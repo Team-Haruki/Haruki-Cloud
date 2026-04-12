@@ -77,10 +77,9 @@ func resolveProfileBGSettings(settings *drawing.ProfileBgSettings) *drawing.Prof
 
 func applyProfileBGVerticalOverride(settings *drawing.ProfileBgSettings, override *bool) *drawing.ProfileBgSettings {
 	resolved := resolveProfileBGSettings(settings)
-	if override == nil {
-		return resolved
+	if override != nil {
+		resolved.Vertical = *override
 	}
-	resolved.Vertical = *override
 	return resolved
 }
 
@@ -158,7 +157,10 @@ func (c *Controller) buildLeaderImagePathFromSource(source DataSource, cardID in
 	if afterTraining {
 		imageType = "after_training"
 	}
-	return common.ResolveCardThumbnailPath(helper, region, card.AssetBundleName, imageType == "after_training")
+	return assets.ResolveRegionAssetPath(helper, region.String(),
+		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", card.AssetBundleName, imageType)),
+		filepath.Join("character", "member", card.AssetBundleName, "card_normal.png"),
+	)
 }
 
 func (c *Controller) buildProfileImagePathFromSource(
@@ -233,13 +235,17 @@ func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUser
 		}
 		userCard := userdata.FindUserCard(userCards, cardID)
 		var level *int
+		var trainRank *int
 		if userCard != nil {
 			value := userCard.Level
 			level = &value
+			rank := userCard.MasterRank
+			trainRank = &rank
 		}
 		result = append(result, common.BuildCardThumbnail(c.assets, cardInfo, region, common.ThumbnailOptions{
 			AfterTraining: userCard != nil && strings.EqualFold(userCard.SpecialTrainingStatus, "done"),
 			TrainedArt:    userCard != nil && strings.EqualFold(userCard.DefaultImage, "special_training"),
+			TrainRank:     trainRank,
 			Level:         level,
 			IsPcard:       true,
 		}))

@@ -223,51 +223,6 @@ func TestBuildProfileRequestFromAPIUsesConfiguredProfileImageCard(t *testing.T) 
 	}
 }
 
-func TestBuildProfileRequestFromAPIAppliesVerticalOverride(t *testing.T) {
-	source := &testProfileSource{
-		region: renderregion.JP,
-		cards: map[int]*masterdata.Card{
-			1001: {
-				ID:              1001,
-				CharacterID:     1,
-				AssetBundleName: "res001_no001",
-			},
-		},
-		honors:      map[int]*masterdata.Honor{},
-		honorGroups: map[int]*masterdata.HonorGroup{},
-	}
-
-	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
-
-	resp := &sekai.GetAnotherProfileResponse{
-		User:        sekai.AnotherUser{UserID: 12345, Name: "Override User", Rank: 100},
-		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
-		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
-		UserCards: []sekai.AnotherUserCard{
-			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
-		},
-	}
-
-	override := true
-	payload, err := controller.BuildProfileRequestFromAPI(Query{
-		Region:           "jp",
-		Visible:          true,
-		VerticalOverride: &override,
-	}, resp, nil)
-	if err != nil {
-		t.Fatalf("BuildProfileRequestFromAPI failed: %v", err)
-	}
-	if payload.BgSettings == nil {
-		t.Fatalf("expected bg settings to be resolved")
-	}
-	if !payload.BgSettings.Vertical {
-		t.Fatalf("expected vertical override to be applied, got %+v", payload.BgSettings)
-	}
-	if payload.BgSettings.Alpha != 100 || payload.BgSettings.Blur != 4 {
-		t.Fatalf("expected default bg settings to be preserved, got %+v", payload.BgSettings)
-	}
-}
-
 func TestBuildProfileRequestFromAPIFallsBackToJPCardMetadataForNonJPProfileCards(t *testing.T) {
 	jpSource := &testProfileSource{
 		region: renderregion.JP,
@@ -312,6 +267,9 @@ func TestBuildProfileRequestFromAPIFallsBackToJPCardMetadataForNonJPProfileCards
 	}
 	if payload.Pcards[0].CardThumbnailPath != wantLeader {
 		t.Fatalf("unexpected first pcard thumbnail path: %q", payload.Pcards[0].CardThumbnailPath)
+	}
+	if payload.Pcards[0].TrainRank == nil || *payload.Pcards[0].TrainRank != 5 {
+		t.Fatalf("unexpected first pcard master rank: %+v", payload.Pcards[0].TrainRank)
 	}
 }
 

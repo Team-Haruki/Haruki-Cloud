@@ -17,6 +17,7 @@ func adaptAPICards(cards []sekai.AnotherUserCard) []userdata.RawUserCard {
 		result[i] = userdata.RawUserCard{
 			CardID:                c.CardID,
 			Level:                 c.Level,
+			MasterRank:            c.MasterRank,
 			SpecialTrainingStatus: c.SpecialTrainingStatus,
 			DefaultImage:          c.DefaultImage,
 		}

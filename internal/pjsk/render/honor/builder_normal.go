@@ -93,12 +93,12 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 			req.RankImgPath = &rankImgPath
 		case "event":
 			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
-			if rankCandidate != honorImgPath && b.assetExists(rankCandidate) {
+			if rankCandidate != honorImgPath {
 				req.RankImgPath = &rankCandidate
 			}
 		case "wl_event":
 			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
-			if rankCandidate != honorImgPath && b.assetExists(rankCandidate) {
+			if rankCandidate != honorImgPath {
 				req.RankImgPath = &rankCandidate
 			}
 		}

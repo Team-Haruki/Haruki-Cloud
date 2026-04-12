@@ -46,12 +46,12 @@ func TestExtractMysekaiPhenomsIncludesBirthdayRefreshSlot(t *testing.T) {
 	}
 }
 
-func TestSortKeysByResourceMovesRareEntriesToTail(t *testing.T) {
+func TestSortKeysByResourceMovesRareEntriesToFront(t *testing.T) {
 	counts := map[string]int{
-		"material_1":           485,
-		"mysekai_material_1":   9,
-		"material_179":         1,
-		"mysekai_material_24":  1,
+		"material_1":             485,
+		"mysekai_material_1":     9,
+		"material_179":           1,
+		"mysekai_material_24":    1,
 		"mysekai_music_record_1": 1,
 	}
 	materialRarityMap := map[int]string{
@@ -61,11 +61,11 @@ func TestSortKeysByResourceMovesRareEntriesToTail(t *testing.T) {
 
 	got := sortKeysByResource(counts, materialRarityMap)
 	want := []string{
-		"material_1",
-		"mysekai_material_1",
-		"mysekai_music_record_1",
 		"material_179",
 		"mysekai_material_24",
+		"mysekai_music_record_1",
+		"material_1",
+		"mysekai_material_1",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("unexpected resource order: got=%v want=%v", got, want)

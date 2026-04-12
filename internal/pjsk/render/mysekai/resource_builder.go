@@ -14,7 +14,7 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 		return nil, err
 	}
 
-	profile := c.mysekaiProfileCard(region, merged, query.Profile)
+	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
 	if profile == nil {
 		return nil, fmt.Errorf("mysekai resource requires profile data")
 	}

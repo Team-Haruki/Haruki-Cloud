@@ -161,7 +161,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 		})
 	}
 
-	profile := c.mysekaiProfileCard(region, merged, query.Profile)
+	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
 	if profile == nil {
 		return nil, fmt.Errorf("mysekai music record requires profile data")
 	}

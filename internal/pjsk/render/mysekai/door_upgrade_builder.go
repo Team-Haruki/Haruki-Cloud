@@ -136,7 +136,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 	}
 
 	return &drawing.MysekaiDoorUpgradeRequest{
-		Profile:       c.mysekaiProfileCard(region, merged, query.Profile),
+		Profile:       c.mysekaiProfileCard(region, merged, query.Profile, false),
 		GateMaterials: gateMaterials,
 	}, nil
 }

@@ -122,7 +122,7 @@ func (s *Service) ProfileCard(region renderregion.Value) *drawing.ProfileCardReq
 		},
 		DataSources: []drawing.ProfileDataSource{
 			{
-				Name:       "User Data",
+				Name:       "Suite数据",
 				Source:     &source,
 				UpdateTime: &update,
 				Mode:       common.CloneStringPtr(detail.Mode),

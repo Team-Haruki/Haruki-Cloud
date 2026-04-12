@@ -264,7 +264,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		promptMessage = &prompt
 	}
 	return &drawing.MysekaiTalkListRequest{
-		Profile:          c.mysekaiProfileCard(region, merged, query.Profile),
+		Profile:          c.mysekaiProfileCard(region, merged, query.Profile, true),
 		SdImagePath:      c.regionPath(region, fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", characterUnitID)),
 		ProgressMessage:  &progressMessage,
 		PromptMessage:    promptMessage,

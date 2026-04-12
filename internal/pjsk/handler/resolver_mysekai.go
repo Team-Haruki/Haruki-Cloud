@@ -80,9 +80,18 @@ func resolveMySekaiRenderContext(
 	}
 
 	platform, platformUserID := platformCredentials(params)
+	if snapshot := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, true); snapshot != nil {
+		result.Controller = app.MySekai.WithSnapshot(snapshot)
+		result.Profile = snapshot.ProfileCard(renderregion.Normalize(regionStr))
+		if result.Profile == nil {
+			result.Profile = buildPublicProfileCardForTarget(ctx, target, regionStr, platform, platformUserID, app)
+		}
+		return result, nil
+	}
+
 	result.Profile = buildPublicProfileCardForTarget(ctx, target, regionStr, platform, platformUserID, app)
-	if controller := resolveTargetMySekaiController(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID); controller != nil {
-		result.Controller = controller
+	if data := resolveTargetMySekaiPayload(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID); len(data) > 0 {
+		result.Controller = app.MySekai.WithMySekaiData(data)
 	}
 	return result, nil
 }

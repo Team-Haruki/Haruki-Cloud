@@ -181,6 +181,200 @@ func TestBuildFixtureListRequestSupportsOnlyCraftable(t *testing.T) {
 	}
 }
 
+func TestBuildFixtureListRequestSortsFixturesByIDWithinGroup(t *testing.T) {
+	root := t.TempDir()
+	userPath := filepath.Join(root, "user.json")
+	mysekaiPath := filepath.Join(root, "mysekai.json")
+	masterdataDir := filepath.Join(root, "masterdata")
+
+	userJSON := `{
+  "now": 1700000000,
+  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
+  "userProfile": {},
+  "userDecks": [{"deckId": 1}],
+  "userCards": []
+}`
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiBlueprints": [{"mysekaiBlueprintId": 1001}, {"mysekaiBlueprintId": 1002}]
+  }
+}`
+
+	if err := os.WriteFile(userPath, []byte(userJSON), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(mysekaiPath, []byte(mysekaiJSON), 0o644); err != nil {
+		t.Fatalf("write mysekai snapshot: %v", err)
+	}
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{
+			"id":                        2002,
+			"name":                      "Garden Lamp",
+			"assetbundleName":           "garden_lamp",
+			"mysekaiFixtureType":        "furniture",
+			"mysekaiFixtureMainGenreId": 1,
+			"mysekaiFixtureSubGenreId":  11,
+		},
+		{
+			"id":                        2001,
+			"name":                      "Wood Chair",
+			"assetbundleName":           "wood_chair",
+			"mysekaiFixtureType":        "furniture",
+			"mysekaiFixtureMainGenreId": 1,
+			"mysekaiFixtureSubGenreId":  11,
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 1, "name": "Main A", "assetbundleName": "main_a"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]any{
+		{"id": 11, "name": "Sub A", "assetbundleName": "sub_a"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{
+		{"id": 1001, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 2001},
+		{"id": 1002, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 2002},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
+
+	service := userdata.NewLocalFileService(nil, nil, userdata.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userPath,
+		MySekaiJSON:   mysekaiPath,
+	})
+	controller := NewController(nil, service, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
+
+	req, err := controller.BuildFixtureListRequest(FixtureListQuery{
+		Region:  "jp",
+		Profile: &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest() error = %v", err)
+	}
+	if len(req.MainGenres) != 1 || len(req.MainGenres[0].SubGenres) != 1 {
+		t.Fatalf("unexpected genre layout: %+v", req.MainGenres)
+	}
+	fixtures := req.MainGenres[0].SubGenres[0].Fixtures
+	if len(fixtures) != 2 {
+		t.Fatalf("expected 2 fixtures, got %+v", fixtures)
+	}
+	if fixtures[0].ID != 2001 || fixtures[1].ID != 2002 {
+		t.Fatalf("expected fixture IDs sorted ascending, got %+v", fixtures)
+	}
+}
+
+func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
+	profile := &drawing.ProfileCardRequest{
+		Profile: &drawing.BasicProfile{
+			ID:              "12345678901234567",
+			Region:          "JP",
+			Nickname:        "Tester",
+			LeaderImagePath: "user/leader.png",
+		},
+		DataSources: []drawing.ProfileDataSource{
+			{Name: "Suite数据"},
+		},
+	}
+	merged := map[string]any{
+		"upload_time":  float64(1776000000123),
+		"source":       "toolbox_live",
+		"local_source": "haruki",
+		"userMysekaiGamedata": map[string]any{
+			"mysekaiRank": 10,
+		},
+	}
+
+	got := controller.mysekaiProfileCard(renderregion.JP, merged, profile, true)
+	if got == nil {
+		t.Fatal("expected profile card")
+	}
+	if got.MysekaiLevel == nil || *got.MysekaiLevel != 10 {
+		t.Fatalf("unexpected mysekai level: %+v", got.MysekaiLevel)
+	}
+	if len(got.DataSources) != 2 {
+		t.Fatalf("expected 2 data sources, got %+v", got.DataSources)
+	}
+	if got.DataSources[1].Name != "Mysekai数据" {
+		t.Fatalf("unexpected mysekai data source: %+v", got.DataSources[1])
+	}
+	if got.DataSources[1].UpdateTime == nil || *got.DataSources[1].UpdateTime != 1776000000123 {
+		t.Fatalf("unexpected mysekai update time: %+v", got.DataSources[1].UpdateTime)
+	}
+	if got.DataSources[1].Source == nil || *got.DataSources[1].Source != "toolbox_live(haruki)" {
+		t.Fatalf("unexpected mysekai source: %+v", got.DataSources[1].Source)
+	}
+}
+
+func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testing.T) {
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
+	controller = controller.WithMySekaiData([]byte(`{"updatedResources":{"userMysekaiGamedata":{"mysekaiRank":8}},"upload_time":1776000000,"source":"toolbox_live"}`))
+	profile := &drawing.ProfileCardRequest{
+		Profile: &drawing.BasicProfile{
+			ID:              "GAME_USER_ID_REDACTED",
+			Region:          "JP",
+			Nickname:        "Tester",
+			LeaderImagePath: "user/leader.png",
+		},
+		DataSources: []drawing.ProfileDataSource{
+			{Name: "Sekai API"},
+		},
+	}
+	merged := map[string]any{
+		"upload_time": float64(1776000000),
+		"source":      "toolbox_live",
+		"userMysekaiGamedata": map[string]any{
+			"mysekaiRank": 8,
+		},
+	}
+
+	got := controller.mysekaiProfileCard(renderregion.JP, merged, profile, false)
+	if got == nil || len(got.DataSources) != 1 {
+		t.Fatalf("expected one mysekai data source, got %+v", got)
+	}
+	if got.DataSources[0].Name != "Mysekai数据" {
+		t.Fatalf("expected single source renamed to Mysekai数据, got %+v", got.DataSources[0])
+	}
+	if got.DataSources[0].UpdateTime == nil || *got.DataSources[0].UpdateTime != 1776000000000 {
+		t.Fatalf("unexpected mysekai update time: %+v", got.DataSources[0].UpdateTime)
+	}
+	if got.MysekaiLevel == nil || *got.MysekaiLevel != 8 {
+		t.Fatalf("unexpected mysekai level: %+v", got.MysekaiLevel)
+	}
+}
+
+func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
+	profile := &drawing.ProfileCardRequest{
+		Profile: &drawing.BasicProfile{
+			ID:              "GAME_USER_ID_REDACTED",
+			Region:          "JP",
+			Nickname:        "Tester",
+			LeaderImagePath: "user/leader.png",
+		},
+		DataSources: []drawing.ProfileDataSource{
+			{Name: "Suite数据"},
+		},
+	}
+	merged := map[string]any{
+		"upload_time": float64(1776000000),
+		"source":      "toolbox_live",
+		"userMysekaiGamedata": map[string]any{
+			"mysekaiRank": 8,
+		},
+	}
+
+	got := controller.mysekaiProfileCard(renderregion.JP, merged, profile, true)
+	if got == nil || len(got.DataSources) != 2 {
+		t.Fatalf("expected suite + mysekai data sources, got %+v", got)
+	}
+	if got.DataSources[0].Name != "Suite数据" || got.DataSources[1].Name != "Mysekai数据" {
+		t.Fatalf("unexpected data source order: %+v", got.DataSources)
+	}
+}
+
 func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")

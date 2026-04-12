@@ -107,9 +107,9 @@ func sortKeysByResource(counts map[string]int, materialRarityMap map[int]string)
 func adjustedResourceSortScore(key string, count int, materialRarityMap map[int]string) int {
 	switch resourceRarity(key, materialRarityMap) {
 	case 2:
-		return count - 1000000
+		return count + 1000000
 	case 1:
-		return count - 100000
+		return count + 100000
 	default:
 		return count
 	}

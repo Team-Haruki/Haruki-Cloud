@@ -117,6 +117,9 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 			if len(rows) == 0 {
 				continue
 			}
+			sort.Slice(rows, func(i, j int) bool {
+				return rows[i].fixture.ID < rows[j].fixture.ID
+			})
 			fixtures := make([]drawing.MysekaiFixture, 0, len(rows))
 			for _, row := range rows {
 				fixtures = append(fixtures, row.fixture)
@@ -156,7 +159,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	}
 
 	request := &drawing.MysekaiFixtureListRequest{
-		Profile:    c.mysekaiProfileCard(region, merged, query.Profile),
+		Profile:    c.mysekaiProfileCard(region, merged, query.Profile, false),
 		ShowID:     showID,
 		MainGenres: mainGenres,
 	}

@@ -3,6 +3,7 @@ package mysekai
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -141,8 +142,9 @@ func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion
 	return merged, c.resolveRegion(region), nil
 }
 
-func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[string]any, override *drawing.ProfileCardRequest) *drawing.ProfileCardRequest {
+func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[string]any, override *drawing.ProfileCardRequest, includeSuite bool) *drawing.ProfileCardRequest {
 	var profile *drawing.ProfileCardRequest
+	usesRawMySekaiOnly := len(c.rawMySekaiJSON) > 0
 	if override != nil {
 		cloned := *override
 		if override.Profile != nil {
@@ -162,10 +164,103 @@ func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[st
 	if profile == nil {
 		return nil
 	}
+	if includeSuite {
+		mergeMySekaiDataSources(profile, merged, usesRawMySekaiOnly)
+	} else {
+		replaceWithMySekaiDataSource(profile, merged)
+	}
 	if updated, ok := merged["userMysekaiGamedata"].(map[string]any); ok {
 		if level := intNumber(updated["mysekaiRank"], 0); level > 0 {
 			profile.MysekaiLevel = &level
 		}
 	}
 	return profile
+}
+
+func replaceWithMySekaiDataSource(profile *drawing.ProfileCardRequest, merged map[string]any) {
+	if profile == nil {
+		return
+	}
+	entry, ok := mysekaiDataSourceFromMerged(profile, merged)
+	if ok {
+		profile.DataSources = []drawing.ProfileDataSource{entry}
+		return
+	}
+	if len(profile.DataSources) == 0 {
+		return
+	}
+	mode := profile.DataSources[0].Mode
+	profile.DataSources = []drawing.ProfileDataSource{{
+		Name: "Mysekai数据",
+		Mode: mode,
+	}}
+}
+
+func mergeMySekaiDataSources(profile *drawing.ProfileCardRequest, merged map[string]any, replaceSingle bool) {
+	if profile == nil || merged == nil {
+		return
+	}
+	entry, ok := mysekaiDataSourceFromMerged(profile, merged)
+	if !ok {
+		if replaceSingle && len(profile.DataSources) == 1 {
+			profile.DataSources[0].Name = "Mysekai数据"
+		}
+		return
+	}
+
+	for i := range profile.DataSources {
+		if strings.TrimSpace(profile.DataSources[i].Name) == "Mysekai数据" {
+			profile.DataSources[i] = entry
+			return
+		}
+	}
+
+	if replaceSingle && len(profile.DataSources) == 1 {
+		profile.DataSources[0] = entry
+		return
+	}
+	profile.DataSources = append(profile.DataSources, entry)
+}
+
+func mysekaiDataSourceFromMerged(profile *drawing.ProfileCardRequest, merged map[string]any) (drawing.ProfileDataSource, bool) {
+	updateTime := normalizeMySekaiUpdateTime(int64Number(merged["upload_time"], 0))
+	sourceValue := strings.TrimSpace(stringValue(merged["source"]))
+	localSource := strings.TrimSpace(stringValue(merged["local_source"]))
+	if updateTime == 0 && sourceValue == "" && localSource == "" {
+		return drawing.ProfileDataSource{}, false
+	}
+	if localSource != "" {
+		if sourceValue != "" {
+			sourceValue += "(" + localSource + ")"
+		} else {
+			sourceValue = localSource
+		}
+	}
+
+	entry := drawing.ProfileDataSource{
+		Name: "Mysekai数据",
+	}
+	if updateTime > 0 {
+		entry.UpdateTime = &updateTime
+	}
+	if sourceValue != "" {
+		entry.Source = &sourceValue
+	}
+	if profile != nil && len(profile.DataSources) > 0 && profile.DataSources[0].Mode != nil {
+		mode := *profile.DataSources[0].Mode
+		entry.Mode = &mode
+	}
+	return entry, true
+}
+
+func normalizeMySekaiUpdateTime(value int64) int64 {
+	if value <= 0 {
+		return 0
+	}
+	// MySekai payloads may report upload_time in seconds while Suite payloads
+	// use milliseconds. Normalize to milliseconds for DrawingAPI consumers.
+	if value < 1_000_000_000_000 {
+		return value * 1000
+	}
+	return value
 }

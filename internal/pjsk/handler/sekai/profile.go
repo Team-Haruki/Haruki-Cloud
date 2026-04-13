@@ -66,7 +66,13 @@ func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 			if args == "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n或 %s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeUnbind, newProfileBindingParams(ctx, args, "")), nil
+			params := newProfileBindingParams(ctx, args, "")
+			scope := ""
+			if ctx.HasExplicitRegion() {
+				scope = ctx.Region().String()
+			}
+			params.Server = scope
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeUnbind, params), nil
 		},
 	}
 }

@@ -224,7 +224,7 @@ func (c *TrackerClient) getRaw(path string) ([]byte, error) {
 		SetHeader("User-Agent", c.userAgent()).
 		Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("tracker: request failed after retries: %w", err)
+		return nil, fmt.Errorf("tracker: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {

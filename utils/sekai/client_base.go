@@ -3,10 +3,27 @@ package sekai
 import (
 	"errors"
 	"net"
+	"regexp"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
 )
+
+// quotedURL matches any quoted http/https URL in an error string, e.g.
+// the fragment produced by Go's net/http: Get "https://host/path": ...
+var quotedURL = regexp.MustCompile(`"https?://[^"]+"`)
+
+// sanitizeNetworkError strips embedded URLs from HTTP client errors so that
+// internal service hostnames are never exposed in user-facing messages.
+// The original error type is intentionally discarded; only the sanitized
+// message text is preserved.
+func sanitizeNetworkError(err error) error {
+	if err == nil {
+		return nil
+	}
+	cleaned := quotedURL.ReplaceAllString(err.Error(), `"<url>"`)
+	return errors.New(cleaned)
+}
 
 // newRestyClient returns a resty.Client pre-configured with common retry
 // logic shared by all Sekai HTTP clients. Each client may further configure

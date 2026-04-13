@@ -110,7 +110,7 @@ func (c *SekaiAPIClient) GetMySekaiImage(server, imagePath string) ([]byte, erro
 func (c *SekaiAPIClient) get(url string) ([]byte, error) {
 	resp, err := c.authReq().Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("sekai api: request failed after retries: %w", err)
+		return nil, fmt.Errorf("sekai api: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {

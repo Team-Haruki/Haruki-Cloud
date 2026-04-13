@@ -106,7 +106,7 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 			SetHarukiUserID(harukiUserID).
 			SetServer(target.Server).
 			SetUserID(target.UserID).
-			SetVisible(true).
+			SetVisible(false).
 			Save(ctx)
 		if err != nil {
 			return nil, err

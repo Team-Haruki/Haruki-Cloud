@@ -76,6 +76,9 @@ func TestBindingServiceBindListAndDefaultSwitch(t *testing.T) {
 	if len(items) != 2 {
 		t.Fatalf("expected 2 bindings, got %d", len(items))
 	}
+	if items[0].Visible || items[1].Visible {
+		t.Fatalf("expected new bindings to hide uid by default, got %+v", items)
+	}
 	if items[0].UserID != "1000" || items[1].UserID != "2000" {
 		t.Fatalf("expected bindings sorted by uid asc, got %+v", items)
 	}
@@ -147,5 +150,8 @@ func TestBindingServiceUnbindReassignsDefaults(t *testing.T) {
 	}
 	if len(items) != 1 || items[0].UserID != "3000" || !items[0].IsGlobalDefault || !items[0].IsServerDefault {
 		t.Fatalf("unexpected bindings after unbind: %+v", items)
+	}
+	if items[0].Visible {
+		t.Fatalf("expected remaining binding to stay hidden by default, got %+v", items[0])
 	}
 }

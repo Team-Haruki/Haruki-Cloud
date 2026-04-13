@@ -214,6 +214,9 @@ func TestResolveTrackerTargetUserNoPrefixUsesGlobalDefaultBinding(t *testing.T) 
 	if _, err := service.Bind(ctx, "qq", "9001", "22222222222222"); err != nil {
 		t.Fatalf("bind jp: %v", err)
 	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "9001", "tw", true); err != nil {
+		t.Fatalf("show tw binding: %v", err)
+	}
 
 	req := rendersk.TrackerRankQuery{
 		Region:         "jp",
@@ -239,6 +242,9 @@ func TestResolveTrackerTargetUserNoPrefixFallsBackToJPWhenNoGlobalDefault(t *tes
 
 	if _, err := service.Bind(ctx, "qq", "9002", "12345678901234"); err != nil {
 		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "9002", "jp", true); err != nil {
+		t.Fatalf("show jp binding: %v", err)
 	}
 	if _, err := service.ClearDefault(ctx, "qq", "9002", "", "", accountdata.GlobalDefaultBindingScope); err != nil {
 		t.Fatalf("clear global default: %v", err)

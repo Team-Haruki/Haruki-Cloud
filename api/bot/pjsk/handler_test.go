@@ -622,6 +622,52 @@ func TestBotEndpointSKQueryAcceptsBaseMatchedCommandForRegionPrefixedInput(t *te
 	assertSingleImageMessage(t, body)
 }
 
+func TestBotEndpointSKQueryTreatsRequestServerAsExplicitRegion(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/query" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.SKRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.Region != "en" {
+			t.Fatalf("unexpected region: %s", req.Region)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKSERVEREN"))
+	}))
+	defer srv.Close()
+
+	bindings := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "12345678901234"); err != nil {
+		t.Fatalf("bind jp account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.Bindings = bindings
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "en", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sk event101 100"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
 func TestBotEndpointSKLineUsesTrackerPayload(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/line" {

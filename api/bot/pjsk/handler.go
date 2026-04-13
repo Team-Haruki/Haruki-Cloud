@@ -14,6 +14,7 @@ import (
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/logger"
 	"regexp"
 	"slices"
@@ -156,8 +157,15 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 			)
 		}
 
-		if req.Server != "" && !resolved.RegionExplicit {
-			resolved.Region = req.Server
+		if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
+			if normalized := renderregion.Normalize(server); !normalized.IsZero() {
+				// Treat the transport-level server as authoritative so Execute()
+				// does not overwrite it with the user's global default binding.
+				resolved.Region = normalized.String()
+				resolved.RegionExplicit = true
+			} else {
+				resolved.Region = server
+			}
 		}
 
 		responseData, err := commandhandler.Execute(c.Context(), resolved, renderApp)

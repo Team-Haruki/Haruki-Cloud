@@ -289,6 +289,24 @@ func resolveDeckMusicCompareSelections(region string, queries []string, app *ren
 	return result, nil
 }
 
+func assignDeckFallbackMusicQuery(q *deck.AutoQuery, raw string) {
+	if q == nil {
+		return
+	}
+
+	query := strings.TrimSpace(raw)
+	if query == "" {
+		return
+	}
+	if strings.TrimSpace(q.MusicDiff) == "" {
+		if diff, cleaned := music.ExtractMusicDifficulty(query); diff != "" && strings.TrimSpace(cleaned) != "" {
+			q.MusicDiff = diff
+			query = cleaned
+		}
+	}
+	q.MusicQuery = strings.TrimSpace(query)
+}
+
 func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app *renderapp.App) error {
 	if q == nil {
 		return nil
@@ -304,7 +322,7 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.WorldBloomCharacterQuery, "deck")
 		if err != nil {
 			if q.WorldBloomEventTurn == nil && strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
-				q.MusicQuery = strings.TrimSpace(q.WorldBloomCharacterQuery)
+				assignDeckFallbackMusicQuery(q, q.WorldBloomCharacterQuery)
 				q.WorldBloomCharacterQuery = ""
 			} else {
 				return err
@@ -322,7 +340,7 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.ChallengeLiveCharacterQuery, "deck")
 		if err != nil {
 			if strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
-				q.MusicQuery = strings.TrimSpace(q.ChallengeLiveCharacterQuery)
+				assignDeckFallbackMusicQuery(q, q.ChallengeLiveCharacterQuery)
 				q.ChallengeLiveCharacterQuery = ""
 			} else {
 				return err
@@ -412,7 +430,7 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		chapter, err := resolveTrackerWorldBloomChapterSelection(ctx, app, region, eventInfo, chapters, query)
 		if err != nil {
 			if strings.TrimSpace(q.MusicQuery) == "" && !isDeckWorldBloomSelectorQuery(query) && isCharacterNotFoundError(err) {
-				q.MusicQuery = query
+				assignDeckFallbackMusicQuery(q, query)
 				q.WorldBloomCharacterQuery = ""
 				return nil
 			}

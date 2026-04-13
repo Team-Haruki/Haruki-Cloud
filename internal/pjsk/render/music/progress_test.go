@@ -74,7 +74,19 @@ type progressSnapshotStub struct {
 	results map[string]map[int]string
 }
 
+type regionalLookupTestSource struct {
+	*lookupTestSource
+	region renderregion.Value
+}
+
 func (s *progressSnapshotStub) Require() error { return nil }
+
+func (s *regionalLookupTestSource) DefaultRegion() renderregion.Value {
+	if s == nil {
+		return renderregion.JP
+	}
+	return s.region
+}
 
 func (s *progressSnapshotStub) DetailedProfile(renderregion.Value) *drawing.DetailedProfileCardRequest {
 	return nil
@@ -157,5 +169,73 @@ func TestBuildMusicProgressRequestFromSnapshotUsesSnapshotData(t *testing.T) {
 	}
 	if len(req.Counts) != 1 || req.Counts[0].Level != 31 || req.Counts[0].Total != 2 || req.Counts[0].Clear != 2 || req.Counts[0].Fc != 1 {
 		t.Fatalf("unexpected counts: %+v", req.Counts)
+	}
+}
+
+func TestBuildMusicProgressRequestFromSnapshotUsesCompactToolboxResults(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			201: {ID: 201, Title: "Song A", PublishedAt: now - 1000},
+			202: {ID: 202, Title: "Song B", PublishedAt: now - 1000},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			201: {
+				{MusicID: 201, MusicDifficulty: "master", PlayLevel: 31},
+			},
+			202: {
+				{MusicID: 202, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+
+	snapshot, err := userdata.NewDefaultSnapshotFactory(nil, nil).Build(nil, userdata.BuildInput{
+		Region: renderregion.CN,
+		Source: "toolbox",
+		SuiteJSON: []byte(`{
+  "now": 1710000000,
+  "userGamedata": {"userId": 123456789, "name": "SnapshotUser", "deck": 1, "rank": 100, "coin": 0},
+  "userProfile": {"profileImageType": "default", "profileImageId": 0, "word": "", "twitterId": ""},
+  "userDecks": [{"deckId": 1, "leader": 1001, "subLeader": 0, "member1": 1001, "member2": 0, "member3": 0, "member4": 0, "member5": 0}],
+  "userCards": [{"cardId": 1001, "level": 60, "masterRank": 0, "specialTrainingStatus": "done", "defaultImage": "special_training", "episodes": []}],
+  "userMusicResults": [],
+  "compactUserMusicResults": {
+    "__ENUM__": {
+      "musicDifficulty": ["easy", "normal", "hard", "expert", "master", "append"],
+      "playType": ["solo", "multi"],
+      "playResult": ["full_perfect", "full_combo", "clear", "not_clear"]
+    },
+    "musicId": [201, 202],
+    "musicDifficulty": [4, 4],
+    "playType": [0, 1],
+    "playResult": [2, 1],
+    "fullComboFlg": [false, true],
+    "fullPerfectFlg": [false, false]
+  },
+  "userChallengeLiveSoloResults": [],
+  "userChallengeLiveSoloStages": [],
+  "userChallengeLiveSoloHighScoreRewards": []
+}`),
+	})
+	if err != nil {
+		t.Fatalf("Build() error = %v", err)
+	}
+
+	controller := NewController(&regionalLookupTestSource{
+		lookupTestSource: source,
+		region:           renderregion.CN,
+	}, nil, assets.NewAssetHelper("", nil), nil, nil)
+	req, err := controller.BuildMusicProgressRequestFromSnapshot(ProgressQuery{
+		Region:     "cn",
+		Difficulty: "master",
+	}, snapshot, nil)
+	if err != nil {
+		t.Fatalf("BuildMusicProgressRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.Counts) != 1 {
+		t.Fatalf("expected 1 level group, got %+v", req.Counts)
+	}
+	if req.Counts[0].Level != 31 || req.Counts[0].Total != 2 || req.Counts[0].Clear != 2 || req.Counts[0].Fc != 1 || req.Counts[0].NotClear != 0 {
+		t.Fatalf("unexpected counts: %+v", req.Counts[0])
 	}
 }

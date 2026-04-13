@@ -113,8 +113,12 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 		params.ChallengeLiveCharacterID = intPtr(charID)
 		args = remaining
 	} else if charQuery != "" {
-		params.ChallengeLiveCharacterQuery = charQuery
-		args = remaining
+		if remaining == "" && looksLikeInlineMusicQuery(charQuery) {
+			args = normalizeDeckSpaces(args)
+		} else {
+			params.ChallengeLiveCharacterQuery = charQuery
+			args = remaining
+		}
 	}
 	if hasCompare {
 		applyDeckMusicCompareParams(params, remaining, compareSuffix)

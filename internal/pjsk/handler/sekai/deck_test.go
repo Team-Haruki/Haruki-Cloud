@@ -972,6 +972,36 @@ func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T
 	}
 }
 
+func TestChallengeDeckHandleTreatsInlineDifficultyTokenAsMusicQuery(t *testing.T) {
+	h := sekaiHandlers{}.ChallengeDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/挑战组卡",
+		ArgText:    "群青ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.ChallengeLiveCharacterID != nil {
+		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	}
+	if params.ChallengeLiveCharacterQuery != "" {
+		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	}
+	if params.MusicQuery != "群青" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != "expert" {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
+	}
+}
+
 func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{

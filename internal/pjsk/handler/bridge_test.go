@@ -1238,6 +1238,43 @@ func TestResolveDeckCharacterSelectionsFallsBackChallengeQueryToMusic(t *testing
 	}
 }
 
+func TestResolveDeckCharacterSelectionsFallbackChallengeQueryExtractsInlineDifficulty(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_challenge_fallback_inline_diff?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:                      "jp",
+		RecommendType:               "challenge",
+		ChallengeLiveCharacterQuery: "群青ex",
+	}
+
+	if err := resolveDeckCharacterSelections(context.Background(), &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.ChallengeLiveCharacterID != nil {
+		t.Fatalf("unexpected challenge character id: %+v", query.ChallengeLiveCharacterID)
+	}
+	if query.MusicQuery != "群青" {
+		t.Fatalf("unexpected fallback music query: %q", query.MusicQuery)
+	}
+	if query.MusicDiff != "expert" {
+		t.Fatalf("unexpected fallback music diff: %q", query.MusicDiff)
+	}
+	if query.ChallengeLiveCharacterQuery != "" {
+		t.Fatalf("expected challenge query to be cleared: %q", query.ChallengeLiveCharacterQuery)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsFallsBackWorldBloomQueryToMusic(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_fallback?mode=memory&cache=shared&_fk=1")

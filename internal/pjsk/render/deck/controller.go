@@ -59,6 +59,8 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 			ServiceBaseURL: strings.TrimSpace(cfg.ServiceBaseURL),
 			MasterdataDir:  cfg.MasterdataDir,
 			Timeout:        cfg.Timeout,
+			MaxRetries:     cfg.MaxRetries,
+			RetryWaitTime:  cfg.RetryWaitTime,
 			DefaultAlgs:    append([]string(nil), cfg.DefaultAlgs...),
 		},
 		metaLoader: metaLoader,

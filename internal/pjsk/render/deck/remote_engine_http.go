@@ -80,6 +80,9 @@ func (r *RemoteDeckRecommender) postJSON(path string, requestBody any, responseB
 
 		lastErr = parseRemoteHTTPError(resp.StatusCode, payload)
 		r.logger.Warnf("POST %s attempt %d returned HTTP %d after %v", path, attempt, resp.StatusCode, elapsed)
+		if isMissingUserdataHashError(lastErr) {
+			return lastErr
+		}
 		if !isRetryableError(nil, resp.StatusCode) {
 			return lastErr
 		}
@@ -131,6 +134,9 @@ func (r *RemoteDeckRecommender) postBinary(path string, payload []byte, response
 
 		lastErr = parseRemoteHTTPError(resp.StatusCode, body)
 		r.logger.Warnf("POST %s (binary) attempt %d returned HTTP %d after %v", path, attempt, resp.StatusCode, elapsed)
+		if isMissingUserdataHashError(lastErr) {
+			return lastErr
+		}
 		if !isRetryableError(nil, resp.StatusCode) {
 			return lastErr
 		}

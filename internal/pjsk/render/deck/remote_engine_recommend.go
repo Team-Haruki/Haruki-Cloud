@@ -89,7 +89,7 @@ func (r *RemoteDeckRecommender) doRecommendCompatible(req RecommendRequest) ([]r
 	if err == nil {
 		return results, nil
 	}
-	if !isUnsupportedBatchProtocolError(err) {
+	if !isUnsupportedBatchProtocolError(err) && !isMissingUserdataHashError(err) {
 		return nil, err
 	}
 	return r.doRecommendLegacy(req)

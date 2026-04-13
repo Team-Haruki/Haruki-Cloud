@@ -561,6 +561,68 @@ func TestExecuteMusicListUsesQueryKeywordAndAlias(t *testing.T) {
 	}
 }
 
+func TestExecuteMusicProgressRequiresSuiteData(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingSuiteVisible(ctx, "qq", "42", "jp", false); err != nil {
+		t.Fatalf("hide suite: %v", err)
+	}
+
+	app := &renderapp.App{
+		Bindings: service,
+		Music:    music.NewController(&bridgeMusicSource{}, nil, assets.NewAssetHelper("", nil), nil, nil),
+	}
+
+	_, err := executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-progress",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err == nil {
+		t.Fatal("expected suite error, got nil")
+	}
+	if err.Error() != ErrMsgSuiteDataUnavailable {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestExecuteMusicProgressRequiresResolvableSuiteSnapshot(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingSuiteVisible(ctx, "qq", "42", "jp", true); err != nil {
+		t.Fatalf("show suite: %v", err)
+	}
+
+	app := &renderapp.App{
+		Bindings: service,
+		Music:    music.NewController(&bridgeMusicSource{}, nil, assets.NewAssetHelper("", nil), nil, nil),
+	}
+
+	_, err := executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-progress",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err == nil {
+		t.Fatal("expected snapshot error, got nil")
+	}
+	if err.Error() != "无法解析当前账号的 Suite 快照" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestResolveDeckMusicSelection(t *testing.T) {
 	root := t.TempDir()
 	jacketPath := filepath.Join(root, "music", "jacket", "jacket_test", "jacket_test.png")

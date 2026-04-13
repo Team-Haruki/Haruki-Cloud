@@ -123,3 +123,44 @@ func TestRequestContextCachesMySekaiSnapshotSeparately(t *testing.T) {
 		t.Fatalf("unexpected resolve flags: %+v", provider.resolveNeedFlags)
 	}
 }
+
+func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
+	liveProvider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{},
+	}
+	fallbackProvider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{},
+	}
+
+	originalFactory := snapshotProviderFactory
+	snapshotProviderFactory = func(app *renderapp.App) renderuserdata.SnapshotProvider {
+		if app != nil && app.Config.UserSnapshot.Provider == "internal_cloud" {
+			return liveProvider
+		}
+		return originalFactory(app)
+	}
+	defer func() {
+		snapshotProviderFactory = originalFactory
+	}()
+
+	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{Provider: "internal_cloud"},
+		},
+		Snapshots: fallbackProvider,
+	})
+
+	if snapshot := rc.ResolveSnapshot(false); snapshot == nil {
+		t.Fatal("expected snapshot from configured provider")
+	}
+	if liveProvider.resolveCount != 1 {
+		t.Fatalf("expected live provider to resolve once, got %d", liveProvider.resolveCount)
+	}
+	if fallbackProvider.resolveCount != 0 {
+		t.Fatalf("expected fallback provider to stay unused, got %d resolves", fallbackProvider.resolveCount)
+	}
+}

@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 
 	accountdata "haruki-cloud/internal/pjsk/userdata"
+	sekaiutils "haruki-cloud/utils/sekai"
 )
 
 // resolveLiveSnapshot resolves the requester's Toolbox binding and fetches a
@@ -27,14 +28,57 @@ func resolveLiveSnapshot(rc *RequestContext, needMySekai bool) userdata.Snapshot
 }
 
 func resolveSnapshotBySelector(ctx context.Context, app *renderapp.App, selector userdata.Selector, opts userdata.ResolveOptions) userdata.Snapshot {
-	if app == nil || app.Snapshots == nil {
+	provider := snapshotProviderFactory(app)
+	if provider == nil {
 		return nil
 	}
-	snapshot, err := app.Snapshots.Resolve(ctx, selector, opts)
+	snapshot, err := provider.Resolve(ctx, selector, opts)
 	if err != nil {
 		return nil
 	}
 	return snapshot
+}
+
+var snapshotProviderFactory = defaultSnapshotProviderFactory
+
+func defaultSnapshotProviderFactory(app *renderapp.App) userdata.SnapshotProvider {
+	if app == nil {
+		return nil
+	}
+
+	providers := make([]userdata.SnapshotProvider, 0, 2)
+	if primary := liveSnapshotProvider(app); primary != nil {
+		providers = append(providers, primary)
+	}
+	if app.Snapshots != nil {
+		providers = append(providers, app.Snapshots)
+	}
+	switch len(providers) {
+	case 0:
+		return nil
+	case 1:
+		return providers[0]
+	default:
+		return userdata.NewFallbackSnapshotProvider(app.Config.UserSnapshot.AllowFallback, providers...)
+	}
+}
+
+func liveSnapshotProvider(app *renderapp.App) userdata.SnapshotProvider {
+	if app == nil || app.Bindings == nil {
+		return nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(app.Config.UserSnapshot.Provider)) {
+	case "toolbox", "internal_cloud":
+	default:
+		return nil
+	}
+
+	provider := userdata.NewToolboxSnapshotProvider(app.Bindings, sekaiutils.GetToolboxClient(), app.Sekai, app.Assets)
+	if app.MetaLoader != nil {
+		provider = provider.WithMusicMetaSource(app.MetaLoader)
+	}
+	return provider
 }
 
 func resolveTargetSnapshot(

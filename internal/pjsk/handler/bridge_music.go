@@ -8,6 +8,7 @@ import (
 
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/music"
+	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
 
@@ -40,7 +41,11 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	case "music-progress":
 		q := music.ProgressQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, rc.ResolveSnapshot(false), rc.GetProfileCard())
+		snapshot, snapshotErr := resolveRequiredSuiteSnapshot(rc)
+		if snapshotErr != nil {
+			return nil, snapshotErr
+		}
+		data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, snapshot, rc.GetProfileCard())
 	case "music-rewards":
 		data, err = renderMusicRewards(rc)
 	case "music-note-count":
@@ -154,4 +159,21 @@ func renderMusicRewards(rc *RequestContext) ([]byte, error) {
 	}
 
 	return musicCtrl.RenderMusicRewardsBasicEstimate(q, clearCounts, reason)
+}
+
+func resolveRequiredSuiteSnapshot(rc *RequestContext) (renderuserdata.Snapshot, error) {
+	if rc == nil {
+		return nil, fmt.Errorf(ErrMsgSuiteDataUnavailable)
+	}
+
+	target := rc.GetSelfTarget()
+	if target == nil || !hasUsableSuiteData(target.Binding) {
+		return nil, fmt.Errorf(ErrMsgSuiteDataUnavailable)
+	}
+
+	snapshot := rc.ResolveSnapshot(false)
+	if snapshot == nil {
+		return nil, fmt.Errorf("无法解析当前账号的 Suite 快照")
+	}
+	return snapshot, nil
 }

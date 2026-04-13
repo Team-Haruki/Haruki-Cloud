@@ -138,7 +138,84 @@ func decodeCardParameterEntry(key string, raw json.RawMessage) (CardParameter, b
 		}, true, nil
 	}
 
+	if power, ok, err := decodeCardParameterPowerSeries(raw); err != nil {
+		return CardParameter{}, false, err
+	} else if ok {
+		return CardParameter{
+			CardParameterType: normalizeCardParameterType(key),
+			Power:             power,
+		}, true, nil
+	}
+
 	return CardParameter{}, false, fmt.Errorf("unsupported card parameter shape for %s", key)
+}
+
+func decodeCardParameterPowerSeries(raw json.RawMessage) (int, bool, error) {
+	var items []json.RawMessage
+	if err := json.Unmarshal(raw, &items); err != nil {
+		return 0, false, nil
+	}
+	if len(items) == 0 {
+		return 0, false, nil
+	}
+
+	maxPower := 0
+	found := false
+	for _, item := range items {
+		power, ok, err := decodeCardParameterPowerValue(item)
+		if err != nil {
+			return 0, false, err
+		}
+		if !ok {
+			continue
+		}
+		if !found || power > maxPower {
+			maxPower = power
+			found = true
+		}
+	}
+	return maxPower, found, nil
+}
+
+func decodeCardParameterPowerValue(raw json.RawMessage) (int, bool, error) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		return 0, false, nil
+	}
+
+	var intValue int
+	if err := json.Unmarshal(raw, &intValue); err == nil {
+		return intValue, true, nil
+	}
+
+	var floatValue float64
+	if err := json.Unmarshal(raw, &floatValue); err == nil {
+		return int(floatValue), true, nil
+	}
+
+	var stringValue string
+	if err := json.Unmarshal(raw, &stringValue); err == nil {
+		stringValue = strings.TrimSpace(stringValue)
+		if stringValue == "" {
+			return 0, false, nil
+		}
+		power, convErr := strconv.Atoi(stringValue)
+		if convErr != nil {
+			return 0, false, fmt.Errorf("unsupported card parameter series value %q", stringValue)
+		}
+		return power, true, nil
+	}
+
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &object); err == nil {
+		for _, field := range []string{"power", "Power", "value", "Value"} {
+			if fieldRaw, ok := object[field]; ok {
+				return decodeCardParameterPowerValue(fieldRaw)
+			}
+		}
+	}
+
+	return 0, false, nil
 }
 
 func compareCardParameterKeys(left, right string) int {

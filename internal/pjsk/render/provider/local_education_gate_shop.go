@@ -36,8 +36,10 @@ func (p *localEducationProvider) ensureShopItems() error {
 		byBoxID := make(map[int]*ShopItem, len(items))
 		for _, item := range items {
 			entry := &ShopItem{
-				ID:            item.ID,
-				ResourceBoxID: item.ResourceBoxID,
+				ID:                 item.ID,
+				ResourceBoxID:      item.ResourceBoxID,
+				ReleaseConditionID: item.ReleaseConditionID,
+				StartAt:            item.StartAt,
 			}
 			if len(item.Costs) > 0 {
 				var rawCosts []struct {

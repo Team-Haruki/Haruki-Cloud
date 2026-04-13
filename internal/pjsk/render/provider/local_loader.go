@@ -260,7 +260,9 @@ type localGameCharacterJSON struct {
 }
 
 type localShopItemJSON struct {
-	ID            int             `json:"id"`
-	ResourceBoxID int            `json:"resourceBoxId"`
-	Costs         json.RawMessage `json:"costs"`
+	ID                 int             `json:"id"`
+	ResourceBoxID      int             `json:"resourceBoxId"`
+	ReleaseConditionID int             `json:"releaseConditionId"`
+	StartAt            int64           `json:"startAt"`
+	Costs              json.RawMessage `json:"costs"`
 }

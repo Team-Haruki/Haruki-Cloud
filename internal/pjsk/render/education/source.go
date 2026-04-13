@@ -93,9 +93,11 @@ type MysekaiGateLevel struct {
 }
 
 type ShopItem struct {
-	ID            int
-	ResourceBoxID int
-	Costs         []ShopItemCost
+	ID                 int
+	ResourceBoxID      int
+	ReleaseConditionID int
+	StartAt            int64
+	Costs              []ShopItemCost
 }
 
 type ShopItemCost struct {

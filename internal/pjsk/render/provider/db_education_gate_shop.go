@@ -92,8 +92,10 @@ func (p *dbEducationProvider) ensureShopItemsLoaded(ctx context.Context) bool {
 	}
 	for _, item := range items {
 		shopEntry := &ShopItem{
-			ID:            int(item.GameID),
-			ResourceBoxID: int(item.ResourceBoxID),
+			ID:                 int(item.GameID),
+			ResourceBoxID:      int(item.ResourceBoxID),
+			ReleaseConditionID: int(item.ReleaseConditionID),
+			StartAt:            item.StartAt,
 		}
 		if len(item.Costs) > 0 {
 			var rawCosts []struct {

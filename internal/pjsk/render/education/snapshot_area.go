@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/utils/drawing"
@@ -46,7 +47,11 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		return nil, fmt.Errorf("area item masterdata is not available")
 	}
 
-	levelShopItems := c.resolveAreaItemShopItems(ctx.source, itemIDs)
+	nowMs := ctx.raw.Now
+	if nowMs <= 0 {
+		nowMs = time.Now().UnixMilli()
+	}
+	levelShopItems := c.resolveAreaItemShopItems(ctx.source, itemIDs, nowMs)
 	minCurrentLevel := 0
 	if len(itemIDs) > 0 {
 		minCurrentLevel = -1
@@ -69,21 +74,29 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		}
 
 		levelMap := make(map[int]*AreaItemLevel, len(levels))
-		maxLevel := 0
+		currentLevel := userAreaLevels[itemID]
+		maxLevel := currentLevel
 		for _, level := range levels {
 			if level == nil {
 				continue
 			}
 			levelMap[level.Level] = level
-			if level.Level > maxLevel {
-				maxLevel = level.Level
-			}
 		}
-		if maxLevel == 0 {
-			continue
+		// Only extend the table through the contiguous, already-released levels
+		// after the user's current level. This avoids showing future CN upgrades.
+		for level := currentLevel + 1; ; level++ {
+			if levelMap[level] == nil {
+				break
+			}
+			if shopLevels := levelShopItems[itemID]; shopLevels == nil || shopLevels[level] == nil {
+				break
+			}
+			maxLevel = level
+		}
+		if maxLevel <= minCurrentLevel {
+			maxLevel = currentLevel
 		}
 
-		currentLevel := userAreaLevels[itemID]
 		sumMaterials := make(map[int]int)
 		levelInfos := make([]drawing.AreaItemLevel, 0, maxLevel-minCurrentLevel)
 		for level := minCurrentLevel + 1; level <= maxLevel; level++ {
@@ -192,7 +205,11 @@ func (c *Controller) resolveAreaItemIDs(source DataSource, userAreaLevels map[in
 	return matched
 }
 
-func (c *Controller) resolveAreaItemShopItems(source DataSource, itemIDs []int) map[int]map[int]*ShopItem {
+func (c *Controller) resolveAreaItemShopItems(source DataSource, itemIDs []int, nowMs int64) map[int]map[int]*ShopItem {
+	if nowMs <= 0 {
+		nowMs = time.Now().UnixMilli()
+	}
+
 	itemSet := make(map[int]struct{}, len(itemIDs))
 	for _, itemID := range itemIDs {
 		itemSet[itemID] = struct{}{}
@@ -205,6 +222,9 @@ func (c *Controller) resolveAreaItemShopItems(source DataSource, itemIDs []int) 
 		}
 		shopItem := source.GetShopItemByResourceBoxID(box.ID)
 		if shopItem == nil {
+			continue
+		}
+		if shopItem.StartAt > 0 && shopItem.StartAt > nowMs {
 			continue
 		}
 		for _, detail := range box.Details {

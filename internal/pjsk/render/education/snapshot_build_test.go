@@ -636,6 +636,77 @@ func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
 	}
 }
 
+func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotHidesUnreleasedFutureLevels(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 100,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+			"coin":   1000,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 2, "member3": 3, "member4": 4, "member5": 5},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userAreas": []map[string]any{
+			{"areaItems": []map[string]any{
+				{"areaItemId": 301, "level": 1},
+			}},
+		},
+		"userMaterials": []map[string]any{
+			{"materialId": 401, "quantity": 50},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller.RegisterSource(&testSource{
+		region: renderregion.CN,
+		boxes: map[string]map[int]*ResourceBox{
+			"shop_item": {
+				41: {ID: 41, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 301, ResourceLevel: 2}}},
+				42: {ID: 42, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 301, ResourceLevel: 3}}},
+				43: {ID: 43, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 301, ResourceLevel: 4}}},
+			},
+		},
+		areaItems: map[int]*AreaItem{
+			301: {ID: 301, AssetbundleName: "item_301"},
+		},
+		areaLevels: map[int]map[int]*AreaItemLevel{
+			301: {
+				1: {AreaItemID: 301, Level: 1, TargetUnit: "street", Power1BonusRate: 1.0},
+				2: {AreaItemID: 301, Level: 2, TargetUnit: "street", Power1BonusRate: 2.0},
+				3: {AreaItemID: 301, Level: 3, TargetUnit: "street", Power1BonusRate: 3.0},
+				4: {AreaItemID: 301, Level: 4, TargetUnit: "street", Power1BonusRate: 4.0},
+			},
+		},
+		shopItems: map[int]*ShopItem{
+			41: {ID: 30041, ResourceBoxID: 41, StartAt: 50, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 401, Quantity: 1}}},
+			42: {ID: 30042, ResourceBoxID: 42, StartAt: 200, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 401, Quantity: 1}}},
+			43: {ID: 30043, ResourceBoxID: 43, StartAt: 300, Costs: []ShopItemCost{{ResourceType: "material", ResourceID: 401, Quantity: 1}}},
+		},
+	})
+
+	req, err := controller.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(AreaItemQuery{Region: renderregion.CN})
+	if err != nil {
+		t.Fatalf("BuildAreaItemUpgradeMaterialsRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.AreaItems) != 1 {
+		t.Fatalf("expected 1 area item, got %d", len(req.AreaItems))
+	}
+	if got := req.AreaItems[0]; got.ItemID != 301 || len(got.Levels) != 1 {
+		t.Fatalf("unexpected area item payload: %+v", got)
+	}
+	if got := req.AreaItems[0].Levels[0]; got.Level != 2 || !got.CanUpgrade {
+		t.Fatalf("unexpected released level payload: %+v", got)
+	}
+}
+
 func mustSnapshot(t *testing.T, payload map[string]any) *userdata.Service {
 	t.Helper()
 

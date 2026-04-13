@@ -162,9 +162,11 @@ func (a *ProviderAdapter) GetShopItemByResourceBoxID(resourceBoxID int) *ShopIte
 		}
 	}
 	return &ShopItem{
-		ID:            pv.ID,
-		ResourceBoxID: pv.ResourceBoxID,
-		Costs:         costs,
+		ID:                 pv.ID,
+		ResourceBoxID:      pv.ResourceBoxID,
+		ReleaseConditionID: pv.ReleaseConditionID,
+		StartAt:            pv.StartAt,
+		Costs:              costs,
 	}
 }
 

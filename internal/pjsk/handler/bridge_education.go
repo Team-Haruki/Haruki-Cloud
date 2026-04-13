@@ -5,7 +5,6 @@ import (
 
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/education"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
@@ -17,7 +16,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	}
 	eduCtrl := rc.App.Edu.WithContext(rc.Ctx)
 	var data []byte
-	region := renderregion.Value(rc.Cmd.Region)
+	region := rc.Region
 	regionStr := rc.RegionStr
 	publicDetailedProfile := rc.GetDetailedProfile()
 

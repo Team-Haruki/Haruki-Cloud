@@ -1,0 +1,273 @@
+package handler
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/parser"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/education"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/utils/drawing"
+	"haruki-cloud/utils/imagecache"
+	sekaiapi "haruki-cloud/utils/sekai"
+)
+
+type bridgeEducationRegionValidator struct{}
+
+func (bridgeEducationRegionValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {
+	if server == "cn" {
+		return &sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 12345678901234,
+				Name:   "CN User",
+			},
+		}, nil
+	}
+	return nil, sekaiapi.ErrUserNotFound
+}
+
+type handlerTestEducationSource struct {
+	region    renderregion.Value
+	maxLevel  int
+	assetName string
+	boxes     map[int]*education.ResourceBox
+	shopItems map[int]*education.ShopItem
+}
+
+func newHandlerTestEducationSource(region renderregion.Value, maxLevel int, assetName string) *handlerTestEducationSource {
+	source := &handlerTestEducationSource{
+		region:    region,
+		maxLevel:  maxLevel,
+		assetName: assetName,
+		boxes:     make(map[int]*education.ResourceBox),
+		shopItems: make(map[int]*education.ShopItem),
+	}
+	for level := 2; level <= maxLevel; level++ {
+		boxID := 1000 + level
+		source.boxes[boxID] = &education.ResourceBox{
+			ID: boxID,
+			Details: []education.ResourceBoxDetail{{
+				ResourceType:  "area_item",
+				ResourceID:    1,
+				ResourceLevel: level,
+			}},
+		}
+		source.shopItems[boxID] = &education.ShopItem{
+			ID:            2000 + level,
+			ResourceBoxID: boxID,
+			StartAt:       1,
+			Costs: []education.ShopItemCost{{
+				ResourceType: "material",
+				ResourceID:   1,
+				Quantity:     1,
+			}},
+		}
+	}
+	return source
+}
+
+func (s *handlerTestEducationSource) DefaultRegion() renderregion.Value { return s.region }
+func (s *handlerTestEducationSource) GetChallengeRewardsByCharacter(int) []*education.ChallengeReward {
+	return nil
+}
+func (s *handlerTestEducationSource) GetResourceBoxByPurpose(purpose string, id int) *education.ResourceBox {
+	if purpose != "shop_item" {
+		return nil
+	}
+	return s.boxes[id]
+}
+func (s *handlerTestEducationSource) GetResourceBoxesByPurpose(purpose string) []*education.ResourceBox {
+	if purpose != "shop_item" {
+		return nil
+	}
+	out := make([]*education.ResourceBox, 0, len(s.boxes))
+	for _, box := range s.boxes {
+		out = append(out, box)
+	}
+	return out
+}
+func (s *handlerTestEducationSource) GetAreaItems() []*education.AreaItem {
+	return []*education.AreaItem{{
+		ID:              1,
+		AreaID:          5,
+		Name:            "item",
+		AssetbundleName: s.assetName,
+	}}
+}
+func (s *handlerTestEducationSource) GetAreaItem(id int) *education.AreaItem {
+	if id != 1 {
+		return nil
+	}
+	return &education.AreaItem{
+		ID:              1,
+		AreaID:          5,
+		Name:            "item",
+		AssetbundleName: s.assetName,
+	}
+}
+func (s *handlerTestEducationSource) GetAreaItemLevels(areaItemID int) []*education.AreaItemLevel {
+	if areaItemID != 1 {
+		return nil
+	}
+	out := make([]*education.AreaItemLevel, 0, s.maxLevel)
+	for level := 1; level <= s.maxLevel; level++ {
+		out = append(out, &education.AreaItemLevel{
+			AreaItemID:      1,
+			Level:           level,
+			TargetUnit:      "light_sound",
+			Power1BonusRate: float64(level),
+		})
+	}
+	return out
+}
+func (s *handlerTestEducationSource) GetAreaItemLevel(areaItemID, level int) *education.AreaItemLevel {
+	if areaItemID != 1 || level <= 0 || level > s.maxLevel {
+		return nil
+	}
+	return &education.AreaItemLevel{
+		AreaItemID:      1,
+		Level:           level,
+		TargetUnit:      "light_sound",
+		Power1BonusRate: float64(level),
+	}
+}
+func (s *handlerTestEducationSource) GetCharacterRank(characterID, rank int) *education.CharacterRank {
+	return nil
+}
+func (s *handlerTestEducationSource) GetBonds() []*education.Bond { return nil }
+func (s *handlerTestEducationSource) GetBondLevels() []*education.BondLevel {
+	return nil
+}
+func (s *handlerTestEducationSource) GetGameCharacterStyle(gameID int) *education.GameCharacterStyle {
+	return nil
+}
+func (s *handlerTestEducationSource) GetLeaderMissionRequirements() ([]education.LeaderMissionRequirement, int) {
+	return nil, 0
+}
+func (s *handlerTestEducationSource) GetMysekaiGateLevel(gateID, level int) *education.MysekaiGateLevel {
+	return nil
+}
+func (s *handlerTestEducationSource) GetShopItemByResourceBoxID(resourceBoxID int) *education.ShopItem {
+	return s.shopItems[resourceBoxID]
+}
+func (s *handlerTestEducationSource) GetShopItems() []*education.ShopItem {
+	out := make([]*education.ShopItem, 0, len(s.shopItems))
+	for _, item := range s.shopItems {
+		out = append(out, item)
+	}
+	return out
+}
+
+func TestExecuteEducationAreaUsesResolvedRequestContextRegion(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeEducationRegionValidator{})
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	snapshot := mustBridgeEducationSnapshot(t)
+
+	var captured drawing.AreaItemUpgradeMaterialsRequest
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/education/area-item" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte{0x89, 'P', 'N', 'G'})
+	}))
+	defer server.Close()
+
+	cacheDir := t.TempDir()
+	controller := education.NewController(drawing.NewHarukiDrawingClient(server.URL), nil, nil, renderregion.JP)
+	controller.RegisterSource(newHandlerTestEducationSource(renderregion.JP, 20, "jp_item"))
+	controller.RegisterSource(newHandlerTestEducationSource(renderregion.CN, 15, "cn_item"))
+
+	app := &renderapp.App{
+		Edu:        controller,
+		Bindings:   service,
+		Snapshots:  renderuserdata.NewStaticSnapshotProvider(snapshot),
+		ImageCache: imagecache.New("https://example.com", cacheDir),
+	}
+
+	rc := &RequestContext{
+		Ctx:            ctx,
+		Cmd:            &parser.ResolvedCommand{Module: parser.ModuleEducation, Mode: "education-area", Region: "", RequesterPlatform: "qq", RequesterUserID: "42"},
+		App:            app,
+		Region:         renderregion.CN,
+		RegionStr:      "cn",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	}
+
+	message, err := executeEducation(rc)
+	if err != nil {
+		t.Fatalf("executeEducation() error = %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TYPE_IMAGE {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if len(captured.AreaItems) != 1 {
+		t.Fatalf("expected 1 area item, got %d", len(captured.AreaItems))
+	}
+	item := captured.AreaItems[0]
+	if item.CurrentLevel != 15 {
+		t.Fatalf("expected current level 15, got %d", item.CurrentLevel)
+	}
+	if len(item.Levels) != 0 {
+		t.Fatalf("expected no future levels for cn source, got %+v", item.Levels)
+	}
+	if item.ItemIconPath != "asset/cn-assets/startapp/areaitem/cn_item/cn_item.png" {
+		t.Fatalf("unexpected item icon path: %s", item.ItemIconPath)
+	}
+}
+
+func mustBridgeEducationSnapshot(t *testing.T) renderuserdata.Snapshot {
+	t.Helper()
+
+	payload := map[string]any{
+		"now": 1713000000000,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+			"coin":   1000,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userAreas": []map[string]any{
+			{"areaItems": []map[string]any{
+				{"areaItemId": 1, "level": 15},
+			}},
+		},
+		"userMaterials": []map[string]any{
+			{"materialId": 1, "quantity": 999},
+		},
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal snapshot: %v", err)
+	}
+	snapshot, err := renderuserdata.NewFromBytes(nil, nil, renderregion.CN, data, nil, nil)
+	if err != nil {
+		t.Fatalf("NewFromBytes() error = %v", err)
+	}
+	return snapshot
+}

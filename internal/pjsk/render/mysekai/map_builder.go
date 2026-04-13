@@ -10,6 +10,7 @@ import (
 
 // BuildMapRequest builds the request for rendering MySekai map view.
 func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequest, error) {
+	c = c.withRegion(query.Region)
 	merged, region, err := c.prepareSnapshot(query.Region)
 	if err != nil {
 		return nil, err

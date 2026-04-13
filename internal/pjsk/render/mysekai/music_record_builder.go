@@ -10,6 +10,7 @@ import (
 
 // BuildMusicRecordRequest builds the request for rendering MySekai music record view.
 func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.MysekaiMusicrecordRequest, error) {
+	c = c.withRegion(query.Region)
 	merged, region, err := c.prepareSnapshot(query.Region)
 	if err != nil {
 		return nil, err

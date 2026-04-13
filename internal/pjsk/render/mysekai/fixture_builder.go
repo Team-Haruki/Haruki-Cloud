@@ -11,6 +11,7 @@ import (
 
 // BuildFixtureListRequest builds the request for rendering MySekai fixture list view.
 func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.MysekaiFixtureListRequest, error) {
+	c = c.withRegion(query.Region)
 	merged, region, err := c.prepareSnapshot(query.Region)
 	if err != nil {
 		return nil, err
@@ -184,6 +185,7 @@ func (c *Controller) RenderFixtureList(query FixtureListQuery) ([]byte, error) {
 
 // BuildFixtureDetailRequests builds the requests for rendering MySekai fixture detail views.
 func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]drawing.MysekaiFixtureDetailRequest, error) {
+	c = c.withRegion(query.Region)
 	if err := c.ensure(); err != nil {
 		return nil, err
 	}

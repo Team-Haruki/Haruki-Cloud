@@ -11,6 +11,7 @@ import (
 
 // BuildTalkListRequest builds the request for rendering MySekai talk list view.
 func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.MysekaiTalkListRequest, error) {
+	c = c.withRegion(query.Region)
 	merged, region, err := c.prepareSnapshot(query.Region)
 	if err != nil {
 		return nil, err

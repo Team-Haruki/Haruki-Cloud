@@ -9,6 +9,7 @@ import (
 
 // BuildDoorUpgradeRequest builds the request for rendering MySekai door upgrade view.
 func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.MysekaiDoorUpgradeRequest, error) {
+	c = c.withRegion(query.Region)
 	merged, region, err := c.prepareSnapshot(query.Region)
 	if err != nil {
 		return nil, err

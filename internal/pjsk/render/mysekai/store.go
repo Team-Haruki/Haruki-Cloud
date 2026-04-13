@@ -4,27 +4,43 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
 type localMasterdataStore struct {
-	dir string
+	dirs []string
 
 	mu       sync.Mutex
 	lists    map[string][]map[string]any
 	mapsByID map[string]map[int]map[string]any
 }
 
-func newLocalMasterdataStore(dir string) *localMasterdataStore {
+func newLocalMasterdataStore(dirs ...string) *localMasterdataStore {
+	cleaned := make([]string, 0, len(dirs))
+	seen := make(map[string]struct{}, len(dirs))
+	for _, dir := range dirs {
+		dir = strings.TrimSpace(dir)
+		if dir == "" {
+			continue
+		}
+		dir = filepath.Clean(dir)
+		if _, ok := seen[dir]; ok {
+			continue
+		}
+		seen[dir] = struct{}{}
+		cleaned = append(cleaned, dir)
+	}
+
 	return &localMasterdataStore{
-		dir:      filepath.Clean(dir),
+		dirs:     cleaned,
 		lists:    make(map[string][]map[string]any),
 		mapsByID: make(map[string]map[int]map[string]any),
 	}
 }
 
 func (s *localMasterdataStore) Configured() bool {
-	return s != nil && s.dir != "" && s.dir != "."
+	return s != nil && len(s.dirs) > 0
 }
 
 func (s *localMasterdataStore) loadList(filename string) []map[string]any {
@@ -39,8 +55,18 @@ func (s *localMasterdataStore) loadList(filename string) []map[string]any {
 	}
 	s.mu.Unlock()
 
-	data, err := os.ReadFile(filepath.Join(s.dir, filepath.Clean(filename)))
-	if err != nil {
+	var data []byte
+	found := false
+	for _, dir := range s.dirs {
+		content, err := os.ReadFile(filepath.Join(dir, filepath.Clean(filename)))
+		if err != nil {
+			continue
+		}
+		data = content
+		found = true
+		break
+	}
+	if !found {
 		return nil
 	}
 	var items []map[string]any
@@ -86,9 +112,13 @@ func (s *localMasterdataStore) loadObject(filename string, target any) bool {
 	if s == nil || !s.Configured() {
 		return false
 	}
-	data, err := os.ReadFile(filepath.Join(s.dir, filepath.Clean(filename)))
-	if err != nil {
-		return false
+
+	for _, dir := range s.dirs {
+		data, err := os.ReadFile(filepath.Join(dir, filepath.Clean(filename)))
+		if err != nil {
+			continue
+		}
+		return json.Unmarshal(data, target) == nil
 	}
-	return json.Unmarshal(data, target) == nil
+	return false
 }

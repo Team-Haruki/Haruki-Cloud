@@ -3,6 +3,7 @@ package mysekai
 import (
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -15,9 +16,19 @@ type Controller struct {
 	snapshot       userdata.Snapshot
 	rawMySekaiJSON []byte // direct mysekai JSON (bypasses snapshot merge)
 	masterdata     masterdataSource
+	resolver       *masterdataResolver
 	defaultRegion  renderregion.Value
 	nicknames      map[string]int
 	assets         *assets.AssetHelper
+}
+
+type masterdataResolver struct {
+	dsn           string
+	localDir      string
+	allowFallback bool
+
+	mu    sync.Mutex
+	cache map[string]masterdataSource
 }
 
 type mysekaiMapSiteConfig struct {
@@ -84,6 +95,67 @@ type MasterdataOptions struct {
 	AllowFallback bool // when false, DB failure is fatal; when true, fallback to local files
 }
 
+func newMasterdataResolver(opts MasterdataOptions) *masterdataResolver {
+	return &masterdataResolver{
+		dsn:           strings.TrimSpace(opts.SekaiDSN),
+		localDir:      cleanMasterdataDir(opts.LocalDir),
+		allowFallback: opts.AllowFallback,
+		cache:         make(map[string]masterdataSource),
+	}
+}
+
+func cleanMasterdataDir(dir string) string {
+	dir = strings.TrimSpace(dir)
+	if dir == "" {
+		return ""
+	}
+	return filepath.Clean(dir)
+}
+
+func (r *masterdataResolver) Resolve(region renderregion.Value) masterdataSource {
+	if r == nil {
+		return nil
+	}
+
+	resolved := renderregion.WithDefault(region)
+	key := resolved.String()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if cached, ok := r.cache[key]; ok {
+		return cached
+	}
+
+	store := r.build(resolved)
+	r.cache[key] = store
+	return store
+}
+
+func (r *masterdataResolver) build(region renderregion.Value) masterdataSource {
+	if r == nil {
+		return nil
+	}
+
+	if r.dsn != "" {
+		if store := newDBMasterdataStore(r.dsn, region.String()); store != nil && store.Configured() {
+			return store
+		}
+	}
+
+	if r.allowFallback {
+		regionDir := ""
+		if r.localDir != "" {
+			regionDir = filepath.Join(r.localDir, region.String())
+		}
+		if store := newLocalMasterdataStore(regionDir, r.localDir); store != nil && store.Configured() {
+			return store
+		}
+	}
+
+	return nil
+}
+
 // NewController creates a mysekai Controller. If SekaiDSN is non-empty the
 // controller queries the sekai database for masterdata. When AllowFallback is
 // true and the DB is unavailable, it falls back to reading JSON files from
@@ -91,17 +163,13 @@ type MasterdataOptions struct {
 // nil so callers get a clear error.
 func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot userdata.Snapshot, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, mdOpts MasterdataOptions) *Controller {
 	region := renderregion.WithDefault(defaultRegion)
-	var md masterdataSource
-	if dsn := strings.TrimSpace(mdOpts.SekaiDSN); dsn != "" {
-		md = newDBMasterdataStore(dsn, region.String())
-	}
-	if (md == nil || !md.Configured()) && mdOpts.AllowFallback {
-		md = newLocalMasterdataStore(mdOpts.LocalDir)
-	}
+	resolver := newMasterdataResolver(mdOpts)
+	md := resolver.Resolve(region)
 	return &Controller{
 		drawing:       drawingClient,
 		snapshot:      snapshot,
 		masterdata:    md,
+		resolver:      resolver,
 		defaultRegion: region,
 		nicknames:     cloneNicknames(defaultNicknames),
 		assets:        assetHelper,
@@ -189,5 +257,19 @@ func (c *Controller) WithMySekaiData(data []byte) *Controller {
 	}
 	clone := *c
 	clone.rawMySekaiJSON = data
+	return &clone
+}
+
+func (c *Controller) withRegion(region string) *Controller {
+	if c == nil {
+		return nil
+	}
+
+	clone := *c
+	resolved := c.resolveRegion(region)
+	clone.defaultRegion = resolved
+	if c.resolver != nil {
+		clone.masterdata = c.resolver.Resolve(resolved)
+	}
 	return &clone
 }

@@ -513,6 +513,118 @@ func TestBuildResourceRequestGateSkinOverridesGateDefaultIcon(t *testing.T) {
 	}
 }
 
+func TestBuildMusicRecordRequestUsesRegionScopedMasterdata(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "jp", "mysekaiMusicRecords.json"), []map[string]any{
+		{"id": 596, "mysekaiMusicTrackType": "music", "externalId": 641},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "jp", "musicTags.json"), []map[string]any{
+		{"id": 1, "musicId": 641, "musicTag": "light_music_club"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "jp", "musics.json"), []map[string]any{
+		{"id": 641, "assetbundleName": "jacket_s_641", "publishedAt": 1},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "jp", "limitedTimeMusics.json"), []map[string]any{})
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "cn", "mysekaiMusicRecords.json"), []map[string]any{
+		{"id": 15, "mysekaiMusicTrackType": "music", "externalId": 15},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "cn", "musicTags.json"), []map[string]any{
+		{"id": 2, "musicId": 15, "musicTag": "light_music_club"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "cn", "musics.json"), []map[string]any{
+		{"id": 15, "assetbundleName": "jacket_s_015", "publishedAt": 1},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "cn", "limitedTimeMusics.json"), []map[string]any{})
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(`{"updatedResources":{"userMysekaiMusicRecords":[]}}`))
+
+	req, err := controller.BuildMusicRecordRequest(MusicRecordQuery{
+		Region: "cn",
+		Profile: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{
+				ID:              "12345678901234567",
+				Region:          "CN",
+				Nickname:        "Tester",
+				LeaderImagePath: "user/leader.png",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildMusicRecordRequest() error = %v", err)
+	}
+	if len(req.CategoryMusicrecords) != 1 {
+		t.Fatalf("expected 1 category, got %+v", req.CategoryMusicrecords)
+	}
+	if len(req.CategoryMusicrecords[0].Musicrecords) != 1 {
+		t.Fatalf("expected 1 music record, got %+v", req.CategoryMusicrecords[0].Musicrecords)
+	}
+
+	got := req.CategoryMusicrecords[0].Musicrecords[0].ImagePath
+	want := "asset/cn-assets/startapp/music/jacket/jacket_s_015/jacket_s_015.png"
+	if got != want {
+		t.Fatalf("unexpected CN music record path: got=%q want=%q", got, want)
+	}
+	if strings.Contains(got, "641") {
+		t.Fatalf("expected CN request to avoid JP-only jacket, got %q", got)
+	}
+}
+
+func TestBuildResourceRequestUsesRegionScopedMasterdata(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "jp", "mysekaiGates.json"), []map[string]any{
+		{"id": 4, "assetbundleName": "mdl_non0006_gate_jp1"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "cn", "mysekaiGates.json"), []map[string]any{
+		{"id": 4, "assetbundleName": "mdl_non0006_gate_cn1"},
+	})
+
+	mysekaiJSON := `{
+  "userMysekaiGateCharacterVisit": {
+    "userMysekaiGate": {
+      "mysekaiGateId": 4,
+      "mysekaiGateSkinId": 0,
+      "mysekaiGateLevel": 30
+    }
+  }
+}`
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(mysekaiJSON))
+
+	req, err := controller.BuildResourceRequest(ResourceQuery{
+		Region: "cn",
+		Profile: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{
+				ID:              "12345678901234567",
+				Region:          "CN",
+				Nickname:        "Tester",
+				LeaderImagePath: "user/leader.png",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildResourceRequest() error = %v", err)
+	}
+
+	want := "asset/cn-assets/ondemand/mysekai/thumbnail/gate_large/mdl_non0006_gate_cn1.png"
+	if req.GateIconPath != want {
+		t.Fatalf("unexpected region-scoped gate icon path: got=%q want=%q", req.GateIconPath, want)
+	}
+	if strings.Contains(req.GateIconPath, "_jp1") {
+		t.Fatalf("expected CN request to avoid JP gate assetbundle, got %q", req.GateIconPath)
+	}
+}
+
 func TestResolveMysekaiMapSiteIDs(t *testing.T) {
 	if got, want := resolveMysekaiMapSiteIDs(nil), []int{5, 6, 7, 8}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("resolveMysekaiMapSiteIDs(nil) = %+v, want %+v", got, want)

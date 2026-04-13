@@ -9,6 +9,7 @@ import (
 
 // BuildResourceRequest builds the request for rendering MySekai resource view.
 func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.MysekaiResourceRequest, error) {
+	c = c.withRegion(query.Region)
 	merged, region, err := c.prepareSnapshot(query.Region)
 	if err != nil {
 		return nil, err

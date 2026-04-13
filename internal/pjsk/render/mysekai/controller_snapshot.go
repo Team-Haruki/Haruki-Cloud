@@ -11,6 +11,7 @@ import (
 )
 
 func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
+	c = c.withRegion(query.Region)
 	if query.Seq == 0 {
 		return nil, fmt.Errorf("请输入正确的照片编号（从1或-1开始）")
 	}

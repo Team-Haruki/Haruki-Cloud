@@ -37,7 +37,7 @@ func (p *dbCardProvider) GetByID(ctx context.Context, id int) (*masterdata.Card,
 
 	model, err := common.ConvertCardEntity(entity)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decode card %d for region %s: %w", entity.GameID, p.region, err)
 	}
 	p.cardMu.Lock()
 	p.cardCache[id] = model
@@ -78,7 +78,7 @@ func (p *dbCardProvider) GetByCharacterAndSeq(ctx context.Context, characterID, 
 	p.init()
 	model, err := common.ConvertCardEntity(entity)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decode card %d for region %s: %w", entity.GameID, p.region, err)
 	}
 	p.cardMu.Lock()
 	p.cardCache[model.ID] = model
@@ -125,7 +125,7 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 	for _, entity := range entities {
 		model, err := common.ConvertCardEntity(entity)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("decode card %d for region %s: %w", entity.GameID, p.region, err)
 		}
 		if !p.matchesUnitFilter(ctx, filter, model) {
 			continue

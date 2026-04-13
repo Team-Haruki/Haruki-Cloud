@@ -18,6 +18,7 @@ type DataSource interface {
 	GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int)
 	GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel
 	GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem
+	GetShopItems() []*ShopItem
 }
 
 type ChallengeReward struct {
@@ -94,6 +95,8 @@ type MysekaiGateLevel struct {
 
 type ShopItem struct {
 	ID                 int
+	ShopID             int
+	Seq                int
 	ResourceBoxID      int
 	ReleaseConditionID int
 	StartAt            int64

@@ -28,15 +28,20 @@ func (p *localEducationProvider) ensureGateLevels() error {
 }
 
 func (p *localEducationProvider) ensureShopItems() error {
-	return p.shops.init(func() (map[int]*ShopItem, error) {
+	return p.shops.init(func() (shopIndex, error) {
 		items, err := loadJSON[localShopItemJSON](p.store, "shopItems.json")
 		if err != nil {
-			return nil, err
+			return shopIndex{}, err
 		}
-		byBoxID := make(map[int]*ShopItem, len(items))
+		index := shopIndex{
+			byBoxID: make(map[int]*ShopItem, len(items)),
+			all:     make([]*ShopItem, 0, len(items)),
+		}
 		for _, item := range items {
 			entry := &ShopItem{
 				ID:                 item.ID,
+				ShopID:             item.ShopID,
+				Seq:                item.Seq,
 				ResourceBoxID:      item.ResourceBoxID,
 				ReleaseConditionID: item.ReleaseConditionID,
 				StartAt:            item.StartAt,
@@ -52,9 +57,10 @@ func (p *localEducationProvider) ensureShopItems() error {
 					}
 				}
 			}
-			byBoxID[entry.ResourceBoxID] = entry
+			index.byBoxID[entry.ResourceBoxID] = entry
+			index.all = append(index.all, entry)
 		}
-		return byBoxID, nil
+		return index, nil
 	})
 }
 
@@ -78,5 +84,12 @@ func (p *localEducationProvider) GetShopItemByResourceBoxID(_ context.Context, r
 	if err := p.ensureShopItems(); err != nil {
 		return nil
 	}
-	return cloneEdShopItem(p.shops.v()[resourceBoxID])
+	return cloneEdShopItem(p.shops.v().byBoxID[resourceBoxID])
+}
+
+func (p *localEducationProvider) GetShopItems(_ context.Context) []*ShopItem {
+	if err := p.ensureShopItems(); err != nil {
+		return nil
+	}
+	return cloneEdShopItems(p.shops.v().all)
 }

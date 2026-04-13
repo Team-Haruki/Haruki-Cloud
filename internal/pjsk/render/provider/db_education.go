@@ -49,9 +49,10 @@ type dbEducationProvider struct {
 	gateByID    map[int]map[int]*MysekaiGateLevel
 	gatesLoaded bool
 
-	shopMu      sync.RWMutex
-	shopByBoxID map[int]*ShopItem
-	shopsLoaded bool
+	shopMu       sync.RWMutex
+	shopByBoxID  map[int]*ShopItem
+	shopItems    []*ShopItem
+	shopsLoaded  bool
 }
 
 func (p *dbEducationProvider) init() {
@@ -66,5 +67,6 @@ func (p *dbEducationProvider) init() {
 		p.stylesByGameID = make(map[int]*GameCharacterStyle)
 		p.gateByID = make(map[int]map[int]*MysekaiGateLevel)
 		p.shopByBoxID = make(map[int]*ShopItem)
+		p.shopItems = nil
 	})
 }

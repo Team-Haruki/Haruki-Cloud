@@ -150,6 +150,19 @@ func (a *ProviderAdapter) GetMysekaiGateLevel(gateID, level int) *MysekaiGateLev
 
 func (a *ProviderAdapter) GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem {
 	pv := a.P.Education().GetShopItemByResourceBoxID(a.Context(), resourceBoxID)
+	return convertShopItem(pv)
+}
+
+func (a *ProviderAdapter) GetShopItems() []*ShopItem {
+	pvItems := a.P.Education().GetShopItems(a.Context())
+	result := make([]*ShopItem, len(pvItems))
+	for i, item := range pvItems {
+		result[i] = convertShopItem(item)
+	}
+	return result
+}
+
+func convertShopItem(pv *provider.ShopItem) *ShopItem {
 	if pv == nil {
 		return nil
 	}
@@ -163,6 +176,8 @@ func (a *ProviderAdapter) GetShopItemByResourceBoxID(resourceBoxID int) *ShopIte
 	}
 	return &ShopItem{
 		ID:                 pv.ID,
+		ShopID:             pv.ShopID,
+		Seq:                pv.Seq,
 		ResourceBoxID:      pv.ResourceBoxID,
 		ReleaseConditionID: pv.ReleaseConditionID,
 		StartAt:            pv.StartAt,

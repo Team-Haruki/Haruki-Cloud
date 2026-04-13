@@ -19,6 +19,7 @@ type EducationProvider interface {
 	GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int)
 	GetMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel
 	GetShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem
+	GetShopItems(ctx context.Context) []*ShopItem
 }
 
 // Types used by EducationProvider, mirroring education package structs.
@@ -97,6 +98,8 @@ type MysekaiGateLevel struct {
 
 type ShopItem struct {
 	ID                 int
+	ShopID             int
+	Seq                int
 	ResourceBoxID      int
 	ReleaseConditionID int
 	StartAt            int64

@@ -261,6 +261,8 @@ type localGameCharacterJSON struct {
 
 type localShopItemJSON struct {
 	ID                 int             `json:"id"`
+	ShopID             int             `json:"shopId"`
+	Seq                int             `json:"seq"`
 	ResourceBoxID      int             `json:"resourceBoxId"`
 	ReleaseConditionID int             `json:"releaseConditionId"`
 	StartAt            int64           `json:"startAt"`

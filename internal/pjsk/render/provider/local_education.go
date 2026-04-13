@@ -32,5 +32,10 @@ type localEducationProvider struct {
 	styles   lazyValue[map[int]*GameCharacterStyle]
 	missions lazyValue[missionData]
 	gates    lazyValue[map[int]map[int]*MysekaiGateLevel]
-	shops    lazyValue[map[int]*ShopItem]
+	shops    lazyValue[shopIndex]
+}
+
+type shopIndex struct {
+	byBoxID map[int]*ShopItem
+	all     []*ShopItem
 }

@@ -1,12 +1,31 @@
 package education
 
-import "haruki-cloud/utils/drawing"
+import (
+	"time"
+
+	"haruki-cloud/utils/drawing"
+)
 
 func (c *Controller) BuildPowerBonusDetailRequestFromSnapshot(query PowerBonusQuery) (*drawing.PowerBonusDetailRequest, error) {
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
 	if err != nil {
 		return nil, err
 	}
+
+	nowMs := ctx.raw.Now
+	if nowMs <= 0 {
+		nowMs = time.Now().UnixMilli()
+	}
+	userAreaLevels := collectUserAreaItemLevels(ctx.raw.UserAreas)
+	itemIDs := make([]int, 0, len(userAreaLevels))
+	for itemID := range userAreaLevels {
+		itemIDs = append(itemIDs, itemID)
+	}
+	releasedLevelCaps := c.resolveReleasedAreaItemLevelCaps(
+		ctx.source,
+		itemIDs,
+		c.resolveAreaItemShopItems(ctx.source, itemIDs, nowMs),
+	)
 
 	charaBonuses := make(map[int]*drawing.CharacterBonus, 26)
 	for charID := 1; charID <= 26; charID++ {
@@ -32,7 +51,11 @@ func (c *Controller) BuildPowerBonusDetailRequestFromSnapshot(query PowerBonusQu
 
 	for _, area := range ctx.raw.UserAreas {
 		for _, item := range area.AreaItems {
-			level := ctx.source.GetAreaItemLevel(item.AreaItemID, item.Level)
+			itemLevel := item.Level
+			if releasedCap := releasedLevelCaps[item.AreaItemID]; releasedCap > 0 && itemLevel > releasedCap {
+				itemLevel = releasedCap
+			}
+			level := ctx.source.GetAreaItemLevel(item.AreaItemID, itemLevel)
 			if level == nil {
 				continue
 			}

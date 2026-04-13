@@ -31,6 +31,16 @@ func (p *dbEducationProvider) GetShopItemByResourceBoxID(ctx context.Context, re
 	return cloneEdShopItem(p.shopByBoxID[resourceBoxID])
 }
 
+func (p *dbEducationProvider) GetShopItems(ctx context.Context) []*ShopItem {
+	if !p.ensureShopItemsLoaded(ctx) {
+		return nil
+	}
+
+	p.shopMu.RLock()
+	defer p.shopMu.RUnlock()
+	return cloneEdShopItems(p.shopItems)
+}
+
 func (p *dbEducationProvider) ensureGateLevelsLoaded(ctx context.Context) bool {
 	p.init()
 	p.gateMu.RLock()
@@ -86,6 +96,7 @@ func (p *dbEducationProvider) ensureShopItemsLoaded(ctx context.Context) bool {
 
 	items, err := p.client.Shopitem.Query().
 		Where(shopitem.ServerRegionEQ(p.region.String())).
+		Order(shopitem.ByShopID(), shopitem.BySeq(), shopitem.ByGameID()).
 		All(ctx)
 	if err != nil {
 		return false
@@ -93,6 +104,8 @@ func (p *dbEducationProvider) ensureShopItemsLoaded(ctx context.Context) bool {
 	for _, item := range items {
 		shopEntry := &ShopItem{
 			ID:                 int(item.GameID),
+			ShopID:             int(item.ShopID),
+			Seq:                int(item.Seq),
 			ResourceBoxID:      int(item.ResourceBoxID),
 			ReleaseConditionID: int(item.ReleaseConditionID),
 			StartAt:            item.StartAt,
@@ -109,6 +122,7 @@ func (p *dbEducationProvider) ensureShopItemsLoaded(ctx context.Context) bool {
 			}
 		}
 		p.shopByBoxID[shopEntry.ResourceBoxID] = shopEntry
+		p.shopItems = append(p.shopItems, shopEntry)
 	}
 	p.shopsLoaded = true
 	return true
@@ -129,4 +143,18 @@ func cloneEdShopItem(source *ShopItem) *ShopItem {
 	c := *source
 	c.Costs = append([]ShopItemCost(nil), source.Costs...)
 	return &c
+}
+
+func cloneEdShopItems(source []*ShopItem) []*ShopItem {
+	if len(source) == 0 {
+		return nil
+	}
+	out := make([]*ShopItem, 0, len(source))
+	for _, item := range source {
+		if item == nil {
+			continue
+		}
+		out = append(out, cloneEdShopItem(item))
+	}
+	return out
 }

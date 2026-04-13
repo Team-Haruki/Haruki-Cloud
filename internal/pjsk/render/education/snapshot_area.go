@@ -52,20 +52,21 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		nowMs = time.Now().UnixMilli()
 	}
 	levelShopItems := c.resolveAreaItemShopItems(ctx.source, itemIDs, nowMs)
-	minCurrentLevel := 0
-	if len(itemIDs) > 0 {
-		minCurrentLevel = -1
-		for _, itemID := range itemIDs {
-			level := userAreaLevels[itemID]
-			if minCurrentLevel == -1 || level < minCurrentLevel {
-				minCurrentLevel = level
-			}
-		}
-		if minCurrentLevel < 0 {
-			minCurrentLevel = 0
-		}
+	releasedLevelCaps := c.resolveReleasedAreaItemLevelCaps(ctx.source, itemIDs, levelShopItems)
+
+	type areaItemRenderState struct {
+		itemID          int
+		master          *AreaItem
+		levels          []*AreaItemLevel
+		levelMap        map[int]*AreaItemLevel
+		shopLevels      map[int]*ShopItem
+		currentLevel    int
+		maxVisibleLevel int
+		targetIconPath  string
 	}
-	areaItems := make([]drawing.AreaItemInfo, 0, len(itemIDs))
+
+	states := make([]areaItemRenderState, 0, len(itemIDs))
+	minCurrentLevel := -1
 	for _, itemID := range itemIDs {
 		master := ctx.source.GetAreaItem(itemID)
 		levels := ctx.source.GetAreaItemLevels(itemID)
@@ -74,33 +75,50 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		}
 
 		levelMap := make(map[int]*AreaItemLevel, len(levels))
-		currentLevel := userAreaLevels[itemID]
-		maxLevel := currentLevel
 		for _, level := range levels {
 			if level == nil {
 				continue
 			}
 			levelMap[level.Level] = level
 		}
-		// Only extend the table through the contiguous, already-released levels
-		// after the user's current level. This avoids showing future CN upgrades.
-		for level := currentLevel + 1; ; level++ {
-			if levelMap[level] == nil {
-				break
-			}
-			if shopLevels := levelShopItems[itemID]; shopLevels == nil || shopLevels[level] == nil {
-				break
-			}
-			maxLevel = level
-		}
-		if maxLevel <= minCurrentLevel {
-			maxLevel = currentLevel
+
+		currentLevel := userAreaLevels[itemID]
+		if releasedCap := releasedLevelCaps[itemID]; releasedCap > 0 && currentLevel > releasedCap {
+			currentLevel = releasedCap
 		}
 
+		maxVisibleLevel := currentLevel
+		if releasedCap := releasedLevelCaps[itemID]; releasedCap > maxVisibleLevel {
+			maxVisibleLevel = releasedCap
+		}
+		if maxVisibleLevel <= 0 {
+			continue
+		}
+		if minCurrentLevel == -1 || currentLevel < minCurrentLevel {
+			minCurrentLevel = currentLevel
+		}
+
+		states = append(states, areaItemRenderState{
+			itemID:          itemID,
+			master:          master,
+			levels:          levels,
+			levelMap:        levelMap,
+			shopLevels:      levelShopItems[itemID],
+			currentLevel:    currentLevel,
+			maxVisibleLevel: maxVisibleLevel,
+			targetIconPath:  c.areaItemTargetIcon(levels),
+		})
+	}
+	if minCurrentLevel < 0 {
+		minCurrentLevel = 0
+	}
+
+	areaItems := make([]drawing.AreaItemInfo, 0, len(states))
+	for _, state := range states {
 		sumMaterials := make(map[int]int)
-		levelInfos := make([]drawing.AreaItemLevel, 0, maxLevel-minCurrentLevel)
-		for level := minCurrentLevel + 1; level <= maxLevel; level++ {
-			levelMaster := levelMap[level]
+		levelInfos := make([]drawing.AreaItemLevel, 0, state.maxVisibleLevel-minCurrentLevel)
+		for level := minCurrentLevel + 1; level <= state.maxVisibleLevel; level++ {
+			levelMaster := state.levelMap[level]
 			if levelMaster == nil {
 				levelInfos = append(levelInfos, drawing.AreaItemLevel{Level: level, Materials: []drawing.AreaItemMaterial{}})
 				continue
@@ -113,8 +131,8 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 				Materials:  []drawing.AreaItemMaterial{},
 			}
 
-			if level > currentLevel {
-				shopItem := levelShopItems[itemID][level]
+			if level > state.currentLevel {
+				shopItem := state.shopLevels[level]
 				if shopItem == nil {
 					row.CanUpgrade = false
 				} else {
@@ -140,23 +158,20 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 						})
 					}
 				}
-			} else {
-				row.CanUpgrade = true
 			}
 
 			levelInfos = append(levelInfos, row)
 		}
 
-		targetIconPath := c.areaItemTargetIcon(levels)
 		areaItem := drawing.AreaItemInfo{
-			ItemID:       itemID,
-			CurrentLevel: currentLevel,
+			ItemID:       state.itemID,
+			CurrentLevel: state.currentLevel,
 			ItemIconPath: assets.ResolveRegionAssetPath(c.assets, ctx.region.String(),
-				filepath.Join("areaitem", master.AssetbundleName, master.AssetbundleName+".png")),
+				filepath.Join("areaitem", state.master.AssetbundleName, state.master.AssetbundleName+".png")),
 			Levels: levelInfos,
 		}
-		if targetIconPath != "" {
-			areaItem.TargetIconPath = &targetIconPath
+		if state.targetIconPath != "" {
+			areaItem.TargetIconPath = &state.targetIconPath
 		}
 		areaItems = append(areaItems, areaItem)
 	}
@@ -242,5 +257,179 @@ func (c *Controller) resolveAreaItemShopItems(source DataSource, itemIDs []int, 
 			}
 		}
 	}
+
+	c.fillAreaItemShopItemsByShopSequence(source, itemIDs, result, nowMs)
 	return result
+}
+
+var areaItemShopIDByAreaID = map[int]int{
+	5:  5,
+	7:  6,
+	8:  7,
+	9:  8,
+	10: 9,
+	11: 10,
+	13: 11,
+}
+
+type areaItemShopTarget struct {
+	itemID       int
+	sortedLevels []int
+}
+
+func (c *Controller) fillAreaItemShopItemsByShopSequence(
+	source DataSource,
+	itemIDs []int,
+	result map[int]map[int]*ShopItem,
+	nowMs int64,
+) {
+	if len(itemIDs) == 0 {
+		return
+	}
+
+	targetsByShopID := make(map[int][]areaItemShopTarget)
+	for _, itemID := range itemIDs {
+		item := source.GetAreaItem(itemID)
+		if item == nil {
+			continue
+		}
+
+		shopID := areaItemShopIDByAreaID[item.AreaID]
+		if shopID <= 0 {
+			continue
+		}
+
+		levels := sortedAreaItemLevels(source.GetAreaItemLevels(itemID))
+		if len(levels) == 0 {
+			continue
+		}
+
+		targetsByShopID[shopID] = append(targetsByShopID[shopID], areaItemShopTarget{
+			itemID:       itemID,
+			sortedLevels: levels,
+		})
+	}
+	if len(targetsByShopID) == 0 {
+		return
+	}
+
+	shopItemsByShopID := make(map[int][]*ShopItem)
+	for _, item := range source.GetShopItems() {
+		if item == nil || item.ShopID <= 0 {
+			continue
+		}
+		if item.StartAt > 0 && item.StartAt > nowMs {
+			continue
+		}
+		shopItemsByShopID[item.ShopID] = append(shopItemsByShopID[item.ShopID], item)
+	}
+	if len(shopItemsByShopID) == 0 {
+		return
+	}
+
+	for shopID, targets := range targetsByShopID {
+		shopItems := shopItemsByShopID[shopID]
+		if len(shopItems) == 0 || len(targets) == 0 {
+			continue
+		}
+		if len(shopItems) < len(targets) || len(shopItems)%len(targets) != 0 {
+			continue
+		}
+
+		sort.Slice(targets, func(i, j int) bool {
+			return targets[i].itemID < targets[j].itemID
+		})
+		sort.Slice(shopItems, func(i, j int) bool {
+			if shopItems[i].Seq != shopItems[j].Seq {
+				return shopItems[i].Seq < shopItems[j].Seq
+			}
+			return shopItems[i].ID < shopItems[j].ID
+		})
+
+		blockSize := len(shopItems) / len(targets)
+		offset := 0
+		for _, target := range targets {
+			if _, ok := result[target.itemID]; !ok {
+				result[target.itemID] = make(map[int]*ShopItem)
+			}
+
+			levelsToMap := blockSize
+			if levelsToMap > len(target.sortedLevels) {
+				levelsToMap = len(target.sortedLevels)
+			}
+			for idx := 0; idx < levelsToMap; idx++ {
+				level := target.sortedLevels[idx]
+				if result[target.itemID][level] == nil {
+					result[target.itemID][level] = shopItems[offset+idx]
+				}
+			}
+			offset += blockSize
+		}
+	}
+}
+
+func sortedAreaItemLevels(levels []*AreaItemLevel) []int {
+	if len(levels) == 0 {
+		return nil
+	}
+
+	levelSet := make(map[int]struct{}, len(levels))
+	result := make([]int, 0, len(levels))
+	for _, level := range levels {
+		if level == nil || level.Level <= 0 {
+			continue
+		}
+		if _, exists := levelSet[level.Level]; exists {
+			continue
+		}
+		levelSet[level.Level] = struct{}{}
+		result = append(result, level.Level)
+	}
+	sort.Ints(result)
+	return result
+}
+
+func (c *Controller) resolveReleasedAreaItemLevelCaps(source DataSource, itemIDs []int, levelShopItems map[int]map[int]*ShopItem) map[int]int {
+	if len(itemIDs) == 0 || len(levelShopItems) == 0 {
+		return nil
+	}
+
+	result := make(map[int]int, len(itemIDs))
+	for _, itemID := range itemIDs {
+		shopLevels := levelShopItems[itemID]
+		if len(shopLevels) == 0 {
+			continue
+		}
+		result[itemID] = releasedAreaItemLevelCap(source.GetAreaItemLevels(itemID), shopLevels)
+	}
+	return result
+}
+
+func releasedAreaItemLevelCap(levels []*AreaItemLevel, shopLevels map[int]*ShopItem) int {
+	if len(levels) == 0 || len(shopLevels) == 0 {
+		return 0
+	}
+
+	levelSet := make(map[int]struct{}, len(levels))
+	for _, level := range levels {
+		if level == nil || level.Level <= 0 {
+			continue
+		}
+		levelSet[level.Level] = struct{}{}
+	}
+	if _, ok := levelSet[1]; !ok {
+		return 0
+	}
+
+	releasedMaxLevel := 1
+	for level := 2; ; level++ {
+		if _, ok := levelSet[level]; !ok {
+			break
+		}
+		if shopLevels[level] == nil {
+			break
+		}
+		releasedMaxLevel = level
+	}
+	return releasedMaxLevel
 }

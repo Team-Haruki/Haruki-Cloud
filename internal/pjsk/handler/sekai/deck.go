@@ -9,6 +9,19 @@ import (
 	"strings"
 )
 
+func buildDeckParamsWithSelfQuery(ctx SekaiHandlerContext, mode string) (deckAutoQueryParams, UserQueryParams, error) {
+	params, err := buildDeckQueryParams(ctx, mode)
+	if err != nil {
+		return deckAutoQueryParams{}, UserQueryParams{}, err
+	}
+	query, err := resolveSelfOnlyQueryParams(ctx)
+	if err != nil {
+		return deckAutoQueryParams{}, UserQueryParams{}, err
+	}
+	params.Selector = query.Selector
+	return params, query, nil
+}
+
 func (sekaiHandlers) EventDeckHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
@@ -22,7 +35,7 @@ func (sekaiHandlers) EventDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params, err := buildDeckQueryParams(ctx, "deck-event")
+			params, _, err := buildDeckParamsWithSelfQuery(ctx, "deck-event")
 			if err != nil {
 				return nil, err
 			}
@@ -41,7 +54,7 @@ func (sekaiHandlers) ChallengeDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params, err := buildDeckQueryParams(ctx, "deck-challenge")
+			params, _, err := buildDeckParamsWithSelfQuery(ctx, "deck-challenge")
 			if err != nil {
 				return nil, err
 			}
@@ -61,7 +74,7 @@ func (sekaiHandlers) NoEventDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params, err := buildDeckQueryParams(ctx, "deck-no-event")
+			params, _, err := buildDeckParamsWithSelfQuery(ctx, "deck-no-event")
 			if err != nil {
 				return nil, err
 			}
@@ -81,7 +94,7 @@ func (sekaiHandlers) BonusDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params, err := buildDeckQueryParams(ctx, "deck-bonus")
+			params, _, err := buildDeckParamsWithSelfQuery(ctx, "deck-bonus")
 			if err != nil {
 				return nil, err
 			}
@@ -101,13 +114,9 @@ func (sekaiHandlers) MysekaiDeckHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params, err := buildDeckQueryParams(ctx, "deck-mysekai")
+			params, p, err := buildDeckParamsWithSelfQuery(ctx, "deck-mysekai")
 			if err != nil {
 				return nil, err
-			}
-			p, pErr := resolveSelfOnlyQueryParams(ctx)
-			if pErr != nil {
-				return nil, pErr
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleDeck, "deck-mysekai", mysekaiDeckCombinedParams{
 				Deck:  params,

@@ -18,6 +18,7 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 	original := deckAutoQueryParams{
 		Boost:               &boost,
 		AreaItemLevel:       &areaItemLevel,
+		Selector:            "u2",
 		UnitFilter:          "idol",
 		AttrFilter:          "cool",
 		ExcludedCards:       []int{123, 456},
@@ -45,6 +46,9 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 	if decoded.AreaItemLevel == nil || *decoded.AreaItemLevel != 15 {
 		t.Fatalf("unexpected area item level: %+v", decoded.AreaItemLevel)
 	}
+	if decoded.Selector != "u2" {
+		t.Fatalf("unexpected selector: %q", decoded.Selector)
+	}
 	if decoded.UnitFilter != "idol" || decoded.AttrFilter != "cool" {
 		t.Fatalf("unexpected filters: unit=%q attr=%q", decoded.UnitFilter, decoded.AttrFilter)
 	}
@@ -66,6 +70,8 @@ func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 miku auto 倍率 满技能 #123 456",
 	})
@@ -106,6 +112,67 @@ func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 	}
 	if params.Rarity1Config == nil || !params.Rarity1Config.SkillMax {
 		t.Fatalf("unexpected rarity patch: %+v", params.Rarity1Config)
+	}
+}
+
+func TestEventDeckHandleParsesLeadingSelectorArg(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/组卡",
+		ArgText:    "u2 event123 当前 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Selector != "u2" {
+		t.Fatalf("unexpected selector: %q", params.Selector)
+	}
+	if params.EventID == nil || *params.EventID != 123 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if !params.UseCurrentDeck {
+		t.Fatalf("expected use_current_deck to be enabled")
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesTrailingSelectorArg(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 sage neo u1",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Selector != "u1" {
+		t.Fatalf("unexpected selector: %q", params.Selector)
+	}
+	if params.EventID == nil || *params.EventID != 123 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
 	}
 }
 

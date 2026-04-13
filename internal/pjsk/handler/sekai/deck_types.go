@@ -16,6 +16,7 @@ type deckAutoQueryParams struct {
 	TargetBonuses                []int                              `json:"target_bonuses,omitempty"`
 	Boost                        *int                               `json:"boost,omitempty"`
 	AreaItemLevel                *int                               `json:"area_item_level,omitempty"`
+	Selector                     string                             `json:"selector,omitempty"`
 	UnitFilter                   string                             `json:"unit_filter,omitempty"`
 	AttrFilter                   string                             `json:"attr_filter,omitempty"`
 	ExcludedCards                []int                              `json:"excluded_cards,omitempty"`

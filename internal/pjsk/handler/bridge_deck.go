@@ -16,9 +16,14 @@ import (
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/profile"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
+
+type deckUserTargetParams struct {
+	Selector string `json:"selector,omitempty"`
+}
 
 func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	defer func() {
@@ -104,20 +109,26 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 	q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
 	mergeParams(rc.Cmd.Params, &q)
+	var targetParams deckUserTargetParams
+	mergeParams(rc.Cmd.Params, &targetParams)
 	if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 		return nil, err
 	}
 	if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
 		return nil, err
 	}
-	if detail := rc.GetDetailedProfile(); detail != nil {
+	detail, snapshot, err := resolveDeckRenderProfileAndSnapshot(rc, targetParams.Selector)
+	if err != nil {
+		return nil, err
+	}
+	if detail != nil {
 		q.Profile = detail
 	}
 
 	// Try to inject live Toolbox snapshot so the deck controller can operate
 	// on real user data even when no local snapshot file is configured.
 	deckCtrl := rc.App.Decks
-	if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
+	if snapshot != nil {
 		deckCtrl = deckCtrl.WithSnapshot(snapshot)
 	}
 
@@ -126,6 +137,56 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, err
 	}
 	return rc.ImageMessage(data)
+}
+
+func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, renderuserdata.Snapshot, error) {
+	if rc == nil {
+		return nil, nil, nil
+	}
+
+	selector = strings.TrimSpace(selector)
+	if selector == "" {
+		return rc.GetDetailedProfile(), rc.ResolveSnapshot(false), nil
+	}
+
+	target, err := resolveGameTarget(rc.Ctx, userQueryParams{
+		Mode:           "self",
+		Platform:       rc.Platform,
+		PlatformUserID: rc.PlatformUserID,
+		Selector:       selector,
+	}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, rc.RegionStr, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
+	detail := buildDeckDetailedProfileForTarget(rc, target, snapshot)
+	if detail == nil && snapshot != nil {
+		detail = snapshot.DetailedProfile(rc.Region)
+	}
+	return detail, snapshot, nil
+}
+
+func buildDeckDetailedProfileForTarget(rc *RequestContext, target resolvedGameTarget, snapshot renderuserdata.Snapshot) *drawing.DetailedProfileCardRequest {
+	if rc == nil || rc.App == nil || rc.App.Profiles == nil {
+		return nil
+	}
+
+	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(rc.RegionStr, target.PJSKUserID)
+	if err != nil {
+		return nil
+	}
+
+	q := profile.Query{
+		Region:     rc.RegionStr,
+		Visible:    target.Visible,
+		BgSettings: target.BgSettings,
+	}
+	detail, err := rc.App.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(q, resp, snapshot)
+	if err != nil {
+		return nil
+	}
+	return detail
 }
 
 func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {

@@ -48,11 +48,13 @@ type runtimeSnapshotProviderStub struct {
 	snapshot         renderuserdata.Snapshot
 	resolveCount     int
 	resolveNeedFlags []bool
+	selectors        []renderuserdata.Selector
 }
 
-func (p *runtimeSnapshotProviderStub) Resolve(_ context.Context, _ renderuserdata.Selector, opts renderuserdata.ResolveOptions) (renderuserdata.Snapshot, error) {
+func (p *runtimeSnapshotProviderStub) Resolve(_ context.Context, selector renderuserdata.Selector, opts renderuserdata.ResolveOptions) (renderuserdata.Snapshot, error) {
 	p.resolveCount++
 	p.resolveNeedFlags = append(p.resolveNeedFlags, opts.NeedMySekai)
+	p.selectors = append(p.selectors, selector)
 	return p.snapshot, nil
 }
 

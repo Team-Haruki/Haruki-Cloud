@@ -194,10 +194,12 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 	singleMainGenres := make([]drawing.MysekaiSingleTalkMainGenre, 0, len(mainGenreIDs))
 	for _, mainGenreID := range mainGenreIDs {
 		info := mainGenreMap[mainGenreID]
+		fixtures := groupedSingle[mainGenreID]
+		sortSingleTalkFixtures(fixtures)
 		singleMainGenres = append(singleMainGenres, drawing.MysekaiSingleTalkMainGenre{
 			Name:      stringValue(info["name"]),
 			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"]))),
-			SubGenres: [][]drawing.MysekaiTalkFixtures{groupedSingle[mainGenreID]},
+			SubGenres: [][]drawing.MysekaiTalkFixtures{fixtures},
 		})
 	}
 
@@ -273,6 +275,22 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		SingleMainGenres: singleMainGenres,
 		MultiReads:       multiReads,
 	}, nil
+}
+
+func sortSingleTalkFixtures(items []drawing.MysekaiTalkFixtures) {
+	sort.SliceStable(items, func(i, j int) bool {
+		left := items[i].Fixtures
+		right := items[j].Fixtures
+		if len(left) != len(right) {
+			return len(left) > len(right)
+		}
+		for idx := 0; idx < len(left) && idx < len(right); idx++ {
+			if left[idx].ID != right[idx].ID {
+				return left[idx].ID > right[idx].ID
+			}
+		}
+		return items[i].NoreadNum > items[j].NoreadNum
+	})
 }
 
 // RenderTalkList renders the MySekai talk list view.

@@ -421,6 +421,127 @@ func TestResolveTalkCharacterHandlesVirtualSingerUnits(t *testing.T) {
 	}
 }
 
+func TestBuildTalkListRequestSortsSingleTalkFixturesByGroupSizeAndFixtureID(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{
+		{"id": 1, "firstName": "星乃", "givenName": "一歌"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacterUnits.json"), []map[string]any{
+		{"id": 101, "gameCharacterId": 1, "unit": "light_sound"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 1, "name": "Main A", "assetbundleName": "main_a"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{"id": 11, "assetbundleName": "fixture_11", "mysekaiFixtureType": "furniture", "mysekaiFixtureMainGenreId": 1},
+		{"id": 12, "assetbundleName": "fixture_12", "mysekaiFixtureType": "furniture", "mysekaiFixtureMainGenreId": 1},
+		{"id": 13, "assetbundleName": "fixture_13", "mysekaiFixtureType": "furniture", "mysekaiFixtureMainGenreId": 1},
+		{"id": 14, "assetbundleName": "fixture_14", "mysekaiFixtureType": "furniture", "mysekaiFixtureMainGenreId": 1},
+		{"id": 15, "assetbundleName": "fixture_15", "mysekaiFixtureType": "furniture", "mysekaiFixtureMainGenreId": 1},
+		{"id": 16, "assetbundleName": "fixture_16", "mysekaiFixtureType": "furniture", "mysekaiFixtureMainGenreId": 1},
+		{"id": 17, "assetbundleName": "fixture_17", "mysekaiFixtureType": "furniture", "mysekaiFixtureMainGenreId": 1},
+		{"id": 18, "assetbundleName": "fixture_18", "mysekaiFixtureType": "furniture", "mysekaiFixtureMainGenreId": 1},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{
+		{"id": 10011, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 11},
+		{"id": 10012, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 12},
+		{"id": 10013, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 13},
+		{"id": 10014, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 14},
+		{"id": 10015, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 15},
+		{"id": 10016, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 16},
+		{"id": 10017, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 17},
+		{"id": 10018, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 18},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGameCharacterUnitGroups.json"), []map[string]any{
+		{"id": 1, "gameCharacterUnitId1": 101},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "characterArchiveMysekaiCharacterTalkGroups.json"), []map[string]any{
+		{"id": 100, "archiveDisplayType": "normal"},
+		{"id": 101, "archiveDisplayType": "normal"},
+		{"id": 102, "archiveDisplayType": "normal"},
+		{"id": 103, "archiveDisplayType": "normal"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiCharacterTalkConditions.json"), []map[string]any{
+		{"id": 2011, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 11},
+		{"id": 2012, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 12},
+		{"id": 2013, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 13},
+		{"id": 2014, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 14},
+		{"id": 2015, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 15},
+		{"id": 2016, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 16},
+		{"id": 2017, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 17},
+		{"id": 2018, "mysekaiCharacterTalkConditionType": "mysekai_fixture_id", "mysekaiCharacterTalkConditionTypeValue": 18},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiCharacterTalkConditionGroups.json"), []map[string]any{
+		{"id": 3011, "mysekaiCharacterTalkConditionId": 2011},
+		{"id": 3012, "mysekaiCharacterTalkConditionId": 2012},
+		{"id": 3013, "mysekaiCharacterTalkConditionId": 2013},
+		{"id": 3014, "mysekaiCharacterTalkConditionId": 2014},
+		{"id": 3015, "mysekaiCharacterTalkConditionId": 2015},
+		{"id": 3016, "mysekaiCharacterTalkConditionId": 2016},
+		{"id": 3017, "mysekaiCharacterTalkConditionId": 2017},
+		{"id": 3018, "mysekaiCharacterTalkConditionId": 2018},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiCharacterTalks.json"), []map[string]any{
+		{"id": 4011, "mysekaiCharacterTalkConditionGroupId": 3011, "mysekaiGameCharacterUnitGroupId": 1, "characterArchiveMysekaiCharacterTalkGroupId": 100},
+		{"id": 4012, "mysekaiCharacterTalkConditionGroupId": 3012, "mysekaiGameCharacterUnitGroupId": 1, "characterArchiveMysekaiCharacterTalkGroupId": 100},
+		{"id": 4013, "mysekaiCharacterTalkConditionGroupId": 3013, "mysekaiGameCharacterUnitGroupId": 1, "characterArchiveMysekaiCharacterTalkGroupId": 101},
+		{"id": 4014, "mysekaiCharacterTalkConditionGroupId": 3014, "mysekaiGameCharacterUnitGroupId": 1, "characterArchiveMysekaiCharacterTalkGroupId": 102},
+		{"id": 4015, "mysekaiCharacterTalkConditionGroupId": 3015, "mysekaiGameCharacterUnitGroupId": 1, "characterArchiveMysekaiCharacterTalkGroupId": 102},
+		{"id": 4016, "mysekaiCharacterTalkConditionGroupId": 3016, "mysekaiGameCharacterUnitGroupId": 1, "characterArchiveMysekaiCharacterTalkGroupId": 102},
+		{"id": 4017, "mysekaiCharacterTalkConditionGroupId": 3017, "mysekaiGameCharacterUnitGroupId": 1, "characterArchiveMysekaiCharacterTalkGroupId": 103},
+		{"id": 4018, "mysekaiCharacterTalkConditionGroupId": 3018, "mysekaiGameCharacterUnitGroupId": 1, "characterArchiveMysekaiCharacterTalkGroupId": 103},
+	})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiBlueprints": [
+      {"mysekaiBlueprintId": 10011},
+      {"mysekaiBlueprintId": 10012},
+      {"mysekaiBlueprintId": 10013},
+      {"mysekaiBlueprintId": 10014},
+      {"mysekaiBlueprintId": 10015},
+      {"mysekaiBlueprintId": 10016},
+      {"mysekaiBlueprintId": 10017},
+      {"mysekaiBlueprintId": 10018}
+    ],
+    "userMysekaiCharacterTalks": []
+  }
+}`
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
+	req, err := controller.BuildTalkListRequest(TalkListQuery{Region: "jp", Query: "101"})
+	if err != nil {
+		t.Fatalf("BuildTalkListRequest() error = %v", err)
+	}
+	if len(req.SingleMainGenres) != 1 || len(req.SingleMainGenres[0].SubGenres) != 1 {
+		t.Fatalf("unexpected single talk genres: %+v", req.SingleMainGenres)
+	}
+
+	got := make([][]int, 0, len(req.SingleMainGenres[0].SubGenres[0]))
+	for _, group := range req.SingleMainGenres[0].SubGenres[0] {
+		ids := make([]int, 0, len(group.Fixtures))
+		for _, fixture := range group.Fixtures {
+			ids = append(ids, fixture.ID)
+		}
+		got = append(got, ids)
+	}
+
+	want := [][]int{
+		{14, 15, 16},
+		{17, 18},
+		{11, 12},
+		{13},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("unexpected single talk fixture order: got=%v want=%v", got, want)
+	}
+}
+
 func writeTestJSON(t *testing.T, path string, value any) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

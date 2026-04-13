@@ -2,7 +2,6 @@ package mysekai
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -245,14 +244,12 @@ func normalizeValue(val any, colTypes []*sql.ColumnType, idx int) any {
 	case []byte:
 		// Could be JSONB or TEXT; try JSON decode first.
 		var parsed any
-		if err := json.Unmarshal(v, &parsed); err == nil {
+		if err := decodeJSONUseNumber(v, &parsed); err == nil {
 			return parsed
 		}
 		return string(v)
 	case int64:
-		// JSON numbers for small ints come through as float64 when
-		// unmarshalled from JSON.  The controller uses intNumber() which
-		// handles both int and float64, so int64 is fine.
+		// Database numeric columns already arrive with integer precision.
 		return v
 	default:
 		return v

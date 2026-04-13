@@ -1,8 +1,9 @@
 package mysekai
 
 import (
-"strconv"
-"strings"
+	"encoding/json"
+	"strconv"
+	"strings"
 )
 
 func intNumber(value any, fallback int) int {
@@ -17,6 +18,13 @@ func intNumber(value any, fallback int) int {
 		return int(v)
 	case int64:
 		return int(v)
+	case json.Number:
+		if n, err := v.Int64(); err == nil {
+			return int(n)
+		}
+		if n, err := v.Float64(); err == nil {
+			return int(n)
+		}
 	case string:
 		if n, err := strconv.Atoi(strings.TrimSpace(v)); err == nil {
 			return n
@@ -37,6 +45,10 @@ func floatNumber(value any, fallback float64) float64 {
 		return float64(v)
 	case int64:
 		return float64(v)
+	case json.Number:
+		if n, err := v.Float64(); err == nil {
+			return n
+		}
 	case string:
 		if n, err := strconv.ParseFloat(strings.TrimSpace(v), 64); err == nil {
 			return n
@@ -57,6 +69,13 @@ func int64Number(value any, fallback int64) int64 {
 		return int64(v)
 	case int64:
 		return v
+	case json.Number:
+		if n, err := v.Int64(); err == nil {
+			return n
+		}
+		if n, err := v.Float64(); err == nil {
+			return int64(n)
+		}
 	case string:
 		if n, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64); err == nil {
 			return n
@@ -123,4 +142,3 @@ func parseIntTokens(query string) []int {
 	}
 	return result
 }
-

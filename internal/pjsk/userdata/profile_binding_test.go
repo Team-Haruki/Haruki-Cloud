@@ -75,7 +75,7 @@ func TestExecuteProfileBindingCommandBindAndList(t *testing.T) {
 		t.Fatalf("execute bind list: %v", err)
 	}
 
-	expectedList := "已绑定账号列表（u序号按区服分别编号）:\nu1 [JP] 2000 (全局默认 / JP服默认)"
+	expectedList := "已绑定账号列表（u序号全局编号）:\nu1 [JP] 2000 (全局默认 / JP服默认)"
 	if string(listText) != expectedList {
 		t.Fatalf("unexpected list text:\n%s", string(listText))
 	}
@@ -172,7 +172,7 @@ func TestExecuteProfileBindingCommandBindListMasksUIDByDefault(t *testing.T) {
 		t.Fatalf("execute bind list: %v", err)
 	}
 
-	expectedList := "已绑定账号列表（u序号按区服分别编号）:\nu1 [JP] 123********234 (全局默认 / JP服默认)"
+	expectedList := "已绑定账号列表（u序号全局编号）:\nu1 [JP] 123********234 (全局默认 / JP服默认)"
 	if string(listText) != expectedList {
 		t.Fatalf("unexpected masked list text:\n%s", string(listText))
 	}

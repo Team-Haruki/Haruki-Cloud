@@ -91,7 +91,9 @@ func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
 			if ctx.HasExplicitRegion() {
 				scope = ctx.Region().String()
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDefaultSet, newProfileBindingParams(ctx, args, scope)), nil
+			params := newProfileBindingParams(ctx, args, scope)
+			params.Server = scope // selector searches all bindings when no explicit region
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDefaultSet, params), nil
 		},
 	}
 }
@@ -112,7 +114,9 @@ func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
 			if ctx.HasExplicitRegion() {
 				scope = ctx.Region().String()
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDefaultClear, newProfileBindingParams(ctx, args, scope)), nil
+			params := newProfileBindingParams(ctx, args, scope)
+			params.Server = scope // selector searches all bindings when no explicit region
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDefaultClear, params), nil
 		},
 	}
 }

@@ -109,14 +109,7 @@ func SelectProfileImageCardID(profileImageType string, profileImageID, leaderCar
 }
 
 func fallbackLeaderImagePath(assetHelper *assets.AssetHelper) string {
-	const fallback = "user/leader.png"
-	if assetHelper == nil {
-		return fallback
-	}
-	if existing := assetHelper.FirstExisting(fallback); existing != "" {
-		return makeRelativeAsset(assetHelper, existing)
-	}
-	return fallback
+	return assets.ResolveProfilePlaceholderPath(assetHelper)
 }
 
 func makeRelativeAsset(assetHelper *assets.AssetHelper, target string) string {

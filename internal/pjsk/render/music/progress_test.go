@@ -69,6 +69,24 @@ func TestBuildMusicProgressRequestUsesQueryUserResults(t *testing.T) {
 	}
 }
 
+func TestBuildMusicProgressRequestUsesStaticPlaceholderLeaderImage(t *testing.T) {
+	controller := NewController(&lookupTestSource{
+		musics:       map[int]*masterdata.Music{},
+		difficulties: map[int][]*masterdata.MusicDifficulty{},
+	}, nil, assets.NewAssetHelper("", nil), nil, nil)
+
+	req, err := controller.BuildMusicProgressRequest(ProgressQuery{Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildMusicProgressRequest() error = %v", err)
+	}
+	if req.Profile.Profile == nil {
+		t.Fatalf("expected placeholder profile")
+	}
+	if req.Profile.Profile.LeaderImagePath != "static_images/unknown.jpg" {
+		t.Fatalf("unexpected placeholder leader path: %q", req.Profile.Profile.LeaderImagePath)
+	}
+}
+
 type progressSnapshotStub struct {
 	profile *drawing.ProfileCardRequest
 	results map[string]map[int]string

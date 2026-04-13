@@ -290,6 +290,12 @@ func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...stri
 // skill icons, play-result icons, etc.) within the Drawing API data root.
 const StaticImagesDir = "static_images"
 
+// ResolveProfilePlaceholderPath returns the stable Drawing placeholder avatar
+// used when no region-specific leader image can be resolved.
+func ResolveProfilePlaceholderPath(helper *AssetHelper) string {
+	return ResolveAssetPath(helper, StaticImagesDir, "unknown.jpg")
+}
+
 var CharacterIDToNickname = map[int]string{
 	1:  "ick",
 	2:  "saki",

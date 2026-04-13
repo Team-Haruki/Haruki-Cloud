@@ -124,7 +124,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
 			ServiceBaseURL: harukiConfig.Cfg.PJSKRender.DeckRecommend.ServiceBaseURL,
-			MasterdataDir:  harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
+			MasterdataDir:  resolveDeckRecommendMasterdataDir(),
 			Timeout:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
 			MaxRetries:     harukiConfig.Cfg.PJSKRender.DeckRecommend.MaxRetries,
 			RetryWaitTime:  harukiConfig.Cfg.PJSKRender.DeckRecommend.RetryWaitTime,
@@ -137,6 +137,14 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	}
 	mainLogger.Infof("PJSK render asset roots: %v", runtime.AssetRoots())
 	return runtime
+}
+
+func resolveDeckRecommendMasterdataDir() string {
+	dir := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DeckRecommend.MasterdataDir)
+	if dir != "" {
+		return dir
+	}
+	return strings.TrimSpace(harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir)
 }
 
 func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {

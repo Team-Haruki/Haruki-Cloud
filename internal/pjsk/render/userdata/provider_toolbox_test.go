@@ -3,11 +3,16 @@ package userdata
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
+	sekaienttest "haruki-cloud/database/sekai/enttest"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	sekaiutils "haruki-cloud/utils/sekai"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type fakeMusicMetaSource struct {
@@ -174,6 +179,61 @@ func TestToolboxSnapshotProviderInjectsMusicMetaPayload(t *testing.T) {
 	}
 	if len(snapshot.MusicMetaBytes()) == 0 {
 		t.Fatalf("expected music meta bytes on toolbox snapshot")
+	}
+}
+
+func TestToolboxSnapshotProviderBuildsSnapshotUsingBindingServerRegion(t *testing.T) {
+	sekaiClient := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:toolbox_snapshot_region_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Card.Create().
+		SetServerRegion("en").
+		SetGameID(1001).
+		SetCharacterID(1).
+		SetAssetbundleName("res001_no001").
+		Save(context.Background()); err != nil {
+		t.Fatalf("create card: %v", err)
+	}
+
+	provider := NewToolboxSnapshotProvider(
+		&fakeBindingLookup{
+			bindings: map[string]*accountdata.ResolvedBinding{
+				"jp": {
+					PJSKUserID:     "123456789",
+					Server:         "en",
+					SuiteVisible:   true,
+					MySekaiVisible: true,
+				},
+			},
+		},
+		&fakePrivateDataClient{
+			suiteJSON: []byte(minimalSuiteJSON),
+		},
+		sekaiClient,
+		nil,
+	)
+
+	snapshot, err := provider.Resolve(context.Background(), Selector{
+		IMPlatform: "qq",
+		IMUserID:   "10001",
+		Region:     renderregion.JP,
+	}, ResolveOptions{})
+	if err != nil {
+		t.Fatalf("Resolve() error = %v", err)
+	}
+
+	profile := snapshot.DetailedProfile(renderregion.JP)
+	if profile == nil {
+		t.Fatal("expected detailed profile")
+	}
+	if profile.LeaderImagePath == "" {
+		t.Fatal("expected leader image path")
+	}
+	if profile.LeaderImagePath == "static_images/unknown.jpg" {
+		t.Fatalf("expected real leader image path, got placeholder %q", profile.LeaderImagePath)
+	}
+	if wantPrefix := "asset/en-assets/startapp/thumbnail/chara/res001_no001_after_training.png"; profile.LeaderImagePath != wantPrefix {
+		t.Fatalf("unexpected leader image path: %q", profile.LeaderImagePath)
 	}
 }
 

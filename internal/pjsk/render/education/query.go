@@ -7,19 +7,19 @@ import (
 )
 
 type ChallengeLiveQuery struct {
-	Region   renderregion.Value                  `json:"region"`
+	Region   renderregion.Value                  `json:"region,omitempty"`
 	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
 	Snapshot userdata.Snapshot                   `json:"-"` // Optional: overrides controller snapshot
 }
 
 type PowerBonusQuery struct {
-	Region   renderregion.Value                  `json:"region"`
+	Region   renderregion.Value                  `json:"region,omitempty"`
 	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
 	Snapshot userdata.Snapshot                   `json:"-"`
 }
 
 type BondsQuery struct {
-	Region         renderregion.Value                  `json:"region"`
+	Region         renderregion.Value                  `json:"region,omitempty"`
 	Profile        *drawing.DetailedProfileCardRequest `json:"-"`
 	Snapshot       userdata.Snapshot                   `json:"-"`
 	Cid            int                                 `json:"cid,omitempty"`
@@ -27,13 +27,13 @@ type BondsQuery struct {
 }
 
 type LeaderCountQuery struct {
-	Region   renderregion.Value                  `json:"region"`
+	Region   renderregion.Value                  `json:"region,omitempty"`
 	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
 	Snapshot userdata.Snapshot                   `json:"-"`
 }
 
 type AreaItemQuery struct {
-	Region         renderregion.Value                  `json:"region"`
+	Region         renderregion.Value                  `json:"region,omitempty"`
 	Profile        *drawing.DetailedProfileCardRequest `json:"-"`
 	Snapshot       userdata.Snapshot                   `json:"-"`
 	Unit           string                              `json:"unit,omitempty"`

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"haruki-cloud/api/bot/onebot11"
@@ -170,6 +171,13 @@ func TestExecuteEducationAreaUsesResolvedRequestContextRegion(t *testing.T) {
 	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
 		t.Fatalf("bind: %v", err)
 	}
+	params, err := json.Marshal(education.AreaItemQuery{Unit: "light_sound"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+	if strings.Contains(string(params), "\"region\"") {
+		t.Fatalf("expected area item params to omit empty region, got %s", params)
+	}
 
 	snapshot := mustBridgeEducationSnapshot(t)
 
@@ -200,8 +208,15 @@ func TestExecuteEducationAreaUsesResolvedRequestContextRegion(t *testing.T) {
 	}
 
 	rc := &RequestContext{
-		Ctx:            ctx,
-		Cmd:            &parser.ResolvedCommand{Module: parser.ModuleEducation, Mode: "education-area", Region: "", RequesterPlatform: "qq", RequesterUserID: "42"},
+		Ctx: ctx,
+		Cmd: &parser.ResolvedCommand{
+			Module:            parser.ModuleEducation,
+			Mode:              "education-area",
+			Region:            "",
+			Params:            params,
+			RequesterPlatform: "qq",
+			RequesterUserID:   "42",
+		},
 		App:            app,
 		Region:         renderregion.CN,
 		RegionStr:      "cn",

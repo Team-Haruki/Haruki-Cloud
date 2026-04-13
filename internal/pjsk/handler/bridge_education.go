@@ -44,6 +44,9 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	case "education-challenge":
 		q := education.ChallengeLiveQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
+		if q.Region.IsZero() {
+			q.Region = region
+		}
 		q.Profile = publicDetailedProfile
 		if suiteSnapshot != nil {
 			q.Snapshot = suiteSnapshot
@@ -53,6 +56,9 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	case "education-bonds":
 		query := education.BondsQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &query)
+		if query.Region.IsZero() {
+			query.Region = region
+		}
 		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
 			query.Cid, err = resolveEducationBondsCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
 			if err != nil {
@@ -108,6 +114,9 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	case "education-area":
 		query := education.AreaItemQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &query)
+		if query.Region.IsZero() {
+			query.Region = region
+		}
 		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
 			query.Cid, err = resolveEducationAreaCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
 			if err != nil {

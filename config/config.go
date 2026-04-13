@@ -87,6 +87,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	// Haruki Bot
 	envStr("HARUKI_BOT_DB_TYPE", &cfg.HarukiBotDB.DBType)
 	envStr("HARUKI_BOT_DB_URL", &cfg.HarukiBotDB.DBURL)
+	envBool("HARUKI_BOT_ENABLE_REGISTRATION", &cfg.HarukiBotDB.EnableRegistration)
 	envStr("HARUKI_BOT_TURNSTILE_SECRET", &cfg.HarukiBotDB.TurnstileSecretKey)
 	envStr("HARUKI_BOT_SMTP_HOST", &cfg.HarukiBotDB.SMTPHost)
 	envInt("HARUKI_BOT_SMTP_PORT", &cfg.HarukiBotDB.SMTPPort)
@@ -263,6 +264,7 @@ type CensorConfig struct {
 type HarukiBotDBConfig struct {
 	DBType              string `yaml:"db_type"`
 	DBURL               string `yaml:"db_url"`
+	EnableRegistration  bool   `yaml:"enable_registration"`
 	TurnstileSecretKey  string `yaml:"turnstile_secret_key"`
 	SMTPHost            string `yaml:"smtp_host"`
 	SMTPPort            int    `yaml:"smtp_port"`

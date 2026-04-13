@@ -77,7 +77,13 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 		}
 	}
 
-	bot := app.Group(botRouteBase+"/:botId", api.VerifyBotSession(redisClient))
+	var sessionMiddleware fiber.Handler
+	if redisClient != nil {
+		sessionMiddleware = api.VerifyBotSession(redisClient)
+	} else {
+		sessionMiddleware = api.VerifyBotSessionTestBypass()
+	}
+	bot := app.Group(botRouteBase+"/:botId", sessionMiddleware)
 
 	bot.Get("/command/manifests", buildManifestHandler(botDBClient))
 

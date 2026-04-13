@@ -50,4 +50,16 @@ func init() {
 	userDescCredential := userFields[2].Descriptor()
 	// user.CredentialValidator is a validator for the "credential" field. It is called by the builders before save.
 	user.CredentialValidator = userDescCredential.Validators[0].(func(string) error)
+	// userDescLastLoginIP is the schema descriptor for last_login_ip field.
+	userDescLastLoginIP := userFields[3].Descriptor()
+	// user.DefaultLastLoginIP holds the default value on creation for the last_login_ip field.
+	user.DefaultLastLoginIP = userDescLastLoginIP.Default.(string)
+	// user.LastLoginIPValidator is a validator for the "last_login_ip" field. It is called by the builders before save.
+	user.LastLoginIPValidator = userDescLastLoginIP.Validators[0].(func(string) error)
+	// userDescLastLoginLocation is the schema descriptor for last_login_location field.
+	userDescLastLoginLocation := userFields[4].Descriptor()
+	// user.DefaultLastLoginLocation holds the default value on creation for the last_login_location field.
+	user.DefaultLastLoginLocation = userDescLastLoginLocation.Default.(string)
+	// user.LastLoginLocationValidator is a validator for the "last_login_location" field. It is called by the builders before save.
+	user.LastLoginLocationValidator = userDescLastLoginLocation.Validators[0].(func(string) error)
 }

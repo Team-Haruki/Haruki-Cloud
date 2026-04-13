@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"haruki-cloud/database/bot/predicate"
 	"haruki-cloud/database/bot/user"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -89,6 +90,66 @@ func (_u *UserUpdate) ClearCredential() *UserUpdate {
 	return _u
 }
 
+// SetLastLoginIP sets the "last_login_ip" field.
+func (_u *UserUpdate) SetLastLoginIP(v string) *UserUpdate {
+	_u.mutation.SetLastLoginIP(v)
+	return _u
+}
+
+// SetNillableLastLoginIP sets the "last_login_ip" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLastLoginIP(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetLastLoginIP(*v)
+	}
+	return _u
+}
+
+// ClearLastLoginIP clears the value of the "last_login_ip" field.
+func (_u *UserUpdate) ClearLastLoginIP() *UserUpdate {
+	_u.mutation.ClearLastLoginIP()
+	return _u
+}
+
+// SetLastLoginLocation sets the "last_login_location" field.
+func (_u *UserUpdate) SetLastLoginLocation(v string) *UserUpdate {
+	_u.mutation.SetLastLoginLocation(v)
+	return _u
+}
+
+// SetNillableLastLoginLocation sets the "last_login_location" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLastLoginLocation(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetLastLoginLocation(*v)
+	}
+	return _u
+}
+
+// ClearLastLoginLocation clears the value of the "last_login_location" field.
+func (_u *UserUpdate) ClearLastLoginLocation() *UserUpdate {
+	_u.mutation.ClearLastLoginLocation()
+	return _u
+}
+
+// SetLastLoginAt sets the "last_login_at" field.
+func (_u *UserUpdate) SetLastLoginAt(v time.Time) *UserUpdate {
+	_u.mutation.SetLastLoginAt(v)
+	return _u
+}
+
+// SetNillableLastLoginAt sets the "last_login_at" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLastLoginAt(v *time.Time) *UserUpdate {
+	if v != nil {
+		_u.SetLastLoginAt(*v)
+	}
+	return _u
+}
+
+// ClearLastLoginAt clears the value of the "last_login_at" field.
+func (_u *UserUpdate) ClearLastLoginAt() *UserUpdate {
+	_u.mutation.ClearLastLoginAt()
+	return _u
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -128,6 +189,16 @@ func (_u *UserUpdate) check() error {
 			return &ValidationError{Name: "credential", err: fmt.Errorf(`bot: validator failed for field "User.credential": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LastLoginIP(); ok {
+		if err := user.LastLoginIPValidator(v); err != nil {
+			return &ValidationError{Name: "last_login_ip", err: fmt.Errorf(`bot: validator failed for field "User.last_login_ip": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LastLoginLocation(); ok {
+		if err := user.LastLoginLocationValidator(v); err != nil {
+			return &ValidationError{Name: "last_login_location", err: fmt.Errorf(`bot: validator failed for field "User.last_login_location": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -160,6 +231,24 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.CredentialCleared() {
 		_spec.ClearField(user.FieldCredential, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastLoginIP(); ok {
+		_spec.SetField(user.FieldLastLoginIP, field.TypeString, value)
+	}
+	if _u.mutation.LastLoginIPCleared() {
+		_spec.ClearField(user.FieldLastLoginIP, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastLoginLocation(); ok {
+		_spec.SetField(user.FieldLastLoginLocation, field.TypeString, value)
+	}
+	if _u.mutation.LastLoginLocationCleared() {
+		_spec.ClearField(user.FieldLastLoginLocation, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastLoginAt(); ok {
+		_spec.SetField(user.FieldLastLoginAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastLoginAtCleared() {
+		_spec.ClearField(user.FieldLastLoginAt, field.TypeTime)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -243,6 +332,66 @@ func (_u *UserUpdateOne) ClearCredential() *UserUpdateOne {
 	return _u
 }
 
+// SetLastLoginIP sets the "last_login_ip" field.
+func (_u *UserUpdateOne) SetLastLoginIP(v string) *UserUpdateOne {
+	_u.mutation.SetLastLoginIP(v)
+	return _u
+}
+
+// SetNillableLastLoginIP sets the "last_login_ip" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLastLoginIP(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetLastLoginIP(*v)
+	}
+	return _u
+}
+
+// ClearLastLoginIP clears the value of the "last_login_ip" field.
+func (_u *UserUpdateOne) ClearLastLoginIP() *UserUpdateOne {
+	_u.mutation.ClearLastLoginIP()
+	return _u
+}
+
+// SetLastLoginLocation sets the "last_login_location" field.
+func (_u *UserUpdateOne) SetLastLoginLocation(v string) *UserUpdateOne {
+	_u.mutation.SetLastLoginLocation(v)
+	return _u
+}
+
+// SetNillableLastLoginLocation sets the "last_login_location" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLastLoginLocation(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetLastLoginLocation(*v)
+	}
+	return _u
+}
+
+// ClearLastLoginLocation clears the value of the "last_login_location" field.
+func (_u *UserUpdateOne) ClearLastLoginLocation() *UserUpdateOne {
+	_u.mutation.ClearLastLoginLocation()
+	return _u
+}
+
+// SetLastLoginAt sets the "last_login_at" field.
+func (_u *UserUpdateOne) SetLastLoginAt(v time.Time) *UserUpdateOne {
+	_u.mutation.SetLastLoginAt(v)
+	return _u
+}
+
+// SetNillableLastLoginAt sets the "last_login_at" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLastLoginAt(v *time.Time) *UserUpdateOne {
+	if v != nil {
+		_u.SetLastLoginAt(*v)
+	}
+	return _u
+}
+
+// ClearLastLoginAt clears the value of the "last_login_at" field.
+func (_u *UserUpdateOne) ClearLastLoginAt() *UserUpdateOne {
+	_u.mutation.ClearLastLoginAt()
+	return _u
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -295,6 +444,16 @@ func (_u *UserUpdateOne) check() error {
 			return &ValidationError{Name: "credential", err: fmt.Errorf(`bot: validator failed for field "User.credential": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LastLoginIP(); ok {
+		if err := user.LastLoginIPValidator(v); err != nil {
+			return &ValidationError{Name: "last_login_ip", err: fmt.Errorf(`bot: validator failed for field "User.last_login_ip": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LastLoginLocation(); ok {
+		if err := user.LastLoginLocationValidator(v); err != nil {
+			return &ValidationError{Name: "last_login_location", err: fmt.Errorf(`bot: validator failed for field "User.last_login_location": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -344,6 +503,24 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.CredentialCleared() {
 		_spec.ClearField(user.FieldCredential, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastLoginIP(); ok {
+		_spec.SetField(user.FieldLastLoginIP, field.TypeString, value)
+	}
+	if _u.mutation.LastLoginIPCleared() {
+		_spec.ClearField(user.FieldLastLoginIP, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastLoginLocation(); ok {
+		_spec.SetField(user.FieldLastLoginLocation, field.TypeString, value)
+	}
+	if _u.mutation.LastLoginLocationCleared() {
+		_spec.ClearField(user.FieldLastLoginLocation, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastLoginAt(); ok {
+		_spec.SetField(user.FieldLastLoginAt, field.TypeTime, value)
+	}
+	if _u.mutation.LastLoginAtCleared() {
+		_spec.ClearField(user.FieldLastLoginAt, field.TypeTime)
 	}
 	_node = &User{config: _u.config}
 	_spec.Assign = _node.assignValues

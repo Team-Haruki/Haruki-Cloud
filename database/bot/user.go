@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"haruki-cloud/database/bot/user"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -21,7 +22,13 @@ type User struct {
 	// Bot ID, primary key
 	BotID int `json:"bot_id,omitempty"`
 	// Bot credential
-	Credential   string `json:"credential,omitempty"`
+	Credential string `json:"credential,omitempty"`
+	// Client self-reported IP from myip.ipip.net
+	LastLoginIP string `json:"last_login_ip,omitempty"`
+	// Client self-reported location from myip.ipip.net
+	LastLoginLocation string `json:"last_login_location,omitempty"`
+	// Last successful login time
+	LastLoginAt  *time.Time `json:"last_login_at,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -32,8 +39,10 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldID, user.FieldOwnerUserID, user.FieldBotID:
 			values[i] = new(sql.NullInt64)
-		case user.FieldCredential:
+		case user.FieldCredential, user.FieldLastLoginIP, user.FieldLastLoginLocation:
 			values[i] = new(sql.NullString)
+		case user.FieldLastLoginAt:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -72,6 +81,25 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field credential", values[i])
 			} else if value.Valid {
 				_m.Credential = value.String
+			}
+		case user.FieldLastLoginIP:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field last_login_ip", values[i])
+			} else if value.Valid {
+				_m.LastLoginIP = value.String
+			}
+		case user.FieldLastLoginLocation:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field last_login_location", values[i])
+			} else if value.Valid {
+				_m.LastLoginLocation = value.String
+			}
+		case user.FieldLastLoginAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_login_at", values[i])
+			} else if value.Valid {
+				_m.LastLoginAt = new(time.Time)
+				*_m.LastLoginAt = value.Time
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -117,6 +145,17 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("credential=")
 	builder.WriteString(_m.Credential)
+	builder.WriteString(", ")
+	builder.WriteString("last_login_ip=")
+	builder.WriteString(_m.LastLoginIP)
+	builder.WriteString(", ")
+	builder.WriteString("last_login_location=")
+	builder.WriteString(_m.LastLoginLocation)
+	builder.WriteString(", ")
+	if v := _m.LastLoginAt; v != nil {
+		builder.WriteString("last_login_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

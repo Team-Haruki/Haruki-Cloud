@@ -24,9 +24,11 @@ type RegisterRequest struct {
 // AuthPayload 解密后的登录载荷（MsgPack 编码）
 // 请求体格式: nonce(12) || AES-256-GCM(key, nonce, MsgPack(AuthPayload))
 type AuthPayload struct {
-	BotID      string `msgpack:"bot_id"`
-	Credential string `msgpack:"credential"` // JWT 签名的 credential
-	Timestamp  int64  `msgpack:"timestamp"`  // 防重放攻击
+	BotID          string `msgpack:"bot_id"`
+	Credential     string `msgpack:"credential"`      // JWT 签名的 credential
+	Timestamp      int64  `msgpack:"timestamp"`        // 防重放攻击
+	ClientIP       string `msgpack:"client_ip"`        // 客户端自报 IP（来自 myip.ipip.net）
+	ClientLocation string `msgpack:"client_location"`  // 客户端自报地理位置
 }
 
 // InternalVerifyRequest 内部服务验证请求
@@ -63,6 +65,8 @@ const (
 	RedisKeyVerifyCode   = "hdb:bot:verify_code:%d"   // QQ号码
 	RedisKeyVerifyStatus = "hdb:bot:verify_status:%d" // QQ号码
 	RedisKeySessionToken = "hdb:bot:session:%s"       // bot_id
+	RedisKeyNonce        = "hdb:bot:nonce:%s"         // payload hash
+	RedisKeyRateLimit    = "hdb:bot:rl:%s:%s"         // action:identifier
 )
 
 // ================= Cache Settings =================
@@ -71,6 +75,14 @@ const (
 	VerifyCodeTTLMinutes = 10
 	// AuthTimestampMaxAge 认证时间戳最大偏差（秒），防重放攻击
 	AuthTimestampMaxAge = 300
+
+	// Rate limit settings
+	RateLimitSendMail   = 5  // 每 QQ 号每小时最多发送 5 次验证码
+	RateLimitRegister   = 5  // 每 QQ 号每验证码最多尝试 5 次验证
+	RateLimitAuth       = 10 // 每 bot_id 每分钟最多认证 10 次
+	RateLimitSendMailTTL = 60 // 分钟
+	RateLimitRegisterTTL = 10 // 分钟
+	RateLimitAuthTTL     = 1  // 分钟
 )
 
 // ================= Error Messages =================
@@ -90,6 +102,9 @@ const (
 	ErrSessionExpired          = "session expired or invalid"
 	ErrMissingVerificationCode = "missing verification_code"
 	ErrSendEmailFailed         = "failed to send verification email"
+	ErrRateLimitExceeded       = "rate limit exceeded, please try again later"
+	ErrReplayDetected          = "duplicate request detected"
+	ErrRegistrationDisabled    = "registration is currently disabled"
 )
 
 // ================= Service Structs =================

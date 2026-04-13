@@ -109,26 +109,27 @@ func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
 
 	prev := config.Cfg
 	config.Cfg.Backend.AcceptAuthorization = "Bearer route-test"
+	config.Cfg.HarukiBotDB.EnableRegistration = true
 	t.Cleanup(func() { config.Cfg = prev })
 
 	app := fiber.New()
 	RegisterBotRoutes(app, client, nil, nil, "")
 
-	sendResp := sendJSONRequest(t, app, http.MethodPost, "/bot/send-mail", `{"qq_number":0}`, nil)
+	sendResp := sendJSONRequest(t, app, http.MethodPost, "/api/v2/bot/send-mail", `{"qq_number":0}`, nil)
 	if sendResp.Status != fiber.StatusBadRequest {
-		t.Fatalf("expected /bot/send-mail to be registered, got status=%d message=%s", sendResp.Status, sendResp.Message)
+		t.Fatalf("expected /api/v2/bot/send-mail to be registered, got status=%d message=%s", sendResp.Status, sendResp.Message)
 	}
 
-	registerResp := sendJSONRequest(t, app, http.MethodPost, "/bot/register", `{"qq_number":0}`, nil)
+	registerResp := sendJSONRequest(t, app, http.MethodPost, "/api/v2/bot/register", `{"qq_number":0}`, nil)
 	if registerResp.Status != fiber.StatusBadRequest {
-		t.Fatalf("expected /bot/register to be registered, got status=%d message=%s", registerResp.Status, registerResp.Message)
+		t.Fatalf("expected /api/v2/bot/register to be registered, got status=%d message=%s", registerResp.Status, registerResp.Message)
 	}
 
-	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/bot/12345678/auth", []byte("garbage"))
+	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/api/v2/bot/12345678/auth", []byte("garbage"))
 	authHTTPResp.Body.Close()
 	// Auth route is registered if we get a non-404 response (400 or 500 both ok)
 	if authHTTPResp.StatusCode == fiber.StatusNotFound {
-		t.Fatalf("expected /bot/:bot_id/auth to be registered, got 404")
+		t.Fatalf("expected /api/v2/bot/:bot_id/auth to be registered, got 404")
 	}
 
 	verifyResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", `{}`, map[string]string{
@@ -151,6 +152,7 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	config.Cfg.HarukiBotDB.CredentialSignToken = "credential-sign-token"
 	config.Cfg.HarukiBotDB.SessionSignToken = "session-sign-token"
 	config.Cfg.HarukiBotDB.SessionTTLDays = 7
+	config.Cfg.HarukiBotDB.EnableRegistration = true
 	config.Cfg.Backend.AcceptAuthorization = "Bearer internal-test"
 	config.Cfg.Backend.AcceptUserAgent = ""
 	t.Cleanup(func() { config.Cfg = prev })
@@ -312,6 +314,10 @@ func TestBotSendMail_TurnstileFailure(t *testing.T) {
 	if err := client.Schema.Create(ctx); err != nil {
 		t.Fatalf("create schema: %v", err)
 	}
+
+	prev := config.Cfg
+	config.Cfg.HarukiBotDB.EnableRegistration = true
+	t.Cleanup(func() { config.Cfg = prev })
 
 	store := newMemoryRedisStore()
 	turnstileMock := &mockTurnstile{valid: false}

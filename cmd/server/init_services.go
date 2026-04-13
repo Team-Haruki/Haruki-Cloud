@@ -142,8 +142,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {
 	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.AuthEncryptionKey)
 	if keyHex == "" {
-		mainLogger.Warnf("Auth encryption key not configured; auth endpoint will reject requests")
-		return nil
+		mainLogger.Errorf("auth_encryption_key is required but not configured")
+		os.Exit(1)
 	}
 	keyBytes, err := hex.DecodeString(keyHex)
 	if err != nil {
@@ -161,8 +161,8 @@ func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {
 func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
 	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey)
 	if keyHex == "" {
-		mainLogger.Warnf("Noise IK private key not configured; bot API transport encryption disabled")
-		return nil
+		mainLogger.Errorf("noise_private_key is required but not configured")
+		os.Exit(1)
 	}
 	privBytes, err := hex.DecodeString(keyHex)
 	if err != nil {

@@ -29,6 +29,20 @@ func (User) Fields() []ent.Field {
 			MaxLen(512).
 			Optional().
 			Comment("Bot credential"),
+		field.String("last_login_ip").
+			MaxLen(64).
+			Optional().
+			Default("").
+			Comment("Client self-reported IP from myip.ipip.net"),
+		field.String("last_login_location").
+			MaxLen(256).
+			Optional().
+			Default("").
+			Comment("Client self-reported location from myip.ipip.net"),
+		field.Time("last_login_at").
+			Optional().
+			Nillable().
+			Comment("Last successful login time"),
 	}
 }
 

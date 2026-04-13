@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/subtle"
 	"errors"
 	"strconv"
 	"time"
@@ -33,6 +34,16 @@ func (h *UserHandler) SendMail(c fiber.Ctx) error {
 	}
 	if req.TurnstileToken == "" {
 		return api.JSONResponse(c, fiber.StatusBadRequest, ErrMissingTurnstileToken)
+	}
+
+	// 速率限制: 每 QQ 号每小时最多 5 次
+	qqStr := strconv.FormatInt(req.QQNumber, 10)
+	allowed, err := h.svc.checkRateLimit(ctx, "sendmail", qqStr, RateLimitSendMail, RateLimitSendMailTTL)
+	if err != nil {
+		return api.InternalError(c)
+	}
+	if !allowed {
+		return api.JSONResponse(c, fiber.StatusTooManyRequests, ErrRateLimitExceeded)
 	}
 
 	// 验证 Turnstile
@@ -82,6 +93,16 @@ func (h *UserHandler) Register(c fiber.Ctx) error {
 		return api.JSONResponse(c, fiber.StatusBadRequest, ErrMissingVerificationCode)
 	}
 
+	// 速率限制: 每 QQ 号每验证码窗口最多 5 次尝试
+	qqStr := strconv.FormatInt(req.QQNumber, 10)
+	allowed, err := h.svc.checkRateLimit(ctx, "register", qqStr, RateLimitRegister, RateLimitRegisterTTL)
+	if err != nil {
+		return api.InternalError(c)
+	}
+	if !allowed {
+		return api.JSONResponse(c, fiber.StatusTooManyRequests, ErrRateLimitExceeded)
+	}
+
 	// 检查验证码
 	storedCode, err := h.svc.getRedisKey(ctx, RedisKeyVerifyCode, req.QQNumber)
 	if errors.Is(err, redis.Nil) {
@@ -90,7 +111,7 @@ func (h *UserHandler) Register(c fiber.Ctx) error {
 	if err != nil {
 		return api.InternalError(c)
 	}
-	if storedCode != req.VerificationCode {
+	if subtle.ConstantTimeCompare([]byte(storedCode), []byte(req.VerificationCode)) != 1 {
 		return api.JSONResponse(c, fiber.StatusBadRequest, ErrVerifyCodeInvalid)
 	}
 
@@ -128,12 +149,18 @@ func (h *UserHandler) Register(c fiber.Ctx) error {
 		return api.InternalError(c)
 	}
 
+	// bcrypt 哈希 credential 后存储
+	hashedCredential, err := hashCredential(credential)
+	if err != nil {
+		return api.InternalError(c)
+	}
+
 	// 创建用户
 	_, err = h.svc.dbClient.User.
 		Create().
 		SetOwnerUserID(req.QQNumber).
 		SetBotID(botID).
-		SetCredential(credential).
+		SetCredential(hashedCredential).
 		Save(ctx)
 	if err != nil {
 		return api.InternalError(c)
@@ -142,7 +169,7 @@ func (h *UserHandler) Register(c fiber.Ctx) error {
 	// 清理 Redis 键
 	h.svc.cleanupRegistrationKeys(ctx, req.QQNumber)
 
-	// 签名 credential 为 JWT
+	// 签名 credential 为 JWT（JWT 中嵌入的是明文 credential，用于后续 auth 比对）
 	payload := jwt.MapClaims{
 		"bot_id":     strconv.Itoa(botID),
 		"credential": credential,
@@ -160,7 +187,7 @@ func (h *UserHandler) Register(c fiber.Ctx) error {
 }
 
 // Auth 登录 - AES-256-GCM 固定密钥加密（公开 API）
-// 请求体: raw bytes = nonce(12) || AES-256-GCM(key, nonce, MsgPack{bot_id, credential, timestamp})
+// 请求体: raw bytes = nonce(12) || AES-256-GCM(key, nonce, MsgPack{bot_id, credential, timestamp, client_ip, client_location})
 // 响应体: raw bytes = nonce(12) || AES-256-GCM(key, nonce, MsgPack{session_token, expires_at, noise_server_pubkey})
 func (h *UserHandler) Auth(c fiber.Ctx) error {
 	ctx := c.Context()
@@ -168,6 +195,15 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	botID, err := strconv.Atoi(botIDStr)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
+	}
+
+	// 速率限制: 每 bot_id 每分钟最多 10 次
+	allowed, rlErr := h.svc.checkRateLimit(ctx, "auth", botIDStr, RateLimitAuth, RateLimitAuthTTL)
+	if rlErr != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+	if !allowed {
+		return c.Status(fiber.StatusTooManyRequests).SendString(ErrRateLimitExceeded)
 	}
 
 	// 使用固定 AES-256 密钥解密请求体
@@ -184,6 +220,15 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	plaintext, err := crypto.DecryptRaw(body, key)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
+	}
+
+	// Nonce 检查（防重放）
+	isNew, nonceErr := h.svc.checkAndStoreNonce(ctx, plaintext)
+	if nonceErr != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+	if !isNew {
+		return c.Status(fiber.StatusBadRequest).SendString(ErrReplayDetected)
 	}
 
 	// MsgPack 解码载荷
@@ -234,7 +279,8 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrBotIDMismatch)
 	}
 
-	if u.Credential != tokenCredential {
+	// 验证 credential（兼容 bcrypt 哈希和旧明文记录）
+	if !verifyCredential(u.Credential, tokenCredential) {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
 	}
 
@@ -253,7 +299,20 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	}
 
 	// 存储 session 到 Redis
-	_ = h.svc.setRedisKey(ctx, RedisKeySessionToken, botIDStr, sessionToken, int(sessionTTL.Minutes()))
+	if err := h.svc.setRedisKey(ctx, RedisKeySessionToken, botIDStr, sessionToken, int(sessionTTL.Minutes())); err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	// 记录客户端自报的登录 IP 和位置
+	loginUpdate := h.svc.dbClient.User.UpdateOneID(u.ID).
+		SetLastLoginAt(time.Now())
+	if payload.ClientIP != "" {
+		loginUpdate = loginUpdate.SetLastLoginIP(payload.ClientIP)
+	}
+	if payload.ClientLocation != "" {
+		loginUpdate = loginUpdate.SetLastLoginLocation(payload.ClientLocation)
+	}
+	_ = loginUpdate.Exec(ctx) // 非关键操作，失败不阻塞登录
 
 	// 构造加密响应: MsgPack → AES-256-GCM
 	resp := AuthResponse{
@@ -274,6 +333,21 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	return c.Send(encrypted)
 }
 
+// Logout 注销 - 删除 Redis session
+func (h *UserHandler) Logout(c fiber.Ctx) error {
+	ctx := c.Context()
+	botIDStr := c.Params("bot_id")
+	if _, err := strconv.Atoi(botIDStr); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
+	}
+
+	if err := h.svc.deleteSession(ctx, botIDStr); err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	return api.JSONResponse(c, fiber.StatusOK, "已注销")
+}
+
 // ================= Route Registration =================
 
 func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) {
@@ -281,9 +355,10 @@ func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis
 	h := NewUserHandler(svc)
 
 	// 公开 API（无需鉴权，暴露到公网）
-	public := app.Group("/bot")
+	public := app.Group("/api/v2/bot")
 
-	public.Post("/send-mail", h.SendMail) // 发送验证码
-	public.Post("/register", h.Register)  // 注册
-	public.Post("/:bot_id/auth", h.Auth)  // 登录（AES-256-GCM 固定密钥加密）
+	public.Post("/send-mail", h.SendMail)      // 发送验证码
+	public.Post("/register", h.Register)       // 注册
+	public.Post("/:bot_id/auth", h.Auth)       // 登录（AES-256-GCM 固定密钥加密）
+	public.Delete("/:bot_id/logout", h.Logout) // 注销
 }

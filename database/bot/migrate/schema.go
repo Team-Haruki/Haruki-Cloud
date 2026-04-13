@@ -74,6 +74,9 @@ var (
 		{Name: "owner_user_id", Type: field.TypeInt64},
 		{Name: "bot_id", Type: field.TypeInt, Unique: true},
 		{Name: "credential", Type: field.TypeString, Nullable: true, Size: 512},
+		{Name: "last_login_ip", Type: field.TypeString, Nullable: true, Size: 64, Default: ""},
+		{Name: "last_login_location", Type: field.TypeString, Nullable: true, Size: 256, Default: ""},
+		{Name: "last_login_at", Type: field.TypeTime, Nullable: true},
 	}
 	// UserTable holds the schema information for the "user" table.
 	UserTable = &schema.Table{

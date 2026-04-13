@@ -87,12 +87,14 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 
 	bot.Get("/command/manifests", buildManifestHandler(botDBClient))
 
+	guard := NewRequestGuard(redisClient)
+
 	pjsk := bot.Group("/pjsk")
 	if noiseKeyPair != nil {
 		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
 	}
 	for _, route := range commandhandler.ListBotRoutes() {
-		h := makeBotHandler(renderApp, route.Path, route.Commands)
+		h := makeBotHandler(renderApp, guard, route.Path, route.Commands)
 		path := "/" + route.Path
 		pjsk.Post(path, h)
 	}
@@ -101,7 +103,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 // makeBotHandler returns a POST-only fiber.Handler that validates the matched
 // command field belongs to the current endpoint path, then lets the registered
 // handler parse the OneBot message segments and produce a resolved render command.
-func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []string) fiber.Handler {
+func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath string, commands []string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
@@ -112,6 +114,11 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 		}
 		if req.MatchedCommand == "" {
 			return botResponse(c, fiber.StatusBadRequest, "matched_command is required")
+		}
+
+		// Dedup + rate limit: acquire guard before doing any work.
+		if !guard.Acquire(c.Context(), req) {
+			return botResponse(c, fiber.StatusOK, "ok", make(onebot11.Message, 0))
 		}
 		// Backward compatibility: /skp moved from sk/rank-trace to sk/predict.
 		// Some clients may still post /skp to the old endpoint until manifests refresh.
@@ -157,15 +164,18 @@ func makeBotHandler(renderApp *renderapp.App, expectedPath string, commands []st
 		if err != nil {
 			var replyErr onebot11.ReplayError
 			if errors.As(err, &replyErr) {
+				guard.MarkComplete(c.Context(), req)
 				return botResponse(c, fiber.StatusOK, "ok",
 					[]onebot11.Segment{onebot11.Text(string(replyErr))},
 				)
 			}
 			logger.Errorf("bot command render failed: mode=%s matched_command=%s err=%v", resolved.Mode, req.MatchedCommand, err)
+			guard.MarkComplete(c.Context(), req)
 			return botResponse(c, fiber.StatusOK, "ok",
 				[]onebot11.Segment{onebot11.Text(err.Error())},
 			)
 		}
+		guard.MarkComplete(c.Context(), req)
 		return botResponse(c, fiber.StatusOK, "ok", responseData)
 	}
 }

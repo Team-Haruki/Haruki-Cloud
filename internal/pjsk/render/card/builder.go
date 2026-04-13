@@ -147,9 +147,14 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 		return nil, fmt.Errorf("no valid cards found from provided ids")
 	}
 
+	termLimitedIconPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "term_limited.png"))
+	fesLimitedIconPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "fes_limited.png"))
+
 	return &drawing.CardListRequest{
-		Cards:  cards,
-		Region: region.String(),
+		Cards:               cards,
+		Region:              region.String(),
+		TermLimitedIconPath: &termLimitedIconPath,
+		FesLimitedIconPath:  &fesLimitedIconPath,
 	}, nil
 }
 

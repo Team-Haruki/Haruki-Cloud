@@ -5,8 +5,6 @@ import (
 
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/education"
-	"haruki-cloud/internal/pjsk/render/userdata"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -18,26 +16,24 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	var data []byte
 	region := rc.Region
 	regionStr := rc.RegionStr
+	binding, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
+	if suiteErr != nil {
+		return nil, suiteErr
+	}
 	publicDetailedProfile := rc.GetDetailedProfile()
+	if suiteSnapshot != nil {
+		publicDetailedProfile = suiteSnapshot.DetailedProfile(region)
+	}
 
 	// Resolve the user's suite-visible binding and its request-scoped snapshot.
 	platform := rc.Platform
 	platformUserID := rc.PlatformUserID
 	var suitePJSKUserID string
 	var suitePlatform, suitePlatformUserID string
-	var suiteBinding *accountdata.ResolvedBinding
-	var suiteSnapshot userdata.Snapshot
-
-	_, binding, _ := resolveBindingWithFallback(
-		rc.Ctx, rc.App.Bindings, platform, platformUserID, regionStr, rc.Cmd.RegionExplicit,
-		bindingResolutionOptions{RequireSuite: true},
-	)
 	if binding != nil {
 		suitePJSKUserID = binding.PJSKUserID
 		suitePlatform = platform
 		suitePlatformUserID = platformUserID
-		suiteBinding = binding
-		suiteSnapshot = resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, suitePlatform, suitePlatformUserID, suitePJSKUserID, false)
 	}
 
 	switch rc.Cmd.Mode {
@@ -97,7 +93,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		req := drawing.PowerBonusDetailRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		if len(req.CharaBonuses) == 0 && len(req.UnitBonuses) == 0 && len(req.AttrBonuses) == 0 {
-			if snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, suitePlatform, suitePlatformUserID, suitePJSKUserID, hasUsableMySekaiData(suiteBinding)); snapshot != nil {
+			if snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, suitePlatform, suitePlatformUserID, suitePJSKUserID, hasUsableMySekaiData(binding)); snapshot != nil {
 				builtReq, buildErr := eduCtrl.BuildPowerBonusDetailRequestFromSnapshot(education.PowerBonusQuery{
 					Region:   region,
 					Profile:  publicDetailedProfile,

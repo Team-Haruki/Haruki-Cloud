@@ -246,6 +246,45 @@ func TestExecuteEducationAreaUsesResolvedRequestContextRegion(t *testing.T) {
 	}
 }
 
+func TestExecuteEducationAreaRequiresSuiteSnapshotWhenBindingVisible(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeEducationRegionValidator{})
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	params, err := json.Marshal(education.AreaItemQuery{Unit: "light_sound"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	_, err = executeEducation(&RequestContext{
+		Ctx: ctx,
+		Cmd: &parser.ResolvedCommand{
+			Module:            parser.ModuleEducation,
+			Mode:              "education-area",
+			Region:            "jp",
+			Params:            params,
+			RequesterPlatform: "qq",
+			RequesterUserID:   "42",
+		},
+		App: &renderapp.App{
+			Edu:      education.NewController(nil, nil, nil, renderregion.JP),
+			Bindings: service,
+		},
+		Region:         renderregion.JP,
+		RegionStr:      "jp",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	})
+	if err == nil {
+		t.Fatal("expected missing suite snapshot to fail")
+	}
+	if err.Error() != ErrMsgSuiteDataNotFound {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func mustBridgeEducationSnapshot(t *testing.T) renderuserdata.Snapshot {
 	t.Helper()
 

@@ -140,20 +140,23 @@ func TestGlobalResolver_Resolution(t *testing.T) {
 	resolver := NewGlobalCommandResolver(nil)
 
 	tests := []struct {
-		name         string
-		input        string
-		expectedMode string
-		expectErr    bool
+		name                   string
+		input                  string
+		expectedMode           string
+		expectedRegion         string
+		expectedRegionExplicit bool
+		expectErr              bool
 	}{
-		{"Player Trace No Flag", "/sk-player-trace", "sk-player-trace", false},
-		{"Player Trace With Extraneous Text", "/sk玩家轨迹 a b c", "sk-player-trace", false},
-		{"Line", "/sk线", "sk-line", false},
-		{"Predict", "/skp", "sk-predict", false},
-		{"Event List with JP region", "/jp/event-list", "event-list", false},
-		{"Mysekai Resource Alias", "/msa", "mysekai-resource", false},
-		{"Mysekai Map Alias", "/msm", "mysekai-map", false},
-		{"Mysekai Music Record Alias", "/msr", "mysekai-music-record", false},
-		{"Mysekai Map Legacy Alias", "/msmap", "mysekai-map", false},
+		{"Player Trace No Flag", "/sk-player-trace", "sk-player-trace", "jp", false, false},
+		{"Player Trace With Extraneous Text", "/sk玩家轨迹 a b c", "sk-player-trace", "jp", false, false},
+		{"Line", "/sk线", "sk-line", "jp", false, false},
+		{"Predict", "/skp", "sk-predict", "jp", false, false},
+		{"Event List with JP region", "/jp/event-list", "event-list", "jp", true, false},
+		{"Mysekai Resource Alias", "/msa", "mysekai-resource", "jp", false, false},
+		{"Mysekai Map Alias", "/msm", "mysekai-map", "jp", false, false},
+		{"Mysekai Music Record Alias", "/msr", "mysekai-music-record", "jp", false, false},
+		{"Mysekai Map Legacy Alias", "/msmap", "mysekai-map", "jp", false, false},
+		{"Event List with Region Flag", "/event-list -r cn", "event-list", "cn", true, false},
 	}
 
 	for _, tt := range tests {
@@ -169,6 +172,12 @@ func TestGlobalResolver_Resolution(t *testing.T) {
 				}
 				if res.Mode != tt.expectedMode {
 					t.Errorf("expected mode: %s, got: %s", tt.expectedMode, res.Mode)
+				}
+				if res.Region != tt.expectedRegion {
+					t.Errorf("expected region: %s, got: %s", tt.expectedRegion, res.Region)
+				}
+				if res.RegionExplicit != tt.expectedRegionExplicit {
+					t.Errorf("expected region explicit: %v, got: %v", tt.expectedRegionExplicit, res.RegionExplicit)
 				}
 			}
 		})

@@ -6,9 +6,11 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"sort"
 	"strconv"
 	"strings"
 )
+
 /*
 func (sekaiHandlers) MusicDetailHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
@@ -41,13 +43,22 @@ func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			params := make(map[string]any)
 			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
-				ctx.SetArgs(cleaned)
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-list", map[string]any{
-					"difficulty": diff,
-				}), nil
+				args = cleaned
+				params["difficulty"] = diff
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-list"), nil
+			if levelParams, cleaned, ok := extractMusicListLevelArgs(args); ok {
+				args = cleaned
+				for key, value := range levelParams {
+					params[key] = value
+				}
+			}
+			ctx.SetArgs(args)
+			if len(params) == 0 {
+				return makeResolvedCmd(ctx, parser.ModuleMusic, "music-list"), nil
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-list", params), nil
 		},
 	}
 }
@@ -180,4 +191,64 @@ func (sekaiHandlers) MusicCoverHandle() SekaiCommandHandler {
 
 func extractMusicDifficulty(args string) (string, string) {
 	return rendermusic.ExtractMusicDifficulty(args)
+}
+
+func extractMusicListLevelArgs(args string) (map[string]any, string, bool) {
+	remaining := strings.TrimSpace(args)
+	for _, token := range strings.Fields(args) {
+		levelParams, ok := parseMusicListLevelToken(strings.TrimSpace(token))
+		if !ok {
+			continue
+		}
+		return levelParams, removeMusicBoardToken(remaining, token), true
+	}
+	return nil, remaining, false
+}
+
+func parseMusicListLevelToken(token string) (map[string]any, bool) {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return nil, false
+	}
+	if exact, err := strconv.Atoi(token); err == nil && exact > 0 {
+		return map[string]any{"level": exact}, true
+	}
+
+	if parts := strings.Split(token, "-"); len(parts) == 2 {
+		left, errLeft := strconv.Atoi(strings.TrimSpace(parts[0]))
+		right, errRight := strconv.Atoi(strings.TrimSpace(parts[1]))
+		if errLeft == nil && errRight == nil && left > 0 && right > 0 {
+			values := []int{left, right}
+			sort.Ints(values)
+			return map[string]any{
+				"level_min": values[0],
+				"level_max": values[1],
+			}, true
+		}
+	}
+
+	switch {
+	case strings.HasPrefix(token, "<="):
+		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, "<="))); err == nil && value > 0 {
+			return map[string]any{"level_max": value}, true
+		}
+	case strings.HasPrefix(token, ">="):
+		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, ">="))); err == nil && value > 0 {
+			return map[string]any{"level_min": value}, true
+		}
+	case strings.HasPrefix(token, "<"):
+		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, "<"))); err == nil && value > 0 {
+			return map[string]any{"level_max": value - 1}, value > 1
+		}
+	case strings.HasPrefix(token, ">"):
+		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, ">"))); err == nil {
+			return map[string]any{"level_min": value + 1}, value >= 0
+		}
+	case strings.HasPrefix(token, "="):
+		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, "="))); err == nil && value > 0 {
+			return map[string]any{"level": value}, true
+		}
+	}
+
+	return nil, false
 }

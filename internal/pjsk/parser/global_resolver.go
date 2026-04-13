@@ -169,12 +169,14 @@ func (r *GlobalCommandResolver) Resolve(input string) (*ResolvedCommand, error) 
 	prefixRes := r.extractor.ExtractRegionPrefix(input)
 	if prefixRes.Found && prefixRes.Value != "" {
 		res.Region = prefixRes.Value
+		res.RegionExplicit = true
 		input = prefixRes.Remaining
 	}
 
 	regRes := r.extractor.ExtractRegion(input)
 	if regRes.Value != "" {
 		res.Region = regRes.Value
+		res.RegionExplicit = true
 	}
 	input = regRes.Remaining
 

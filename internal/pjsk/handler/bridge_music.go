@@ -8,7 +8,6 @@ import (
 
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/music"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
 
@@ -27,25 +26,40 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = musicCtrl.RenderMusicDetail(q)
 	case "music-list":
+		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
+		if suiteErr != nil {
+			return nil, suiteErr
+		}
+		if suiteSnapshot != nil {
+			musicCtrl = musicCtrl.WithSnapshot(suiteSnapshot)
+		}
 		q := music.ListQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		if strings.TrimSpace(q.Keyword) == "" {
 			q.Keyword = strings.TrimSpace(rc.Cmd.Query)
 		}
-		q.DetailedProfile = rc.GetDetailedProfile()
+		if suiteSnapshot != nil {
+			q.DetailedProfile = suiteSnapshot.DetailedProfile(rc.Region)
+		} else {
+			q.DetailedProfile = rc.GetDetailedProfile()
+		}
 		data, err = musicCtrl.RenderMusicList(q)
 	case "music-chart":
 		q := music.ChartQuery{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = musicCtrl.RenderMusicChart(q)
 	case "music-progress":
+		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
+		if suiteErr != nil {
+			return nil, suiteErr
+		}
 		q := music.ProgressQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		snapshot, snapshotErr := resolveRequiredSuiteSnapshot(rc)
-		if snapshotErr != nil {
-			return nil, snapshotErr
+		if suiteSnapshot != nil {
+			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, suiteSnapshot.ProfileCard(rc.Region))
+		} else {
+			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, nil, rc.GetProfileCard())
 		}
-		data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, snapshot, rc.GetProfileCard())
 	case "music-rewards":
 		data, err = renderMusicRewards(rc)
 	case "music-note-count":
@@ -159,21 +173,4 @@ func renderMusicRewards(rc *RequestContext) ([]byte, error) {
 	}
 
 	return musicCtrl.RenderMusicRewardsBasicEstimate(q, clearCounts, reason)
-}
-
-func resolveRequiredSuiteSnapshot(rc *RequestContext) (renderuserdata.Snapshot, error) {
-	if rc == nil {
-		return nil, fmt.Errorf(ErrMsgSuiteDataUnavailable)
-	}
-
-	target := rc.GetSelfTarget()
-	if target == nil || !hasUsableSuiteData(target.Binding) {
-		return nil, fmt.Errorf(ErrMsgSuiteDataUnavailable)
-	}
-
-	snapshot := rc.ResolveSnapshot(false)
-	if snapshot == nil {
-		return nil, fmt.Errorf("无法解析当前账号的 Suite 快照")
-	}
-	return snapshot, nil
 }

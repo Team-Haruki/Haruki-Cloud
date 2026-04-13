@@ -12,8 +12,9 @@ import (
 )
 
 type runtimeSnapshotStub struct {
-	detail *drawing.DetailedProfileCardRequest
-	card   *drawing.ProfileCardRequest
+	detail       *drawing.DetailedProfileCardRequest
+	card         *drawing.ProfileCardRequest
+	musicResults map[string]map[int]string
 }
 
 func (s *runtimeSnapshotStub) Require() error { return nil }
@@ -26,9 +27,27 @@ func (s *runtimeSnapshotStub) ProfileCard(renderregion.Value) *drawing.ProfileCa
 	return s.card
 }
 
-func (s *runtimeSnapshotStub) MusicResults(string) map[int]string { return nil }
+func (s *runtimeSnapshotStub) MusicResults(diff string) map[int]string {
+	if s == nil || s.musicResults == nil {
+		return nil
+	}
+	src := s.musicResults[diff]
+	if len(src) == 0 {
+		return nil
+	}
+	out := make(map[int]string, len(src))
+	for musicID, result := range src {
+		out[musicID] = result
+	}
+	return out
+}
 
-func (s *runtimeSnapshotStub) GetMusicResult(int, string) string { return "" }
+func (s *runtimeSnapshotStub) GetMusicResult(musicID int, diff string) string {
+	if s == nil || s.musicResults == nil {
+		return ""
+	}
+	return s.musicResults[diff][musicID]
+}
 
 func (s *runtimeSnapshotStub) ChallengeLive() *renderuserdata.ChallengeLiveData { return nil }
 

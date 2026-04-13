@@ -64,6 +64,28 @@ func TestBuildCardListRequestResolvesAdvancedFiltersFromQuery(t *testing.T) {
 	}
 }
 
+func TestBuildCardListRequestIncludesLimitedIconPaths(t *testing.T) {
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"},
+		},
+		supplyByCard: map[int]string{
+			1001: "term_limited",
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardListRequest(ListRequest{Query: "1001", Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildCardListRequest() error = %v", err)
+	}
+	if req.TermLimitedIconPath == nil || !strings.Contains(*req.TermLimitedIconPath, "term_limited.png") {
+		t.Fatalf("unexpected term limited icon path: %+v", req.TermLimitedIconPath)
+	}
+	if req.FesLimitedIconPath == nil || !strings.Contains(*req.FesLimitedIconPath, "fes_limited.png") {
+		t.Fatalf("unexpected fes limited icon path: %+v", req.FesLimitedIconPath)
+	}
+}
+
 func TestBuildCardBoxRequestMarksOwnedCardsFromDetailedProfile(t *testing.T) {
 	source := &lookupTestSource{}
 	builder := NewBuilder(source, nil, nil, nil)

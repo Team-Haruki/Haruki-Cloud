@@ -132,3 +132,31 @@ func TestBuildCardDetailRequestUsesLunabotStaticPathsForEventIcons(t *testing.T)
 		t.Fatalf("expected lunabot character icon path, got %q", got)
 	}
 }
+
+func TestBuildCardDetailRequestKeepsBaseMikuIconForCharacter21(t *testing.T) {
+	source := &lookupTestSource{
+		card: &masterdata.Card{
+			ID:              191,
+			CharacterID:     21,
+			CardRarityType:  "rarity_4",
+			Attr:            "cool",
+			Prefix:          "Miku Card",
+			AssetBundleName: "card_miku",
+		},
+		characters: map[int]*masterdata.Character{
+			21: {ID: 21, FirstName: "初音", GivenName: "未来", Unit: "piapro"},
+		},
+		unitByCard: map[int]string{
+			191: "school_refusal",
+		},
+	}
+
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardDetailRequest(Query{Query: "191", Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildCardDetailRequest() error = %v", err)
+	}
+	if req.CharacterIconPath != "static_images/chara_icon/miku.png" {
+		t.Fatalf("unexpected miku icon path: %q", req.CharacterIconPath)
+	}
+}

@@ -133,7 +133,7 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		if filter.SkillType != "" {
 			if p.skills != nil {
 				skillInfo, sErr := p.skills.GetByID(ctx, model.SkillID)
-				if sErr != nil || skillInfo == nil || skillInfo.DescriptionSpriteName != filter.SkillType {
+				if sErr != nil || skillInfo == nil || !cardSkillTypesMatch(filter.SkillType, skillInfo.DescriptionSpriteName) {
 					continue
 				}
 			} else {

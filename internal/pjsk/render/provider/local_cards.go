@@ -238,7 +238,7 @@ func (p *localCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*
 		if filter.SkillType != "" {
 			if p.skills != nil {
 				skill, sErr := p.skills.GetByID(ctx, card.SkillID)
-				if sErr != nil || skill == nil || skill.DescriptionSpriteName != filter.SkillType {
+				if sErr != nil || skill == nil || !cardSkillTypesMatch(filter.SkillType, skill.DescriptionSpriteName) {
 					continue
 				}
 			} else {

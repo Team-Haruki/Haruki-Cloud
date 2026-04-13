@@ -89,3 +89,26 @@ func TestLocalCardProviderFilterHonorsMainUnitConstraint(t *testing.T) {
 		t.Fatalf("unexpected pure-vs filter results: %+v", results)
 	}
 }
+
+func TestCardSkillTypesMatchSupportsLegacyJudgmentAlias(t *testing.T) {
+	tests := []struct {
+		name       string
+		filterType string
+		actualType string
+		want       bool
+	}{
+		{name: "exact score", filterType: "score_up", actualType: "score_up", want: true},
+		{name: "exact heal", filterType: "life_recovery", actualType: "life_recovery", want: true},
+		{name: "legacy judgment alias", filterType: "judgment_up", actualType: "judgment_accuracy_up", want: true},
+		{name: "reverse legacy judgment alias", filterType: "judgment_accuracy_up", actualType: "judgment_up", want: true},
+		{name: "different types", filterType: "life_recovery", actualType: "score_up", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := cardSkillTypesMatch(tt.filterType, tt.actualType); got != tt.want {
+				t.Fatalf("cardSkillTypesMatch(%q, %q) = %v, want %v", tt.filterType, tt.actualType, got, tt.want)
+			}
+		})
+	}
+}

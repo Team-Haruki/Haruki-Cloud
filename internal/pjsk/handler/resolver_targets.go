@@ -113,3 +113,12 @@ func selectorBindingServer(region string, regionExplicit bool) string {
 	}
 	return strings.TrimSpace(region)
 }
+
+func resolvedTargetRegion(region string, target resolvedGameTarget) string {
+	if target.Binding != nil {
+		if normalized := renderregion.Normalize(target.Binding.Server); !normalized.IsZero() {
+			return normalized.String()
+		}
+	}
+	return regionWithDefault(region)
+}

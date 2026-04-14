@@ -23,6 +23,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		if err != nil {
 			return nil, err
 		}
+		region = resolvedTargetRegion(region, target)
 
 		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
@@ -47,7 +48,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		}
 
 		q := profile.Query{
-			Region:           rc.Cmd.Region,
+			Region:           region,
 			Visible:          target.Visible,
 			BgSettings:       target.BgSettings,
 			VerticalOverride: p.ProfileVertical,

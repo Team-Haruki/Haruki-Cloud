@@ -23,10 +23,15 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 
 	region := regionWithDefault(rc.Cmd.Region)
 
-	harukiUserID, pjskUserID, visible, err := resolveGameUID(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
+	target, err := resolveGameTarget(rc.Ctx, p, region, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {
 		return nil, err
 	}
+	region = resolvedTargetRegion(region, target)
+	harukiUserID := target.HarukiUserID
+	pjskUserID := target.PJSKUserID
+	visible := target.Visible
+
 	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
 	if err != nil {
 		return nil, fmt.Errorf("获取玩家信息失败：%w", err)

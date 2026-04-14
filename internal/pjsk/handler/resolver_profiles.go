@@ -39,13 +39,14 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 	if err != nil {
 		return nil, nil
 	}
+	region := resolvedTargetRegion(rc.RegionStr, target)
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(rc.RegionStr, target.PJSKUserID)
+	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil, nil
 	}
 
-	return buildPublicMusicProfilesFromResolvedTarget(rc.Ctx, target, rc.RegionStr, rc.Platform, rc.PlatformUserID, resp, rc.App)
+	return buildPublicMusicProfilesFromResolvedTarget(rc.Ctx, target, region, rc.Platform, rc.PlatformUserID, resp, rc.App)
 }
 
 func buildPublicMusicProfilesFromResolvedTarget(
@@ -60,6 +61,7 @@ func buildPublicMusicProfilesFromResolvedTarget(
 	if app == nil || app.Profiles == nil || resp == nil {
 		return nil, nil
 	}
+	region = resolvedTargetRegion(region, target)
 
 	var profileSnapshot userdata.Snapshot
 	if hasUsableSuiteData(target.Binding) {
@@ -89,6 +91,7 @@ func buildPublicProfileCardForTarget(ctx context.Context, target resolvedGameTar
 	if app == nil || app.Profiles == nil {
 		return nil
 	}
+	region = resolvedTargetRegion(region, target)
 
 	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 	if err != nil {

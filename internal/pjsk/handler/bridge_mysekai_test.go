@@ -113,6 +113,66 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 	}
 }
 
+func TestResolveMySekaiRenderContextUsesSelectedBindingRegion(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"cn": {
+				"11111111111111": "CN User 1",
+			},
+			"jp": {
+				"33333333333333": "JP User 1",
+			},
+		},
+	})
+
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "33333333333333"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+
+	controller := rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true})
+	provider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{
+			card: &drawing.ProfileCardRequest{
+				Profile: &drawing.BasicProfile{Nickname: "selector-card"},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:  service,
+		MySekai:   controller,
+		Snapshots: provider,
+	}
+
+	result, err := resolveMySekaiRenderContext(ctx, app, userQueryParams{
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "u1",
+	}, "jp", false)
+	if err != nil {
+		t.Fatalf("resolveMySekaiRenderContext() error = %v", err)
+	}
+	if result.Region != "cn" {
+		t.Fatalf("expected resolved region cn, got %q", result.Region)
+	}
+	if result.Profile == nil || result.Profile.Profile == nil || result.Profile.Profile.Nickname != "selector-card" {
+		t.Fatalf("unexpected profile card: %+v", result.Profile)
+	}
+	if len(provider.selectors) != 1 {
+		t.Fatalf("expected one snapshot selector, got %d", len(provider.selectors))
+	}
+	if provider.selectors[0].Region != renderregion.CN {
+		t.Fatalf("expected cn selector region, got %+v", provider.selectors[0].Region)
+	}
+}
+
 func TestExecuteMySekaiRequiresController(t *testing.T) {
 	_, err := executeMysekai(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module: parser.ModuleMysekai,

@@ -68,10 +68,11 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, targetErr
 		}
 
+		regionStr = resolvedTargetRegion(regionStr, target)
 		platform, platformUserID := platformCredentials(p)
 		targetSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, false)
 
-		q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
+		q := deck.AutoQuery{Region: regionStr, RecommendType: recommendType}
 		mergeParams(combined.Deck, &q)
 		if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 			return nil, err
@@ -124,10 +125,11 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
 		return nil, err
 	}
-	detail, snapshot, err := resolveDeckRenderProfileAndSnapshot(rc, targetParams.Selector)
+	detail, snapshot, region, err := resolveDeckRenderProfileAndSnapshot(rc, targetParams.Selector)
 	if err != nil {
 		return nil, err
 	}
+	q.Region = region
 	if detail != nil {
 		q.Profile = detail
 	}
@@ -193,14 +195,14 @@ func formatDeckQuerySummary(q deck.AutoQuery) string {
 	return strings.Join(parts, " / ")
 }
 
-func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, renderuserdata.Snapshot, error) {
+func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, renderuserdata.Snapshot, string, error) {
 	if rc == nil {
-		return nil, nil, nil
+		return nil, nil, "", nil
 	}
 
 	selector = strings.TrimSpace(selector)
 	if selector == "" {
-		return rc.GetDetailedProfile(), rc.ResolveSnapshot(false), nil
+		return rc.GetDetailedProfile(), rc.ResolveSnapshot(false), rc.RegionStr, nil
 	}
 
 	target, err := resolveGameTarget(rc.Ctx, userQueryParams{
@@ -210,29 +212,31 @@ func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*
 		Selector:       selector,
 	}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
+	region := resolvedTargetRegion(rc.RegionStr, target)
 
-	snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, rc.RegionStr, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
-	detail := buildDeckDetailedProfileForTarget(rc, target, snapshot)
+	snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, region, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
+	detail := buildDeckDetailedProfileForTarget(rc, target, region, snapshot)
 	if detail == nil && snapshot != nil {
-		detail = snapshot.DetailedProfile(rc.Region)
+		detail = snapshot.DetailedProfile(renderregion.Normalize(region))
 	}
-	return detail, snapshot, nil
+	return detail, snapshot, region, nil
 }
 
-func buildDeckDetailedProfileForTarget(rc *RequestContext, target resolvedGameTarget, snapshot renderuserdata.Snapshot) *drawing.DetailedProfileCardRequest {
+func buildDeckDetailedProfileForTarget(rc *RequestContext, target resolvedGameTarget, region string, snapshot renderuserdata.Snapshot) *drawing.DetailedProfileCardRequest {
 	if rc == nil || rc.App == nil || rc.App.Profiles == nil {
 		return nil
 	}
+	region = resolvedTargetRegion(region, target)
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(rc.RegionStr, target.PJSKUserID)
+	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil
 	}
 
 	q := profile.Query{
-		Region:     rc.RegionStr,
+		Region:     region,
 		Visible:    target.Visible,
 		BgSettings: target.BgSettings,
 	}

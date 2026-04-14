@@ -69,7 +69,7 @@ func resolveMySekaiRenderContext(
 		return mySekaiRenderContext{}, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
 	}
 
-	result := mySekaiRenderContext{Controller: app.MySekai}
+	result := mySekaiRenderContext{Controller: app.MySekai, Region: regionWithDefault(regionStr)}
 	if app.Bindings == nil || strings.TrimSpace(params.Platform) == "" || strings.TrimSpace(params.PlatformUserID) == "" {
 		return result, nil
 	}
@@ -78,6 +78,8 @@ func resolveMySekaiRenderContext(
 	if err != nil {
 		return mySekaiRenderContext{}, err
 	}
+	regionStr = resolvedTargetRegion(regionStr, target)
+	result.Region = regionStr
 
 	platform, platformUserID := platformCredentials(params)
 	if snapshot := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, true); snapshot != nil {

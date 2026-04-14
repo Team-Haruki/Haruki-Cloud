@@ -21,10 +21,7 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 		return nil, err
 	}
 	pjskUserID := target.PJSKUserID
-	bindingServer := region
-	if target.Binding != nil && target.Binding.Server != "" {
-		bindingServer = target.Binding.Server
-	}
+	bindingServer := resolvedTargetRegion(region, target)
 
 	ts, err := calcRegistrationTime(pjskUserID, bindingServer)
 	if err != nil {

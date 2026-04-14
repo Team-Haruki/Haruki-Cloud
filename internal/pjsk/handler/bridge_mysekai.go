@@ -88,15 +88,15 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "mysekai-resource":
-		q := mysekai.ResourceQuery{Region: rc.Cmd.Region}
+		q := mysekai.ResourceQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderResource(q)
 	case "mysekai-resource-map":
-		resourceQuery := mysekai.ResourceQuery{Region: rc.Cmd.Region}
+		resourceQuery := mysekai.ResourceQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &resourceQuery)
 		resourceQuery.Profile = renderCtx.Profile
-		mapQuery := mysekai.MapQuery{Region: rc.Cmd.Region}
+		mapQuery := mysekai.MapQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &mapQuery)
 		return executeConcurrentMessages(
 			rc.Ctx,
@@ -116,7 +116,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 			},
 		)
 	case "mysekai-map":
-		q := mysekai.MapQuery{Region: rc.Cmd.Region}
+		q := mysekai.MapQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = renderCtx.Controller.RenderMap(q)
 		replayMessage, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
@@ -127,26 +127,26 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 			return replayMessage, nil
 		}
 	case "mysekai-fixture-list":
-		q := mysekai.FixtureListQuery{Region: rc.Cmd.Region}
+		q := mysekai.FixtureListQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderFixtureList(q)
 	case "mysekai-fixture-detail":
-		q := mysekai.FixtureDetailQuery{Region: rc.Cmd.Region, Query: rc.Cmd.Query}
+		q := mysekai.FixtureDetailQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = renderCtx.Controller.RenderFixtureDetail(q)
 	case "mysekai-door-upgrade":
-		q := mysekai.DoorUpgradeQuery{Region: rc.Cmd.Region, Query: rc.Cmd.Query}
+		q := mysekai.DoorUpgradeQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderDoorUpgrade(q)
 	case "mysekai-music-record":
-		q := mysekai.MusicRecordQuery{Region: rc.Cmd.Region}
+		q := mysekai.MusicRecordQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderMusicRecord(q)
 	case "mysekai-photo":
-		q := mysekai.PhotoQuery{Region: rc.Cmd.Region}
+		q := mysekai.PhotoQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		result, resolveErr := renderCtx.Controller.ResolvePhoto(q)
 		if resolveErr != nil {
@@ -166,7 +166,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		return append(image, onebot11.Text(fmt.Sprintf("拍摄时间: %s", photoTime))), nil
 	case "mysekai-talk-list":
-		q := mysekai.TalkListQuery{Region: rc.Cmd.Region, Query: rc.Cmd.Query}
+		q := mysekai.TalkListQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderTalkList(q)

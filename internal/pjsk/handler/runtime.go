@@ -130,7 +130,8 @@ func (rc *RequestContext) GetPublicProfileResponse() *sekaiutils.GetAnotherProfi
 		if target == nil {
 			return
 		}
-		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(rc.RegionStr, target.PJSKUserID)
+		region := resolvedTargetRegion(rc.RegionStr, *target)
+		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
 			return
 		}
@@ -143,10 +144,11 @@ func (rc *RequestContext) resolveProfiles() {
 	rc.profileOnce.Do(func() {
 		if target := rc.GetSelfTarget(); target != nil {
 			if resp := rc.GetPublicProfileResponse(); resp != nil {
+				region := resolvedTargetRegion(rc.RegionStr, *target)
 				rc.detailedProfile, rc.profileCard = buildPublicMusicProfilesFromResolvedTarget(
 					rc.Ctx,
 					*target,
-					rc.RegionStr,
+					region,
 					rc.Platform,
 					rc.PlatformUserID,
 					resp,

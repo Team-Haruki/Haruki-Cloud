@@ -29,4 +29,5 @@ type resolvedGameTarget struct {
 type mySekaiRenderContext struct {
 	Controller *rendermysekai.Controller
 	Profile    *drawing.ProfileCardRequest
+	Region     string
 }

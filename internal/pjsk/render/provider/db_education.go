@@ -10,6 +10,7 @@ import (
 type dbEducationProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	store  *localStore
 	once   sync.Once
 
 	rewardMu      sync.RWMutex
@@ -49,10 +50,10 @@ type dbEducationProvider struct {
 	gateByID    map[int]map[int]*MysekaiGateLevel
 	gatesLoaded bool
 
-	shopMu       sync.RWMutex
-	shopByBoxID  map[int]*ShopItem
-	shopItems    []*ShopItem
-	shopsLoaded  bool
+	shopMu      sync.RWMutex
+	shopByBoxID map[int]*ShopItem
+	shopItems   []*ShopItem
+	shopsLoaded bool
 }
 
 func (p *dbEducationProvider) init() {

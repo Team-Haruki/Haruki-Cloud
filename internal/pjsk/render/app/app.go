@@ -180,7 +180,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var vliveController *vlive.Controller
 	var masterProvider provider.MasterDataProvider
 	if sekaiClient != nil {
-		masterProvider = provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
+		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
+		masterDBProvider.SetLocalMasterdataDir(cfg.LocalMasterdata.Dir)
+		masterProvider = masterDBProvider
 
 		// Create module adapters from the unified provider
 		cardAdapter := card.NewProviderAdapter(masterProvider)
@@ -226,6 +228,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 				continue
 			}
 			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
+			regionProvider.SetLocalMasterdataDir(cfg.LocalMasterdata.Dir)
 			regionCardAdapter := card.NewProviderAdapter(regionProvider)
 			regionEventAdapter := event.NewProviderAdapter(regionProvider)
 			regionMusicAdapter := music.NewProviderAdapter(regionProvider)

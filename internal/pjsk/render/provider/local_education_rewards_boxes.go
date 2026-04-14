@@ -37,6 +37,7 @@ func (p *localEducationProvider) ensureResourceBoxes() error {
 			}
 			idx.byPurpose[box.ResourceBoxPurpose][box.ID] = box
 		}
+		supplementResourceBoxDetailsFromStore(p.store, idx.byPurpose)
 		return idx, nil
 	})
 }

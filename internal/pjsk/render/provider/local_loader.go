@@ -16,19 +16,43 @@ import (
 // ---------------------------------------------------------------------------
 
 type localStore struct {
-	dir   string
+	dirs  []string
 	mu    sync.RWMutex
 	cache map[string][]byte
 }
 
-func newLocalStore(dir string) *localStore {
+func newLocalStore(dirs ...string) *localStore {
+	cleaned := make([]string, 0, len(dirs))
+	seen := make(map[string]struct{}, len(dirs))
+	for _, dir := range dirs {
+		dir = strings.TrimSpace(dir)
+		if dir == "" {
+			continue
+		}
+		dir = filepath.Clean(dir)
+		if _, ok := seen[dir]; ok {
+			continue
+		}
+		seen[dir] = struct{}{}
+		cleaned = append(cleaned, dir)
+	}
+
 	return &localStore{
-		dir:   dir,
+		dirs:  cleaned,
 		cache: make(map[string][]byte),
 	}
 }
 
+func (s *localStore) Configured() bool {
+	return s != nil && len(s.dirs) > 0
+}
+
 func (s *localStore) readFile(filename string) ([]byte, error) {
+	if s == nil || !s.Configured() {
+		return nil, fmt.Errorf("read %s: local store is not configured", filename)
+	}
+	filename = filepath.Clean(filename)
+
 	s.mu.RLock()
 	if data, ok := s.cache[filename]; ok {
 		s.mu.RUnlock()
@@ -43,12 +67,25 @@ func (s *localStore) readFile(filename string) ([]byte, error) {
 		return data, nil
 	}
 
-	data, err := os.ReadFile(filepath.Join(s.dir, filename))
-	if err != nil {
-		return nil, fmt.Errorf("read %s: %w", filename, err)
+	var (
+		data    []byte
+		err     error
+		readErr error
+	)
+	for _, dir := range s.dirs {
+		data, err = os.ReadFile(filepath.Join(dir, filename))
+		if err == nil {
+			s.cache[filename] = data
+			return data, nil
+		}
+		if readErr == nil {
+			readErr = err
+		}
 	}
-	s.cache[filename] = data
-	return data, nil
+	if readErr == nil {
+		readErr = os.ErrNotExist
+	}
+	return nil, fmt.Errorf("read %s: %w", filename, readErr)
 }
 
 // loadJSON reads a JSON file and unmarshals it into a slice of T.

@@ -1,6 +1,9 @@
 package provider
 
 import (
+	"path/filepath"
+	"strings"
+
 	sekaiDB "haruki-cloud/database/sekai"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
@@ -52,17 +55,31 @@ func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value) *Dat
 	return p
 }
 
+func (p *DatabaseProvider) SetLocalMasterdataDir(root string) {
+	if p == nil || p.education == nil {
+		return
+	}
+
+	root = strings.TrimSpace(root)
+	if root == "" {
+		p.education.store = nil
+		return
+	}
+
+	p.education.store = newLocalStore(filepath.Join(root, p.region.String()), root)
+}
+
 func (p *DatabaseProvider) Region() renderregion.Value { return p.region }
 
-func (p *DatabaseProvider) Cards() CardProvider         { return p.cards }
-func (p *DatabaseProvider) Characters() CharacterProvider { return p.characters }
-func (p *DatabaseProvider) Skills() SkillProvider       { return p.skills }
-func (p *DatabaseProvider) Events() EventProvider       { return p.events }
-func (p *DatabaseProvider) Musics() MusicProvider       { return p.musics }
-func (p *DatabaseProvider) Gachas() GachaProvider       { return p.gachas }
-func (p *DatabaseProvider) Honors() HonorProvider       { return p.honors }
-func (p *DatabaseProvider) Stamps() StampProvider       { return p.stamps }
-func (p *DatabaseProvider) VLives() VLiveProvider       { return p.vlives }
-func (p *DatabaseProvider) Education() EducationProvider { return p.education }
+func (p *DatabaseProvider) Cards() CardProvider               { return p.cards }
+func (p *DatabaseProvider) Characters() CharacterProvider     { return p.characters }
+func (p *DatabaseProvider) Skills() SkillProvider             { return p.skills }
+func (p *DatabaseProvider) Events() EventProvider             { return p.events }
+func (p *DatabaseProvider) Musics() MusicProvider             { return p.musics }
+func (p *DatabaseProvider) Gachas() GachaProvider             { return p.gachas }
+func (p *DatabaseProvider) Honors() HonorProvider             { return p.honors }
+func (p *DatabaseProvider) Stamps() StampProvider             { return p.stamps }
+func (p *DatabaseProvider) VLives() VLiveProvider             { return p.vlives }
+func (p *DatabaseProvider) Education() EducationProvider      { return p.education }
 func (p *DatabaseProvider) PlayerFrames() PlayerFrameProvider { return p.playerFrames }
-func (p *DatabaseProvider) MySekai() MySekaiProvider     { return p.mysekai }
+func (p *DatabaseProvider) MySekai() MySekaiProvider          { return p.mysekai }

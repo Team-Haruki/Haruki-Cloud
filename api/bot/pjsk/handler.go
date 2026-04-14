@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/logger"
 	"regexp"
 	"slices"
@@ -143,25 +144,8 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 			}
 		}
 		if err != nil {
-			var validationErr *botValidationError
-			if errors.As(err, &validationErr) {
-				return botResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
-					BotCommandErrorResponse{
-						Error:          err.Error(),
-						ExpectedPath:   expectedPath,
-						MatchedCommand: req.MatchedCommand,
-					})
-			}
-			var replyErr onebot11.ReplayError
-			if errors.As(err, &replyErr) {
-				return botResponse(c, fiber.StatusOK, "ok",
-					[]onebot11.Segment{onebot11.Text(string(replyErr))},
-				)
-			}
 			logger.Warnf("bot command resolve failed: path=%s matched_command=%s err=%v", expectedPath, req.MatchedCommand, err)
-			return botResponse(c, fiber.StatusOK, "ok",
-				[]onebot11.Segment{onebot11.Text(err.Error())},
-			)
+			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
 		}
 
 		if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
@@ -177,18 +161,9 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 
 		responseData, err := commandhandler.Execute(c.Context(), resolved, renderApp)
 		if err != nil {
-			var replyErr onebot11.ReplayError
-			if errors.As(err, &replyErr) {
-				guard.MarkComplete(c.Context(), req)
-				return botResponse(c, fiber.StatusOK, "ok",
-					[]onebot11.Segment{onebot11.Text(string(replyErr))},
-				)
-			}
 			logger.Errorf("bot command render failed: mode=%s matched_command=%s err=%v", resolved.Mode, req.MatchedCommand, err)
 			guard.MarkComplete(c.Context(), req)
-			return botResponse(c, fiber.StatusOK, "ok",
-				[]onebot11.Segment{onebot11.Text(err.Error())},
-			)
+			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
 		}
 		guard.MarkComplete(c.Context(), req)
 		return botResponse(c, fiber.StatusOK, "ok", responseData)
@@ -263,6 +238,36 @@ func botResponse(c fiber.Ctx, status int, message string, data ...any) error {
 		return api.MsgPackResponse(c, status, message, data...)
 	}
 	return api.JSONResponse(c, status, message, data...)
+}
+
+func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedCommand string) error {
+	var validationErr *botValidationError
+	if errors.As(err, &validationErr) {
+		return botResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
+			BotCommandErrorResponse{
+				Error:          err.Error(),
+				ExpectedPath:   expectedPath,
+				MatchedCommand: matchedCommand,
+			})
+	}
+	var replyErr onebot11.ReplayError
+	if errors.As(err, &replyErr) {
+		return botResponse(c, fiber.StatusOK, "ok",
+			[]onebot11.Segment{onebot11.Text(string(replyErr))},
+		)
+	}
+	if errors.Is(err, userdata.ErrNoBinding) {
+		return botResponse(
+			c, fiber.StatusOK, "ok",
+			[]onebot11.Segment{
+				onebot11.Text("未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令"),
+				onebot11.Text("如果已经绑定，请确保已设置默认账号或绑定的账号在当前服务器可见"),
+			},
+		)
+	}
+	return botResponse(c, fiber.StatusOK, "ok",
+		[]onebot11.Segment{onebot11.Text(err.Error())},
+	)
 }
 
 type botValidationError struct {

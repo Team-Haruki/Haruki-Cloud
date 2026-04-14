@@ -158,7 +158,10 @@ func (c *Controller) BuildMusicRewardsDetailRequestFromSnapshot(query RewardsDet
 	}
 	achievementsJSON, err := snapshot.RawValue("userMusicAchievements")
 	if err != nil {
-		return nil, err
+		achievementsJSON, err = extractNestedAchievementsJSON(snapshot)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return c.BuildMusicRewardsDetailRequestFromAchievements(query, achievementsJSON)
 }
@@ -371,6 +374,35 @@ func decodeUserMusicAchievements(raw []byte) ([]userMusicAchievement, error) {
 	return items, nil
 }
 
+func extractNestedAchievementsJSON(snapshot userdata.Snapshot) ([]byte, error) {
+	if snapshot == nil {
+		return nil, fmt.Errorf("user snapshot is required for music rewards detail")
+	}
+	raw, err := snapshot.RawBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+
+	var payload any
+	if err := decoder.Decode(&payload); err != nil {
+		return nil, err
+	}
+
+	value, ok := findNestedJSONValue(payload, "usermusicachievements")
+	if !ok {
+		return nil, fmt.Errorf("raw user snapshot key %q is unavailable", "userMusicAchievements")
+	}
+
+	data, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func collectUserMusicAchievements(value any) []userMusicAchievement {
 	switch typed := value.(type) {
 	case []any:
@@ -398,6 +430,30 @@ func collectUserMusicAchievements(value any) []userMusicAchievement {
 	default:
 		return nil
 	}
+}
+
+func findNestedJSONValue(value any, want string) (any, bool) {
+	switch typed := value.(type) {
+	case map[string]any:
+		for key, item := range typed {
+			normalized := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(key), "_", ""), "-", ""))
+			if normalized == want {
+				return item, true
+			}
+		}
+		for _, item := range typed {
+			if found, ok := findNestedJSONValue(item, want); ok {
+				return found, true
+			}
+		}
+	case []any:
+		for _, item := range typed {
+			if found, ok := findNestedJSONValue(item, want); ok {
+				return found, true
+			}
+		}
+	}
+	return nil, false
 }
 
 func parseAchievementItemMap(value map[string]any) (userMusicAchievement, bool) {

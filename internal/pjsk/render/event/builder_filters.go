@@ -45,7 +45,7 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 		}
 		if query.BannerCharID != nil {
 			bannerCID, err := b.source.GetEventBannerCharacterID(eventInfo.ID)
-			if err != nil || bannerCID != *query.BannerCharID {
+			if err != nil || bannerCID != *query.BannerCharID || !b.isBoxEvent(eventInfo.ID) {
 				continue
 			}
 		}
@@ -62,24 +62,9 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 }
 
 func (b *Builder) extractEventBonuses(eventID int) (string, []int) {
-	bonuses, err := b.source.GetEventDeckBonuses(eventID)
-	if err != nil {
-		return "", nil
-	}
-
-	attr := ""
-	charSet := make(map[int]struct{})
-	for _, bonus := range bonuses {
-		if attr == "" && bonus.CardAttr != "" {
-			attr = strings.ToLower(bonus.CardAttr)
-		}
-		if bonus.GameCharacterUnitID != 0 {
-			if unit, err := b.source.GetGameCharacterUnit(bonus.GameCharacterUnitID); err == nil && unit != nil {
-				charSet[unit.GameCharacterID] = struct{}{}
-			}
-		} else if bonus.GameCharacterID != 0 {
-			charSet[bonus.GameCharacterID] = struct{}{}
-		}
+	attr, _, charSet := b.extractEventBonusMeta(eventID)
+	if len(charSet) == 0 {
+		return attr, nil
 	}
 
 	chars := make([]int, 0, len(charSet))
@@ -90,34 +75,49 @@ func (b *Builder) extractEventBonuses(eventID int) (string, []int) {
 	return attr, chars
 }
 
-func (b *Builder) matchEventBonus(eventID int, unit string, blend bool, attr string, charID int, charIDs []int) bool {
-	if unit == "" && !blend && attr == "" && charID == 0 && len(charIDs) == 0 {
-		return true
-	}
-
+func (b *Builder) extractEventBonusMeta(eventID int) (string, map[string]struct{}, map[int]struct{}) {
 	bonuses, err := b.source.GetEventDeckBonuses(eventID)
 	if err != nil {
-		return false
+		return "", nil, nil
 	}
 
-	attrMatched := attr == ""
+	attr := ""
 	units := make(map[string]struct{})
 	charSet := make(map[int]struct{})
-
 	for _, bonus := range bonuses {
-		if !attrMatched && strings.EqualFold(bonus.CardAttr, attr) {
-			attrMatched = true
+		if attr == "" && bonus.CardAttr != "" {
+			attr = strings.ToLower(bonus.CardAttr)
 		}
 		if bonus.GameCharacterUnitID != 0 {
-			gcu, gcuErr := b.source.GetGameCharacterUnit(bonus.GameCharacterUnitID)
-			if gcuErr == nil && gcu != nil {
-				units[strings.ToLower(strings.TrimSpace(gcu.Unit))] = struct{}{}
-				charSet[gcu.GameCharacterID] = struct{}{}
+			if unit, err := b.source.GetGameCharacterUnit(bonus.GameCharacterUnitID); err == nil && unit != nil {
+				unitName := strings.ToLower(strings.TrimSpace(unit.Unit))
+				if unitName != "" {
+					units[unitName] = struct{}{}
+				}
+				charSet[unit.GameCharacterID] = struct{}{}
 			}
 		} else if bonus.GameCharacterID != 0 {
 			charSet[bonus.GameCharacterID] = struct{}{}
 		}
 	}
+	return attr, units, charSet
+}
+
+func (b *Builder) isBoxEvent(eventID int) bool {
+	_, units, _ := b.extractEventBonusMeta(eventID)
+	return len(units) == 1
+}
+
+func (b *Builder) matchEventBonus(eventID int, unit string, blend bool, attr string, charID int, charIDs []int) bool {
+	if unit == "" && !blend && attr == "" && charID == 0 && len(charIDs) == 0 {
+		return true
+	}
+
+	bonusAttr, units, charSet := b.extractEventBonusMeta(eventID)
+	if len(units) == 0 && len(charSet) == 0 && bonusAttr == "" {
+		return false
+	}
+	attrMatched := attr == "" || strings.EqualFold(bonusAttr, attr)
 
 	unitMatched := unit == ""
 	if unit != "" {

@@ -174,3 +174,50 @@ func TestBuildEventListRequestOrdersByStartAtAscending(t *testing.T) {
 		t.Fatalf("unexpected order: got [%d, %d], want [202, 201]", req.EventInfo[0].ID, req.EventInfo[1].ID)
 	}
 }
+
+func TestBuildEventListRequestBannerFilterOnlyKeepsBoxEvents(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	first := &masterdata.Event{ID: 101, EventType: "marathon", Name: "box-1", AssetBundleName: "e101", StartAt: 100, AggregateAt: 200}
+	mixed := &masterdata.Event{ID: 102, EventType: "marathon", Name: "mixed", AssetBundleName: "e102", StartAt: 300, AggregateAt: 400}
+	second := &masterdata.Event{ID: 103, EventType: "cheerful_carnival", Name: "box-2", AssetBundleName: "e103", StartAt: 500, AggregateAt: 600}
+	source.events = []*masterdata.Event{first, mixed, second}
+	source.eventsByID[first.ID] = first
+	source.eventsByID[mixed.ID] = mixed
+	source.eventsByID[second.ID] = second
+	source.bannerByEvent[first.ID] = 10
+	source.bannerByEvent[mixed.ID] = 10
+	source.bannerByEvent[second.ID] = 10
+	source.bonusesByEvent[first.ID] = []*masterdata.EventDeckBonus{
+		{ID: 1, EventID: first.ID, GameCharacterUnitID: 10, CardAttr: "cool"},
+		{ID: 2, EventID: first.ID, GameCharacterUnitID: 21},
+	}
+	source.bonusesByEvent[mixed.ID] = []*masterdata.EventDeckBonus{
+		{ID: 3, EventID: mixed.ID, GameCharacterUnitID: 10, CardAttr: "cool"},
+		{ID: 4, EventID: mixed.ID, GameCharacterUnitID: 105},
+	}
+	source.bonusesByEvent[second.ID] = []*masterdata.EventDeckBonus{
+		{ID: 5, EventID: second.ID, GameCharacterUnitID: 10, CardAttr: "pure"},
+		{ID: 6, EventID: second.ID, GameCharacterUnitID: 21},
+	}
+	source.gcuByID[10] = &masterdata.GameCharacterUnit{ID: 10, GameCharacterID: 10, Unit: "street"}
+	source.gcuByID[21] = &masterdata.GameCharacterUnit{ID: 21, GameCharacterID: 21, Unit: "street"}
+	source.gcuByID[105] = &masterdata.GameCharacterUnit{ID: 105, GameCharacterID: 5, Unit: "idol"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	bannerID := 10
+	req, err := builder.BuildEventListRequest(ListQuery{
+		Region:        renderregion.JP,
+		IncludePast:   true,
+		IncludeFuture: true,
+		BannerCharID:  &bannerID,
+	})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 2 {
+		t.Fatalf("expected 2 box events, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].ID != 101 || req.EventInfo[1].ID != 103 {
+		t.Fatalf("unexpected banner-filter events: %+v", req.EventInfo)
+	}
+}

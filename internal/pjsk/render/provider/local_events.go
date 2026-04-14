@@ -217,9 +217,31 @@ func (p *localEventProvider) GetBanEvents(ctx context.Context, charID int) []*ma
 		if err != nil || bannerCID != charID {
 			continue
 		}
+		if !p.isBoxEvent(ctx, ev.ID) {
+			continue
+		}
 		result = append(result, common.CloneEvent(ev))
 	}
 	return result
+}
+
+func (p *localEventProvider) isBoxEvent(ctx context.Context, eventID int) bool {
+	bonuses, err := p.GetDeckBonuses(ctx, eventID)
+	if err != nil || len(bonuses) == 0 || p.cards == nil || p.cards.characters == nil {
+		return false
+	}
+	return eventUsesSingleBonusUnit(ctx, bonuses, p.getBonusUnit)
+}
+
+func (p *localEventProvider) getBonusUnit(ctx context.Context, gameCharacterUnitID int) (string, bool) {
+	if p == nil || p.cards == nil || p.cards.characters == nil {
+		return "", false
+	}
+	gcu, err := p.cards.characters.GetGameCharacterUnit(ctx, gameCharacterUnitID)
+	if err != nil || gcu == nil {
+		return "", false
+	}
+	return normalizeEventBonusUnit(gcu.Unit)
 }
 
 func (p *localEventProvider) GetWorldBloomChapters(_ context.Context, eventID int) []*masterdata.WorldBloom {

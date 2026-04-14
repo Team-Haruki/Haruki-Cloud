@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
+	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -29,6 +30,9 @@ type dbEventProvider struct {
 	cardMu    sync.RWMutex
 	cardCache map[int]*masterdata.Card
 
+	unitMu    sync.RWMutex
+	unitCache map[int]string
+
 	supplyMu    sync.RWMutex
 	supplyCache map[int]string
 }
@@ -37,6 +41,7 @@ func (p *dbEventProvider) init() {
 	p.once.Do(func() {
 		p.eventCache = make(map[int]*masterdata.Event)
 		p.cardCache = make(map[int]*masterdata.Card)
+		p.unitCache = make(map[int]string)
 		p.supplyCache = make(map[int]string)
 	})
 }
@@ -184,9 +189,47 @@ func (p *dbEventProvider) GetBanEvents(ctx context.Context, charID int) []*maste
 		if err != nil || bannerCID != charID {
 			continue
 		}
+		if !p.isBoxEvent(ctx, eventInfo.ID) {
+			continue
+		}
 		result = append(result, common.CloneEvent(eventInfo))
 	}
 	return result
+}
+
+func (p *dbEventProvider) isBoxEvent(ctx context.Context, eventID int) bool {
+	bonuses, err := p.GetDeckBonuses(ctx, eventID)
+	if err != nil || len(bonuses) == 0 {
+		return false
+	}
+	return eventUsesSingleBonusUnit(ctx, bonuses, p.getBonusUnit)
+}
+
+func (p *dbEventProvider) getBonusUnit(ctx context.Context, gameCharacterUnitID int) (string, bool) {
+	if gameCharacterUnitID == 0 {
+		return "", false
+	}
+	p.init()
+
+	p.unitMu.RLock()
+	if cached, ok := p.unitCache[gameCharacterUnitID]; ok {
+		p.unitMu.RUnlock()
+		return cached, cached != ""
+	}
+	p.unitMu.RUnlock()
+
+	entity, err := p.client.Gamecharacterunit.Query().
+		Where(gamecharacterunit.ServerRegionEQ(p.region.String()), gamecharacterunit.GameIDEQ(int64(gameCharacterUnitID))).
+		Only(ctx)
+	if err != nil {
+		return "", false
+	}
+
+	unit, ok := normalizeEventBonusUnit(entity.Unit)
+	p.unitMu.Lock()
+	p.unitCache[gameCharacterUnitID] = unit
+	p.unitMu.Unlock()
+	return unit, ok
 }
 
 func (p *dbEventProvider) GetWorldBloomChapters(ctx context.Context, eventID int) []*masterdata.WorldBloom {

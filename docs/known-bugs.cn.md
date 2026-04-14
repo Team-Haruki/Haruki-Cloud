@@ -10,3 +10,5 @@
 | BUG-004 | sekai/api | SekaiAPI / Toolbox / Tracker 网络错误未脱敏，原始内部 URL 泄露至客户端响应 | ✅ 已修复 | Copilot | 2026-04-14 | `acce4c4` |
 | BUG-005 | bot/dedup | Bot 请求未去重，同一用户同一指令在短时间内可触发多次响应 | ✅ 已修复 | Copilot | 2026-04-14 | `7a06685` |
 | BUG-006 | profile/bg | 自定义背景图片文件名固定（非随机），更新图片后参数不变导致客户端使用旧缓存 | ✅ 已修复 | Copilot | 2026-04-13 | — |
+| BUG-007 | music/rewards | `/打歌奖励` 在 CN 等区服即使有可用 Suite 数据，也可能因 `userMusicAchievements` 字段形态差异误判为“无法读取 Suite 数据”并退回预估模式 | ✅ 已修复 | Codex | 2026-04-14 | 待提交 |
+| BUG-008 | event/record | `/冲榜记录` 会把 WL 单榜记录按活动聚合，导致单榜 PT/Rank 与总榜混淆，或只显示总榜不显示单榜 | ✅ 已修复 | Codex | 2026-04-14 | 待提交 |

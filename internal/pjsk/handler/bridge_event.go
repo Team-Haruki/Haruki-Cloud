@@ -97,12 +97,12 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	// --- Build regular event entries from userEvents ---
 	eventInfo := make([]drawing.EventHistory, 0)
 	for _, ue := range rawData.UserEvents {
-		if _, isWL := wlEventIDs[ue.EventID]; isWL {
-			continue // world bloom events handled below
-		}
 		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, rc.App.Assets, regionStr)
 		if hist == nil {
 			continue
+		}
+		if _, isWL := wlEventIDs[ue.EventID]; isWL {
+			hist.IsWlEvent = true
 		}
 		if rank, ok := rankByEvent[ue.EventID]; ok {
 			hist.Rank = &rank
@@ -110,59 +110,22 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		eventInfo = append(eventInfo, *hist)
 	}
 
-	// --- Build world bloom entries from userWorldBlooms ---
-	// Aggregate by eventId: sum points, pick best rank, collect character IDs
-	type wlAgg struct {
-		totalPoint int
-		bestRank   int
-		charIDs    []int
-	}
-	wlMap := make(map[int]*wlAgg)
+	// --- Build world bloom single-board entries from userWorldBlooms ---
+	wlEventInfo := make([]drawing.EventHistory, 0, len(rawData.UserWorldBlooms))
 	for _, wb := range rawData.UserWorldBlooms {
-		agg, ok := wlMap[wb.EventID]
-		if !ok {
-			agg = &wlAgg{bestRank: wb.Rank}
-			wlMap[wb.EventID] = agg
-		}
-		agg.totalPoint += wb.WorldBloomChapterPoint
-		if wb.Rank > 0 && (agg.bestRank == 0 || wb.Rank < agg.bestRank) {
-			agg.bestRank = wb.Rank
-		}
-		agg.charIDs = append(agg.charIDs, wb.GameCharacterID)
-	}
-
-	wlEventInfo := make([]drawing.EventHistory, 0)
-	for eventID, agg := range wlMap {
-		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, agg.totalPoint, rc.App.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[wb.EventID], wb.EventID, wb.WorldBloomChapterPoint, rc.App.Assets, regionStr)
 		if hist == nil {
 			continue
 		}
 		hist.IsWlEvent = true
-		if agg.bestRank > 0 {
-			rank := agg.bestRank
+		if wb.Rank > 0 {
+			rank := wb.Rank
 			hist.Rank = &rank
 		}
-		// Use first character for WL icon
-		if len(agg.charIDs) > 0 && agg.charIDs[0] > 0 {
-			icon := charaIconPath(rc.App.Assets, agg.charIDs[0])
+		if wb.GameCharacterID > 0 {
+			icon := charaIconPath(rc.App.Assets, wb.GameCharacterID)
 			hist.WlCharaIconPath = &icon
 		}
-		wlEventInfo = append(wlEventInfo, *hist)
-	}
-
-	// Also add any userEvents entries that are world bloom type
-	for _, ue := range rawData.UserEvents {
-		if _, isWL := wlEventIDs[ue.EventID]; !isWL {
-			continue
-		}
-		if _, exists := wlMap[ue.EventID]; exists {
-			continue
-		}
-		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, rc.App.Assets, regionStr)
-		if hist == nil {
-			continue
-		}
-		hist.IsWlEvent = true
 		wlEventInfo = append(wlEventInfo, *hist)
 	}
 

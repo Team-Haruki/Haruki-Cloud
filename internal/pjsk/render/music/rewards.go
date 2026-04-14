@@ -1,9 +1,11 @@
 package music
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -76,8 +78,8 @@ func (c *Controller) BuildMusicRewardsDetailRequestFromAchievements(query Reward
 		return nil, err
 	}
 
-	var achievements []userMusicAchievement
-	if err := json.Unmarshal(achievementsJSON, &achievements); err != nil {
+	achievements, err := decodeUserMusicAchievements(achievementsJSON)
+	if err != nil {
 		return nil, fmt.Errorf("decode userMusicAchievements: %w", err)
 	}
 
@@ -341,4 +343,186 @@ func formatEstimatedReward(single int, count int) string {
 	}
 	total := single * count
 	return fmt.Sprintf("%d (%d×%d)", total, single, count)
+}
+
+func decodeUserMusicAchievements(raw []byte) ([]userMusicAchievement, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil, nil
+	}
+
+	var direct []userMusicAchievement
+	if err := json.Unmarshal(trimmed, &direct); err == nil {
+		return direct, nil
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
+	decoder.UseNumber()
+
+	var payload any
+	if err := decoder.Decode(&payload); err != nil {
+		return nil, err
+	}
+
+	items := collectUserMusicAchievements(payload)
+	if len(items) == 0 {
+		return nil, fmt.Errorf("unsupported achievements payload shape")
+	}
+	return items, nil
+}
+
+func collectUserMusicAchievements(value any) []userMusicAchievement {
+	switch typed := value.(type) {
+	case []any:
+		out := make([]userMusicAchievement, 0, len(typed))
+		for _, item := range typed {
+			out = append(out, collectUserMusicAchievements(item)...)
+		}
+		return out
+	case map[string]any:
+		if item, ok := parseAchievementItemMap(typed); ok {
+			return []userMusicAchievement{item}
+		}
+		if items, ok := parseAchievementColumnsMap(typed); ok {
+			return items
+		}
+		if items, ok := parseAchievementGroupedMap(typed); ok {
+			return items
+		}
+
+		out := make([]userMusicAchievement, 0)
+		for _, item := range typed {
+			out = append(out, collectUserMusicAchievements(item)...)
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func parseAchievementItemMap(value map[string]any) (userMusicAchievement, bool) {
+	musicID, okMusic := findAchievementInt(value, "musicid")
+	achievementID, okAchievement := findAchievementInt(value, "musicachievementid")
+	if !okMusic || !okAchievement || musicID <= 0 || achievementID <= 0 {
+		return userMusicAchievement{}, false
+	}
+	return userMusicAchievement{
+		MusicID:            musicID,
+		MusicAchievementID: achievementID,
+	}, true
+}
+
+func parseAchievementColumnsMap(value map[string]any) ([]userMusicAchievement, bool) {
+	musicIDsRaw, okMusic := findAchievementValue(value, "musicid")
+	achievementIDsRaw, okAchievement := findAchievementValue(value, "musicachievementid")
+	if !okMusic || !okAchievement {
+		return nil, false
+	}
+
+	musicIDs, okMusic := toAchievementIntSlice(musicIDsRaw)
+	achievementIDs, okAchievement := toAchievementIntSlice(achievementIDsRaw)
+	if !okMusic || !okAchievement || len(musicIDs) == 0 || len(musicIDs) != len(achievementIDs) {
+		return nil, false
+	}
+
+	items := make([]userMusicAchievement, 0, len(musicIDs))
+	for idx := range musicIDs {
+		if musicIDs[idx] <= 0 || achievementIDs[idx] <= 0 {
+			continue
+		}
+		items = append(items, userMusicAchievement{
+			MusicID:            musicIDs[idx],
+			MusicAchievementID: achievementIDs[idx],
+		})
+	}
+	return items, len(items) > 0
+}
+
+func parseAchievementGroupedMap(value map[string]any) ([]userMusicAchievement, bool) {
+	items := make([]userMusicAchievement, 0)
+	for key, raw := range value {
+		musicID, err := strconv.Atoi(strings.TrimSpace(key))
+		if err != nil || musicID <= 0 {
+			continue
+		}
+
+		achievementIDs, ok := toAchievementIntSlice(raw)
+		if !ok {
+			continue
+		}
+		for _, achievementID := range achievementIDs {
+			if achievementID <= 0 {
+				continue
+			}
+			items = append(items, userMusicAchievement{
+				MusicID:            musicID,
+				MusicAchievementID: achievementID,
+			})
+		}
+	}
+	return items, len(items) > 0
+}
+
+func findAchievementValue(value map[string]any, want string) (any, bool) {
+	for key, item := range value {
+		normalized := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(key), "_", ""), "-", ""))
+		if normalized == want {
+			return item, true
+		}
+	}
+	return nil, false
+}
+
+func findAchievementInt(value map[string]any, want string) (int, bool) {
+	raw, ok := findAchievementValue(value, want)
+	if !ok {
+		return 0, false
+	}
+	return toAchievementInt(raw)
+}
+
+func toAchievementIntSlice(value any) ([]int, bool) {
+	switch typed := value.(type) {
+	case []any:
+		out := make([]int, 0, len(typed))
+		for _, item := range typed {
+			intValue, ok := toAchievementInt(item)
+			if !ok {
+				return nil, false
+			}
+			out = append(out, intValue)
+		}
+		return out, true
+	default:
+		intValue, ok := toAchievementInt(value)
+		if !ok {
+			return nil, false
+		}
+		return []int{intValue}, true
+	}
+}
+
+func toAchievementInt(value any) (int, bool) {
+	switch typed := value.(type) {
+	case int:
+		return typed, true
+	case int64:
+		return int(typed), true
+	case float64:
+		return int(typed), true
+	case json.Number:
+		parsed, err := typed.Int64()
+		if err != nil {
+			return 0, false
+		}
+		return int(parsed), true
+	case string:
+		parsed, err := strconv.Atoi(strings.TrimSpace(typed))
+		if err != nil {
+			return 0, false
+		}
+		return parsed, true
+	default:
+		return 0, false
+	}
 }

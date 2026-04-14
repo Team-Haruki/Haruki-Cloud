@@ -380,6 +380,13 @@ MySekai 相关指令（`mysekai/*` 路径）在 `region=cn` 时默认关闭。
 - 客户端应在 `expires_at` 前重新调用 `/bot/:bot_id/auth` 获取新 token
 - 收到 401 响应时也应自动重新认证
 
+### 8.4 单 Session 限制
+
+- 同一 `bot_id` 同一时间只能有 **一个活跃 session**
+- 每次调用 `/bot/:bot_id/auth` 登录成功后，之前的 session token 会被覆盖（新 token 替换旧 token）
+- 如果客户端 A 和客户端 B 使用同一 `bot_id` 登录，后登录的客户端会导致先登录的客户端 session 失效（收到 401）
+- 注销端点 `DELETE /bot/:bot_id/logout` 需要在请求头中携带 `X-Haruki-Bot-Session-Token`，服务端验证通过后才会删除 session
+
 ---
 
 ## 9. 端点路径速查

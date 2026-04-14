@@ -1,6 +1,22 @@
-# Known Bugs
+# Known Bugs & Issues
 
-记录近期排查过的 bug、状态及修复信息。
+记录近期排查过的 bug、待解决问题及修复信息。
+
+## 待解决问题
+
+> 以下问题由 2026-04-14 API 层审计发现，按严重度排列。
+
+| ID | 严重度 | 模块 | 描述 | 状态 | 发现时间 |
+|----|--------|------|------|------|----------|
+| ISSUE-001 | P0 | bot/pjsk/handler | `parseBotRequest()` 中两行 `logger.Infof` 将每个请求的完整 OneBot 消息内容打印到 INFO 日志，生产环境存在用户隐私泄露风险和日志噪音 | 📋 测试期保留 | 2026-04-14 |
+| ISSUE-002 | P1 | bot/auth/helper | `checkRateLimit()` 每次 `Set` 都重置 Redis key TTL，导致高频用户的限流窗口永远不过期 | ✅ 已修复 | 2026-04-14 |
+| ISSUE-003 | P1 | api/helper | `VerifyAPIAuthorization()` 当仅配置 `AcceptUserAgent` 而未配置 `AcceptAuthorization` 时，内部 API 仅靠可伪造的 User-Agent 鉴权 | ✅ 已修复 | 2026-04-14 |
+| ISSUE-004 | P1 | server | `createFiberApp()` 未注册 `recover` 中间件，handler panic 会导致空响应而非 500 错误 | ✅ 已修复 | 2026-04-14 |
+| ISSUE-005 | P2 | bot/auth/user | `Logout` 端点注册在 public group 无需 session 验证，任意知道 bot_id 的人可删除 session（DoS） | ✅ 已修复 | 2026-04-14 |
+| ISSUE-006 | P2 | bot/auth/statistics | `/bot/statistics/record/:botID` 路由前缀与其他内部路由（`/internal/bot/*`）不一致 | ✅ 已修复 | 2026-04-14 |
+| ISSUE-007 | P2 | bot_session_middleware | 同一 bot_id 只能有一个活跃 session（后登录踢前一个），该行为未在客户端对接文档中说明 | ✅ 已文档化 | 2026-04-14 |
+
+## 已修复 Bug
 
 | ID | 模块 | 描述 | 状态 | 修复人 | 修复时间 | 相关提交 |
 |----|------|------|------|--------|----------|----------|

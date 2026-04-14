@@ -26,9 +26,9 @@ type RegisterRequest struct {
 type AuthPayload struct {
 	BotID          string `msgpack:"bot_id"`
 	Credential     string `msgpack:"credential"`      // JWT 签名的 credential
-	Timestamp      int64  `msgpack:"timestamp"`        // 防重放攻击
-	ClientIP       string `msgpack:"client_ip"`        // 客户端自报 IP（来自 myip.ipip.net）
-	ClientLocation string `msgpack:"client_location"`  // 客户端自报地理位置
+	Timestamp      int64  `msgpack:"timestamp"`       // 防重放攻击
+	ClientIP       string `msgpack:"client_ip"`       // 客户端自报 IP（来自 myip.ipip.net）
+	ClientLocation string `msgpack:"client_location"` // 客户端自报地理位置
 }
 
 // InternalVerifyRequest 内部服务验证请求
@@ -77,9 +77,9 @@ const (
 	AuthTimestampMaxAge = 300
 
 	// Rate limit settings
-	RateLimitSendMail   = 5  // 每 QQ 号每小时最多发送 5 次验证码
-	RateLimitRegister   = 5  // 每 QQ 号每验证码最多尝试 5 次验证
-	RateLimitAuth       = 10 // 每 bot_id 每分钟最多认证 10 次
+	RateLimitSendMail    = 5  // 每 QQ 号每小时最多发送 5 次验证码
+	RateLimitRegister    = 5  // 每 QQ 号每验证码最多尝试 5 次验证
+	RateLimitAuth        = 10 // 每 bot_id 每分钟最多认证 10 次
 	RateLimitSendMailTTL = 60 // 分钟
 	RateLimitRegisterTTL = 10 // 分钟
 	RateLimitAuthTTL     = 1  // 分钟
@@ -121,6 +121,8 @@ type RedisKVStore interface {
 	Set(ctx context.Context, key string, value string, ttl time.Duration) error
 	Get(ctx context.Context, key string) (string, error)
 	Del(ctx context.Context, key string) error
+	Incr(ctx context.Context, key string) (int64, error)
+	Expire(ctx context.Context, key string, ttl time.Duration) error
 }
 
 type UserService struct {

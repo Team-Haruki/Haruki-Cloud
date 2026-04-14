@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"strconv"
 	"time"
 
 	"haruki-cloud/config"
@@ -51,6 +50,20 @@ func (s *redisKVStore) Del(ctx context.Context, key string) error {
 		return errRedisClientUnavailable
 	}
 	return s.client.Del(ctx, key).Err()
+}
+
+func (s *redisKVStore) Incr(ctx context.Context, key string) (int64, error) {
+	if s.client == nil {
+		return 0, errRedisClientUnavailable
+	}
+	return s.client.Incr(ctx, key).Result()
+}
+
+func (s *redisKVStore) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	if s.client == nil {
+		return errRedisClientUnavailable
+	}
+	return s.client.Expire(ctx, key, ttl).Err()
 }
 
 // ================= Service Constructors =================
@@ -190,23 +203,20 @@ func getSessionTTL() time.Duration {
 // ================= Rate Limiting =================
 
 // checkRateLimit 检查速率限制。返回 true 表示允许通过，false 表示已超限。
+// 使用 INCR + EXPIRE 模式：仅在首次创建 key 时设置 TTL，后续递增不会重置窗口。
 func (s *UserService) checkRateLimit(ctx context.Context, action string, identifier string, maxRequests int, windowMinutes int) (bool, error) {
 	key := fmt.Sprintf(RedisKeyRateLimit, action, identifier)
-	val, err := s.redisStore.Get(ctx, key)
-	if errors.Is(err, redis.Nil) {
-		// 首次访问
-		return true, s.redisStore.Set(ctx, key, "1", time.Duration(windowMinutes)*time.Minute)
-	}
+	count, err := s.redisStore.Incr(ctx, key)
 	if err != nil {
 		return false, err
 	}
 
-	count, _ := strconv.Atoi(val)
-	if count >= maxRequests {
-		return false, nil
+	// 首次创建 key（count == 1）时设置 TTL
+	if count == 1 {
+		_ = s.redisStore.Expire(ctx, key, time.Duration(windowMinutes)*time.Minute)
 	}
 
-	return true, s.redisStore.Set(ctx, key, strconv.Itoa(count+1), time.Duration(windowMinutes)*time.Minute)
+	return count <= int64(maxRequests), nil
 }
 
 // ================= Nonce Cache (Replay Protection) =================

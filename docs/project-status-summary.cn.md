@@ -750,6 +750,12 @@ Bot API 传输层加密从 Noise IK 模式迁移至 Noise NK 模式，Auth API �
 | 内部 URL 脱敏 | ✅ | SekaiAPI / Toolbox / Tracker 错误消息不再泄露内部 URL（`acce4c4`）|
 | 绑定账号 ID 默认隐藏 | ✅ | 默认不对外展示游戏账号 ID（`5cc5c19`）|
 | 别名管理（add/review/reject）API 归属 | ⏳ | 公开查询已通，新增/审核/拒绝 API 归属待决策 |
+| **API 层审计问题（2026-04-14）** | ⚠️ | 共 7 项，详见 [known-bugs.cn.md](known-bugs.cn.md) ISSUE-001~007 |
+| — 生产日志打印用户消息内容（P0） | ⚠️ | `parseBotRequest()` 中 `logger.Infof` 泄露用户隐私 |
+| — Auth rate limit TTL 重置 bug（P1） | ⚠️ | `checkRateLimit()` 每次 Set 重置窗口 |
+| — Internal API UA-only 鉴权可伪造（P1） | ⚠️ | 仅配置 UA 时等于无鉴权 |
+| — 缺少 recover 中间件（P1） | ⚠️ | handler panic 导致空响应 |
+| — Logout 端点无鉴权（P2） | ⚠️ | 任意 bot_id 可被踢下线 |
 
 **测试前提条件**：
 1. 执行 DB 迁移（`user_bindings`：`suite_visible` / `mysekai_visible` / `bg` / `verified`；`authorize_social_platform_infos`：`allow_fast_verification`；censor DB：`image_mod_cache` 表）

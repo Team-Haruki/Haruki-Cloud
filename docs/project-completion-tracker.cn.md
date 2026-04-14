@@ -465,6 +465,11 @@ go test ./...
 |------|------|------|
 | Noise 对端静态公钥白名单 | 不适用 | 已从 IK 迁移至 NK 模式（v17.4），客户端不持有静态密钥，无需白名单校验 |
 | `/internal/*` 默认保护强度 | 已收紧 | 未配置鉴权时默认拒绝；支持 `backend.accept_authorization` 或 `haruki_bot.internal_api_token`；仅显式 `allow_insecure_internal_api=true` 才放宽 |
+| 生产日志用户隐私泄露（P0） | 待修复 | `parseBotRequest()` 将每个请求完整消息打印到 INFO 日志（ISSUE-001） |
+| Auth rate limit TTL 重置（P1） | 待修复 | `checkRateLimit()` 每次 `Set` 重置窗口 TTL，高频用户窗口永不过期（ISSUE-002） |
+| Internal API UA-only 鉴权（P1） | 待修复 | 仅配置 `AcceptUserAgent` 时内部 API 无实质鉴权（ISSUE-003） |
+| 缺少 recover 中间件（P1） | 待修复 | handler panic 导致空响应而非 500 错误（ISSUE-004） |
+| Logout 端点无鉴权（P2） | 待修复 | 任意知道 bot_id 的人可删除 session（ISSUE-005） |
 
 补充说明（2026-04-14 更新）：
 

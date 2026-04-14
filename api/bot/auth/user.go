@@ -333,12 +333,22 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	return c.Send(encrypted)
 }
 
-// Logout 注销 - 删除 Redis session
+// Logout 注销 - 验证 session token 后删除 Redis session
 func (h *UserHandler) Logout(c fiber.Ctx) error {
 	ctx := c.Context()
 	botIDStr := c.Params("bot_id")
 	if _, err := strconv.Atoi(botIDStr); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
+	}
+
+	// 验证请求携带的 session token 与 Redis 中存储的一致
+	sessionToken := c.Get("X-Haruki-Bot-Session-Token")
+	if sessionToken == "" {
+		return api.JSONResponse(c, fiber.StatusUnauthorized, "session token required for logout")
+	}
+	stored, err := h.svc.getRedisKey(ctx, RedisKeySessionToken, botIDStr)
+	if err != nil || stored != sessionToken {
+		return api.JSONResponse(c, fiber.StatusUnauthorized, ErrSessionExpired)
 	}
 
 	if err := h.svc.deleteSession(ctx, botIDStr); err != nil {

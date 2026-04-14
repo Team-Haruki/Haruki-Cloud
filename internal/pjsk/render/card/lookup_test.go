@@ -18,6 +18,7 @@ type lookupTestSource struct {
 	card             *masterdata.Card
 	cards            []*masterdata.Card
 	characters       map[int]*masterdata.Character
+	costumesByCard   map[int][]*masterdata.Costume3d
 	unitByCard       map[int]string
 	supplyByCard     map[int]string
 	filterFunc       func(*CardQueryInfo) ([]*masterdata.Card, error)
@@ -157,6 +158,18 @@ func (s *lookupTestSource) GetGachaByCardID(cardID int) (*masterdata.Gacha, erro
 }
 
 func (s *lookupTestSource) GetCostume3dsByCardID(cardID int) ([]*masterdata.Costume3d, error) {
+	if s.costumesByCard != nil {
+		items := s.costumesByCard[cardID]
+		out := make([]*masterdata.Costume3d, 0, len(items))
+		for _, item := range items {
+			if item == nil {
+				continue
+			}
+			copy := *item
+			out = append(out, &copy)
+		}
+		return out, nil
+	}
 	return nil, nil
 }
 
@@ -226,5 +239,41 @@ func TestSearchServiceSupportsGlobalLatestVisibleCard(t *testing.T) {
 	}
 	if len(list) != 1 || list[0].ID != 101 {
 		t.Fatalf("expected second latest visible card 101, got %+v", list)
+	}
+}
+
+func TestBuildCardDetailRequestSkipsEmptyCostumeAssetBundlePaths(t *testing.T) {
+	source := &lookupTestSource{
+		region: renderregion.CN,
+		card: &masterdata.Card{
+			ID:              1001,
+			CharacterID:     5,
+			CardRarityType:  "rarity_4",
+			Attr:            "cute",
+			Prefix:          "Test Card",
+			AssetBundleName: "card_test",
+		},
+		characters: map[int]*masterdata.Character{
+			5: {ID: 5, FirstName: "花里", GivenName: "实乃理", Unit: "idol"},
+		},
+		costumesByCard: map[int][]*masterdata.Costume3d{
+			1001: {
+				{ID: 1, CharacterID: 5, AssetBundleName: ""},
+				{ID: 2, CharacterID: 5, AssetBundleName: "head_default_01"},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardDetailRequest(Query{Query: "1001", Region: "cn"})
+	if err != nil {
+		t.Fatalf("BuildCardDetailRequest() error = %v", err)
+	}
+
+	if len(req.CostumeImagesPath) != 1 {
+		t.Fatalf("expected exactly one valid costume path, got %+v", req.CostumeImagesPath)
+	}
+	if got := req.CostumeImagesPath[0]; got != "asset/cn-assets/startapp/thumbnail/costume/head_default_01.png" {
+		t.Fatalf("unexpected costume path: %q", got)
 	}
 }

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/common"
@@ -177,6 +178,26 @@ func TestCloneCardCostumesSkipsNils(t *testing.T) {
 	clone := common.CloneCostumes(orig)
 	if len(clone) != 1 || clone[0].ID != 3 {
 		t.Fatal("nil entries should be skipped")
+	}
+}
+
+func TestLocalCostume3dJSONToModelSupportsLegacyAssetBundleName(t *testing.T) {
+	var payload localCostume3dJSON
+	if err := json.Unmarshal([]byte(`{
+		"id": 1,
+		"characterId": 21,
+		"name": "legacy costume",
+		"_assetbundleName": "head_default_01"
+	}`), &payload); err != nil {
+		t.Fatalf("unmarshal localCostume3dJSON: %v", err)
+	}
+
+	model := payload.toModel()
+	if model == nil {
+		t.Fatal("expected costume model")
+	}
+	if model.AssetBundleName != "head_default_01" {
+		t.Fatalf("expected legacy asset bundle name, got %q", model.AssetBundleName)
 	}
 }
 

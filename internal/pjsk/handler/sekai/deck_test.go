@@ -521,6 +521,96 @@ func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventIDWithTrailingO
 	}
 }
 
+func TestEventDeckHandleParsesStandaloneWorldBloomSelectorForCurrentEvent(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/活动组卡",
+		ArgText:    "wl3",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID != nil {
+		t.Fatalf("unexpected explicit event id: %+v", params.EventID)
+	}
+	if params.WorldBloomCharacterID != nil {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.WorldBloomCharacterQuery != "wl3" {
+		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesMusicQueryBeforeStandaloneWorldBloomSelectorForCurrentEvent(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/活动组卡",
+		ArgText:    "sage wl3",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.WorldBloomEventTurn != nil {
+		t.Fatalf("unexpected world bloom event turn: %+v", params.WorldBloomEventTurn)
+	}
+	if params.WorldBloomCharacterID != nil {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.WorldBloomCharacterQuery != "wl3" {
+		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
+	}
+	if params.MusicQuery != "sage" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestEventDeckHandleParsesMusicQueryBeforeWorldBloomSelectorAfterEventID(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "140 sage wl3",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 140 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.WorldBloomCharacterID != nil {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.WorldBloomCharacterQuery != "wl3" {
+		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
+	}
+	if params.MusicQuery != "sage" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
 func TestEventDeckHandleParsesMaxProfile(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{

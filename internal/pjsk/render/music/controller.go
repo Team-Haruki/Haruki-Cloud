@@ -110,9 +110,14 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 	if query == "" {
 		return nil, fmt.Errorf("music query is empty")
 	}
+	now := currentMusicVisibilityTime()
 
 	if musicID, ok := ParseExplicitMusicID(query); ok {
-		return source.GetMusicByID(musicID)
+		musicInfo, err := source.GetMusicByID(musicID)
+		if err != nil {
+			return nil, err
+		}
+		return ensureVisibleMusic(musicInfo, now, musicID)
 	}
 
 	if c != nil && c.aliases != nil {
@@ -121,7 +126,11 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 			return nil, err
 		}
 		if ok {
-			return source.GetMusicByID(musicID)
+			musicInfo, getErr := source.GetMusicByID(musicID)
+			if getErr != nil {
+				return nil, getErr
+			}
+			return ensureVisibleMusic(musicInfo, now, query)
 		}
 	}
 
@@ -133,12 +142,17 @@ func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword st
 	if keyword == "" {
 		return nil, "", nil
 	}
+	now := currentMusicVisibilityTime()
 
 	if musicID, ok := ParseExplicitMusicID(keyword); ok {
 		if source == nil {
 			return nil, "", fmt.Errorf("music data source is not configured")
 		}
-		if _, err := source.GetMusicByID(musicID); err != nil {
+		musicInfo, err := source.GetMusicByID(musicID)
+		if err != nil {
+			return nil, "", err
+		}
+		if _, err := ensureVisibleMusic(musicInfo, now, musicID); err != nil {
 			return nil, "", err
 		}
 		return &musicID, "", nil
@@ -146,7 +160,7 @@ func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword st
 
 	if musicID, ok := ParseImplicitMusicID(keyword); ok {
 		if source != nil {
-			if _, err := source.GetMusicByID(musicID); err == nil {
+			if musicInfo, err := source.GetMusicByID(musicID); err == nil && isMusicVisibleAt(musicInfo, now) {
 				return &musicID, "", nil
 			}
 		}
@@ -158,6 +172,15 @@ func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword st
 			return nil, "", err
 		}
 		if ok {
+			if source != nil {
+				musicInfo, getErr := source.GetMusicByID(musicID)
+				if getErr != nil {
+					return nil, "", getErr
+				}
+				if _, visibleErr := ensureVisibleMusic(musicInfo, now, keyword); visibleErr != nil {
+					return nil, "", visibleErr
+				}
+			}
 			return &musicID, "", nil
 		}
 	}

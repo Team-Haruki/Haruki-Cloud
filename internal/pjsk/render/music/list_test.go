@@ -44,12 +44,12 @@ func TestBuildMusicListRequestFiltersByApprovedAlias(t *testing.T) {
 	}
 }
 
-func TestBuildMusicListRequestSortsByLevelReleaseAtAndID(t *testing.T) {
+func TestBuildMusicListRequestSortsByLevelSeqAndID(t *testing.T) {
 	source := &lookupTestSource{
 		musics: map[int]*masterdata.Music{
-			10: {ID: 10, Title: "Song A", AssetBundleName: "jacket_a", PublishedAt: 3000},
-			11: {ID: 11, Title: "Song B", AssetBundleName: "jacket_b", PublishedAt: 1000},
-			12: {ID: 12, Title: "Song C", AssetBundleName: "jacket_c", PublishedAt: 1000},
+			10: {ID: 10, Seq: 30, Title: "Song A", AssetBundleName: "jacket_a", PublishedAt: 1000},
+			11: {ID: 11, Seq: 10, Title: "Song B", AssetBundleName: "jacket_b", PublishedAt: 3000},
+			12: {ID: 12, Seq: 20, Title: "Song C", AssetBundleName: "jacket_c", PublishedAt: 2000},
 		},
 		difficulties: map[int][]*masterdata.MusicDifficulty{
 			10: {
@@ -85,6 +85,18 @@ func TestBuildMusicListRequestSortsByLevelReleaseAtAndID(t *testing.T) {
 	for i := range wantIDs {
 		if gotIDs[i] != wantIDs[i] {
 			t.Fatalf("unexpected sorted ids: got=%v want=%v", gotIDs, wantIDs)
+		}
+	}
+
+	gotOrders := []int64{
+		req.MusicList[0]["release_at"].(int64),
+		req.MusicList[1]["release_at"].(int64),
+		req.MusicList[2]["release_at"].(int64),
+	}
+	wantOrders := []int64{10, 20, 30}
+	for i := range wantOrders {
+		if gotOrders[i] != wantOrders[i] {
+			t.Fatalf("unexpected display orders: got=%v want=%v", gotOrders, wantOrders)
 		}
 	}
 }

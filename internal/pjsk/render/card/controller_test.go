@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
@@ -28,6 +29,37 @@ func TestBuildCardListRequestResolvesIDsFromQuery(t *testing.T) {
 	}
 	if req.Cards[0].CardID != 1001 || req.Cards[1].CardID != 1002 {
 		t.Fatalf("unexpected cards: %+v", req.Cards)
+	}
+}
+
+func TestBuildCardListRequestRejectsUnreleasedCardQuery(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Future Card", AssetBundleName: "card_a", ReleaseAt: now + 60_000},
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	if _, err := controller.BuildCardListRequest(ListRequest{Query: "1001", Region: "jp"}); err == nil {
+		t.Fatal("expected unreleased card query to fail")
+	}
+}
+
+func TestBuildCardListRequestFiltersUnreleasedCardsFromQuery(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Released Card", AssetBundleName: "card_a", ReleaseAt: now - 60_000},
+			{ID: 1002, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cool", Prefix: "Future Card", AssetBundleName: "card_b", ReleaseAt: now + 60_000},
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardListRequest(ListRequest{Query: "mnr 4星", Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildCardListRequest() error = %v", err)
+	}
+	if len(req.Cards) != 1 || req.Cards[0].CardID != 1001 {
+		t.Fatalf("unexpected released card list: %+v", req.Cards)
 	}
 }
 

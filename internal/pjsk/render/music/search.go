@@ -2,7 +2,6 @@ package music
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -54,10 +53,12 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		return nil, fmt.Errorf("music query info is required")
 	}
 
+	now := currentMusicVisibilityTime()
+
 	switch info.Type {
 	case QueryTypeID:
 		musicInfo, err := s.source.GetMusicByID(info.Value)
-		if err == nil && musicInfo != nil {
+		if err == nil && musicInfo != nil && isMusicVisibleAt(musicInfo, now) {
 			return musicInfo, nil
 		}
 		if info.AllowTitleFallback {
@@ -73,16 +74,10 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		return nil, fmt.Errorf("music not found: %d", info.Value)
 
 	case QueryTypeSeq:
-		musics := append([]*masterdata.Music(nil), s.source.GetMusics()...)
+		musics := visibleMusicsSortedByPublishedAt(s.source, now)
 		if len(musics) == 0 {
 			return nil, fmt.Errorf("no music data available")
 		}
-		sort.Slice(musics, func(i, j int) bool {
-			if musics[i].PublishedAt == musics[j].PublishedAt {
-				return musics[i].ID < musics[j].ID
-			}
-			return musics[i].PublishedAt < musics[j].PublishedAt
-		})
 
 		index := info.Value
 		if index < 0 {
@@ -96,7 +91,11 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		return musics[index], nil
 
 	case QueryTypeEvent:
-		return s.source.GetMusicByEventID(info.Value)
+		musicInfo, err := s.source.GetMusicByEventID(info.Value)
+		if err != nil {
+			return nil, err
+		}
+		return ensureVisibleMusic(musicInfo, now, info.Value)
 
 	case QueryTypeBan:
 		events := s.source.GetBanEvents(info.BanCharID)
@@ -106,7 +105,11 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		if info.BanSeq < 1 || info.BanSeq > len(events) {
 			return nil, fmt.Errorf("ban event index out of range: %d", info.BanSeq)
 		}
-		return s.source.GetMusicByEventID(events[info.BanSeq-1].ID)
+		musicInfo, err := s.source.GetMusicByEventID(events[info.BanSeq-1].ID)
+		if err != nil {
+			return nil, err
+		}
+		return ensureVisibleMusic(musicInfo, now, events[info.BanSeq-1].ID)
 
 	case QueryTypeTitle, QueryTypeChart:
 		if info.MusicID != 0 {

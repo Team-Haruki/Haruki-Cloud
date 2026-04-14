@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/utils/drawing"
@@ -125,7 +124,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 	if err != nil {
 		return nil, err
 	}
-	now := time.Now().UnixMilli()
+	now := currentMusicVisibilityTime()
 	list := make([]map[string]any, 0)
 	jackets := make(map[int]string)
 
@@ -133,10 +132,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		if musicInfo == nil {
 			continue
 		}
-		if _, blocked := hiddenMusicIDs[musicInfo.ID]; blocked {
-			continue
-		}
-		if !query.IncludeLeaks && musicInfo.PublishedAt > now {
+		if !query.IncludeLeaks && !isMusicVisibleAt(musicInfo, now) {
 			continue
 		}
 		if filterMusicID != nil && musicInfo.ID != *filterMusicID {
@@ -157,10 +153,13 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 			continue
 		}
 
+		displayOrder := musicListDisplayOrder(musicInfo)
 		list = append(list, map[string]any{
 			"id":         musicInfo.ID,
 			"difficulty": level,
-			"release_at": musicInfo.PublishedAt,
+			// The drawing service re-sorts each level bucket by release_at, so
+			// we pass the desired display order here instead of the raw publish time.
+			"release_at": displayOrder,
 		})
 		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	}
@@ -176,10 +175,10 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 			return levelI < levelJ
 		}
 
-		releaseI, _ := list[i]["release_at"].(int64)
-		releaseJ, _ := list[j]["release_at"].(int64)
-		if releaseI != releaseJ {
-			return releaseI < releaseJ
+		orderI, _ := list[i]["release_at"].(int64)
+		orderJ, _ := list[j]["release_at"].(int64)
+		if orderI != orderJ {
+			return orderI < orderJ
 		}
 
 		idI, _ := list[i]["id"].(int)

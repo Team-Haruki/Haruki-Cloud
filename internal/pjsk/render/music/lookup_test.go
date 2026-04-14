@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -197,6 +198,20 @@ func TestResolveMusicCoverUsesControllerRequestContext(t *testing.T) {
 	}
 	if result == nil || result.Music == nil || result.Music.ID != 7 {
 		t.Fatalf("unexpected cover result: %+v", result)
+	}
+}
+
+func TestResolveMusicCoverHidesUnreleasedMusic(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			9: {ID: 9, Title: "Future Song", AssetBundleName: "future_song", PublishedAt: now + 60_000},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	if _, err := controller.ResolveMusicCover(Query{Query: "music9", Region: "jp"}); err == nil {
+		t.Fatal("expected unreleased music query to fail")
 	}
 }
 

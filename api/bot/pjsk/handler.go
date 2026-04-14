@@ -17,6 +17,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/sekai"
 	"regexp"
 	"slices"
 	"strings"
@@ -260,8 +261,42 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 		return botResponse(
 			c, fiber.StatusOK, "ok",
 			[]onebot11.Segment{
-				onebot11.Text("未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令"),
+				onebot11.Text("未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令\n"),
 				onebot11.Text("如果已经绑定，请确保已设置默认账号或绑定的账号在当前服务器可见"),
+			},
+		)
+	}
+	if errors.Is(err, sekai.ErrAccountBindingNotFound) {
+		return botResponse(
+			c, fiber.StatusOK, "ok",
+			[]onebot11.Segment{
+				onebot11.Text("你还没有在工具箱绑定账号，请前往工具箱绑定你的账号并上传 suite 数据后再使用此命令\n"),
+				onebot11.Text("工具箱地址：https://haruki.seiunx.com/"),
+			},
+		)
+	}
+	if errors.Is(err, sekai.ErrGameDataNotFound) {
+		return botResponse(
+			c, fiber.StatusOK, "ok",
+			[]onebot11.Segment{
+				onebot11.Text("没有找到有效的 suite 数据，请前往工具箱上传数据后再使用此命令\n"),
+				onebot11.Text("工具箱地址：https://haruki.seiunx.com/"),
+			},
+		)
+	}
+	if errors.Is(err, sekai.ErrInvalidPlatformUser) {
+		return botResponse(
+			c, fiber.StatusOK, "ok",
+			[]onebot11.Segment{
+				onebot11.Text("你无权查看这个账号的数据\n"),
+			},
+		)
+	}
+	if errors.Is(err, sekai.ErrAccountOwnerBanned) {
+		return botResponse(
+			c, fiber.StatusOK, "ok",
+			[]onebot11.Segment{
+				onebot11.Text("你被禁止使用此命令\n"),
 			},
 		)
 	}

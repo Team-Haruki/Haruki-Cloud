@@ -19,8 +19,9 @@ type lookupTestSource struct {
 }
 
 type lookupTestAliasResolver struct {
-	ids map[string]int
-	err error
+	ids      map[string]int
+	approved map[int][]string
+	err      error
 }
 
 type lookupContextKey string
@@ -53,6 +54,28 @@ func (r *lookupTestAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Contex
 	}
 	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
 	return id, ok, nil
+}
+
+func (r *lookupTestAliasResolver) ListApprovedMusicAliases(_ context.Context, musicID int) ([]string, error) {
+	if r == nil {
+		return nil, nil
+	}
+	if r.err != nil {
+		return nil, r.err
+	}
+	items := r.approved[musicID]
+	if len(items) == 0 {
+		return nil, nil
+	}
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		result = append(result, item)
+	}
+	return result, nil
 }
 
 func (r *contextAwareLookupTestAliasResolver) TryResolveMusicID(ctx context.Context, token string) (int, bool, error) {

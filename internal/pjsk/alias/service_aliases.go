@@ -109,6 +109,40 @@ func (s *Service) Query(ctx context.Context, aliasType, target string) (*QueryRe
 	}, nil
 }
 
+func (s *Service) ListApprovedMusicAliases(ctx context.Context, musicID int) ([]string, error) {
+	if !s.IsReady() || musicID <= 0 {
+		return nil, nil
+	}
+	rows, err := s.pjsk.Alias.Query().
+		Where(
+			aliasdb.AliasTypeEQ(AliasTypeMusic),
+			aliasdb.AliasTypeIDEQ(musicID),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	aliases := make([]string, 0, len(rows))
+	seen := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		value := strings.TrimSpace(row.Alias)
+		if value == "" {
+			continue
+		}
+		key := normalizeCompareText(value)
+		if key == "" {
+			continue
+		}
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		aliases = append(aliases, value)
+	}
+	sortAliasTexts(aliases)
+	return aliases, nil
+}
+
 func (s *Service) Delete(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToDelete []string) ([]ApprovedAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")

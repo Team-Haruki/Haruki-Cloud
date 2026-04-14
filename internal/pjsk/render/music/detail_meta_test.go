@@ -169,3 +169,41 @@ func TestBuildMusicDetailRequestIncludesMetadataFields(t *testing.T) {
 		t.Fatalf("expected percentage leaderboard value, got %#v", req.LeaderboardMatrix[0][0])
 	}
 }
+
+func TestBuildMusicDetailRequestMergesApprovedAliases(t *testing.T) {
+	source := &detailMetaTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {
+				ID:              1,
+				Title:           "Song A",
+				AssetBundleName: "jacket_a",
+				Pronunciation:   "song a",
+				PublishedAt:     1700000000000,
+			},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31, TotalNoteCount: 999}},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetAliasResolver(&lookupTestAliasResolver{
+		ids:      map[string]int{"blue song": 1},
+		approved: map[int][]string{1: {"Blue Song", "群青", "song a"}},
+	})
+
+	req, err := controller.BuildMusicDetailRequest(Query{Query: "blue song", Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
+	}
+
+	want := []string{"song a", "Blue Song", "群青"}
+	if len(req.Alias) != len(want) {
+		t.Fatalf("unexpected alias count: got=%v want=%v", req.Alias, want)
+	}
+	for i := range want {
+		if req.Alias[i] != want[i] {
+			t.Fatalf("unexpected aliases: got=%v want=%v", req.Alias, want)
+		}
+	}
+}

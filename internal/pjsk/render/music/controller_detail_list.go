@@ -66,6 +66,7 @@ func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailR
 	if err != nil {
 		return nil, err
 	}
+	c.appendApprovedMusicAliases(req, musicInfo.ID)
 	c.enrichMusicDetailRequest(req, region, source, builder, musicInfo)
 	return req, nil
 }

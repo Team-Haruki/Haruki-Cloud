@@ -310,3 +310,39 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("unexpected fallback resolved command: %+v", resolved)
 	}
 }
+
+func TestMysekaiBlueprintHandleSupportsCompactCharacterAliases(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiBlueprintHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msb",
+		ArgText:    "akt vbs all",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-talk-list" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+	if resolved.Query != "street akt" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+
+	var params struct {
+		ShowID       bool `json:"show_id"`
+		ShowAllTalks bool `json:"show_all_talks"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.ShowID || !params.ShowAllTalks {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}

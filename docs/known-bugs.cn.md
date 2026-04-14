@@ -21,3 +21,5 @@
 | BUG-015 | deck/world-bloom | 组卡章节参数最初只支持 `wl1`/`wl2`，`wl3`/`wl4` 无法解析；当前 WL 活动下裸 `wl3`、`歌曲名 wl3`、`活动ID 歌曲名 wl3` 这类顺序还会掉回歌曲参数 | ✅ 已修复 | Codex | 2026-04-14 | `24cb148` |
 | BUG-016 | music/list | 难度排行分组内排序依赖发布时间，Drawing 侧再次按 `release_at` 重排后，视觉顺序仍然会乱 | ✅ 已修复 | Codex | 2026-04-14 | `24cb148` |
 | BUG-017 | card/music visibility | 查卡、查歌会返回未上线 masterdata；`查歌 -1` 也会把未上线歌曲计入“最近一首/倒数第 N 首” | ✅ 已修复 | Codex | 2026-04-14 | `24cb148` |
+| BUG-018 | music/detail | 查歌详情图的 `Alias` 字段只展示本地标题/读音/tag，没有并入已审核歌曲别名，导致“查歌别名没接上”的观感问题 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
+| BUG-019 | mysekai/blueprint | `mysekai` 角色昵称表缺少 `akt`、`khn`、`tks` 等 compact alias 与若干常见名字写法，导致 `/msb akt` 一类输入无法识别角色并错误回退到家具列表 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |

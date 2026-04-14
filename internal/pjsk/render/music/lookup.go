@@ -54,6 +54,7 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 		return nil, err
 	}
 
+	now := currentMusicVisibilityTime()
 	matches := make([]NoteCountMatch, 0)
 	if finder, ok := source.(noteCountFinder); ok {
 		items, err := finder.FindMusicDifficultiesByNoteCount(query.NoteCount)
@@ -64,11 +65,8 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 			if item == nil {
 				continue
 			}
-			if _, hidden := hiddenMusicIDs[item.MusicID]; hidden {
-				continue
-			}
 			musicInfo, err := source.GetMusicByID(item.MusicID)
-			if err != nil || musicInfo == nil {
+			if err != nil || !isMusicVisibleAt(musicInfo, now) {
 				continue
 			}
 			matches = append(matches, NoteCountMatch{
@@ -80,10 +78,7 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 		}
 	} else {
 		for _, musicInfo := range source.GetMusics() {
-			if musicInfo == nil {
-				continue
-			}
-			if _, hidden := hiddenMusicIDs[musicInfo.ID]; hidden {
+			if !isMusicVisibleAt(musicInfo, now) {
 				continue
 			}
 			difficulties, err := source.GetMusicDifficulties(musicInfo.ID)

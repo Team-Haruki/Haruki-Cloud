@@ -87,6 +87,10 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 		return extractDeckExplicitEventSelection(remaining, eventID, params)
 	}
 
+	if remaining, ok := extractDeckCurrentWorldBloomSelection(args, params); ok {
+		return remaining, nil
+	}
+
 	if turn, charID, charQuery, remaining := extractDeckSimulatedWorldBloom(args); turn > 0 && (charID > 0 || charQuery != "") {
 		params.WorldBloomEventTurn = intPtr(turn)
 		if charID > 0 {
@@ -100,12 +104,24 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 		return remaining, nil
 	}
 
+	if selector, remaining := extractDeckWorldBloomSelectorCandidate(args); selector != "" {
+		params.WorldBloomCharacterQuery = selector
+		return remaining, nil
+	}
+
 	return normalizeDeckSpaces(args), nil
 }
 
 func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAutoQueryParams) (string, error) {
 	params.EventID = eventID
 	if selector, remaining := extractDeckWorldBloomSelectorCandidate(args); selector != "" {
+		if charID, _, leftover := extractDeckCharacterCandidate(remaining, false); charID > 0 {
+			params.WorldBloomCharacterID = intPtr(charID)
+			if params.EventUnit == "" {
+				params.EventUnit = deckCharacterUnit(charID)
+			}
+			return leftover, nil
+		}
 		params.WorldBloomCharacterQuery = selector
 		return remaining, nil
 	}
@@ -125,6 +141,27 @@ func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAu
 	return normalizeDeckSpaces(args), nil
 }
 
+func extractDeckCurrentWorldBloomSelection(args string, params *deckAutoQueryParams) (string, bool) {
+	selector, remaining := extractDeckWorldBloomSelectorCandidate(args)
+	if selector == "" {
+		return normalizeDeckSpaces(args), false
+	}
+
+	if charID, _, leftover := extractDeckCharacterCandidate(remaining, false); charID > 0 {
+		if turn, ok := parseDeckWorldBloomTurn(selector); ok {
+			params.WorldBloomEventTurn = intPtr(turn)
+			params.WorldBloomCharacterID = intPtr(charID)
+			if params.EventUnit == "" {
+				params.EventUnit = deckCharacterUnit(charID)
+			}
+			return normalizeDeckSpaces(leftover), true
+		}
+	}
+
+	params.WorldBloomCharacterQuery = selector
+	return remaining, true
+}
+
 func extractDeckWorldBloomSelectorCandidate(args string) (string, string) {
 	normalized := normalizeDeckSpaces(args)
 	fields := strings.Fields(normalized)
@@ -133,14 +170,40 @@ func extractDeckWorldBloomSelectorCandidate(args string) (string, string) {
 	}
 
 	first := strings.TrimSpace(fields[0])
-	if first == "" {
-		return "", normalized
+	if isDeckWorldBloomSelectorToken(first) {
+		return strings.ToLower(first), normalizeDeckSpaces(strings.Join(fields[1:], " "))
 	}
-	lower := strings.ToLower(first)
-	if strings.EqualFold(lower, "wl") || strings.HasPrefix(lower, "wl") {
-		return lower, normalizeDeckSpaces(strings.Join(fields[1:], " "))
+
+	last := strings.TrimSpace(fields[len(fields)-1])
+	if isDeckWorldBloomSelectorToken(last) {
+		return strings.ToLower(last), normalizeDeckSpaces(strings.Join(fields[:len(fields)-1], " "))
 	}
 	return "", normalized
+}
+
+func isDeckWorldBloomSelectorToken(value string) bool {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return false
+	}
+	lower := strings.ToLower(value)
+	return strings.EqualFold(lower, "wl") || strings.HasPrefix(lower, "wl")
+}
+
+func parseDeckWorldBloomTurn(value string) (int, bool) {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" || !strings.HasPrefix(value, "wl") {
+		return 0, false
+	}
+	raw := strings.TrimSpace(strings.TrimPrefix(value, "wl"))
+	if raw == "" {
+		return 0, false
+	}
+	turn, err := strconv.Atoi(raw)
+	if err != nil || turn <= 0 {
+		return 0, false
+	}
+	return turn, true
 }
 
 func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuery string, remaining string) {

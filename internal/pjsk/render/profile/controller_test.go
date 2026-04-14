@@ -223,6 +223,70 @@ func TestBuildProfileRequestFromAPIUsesConfiguredProfileImageCard(t *testing.T) 
 	}
 }
 
+func TestBuildProfileRequestFromAPIUsesActualFcApCountsForHonorBadges(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+		},
+		honors: map[int]*masterdata.Honor{
+			3013: {
+				ID:              3013,
+				GroupID:         701,
+				HonorRarity:     "high",
+				AssetBundleName: "honor_3013_700",
+				Levels: []masterdata.HonorLevel{
+					{Level: 20, AssetBundleName: "honor_3013_700", HonorRarity: "high"},
+				},
+			},
+		},
+		honorGroups: map[int]*masterdata.HonorGroup{
+			701: {
+				ID:        701,
+				HonorType: "achievement",
+				Name:      "MASTER FC",
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "Honor User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
+		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+		},
+		UserProfileHonors: []sekai.UserProfileHonor{
+			{Seq: 1, ProfileHonorType: "normal", HonorID: 3013, HonorLevel: 20},
+		},
+		UserHonors: []sekai.UserHonor{
+			{HonorID: 3013, Level: 20},
+		},
+		UserMusicDifficultyClearCount: []sekai.AnotherUserMusicDifficultyClearCount{
+			{MusicDifficultyType: "master", LiveClear: 30, FullCombo: 15, AllPerfect: 2},
+		},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPI(Query{Region: "jp", Visible: true}, resp, nil)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPI failed: %v", err)
+	}
+	if len(payload.Honors) != 1 {
+		t.Fatalf("expected 1 honor, got %d", len(payload.Honors))
+	}
+	if payload.Honors[0].HonorLevel == nil || *payload.Honors[0].HonorLevel != 20 {
+		t.Fatalf("unexpected visual honor level: %#v", payload.Honors[0].HonorLevel)
+	}
+	if payload.Honors[0].FcOrApLevel == nil || *payload.Honors[0].FcOrApLevel != "15" {
+		t.Fatalf("expected displayed FC/AP level 15, got %#v", payload.Honors[0].FcOrApLevel)
+	}
+}
+
 func TestBuildProfileRequestFromAPIFallsBackToJPCardMetadataForNonJPProfileCards(t *testing.T) {
 	jpSource := &testProfileSource{
 		region: renderregion.JP,

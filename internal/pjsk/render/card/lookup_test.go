@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -13,15 +14,22 @@ import (
 )
 
 type lookupTestSource struct {
-	card         *masterdata.Card
-	cards        []*masterdata.Card
-	characters   map[int]*masterdata.Character
-	unitByCard   map[int]string
-	supplyByCard map[int]string
-	filterFunc   func(*CardQueryInfo) ([]*masterdata.Card, error)
+	region           renderregion.Value
+	card             *masterdata.Card
+	cards            []*masterdata.Card
+	characters       map[int]*masterdata.Character
+	unitByCard       map[int]string
+	supplyByCard     map[int]string
+	filterFunc       func(*CardQueryInfo) ([]*masterdata.Card, error)
+	allowEmptyFilter bool
 }
 
-func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
+func (s *lookupTestSource) DefaultRegion() renderregion.Value {
+	if s.region.IsZero() {
+		return renderregion.JP
+	}
+	return s.region
+}
 
 func (s *lookupTestSource) GetCardByID(id int) (*masterdata.Card, error) {
 	if s.card != nil && s.card.ID == id {
@@ -76,6 +84,19 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 	}
 	if info == nil {
 		return nil, fmt.Errorf("filter not supported: %+v", info)
+	}
+	if s.allowEmptyFilter && info.CharacterID == 0 && info.Rarity == "" && info.Attr == "" &&
+		info.SkillType == "" && info.Unit == "" && info.MainUnit == "" && info.SupportUnit == "" &&
+		info.SupplyType == "" && info.Year == 0 && info.EventID == 0 && info.BanCharID == 0 && info.BanSeq == 0 {
+		out := make([]*masterdata.Card, 0, len(s.cards))
+		for _, item := range s.cards {
+			if item == nil {
+				continue
+			}
+			copy := *item
+			out = append(out, &copy)
+		}
+		return out, nil
 	}
 	if info.CharacterID != 5 || info.Rarity != "rarity_4" {
 		return nil, fmt.Errorf("filter not supported: %+v", info)
@@ -176,5 +197,34 @@ func TestResolveCardImagesSupportsStandardAndRipPaths(t *testing.T) {
 	}
 	if filepath.Clean(result.Paths[1]) != filepath.Clean(after) {
 		t.Fatalf("unexpected after-training path: %q", result.Paths[1])
+	}
+}
+
+func TestSearchServiceSupportsGlobalLatestVisibleCard(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 101, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Old", AssetBundleName: "card_old", ReleaseAt: now - 3000},
+			{ID: 102, CharacterID: 6, CardRarityType: "rarity_4", Prefix: "Latest Visible", AssetBundleName: "card_latest", ReleaseAt: now - 1000},
+			{ID: 103, CharacterID: 7, CardRarityType: "rarity_4", Prefix: "Future", AssetBundleName: "card_future", ReleaseAt: now + 1000},
+		},
+		allowEmptyFilter: true,
+	}
+
+	searcher := NewSearchService(source, NewParser(defaultNicknames))
+	cardInfo, err := searcher.Search("-1")
+	if err != nil {
+		t.Fatalf("Search(-1) error = %v", err)
+	}
+	if cardInfo.ID != 102 {
+		t.Fatalf("expected latest visible card 102, got %+v", cardInfo)
+	}
+
+	list, err := searcher.SearchList("-2")
+	if err != nil {
+		t.Fatalf("SearchList(-2) error = %v", err)
+	}
+	if len(list) != 1 || list[0].ID != 101 {
+		t.Fatalf("expected second latest visible card 101, got %+v", list)
 	}
 }

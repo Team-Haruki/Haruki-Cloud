@@ -95,6 +95,14 @@ func TestListBotRoutes(t *testing.T) {
 	if !contains(mysekaiBlueprintRoute.Commands, "/msb") {
 		t.Fatalf("expected mysekai/blueprint commands to include /msb, got %v", mysekaiBlueprintRoute.Commands)
 	}
+
+	mysekaiOverviewRoute, ok := byPath["mysekai/overview"]
+	if !ok {
+		t.Fatal("expected mysekai/overview route to exist")
+	}
+	if !contains(mysekaiOverviewRoute.Commands, "/msam") {
+		t.Fatalf("expected mysekai/overview commands to include /msam, got %v", mysekaiOverviewRoute.Commands)
+	}
 }
 
 func contains(items []string, target string) bool {

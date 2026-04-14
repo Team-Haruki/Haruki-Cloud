@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目完成度跟踪
 
-> 最后更新：2026-04-10（收尾治理完成）
+> 最后更新：2026-04-14（实战联调稳定化 + 安全加固）
 >
 > 本文基于 2026-04-08 ~ 2026-04-09 对当前仓库代码与 `docs/` 文档的交叉审计整理而成，用于持续跟踪“哪些能力已经稳定、哪些仍处于过渡阶段、哪些尚未暴露”。
 >
@@ -64,8 +64,8 @@
 
 如果只看 `Haruki-Cloud` 作为 **PJSK Bot 新协议后端** 的目标完成度，本次审计给出的判断是：
 
-- **业务主链完成度：约 88%**
-- **发布级稳定度：约 82%**
+- **业务主链完成度：约 93%**
+- **发布级稳定度：约 90%**
 
 更准确地说，它已经是一个 **可以继续在现有结构上推进，而不应推倒重来** 的项目。
 
@@ -117,7 +117,7 @@
 
 | 模块 | 活跃 path | 分档 | 当前判断 | 主要边界 |
 |------|-----------|------|----------|----------|
-| 协议 / 鉴权 / Manifest / Bot API | N/A | `A-` | 主链已完成 | Noise 白名单、安全收尾仍未完成 |
+| 协议 / 鉴权 / Manifest / Bot API | N/A | `A` | 主链已完成 | Noise NK 已落地、Auth AES-256-GCM 固定密钥已实现、请求去重+限流已上线 |
 | Parser / Handler Registry | N/A | `A-` | 已完成 | 路径数与旧文档存在漂移 |
 | Alias | 9 | `A-` | 稳定 | 审核类命令依赖管理员身份与 PJSK DB |
 | Profile 账号体系 | 20 中的设置类 | `A-` | 稳定 | 依赖 users DB、PJSK DB、Toolbox 快速验证 |
@@ -463,19 +463,20 @@ go test ./...
 
 | 项目 | 状态 | 说明 |
 |------|------|------|
-| Noise 对端静态公钥白名单 | 未完成 | `internal/middleware/secure/secure.go` 仍留有 `TODO` |
+| Noise 对端静态公钥白名单 | 不适用 | 已从 IK 迁移至 NK 模式（v17.4），客户端不持有静态密钥，无需白名单校验 |
 | `/internal/*` 默认保护强度 | 已收紧 | 未配置鉴权时默认拒绝；支持 `backend.accept_authorization` 或 `haruki_bot.internal_api_token`；仅显式 `allow_insecure_internal_api=true` 才放宽 |
+| 生产日志用户隐私泄露（P0） | 待修复 | `parseBotRequest()` 将每个请求完整消息打印到 INFO 日志（ISSUE-001） |
+| Auth rate limit TTL 重置（P1） | 待修复 | `checkRateLimit()` 每次 `Set` 重置窗口 TTL，高频用户窗口永不过期（ISSUE-002） |
+| Internal API UA-only 鉴权（P1） | 待修复 | 仅配置 `AcceptUserAgent` 时内部 API 无实质鉴权（ISSUE-003） |
+| 缺少 recover 中间件（P1） | 待修复 | handler panic 导致空响应而非 500 错误（ISSUE-004） |
+| Logout 端点无鉴权（P2） | 待修复 | 任意知道 bot_id 的人可删除 session（ISSUE-005） |
 
-补充 TODO（2026-04-09 明确延期）：
+补充说明（2026-04-14 更新）：
 
-- **客户端静态公钥登记 / 白名单校验体系**
-  - 当前客户端只显式持有“服务端公钥”，并通过 Noise IK 在握手中隐式带出客户端静态公钥。
-  - 服务端虽然能通过 `peerStatic` 读取到对端静态公钥，但还没有：
-    - `bot_id -> 客户端静态公钥` 绑定表
-    - 公钥轮换 / 吊销机制
-    - 多客户端并存策略
-    - 基于白名单的正式授权判断
-  - 当前决定：**先标记为 TODO，不作为本轮优先工作项**。
+- **客户端静态公钥白名单已不适用**
+  - v17.4 已将 Noise 从 IK 迁移至 NK 模式。NK 模式下客户端不持有静态密钥对，仅需知道服务端公钥即可建立加密通道。
+  - Auth API 通过 AES-256-GCM 固定密钥加密 + credential JWT 验证提供身份认证，不再需要 Noise 层的客户端公钥校验。
+  - 原 `secure.go` 中的 `peerStatic` 验证逻辑已在 NK 迁移时移除。
 
 ### 10.2 架构过渡风险
 
@@ -517,9 +518,10 @@ P0-R28、阶段 A-E、Context 注入迁移、P1-P7 清理、以及 6 项收尾�
 
 当前推荐优先：
 
-1. 为 `secure.go` 增加 Noise 对端静态公钥白名单校验（唯一剩余安全 TODO）。
+1. ~~为 `secure.go` 增加 Noise 对端静态公钥白名单校验~~ — 已不适用（NK 模式无客户端公钥）。
 2. 视调用方现状决定是否进一步统一内部服务鉴权字段。
 3. 启用 CI integration workflow（当前为手动触发模板，待基础设施就绪后改为自动触发）。
+4. 持续联调 bug 修复和回归测试覆盖扩展。
 
 ### 2026-04-10 收尾治理完成后最终状态
 
@@ -534,6 +536,36 @@ P0-R28、阶段 A-E、Context 注入迁移、P1-P7 清理、以及 6 项收尾�
 | 快照 / MySekai fallback | 可配置（AllowFallback 标志）|
 | Deck 重试 / 断路器 | 已实装（max_retries + circuit breaker）|
 | imagecache + bridge ctx | 已完成（全链路 rc.Ctx）|
+
+### 2026-04-14 实战联调稳定化（v17.5）
+
+在 v17.4（Noise NK + Auth AES 固定密钥）之后，04-12 ~ 04-14 产出 35 个提交，集中在客户端联调 bug 修复和安全加固。项目已从"架构重构收尾"进入"实战联调稳定化"阶段。
+
+**本轮主要变更分类**：
+
+| 分类 | 数量 | 代表性变更 |
+|------|------|-----------|
+| 安全加固 | 3 | 请求去重锁（`808439d`）、URL 脱敏（`acce4c4`）、账号 ID 隐藏（`5cc5c19`）|
+| 认证/注册 | 2 | Auth IP 上报 + 注册开关（`326c90b`）、provision_bot CLI（`aeb1ec9`）|
+| Profile/绑定修复 | 5 | 跨区服编号（`6c02169`）、跨区服解绑（`e87c1a9`）、背景缓存（`44c5c43`）等 |
+| 渲染/快照修复 | 11 | suite snapshot（`5d7f9b2`）、card parameter（`b29445b` `fc47512`）、rewards 多形态解码（`7893c90`）、未上线数据过滤（`24cb148`）等 |
+| Deck 修复 | 4 | recommend fallback（`3c44203`）、masterdata 同步（`131ddfd`）、binding 选择器（`d1fb1a0`）等 |
+| Education/MySekai 区域 | 7 | CN area item（`b9da188`）、region-scoped masterdata（`4751db9`）、education region 传递等 |
+| Event 修复 | 1 | WL 冲榜记录单榜拆分（`7893c90`）|
+| 回归测试 | 6 | card parameter 解码（`c2d84ed`）、rewards snapshot 解码（`7893c90`）、event WL 拆分（`7893c90`）、card visibility（`24cb148`）、music visibility + list（`24cb148`）、WL 歌曲解析（`24cb148`）|
+| 文档 | 2 | known-bugs.cn.md 追踪表（`ea3d595`）、doc 同步（`1b84f1e`）|
+
+**已知 bug 追踪**：新增 `docs/known-bugs.cn.md`，当前 17 个已追踪 bug 全部已修复。
+
+**完成度更新**：
+
+| 指标 | v17.4（04-12） | v17.5（04-14） |
+|------|----------------|----------------|
+| 重构进度 | ~97-98% | ~98-99% |
+| 整体交付 | ~93-95% | ~95-97% |
+| 协议/鉴权分档 | A- | A |
+| 实战联调 bug 修复 | — | 35 commits |
+| 已知 bug 追踪 | 无 | 17/17 已修复 |
 
 
 ## 12. 维护说明

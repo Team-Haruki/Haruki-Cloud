@@ -12,6 +12,7 @@ const (
 	QueryTypeUnknown QueryType = iota
 	QueryTypeID
 	QueryTypeSeq
+	QueryTypeLatest
 	QueryTypeFilter
 )
 
@@ -55,6 +56,9 @@ func (p *Parser) parse(args string, preferFilter bool) (*CardQueryInfo, error) {
 	if info := p.tryParseNicknameSeq(args); info != nil {
 		return info, nil
 	}
+	if info := p.tryParseLatestSeq(args); info != nil {
+		return info, nil
+	}
 	if preferFilter {
 		if info := p.tryParseFilter(args); info != nil {
 			return info, nil
@@ -74,7 +78,7 @@ func LooksLikeSingleCardQuery(args string) bool {
 	if err != nil || info == nil {
 		return false
 	}
-	return info.Type == QueryTypeID || info.Type == QueryTypeSeq
+	return info.Type == QueryTypeID || info.Type == QueryTypeSeq || info.Type == QueryTypeLatest
 }
 
 func LooksLikeSingleCardQueryPreferFilter(args string) bool {
@@ -82,7 +86,7 @@ func LooksLikeSingleCardQueryPreferFilter(args string) bool {
 	if err != nil || info == nil {
 		return false
 	}
-	return info.Type == QueryTypeID || info.Type == QueryTypeSeq
+	return info.Type == QueryTypeID || info.Type == QueryTypeSeq || info.Type == QueryTypeLatest
 }
 
 func (p *Parser) tryParseNicknameSeq(args string) *CardQueryInfo {
@@ -118,6 +122,26 @@ func (p *Parser) tryParseID(args string) *CardQueryInfo {
 	return &CardQueryInfo{
 		Type:     QueryTypeID,
 		Value:    value,
+		Original: args,
+	}
+}
+
+func (p *Parser) tryParseLatestSeq(args string) *CardQueryInfo {
+	args = strings.TrimSpace(args)
+	if len(args) < 2 || args[0] != '-' {
+		return nil
+	}
+	numberPart := args[1:]
+	if !isNumeric(numberPart) {
+		return nil
+	}
+	sequence, err := strconv.Atoi(args)
+	if err != nil || sequence >= 0 {
+		return nil
+	}
+	return &CardQueryInfo{
+		Type:     QueryTypeLatest,
+		Sequence: sequence,
 		Original: args,
 	}
 }

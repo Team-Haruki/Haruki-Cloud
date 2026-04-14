@@ -17,6 +17,8 @@ import (
 	noiseCrypto "haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/render/assets"
+	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/drawing"
@@ -620,6 +622,29 @@ func TestBotEndpointSKQueryAcceptsBaseMatchedCommandForRegionPrefixedInput(t *te
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleImageMessage(t, body)
+}
+
+func TestBotEndpointMysekaiOverviewAcceptsLegacyResourceEndpoint(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.MySekai = rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true})
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("mysekai/resource"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/msa",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/msam"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessage(t, body, "drawing client is not configured")
 }
 
 func TestBotEndpointSKQueryTreatsRequestServerAsExplicitRegion(t *testing.T) {

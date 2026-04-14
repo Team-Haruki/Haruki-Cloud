@@ -45,27 +45,28 @@ func resolveUniqueMusicQuery(source DataSource, query string) (*masterdata.Music
 	}
 
 	queryLower := strings.ToLower(query)
+	now := currentMusicVisibilityTime()
 	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
-	}); len(matches) > 0 {
+	}, now); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
 
 	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.Contains(strings.ToLower(strings.TrimSpace(musicInfo.Title)), queryLower)
-	}); len(matches) > 0 {
+	}, now); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
 
 	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
 		return strings.EqualFold(strings.TrimSpace(title), query)
-	}); len(matches) > 0 {
+	}, now); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
 
 	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
 		return strings.Contains(strings.ToLower(strings.TrimSpace(title)), queryLower)
-	}); len(matches) > 0 {
+	}, now); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
 
@@ -78,9 +79,10 @@ func resolveUniqueMusicKeyword(source DataSource, keyword string) (*masterdata.M
 		return nil, fmt.Errorf("music query is empty")
 	}
 
+	now := currentMusicVisibilityTime()
 	matches := make([]*masterdata.Music, 0)
 	for _, item := range source.GetMusics() {
-		if item == nil || !matchesMusicKeyword(source, item, keyword) {
+		if !isMusicVisibleAt(item, now) || !matchesMusicKeyword(source, item, keyword) {
 			continue
 		}
 		matches = append(matches, item)
@@ -91,13 +93,13 @@ func resolveUniqueMusicKeyword(source DataSource, keyword string) (*masterdata.M
 	return selectUniqueMusicMatch("曲名/别名", matches)
 }
 
-func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool) []*masterdata.Music {
+func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool, now int64) []*masterdata.Music {
 	if source == nil || matcher == nil {
 		return nil
 	}
 	matches := make([]*masterdata.Music, 0)
 	for _, item := range source.GetMusics() {
-		if item == nil || !matcher(item) {
+		if !isMusicVisibleAt(item, now) || !matcher(item) {
 			continue
 		}
 		matches = append(matches, item)
@@ -105,13 +107,13 @@ func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool
 	return matches
 }
 
-func collectLocalizedMusicMatches(source DataSource, matcher func(string) bool) []*masterdata.Music {
+func collectLocalizedMusicMatches(source DataSource, matcher func(string) bool, now int64) []*masterdata.Music {
 	if source == nil || matcher == nil {
 		return nil
 	}
 	matches := make([]*masterdata.Music, 0)
 	for _, item := range source.GetMusics() {
-		if item == nil {
+		if !isMusicVisibleAt(item, now) {
 			continue
 		}
 		titles, err := source.GetMusicLocalizedTitles(item.ID)

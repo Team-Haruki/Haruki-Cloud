@@ -1,10 +1,10 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-04-12（v17.4 — Noise IK→NK + Auth AES 固定密钥改造）
+> 最后更新：2026-04-14（v17.5 — 实战联调 bug 修复 + 安全加固）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 >
-> 2026-04-10 状态：核心重构与 6 项收尾治理全部完成（快照正式化、MySekai 数据源收口、Deck 服务治理、CI 模板、context 清理、文档漂移修正）。重构进度 ~97-98%，整体交付 ~93-95%。详见 [项目完成度跟踪](project-completion-tracker.cn.md) 和 [重构进展](refactoring-progress.cn.md)。
+> 2026-04-14 状态：在 v17.4（Noise IK→NK + Auth AES 固定密钥改造）基础上，本轮集中修复了 35 个实战联调 bug 并新增安全加固（请求去重、用户限流、URL 脱敏）。项目已从架构重构收尾进入 **实战联调稳定化** 阶段。重构进度 ~98-99%，整体交付 ~95-97%。详见 [项目完成度跟踪](project-completion-tracker.cn.md) 和 [重构进展](refactoring-progress.cn.md)。已知 bug 追踪见 [known-bugs.cn.md](known-bugs.cn.md)。
 >
 > `api/legacy/pjsk/` 与 `internal/pjsk/render/deck/deck_cgo/` 历史目录已移除。本文保留了 2026-03 ~ 2026-04-01 的阶段性记录，凡与当前运行事实冲突之处，以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
 
@@ -746,7 +746,16 @@ Bot API 传输层加密从 Noise IK 模式迁移至 Noise NK 模式，Auth API �
 | DB 迁移（`allow_fast_verification`） | ⚠️ | Toolbox 侧，上线前需执行 |
 | DB 迁移（censor `image_mod_cache` 表） | ⚠️ | 上线前需执行（censor DB `Schema.Create()` 已在启动时自动运行）|
 | ImageCache 配置 | ⚠️ | 未配置 `image_cache.uri/dir` 时所有图片命令失败 |
+| 请求去重 + 用户限流 | ✅ | per-request dedup lock + per-user rate limiting（`808439d`）|
+| 内部 URL 脱敏 | ✅ | SekaiAPI / Toolbox / Tracker 错误消息不再泄露内部 URL（`acce4c4`）|
+| 绑定账号 ID 默认隐藏 | ✅ | 默认不对外展示游戏账号 ID（`5cc5c19`）|
 | 别名管理（add/review/reject）API 归属 | ⏳ | 公开查询已通，新增/审核/拒绝 API 归属待决策 |
+| **API 层审计问题（2026-04-14）** | ⚠️ | 共 7 项，详见 [known-bugs.cn.md](known-bugs.cn.md) ISSUE-001~007 |
+| — 生产日志打印用户消息内容（P0） | ⚠️ | `parseBotRequest()` 中 `logger.Infof` 泄露用户隐私 |
+| — Auth rate limit TTL 重置 bug（P1） | ⚠️ | `checkRateLimit()` 每次 Set 重置窗口 |
+| — Internal API UA-only 鉴权可伪造（P1） | ⚠️ | 仅配置 UA 时等于无鉴权 |
+| — 缺少 recover 中间件（P1） | ⚠️ | handler panic 导致空响应 |
+| — Logout 端点无鉴权（P2） | ⚠️ | 任意 bot_id 可被踢下线 |
 
 **测试前提条件**：
 1. 执行 DB 迁移（`user_bindings`：`suite_visible` / `mysekai_visible` / `bg` / `verified`；`authorize_social_platform_infos`：`allow_fast_verification`；censor DB：`image_mod_cache` 表）
@@ -1635,8 +1644,92 @@ pjsk:
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |
 | alpha 进程管理 | ⏸ 建议 | 建议使用 systemd 或 supervisor 管理 haruki-server 进程，当前为 nohup 启动 |
 
+### 11.10 实战联调稳定化（2026-04-12 ~ 2026-04-14，35 commits）
+
+本轮在 v17.4（Noise NK + Auth AES）基础上进入实战联调，集中修复了跨区服、CN 区域、快照解析、安全等多个方面的问题。
+
+#### 安全加固
+
+| 修复项 | 提交 | 说明 |
+|--------|------|------|
+| 请求去重锁 + 用户级限流 | `808439d` | 防止同一用户同一指令短时间重复触发 |
+| 内部 URL 脱敏 | `acce4c4` | SekaiAPI / Toolbox / Tracker 网络错误不再泄露原始内部 URL |
+| 绑定账号 ID 默认隐藏 | `5cc5c19` | 默认不对外显示绑定的游戏账号 ID |
+
+#### 认证与注册
+
+| 修复项 | 提交 | 说明 |
+|--------|------|------|
+| Auth IP 上报 + 注册开关 + 凭证重注册 | `326c90b` | 客户端自报登录 IP/位置、`enable_registration` 运行时开关、credential 重新生成 |
+| provision_bot CLI | `aeb1ec9` | 支持手动配发 bot 凭证（不依赖邮箱验证流程） |
+
+#### Profile / 绑定体系修复
+
+| 修复项 | 提交 | 说明 |
+|--------|------|------|
+| 绑定列表全局编号 + 跨区服默认选号 | `6c02169` | 不带区服前缀时使用全局序号，解决同序号指向不同区服的歧义 |
+| 跨区服解绑 | `e87c1a9` | 不带区服前缀时正确查找跨区服绑定 |
+| 自定义背景缓存击穿 | `44c5c43` | 随机文件名 + JPEG 压缩 + 孤儿清理 |
+| Profile fallback 图片路径 | `fe8a2b5` | 补充缺失的默认头像 fallback |
+| Bot 请求 server region override | `15e304d` | 修复 bot 请求中区服覆盖逻辑 |
+
+#### 渲染 / 快照修复
+
+| 修复项 | 提交 | 说明 |
+|--------|------|------|
+| Suite snapshot 处理（music） | `5d7f9b2` | 修复 music 命令下 suite snapshot 读取 |
+| 跨区服 leader 图片 | `f810dd6` | 修复跨区服 snapshot 下领队卡图解析 |
+| 卡牌 parameter 解码兼容 | `b29445b` | 兼容 object 形式的 card parameter |
+| CN 卡牌 power series | `fc47512` | 处理 CN 区卡牌特有的 parameter power 序列 |
+| 卡牌 skill filter 别名对齐 | `349730e` | 与 lunabot 别名保持一致 |
+| 大 MySekai ID 精度保持 | `cf328f3` | JSON 解码时保留大整数精度 |
+| Render stats / sorting / deck parsing 对齐 | `36a950b` | 渲染统计、排序、deck 解析一致性修复；含 honor FC/AP 聚合计数修正（BUG-013）、难度排行区间解析（BUG-014）、跨服查询 region 覆盖修正（BUG-012）|
+| Suite 处理 + card/music 渲染收紧 | `925a1c2` | 加强 suite 校验与渲染逻辑 |
+| 未上线 masterdata 过滤 + WL 歌曲解析稳定化 | `24cb148` | 查卡/查歌隐藏未上线数据（BUG-017）、难度排行视觉排序修正（BUG-016）、WL 章节参数 wl3/wl4 解析（BUG-015）|
+
+#### Deck 组卡修复
+
+| 修复项 | 提交 | 说明 |
+|--------|------|------|
+| Deck recommend fallback + no-event 默认值 | `3c44203` | 无活动时的推荐逻辑修正 |
+| Deck masterdata 配置同步 | `131ddfd` | masterdata 目录配置与实际路径对齐 |
+| Deck music 解析 + snapshot bond 结果 | `4392845` | 修复 deck 音乐解析与 bond 快照结果 |
+| Deck 绑定选择器 | `d1fb1a0` | 支持 deck 命令中的绑定选择器语法 |
+
+#### Education / MySekai 区域修复
+
+| 修复项 | 提交 | 说明 |
+|--------|------|------|
+| Education region 传递 | `faef467` `ab1c752` | bridge 和 params 层保持 resolved region |
+| CN 区域未发布 area item 隐藏 | `b9da188` | 根据商店序列推断已发布等级 |
+| Area item 等级推断 | `1ec28de` | 从商店数据推断已开放的 area item 等级 |
+| MySekai region-scoped masterdata | `4751db9` | MySekai masterdata 按区域隔离 |
+| MySekai birthday 刷新渲染 | `1bfbddb` | 修复生日刷新渲染链路 |
+| MySekai card / fixture 渲染对齐 | `8aad61a` | 对齐卡牌和摆件渲染逻辑 |
+| Talk list 排序 | `eef33b5` | 修复对话列表排序 |
+
+#### Music / Event 快照修复
+
+| 修复项 | 提交 | 说明 |
+|--------|------|------|
+| Rewards snapshot fallback | `7893c90` | `/打歌奖励` 在 CN 等区服因 `userMusicAchievements` 字段形态差异误判无 Suite 数据并退回预估模式，新增多形态解码器兼容 array / columns-map / grouped-map 三种格式 |
+| WL 冲榜记录单榜拆分 | `7893c90` | `/冲榜记录` WL 单榜记录不再按活动聚合，改为逐条展示单榜 PT/Rank/角色图标，总榜条目标记 `IsWlEvent` |
+
+#### 回归测试
+
+| 项目 | 提交 | 说明 |
+|------|------|------|
+| Card parameter object 解码覆盖 | `c2d84ed` | 新增回归测试防止 parameter 解码退化 |
+| Rewards snapshot 解码测试 | `7893c90` | 覆盖 achievements 三种 JSON 形态的解码路径 |
+| Event record WL 拆分测试 | `7893c90` | 覆盖 WL 单榜条目拆分与总榜标记逻辑 |
+
+#### 已知 bug 追踪
+
+本轮新增 `docs/known-bugs.cn.md`（`ea3d595`），当前记录 17 个已知 bug，**全部已修复**。
+
 ## 12. 相关文档
 
+- [**已知 Bug 追踪**](known-bugs.cn.md) ← 已知问题与修复状态
 - [**Bot 客户端对接指南**](client-integration-guide.cn.md) ← 客户端接入必读
 - [PJSK 指令系统设计](pjsk-command-system.cn.md)
 - [PJSK 账号绑定实现说明](pjsk-profile-binding-implementation.cn.md)

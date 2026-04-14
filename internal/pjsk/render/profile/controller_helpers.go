@@ -253,8 +253,9 @@ func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUser
 	return result
 }
 
-func (c *Controller) buildHonors(source DataSource, region renderregion.Value, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor) []drawing.HonorRequest {
+func (c *Controller) buildHonors(source DataSource, region renderregion.Value, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor, musicCounts []drawing.MusicClearCount) []drawing.HonorRequest {
 	builder := renderhonor.NewBuilder(source, c.assets)
+	fcApLevels := buildHonorFcApLevels(musicCounts)
 	selected := make([]userdata.RawUserProfileHonor, 0, len(profileHonors))
 	for _, item := range profileHonors {
 		if item.HonorID > 0 || item.HonorId2 > 0 {
@@ -270,11 +271,12 @@ func (c *Controller) buildHonors(source DataSource, region renderregion.Value, p
 			honorID = item.HonorId2
 		}
 		req, err := builder.BuildHonorRequest(renderhonor.Query{
-			Region:           region,
-			HonorID:          honorID,
-			HonorLevel:       item.HonorLevel,
-			IsMain:           item.Seq == 1,
-			BondsHonorWordID: item.BondsHonorWordId,
+			Region:              region,
+			HonorID:             honorID,
+			HonorLevel:          item.HonorLevel,
+			IsMain:              item.Seq == 1,
+			BondsHonorWordID:    item.BondsHonorWordId,
+			FcOrApLevelOverride: fcApLevels[honorID],
 		})
 		if err == nil && req != nil {
 			requests = append(requests, *req)
@@ -289,16 +291,61 @@ func (c *Controller) buildHonors(source DataSource, region renderregion.Value, p
 			break
 		}
 		req, err := builder.BuildHonorRequest(renderhonor.Query{
-			Region:     region,
-			HonorID:    item.HonorID,
-			HonorLevel: item.HonorLevel,
-			IsMain:     len(requests) == 0,
+			Region:              region,
+			HonorID:             item.HonorID,
+			HonorLevel:          item.HonorLevel,
+			IsMain:              len(requests) == 0,
+			FcOrApLevelOverride: fcApLevels[item.HonorID],
 		})
 		if err == nil && req != nil {
 			requests = append(requests, *req)
 		}
 	}
 	return requests
+}
+
+func buildHonorFcApLevels(musicCounts []drawing.MusicClearCount) map[int]*int {
+	if len(musicCounts) == 0 {
+		return nil
+	}
+
+	countsByDifficulty := make(map[string]drawing.MusicClearCount, len(musicCounts))
+	for _, count := range musicCounts {
+		difficulty := strings.ToLower(strings.TrimSpace(count.Difficulty))
+		if difficulty == "" {
+			continue
+		}
+		countsByDifficulty[difficulty] = count
+	}
+	if len(countsByDifficulty) == 0 {
+		return nil
+	}
+
+	result := make(map[int]*int)
+	for _, honorID := range []int{3009, 3010, 3011, 3012, 3013, 3014, 4700, 4701} {
+		difficulty, score, ok := renderhonor.LookupFcApCounter(honorID)
+		if !ok {
+			continue
+		}
+		count, ok := countsByDifficulty[strings.ToLower(strings.TrimSpace(difficulty))]
+		if !ok {
+			continue
+		}
+
+		value := 0
+		switch score {
+		case "fullCombo":
+			value = count.Fc
+		case "allPerfect":
+			value = count.Ap
+		default:
+			continue
+		}
+
+		level := value
+		result[honorID] = &level
+	}
+	return result
 }
 
 func buildMusicCounts(clears []userdata.RawMusicClear, stats []userdata.RawMusicResult) []drawing.MusicClearCount {

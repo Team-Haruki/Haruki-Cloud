@@ -122,5 +122,5 @@ func registerStatisticsRoutes(app *fiber.App, client *bot.Client) {
 	svc := NewStatisticsService(client)
 	h := NewStatisticsHandler(svc)
 
-	app.Post("/bot/statistics/record/:botID", api.VerifyAPIAuthorization(), h.RecordStatistics)
+	app.Post("/internal/bot/statistics/record/:botID", api.VerifyAPIAuthorization(), h.RecordStatistics)
 }

@@ -46,6 +46,39 @@ func TestExtractMysekaiPhenomsIncludesBirthdayRefreshSlot(t *testing.T) {
 	}
 }
 
+func TestExtractMysekaiPhenomsPrefersFreshestSnapshotTime(t *testing.T) {
+	loc := time.FixedZone("CST", 8*3600)
+	staleNow := time.Date(2026, 4, 12, 16, 37, 0, 0, loc)
+	freshUpload := time.Date(2026, 4, 14, 16, 1, 0, 0, loc)
+
+	phenoms := extractMysekaiPhenoms(renderregion.JP, func(path string) string { return path }, map[string]any{
+		"now":         staleNow.UnixMilli(),
+		"upload_time": freshUpload.UnixMilli(),
+		"updatedResources": map[string]any{
+			"now": staleNow.UnixMilli(),
+		},
+		"mysekaiPhenomenaSchedules": []any{
+			map[string]any{"mysekaiPhenomenaId": 1},
+			map[string]any{"mysekaiPhenomenaId": 2},
+			map[string]any{"mysekaiPhenomenaId": 3},
+			map[string]any{"mysekaiPhenomenaId": 4},
+		},
+	})
+
+	if len(phenoms) != 4 {
+		t.Fatalf("expected stale birthday slot to be suppressed, got %+v", phenoms)
+	}
+
+	gotTexts := make([]string, 0, len(phenoms))
+	for _, item := range phenoms {
+		gotTexts = append(gotTexts, item.Text)
+	}
+	wantTexts := []string{"04:00", "16:00", "04:00", "16:00"}
+	if !reflect.DeepEqual(gotTexts, wantTexts) {
+		t.Fatalf("unexpected phenom card times with fresh upload: got=%v want=%v", gotTexts, wantTexts)
+	}
+}
+
 func TestSortKeysByResourceMovesRareEntriesToFront(t *testing.T) {
 	counts := map[string]int{
 		"material_1":             485,

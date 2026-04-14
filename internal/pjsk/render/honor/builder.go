@@ -34,7 +34,7 @@ func (b *Builder) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) 
 	}
 
 	if isNormal {
-		if err := b.buildNormalHonorRequest(req, query.HonorID, query.HonorLevel, query.Region); err != nil {
+		if err := b.buildNormalHonorRequest(req, query.HonorID, query.HonorLevel, query.FcOrApLevelOverride, query.Region); err != nil {
 			return nil, err
 		}
 	} else if isBonds {

@@ -1,14 +1,50 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"golang.org/x/sync/errgroup"
 	"haruki-cloud/api/bot/onebot11"
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/render/mysekai"
 	sekaiutils "haruki-cloud/utils/sekai"
 )
+
+type concurrentMessageJob func(context.Context) (onebot11.Message, error)
+
+func executeConcurrentMessages(ctx context.Context, jobs ...concurrentMessageJob) (onebot11.Message, error) {
+	if len(jobs) == 0 {
+		return nil, nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	group, groupCtx := errgroup.WithContext(ctx)
+	messages := make([]onebot11.Message, len(jobs))
+	for i, job := range jobs {
+		i, job := i, job
+		group.Go(func() error {
+			message, err := job(groupCtx)
+			if err != nil {
+				return err
+			}
+			messages[i] = message
+			return nil
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	combined := make(onebot11.Message, 0, len(messages))
+	for _, message := range messages {
+		combined = append(combined, message...)
+	}
+	return combined, nil
+}
 
 func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	if rc.App == nil || rc.App.MySekai == nil {
@@ -55,6 +91,29 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderResource(q)
+	case "mysekai-resource-map":
+		resourceQuery := mysekai.ResourceQuery{Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &resourceQuery)
+		resourceQuery.Profile = renderCtx.Profile
+		mapQuery := mysekai.MapQuery{Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &mapQuery)
+		return executeConcurrentMessages(
+			rc.Ctx,
+			func(ctx context.Context) (onebot11.Message, error) {
+				resourceData, resourceErr := renderCtx.Controller.RenderResource(resourceQuery)
+				if resourceErr != nil {
+					return nil, resourceErr
+				}
+				return imageMessage(ctx, resourceData, rc.App, BotModulePJSK)
+			},
+			func(ctx context.Context) (onebot11.Message, error) {
+				mapData, mapErr := renderCtx.Controller.RenderMap(mapQuery)
+				if mapErr != nil {
+					return nil, mapErr
+				}
+				return imageMessage(ctx, mapData, rc.App, BotModulePJSK)
+			},
+		)
 	case "mysekai-map":
 		q := mysekai.MapQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)

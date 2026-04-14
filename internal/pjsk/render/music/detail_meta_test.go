@@ -88,6 +88,7 @@ func TestBuildMusicDetailRequestIncludesMetadataFields(t *testing.T) {
 	root := t.TempDir()
 	userPath := filepath.Join(root, "user.json")
 	metaPath := filepath.Join(root, "music_meta.json")
+	chartPath := filepath.Join(root, "music", "music_score", "0001_01", "expert.txt")
 
 	if err := os.WriteFile(userPath, []byte(`{
   "now": 1700000000,
@@ -103,6 +104,17 @@ func TestBuildMusicDetailRequestIncludesMetadataFields(t *testing.T) {
   {"music_id": 2, "difficulty": "master", "music_time": 100, "tap_count": 500, "event_rate": 80, "base_score": 1.00, "base_score_auto": 0.90, "skill_score_solo": [0.08,0.07,0.06,0.05,0.04,0.03], "skill_score_auto": [0.07,0.06,0.05,0.04,0.03,0.02], "skill_score_multi": [0.09,0.08,0.07,0.06,0.05,0.04], "fever_score": 0.50}
 ]`), 0o644); err != nil {
 		t.Fatalf("write music meta snapshot: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(chartPath), 0o755); err != nil {
+		t.Fatalf("mkdir chart: %v", err)
+	}
+	if err := os.WriteFile(chartPath, []byte(strings.Join([]string{
+		"#BPM01:120",
+		"#BPM02:180",
+		"#00008:0100",
+		"#00108:0200",
+	}, "\n")), 0o644); err != nil {
+		t.Fatalf("write chart: %v", err)
 	}
 
 	source := &detailMetaTestSource{
@@ -153,6 +165,9 @@ func TestBuildMusicDetailRequestIncludesMetadataFields(t *testing.T) {
 	if req.Length == nil || *req.Length != "120.0秒（2分0.0秒）" {
 		t.Fatalf("expected formatted length from music meta, got %#v", req.Length)
 	}
+	if req.Bpm == nil || *req.Bpm != 120 {
+		t.Fatalf("expected bpm from local chart, got %#v", req.Bpm)
+	}
 	if req.LeaderboardMusicNum == nil || *req.LeaderboardMusicNum != 2 {
 		t.Fatalf("expected leaderboard music count 2, got %#v", req.LeaderboardMusicNum)
 	}
@@ -167,5 +182,43 @@ func TestBuildMusicDetailRequestIncludesMetadataFields(t *testing.T) {
 	}
 	if !strings.HasSuffix(req.LeaderboardMatrix[0][0].Value, "%") {
 		t.Fatalf("expected percentage leaderboard value, got %#v", req.LeaderboardMatrix[0][0])
+	}
+}
+
+func TestBuildMusicDetailRequestMergesApprovedAliases(t *testing.T) {
+	source := &detailMetaTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {
+				ID:              1,
+				Title:           "Song A",
+				AssetBundleName: "jacket_a",
+				Pronunciation:   "song a",
+				PublishedAt:     1700000000000,
+			},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31, TotalNoteCount: 999}},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetAliasResolver(&lookupTestAliasResolver{
+		ids:      map[string]int{"blue song": 1},
+		approved: map[int][]string{1: {"Blue Song", "群青", "song a"}},
+	})
+
+	req, err := controller.BuildMusicDetailRequest(Query{Query: "blue song", Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
+	}
+
+	want := []string{"song a", "Blue Song", "群青"}
+	if len(req.Alias) != len(want) {
+		t.Fatalf("unexpected alias count: got=%v want=%v", req.Alias, want)
+	}
+	for i := range want {
+		if req.Alias[i] != want[i] {
+			t.Fatalf("unexpected aliases: got=%v want=%v", req.Alias, want)
+		}
 	}
 }

@@ -223,7 +223,7 @@ func mergeMySekaiDataSources(profile *drawing.ProfileCardRequest, merged map[str
 }
 
 func mysekaiDataSourceFromMerged(profile *drawing.ProfileCardRequest, merged map[string]any) (drawing.ProfileDataSource, bool) {
-	updateTime := normalizeMySekaiUpdateTime(int64Number(merged["upload_time"], 0))
+	updateTime := normalizeMySekaiTimestampMs(int64Number(merged["upload_time"], 0))
 	sourceValue := strings.TrimSpace(stringValue(merged["source"]))
 	localSource := strings.TrimSpace(stringValue(merged["local_source"]))
 	if updateTime == 0 && sourceValue == "" && localSource == "" {
@@ -253,12 +253,12 @@ func mysekaiDataSourceFromMerged(profile *drawing.ProfileCardRequest, merged map
 	return entry, true
 }
 
-func normalizeMySekaiUpdateTime(value int64) int64 {
+func normalizeMySekaiTimestampMs(value int64) int64 {
 	if value <= 0 {
 		return 0
 	}
-	// MySekai payloads may report upload_time in seconds while Suite payloads
-	// use milliseconds. Normalize to milliseconds for DrawingAPI consumers.
+	// MySekai payloads may report timestamps in seconds while Suite payloads
+	// use milliseconds. Normalize all timestamp-like fields to milliseconds.
 	if value < 1_000_000_000_000 {
 		return value * 1000
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -37,6 +38,8 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 			Proxies: harukiConfig.Cfg.Backend.TrustProxies,
 		},
 	})
+
+	app.Use(recover.New())
 
 	if harukiConfig.Cfg.Backend.AccessLog != "" {
 		loggerConfig := logger.Config{Format: harukiConfig.Cfg.Backend.AccessLog}

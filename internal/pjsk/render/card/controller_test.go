@@ -5,8 +5,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -27,6 +29,37 @@ func TestBuildCardListRequestResolvesIDsFromQuery(t *testing.T) {
 	}
 	if req.Cards[0].CardID != 1001 || req.Cards[1].CardID != 1002 {
 		t.Fatalf("unexpected cards: %+v", req.Cards)
+	}
+}
+
+func TestBuildCardListRequestRejectsUnreleasedCardQuery(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Future Card", AssetBundleName: "card_a", ReleaseAt: now + 60_000},
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	if _, err := controller.BuildCardListRequest(ListRequest{Query: "1001", Region: "jp"}); err == nil {
+		t.Fatal("expected unreleased card query to fail")
+	}
+}
+
+func TestBuildCardListRequestFiltersUnreleasedCardsFromQuery(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Released Card", AssetBundleName: "card_a", ReleaseAt: now - 60_000},
+			{ID: 1002, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cool", Prefix: "Future Card", AssetBundleName: "card_b", ReleaseAt: now + 60_000},
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardListRequest(ListRequest{Query: "mnr 4星", Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildCardListRequest() error = %v", err)
+	}
+	if len(req.Cards) != 1 || req.Cards[0].CardID != 1001 {
+		t.Fatalf("unexpected released card list: %+v", req.Cards)
 	}
 }
 
@@ -159,6 +192,37 @@ func TestBuildCardBoxRequestRejectsExplicitRegionWithoutSource(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "region cn") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestBuildCardBoxRequestUsesRequestedRegionSourceForFullList(t *testing.T) {
+	jpSource := &lookupTestSource{
+		region: renderregion.JP,
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "JP Card", AssetBundleName: "card_jp", ReleaseAt: 1700000000000},
+		},
+		allowEmptyFilter: true,
+	}
+	cnSource := &lookupTestSource{
+		region: renderregion.CN,
+		cards: []*masterdata.Card{
+			{ID: 2001, CharacterID: 6, CardRarityType: "rarity_4", Attr: "cool", Prefix: "CN Card", AssetBundleName: "card_cn", ReleaseAt: 1700000000000},
+		},
+		allowEmptyFilter: true,
+	}
+
+	controller := NewController(jpSource, nil, nil, nil)
+	controller.RegisterSource(cnSource)
+
+	req, err := controller.BuildCardBoxRequest([]Query{{Region: "cn"}})
+	if err != nil {
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if req.Region != "cn" {
+		t.Fatalf("expected cn region, got %q", req.Region)
+	}
+	if len(req.Cards) != 1 || req.Cards[0].Card.CardID != 2001 {
+		t.Fatalf("unexpected cards: %+v", req.Cards)
 	}
 }
 

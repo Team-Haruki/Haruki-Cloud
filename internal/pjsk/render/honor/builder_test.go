@@ -363,6 +363,41 @@ func TestBuildHonorRequestFcApUsesResolvedAbsoluteScrollPath(t *testing.T) {
 	}
 }
 
+func TestBuildHonorRequestFcApUsesOverrideLevelForDisplayedCount(t *testing.T) {
+	source := newTestHonorSource(renderregion.JP)
+	source.honors[3013] = &masterdata.Honor{
+		ID:          3013,
+		GroupID:     711,
+		HonorRarity: "high",
+		Levels: []masterdata.HonorLevel{
+			{Level: 20, AssetBundleName: "honor_3013_700", HonorRarity: "high"},
+		},
+	}
+	source.groups[711] = &masterdata.HonorGroup{
+		ID:        711,
+		HonorType: "achievement",
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	displayLevel := 15
+	req, err := builder.BuildHonorRequest(Query{
+		Region:              renderregion.JP,
+		HonorID:             3013,
+		HonorLevel:          20,
+		IsMain:              true,
+		FcOrApLevelOverride: &displayLevel,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.HonorLevel == nil || *req.HonorLevel != 20 {
+		t.Fatalf("expected visual honor level 20, got %#v", req.HonorLevel)
+	}
+	if req.FcOrApLevel == nil || *req.FcOrApLevel != "15" {
+		t.Fatalf("expected displayed FC/AP level 15, got %#v", req.FcOrApLevel)
+	}
+}
+
 func TestBuildHonorRequestEventFrameFallsBackToStaticForLowRarity(t *testing.T) {
 	dir := t.TempDir()
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_bg_event_underwater_cp1", "degree_sub.png"))

@@ -12,7 +12,7 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
-func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, honorLevel int, region renderregion.Value) error {
+func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, honorLevel int, fcOrApLevelOverride *int, region renderregion.Value) error {
 	honorInfo, _ := b.source.GetHonorByID(honorID)
 	group, err := b.source.GetHonorGroupByID(honorInfo.GroupID)
 	if err != nil {
@@ -144,7 +144,11 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 		if b.assetExists(scrollPath) {
 			req.ScrollImgPath = &scrollPath
 		}
-		fcApLevel := strconv.Itoa(honorLevel)
+		fcApLevelValue := honorLevel
+		if fcOrApLevelOverride != nil {
+			fcApLevelValue = *fcOrApLevelOverride
+		}
+		fcApLevel := strconv.Itoa(fcApLevelValue)
 		req.FcOrApLevel = &fcApLevel
 	}
 
@@ -221,6 +225,14 @@ var diffScoreMap = map[int]struct {
 	3014: {diff: "master", score: "allPerfect"},
 	4700: {diff: "append", score: "fullCombo"},
 	4701: {diff: "append", score: "allPerfect"},
+}
+
+func LookupFcApCounter(honorID int) (difficulty string, score string, ok bool) {
+	spec, ok := diffScoreMap[honorID]
+	if !ok {
+		return "", "", false
+	}
+	return spec.diff, spec.score, true
 }
 
 func absInt(v int) int {

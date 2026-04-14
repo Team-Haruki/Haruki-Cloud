@@ -88,7 +88,9 @@ func VerifyAPIAuthorization() fiber.Handler {
 		}
 		expectedUserAgent := strings.TrimSpace(config.Cfg.Backend.AcceptUserAgent)
 
-		if expectedAuth == "" && expectedUserAgent == "" && !config.Cfg.Backend.AllowInsecureInternalAPI {
+		// Require at least an Authorization token to be configured.
+		// User-Agent alone is not sufficient as it can be trivially forged.
+		if expectedAuth == "" && !config.Cfg.Backend.AllowInsecureInternalAPI {
 			return JSONResponse(c, fiber.StatusServiceUnavailable, "Internal API authorization is not configured")
 		}
 

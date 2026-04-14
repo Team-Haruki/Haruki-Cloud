@@ -99,6 +99,24 @@ func (s *memoryRedisStore) Del(_ context.Context, key string) error {
 	return nil
 }
 
+func (s *memoryRedisStore) Incr(_ context.Context, key string) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	v, ok := s.value[key]
+	if !ok {
+		s.value[key] = "1"
+		return 1, nil
+	}
+	n, _ := strconv.ParseInt(v, 10, 64)
+	n++
+	s.value[key] = strconv.FormatInt(n, 10)
+	return n, nil
+}
+
+func (s *memoryRedisStore) Expire(_ context.Context, _ string, _ time.Duration) error {
+	return nil
+}
+
 func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
 	ctx := context.Background()
 	client := newBotTestClient(t, "route")
@@ -173,7 +191,7 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	public.Post("/:bot_id/auth", userHandler.Auth)
 	internal := app.Group("/internal/bot", api.VerifyAPIAuthorization())
 	internal.Post("/verify-session", internalHandler.VerifySession)
-	app.Post("/bot/statistics/record/:botID", api.VerifyAPIAuthorization(), statsHandler.RecordStatistics)
+	app.Post("/internal/bot/statistics/record/:botID", api.VerifyAPIAuthorization(), statsHandler.RecordStatistics)
 
 	const qqNumber int64 = 123456789
 	sendMailResp := sendJSONRequest(t, app, http.MethodPost, "/bot/send-mail", fmt.Sprintf(`{"qq_number":%d,"turnstile_token":"ts-token"}`, qqNumber), nil)
@@ -269,13 +287,13 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 		t.Fatalf("unexpected verify response: %+v", verifyData)
 	}
 
-	statsResp := sendJSONRequest(t, app, http.MethodPost, "/bot/statistics/record/"+registerData.BotID, `{}`, map[string]string{
+	statsResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+registerData.BotID, `{}`, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
 	if statsResp.Status != fiber.StatusOK {
 		t.Fatalf("statistics failed: status=%d message=%s", statsResp.Status, statsResp.Message)
 	}
-	statsResp = sendJSONRequest(t, app, http.MethodPost, "/bot/statistics/record/"+registerData.BotID, `{}`, map[string]string{
+	statsResp = sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+registerData.BotID, `{}`, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
 	if statsResp.Status != fiber.StatusOK {

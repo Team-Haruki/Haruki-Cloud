@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -18,8 +19,9 @@ type lookupTestSource struct {
 }
 
 type lookupTestAliasResolver struct {
-	ids map[string]int
-	err error
+	ids      map[string]int
+	approved map[int][]string
+	err      error
 }
 
 type lookupContextKey string
@@ -52,6 +54,28 @@ func (r *lookupTestAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Contex
 	}
 	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
 	return id, ok, nil
+}
+
+func (r *lookupTestAliasResolver) ListApprovedMusicAliases(_ context.Context, musicID int) ([]string, error) {
+	if r == nil {
+		return nil, nil
+	}
+	if r.err != nil {
+		return nil, r.err
+	}
+	items := r.approved[musicID]
+	if len(items) == 0 {
+		return nil, nil
+	}
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		result = append(result, item)
+	}
+	return result, nil
 }
 
 func (r *contextAwareLookupTestAliasResolver) TryResolveMusicID(ctx context.Context, token string) (int, bool, error) {
@@ -197,6 +221,20 @@ func TestResolveMusicCoverUsesControllerRequestContext(t *testing.T) {
 	}
 	if result == nil || result.Music == nil || result.Music.ID != 7 {
 		t.Fatalf("unexpected cover result: %+v", result)
+	}
+}
+
+func TestResolveMusicCoverHidesUnreleasedMusic(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			9: {ID: 9, Title: "Future Song", AssetBundleName: "future_song", PublishedAt: now + 60_000},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	if _, err := controller.ResolveMusicCover(Query{Query: "music9", Region: "jp"}); err == nil {
+		t.Fatal("expected unreleased music query to fail")
 	}
 }
 

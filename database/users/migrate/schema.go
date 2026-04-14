@@ -12,7 +12,7 @@ var (
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "platform", Type: field.TypeString, Size: 20},
-		{Name: "user_id", Type: field.TypeString, Size: 50},
+		{Name: "user_id", Type: field.TypeString, Size: 100},
 		{Name: "ban_state", Type: field.TypeBool, Default: false},
 		{Name: "ban_reason", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "pjsk_ban_state", Type: field.TypeBool, Default: false},

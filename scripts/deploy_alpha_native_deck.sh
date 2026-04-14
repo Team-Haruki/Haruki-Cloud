@@ -177,11 +177,11 @@ main() {
 	require_cmd tar
 	require_cmd go
 
-	check_local_paths
+	# check_local_paths
 	build_binary
-	prepare_remote
+	# prepare_remote
 	upload_binary
-	upload_masterdata
+	# upload_masterdata
 	restart_remote
 
 	echo

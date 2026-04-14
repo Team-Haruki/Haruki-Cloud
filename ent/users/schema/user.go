@@ -19,7 +19,7 @@ func (User) Fields() []ent.Field {
 			MaxLen(20).
 			Comment("Platform name"),
 		field.String("user_id").
-			MaxLen(50).
+			MaxLen(100).
 			Comment("User ID on the platform"),
 		field.Bool("ban_state").
 			Default(false).

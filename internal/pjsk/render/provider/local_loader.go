@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -168,17 +169,22 @@ type localVirtualLiveJSON struct {
 }
 
 type localCostume3dJSON struct {
-	ID              int    `json:"id"`
-	CharacterID     int    `json:"characterId"`
-	Name            string `json:"name"`
-	AssetBundleName string `json:"assetbundleName"`
+	ID                    int    `json:"id"`
+	CharacterID           int    `json:"characterId"`
+	Name                  string `json:"name"`
+	AssetBundleName       string `json:"assetbundleName"`
+	LegacyAssetBundleName string `json:"_assetbundleName"`
 }
 
 func (j *localCostume3dJSON) toModel() *masterdata.Costume3d {
+	assetBundleName := strings.TrimSpace(j.AssetBundleName)
+	if assetBundleName == "" {
+		assetBundleName = strings.TrimSpace(j.LegacyAssetBundleName)
+	}
 	return &masterdata.Costume3d{
 		ID:              j.ID,
 		CharacterID:     j.CharacterID,
-		AssetBundleName: j.AssetBundleName,
+		AssetBundleName: assetBundleName,
 		Description:     j.Name,
 	}
 }

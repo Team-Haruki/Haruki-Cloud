@@ -192,7 +192,11 @@ func (b *Builder) buildCostumeImagePaths(card *masterdata.Card, region renderreg
 		if costume == nil {
 			continue
 		}
-		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("thumbnail", "costume", costume.AssetBundleName+".png")))
+		assetBundleName := strings.TrimSpace(costume.AssetBundleName)
+		if assetBundleName == "" {
+			continue
+		}
+		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("thumbnail", "costume", assetBundleName+".png")))
 	}
 	return paths
 }

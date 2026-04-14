@@ -19,11 +19,6 @@ func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileC
 			return detail
 		}
 	}
-	if rc.App.Profiles != nil {
-		if detail := rc.App.Profiles.SnapshotDetailedProfile(rc.Region); detail != nil && len(detail.UserCards) > 0 {
-			return detail
-		}
-	}
 	return nil
 }
 

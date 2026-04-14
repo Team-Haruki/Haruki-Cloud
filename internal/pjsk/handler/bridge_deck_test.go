@@ -43,6 +43,9 @@ func TestResolveDeckRenderProfileAndSnapshotUsesSelectedBinding(t *testing.T) {
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
 		Bindings:  service,
 		Snapshots: provider,
 	})

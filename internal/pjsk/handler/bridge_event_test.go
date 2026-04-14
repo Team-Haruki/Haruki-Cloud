@@ -75,6 +75,9 @@ func TestBuildEventRecordFromSnapshotSeparatesWorldBloomTotalAndSingleRank(t *te
 		Mode:   "event-record",
 		Region: "jp",
 	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
 		Sekai:  sekaiClient,
 		Events: renderevent.NewController(nil, nil, nil),
 		Assets: assets.NewAssetHelper("", nil),

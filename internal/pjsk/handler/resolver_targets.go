@@ -22,7 +22,7 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 		var binding *accountdata.ResolvedBinding
 		var err error
 		if p.Selector != "" {
-			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, region, p.Selector)
+			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, selectorBindingServer(region, regionExplicit), p.Selector)
 		} else if !regionExplicit {
 			// No explicit region prefix — use global default binding directly,
 			// so the user's global default account is picked instead of a
@@ -105,4 +105,11 @@ func resolveRegionFromDefaultBinding(ctx context.Context, r *parser.ResolvedComm
 		return r.Region
 	}
 	return normalized.String()
+}
+
+func selectorBindingServer(region string, regionExplicit bool) string {
+	if !regionExplicit {
+		return ""
+	}
+	return strings.TrimSpace(region)
 }

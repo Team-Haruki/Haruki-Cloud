@@ -89,6 +89,9 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 		},
 	}
 	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
 		Bindings:  service,
 		MySekai:   controller,
 		Snapshots: &runtimeSnapshotProviderStub{snapshot: snapshot},

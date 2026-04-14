@@ -12,10 +12,10 @@ import (
 	sekaiutils "haruki-cloud/utils/sekai"
 )
 
-// resolveLiveSnapshot resolves the requester's Toolbox binding and fetches a
-// live snapshot. If needMySekai is true it also fetches mysekai data and merges
-// it into the snapshot. Returns nil if the user has no usable binding or if any
-// API call fails (callers fall back to the controller-level static snapshot).
+// resolveLiveSnapshot resolves the requester's bound snapshot provider. In
+// production this is expected to be the Toolbox/internal-cloud provider only.
+// When allow_fallback=true (dev/test), a configured static snapshot provider
+// may also be included in the provider chain.
 func resolveLiveSnapshot(rc *RequestContext, needMySekai bool) userdata.Snapshot {
 	return resolveSnapshotBySelector(rc.Ctx, rc.App, userdata.Selector{
 		IMPlatform: rc.Platform,
@@ -50,7 +50,7 @@ func defaultSnapshotProviderFactory(app *renderapp.App) userdata.SnapshotProvide
 	if primary := liveSnapshotProvider(app); primary != nil {
 		providers = append(providers, primary)
 	}
-	if app.Snapshots != nil {
+	if app.Config.UserSnapshot.AllowFallback && app.Snapshots != nil {
 		providers = append(providers, app.Snapshots)
 	}
 	switch len(providers) {
@@ -161,7 +161,7 @@ func resolveBindingWithFallback(
 	}
 
 	if opts.Selector != "" {
-		hid, binding, err = bindings.ResolveUserBindingBySelector(ctx, platform, platformUserID, regionStr, opts.Selector)
+		hid, binding, err = bindings.ResolveUserBindingBySelector(ctx, platform, platformUserID, selectorBindingServer(regionStr, regionExplicit), opts.Selector)
 	} else if !regionExplicit {
 		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
 		if err != nil || !isValid(binding) {

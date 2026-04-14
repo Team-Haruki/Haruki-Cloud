@@ -51,6 +51,14 @@ func TestBuildBindingListAssignsPerServerIndicesAndSelectsWithinServer(t *testin
 		t.Fatalf("unexpected cn u1 target: %+v", cnFirst)
 	}
 
+	globalThird, err := selectBinding(items, "u3", "")
+	if err != nil {
+		t.Fatalf("select global u3: %v", err)
+	}
+	if globalThird.Server != "jp" || globalThird.UserID != "2000" {
+		t.Fatalf("unexpected global u3 target: %+v", globalThird)
+	}
+
 	if _, err := selectBinding(items, "u2", "en"); err == nil {
 		t.Fatalf("expected en u2 to fail")
 	}

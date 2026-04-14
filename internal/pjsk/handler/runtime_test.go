@@ -6,6 +6,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
@@ -92,6 +93,9 @@ func TestRequestContextCachesBasicSnapshotAndUsesSnapshotProfiles(t *testing.T) 
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
 		Snapshots: provider,
 	})
 
@@ -130,6 +134,9 @@ func TestRequestContextCachesMySekaiSnapshotSeparately(t *testing.T) {
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
 		Snapshots: provider,
 	})
 
@@ -181,5 +188,26 @@ func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
 	}
 	if fallbackProvider.resolveCount != 0 {
 		t.Fatalf("expected fallback provider to stay unused, got %d resolves", fallbackProvider.resolveCount)
+	}
+}
+
+func TestResolveCardBoxDetailedProfileDoesNotFallbackToProfileControllerSnapshot(t *testing.T) {
+	profileController := renderprofile.NewController(nil, nil, nil, &runtimeSnapshotStub{
+		detail: &drawing.DetailedProfileCardRequest{
+			Nickname:  "controller-snapshot",
+			UserCards: []any{map[string]any{"card_id": 1001}},
+		},
+	})
+
+	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Profiles: profileController,
+	})
+
+	if detail := resolveCardBoxDetailedProfile(rc); detail != nil {
+		t.Fatalf("expected nil detail without snapshot provider, got %+v", detail)
 	}
 }

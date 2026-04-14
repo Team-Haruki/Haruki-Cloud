@@ -87,7 +87,10 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 	return rc.binding, rc.harukiUserID
 }
 
-// ResolveSnapshot fetches and builds a live snapshot from Toolbox.
+// ResolveSnapshot resolves a request-scoped snapshot via the configured
+// snapshot provider chain. In production this should be the live
+// Toolbox/internal-cloud provider only; dev/test may still enable static
+// snapshot fallback through allow_fallback.
 // Cached per request for suite-only and full(mysekai) modes separately.
 func (rc *RequestContext) ResolveSnapshot(needMySekai bool) userdata.Snapshot {
 	if needMySekai {

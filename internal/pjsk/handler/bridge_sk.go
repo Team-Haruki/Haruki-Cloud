@@ -330,7 +330,7 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 
 	// Selector mode: pick a specific bound account directly (u1/u2...).
 	if targetSelector != "" {
-		_, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, targetPlatform, targetUserID, normalizeTrackerRegion(req.Region), targetSelector)
+		_, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, targetPlatform, targetUserID, selectorBindingServer(normalizeTrackerRegion(req.Region), req.RegionExplicit), targetSelector)
 		if err != nil {
 			return fmt.Errorf("无法解析账号选择器 %s: %w", targetSelector, err)
 		}

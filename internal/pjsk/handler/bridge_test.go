@@ -704,6 +704,9 @@ func TestExecuteMusicListUsesSuiteSnapshotResults(t *testing.T) {
 		},
 	}
 	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
 		Music:    music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
 		Bindings: service,
 		Snapshots: userdata.NewStaticSnapshotProvider(&runtimeSnapshotStub{

@@ -201,6 +201,9 @@ func TestExecuteEducationAreaUsesResolvedRequestContextRegion(t *testing.T) {
 	controller.RegisterSource(newHandlerTestEducationSource(renderregion.CN, 15, "cn_item"))
 
 	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
 		Edu:        controller,
 		Bindings:   service,
 		Snapshots:  renderuserdata.NewStaticSnapshotProvider(snapshot),

@@ -124,13 +124,17 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
 	var snapshotService userdata.Snapshot
-	if provider := strings.TrimSpace(cfg.UserSnapshot.Provider); provider == "" || strings.EqualFold(provider, "local_file") {
+	if shouldEnableLocalSnapshotFallback(cfg) {
 		snapshotService = userdata.NewLocalFileServiceWithContext(initCtx, sekaiClient, assetHelper, userdata.LocalFileConfig{
 			DefaultRegion: cfg.DefaultRegion,
 			UserJSON:      cfg.UserSnapshot.UserJSON,
 			MusicMetaJSON: cfg.UserSnapshot.MusicMetaJSON,
 			MySekaiJSON:   cfg.UserSnapshot.MySekaiJSON,
 		})
+	}
+	var staticSnapshotProvider userdata.SnapshotProvider
+	if snapshotService != nil {
+		staticSnapshotProvider = userdata.NewStaticSnapshotProvider(snapshotService)
 	}
 
 	var drawingClient *drawing.HarukiDrawingClient
@@ -292,10 +296,26 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		SK:         skController,
 		Stamps:     stampController,
 		VLive:      vliveController,
-		Snapshots:  userdata.NewStaticSnapshotProvider(snapshotService),
+		Snapshots:  staticSnapshotProvider,
 		ImageCache: imagecache.NewWithStore(cfg.ImageCacheURI, cfg.ImageCacheDir, imgStore),
 		Censor:     cfg.CensorService,
 		Config:     cfg,
+	}
+}
+
+func shouldEnableLocalSnapshotFallback(cfg Config) bool {
+	if !cfg.UserSnapshot.AllowFallback {
+		return false
+	}
+	if strings.TrimSpace(cfg.UserSnapshot.UserJSON) == "" {
+		return false
+	}
+
+	switch strings.ToLower(strings.TrimSpace(cfg.UserSnapshot.Provider)) {
+	case "", "local_file", "toolbox", "internal_cloud":
+		return true
+	default:
+		return false
 	}
 }
 

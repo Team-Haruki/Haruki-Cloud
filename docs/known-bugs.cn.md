@@ -39,3 +39,4 @@
 | BUG-017 | card/music visibility | 查卡、查歌会返回未上线 masterdata；`查歌 -1` 也会把未上线歌曲计入“最近一首/倒数第 N 首” | ✅ 已修复 | Codex | 2026-04-14 | `24cb148` |
 | BUG-018 | music/detail | 查歌详情图的 `Alias` 字段只展示本地标题/读音/tag，没有并入已审核歌曲别名，导致“查歌别名没接上”的观感问题 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
 | BUG-019 | mysekai/blueprint | `mysekai` 角色昵称表缺少 `akt`、`khn`、`tks` 等 compact alias 与若干常见名字写法，导致 `/msb akt` 一类输入无法识别角色并错误回退到家具列表 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
+| BUG-020 | mysekai/resource | `msa` 顶部天气/现象卡片过度信任 `updatedResources.now`，当该时间戳落后于 `upload_time` 时会错误保留生日刷新槽，导致只有部分账号显示出异常天气时间段 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |

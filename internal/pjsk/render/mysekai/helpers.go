@@ -83,12 +83,7 @@ func extractMysekaiPhenoms(region renderregion.Value, resolve pathResolver, merg
 		return []drawing.MysekaiPhenomRequest{}
 	}
 
-	nowMs := int64Number(merged["now"], 0)
-	if updated, ok := merged["updatedResources"].(map[string]any); ok {
-		if v := int64Number(updated["now"], 0); v > 0 {
-			nowMs = v
-		}
-	}
+	nowMs := resolveMysekaiSnapshotTimeMs(merged)
 	now := time.Now()
 	if nowMs > 0 {
 		now = time.UnixMilli(nowMs)
@@ -127,6 +122,23 @@ func extractMysekaiPhenoms(region renderregion.Value, resolve pathResolver, merg
 		}
 	}
 	return phenoms
+}
+
+func resolveMysekaiSnapshotTimeMs(merged map[string]any) int64 {
+	if merged == nil {
+		return 0
+	}
+
+	best := normalizeMySekaiTimestampMs(int64Number(merged["now"], 0))
+	if updated, ok := merged["updatedResources"].(map[string]any); ok {
+		if current := normalizeMySekaiTimestampMs(int64Number(updated["now"], 0)); current > best {
+			best = current
+		}
+	}
+	if upload := normalizeMySekaiTimestampMs(int64Number(merged["upload_time"], 0)); upload > best {
+		best = upload
+	}
+	return best
 }
 
 func mysekaiNaturalPhenom(resolve pathResolver, phenomID int, start time.Time, isCurrent bool) drawing.MysekaiPhenomRequest {

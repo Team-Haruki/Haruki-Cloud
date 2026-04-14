@@ -199,3 +199,26 @@ func TestDispatchSupportsSKPredictMode(t *testing.T) {
 		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
 	}
 }
+
+func TestDispatchSupportsMysekaiOverviewAlias(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	result, err := handler.Dispatch(context.Background(), handler.Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]any{"text": "/msam"}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok || resolved == nil {
+		t.Fatalf("expected resolved command, got %#v", result)
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-resource-map" {
+		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	}
+}

@@ -42,3 +42,4 @@
 | BUG-020 | mysekai/resource | `msa` 顶部天气/现象卡片过度信任 `updatedResources.now`，当该时间戳落后于 `upload_time` 时会错误保留生日刷新槽，导致只有部分账号显示出异常天气时间段 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
 | BUG-021 | card/parser | `/查卡 -1` 会把负号后的 `1` 误当成筛选 token，落到一星卡过滤而不是“当前区服最新已上线卡”语义 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
 | BUG-022 | music/detail | 查歌详情图请求体预留了 `bpm` 字段，但构建阶段没有填充，导致详情图长期不展示 BPM | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
+| BUG-023 | bot/api | 新增 `/msam` 后，旧 manifest 仍可能把请求投到 `mysekai/resource` 端点；Bot API 严格校验 endpoint path，导致命令直接 400 无响应 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |

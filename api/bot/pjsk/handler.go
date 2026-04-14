@@ -121,18 +121,25 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 		if !guard.Acquire(c.Context(), req) {
 			return botResponse(c, fiber.StatusOK, "ok", make(onebot11.Message, 0))
 		}
-		// Backward compatibility: /skp moved from sk/rank-trace to sk/predict.
-		// Some clients may still post /skp to the old endpoint until manifests refresh.
+		// Backward compatibility:
+		// 1. /skp moved from sk/rank-trace to sk/predict.
+		// 2. /msam may still be posted to mysekai/resource until manifests refresh.
 		legacySKPredictCompat := expectedPath == "sk/rank-trace"
-		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat {
+		legacyMysekaiOverviewCompat := expectedPath == "mysekai/resource"
+		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat && !legacyMysekaiOverviewCompat {
 			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
 		}
 
 		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req)
-		if err != nil && legacySKPredictCompat {
+		if err != nil && (legacySKPredictCompat || legacyMysekaiOverviewCompat) {
 			var validationErr *botValidationError
-			if errors.As(err, &validationErr) && strings.Contains(validationErr.Error(), "belongs to path sk/predict") {
-				resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/predict", req)
+			if errors.As(err, &validationErr) {
+				switch {
+				case legacySKPredictCompat && strings.Contains(validationErr.Error(), "belongs to path sk/predict"):
+					resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/predict", req)
+				case legacyMysekaiOverviewCompat && strings.Contains(validationErr.Error(), "belongs to path mysekai/overview"):
+					resolved, err = resolveBotCommand(c.Context(), req.Message, "mysekai/overview", req)
+				}
 			}
 		}
 		if err != nil {

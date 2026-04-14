@@ -180,8 +180,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var vliveController *vlive.Controller
 	var masterProvider provider.MasterDataProvider
 	if sekaiClient != nil {
+		renderMasterdataDir := resolveRenderProviderMasterdataDir(cfg)
 		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
-		masterDBProvider.SetLocalMasterdataDir(cfg.LocalMasterdata.Dir)
+		masterDBProvider.SetLocalMasterdataDir(renderMasterdataDir)
 		masterProvider = masterDBProvider
 
 		// Create module adapters from the unified provider
@@ -228,7 +229,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 				continue
 			}
 			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
-			regionProvider.SetLocalMasterdataDir(cfg.LocalMasterdata.Dir)
+			regionProvider.SetLocalMasterdataDir(renderMasterdataDir)
 			regionCardAdapter := card.NewProviderAdapter(regionProvider)
 			regionEventAdapter := event.NewProviderAdapter(regionProvider)
 			regionMusicAdapter := music.NewProviderAdapter(regionProvider)
@@ -304,6 +305,13 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Censor:     cfg.CensorService,
 		Config:     cfg,
 	}
+}
+
+func resolveRenderProviderMasterdataDir(cfg Config) string {
+	if dir := strings.TrimSpace(cfg.LocalMasterdata.Dir); dir != "" {
+		return dir
+	}
+	return strings.TrimSpace(cfg.DeckRecommend.MasterdataDir)
 }
 
 func shouldEnableLocalSnapshotFallback(cfg Config) bool {

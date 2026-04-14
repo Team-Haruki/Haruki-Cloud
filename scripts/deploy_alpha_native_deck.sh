@@ -136,7 +136,7 @@ set -euo pipefail
 remote_dir="$1"
 log_level="$2"
 binary_path="${remote_dir}/haruki-server"
-log_path="${remote_dir}/logs/haruki-server.out"
+log_path="${remote_dir}/haruki.log"
 
 mv "${binary_path}.new" "${binary_path}"
 

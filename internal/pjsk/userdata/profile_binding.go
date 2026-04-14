@@ -104,12 +104,16 @@ func formatBindingListText(items []BindingListItem, server string) string {
 		return "你还没有绑定任何PJSK账号"
 	}
 
-	lines := []string{"已绑定账号列表（u序号按区服分别编号）:"}
+	lines := []string{"已绑定账号列表（u序号全局编号）:"}
 	if server != "" {
 		lines[0] = fmt.Sprintf("已绑定%s服账号列表（u序号按该区服编号）:", strings.ToUpper(server))
 	}
-	for _, item := range items {
-		line := fmt.Sprintf("u%d [%s] %s", item.Index, strings.ToUpper(item.Server), formatBindingUID(item))
+	for i, item := range items {
+		displayIdx := i + 1
+		if server != "" {
+			displayIdx = item.Index
+		}
+		line := fmt.Sprintf("u%d [%s] %s", displayIdx, strings.ToUpper(item.Server), formatBindingUID(item))
 		marks := make([]string, 0, 2)
 		if item.IsGlobalDefault {
 			marks = append(marks, "全局默认")

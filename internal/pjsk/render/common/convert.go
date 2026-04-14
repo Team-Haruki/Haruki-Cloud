@@ -17,8 +17,15 @@ func ConvertCardEntity(entity *sekaiDB.Card) (*masterdata.Card, error) {
 
 	var parameters []masterdata.CardParameter
 	if len(entity.CardParameters) > 0 {
-		if err := json.Unmarshal(entity.CardParameters, &parameters); err != nil {
+		var err error
+		parameters, err = masterdata.DecodeCardParameters(entity.CardParameters)
+		if err != nil {
 			return nil, fmt.Errorf("decode card parameters: %w", err)
+		}
+		for idx := range parameters {
+			if parameters[idx].CardID == 0 {
+				parameters[idx].CardID = int(entity.GameID)
+			}
 		}
 	}
 

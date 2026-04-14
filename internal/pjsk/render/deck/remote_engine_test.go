@@ -171,3 +171,62 @@ func TestRemoteRecommendRewarmsOnLogicalMusicMetaError(t *testing.T) {
 		t.Fatalf("expected 2 recommend calls, got %d", recommendCalls.Load())
 	}
 }
+
+func TestRemoteRecommendFallsBackToLegacyWhenUserdataHashMissing(t *testing.T) {
+	var batchRecommendCalls atomic.Int32
+	var legacyRecommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			if strings.Contains(r.Header.Get("Content-Type"), "application/octet-stream") {
+				batchRecommendCalls.Add(1)
+				http.Error(w, `{"error":"User data not found for userdata_hash: test-userdata-hash"}`, http.StatusInternalServerError)
+				return
+			}
+			legacyRecommendCalls.Add(1)
+			_, _ = w.Write([]byte(`{"decks":[{"score":100,"live_score":100,"mysekai_event_point":0,"total_power":200,"event_bonus_rate":20,"support_deck_bonus_rate":0,"multi_live_score_up":110,"cards":[{"card_id":1001,"level":60,"master_rank":5,"skill_level":4,"skill_score_up":120,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":true,"default_image":"special_training","has_canvas_bonus":false}]}]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	musicMeta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
+	recommender := &RemoteDeckRecommender{
+		baseURL:       server.URL,
+		client:        server.Client(),
+		defaultAlgs:   []string{"ga"},
+		masterdataDir: "/masterdata",
+		region:        "jp",
+		maxRetries:    0,
+		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
+	}
+
+	result, err := recommender.Recommend(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: musicMeta,
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if result == nil || len(result.Decks) != 1 {
+		t.Fatalf("unexpected recommend result: %+v", result)
+	}
+	if batchRecommendCalls.Load() != 1 {
+		t.Fatalf("expected 1 batch recommend call, got %d", batchRecommendCalls.Load())
+	}
+	if legacyRecommendCalls.Load() != 1 {
+		t.Fatalf("expected 1 legacy recommend call, got %d", legacyRecommendCalls.Load())
+	}
+}

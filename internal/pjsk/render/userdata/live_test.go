@@ -41,7 +41,7 @@ func TestNewFromBytesWithContextUsesFactoryContextForLeaderLookup(t *testing.T) 
 	if profile == nil {
 		t.Fatalf("expected profile")
 	}
-	if profile.LeaderImagePath != "user/leader.png" {
+	if profile.LeaderImagePath != "static_images/unknown.jpg" {
 		t.Fatalf("expected fallback leader path when build ctx is canceled, got %q", profile.LeaderImagePath)
 	}
 }

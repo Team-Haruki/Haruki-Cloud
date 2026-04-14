@@ -1,7 +1,6 @@
 package mysekai
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,7 +69,7 @@ func (s *localMasterdataStore) loadList(filename string) []map[string]any {
 		return nil
 	}
 	var items []map[string]any
-	if err := json.Unmarshal(data, &items); err != nil {
+	if err := decodeJSONUseNumber(data, &items); err != nil {
 		return nil
 	}
 
@@ -118,7 +117,7 @@ func (s *localMasterdataStore) loadObject(filename string, target any) bool {
 		if err != nil {
 			continue
 		}
-		return json.Unmarshal(data, target) == nil
+		return decodeJSONUseNumber(data, target) == nil
 	}
 	return false
 }

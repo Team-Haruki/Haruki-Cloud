@@ -642,6 +642,69 @@ func TestBuildBondsRequestFromSnapshot(t *testing.T) {
 	}
 }
 
+func TestBuildBondsRequestFromSnapshotUsesBaseCharacterForStyledPairs(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userBonds": []map[string]any{
+			{"bondsGroupId": 9127, "rank": 7, "exp": 4},
+		},
+		"userCharacters": []map[string]any{
+			{"characterId": 21, "characterRank": 55},
+			{"characterId": 27, "characterRank": 33},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		bonds: []*Bond{
+			{GroupID: 9127, CharacterID1: 121, CharacterID2: 27},
+		},
+		bondLevels: []*BondLevel{
+			{Level: 1, TotalExp: 0},
+			{Level: 7, TotalExp: 70},
+			{Level: 8, TotalExp: 90},
+		},
+		charStyles: map[int]*GameCharacterStyle{
+			121: {GameID: 121, CharacterID: 21, ColorCode: "#112233"},
+			27:  {GameID: 27, CharacterID: 27, ColorCode: "#445566"},
+		},
+	})
+
+	req, err := controller.BuildBondsRequestFromSnapshot(BondsQuery{Region: renderregion.JP, Cid: 21})
+	if err != nil {
+		t.Fatalf("BuildBondsRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.Bonds) != 1 {
+		t.Fatalf("unexpected bonds payload: %+v", req.Bonds)
+	}
+
+	bond := req.Bonds[0]
+	if bond.CharaID1 != 121 || bond.CharaID2 != 27 {
+		t.Fatalf("unexpected bond pair: %+v", bond)
+	}
+	if bond.CharaRank1 != 55 || bond.CharaRank2 != 33 {
+		t.Fatalf("unexpected character ranks: %+v", bond)
+	}
+	if !strings.Contains(bond.CharaIconPath1, "miku.png") {
+		t.Fatalf("unexpected icon path1: %q", bond.CharaIconPath1)
+	}
+}
+
 func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
 	snapshot := mustSnapshot(t, map[string]any{
 		"now": 12345,

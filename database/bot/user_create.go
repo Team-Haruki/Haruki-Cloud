@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"haruki-cloud/database/bot/user"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -45,6 +46,48 @@ func (_c *UserCreate) SetNillableCredential(v *string) *UserCreate {
 	return _c
 }
 
+// SetLastLoginIP sets the "last_login_ip" field.
+func (_c *UserCreate) SetLastLoginIP(v string) *UserCreate {
+	_c.mutation.SetLastLoginIP(v)
+	return _c
+}
+
+// SetNillableLastLoginIP sets the "last_login_ip" field if the given value is not nil.
+func (_c *UserCreate) SetNillableLastLoginIP(v *string) *UserCreate {
+	if v != nil {
+		_c.SetLastLoginIP(*v)
+	}
+	return _c
+}
+
+// SetLastLoginLocation sets the "last_login_location" field.
+func (_c *UserCreate) SetLastLoginLocation(v string) *UserCreate {
+	_c.mutation.SetLastLoginLocation(v)
+	return _c
+}
+
+// SetNillableLastLoginLocation sets the "last_login_location" field if the given value is not nil.
+func (_c *UserCreate) SetNillableLastLoginLocation(v *string) *UserCreate {
+	if v != nil {
+		_c.SetLastLoginLocation(*v)
+	}
+	return _c
+}
+
+// SetLastLoginAt sets the "last_login_at" field.
+func (_c *UserCreate) SetLastLoginAt(v time.Time) *UserCreate {
+	_c.mutation.SetLastLoginAt(v)
+	return _c
+}
+
+// SetNillableLastLoginAt sets the "last_login_at" field if the given value is not nil.
+func (_c *UserCreate) SetNillableLastLoginAt(v *time.Time) *UserCreate {
+	if v != nil {
+		_c.SetLastLoginAt(*v)
+	}
+	return _c
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -52,6 +95,7 @@ func (_c *UserCreate) Mutation() *UserMutation {
 
 // Save creates the User in the database.
 func (_c *UserCreate) Save(ctx context.Context) (*User, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -77,6 +121,18 @@ func (_c *UserCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *UserCreate) defaults() {
+	if _, ok := _c.mutation.LastLoginIP(); !ok {
+		v := user.DefaultLastLoginIP
+		_c.mutation.SetLastLoginIP(v)
+	}
+	if _, ok := _c.mutation.LastLoginLocation(); !ok {
+		v := user.DefaultLastLoginLocation
+		_c.mutation.SetLastLoginLocation(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *UserCreate) check() error {
 	if _, ok := _c.mutation.OwnerUserID(); !ok {
@@ -88,6 +144,16 @@ func (_c *UserCreate) check() error {
 	if v, ok := _c.mutation.Credential(); ok {
 		if err := user.CredentialValidator(v); err != nil {
 			return &ValidationError{Name: "credential", err: fmt.Errorf(`bot: validator failed for field "User.credential": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.LastLoginIP(); ok {
+		if err := user.LastLoginIPValidator(v); err != nil {
+			return &ValidationError{Name: "last_login_ip", err: fmt.Errorf(`bot: validator failed for field "User.last_login_ip": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.LastLoginLocation(); ok {
+		if err := user.LastLoginLocationValidator(v); err != nil {
+			return &ValidationError{Name: "last_login_location", err: fmt.Errorf(`bot: validator failed for field "User.last_login_location": %w`, err)}
 		}
 	}
 	return nil
@@ -128,6 +194,18 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldCredential, field.TypeString, value)
 		_node.Credential = value
 	}
+	if value, ok := _c.mutation.LastLoginIP(); ok {
+		_spec.SetField(user.FieldLastLoginIP, field.TypeString, value)
+		_node.LastLoginIP = value
+	}
+	if value, ok := _c.mutation.LastLoginLocation(); ok {
+		_spec.SetField(user.FieldLastLoginLocation, field.TypeString, value)
+		_node.LastLoginLocation = value
+	}
+	if value, ok := _c.mutation.LastLoginAt(); ok {
+		_spec.SetField(user.FieldLastLoginAt, field.TypeTime, value)
+		_node.LastLoginAt = &value
+	}
 	return _node, _spec
 }
 
@@ -149,6 +227,7 @@ func (_c *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*UserMutation)
 				if !ok {

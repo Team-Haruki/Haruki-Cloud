@@ -42,8 +42,8 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 		return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{Valid: false})
 	}
 
-	tokenBotID := claims["bot_id"].(string)
-	if tokenBotID != req.BotID {
+	tokenBotID, ok := claims["bot_id"].(string)
+	if !ok || tokenBotID != req.BotID {
 		return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{Valid: false})
 	}
 

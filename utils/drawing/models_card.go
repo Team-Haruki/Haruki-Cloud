@@ -95,10 +95,12 @@ type CardDetailRequest struct {
 
 // CardListRequest represents request for /card/list
 type CardListRequest struct {
-	Cards             []CardBasic                 `json:"cards"`
-	Region            string                      `json:"region"`
-	UserInfo          *DetailedProfileCardRequest `json:"user_info,omitempty"`
-	BackgroundImgPath *string                     `json:"background_img_path,omitempty"`
+	Cards               []CardBasic                 `json:"cards"`
+	Region              string                      `json:"region"`
+	UserInfo            *DetailedProfileCardRequest `json:"user_info,omitempty"`
+	BackgroundImgPath   *string                     `json:"background_img_path,omitempty"`
+	TermLimitedIconPath *string                     `json:"term_limited_icon_path,omitempty"`
+	FesLimitedIconPath  *string                     `json:"fes_limited_icon_path,omitempty"`
 }
 
 // CardBoxRequest represents request for /card/box

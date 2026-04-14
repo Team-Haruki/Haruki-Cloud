@@ -87,11 +87,37 @@ func TestParserExtractsBanEventOCUnitSkillAndAttr(t *testing.T) {
 	if info.MainUnit != "piapro" || info.SupportUnit != "none" {
 		t.Fatalf("unexpected unit filter: %+v", info)
 	}
-	if info.SkillType != "judgment_accuracy_up" {
+	if info.SkillType != "judgment_up" {
 		t.Fatalf("unexpected skill filter: %+v", info)
 	}
 	if info.Attr != "cool" {
 		t.Fatalf("unexpected attr filter: %+v", info)
+	}
+}
+
+func TestParserSupportsLunabotSkillAliases(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	tests := []struct {
+		query     string
+		skillType string
+	}{
+		{query: "判卡", skillType: "judgment_up"},
+		{query: "分卡", skillType: "score_up"},
+		{query: "奶卡", skillType: "life_recovery"},
+	}
+
+	for _, tt := range tests {
+		info, err := parser.ParsePreferFilter(tt.query)
+		if err != nil {
+			t.Fatalf("ParsePreferFilter(%q) error = %v", tt.query, err)
+		}
+		if info.Type != QueryTypeFilter {
+			t.Fatalf("expected filter query for %q, got %+v", tt.query, info)
+		}
+		if info.SkillType != tt.skillType {
+			t.Fatalf("unexpected skill type for %q: got=%q want=%q", tt.query, info.SkillType, tt.skillType)
+		}
 	}
 }
 

@@ -220,6 +220,15 @@ func isUnsupportedBatchProtocolError(err error) bool {
 		strings.Contains(message, "unsupported media type")
 }
 
+func isMissingUserdataHashError(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "userdata_hash") &&
+		(strings.Contains(message, "user data not found") || strings.Contains(message, "not found"))
+}
+
 func hashPayload(data []byte) string {
 	if len(data) == 0 {
 		return ""

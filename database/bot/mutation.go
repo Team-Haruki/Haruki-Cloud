@@ -2029,18 +2029,21 @@ func (m *RequestsRankingMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	owner_user_id    *int64
-	addowner_user_id *int64
-	bot_id           *int
-	addbot_id        *int
-	credential       *string
-	clearedFields    map[string]struct{}
-	done             bool
-	oldValue         func(context.Context) (*User, error)
-	predicates       []predicate.User
+	op                  Op
+	typ                 string
+	id                  *int
+	owner_user_id       *int64
+	addowner_user_id    *int64
+	bot_id              *int
+	addbot_id           *int
+	credential          *string
+	last_login_ip       *string
+	last_login_location *string
+	last_login_at       *time.Time
+	clearedFields       map[string]struct{}
+	done                bool
+	oldValue            func(context.Context) (*User, error)
+	predicates          []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -2302,6 +2305,153 @@ func (m *UserMutation) ResetCredential() {
 	delete(m.clearedFields, user.FieldCredential)
 }
 
+// SetLastLoginIP sets the "last_login_ip" field.
+func (m *UserMutation) SetLastLoginIP(s string) {
+	m.last_login_ip = &s
+}
+
+// LastLoginIP returns the value of the "last_login_ip" field in the mutation.
+func (m *UserMutation) LastLoginIP() (r string, exists bool) {
+	v := m.last_login_ip
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastLoginIP returns the old "last_login_ip" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastLoginIP(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastLoginIP is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastLoginIP requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastLoginIP: %w", err)
+	}
+	return oldValue.LastLoginIP, nil
+}
+
+// ClearLastLoginIP clears the value of the "last_login_ip" field.
+func (m *UserMutation) ClearLastLoginIP() {
+	m.last_login_ip = nil
+	m.clearedFields[user.FieldLastLoginIP] = struct{}{}
+}
+
+// LastLoginIPCleared returns if the "last_login_ip" field was cleared in this mutation.
+func (m *UserMutation) LastLoginIPCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastLoginIP]
+	return ok
+}
+
+// ResetLastLoginIP resets all changes to the "last_login_ip" field.
+func (m *UserMutation) ResetLastLoginIP() {
+	m.last_login_ip = nil
+	delete(m.clearedFields, user.FieldLastLoginIP)
+}
+
+// SetLastLoginLocation sets the "last_login_location" field.
+func (m *UserMutation) SetLastLoginLocation(s string) {
+	m.last_login_location = &s
+}
+
+// LastLoginLocation returns the value of the "last_login_location" field in the mutation.
+func (m *UserMutation) LastLoginLocation() (r string, exists bool) {
+	v := m.last_login_location
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastLoginLocation returns the old "last_login_location" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastLoginLocation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastLoginLocation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastLoginLocation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastLoginLocation: %w", err)
+	}
+	return oldValue.LastLoginLocation, nil
+}
+
+// ClearLastLoginLocation clears the value of the "last_login_location" field.
+func (m *UserMutation) ClearLastLoginLocation() {
+	m.last_login_location = nil
+	m.clearedFields[user.FieldLastLoginLocation] = struct{}{}
+}
+
+// LastLoginLocationCleared returns if the "last_login_location" field was cleared in this mutation.
+func (m *UserMutation) LastLoginLocationCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastLoginLocation]
+	return ok
+}
+
+// ResetLastLoginLocation resets all changes to the "last_login_location" field.
+func (m *UserMutation) ResetLastLoginLocation() {
+	m.last_login_location = nil
+	delete(m.clearedFields, user.FieldLastLoginLocation)
+}
+
+// SetLastLoginAt sets the "last_login_at" field.
+func (m *UserMutation) SetLastLoginAt(t time.Time) {
+	m.last_login_at = &t
+}
+
+// LastLoginAt returns the value of the "last_login_at" field in the mutation.
+func (m *UserMutation) LastLoginAt() (r time.Time, exists bool) {
+	v := m.last_login_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastLoginAt returns the old "last_login_at" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastLoginAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastLoginAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastLoginAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastLoginAt: %w", err)
+	}
+	return oldValue.LastLoginAt, nil
+}
+
+// ClearLastLoginAt clears the value of the "last_login_at" field.
+func (m *UserMutation) ClearLastLoginAt() {
+	m.last_login_at = nil
+	m.clearedFields[user.FieldLastLoginAt] = struct{}{}
+}
+
+// LastLoginAtCleared returns if the "last_login_at" field was cleared in this mutation.
+func (m *UserMutation) LastLoginAtCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastLoginAt]
+	return ok
+}
+
+// ResetLastLoginAt resets all changes to the "last_login_at" field.
+func (m *UserMutation) ResetLastLoginAt() {
+	m.last_login_at = nil
+	delete(m.clearedFields, user.FieldLastLoginAt)
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -2336,7 +2486,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 6)
 	if m.owner_user_id != nil {
 		fields = append(fields, user.FieldOwnerUserID)
 	}
@@ -2345,6 +2495,15 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.credential != nil {
 		fields = append(fields, user.FieldCredential)
+	}
+	if m.last_login_ip != nil {
+		fields = append(fields, user.FieldLastLoginIP)
+	}
+	if m.last_login_location != nil {
+		fields = append(fields, user.FieldLastLoginLocation)
+	}
+	if m.last_login_at != nil {
+		fields = append(fields, user.FieldLastLoginAt)
 	}
 	return fields
 }
@@ -2360,6 +2519,12 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.BotID()
 	case user.FieldCredential:
 		return m.Credential()
+	case user.FieldLastLoginIP:
+		return m.LastLoginIP()
+	case user.FieldLastLoginLocation:
+		return m.LastLoginLocation()
+	case user.FieldLastLoginAt:
+		return m.LastLoginAt()
 	}
 	return nil, false
 }
@@ -2375,6 +2540,12 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldBotID(ctx)
 	case user.FieldCredential:
 		return m.OldCredential(ctx)
+	case user.FieldLastLoginIP:
+		return m.OldLastLoginIP(ctx)
+	case user.FieldLastLoginLocation:
+		return m.OldLastLoginLocation(ctx)
+	case user.FieldLastLoginAt:
+		return m.OldLastLoginAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -2404,6 +2575,27 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCredential(v)
+		return nil
+	case user.FieldLastLoginIP:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastLoginIP(v)
+		return nil
+	case user.FieldLastLoginLocation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastLoginLocation(v)
+		return nil
+	case user.FieldLastLoginAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastLoginAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -2465,6 +2657,15 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldCredential) {
 		fields = append(fields, user.FieldCredential)
 	}
+	if m.FieldCleared(user.FieldLastLoginIP) {
+		fields = append(fields, user.FieldLastLoginIP)
+	}
+	if m.FieldCleared(user.FieldLastLoginLocation) {
+		fields = append(fields, user.FieldLastLoginLocation)
+	}
+	if m.FieldCleared(user.FieldLastLoginAt) {
+		fields = append(fields, user.FieldLastLoginAt)
+	}
 	return fields
 }
 
@@ -2482,6 +2683,15 @@ func (m *UserMutation) ClearField(name string) error {
 	case user.FieldCredential:
 		m.ClearCredential()
 		return nil
+	case user.FieldLastLoginIP:
+		m.ClearLastLoginIP()
+		return nil
+	case user.FieldLastLoginLocation:
+		m.ClearLastLoginLocation()
+		return nil
+	case user.FieldLastLoginAt:
+		m.ClearLastLoginAt()
+		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
 }
@@ -2498,6 +2708,15 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldCredential:
 		m.ResetCredential()
+		return nil
+	case user.FieldLastLoginIP:
+		m.ResetLastLoginIP()
+		return nil
+	case user.FieldLastLoginLocation:
+		m.ResetLastLoginLocation()
+		return nil
+	case user.FieldLastLoginAt:
+		m.ResetLastLoginAt()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

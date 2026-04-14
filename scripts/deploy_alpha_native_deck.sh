@@ -6,6 +6,7 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 WORKSPACE_ROOT="$(cd -- "${REPO_ROOT}/.." && pwd)"
 
 REMOTE_HOST="${REMOTE_HOST:-Haruki}"
+REMOTE_PORT="${REMOTE_PORT:-}"
 REMOTE_DIR="${REMOTE_DIR:-/data/HarukiServices/alpha}"
 REMOTE_BINARY_PATH="${REMOTE_BINARY_PATH:-${REMOTE_DIR}/haruki-server}"
 REMOTE_LOG_PATH="${REMOTE_LOG_PATH:-${REMOTE_DIR}/logs/haruki-server.out}"
@@ -25,6 +26,7 @@ Usage:
 
 Optional environment variables:
   REMOTE_HOST           SSH host alias or user@host (default: Haruki)
+  REMOTE_PORT           SSH port for direct host connections
   REMOTE_DIR            Remote working directory (default: /data/HarukiServices/alpha)
   LOCAL_MASTERDATA_DIR  Local deck masterdata root
   LOCAL_BINARY_PATH     Local built binary path
@@ -68,6 +70,22 @@ check_local_paths() {
 	done
 }
 
+ssh_cmd() {
+	if [[ -n "${REMOTE_PORT}" ]]; then
+		ssh -p "${REMOTE_PORT}" "${REMOTE_HOST}" "$@"
+	else
+		ssh "${REMOTE_HOST}" "$@"
+	fi
+}
+
+scp_cmd() {
+	if [[ -n "${REMOTE_PORT}" ]]; then
+		scp -P "${REMOTE_PORT}" "$@"
+	else
+		scp "$@"
+	fi
+}
+
 build_binary() {
 	if [[ "${BUILD_BINARY}" != "1" ]]; then
 		if [[ ! -f "${LOCAL_BINARY_PATH}" ]]; then
@@ -86,12 +104,12 @@ build_binary() {
 }
 
 prepare_remote() {
-	ssh "${REMOTE_HOST}" "mkdir -p '${REMOTE_DIR}' '${REMOTE_DIR}/deckrec' '${REMOTE_DIR}/logs'"
+	ssh_cmd "mkdir -p '${REMOTE_DIR}' '${REMOTE_DIR}/deckrec' '${REMOTE_DIR}/logs'"
 }
 
 upload_binary() {
 	echo "[upload] binary"
-	scp "${LOCAL_BINARY_PATH}" "${REMOTE_HOST}:${REMOTE_BINARY_PATH}.new"
+	scp_cmd "${LOCAL_BINARY_PATH}" "${REMOTE_HOST}:${REMOTE_BINARY_PATH}.new"
 }
 
 upload_masterdata() {
@@ -105,9 +123,9 @@ upload_masterdata() {
 	trap 'rm -f -- "${tmp_archive}"' RETURN
 
 	tar -C "${LOCAL_MASTERDATA_DIR}" -cf "${tmp_archive}" .
-	scp "${tmp_archive}" "${REMOTE_HOST}:${REMOTE_DIR}/deckrec/masterdata.tar.tmp"
+	scp_cmd "${tmp_archive}" "${REMOTE_HOST}:${REMOTE_DIR}/deckrec/masterdata.tar.tmp"
 
-	ssh "${REMOTE_HOST}" "bash -s" -- "${REMOTE_DIR}" <<'EOF'
+	ssh_cmd "bash -s" -- "${REMOTE_DIR}" <<'EOF'
 set -euo pipefail
 remote_dir="$1"
 target_dir="${remote_dir}/deckrec/masterdata"
@@ -131,7 +149,7 @@ EOF
 
 restart_remote() {
 	echo "[restart] haruki-server"
-	ssh "${REMOTE_HOST}" "bash -s" -- "${REMOTE_DIR}" "${LOG_LEVEL}" <<'EOF'
+	ssh_cmd "bash -s" -- "${REMOTE_DIR}" "${LOG_LEVEL}" <<'EOF'
 set -euo pipefail
 remote_dir="$1"
 log_level="$2"
@@ -163,14 +181,18 @@ main() {
 	build_binary
 	prepare_remote
 	upload_binary
-	# upload_masterdata
+	upload_masterdata
 	restart_remote
 
 	echo
 	echo "done"
 	echo "remote host: ${REMOTE_HOST}"
 	echo "remote dir:  ${REMOTE_DIR}"
-	echo "log tail:    ssh ${REMOTE_HOST} 'tail -f ${REMOTE_LOG_PATH}'"
+	if [[ -n "${REMOTE_PORT}" ]]; then
+		echo "log tail:    ssh -p ${REMOTE_PORT} ${REMOTE_HOST} 'tail -f ${REMOTE_LOG_PATH}'"
+	else
+		echo "log tail:    ssh ${REMOTE_HOST} 'tail -f ${REMOTE_LOG_PATH}'"
+	fi
 }
 
 main "$@"

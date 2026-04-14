@@ -12,8 +12,9 @@ import (
 )
 
 type runtimeSnapshotStub struct {
-	detail *drawing.DetailedProfileCardRequest
-	card   *drawing.ProfileCardRequest
+	detail       *drawing.DetailedProfileCardRequest
+	card         *drawing.ProfileCardRequest
+	musicResults map[string]map[int]string
 }
 
 func (s *runtimeSnapshotStub) Require() error { return nil }
@@ -26,9 +27,27 @@ func (s *runtimeSnapshotStub) ProfileCard(renderregion.Value) *drawing.ProfileCa
 	return s.card
 }
 
-func (s *runtimeSnapshotStub) MusicResults(string) map[int]string { return nil }
+func (s *runtimeSnapshotStub) MusicResults(diff string) map[int]string {
+	if s == nil || s.musicResults == nil {
+		return nil
+	}
+	src := s.musicResults[diff]
+	if len(src) == 0 {
+		return nil
+	}
+	out := make(map[int]string, len(src))
+	for musicID, result := range src {
+		out[musicID] = result
+	}
+	return out
+}
 
-func (s *runtimeSnapshotStub) GetMusicResult(int, string) string { return "" }
+func (s *runtimeSnapshotStub) GetMusicResult(musicID int, diff string) string {
+	if s == nil || s.musicResults == nil {
+		return ""
+	}
+	return s.musicResults[diff][musicID]
+}
 
 func (s *runtimeSnapshotStub) ChallengeLive() *renderuserdata.ChallengeLiveData { return nil }
 
@@ -121,5 +140,46 @@ func TestRequestContextCachesMySekaiSnapshotSeparately(t *testing.T) {
 	}
 	if len(provider.resolveNeedFlags) != 1 || !provider.resolveNeedFlags[0] {
 		t.Fatalf("unexpected resolve flags: %+v", provider.resolveNeedFlags)
+	}
+}
+
+func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
+	liveProvider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{},
+	}
+	fallbackProvider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{},
+	}
+
+	originalFactory := snapshotProviderFactory
+	snapshotProviderFactory = func(app *renderapp.App) renderuserdata.SnapshotProvider {
+		if app != nil && app.Config.UserSnapshot.Provider == "internal_cloud" {
+			return liveProvider
+		}
+		return originalFactory(app)
+	}
+	defer func() {
+		snapshotProviderFactory = originalFactory
+	}()
+
+	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{Provider: "internal_cloud"},
+		},
+		Snapshots: fallbackProvider,
+	})
+
+	if snapshot := rc.ResolveSnapshot(false); snapshot == nil {
+		t.Fatal("expected snapshot from configured provider")
+	}
+	if liveProvider.resolveCount != 1 {
+		t.Fatalf("expected live provider to resolve once, got %d", liveProvider.resolveCount)
+	}
+	if fallbackProvider.resolveCount != 0 {
+		t.Fatalf("expected fallback provider to stay unused, got %d resolves", fallbackProvider.resolveCount)
 	}
 }

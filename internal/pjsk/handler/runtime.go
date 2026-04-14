@@ -178,6 +178,34 @@ func (rc *RequestContext) GetProfileCard() *drawing.ProfileCardRequest {
 	return rc.profileCard
 }
 
+// requireVisibleSuiteSnapshot is used by suite-dependent commands that should
+// stop falling back to the public SekaiAPI path when the user simply has no
+// suite data. If the binding exists but suite was intentionally hidden, the
+// helper returns (binding, nil, nil) so callers can keep the existing
+// hide-suite behavior unchanged.
+func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBinding, userdata.Snapshot, error) {
+	if rc == nil {
+		return nil, nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+	}
+	if rc.Platform == "" || rc.PlatformUserID == "" || rc.App == nil || rc.App.Bindings == nil {
+		return nil, nil, nil
+	}
+
+	binding, _ := rc.GetBinding()
+	if binding == nil {
+		return nil, nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+	}
+	if !binding.SuiteVisible {
+		return binding, nil, nil
+	}
+
+	snapshot := rc.ResolveSnapshot(false)
+	if snapshot == nil {
+		return binding, nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+	}
+	return binding, snapshot, nil
+}
+
 // ImageMessage is a convenience method to store image bytes and return an image message.
 func (rc *RequestContext) ImageMessage(data []byte) (onebot11.Message, error) {
 	url, err := rc.App.ImageCache.StoreAndGetURL(rc.Ctx, data, BotModulePJSK)

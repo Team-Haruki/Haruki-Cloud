@@ -49,6 +49,25 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 		charRankMap[item.CharacterID] = item.CharacterRank
 	}
 
+	charStyles := make(map[int]*GameCharacterStyle)
+	getCharacterStyle := func(gameID int) *GameCharacterStyle {
+		if gameID <= 0 {
+			return nil
+		}
+		if style, ok := charStyles[gameID]; ok {
+			return style
+		}
+		style := ctx.source.GetGameCharacterStyle(gameID)
+		charStyles[gameID] = style
+		return style
+	}
+	resolveBondBaseCharacterID := func(gameID int) int {
+		if style := getCharacterStyle(gameID); style != nil && style.CharacterID > 0 {
+			return style.CharacterID
+		}
+		return gameID
+	}
+
 	levelTotalExp := make(map[int]int)
 	maxLevel := 0
 	for _, item := range ctx.source.GetBondLevels() {
@@ -70,10 +89,12 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 				continue
 			}
 			pair := bondPair{CharID1: master.CharacterID1, CharID2: master.CharacterID2}
-			if pair.CharID1 != query.Cid && pair.CharID2 != query.Cid {
+			leftBaseID := resolveBondBaseCharacterID(pair.CharID1)
+			rightBaseID := resolveBondBaseCharacterID(pair.CharID2)
+			if leftBaseID != query.Cid && rightBaseID != query.Cid {
 				continue
 			}
-			if pair.CharID1 != query.Cid {
+			if leftBaseID != query.Cid {
 				pair.CharID1, pair.CharID2 = pair.CharID2, pair.CharID1
 			}
 			selectedPairs = append(selectedPairs, pair)
@@ -94,11 +115,8 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 		}
 	}
 
-	charStyles := make(map[int]*GameCharacterStyle, len(requiredCharIDs))
 	for charID := range requiredCharIDs {
-		if style := ctx.source.GetGameCharacterStyle(charID); style != nil {
-			charStyles[charID] = style
-		}
+		_ = getCharacterStyle(charID)
 	}
 
 	resolveCharIcon := func(gameID int) string {
@@ -127,8 +145,8 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 			CharaID2:       pair.CharID2,
 			CharaIconPath1: resolveCharIcon(pair.CharID1),
 			CharaIconPath2: resolveCharIcon(pair.CharID2),
-			CharaRank1:     charRankMap[pair.CharID1],
-			CharaRank2:     charRankMap[pair.CharID2],
+			CharaRank1:     charRankMap[resolveBondBaseCharacterID(pair.CharID1)],
+			CharaRank2:     charRankMap[resolveBondBaseCharacterID(pair.CharID2)],
 			BondLevel:      state.Rank,
 			HasBond:        state.BondsGroupID != 0,
 			Color1:         defaultBondColor(),

@@ -75,7 +75,7 @@ func TestExecuteProfileBindingCommandBindAndList(t *testing.T) {
 		t.Fatalf("execute bind list: %v", err)
 	}
 
-	expectedList := "已绑定账号列表（u序号按区服分别编号）:\nu1 [JP] 2000 (全局默认 / JP服默认)"
+	expectedList := "已绑定账号列表（u序号全局编号）:\nu1 [JP] 2000 (全局默认 / JP服默认)"
 	if string(listText) != expectedList {
 		t.Fatalf("unexpected list text:\n%s", string(listText))
 	}
@@ -146,5 +146,34 @@ func TestExecuteProfileBindingCommandBindListFiltersByServerWhenEmpty(t *testing
 	expectedList := "你还没有绑定任何CN服PJSK账号"
 	if string(listText) != expectedList {
 		t.Fatalf("unexpected empty filtered list text:\n%s", string(listText))
+	}
+}
+
+func TestExecuteProfileBindingCommandBindListMasksUIDByDefault(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"12345678901234": "JP User"},
+	})
+
+	ctx := context.Background()
+
+	if _, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "12345678901234",
+	}); err != nil {
+		t.Fatalf("execute bind: %v", err)
+	}
+
+	listText, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBindList, userdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+	})
+	if err != nil {
+		t.Fatalf("execute bind list: %v", err)
+	}
+
+	expectedList := "已绑定账号列表（u序号全局编号）:\nu1 [JP] 123********234 (全局默认 / JP服默认)"
+	if string(listText) != expectedList {
+		t.Fatalf("unexpected masked list text:\n%s", string(listText))
 	}
 }

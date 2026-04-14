@@ -1,5 +1,7 @@
 package userdata
 
+import "encoding/json"
+
 type RawUserData struct {
 	Now                                               int64                             `json:"now"`
 	UserGamedata                                      RawUserGamedata                   `json:"userGamedata"`
@@ -8,6 +10,8 @@ type RawUserData struct {
 	UserCards                                         []RawUserCard                     `json:"userCards"`
 	UserBonds                                         []RawUserBond                     `json:"userBonds"`
 	UserMusicStats                                    []RawMusicResult                  `json:"userMusicResults"`
+	CompactUserMusicResults                           json.RawMessage                   `json:"compactUserMusicResults"`
+	UserMusics                                        []RawUserMusic                    `json:"userMusics"`
 	UserChallengeLiveSoloDecks                        []RawChallengeLiveDeck            `json:"userChallengeLiveSoloDecks"`
 	UserChallengeLiveSoloResults                      []RawChallengeLiveResult          `json:"userChallengeLiveSoloResults"`
 	UserChallengeLiveSoloStages                       []RawChallengeLiveStage           `json:"userChallengeLiveSoloStages"`
@@ -83,6 +87,17 @@ type RawMusicResult struct {
 	PlayResult          string `json:"playResult"`
 	FullComboFlg        bool   `json:"fullComboFlg"`
 	FullPerfectFlg      bool   `json:"fullPerfectFlg"`
+}
+
+type RawUserMusic struct {
+	MusicID                     int                            `json:"musicId"`
+	UserMusicDifficultyStatuses []RawUserMusicDifficultyStatus `json:"userMusicDifficultyStatuses"`
+}
+
+type RawUserMusicDifficultyStatus struct {
+	MusicDifficulty     string           `json:"musicDifficulty"`
+	MusicDifficultyType string           `json:"musicDifficultyType"`
+	UserMusicResults    []RawMusicResult `json:"userMusicResults"`
 }
 
 type RawChallengeLiveResult struct {

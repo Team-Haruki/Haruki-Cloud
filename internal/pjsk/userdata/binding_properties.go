@@ -42,12 +42,17 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 		}
 	}
 
+	oldBg := binding.Bg
 	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.ID, imageURL)
 	if err != nil {
 		return nil, err
 	}
 	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).SetBg(settings).Save(ctx); err != nil {
 		return nil, err
+	}
+	// Remove the old background file after the DB record is updated.
+	if oldBg != nil {
+		_ = s.bgStorage.DeleteProfileBackground(ctx, oldBg)
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 }

@@ -17,6 +17,12 @@ const (
 	FieldBotID = "bot_id"
 	// FieldCredential holds the string denoting the credential field in the database.
 	FieldCredential = "credential"
+	// FieldLastLoginIP holds the string denoting the last_login_ip field in the database.
+	FieldLastLoginIP = "last_login_ip"
+	// FieldLastLoginLocation holds the string denoting the last_login_location field in the database.
+	FieldLastLoginLocation = "last_login_location"
+	// FieldLastLoginAt holds the string denoting the last_login_at field in the database.
+	FieldLastLoginAt = "last_login_at"
 	// Table holds the table name of the user in the database.
 	Table = "user"
 )
@@ -27,6 +33,9 @@ var Columns = []string{
 	FieldOwnerUserID,
 	FieldBotID,
 	FieldCredential,
+	FieldLastLoginIP,
+	FieldLastLoginLocation,
+	FieldLastLoginAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -42,6 +51,14 @@ func ValidColumn(column string) bool {
 var (
 	// CredentialValidator is a validator for the "credential" field. It is called by the builders before save.
 	CredentialValidator func(string) error
+	// DefaultLastLoginIP holds the default value on creation for the "last_login_ip" field.
+	DefaultLastLoginIP string
+	// LastLoginIPValidator is a validator for the "last_login_ip" field. It is called by the builders before save.
+	LastLoginIPValidator func(string) error
+	// DefaultLastLoginLocation holds the default value on creation for the "last_login_location" field.
+	DefaultLastLoginLocation string
+	// LastLoginLocationValidator is a validator for the "last_login_location" field. It is called by the builders before save.
+	LastLoginLocationValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -65,4 +82,19 @@ func ByBotID(opts ...sql.OrderTermOption) OrderOption {
 // ByCredential orders the results by the credential field.
 func ByCredential(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCredential, opts...).ToFunc()
+}
+
+// ByLastLoginIP orders the results by the last_login_ip field.
+func ByLastLoginIP(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastLoginIP, opts...).ToFunc()
+}
+
+// ByLastLoginLocation orders the results by the last_login_location field.
+func ByLastLoginLocation(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastLoginLocation, opts...).ToFunc()
+}
+
+// ByLastLoginAt orders the results by the last_login_at field.
+func ByLastLoginAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastLoginAt, opts...).ToFunc()
 }

@@ -130,12 +130,15 @@ const (
 )
 
 var skillRules = buildRules(map[string]string{
+	"奶卡": "life_recovery",
+	"分卡": "score_up",
+	"判卡": "judgment_up",
 	"p分": "perfect_score_up",
-	"判分": "judgment_accuracy_up",
+	"判分": "judgment_up",
 	"大分": "great_score_up",
 	"分":  "score_up",
-	"判定": "judgment_accuracy_up",
-	"判":  "judgment_accuracy_up",
+	"判定": "judgment_up",
+	"判":  "judgment_up",
 	"回复": "life_recovery",
 	"奶":  "life_recovery",
 })

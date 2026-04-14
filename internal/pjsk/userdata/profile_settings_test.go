@@ -198,7 +198,7 @@ func TestExecuteProfileSettingsCommandVerifyReturnsVerificationText(t *testing.T
 	if err != nil {
 		t.Fatalf("verify command: %v", err)
 	}
-	if got := string(text); got != "已验证JP服账号 12345678901234" {
+	if got := string(text); got != "已验证JP服账号 123********234" {
 		t.Fatalf("unexpected verify text:\n%s", got)
 	}
 }

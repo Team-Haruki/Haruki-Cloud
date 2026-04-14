@@ -71,7 +71,7 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		}).
 		Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("toolbox: request failed after retries: %w", err)
+		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {
@@ -141,7 +141,7 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 		}).
 		Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("toolbox: request failed after retries: %w", err)
+		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {
@@ -227,7 +227,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 		}).
 		Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("toolbox: request failed after retries: %w", err)
+		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {

@@ -78,7 +78,10 @@ func (c *Client) sendMail(to, subject, body string, isHTML bool) error {
 		"Content-Type: %s; charset=UTF-8\r\n"+
 		"\r\n"+
 		"%s", c.from, to, subject, contentType, body)
-	auth := smtp.PlainAuth("", c.username, c.password, c.host)
+	var auth smtp.Auth
+	if c.username != "" || c.password != "" {
+		auth = smtp.PlainAuth("", c.username, c.password, c.host)
+	}
 	if c.port == 587 || c.port == 25 {
 		return c.sendWithSTARTTLS(addr, auth, fromEmail, to, []byte(msg))
 	}
@@ -106,8 +109,10 @@ func (c *Client) sendWithTLS(addr string, auth smtp.Auth, from, to string, msg [
 		return fmt.Errorf("smtp client creation failed: %w", err)
 	}
 	defer client.Close()
-	if err := client.Auth(auth); err != nil {
-		return fmt.Errorf("smtp auth failed: %w", err)
+	if auth != nil {
+		if err := client.Auth(auth); err != nil {
+			return fmt.Errorf("smtp auth failed: %w", err)
+		}
 	}
 	if err := client.Mail(from); err != nil {
 		return fmt.Errorf("smtp MAIL command failed: %w", err)

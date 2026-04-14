@@ -1,7 +1,6 @@
 package mysekai
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -125,7 +124,7 @@ func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion
 	}
 
 	var merged map[string]any
-	if err := json.Unmarshal(rawBytes, &merged); err != nil {
+	if err := decodeJSONUseNumber(rawBytes, &merged); err != nil {
 		return nil, renderregion.Unknown, fmt.Errorf("decode mysekai data: %w", err)
 	}
 

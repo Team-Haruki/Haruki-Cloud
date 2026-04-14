@@ -186,7 +186,7 @@ func (c *Controller) buildProfileImagePathFromSource(
 }
 
 func profileUnknownImagePath(helper *assets.AssetHelper) string {
-	return assets.ResolveAssetPath(helper, assets.StaticImagesDir, "unknown.jpg")
+	return assets.ResolveProfilePlaceholderPath(helper)
 }
 
 func (c *Controller) buildFramePaths(source DataSource, userFrames []userdata.RawUserFrame) (*drawing.PlayerFramePaths, bool) {

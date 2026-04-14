@@ -95,13 +95,14 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	if bindingRegion := renderregion.Normalize(binding.Server); !bindingRegion.IsZero() {
 		metaRegion = bindingRegion
 	}
+	snapshotRegion := metaRegion
 	var musicMetaJSON []byte
 	if p.metas != nil {
 		musicMetaJSON = p.metas.Get(metaRegion.String())
 	}
 
 	snapshot, err := p.factory.Build(ctx, BuildInput{
-		Region:        region,
+		Region:        snapshotRegion,
 		Source:        "toolbox_live",
 		SuiteJSON:     suiteJSON,
 		MySekaiJSON:   mysekaiJSON,

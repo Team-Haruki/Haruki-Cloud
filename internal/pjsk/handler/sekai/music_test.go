@@ -136,3 +136,75 @@ func TestMusicProgressHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }
+
+func TestMusicListHandleBuildsResolvedCommandWithExactLevel(t *testing.T) {
+	h := sekaiHandlers{}.MusicListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/难度排行",
+		ArgText:    "31",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-list" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+	if resolved.Query != "" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+
+	var params struct {
+		Level int `json:"level"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Level != 31 {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestMusicListHandleBuildsResolvedCommandWithLevelRangeAndDiff(t *testing.T) {
+	h := sekaiHandlers{}.MusicListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/难度排行",
+		ArgText:    "31-32 ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-list" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+	if resolved.Query != "" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+
+	var params struct {
+		Difficulty string `json:"difficulty"`
+		LevelMin   int    `json:"level_min"`
+		LevelMax   int    `json:"level_max"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Difficulty != "expert" || params.LevelMin != 31 || params.LevelMax != 32 {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}

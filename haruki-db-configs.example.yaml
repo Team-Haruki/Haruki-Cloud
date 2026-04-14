@@ -63,6 +63,7 @@ censor:
 haruki_bot:
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_bot sslmode=disable"
+  enable_registration: true
   turnstile_secret_key: "0x4AAAAAAxxxxxxxx"
   smtp_host: "smtp.example.com"
   smtp_port: 587

@@ -115,7 +115,7 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 		HasFrame:        false,
 		UserCards:       buildUserCardEntries(raw.UserCards),
 	}
-	service.musicResult = buildMusicResultMap(raw.UserMusicStats)
+	service.musicResult = resolveMusicResultMap(raw)
 	service.challenge = &ChallengeLiveData{
 		Results: convertChallengeResults(raw.UserChallengeLiveSoloResults),
 		Stages:  convertChallengeStages(raw.UserChallengeLiveSoloStages),

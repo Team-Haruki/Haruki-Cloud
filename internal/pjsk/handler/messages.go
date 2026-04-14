@@ -6,6 +6,7 @@ import "fmt"
 const (
 	// Data availability errors
 	ErrMsgSuiteDataUnavailable   = "当前账号没有可用的 Suite 抓包数据"
+	ErrMsgSuiteDataNotFound      = "找不到用户的 Suite 数据"
 	ErrMsgMySekaiDataUnavailable = "当前账号没有可用的 MySekai 抓包数据"
 
 	// Permission errors

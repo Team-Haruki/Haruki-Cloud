@@ -13,10 +13,12 @@ import (
 )
 
 type lookupTestSource struct {
-	card       *masterdata.Card
-	cards      []*masterdata.Card
-	characters map[int]*masterdata.Character
-	filterFunc func(*CardQueryInfo) ([]*masterdata.Card, error)
+	card         *masterdata.Card
+	cards        []*masterdata.Card
+	characters   map[int]*masterdata.Character
+	unitByCard   map[int]string
+	supplyByCard map[int]string
+	filterFunc   func(*CardQueryInfo) ([]*masterdata.Card, error)
 }
 
 func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
@@ -103,9 +105,23 @@ func (s *lookupTestSource) GetCharacterColorCode(id int) (string, bool) {
 	return "", false
 }
 
-func (s *lookupTestSource) GetUnitByCardID(cardID int) (string, error) { return "", nil }
+func (s *lookupTestSource) GetUnitByCardID(cardID int) (string, error) {
+	if s.unitByCard != nil {
+		if unit, ok := s.unitByCard[cardID]; ok {
+			return unit, nil
+		}
+	}
+	return "", nil
+}
 
-func (s *lookupTestSource) GetCardSupplyType(card *masterdata.Card) string { return "" }
+func (s *lookupTestSource) GetCardSupplyType(card *masterdata.Card) string {
+	if s.supplyByCard != nil && card != nil {
+		if supply, ok := s.supplyByCard[card.ID]; ok {
+			return supply
+		}
+	}
+	return ""
+}
 
 func (s *lookupTestSource) GetSkillByID(id int) (*masterdata.Skill, error) {
 	return nil, fmt.Errorf("skill %d not found", id)
@@ -126,6 +142,7 @@ func (s *lookupTestSource) GetCostume3dsByCardID(cardID int) ([]*masterdata.Cost
 func TestResolveCardImagesSupportsStandardAndRipPaths(t *testing.T) {
 	root := t.TempDir()
 	normal := filepath.Join(root, "asset", "jp-assets", "startapp", "character", "member", "card_test", "card_normal.png")
+	after := filepath.Join(root, "asset", "jp-assets", "startapp", "character", "member", "card_test", "card_after_training.png")
 	for _, path := range []string{normal, after} {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatalf("mkdir: %v", err)

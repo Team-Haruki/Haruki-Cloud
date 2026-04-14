@@ -198,8 +198,17 @@ func (b *Builder) buildCostumeImagePaths(card *masterdata.Card, region renderreg
 }
 
 func (b *Builder) BuildCharacterIconPath(characterID int, unit string, region renderregion.Value) string {
-	if characterID == 21 && unit != "" && unit != "piapro" {
-		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", fmt.Sprintf("miku_%s.png", unit)))
+	switch characterID {
+	case 27:
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", "miku_light_sound.png"))
+	case 28:
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", "miku_idol.png"))
+	case 29:
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", "miku_street.png"))
+	case 30:
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", "miku_theme_park.png"))
+	case 31:
+		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", "miku_school_refusal.png"))
 	}
 	if nickname, ok := assets.CharacterIDToNickname[characterID]; ok {
 		return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", nickname+".png"))

@@ -26,21 +26,40 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = musicCtrl.RenderMusicDetail(q)
 	case "music-list":
+		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
+		if suiteErr != nil {
+			return nil, suiteErr
+		}
+		if suiteSnapshot != nil {
+			musicCtrl = musicCtrl.WithSnapshot(suiteSnapshot)
+		}
 		q := music.ListQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		if strings.TrimSpace(q.Keyword) == "" {
 			q.Keyword = strings.TrimSpace(rc.Cmd.Query)
 		}
-		q.DetailedProfile = rc.GetDetailedProfile()
+		if suiteSnapshot != nil {
+			q.DetailedProfile = suiteSnapshot.DetailedProfile(rc.Region)
+		} else {
+			q.DetailedProfile = rc.GetDetailedProfile()
+		}
 		data, err = musicCtrl.RenderMusicList(q)
 	case "music-chart":
 		q := music.ChartQuery{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = musicCtrl.RenderMusicChart(q)
 	case "music-progress":
+		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
+		if suiteErr != nil {
+			return nil, suiteErr
+		}
 		q := music.ProgressQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, rc.ResolveSnapshot(false), rc.GetProfileCard())
+		if suiteSnapshot != nil {
+			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, suiteSnapshot.ProfileCard(rc.Region))
+		} else {
+			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, nil, rc.GetProfileCard())
+		}
 	case "music-rewards":
 		data, err = renderMusicRewards(rc)
 	case "music-note-count":

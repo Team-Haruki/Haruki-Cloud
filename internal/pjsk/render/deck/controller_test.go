@@ -419,6 +419,46 @@ func TestBuildRecommendOptionBonusTargetsWithKeywords(t *testing.T) {
 	}
 }
 
+func TestBuildRecommendOptionDefaultsNoEventToSingleAlgorithm(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	option, err := controller.buildRecommendOption(renderregion.JP, "no_event", AutoQuery{
+		Region:        "jp",
+		RecommendType: "no_event",
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	if option["algorithm"] != "ga" {
+		t.Fatalf("unexpected no_event algorithm: %+v", option["algorithm"])
+	}
+	if option["live_type"] != "multi" {
+		t.Fatalf("unexpected live_type: %+v", option["live_type"])
+	}
+	if value, ok := option["event_id"]; ok && value != nil {
+		t.Fatalf("expected no_event to clear event_id: %+v", value)
+	}
+}
+
+func TestBuildRecommendOptionDefaultsNoEventToSupportedConfiguredAlgorithm(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{
+		DefaultAlgs: []string{"dfs", "sa"},
+	})
+
+	option, err := controller.buildRecommendOption(renderregion.JP, "no_event", AutoQuery{
+		Region:        "jp",
+		RecommendType: "no_event",
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	if option["algorithm"] != "sa" {
+		t.Fatalf("unexpected no_event algorithm with configured algs: %+v", option["algorithm"])
+	}
+}
+
 func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
@@ -1965,6 +2005,86 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyProtocol(t *test
 	}
 	if recommendCalls.Load() != 1 {
 		t.Fatalf("expected one legacy recommend call, got %d", recommendCalls.Load())
+	}
+	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
+		t.Fatalf("unexpected request payload: %+v", request.DeckData)
+	}
+}
+
+func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyWhenUserdataHashMissing(t *testing.T) {
+	var binaryRecommendCalls atomic.Int32
+	var legacyRecommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			if len(payloads) != 1 || len(payloads[0]) == 0 {
+				t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"missing-userdata-hash"}`))
+		case "/recommend":
+			if strings.Contains(r.Header.Get("Content-Type"), "application/octet-stream") {
+				binaryRecommendCalls.Add(1)
+				http.Error(w, `{"error":"User data not found for userdata_hash: missing-userdata-hash"}`, http.StatusInternalServerError)
+				return
+			}
+
+			legacyRecommendCalls.Add(1)
+			var payload map[string]any
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode legacy recommend request: %v", err)
+			}
+			if payload["algorithm"] != "ga" {
+				t.Fatalf("unexpected legacy algorithm: %+v", payload["algorithm"])
+			}
+			if strings.TrimSpace(payload["user_data_str"].(string)) == "" {
+				t.Fatalf("expected user_data_str in legacy payload")
+			}
+			_, _ = w.Write([]byte(`{"decks":[{"score":456,"live_score":456,"mysekai_event_point":0,"total_power":789,"event_bonus_rate":25,"support_deck_bonus_rate":0,"multi_live_score_up":110,"cards":[{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]}]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	eventID := 7
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       &eventID,
+		Algorithm:     "ga",
+		Limit:         1,
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+	if binaryRecommendCalls.Load() != 1 {
+		t.Fatalf("expected one binary recommend call, got %d", binaryRecommendCalls.Load())
+	}
+	if legacyRecommendCalls.Load() != 1 {
+		t.Fatalf("expected one legacy recommend call, got %d", legacyRecommendCalls.Load())
 	}
 	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
 		t.Fatalf("unexpected request payload: %+v", request.DeckData)

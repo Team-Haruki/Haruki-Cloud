@@ -214,6 +214,9 @@ func TestResolveTrackerTargetUserNoPrefixUsesGlobalDefaultBinding(t *testing.T) 
 	if _, err := service.Bind(ctx, "qq", "9001", "22222222222222"); err != nil {
 		t.Fatalf("bind jp: %v", err)
 	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "9001", "tw", true); err != nil {
+		t.Fatalf("show tw binding: %v", err)
+	}
 
 	req := rendersk.TrackerRankQuery{
 		Region:         "jp",
@@ -239,6 +242,9 @@ func TestResolveTrackerTargetUserNoPrefixFallsBackToJPWhenNoGlobalDefault(t *tes
 
 	if _, err := service.Bind(ctx, "qq", "9002", "12345678901234"); err != nil {
 		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "9002", "jp", true); err != nil {
+		t.Fatalf("show jp binding: %v", err)
 	}
 	if _, err := service.ClearDefault(ctx, "qq", "9002", "", "", accountdata.GlobalDefaultBindingScope); err != nil {
 		t.Fatalf("clear global default: %v", err)
@@ -558,6 +564,253 @@ func TestExecuteMusicListUsesQueryKeywordAndAlias(t *testing.T) {
 	}
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected list message: %+v", message)
+	}
+}
+
+func TestExecuteMusicListRequiresSuiteSnapshotWhenBindingVisible(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:    music.NewController(source, drawing.NewHarukiDrawingClient("https://drawing.invalid"), assets.NewAssetHelper("", nil), nil, nil),
+		Bindings: service,
+	}
+
+	params, err := json.Marshal(map[string]string{"difficulty": "master"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	_, err = executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-list",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err == nil {
+		t.Fatal("expected missing suite snapshot to fail")
+	}
+	if err.Error() != ErrMsgSuiteDataNotFound {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestExecuteMusicListKeepsFallbackWhenSuiteHidden(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingSuiteVisible(ctx, "qq", "42", "jp", false); err != nil {
+		t.Fatalf("hide suite: %v", err)
+	}
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil),
+		Bindings:   service,
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]string{"difficulty": "master"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-list",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic list with hidden suite: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+}
+
+func TestExecuteMusicListUsesSuiteSnapshotResults(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	root := t.TempDir()
+	jacketPath := filepath.Join(root, "music", "jacket", "jacket_a", "jacket_a.png")
+	if err := os.MkdirAll(filepath.Dir(jacketPath), 0o755); err != nil {
+		t.Fatalf("mkdir jacket: %v", err)
+	}
+	if err := os.WriteFile(jacketPath, []byte("png"), 0o644); err != nil {
+		t.Fatalf("write jacket: %v", err)
+	}
+
+	var captured drawing.MusicListRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/api/pjsk/music/list") {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:    music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
+		Bindings: service,
+		Snapshots: userdata.NewStaticSnapshotProvider(&runtimeSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				Nickname:        "SnapshotUser",
+				LeaderImagePath: "asset/user/leader.png",
+				UserCards:       []any{},
+			},
+			musicResults: map[string]map[int]string{
+				"master": {
+					1: "ap",
+				},
+			},
+		}),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]string{"difficulty": "master"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-list",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic list: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected list message: %+v", message)
+	}
+	if got := captured.Profile.Nickname; got != "SnapshotUser" {
+		t.Fatalf("unexpected profile nickname: %q", got)
+	}
+	if got := captured.UserResults[1]; got != "ap" {
+		t.Fatalf("unexpected user result: %+v", got)
+	}
+}
+
+func TestExecuteMusicProgressRequiresSuiteData(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingSuiteVisible(ctx, "qq", "42", "jp", false); err != nil {
+		t.Fatalf("hide suite: %v", err)
+	}
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	app := &renderapp.App{
+		Bindings:   service,
+		Music:      music.NewController(&bridgeMusicSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	_, err := executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-progress",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("expected hidden suite to keep fallback, got %v", err)
+	}
+}
+
+func TestExecuteMusicProgressRequiresResolvableSuiteSnapshot(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingSuiteVisible(ctx, "qq", "42", "jp", true); err != nil {
+		t.Fatalf("show suite: %v", err)
+	}
+
+	app := &renderapp.App{
+		Bindings: service,
+		Music:    music.NewController(&bridgeMusicSource{}, nil, assets.NewAssetHelper("", nil), nil, nil),
+	}
+
+	_, err := executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-progress",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err == nil {
+		t.Fatal("expected snapshot error, got nil")
+	}
+	if err.Error() != ErrMsgSuiteDataNotFound {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
@@ -1232,6 +1485,43 @@ func TestResolveDeckCharacterSelectionsFallsBackChallengeQueryToMusic(t *testing
 	}
 	if query.MusicQuery != "neo" {
 		t.Fatalf("unexpected fallback music query: %q", query.MusicQuery)
+	}
+	if query.ChallengeLiveCharacterQuery != "" {
+		t.Fatalf("expected challenge query to be cleared: %q", query.ChallengeLiveCharacterQuery)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsFallbackChallengeQueryExtractsInlineDifficulty(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_challenge_fallback_inline_diff?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:                      "jp",
+		RecommendType:               "challenge",
+		ChallengeLiveCharacterQuery: "群青ex",
+	}
+
+	if err := resolveDeckCharacterSelections(context.Background(), &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.ChallengeLiveCharacterID != nil {
+		t.Fatalf("unexpected challenge character id: %+v", query.ChallengeLiveCharacterID)
+	}
+	if query.MusicQuery != "群青" {
+		t.Fatalf("unexpected fallback music query: %q", query.MusicQuery)
+	}
+	if query.MusicDiff != "expert" {
+		t.Fatalf("unexpected fallback music diff: %q", query.MusicDiff)
 	}
 	if query.ChallengeLiveCharacterQuery != "" {
 		t.Fatalf("expected challenge query to be cleared: %q", query.ChallengeLiveCharacterQuery)

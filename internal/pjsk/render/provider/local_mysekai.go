@@ -1,9 +1,5 @@
 package provider
 
-import (
-	"encoding/json"
-)
-
 // ===========================================================================
 // localMySekaiProvider
 // ===========================================================================
@@ -22,7 +18,7 @@ func (p *localMySekaiProvider) LoadList(filename string) []map[string]any {
 		return nil
 	}
 	var items []map[string]any
-	if err := json.Unmarshal(data, &items); err != nil {
+	if err := decodeJSONUseNumber(data, &items); err != nil {
 		return nil
 	}
 	return items
@@ -47,5 +43,5 @@ func (p *localMySekaiProvider) LoadObject(filename string, target any) bool {
 	if err != nil {
 		return false
 	}
-	return json.Unmarshal(data, target) == nil
+	return decodeJSONUseNumber(data, target) == nil
 }

@@ -29,13 +29,12 @@ const (
 //  4. Confirming the JWT bot_id claim matches X-Haruki-Bot-Id
 //  5. Looking up the session token in Redis to ensure it has not been revoked
 //
-// If redisClient is nil the middleware is a no-op and calls c.Next() immediately.
-// This allows unit tests that have no Redis connection to still exercise route logic.
+// If redisClient is nil the middleware returns 503 Service Unavailable.
+// Use VerifyBotSessionTestBypass for testing without Redis.
 func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		// Skip auth entirely when Redis is unavailable (e.g. unit tests).
 		if redisClient == nil {
-			return c.Next()
+			return JSONResponse(c, fiber.StatusServiceUnavailable, "session store unavailable")
 		}
 
 		headerBotID := c.Get(HeaderBotID)
@@ -88,6 +87,14 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 			return JSONResponse(c, fiber.StatusUnauthorized, "session token mismatch")
 		}
 
+		return c.Next()
+	}
+}
+
+// VerifyBotSessionTestBypass returns a no-op middleware that skips session
+// validation. Use ONLY in test code where no Redis connection is available.
+func VerifyBotSessionTestBypass() fiber.Handler {
+	return func(c fiber.Ctx) error {
 		return c.Next()
 	}
 }

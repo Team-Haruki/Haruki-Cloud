@@ -4,7 +4,7 @@
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 >
-> 2026-04-14 状态：在 v17.4（Noise IK→NK + Auth AES 固定密钥改造）基础上，本轮集中修复了 33 个实战联调 bug 并新增安全加固（请求去重、用户限流、URL 脱敏）。项目已从架构重构收尾进入 **实战联调稳定化** 阶段。重构进度 ~98-99%，整体交付 ~95-97%。详见 [项目完成度跟踪](project-completion-tracker.cn.md) 和 [重构进展](refactoring-progress.cn.md)。已知 bug 追踪见 [known-bugs.cn.md](known-bugs.cn.md)。
+> 2026-04-14 状态：在 v17.4（Noise IK→NK + Auth AES 固定密钥改造）基础上，本轮集中修复了 35 个实战联调 bug 并新增安全加固（请求去重、用户限流、URL 脱敏）。项目已从架构重构收尾进入 **实战联调稳定化** 阶段。重构进度 ~98-99%，整体交付 ~95-97%。详见 [项目完成度跟踪](project-completion-tracker.cn.md) 和 [重构进展](refactoring-progress.cn.md)。已知 bug 追踪见 [known-bugs.cn.md](known-bugs.cn.md)。
 >
 > `api/legacy/pjsk/` 与 `internal/pjsk/render/deck/deck_cgo/` 历史目录已移除。本文保留了 2026-03 ~ 2026-04-01 的阶段性记录，凡与当前运行事实冲突之处，以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
 
@@ -1638,7 +1638,7 @@ pjsk:
 | alias 管理 API 归属 | ⏸ 待决策 | 别名新增/审核/拒绝操作归属（bot API vs admin API）待设计决策 |
 | alpha 进程管理 | ⏸ 建议 | 建议使用 systemd 或 supervisor 管理 haruki-server 进程，当前为 nohup 启动 |
 
-### 11.10 实战联调稳定化（2026-04-12 ~ 2026-04-14，33 commits）
+### 11.10 实战联调稳定化（2026-04-12 ~ 2026-04-14，35 commits）
 
 本轮在 v17.4（Noise NK + Auth AES）基础上进入实战联调，集中修复了跨区服、CN 区域、快照解析、安全等多个方面的问题。
 
@@ -1677,8 +1677,9 @@ pjsk:
 | CN 卡牌 power series | `fc47512` | 处理 CN 区卡牌特有的 parameter power 序列 |
 | 卡牌 skill filter 别名对齐 | `349730e` | 与 lunabot 别名保持一致 |
 | 大 MySekai ID 精度保持 | `cf328f3` | JSON 解码时保留大整数精度 |
-| Render stats / sorting / deck parsing 对齐 | `36a950b` | 渲染统计、排序、deck 解析一致性修复 |
+| Render stats / sorting / deck parsing 对齐 | `36a950b` | 渲染统计、排序、deck 解析一致性修复；含 honor FC/AP 聚合计数修正（BUG-013）、难度排行区间解析（BUG-014）、跨服查询 region 覆盖修正（BUG-012）|
 | Suite 处理 + card/music 渲染收紧 | `925a1c2` | 加强 suite 校验与渲染逻辑 |
+| 未上线 masterdata 过滤 + WL 歌曲解析稳定化 | `24cb148` | 查卡/查歌隐藏未上线数据（BUG-017）、难度排行视觉排序修正（BUG-016）、WL 章节参数 wl3/wl4 解析（BUG-015）|
 
 #### Deck 组卡修复
 
@@ -1718,7 +1719,7 @@ pjsk:
 
 #### 已知 bug 追踪
 
-本轮新增 `docs/known-bugs.cn.md`（`ea3d595`），当前记录 8 个已知 bug，**全部已修复**。
+本轮新增 `docs/known-bugs.cn.md`（`ea3d595`），当前记录 17 个已知 bug，**全部已修复**。
 
 ## 12. 相关文档
 

@@ -534,7 +534,7 @@ P0-R28、阶段 A-E、Context 注入迁移、P1-P7 清理、以及 6 项收尾�
 
 ### 2026-04-14 实战联调稳定化（v17.5）
 
-在 v17.4（Noise NK + Auth AES 固定密钥）之后，04-12 ~ 04-14 产出 33 个提交，集中在客户端联调 bug 修复和安全加固。项目已从"架构重构收尾"进入"实战联调稳定化"阶段。
+在 v17.4（Noise NK + Auth AES 固定密钥）之后，04-12 ~ 04-14 产出 35 个提交，集中在客户端联调 bug 修复和安全加固。项目已从"架构重构收尾"进入"实战联调稳定化"阶段。
 
 **本轮主要变更分类**：
 
@@ -543,14 +543,14 @@ P0-R28、阶段 A-E、Context 注入迁移、P1-P7 清理、以及 6 项收尾�
 | 安全加固 | 3 | 请求去重锁（`808439d`）、URL 脱敏（`acce4c4`）、账号 ID 隐藏（`5cc5c19`）|
 | 认证/注册 | 2 | Auth IP 上报 + 注册开关（`326c90b`）、provision_bot CLI（`aeb1ec9`）|
 | Profile/绑定修复 | 5 | 跨区服编号（`6c02169`）、跨区服解绑（`e87c1a9`）、背景缓存（`44c5c43`）等 |
-| 渲染/快照修复 | 10 | suite snapshot（`5d7f9b2`）、card parameter（`b29445b` `fc47512`）、rewards 多形态解码（`7893c90`）等 |
+| 渲染/快照修复 | 11 | suite snapshot（`5d7f9b2`）、card parameter（`b29445b` `fc47512`）、rewards 多形态解码（`7893c90`）、未上线数据过滤（`24cb148`）等 |
 | Deck 修复 | 4 | recommend fallback（`3c44203`）、masterdata 同步（`131ddfd`）、binding 选择器（`d1fb1a0`）等 |
 | Education/MySekai 区域 | 7 | CN area item（`b9da188`）、region-scoped masterdata（`4751db9`）、education region 传递等 |
 | Event 修复 | 1 | WL 冲榜记录单榜拆分（`7893c90`）|
-| 回归测试 | 3 | card parameter 解码（`c2d84ed`）、rewards snapshot 解码（`7893c90`）、event WL 拆分（`7893c90`）|
-| 文档 | 1 | known-bugs.cn.md 追踪表（`ea3d595`）|
+| 回归测试 | 6 | card parameter 解码（`c2d84ed`）、rewards snapshot 解码（`7893c90`）、event WL 拆分（`7893c90`）、card visibility（`24cb148`）、music visibility + list（`24cb148`）、WL 歌曲解析（`24cb148`）|
+| 文档 | 2 | known-bugs.cn.md 追踪表（`ea3d595`）、doc 同步（`1b84f1e`）|
 
-**已知 bug 追踪**：新增 `docs/known-bugs.cn.md`，当前 8 个已追踪 bug 全部已修复。
+**已知 bug 追踪**：新增 `docs/known-bugs.cn.md`，当前 17 个已追踪 bug 全部已修复。
 
 **完成度更新**：
 
@@ -559,8 +559,8 @@ P0-R28、阶段 A-E、Context 注入迁移、P1-P7 清理、以及 6 项收尾�
 | 重构进度 | ~97-98% | ~98-99% |
 | 整体交付 | ~93-95% | ~95-97% |
 | 协议/鉴权分档 | A- | A |
-| 实战联调 bug 修复 | — | 33 commits |
-| 已知 bug 追踪 | 无 | 8/8 已修复 |
+| 实战联调 bug 修复 | — | 35 commits |
+| 已知 bug 追踪 | 无 | 17/17 已修复 |
 
 
 ## 12. 维护说明

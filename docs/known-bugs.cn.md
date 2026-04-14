@@ -18,6 +18,6 @@
 | BUG-012 | card/region | 查卡与卡牌一览在 bridge 合并参数后会被旧 `region` 覆盖回去，跨服查询可能错误落到 JP | ✅ 已修复 | Codex | 2026-04-14 | `36a950b` |
 | BUG-013 | profile/honor | `皆传`、`FC`、`AP` 牌子数字直接读取 honor level，而不是玩家真实 FC/AP 聚合计数，导致显示与实际不符 | ✅ 已修复 | Codex | 2026-04-14 | `36a950b` |
 | BUG-014 | music/list | 难度排行闭区间等级解析只支持单 token，`31 32`、`31到32`、`[31,32]` 等写法无法使用 | ✅ 已修复 | Codex | 2026-04-14 | `36a950b` |
-| BUG-015 | deck/world-bloom | 组卡章节参数最初只支持 `wl1`/`wl2`，`wl3`/`wl4` 无法解析；当前 WL 活动下裸 `wl3`、`歌曲名 wl3`、`活动ID 歌曲名 wl3` 这类顺序还会掉回歌曲参数 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
-| BUG-016 | music/list | 难度排行分组内排序依赖发布时间，Drawing 侧再次按 `release_at` 重排后，视觉顺序仍然会乱 | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
-| BUG-017 | card/music visibility | 查卡、查歌会返回未上线 masterdata；`查歌 -1` 也会把未上线歌曲计入“最近一首/倒数第 N 首” | ✅ 已修复 | Codex | 2026-04-14 | 本次提交 |
+| BUG-015 | deck/world-bloom | 组卡章节参数最初只支持 `wl1`/`wl2`，`wl3`/`wl4` 无法解析；当前 WL 活动下裸 `wl3`、`歌曲名 wl3`、`活动ID 歌曲名 wl3` 这类顺序还会掉回歌曲参数 | ✅ 已修复 | Codex | 2026-04-14 | `24cb148` |
+| BUG-016 | music/list | 难度排行分组内排序依赖发布时间，Drawing 侧再次按 `release_at` 重排后，视觉顺序仍然会乱 | ✅ 已修复 | Codex | 2026-04-14 | `24cb148` |
+| BUG-017 | card/music visibility | 查卡、查歌会返回未上线 masterdata；`查歌 -1` 也会把未上线歌曲计入“最近一首/倒数第 N 首” | ✅ 已修复 | Codex | 2026-04-14 | `24cb148` |

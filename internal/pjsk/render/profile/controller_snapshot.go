@@ -42,6 +42,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		framePath = &path
 	}
 	updateTime := detail.UpdateTime
+	musicCounts := buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats)
 
 	nickname := detail.Nickname
 	if c.censor != nil && nickname != "" {
@@ -71,8 +72,8 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		Word:                 word,
 		Pcards:               c.buildPCards(source, raw.UserCards, raw.UserDecks, raw.UserGamedata.Deck, region),
 		BgSettings:           applyProfileBGVerticalOverride(query.BgSettings, query.VerticalOverride),
-		Honors:               c.buildHonors(source, region, raw.UserProfileHonors, raw.UserHonors),
-		MusicDifficultyCount: buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats),
+		Honors:               c.buildHonors(source, region, raw.UserProfileHonors, raw.UserHonors, musicCounts),
+		MusicDifficultyCount: musicCounts,
 		CharacterRank:        buildCharacterRanks(raw.UserCharacters),
 		SoloLive:             buildSoloLive(raw.UserChallengeLiveSoloResults, raw.UserChallengeLiveSoloStages),
 		UpdateTime:           &updateTime,

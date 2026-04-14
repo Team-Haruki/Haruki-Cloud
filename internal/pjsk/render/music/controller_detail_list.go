@@ -2,6 +2,7 @@ package music
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -167,6 +168,24 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 	if len(list) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
+
+	sort.Slice(list, func(i, j int) bool {
+		levelI, _ := list[i]["difficulty"].(int)
+		levelJ, _ := list[j]["difficulty"].(int)
+		if levelI != levelJ {
+			return levelI < levelJ
+		}
+
+		releaseI, _ := list[i]["release_at"].(int64)
+		releaseJ, _ := list[j]["release_at"].(int64)
+		if releaseI != releaseJ {
+			return releaseI < releaseJ
+		}
+
+		idI, _ := list[i]["id"].(int)
+		idJ, _ := list[j]["id"].(int)
+		return idI < idJ
+	})
 
 	userResults := make(map[int]any)
 	if query.UserResults != nil {

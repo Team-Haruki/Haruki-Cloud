@@ -13,15 +13,22 @@ import (
 )
 
 type lookupTestSource struct {
-	card         *masterdata.Card
-	cards        []*masterdata.Card
-	characters   map[int]*masterdata.Character
-	unitByCard   map[int]string
-	supplyByCard map[int]string
-	filterFunc   func(*CardQueryInfo) ([]*masterdata.Card, error)
+	region           renderregion.Value
+	card             *masterdata.Card
+	cards            []*masterdata.Card
+	characters       map[int]*masterdata.Character
+	unitByCard       map[int]string
+	supplyByCard     map[int]string
+	filterFunc       func(*CardQueryInfo) ([]*masterdata.Card, error)
+	allowEmptyFilter bool
 }
 
-func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
+func (s *lookupTestSource) DefaultRegion() renderregion.Value {
+	if s.region.IsZero() {
+		return renderregion.JP
+	}
+	return s.region
+}
 
 func (s *lookupTestSource) GetCardByID(id int) (*masterdata.Card, error) {
 	if s.card != nil && s.card.ID == id {
@@ -76,6 +83,19 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 	}
 	if info == nil {
 		return nil, fmt.Errorf("filter not supported: %+v", info)
+	}
+	if s.allowEmptyFilter && info.CharacterID == 0 && info.Rarity == "" && info.Attr == "" &&
+		info.SkillType == "" && info.Unit == "" && info.MainUnit == "" && info.SupportUnit == "" &&
+		info.SupplyType == "" && info.Year == 0 && info.EventID == 0 && info.BanCharID == 0 && info.BanSeq == 0 {
+		out := make([]*masterdata.Card, 0, len(s.cards))
+		for _, item := range s.cards {
+			if item == nil {
+				continue
+			}
+			copy := *item
+			out = append(out, &copy)
+		}
+		return out, nil
 	}
 	if info.CharacterID != 5 || info.Rarity != "rarity_4" {
 		return nil, fmt.Errorf("filter not supported: %+v", info)

@@ -75,7 +75,7 @@ type deckAliasRule struct {
 
 var (
 	deckEventIDRegex = regexp.MustCompile(`(?i)(活动|event)\s*(\d+)`)
-	deckWlTurnRegex  = regexp.MustCompile(`(?i)\bwl([12])\b`)
+	deckWlTurnRegex  = regexp.MustCompile(`(?i)\bwl([1-9]\d*)\b`)
 )
 
 var deckPowerTargetKeywords = []string{"综合力", "综合", "总合力", "总和", "power"}

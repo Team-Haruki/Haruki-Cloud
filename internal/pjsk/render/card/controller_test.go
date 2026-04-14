@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -159,6 +160,37 @@ func TestBuildCardBoxRequestRejectsExplicitRegionWithoutSource(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "region cn") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestBuildCardBoxRequestUsesRequestedRegionSourceForFullList(t *testing.T) {
+	jpSource := &lookupTestSource{
+		region: renderregion.JP,
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "JP Card", AssetBundleName: "card_jp", ReleaseAt: 1700000000000},
+		},
+		allowEmptyFilter: true,
+	}
+	cnSource := &lookupTestSource{
+		region: renderregion.CN,
+		cards: []*masterdata.Card{
+			{ID: 2001, CharacterID: 6, CardRarityType: "rarity_4", Attr: "cool", Prefix: "CN Card", AssetBundleName: "card_cn", ReleaseAt: 1700000000000},
+		},
+		allowEmptyFilter: true,
+	}
+
+	controller := NewController(jpSource, nil, nil, nil)
+	controller.RegisterSource(cnSource)
+
+	req, err := controller.BuildCardBoxRequest([]Query{{Region: "cn"}})
+	if err != nil {
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if req.Region != "cn" {
+		t.Fatalf("expected cn region, got %q", req.Region)
+	}
+	if len(req.Cards) != 1 || req.Cards[0].Card.CardID != 2001 {
+		t.Fatalf("unexpected cards: %+v", req.Cards)
 	}
 }
 

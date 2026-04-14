@@ -19,8 +19,8 @@ import (
 // query.Visible maps directly to !IsHideUID (false = hide UID, true = show UID).
 // UpdateTime is always nil so that the image cache system produces a stable cache key for
 // identical renders.
-// UserEventResults are intentionally ignored — honor badges show the honor level,
-// and FcOrApLevel is not an event-rank rendering field.
+// UserEventResults are intentionally ignored here; profile honors are rendered from
+// the public profile payload plus aggregate clear-count data.
 func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileRequest, error) {
 	return c.buildProfileRequestFromAPIFrames(query, resp, parseFramesJSON(framesJSON))
 }
@@ -64,6 +64,7 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 
 	adaptedCards := adaptAPICards(resp.UserCards)
 	adaptedDecks := adaptAPIDeckAsList(resp.UserDeck)
+	musicCounts := buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil)
 
 	// 拼接drawing的背景路径
 	if query.BgSettings != nil && query.BgSettings.ImgPath != nil && *query.BgSettings.ImgPath != "" {
@@ -84,8 +85,8 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 		Word:                 cleanWord(resp.UserProfile.Word),
 		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID, region),
 		BgSettings:           applyProfileBGVerticalOverride(query.BgSettings, query.VerticalOverride),
-		Honors:               c.buildHonors(source, region, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors)),
-		MusicDifficultyCount: buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil),
+		Honors:               c.buildHonors(source, region, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors), musicCounts),
+		MusicDifficultyCount: musicCounts,
 		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),
 		SoloLive:             buildSoloLive(adaptAPIChallengeLiveResult(resp.UserChallengeLiveSoloResult), adaptAPIChallengeLiveStages(resp.UserChallengeLiveSoloStages)),
 		UpdateTime:           nil,

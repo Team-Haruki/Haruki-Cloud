@@ -17,10 +17,12 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 	case "card-detail":
 		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
+		q.Region = rc.Cmd.Region
 		data, err = cardCtrl.RenderCardDetail(q)
 	case "card-list":
 		q := card.ListRequest{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
+		q.Region = rc.Cmd.Region
 		q.DetailedProfile = rc.GetDetailedProfile()
 		data, err = cardCtrl.RenderCardList(q)
 	case "card-box":
@@ -32,11 +34,13 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 			DetailedProfile:  resolveCardBoxDetailedProfile(rc),
 		}
 		mergeParams(rc.Cmd.Params, &q)
+		q.Region = rc.Cmd.Region
 		queries := []card.Query{q}
 		data, err = cardCtrl.RenderCardBox(queries)
 	case "card-image":
 		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
+		q.Region = rc.Cmd.Region
 		result, resolveErr := cardCtrl.ResolveCardImages(q)
 		if resolveErr != nil {
 			return nil, resolveErr

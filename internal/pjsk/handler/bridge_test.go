@@ -2152,11 +2152,27 @@ func TestExecuteVLiveReturnsText(t *testing.T) {
 	}
 }
 
-type bridgeCardSource struct{}
+type bridgeCardSource struct {
+	region           renderregion.Value
+	cards            map[int]*masterdata.Card
+	allowEmptyFilter bool
+}
 
-func (s *bridgeCardSource) DefaultRegion() renderregion.Value { return renderregion.JP }
+func (s *bridgeCardSource) DefaultRegion() renderregion.Value {
+	if s.region.IsZero() {
+		return renderregion.JP
+	}
+	return s.region
+}
 
 func (s *bridgeCardSource) GetCardByID(id int) (*masterdata.Card, error) {
+	if s.cards != nil {
+		if card := s.cards[id]; card != nil {
+			copy := *card
+			return &copy, nil
+		}
+		return nil, os.ErrNotExist
+	}
 	if id == 1001 {
 		return &masterdata.Card{
 			ID:              1001,
@@ -2175,6 +2191,19 @@ func (s *bridgeCardSource) GetCardByCharacterAndSeq(characterID, seq int) (*mast
 }
 
 func (s *bridgeCardSource) FilterCards(info *rendercard.CardQueryInfo) ([]*masterdata.Card, error) {
+	if s.allowEmptyFilter && info != nil && info.CharacterID == 0 && info.Rarity == "" && info.Attr == "" &&
+		info.SkillType == "" && info.Unit == "" && info.MainUnit == "" && info.SupportUnit == "" &&
+		info.SupplyType == "" && info.Year == 0 && info.EventID == 0 && info.BanCharID == 0 && info.BanSeq == 0 {
+		result := make([]*masterdata.Card, 0, len(s.cards))
+		for _, card := range s.cards {
+			if card == nil {
+				continue
+			}
+			copy := *card
+			result = append(result, &copy)
+		}
+		return result, nil
+	}
 	return nil, nil
 }
 
@@ -2345,5 +2374,68 @@ func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "box 模式需要用户卡牌持有数据") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestExecuteCardListKeepsResolvedRegionInsteadOfStaleParamRegion(t *testing.T) {
+	root := t.TempDir()
+	var captured drawing.CardListRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/card/list" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	jpSource := &bridgeCardSource{region: renderregion.JP, cards: map[int]*masterdata.Card{}}
+	cnSource := &bridgeCardSource{
+		region: renderregion.CN,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     5,
+				CardRarityType:  "rarity_4",
+				Attr:            "cute",
+				Prefix:          "CN Test Card",
+				AssetBundleName: "card_cn_test",
+			},
+		},
+	}
+	cardController := rendercard.NewController(jpSource, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil))
+	cardController.RegisterSource(cnSource)
+
+	app := &renderapp.App{
+		Cards:      cardController,
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+	params, err := json.Marshal(rendercard.ListRequest{
+		Query:  "1001",
+		Region: "jp",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module: parser.ModuleCard,
+		Mode:   "card-list",
+		Region: "cn",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeCard list: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if captured.Region != "cn" {
+		t.Fatalf("expected rendered region cn, got %q", captured.Region)
+	}
+	if len(captured.Cards) != 1 || captured.Cards[0].CardID != 1001 {
+		t.Fatalf("unexpected rendered cards: %+v", captured.Cards)
 	}
 }

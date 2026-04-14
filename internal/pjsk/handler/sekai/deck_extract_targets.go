@@ -133,14 +133,24 @@ func extractDeckWorldBloomSelectorCandidate(args string) (string, string) {
 	}
 
 	first := strings.TrimSpace(fields[0])
-	if first == "" {
-		return "", normalized
+	if isDeckWorldBloomSelectorToken(first) {
+		return strings.ToLower(first), normalizeDeckSpaces(strings.Join(fields[1:], " "))
 	}
-	lower := strings.ToLower(first)
-	if strings.EqualFold(lower, "wl") || strings.HasPrefix(lower, "wl") {
-		return lower, normalizeDeckSpaces(strings.Join(fields[1:], " "))
+
+	last := strings.TrimSpace(fields[len(fields)-1])
+	if isDeckWorldBloomSelectorToken(last) {
+		return strings.ToLower(last), normalizeDeckSpaces(strings.Join(fields[:len(fields)-1], " "))
 	}
 	return "", normalized
+}
+
+func isDeckWorldBloomSelectorToken(value string) bool {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return false
+	}
+	lower := strings.ToLower(value)
+	return strings.EqualFold(lower, "wl") || strings.HasPrefix(lower, "wl")
 }
 
 func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuery string, remaining string) {

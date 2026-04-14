@@ -250,7 +250,11 @@ func (b *Builder) buildCeilItemIconPath(_ int, region renderregion.Value) string
 func (b *Builder) convertBehaviors(gachaInfo *masterdata.Gacha, region renderregion.Value) []drawing.GachaBehavior {
 	behaviors := make([]drawing.GachaBehavior, 0, len(gachaInfo.GachaBehaviors))
 	jewelIcon := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, "jewel.png")
-	gachaTicketIcon := filepath.ToSlash(filepath.Join("thumbnail", "gacha_ticket", "gacha_ticket.png"))
+	gachaTicketIcon := assets.ResolveRegionAssetPath(
+		b.assets,
+		region.String(),
+		filepath.Join("thumbnail", "gacha_ticket", "gacha_ticket.png"),
+	)
 	for _, behavior := range gachaInfo.GachaBehaviors {
 		var costType *string
 		var costQty *int

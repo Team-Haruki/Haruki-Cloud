@@ -214,6 +214,50 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsColumnarAchievements(t
 	}
 }
 
+func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsCompactAchievements(t *testing.T) {
+	source := &rewardsSnapshotTestSource{
+		region: renderregion.JP,
+		musics: map[int]*masterdata.Music{
+			1001: {
+				ID:          1001,
+				Title:       "Test Song",
+				PublishedAt: time.Now().Add(-time.Hour).UnixMilli(),
+			},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1001: {
+				{
+					MusicID:         1001,
+					MusicDifficulty: "hard",
+					PlayLevel:       10,
+				},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	snapshot := &musicSnapshotStub{
+		rawValues: map[string][]byte{
+			"compactUserMusicAchievements": []byte(`{
+				"musicId": [1001, 1001, 1001, 1001, 1001, 1001, 1001, 1001],
+				"musicAchievementId": [1, 2, 3, 4, 13, 14, 15, 16]
+			}`),
+		},
+	}
+
+	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snapshot)
+	if err != nil {
+		t.Fatalf("BuildMusicRewardsDetailRequestFromSnapshot failed: %v", err)
+	}
+
+	if payload.RankRewards != 0 {
+		t.Fatalf("unexpected rank rewards: %d", payload.RankRewards)
+	}
+	if rewards := payload.ComboRewards["hard"]; len(rewards) != 0 {
+		t.Fatalf("unexpected hard combo rewards: %+v", rewards)
+	}
+}
+
 func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsGroupedAchievements(t *testing.T) {
 	source := &rewardsSnapshotTestSource{
 		region: renderregion.JP,
@@ -285,6 +329,53 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotFindsNestedAchievements(t *te
 			"updatedResources": {
 				"userMusicAchievements": {
 					"1001": [1, 2, 3, 4, 13, 14, 15, 16]
+				}
+			}
+		}`),
+	}
+
+	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snapshot)
+	if err != nil {
+		t.Fatalf("BuildMusicRewardsDetailRequestFromSnapshot failed: %v", err)
+	}
+
+	if payload.RankRewards != 0 {
+		t.Fatalf("unexpected rank rewards: %d", payload.RankRewards)
+	}
+	if rewards := payload.ComboRewards["hard"]; len(rewards) != 0 {
+		t.Fatalf("unexpected hard combo rewards: %+v", rewards)
+	}
+}
+
+func TestBuildMusicRewardsDetailRequestFromSnapshotFindsNestedCompactAchievements(t *testing.T) {
+	source := &rewardsSnapshotTestSource{
+		region: renderregion.JP,
+		musics: map[int]*masterdata.Music{
+			1001: {
+				ID:          1001,
+				Title:       "Test Song",
+				PublishedAt: time.Now().Add(-time.Hour).UnixMilli(),
+			},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1001: {
+				{
+					MusicID:         1001,
+					MusicDifficulty: "hard",
+					PlayLevel:       10,
+				},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	snapshot := &musicSnapshotStub{
+		rawValues: map[string][]byte{},
+		rawBytes: []byte(`{
+			"updatedResources": {
+				"compactUserMusicAchievements": {
+					"musicId": [1001, 1001, 1001, 1001, 1001, 1001, 1001, 1001],
+					"musicAchievementId": [1, 2, 3, 4, 13, 14, 15, 16]
 				}
 			}
 		}`),

@@ -156,12 +156,9 @@ func (c *Controller) BuildMusicRewardsDetailRequestFromSnapshot(query RewardsDet
 	if err := snapshot.Require(); err != nil {
 		return nil, err
 	}
-	achievementsJSON, err := snapshot.RawValue("userMusicAchievements")
+	achievementsJSON, err := resolveSnapshotAchievementsJSON(snapshot)
 	if err != nil {
-		achievementsJSON, err = extractNestedAchievementsJSON(snapshot)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	return c.BuildMusicRewardsDetailRequestFromAchievements(query, achievementsJSON)
 }
@@ -374,6 +371,21 @@ func decodeUserMusicAchievements(raw []byte) ([]userMusicAchievement, error) {
 	return items, nil
 }
 
+var snapshotAchievementKeys = []string{
+	"userMusicAchievements",
+	"compactUserMusicAchievements",
+}
+
+func resolveSnapshotAchievementsJSON(snapshot userdata.Snapshot) ([]byte, error) {
+	for _, key := range snapshotAchievementKeys {
+		value, err := snapshot.RawValue(key)
+		if err == nil {
+			return value, nil
+		}
+	}
+	return extractNestedAchievementsJSON(snapshot)
+}
+
 func extractNestedAchievementsJSON(snapshot userdata.Snapshot) ([]byte, error) {
 	if snapshot == nil {
 		return nil, fmt.Errorf("user snapshot is required for music rewards detail")
@@ -391,16 +403,17 @@ func extractNestedAchievementsJSON(snapshot userdata.Snapshot) ([]byte, error) {
 		return nil, err
 	}
 
-	value, ok := findNestedJSONValue(payload, "usermusicachievements")
-	if !ok {
-		return nil, fmt.Errorf("raw user snapshot key %q is unavailable", "userMusicAchievements")
+	for _, key := range snapshotAchievementKeys {
+		want := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(key), "_", ""), "-", ""))
+		if value, ok := findNestedJSONValue(payload, want); ok {
+			data, err := json.Marshal(value)
+			if err != nil {
+				return nil, err
+			}
+			return data, nil
+		}
 	}
-
-	data, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return nil, fmt.Errorf("raw user snapshot keys %q are unavailable", strings.Join(snapshotAchievementKeys, ", "))
 }
 
 func collectUserMusicAchievements(value any) []userMusicAchievement {

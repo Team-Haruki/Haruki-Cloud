@@ -34,6 +34,21 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 			},
 		},
 		{
+			name:     "card detail latest query",
+			args:     "-1",
+			wantMode: "card-detail",
+			checkParam: func(t *testing.T, raw []byte) {
+				t.Helper()
+				var params card.Query
+				if err := json.Unmarshal(raw, &params); err != nil {
+					t.Fatalf("unmarshal params: %v", err)
+				}
+				if params.Query != "-1" || params.Region != "jp" {
+					t.Fatalf("unexpected params: %+v", params)
+				}
+			},
+		},
+		{
 			name:     "card detail sequence query",
 			args:     "mnr-1",
 			wantMode: "card-detail",

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -196,5 +197,34 @@ func TestResolveCardImagesSupportsStandardAndRipPaths(t *testing.T) {
 	}
 	if filepath.Clean(result.Paths[1]) != filepath.Clean(after) {
 		t.Fatalf("unexpected after-training path: %q", result.Paths[1])
+	}
+}
+
+func TestSearchServiceSupportsGlobalLatestVisibleCard(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 101, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Old", AssetBundleName: "card_old", ReleaseAt: now - 3000},
+			{ID: 102, CharacterID: 6, CardRarityType: "rarity_4", Prefix: "Latest Visible", AssetBundleName: "card_latest", ReleaseAt: now - 1000},
+			{ID: 103, CharacterID: 7, CardRarityType: "rarity_4", Prefix: "Future", AssetBundleName: "card_future", ReleaseAt: now + 1000},
+		},
+		allowEmptyFilter: true,
+	}
+
+	searcher := NewSearchService(source, NewParser(defaultNicknames))
+	cardInfo, err := searcher.Search("-1")
+	if err != nil {
+		t.Fatalf("Search(-1) error = %v", err)
+	}
+	if cardInfo.ID != 102 {
+		t.Fatalf("expected latest visible card 102, got %+v", cardInfo)
+	}
+
+	list, err := searcher.SearchList("-2")
+	if err != nil {
+		t.Fatalf("SearchList(-2) error = %v", err)
+	}
+	if len(list) != 1 || list[0].ID != 101 {
+		t.Fatalf("expected second latest visible card 101, got %+v", list)
 	}
 }

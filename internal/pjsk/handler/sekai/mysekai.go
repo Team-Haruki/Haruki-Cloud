@@ -37,6 +37,40 @@ func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 	}
 }
 
+func (sekaiHandlers) MysekaiOverviewHandle() SekaiCommandHandler {
+	return SekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "mysekai/overview",
+			Commands: []string{
+				"/pjsk mysekai overview", "/mysekai-overview", "/mysekai总览", "/烤森总览", "/msam",
+			},
+		},
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			params := map[string]any{}
+			if strings.Contains(strings.ToLower(args), "all") {
+				params["show_harvested"] = true
+			}
+			if !strings.Contains(strings.ToLower(args), "force") {
+				params["check_time"] = true
+			} else {
+				params["check_time"] = false
+			}
+			mapIDs, parseErr := parseMysekaiMapIDs(args)
+			if parseErr != nil {
+				return nil, parseErr
+			}
+			if len(mapIDs) > 0 {
+				params["map_ids"] = mapIDs
+			}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-resource-map", params), nil
+		},
+	}
+}
+
 func (sekaiHandlers) MysekaiMapHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{

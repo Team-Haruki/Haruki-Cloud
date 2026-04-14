@@ -58,7 +58,15 @@ func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailR
 		return nil, err
 	}
 	searcher := c.newSearchService(source)
-	musicInfo, err := searcher.Search(query.Query)
+	info, err := searcher.parser.Parse(query.Query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search music: %w", err)
+	}
+	if info != nil && strings.TrimSpace(info.Difficulty) == "" && strings.TrimSpace(query.Difficulty) != "" {
+		info.Diff = normalizeDifficulty(query.Difficulty)
+		info.Difficulty = info.Diff
+	}
+	musicInfo, err := searcher.SearchInfo(info)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music: %w", err)
 	}
@@ -67,7 +75,7 @@ func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailR
 		return nil, err
 	}
 	c.appendApprovedMusicAliases(req, musicInfo.ID)
-	c.enrichMusicDetailRequest(req, region, source, builder, musicInfo)
+	c.enrichMusicDetailRequest(req, region, source, builder, musicInfo, info.Difficulty)
 	return req, nil
 }
 

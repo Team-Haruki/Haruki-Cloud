@@ -43,6 +43,12 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 			return nil, fmt.Errorf("card not found: %d/%d", info.CharacterID, info.Sequence)
 		}
 		return card, nil
+	case QueryTypeLatest:
+		card, err := s.latestVisibleCard(info.Sequence, now)
+		if err != nil {
+			return nil, err
+		}
+		return card, nil
 	case QueryTypeFilter:
 		items, err := s.source.FilterCards(info)
 		if err != nil {
@@ -95,7 +101,38 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 			return nil, fmt.Errorf("card not found: %d/%d", info.CharacterID, info.Sequence)
 		}
 		return []*masterdata.Card{card}, nil
+	case QueryTypeLatest:
+		card, err := s.latestVisibleCard(info.Sequence, now)
+		if err != nil {
+			return nil, err
+		}
+		return []*masterdata.Card{card}, nil
 	default:
 		return nil, fmt.Errorf("无法解析的列表查询指令: %s", query)
 	}
+}
+
+func (s *SearchService) latestVisibleCard(sequence int, now int64) (*masterdata.Card, error) {
+	if s == nil || s.source == nil {
+		return nil, fmt.Errorf("card data source is not configured")
+	}
+	if sequence >= 0 {
+		return nil, fmt.Errorf("card sequence must be negative: %d", sequence)
+	}
+
+	items, err := s.source.FilterCards(&CardQueryInfo{})
+	if err != nil {
+		return nil, err
+	}
+	items = filterVisibleCards(items, now)
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no released cards found")
+	}
+
+	sortCardsByReleaseAndID(items)
+	index := len(items) + sequence
+	if index < 0 || index >= len(items) {
+		return nil, fmt.Errorf("card not found: latest/%d", sequence)
+	}
+	return items[index], nil
 }

@@ -36,13 +36,16 @@ var (
 	}
 )
 
-func (c *Controller) enrichMusicDetailRequest(req *drawing.MusicDetailRequest, region renderregion.Value, source DataSource, builder *Builder, musicInfo *masterdata.Music) {
+func (c *Controller) enrichMusicDetailRequest(req *drawing.MusicDetailRequest, region renderregion.Value, source DataSource, builder *Builder, musicInfo *masterdata.Music, preferredDifficulty string) {
 	if c == nil || req == nil || musicInfo == nil {
 		return
 	}
 
 	if length := c.resolveMusicDetailLength(region.String(), musicInfo.ID); length != nil {
 		req.Length = length
+	}
+	if bpm := c.resolveMusicDetailBPM(region, musicInfo.ID, preferredDifficulty); bpm != nil {
+		req.Bpm = bpm
 	}
 
 	matrix, total := c.resolveMusicDetailLeaderboard(region, source, builder, musicInfo.ID)
@@ -54,6 +57,29 @@ func (c *Controller) enrichMusicDetailRequest(req *drawing.MusicDetailRequest, r
 	req.LeaderboardLiveTypes = cloneMusicDetailLabels(musicDetailLeaderboardLiveTypes, musicDetailLeaderboardLiveTypeOrder)
 	req.LeaderboardTargets = cloneMusicDetailLabels(musicDetailLeaderboardTargets, musicDetailLeaderboardTargetOrder)
 	req.LeaderboardMusicNum = intPtr(total)
+}
+
+func (c *Controller) resolveMusicDetailBPM(region renderregion.Value, musicID int, preferredDifficulty string) *int {
+	if c == nil || musicID <= 0 {
+		return nil
+	}
+
+	for _, difficulty := range buildBPMDifficultyCandidates(preferredDifficulty) {
+		chartPath := c.resolveLocalChartPath(region.String(), musicID, difficulty)
+		if chartPath == "" {
+			continue
+		}
+		parsed, err := parseChartBPM(chartPath)
+		if err != nil || parsed == nil || parsed.MainBPM <= 0 {
+			continue
+		}
+		bpm := int(math.Round(parsed.MainBPM))
+		if bpm <= 0 {
+			continue
+		}
+		return &bpm
+	}
+	return nil
 }
 
 func (c *Controller) resolveMusicDetailLength(region string, musicID int) *string {

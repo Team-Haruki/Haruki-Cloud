@@ -11,7 +11,8 @@ import (
 
 const searchSingleCardHelp = `查单张卡的方式:
 1. 直接使用卡牌ID
-2. 角色昵称+负数 代表角色新卡，例如 mnr-1 代表 mnr 最新一张卡`
+2. 角色昵称+负数 代表角色新卡，例如 mnr-1 代表 mnr 最新一张卡
+3. 直接使用负数代表全局倒序已上线卡，例如 -1 代表当前区服最新上线卡`
 
 const searchMultiCardHelp = `查询多张卡牌的筛选参数:
 角色昵称：miku

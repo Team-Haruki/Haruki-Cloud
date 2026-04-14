@@ -25,6 +25,14 @@ func TestMysekaiAliasRemap(t *testing.T) {
 		t.Fatalf("resource aliases should not contain /msr")
 	}
 
+	overview := sekaiHandlers{}.MysekaiOverviewHandle()
+	if !slices.Contains(overview.Commands, "/msam") {
+		t.Fatalf("overview aliases should contain /msam")
+	}
+	if slices.Contains(overview.Commands, "/msa") {
+		t.Fatalf("overview aliases should not contain /msa")
+	}
+
 	musicRecord := sekaiHandlers{}.MysekaiMusicRecordHandle()
 	if !slices.Contains(musicRecord.Commands, "/msr") {
 		t.Fatalf("music record aliases should contain /msr")
@@ -39,6 +47,49 @@ func TestMysekaiAliasRemap(t *testing.T) {
 	}
 	if !slices.Contains(mapHandle.Commands, "/msmap") {
 		t.Fatalf("map aliases should contain /msmap")
+	}
+}
+
+func TestMysekaiOverviewHandleBuildsResolvedCommand(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiOverviewHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+	if h.GetPath() != "mysekai/overview" {
+		t.Fatalf("handler path = %q", h.GetPath())
+	}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msam",
+		ArgText:    "13 all force",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-resource-map" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+
+	var params struct {
+		MapIDs        []int `json:"map_ids"`
+		ShowHarvested bool  `json:"show_harvested"`
+		CheckTime     bool  `json:"check_time"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !reflect.DeepEqual(params.MapIDs, []int{5, 6}) {
+		t.Fatalf("params.MapIDs = %+v", params.MapIDs)
+	}
+	if !params.ShowHarvested {
+		t.Fatalf("params.ShowHarvested = %v", params.ShowHarvested)
+	}
+	if params.CheckTime {
+		t.Fatalf("params.CheckTime = %v", params.CheckTime)
 	}
 }
 

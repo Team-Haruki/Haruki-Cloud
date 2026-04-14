@@ -153,6 +153,7 @@ func TestGlobalResolver_Resolution(t *testing.T) {
 		{"Predict", "/skp", "sk-predict", "jp", false, false},
 		{"Event List with JP region", "/jp/event-list", "event-list", "jp", true, false},
 		{"Mysekai Resource Alias", "/msa", "mysekai-resource", "jp", false, false},
+		{"Mysekai Overview Alias", "/msam", "mysekai-resource-map", "jp", false, false},
 		{"Mysekai Map Alias", "/msm", "mysekai-map", "jp", false, false},
 		{"Mysekai Music Record Alias", "/msr", "mysekai-music-record", "jp", false, false},
 		{"Mysekai Map Legacy Alias", "/msmap", "mysekai-map", "jp", false, false},

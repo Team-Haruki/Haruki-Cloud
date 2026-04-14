@@ -55,6 +55,31 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderResource(q)
+	case "mysekai-resource-map":
+		resourceQuery := mysekai.ResourceQuery{Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &resourceQuery)
+		resourceQuery.Profile = renderCtx.Profile
+		resourceData, resourceErr := renderCtx.Controller.RenderResource(resourceQuery)
+		if resourceErr != nil {
+			return nil, resourceErr
+		}
+
+		mapQuery := mysekai.MapQuery{Region: rc.Cmd.Region}
+		mergeParams(rc.Cmd.Params, &mapQuery)
+		mapData, mapErr := renderCtx.Controller.RenderMap(mapQuery)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+
+		resourceMessage, resourceImageErr := imageMessage(rc.Ctx, resourceData, rc.App, BotModulePJSK)
+		if resourceImageErr != nil {
+			return nil, resourceImageErr
+		}
+		mapMessage, mapImageErr := imageMessage(rc.Ctx, mapData, rc.App, BotModulePJSK)
+		if mapImageErr != nil {
+			return nil, mapImageErr
+		}
+		return append(resourceMessage, mapMessage...), nil
 	case "mysekai-map":
 		q := mysekai.MapQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)

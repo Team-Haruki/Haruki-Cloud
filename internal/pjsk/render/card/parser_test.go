@@ -6,6 +6,9 @@ func TestLooksLikeSingleCardQuerySupportsIDAndNicknameSequence(t *testing.T) {
 	if !LooksLikeSingleCardQuery("1001") {
 		t.Fatal("expected card id query to be treated as single-card query")
 	}
+	if !LooksLikeSingleCardQuery("-1") {
+		t.Fatal("expected global latest-card query to be treated as single-card query")
+	}
 	if !LooksLikeSingleCardQuery("mnr-1") {
 		t.Fatal("expected nickname sequence query to be treated as single-card query")
 	}
@@ -144,5 +147,25 @@ func TestParserSupportsLunabotCharacterAliases(t *testing.T) {
 		if info.Type != QueryTypeSeq || info.CharacterID != tt.characterID || info.Sequence != -1 {
 			t.Fatalf("unexpected parse result for %q: %+v", tt.query, info)
 		}
+	}
+}
+
+func TestParserSupportsGlobalLatestCardSequence(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.Parse("-1")
+	if err != nil {
+		t.Fatalf("Parse(-1) error = %v", err)
+	}
+	if info.Type != QueryTypeLatest || info.Sequence != -1 {
+		t.Fatalf("unexpected parse result: %+v", info)
+	}
+
+	info, err = parser.ParsePreferFilter("-2")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter(-2) error = %v", err)
+	}
+	if info.Type != QueryTypeLatest || info.Sequence != -2 {
+		t.Fatalf("unexpected prefer-filter parse result: %+v", info)
 	}
 }

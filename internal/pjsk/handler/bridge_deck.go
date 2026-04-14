@@ -32,6 +32,9 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 
 	var data []byte
 	recommendType := ""
+	buildDoneText := func(q deck.AutoQuery) string {
+		return fmt.Sprintf("已处理%s。", formatDeckQuerySummary(q))
+	}
 	switch rc.Cmd.Mode {
 	case "deck-event":
 		recommendType = "event"
@@ -96,7 +99,11 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		if err != nil {
 			return nil, err
 		}
-		return rc.ImageMessage(data)
+		image, imageErr := rc.ImageMessage(data)
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
 	case "deck-score-up":
 		var msg string
 		err := json.Unmarshal(rc.Cmd.Params, &msg)
@@ -136,7 +143,54 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	image, imageErr := rc.ImageMessage(data)
+	if imageErr != nil {
+		return nil, imageErr
+	}
+	return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
+}
+
+func formatDeckQuerySummary(q deck.AutoQuery) string {
+	parts := make([]string, 0, 6)
+	if region := strings.ToUpper(strings.TrimSpace(q.Region)); region != "" {
+		parts = append(parts, region)
+	}
+	switch strings.ToLower(strings.TrimSpace(q.RecommendType)) {
+	case "event":
+		parts = append(parts, "活动组卡")
+	case "challenge":
+		parts = append(parts, "挑战组卡")
+	case "no_event":
+		parts = append(parts, "长草组卡")
+	case "bonus":
+		parts = append(parts, "加成组卡")
+	case "mysekai":
+		parts = append(parts, "烤森组卡")
+	default:
+		parts = append(parts, "组卡")
+	}
+	if q.EventID != nil && *q.EventID > 0 {
+		parts = append(parts, fmt.Sprintf("event%d", *q.EventID))
+	}
+	if q.MusicTitle != "" {
+		parts = append(parts, q.MusicTitle)
+	} else if q.MusicQuery != "" {
+		parts = append(parts, q.MusicQuery)
+	}
+	if q.MusicDiff != "" {
+		parts = append(parts, strings.ToUpper(q.MusicDiff))
+	}
+	if q.WorldBloomCharacterQuery != "" {
+		parts = append(parts, q.WorldBloomCharacterQuery)
+	} else if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
+		parts = append(parts, fmt.Sprintf("wl角色%d", *q.WorldBloomCharacterID))
+	}
+	if q.ChallengeLiveCharacterQuery != "" {
+		parts = append(parts, q.ChallengeLiveCharacterQuery)
+	} else if q.ChallengeLiveCharacterID != nil && *q.ChallengeLiveCharacterID > 0 {
+		parts = append(parts, fmt.Sprintf("挑战角色%d", *q.ChallengeLiveCharacterID))
+	}
+	return strings.Join(parts, " / ")
 }
 
 func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, renderuserdata.Snapshot, error) {

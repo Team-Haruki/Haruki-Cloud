@@ -280,7 +280,7 @@ func TestBuildGachaDetailRequestComputesRatesAndPickupCards(t *testing.T) {
 	if req.Gacha.Behaviors[0].CostIconPath == nil || *req.Gacha.Behaviors[0].CostIconPath != "static_images/jewel.png" {
 		t.Fatalf("unexpected jewel cost icon path: %+v", req.Gacha.Behaviors[0].CostIconPath)
 	}
-	if req.Gacha.Behaviors[1].CostIconPath == nil || *req.Gacha.Behaviors[1].CostIconPath != "thumbnail/gacha_ticket/gacha_ticket.png" {
+	if req.Gacha.Behaviors[1].CostIconPath == nil || *req.Gacha.Behaviors[1].CostIconPath != "asset/jp-assets/startapp/thumbnail/gacha_ticket/gacha_ticket.png" {
 		t.Fatalf("unexpected ticket cost icon path: %+v", req.Gacha.Behaviors[1].CostIconPath)
 	}
 }

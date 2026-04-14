@@ -7,7 +7,10 @@ import (
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/utils/logger"
 )
+
+var bindingDebugLogger = logger.NewLoggerFromGlobal("PJSKBinding")
 
 func resolveSnapshotBinding(
 	ctx context.Context,
@@ -20,6 +23,8 @@ func resolveSnapshotBinding(
 	if bindings == nil {
 		return nil, ErrProviderUnavailable
 	}
+	bindingDebugLogger.Debugf("snapshot binding resolve start: platform=%s user=%s region=%s pjsk_user=%s prefer_global_default=%t need_mysekai=%t",
+		strings.TrimSpace(platform), maskBindingDebugID(imUserID), region.String(), maskBindingDebugID(pjskUserID), opts.PreferGlobalDefault, opts.NeedMySekai)
 	if strings.TrimSpace(pjskUserID) != "" {
 		return resolveExplicitSnapshotBinding(ctx, bindings, platform, imUserID, region, pjskUserID, opts)
 	}
@@ -27,12 +32,18 @@ func resolveSnapshotBinding(
 	regionStr := region.String()
 	if opts.PreferGlobalDefault {
 		_, binding, err := bindings.ResolveUserBinding(ctx, platform, imUserID, accountdata.GlobalDefaultBindingScope)
+		bindingDebugLogger.Debugf("snapshot binding global-default result: platform=%s user=%s binding=%s err=%v",
+			strings.TrimSpace(platform), maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), err)
 		if err == nil && bindingAllowed(binding, opts) {
+			bindingDebugLogger.Debugf("snapshot binding selected global-default: platform=%s user=%s binding=%s",
+				strings.TrimSpace(platform), maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding))
 			return binding, nil
 		}
 	}
 
 	_, binding, err := bindings.ResolveUserBinding(ctx, platform, imUserID, regionStr)
+	bindingDebugLogger.Debugf("snapshot binding region result: platform=%s user=%s region=%s binding=%s err=%v",
+		strings.TrimSpace(platform), maskBindingDebugID(imUserID), strings.TrimSpace(regionStr), formatSnapshotBindingDebug(binding), err)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +53,8 @@ func resolveSnapshotBinding(
 		}
 		return nil, fmt.Errorf("userdata: binding does not expose suite snapshot")
 	}
+	bindingDebugLogger.Debugf("snapshot binding selected region binding: platform=%s user=%s region=%s binding=%s",
+		strings.TrimSpace(platform), maskBindingDebugID(imUserID), strings.TrimSpace(regionStr), formatSnapshotBindingDebug(binding))
 	return binding, nil
 }
 
@@ -93,6 +106,8 @@ func resolveExplicitSnapshotBinding(
 		}
 		return nil, fmt.Errorf("userdata: binding %s does not expose suite snapshot", pjskUserID)
 	}
+	bindingDebugLogger.Debugf("snapshot binding selected explicit binding: platform=%s user=%s region=%s binding=%s",
+		strings.TrimSpace(platform), maskBindingDebugID(imUserID), region.String(), formatSnapshotBindingDebug(binding))
 	return binding, nil
 }
 
@@ -104,4 +119,23 @@ func bindingAllowed(binding *accountdata.ResolvedBinding, opts ResolveOptions) b
 		return false
 	}
 	return true
+}
+
+func formatSnapshotBindingDebug(binding *accountdata.ResolvedBinding) string {
+	if binding == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("{binding_id=%d server=%s pjsk_user=%s visible=%t suite_visible=%t mysekai_visible=%t verified=%t}",
+		binding.BindingID, strings.TrimSpace(binding.Server), maskBindingDebugID(binding.PJSKUserID), binding.Visible, binding.SuiteVisible, binding.MySekaiVisible, binding.Verified)
+}
+
+func maskBindingDebugID(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	if len(value) <= 6 {
+		return value
+	}
+	return value[:3] + "***" + value[len(value)-3:]
 }

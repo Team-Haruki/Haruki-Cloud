@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/utils/logger"
 )
 
 type bindingLookup interface {
@@ -35,6 +36,7 @@ type ToolboxSnapshotProvider struct {
 	client   privateDataClient
 	factory  SnapshotFactory
 	metas    musicMetaSource
+	logger   *logger.Logger
 }
 
 func NewToolboxSnapshotProvider(bindings bindingLookup, client privateDataClient, sekai *sekaiDB.Client, assetHelper *assets.AssetHelper) *ToolboxSnapshotProvider {
@@ -42,6 +44,7 @@ func NewToolboxSnapshotProvider(bindings bindingLookup, client privateDataClient
 		bindings: bindings,
 		client:   client,
 		factory:  NewDefaultSnapshotFactory(sekai, assetHelper),
+		logger:   logger.NewLoggerFromGlobal("ToolboxSnapshot"),
 	}
 }
 
@@ -67,8 +70,12 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	region := renderregion.WithDefault(selector.Region)
 	binding, err := resolveSnapshotBinding(ctx, p.bindings, platform, imUserID, region, selector.PJSKUserID, opts)
 	if err != nil {
+		p.logger.Warnf("toolbox snapshot binding failed: platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t err=%v",
+			platform, maskBindingDebugID(imUserID), region.String(), maskBindingDebugID(selector.PJSKUserID), opts.NeedMySekai, err)
 		return nil, err
 	}
+	p.logger.Debugf("toolbox snapshot binding selected: platform=%s user=%s region=%s binding=%s",
+		platform, maskBindingDebugID(imUserID), region.String(), formatSnapshotBindingDebug(binding))
 
 	uid, err := strconv.ParseInt(binding.PJSKUserID, 10, 64)
 	if err != nil {
@@ -77,18 +84,28 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 
 	suiteJSON, err := p.client.GetSuiteData(binding.Server, uid, platform, imUserID)
 	if err != nil {
+		p.logger.Warnf("toolbox suite fetch failed: platform=%s user=%s binding=%s err=%v",
+			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), err)
 		return nil, err
 	}
 	if len(suiteJSON) == 0 {
+		p.logger.Warnf("toolbox suite fetch returned empty payload: platform=%s user=%s binding=%s",
+			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding))
 		return nil, fmt.Errorf("userdata: suite snapshot is empty")
 	}
+	p.logger.Debugf("toolbox suite fetch succeeded: platform=%s user=%s binding=%s suite_bytes=%d",
+		platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(suiteJSON))
 
 	var mysekaiJSON []byte
 	if opts.NeedMySekai {
 		mysekaiJSON, err = p.client.GetMySekaiData(binding.Server, uid, platform, imUserID)
 		if err != nil {
+			p.logger.Warnf("toolbox mysekai fetch failed: platform=%s user=%s binding=%s err=%v",
+				platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), err)
 			return nil, err
 		}
+		p.logger.Debugf("toolbox mysekai fetch succeeded: platform=%s user=%s binding=%s mysekai_bytes=%d",
+			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(mysekaiJSON))
 	}
 
 	metaRegion := region
@@ -109,7 +126,11 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		MusicMetaJSON: musicMetaJSON,
 	})
 	if err != nil {
+		p.logger.Warnf("toolbox snapshot build failed: platform=%s user=%s binding=%s snapshot_region=%s suite_bytes=%d mysekai_bytes=%d err=%v",
+			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), snapshotRegion.String(), len(suiteJSON), len(mysekaiJSON), err)
 		return nil, err
 	}
+	p.logger.Debugf("toolbox snapshot build succeeded: platform=%s user=%s binding=%s snapshot_region=%s",
+		platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), snapshotRegion.String())
 	return snapshot, nil
 }

@@ -1657,6 +1657,55 @@ func TestResolveDeckCharacterSelectionsResolvesDefaultWorldBloomChapterForExplic
 	}
 }
 
+func TestResolveDeckCharacterSelectionsUsesDefaultWorldBloomChapterAfterMusicFallback(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_music_fallback?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	for _, item := range []struct {
+		id    int64
+		first string
+		last  string
+	}{
+		{id: 21, first: "初音", last: "未来"},
+		{id: 24, first: "巡音", last: "流歌"},
+	} {
+		if _, err := sekaiClient.Gamecharacter.Create().
+			SetServerRegion("jp").
+			SetGameID(item.id).
+			SetFirstName(item.first).
+			SetGivenName(item.last).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacter %d: %v", item.id, err)
+		}
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 504, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(3*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+		{chapterNo: 2, startAt: now + int64(time.Hour/time.Millisecond), aggregateAt: now + int64(2*time.Hour/time.Millisecond), characterID: 24},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:                  "jp",
+		RecommendType:           "event",
+		EventID:                 drawing.IntPtr(504),
+		WorldBloomCharacterQuery: "虾",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected default world bloom character id after music fallback: %+v", query.WorldBloomCharacterID)
+	}
+	if query.WorldBloomCharacterQuery != "" {
+		t.Fatalf("expected world bloom query to be cleared after music fallback: %q", query.WorldBloomCharacterQuery)
+	}
+	if query.MusicQuery != "虾" {
+		t.Fatalf("expected music query fallback to be preserved, got %q", query.MusicQuery)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsResolvesCurrentWorldBloomEventWhenEventIDMissing(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_default_current?mode=memory&cache=shared&_fk=1")

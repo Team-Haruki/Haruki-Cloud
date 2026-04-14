@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.org/x/sync/errgroup"
 	"haruki-cloud/api/bot/onebot11"
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/render/mysekai"
 	sekaiutils "haruki-cloud/utils/sekai"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type concurrentMessageJob func(context.Context) (onebot11.Message, error)
@@ -118,6 +119,13 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		q := mysekai.MapQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = renderCtx.Controller.RenderMap(q)
+		replayMessage, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+		if err != nil {
+			return nil, err
+		} else {
+			replayMessage = append(replayMessage, onebot11.At(rc.PlatformUserID))
+			return replayMessage, nil
+		}
 	case "mysekai-fixture-list":
 		q := mysekai.FixtureListQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)

@@ -10,7 +10,6 @@ import (
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	"haruki-cloud/database/pjsk/userpreference"
 	pjskschema "haruki-cloud/ent/pjsk/schema"
-	"haruki-cloud/utils"
 	"haruki-cloud/utils/types"
 )
 
@@ -18,7 +17,7 @@ func (c *Client) GetPJSKGlobalAliasToID(ctx context.Context, aliasType string, a
 	if err := c.requirePJSK(); err != nil {
 		return nil, err
 	}
-	if _, err := utils.ParseAliasType(aliasType); err != nil {
+	if _, err := types.ParseAliasType(aliasType); err != nil {
 		return nil, ErrInvalidAliasType
 	}
 	if !isValidAlias(aliasStr) {
@@ -50,7 +49,7 @@ func (c *Client) GetPJSKGlobalAliasesByID(ctx context.Context, aliasType string,
 	if err := c.requirePJSK(); err != nil {
 		return nil, err
 	}
-	if _, err := utils.ParseAliasType(aliasType); err != nil {
+	if _, err := types.ParseAliasType(aliasType); err != nil {
 		return nil, ErrInvalidAliasType
 	}
 	if aliasTypeID < 0 {
@@ -85,7 +84,7 @@ func (c *Client) GetPJSKGroupAliasToID(ctx context.Context, platform, groupID, a
 	if platform == "" || groupID == "" {
 		return nil, ErrInvalidUserID
 	}
-	if _, err := utils.ParseAliasType(aliasType); err != nil {
+	if _, err := types.ParseAliasType(aliasType); err != nil {
 		return nil, ErrInvalidAliasType
 	}
 	if !isValidAlias(aliasStr) {
@@ -122,7 +121,7 @@ func (c *Client) GetPJSKGroupAliasesByID(ctx context.Context, platform, groupID,
 	if platform == "" || groupID == "" {
 		return nil, ErrInvalidUserID
 	}
-	if _, err := utils.ParseAliasType(aliasType); err != nil {
+	if _, err := types.ParseAliasType(aliasType); err != nil {
 		return nil, ErrInvalidAliasType
 	}
 	if aliasTypeID < 0 {
@@ -160,7 +159,7 @@ func (c *Client) GetPJSKBindings(ctx context.Context, harukiUserID int, server s
 		return nil, ErrInvalidUserID
 	}
 	if server != "" {
-		if _, err := utils.ParseBindingServer(server); err != nil {
+		if _, err := types.ParseBindingServer(server); err != nil {
 			return nil, err
 		}
 	}
@@ -202,7 +201,7 @@ func (c *Client) GetPJSKDefaultBinding(ctx context.Context, harukiUserID int, se
 	if server == "" {
 		server = "default"
 	}
-	if _, err := utils.ParseDefaultBindingServer(server); err != nil {
+	if _, err := types.ParseDefaultBindingServer(server); err != nil {
 		return nil, err
 	}
 

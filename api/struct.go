@@ -1,6 +1,6 @@
 package api
 
-import "haruki-cloud/utils"
+import "haruki-cloud/utils/types"
 
 // ================= Response Structs =================
 
@@ -31,28 +31,28 @@ const UserContextKey = "haruki_user"
 // ================= Length Constants =================
 
 const (
-	MaxAliasLength    = utils.MaxAliasLength
-	MaxUserIDLength   = utils.MaxUserIDLength
-	MaxServerLength   = utils.MaxServerLength
-	MaxReasonLength   = utils.MaxReasonLength
-	MaxOptionLength   = utils.MaxOptionLength
-	MaxValueLength    = utils.MaxValueLength
-	MaxPlatformLength = utils.MaxPlatformLength
+	MaxAliasLength    = types.MaxAliasLength
+	MaxUserIDLength   = types.MaxUserIDLength
+	MaxServerLength   = types.MaxServerLength
+	MaxReasonLength   = types.MaxReasonLength
+	MaxOptionLength   = types.MaxOptionLength
+	MaxValueLength    = types.MaxValueLength
+	MaxPlatformLength = types.MaxPlatformLength
 )
 
 // ================= Error Messages =================
 
 const (
-	ErrInvalidRequest      = utils.ErrInvalidRequest
-	ErrInvalidUserID       = utils.ErrInvalidUserID
-	ErrInvalidHarukiUserID = utils.ErrInvalidHarukiUserID
-	ErrUserNotFound        = utils.ErrUserNotFound
-	ErrAliasNotFound       = utils.ErrAliasNotFound
-	ErrBindingNotFound     = utils.ErrBindingNotFound
-	ErrPreferenceNotFound  = utils.ErrPreferenceNotFound
-	ErrPermissionDenied    = utils.ErrPermissionDenied
-	ErrAlreadyExists       = utils.ErrAlreadyExists
-	ErrInternalServer      = utils.ErrInternalServer
+	ErrInvalidRequest      = types.ErrInvalidRequest
+	ErrInvalidUserID       = types.ErrInvalidUserID
+	ErrInvalidHarukiUserID = types.ErrInvalidHarukiUserID
+	ErrUserNotFound        = types.ErrUserNotFound
+	ErrAliasNotFound       = types.ErrAliasNotFound
+	ErrBindingNotFound     = types.ErrBindingNotFound
+	ErrPreferenceNotFound  = types.ErrPreferenceNotFound
+	ErrPermissionDenied    = types.ErrPermissionDenied
+	ErrAlreadyExists       = types.ErrAlreadyExists
+	ErrInternalServer      = types.ErrInternalServer
 	ErrUserBanned          = "user is banned"
 	ErrMissingPlatformInfo = "platform and platform_user_id are required"
 )

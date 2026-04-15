@@ -111,6 +111,74 @@ func (b *Builder) BuildMusicBriefListRequest(musicIDs []int, difficulty string, 
 	}, nil
 }
 
+func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery, region renderregion.Value) (*drawing.MusicBriefListRequest, error) {
+	if len(items) == 0 {
+		return nil, fmt.Errorf("brief list items are required")
+	}
+	region = renderregion.WithDefault(region)
+
+	list := make([]drawing.MusicBriefList, 0, len(items))
+	requiredDiff := ""
+	sameDifficulty := true
+
+	for _, item := range items {
+		if item.MusicID <= 0 {
+			continue
+		}
+		musicInfo, err := b.source.GetMusicByID(item.MusicID)
+		if err != nil || musicInfo == nil {
+			continue
+		}
+
+		diff := normalizeDifficulty(item.Difficulty)
+		level := b.GetDifficultyLevel(musicInfo.ID, diff)
+		if level == 0 {
+			continue
+		}
+
+		if requiredDiff == "" {
+			requiredDiff = diff
+		} else if requiredDiff != diff {
+			sameDifficulty = false
+		}
+
+		list = append(list, drawing.MusicBriefList{
+			ID:              musicInfo.ID,
+			Level:           level,
+			MusicJacketPath: b.BuildMusicJacketPath(musicInfo.AssetBundleName, region),
+			MusicInfo: drawing.MusicMD{
+				ID:           musicInfo.ID,
+				Title:        b.buildDisplayMusicTitle(musicInfo, region),
+				Composer:     musicInfo.Composer,
+				Lyricist:     musicInfo.Lyricist,
+				Arranger:     musicInfo.Arranger,
+				Categories:   b.buildCategories(musicInfo.ID),
+				ReleaseAt:    musicInfo.PublishedAt,
+				IsFullLength: musicInfo.IsFullLength,
+			},
+			Difficulty: drawing.DifficultyInfo{
+				Level:     []int{level},
+				NoteCount: []int{0},
+				HasAppend: strings.EqualFold(diff, "append"),
+				Order:     []string{diff},
+			},
+		})
+	}
+	if len(list) == 0 {
+		return nil, fmt.Errorf("no valid music data")
+	}
+
+	req := &drawing.MusicBriefListRequest{
+		MusicList: list,
+		Region:    region.String(),
+	}
+	if sameDifficulty && requiredDiff != "" {
+		req.RequiredDifficulty = requiredDiff
+		req.RequiredDifficulties = requiredDiff
+	}
+	return req, nil
+}
+
 func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Music, region renderregion.Value) (*drawing.GenerateMusicChartRequest, error) {
 	if music == nil {
 		return nil, fmt.Errorf("music is required")

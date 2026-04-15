@@ -19,6 +19,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 	if ids := parseIntTokens(query.Query); len(ids) > 0 {
 		specGateID = ids[0]
 	}
+	showAll := query.ShowAll != nil && *query.ShowAll
 
 	userMaterials := map[int]int{}
 	for _, raw := range nestedList(merged, "userMysekaiMaterials") {
@@ -62,7 +63,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 		})
 	}
 
-	if specGateID == 0 {
+	if specGateID == 0 && !showAll {
 		bestLevel := 0
 		for gateID, level := range specLevels {
 			if level == gateMaxLevel || level <= bestLevel {
@@ -97,6 +98,8 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 		currentLevel := specLevels[gateID]
 		if currentLevel > 0 && currentLevel < len(levelMats) {
 			levelMats = levelMats[currentLevel:]
+		} else if currentLevel >= len(levelMats) {
+			levelMats = nil
 		}
 
 		sumMaterials := map[int]int{}

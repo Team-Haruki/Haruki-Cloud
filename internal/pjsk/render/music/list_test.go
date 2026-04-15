@@ -100,3 +100,126 @@ func TestBuildMusicListRequestSortsByLevelSeqAndID(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildMusicListRequestSupportsExplicitItems(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			10: {ID: 10, Seq: 30, Title: "Song A", AssetBundleName: "jacket_a", PublishedAt: 1000},
+			11: {ID: 11, Seq: 10, Title: "Song B", AssetBundleName: "jacket_b", PublishedAt: 3000},
+			12: {ID: 12, Seq: 20, Title: "Song C", AssetBundleName: "jacket_c", PublishedAt: 2000},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			10: {
+				{MusicID: 10, MusicDifficulty: "expert", PlayLevel: 27},
+			},
+			11: {
+				{MusicID: 11, MusicDifficulty: "expert", PlayLevel: 26},
+			},
+			12: {
+				{MusicID: 12, MusicDifficulty: "expert", PlayLevel: 27},
+			},
+		},
+	}
+
+	title := "BPM 200 EXPERT 匹配结果"
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	req, err := controller.BuildMusicListRequest(ListQuery{
+		Region:     "jp",
+		Difficulty: "expert",
+		Items: []ListItemQuery{
+			{MusicID: 10, Difficulty: "expert", Level: 27},
+			{MusicID: 11, Difficulty: "expert", Level: 26},
+			{MusicID: 12, Difficulty: "expert"},
+		},
+		Title: &title,
+	})
+	if err != nil {
+		t.Fatalf("BuildMusicListRequest() error = %v", err)
+	}
+	if req.Title == nil || *req.Title != title {
+		t.Fatalf("unexpected title: %+v", req.Title)
+	}
+	if req.RequiredDifficulties != "expert" {
+		t.Fatalf("unexpected required difficulty: %q", req.RequiredDifficulties)
+	}
+	if len(req.MusicList) != 3 {
+		t.Fatalf("expected 3 music items, got %d", len(req.MusicList))
+	}
+	if diff, ok := req.MusicList[0]["difficulty_type"].(string); !ok || diff != "expert" {
+		t.Fatalf("unexpected difficulty type: %+v", req.MusicList[0])
+	}
+
+	gotIDs := []int{
+		req.MusicList[0]["id"].(int),
+		req.MusicList[1]["id"].(int),
+		req.MusicList[2]["id"].(int),
+	}
+	wantIDs := []int{11, 12, 10}
+	for i := range wantIDs {
+		if gotIDs[i] != wantIDs[i] {
+			t.Fatalf("unexpected sorted ids: got=%v want=%v", gotIDs, wantIDs)
+		}
+	}
+}
+
+func TestBuildMusicListRequestKeepsMixedDifficultyItemsWithoutPlaceholderProfile(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			10: {ID: 10, Seq: 30, Title: "Song A", AssetBundleName: "jacket_a", PublishedAt: 1000},
+			11: {ID: 11, Seq: 10, Title: "Song B", AssetBundleName: "jacket_b", PublishedAt: 3000},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			10: {
+				{MusicID: 10, MusicDifficulty: "expert", PlayLevel: 27},
+				{MusicID: 10, MusicDifficulty: "master", PlayLevel: 31},
+			},
+			11: {
+				{MusicID: 11, MusicDifficulty: "master", PlayLevel: 30},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	req, err := controller.BuildMusicListRequest(ListQuery{
+		Region: "jp",
+		Items: []ListItemQuery{
+			{MusicID: 10, Difficulty: "expert"},
+			{MusicID: 10, Difficulty: "master"},
+			{MusicID: 11, Difficulty: "master"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildMusicListRequest() error = %v", err)
+	}
+	if req.Profile != nil {
+		t.Fatalf("expected nil profile, got %+v", req.Profile)
+	}
+	if req.RequiredDifficulties != "expert" {
+		t.Fatalf("unexpected required difficulty fallback: %q", req.RequiredDifficulties)
+	}
+	if len(req.MusicList) != 3 {
+		t.Fatalf("expected 3 music items, got %d", len(req.MusicList))
+	}
+
+	got := []struct {
+		ID   int
+		Diff string
+	}{
+		{ID: req.MusicList[0]["id"].(int), Diff: req.MusicList[0]["difficulty_type"].(string)},
+		{ID: req.MusicList[1]["id"].(int), Diff: req.MusicList[1]["difficulty_type"].(string)},
+		{ID: req.MusicList[2]["id"].(int), Diff: req.MusicList[2]["difficulty_type"].(string)},
+	}
+	want := []struct {
+		ID   int
+		Diff string
+	}{
+		{ID: 10, Diff: "expert"},
+		{ID: 11, Diff: "master"},
+		{ID: 10, Diff: "master"},
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("unexpected mixed difficulty list: got=%+v want=%+v", got, want)
+		}
+	}
+}

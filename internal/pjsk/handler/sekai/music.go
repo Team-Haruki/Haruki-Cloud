@@ -136,13 +136,19 @@ func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			params := map[string]any{}
+			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
+				args = cleaned
+				params["difficulty"] = diff
+			}
+			args = strings.TrimSpace(args)
 			noteCount, err := strconv.Atoi(args)
 			if err != nil {
 				return nil, onebot11.NewReplayError("请输入物量数值")
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-note-count", map[string]any{
-				"note_count": noteCount,
-			}), nil
+			ctx.SetArgs(args)
+			params["note_count"] = noteCount
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-note-count", params), nil
 		},
 	}
 }
@@ -158,15 +164,21 @@ func (sekaiHandlers) BPMHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
-				return nil, onebot11.NewReplayError("请输入要查询的歌曲名或ID")
+				return nil, onebot11.NewReplayError("请输入要查询的 BPM 数值")
 			}
+			params := map[string]any{}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
-				ctx.SetArgs(cleaned)
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-bpm", map[string]any{
-					"difficulty": diff,
-				}), nil
+				query = cleaned
+				params["difficulty"] = diff
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-bpm"), nil
+			query = strings.TrimSpace(query)
+			bpmValue, err := strconv.ParseFloat(query, 64)
+			if err != nil || bpmValue <= 0 {
+				return nil, onebot11.NewReplayError("请输入正确的 BPM 数值")
+			}
+			ctx.SetArgs(query)
+			params["bpm"] = bpmValue
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-bpm", params), nil
 		},
 	}
 }

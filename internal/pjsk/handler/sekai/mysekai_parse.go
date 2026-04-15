@@ -182,6 +182,28 @@ func extractMysekaiGateID(args string) (int, string) {
 	return 0, strings.TrimSpace(args)
 }
 
+func extractMysekaiAllFlag(args string) (bool, string) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) == 0 {
+		return false, ""
+	}
+
+	showAll := false
+	remaining := make([]string, 0, len(fields))
+	for _, field := range fields {
+		switch strings.ToLower(strings.TrimSpace(field)) {
+		case "", "all", "全部":
+			if strings.TrimSpace(field) != "" {
+				showAll = true
+			}
+			continue
+		default:
+			remaining = append(remaining, field)
+		}
+	}
+	return showAll, strings.TrimSpace(strings.Join(remaining, " "))
+}
+
 func parseMysekaiBlueprintArgs(args string) (string, string, bool) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) == 0 {

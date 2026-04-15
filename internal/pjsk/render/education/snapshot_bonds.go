@@ -7,6 +7,8 @@ import (
 	"haruki-cloud/utils/drawing"
 )
 
+const maxRenderedBonds = 10
+
 func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.BondsRequest, error) {
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
 	if err != nil {
@@ -120,13 +122,13 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 	}
 
 	resolveCharIcon := func(gameID int) string {
-		if style, ok := charStyles[gameID]; ok && style.CharacterID > 0 {
+		if style, ok := charStyles[gameID]; ok && style != nil && style.CharacterID > 0 {
 			return c.characterIconPath(style.CharacterID)
 		}
 		return c.characterIconPath(gameID)
 	}
 	resolveBondSortCharacterID := func(gameID int) int {
-		if style, ok := charStyles[gameID]; ok && style.CharacterID > 0 {
+		if style, ok := charStyles[gameID]; ok && style != nil && style.CharacterID > 0 {
 			return style.CharacterID
 		}
 		return gameID
@@ -152,10 +154,10 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 			Color1:         defaultBondColor(),
 			Color2:         defaultBondColor(),
 		}
-		if style, ok := charStyles[pair.CharID1]; ok {
+		if style, ok := charStyles[pair.CharID1]; ok && style != nil {
 			info.Color1 = parseBondColorCode(style.ColorCode)
 		}
-		if style, ok := charStyles[pair.CharID2]; ok {
+		if style, ok := charStyles[pair.CharID2]; ok && style != nil {
 			info.Color2 = parseBondColorCode(style.ColorCode)
 		}
 		if state.Rank > 0 && state.Rank < maxLevel {
@@ -232,6 +234,9 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 		}
 		return bonds[i].CharaID2 < bonds[j].CharaID2
 	})
+	if len(bonds) > maxRenderedBonds {
+		bonds = bonds[:maxRenderedBonds]
+	}
 
 	return c.BuildBondsRequest(drawing.BondsRequest{
 		Profile:  *ctx.profile,

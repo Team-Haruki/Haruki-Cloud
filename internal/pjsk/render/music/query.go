@@ -9,9 +9,27 @@ type Query struct {
 	UserID     string `json:"user_id,omitempty"`
 }
 
+type BPMQuery struct {
+	BPM        float64 `json:"bpm"`
+	Region     string  `json:"region"`
+	Difficulty string  `json:"difficulty,omitempty"`
+}
+
 type NoteCountQuery struct {
-	NoteCount int    `json:"note_count"`
-	Region    string `json:"region"`
+	NoteCount  int    `json:"note_count"`
+	Difficulty string `json:"difficulty,omitempty"`
+	Region     string `json:"region"`
+}
+
+type BriefListItemQuery struct {
+	MusicID    int    `json:"music_id"`
+	Difficulty string `json:"difficulty,omitempty"`
+}
+
+type ListItemQuery struct {
+	MusicID    int    `json:"music_id"`
+	Difficulty string `json:"difficulty,omitempty"`
+	Level      int    `json:"level,omitempty"`
 }
 
 type ChartQuery struct {
@@ -23,12 +41,17 @@ type ChartQuery struct {
 }
 
 type BriefListQuery struct {
-	MusicIDs   []int  `json:"music_ids"`
-	Difficulty string `json:"difficulty,omitempty"`
-	Region     string `json:"region"`
+	MusicIDs    []int                `json:"music_ids"`
+	Items       []BriefListItemQuery `json:"items,omitempty"`
+	Difficulty  string               `json:"difficulty,omitempty"`
+	Region      string               `json:"region"`
+	Title       *string              `json:"title,omitempty"`
+	TitleStyle  map[string]any       `json:"title_style,omitempty"`
+	TitleShadow bool                 `json:"title_shadow,omitempty"`
 }
 
 type ListQuery struct {
+	Items           []ListItemQuery                     `json:"items,omitempty"`
 	Difficulty      string                              `json:"difficulty"`
 	Level           int                                 `json:"level,omitempty"`
 	LevelMin        int                                 `json:"level_min,omitempty"`
@@ -37,7 +60,7 @@ type ListQuery struct {
 	IncludeLeaks    bool                                `json:"include_leaks,omitempty"`
 	UserResults     map[int]string                      `json:"user_results,omitempty"`
 	Title           *string                             `json:"title,omitempty"`
-	TitleStyle      map[string]any              `json:"title_style,omitempty"`
+	TitleStyle      map[string]any                      `json:"title_style,omitempty"`
 	TitleShadow     bool                                `json:"title_shadow,omitempty"`
 	Keyword         string                              `json:"keyword,omitempty"`
 	ShowID          bool                                `json:"show_id,omitempty"`
@@ -50,7 +73,7 @@ type ProgressQuery struct {
 	Counts      []drawing.PlayProgressCount `json:"counts,omitempty"`
 	UserResults map[int]string              `json:"user_results,omitempty"`
 	Title       *string                     `json:"title,omitempty"`
-	TitleStyle  map[string]any      `json:"title_style,omitempty"`
+	TitleStyle  map[string]any              `json:"title_style,omitempty"`
 	Profile     *drawing.ProfileCardRequest `json:"-"`
 }
 
@@ -74,7 +97,7 @@ type RewardsDetailQuery struct {
 	RankRewards   int                                   `json:"rank_rewards"`
 	ComboRewards  map[string][]drawing.MusicComboReward `json:"combo_rewards"`
 	Title         *string                               `json:"title,omitempty"`
-	TitleStyle    map[string]any                `json:"title_style,omitempty"`
+	TitleStyle    map[string]any                        `json:"title_style,omitempty"`
 	JewelIconPath *string                               `json:"jewel_icon_path,omitempty"`
 	ShardIconPath *string                               `json:"shard_icon_path,omitempty"`
 	Profile       *drawing.ProfileCardRequest           `json:"-"`
@@ -85,7 +108,7 @@ type RewardsBasicQuery struct {
 	RankRewards   string                      `json:"rank_rewards"`
 	ComboRewards  map[string]string           `json:"combo_rewards"`
 	Title         *string                     `json:"title,omitempty"`
-	TitleStyle    map[string]any      `json:"title_style,omitempty"`
+	TitleStyle    map[string]any              `json:"title_style,omitempty"`
 	JewelIconPath *string                     `json:"jewel_icon_path,omitempty"`
 	ShardIconPath *string                     `json:"shard_icon_path,omitempty"`
 	Profile       *drawing.ProfileCardRequest `json:"-"`

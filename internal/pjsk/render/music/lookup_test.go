@@ -200,6 +200,40 @@ func TestFindMusicChartsByNoteCount(t *testing.T) {
 	}
 }
 
+func TestFindMusicChartsByNoteCountSupportsDifficultyFilter(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A"},
+			2: {ID: 2, Title: "Song B"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31, TotalNoteCount: 777},
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 777},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "append", PlayLevel: 34, TotalNoteCount: 777},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	matches, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{
+		NoteCount:  777,
+		Difficulty: "expert",
+		Region:     "jp",
+	})
+	if err != nil {
+		t.Fatalf("FindMusicChartsByNoteCount() error = %v", err)
+	}
+	if len(matches) != 1 {
+		t.Fatalf("expected 1 match, got %d", len(matches))
+	}
+	if matches[0].Music.ID != 1 || matches[0].Difficulty != "expert" {
+		t.Fatalf("unexpected match: %+v", matches[0])
+	}
+}
+
 func TestResolveMusicCoverUsesControllerRequestContext(t *testing.T) {
 	source := &lookupTestSource{
 		musics: map[int]*masterdata.Music{
@@ -336,6 +370,73 @@ func TestResolveMusicBPMSupportsRegionAssetChartPath(t *testing.T) {
 	}
 	if len(bpm.Events) != 2 || bpm.Events[0].BPM != 128 || bpm.Events[1].BPM != 196 {
 		t.Fatalf("unexpected events: %+v", bpm.Events)
+	}
+}
+
+func TestFindMusicChartsByBPM(t *testing.T) {
+	root := t.TempDir()
+	writeChart := func(relPath string, lines ...string) {
+		path := filepath.Join(root, relPath)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatalf("mkdir chart: %v", err)
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+			t.Fatalf("write chart: %v", err)
+		}
+	}
+
+	writeChart(filepath.Join("music", "music_score", "0001_01", "expert.txt"),
+		"#BPM01:120",
+		"#BPM02:180",
+		"#00008:0100",
+		"#00108:0200",
+	)
+	writeChart(filepath.Join("music", "music_score", "0001_01", "master.txt"),
+		"#BPM01:200",
+		"#00008:0100",
+	)
+	writeChart(filepath.Join("music", "music_score", "0002_01", "append.txt"),
+		"#BPM01:200",
+		"#00008:0100",
+	)
+
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert"},
+				{MusicID: 1, MusicDifficulty: "master"},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "append"},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper(root, nil), nil, nil)
+	matches, err := controller.FindMusicChartsByBPM(BPMQuery{Region: "jp", BPM: 200})
+	if err != nil {
+		t.Fatalf("FindMusicChartsByBPM() error = %v", err)
+	}
+	if len(matches) != 2 {
+		t.Fatalf("expected 2 matches, got %+v", matches)
+	}
+	if matches[0].Music.ID != 1 || matches[0].Difficulty != "master" {
+		t.Fatalf("unexpected first bpm match: %+v", matches[0])
+	}
+	if matches[1].Music.ID != 2 || matches[1].Difficulty != "append" {
+		t.Fatalf("unexpected second bpm match: %+v", matches[1])
+	}
+
+	filtered, err := controller.FindMusicChartsByBPM(BPMQuery{Region: "jp", BPM: 200, Difficulty: "append"})
+	if err != nil {
+		t.Fatalf("FindMusicChartsByBPM() filtered error = %v", err)
+	}
+	if len(filtered) != 1 || filtered[0].Music.ID != 2 || filtered[0].Difficulty != "append" {
+		t.Fatalf("unexpected filtered matches: %+v", filtered)
 	}
 }
 

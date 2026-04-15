@@ -458,6 +458,28 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 		t.Fatalf("write jacket: %v", err)
 	}
 
+	chartCalls := 0
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/pjsk/chart":
+			chartCalls++
+			var req drawing.GenerateMusicChartRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode chart request: %v", err)
+			}
+			if req.Difficulty != "expert" {
+				t.Fatalf("unexpected chart difficulty: %+v", req)
+			}
+			if musicID, ok := req.MusicID.(float64); !ok || int(musicID) != 1 {
+				t.Fatalf("unexpected chart music id: %+v", req.MusicID)
+			}
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+	}))
+	defer drawingServer.Close()
+
 	source := &bridgeMusicSource{
 		musics: map[int]*masterdata.Music{
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
@@ -469,7 +491,7 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 		},
 	}
 	app := &renderapp.App{
-		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), nil, nil),
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 
@@ -499,8 +521,189 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeMusic note-count: %v", err)
 	}
-	if len(message) != 1 || message[0].Type != "text" {
+	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected note-count message: %+v", message)
+	}
+	if chartCalls != 1 {
+		t.Fatalf("expected 1 chart render call, got %d", chartCalls)
+	}
+}
+
+func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.T) {
+	root := t.TempDir()
+	chartA := filepath.Join(root, "music", "music_score", "0001_01", "expert.txt")
+	chartB := filepath.Join(root, "music", "music_score", "0002_01", "master.txt")
+	if err := os.MkdirAll(filepath.Dir(chartA), 0o755); err != nil {
+		t.Fatalf("mkdir chartA: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(chartB), 0o755); err != nil {
+		t.Fatalf("mkdir chartB: %v", err)
+	}
+	if err := os.WriteFile(chartA, []byte(strings.Join([]string{
+		"#BPM01:200",
+		"#00008:0100",
+	}, "\n")), 0o644); err != nil {
+		t.Fatalf("write chartA: %v", err)
+	}
+	if err := os.WriteFile(chartB, []byte(strings.Join([]string{
+		"#BPM01:180",
+		"#BPM02:200",
+		"#00008:0100",
+		"#00108:0200",
+	}, "\n")), 0o644); err != nil {
+		t.Fatalf("write chartB: %v", err)
+	}
+
+	listCalls := 0
+	titles := make([]string, 0, 1)
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/pjsk/music/list":
+			listCalls++
+			var req drawing.MusicListRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode music-list request: %v", err)
+			}
+			if req.Title == nil {
+				t.Fatalf("expected list title, got nil")
+			}
+			titles = append(titles, *req.Title)
+			if req.Profile != nil {
+				t.Fatalf("expected nil profile for lookup list, got %+v", req.Profile)
+			}
+			if len(req.MusicList) != 2 {
+				t.Fatalf("expected 2 list items in single request, got %d", len(req.MusicList))
+			}
+			gotPairs := []string{
+				fmt.Sprintf("%d:%s", int(req.MusicList[0]["id"].(float64)), req.MusicList[0]["difficulty_type"].(string)),
+				fmt.Sprintf("%d:%s", int(req.MusicList[1]["id"].(float64)), req.MusicList[1]["difficulty_type"].(string)),
+			}
+			wantPairs := []string{"1:expert", "2:master"}
+			for i := range wantPairs {
+				if gotPairs[i] != wantPairs[i] {
+					t.Fatalf("unexpected mixed difficulty payload: got=%v want=%v", gotPairs, wantPairs)
+				}
+			}
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]any{"bpm": 200})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module: parser.ModuleMusic,
+		Mode:   "music-bpm",
+		Region: "jp",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic bpm: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected bpm message: %+v", message)
+	}
+	if listCalls != 1 {
+		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
+	}
+	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+		t.Fatalf("unexpected title list: %+v", titles)
+	}
+}
+
+func TestExecuteMusicNoteCountUsesSingleMusicListImageWithoutSummaryText(t *testing.T) {
+	listCalls := 0
+	titles := make([]string, 0, 1)
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/pjsk/music/list":
+			listCalls++
+			var req drawing.MusicListRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode music-list request: %v", err)
+			}
+			if req.Title == nil {
+				t.Fatalf("expected list title, got nil")
+			}
+			titles = append(titles, *req.Title)
+			if req.Profile != nil {
+				t.Fatalf("expected nil profile for lookup list, got %+v", req.Profile)
+			}
+			if len(req.MusicList) != 2 {
+				t.Fatalf("expected 2 list items in single request, got %d", len(req.MusicList))
+			}
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 777},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "expert", PlayLevel: 28, TotalNoteCount: 777},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]any{"note_count": 777, "difficulty": "expert"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module: parser.ModuleMusic,
+		Mode:   "music-note-count",
+		Region: "jp",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic note-count: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected note-count message: %+v", message)
+	}
+	if listCalls != 1 {
+		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
+	}
+	if len(titles) != 1 || titles[0] != "物量 777 EXPERT 匹配结果" {
+		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
 
@@ -1686,9 +1889,9 @@ func TestResolveDeckCharacterSelectionsUsesDefaultWorldBloomChapterAfterMusicFal
 	})
 
 	query := renderdeck.AutoQuery{
-		Region:                  "jp",
-		RecommendType:           "event",
-		EventID:                 drawing.IntPtr(504),
+		Region:                   "jp",
+		RecommendType:            "event",
+		EventID:                  drawing.IntPtr(504),
 		WorldBloomCharacterQuery: "虾",
 	}
 

@@ -5,6 +5,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 type NoteCountMatch struct {
@@ -35,6 +36,13 @@ type BPMResult struct {
 	Duration   float64
 }
 
+type BPMMatch struct {
+	Music      *masterdata.Music
+	Difficulty string
+	MainBPM    float64
+	Events     []BPMEvent
+}
+
 type noteCountFinder interface {
 	FindMusicDifficultiesByNoteCount(noteCount int) ([]*masterdata.MusicDifficulty, error)
 }
@@ -47,6 +55,10 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 	}
 	if query.NoteCount <= 0 {
 		return nil, fmt.Errorf("物量必须大于 0")
+	}
+	targetDifficulty := strings.TrimSpace(query.Difficulty)
+	if targetDifficulty != "" {
+		targetDifficulty = normalizeDifficulty(targetDifficulty)
 	}
 
 	_, source, _, err := c.resolveBuilder(query.Region)
@@ -69,9 +81,13 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 			if err != nil || !isMusicVisibleAt(musicInfo, now) {
 				continue
 			}
+			diff := normalizeDifficulty(item.MusicDifficulty)
+			if targetDifficulty != "" && diff != targetDifficulty {
+				continue
+			}
 			matches = append(matches, NoteCountMatch{
 				Music:          musicInfo,
-				Difficulty:     normalizeDifficulty(item.MusicDifficulty),
+				Difficulty:     diff,
 				PlayLevel:      item.PlayLevel,
 				TotalNoteCount: item.TotalNoteCount,
 			})
@@ -89,9 +105,13 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 				if item == nil || item.TotalNoteCount != query.NoteCount {
 					continue
 				}
+				diff := normalizeDifficulty(item.MusicDifficulty)
+				if targetDifficulty != "" && diff != targetDifficulty {
+					continue
+				}
 				matches = append(matches, NoteCountMatch{
 					Music:          musicInfo,
-					Difficulty:     normalizeDifficulty(item.MusicDifficulty),
+					Difficulty:     diff,
 					PlayLevel:      item.PlayLevel,
 					TotalNoteCount: item.TotalNoteCount,
 				})
@@ -100,6 +120,9 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 	}
 
 	if len(matches) == 0 {
+		if targetDifficulty != "" {
+			return nil, fmt.Errorf("没有找到物量为 %d 的 %s 谱面", query.NoteCount, targetDifficulty)
+		}
 		return nil, fmt.Errorf("没有找到物量为 %d 的谱面", query.NoteCount)
 	}
 

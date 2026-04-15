@@ -32,6 +32,7 @@ type FixtureDetailQuery struct {
 type DoorUpgradeQuery struct {
 	Region  string                      `json:"region,omitempty"`
 	Query   string                      `json:"query,omitempty"`
+	ShowAll *bool                       `json:"show_all,omitempty"`
 	Profile *drawing.ProfileCardRequest `json:"-"`
 }
 

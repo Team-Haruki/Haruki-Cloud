@@ -40,6 +40,20 @@ func (c *Controller) resolveDetailedProfile(override *drawing.DetailedProfileCar
 	return c.detailedProfile(region)
 }
 
+func (c *Controller) resolveMusicListProfile(override *drawing.DetailedProfileCardRequest, region renderregion.Value) *drawing.DetailedProfileCardRequest {
+	if override != nil {
+		copy := *override
+		return &copy
+	}
+	if snapshot := c.currentSnapshot(); snapshot != nil {
+		if profile := snapshot.DetailedProfile(region); profile != nil {
+			copy := *profile
+			return &copy
+		}
+	}
+	return nil
+}
+
 func (c *Controller) profileCard(region renderregion.Value) drawing.ProfileCardRequest {
 	if snapshot := c.currentSnapshot(); snapshot != nil {
 		if profile := snapshot.ProfileCard(region); profile != nil {

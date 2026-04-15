@@ -1,4 +1,4 @@
-package crypto
+package aesgcm
 
 import (
 	"crypto/aes"

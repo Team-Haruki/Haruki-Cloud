@@ -18,7 +18,7 @@ import (
 	ent "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/requestsranking"
 	"haruki-cloud/database/bot/user"
-	"haruki-cloud/utils/crypto"
+	"haruki-cloud/utils/aesgcm"
 
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
@@ -244,7 +244,7 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal auth payload: %v", err)
 	}
-	encryptedBody, err := crypto.EncryptRaw(payloadBytes, testAuthKey)
+	encryptedBody, err := aesgcm.EncryptRaw(payloadBytes, testAuthKey)
 	if err != nil {
 		t.Fatalf("encrypt auth payload: %v", err)
 	}
@@ -257,7 +257,7 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	authRespBody, _ := io.ReadAll(authHTTPResp.Body)
 	authHTTPResp.Body.Close()
 
-	decryptedResp, err := crypto.DecryptRaw(authRespBody, testAuthKey)
+	decryptedResp, err := aesgcm.DecryptRaw(authRespBody, testAuthKey)
 	if err != nil {
 		t.Fatalf("decrypt auth response: %v", err)
 	}

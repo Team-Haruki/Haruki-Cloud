@@ -12,7 +12,7 @@ import (
 	"haruki-cloud/api"
 	"haruki-cloud/config"
 	"haruki-cloud/database/bot/user"
-	"haruki-cloud/utils/crypto"
+	"haruki-cloud/utils/aesgcm"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
@@ -53,7 +53,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
 	}
 
-	plaintext, err := crypto.DecryptRaw(body, key)
+	plaintext, err := aesgcm.DecryptRaw(body, key)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
 	}
@@ -160,7 +160,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
-	encrypted, err := crypto.EncryptRaw(respBytes, key)
+	encrypted, err := aesgcm.EncryptRaw(respBytes, key)
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}

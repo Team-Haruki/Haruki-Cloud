@@ -1780,11 +1780,20 @@ region 包定义了项目全局使用的区服枚举（jp/cn/tw/en/kr），被 a
 
 ---
 
+### R36：杂项清理 ✅
+
+| 变更 | 说明 |
+|------|------|
+| `utils/crypto/` → `utils/aesgcm/` | 消除与 `internal/core/crypto`（Noise 协议）的命名混淆 |
+| 清理空目录 | 删除 `api/bot/onebot11/`、`internal/pjsk/render/region/`、`internal/pjsk/userdata/` 残留空目录 |
+
+---
+
 ### 重构后 utils/ 结构
 
 ```
 utils/
-├── crypto/       # AES-256-GCM 加解密（纯 stdlib，3 个调用方）
+├── aesgcm/       # AES-256-GCM 加解密（纯 stdlib，3 个调用方；原 crypto/）
 ├── logger/       # 全局日志（21 个调用方）
 ├── imagecache/   # 内容寻址图片存储（4 个调用方）
 ├── redis/        # Redis 缓存操作（已解耦 Fiber）
@@ -1793,7 +1802,7 @@ utils/
 └── query/        # 数据库查询 facade（4 个调用方）
 ```
 
-不再包含：~~sekai/~~、~~drawing/~~、~~turnstile/~~、~~smtp/~~、~~enum.go~~
+不再包含：~~sekai/~~、~~drawing/~~、~~turnstile/~~、~~smtp/~~、~~enum.go~~、~~crypto/~~
 
 ---
 
@@ -1835,5 +1844,4 @@ internal/pjsk/
 | 项目 | 优先级 | 说明 |
 |------|--------|------|
 | handler/sekai/ 拆分 | 低 | 31 文件 11K 行，但受反射注册机制制约不宜拆子包 |
-| utils/crypto 重命名 | 低 | 与 internal/core/crypto 名称重叠，cosmetic |
 | render 小包合并 | 低 | misc/score/source 等单文件包，影响不大 |

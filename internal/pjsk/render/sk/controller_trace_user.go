@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) buildUserTraceFromTracker(server string, eventID int, userID int64, wlCharacterID *int) ([]drawing.RankInfo, error) {

@@ -10,7 +10,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type CardSource interface {

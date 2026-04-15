@@ -8,7 +8,7 @@ import (
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/userdata"
-	sekaiapi "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )

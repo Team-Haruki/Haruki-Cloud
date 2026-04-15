@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // BuildResourceRequest builds the request for rendering MySekai resource view.

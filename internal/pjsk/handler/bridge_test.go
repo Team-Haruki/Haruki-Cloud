@@ -35,9 +35,9 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 	rendervlive "haruki-cloud/internal/pjsk/render/vlive"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
-	sekaiapi "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )

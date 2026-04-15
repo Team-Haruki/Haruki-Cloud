@@ -21,8 +21,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
-	"haruki-cloud/utils/drawing"
-	sekaiapi "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"

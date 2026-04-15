@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func TestResolveDeckRenderProfileAndSnapshotUsesSelectedBinding(t *testing.T) {

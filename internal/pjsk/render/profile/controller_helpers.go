@@ -14,8 +14,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
-	sekai "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 
 func logProfilePayloadDebug(source string, payload *drawing.ProfileRequest) {

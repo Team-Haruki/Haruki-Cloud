@@ -3,7 +3,7 @@ package mysekai
 import (
 	"time"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type ResourceQuery struct {

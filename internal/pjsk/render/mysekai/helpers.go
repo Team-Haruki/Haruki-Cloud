@@ -6,7 +6,7 @@ import (
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // pathResolver resolves a relative asset path to its full Drawing-API-relative path.

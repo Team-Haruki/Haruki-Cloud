@@ -11,7 +11,7 @@ import (
 
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/logger"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 var snapshotDebugLogger = logger.NewLoggerFromGlobal("PJSKSnapshot")

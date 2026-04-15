@@ -9,7 +9,7 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // ErrNoBinding is returned when no PJSK game account is bound for the

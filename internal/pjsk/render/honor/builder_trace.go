@@ -3,7 +3,7 @@ package honor
 import (
 	"log/slog"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func logHonorRequestTrace(query Query, req *drawing.HonorRequest) {

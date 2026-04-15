@@ -9,7 +9,7 @@ import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector userdata.Selector, preferGlobalDefault bool) []byte {

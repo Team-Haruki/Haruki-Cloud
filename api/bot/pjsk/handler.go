@@ -17,7 +17,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/logger"
-	"haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/sekai"
 	"regexp"
 	"slices"
 	"strings"

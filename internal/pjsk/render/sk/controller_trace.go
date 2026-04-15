@@ -3,7 +3,7 @@ package sk
 import (
 	"fmt"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) buildPlayerTraceByRankFromTracker(server string, eventID, rank int, wlCharacterID *int) ([]drawing.RankInfo, error) {

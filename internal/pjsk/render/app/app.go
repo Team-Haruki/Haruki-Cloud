@@ -29,10 +29,10 @@ import (
 	"haruki-cloud/internal/pjsk/render/vlive"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/censor"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
 	"haruki-cloud/utils/logger"
-	sekaiutil "haruki-cloud/utils/sekai"
+	sekaiutil "haruki-cloud/internal/pjsk/sekai"
 )
 
 type Config struct {

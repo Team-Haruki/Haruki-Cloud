@@ -14,9 +14,9 @@ import (
 	"haruki-cloud/internal/pjsk/render/education"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
-	sekaiapi "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type bridgeEducationRegionValidator struct{}

@@ -8,7 +8,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/requestbuilder"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func executeScore(rc *RequestContext) (message onebot11.Message, err error) {

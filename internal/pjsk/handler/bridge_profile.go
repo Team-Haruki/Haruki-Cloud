@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 func executeProfile(rc *RequestContext) (onebot11.Message, error) {

@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"haruki-cloud/config"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 const (

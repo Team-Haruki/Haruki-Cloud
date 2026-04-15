@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // BuildMapRequest builds the request for rendering MySekai map view.

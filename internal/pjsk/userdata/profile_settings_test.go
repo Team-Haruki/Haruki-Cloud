@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"haruki-cloud/internal/pjsk/userdata"
-	"haruki-cloud/utils/drawing"
-	sekaiapi "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type fakeFastVerifier struct {

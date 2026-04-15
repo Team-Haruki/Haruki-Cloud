@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // BuildDoorUpgradeRequest builds the request for rendering MySekai door upgrade view.

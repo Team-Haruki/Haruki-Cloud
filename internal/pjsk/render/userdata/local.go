@@ -2,7 +2,7 @@ package userdata
 
 import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type LocalFileConfig struct {

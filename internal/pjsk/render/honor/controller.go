@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // contextualDataSource is the local interface for type-asserting

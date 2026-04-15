@@ -3,7 +3,7 @@ package score
 import (
 	"testing"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func TestBuildScoreControlRequestNormalizesLegacyCoverPath(t *testing.T) {

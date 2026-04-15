@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
-	sekaiapi "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 // GlobalDefaultBindingScope is the scope key used for the global default binding.

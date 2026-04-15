@@ -6,7 +6,7 @@ import (
 	"unicode"
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) resolveTrackerNameByUserIDs(server string, eventID int, wlCharacterID *int, userIDs ...string) string {

@@ -16,8 +16,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/profile"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
-	sekaiutils "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 func formatDeckQuerySummary(q deck.AutoQuery) string {

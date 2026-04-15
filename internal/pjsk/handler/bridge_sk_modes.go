@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/sk"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func executeSKMode(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {

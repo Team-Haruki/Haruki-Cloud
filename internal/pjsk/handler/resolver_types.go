@@ -2,7 +2,7 @@ package handler
 
 import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 )

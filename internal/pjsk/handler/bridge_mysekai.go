@@ -8,7 +8,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/render/mysekai"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 
 	"golang.org/x/sync/errgroup"
 )

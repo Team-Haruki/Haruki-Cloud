@@ -14,9 +14,9 @@ import (
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/censor"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	harukiLogger "haruki-cloud/utils/logger"
-	sekaiAPI "haruki-cloud/utils/sekai"
+	sekaiAPI "haruki-cloud/internal/pjsk/sekai"
 
 	censorDB "haruki-cloud/database/censor"
 	pjskDB "haruki-cloud/database/pjsk"

@@ -9,7 +9,7 @@ import (
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/censor"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 var wordTagPattern = regexp.MustCompile(`<#.*?>`)

@@ -11,8 +11,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
-	"haruki-cloud/utils/drawing"
-	sekaiutils "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 // RequestContext holds pre-resolved request-level data for a single command

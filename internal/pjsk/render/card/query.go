@@ -1,6 +1,6 @@
 package card
 
-import "haruki-cloud/utils/drawing"
+import "haruki-cloud/internal/pjsk/drawing"
 
 type Query struct {
 	Query            string                              `json:"query"`

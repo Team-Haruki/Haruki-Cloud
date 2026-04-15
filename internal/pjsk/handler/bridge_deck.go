@@ -8,7 +8,7 @@ import (
 	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/profile"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 type deckUserTargetParams struct {

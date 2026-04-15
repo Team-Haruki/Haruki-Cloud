@@ -137,17 +137,17 @@ func renderNoteCountLookupListMessages(rc *RequestContext, musicCtrl *music.Cont
 }
 
 func renderBPMLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, query music.BPMQuery, matches []music.BPMMatch) (onebot11.Message, error) {
-	items := make([]music.ListItemQuery, 0, len(matches))
-	for _, item := range matches {
+	uniqueMatches := dedupeBPMMatchesByMusic(matches)
+	items := make([]music.BriefListItemQuery, 0, len(uniqueMatches))
+	for _, item := range uniqueMatches {
 		if item.Music == nil {
 			continue
 		}
-		items = append(items, music.ListItemQuery{
-			MusicID:    item.Music.ID,
-			Difficulty: item.Difficulty,
+		items = append(items, music.BriefListItemQuery{
+			MusicID: item.Music.ID,
 		})
 	}
-	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "BPM", formatMusicBPM(query.BPM), query.Difficulty, "", items)
+	return renderMusicBriefLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "BPM", formatMusicBPM(query.BPM), items)
 }
 
 func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, region string, prefix string, value string, requestDifficulty string, titleDifficulty string, items []music.ListItemQuery) (onebot11.Message, error) {
@@ -170,6 +170,42 @@ func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *music.Controll
 		return nil, err
 	}
 	return image, nil
+}
+
+func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, region string, prefix string, value string, items []music.BriefListItemQuery) (onebot11.Message, error) {
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no music matched the current filters")
+	}
+	title := buildMusicLookupListTitle(prefix, value, "")
+	data, err := musicCtrl.RenderMusicBriefList(music.BriefListQuery{
+		Items:       items,
+		Region:      region,
+		Title:       &title,
+		TitleShadow: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return rc.ImageMessage(data)
+}
+
+func dedupeBPMMatchesByMusic(matches []music.BPMMatch) []music.BPMMatch {
+	if len(matches) == 0 {
+		return nil
+	}
+	result := make([]music.BPMMatch, 0, len(matches))
+	seen := make(map[int]struct{}, len(matches))
+	for _, match := range matches {
+		if match.Music == nil {
+			continue
+		}
+		if _, ok := seen[match.Music.ID]; ok {
+			continue
+		}
+		seen[match.Music.ID] = struct{}{}
+		result = append(result, match)
+	}
+	return result
 }
 
 func buildMusicLookupListTitle(prefix string, value string, difficulty string) string {

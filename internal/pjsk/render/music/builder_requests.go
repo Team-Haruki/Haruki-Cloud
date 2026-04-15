@@ -130,16 +130,32 @@ func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery
 			continue
 		}
 
-		diff := normalizeDifficulty(item.Difficulty)
-		level := b.GetDifficultyLevel(musicInfo.ID, diff)
-		if level == 0 {
-			continue
-		}
-
-		if requiredDiff == "" {
-			requiredDiff = diff
-		} else if requiredDiff != diff {
-			sameDifficulty = false
+		diff := strings.TrimSpace(item.Difficulty)
+		level := 0
+		var diffInfo drawing.DifficultyInfo
+		if diff == "" {
+			builtInfo, err := b.buildDifficultyInfo(musicInfo.ID)
+			if err != nil {
+				continue
+			}
+			diffInfo = *builtInfo
+		} else {
+			diff = normalizeDifficulty(diff)
+			level = b.GetDifficultyLevel(musicInfo.ID, diff)
+			if level == 0 {
+				continue
+			}
+			if requiredDiff == "" {
+				requiredDiff = diff
+			} else if requiredDiff != diff {
+				sameDifficulty = false
+			}
+			diffInfo = drawing.DifficultyInfo{
+				Level:     []int{level},
+				NoteCount: []int{0},
+				HasAppend: strings.EqualFold(diff, "append"),
+				Order:     []string{diff},
+			}
 		}
 
 		list = append(list, drawing.MusicBriefList{
@@ -156,12 +172,7 @@ func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery
 				ReleaseAt:    musicInfo.PublishedAt,
 				IsFullLength: musicInfo.IsFullLength,
 			},
-			Difficulty: drawing.DifficultyInfo{
-				Level:     []int{level},
-				NoteCount: []int{0},
-				HasAppend: strings.EqualFold(diff, "append"),
-				Order:     []string{diff},
-			},
+			Difficulty: diffInfo,
 		})
 	}
 	if len(list) == 0 {

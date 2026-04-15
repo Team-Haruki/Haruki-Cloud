@@ -223,3 +223,48 @@ func TestBuildMusicListRequestKeepsMixedDifficultyItemsWithoutPlaceholderProfile
 		}
 	}
 }
+
+func TestBuildMusicBriefListRequestFromItemsUsesFullDifficultyInfoWhenDifficultyOmitted(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			10: {ID: 10, Title: "Song A", AssetBundleName: "jacket_a", PublishedAt: 1000},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			10: {
+				{MusicID: 10, MusicDifficulty: "easy", PlayLevel: 5, TotalNoteCount: 100},
+				{MusicID: 10, MusicDifficulty: "normal", PlayLevel: 12, TotalNoteCount: 200},
+				{MusicID: 10, MusicDifficulty: "hard", PlayLevel: 17, TotalNoteCount: 300},
+				{MusicID: 10, MusicDifficulty: "expert", PlayLevel: 25, TotalNoteCount: 400},
+				{MusicID: 10, MusicDifficulty: "master", PlayLevel: 29, TotalNoteCount: 500},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	req, err := controller.BuildMusicBriefListRequest(BriefListQuery{
+		Region: "jp",
+		Items: []BriefListItemQuery{
+			{MusicID: 10},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildMusicBriefListRequest() error = %v", err)
+	}
+	if req.RequiredDifficulty != "" {
+		t.Fatalf("expected empty required difficulty, got %q", req.RequiredDifficulty)
+	}
+	if len(req.MusicList) != 1 {
+		t.Fatalf("expected 1 music item, got %d", len(req.MusicList))
+	}
+	got := req.MusicList[0].Difficulty
+	wantOrder := []string{"easy", "normal", "hard", "expert", "master"}
+	wantLevels := []int{5, 12, 17, 25, 29}
+	for i := range wantOrder {
+		if got.Order[i] != wantOrder[i] {
+			t.Fatalf("unexpected difficulty order: got=%v want=%v", got.Order, wantOrder)
+		}
+		if got.Level[i] != wantLevels[i] {
+			t.Fatalf("unexpected difficulty levels: got=%v want=%v", got.Level, wantLevels)
+		}
+	}
+}

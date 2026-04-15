@@ -554,35 +554,35 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 		t.Fatalf("write chartB: %v", err)
 	}
 
-	listCalls := 0
+	briefListCalls := 0
 	titles := make([]string, 0, 1)
 	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/api/pjsk/music/list":
-			listCalls++
-			var req drawing.MusicListRequest
+		case "/api/pjsk/music/brief-list":
+			briefListCalls++
+			var req drawing.MusicBriefListRequest
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				t.Fatalf("decode music-list request: %v", err)
+				t.Fatalf("decode music-brief-list request: %v", err)
 			}
 			if req.Title == nil {
 				t.Fatalf("expected list title, got nil")
 			}
 			titles = append(titles, *req.Title)
-			if req.Profile != nil {
-				t.Fatalf("expected nil profile for lookup list, got %+v", req.Profile)
-			}
 			if len(req.MusicList) != 2 {
 				t.Fatalf("expected 2 list items in single request, got %d", len(req.MusicList))
 			}
-			gotPairs := []string{
-				fmt.Sprintf("%d:%s", int(req.MusicList[0]["id"].(float64)), req.MusicList[0]["difficulty_type"].(string)),
-				fmt.Sprintf("%d:%s", int(req.MusicList[1]["id"].(float64)), req.MusicList[1]["difficulty_type"].(string)),
+			gotIDs := []int{
+				req.MusicList[0].ID,
+				req.MusicList[1].ID,
 			}
-			wantPairs := []string{"1:expert", "2:master"}
-			for i := range wantPairs {
-				if gotPairs[i] != wantPairs[i] {
-					t.Fatalf("unexpected mixed difficulty payload: got=%v want=%v", gotPairs, wantPairs)
+			wantIDs := []int{1, 2}
+			for i := range wantIDs {
+				if gotIDs[i] != wantIDs[i] {
+					t.Fatalf("unexpected bpm song list ids: got=%v want=%v", gotIDs, wantIDs)
 				}
+			}
+			if len(req.MusicList[0].Difficulty.Order) < 2 {
+				t.Fatalf("expected full difficulty info for first song, got %+v", req.MusicList[0].Difficulty)
 			}
 			_, _ = w.Write([]byte("png"))
 		default:
@@ -627,8 +627,8 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected bpm message: %+v", message)
 	}
-	if listCalls != 1 {
-		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
+	if briefListCalls != 1 {
+		t.Fatalf("expected 1 music-brief-list render call, got %d", briefListCalls)
 	}
 	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
 		t.Fatalf("unexpected title list: %+v", titles)

@@ -195,6 +195,36 @@ func TestBuildCardBoxRequestRejectsExplicitRegionWithoutSource(t *testing.T) {
 	}
 }
 
+func TestBuildCardBoxRequestStrictFilterTreats25AsSchoolRefusalUnit(t *testing.T) {
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 17, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Kana", AssetBundleName: "card_a"},
+		},
+		filterFunc: func(info *CardQueryInfo) ([]*masterdata.Card, error) {
+			if info == nil {
+				t.Fatal("expected query info")
+			}
+			if info.Unit != "school_refusal" {
+				t.Fatalf("unexpected unit filter: %+v", info)
+			}
+			if info.CharacterID != 0 {
+				t.Fatalf("did not expect character id from bare 25: %+v", info)
+			}
+			return []*masterdata.Card{
+				{ID: 1001, CharacterID: 17, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Kana", AssetBundleName: "card_a"},
+			}, nil
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardBoxRequest([]Query{{Query: "25", Region: "jp", StrictFilterOnly: true}})
+	if err != nil {
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if len(req.Cards) != 1 || req.Cards[0].Card.CardID != 1001 {
+		t.Fatalf("unexpected filtered cards: %+v", req.Cards)
+	}
+}
+
 func TestBuildCardBoxRequestUsesRequestedRegionSourceForFullList(t *testing.T) {
 	jpSource := &lookupTestSource{
 		region: renderregion.JP,

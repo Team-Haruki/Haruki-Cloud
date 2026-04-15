@@ -167,11 +167,6 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 		current = result.Remaining
 		matched = true
 	}
-	if result := p.extractor.ExtractExplicitCharacterID(current); result.Found {
-		info.CharacterID = result.Value
-		current = result.Remaining
-		matched = true
-	}
 	if result := p.extractor.ExtractCharacter(current); result.Found {
 		info.CharacterID = result.Value
 		current = result.Remaining

@@ -288,7 +288,6 @@ func isLooseSeparator(ch rune) bool {
 }
 
 var reEventID = regexp.MustCompile(`(?i)\bevent(\d+)\b`)
-var reCharacterID = regexp.MustCompile(`(?i)\bcid\s*(\d+)\b`)
 
 func (e *Extractor) ExtractEventID(text string) ExtractResult[int] {
 	matches := reEventID.FindStringSubmatch(text)
@@ -300,19 +299,6 @@ func (e *Extractor) ExtractEventID(text string) ExtractResult[int] {
 		return ExtractResult[int]{Remaining: text}
 	}
 	remaining := reEventID.ReplaceAllString(text, "")
-	return ExtractResult[int]{Value: value, Remaining: strings.TrimSpace(remaining), Found: true}
-}
-
-func (e *Extractor) ExtractExplicitCharacterID(text string) ExtractResult[int] {
-	matches := reCharacterID.FindStringSubmatch(text)
-	if len(matches) < 2 {
-		return ExtractResult[int]{Remaining: text}
-	}
-	value, err := strconv.Atoi(matches[1])
-	if err != nil || value <= 0 {
-		return ExtractResult[int]{Remaining: text}
-	}
-	remaining := reCharacterID.ReplaceAllString(text, "")
 	return ExtractResult[int]{Value: value, Remaining: strings.TrimSpace(remaining), Found: true}
 }
 

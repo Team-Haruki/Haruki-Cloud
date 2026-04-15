@@ -126,10 +126,23 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 				if !ok {
 					t.Fatalf("handler returned %T", result)
 				}
-				if resolved.Module != parser.ModuleCard || resolved.Mode != tt.wantMode {
+				expectedMode := tt.wantMode
+				if builder.name == "list" && tt.wantMode != "card-box" {
+					expectedMode = "card-list"
+				}
+				if resolved.Module != parser.ModuleCard || resolved.Mode != expectedMode {
 					t.Fatalf("unexpected resolved command: %+v", resolved)
 				}
 				tt.checkParam(t, resolved.Params)
+				if builder.name == "list" && resolved.Mode == "card-list" {
+					var params card.ListRequest
+					if err := json.Unmarshal(resolved.Params, &params); err != nil {
+						t.Fatalf("unmarshal strict list params: %v", err)
+					}
+					if !params.StrictFilterOnly {
+						t.Fatalf("expected strict filter mode for card-list handler, got %+v", params)
+					}
+				}
 
 				if tt.wantMode == "card-box" && resolved.Query != "mnr 4星" {
 					t.Fatalf("unexpected cleaned query: %q", resolved.Query)
@@ -226,5 +239,40 @@ func TestCardListHandleSupportsLunabotCharacterAlias(t *testing.T) {
 	}
 	if params.Query != "tks 4" || params.Region != "jp" {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestCardBoxHandleTreats25AsStrictFilterQuery(t *testing.T) {
+	h := sekaiHandlers{}.CardBoxHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/卡牌一览",
+		ArgText:    "25",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-box" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+	if resolved.Query != "25" {
+		t.Fatalf("unexpected box query: %q", resolved.Query)
+	}
+
+	var params struct {
+		StrictFilterOnly bool `json:"strict_filter_only"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.StrictFilterOnly {
+		t.Fatalf("expected strict filter mode for /卡牌一览 25, got %+v", params)
 	}
 }

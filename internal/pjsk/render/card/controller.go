@@ -210,15 +210,17 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 			return nil, fmt.Errorf("no released cards found for region %s", region)
 		}
 	} else {
-		searcher := NewSearchService(source, NewParser(c.nicknames))
 		if queries[0].StrictFilterOnly {
-			if _, parseErr := NewParser(c.nicknames).ParseStrictFilter(queryText); parseErr != nil {
-				return nil, fmt.Errorf("failed to search card box: %w", parseErr)
+			cards, err = c.searchStrictFilterCards(source, queryText)
+			if err != nil {
+				return nil, fmt.Errorf("failed to search card box: %w", err)
 			}
-		}
-		cards, err = searcher.SearchList(queryText)
-		if err != nil {
-			return nil, fmt.Errorf("failed to search card box: %w", err)
+		} else {
+			searcher := NewSearchService(source, NewParser(c.nicknames))
+			cards, err = searcher.SearchList(queryText)
+			if err != nil {
+				return nil, fmt.Errorf("failed to search card box: %w", err)
+			}
 		}
 	}
 	useAfterTraining := true
@@ -300,12 +302,17 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 		return region, nil, nil, nil, fmt.Errorf("card ids are required")
 	}
 
-	searcher := NewSearchService(source, NewParser(c.nicknames))
 	if query.StrictFilterOnly {
-		if _, parseErr := NewParser(c.nicknames).ParseStrictFilter(rawQuery); parseErr != nil {
-			return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", parseErr)
+		cards, err := c.searchStrictFilterCards(source, rawQuery)
+		if err != nil {
+			return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", err)
 		}
+		if len(cards) == 0 {
+			return region, nil, nil, nil, fmt.Errorf("card ids are required")
+		}
+		return region, source, builder, cards, nil
 	}
+	searcher := NewSearchService(source, NewParser(c.nicknames))
 	cards, err := searcher.SearchList(rawQuery)
 	if err != nil {
 		return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", err)
@@ -314,6 +321,27 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 		return region, nil, nil, nil, fmt.Errorf("card ids are required")
 	}
 	return region, source, builder, cards, nil
+}
+
+func (c *Controller) searchStrictFilterCards(source DataSource, rawQuery string) ([]*masterdata.Card, error) {
+	parser := NewParser(c.nicknames)
+	info, parseErr := parser.ParseStrictFilter(rawQuery)
+	if parseErr != nil {
+		return nil, parseErr
+	}
+	if info == nil || info.Type != QueryTypeFilter {
+		return nil, fmt.Errorf("无法解析的列表查询指令: %s", rawQuery)
+	}
+	items, err := source.FilterCards(info)
+	if err != nil {
+		return nil, err
+	}
+	items = filterVisibleCards(items, currentCardVisibilityTime())
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no cards found for filter: %s", rawQuery)
+	}
+	sortCardsByReleaseAndID(items)
+	return items, nil
 }
 
 func (c *Controller) translationSource(region renderregion.Value) DataSource {

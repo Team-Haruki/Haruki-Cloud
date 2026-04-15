@@ -220,21 +220,6 @@ func TestParserIgnoresNumericApprovedAliases(t *testing.T) {
 	}
 }
 
-func TestParserSupportsExplicitCharacterIDInFilterMode(t *testing.T) {
-	parser := NewParser(defaultNicknames)
-
-	info, err := parser.ParseStrictFilter("cid24 4")
-	if err != nil {
-		t.Fatalf("ParsePreferFilter(cid24 4) error = %v", err)
-	}
-	if info.Type != QueryTypeFilter {
-		t.Fatalf("expected filter query, got %+v", info)
-	}
-	if info.CharacterID != 24 || info.Rarity != "rarity_4" {
-		t.Fatalf("unexpected explicit cid parse result: %+v", info)
-	}
-}
-
 func TestParserSupportsUnitAndRarityWithoutNumericAliasHijack(t *testing.T) {
 	nicknames := cloneNicknames(defaultNicknames)
 	nicknames["4"] = 4
@@ -255,6 +240,21 @@ func TestParserSupportsUnitAndRarityWithoutNumericAliasHijack(t *testing.T) {
 	}
 }
 
+func TestParserSupportsAttributeAndCharacterCombination(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParseStrictFilter("绿 mnr")
+	if err != nil {
+		t.Fatalf("ParseStrictFilter(绿 mnr) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.Attr != "pure" || info.CharacterID != 5 {
+		t.Fatalf("unexpected attr/character parse result: %+v", info)
+	}
+}
+
 func TestParserTreatsBare25AsSchoolRefusalUnitFilter(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 
@@ -267,6 +267,9 @@ func TestParserTreatsBare25AsSchoolRefusalUnitFilter(t *testing.T) {
 	}
 	if info.Unit != "school_refusal" {
 		t.Fatalf("unexpected unit parse result: %+v", info)
+	}
+	if info.CharacterID != 0 {
+		t.Fatalf("did not expect 25 to resolve as character in strict filter mode: %+v", info)
 	}
 }
 

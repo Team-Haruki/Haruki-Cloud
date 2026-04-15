@@ -13,6 +13,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
+	sekaiapi "haruki-cloud/utils/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -138,5 +139,293 @@ func TestBuildEventRecordFromSnapshotSeparatesWorldBloomTotalAndSingleRank(t *te
 	}
 	if got := *req.WlEventInfo[1].WlCharaIconPath; got != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_22.png" {
 		t.Fatalf("unexpected second WL single SD path: %q", got)
+	}
+}
+
+func TestBuildEventRecordFromSnapshotBackfillsRegularEventRankFromTracker(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_event_record_tracker?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	startAt := time.Now().Add(-24 * time.Hour).UnixMilli()
+	aggregateAt := time.Now().Add(-23 * time.Hour).UnixMilli()
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("jp").
+		SetGameID(9101).
+		SetEventType("marathon").
+		SetName("Regular Event").
+		SetAssetbundleName("regular_9101").
+		SetStartAt(startAt).
+		SetAggregateAt(aggregateAt).
+		SetClosedAt(aggregateAt + 1000).
+		Save(ctx); err != nil {
+		t.Fatalf("create event: %v", err)
+	}
+
+	originalLookup := eventRecordTrackerRankLookup
+	t.Cleanup(func() {
+		eventRecordTrackerRankLookup = originalLookup
+	})
+
+	var calls int
+	eventRecordTrackerRankLookup = func(ctx context.Context, region string, eventID int, userID int64) (*int, error) {
+		calls++
+		if region != "jp" || eventID != 9101 || userID != 123456789 {
+			t.Fatalf("unexpected tracker lookup args: region=%s event=%d user=%d", region, eventID, userID)
+		}
+		rank := 456
+		return &rank, nil
+	}
+
+	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "jp",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "JP",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &renderuserdata.RawUserData{
+				UserGamedata: renderuserdata.RawUserGamedata{UserID: 123456789},
+				UserEvents: []renderuserdata.RawUserEvent{
+					{EventID: 9101, EventPoint: 777777},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if calls != 1 {
+		t.Fatalf("expected tracker rank lookup once, got %d", calls)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 456 {
+		t.Fatalf("expected tracker-backed regular event rank, got %+v", req.EventInfo[0].Rank)
+	}
+}
+
+func TestBuildEventRecordFromSnapshotUsesEmbeddedRegularEventRankWithoutTracker(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_event_record_embedded_rank?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	startAt := time.Now().Add(-24 * time.Hour).UnixMilli()
+	aggregateAt := time.Now().Add(-23 * time.Hour).UnixMilli()
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("jp").
+		SetGameID(9104).
+		SetEventType("marathon").
+		SetName("Regular Event With Embedded Rank").
+		SetAssetbundleName("regular_9104").
+		SetStartAt(startAt).
+		SetAggregateAt(aggregateAt).
+		SetClosedAt(aggregateAt + 1000).
+		Save(ctx); err != nil {
+		t.Fatalf("create event: %v", err)
+	}
+
+	originalLookup := eventRecordTrackerRankLookup
+	t.Cleanup(func() {
+		eventRecordTrackerRankLookup = originalLookup
+	})
+	eventRecordTrackerRankLookup = func(context.Context, string, int, int64) (*int, error) {
+		t.Fatal("tracker fallback should not be used when userEvents already embeds rank")
+		return nil, nil
+	}
+
+	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "jp",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "JP",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &renderuserdata.RawUserData{
+				UserGamedata: renderuserdata.RawUserGamedata{UserID: 123456789},
+				UserEvents: []renderuserdata.RawUserEvent{
+					{
+						EventID:                 9104,
+						EventPoint:              666666,
+						Rank:                    908,
+						RankingRewardReceivedAt: 1776164672910,
+					},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 908 {
+		t.Fatalf("expected embedded regular event rank, got %+v", req.EventInfo[0].Rank)
+	}
+}
+
+func TestBuildEventRecordFromSnapshotSkipsTrackerFallbackWhenSnapshotHasRank(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_event_record_snapshot_rank?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	startAt := time.Now().Add(-24 * time.Hour).UnixMilli()
+	aggregateAt := time.Now().Add(-23 * time.Hour).UnixMilli()
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("jp").
+		SetGameID(9102).
+		SetEventType("marathon").
+		SetName("Regular Event With Snapshot Rank").
+		SetAssetbundleName("regular_9102").
+		SetStartAt(startAt).
+		SetAggregateAt(aggregateAt).
+		SetClosedAt(aggregateAt + 1000).
+		Save(ctx); err != nil {
+		t.Fatalf("create event: %v", err)
+	}
+
+	originalLookup := eventRecordTrackerRankLookup
+	t.Cleanup(func() {
+		eventRecordTrackerRankLookup = originalLookup
+	})
+	eventRecordTrackerRankLookup = func(context.Context, string, int, int64) (*int, error) {
+		t.Fatal("tracker fallback should not be used when snapshot already has rank")
+		return nil, nil
+	}
+
+	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "jp",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "JP",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &renderuserdata.RawUserData{
+				UserGamedata: renderuserdata.RawUserGamedata{UserID: 123456789},
+				UserEvents: []renderuserdata.RawUserEvent{
+					{EventID: 9102, EventPoint: 888888},
+				},
+				UserEventResults: []renderuserdata.RawUserEventResult{
+					{EventID: 9102, Rank: 321},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 321 {
+		t.Fatalf("expected snapshot rank to be preserved, got %+v", req.EventInfo[0].Rank)
+	}
+}
+
+func TestBuildEventRecordFromSnapshotIgnoresMissingTrackerRank(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_event_record_missing_tracker?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	startAt := time.Now().Add(-24 * time.Hour).UnixMilli()
+	aggregateAt := time.Now().Add(-23 * time.Hour).UnixMilli()
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("jp").
+		SetGameID(9103).
+		SetEventType("marathon").
+		SetName("Regular Event Missing Tracker Rank").
+		SetAssetbundleName("regular_9103").
+		SetStartAt(startAt).
+		SetAggregateAt(aggregateAt).
+		SetClosedAt(aggregateAt + 1000).
+		Save(ctx); err != nil {
+		t.Fatalf("create event: %v", err)
+	}
+
+	originalLookup := eventRecordTrackerRankLookup
+	t.Cleanup(func() {
+		eventRecordTrackerRankLookup = originalLookup
+	})
+	eventRecordTrackerRankLookup = func(context.Context, string, int, int64) (*int, error) {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+
+	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "jp",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "JP",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &renderuserdata.RawUserData{
+				UserGamedata: renderuserdata.RawUserGamedata{UserID: 123456789},
+				UserEvents: []renderuserdata.RawUserEvent{
+					{EventID: 9103, EventPoint: 999999},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].Rank != nil {
+		t.Fatalf("expected missing tracker rank to stay empty, got %+v", req.EventInfo[0].Rank)
 	}
 }

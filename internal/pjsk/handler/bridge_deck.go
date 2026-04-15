@@ -149,7 +149,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	if imageErr != nil {
 		return nil, imageErr
 	}
-	return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
+	return append(onebot11.Message{onebot11.At(rc.PlatformUserID), onebot11.Text(buildDoneText(q))}, image...), nil
 }
 
 func formatDeckQuerySummary(q deck.AutoQuery) string {

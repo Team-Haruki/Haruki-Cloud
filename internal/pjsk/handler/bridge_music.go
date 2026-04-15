@@ -73,13 +73,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 			data, err = renderSingleMusicLookupChart(musicCtrl, rc.Cmd.Region, matches[0].Music.ID, matches[0].Difficulty)
 			break
 		}
-		title := buildMusicLookupListTitle("物量", strconv.Itoa(q.NoteCount), q.Difficulty)
-		data, err = musicCtrl.RenderMusicBriefList(music.BriefListQuery{
-			Items:       buildNoteCountBriefListItems(matches),
-			Region:      rc.Cmd.Region,
-			Title:       &title,
-			TitleShadow: true,
-		})
+		return renderNoteCountLookupListMessages(rc, musicCtrl, q, matches)
 	case "music-cover":
 		q := music.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
@@ -109,13 +103,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 			data, err = renderSingleMusicLookupChart(musicCtrl, rc.Cmd.Region, matches[0].Music.ID, matches[0].Difficulty)
 			break
 		}
-		title := buildMusicLookupListTitle("BPM", formatMusicBPM(q.BPM), q.Difficulty)
-		data, err = musicCtrl.RenderMusicBriefList(music.BriefListQuery{
-			Items:       buildBPMBriefListItems(matches),
-			Region:      rc.Cmd.Region,
-			Title:       &title,
-			TitleShadow: true,
-		})
+		return renderBPMLookupListMessages(rc, musicCtrl, q, matches)
 	default:
 		return nil, unsupportedModeError("music", rc.Cmd.Mode)
 	}
@@ -133,32 +121,105 @@ func renderSingleMusicLookupChart(musicCtrl *music.Controller, region string, mu
 	})
 }
 
-func buildNoteCountBriefListItems(matches []music.NoteCountMatch) []music.BriefListItemQuery {
-	items := make([]music.BriefListItemQuery, 0, len(matches))
+func renderNoteCountLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, query music.NoteCountQuery, matches []music.NoteCountMatch) (onebot11.Message, error) {
+	groups := make([]musicLookupListGroup, 0)
 	for _, item := range matches {
 		if item.Music == nil {
 			continue
 		}
-		items = append(items, music.BriefListItemQuery{
+		groups = appendLookupListGroupItem(groups, item.Difficulty, music.ListItemQuery{
 			MusicID:    item.Music.ID,
 			Difficulty: item.Difficulty,
+			Level:      item.PlayLevel,
 		})
 	}
-	return items
+	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "物量", strconv.Itoa(query.NoteCount), groups)
 }
 
-func buildBPMBriefListItems(matches []music.BPMMatch) []music.BriefListItemQuery {
-	items := make([]music.BriefListItemQuery, 0, len(matches))
+func renderBPMLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, query music.BPMQuery, matches []music.BPMMatch) (onebot11.Message, error) {
+	groups := make([]musicLookupListGroup, 0)
 	for _, item := range matches {
 		if item.Music == nil {
 			continue
 		}
-		items = append(items, music.BriefListItemQuery{
+		groups = appendLookupListGroupItem(groups, item.Difficulty, music.ListItemQuery{
 			MusicID:    item.Music.ID,
 			Difficulty: item.Difficulty,
 		})
 	}
-	return items
+	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "BPM", formatMusicBPM(query.BPM), groups)
+}
+
+type musicLookupListGroup struct {
+	Difficulty string
+	Items      []music.ListItemQuery
+}
+
+func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, region string, prefix string, value string, groups []musicLookupListGroup) (onebot11.Message, error) {
+	ordered := orderMusicLookupListGroups(groups)
+	message := make(onebot11.Message, 0, len(ordered))
+	for _, group := range ordered {
+		if len(group.Items) == 0 {
+			continue
+		}
+		title := buildMusicLookupListTitle(prefix, value, group.Difficulty)
+		data, err := musicCtrl.RenderMusicList(music.ListQuery{
+			Items:       group.Items,
+			Difficulty:  group.Difficulty,
+			Region:      region,
+			Title:       &title,
+			TitleShadow: true,
+		})
+		if err != nil {
+			return nil, err
+		}
+		image, err := rc.ImageMessage(data)
+		if err != nil {
+			return nil, err
+		}
+		message = append(message, image...)
+	}
+	if len(message) == 0 {
+		return nil, fmt.Errorf("no music matched the current filters")
+	}
+	return message, nil
+}
+
+func appendLookupListGroupItem(groups []musicLookupListGroup, difficulty string, item music.ListItemQuery) []musicLookupListGroup {
+	diff := strings.ToLower(strings.TrimSpace(difficulty))
+	for i := range groups {
+		if groups[i].Difficulty != diff {
+			continue
+		}
+		groups[i].Items = append(groups[i].Items, item)
+		return groups
+	}
+	return append(groups, musicLookupListGroup{
+		Difficulty: diff,
+		Items:      []music.ListItemQuery{item},
+	})
+}
+
+func orderMusicLookupListGroups(groups []musicLookupListGroup) []musicLookupListGroup {
+	order := []string{"easy", "normal", "hard", "expert", "master", "append"}
+	result := make([]musicLookupListGroup, 0, len(groups))
+	used := make(map[string]struct{}, len(groups))
+	for _, diff := range order {
+		for _, group := range groups {
+			if group.Difficulty != diff {
+				continue
+			}
+			result = append(result, group)
+			used[diff] = struct{}{}
+		}
+	}
+	for _, group := range groups {
+		if _, ok := used[group.Difficulty]; ok {
+			continue
+		}
+		result = append(result, group)
+	}
+	return result
 }
 
 func buildMusicLookupListTitle(prefix string, value string, difficulty string) string {

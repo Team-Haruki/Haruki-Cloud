@@ -529,7 +529,7 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	}
 }
 
-func TestExecuteMusicBPMUsesBriefListImageForMultipleMatches(t *testing.T) {
+func TestExecuteMusicBPMUsesMusicListImagesForMultipleDifficultyGroups(t *testing.T) {
 	root := t.TempDir()
 	chartA := filepath.Join(root, "music", "music_score", "0001_01", "expert.txt")
 	chartB := filepath.Join(root, "music", "music_score", "0002_01", "master.txt")
@@ -554,26 +554,22 @@ func TestExecuteMusicBPMUsesBriefListImageForMultipleMatches(t *testing.T) {
 		t.Fatalf("write chartB: %v", err)
 	}
 
-	briefListCalls := 0
+	listCalls := 0
+	titles := make([]string, 0, 2)
 	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/api/pjsk/music/brief-list":
-			briefListCalls++
-			var req drawing.MusicBriefListRequest
+		case "/api/pjsk/music/list":
+			listCalls++
+			var req drawing.MusicListRequest
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				t.Fatalf("decode brief-list request: %v", err)
+				t.Fatalf("decode music-list request: %v", err)
 			}
-			if req.Title == nil || *req.Title != "BPM 200 匹配结果" {
-				t.Fatalf("unexpected brief-list title: %+v", req.Title)
+			if req.Title == nil {
+				t.Fatalf("expected list title, got nil")
 			}
-			if len(req.MusicList) != 2 {
-				t.Fatalf("expected 2 brief-list items, got %d", len(req.MusicList))
-			}
-			if len(req.MusicList[0].Difficulty.Order) != 1 || req.MusicList[0].Difficulty.Order[0] != "expert" {
-				t.Fatalf("unexpected first item difficulty: %+v", req.MusicList[0].Difficulty)
-			}
-			if len(req.MusicList[1].Difficulty.Order) != 1 || req.MusicList[1].Difficulty.Order[0] != "master" {
-				t.Fatalf("unexpected second item difficulty: %+v", req.MusicList[1].Difficulty)
+			titles = append(titles, *req.Title)
+			if len(req.MusicList) != 1 {
+				t.Fatalf("expected 1 list item per difficulty group, got %d", len(req.MusicList))
 			}
 			_, _ = w.Write([]byte("png"))
 		default:
@@ -615,11 +611,20 @@ func TestExecuteMusicBPMUsesBriefListImageForMultipleMatches(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeMusic bpm: %v", err)
 	}
-	if len(message) != 1 || message[0].Type != "image" {
+	if len(message) != 2 || message[0].Type != "image" || message[1].Type != "image" {
 		t.Fatalf("unexpected bpm message: %+v", message)
 	}
-	if briefListCalls != 1 {
-		t.Fatalf("expected 1 brief-list render call, got %d", briefListCalls)
+	if listCalls != 2 {
+		t.Fatalf("expected 2 music-list render calls, got %d", listCalls)
+	}
+	wantTitles := map[string]bool{
+		"BPM 200 EXPERT 匹配结果": true,
+		"BPM 200 MASTER 匹配结果": true,
+	}
+	for _, title := range titles {
+		if !wantTitles[title] {
+			t.Fatalf("unexpected title list: %+v", titles)
+		}
 	}
 }
 

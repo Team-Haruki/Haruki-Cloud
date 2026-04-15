@@ -26,6 +26,12 @@ type BriefListItemQuery struct {
 	Difficulty string `json:"difficulty,omitempty"`
 }
 
+type ListItemQuery struct {
+	MusicID    int    `json:"music_id"`
+	Difficulty string `json:"difficulty,omitempty"`
+	Level      int    `json:"level,omitempty"`
+}
+
 type ChartQuery struct {
 	Query      string `json:"query"`
 	Region     string `json:"region"`
@@ -45,6 +51,7 @@ type BriefListQuery struct {
 }
 
 type ListQuery struct {
+	Items           []ListItemQuery                     `json:"items,omitempty"`
 	Difficulty      string                              `json:"difficulty"`
 	Level           int                                 `json:"level,omitempty"`
 	LevelMin        int                                 `json:"level_min,omitempty"`

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/utils/drawing"
 )
 
@@ -145,44 +146,47 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 	if err != nil {
 		return nil, err
 	}
-	now := currentMusicVisibilityTime()
 	list := make([]map[string]any, 0)
 	jackets := make(map[int]string)
+	if len(query.Items) > 0 {
+		list, jackets = c.buildMusicListEntriesFromItems(source, builder, region, diff, query.Items, query.IncludeLeaks)
+	} else {
+		now := currentMusicVisibilityTime()
+		for _, musicInfo := range source.GetMusics() {
+			if musicInfo == nil {
+				continue
+			}
+			if !query.IncludeLeaks && !isMusicVisibleAt(musicInfo, now) {
+				continue
+			}
+			if filterMusicID != nil && musicInfo.ID != *filterMusicID {
+				continue
+			}
+			if filterMusicID == nil && keyword != "" && !matchesMusicKeyword(source, musicInfo, keyword) {
+				continue
+			}
 
-	for _, musicInfo := range source.GetMusics() {
-		if musicInfo == nil {
-			continue
-		}
-		if !query.IncludeLeaks && !isMusicVisibleAt(musicInfo, now) {
-			continue
-		}
-		if filterMusicID != nil && musicInfo.ID != *filterMusicID {
-			continue
-		}
-		if filterMusicID == nil && keyword != "" && !matchesMusicKeyword(source, musicInfo, keyword) {
-			continue
-		}
+			level := builder.GetDifficultyLevel(musicInfo.ID, diff)
+			if level == 0 {
+				continue
+			}
+			if minLevel > 0 && level < minLevel {
+				continue
+			}
+			if maxLevel > 0 && level > maxLevel {
+				continue
+			}
 
-		level := builder.GetDifficultyLevel(musicInfo.ID, diff)
-		if level == 0 {
-			continue
+			displayOrder := musicListDisplayOrder(musicInfo)
+			list = append(list, map[string]any{
+				"id":         musicInfo.ID,
+				"difficulty": level,
+				// The drawing service re-sorts each level bucket by release_at, so
+				// we pass the desired display order here instead of the raw publish time.
+				"release_at": displayOrder,
+			})
+			jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 		}
-		if minLevel > 0 && level < minLevel {
-			continue
-		}
-		if maxLevel > 0 && level > maxLevel {
-			continue
-		}
-
-		displayOrder := musicListDisplayOrder(musicInfo)
-		list = append(list, map[string]any{
-			"id":         musicInfo.ID,
-			"difficulty": level,
-			// The drawing service re-sorts each level bucket by release_at, so
-			// we pass the desired display order here instead of the raw publish time.
-			"release_at": displayOrder,
-		})
-		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	}
 
 	if len(list) == 0 {
@@ -232,6 +236,52 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		req.PlayResultIconPathMap = c.buildPlayResultIconMap(region)
 	}
 	return req, nil
+}
+
+func (c *Controller) buildMusicListEntriesFromItems(source DataSource, builder *Builder, region renderregion.Value, difficulty string, items []ListItemQuery, includeLeaks bool) ([]map[string]any, map[int]string) {
+	now := currentMusicVisibilityTime()
+	list := make([]map[string]any, 0, len(items))
+	jackets := make(map[int]string, len(items))
+	seen := make(map[int]struct{}, len(items))
+
+	for _, item := range items {
+		if item.MusicID <= 0 {
+			continue
+		}
+		if _, ok := seen[item.MusicID]; ok {
+			continue
+		}
+		musicInfo, err := source.GetMusicByID(item.MusicID)
+		if err != nil || musicInfo == nil {
+			continue
+		}
+		if !includeLeaks && !isMusicVisibleAt(musicInfo, now) {
+			continue
+		}
+
+		level := item.Level
+		if level <= 0 {
+			itemDiff := difficulty
+			if strings.TrimSpace(item.Difficulty) != "" {
+				itemDiff = normalizeDifficulty(item.Difficulty)
+			}
+			level = builder.GetDifficultyLevel(musicInfo.ID, itemDiff)
+		}
+		if level <= 0 {
+			continue
+		}
+
+		seen[item.MusicID] = struct{}{}
+		displayOrder := musicListDisplayOrder(musicInfo)
+		list = append(list, map[string]any{
+			"id":         musicInfo.ID,
+			"difficulty": level,
+			"release_at": displayOrder,
+		})
+		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
+	}
+
+	return list, jackets
 }
 
 func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {

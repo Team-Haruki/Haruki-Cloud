@@ -9,6 +9,7 @@ type Query struct {
 	Mode             string                              `json:"mode,omitempty"`
 	ShowID           bool                                `json:"show_id,omitempty"`
 	ShowBox          bool                                `json:"show_box,omitempty"`
+	StrictFilterOnly bool                                `json:"strict_filter_only,omitempty"`
 	UseAfterTraining *bool                               `json:"use_after_training,omitempty"`
 	DetailedProfile  *drawing.DetailedProfileCardRequest `json:"-"`
 }
@@ -17,5 +18,6 @@ type ListRequest struct {
 	Query           string                              `json:"query,omitempty"`
 	CardIDs         []int                               `json:"card_ids"`
 	Region          string                              `json:"region"`
+	StrictFilterOnly bool                               `json:"strict_filter_only,omitempty"`
 	DetailedProfile *drawing.DetailedProfileCardRequest `json:"-"`
 }

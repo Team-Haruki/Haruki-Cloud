@@ -69,7 +69,8 @@ func extractByRulesWithOptions(text string, rules []dictRule, allowSingleRuneNon
 }
 
 type Extractor struct {
-	nicknames map[string]int
+	nicknames    map[string]int
+	banNicknames map[string]int
 }
 
 type BanEventRef struct {
@@ -86,7 +87,10 @@ type ExtractResult[T any] struct {
 }
 
 func NewExtractor(nicknames map[string]int) *Extractor {
-	return &Extractor{nicknames: cloneNicknames(nicknames)}
+	return &Extractor{
+		nicknames:    sanitizeCharacterNicknames(nicknames),
+		banNicknames: sanitizeCharacterNicknames(defaultNicknames),
+	}
 }
 
 func (e *Extractor) ExtractCharacter(text string) ExtractResult[int] {
@@ -284,6 +288,7 @@ func isLooseSeparator(ch rune) bool {
 }
 
 var reEventID = regexp.MustCompile(`(?i)\bevent(\d+)\b`)
+var reCharacterID = regexp.MustCompile(`(?i)\bcid\s*(\d+)\b`)
 
 func (e *Extractor) ExtractEventID(text string) ExtractResult[int] {
 	matches := reEventID.FindStringSubmatch(text)
@@ -298,27 +303,31 @@ func (e *Extractor) ExtractEventID(text string) ExtractResult[int] {
 	return ExtractResult[int]{Value: value, Remaining: strings.TrimSpace(remaining), Found: true}
 }
 
+func (e *Extractor) ExtractExplicitCharacterID(text string) ExtractResult[int] {
+	matches := reCharacterID.FindStringSubmatch(text)
+	if len(matches) < 2 {
+		return ExtractResult[int]{Remaining: text}
+	}
+	value, err := strconv.Atoi(matches[1])
+	if err != nil || value <= 0 {
+		return ExtractResult[int]{Remaining: text}
+	}
+	remaining := reCharacterID.ReplaceAllString(text, "")
+	return ExtractResult[int]{Value: value, Remaining: strings.TrimSpace(remaining), Found: true}
+}
+
 func (e *Extractor) ExtractBanEvent(text string) ExtractResult[BanEventRef] {
 	bestToken := ""
 	best := BanEventRef{}
-	for nickname, id := range e.nicknames {
+	for nickname, id := range e.banNicknames {
 		for seq := 1; seq <= 9; seq++ {
 			token := nickname + strconv.Itoa(seq)
-			pattern := "(?i)"
-			isASCII := true
-			for _, ch := range token {
-				if ch > 127 {
-					isASCII = false
-					break
-				}
+			lowerText := strings.ToLower(text)
+			index := strings.Index(lowerText, strings.ToLower(token))
+			if index == -1 {
+				continue
 			}
-			if isASCII {
-				pattern += `\b` + regexp.QuoteMeta(token) + `\b`
-			} else {
-				pattern += regexp.QuoteMeta(token)
-			}
-			re := regexp.MustCompile(pattern)
-			if !re.MatchString(text) {
+			if !hasLooseBoundaries(text, index, index+len(token)) {
 				continue
 			}
 			if len(token) <= len(bestToken) {
@@ -331,22 +340,27 @@ func (e *Extractor) ExtractBanEvent(text string) ExtractResult[BanEventRef] {
 	if bestToken == "" {
 		return ExtractResult[BanEventRef]{Remaining: text}
 	}
-	pattern := "(?i)"
-	isASCII := true
-	for _, ch := range bestToken {
-		if ch > 127 {
-			isASCII = false
-			break
+	lowerText := strings.ToLower(text)
+	index := strings.Index(lowerText, strings.ToLower(bestToken))
+	remaining := strings.TrimSpace(text[:index] + text[index+len(bestToken):])
+	return ExtractResult[BanEventRef]{Value: best, Remaining: remaining, Found: true}
+}
+
+func hasLooseBoundaries(text string, start, end int) bool {
+	if start < 0 || end < start || end > len(text) {
+		return false
+	}
+	if start > 0 {
+		if prev, _ := utf8.DecodeLastRuneInString(text[:start]); prev != utf8.RuneError && !isLooseSeparator(prev) {
+			return false
 		}
 	}
-	if isASCII {
-		pattern += `\b` + regexp.QuoteMeta(bestToken) + `\b`
-	} else {
-		pattern += regexp.QuoteMeta(bestToken)
+	if end < len(text) {
+		if next, _ := utf8.DecodeRuneInString(text[end:]); next != utf8.RuneError && !isLooseSeparator(next) {
+			return false
+		}
 	}
-	re := regexp.MustCompile(pattern)
-	remaining := strings.TrimSpace(re.ReplaceAllString(text, ""))
-	return ExtractResult[BanEventRef]{Value: best, Remaining: remaining, Found: true}
+	return true
 }
 
 var (

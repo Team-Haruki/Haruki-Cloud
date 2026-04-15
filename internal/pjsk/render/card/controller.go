@@ -211,6 +211,11 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 		}
 	} else {
 		searcher := NewSearchService(source, NewParser(c.nicknames))
+		if queries[0].StrictFilterOnly {
+			if _, parseErr := NewParser(c.nicknames).ParseStrictFilter(queryText); parseErr != nil {
+				return nil, fmt.Errorf("failed to search card box: %w", parseErr)
+			}
+		}
 		cards, err = searcher.SearchList(queryText)
 		if err != nil {
 			return nil, fmt.Errorf("failed to search card box: %w", err)
@@ -296,6 +301,11 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 	}
 
 	searcher := NewSearchService(source, NewParser(c.nicknames))
+	if query.StrictFilterOnly {
+		if _, parseErr := NewParser(c.nicknames).ParseStrictFilter(rawQuery); parseErr != nil {
+			return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", parseErr)
+		}
+	}
 	cards, err := searcher.SearchList(rawQuery)
 	if err != nil {
 		return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", err)

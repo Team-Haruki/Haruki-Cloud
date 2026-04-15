@@ -1,11 +1,15 @@
 package education
 
 import (
+	"bytes"
 	"sort"
 	"strings"
 
 	"haruki-cloud/utils/drawing"
+	"haruki-cloud/utils/logger"
 )
+
+var leaderCountDebugLogger = logger.NewLoggerFromGlobal("LeaderCount")
 
 func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery) (*drawing.LeaderCountRequest, error) {
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
@@ -18,6 +22,9 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 	exCountByCharacter := make(map[int]int)
 	exLevelByCharacter := make(map[int]int)
 	hasPlayLiveMission := false
+	playLiveMissionCount := 0
+	playLiveExMissionCount := 0
+	status101Count := 0
 
 	for _, item := range ctx.raw.UserCharacterMissionV2s {
 		if item.CharacterID <= 0 {
@@ -27,11 +34,13 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		case "play_live":
 			playCountByCharacter[item.CharacterID] = item.Progress
 			hasPlayLiveMission = true
+			playLiveMissionCount++
 		case "play_live_ex":
 			exCountByCharacter[item.CharacterID] = item.Progress
 			if _, ok := exLevelByCharacter[item.CharacterID]; !ok {
 				exLevelByCharacter[item.CharacterID] = 0
 			}
+			playLiveExMissionCount++
 		}
 	}
 
@@ -48,6 +57,7 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		if item.CharacterID <= 0 || item.ParameterGroupID != 101 {
 			continue
 		}
+		status101Count++
 		if item.Seq > exLevelByCharacter[item.CharacterID] {
 			exLevelByCharacter[item.CharacterID] = item.Seq
 		}
@@ -82,6 +92,26 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 			}
 		}
 	}
+
+	rawBytes, rawBytesErr := ctx.snapshot.RawBytes()
+	leaderCountDebugLogger.Debugf(
+		"leader-count snapshot summary: region=%s user_id=%d mission_v2s=%d play_live=%d play_live_ex=%d mission_v2_statuses=%d status_101=%d live_usage=%d requirements_101=%d max_play_limit=%d has_key_userCharacterMissionV2s=%t has_key_userCharacterMissionV2Statuses=%t has_key_userCharacterMissionStatuses=%t has_key_userCharacterMissionStatus=%t raw_bytes_err=%v",
+		ctx.region.String(),
+		ctx.raw.UserGamedata.UserID,
+		len(ctx.raw.UserCharacterMissionV2s),
+		playLiveMissionCount,
+		playLiveExMissionCount,
+		len(ctx.raw.UserCharacterMissionV2Statuses),
+		status101Count,
+		len(ctx.raw.UserCharacterLiveUsageCounts),
+		len(missionRequirements),
+		maxPlayLimit,
+		bytes.Contains(rawBytes, []byte(`"userCharacterMissionV2s"`)),
+		bytes.Contains(rawBytes, []byte(`"userCharacterMissionV2Statuses"`)),
+		bytes.Contains(rawBytes, []byte(`"userCharacterMissionStatuses"`)),
+		bytes.Contains(rawBytes, []byte(`"userCharacterMissionStatus"`)),
+		rawBytesErr,
+	)
 
 	return c.BuildLeaderCountRequest(drawing.LeaderCountRequest{
 		Profile:      *ctx.profile,

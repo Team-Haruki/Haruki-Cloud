@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 type QueryType int
@@ -51,6 +52,14 @@ func (p *Parser) ParsePreferFilter(args string) (*CardQueryInfo, error) {
 	return p.parse(args, true)
 }
 
+func (p *Parser) ParseStrictFilter(args string) (*CardQueryInfo, error) {
+	args = strings.TrimSpace(args)
+	if info := p.tryParseFilter(args); info != nil {
+		return info, nil
+	}
+	return nil, fmt.Errorf("无法解析的指令: %s", args)
+}
+
 func (p *Parser) parse(args string, preferFilter bool) (*CardQueryInfo, error) {
 	args = strings.TrimSpace(args)
 	if info := p.tryParseNicknameSeq(args); info != nil {
@@ -58,11 +67,6 @@ func (p *Parser) parse(args string, preferFilter bool) (*CardQueryInfo, error) {
 	}
 	if info := p.tryParseLatestSeq(args); info != nil {
 		return info, nil
-	}
-	if preferFilter {
-		if info := p.tryParseFilter(args); info != nil {
-			return info, nil
-		}
 	}
 	if info := p.tryParseID(args); info != nil {
 		return info, nil
@@ -163,6 +167,11 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 		current = result.Remaining
 		matched = true
 	}
+	if result := p.extractor.ExtractExplicitCharacterID(current); result.Found {
+		info.CharacterID = result.Value
+		current = result.Remaining
+		matched = true
+	}
 	if result := p.extractor.ExtractCharacter(current); result.Found {
 		info.CharacterID = result.Value
 		current = result.Remaining
@@ -225,12 +234,35 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 	}
 	if result := p.extractor.ExtractYear(current); result.Found {
 		info.Year = result.Value
+		current = result.Remaining
 		matched = true
 	}
-	if matched {
+	if suppressSingleRuneAttr && shouldIgnoreSuppressedSingleRuneAttr(p.extractor, current) {
+		current = ""
+	}
+	if matched && strings.TrimSpace(current) == "" {
 		return info
 	}
 	return nil
+}
+
+func shouldIgnoreSuppressedSingleRuneAttr(extractor *Extractor, text string) bool {
+	if extractor == nil {
+		return false
+	}
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return false
+	}
+	if utf8.RuneCountInString(text) == 1 {
+		if r, _ := utf8.DecodeRuneInString(text); r != utf8.RuneError && r > 127 {
+			return true
+		}
+	}
+	if !extractor.ExtractAttribute(text).Found {
+		return false
+	}
+	return !extractor.ExtractAttributeWithoutSingleRune(text).Found
 }
 
 func isNumeric(text string) bool {

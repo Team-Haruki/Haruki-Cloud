@@ -61,6 +61,13 @@ func resolveCardDetailOrList(ctx SekaiHandlerContext, preferFilter bool) *parser
 		ctx.SetArgs(cleanCardBoxArgs(args))
 		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", cardBoxParams(args))
 	}
+	if preferFilter {
+		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-list", card.ListRequest{
+			Query:            args,
+			Region:           ctx.Region().String(),
+			StrictFilterOnly: true,
+		})
+	}
 	if looksLikeSingleCardQuery(args, preferFilter) {
 		return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-detail", card.Query{Query: args, Region: ctx.Region().String()})
 	}
@@ -85,7 +92,9 @@ func (sekaiHandlers) CardBoxHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			ctx.SetArgs(cleanCardBoxArgs(args))
-			return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", cardBoxParams(args)), nil
+			params := cardBoxParams(args)
+			params["strict_filter_only"] = true
+			return makeResolvedCmdWithParams(ctx, parser.ModuleCard, "card-box", params), nil
 		},
 	}
 }

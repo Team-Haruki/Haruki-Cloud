@@ -39,6 +39,21 @@ func cloneNicknames(items map[string]int) map[string]int {
 	return result
 }
 
+func sanitizeCharacterNicknames(items map[string]int) map[string]int {
+	result := make(map[string]int, len(items))
+	for key, value := range items {
+		normalized := normalizeNicknameQuery(key)
+		if normalized == "" || value <= 0 {
+			continue
+		}
+		if isAllDigits(normalized) {
+			continue
+		}
+		result[normalized] = value
+	}
+	return result
+}
+
 func DefaultCharacterNicknames() map[string]int {
 	return cloneNicknames(defaultNicknames)
 }
@@ -58,4 +73,16 @@ func ResolveDefaultCharacterNickname(query string) (int, bool) {
 
 func normalizeNicknameQuery(text string) string {
 	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(text)), ""))
+}
+
+func isAllDigits(text string) bool {
+	if text == "" {
+		return false
+	}
+	for _, ch := range text {
+		if ch < '0' || ch > '9' {
+			return false
+		}
+	}
+	return true
 }

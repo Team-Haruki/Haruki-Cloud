@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"haruki-cloud/utils/logger"
 )
@@ -228,5 +229,85 @@ func TestRemoteRecommendFallsBackToLegacyWhenUserdataHashMissing(t *testing.T) {
 	}
 	if legacyRecommendCalls.Load() != 1 {
 		t.Fatalf("expected 1 legacy recommend call, got %d", legacyRecommendCalls.Load())
+	}
+}
+
+func TestRemoteRecommendAutoResetsCircuitBreakerAfterCooldown(t *testing.T) {
+	var cacheCalls atomic.Int32
+	var recommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			cacheCalls.Add(1)
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			_, _ = w.Write([]byte(`[{
+				"alg": "ga",
+				"cost_time": 0.1,
+				"wait_time": 0.0,
+				"result": {
+					"decks": [{
+						"score": 100,
+						"live_score": 100,
+						"mysekai_event_point": 0,
+						"total_power": 200,
+						"event_bonus_rate": 20,
+						"support_deck_bonus_rate": 0,
+						"multi_live_score_up": 110,
+						"cards": [{"card_id": 1001, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
+					}]
+				}
+			}]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	now := time.Now()
+	musicMeta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
+	recommender := &RemoteDeckRecommender{
+		baseURL:       server.URL,
+		client:        server.Client(),
+		defaultAlgs:   []string{"ga"},
+		masterdataDir: "/masterdata",
+		region:        "jp",
+		maxRetries:    0,
+		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
+		now: func() time.Time {
+			return now
+		},
+	}
+	recommender.consecutiveFailures.Store(maxConsecutiveFailures)
+	recommender.lastFailureAtNanos.Store(now.Add(-circuitBreakerCooldown - time.Second).UnixNano())
+
+	result, err := recommender.Recommend(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: musicMeta,
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if result == nil || len(result.Decks) != 1 {
+		t.Fatalf("unexpected recommend result: %+v", result)
+	}
+	if got := cacheCalls.Load(); got != 1 {
+		t.Fatalf("expected cache_userdata to run once after auto-reset, got %d", got)
+	}
+	if got := recommendCalls.Load(); got != 1 {
+		t.Fatalf("expected recommend to run once after auto-reset, got %d", got)
+	}
+	if failures := recommender.consecutiveFailures.Load(); failures != 0 {
+		t.Fatalf("expected circuit breaker to reset after successful request, got %d failures", failures)
 	}
 }

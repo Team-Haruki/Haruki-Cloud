@@ -20,8 +20,12 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 
 	// Circuit breaker: reject early when service is consistently failing.
 	if failures := r.consecutiveFailures.Load(); failures >= maxConsecutiveFailures {
-		r.logger.Warnf("circuit breaker open: %d consecutive failures, rejecting request", failures)
-		return nil, fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures)
+		if r.tryResetCircuitBreakerAfterCooldown(failures) {
+			r.logger.Infof("circuit breaker auto-reset after cooldown; allowing request to proceed")
+		} else {
+			r.logger.Warnf("circuit breaker open: %d consecutive failures, rejecting request", failures)
+			return nil, fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures)
+		}
 	}
 
 	if err := r.ensureReady(req.Region, req.MusicMeta, req.MusicMetaFilePath); err != nil {
@@ -71,17 +75,41 @@ func (r *RemoteDeckRecommender) recommendOnce(req RecommendRequest) (*RecommendR
 
 func (r *RemoteDeckRecommender) recordSuccess() {
 	r.consecutiveFailures.Store(0)
+	r.lastFailureAtNanos.Store(0)
 }
 
 func (r *RemoteDeckRecommender) recordFailure() {
 	r.consecutiveFailures.Add(1)
+	r.lastFailureAtNanos.Store(r.timeNow().UnixNano())
 }
 
 // ResetCircuitBreaker allows external callers (e.g. health checks) to
 // re-enable the service after recovery.
 func (r *RemoteDeckRecommender) ResetCircuitBreaker() {
 	r.consecutiveFailures.Store(0)
+	r.lastFailureAtNanos.Store(0)
 	r.logger.Infof("circuit breaker reset")
+}
+
+func (r *RemoteDeckRecommender) tryResetCircuitBreakerAfterCooldown(failures int64) bool {
+	lastNanos := r.lastFailureAtNanos.Load()
+	if lastNanos <= 0 {
+		return false
+	}
+	elapsed := r.timeNow().Sub(time.Unix(0, lastNanos))
+	if elapsed < circuitBreakerCooldown {
+		return false
+	}
+	r.logger.Infof("circuit breaker cooldown elapsed after %v; resetting from %d consecutive failures", elapsed, failures)
+	r.ResetCircuitBreaker()
+	return true
+}
+
+func (r *RemoteDeckRecommender) timeNow() time.Time {
+	if r != nil && r.now != nil {
+		return r.now()
+	}
+	return time.Now()
 }
 
 func (r *RemoteDeckRecommender) doRecommendCompatible(req RecommendRequest) ([]remoteBatchRecommendResult, error) {

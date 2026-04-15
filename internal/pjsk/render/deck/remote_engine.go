@@ -15,6 +15,7 @@ const (
 	defaultMaxRetries            = 3
 	defaultRetryWaitTime         = time.Second
 	maxConsecutiveFailures int64 = 5
+	circuitBreakerCooldown       = time.Minute
 )
 
 type remoteEngineProvider struct {
@@ -100,6 +101,9 @@ type RemoteDeckRecommender struct {
 	musicMetaHash   string
 
 	consecutiveFailures atomic.Int64
+	lastFailureAtNanos  atomic.Int64
+
+	now func() time.Time
 }
 
 type remoteRecommendResult struct {

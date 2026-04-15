@@ -529,7 +529,7 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	}
 }
 
-func TestExecuteMusicBPMUsesMusicListImagesForMultipleDifficultyGroups(t *testing.T) {
+func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.T) {
 	root := t.TempDir()
 	chartA := filepath.Join(root, "music", "music_score", "0001_01", "expert.txt")
 	chartB := filepath.Join(root, "music", "music_score", "0002_01", "master.txt")
@@ -555,7 +555,7 @@ func TestExecuteMusicBPMUsesMusicListImagesForMultipleDifficultyGroups(t *testin
 	}
 
 	listCalls := 0
-	titles := make([]string, 0, 2)
+	titles := make([]string, 0, 1)
 	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/pjsk/music/list":
@@ -568,8 +568,21 @@ func TestExecuteMusicBPMUsesMusicListImagesForMultipleDifficultyGroups(t *testin
 				t.Fatalf("expected list title, got nil")
 			}
 			titles = append(titles, *req.Title)
-			if len(req.MusicList) != 1 {
-				t.Fatalf("expected 1 list item per difficulty group, got %d", len(req.MusicList))
+			if req.Profile != nil {
+				t.Fatalf("expected nil profile for lookup list, got %+v", req.Profile)
+			}
+			if len(req.MusicList) != 2 {
+				t.Fatalf("expected 2 list items in single request, got %d", len(req.MusicList))
+			}
+			gotPairs := []string{
+				fmt.Sprintf("%d:%s", int(req.MusicList[0]["id"].(float64)), req.MusicList[0]["difficulty_type"].(string)),
+				fmt.Sprintf("%d:%s", int(req.MusicList[1]["id"].(float64)), req.MusicList[1]["difficulty_type"].(string)),
+			}
+			wantPairs := []string{"1:expert", "2:master"}
+			for i := range wantPairs {
+				if gotPairs[i] != wantPairs[i] {
+					t.Fatalf("unexpected mixed difficulty payload: got=%v want=%v", gotPairs, wantPairs)
+				}
 			}
 			_, _ = w.Write([]byte("png"))
 		default:
@@ -611,20 +624,21 @@ func TestExecuteMusicBPMUsesMusicListImagesForMultipleDifficultyGroups(t *testin
 	if err != nil {
 		t.Fatalf("executeMusic bpm: %v", err)
 	}
-	if len(message) != 2 || message[0].Type != "image" || message[1].Type != "image" {
+	if len(message) != 2 || message[0].Type != "text" || message[1].Type != "image" {
 		t.Fatalf("unexpected bpm message: %+v", message)
 	}
-	if listCalls != 2 {
-		t.Fatalf("expected 2 music-list render calls, got %d", listCalls)
+	textData, ok := message[0].Data.(onebot11.TextData)
+	if !ok {
+		t.Fatalf("unexpected bpm text payload: %+v", message[0].Data)
 	}
-	wantTitles := map[string]bool{
-		"BPM 200 EXPERT 匹配结果": true,
-		"BPM 200 MASTER 匹配结果": true,
+	if got := textData.Text; got != "BPM 200" {
+		t.Fatalf("unexpected bpm summary text: %+v", message[0].Data)
 	}
-	for _, title := range titles {
-		if !wantTitles[title] {
-			t.Fatalf("unexpected title list: %+v", titles)
-		}
+	if listCalls != 1 {
+		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
+	}
+	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }
 

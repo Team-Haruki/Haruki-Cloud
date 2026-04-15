@@ -130,7 +130,10 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 	if err != nil {
 		return nil, err
 	}
-	diff := normalizeDifficulty(query.Difficulty)
+	diff := ""
+	if strings.TrimSpace(query.Difficulty) != "" || len(query.Items) == 0 {
+		diff = normalizeDifficulty(query.Difficulty)
+	}
 
 	minLevel := query.LevelMin
 	maxLevel := query.LevelMax
@@ -179,8 +182,9 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 
 			displayOrder := musicListDisplayOrder(musicInfo)
 			list = append(list, map[string]any{
-				"id":         musicInfo.ID,
-				"difficulty": level,
+				"id":              musicInfo.ID,
+				"difficulty":      level,
+				"difficulty_type": diff,
 				// The drawing service re-sorts each level bucket by release_at, so
 				// we pass the desired display order here instead of the raw publish time.
 				"release_at": displayOrder,
@@ -194,6 +198,12 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 	}
 
 	sort.Slice(list, func(i, j int) bool {
+		diffI := normalizedDifficultyValue(list[i]["difficulty_type"])
+		diffJ := normalizedDifficultyValue(list[j]["difficulty_type"])
+		if diffI != diffJ {
+			return difficultyOrder(diffI) < difficultyOrder(diffJ)
+		}
+
 		levelI, _ := list[i]["difficulty"].(int)
 		levelJ, _ := list[j]["difficulty"].(int)
 		if levelI != levelJ {
@@ -210,6 +220,9 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		idJ, _ := list[j]["id"].(int)
 		return idI < idJ
 	})
+	if diff == "" {
+		diff = normalizedDifficultyValue(list[0]["difficulty_type"])
+	}
 
 	userResults := make(map[int]any)
 	if query.UserResults != nil {
@@ -227,7 +240,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		MusicList:            list,
 		JacketsPathList:      jackets,
 		RequiredDifficulties: diff,
-		Profile:              c.resolveDetailedProfile(query.DetailedProfile, region),
+		Profile:              c.resolveMusicListProfile(query.DetailedProfile, region),
 		Title:                query.Title,
 		TitleStyle:           query.TitleStyle,
 		TitleShadow:          query.TitleShadow,
@@ -242,13 +255,10 @@ func (c *Controller) buildMusicListEntriesFromItems(source DataSource, builder *
 	now := currentMusicVisibilityTime()
 	list := make([]map[string]any, 0, len(items))
 	jackets := make(map[int]string, len(items))
-	seen := make(map[int]struct{}, len(items))
+	seen := make(map[string]struct{}, len(items))
 
 	for _, item := range items {
 		if item.MusicID <= 0 {
-			continue
-		}
-		if _, ok := seen[item.MusicID]; ok {
 			continue
 		}
 		musicInfo, err := source.GetMusicByID(item.MusicID)
@@ -271,12 +281,22 @@ func (c *Controller) buildMusicListEntriesFromItems(source DataSource, builder *
 			continue
 		}
 
-		seen[item.MusicID] = struct{}{}
+		itemDiff := difficulty
+		if strings.TrimSpace(item.Difficulty) != "" {
+			itemDiff = normalizeDifficulty(item.Difficulty)
+		}
+		seenKey := fmt.Sprintf("%d:%s", item.MusicID, itemDiff)
+		if _, ok := seen[seenKey]; ok {
+			continue
+		}
+
+		seen[seenKey] = struct{}{}
 		displayOrder := musicListDisplayOrder(musicInfo)
 		list = append(list, map[string]any{
-			"id":         musicInfo.ID,
-			"difficulty": level,
-			"release_at": displayOrder,
+			"id":              musicInfo.ID,
+			"difficulty":      level,
+			"difficulty_type": itemDiff,
+			"release_at":      displayOrder,
 		})
 		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
 	}

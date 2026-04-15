@@ -133,4 +133,10 @@ func TestBuildEventRecordFromSnapshotSeparatesWorldBloomTotalAndSingleRank(t *te
 	if req.WlEventInfo[0].WlCharaIconPath == nil || req.WlEventInfo[1].WlCharaIconPath == nil {
 		t.Fatalf("expected WL single-rank icons: %+v", req.WlEventInfo)
 	}
+	if got := *req.WlEventInfo[0].WlCharaIconPath; got != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_21.png" {
+		t.Fatalf("unexpected first WL single SD path: %q", got)
+	}
+	if got := *req.WlEventInfo[1].WlCharaIconPath; got != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_22.png" {
+		t.Fatalf("unexpected second WL single SD path: %q", got)
+	}
 }

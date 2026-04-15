@@ -123,8 +123,12 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 			hist.Rank = &rank
 		}
 		if wb.GameCharacterID > 0 {
-			icon := charaIconPath(rc.App.Assets, wb.GameCharacterID)
-			hist.WlCharaIconPath = &icon
+			sdPath := assets.ResolveRegionAssetPath(
+				rc.App.Assets,
+				regionStr,
+				fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", wb.GameCharacterID),
+			)
+			hist.WlCharaIconPath = &sdPath
 		}
 		wlEventInfo = append(wlEventInfo, *hist)
 	}

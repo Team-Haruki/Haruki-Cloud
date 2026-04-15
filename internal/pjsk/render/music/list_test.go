@@ -256,6 +256,9 @@ func TestBuildMusicBriefListRequestFromItemsUsesFullDifficultyInfoWhenDifficulty
 	if len(req.MusicList) != 1 {
 		t.Fatalf("expected 1 music item, got %d", len(req.MusicList))
 	}
+	if req.MusicList[0].Level != 29 {
+		t.Fatalf("unexpected representative level: %d", req.MusicList[0].Level)
+	}
 	got := req.MusicList[0].Difficulty
 	wantOrder := []string{"easy", "normal", "hard", "expert", "master"}
 	wantLevels := []int{5, 12, 17, 25, 29}

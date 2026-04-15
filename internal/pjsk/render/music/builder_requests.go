@@ -139,6 +139,7 @@ func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery
 				continue
 			}
 			diffInfo = *builtInfo
+			level = maxMusicDifficultyLevel(diffInfo.Level)
 		} else {
 			diff = normalizeDifficulty(diff)
 			level = b.GetDifficultyLevel(musicInfo.ID, diff)
@@ -188,6 +189,16 @@ func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery
 		req.RequiredDifficulties = requiredDiff
 	}
 	return req, nil
+}
+
+func maxMusicDifficultyLevel(levels []int) int {
+	maxLevel := 0
+	for _, level := range levels {
+		if level > maxLevel {
+			maxLevel = level
+		}
+	}
+	return maxLevel
 }
 
 func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Music, region renderregion.Value) (*drawing.GenerateMusicChartRequest, error) {

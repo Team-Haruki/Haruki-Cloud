@@ -150,6 +150,98 @@ func TestParserSupportsLunabotCharacterAliases(t *testing.T) {
 	}
 }
 
+func TestParserPrefersFullCharacterNameOverAttributeSubstring(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParsePreferFilter("草薙宁宁")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter(草薙宁宁) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.CharacterID != 15 {
+		t.Fatalf("unexpected character parse result: %+v", info)
+	}
+	if info.Attr != "" {
+		t.Fatalf("did not expect attribute to be extracted from full character name: %+v", info)
+	}
+}
+
+func TestParserPrefersFullCharacterNameOverMysteriousAliasSubstring(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParsePreferFilter("望月穗波")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter(望月穗波) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.CharacterID != 3 {
+		t.Fatalf("unexpected character parse result: %+v", info)
+	}
+	if info.Attr != "" {
+		t.Fatalf("did not expect attribute to be extracted from full character name: %+v", info)
+	}
+}
+
+func TestParserSupportsApprovedAliasNicknamesBeforeAttributeKeywords(t *testing.T) {
+	nicknames := cloneNicknames(defaultNicknames)
+	nicknames["黄桃"] = 13
+	parser := NewParser(nicknames)
+
+	info, err := parser.ParsePreferFilter("黄桃")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter(黄桃) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.CharacterID != 13 {
+		t.Fatalf("unexpected character parse result: %+v", info)
+	}
+	if info.Attr != "" {
+		t.Fatalf("did not expect happy attribute to be extracted from alias 黄桃: %+v", info)
+	}
+}
+
+func TestParserDoesNotExtractSingleRuneAttributeWhenTightlyJoinedBeforeCharacter(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParsePreferFilter("草草薙宁宁")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter(草草薙宁宁) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.CharacterID != 15 {
+		t.Fatalf("unexpected character parse result: %+v", info)
+	}
+	if info.Attr != "" {
+		t.Fatalf("did not expect pure attribute from tightly-joined prefix: %+v", info)
+	}
+}
+
+func TestParserDoesNotExtractSingleRuneAttributeWhenTightlyJoinedBeforeCharacterAlias(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParsePreferFilter("月望月穗波")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter(月望月穗波) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.CharacterID != 3 {
+		t.Fatalf("unexpected character parse result: %+v", info)
+	}
+	if info.Attr != "" {
+		t.Fatalf("did not expect mysterious attribute from tightly-joined prefix: %+v", info)
+	}
+}
+
 func TestParserSupportsGlobalLatestCardSequence(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 

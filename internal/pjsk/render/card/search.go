@@ -35,12 +35,9 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 		}
 		return card, nil
 	case QueryTypeSeq:
-		card, err := s.source.GetCardByCharacterAndSeq(info.CharacterID, info.Sequence)
+		card, err := s.visibleCardByCharacterAndSeq(info.CharacterID, info.Sequence, now)
 		if err != nil {
 			return nil, err
-		}
-		if !isCardVisibleAt(card, now) {
-			return nil, fmt.Errorf("card not found: %d/%d", info.CharacterID, info.Sequence)
 		}
 		return card, nil
 	case QueryTypeLatest:
@@ -93,12 +90,9 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 		}
 		return []*masterdata.Card{card}, nil
 	case QueryTypeSeq:
-		card, err := s.source.GetCardByCharacterAndSeq(info.CharacterID, info.Sequence)
+		card, err := s.visibleCardByCharacterAndSeq(info.CharacterID, info.Sequence, now)
 		if err != nil {
 			return nil, err
-		}
-		if !isCardVisibleAt(card, now) {
-			return nil, fmt.Errorf("card not found: %d/%d", info.CharacterID, info.Sequence)
 		}
 		return []*masterdata.Card{card}, nil
 	case QueryTypeLatest:
@@ -110,6 +104,40 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 	default:
 		return nil, fmt.Errorf("无法解析的列表查询指令: %s", query)
 	}
+}
+
+func (s *SearchService) visibleCardByCharacterAndSeq(characterID, sequence int, now int64) (*masterdata.Card, error) {
+	if s == nil || s.source == nil {
+		return nil, fmt.Errorf("card data source is not configured")
+	}
+	if characterID == 0 {
+		return nil, fmt.Errorf("character id is required")
+	}
+	if sequence == 0 {
+		return nil, fmt.Errorf("card sequence must not be zero")
+	}
+
+	items, err := s.source.FilterCards(&CardQueryInfo{CharacterID: characterID})
+	if err != nil {
+		return nil, err
+	}
+	items = filterVisibleCards(items, now)
+	if len(items) == 0 {
+		return nil, fmt.Errorf("card not found: %d/%d", characterID, sequence)
+	}
+
+	sortCardsByReleaseAndID(items)
+
+	index := 0
+	if sequence < 0 {
+		index = len(items) + sequence
+	} else {
+		index = sequence - 1
+	}
+	if index < 0 || index >= len(items) {
+		return nil, fmt.Errorf("card not found: %d/%d", characterID, sequence)
+	}
+	return items[index], nil
 }
 
 func (s *SearchService) latestVisibleCard(sequence int, now int64) (*masterdata.Card, error) {

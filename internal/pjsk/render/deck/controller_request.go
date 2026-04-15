@@ -197,6 +197,16 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	if teammateScoreUp, ok := optionFloat(option, "multi_live_teammate_score_up"); ok {
 		request.MultiLiveTeammateScoreUp = float64Ptr(teammateScoreUp)
 	}
+	if boost, ok := option["boost"].(int); ok && boost >= 0 {
+		liveType := optionString(option, "live_type")
+		target := optionString(option, "target")
+		if target == "" {
+			target = "score"
+		}
+		if target == "score" && (liveType == "multi" || liveType == "solo" || liveType == "auto") {
+			request.Boost = drawing.IntPtr(boost)
+		}
+	}
 	if lowerBound, ok := optionFloat(option, "multi_live_score_up_lower_bound"); ok {
 		request.MultiLiveScoreUpLowerBound = float64Ptr(lowerBound)
 	}

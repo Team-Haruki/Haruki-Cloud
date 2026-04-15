@@ -150,6 +150,7 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 	current := args
 	info := &CardQueryInfo{Type: QueryTypeFilter, Original: args}
 	matched := false
+	suppressSingleRuneAttr := false
 
 	if result := p.extractor.ExtractEventID(current); result.Found {
 		info.EventID = result.Value
@@ -162,10 +163,31 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 		current = result.Remaining
 		matched = true
 	}
-	if result := p.extractor.ExtractAttribute(current); result.Found {
-		info.Attr = result.Value
+	if result := p.extractor.ExtractCharacter(current); result.Found {
+		info.CharacterID = result.Value
 		current = result.Remaining
 		matched = true
+		if result.PrefixTightlyJoin || result.SuffixTightlyJoin {
+			suppressSingleRuneAttr = true
+			if attr := p.extractor.ExtractAttributeWithoutSingleRune(current); attr.Found {
+				info.Attr = attr.Value
+				current = attr.Remaining
+				matched = true
+			}
+		}
+	}
+	if info.Attr == "" {
+		var result ExtractResult[string]
+		if suppressSingleRuneAttr {
+			result = p.extractor.ExtractAttributeWithoutSingleRune(current)
+		} else {
+			result = p.extractor.ExtractAttribute(current)
+		}
+		if result.Found {
+			info.Attr = result.Value
+			current = result.Remaining
+			matched = true
+		}
 	}
 	if result := p.extractor.ExtractSkill(current); result.Found {
 		info.SkillType = result.Value
@@ -193,11 +215,6 @@ func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
 	}
 	if result := p.extractor.ExtractRarity(current); result.Found {
 		info.Rarity = result.Value
-		current = result.Remaining
-		matched = true
-	}
-	if result := p.extractor.ExtractCharacter(current); result.Found {
-		info.CharacterID = result.Value
 		current = result.Remaining
 		matched = true
 	}

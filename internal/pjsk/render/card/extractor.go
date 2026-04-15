@@ -6,11 +6,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 type dictRule struct {
-	re  *regexp.Regexp
-	val string
+	re                 *regexp.Regexp
+	val                string
+	singleRuneNonASCII bool
 }
 
 func buildRules(items map[string]string) []dictRule {
@@ -41,15 +43,23 @@ func buildRules(items map[string]string) []dictRule {
 			pattern += regexp.QuoteMeta(key)
 		}
 		rules = append(rules, dictRule{
-			re:  regexp.MustCompile(pattern),
-			val: items[key],
+			re:                 regexp.MustCompile(pattern),
+			val:                items[key],
+			singleRuneNonASCII: !isASCII && utf8.RuneCountInString(key) == 1,
 		})
 	}
 	return rules
 }
 
 func extractByRules(text string, rules []dictRule) ExtractResult[string] {
+	return extractByRulesWithOptions(text, rules, true)
+}
+
+func extractByRulesWithOptions(text string, rules []dictRule, allowSingleRuneNonASCII bool) ExtractResult[string] {
 	for _, rule := range rules {
+		if !allowSingleRuneNonASCII && rule.singleRuneNonASCII {
+			continue
+		}
 		if rule.re.MatchString(text) {
 			remaining := rule.re.ReplaceAllString(text, "")
 			return ExtractResult[string]{Value: rule.val, Remaining: strings.TrimSpace(remaining), Found: true}
@@ -68,9 +78,11 @@ type BanEventRef struct {
 }
 
 type ExtractResult[T any] struct {
-	Value     T
-	Remaining string
-	Found     bool
+	Value             T
+	Remaining         string
+	Found             bool
+	PrefixTightlyJoin bool
+	SuffixTightlyJoin bool
 }
 
 func NewExtractor(nicknames map[string]int) *Extractor {
@@ -81,10 +93,12 @@ func (e *Extractor) ExtractCharacter(text string) ExtractResult[int] {
 	textLower := strings.ToLower(text)
 	bestNickname := ""
 	bestID := 0
+	bestIndex := -1
 	for nickname, id := range e.nicknames {
-		if strings.Contains(textLower, nickname) && len(nickname) > len(bestNickname) {
+		if index := strings.Index(textLower, nickname); index != -1 && len(nickname) > len(bestNickname) {
 			bestNickname = nickname
 			bestID = id
+			bestIndex = index
 		}
 	}
 	if bestNickname == "" {
@@ -92,7 +106,26 @@ func (e *Extractor) ExtractCharacter(text string) ExtractResult[int] {
 	}
 	re := regexp.MustCompile("(?i)" + regexp.QuoteMeta(bestNickname))
 	remaining := re.ReplaceAllString(text, "")
-	return ExtractResult[int]{Value: bestID, Remaining: strings.TrimSpace(remaining), Found: true}
+	prefixTightlyJoin := false
+	suffixTightlyJoin := false
+	if bestIndex > 0 {
+		if prev, _ := utf8.DecodeLastRuneInString(text[:bestIndex]); prev != utf8.RuneError && !isLooseSeparator(prev) {
+			prefixTightlyJoin = true
+		}
+	}
+	matchEnd := bestIndex + len(bestNickname)
+	if matchEnd >= 0 && matchEnd < len(text) {
+		if next, _ := utf8.DecodeRuneInString(text[matchEnd:]); next != utf8.RuneError && !isLooseSeparator(next) {
+			suffixTightlyJoin = true
+		}
+	}
+	return ExtractResult[int]{
+		Value:             bestID,
+		Remaining:         strings.TrimSpace(remaining),
+		Found:             true,
+		PrefixTightlyJoin: prefixTightlyJoin,
+		SuffixTightlyJoin: suffixTightlyJoin,
+	}
 }
 
 var rarityRules = buildRules(map[string]string{
@@ -117,6 +150,10 @@ var attrRules = buildRules(map[string]string{
 
 func (e *Extractor) ExtractAttribute(text string) ExtractResult[string] {
 	return extractByRules(text, attrRules)
+}
+
+func (e *Extractor) ExtractAttributeWithoutSingleRune(text string) ExtractResult[string] {
+	return extractByRulesWithOptions(text, attrRules, false)
 }
 
 const (
@@ -235,6 +272,15 @@ var ocUnitRules = buildRules(map[string]string{
 
 func (e *Extractor) ExtractOCUnit(text string) ExtractResult[string] {
 	return extractByRules(text, ocUnitRules)
+}
+
+func isLooseSeparator(ch rune) bool {
+	switch ch {
+	case ' ', '\t', '\n', '\r', ',', '，', '.', '。', '/', '\\', '-', '_', '+', '&', '＆', '|', '｜', '(', ')', '（', '）', '[', ']', '【', '】':
+		return true
+	default:
+		return false
+	}
 }
 
 var reEventID = regexp.MustCompile(`(?i)\bevent(\d+)\b`)

@@ -175,6 +175,7 @@ type DeckRequest struct {
 	IsWl                         bool                       `json:"is_wl"`
 	MultiLiveTeammatePower       *int                       `json:"multi_live_teammate_power,omitempty"`
 	MultiLiveTeammateScoreUp     *float64                   `json:"multi_live_teammate_score_up,omitempty"`
+	Boost                        *int                       `json:"boost,omitempty"`
 	Target                       *string                    `json:"target,omitempty"`
 	UnitFilter                   *string                    `json:"unit_filter,omitempty"`
 	AttrFilter                   *string                    `json:"attr_filter,omitempty"`

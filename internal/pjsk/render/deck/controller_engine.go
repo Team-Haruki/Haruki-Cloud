@@ -127,7 +127,7 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 		option["live_type"] = "challenge"
 		option["event_id"] = nil
 	case "no_event":
-		option["algorithm"] = c.defaultNoEventAlgorithm()
+		option["algorithm"] = "all"
 		option["live_type"] = "multi"
 		option["event_id"] = nil
 	case "bonus":

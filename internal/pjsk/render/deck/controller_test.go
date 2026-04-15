@@ -419,7 +419,7 @@ func TestBuildRecommendOptionBonusTargetsWithKeywords(t *testing.T) {
 	}
 }
 
-func TestBuildRecommendOptionDefaultsNoEventToSingleAlgorithm(t *testing.T) {
+func TestBuildRecommendOptionDefaultsNoEventToAllAlgorithms(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
 	option, err := controller.buildRecommendOption(renderregion.JP, "no_event", AutoQuery{
@@ -430,7 +430,7 @@ func TestBuildRecommendOptionDefaultsNoEventToSingleAlgorithm(t *testing.T) {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
 	}
 
-	if option["algorithm"] != "ga" {
+	if option["algorithm"] != "all" {
 		t.Fatalf("unexpected no_event algorithm: %+v", option["algorithm"])
 	}
 	if option["live_type"] != "multi" {
@@ -441,7 +441,7 @@ func TestBuildRecommendOptionDefaultsNoEventToSingleAlgorithm(t *testing.T) {
 	}
 }
 
-func TestBuildRecommendOptionDefaultsNoEventToSupportedConfiguredAlgorithm(t *testing.T) {
+func TestBuildRecommendOptionKeepsNoEventAllWithConfiguredAlgorithms(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{
 		DefaultAlgs: []string{"dfs", "sa"},
 	})
@@ -454,7 +454,7 @@ func TestBuildRecommendOptionDefaultsNoEventToSupportedConfiguredAlgorithm(t *te
 		t.Fatalf("buildRecommendOption returned error: %v", err)
 	}
 
-	if option["algorithm"] != "sa" {
+	if option["algorithm"] != "all" {
 		t.Fatalf("unexpected no_event algorithm with configured algs: %+v", option["algorithm"])
 	}
 }

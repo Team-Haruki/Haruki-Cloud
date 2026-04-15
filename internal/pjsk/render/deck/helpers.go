@@ -135,24 +135,6 @@ func normalizeRecommendStrategy(raw string) string {
 	}
 }
 
-func (c *Controller) defaultNoEventAlgorithm() string {
-	if c == nil {
-		return "ga"
-	}
-	available := append([]string(nil), c.recommendCfg.DefaultAlgs...)
-	if len(available) == 0 {
-		available = []string{"dfs", "sa", "ga"}
-	}
-	for _, alg := range []string{"ga", "sa", "dfs"} {
-		for _, candidate := range available {
-			if normalizeRecommendAlgorithm(candidate) == alg {
-				return alg
-			}
-		}
-	}
-	return "ga"
-}
-
 // Asset path resolvers
 
 func (c *Controller) resolveCharacterIconPath(characterID int) string {

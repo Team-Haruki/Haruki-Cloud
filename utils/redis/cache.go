@@ -2,8 +2,6 @@ package redis
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -12,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -47,20 +44,6 @@ func CanonicalizeQueryString(queryString string) string {
 		}
 	}
 	return strings.Join(parts, "&")
-}
-
-func CacheKeyBuilder(c fiber.Ctx, namespace string) string {
-	fullPath := c.Path()
-	queryString := c.RequestCtx().QueryArgs().String()
-	canonicalQuery := CanonicalizeQueryString(queryString)
-
-	queryHash := "none"
-	if canonicalQuery != "" {
-		hash := md5.Sum([]byte(canonicalQuery))
-		queryHash = hex.EncodeToString(hash[:])
-	}
-
-	return fmt.Sprintf("%s:%s:query=%s", namespace, fullPath, queryHash)
 }
 
 func SetCache(ctx context.Context, client *redis.Client, key string, value any, ttl time.Duration) error {

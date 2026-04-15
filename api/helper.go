@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"haruki-cloud/config"
 	harukiRedis "haruki-cloud/utils/redis"
 	"strconv"
@@ -110,7 +113,7 @@ func VerifyAPIAuthorization() fiber.Handler {
 }
 
 func CacheQuery(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, namespace string) (string, map[string]any, bool, error) {
-	key := harukiRedis.CacheKeyBuilder(c, namespace)
+	key := cacheKeyFromFiberCtx(c, namespace)
 	if redisClient == nil {
 		return key, nil, false, nil
 	}
@@ -190,4 +193,18 @@ func ValidateServer(server string) bool {
 		return false
 	}
 	return ValidateStringLength(server, MaxServerLength)
+}
+
+func cacheKeyFromFiberCtx(c fiber.Ctx, namespace string) string {
+	fullPath := c.Path()
+	queryString := c.RequestCtx().QueryArgs().String()
+	canonicalQuery := harukiRedis.CanonicalizeQueryString(queryString)
+
+	queryHash := "none"
+	if canonicalQuery != "" {
+		hash := md5.Sum([]byte(canonicalQuery))
+		queryHash = hex.EncodeToString(hash[:])
+	}
+
+	return fmt.Sprintf("%s:%s:query=%s", namespace, fullPath, queryHash)
 }

@@ -93,7 +93,13 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		req := drawing.PowerBonusDetailRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		if len(req.CharaBonuses) == 0 && len(req.UnitBonuses) == 0 && len(req.AttrBonuses) == 0 {
-			if snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, suitePlatform, suitePlatformUserID, suitePJSKUserID, hasUsableMySekaiData(binding)); snapshot != nil {
+			snapshot := suiteSnapshot
+			if binding != nil && hasUsableMySekaiData(binding) {
+				if fullSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, suitePlatform, suitePlatformUserID, suitePJSKUserID, true); fullSnapshot != nil {
+					snapshot = fullSnapshot
+				}
+			}
+			if snapshot != nil {
 				builtReq, buildErr := eduCtrl.BuildPowerBonusDetailRequestFromSnapshot(education.PowerBonusQuery{
 					Region:   region,
 					Profile:  publicDetailedProfile,

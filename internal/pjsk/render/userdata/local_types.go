@@ -6,31 +6,31 @@ type RawUserData struct {
 	Now                                               int64                             `json:"now"`
 	UserGamedata                                      RawUserGamedata                   `json:"userGamedata"`
 	UserProfile                                       RawUserProfile                    `json:"userProfile"`
-	UserDecks                                         []RawUserDeck                     `json:"userDecks"`
-	UserCards                                         []RawUserCard                     `json:"userCards"`
-	UserBonds                                         []RawUserBond                     `json:"userBonds"`
-	UserMusicStats                                    []RawMusicResult                  `json:"userMusicResults"`
-	CompactUserMusicResults                           json.RawMessage                   `json:"compactUserMusicResults"`
-	UserMusics                                        []RawUserMusic                    `json:"userMusics"`
-	UserChallengeLiveSoloDecks                        []RawChallengeLiveDeck            `json:"userChallengeLiveSoloDecks"`
-	UserChallengeLiveSoloResults                      []RawChallengeLiveResult          `json:"userChallengeLiveSoloResults"`
-	UserChallengeLiveSoloStages                       []RawChallengeLiveStage           `json:"userChallengeLiveSoloStages"`
-	UserChallengeLiveSoloHighScoreRewards             []RawChallengeLiveReward          `json:"userChallengeLiveSoloHighScoreRewards"`
-	UserCharacters                                    []RawUserCharacter                `json:"userCharacters"`
-	UserCharacterMissionV2s                           []RawUserCharacterMissionV2       `json:"userCharacterMissionV2s"`
-	UserCharacterLiveUsageCounts                      []RawUserCharacterLiveUsageCount  `json:"userCharacterLiveUsageCounts"`
-	UserCharacterMissionV2Statuses                    []RawUserCharacterMissionV2Status `json:"userCharacterMissionV2Statuses"`
-	UserAreas                                         []RawUserArea                     `json:"userAreas"`
-	UserMaterials                                     []RawUserMaterial                 `json:"userMaterials"`
-	UserMysekaiGates                                  []RawUserMysekaiGate              `json:"userMysekaiGates"`
-	UserMysekaiFixtureGameCharacterPerformanceBonuses []RawUserFixtureBonus             `json:"userMysekaiFixtureGameCharacterPerformanceBonuses"`
-	UserMusicClear                                    []RawMusicClear                   `json:"userMusicDifficultyClearCounts"`
-	UserHonors                                        []RawUserHonor                    `json:"userHonors"`
-	UserProfileHonors                                 []RawUserProfileHonor             `json:"userProfileHonors"`
-	UserFrames                                        []RawUserFrame                    `json:"userPlayerFrames"`
-	UserEvents                                        []RawUserEvent                    `json:"userEvents"`
-	UserEventResults                                  []RawUserEventResult              `json:"userEventResults"`
-	UserWorldBlooms                                   []RawUserWorldBloom               `json:"userWorldBlooms"`
+	UserDecks                                         []RawUserDeck                     `json:"userDecks,omitempty"`
+	UserCards                                         []RawUserCard                     `json:"userCards,omitempty"`
+	UserBonds                                         []RawUserBond                     `json:"userBonds,omitempty"`
+	UserMusicStats                                    []RawMusicResult                  `json:"userMusicResults,omitempty"`
+	CompactUserMusicResults                           json.RawMessage                   `json:"compactUserMusicResults,omitempty"`
+	UserMusics                                        []RawUserMusic                    `json:"userMusics,omitempty"`
+	UserChallengeLiveSoloDecks                        []RawChallengeLiveDeck            `json:"userChallengeLiveSoloDecks,omitempty"`
+	UserChallengeLiveSoloResults                      []RawChallengeLiveResult          `json:"userChallengeLiveSoloResults,omitempty"`
+	UserChallengeLiveSoloStages                       []RawChallengeLiveStage           `json:"userChallengeLiveSoloStages,omitempty"`
+	UserChallengeLiveSoloHighScoreRewards             []RawChallengeLiveReward          `json:"userChallengeLiveSoloHighScoreRewards,omitempty"`
+	UserCharacters                                    []RawUserCharacter                `json:"userCharacters,omitempty"`
+	UserCharacterMissionV2s                           []RawUserCharacterMissionV2       `json:"userCharacterMissionV2s,omitempty"`
+	UserCharacterLiveUsageCounts                      []RawUserCharacterLiveUsageCount  `json:"userCharacterLiveUsageCounts,omitempty"`
+	UserCharacterMissionV2Statuses                    []RawUserCharacterMissionV2Status `json:"userCharacterMissionV2Statuses,omitempty"`
+	UserAreas                                         []RawUserArea                     `json:"userAreas,omitempty"`
+	UserMaterials                                     []RawUserMaterial                 `json:"userMaterials,omitempty"`
+	UserMysekaiGates                                  []RawUserMysekaiGate              `json:"userMysekaiGates,omitempty"`
+	UserMysekaiFixtureGameCharacterPerformanceBonuses []RawUserFixtureBonus             `json:"userMysekaiFixtureGameCharacterPerformanceBonuses,omitempty"`
+	UserMusicClear                                    []RawMusicClear                   `json:"userMusicDifficultyClearCounts,omitempty"`
+	UserHonors                                        []RawUserHonor                    `json:"userHonors,omitempty"`
+	UserProfileHonors                                 []RawUserProfileHonor             `json:"userProfileHonors,omitempty"`
+	UserFrames                                        []RawUserFrame                    `json:"userPlayerFrames,omitempty"`
+	UserEvents                                        []RawUserEvent                    `json:"userEvents,omitempty"`
+	UserEventResults                                  []RawUserEventResult              `json:"userEventResults,omitempty"`
+	UserWorldBlooms                                   []RawUserWorldBloom               `json:"userWorldBlooms,omitempty"`
 }
 
 type RawUserGamedata struct {
@@ -77,7 +77,7 @@ type RawUserCard struct {
 	MasterRank            int                  `json:"masterRank"`
 	SpecialTrainingStatus string               `json:"specialTrainingStatus"`
 	DefaultImage          string               `json:"defaultImage"`
-	Episodes              []RawUserCardEpisode `json:"episodes"`
+	Episodes              []RawUserCardEpisode `json:"episodes,omitempty"`
 }
 
 type RawMusicResult struct {
@@ -91,13 +91,13 @@ type RawMusicResult struct {
 
 type RawUserMusic struct {
 	MusicID                     int                            `json:"musicId"`
-	UserMusicDifficultyStatuses []RawUserMusicDifficultyStatus `json:"userMusicDifficultyStatuses"`
+	UserMusicDifficultyStatuses []RawUserMusicDifficultyStatus `json:"userMusicDifficultyStatuses,omitempty"`
 }
 
 type RawUserMusicDifficultyStatus struct {
 	MusicDifficulty     string           `json:"musicDifficulty"`
 	MusicDifficultyType string           `json:"musicDifficultyType"`
-	UserMusicResults    []RawMusicResult `json:"userMusicResults"`
+	UserMusicResults    []RawMusicResult `json:"userMusicResults,omitempty"`
 }
 
 type RawChallengeLiveResult struct {
@@ -148,7 +148,7 @@ type RawUserCharacterMissionV2Status struct {
 }
 
 type RawUserArea struct {
-	AreaItems []RawUserAreaItem `json:"areaItems"`
+	AreaItems []RawUserAreaItem `json:"areaItems,omitempty"`
 }
 
 type RawUserAreaItem struct {

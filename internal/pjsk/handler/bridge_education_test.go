@@ -288,6 +288,94 @@ func TestExecuteEducationAreaRequiresSuiteSnapshotWhenBindingVisible(t *testing.
 	}
 }
 
+type bridgeEducationSnapshotProviderStub struct {
+	basicSnapshot renderuserdata.Snapshot
+	fullErr       error
+}
+
+func (p *bridgeEducationSnapshotProviderStub) Resolve(_ context.Context, _ renderuserdata.Selector, opts renderuserdata.ResolveOptions) (renderuserdata.Snapshot, error) {
+	if opts.NeedMySekai {
+		return nil, p.fullErr
+	}
+	return p.basicSnapshot, nil
+}
+
+func TestExecuteEducationPowerFallsBackToSuiteSnapshotWhenMySekaiSnapshotUnavailable(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeEducationRegionValidator{})
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	snapshot := mustBridgeEducationSnapshot(t)
+	provider := &bridgeEducationSnapshotProviderStub{
+		basicSnapshot: snapshot,
+		fullErr:       renderuserdata.ErrSnapshotUnavailable,
+	}
+
+	var captured drawing.PowerBonusDetailRequest
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/education/power-bonus" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte{0x89, 'P', 'N', 'G'})
+	}))
+	defer server.Close()
+
+	cacheDir := t.TempDir()
+	controller := education.NewController(drawing.NewHarukiDrawingClient(server.URL), nil, nil, renderregion.CN)
+	controller.RegisterSource(newHandlerTestEducationSource(renderregion.CN, 15, "cn_item"))
+
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{Provider: "toolbox"},
+		},
+		Edu:        controller,
+		Bindings:   service,
+		ImageCache: imagecache.New("https://example.com", cacheDir),
+	}
+
+	originalFactory := snapshotProviderFactory
+	snapshotProviderFactory = func(app *renderapp.App) renderuserdata.SnapshotProvider {
+		return provider
+	}
+	defer func() {
+		snapshotProviderFactory = originalFactory
+	}()
+
+	rc := &RequestContext{
+		Ctx: ctx,
+		Cmd: &parser.ResolvedCommand{
+			Module:            parser.ModuleEducation,
+			Mode:              "education-power",
+			Region:            "cn",
+			RequesterPlatform: "qq",
+			RequesterUserID:   "42",
+		},
+		App:            app,
+		Region:         renderregion.CN,
+		RegionStr:      "cn",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	}
+
+	message, err := executeEducation(rc)
+	if err != nil {
+		t.Fatalf("executeEducation() error = %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TYPE_IMAGE {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if len(captured.CharaBonuses) == 0 || len(captured.UnitBonuses) == 0 || len(captured.AttrBonuses) == 0 {
+		t.Fatalf("expected power bonus request to fall back to suite snapshot, got %+v", captured)
+	}
+}
+
 func mustBridgeEducationSnapshot(t *testing.T) renderuserdata.Snapshot {
 	t.Helper()
 

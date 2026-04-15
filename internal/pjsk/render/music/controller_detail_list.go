@@ -91,14 +91,26 @@ func (c *Controller) RenderMusicDetail(query Query) ([]byte, error) {
 }
 
 func (c *Controller) BuildMusicBriefListRequest(query BriefListQuery) (*drawing.MusicBriefListRequest, error) {
-	if len(query.MusicIDs) == 0 {
-		return nil, fmt.Errorf("music ids are required")
-	}
 	region, _, builder, err := c.resolveBuilder(query.Region)
 	if err != nil {
 		return nil, err
 	}
-	return builder.BuildMusicBriefListRequest(query.MusicIDs, query.Difficulty, region)
+	var payload *drawing.MusicBriefListRequest
+	switch {
+	case len(query.Items) > 0:
+		payload, err = builder.BuildMusicBriefListRequestFromItems(query.Items, region)
+	case len(query.MusicIDs) > 0:
+		payload, err = builder.BuildMusicBriefListRequest(query.MusicIDs, query.Difficulty, region)
+	default:
+		return nil, fmt.Errorf("music ids are required")
+	}
+	if err != nil {
+		return nil, err
+	}
+	payload.Title = query.Title
+	payload.TitleStyle = query.TitleStyle
+	payload.TitleShadow = query.TitleShadow
+	return payload, nil
 }
 
 func (c *Controller) RenderMusicBriefList(query BriefListQuery) ([]byte, error) {

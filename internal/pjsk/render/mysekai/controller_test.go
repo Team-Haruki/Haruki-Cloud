@@ -634,6 +634,53 @@ func TestBuildResourceRequestGateSkinOverridesGateDefaultIcon(t *testing.T) {
 	}
 }
 
+func TestBuildDoorUpgradeRequestSupportsShowAll(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateMaterialGroups.json"), []map[string]any{
+		{"groupId": 1001, "mysekaiMaterialId": 1, "quantity": 2},
+		{"groupId": 2001, "mysekaiMaterialId": 1, "quantity": 3},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
+		{"id": 1, "iconAssetbundleName": "mat_1"},
+	})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiMaterials": [{"mysekaiMaterialId": 1, "quantity": 5}],
+    "userMysekaiGates": [
+      {"mysekaiGateId": 1, "mysekaiGateLevel": 5},
+      {"mysekaiGateId": 2, "mysekaiGateLevel": 7}
+    ]
+  }
+}`
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(mysekaiJSON))
+
+	showAll := true
+	req, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{
+		Region:  "jp",
+		ShowAll: &showAll,
+		Profile: &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildDoorUpgradeRequest() error = %v", err)
+	}
+	if len(req.GateMaterials) != 2 {
+		t.Fatalf("expected all gate materials, got %+v", req.GateMaterials)
+	}
+	if req.GateMaterials[0].ID != 1 || req.GateMaterials[1].ID != 2 {
+		t.Fatalf("unexpected gate material order: %+v", req.GateMaterials)
+	}
+}
+
 func TestBuildMusicRecordRequestUsesRegionScopedMasterdata(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")

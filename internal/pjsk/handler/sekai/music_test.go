@@ -42,6 +42,42 @@ func TestNoteNumHandleBuildsResolvedCommand(t *testing.T) {
 	}
 }
 
+func TestNoteNumHandleBuildsResolvedCommandWithDifficulty(t *testing.T) {
+	h := sekaiHandlers{}.NoteNumHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/查物量",
+		ArgText:    "777 ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-note-count" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+	if resolved.Query != "777" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+
+	var params struct {
+		NoteCount  int    `json:"note_count"`
+		Difficulty string `json:"difficulty"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.NoteCount != 777 || params.Difficulty != "expert" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
 func TestBPMHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.BPMHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
@@ -49,7 +85,7 @@ func TestBPMHandleBuildsResolvedCommand(t *testing.T) {
 	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/查BPM",
-		ArgText:    "テオ ex",
+		ArgText:    "200 ex",
 	})
 	if err != nil {
 		t.Fatalf("Handle() error = %v", err)
@@ -62,15 +98,19 @@ func TestBPMHandleBuildsResolvedCommand(t *testing.T) {
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-bpm" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
 	}
-	if resolved.Query != "テオ" {
+	if resolved.Query != "200" {
 		t.Fatalf("resolved.Query = %q", resolved.Query)
 	}
 
 	var params struct {
-		Difficulty string `json:"difficulty"`
+		BPM        float64 `json:"bpm"`
+		Difficulty string  `json:"difficulty"`
 	}
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.BPM != 200 {
+		t.Fatalf("unexpected bpm params: %+v", params)
 	}
 	if params.Difficulty != "expert" {
 		t.Fatalf("unexpected params: %+v", params)

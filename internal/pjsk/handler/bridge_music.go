@@ -69,11 +69,17 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		lines := make([]string, 0, len(matches))
-		for _, item := range matches {
-			lines = append(lines, fmt.Sprintf("【%d】%s - %s %d", item.Music.ID, item.Music.Title, strings.ToUpper(item.Difficulty), item.PlayLevel))
+		if len(matches) == 1 {
+			data, err = renderSingleMusicLookupChart(musicCtrl, rc.Cmd.Region, matches[0].Music.ID, matches[0].Difficulty)
+			break
 		}
-		return onebot11.Message{onebot11.Text(strings.Join(lines, "\n"))}, nil
+		title := buildMusicLookupListTitle("物量", strconv.Itoa(q.NoteCount), q.Difficulty)
+		data, err = musicCtrl.RenderMusicBriefList(music.BriefListQuery{
+			Items:       buildNoteCountBriefListItems(matches),
+			Region:      rc.Cmd.Region,
+			Title:       &title,
+			TitleShadow: true,
+		})
 	case "music-cover":
 		q := music.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
@@ -88,23 +94,28 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		text := fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title)
 		return append(image, onebot11.Text(text)), nil
 	case "music-bpm":
-		q := music.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+		q := music.BPMQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		result, resolveErr := musicCtrl.ResolveMusicBPM(q)
+		if q.BPM <= 0 {
+			if value, parseErr := strconv.ParseFloat(strings.TrimSpace(rc.Cmd.Query), 64); parseErr == nil {
+				q.BPM = value
+			}
+		}
+		matches, resolveErr := musicCtrl.FindMusicChartsByBPM(q)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		image, imageErr := assetImageMessage(rc.Ctx, result.JacketPath, rc.App, BotModulePJSK)
-		if imageErr != nil {
-			return nil, imageErr
+		if len(matches) == 1 {
+			data, err = renderSingleMusicLookupChart(musicCtrl, rc.Cmd.Region, matches[0].Music.ID, matches[0].Difficulty)
+			break
 		}
-		textLines := []string{
-			fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title),
-			fmt.Sprintf("主 BPM: %s", formatMusicBPM(result.MainBPM)),
-			fmt.Sprintf("BPM 变化: %s", formatBPMEvents(result.Events)),
-			fmt.Sprintf("谱面来源: %s", strings.ToUpper(result.Difficulty)),
-		}
-		return append(image, onebot11.Text(strings.Join(textLines, "\n"))), nil
+		title := buildMusicLookupListTitle("BPM", formatMusicBPM(q.BPM), q.Difficulty)
+		data, err = musicCtrl.RenderMusicBriefList(music.BriefListQuery{
+			Items:       buildBPMBriefListItems(matches),
+			Region:      rc.Cmd.Region,
+			Title:       &title,
+			TitleShadow: true,
+		})
 	default:
 		return nil, unsupportedModeError("music", rc.Cmd.Mode)
 	}
@@ -114,15 +125,67 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	return rc.ImageMessage(data)
 }
 
-func formatBPMEvents(events []music.BPMEvent) string {
-	if len(events) == 0 {
-		return "无数据"
+func renderSingleMusicLookupChart(musicCtrl *music.Controller, region string, musicID int, difficulty string) ([]byte, error) {
+	return musicCtrl.RenderMusicChart(music.ChartQuery{
+		Query:      fmt.Sprintf("music%d", musicID),
+		Region:     region,
+		Difficulty: difficulty,
+	})
+}
+
+func buildNoteCountBriefListItems(matches []music.NoteCountMatch) []music.BriefListItemQuery {
+	items := make([]music.BriefListItemQuery, 0, len(matches))
+	for _, item := range matches {
+		if item.Music == nil {
+			continue
+		}
+		items = append(items, music.BriefListItemQuery{
+			MusicID:    item.Music.ID,
+			Difficulty: item.Difficulty,
+		})
 	}
-	parts := make([]string, 0, len(events))
-	for _, item := range events {
-		parts = append(parts, formatMusicBPM(item.BPM))
+	return items
+}
+
+func buildBPMBriefListItems(matches []music.BPMMatch) []music.BriefListItemQuery {
+	items := make([]music.BriefListItemQuery, 0, len(matches))
+	for _, item := range matches {
+		if item.Music == nil {
+			continue
+		}
+		items = append(items, music.BriefListItemQuery{
+			MusicID:    item.Music.ID,
+			Difficulty: item.Difficulty,
+		})
 	}
-	return strings.Join(parts, " -> ")
+	return items
+}
+
+func buildMusicLookupListTitle(prefix string, value string, difficulty string) string {
+	title := fmt.Sprintf("%s %s 匹配结果", strings.TrimSpace(prefix), strings.TrimSpace(value))
+	if diffLabel := formatMusicDifficultyLabel(difficulty); diffLabel != "" {
+		title = fmt.Sprintf("%s %s %s 匹配结果", strings.TrimSpace(prefix), strings.TrimSpace(value), diffLabel)
+	}
+	return strings.TrimSpace(title)
+}
+
+func formatMusicDifficultyLabel(difficulty string) string {
+	switch strings.ToLower(strings.TrimSpace(difficulty)) {
+	case "easy":
+		return "EASY"
+	case "normal":
+		return "NORMAL"
+	case "hard":
+		return "HARD"
+	case "expert":
+		return "EXPERT"
+	case "master":
+		return "MASTER"
+	case "append":
+		return "APPEND"
+	default:
+		return ""
+	}
 }
 
 func formatMusicBPM(value float64) string {

@@ -3,6 +3,7 @@ package music
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,6 +12,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderregion "haruki-cloud/internal/pjsk/render/region"
 )
 
 func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
@@ -36,25 +38,62 @@ func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
 	}
 
 	return &CoverResult{
-		Music: &masterdata.Music{
-			ID:                 musicInfo.ID,
-			Seq:                musicInfo.Seq,
-			ReleaseConditionID: musicInfo.ReleaseConditionID,
-			Categories:         append([]string(nil), musicInfo.Categories...),
-			Title:              builder.buildDisplayMusicTitle(musicInfo, region),
-			Pronunciation:      musicInfo.Pronunciation,
-			Lyricist:           musicInfo.Lyricist,
-			Composer:           musicInfo.Composer,
-			Arranger:           musicInfo.Arranger,
-			DancerCount:        musicInfo.DancerCount,
-			SelfDancerCount:    musicInfo.SelfDancerCount,
-			AssetBundleName:    musicInfo.AssetBundleName,
-			PublishedAt:        musicInfo.PublishedAt,
-			DigitizedAt:        musicInfo.DigitizedAt,
-			IsFullLength:       musicInfo.IsFullLength,
-		},
+		Music:      buildLookupMusic(musicInfo, builder, region),
 		JacketPath: jacketPath,
 	}, nil
+}
+
+func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
+	if c == nil {
+		return nil, fmt.Errorf("music controller is not configured")
+	}
+	if query.BPM <= 0 {
+		return nil, fmt.Errorf("BPM 必须大于 0")
+	}
+
+	region, source, builder, err := c.resolveBuilder(query.Region)
+	if err != nil {
+		return nil, err
+	}
+
+	now := currentMusicVisibilityTime()
+	matches := make([]BPMMatch, 0)
+	for _, musicInfo := range source.GetMusics() {
+		if !isMusicVisibleAt(musicInfo, now) {
+			continue
+		}
+
+		for _, difficulty := range c.collectBPMSearchDifficulties(source, musicInfo.ID, query.Difficulty) {
+			chartPath := c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
+			if chartPath == "" {
+				continue
+			}
+
+			parsed, err := parseChartBPM(chartPath)
+			if err != nil || !chartContainsBPM(parsed, query.BPM) {
+				continue
+			}
+
+			matches = append(matches, BPMMatch{
+				Music:      buildLookupMusic(musicInfo, builder, region),
+				Difficulty: difficulty,
+				MainBPM:    parsed.MainBPM,
+				Events:     parsed.Events,
+			})
+		}
+	}
+
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("没有找到 BPM 为 %s 的谱面", formatLookupBPMValue(query.BPM))
+	}
+
+	sort.Slice(matches, func(i, j int) bool {
+		if matches[i].Music.ID == matches[j].Music.ID {
+			return difficultyOrder(matches[i].Difficulty) < difficultyOrder(matches[j].Difficulty)
+		}
+		return matches[i].Music.ID < matches[j].Music.ID
+	})
+	return matches, nil
 }
 
 func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
@@ -106,23 +145,7 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 	}
 
 	return &BPMResult{
-		Music: &masterdata.Music{
-			ID:                 musicInfo.ID,
-			Seq:                musicInfo.Seq,
-			ReleaseConditionID: musicInfo.ReleaseConditionID,
-			Categories:         append([]string(nil), musicInfo.Categories...),
-			Title:              builder.buildDisplayMusicTitle(musicInfo, region),
-			Pronunciation:      musicInfo.Pronunciation,
-			Lyricist:           musicInfo.Lyricist,
-			Composer:           musicInfo.Composer,
-			Arranger:           musicInfo.Arranger,
-			DancerCount:        musicInfo.DancerCount,
-			SelfDancerCount:    musicInfo.SelfDancerCount,
-			AssetBundleName:    musicInfo.AssetBundleName,
-			PublishedAt:        musicInfo.PublishedAt,
-			DigitizedAt:        musicInfo.DigitizedAt,
-			IsFullLength:       musicInfo.IsFullLength,
-		},
+		Music:      buildLookupMusic(musicInfo, builder, region),
 		JacketPath: jacketPath,
 		Difficulty: diffUsed,
 		MainBPM:    parsed.MainBPM,
@@ -162,6 +185,77 @@ func (c *Controller) resolveLocalChartPath(region string, musicID int, difficult
 		)
 	}
 	return c.assets.FirstExisting(candidates...)
+}
+
+func (c *Controller) collectBPMSearchDifficulties(source DataSource, musicID int, preferred string) []string {
+	if preferred = strings.TrimSpace(preferred); preferred != "" {
+		return []string{normalizeDifficulty(preferred)}
+	}
+
+	difficulties, err := source.GetMusicDifficulties(musicID)
+	if err != nil || len(difficulties) == 0 {
+		return buildBPMDifficultyCandidates("")
+	}
+
+	seen := make(map[string]struct{}, len(difficulties))
+	result := make([]string, 0, len(difficulties))
+	for _, difficulty := range difficulties {
+		if difficulty == nil {
+			continue
+		}
+		diff := normalizeDifficulty(difficulty.MusicDifficulty)
+		if _, ok := seen[diff]; ok {
+			continue
+		}
+		seen[diff] = struct{}{}
+		result = append(result, diff)
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return difficultyOrder(result[i]) < difficultyOrder(result[j])
+	})
+	return result
+}
+
+func buildLookupMusic(musicInfo *masterdata.Music, builder *Builder, region renderregion.Value) *masterdata.Music {
+	if musicInfo == nil {
+		return nil
+	}
+	return &masterdata.Music{
+		ID:                 musicInfo.ID,
+		Seq:                musicInfo.Seq,
+		ReleaseConditionID: musicInfo.ReleaseConditionID,
+		Categories:         append([]string(nil), musicInfo.Categories...),
+		Title:              builder.buildDisplayMusicTitle(musicInfo, region),
+		Pronunciation:      musicInfo.Pronunciation,
+		Lyricist:           musicInfo.Lyricist,
+		Composer:           musicInfo.Composer,
+		Arranger:           musicInfo.Arranger,
+		DancerCount:        musicInfo.DancerCount,
+		SelfDancerCount:    musicInfo.SelfDancerCount,
+		AssetBundleName:    musicInfo.AssetBundleName,
+		PublishedAt:        musicInfo.PublishedAt,
+		DigitizedAt:        musicInfo.DigitizedAt,
+		IsFullLength:       musicInfo.IsFullLength,
+	}
+}
+
+func chartContainsBPM(parsed *parsedChartBPM, target float64) bool {
+	if parsed == nil {
+		return false
+	}
+	for _, event := range parsed.Events {
+		if math.Abs(event.BPM-target) < 1e-9 {
+			return true
+		}
+	}
+	return false
+}
+
+func formatLookupBPMValue(value float64) string {
+	if math.Abs(value-math.Round(value)) < 1e-9 {
+		return strconv.FormatInt(int64(math.Round(value)), 10)
+	}
+	return strconv.FormatFloat(value, 'f', -1, 64)
 }
 
 type parsedChartBPM struct {

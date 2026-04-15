@@ -1,10 +1,10 @@
 # Haruki-Cloud 项目进展总结
 
-> 最后更新：2026-04-14（v17.5 — 实战联调 bug 修复 + 安全加固）
+> 最后更新：2026-04-15（v17.6 — Profile 机制 + 项目更名 + API 安全修复）
 >
 > 涉及 `Haruki-ZeroBot` 联调的协议边界，请优先参考 `docs/zerobot-cloud-integration-plan.cn.md`。
 >
-> 2026-04-14 状态：在 v17.4（Noise IK→NK + Auth AES 固定密钥改造）基础上，本轮集中修复了 35 个实战联调 bug 并新增安全加固（请求去重、用户限流、URL 脱敏）。项目已从架构重构收尾进入 **实战联调稳定化** 阶段。重构进度 ~98-99%，整体交付 ~95-97%。详见 [项目完成度跟踪](project-completion-tracker.cn.md) 和 [重构进展](refactoring-progress.cn.md)。已知 bug 追踪见 [known-bugs.cn.md](known-bugs.cn.md)。
+> 2026-04-15 状态：在 v17.5 实战联调稳定化基础上，本轮引入 Profile 部署环境机制（`production` / `beta` / `dev`），完成项目从"Haruki Database Backend"到"Haruki Cloud"的正式更名（配置文件 → `haruki-cloud.yaml`），并修复 API 层 6 项安全审计问题。项目进入 **运维配置标准化** 阶段。详见 [项目完成度跟踪](project-completion-tracker.cn.md)。已知 bug 追踪见 [known-bugs.cn.md](known-bugs.cn.md)。
 >
 > `api/legacy/pjsk/` 与 `internal/pjsk/render/deck/deck_cgo/` 历史目录已移除。本文保留了 2026-03 ~ 2026-04-01 的阶段性记录，凡与当前运行事实冲突之处，以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
 
@@ -622,7 +622,7 @@ Bot API（`/api/v2/bot/:botId/pjsk/*`）全面接入 Noise IK 传输层加密。
 **变更清单**：
 
 - `config/config.go`：`HarukiBotDBConfig` 新增 `NoisePrivateKey string` 字段
-- `haruki-db-configs.example.yaml`：新增 `noise_private_key` 配置项
+- `haruki-cloud.example.yaml`：新增 `noise_private_key` 配置项
 - `internal/core/crypto/crypto.go`：新增 `KeyPairFromPrivate([]byte)` 用于从配置文件私钥派生密钥对
 - `internal/middleware/secure/secure.go`：解密后设置 `c.Locals("secure_noise", true)` 标记
 - `api/helper.go`：新增 `MsgPackResponse()` 用于返回 MsgPack 编码的响应信封
@@ -828,19 +828,19 @@ Bot API 传输层加密从 Noise IK 模式迁移至 Noise NK 模式，Auth API �
 
 #### Education Suite 集成打通
 
-核心问题：Toolbox API 返回 `401 "unauthorized user agent"`，原因是 `haruki-db-configs.yaml` 中 `toolbox` 配置缺少 `user_agent` 字段。
+核心问题：Toolbox API 返回 `401 "unauthorized user agent"`，原因是 `haruki-cloud.yaml` 中 `toolbox` 配置缺少 `user_agent` 字段。
 
 修复清单：
 
 | 文件 | 修复内容 |
 |------|---------|
-| `haruki-db-configs.yaml` | 补充 `toolbox.user_agent: "Haruki-Cloud/v2.0.0"` |
+| `haruki-cloud.yaml` | 补充 `toolbox.user_agent: "Haruki-Cloud/v2.0.0"` |
 | `education/controller.go` | `lunabot_static_images` → `StaticImagesDir`；`characterIconPath` 改用 `ResolveAssetPath` |
 | `music/controller.go` | `lunabot_static_images` → `StaticImagesDir` |
 | `music/builder.go` | `NoteHost` 前缀改为 `StaticImagesDir` |
 | `handler/bridge.go` | `charaIconPath()` 改用 `ResolveAssetPath + StaticImagesDir`；education-bonds 跳过无图标的角色（ID > 26）|
 | `utils/drawing/models.go` | `BondInfo.Color1/Color2` 加 `omitempty`（避免 `null → tuple` Pydantic 422 错误）|
-| `.gitignore` | 补充 `server`、`test_auth`、`haruki-db-configs.yaml`、`exports/`、`Data/` |
+| `.gitignore` | 补充 `server`、`test_auth`、`haruki-cloud.yaml`、`exports/`、`Data/` |
 
 #### Education 端点当前状态
 
@@ -1493,7 +1493,7 @@ deck/\*、mysekai/\* 共 12 个端点的 Toolbox 快照注入问题已解决：
 - `resolveLiveSnapshot()` — 统一的 Toolbox 数据拉取逻辑（解析绑定 → GetSuiteData → 可选 GetMySekaiData → NewFromBytes）
 - `executeDeck()` / `executeMysekai()` 调用 `resolveLiveSnapshot()` 后传入 `WithSnapshot()` 克隆
 - `app.go` — 始终创建 mysekai.Controller（不再要求本地快照文件）
-- `haruki-db-configs.yaml` — 添加 `local_masterdata` 配置指向 `Data/master/haruki-sekai-master/master`
+- `haruki-cloud.yaml` — 添加 `local_masterdata` 配置指向 `Data/master/haruki-sekai-master/master`
 
 **验证结果**：
 - 所有 12 个端点成功获取 Toolbox 数据（suite + mysekai）
@@ -1726,6 +1726,37 @@ pjsk:
 #### 已知 bug 追踪
 
 本轮新增 `docs/known-bugs.cn.md`（`ea3d595`），当前记录 17 个已知 bug，**全部已修复**。
+
+### 11.11 运维配置标准化（2026-04-15）
+
+#### Profile 部署环境机制
+
+引入 `profile` 顶级配置字段，支持三个环境：
+
+| Profile | 用途 | log_level 默认 | api_cache_ttl 默认 | 特殊行为 |
+|---------|------|----------------|--------------------|----|
+| `production` | 生产环境 | `WARN` | `120s` | 强制关闭 `allow_insecure_internal_api`；recover 隐藏 stack trace |
+| `beta` | 测试环境 | `INFO` | `60s` | — |
+| `dev` | 开发环境 | `DEBUG` | `10s` | — |
+
+- 通过 YAML `profile: "dev"` 或环境变量 `HARUKI_PROFILE=production` 设置
+- **加载优先级**：YAML 值 → `ApplyProfileDefaults`（填充未设置的默认值）→ `ApplyEnvOverrides`（环境变量始终最高优先级）
+- YAML 中显式设置的字段不会被 profile 覆盖（如 `log_level: "DEBUG"` 在 production 下仍保持 DEBUG）
+- Profile 别名：`prod` → production, `test`/`staging` → beta, `development` → dev, 空值 → dev
+- Docker Compose 默认 `HARUKI_PROFILE=production`
+
+#### 项目更名
+
+| 变更项 | 旧值 | 新值 |
+|--------|------|------|
+| 启动标识 | Haruki Database Backend | Haruki Cloud |
+| 配置文件名 | `haruki-db-configs.yaml` | `haruki-cloud.yaml` |
+| Dockerfile VOLUME | `/app/haruki-db-configs.yaml` | `/app/haruki-cloud.yaml` |
+| 所有文档/脚本引用 | `haruki-db-configs` | `haruki-cloud` |
+
+#### API 安全审计修复
+
+详见 [known-bugs.cn.md](known-bugs.cn.md) ISSUE-001 ~ ISSUE-007。除 ISSUE-001（测试期保留调试日志）外，其余全部已修复或已文档化。
 
 ## 12. 相关文档
 

@@ -1,18 +1,31 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
+	"sync"
 
 	"haruki-cloud/api/bot/onebot11"
 	eventdb "haruki-cloud/database/sekai/event"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/event"
 	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/drawing"
+	"haruki-cloud/utils/logger"
+	sekaiutils "haruki-cloud/utils/sekai"
+
+	"golang.org/x/sync/errgroup"
 )
+
+var eventRecordDebugLogger = logger.NewLoggerFromGlobal("EventRecord")
+
+var eventRecordTrackerRankLookup = defaultEventRecordTrackerRankLookup
 
 func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 	if rc.App.Events == nil {
@@ -58,11 +71,21 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		return nil, fmt.Errorf("event record requires at least one history entry")
 	}
 
-	// Build rank lookup from UserEventResults (if available)
+	// Build rank lookup from UserEventResults (if available), then fall back to
+	// the legacy/original suite shape where rank is embedded inside userEvents.
 	rankByEvent := make(map[int]int, len(rawData.UserEventResults))
 	for _, result := range rawData.UserEventResults {
 		rankByEvent[result.EventID] = result.Rank
 	}
+	for _, userEvent := range rawData.UserEvents {
+		if userEvent.EventID <= 0 || userEvent.Rank <= 0 {
+			continue
+		}
+		if _, exists := rankByEvent[userEvent.EventID]; !exists {
+			rankByEvent[userEvent.EventID] = userEvent.Rank
+		}
+	}
+	fillEventRecordTrackerRanks(rc.Ctx, region, rawData.UserGamedata.UserID, rawData.UserEvents, rankByEvent)
 
 	eventEntities, err := rc.App.Sekai.Event.Query().
 		Where(eventdb.ServerRegionEQ(region.String())).
@@ -150,6 +173,90 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		WlEventInfo: wlEventInfo,
 		UserInfo:    *profile,
 	}, nil
+}
+
+func defaultEventRecordTrackerRankLookup(ctx context.Context, region string, eventID int, userID int64) (*int, error) {
+	tracker := sekaiutils.GetTrackerClient()
+	if tracker == nil {
+		return nil, nil
+	}
+
+	resp, err := tracker.WithContext(ctx).GetLatestRankingByUser(region, eventID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || resp.RankData.Rank <= 0 {
+		return nil, nil
+	}
+
+	rank := resp.RankData.Rank
+	return &rank, nil
+}
+
+func fillEventRecordTrackerRanks(
+	ctx context.Context,
+	region renderregion.Value,
+	userID int64,
+	userEvents []renderuserdata.RawUserEvent,
+	rankByEvent map[int]int,
+) {
+	if userID <= 0 || len(userEvents) == 0 || len(rankByEvent) >= len(userEvents) {
+		return
+	}
+
+	regionStr := regionWithDefault(region.String())
+	if regionStr == "" {
+		return
+	}
+
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(4)
+
+	var (
+		mu      sync.Mutex
+		logOnce sync.Once
+	)
+	seen := make(map[int]struct{}, len(userEvents))
+
+	for _, ue := range userEvents {
+		eventID := ue.EventID
+		if eventID <= 0 {
+			continue
+		}
+		if _, ok := seen[eventID]; ok {
+			continue
+		}
+		seen[eventID] = struct{}{}
+		if _, ok := rankByEvent[eventID]; ok {
+			continue
+		}
+
+		eventIDCopy := eventID
+		group.Go(func() error {
+			rank, err := eventRecordTrackerRankLookup(groupCtx, regionStr, eventIDCopy, userID)
+			if err != nil {
+				if !errors.Is(err, sekaiutils.ErrRankingNotFound) {
+					logOnce.Do(func() {
+						eventRecordDebugLogger.Debugf("event record tracker rank fallback unavailable: region=%s user=%s err=%v",
+							regionStr, maskDebugID(strconv.FormatInt(userID, 10)), err)
+					})
+				}
+				return nil
+			}
+			if rank == nil || *rank <= 0 {
+				return nil
+			}
+
+			mu.Lock()
+			if _, exists := rankByEvent[eventIDCopy]; !exists {
+				rankByEvent[eventIDCopy] = *rank
+			}
+			mu.Unlock()
+			return nil
+		})
+	}
+
+	_ = group.Wait()
 }
 
 // buildEventHistoryFromMaster creates an EventHistory from master data.

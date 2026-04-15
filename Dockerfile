@@ -20,9 +20,9 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /build/haruki-server ./
 
-# Config file is expected to be mounted at /app/haruki-db-configs.yaml
-# e.g. docker run -v $(pwd)/haruki-db-configs.yaml:/app/haruki-db-configs.yaml ...
-VOLUME ["/app/haruki-db-configs.yaml"]
+# Config file is expected to be mounted at /app/haruki-cloud.yaml
+# e.g. docker run -v $(pwd)/haruki-cloud.yaml:/app/haruki-cloud.yaml ...
+VOLUME ["/app/haruki-cloud.yaml"]
 
 EXPOSE 6666
 

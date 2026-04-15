@@ -178,9 +178,14 @@ type RawMusicClear struct {
 	AllPerfect          int    `json:"allPerfect"`
 }
 
+// RawUserEvent supports both the current suite payload and the older/manual
+// editing shape used for event-record imports:
+// {"eventId":156,"eventPoint":10050827,"rank":671,"rankingRewardReceivedAt":1739066808312}
 type RawUserEvent struct {
-	EventID    int `json:"eventId"`
-	EventPoint int `json:"eventPoint"`
+	EventID                 int   `json:"eventId"`
+	EventPoint              int   `json:"eventPoint"`
+	Rank                    int   `json:"rank,omitempty"`
+	RankingRewardReceivedAt int64 `json:"rankingRewardReceivedAt,omitempty"`
 }
 
 type RawUserEventResult struct {
@@ -188,6 +193,8 @@ type RawUserEventResult struct {
 	Rank    int `json:"rank"`
 }
 
+// RawUserWorldBloom matches the manual World Link single-board import shape:
+// {"eventId":170,"gameCharacterId":20,"worldBloomChapterPoint":68271005,"rank":363}
 type RawUserWorldBloom struct {
 	EventID                int `json:"eventId"`
 	GameCharacterID        int `json:"gameCharacterId"`

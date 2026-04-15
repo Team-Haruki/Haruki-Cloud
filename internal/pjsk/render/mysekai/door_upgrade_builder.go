@@ -139,8 +139,13 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 		})
 	}
 
+	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
+	if profile != nil && len(profile.DataSources) > 0 {
+		profile.DataSources[0].Name = "Suite数据"
+	}
+
 	return &drawing.MysekaiDoorUpgradeRequest{
-		Profile:       c.mysekaiProfileCard(region, merged, query.Profile, false),
+		Profile:       profile,
 		GateMaterials: gateMaterials,
 	}, nil
 }

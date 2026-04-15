@@ -74,7 +74,7 @@
 - `config/config.go`
 - `cmd/server/main.go`
 - `internal/pjsk/render/app/app.go`
-- `haruki-db-configs.example.yaml`
+- `haruki-cloud.example.yaml`
 
 当前行为是：
 
@@ -301,7 +301,7 @@ Cannot recommend any deck in 862 cards
 - `internal/pjsk/render/deck/integration_test.go`
 - `internal/pjsk/render/userdata/local.go`
 - `internal/pjsk/render/userdata/normalize.go`
-- `haruki-db-configs.example.yaml`
+- `haruki-cloud.example.yaml`
 
 ## 12. 一句话总结
 

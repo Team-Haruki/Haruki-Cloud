@@ -39,7 +39,7 @@ func resolveMigrationDBConfig() (migrateDBConfig, error) {
 
 	configPath := strings.TrimSpace(os.Getenv("HARUKI_CONFIG_PATH"))
 	if configPath == "" {
-		configPath = "haruki-db-configs.yaml"
+		configPath = "haruki-cloud.yaml"
 	}
 	if _, err := os.Stat(configPath); err == nil {
 		cfg, err := harukiConfig.ReadConfig(configPath)

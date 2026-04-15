@@ -34,8 +34,7 @@ go.work.sum
 # Self tested
 test.go
 test.py
-haruki-cloud-configs.yaml
-haruki-db-configs.yaml
+haruki-cloud.yaml
 .DS_Store
 
 # Build artifacts

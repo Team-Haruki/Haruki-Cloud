@@ -39,7 +39,9 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 		},
 	})
 
-	app.Use(recover.New())
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: !harukiConfig.Cfg.Profile.IsProduction(),
+	}))
 
 	if harukiConfig.Cfg.Backend.AccessLog != "" {
 		loggerConfig := logger.Config{Format: harukiConfig.Cfg.Backend.AccessLog}

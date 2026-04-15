@@ -83,11 +83,14 @@ services:
     ports:
       - "${HARUKI_BACKEND_PORT:-6666}:${HARUKI_BACKEND_PORT:-6666}"
     volumes:
-      - ./haruki-db-configs.yaml:/app/haruki-db-configs.yaml:ro
+      - ./haruki-cloud.yaml:/app/haruki-cloud.yaml:ro
     env_file:
       - path: .env
         required: false
     environment:
+      # ── Profile ──────────────────────────────────────────────────────────
+      HARUKI_PROFILE: ${HARUKI_PROFILE:-production}
+
       # ── Backend ──────────────────────────────────────────────────────────
       HARUKI_BACKEND_HOST: ${HARUKI_BACKEND_HOST:-0.0.0.0}
       HARUKI_BACKEND_PORT: ${HARUKI_BACKEND_PORT:-6666}

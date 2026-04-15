@@ -1,17 +1,17 @@
 // provision_bot is a CLI tool for manually provisioning a bot user.
 //
 // It generates a unique bot_id and credential, writes the user record to the
-// database configured in haruki-db-configs.yaml, and prints the signed JWT
+// database configured in haruki-cloud.yaml, and prints the signed JWT
 // credential ready to paste into the client's configs.yaml.
 //
 // Usage:
 //
-//	go run ./scripts/provision_bot --qq <QQ号> [--config haruki-db-configs.yaml] [--force]
+//	go run ./scripts/provision_bot --qq <QQ号> [--config haruki-cloud.yaml] [--force]
 //
 // Flags:
 //
 //	--qq      QQ号 (required) — owner QQ number of the bot
-//	--config  path to haruki-db-configs.yaml (default: haruki-db-configs.yaml)
+//	--config  path to haruki-cloud.yaml (default: haruki-cloud.yaml)
 //	--force   reset credential if the user already exists
 package main
 
@@ -35,7 +35,7 @@ import (
 
 func main() {
 	var (
-		configPath = flag.String("config", "haruki-db-configs.yaml", "path to haruki-db-configs.yaml")
+		configPath = flag.String("config", "haruki-cloud.yaml", "path to haruki-cloud.yaml")
 		qq         = flag.Int64("qq", 0, "QQ号 (required)")
 		force      = flag.Bool("force", false, "reset credential if user already exists")
 	)

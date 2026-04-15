@@ -251,7 +251,7 @@ MsgPack 字段名与 JSON 字段名完全一致（结构体标注了 `msgpack:".
 ### 9.2 密钥管理
 
 ```
-服务端配置 (haruki-db-configs.yaml):
+服务端配置 (haruki-cloud.yaml):
   haruki_bot:
     noise_private_key: "<64 hex chars = 32 bytes>"
 

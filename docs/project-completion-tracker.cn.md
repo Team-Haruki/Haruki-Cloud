@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目完成度跟踪
 
-> 最后更新：2026-04-14（实战联调稳定化 + 安全加固）
+> 最后更新：2026-04-15（Profile 机制 + 项目更名 + API 安全修复）
 >
 > 本文基于 2026-04-08 ~ 2026-04-09 对当前仓库代码与 `docs/` 文档的交叉审计整理而成，用于持续跟踪“哪些能力已经稳定、哪些仍处于过渡阶段、哪些尚未暴露”。
 >
@@ -24,7 +24,7 @@
 > 16. 同日晚些时候，`card` / `event` / `gacha` / `music` / `profile` 的 provider-backed controller 已补上“按请求克隆 source/provider”链路：这些模块经由 `DatabaseProvider` 读取 masterdata 时，已能把请求 `ctx` 继续传到 `db_cards` / `db_events` / `db_musics` / `db_gachas` / `db_honors` / `db_player_frames` / `db_characters` / `db_skills` 查询层。
 > 17. 继续推进后，`education` / `stamp` / `vlive` 也已接入同一套请求级 source/provider 克隆链路；当前主链 render provider 中已基本消除“直接用 `context.Background()` 发起 DB 查询”的问题，剩余个别 `Background()` 主要只出现在本地调试/静态 snapshot helper 与脚本入口的 nil-ctx 兜底逻辑。
 > 18. `internal/pjsk/render/userdata` 的 `SnapshotFactory` 现已真正消费传入 `ctx`：live/local snapshot 构建时的 leader 卡图路径解析会跟随构建上下文；`NewFromBytesWithContext(...)`、`NewLocalFileServiceWithContext(...)` 也已补齐，MySekai JSON merge 逻辑收口到统一 helper。
-> 19. `cmd/migrate` 已移除源码中的硬编码 Sekai DSN：现在优先读取 `HARUKI_SEKAI_DB_URL` / `HARUKI_SEKAI_DSN`，否则回退读取 `HARUKI_CONFIG_PATH` 或默认 `haruki-db-configs.yaml` 中的 `sekai.db_url`；迁移上下文也已挂到信号取消。
+> 19. `cmd/migrate` 已移除源码中的硬编码 Sekai DSN：现在优先读取 `HARUKI_SEKAI_DB_URL` / `HARUKI_SEKAI_DSN`，否则回退读取 `HARUKI_CONFIG_PATH` 或默认 `haruki-cloud.yaml` 中的 `sekai.db_url`；迁移上下文也已挂到信号取消。
 > 20. 2026-04-10 又继续执行了一轮大文件治理：`render/deck/controller.go`、`render/education/snapshot_build.go`、`render/mysekai/controller.go`、`render/deck/remote_engine.go`、`handler/sekai/sk.go`、`alias/service.go`、`handler/sekai/profile.go`、`handler/sekai/mysekai.go`、`render/music/controller.go`、`render/sk/forecast_provider.go`、`render/provider/db_education.go`、`render/provider/db_cards.go` 均已进一步按职责拆分，当前大文件热点已明显收缩到少数 provider / builder / extractor 文件。
 > 21. 2026-04-10 本轮后续又继续清理了一批热点文件：`handler/sekai/deck_extractor.go`、`render/provider/db_musics.go`、`render/gacha/builder.go`、`handler/sekai/score_board_params.go`、`render/music/board_helpers.go`、`render/music/lookup.go`、`render/music/builder.go`、`render/event/builder.go`、`render/honor/builder.go`、`render/provider/db_honors.go` 均已进一步按职责拆分；`music/event/honor/provider` 相关 targeted tests 与 `go test ./...` 现已保持通过。
 > 22. 2026-04-10 本轮继续收尾后，`render/userdata/local.go`、`render/sk/controller_trace.go`、`render/mysekai/helpers.go`、`render/music/board_request.go`、`render/mysekai/map_builder.go`、`render/profile/controller.go`、`render/provider/contextual.go` 也已进一步按职责拆分；同时补平了 `render/music/lookup.go` 上一轮拆分残留的重复定义编译债务，`music/sk/userdata/mysekai/profile/provider/handler` 定向回归已恢复通过。
@@ -464,12 +464,12 @@ go test ./...
 | 项目 | 状态 | 说明 |
 |------|------|------|
 | Noise 对端静态公钥白名单 | 不适用 | 已从 IK 迁移至 NK 模式（v17.4），客户端不持有静态密钥，无需白名单校验 |
-| `/internal/*` 默认保护强度 | 已收紧 | 未配置鉴权时默认拒绝；支持 `backend.accept_authorization` 或 `haruki_bot.internal_api_token`；仅显式 `allow_insecure_internal_api=true` 才放宽 |
-| 生产日志用户隐私泄露（P0） | 待修复 | `parseBotRequest()` 将每个请求完整消息打印到 INFO 日志（ISSUE-001） |
-| Auth rate limit TTL 重置（P1） | 待修复 | `checkRateLimit()` 每次 `Set` 重置窗口 TTL，高频用户窗口永不过期（ISSUE-002） |
-| Internal API UA-only 鉴权（P1） | 待修复 | 仅配置 `AcceptUserAgent` 时内部 API 无实质鉴权（ISSUE-003） |
-| 缺少 recover 中间件（P1） | 待修复 | handler panic 导致空响应而非 500 错误（ISSUE-004） |
-| Logout 端点无鉴权（P2） | 待修复 | 任意知道 bot_id 的人可删除 session（ISSUE-005） |
+| `/internal/*` 默认保护强度 | 已收紧 | 未配置鉴权时默认拒绝；支持 `backend.accept_authorization` 或 `haruki_bot.internal_api_token`；production profile 强制关闭 `allow_insecure_internal_api` |
+| 生产日志用户隐私泄露（P0） | 📋 测试期保留 | `parseBotRequest()` 将每个请求完整消息打印到 INFO 日志（ISSUE-001）；后续可通过 profile 控制 |
+| Auth rate limit TTL 重置（P1） | ✅ 已修复 | 已改为 INCR+EXPIRE 原子操作（`ae1a334`） |
+| Internal API UA-only 鉴权（P1） | ✅ 已修复 | 必须配置 Authorization token，UA 仅作补充校验（`ae1a334`） |
+| 缺少 recover 中间件（P1） | ✅ 已修复 | 已注册 recover 中间件，production 隐藏 stack trace（`ae1a334`） |
+| Logout 端点无鉴权（P2） | ✅ 已修复 | Logout 现需携带匹配的 session token（`ae1a334`） |
 
 补充说明（2026-04-14 更新）：
 
@@ -555,17 +555,24 @@ P0-R28、阶段 A-E、Context 注入迁移、P1-P7 清理、以及 6 项收尾�
 | 回归测试 | 6 | card parameter 解码（`c2d84ed`）、rewards snapshot 解码（`7893c90`）、event WL 拆分（`7893c90`）、card visibility（`24cb148`）、music visibility + list（`24cb148`）、WL 歌曲解析（`24cb148`）|
 | 文档 | 2 | known-bugs.cn.md 追踪表（`ea3d595`）、doc 同步（`1b84f1e`）|
 
-**已知 bug 追踪**：新增 `docs/known-bugs.cn.md`，当前 17 个已追踪 bug 全部已修复。
+**已知 bug 追踪**：新增 `docs/known-bugs.cn.md`，当前 23 个已追踪 bug 全部已修复。
+
+**2026-04-15 增量更新**：
+
+- **Profile 机制**：引入 `profile` 顶级配置字段（`production` / `beta` / `dev`），支持 `HARUKI_PROFILE` 环境变量覆盖。按 profile 自动推导 `log_level`、`api_cache_ttl` 默认值；production 强制关闭 `allow_insecure_internal_api`，recover 中间件隐藏 stack trace。
+- **项目更名**：启动标识从 "Haruki Database Backend" 更正为 "Haruki Cloud"；配置文件从 `haruki-db-configs.yaml` 重命名为 `haruki-cloud.yaml`；Dockerfile / docker-compose / 脚本 / 文档已全部同步。
+- **API 安全修复**：ISSUE-002~006 已全部修复（rate limit INCR+EXPIRE、Internal API 必须配置 Authorization、recover 中间件、Logout 需 session token、Statistics 路由对齐）；ISSUE-007 已文档化。
 
 **完成度更新**：
 
-| 指标 | v17.4（04-12） | v17.5（04-14） |
+| 指标 | v17.4（04-12） | v17.5（04-15） |
 |------|----------------|----------------|
 | 重构进度 | ~97-98% | ~98-99% |
 | 整体交付 | ~93-95% | ~95-97% |
 | 协议/鉴权分档 | A- | A |
-| 实战联调 bug 修复 | — | 35 commits |
-| 已知 bug 追踪 | 无 | 17/17 已修复 |
+| 实战联调 bug 修复 | — | 50+ commits |
+| 已知 bug 追踪 | 无 | 23/23 已修复 |
+| Profile 机制 | 无 | production / beta / dev |
 
 
 ## 12. 维护说明

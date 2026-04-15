@@ -9,7 +9,7 @@ import (
 	harukiLogger "haruki-cloud/utils/logger"
 )
 
-const defaultConfigPath = "haruki-db-configs.yaml"
+const defaultConfigPath = "haruki-cloud.yaml"
 
 var mainLogFileHandle *os.File
 
@@ -52,9 +52,10 @@ func closeMainLogFile(mainLogger *harukiLogger.Logger) {
 }
 
 func logStartupInfo(mainLogger *harukiLogger.Logger) {
-	mainLogger.Infof("========================= Haruki Database Backend %s =========================", Version)
+	mainLogger.Infof("========================= Haruki Cloud %s =========================", Version)
 	mainLogger.Infof("Powered By Haruki Dev Team")
-	mainLogger.Infof("Haruki Suite Backend Main Access Log Level: %s", harukiConfig.Cfg.Backend.LogLevel)
-	mainLogger.Infof("Haruki Suite Backend Main Access Log Save Path: %s", harukiConfig.Cfg.Backend.MainLogFile)
-	mainLogger.Infof("Go Fiber Access Log Save Path: %s", harukiConfig.Cfg.Backend.AccessLogPath)
+	mainLogger.Infof("Profile: %s", harukiConfig.Cfg.Profile)
+	mainLogger.Infof("Log Level: %s", harukiConfig.Cfg.Backend.LogLevel)
+	mainLogger.Infof("Main Log Path: %s", harukiConfig.Cfg.Backend.MainLogFile)
+	mainLogger.Infof("Access Log Path: %s", harukiConfig.Cfg.Backend.AccessLogPath)
 }

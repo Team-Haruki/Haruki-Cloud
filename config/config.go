@@ -5,10 +5,39 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
+
+// Profile represents the deployment environment.
+type Profile string
+
+const (
+	ProfileProduction Profile = "production"
+	ProfileBeta       Profile = "beta"
+	ProfileDev        Profile = "dev"
+)
+
+// ParseProfile normalises a raw string into a known Profile.
+// Empty string defaults to "dev".
+func ParseProfile(raw string) (Profile, error) {
+	switch strings.TrimSpace(strings.ToLower(raw)) {
+	case "production", "prod":
+		return ProfileProduction, nil
+	case "beta", "test", "staging":
+		return ProfileBeta, nil
+	case "dev", "development", "":
+		return ProfileDev, nil
+	default:
+		return "", fmt.Errorf("unknown profile %q (must be production, beta, or dev)", raw)
+	}
+}
+
+func (p Profile) IsProduction() bool { return p == ProfileProduction }
+func (p Profile) IsBeta() bool       { return p == ProfileBeta }
+func (p Profile) IsDev() bool        { return p == ProfileDev }
 
 // envStr overrides dst with the value of the named env var if set and non-empty.
 func envStr(name string, dst *string) {
@@ -47,6 +76,13 @@ func envDuration(name string, dst *time.Duration) {
 // ApplyEnvOverrides replaces key config fields with environment variables when set.
 // Env var names follow the pattern HARUKI_<SECTION>_<FIELD> (all upper-snake).
 func ApplyEnvOverrides(cfg *Config) {
+	// Profile (env override parsed into typed field)
+	if v := os.Getenv("HARUKI_PROFILE"); v != "" {
+		if p, err := ParseProfile(v); err == nil {
+			cfg.Profile = p
+		}
+	}
+
 	// Backend
 	envStr("HARUKI_BACKEND_HOST", &cfg.Backend.Host)
 	envInt("HARUKI_BACKEND_PORT", &cfg.Backend.Port)
@@ -307,6 +343,7 @@ type ToolboxConfig struct {
 }
 
 type Config struct {
+	Profile     Profile           `yaml:"profile"`
 	Backend     BackendConfig     `yaml:"backend"`
 	Chunithm    ChunithmConfig    `yaml:"chunithm"`
 	PJSK        PJSKConfig        `yaml:"pjsk"`
@@ -323,6 +360,42 @@ type Config struct {
 
 var Cfg Config
 
+// ApplyProfileDefaults fills in zero-value fields with profile-aware defaults.
+// Called after YAML parse but before env overrides, so explicit YAML values and
+// env vars always take precedence.
+func ApplyProfileDefaults(cfg *Config) {
+	p := cfg.Profile
+
+	// LogLevel — only set when the YAML field is empty.
+	if cfg.Backend.LogLevel == "" {
+		switch {
+		case p.IsProduction():
+			cfg.Backend.LogLevel = "WARN"
+		case p.IsBeta():
+			cfg.Backend.LogLevel = "INFO"
+		default:
+			cfg.Backend.LogLevel = "DEBUG"
+		}
+	}
+
+	// APICacheTTL — only set when unspecified (zero).
+	if cfg.Backend.APICacheTTL == 0 {
+		switch {
+		case p.IsProduction():
+			cfg.Backend.APICacheTTL = 120 * time.Second
+		case p.IsBeta():
+			cfg.Backend.APICacheTTL = 60 * time.Second
+		default:
+			cfg.Backend.APICacheTTL = 10 * time.Second
+		}
+	}
+
+	// Production safety: force-disable insecure internal API regardless of YAML.
+	if p.IsProduction() {
+		cfg.Backend.AllowInsecureInternalAPI = false
+	}
+}
+
 func ReadConfig(path string) (Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -335,6 +408,14 @@ func ReadConfig(path string) (Config, error) {
 		return Config{}, fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
+	// Normalise profile from YAML (may be empty → defaults to "dev").
+	p, pErr := ParseProfile(string(cfg.Profile))
+	if pErr != nil {
+		return Config{}, fmt.Errorf("invalid profile in config: %w", pErr)
+	}
+	cfg.Profile = p
+
+	ApplyProfileDefaults(&cfg)
 	ApplyEnvOverrides(&cfg)
 	return cfg, nil
 }

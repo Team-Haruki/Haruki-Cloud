@@ -89,7 +89,7 @@
 观察到的特征：
 
 - 单一 Fiber 服务，入口在 `cmd/server/main.go`。
-- 通过 `haruki-db-configs.yaml` 做集中式配置加载。
+- 通过 `haruki-cloud.yaml` 做集中式配置加载。
 - 现有公开 API 风格是 `/<module>/...`，配合 `api/helper.go` 中的统一 JSON envelope。
 - 现有内部/私有接口已经具备中间件和鉴权机制。
 - `api/pjsk` 目前只暴露 alias 相关接口。

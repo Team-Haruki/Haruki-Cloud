@@ -107,22 +107,27 @@ Haruki-Cloud/
 ├── cmd/server/                   #   主服务入口
 ├── schema_info.json              #   Sekai 表结构元数据
 ├── go.mod / go.sum               #   Go 模块定义
-└── haruki-db-configs.example.yaml  #   配置文件模板
+└── haruki-cloud.example.yaml  #   配置文件模板
 ```
 
 ---
 
 ## 3. 配置系统
 
-配置通过 `haruki-db-configs.yaml` 加载，顶级结构如下：
+配置通过 `haruki-cloud.yaml` 加载，顶级结构如下：
 
 ```yaml
+profile: "dev"             # 部署环境: production / beta / dev
+                           # 影响 log_level / api_cache_ttl 默认值、recover stack trace 可见性
+                           # production 强制关闭 allow_insecure_internal_api
+                           # 可通过 HARUKI_PROFILE 环境变量覆盖
+
 backend:                   # 服务基础配置
   host: "0.0.0.0"
   port: 3000
   accept_authorization: "" # 内部 API 鉴权令牌
   accept_user_agent: ""    # 内部 API User-Agent 过滤
-  allow_insecure_internal_api: false # 仅测试/本地调试时才建议显式开启
+  allow_insecure_internal_api: false # 仅 dev/beta 时可开启；production 下强制关闭
 
 redis:                     # Redis 连接
   addr: "localhost:6379"

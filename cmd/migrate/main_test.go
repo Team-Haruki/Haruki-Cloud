@@ -22,7 +22,7 @@ func TestResolveMigrationDBConfigPrefersEnv(t *testing.T) {
 
 func TestResolveMigrationDBConfigFallsBackToConfigFile(t *testing.T) {
 	configDir := t.TempDir()
-	configPath := filepath.Join(configDir, "haruki-db-configs.yaml")
+	configPath := filepath.Join(configDir, "haruki-cloud.yaml")
 	content := []byte("sekai:\n  db_type: postgres\n  db_url: host=localhost port=5432 user=test password=test dbname=test sslmode=disable\n")
 	if err := os.WriteFile(configPath, content, 0o644); err != nil {
 		t.Fatalf("write config: %v", err)

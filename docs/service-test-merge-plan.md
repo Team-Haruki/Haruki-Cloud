@@ -77,7 +77,7 @@ Main functional modules currently present:
 Observed characteristics:
 
 - Single Fiber server in `cmd/server/main.go`.
-- Centralized config loading from `haruki-db-configs.yaml`.
+- Centralized config loading from `haruki-cloud.yaml`.
 - Existing public API style is `/<module>/...`, with JSON envelope helpers in `api/helper.go`.
 - Existing internal/private style already uses auth middleware where needed.
 - `api/pjsk` currently exposes only alias endpoints.

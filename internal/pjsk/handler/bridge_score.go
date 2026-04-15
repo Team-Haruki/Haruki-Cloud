@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/requestbuilder"
 	"haruki-cloud/internal/pjsk/drawing"

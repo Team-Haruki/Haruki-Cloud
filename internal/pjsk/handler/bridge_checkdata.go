@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/query"
 	sekaiutils "haruki-cloud/internal/pjsk/sekai"

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"

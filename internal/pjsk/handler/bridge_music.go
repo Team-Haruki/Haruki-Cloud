@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/music"
 	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )

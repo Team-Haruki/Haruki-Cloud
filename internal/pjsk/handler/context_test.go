@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"reflect"
 	"testing"
 )

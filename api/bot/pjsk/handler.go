@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"haruki-cloud/api"
-	onebot11 "haruki-cloud/api/bot/onebot11"
+	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/internal/core/crypto"

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	noiseCrypto "haruki-cloud/internal/core/crypto"

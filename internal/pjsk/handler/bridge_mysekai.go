@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/render/mysekai"
 	sekaiutils "haruki-cloud/internal/pjsk/sekai"

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/query"

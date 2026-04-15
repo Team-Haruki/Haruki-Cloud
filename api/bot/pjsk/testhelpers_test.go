@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	onebot11 "haruki-cloud/api/bot/onebot11"
+	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"

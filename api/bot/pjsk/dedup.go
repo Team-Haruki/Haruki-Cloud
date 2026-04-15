@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	onebot11 "haruki-cloud/api/bot/onebot11"
+	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 
 	"github.com/redis/go-redis/v9"
 )

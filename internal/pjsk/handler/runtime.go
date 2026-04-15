@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderregion "haruki-cloud/internal/pjsk/render/region"

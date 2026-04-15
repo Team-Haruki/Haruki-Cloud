@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/config"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaidb "haruki-cloud/database/sekai"

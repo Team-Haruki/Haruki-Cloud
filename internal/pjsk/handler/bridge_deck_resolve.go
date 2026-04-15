@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	sekaidb "haruki-cloud/database/sekai"
 	eventdb "haruki-cloud/database/sekai/event"
 	renderapp "haruki-cloud/internal/pjsk/render/app"

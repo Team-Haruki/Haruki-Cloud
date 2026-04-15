@@ -57,6 +57,25 @@ func (c *Controller) RegisterEventSource(source event.DataSource) {
 	c.events.RegisterSource(source)
 }
 
+func (c *Controller) MergeNicknames(items map[string]int) {
+	if c == nil || len(items) == 0 {
+		return
+	}
+	if c.nicknames == nil {
+		c.nicknames = cloneNicknames(defaultNicknames)
+	}
+	for nickname, characterID := range items {
+		key := normalizeNicknameQuery(nickname)
+		if key == "" || characterID <= 0 {
+			continue
+		}
+		if existing, ok := c.nicknames[key]; ok && existing != characterID {
+			continue
+		}
+		c.nicknames[key] = characterID
+	}
+}
+
 func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c == nil {
 		return nil

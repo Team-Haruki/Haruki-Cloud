@@ -638,6 +638,74 @@ func TestBuildRecommendOptionDefaultsChallengeLiveTypeAndStrategies(t *testing.T
 	}
 }
 
+func TestPrepareRecommendUserDataPreservesUnknownSnapshotFields(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	raw := &userdata.RawUserData{
+		Now:          1700000000000,
+		UserGamedata: userdata.RawUserGamedata{UserID: 10001, Name: "Deck User", Deck: 1},
+		UserProfile:  userdata.RawUserProfile{ProfileImageType: "default"},
+		UserCards: []userdata.RawUserCard{
+			{
+				CardID:                1001,
+				Level:                 50,
+				SkillLevel:            4,
+				MasterRank:            1,
+				SpecialTrainingStatus: "not_done",
+				DefaultImage:          "normal",
+			},
+		},
+		UserAreas: []userdata.RawUserArea{
+			{AreaItems: []userdata.RawUserAreaItem{{AreaItemID: 1, Level: 3}}},
+		},
+	}
+	originalBytes := []byte(`{
+		"now":1700000000000,
+		"userGamedata":{"userId":10001,"name":"Deck User","deck":1},
+		"userProfile":{"profileImageType":"default"},
+		"userCards":[{"cardId":1001,"userId":10001,"level":50,"skillLevel":4,"masterRank":1,"specialTrainingStatus":"not_done","defaultImage":"normal","createdAt":"2026-04-15T17:00:00Z","duplicateCount":2,"exp":123,"skillExp":456,"totalExp":789,"totalSkillExp":987,"episodes":null}],
+		"userAreas":[{"areaItems":[{"areaItemId":1,"level":3,"updatedAt":"2026-04-15T17:00:00Z"}]}],
+		"userDecks":[{"deckId":1,"leader":1001,"subLeader":1002,"member1":1001,"member2":1002,"member3":1003,"member4":1004,"member5":1005}],
+		"userCustomUnknown":{"keep":"me"}
+	}`)
+
+	userBytes, err := encodePreparedRecommendUserData(originalBytes, raw, raw)
+	if err != nil {
+		t.Fatalf("encodePreparedRecommendUserData() error = %v", err)
+	}
+
+	text := string(userBytes)
+	if !strings.Contains(text, `"userCustomUnknown":{"keep":"me"}`) {
+		t.Fatalf("expected unknown snapshot fields to be preserved: %s", text)
+	}
+	if !strings.Contains(text, `"userDecks":[{"deckId":1`) {
+		t.Fatalf("expected original unmodeled top-level fields to remain: %s", text)
+	}
+	for _, fragment := range []string{
+		`"createdAt":"2026-04-15T17:00:00Z"`,
+		`"duplicateCount":2`,
+		`"exp":123`,
+		`"skillExp":456`,
+		`"totalExp":789`,
+		`"totalSkillExp":987`,
+		`"userId":10001`,
+		`"updatedAt":"2026-04-15T17:00:00Z"`,
+		`"userAreaStatus":{}`,
+	} {
+		if !strings.Contains(text, fragment) {
+			t.Fatalf("expected nested snapshot field %s to be preserved: %s", fragment, text)
+		}
+	}
+	if strings.Contains(text, `"episodes":null`) {
+		t.Fatalf("expected nil nested collections to be omitted or normalized: %s", text)
+	}
+	if !strings.Contains(text, `"userCards":[{`) || !strings.Contains(text, `"userAreas":[{`) {
+		t.Fatalf("expected prepared userCards/userAreas to remain populated: %s", text)
+	}
+
+	_ = controller
+}
+
 func TestBuildRecommendOptionMapsChallengeAutoLiveType(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
@@ -1618,10 +1686,12 @@ func TestBuildAutoRecommendRequestFilterAndExcludeTrimUserCards(t *testing.T) {
 	})
 
 	eventID := 7
+	boost := 5
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
 		EventID:       &eventID,
+		Boost:         &boost,
 		UnitFilter:    "piapro",
 		ExcludedCards: []int{1004},
 		Algorithm:     "ga",
@@ -1633,6 +1703,12 @@ func TestBuildAutoRecommendRequestFilterAndExcludeTrimUserCards(t *testing.T) {
 	if request.UnitFilter == nil || *request.UnitFilter != "piapro" {
 		t.Fatalf("unexpected request unit filter: %+v", request.UnitFilter)
 	}
+	if request.UnitLogoPath == nil || *request.UnitLogoPath != "static_images/icon_piapro.png" {
+		t.Fatalf("unexpected request unit logo path: %+v", request.UnitLogoPath)
+	}
+	if request.Boost == nil || *request.Boost != 5 {
+		t.Fatalf("unexpected request boost: %+v", request.Boost)
+	}
 	if !reflect.DeepEqual(request.ExcludedCards, []int{1004}) {
 		t.Fatalf("unexpected request excluded cards: %+v", request.ExcludedCards)
 	}
@@ -1643,6 +1719,38 @@ func TestBuildAutoRecommendRequestFilterAndExcludeTrimUserCards(t *testing.T) {
 	sort.Ints(got)
 	if !reflect.DeepEqual(got, []int{1003, 1005}) {
 		t.Fatalf("unexpected filtered user cards: %+v", got)
+	}
+}
+
+func TestBuildAutoRecommendRequestSetsAttrIconPathFromAttrFilter(t *testing.T) {
+	server, masterdataRoot := newDeckRecommendStubServer(t)
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+	defer server.Close()
+
+	eventID := 7
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       &eventID,
+		AttrFilter:    "happy",
+		Algorithm:     "ga",
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+
+	if request.AttrFilter == nil || *request.AttrFilter != "happy" {
+		t.Fatalf("unexpected request attr filter: %+v", request.AttrFilter)
+	}
+	if request.AttrIconPath == nil || *request.AttrIconPath != "static_images/card/attr_icon_happy.png" {
+		t.Fatalf("unexpected request attr icon path: %+v", request.AttrIconPath)
 	}
 }
 

@@ -143,6 +143,43 @@ func (s *Service) ListApprovedMusicAliases(ctx context.Context, musicID int) ([]
 	return aliases, nil
 }
 
+func (s *Service) ListApprovedCharacterAliasMap(ctx context.Context) (map[string]int, error) {
+	result := make(map[string]int)
+	if !s.IsReady() {
+		return result, nil
+	}
+
+	rows, err := s.pjsk.Alias.Query().
+		Where(aliasdb.AliasTypeEQ(AliasTypeCharacter)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	owners := make(map[string]int, len(rows))
+	conflicts := make(map[string]struct{})
+	for _, row := range rows {
+		if row == nil || row.AliasTypeID <= 0 {
+			continue
+		}
+		key := normalizeCompareText(row.Alias)
+		if key == "" {
+			continue
+		}
+		if _, conflicted := conflicts[key]; conflicted {
+			continue
+		}
+		if existing, ok := owners[key]; ok && existing != row.AliasTypeID {
+			delete(result, key)
+			conflicts[key] = struct{}{}
+			continue
+		}
+		owners[key] = row.AliasTypeID
+		result[key] = row.AliasTypeID
+	}
+	return result, nil
+}
+
 func (s *Service) Delete(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToDelete []string) ([]ApprovedAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")

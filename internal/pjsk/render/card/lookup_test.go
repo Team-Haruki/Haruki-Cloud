@@ -242,6 +242,48 @@ func TestSearchServiceSupportsGlobalLatestVisibleCard(t *testing.T) {
 	}
 }
 
+func TestSearchServiceSupportsCharacterLatestVisibleCard(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 501, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Old Visible", AssetBundleName: "card_old_visible", ReleaseAt: now - 3000},
+			{ID: 502, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Latest Visible", AssetBundleName: "card_latest_visible", ReleaseAt: now - 1000},
+			{ID: 503, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Future", AssetBundleName: "card_future", ReleaseAt: now + 1000},
+		},
+	}
+	source.filterFunc = func(info *CardQueryInfo) ([]*masterdata.Card, error) {
+		if info == nil || info.CharacterID != 5 {
+			return nil, fmt.Errorf("filter not supported: %+v", info)
+		}
+		out := make([]*masterdata.Card, 0, 3)
+		for _, item := range source.cards {
+			if item == nil || item.CharacterID != info.CharacterID {
+				continue
+			}
+			copy := *item
+			out = append(out, &copy)
+		}
+		return out, nil
+	}
+
+	searcher := NewSearchService(source, NewParser(defaultNicknames))
+	cardInfo, err := searcher.Search("mnr-1")
+	if err != nil {
+		t.Fatalf("Search(mnr-1) error = %v", err)
+	}
+	if cardInfo.ID != 502 {
+		t.Fatalf("expected latest visible character card 502, got %+v", cardInfo)
+	}
+
+	list, err := searcher.SearchList("mnr-2")
+	if err != nil {
+		t.Fatalf("SearchList(mnr-2) error = %v", err)
+	}
+	if len(list) != 1 || list[0].ID != 501 {
+		t.Fatalf("expected second latest visible character card 501, got %+v", list)
+	}
+}
+
 func TestBuildCardDetailRequestSkipsEmptyCostumeAssetBundlePaths(t *testing.T) {
 	source := &lookupTestSource{
 		region: renderregion.CN,

@@ -85,12 +85,20 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 			}
 		}
 	}
-	if unit := optionString(option, "event_unit"); unit != "" {
+	unit := optionString(option, "event_unit")
+	if unit == "" {
+		unit = optionString(option, "unit_filter")
+	}
+	if unit != "" {
 		if path := c.resolveUnitIconPath(unit); path != "" {
 			request.UnitLogoPath = &path
 		}
 	}
-	if attr := optionString(option, "event_attr"); attr != "" {
+	attr := optionString(option, "event_attr")
+	if attr == "" {
+		attr = optionString(option, "attr_filter")
+	}
+	if attr != "" {
 		if path := c.resolveAttrIconPath(attr); path != "" {
 			request.AttrIconPath = &path
 		}

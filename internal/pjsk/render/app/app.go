@@ -263,7 +263,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 	if cardController != nil && aliasService != nil {
 		if nicknames, err := aliasService.ListApprovedCharacterAliasMap(initCtx); err != nil {
-			mainLogger.Warnf("load approved character aliases for card controller failed: %v", err)
+			logger.Warnf("load approved character aliases for card controller failed: %v", err)
 		} else {
 			cardController.MergeNicknames(nicknames)
 		}

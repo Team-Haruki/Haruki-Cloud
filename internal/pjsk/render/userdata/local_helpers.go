@@ -36,6 +36,9 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 
 	if updatedResources, ok := mySekaiMap["updatedResources"].(map[string]any); ok {
 		for key, value := range updatedResources {
+			if shouldPreserveSuiteSnapshotKey(key) {
+				continue
+			}
 			// Don't overwrite a non-empty suite array with an empty mysekai delta.
 			if existing, exists := baseMap[key]; exists {
 				if existingSlice, ok := existing.([]any); ok && len(existingSlice) > 0 {
@@ -62,6 +65,22 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		return nil, fmt.Errorf("encode merged mysekai snapshot: %w", err)
 	}
 	return merged, nil
+}
+
+func shouldPreserveSuiteSnapshotKey(key string) bool {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return false
+	}
+	if strings.HasPrefix(key, "userMysekai") || strings.HasPrefix(key, "mysekai") {
+		return false
+	}
+	switch key {
+	case "userGamedata", "userProfile", "userDecks", "userCards", "userAreas", "userCharacters", "userHonors":
+		return true
+	default:
+		return false
+	}
 }
 
 func shouldMergeMySekaiTopLevelKey(key string) bool {

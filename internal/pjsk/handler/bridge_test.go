@@ -624,20 +624,85 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 	if err != nil {
 		t.Fatalf("executeMusic bpm: %v", err)
 	}
-	if len(message) != 2 || message[0].Type != "text" || message[1].Type != "image" {
+	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected bpm message: %+v", message)
-	}
-	textData, ok := message[0].Data.(onebot11.TextData)
-	if !ok {
-		t.Fatalf("unexpected bpm text payload: %+v", message[0].Data)
-	}
-	if got := textData.Text; got != "BPM 200" {
-		t.Fatalf("unexpected bpm summary text: %+v", message[0].Data)
 	}
 	if listCalls != 1 {
 		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
 	}
 	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+		t.Fatalf("unexpected title list: %+v", titles)
+	}
+}
+
+func TestExecuteMusicNoteCountUsesSingleMusicListImageWithoutSummaryText(t *testing.T) {
+	listCalls := 0
+	titles := make([]string, 0, 1)
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/pjsk/music/list":
+			listCalls++
+			var req drawing.MusicListRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode music-list request: %v", err)
+			}
+			if req.Title == nil {
+				t.Fatalf("expected list title, got nil")
+			}
+			titles = append(titles, *req.Title)
+			if req.Profile != nil {
+				t.Fatalf("expected nil profile for lookup list, got %+v", req.Profile)
+			}
+			if len(req.MusicList) != 2 {
+				t.Fatalf("expected 2 list items in single request, got %d", len(req.MusicList))
+			}
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 777},
+			},
+			2: {
+				{MusicID: 2, MusicDifficulty: "expert", PlayLevel: 28, TotalNoteCount: 777},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]any{"note_count": 777, "difficulty": "expert"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module: parser.ModuleMusic,
+		Mode:   "music-note-count",
+		Region: "jp",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic note-count: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected note-count message: %+v", message)
+	}
+	if listCalls != 1 {
+		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
+	}
+	if len(titles) != 1 || titles[0] != "物量 777 EXPERT 匹配结果" {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }

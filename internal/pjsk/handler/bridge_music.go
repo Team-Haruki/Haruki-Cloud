@@ -133,7 +133,7 @@ func renderNoteCountLookupListMessages(rc *RequestContext, musicCtrl *music.Cont
 			Level:      item.PlayLevel,
 		})
 	}
-	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "物量", strconv.Itoa(query.NoteCount), query.Difficulty, items)
+	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "物量", strconv.Itoa(query.NoteCount), query.Difficulty, query.Difficulty, items)
 }
 
 func renderBPMLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, query music.BPMQuery, matches []music.BPMMatch) (onebot11.Message, error) {
@@ -147,18 +147,17 @@ func renderBPMLookupListMessages(rc *RequestContext, musicCtrl *music.Controller
 			Difficulty: item.Difficulty,
 		})
 	}
-	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "BPM", formatMusicBPM(query.BPM), query.Difficulty, items)
+	return renderMusicLookupListMessages(rc, musicCtrl, rc.Cmd.Region, "BPM", formatMusicBPM(query.BPM), query.Difficulty, "", items)
 }
 
-func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, region string, prefix string, value string, difficulty string, items []music.ListItemQuery) (onebot11.Message, error) {
+func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *music.Controller, region string, prefix string, value string, requestDifficulty string, titleDifficulty string, items []music.ListItemQuery) (onebot11.Message, error) {
 	if len(items) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
-	title := buildMusicLookupListTitle(prefix, value, difficulty)
-	summary := buildMusicLookupSummary(prefix, value, difficulty)
+	title := buildMusicLookupListTitle(prefix, value, titleDifficulty)
 	data, err := musicCtrl.RenderMusicList(music.ListQuery{
 		Items:       items,
-		Difficulty:  difficulty,
+		Difficulty:  requestDifficulty,
 		Region:      region,
 		Title:       &title,
 		TitleShadow: true,
@@ -170,15 +169,7 @@ func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *music.Controll
 	if err != nil {
 		return nil, err
 	}
-	return append(onebot11.Message{onebot11.Text(summary)}, image...), nil
-}
-
-func buildMusicLookupSummary(prefix string, value string, difficulty string) string {
-	summary := fmt.Sprintf("%s %s", strings.TrimSpace(prefix), strings.TrimSpace(value))
-	if diffLabel := formatMusicDifficultyLabel(difficulty); diffLabel != "" {
-		summary = fmt.Sprintf("%s %s %s", strings.TrimSpace(prefix), strings.TrimSpace(value), diffLabel)
-	}
-	return strings.TrimSpace(summary)
+	return image, nil
 }
 
 func buildMusicLookupListTitle(prefix string, value string, difficulty string) string {

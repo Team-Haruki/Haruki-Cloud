@@ -43,10 +43,43 @@ func ExtractMusicDifficulty(text string) (string, string) {
 		if index < 0 {
 			continue
 		}
+		if !canExtractMusicDifficultyAlias(lower, index, alias) {
+			continue
+		}
 		cleaned := strings.TrimSpace(text[:index] + text[index+len(alias):])
 		return item.Canonical, strings.Join(strings.Fields(cleaned), " ")
 	}
 	return "", strings.Join(strings.Fields(text), " ")
+}
+
+func canExtractMusicDifficultyAlias(text string, index int, alias string) bool {
+	if index < 0 || alias == "" || index+len(alias) > len(text) {
+		return false
+	}
+	if !isASCIIAlias(alias) {
+		return true
+	}
+	if index > 0 && isASCIILetter(text[index-1]) {
+		return false
+	}
+	next := index + len(alias)
+	if next < len(text) && isASCIILetter(text[next]) {
+		return false
+	}
+	return true
+}
+
+func isASCIIAlias(value string) bool {
+	for i := 0; i < len(value); i++ {
+		if value[i] > 127 {
+			return false
+		}
+	}
+	return true
+}
+
+func isASCIILetter(ch byte) bool {
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
 }
 
 func SplitMusicQueries(text string) []string {

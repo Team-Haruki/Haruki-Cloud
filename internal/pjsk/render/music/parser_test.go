@@ -23,6 +23,16 @@ func TestExtractMusicDifficultySupportsInlineForms(t *testing.T) {
 	if diff != "" || cleaned != "红" {
 		t.Fatalf("single-char diff alias should not be recognized: diff=%q cleaned=%q", diff, cleaned)
 	}
+
+	diff, cleaned = ExtractMusicDifficulty("hnm")
+	if diff != "" || cleaned != "hnm" {
+		t.Fatalf("embedded normal alias should not be recognized inside hnm: diff=%q cleaned=%q", diff, cleaned)
+	}
+
+	diff, cleaned = ExtractMusicDifficulty("hnm ex")
+	if diff != "expert" || cleaned != "hnm" {
+		t.Fatalf("spaced expert alias should still be recognized: diff=%q cleaned=%q", diff, cleaned)
+	}
 }
 
 func TestParserSupportsExplicitMusicID(t *testing.T) {

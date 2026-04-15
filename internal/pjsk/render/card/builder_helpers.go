@@ -167,13 +167,16 @@ func (b *Builder) buildCardImagePaths(card *masterdata.Card, region renderregion
 	if card == nil {
 		return nil
 	}
-	base := filepath.Join("character", "member", card.AssetBundleName)
 
 	if !onlyHasAfterTrainingCard(card) {
-		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join(base, "card_normal.png")))
+		if path := common.ResolveCardMemberImagePath(b.assets, region, card.AssetBundleName, "card_normal.png"); strings.TrimSpace(path) != "" {
+			paths = append(paths, path)
+		}
 	}
 	if card.CardRarityType == "rarity_3" || card.CardRarityType == "rarity_4" {
-		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join(base, "card_after_training.png")))
+		if path := common.ResolveCardMemberImagePath(b.assets, region, card.AssetBundleName, "card_after_training.png"); strings.TrimSpace(path) != "" {
+			paths = append(paths, path)
+		}
 	}
 	return paths
 }

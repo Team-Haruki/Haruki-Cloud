@@ -153,14 +153,10 @@ func (c *Controller) buildLeaderImagePathFromSource(source DataSource, cardID in
 	if err != nil || card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
 		return fallback
 	}
-	imageType := "normal"
-	if afterTraining {
-		imageType = "after_training"
+	if path := common.ResolveCardThumbnailPath(helper, region, card.AssetBundleName, afterTraining); strings.TrimSpace(path) != "" {
+		return path
 	}
-	return assets.ResolveRegionAssetPath(helper, region.String(),
-		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", card.AssetBundleName, imageType)),
-		filepath.Join("character", "member", card.AssetBundleName, "card_normal.png"),
-	)
+	return fallback
 }
 
 func (c *Controller) buildProfileImagePathFromSource(

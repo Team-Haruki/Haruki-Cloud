@@ -56,3 +56,21 @@ func TestBuildCardThumbnailUsesRipMemberAssetWhenThumbnailMissing(t *testing.T) 
 		t.Fatalf("expected %q, got %q", want, got.CardThumbnailPath)
 	}
 }
+
+func TestResolveCardThumbnailPathSupportsOnDemandMemberAsset(t *testing.T) {
+	root := t.TempDir()
+	helper := assets.NewAssetHelper(root, nil)
+	target := filepath.Join(root, "asset", "en-assets", "ondemand", "character", "member", "card_test", "card_after_training.png")
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(target, []byte("png"), 0o644); err != nil {
+		t.Fatalf("write asset: %v", err)
+	}
+
+	got := ResolveCardThumbnailPath(helper, renderregion.EN, "card_test", true)
+	want := filepath.ToSlash(filepath.Join("asset", "en-assets", "ondemand", "character", "member", "card_test", "card_after_training.png"))
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}

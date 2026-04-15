@@ -27,7 +27,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/render/vlive"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/censor"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"

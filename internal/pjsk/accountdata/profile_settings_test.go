@@ -1,10 +1,10 @@
-package userdata_test
+package accountdata_test
 
 import (
 	"context"
 	"testing"
 
-	"haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
@@ -32,9 +32,9 @@ func (s *fakeProfileBGStore) SaveProfileBackground(ctx context.Context, server s
 	s.saved = append(s.saved, imageURL)
 	s.savedServers = append(s.savedServers, server)
 	s.savedBindingID = append(s.savedBindingID, bindingID)
-	path := userdata.DefaultProfileBGRelativeDir + "/" + server + "/binding_" + "1" + ".jpg"
+	path := accountdata.DefaultProfileBGRelativeDir + "/" + server + "/binding_" + "1" + ".jpg"
 	if bindingID != 1 {
-		path = userdata.DefaultProfileBGRelativeDir + "/" + server + "/binding_" + "2" + ".jpg"
+		path = accountdata.DefaultProfileBGRelativeDir + "/" + server + "/binding_" + "2" + ".jpg"
 	}
 	return &drawing.ProfileBgSettings{
 		ImgPath:  &path,
@@ -162,7 +162,7 @@ func TestExecuteProfileSettingsCommandVerifyListMasksUID(t *testing.T) {
 		t.Fatalf("verify: %v", err)
 	}
 
-	text, err := userdata.ExecuteProfileSettingsCommand(ctx, service, userdata.ProfileModeVerifyList, userdata.ProfileSettingsCommandParams{
+	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeVerifyList, accountdata.ProfileSettingsCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Server:         "jp",
@@ -190,7 +190,7 @@ func TestExecuteProfileSettingsCommandVerifyReturnsVerificationText(t *testing.T
 		t.Fatalf("bind: %v", err)
 	}
 
-	text, err := userdata.ExecuteProfileSettingsCommand(ctx, service, userdata.ProfileModeVerify, userdata.ProfileSettingsCommandParams{
+	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeVerify, accountdata.ProfileSettingsCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Server:         "jp",
@@ -231,7 +231,7 @@ func TestExecuteProfileSettingsCommandBGUploadUsesGlobalDefaultBindingWhenRegion
 		t.Fatalf("verify jp: %v", err)
 	}
 
-	text, err := userdata.ExecuteProfileSettingsCommand(ctx, service, userdata.ProfileModeBGUpload, userdata.ProfileSettingsCommandParams{
+	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGUpload, accountdata.ProfileSettingsCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Server:         "jp",

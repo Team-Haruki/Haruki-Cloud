@@ -4,7 +4,7 @@ import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	"haruki-cloud/internal/pjsk/drawing"
 
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 // userQueryParams mirrors sekai.UserQueryParams for bridge-side decoding.

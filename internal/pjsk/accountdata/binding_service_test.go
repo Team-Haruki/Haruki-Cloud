@@ -1,4 +1,4 @@
-package userdata_test
+package accountdata_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
-	"haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -40,7 +40,7 @@ func TestBindingServiceBindListAndDefaultSwitch(t *testing.T) {
 	usersClient := usersenttest.Open(t, "sqlite3", "file:users_bind_test?mode=memory&cache=shared&_fk=1")
 	defer usersClient.Close()
 
-	service := userdata.NewBindingService(
+	service := accountdata.NewBindingService(
 		pjskClient,
 		identity.NewResolver(usersClient),
 		&fakeProfileValidator{
@@ -93,7 +93,7 @@ func TestBindingServiceBindListAndDefaultSwitch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("set global default: %v", err)
 	}
-	if result.Scope != userdata.DefaultScopeGlobal || result.Binding.UserID != "1000" {
+	if result.Scope != accountdata.DefaultScopeGlobal || result.Binding.UserID != "1000" {
 		t.Fatalf("unexpected set default result: %+v", result)
 	}
 
@@ -112,7 +112,7 @@ func TestBindingServiceUnbindReassignsDefaults(t *testing.T) {
 	usersClient := usersenttest.Open(t, "sqlite3", "file:users_unbind_test?mode=memory&cache=shared&_fk=1")
 	defer usersClient.Close()
 
-	service := userdata.NewBindingService(
+	service := accountdata.NewBindingService(
 		pjskClient,
 		identity.NewResolver(usersClient),
 		&fakeProfileValidator{

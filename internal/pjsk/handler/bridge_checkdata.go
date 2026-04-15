@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/onebot11"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/query"
 	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )

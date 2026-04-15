@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	renderregion "haruki-cloud/internal/pjsk/render/region"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 type MySekaiPayloadProvider interface {

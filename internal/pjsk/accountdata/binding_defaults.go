@@ -8,7 +8,7 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // SetDefault sets the default binding for the given scope (global or server-specific).

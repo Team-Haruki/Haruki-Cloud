@@ -7,7 +7,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekai "haruki-cloud/internal/pjsk/sekai"

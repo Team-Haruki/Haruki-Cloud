@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/card"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {

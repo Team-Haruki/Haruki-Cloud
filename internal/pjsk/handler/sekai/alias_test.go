@@ -8,7 +8,7 @@ import (
 	aliases "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestMusicAliasAddHandleBuildsResolvedCommand(t *testing.T) {

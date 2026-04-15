@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sort"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // ===========================================================================

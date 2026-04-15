@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"haruki-cloud/internal/pjsk/handler"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestBuildSKTrackerParamsDefaults(t *testing.T) {

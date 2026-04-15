@@ -14,7 +14,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/profile"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiutils "haruki-cloud/internal/pjsk/sekai"

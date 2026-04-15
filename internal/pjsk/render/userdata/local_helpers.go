@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/database/sekai/card"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {

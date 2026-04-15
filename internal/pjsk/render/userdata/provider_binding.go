@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/logger"
 )

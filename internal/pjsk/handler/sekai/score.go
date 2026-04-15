@@ -6,7 +6,7 @@ import (
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"strconv"
 	"strings"
 )

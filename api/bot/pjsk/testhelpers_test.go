@@ -11,7 +11,7 @@ import (
 	rendercard "haruki-cloud/internal/pjsk/render/card"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
 )

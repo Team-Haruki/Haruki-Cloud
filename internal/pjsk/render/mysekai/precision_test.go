@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 const largeMySekaiID int64 = 9007199254740993

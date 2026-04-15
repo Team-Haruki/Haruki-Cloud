@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
 )

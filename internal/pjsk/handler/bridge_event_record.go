@@ -12,7 +12,7 @@ import (
 
 	eventdb "haruki-cloud/database/sekai/event"
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/logger"

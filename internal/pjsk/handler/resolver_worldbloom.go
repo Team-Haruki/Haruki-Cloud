@@ -11,7 +11,7 @@ import (
 	eventdb "haruki-cloud/database/sekai/event"
 	worldbloomdb "haruki-cloud/database/sekai/worldbloom"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func resolveTrackerWorldBloomEvent(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) (*sekaidb.Event, []*sekaidb.Worldbloom, error) {

@@ -14,7 +14,7 @@ import (
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/logger"
 	"haruki-cloud/internal/pjsk/sekai"

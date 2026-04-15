@@ -21,7 +21,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/mysekai"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/score"
 	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/stamp"

@@ -1,7 +1,7 @@
 package provider
 
 import (
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // LocalProvider implements MasterDataProvider using local JSON files.

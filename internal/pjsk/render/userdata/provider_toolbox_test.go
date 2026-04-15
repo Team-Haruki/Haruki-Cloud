@@ -8,7 +8,7 @@ import (
 	"time"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 

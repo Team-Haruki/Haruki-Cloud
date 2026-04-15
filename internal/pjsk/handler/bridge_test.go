@@ -29,7 +29,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/userdata"

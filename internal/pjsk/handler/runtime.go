@@ -12,7 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
-	sekaiutils "haruki-cloud/internal/pjsk/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 // RequestContext holds pre-resolved request-level data for a single command
@@ -42,7 +42,7 @@ type RequestContext struct {
 	selfTargetOnce    sync.Once
 	selfTarget        *resolvedGameTarget
 	publicProfileOnce sync.Once
-	publicProfileResp *sekaiutils.GetAnotherProfileResponse
+	publicProfileResp *sekaiapi.GetAnotherProfileResponse
 
 	// Lazy profile resolution
 	profileOnce     sync.Once
@@ -124,14 +124,14 @@ func (rc *RequestContext) GetSelfTarget() *resolvedGameTarget {
 	return rc.selfTarget
 }
 
-func (rc *RequestContext) GetPublicProfileResponse() *sekaiutils.GetAnotherProfileResponse {
+func (rc *RequestContext) GetPublicProfileResponse() *sekaiapi.GetAnotherProfileResponse {
 	rc.publicProfileOnce.Do(func() {
 		target := rc.GetSelfTarget()
 		if target == nil {
 			return
 		}
 		region := resolvedTargetRegion(rc.RegionStr, *target)
-		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+		resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
 			return
 		}

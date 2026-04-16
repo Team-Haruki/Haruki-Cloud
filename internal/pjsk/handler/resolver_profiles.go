@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
-	sekaiutils "haruki-cloud/internal/pjsk/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileCardRequest {
@@ -41,7 +41,7 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 	}
 	region := resolvedTargetRegion(rc.RegionStr, target)
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil, nil
 	}
@@ -55,7 +55,7 @@ func buildPublicMusicProfilesFromResolvedTarget(
 	region string,
 	platform string,
 	platformUserID string,
-	resp *sekaiutils.GetAnotherProfileResponse,
+	resp *sekaiapi.GetAnotherProfileResponse,
 	app *renderapp.App,
 ) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
 	if app == nil || app.Profiles == nil || resp == nil {
@@ -93,7 +93,7 @@ func buildPublicProfileCardForTarget(ctx context.Context, target resolvedGameTar
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil
 	}

@@ -32,7 +32,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
 	"haruki-cloud/utils/logger"
-	sekaiutil "haruki-cloud/internal/pjsk/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type Config struct {
@@ -169,7 +169,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewController(drawingClient)
-	skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), nil, assetHelper)
+	skController.SetTrackerIntegration(sekaiapi.GetTrackerClient(), nil, assetHelper)
 
 	var cardController *card.Controller
 	var eventController *event.Controller
@@ -197,7 +197,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		educationAdapter := education.NewProviderAdapter(masterProvider)
 
 		// Initialize controllers with provider adapters.
-		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventAdapter, assetHelper)
+		skController.SetTrackerIntegration(sekaiapi.GetTrackerClient(), eventAdapter, assetHelper)
 		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 			Enabled:        cfg.DeckRecommend.Enabled,
 			ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,

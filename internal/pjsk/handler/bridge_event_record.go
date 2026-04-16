@@ -16,7 +16,7 @@ import (
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/logger"
-	sekaiutils "haruki-cloud/internal/pjsk/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -143,7 +143,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 }
 
 func defaultEventRecordTrackerRankLookup(ctx context.Context, region string, eventID int, userID int64) (*int, error) {
-	tracker := sekaiutils.GetTrackerClient()
+	tracker := sekaiapi.GetTrackerClient()
 	if tracker == nil {
 		return nil, nil
 	}
@@ -202,7 +202,7 @@ func fillEventRecordTrackerRanks(
 		group.Go(func() error {
 			rank, err := eventRecordTrackerRankLookup(groupCtx, regionStr, eventIDCopy, userID)
 			if err != nil {
-				if !errors.Is(err, sekaiutils.ErrRankingNotFound) {
+				if !errors.Is(err, sekaiapi.ErrRankingNotFound) {
 					logOnce.Do(func() {
 						eventRecordDebugLogger.Debugf("event record tracker rank fallback unavailable: region=%s user=%s err=%v",
 							regionStr, maskDebugID(strconv.FormatInt(userID, 10)), err)

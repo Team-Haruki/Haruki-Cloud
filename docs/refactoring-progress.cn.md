@@ -1879,11 +1879,11 @@ internal/pjsk/
 
 #### 包命名与组织
 
-| 项目 | 严重度 | 说明 |
-|------|--------|------|
-| `handler/sekai` vs `pjsk/sekai` 包名冲突 | **中** | 两者都声明 `package sekai`，导致 handler/ 下 11 个文件需要 `sekaiutils` alias。可将 `handler/sekai` 的 package 声明改为 `package command`（目录名不变） |
-| `pjsk/sekai` 全局单例模式 | **低中** | 3 个 `sync.Once` 客户端（`GetSekaiAPIClient`/`GetToolboxClient`/`GetTrackerClient`）直接读 `config.Cfg`，不可测试，与其他包的构造器注入风格不一致 |
-| `render/userdata` 与 `accountdata` 概念混淆 | **低** | 重命名 `userdata→accountdata` 后，`render/userdata`（游戏快照）仍存在，名称易混淆。改为 `render/snapshot` 更清晰，但涉及 ~20 文件 import 变更 |
+| 项目 | 严重度 | 状态 | 说明 |
+|------|--------|------|------|
+| `handler/sekai` vs `pjsk/sekai` 包名冲突 | **中** | ✅ 已统一 alias | `pjsk/sekai` 的 import alias 全部统一为 `sekaiapi`（原混用 `sekaiutils`/`sekaiutil`/`sekaiapi`），消除 13 文件不一致；`handler/sekai` 包名保留（仅 2 处外部调用方、均已用 `sekaihandler` alias） |
+| `pjsk/sekai` 全局单例模式 | **低中** | 待处理 | 3 个 `sync.Once` 客户端（`GetSekaiAPIClient`/`GetToolboxClient`/`GetTrackerClient`）直接读 `config.Cfg`，不可测试，与其他包的构造器注入风格不一致 |
+| `render/userdata` 与 `accountdata` 概念混淆 | **低** | 待处理 | 重命名 `userdata→accountdata` 后，`render/userdata`（游戏快照）仍存在，名称易混淆。改为 `render/snapshot` 更清晰，但涉及 ~20 文件 import 变更 |
 
 #### 文件命名与大小
 

@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/accountdata"
-	sekaiutils "haruki-cloud/internal/pjsk/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func executeProfile(rc *RequestContext) (onebot11.Message, error) {
@@ -25,7 +25,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		}
 		region = resolvedTargetRegion(region, target)
 
-		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+		resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
 			return nil, fmt.Errorf("获取玩家信息失败：%w", err)
 		}

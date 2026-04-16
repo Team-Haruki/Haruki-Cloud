@@ -10,7 +10,7 @@ import (
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/accountdata"
-	sekaiutils "haruki-cloud/internal/pjsk/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -63,7 +63,7 @@ func (f *fakePrivateDataClient) GetMySekaiData(server string, userID int64, plat
 	return append([]byte(nil), f.mysekaiJSON...), nil
 }
 
-func (f *fakePrivateDataClient) GetUploadTime(server string, dataType sekaiutils.ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
+func (f *fakePrivateDataClient) GetUploadTime(server string, dataType sekaiapi.ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
 	return []byte(f.uploadTime), nil
 }
 

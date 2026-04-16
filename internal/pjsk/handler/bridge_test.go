@@ -342,7 +342,7 @@ func TestResolveTrackerTargetUserSupportsSelector(t *testing.T) {
 
 	req := rendersk.TrackerRankQuery{
 		Region:         "jp",
-		RegionExplicit: false,
+		RegionExplicit: true,
 		Ranks:          []int{100},
 		TargetPlatform: "qq",
 		TargetUserID:   "9004",
@@ -1137,7 +1137,7 @@ func TestResolveDeckMusicSelectionMusicCompareSelections(t *testing.T) {
 	query := renderdeck.AutoQuery{
 		Region:              "jp",
 		MusicCompare:        true,
-		MusicCompareQueries: []string{"Song Ahd", "Song B"},
+		MusicCompareQueries: []string{"Song A hd", "Song B"},
 	}
 	if err := resolveDeckMusicSelection(&query, app); err != nil {
 		t.Fatalf("resolveDeckMusicSelection compare: %v", err)
@@ -2571,6 +2571,7 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 	root := t.TempDir()
 	for _, rel := range []string{
 		filepath.Join("asset", "jp-assets", "startapp", "character", "member", "card_test", "card_normal.png"),
+		filepath.Join("asset", "jp-assets", "startapp", "character", "member", "card_test", "card_after_training.png"),
 	} {
 		full := filepath.Join(root, rel)
 		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {

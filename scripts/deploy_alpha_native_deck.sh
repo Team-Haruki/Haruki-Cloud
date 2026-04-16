@@ -17,7 +17,7 @@ LOCAL_BINARY_PATH="${LOCAL_BINARY_PATH:-${REPO_ROOT}/build/haruki-server}"
 BUILD_BINARY="${BUILD_BINARY:-1}"
 SYNC_MASTERDATA="${SYNC_MASTERDATA:-1}"
 LOG_LEVEL="${LOG_LEVEL:-DEBUG}"
-GO_BUILD_TARGET="${GO_BUILD_TARGET:-./cmd/server}"
+GO_BUILD_TARGET="${GO_BUILD_TARGET:-.}"
 
 usage() {
 	cat <<'EOF'
@@ -33,7 +33,7 @@ Optional environment variables:
   BUILD_BINARY          1 to build before deploy, 0 to reuse existing binary
   SYNC_MASTERDATA       1 to upload deckrec/masterdata, 0 to skip
   LOG_LEVEL             Remote HARUKI_BACKEND_LOG_LEVEL (default: DEBUG)
-  GO_BUILD_TARGET       Go build package target (default: ./cmd/server)
+  GO_BUILD_TARGET       Go build package target (default: .)
 EOF
 }
 

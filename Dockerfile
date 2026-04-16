@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 RUN CGO_ENABLED=1 GOOS=linux \
-    go build -ldflags="-w -s" -o haruki-server ./cmd/server
+    go build -ldflags="-w -s" -o haruki-server .
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM alpine:latest

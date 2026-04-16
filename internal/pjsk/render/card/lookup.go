@@ -73,6 +73,13 @@ func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregi
 		if strings.TrimSpace(path) == "" {
 			continue
 		}
+		// Resolve to absolute path when the file exists locally so that callers
+		// using os.ReadFile (card-image mode, no CDN) receive a usable path.
+		if helper != nil {
+			if resolved := helper.FirstExisting(path); resolved != "" {
+				path = resolved
+			}
+		}
 		if _, ok := seen[path]; ok {
 			continue
 		}

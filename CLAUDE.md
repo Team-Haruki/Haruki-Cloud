@@ -21,7 +21,7 @@
 
 ### 组合根
 - `internal/pjsk/render/app.App` 是 render runtime 的组合根，包含所有 controller 和外部 client 字段。
-- `cmd/server/init_services.go` 负责把 `config.Cfg` 里的各段转成 `renderapp.Config`，然后构造 `renderapp.App`。
+- `init_services.go`（项目根）负责把 `config.Cfg` 里的各段转成 `renderapp.Config`，然后构造 `renderapp.App`。
 - handler 层通过 `rc.App.<Field>` 访问共享依赖；**不要再引入包级单例**。
 
 ### Sekai / Toolbox / Tracker 客户端
@@ -46,24 +46,16 @@
 
 ## 测试基线
 
-截至 2026-04-16，`go test ./...` 有 **37 packages ok / 7 FAIL**。以下失败**均为基线上已存在**的失败，**不是回归**：
-
-| 包 | 失败测试 |
-|----|----------|
-| `api/bot/pjsk` | `TestBotEndpointSKQueryUsesTrackerAtBindingPayload`、`TestBotEndpointSKQueryHandlesInlineCQAtInTextSegment` |
-| `internal/pjsk/handler` | `TestResolveTrackerTargetUserSupportsSelector`、`TestResolveDeckMusicSelectionMusicCompareSelections`、`TestExecuteCardImageReturnsAllOriginalArts` |
-| `internal/pjsk/render/card` | `TestResolveCardImagesSupportsStandardAndRipPaths` |
-
-定位手段：`git stash --include-untracked` 切回基线、重跑同组测试；若失败依旧则可排除是当前改动引入的。
+截至 2026-04-17，`go test ./...` 全量 **39 packages ok / 0 FAIL**。无已知基线失败。
 
 ## R38 剩余项（低优先）
 
 1. `render/misc`（38 行）是否吸收 —— 已评估性价比低，暂保留
 
-已完成：`accountdata/` 导出收窄（`bindingResolver` / `profileBGCleaner`）；`render/deck/controller_prepare.go` 按 userdata pipeline / profile 职责拆分；`render/userdata` → `render/snapshot` 重命名。
+已完成：`accountdata/` 导出收窄（`bindingResolver` / `profileBGCleaner`）；`render/deck/controller_prepare.go` 按 userdata pipeline / profile 职责拆分；`render/userdata` → `render/snapshot` 重命名；所有基线失败测试已修复；`cmd/server/` 上移至项目根。
 
 ## 常见陷阱
 
-- `cmd/server/` 目录被 `.gitignore` 的 `server` 规则匹配。已跟踪的文件仍能 `git commit`，但首次 `git add` 需要 `-f`。
+- 服务器主入口文件（`main.go`、`server.go`、`init_*.go`）现在在**项目根**（`package main`），构建命令是 `go build .`。`cmd/` 下只剩 `cmd/migrate/` 和 `cmd/extractor/`。
 - Remote merge 后检查 `resolver_snapshot.go`、`runtime_test.go`、`bridge_test.go` 等 — 这些是早期 singleton migration 的高频冲突点，合并方可能把旧 API（`sekaiapi.GetToolboxClient()`）恢复进来。
 - 删除 `parser/parser.go` 之后，`internal/pjsk/parser/` 包内再无 `CardParser` 系列。card 查询解析统一走 `internal/pjsk/render/card/parser.go`。

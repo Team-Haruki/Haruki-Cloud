@@ -183,11 +183,19 @@ func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snapshot u
 		return state
 	}
 
+	// Profile current-deck information comes from the public game API. Snapshot
+	// data can still supplement missing card records, but it should not replace
+	// the API-selected deck or leader display state.
 	if len(raw.UserCards) > 0 {
-		state.userCards = append([]userdata.RawUserCard(nil), raw.UserCards...)
-		state.detailedUserCards = buildSnapshotUserCardEntries(raw.UserCards)
+		state.userCards = mergeProfileUserCards(state.userCards, raw.UserCards)
+		if len(state.detailedUserCards) == 0 {
+			state.detailedUserCards = buildSnapshotUserCardEntries(raw.UserCards)
+		}
+		if state.leaderCardID > 0 && findAPIUserCard(resp.UserCards, state.leaderCardID) == nil {
+			state.leaderTrainedArt = isSnapshotCardTrainedArt(userdata.FindUserCard(raw.UserCards, state.leaderCardID))
+		}
 	}
-	if len(raw.UserDecks) > 0 {
+	if state.activeDeckID == 0 && len(raw.UserDecks) > 0 {
 		state.decks = append([]userdata.RawUserDeck(nil), raw.UserDecks...)
 		activeDeck := userdata.FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
 		state.activeDeckID = raw.UserGamedata.Deck
@@ -201,6 +209,31 @@ func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snapshot u
 	}
 
 	return state
+}
+
+func mergeProfileUserCards(primary []userdata.RawUserCard, fallback []userdata.RawUserCard) []userdata.RawUserCard {
+	if len(primary) == 0 {
+		return append([]userdata.RawUserCard(nil), fallback...)
+	}
+
+	result := append([]userdata.RawUserCard(nil), primary...)
+	seen := make(map[int]struct{}, len(primary))
+	for _, card := range primary {
+		if card.CardID > 0 {
+			seen[card.CardID] = struct{}{}
+		}
+	}
+	for _, card := range fallback {
+		if card.CardID == 0 {
+			continue
+		}
+		if _, ok := seen[card.CardID]; ok {
+			continue
+		}
+		seen[card.CardID] = struct{}{}
+		result = append(result, card)
+	}
+	return result
 }
 
 func buildSnapshotUserCardEntries(cards []userdata.RawUserCard) []any {

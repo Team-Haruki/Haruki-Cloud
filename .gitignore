@@ -38,9 +38,9 @@ haruki-cloud.yaml
 .DS_Store
 
 # Build artifacts
-server
-server-local
-server.gz
+/server
+/server-local
+/server.gz
 test_auth
 
 # Drawing API subproject (separate repo)

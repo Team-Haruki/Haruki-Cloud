@@ -77,6 +77,9 @@ func liveSnapshotProvider(app *renderapp.App) userdata.SnapshotProvider {
 		return nil
 	}
 
+	if app.Toolbox == nil {
+		return nil
+	}
 	provider := userdata.NewToolboxSnapshotProvider(app.Bindings, app.Toolbox, app.Sekai, app.Assets)
 	if app.MetaLoader != nil {
 		provider = provider.WithMusicMetaSource(app.MetaLoader)

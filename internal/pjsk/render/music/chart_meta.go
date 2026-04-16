@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func findMusicMeta(payload []byte, musicID int, difficulty string) map[string]any {

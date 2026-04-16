@@ -9,9 +9,9 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) currentSnapshot() userdata.Snapshot {

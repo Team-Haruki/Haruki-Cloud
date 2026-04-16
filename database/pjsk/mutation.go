@@ -16,7 +16,7 @@ import (
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	"haruki-cloud/database/pjsk/userpreference"
 	"haruki-cloud/ent/pjsk/schema"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	"sync"
 	"time"
 

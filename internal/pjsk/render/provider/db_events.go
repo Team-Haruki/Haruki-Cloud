@@ -16,7 +16,7 @@ import (
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type dbEventProvider struct {

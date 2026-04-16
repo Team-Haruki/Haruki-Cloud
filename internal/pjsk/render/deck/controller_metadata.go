@@ -3,8 +3,8 @@ package deck
 import (
 	"fmt"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, region renderregion.Value, recType string, option map[string]any, query AutoQuery) {

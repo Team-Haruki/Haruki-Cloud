@@ -10,10 +10,10 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
-	sekaiapi "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )

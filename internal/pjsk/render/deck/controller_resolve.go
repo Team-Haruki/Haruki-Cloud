@@ -8,8 +8,8 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) resolveProfile(region renderregion.Value, override *drawing.DetailedProfileCardRequest, source string) *drawing.DetailedProfileCardRequest {

@@ -1,4 +1,4 @@
-package userdata
+package accountdata
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	"haruki-cloud/utils/censor"
-	sekaiapi "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 // BindingService manages user game account bindings.

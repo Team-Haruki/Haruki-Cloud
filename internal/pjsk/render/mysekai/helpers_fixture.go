@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func birthdayCharacterID(characters map[int]map[string]any, fixtureName string) int {

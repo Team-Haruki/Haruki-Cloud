@@ -1,6 +1,6 @@
 package event
 
-import renderregion "haruki-cloud/internal/pjsk/render/region"
+import renderregion "haruki-cloud/internal/pjsk/region"
 
 type DetailQuery struct {
 	Region     renderregion.Value `json:"region"`

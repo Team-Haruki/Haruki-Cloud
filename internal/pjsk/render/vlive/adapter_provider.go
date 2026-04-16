@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // ProviderAdapter bridges provider.MasterDataProvider to vlive.DataSource.

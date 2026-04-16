@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/query"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 func executeArrest(rc *RequestContext) (onebot11.Message, error) {

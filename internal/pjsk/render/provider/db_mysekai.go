@@ -2,7 +2,7 @@ package provider
 
 import (
 	sekaiDB "haruki-cloud/database/sekai"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type dbMySekaiProvider struct {

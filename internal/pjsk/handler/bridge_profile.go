@@ -3,11 +3,11 @@ package handler
 import (
 	"fmt"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
-	sekaiutils "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/accountdata"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 func executeProfile(rc *RequestContext) (onebot11.Message, error) {

@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, error) {

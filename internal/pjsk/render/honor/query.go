@@ -1,6 +1,6 @@
 package honor
 
-import renderregion "haruki-cloud/internal/pjsk/render/region"
+import renderregion "haruki-cloud/internal/pjsk/region"
 
 type Query struct {
 	Region              renderregion.Value `json:"region"`

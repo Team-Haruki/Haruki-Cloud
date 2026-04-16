@@ -1,4 +1,4 @@
-package utils
+package types
 
 import "fmt"
 
@@ -38,7 +38,7 @@ const (
 	AliasTypeCharacter AliasType = "character"
 )
 
-// Valid returns true if the alias type is valid
+// Valid returns true if the alias type is valid.
 func (a AliasType) Valid() bool {
 	switch a {
 	case AliasTypeMusic, AliasTypeCharacter:
@@ -68,7 +68,7 @@ const (
 	BindingServerCN BindingServer = "cn"
 )
 
-// Valid returns true if the binding server is valid
+// Valid returns true if the binding server is valid.
 func (s BindingServer) Valid() bool {
 	switch s {
 	case BindingServerJP, BindingServerEN, BindingServerTW, BindingServerKR, BindingServerCN:
@@ -99,7 +99,7 @@ const (
 	DefaultBindingServerDefault DefaultBindingServer = "default"
 )
 
-// Valid returns true if the default binding server is valid
+// Valid returns true if the default binding server is valid.
 func (s DefaultBindingServer) Valid() bool {
 	switch s {
 	case DefaultBindingServerJP, DefaultBindingServerEN, DefaultBindingServerTW,

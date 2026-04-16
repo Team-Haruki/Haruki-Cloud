@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query AreaItemQuery) (*drawing.AreaItemUpgradeMaterialsRequest, error) {

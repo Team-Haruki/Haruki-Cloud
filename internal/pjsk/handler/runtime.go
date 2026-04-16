@@ -5,14 +5,14 @@ import (
 	"strings"
 	"sync"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
-	"haruki-cloud/utils/drawing"
-	sekaiutils "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 // RequestContext holds pre-resolved request-level data for a single command

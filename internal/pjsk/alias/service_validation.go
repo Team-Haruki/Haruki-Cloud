@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	pjskdb "haruki-cloud/database/pjsk"
 	aliasdb "haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"

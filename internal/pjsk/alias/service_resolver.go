@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	aliasdb "haruki-cloud/database/pjsk/alias"
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"

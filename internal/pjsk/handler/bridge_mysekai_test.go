@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type unavailableSnapshotProvider struct{}
@@ -82,7 +82,7 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 	controller := rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true})
 	snapshot := &runtimeSnapshotStub{
 		card: &drawing.ProfileCardRequest{
-			Profile: &drawing.BasicProfile{Nickname: "snapshot-card"},
+			Profile: &drawing.BasicProfile{ID: "99999999999999", Region: "TW", Nickname: "snapshot-card"},
 			DataSources: []drawing.ProfileDataSource{
 				{Name: "Suite数据"},
 			},
@@ -107,6 +107,12 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 	}
 	if result.Profile == nil || result.Profile.Profile == nil || result.Profile.Profile.Nickname != "snapshot-card" {
 		t.Fatalf("expected snapshot profile card, got %+v", result.Profile)
+	}
+	if result.Profile.Profile.ID != "12345678901234" {
+		t.Fatalf("expected binding uid to override snapshot profile id, got %q", result.Profile.Profile.ID)
+	}
+	if result.Profile.Profile.Region != "JP" {
+		t.Fatalf("expected normalized profile region JP, got %q", result.Profile.Profile.Region)
 	}
 	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != "Suite数据" {
 		t.Fatalf("expected suite data source, got %+v", result.Profile.DataSources)
@@ -137,7 +143,7 @@ func TestResolveMySekaiRenderContextUsesSelectedBindingRegion(t *testing.T) {
 	provider := &runtimeSnapshotProviderStub{
 		snapshot: &runtimeSnapshotStub{
 			card: &drawing.ProfileCardRequest{
-				Profile: &drawing.BasicProfile{Nickname: "selector-card"},
+				Profile: &drawing.BasicProfile{ID: "99999999999999", Region: "JP", Nickname: "selector-card"},
 			},
 		},
 	}
@@ -164,6 +170,12 @@ func TestResolveMySekaiRenderContextUsesSelectedBindingRegion(t *testing.T) {
 	}
 	if result.Profile == nil || result.Profile.Profile == nil || result.Profile.Profile.Nickname != "selector-card" {
 		t.Fatalf("unexpected profile card: %+v", result.Profile)
+	}
+	if result.Profile.Profile.ID != "11111111111111" {
+		t.Fatalf("expected selected binding uid to override snapshot profile id, got %q", result.Profile.Profile.ID)
+	}
+	if result.Profile.Profile.Region != "CN" {
+		t.Fatalf("expected selected binding region CN, got %q", result.Profile.Profile.Region)
 	}
 	if len(provider.selectors) != 1 {
 		t.Fatalf("expected one snapshot selector, got %d", len(provider.selectors))

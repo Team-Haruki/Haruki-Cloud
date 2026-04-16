@@ -1,4 +1,4 @@
-package userdata
+package accountdata
 
 import (
 	"testing"

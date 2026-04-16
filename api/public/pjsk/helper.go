@@ -3,7 +3,7 @@ package pjsk
 import (
 	"haruki-cloud/api"
 	"haruki-cloud/database/pjsk"
-	"haruki-cloud/utils"
+	"haruki-cloud/utils/types"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
@@ -34,7 +34,7 @@ func parseAliasParams(requireID bool, requireAlias bool) fiber.Handler {
 		params := AliasParams{
 			AliasType: c.Params("alias_type"),
 		}
-		if _, err := utils.ParseAliasType(params.AliasType); err != nil {
+		if _, err := types.ParseAliasType(params.AliasType); err != nil {
 			return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
 		}
 		if requireID {

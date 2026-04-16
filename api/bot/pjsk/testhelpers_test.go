@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	onebot11 "haruki-cloud/api/bot/onebot11"
+	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
 )
 

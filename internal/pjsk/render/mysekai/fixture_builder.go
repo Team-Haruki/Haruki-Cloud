@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // BuildFixtureListRequest builds the request for rendering MySekai fixture list view.

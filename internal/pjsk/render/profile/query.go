@@ -1,6 +1,6 @@
 package profile
 
-import "haruki-cloud/utils/drawing"
+import "haruki-cloud/internal/pjsk/drawing"
 
 type Query struct {
 	UserID string `json:"user_id,omitempty"`

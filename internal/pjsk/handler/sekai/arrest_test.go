@@ -7,7 +7,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestArrestHandleParsesUserTargetModes(t *testing.T) {

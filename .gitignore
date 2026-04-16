@@ -45,8 +45,8 @@ test_auth
 
 # Drawing API subproject (separate repo)
 drawing/
-!utils/drawing/
-!utils/drawing/*.go
+!internal/pjsk/drawing/
+!internal/pjsk/drawing/*.go
 
 # Images
 *.png

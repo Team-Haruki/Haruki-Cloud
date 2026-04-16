@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {
@@ -678,6 +678,58 @@ func TestBuildDoorUpgradeRequestSupportsShowAll(t *testing.T) {
 	}
 	if req.GateMaterials[0].ID != 1 || req.GateMaterials[1].ID != 2 {
 		t.Fatalf("unexpected gate material order: %+v", req.GateMaterials)
+	}
+}
+
+func TestBuildDoorUpgradeRequestRenamesTopSourceToSuite(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateMaterialGroups.json"), []map[string]any{
+		{"groupId": 1001, "mysekaiMaterialId": 1, "quantity": 2},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
+		{"id": 1, "iconAssetbundleName": "mat_1"},
+	})
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(`{
+  "upload_time": 1776000000,
+  "source": "toolbox_live",
+  "updatedResources": {
+    "userMysekaiMaterials": [{"mysekaiMaterialId": 1, "quantity": 5}],
+    "userMysekaiGates": [{"mysekaiGateId": 1, "mysekaiGateLevel": 5}],
+    "userMysekaiGamedata": {"mysekaiRank": 8}
+  }
+}`))
+
+	req, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{
+		Region: "jp",
+		Profile: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{
+				ID:              "GAME_USER_ID_REDACTED",
+				Region:          "JP",
+				Nickname:        "Tester",
+				LeaderImagePath: "user/leader.png",
+			},
+			DataSources: []drawing.ProfileDataSource{
+				{Name: "Suite数据"},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildDoorUpgradeRequest() error = %v", err)
+	}
+	if req.Profile == nil || len(req.Profile.DataSources) != 1 {
+		t.Fatalf("expected one top data source, got %+v", req.Profile)
+	}
+	if req.Profile.DataSources[0].Name != "Suite数据" {
+		t.Fatalf("expected top source to be renamed to Suite数据, got %+v", req.Profile.DataSources)
 	}
 }
 

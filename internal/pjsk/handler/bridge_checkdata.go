@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/query"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 func executeCheckData(rc *RequestContext) (onebot11.Message, error) {

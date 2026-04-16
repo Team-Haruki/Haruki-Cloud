@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) ResolveMusicCoverByTitleOrAlias(query Query) (*CoverResult, error) {

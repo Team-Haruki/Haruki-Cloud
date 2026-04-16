@@ -3,7 +3,7 @@ package sekai
 import (
 	"encoding/json"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func makeResolvedCmd(ctx SekaiHandlerContext, module parser.TargetModule, mode string) *parser.ResolvedCommand {

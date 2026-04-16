@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"strconv"
 	"strings"
 )

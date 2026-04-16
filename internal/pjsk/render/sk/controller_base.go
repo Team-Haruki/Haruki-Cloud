@@ -7,10 +7,10 @@ import (
 
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
-	"haruki-cloud/utils/drawing"
-	sekaiapi "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type LineRequest struct {

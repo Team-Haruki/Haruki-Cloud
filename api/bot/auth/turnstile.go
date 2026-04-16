@@ -1,4 +1,4 @@
-package turnstile
+package auth
 
 import (
 	"encoding/json"
@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	verifyURL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+	turnstileVerifyURL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 )
 
 var (
-	ErrVerificationFailed = errors.New("turnstile verification failed")
-	ErrNetworkError       = errors.New("network error during verification")
+	ErrTurnstileVerificationFailed = errors.New("turnstile verification failed")
+	ErrTurnstileNetworkError       = errors.New("network error during verification")
 )
 
-type VerifyResponse struct {
+type turnstileVerifyResponse struct {
 	Success     bool     `json:"success"`
 	ChallengeTs string   `json:"challenge_ts,omitempty"`
 	Hostname    string   `json:"hostname,omitempty"`
@@ -28,19 +28,19 @@ type VerifyResponse struct {
 	Cdata       string   `json:"cdata,omitempty"`
 }
 
-type Client struct {
+type turnstileClient struct {
 	secretKey string
 	client    *resty.Client
 }
 
-func NewClient(secretKey string) *Client {
-	return &Client{
+func newTurnstileClient(secretKey string) *turnstileClient {
+	return &turnstileClient{
 		secretKey: secretKey,
 		client:    resty.New().SetTimeout(config.HTTPClientTimeout),
 	}
 }
 
-func (c *Client) Verify(token, remoteIP string) (*VerifyResponse, error) {
+func (c *turnstileClient) verify(token, remoteIP string) (*turnstileVerifyResponse, error) {
 	if token == "" {
 		return nil, errors.New("empty turnstile token")
 	}
@@ -53,22 +53,22 @@ func (c *Client) Verify(token, remoteIP string) (*VerifyResponse, error) {
 	}
 	resp, err := c.client.R().
 		SetFormData(formData).
-		Post(verifyURL)
+		Post(turnstileVerifyURL)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrNetworkError, err)
+		return nil, fmt.Errorf("%w: %v", ErrTurnstileNetworkError, err)
 	}
 	if resp.StatusCode() != 200 {
-		return nil, fmt.Errorf("%w: status code %d", ErrNetworkError, resp.StatusCode())
+		return nil, fmt.Errorf("%w: status code %d", ErrTurnstileNetworkError, resp.StatusCode())
 	}
-	var result VerifyResponse
+	var result turnstileVerifyResponse
 	if err := json.Unmarshal(resp.Body(), &result); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 	return &result, nil
 }
 
-func (c *Client) VerifyToken(token, remoteIP string) (bool, error) {
-	result, err := c.Verify(token, remoteIP)
+func (c *turnstileClient) VerifyToken(token, remoteIP string) (bool, error) {
+	result, err := c.verify(token, remoteIP)
 	if err != nil {
 		return false, err
 	}

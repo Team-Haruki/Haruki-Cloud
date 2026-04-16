@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/education"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
-	sekaiapi "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type bridgeEducationRegionValidator struct{}

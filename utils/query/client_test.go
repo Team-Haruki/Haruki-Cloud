@@ -12,7 +12,7 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	usersDB "haruki-cloud/database/users"
 	pjskschema "haruki-cloud/ent/pjsk/schema"
-	sekai "haruki-cloud/utils/sekai"
+	sekai "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )

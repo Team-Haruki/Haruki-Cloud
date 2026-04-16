@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/config"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaidb "haruki-cloud/database/sekai"
@@ -29,15 +29,15 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	rendervlive "haruki-cloud/internal/pjsk/render/vlive"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
-	sekaiapi "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )

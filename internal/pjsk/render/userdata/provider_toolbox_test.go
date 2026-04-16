@@ -8,9 +8,9 @@ import (
 	"time"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
-	sekaiutils "haruki-cloud/utils/sekai"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/accountdata"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )

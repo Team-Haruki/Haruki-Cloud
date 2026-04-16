@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type Controller struct {

@@ -12,7 +12,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {

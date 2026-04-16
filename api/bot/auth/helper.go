@@ -8,8 +8,6 @@ import (
 
 	"haruki-cloud/config"
 	ent "haruki-cloud/database/bot"
-	"haruki-cloud/utils/smtp"
-	"haruki-cloud/utils/turnstile"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -66,8 +64,8 @@ func NewUserService(dbClient *ent.Client, redisClient *redis.Client, authEncrypt
 	return NewUserServiceWithDependencies(
 		dbClient,
 		newRedisKVStore(redisClient),
-		turnstile.NewClient(cfg.TurnstileSecretKey),
-		smtp.NewClient(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom),
+		newTurnstileClient(cfg.TurnstileSecretKey),
+		newSMTPClient(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom),
 		authEncryptionKey,
 		noiseServerPubKey,
 	)

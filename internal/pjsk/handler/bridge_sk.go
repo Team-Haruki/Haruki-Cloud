@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/sk"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func executeSK(rc *RequestContext) (message onebot11.Message, err error) {

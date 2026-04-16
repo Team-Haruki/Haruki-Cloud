@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 func TestProfileUploadBGHandleExtractsImageURL(t *testing.T) {

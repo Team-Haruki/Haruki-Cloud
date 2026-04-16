@@ -1,4 +1,4 @@
-package smtp
+package auth
 
 import (
 	"crypto/tls"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type Client struct {
+type smtpClient struct {
 	host     string
 	port     int
 	username string
@@ -15,8 +15,8 @@ type Client struct {
 	from     string
 }
 
-func NewClient(host string, port int, username, password, from string) *Client {
-	return &Client{
+func newSMTPClient(host string, port int, username, password, from string) *smtpClient {
+	return &smtpClient{
 		host:     host,
 		port:     port,
 		username: username,
@@ -25,7 +25,7 @@ func NewClient(host string, port int, username, password, from string) *Client {
 	}
 }
 
-func (c *Client) SendVerificationCode(qqNumber int64, code string) error {
+func (c *smtpClient) SendVerificationCode(qqNumber int64, code string) error {
 	to := fmt.Sprintf("%d@qq.com", qqNumber)
 	subject := "Haruki Bot 验证码"
 	body := fmt.Sprintf(`
@@ -58,7 +58,7 @@ func (c *Client) SendVerificationCode(qqNumber int64, code string) error {
 	return c.sendMail(to, subject, body, true)
 }
 
-func (c *Client) sendMail(to, subject, body string, isHTML bool) error {
+func (c *smtpClient) sendMail(to, subject, body string, isHTML bool) error {
 	addr := fmt.Sprintf("%s:%d", c.host, c.port)
 	contentType := "text/plain"
 	if isHTML {
@@ -91,11 +91,11 @@ func (c *Client) sendMail(to, subject, body string, isHTML bool) error {
 	return c.sendWithSTARTTLS(addr, auth, fromEmail, to, []byte(msg))
 }
 
-func (c *Client) sendWithSTARTTLS(addr string, auth smtp.Auth, from, to string, msg []byte) error {
+func (c *smtpClient) sendWithSTARTTLS(addr string, auth smtp.Auth, from, to string, msg []byte) error {
 	return smtp.SendMail(addr, auth, from, []string{to}, msg)
 }
 
-func (c *Client) sendWithTLS(addr string, auth smtp.Auth, from, to string, msg []byte) error {
+func (c *smtpClient) sendWithTLS(addr string, auth smtp.Auth, from, to string, msg []byte) error {
 	tlsConfig := &tls.Config{
 		ServerName: c.host,
 	}

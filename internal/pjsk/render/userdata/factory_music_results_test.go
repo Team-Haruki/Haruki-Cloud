@@ -3,7 +3,7 @@ package userdata
 import (
 	"testing"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestSnapshotFactoryBuildParsesMusicResultsFromUserMusics(t *testing.T) {

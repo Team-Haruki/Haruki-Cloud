@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -11,7 +12,6 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
-	"github.com/gofiber/fiber/v3"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -75,10 +75,10 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 	}
 
 	switch resp.StatusCode() {
-	case fiber.StatusOK:
+	case http.StatusOK:
 		return decompress(resp)
 
-	case fiber.StatusForbidden:
+	case http.StatusForbidden:
 		msg := parseMessage(resp.Body())
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
@@ -86,10 +86,10 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		case strings.Contains(msg, "account owner is banned"):
 			return nil, ErrAccountOwnerBanned
 		default:
-			return nil, &ToolboxAPIError{StatusCode: fiber.StatusForbidden, Message: msg}
+			return nil, &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
 		}
 
-	case fiber.StatusNotFound:
+	case http.StatusNotFound:
 		msg := parseMessage(resp.Body())
 		switch {
 		case strings.Contains(msg, "account binding not found"):
@@ -97,11 +97,11 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		case strings.Contains(msg, "game data not found"):
 			return nil, ErrGameDataNotFound
 		default:
-			return nil, &ToolboxAPIError{StatusCode: fiber.StatusNotFound, Message: msg}
+			return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 		}
 
-	case fiber.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: fiber.StatusServiceUnavailable, Message: "toolbox service unavailable"}
+	case http.StatusServiceUnavailable:
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
 
 	default:
 		msg := parseMessage(resp.Body())
@@ -145,9 +145,9 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 	}
 
 	switch resp.StatusCode() {
-	case fiber.StatusOK:
+	case http.StatusOK:
 		return resp.Body(), nil
-	case fiber.StatusForbidden:
+	case http.StatusForbidden:
 		msg := parseMessage(resp.Body())
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
@@ -155,9 +155,9 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 		case strings.Contains(msg, "account owner is banned"):
 			return nil, ErrAccountOwnerBanned
 		default:
-			return nil, &ToolboxAPIError{StatusCode: fiber.StatusForbidden, Message: msg}
+			return nil, &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
 		}
-	case fiber.StatusNotFound:
+	case http.StatusNotFound:
 		msg := parseMessage(resp.Body())
 		switch {
 		case strings.Contains(msg, "account binding not found"):
@@ -165,10 +165,10 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 		case strings.Contains(msg, "game data not found"):
 			return nil, ErrGameDataNotFound
 		default:
-			return nil, &ToolboxAPIError{StatusCode: fiber.StatusNotFound, Message: msg}
+			return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 		}
-	case fiber.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: fiber.StatusServiceUnavailable, Message: "toolbox service unavailable"}
+	case http.StatusServiceUnavailable:
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
 	default:
 		msg := parseMessage(resp.Body())
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
@@ -231,14 +231,14 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 	}
 
 	switch resp.StatusCode() {
-	case fiber.StatusOK:
+	case http.StatusOK:
 		var bindings []UserGameBinding
 		if err := sonic.Unmarshal(resp.Body(), &bindings); err != nil {
 			return nil, fmt.Errorf("toolbox: failed to parse game bindings response: %w", err)
 		}
 		return bindings, nil
 
-	case fiber.StatusForbidden:
+	case http.StatusForbidden:
 		msg := parseMessage(resp.Body())
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
@@ -246,18 +246,18 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 		case strings.Contains(msg, "account owner is banned"):
 			return nil, ErrAccountOwnerBanned
 		default:
-			return nil, &ToolboxAPIError{StatusCode: fiber.StatusForbidden, Message: msg}
+			return nil, &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
 		}
 
-	case fiber.StatusNotFound:
+	case http.StatusNotFound:
 		msg := parseMessage(resp.Body())
 		if strings.Contains(msg, "account binding not found") {
 			return nil, ErrAccountBindingNotFound
 		}
-		return nil, &ToolboxAPIError{StatusCode: fiber.StatusNotFound, Message: msg}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 
-	case fiber.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: fiber.StatusServiceUnavailable, Message: "toolbox service unavailable"}
+	case http.StatusServiceUnavailable:
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
 
 	default:
 		msg := parseMessage(resp.Body())

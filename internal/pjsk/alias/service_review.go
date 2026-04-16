@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/pendingalias"
 )

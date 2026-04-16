@@ -10,7 +10,7 @@ import (
 	"haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type dbCharacterProvider struct {

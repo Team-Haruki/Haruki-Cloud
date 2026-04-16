@@ -3,7 +3,7 @@ package misc
 import (
 	"testing"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func TestBuildCharaBirthdayRequestRejectsMissingCards(t *testing.T) {

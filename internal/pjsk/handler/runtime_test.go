@@ -7,9 +7,9 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type runtimeSnapshotStub struct {

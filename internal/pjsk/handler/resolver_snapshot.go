@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/logger"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiutils "haruki-cloud/internal/pjsk/sekai"
 )
 
 var snapshotDebugLogger = logger.NewLoggerFromGlobal("PJSKSnapshot")

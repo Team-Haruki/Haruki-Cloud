@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {

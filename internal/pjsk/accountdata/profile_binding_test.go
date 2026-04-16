@@ -1,4 +1,4 @@
-package userdata_test
+package accountdata_test
 
 import (
 	"context"
@@ -8,12 +8,12 @@ import (
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
-	"haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func newProfileBindingTestService(t *testing.T, profiles map[string]map[string]string) *userdata.BindingService {
+func newProfileBindingTestService(t *testing.T, profiles map[string]map[string]string) *accountdata.BindingService {
 	t.Helper()
 
 	pjskClient := pjskenttest.Open(t, "sqlite3", "file:pjsk_profile_binding_test?mode=memory&cache=shared&_fk=1")
@@ -22,7 +22,7 @@ func newProfileBindingTestService(t *testing.T, profiles map[string]map[string]s
 	usersClient := usersenttest.Open(t, "sqlite3", "file:users_profile_binding_test?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = usersClient.Close() })
 
-	return userdata.NewBindingService(
+	return accountdata.NewBindingService(
 		pjskClient,
 		identity.NewResolver(usersClient),
 		&fakeProfileValidator{profiles: profiles},
@@ -30,7 +30,7 @@ func newProfileBindingTestService(t *testing.T, profiles map[string]map[string]s
 }
 
 func TestDecodeProfileBindingParams(t *testing.T) {
-	params, err := userdata.DecodeProfileBindingParams(json.RawMessage(`{
+	params, err := accountdata.DecodeProfileBindingParams(json.RawMessage(`{
 		"platform": " qq ",
 		"platform_user_id": " 42 ",
 		"selector": " u1 ",
@@ -53,7 +53,7 @@ func TestExecuteProfileBindingCommandBindAndList(t *testing.T) {
 
 	ctx := context.Background()
 
-	bindText, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+	bindText, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Selector:       "2000",
@@ -67,7 +67,7 @@ func TestExecuteProfileBindingCommandBindAndList(t *testing.T) {
 		t.Fatalf("unexpected bind text:\n%s", string(bindText))
 	}
 
-	listText, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBindList, userdata.ProfileBindingCommandParams{
+	listText, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBindList, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 	})
@@ -89,14 +89,14 @@ func TestExecuteProfileBindingCommandBindListFiltersByServer(t *testing.T) {
 
 	ctx := context.Background()
 
-	if _, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+	if _, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Selector:       "2000",
 	}); err != nil {
 		t.Fatalf("bind jp: %v", err)
 	}
-	if _, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+	if _, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Selector:       "3000",
@@ -104,7 +104,7 @@ func TestExecuteProfileBindingCommandBindListFiltersByServer(t *testing.T) {
 		t.Fatalf("bind cn: %v", err)
 	}
 
-	listText, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBindList, userdata.ProfileBindingCommandParams{
+	listText, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBindList, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Server:         "cn",
@@ -126,7 +126,7 @@ func TestExecuteProfileBindingCommandBindListFiltersByServerWhenEmpty(t *testing
 
 	ctx := context.Background()
 
-	if _, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+	if _, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Selector:       "2000",
@@ -134,7 +134,7 @@ func TestExecuteProfileBindingCommandBindListFiltersByServerWhenEmpty(t *testing
 		t.Fatalf("bind jp: %v", err)
 	}
 
-	listText, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBindList, userdata.ProfileBindingCommandParams{
+	listText, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBindList, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Server:         "cn",
@@ -156,7 +156,7 @@ func TestExecuteProfileBindingCommandBindListMasksUIDByDefault(t *testing.T) {
 
 	ctx := context.Background()
 
-	if _, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBind, userdata.ProfileBindingCommandParams{
+	if _, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Selector:       "12345678901234",
@@ -164,7 +164,7 @@ func TestExecuteProfileBindingCommandBindListMasksUIDByDefault(t *testing.T) {
 		t.Fatalf("execute bind: %v", err)
 	}
 
-	listText, err := userdata.ExecuteProfileBindingCommand(ctx, service, userdata.ProfileModeBindList, userdata.ProfileBindingCommandParams{
+	listText, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBindList, accountdata.ProfileBindingCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 	})

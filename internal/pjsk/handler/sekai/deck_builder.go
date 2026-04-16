@@ -2,7 +2,7 @@ package sekai
 
 import (
 	"fmt"
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"strings"
 )
 

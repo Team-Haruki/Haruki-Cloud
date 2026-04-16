@@ -8,10 +8,10 @@ import (
 	"haruki-cloud/internal/pjsk/meta"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 var hiddenMusicIDs = map[int]struct{}{

@@ -1,6 +1,6 @@
 package deck
 
-import "haruki-cloud/utils/drawing"
+import "haruki-cloud/internal/pjsk/drawing"
 
 type MusicCompareSelection struct {
 	MusicID        int    `json:"music_id"`

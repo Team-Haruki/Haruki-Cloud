@@ -1,6 +1,6 @@
 // Package userdata provides PJSK-specific data access helpers, including
 // resolving a user's active game account binding from their haruki_user_id.
-package userdata
+package accountdata
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // ErrNoBinding is returned when no PJSK game account is bound for the

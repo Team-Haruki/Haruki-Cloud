@@ -3,9 +3,9 @@ package handler
 import (
 	"fmt"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/event"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {

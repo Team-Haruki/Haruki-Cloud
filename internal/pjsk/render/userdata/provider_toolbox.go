@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/pjsk/accountdata"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
 	"haruki-cloud/utils/logger"
 )
 

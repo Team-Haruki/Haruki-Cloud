@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"haruki-cloud/api"
-	onebot11 "haruki-cloud/api/bot/onebot11"
+	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/internal/core/crypto"
@@ -14,10 +14,10 @@ import (
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/internal/pjsk/userdata"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/logger"
-	"haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/sekai"
 	"regexp"
 	"slices"
 	"strings"
@@ -257,7 +257,7 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 			[]onebot11.Segment{onebot11.Text(string(replyErr))},
 		)
 	}
-	if errors.Is(err, userdata.ErrNoBinding) {
+	if errors.Is(err, accountdata.ErrNoBinding) {
 		return botResponse(
 			c, fiber.StatusOK, "ok",
 			[]onebot11.Segment{

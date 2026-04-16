@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (c *Controller) buildMusicBoardRows(region renderregion.Value, source DataSource, builder *Builder, query musicBoardResolvedQuery) ([]musicBoardRow, error) {

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	sekaiapi "haruki-cloud/utils/sekai"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type testForecastProvider struct {

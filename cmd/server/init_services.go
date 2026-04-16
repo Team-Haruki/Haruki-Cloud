@@ -12,11 +12,11 @@ import (
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/meta"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/censor"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	harukiLogger "haruki-cloud/utils/logger"
-	sekaiAPI "haruki-cloud/utils/sekai"
+	sekaiAPI "haruki-cloud/internal/pjsk/sekai"
 
 	censorDB "haruki-cloud/database/censor"
 	pjskDB "haruki-cloud/database/pjsk"
@@ -34,7 +34,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 	var resolver *identity.Resolver
 	if usersClient != nil {
 		resolver = identity.NewResolver(usersClient)
-		renderRuntime.Bindings = userdata.NewBindingService(
+		renderRuntime.Bindings = accountdata.NewBindingService(
 			pjskClient,
 			resolver,
 			sekaiAPI.GetSekaiAPIClient(),
@@ -57,13 +57,13 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 			),
 		)
 		if renderRuntime.Assets != nil {
-			bgStore := userdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary())
+			bgStore := accountdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary())
 			renderRuntime.Bindings.SetProfileBGStorage(bgStore)
 		}
 		if censorService != nil {
 			renderRuntime.Bindings.SetCensorService(censorService)
 		}
-		renderRuntime.BanChecker = userdata.NewBanService(usersClient)
+		renderRuntime.BanChecker = accountdata.NewBanService(usersClient)
 	}
 
 	renderRuntime.Aliases = pjskalias.NewService(renderRuntime.Sekai, pjskClient, resolver)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"haruki-cloud/utils/drawing"
-	sekaiapi "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, interval int, unitPeriodSeconds int64, skipMissing bool) ([]drawing.SpeedInfo, error) {

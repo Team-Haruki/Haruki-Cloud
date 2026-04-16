@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // DatabaseProvider implements MasterDataProvider using a Sekai database client.

@@ -12,10 +12,10 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
-	sekai "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
+	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 
 func logProfilePayloadDebug(source string, payload *drawing.ProfileRequest) {

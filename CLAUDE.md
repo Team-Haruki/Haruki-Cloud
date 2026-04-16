@@ -21,7 +21,7 @@
 
 ### 组合根
 - `internal/pjsk/render/app.App` 是 render runtime 的组合根，包含所有 controller 和外部 client 字段。
-- `init_services.go`（项目根）负责把 `config.Cfg` 里的各段转成 `renderapp.Config`，然后构造 `renderapp.App`。
+- `init_services.go`（`internal/server/`）负责把 `config.Cfg` 里的各段转成 `renderapp.Config`，然后构造 `renderapp.App`。
 - handler 层通过 `rc.App.<Field>` 访问共享依赖；**不要再引入包级单例**。
 
 ### Sekai / Toolbox / Tracker 客户端
@@ -56,6 +56,6 @@
 
 ## 常见陷阱
 
-- 服务器主入口文件（`main.go`、`server.go`、`init_*.go`）现在在**项目根**（`package main`），构建命令是 `go build .`。`cmd/` 下只剩 `cmd/migrate/` 和 `cmd/extractor/`。
+- 服务器主入口只有 `main.go` 在**项目根**，信号设置后调用 `server.Run(ctx)`。启动初始化逻辑（`init_*.go`、`fiber.go`、`run.go`）在 `internal/server/` 包（`package server`），构建命令是 `go build .`。`cmd/` 下只剩 `cmd/migrate/` 和 `cmd/extractor/`。
 - Remote merge 后检查 `resolver_snapshot.go`、`runtime_test.go`、`bridge_test.go` 等 — 这些是早期 singleton migration 的高频冲突点，合并方可能把旧 API（`sekaiapi.GetToolboxClient()`）恢复进来。
 - 删除 `parser/parser.go` 之后，`internal/pjsk/parser/` 包内再无 `CardParser` 系列。card 查询解析统一走 `internal/pjsk/render/card/parser.go`。

@@ -3,10 +3,10 @@ package handler
 import (
 	"fmt"
 
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 func executeProfile(rc *RequestContext) (onebot11.Message, error) {
@@ -59,7 +59,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		if rc.App.Bindings == nil {
-			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")
+			return nil, accountdata.ErrBindingServiceUnavailable
 		}
 		params, err := accountdata.DecodeProfileBindingParams(rc.Cmd.Params)
 		if err != nil {
@@ -76,7 +76,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear, accountdata.ProfileModeBGAdjust:
 		if rc.App.Bindings == nil {
-			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")
+			return nil, accountdata.ErrBindingServiceUnavailable
 		}
 		params, err := accountdata.DecodeProfileSettingsParams(rc.Cmd.Params)
 		if err != nil {

@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"errors"
 
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/profile"
@@ -18,6 +20,36 @@ func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileC
 		if detail := snapshot.DetailedProfile(rc.Region); detail != nil && len(detail.UserCards) > 0 {
 			return detail
 		}
+	}
+	return nil
+}
+
+func resolveCardCatalogTitle(rc *RequestContext) *string {
+	if rc == nil || rc.App == nil {
+		return nil
+	}
+	if rc.Platform == "" || rc.PlatformUserID == "" {
+		return nil
+	}
+
+	binding, _ := rc.GetBinding()
+	if binding == nil {
+		if errors.Is(rc.bindingErr, accountdata.ErrNoBinding) {
+			return stringPtr(CardCatalogTitleNoBinding)
+		}
+		return nil
+	}
+	if !binding.SuiteVisible {
+		return stringPtr(CardCatalogTitleNoSuite)
+	}
+
+	snapshot := rc.ResolveSnapshot(false)
+	if snapshot == nil {
+		return stringPtr(CardCatalogTitleNoSuite)
+	}
+	detail := snapshot.DetailedProfile(rc.Region)
+	if detail == nil || len(detail.UserCards) == 0 {
+		return stringPtr(CardCatalogTitleNoSuite)
 	}
 	return nil
 }

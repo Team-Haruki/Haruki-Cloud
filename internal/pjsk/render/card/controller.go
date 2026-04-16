@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 const cardListAutoBoxThreshold = 90
@@ -149,6 +149,9 @@ func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListR
 	if err != nil {
 		return nil, err
 	}
+	if query.Title != nil {
+		req.Title = query.Title
+	}
 	if query.DetailedProfile != nil {
 		req.UserInfo = query.DetailedProfile
 	}
@@ -167,6 +170,9 @@ func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
 		req, buildErr := builder.BuildCardBoxRequest(cards, region, query.DetailedProfile, false, false, true)
 		if buildErr != nil {
 			return nil, buildErr
+		}
+		if query.Title != nil {
+			req.Title = query.Title
 		}
 		return c.drawing.GenerateCardBox(req)
 	}
@@ -240,6 +246,9 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	}
 	if queries[0].DetailedProfile != nil {
 		req.UserInfo = queries[0].DetailedProfile
+	}
+	if queries[0].Title != nil {
+		req.Title = queries[0].Title
 	}
 	return req, nil
 }

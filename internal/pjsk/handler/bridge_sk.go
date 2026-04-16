@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/onebot11"
-	"haruki-cloud/internal/pjsk/parser"
-	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/sk"
 )
 
 func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
@@ -131,7 +131,7 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 	}
 
 	if app == nil || app.Bindings == nil || !app.Bindings.IsReady() {
-		return fmt.Errorf("绑定服务未就绪，无法解析目标用户")
+		return accountdata.ErrBindingServiceUnavailable
 	}
 
 	var (
@@ -143,13 +143,13 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 	if targetSelector != "" {
 		_, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, targetPlatform, targetUserID, selectorBindingServer(normalizeTrackerRegion(req.Region), req.RegionExplicit), targetSelector)
 		if err != nil {
-			return fmt.Errorf("无法解析账号选择器 %s: %w", targetSelector, err)
+			return normalizeBindingLookupError(err, fmt.Sprintf("无法解析账号选择器 %s", targetSelector))
 		}
 	} else if req.RegionExplicit {
 		region := normalizeTrackerRegion(req.Region)
 		_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, region)
 		if err != nil {
-			return fmt.Errorf("@用户 %s 在 %s 服没有绑定账号", targetUserID, strings.ToUpper(region))
+			return normalizeBindingLookupError(err, fmt.Sprintf("@用户 %s 在 %s 服没有绑定账号", targetUserID, strings.ToUpper(region)))
 		}
 	} else {
 		// No explicit region prefix: use global default binding first, then JP.
@@ -157,13 +157,13 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 		if err != nil || binding == nil {
 			_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, DefaultRegionStr)
 			if err != nil {
-				return fmt.Errorf("@用户 %s 没有可用绑定", targetUserID)
+				return normalizeBindingLookupError(err, fmt.Sprintf("@用户 %s 没有可用绑定", targetUserID))
 			}
 		}
 	}
 
 	if binding == nil {
-		return fmt.Errorf("@用户 %s 没有可用绑定", targetUserID)
+		return accountdata.ErrNoBinding
 	}
 
 	isSelfTarget := strings.EqualFold(strings.TrimSpace(targetPlatform), strings.TrimSpace(requesterPlatform)) &&

@@ -23,6 +23,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		q := card.ListRequest{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
+		q.Title = resolveCardCatalogTitle(rc)
 		q.DetailedProfile = rc.GetDetailedProfile()
 		data, err = cardCtrl.RenderCardList(q)
 	case "card-box":
@@ -31,6 +32,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 			Query:            rc.Cmd.Query,
 			Region:           rc.Cmd.Region,
 			UseAfterTraining: &useAfterTraining,
+			Title:            resolveCardCatalogTitle(rc),
 			DetailedProfile:  resolveCardBoxDetailedProfile(rc),
 		}
 		mergeParams(rc.Cmd.Params, &q)

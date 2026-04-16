@@ -98,6 +98,7 @@ type CardListRequest struct {
 	Cards               []CardBasic                 `json:"cards"`
 	Region              string                      `json:"region"`
 	UserInfo            *DetailedProfileCardRequest `json:"user_info,omitempty"`
+	Title               *string                     `json:"title,omitempty"`
 	BackgroundImgPath   *string                     `json:"background_img_path,omitempty"`
 	TermLimitedIconPath *string                     `json:"term_limited_icon_path,omitempty"`
 	FesLimitedIconPath  *string                     `json:"fes_limited_icon_path,omitempty"`
@@ -108,6 +109,7 @@ type CardBoxRequest struct {
 	Cards               []UserCard                  `json:"cards"`
 	Region              string                      `json:"region"`
 	UserInfo            *DetailedProfileCardRequest `json:"user_info,omitempty"`
+	Title               *string                     `json:"title,omitempty"`
 	ShowID              bool                        `json:"show_id"`
 	ShowBox             bool                        `json:"show_box"`
 	BackgroundImgPath   *string                     `json:"background_img_path,omitempty"`

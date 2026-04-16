@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
-	"haruki-cloud/utils/query"
+	"haruki-cloud/internal/pjsk/onebot11"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/query"
 )
 
 func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
@@ -39,7 +39,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			},
 		)
 		if err != nil {
-			return nil, 0, fmt.Errorf("解析绑定账号失败：%w", err)
+			return nil, 0, normalizeBindingLookupError(err, "解析绑定账号失败")
 		}
 		return binding, hid, nil
 	}

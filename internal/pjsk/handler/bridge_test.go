@@ -13,15 +13,18 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/config"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaidb "haruki-cloud/database/sekai"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
+	"haruki-cloud/internal/pjsk/accountdata"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
+	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
@@ -29,15 +32,12 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	rendervlive "haruki-cloud/internal/pjsk/render/vlive"
-	"haruki-cloud/internal/pjsk/accountdata"
-	"haruki-cloud/internal/pjsk/drawing"
-	"haruki-cloud/utils/imagecache"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/imagecache"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -2603,6 +2603,89 @@ func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
 	}
 	if len(captured.Cards) != 1 || captured.Cards[0].Card.IsAfterTraining == nil || *captured.Cards[0].Card.IsAfterTraining {
 		t.Fatalf("unexpected card payload: %+v", captured.Cards)
+	}
+}
+
+func TestExecuteCardBoxAddsNoBindingTitleToDrawing(t *testing.T) {
+	root := t.TempDir()
+	var captured drawing.CardBoxRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/card/box" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeTestBindingValidator{})
+	app := &renderapp.App{
+		Bindings:   service,
+		Cards:      rendercard.NewController(&bridgeCardSource{allowEmptyFilter: true, cards: map[int]*masterdata.Card{1001: {ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Test Card", AssetBundleName: "card_test", ReleaseAt: 1700000000000}}}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleCard,
+		Mode:              "card-box",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeCard box: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if captured.Title == nil || *captured.Title != CardCatalogTitleNoBinding {
+		t.Fatalf("expected no-binding title %q, got %+v", CardCatalogTitleNoBinding, captured.Title)
+	}
+}
+
+func TestExecuteCardBoxAddsNoSuiteTitleToDrawing(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	var captured drawing.CardBoxRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/card/box" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeTestBindingValidator{})
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	app := &renderapp.App{
+		Bindings:   service,
+		Cards:      rendercard.NewController(&bridgeCardSource{allowEmptyFilter: true, cards: map[int]*masterdata.Card{1001: {ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Test Card", AssetBundleName: "card_test", ReleaseAt: 1700000000000}}}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleCard,
+		Mode:              "card-box",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeCard box: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if captured.Title == nil || *captured.Title != CardCatalogTitleNoSuite {
+		t.Fatalf("expected no-suite title %q, got %+v", CardCatalogTitleNoSuite, captured.Title)
 	}
 }
 

@@ -252,7 +252,10 @@ func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBi
 
 	binding, _ := rc.GetBinding()
 	if binding == nil {
-		return nil, nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+		if rc.bindingErr != nil {
+			return nil, nil, rc.bindingErr
+		}
+		return nil, nil, accountdata.ErrNoBinding
 	}
 	if !binding.SuiteVisible {
 		return binding, nil, nil

@@ -5,19 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"haruki-cloud/api"
-	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/middleware/secure"
+	"haruki-cloud/internal/pjsk/accountdata"
 	commandhandler "haruki-cloud/internal/pjsk/handler"
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
+	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
-	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/accountdata"
-	"haruki-cloud/utils/logger"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/logger"
 	"regexp"
 	"slices"
 	"strings"
@@ -263,6 +263,14 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 			[]onebot11.Segment{
 				onebot11.Text("未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令\n"),
 				onebot11.Text("如果已经绑定，请确保已设置默认账号或绑定的账号在当前服务器可见"),
+			},
+		)
+	}
+	if errors.Is(err, accountdata.ErrBindingServiceUnavailable) {
+		return botResponse(
+			c, fiber.StatusOK, "ok",
+			[]onebot11.Segment{
+				onebot11.Text("绑定服务未就绪，请稍后再试"),
 			},
 		)
 	}

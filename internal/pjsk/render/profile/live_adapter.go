@@ -159,7 +159,20 @@ func findAPIUserCard(cards []sekai.AnotherUserCard, cardID int) *sekai.AnotherUs
 	return nil
 }
 
-// isAPICardAfterTraining reports whether the given card has completed special training.
+// isAPICardAfterTraining reports whether the card should currently display its
+// after-training art. Prefer the user's current defaultImage choice and fall
+// back to the historical "training done" status when the display state is
+// missing from the payload.
 func isAPICardAfterTraining(card *sekai.AnotherUserCard) bool {
-	return card != nil && strings.EqualFold(card.SpecialTrainingStatus, "done")
+	if card == nil {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(card.DefaultImage)) {
+	case "special_training":
+		return true
+	case "normal":
+		return false
+	default:
+		return strings.EqualFold(card.SpecialTrainingStatus, "done")
+	}
 }

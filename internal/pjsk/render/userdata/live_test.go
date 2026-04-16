@@ -3,6 +3,7 @@ package userdata
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,5 +44,38 @@ func TestNewFromBytesWithContextUsesFactoryContextForLeaderLookup(t *testing.T) 
 	}
 	if profile.LeaderImagePath != "static_images/unknown.jpg" {
 		t.Fatalf("expected fallback leader path when build ctx is canceled, got %q", profile.LeaderImagePath)
+	}
+}
+
+func TestNewFromBytesWithContextUsesCurrentLeaderDisplayState(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:userdata_live_before_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Card.Create().
+		SetServerRegion("jp").
+		SetGameID(1001).
+		SetCharacterID(1).
+		SetAssetbundleName("res001_no001").
+		Save(ctx); err != nil {
+		t.Fatalf("create card: %v", err)
+	}
+
+	beforeArtJSON := strings.Replace(minimalSuiteJSON, `"defaultImage": "special_training"`, `"defaultImage": "normal"`, 1)
+	snapshot, err := NewFromBytesWithContext(ctx, sekaiClient, nil, renderregion.JP, []byte(beforeArtJSON), nil, nil)
+	if err != nil {
+		t.Fatalf("NewFromBytesWithContext() error = %v", err)
+	}
+	if err := snapshot.Require(); err != nil {
+		t.Fatalf("snapshot.Require() error = %v", err)
+	}
+
+	profile := snapshot.DetailedProfile(renderregion.JP)
+	if profile == nil {
+		t.Fatalf("expected profile")
+	}
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png"
+	if profile.LeaderImagePath != wantLeader {
+		t.Fatalf("expected leader image path %q, got %q", wantLeader, profile.LeaderImagePath)
 	}
 }

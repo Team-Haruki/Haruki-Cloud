@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -220,6 +220,41 @@ func TestBuildProfileRequestFromAPIUsesConfiguredProfileImageCard(t *testing.T) 
 	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res021_no002_after_training.png"
 	if payload.Profile.LeaderImagePath != wantLeader {
 		t.Fatalf("unexpected custom profile image path: %q", payload.Profile.LeaderImagePath)
+	}
+}
+
+func TestBuildProfileRequestFromAPIUsesCurrentCardDisplayState(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "Before Art User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "leader"},
+		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "normal"},
+		},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPI(Query{Region: "jp", Visible: true}, resp, nil)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPI failed: %v", err)
+	}
+
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png"
+	if payload.Profile.LeaderImagePath != wantLeader {
+		t.Fatalf("expected leader image path %q, got %q", wantLeader, payload.Profile.LeaderImagePath)
 	}
 }
 

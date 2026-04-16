@@ -149,6 +149,87 @@ func snapshotFrames(snapshot userdata.Snapshot) []userdata.RawUserFrame {
 	return frames
 }
 
+func snapshotRawData(snapshot userdata.Snapshot) *userdata.RawUserData {
+	if snapshot == nil {
+		return nil
+	}
+	if err := snapshot.Require(); err != nil {
+		return nil
+	}
+	return snapshot.RawData()
+}
+
+type profileRenderState struct {
+	leaderCardID      int
+	leaderTrainedArt  bool
+	userCards         []userdata.RawUserCard
+	decks             []userdata.RawUserDeck
+	activeDeckID      int
+	detailedUserCards []any
+}
+
+func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) profileRenderState {
+	state := profileRenderState{
+		leaderCardID:      resp.UserDeck.Leader,
+		leaderTrainedArt:  isAPICardTrainedArt(findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)),
+		userCards:         adaptAPICards(resp.UserCards),
+		decks:             adaptAPIDeckAsList(resp.UserDeck),
+		activeDeckID:      resp.UserDeck.DeckID,
+		detailedUserCards: buildAPIUserCardEntries(resp.UserCards, resp.UserDeck),
+	}
+
+	raw := snapshotRawData(snapshot)
+	if raw == nil {
+		return state
+	}
+
+	if len(raw.UserCards) > 0 {
+		state.userCards = append([]userdata.RawUserCard(nil), raw.UserCards...)
+		state.detailedUserCards = buildSnapshotUserCardEntries(raw.UserCards)
+	}
+	if len(raw.UserDecks) > 0 {
+		state.decks = append([]userdata.RawUserDeck(nil), raw.UserDecks...)
+		activeDeck := userdata.FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
+		state.activeDeckID = raw.UserGamedata.Deck
+		if state.activeDeckID == 0 {
+			state.activeDeckID = activeDeck.DeckID
+		}
+		if activeDeck.Leader > 0 {
+			state.leaderCardID = activeDeck.Leader
+			state.leaderTrainedArt = isSnapshotCardTrainedArt(userdata.FindUserCard(raw.UserCards, activeDeck.Leader))
+		}
+	}
+
+	return state
+}
+
+func buildSnapshotUserCardEntries(cards []userdata.RawUserCard) []any {
+	seen := make(map[int]struct{}, len(cards))
+	entries := make([]any, 0, len(cards))
+	for _, card := range cards {
+		if card.CardID == 0 {
+			continue
+		}
+		if _, ok := seen[card.CardID]; ok {
+			continue
+		}
+		seen[card.CardID] = struct{}{}
+
+		entry := map[string]any{
+			"cardId":                card.CardID,
+			"level":                 card.Level,
+			"masterRank":            card.MasterRank,
+			"defaultImage":          card.DefaultImage,
+			"specialTrainingStatus": card.SpecialTrainingStatus,
+		}
+		if card.SkillLevel > 0 {
+			entry["skillLevel"] = card.SkillLevel
+		}
+		entries = append(entries, entry)
+	}
+	return entries
+}
+
 // findAPIUserCard returns the first AnotherUserCard whose CardID matches, or nil.
 func findAPIUserCard(cards []sekai.AnotherUserCard, cardID int) *sekai.AnotherUserCard {
 	for i := range cards {
@@ -159,20 +240,20 @@ func findAPIUserCard(cards []sekai.AnotherUserCard, cardID int) *sekai.AnotherUs
 	return nil
 }
 
-// isAPICardAfterTraining reports whether the card should currently display its
-// after-training art. Prefer the user's current defaultImage choice and fall
-// back to the historical "training done" status when the display state is
-// missing from the payload.
-func isAPICardAfterTraining(card *sekai.AnotherUserCard) bool {
+// isAPICardTrainedArt reports whether the card should currently display its
+// after-training art. We intentionally key this off defaultImage only so the
+// avatar stays in sync with the actual selected art, rather than the unlock
+// state of the card.
+func isAPICardTrainedArt(card *sekai.AnotherUserCard) bool {
 	if card == nil {
 		return false
 	}
-	switch strings.ToLower(strings.TrimSpace(card.DefaultImage)) {
-	case "special_training":
-		return true
-	case "normal":
+	return strings.EqualFold(strings.TrimSpace(card.DefaultImage), "special_training")
+}
+
+func isSnapshotCardTrainedArt(card *userdata.RawUserCard) bool {
+	if card == nil {
 		return false
-	default:
-		return strings.EqualFold(card.SpecialTrainingStatus, "done")
 	}
+	return strings.EqualFold(strings.TrimSpace(card.DefaultImage), "special_training")
 }

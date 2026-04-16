@@ -273,6 +273,13 @@ func isAfterTraining(cardInfo *RawUserCard) bool {
 	}
 }
 
+func leaderCardUsesTrainedArt(cardInfo *RawUserCard) bool {
+	if cardInfo == nil {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(cardInfo.DefaultImage), "special_training")
+}
+
 func convertChallengeResults(source []RawChallengeLiveResult) []ChallengeLiveResult {
 	out := make([]ChallengeLiveResult, 0, len(source))
 	for _, item := range source {

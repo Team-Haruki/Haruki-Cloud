@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/database/pjsk/aliasadmin"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/pendingalias"
+	"haruki-cloud/database/pjsk/profilebackground"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -39,6 +40,8 @@ type Client struct {
 	GroupAlias *GroupAliasClient
 	// PendingAlias is the client for interacting with the PendingAlias builders.
 	PendingAlias *PendingAliasClient
+	// ProfileBackground is the client for interacting with the ProfileBackground builders.
+	ProfileBackground *ProfileBackgroundClient
 	// RejectedAlias is the client for interacting with the RejectedAlias builders.
 	RejectedAlias *RejectedAliasClient
 	// UserBinding is the client for interacting with the UserBinding builders.
@@ -62,6 +65,7 @@ func (c *Client) init() {
 	c.AliasAdmin = NewAliasAdminClient(c.config)
 	c.GroupAlias = NewGroupAliasClient(c.config)
 	c.PendingAlias = NewPendingAliasClient(c.config)
+	c.ProfileBackground = NewProfileBackgroundClient(c.config)
 	c.RejectedAlias = NewRejectedAliasClient(c.config)
 	c.UserBinding = NewUserBindingClient(c.config)
 	c.UserDefaultBinding = NewUserDefaultBindingClient(c.config)
@@ -162,6 +166,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AliasAdmin:         NewAliasAdminClient(cfg),
 		GroupAlias:         NewGroupAliasClient(cfg),
 		PendingAlias:       NewPendingAliasClient(cfg),
+		ProfileBackground:  NewProfileBackgroundClient(cfg),
 		RejectedAlias:      NewRejectedAliasClient(cfg),
 		UserBinding:        NewUserBindingClient(cfg),
 		UserDefaultBinding: NewUserDefaultBindingClient(cfg),
@@ -189,6 +194,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AliasAdmin:         NewAliasAdminClient(cfg),
 		GroupAlias:         NewGroupAliasClient(cfg),
 		PendingAlias:       NewPendingAliasClient(cfg),
+		ProfileBackground:  NewProfileBackgroundClient(cfg),
 		RejectedAlias:      NewRejectedAliasClient(cfg),
 		UserBinding:        NewUserBindingClient(cfg),
 		UserDefaultBinding: NewUserDefaultBindingClient(cfg),
@@ -222,8 +228,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Alias, c.AliasAdmin, c.GroupAlias, c.PendingAlias, c.RejectedAlias,
-		c.UserBinding, c.UserDefaultBinding, c.UserPreference,
+		c.Alias, c.AliasAdmin, c.GroupAlias, c.PendingAlias, c.ProfileBackground,
+		c.RejectedAlias, c.UserBinding, c.UserDefaultBinding, c.UserPreference,
 	} {
 		n.Use(hooks...)
 	}
@@ -233,8 +239,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Alias, c.AliasAdmin, c.GroupAlias, c.PendingAlias, c.RejectedAlias,
-		c.UserBinding, c.UserDefaultBinding, c.UserPreference,
+		c.Alias, c.AliasAdmin, c.GroupAlias, c.PendingAlias, c.ProfileBackground,
+		c.RejectedAlias, c.UserBinding, c.UserDefaultBinding, c.UserPreference,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -251,6 +257,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.GroupAlias.mutate(ctx, m)
 	case *PendingAliasMutation:
 		return c.PendingAlias.mutate(ctx, m)
+	case *ProfileBackgroundMutation:
+		return c.ProfileBackground.mutate(ctx, m)
 	case *RejectedAliasMutation:
 		return c.RejectedAlias.mutate(ctx, m)
 	case *UserBindingMutation:
@@ -793,6 +801,139 @@ func (c *PendingAliasClient) mutate(ctx context.Context, m *PendingAliasMutation
 		return (&PendingAliasDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("pjsk: unknown PendingAlias mutation op: %q", m.Op())
+	}
+}
+
+// ProfileBackgroundClient is a client for the ProfileBackground schema.
+type ProfileBackgroundClient struct {
+	config
+}
+
+// NewProfileBackgroundClient returns a client for the ProfileBackground from the given config.
+func NewProfileBackgroundClient(c config) *ProfileBackgroundClient {
+	return &ProfileBackgroundClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `profilebackground.Hooks(f(g(h())))`.
+func (c *ProfileBackgroundClient) Use(hooks ...Hook) {
+	c.hooks.ProfileBackground = append(c.hooks.ProfileBackground, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `profilebackground.Intercept(f(g(h())))`.
+func (c *ProfileBackgroundClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ProfileBackground = append(c.inters.ProfileBackground, interceptors...)
+}
+
+// Create returns a builder for creating a ProfileBackground entity.
+func (c *ProfileBackgroundClient) Create() *ProfileBackgroundCreate {
+	mutation := newProfileBackgroundMutation(c.config, OpCreate)
+	return &ProfileBackgroundCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ProfileBackground entities.
+func (c *ProfileBackgroundClient) CreateBulk(builders ...*ProfileBackgroundCreate) *ProfileBackgroundCreateBulk {
+	return &ProfileBackgroundCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ProfileBackgroundClient) MapCreateBulk(slice any, setFunc func(*ProfileBackgroundCreate, int)) *ProfileBackgroundCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ProfileBackgroundCreateBulk{err: fmt.Errorf("calling to ProfileBackgroundClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ProfileBackgroundCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ProfileBackgroundCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ProfileBackground.
+func (c *ProfileBackgroundClient) Update() *ProfileBackgroundUpdate {
+	mutation := newProfileBackgroundMutation(c.config, OpUpdate)
+	return &ProfileBackgroundUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProfileBackgroundClient) UpdateOne(_m *ProfileBackground) *ProfileBackgroundUpdateOne {
+	mutation := newProfileBackgroundMutation(c.config, OpUpdateOne, withProfileBackground(_m))
+	return &ProfileBackgroundUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProfileBackgroundClient) UpdateOneID(id int) *ProfileBackgroundUpdateOne {
+	mutation := newProfileBackgroundMutation(c.config, OpUpdateOne, withProfileBackgroundID(id))
+	return &ProfileBackgroundUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ProfileBackground.
+func (c *ProfileBackgroundClient) Delete() *ProfileBackgroundDelete {
+	mutation := newProfileBackgroundMutation(c.config, OpDelete)
+	return &ProfileBackgroundDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ProfileBackgroundClient) DeleteOne(_m *ProfileBackground) *ProfileBackgroundDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ProfileBackgroundClient) DeleteOneID(id int) *ProfileBackgroundDeleteOne {
+	builder := c.Delete().Where(profilebackground.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProfileBackgroundDeleteOne{builder}
+}
+
+// Query returns a query builder for ProfileBackground.
+func (c *ProfileBackgroundClient) Query() *ProfileBackgroundQuery {
+	return &ProfileBackgroundQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeProfileBackground},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ProfileBackground entity by its id.
+func (c *ProfileBackgroundClient) Get(ctx context.Context, id int) (*ProfileBackground, error) {
+	return c.Query().Where(profilebackground.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProfileBackgroundClient) GetX(ctx context.Context, id int) *ProfileBackground {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ProfileBackgroundClient) Hooks() []Hook {
+	return c.hooks.ProfileBackground
+}
+
+// Interceptors returns the client interceptors.
+func (c *ProfileBackgroundClient) Interceptors() []Interceptor {
+	return c.inters.ProfileBackground
+}
+
+func (c *ProfileBackgroundClient) mutate(ctx context.Context, m *ProfileBackgroundMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ProfileBackgroundCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ProfileBackgroundUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ProfileBackgroundUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ProfileBackgroundDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("pjsk: unknown ProfileBackground mutation op: %q", m.Op())
 	}
 }
 
@@ -1363,11 +1504,11 @@ func (c *UserPreferenceClient) mutate(ctx context.Context, m *UserPreferenceMuta
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Alias, AliasAdmin, GroupAlias, PendingAlias, RejectedAlias, UserBinding,
-		UserDefaultBinding, UserPreference []ent.Hook
+		Alias, AliasAdmin, GroupAlias, PendingAlias, ProfileBackground, RejectedAlias,
+		UserBinding, UserDefaultBinding, UserPreference []ent.Hook
 	}
 	inters struct {
-		Alias, AliasAdmin, GroupAlias, PendingAlias, RejectedAlias, UserBinding,
-		UserDefaultBinding, UserPreference []ent.Interceptor
+		Alias, AliasAdmin, GroupAlias, PendingAlias, ProfileBackground, RejectedAlias,
+		UserBinding, UserDefaultBinding, UserPreference []ent.Interceptor
 	}
 )

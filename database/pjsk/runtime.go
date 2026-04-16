@@ -7,6 +7,7 @@ import (
 	"haruki-cloud/database/pjsk/aliasadmin"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/pendingalias"
+	"haruki-cloud/database/pjsk/profilebackground"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -66,6 +67,16 @@ func init() {
 	pendingaliasDescSubmittedBy := pendingaliasFields[4].Descriptor()
 	// pendingalias.SubmittedByValidator is a validator for the "submitted_by" field. It is called by the builders before save.
 	pendingalias.SubmittedByValidator = pendingaliasDescSubmittedBy.Validators[0].(func(string) error)
+	profilebackgroundFields := schema.ProfileBackground{}.Fields()
+	_ = profilebackgroundFields
+	// profilebackgroundDescServer is the schema descriptor for server field.
+	profilebackgroundDescServer := profilebackgroundFields[1].Descriptor()
+	// profilebackground.ServerValidator is a validator for the "server" field. It is called by the builders before save.
+	profilebackground.ServerValidator = profilebackgroundDescServer.Validators[0].(func(string) error)
+	// profilebackgroundDescUserID is the schema descriptor for user_id field.
+	profilebackgroundDescUserID := profilebackgroundFields[2].Descriptor()
+	// profilebackground.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	profilebackground.UserIDValidator = profilebackgroundDescUserID.Validators[0].(func(string) error)
 	rejectedaliasFields := schema.RejectedAlias{}.Fields()
 	_ = rejectedaliasFields
 	// rejectedaliasDescAliasType is the schema descriptor for alias_type field.

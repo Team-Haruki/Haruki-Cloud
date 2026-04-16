@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/database/pjsk/aliasadmin"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/pendingalias"
+	"haruki-cloud/database/pjsk/profilebackground"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -84,6 +85,7 @@ func checkColumn(t, c string) error {
 			aliasadmin.Table:         aliasadmin.ValidColumn,
 			groupalias.Table:         groupalias.ValidColumn,
 			pendingalias.Table:       pendingalias.ValidColumn,
+			profilebackground.Table:  profilebackground.ValidColumn,
 			rejectedalias.Table:      rejectedalias.ValidColumn,
 			userbinding.Table:        userbinding.ValidColumn,
 			userdefaultbinding.Table: userdefaultbinding.ValidColumn,

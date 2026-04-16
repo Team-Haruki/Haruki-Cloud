@@ -18,6 +18,9 @@ type GroupAlias func(*sql.Selector)
 // PendingAlias is the predicate function for pendingalias builders.
 type PendingAlias func(*sql.Selector)
 
+// ProfileBackground is the predicate function for profilebackground builders.
+type ProfileBackground func(*sql.Selector)
+
 // RejectedAlias is the predicate function for rejectedalias builders.
 type RejectedAlias func(*sql.Selector)
 

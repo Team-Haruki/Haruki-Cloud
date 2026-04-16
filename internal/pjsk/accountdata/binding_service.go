@@ -9,8 +9,8 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
-	"haruki-cloud/utils/censor"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/censor"
 )
 
 // BindingService manages user game account bindings.
@@ -160,7 +160,11 @@ func (s *BindingService) List(ctx context.Context, platform, platformUserID stri
 	if err != nil {
 		return nil, err
 	}
-	return buildBindingList(bindings, defaults), nil
+	bgMap, err := loadProfileBackgroundMap(ctx, s.pjskDB, bindings)
+	if err != nil {
+		return nil, err
+	}
+	return buildBindingListWithBackgrounds(bindings, defaults, bgMap), nil
 }
 
 func (s *BindingService) Unbind(ctx context.Context, platform, platformUserID, selector, server string) (*UnbindResult, error) {

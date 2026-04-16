@@ -61,6 +61,10 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 		if b == nil {
 			return nil, ErrNoBinding
 		}
+		bg, err := loadProfileBackground(ctx, r.db, b.Server, b.UserID)
+		if err != nil {
+			return nil, err
+		}
 		return &ResolvedBinding{
 			BindingID:      b.ID,
 			PJSKUserID:     b.UserID,
@@ -69,7 +73,7 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 			SuiteVisible:   b.SuiteVisible,
 			MySekaiVisible: b.MysekaiVisible,
 			Verified:       b.Verified,
-			Bg:             cloneProfileBGSettings(b.Bg),
+			Bg:             resolveLoadedBindingProfileBG(bg, b),
 		}, nil
 	}
 	if !pjskdb.IsNotFound(err) {
@@ -90,6 +94,10 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 		}
 		return nil, err
 	}
+	bg, err := loadProfileBackground(ctx, r.db, b.Server, b.UserID)
+	if err != nil {
+		return nil, err
+	}
 
 	return &ResolvedBinding{
 		BindingID:      b.ID,
@@ -99,7 +107,7 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 		SuiteVisible:   b.SuiteVisible,
 		MySekaiVisible: b.MysekaiVisible,
 		Verified:       b.Verified,
-		Bg:             cloneProfileBGSettings(b.Bg),
+		Bg:             resolveLoadedBindingProfileBG(bg, b),
 	}, nil
 }
 

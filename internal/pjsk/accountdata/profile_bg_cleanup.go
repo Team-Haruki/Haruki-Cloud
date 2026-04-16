@@ -16,7 +16,7 @@ import (
 // CleanupOrphanedFiles walks the profile background directory and removes any
 // files whose relative paths are not present in activePaths.
 // activePaths values must use forward-slash separators, matching the format
-// stored in ProfileBgSettings.ImgPath (e.g. "user_upload/profile_bg/jp/binding_3_abc12345.jpg").
+// stored in ProfileBgSettings.ImgPath (e.g. "user_upload/profile_bg/jp/uid_12345678901234_abc12345.jpg").
 // Returns the number of deleted files.
 func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePaths map[string]bool) (int, error) {
 	if s == nil {
@@ -88,17 +88,30 @@ func (c *ProfileBGCleaner) Run(ctx context.Context) (int, error) {
 		return 0, nil
 	}
 
-	bindings, err := c.db.UserBinding.Query().
+	rows, err := c.db.ProfileBackground.Query().
+		All(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("profile bg cleanup: query profile backgrounds: %w", err)
+	}
+	legacyBindings, err := c.db.UserBinding.Query().
 		Where(userbinding.BgNotNil()).
 		All(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("profile bg cleanup: query bindings: %w", err)
+		return 0, fmt.Errorf("profile bg cleanup: query legacy binding backgrounds: %w", err)
 	}
 
-	active := make(map[string]bool, len(bindings))
-	for _, b := range bindings {
-		if b.Bg != nil && b.Bg.ImgPath != nil {
-			p := filepath.ToSlash(strings.TrimSpace(*b.Bg.ImgPath))
+	active := make(map[string]bool, len(rows)+len(legacyBindings))
+	for _, row := range rows {
+		if row.Bg != nil && row.Bg.ImgPath != nil {
+			p := filepath.ToSlash(strings.TrimSpace(*row.Bg.ImgPath))
+			if p != "" {
+				active[p] = true
+			}
+		}
+	}
+	for _, binding := range legacyBindings {
+		if binding.Bg != nil && binding.Bg.ImgPath != nil {
+			p := filepath.ToSlash(strings.TrimSpace(*binding.Bg.ImgPath))
 			if p != "" {
 				active[p] = true
 			}

@@ -20,6 +20,8 @@ type Tx struct {
 	GroupAlias *GroupAliasClient
 	// PendingAlias is the client for interacting with the PendingAlias builders.
 	PendingAlias *PendingAliasClient
+	// ProfileBackground is the client for interacting with the ProfileBackground builders.
+	ProfileBackground *ProfileBackgroundClient
 	// RejectedAlias is the client for interacting with the RejectedAlias builders.
 	RejectedAlias *RejectedAliasClient
 	// UserBinding is the client for interacting with the UserBinding builders.
@@ -163,6 +165,7 @@ func (tx *Tx) init() {
 	tx.AliasAdmin = NewAliasAdminClient(tx.config)
 	tx.GroupAlias = NewGroupAliasClient(tx.config)
 	tx.PendingAlias = NewPendingAliasClient(tx.config)
+	tx.ProfileBackground = NewProfileBackgroundClient(tx.config)
 	tx.RejectedAlias = NewRejectedAliasClient(tx.config)
 	tx.UserBinding = NewUserBindingClient(tx.config)
 	tx.UserDefaultBinding = NewUserDefaultBindingClient(tx.config)

@@ -84,7 +84,7 @@ func NewLocalProfileBGStore(rootDir string) *LocalProfileBGStore {
 	}
 }
 
-func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server string, bindingID int, imageURL string) (*drawing.ProfileBgSettings, error) {
+func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server string, userID string, imageURL string) (*drawing.ProfileBgSettings, error) {
 	if s == nil {
 		return nil, fmt.Errorf("pjsk: profile background storage is not configured")
 	}
@@ -120,7 +120,8 @@ func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server 
 	}
 
 	server = strings.TrimSpace(strings.ToLower(server))
-	filename := fmt.Sprintf("binding_%d_%s.jpg", bindingID, randomHex8())
+	userID = strings.TrimSpace(userID)
+	filename := fmt.Sprintf("uid_%s_%s.jpg", userID, randomHex8())
 	relativePath := filepath.ToSlash(filepath.Join(s.relativeDir, server, filename))
 	absolutePath, err := s.absolutePath(relativePath)
 	if err != nil {

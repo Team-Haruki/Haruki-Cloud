@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -41,7 +41,7 @@ type FastVerificationProvider interface {
 
 // ProfileBGStorage handles storage of custom profile background images.
 type ProfileBGStorage interface {
-	SaveProfileBackground(ctx context.Context, server string, bindingID int, imageURL string) (*drawing.ProfileBgSettings, error)
+	SaveProfileBackground(ctx context.Context, server string, userID string, imageURL string) (*drawing.ProfileBgSettings, error)
 	DeleteProfileBackground(ctx context.Context, settings *drawing.ProfileBgSettings) error
 }
 

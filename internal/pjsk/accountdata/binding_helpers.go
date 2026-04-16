@@ -8,10 +8,15 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func buildBindingList(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDefaultBinding) []BindingListItem {
+	return buildBindingListWithBackgrounds(bindings, defaults, nil)
+}
+
+func buildBindingListWithBackgrounds(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDefaultBinding, bgMap map[string]*drawing.ProfileBgSettings) []BindingListItem {
 	if len(bindings) == 0 {
 		return nil
 	}
@@ -36,7 +41,7 @@ func buildBindingList(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDef
 			SuiteVisible:    binding.SuiteVisible,
 			MySekaiVisible:  binding.MysekaiVisible,
 			Verified:        binding.Verified,
-			Bg:              cloneProfileBGSettings(binding.Bg),
+			Bg:              resolveBindingProfileBG(bgMap, binding),
 			IsGlobalDefault: binding.ID == globalDefaultID,
 			IsServerDefault: binding.ID == serverDefaultByServer[binding.Server],
 		})

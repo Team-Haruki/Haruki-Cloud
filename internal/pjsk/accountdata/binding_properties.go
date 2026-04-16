@@ -42,16 +42,22 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 		}
 	}
 
-	oldBg := binding.Bg
-	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.ID, imageURL)
+	oldBg, err := loadProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).SetBg(settings).Save(ctx); err != nil {
+	if oldBg == nil {
+		oldBg = cloneProfileBGSettings(binding.Bg)
+	}
+	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.UserID, imageURL)
+	if err != nil {
+		return nil, err
+	}
+	if err := upsertProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID, settings); err != nil {
 		return nil, err
 	}
 	// Remove the old background file after the DB record is updated.
-	if oldBg != nil {
+	if oldBg != nil && !sameProfileBGPath(oldBg, settings) {
 		_ = s.bgStorage.DeleteProfileBackground(ctx, oldBg)
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
@@ -64,14 +70,19 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 	if !binding.Verified {
 		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法清除个人信息背景", strings.ToUpper(binding.Server))
 	}
+	settings, err := loadProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if settings == nil {
+		settings = cloneProfileBGSettings(binding.Bg)
+	}
 	if s.bgStorage != nil {
-		if err := s.bgStorage.DeleteProfileBackground(ctx, binding.Bg); err != nil {
+		if err := s.bgStorage.DeleteProfileBackground(ctx, settings); err != nil {
 			return nil, err
 		}
 	}
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
-		ClearBg().
-		Save(ctx); err != nil {
+	if err := deleteProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID); err != nil {
 		return nil, err
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
@@ -84,11 +95,18 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 	if !binding.Verified {
 		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法调整个人信息背景", strings.ToUpper(binding.Server))
 	}
-	if binding.Bg == nil || binding.Bg.ImgPath == nil || strings.TrimSpace(*binding.Bg.ImgPath) == "" {
+	currentBg, err := loadProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if currentBg == nil {
+		currentBg = cloneProfileBGSettings(binding.Bg)
+	}
+	if currentBg == nil || currentBg.ImgPath == nil || strings.TrimSpace(*currentBg.ImgPath) == "" {
 		return nil, fmt.Errorf("当前%s服还没有自定义个人信息背景", strings.ToUpper(binding.Server))
 	}
 
-	settings := cloneProfileBGSettings(binding.Bg)
+	settings := cloneProfileBGSettings(currentBg)
 	if blur != nil {
 		settings.Blur = *blur
 	}
@@ -99,9 +117,7 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 		settings.Vertical = *vertical
 	}
 
-	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
-		SetBg(settings).
-		Save(ctx); err != nil {
+	if err := upsertProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID, settings); err != nil {
 		return nil, err
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)

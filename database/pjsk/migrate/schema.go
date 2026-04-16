@@ -84,6 +84,26 @@ var (
 			},
 		},
 	}
+	// ProfileBackgroundsColumns holds the columns for the "profile_backgrounds" table.
+	ProfileBackgroundsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "server", Type: field.TypeString, Size: 2},
+		{Name: "user_id", Type: field.TypeString, Size: 30},
+		{Name: "bg", Type: field.TypeJSON},
+	}
+	// ProfileBackgroundsTable holds the schema information for the "profile_backgrounds" table.
+	ProfileBackgroundsTable = &schema.Table{
+		Name:       "profile_backgrounds",
+		Columns:    ProfileBackgroundsColumns,
+		PrimaryKey: []*schema.Column{ProfileBackgroundsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "profilebackground_server_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{ProfileBackgroundsColumns[1], ProfileBackgroundsColumns[2]},
+			},
+		},
+	}
 	// RejectedAliasColumns holds the columns for the "rejected_alias" table.
 	RejectedAliasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -171,6 +191,7 @@ var (
 		AliasAdminsTable,
 		GroupAliasTable,
 		PendingAliasTable,
+		ProfileBackgroundsTable,
 		RejectedAliasTable,
 		UserBindingsTable,
 		UserDefaultBindingsTable,

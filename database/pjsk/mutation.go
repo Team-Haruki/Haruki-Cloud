@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/predicate"
+	"haruki-cloud/database/pjsk/profilebackground"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -37,6 +38,7 @@ const (
 	TypeAliasAdmin         = "AliasAdmin"
 	TypeGroupAlias         = "GroupAlias"
 	TypePendingAlias       = "PendingAlias"
+	TypeProfileBackground  = "ProfileBackground"
 	TypeRejectedAlias      = "RejectedAlias"
 	TypeUserBinding        = "UserBinding"
 	TypeUserDefaultBinding = "UserDefaultBinding"
@@ -2095,6 +2097,446 @@ func (m *PendingAliasMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *PendingAliasMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown PendingAlias edge %s", name)
+}
+
+// ProfileBackgroundMutation represents an operation that mutates the ProfileBackground nodes in the graph.
+type ProfileBackgroundMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	server        *string
+	user_id       *string
+	bg            **drawing.ProfileBgSettings
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*ProfileBackground, error)
+	predicates    []predicate.ProfileBackground
+}
+
+var _ ent.Mutation = (*ProfileBackgroundMutation)(nil)
+
+// profilebackgroundOption allows management of the mutation configuration using functional options.
+type profilebackgroundOption func(*ProfileBackgroundMutation)
+
+// newProfileBackgroundMutation creates new mutation for the ProfileBackground entity.
+func newProfileBackgroundMutation(c config, op Op, opts ...profilebackgroundOption) *ProfileBackgroundMutation {
+	m := &ProfileBackgroundMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeProfileBackground,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withProfileBackgroundID sets the ID field of the mutation.
+func withProfileBackgroundID(id int) profilebackgroundOption {
+	return func(m *ProfileBackgroundMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ProfileBackground
+		)
+		m.oldValue = func(ctx context.Context) (*ProfileBackground, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ProfileBackground.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withProfileBackground sets the old ProfileBackground of the mutation.
+func withProfileBackground(node *ProfileBackground) profilebackgroundOption {
+	return func(m *ProfileBackgroundMutation) {
+		m.oldValue = func(context.Context) (*ProfileBackground, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ProfileBackgroundMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ProfileBackgroundMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("pjsk: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ProfileBackground entities.
+func (m *ProfileBackgroundMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ProfileBackgroundMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ProfileBackgroundMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ProfileBackground.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetServer sets the "server" field.
+func (m *ProfileBackgroundMutation) SetServer(s string) {
+	m.server = &s
+}
+
+// Server returns the value of the "server" field in the mutation.
+func (m *ProfileBackgroundMutation) Server() (r string, exists bool) {
+	v := m.server
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServer returns the old "server" field's value of the ProfileBackground entity.
+// If the ProfileBackground object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBackgroundMutation) OldServer(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServer is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServer requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServer: %w", err)
+	}
+	return oldValue.Server, nil
+}
+
+// ResetServer resets all changes to the "server" field.
+func (m *ProfileBackgroundMutation) ResetServer() {
+	m.server = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *ProfileBackgroundMutation) SetUserID(s string) {
+	m.user_id = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *ProfileBackgroundMutation) UserID() (r string, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the ProfileBackground entity.
+// If the ProfileBackground object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBackgroundMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *ProfileBackgroundMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetBg sets the "bg" field.
+func (m *ProfileBackgroundMutation) SetBg(dbs *drawing.ProfileBgSettings) {
+	m.bg = &dbs
+}
+
+// Bg returns the value of the "bg" field in the mutation.
+func (m *ProfileBackgroundMutation) Bg() (r *drawing.ProfileBgSettings, exists bool) {
+	v := m.bg
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBg returns the old "bg" field's value of the ProfileBackground entity.
+// If the ProfileBackground object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileBackgroundMutation) OldBg(ctx context.Context) (v *drawing.ProfileBgSettings, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBg is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBg requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBg: %w", err)
+	}
+	return oldValue.Bg, nil
+}
+
+// ResetBg resets all changes to the "bg" field.
+func (m *ProfileBackgroundMutation) ResetBg() {
+	m.bg = nil
+}
+
+// Where appends a list predicates to the ProfileBackgroundMutation builder.
+func (m *ProfileBackgroundMutation) Where(ps ...predicate.ProfileBackground) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ProfileBackgroundMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ProfileBackgroundMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ProfileBackground, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ProfileBackgroundMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ProfileBackgroundMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ProfileBackground).
+func (m *ProfileBackgroundMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ProfileBackgroundMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.server != nil {
+		fields = append(fields, profilebackground.FieldServer)
+	}
+	if m.user_id != nil {
+		fields = append(fields, profilebackground.FieldUserID)
+	}
+	if m.bg != nil {
+		fields = append(fields, profilebackground.FieldBg)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ProfileBackgroundMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case profilebackground.FieldServer:
+		return m.Server()
+	case profilebackground.FieldUserID:
+		return m.UserID()
+	case profilebackground.FieldBg:
+		return m.Bg()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ProfileBackgroundMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case profilebackground.FieldServer:
+		return m.OldServer(ctx)
+	case profilebackground.FieldUserID:
+		return m.OldUserID(ctx)
+	case profilebackground.FieldBg:
+		return m.OldBg(ctx)
+	}
+	return nil, fmt.Errorf("unknown ProfileBackground field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ProfileBackgroundMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case profilebackground.FieldServer:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServer(v)
+		return nil
+	case profilebackground.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case profilebackground.FieldBg:
+		v, ok := value.(*drawing.ProfileBgSettings)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBg(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ProfileBackground field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ProfileBackgroundMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ProfileBackgroundMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ProfileBackgroundMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ProfileBackground numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ProfileBackgroundMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ProfileBackgroundMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ProfileBackgroundMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ProfileBackground nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ProfileBackgroundMutation) ResetField(name string) error {
+	switch name {
+	case profilebackground.FieldServer:
+		m.ResetServer()
+		return nil
+	case profilebackground.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case profilebackground.FieldBg:
+		m.ResetBg()
+		return nil
+	}
+	return fmt.Errorf("unknown ProfileBackground field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ProfileBackgroundMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ProfileBackgroundMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ProfileBackgroundMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ProfileBackgroundMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ProfileBackgroundMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ProfileBackgroundMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ProfileBackgroundMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown ProfileBackground unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ProfileBackgroundMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown ProfileBackground edge %s", name)
 }
 
 // RejectedAliasMutation represents an operation that mutates the RejectedAlias nodes in the graph.

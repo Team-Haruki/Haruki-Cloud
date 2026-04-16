@@ -2,6 +2,7 @@ package accountdata_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -22,20 +23,17 @@ func (f fakeFastVerifier) GetToolboxUserFastVerificationGameAccountBindings(plat
 }
 
 type fakeProfileBGStore struct {
-	saved          []string
-	savedServers   []string
-	savedBindingID []int
-	deleted        []string
+	saved        []string
+	savedServers []string
+	savedUserIDs []string
+	deleted      []string
 }
 
-func (s *fakeProfileBGStore) SaveProfileBackground(ctx context.Context, server string, bindingID int, imageURL string) (*drawing.ProfileBgSettings, error) {
+func (s *fakeProfileBGStore) SaveProfileBackground(ctx context.Context, server string, userID string, imageURL string) (*drawing.ProfileBgSettings, error) {
 	s.saved = append(s.saved, imageURL)
 	s.savedServers = append(s.savedServers, server)
-	s.savedBindingID = append(s.savedBindingID, bindingID)
-	path := accountdata.DefaultProfileBGRelativeDir + "/" + server + "/binding_" + "1" + ".jpg"
-	if bindingID != 1 {
-		path = accountdata.DefaultProfileBGRelativeDir + "/" + server + "/binding_" + "2" + ".jpg"
-	}
+	s.savedUserIDs = append(s.savedUserIDs, userID)
+	path := accountdata.DefaultProfileBGRelativeDir + "/" + server + "/uid_" + userID + ".jpg"
 	return &drawing.ProfileBgSettings{
 		ImgPath:  &path,
 		Blur:     4,
@@ -140,6 +138,26 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 	}
 	if len(bgStore.deleted) != 1 {
 		t.Fatalf("expected one deleted background, got %+v", bgStore.deleted)
+	}
+}
+
+func TestProfileBackgroundRequiresVerifiedBinding(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"12345678901234": "JP User"},
+	})
+	service.SetProfileBGStorage(&fakeProfileBGStore{})
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	_, err := service.SetCurrentBindingProfileBG(ctx, "qq", "42", "jp", "https://example.com/bg.png")
+	if err == nil {
+		t.Fatal("expected unverified binding to reject bg upload")
+	}
+	if !strings.Contains(err.Error(), "尚未验证") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
@@ -250,6 +268,9 @@ func TestExecuteProfileSettingsCommandBGUploadUsesGlobalDefaultBindingWhenRegion
 	if len(bgStore.savedServers) != 1 || bgStore.savedServers[0] != "tw" {
 		t.Fatalf("unexpected saved servers: %+v", bgStore.savedServers)
 	}
+	if len(bgStore.savedUserIDs) != 1 || bgStore.savedUserIDs[0] != "11111111111111" {
+		t.Fatalf("unexpected saved user ids: %+v", bgStore.savedUserIDs)
+	}
 
 	items, err := service.List(ctx, "qq", "42")
 	if err != nil {
@@ -269,5 +290,45 @@ func TestExecuteProfileSettingsCommandBGUploadUsesGlobalDefaultBindingWhenRegion
 	}
 	if jpHasBG {
 		t.Fatalf("expected JP binding to remain unchanged")
+	}
+}
+
+func TestProfileBackgroundPersistsAcrossUnbindAndRebind(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"12345678901234": "JP User"},
+	})
+	service.SetFastVerificationProvider(fakeFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{{Server: "jp", GameUserID: "12345678901234"}},
+	})
+	bgStore := &fakeProfileBGStore{}
+	service.SetProfileBGStorage(bgStore)
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp"); err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+	if _, err := service.SetCurrentBindingProfileBG(ctx, "qq", "42", "jp", "https://example.com/bg.png"); err != nil {
+		t.Fatalf("set bg: %v", err)
+	}
+
+	if _, err := service.Unbind(ctx, "qq", "42", "12345678901234", ""); err != nil {
+		t.Fatalf("unbind: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("rebind: %v", err)
+	}
+
+	items, err := service.List(ctx, "qq", "42")
+	if err != nil {
+		t.Fatalf("list after rebind: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("expected one binding after rebind, got %d", len(items))
+	}
+	if items[0].Bg == nil || items[0].Bg.ImgPath == nil || *items[0].Bg.ImgPath == "" {
+		t.Fatalf("expected background to persist after rebind, got %+v", items[0].Bg)
 	}
 }

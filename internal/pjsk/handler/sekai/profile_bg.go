@@ -137,9 +137,6 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 		},
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s [图片]", ctx.originalTriggerCmd)
-			}
 			imageURL := extractFirstImageURL(ctx)
 			if imageURL == "" {
 				return nil, onebot11.NewReplayError("请在命令中附带一张个人信息背景图片")
@@ -162,9 +159,6 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 		},
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
-			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGClear, newProfileSettingsParams(ctx)), nil
 		},
 	}

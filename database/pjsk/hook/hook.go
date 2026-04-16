@@ -56,6 +56,18 @@ func (f PendingAliasFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.PendingAliasMutation", m)
 }
 
+// The ProfileBackgroundFunc type is an adapter to allow the use of ordinary
+// function as ProfileBackground mutator.
+type ProfileBackgroundFunc func(context.Context, *pjsk.ProfileBackgroundMutation) (pjsk.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProfileBackgroundFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value, error) {
+	if mv, ok := m.(*pjsk.ProfileBackgroundMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.ProfileBackgroundMutation", m)
+}
+
 // The RejectedAliasFunc type is an adapter to allow the use of ordinary
 // function as RejectedAlias mutator.
 type RejectedAliasFunc func(context.Context, *pjsk.RejectedAliasMutation) (pjsk.Value, error)

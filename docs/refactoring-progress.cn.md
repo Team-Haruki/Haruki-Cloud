@@ -1957,3 +1957,24 @@ internal/pjsk/
 `utils/` 目录从 7 包收缩到 5 包（`aesgcm` / `censor` / `imagecache` / `logger` / `redis`）。
 
 **验证**：`go build ./...` ✅；`go vet ./...` ✅；`go test ./...` 失败项与 [CLAUDE.md 测试基线](../CLAUDE.md) 已知失败一致，无新回归。
+
+---
+
+### R40：`utils/aesgcm` 下沉 + `utils/redis` 瘦身（2026-04-17）
+
+审计结论：
+
+- `utils/aesgcm` — 8 个导出里只有 `EncryptRaw` / `DecryptRaw` 在生产代码有人用（`api/bot/auth/session.go`），另外 `Encrypt` 仅被 `integration/api_test.go` 使用且该用例对 `Auth` 端点的 body 编码已完全过时（handler 期望 raw bytes + MsgPack，测试仍发 JSON-wrapped base64）。其余 5 个导出（`GenerateKey` / `GenerateKeyBase64` / `EncryptString` / `Decrypt` / `DecryptString`）无任何消费者。符合 R37 的 `turnstile` / `smtp` 下沉条件。
+- `utils/redis` — 7 个导出里 `ClearAllCacheForPath` 无任何消费者；`DeleteCache` 仅被同包 `ClearCache` 调用但 API 形态与 `SetCache` / `GetCache` 成对，保留。
+
+| 变更 | 细节 |
+|------|------|
+| 新建 `api/bot/auth/crypto.go` | 只保留 `EncryptRaw` / `DecryptRaw` 两个活导出；常量改为包私有（`aesKeySize` / `aesNonceSize` / `aesTagSize`）；sentinel error 改小写（`errInvalidAESKeySize` 等）；丢弃 5 个死导出 |
+| `api/bot/auth/session.go` + `bot_test.go` | 去掉 `haruki-cloud/utils/aesgcm` import，调用本包裸函数 `EncryptRaw` / `DecryptRaw` |
+| `integration/api_test.go` | import 由 `haruki-cloud/utils/aesgcm` 改为 `haruki-cloud/api/bot/auth`；`utilscrypto.Encrypt(...)` 替换为 `botauth.EncryptRaw(...)` + `base64.StdEncoding.EncodeToString(...)` 手工套壳，以保持既有（已 broken）body 格式不变。测试仍 broken（body 编码 / MsgPack 均与 handler 不匹配），但这是原有问题，本次不修复 |
+| 删除 `utils/aesgcm/` | 整包 1 文件 159 行移除 |
+| `utils/redis/clearcache.go` | 删除 `ClearAllCacheForPath`（21 行，无调用方） |
+
+**验证**：`go build ./...` ✅；`go vet ./...` ✅；`go test ./api/bot/auth/... ./internal/pjsk/accountdata/...` 通过。
+
+`utils/` 目录再收缩到 **4 包**（`censor` / `imagecache` / `logger` / `redis`），剩下的 4 个都是跨域多消费者的真工具。

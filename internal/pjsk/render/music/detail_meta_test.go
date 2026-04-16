@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 )
 
@@ -212,7 +212,7 @@ func TestBuildMusicDetailRequestMergesApprovedAliases(t *testing.T) {
 		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
 	}
 
-	want := []string{"song a", "Blue Song", "群青"}
+	want := []string{"Blue Song", "群青", "song a"}
 	if len(req.Alias) != len(want) {
 		t.Fatalf("unexpected alias count: got=%v want=%v", req.Alias, want)
 	}
@@ -220,5 +220,31 @@ func TestBuildMusicDetailRequestMergesApprovedAliases(t *testing.T) {
 		if req.Alias[i] != want[i] {
 			t.Fatalf("unexpected aliases: got=%v want=%v", req.Alias, want)
 		}
+	}
+}
+
+func TestBuildMusicDetailRequestLeavesAliasEmptyWithoutApprovedAliases(t *testing.T) {
+	source := &detailMetaTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {
+				ID:              1,
+				Title:           "Song A",
+				AssetBundleName: "jacket_a",
+				Pronunciation:   "song a",
+				PublishedAt:     1700000000000,
+			},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31, TotalNoteCount: 999}},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	req, err := controller.BuildMusicDetailRequest(Query{Query: "Song A", Region: "jp"})
+	if err != nil {
+		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
+	}
+	if len(req.Alias) != 0 {
+		t.Fatalf("expected empty alias list without approved aliases, got=%v", req.Alias)
 	}
 }

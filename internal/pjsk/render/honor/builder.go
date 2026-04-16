@@ -3,8 +3,8 @@ package honor
 import (
 	"fmt"
 
-	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/render/assets"
 )
 
 type Builder struct {
@@ -38,7 +38,7 @@ func (b *Builder) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) 
 			return nil, err
 		}
 	} else if isBonds {
-		if err := b.buildBondsHonorRequest(req, bondsHonor, query.HonorLevel, query.BondsHonorWordID, query.Region); err != nil {
+		if err := b.buildBondsHonorRequest(req, bondsHonor, query.HonorLevel, query.BondsHonorViewType, query.BondsHonorWordID, query.Region); err != nil {
 			return nil, err
 		}
 	}

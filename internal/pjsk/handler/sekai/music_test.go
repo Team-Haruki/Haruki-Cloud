@@ -324,6 +324,38 @@ func TestMusicListHandleEmbedsSelfSelector(t *testing.T) {
 	}
 }
 
+func TestMusicListHandleBuildsResolvedCommandWithResultFilter(t *testing.T) {
+	h := sekaiHandlers{}.MusicListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/难度排行",
+		ArgText:    "未ap 31-32 ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params struct {
+		Difficulty   string `json:"difficulty"`
+		LevelMin     int    `json:"level_min"`
+		LevelMax     int    `json:"level_max"`
+		ResultFilter string `json:"result_filter"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Difficulty != "expert" || params.LevelMin != 31 || params.LevelMax != 32 || params.ResultFilter != "not_ap" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
 func TestMusicRewardsHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.MusicRewardsHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}

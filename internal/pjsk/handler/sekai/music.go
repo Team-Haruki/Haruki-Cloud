@@ -48,6 +48,10 @@ func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
+			if resultFilter, cleaned, ok := extractMusicListResultFilter(args); ok {
+				args = cleaned
+				params["result_filter"] = resultFilter
+			}
 			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
 				args = cleaned
 				params["difficulty"] = diff
@@ -205,6 +209,38 @@ func (sekaiHandlers) MusicCoverHandle() SekaiCommandHandler {
 			}
 			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-cover"), nil
 		},
+	}
+}
+
+func extractMusicListResultFilter(args string) (string, string, bool) {
+	tokens := strings.Fields(strings.TrimSpace(args))
+	for idx, token := range tokens {
+		switch normalizeMusicListResultFilterToken(token) {
+		case "not_ap":
+			return "not_ap", joinMusicListTokensExcluding(tokens, idx), true
+		case "not_fc":
+			return "not_fc", joinMusicListTokensExcluding(tokens, idx), true
+		case "not_clear":
+			return "not_clear", joinMusicListTokensExcluding(tokens, idx), true
+		}
+	}
+	return "", strings.TrimSpace(args), false
+}
+
+func normalizeMusicListResultFilterToken(token string) string {
+	normalized := strings.ToLower(strings.TrimSpace(token))
+	normalized = strings.ReplaceAll(normalized, "_", "")
+	normalized = strings.ReplaceAll(normalized, "-", "")
+	normalized = strings.ReplaceAll(normalized, " ", "")
+	switch normalized {
+	case "未ap", "未allperfect", "未全perfect", "未全p", "notap":
+		return "not_ap"
+	case "未fc", "未fullcombo", "notfc":
+		return "not_fc"
+	case "未完成", "未clear", "未通关", "notclear":
+		return "not_clear"
+	default:
+		return ""
 	}
 }
 

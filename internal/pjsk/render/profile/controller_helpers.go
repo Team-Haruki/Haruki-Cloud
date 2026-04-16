@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/drawing"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -271,6 +271,7 @@ func (c *Controller) buildHonors(source DataSource, region renderregion.Value, p
 			HonorID:             honorID,
 			HonorLevel:          item.HonorLevel,
 			IsMain:              item.Seq == 1,
+			BondsHonorViewType:  item.BondsHonorViewType,
 			BondsHonorWordID:    item.BondsHonorWordId,
 			FcOrApLevelOverride: fcApLevels[honorID],
 		})

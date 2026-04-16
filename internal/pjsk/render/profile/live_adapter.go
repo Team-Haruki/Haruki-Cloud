@@ -57,11 +57,12 @@ func adaptAPIProfileHonors(honors []sekai.UserProfileHonor) []userdata.RawUserPr
 	result := make([]userdata.RawUserProfileHonor, len(honors))
 	for i, h := range honors {
 		result[i] = userdata.RawUserProfileHonor{
-			Seq:              h.Seq,
-			ProfileHonorType: h.ProfileHonorType,
-			HonorID:          h.HonorID,
-			HonorLevel:       h.HonorLevel,
-			BondsHonorWordId: h.BondsHonorWordID,
+			Seq:                h.Seq,
+			ProfileHonorType:   h.ProfileHonorType,
+			HonorID:            h.HonorID,
+			HonorLevel:         h.HonorLevel,
+			BondsHonorViewType: h.BondsHonorViewType,
+			BondsHonorWordId:   h.BondsHonorWordID,
 		}
 	}
 	return result

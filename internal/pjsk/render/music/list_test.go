@@ -271,3 +271,81 @@ func TestBuildMusicBriefListRequestFromItemsUsesFullDifficultyInfoWhenDifficulty
 		}
 	}
 }
+
+func TestBuildMusicListRequestFiltersByResultStatus(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Seq: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Seq: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+			3: {ID: 3, Seq: 3, Title: "Song C", AssetBundleName: "jacket_c"},
+			4: {ID: 4, Seq: 4, Title: "Song D", AssetBundleName: "jacket_d"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31}},
+			2: {{MusicID: 2, MusicDifficulty: "master", PlayLevel: 31}},
+			3: {{MusicID: 3, MusicDifficulty: "master", PlayLevel: 31}},
+			4: {{MusicID: 4, MusicDifficulty: "master", PlayLevel: 31}},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+
+	tests := []struct {
+		name         string
+		filter       string
+		wantIDs      []int
+		wantStatuses map[int]any
+	}{
+		{
+			name:    "not ap",
+			filter:  "not_ap",
+			wantIDs: []int{2, 3, 4},
+			wantStatuses: map[int]any{
+				2: "fc",
+				3: "clear",
+			},
+		},
+		{
+			name:    "not fc",
+			filter:  "not_fc",
+			wantIDs: []int{3, 4},
+			wantStatuses: map[int]any{
+				3: "clear",
+			},
+		},
+		{
+			name:    "not clear",
+			filter:  "not_clear",
+			wantIDs: []int{4},
+		},
+	}
+
+	for _, tc := range tests {
+		req, err := controller.BuildMusicListRequest(ListQuery{
+			Region:       "jp",
+			Difficulty:   "master",
+			ResultFilter: tc.filter,
+			UserResults: map[int]string{
+				1: "ap",
+				2: "fc",
+				3: "clear",
+			},
+		})
+		if err != nil {
+			t.Fatalf("%s: BuildMusicListRequest() error = %v", tc.name, err)
+		}
+		if len(req.MusicList) != len(tc.wantIDs) {
+			t.Fatalf("%s: expected %d music items, got %d", tc.name, len(tc.wantIDs), len(req.MusicList))
+		}
+		for idx, wantID := range tc.wantIDs {
+			if gotID := req.MusicList[idx]["id"].(int); gotID != wantID {
+				t.Fatalf("%s: unexpected music ids: got=%v want=%v", tc.name, req.MusicList, tc.wantIDs)
+			}
+		}
+		for musicID, wantStatus := range tc.wantStatuses {
+			if gotStatus := req.UserResults[musicID]; gotStatus != wantStatus {
+				t.Fatalf("%s: unexpected user result for music %d: got=%v want=%v", tc.name, musicID, gotStatus, wantStatus)
+			}
+		}
+	}
+}

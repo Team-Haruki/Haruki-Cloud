@@ -18,6 +18,7 @@ func logHonorRequestTrace(query Query, req *drawing.HonorRequest) {
 		"region", query.Region.String(),
 		"is_main", query.IsMain,
 		"honor_level", query.HonorLevel,
+		"bonds_honor_view_type", query.BondsHonorViewType,
 		"bonds_honor_word_id", query.BondsHonorWordID,
 		"honor_type", stringPtrTraceValue(req.HonorType),
 		"group_type", stringPtrTraceValue(req.GroupType),

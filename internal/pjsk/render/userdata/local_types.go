@@ -217,12 +217,13 @@ type RawUserFrame struct {
 }
 
 type RawUserProfileHonor struct {
-	Seq              int    `json:"seq"`
-	ProfileHonorType string `json:"profileHonorType"`
-	HonorID          int    `json:"honorId"`
-	HonorLevel       int    `json:"honorLevel"`
-	HonorId2         int    `json:"honorId2"`
-	BondsHonorWordId int    `json:"bondsHonorWordId"`
+	Seq                int    `json:"seq"`
+	ProfileHonorType   string `json:"profileHonorType"`
+	HonorID            int    `json:"honorId"`
+	HonorLevel         int    `json:"honorLevel"`
+	HonorId2           int    `json:"honorId2"`
+	BondsHonorViewType string `json:"bondsHonorViewType"`
+	BondsHonorWordId   int    `json:"bondsHonorWordId"`
 }
 
 type ChallengeLiveData struct {

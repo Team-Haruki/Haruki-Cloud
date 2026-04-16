@@ -53,6 +53,7 @@ type BriefListQuery struct {
 type ListQuery struct {
 	Items           []ListItemQuery                     `json:"items,omitempty"`
 	Difficulty      string                              `json:"difficulty"`
+	ResultFilter    string                              `json:"result_filter,omitempty"`
 	Level           int                                 `json:"level,omitempty"`
 	LevelMin        int                                 `json:"level_min,omitempty"`
 	LevelMax        int                                 `json:"level_max,omitempty"`

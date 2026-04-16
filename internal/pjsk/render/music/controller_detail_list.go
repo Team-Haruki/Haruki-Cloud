@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
 func (c *Controller) ResolveMusicCoverByTitleOrAlias(query Query) (*CoverResult, error) {
@@ -130,6 +130,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 	if err != nil {
 		return nil, err
 	}
+	resultFilter := normalizeMusicListResultFilter(query.ResultFilter)
 	diff := ""
 	if strings.TrimSpace(query.Difficulty) != "" || len(query.Items) == 0 {
 		diff = normalizeDifficulty(query.Difficulty)
@@ -145,6 +146,7 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		minLevel, maxLevel = maxLevel, minLevel
 	}
 
+	userResults := buildMusicListUserResults(query.UserResults, c.buildUserResults(diff))
 	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(source, query.Keyword)
 	if err != nil {
 		return nil, err
@@ -177,6 +179,9 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 				continue
 			}
 			if maxLevel > 0 && level > maxLevel {
+				continue
+			}
+			if !matchesMusicListResultFilter(resultFilter, userResults[musicInfo.ID]) {
 				continue
 			}
 
@@ -224,19 +229,13 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		diff = normalizedDifficultyValue(list[0]["difficulty_type"])
 	}
 
-	userResults := make(map[int]any)
-	if query.UserResults != nil {
-		for musicID, result := range query.UserResults {
-			userResults[musicID] = result
-		}
-	} else {
-		for musicID, result := range c.buildUserResults(diff) {
-			userResults[musicID] = result
-		}
+	drawingUserResults := make(map[int]any, len(userResults))
+	for musicID, result := range userResults {
+		drawingUserResults[musicID] = result
 	}
 
 	req := &drawing.MusicListRequest{
-		UserResults:          userResults,
+		UserResults:          drawingUserResults,
 		MusicList:            list,
 		JacketsPathList:      jackets,
 		RequiredDifficulties: diff,
@@ -313,4 +312,62 @@ func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
 		return nil, err
 	}
 	return c.drawing.GenerateMusicList(payload, query.ShowID, query.IncludeLeaks)
+}
+
+func buildMusicListUserResults(primary map[int]string, fallback map[int]string) map[int]string {
+	if len(primary) == 0 && len(fallback) == 0 {
+		return nil
+	}
+	result := make(map[int]string, len(primary)+len(fallback))
+	for musicID, value := range fallback {
+		result[musicID] = normalizeMusicListResultValue(value)
+	}
+	for musicID, value := range primary {
+		result[musicID] = normalizeMusicListResultValue(value)
+	}
+	return result
+}
+
+func normalizeMusicListResultFilter(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "not_ap":
+		return "not_ap"
+	case "not_fc":
+		return "not_fc"
+	case "not_clear":
+		return "not_clear"
+	default:
+		return ""
+	}
+}
+
+func normalizeMusicListResultValue(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "ap":
+		return "ap"
+	case "fc":
+		return "fc"
+	case "clear":
+		return "clear"
+	default:
+		return "not_clear"
+	}
+}
+
+func matchesMusicListResultFilter(filter string, result string) bool {
+	switch normalizeMusicListResultFilter(filter) {
+	case "not_ap":
+		return normalizeMusicListResultValue(result) != "ap"
+	case "not_fc":
+		switch normalizeMusicListResultValue(result) {
+		case "ap", "fc":
+			return false
+		default:
+			return true
+		}
+	case "not_clear":
+		return normalizeMusicListResultValue(result) == "not_clear"
+	default:
+		return true
+	}
 }

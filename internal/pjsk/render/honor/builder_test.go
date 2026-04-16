@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type testHonorSource struct {
@@ -111,21 +111,22 @@ func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 
 func TestBuildHonorRequestBondsMain(t *testing.T) {
 	source := newTestHonorSource(renderregion.JP)
-	source.bonds[900] = &masterdata.BondsHonor{
-		ID:                   900,
+	source.bonds[1020501] = &masterdata.BondsHonor{
+		ID:                   1020501,
 		GameCharacterUnitID1: 11,
 		GameCharacterUnitID2: 22,
 		HonorRarity:          "highest",
 	}
-	source.gcuByID[11] = &masterdata.GameCharacterUnit{ID: 11, GameCharacterID: 5}
-	source.gcuByID[22] = &masterdata.GameCharacterUnit{ID: 22, GameCharacterID: 7}
+	source.gcuByID[11] = &masterdata.GameCharacterUnit{ID: 11, GameCharacterID: 2}
+	source.gcuByID[22] = &masterdata.GameCharacterUnit{ID: 22, GameCharacterID: 5}
 
 	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
 	req, err := builder.BuildHonorRequest(Query{
-		Region:     renderregion.JP,
-		HonorID:    900,
-		HonorLevel: 3,
-		IsMain:     true,
+		Region:           renderregion.JP,
+		HonorID:          1020501,
+		HonorLevel:       3,
+		IsMain:           true,
+		BondsHonorWordID: 1020501,
 	})
 	if err != nil {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
@@ -136,8 +137,55 @@ func TestBuildHonorRequestBondsMain(t *testing.T) {
 	if req.WordImgPath == nil || *req.WordImgPath == "" {
 		t.Fatalf("expected word image path, got %#v", req.WordImgPath)
 	}
+	if *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_01_01.png" {
+		t.Fatalf("unexpected word image path: %#v", req.WordImgPath)
+	}
 	if req.CharaID == nil || *req.CharaID != "11" || req.CharaID2 == nil || *req.CharaID2 != "22" {
 		t.Fatalf("unexpected chara ids: %#v %#v", req.CharaID, req.CharaID2)
+	}
+}
+
+func TestBuildHonorRequestBondsReverseViewUsesReverseDisplayOrder(t *testing.T) {
+	source := newTestHonorSource(renderregion.JP)
+	source.bonds[1020501] = &masterdata.BondsHonor{
+		ID:                   1020501,
+		GameCharacterUnitID1: 11,
+		GameCharacterUnitID2: 22,
+		HonorRarity:          "highest",
+	}
+	source.gcuByID[11] = &masterdata.GameCharacterUnit{ID: 11, GameCharacterID: 2}
+	source.gcuByID[22] = &masterdata.GameCharacterUnit{ID: 22, GameCharacterID: 5}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:             renderregion.JP,
+		HonorID:            1020501,
+		HonorLevel:         3,
+		IsMain:             true,
+		BondsHonorViewType: "reverse",
+		BondsHonorWordID:   10205002,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+
+	if req.WordImgPath == nil || *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_default_0502_02.png" {
+		t.Fatalf("unexpected reverse word image path: %#v", req.WordImgPath)
+	}
+	if req.CharaID == nil || *req.CharaID != "22" || req.CharaID2 == nil || *req.CharaID2 != "11" {
+		t.Fatalf("unexpected reverse chara ids: %#v %#v", req.CharaID, req.CharaID2)
+	}
+	if req.BondsBgPath == nil || *req.BondsBgPath != "static_images/honor/bonds/5.png" {
+		t.Fatalf("unexpected reverse first bonds bg path: %#v", req.BondsBgPath)
+	}
+	if req.BondsBgPath2 == nil || *req.BondsBgPath2 != "static_images/honor/bonds/2.png" {
+		t.Fatalf("unexpected reverse second bonds bg path: %#v", req.BondsBgPath2)
+	}
+	if req.CharaIconPath == nil || *req.CharaIconPath != "asset/jp-assets/startapp/bonds_honor/character/chr_sd_22_01.png" {
+		t.Fatalf("unexpected reverse first chara icon: %#v", req.CharaIconPath)
+	}
+	if req.CharaIconPath2 == nil || *req.CharaIconPath2 != "asset/jp-assets/startapp/bonds_honor/character/chr_sd_11_01.png" {
+		t.Fatalf("unexpected reverse second chara icon: %#v", req.CharaIconPath2)
 	}
 }
 

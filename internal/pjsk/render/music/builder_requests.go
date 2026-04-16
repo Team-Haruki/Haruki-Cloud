@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region renderregion.Value) (*drawing.MusicDetailRequest, error) {
@@ -44,7 +44,6 @@ func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region render
 		Difficulty:      *diffInfo,
 		Vocal:           *vocalInfo,
 		MusicJacketPath: b.BuildMusicJacketPath(music.AssetBundleName, region),
-		Alias:           b.buildMusicAliases(music),
 	}
 
 	if eventInfo, err := b.source.GetPrimaryEventByMusicID(music.ID); err == nil && eventInfo != nil {

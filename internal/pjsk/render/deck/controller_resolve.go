@@ -6,23 +6,23 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) resolveProfile(region renderregion.Value, override *drawing.DetailedProfileCardRequest, source string) *drawing.DetailedProfileCardRequest {
 	if override != nil {
 		profile := *override
-		return &profile
+		return sanitizeDeckProfile(&profile)
 	}
 	if c.snapshot != nil {
 		if profile := c.snapshot.DetailedProfile(region); profile != nil {
-			return profile
+			return sanitizeDeckProfile(profile)
 		}
 	}
-	return &drawing.DetailedProfileCardRequest{
+	return sanitizeDeckProfile(&drawing.DetailedProfileCardRequest{
 		ID:              "1",
 		Region:          strings.ToUpper(region.String()),
 		Nickname:        "Unknown",
@@ -31,7 +31,17 @@ func (c *Controller) resolveProfile(region renderregion.Value, override *drawing
 		IsHideUID:       true,
 		LeaderImagePath: "",
 		HasFrame:        false,
+	})
+}
+
+func sanitizeDeckProfile(profile *drawing.DetailedProfileCardRequest) *drawing.DetailedProfileCardRequest {
+	if profile == nil {
+		return nil
 	}
+	cloned := *profile
+	cloned.Source = ""
+	cloned.Mode = nil
+	return &cloned
 }
 
 func (c *Controller) resolveMusicMeta(region renderregion.Value) []byte {

@@ -223,6 +223,9 @@ func TestBuildAutoRecommendRequestSetsWorldBloomCharacterMetadata(t *testing.T) 
 	if request.Boost == nil || *request.Boost != 5 {
 		t.Fatalf("unexpected request boost: %+v", request.Boost)
 	}
+	if request.Profile.Source != "" || request.Profile.Mode != nil {
+		t.Fatalf("expected deck profile source details to be hidden, got %+v", request.Profile)
+	}
 }
 
 func TestBuildAutoRecommendRequestUsesExplicitRegionSources(t *testing.T) {

@@ -37,6 +37,7 @@
 > - 2026-04-10 阶段 B 再推进一轮：`internal/pjsk/render/mysekai/map_builder.go` 已进一步拆为 `map_builder.go` / `map_builder_resources.go`
 > - 2026-04-10 阶段 B 再继续推进：`internal/pjsk/render/profile/controller.go` 已进一步拆为 `controller.go` / `controller_snapshot.go` / `controller_api.go`
 > - 2026-04-10 阶段 B 再补 provider：`internal/pjsk/render/provider/contextual.go` 已进一步拆为 `contextual.go` / `contextual_cards.go` / `contextual_event_music.go` / `contextual_misc.go`
+> - 2026-04-17 R38 收尾：`accountdata/` 导出收窄（`BindingResolver`/`ProfileBGCleaner` 及其 `New*` 构造器降为 unexported，仅同包一处调用）；`internal/pjsk/render/deck/controller_prepare.go`（862 行）按职责拆为 `controller_prepare_userdata.go`（orchestrator + JSON encode/merge/log，486 行）与 `controller_prepare_profile.go`（preset / 卡牌过滤 / 当前主队 / area-item，386 行）；`internal/pjsk/render/userdata` 整体重命名为 `internal/pjsk/render/snapshot`（47 文件 import/选择器更新，`renderuserdata` alias 统一为 `rendersnapshot`，`profile/live_adapter.go` 同名参数改为 `snap` 消除 shadowing）
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 
@@ -1912,6 +1913,21 @@ internal/pjsk/
 | `internal/` 不引用 `cmd/` | ✅（0 处） |
 | `utils/` 不引用 `gofiber/fiber` | ✅（0 处） |
 | `utils/` 根包无 Go 文件 | ✅ |
-| 无包命名冲突 | ✅（userdata 冲突已消除；handler/sekai vs pjsk/sekai 仅需 alias，非编译错误） |
+| 无包命名冲突 | ✅（`internal/pjsk/userdata` 已改为 `accountdata`，`render/userdata` 已改为 `render/snapshot`；handler/sekai vs pjsk/sekai 仅需 alias，非编译错误） |
 | 无空目录 | ✅ |
 | 无 TODO/FIXME/HACK | ✅（非测试代码） |
+
+---
+
+### R38 收尾（2026-04-17）
+
+提交：`696dccd` / `89b6cbe` / `7fe990f`（已 push 到 `refactor/test2`）。
+
+| 项目 | 原状态 | 处理 |
+|------|--------|------|
+| `accountdata/` 导出收窄 | R38 待处理 | `BindingResolver`/`NewBindingResolver` → `bindingResolver`/`newBindingResolver`（同包仅 `binding_helpers.go:219` 一处调用）；`ProfileBGCleaner`/`NewProfileBGCleaner` → `profileBGCleaner`/`newProfileBGCleaner`（全仓零调用方，保留作定时清理入口） |
+| `render/deck/controller_prepare.go` 拆分 | R38 待处理 | 862 行 → `controller_prepare_userdata.go`（486 行，含 `prepareRecommendUserData` orchestrator、`encodePreparedRecommendUserData`、merge/normalize 系列、`logPreparedRecommendUserData` + `summarizePreparedRecommendUserData`、`shouldPrepareRecommendUserData` 闸门）+ `controller_prepare_profile.go`（386 行，含 max-profile preset、`applyUserCardFilters`、`applyCurrentDeckOption` / `restoreFixedCards`、area-item 级别处理，以及 4 个 source interface） |
+| `render/userdata` → `render/snapshot` | R38 待处理 | 21 文件 `package userdata` → `package snapshot`；47 个外部消费者（含 `cmd/server/init_services.go`）更新 import / 选择器：36 处 bare import 的 `userdata.X` → `snapshot.X`，11 处 `renderuserdata` alias → `rendersnapshot`；`profile/live_adapter.go` 中 `snapshotFrames` / `snapshotRawData` / `resolveProfileRenderState` 的参数 `snapshot snapshot.Snapshot` 重命名为 `snap` 以消除 shadowing；`accountdata/binding.go` 顶部残留的 `// Package userdata` 文档注释一并修正 |
+| `render/misc`（38 行） | R38 评估 | **保留**。功能独立（角色生日渲染，走 `bridge_misc.go` → `misc-birthday`），合并到 `render/score` / `render/app` 会污染语义，保留成本近零 |
+
+**验证**：`go build ./...` ✅；`go vet ./...` ✅；`go test ./...` 失败项与 [CLAUDE.md 测试基线](../CLAUDE.md) 已知失败一致，无新回归。

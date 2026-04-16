@@ -3190,7 +3190,6 @@ type UserBindingMutation struct {
 	visible             *bool
 	suite_visible       *bool
 	mysekai_visible     *bool
-	bg                  **drawing.ProfileBgSettings
 	verified            *bool
 	clearedFields       map[string]struct{}
 	default_refs        map[int]struct{}
@@ -3541,55 +3540,6 @@ func (m *UserBindingMutation) ResetMysekaiVisible() {
 	m.mysekai_visible = nil
 }
 
-// SetBg sets the "bg" field.
-func (m *UserBindingMutation) SetBg(dbs *drawing.ProfileBgSettings) {
-	m.bg = &dbs
-}
-
-// Bg returns the value of the "bg" field in the mutation.
-func (m *UserBindingMutation) Bg() (r *drawing.ProfileBgSettings, exists bool) {
-	v := m.bg
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBg returns the old "bg" field's value of the UserBinding entity.
-// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserBindingMutation) OldBg(ctx context.Context) (v *drawing.ProfileBgSettings, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBg is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBg requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBg: %w", err)
-	}
-	return oldValue.Bg, nil
-}
-
-// ClearBg clears the value of the "bg" field.
-func (m *UserBindingMutation) ClearBg() {
-	m.bg = nil
-	m.clearedFields[userbinding.FieldBg] = struct{}{}
-}
-
-// BgCleared returns if the "bg" field was cleared in this mutation.
-func (m *UserBindingMutation) BgCleared() bool {
-	_, ok := m.clearedFields[userbinding.FieldBg]
-	return ok
-}
-
-// ResetBg resets all changes to the "bg" field.
-func (m *UserBindingMutation) ResetBg() {
-	m.bg = nil
-	delete(m.clearedFields, userbinding.FieldBg)
-}
-
 // SetVerified sets the "verified" field.
 func (m *UserBindingMutation) SetVerified(b bool) {
 	m.verified = &b
@@ -3714,7 +3664,7 @@ func (m *UserBindingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserBindingMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 7)
 	if m.haruki_user_id != nil {
 		fields = append(fields, userbinding.FieldHarukiUserID)
 	}
@@ -3732,9 +3682,6 @@ func (m *UserBindingMutation) Fields() []string {
 	}
 	if m.mysekai_visible != nil {
 		fields = append(fields, userbinding.FieldMysekaiVisible)
-	}
-	if m.bg != nil {
-		fields = append(fields, userbinding.FieldBg)
 	}
 	if m.verified != nil {
 		fields = append(fields, userbinding.FieldVerified)
@@ -3759,8 +3706,6 @@ func (m *UserBindingMutation) Field(name string) (ent.Value, bool) {
 		return m.SuiteVisible()
 	case userbinding.FieldMysekaiVisible:
 		return m.MysekaiVisible()
-	case userbinding.FieldBg:
-		return m.Bg()
 	case userbinding.FieldVerified:
 		return m.Verified()
 	}
@@ -3784,8 +3729,6 @@ func (m *UserBindingMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldSuiteVisible(ctx)
 	case userbinding.FieldMysekaiVisible:
 		return m.OldMysekaiVisible(ctx)
-	case userbinding.FieldBg:
-		return m.OldBg(ctx)
 	case userbinding.FieldVerified:
 		return m.OldVerified(ctx)
 	}
@@ -3839,13 +3782,6 @@ func (m *UserBindingMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetMysekaiVisible(v)
 		return nil
-	case userbinding.FieldBg:
-		v, ok := value.(*drawing.ProfileBgSettings)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBg(v)
-		return nil
 	case userbinding.FieldVerified:
 		v, ok := value.(bool)
 		if !ok {
@@ -3897,11 +3833,7 @@ func (m *UserBindingMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserBindingMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(userbinding.FieldBg) {
-		fields = append(fields, userbinding.FieldBg)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -3914,11 +3846,6 @@ func (m *UserBindingMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserBindingMutation) ClearField(name string) error {
-	switch name {
-	case userbinding.FieldBg:
-		m.ClearBg()
-		return nil
-	}
 	return fmt.Errorf("unknown UserBinding nullable field %s", name)
 }
 
@@ -3943,9 +3870,6 @@ func (m *UserBindingMutation) ResetField(name string) error {
 		return nil
 	case userbinding.FieldMysekaiVisible:
 		m.ResetMysekaiVisible()
-		return nil
-	case userbinding.FieldBg:
-		m.ResetBg()
 		return nil
 	case userbinding.FieldVerified:
 		m.ResetVerified()

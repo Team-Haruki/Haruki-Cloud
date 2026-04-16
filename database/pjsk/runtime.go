@@ -118,7 +118,7 @@ func init() {
 	// userbinding.DefaultMysekaiVisible holds the default value on creation for the mysekai_visible field.
 	userbinding.DefaultMysekaiVisible = userbindingDescMysekaiVisible.Default.(bool)
 	// userbindingDescVerified is the schema descriptor for verified field.
-	userbindingDescVerified := userbindingFields[8].Descriptor()
+	userbindingDescVerified := userbindingFields[7].Descriptor()
 	// userbinding.DefaultVerified holds the default value on creation for the verified field.
 	userbinding.DefaultVerified = userbindingDescVerified.Default.(bool)
 	userdefaultbindingFields := schema.UserDefaultBinding{}.Fields()

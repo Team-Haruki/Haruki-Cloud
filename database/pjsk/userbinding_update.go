@@ -9,7 +9,6 @@ import (
 	"haruki-cloud/database/pjsk/predicate"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
-	"haruki-cloud/internal/pjsk/drawing"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -117,18 +116,6 @@ func (_u *UserBindingUpdate) SetNillableMysekaiVisible(v *bool) *UserBindingUpda
 	if v != nil {
 		_u.SetMysekaiVisible(*v)
 	}
-	return _u
-}
-
-// SetBg sets the "bg" field.
-func (_u *UserBindingUpdate) SetBg(v *drawing.ProfileBgSettings) *UserBindingUpdate {
-	_u.mutation.SetBg(v)
-	return _u
-}
-
-// ClearBg clears the value of the "bg" field.
-func (_u *UserBindingUpdate) ClearBg() *UserBindingUpdate {
-	_u.mutation.ClearBg()
 	return _u
 }
 
@@ -261,12 +248,6 @@ func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.MysekaiVisible(); ok {
 		_spec.SetField(userbinding.FieldMysekaiVisible, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.Bg(); ok {
-		_spec.SetField(userbinding.FieldBg, field.TypeJSON, value)
-	}
-	if _u.mutation.BgCleared() {
-		_spec.ClearField(userbinding.FieldBg, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Verified(); ok {
 		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)
@@ -424,18 +405,6 @@ func (_u *UserBindingUpdateOne) SetNillableMysekaiVisible(v *bool) *UserBindingU
 	if v != nil {
 		_u.SetMysekaiVisible(*v)
 	}
-	return _u
-}
-
-// SetBg sets the "bg" field.
-func (_u *UserBindingUpdateOne) SetBg(v *drawing.ProfileBgSettings) *UserBindingUpdateOne {
-	_u.mutation.SetBg(v)
-	return _u
-}
-
-// ClearBg clears the value of the "bg" field.
-func (_u *UserBindingUpdateOne) ClearBg() *UserBindingUpdateOne {
-	_u.mutation.ClearBg()
 	return _u
 }
 
@@ -598,12 +567,6 @@ func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding
 	}
 	if value, ok := _u.mutation.MysekaiVisible(); ok {
 		_spec.SetField(userbinding.FieldMysekaiVisible, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.Bg(); ok {
-		_spec.SetField(userbinding.FieldBg, field.TypeJSON, value)
-	}
-	if _u.mutation.BgCleared() {
-		_spec.ClearField(userbinding.FieldBg, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Verified(); ok {
 		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)

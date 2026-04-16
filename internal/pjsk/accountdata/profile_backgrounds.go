@@ -22,17 +22,7 @@ func resolveBindingProfileBG(bgMap map[string]*drawing.ProfileBgSettings, bindin
 			return cloneProfileBGSettings(bg)
 		}
 	}
-	return cloneProfileBGSettings(binding.Bg)
-}
-
-func resolveLoadedBindingProfileBG(bg *drawing.ProfileBgSettings, binding *pjskdb.UserBinding) *drawing.ProfileBgSettings {
-	if bg != nil {
-		return cloneProfileBGSettings(bg)
-	}
-	if binding == nil {
-		return nil
-	}
-	return cloneProfileBGSettings(binding.Bg)
+	return nil
 }
 
 func sameProfileBGPath(left, right *drawing.ProfileBgSettings) bool {

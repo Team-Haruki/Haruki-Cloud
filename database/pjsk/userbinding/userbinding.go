@@ -24,8 +24,6 @@ const (
 	FieldSuiteVisible = "suite_visible"
 	// FieldMysekaiVisible holds the string denoting the mysekai_visible field in the database.
 	FieldMysekaiVisible = "mysekai_visible"
-	// FieldBg holds the string denoting the bg field in the database.
-	FieldBg = "bg"
 	// FieldVerified holds the string denoting the verified field in the database.
 	FieldVerified = "verified"
 	// EdgeDefaultRefs holds the string denoting the default_refs edge name in mutations.
@@ -50,7 +48,6 @@ var Columns = []string{
 	FieldVisible,
 	FieldSuiteVisible,
 	FieldMysekaiVisible,
-	FieldBg,
 	FieldVerified,
 }
 

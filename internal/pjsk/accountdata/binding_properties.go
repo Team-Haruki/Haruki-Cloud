@@ -46,9 +46,6 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 	if err != nil {
 		return nil, err
 	}
-	if oldBg == nil {
-		oldBg = cloneProfileBGSettings(binding.Bg)
-	}
 	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.UserID, imageURL)
 	if err != nil {
 		return nil, err
@@ -74,9 +71,6 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 	if err != nil {
 		return nil, err
 	}
-	if settings == nil {
-		settings = cloneProfileBGSettings(binding.Bg)
-	}
 	if s.bgStorage != nil {
 		if err := s.bgStorage.DeleteProfileBackground(ctx, settings); err != nil {
 			return nil, err
@@ -98,9 +92,6 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 	currentBg, err := loadProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID)
 	if err != nil {
 		return nil, err
-	}
-	if currentBg == nil {
-		currentBg = cloneProfileBGSettings(binding.Bg)
 	}
 	if currentBg == nil || currentBg.ImgPath == nil || strings.TrimSpace(*currentBg.ImgPath) == "" {
 		return nil, fmt.Errorf("当前%s服还没有自定义个人信息背景", strings.ToUpper(binding.Server))

@@ -3,10 +3,8 @@
 package pjsk
 
 import (
-	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/pjsk/userbinding"
-	"haruki-cloud/internal/pjsk/drawing"
 	"strings"
 
 	"entgo.io/ent"
@@ -30,8 +28,6 @@ type UserBinding struct {
 	SuiteVisible bool `json:"suite_visible,omitempty"`
 	// Controls visibility of mysekai private data
 	MysekaiVisible bool `json:"mysekai_visible,omitempty"`
-	// Profile card background settings stored as JSONB
-	Bg *drawing.ProfileBgSettings `json:"bg,omitempty"`
 	// Whether the game account has been verified
 	Verified bool `json:"verified,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -63,8 +59,6 @@ func (*UserBinding) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case userbinding.FieldBg:
-			values[i] = new([]byte)
 		case userbinding.FieldVisible, userbinding.FieldSuiteVisible, userbinding.FieldMysekaiVisible, userbinding.FieldVerified:
 			values[i] = new(sql.NullBool)
 		case userbinding.FieldID, userbinding.FieldHarukiUserID:
@@ -127,14 +121,6 @@ func (_m *UserBinding) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field mysekai_visible", values[i])
 			} else if value.Valid {
 				_m.MysekaiVisible = value.Bool
-			}
-		case userbinding.FieldBg:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field bg", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Bg); err != nil {
-					return fmt.Errorf("unmarshal field bg: %w", err)
-				}
 			}
 		case userbinding.FieldVerified:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -200,9 +186,6 @@ func (_m *UserBinding) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("mysekai_visible=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MysekaiVisible))
-	builder.WriteString(", ")
-	builder.WriteString("bg=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Bg))
 	builder.WriteString(", ")
 	builder.WriteString("verified=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Verified))

@@ -289,16 +289,6 @@ func MysekaiVisibleNEQ(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldNEQ(FieldMysekaiVisible, v))
 }
 
-// BgIsNil applies the IsNil predicate on the "bg" field.
-func BgIsNil() predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldIsNull(FieldBg))
-}
-
-// BgNotNil applies the NotNil predicate on the "bg" field.
-func BgNotNil() predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldNotNull(FieldBg))
-}
-
 // VerifiedEQ applies the EQ predicate on the "verified" field.
 func VerifiedEQ(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldVerified, v))

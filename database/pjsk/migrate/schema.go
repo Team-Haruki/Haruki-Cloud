@@ -129,7 +129,6 @@ var (
 		{Name: "visible", Type: field.TypeBool, Default: true},
 		{Name: "suite_visible", Type: field.TypeBool, Default: true},
 		{Name: "mysekai_visible", Type: field.TypeBool, Default: true},
-		{Name: "bg", Type: field.TypeJSON, Nullable: true},
 		{Name: "verified", Type: field.TypeBool, Default: false},
 	}
 	// UserBindingsTable holds the schema information for the "user_bindings" table.

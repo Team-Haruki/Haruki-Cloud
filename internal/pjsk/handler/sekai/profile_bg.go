@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
-	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 var (
@@ -126,6 +126,17 @@ func parseProfileBGInt(raw string, minValue, maxValue int) (int, error) {
 	return n, nil
 }
 
+func resolveProfileBGSelector(ctx SekaiHandlerContext) (string, error) {
+	uidArg := strings.TrimSpace(ctx.UIDArg())
+	if uidArg == "" {
+		return "", nil
+	}
+	if isBindingSelector(uidArg) {
+		return uidArg, nil
+	}
+	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号] ...", ctx.originalTriggerCmd)
+}
+
 func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
@@ -135,13 +146,17 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bg/upload",
 		},
-		ParseUIDArg: common.BoolPtr(false),
+		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			imageURL := extractFirstImageURL(ctx)
 			if imageURL == "" {
 				return nil, onebot11.NewReplayError("请在命令中附带一张个人信息背景图片")
 			}
-			params := newProfileSettingsParams(ctx)
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
+			}
+			params := newProfileSettingsParams(ctx, selector)
 			params.ImageURL = imageURL
 			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGUpload, params), nil
 		},
@@ -157,9 +172,13 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bg/clear",
 		},
-		ParseUIDArg: common.BoolPtr(false),
+		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGClear, newProfileSettingsParams(ctx)), nil
+			selector, err := resolveSettingsSelector(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBGClear, newProfileSettingsParams(ctx, selector)), nil
 		},
 	}
 }
@@ -173,9 +192,13 @@ func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
 			},
 			Path: "profile/bg/adjust",
 		},
-		ParseUIDArg: common.BoolPtr(false),
+		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params := newProfileSettingsParams(ctx)
+			selector, err := resolveProfileBGSelector(ctx)
+			if err != nil {
+				return nil, err
+			}
+			params := newProfileSettingsParams(ctx, selector)
 			adjustParams, err := parseProfileBGAdjustArgs(ctx.GetArgs())
 			if err != nil {
 				return nil, err

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
-	"haruki-cloud/internal/pjsk/drawing"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -78,12 +77,6 @@ func (_c *UserBindingCreate) SetNillableMysekaiVisible(v *bool) *UserBindingCrea
 	if v != nil {
 		_c.SetMysekaiVisible(*v)
 	}
-	return _c
-}
-
-// SetBg sets the "bg" field.
-func (_c *UserBindingCreate) SetBg(v *drawing.ProfileBgSettings) *UserBindingCreate {
-	_c.mutation.SetBg(v)
 	return _c
 }
 
@@ -263,10 +256,6 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.MysekaiVisible(); ok {
 		_spec.SetField(userbinding.FieldMysekaiVisible, field.TypeBool, value)
 		_node.MysekaiVisible = value
-	}
-	if value, ok := _c.mutation.Bg(); ok {
-		_spec.SetField(userbinding.FieldBg, field.TypeJSON, value)
-		_node.Bg = value
 	}
 	if value, ok := _c.mutation.Verified(); ok {
 		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)

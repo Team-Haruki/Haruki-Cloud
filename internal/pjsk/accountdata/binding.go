@@ -73,7 +73,7 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 			SuiteVisible:   b.SuiteVisible,
 			MySekaiVisible: b.MysekaiVisible,
 			Verified:       b.Verified,
-			Bg:             resolveLoadedBindingProfileBG(bg, b),
+			Bg:             cloneProfileBGSettings(bg),
 		}, nil
 	}
 	if !pjskdb.IsNotFound(err) {
@@ -107,7 +107,7 @@ func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 		SuiteVisible:   b.SuiteVisible,
 		MySekaiVisible: b.MysekaiVisible,
 		Verified:       b.Verified,
-		Bg:             resolveLoadedBindingProfileBG(bg, b),
+		Bg:             cloneProfileBGSettings(bg),
 	}, nil
 }
 

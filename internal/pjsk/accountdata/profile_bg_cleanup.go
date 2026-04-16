@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
-	"haruki-cloud/database/pjsk/userbinding"
 )
 
 // CleanupOrphanedFiles walks the profile background directory and removes any
@@ -93,25 +92,11 @@ func (c *ProfileBGCleaner) Run(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("profile bg cleanup: query profile backgrounds: %w", err)
 	}
-	legacyBindings, err := c.db.UserBinding.Query().
-		Where(userbinding.BgNotNil()).
-		All(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("profile bg cleanup: query legacy binding backgrounds: %w", err)
-	}
 
-	active := make(map[string]bool, len(rows)+len(legacyBindings))
+	active := make(map[string]bool, len(rows))
 	for _, row := range rows {
 		if row.Bg != nil && row.Bg.ImgPath != nil {
 			p := filepath.ToSlash(strings.TrimSpace(*row.Bg.ImgPath))
-			if p != "" {
-				active[p] = true
-			}
-		}
-	}
-	for _, binding := range legacyBindings {
-		if binding.Bg != nil && binding.Bg.ImgPath != nil {
-			p := filepath.ToSlash(strings.TrimSpace(*binding.Bg.ImgPath))
 			if p != "" {
 				active[p] = true
 			}

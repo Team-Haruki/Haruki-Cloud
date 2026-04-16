@@ -239,6 +239,9 @@ func (c *Controller) hasMysekaiMusicRecord(merged map[string]any, recordID int) 
 }
 
 func (c *Controller) loadIconNameMap(filename, field string) map[int]string {
+	if c == nil || c.masterdata == nil {
+		return map[int]string{}
+	}
 	items := c.masterdata.loadMapByID(filename)
 	result := make(map[int]string, len(items))
 	for id, item := range items {
@@ -250,6 +253,9 @@ func (c *Controller) loadIconNameMap(filename, field string) map[int]string {
 }
 
 func (c *Controller) loadFieldMap(filename, field string) map[int]string {
+	if c == nil || c.masterdata == nil {
+		return map[int]string{}
+	}
 	items := c.masterdata.loadMapByID(filename)
 	result := make(map[int]string, len(items))
 	for id, item := range items {

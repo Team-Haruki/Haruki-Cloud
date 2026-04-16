@@ -77,7 +77,7 @@ var (
 	}
 )
 
-func extractMysekaiPhenoms(region renderregion.Value, resolve pathResolver, merged map[string]any) []drawing.MysekaiPhenomRequest {
+func extractMysekaiPhenoms(region renderregion.Value, resolve pathResolver, phenomIcons map[int]string, merged map[string]any) []drawing.MysekaiPhenomRequest {
 	rawSchedules, ok := merged["mysekaiPhenomenaSchedules"].([]any)
 	if !ok {
 		return []drawing.MysekaiPhenomRequest{}
@@ -116,7 +116,7 @@ func extractMysekaiPhenoms(region renderregion.Value, resolve pathResolver, merg
 			midCurrent = &value
 			current = current && !value
 		}
-		phenoms = append(phenoms, mysekaiNaturalPhenom(resolve, phenomID, currentStart, current))
+		phenoms = append(phenoms, mysekaiNaturalPhenom(resolve, phenomIcons, phenomID, currentStart, current))
 		if midCurrent != nil {
 			phenoms = append(phenoms, mysekaiBirthdayPhenom(resolve, reason, lastRefreshOfEnd, *midCurrent))
 		}
@@ -141,16 +141,20 @@ func resolveMysekaiSnapshotTimeMs(merged map[string]any) int64 {
 	return best
 }
 
-func mysekaiNaturalPhenom(resolve pathResolver, phenomID int, start time.Time, isCurrent bool) drawing.MysekaiPhenomRequest {
+func mysekaiNaturalPhenom(resolve pathResolver, phenomIcons map[int]string, phenomID int, start time.Time, isCurrent bool) drawing.MysekaiPhenomRequest {
 	bg := []int{255, 255, 255, 75}
 	fg := []int{125, 125, 125, 255}
 	if isCurrent {
 		bg = []int{255, 255, 255, 150}
 		fg = []int{0, 0, 0, 255}
 	}
+	iconName := strings.TrimSpace(phenomIcons[phenomID])
+	if iconName == "" {
+		iconName = "env_default"
+	}
 	return drawing.MysekaiPhenomRequest{
 		RefreshReason:  "natural",
-		ImagePath:      resolve(fmt.Sprintf("mysekai/thumbnail/phenomena/%s.png", mysekaiPhenomIconName(phenomID))),
+		ImagePath:      resolve(fmt.Sprintf("mysekai/thumbnail/phenomena/%s.png", iconName)),
 		BackgroundFill: bg,
 		Text:           start.Format("15:04"),
 		TextFill:       fg,
@@ -255,26 +259,3 @@ func mysekaiNextBirthdayLocal(region renderregion.Value, now time.Time, characte
 	return nextBirthday
 }
 
-func mysekaiPhenomIconName(phenomID int) string {
-	icons := map[int]string{
-		1:  "env_sunny",
-		2:  "env_evening",
-		3:  "env_night",
-		4:  "env_fine",
-		5:  "env_fullmoon",
-		6:  "env_rain",
-		7:  "env_rainnight",
-		8:  "env_cloud",
-		9:  "env_thunder",
-		10: "env_snow",
-		11: "env_snownight",
-		12: "env_rainbow",
-		13: "env_universe",
-		14: "env_meteorshower",
-		15: "env_sekai",
-	}
-	if icon, ok := icons[phenomID]; ok {
-		return icon
-	}
-	return "env_default"
-}

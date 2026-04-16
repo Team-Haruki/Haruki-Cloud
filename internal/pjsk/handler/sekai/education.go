@@ -1,8 +1,8 @@
 package sekai
 
 import (
-	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/education"
 	"strings"
@@ -18,7 +18,11 @@ func (sekaiHandlers) ChallengeInfoHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			return makeResolvedCmd(ctx, parser.ModuleEducation, "education-challenge"), nil
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleEducation, "education-challenge", params), nil
 		},
 	}
 }
@@ -33,7 +37,11 @@ func (sekaiHandlers) PowerBonusInfoHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			return makeResolvedCmd(ctx, parser.ModuleEducation, "education-power"), nil
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleEducation, "education-power", params), nil
 		},
 	}
 }
@@ -48,9 +56,31 @@ func (sekaiHandlers) AreaItemHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params, err := buildEducationAreaQuery(ctx.GetArgs(), ctx.originalTriggerCmd)
+			query, err := buildEducationAreaQuery(ctx.GetArgs(), ctx.originalTriggerCmd)
 			if err != nil {
 				return nil, err
+			}
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if query.Unit != "" {
+				params["unit"] = query.Unit
+			}
+			if query.Cid > 0 {
+				params["cid"] = query.Cid
+			}
+			if query.CharacterQuery != "" {
+				params["character_query"] = query.CharacterQuery
+			}
+			if query.Attr != "" {
+				params["attr"] = query.Attr
+			}
+			if query.Tree {
+				params["tree"] = true
+			}
+			if query.Flower {
+				params["flower"] = true
 			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleEducation, "education-area", params), nil
 		},
@@ -68,9 +98,14 @@ func (sekaiHandlers) BondsHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			return makeResolvedCmdWithParams(ctx, parser.ModuleEducation, "education-bonds", education.BondsQuery{
-				CharacterQuery: strings.TrimSpace(ctx.GetArgs()),
-			}), nil
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if query := strings.TrimSpace(ctx.GetArgs()); query != "" {
+				params["character_query"] = query
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleEducation, "education-bonds", params), nil
 		},
 	}
 }
@@ -85,7 +120,11 @@ func (sekaiHandlers) LeaderCountHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			return makeResolvedCmd(ctx, parser.ModuleEducation, "education-leader"), nil
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleEducation, "education-leader", params), nil
 		},
 	}
 }

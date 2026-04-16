@@ -836,6 +836,61 @@ func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
 	}
 }
 
+func TestBuildLeaderCountRequestFromSnapshotFallsBackToLegacyMissionStatuses(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacterMissionV2s": []map[string]any{
+			{"characterMissionType": "play_live_ex", "characterId": 2, "progress": 11},
+		},
+		"userCharacterLiveUsageCounts": []map[string]any{
+			{"characterId": 2, "characterLiveUsageType": "leader", "usageCount": 66},
+		},
+		"userCharacterMissionStatuses": []map[string]any{
+			{"parameterGroupId": 101, "seq": 1, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 2, "characterId": 2},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller.RegisterSource(&testSource{
+		region: renderregion.CN,
+		leaderRequirements: []LeaderMissionRequirement{
+			{Seq: 1, Requirement: 3},
+			{Seq: 2, Requirement: 7},
+		},
+		leaderMaxPlayLimit: 120,
+	})
+
+	req, err := controller.BuildLeaderCountRequestFromSnapshot(LeaderCountQuery{Region: renderregion.CN})
+	if err != nil {
+		t.Fatalf("BuildLeaderCountRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.LeaderCounts) == 0 {
+		t.Fatalf("expected leader counts")
+	}
+	first := req.LeaderCounts[0]
+	if first.CharaID != 2 {
+		t.Fatalf("unexpected first character: %+v", first)
+	}
+	if first.ExLevel != 2 || first.ExCount != 21 {
+		t.Fatalf("unexpected ex progress from legacy statuses: %+v", first)
+	}
+}
+
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotHidesUnreleasedFutureLevels(t *testing.T) {
 	snapshot := mustSnapshot(t, map[string]any{
 		"now": 100,

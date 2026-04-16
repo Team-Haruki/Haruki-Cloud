@@ -2,10 +2,12 @@ package education
 
 import (
 	"bytes"
+	"encoding/json"
 	"sort"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
+	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/utils/logger"
 )
 
@@ -53,7 +55,8 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		}
 	}
 
-	for _, item := range ctx.raw.UserCharacterMissionV2Statuses {
+	missionStatuses := leaderMissionStatuses(ctx.snapshot, ctx.raw)
+	for _, item := range missionStatuses {
 		if item.CharacterID <= 0 || item.ParameterGroupID != 101 {
 			continue
 		}
@@ -101,7 +104,7 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		len(ctx.raw.UserCharacterMissionV2s),
 		playLiveMissionCount,
 		playLiveExMissionCount,
-		len(ctx.raw.UserCharacterMissionV2Statuses),
+		len(missionStatuses),
 		status101Count,
 		len(ctx.raw.UserCharacterLiveUsageCounts),
 		len(missionRequirements),
@@ -118,4 +121,48 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		LeaderCounts: leaders,
 		MaxPlayCount: maxPlay,
 	})
+}
+
+func leaderMissionStatuses(snapshot renderuserdata.Snapshot, raw *renderuserdata.RawUserData) []renderuserdata.RawUserCharacterMissionV2Status {
+	if raw != nil && len(raw.UserCharacterMissionV2Statuses) > 0 {
+		return raw.UserCharacterMissionV2Statuses
+	}
+	if snapshot == nil {
+		return nil
+	}
+	rawBytes, err := snapshot.RawBytes()
+	if err != nil || len(rawBytes) == 0 {
+		return nil
+	}
+
+	var payload map[string]json.RawMessage
+	if err := json.Unmarshal(rawBytes, &payload); err != nil {
+		return nil
+	}
+
+	for _, key := range []string{"userCharacterMissionStatuses", "userCharacterMissionStatus"} {
+		items := decodeLegacyLeaderMissionStatuses(payload[key])
+		if len(items) > 0 {
+			return items
+		}
+	}
+	return nil
+}
+
+func decodeLegacyLeaderMissionStatuses(raw json.RawMessage) []renderuserdata.RawUserCharacterMissionV2Status {
+	if len(raw) == 0 {
+		return nil
+	}
+
+	var items []renderuserdata.RawUserCharacterMissionV2Status
+	if err := json.Unmarshal(raw, &items); err == nil && len(items) > 0 {
+		return items
+	}
+
+	var item renderuserdata.RawUserCharacterMissionV2Status
+	if err := json.Unmarshal(raw, &item); err == nil && item.CharacterID > 0 {
+		return []renderuserdata.RawUserCharacterMissionV2Status{item}
+	}
+
+	return nil
 }

@@ -32,6 +32,14 @@ func makeResolvedCmdWithParams(ctx SekaiHandlerContext, module parser.TargetModu
 	return resolved
 }
 
+func newSelfQueryParamsMap(ctx SekaiHandlerContext) (map[string]any, error) {
+	params := map[string]any{}
+	if err := embedSelfQuery(params, ctx); err != nil {
+		return nil, err
+	}
+	return params, nil
+}
+
 // embedSelfQuery resolves self-only query params from ctx and merges them
 // into the given params map so the backend can resolve the correct binding.
 func embedSelfQuery(params map[string]any, ctx SekaiHandlerContext) error {

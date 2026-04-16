@@ -2,8 +2,8 @@ package sekai
 
 import (
 	"fmt"
-	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"regexp"
@@ -44,7 +44,10 @@ func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
-			params := make(map[string]any)
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
 			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
 				args = cleaned
 				params["difficulty"] = diff
@@ -56,9 +59,6 @@ func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 				}
 			}
 			ctx.SetArgs(args)
-			if len(params) == 0 {
-				return makeResolvedCmd(ctx, parser.ModuleMusic, "music-list"), nil
-			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-list", params), nil
 		},
 	}
@@ -74,7 +74,11 @@ func (sekaiHandlers) MusicRewardsHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-rewards"), nil
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-rewards", params), nil
 		},
 	}
 }
@@ -89,13 +93,15 @@ func (sekaiHandlers) MusicProgressHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
 			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
 				ctx.SetArgs(cleaned)
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-progress", map[string]any{
-					"difficulty": diff,
-				}), nil
+				params["difficulty"] = diff
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-progress"), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-progress", params), nil
 		},
 	}
 }

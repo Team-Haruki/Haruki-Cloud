@@ -2,14 +2,15 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type runtimeSnapshotStub struct {
@@ -188,6 +189,74 @@ func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
 	}
 	if fallbackProvider.resolveCount != 0 {
 		t.Fatalf("expected fallback provider to stay unused, got %d resolves", fallbackProvider.resolveCount)
+	}
+}
+
+func TestRequestContextResolveSnapshotUsesSelectedBindingFromParams(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"cn": {"11111111111111": "CN User"},
+			"jp": {"33333333333333": "JP User"},
+		},
+	})
+
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "33333333333333"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+
+	_, expectedBinding, err := service.ResolveUserBindingBySelector(ctx, "qq", "42", "", "u1")
+	if err != nil {
+		t.Fatalf("resolve selector binding: %v", err)
+	}
+
+	params, err := json.Marshal(userQueryParams{
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "u1",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	provider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{},
+	}
+
+	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:  service,
+		Snapshots: provider,
+	})
+
+	binding, _ := rc.GetBinding()
+	if binding == nil || binding.PJSKUserID != expectedBinding.PJSKUserID {
+		t.Fatalf("unexpected selected binding: %+v", binding)
+	}
+
+	if snapshot := rc.ResolveSnapshot(false); snapshot == nil {
+		t.Fatal("expected selected snapshot")
+	}
+	if len(provider.selectors) != 1 {
+		t.Fatalf("expected one snapshot resolve, got %d", len(provider.selectors))
+	}
+	selector := provider.selectors[0]
+	if selector.PJSKUserID != expectedBinding.PJSKUserID {
+		t.Fatalf("expected selected binding uid %q, got %q", expectedBinding.PJSKUserID, selector.PJSKUserID)
+	}
+	if selector.Region != renderregion.CN {
+		t.Fatalf("expected selected binding region cn, got %+v", selector.Region)
 	}
 }
 

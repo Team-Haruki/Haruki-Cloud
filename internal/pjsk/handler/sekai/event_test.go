@@ -224,3 +224,39 @@ func TestEventHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestEventRecordHandleEmbedsSelfSelector(t *testing.T) {
+	h := sekaiHandlers{}.EventRecordHandle()
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/活动记录",
+		ArgText:    "u2",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-record" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+
+	var params struct {
+		Mode           string `json:"mode"`
+		Platform       string `json:"platform"`
+		PlatformUserID string `json:"platform_user_id"`
+		Selector       string `json:"selector"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}

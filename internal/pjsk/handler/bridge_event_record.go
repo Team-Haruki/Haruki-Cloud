@@ -11,12 +11,12 @@ import (
 	"sync"
 
 	eventdb "haruki-cloud/database/sekai/event"
-	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
-	"haruki-cloud/utils/logger"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
+	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/utils/logger"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -29,7 +29,7 @@ var eventRecordTrackerRankLookup = defaultEventRecordTrackerRankLookup
 // Toolbox suite data, cross-referencing with master data for event metadata.
 // Regular events come from userEvents; world bloom events come from userWorldBlooms.
 func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value) (*drawing.EventRecordRequest, error) {
-	snapshot := resolveLiveSnapshot(rc, false)
+	snapshot := rc.ResolveSnapshot(false)
 	if snapshot == nil {
 		return nil, fmt.Errorf("event record requires user data (suite snapshot unavailable)")
 	}

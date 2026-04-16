@@ -5,13 +5,13 @@ import (
 	"strings"
 	"sync"
 
-	"haruki-cloud/internal/pjsk/onebot11"
-	"haruki-cloud/internal/pjsk/parser"
-	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/userdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -65,24 +65,76 @@ func NewRequestContext(ctx context.Context, r *parser.ResolvedCommand, app *rend
 	}
 }
 
+func (rc *RequestContext) requestScopedSelfQuery() userQueryParams {
+	params := userQueryParams{
+		Mode:           "self",
+		Platform:       rc.Platform,
+		PlatformUserID: rc.PlatformUserID,
+	}
+	if rc == nil || rc.Cmd == nil {
+		return params
+	}
+
+	var decoded userQueryParams
+	mergeParams(rc.Cmd.Params, &decoded)
+	switch strings.TrimSpace(decoded.Mode) {
+	case "", "self":
+		if strings.TrimSpace(decoded.Platform) != "" {
+			params.Platform = strings.TrimSpace(decoded.Platform)
+		}
+		if strings.TrimSpace(decoded.PlatformUserID) != "" {
+			params.PlatformUserID = strings.TrimSpace(decoded.PlatformUserID)
+		}
+		if strings.TrimSpace(decoded.Selector) != "" {
+			params.Selector = strings.TrimSpace(decoded.Selector)
+		}
+	}
+	return params
+}
+
+func (rc *RequestContext) snapshotSelector(needMySekai bool) (userdata.Selector, userdata.ResolveOptions) {
+	query := rc.requestScopedSelfQuery()
+	selector := userdata.Selector{
+		IMPlatform: strings.TrimSpace(query.Platform),
+		IMUserID:   strings.TrimSpace(query.PlatformUserID),
+		Region:     rc.Region,
+	}
+	opts := userdata.ResolveOptions{
+		PreferGlobalDefault: !rc.Cmd.RegionExplicit,
+		NeedMySekai:         needMySekai,
+	}
+
+	if binding, _ := rc.GetBinding(); binding != nil {
+		selector.PJSKUserID = strings.TrimSpace(binding.PJSKUserID)
+		if normalized := renderregion.Normalize(binding.Server); !normalized.IsZero() {
+			selector.Region = normalized
+		}
+		opts.PreferGlobalDefault = false
+	}
+
+	return selector, opts
+}
+
 // GetBinding lazily resolves the user's binding using the global-default →
 // regional fallback pattern. Returns (binding, harukiUserID). Binding may be nil.
 func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 	rc.bindingOnce.Do(func() {
-		if rc.Platform == "" || rc.PlatformUserID == "" || rc.App.Bindings == nil {
+		if rc.App == nil || rc.App.Bindings == nil {
 			return
 		}
-		if !rc.Cmd.RegionExplicit {
-			rc.harukiUserID, rc.binding, rc.bindingErr = rc.App.Bindings.ResolveUserBinding(
-				rc.Ctx, rc.Platform, rc.PlatformUserID, accountdata.GlobalDefaultBindingScope)
-			if rc.bindingErr != nil || rc.binding == nil {
-				rc.harukiUserID, rc.binding, rc.bindingErr = rc.App.Bindings.ResolveUserBinding(
-					rc.Ctx, rc.Platform, rc.PlatformUserID, rc.RegionStr)
-			}
-		} else {
-			rc.harukiUserID, rc.binding, rc.bindingErr = rc.App.Bindings.ResolveUserBinding(
-				rc.Ctx, rc.Platform, rc.PlatformUserID, rc.RegionStr)
+		query := rc.requestScopedSelfQuery()
+		if query.Platform == "" || query.PlatformUserID == "" {
+			return
 		}
+		rc.harukiUserID, rc.binding, rc.bindingErr = resolveBindingWithFallback(
+			rc.Ctx,
+			rc.App.Bindings,
+			query.Platform,
+			query.PlatformUserID,
+			rc.RegionStr,
+			rc.Cmd.RegionExplicit,
+			bindingResolutionOptions{Selector: query.Selector},
+		)
 	})
 	return rc.binding, rc.harukiUserID
 }
@@ -95,26 +147,28 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 func (rc *RequestContext) ResolveSnapshot(needMySekai bool) userdata.Snapshot {
 	if needMySekai {
 		rc.fullSnapshotOnce.Do(func() {
-			rc.fullSnapshot = resolveLiveSnapshot(rc, true)
+			selector, opts := rc.snapshotSelector(true)
+			rc.fullSnapshot = resolveSnapshotBySelector(rc.Ctx, rc.App, selector, opts)
 		})
 		return rc.fullSnapshot
 	}
 	rc.basicSnapshotOnce.Do(func() {
-		rc.basicSnapshot = resolveLiveSnapshot(rc, false)
+		selector, opts := rc.snapshotSelector(false)
+		rc.basicSnapshot = resolveSnapshotBySelector(rc.Ctx, rc.App, selector, opts)
 	})
 	return rc.basicSnapshot
 }
 
 func (rc *RequestContext) GetSelfTarget() *resolvedGameTarget {
 	rc.selfTargetOnce.Do(func() {
-		if rc.Platform == "" || rc.PlatformUserID == "" || rc.App == nil || rc.App.Bindings == nil {
+		if rc.App == nil || rc.App.Bindings == nil {
 			return
 		}
-		target, err := resolveGameTarget(rc.Ctx, userQueryParams{
-			Mode:           "self",
-			Platform:       rc.Platform,
-			PlatformUserID: rc.PlatformUserID,
-		}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
+		query := rc.requestScopedSelfQuery()
+		if query.Platform == "" || query.PlatformUserID == "" {
+			return
+		}
+		target, err := resolveGameTarget(rc.Ctx, query, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
 		if err != nil {
 			return
 		}

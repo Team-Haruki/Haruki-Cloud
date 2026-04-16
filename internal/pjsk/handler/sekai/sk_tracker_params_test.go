@@ -18,10 +18,7 @@ func TestBuildSKTrackerParamsDefaults(t *testing.T) {
 		t.Fatalf("build params: %v", err)
 	}
 
-	ranks, ok := params["ranks"].([]int)
-	if !ok {
-		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
-	}
+	ranks, _ := params["ranks"].([]int)
 	if len(ranks) != len(defaultSKRanks) {
 		t.Fatalf("expected default ranks len=%d got=%d", len(defaultSKRanks), len(ranks))
 	}
@@ -42,10 +39,7 @@ func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
 		t.Fatalf("build params: %v", err)
 	}
 
-	ranks, ok := params["ranks"].([]int)
-	if !ok {
-		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
-	}
+	ranks, _ := params["ranks"].([]int)
 	if len(ranks) != len(defaultSKRanksWorldLink) {
 		t.Fatalf("expected world link default ranks len=%d got=%d", len(defaultSKRanksWorldLink), len(ranks))
 	}
@@ -69,10 +63,7 @@ func TestBuildSKTrackerParamsParsesEventAndRanks(t *testing.T) {
 	if !ok || eventID != 101 {
 		t.Fatalf("unexpected event_id: %#v", params["event_id"])
 	}
-	ranks, ok := params["ranks"].([]int)
-	if !ok {
-		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
-	}
+	ranks, _ := params["ranks"].([]int)
 	if len(ranks) != 2 || ranks[0] != 100 || ranks[1] != 500 {
 		t.Fatalf("unexpected ranks: %#v", ranks)
 	}
@@ -96,10 +87,7 @@ func TestBuildSKTrackerParamsWlDefaultsToCurrentChapterSelector(t *testing.T) {
 	if got, ok := params["wl_character_query"].(string); !ok || got != "wl" {
 		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
 	}
-	ranks, ok := params["ranks"].([]int)
-	if !ok {
-		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
-	}
+	ranks, _ := params["ranks"].([]int)
 	if len(ranks) != 2 || ranks[0] != 100 || ranks[1] != 500 {
 		t.Fatalf("unexpected ranks: %#v", ranks)
 	}
@@ -254,10 +242,7 @@ func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {
 	if got, ok := params["wl_character_query"].(string); !ok || got != "初音未来" {
 		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
 	}
-	ranks, ok := params["ranks"].([]int)
-	if !ok {
-		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
-	}
+	ranks, _ := params["ranks"].([]int)
 	if len(ranks) != 2 || ranks[0] != 100 || ranks[1] != 500 {
 		t.Fatalf("unexpected ranks: %#v", ranks)
 	}
@@ -278,10 +263,7 @@ func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
 	if got, ok := params["wl_character_query"].(string); !ok || got != "初音未来" {
 		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
 	}
-	ranks, ok := params["ranks"].([]int)
-	if !ok {
-		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
-	}
+	ranks, _ := params["ranks"].([]int)
 	if len(ranks) != 1 || ranks[0] != 100 {
 		t.Fatalf("unexpected ranks: %#v", ranks)
 	}
@@ -301,10 +283,7 @@ func TestBuildSKTrackerParamsParsesLeadingWlChapterSelector(t *testing.T) {
 	if got, ok := params["wl_character_query"].(string); !ok || got != "wl2" {
 		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
 	}
-	ranks, ok := params["ranks"].([]int)
-	if !ok {
-		t.Fatalf("ranks type mismatch: %#v", params["ranks"])
-	}
+	ranks, _ := params["ranks"].([]int)
 	if len(ranks) != 1 || ranks[0] != 100 {
 		t.Fatalf("unexpected ranks: %#v", ranks)
 	}

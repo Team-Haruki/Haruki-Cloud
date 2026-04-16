@@ -17,7 +17,7 @@ func (sekaiHandlers) ChallengeInfoHandle() SekaiCommandHandler {
 				"/挑战信息", "/挑战详情", "/挑战进度", "/挑战一览", "/每日挑战",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
@@ -36,7 +36,7 @@ func (sekaiHandlers) PowerBonusInfoHandle() SekaiCommandHandler {
 				"/加成信息", "/加成详情", "/加成进度", "/加成一览", "/角色加成",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
@@ -55,7 +55,7 @@ func (sekaiHandlers) AreaItemHandle() SekaiCommandHandler {
 				"/区域道具", "/区域道具升级", "/区域道具升级材料",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			query, err := buildEducationAreaQuery(ctx.GetArgs(), ctx.originalTriggerCmd)
 			if err != nil {
 				return nil, err
@@ -97,7 +97,7 @@ func (sekaiHandlers) BondsHandle() SekaiCommandHandler {
 				"/牵绊等级", "/牵绊", "/角色牵绊", "/牵绊信息",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
@@ -119,7 +119,7 @@ func (sekaiHandlers) LeaderCountHandle() SekaiCommandHandler {
 				"/队长次数", "/角色次数", "/队长游玩次数", "/角色游玩次数",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err

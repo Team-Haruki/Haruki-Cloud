@@ -147,7 +147,7 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/upload",
 		},
 		ParseUIDArg: common.BoolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			imageURL := extractFirstImageURL(ctx)
 			if imageURL == "" {
 				return nil, onebot11.NewReplayError("请在命令中附带一张个人信息背景图片")
@@ -173,7 +173,7 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/clear",
 		},
 		ParseUIDArg: common.BoolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -193,7 +193,7 @@ func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/adjust",
 		},
 		ParseUIDArg: common.BoolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveProfileBGSelector(ctx)
 			if err != nil {
 				return nil, err

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"haruki-cloud/internal/pjsk/handler"
-	"haruki-cloud/internal/pjsk/parser"
 )
 
 func TestChartHandleSkillPreviewSetsSkillFlag(t *testing.T) {
@@ -19,9 +18,9 @@ func TestChartHandleSkillPreviewSetsSkillFlag(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("expected *ResolvedCommand, got %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if string(resolved.Params) != `{"skill":true}` {
 		t.Fatalf("params = %s", string(resolved.Params))

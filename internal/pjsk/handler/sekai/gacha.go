@@ -40,7 +40,7 @@ func (sekaiHandlers) GachaHandle() SekaiCommandHandler {
 			},
 			Helper: gachaSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveGachaDetailOrList(ctx)
 		},
 	}

@@ -15,7 +15,7 @@ func (sekaiHandlers) StampHandle() SekaiCommandHandler {
 				"/贴纸", "/查贴纸", "/pjsk贴纸", "/pjsk表情", "/pjsk stamp", "/pjsk bq", "/stamp",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if page, remaining, ok := parseStampPageWithRemaining(args); ok {
 				ctx.SetArgs(remaining)

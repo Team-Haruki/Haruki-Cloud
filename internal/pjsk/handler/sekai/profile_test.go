@@ -8,7 +8,6 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/onebot11"
-	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
@@ -30,9 +29,9 @@ func TestProfileUploadBGHandleExtractsImageURL(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != accountdata.ProfileModeBGUpload {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
@@ -66,9 +65,9 @@ func TestProfileUploadBGHandleParsesSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != accountdata.ProfileModeBGUpload {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
@@ -101,9 +100,9 @@ func TestProfileAdjustBGHandleParsesArgs(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != accountdata.ProfileModeBGAdjust {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
@@ -139,9 +138,9 @@ func TestProfileAdjustBGHandleParsesSelectorAndArgs(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != accountdata.ProfileModeBGAdjust {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
@@ -180,9 +179,9 @@ func TestProfileHandleParsesVerticalArg(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != accountdata.ProfileModeRender {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
@@ -217,9 +216,9 @@ func TestProfileBindListHandleOmitsServerWhenRegionImplicit(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != accountdata.ProfileModeBindList {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
@@ -248,9 +247,9 @@ func TestProfileBindListHandleKeepsServerWhenRegionExplicit(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != accountdata.ProfileModeBindList {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)

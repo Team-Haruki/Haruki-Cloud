@@ -24,9 +24,9 @@ func TestVLiveHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleVLive || resolved.Mode != "vlive-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)

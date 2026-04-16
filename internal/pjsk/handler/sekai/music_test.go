@@ -23,9 +23,9 @@ func TestNoteNumHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-note-count" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -55,9 +55,9 @@ func TestNoteNumHandleBuildsResolvedCommandWithDifficulty(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-note-count" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -91,9 +91,9 @@ func TestBPMHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-bpm" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -130,9 +130,9 @@ func TestMusicCoverHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-cover" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -155,9 +155,9 @@ func TestMusicProgressHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-progress" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -192,9 +192,9 @@ func TestMusicProgressHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params struct {
@@ -225,9 +225,9 @@ func TestMusicListHandleBuildsResolvedCommandWithExactLevel(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -260,9 +260,9 @@ func TestMusicListHandleBuildsResolvedCommandWithLevelRangeAndDiff(t *testing.T)
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -299,9 +299,9 @@ func TestMusicListHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params struct {
@@ -337,9 +337,9 @@ func TestMusicListHandleBuildsResolvedCommandWithResultFilter(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params struct {
@@ -371,9 +371,9 @@ func TestMusicRewardsHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params struct {
@@ -403,9 +403,9 @@ func TestMusicListHandleBuildsResolvedCommandWithClosedIntervalTwoTokensAndDiff(
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -440,9 +440,9 @@ func TestMusicListHandleBuildsResolvedCommandWithBracketedClosedInterval(t *test
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -477,9 +477,9 @@ func TestMusicListHandleBuildsResolvedCommandWithSpacedClosedInterval(t *testing
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)

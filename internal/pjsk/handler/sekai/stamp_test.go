@@ -20,9 +20,9 @@ func TestStampHandleParsesCharacterWithPage(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleStamp || resolved.Mode != "stamp-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -53,7 +53,7 @@ func TestStampHandleParsesPageBeforeCharacter(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	if resolved.Query != "mzk" {
 		t.Fatalf("unexpected query: %q", resolved.Query)
 	}
@@ -79,7 +79,7 @@ func TestStampHandleParsesPurePage(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	if resolved.Query != "" {
 		t.Fatalf("unexpected query: %q", resolved.Query)
 	}

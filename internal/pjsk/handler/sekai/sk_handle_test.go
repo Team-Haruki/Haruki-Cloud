@@ -22,9 +22,9 @@ func TestSKDailySpeedHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-daily-speed" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -57,9 +57,9 @@ func TestSKSpeedHandleBuildsResolvedCommandWithHourDefaults(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-speed" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -89,9 +89,9 @@ func TestSKLineHandleBuildsWorldLinkCurrentChapterSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-line" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -123,9 +123,9 @@ func TestSKCheckRoomHandleDefaultsToSelfBinding(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-check-room" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -161,9 +161,9 @@ func TestSKCheckRoomLiteHandleUsesFixedDefaultRanks(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-check-room" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -229,9 +229,9 @@ func TestSKHandlersRespectWorldLinkPrefixAcrossCommands(t *testing.T) {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
-			resolved, ok := result.(*parser.ResolvedCommand)
-			if !ok {
-				t.Fatalf("handler returned %T", result)
+			resolved := result
+			if resolved == nil {
+				t.Fatal("expected resolved command, got nil")
 			}
 			if resolved.Module != parser.ModuleSK || resolved.Mode != tc.wantMode {
 				t.Fatalf("unexpected resolved command: %+v", resolved)

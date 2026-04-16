@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"unicode"
+
+	"haruki-cloud/internal/pjsk/parser"
 )
 
 var commandHandlerTree handlerTreeNode
@@ -16,7 +18,7 @@ var maxDepth int
 
 const DefaultPriority = 100
 
-func Dispatch(ctx context.Context, event Event) (any, error) {
+func Dispatch(ctx context.Context, event Event) (*parser.ResolvedCommand, error) {
 
 	handlerContext, err := BuildContext(ctx, event)
 	if err != nil {
@@ -37,7 +39,7 @@ type CommandHandler interface {
 	GetPath() string
 	GetPriority() int
 	GetHelper() string
-	Handle(Context) (any, error)
+	Handle(Context) (*parser.ResolvedCommand, error)
 }
 
 type CommandHandlerBase struct {
@@ -46,7 +48,7 @@ type CommandHandlerBase struct {
 	Path       string
 	Priority   int
 	Helper     string
-	handleFunc func(Context) (any, error)
+	handleFunc func(Context) (*parser.ResolvedCommand, error)
 }
 
 func (h *CommandHandlerBase) IsDisabled() bool {
@@ -65,7 +67,7 @@ func (h *CommandHandlerBase) GetPriority() int {
 func (h *CommandHandlerBase) GetHelper() string {
 	return h.Helper
 }
-func (b *CommandHandlerBase) Handle(ctx Context) (any, error) {
+func (b *CommandHandlerBase) Handle(ctx Context) (*parser.ResolvedCommand, error) {
 	if b.handleFunc != nil {
 		return b.handleFunc(ctx)
 	}

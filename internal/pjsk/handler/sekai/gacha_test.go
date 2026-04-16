@@ -22,9 +22,9 @@ func TestGachaHandleUsesPastInclusiveListWhenArgsEmpty(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleGacha || resolved.Mode != "gacha-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -53,9 +53,9 @@ func TestGachaHandleUsesDetailForDirectID(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != "gacha-detail" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -84,9 +84,9 @@ func TestGachaHandleUsesDetailForNegativeIndex(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != "gacha-detail" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -115,9 +115,9 @@ func TestGachaHandleUsesDetailForEventSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != "gacha-detail" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -146,9 +146,9 @@ func TestGachaHandleParsesListFilters(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != "gacha-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)

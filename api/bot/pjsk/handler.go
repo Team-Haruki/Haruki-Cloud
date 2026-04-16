@@ -261,13 +261,12 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	ctx.TriggerCmd = matched.Command
 	ctx.ArgText = strings.TrimSpace(string(matched.ArgText))
 	ctx.MessageType = messageType
-	result, err := matched.Handler.Handle(ctx)
+	resolved, err := matched.Handler.Handle(ctx)
 	if err != nil {
 		return nil, err
 	}
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		return nil, fmt.Errorf("handler returned %T", result)
+	if resolved == nil {
+		return nil, fmt.Errorf("handler returned nil")
 	}
 	resolved.RequesterPlatform = req.Platform
 	resolved.RequesterUserID = req.PlatformUserID

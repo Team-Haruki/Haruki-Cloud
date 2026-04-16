@@ -20,7 +20,7 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 			Path: "profile/bind",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID", ctx.originalTriggerCmd)
@@ -39,7 +39,7 @@ func (sekaiHandlers) ProfileBindListHandle() SekaiCommandHandler {
 			Path: "profile/bind/list",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}
@@ -61,7 +61,7 @@ func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 			Path: "profile/unbind",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n或 %s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
@@ -87,7 +87,7 @@ func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
 			Path: "profile/default",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n%s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
@@ -113,7 +113,7 @@ func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
 			Path: "profile/default/clear",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 
 			scope := ""

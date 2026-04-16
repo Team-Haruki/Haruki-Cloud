@@ -32,14 +32,14 @@ func TestRegisterCommandHandler(t *testing.T) {
 func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 	skh := SekaiCommandHandler{
 		ParseUIDArg: boolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if ctx.UIDArg() != "@987654321" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
 			}
 			if ctx.GetArgs() != "剩余参数" {
 				t.Fatalf("args = %q", ctx.GetArgs())
 			}
-			return ctx, nil
+			return makeResolvedCmd(ctx, parser.ModuleProfile, "test"), nil
 		},
 	}
 
@@ -58,14 +58,14 @@ func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 	skh := SekaiCommandHandler{
 		ParseUIDArg: boolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if ctx.UIDArg() != "" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
 			}
 			if ctx.GetArgs() != "u2 12345678901234 @123456789 剩余参数" {
 				t.Fatalf("args = %q", ctx.GetArgs())
 			}
-			return ctx, nil
+			return makeResolvedCmd(ctx, parser.ModuleProfile, "test"), nil
 		},
 	}
 
@@ -84,7 +84,7 @@ func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 
-	result, err := handler.Dispatch(context.Background(), handler.Event{
+	resolved, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
 		Message: onebot11.Message{
 			{Type: "text", Data: map[string]any{"text": "/cnsk event101 100"}},
@@ -94,10 +94,8 @@ func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dispatch: %v", err)
 	}
-
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok || resolved == nil {
-		t.Fatalf("expected resolved command, got %#v", result)
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-query" {
 		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
@@ -110,7 +108,7 @@ func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 func TestDispatchSupportsRegionPrefixedWorldBloomSKLineWithCharacterOnly(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 
-	result, err := handler.Dispatch(context.Background(), handler.Event{
+	resolved, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
 		Message: onebot11.Message{
 			{Type: "text", Data: map[string]any{"text": "/cnwlsk线冬弥"}},
@@ -120,10 +118,8 @@ func TestDispatchSupportsRegionPrefixedWorldBloomSKLineWithCharacterOnly(t *test
 	if err != nil {
 		t.Fatalf("dispatch: %v", err)
 	}
-
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok || resolved == nil {
-		t.Fatalf("expected resolved command, got %#v", result)
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-line" {
 		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
@@ -151,7 +147,7 @@ func TestDispatchSupportsRegionPrefixedWorldBloomSKLineWithCharacterOnly(t *test
 func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 
-	result, err := handler.Dispatch(context.Background(), handler.Event{
+	resolved, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
 		Message: onebot11.Message{
 			{Type: "text", Data: map[string]any{"text": "/sk event101 "}},
@@ -162,10 +158,8 @@ func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dispatch: %v", err)
 	}
-
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok || resolved == nil {
-		t.Fatalf("expected resolved command, got %#v", result)
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params map[string]any
@@ -180,7 +174,7 @@ func TestDispatchSupportsAtMentionFromMapSegmentsInSK(t *testing.T) {
 func TestDispatchSupportsSKPredictMode(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 
-	result, err := handler.Dispatch(context.Background(), handler.Event{
+	resolved, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
 		Message: onebot11.Message{
 			{Type: "text", Data: map[string]any{"text": "/skp event101 100"}},
@@ -190,10 +184,8 @@ func TestDispatchSupportsSKPredictMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dispatch: %v", err)
 	}
-
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok || resolved == nil {
-		t.Fatalf("expected resolved command, got %#v", result)
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-predict" {
 		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
@@ -203,7 +195,7 @@ func TestDispatchSupportsSKPredictMode(t *testing.T) {
 func TestDispatchSupportsMysekaiOverviewAlias(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 
-	result, err := handler.Dispatch(context.Background(), handler.Event{
+	resolved, err := handler.Dispatch(context.Background(), handler.Event{
 		Platform: "qq",
 		Message: onebot11.Message{
 			{Type: "text", Data: map[string]any{"text": "/msam"}},
@@ -213,10 +205,8 @@ func TestDispatchSupportsMysekaiOverviewAlias(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dispatch: %v", err)
 	}
-
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok || resolved == nil {
-		t.Fatalf("expected resolved command, got %#v", result)
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-resource-map" {
 		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)

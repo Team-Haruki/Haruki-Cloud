@@ -78,9 +78,9 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
-			resolved, ok := result.(*parser.ResolvedCommand)
-			if !ok {
-				t.Fatalf("handler returned %T", result)
+			resolved := result
+			if resolved == nil {
+				t.Fatal("expected resolved command, got nil")
 			}
 			if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-area" {
 				t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -135,9 +135,9 @@ func TestBondsHandleBuildsResolvedCommand(t *testing.T) {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
-			resolved, ok := result.(*parser.ResolvedCommand)
-			if !ok {
-				t.Fatalf("handler returned %T", result)
+			resolved := result
+			if resolved == nil {
+				t.Fatal("expected resolved command, got nil")
 			}
 			if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-bonds" {
 				t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -178,9 +178,9 @@ func TestEducationSelfHandlersEmbedSelector(t *testing.T) {
 				t.Fatalf("Handle() error = %v", err)
 			}
 
-			resolved, ok := result.(*parser.ResolvedCommand)
-			if !ok {
-				t.Fatalf("handler returned %T", result)
+			resolved := result
+			if resolved == nil {
+				t.Fatal("expected resolved command, got nil")
 			}
 			if resolved.Module != parser.ModuleEducation || resolved.Mode != tt.mode {
 				t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -215,9 +215,9 @@ func TestAreaItemHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params struct {
@@ -255,9 +255,9 @@ func TestBondsHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params struct {

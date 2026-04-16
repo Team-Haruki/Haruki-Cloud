@@ -32,7 +32,7 @@ func (sekaiHandlers) EventHandle() SekaiCommandHandler {
 			},
 			Helper: eventSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveEventDetailOrList(ctx, true)
 		},
 	}
@@ -47,7 +47,7 @@ func (sekaiHandlers) EventDetailHandle() SekaiCommandHandler {
 			},
 			Helper: eventSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveEventDetailOrList(ctx, false)
 		},
 	}
@@ -155,7 +155,7 @@ func (sekaiHandlers) EventRecordHandle() SekaiCommandHandler {
 				"/活动记录", "/冲榜记录",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err

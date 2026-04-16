@@ -18,7 +18,7 @@ func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 				"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msa",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if strings.Contains(strings.ToLower(args), "all") {
@@ -45,7 +45,7 @@ func (sekaiHandlers) MysekaiOverviewHandle() SekaiCommandHandler {
 				"/pjsk mysekai overview", "/mysekai-overview", "/mysekai总览", "/烤森总览", "/msam",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if strings.Contains(strings.ToLower(args), "all") {
@@ -79,7 +79,7 @@ func (sekaiHandlers) MysekaiMapHandle() SekaiCommandHandler {
 				"/pjsk mysekai map", "/mysekai-map", "/mysekai地图", "/烤森地图", "/msm", "/msmap",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if strings.Contains(strings.ToLower(args), "all") {
@@ -108,7 +108,7 @@ func (sekaiHandlers) MysekaiTalkListHandle() SekaiCommandHandler {
 				"/mysekai-talk-list", "/mysekai对话列表", "/烤森对话列表",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			showAllTalks := strings.Contains(strings.ToLower(args), "all")
 			cleaned := cleanMysekaiArgs(args)
@@ -134,7 +134,7 @@ func (sekaiHandlers) MysekaiFixtureListHandle() SekaiCommandHandler {
 				"/mysekai-fixture-list", "/mysekai家具列表", "/烤森家具列表",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			showID := !strings.Contains(strings.ToLower(args), "noid")
 			onlyCraftable := false
@@ -162,7 +162,7 @@ func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 				"/msf", "/mysekai 家具", "/家具列表",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 
 			selfParams := map[string]any{}
@@ -201,7 +201,7 @@ func (sekaiHandlers) MysekaiDoorUpgradeHandle() SekaiCommandHandler {
 				"/pjsk mysekai gate", "/mysekai-door-upgrade", "/mysekai大门升级", "/烤森大门升级", "/msg", "/msgate",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			showAll, cleanedArgs := extractMysekaiAllFlag(args)
 			args = cleanedArgs
@@ -234,7 +234,7 @@ func (sekaiHandlers) MysekaiMusicRecordHandle() SekaiCommandHandler {
 				"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/mss", "/msr", "/mssong",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if err := embedSelfQuery(params, ctx); err != nil {
@@ -260,7 +260,7 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 				"/msb", "/mysekai 蓝图",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selfParams := map[string]any{}
 			if err := embedSelfQuery(selfParams, ctx); err != nil {
 				return nil, err
@@ -296,7 +296,7 @@ func (sekaiHandlers) MysekaiPhotoHandle() SekaiCommandHandler {
 				"/msp", "/mysekai 照片",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			seq, err := strconv.Atoi(args)
 			if err != nil || seq == 0 {

@@ -26,9 +26,9 @@ func TestMusicAliasAddHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleAlias || resolved.Mode != aliases.ModeAdd {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -59,9 +59,9 @@ func TestCharacterAliasQueryHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleAlias || resolved.Mode != aliases.ModeQuery {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -91,9 +91,9 @@ func TestCharacterAliasDeleteHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleAlias || resolved.Mode != aliases.ModeDelete {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -125,9 +125,9 @@ func TestAliasPendingHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != aliases.ModePendingList {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
@@ -157,9 +157,9 @@ func TestAliasApproveHandleParsesReviewIDs(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != aliases.ModeApprove {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
@@ -189,9 +189,9 @@ func TestAliasRejectHandleParsesReason(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != aliases.ModeReject {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)

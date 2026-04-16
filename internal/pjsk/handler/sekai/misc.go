@@ -23,7 +23,7 @@ func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
 				"/pjsk chara birthday", "/角色生日", "/生日", "/查生日",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildMiscBirthdayParams(ctx.GetArgs())
 			if err != nil {
 				return nil, err
@@ -56,7 +56,7 @@ func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
 				"/个人中心", "/profile", "/个人信息",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			p, err := resolveUserQueryParams(ctx)
 			if err != nil {
 				return nil, err

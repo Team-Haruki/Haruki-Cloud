@@ -227,6 +227,10 @@ func (c *TrackerClient) getRaw(path string) ([]byte, error) {
 		return resp.Body(), nil
 	case 404:
 		return nil, ErrRankingNotFound
+	case 429:
+		return nil, &TrackerAPIError{StatusCode: 429, Message: "rate limited by tracker"}
+	case 503:
+		return nil, ErrServerMaintenance
 	default:
 		msg := parseMessage(resp.Body())
 		return nil, &TrackerAPIError{StatusCode: resp.StatusCode(), Message: msg}

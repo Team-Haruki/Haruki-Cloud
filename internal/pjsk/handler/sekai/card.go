@@ -34,7 +34,7 @@ func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 			},
 			Helper: cardSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveCardDetailOrList(ctx, false)
 		},
 	}
@@ -49,7 +49,7 @@ func (sekaiHandlers) CardListHandle() SekaiCommandHandler {
 			},
 			Helper: cardSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveCardDetailOrList(ctx, true)
 		},
 	}
@@ -97,7 +97,7 @@ func (sekaiHandlers) CardBoxHandle() SekaiCommandHandler {
 				"/查箱", "/卡牌一览", "/卡面一览", "/卡一览", "/box", "/card-box", "/pjsk box",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			ctx.SetArgs(cleanCardBoxArgs(args))
 			params, err := newCardBoxParams(ctx, args, true)
@@ -169,7 +169,7 @@ func (sekaiHandlers) CardImgHandle() SekaiCommandHandler {
 				"/查卡面", "/卡面原图", "/卡面", "/card", "/卡图",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, errors.New("请输入要查询的卡牌")

@@ -79,9 +79,9 @@ func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleDeck || resolved.Mode != "deck-event" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -128,7 +128,7 @@ func TestEventDeckHandleParsesLeadingSelectorArg(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -160,7 +160,7 @@ func TestEventDeckHandleParsesTrailingSelectorArg(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -187,7 +187,7 @@ func TestEventDeckHandlePrefersLastLiveTypeKeyword(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -211,7 +211,7 @@ func TestEventDeckHandleParsesSimulatedEvent(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -235,7 +235,7 @@ func TestEventDeckHandlePrefersSimulatedEventOverBareNumericEventFor25(t *testin
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -259,7 +259,7 @@ func TestEventDeckHandleParsesMultiSkillLowerBound(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -292,7 +292,7 @@ func TestEventDeckHandleParsesSplitTeammateScoreUp(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -325,7 +325,7 @@ func TestEventDeckHandleParsesBareSkillTargetAfterMusicQuery(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -364,7 +364,7 @@ func TestEventDeckHandleParsesSplitSkillLowerBound(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -388,7 +388,7 @@ func TestEventDeckHandleParsesSimulatedWorldBloom(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -416,7 +416,7 @@ func TestEventDeckHandlePreservesSimulatedWorldBloomCharacterQuery(t *testing.T)
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -444,7 +444,7 @@ func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -472,7 +472,7 @@ func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventID(t *testing.T
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -502,7 +502,7 @@ func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventIDWithTrailingO
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -532,7 +532,7 @@ func TestEventDeckHandleParsesStandaloneWorldBloomSelectorForCurrentEvent(t *tes
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -562,7 +562,7 @@ func TestEventDeckHandleParsesMusicQueryBeforeStandaloneWorldBloomSelectorForCur
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -592,7 +592,7 @@ func TestEventDeckHandleParsesMusicQueryBeforeWorldBloomSelectorAfterEventID(t *
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -622,7 +622,7 @@ func TestEventDeckHandleParsesMaxProfile(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -646,7 +646,7 @@ func TestEventDeckHandleParsesSubMaxProfile(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -670,7 +670,7 @@ func TestEventDeckHandleParsesCurrentDeck(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -694,7 +694,7 @@ func TestEventDeckHandleParsesMusicCompareCurrent(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -721,7 +721,7 @@ func TestEventDeckHandleParsesMusicCompareQueriesAcrossKeyword(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -763,7 +763,7 @@ func TestEventDeckHandleParsesUnitFilter(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -787,7 +787,7 @@ func TestEventDeckHandleParsesAttrFilter(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -811,7 +811,7 @@ func TestEventDeckHandleParsesExcludedCards(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -835,7 +835,7 @@ func TestEventDeckHandleParsesAreaItemLevel(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -859,7 +859,7 @@ func TestEventDeckHandleParsesSkillOrderAverage(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -886,7 +886,7 @@ func TestEventDeckHandleParsesSpecificSkillOrderWithCurrent(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -916,7 +916,7 @@ func TestEventDeckHandleParsesSpecificSkillOrderWithFixedCards(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -976,7 +976,7 @@ func TestBonusDeckHandleParsesEventAndBonuses(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1000,7 +1000,7 @@ func TestBonusDeckHandleParsesBonusKeywords(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1024,7 +1024,7 @@ func TestBonusDeckHandleTreatsBareNumericLeadingValueAsBonusTarget(t *testing.T)
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1048,7 +1048,7 @@ func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1076,7 +1076,7 @@ func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1103,7 +1103,7 @@ func TestChallengeDeckHandleTreatsInlineDifficultyTokenAsMusicQuery(t *testing.T
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1133,7 +1133,7 @@ func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1160,7 +1160,7 @@ func TestChallengeDeckHandleParsesCharacterAndCurrentKeyword(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1187,7 +1187,7 @@ func TestChallengeDeckHandleParsesMusicCompareQueries(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1217,7 +1217,7 @@ func TestChallengeDeckHandlePreservesCharacterQuery(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1245,7 +1245,7 @@ func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var combined mysekaiDeckCombinedParams
 	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1274,7 +1274,7 @@ func TestMysekaiDeckHandleParsesMusicCompareQueries(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var combined mysekaiDeckCombinedParams
 	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1298,7 +1298,7 @@ func TestMysekaiDeckHandlePreservesFixedCharacterQueries(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var combined mysekaiDeckCombinedParams
 	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1327,7 +1327,7 @@ func TestEventDeckHandleParsesMusicQueryAndDifficulty(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1351,7 +1351,7 @@ func TestEventDeckHandleParsesMusicQueryAndDifficultyWithoutSpace(t *testing.T) 
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1378,7 +1378,7 @@ func TestEventDeckHandleParsesExplicitMusicID(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1405,7 +1405,7 @@ func TestEventDeckHandleKeepsBareNumericQuery(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1432,7 +1432,7 @@ func TestEventDeckHandleRecognizesNicknameAliasAfterEventID(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1459,7 +1459,7 @@ func TestEventDeckHandleRecognizesLeadingNumericEventIDAndStripsBoostToken(t *te
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1489,7 +1489,7 @@ func TestEventDeckHandleStripsBoostTokenAfterExplicitEventID(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1516,7 +1516,7 @@ func TestChallengeDeckHandleRecognizesNicknameAlias(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1543,7 +1543,7 @@ func TestMysekaiDeckHandleRecognizesFixedCharacterAlias(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var combined mysekaiDeckCombinedParams
 	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1568,7 +1568,7 @@ func TestNoEventDeckHandleRecognizesBoostToken(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1592,7 +1592,7 @@ func TestMysekaiDeckHandleRecognizesBoostToken(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var combined mysekaiDeckCombinedParams
 	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1616,7 +1616,7 @@ func TestEventDeckHandleRecognizesChinese25JiAlias(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -1670,7 +1670,7 @@ func TestEventDeckHandleTreatsBareSingleNumberAsEventID(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved := result.(*parser.ResolvedCommand)
+	resolved := result
 	var params deckAutoQueryParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)

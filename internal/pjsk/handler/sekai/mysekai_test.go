@@ -66,9 +66,9 @@ func TestMysekaiOverviewHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-resource-map" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -109,9 +109,9 @@ func TestMysekaiMapHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-map" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -140,9 +140,9 @@ func TestMysekaiMapHandleBuildsSingleMapParams(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handle() error = %v", err)
 	}
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != "mysekai-map" {
 		t.Fatalf("unexpected mode: %s", resolved.Mode)
@@ -175,9 +175,9 @@ func TestMysekaiMapHandleBuildsGardenMapParams(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handle() error = %v", err)
 	}
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != "mysekai-map" {
 		t.Fatalf("unexpected mode: %s", resolved.Mode)
@@ -206,9 +206,9 @@ func TestMysekaiMapHandleParsesCompactMapIndices(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handle() error = %v", err)
 	}
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params struct {
@@ -259,9 +259,9 @@ func TestMysekaiPhotoHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-photo" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -294,9 +294,9 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("Handle() list error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-fixture-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -322,9 +322,9 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("Handle() talk error = %v", err)
 	}
 
-	resolved, ok = result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved = result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-talk-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -353,9 +353,9 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("Handle() fallback list error = %v", err)
 	}
 
-	resolved, ok = result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved = result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Mode != "mysekai-fixture-list" {
 		t.Fatalf("unexpected fallback resolved command: %+v", resolved)
@@ -375,9 +375,9 @@ func TestMysekaiBlueprintHandleSupportsCompactCharacterAliases(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-talk-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -413,9 +413,9 @@ func TestMysekaiDoorUpgradeHandleSupportsShowAll(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-door-upgrade" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)

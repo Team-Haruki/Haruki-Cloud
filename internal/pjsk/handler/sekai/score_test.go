@@ -22,9 +22,9 @@ func TestScoreControlHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleScore || resolved.Mode != "score-control" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -51,9 +51,9 @@ func TestMusicMetaHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleScore || resolved.Mode != "score-music-meta" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -80,9 +80,9 @@ func TestMusicMetaHandleSplitsQueriesByNewline(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params musicMetaQueriesParams
@@ -106,9 +106,9 @@ func TestCustomRoomScoreControlHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleScore || resolved.Mode != "score-custom-room" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -135,9 +135,9 @@ func TestMusicBoardHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleScore || resolved.Mode != "score-music-board" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -173,9 +173,9 @@ func TestMusicBoardHandleSplitsSpecQueriesByWhitespaceLikeRefer(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params rendermusic.BoardQuery
@@ -199,9 +199,9 @@ func TestMusicBoardHandleAllowsModeOnlyQueryWithoutSpecSongs(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params rendermusic.BoardQuery
@@ -228,9 +228,9 @@ func TestMusicBoardHandleParsesSkillsAndKeepsSpecQueryDifficulty(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params rendermusic.BoardQuery
@@ -266,9 +266,9 @@ func TestMusicBoardHandleKeepsBareNumericSpecQuery(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params rendermusic.BoardQuery
@@ -298,9 +298,9 @@ func TestMusicBoardHandleParsesMultiSkillWithKeyword(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params rendermusic.BoardQuery
@@ -332,9 +332,9 @@ func TestMusicBoardHandleParsesPageWithTrailingP(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params rendermusic.BoardQuery
@@ -361,9 +361,9 @@ func TestMusicBoardHandleExtractsLevelAndDiffFiltersFromAnyPosition(t *testing.T
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 
 	var params rendermusic.BoardQuery

@@ -122,9 +122,9 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 					t.Fatalf("Handle() error = %v", err)
 				}
 
-				resolved, ok := result.(*parser.ResolvedCommand)
-				if !ok {
-					t.Fatalf("handler returned %T", result)
+				resolved := result
+				if resolved == nil {
+					t.Fatal("expected resolved command, got nil")
 				}
 				expectedMode := tt.wantMode
 				if builder.name == "list" && tt.wantMode != "card-box" {
@@ -165,9 +165,9 @@ func TestCardListHandlePrefers25UnitAliasOverCardID(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -195,9 +195,9 @@ func TestCardListHandlePrefersBare4RarityOverSingleCardID(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -225,9 +225,9 @@ func TestCardListHandleSupportsLunabotCharacterAlias(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -255,9 +255,9 @@ func TestCardBoxHandleTreats25AsStrictFilterQuery(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-box" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -292,9 +292,9 @@ func TestCardListHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -338,9 +338,9 @@ func TestCardBoxHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-box" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)

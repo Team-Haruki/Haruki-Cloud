@@ -59,7 +59,7 @@ func (sekaiHandlers) ProfileHideSuiteHandle() SekaiCommandHandler {
 			},
 			Path: "profile/suite/hide",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -77,7 +77,7 @@ func (sekaiHandlers) ProfileShowSuiteHandle() SekaiCommandHandler {
 			},
 			Path: "profile/suite/show",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -95,7 +95,7 @@ func (sekaiHandlers) ProfileHideMySekaiHandle() SekaiCommandHandler {
 			},
 			Path: "profile/mysekai/hide",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -113,7 +113,7 @@ func (sekaiHandlers) ProfileShowMySekaiHandle() SekaiCommandHandler {
 			},
 			Path: "profile/mysekai/show",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -131,7 +131,7 @@ func (sekaiHandlers) ProfileHideIDHandle() SekaiCommandHandler {
 			},
 			Path: "profile/visibility/hide",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -150,7 +150,7 @@ func (sekaiHandlers) ProfileShowIDHandle() SekaiCommandHandler {
 			},
 			Path: "profile/visibility/show",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -169,7 +169,7 @@ func (sekaiHandlers) ProfileCheckDataHandle() SekaiCommandHandler {
 			},
 			Path: "profile/check-data",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err
@@ -189,7 +189,7 @@ func (sekaiHandlers) MsdHandle() SekaiCommandHandler {
 			},
 			Path: "profile/check-data-mysekai",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err
@@ -207,7 +207,7 @@ func (sekaiHandlers) ProfileVerifyHandle() SekaiCommandHandler {
 			},
 			Path: "profile/verify",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -226,7 +226,7 @@ func (sekaiHandlers) ProfileVerifyListHandle() SekaiCommandHandler {
 			Path: "profile/verify/list",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}

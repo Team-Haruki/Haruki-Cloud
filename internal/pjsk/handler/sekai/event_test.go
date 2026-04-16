@@ -22,9 +22,9 @@ func TestEventDetailHandleUsesCurrentEventWhenArgsEmpty(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-detail" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -53,9 +53,9 @@ func TestEventListHandleUsesFullRangeWhenArgsEmpty(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -85,9 +85,9 @@ func TestEventDetailHandleFallsBackToListForFilterQuery(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -122,9 +122,9 @@ func TestEventDetailHandleTreatsBare25AsEventID(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-detail" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -153,9 +153,9 @@ func TestEventListHandleFallsBackToDetailForSingleEventQuery(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-detail" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -185,9 +185,9 @@ func TestEventListHandleTreatsBare25AsUnitFilter(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-list" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)
@@ -239,9 +239,9 @@ func TestEventRecordHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("Handle() error = %v", err)
 	}
 
-	resolved, ok := result.(*parser.ResolvedCommand)
-	if !ok {
-		t.Fatalf("handler returned %T", result)
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
 	}
 	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-record" {
 		t.Fatalf("unexpected resolved command: %+v", resolved)

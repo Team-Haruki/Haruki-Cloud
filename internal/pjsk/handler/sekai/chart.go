@@ -26,7 +26,7 @@ func (sekaiHandlers) ChartHandle() SekaiCommandHandler {
 			},
 			Helper: MUSIC_SEARCH_HELP,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if strings.TrimSpace(ctx.GetArgs()) == "" {
 				return nil, errors.New(MUSIC_SEARCH_HELP)
 			}

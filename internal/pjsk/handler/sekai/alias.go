@@ -77,7 +77,7 @@ func (sekaiHandlers) AliasPendingHandle() SekaiCommandHandler {
 			Helper: "使用方式:\n/待审核别名",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n/待审核别名")
 			}
@@ -99,7 +99,7 @@ func (sekaiHandlers) AliasApproveHandle() SekaiCommandHandler {
 			Helper: "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			reviewIDs, err := parseAliasReviewIDs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
@@ -123,7 +123,7 @@ func (sekaiHandlers) AliasRejectHandle() SekaiCommandHandler {
 			Helper: "使用方式:\n/拒绝别名 待审核ID 原因",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			reviewID, reason, err := parseAliasRejectArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
@@ -146,7 +146,7 @@ func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampl
 			Helper:   aliasQueryHelp(aliasType, sampleCommand),
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			target := strings.TrimSpace(ctx.GetArgs())
 			if target == "" {
 				return nil, onebot11.NewReplayError("%s", aliasQueryHelp(aliasType, sampleCommand))
@@ -167,7 +167,7 @@ func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleC
 			Helper:   aliasAddHelp(aliasType, sampleCommand),
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasAddHelp(aliasType, sampleCommand))
 			if err != nil {
 				return nil, err
@@ -191,7 +191,7 @@ func newEntityAliasDeleteHandler(aliasType, path string, commands []string, samp
 			Helper:   aliasDeleteHelp(aliasType, sampleCommand),
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasDeleteHelp(aliasType, sampleCommand))
 			if err != nil {
 				return nil, err

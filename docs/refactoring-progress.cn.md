@@ -39,6 +39,7 @@
 > - 2026-04-10 阶段 B 再补 provider：`internal/pjsk/render/provider/contextual.go` 已进一步拆为 `contextual.go` / `contextual_cards.go` / `contextual_event_music.go` / `contextual_misc.go`
 > - 2026-04-17 R38 收尾：`accountdata/` 导出收窄（`BindingResolver`/`ProfileBGCleaner` 及其 `New*` 构造器降为 unexported，仅同包一处调用）；`internal/pjsk/render/deck/controller_prepare.go`（862 行）按职责拆为 `controller_prepare_userdata.go`（orchestrator + JSON encode/merge/log，486 行）与 `controller_prepare_profile.go`（preset / 卡牌过滤 / 当前主队 / area-item，386 行）；`internal/pjsk/render/userdata` 整体重命名为 `internal/pjsk/render/snapshot`（47 文件 import/选择器更新，`renderuserdata` alias 统一为 `rendersnapshot`，`profile/live_adapter.go` 同名参数改为 `snap` 消除 shadowing）
 > - 2026-04-17 测试修复与入口整理：修复 4 个基线失败测试（`TestResolveTrackerTargetUserSupportsSelector` / `TestResolveDeckMusicSelectionMusicCompareSelections` / `TestExecuteCardImageReturnsAllOriginalArts` / `TestResolveCardImagesSupportsStandardAndRipPaths`）；`resolveCardOriginalImagePaths` 在本地文件存在时通过 `helper.FirstExisting` 将相对路径转为绝对路径，避免 `os.ReadFile` 因 CWD 不符失败；`cmd/server/` 所有文件上移至项目根目录（`package main` 不变），构建命令由 `./cmd/server` 改为 `.`，Dockerfile 与部署脚本同步更新；`go test ./...` 全量 39 包均 ok
+> - 2026-04-17 R41 内部质量审计：Handler 全链路返回类型 `any` → `*parser.ResolvedCommand`（接口 + 85 个闭包 + 16 个测试文件移除 type assertion）；缓存并发去重（`singleflight.Group`）、15 处请求路径 `context.Background()` → `context.TODO()`、23 处 snapshot 错误前缀 `"userdata:"` → `"snapshot:"`、Tracker 客户端新增 429/503 处理、死代码清理（注释 handler / unused 参数 / stderr→slog）；`go test ./...` 全量 39 包通过
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 
@@ -1979,3 +1980,46 @@ internal/pjsk/
 **验证**：`go build ./...` ✅；`go vet ./...` ✅；`go test ./api/bot/auth/... ./internal/pjsk/accountdata/...` 通过。
 
 `utils/` 目录再收缩到 **4 包**（`censor` / `imagecache` / `logger` / `redis`），剩下的 4 个都是跨域多消费者的真工具。
+
+---
+
+### R41：内部质量审计——类型安全 / 并发 / 错误处理（2026-04-17）
+
+对 `internal/` 全量进行了缺陷与改进扫描，分 handler / render / infrastructure 三层并行审计。
+
+#### 类型安全
+
+| 变更 | 细节 |
+|------|------|
+| Handler 返回类型 `any` → `*parser.ResolvedCommand` | `CommandHandler` 接口、`Dispatch()`、`CommandHandlerBase.handleFunc`、`SekaiCommandHandler.handleFunc` 全链路改为强类型返回；85 个 handler 闭包签名更新；`api/bot/pjsk/handler.go` 移除不再需要的 type assertion；16 个测试文件中 ~120 处 type assertion 清理为直接使用 |
+
+#### 并发安全
+
+| 变更 | 细节 |
+|------|------|
+| `localRenderCache` 并发去重 | 新增 `singleflight.Group` 字段，消除 `get()`（RUnlock）到 `set()`（Lock）窗口期内相同 key 的并发重复渲染；`golang.org/x/sync` 由 indirect 提升为 direct dependency |
+| `RenderCacheClient.Render()` 重复计算 | `buildRenderCacheKey(policy)` 在 lookup 和 store 阶段各调用一次，改为复用首次结果 |
+
+#### context 清理
+
+| 变更 | 细节 |
+|------|------|
+| 15 处请求路径 `context.Background()` → `context.TODO()` | 涉及 11 文件：`client_tracker.go`、`render/{music,profile}/controller.go`、`render/sk/controller_base.go`、`handler/bridge_mysekai.go`、`render/provider/adapter_base.go`（3 处）、`render/snapshot/{factory,live,local_helpers}.go`、`requestbuilder/{birthday_helpers,misc_birthday,score_control}.go` |
+
+#### 错误处理
+
+| 变更 | 细节 |
+|------|------|
+| snapshot 错误前缀统一 | 23 处 `"userdata: ..."` → `"snapshot: ..."` 跨 7 文件（package 已于 R38 重命名为 `snapshot`，前缀未同步） |
+| Tracker 客户端 5xx 处理 | `getRaw()` switch 新增 `429 → TrackerAPIError{rate limited}`、`503 → ErrServerMaintenance`（与 SekaiAPIClient 对齐） |
+
+#### 死代码清理
+
+| 变更 | 细节 |
+|------|------|
+| `handler/sekai/music.go` | 移除 22 行注释掉的 `MusicDetailHandle` |
+| `handler/sekai/handler.go` | `fmt.Fprintf(os.Stderr)` → `slog.Warn`，移除 `os` import |
+| `render/mysekai/helpers.go` | `mysekaiNextBirthdayLocal` 移除未使用的 `characterID` 参数 |
+| `render/education/snapshot_bonds.go` | `_ = getCharacterStyle(charID)` 补注释说明预热意图 |
+
+**验证**：`go build ./...` ✅；`go test ./...` 全量 39 包通过，无回归。

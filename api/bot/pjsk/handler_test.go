@@ -11,17 +11,17 @@ import (
 	"strings"
 	"testing"
 
-	"haruki-cloud/internal/pjsk/onebot11"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	noiseCrypto "haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/identity"
-	"haruki-cloud/internal/pjsk/render/assets"
-	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/onebot11"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
+	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"github.com/gofiber/fiber/v3"
@@ -952,6 +952,9 @@ func TestBotEndpointSKQueryUsesTrackerAtBindingPayload(t *testing.T) {
 	if _, err := bindingService.Bind(context.Background(), "qq", "67890", "1234567890"); err != nil {
 		t.Fatalf("bind test account: %v", err)
 	}
+	if _, err := bindingService.SetBindingVisible(context.Background(), "qq", "67890", "jp", true); err != nil {
+		t.Fatalf("set binding visible: %v", err)
+	}
 
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
@@ -1003,6 +1006,9 @@ func TestBotEndpointSKQueryHandlesInlineCQAtInTextSegment(t *testing.T) {
 	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
 	if _, err := bindingService.Bind(context.Background(), "qq", "67890", "1234567890"); err != nil {
 		t.Fatalf("bind test account: %v", err)
+	}
+	if _, err := bindingService.SetBindingVisible(context.Background(), "qq", "67890", "jp", true); err != nil {
+		t.Fatalf("set binding visible: %v", err)
 	}
 
 	app := fiber.New()
@@ -1310,6 +1316,107 @@ func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {
 	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/cf",
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cf event101 100 1"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
+func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/check-room" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.CFRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.Eid != 101 {
+			t.Fatalf("unexpected event id: %d", req.Eid)
+		}
+		if len(req.Ranks) != 1 || req.Ranks[0].Rank != 777 {
+			t.Fatalf("expected self-bound check-room payload, got %+v", req.Ranks)
+		}
+		if req.PrevRank == nil || req.PrevRank.Rank != 776 {
+			t.Fatalf("unexpected prev rank: %+v", req.PrevRank)
+		}
+		if req.NextRank == nil || req.NextRank.Rank != 778 {
+			t.Fatalf("unexpected next rank: %+v", req.NextRank)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKCHECKSELFPNG"))
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/cf",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cf event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
+func TestBotEndpointSKCheckRoomLiteUsesFixedRanks(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/check-room" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.CFRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		wantRanks := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 100}
+		if len(req.Ranks) != len(wantRanks) {
+			t.Fatalf("unexpected /cfl rank count: %d", len(req.Ranks))
+		}
+		for i, want := range wantRanks {
+			if req.Ranks[i].Rank != want {
+				t.Fatalf("unexpected /cfl ranks: %+v", req.Ranks)
+			}
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKCHECKLITEPNG"))
+	}))
+	defer srv.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/cfl",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cfl event101"}}},
 	})
 	resp, err := app.Test(req)
 	if err != nil {

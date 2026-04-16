@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -375,6 +375,36 @@ func (checkRoomMetricTrackerSource) GetLatestRankingByRank(server string, eventI
 		UserData: sekaiapi.RankingUserData{
 			UserID: strconv.FormatInt(int64(11000+rank), 10),
 			Name:   fmt.Sprintf("Player-%d", rank),
+		},
+	}, nil
+}
+
+func (checkRoomMetricTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	rank := int(userID - 11000)
+	if rank > 0 && rank < 1000 {
+		return &sekaiapi.LatestRankingResponse{
+			RankData: sekaiapi.RankDataPoint{
+				UserID:    strconv.FormatInt(userID, 10),
+				Score:     1900 + rank,
+				Rank:      rank,
+				Timestamp: 6000,
+			},
+			UserData: sekaiapi.RankingUserData{
+				UserID: strconv.FormatInt(userID, 10),
+				Name:   fmt.Sprintf("Player-%d", rank),
+			},
+		}, nil
+	}
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     1925,
+			Rank:      25,
+			Timestamp: 6000,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "SelfPlayer",
 		},
 	}, nil
 }
@@ -1209,6 +1239,46 @@ func TestBuildCheckRoomRequestFromTrackerKeepsPlayerNameAndUsesWindowMetrics(t *
 	}
 	if got.Min20Time3Speed == nil || *got.Min20Time3Speed != 2442000 {
 		t.Fatalf("unexpected 20minx3 speed: %+v", got.Min20Time3Speed)
+	}
+}
+
+func TestBuildCheckRoomRequestFromTrackerSupportsUserQuery(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	userID := int64(99887766)
+	payload, err := controller.BuildCheckRoomRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		UserID:  &userID,
+	})
+	if err != nil {
+		t.Fatalf("build check-room request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	if payload.Ranks[0].Rank != 25 || payload.Ranks[0].Name != "SelfPlayer" {
+		t.Fatalf("unexpected user rank payload: %+v", payload.Ranks[0])
+	}
+	if payload.Ranks[0].Speed == nil || *payload.Ranks[0].Speed != 2296551 {
+		t.Fatalf("expected user query metrics to be enriched, got %+v", payload.Ranks[0])
+	}
+	if payload.PrevRank == nil || payload.PrevRank.Rank != 24 || payload.PrevRank.Name != "Player-24" {
+		t.Fatalf("unexpected prev rank: %+v", payload.PrevRank)
+	}
+	if payload.NextRank == nil || payload.NextRank.Rank != 26 || payload.NextRank.Name != "Player-26" {
+		t.Fatalf("unexpected next rank: %+v", payload.NextRank)
 	}
 }
 

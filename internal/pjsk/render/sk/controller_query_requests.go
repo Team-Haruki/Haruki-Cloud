@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (c *Controller) BuildQueryRequest(req drawing.SKRequest) (*drawing.SKRequest, error) {
@@ -67,21 +67,12 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 	if err != nil {
 		return nil, err
 	}
-	if normalized.UserID != nil {
-		return nil, fmt.Errorf("check-room 暂不支持按用户查询，请使用排名")
-	}
-	skipMissing := shouldSkipMissingTrackerRanks(normalized)
-	rankInfos, err := c.buildRanksFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, skipMissing)
-	if err != nil {
-		return nil, err
-	}
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
 	payload := drawing.CFRequest{
 		Eid:         normalized.EventID,
 		EventName:   meta.name,
 		Region:      normalized.Region,
-		Ranks:       rankInfos,
 		AggregateAt: meta.aggregateAt,
 		UpdateAt:    time.Now().UTC().Format(time.RFC3339),
 	}
@@ -90,14 +81,34 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 			payload.WlCharaIconPath = &icon
 		}
 	}
-	if len(normalized.Ranks) > 0 {
-		target := normalized.Ranks[0]
-		if target > 1 {
-			if prev, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, target-1, normalized.WlCharacterID); err == nil {
+
+	targetRank := 0
+	if normalized.UserID != nil && *normalized.UserID > 0 {
+		info, err := c.buildSingleUserFromTracker(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID)
+		if err != nil {
+			return nil, fmt.Errorf("tracker user query failed: %w", err)
+		}
+		payload.Ranks = []drawing.RankInfo{info}
+		targetRank = info.Rank
+	} else {
+		skipMissing := shouldSkipMissingTrackerRanks(normalized)
+		rankInfos, err := c.buildRanksFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, skipMissing)
+		if err != nil {
+			return nil, err
+		}
+		payload.Ranks = rankInfos
+		if len(normalized.Ranks) > 0 {
+			targetRank = normalized.Ranks[0]
+		}
+	}
+
+	if targetRank > 0 {
+		if targetRank > 1 {
+			if prev, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, targetRank-1, normalized.WlCharacterID); err == nil {
 				payload.PrevRank = &prev
 			}
 		}
-		if next, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, target+1, normalized.WlCharacterID); err == nil {
+		if next, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, targetRank+1, normalized.WlCharacterID); err == nil {
 			payload.NextRank = &next
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -331,8 +332,8 @@ func decodeSuccessMessage(t *testing.T, body []byte) onebot11.Message {
 func assertSingleImageMessage(t *testing.T, body []byte) {
 	t.Helper()
 	message := decodeSuccessMessage(t, body)
-	if len(message) != 1 || message[0].Type != "image" {
-		t.Fatalf("expected single image message, got %+v", message)
+	if len(message) != 2 || message[0].Type != "image" || message[1].Type != "text" {
+		t.Fatalf("expected image + dt message, got %+v", message)
 	}
 	data, ok := message[0].Data.(map[string]any)
 	if !ok {
@@ -341,6 +342,14 @@ func assertSingleImageMessage(t *testing.T, body []byte) {
 	file, _ := data["file"].(string)
 	if !strings.HasPrefix(file, "https://image-cache.test/pjsk/") {
 		t.Fatalf("unexpected image url: %q", file)
+	}
+	dtData, ok := message[1].Data.(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected dt segment data: %#v", message[1].Data)
+	}
+	dtText, _ := dtData["text"].(string)
+	if !regexp.MustCompile(`^dt: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} / \d+ms$`).MatchString(dtText) {
+		t.Fatalf("unexpected dt text: %q", dtText)
 	}
 }
 

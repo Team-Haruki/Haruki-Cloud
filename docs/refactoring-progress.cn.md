@@ -1859,11 +1859,59 @@ internal/pjsk/
 
 ---
 
-### 剩余可选优化
+### R38：internal/ 全面审计（2026-04-16）
 
-| 项目 | 优先级 | 说明 |
+对 `internal/` 目录进行了全面审计，确认无分层违规、无空目录、无 TODO/FIXME/HACK 注释。以下为发现的可优化项。
+
+#### 死代码
+
+| 项目 | 严重度 | 说明 |
 |------|--------|------|
-| handler/sekai/ 拆分 | 低 | 31 文件 11K 行，但受反射注册机制制约不宜拆子包 |
-| render 小包合并 | 低 | misc/score/source 等单文件包，影响不大 |
-| parser/parser.go CardParser | 低 | 外部零调用方（被 render/card/parser.go 替代），有包内测试，可考虑移除 |
-| accountdata/ 导出收窄 | 低 | ProfileBGCleaner/BindingResolver 可降为 unexported，BindingService 细粒度方法可考虑仅暴露测试 helper |
+| `chardata/` 死包 | **高** | 整个包从未被任何 Go 文件 import。定义了 DB-backed 角色昵称 `Loader`，`config.go` 有对应配置字段（`chardata_region`、`chardata_refresh_interval`），但实际已被硬编码 nickname map 替代（见下方重复代码 #3）。可连同配置字段一起删除 |
+
+#### 重复代码
+
+| # | 项目 | 严重度 | 说明 |
+|---|------|--------|------|
+| 1 | `mergeParams` 重复 | **中** | `handler/bridge.go:128` 与 `requestbuilder/params.go:11` 逐字相同（仅日志前缀不同）。handler 不能 import requestbuilder（循环依赖），可提取到 `render/common` 或新建 `internal/pjsk/jsonutil` |
+| 2 | 角色昵称 map + helpers 三处重复 | **中** | `render/card/nicknames.go`、`render/mysekai/nicknames.go` 有完全相同的 `defaultNicknames` map 和 `cloneNicknames`/`normalizeNicknameQuery` helper；`render/music/nicknames.go` 有第三份 `cloneNicknames`。权威来源 `assets.CharacterIDToNickname` 已存在于共享包，应统一派生 |
+| 3 | `decodeJSONUseNumber` 重复 | **低中** | `render/mysekai/json_decode.go` 与 `render/provider/json_decode.go` 逐字相同（12 行），可提到 `render/common` |
+
+#### 包命名与组织
+
+| 项目 | 严重度 | 说明 |
+|------|--------|------|
+| `handler/sekai` vs `pjsk/sekai` 包名冲突 | **中** | 两者都声明 `package sekai`，导致 handler/ 下 11 个文件需要 `sekaiutils` alias。可将 `handler/sekai` 的 package 声明改为 `package command`（目录名不变） |
+| `pjsk/sekai` 全局单例模式 | **低中** | 3 个 `sync.Once` 客户端（`GetSekaiAPIClient`/`GetToolboxClient`/`GetTrackerClient`）直接读 `config.Cfg`，不可测试，与其他包的构造器注入风格不一致 |
+| `render/userdata` 与 `accountdata` 概念混淆 | **低** | 重命名 `userdata→accountdata` 后，`render/userdata`（游戏快照）仍存在，名称易混淆。改为 `render/snapshot` 更清晰，但涉及 ~20 文件 import 变更 |
+
+#### 文件命名与大小
+
+| 项目 | 严重度 | 说明 |
+|------|--------|------|
+| `render/profile/controller_api.go` 命名误导 | **低** | "API" 指 Sekai HTTP API 响应而非项目 `api/` 层，建议改名 `controller_live.go` |
+| `AllRegions` 注释 + `DefaultRegions` 冗余 | **低** | `handler/sekai/helpers.go:51` var 注释写"returns"，且 `DefaultRegions = AllRegions` 仅一处使用 |
+| `render/deck/controller_prepare.go` 862 行 | **低** | 可拆为 `controller_prepare_userdata.go`（数据准备/合并）和 `controller_prepare_profile.go`（profile preset/卡牌过滤） |
+| `render/misc` 仅 38 行 | **低** | 薄封装，可吸收进 `render/score` 或 `render/app` |
+
+#### 导出收窄（R37 已审计，待处理）
+
+| 项目 | 严重度 | 说明 |
+|------|--------|------|
+| `parser/parser.go` CardParser | **低** | 外部零调用方（被 `render/card/parser.go` 替代），有包内测试，可考虑移除 |
+| `accountdata/` 导出收窄 | **低** | `ProfileBGCleaner`/`BindingResolver` 可降为 unexported；`BindingService` 细粒度方法仅测试调用 |
+
+---
+
+### 架构验证状态
+
+| 检查项 | 状态 |
+|--------|------|
+| `go build ./...` | ✅ |
+| `internal/` 不引用 `api/` | ✅（0 处） |
+| `internal/` 不引用 `cmd/` | ✅（0 处） |
+| `utils/` 不引用 `gofiber/fiber` | ✅（0 处） |
+| `utils/` 根包无 Go 文件 | ✅ |
+| 无包命名冲突 | ✅（userdata 冲突已消除；handler/sekai vs pjsk/sekai 仅需 alias，非编译错误） |
+| 无空目录 | ✅ |
+| 无 TODO/FIXME/HACK | ✅（非测试代码） |

@@ -129,7 +129,7 @@ func TestBuildRenderCachePolicyMusicListUsesRenderFlagsAndPublicFallback(t *test
 			{"id": 1, "difficulty": 32},
 		},
 		RequiredDifficulties: "master",
-		Profile: DetailedProfileCardRequest{
+		Profile: &DetailedProfileCardRequest{
 			ID:              "service",
 			Region:          "JP",
 			Nickname:        "Lunabot",

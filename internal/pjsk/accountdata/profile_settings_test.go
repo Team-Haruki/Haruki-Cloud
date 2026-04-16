@@ -293,6 +293,106 @@ func TestExecuteProfileSettingsCommandBGUploadUsesGlobalDefaultBindingWhenRegion
 	}
 }
 
+func TestExecuteProfileSettingsCommandBGUploadSelectorUsesGlobalIndicesWhenRegionImplicit(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"tw": {"11111111111111": "TW User"},
+		"jp": {"22222222222222": "JP User"},
+	})
+	service.SetFastVerificationProvider(fakeFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{
+			{Server: "tw", GameUserID: "11111111111111"},
+			{Server: "jp", GameUserID: "22222222222222"},
+		},
+	})
+	bgStore := &fakeProfileBGStore{}
+	service.SetProfileBGStorage(bgStore)
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind tw: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "22222222222222"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "tw"); err != nil {
+		t.Fatalf("verify tw: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp"); err != nil {
+		t.Fatalf("verify jp: %v", err)
+	}
+
+	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGUpload, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		RegionExplicit: false,
+		Selector:       "u1",
+		ImageURL:       "https://example.com/bg-global-u1.png",
+	})
+	if err != nil {
+		t.Fatalf("bg upload command with implicit-region selector: %v", err)
+	}
+	if got := string(text); got != "已更新TW服个人信息背景" {
+		t.Fatalf("unexpected bg upload text:\n%s", got)
+	}
+	if len(bgStore.savedServers) != 1 || bgStore.savedServers[0] != "tw" {
+		t.Fatalf("unexpected saved servers: %+v", bgStore.savedServers)
+	}
+	if len(bgStore.savedUserIDs) != 1 || bgStore.savedUserIDs[0] != "11111111111111" {
+		t.Fatalf("unexpected saved user ids: %+v", bgStore.savedUserIDs)
+	}
+}
+
+func TestExecuteProfileSettingsCommandBGUploadSelectorUsesRegionalIndicesWhenRegionExplicit(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"tw": {"11111111111111": "TW User"},
+		"jp": {"22222222222222": "JP User"},
+	})
+	service.SetFastVerificationProvider(fakeFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{
+			{Server: "tw", GameUserID: "11111111111111"},
+			{Server: "jp", GameUserID: "22222222222222"},
+		},
+	})
+	bgStore := &fakeProfileBGStore{}
+	service.SetProfileBGStorage(bgStore)
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind tw: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "22222222222222"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "tw"); err != nil {
+		t.Fatalf("verify tw: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp"); err != nil {
+		t.Fatalf("verify jp: %v", err)
+	}
+
+	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeBGUpload, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		RegionExplicit: true,
+		Selector:       "u1",
+		ImageURL:       "https://example.com/bg-jp-u1.png",
+	})
+	if err != nil {
+		t.Fatalf("bg upload command with explicit-region selector: %v", err)
+	}
+	if got := string(text); got != "已更新JP服个人信息背景" {
+		t.Fatalf("unexpected bg upload text:\n%s", got)
+	}
+	if len(bgStore.savedServers) != 1 || bgStore.savedServers[0] != "jp" {
+		t.Fatalf("unexpected saved servers: %+v", bgStore.savedServers)
+	}
+	if len(bgStore.savedUserIDs) != 1 || bgStore.savedUserIDs[0] != "22222222222222" {
+		t.Fatalf("unexpected saved user ids: %+v", bgStore.savedUserIDs)
+	}
+}
+
 func TestProfileBackgroundPersistsAcrossUnbindAndRebind(t *testing.T) {
 	service := newProfileBindingTestService(t, map[string]map[string]string{
 		"jp": {"12345678901234": "JP User"},

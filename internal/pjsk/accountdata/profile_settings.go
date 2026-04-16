@@ -71,7 +71,11 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 	// first so the user's "default" account is targeted, not a server-specific one.
 	resolveBinding := func() (*pjskdb.UserBinding, error) {
 		if params.Selector != "" {
-			return service.currentBindingEntityBySelector(ctx, params.Platform, params.PlatformUserID, params.Server, params.Selector)
+			selectorServer := ""
+			if params.RegionExplicit {
+				selectorServer = params.Server
+			}
+			return service.currentBindingEntityBySelector(ctx, params.Platform, params.PlatformUserID, selectorServer, params.Selector)
 		}
 		if !params.RegionExplicit {
 			entity, err := service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, GlobalDefaultBindingScope)

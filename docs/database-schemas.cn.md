@@ -602,7 +602,7 @@ chunithm.maindb.chunithm_bindings.haruki_user_id
 chunithm.maindb.chunithm_default_servers.haruki_user_id
 ```
 
-同一个 `haruki_user_id` 可同时在 PJSK 和 CHUNITHM 数据库中有记录，`utils/query` 包封装了跨库查询逻辑。
+同一个 `haruki_user_id` 可同时在 PJSK 和 CHUNITHM 数据库中有记录，各 Handler 通过各自的 Ent Client 直接查询对应表。
 
 ---
 

@@ -24,7 +24,6 @@ Recommended end state:
 - Existing `Haruki-Cloud` assets are reused where they already exist:
   - `database/sekai`
   - `utils/drawing`
-  - `utils/query`
   - `api` response/middleware conventions
 - What must remain long-term is the migration/decommission documentation under `Haruki-Cloud/docs`, not the old service itself.
 
@@ -81,7 +80,6 @@ Observed characteristics:
 - Existing public API style is `/<module>/...`, with JSON envelope helpers in `api/helper.go`.
 - Existing internal/private style already uses auth middleware where needed.
 - `api/pjsk` currently exposes only alias endpoints.
-- `utils/query` already acts as an in-process query toolkit for consumers.
 - `utils/drawing/models.go` already contains most of the drawing payload structs that Service-Test recreates in `internal/model`.
 - `utils/drawing/client.go` already contains the Drawing API client wrapper that overlaps with `Service-Test/internal/service/drawing.go`.
 - Repository includes `database/sekai`, but `cmd/server` does not currently initialize a Sekai DB client.

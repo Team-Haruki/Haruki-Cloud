@@ -431,7 +431,6 @@ HARUKI_RUN_INTEGRATION=1 go test ./integration -count=1
 - `api/bot/pjsk`
 - `utils/drawing`
 - `utils/logger`
-- `utils/query`
 
 ### 9.5 已移除的失败包记录
 

@@ -563,7 +563,6 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 
 | 文档 | 说明 |
 |------|------|
-| `docs/utils-query.cn.md` | `utils/query` 包说明（统一查询门面） |
 | `docs/database-schemas.cn.md` | 数据库 Schema 详解（全 7 个 DB 模块） |
 | `docs/pjsk-command-system.cn.md` | PJSK 指令解析 + 请求构建系统技术文档 |
 | `docs/pjsk-profile-binding-implementation.cn.md` | PJSK 账号绑定与执行链路收口说明 |

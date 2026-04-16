@@ -1930,4 +1930,30 @@ internal/pjsk/
 | `render/userdata` → `render/snapshot` | R38 待处理 | 21 文件 `package userdata` → `package snapshot`；47 个外部消费者（含 `cmd/server/init_services.go`）更新 import / 选择器：36 处 bare import 的 `userdata.X` → `snapshot.X`，11 处 `renderuserdata` alias → `rendersnapshot`；`profile/live_adapter.go` 中 `snapshotFrames` / `snapshotRawData` / `resolveProfileRenderState` 的参数 `snapshot snapshot.Snapshot` 重命名为 `snap` 以消除 shadowing；`accountdata/binding.go` 顶部残留的 `// Package userdata` 文档注释一并修正 |
 | `render/misc`（38 行） | R38 评估 | **保留**。功能独立（角色生日渲染，走 `bridge_misc.go` → `misc-birthday`），合并到 `render/score` / `render/app` 会污染语义，保留成本近零 |
 
+---
+
+### R39：`utils/query` + `utils/types` 废包清除（2026-04-17）
+
+两个包的审计结论：
+
+- `utils/query` — 15+ 个方法中只有 3 个 Settings 相关方法（`GetPJSKSettings` / `UpsertPJSKSettings` / `IncrNoncompliantBGCount`）在生产路径有调用，其余（chunithm.go 全部、users.go 全部、pjsk.go 的 alias / binding 方法）仅被 `client_test.go` 和 `integration/*.go.bak` 引用；`docs/utils-query.cn.md:143` 自己已标注"当前生产 API Handler 尚未使用本包"。
+- `utils/types` — `pjsk.go` / `user.go` 及 `chunithm.go` 的 binding 结构只供 `utils/query` 的死方法填充；其余类型（枚举、长度/错误消息常量、Alias 响应类型、Music schema）在去掉 `utils/query` 中间层后都可就近本地化。
+
+| 变更 | 细节 |
+|------|------|
+| 新增 `internal/pjsk/accountdata/user_settings.go` | 将 Settings 三方法从 `utils/query` 搬出，改为包级函数 `GetUserSettings` / `UpsertUserSettings` / `IncrNoncompliantBGCount`，接受 `*pjskdb.Client` 参数；新增 sentinel `ErrUserSettingsNotFound` |
+| 4 个调用点更新 | `accountdata/binding_properties.go`（BG 违规上传检查）、`handler/bridge_checkdata.go`、`handler/bridge_regtime.go`（时区 offset 读取）、`handler/bridge_arrest.go`（启用难度读取）— 全部改为直接调用 `accountdata.GetUserSettings(ctx, rc.App.PJSK, ...)` |
+| `api/struct.go` | 去掉 `import "haruki-cloud/utils/types"`，长度常量（`MaxAliasLength` 等）和错误消息常量（`ErrInvalidRequest` 等）从 alias（`= types.XXX`）改为字面值 |
+| `api/public/pjsk/struct.go` + `helper.go` | `AliasToObjectIdResponse` / `AllAliasesResponse` 由 type alias 变为本地 struct；新增本地 `parseAliasType` 辅助函数（原 `types.ParseAliasType` 的唯一外部消费者） |
+| `api/public/chunithm/struct.go` | `AliasToMusicIDResponse` / `AllAliasesResponse` / `AliasRequest` / `MusicInfoSchema` / `MusicDifficultySchema` / `ChartDataSchema` / `MusicBatchItemSchema` / `MusicAliasSchema` 全部由 type alias 改为本地 struct |
+| `utils/censor/censor.go` | `types.ParseBindingServer(server) == types.BindingServerCN` 改为 `strings.EqualFold(strings.TrimSpace(server), "cn")`，消除对 `utils/types` 的唯一依赖 |
+| 删除 `utils/query/` | 6 文件：`client.go`、`users.go`、`pjsk.go`（除 Settings 方法外的死方法）、`chunithm.go`、`client_test.go`（591 行）、`README.md` |
+| 删除 `utils/types/` | 5 文件：`enum.go`、`common.go`、`pjsk.go`、`chunithm.go`、`user.go` |
+| 删除 `docs/utils-query.cn.md` | 描述已不存在的僵尸包 |
+| 同步更新文档 | `docs/architecture.cn.md`（去掉 `utils-query.cn.md` 文档索引项）、`docs/database-schemas.cn.md`（跨库查询说明改写）、`docs/project-completion-tracker.cn.md`（稳定包清单删除 `utils/query`）、`docs/service-test-merge-plan.md/.cn.md`（复用资产清单删除 `utils/query`、"in-process query toolkit" 句子删除） |
+
+**验证**：`go build ./...` ✅；`go vet ./...` ✅；`go test ./internal/pjsk/accountdata ./utils/... ./api/... ./internal/pjsk/handler` 失败项与 CLAUDE.md 测试基线一致（`TestResolveTrackerTargetUserSupportsSelector`、`TestResolveDeckMusicSelectionMusicCompareSelections`、`TestExecuteCardImageReturnsAllOriginalArts`），无新回归；accountdata 包自身测试通过。
+
+`utils/` 目录从 7 包收缩到 5 包（`aesgcm` / `censor` / `imagecache` / `logger` / `redis`）。
+
 **验证**：`go build ./...` ✅；`go vet ./...` ✅；`go test ./...` 失败项与 [CLAUDE.md 测试基线](../CLAUDE.md) 已知失败一致，无新回归。

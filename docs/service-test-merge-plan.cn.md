@@ -36,7 +36,6 @@
 - `Haruki-Cloud` 里已经存在的基础能力直接复用：
   - `database/sekai`
   - `utils/drawing`
-  - `utils/query`
   - `api` 响应与中间件约定
 - 长期需要保留的是 `Haruki-Cloud/docs` 下的迁移/退役说明文档，而不是旧服务本体。
 
@@ -93,7 +92,6 @@
 - 现有公开 API 风格是 `/<module>/...`，配合 `api/helper.go` 中的统一 JSON envelope。
 - 现有内部/私有接口已经具备中间件和鉴权机制。
 - `api/pjsk` 目前只暴露 alias 相关接口。
-- `utils/query` 已经承担了给调用方使用的进程内查询工具职责。
 - `utils/drawing/models.go` 已经定义了大部分 Drawing API 请求结构，而这些结构在 `Service-Test/internal/model` 中又被重复定义了一遍。
 - `utils/drawing/client.go` 已经提供了 Drawing API client，而这与 `Service-Test/internal/service/drawing.go` 职责重叠。
 - 仓库内已经包含 `database/sekai`，但 `cmd/server` 当前并不会初始化 Sekai DB client。

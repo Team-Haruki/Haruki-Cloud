@@ -8,11 +8,11 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector userdata.Selector, preferGlobalDefault bool) []byte {
+func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, preferGlobalDefault bool) []byte {
 	if app == nil || app.MySekaiPayloads == nil {
 		return nil
 	}
@@ -31,7 +31,7 @@ func resolveTargetMySekaiPayload(
 	platformUserID string,
 	pjskUserID string,
 ) []byte {
-	return resolveMySekaiPayloadBySelector(ctx, app, userdata.Selector{
+	return resolveMySekaiPayloadBySelector(ctx, app, snapshot.Selector{
 		IMPlatform: strings.TrimSpace(platform),
 		IMUserID:   strings.TrimSpace(platformUserID),
 		Region:     renderregion.Normalize(regionStr),

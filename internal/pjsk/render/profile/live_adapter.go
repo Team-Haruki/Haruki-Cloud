@@ -3,7 +3,7 @@ package profile
 import (
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 
 	"github.com/bytedance/sonic"
@@ -11,10 +11,10 @@ import (
 
 // adaptAPICards converts GetAnotherProfileResponse card list to the raw type used by the
 // existing buildPCards helper.
-func adaptAPICards(cards []sekai.AnotherUserCard) []userdata.RawUserCard {
-	result := make([]userdata.RawUserCard, len(cards))
+func adaptAPICards(cards []sekai.AnotherUserCard) []snapshot.RawUserCard {
+	result := make([]snapshot.RawUserCard, len(cards))
 	for i, c := range cards {
-		result[i] = userdata.RawUserCard{
+		result[i] = snapshot.RawUserCard{
 			CardID:                c.CardID,
 			Level:                 c.Level,
 			MasterRank:            c.MasterRank,
@@ -27,8 +27,8 @@ func adaptAPICards(cards []sekai.AnotherUserCard) []userdata.RawUserCard {
 
 // adaptAPIDeckAsList wraps the singular UserDeck from the API into the slice form
 // expected by buildPCards / findActiveDeck.
-func adaptAPIDeckAsList(deck sekai.UserDeck) []userdata.RawUserDeck {
-	return []userdata.RawUserDeck{{
+func adaptAPIDeckAsList(deck sekai.UserDeck) []snapshot.RawUserDeck {
+	return []snapshot.RawUserDeck{{
 		DeckID:  deck.DeckID,
 		Leader:  deck.Leader,
 		Member1: deck.Member1,
@@ -40,10 +40,10 @@ func adaptAPIDeckAsList(deck sekai.UserDeck) []userdata.RawUserDeck {
 }
 
 // adaptAPIUserHonors converts the public UserHonor list to the raw type.
-func adaptAPIUserHonors(honors []sekai.UserHonor) []userdata.RawUserHonor {
-	result := make([]userdata.RawUserHonor, len(honors))
+func adaptAPIUserHonors(honors []sekai.UserHonor) []snapshot.RawUserHonor {
+	result := make([]snapshot.RawUserHonor, len(honors))
 	for i, h := range honors {
-		result[i] = userdata.RawUserHonor{
+		result[i] = snapshot.RawUserHonor{
 			HonorID:    h.HonorID,
 			HonorLevel: h.Level,
 		}
@@ -53,10 +53,10 @@ func adaptAPIUserHonors(honors []sekai.UserHonor) []userdata.RawUserHonor {
 
 // adaptAPIProfileHonors converts the profile-slot honors to the raw type.
 // HonorId2 (dual bonds-honor fallback) is not present in the API response and defaults to 0.
-func adaptAPIProfileHonors(honors []sekai.UserProfileHonor) []userdata.RawUserProfileHonor {
-	result := make([]userdata.RawUserProfileHonor, len(honors))
+func adaptAPIProfileHonors(honors []sekai.UserProfileHonor) []snapshot.RawUserProfileHonor {
+	result := make([]snapshot.RawUserProfileHonor, len(honors))
 	for i, h := range honors {
-		result[i] = userdata.RawUserProfileHonor{
+		result[i] = snapshot.RawUserProfileHonor{
 			Seq:                h.Seq,
 			ProfileHonorType:   h.ProfileHonorType,
 			HonorID:            h.HonorID,
@@ -69,10 +69,10 @@ func adaptAPIProfileHonors(honors []sekai.UserProfileHonor) []userdata.RawUserPr
 }
 
 // adaptAPICharacters converts the public character rank list to the raw type.
-func adaptAPICharacters(chars []sekai.AnotherUserCharacter) []userdata.RawUserCharacter {
-	result := make([]userdata.RawUserCharacter, len(chars))
+func adaptAPICharacters(chars []sekai.AnotherUserCharacter) []snapshot.RawUserCharacter {
+	result := make([]snapshot.RawUserCharacter, len(chars))
 	for i, c := range chars {
-		result[i] = userdata.RawUserCharacter{
+		result[i] = snapshot.RawUserCharacter{
 			CharacterID:   c.CharacterID,
 			CharacterRank: c.CharacterRank,
 		}
@@ -82,10 +82,10 @@ func adaptAPICharacters(chars []sekai.AnotherUserCharacter) []userdata.RawUserCh
 
 // adaptAPIMusicClearCount converts the aggregate clear counts to the raw type used by
 // buildMusicCounts.
-func adaptAPIMusicClearCount(counts []sekai.AnotherUserMusicDifficultyClearCount) []userdata.RawMusicClear {
-	result := make([]userdata.RawMusicClear, len(counts))
+func adaptAPIMusicClearCount(counts []sekai.AnotherUserMusicDifficultyClearCount) []snapshot.RawMusicClear {
+	result := make([]snapshot.RawMusicClear, len(counts))
 	for i, c := range counts {
-		result[i] = userdata.RawMusicClear{
+		result[i] = snapshot.RawMusicClear{
 			MusicDifficultyType: string(c.MusicDifficultyType),
 			LiveClear:           c.LiveClear,
 			FullCombo:           c.FullCombo,
@@ -97,21 +97,21 @@ func adaptAPIMusicClearCount(counts []sekai.AnotherUserMusicDifficultyClearCount
 
 // adaptAPIChallengeLiveResult wraps the singular best-character result into the slice
 // form expected by buildSoloLive.  Returns nil when CharacterID is 0 (no data).
-func adaptAPIChallengeLiveResult(result sekai.UserChallengeLiveSoloResult) []userdata.RawChallengeLiveResult {
+func adaptAPIChallengeLiveResult(result sekai.UserChallengeLiveSoloResult) []snapshot.RawChallengeLiveResult {
 	if result.CharacterID == 0 {
 		return nil
 	}
-	return []userdata.RawChallengeLiveResult{{
+	return []snapshot.RawChallengeLiveResult{{
 		CharacterID: result.CharacterID,
 		HighScore:   result.HighScore,
 	}}
 }
 
 // adaptAPIChallengeLiveStages converts Challenge Live stage rank entries to the raw type.
-func adaptAPIChallengeLiveStages(stages []sekai.AnotherUserChallengeLiveSoloStage) []userdata.RawChallengeLiveStage {
-	result := make([]userdata.RawChallengeLiveStage, len(stages))
+func adaptAPIChallengeLiveStages(stages []sekai.AnotherUserChallengeLiveSoloStage) []snapshot.RawChallengeLiveStage {
+	result := make([]snapshot.RawChallengeLiveStage, len(stages))
 	for i, s := range stages {
-		result[i] = userdata.RawChallengeLiveStage{
+		result[i] = snapshot.RawChallengeLiveStage{
 			CharacterID: s.CharacterID,
 			Rank:        s.Rank,
 		}
@@ -122,53 +122,53 @@ func adaptAPIChallengeLiveStages(stages []sekai.AnotherUserChallengeLiveSoloStag
 // parseFramesJSON parses the raw bytes from a userPlayerFrames snapshot payload into the
 // RawUserFrame slice used by buildFramePaths. Returns nil on empty input or parse error so
 // that the caller renders without a player frame.
-func parseFramesJSON(data []byte) []userdata.RawUserFrame {
+func parseFramesJSON(data []byte) []snapshot.RawUserFrame {
 	if len(data) == 0 {
 		return nil
 	}
-	var frames []userdata.RawUserFrame
+	var frames []snapshot.RawUserFrame
 	if err := sonic.Unmarshal(data, &frames); err != nil {
 		return nil
 	}
 	return frames
 }
 
-func snapshotFrames(snapshot userdata.Snapshot) []userdata.RawUserFrame {
-	if snapshot == nil {
+func snapshotFrames(snap snapshot.Snapshot) []snapshot.RawUserFrame {
+	if snap == nil {
 		return nil
 	}
-	if err := snapshot.Require(); err != nil {
+	if err := snap.Require(); err != nil {
 		return nil
 	}
-	raw := snapshot.RawData()
+	raw := snap.RawData()
 	if raw == nil || len(raw.UserFrames) == 0 {
 		return nil
 	}
-	frames := make([]userdata.RawUserFrame, len(raw.UserFrames))
+	frames := make([]snapshot.RawUserFrame, len(raw.UserFrames))
 	copy(frames, raw.UserFrames)
 	return frames
 }
 
-func snapshotRawData(snapshot userdata.Snapshot) *userdata.RawUserData {
-	if snapshot == nil {
+func snapshotRawData(snap snapshot.Snapshot) *snapshot.RawUserData {
+	if snap == nil {
 		return nil
 	}
-	if err := snapshot.Require(); err != nil {
+	if err := snap.Require(); err != nil {
 		return nil
 	}
-	return snapshot.RawData()
+	return snap.RawData()
 }
 
 type profileRenderState struct {
 	leaderCardID      int
 	leaderTrainedArt  bool
-	userCards         []userdata.RawUserCard
-	decks             []userdata.RawUserDeck
+	userCards         []snapshot.RawUserCard
+	decks             []snapshot.RawUserDeck
 	activeDeckID      int
 	detailedUserCards []any
 }
 
-func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) profileRenderState {
+func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snap snapshot.Snapshot) profileRenderState {
 	state := profileRenderState{
 		leaderCardID:      resp.UserDeck.Leader,
 		leaderTrainedArt:  isAPICardTrainedArt(findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)),
@@ -178,7 +178,7 @@ func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snapshot u
 		detailedUserCards: buildAPIUserCardEntries(resp.UserCards, resp.UserDeck),
 	}
 
-	raw := snapshotRawData(snapshot)
+	raw := snapshotRawData(snap)
 	if raw == nil {
 		return state
 	}
@@ -192,31 +192,31 @@ func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snapshot u
 			state.detailedUserCards = buildSnapshotUserCardEntries(raw.UserCards)
 		}
 		if state.leaderCardID > 0 && findAPIUserCard(resp.UserCards, state.leaderCardID) == nil {
-			state.leaderTrainedArt = isSnapshotCardTrainedArt(userdata.FindUserCard(raw.UserCards, state.leaderCardID))
+			state.leaderTrainedArt = isSnapshotCardTrainedArt(snapshot.FindUserCard(raw.UserCards, state.leaderCardID))
 		}
 	}
 	if state.activeDeckID == 0 && len(raw.UserDecks) > 0 {
-		state.decks = append([]userdata.RawUserDeck(nil), raw.UserDecks...)
-		activeDeck := userdata.FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
+		state.decks = append([]snapshot.RawUserDeck(nil), raw.UserDecks...)
+		activeDeck := snapshot.FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
 		state.activeDeckID = raw.UserGamedata.Deck
 		if state.activeDeckID == 0 {
 			state.activeDeckID = activeDeck.DeckID
 		}
 		if activeDeck.Leader > 0 {
 			state.leaderCardID = activeDeck.Leader
-			state.leaderTrainedArt = isSnapshotCardTrainedArt(userdata.FindUserCard(raw.UserCards, activeDeck.Leader))
+			state.leaderTrainedArt = isSnapshotCardTrainedArt(snapshot.FindUserCard(raw.UserCards, activeDeck.Leader))
 		}
 	}
 
 	return state
 }
 
-func mergeProfileUserCards(primary []userdata.RawUserCard, fallback []userdata.RawUserCard) []userdata.RawUserCard {
+func mergeProfileUserCards(primary []snapshot.RawUserCard, fallback []snapshot.RawUserCard) []snapshot.RawUserCard {
 	if len(primary) == 0 {
-		return append([]userdata.RawUserCard(nil), fallback...)
+		return append([]snapshot.RawUserCard(nil), fallback...)
 	}
 
-	result := append([]userdata.RawUserCard(nil), primary...)
+	result := append([]snapshot.RawUserCard(nil), primary...)
 	seen := make(map[int]struct{}, len(primary))
 	for _, card := range primary {
 		if card.CardID > 0 {
@@ -236,7 +236,7 @@ func mergeProfileUserCards(primary []userdata.RawUserCard, fallback []userdata.R
 	return result
 }
 
-func buildSnapshotUserCardEntries(cards []userdata.RawUserCard) []any {
+func buildSnapshotUserCardEntries(cards []snapshot.RawUserCard) []any {
 	seen := make(map[int]struct{}, len(cards))
 	entries := make([]any, 0, len(cards))
 	for _, card := range cards {
@@ -284,7 +284,7 @@ func isAPICardTrainedArt(card *sekai.AnotherUserCard) bool {
 	return strings.EqualFold(strings.TrimSpace(card.DefaultImage), "special_training")
 }
 
-func isSnapshotCardTrainedArt(card *userdata.RawUserCard) bool {
+func isSnapshotCardTrainedArt(card *snapshot.RawUserCard) bool {
 	if card == nil {
 		return false
 	}

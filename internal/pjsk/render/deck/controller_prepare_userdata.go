@@ -8,13 +8,13 @@ import (
 	"strings"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/utils/logger"
 )
 
 var deckPrepareDebugLogger = logger.NewLoggerFromGlobal("DeckPrepare")
 
-func (c *Controller) prepareRecommendUserData(region renderregion.Value, recType string, query AutoQuery, option map[string]any) (*userdata.RawUserData, []byte, error) {
+func (c *Controller) prepareRecommendUserData(region renderregion.Value, recType string, query AutoQuery, option map[string]any) (*snapshot.RawUserData, []byte, error) {
 	original := c.snapshot.RawData()
 	if original == nil {
 		return nil, nil, fmt.Errorf("raw user snapshot is unavailable")
@@ -28,7 +28,7 @@ func (c *Controller) prepareRecommendUserData(region renderregion.Value, recType
 		return original, originalBytes, nil
 	}
 
-	raw, err := userdata.CloneRawUserData(original)
+	raw, err := snapshot.CloneRawUserData(original)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -60,12 +60,12 @@ func (c *Controller) prepareRecommendUserData(region renderregion.Value, recType
 	return raw, userBytes, nil
 }
 
-func encodePreparedRecommendUserData(originalBytes []byte, original, raw *userdata.RawUserData) ([]byte, error) {
+func encodePreparedRecommendUserData(originalBytes []byte, original, raw *snapshot.RawUserData) ([]byte, error) {
 	if raw == nil {
 		return nil, fmt.Errorf("raw user snapshot is unavailable")
 	}
 	if len(bytes.TrimSpace(originalBytes)) == 0 {
-		return userdata.EncodeRawUserData(raw)
+		return snapshot.EncodeRawUserData(raw)
 	}
 
 	var payload map[string]any
@@ -75,10 +75,10 @@ func encodePreparedRecommendUserData(originalBytes []byte, original, raw *userda
 		return nil, fmt.Errorf("decode original user snapshot: %w", err)
 	}
 	if payload == nil {
-		return userdata.EncodeRawUserData(raw)
+		return snapshot.EncodeRawUserData(raw)
 	}
 
-	var originalCards []userdata.RawUserCard
+	var originalCards []snapshot.RawUserCard
 	if original != nil {
 		originalCards = original.UserCards
 	}
@@ -101,7 +101,7 @@ func encodePreparedRecommendUserData(originalBytes []byte, original, raw *userda
 	return encoded, nil
 }
 
-func mergePreparedUserCards(original any, originalCards, cards []userdata.RawUserCard) ([]any, error) {
+func mergePreparedUserCards(original any, originalCards, cards []snapshot.RawUserCard) ([]any, error) {
 	if len(cards) == 0 {
 		return []any{}, nil
 	}
@@ -118,7 +118,7 @@ func mergePreparedUserCards(original any, originalCards, cards []userdata.RawUse
 	merged := make([]any, 0, len(cards))
 	for _, card := range cards {
 		if existing := originalByCardID[card.CardID]; existing != nil {
-			if samePreparedUserCard(userdata.FindUserCard(originalCards, card.CardID), &card) {
+			if samePreparedUserCard(snapshot.FindUserCard(originalCards, card.CardID), &card) {
 				cardMap := copyJSONObject(existing)
 				normalizePreparedUserCardJSON(cardMap)
 				merged = append(merged, cardMap)
@@ -139,7 +139,7 @@ func mergePreparedUserCards(original any, originalCards, cards []userdata.RawUse
 	return merged, nil
 }
 
-func mergePreparedUserAreas(original any, areas []userdata.RawUserArea) ([]any, error) {
+func mergePreparedUserAreas(original any, areas []snapshot.RawUserArea) ([]any, error) {
 	if len(areas) == 0 {
 		return []any{}, nil
 	}
@@ -171,7 +171,7 @@ func mergePreparedUserAreas(original any, areas []userdata.RawUserArea) ([]any, 
 	return merged, nil
 }
 
-func mergePreparedAreaItems(original any, items []userdata.RawUserAreaItem) ([]any, error) {
+func mergePreparedAreaItems(original any, items []snapshot.RawUserAreaItem) ([]any, error) {
 	if len(items) == 0 {
 		return []any{}, nil
 	}
@@ -281,7 +281,7 @@ func jsonNumberToInt(value any) (int, bool) {
 	}
 }
 
-func samePreparedUserCard(original, current *userdata.RawUserCard) bool {
+func samePreparedUserCard(original, current *snapshot.RawUserCard) bool {
 	if original == nil || current == nil {
 		return false
 	}
@@ -324,7 +324,7 @@ func normalizePreparedUserAreaJSON(area map[string]any) {
 	}
 }
 
-func logPreparedRecommendUserData(region renderregion.Value, recType string, query AutoQuery, raw *userdata.RawUserData, originalBytes, preparedBytes []byte) {
+func logPreparedRecommendUserData(region renderregion.Value, recType string, query AutoQuery, raw *snapshot.RawUserData, originalBytes, preparedBytes []byte) {
 	if raw == nil {
 		return
 	}

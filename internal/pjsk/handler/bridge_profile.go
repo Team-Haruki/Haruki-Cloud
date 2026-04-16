@@ -8,7 +8,7 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/profile"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func executeProfile(rc *RequestContext) (onebot11.Message, error) {
@@ -41,7 +41,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 			}
 		}
 
-		var profileSnapshot userdata.Snapshot
+		var profileSnapshot snapshot.Snapshot
 		if p.Mode == "self" && hasUsableSuiteData(target.Binding) {
 			if platform, platformUserID := platformCredentials(p); platform != "" {
 				profileSnapshot = resolveTargetSnapshot(rc.Ctx, rc.App, region, platform, platformUserID, target.PJSKUserID, false)

@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
@@ -20,7 +20,7 @@ import (
 
 type eventRecordSnapshotStub struct {
 	detail  *drawing.DetailedProfileCardRequest
-	rawData *renderuserdata.RawUserData
+	rawData *rendersnapshot.RawUserData
 }
 
 func (s *eventRecordSnapshotStub) Require() error { return nil }
@@ -37,7 +37,7 @@ func (s *eventRecordSnapshotStub) MusicResults(string) map[int]string { return n
 
 func (s *eventRecordSnapshotStub) GetMusicResult(int, string) string { return "" }
 
-func (s *eventRecordSnapshotStub) ChallengeLive() *renderuserdata.ChallengeLiveData { return nil }
+func (s *eventRecordSnapshotStub) ChallengeLive() *rendersnapshot.ChallengeLiveData { return nil }
 
 func (s *eventRecordSnapshotStub) RawBytes() ([]byte, error) { return nil, nil }
 
@@ -45,7 +45,7 @@ func (s *eventRecordSnapshotStub) RawValue(string) ([]byte, error) { return nil,
 
 func (s *eventRecordSnapshotStub) RawFilePath() string { return "" }
 
-func (s *eventRecordSnapshotStub) RawData() *renderuserdata.RawUserData { return s.rawData }
+func (s *eventRecordSnapshotStub) RawData() *rendersnapshot.RawUserData { return s.rawData }
 
 func (s *eventRecordSnapshotStub) MusicMetaBytes() []byte { return nil }
 
@@ -82,21 +82,21 @@ func TestBuildEventRecordFromSnapshotSeparatesWorldBloomTotalAndSingleRank(t *te
 		Sekai:  sekaiClient,
 		Events: renderevent.NewController(nil, nil, nil),
 		Assets: assets.NewAssetHelper("", nil),
-		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
 			detail: &drawing.DetailedProfileCardRequest{
 				ID:              "12345678901234",
 				Region:          "JP",
 				Nickname:        "Tester",
 				LeaderImagePath: "static_images/chara_icon/miku.png",
 			},
-			rawData: &renderuserdata.RawUserData{
-				UserEvents: []renderuserdata.RawUserEvent{
+			rawData: &rendersnapshot.RawUserData{
+				UserEvents: []rendersnapshot.RawUserEvent{
 					{EventID: 9001, EventPoint: 9999},
 				},
-				UserEventResults: []renderuserdata.RawUserEventResult{
+				UserEventResults: []rendersnapshot.RawUserEventResult{
 					{EventID: 9001, Rank: 123},
 				},
-				UserWorldBlooms: []renderuserdata.RawUserWorldBloom{
+				UserWorldBlooms: []rendersnapshot.RawUserWorldBloom{
 					{EventID: 9001, GameCharacterID: 21, WorldBloomChapterPoint: 111, Rank: 10},
 					{EventID: 9001, GameCharacterID: 22, WorldBloomChapterPoint: 222, Rank: 20},
 				},
@@ -188,16 +188,16 @@ func TestBuildEventRecordFromSnapshotBackfillsRegularEventRankFromTracker(t *tes
 		Sekai:  sekaiClient,
 		Events: renderevent.NewController(nil, nil, nil),
 		Assets: assets.NewAssetHelper("", nil),
-		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
 			detail: &drawing.DetailedProfileCardRequest{
 				ID:              "123456789",
 				Region:          "JP",
 				Nickname:        "Tester",
 				LeaderImagePath: "static_images/chara_icon/miku.png",
 			},
-			rawData: &renderuserdata.RawUserData{
-				UserGamedata: renderuserdata.RawUserGamedata{UserID: 123456789},
-				UserEvents: []renderuserdata.RawUserEvent{
+			rawData: &rendersnapshot.RawUserData{
+				UserGamedata: rendersnapshot.RawUserGamedata{UserID: 123456789},
+				UserEvents: []rendersnapshot.RawUserEvent{
 					{EventID: 9101, EventPoint: 777777},
 				},
 			},
@@ -259,16 +259,16 @@ func TestBuildEventRecordFromSnapshotUsesEmbeddedRegularEventRankWithoutTracker(
 		Sekai:  sekaiClient,
 		Events: renderevent.NewController(nil, nil, nil),
 		Assets: assets.NewAssetHelper("", nil),
-		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
 			detail: &drawing.DetailedProfileCardRequest{
 				ID:              "123456789",
 				Region:          "JP",
 				Nickname:        "Tester",
 				LeaderImagePath: "static_images/chara_icon/miku.png",
 			},
-			rawData: &renderuserdata.RawUserData{
-				UserGamedata: renderuserdata.RawUserGamedata{UserID: 123456789},
-				UserEvents: []renderuserdata.RawUserEvent{
+			rawData: &rendersnapshot.RawUserData{
+				UserGamedata: rendersnapshot.RawUserGamedata{UserID: 123456789},
+				UserEvents: []rendersnapshot.RawUserEvent{
 					{
 						EventID:                 9104,
 						EventPoint:              666666,
@@ -332,19 +332,19 @@ func TestBuildEventRecordFromSnapshotSkipsTrackerFallbackWhenSnapshotHasRank(t *
 		Sekai:  sekaiClient,
 		Events: renderevent.NewController(nil, nil, nil),
 		Assets: assets.NewAssetHelper("", nil),
-		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
 			detail: &drawing.DetailedProfileCardRequest{
 				ID:              "123456789",
 				Region:          "JP",
 				Nickname:        "Tester",
 				LeaderImagePath: "static_images/chara_icon/miku.png",
 			},
-			rawData: &renderuserdata.RawUserData{
-				UserGamedata: renderuserdata.RawUserGamedata{UserID: 123456789},
-				UserEvents: []renderuserdata.RawUserEvent{
+			rawData: &rendersnapshot.RawUserData{
+				UserGamedata: rendersnapshot.RawUserGamedata{UserID: 123456789},
+				UserEvents: []rendersnapshot.RawUserEvent{
 					{EventID: 9102, EventPoint: 888888},
 				},
-				UserEventResults: []renderuserdata.RawUserEventResult{
+				UserEventResults: []rendersnapshot.RawUserEventResult{
 					{EventID: 9102, Rank: 321},
 				},
 			},
@@ -402,16 +402,16 @@ func TestBuildEventRecordFromSnapshotIgnoresMissingTrackerRank(t *testing.T) {
 		Sekai:  sekaiClient,
 		Events: renderevent.NewController(nil, nil, nil),
 		Assets: assets.NewAssetHelper("", nil),
-		Snapshots: renderuserdata.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
 			detail: &drawing.DetailedProfileCardRequest{
 				ID:              "123456789",
 				Region:          "JP",
 				Nickname:        "Tester",
 				LeaderImagePath: "static_images/chara_icon/miku.png",
 			},
-			rawData: &renderuserdata.RawUserData{
-				UserGamedata: renderuserdata.RawUserGamedata{UserID: 123456789},
-				UserEvents: []renderuserdata.RawUserEvent{
+			rawData: &rendersnapshot.RawUserData{
+				UserGamedata: rendersnapshot.RawUserGamedata{UserID: 123456789},
+				UserEvents: []rendersnapshot.RawUserEvent{
 					{EventID: 9103, EventPoint: 999999},
 				},
 			},

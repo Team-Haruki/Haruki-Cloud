@@ -13,7 +13,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/education"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -206,7 +206,7 @@ func TestExecuteEducationAreaUsesResolvedRequestContextRegion(t *testing.T) {
 		},
 		Edu:        controller,
 		Bindings:   service,
-		Snapshots:  renderuserdata.NewStaticSnapshotProvider(snapshot),
+		Snapshots:  rendersnapshot.NewStaticSnapshotProvider(snapshot),
 		ImageCache: imagecache.New("https://example.com", cacheDir),
 	}
 
@@ -289,11 +289,11 @@ func TestExecuteEducationAreaRequiresSuiteSnapshotWhenBindingVisible(t *testing.
 }
 
 type bridgeEducationSnapshotProviderStub struct {
-	basicSnapshot renderuserdata.Snapshot
+	basicSnapshot rendersnapshot.Snapshot
 	fullErr       error
 }
 
-func (p *bridgeEducationSnapshotProviderStub) Resolve(_ context.Context, _ renderuserdata.Selector, opts renderuserdata.ResolveOptions) (renderuserdata.Snapshot, error) {
+func (p *bridgeEducationSnapshotProviderStub) Resolve(_ context.Context, _ rendersnapshot.Selector, opts rendersnapshot.ResolveOptions) (rendersnapshot.Snapshot, error) {
 	if opts.NeedMySekai {
 		return nil, p.fullErr
 	}
@@ -310,7 +310,7 @@ func TestExecuteEducationPowerFallsBackToSuiteSnapshotWhenMySekaiSnapshotUnavail
 	snapshot := mustBridgeEducationSnapshot(t)
 	provider := &bridgeEducationSnapshotProviderStub{
 		basicSnapshot: snapshot,
-		fullErr:       renderuserdata.ErrSnapshotUnavailable,
+		fullErr:       rendersnapshot.ErrSnapshotUnavailable,
 	}
 
 	var captured drawing.PowerBonusDetailRequest
@@ -341,7 +341,7 @@ func TestExecuteEducationPowerFallsBackToSuiteSnapshotWhenMySekaiSnapshotUnavail
 	}
 
 	originalFactory := snapshotProviderFactory
-	snapshotProviderFactory = func(app *renderapp.App) renderuserdata.SnapshotProvider {
+	snapshotProviderFactory = func(app *renderapp.App) rendersnapshot.SnapshotProvider {
 		return provider
 	}
 	defer func() {
@@ -376,7 +376,7 @@ func TestExecuteEducationPowerFallsBackToSuiteSnapshotWhenMySekaiSnapshotUnavail
 	}
 }
 
-func mustBridgeEducationSnapshot(t *testing.T) renderuserdata.Snapshot {
+func mustBridgeEducationSnapshot(t *testing.T) rendersnapshot.Snapshot {
 	t.Helper()
 
 	payload := map[string]any{
@@ -410,7 +410,7 @@ func mustBridgeEducationSnapshot(t *testing.T) renderuserdata.Snapshot {
 	if err != nil {
 		t.Fatalf("marshal snapshot: %v", err)
 	}
-	snapshot, err := renderuserdata.NewFromBytes(nil, nil, renderregion.CN, data, nil, nil)
+	snapshot, err := rendersnapshot.NewFromBytes(nil, nil, renderregion.CN, data, nil, nil)
 	if err != nil {
 		t.Fatalf("NewFromBytes() error = %v", err)
 	}

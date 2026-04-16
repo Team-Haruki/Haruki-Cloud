@@ -9,7 +9,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -30,18 +30,18 @@ type Controller struct {
 	musicSources  *regionsource.Registry[MusicSource]
 	drawing       *drawing.HarukiDrawingClient
 	assets        *assets.AssetHelper
-	snapshot      userdata.Snapshot
+	snapshot      snapshot.Snapshot
 	defaultRegion renderregion.Value
 	recommendCfg  RecommendConfig
 	metaLoader    MusicMetaSource
 	engine        engineProvider
 }
 
-func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot userdata.Snapshot, defaultRegion renderregion.Value) *Controller {
+func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
 	return NewControllerWithConfig(cards, events, drawingClient, assetHelper, snapshot, defaultRegion, RecommendConfig{}, nil)
 }
 
-func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot userdata.Snapshot, defaultRegion renderregion.Value, cfg RecommendConfig, metaLoader MusicMetaSource) *Controller {
+func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value, cfg RecommendConfig, metaLoader MusicMetaSource) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
@@ -106,7 +106,7 @@ func (c *Controller) RegisterMusicSource(source MusicSource) {
 // WithSnapshot returns a shallow copy of this Controller that uses the given
 // snapshot instead of the one configured at construction time. This is used by
 // the bridge layer to inject a live Toolbox snapshot on a per-request basis.
-func (c *Controller) WithSnapshot(s userdata.Snapshot) *Controller {
+func (c *Controller) WithSnapshot(s snapshot.Snapshot) *Controller {
 	if c == nil {
 		return nil
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -78,7 +78,7 @@ func (c *Controller) RenderMusicProgress(query ProgressQuery) ([]byte, error) {
 	return c.drawing.GeneratePlayProgress(payload)
 }
 
-func (c *Controller) BuildMusicProgressRequestFromSnapshot(query ProgressQuery, snapshot userdata.Snapshot, fallbackProfile *drawing.ProfileCardRequest) (*drawing.PlayProgressRequest, error) {
+func (c *Controller) BuildMusicProgressRequestFromSnapshot(query ProgressQuery, snapshot snapshot.Snapshot, fallbackProfile *drawing.ProfileCardRequest) (*drawing.PlayProgressRequest, error) {
 	if c == nil {
 		return nil, fmt.Errorf("music controller is not configured")
 	}
@@ -98,7 +98,7 @@ func (c *Controller) BuildMusicProgressRequestFromSnapshot(query ProgressQuery, 
 	return controller.BuildMusicProgressRequest(query)
 }
 
-func (c *Controller) RenderMusicProgressFromSnapshot(query ProgressQuery, snapshot userdata.Snapshot, fallbackProfile *drawing.ProfileCardRequest) ([]byte, error) {
+func (c *Controller) RenderMusicProgressFromSnapshot(query ProgressQuery, snapshot snapshot.Snapshot, fallbackProfile *drawing.ProfileCardRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}

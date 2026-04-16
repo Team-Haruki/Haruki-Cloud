@@ -10,11 +10,11 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-func (c *Controller) currentSnapshot() userdata.Snapshot {
+func (c *Controller) currentSnapshot() snapshot.Snapshot {
 	if c == nil || c.snapshot == nil {
 		return nil
 	}

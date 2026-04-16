@@ -10,7 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -25,7 +25,7 @@ type Controller struct {
 	assets                *assets.AssetHelper
 	banCharacterNicknames map[string]int
 	aliases               musicAliasResolver
-	snapshot              userdata.Snapshot
+	snapshot              snapshot.Snapshot
 	metaLoader            *meta.Loader
 	requestCtx            context.Context
 }
@@ -56,7 +56,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	return &clone
 }
 
-func (c *Controller) WithSnapshot(snapshot userdata.Snapshot) *Controller {
+func (c *Controller) WithSnapshot(snapshot snapshot.Snapshot) *Controller {
 	if c == nil {
 		return nil
 	}
@@ -65,7 +65,7 @@ func (c *Controller) WithSnapshot(snapshot userdata.Snapshot) *Controller {
 	return &clone
 }
 
-func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot userdata.Snapshot, metaLoader *meta.Loader) *Controller {
+func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, metaLoader *meta.Loader) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}

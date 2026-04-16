@@ -6,7 +6,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/profile"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -86,7 +86,7 @@ func buildPublicMusicProfilesFromResolvedTarget(
 	}
 	region = resolvedTargetRegion(region, target)
 
-	var profileSnapshot userdata.Snapshot
+	var profileSnapshot snapshot.Snapshot
 	if hasUsableSuiteData(target.Binding) {
 		profileSnapshot = resolveTargetSnapshot(ctx, app, region, platform, platformUserID, target.PJSKUserID, false)
 	}

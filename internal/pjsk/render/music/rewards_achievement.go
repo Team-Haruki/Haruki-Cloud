@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func decodeUserMusicAchievements(raw []byte) ([]userMusicAchievement, error) {
@@ -41,7 +41,7 @@ var snapshotAchievementKeys = []string{
 	"compactUserMusicAchievements",
 }
 
-func resolveSnapshotAchievementsJSON(snapshot userdata.Snapshot) ([]byte, error) {
+func resolveSnapshotAchievementsJSON(snapshot snapshot.Snapshot) ([]byte, error) {
 	for _, key := range snapshotAchievementKeys {
 		value, err := snapshot.RawValue(key)
 		if err == nil {
@@ -51,7 +51,7 @@ func resolveSnapshotAchievementsJSON(snapshot userdata.Snapshot) ([]byte, error)
 	return extractNestedAchievementsJSON(snapshot)
 }
 
-func extractNestedAchievementsJSON(snapshot userdata.Snapshot) ([]byte, error) {
+func extractNestedAchievementsJSON(snapshot snapshot.Snapshot) ([]byte, error) {
 	if snapshot == nil {
 		return nil, fmt.Errorf("user snapshot is required for music rewards detail")
 	}

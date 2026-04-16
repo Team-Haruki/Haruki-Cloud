@@ -1,4 +1,4 @@
-package userdata
+package snapshot
 
 import (
 	"bytes"

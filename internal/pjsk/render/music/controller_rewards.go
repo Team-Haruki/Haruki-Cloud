@@ -3,7 +3,7 @@ package music
 import (
 	"fmt"
 
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 )
@@ -41,7 +41,7 @@ func (c *Controller) RenderMusicRewardsDetailFromAchievements(query RewardsDetai
 	return c.drawing.GenerateDetailMusicRewards(payload)
 }
 
-func (c *Controller) RenderMusicRewardsDetailFromSnapshot(query RewardsDetailQuery, snapshot userdata.Snapshot) ([]byte, error) {
+func (c *Controller) RenderMusicRewardsDetailFromSnapshot(query RewardsDetailQuery, snapshot snapshot.Snapshot) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}

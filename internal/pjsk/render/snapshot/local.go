@@ -1,4 +1,4 @@
-package userdata
+package snapshot
 
 import (
 	renderregion "haruki-cloud/internal/pjsk/region"

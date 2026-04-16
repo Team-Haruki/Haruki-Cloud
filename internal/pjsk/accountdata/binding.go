@@ -1,4 +1,4 @@
-// Package userdata provides PJSK-specific data access helpers, including
+// Package accountdata provides PJSK-specific data access helpers, including
 // resolving a user's active game account binding from their haruki_user_id.
 package accountdata
 

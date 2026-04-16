@@ -9,7 +9,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -25,11 +25,11 @@ func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnot
 	return c.buildProfileRequestFromAPIState(query, resp, parseFramesJSON(framesJSON), nil)
 }
 
-func (c *Controller) BuildProfileRequestFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.ProfileRequest, error) {
+func (c *Controller) BuildProfileRequestFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot snapshot.Snapshot) (*drawing.ProfileRequest, error) {
 	return c.buildProfileRequestFromAPIState(query, resp, snapshotFrames(snapshot), snapshot)
 }
 
-func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.GetAnotherProfileResponse, frames []userdata.RawUserFrame, snapshot userdata.Snapshot) (*drawing.ProfileRequest, error) {
+func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.GetAnotherProfileResponse, frames []snapshot.RawUserFrame, snapshot snapshot.Snapshot) (*drawing.ProfileRequest, error) {
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("profile controller is not initialized")
 	}
@@ -93,11 +93,11 @@ func (c *Controller) BuildDetailedProfileCardFromAPI(query Query, resp *sekai.Ge
 	return c.buildDetailedProfileCardFromAPIState(query, resp, parseFramesJSON(framesJSON), nil)
 }
 
-func (c *Controller) BuildDetailedProfileCardFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.DetailedProfileCardRequest, error) {
+func (c *Controller) BuildDetailedProfileCardFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot snapshot.Snapshot) (*drawing.DetailedProfileCardRequest, error) {
 	return c.buildDetailedProfileCardFromAPIState(query, resp, snapshotFrames(snapshot), snapshot)
 }
 
-func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sekai.GetAnotherProfileResponse, frames []userdata.RawUserFrame, snapshot userdata.Snapshot) (*drawing.DetailedProfileCardRequest, error) {
+func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sekai.GetAnotherProfileResponse, frames []snapshot.RawUserFrame, snapshot snapshot.Snapshot) (*drawing.DetailedProfileCardRequest, error) {
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("profile controller is not initialized")
 	}
@@ -161,7 +161,7 @@ func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnother
 	}, nil
 }
 
-func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.ProfileCardRequest, error) {
+func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot snapshot.Snapshot) (*drawing.ProfileCardRequest, error) {
 	detail, err := c.buildDetailedProfileCardFromAPIState(query, resp, snapshotFrames(snapshot), snapshot)
 	if err != nil {
 		return nil, err
@@ -201,7 +201,7 @@ func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherPro
 	return c.drawing.GenerateProfile(payload)
 }
 
-func (c *Controller) RenderProfileFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) ([]byte, error) {
+func (c *Controller) RenderProfileFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot snapshot.Snapshot) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}

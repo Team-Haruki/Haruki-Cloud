@@ -15,7 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/profile"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -62,7 +62,7 @@ func formatDeckQuerySummary(q deck.AutoQuery) string {
 	return strings.Join(parts, " / ")
 }
 
-func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, renderuserdata.Snapshot, string, error) {
+func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, rendersnapshot.Snapshot, string, error) {
 	if rc == nil {
 		return nil, nil, "", nil
 	}
@@ -91,7 +91,7 @@ func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*
 	return detail, snapshot, region, nil
 }
 
-func buildDeckDetailedProfileForTarget(rc *RequestContext, target resolvedGameTarget, region string, snapshot renderuserdata.Snapshot) *drawing.DetailedProfileCardRequest {
+func buildDeckDetailedProfileForTarget(rc *RequestContext, target resolvedGameTarget, region string, snapshot rendersnapshot.Snapshot) *drawing.DetailedProfileCardRequest {
 	if rc == nil || rc.App == nil || rc.App.Profiles == nil {
 		return nil
 	}

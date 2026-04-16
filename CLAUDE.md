@@ -32,7 +32,7 @@
 
 ### 包命名避坑
 - `handler/sekai`（bot 命令解析）≠ `pjsk/sekai`（上游 HTTP 客户端）。后者 import 一律 alias 为 **`sekaiapi`**。
-- `accountdata/`（用户绑定 / profile 设置）≠ `render/userdata/`（游戏快照 Snapshot）。后者仍待重命名为 `render/snapshot`，import 时注意别搞混。
+- `accountdata/`（用户绑定 / profile 设置）≠ `render/snapshot/`（游戏快照 Snapshot，曾名 `render/userdata`）。
 
 ### 用户身份 / 快照链路
 - 实际路径：`Toolbox -> local static (debug fallback, 仅 AllowFallback=true)`。
@@ -58,10 +58,9 @@
 
 ## R38 剩余项（低优先）
 
-1. `render/userdata` → `render/snapshot` 重命名（~20 文件 import 变更，churn 最大）
-2. `render/deck/controller_prepare.go` 862 行按职责拆分
-3. `accountdata/` 导出收窄（`ProfileBGCleaner`/`BindingResolver` 可降为 unexported）
-4. `render/misc`（38 行）是否吸收 —— 已评估性价比低，暂保留
+1. `render/misc`（38 行）是否吸收 —— 已评估性价比低，暂保留
+
+已完成：`accountdata/` 导出收窄（`bindingResolver` / `profileBGCleaner`）；`render/deck/controller_prepare.go` 按 userdata pipeline / profile 职责拆分；`render/userdata` → `render/snapshot` 重命名。
 
 ## 常见陷阱
 

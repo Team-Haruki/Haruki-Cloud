@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -34,9 +34,9 @@ type RequestContext struct {
 
 	// Lazy snapshot resolution
 	basicSnapshotOnce sync.Once
-	basicSnapshot     userdata.Snapshot
+	basicSnapshot     snapshot.Snapshot
 	fullSnapshotOnce  sync.Once
-	fullSnapshot      userdata.Snapshot
+	fullSnapshot      snapshot.Snapshot
 
 	// Lazy self target / public profile resolution
 	selfTargetOnce    sync.Once
@@ -92,14 +92,14 @@ func (rc *RequestContext) requestScopedSelfQuery() userQueryParams {
 	return params
 }
 
-func (rc *RequestContext) snapshotSelector(needMySekai bool) (userdata.Selector, userdata.ResolveOptions) {
+func (rc *RequestContext) snapshotSelector(needMySekai bool) (snapshot.Selector, snapshot.ResolveOptions) {
 	query := rc.requestScopedSelfQuery()
-	selector := userdata.Selector{
+	selector := snapshot.Selector{
 		IMPlatform: strings.TrimSpace(query.Platform),
 		IMUserID:   strings.TrimSpace(query.PlatformUserID),
 		Region:     rc.Region,
 	}
-	opts := userdata.ResolveOptions{
+	opts := snapshot.ResolveOptions{
 		PreferGlobalDefault: !rc.Cmd.RegionExplicit,
 		NeedMySekai:         needMySekai,
 	}
@@ -164,7 +164,7 @@ func (rc *RequestContext) requireBinding() (*accountdata.ResolvedBinding, error)
 // Toolbox/internal-cloud provider only; dev/test may still enable static
 // snapshot fallback through allow_fallback.
 // Cached per request for suite-only and full(mysekai) modes separately.
-func (rc *RequestContext) ResolveSnapshot(needMySekai bool) userdata.Snapshot {
+func (rc *RequestContext) ResolveSnapshot(needMySekai bool) snapshot.Snapshot {
 	if needMySekai {
 		rc.fullSnapshotOnce.Do(func() {
 			selector, opts := rc.snapshotSelector(true)
@@ -262,7 +262,7 @@ func (rc *RequestContext) GetProfileCard() *drawing.ProfileCardRequest {
 // suite data. If the binding exists but suite was intentionally hidden, the
 // helper returns (binding, nil, nil) so callers can keep the existing
 // hide-suite behavior unchanged.
-func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBinding, userdata.Snapshot, error) {
+func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBinding, snapshot.Snapshot, error) {
 	if rc == nil {
 		return nil, nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
 	}

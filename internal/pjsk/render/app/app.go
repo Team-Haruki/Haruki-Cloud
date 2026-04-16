@@ -25,7 +25,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/score"
 	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/stamp"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/render/vlive"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/censor"
@@ -113,8 +113,8 @@ type App struct {
 	VLive           *vlive.Controller
 	Bindings        *accountdata.BindingService
 	BanChecker      *accountdata.BanService
-	Snapshots       userdata.SnapshotProvider
-	MySekaiPayloads userdata.MySekaiPayloadProvider
+	Snapshots       snapshot.SnapshotProvider
+	MySekaiPayloads snapshot.MySekaiPayloadProvider
 	ImageCache      *imagecache.Client
 	Censor          *censor.Service
 	SekaiAPI        *sekaiapi.SekaiAPIClient
@@ -132,18 +132,18 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval)
 
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
-	var snapshotService userdata.Snapshot
+	var snapshotService snapshot.Snapshot
 	if shouldEnableLocalSnapshotFallback(cfg) {
-		snapshotService = userdata.NewLocalFileServiceWithContext(initCtx, sekaiClient, assetHelper, userdata.LocalFileConfig{
+		snapshotService = snapshot.NewLocalFileServiceWithContext(initCtx, sekaiClient, assetHelper, snapshot.LocalFileConfig{
 			DefaultRegion: cfg.DefaultRegion,
 			UserJSON:      cfg.UserSnapshot.UserJSON,
 			MusicMetaJSON: cfg.UserSnapshot.MusicMetaJSON,
 			MySekaiJSON:   cfg.UserSnapshot.MySekaiJSON,
 		})
 	}
-	var staticSnapshotProvider userdata.SnapshotProvider
+	var staticSnapshotProvider snapshot.SnapshotProvider
 	if snapshotService != nil {
-		staticSnapshotProvider = userdata.NewStaticSnapshotProvider(snapshotService)
+		staticSnapshotProvider = snapshot.NewStaticSnapshotProvider(snapshotService)
 	}
 
 	var drawingClient *drawing.HarukiDrawingClient

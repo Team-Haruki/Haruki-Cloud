@@ -9,7 +9,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func TestResolveMusicMetaRequestsBuildsRequestsFromQuery(t *testing.T) {
@@ -38,7 +38,7 @@ func TestResolveMusicMetaRequestsBuildsRequestsFromQuery(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -91,7 +91,7 @@ func TestResolveMusicMetaRequestsBuildsRequestsFromAlias(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -136,7 +136,7 @@ func TestResolveMusicMetaRequestsBuildsRequestsFromExplicitMusicID(t *testing.T)
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -177,7 +177,7 @@ func TestResolveMusicMetaRequestsRejectsMissingExplicitMusicID(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -216,7 +216,7 @@ func TestResolveMusicMetaRequestsRejectsAmbiguousKeywordQuery(t *testing.T) {
 			2: {ID: 2, Title: "Beta", Pronunciation: "shared"},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,

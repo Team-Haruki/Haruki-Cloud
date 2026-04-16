@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 type educationContextKey string
@@ -1340,14 +1340,14 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotFallsBackToShopSequence
 	}
 }
 
-func mustSnapshot(t *testing.T, payload map[string]any) *userdata.Service {
+func mustSnapshot(t *testing.T, payload map[string]any) *snapshot.Service {
 	t.Helper()
 
 	data, err := json.Marshal(payload)
 	if err != nil {
 		t.Fatalf("json.Marshal() error = %v", err)
 	}
-	snapshot, err := userdata.NewFromBytes(nil, nil, renderregion.JP, data, nil, nil)
+	snapshot, err := snapshot.NewFromBytes(nil, nil, renderregion.JP, data, nil, nil)
 	if err != nil {
 		t.Fatalf("NewFromBytes() error = %v", err)
 	}

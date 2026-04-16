@@ -9,7 +9,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -373,7 +373,7 @@ func TestBuildProfileRequestFromAPIFallsBackToJPCardMetadataForNonJPProfileCards
 }
 
 type profileSnapshotStub struct {
-	rawData *userdata.RawUserData
+	rawData *snapshot.RawUserData
 }
 
 func (s *profileSnapshotStub) Require() error { return nil }
@@ -390,7 +390,7 @@ func (s *profileSnapshotStub) MusicResults(string) map[int]string { return nil }
 
 func (s *profileSnapshotStub) GetMusicResult(int, string) string { return "" }
 
-func (s *profileSnapshotStub) ChallengeLive() *userdata.ChallengeLiveData { return nil }
+func (s *profileSnapshotStub) ChallengeLive() *snapshot.ChallengeLiveData { return nil }
 
 func (s *profileSnapshotStub) RawBytes() ([]byte, error) { return nil, nil }
 
@@ -398,7 +398,7 @@ func (s *profileSnapshotStub) RawValue(string) ([]byte, error) { return nil, nil
 
 func (s *profileSnapshotStub) RawFilePath() string { return "" }
 
-func (s *profileSnapshotStub) RawData() *userdata.RawUserData { return s.rawData }
+func (s *profileSnapshotStub) RawData() *snapshot.RawUserData { return s.rawData }
 
 func (s *profileSnapshotStub) MusicMetaBytes() []byte { return nil }
 
@@ -426,8 +426,8 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
 	snapshot := &profileSnapshotStub{
-		rawData: &userdata.RawUserData{
-			UserFrames: []userdata.RawUserFrame{
+		rawData: &snapshot.RawUserData{
+			UserFrames: []snapshot.RawUserFrame{
 				{PlayerFrameID: 10, PlayerFrameAttachStatus: "equipped"},
 			},
 		},
@@ -479,12 +479,12 @@ func TestBuildProfileRequestFromAPIWithSnapshotKeepsAPILeaderDisplayState(t *tes
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
 	snapshot := &profileSnapshotStub{
-		rawData: &userdata.RawUserData{
-			UserGamedata: userdata.RawUserGamedata{Deck: 1},
-			UserDecks: []userdata.RawUserDeck{
+		rawData: &snapshot.RawUserData{
+			UserGamedata: snapshot.RawUserGamedata{Deck: 1},
+			UserDecks: []snapshot.RawUserDeck{
 				{DeckID: 1, Leader: 1001, Member1: 1001},
 			},
-			UserCards: []userdata.RawUserCard{
+			UserCards: []snapshot.RawUserCard{
 				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "normal"},
 			},
 		},
@@ -533,12 +533,12 @@ func TestBuildProfileRequestFromAPIWithSnapshotFallsBackToSnapshotDeckWhenAPIDec
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
 	snapshot := &profileSnapshotStub{
-		rawData: &userdata.RawUserData{
-			UserGamedata: userdata.RawUserGamedata{Deck: 1},
-			UserDecks: []userdata.RawUserDeck{
+		rawData: &snapshot.RawUserData{
+			UserGamedata: snapshot.RawUserGamedata{Deck: 1},
+			UserDecks: []snapshot.RawUserDeck{
 				{DeckID: 1, Leader: 1001, Member1: 1001},
 			},
-			UserCards: []userdata.RawUserCard{
+			UserCards: []snapshot.RawUserCard{
 				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "normal"},
 			},
 		},
@@ -580,8 +580,8 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesSnapshotLeaderArtWhenAPICardS
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
 	snapshot := &profileSnapshotStub{
-		rawData: &userdata.RawUserData{
-			UserCards: []userdata.RawUserCard{
+		rawData: &snapshot.RawUserData{
+			UserCards: []snapshot.RawUserCard{
 				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
 			},
 		},

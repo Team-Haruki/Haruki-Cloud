@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func hasAreaItemFilter(query AreaItemQuery) bool {
@@ -198,7 +198,7 @@ func leaderMissionRequirementForSeq(requirements []LeaderMissionRequirement, seq
 	return result
 }
 
-func collectUserAreaItemLevels(areas []userdata.RawUserArea) map[int]int {
+func collectUserAreaItemLevels(areas []snapshot.RawUserArea) map[int]int {
 	levels := make(map[int]int)
 	for _, area := range areas {
 		for _, item := range area.AreaItems {

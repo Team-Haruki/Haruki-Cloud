@@ -7,13 +7,13 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type Controller struct {
 	drawing        *drawing.HarukiDrawingClient
-	snapshot       userdata.Snapshot
+	snapshot       snapshot.Snapshot
 	rawMySekaiJSON []byte // direct mysekai JSON (bypasses snapshot merge)
 	masterdata     masterdataSource
 	resolver       *masterdataResolver
@@ -161,7 +161,7 @@ func (r *masterdataResolver) build(region renderregion.Value) masterdataSource {
 // true and the DB is unavailable, it falls back to reading JSON files from
 // LocalDir. In production (AllowFallback=false) a DB failure leaves masterdata
 // nil so callers get a clear error.
-func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot userdata.Snapshot, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, mdOpts MasterdataOptions) *Controller {
+func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot.Snapshot, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, mdOpts MasterdataOptions) *Controller {
 	region := renderregion.WithDefault(defaultRegion)
 	resolver := newMasterdataResolver(mdOpts)
 	md := resolver.Resolve(region)
@@ -238,7 +238,7 @@ func (c *Controller) staticPath(relPath string) string {
 // WithSnapshot returns a shallow copy of this Controller that uses the given
 // snapshot instead of the one configured at construction time. This is used by
 // the bridge layer to inject a live Toolbox snapshot on a per-request basis.
-func (c *Controller) WithSnapshot(s userdata.Snapshot) *Controller {
+func (c *Controller) WithSnapshot(s snapshot.Snapshot) *Controller {
 	if c == nil {
 		return nil
 	}
@@ -248,7 +248,7 @@ func (c *Controller) WithSnapshot(s userdata.Snapshot) *Controller {
 }
 
 // WithMySekaiData returns a shallow copy that uses raw mysekai JSON bytes
-// directly, without going through the userdata.Service merge path. This is
+// directly, without going through the snapshot.Service merge path. This is
 // the preferred injection for mysekai-only commands: suite data is not needed
 // because the profile card comes from the public API via query.Profile.
 func (c *Controller) WithMySekaiData(data []byte) *Controller {

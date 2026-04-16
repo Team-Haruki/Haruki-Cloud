@@ -21,7 +21,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 
 	"github.com/klauspost/compress/zstd"
 )
@@ -693,11 +693,11 @@ func TestBuildRecommendOptionDefaultsChallengeLiveTypeAndStrategies(t *testing.T
 func TestPrepareRecommendUserDataPreservesUnknownSnapshotFields(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
-	raw := &userdata.RawUserData{
+	raw := &snapshot.RawUserData{
 		Now:          1700000000000,
-		UserGamedata: userdata.RawUserGamedata{UserID: 10001, Name: "Deck User", Deck: 1},
-		UserProfile:  userdata.RawUserProfile{ProfileImageType: "default"},
-		UserCards: []userdata.RawUserCard{
+		UserGamedata: snapshot.RawUserGamedata{UserID: 10001, Name: "Deck User", Deck: 1},
+		UserProfile:  snapshot.RawUserProfile{ProfileImageType: "default"},
+		UserCards: []snapshot.RawUserCard{
 			{
 				CardID:                1001,
 				Level:                 50,
@@ -707,8 +707,8 @@ func TestPrepareRecommendUserDataPreservesUnknownSnapshotFields(t *testing.T) {
 				DefaultImage:          "normal",
 			},
 		},
-		UserAreas: []userdata.RawUserArea{
-			{AreaItems: []userdata.RawUserAreaItem{{AreaItemID: 1, Level: 3}}},
+		UserAreas: []snapshot.RawUserArea{
+			{AreaItems: []snapshot.RawUserAreaItem{{AreaItemID: 1, Level: 3}}},
 		},
 	}
 	originalBytes := []byte(`{
@@ -1515,7 +1515,7 @@ func TestBuildAutoRecommendRequestEventCurrentUsesSnapshotDeck(t *testing.T) {
 }
 
 func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testing.T) {
-	var cached userdata.RawUserData
+	var cached snapshot.RawUserData
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -1590,18 +1590,18 @@ func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testin
 	if len(cached.UserCards) != 7 {
 		t.Fatalf("unexpected max profile user card count: %d", len(cached.UserCards))
 	}
-	card1006 := userdata.FindUserCard(cached.UserCards, 1006)
+	card1006 := snapshot.FindUserCard(cached.UserCards, 1006)
 	if card1006 == nil || card1006.Level != 60 || card1006.SkillLevel != 4 || card1006.MasterRank != 5 {
 		t.Fatalf("unexpected max profile card 1006: %+v", card1006)
 	}
-	card1007 := userdata.FindUserCard(cached.UserCards, 1007)
+	card1007 := snapshot.FindUserCard(cached.UserCards, 1007)
 	if card1007 == nil || card1007.Level != 50 || card1007.DefaultImage != "special_training" {
 		t.Fatalf("unexpected max profile card 1007: %+v", card1007)
 	}
 }
 
 func TestBuildAutoRecommendRequestSubMaxProfilePromotesAreaItemsTo15(t *testing.T) {
-	var cached userdata.RawUserData
+	var cached snapshot.RawUserData
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -1680,7 +1680,7 @@ func TestBuildAutoRecommendRequestSubMaxProfilePromotesAreaItemsTo15(t *testing.
 }
 
 func TestBuildAutoRecommendRequestFilterAndExcludeTrimUserCards(t *testing.T) {
-	var cached userdata.RawUserData
+	var cached snapshot.RawUserData
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -2374,7 +2374,7 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 	}
 
 	assetHelper := assets.NewAssetHelper(tempDir, nil)
-	snapshot := userdata.NewLocalFileService(nil, assetHelper, userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, assetHelper, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSONPath,
 	})

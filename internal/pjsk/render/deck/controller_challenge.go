@@ -3,7 +3,7 @@ package deck
 import (
 	"fmt"
 
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 const challengeCharacterCount = 26
@@ -33,12 +33,12 @@ func (c *Controller) prepareChallengeRecommend(query AutoQuery, option map[strin
 		return fmt.Errorf("raw user snapshot is unavailable")
 	}
 
-	deckInfo := userdata.FindChallengeLiveDeck(raw.UserChallengeLiveSoloDecks, charID)
+	deckInfo := snapshot.FindChallengeLiveDeck(raw.UserChallengeLiveSoloDecks, charID)
 	if deckInfo == nil {
 		return fmt.Errorf("找不到你的该角色的当前挑战卡组（更新当前挑战卡组需要抓包）")
 	}
 
-	cards, ok := userdata.ChallengeLiveDeckCardIDs(deckInfo)
+	cards, ok := snapshot.ChallengeLiveDeckCardIDs(deckInfo)
 	if !ok {
 		return fmt.Errorf("你的该角色的当前挑战卡组不足5张，无法使用\"当前\"参数（更新当前挑战卡组需要抓包）")
 	}
@@ -114,7 +114,7 @@ func (c *Controller) recommendChallengeAll(recommender DeckRecommender, req Reco
 	return agg, nil
 }
 
-func applyChallengeScoreDelta(result *RecommendResult, charID int, raw *userdata.RawUserData) {
+func applyChallengeScoreDelta(result *RecommendResult, charID int, raw *snapshot.RawUserData) {
 	if result == nil || charID <= 0 {
 		return
 	}
@@ -124,7 +124,7 @@ func applyChallengeScoreDelta(result *RecommendResult, charID int, raw *userdata
 	}
 }
 
-func challengeHighScore(raw *userdata.RawUserData, charID int) int {
+func challengeHighScore(raw *snapshot.RawUserData, charID int) int {
 	if raw == nil || charID <= 0 {
 		return 0
 	}

@@ -10,7 +10,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 type detailMetaTestSource struct {
@@ -148,7 +148,7 @@ func TestBuildMusicDetailRequestIncludesMetadataFields(t *testing.T) {
 	}
 
 	assetHelper := assets.NewAssetHelper(root, nil)
-	snapshot := userdata.NewLocalFileService(nil, assetHelper, userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, assetHelper, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,

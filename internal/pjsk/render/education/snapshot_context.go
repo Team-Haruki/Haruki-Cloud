@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -60,15 +60,15 @@ var gateUnitByID = map[int]string{
 type resolvedSnapshotContext struct {
 	region   renderregion.Value
 	source   DataSource
-	snapshot userdata.Snapshot
-	raw      *userdata.RawUserData
+	snapshot snapshot.Snapshot
+	raw      *snapshot.RawUserData
 	profile  *drawing.DetailedProfileCardRequest
 }
 
 func (c *Controller) resolveSnapshotContext(
 	region renderregion.Value,
 	profile *drawing.DetailedProfileCardRequest,
-	snapshot userdata.Snapshot,
+	snapshot snapshot.Snapshot,
 ) (*resolvedSnapshotContext, error) {
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("education controller is not initialized")

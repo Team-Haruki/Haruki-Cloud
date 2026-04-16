@@ -13,7 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {
@@ -38,7 +38,7 @@ func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {
 		t.Fatalf("write mysekai snapshot: %v", err)
 	}
 
-	service := userdata.NewLocalFileService(nil, nil, userdata.LocalFileConfig{
+	service := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MySekaiJSON:   mysekaiPath,
@@ -153,7 +153,7 @@ func TestBuildFixtureListRequestSupportsOnlyCraftable(t *testing.T) {
 	})
 	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
 
-	service := userdata.NewLocalFileService(nil, nil, userdata.LocalFileConfig{
+	service := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MySekaiJSON:   mysekaiPath,
@@ -239,7 +239,7 @@ func TestBuildFixtureListRequestSortsFixturesByIDWithinGroup(t *testing.T) {
 	})
 	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
 
-	service := userdata.NewLocalFileService(nil, nil, userdata.LocalFileConfig{
+	service := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MySekaiJSON:   mysekaiPath,

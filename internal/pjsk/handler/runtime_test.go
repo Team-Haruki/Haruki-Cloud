@@ -16,7 +16,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -58,7 +58,7 @@ func (s *runtimeSnapshotStub) GetMusicResult(musicID int, diff string) string {
 	return s.musicResults[diff][musicID]
 }
 
-func (s *runtimeSnapshotStub) ChallengeLive() *renderuserdata.ChallengeLiveData { return nil }
+func (s *runtimeSnapshotStub) ChallengeLive() *rendersnapshot.ChallengeLiveData { return nil }
 
 func (s *runtimeSnapshotStub) RawBytes() ([]byte, error) { return nil, nil }
 
@@ -66,17 +66,17 @@ func (s *runtimeSnapshotStub) RawValue(string) ([]byte, error) { return nil, nil
 
 func (s *runtimeSnapshotStub) RawFilePath() string { return "" }
 
-func (s *runtimeSnapshotStub) RawData() *renderuserdata.RawUserData { return nil }
+func (s *runtimeSnapshotStub) RawData() *rendersnapshot.RawUserData { return nil }
 
 func (s *runtimeSnapshotStub) MusicMetaBytes() []byte { return nil }
 
 func (s *runtimeSnapshotStub) MusicMetaPath() string { return "" }
 
 type runtimeSnapshotProviderStub struct {
-	snapshot         renderuserdata.Snapshot
+	snapshot         rendersnapshot.Snapshot
 	resolveCount     int
 	resolveNeedFlags []bool
-	selectors        []renderuserdata.Selector
+	selectors        []rendersnapshot.Selector
 }
 
 type runtimeProfileDataSourceStub struct {
@@ -115,7 +115,7 @@ func (runtimeProfileDataSourceStub) GetCardByID(int) (*masterdata.Card, error) {
 
 func (runtimeProfileDataSourceStub) GetEventIDByHonorID(int) int { return 0 }
 
-func (p *runtimeSnapshotProviderStub) Resolve(_ context.Context, selector renderuserdata.Selector, opts renderuserdata.ResolveOptions) (renderuserdata.Snapshot, error) {
+func (p *runtimeSnapshotProviderStub) Resolve(_ context.Context, selector rendersnapshot.Selector, opts rendersnapshot.ResolveOptions) (rendersnapshot.Snapshot, error) {
 	p.resolveCount++
 	p.resolveNeedFlags = append(p.resolveNeedFlags, opts.NeedMySekai)
 	p.selectors = append(p.selectors, selector)
@@ -203,7 +203,7 @@ func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
 	}
 
 	originalFactory := snapshotProviderFactory
-	snapshotProviderFactory = func(app *renderapp.App) renderuserdata.SnapshotProvider {
+	snapshotProviderFactory = func(app *renderapp.App) rendersnapshot.SnapshotProvider {
 		if app != nil && app.Config.UserSnapshot.Provider == "internal_cloud" {
 			return liveProvider
 		}

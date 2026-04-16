@@ -2,26 +2,26 @@ package education
 
 import (
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type ChallengeLiveQuery struct {
 	Region   renderregion.Value                  `json:"region,omitempty"`
 	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
-	Snapshot userdata.Snapshot                   `json:"-"` // Optional: overrides controller snapshot
+	Snapshot snapshot.Snapshot                   `json:"-"` // Optional: overrides controller snapshot
 }
 
 type PowerBonusQuery struct {
 	Region   renderregion.Value                  `json:"region,omitempty"`
 	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
-	Snapshot userdata.Snapshot                   `json:"-"`
+	Snapshot snapshot.Snapshot                   `json:"-"`
 }
 
 type BondsQuery struct {
 	Region         renderregion.Value                  `json:"region,omitempty"`
 	Profile        *drawing.DetailedProfileCardRequest `json:"-"`
-	Snapshot       userdata.Snapshot                   `json:"-"`
+	Snapshot       snapshot.Snapshot                   `json:"-"`
 	Cid            int                                 `json:"cid,omitempty"`
 	CharacterQuery string                              `json:"character_query,omitempty"`
 }
@@ -29,13 +29,13 @@ type BondsQuery struct {
 type LeaderCountQuery struct {
 	Region   renderregion.Value                  `json:"region,omitempty"`
 	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
-	Snapshot userdata.Snapshot                   `json:"-"`
+	Snapshot snapshot.Snapshot                   `json:"-"`
 }
 
 type AreaItemQuery struct {
 	Region         renderregion.Value                  `json:"region,omitempty"`
 	Profile        *drawing.DetailedProfileCardRequest `json:"-"`
-	Snapshot       userdata.Snapshot                   `json:"-"`
+	Snapshot       snapshot.Snapshot                   `json:"-"`
 	Unit           string                              `json:"unit,omitempty"`
 	Cid            int                                 `json:"cid,omitempty"`
 	CharacterQuery string                              `json:"character_query,omitempty"`

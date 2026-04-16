@@ -14,7 +14,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -120,7 +120,7 @@ func buildAPIUserCardEntries(cards []sekai.AnotherUserCard, deck sekai.UserDeck)
 }
 
 // buildLeaderImagePathFromSource resolves the leader card thumbnail path using the DataSource's
-// master-data lookup, mirroring the logic in userdata.resolveLeaderImagePath but without
+// master-data lookup, mirroring the logic in snapshot.resolveLeaderImagePath but without
 // requiring a direct ent client reference.
 func (c *Controller) cardByIDWithFallback(source DataSource, region renderregion.Value, cardID int) (*masterdata.Card, error) {
 	if cardID == 0 || source == nil {
@@ -185,7 +185,7 @@ func profileUnknownImagePath(helper *assets.AssetHelper) string {
 	return assets.ResolveProfilePlaceholderPath(helper)
 }
 
-func (c *Controller) buildFramePaths(source DataSource, userFrames []userdata.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
+func (c *Controller) buildFramePaths(source DataSource, userFrames []snapshot.RawUserFrame) (*drawing.PlayerFramePaths, bool) {
 	equippedID := 0
 	for _, item := range userFrames {
 		if strings.EqualFold(item.PlayerFrameAttachStatus, "equipped") {
@@ -217,8 +217,8 @@ func (c *Controller) buildFramePaths(source DataSource, userFrames []userdata.Ra
 	}, true
 }
 
-func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUserCard, decks []userdata.RawUserDeck, activeDeckID int, region renderregion.Value) []drawing.CardFullThumbnailRequest {
-	activeDeck := userdata.FindActiveDeck(decks, activeDeckID)
+func (c *Controller) buildPCards(source DataSource, userCards []snapshot.RawUserCard, decks []snapshot.RawUserDeck, activeDeckID int, region renderregion.Value) []drawing.CardFullThumbnailRequest {
+	activeDeck := snapshot.FindActiveDeck(decks, activeDeckID)
 	memberIDs := []int{activeDeck.Member1, activeDeck.Member2, activeDeck.Member3, activeDeck.Member4, activeDeck.Member5}
 	result := make([]drawing.CardFullThumbnailRequest, 0, len(memberIDs))
 	for _, cardID := range memberIDs {
@@ -229,7 +229,7 @@ func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUser
 		if err != nil || cardInfo == nil {
 			continue
 		}
-		userCard := userdata.FindUserCard(userCards, cardID)
+		userCard := snapshot.FindUserCard(userCards, cardID)
 		var level *int
 		var trainRank *int
 		if userCard != nil {
@@ -249,10 +249,10 @@ func (c *Controller) buildPCards(source DataSource, userCards []userdata.RawUser
 	return result
 }
 
-func (c *Controller) buildHonors(source DataSource, region renderregion.Value, profileHonors []userdata.RawUserProfileHonor, userHonors []userdata.RawUserHonor, musicCounts []drawing.MusicClearCount) []drawing.HonorRequest {
+func (c *Controller) buildHonors(source DataSource, region renderregion.Value, profileHonors []snapshot.RawUserProfileHonor, userHonors []snapshot.RawUserHonor, musicCounts []drawing.MusicClearCount) []drawing.HonorRequest {
 	builder := renderhonor.NewBuilder(source, c.assets)
 	fcApLevels := buildHonorFcApLevels(musicCounts)
-	selected := make([]userdata.RawUserProfileHonor, 0, len(profileHonors))
+	selected := make([]snapshot.RawUserProfileHonor, 0, len(profileHonors))
 	for _, item := range profileHonors {
 		if item.HonorID > 0 || item.HonorId2 > 0 {
 			selected = append(selected, item)
@@ -345,7 +345,7 @@ func buildHonorFcApLevels(musicCounts []drawing.MusicClearCount) map[int]*int {
 	return result
 }
 
-func buildMusicCounts(clears []userdata.RawMusicClear, stats []userdata.RawMusicResult) []drawing.MusicClearCount {
+func buildMusicCounts(clears []snapshot.RawMusicClear, stats []snapshot.RawMusicResult) []drawing.MusicClearCount {
 	difficulties := []string{"easy", "normal", "hard", "expert", "master", "append"}
 	result := make([]drawing.MusicClearCount, 0, len(difficulties))
 
@@ -389,7 +389,7 @@ func buildMusicCounts(clears []userdata.RawMusicClear, stats []userdata.RawMusic
 	return result
 }
 
-func buildCharacterRanks(ranks []userdata.RawUserCharacter) []drawing.CharacterRank {
+func buildCharacterRanks(ranks []snapshot.RawUserCharacter) []drawing.CharacterRank {
 	result := make([]drawing.CharacterRank, 0, len(ranks))
 	for _, item := range ranks {
 		result = append(result, drawing.CharacterRank{
@@ -400,11 +400,11 @@ func buildCharacterRanks(ranks []userdata.RawUserCharacter) []drawing.CharacterR
 	return result
 }
 
-func buildSoloLive(results []userdata.RawChallengeLiveResult, stages []userdata.RawChallengeLiveStage) *drawing.SoloLiveRank {
+func buildSoloLive(results []snapshot.RawChallengeLiveResult, stages []snapshot.RawChallengeLiveStage) *drawing.SoloLiveRank {
 	if len(results) == 0 {
 		return nil
 	}
-	items := append([]userdata.RawChallengeLiveResult(nil), results...)
+	items := append([]snapshot.RawChallengeLiveResult(nil), results...)
 	sort.Slice(items, func(i, j int) bool { return items[i].HighScore > items[j].HighScore })
 	top := items[0]
 	rank := 1

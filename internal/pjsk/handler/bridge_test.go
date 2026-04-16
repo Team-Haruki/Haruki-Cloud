@@ -34,7 +34,7 @@ import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	rendervlive "haruki-cloud/internal/pjsk/render/vlive"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/imagecache"
@@ -912,7 +912,7 @@ func TestExecuteMusicListUsesSuiteSnapshotResults(t *testing.T) {
 		},
 		Music:    music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
 		Bindings: service,
-		Snapshots: userdata.NewStaticSnapshotProvider(&runtimeSnapshotStub{
+		Snapshots: snapshot.NewStaticSnapshotProvider(&runtimeSnapshotStub{
 			detail: &drawing.DetailedProfileCardRequest{
 				Nickname:        "SnapshotUser",
 				LeaderImagePath: "asset/user/leader.png",
@@ -1205,7 +1205,7 @@ func TestExecuteScoreMusicMetaBuildsRequestsFromQueries(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
@@ -1283,7 +1283,7 @@ func TestExecuteScoreControlBuildsRequestFromParams(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
@@ -1373,7 +1373,7 @@ func TestExecuteCustomRoomScoreBuildsRequestFromParams(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
@@ -1465,7 +1465,7 @@ func TestExecuteScoreMusicBoardBuildsRequestFromParams(t *testing.T) {
 			},
 		},
 	}
-	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
@@ -1552,7 +1552,7 @@ func TestExecuteScoreMusicBoardDoesNotTreatModeArgsAsSpecQueries(t *testing.T) {
 			},
 		},
 	}
-	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
@@ -2363,7 +2363,7 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 		t.Fatalf("write mysekai snapshot: %v", err)
 	}
 
-	snapshot := userdata.NewLocalFileService(nil, nil, userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MySekaiJSON:   mysekaiPath,

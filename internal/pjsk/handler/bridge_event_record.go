@@ -14,7 +14,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/logger"
 
@@ -164,7 +164,7 @@ func fillEventRecordTrackerRanks(
 	tracker *sekaiapi.TrackerClient,
 	region renderregion.Value,
 	userID int64,
-	userEvents []renderuserdata.RawUserEvent,
+	userEvents []rendersnapshot.RawUserEvent,
 	rankByEvent map[int]int,
 ) {
 	if userID <= 0 || len(userEvents) == 0 || len(rankByEvent) >= len(userEvents) {

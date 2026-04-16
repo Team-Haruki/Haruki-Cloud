@@ -1883,7 +1883,7 @@ internal/pjsk/
 |------|--------|------|------|
 | `handler/sekai` vs `pjsk/sekai` 包名冲突 | **中** | ✅ 已统一 alias | `pjsk/sekai` 的 import alias 全部统一为 `sekaiapi`（原混用 `sekaiutils`/`sekaiutil`/`sekaiapi`），消除 13 文件不一致；`handler/sekai` 包名保留（仅 2 处外部调用方、均已用 `sekaihandler` alias） |
 | `pjsk/sekai` 全局单例模式 | **低中** | ✅ 已改造 | 3 个 `sync.Once` 客户端替换为导出构造器 `NewSekaiAPIClient`/`NewToolboxClient`/`NewTrackerClient`，通过 `renderapp.App.SekaiAPI/Toolbox/Tracker` 字段注入；所有方法加 `c == nil → ErrClientNotConfigured` 守卫以兼容仅构造部分字段的测试；11 处 handler 调用点迁移，`cmd/server/init_services.go` 改为显式构造并注入 |
-| `render/userdata` 与 `accountdata` 概念混淆 | **低** | 待处理 | 重命名 `userdata→accountdata` 后，`render/userdata`（游戏快照）仍存在，名称易混淆。改为 `render/snapshot` 更清晰，但涉及 ~20 文件 import 变更 |
+| `render/userdata` 与 `accountdata` 概念混淆 | **低** | ✅ 已重命名 | `render/userdata` 包整体迁移至 `render/snapshot`（`package snapshot`）；47 文件 import / 选择器更新，`renderuserdata` alias 统一为 `rendersnapshot`；`profile/live_adapter.go` 里与包同名的参数重命名为 `snap` 以消除 shadowing |
 
 #### 文件命名与大小
 
@@ -1891,7 +1891,7 @@ internal/pjsk/
 |------|--------|------|------|
 | `render/profile/controller_api.go` 命名误导 | **低** | ✅ 已改名 | 文件重命名为 `controller_live.go`（与同目录 `live_adapter.go` 命名风格统一），"API" 原指 Sekai HTTP 响应而非项目 `api/` 层 |
 | `AllRegions` 注释 + `DefaultRegions` 冗余 | **低** | ✅ 已清理 | `AllRegions` 注释改为描述用途（非 "returns"）；`DefaultRegions = AllRegions` 删除，唯一调用点 `handler.go:200` 直接用 `AllRegions` |
-| `render/deck/controller_prepare.go` 862 行 | **低** | 待处理 | 可拆为 `controller_prepare_userdata.go`（数据准备/合并）和 `controller_prepare_profile.go`（profile preset/卡牌过滤） |
+| `render/deck/controller_prepare.go` 862 行 | **低** | ✅ 已拆分 | 拆为 `controller_prepare_userdata.go`（orchestrator + JSON encode/merge/log，486 行）和 `controller_prepare_profile.go`（preset / 卡牌过滤 / 当前主队 / area-item，386 行） |
 | `render/misc` 仅 38 行 | **低** | 待处理 | 薄封装，可吸收进 `render/score` 或 `render/app`；当前属独立 bridge 入口（`bridge_misc.go`→`misc-birthday`），保留暂不造成负担 |
 
 #### 导出收窄（R37 已审计，待处理）
@@ -1899,7 +1899,7 @@ internal/pjsk/
 | 项目 | 严重度 | 状态 | 说明 |
 |------|--------|------|------|
 | `parser/parser.go` CardParser | **低** | ✅ 已删除 | 整个 `parser.go` 文件（`CardParser`/`CardQueryInfo`/`QueryType*`）删除；经 grep 确认包外零调用方（`render/card/parser.go` 有独立实现），同包内也无测试覆盖或使用 |
-| `accountdata/` 导出收窄 | **低** | 待处理 | `ProfileBGCleaner`/`BindingResolver` 可降为 unexported；`BindingService` 细粒度方法仅测试调用 |
+| `accountdata/` 导出收窄 | **低** | ✅ 已收窄 | `BindingResolver`/`NewBindingResolver`、`ProfileBGCleaner`/`NewProfileBGCleaner` 均降为 unexported（`bindingResolver`、`profileBGCleaner` 等）；`BindingService` 细粒度方法保持现状 |
 
 ---
 

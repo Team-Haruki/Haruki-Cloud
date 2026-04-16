@@ -8,7 +8,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 type allCardSource interface {
@@ -27,7 +27,7 @@ type characterSource interface {
 	GetCharacterByID(id int) (*masterdata.Character, error)
 }
 
-func (c *Controller) applyProfilePreset(region renderregion.Value, raw *userdata.RawUserData, query AutoQuery) error {
+func (c *Controller) applyProfilePreset(region renderregion.Value, raw *snapshot.RawUserData, query AutoQuery) error {
 	if raw == nil || (!query.MaxProfile && !query.SubMaxProfile) {
 		return nil
 	}
@@ -47,7 +47,7 @@ func (c *Controller) applyProfilePreset(region renderregion.Value, raw *userdata
 	return nil
 }
 
-func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int64) ([]userdata.RawUserCard, error) {
+func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int64) ([]snapshot.RawUserCard, error) {
 	_, source, err := c.resolveCardSource(region)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 		now = time.Now().UnixMilli()
 	}
 
-	result := make([]userdata.RawUserCard, 0, len(allCards))
+	result := make([]snapshot.RawUserCard, 0, len(allCards))
 	for _, card := range allCards {
 		if card == nil || card.ID <= 0 {
 			continue
@@ -76,7 +76,7 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 		if card.ReleaseAt > 0 && card.ReleaseAt > now {
 			continue
 		}
-		result = append(result, userdata.RawUserCard{
+		result = append(result, snapshot.RawUserCard{
 			CardID:                card.ID,
 			Level:                 maxProfileCardLevel(card.CardRarityType),
 			SkillLevel:            4,
@@ -131,7 +131,7 @@ func cardHasAfterTraining(card *masterdata.Card) bool {
 	}
 }
 
-func (c *Controller) applyUserCardFilters(region renderregion.Value, raw *userdata.RawUserData, query AutoQuery) error {
+func (c *Controller) applyUserCardFilters(region renderregion.Value, raw *snapshot.RawUserData, query AutoQuery) error {
 	if raw == nil {
 		return nil
 	}
@@ -153,7 +153,7 @@ func (c *Controller) applyUserCardFilters(region renderregion.Value, raw *userda
 		}
 	}
 
-	filtered := make([]userdata.RawUserCard, 0, len(raw.UserCards))
+	filtered := make([]snapshot.RawUserCard, 0, len(raw.UserCards))
 	for _, userCard := range raw.UserCards {
 		if _, ok := excluded[userCard.CardID]; ok {
 			continue
@@ -207,7 +207,7 @@ func (c *Controller) resolveCardUnit(source CardSource, card *masterdata.Card, u
 	return ""
 }
 
-func (c *Controller) applyCurrentDeckOption(_ *userdata.RawUserData, original *userdata.RawUserData, recType string, query AutoQuery, option map[string]any) error {
+func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *snapshot.RawUserData, recType string, query AutoQuery, option map[string]any) error {
 	if !query.UseCurrentDeck || recType == "challenge" {
 		return nil
 	}
@@ -215,12 +215,12 @@ func (c *Controller) applyCurrentDeckOption(_ *userdata.RawUserData, original *u
 		return fmt.Errorf("raw user snapshot is unavailable")
 	}
 
-	deckInfo := userdata.FindActiveDeck(original.UserDecks, original.UserGamedata.Deck)
+	deckInfo := snapshot.FindActiveDeck(original.UserDecks, original.UserGamedata.Deck)
 	if deckInfo.DeckID == 0 {
 		return fmt.Errorf("找不到你的当前主队配置（更新当前主队需要抓包）")
 	}
 
-	cards, ok := userdata.UserDeckCardIDs(&deckInfo)
+	cards, ok := snapshot.UserDeckCardIDs(&deckInfo)
 	if !ok {
 		return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数（更新当前主队需要抓包）")
 	}
@@ -231,7 +231,7 @@ func (c *Controller) applyCurrentDeckOption(_ *userdata.RawUserData, original *u
 	return nil
 }
 
-func (c *Controller) restoreFixedCards(raw *userdata.RawUserData, original *userdata.RawUserData, option map[string]any, preferOriginal bool) error {
+func (c *Controller) restoreFixedCards(raw *snapshot.RawUserData, original *snapshot.RawUserData, option map[string]any, preferOriginal bool) error {
 	if raw == nil || original == nil || option == nil {
 		return nil
 	}
@@ -250,7 +250,7 @@ func (c *Controller) restoreFixedCards(raw *userdata.RawUserData, original *user
 		if cardID <= 0 {
 			continue
 		}
-		originalCard := userdata.FindUserCard(original.UserCards, cardID)
+		originalCard := snapshot.FindUserCard(original.UserCards, cardID)
 		if originalCard == nil {
 			if _, ok := indexByCardID[cardID]; ok {
 				continue
@@ -272,7 +272,7 @@ func (c *Controller) restoreFixedCards(raw *userdata.RawUserData, original *user
 	return nil
 }
 
-func (c *Controller) applyAreaItemCaps(region renderregion.Value, raw *userdata.RawUserData, limit int) {
+func (c *Controller) applyAreaItemCaps(region renderregion.Value, raw *snapshot.RawUserData, limit int) {
 	if raw == nil {
 		return
 	}
@@ -290,7 +290,7 @@ func (c *Controller) applyAreaItemCaps(region renderregion.Value, raw *userdata.
 	raw.UserAreas = buildRawUserAreas(levels)
 }
 
-func (c *Controller) applyAreaItemLevel(region renderregion.Value, raw *userdata.RawUserData, targetLevel int) error {
+func (c *Controller) applyAreaItemLevel(region renderregion.Value, raw *snapshot.RawUserData, targetLevel int) error {
 	if raw == nil || targetLevel <= 0 {
 		return nil
 	}
@@ -344,7 +344,7 @@ func (c *Controller) areaItemLevelCaps(region renderregion.Value, limit int) map
 	return caps
 }
 
-func collectRawAreaItemLevels(areas []userdata.RawUserArea) map[int]int {
+func collectRawAreaItemLevels(areas []snapshot.RawUserArea) map[int]int {
 	levels := make(map[int]int)
 	for _, area := range areas {
 		for _, item := range area.AreaItems {
@@ -359,7 +359,7 @@ func collectRawAreaItemLevels(areas []userdata.RawUserArea) map[int]int {
 	return levels
 }
 
-func buildRawUserAreas(levels map[int]int) []userdata.RawUserArea {
+func buildRawUserAreas(levels map[int]int) []snapshot.RawUserArea {
 	if len(levels) == 0 {
 		return nil
 	}
@@ -372,9 +372,9 @@ func buildRawUserAreas(levels map[int]int) []userdata.RawUserArea {
 	}
 	sort.Ints(itemIDs)
 
-	items := make([]userdata.RawUserAreaItem, 0, len(itemIDs))
+	items := make([]snapshot.RawUserAreaItem, 0, len(itemIDs))
 	for _, itemID := range itemIDs {
-		items = append(items, userdata.RawUserAreaItem{
+		items = append(items, snapshot.RawUserAreaItem{
 			AreaItemID: itemID,
 			Level:      levels[itemID],
 		})
@@ -382,5 +382,5 @@ func buildRawUserAreas(levels map[int]int) []userdata.RawUserArea {
 	if len(items) == 0 {
 		return nil
 	}
-	return []userdata.RawUserArea{{AreaItems: items}}
+	return []snapshot.RawUserArea{{AreaItems: items}}
 }

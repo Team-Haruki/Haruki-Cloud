@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/internal/identity"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/meta"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/censor"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -40,9 +40,9 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 			renderRuntime.SekaiAPI,
 		)
 		renderRuntime.Bindings.SetFastVerificationProvider(renderRuntime.Toolbox)
-		renderRuntime.Snapshots = renderuserdata.NewFallbackSnapshotProvider(
+		renderRuntime.Snapshots = rendersnapshot.NewFallbackSnapshotProvider(
 			harukiConfig.Cfg.PJSKRender.UserSnapshot.AllowFallback,
-			renderuserdata.NewToolboxSnapshotProvider(
+			rendersnapshot.NewToolboxSnapshotProvider(
 				renderRuntime.Bindings,
 				renderRuntime.Toolbox,
 				renderRuntime.Sekai,
@@ -50,8 +50,8 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 			),
 			renderRuntime.Snapshots,
 		)
-		renderRuntime.MySekaiPayloads = renderuserdata.NewFallbackMySekaiPayloadProvider(
-			renderuserdata.NewToolboxMySekaiPayloadProvider(
+		renderRuntime.MySekaiPayloads = rendersnapshot.NewFallbackMySekaiPayloadProvider(
+			rendersnapshot.NewToolboxMySekaiPayloadProvider(
 				renderRuntime.Bindings,
 				renderRuntime.Toolbox,
 			),

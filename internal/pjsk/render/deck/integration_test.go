@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -84,7 +84,7 @@ func buildIntegrationRequest(input integrationTestInput, cfg RecommendConfig) (*
 	}
 	integrationCards, _ := cardSource.(*integrationCardSource)
 
-	snapshot := userdata.NewLocalFileService(nil, assets.NewAssetHelper("", nil), userdata.LocalFileConfig{
+	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper("", nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      input.userJSON,
 		MusicMetaJSON: input.musicMetaJSON,
@@ -207,7 +207,7 @@ func loadIntegrationSources(root, region string) (CardSource, EventSource, error
 		}, nil
 }
 
-func selectEligibleFixedCharacters(raw *userdata.RawUserData, cards *integrationCardSource) []int {
+func selectEligibleFixedCharacters(raw *snapshot.RawUserData, cards *integrationCardSource) []int {
 	if raw == nil || cards == nil {
 		return nil
 	}

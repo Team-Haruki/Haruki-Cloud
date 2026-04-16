@@ -10,10 +10,10 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
-func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]any, preparedRaw *userdata.RawUserData, result *RecommendResult, musicCompareSelections []MusicCompareSelection) (*drawing.DeckRequest, error) {
+func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]any, preparedRaw *snapshot.RawUserData, result *RecommendResult, musicCompareSelections []MusicCompareSelection) (*drawing.DeckRequest, error) {
 	if result == nil || len(result.Decks) == 0 {
 		return nil, fmt.Errorf("deck recommend service returned no deck results")
 	}
@@ -23,7 +23,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	}
 
 	profile := c.resolveProfile(region, query.Profile, "deck_remote_service")
-	userCardMap := make(map[int]userdata.RawUserCard)
+	userCardMap := make(map[int]snapshot.RawUserCard)
 	if preparedRaw != nil {
 		for _, userCard := range preparedRaw.UserCards {
 			userCardMap[userCard.CardID] = userCard

@@ -10,7 +10,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 // Option extractors
@@ -303,6 +303,6 @@ func float64Ptr(value float64) *float64 {
 
 // Card helpers
 
-func isAfterTraining(userCard userdata.RawUserCard) bool {
+func isAfterTraining(userCard snapshot.RawUserCard) bool {
 	return strings.EqualFold(userCard.SpecialTrainingStatus, "done")
 }

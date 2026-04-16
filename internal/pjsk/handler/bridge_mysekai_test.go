@@ -13,21 +13,21 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type unavailableSnapshotProvider struct{}
 
-func (unavailableSnapshotProvider) Resolve(context.Context, renderuserdata.Selector, renderuserdata.ResolveOptions) (renderuserdata.Snapshot, error) {
-	return nil, renderuserdata.ErrSnapshotUnavailable
+func (unavailableSnapshotProvider) Resolve(context.Context, rendersnapshot.Selector, rendersnapshot.ResolveOptions) (rendersnapshot.Snapshot, error) {
+	return nil, rendersnapshot.ErrSnapshotUnavailable
 }
 
 type fixedMySekaiPayloadProvider struct {
 	payload []byte
 }
 
-func (p fixedMySekaiPayloadProvider) Resolve(context.Context, renderuserdata.Selector, bool) ([]byte, error) {
+func (p fixedMySekaiPayloadProvider) Resolve(context.Context, rendersnapshot.Selector, bool) ([]byte, error) {
 	if len(p.payload) == 0 {
 		return nil, errors.New("payload is unavailable")
 	}

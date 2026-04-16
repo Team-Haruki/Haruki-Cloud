@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/utils/logger"
 )
 
@@ -132,8 +132,8 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 	})
 }
 
-func leaderMissionStatuses(snapshot renderuserdata.Snapshot, raw *renderuserdata.RawUserData) []renderuserdata.RawUserCharacterMissionV2Status {
-	if statuses := renderuserdata.ResolveCharacterMissionV2Statuses(raw); len(statuses) > 0 {
+func leaderMissionStatuses(snapshot rendersnapshot.Snapshot, raw *rendersnapshot.RawUserData) []rendersnapshot.RawUserCharacterMissionV2Status {
+	if statuses := rendersnapshot.ResolveCharacterMissionV2Statuses(raw); len(statuses) > 0 {
 		return statuses
 	}
 	if snapshot == nil {
@@ -154,25 +154,25 @@ func leaderMissionStatuses(snapshot renderuserdata.Snapshot, raw *renderuserdata
 			return items
 		}
 	}
-	if items := renderuserdata.DecodeCompactCharacterMissionV2Statuses(payload["compactUserCharacterMissionV2Statuses"]); len(items) > 0 {
+	if items := rendersnapshot.DecodeCompactCharacterMissionV2Statuses(payload["compactUserCharacterMissionV2Statuses"]); len(items) > 0 {
 		return items
 	}
 	return nil
 }
 
-func decodeLegacyLeaderMissionStatuses(raw json.RawMessage) []renderuserdata.RawUserCharacterMissionV2Status {
+func decodeLegacyLeaderMissionStatuses(raw json.RawMessage) []rendersnapshot.RawUserCharacterMissionV2Status {
 	if len(raw) == 0 {
 		return nil
 	}
 
-	var items []renderuserdata.RawUserCharacterMissionV2Status
+	var items []rendersnapshot.RawUserCharacterMissionV2Status
 	if err := json.Unmarshal(raw, &items); err == nil && len(items) > 0 {
 		return items
 	}
 
-	var item renderuserdata.RawUserCharacterMissionV2Status
+	var item rendersnapshot.RawUserCharacterMissionV2Status
 	if err := json.Unmarshal(raw, &item); err == nil && item.CharacterID > 0 {
-		return []renderuserdata.RawUserCharacterMissionV2Status{item}
+		return []rendersnapshot.RawUserCharacterMissionV2Status{item}
 	}
 
 	return nil

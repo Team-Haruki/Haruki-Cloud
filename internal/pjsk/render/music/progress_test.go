@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -127,7 +127,7 @@ func (s *progressSnapshotStub) GetMusicResult(musicID int, diff string) string {
 	return s.results[diff][musicID]
 }
 
-func (s *progressSnapshotStub) ChallengeLive() *userdata.ChallengeLiveData { return nil }
+func (s *progressSnapshotStub) ChallengeLive() *snapshot.ChallengeLiveData { return nil }
 
 func (s *progressSnapshotStub) RawBytes() ([]byte, error) { return nil, nil }
 
@@ -135,7 +135,7 @@ func (s *progressSnapshotStub) RawValue(string) ([]byte, error) { return nil, ni
 
 func (s *progressSnapshotStub) RawFilePath() string { return "" }
 
-func (s *progressSnapshotStub) RawData() *userdata.RawUserData { return nil }
+func (s *progressSnapshotStub) RawData() *snapshot.RawUserData { return nil }
 
 func (s *progressSnapshotStub) MusicMetaBytes() []byte { return nil }
 
@@ -207,7 +207,7 @@ func TestBuildMusicProgressRequestFromSnapshotUsesCompactToolboxResults(t *testi
 		},
 	}
 
-	snapshot, err := userdata.NewDefaultSnapshotFactory(nil, nil).Build(nil, userdata.BuildInput{
+	snapshot, err := snapshot.NewDefaultSnapshotFactory(nil, nil).Build(nil, snapshot.BuildInput{
 		Region: renderregion.CN,
 		Source: "toolbox",
 		SuiteJSON: []byte(`{

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 )
@@ -146,7 +146,7 @@ func (c *Controller) BuildMusicRewardsDetailRequestFromAchievements(query Reward
 	}, nil
 }
 
-func (c *Controller) BuildMusicRewardsDetailRequestFromSnapshot(query RewardsDetailQuery, snapshot userdata.Snapshot) (*drawing.DetailMusicRewardsRequest, error) {
+func (c *Controller) BuildMusicRewardsDetailRequestFromSnapshot(query RewardsDetailQuery, snapshot snapshot.Snapshot) (*drawing.DetailMusicRewardsRequest, error) {
 	if snapshot == nil {
 		return nil, fmt.Errorf("user snapshot is required for music rewards detail")
 	}

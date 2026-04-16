@@ -8,7 +8,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -106,7 +106,7 @@ func (s *musicSnapshotStub) MusicResults(string) map[int]string { return nil }
 
 func (s *musicSnapshotStub) GetMusicResult(int, string) string { return "" }
 
-func (s *musicSnapshotStub) ChallengeLive() *userdata.ChallengeLiveData { return nil }
+func (s *musicSnapshotStub) ChallengeLive() *snapshot.ChallengeLiveData { return nil }
 
 func (s *musicSnapshotStub) RawBytes() ([]byte, error) {
 	return append([]byte(nil), s.rawBytes...), nil
@@ -122,7 +122,7 @@ func (s *musicSnapshotStub) RawValue(key string) ([]byte, error) {
 
 func (s *musicSnapshotStub) RawFilePath() string { return "" }
 
-func (s *musicSnapshotStub) RawData() *userdata.RawUserData { return nil }
+func (s *musicSnapshotStub) RawData() *snapshot.RawUserData { return nil }
 
 func (s *musicSnapshotStub) MusicMetaBytes() []byte { return nil }
 

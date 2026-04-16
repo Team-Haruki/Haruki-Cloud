@@ -9,7 +9,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func TestResolveMusicBoardRequestBuildsItemsFromMeta(t *testing.T) {
@@ -49,7 +49,7 @@ func TestResolveMusicBoardRequestBuildsItemsFromMeta(t *testing.T) {
 			},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -118,7 +118,7 @@ func TestResolveMusicBoardRequestBuildsPtTimeMetrics(t *testing.T) {
 			},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -177,7 +177,7 @@ func TestResolveMusicBoardRequestBuildsItemsFromAlias(t *testing.T) {
 			},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -234,7 +234,7 @@ func TestResolveMusicBoardRequestExpandsWildcardSpecDiffs(t *testing.T) {
 			},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -288,7 +288,7 @@ func TestResolveMusicBoardRequestReturnsErrorForMissingExplicitDiff(t *testing.T
 			},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,
@@ -337,7 +337,7 @@ func TestResolveMusicBoardRequestReturnsAmbiguousSpecError(t *testing.T) {
 			},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,

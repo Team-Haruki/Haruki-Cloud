@@ -14,7 +14,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 type scoreControlTestSource struct {
@@ -128,7 +128,7 @@ func TestBuildScoreControlRequestPreservesControllerAliasResolver(t *testing.T) 
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := renderuserdata.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), renderuserdata.LocalFileConfig{
+	snapshot := rendersnapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), rendersnapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSON,
 		MusicMetaJSON: metaJSON,

@@ -216,7 +216,7 @@ func (s *BindingService) ResolveUserBinding(ctx context.Context, platform, platf
 	if err != nil {
 		return 0, nil, err
 	}
-	resolver := NewBindingResolver(s.pjskDB)
+	resolver := newBindingResolver(s.pjskDB)
 	binding, err := resolver.Resolve(ctx, harukiUserID, server)
 	if err != nil {
 		return harukiUserID, nil, err

@@ -28,15 +28,15 @@ type ResolvedBinding struct {
 	Bg             *drawing.ProfileBgSettings
 }
 
-// BindingResolver resolves a (haruki_user_id, server) pair to the user's
+// bindingResolver resolves a (haruki_user_id, server) pair to the user's
 // active PJSK game account.
-type BindingResolver struct {
+type bindingResolver struct {
 	db *pjskdb.Client
 }
 
-// NewBindingResolver creates a new BindingResolver.
-func NewBindingResolver(db *pjskdb.Client) *BindingResolver {
-	return &BindingResolver{db: db}
+// newBindingResolver creates a new bindingResolver.
+func newBindingResolver(db *pjskdb.Client) *bindingResolver {
+	return &bindingResolver{db: db}
 }
 
 // Resolve returns the active PJSK binding for (harukiUserID, server).
@@ -47,7 +47,7 @@ func NewBindingResolver(db *pjskdb.Client) *BindingResolver {
 //     (for users who bound an account but never set a default).
 //
 // Returns ErrNoBinding if the user has no binding on the requested server.
-func (r *BindingResolver) Resolve(ctx context.Context, harukiUserID int, server string) (*ResolvedBinding, error) {
+func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server string) (*ResolvedBinding, error) {
 	// 1. Try the user's default binding.
 	defaultBind, err := r.db.UserDefaultBinding.Query().
 		Where(

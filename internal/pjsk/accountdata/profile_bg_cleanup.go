@@ -61,28 +61,28 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 	return deleted, nil
 }
 
-// ProfileBGCleaner queries the database for all active background image paths
+// profileBGCleaner queries the database for all active background image paths
 // and removes any orphaned files from the profile background directory.
 // It is stateless — call Run on whatever schedule suits the deployment
 // (e.g. time.Ticker, cron, startup hook).
-type ProfileBGCleaner struct {
+type profileBGCleaner struct {
 	store *LocalProfileBGStore
 	db    *pjskdb.Client
 }
 
-// NewProfileBGCleaner returns a new ProfileBGCleaner.
+// newProfileBGCleaner returns a new profileBGCleaner.
 // Returns nil if either argument is nil.
-func NewProfileBGCleaner(store *LocalProfileBGStore, db *pjskdb.Client) *ProfileBGCleaner {
+func newProfileBGCleaner(store *LocalProfileBGStore, db *pjskdb.Client) *profileBGCleaner {
 	if store == nil || db == nil {
 		return nil
 	}
-	return &ProfileBGCleaner{store: store, db: db}
+	return &profileBGCleaner{store: store, db: db}
 }
 
 // Run queries all active background paths from the database, then deletes any
 // files in the background directory that are no longer referenced.
 // Returns the number of deleted files and any non-fatal walk error.
-func (c *ProfileBGCleaner) Run(ctx context.Context) (int, error) {
+func (c *profileBGCleaner) Run(ctx context.Context) (int, error) {
 	if c == nil {
 		return 0, nil
 	}

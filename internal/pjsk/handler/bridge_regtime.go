@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/onebot11"
-	"haruki-cloud/utils/query"
 )
 
 func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
@@ -30,7 +30,7 @@ func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
 
 	var tzOffset string
 	if rc.App.PJSK != nil && target.HarukiUserID > 0 {
-		if settings, sErr := query.NewClient(nil, nil, rc.App.PJSK, nil).GetPJSKSettings(rc.Ctx, target.HarukiUserID); sErr == nil && settings != nil {
+		if settings, sErr := accountdata.GetUserSettings(rc.Ctx, rc.App.PJSK, target.HarukiUserID); sErr == nil && settings != nil {
 			tzOffset = settings.TimeZoneOffset
 		}
 	}

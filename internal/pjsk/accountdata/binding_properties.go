@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
-	"haruki-cloud/utils/query"
 )
 
 func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding, imageURL string) (*BindingListItem, error) {
@@ -21,8 +20,7 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 	}
 
 	// User-level BG ban check: read from UserSettings (haruki_user_id granularity).
-	queryClient := query.NewClient(nil, nil, s.pjskDB, nil)
-	userSettings, _ := queryClient.GetPJSKSettings(ctx, binding.HarukiUserID)
+	userSettings, _ := GetUserSettings(ctx, s.pjskDB, binding.HarukiUserID)
 	currentCount := 0
 	if userSettings != nil {
 		currentCount = userSettings.NoncompliantBGCount
@@ -34,7 +32,7 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 	// Image content moderation
 	if s.censor != nil {
 		if !s.censor.CensorImage(ctx, binding.HarukiUserID, imageURL) {
-			newCount, _ := queryClient.IncrNoncompliantBGCount(ctx, binding.HarukiUserID)
+			newCount, _ := IncrNoncompliantBGCount(ctx, s.pjskDB, binding.HarukiUserID)
 			if newCount >= 3 {
 				return nil, fmt.Errorf("背景图片内容审核未通过，背景上传功能已被禁用（违规次数已达 3/3）")
 			}

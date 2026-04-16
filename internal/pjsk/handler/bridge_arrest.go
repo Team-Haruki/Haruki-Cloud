@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/onebot11"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
+	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	"haruki-cloud/utils/query"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -39,11 +39,10 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 			resp.User.Name = ""
 		}
 	}
-	queryClient := query.NewClient(nil, nil, rc.App.PJSK, nil)
 	// Load the caller's enabled difficulties for self-mode; default for others.
 	enabledDiffs := defaultEnabledDiffs()
 	if p.Mode == "self" && harukiUserID > 0 && rc.App.PJSK != nil {
-		if settings, sErr := queryClient.GetPJSKSettings(rc.Ctx, harukiUserID); sErr == nil && settings != nil {
+		if settings, sErr := accountdata.GetUserSettings(rc.Ctx, rc.App.PJSK, harukiUserID); sErr == nil && settings != nil {
 			if len(settings.PJSKEnabledDifficulties) > 0 {
 				enabledDiffs = settings.PJSKEnabledDifficulties
 			}

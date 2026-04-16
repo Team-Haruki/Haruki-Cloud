@@ -9,7 +9,6 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/onebot11"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
-	"haruki-cloud/utils/query"
 )
 
 func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
@@ -109,7 +108,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 
 	var tzOffset string
 	if rc.App.PJSK != nil && resolvedHarukiID > 0 {
-		if settings, sErr := query.NewClient(nil, nil, rc.App.PJSK, nil).GetPJSKSettings(rc.Ctx, resolvedHarukiID); sErr == nil && settings != nil {
+		if settings, sErr := accountdata.GetUserSettings(rc.Ctx, rc.App.PJSK, resolvedHarukiID); sErr == nil && settings != nil {
 			tzOffset = settings.TimeZoneOffset
 		}
 	}

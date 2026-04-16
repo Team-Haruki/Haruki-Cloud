@@ -458,7 +458,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 	}
 }
 
-func TestBuildProfileRequestFromAPIWithSnapshotFollowsSnapshotLeaderDisplayState(t *testing.T) {
+func TestBuildProfileRequestFromAPIWithSnapshotKeepsAPILeaderDisplayState(t *testing.T) {
 	source := &testProfileSource{
 		region: renderregion.JP,
 		cards: map[int]*masterdata.Card{
@@ -508,12 +508,102 @@ func TestBuildProfileRequestFromAPIWithSnapshotFollowsSnapshotLeaderDisplayState
 		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
 	}
 
-	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png"
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_after_training.png"
 	if payload.Profile.LeaderImagePath != wantLeader {
 		t.Fatalf("expected leader image path %q, got %q", wantLeader, payload.Profile.LeaderImagePath)
 	}
 	if len(payload.Pcards) != 1 || payload.Pcards[0].CardThumbnailPath != wantLeader {
-		t.Fatalf("expected pcard thumbnail to follow snapshot leader art, got %+v", payload.Pcards)
+		t.Fatalf("expected pcard thumbnail to follow API leader art, got %+v", payload.Pcards)
+	}
+}
+
+func TestBuildProfileRequestFromAPIWithSnapshotFallsBackToSnapshotDeckWhenAPIDeckMissing(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	snapshot := &profileSnapshotStub{
+		rawData: &userdata.RawUserData{
+			UserGamedata: userdata.RawUserGamedata{Deck: 1},
+			UserDecks: []userdata.RawUserDeck{
+				{DeckID: 1, Leader: 1001, Member1: 1001},
+			},
+			UserCards: []userdata.RawUserCard{
+				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "normal"},
+			},
+		},
+	}
+
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "Snapshot Fallback", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
+		UserDeck:    sekai.UserDeck{},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snapshot)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
+	}
+
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png"
+	if payload.Profile.LeaderImagePath != wantLeader {
+		t.Fatalf("expected snapshot fallback leader image path %q, got %q", wantLeader, payload.Profile.LeaderImagePath)
+	}
+	if len(payload.Pcards) != 1 || payload.Pcards[0].CardThumbnailPath != wantLeader {
+		t.Fatalf("expected snapshot fallback pcard thumbnail, got %+v", payload.Pcards)
+	}
+}
+
+func TestBuildProfileRequestFromAPIWithSnapshotUsesSnapshotLeaderArtWhenAPICardStateMissing(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	snapshot := &profileSnapshotStub{
+		rawData: &userdata.RawUserData{
+			UserCards: []userdata.RawUserCard{
+				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+			},
+		},
+	}
+
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "Leader Art Fallback", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
+		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snapshot)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
+	}
+
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_after_training.png"
+	if payload.Profile.LeaderImagePath != wantLeader {
+		t.Fatalf("expected snapshot-supplemented leader image path %q, got %q", wantLeader, payload.Profile.LeaderImagePath)
+	}
+	if len(payload.Pcards) != 1 || payload.Pcards[0].CardThumbnailPath != wantLeader {
+		t.Fatalf("expected snapshot-supplemented pcard thumbnail, got %+v", payload.Pcards)
 	}
 }
 

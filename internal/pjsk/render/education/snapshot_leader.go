@@ -23,6 +23,8 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 	missionRequirements, maxPlayLimit := ctx.source.GetLeaderMissionRequirements()
 	exCountByCharacter := make(map[int]int)
 	exLevelByCharacter := make(map[int]int)
+	exProgressByCharacter := make(map[int]int)
+	hasPlayLiveExByCharacter := make(map[int]bool)
 	hasPlayLiveMission := false
 	playLiveMissionCount := 0
 	playLiveExMissionCount := 0
@@ -39,9 +41,8 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 			playLiveMissionCount++
 		case "play_live_ex":
 			exCountByCharacter[item.CharacterID] = item.Progress
-			if _, ok := exLevelByCharacter[item.CharacterID]; !ok {
-				exLevelByCharacter[item.CharacterID] = 0
-			}
+			exProgressByCharacter[item.CharacterID] = item.Progress
+			hasPlayLiveExByCharacter[item.CharacterID] = true
 			playLiveExMissionCount++
 		}
 	}
@@ -65,6 +66,15 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 			exLevelByCharacter[item.CharacterID] = item.Seq
 		}
 		exCountByCharacter[item.CharacterID] += leaderMissionRequirementForSeq(missionRequirements, item.Seq)
+	}
+
+	for charID := 1; charID <= 26; charID++ {
+		if !hasPlayLiveExByCharacter[charID] {
+			continue
+		}
+		if exLevelByCharacter[charID] == 0 || exProgressByCharacter[charID] > 0 {
+			exLevelByCharacter[charID]++
+		}
 	}
 
 	leaders := make([]drawing.LeaderCountInfo, 0, 26)
@@ -98,7 +108,7 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 
 	rawBytes, rawBytesErr := ctx.snapshot.RawBytes()
 	leaderCountDebugLogger.Debugf(
-		"leader-count snapshot summary: region=%s user_id=%d mission_v2s=%d play_live=%d play_live_ex=%d mission_v2_statuses=%d status_101=%d live_usage=%d requirements_101=%d max_play_limit=%d has_key_userCharacterMissionV2s=%t has_key_userCharacterMissionV2Statuses=%t has_key_userCharacterMissionStatuses=%t has_key_userCharacterMissionStatus=%t raw_bytes_err=%v",
+		"leader-count snapshot summary: region=%s user_id=%d mission_v2s=%d play_live=%d play_live_ex=%d mission_v2_statuses=%d status_101=%d live_usage=%d requirements_101=%d max_play_limit=%d has_key_userCharacterMissionV2s=%t has_key_userCharacterMissionV2Statuses=%t has_key_compactUserCharacterMissionV2Statuses=%t has_key_userCharacterMissionStatuses=%t has_key_userCharacterMissionStatus=%t raw_bytes_err=%v",
 		ctx.region.String(),
 		ctx.raw.UserGamedata.UserID,
 		len(ctx.raw.UserCharacterMissionV2s),
@@ -111,6 +121,7 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		maxPlayLimit,
 		bytes.Contains(rawBytes, []byte(`"userCharacterMissionV2s"`)),
 		bytes.Contains(rawBytes, []byte(`"userCharacterMissionV2Statuses"`)),
+		bytes.Contains(rawBytes, []byte(`"compactUserCharacterMissionV2Statuses"`)),
 		bytes.Contains(rawBytes, []byte(`"userCharacterMissionStatuses"`)),
 		bytes.Contains(rawBytes, []byte(`"userCharacterMissionStatus"`)),
 		rawBytesErr,
@@ -124,8 +135,8 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 }
 
 func leaderMissionStatuses(snapshot renderuserdata.Snapshot, raw *renderuserdata.RawUserData) []renderuserdata.RawUserCharacterMissionV2Status {
-	if raw != nil && len(raw.UserCharacterMissionV2Statuses) > 0 {
-		return raw.UserCharacterMissionV2Statuses
+	if statuses := renderuserdata.ResolveCharacterMissionV2Statuses(raw); len(statuses) > 0 {
+		return statuses
 	}
 	if snapshot == nil {
 		return nil
@@ -141,10 +152,12 @@ func leaderMissionStatuses(snapshot renderuserdata.Snapshot, raw *renderuserdata
 	}
 
 	for _, key := range []string{"userCharacterMissionStatuses", "userCharacterMissionStatus"} {
-		items := decodeLegacyLeaderMissionStatuses(payload[key])
-		if len(items) > 0 {
+		if items := decodeLegacyLeaderMissionStatuses(payload[key]); len(items) > 0 {
 			return items
 		}
+	}
+	if items := renderuserdata.DecodeCompactCharacterMissionV2Statuses(payload["compactUserCharacterMissionV2Statuses"]); len(items) > 0 {
+		return items
 	}
 	return nil
 }

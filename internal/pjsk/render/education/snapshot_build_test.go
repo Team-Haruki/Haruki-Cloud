@@ -828,7 +828,7 @@ func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
 	if first.PlayCount != 66 {
 		t.Fatalf("unexpected play count: %+v", first)
 	}
-	if first.ExLevel != 2 || first.ExCount != 21 {
+	if first.ExLevel != 3 || first.ExCount != 21 {
 		t.Fatalf("unexpected ex progress: %+v", first)
 	}
 	if strings.TrimSpace(first.CharaIconPath) == "" {
@@ -886,8 +886,157 @@ func TestBuildLeaderCountRequestFromSnapshotFallsBackToLegacyMissionStatuses(t *
 	if first.CharaID != 2 {
 		t.Fatalf("unexpected first character: %+v", first)
 	}
-	if first.ExLevel != 2 || first.ExCount != 21 {
+	if first.ExLevel != 3 || first.ExCount != 21 {
 		t.Fatalf("unexpected ex progress from legacy statuses: %+v", first)
+	}
+}
+
+func TestBuildLeaderCountRequestFromSnapshotUsesCompactMissionStatuses(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacterMissionV2s": []map[string]any{
+			{"characterMissionType": "play_live_ex", "characterId": 2, "progress": 11},
+		},
+		"userCharacterLiveUsageCounts": []map[string]any{
+			{"characterId": 2, "characterLiveUsageType": "leader", "usageCount": 66},
+		},
+		"compactUserCharacterMissionV2Statuses": map[string]any{
+			"__ENUM__": map[string]any{
+				"missionStatus": []string{"achieved", "received", "reset"},
+			},
+			"parameterGroupId": []int{101, 101, 101, 102},
+			"seq":              []int{1, 2, 3, 1},
+			"characterId":      []int{2, 2, 2, 3},
+			"missionId":        []int{21101, 21101, 21101, 39999},
+			"missionStatus":    []int{1, 1, 3, 1},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller.RegisterSource(&testSource{
+		region: renderregion.CN,
+		leaderRequirements: []LeaderMissionRequirement{
+			{Seq: 1, Requirement: 3},
+			{Seq: 2, Requirement: 7},
+			{Seq: 3, Requirement: 11},
+		},
+		leaderMaxPlayLimit: 120,
+	})
+
+	req, err := controller.BuildLeaderCountRequestFromSnapshot(LeaderCountQuery{Region: renderregion.CN})
+	if err != nil {
+		t.Fatalf("BuildLeaderCountRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.LeaderCounts) == 0 {
+		t.Fatalf("expected leader counts")
+	}
+	first := req.LeaderCounts[0]
+	if first.CharaID != 2 {
+		t.Fatalf("unexpected first character: %+v", first)
+	}
+	if first.ExLevel != 3 || first.ExCount != 21 {
+		t.Fatalf("unexpected ex progress from compact statuses: %+v", first)
+	}
+}
+
+func TestBuildLeaderCountRequestFromSnapshotMergesCompactAndStandardMissionStatuses(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacterMissionV2s": []map[string]any{
+			{"characterMissionType": "play_live_ex", "characterId": 2, "progress": 162},
+		},
+		"userCharacterLiveUsageCounts": []map[string]any{
+			{"characterId": 2, "characterLiveUsageType": "leader", "usageCount": 66},
+		},
+		"userCharacterMissionV2Statuses": []map[string]any{
+			{"parameterGroupId": 101, "seq": 1, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 2, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 3, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 4, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 5, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 6, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 7, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 8, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 9, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 10, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 11, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 12, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 13, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 14, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 15, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 16, "characterId": 2},
+			{"parameterGroupId": 101, "seq": 17, "characterId": 2},
+		},
+		"compactUserCharacterMissionV2Statuses": map[string]any{
+			"__ENUM__": map[string]any{
+				"missionStatus": []string{"achieved", "received", "reset"},
+			},
+			"parameterGroupId": []int{101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101},
+			"seq":              []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+			"characterId":      []int{2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+			"missionId":        []int{21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101},
+			"missionStatus":    []int{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller.RegisterSource(&testSource{
+		region: renderregion.CN,
+		leaderRequirements: []LeaderMissionRequirement{
+			{Seq: 1, Requirement: 500},
+			{Seq: 4, Requirement: 600},
+			{Seq: 7, Requirement: 700},
+			{Seq: 10, Requirement: 800},
+			{Seq: 13, Requirement: 900},
+			{Seq: 16, Requirement: 1000},
+			{Seq: 19, Requirement: 1100},
+			{Seq: 22, Requirement: 1200},
+			{Seq: 25, Requirement: 1300},
+		},
+		leaderMaxPlayLimit: 40000,
+	})
+
+	req, err := controller.BuildLeaderCountRequestFromSnapshot(LeaderCountQuery{Region: renderregion.CN})
+	if err != nil {
+		t.Fatalf("BuildLeaderCountRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.LeaderCounts) == 0 {
+		t.Fatalf("expected leader counts")
+	}
+	first := req.LeaderCounts[0]
+	if first.CharaID != 2 {
+		t.Fatalf("unexpected first character: %+v", first)
+	}
+	if first.ExLevel != 26 || first.ExCount != 21862 {
+		t.Fatalf("unexpected merged ex progress: %+v", first)
 	}
 }
 

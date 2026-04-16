@@ -20,6 +20,7 @@ type RawUserData struct {
 	UserCharacterMissionV2s                           []RawUserCharacterMissionV2       `json:"userCharacterMissionV2s,omitempty"`
 	UserCharacterLiveUsageCounts                      []RawUserCharacterLiveUsageCount  `json:"userCharacterLiveUsageCounts,omitempty"`
 	UserCharacterMissionV2Statuses                    []RawUserCharacterMissionV2Status `json:"userCharacterMissionV2Statuses,omitempty"`
+	CompactUserCharacterMissionV2Statuses             json.RawMessage                   `json:"compactUserCharacterMissionV2Statuses,omitempty"`
 	UserAreas                                         []RawUserArea                     `json:"userAreas,omitempty"`
 	UserMaterials                                     []RawUserMaterial                 `json:"userMaterials,omitempty"`
 	UserMysekaiGates                                  []RawUserMysekaiGate              `json:"userMysekaiGates,omitempty"`

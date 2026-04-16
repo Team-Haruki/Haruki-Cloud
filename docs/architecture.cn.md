@@ -58,7 +58,6 @@ Haruki-Cloud/
 │   └── pjsk/                     #   PJSK 核心子系统
 │       ├── parser/               #     指令解析与提取能力
 │       ├── handler/              #     命令注册、端点归属、执行桥接
-│       ├── chardata/             #     角色昵称加载器
 │       └── render/               #     渲染与执行子系统
 │
 ├── config/                       # ── 配置 ──
@@ -134,10 +133,6 @@ redis:                     # Redis 连接
 
 pjsk:                      # PJSK 数据库
   db_url: "..."
-  parser:                  # 指令解析器配置
-    chardata_region: "jp"
-    chardata_refresh_interval: "24h"
-
 pjsk_render:               # 渲染引擎配置
   drawing:
     base_url: ""           # Drawing API 地址

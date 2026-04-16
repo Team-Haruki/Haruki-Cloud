@@ -33,9 +33,6 @@ pjsk:
   enabled: true
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_pjsk sslmode=disable"
-  parser:
-    chardata_region: "jp"
-    chardata_refresh_interval: "1h"
   # MySekai is disabled for CN region by default. Add platform+group_id
   # entries below to whitelist specific groups.
   allow_cn_mysekai:

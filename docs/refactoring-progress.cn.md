@@ -1865,9 +1865,9 @@ internal/pjsk/
 
 #### 死代码
 
-| 项目 | 严重度 | 说明 |
-|------|--------|------|
-| `chardata/` 死包 | **高** | 整个包从未被任何 Go 文件 import。定义了 DB-backed 角色昵称 `Loader`，`config.go` 有对应配置字段（`chardata_region`、`chardata_refresh_interval`），但实际已被硬编码 nickname map 替代（见下方重复代码 #3）。可连同配置字段一起删除 |
+| 项目 | 严重度 | 状态 | 说明 |
+|------|--------|------|------|
+| `chardata/` 死包 | **高** | ✅ 已删除 | 整个包从未被任何 Go 文件 import，实际已被硬编码 nickname map 替代。一并移除 `config.PJSKParserConfig`（`chardata_region`/`chardata_refresh_interval`）及示例 YAML 条目 |
 
 #### 重复代码
 

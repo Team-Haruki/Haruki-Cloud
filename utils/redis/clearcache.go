@@ -21,25 +21,3 @@ func ClearCache(ctx context.Context, redisClient *redis.Client, namespace, path 
 	}
 	return nil
 }
-
-func ClearAllCacheForPath(ctx context.Context, redisClient *redis.Client, namespace, path string) error {
-	pattern := fmt.Sprintf("%s:%s:query=*", namespace, path)
-	var cursor uint64 = 0
-	for {
-		var scannedKeys []string
-		var err error
-		scannedKeys, cursor, err = redisClient.Scan(ctx, cursor, pattern, 100).Result()
-		if err != nil {
-			return fmt.Errorf("failed to scan redis keys: %w", err)
-		}
-		if len(scannedKeys) > 0 {
-			if err := redisClient.Del(ctx, scannedKeys...).Err(); err != nil {
-				return fmt.Errorf("failed to delete redis keys: %w", err)
-			}
-		}
-		if cursor == 0 {
-			break
-		}
-	}
-	return nil
-}

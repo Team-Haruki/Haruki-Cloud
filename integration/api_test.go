@@ -20,10 +20,12 @@ import (
 	"testing"
 	"time"
 
+	"encoding/base64"
+
 	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
+	botauth "haruki-cloud/api/bot/auth"
 	corecrypto "haruki-cloud/internal/core/crypto"
-	utilscrypto "haruki-cloud/utils/aesgcm"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -180,10 +182,11 @@ func authenticate(cfg integrationConfig) error {
 	}
 
 	authPayload := fmt.Sprintf(`{"credential":"%s","timestamp":%d}`, jwtCred, time.Now().Unix())
-	encrypted, err := utilscrypto.Encrypt([]byte(authPayload), aesKey)
+	encryptedRaw, err := botauth.EncryptRaw([]byte(authPayload), aesKey)
 	if err != nil {
 		return fmt.Errorf("encrypt auth payload: %w", err)
 	}
+	encrypted := base64.StdEncoding.EncodeToString(encryptedRaw)
 
 	body := fmt.Sprintf(`{"encrypted_payload":"%s"}`, encrypted)
 	resp, err := http.Post(cfg.BaseURL+"/bot/"+cfg.BotID+"/auth", "application/json", strings.NewReader(body))

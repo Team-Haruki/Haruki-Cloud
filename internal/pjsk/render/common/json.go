@@ -1,9 +1,20 @@
 package common
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 )
+
+// DecodeJSONUseNumber unmarshals data into target using a decoder with
+// UseNumber() enabled, so numeric fields land as json.Number instead of
+// float64. This is required when passing JSON through without losing
+// precision on large integers.
+func DecodeJSONUseNumber(data []byte, target any) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	return decoder.Decode(target)
+}
 
 // JSONString extracts a plain string from a json.RawMessage value.
 func JSONString(raw json.RawMessage) string {

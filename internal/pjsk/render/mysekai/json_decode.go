@@ -1,12 +1,6 @@
 package mysekai
 
-import (
-	"bytes"
-	"encoding/json"
-)
+import "haruki-cloud/internal/pjsk/render/common"
 
-func decodeJSONUseNumber(data []byte, target any) error {
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.UseNumber()
-	return decoder.Decode(target)
-}
+// Package-local alias for readability at the in-package call sites.
+var decodeJSONUseNumber = common.DecodeJSONUseNumber

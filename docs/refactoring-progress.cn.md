@@ -1875,7 +1875,7 @@ internal/pjsk/
 |---|------|--------|------|------|
 | 1 | `mergeParams` 重复 | **中** | ✅ 已合并 | `requestbuilder.MergeParams` 提升为导出函数，统一日志格式；`handler/bridge.go` 用 `var mergeParams = requestbuilder.MergeParams` 别名保留 52 处调用点短名 |
 | 2 | 角色昵称 map + helpers 三处重复 | **中** | ✅ 已合并 | 新建 `render/common/nicknames.go` 存放 `DefaultNicknames`（26 角色 ~200 条别名）、`CloneNicknames`、`NormalizeNicknameQuery`；`card/mysekai/music` 各自保留 package-local alias 保持短调用名（`defaultNicknames = common.DefaultNicknames` 等），消除真实重复代码约 90 行 |
-| 3 | `decodeJSONUseNumber` 重复 | **低中** | 待处理 | `render/mysekai/json_decode.go` 与 `render/provider/json_decode.go` 逐字相同（12 行），可提到 `render/common` |
+| 3 | `decodeJSONUseNumber` 重复 | **低中** | ✅ 已合并 | `common.DecodeJSONUseNumber` 作为权威实现；两个消费包的 `json_decode.go` 缩成 2 行 alias stub |
 
 #### 包命名与组织
 

@@ -393,6 +393,7 @@ func TestBuildPublicMusicProfilesUsesSelectorFromRequestParams(t *testing.T) {
 	}, &renderapp.App{
 		Bindings: service,
 		Profiles: profileController,
+		SekaiAPI: sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
 	})
 
 	detail, card := buildPublicMusicProfiles(rc)

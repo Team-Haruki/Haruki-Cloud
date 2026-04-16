@@ -10,7 +10,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/userdata"
 
 	"haruki-cloud/internal/pjsk/accountdata"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/logger"
 )
 
@@ -78,7 +77,7 @@ func liveSnapshotProvider(app *renderapp.App) userdata.SnapshotProvider {
 		return nil
 	}
 
-	provider := userdata.NewToolboxSnapshotProvider(app.Bindings, sekaiapi.GetToolboxClient(), app.Sekai, app.Assets)
+	provider := userdata.NewToolboxSnapshotProvider(app.Bindings, app.Toolbox, app.Sekai, app.Assets)
 	if app.MetaLoader != nil {
 		provider = provider.WithMusicMetaSource(app.MetaLoader)
 	}

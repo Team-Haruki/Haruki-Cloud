@@ -3,8 +3,8 @@ package mysekai
 import (
 	"fmt"
 
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // BuildResourceRequest builds the request for rendering MySekai resource view.
@@ -19,6 +19,7 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 	if profile == nil {
 		return nil, fmt.Errorf("mysekai resource requires profile data")
 	}
+	renameSingleProfileDataSource(profile, "Suite数据")
 
 	gateID, gateLevel, gateSkinID := extractMysekaiGateInfo(merged)
 	phenomIcons := c.loadIconNameMap("mysekaiPhenomenas.json", "iconAssetbundleName")

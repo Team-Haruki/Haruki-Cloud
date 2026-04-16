@@ -166,6 +166,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 	if profile == nil {
 		return nil, fmt.Errorf("mysekai music record requires profile data")
 	}
+	renameSingleProfileDataSource(profile, "Suite数据")
 	request := &drawing.MysekaiMusicrecordRequest{
 		Profile:              *profile,
 		CategoryMusicrecords: categories,

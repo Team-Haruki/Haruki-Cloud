@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/userdata"
 )
 
 func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {
@@ -727,6 +727,57 @@ func TestBuildDoorUpgradeRequestRenamesTopSourceToSuite(t *testing.T) {
 	}
 	if req.Profile == nil || len(req.Profile.DataSources) != 1 {
 		t.Fatalf("expected one top data source, got %+v", req.Profile)
+	}
+	if req.Profile.DataSources[0].Name != "Suite数据" {
+		t.Fatalf("expected top source to be renamed to Suite数据, got %+v", req.Profile.DataSources)
+	}
+}
+
+func TestBuildResourceRequestRenamesTopSourceToSuite(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]any{
+		{"id": 1, "assetbundleName": "mdl_non0001_gate_default"},
+	})
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(`{
+  "upload_time": 1776000000,
+  "source": "toolbox_live",
+  "userMysekaiGamedata": {"mysekaiRank": 8},
+  "userMysekaiGateCharacterVisit": {
+    "userMysekaiGate": {
+      "mysekaiGateId": 1,
+      "mysekaiGateLevel": 5
+    }
+  }
+}`))
+
+	req, err := controller.BuildResourceRequest(ResourceQuery{
+		Region: "jp",
+		Profile: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{
+				ID:              "GAME_USER_ID_REDACTED",
+				Region:          "JP",
+				Nickname:        "Tester",
+				LeaderImagePath: "user/leader.png",
+			},
+			DataSources: []drawing.ProfileDataSource{
+				{Name: "Suite数据"},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildResourceRequest() error = %v", err)
+	}
+	if len(req.Profile.DataSources) != 1 {
+		t.Fatalf("expected one top data source, got %+v", req.Profile.DataSources)
 	}
 	if req.Profile.DataSources[0].Name != "Suite数据" {
 		t.Fatalf("expected top source to be renamed to Suite数据, got %+v", req.Profile.DataSources)

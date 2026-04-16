@@ -89,6 +89,12 @@ func TestNormalizeValuePreservesLargeIntegerPrecisionInJSONB(t *testing.T) {
 	}
 }
 
+func TestDBMasterdataFileMapIncludesMysekaiPhenomena(t *testing.T) {
+	if got := fileToTable["mysekaiPhenomenas.json"]; got != "mysekaiphenomenas" {
+		t.Fatalf("unexpected db table mapping for mysekaiPhenomenas.json: %q", got)
+	}
+}
+
 func TestLocalMasterdataStoreLoadObjectPreservesLargeIntegerPrecision(t *testing.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "mysekai", "system", "fixture_reaction_data", "fixture_reaction_data.json")

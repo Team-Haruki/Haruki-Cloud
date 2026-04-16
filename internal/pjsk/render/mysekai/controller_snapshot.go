@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
@@ -194,6 +194,17 @@ func replaceWithMySekaiDataSource(profile *drawing.ProfileCardRequest, merged ma
 		Name: "Mysekai数据",
 		Mode: mode,
 	}}
+}
+
+func renameSingleProfileDataSource(profile *drawing.ProfileCardRequest, name string) {
+	if profile == nil || len(profile.DataSources) == 0 {
+		return
+	}
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return
+	}
+	profile.DataSources[0].Name = name
 }
 
 func mergeMySekaiDataSources(profile *drawing.ProfileCardRequest, merged map[string]any, replaceSingle bool) {

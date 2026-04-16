@@ -140,7 +140,9 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 	}
 
 	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
-	renameSingleProfileDataSource(profile, "Suite数据")
+	if profile != nil && len(profile.DataSources) > 0 {
+		profile.DataSources[0].Name = "Suite数据"
+	}
 
 	return &drawing.MysekaiDoorUpgradeRequest{
 		Profile:       profile,

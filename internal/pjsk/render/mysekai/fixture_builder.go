@@ -164,7 +164,6 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		ShowID:     showID,
 		MainGenres: mainGenres,
 	}
-	renameSingleProfileDataSource(request.Profile, "Suite数据")
 	if totalAll > 0 {
 		message := fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", totalObtained, totalAll, percent(totalObtained, totalAll))
 		request.ProgressMessage = &message

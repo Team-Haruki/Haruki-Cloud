@@ -19,7 +19,6 @@ func (c *Controller) BuildResourceRequest(query ResourceQuery) (*drawing.Mysekai
 	if profile == nil {
 		return nil, fmt.Errorf("mysekai resource requires profile data")
 	}
-	renameSingleProfileDataSource(profile, "Suite数据")
 
 	gateID, gateLevel, gateSkinID := extractMysekaiGateInfo(merged)
 	phenomIcons := c.loadIconNameMap("mysekaiPhenomenas.json", "iconAssetbundleName")

@@ -267,6 +267,8 @@ func TestBuildFixtureListRequestSortsFixturesByIDWithinGroup(t *testing.T) {
 
 func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
+	suiteSource := "suite_dump"
+	mode := "leader"
 	profile := &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              "12345678901234567",
@@ -275,7 +277,7 @@ func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Suite数据"},
+			{Name: "Suite数据", Source: &suiteSource, Mode: &mode},
 		},
 	}
 	merged := map[string]any{
@@ -303,14 +305,18 @@ func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 	if got.DataSources[1].UpdateTime == nil || *got.DataSources[1].UpdateTime != 1776000000123 {
 		t.Fatalf("unexpected mysekai update time: %+v", got.DataSources[1].UpdateTime)
 	}
-	if got.DataSources[1].Source == nil || *got.DataSources[1].Source != "toolbox_live(haruki)" {
-		t.Fatalf("unexpected mysekai source: %+v", got.DataSources[1].Source)
+	if got.DataSources[0].Source != nil || got.DataSources[0].Mode != nil {
+		t.Fatalf("expected suite source details to be hidden, got %+v", got.DataSources[0])
+	}
+	if got.DataSources[1].Source != nil || got.DataSources[1].Mode != nil {
+		t.Fatalf("expected mysekai source details to be hidden, got %+v", got.DataSources[1])
 	}
 }
 
 func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
 	controller = controller.WithMySekaiData([]byte(`{"updatedResources":{"userMysekaiGamedata":{"mysekaiRank":8}},"upload_time":1776000000,"source":"toolbox_live"}`))
+	mode := "leader"
 	profile := &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              "GAME_USER_ID_REDACTED",
@@ -319,7 +325,7 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Sekai API"},
+			{Name: "Sekai API", Mode: &mode},
 		},
 	}
 	merged := map[string]any{
@@ -340,6 +346,9 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 	if got.DataSources[0].UpdateTime == nil || *got.DataSources[0].UpdateTime != 1776000000000 {
 		t.Fatalf("unexpected mysekai update time: %+v", got.DataSources[0].UpdateTime)
 	}
+	if got.DataSources[0].Source != nil || got.DataSources[0].Mode != nil {
+		t.Fatalf("expected single source details to be hidden, got %+v", got.DataSources[0])
+	}
 	if got.MysekaiLevel == nil || *got.MysekaiLevel != 8 {
 		t.Fatalf("unexpected mysekai level: %+v", got.MysekaiLevel)
 	}
@@ -347,6 +356,8 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 
 func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
+	suiteSource := "suite_dump"
+	mode := "leader"
 	profile := &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              "GAME_USER_ID_REDACTED",
@@ -355,7 +366,7 @@ func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Suite数据"},
+			{Name: "Suite数据", Source: &suiteSource, Mode: &mode},
 		},
 	}
 	merged := map[string]any{
@@ -372,6 +383,12 @@ func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 	}
 	if got.DataSources[0].Name != "Suite数据" || got.DataSources[1].Name != "Mysekai数据" {
 		t.Fatalf("unexpected data source order: %+v", got.DataSources)
+	}
+	if got.DataSources[0].Source != nil || got.DataSources[0].Mode != nil {
+		t.Fatalf("expected suite source details to be hidden, got %+v", got.DataSources[0])
+	}
+	if got.DataSources[1].Source != nil || got.DataSources[1].Mode != nil {
+		t.Fatalf("expected mysekai source details to be hidden, got %+v", got.DataSources[1])
 	}
 }
 
@@ -681,7 +698,7 @@ func TestBuildDoorUpgradeRequestSupportsShowAll(t *testing.T) {
 	}
 }
 
-func TestBuildDoorUpgradeRequestRenamesTopSourceToSuite(t *testing.T) {
+func TestBuildDoorUpgradeRequestUsesMysekaiSourceOnly(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")
 	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
@@ -729,11 +746,14 @@ func TestBuildDoorUpgradeRequestRenamesTopSourceToSuite(t *testing.T) {
 		t.Fatalf("expected one top data source, got %+v", req.Profile)
 	}
 	if req.Profile.DataSources[0].Name != "Suite数据" {
-		t.Fatalf("expected top source to be renamed to Suite数据, got %+v", req.Profile.DataSources)
+		t.Fatalf("expected top source to be Suite数据, got %+v", req.Profile.DataSources)
+	}
+	if req.Profile.DataSources[0].Source != nil || req.Profile.DataSources[0].Mode != nil {
+		t.Fatalf("expected single source details to be hidden, got %+v", req.Profile.DataSources[0])
 	}
 }
 
-func TestBuildResourceRequestRenamesTopSourceToSuite(t *testing.T) {
+func TestBuildResourceRequestUsesMysekaiSourceOnly(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")
 	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
@@ -779,8 +799,11 @@ func TestBuildResourceRequestRenamesTopSourceToSuite(t *testing.T) {
 	if len(req.Profile.DataSources) != 1 {
 		t.Fatalf("expected one top data source, got %+v", req.Profile.DataSources)
 	}
-	if req.Profile.DataSources[0].Name != "Suite数据" {
-		t.Fatalf("expected top source to be renamed to Suite数据, got %+v", req.Profile.DataSources)
+	if req.Profile.DataSources[0].Name != "Mysekai数据" {
+		t.Fatalf("expected top source to be Mysekai数据, got %+v", req.Profile.DataSources)
+	}
+	if req.Profile.DataSources[0].Source != nil || req.Profile.DataSources[0].Mode != nil {
+		t.Fatalf("expected single source details to be hidden, got %+v", req.Profile.DataSources[0])
 	}
 }
 

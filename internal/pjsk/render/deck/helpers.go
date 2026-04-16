@@ -1,14 +1,15 @@
 package deck
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 )
 
@@ -25,18 +26,35 @@ func optionString(option map[string]any, key string) string {
 }
 
 func optionInt(option map[string]any, key string) int {
+	value, _ := optionIntValue(option, key)
+	return value
+}
+
+func optionIntValue(option map[string]any, key string) (int, bool) {
 	if option == nil {
-		return 0
+		return 0, false
 	}
 	switch value := option[key].(type) {
 	case int:
-		return value
+		return value, true
+	case int64:
+		return int(value), true
+	case int32:
+		return int(value), true
 	case float64:
-		return int(value)
+		return int(value), true
 	case float32:
-		return int(value)
+		return int(value), true
+	case json.Number:
+		if parsed, err := value.Int64(); err == nil {
+			return int(parsed), true
+		}
+		if parsed, err := value.Float64(); err == nil {
+			return int(parsed), true
+		}
+		return 0, false
 	default:
-		return 0
+		return 0, false
 	}
 }
 

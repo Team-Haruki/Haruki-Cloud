@@ -17,11 +17,11 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/drawing"
 
 	"github.com/klauspost/compress/zstd"
 )
@@ -192,11 +192,13 @@ func TestBuildAutoRecommendRequestSetsWorldBloomCharacterMetadata(t *testing.T) 
 
 	eventID := 7
 	worldBloomCharacterID := 20
+	boost := 5
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:                "jp",
 		RecommendType:         "event",
 		Algorithm:             "ga",
 		EventID:               &eventID,
+		Boost:                 &boost,
 		WorldBloomCharacterID: &worldBloomCharacterID,
 	})
 	if err != nil {
@@ -217,6 +219,9 @@ func TestBuildAutoRecommendRequestSetsWorldBloomCharacterMetadata(t *testing.T) 
 	}
 	if request.CharaName == nil || *request.CharaName != "晓山瑞希" {
 		t.Fatalf("unexpected shared character name: %+v", request.CharaName)
+	}
+	if request.Boost == nil || *request.Boost != 5 {
+		t.Fatalf("unexpected request boost: %+v", request.Boost)
 	}
 }
 
@@ -590,6 +595,50 @@ func TestBuildRecommendOptionAppliesExtendedOverrides(t *testing.T) {
 	}
 	if option["skill_order_choose_strategy"] != "specific" {
 		t.Fatalf("unexpected skill_order_choose_strategy: %+v", option["skill_order_choose_strategy"])
+	}
+}
+
+func TestApplyOptionRequestFieldsCarriesBoostAcrossRecommendModes(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	cases := []struct {
+		name   string
+		option map[string]any
+	}{
+		{
+			name: "event_wl",
+			option: map[string]any{
+				"boost":     5,
+				"live_type": "multi",
+				"target":    "score",
+			},
+		},
+		{
+			name: "no_event_float_boost",
+			option: map[string]any{
+				"boost":     float64(5),
+				"live_type": "multi",
+				"target":    "score",
+			},
+		},
+		{
+			name: "mysekai",
+			option: map[string]any{
+				"boost":     5,
+				"live_type": "mysekai",
+				"target":    "score",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			request := &drawing.DeckRequest{}
+			controller.applyOptionRequestFields(request, tc.option, AutoQuery{})
+			if request.Boost == nil || *request.Boost != 5 {
+				t.Fatalf("unexpected request boost: %+v", request.Boost)
+			}
+		})
 	}
 }
 

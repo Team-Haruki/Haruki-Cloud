@@ -169,6 +169,7 @@ func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[st
 	} else {
 		replaceWithMySekaiDataSource(profile, merged)
 	}
+	stripProfileDataSourceDetails(profile)
 	if updated, ok := merged["userMysekaiGamedata"].(map[string]any); ok {
 		if level := intNumber(updated["mysekaiRank"], 0); level > 0 {
 			profile.MysekaiLevel = &level
@@ -186,25 +187,19 @@ func replaceWithMySekaiDataSource(profile *drawing.ProfileCardRequest, merged ma
 		profile.DataSources = []drawing.ProfileDataSource{entry}
 		return
 	}
-	if len(profile.DataSources) == 0 {
-		return
-	}
-	mode := profile.DataSources[0].Mode
 	profile.DataSources = []drawing.ProfileDataSource{{
 		Name: "Mysekai数据",
-		Mode: mode,
 	}}
 }
 
-func renameSingleProfileDataSource(profile *drawing.ProfileCardRequest, name string) {
-	if profile == nil || len(profile.DataSources) == 0 {
+func stripProfileDataSourceDetails(profile *drawing.ProfileCardRequest) {
+	if profile == nil {
 		return
 	}
-	name = strings.TrimSpace(name)
-	if name == "" {
-		return
+	for i := range profile.DataSources {
+		profile.DataSources[i].Source = nil
+		profile.DataSources[i].Mode = nil
 	}
-	profile.DataSources[0].Name = name
 }
 
 func mergeMySekaiDataSources(profile *drawing.ProfileCardRequest, merged map[string]any, replaceSingle bool) {

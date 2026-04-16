@@ -1838,7 +1838,7 @@ internal/pjsk/
 | 包 | 结果 |
 |----|------|
 | `onebot11/` | ✅ 全部导出均有外部调用方 |
-| `parser/` | `CardParser` 系列（`parser.go`）外部零调用方（`render/card/parser.go` 有独立实现），但包内有测试覆盖，暂保留 |
+| `parser/` | `CardParser` 系列（`parser.go`）外部零调用方（`render/card/parser.go` 有独立实现）→ R38 确认包内亦无测试/调用，已整文件删除 |
 | `accountdata/` | `ProfileBGCleaner`/`BindingResolver` 仅内部使用；`BindingService` 大量细粒度方法仅测试调用，外部统一走 `ExecuteProfileBindingCommand`/`ExecuteProfileSettingsCommand` 入口 |
 
 **清理的空目录：**
@@ -1887,19 +1887,19 @@ internal/pjsk/
 
 #### 文件命名与大小
 
-| 项目 | 严重度 | 说明 |
-|------|--------|------|
-| `render/profile/controller_api.go` 命名误导 | **低** | "API" 指 Sekai HTTP API 响应而非项目 `api/` 层，建议改名 `controller_live.go` |
-| `AllRegions` 注释 + `DefaultRegions` 冗余 | **低** | `handler/sekai/helpers.go:51` var 注释写"returns"，且 `DefaultRegions = AllRegions` 仅一处使用 |
-| `render/deck/controller_prepare.go` 862 行 | **低** | 可拆为 `controller_prepare_userdata.go`（数据准备/合并）和 `controller_prepare_profile.go`（profile preset/卡牌过滤） |
-| `render/misc` 仅 38 行 | **低** | 薄封装，可吸收进 `render/score` 或 `render/app` |
+| 项目 | 严重度 | 状态 | 说明 |
+|------|--------|------|------|
+| `render/profile/controller_api.go` 命名误导 | **低** | ✅ 已改名 | 文件重命名为 `controller_live.go`（与同目录 `live_adapter.go` 命名风格统一），"API" 原指 Sekai HTTP 响应而非项目 `api/` 层 |
+| `AllRegions` 注释 + `DefaultRegions` 冗余 | **低** | ✅ 已清理 | `AllRegions` 注释改为描述用途（非 "returns"）；`DefaultRegions = AllRegions` 删除，唯一调用点 `handler.go:200` 直接用 `AllRegions` |
+| `render/deck/controller_prepare.go` 862 行 | **低** | 待处理 | 可拆为 `controller_prepare_userdata.go`（数据准备/合并）和 `controller_prepare_profile.go`（profile preset/卡牌过滤） |
+| `render/misc` 仅 38 行 | **低** | 待处理 | 薄封装，可吸收进 `render/score` 或 `render/app`；当前属独立 bridge 入口（`bridge_misc.go`→`misc-birthday`），保留暂不造成负担 |
 
 #### 导出收窄（R37 已审计，待处理）
 
-| 项目 | 严重度 | 说明 |
-|------|--------|------|
-| `parser/parser.go` CardParser | **低** | 外部零调用方（被 `render/card/parser.go` 替代），有包内测试，可考虑移除 |
-| `accountdata/` 导出收窄 | **低** | `ProfileBGCleaner`/`BindingResolver` 可降为 unexported；`BindingService` 细粒度方法仅测试调用 |
+| 项目 | 严重度 | 状态 | 说明 |
+|------|--------|------|------|
+| `parser/parser.go` CardParser | **低** | ✅ 已删除 | 整个 `parser.go` 文件（`CardParser`/`CardQueryInfo`/`QueryType*`）删除；经 grep 确认包外零调用方（`render/card/parser.go` 有独立实现），同包内也无测试覆盖或使用 |
+| `accountdata/` 导出收窄 | **低** | 待处理 | `ProfileBGCleaner`/`BindingResolver` 可降为 unexported；`BindingService` 细粒度方法仅测试调用 |
 
 ---
 

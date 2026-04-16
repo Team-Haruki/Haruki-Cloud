@@ -56,7 +56,8 @@ func embedSelfQuery(params map[string]any, ctx SekaiHandlerContext) error {
 	return nil
 }
 
-// AllRegions returns all supported region values.
+// AllRegions lists every supported region; used as the default region set
+// when a SekaiCommandHandler leaves Regions empty.
 var AllRegions = []renderregion.Value{
 	renderregion.JP,
 	renderregion.CN,

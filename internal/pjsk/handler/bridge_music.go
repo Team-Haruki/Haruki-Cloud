@@ -8,7 +8,6 @@ import (
 
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/music"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
@@ -247,40 +246,19 @@ func renderMusicRewards(rc *RequestContext) ([]byte, error) {
 	if rc.App.Aliases != nil {
 		musicCtrl.SetAliasResolver(rc.App.Aliases)
 	}
-	q := music.RewardsBasicQuery{Region: rc.Cmd.Region}
-	mergeParams(rc.Cmd.Params, &q)
-	q.Profile = rc.GetProfileCard()
-
-	reason := ""
-
-	if target := rc.GetSelfTarget(); target != nil && target.Binding != nil {
-		if !hasUsableSuiteData(target.Binding) {
-			reason = "当前账号没有可用的 Suite 抓包数据"
-		} else if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
-			detailQuery := music.RewardsDetailQuery{
-				Region:        q.Region,
-				Title:         q.Title,
-				TitleStyle:    q.TitleStyle,
-				JewelIconPath: q.JewelIconPath,
-				ShardIconPath: q.ShardIconPath,
-				Profile:       q.Profile,
-			}
-			if _, buildErr := musicCtrl.BuildMusicRewardsDetailRequestFromSnapshot(detailQuery, snapshot); buildErr == nil {
-				return musicCtrl.RenderMusicRewardsDetailFromSnapshot(detailQuery, snapshot)
-			} else if strings.Contains(buildErr.Error(), "unavailable") {
-				reason = "无法获取 Suite 快照中的成绩数据"
-			} else {
-				reason = "Suite 快照中的成绩数据无法解析"
-			}
-		} else {
-			reason = "无法解析当前账号的 Suite 快照"
-		}
+	_, snapshot, err := rc.requireVisibleSuiteSnapshot()
+	if err != nil {
+		return nil, err
+	}
+	if snapshot == nil {
+		return nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
 	}
 
-	var clearCounts []sekaiapi.AnotherUserMusicDifficultyClearCount
-	if resp := rc.GetPublicProfileResponse(); resp != nil {
-		clearCounts = resp.UserMusicDifficultyClearCount
+	detailQuery := music.RewardsDetailQuery{Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &detailQuery)
+	detailQuery.Profile = rc.GetProfileCard()
+	if _, buildErr := musicCtrl.BuildMusicRewardsDetailRequestFromSnapshot(detailQuery, snapshot); buildErr != nil {
+		return nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
 	}
-
-	return musicCtrl.RenderMusicRewardsBasicEstimate(q, clearCounts, reason)
+	return musicCtrl.RenderMusicRewardsDetailFromSnapshot(detailQuery, snapshot)
 }

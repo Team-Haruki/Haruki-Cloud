@@ -2,9 +2,7 @@ package handler
 
 import (
 	"context"
-	"errors"
 
-	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/profile"
@@ -34,9 +32,6 @@ func resolveCardCatalogTitle(rc *RequestContext) *string {
 
 	binding, _ := rc.GetBinding()
 	if binding == nil {
-		if errors.Is(rc.bindingErr, accountdata.ErrNoBinding) {
-			return stringPtr(CardCatalogTitleNoBinding)
-		}
 		return nil
 	}
 	if !binding.SuiteVisible {

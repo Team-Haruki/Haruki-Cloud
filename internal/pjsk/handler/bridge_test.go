@@ -1020,6 +1020,52 @@ func TestExecuteMusicProgressRequiresResolvableSuiteSnapshot(t *testing.T) {
 	}
 }
 
+func TestExecuteMusicRewardsReturnsNoBindingError(t *testing.T) {
+	service := newBridgeTestBindingService(t)
+	app := &renderapp.App{
+		Bindings: service,
+		Music:    music.NewController(&bridgeMusicSource{}, nil, assets.NewAssetHelper("", nil), nil, nil),
+	}
+
+	_, err := executeMusic(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-rewards",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != accountdata.ErrNoBinding {
+		t.Fatalf("expected ErrNoBinding, got %v", err)
+	}
+}
+
+func TestExecuteMusicRewardsRequiresSuiteSnapshot(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	app := &renderapp.App{
+		Bindings: service,
+		Music:    music.NewController(&bridgeMusicSource{}, nil, assets.NewAssetHelper("", nil), nil, nil),
+	}
+
+	_, err := executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-rewards",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err == nil {
+		t.Fatal("expected missing suite snapshot to fail")
+	}
+	if err.Error() != ErrMsgSuiteDataNotFound {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestResolveDeckMusicSelection(t *testing.T) {
 	root := t.TempDir()
 	jacketPath := filepath.Join(root, "music", "jacket", "jacket_test", "jacket_test.png")
@@ -2606,16 +2652,9 @@ func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
 	}
 }
 
-func TestExecuteCardBoxAddsNoBindingTitleToDrawing(t *testing.T) {
+func TestExecuteCardBoxReturnsNoBindingError(t *testing.T) {
 	root := t.TempDir()
-	var captured drawing.CardBoxRequest
 	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/pjsk/card/box" {
-			t.Fatalf("unexpected path: %s", r.URL.Path)
-		}
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
-			t.Fatalf("decode request: %v", err)
-		}
 		_, _ = w.Write([]byte("png"))
 	}))
 	defer drawingServer.Close()
@@ -2627,21 +2666,15 @@ func TestExecuteCardBoxAddsNoBindingTitleToDrawing(t *testing.T) {
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 
-	message, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+	_, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module:            parser.ModuleCard,
 		Mode:              "card-box",
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, app))
-	if err != nil {
-		t.Fatalf("executeCard box: %v", err)
-	}
-	if len(message) != 1 || message[0].Type != "image" {
-		t.Fatalf("unexpected message: %+v", message)
-	}
-	if captured.Title == nil || *captured.Title != CardCatalogTitleNoBinding {
-		t.Fatalf("expected no-binding title %q, got %+v", CardCatalogTitleNoBinding, captured.Title)
+	if err != accountdata.ErrNoBinding {
+		t.Fatalf("expected ErrNoBinding, got %v", err)
 	}
 }
 
@@ -2686,6 +2719,32 @@ func TestExecuteCardBoxAddsNoSuiteTitleToDrawing(t *testing.T) {
 	}
 	if captured.Title == nil || *captured.Title != CardCatalogTitleNoSuite {
 		t.Fatalf("expected no-suite title %q, got %+v", CardCatalogTitleNoSuite, captured.Title)
+	}
+}
+
+func TestExecuteCardListReturnsNoBindingError(t *testing.T) {
+	root := t.TempDir()
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeTestBindingValidator{})
+	app := &renderapp.App{
+		Bindings:   service,
+		Cards:      rendercard.NewController(&bridgeCardSource{allowEmptyFilter: true, cards: map[int]*masterdata.Card{1001: {ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Test Card", AssetBundleName: "card_test", ReleaseAt: 1700000000000}}}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	_, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleCard,
+		Mode:              "card-list",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != accountdata.ErrNoBinding {
+		t.Fatalf("expected ErrNoBinding, got %v", err)
 	}
 }
 

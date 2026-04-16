@@ -139,6 +139,26 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 	return rc.binding, rc.harukiUserID
 }
 
+// requireBinding resolves the current self-account binding when requester
+// context is available and returns accountdata.ErrNoBinding if nothing matches.
+func (rc *RequestContext) requireBinding() (*accountdata.ResolvedBinding, error) {
+	if rc == nil {
+		return nil, accountdata.ErrNoBinding
+	}
+	if rc.Platform == "" || rc.PlatformUserID == "" || rc.App == nil || rc.App.Bindings == nil {
+		return nil, nil
+	}
+
+	binding, _ := rc.GetBinding()
+	if binding == nil {
+		if rc.bindingErr != nil {
+			return nil, rc.bindingErr
+		}
+		return nil, accountdata.ErrNoBinding
+	}
+	return binding, nil
+}
+
 // ResolveSnapshot resolves a request-scoped snapshot via the configured
 // snapshot provider chain. In production this should be the live
 // Toolbox/internal-cloud provider only; dev/test may still enable static

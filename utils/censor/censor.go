@@ -3,6 +3,7 @@ package censor
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	ent "haruki-cloud/database/censor"
@@ -11,7 +12,6 @@ import (
 	"haruki-cloud/database/censor/result"
 	"haruki-cloud/database/censor/shortbio"
 	"haruki-cloud/utils/logger"
-	"haruki-cloud/utils/types"
 )
 
 type ResultStatus string
@@ -29,8 +29,7 @@ type Service struct {
 }
 
 func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool {
-	serverEnum, _ := types.ParseBindingServer(server)
-	if name == "" || serverEnum == types.BindingServerCN {
+	if name == "" || strings.EqualFold(strings.TrimSpace(server), "cn") {
 		return true
 	}
 
@@ -97,8 +96,7 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 }
 
 func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID string, content string, server string) bool {
-	serverEnum, _ := types.ParseBindingServer(server)
-	if content == "" || serverEnum == types.BindingServerCN {
+	if content == "" || strings.EqualFold(strings.TrimSpace(server), "cn") {
 		return true
 	}
 

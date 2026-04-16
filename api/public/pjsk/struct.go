@@ -2,15 +2,19 @@ package pjsk
 
 import (
 	"haruki-cloud/database/pjsk"
-	"haruki-cloud/utils/types"
 
 	"github.com/redis/go-redis/v9"
 )
 
-// ================= Type Aliases =================
+// ================= Response Types =================
 
-type AliasToObjectIdResponse = types.AliasToIDResponse
-type AllAliasesResponse = types.AliasListResponse
+type AliasToObjectIdResponse struct {
+	MatchIDs []int `json:"match_ids"`
+}
+
+type AllAliasesResponse struct {
+	Aliases []string `json:"aliases"`
+}
 
 // ================= Cache Namespace Constants =================
 

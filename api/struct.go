@@ -1,7 +1,5 @@
 package api
 
-import "haruki-cloud/utils/types"
-
 // ================= Response Structs =================
 
 type HarukiAPIResponse struct {
@@ -31,28 +29,28 @@ const UserContextKey = "haruki_user"
 // ================= Length Constants =================
 
 const (
-	MaxAliasLength    = types.MaxAliasLength
-	MaxUserIDLength   = types.MaxUserIDLength
-	MaxServerLength   = types.MaxServerLength
-	MaxReasonLength   = types.MaxReasonLength
-	MaxOptionLength   = types.MaxOptionLength
-	MaxValueLength    = types.MaxValueLength
-	MaxPlatformLength = types.MaxPlatformLength
+	MaxAliasLength    = 100
+	MaxUserIDLength   = 50
+	MaxServerLength   = 20
+	MaxReasonLength   = 255
+	MaxOptionLength   = 50
+	MaxValueLength    = 50
+	MaxPlatformLength = 20
 )
 
 // ================= Error Messages =================
 
 const (
-	ErrInvalidRequest      = types.ErrInvalidRequest
-	ErrInvalidUserID       = types.ErrInvalidUserID
-	ErrInvalidHarukiUserID = types.ErrInvalidHarukiUserID
-	ErrUserNotFound        = types.ErrUserNotFound
-	ErrAliasNotFound       = types.ErrAliasNotFound
-	ErrBindingNotFound     = types.ErrBindingNotFound
-	ErrPreferenceNotFound  = types.ErrPreferenceNotFound
-	ErrPermissionDenied    = types.ErrPermissionDenied
-	ErrAlreadyExists       = types.ErrAlreadyExists
-	ErrInternalServer      = types.ErrInternalServer
+	ErrInvalidRequest      = "Invalid request"
+	ErrInvalidUserID       = "Invalid user_id"
+	ErrInvalidHarukiUserID = "Invalid haruki_user_id"
+	ErrUserNotFound        = "User not found"
+	ErrAliasNotFound       = "Alias not found"
+	ErrBindingNotFound     = "Binding not found"
+	ErrPreferenceNotFound  = "Preference not found"
+	ErrPermissionDenied    = "Permission denied"
+	ErrAlreadyExists       = "Already exists"
+	ErrInternalServer      = "Internal server error"
 	ErrUserBanned          = "user is banned"
 	ErrMissingPlatformInfo = "platform and platform_user_id are required"
 )

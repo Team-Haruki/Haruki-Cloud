@@ -1,13 +1,31 @@
 package pjsk
 
 import (
+	"fmt"
+
 	"haruki-cloud/api"
 	"haruki-cloud/database/pjsk"
-	"haruki-cloud/utils/types"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 )
+
+// ================= Alias Type Validation =================
+
+const (
+	aliasTypeMusic     = "music"
+	aliasTypeCharacter = "character"
+)
+
+// parseAliasType validates an alias_type path parameter.
+func parseAliasType(t string) error {
+	switch t {
+	case aliasTypeMusic, aliasTypeCharacter:
+		return nil
+	default:
+		return fmt.Errorf("invalid alias type: %s", t)
+	}
+}
 
 // ================= Context Keys =================
 
@@ -34,7 +52,7 @@ func parseAliasParams(requireID bool, requireAlias bool) fiber.Handler {
 		params := AliasParams{
 			AliasType: c.Params("alias_type"),
 		}
-		if _, err := types.ParseAliasType(params.AliasType); err != nil {
+		if err := parseAliasType(params.AliasType); err != nil {
 			return api.JSONResponse(c, fiber.StatusBadRequest, err.Error())
 		}
 		if requireID {

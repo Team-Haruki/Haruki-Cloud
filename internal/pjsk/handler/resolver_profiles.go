@@ -3,10 +3,10 @@ package handler
 import (
 	"context"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -30,11 +30,7 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 		return nil, nil
 	}
 
-	queryParams := userQueryParams{
-		Mode:           "self",
-		Platform:       rc.Platform,
-		PlatformUserID: rc.PlatformUserID,
-	}
+	queryParams := rc.requestScopedSelfQuery()
 	target, err := resolveGameTarget(rc.Ctx, queryParams, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {
 		return nil, nil

@@ -74,11 +74,12 @@ func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, rend
 }
 
 func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
+	requestBody := prepareDrawingRequestBody(endpoint, body, time.Now())
 	resp, err := c.client.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(body).
+		SetBody(requestBody).
 		Post(c.baseURL + endpoint)
-	data, _ := json.Marshal(body)
+	data, _ := json.Marshal(requestBody)
 	c.logger.Debugf("POST %s: %s", c.baseURL+endpoint, string(data))
 	if err != nil {
 		return nil, err

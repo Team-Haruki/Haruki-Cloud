@@ -21,7 +21,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
@@ -109,7 +108,6 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 // handler parse the OneBot message segments and produce a resolved render command.
 func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath string, commands []string) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		requestStartedAt := time.Now()
 		req, err := parseBotRequest(c)
 		if err != nil {
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
@@ -169,7 +167,6 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
 		}
 		guard.MarkComplete(c.Context(), req)
-		responseData = appendImageReplyDT(responseData, time.Now(), time.Since(requestStartedAt))
 		return botResponse(c, fiber.StatusOK, "ok", responseData)
 	}
 }
@@ -233,28 +230,6 @@ func stripInlineCQTags(text string) string {
 		return text
 	}
 	return inlineCQPattern.ReplaceAllString(text, " ")
-}
-
-func appendImageReplyDT(message onebot11.Message, generatedAt time.Time, duration time.Duration) onebot11.Message {
-	if !messageContainsImage(message) {
-		return message
-	}
-
-	dtText := fmt.Sprintf(
-		"dt: %s / %dms",
-		generatedAt.Format("2006-01-02 15:04:05"),
-		duration.Milliseconds(),
-	)
-	return append(message, onebot11.Text(dtText))
-}
-
-func messageContainsImage(message onebot11.Message) bool {
-	for _, segment := range message {
-		if segment.Type == onebot11.TYPE_IMAGE {
-			return true
-		}
-	}
-	return false
 }
 
 // botResponse sends a response using MsgPack when the request came through the

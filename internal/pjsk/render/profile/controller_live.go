@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/drawing"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -22,14 +22,14 @@ import (
 // UserEventResults are intentionally ignored here; profile honors are rendered from
 // the public profile payload plus aggregate clear-count data.
 func (c *Controller) BuildProfileRequestFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileRequest, error) {
-	return c.buildProfileRequestFromAPIFrames(query, resp, parseFramesJSON(framesJSON))
+	return c.buildProfileRequestFromAPIState(query, resp, parseFramesJSON(framesJSON), nil)
 }
 
 func (c *Controller) BuildProfileRequestFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.ProfileRequest, error) {
-	return c.buildProfileRequestFromAPIFrames(query, resp, snapshotFrames(snapshot))
+	return c.buildProfileRequestFromAPIState(query, resp, snapshotFrames(snapshot), snapshot)
 }
 
-func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.GetAnotherProfileResponse, frames []userdata.RawUserFrame) (*drawing.ProfileRequest, error) {
+func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.GetAnotherProfileResponse, frames []userdata.RawUserFrame, snapshot userdata.Snapshot) (*drawing.ProfileRequest, error) {
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("profile controller is not initialized")
 	}
@@ -43,17 +43,8 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 		return nil, fmt.Errorf("profile data source is not configured")
 	}
 
-	profileCardID := userdata.SelectProfileImageCardID(resp.UserProfile.ProfileImageType, resp.UserProfile.ProfileImageID, resp.UserDeck.Leader)
-	profileCard := findAPIUserCard(resp.UserCards, profileCardID)
-	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
-	leaderImagePath := c.buildProfileImagePathFromSource(
-		source,
-		profileCardID,
-		isAPICardAfterTraining(profileCard),
-		resp.UserDeck.Leader,
-		isAPICardAfterTraining(leaderCard),
-		region,
-	)
+	state := resolveProfileRenderState(resp, snapshot)
+	leaderImagePath := c.buildLeaderImagePathFromSource(source, state.leaderCardID, state.leaderTrainedArt, region)
 
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
 	var framePath *string
@@ -62,8 +53,6 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 		framePath = &path
 	}
 
-	adaptedCards := adaptAPICards(resp.UserCards)
-	adaptedDecks := adaptAPIDeckAsList(resp.UserDeck)
 	musicCounts := buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil)
 
 	// 拼接drawing的背景路径
@@ -83,7 +72,7 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 		Rank:                 resp.User.Rank,
 		TwitterID:            resp.UserProfile.TwitterID,
 		Word:                 cleanWord(resp.UserProfile.Word),
-		Pcards:               c.buildPCards(source, adaptedCards, adaptedDecks, resp.UserDeck.DeckID, region),
+		Pcards:               c.buildPCards(source, state.userCards, state.decks, state.activeDeckID, region),
 		BgSettings:           applyProfileBGVerticalOverride(query.BgSettings, query.VerticalOverride),
 		Honors:               c.buildHonors(source, region, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors), musicCounts),
 		MusicDifficultyCount: musicCounts,
@@ -101,14 +90,14 @@ func (c *Controller) buildProfileRequestFromAPIFrames(query Query, resp *sekai.G
 }
 
 func (c *Controller) BuildDetailedProfileCardFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.DetailedProfileCardRequest, error) {
-	return c.buildDetailedProfileCardFromAPIFrames(query, resp, parseFramesJSON(framesJSON))
+	return c.buildDetailedProfileCardFromAPIState(query, resp, parseFramesJSON(framesJSON), nil)
 }
 
 func (c *Controller) BuildDetailedProfileCardFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.DetailedProfileCardRequest, error) {
-	return c.buildDetailedProfileCardFromAPIFrames(query, resp, snapshotFrames(snapshot))
+	return c.buildDetailedProfileCardFromAPIState(query, resp, snapshotFrames(snapshot), snapshot)
 }
 
-func (c *Controller) buildDetailedProfileCardFromAPIFrames(query Query, resp *sekai.GetAnotherProfileResponse, frames []userdata.RawUserFrame) (*drawing.DetailedProfileCardRequest, error) {
+func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sekai.GetAnotherProfileResponse, frames []userdata.RawUserFrame, snapshot userdata.Snapshot) (*drawing.DetailedProfileCardRequest, error) {
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("profile controller is not initialized")
 	}
@@ -122,17 +111,8 @@ func (c *Controller) buildDetailedProfileCardFromAPIFrames(query Query, resp *se
 		return nil, fmt.Errorf("profile data source is not configured")
 	}
 
-	profileCardID := userdata.SelectProfileImageCardID(resp.UserProfile.ProfileImageType, resp.UserProfile.ProfileImageID, resp.UserDeck.Leader)
-	profileCard := findAPIUserCard(resp.UserCards, profileCardID)
-	leaderCard := findAPIUserCard(resp.UserCards, resp.UserDeck.Leader)
-	leaderImagePath := c.buildProfileImagePathFromSource(
-		source,
-		profileCardID,
-		isAPICardAfterTraining(profileCard),
-		resp.UserDeck.Leader,
-		isAPICardAfterTraining(leaderCard),
-		region,
-	)
+	state := resolveProfileRenderState(resp, snapshot)
+	leaderImagePath := c.buildLeaderImagePathFromSource(source, state.leaderCardID, state.leaderTrainedArt, region)
 
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
 	var framePath *string
@@ -151,12 +131,12 @@ func (c *Controller) buildDetailedProfileCardFromAPIFrames(query Query, resp *se
 		LeaderImagePath: leaderImagePath,
 		HasFrame:        hasFrame,
 		FramePath:       framePath,
-		UserCards:       buildAPIUserCardEntries(resp.UserCards, resp.UserDeck),
+		UserCards:       state.detailedUserCards,
 	}, nil
 }
 
 func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileCardRequest, error) {
-	detail, err := c.buildDetailedProfileCardFromAPIFrames(query, resp, parseFramesJSON(framesJSON))
+	detail, err := c.buildDetailedProfileCardFromAPIState(query, resp, parseFramesJSON(framesJSON), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +162,7 @@ func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnother
 }
 
 func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot userdata.Snapshot) (*drawing.ProfileCardRequest, error) {
-	detail, err := c.buildDetailedProfileCardFromAPIFrames(query, resp, snapshotFrames(snapshot))
+	detail, err := c.buildDetailedProfileCardFromAPIState(query, resp, snapshotFrames(snapshot), snapshot)
 	if err != nil {
 		return nil, err
 	}

@@ -73,7 +73,26 @@ func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params, err := buildSKTrackerParams(ctx, false, false, false)
+			params, err := buildSKTrackerParams(ctx, false, true, true)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleSK, "sk-check-room", params), nil
+		},
+	}
+}
+
+func (sekaiHandlers) SKCheckRoomLiteHandle() SekaiCommandHandler {
+	return SekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Path: "sk/check-room",
+			Commands: []string{
+				"/cfl",
+			},
+		},
+		PrefixArgs: []string{"", "wl"},
+		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
+			params, err := buildSKTrackerParamsWithDefaultRanks(ctx, false, true, false, defaultSKCheckRoomLiteRanks)
 			if err != nil {
 				return nil, err
 			}
@@ -203,7 +222,7 @@ func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			params, err := buildSKTrackerParams(ctx, false, false, false)
+			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err
 			}

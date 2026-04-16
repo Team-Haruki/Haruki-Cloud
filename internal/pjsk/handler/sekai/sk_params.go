@@ -6,6 +6,10 @@ import (
 )
 
 func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bool, selfWhenEmpty bool) (map[string]any, error) {
+	return buildSKTrackerParamsWithDefaultRanks(ctx, defaultFull, allowUID, selfWhenEmpty, nil)
+}
+
+func buildSKTrackerParamsWithDefaultRanks(ctx SekaiHandlerContext, defaultFull bool, allowUID bool, selfWhenEmpty bool, defaultRanksOverride []int) (map[string]any, error) {
 	eventID, wlCharacterID, wlCharacterQuery, full, rankArgs := extractSKMetaArgs(
 		strings.TrimSpace(ctx.GetArgs()),
 		defaultFull,
@@ -56,9 +60,14 @@ func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bo
 	if len(ranks) == 0 && userID == nil && targetUserID == "" {
 		return nil, fmt.Errorf("请至少提供一个排名或UID")
 	}
+
+	defaultRanks := defaultSKRanksByMode(wlMode)
+	if len(defaultRanksOverride) > 0 {
+		defaultRanks = append([]int(nil), defaultRanksOverride...)
+	}
 	// Empty rank query should use mode-specific default lines.
 	if !rankArgsProvided && userID == nil && targetUserID == "" {
-		ranks = defaultSKRanksByMode(wlMode)
+		ranks = defaultRanks
 	}
 	params := map[string]any{
 		"region":          strings.ToLower(strings.TrimSpace(ctx.Region().String())),

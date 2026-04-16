@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type BuildInput struct {
@@ -87,13 +87,8 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 	region := renderregion.WithDefault(input.Region)
 	activeDeck := FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
 	leaderCardID := activeDeck.Leader
-	profileCardID := SelectProfileImageCardID(raw.UserProfile.ProfileImageType, raw.UserProfile.ProfileImageID, leaderCardID)
-	profileCard := FindUserCard(raw.UserCards, profileCardID)
 	leaderCard := FindUserCard(raw.UserCards, leaderCardID)
-	leaderImagePath := resolveLeaderImagePath(ctx, f.sekaiClient, f.assetHelper, region, profileCardID, isAfterTraining(profileCard))
-	if leaderImagePath == "" && profileCardID != leaderCardID {
-		leaderImagePath = resolveLeaderImagePath(ctx, f.sekaiClient, f.assetHelper, region, leaderCardID, isAfterTraining(leaderCard))
-	}
+	leaderImagePath := resolveLeaderImagePath(ctx, f.sekaiClient, f.assetHelper, region, leaderCardID, leaderCardUsesTrainedArt(leaderCard))
 	if leaderImagePath == "" {
 		leaderImagePath = fallbackLeaderImagePath(f.assetHelper)
 	}

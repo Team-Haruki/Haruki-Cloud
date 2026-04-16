@@ -9,9 +9,9 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/card"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
@@ -263,7 +263,21 @@ func isAfterTraining(cardInfo *RawUserCard) bool {
 	if cardInfo == nil {
 		return false
 	}
-	return strings.EqualFold(cardInfo.SpecialTrainingStatus, "done")
+	switch strings.ToLower(strings.TrimSpace(cardInfo.DefaultImage)) {
+	case "special_training":
+		return true
+	case "normal":
+		return false
+	default:
+		return strings.EqualFold(cardInfo.SpecialTrainingStatus, "done")
+	}
+}
+
+func leaderCardUsesTrainedArt(cardInfo *RawUserCard) bool {
+	if cardInfo == nil {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(cardInfo.DefaultImage), "special_training")
 }
 
 func convertChallengeResults(source []RawChallengeLiveResult) []ChallengeLiveResult {

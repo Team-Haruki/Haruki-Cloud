@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -320,6 +321,26 @@ func TestResolveCardBoxDetailedProfileDoesNotFallbackToProfileControllerSnapshot
 
 	if detail := resolveCardBoxDetailedProfile(rc); detail != nil {
 		t.Fatalf("expected nil detail without snapshot provider, got %+v", detail)
+	}
+}
+
+func TestRequireVisibleSuiteSnapshotReturnsNoBindingSentinel(t *testing.T) {
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeTestBindingValidator{})
+
+	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Bindings: service,
+	})
+
+	binding, snapshot, err := rc.requireVisibleSuiteSnapshot()
+	if binding != nil || snapshot != nil {
+		t.Fatalf("expected nil binding/snapshot, got binding=%+v snapshot=%+v", binding, snapshot)
+	}
+	if !errors.Is(err, accountdata.ErrNoBinding) {
+		t.Fatalf("expected ErrNoBinding, got %v", err)
 	}
 }
 

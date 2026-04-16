@@ -2,11 +2,13 @@ package handler
 
 import (
 	"fmt"
+	"log/slog"
+	"time"
 
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 func executeProfile(rc *RequestContext) (onebot11.Message, error) {
@@ -52,14 +54,33 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 			BgSettings:       target.BgSettings,
 			VerticalOverride: p.ProfileVertical,
 		}
+		renderStart := time.Now()
 		data, err := profileCtrl.RenderProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
 		if err != nil {
 			return nil, err
 		}
-		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+		slog.Info("profile render completed",
+			"region", region,
+			"target_user_id", target.PJSKUserID,
+			"image_bytes", len(data),
+			"duration_ms", time.Since(renderStart).Milliseconds(),
+		)
+
+		messageStart := time.Now()
+		message, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+		if err != nil {
+			return nil, err
+		}
+		slog.Info("profile image message prepared",
+			"region", region,
+			"target_user_id", target.PJSKUserID,
+			"segments", len(message),
+			"duration_ms", time.Since(messageStart).Milliseconds(),
+		)
+		return message, nil
 	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		if rc.App.Bindings == nil {
-			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")
+			return nil, accountdata.ErrBindingServiceUnavailable
 		}
 		params, err := accountdata.DecodeProfileBindingParams(rc.Cmd.Params)
 		if err != nil {
@@ -76,7 +97,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear, accountdata.ProfileModeBGAdjust:
 		if rc.App.Bindings == nil {
-			return nil, fmt.Errorf("绑定服务未就绪，请稍后再试")
+			return nil, accountdata.ErrBindingServiceUnavailable
 		}
 		params, err := accountdata.DecodeProfileSettingsParams(rc.Cmd.Params)
 		if err != nil {

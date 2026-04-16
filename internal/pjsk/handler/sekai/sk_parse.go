@@ -223,6 +223,11 @@ var defaultSKRanksWorldLink = []int{
 	10000, 20000, 30000, 40000, 50000, 70000, 100000,
 }
 
+var defaultSKCheckRoomLiteRanks = []int{
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+	20, 30, 40, 50, 100,
+}
+
 var defaultSKRanks = defaultSKRanksNormal
 
 func defaultSKRanksByMode(wlMode bool) []int {

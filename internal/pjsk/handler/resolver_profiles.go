@@ -22,6 +22,33 @@ func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileC
 	return nil
 }
 
+func resolveCardCatalogTitle(rc *RequestContext) *string {
+	if rc == nil || rc.App == nil {
+		return nil
+	}
+	if rc.Platform == "" || rc.PlatformUserID == "" {
+		return nil
+	}
+
+	binding, _ := rc.GetBinding()
+	if binding == nil {
+		return nil
+	}
+	if !binding.SuiteVisible {
+		return stringPtr(CardCatalogTitleNoSuite)
+	}
+
+	snapshot := rc.ResolveSnapshot(false)
+	if snapshot == nil {
+		return stringPtr(CardCatalogTitleNoSuite)
+	}
+	detail := snapshot.DetailedProfile(rc.Region)
+	if detail == nil || len(detail.UserCards) == 0 {
+		return stringPtr(CardCatalogTitleNoSuite)
+	}
+	return nil
+}
+
 func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
 	if rc == nil || rc.App == nil || rc.App.Profiles == nil || rc.App.Bindings == nil {
 		return nil, nil

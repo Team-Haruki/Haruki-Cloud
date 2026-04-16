@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -178,7 +178,7 @@ func TestBuildProfileRequestFromAPIUsesRequestedRegionAssetPaths(t *testing.T) {
 	}
 }
 
-func TestBuildProfileRequestFromAPIUsesConfiguredProfileImageCard(t *testing.T) {
+func TestBuildProfileRequestFromAPIFollowsLeaderCardInsteadOfCustomProfileImage(t *testing.T) {
 	source := &testProfileSource{
 		region: renderregion.JP,
 		cards: map[int]*masterdata.Card{
@@ -217,9 +217,44 @@ func TestBuildProfileRequestFromAPIUsesConfiguredProfileImageCard(t *testing.T) 
 		t.Fatalf("BuildProfileRequestFromAPI failed: %v", err)
 	}
 
-	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res021_no002_after_training.png"
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_after_training.png"
 	if payload.Profile.LeaderImagePath != wantLeader {
-		t.Fatalf("unexpected custom profile image path: %q", payload.Profile.LeaderImagePath)
+		t.Fatalf("expected leader image path %q, got %q", wantLeader, payload.Profile.LeaderImagePath)
+	}
+}
+
+func TestBuildProfileRequestFromAPIUsesCurrentCardDisplayState(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "Before Art User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "leader"},
+		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "normal"},
+		},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPI(Query{Region: "jp", Visible: true}, resp, nil)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPI failed: %v", err)
+	}
+
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png"
+	if payload.Profile.LeaderImagePath != wantLeader {
+		t.Fatalf("expected leader image path %q, got %q", wantLeader, payload.Profile.LeaderImagePath)
 	}
 }
 
@@ -420,6 +455,65 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 	}
 	if payload.Profile.FramePath == nil || *payload.Profile.FramePath != payload.FramePaths.Base {
 		t.Fatalf("unexpected profile frame path: %+v", payload.Profile.FramePath)
+	}
+}
+
+func TestBuildProfileRequestFromAPIWithSnapshotFollowsSnapshotLeaderDisplayState(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+			1002: {
+				ID:              1002,
+				CharacterID:     21,
+				AssetBundleName: "res021_no002",
+			},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	snapshot := &profileSnapshotStub{
+		rawData: &userdata.RawUserData{
+			UserGamedata: userdata.RawUserGamedata{Deck: 1},
+			UserDecks: []userdata.RawUserDeck{
+				{DeckID: 1, Leader: 1001, Member1: 1001},
+			},
+			UserCards: []userdata.RawUserCard{
+				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "normal"},
+			},
+		},
+	}
+
+	resp := &sekai.GetAnotherProfileResponse{
+		User: sekai.AnotherUser{UserID: 12345, Name: "Snapshot Leader", Rank: 100},
+		UserProfile: sekai.UserProfile{
+			ProfileImageType: "normal",
+			ProfileImageID:   1002,
+		},
+		UserDeck: sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+			{CardID: 1002, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+		},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snapshot)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
+	}
+
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png"
+	if payload.Profile.LeaderImagePath != wantLeader {
+		t.Fatalf("expected leader image path %q, got %q", wantLeader, payload.Profile.LeaderImagePath)
+	}
+	if len(payload.Pcards) != 1 || payload.Pcards[0].CardThumbnailPath != wantLeader {
+		t.Fatalf("expected pcard thumbnail to follow snapshot leader art, got %+v", payload.Pcards)
 	}
 }
 

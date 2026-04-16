@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -137,7 +138,12 @@ type bindingResolutionOptions struct {
 // 3. Validate the binding against the options (suite/mysekai requirements)
 //
 // Returns (harukiUserID, binding, nil) on success. The binding is non-nil on success.
-// Returns (0, nil, nil) when the binding service is unavailable or no valid binding found.
+// Returns accountdata.ErrNoBinding when the user has no matching binding.
+// Returns accountdata.ErrBindingServiceUnavailable when the binding service is unavailable.
+// When RequireSuite/RequireMySekai is set, the function prefers a binding with
+// usable private data, but still returns the best resolved binding when all
+// candidates exist yet fail the private-data check so callers can surface a
+// more specific "no suite/mysekai data" message.
 func resolveBindingWithFallback(
 	ctx context.Context,
 	bindings *accountdata.BindingService,
@@ -145,7 +151,10 @@ func resolveBindingWithFallback(
 	regionExplicit bool,
 	opts bindingResolutionOptions,
 ) (int, *accountdata.ResolvedBinding, error) {
-	if bindings == nil || platform == "" || platformUserID == "" {
+	if bindings == nil {
+		return 0, nil, accountdata.ErrBindingServiceUnavailable
+	}
+	if platform == "" || platformUserID == "" {
 		return 0, nil, nil
 	}
 
@@ -155,6 +164,10 @@ func resolveBindingWithFallback(
 	var hid int
 	var binding *accountdata.ResolvedBinding
 	var err error
+	var invalidHID int
+	var invalidBinding *accountdata.ResolvedBinding
+	var unexpectedErr error
+	var sawNoBinding bool
 
 	isValid := func(b *accountdata.ResolvedBinding) bool {
 		if b == nil {
@@ -169,36 +182,82 @@ func resolveBindingWithFallback(
 		return true
 	}
 
+	recordAttempt := func(attemptHID int, attemptBinding *accountdata.ResolvedBinding, attemptErr error) (int, *accountdata.ResolvedBinding, error, bool) {
+		if attemptErr == nil && isValid(attemptBinding) {
+			return attemptHID, attemptBinding, nil, true
+		}
+		if attemptErr == nil {
+			if attemptBinding != nil {
+				invalidHID = attemptHID
+				invalidBinding = attemptBinding
+			} else {
+				sawNoBinding = true
+			}
+			return 0, nil, nil, false
+		}
+		if errors.Is(attemptErr, accountdata.ErrNoBinding) {
+			sawNoBinding = true
+			return 0, nil, nil, false
+		}
+		unexpectedErr = attemptErr
+		return 0, nil, attemptErr, false
+	}
+
 	if opts.Selector != "" {
 		hid, binding, err = bindings.ResolveUserBindingBySelector(ctx, platform, platformUserID, selectorBindingServer(regionStr, regionExplicit), opts.Selector)
 		snapshotDebugLogger.Debugf("binding resolve selector result: platform=%s user=%s region=%s selector=%q hid=%d binding=%s err=%v",
 			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), strings.TrimSpace(opts.Selector), hid, formatBindingDebug(binding), err)
+		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
+			snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
+				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), resolvedHID, formatBindingDebug(resolvedBinding))
+			return resolvedHID, resolvedBinding, resolvedErr
+		}
 	} else if !regionExplicit {
 		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
 		snapshotDebugLogger.Debugf("binding resolve global-default result: platform=%s user=%s hid=%d binding=%s err=%v",
 			strings.TrimSpace(platform), maskDebugID(platformUserID), hid, formatBindingDebug(binding), err)
-		if err != nil || !isValid(binding) {
-			hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-			snapshotDebugLogger.Debugf("binding resolve region fallback result: platform=%s user=%s region=%s hid=%d binding=%s err=%v",
-				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), hid, formatBindingDebug(binding), err)
+		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
+			snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
+				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), resolvedHID, formatBindingDebug(resolvedBinding))
+			return resolvedHID, resolvedBinding, resolvedErr
+		}
+		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
+		snapshotDebugLogger.Debugf("binding resolve region fallback result: platform=%s user=%s region=%s hid=%d binding=%s err=%v",
+			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), hid, formatBindingDebug(binding), err)
+		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
+			snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
+				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), resolvedHID, formatBindingDebug(resolvedBinding))
+			return resolvedHID, resolvedBinding, resolvedErr
 		}
 	} else {
 		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
 		snapshotDebugLogger.Debugf("binding resolve explicit-region result: platform=%s user=%s region=%s hid=%d binding=%s err=%v",
 			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), hid, formatBindingDebug(binding), err)
+		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
+			snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
+				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), resolvedHID, formatBindingDebug(resolvedBinding))
+			return resolvedHID, resolvedBinding, resolvedErr
+		}
 	}
 
-	if err != nil || !isValid(binding) {
-		if err == nil {
-			err = fmt.Errorf("binding invalid for requested private data flags")
-		}
+	switch {
+	case unexpectedErr != nil:
 		snapshotDebugLogger.Warnf("binding resolve failed: platform=%s user=%s region=%s region_explicit=%t selector=%q hid=%d binding=%s err=%v",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), hid, formatBindingDebug(binding), err)
+			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), hid, formatBindingDebug(binding), unexpectedErr)
+		return 0, nil, unexpectedErr
+	case invalidBinding != nil:
+		snapshotDebugLogger.Warnf("binding resolve returned binding without required private data: platform=%s user=%s region=%s region_explicit=%t selector=%q hid=%d binding=%s",
+			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), invalidHID, formatBindingDebug(invalidBinding))
+		return invalidHID, invalidBinding, nil
+	case sawNoBinding:
+		snapshotDebugLogger.Warnf("binding resolve failed: platform=%s user=%s region=%s region_explicit=%t selector=%q err=%v",
+			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), accountdata.ErrNoBinding)
+		return 0, nil, accountdata.ErrNoBinding
+	default:
+		snapshotDebugLogger.Warnf("binding resolve failed: platform=%s user=%s region=%s region_explicit=%t selector=%q err=%v",
+			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), fmt.Errorf("binding invalid for requested private data flags"))
 		return 0, nil, nil
 	}
-	snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
-		strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), hid, formatBindingDebug(binding))
-	return hid, binding, nil
 }
 
 func formatBindingDebug(binding *accountdata.ResolvedBinding) string {

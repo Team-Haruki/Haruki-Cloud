@@ -72,9 +72,7 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		if !hasPlayLiveExByCharacter[charID] {
 			continue
 		}
-		if exLevelByCharacter[charID] == 0 || exProgressByCharacter[charID] > 0 {
-			exLevelByCharacter[charID]++
-		}
+		exLevelByCharacter[charID]++
 	}
 
 	leaders := make([]drawing.LeaderCountInfo, 0, 26)

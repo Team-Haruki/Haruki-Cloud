@@ -1040,6 +1040,72 @@ func TestBuildLeaderCountRequestFromSnapshotMergesCompactAndStandardMissionStatu
 	}
 }
 
+func TestBuildLeaderCountRequestFromSnapshotShowsNextExStageWhenProgressIsZero(t *testing.T) {
+	snapshot := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacterMissionV2s": []map[string]any{
+			{"characterMissionType": "play_live_ex", "characterId": 2, "progress": 0},
+		},
+		"compactUserCharacterMissionV2Statuses": map[string]any{
+			"__ENUM__": map[string]any{
+				"missionStatus": []string{"achieved", "received", "reset"},
+			},
+			"parameterGroupId": []int{101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101},
+			"seq":              []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+			"characterId":      []int{2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+			"missionId":        []int{21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101, 21101},
+			"missionStatus":    []int{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		},
+	})
+
+	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller.RegisterSource(&testSource{
+		region: renderregion.CN,
+		leaderRequirements: []LeaderMissionRequirement{
+			{Seq: 1, Requirement: 500},
+			{Seq: 4, Requirement: 600},
+			{Seq: 7, Requirement: 700},
+			{Seq: 10, Requirement: 800},
+			{Seq: 13, Requirement: 900},
+			{Seq: 16, Requirement: 1000},
+			{Seq: 19, Requirement: 1100},
+			{Seq: 22, Requirement: 1200},
+			{Seq: 25, Requirement: 1300},
+			{Seq: 28, Requirement: 1400},
+		},
+		leaderMaxPlayLimit: 40000,
+	})
+
+	req, err := controller.BuildLeaderCountRequestFromSnapshot(LeaderCountQuery{Region: renderregion.CN})
+	if err != nil {
+		t.Fatalf("BuildLeaderCountRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.LeaderCounts) == 0 {
+		t.Fatalf("expected leader counts")
+	}
+	first := req.LeaderCounts[0]
+	if first.CharaID != 2 {
+		t.Fatalf("unexpected first character: %+v", first)
+	}
+	if first.ExLevel != 31 || first.ExCount != 28500 {
+		t.Fatalf("unexpected zero-progress ex stage: %+v", first)
+	}
+}
+
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotHidesUnreleasedFutureLevels(t *testing.T) {
 	snapshot := mustSnapshot(t, map[string]any{
 		"now": 100,

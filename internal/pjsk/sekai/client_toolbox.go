@@ -6,18 +6,12 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 
 	"haruki-cloud/config"
 
 	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
 	"github.com/klauspost/compress/zstd"
-)
-
-var (
-	toolboxOnce   sync.Once
-	toolboxClient *HarukiToolboxClient
 )
 
 type HarukiToolboxClient struct {
@@ -27,16 +21,14 @@ type HarukiToolboxClient struct {
 
 const defaultToolboxUserAgent = "Haruki-Cloud/ToolboxClient"
 
-func GetToolboxClient() *HarukiToolboxClient {
-	toolboxOnce.Do(func() {
-		c := newRestyClient().SetTimeout(apiTimeout)
-
-		toolboxClient = &HarukiToolboxClient{
-			http:   c,
-			config: &config.Cfg.Toolbox,
-		}
-	})
-	return toolboxClient
+// NewToolboxClient constructs a HarukiToolboxClient bound to the supplied config.
+// Callers own the returned client; pass it via dependency injection rather than
+// reaching for a package-level singleton.
+func NewToolboxClient(cfg *config.ToolboxConfig) *HarukiToolboxClient {
+	return &HarukiToolboxClient{
+		http:   newRestyClient().SetTimeout(apiTimeout),
+		config: cfg,
+	}
 }
 
 func (c *HarukiToolboxClient) userAgent() string {
@@ -59,6 +51,9 @@ func (c *HarukiToolboxClient) userAgent() string {
 //   - ErrAccountOwnerBanned     — game account owner is banned
 //   - *ToolboxAPIError          — any other unexpected non-2xx status
 func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
 	url := fmt.Sprintf("%s/api/private/game-data/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
 
 	resp, err := c.http.R().
@@ -129,6 +124,9 @@ func (c *HarukiToolboxClient) GetMySekaiData(server string, userID int64, platfo
 //
 //	GET /api/private/{server}/{dataType}/{userID}?platform=...&platform_user_id=...&key={key}
 func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType ToolboxDataType, userID int64, platform, platformUserID, key string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
 	url := fmt.Sprintf("%s/api/private/game-data/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
 
 	resp, err := c.http.R().
@@ -216,6 +214,9 @@ type UserGameBinding struct {
 //
 //     GET /api/private/game-binding?platform=...&platform_user_id=...
 func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID string) ([]UserGameBinding, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
 	url := fmt.Sprintf("%s/api/private/game-binding", c.config.BaseURL)
 
 	resp, err := c.http.R().

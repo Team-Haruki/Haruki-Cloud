@@ -181,11 +181,11 @@ func (rc *RequestContext) GetSelfTarget() *resolvedGameTarget {
 func (rc *RequestContext) GetPublicProfileResponse() *sekaiapi.GetAnotherProfileResponse {
 	rc.publicProfileOnce.Do(func() {
 		target := rc.GetSelfTarget()
-		if target == nil {
+		if target == nil || rc.App == nil || rc.App.SekaiAPI == nil {
 			return
 		}
 		region := resolvedTargetRegion(rc.RegionStr, *target)
-		resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+		resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
 			return
 		}

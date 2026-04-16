@@ -97,7 +97,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		bindingServer = region
 	}
 
-	raw, err := sekaiapi.GetToolboxClient().GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
+	raw, err := rc.App.Toolbox.GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
 		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
 	}

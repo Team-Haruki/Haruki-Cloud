@@ -4,17 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 
 	"haruki-cloud/config"
 
 	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
-)
-
-var (
-	trackerOnce   sync.Once
-	trackerClient *TrackerClient
 )
 
 const defaultTrackerUserAgent = "Haruki-Cloud/TrackerClient"
@@ -25,16 +19,14 @@ type TrackerClient struct {
 	requestCtx context.Context
 }
 
-func GetTrackerClient() *TrackerClient {
-	trackerOnce.Do(func() {
-		c := newRestyClient().SetTimeout(apiTimeout)
-
-		trackerClient = &TrackerClient{
-			http:   c,
-			config: &config.Cfg.Tracker,
-		}
-	})
-	return trackerClient
+// NewTrackerClient constructs a TrackerClient bound to the supplied config.
+// Callers own the returned client; pass it via dependency injection rather than
+// reaching for a package-level singleton.
+func NewTrackerClient(cfg *config.TrackerConfig) *TrackerClient {
+	return &TrackerClient{
+		http:   newRestyClient().SetTimeout(apiTimeout),
+		config: cfg,
+	}
 }
 
 func (c *TrackerClient) WithContext(ctx context.Context) *TrackerClient {
@@ -214,6 +206,9 @@ func getSliceAs[T any](c *TrackerClient, path string) ([]T, error) {
 // getRaw executes a GET request and returns the raw body, mapping HTTP errors
 // to typed errors.
 func (c *TrackerClient) getRaw(path string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
 	baseURL := strings.TrimRight(strings.TrimSpace(c.config.BaseURL), "/")
 	if baseURL == "" {
 		return nil, fmt.Errorf("tracker: base_url is empty")

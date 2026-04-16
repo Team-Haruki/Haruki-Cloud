@@ -52,7 +52,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 			rankByEvent[userEvent.EventID] = userEvent.Rank
 		}
 	}
-	fillEventRecordTrackerRanks(rc.Ctx, region, rawData.UserGamedata.UserID, rawData.UserEvents, rankByEvent)
+	fillEventRecordTrackerRanks(rc.Ctx, rc.App.Tracker, region, rawData.UserGamedata.UserID, rawData.UserEvents, rankByEvent)
 
 	eventEntities, err := rc.App.Sekai.Event.Query().
 		Where(eventdb.ServerRegionEQ(region.String())).
@@ -142,8 +142,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	}, nil
 }
 
-func defaultEventRecordTrackerRankLookup(ctx context.Context, region string, eventID int, userID int64) (*int, error) {
-	tracker := sekaiapi.GetTrackerClient()
+func defaultEventRecordTrackerRankLookup(ctx context.Context, tracker *sekaiapi.TrackerClient, region string, eventID int, userID int64) (*int, error) {
 	if tracker == nil {
 		return nil, nil
 	}
@@ -162,6 +161,7 @@ func defaultEventRecordTrackerRankLookup(ctx context.Context, region string, eve
 
 func fillEventRecordTrackerRanks(
 	ctx context.Context,
+	tracker *sekaiapi.TrackerClient,
 	region renderregion.Value,
 	userID int64,
 	userEvents []renderuserdata.RawUserEvent,
@@ -200,7 +200,7 @@ func fillEventRecordTrackerRanks(
 
 		eventIDCopy := eventID
 		group.Go(func() error {
-			rank, err := eventRecordTrackerRankLookup(groupCtx, regionStr, eventIDCopy, userID)
+			rank, err := eventRecordTrackerRankLookup(groupCtx, tracker, regionStr, eventIDCopy, userID)
 			if err != nil {
 				if !errors.Is(err, sekaiapi.ErrRankingNotFound) {
 					logOnce.Do(func() {

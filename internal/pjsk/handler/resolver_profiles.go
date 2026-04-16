@@ -37,7 +37,7 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 	}
 	region := resolvedTargetRegion(rc.RegionStr, target)
 
-	resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil, nil
 	}
@@ -89,7 +89,7 @@ func buildPublicProfileCardForTarget(ctx context.Context, target resolvedGameTar
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := app.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil
 	}

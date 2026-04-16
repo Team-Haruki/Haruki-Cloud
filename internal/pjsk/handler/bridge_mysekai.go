@@ -8,7 +8,6 @@ import (
 	"haruki-cloud/internal/pjsk/onebot11"
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/render/mysekai"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -152,7 +151,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		data, err = sekaiapi.GetSekaiAPIClient().GetMySekaiImage(result.Region, result.ImagePath)
+		data, err = rc.App.SekaiAPI.GetMySekaiImage(result.Region, result.ImagePath)
 		if err != nil {
 			return nil, fmt.Errorf("获取 MySekai 照片失败：%w", err)
 		}

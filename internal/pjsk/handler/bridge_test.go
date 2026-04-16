@@ -2325,6 +2325,7 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 	app := &renderapp.App{
 		MySekai:    rendermysekai.NewController(nil, snapshot, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+		SekaiAPI:   sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
 	}
 
 	params, err := json.Marshal(rendermysekai.PhotoQuery{Seq: 1})

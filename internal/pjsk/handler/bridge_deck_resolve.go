@@ -17,7 +17,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/drawing"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func formatDeckQuerySummary(q deck.AutoQuery) string {
@@ -98,7 +97,7 @@ func buildDeckDetailedProfileForTarget(rc *RequestContext, target resolvedGameTa
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil
 	}

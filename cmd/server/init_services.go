@@ -37,14 +37,14 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		renderRuntime.Bindings = accountdata.NewBindingService(
 			pjskClient,
 			resolver,
-			sekaiAPI.GetSekaiAPIClient(),
+			renderRuntime.SekaiAPI,
 		)
-		renderRuntime.Bindings.SetFastVerificationProvider(sekaiAPI.GetToolboxClient())
+		renderRuntime.Bindings.SetFastVerificationProvider(renderRuntime.Toolbox)
 		renderRuntime.Snapshots = renderuserdata.NewFallbackSnapshotProvider(
 			harukiConfig.Cfg.PJSKRender.UserSnapshot.AllowFallback,
 			renderuserdata.NewToolboxSnapshotProvider(
 				renderRuntime.Bindings,
-				sekaiAPI.GetToolboxClient(),
+				renderRuntime.Toolbox,
 				renderRuntime.Sekai,
 				renderRuntime.Assets,
 			),
@@ -53,7 +53,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		renderRuntime.MySekaiPayloads = renderuserdata.NewFallbackMySekaiPayloadProvider(
 			renderuserdata.NewToolboxMySekaiPayloadProvider(
 				renderRuntime.Bindings,
-				sekaiAPI.GetToolboxClient(),
+				renderRuntime.Toolbox,
 			),
 		)
 		if renderRuntime.Assets != nil {
@@ -91,8 +91,15 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	metaLoader.StartBackgroundRefresh(ctx, metaRefreshInterval)
 	mainLogger.Infof("Music meta loader started (refresh=%s)", metaRefreshInterval)
 
+	sekaiAPIClient := sekaiAPI.NewSekaiAPIClient(&harukiConfig.Cfg.SekaiAPI)
+	toolboxClient := sekaiAPI.NewToolboxClient(&harukiConfig.Cfg.Toolbox)
+	trackerClient := sekaiAPI.NewTrackerClient(&harukiConfig.Cfg.Tracker)
+
 	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
 		InitContext:       ctx,
+		SekaiAPI:          sekaiAPIClient,
+		Toolbox:           toolboxClient,
+		Tracker:           trackerClient,
 		DrawingBaseURL:    harukiConfig.Cfg.PJSKRender.DrawingBaseURL,
 		DrawingTimeout:    harukiConfig.Cfg.PJSKRender.DrawingTimeout,
 		DrawingRetryCount: harukiConfig.Cfg.PJSKRender.DrawingRetryCount,

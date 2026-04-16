@@ -30,6 +30,12 @@ var (
 
 	// ErrServerMaintenance means the game server is currently under maintenance (HTTP 503).
 	ErrServerMaintenance = errors.New("sekai api: game server is under maintenance")
+
+	// ErrClientNotConfigured is returned by any Sekai-family client when a method
+	// is invoked on a nil receiver. Callers (especially tests) may construct an
+	// App without wiring these clients; we return this error rather than panicking
+	// on the nil receiver so existing error-handling paths kick in.
+	ErrClientNotConfigured = errors.New("sekai client: not configured")
 )
 
 // SekaiAPIError is returned for unexpected non-2xx responses that do not map

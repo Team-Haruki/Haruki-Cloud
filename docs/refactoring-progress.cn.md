@@ -1882,7 +1882,7 @@ internal/pjsk/
 | 项目 | 严重度 | 状态 | 说明 |
 |------|--------|------|------|
 | `handler/sekai` vs `pjsk/sekai` 包名冲突 | **中** | ✅ 已统一 alias | `pjsk/sekai` 的 import alias 全部统一为 `sekaiapi`（原混用 `sekaiutils`/`sekaiutil`/`sekaiapi`），消除 13 文件不一致；`handler/sekai` 包名保留（仅 2 处外部调用方、均已用 `sekaihandler` alias） |
-| `pjsk/sekai` 全局单例模式 | **低中** | 待处理 | 3 个 `sync.Once` 客户端（`GetSekaiAPIClient`/`GetToolboxClient`/`GetTrackerClient`）直接读 `config.Cfg`，不可测试，与其他包的构造器注入风格不一致 |
+| `pjsk/sekai` 全局单例模式 | **低中** | ✅ 已改造 | 3 个 `sync.Once` 客户端替换为导出构造器 `NewSekaiAPIClient`/`NewToolboxClient`/`NewTrackerClient`，通过 `renderapp.App.SekaiAPI/Toolbox/Tracker` 字段注入；所有方法加 `c == nil → ErrClientNotConfigured` 守卫以兼容仅构造部分字段的测试；11 处 handler 调用点迁移，`cmd/server/init_services.go` 改为显式构造并注入 |
 | `render/userdata` 与 `accountdata` 概念混淆 | **低** | 待处理 | 重命名 `userdata→accountdata` 后，`render/userdata`（游戏快照）仍存在，名称易混淆。改为 `render/snapshot` 更清晰，但涉及 ~20 文件 import 变更 |
 
 #### 文件命名与大小

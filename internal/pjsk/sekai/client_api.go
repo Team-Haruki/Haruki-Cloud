@@ -2,7 +2,6 @@ package sekai
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"haruki-cloud/config"
@@ -18,26 +17,19 @@ const (
 	tokenHeader   = "X-Haruki-Sekai-Token"
 )
 
-var (
-	apiOnce   sync.Once
-	apiClient *SekaiAPIClient
-)
-
 type SekaiAPIClient struct {
 	http   *resty.Client
 	config *config.SekaiAPIConfig
 }
 
-func GetSekaiAPIClient() *SekaiAPIClient {
-	apiOnce.Do(func() {
-		c := newRestyClient().SetTimeout(apiTimeout)
-
-		apiClient = &SekaiAPIClient{
-			http:   c,
-			config: &config.Cfg.SekaiAPI,
-		}
-	})
-	return apiClient
+// NewSekaiAPIClient constructs a SekaiAPIClient bound to the supplied config.
+// Callers own the returned client; pass it via dependency injection rather than
+// reaching for a package-level singleton.
+func NewSekaiAPIClient(cfg *config.SekaiAPIConfig) *SekaiAPIClient {
+	return &SekaiAPIClient{
+		http:   newRestyClient().SetTimeout(apiTimeout),
+		config: cfg,
+	}
 }
 
 // authReq returns a pre-configured request with the token header set.
@@ -51,6 +43,9 @@ func (c *SekaiAPIClient) authReq() *resty.Request {
 //
 // Returns ErrUserNotFound on HTTP 404.
 func (c *SekaiAPIClient) GetUserProfile(server, userID string) (*GetAnotherProfileResponse, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
 	url := fmt.Sprintf("%s/api/%s/%s/profile", c.config.BaseURL, server, userID)
 	body, err := c.get(url)
 	if err != nil {
@@ -67,6 +62,9 @@ func (c *SekaiAPIClient) GetUserProfile(server, userID string) (*GetAnotherProfi
 //
 //	GET /api/{server}/system
 func (c *SekaiAPIClient) GetSystem(server string) (*GetSystemResponse, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
 	url := fmt.Sprintf("%s/api/%s/system", c.config.BaseURL, server)
 	body, err := c.get(url)
 	if err != nil {
@@ -83,6 +81,9 @@ func (c *SekaiAPIClient) GetSystem(server string) (*GetSystemResponse, error) {
 //
 //	GET /api/{server}/information
 func (c *SekaiAPIClient) GetInformation(server string) (*GetInformationResponse, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
 	url := fmt.Sprintf("%s/api/%s/information", c.config.BaseURL, server)
 	body, err := c.get(url)
 	if err != nil {
@@ -102,6 +103,9 @@ func (c *SekaiAPIClient) GetInformation(server string) (*GetInformationResponse,
 // imagePath is the sub-path identifying the photo, e.g. "12345/6" for CN/TW
 // or the raw imagePath value returned by the suite API for JP/EN.
 func (c *SekaiAPIClient) GetMySekaiImage(server, imagePath string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
 	url := fmt.Sprintf("%s/image/%s/mysekai/%s", c.config.BaseURL, server, imagePath)
 	return c.get(url)
 }

@@ -168,7 +168,7 @@ func TestBuildEventRecordFromSnapshotBackfillsRegularEventRankFromTracker(t *tes
 	})
 
 	var calls int
-	eventRecordTrackerRankLookup = func(ctx context.Context, region string, eventID int, userID int64) (*int, error) {
+	eventRecordTrackerRankLookup = func(ctx context.Context, _ *sekaiapi.TrackerClient, region string, eventID int, userID int64) (*int, error) {
 		calls++
 		if region != "jp" || eventID != 9101 || userID != 123456789 {
 			t.Fatalf("unexpected tracker lookup args: region=%s event=%d user=%d", region, eventID, userID)
@@ -243,7 +243,7 @@ func TestBuildEventRecordFromSnapshotUsesEmbeddedRegularEventRankWithoutTracker(
 	t.Cleanup(func() {
 		eventRecordTrackerRankLookup = originalLookup
 	})
-	eventRecordTrackerRankLookup = func(context.Context, string, int, int64) (*int, error) {
+	eventRecordTrackerRankLookup = func(context.Context, *sekaiapi.TrackerClient, string, int, int64) (*int, error) {
 		t.Fatal("tracker fallback should not be used when userEvents already embeds rank")
 		return nil, nil
 	}
@@ -316,7 +316,7 @@ func TestBuildEventRecordFromSnapshotSkipsTrackerFallbackWhenSnapshotHasRank(t *
 	t.Cleanup(func() {
 		eventRecordTrackerRankLookup = originalLookup
 	})
-	eventRecordTrackerRankLookup = func(context.Context, string, int, int64) (*int, error) {
+	eventRecordTrackerRankLookup = func(context.Context, *sekaiapi.TrackerClient, string, int, int64) (*int, error) {
 		t.Fatal("tracker fallback should not be used when snapshot already has rank")
 		return nil, nil
 	}
@@ -387,7 +387,7 @@ func TestBuildEventRecordFromSnapshotIgnoresMissingTrackerRank(t *testing.T) {
 	t.Cleanup(func() {
 		eventRecordTrackerRankLookup = originalLookup
 	})
-	eventRecordTrackerRankLookup = func(context.Context, string, int, int64) (*int, error) {
+	eventRecordTrackerRankLookup = func(context.Context, *sekaiapi.TrackerClient, string, int, int64) (*int, error) {
 		return nil, sekaiapi.ErrRankingNotFound
 	}
 

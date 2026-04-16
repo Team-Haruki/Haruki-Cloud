@@ -28,7 +28,7 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 	pjskUserID := target.PJSKUserID
 	visible := target.Visible
 
-	resp, err := sekaiapi.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
+	resp, err := rc.App.SekaiAPI.GetUserProfile(region, pjskUserID)
 	if err != nil {
 		return nil, fmt.Errorf("获取玩家信息失败：%w", err)
 	}

@@ -156,7 +156,11 @@ func (sekaiHandlers) EventRecordHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			return makeResolvedCmd(ctx, parser.ModuleEvent, "event-record"), nil
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleEvent, "event-record", params), nil
 		},
 	}
 }

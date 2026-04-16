@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (c *Controller) ResolvePhoto(query PhotoQuery) (*PhotoResult, error) {
@@ -169,6 +169,7 @@ func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[st
 	} else {
 		replaceWithMySekaiDataSource(profile, merged)
 	}
+	stripProfileDataSourceDetails(profile)
 	if updated, ok := merged["userMysekaiGamedata"].(map[string]any); ok {
 		if level := intNumber(updated["mysekaiRank"], 0); level > 0 {
 			profile.MysekaiLevel = &level
@@ -186,14 +187,19 @@ func replaceWithMySekaiDataSource(profile *drawing.ProfileCardRequest, merged ma
 		profile.DataSources = []drawing.ProfileDataSource{entry}
 		return
 	}
-	if len(profile.DataSources) == 0 {
-		return
-	}
-	mode := profile.DataSources[0].Mode
 	profile.DataSources = []drawing.ProfileDataSource{{
 		Name: "Mysekai数据",
-		Mode: mode,
 	}}
+}
+
+func stripProfileDataSourceDetails(profile *drawing.ProfileCardRequest) {
+	if profile == nil {
+		return
+	}
+	for i := range profile.DataSources {
+		profile.DataSources[i].Source = nil
+		profile.DataSources[i].Mode = nil
+	}
 }
 
 func mergeMySekaiDataSources(profile *drawing.ProfileCardRequest, merged map[string]any, replaceSingle bool) {

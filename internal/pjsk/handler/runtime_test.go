@@ -2,14 +2,21 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"haruki-cloud/config"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type runtimeSnapshotStub struct {
@@ -70,6 +77,42 @@ type runtimeSnapshotProviderStub struct {
 	resolveNeedFlags []bool
 	selectors        []renderuserdata.Selector
 }
+
+type runtimeProfileDataSourceStub struct {
+	region renderregion.Value
+}
+
+func (s runtimeProfileDataSourceStub) DefaultRegion() renderregion.Value { return s.region }
+
+func (runtimeProfileDataSourceStub) GetHonorByID(int) (*masterdata.Honor, error) {
+	return nil, errors.New("not found")
+}
+
+func (runtimeProfileDataSourceStub) GetHonorGroupByID(int) (*masterdata.HonorGroup, error) {
+	return nil, errors.New("not found")
+}
+
+func (runtimeProfileDataSourceStub) GetBondsHonorByID(int) (*masterdata.BondsHonor, error) {
+	return nil, errors.New("not found")
+}
+
+func (runtimeProfileDataSourceStub) GetGameCharacterUnitByID(int) (*masterdata.GameCharacterUnit, bool) {
+	return nil, false
+}
+
+func (runtimeProfileDataSourceStub) GetPlayerFrameByID(int) (*masterdata.PlayerFrame, error) {
+	return nil, errors.New("not found")
+}
+
+func (runtimeProfileDataSourceStub) GetPlayerFrameGroupByID(int) (*masterdata.PlayerFrameGroup, error) {
+	return nil, errors.New("not found")
+}
+
+func (runtimeProfileDataSourceStub) GetCardByID(int) (*masterdata.Card, error) {
+	return nil, errors.New("not found")
+}
+
+func (runtimeProfileDataSourceStub) GetEventIDByHonorID(int) int { return 0 }
 
 func (p *runtimeSnapshotProviderStub) Resolve(_ context.Context, selector renderuserdata.Selector, opts renderuserdata.ResolveOptions) (renderuserdata.Snapshot, error) {
 	p.resolveCount++
@@ -191,6 +234,74 @@ func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
 	}
 }
 
+func TestRequestContextResolveSnapshotUsesSelectedBindingFromParams(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"cn": {"11111111111111": "CN User"},
+			"jp": {"33333333333333": "JP User"},
+		},
+	})
+
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "33333333333333"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+
+	_, expectedBinding, err := service.ResolveUserBindingBySelector(ctx, "qq", "42", "", "u1")
+	if err != nil {
+		t.Fatalf("resolve selector binding: %v", err)
+	}
+
+	params, err := json.Marshal(userQueryParams{
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "u1",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	provider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{},
+	}
+
+	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:  service,
+		Snapshots: provider,
+	})
+
+	binding, _ := rc.GetBinding()
+	if binding == nil || binding.PJSKUserID != expectedBinding.PJSKUserID {
+		t.Fatalf("unexpected selected binding: %+v", binding)
+	}
+
+	if snapshot := rc.ResolveSnapshot(false); snapshot == nil {
+		t.Fatal("expected selected snapshot")
+	}
+	if len(provider.selectors) != 1 {
+		t.Fatalf("expected one snapshot resolve, got %d", len(provider.selectors))
+	}
+	selector := provider.selectors[0]
+	if selector.PJSKUserID != expectedBinding.PJSKUserID {
+		t.Fatalf("expected selected binding uid %q, got %q", expectedBinding.PJSKUserID, selector.PJSKUserID)
+	}
+	if selector.Region != renderregion.CN {
+		t.Fatalf("expected selected binding region cn, got %+v", selector.Region)
+	}
+}
+
 func TestResolveCardBoxDetailedProfileDoesNotFallbackToProfileControllerSnapshot(t *testing.T) {
 	profileController := renderprofile.NewController(nil, nil, nil, &runtimeSnapshotStub{
 		detail: &drawing.DetailedProfileCardRequest{
@@ -209,5 +320,90 @@ func TestResolveCardBoxDetailedProfileDoesNotFallbackToProfileControllerSnapshot
 
 	if detail := resolveCardBoxDetailedProfile(rc); detail != nil {
 		t.Fatalf("expected nil detail without snapshot provider, got %+v", detail)
+	}
+}
+
+func TestBuildPublicMusicProfilesUsesSelectorFromRequestParams(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"jp": {"11111111111111": "JP User"},
+			"cn": {"22222222222222": "CN User"},
+		},
+	})
+
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "22222222222222"); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+
+	params, err := json.Marshal(userQueryParams{
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "u2",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	var requestedPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		switch r.URL.Path {
+		case "/api/cn/22222222222222/profile":
+			_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+				User: sekaiapi.AnotherUser{
+					UserID: 22222222222222,
+					Name:   "CN User",
+				},
+			})
+		case "/api/jp/11111111111111/profile":
+			_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+				User: sekaiapi.AnotherUser{
+					UserID: 11111111111111,
+					Name:   "JP User",
+				},
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	oldBaseURL := config.Cfg.SekaiAPI.BaseURL
+	oldToken := config.Cfg.SekaiAPI.Token
+	config.Cfg.SekaiAPI.BaseURL = server.URL
+	config.Cfg.SekaiAPI.Token = "test-token"
+	defer func() {
+		config.Cfg.SekaiAPI.BaseURL = oldBaseURL
+		config.Cfg.SekaiAPI.Token = oldToken
+	}()
+
+	profileController := renderprofile.NewController(runtimeProfileDataSourceStub{region: renderregion.JP}, nil, nil, nil)
+	profileController.RegisterSource(runtimeProfileDataSourceStub{region: renderregion.CN})
+
+	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Bindings: service,
+		Profiles: profileController,
+		SekaiAPI: sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
+	})
+
+	detail, card := buildPublicMusicProfiles(rc)
+	if requestedPath != "/api/cn/22222222222222/profile" {
+		t.Fatalf("expected selected profile request path, got %q", requestedPath)
+	}
+	if detail == nil || detail.Nickname != "CN User" {
+		t.Fatalf("unexpected detailed profile: %+v", detail)
+	}
+	if card == nil || card.Profile == nil || card.Profile.Nickname != "CN User" {
+		t.Fatalf("unexpected profile card: %+v", card)
 	}
 }

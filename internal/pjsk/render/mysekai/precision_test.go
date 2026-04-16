@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 const largeMySekaiID int64 = 9007199254740993
@@ -86,6 +86,12 @@ func TestNormalizeValuePreservesLargeIntegerPrecisionInJSONB(t *testing.T) {
 	}
 	if got := int64Number(payload["thumbnailId"], 0); got != largeMySekaiID {
 		t.Fatalf("unexpected thumbnailId value: got=%d want=%d", got, largeMySekaiID)
+	}
+}
+
+func TestDBMasterdataFileMapIncludesMysekaiPhenomena(t *testing.T) {
+	if got := fileToTable["mysekaiPhenomenas.json"]; got != "mysekaiphenomenas" {
+		t.Fatalf("unexpected db table mapping for mysekaiPhenomenas.json: %q", got)
 	}
 }
 

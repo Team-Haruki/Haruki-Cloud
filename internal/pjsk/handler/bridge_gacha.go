@@ -3,9 +3,9 @@ package handler
 import (
 	"fmt"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/gacha"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {

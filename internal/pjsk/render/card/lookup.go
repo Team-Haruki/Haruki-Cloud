@@ -2,12 +2,12 @@ package card
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type ImageResult struct {
@@ -50,29 +50,26 @@ func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregi
 		return nil
 	}
 
-	base := filepath.Join("character", "member", card.AssetBundleName)
-
 	type candidate struct {
-		primary  string
-		fallback string
+		fileName string
 	}
 	var candidates []candidate
 
 	if !onlyHasAfterTrainingCard(card) {
 		candidates = append(candidates, candidate{
-			primary: filepath.Join(base, "card_normal.png"),
+			fileName: "card_normal.png",
 		})
 	}
 	if card.CardRarityType == "rarity_3" || card.CardRarityType == "rarity_4" {
 		candidates = append(candidates, candidate{
-			primary: filepath.Join(base, "card_after_training.png"),
+			fileName: "card_after_training.png",
 		})
 	}
 
 	seen := make(map[string]struct{}, len(candidates))
 	paths := make([]string, 0, len(candidates))
 	for _, item := range candidates {
-		path := resolveCardOriginalImagePath(helper, region, item.primary, item.fallback)
+		path := common.ResolveCardMemberImagePath(helper, region, card.AssetBundleName, item.fileName)
 		if strings.TrimSpace(path) == "" {
 			continue
 		}
@@ -83,25 +80,4 @@ func resolveCardOriginalImagePaths(helper *assets.AssetHelper, region renderregi
 		paths = append(paths, path)
 	}
 	return paths
-}
-
-func resolveCardOriginalImagePath(helper *assets.AssetHelper, region renderregion.Value, relPaths ...string) string {
-	candidates := make([]string, 0, len(relPaths)*3)
-	for _, rel := range relPaths {
-		cleanRel := filepath.ToSlash(strings.TrimSpace(rel))
-		if cleanRel == "" {
-			continue
-		}
-		for _, base := range assets.RegionAssetDirs(region.String()) {
-			candidates = append(candidates, filepath.ToSlash(filepath.Join(base, cleanRel)))
-		}
-		// Keep compatibility with older local layouts used by tests and ad-hoc assets.
-		candidates = append(candidates, cleanRel)
-	}
-	if helper != nil {
-		if local := helper.FirstExisting(candidates...); local != "" {
-			return filepath.ToSlash(local)
-		}
-	}
-	return assets.ResolveRegionAssetPath(helper, region.String(), relPaths...)
 }

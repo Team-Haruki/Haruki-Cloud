@@ -3,7 +3,7 @@ package handler
 import (
 	"testing"
 
-	onebot11 "haruki-cloud/api/bot/onebot11"
+	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 )
 
 func TestNormalizeDeckUserFacingError(t *testing.T) {

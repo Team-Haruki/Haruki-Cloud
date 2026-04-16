@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"haruki-cloud/internal/pjsk/render/common"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 const (

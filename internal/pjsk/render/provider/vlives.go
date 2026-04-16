@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // VLive holds a virtual live entry.

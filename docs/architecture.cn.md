@@ -58,7 +58,6 @@ Haruki-Cloud/
 │   └── pjsk/                     #   PJSK 核心子系统
 │       ├── parser/               #     指令解析与提取能力
 │       ├── handler/              #     命令注册、端点归属、执行桥接
-│       ├── chardata/             #     角色昵称加载器
 │       └── render/               #     渲染与执行子系统
 │
 ├── config/                       # ── 配置 ──
@@ -134,10 +133,6 @@ redis:                     # Redis 连接
 
 pjsk:                      # PJSK 数据库
   db_url: "..."
-  parser:                  # 指令解析器配置
-    chardata_region: "jp"
-    chardata_refresh_interval: "24h"
-
 pjsk_render:               # 渲染引擎配置
   drawing:
     base_url: ""           # Drawing API 地址
@@ -384,13 +379,13 @@ Schema 定义在 `ent/<module>/schema/` 下，通过 `go generate` 自动生成 
 internal/pjsk/parser/
 ├── global_resolver.go    # 兼容型全局解析器，供测试、调试和历史辅助逻辑使用
 ├── extractor.go          # Extractor：从文本中提取区服、角色、稀有度、属性、年份、uidArg 等
-├── parser.go             # CardParser + CardQueryInfo
-├── music_parser.go       # MusicParser + MusicQueryInfo
 ├── event_parser.go       # EventParser + EventQueryInfo
 ├── command_parser.go     # 其他命令解析辅助
 ├── utils.go              # isNumeric 等工具函数
-└── parser_test.go        # 测试
+└── parser_test.go        # 测试（聚焦 Extractor）
 ```
+
+> 历史上曾存在 `parser.go` (`CardParser`/`CardQueryInfo`)，已在 R38 删除：功能由 `internal/pjsk/render/card/parser.go` 独立实现覆盖，原版本零外部调用方。
 
 **核心概念：**
 - `GlobalCommandResolver.Resolve(text)` 当前主要服务测试、调试与历史辅助逻辑，不是运行时 Bot 主协议入口

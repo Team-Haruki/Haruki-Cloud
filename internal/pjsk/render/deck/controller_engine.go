@@ -3,8 +3,8 @@ package deck
 import (
 	"fmt"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.DeckRequest, error) {
@@ -127,7 +127,7 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 		option["live_type"] = "challenge"
 		option["event_id"] = nil
 	case "no_event":
-		option["algorithm"] = c.defaultNoEventAlgorithm()
+		option["algorithm"] = "all"
 		option["live_type"] = "multi"
 		option["event_id"] = nil
 	case "bonus":

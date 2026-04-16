@@ -1,7 +1,7 @@
 package vlive
 
 import (
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // DataSource provides VLive master data.

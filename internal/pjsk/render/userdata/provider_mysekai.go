@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 type MySekaiPayloadProvider interface {

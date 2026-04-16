@@ -11,7 +11,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type SekaiHandlerContext struct {
@@ -168,8 +168,6 @@ func boolPtr(v bool) *bool {
 	return &v
 }
 
-var DefaultRegions = AllRegions
-
 var registerOnce sync.Once
 
 type sekaiHandlers struct{}
@@ -198,7 +196,7 @@ func registerSekaiCommandHandlers() {
 			skHandler := results[0].Interface().(SekaiCommandHandler)
 
 			if len(skHandler.Regions) == 0 {
-				skHandler.Regions = DefaultRegions
+				skHandler.Regions = AllRegions
 			}
 			if len(skHandler.PrefixArgs) == 0 {
 				skHandler.PrefixArgs = []string{""}

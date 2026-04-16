@@ -1692,3 +1692,226 @@ card, education, event, gacha, honor, music, profile, stamp, vlive
 | Deck 重试/断路器 | 已实装 |
 | 重构完成度 | ~97-98% |
 | 整体交付完成度 | ~93-95% |
+
+---
+
+## 包组织重构阶段（2026-04-16）
+
+在前期文件拆分和代码审计基础上，对项目整体包组织进行系统性重构，解决架构违规、包归属错误和命名冲突问题。
+
+### 阶段概览
+
+本轮共 6 个提交，分三个维度推进：
+
+1. **API 层薄化**（render 层文件拆分）
+2. **utils/ 包治理**（移除领域代码、解耦框架依赖）
+3. **internal/ 架构修正**（分层违规、命名冲突、共享类型归属）
+
+---
+
+### R30：render 层文件拆分 ✅
+
+**提交**：`8340713`
+
+| 新文件 | 来源 | 提取内容 |
+|--------|------|----------|
+| `render/music/rewards_achievement.go` | `rewards.go`（597→344 行） | achievement 解码、收集、解析（12 个函数） |
+| `render/userdata/local_helpers_music.go` | `local_helpers.go`（549→268 行） | music result map 构建、compact 格式解析（14 个函数） |
+| `render/app/app_masterdata.go` | `app.go`（487→360 行） | masterdata 目录探测与分类（8 个函数） |
+
+---
+
+### R31：utils/ 单调用方包内联 ✅
+
+**提交**：`2a23759`
+
+| 变更 | 说明 |
+|------|------|
+| `utils/turnstile/` → `api/bot/auth/turnstile.go` | 仅 1 个调用方，类型降级为 unexported |
+| `utils/smtp/` → `api/bot/auth/smtp.go` | 仅 1 个调用方，类型降级为 unexported |
+| `utils/redis` 解耦 Fiber | `CacheKeyBuilder` 移到 `api/helper.go`，redis 包不再依赖 `gofiber/fiber` |
+| `utils/sekai` 解耦 Fiber | `fiber.StatusXxx` → `net/http` 标准库常量 |
+
+---
+
+### R32：utils 根包消除 ✅
+
+**提交**：`35b557d`
+
+将 `utils/enum.go`（验证常量、AliasType/BindingServer 枚举）移入 `utils/types/enum.go`。
+
+更新 5 个调用方：`api/struct.go`、`api/public/pjsk/helper.go`、`utils/query/pjsk.go`、`utils/query/chunithm.go`、`utils/censor/censor.go`。
+
+`utils/` 根目录不再包含 Go 文件。
+
+---
+
+### R33：领域客户端从 utils 迁入 internal ✅
+
+**提交**：`fefde6e`（168 文件变更）
+
+| 变更 | 文件数 | 引用数 |
+|------|--------|--------|
+| `utils/sekai/` → `internal/pjsk/sekai/` | 11 | 34 |
+| `utils/drawing/` → `internal/pjsk/drawing/` | 15 | 126 |
+
+同步更新 `.gitignore` 中的 drawing 例外规则。
+
+---
+
+### R34：分层违规修复与命名冲突消除 ✅
+
+**提交**：`08e9023`（49 文件变更）
+
+| 变更 | 说明 |
+|------|------|
+| `api/bot/onebot11/` → `internal/pjsk/onebot11/` | 消除 internal → api 反向依赖（42 个 internal 文件引用） |
+| `internal/pjsk/userdata/` → `internal/pjsk/accountdata/` | 消除与 `render/userdata` 命名冲突，与已有 `accountdata` 别名一致 |
+
+---
+
+### R35：跨层共享类型提升 ✅
+
+**提交**：`68b1453`（173 文件变更）
+
+将 `internal/pjsk/render/region/` 提升到 `internal/pjsk/region/`。
+
+region 包定义了项目全局使用的区服枚举（jp/cn/tw/en/kr），被 api、handler、render、accountdata 等所有层引用（173 处），不应嵌套在 render 子目录下。
+
+---
+
+### R36：杂项清理 ✅
+
+| 变更 | 说明 |
+|------|------|
+| `utils/crypto/` → `utils/aesgcm/` | 消除与 `internal/core/crypto`（Noise 协议）的命名混淆 |
+| 清理空目录 | 删除 `api/bot/onebot11/`、`internal/pjsk/render/region/`、`internal/pjsk/userdata/` 残留空目录 |
+
+---
+
+### 重构后 utils/ 结构
+
+```
+utils/
+├── aesgcm/       # AES-256-GCM 加解密（纯 stdlib，3 个调用方；原 crypto/）
+├── logger/       # 全局日志（21 个调用方）
+├── imagecache/   # 内容寻址图片存储（4 个调用方）
+├── redis/        # Redis 缓存操作（已解耦 Fiber）
+├── censor/       # 外部审核服务封装（5 个调用方）
+├── types/        # 共享枚举 + DTO
+└── query/        # 数据库查询 facade（4 个调用方）
+```
+
+不再包含：~~sekai/~~、~~drawing/~~、~~turnstile/~~、~~smtp/~~、~~enum.go~~、~~crypto/~~
+
+---
+
+### 重构后 internal/pjsk/ 顶层结构
+
+```
+internal/pjsk/
+├── accountdata/   # 用户绑定、profile 设置（原 userdata/）
+├── alias/         # 别名服务
+├── drawing/       # Drawing 渲染服务客户端（从 utils/ 迁入）
+├── handler/       # bot 命令 bridge + sekai 命令解析
+├── meta/          # 音乐元数据
+├── onebot11/      # OneBot v11 消息段类型（从 api/ 迁入）
+├── parser/        # 命令解析器
+├── region/        # 区服枚举（从 render/region/ 提升）
+├── render/        # 渲染控制器 + provider + 模块
+├── requestbuilder/# 请求构建器
+└── sekai/         # Sekai 游戏 API 客户端（从 utils/ 迁入）
+```
+
+---
+
+### R37：dead code 清理与导出审计（2026-04-16）
+
+**删除的死代码：**
+
+| 文件 | 原因 |
+|------|------|
+| `handler/chara_icon.go` | 未导出函数 `charaIconPath` 在 handler 包内无调用方；`requestbuilder/birthday_helpers.go` 已有独立副本 |
+
+**导出审计结论：**
+
+| 包 | 结果 |
+|----|------|
+| `onebot11/` | ✅ 全部导出均有外部调用方 |
+| `parser/` | `CardParser` 系列（`parser.go`）外部零调用方（`render/card/parser.go` 有独立实现）→ R38 确认包内亦无测试/调用，已整文件删除 |
+| `accountdata/` | `ProfileBGCleaner`/`BindingResolver` 仅内部使用；`BindingService` 大量细粒度方法仅测试调用，外部统一走 `ExecuteProfileBindingCommand`/`ExecuteProfileSettingsCommand` 入口 |
+
+**清理的空目录：**
+- `utils/crypto/`（已在 R36 重命名为 `utils/aesgcm/`，空壳遗留）
+
+---
+
+### 架构验证
+
+| 检查项 | 状态 |
+|--------|------|
+| `go build ./...` | ✅ |
+| `internal/` 不引用 `api/` | ✅（0 处） |
+| `internal/` 不引用 `cmd/` | ✅（0 处） |
+| `utils/` 不引用 `gofiber/fiber` | ✅（0 处） |
+| `utils/` 根包无 Go 文件 | ✅ |
+| 无包命名冲突 | ✅（userdata 冲突已消除） |
+
+---
+
+### R38：internal/ 全面审计（2026-04-16）
+
+对 `internal/` 目录进行了全面审计，确认无分层违规、无空目录、无 TODO/FIXME/HACK 注释。以下为发现的可优化项。
+
+#### 死代码
+
+| 项目 | 严重度 | 状态 | 说明 |
+|------|--------|------|------|
+| `chardata/` 死包 | **高** | ✅ 已删除 | 整个包从未被任何 Go 文件 import，实际已被硬编码 nickname map 替代。一并移除 `config.PJSKParserConfig`（`chardata_region`/`chardata_refresh_interval`）及示例 YAML 条目 |
+
+#### 重复代码
+
+| # | 项目 | 严重度 | 状态 | 说明 |
+|---|------|--------|------|------|
+| 1 | `mergeParams` 重复 | **中** | ✅ 已合并 | `requestbuilder.MergeParams` 提升为导出函数，统一日志格式；`handler/bridge.go` 用 `var mergeParams = requestbuilder.MergeParams` 别名保留 52 处调用点短名 |
+| 2 | 角色昵称 map + helpers 三处重复 | **中** | ✅ 已合并 | 新建 `render/common/nicknames.go` 存放 `DefaultNicknames`（26 角色 ~200 条别名）、`CloneNicknames`、`NormalizeNicknameQuery`；`card/mysekai/music` 各自保留 package-local alias 保持短调用名（`defaultNicknames = common.DefaultNicknames` 等），消除真实重复代码约 90 行 |
+| 3 | `decodeJSONUseNumber` 重复 | **低中** | ✅ 已合并 | `common.DecodeJSONUseNumber` 作为权威实现；两个消费包的 `json_decode.go` 缩成 2 行 alias stub |
+
+#### 包命名与组织
+
+| 项目 | 严重度 | 状态 | 说明 |
+|------|--------|------|------|
+| `handler/sekai` vs `pjsk/sekai` 包名冲突 | **中** | ✅ 已统一 alias | `pjsk/sekai` 的 import alias 全部统一为 `sekaiapi`（原混用 `sekaiutils`/`sekaiutil`/`sekaiapi`），消除 13 文件不一致；`handler/sekai` 包名保留（仅 2 处外部调用方、均已用 `sekaihandler` alias） |
+| `pjsk/sekai` 全局单例模式 | **低中** | ✅ 已改造 | 3 个 `sync.Once` 客户端替换为导出构造器 `NewSekaiAPIClient`/`NewToolboxClient`/`NewTrackerClient`，通过 `renderapp.App.SekaiAPI/Toolbox/Tracker` 字段注入；所有方法加 `c == nil → ErrClientNotConfigured` 守卫以兼容仅构造部分字段的测试；11 处 handler 调用点迁移，`cmd/server/init_services.go` 改为显式构造并注入 |
+| `render/userdata` 与 `accountdata` 概念混淆 | **低** | 待处理 | 重命名 `userdata→accountdata` 后，`render/userdata`（游戏快照）仍存在，名称易混淆。改为 `render/snapshot` 更清晰，但涉及 ~20 文件 import 变更 |
+
+#### 文件命名与大小
+
+| 项目 | 严重度 | 状态 | 说明 |
+|------|--------|------|------|
+| `render/profile/controller_api.go` 命名误导 | **低** | ✅ 已改名 | 文件重命名为 `controller_live.go`（与同目录 `live_adapter.go` 命名风格统一），"API" 原指 Sekai HTTP 响应而非项目 `api/` 层 |
+| `AllRegions` 注释 + `DefaultRegions` 冗余 | **低** | ✅ 已清理 | `AllRegions` 注释改为描述用途（非 "returns"）；`DefaultRegions = AllRegions` 删除，唯一调用点 `handler.go:200` 直接用 `AllRegions` |
+| `render/deck/controller_prepare.go` 862 行 | **低** | 待处理 | 可拆为 `controller_prepare_userdata.go`（数据准备/合并）和 `controller_prepare_profile.go`（profile preset/卡牌过滤） |
+| `render/misc` 仅 38 行 | **低** | 待处理 | 薄封装，可吸收进 `render/score` 或 `render/app`；当前属独立 bridge 入口（`bridge_misc.go`→`misc-birthday`），保留暂不造成负担 |
+
+#### 导出收窄（R37 已审计，待处理）
+
+| 项目 | 严重度 | 状态 | 说明 |
+|------|--------|------|------|
+| `parser/parser.go` CardParser | **低** | ✅ 已删除 | 整个 `parser.go` 文件（`CardParser`/`CardQueryInfo`/`QueryType*`）删除；经 grep 确认包外零调用方（`render/card/parser.go` 有独立实现），同包内也无测试覆盖或使用 |
+| `accountdata/` 导出收窄 | **低** | 待处理 | `ProfileBGCleaner`/`BindingResolver` 可降为 unexported；`BindingService` 细粒度方法仅测试调用 |
+
+---
+
+### 架构验证状态
+
+| 检查项 | 状态 |
+|--------|------|
+| `go build ./...` | ✅ |
+| `internal/` 不引用 `api/` | ✅（0 处） |
+| `internal/` 不引用 `cmd/` | ✅（0 处） |
+| `utils/` 不引用 `gofiber/fiber` | ✅（0 处） |
+| `utils/` 根包无 Go 文件 | ✅ |
+| 无包命名冲突 | ✅（userdata 冲突已消除；handler/sekai vs pjsk/sekai 仅需 alias，非编译错误） |
+| 无空目录 | ✅ |
+| 无 TODO/FIXME/HACK | ✅（非测试代码） |

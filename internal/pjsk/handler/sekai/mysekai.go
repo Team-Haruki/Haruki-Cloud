@@ -203,9 +203,15 @@ func (sekaiHandlers) MysekaiDoorUpgradeHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			showAll, cleanedArgs := extractMysekaiAllFlag(args)
+			args = cleanedArgs
+			ctx.SetArgs(args)
 			params := map[string]any{}
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
+			}
+			if showAll {
+				params["show_all"] = true
 			}
 			if gateID, cleaned := extractMysekaiGateID(args); gateID != 0 {
 				resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-door-upgrade", params)

@@ -1,6 +1,6 @@
 package stamp
 
-import renderregion "haruki-cloud/internal/pjsk/render/region"
+import renderregion "haruki-cloud/internal/pjsk/region"
 
 type ListQuery struct {
 	Region        renderregion.Value `json:"region"`

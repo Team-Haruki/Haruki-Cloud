@@ -3,7 +3,7 @@ package mysekai
 import (
 	"time"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type ResourceQuery struct {
@@ -32,6 +32,7 @@ type FixtureDetailQuery struct {
 type DoorUpgradeQuery struct {
 	Region  string                      `json:"region,omitempty"`
 	Query   string                      `json:"query,omitempty"`
+	ShowAll *bool                       `json:"show_all,omitempty"`
 	Profile *drawing.ProfileCardRequest `json:"-"`
 }
 

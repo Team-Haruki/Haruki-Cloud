@@ -4,7 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
 
-	"haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/sekai"
 )
 
 // UserSettings holds all user-configurable preferences in a single JSONB value.

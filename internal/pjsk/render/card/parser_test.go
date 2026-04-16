@@ -17,10 +17,17 @@ func TestLooksLikeSingleCardQuerySupportsIDAndNicknameSequence(t *testing.T) {
 	}
 }
 
+func TestParserStrictFilterRejectsBareCardID(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+	if _, err := parser.ParseStrictFilter("1001"); err == nil {
+		t.Fatal("expected strict filter parser to reject bare card id")
+	}
+}
+
 func TestParserPreferFilterTreats25AsUnitFilter(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 
-	info, err := parser.ParsePreferFilter("25")
+	info, err := parser.ParseStrictFilter("25")
 	if err != nil {
 		t.Fatalf("ParsePreferFilter() error = %v", err)
 	}
@@ -35,7 +42,7 @@ func TestParserPreferFilterTreats25AsUnitFilter(t *testing.T) {
 func TestParserPreferFilterTreatsBare4AsRarityFilter(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 
-	info, err := parser.ParsePreferFilter("4")
+	info, err := parser.ParseStrictFilter("4")
 	if err != nil {
 		t.Fatalf("ParsePreferFilter() error = %v", err)
 	}
@@ -44,9 +51,6 @@ func TestParserPreferFilterTreatsBare4AsRarityFilter(t *testing.T) {
 	}
 	if info.Rarity != "rarity_4" {
 		t.Fatalf("unexpected rarity filter: %+v", info)
-	}
-	if LooksLikeSingleCardQueryPreferFilter("4") {
-		t.Fatal("did not expect bare 4 list query to be treated as single-card query")
 	}
 }
 
@@ -111,7 +115,7 @@ func TestParserSupportsLunabotSkillAliases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		info, err := parser.ParsePreferFilter(tt.query)
+		info, err := parser.ParseStrictFilter(tt.query)
 		if err != nil {
 			t.Fatalf("ParsePreferFilter(%q) error = %v", tt.query, err)
 		}
@@ -191,7 +195,7 @@ func TestParserSupportsApprovedAliasNicknamesBeforeAttributeKeywords(t *testing.
 	nicknames["黄桃"] = 13
 	parser := NewParser(nicknames)
 
-	info, err := parser.ParsePreferFilter("黄桃")
+	info, err := parser.ParseStrictFilter("黄桃")
 	if err != nil {
 		t.Fatalf("ParsePreferFilter(黄桃) error = %v", err)
 	}
@@ -206,10 +210,122 @@ func TestParserSupportsApprovedAliasNicknamesBeforeAttributeKeywords(t *testing.
 	}
 }
 
+func TestParserIgnoresNumericApprovedAliases(t *testing.T) {
+	nicknames := cloneNicknames(defaultNicknames)
+	nicknames["2"] = 2
+	parser := NewParser(nicknames)
+
+	if _, err := parser.ParseStrictFilter("24"); err == nil {
+		t.Fatal("expected numeric alias collision input to be rejected in filter mode")
+	}
+}
+
+func TestParserSupportsUnitAndRarityWithoutNumericAliasHijack(t *testing.T) {
+	nicknames := cloneNicknames(defaultNicknames)
+	nicknames["4"] = 4
+	parser := NewParser(nicknames)
+
+	info, err := parser.ParseStrictFilter("ws 4")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter(ws 4) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.Unit != "theme_park" || info.Rarity != "rarity_4" {
+		t.Fatalf("unexpected ws+4 parse result: %+v", info)
+	}
+	if info.CharacterID != 0 || info.BanCharID != 0 {
+		t.Fatalf("did not expect numeric alias to hijack ws 4: %+v", info)
+	}
+}
+
+func TestParserSupportsAttributeAndCharacterCombination(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParseStrictFilter("绿 mnr")
+	if err != nil {
+		t.Fatalf("ParseStrictFilter(绿 mnr) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.Attr != "pure" || info.CharacterID != 5 {
+		t.Fatalf("unexpected attr/character parse result: %+v", info)
+	}
+}
+
+func TestParserTreatsBare25AsSchoolRefusalUnitFilter(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParseStrictFilter("25")
+	if err != nil {
+		t.Fatalf("ParseStrictFilter(25) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.Unit != "school_refusal" {
+		t.Fatalf("unexpected unit parse result: %+v", info)
+	}
+	if info.CharacterID != 0 {
+		t.Fatalf("did not expect 25 to resolve as character in strict filter mode: %+v", info)
+	}
+}
+
+func TestParserIgnoresNumericAliasWhenParsingUnitAndRarity(t *testing.T) {
+	nicknames := cloneNicknames(defaultNicknames)
+	nicknames["4"] = 4
+	parser := NewParser(nicknames)
+
+	info, err := parser.ParseStrictFilter("ws 4")
+	if err != nil {
+		t.Fatalf("ParseStrictFilter(ws 4) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.Unit != "theme_park" || info.Rarity != "rarity_4" {
+		t.Fatalf("unexpected unit/rarity parse result: %+v", info)
+	}
+	if info.CharacterID != 0 || info.BanCharID != 0 {
+		t.Fatalf("did not expect numeric alias to hijack unit+rarity parsing: %+v", info)
+	}
+}
+
+func TestParserDoesNotTreatNicknamePlusRarityAsBanEvent(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParseStrictFilter("宁宁4星")
+	if err != nil {
+		t.Fatalf("ParsePreferFilter(宁宁4星) error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.CharacterID != 15 {
+		t.Fatalf("unexpected character parse result: %+v", info)
+	}
+	if info.Rarity != "rarity_4" {
+		t.Fatalf("unexpected rarity parse result: %+v", info)
+	}
+	if info.BanCharID != 0 || info.BanSeq != 0 {
+		t.Fatalf("did not expect ban event parse result: %+v", info)
+	}
+}
+
+func TestParserRejectsUnparsedRarityDigits(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	if _, err := parser.ParseStrictFilter("4 3"); err == nil {
+		t.Fatal("expected leftover rarity digits to be rejected")
+	}
+}
+
 func TestParserDoesNotExtractSingleRuneAttributeWhenTightlyJoinedBeforeCharacter(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 
-	info, err := parser.ParsePreferFilter("草草薙宁宁")
+	info, err := parser.ParseStrictFilter("草草薙宁宁")
 	if err != nil {
 		t.Fatalf("ParsePreferFilter(草草薙宁宁) error = %v", err)
 	}
@@ -227,7 +343,7 @@ func TestParserDoesNotExtractSingleRuneAttributeWhenTightlyJoinedBeforeCharacter
 func TestParserDoesNotExtractSingleRuneAttributeWhenTightlyJoinedBeforeCharacterAlias(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 
-	info, err := parser.ParsePreferFilter("月望月穗波")
+	info, err := parser.ParseStrictFilter("月望月穗波")
 	if err != nil {
 		t.Fatalf("ParsePreferFilter(月望月穗波) error = %v", err)
 	}

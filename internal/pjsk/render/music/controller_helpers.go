@@ -9,9 +9,9 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) currentSnapshot() userdata.Snapshot {
@@ -38,6 +38,20 @@ func (c *Controller) resolveDetailedProfile(override *drawing.DetailedProfileCar
 		return *override
 	}
 	return c.detailedProfile(region)
+}
+
+func (c *Controller) resolveMusicListProfile(override *drawing.DetailedProfileCardRequest, region renderregion.Value) *drawing.DetailedProfileCardRequest {
+	if override != nil {
+		copy := *override
+		return &copy
+	}
+	if snapshot := c.currentSnapshot(); snapshot != nil {
+		if profile := snapshot.DetailedProfile(region); profile != nil {
+			copy := *profile
+			return &copy
+		}
+	}
+	return nil
 }
 
 func (c *Controller) profileCard(region renderregion.Value) drawing.ProfileCardRequest {

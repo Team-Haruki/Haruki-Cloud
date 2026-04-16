@@ -21,18 +21,18 @@ import (
 	"haruki-cloud/internal/pjsk/render/mysekai"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/score"
 	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/stamp"
 	"haruki-cloud/internal/pjsk/render/userdata"
 	"haruki-cloud/internal/pjsk/render/vlive"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/censor"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/utils/imagecache"
 	"haruki-cloud/utils/logger"
-	sekaiutil "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type Config struct {
@@ -55,6 +55,12 @@ type Config struct {
 	MusicMetaRefreshInterval time.Duration
 	MetaLoader               *meta.Loader
 	DeckRecommend            DeckRecommendConfig
+	// Upstream HTTP clients. Caller constructs these from its own config
+	// (see cmd/server) and passes them here so the render runtime does not
+	// depend on package-level singletons.
+	SekaiAPI *sekaiapi.SekaiAPIClient
+	Toolbox  *sekaiapi.HarukiToolboxClient
+	Tracker  *sekaiapi.TrackerClient
 }
 
 const defaultMusicMetaRefreshInterval = 30 * time.Minute
@@ -111,6 +117,9 @@ type App struct {
 	MySekaiPayloads userdata.MySekaiPayloadProvider
 	ImageCache      *imagecache.Client
 	Censor          *censor.Service
+	SekaiAPI        *sekaiapi.SekaiAPIClient
+	Toolbox         *sekaiapi.HarukiToolboxClient
+	Tracker         *sekaiapi.TrackerClient
 	Config          Config
 }
 
@@ -169,7 +178,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewController(drawingClient)
-	skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), nil, assetHelper)
+	skController.SetTrackerIntegration(cfg.Tracker, nil, assetHelper)
 
 	var cardController *card.Controller
 	var eventController *event.Controller
@@ -197,7 +206,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		educationAdapter := education.NewProviderAdapter(masterProvider)
 
 		// Initialize controllers with provider adapters.
-		skController.SetTrackerIntegration(sekaiutil.GetTrackerClient(), eventAdapter, assetHelper)
+		skController.SetTrackerIntegration(cfg.Tracker, eventAdapter, assetHelper)
 		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 			Enabled:        cfg.DeckRecommend.Enabled,
 			ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
@@ -310,6 +319,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Snapshots:  staticSnapshotProvider,
 		ImageCache: imagecache.NewWithStore(cfg.ImageCacheURI, cfg.ImageCacheDir, imgStore),
 		Censor:     cfg.CensorService,
+		SekaiAPI:   cfg.SekaiAPI,
+		Toolbox:    cfg.Toolbox,
+		Tracker:    cfg.Tracker,
 		Config:     cfg,
 	}
 }

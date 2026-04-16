@@ -13,8 +13,8 @@ import (
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func matchBirthdayCharacterIDs(rows []*sekaidb.Gamecharacter, query string) []int {

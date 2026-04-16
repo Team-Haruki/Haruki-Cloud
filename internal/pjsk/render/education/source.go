@@ -1,6 +1,6 @@
 package education
 
-import renderregion "haruki-cloud/internal/pjsk/render/region"
+import renderregion "haruki-cloud/internal/pjsk/region"
 
 type DataSource interface {
 	DefaultRegion() renderregion.Value

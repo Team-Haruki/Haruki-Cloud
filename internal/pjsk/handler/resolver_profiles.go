@@ -3,11 +3,11 @@ package handler
 import (
 	"context"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileCardRequest {
@@ -30,18 +30,14 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 		return nil, nil
 	}
 
-	queryParams := userQueryParams{
-		Mode:           "self",
-		Platform:       rc.Platform,
-		PlatformUserID: rc.PlatformUserID,
-	}
+	queryParams := rc.requestScopedSelfQuery()
 	target, err := resolveGameTarget(rc.Ctx, queryParams, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {
 		return nil, nil
 	}
 	region := resolvedTargetRegion(rc.RegionStr, target)
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil, nil
 	}
@@ -55,7 +51,7 @@ func buildPublicMusicProfilesFromResolvedTarget(
 	region string,
 	platform string,
 	platformUserID string,
-	resp *sekaiutils.GetAnotherProfileResponse,
+	resp *sekaiapi.GetAnotherProfileResponse,
 	app *renderapp.App,
 ) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
 	if app == nil || app.Profiles == nil || resp == nil {
@@ -93,7 +89,7 @@ func buildPublicProfileCardForTarget(ctx context.Context, target resolvedGameTar
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := app.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil
 	}

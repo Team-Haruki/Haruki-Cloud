@@ -8,14 +8,14 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
-	sekai "haruki-cloud/utils/sekai"
+	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 
 func logProfilePayloadDebug(source string, payload *drawing.ProfileRequest) {
@@ -153,14 +153,10 @@ func (c *Controller) buildLeaderImagePathFromSource(source DataSource, cardID in
 	if err != nil || card == nil || strings.TrimSpace(card.AssetBundleName) == "" {
 		return fallback
 	}
-	imageType := "normal"
-	if afterTraining {
-		imageType = "after_training"
+	if path := common.ResolveCardThumbnailPath(helper, region, card.AssetBundleName, afterTraining); strings.TrimSpace(path) != "" {
+		return path
 	}
-	return assets.ResolveRegionAssetPath(helper, region.String(),
-		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", card.AssetBundleName, imageType)),
-		filepath.Join("character", "member", card.AssetBundleName, "card_normal.png"),
-	)
+	return fallback
 }
 
 func (c *Controller) buildProfileImagePathFromSource(
@@ -275,6 +271,7 @@ func (c *Controller) buildHonors(source DataSource, region renderregion.Value, p
 			HonorID:             honorID,
 			HonorLevel:          item.HonorLevel,
 			IsMain:              item.Seq == 1,
+			BondsHonorViewType:  item.BondsHonorViewType,
 			BondsHonorWordID:    item.BondsHonorWordId,
 			FcOrApLevelOverride: fcApLevels[honorID],
 		})

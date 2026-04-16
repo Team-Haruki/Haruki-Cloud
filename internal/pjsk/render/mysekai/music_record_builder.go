@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // BuildMusicRecordRequest builds the request for rendering MySekai music record view.

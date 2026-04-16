@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type trackerScoreSample struct {

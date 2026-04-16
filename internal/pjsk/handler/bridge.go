@@ -2,17 +2,20 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	"haruki-cloud/utils/logger"
+	"haruki-cloud/internal/pjsk/requestbuilder"
 )
+
+// mergeParams aliases requestbuilder.MergeParams so all bridge call sites can
+// keep using the short local name while sharing one implementation.
+var mergeParams = requestbuilder.MergeParams
 
 // Execute routes a ResolvedCommand to the corresponding execution controller
 // and returns a OneBot message or an error.
@@ -122,14 +125,3 @@ func assetImageMessage(ctx context.Context, path string, app *renderapp.App, gro
 	return imageMessage(ctx, data, app, group)
 }
 
-// mergeParams unmarshals the JSON params from ResolvedCommand into the target struct,
-// allowing handler-set fields to override defaults. Fields not present in params
-// remain at their zero/pre-set values.
-func mergeParams(params json.RawMessage, target any) {
-	if len(params) == 0 {
-		return
-	}
-	if err := json.Unmarshal(params, target); err != nil {
-		logger.Warnf("bridge: failed to parse command params into %T: %v (raw_len=%d)", target, err, len(params))
-	}
-}

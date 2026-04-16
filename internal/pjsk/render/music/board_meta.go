@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"sort"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) loadMusicBoardMetaMap(region string) map[int][]drawing.MusicMetaInfo {

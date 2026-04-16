@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type musicApprovedAliasProvider interface {

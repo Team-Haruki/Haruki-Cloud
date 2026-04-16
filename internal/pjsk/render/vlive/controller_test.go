@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type vliveContextKey string

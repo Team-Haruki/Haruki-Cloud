@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/query"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
@@ -18,7 +18,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 
 	region := regionWithDefault(rc.Cmd.Region)
 
-	var dataType sekaiutils.ToolboxDataType
+	var dataType sekaiapi.ToolboxDataType
 	var label string
 	var uid int64
 	var platform string
@@ -62,7 +62,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		}
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
-		dataType = sekaiutils.ToolboxDataTypeMySekai
+		dataType = sekaiapi.ToolboxDataTypeMySekai
 		label = "MySekai"
 		pjskUID = binding.PJSKUserID
 		bindingVisible = binding.Visible
@@ -85,7 +85,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		}
 		platform = p.Platform
 		platformUserID = p.PlatformUserID
-		dataType = sekaiutils.ToolboxDataTypeSuite
+		dataType = sekaiapi.ToolboxDataTypeSuite
 		label = "Suite"
 		pjskUID = binding.PJSKUserID
 		bindingVisible = binding.Visible
@@ -97,7 +97,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		bindingServer = region
 	}
 
-	raw, err := sekaiutils.GetToolboxClient().GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
+	raw, err := rc.App.Toolbox.GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
 		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
 	}

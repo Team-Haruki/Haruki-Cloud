@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // buildMapResourceDrops builds the resource drops list for a single map site.

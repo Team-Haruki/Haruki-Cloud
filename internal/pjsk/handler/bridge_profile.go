@@ -3,11 +3,10 @@ package handler
 import (
 	"fmt"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/profile"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	accountdata "haruki-cloud/internal/pjsk/userdata"
-	sekaiutils "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 func executeProfile(rc *RequestContext) (onebot11.Message, error) {
@@ -25,7 +24,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		}
 		region = resolvedTargetRegion(region, target)
 
-		resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+		resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
 		if err != nil {
 			return nil, fmt.Errorf("获取玩家信息失败：%w", err)
 		}

@@ -10,7 +10,8 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/card"
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	"haruki-cloud/internal/pjsk/render/common"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
@@ -35,6 +36,9 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 
 	if updatedResources, ok := mySekaiMap["updatedResources"].(map[string]any); ok {
 		for key, value := range updatedResources {
+			if shouldPreserveSuiteSnapshotKey(key) {
+				continue
+			}
 			// Don't overwrite a non-empty suite array with an empty mysekai delta.
 			if existing, exists := baseMap[key]; exists {
 				if existingSlice, ok := existing.([]any); ok && len(existingSlice) > 0 {
@@ -50,6 +54,9 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		if key == "updatedResources" {
 			continue
 		}
+		if !shouldMergeMySekaiTopLevelKey(key) {
+			continue
+		}
 		baseMap[key] = value
 	}
 
@@ -58,6 +65,34 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		return nil, fmt.Errorf("encode merged mysekai snapshot: %w", err)
 	}
 	return merged, nil
+}
+
+func shouldPreserveSuiteSnapshotKey(key string) bool {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return false
+	}
+	if strings.HasPrefix(key, "userMysekai") || strings.HasPrefix(key, "mysekai") {
+		return false
+	}
+	switch key {
+	case "userGamedata", "userProfile", "userDecks", "userCards", "userAreas", "userCharacters", "userHonors":
+		return true
+	default:
+		return false
+	}
+}
+
+func shouldMergeMySekaiTopLevelKey(key string) bool {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return false
+	}
+	switch key {
+	case "now", "upload_time", "source", "local_source":
+		return true
+	}
+	return strings.HasPrefix(key, "userMysekai") || strings.HasPrefix(key, "mysekai")
 }
 
 func resolveLeaderImagePath(ctx context.Context, sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, region renderregion.Value, cardID int, afterTraining bool) string {
@@ -80,16 +115,7 @@ func resolveLeaderImagePath(ctx context.Context, sekaiClient *sekaiDB.Client, as
 	if strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
-
-	imageType := "normal"
-	if afterTraining {
-		imageType = "after_training"
-	}
-
-	regionStr := renderregion.WithDefault(region).String()
-	return assets.ResolveRegionAssetPath(assetHelper, regionStr,
-		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", assetBundleName, imageType)),
-		filepath.Join("character", "member", assetBundleName, "card_normal.png"))
+	return common.ResolveCardThumbnailPath(assetHelper, renderregion.WithDefault(region), assetBundleName, afterTraining)
 }
 
 func SelectProfileImageCardID(profileImageType string, profileImageID, leaderCardID int) int {

@@ -5,12 +5,12 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
 )
 
 func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.Value, recType string, query AutoQuery, option map[string]any, preparedRaw *userdata.RawUserData, result *RecommendResult, musicCompareSelections []MusicCompareSelection) (*drawing.DeckRequest, error) {
@@ -197,15 +197,8 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	if teammateScoreUp, ok := optionFloat(option, "multi_live_teammate_score_up"); ok {
 		request.MultiLiveTeammateScoreUp = float64Ptr(teammateScoreUp)
 	}
-	if boost, ok := option["boost"].(int); ok && boost >= 0 {
-		liveType := optionString(option, "live_type")
-		target := optionString(option, "target")
-		if target == "" {
-			target = "score"
-		}
-		if target == "score" && (liveType == "multi" || liveType == "solo" || liveType == "auto") {
-			request.Boost = drawing.IntPtr(boost)
-		}
+	if boost, ok := optionIntValue(option, "boost"); ok && boost >= 0 {
+		request.Boost = drawing.IntPtr(boost)
 	}
 	if lowerBound, ok := optionFloat(option, "multi_live_score_up_lower_bound"); ok {
 		request.MultiLiveScoreUpLowerBound = float64Ptr(lowerBound)

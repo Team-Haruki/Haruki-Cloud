@@ -11,12 +11,12 @@ import (
 	"sync"
 
 	eventdb "haruki-cloud/database/sekai/event"
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/logger"
-	sekaiutils "haruki-cloud/utils/sekai"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -29,7 +29,7 @@ var eventRecordTrackerRankLookup = defaultEventRecordTrackerRankLookup
 // Toolbox suite data, cross-referencing with master data for event metadata.
 // Regular events come from userEvents; world bloom events come from userWorldBlooms.
 func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value) (*drawing.EventRecordRequest, error) {
-	snapshot := resolveLiveSnapshot(rc, false)
+	snapshot := rc.ResolveSnapshot(false)
 	if snapshot == nil {
 		return nil, fmt.Errorf("event record requires user data (suite snapshot unavailable)")
 	}
@@ -52,7 +52,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 			rankByEvent[userEvent.EventID] = userEvent.Rank
 		}
 	}
-	fillEventRecordTrackerRanks(rc.Ctx, region, rawData.UserGamedata.UserID, rawData.UserEvents, rankByEvent)
+	fillEventRecordTrackerRanks(rc.Ctx, rc.App.Tracker, region, rawData.UserGamedata.UserID, rawData.UserEvents, rankByEvent)
 
 	eventEntities, err := rc.App.Sekai.Event.Query().
 		Where(eventdb.ServerRegionEQ(region.String())).
@@ -142,8 +142,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	}, nil
 }
 
-func defaultEventRecordTrackerRankLookup(ctx context.Context, region string, eventID int, userID int64) (*int, error) {
-	tracker := sekaiutils.GetTrackerClient()
+func defaultEventRecordTrackerRankLookup(ctx context.Context, tracker *sekaiapi.TrackerClient, region string, eventID int, userID int64) (*int, error) {
 	if tracker == nil {
 		return nil, nil
 	}
@@ -162,6 +161,7 @@ func defaultEventRecordTrackerRankLookup(ctx context.Context, region string, eve
 
 func fillEventRecordTrackerRanks(
 	ctx context.Context,
+	tracker *sekaiapi.TrackerClient,
 	region renderregion.Value,
 	userID int64,
 	userEvents []renderuserdata.RawUserEvent,
@@ -200,9 +200,9 @@ func fillEventRecordTrackerRanks(
 
 		eventIDCopy := eventID
 		group.Go(func() error {
-			rank, err := eventRecordTrackerRankLookup(groupCtx, regionStr, eventIDCopy, userID)
+			rank, err := eventRecordTrackerRankLookup(groupCtx, tracker, regionStr, eventIDCopy, userID)
 			if err != nil {
-				if !errors.Is(err, sekaiutils.ErrRankingNotFound) {
+				if !errors.Is(err, sekaiapi.ErrRankingNotFound) {
 					logOnce.Do(func() {
 						eventRecordDebugLogger.Debugf("event record tracker rank fallback unavailable: region=%s user=%s err=%v",
 							regionStr, maskDebugID(strconv.FormatInt(userID, 10)), err)

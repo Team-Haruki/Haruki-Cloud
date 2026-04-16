@@ -13,7 +13,6 @@ import (
 	"haruki-cloud/database/chunithm/music/chunithmchartdata"
 	"haruki-cloud/database/chunithm/music/chunithmmusic"
 	"haruki-cloud/database/chunithm/music/chunithmmusicdifficulty"
-	"haruki-cloud/utils"
 	"haruki-cloud/utils/types"
 )
 
@@ -297,7 +296,7 @@ func (c *Client) GetChunithmBinding(ctx context.Context, harukiUserID int, serve
 	if harukiUserID <= 0 {
 		return nil, ErrInvalidUserID
 	}
-	if _, err := utils.ParseBindingServer(server); err != nil {
+	if _, err := types.ParseBindingServer(server); err != nil {
 		return nil, err
 	}
 
@@ -324,7 +323,7 @@ func isValidAlias(alias string) bool {
 	if alias == "" {
 		return false
 	}
-	return utf8.RuneCountInString(alias) <= utils.MaxAliasLength
+	return utf8.RuneCountInString(alias) <= types.MaxAliasLength
 }
 
 func toChunithmMusicInfo(row *entchunimusic.ChunithmMusic) types.ChunithmMusicInfo {

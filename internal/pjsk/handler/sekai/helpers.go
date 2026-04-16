@@ -3,7 +3,7 @@ package sekai
 import (
 	"encoding/json"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func makeResolvedCmd(ctx SekaiHandlerContext, module parser.TargetModule, mode string) *parser.ResolvedCommand {
@@ -32,6 +32,14 @@ func makeResolvedCmdWithParams(ctx SekaiHandlerContext, module parser.TargetModu
 	return resolved
 }
 
+func newSelfQueryParamsMap(ctx SekaiHandlerContext) (map[string]any, error) {
+	params := map[string]any{}
+	if err := embedSelfQuery(params, ctx); err != nil {
+		return nil, err
+	}
+	return params, nil
+}
+
 // embedSelfQuery resolves self-only query params from ctx and merges them
 // into the given params map so the backend can resolve the correct binding.
 func embedSelfQuery(params map[string]any, ctx SekaiHandlerContext) error {
@@ -48,7 +56,8 @@ func embedSelfQuery(params map[string]any, ctx SekaiHandlerContext) error {
 	return nil
 }
 
-// AllRegions returns all supported region values.
+// AllRegions lists every supported region; used as the default region set
+// when a SekaiCommandHandler leaves Regions empty.
 var AllRegions = []renderregion.Value{
 	renderregion.JP,
 	renderregion.CN,

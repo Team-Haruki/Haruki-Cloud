@@ -10,8 +10,8 @@ import (
 	"haruki-cloud/database/censor/namelog"
 	"haruki-cloud/database/censor/result"
 	"haruki-cloud/database/censor/shortbio"
-	"haruki-cloud/utils"
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/types"
 )
 
 type ResultStatus string
@@ -29,8 +29,8 @@ type Service struct {
 }
 
 func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool {
-	serverEnum, _ := utils.ParseBindingServer(server)
-	if name == "" || serverEnum == utils.BindingServerCN {
+	serverEnum, _ := types.ParseBindingServer(server)
+	if name == "" || serverEnum == types.BindingServerCN {
 		return true
 	}
 
@@ -97,8 +97,8 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 }
 
 func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID string, content string, server string) bool {
-	serverEnum, _ := utils.ParseBindingServer(server)
-	if content == "" || serverEnum == utils.BindingServerCN {
+	serverEnum, _ := types.ParseBindingServer(server)
+	if content == "" || serverEnum == types.BindingServerCN {
 		return true
 	}
 

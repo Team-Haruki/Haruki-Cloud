@@ -7,17 +7,16 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	sekaidb "haruki-cloud/database/sekai"
 	eventdb "haruki-cloud/database/sekai/event"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/profile"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderuserdata "haruki-cloud/internal/pjsk/render/userdata"
-	"haruki-cloud/utils/drawing"
-	sekaiutils "haruki-cloud/utils/sekai"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func formatDeckQuerySummary(q deck.AutoQuery) string {
@@ -98,7 +97,7 @@ func buildDeckDetailedProfileForTarget(rc *RequestContext, target resolvedGameTa
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, target.PJSKUserID)
+	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
 	if err != nil {
 		return nil
 	}

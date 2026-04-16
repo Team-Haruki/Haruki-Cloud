@@ -10,7 +10,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestMysekaiAliasRemap(t *testing.T) {
@@ -395,5 +395,48 @@ func TestMysekaiBlueprintHandleSupportsCompactCharacterAliases(t *testing.T) {
 	}
 	if !params.ShowID || !params.ShowAllTalks {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestMysekaiDoorUpgradeHandleSupportsShowAll(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiDoorUpgradeHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msg",
+		ArgText:    "all",
+		UserId:     "10001",
+		Platform:   "qq",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-door-upgrade" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+	if strings.TrimSpace(resolved.Query) != "" {
+		t.Fatalf("expected empty query for /msg all, got %q", resolved.Query)
+	}
+
+	var params struct {
+		ShowAll        bool   `json:"show_all"`
+		Mode           string `json:"mode"`
+		Platform       string `json:"platform"`
+		PlatformUserID string `json:"platform_user_id"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.ShowAll {
+		t.Fatalf("expected show_all params, got %+v", params)
+	}
+	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "10001" {
+		t.Fatalf("unexpected self params: %+v", params)
 	}
 }

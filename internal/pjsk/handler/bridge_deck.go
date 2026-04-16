@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/profile"
-	sekaiutils "haruki-cloud/utils/sekai"
 )
 
 type deckUserTargetParams struct {
@@ -73,7 +72,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 
 		// Build detailed profile for deck rendering from the resolved target.
 		if rc.App.Profiles != nil {
-			if resp, apiErr := sekaiutils.GetSekaiAPIClient().GetUserProfile(regionStr, target.PJSKUserID); apiErr == nil {
+			if resp, apiErr := rc.App.SekaiAPI.GetUserProfile(regionStr, target.PJSKUserID); apiErr == nil {
 				pq := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
 				if detail, buildErr := rc.App.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(pq, resp, targetSnapshot); buildErr == nil {
 					q.Profile = detail

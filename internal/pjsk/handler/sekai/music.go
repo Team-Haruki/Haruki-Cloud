@@ -2,8 +2,8 @@ package sekai
 
 import (
 	"fmt"
-	"haruki-cloud/api/bot/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"regexp"
@@ -44,7 +44,14 @@ func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
-			params := make(map[string]any)
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if resultFilter, cleaned, ok := extractMusicListResultFilter(args); ok {
+				args = cleaned
+				params["result_filter"] = resultFilter
+			}
 			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
 				args = cleaned
 				params["difficulty"] = diff
@@ -56,9 +63,6 @@ func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 				}
 			}
 			ctx.SetArgs(args)
-			if len(params) == 0 {
-				return makeResolvedCmd(ctx, parser.ModuleMusic, "music-list"), nil
-			}
 			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-list", params), nil
 		},
 	}
@@ -74,7 +78,11 @@ func (sekaiHandlers) MusicRewardsHandle() SekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-rewards"), nil
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-rewards", params), nil
 		},
 	}
 }
@@ -89,13 +97,15 @@ func (sekaiHandlers) MusicProgressHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
 			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
 				ctx.SetArgs(cleaned)
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-progress", map[string]any{
-					"difficulty": diff,
-				}), nil
+				params["difficulty"] = diff
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-progress"), nil
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-progress", params), nil
 		},
 	}
 }
@@ -136,13 +146,19 @@ func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 		},
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			params := map[string]any{}
+			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
+				args = cleaned
+				params["difficulty"] = diff
+			}
+			args = strings.TrimSpace(args)
 			noteCount, err := strconv.Atoi(args)
 			if err != nil {
 				return nil, onebot11.NewReplayError("请输入物量数值")
 			}
-			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-note-count", map[string]any{
-				"note_count": noteCount,
-			}), nil
+			ctx.SetArgs(args)
+			params["note_count"] = noteCount
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-note-count", params), nil
 		},
 	}
 }
@@ -158,15 +174,21 @@ func (sekaiHandlers) BPMHandle() SekaiCommandHandler {
 		handleFunc: func(ctx SekaiHandlerContext) (any, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
-				return nil, onebot11.NewReplayError("请输入要查询的歌曲名或ID")
+				return nil, onebot11.NewReplayError("请输入要查询的 BPM 数值")
 			}
+			params := map[string]any{}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
-				ctx.SetArgs(cleaned)
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-bpm", map[string]any{
-					"difficulty": diff,
-				}), nil
+				query = cleaned
+				params["difficulty"] = diff
 			}
-			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-bpm"), nil
+			query = strings.TrimSpace(query)
+			bpmValue, err := strconv.ParseFloat(query, 64)
+			if err != nil || bpmValue <= 0 {
+				return nil, onebot11.NewReplayError("请输入正确的 BPM 数值")
+			}
+			ctx.SetArgs(query)
+			params["bpm"] = bpmValue
+			return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-bpm", params), nil
 		},
 	}
 }
@@ -187,6 +209,38 @@ func (sekaiHandlers) MusicCoverHandle() SekaiCommandHandler {
 			}
 			return makeResolvedCmd(ctx, parser.ModuleMusic, "music-cover"), nil
 		},
+	}
+}
+
+func extractMusicListResultFilter(args string) (string, string, bool) {
+	tokens := strings.Fields(strings.TrimSpace(args))
+	for idx, token := range tokens {
+		switch normalizeMusicListResultFilterToken(token) {
+		case "not_ap":
+			return "not_ap", joinMusicListTokensExcluding(tokens, idx), true
+		case "not_fc":
+			return "not_fc", joinMusicListTokensExcluding(tokens, idx), true
+		case "not_clear":
+			return "not_clear", joinMusicListTokensExcluding(tokens, idx), true
+		}
+	}
+	return "", strings.TrimSpace(args), false
+}
+
+func normalizeMusicListResultFilterToken(token string) string {
+	normalized := strings.ToLower(strings.TrimSpace(token))
+	normalized = strings.ReplaceAll(normalized, "_", "")
+	normalized = strings.ReplaceAll(normalized, "-", "")
+	normalized = strings.ReplaceAll(normalized, " ", "")
+	switch normalized {
+	case "未ap", "未allperfect", "未全perfect", "未全p", "notap":
+		return "not_ap"
+	case "未fc", "未fullcombo", "notfc":
+		return "not_fc"
+	case "未完成", "未clear", "未通关", "notclear":
+		return "not_clear"
+	default:
+		return ""
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"haruki-cloud/database/pjsk/userbinding"
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 	"strings"
 
 	"entgo.io/ent"

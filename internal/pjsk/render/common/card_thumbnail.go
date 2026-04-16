@@ -7,8 +7,8 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type ThumbnailOptions struct {
@@ -25,6 +25,22 @@ type ThumbnailOptions struct {
 	IsPcard          bool
 }
 
+func ResolveCardMemberImagePath(helper *assets.AssetHelper, region renderregion.Value, assetBundleName string, fileName string) string {
+	assetBundleName = strings.TrimSpace(assetBundleName)
+	fileName = strings.TrimSpace(fileName)
+	if assetBundleName == "" || fileName == "" {
+		return ""
+	}
+
+	relPaths := []string{
+		filepath.Join("character", "member", assetBundleName, fileName),
+	}
+	if !strings.HasSuffix(assetBundleName, "_rip") {
+		relPaths = append(relPaths, filepath.Join("character", "member", assetBundleName+"_rip", fileName))
+	}
+	return assets.ResolveRegionAssetPath(helper, region.String(), relPaths...)
+}
+
 func ResolveCardThumbnailPath(helper *assets.AssetHelper, region renderregion.Value, assetBundleName string, trainedArt bool) string {
 	assetBundleName = strings.TrimSpace(assetBundleName)
 	if assetBundleName == "" {
@@ -38,10 +54,14 @@ func ResolveCardThumbnailPath(helper *assets.AssetHelper, region renderregion.Va
 		memberFile = "card_after_training.png"
 	}
 
-	return assets.ResolveRegionAssetPath(helper, region.String(),
+	relPaths := []string{
 		filepath.Join("thumbnail", "chara", assetBundleName+fileSuffix),
 		filepath.Join("character", "member", assetBundleName, memberFile),
-	)
+	}
+	if !strings.HasSuffix(assetBundleName, "_rip") {
+		relPaths = append(relPaths, filepath.Join("character", "member", assetBundleName+"_rip", memberFile))
+	}
+	return assets.ResolveRegionAssetPath(helper, region.String(), relPaths...)
 }
 
 func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, region renderregion.Value, opts ThumbnailOptions) drawing.CardFullThumbnailRequest {

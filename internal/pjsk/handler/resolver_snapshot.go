@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
 	"haruki-cloud/internal/pjsk/render/userdata"
 
-	accountdata "haruki-cloud/internal/pjsk/userdata"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/utils/logger"
-	sekaiutils "haruki-cloud/utils/sekai"
 )
 
 var snapshotDebugLogger = logger.NewLoggerFromGlobal("PJSKSnapshot")
@@ -21,14 +20,8 @@ var snapshotDebugLogger = logger.NewLoggerFromGlobal("PJSKSnapshot")
 // When allow_fallback=true (dev/test), a configured static snapshot provider
 // may also be included in the provider chain.
 func resolveLiveSnapshot(rc *RequestContext, needMySekai bool) userdata.Snapshot {
-	return resolveSnapshotBySelector(rc.Ctx, rc.App, userdata.Selector{
-		IMPlatform: rc.Platform,
-		IMUserID:   rc.PlatformUserID,
-		Region:     rc.Region,
-	}, userdata.ResolveOptions{
-		PreferGlobalDefault: !rc.Cmd.RegionExplicit,
-		NeedMySekai:         needMySekai,
-	})
+	selector, opts := rc.snapshotSelector(needMySekai)
+	return resolveSnapshotBySelector(rc.Ctx, rc.App, selector, opts)
 }
 
 func resolveSnapshotBySelector(ctx context.Context, app *renderapp.App, selector userdata.Selector, opts userdata.ResolveOptions) userdata.Snapshot {
@@ -84,7 +77,10 @@ func liveSnapshotProvider(app *renderapp.App) userdata.SnapshotProvider {
 		return nil
 	}
 
-	provider := userdata.NewToolboxSnapshotProvider(app.Bindings, sekaiutils.GetToolboxClient(), app.Sekai, app.Assets)
+	if app.Toolbox == nil {
+		return nil
+	}
+	provider := userdata.NewToolboxSnapshotProvider(app.Bindings, app.Toolbox, app.Sekai, app.Assets)
 	if app.MetaLoader != nil {
 		provider = provider.WithMusicMetaSource(app.MetaLoader)
 	}

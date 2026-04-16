@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
 )
 
 func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region renderregion.Value) (*drawing.MusicDetailRequest, error) {
@@ -44,7 +44,7 @@ func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region render
 		Difficulty:      *diffInfo,
 		Vocal:           *vocalInfo,
 		MusicJacketPath: b.BuildMusicJacketPath(music.AssetBundleName, region),
-		Alias:           b.buildMusicAliases(music),
+		Alias:           []string{},
 	}
 
 	if eventInfo, err := b.source.GetPrimaryEventByMusicID(music.ID); err == nil && eventInfo != nil {
@@ -109,6 +109,96 @@ func (b *Builder) BuildMusicBriefListRequest(musicIDs []int, difficulty string, 
 		RequiredDifficulty:   diff,
 		RequiredDifficulties: diff,
 	}, nil
+}
+
+func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery, region renderregion.Value) (*drawing.MusicBriefListRequest, error) {
+	if len(items) == 0 {
+		return nil, fmt.Errorf("brief list items are required")
+	}
+	region = renderregion.WithDefault(region)
+
+	list := make([]drawing.MusicBriefList, 0, len(items))
+	requiredDiff := ""
+	sameDifficulty := true
+
+	for _, item := range items {
+		if item.MusicID <= 0 {
+			continue
+		}
+		musicInfo, err := b.source.GetMusicByID(item.MusicID)
+		if err != nil || musicInfo == nil {
+			continue
+		}
+
+		diff := strings.TrimSpace(item.Difficulty)
+		level := 0
+		var diffInfo drawing.DifficultyInfo
+		if diff == "" {
+			builtInfo, err := b.buildDifficultyInfo(musicInfo.ID)
+			if err != nil {
+				continue
+			}
+			diffInfo = *builtInfo
+			level = maxMusicDifficultyLevel(diffInfo.Level)
+		} else {
+			diff = normalizeDifficulty(diff)
+			level = b.GetDifficultyLevel(musicInfo.ID, diff)
+			if level == 0 {
+				continue
+			}
+			if requiredDiff == "" {
+				requiredDiff = diff
+			} else if requiredDiff != diff {
+				sameDifficulty = false
+			}
+			diffInfo = drawing.DifficultyInfo{
+				Level:     []int{level},
+				NoteCount: []int{0},
+				HasAppend: strings.EqualFold(diff, "append"),
+				Order:     []string{diff},
+			}
+		}
+
+		list = append(list, drawing.MusicBriefList{
+			ID:              musicInfo.ID,
+			Level:           level,
+			MusicJacketPath: b.BuildMusicJacketPath(musicInfo.AssetBundleName, region),
+			MusicInfo: drawing.MusicMD{
+				ID:           musicInfo.ID,
+				Title:        b.buildDisplayMusicTitle(musicInfo, region),
+				Composer:     musicInfo.Composer,
+				Lyricist:     musicInfo.Lyricist,
+				Arranger:     musicInfo.Arranger,
+				Categories:   b.buildCategories(musicInfo.ID),
+				ReleaseAt:    musicInfo.PublishedAt,
+				IsFullLength: musicInfo.IsFullLength,
+			},
+			Difficulty: diffInfo,
+		})
+	}
+	if len(list) == 0 {
+		return nil, fmt.Errorf("no valid music data")
+	}
+
+	req := &drawing.MusicBriefListRequest{
+		MusicList: list,
+		Region:    region.String(),
+	}
+	if sameDifficulty && requiredDiff != "" {
+		req.RequiredDifficulty = requiredDiff
+		req.RequiredDifficulties = requiredDiff
+	}
+	return req, nil
+}
+
+func maxMusicDifficultyLevel(levels []int) int {
+	maxLevel := 0
+	for _, level := range levels {
+		if level > maxLevel {
+			maxLevel = level
+		}
+	}
+	return maxLevel
 }
 
 func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Music, region renderregion.Value) (*drawing.GenerateMusicChartRequest, error) {

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 // BuildTalkListRequest builds the request for rendering MySekai talk list view.

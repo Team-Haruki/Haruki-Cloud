@@ -8,7 +8,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	sekaiStamp "haruki-cloud/database/sekai/stamp"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type dbStampProvider struct {

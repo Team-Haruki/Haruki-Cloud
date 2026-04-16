@@ -151,3 +151,126 @@ func TestBondsHandleBuildsResolvedCommand(t *testing.T) {
 		})
 	}
 }
+
+func TestEducationSelfHandlersEmbedSelector(t *testing.T) {
+	tests := []struct {
+		name string
+		mode string
+		run  func() SekaiCommandHandler
+		cmd  string
+	}{
+		{name: "challenge", mode: "education-challenge", run: sekaiHandlers{}.ChallengeInfoHandle, cmd: "/挑战信息"},
+		{name: "power", mode: "education-power", run: sekaiHandlers{}.PowerBonusInfoHandle, cmd: "/加成信息"},
+		{name: "leader", mode: "education-leader", run: sekaiHandlers{}.LeaderCountHandle, cmd: "/队长统计"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := tt.run()
+			result, err := h.Handle(&handler.HandlerContext{
+				Context:    context.Background(),
+				Platform:   "qq",
+				UserId:     "42",
+				TriggerCmd: tt.cmd,
+				ArgText:    "u2",
+			})
+			if err != nil {
+				t.Fatalf("Handle() error = %v", err)
+			}
+
+			resolved, ok := result.(*parser.ResolvedCommand)
+			if !ok {
+				t.Fatalf("handler returned %T", result)
+			}
+			if resolved.Module != parser.ModuleEducation || resolved.Mode != tt.mode {
+				t.Fatalf("unexpected resolved command: %+v", resolved)
+			}
+
+			var params struct {
+				Mode           string `json:"mode"`
+				Platform       string `json:"platform"`
+				PlatformUserID string `json:"platform_user_id"`
+				Selector       string `json:"selector"`
+			}
+			if err := json.Unmarshal(resolved.Params, &params); err != nil {
+				t.Fatalf("unmarshal params: %v", err)
+			}
+			if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
+				t.Fatalf("unexpected params: %+v", params)
+			}
+		})
+	}
+}
+
+func TestAreaItemHandleEmbedsSelfSelector(t *testing.T) {
+	h := sekaiHandlers{}.AreaItemHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/区域道具",
+		ArgText:    "u2 25h miku 可爱 树 花",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params struct {
+		Mode           string `json:"mode"`
+		Platform       string `json:"platform"`
+		PlatformUserID string `json:"platform_user_id"`
+		Selector       string `json:"selector"`
+		Unit           string `json:"unit"`
+		CharacterQuery string `json:"character_query"`
+		Attr           string `json:"attr"`
+		Tree           bool   `json:"tree"`
+		Flower         bool   `json:"flower"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
+		t.Fatalf("unexpected self params: %+v", params)
+	}
+	if params.Unit != "school_refusal" || params.CharacterQuery != "miku" || params.Attr != "cute" || !params.Tree || !params.Flower {
+		t.Fatalf("unexpected area item params: %+v", params)
+	}
+}
+
+func TestBondsHandleEmbedsSelfSelector(t *testing.T) {
+	h := sekaiHandlers{}.BondsHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/羁绊",
+		ArgText:    "u2 初音未来",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved, ok := result.(*parser.ResolvedCommand)
+	if !ok {
+		t.Fatalf("handler returned %T", result)
+	}
+
+	var params struct {
+		Mode           string `json:"mode"`
+		Platform       string `json:"platform"`
+		PlatformUserID string `json:"platform_user_id"`
+		Selector       string `json:"selector"`
+		CharacterQuery string `json:"character_query"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" || params.CharacterQuery != "初音未来" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}

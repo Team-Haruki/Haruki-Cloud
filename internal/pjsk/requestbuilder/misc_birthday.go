@@ -12,8 +12,8 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
-	"haruki-cloud/utils/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type miscBirthdaySelection struct {
@@ -194,7 +194,7 @@ func BuildMiscBirthdayRequest(ctx context.Context, r *parser.ResolvedCommand, ap
 func normalizeBirthdaySelection(r *parser.ResolvedCommand) (miscBirthdaySelection, error) {
 	selection := miscBirthdaySelection{}
 	if r != nil {
-		mergeParams(r.Params, &selection)
+		MergeParams(r.Params, &selection)
 	}
 	selection.Query = strings.TrimSpace(selection.Query)
 	if selection.Cid > 0 || selection.UpcomingIndex > 0 || selection.Query != "" {

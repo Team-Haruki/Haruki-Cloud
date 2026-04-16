@@ -5,7 +5,7 @@
 package provider
 
 import (
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // MasterDataProvider is the top-level interface that aggregates all

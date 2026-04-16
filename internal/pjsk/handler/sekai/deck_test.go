@@ -1557,6 +1557,54 @@ func TestMysekaiDeckHandleRecognizesFixedCharacterAlias(t *testing.T) {
 	}
 }
 
+func TestNoEventDeckHandleRecognizesBoostToken(t *testing.T) {
+	h := sekaiHandlers{}.NoEventDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/最强组卡",
+		ArgText:    "sage 5火",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Boost == nil || *params.Boost != 5 {
+		t.Fatalf("unexpected boost: %+v", params.Boost)
+	}
+	if params.MusicQuery != "sage" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestMysekaiDeckHandleRecognizesBoostToken(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiDeckHandle()
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/ms组卡",
+		ArgText:    "event123 5火",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result.(*parser.ResolvedCommand)
+	var combined mysekaiDeckCombinedParams
+	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if combined.Deck.EventID == nil || *combined.Deck.EventID != 123 {
+		t.Fatalf("unexpected event id: %+v", combined.Deck.EventID)
+	}
+	if combined.Deck.Boost == nil || *combined.Deck.Boost != 5 {
+		t.Fatalf("unexpected boost: %+v", combined.Deck.Boost)
+	}
+}
+
 func TestEventDeckHandleRecognizesChinese25JiAlias(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.HandlerContext{

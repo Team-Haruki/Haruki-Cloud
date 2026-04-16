@@ -23,7 +23,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
 	corecrypto "haruki-cloud/internal/core/crypto"
-	utilscrypto "haruki-cloud/utils/crypto"
+	utilscrypto "haruki-cloud/utils/aesgcm"
 
 	"github.com/vmihailenco/msgpack/v5"
 )

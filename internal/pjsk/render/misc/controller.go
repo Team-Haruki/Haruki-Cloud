@@ -3,7 +3,7 @@ package misc
 import (
 	"fmt"
 
-	"haruki-cloud/utils/drawing"
+	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type Controller struct {

@@ -1,6 +1,9 @@
 package music
 
-import "haruki-cloud/internal/pjsk/render/assets"
+import (
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/common"
+)
 
 var defaultBanCharacterNicknames = buildDefaultBanCharacterNicknames()
 
@@ -12,10 +15,5 @@ func buildDefaultBanCharacterNicknames() map[string]int {
 	return result
 }
 
-func cloneNicknames(src map[string]int) map[string]int {
-	result := make(map[string]int, len(src))
-	for key, value := range src {
-		result[key] = value
-	}
-	return result
-}
+// Package-local alias for readability at the in-package call sites.
+var cloneNicknames = common.CloneNicknames

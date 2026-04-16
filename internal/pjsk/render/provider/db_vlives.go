@@ -8,7 +8,7 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/virtuallive"
-	renderregion "haruki-cloud/internal/pjsk/render/region"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type dbVLiveProvider struct {

@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/api/bot/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/query"
-	sekaiutils "haruki-cloud/utils/sekai"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func executeArrest(rc *RequestContext) (onebot11.Message, error) {
@@ -28,7 +28,7 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 	pjskUserID := target.PJSKUserID
 	visible := target.Visible
 
-	resp, err := sekaiutils.GetSekaiAPIClient().GetUserProfile(region, pjskUserID)
+	resp, err := rc.App.SekaiAPI.GetUserProfile(region, pjskUserID)
 	if err != nil {
 		return nil, fmt.Errorf("获取玩家信息失败：%w", err)
 	}
@@ -53,19 +53,19 @@ func executeArrest(rc *RequestContext) (onebot11.Message, error) {
 	return onebot11.Message{onebot11.Text(text)}, nil
 }
 
-func defaultEnabledDiffs() []sekaiutils.MusicDifficultyType {
-	return []sekaiutils.MusicDifficultyType{
-		sekaiutils.MusicDifficultyMaster,
-		sekaiutils.MusicDifficultyExpert,
+func defaultEnabledDiffs() []sekaiapi.MusicDifficultyType {
+	return []sekaiapi.MusicDifficultyType{
+		sekaiapi.MusicDifficultyMaster,
+		sekaiapi.MusicDifficultyExpert,
 	}
 }
 
-func formatArrestText(resp *sekaiutils.GetAnotherProfileResponse, diffs []sekaiutils.MusicDifficultyType, challengeCharacterName string, uidVisible bool) string {
+func formatArrestText(resp *sekaiapi.GetAnotherProfileResponse, diffs []sekaiapi.MusicDifficultyType, challengeCharacterName string, uidVisible bool) string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("逮捕: %s (UID: %s) Lv.%d\n",
 		resp.User.Name, arrestDisplayUID(resp.User.UserID, uidVisible), resp.User.Rank))
 
-	countByDiff := make(map[sekaiutils.MusicDifficultyType]sekaiutils.AnotherUserMusicDifficultyClearCount)
+	countByDiff := make(map[sekaiapi.MusicDifficultyType]sekaiapi.AnotherUserMusicDifficultyClearCount)
 	for _, c := range resp.UserMusicDifficultyClearCount {
 		countByDiff[c.MusicDifficultyType] = c
 	}

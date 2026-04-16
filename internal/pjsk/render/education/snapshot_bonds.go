@@ -118,7 +118,7 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 	}
 
 	for charID := range requiredCharIDs {
-		_ = getCharacterStyle(charID)
+		getCharacterStyle(charID) // pre-warm charStyles cache
 	}
 
 	resolveCharIcon := func(gameID int) string {

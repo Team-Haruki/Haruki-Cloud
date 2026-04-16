@@ -236,7 +236,7 @@ func mysekaiLastRefreshTimeAndReason(region renderregion.Value, now time.Time) (
 	}
 
 	for characterID, birthday := range mysekaiCharacterBirthdays {
-		nextBirthday := mysekaiNextBirthdayLocal(region, now.Add(-24*time.Hour), characterID, birthday.Month, birthday.Day)
+		nextBirthday := mysekaiNextBirthdayLocal(region, now.Add(-24*time.Hour), birthday.Month, birthday.Day)
 		start := nextBirthday.Add(-72 * time.Hour)
 		end := nextBirthday
 		if lastRefresh.Before(start) && !start.After(now) {
@@ -249,8 +249,7 @@ func mysekaiLastRefreshTimeAndReason(region renderregion.Value, now time.Time) (
 	return lastRefresh, "natural"
 }
 
-func mysekaiNextBirthdayLocal(region renderregion.Value, now time.Time, characterID, month, day int) time.Time {
-	_ = characterID
+func mysekaiNextBirthdayLocal(region renderregion.Value, now time.Time, month, day int) time.Time {
 	regionLocation := time.FixedZone(region.String(), mysekaiRegionUTCOffset(region.String(), now)*3600)
 	nextBirthday := time.Date(now.Year(), time.Month(month), day, 0, 0, 0, 0, regionLocation).In(now.Location())
 	if nextBirthday.Before(now) {

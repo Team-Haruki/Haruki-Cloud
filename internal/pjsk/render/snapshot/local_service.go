@@ -66,7 +66,7 @@ func NewLocalFileServiceWithContext(ctx context.Context, sekaiClient *sekaiDB.Cl
 
 	built, ok := snapshot.(*Service)
 	if !ok {
-		service.initErr = fmt.Errorf("userdata: snapshot factory returned unexpected type %T", snapshot)
+		service.initErr = fmt.Errorf("snapshot: snapshot factory returned unexpected type %T", snapshot)
 		return service
 	}
 	return built

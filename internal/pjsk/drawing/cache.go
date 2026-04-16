@@ -18,6 +18,7 @@ import (
 	"haruki-cloud/config"
 
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -33,6 +34,7 @@ type localRenderCache struct {
 	mu      sync.RWMutex
 	entries map[string]*localRenderEntry
 	ttl     time.Duration
+	flight  singleflight.Group
 }
 
 type localRenderEntry struct {
@@ -96,6 +98,7 @@ func (lc *localRenderCache) set(key string, data []byte) {
 }
 
 // Render returns cached bytes for identical requests; otherwise calls render() and stores the result.
+// Concurrent calls with the same key are deduplicated via singleflight.
 func (lc *localRenderCache) Render(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
 	key, err := lc.buildKey(endpoint, request)
 	if err != nil {
@@ -104,12 +107,21 @@ func (lc *localRenderCache) Render(endpoint string, request any, render func() (
 	if cached, ok := lc.get(key); ok {
 		return cached, nil
 	}
-	data, err := render()
+	v, err, _ := lc.flight.Do(key, func() (any, error) {
+		if cached, ok := lc.get(key); ok {
+			return cached, nil
+		}
+		data, err := render()
+		if err != nil {
+			return nil, err
+		}
+		lc.set(key, data)
+		return data, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	lc.set(key, data)
-	return data, nil
+	return v.([]byte), nil
 }
 
 type RenderCacheConfig struct {
@@ -191,7 +203,7 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 			return nil, err
 		}
 
-		if key, keyErr := buildRenderCacheKey(policy); keyErr == nil {
+		if keyErr == nil {
 			_ = c.store(key, policy.APIPath, policy.UserID, image)
 		}
 		return image, nil

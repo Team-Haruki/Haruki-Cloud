@@ -12,28 +12,6 @@ import (
 	"strings"
 )
 
-/*
-	func (sekaiHandlers) MusicDetailHandle() SekaiCommandHandler {
-		return SekaiCommandHandler{
-			CommandHandlerBase: handler.CommandHandlerBase{
-				Path: "music",
-				Commands: []string{
-					"/查曲", "/查歌", "/查乐", "/查音乐", "/查询乐曲", "/查歌曲", "/歌曲", "/乐曲", "/song", "/music",
-				},
-			},
-			handleFunc: func(ctx SekaiHandlerContext) (any, error) {
-				args := strings.TrimSpace(ctx.GetArgs())
-				if diff, cleaned := extractMusicDifficulty(args); diff != "" {
-					ctx.SetArgs(cleaned)
-					return makeResolvedCmdWithParams(ctx, parser.ModuleMusic, "music-detail", map[string]any{
-						"difficulty": diff,
-					}), nil
-				}
-				return makeResolvedCmd(ctx, parser.ModuleMusic, "music-detail"), nil
-			},
-		}
-	}
-*/
 func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{

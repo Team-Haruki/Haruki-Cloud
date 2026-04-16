@@ -16,7 +16,7 @@ type ProviderAdapterBase struct {
 }
 
 func NewProviderAdapterBase(p MasterDataProvider) ProviderAdapterBase {
-	return ProviderAdapterBase{P: p, Ctx: context.Background()}
+	return ProviderAdapterBase{P: p, Ctx: context.TODO()}
 }
 
 func (b *ProviderAdapterBase) DefaultRegion() renderregion.Value {
@@ -27,7 +27,7 @@ func (b *ProviderAdapterBase) DefaultRegion() renderregion.Value {
 // to context.Background() when no context has been set.
 func (b *ProviderAdapterBase) Context() context.Context {
 	if b == nil || b.Ctx == nil {
-		return context.Background()
+		return context.TODO()
 	}
 	return b.Ctx
 }
@@ -36,7 +36,7 @@ func (b *ProviderAdapterBase) Context() context.Context {
 // interfaces accept ctx directly, so no provider wrapping is needed.
 func (b *ProviderAdapterBase) CloneWithContext(ctx context.Context) ProviderAdapterBase {
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 	return ProviderAdapterBase{P: b.P, Ctx: ctx}
 }

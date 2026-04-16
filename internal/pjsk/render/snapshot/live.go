@@ -25,7 +25,7 @@ func NewFromBytes(
 	mysekaiJSON []byte,
 	musicMetaBytes []byte,
 ) (*Service, error) {
-	return NewFromBytesWithContext(context.Background(), sekaiClient, assetHelper, region, suiteJSON, mysekaiJSON, musicMetaBytes)
+	return NewFromBytesWithContext(context.TODO(), sekaiClient, assetHelper, region, suiteJSON, mysekaiJSON, musicMetaBytes)
 }
 
 func NewFromBytesWithContext(
@@ -49,7 +49,7 @@ func NewFromBytesWithContext(
 	}
 	service, ok := snapshot.(*Service)
 	if !ok {
-		return nil, fmt.Errorf("userdata: snapshot factory returned unexpected type %T", snapshot)
+		return nil, fmt.Errorf("snapshot: snapshot factory returned unexpected type %T", snapshot)
 	}
 	return service, nil
 }

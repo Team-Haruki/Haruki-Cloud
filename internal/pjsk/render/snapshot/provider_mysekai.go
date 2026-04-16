@@ -34,7 +34,7 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 	platform := strings.TrimSpace(selector.IMPlatform)
 	imUserID := strings.TrimSpace(selector.IMUserID)
 	if platform == "" || imUserID == "" {
-		return nil, fmt.Errorf("userdata: mysekai selector is incomplete")
+		return nil, fmt.Errorf("snapshot: mysekai selector is incomplete")
 	}
 
 	region := renderregion.WithDefault(selector.Region)
@@ -45,7 +45,7 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 
 	uid, err := strconv.ParseInt(binding.PJSKUserID, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("userdata: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
+		return nil, fmt.Errorf("snapshot: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
 	}
 
 	payload, err := p.client.GetMySekaiData(binding.Server, uid, platform, imUserID)
@@ -121,7 +121,7 @@ func resolveMySekaiPayloadBinding(
 		return nil, err
 	}
 	if !mySekaiPayloadBindingAllowed(binding) {
-		return nil, fmt.Errorf("userdata: binding does not expose mysekai payload")
+		return nil, fmt.Errorf("snapshot: binding does not expose mysekai payload")
 	}
 	return binding, nil
 }
@@ -148,13 +148,13 @@ func resolveExplicitMySekaiPayloadBinding(
 			continue
 		}
 		if match != nil {
-			return nil, fmt.Errorf("userdata: multiple bindings match pjsk user id %s; region is required", pjskUserID)
+			return nil, fmt.Errorf("snapshot: multiple bindings match pjsk user id %s; region is required", pjskUserID)
 		}
 		copy := item
 		match = &copy
 	}
 	if match == nil {
-		return nil, fmt.Errorf("userdata: binding %s not found", pjskUserID)
+		return nil, fmt.Errorf("snapshot: binding %s not found", pjskUserID)
 	}
 
 	binding := &accountdata.ResolvedBinding{
@@ -168,7 +168,7 @@ func resolveExplicitMySekaiPayloadBinding(
 		Bg:             match.Bg,
 	}
 	if !mySekaiPayloadBindingAllowed(binding) {
-		return nil, fmt.Errorf("userdata: binding %s does not expose mysekai payload", pjskUserID)
+		return nil, fmt.Errorf("snapshot: binding %s does not expose mysekai payload", pjskUserID)
 	}
 	return binding, nil
 }

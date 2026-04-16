@@ -19,7 +19,7 @@ func executeConcurrentMessages(ctx context.Context, jobs ...concurrentMessageJob
 		return nil, nil
 	}
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 
 	group, groupCtx := errgroup.WithContext(ctx)

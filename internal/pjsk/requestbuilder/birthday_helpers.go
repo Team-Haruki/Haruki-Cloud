@@ -86,7 +86,7 @@ func normalizeBirthdayCharacterText(text string) string {
 
 func loadBirthdayCards(ctx context.Context, app *renderapp.App, region renderregion.Value, cid int) ([]drawing.CharaBirthdayCard, string, error) {
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 	entities, err := app.Sekai.Card.Query().
 		Where(
@@ -148,7 +148,7 @@ func birthdayCardImagePath(app *renderapp.App, region renderregion.Value, assetB
 
 func resolveBirthdayColorCode(ctx context.Context, app *renderapp.App, region renderregion.Value, cid int) string {
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 	entity, err := app.Sekai.Gamecharacterunit.Query().
 		Where(

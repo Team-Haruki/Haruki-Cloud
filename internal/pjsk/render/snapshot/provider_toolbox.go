@@ -64,7 +64,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	platform := strings.TrimSpace(selector.IMPlatform)
 	imUserID := strings.TrimSpace(selector.IMUserID)
 	if platform == "" || imUserID == "" {
-		return nil, fmt.Errorf("userdata: snapshot selector is incomplete")
+		return nil, fmt.Errorf("snapshot: snapshot selector is incomplete")
 	}
 
 	region := renderregion.WithDefault(selector.Region)
@@ -79,7 +79,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 
 	uid, err := strconv.ParseInt(binding.PJSKUserID, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("userdata: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
+		return nil, fmt.Errorf("snapshot: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
 	}
 
 	suiteJSON, err := p.client.GetSuiteData(binding.Server, uid, platform, imUserID)
@@ -91,7 +91,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	if len(suiteJSON) == 0 {
 		p.logger.Warnf("toolbox suite fetch returned empty payload: platform=%s user=%s binding=%s",
 			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding))
-		return nil, fmt.Errorf("userdata: suite snapshot is empty")
+		return nil, fmt.Errorf("snapshot: suite snapshot is empty")
 	}
 	p.logger.Debugf("toolbox suite fetch succeeded: platform=%s user=%s binding=%s suite_bytes=%d",
 		platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(suiteJSON))

@@ -45,7 +45,7 @@ func BuildScoreControlRequest(ctx context.Context, r *parser.ResolvedCommand, ap
 		return nil, fmt.Errorf("score music service unavailable: music controller is not configured")
 	}
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 	musicCtrl := app.Music.WithContext(ctx)
 	if app.Aliases != nil {

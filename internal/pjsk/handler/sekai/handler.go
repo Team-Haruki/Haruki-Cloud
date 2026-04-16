@@ -3,7 +3,6 @@ package sekai
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"reflect"
 	"slices"
 	"strings"
@@ -207,7 +206,7 @@ func registerSekaiCommandHandlers() {
 					for _, cmd := range skHandler.Commands {
 						regionStr := string(region)
 						if strings.HasPrefix(cmd, fmt.Sprintf("/%s%s", regionStr, prefix)) {
-							fmt.Fprintf(os.Stderr, "指令 %s 本身包含了区服前缀！", cmd)
+							slog.Warn("指令本身包含了区服前缀", "cmd", cmd)
 						}
 						allRegionCommands[cmd] = true
 						allRegionCommands[strings.Replace(cmd, "/", fmt.Sprintf("/%s", prefix), 1)] = true

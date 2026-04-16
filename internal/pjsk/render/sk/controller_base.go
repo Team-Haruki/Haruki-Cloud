@@ -133,7 +133,7 @@ func (c *Controller) contextOrBackground() context.Context {
 	if c != nil && c.requestCtx != nil {
 		return c.requestCtx
 	}
-	return context.Background()
+	return context.TODO()
 }
 
 func (c *Controller) SetForecastProvider(provider ForecastProvider) {

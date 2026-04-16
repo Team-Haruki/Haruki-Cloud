@@ -45,10 +45,10 @@ func NewDefaultSnapshotFactory(sekaiClient *sekaiDB.Client, assetHelper *assets.
 
 func (f *DefaultSnapshotFactory) Build(ctx context.Context, input BuildInput) (Snapshot, error) {
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 	if len(bytes.TrimSpace(input.SuiteJSON)) == 0 {
-		return nil, fmt.Errorf("userdata: suite snapshot is empty")
+		return nil, fmt.Errorf("snapshot: suite snapshot is empty")
 	}
 
 	var (
@@ -78,10 +78,10 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 
 	var raw RawUserData
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return nil, fmt.Errorf("userdata: decode suite JSON: %w", err)
+		return nil, fmt.Errorf("snapshot: decode suite JSON: %w", err)
 	}
 	if raw.UserGamedata.UserID == 0 {
-		return nil, fmt.Errorf("userdata: suite JSON is missing userId")
+		return nil, fmt.Errorf("snapshot: suite JSON is missing userId")
 	}
 
 	region := renderregion.WithDefault(input.Region)

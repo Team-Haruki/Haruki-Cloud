@@ -116,7 +116,7 @@ func BuildMiscBirthdayRequest(ctx context.Context, r *parser.ResolvedCommand, ap
 		return nil, fmt.Errorf("misc birthday service unavailable: sekai client not configured")
 	}
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 
 	region := renderregion.WithDefault(renderregion.Normalize(r.Region))
@@ -292,7 +292,7 @@ func lookupBirthdayCharacterIDs(ctx context.Context, app *renderapp.App, region 
 		return nil, fmt.Errorf("misc birthday service unavailable: sekai client not configured")
 	}
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 
 	rows, err := app.Sekai.Gamecharacter.Query().

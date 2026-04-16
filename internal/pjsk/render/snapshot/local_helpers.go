@@ -100,7 +100,7 @@ func resolveLeaderImagePath(ctx context.Context, sekaiClient *sekaiDB.Client, as
 		return ""
 	}
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 
 	var assetBundleName string

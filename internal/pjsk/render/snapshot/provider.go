@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	ErrSnapshotUnavailable = errors.New("userdata: snapshot is unavailable")
-	ErrProviderUnavailable = errors.New("userdata: snapshot provider is unavailable")
-	ErrSnapshotNotFound    = errors.New("userdata: snapshot not found")
+	ErrSnapshotUnavailable = errors.New("snapshot: snapshot is unavailable")
+	ErrProviderUnavailable = errors.New("snapshot: snapshot provider is unavailable")
+	ErrSnapshotNotFound    = errors.New("snapshot: snapshot not found")
 )
 
 // Snapshot is the stable read-only contract consumed by render controllers.

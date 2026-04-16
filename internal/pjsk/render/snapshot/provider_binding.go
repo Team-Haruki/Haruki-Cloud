@@ -49,9 +49,9 @@ func resolveSnapshotBinding(
 	}
 	if !bindingAllowed(binding, opts) {
 		if opts.NeedMySekai {
-			return nil, fmt.Errorf("userdata: binding does not expose mysekai snapshot")
+			return nil, fmt.Errorf("snapshot: binding does not expose mysekai snapshot")
 		}
-		return nil, fmt.Errorf("userdata: binding does not expose suite snapshot")
+		return nil, fmt.Errorf("snapshot: binding does not expose suite snapshot")
 	}
 	bindingDebugLogger.Debugf("snapshot binding selected region binding: platform=%s user=%s region=%s binding=%s",
 		strings.TrimSpace(platform), maskBindingDebugID(imUserID), strings.TrimSpace(regionStr), formatSnapshotBindingDebug(binding))
@@ -81,13 +81,13 @@ func resolveExplicitSnapshotBinding(
 			continue
 		}
 		if match != nil {
-			return nil, fmt.Errorf("userdata: multiple bindings match pjsk user id %s; region is required", pjskUserID)
+			return nil, fmt.Errorf("snapshot: multiple bindings match pjsk user id %s; region is required", pjskUserID)
 		}
 		copy := item
 		match = &copy
 	}
 	if match == nil {
-		return nil, fmt.Errorf("userdata: binding %s not found", pjskUserID)
+		return nil, fmt.Errorf("snapshot: binding %s not found", pjskUserID)
 	}
 
 	binding := &accountdata.ResolvedBinding{
@@ -102,9 +102,9 @@ func resolveExplicitSnapshotBinding(
 	}
 	if !bindingAllowed(binding, opts) {
 		if opts.NeedMySekai {
-			return nil, fmt.Errorf("userdata: binding %s does not expose mysekai snapshot", pjskUserID)
+			return nil, fmt.Errorf("snapshot: binding %s does not expose mysekai snapshot", pjskUserID)
 		}
-		return nil, fmt.Errorf("userdata: binding %s does not expose suite snapshot", pjskUserID)
+		return nil, fmt.Errorf("snapshot: binding %s does not expose suite snapshot", pjskUserID)
 	}
 	bindingDebugLogger.Debugf("snapshot binding selected explicit binding: platform=%s user=%s region=%s binding=%s",
 		strings.TrimSpace(platform), maskBindingDebugID(imUserID), region.String(), formatSnapshotBindingDebug(binding))

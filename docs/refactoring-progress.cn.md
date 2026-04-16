@@ -1871,11 +1871,11 @@ internal/pjsk/
 
 #### 重复代码
 
-| # | 项目 | 严重度 | 说明 |
-|---|------|--------|------|
-| 1 | `mergeParams` 重复 | **中** | `handler/bridge.go:128` 与 `requestbuilder/params.go:11` 逐字相同（仅日志前缀不同）。handler 不能 import requestbuilder（循环依赖），可提取到 `render/common` 或新建 `internal/pjsk/jsonutil` |
-| 2 | 角色昵称 map + helpers 三处重复 | **中** | `render/card/nicknames.go`、`render/mysekai/nicknames.go` 有完全相同的 `defaultNicknames` map 和 `cloneNicknames`/`normalizeNicknameQuery` helper；`render/music/nicknames.go` 有第三份 `cloneNicknames`。权威来源 `assets.CharacterIDToNickname` 已存在于共享包，应统一派生 |
-| 3 | `decodeJSONUseNumber` 重复 | **低中** | `render/mysekai/json_decode.go` 与 `render/provider/json_decode.go` 逐字相同（12 行），可提到 `render/common` |
+| # | 项目 | 严重度 | 状态 | 说明 |
+|---|------|--------|------|------|
+| 1 | `mergeParams` 重复 | **中** | ✅ 已合并 | `requestbuilder.MergeParams` 提升为导出函数，统一日志格式；`handler/bridge.go` 用 `var mergeParams = requestbuilder.MergeParams` 别名保留 52 处调用点短名 |
+| 2 | 角色昵称 map + helpers 三处重复 | **中** | 待处理 | `render/card/nicknames.go`、`render/mysekai/nicknames.go` 有完全相同的 `defaultNicknames` map 和 `cloneNicknames`/`normalizeNicknameQuery` helper；`render/music/nicknames.go` 有第三份 `cloneNicknames`。权威来源 `assets.CharacterIDToNickname` 已存在于共享包，应统一派生 |
+| 3 | `decodeJSONUseNumber` 重复 | **低中** | 待处理 | `render/mysekai/json_decode.go` 与 `render/provider/json_decode.go` 逐字相同（12 行），可提到 `render/common` |
 
 #### 包命名与组织
 

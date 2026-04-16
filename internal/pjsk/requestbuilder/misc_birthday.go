@@ -194,7 +194,7 @@ func BuildMiscBirthdayRequest(ctx context.Context, r *parser.ResolvedCommand, ap
 func normalizeBirthdaySelection(r *parser.ResolvedCommand) (miscBirthdaySelection, error) {
 	selection := miscBirthdaySelection{}
 	if r != nil {
-		mergeParams(r.Params, &selection)
+		MergeParams(r.Params, &selection)
 	}
 	selection.Query = strings.TrimSpace(selection.Query)
 	if selection.Cid > 0 || selection.UpcomingIndex > 0 || selection.Query != "" {

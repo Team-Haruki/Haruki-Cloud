@@ -1820,9 +1820,29 @@ internal/pjsk/
 ├── region/        # 区服枚举（从 render/region/ 提升）
 ├── render/        # 渲染控制器 + provider + 模块
 ├── requestbuilder/# 请求构建器
-├── sekai/         # Sekai 游戏 API 客户端（从 utils/ 迁入）
-└── userdata/      # ← 已清空（重命名为 accountdata/）
+└── sekai/         # Sekai 游戏 API 客户端（从 utils/ 迁入）
 ```
+
+---
+
+### R37：dead code 清理与导出审计（2026-04-16）
+
+**删除的死代码：**
+
+| 文件 | 原因 |
+|------|------|
+| `handler/chara_icon.go` | 未导出函数 `charaIconPath` 在 handler 包内无调用方；`requestbuilder/birthday_helpers.go` 已有独立副本 |
+
+**导出审计结论：**
+
+| 包 | 结果 |
+|----|------|
+| `onebot11/` | ✅ 全部导出均有外部调用方 |
+| `parser/` | `CardParser` 系列（`parser.go`）外部零调用方（`render/card/parser.go` 有独立实现），但包内有测试覆盖，暂保留 |
+| `accountdata/` | `ProfileBGCleaner`/`BindingResolver` 仅内部使用；`BindingService` 大量细粒度方法仅测试调用，外部统一走 `ExecuteProfileBindingCommand`/`ExecuteProfileSettingsCommand` 入口 |
+
+**清理的空目录：**
+- `utils/crypto/`（已在 R36 重命名为 `utils/aesgcm/`，空壳遗留）
 
 ---
 
@@ -1845,3 +1865,5 @@ internal/pjsk/
 |------|--------|------|
 | handler/sekai/ 拆分 | 低 | 31 文件 11K 行，但受反射注册机制制约不宜拆子包 |
 | render 小包合并 | 低 | misc/score/source 等单文件包，影响不大 |
+| parser/parser.go CardParser | 低 | 外部零调用方（被 render/card/parser.go 替代），有包内测试，可考虑移除 |
+| accountdata/ 导出收窄 | 低 | ProfileBGCleaner/BindingResolver 可降为 unexported，BindingService 细粒度方法可考虑仅暴露测试 helper |

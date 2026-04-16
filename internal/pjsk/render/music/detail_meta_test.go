@@ -1,6 +1,7 @@
 package music
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -244,7 +245,17 @@ func TestBuildMusicDetailRequestLeavesAliasEmptyWithoutApprovedAliases(t *testin
 	if err != nil {
 		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
 	}
+	if req.Alias == nil {
+		t.Fatalf("expected alias field to be an empty slice, got nil")
+	}
 	if len(req.Alias) != 0 {
 		t.Fatalf("expected empty alias list without approved aliases, got=%v", req.Alias)
+	}
+	payload, err := json.Marshal(req)
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+	if !strings.Contains(string(payload), `"alias":[]`) {
+		t.Fatalf("expected serialized request to include empty alias array, got=%s", string(payload))
 	}
 }

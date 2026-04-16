@@ -44,6 +44,7 @@ func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region render
 		Difficulty:      *diffInfo,
 		Vocal:           *vocalInfo,
 		MusicJacketPath: b.BuildMusicJacketPath(music.AssetBundleName, region),
+		Alias:           []string{},
 	}
 
 	if eventInfo, err := b.source.GetPrimaryEventByMusicID(music.ID); err == nil && eventInfo != nil {

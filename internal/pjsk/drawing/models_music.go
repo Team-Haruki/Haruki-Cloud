@@ -39,7 +39,7 @@ type MusicDetailRequest struct {
 	MusicInfo            MusicMD              `json:"music_info"`
 	Bpm                  *int                 `json:"bpm,omitempty"`
 	Vocal                MusicVocalInfo       `json:"vocal"`
-	Alias                []string             `json:"alias,omitempty"`
+	Alias                []string             `json:"alias"`
 	Length               *string              `json:"length,omitempty"`
 	Difficulty           DifficultyInfo       `json:"difficulty"`
 	EventID              *int                 `json:"event_id,omitempty"`

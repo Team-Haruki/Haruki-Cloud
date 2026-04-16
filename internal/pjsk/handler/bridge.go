@@ -85,7 +85,7 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 		return nil, fmt.Errorf("bridge: unsupported module %v", resolved.Module)
 	}
 	if err != nil {
-		return nil, err
+		return nil, WrapDomainError(err)
 	}
 	return message, nil
 }

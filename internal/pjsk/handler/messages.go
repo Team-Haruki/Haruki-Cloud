@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/onebot11"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 // Common error messages for user-facing errors (Chinese).
@@ -43,6 +45,43 @@ func normalizeBindingLookupError(err error, fallback string) error {
 	default:
 		return fmt.Errorf("%s：%w", fallback, err)
 	}
+}
+
+// WrapDomainError converts well-known domain errors into ReplayError so that
+// transport layers (e.g. api/bot/pjsk) only need to distinguish ReplayError
+// from unexpected errors, without duplicating Chinese user-facing messages.
+func WrapDomainError(err error) error {
+	if err == nil {
+		return nil
+	}
+	var re onebot11.ReplayError
+	if errors.As(err, &re) {
+		return err
+	}
+	switch {
+	case errors.Is(err, accountdata.ErrNoBinding):
+		return onebot11.NewReplayError(
+			"未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令\n" +
+				"如果已经绑定，请确保已设置默认账号或绑定的账号在当前服务器可见",
+		)
+	case errors.Is(err, accountdata.ErrBindingServiceUnavailable):
+		return onebot11.NewReplayError("绑定服务未就绪，请稍后再试")
+	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound):
+		return onebot11.NewReplayError(
+			"你还没有在工具箱绑定账号，请前往工具箱绑定你的账号并上传 suite 数据后再使用此命令\n" +
+				"工具箱地址：https://haruki.seiunx.com/",
+		)
+	case errors.Is(err, sekaiapi.ErrGameDataNotFound):
+		return onebot11.NewReplayError(
+			"没有找到有效的 suite 数据，请前往工具箱上传数据后再使用此命令\n" +
+				"工具箱地址：https://haruki.seiunx.com/",
+		)
+	case errors.Is(err, sekaiapi.ErrInvalidPlatformUser):
+		return onebot11.NewReplayError("你无权查看这个账号的数据")
+	case errors.Is(err, sekaiapi.ErrAccountOwnerBanned):
+		return onebot11.NewReplayError("你被禁止使用此命令")
+	}
+	return err
 }
 
 func stringPtr(value string) *string {

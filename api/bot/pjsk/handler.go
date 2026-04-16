@@ -9,16 +9,13 @@ import (
 	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/internal/core/crypto"
 	"haruki-cloud/internal/middleware/secure"
-	"haruki-cloud/internal/pjsk/accountdata"
 	commandhandler "haruki-cloud/internal/pjsk/handler"
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
 	onebot11 "haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
-	"haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/logger"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -186,50 +183,9 @@ func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
 		return BotCommandRequest{}, err
 	}
 	logger.Infof("before parse: %+v", req.Message)
-	req.Message = parseOnebot11Message(req.Message)
+	req.Message = onebot11.ParseMessage(req.Message)
 	logger.Infof("after parse: %+v", req.Message)
 	return req, nil
-}
-
-func parseOnebot11Message(msg onebot11.Message) onebot11.Message {
-	segs := make([]onebot11.Segment, 0, len(msg))
-	for _, s := range msg {
-		data := make(map[string]string)
-		switch d := s.Data.(type) {
-		case map[string]any:
-			for k, v := range d {
-				data[k] = fmt.Sprint(v)
-			}
-		case map[any]any:
-			for k, v := range d {
-				ks, _ := k.(string)
-				vs := fmt.Sprint(v)
-				if ks != "" {
-					data[ks] = vs
-				}
-			}
-		case map[string]string:
-			data = d
-		}
-		switch s.Type {
-		case onebot11.TYPE_TEXT:
-			segs = append(segs, onebot11.Text(stripInlineCQTags(data[onebot11.KEY_TEXT])))
-		case onebot11.TYPE_IMAGE:
-			segs = append(segs, onebot11.Image(data[onebot11.KEY_FILE], data[onebot11.KEY_URL]))
-		case onebot11.TYPE_AT:
-			segs = append(segs, onebot11.At(data[onebot11.KEY_QQ]))
-		}
-	}
-	return segs
-}
-
-var inlineCQPattern = regexp.MustCompile(`(?i)\[cq:[^\]]+\]`)
-
-func stripInlineCQTags(text string) string {
-	if strings.TrimSpace(text) == "" {
-		return text
-	}
-	return inlineCQPattern.ReplaceAllString(text, " ")
 }
 
 // botResponse sends a response using MsgPack when the request came through the
@@ -255,57 +211,6 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 	if errors.As(err, &replyErr) {
 		return botResponse(c, fiber.StatusOK, "ok",
 			[]onebot11.Segment{onebot11.Text(string(replyErr))},
-		)
-	}
-	if errors.Is(err, accountdata.ErrNoBinding) {
-		return botResponse(
-			c, fiber.StatusOK, "ok",
-			[]onebot11.Segment{
-				onebot11.Text("未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令\n"),
-				onebot11.Text("如果已经绑定，请确保已设置默认账号或绑定的账号在当前服务器可见"),
-			},
-		)
-	}
-	if errors.Is(err, accountdata.ErrBindingServiceUnavailable) {
-		return botResponse(
-			c, fiber.StatusOK, "ok",
-			[]onebot11.Segment{
-				onebot11.Text("绑定服务未就绪，请稍后再试"),
-			},
-		)
-	}
-	if errors.Is(err, sekai.ErrAccountBindingNotFound) {
-		return botResponse(
-			c, fiber.StatusOK, "ok",
-			[]onebot11.Segment{
-				onebot11.Text("你还没有在工具箱绑定账号，请前往工具箱绑定你的账号并上传 suite 数据后再使用此命令\n"),
-				onebot11.Text("工具箱地址：https://haruki.seiunx.com/"),
-			},
-		)
-	}
-	if errors.Is(err, sekai.ErrGameDataNotFound) {
-		return botResponse(
-			c, fiber.StatusOK, "ok",
-			[]onebot11.Segment{
-				onebot11.Text("没有找到有效的 suite 数据，请前往工具箱上传数据后再使用此命令\n"),
-				onebot11.Text("工具箱地址：https://haruki.seiunx.com/"),
-			},
-		)
-	}
-	if errors.Is(err, sekai.ErrInvalidPlatformUser) {
-		return botResponse(
-			c, fiber.StatusOK, "ok",
-			[]onebot11.Segment{
-				onebot11.Text("你无权查看这个账号的数据\n"),
-			},
-		)
-	}
-	if errors.Is(err, sekai.ErrAccountOwnerBanned) {
-		return botResponse(
-			c, fiber.StatusOK, "ok",
-			[]onebot11.Segment{
-				onebot11.Text("你被禁止使用此命令\n"),
-			},
 		)
 	}
 	return botResponse(c, fiber.StatusOK, "ok",

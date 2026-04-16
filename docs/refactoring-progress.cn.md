@@ -38,6 +38,7 @@
 > - 2026-04-10 阶段 B 再继续推进：`internal/pjsk/render/profile/controller.go` 已进一步拆为 `controller.go` / `controller_snapshot.go` / `controller_api.go`
 > - 2026-04-10 阶段 B 再补 provider：`internal/pjsk/render/provider/contextual.go` 已进一步拆为 `contextual.go` / `contextual_cards.go` / `contextual_event_music.go` / `contextual_misc.go`
 > - 2026-04-17 R38 收尾：`accountdata/` 导出收窄（`BindingResolver`/`ProfileBGCleaner` 及其 `New*` 构造器降为 unexported，仅同包一处调用）；`internal/pjsk/render/deck/controller_prepare.go`（862 行）按职责拆为 `controller_prepare_userdata.go`（orchestrator + JSON encode/merge/log，486 行）与 `controller_prepare_profile.go`（preset / 卡牌过滤 / 当前主队 / area-item，386 行）；`internal/pjsk/render/userdata` 整体重命名为 `internal/pjsk/render/snapshot`（47 文件 import/选择器更新，`renderuserdata` alias 统一为 `rendersnapshot`，`profile/live_adapter.go` 同名参数改为 `snap` 消除 shadowing）
+> - 2026-04-17 api 层清理：`api/bot/pjsk/handler.go` 中 `errorResponse` 的六处领域错误文案（`ErrNoBinding`、`ErrBindingServiceUnavailable`、`ErrAccountBindingNotFound`、`ErrGameDataNotFound`、`ErrInvalidPlatformUser`、`ErrAccountOwnerBanned`）下沉至 `internal/pjsk/handler/messages.go` 新增的 `WrapDomainError()`，由 `Execute()` 在返回前统一包装为 `ReplayError`；api 层 `errorResponse` 缩减为仅区分 `botValidationError`（400）和 `ReplayError`（200 文本）两种情况；`parseOnebot11Message` / `stripInlineCQTags` 迁移至 `internal/pjsk/onebot11/parse.go` 并重命名为 `ParseMessage` / `StripInlineCQTags`，api 层通过包调用替换本地实现；`regexp` / `accountdata` / `sekai` 三个 import 从 `api/bot/pjsk/handler.go` 移除
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 

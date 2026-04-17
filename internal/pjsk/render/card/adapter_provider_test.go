@@ -26,8 +26,7 @@ func (p *adapterTestCardProvider) GetByCharacterAndSeq(_ context.Context, charac
 
 func (p *adapterTestCardProvider) Filter(_ context.Context, filter *provider.CardFilter) ([]*masterdata.Card, error) {
 	if filter != nil {
-		cp := *filter
-		p.lastFilter = &cp
+		p.lastFilter = new(*filter)
 	}
 	return p.filterResult, p.filterErr
 }
@@ -130,7 +129,7 @@ func TestProviderAdapterFilterCardsPassesMainUnitAndResolvesBanEvent(t *testing.
 		events: events,
 	})
 
-	result, err := adapter.FilterCards(&CardQueryInfo{
+	result, err := adapter.FilterCards(&PjskCardQueryInfo{
 		MainUnit:    "piapro",
 		SupportUnit: "none",
 		BanCharID:   5,
@@ -162,7 +161,7 @@ func TestProviderAdapterFilterCardsRejectsOutOfRangeBanEvent(t *testing.T) {
 		},
 	})
 
-	_, err := adapter.FilterCards(&CardQueryInfo{BanCharID: 5, BanSeq: 2})
+	_, err := adapter.FilterCards(&PjskCardQueryInfo{BanCharID: 5, BanSeq: 2})
 	if err == nil {
 		t.Fatal("expected out-of-range ban event query to fail")
 	}

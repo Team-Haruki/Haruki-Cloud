@@ -29,8 +29,7 @@ func (s *rewardsSnapshotTestSource) GetMusicByID(id int) (*masterdata.Music, err
 	if !ok {
 		return nil, fmt.Errorf("music not found: %d", id)
 	}
-	cloned := *item
-	return &cloned, nil
+	return new(*item), nil
 }
 
 func (s *rewardsSnapshotTestSource) GetMusicByEventID(int) (*masterdata.Music, error) {
@@ -40,8 +39,7 @@ func (s *rewardsSnapshotTestSource) GetMusicByEventID(int) (*masterdata.Music, e
 func (s *rewardsSnapshotTestSource) GetMusics() []*masterdata.Music {
 	result := make([]*masterdata.Music, 0, len(s.musics))
 	for _, item := range s.musics {
-		cloned := *item
-		result = append(result, &cloned)
+		result = append(result, new(*item))
 	}
 	return result
 }
@@ -59,8 +57,7 @@ func (s *rewardsSnapshotTestSource) GetMusicDifficulties(musicID int) ([]*master
 	}
 	result := make([]*masterdata.MusicDifficulty, 0, len(items))
 	for _, item := range items {
-		cloned := *item
-		result = append(result, &cloned)
+		result = append(result, new(*item))
 	}
 	return result, nil
 }

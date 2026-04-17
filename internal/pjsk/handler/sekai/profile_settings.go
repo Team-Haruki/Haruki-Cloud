@@ -10,7 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 )
 
-func newProfileBindingParams(ctx SekaiHandlerContext, selector, scope string) accountdata.ProfileBindingCommandParams {
+func newProfileBindingParams(ctx HarrukiSekaiHandlerContext, selector, scope string) accountdata.ProfileBindingCommandParams {
 	return accountdata.ProfileBindingCommandParams{
 		Platform:       ctx.GetPlatform(),
 		PlatformUserID: ctx.GetUserId(),
@@ -20,7 +20,7 @@ func newProfileBindingParams(ctx SekaiHandlerContext, selector, scope string) ac
 	}
 }
 
-func newProfileSettingsParams(ctx SekaiHandlerContext, selector ...string) accountdata.ProfileSettingsCommandParams {
+func newProfileSettingsParams(ctx HarrukiSekaiHandlerContext, selector ...string) accountdata.ProfileSettingsCommandParams {
 	params := accountdata.ProfileSettingsCommandParams{
 		Platform:       ctx.GetPlatform(),
 		PlatformUserID: ctx.GetUserId(),
@@ -36,7 +36,7 @@ func newProfileSettingsParams(ctx SekaiHandlerContext, selector ...string) accou
 // resolveSettingsSelector extracts a u[i] binding selector from the handler context.
 // Returns empty string when no selector is specified (use default binding for region).
 // Returns error if args are present but not a valid u[i] selector.
-func resolveSettingsSelector(ctx SekaiHandlerContext) (string, error) {
+func resolveSettingsSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args != "" {
 		return "", onebot11.NewReplayError("使用方式:\n%s [u序号]", ctx.originalTriggerCmd)
@@ -51,15 +51,15 @@ func resolveSettingsSelector(ctx SekaiHandlerContext) (string, error) {
 	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
 }
 
-func (sekaiHandlers) ProfileHideSuiteHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileHideSuiteHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk hide suite", "/pjsk隐藏抓包", "/隐藏抓包",
 			},
 			Path: "profile/suite/hide",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -69,15 +69,15 @@ func (sekaiHandlers) ProfileHideSuiteHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileShowSuiteHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileShowSuiteHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk show suite", "/pjsk显示抓包", "/pjsk展示抓包", "/展示抓包",
 			},
 			Path: "profile/suite/show",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -87,15 +87,15 @@ func (sekaiHandlers) ProfileShowSuiteHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileHideMySekaiHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileHideMySekaiHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk hide mysekai", "/pjsk隐藏烤森抓包", "/隐藏烤森抓包",
 			},
 			Path: "profile/mysekai/hide",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -105,15 +105,15 @@ func (sekaiHandlers) ProfileHideMySekaiHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileShowMySekaiHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileShowMySekaiHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk show mysekai", "/pjsk显示烤森抓包", "/pjsk展示烤森抓包", "/展示烤森抓包",
 			},
 			Path: "profile/mysekai/show",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -123,15 +123,15 @@ func (sekaiHandlers) ProfileShowMySekaiHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileHideIDHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileHideIDHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID",
 			},
 			Path: "profile/visibility/hide",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -141,8 +141,8 @@ func (sekaiHandlers) ProfileHideIDHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileShowIDHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileShowIDHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID",
@@ -150,7 +150,7 @@ func (sekaiHandlers) ProfileShowIDHandle() SekaiCommandHandler {
 			},
 			Path: "profile/visibility/show",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -160,8 +160,8 @@ func (sekaiHandlers) ProfileShowIDHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileCheckDataHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileCheckDataHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk check data", "/pjsk抓包", "/pjsk抓包状态", "/pjsk抓包数据", "/pjsk抓包查询",
@@ -169,7 +169,7 @@ func (sekaiHandlers) ProfileCheckDataHandle() SekaiCommandHandler {
 			},
 			Path: "profile/check-data",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err
@@ -179,8 +179,8 @@ func (sekaiHandlers) ProfileCheckDataHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MsdHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MsdHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/msd",
@@ -189,7 +189,7 @@ func (sekaiHandlers) MsdHandle() SekaiCommandHandler {
 			},
 			Path: "profile/check-data-mysekai",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err
@@ -199,15 +199,15 @@ func (sekaiHandlers) MsdHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileVerifyHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileVerifyHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk verify", "/pjsk验证",
 			},
 			Path: "profile/verify",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -217,8 +217,8 @@ func (sekaiHandlers) ProfileVerifyHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileVerifyListHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileVerifyListHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk verify list", "/pjsk验证列表", "/pjsk验证状态",
@@ -226,7 +226,7 @@ func (sekaiHandlers) ProfileVerifyListHandle() SekaiCommandHandler {
 			Path: "profile/verify/list",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}

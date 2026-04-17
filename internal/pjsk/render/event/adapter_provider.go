@@ -8,14 +8,14 @@ import (
 )
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
+	return &ProviderAdapter{PjskProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
+	return &ProviderAdapter{PjskProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
 func (a *ProviderAdapter) GetEventByID(id int) (*masterdata.Event, error) {

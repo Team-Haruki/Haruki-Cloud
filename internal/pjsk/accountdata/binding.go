@@ -117,8 +117,7 @@ func cloneProfileBGSettings(bg *drawing.ProfileBgSettings) *drawing.ProfileBgSet
 	}
 	cloned := *bg
 	if bg.ImgPath != nil {
-		path := *bg.ImgPath
-		cloned.ImgPath = &path
+		cloned.ImgPath = new(*bg.ImgPath)
 	}
 	return &cloned
 }

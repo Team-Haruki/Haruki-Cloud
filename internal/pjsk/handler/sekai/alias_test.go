@@ -15,7 +15,7 @@ func TestMusicAliasAddHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.MusicAliasAddHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -38,7 +38,7 @@ func TestMusicAliasAddHandleBuildsResolvedCommand(t *testing.T) {
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if params.AliasType != aliases.AliasTypeMusic || params.Platform != "qq" || params.PlatformUserID != "42" || params.Target != "5201" {
+	if params.AliasType != aliases.PjskAliasTypeMusic || params.Platform != "qq" || params.PlatformUserID != "42" || params.Target != "5201" {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 	if len(params.Aliases) != 2 || params.Aliases[0] != "蓝歌" || params.Aliases[1] != "群青歌" {
@@ -50,7 +50,7 @@ func TestCharacterAliasQueryHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.CharacterAliasQueryHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/角色别名",
 		ArgText:    "初音未来",
@@ -71,7 +71,7 @@ func TestCharacterAliasQueryHandleBuildsResolvedCommand(t *testing.T) {
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if params.AliasType != aliases.AliasTypeCharacter || params.Target != "初音未来" {
+	if params.AliasType != aliases.PjskAliasTypeCharacter || params.Target != "初音未来" {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }
@@ -80,7 +80,7 @@ func TestCharacterAliasDeleteHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.CharacterAliasDeleteHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "admin",
@@ -103,7 +103,7 @@ func TestCharacterAliasDeleteHandleBuildsResolvedCommand(t *testing.T) {
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if params.AliasType != aliases.AliasTypeCharacter || params.PlatformUserID != "admin" || params.Target != "1" {
+	if params.AliasType != aliases.PjskAliasTypeCharacter || params.PlatformUserID != "admin" || params.Target != "1" {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 	if len(params.Aliases) != 2 || params.Aliases[0] != "葱" || params.Aliases[1] != "公主殿下" {
@@ -115,7 +115,7 @@ func TestAliasPendingHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.AliasPendingHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "admin",
@@ -146,7 +146,7 @@ func TestAliasApproveHandleParsesReviewIDs(t *testing.T) {
 	h := sekaiHandlers{}.AliasApproveHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "admin",
@@ -178,7 +178,7 @@ func TestAliasRejectHandleParsesReason(t *testing.T) {
 	h := sekaiHandlers{}.AliasRejectHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "admin",

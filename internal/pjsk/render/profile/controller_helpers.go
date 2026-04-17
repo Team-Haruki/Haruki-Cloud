@@ -16,7 +16,7 @@ import (
 	renderhonor "haruki-cloud/internal/pjsk/render/honor"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
-	sekai "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/pjsk/sekai"
 )
 
 func logProfilePayloadDebug(source string, payload *drawing.ProfileRequest) {
@@ -70,8 +70,7 @@ func resolveProfileBGSettings(settings *drawing.ProfileBgSettings) *drawing.Prof
 	}
 	cloned := *settings
 	if settings.ImgPath != nil {
-		path := filepath.ToSlash(strings.TrimSpace(*settings.ImgPath))
-		cloned.ImgPath = &path
+		cloned.ImgPath = new(filepath.ToSlash(strings.TrimSpace(*settings.ImgPath)))
 	}
 	return &cloned
 }
@@ -234,10 +233,8 @@ func (c *Controller) buildPCards(source DataSource, userCards []snapshot.RawUser
 		var level *int
 		var trainRank *int
 		if userCard != nil {
-			value := userCard.Level
-			level = &value
-			rank := userCard.MasterRank
-			trainRank = &rank
+			level = new(userCard.Level)
+			trainRank = new(userCard.MasterRank)
 		}
 		result = append(result, common.BuildCardThumbnail(c.assets, cardInfo, region, common.ThumbnailOptions{
 			AfterTraining: userCard != nil && strings.EqualFold(userCard.SpecialTrainingStatus, "done"),
@@ -340,8 +337,7 @@ func buildHonorFcApLevels(musicCounts []drawing.MusicClearCount) map[int]*int {
 			continue
 		}
 
-		level := value
-		result[honorID] = &level
+		result[honorID] = new(value)
 	}
 	return result
 }

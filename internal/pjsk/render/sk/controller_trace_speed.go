@@ -194,8 +194,7 @@ func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint, unitPeriodSeconds
 	}
 
 	if growth != nil && *growth > 0 && timeDiff != nil && *timeDiff > 0 {
-		val := int((int64(*growth) * unitPeriodSeconds) / *timeDiff)
-		speed = &val
+		speed = new(int((int64(*growth) * unitPeriodSeconds) / *timeDiff))
 	}
 	score := point.ScoreLatest
 	if score <= 0 && point.ScoreEarlier != nil {

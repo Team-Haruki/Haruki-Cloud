@@ -44,7 +44,7 @@ func (s *Service) loadMusicTitles(ctx context.Context, musicIDs []int) (map[int]
 			result[musicID] = preferredMusicTitle(items, musicID)
 			continue
 		}
-		result[musicID] = fmt.Sprintf("%s%d", aliasTypeLabel(AliasTypeMusic), musicID)
+		result[musicID] = fmt.Sprintf("%s%d", aliasTypeLabel(PjskAliasTypeMusic), musicID)
 	}
 	return result, nil
 }
@@ -81,7 +81,7 @@ func (s *Service) loadCharacterNames(ctx context.Context, characterIDs []int) (m
 			result[characterID] = preferredCharacterName(items, characterID)
 			continue
 		}
-		result[characterID] = fmt.Sprintf("%s%d", aliasTypeLabel(AliasTypeCharacter), characterID)
+		result[characterID] = fmt.Sprintf("%s%d", aliasTypeLabel(PjskAliasTypeCharacter), characterID)
 	}
 	return result, nil
 }
@@ -101,7 +101,7 @@ func preferredMusicTitle(rows []*sekaiDB.Music, musicID int) string {
 		}
 	}
 	if bestTitle == "" {
-		return fmt.Sprintf("%s%d", aliasTypeLabel(AliasTypeMusic), musicID)
+		return fmt.Sprintf("%s%d", aliasTypeLabel(PjskAliasTypeMusic), musicID)
 	}
 	return bestTitle
 }
@@ -124,7 +124,7 @@ func preferredCharacterName(rows []*sekaiDB.Gamecharacter, characterID int) stri
 		}
 	}
 	if bestName == "" {
-		return fmt.Sprintf("%s%d", aliasTypeLabel(AliasTypeCharacter), characterID)
+		return fmt.Sprintf("%s%d", aliasTypeLabel(PjskAliasTypeCharacter), characterID)
 	}
 	return bestName
 }
@@ -198,7 +198,7 @@ func ambiguousEntityError(aliasType, sourceName string, ids []int, names map[int
 	for _, id := range ids {
 		parts = append(parts, fmt.Sprintf("%d/%s", id, names[id]))
 	}
-	if aliasType == AliasTypeMusic {
+	if aliasType == PjskAliasTypeMusic {
 		lines := make([]string, 0, len(ids))
 		for _, id := range ids {
 			lines = append(lines, fmt.Sprintf("music%d/%s", id, names[id]))
@@ -251,7 +251,7 @@ func normalizeReviewIDs(reviewIDs []int64) ([]int64, error) {
 func normalizeAliasType(aliasType string) (string, error) {
 	aliasType = strings.ToLower(strings.TrimSpace(aliasType))
 	switch aliasType {
-	case AliasTypeMusic, AliasTypeCharacter:
+	case PjskAliasTypeMusic, PjskAliasTypeCharacter:
 		return aliasType, nil
 	default:
 		return "", fmt.Errorf("不支持的别名类型: %s", aliasType)
@@ -260,9 +260,9 @@ func normalizeAliasType(aliasType string) (string, error) {
 
 func aliasTypeLabel(aliasType string) string {
 	switch aliasType {
-	case AliasTypeMusic:
+	case PjskAliasTypeMusic:
 		return "歌曲"
-	case AliasTypeCharacter:
+	case PjskAliasTypeCharacter:
 		return "角色"
 	default:
 		return "未知类型"
@@ -271,9 +271,9 @@ func aliasTypeLabel(aliasType string) string {
 
 func aliasTypeIDLabel(aliasType string) string {
 	switch aliasType {
-	case AliasTypeMusic:
+	case PjskAliasTypeMusic:
 		return "歌曲ID"
-	case AliasTypeCharacter:
+	case PjskAliasTypeCharacter:
 		return "角色ID"
 	default:
 		return "目标ID"
@@ -282,9 +282,9 @@ func aliasTypeIDLabel(aliasType string) string {
 
 func aliasTypeNameLabel(aliasType string) string {
 	switch aliasType {
-	case AliasTypeMusic:
+	case PjskAliasTypeMusic:
 		return "曲名"
-	case AliasTypeCharacter:
+	case PjskAliasTypeCharacter:
 		return "角色名"
 	default:
 		return "名称"
@@ -293,9 +293,9 @@ func aliasTypeNameLabel(aliasType string) string {
 
 func entityTokenPrompt(aliasType string) string {
 	switch aliasType {
-	case AliasTypeMusic:
+	case PjskAliasTypeMusic:
 		return "歌曲ID、曲名或已审核别名"
-	case AliasTypeCharacter:
+	case PjskAliasTypeCharacter:
 		return "角色ID、角色名或已审核别名"
 	default:
 		return "ID、名称或已审核别名"
@@ -332,11 +332,11 @@ func sortAliasTexts(values []string) {
 	})
 }
 
-func formatAliasRecord(record AliasRecord) string {
+func formatAliasRecord(record PjskAliasRecord) string {
 	return fmt.Sprintf("审核ID: %d | 类型: %s | 目标ID: %d | 名称: %s | 别名: %s", record.ReviewID, aliasTypeLabel(record.Entity.AliasType), record.Entity.ID, record.Entity.Name, record.Alias)
 }
 
-func formatRejectedAliasRecord(record AliasRecord, reason string) string {
+func formatRejectedAliasRecord(record PjskAliasRecord, reason string) string {
 	return formatAliasRecord(record) + "\n原因: " + reason
 }
 

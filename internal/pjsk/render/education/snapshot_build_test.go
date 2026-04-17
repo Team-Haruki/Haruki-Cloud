@@ -151,7 +151,7 @@ func (s *testSource) GetShopItems() []*ShopItem {
 }
 
 func TestBuildPowerBonusDetailRequestFromSnapshot(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -186,7 +186,7 @@ func TestBuildPowerBonusDetailRequestFromSnapshot(t *testing.T) {
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(&testSource{
 		region: renderregion.JP,
 		areaLevels: map[int]map[int]*AreaItemLevel{
@@ -227,7 +227,7 @@ func TestBuildPowerBonusDetailRequestFromSnapshot(t *testing.T) {
 }
 
 func TestBuildPowerBonusDetailRequestFromSnapshotCapsUnreleasedAreaItemLevel(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 100,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -250,7 +250,7 @@ func TestBuildPowerBonusDetailRequestFromSnapshotCapsUnreleasedAreaItemLevel(t *
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller := NewController(nil, nil, snap, renderregion.CN)
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		boxes: map[string]map[int]*ResourceBox{
@@ -280,7 +280,7 @@ func TestBuildPowerBonusDetailRequestFromSnapshotCapsUnreleasedAreaItemLevel(t *
 }
 
 func TestControllerWithContextClonesEducationSource(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -314,7 +314,7 @@ func TestControllerWithContextClonesEducationSource(t *testing.T) {
 		wantValue: "education-power",
 	}
 
-	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(source)
 	ctx := context.WithValue(context.Background(), educationContextKey("trace"), "education-power")
 
@@ -328,7 +328,7 @@ func TestControllerWithContextClonesEducationSource(t *testing.T) {
 }
 
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshot(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -357,7 +357,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshot(t *testing.T) {
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(&testSource{
 		region: renderregion.JP,
 		boxes: map[string]map[int]*ResourceBox{
@@ -448,7 +448,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshot(t *testing.T) {
 }
 
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotAppliesFilters(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -475,7 +475,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotAppliesFilters(t *testi
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(&testSource{
 		region: renderregion.JP,
 		boxes: map[string]map[int]*ResourceBox{
@@ -559,7 +559,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotAppliesFilters(t *testi
 }
 
 func TestBuildBondsRequestFromSnapshot(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -584,7 +584,7 @@ func TestBuildBondsRequestFromSnapshot(t *testing.T) {
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(&testSource{
 		region: renderregion.JP,
 		bonds: []*Bond{
@@ -643,7 +643,7 @@ func TestBuildBondsRequestFromSnapshot(t *testing.T) {
 }
 
 func TestBuildBondsRequestFromSnapshotUsesBaseCharacterForStyledPairs(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -668,7 +668,7 @@ func TestBuildBondsRequestFromSnapshotUsesBaseCharacterForStyledPairs(t *testing
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(&testSource{
 		region: renderregion.JP,
 		bonds: []*Bond{
@@ -727,7 +727,7 @@ func TestBuildBondsRequestFromSnapshotLimitsToTopTen(t *testing.T) {
 		})
 	}
 
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -746,7 +746,7 @@ func TestBuildBondsRequestFromSnapshotLimitsToTopTen(t *testing.T) {
 		"userBonds": userBonds,
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(&testSource{
 		region:     renderregion.JP,
 		bonds:      bondsMaster,
@@ -769,7 +769,7 @@ func TestBuildBondsRequestFromSnapshotLimitsToTopTen(t *testing.T) {
 }
 
 func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -797,7 +797,7 @@ func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.JP)
+	controller := NewController(nil, nil, snap, renderregion.JP)
 	controller.RegisterSource(&testSource{
 		region: renderregion.JP,
 		leaderRequirements: []LeaderMissionRequirement{
@@ -837,7 +837,7 @@ func TestBuildLeaderCountRequestFromSnapshot(t *testing.T) {
 }
 
 func TestBuildLeaderCountRequestFromSnapshotFallsBackToLegacyMissionStatuses(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -865,7 +865,7 @@ func TestBuildLeaderCountRequestFromSnapshotFallsBackToLegacyMissionStatuses(t *
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller := NewController(nil, nil, snap, renderregion.CN)
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		leaderRequirements: []LeaderMissionRequirement{
@@ -892,7 +892,7 @@ func TestBuildLeaderCountRequestFromSnapshotFallsBackToLegacyMissionStatuses(t *
 }
 
 func TestBuildLeaderCountRequestFromSnapshotUsesCompactMissionStatuses(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -926,7 +926,7 @@ func TestBuildLeaderCountRequestFromSnapshotUsesCompactMissionStatuses(t *testin
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller := NewController(nil, nil, snap, renderregion.CN)
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		leaderRequirements: []LeaderMissionRequirement{
@@ -954,7 +954,7 @@ func TestBuildLeaderCountRequestFromSnapshotUsesCompactMissionStatuses(t *testin
 }
 
 func TestBuildLeaderCountRequestFromSnapshotMergesCompactAndStandardMissionStatuses(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -1007,7 +1007,7 @@ func TestBuildLeaderCountRequestFromSnapshotMergesCompactAndStandardMissionStatu
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller := NewController(nil, nil, snap, renderregion.CN)
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		leaderRequirements: []LeaderMissionRequirement{
@@ -1041,7 +1041,7 @@ func TestBuildLeaderCountRequestFromSnapshotMergesCompactAndStandardMissionStatu
 }
 
 func TestBuildLeaderCountRequestFromSnapshotShowsNextExStageWhenProgressIsZero(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -1072,7 +1072,7 @@ func TestBuildLeaderCountRequestFromSnapshotShowsNextExStageWhenProgressIsZero(t
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller := NewController(nil, nil, snap, renderregion.CN)
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		leaderRequirements: []LeaderMissionRequirement{
@@ -1107,7 +1107,7 @@ func TestBuildLeaderCountRequestFromSnapshotShowsNextExStageWhenProgressIsZero(t
 }
 
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotHidesUnreleasedFutureLevels(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 100,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -1134,7 +1134,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotHidesUnreleasedFutureLe
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller := NewController(nil, nil, snap, renderregion.CN)
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		boxes: map[string]map[int]*ResourceBox{
@@ -1178,7 +1178,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotHidesUnreleasedFutureLe
 }
 
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotCapsCurrentLevelToReleasedLevels(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 100,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -1206,7 +1206,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotCapsCurrentLevelToRelea
 		},
 	})
 
-	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller := NewController(nil, nil, snap, renderregion.CN)
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		boxes: map[string]map[int]*ResourceBox{
@@ -1253,7 +1253,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotCapsCurrentLevelToRelea
 }
 
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotFallsBackToShopSequenceWhenResourceBoxDetailsMissing(t *testing.T) {
-	snapshot := mustSnapshot(t, map[string]any{
+	snap := mustSnapshot(t, map[string]any{
 		"now": 100,
 		"userGamedata": map[string]any{
 			"userId": 1001,
@@ -1307,7 +1307,7 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotFallsBackToShopSequence
 		}
 	}
 
-	controller := NewController(nil, nil, snapshot, renderregion.CN)
+	controller := NewController(nil, nil, snap, renderregion.CN)
 	controller.RegisterSource(&testSource{
 		region: renderregion.CN,
 		boxes: map[string]map[int]*ResourceBox{
@@ -1347,11 +1347,11 @@ func mustSnapshot(t *testing.T, payload map[string]any) *snapshot.Service {
 	if err != nil {
 		t.Fatalf("json.Marshal() error = %v", err)
 	}
-	snapshot, err := snapshot.NewFromBytes(nil, nil, renderregion.JP, data, nil, nil)
+	snap, err := snapshot.NewFromBytes(nil, nil, renderregion.JP, data, nil, nil)
 	if err != nil {
 		t.Fatalf("NewFromBytes() error = %v", err)
 	}
-	return snapshot
+	return snap
 }
 
 func approxEqual(a, b float64) bool {

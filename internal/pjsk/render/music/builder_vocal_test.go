@@ -34,8 +34,7 @@ func (s *vocalBuilderTestSource) GetMusicVocals(int) ([]*masterdata.MusicVocal, 
 func (s *vocalBuilderTestSource) GetMusicTags(int) ([]string, error) { return nil, nil }
 func (s *vocalBuilderTestSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	if item := s.characters[id]; item != nil {
-		cp := *item
-		return &cp, nil
+		return new(*item), nil
 	}
 	return nil, errNotFound("character")
 }

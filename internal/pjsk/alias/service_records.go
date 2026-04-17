@@ -6,15 +6,15 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 )
 
-func (s *Service) buildAliasRecordsFromPending(ctx context.Context, rows []*pjskdb.PendingAlias) ([]AliasRecord, error) {
+func (s *Service) buildAliasRecordsFromPending(ctx context.Context, rows []*pjskdb.PendingAlias) ([]PjskAliasRecord, error) {
 	refs, err := s.loadEntityRefs(ctx, pendingRowsToKeys(rows))
 	if err != nil {
 		return nil, err
 	}
-	records := make([]AliasRecord, 0, len(rows))
+	records := make([]PjskAliasRecord, 0, len(rows))
 	for _, row := range rows {
 		ref := refs[entityMapKey(row.AliasType, row.AliasTypeID)]
-		records = append(records, AliasRecord{
+		records = append(records, PjskAliasRecord{
 			ReviewID: row.ID,
 			Entity:   ref,
 			Alias:    row.Alias,
@@ -60,9 +60,9 @@ func (s *Service) loadEntityRefs(ctx context.Context, keys []entityKey) (map[str
 		}
 		seen[mapKey] = struct{}{}
 		switch key.aliasType {
-		case AliasTypeMusic:
+		case PjskAliasTypeMusic:
 			musicIDs = append(musicIDs, key.id)
-		case AliasTypeCharacter:
+		case PjskAliasTypeCharacter:
 			characterIDs = append(characterIDs, key.id)
 		}
 	}
@@ -72,8 +72,8 @@ func (s *Service) loadEntityRefs(ctx context.Context, keys []entityKey) (map[str
 		return nil, err
 	}
 	for _, musicID := range musicIDs {
-		result[entityMapKey(AliasTypeMusic, musicID)] = EntityRef{
-			AliasType: AliasTypeMusic,
+		result[entityMapKey(PjskAliasTypeMusic, musicID)] = EntityRef{
+			AliasType: PjskAliasTypeMusic,
 			ID:        musicID,
 			Name:      musicNames[musicID],
 		}
@@ -84,8 +84,8 @@ func (s *Service) loadEntityRefs(ctx context.Context, keys []entityKey) (map[str
 		return nil, err
 	}
 	for _, characterID := range characterIDs {
-		result[entityMapKey(AliasTypeCharacter, characterID)] = EntityRef{
-			AliasType: AliasTypeCharacter,
+		result[entityMapKey(PjskAliasTypeCharacter, characterID)] = EntityRef{
+			AliasType: PjskAliasTypeCharacter,
 			ID:        characterID,
 			Name:      characterNames[characterID],
 		}

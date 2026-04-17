@@ -153,12 +153,11 @@ func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *music.Controll
 	if len(items) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
-	title := buildMusicLookupListTitle(prefix, value, titleDifficulty)
 	data, err := musicCtrl.RenderMusicList(music.ListQuery{
 		Items:       items,
 		Difficulty:  requestDifficulty,
 		Region:      region,
-		Title:       &title,
+		Title:       new(buildMusicLookupListTitle(prefix, value, titleDifficulty)),
 		TitleShadow: true,
 	})
 	if err != nil {
@@ -175,11 +174,10 @@ func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *music.Con
 	if len(items) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
-	title := buildMusicLookupListTitle(prefix, value, "")
 	data, err := musicCtrl.RenderMusicBriefList(music.BriefListQuery{
 		Items:       items,
 		Region:      region,
-		Title:       &title,
+		Title:       new(buildMusicLookupListTitle(prefix, value, "")),
 		TitleShadow: true,
 	})
 	if err != nil {

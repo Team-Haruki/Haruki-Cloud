@@ -46,8 +46,7 @@ func (r *scoreControlTestAliasResolver) TryResolveMusicTitleOrAliasID(_ context.
 func (s *scoreControlTestSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
 		if strings.EqualFold(item.Title, strings.TrimSpace(query)) {
-			cp := *item
-			return &cp, nil
+			return new(*item), nil
 		}
 	}
 	return nil, os.ErrNotExist
@@ -58,8 +57,7 @@ func (s *scoreControlTestSource) GetMusicByID(id int) (*masterdata.Music, error)
 	if item == nil {
 		return nil, os.ErrNotExist
 	}
-	cp := *item
-	return &cp, nil
+	return new(*item), nil
 }
 
 func (s *scoreControlTestSource) GetMusicByEventID(int) (*masterdata.Music, error) {
@@ -69,8 +67,7 @@ func (s *scoreControlTestSource) GetMusicByEventID(int) (*masterdata.Music, erro
 func (s *scoreControlTestSource) GetMusics() []*masterdata.Music {
 	out := make([]*masterdata.Music, 0, len(s.musics))
 	for _, item := range s.musics {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out
 }

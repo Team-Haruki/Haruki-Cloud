@@ -227,8 +227,7 @@ func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuer
 func extractDeckExplicitEventID(args string) (*int, string) {
 	normalized := normalizeDeckSpaces(args)
 	if strings.Contains(args, "终章") {
-		eventID := 180
-		return &eventID, normalizeDeckSpaces(strings.Replace(args, "终章", "", 1))
+		return new(180), normalizeDeckSpaces(strings.Replace(args, "终章", "", 1))
 	}
 	matches := deckEventIDRegex.FindStringSubmatch(normalized)
 	if len(matches) < 3 {

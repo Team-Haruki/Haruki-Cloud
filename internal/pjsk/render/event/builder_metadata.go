@@ -107,15 +107,13 @@ func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregi
 		}
 	}
 	if attr, _ := b.extractEventBonuses(eventInfo.ID); attr != "" {
-		path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(attr))))
-		brief.EventAttrPath = &path
+		brief.EventAttrPath = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(attr)))))
 	}
 
 	isWLEvent := strings.EqualFold(eventInfo.EventType, "world_bloom")
 	if !isWLEvent {
 		if bannerCID, err := b.source.GetEventBannerCharacterID(eventInfo.ID); err == nil && bannerCID != 0 {
-			path := b.characterIconPath(bannerCID, region)
-			brief.EventCharaPath = &path
+			brief.EventCharaPath = new(b.characterIconPath(bannerCID, region))
 			if unit := b.unitIconPathByCharacter(bannerCID, region); unit != "" {
 				brief.EventUnitPath = &unit
 			}

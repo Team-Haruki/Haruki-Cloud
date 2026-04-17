@@ -74,8 +74,7 @@ func (c *Controller) ResolveLives(query ListQuery) ([]ResolvedLive, renderregion
 		}
 		for _, schedule := range schedules {
 			if now.Before(schedule.EndAt) {
-				current := schedule
-				resolved.Current = &current
+				resolved.Current = new(schedule)
 				resolved.Living = !now.Before(schedule.StartAt)
 				break
 			}

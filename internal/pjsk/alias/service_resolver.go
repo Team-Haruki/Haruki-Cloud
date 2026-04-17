@@ -95,9 +95,9 @@ func (s *Service) TryResolveCharacterID(ctx context.Context, token string) (int,
 
 func (s *Service) resolveEntityByToken(ctx context.Context, aliasType, token string) (EntityRef, error) {
 	switch aliasType {
-	case AliasTypeMusic:
+	case PjskAliasTypeMusic:
 		return s.resolveMusicByToken(ctx, token)
-	case AliasTypeCharacter:
+	case PjskAliasTypeCharacter:
 		return s.resolveCharacterByToken(ctx, token)
 	default:
 		return EntityRef{}, onebot11.NewReplayError("不支持的别名类型: %s", aliasType)
@@ -107,7 +107,7 @@ func (s *Service) resolveEntityByToken(ctx context.Context, aliasType, token str
 func (s *Service) resolveMusicByToken(ctx context.Context, token string) (EntityRef, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return EntityRef{}, fmt.Errorf("请输入%s", entityTokenPrompt(AliasTypeMusic))
+		return EntityRef{}, fmt.Errorf("请输入%s", entityTokenPrompt(PjskAliasTypeMusic))
 	}
 	if ref, ok, err := s.tryResolveMusicByID(ctx, token); err != nil || ok {
 		return ref, err
@@ -118,13 +118,13 @@ func (s *Service) resolveMusicByToken(ctx context.Context, token string) (Entity
 	if ref, ok, err := s.tryResolveMusicByApprovedAlias(ctx, token); err != nil || ok {
 		return ref, err
 	}
-	return EntityRef{}, fmt.Errorf("未找到对应%s，请检查%s", aliasTypeLabel(AliasTypeMusic), entityTokenPrompt(AliasTypeMusic))
+	return EntityRef{}, fmt.Errorf("未找到对应%s，请检查%s", aliasTypeLabel(PjskAliasTypeMusic), entityTokenPrompt(PjskAliasTypeMusic))
 }
 
 func (s *Service) resolveCharacterByToken(ctx context.Context, token string) (EntityRef, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return EntityRef{}, fmt.Errorf("请输入%s", entityTokenPrompt(AliasTypeCharacter))
+		return EntityRef{}, fmt.Errorf("请输入%s", entityTokenPrompt(PjskAliasTypeCharacter))
 	}
 	if ref, ok, err := s.tryResolveCharacterByID(ctx, token); err != nil || ok {
 		return ref, err
@@ -135,7 +135,7 @@ func (s *Service) resolveCharacterByToken(ctx context.Context, token string) (En
 	if ref, ok, err := s.tryResolveCharacterByApprovedAlias(ctx, token); err != nil || ok {
 		return ref, err
 	}
-	return EntityRef{}, fmt.Errorf("未找到对应%s，请检查%s", aliasTypeLabel(AliasTypeCharacter), entityTokenPrompt(AliasTypeCharacter))
+	return EntityRef{}, fmt.Errorf("未找到对应%s，请检查%s", aliasTypeLabel(PjskAliasTypeCharacter), entityTokenPrompt(PjskAliasTypeCharacter))
 }
 
 func (s *Service) tryResolveMusicByID(ctx context.Context, token string) (EntityRef, bool, error) {
@@ -150,9 +150,9 @@ func (s *Service) tryResolveMusicByID(ctx context.Context, token string) (Entity
 		return EntityRef{}, true, err
 	}
 	if len(rows) == 0 {
-		return EntityRef{}, true, fmt.Errorf("未找到%s: %d", aliasTypeIDLabel(AliasTypeMusic), id)
+		return EntityRef{}, true, fmt.Errorf("未找到%s: %d", aliasTypeIDLabel(PjskAliasTypeMusic), id)
 	}
-	return EntityRef{AliasType: AliasTypeMusic, ID: id, Name: preferredMusicTitle(rows, id)}, true, nil
+	return EntityRef{AliasType: PjskAliasTypeMusic, ID: id, Name: preferredMusicTitle(rows, id)}, true, nil
 }
 
 func (s *Service) tryResolveMusicByTitle(ctx context.Context, token string) (EntityRef, bool, error) {
@@ -165,14 +165,14 @@ func (s *Service) tryResolveMusicByTitle(ctx context.Context, token string) (Ent
 	if len(rows) == 0 {
 		return EntityRef{}, false, nil
 	}
-	ref, err := uniqueMusicFromRows(rows, aliasTypeNameLabel(AliasTypeMusic))
+	ref, err := uniqueMusicFromRows(rows, aliasTypeNameLabel(PjskAliasTypeMusic))
 	return ref, true, err
 }
 
 func (s *Service) tryResolveMusicByApprovedAlias(ctx context.Context, token string) (EntityRef, bool, error) {
 	rows, err := s.pjsk.Alias.Query().
 		Where(
-			aliasdb.AliasTypeEQ(AliasTypeMusic),
+			aliasdb.AliasTypeEQ(PjskAliasTypeMusic),
 			aliasdb.AliasEqualFold(token),
 		).
 		All(ctx)
@@ -197,14 +197,14 @@ func (s *Service) tryResolveMusicByApprovedAlias(ctx context.Context, token stri
 		if err != nil {
 			return EntityRef{}, true, err
 		}
-		return EntityRef{}, true, ambiguousEntityError(AliasTypeMusic, "别名", musicIDs, titles)
+		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeMusic, "别名", musicIDs, titles)
 	}
 	titles, err := s.loadMusicTitles(ctx, musicIDs)
 	if err != nil {
 		return EntityRef{}, true, err
 	}
 	return EntityRef{
-		AliasType: AliasTypeMusic,
+		AliasType: PjskAliasTypeMusic,
 		ID:        musicIDs[0],
 		Name:      titles[musicIDs[0]],
 	}, true, nil
@@ -222,9 +222,9 @@ func (s *Service) tryResolveCharacterByID(ctx context.Context, token string) (En
 		return EntityRef{}, true, err
 	}
 	if len(rows) == 0 {
-		return EntityRef{}, true, onebot11.NewReplayError("未找到%s: %d", aliasTypeIDLabel(AliasTypeCharacter), id)
+		return EntityRef{}, true, onebot11.NewReplayError("未找到%s: %d", aliasTypeIDLabel(PjskAliasTypeCharacter), id)
 	}
-	return EntityRef{AliasType: AliasTypeCharacter, ID: id, Name: preferredCharacterName(rows, id)}, true, nil
+	return EntityRef{AliasType: PjskAliasTypeCharacter, ID: id, Name: preferredCharacterName(rows, id)}, true, nil
 }
 
 func (s *Service) tryResolveCharacterByName(ctx context.Context, token string) (EntityRef, bool, error) {
@@ -256,10 +256,10 @@ func (s *Service) tryResolveCharacterByName(ctx context.Context, token string) (
 	}
 	sort.Ints(characterIDs)
 	if len(characterIDs) > 1 {
-		return EntityRef{}, true, ambiguousEntityError(AliasTypeCharacter, aliasTypeNameLabel(AliasTypeCharacter), characterIDs, names)
+		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeCharacter, aliasTypeNameLabel(PjskAliasTypeCharacter), characterIDs, names)
 	}
 	return EntityRef{
-		AliasType: AliasTypeCharacter,
+		AliasType: PjskAliasTypeCharacter,
 		ID:        characterIDs[0],
 		Name:      names[characterIDs[0]],
 	}, true, nil
@@ -268,7 +268,7 @@ func (s *Service) tryResolveCharacterByName(ctx context.Context, token string) (
 func (s *Service) tryResolveCharacterByApprovedAlias(ctx context.Context, token string) (EntityRef, bool, error) {
 	rows, err := s.pjsk.Alias.Query().
 		Where(
-			aliasdb.AliasTypeEQ(AliasTypeCharacter),
+			aliasdb.AliasTypeEQ(PjskAliasTypeCharacter),
 			aliasdb.AliasEqualFold(token),
 		).
 		All(ctx)
@@ -293,14 +293,14 @@ func (s *Service) tryResolveCharacterByApprovedAlias(ctx context.Context, token 
 		if err != nil {
 			return EntityRef{}, true, err
 		}
-		return EntityRef{}, true, ambiguousEntityError(AliasTypeCharacter, "别名", characterIDs, names)
+		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeCharacter, "别名", characterIDs, names)
 	}
 	names, err := s.loadCharacterNames(ctx, characterIDs)
 	if err != nil {
 		return EntityRef{}, true, err
 	}
 	return EntityRef{
-		AliasType: AliasTypeCharacter,
+		AliasType: PjskAliasTypeCharacter,
 		ID:        characterIDs[0],
 		Name:      names[characterIDs[0]],
 	}, true, nil
@@ -312,7 +312,7 @@ func uniqueMusicFromRows(rows []*sekaiDB.Music, sourceName string) (EntityRef, e
 		grouped[int(row.GameID)] = append(grouped[int(row.GameID)], row)
 	}
 	if len(grouped) == 0 {
-		return EntityRef{}, fmt.Errorf("未找到对应%s", aliasTypeLabel(AliasTypeMusic))
+		return EntityRef{}, fmt.Errorf("未找到对应%s", aliasTypeLabel(PjskAliasTypeMusic))
 	}
 	musicIDs := make([]int, 0, len(grouped))
 	titles := make(map[int]string, len(grouped))
@@ -322,10 +322,10 @@ func uniqueMusicFromRows(rows []*sekaiDB.Music, sourceName string) (EntityRef, e
 	}
 	sort.Ints(musicIDs)
 	if len(musicIDs) > 1 {
-		return EntityRef{}, ambiguousEntityError(AliasTypeMusic, sourceName, musicIDs, titles)
+		return EntityRef{}, ambiguousEntityError(PjskAliasTypeMusic, sourceName, musicIDs, titles)
 	}
 	return EntityRef{
-		AliasType: AliasTypeMusic,
+		AliasType: PjskAliasTypeMusic,
 		ID:        musicIDs[0],
 		Name:      titles[musicIDs[0]],
 	}, nil

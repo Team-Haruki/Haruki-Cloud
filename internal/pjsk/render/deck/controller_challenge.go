@@ -52,7 +52,7 @@ func shouldRunChallengeAll(option map[string]any) bool {
 	return optionInt(option, "challenge_live_character_id") <= 0
 }
 
-func (c *Controller) recommendChallengeAll(recommender DeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
+func (c *Controller) recommendChallengeAll(recommender PjskDeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
 	if recommender == nil {
 		return nil, fmt.Errorf("deck recommender is not configured")
 	}

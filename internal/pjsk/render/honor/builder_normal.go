@@ -89,8 +89,7 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	if assetName != "" && (groupType == "event" || groupType == "wl_event" || groupType == "rank_match") {
 		switch groupType {
 		case "rank_match":
-			rankImgPath := resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/%s.png", assetName, mode))
-			req.RankImgPath = &rankImgPath
+			req.RankImgPath = new(resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/%s.png", assetName, mode)))
 		case "event":
 			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
 			if rankCandidate != honorImgPath {
@@ -127,8 +126,7 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 			req.FrameImgPath = &staticFramePath
 		}
 		if strings.HasPrefix(frameName, "honor_frame_birthday") && req.FrameImgPath != nil && *req.FrameImgPath == framePath {
-			levelPath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_level_%d.png", frameName, rarityRank))
-			req.FrameDegreeLevelImgPath = &levelPath
+			req.FrameDegreeLevelImgPath = new(resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_level_%d.png", frameName, rarityRank)))
 		}
 	} else {
 		req.FrameImgPath = &staticFramePath
@@ -137,8 +135,7 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	_, hasScore := diffScoreMap[honorID]
 	if hasScore || groupType == "event" || groupType == "wl_event" {
 		if hasScore {
-			fcApGroup := "fc_ap"
-			req.GroupType = &fcApGroup
+			req.GroupType = new("fc_ap")
 		}
 		scrollPath := resolveGameAsset(fmt.Sprintf("honor/%s/scroll.png", assetName))
 		if b.assetExists(scrollPath) {
@@ -148,15 +145,12 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 		if fcOrApLevelOverride != nil {
 			fcApLevelValue = *fcOrApLevelOverride
 		}
-		fcApLevel := strconv.Itoa(fcApLevelValue)
-		req.FcOrApLevel = &fcApLevel
+		req.FcOrApLevel = new(strconv.Itoa(fcApLevelValue))
 	}
 
 	if groupType == "character" || groupType == "achievement" || strings.HasPrefix(*req.GroupType, "fc_ap") {
-		lvImg := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png"))
-		lv6Img := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png"))
-		req.LvImgPath = &lvImg
-		req.Lv6ImgPath = &lv6Img
+		req.LvImgPath = new(filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png")))
+		req.Lv6ImgPath = new(filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png")))
 	}
 	return nil
 }

@@ -234,7 +234,7 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 		t.Fatalf("owner user mismatch: got=%d want=%d", dbUser.OwnerUserID, qqNumber)
 	}
 
-	authPayload := AuthPayload{
+	authPayload := HarukiAuthPayload{
 		BotID:      registerData.BotID,
 		Credential: registerData.Credential,
 		Timestamp:  time.Now().Unix(),
@@ -260,7 +260,7 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decrypt auth response: %v", err)
 	}
-	var authData AuthResponse
+	var authData HarukiAuthResponse
 	if err := noiseMP.Unmarshal(decryptedResp, &authData); err != nil {
 		t.Fatalf("decode auth response: %v", err)
 	}

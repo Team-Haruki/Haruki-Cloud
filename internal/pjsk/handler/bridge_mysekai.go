@@ -121,10 +121,10 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		replayMessage, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 		if err != nil {
 			return nil, err
-		} else {
-			replayMessage = append(replayMessage, onebot11.At(rc.PlatformUserID))
-			return replayMessage, nil
 		}
+
+		replayMessage = append(replayMessage, onebot11.At(rc.PlatformUserID))
+		return replayMessage, nil
 	case "mysekai-fixture-list":
 		q := mysekai.FixtureListQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)

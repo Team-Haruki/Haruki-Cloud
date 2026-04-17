@@ -42,13 +42,11 @@ func (c *Controller) resolveDetailedProfile(override *drawing.DetailedProfileCar
 
 func (c *Controller) resolveMusicListProfile(override *drawing.DetailedProfileCardRequest, region renderregion.Value) *drawing.DetailedProfileCardRequest {
 	if override != nil {
-		cp := *override
-		return &cp
+		return new(*override)
 	}
 	if snap := c.currentSnapshot(); snap != nil {
 		if profile := snap.DetailedProfile(region); profile != nil {
-			cp := *profile
-			return &cp
+			return new(*profile)
 		}
 	}
 	return nil
@@ -75,13 +73,11 @@ func (c *Controller) profileCardWithMessage(override *drawing.ProfileCardRequest
 	if message == nil {
 		return card
 	}
-	cp := *message
-	card.ErrorMessage = &cp
+	card.ErrorMessage = new(*message)
 	return card
 }
 
 func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.DetailedProfileCardRequest {
-	mode := "service"
 	leaderPath := assets.ResolveProfilePlaceholderPath(c.assets)
 	return drawing.DetailedProfileCardRequest{
 		ID:              "service",
@@ -89,7 +85,7 @@ func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.
 		Nickname:        "Lunabot",
 		Source:          "lunabot-service",
 		UpdateTime:      time.Now().Unix(),
-		Mode:            &mode,
+		Mode:            new("service"),
 		IsHideUID:       true,
 		LeaderImagePath: leaderPath,
 		HasFrame:        false,

@@ -15,15 +15,15 @@ type miscBirthdayParams struct {
 	Query         string `json:"query,omitempty"`
 }
 
-func (sekaiHandlers) MiscBirthdayHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MiscBirthdayHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "misc/birthday",
 			Commands: []string{
 				"/pjsk chara birthday", "/角色生日", "/生日", "/查生日",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildMiscBirthdayParams(ctx.GetArgs())
 			if err != nil {
 				return nil, err
@@ -48,15 +48,15 @@ func buildMiscBirthdayParams(args string) (miscBirthdayParams, error) {
 	return miscBirthdayParams{Query: args}, nil
 }
 
-func (sekaiHandlers) ProfileHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "profile",
 			Commands: []string{
 				"/个人中心", "/profile", "/个人信息",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			p, err := resolveUserQueryParams(ctx)
 			if err != nil {
 				return nil, err

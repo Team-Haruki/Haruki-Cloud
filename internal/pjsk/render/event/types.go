@@ -42,7 +42,7 @@ type Builder struct {
 
 // ProviderAdapter bridges provider.MasterDataProvider to event.DataSource.
 type ProviderAdapter struct {
-	provider.ProviderAdapterBase
+	provider.PjskProviderAdapterBase
 }
 
 type DetailQuery struct {

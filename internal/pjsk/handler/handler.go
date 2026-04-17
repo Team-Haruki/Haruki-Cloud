@@ -51,21 +51,21 @@ type CommandHandlerBase struct {
 	handleFunc func(Context) (*parser.ResolvedCommand, error)
 }
 
-func (h *CommandHandlerBase) IsDisabled() bool {
-	return h.Disabled
+func (b *CommandHandlerBase) IsDisabled() bool {
+	return b.Disabled
 }
 
-func (h *CommandHandlerBase) GetCommands() []string {
-	return h.Commands
+func (b *CommandHandlerBase) GetCommands() []string {
+	return b.Commands
 }
-func (h *CommandHandlerBase) GetPath() string {
-	return h.Path
+func (b *CommandHandlerBase) GetPath() string {
+	return b.Path
 }
-func (h *CommandHandlerBase) GetPriority() int {
-	return h.Priority
+func (b *CommandHandlerBase) GetPriority() int {
+	return b.Priority
 }
-func (h *CommandHandlerBase) GetHelper() string {
-	return h.Helper
+func (b *CommandHandlerBase) GetHelper() string {
+	return b.Helper
 }
 func (b *CommandHandlerBase) Handle(ctx Context) (*parser.ResolvedCommand, error) {
 	if b.handleFunc != nil {
@@ -87,11 +87,11 @@ func RegisterCommandHandler(module string, handler CommandHandler) {
 	registerBotRouteLocked(module, handler)
 }
 
-func MatchCommandHandler(message string) matchedHandler {
+func MatchCommandHandler(message string) MatchedHandler {
 	treeMutex.RLock()
 	defer treeMutex.RUnlock()
 	messageRune := []rune(message)
-	matched := commandHandlerTree.get(messageRune, 0, matchedHandler{})
+	matched := commandHandlerTree.get(messageRune, 0, MatchedHandler{})
 	matched.ArgText = messageRune[matched.PrefixLength:]
 	return matched
 }
@@ -177,7 +177,7 @@ func (t *handlerTreeNode) add(depth, index int, command []rune, handler CommandH
 	if nextR == 0 {
 		handlerPriority := handler.GetPriority()
 		if t.handler != nil && !t.handler.IsDisabled() {
-			slog.Warn("指令已被注册", "command", string(command), "existing", string(t.command), "existing_priority", t.priority, "new_priority", handlerPriority)
+			slog.Warn("指令已被注册", "command", string(command), "existing", t.command, "existing_priority", t.priority, "new_priority", handlerPriority)
 			if handlerPriority > 0 && (handlerPriority < t.priority || t.priority == 0) {
 				slog.Info("待注册的指令处理器优先级更高，替换已有的处理器", "command", string(command))
 			} else {
@@ -204,14 +204,14 @@ func (t *handlerTreeNode) add(depth, index int, command []rune, handler CommandH
 	t.children[nextR] = child
 }
 
-type matchedHandler struct {
+type MatchedHandler struct {
 	Command      string
 	PrefixLength int
 	ArgText      []rune
 	Handler      CommandHandler
 }
 
-func (t *handlerTreeNode) get(command []rune, prefixLength int, macthed matchedHandler) matchedHandler {
+func (t *handlerTreeNode) get(command []rune, prefixLength int, macthed MatchedHandler) MatchedHandler {
 	macthedPriority := 0
 	if macthed.Handler != nil && !macthed.Handler.IsDisabled() {
 		macthedPriority = macthed.Handler.GetPriority()

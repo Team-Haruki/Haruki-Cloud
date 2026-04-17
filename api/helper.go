@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"haruki-cloud/config"
 	harukiRedis "haruki-cloud/utils/redis"
@@ -144,7 +145,8 @@ func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn
 	}
 	data, err := fetchFn(key)
 	if err != nil {
-		if bypass, ok := err.(*CacheBypassError); ok {
+		var bypass *CacheBypassError
+		if errors.As(err, &bypass) {
 			return bypass.Response
 		}
 		return InternalError(c)

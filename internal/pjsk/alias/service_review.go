@@ -12,7 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/onebot11"
 )
 
-func (s *Service) ListPending(ctx context.Context, platform, platformUserID string) ([]AliasRecord, error) {
+func (s *Service) ListPending(ctx context.Context, platform, platformUserID string) ([]PjskAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
 	}
@@ -29,7 +29,7 @@ func (s *Service) ListPending(ctx context.Context, platform, platformUserID stri
 	return s.buildAliasRecordsFromPending(ctx, rows)
 }
 
-func (s *Service) Approve(ctx context.Context, platform, platformUserID string, reviewIDs []int64) ([]AliasRecord, error) {
+func (s *Service) Approve(ctx context.Context, platform, platformUserID string, reviewIDs []int64) ([]PjskAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
 	}
@@ -119,7 +119,7 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 	return s.buildAliasRecordsFromPending(ctx, orderedPendingAliases(uniqueIDs, byID))
 }
 
-func (s *Service) Reject(ctx context.Context, platform, platformUserID string, reviewID int64, reason string) (*AliasRecord, error) {
+func (s *Service) Reject(ctx context.Context, platform, platformUserID string, reviewID int64, reason string) (*PjskAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
 	}

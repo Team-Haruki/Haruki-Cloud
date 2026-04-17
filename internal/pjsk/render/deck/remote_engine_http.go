@@ -18,8 +18,7 @@ import (
 // isRetryableError returns true for transient errors that warrant a retry.
 func isRetryableError(err error, statusCode int) bool {
 	if err != nil {
-		var netErr net.Error
-		if errors.As(err, &netErr) {
+		if _, ok := errors.AsType[net.Error](err); ok {
 			return true
 		}
 		msg := err.Error()

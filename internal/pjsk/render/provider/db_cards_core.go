@@ -213,5 +213,5 @@ func (p *dbCardProvider) matchesUnitFilter(ctx context.Context, filter *CardFilt
 // cardJsonFieldEQ creates a predicate that matches a JSONB text field by its
 // unquoted string value. Works with PostgreSQL's ->> operator.
 func cardJsonFieldEQ(field, value string) predicate.Card {
-	return predicate.Card(sql.FieldEQ(field, value))
+	return sql.FieldEQ(field, value)
 }

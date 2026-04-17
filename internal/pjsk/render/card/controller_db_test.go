@@ -23,7 +23,7 @@ func (s *dbBackedLookupTestSource) GetCardByID(id int) (*masterdata.Card, error)
 	return common.ConvertCardEntity(s.entity)
 }
 
-func (s *dbBackedLookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
+func (s *dbBackedLookupTestSource) FilterCards(info *PjskCardQueryInfo) ([]*masterdata.Card, error) {
 	if len(s.filterEntities) == 0 {
 		return s.lookupTestSource.FilterCards(info)
 	}

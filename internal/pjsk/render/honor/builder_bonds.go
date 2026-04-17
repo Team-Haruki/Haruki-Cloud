@@ -13,8 +13,7 @@ import (
 )
 
 func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *masterdata.BondsHonor, honorLevel int, bondsHonorViewType string, bondsHonorWordID int, region renderregion.Value) error {
-	honorType := "bonds"
-	req.HonorType = &honorType
+	req.HonorType = new("bonds")
 	req.HonorRarity = &honorInfo.HonorRarity
 	req.HonorLevel = &honorLevel
 
@@ -55,11 +54,9 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 	}
 	applyBondsHonorDisplaySlots(req, resolveGameAsset, displaySlots, bgSuffix)
 
-	maskPath := fmt.Sprintf("%s/honor/mask_degree_%s.png", assets.StaticImagesDir, mode)
-	req.MaskImgPath = &maskPath
+	req.MaskImgPath = new(fmt.Sprintf("%s/honor/mask_degree_%s.png", assets.StaticImagesDir, mode))
 
-	framePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), mapHonorRarity(honorInfo.HonorRarity))
-	req.FrameImgPath = &framePath
+	req.FrameImgPath = new(fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), mapHonorRarity(honorInfo.HonorRarity)))
 
 	if req.IsMainHonor {
 		wordID := bondsHonorWordID
@@ -78,14 +75,11 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 		} else {
 			bundleName = fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_%s", cid1, cid2, cid2, cid1, viewSuffix)
 		}
-		wordPath := resolveGameAsset(fmt.Sprintf("bonds_honor/word/%s.png", bundleName))
-		req.WordImgPath = &wordPath
+		req.WordImgPath = new(resolveGameAsset(fmt.Sprintf("bonds_honor/word/%s.png", bundleName)))
 	}
 
-	lvImg := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png"))
-	lv6Img := filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png"))
-	req.LvImgPath = &lvImg
-	req.Lv6ImgPath = &lv6Img
+	req.LvImgPath = new(filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png")))
+	req.Lv6ImgPath = new(filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png")))
 	return nil
 }
 
@@ -97,20 +91,14 @@ func applyBondsHonorDisplaySlots(req *drawing.HonorRequest, resolveGameAsset fun
 		return
 	}
 
-	bgPath1 := fmt.Sprintf("%s/honor/bonds/%d%s.png", assets.StaticImagesDir, displaySlots[0].characterID, bgSuffix)
-	bgPath2 := fmt.Sprintf("%s/honor/bonds/%d%s.png", assets.StaticImagesDir, displaySlots[1].characterID, bgSuffix)
-	req.BondsBgPath = &bgPath1
-	req.BondsBgPath2 = &bgPath2
+	req.BondsBgPath = new(fmt.Sprintf("%s/honor/bonds/%d%s.png", assets.StaticImagesDir, displaySlots[0].characterID, bgSuffix))
+	req.BondsBgPath2 = new(fmt.Sprintf("%s/honor/bonds/%d%s.png", assets.StaticImagesDir, displaySlots[1].characterID, bgSuffix))
 
-	charaPath1 := resolveGameAsset(fmt.Sprintf("bonds_honor/character/chr_sd_%02d_01.png", displaySlots[0].unitID))
-	charaPath2 := resolveGameAsset(fmt.Sprintf("bonds_honor/character/chr_sd_%02d_01.png", displaySlots[1].unitID))
-	req.CharaIconPath = &charaPath1
-	req.CharaIconPath2 = &charaPath2
+	req.CharaIconPath = new(resolveGameAsset(fmt.Sprintf("bonds_honor/character/chr_sd_%02d_01.png", displaySlots[0].unitID)))
+	req.CharaIconPath2 = new(resolveGameAsset(fmt.Sprintf("bonds_honor/character/chr_sd_%02d_01.png", displaySlots[1].unitID)))
 
-	charaID1 := strconv.Itoa(displaySlots[0].unitID)
-	charaID2 := strconv.Itoa(displaySlots[1].unitID)
-	req.CharaID = &charaID1
-	req.CharaID2 = &charaID2
+	req.CharaID = new(strconv.Itoa(displaySlots[0].unitID))
+	req.CharaID2 = new(strconv.Itoa(displaySlots[1].unitID))
 }
 
 func bondsHonorViewTypeIsReverse(viewType string) bool {

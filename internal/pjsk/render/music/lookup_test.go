@@ -99,8 +99,7 @@ func (r *contextAwareLookupTestAliasResolver) TryResolveMusicTitleOrAliasID(ctx 
 func (s *lookupTestSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
 		if strings.EqualFold(item.Title, query) {
-			cp := *item
-			return &cp, nil
+			return new(*item), nil
 		}
 	}
 	return nil, errNotFound("music")
@@ -111,8 +110,7 @@ func (s *lookupTestSource) GetMusicByID(id int) (*masterdata.Music, error) {
 	if item == nil {
 		return nil, errNotFound("music")
 	}
-	cp := *item
-	return &cp, nil
+	return new(*item), nil
 }
 
 func (s *lookupTestSource) GetMusicByEventID(int) (*masterdata.Music, error) {
@@ -122,8 +120,7 @@ func (s *lookupTestSource) GetMusicByEventID(int) (*masterdata.Music, error) {
 func (s *lookupTestSource) GetMusics() []*masterdata.Music {
 	out := make([]*masterdata.Music, 0, len(s.musics))
 	for _, item := range s.musics {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out
 }
@@ -136,8 +133,7 @@ func (s *lookupTestSource) GetMusicDifficulties(musicID int) ([]*masterdata.Musi
 	items := s.difficulties[musicID]
 	out := make([]*masterdata.MusicDifficulty, 0, len(items))
 	for _, item := range items {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out, nil
 }
@@ -243,7 +239,7 @@ func TestResolveMusicCoverUsesControllerRequestContext(t *testing.T) {
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
 	controller.SetAliasResolver(&contextAwareLookupTestAliasResolver{
-		wantKey:   lookupContextKey("trace"),
+		wantKey:   "trace",
 		wantValue: "music-cover",
 		id:        7,
 	})

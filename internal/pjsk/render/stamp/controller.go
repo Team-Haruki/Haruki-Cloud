@@ -83,10 +83,9 @@ func (c *Controller) BuildStampListRequests(query ListQuery) ([]*drawing.StampLi
 			end = len(items)
 		}
 		pageItems := slices.Clone(items[start:end])
-		pageText := fmt.Sprintf("第 %d / %d 页", pageNum, totalPages)
 		return &drawing.StampListRequest{
 			PromptMessage: &prompt,
-			PageMessage:   &pageText,
+			PageMessage:   new(fmt.Sprintf("第 %d / %d 页", pageNum, totalPages)),
 			Stamps:        pageItems,
 		}
 	}

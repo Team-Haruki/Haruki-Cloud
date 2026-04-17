@@ -9,7 +9,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
-	sekai "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/pjsk/sekai"
 )
 
 type userMusicAchievement struct {

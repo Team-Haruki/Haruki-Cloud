@@ -190,16 +190,13 @@ func TestBuildAutoRecommendRequestSetsWorldBloomCharacterMetadata(t *testing.T) 
 	})
 	defer server.Close()
 
-	eventID := 7
-	worldBloomCharacterID := 20
-	boost := 5
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:                "jp",
 		RecommendType:         "event",
 		Algorithm:             "ga",
-		EventID:               &eventID,
-		Boost:                 &boost,
-		WorldBloomCharacterID: &worldBloomCharacterID,
+		EventID:               new(7),
+		Boost:                 new(5),
+		WorldBloomCharacterID: new(20),
 	})
 	if err != nil {
 		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
@@ -470,29 +467,23 @@ func TestBuildRecommendOptionKeepsNoEventAllWithConfiguredAlgorithms(t *testing.
 func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
-	eventID := 123
-	musicID := 456
-	worldBloomCharacterID := 21
-	teammatePower := 260000
-	teammateScoreUp := 210
-	scoreUpLowerBound := 180.0
 	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
 		Region:                       "jp",
 		RecommendType:                "event",
-		EventID:                      &eventID,
+		EventID:                      new(123),
 		Algorithm:                    "sa",
 		LiveType:                     "multi",
 		Target:                       "skill",
-		MusicID:                      &musicID,
+		MusicID:                      new(456),
 		MusicDiff:                    "expert",
-		WorldBloomCharacterID:        &worldBloomCharacterID,
+		WorldBloomCharacterID:        new(21),
 		FixedCards:                   []int{1001},
 		FixedCharacters:              []int{21},
 		Rarity4Config:                &CardConfigPatch{MasterMax: true},
 		SingleCardConfigs:            []SingleCardConfigPatch{{CardID: 777, LevelMax: true, SkillMax: true}},
-		MultiLiveTeammatePower:       &teammatePower,
-		MultiLiveTeammateScoreUp:     &teammateScoreUp,
-		MultiLiveScoreUpLowerBound:   &scoreUpLowerBound,
+		MultiLiveTeammatePower:       new(260000),
+		MultiLiveTeammateScoreUp:     new(210),
+		MultiLiveScoreUpLowerBound:   new(180.0),
 		SkillOrderChooseStrategy:     "max",
 		SkillReferenceChooseStrategy: "average",
 		KeepAfterTrainingState:       true,
@@ -545,13 +536,11 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 func TestBuildRecommendOptionAppliesExtendedOverrides(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
-	boost := 5
-	areaItemLevel := 15
 	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
 		Region:              "jp",
 		RecommendType:       "event",
-		Boost:               &boost,
-		AreaItemLevel:       &areaItemLevel,
+		Boost:               new(5),
+		AreaItemLevel:       new(15),
 		UnitFilter:          "idol",
 		AttrFilter:          "cool",
 		ExcludedCards:       []int{1001, 1002},
@@ -784,14 +773,12 @@ func TestBuildRecommendOptionMapsChallengeAutoLiveType(t *testing.T) {
 func TestBuildRecommendOptionSimulatedWorldBloomClearsEventID(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
-	worldBloomCharacterID := 21
-	worldBloomTurn := 2
 	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
 		Region:                "jp",
 		RecommendType:         "event",
 		EventUnit:             "piapro",
-		WorldBloomCharacterID: &worldBloomCharacterID,
-		WorldBloomEventTurn:   &worldBloomTurn,
+		WorldBloomCharacterID: new(21),
+		WorldBloomEventTurn:   new(2),
 	})
 	if err != nil {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
@@ -808,14 +795,12 @@ func TestBuildRecommendOptionSimulatedWorldBloomClearsEventID(t *testing.T) {
 func TestBuildRecommendOptionExplicitEventWorldBloomCharacterKeepsEventID(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
-	eventID := 112
-	worldBloomCharacterID := 20
 	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
 		Region:                "jp",
 		RecommendType:         "event",
-		EventID:               &eventID,
+		EventID:               new(112),
 		EventUnit:             "school_refusal",
-		WorldBloomCharacterID: &worldBloomCharacterID,
+		WorldBloomCharacterID: new(20),
 	})
 	if err != nil {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
@@ -1086,11 +1071,10 @@ func TestBuildAutoRecommendRequestChallengeCurrentUsesSnapshotDeck(t *testing.T)
 		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	charaID := 21
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:                   "jp",
 		RecommendType:            "challenge",
-		ChallengeLiveCharacterID: &charaID,
+		ChallengeLiveCharacterID: new(21),
 		UseCurrentDeck:           true,
 		Algorithm:                "ga",
 	})
@@ -1151,11 +1135,10 @@ func TestBuildAutoRecommendRequestEventMusicCompareRequiresFixedDeckWhenQueriesO
 		data: []byte(`[{"music_id":1,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
 	_, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
+		EventID:       new(7),
 		MusicCompare:  true,
 	})
 	if err == nil {
@@ -1247,11 +1230,10 @@ func TestBuildAutoRecommendRequestEventMusicCompareUsesResolvedSelections(t *tes
 		data: []byte(`[{"music_id":1,"difficulty":"hard","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100},{"music_id":2,"difficulty":"expert","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
+		EventID:       new(7),
 		MusicCompare:  true,
 		MusicCompareSelections: []MusicCompareSelection{
 			{MusicID: 1, MusicDiff: "hard", MusicTitle: "Song A", MusicCoverPath: "music/jacket/song_a/song_a.png", MusicQuery: "Song Ahd"},
@@ -1374,11 +1356,10 @@ func TestBuildAutoRecommendRequestEventMusicCompareCurrentDeckBuildsCandidatesAn
 		]`),
 	})
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:         "jp",
 		RecommendType:  "event",
-		EventID:        &eventID,
+		EventID:        new(7),
 		UseCurrentDeck: true,
 		MusicCompare:   true,
 	})
@@ -1494,11 +1475,10 @@ func TestBuildAutoRecommendRequestEventCurrentUsesSnapshotDeck(t *testing.T) {
 		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:         "jp",
 		RecommendType:  "event",
-		EventID:        &eventID,
+		EventID:        new(7),
 		UseCurrentDeck: true,
 		Algorithm:      "ga",
 	})
@@ -1572,11 +1552,10 @@ func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testin
 		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
+		EventID:       new(7),
 		MaxProfile:    true,
 		Algorithm:     "ga",
 	})
@@ -1658,11 +1637,10 @@ func TestBuildAutoRecommendRequestSubMaxProfilePromotesAreaItemsTo15(t *testing.
 		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
+		EventID:       new(7),
 		SubMaxProfile: true,
 		Algorithm:     "ga",
 	})
@@ -1737,13 +1715,11 @@ func TestBuildAutoRecommendRequestFilterAndExcludeTrimUserCards(t *testing.T) {
 		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
-	boost := 5
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
-		Boost:         &boost,
+		EventID:       new(7),
+		Boost:         new(5),
 		UnitFilter:    "piapro",
 		ExcludedCards: []int{1004},
 		Algorithm:     "ga",
@@ -1786,11 +1762,10 @@ func TestBuildAutoRecommendRequestSetsAttrIconPathFromAttrFilter(t *testing.T) {
 	})
 	defer server.Close()
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
+		EventID:       new(7),
 		AttrFilter:    "happy",
 		Algorithm:     "ga",
 	})
@@ -2090,11 +2065,10 @@ func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T
 		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
+		EventID:       new(7),
 		Limit:         1,
 	})
 	if err != nil {
@@ -2152,11 +2126,10 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyProtocol(t *test
 		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
+		EventID:       new(7),
 		Algorithm:     "ga",
 		Limit:         1,
 	})
@@ -2229,11 +2202,10 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyWhenUserdataHash
 		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
 	})
 
-	eventID := 7
 	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
 		Region:        "jp",
 		RecommendType: "event",
-		EventID:       &eventID,
+		EventID:       new(7),
 		Algorithm:     "ga",
 		Limit:         1,
 	})
@@ -2374,7 +2346,7 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 	}
 
 	assetHelper := assets.NewAssetHelper(tempDir, nil)
-	snapshot := snapshot.NewLocalFileService(nil, assetHelper, snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, assetHelper, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userJSONPath,
 	})
@@ -2506,7 +2478,7 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 		},
 	}
 
-	controller := NewControllerWithConfig(cardSource, eventSource, nil, assetHelper, snapshot, renderregion.JP, cfg, metaLoader)
+	controller := NewControllerWithConfig(cardSource, eventSource, nil, assetHelper, snap, renderregion.JP, cfg, metaLoader)
 	controller.RegisterMusicSource(musicSource)
 	return controller
 }

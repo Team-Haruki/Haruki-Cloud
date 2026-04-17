@@ -7,9 +7,10 @@ import (
 	"sort"
 	"testing"
 
-	_ "github.com/lib/pq"
 	entsekai "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/migrate"
+
+	_ "github.com/lib/pq"
 )
 
 const defaultSekaiDSN = "host=localhost port=5432 user=haruki password=sekai dbname=master_data sslmode=disable"

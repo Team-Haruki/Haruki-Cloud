@@ -38,14 +38,14 @@ var (
 	ErrClientNotConfigured = errors.New("sekai client: not configured")
 )
 
-// SekaiAPIError is returned for unexpected non-2xx responses that do not map
+// APIError is returned for unexpected non-2xx responses that do not map
 // to one of the typed sentinel errors above.
-type SekaiAPIError struct {
+type APIError struct {
 	StatusCode int
 	Message    string
 }
 
-func (e *SekaiAPIError) Error() string {
+func (e *APIError) Error() string {
 	return fmt.Sprintf("sekai api error: status %d, message: %q", e.StatusCode, e.Message)
 }
 

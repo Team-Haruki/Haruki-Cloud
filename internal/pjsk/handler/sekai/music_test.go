@@ -14,7 +14,7 @@ func TestNoteNumHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.NoteNumHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/物量",
 		ArgText:    "777",
@@ -46,7 +46,7 @@ func TestNoteNumHandleBuildsResolvedCommandWithDifficulty(t *testing.T) {
 	h := sekaiHandlers{}.NoteNumHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/查物量",
 		ArgText:    "777 ex",
@@ -82,7 +82,7 @@ func TestBPMHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.BPMHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/查BPM",
 		ArgText:    "200 ex",
@@ -121,7 +121,7 @@ func TestMusicCoverHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.MusicCoverHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/曲绘",
 		ArgText:    "テオ",
@@ -146,7 +146,7 @@ func TestMusicProgressHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.MusicProgressHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/pjsk progress",
 		ArgText:    "ex",
@@ -181,7 +181,7 @@ func TestMusicProgressHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.MusicProgressHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -216,7 +216,7 @@ func TestMusicListHandleBuildsResolvedCommandWithExactLevel(t *testing.T) {
 	h := sekaiHandlers{}.MusicListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/难度排行",
 		ArgText:    "31",
@@ -251,7 +251,7 @@ func TestMusicListHandleBuildsResolvedCommandWithLevelRangeAndDiff(t *testing.T)
 	h := sekaiHandlers{}.MusicListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/难度排行",
 		ArgText:    "31-32 ex",
@@ -288,7 +288,7 @@ func TestMusicListHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.MusicListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -328,7 +328,7 @@ func TestMusicListHandleBuildsResolvedCommandWithResultFilter(t *testing.T) {
 	h := sekaiHandlers{}.MusicListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/难度排行",
 		ArgText:    "未ap 31-32 ex",
@@ -360,7 +360,7 @@ func TestMusicRewardsHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.MusicRewardsHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -394,7 +394,7 @@ func TestMusicListHandleBuildsResolvedCommandWithClosedIntervalTwoTokensAndDiff(
 	h := sekaiHandlers{}.MusicListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/难度排行",
 		ArgText:    "31 32 ex",
@@ -431,7 +431,7 @@ func TestMusicListHandleBuildsResolvedCommandWithBracketedClosedInterval(t *test
 	h := sekaiHandlers{}.MusicListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/难度排行",
 		ArgText:    "[31,32] ex",
@@ -468,7 +468,7 @@ func TestMusicListHandleBuildsResolvedCommandWithSpacedClosedInterval(t *testing
 	h := sekaiHandlers{}.MusicListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/难度排行",
 		ArgText:    "31 到 32 ex",

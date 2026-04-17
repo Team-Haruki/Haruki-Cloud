@@ -10,15 +10,15 @@ import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 )
 
-func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiResourceHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/resource",
 			Commands: []string{
 				"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msa",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if strings.Contains(strings.ToLower(args), "all") {
@@ -37,15 +37,15 @@ func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiOverviewHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiOverviewHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/overview",
 			Commands: []string{
 				"/pjsk mysekai overview", "/mysekai-overview", "/mysekai总览", "/烤森总览", "/msam",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if strings.Contains(strings.ToLower(args), "all") {
@@ -71,15 +71,15 @@ func (sekaiHandlers) MysekaiOverviewHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiMapHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiMapHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/map",
 			Commands: []string{
 				"/pjsk mysekai map", "/mysekai-map", "/mysekai地图", "/烤森地图", "/msm", "/msmap",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if strings.Contains(strings.ToLower(args), "all") {
@@ -100,15 +100,15 @@ func (sekaiHandlers) MysekaiMapHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiTalkListHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/talk-list",
 			Commands: []string{
 				"/mysekai-talk-list", "/mysekai对话列表", "/烤森对话列表",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			showAllTalks := strings.Contains(strings.ToLower(args), "all")
 			cleaned := cleanMysekaiArgs(args)
@@ -126,15 +126,15 @@ func (sekaiHandlers) MysekaiTalkListHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiFixtureListHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/fixture-list",
 			Commands: []string{
 				"/mysekai-fixture-list", "/mysekai家具列表", "/烤森家具列表",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			showID := !strings.Contains(strings.ToLower(args), "noid")
 			onlyCraftable := false
@@ -153,8 +153,8 @@ func (sekaiHandlers) MysekaiFixtureListHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/fixture-detail",
 			Commands: []string{
@@ -162,7 +162,7 @@ func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 				"/msf", "/mysekai 家具", "/家具列表",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 
 			selfParams := map[string]any{}
@@ -193,15 +193,15 @@ func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiDoorUpgradeHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiDoorUpgradeHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/door-upgrade",
 			Commands: []string{
 				"/pjsk mysekai gate", "/mysekai-door-upgrade", "/mysekai大门升级", "/烤森大门升级", "/msg", "/msgate",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			showAll, cleanedArgs := extractMysekaiAllFlag(args)
 			args = cleanedArgs
@@ -226,15 +226,15 @@ func (sekaiHandlers) MysekaiDoorUpgradeHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiMusicRecordHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiMusicRecordHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/music-record",
 			Commands: []string{
 				"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/mss", "/msr", "/mssong",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if err := embedSelfQuery(params, ctx); err != nil {
@@ -251,8 +251,8 @@ func (sekaiHandlers) MysekaiMusicRecordHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/blueprint",
 			Commands: []string{
@@ -260,7 +260,7 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 				"/msb", "/mysekai 蓝图",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selfParams := map[string]any{}
 			if err := embedSelfQuery(selfParams, ctx); err != nil {
 				return nil, err
@@ -287,8 +287,8 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MysekaiPhotoHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MysekaiPhotoHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "mysekai/photo",
 			Commands: []string{
@@ -296,7 +296,7 @@ func (sekaiHandlers) MysekaiPhotoHandle() SekaiCommandHandler {
 				"/msp", "/mysekai 照片",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			seq, err := strconv.Atoi(args)
 			if err != nil || seq == 0 {

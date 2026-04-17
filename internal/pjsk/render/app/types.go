@@ -58,7 +58,7 @@ type Config struct {
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not
 	// depend on package-level singletons.
-	SekaiAPI *sekaiapi.SekaiAPIClient
+	SekaiAPI *sekaiapi.HarukiSekaiAPIClient
 	Toolbox  *sekaiapi.HarukiToolboxClient
 	Tracker  *sekaiapi.TrackerClient
 }
@@ -115,11 +115,11 @@ type App struct {
 	VLive           *vlive.Controller
 	Bindings        *accountdata.BindingService
 	BanChecker      *accountdata.BanService
-	Snapshots       snapshot.SnapshotProvider
+	Snapshots       snapshot.HarukiSnapshotProvider
 	MySekaiPayloads snapshot.MySekaiPayloadProvider
 	ImageCache      *imagecache.Client
 	Censor          *censor.Service
-	SekaiAPI        *sekaiapi.SekaiAPIClient
+	SekaiAPI        *sekaiapi.HarukiSekaiAPIClient
 	Toolbox         *sekaiapi.HarukiToolboxClient
 	Tracker         *sekaiapi.TrackerClient
 	Config          Config

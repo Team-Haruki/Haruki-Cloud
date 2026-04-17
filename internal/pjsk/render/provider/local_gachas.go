@@ -95,6 +95,5 @@ func (p *localGachaProvider) GetCardByID(_ context.Context, id int) (*masterdata
 	if !ok {
 		return nil, fmt.Errorf("card %d not found", id)
 	}
-	c := *card
-	return &c, nil
+	return new(*card), nil
 }

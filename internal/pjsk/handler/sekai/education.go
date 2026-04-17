@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-func (sekaiHandlers) ChallengeInfoHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ChallengeInfoHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "education/challenge",
 			Commands: []string{
@@ -17,7 +17,7 @@ func (sekaiHandlers) ChallengeInfoHandle() SekaiCommandHandler {
 				"/挑战信息", "/挑战详情", "/挑战进度", "/挑战一览", "/每日挑战",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
@@ -27,8 +27,8 @@ func (sekaiHandlers) ChallengeInfoHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) PowerBonusInfoHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) PowerBonusInfoHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "education/power",
 			Commands: []string{
@@ -36,7 +36,7 @@ func (sekaiHandlers) PowerBonusInfoHandle() SekaiCommandHandler {
 				"/加成信息", "/加成详情", "/加成进度", "/加成一览", "/角色加成",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
@@ -46,8 +46,8 @@ func (sekaiHandlers) PowerBonusInfoHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) AreaItemHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) AreaItemHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "education/area",
 			Commands: []string{
@@ -55,7 +55,7 @@ func (sekaiHandlers) AreaItemHandle() SekaiCommandHandler {
 				"/区域道具", "/区域道具升级", "/区域道具升级材料",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			query, err := buildEducationAreaQuery(ctx.GetArgs(), ctx.originalTriggerCmd)
 			if err != nil {
 				return nil, err
@@ -87,8 +87,8 @@ func (sekaiHandlers) AreaItemHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) BondsHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) BondsHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "education/bonds",
 			Commands: []string{
@@ -97,7 +97,7 @@ func (sekaiHandlers) BondsHandle() SekaiCommandHandler {
 				"/牵绊等级", "/牵绊", "/角色牵绊", "/牵绊信息",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
@@ -110,8 +110,8 @@ func (sekaiHandlers) BondsHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) LeaderCountHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) LeaderCountHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "education/leader",
 			Commands: []string{
@@ -119,7 +119,7 @@ func (sekaiHandlers) LeaderCountHandle() SekaiCommandHandler {
 				"/队长次数", "/角色次数", "/队长游玩次数", "/角色游玩次数",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err

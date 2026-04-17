@@ -12,9 +12,9 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 )
 
-func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (resolvedGameTarget, error) {
+func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (ResolvedGameTarget, error) {
 	if app == nil || app.Bindings == nil {
-		return resolvedGameTarget{}, accountdata.ErrBindingServiceUnavailable
+		return ResolvedGameTarget{}, accountdata.ErrBindingServiceUnavailable
 	}
 	switch p.Mode {
 	case "self":
@@ -35,9 +35,9 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
 		}
 		if err != nil {
-			return resolvedGameTarget{}, normalizeBindingLookupError(err, "解析绑定账号失败")
+			return ResolvedGameTarget{}, normalizeBindingLookupError(err, "解析绑定账号失败")
 		}
-		return resolvedGameTarget{
+		return ResolvedGameTarget{
 			HarukiUserID: hid,
 			PJSKUserID:   binding.PJSKUserID,
 			Visible:      binding.Visible,
@@ -47,24 +47,24 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 	case "at_user":
 		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
 		if err != nil {
-			return resolvedGameTarget{}, normalizeBindingLookupError(err, "未找到该用户的绑定账号")
+			return ResolvedGameTarget{}, normalizeBindingLookupError(err, "未找到该用户的绑定账号")
 		}
 		if !binding.Visible {
-			return resolvedGameTarget{}, fmt.Errorf("该用户已隐藏个人信息")
+			return ResolvedGameTarget{}, fmt.Errorf("该用户已隐藏个人信息")
 		}
-		return resolvedGameTarget{
+		return ResolvedGameTarget{
 			PJSKUserID: binding.PJSKUserID,
 			Visible:    binding.Visible,
 			BgSettings: binding.Bg,
 			Binding:    binding,
 		}, nil
 	case "uid":
-		return resolvedGameTarget{
+		return ResolvedGameTarget{
 			PJSKUserID: p.PJSKUserID,
 			Visible:    true,
 		}, nil
 	default:
-		return resolvedGameTarget{}, fmt.Errorf("未知的查询模式：%q", p.Mode)
+		return ResolvedGameTarget{}, fmt.Errorf("未知的查询模式：%q", p.Mode)
 	}
 }
 
@@ -114,7 +114,7 @@ func selectorBindingServer(region string, regionExplicit bool) string {
 	return strings.TrimSpace(region)
 }
 
-func resolvedTargetRegion(region string, target resolvedGameTarget) string {
+func resolvedTargetRegion(region string, target ResolvedGameTarget) string {
 	if target.Binding != nil {
 		if normalized := renderregion.Normalize(target.Binding.Server); !normalized.IsZero() {
 			return normalized.String()

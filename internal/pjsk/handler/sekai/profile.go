@@ -10,8 +10,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 )
 
-func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileBindHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk bind", "/pjsk id",
@@ -20,7 +20,7 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 			Path: "profile/bind",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID", ctx.originalTriggerCmd)
@@ -30,8 +30,8 @@ func (sekaiHandlers) ProfileBindHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileBindListHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileBindListHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/绑定列表", "/pjsk bind list", "/pjsk绑定列表",
@@ -39,7 +39,7 @@ func (sekaiHandlers) ProfileBindListHandle() SekaiCommandHandler {
 			Path: "profile/bind/list",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
 			}
@@ -52,8 +52,8 @@ func (sekaiHandlers) ProfileBindListHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileUnbindHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk unbind", "/pjsk解绑", "/解绑", "/取消绑定",
@@ -61,7 +61,7 @@ func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 			Path: "profile/unbind",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n或 %s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
@@ -77,8 +77,8 @@ func (sekaiHandlers) ProfileUnbindHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileSetMainHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk set main", "/pjsk主账号", "/设置主账号", "/主账号",
@@ -87,7 +87,7 @@ func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
 			Path: "profile/default",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID\n%s u1", ctx.originalTriggerCmd, ctx.originalTriggerCmd)
@@ -104,8 +104,8 @@ func (sekaiHandlers) ProfileSetMainHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileClearDefaultBindingHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/取消默认绑定", "/清除默认绑定", "/取消主账号", "/清除主账号",
@@ -113,7 +113,7 @@ func (sekaiHandlers) ProfileClearDefaultBindingHandle() SekaiCommandHandler {
 			Path: "profile/default/clear",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 
 			scope := ""

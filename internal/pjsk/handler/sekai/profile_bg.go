@@ -20,20 +20,18 @@ func extractProfileVerticalArg(args string) (*bool, string) {
 	remaining := strings.TrimSpace(args)
 	for _, keyword := range profileHorizontalKeywords {
 		if strings.Contains(remaining, keyword) {
-			v := false
-			return &v, strings.TrimSpace(strings.Replace(remaining, keyword, "", 1))
+			return new(false), strings.TrimSpace(strings.Replace(remaining, keyword, "", 1))
 		}
 	}
 	for _, keyword := range profileVerticalKeywords {
 		if strings.Contains(remaining, keyword) {
-			v := true
-			return &v, strings.TrimSpace(strings.Replace(remaining, keyword, "", 1))
+			return new(true), strings.TrimSpace(strings.Replace(remaining, keyword, "", 1))
 		}
 	}
 	return nil, remaining
 }
 
-func extractFirstImageURL(ctx SekaiHandlerContext) string {
+func extractFirstImageURL(ctx HarrukiSekaiHandlerContext) string {
 	for _, segment := range ctx.GetMessage() {
 		if segment.Type != "image" {
 			continue
@@ -126,7 +124,7 @@ func parseProfileBGInt(raw string, minValue, maxValue int) (int, error) {
 	return n, nil
 }
 
-func resolveProfileBGSelector(ctx SekaiHandlerContext) (string, error) {
+func resolveProfileBGSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	uidArg := strings.TrimSpace(ctx.UIDArg())
 	if uidArg == "" {
 		return "", nil
@@ -137,8 +135,8 @@ func resolveProfileBGSelector(ctx SekaiHandlerContext) (string, error) {
 	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号] ...", ctx.originalTriggerCmd)
 }
 
-func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileUploadBGHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk upload profile bg", "/pjsk upload profile background",
@@ -147,7 +145,7 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/upload",
 		},
 		ParseUIDArg: common.BoolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			imageURL := extractFirstImageURL(ctx)
 			if imageURL == "" {
 				return nil, onebot11.NewReplayError("请在命令中附带一张个人信息背景图片")
@@ -163,8 +161,8 @@ func (sekaiHandlers) ProfileUploadBGHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileClearBGHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk clear profile bg", "/pjsk clear profile background",
@@ -173,7 +171,7 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/clear",
 		},
 		ParseUIDArg: common.BoolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
 				return nil, err
@@ -183,8 +181,8 @@ func (sekaiHandlers) ProfileClearBGHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ProfileAdjustBGHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/pjsk adjust profile", "/pjsk adjust profile bg", "/pjsk adjust profile background",
@@ -193,7 +191,7 @@ func (sekaiHandlers) ProfileAdjustBGHandle() SekaiCommandHandler {
 			Path: "profile/bg/adjust",
 		},
 		ParseUIDArg: common.BoolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			selector, err := resolveProfileBGSelector(ctx)
 			if err != nil {
 				return nil, err

@@ -203,7 +203,7 @@ func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
 	}
 
 	originalFactory := snapshotProviderFactory
-	snapshotProviderFactory = func(app *renderapp.App) rendersnapshot.SnapshotProvider {
+	snapshotProviderFactory = func(app *renderapp.App) rendersnapshot.HarukiSnapshotProvider {
 		if app != nil && app.Config.UserSnapshot.Provider == "internal_cloud" {
 			return liveProvider
 		}

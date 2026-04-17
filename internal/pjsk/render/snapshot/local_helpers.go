@@ -152,23 +152,23 @@ func makeRelativeAsset(assetHelper *assets.AssetHelper, target string) string {
 func buildUserCardEntries(cards []RawUserCard) []any {
 	seen := make(map[int]struct{}, len(cards))
 	entries := make([]any, 0, len(cards))
-	for _, card := range cards {
-		if card.CardID == 0 {
+	for _, userCard := range cards {
+		if userCard.CardID == 0 {
 			continue
 		}
-		if _, ok := seen[card.CardID]; ok {
+		if _, ok := seen[userCard.CardID]; ok {
 			continue
 		}
-		seen[card.CardID] = struct{}{}
+		seen[userCard.CardID] = struct{}{}
 		entry := map[string]any{
-			"cardId":                card.CardID,
-			"level":                 card.Level,
-			"masterRank":            card.MasterRank,
-			"defaultImage":          card.DefaultImage,
-			"specialTrainingStatus": card.SpecialTrainingStatus,
+			"cardId":                userCard.CardID,
+			"level":                 userCard.Level,
+			"masterRank":            userCard.MasterRank,
+			"defaultImage":          userCard.DefaultImage,
+			"specialTrainingStatus": userCard.SpecialTrainingStatus,
 		}
-		if card.SkillLevel > 0 {
-			entry["skillLevel"] = card.SkillLevel
+		if userCard.SkillLevel > 0 {
+			entry["skillLevel"] = userCard.SkillLevel
 		}
 		entries = append(entries, entry)
 	}

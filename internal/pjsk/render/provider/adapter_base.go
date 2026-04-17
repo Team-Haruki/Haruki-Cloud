@@ -6,26 +6,26 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-// ProviderAdapterBase provides common adapter scaffolding embedded by each
+// PjskProviderAdapterBase provides common adapter scaffolding embedded by each
 // render module's ProviderAdapter.  It exposes DefaultRegion and a
 // CloneWithContext helper so individual adapters only need a thin
 // WithContext wrapper that returns their module-specific DataSource.
-type ProviderAdapterBase struct {
+type PjskProviderAdapterBase struct {
 	P   MasterDataProvider
 	Ctx context.Context
 }
 
-func NewProviderAdapterBase(p MasterDataProvider) ProviderAdapterBase {
-	return ProviderAdapterBase{P: p, Ctx: context.TODO()}
+func NewProviderAdapterBase(p MasterDataProvider) PjskProviderAdapterBase {
+	return PjskProviderAdapterBase{P: p, Ctx: context.TODO()}
 }
 
-func (b *ProviderAdapterBase) DefaultRegion() renderregion.Value {
+func (b *PjskProviderAdapterBase) DefaultRegion() renderregion.Value {
 	return b.P.Region()
 }
 
 // Context returns the request context bound to this adapter, falling back
 // to context.Background() when no context has been set.
-func (b *ProviderAdapterBase) Context() context.Context {
+func (b *PjskProviderAdapterBase) Context() context.Context {
 	if b == nil || b.Ctx == nil {
 		return context.TODO()
 	}
@@ -34,9 +34,9 @@ func (b *ProviderAdapterBase) Context() context.Context {
 
 // CloneWithContext returns a new base bound to ctx. All sub-provider
 // interfaces accept ctx directly, so no provider wrapping is needed.
-func (b *ProviderAdapterBase) CloneWithContext(ctx context.Context) ProviderAdapterBase {
+func (b *PjskProviderAdapterBase) CloneWithContext(ctx context.Context) PjskProviderAdapterBase {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return ProviderAdapterBase{P: b.P, Ctx: ctx}
+	return PjskProviderAdapterBase{P: b.P, Ctx: ctx}
 }

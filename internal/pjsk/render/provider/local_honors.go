@@ -157,12 +157,10 @@ func (p *localHonorProvider) GetGroupByID(_ context.Context, id int) (*masterdat
 	if model.HonorType == "birthday" && (model.BackgroundAssetBundleName == nil || model.FrameName == nil) {
 		if derived, ok := p.deriveBirthdayAssetsForGroup(id, model.Name); ok {
 			if model.BackgroundAssetBundleName == nil && derived.background != "" {
-				v := derived.background
-				model.BackgroundAssetBundleName = &v
+				model.BackgroundAssetBundleName = new(derived.background)
 			}
 			if model.FrameName == nil && derived.frame != "" {
-				v := derived.frame
-				model.FrameName = &v
+				model.FrameName = new(derived.frame)
 			}
 			slog.Info("honor birthday derive trace",
 				"group_id", id,

@@ -25,8 +25,8 @@ const searchMultiCardHelp = `查询多张卡牌的筛选参数:
 
 const cardSearchHelp = searchSingleCardHelp + "\n\n" + searchMultiCardHelp
 
-func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) CardDetailHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/detail",
 			Commands: []string{
@@ -34,14 +34,14 @@ func (sekaiHandlers) CardDetailHandle() SekaiCommandHandler {
 			},
 			Helper: cardSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveCardDetailOrList(ctx, false)
 		},
 	}
 }
 
-func (sekaiHandlers) CardListHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) CardListHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/list",
 			Commands: []string{
@@ -49,13 +49,13 @@ func (sekaiHandlers) CardListHandle() SekaiCommandHandler {
 			},
 			Helper: cardSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveCardDetailOrList(ctx, true)
 		},
 	}
 }
 
-func resolveCardDetailOrList(ctx SekaiHandlerContext, preferFilter bool) (*parser.ResolvedCommand, error) {
+func resolveCardDetailOrList(ctx HarrukiSekaiHandlerContext, preferFilter bool) (*parser.ResolvedCommand, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if isCardBoxQuery(args) {
 		ctx.SetArgs(cleanCardBoxArgs(args))
@@ -89,15 +89,15 @@ func looksLikeSingleCardQuery(args string, preferFilter bool) bool {
 	return card.LooksLikeSingleCardQuery(args)
 }
 
-func (sekaiHandlers) CardBoxHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) CardBoxHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/box",
 			Commands: []string{
 				"/查箱", "/卡牌一览", "/卡面一览", "/卡一览", "/box", "/card-box", "/pjsk box",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			ctx.SetArgs(cleanCardBoxArgs(args))
 			params, err := newCardBoxParams(ctx, args, true)
@@ -128,7 +128,7 @@ func cardBoxParams(args string) map[string]any {
 	}
 }
 
-func newCardListParams(ctx SekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
+func newCardListParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
 	params, err := newSelfQueryParamsMap(ctx)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func newCardListParams(ctx SekaiHandlerContext, args string, strictFilterOnly bo
 	return params, nil
 }
 
-func newCardBoxParams(ctx SekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
+func newCardBoxParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
 	params, err := newSelfQueryParamsMap(ctx)
 	if err != nil {
 		return nil, err
@@ -160,8 +160,8 @@ func cleanCardBoxArgs(args string) string {
 	return strings.TrimSpace(replacer.Replace(strings.ToLower(args)))
 }
 
-func (sekaiHandlers) CardImgHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) CardImgHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "card/image",
 			Commands: []string{
@@ -169,7 +169,7 @@ func (sekaiHandlers) CardImgHandle() SekaiCommandHandler {
 				"/查卡面", "/卡面原图", "/卡面", "/card", "/卡图",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
 				return nil, errors.New("请输入要查询的卡牌")

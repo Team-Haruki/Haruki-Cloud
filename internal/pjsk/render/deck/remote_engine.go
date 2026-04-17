@@ -18,11 +18,11 @@ func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 	return &remoteEngineProvider{
 		cfg:          cfg,
 		client:       &http.Client{Timeout: timeout},
-		recommenders: make(map[string]DeckRecommender),
+		recommenders: make(map[string]PjskDeckRecommender),
 	}
 }
 
-func (p *remoteEngineProvider) Get(region string) (DeckRecommender, error) {
+func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 	if p == nil {
 		return nil, fmt.Errorf("deck remote engine provider is not initialized")
 	}

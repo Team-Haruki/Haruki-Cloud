@@ -126,8 +126,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 
 			var pointID *int
 			if fixtureID > 0 {
-				idCopy := fixtureID
-				pointID = &idCopy
+				pointID = new(fixtureID)
 			}
 
 			positionX := floatNumber(point["positionX"], floatNumber(point["position_x"], 0))
@@ -140,15 +139,13 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			var offsetX float64
 			offsetZ := -48.0
 			if fixtureType == "birthday_plant" {
-				fallbackPath := c.staticPath("mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png")
-				fallbackImagePath = &fallbackPath
+				fallbackImagePath = new(c.staticPath("mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png"))
 				if characterID := birthdayCharacterByPos[posKey]; characterID > 0 {
 					if imageName := mysekaiBirthdayCharacterImageName(characterMap[characterID]); imageName != "" {
 						imageRelPath = fmt.Sprintf("mysekai/birthday/%s_%d/icon_refresh.png", imageName, time.Now().Year())
 					}
 				}
-				sizeValue := 50
-				size = &sizeValue
+				size = new(50)
 				offsetX = 7.5
 				offsetZ = 0
 			}

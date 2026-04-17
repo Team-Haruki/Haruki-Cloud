@@ -116,8 +116,7 @@ func ConvertGachaEntity(entity *sekaiDB.Gacha) (*masterdata.Gacha, error) {
 
 	var ceilItemID *int
 	if entity.GachaCeilItemID != 0 {
-		value := int(entity.GachaCeilItemID)
-		ceilItemID = &value
+		ceilItemID = new(int(entity.GachaCeilItemID))
 	}
 
 	return &masterdata.Gacha{

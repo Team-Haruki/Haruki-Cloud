@@ -21,60 +21,60 @@ var AllMusicDifficulties = []MusicDifficultyType{
 	MusicDifficultyAppend,
 }
 
-type SekaiServerRegion string
+type ServerRegion string
 
 const (
-	SekaiServerRegionJP SekaiServerRegion = "jp"
-	SekaiServerRegionEN SekaiServerRegion = "en"
-	SekaiServerRegionTW SekaiServerRegion = "tw"
-	SekaiServerRegionKR SekaiServerRegion = "kr"
-	SekaiServerRegionCN SekaiServerRegion = "cn"
+	ServerRegionJP ServerRegion = "jp"
+	ServerRegionEN ServerRegion = "en"
+	ServerRegionTW ServerRegion = "tw"
+	ServerRegionKR ServerRegion = "kr"
+	ServerRegionCN ServerRegion = "cn"
 )
 
-type SekaiEventType string
+type EventType string
 
 const (
-	SekaiEventTypeMarathon         SekaiEventType = "marathon"          // 马拉松 (普活)
-	SekaiEventTypeCheerfulCarnival SekaiEventType = "cheerful_carnival" // 欢乐嘉年华 (5v5)
-	SekaiEventTypeWorldBloom       SekaiEventType = "world_bloom"       // 世界连接 (World Link)
+	EventTypeMarathon         EventType = "marathon"          // 马拉松 (普活)
+	EventTypeCheerfulCarnival EventType = "cheerful_carnival" // 欢乐嘉年华 (5v5)
+	EventTypeWorldBloom       EventType = "world_bloom"       // 世界连接 (World Link)
 )
 
-type SekaiWorldBloomType string
+type WorldBloomType string
 
 const (
-	SekaiWorldBloomTypeGameCharacter SekaiWorldBloomType = "game_character"
-	SekaiWorldBloomTypeFinale        SekaiWorldBloomType = "finale"
+	WorldBloomTypeGameCharacter WorldBloomType = "game_character"
+	WorldBloomTypeFinale        WorldBloomType = "finale"
 )
 
-type SekaiEventStatus string
+type EventStatus string
 
 const (
-	SekaiEventStatusNotStarted  SekaiEventStatus = "not_started" // 还没开始
-	SekaiEventStatusOngoing     SekaiEventStatus = "ongoing"     // 正在进行
-	SekaiEventStatusAggregating SekaiEventStatus = "aggregating" // 集算中
-	SekaiEventStatusEnded       SekaiEventStatus = "ended"       // 已结束
+	EventStatusNotStarted  EventStatus = "not_started" // 还没开始
+	EventStatusOngoing     EventStatus = "ongoing"     // 正在进行
+	EventStatusAggregating EventStatus = "aggregating" // 集算中
+	EventStatusEnded       EventStatus = "ended"       // 已结束
 )
 
-type SekaiEventSpeedType string
+type EventSpeedType string
 
 const (
-	SekaiEventSpeedTypeHourly    SekaiEventSpeedType = "hourly"
-	SekaiEventSpeedTypeSemiDaily SekaiEventSpeedType = "semi_daily"
-	SekaiEventSpeedTypeDaily     SekaiEventSpeedType = "daily"
+	EventSpeedTypeHourly    EventSpeedType = "hourly"
+	EventSpeedTypeSemiDaily EventSpeedType = "semi_daily"
+	EventSpeedTypeDaily     EventSpeedType = "daily"
 )
 
-type SekaiUnit string
+type Unit string
 
 const (
-	SekaiUnitNone                SekaiUnit = "none"
-	SekaiUnitLeoneed             SekaiUnit = "light_sound"
-	SekaiUnitMoreMoreJump        SekaiUnit = "idol"
-	SekaiUnitVividBadSquad       SekaiUnit = "street"
-	SekaiUnitWonderlandsShowtime SekaiUnit = "theme_park"
-	SekaiUnitNightcord           SekaiUnit = "school_refusal"
+	UnitNone                Unit = "none"
+	UnitLeoneed             Unit = "light_sound"
+	UnitMoreMoreJump        Unit = "idol"
+	UnitVividBadSquad       Unit = "street"
+	UnitWonderlandsShowtime Unit = "theme_park"
+	UnitNightcord           Unit = "school_refusal"
 )
 
-var SekaiEventRankingLinesNormal = []int{
+var EventRankingLinesNormal = []int{
 	10, 20, 30, 40, 50, 100, 200, 300, 400, 500,
 	1000, 1500, 2000, 2500, 3000, 4000, 5000,
 	10000, 20000, 30000, 40000, 50000,
@@ -91,7 +91,7 @@ const (
 	ToolboxDataTypeMySekai ToolboxDataType = "mysekai"
 )
 
-var SekaiEventRankingLinesWorldBloom = []int{
+var EventRankingLinesWorldBloom = []int{
 	10, 20, 30, 40, 50, 100, 200, 300, 400, 500,
 	1000, 2000, 3000, 4000, 5000, 7000,
 	10000, 20000, 30000, 40000, 50000, 70000,

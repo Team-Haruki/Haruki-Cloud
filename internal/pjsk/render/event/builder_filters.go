@@ -151,8 +151,7 @@ func (b *Builder) getBannerIndex(charID, eventID int) *int {
 	})
 	for idx, eventInfo := range events {
 		if eventInfo.ID == eventID {
-			index := idx + 1
-			return &index
+			return new(idx + 1)
 		}
 	}
 	return nil

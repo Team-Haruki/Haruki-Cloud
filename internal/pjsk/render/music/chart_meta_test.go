@@ -15,7 +15,7 @@ func TestFindMusicMetaMatchesDifficulty(t *testing.T) {
 	if got := item["difficulty"]; got != "master" {
 		t.Fatalf("difficulty = %v", got)
 	}
-	if got := item["fever_score"]; got != float64(0.4) {
+	if got := item["fever_score"]; got != 0.4 {
 		t.Fatalf("fever_score = %v", got)
 	}
 }

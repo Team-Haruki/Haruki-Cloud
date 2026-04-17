@@ -17,23 +17,23 @@ const (
 	tokenHeader   = "X-Haruki-Sekai-Token"
 )
 
-type SekaiAPIClient struct {
+type HarukiSekaiAPIClient struct {
 	http   *resty.Client
 	config *config.SekaiAPIConfig
 }
 
-// NewSekaiAPIClient constructs a SekaiAPIClient bound to the supplied config.
+// NewSekaiAPIClient constructs a HarukiSekaiAPIClient bound to the supplied config.
 // Callers own the returned client; pass it via dependency injection rather than
 // reaching for a package-level singleton.
-func NewSekaiAPIClient(cfg *config.SekaiAPIConfig) *SekaiAPIClient {
-	return &SekaiAPIClient{
+func NewSekaiAPIClient(cfg *config.SekaiAPIConfig) *HarukiSekaiAPIClient {
+	return &HarukiSekaiAPIClient{
 		http:   newRestyClient().SetTimeout(apiTimeout),
 		config: cfg,
 	}
 }
 
 // authReq returns a pre-configured request with the token header set.
-func (c *SekaiAPIClient) authReq() *resty.Request {
+func (c *HarukiSekaiAPIClient) authReq() *resty.Request {
 	return c.http.R().SetHeader(tokenHeader, c.config.Token)
 }
 
@@ -42,7 +42,7 @@ func (c *SekaiAPIClient) authReq() *resty.Request {
 //	GET /api/{server}/{userID}/profile
 //
 // Returns ErrUserNotFound on HTTP 404.
-func (c *SekaiAPIClient) GetUserProfile(server, userID string) (*GetAnotherProfileResponse, error) {
+func (c *HarukiSekaiAPIClient) GetUserProfile(server, userID string) (*GetAnotherProfileResponse, error) {
 	if c == nil {
 		return nil, ErrClientNotConfigured
 	}
@@ -61,7 +61,7 @@ func (c *SekaiAPIClient) GetUserProfile(server, userID string) (*GetAnotherProfi
 // GetSystem fetches the current game system status.
 //
 //	GET /api/{server}/system
-func (c *SekaiAPIClient) GetSystem(server string) (*GetSystemResponse, error) {
+func (c *HarukiSekaiAPIClient) GetSystem(server string) (*GetSystemResponse, error) {
 	if c == nil {
 		return nil, ErrClientNotConfigured
 	}
@@ -80,7 +80,7 @@ func (c *SekaiAPIClient) GetSystem(server string) (*GetSystemResponse, error) {
 // GetInformation fetches in-game information / announcements.
 //
 //	GET /api/{server}/information
-func (c *SekaiAPIClient) GetInformation(server string) (*GetInformationResponse, error) {
+func (c *HarukiSekaiAPIClient) GetInformation(server string) (*GetInformationResponse, error) {
 	if c == nil {
 		return nil, ErrClientNotConfigured
 	}
@@ -102,7 +102,7 @@ func (c *SekaiAPIClient) GetInformation(server string) (*GetInformationResponse,
 //
 // imagePath is the sub-path identifying the photo, e.g. "12345/6" for CN/TW
 // or the raw imagePath value returned by the suite API for JP/EN.
-func (c *SekaiAPIClient) GetMySekaiImage(server, imagePath string) ([]byte, error) {
+func (c *HarukiSekaiAPIClient) GetMySekaiImage(server, imagePath string) ([]byte, error) {
 	if c == nil {
 		return nil, ErrClientNotConfigured
 	}
@@ -111,7 +111,7 @@ func (c *SekaiAPIClient) GetMySekaiImage(server, imagePath string) ([]byte, erro
 }
 
 // get executes a GET request with auth and maps HTTP status codes to typed errors.
-func (c *SekaiAPIClient) get(url string) ([]byte, error) {
+func (c *HarukiSekaiAPIClient) get(url string) ([]byte, error) {
 	resp, err := c.authReq().Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("sekai api: request failed after retries: %w", sanitizeNetworkError(err))
@@ -126,6 +126,6 @@ func (c *SekaiAPIClient) get(url string) ([]byte, error) {
 		return nil, ErrServerMaintenance
 	default:
 		msg := parseMessage(resp.Body())
-		return nil, &SekaiAPIError{StatusCode: resp.StatusCode(), Message: msg}
+		return nil, &APIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
 }

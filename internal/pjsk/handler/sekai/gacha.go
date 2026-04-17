@@ -31,8 +31,8 @@ var (
 	reGachaPageCN     = regexp.MustCompile(`(\d+)页`)
 )
 
-func (sekaiHandlers) GachaHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) GachaHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "gacha",
 			Commands: []string{
@@ -40,13 +40,13 @@ func (sekaiHandlers) GachaHandle() SekaiCommandHandler {
 			},
 			Helper: gachaSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveGachaDetailOrList(ctx)
 		},
 	}
 }
 
-func resolveGachaDetailOrList(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+func resolveGachaDetailOrList(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args == "" {
 		return makeResolvedCmdWithParams(ctx, parser.ModuleGacha, "gacha-list", map[string]any{

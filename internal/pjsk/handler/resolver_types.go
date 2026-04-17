@@ -18,7 +18,7 @@ type userQueryParams struct {
 	ProfileVertical *bool  `json:"profile_vertical,omitempty"`
 }
 
-type resolvedGameTarget struct {
+type ResolvedGameTarget struct {
 	HarukiUserID int
 	PJSKUserID   string
 	Visible      bool

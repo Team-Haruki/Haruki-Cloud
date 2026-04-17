@@ -56,8 +56,7 @@ func (p *localPlayerFrameProvider) GetByID(_ context.Context, id int) (*masterda
 	if !ok {
 		return nil, fmt.Errorf("player frame %d not found", id)
 	}
-	c := *f
-	return &c, nil
+	return new(*f), nil
 }
 
 func (p *localPlayerFrameProvider) GetGroupByID(_ context.Context, id int) (*masterdata.PlayerFrameGroup, error) {
@@ -71,6 +70,5 @@ func (p *localPlayerFrameProvider) GetGroupByID(_ context.Context, id int) (*mas
 	if !ok {
 		return nil, fmt.Errorf("player frame group %d not found", id)
 	}
-	c := *g
-	return &c, nil
+	return new(*g), nil
 }

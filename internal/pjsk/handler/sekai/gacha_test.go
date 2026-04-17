@@ -13,7 +13,7 @@ import (
 func TestGachaHandleUsesPastInclusiveListWhenArgsEmpty(t *testing.T) {
 	h := sekaiHandlers{}.GachaHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡池",
 		ArgText:    "",
@@ -44,7 +44,7 @@ func TestGachaHandleUsesPastInclusiveListWhenArgsEmpty(t *testing.T) {
 func TestGachaHandleUsesDetailForDirectID(t *testing.T) {
 	h := sekaiHandlers{}.GachaHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡池",
 		ArgText:    "123",
@@ -75,7 +75,7 @@ func TestGachaHandleUsesDetailForDirectID(t *testing.T) {
 func TestGachaHandleUsesDetailForNegativeIndex(t *testing.T) {
 	h := sekaiHandlers{}.GachaHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡池",
 		ArgText:    "-2",
@@ -106,7 +106,7 @@ func TestGachaHandleUsesDetailForNegativeIndex(t *testing.T) {
 func TestGachaHandleUsesDetailForEventSelector(t *testing.T) {
 	h := sekaiHandlers{}.GachaHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡池",
 		ArgText:    "event123",
@@ -137,7 +137,7 @@ func TestGachaHandleUsesDetailForEventSelector(t *testing.T) {
 func TestGachaHandleParsesListFilters(t *testing.T) {
 	h := sekaiHandlers{}.GachaHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡池",
 		ArgText:    "当前 25年 card123 p2 复刻 回响",
@@ -174,7 +174,7 @@ func TestGachaHandleParsesListFilters(t *testing.T) {
 func TestGachaHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
 	h := sekaiHandlers{}.GachaHandle()
 
-	_, err := h.Handle(&handler.HandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡池",
 		ArgText:    "???",

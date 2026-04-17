@@ -181,7 +181,7 @@ func compareMusicCandidateValue(item map[string]any, liveType string, useEventRa
 	return value
 }
 
-func (c *Controller) recommendMusicCompare(recommender DeckRecommender, req RecommendRequest, option map[string]any, selections []MusicCompareSelection, showNum int, recType string) (*RecommendResult, []MusicCompareSelection, error) {
+func (c *Controller) recommendMusicCompare(recommender PjskDeckRecommender, req RecommendRequest, option map[string]any, selections []MusicCompareSelection, showNum int, recType string) (*RecommendResult, []MusicCompareSelection, error) {
 	if recommender == nil {
 		return nil, nil, fmt.Errorf("deck recommender is not configured")
 	}

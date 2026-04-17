@@ -74,8 +74,7 @@ func musicRecordIconPath(resolve pathResolver, hasRecord bool) *string {
 	if !hasRecord {
 		return nil
 	}
-	path := resolve("mysekai/music_record.png")
-	return &path
+	return new(resolve("mysekai/music_record.png"))
 }
 
 func formatMysekaiQuantity(quantity int) string {

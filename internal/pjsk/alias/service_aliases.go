@@ -10,7 +10,7 @@ import (
 	aliasdb "haruki-cloud/database/pjsk/alias"
 )
 
-func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToSubmit []string) ([]AliasRecord, error) {
+func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToSubmit []string) ([]PjskAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
 	}
@@ -44,7 +44,7 @@ func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserI
 		}
 	}()
 
-	records := make([]AliasRecord, 0, len(cleanedAliases))
+	records := make([]PjskAliasRecord, 0, len(cleanedAliases))
 	for _, aliasText := range cleanedAliases {
 		row, err := tx.PendingAlias.Create().
 			SetAliasType(aliasType).
@@ -59,7 +59,7 @@ func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserI
 			}
 			return nil, err
 		}
-		records = append(records, AliasRecord{
+		records = append(records, PjskAliasRecord{
 			ReviewID: row.ID,
 			Entity:   entityRef,
 			Alias:    row.Alias,
@@ -115,7 +115,7 @@ func (s *Service) ListApprovedMusicAliases(ctx context.Context, musicID int) ([]
 	}
 	rows, err := s.pjsk.Alias.Query().
 		Where(
-			aliasdb.AliasTypeEQ(AliasTypeMusic),
+			aliasdb.AliasTypeEQ(PjskAliasTypeMusic),
 			aliasdb.AliasTypeIDEQ(musicID),
 		).
 		All(ctx)
@@ -150,7 +150,7 @@ func (s *Service) ListApprovedCharacterAliasMap(ctx context.Context) (map[string
 	}
 
 	rows, err := s.pjsk.Alias.Query().
-		Where(aliasdb.AliasTypeEQ(AliasTypeCharacter)).
+		Where(aliasdb.AliasTypeEQ(PjskAliasTypeCharacter)).
 		All(ctx)
 	if err != nil {
 		return nil, err

@@ -12,62 +12,62 @@ import (
 	"haruki-cloud/internal/pjsk/render/common"
 )
 
-func (sekaiHandlers) MusicAliasQueryHandle() SekaiCommandHandler {
+func (sekaiHandlers) MusicAliasQueryHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasQueryHandler(
-		aliases.AliasTypeMusic,
+		aliases.PjskAliasTypeMusic,
 		"alias/music",
 		[]string{"/pjsk alias", "/music alias", "/歌曲别名", "/查歌曲别名"},
 		"/music alias",
 	)
 }
 
-func (sekaiHandlers) MusicAliasAddHandle() SekaiCommandHandler {
+func (sekaiHandlers) MusicAliasAddHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasAddHandler(
-		aliases.AliasTypeMusic,
+		aliases.PjskAliasTypeMusic,
 		"alias/music/add",
 		[]string{"/music alias add", "/pjsk alias add", "/pjskalias add", "/添加歌曲别名", "/歌曲别名添加"},
 		"/music alias add",
 	)
 }
 
-func (sekaiHandlers) MusicAliasDeleteHandle() SekaiCommandHandler {
+func (sekaiHandlers) MusicAliasDeleteHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasDeleteHandler(
-		aliases.AliasTypeMusic,
+		aliases.PjskAliasTypeMusic,
 		"alias/music/del",
 		[]string{"/music alias del", "/pjsk alias del", "/pjskalias del", "/删除歌曲别名", "/歌曲别名删除"},
 		"/music alias del",
 	)
 }
 
-func (sekaiHandlers) CharacterAliasQueryHandle() SekaiCommandHandler {
+func (sekaiHandlers) CharacterAliasQueryHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasQueryHandler(
-		aliases.AliasTypeCharacter,
+		aliases.PjskAliasTypeCharacter,
 		"alias/character",
 		[]string{"/pjsk chara alias", "/chara alias", "/character alias", "/角色别名", "/查角色别名"},
 		"/chara alias",
 	)
 }
 
-func (sekaiHandlers) CharacterAliasAddHandle() SekaiCommandHandler {
+func (sekaiHandlers) CharacterAliasAddHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasAddHandler(
-		aliases.AliasTypeCharacter,
+		aliases.PjskAliasTypeCharacter,
 		"alias/character/add",
 		[]string{"/pjsk chara alias add", "/chara alias add", "/character alias add", "/添加角色别名", "/角色别名添加"},
 		"/chara alias add",
 	)
 }
 
-func (sekaiHandlers) CharacterAliasDeleteHandle() SekaiCommandHandler {
+func (sekaiHandlers) CharacterAliasDeleteHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasDeleteHandler(
-		aliases.AliasTypeCharacter,
+		aliases.PjskAliasTypeCharacter,
 		"alias/character/del",
 		[]string{"/pjsk chara alias del", "/chara alias del", "/character alias del", "/删除角色别名", "/角色别名删除"},
 		"/chara alias del",
 	)
 }
 
-func (sekaiHandlers) AliasPendingHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) AliasPendingHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "alias/pending",
 			Commands: []string{
@@ -77,7 +77,7 @@ func (sekaiHandlers) AliasPendingHandle() SekaiCommandHandler {
 			Helper: "使用方式:\n/待审核别名",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
 				return nil, onebot11.NewReplayError("使用方式:\n/待审核别名")
 			}
@@ -89,8 +89,8 @@ func (sekaiHandlers) AliasPendingHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) AliasApproveHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) AliasApproveHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "alias/approve",
 			Commands: []string{
@@ -99,7 +99,7 @@ func (sekaiHandlers) AliasApproveHandle() SekaiCommandHandler {
 			Helper: "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			reviewIDs, err := parseAliasReviewIDs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
@@ -113,8 +113,8 @@ func (sekaiHandlers) AliasApproveHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) AliasRejectHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "alias/reject",
 			Commands: []string{
@@ -123,7 +123,7 @@ func (sekaiHandlers) AliasRejectHandle() SekaiCommandHandler {
 			Helper: "使用方式:\n/拒绝别名 待审核ID 原因",
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			reviewID, reason, err := parseAliasRejectArgs(strings.TrimSpace(ctx.GetArgs()))
 			if err != nil {
 				return nil, err
@@ -138,15 +138,15 @@ func (sekaiHandlers) AliasRejectHandle() SekaiCommandHandler {
 	}
 }
 
-func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampleCommand string) SekaiCommandHandler {
-	return SekaiCommandHandler{
+func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path:     path,
 			Commands: commands,
 			Helper:   aliasQueryHelp(aliasType, sampleCommand),
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			target := strings.TrimSpace(ctx.GetArgs())
 			if target == "" {
 				return nil, onebot11.NewReplayError("%s", aliasQueryHelp(aliasType, sampleCommand))
@@ -159,15 +159,15 @@ func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampl
 	}
 }
 
-func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleCommand string) SekaiCommandHandler {
-	return SekaiCommandHandler{
+func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path:     path,
 			Commands: commands,
 			Helper:   aliasAddHelp(aliasType, sampleCommand),
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasAddHelp(aliasType, sampleCommand))
 			if err != nil {
 				return nil, err
@@ -183,15 +183,15 @@ func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleC
 	}
 }
 
-func newEntityAliasDeleteHandler(aliasType, path string, commands []string, sampleCommand string) SekaiCommandHandler {
-	return SekaiCommandHandler{
+func newEntityAliasDeleteHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path:     path,
 			Commands: commands,
 			Helper:   aliasDeleteHelp(aliasType, sampleCommand),
 		},
 		ParseUIDArg: common.BoolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasDeleteHelp(aliasType, sampleCommand))
 			if err != nil {
 				return nil, err
@@ -246,9 +246,9 @@ func aliasDeleteHelp(aliasType, sampleCommand string) string {
 
 func aliasTypeLabel(aliasType string) string {
 	switch aliasType {
-	case aliases.AliasTypeMusic:
+	case aliases.PjskAliasTypeMusic:
 		return "歌曲"
-	case aliases.AliasTypeCharacter:
+	case aliases.PjskAliasTypeCharacter:
 		return "角色"
 	default:
 		return "目标"
@@ -257,9 +257,9 @@ func aliasTypeLabel(aliasType string) string {
 
 func aliasQueryTokenPrompt(aliasType string) string {
 	switch aliasType {
-	case aliases.AliasTypeMusic:
+	case aliases.PjskAliasTypeMusic:
 		return "歌曲ID 或 曲名 或 已审核别名"
-	case aliases.AliasTypeCharacter:
+	case aliases.PjskAliasTypeCharacter:
 		return "角色ID 或 角色名 或 已审核别名"
 	default:
 		return "ID 或 名称 或 已审核别名"

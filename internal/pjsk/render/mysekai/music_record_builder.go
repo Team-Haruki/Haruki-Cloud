@@ -145,19 +145,17 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 				Obtained:  musicObtainedAt[musicID] != 0,
 			}
 			if showID {
-				idCopy := musicID
-				record.ID = &idCopy
+				record.ID = new(musicID)
 			}
 			records = append(records, record)
 		}
 		if categoryTotal == 0 {
 			continue
 		}
-		message := fmt.Sprintf("%d/%d (%.1f%%)", categoryObtained, categoryTotal, percent(categoryObtained, categoryTotal))
 		categories = append(categories, drawing.MysekaiCategoryMusicrecord{
 			Tag:             tag,
 			TagIconPath:     tagIcons[tag],
-			ProgressMessage: &message,
+			ProgressMessage: new(fmt.Sprintf("%d/%d (%.1f%%)", categoryObtained, categoryTotal, percent(categoryObtained, categoryTotal))),
 			Musicrecords:    records,
 		})
 	}
@@ -171,8 +169,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 		CategoryMusicrecords: categories,
 	}
 	if totalCount > 0 {
-		message := fmt.Sprintf("总收集进度: %d/%d (%.1f%%)", obtainedCount, totalCount, percent(obtainedCount, totalCount))
-		request.ProgressMessage = &message
+		request.ProgressMessage = new(fmt.Sprintf("总收集进度: %d/%d (%.1f%%)", obtainedCount, totalCount, percent(obtainedCount, totalCount)))
 	}
 	return request, nil
 }

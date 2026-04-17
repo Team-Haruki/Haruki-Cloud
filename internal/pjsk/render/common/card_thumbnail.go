@@ -69,21 +69,17 @@ func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, regio
 		rareImg = filepath.ToSlash(rareImg)
 	}
 
-	isAfter := opts.AfterTraining
 	birthdayIcon := opts.BirthdayIconPath
 	if birthdayIcon == nil && card.CardRarityType == "rarity_birthday" {
-		path := assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("card", "rare_birthday.png"))
-		birthdayIcon = &path
+		birthdayIcon = new(assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("card", "rare_birthday.png")))
 	}
 
 	trainRank := opts.TrainRank
 	trainRankImgPath := opts.TrainRankImgPath
 	if trainRank == nil {
-		defaultRank := 0
-		trainRank = &defaultRank
+		trainRank = new(0)
 	} else if *trainRank > 0 && trainRankImgPath == nil {
-		path := assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("train_rank_%d.png", *trainRank)))
-		trainRankImgPath = &path
+		trainRankImgPath = new(assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("train_rank_%d.png", *trainRank))))
 	}
 
 	framePath := assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("frame_%s.png", card.CardRarityType)))
@@ -100,7 +96,7 @@ func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, regio
 		TrainRankImgPath:  trainRankImgPath,
 		Level:             opts.Level,
 		BirthdayIconPath:  birthdayIcon,
-		IsAfterTraining:   &isAfter,
+		IsAfterTraining:   new(opts.AfterTraining),
 		CustomText:        opts.CustomText,
 		CardLevel:         opts.CardLevel,
 		IsPcard:           opts.IsPcard,

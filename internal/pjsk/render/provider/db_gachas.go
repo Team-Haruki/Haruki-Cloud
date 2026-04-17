@@ -119,8 +119,7 @@ func (p *dbGachaProvider) GetCardByID(ctx context.Context, id int) (*masterdata.
 	p.cardMu.RLock()
 	if cached, ok := p.cardCache[id]; ok {
 		p.cardMu.RUnlock()
-		c := *cached
-		return &c, nil
+		return new(*cached), nil
 	}
 	p.cardMu.RUnlock()
 
@@ -154,6 +153,5 @@ func (p *dbGachaProvider) GetCardByID(ctx context.Context, id int) (*masterdata.
 	p.cardCache[id] = model
 	p.cardMu.Unlock()
 
-	c := *model
-	return &c, nil
+	return new(*model), nil
 }

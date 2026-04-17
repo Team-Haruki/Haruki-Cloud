@@ -12,12 +12,9 @@ import (
 )
 
 func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
-	boost := 5
-	areaItemLevel := 15
-
 	original := deckAutoQueryParams{
-		Boost:               &boost,
-		AreaItemLevel:       &areaItemLevel,
+		Boost:               new(5),
+		AreaItemLevel:       new(15),
 		Selector:            "u2",
 		UnitFilter:          "idol",
 		AttrFilter:          "cool",
@@ -68,7 +65,7 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 
 func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -117,7 +114,7 @@ func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 
 func TestEventDeckHandleParsesLeadingSelectorArg(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -149,7 +146,7 @@ func TestEventDeckHandleParsesLeadingSelectorArg(t *testing.T) {
 
 func TestEventDeckHandleParsesTrailingSelectorArg(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -178,7 +175,7 @@ func TestEventDeckHandleParsesTrailingSelectorArg(t *testing.T) {
 
 func TestEventDeckHandlePrefersLastLiveTypeKeyword(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "solo auto",
@@ -202,7 +199,7 @@ func TestEventDeckHandlePrefersLastLiveTypeKeyword(t *testing.T) {
 
 func TestEventDeckHandleParsesSimulatedEvent(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "25h 可爱",
@@ -226,7 +223,7 @@ func TestEventDeckHandleParsesSimulatedEvent(t *testing.T) {
 
 func TestEventDeckHandlePrefersSimulatedEventOverBareNumericEventFor25(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "25 蓝",
@@ -250,7 +247,7 @@ func TestEventDeckHandlePrefersSimulatedEventOverBareNumericEventFor25(t *testin
 
 func TestEventDeckHandleParsesMultiSkillLowerBound(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "多人 230实效 Song A",
@@ -283,7 +280,7 @@ func TestEventDeckHandleParsesMultiSkillLowerBound(t *testing.T) {
 
 func TestEventDeckHandleParsesSplitTeammateScoreUp(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "多人 队友实效 210 Song A",
@@ -316,7 +313,7 @@ func TestEventDeckHandleParsesSplitTeammateScoreUp(t *testing.T) {
 
 func TestEventDeckHandleParsesBareSkillTargetAfterMusicQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "三星满破满技能 四星禁用 已读 画布 龙hd 实效",
@@ -355,7 +352,7 @@ func TestEventDeckHandleParsesBareSkillTargetAfterMusicQuery(t *testing.T) {
 
 func TestEventDeckHandleParsesSplitSkillLowerBound(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "多人 230 实效",
@@ -379,7 +376,7 @@ func TestEventDeckHandleParsesSplitSkillLowerBound(t *testing.T) {
 
 func TestEventDeckHandleParsesSimulatedWorldBloom(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "miku wl4",
@@ -407,7 +404,7 @@ func TestEventDeckHandleParsesSimulatedWorldBloom(t *testing.T) {
 
 func TestEventDeckHandlePreservesSimulatedWorldBloomCharacterQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "初音未来 wl3",
@@ -435,7 +432,7 @@ func TestEventDeckHandlePreservesSimulatedWorldBloomCharacterQuery(t *testing.T)
 
 func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 初音未来",
@@ -463,7 +460,7 @@ func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing
 
 func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "140 wl3 sage",
@@ -493,7 +490,7 @@ func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventID(t *testing.T
 
 func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventIDWithTrailingOrder(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "140 sage wl4",
@@ -523,7 +520,7 @@ func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventIDWithTrailingO
 
 func TestEventDeckHandleParsesStandaloneWorldBloomSelectorForCurrentEvent(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动组卡",
 		ArgText:    "wl3",
@@ -553,7 +550,7 @@ func TestEventDeckHandleParsesStandaloneWorldBloomSelectorForCurrentEvent(t *tes
 
 func TestEventDeckHandleParsesMusicQueryBeforeStandaloneWorldBloomSelectorForCurrentEvent(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动组卡",
 		ArgText:    "sage wl3",
@@ -583,7 +580,7 @@ func TestEventDeckHandleParsesMusicQueryBeforeStandaloneWorldBloomSelectorForCur
 
 func TestEventDeckHandleParsesMusicQueryBeforeWorldBloomSelectorAfterEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "140 sage wl3",
@@ -613,7 +610,7 @@ func TestEventDeckHandleParsesMusicQueryBeforeWorldBloomSelectorAfterEventID(t *
 
 func TestEventDeckHandleParsesMaxProfile(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 顶配 sage neo",
@@ -637,7 +634,7 @@ func TestEventDeckHandleParsesMaxProfile(t *testing.T) {
 
 func TestEventDeckHandleParsesSubMaxProfile(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 次顶配 sage neo",
@@ -661,7 +658,7 @@ func TestEventDeckHandleParsesSubMaxProfile(t *testing.T) {
 
 func TestEventDeckHandleParsesCurrentDeck(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 当前 sage neo",
@@ -685,7 +682,7 @@ func TestEventDeckHandleParsesCurrentDeck(t *testing.T) {
 
 func TestEventDeckHandleParsesMusicCompareCurrent(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "歌曲比较 当前",
@@ -712,7 +709,7 @@ func TestEventDeckHandleParsesMusicCompareCurrent(t *testing.T) {
 
 func TestEventDeckHandleParsesMusicCompareQueriesAcrossKeyword(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "龙hard 歌曲比较 虾expert sage",
@@ -739,7 +736,7 @@ func TestEventDeckHandleParsesMusicCompareQueriesAcrossKeyword(t *testing.T) {
 
 func TestEventDeckHandleRejectsTooManyMusicCompareQueries(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	_, err := h.Handle(&handler.HandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "歌曲比较 a b c d e f",
@@ -754,7 +751,7 @@ func TestEventDeckHandleRejectsTooManyMusicCompareQueries(t *testing.T) {
 
 func TestEventDeckHandleParsesUnitFilter(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 仅vs sage neo",
@@ -778,7 +775,7 @@ func TestEventDeckHandleParsesUnitFilter(t *testing.T) {
 
 func TestEventDeckHandleParsesAttrFilter(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 仅紫 sage neo",
@@ -802,7 +799,7 @@ func TestEventDeckHandleParsesAttrFilter(t *testing.T) {
 
 func TestEventDeckHandleParsesExcludedCards(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 sage neo -123 -456",
@@ -826,7 +823,7 @@ func TestEventDeckHandleParsesExcludedCards(t *testing.T) {
 
 func TestEventDeckHandleParsesAreaItemLevel(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 区域道具15级 sage neo",
@@ -850,7 +847,7 @@ func TestEventDeckHandleParsesAreaItemLevel(t *testing.T) {
 
 func TestEventDeckHandleParsesSkillOrderAverage(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 技能顺序平均 sage neo",
@@ -877,7 +874,7 @@ func TestEventDeckHandleParsesSkillOrderAverage(t *testing.T) {
 
 func TestEventDeckHandleParsesSpecificSkillOrderWithCurrent(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 当前 技能顺序12345 sage neo",
@@ -907,7 +904,7 @@ func TestEventDeckHandleParsesSpecificSkillOrderWithCurrent(t *testing.T) {
 
 func TestEventDeckHandleParsesSpecificSkillOrderWithFixedCards(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 sage neo 技能顺序15234 #1 2 3 4 5",
@@ -937,7 +934,7 @@ func TestEventDeckHandleParsesSpecificSkillOrderWithFixedCards(t *testing.T) {
 
 func TestEventDeckHandleRejectsSpecificSkillOrderWithoutCompleteFixedDeck(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	_, err := h.Handle(&handler.HandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 技能顺序12345 sage neo",
@@ -952,7 +949,7 @@ func TestEventDeckHandleRejectsSpecificSkillOrderWithoutCompleteFixedDeck(t *tes
 
 func TestEventDeckHandleRejectsSpecificSkillOrderWithFixedCharacters(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	_, err := h.Handle(&handler.HandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 sage neo 技能顺序12345 #miku rin",
@@ -967,7 +964,7 @@ func TestEventDeckHandleRejectsSpecificSkillOrderWithFixedCharacters(t *testing.
 
 func TestBonusDeckHandleParsesEventAndBonuses(t *testing.T) {
 	h := sekaiHandlers{}.BonusDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/加成组卡",
 		ArgText:    "event123 120 160",
@@ -991,7 +988,7 @@ func TestBonusDeckHandleParsesEventAndBonuses(t *testing.T) {
 
 func TestBonusDeckHandleParsesBonusKeywords(t *testing.T) {
 	h := sekaiHandlers{}.BonusDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/加成组卡",
 		ArgText:    "event123 120加成 160%",
@@ -1015,7 +1012,7 @@ func TestBonusDeckHandleParsesBonusKeywords(t *testing.T) {
 
 func TestBonusDeckHandleTreatsBareNumericLeadingValueAsBonusTarget(t *testing.T) {
 	h := sekaiHandlers{}.BonusDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/加成组卡",
 		ArgText:    "123 120",
@@ -1039,7 +1036,7 @@ func TestBonusDeckHandleTreatsBareNumericLeadingValueAsBonusTarget(t *testing.T)
 
 func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "miku auto",
@@ -1067,7 +1064,7 @@ func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
 
 func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "",
@@ -1094,7 +1091,7 @@ func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T
 
 func TestChallengeDeckHandleTreatsInlineDifficultyTokenAsMusicQuery(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "群青ex",
@@ -1124,7 +1121,7 @@ func TestChallengeDeckHandleTreatsInlineDifficultyTokenAsMusicQuery(t *testing.T
 
 func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "当前",
@@ -1151,7 +1148,7 @@ func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
 
 func TestChallengeDeckHandleParsesCharacterAndCurrentKeyword(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "miku 当前",
@@ -1178,7 +1175,7 @@ func TestChallengeDeckHandleParsesCharacterAndCurrentKeyword(t *testing.T) {
 
 func TestChallengeDeckHandleParsesMusicCompareQueries(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "miku 歌曲比较 10th 群青apd",
@@ -1208,7 +1205,7 @@ func TestChallengeDeckHandleParsesMusicCompareQueries(t *testing.T) {
 
 func TestChallengeDeckHandlePreservesCharacterQuery(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "初音未来 auto",
@@ -1236,7 +1233,7 @@ func TestChallengeDeckHandlePreservesCharacterQuery(t *testing.T) {
 
 func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/ms组卡",
 		ArgText:    "event123 #miku",
@@ -1265,7 +1262,7 @@ func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
 
 func TestMysekaiDeckHandleParsesMusicCompareQueries(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/ms组卡",
 		ArgText:    "歌曲比较 龙hard 虾expert",
@@ -1289,7 +1286,7 @@ func TestMysekaiDeckHandleParsesMusicCompareQueries(t *testing.T) {
 
 func TestMysekaiDeckHandlePreservesFixedCharacterQueries(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/ms组卡",
 		ArgText:    "event123 #初音未来 巡音流歌",
@@ -1318,7 +1315,7 @@ func TestMysekaiDeckHandlePreservesFixedCharacterQueries(t *testing.T) {
 
 func TestEventDeckHandleParsesMusicQueryAndDifficulty(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "Tell Your World ex",
@@ -1342,7 +1339,7 @@ func TestEventDeckHandleParsesMusicQueryAndDifficulty(t *testing.T) {
 
 func TestEventDeckHandleParsesMusicQueryAndDifficultyWithoutSpace(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "190 满画布 已读 虾ex 10火",
@@ -1369,7 +1366,7 @@ func TestEventDeckHandleParsesMusicQueryAndDifficultyWithoutSpace(t *testing.T) 
 
 func TestEventDeckHandleParsesExplicitMusicID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "music123 ex",
@@ -1396,7 +1393,7 @@ func TestEventDeckHandleParsesExplicitMusicID(t *testing.T) {
 
 func TestEventDeckHandleKeepsBareNumericQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "123 ex",
@@ -1423,7 +1420,7 @@ func TestEventDeckHandleKeepsBareNumericQuery(t *testing.T) {
 
 func TestEventDeckHandleRecognizesNicknameAliasAfterEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/缁勫崱",
 		ArgText:    "event123 tks",
@@ -1450,7 +1447,7 @@ func TestEventDeckHandleRecognizesNicknameAliasAfterEventID(t *testing.T) {
 
 func TestEventDeckHandleRecognizesLeadingNumericEventIDAndStripsBoostToken(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "163 tks sage 5火",
@@ -1480,7 +1477,7 @@ func TestEventDeckHandleRecognizesLeadingNumericEventIDAndStripsBoostToken(t *te
 
 func TestEventDeckHandleStripsBoostTokenAfterExplicitEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "event163 sage neo 5火",
@@ -1507,7 +1504,7 @@ func TestEventDeckHandleStripsBoostTokenAfterExplicitEventID(t *testing.T) {
 
 func TestChallengeDeckHandleRecognizesNicknameAlias(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/鎸戞垬缁勫崱",
 		ArgText:    "tks auto",
@@ -1534,7 +1531,7 @@ func TestChallengeDeckHandleRecognizesNicknameAlias(t *testing.T) {
 
 func TestMysekaiDeckHandleRecognizesFixedCharacterAlias(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/ms缁勫崱",
 		ArgText:    "event123 #tks",
@@ -1559,7 +1556,7 @@ func TestMysekaiDeckHandleRecognizesFixedCharacterAlias(t *testing.T) {
 
 func TestNoEventDeckHandleRecognizesBoostToken(t *testing.T) {
 	h := sekaiHandlers{}.NoEventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/最强组卡",
 		ArgText:    "sage 5火",
@@ -1583,7 +1580,7 @@ func TestNoEventDeckHandleRecognizesBoostToken(t *testing.T) {
 
 func TestMysekaiDeckHandleRecognizesBoostToken(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/ms组卡",
 		ArgText:    "event123 5火",
@@ -1607,7 +1604,7 @@ func TestMysekaiDeckHandleRecognizesBoostToken(t *testing.T) {
 
 func TestEventDeckHandleRecognizesChinese25JiAlias(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "25时 紫",
@@ -1631,7 +1628,7 @@ func TestEventDeckHandleRecognizesChinese25JiAlias(t *testing.T) {
 
 func TestNoEventDeckHandleRejectsAttrOnlyAliasAsSongQuery(t *testing.T) {
 	h := sekaiHandlers{}.NoEventDeckHandle()
-	_, err := h.Handle(&handler.HandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/最强组卡",
 		ArgText:    "紫月",
@@ -1646,7 +1643,7 @@ func TestNoEventDeckHandleRejectsAttrOnlyAliasAsSongQuery(t *testing.T) {
 
 func TestNoEventDeckHandleRejectsFullAliasesWithNoEventHint(t *testing.T) {
 	h := sekaiHandlers{}.NoEventDeckHandle()
-	_, err := h.Handle(&handler.HandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/最强组卡",
 		ArgText:    "25时 蓝星",
@@ -1661,7 +1658,7 @@ func TestNoEventDeckHandleRejectsFullAliasesWithNoEventHint(t *testing.T) {
 
 func TestEventDeckHandleTreatsBareSingleNumberAsEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动组卡",
 		ArgText:    "118",

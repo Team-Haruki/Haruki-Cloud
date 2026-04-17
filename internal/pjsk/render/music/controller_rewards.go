@@ -5,7 +5,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/snapshot"
-	sekai "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/pjsk/sekai"
 )
 
 func (c *Controller) BuildMusicRewardsDetailRequest(query RewardsDetailQuery) (*drawing.DetailMusicRewardsRequest, error) {

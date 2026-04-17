@@ -28,7 +28,7 @@ type Controller struct {
 
 // ProviderAdapter bridges provider.MasterDataProvider to stamp.DataSource.
 type ProviderAdapter struct {
-	provider.ProviderAdapterBase
+	provider.PjskProviderAdapterBase
 }
 
 const stampPageSize = 25

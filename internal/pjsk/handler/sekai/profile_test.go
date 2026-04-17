@@ -15,7 +15,7 @@ func TestProfileUploadBGHandleExtractsImageURL(t *testing.T) {
 	h := sekaiHandlers{}.ProfileUploadBGHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -50,7 +50,7 @@ func TestProfileUploadBGHandleParsesSelector(t *testing.T) {
 	h := sekaiHandlers{}.ProfileUploadBGHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -89,7 +89,7 @@ func TestProfileAdjustBGHandleParsesArgs(t *testing.T) {
 	h := sekaiHandlers{}.ProfileAdjustBGHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -127,7 +127,7 @@ func TestProfileAdjustBGHandleParsesSelectorAndArgs(t *testing.T) {
 	h := sekaiHandlers{}.ProfileAdjustBGHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -168,7 +168,7 @@ func TestProfileHandleParsesVerticalArg(t *testing.T) {
 	h := sekaiHandlers{}.ProfileHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -206,7 +206,7 @@ func TestProfileBindListHandleOmitsServerWhenRegionImplicit(t *testing.T) {
 	h := sekaiHandlers{}.ProfileBindListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -237,7 +237,7 @@ func TestProfileBindListHandleKeepsServerWhenRegionExplicit(t *testing.T) {
 	h := sekaiHandlers{}.ProfileBindListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP, renderregion.CN}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",

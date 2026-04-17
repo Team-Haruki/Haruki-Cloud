@@ -152,8 +152,7 @@ func cloneEdChallengeRewards(source []*ChallengeReward) []*ChallengeReward {
 		if item == nil {
 			continue
 		}
-		c := *item
-		out = append(out, &c)
+		out = append(out, new(*item))
 	}
 	return out
 }

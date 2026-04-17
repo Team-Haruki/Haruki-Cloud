@@ -204,7 +204,7 @@ func (b *Builder) buildGachaLogoPath(gachaInfo *masterdata.Gacha, region renderr
 		return ""
 	}
 	idText := strconv.Itoa(gachaInfo.ID)
-	candidates := []string{}
+	var candidates []string
 
 	if assetName := strings.TrimSpace(gachaInfo.AssetBundleName); assetName != "" {
 		candidates = append(candidates,
@@ -264,16 +264,13 @@ func (b *Builder) convertBehaviors(gachaInfo *masterdata.Gacha, region renderreg
 			costType = &value
 			switch {
 			case strings.Contains(lowerValue, "jewel") && jewelIcon != "":
-				icon := jewelIcon
-				costIcon = &icon
+				costIcon = new(jewelIcon)
 			case strings.Contains(lowerValue, "ticket"):
-				icon := gachaTicketIcon
-				costIcon = &icon
+				costIcon = new(gachaTicketIcon)
 			}
 		}
 		if behavior.CostResourceQuantity != 0 {
-			value := behavior.CostResourceQuantity
-			costQty = &value
+			costQty = new(behavior.CostResourceQuantity)
 		}
 		behaviors = append(behaviors, drawing.GachaBehavior{
 			Type:         behavior.GachaBehaviorType,

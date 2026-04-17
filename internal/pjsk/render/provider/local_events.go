@@ -198,8 +198,7 @@ func (p *localEventProvider) GetDeckBonuses(_ context.Context, eventID int) ([]*
 	}
 	result := make([]*masterdata.EventDeckBonus, 0, len(bonuses))
 	for _, b := range bonuses {
-		c := *b
-		result = append(result, &c)
+		result = append(result, new(*b))
 	}
 	return result, nil
 }
@@ -254,8 +253,7 @@ func (p *localEventProvider) GetWorldBloomChapters(_ context.Context, eventID in
 	}
 	result := make([]*masterdata.WorldBloom, 0, len(wbs))
 	for _, wb := range wbs {
-		c := *wb
-		result = append(result, &c)
+		result = append(result, new(*wb))
 	}
 	return result
 }

@@ -11,7 +11,7 @@ import (
 
 func TestStampHandleParsesCharacterWithPage(t *testing.T) {
 	h := sekaiHandlers{}.StampHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/stamp",
 		ArgText:    "mzk page 2",
@@ -44,7 +44,7 @@ func TestStampHandleParsesCharacterWithPage(t *testing.T) {
 
 func TestStampHandleParsesPageBeforeCharacter(t *testing.T) {
 	h := sekaiHandlers{}.StampHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/stamp",
 		ArgText:    "page 3 mzk",
@@ -70,7 +70,7 @@ func TestStampHandleParsesPageBeforeCharacter(t *testing.T) {
 
 func TestStampHandleParsesPurePage(t *testing.T) {
 	h := sekaiHandlers{}.StampHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/stamp",
 		ArgText:    "p 2",

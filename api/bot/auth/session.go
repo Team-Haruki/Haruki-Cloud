@@ -67,7 +67,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	}
 
 	// MsgPack 解码载荷
-	var payload AuthPayload
+	var payload HarukiAuthPayload
 	if err := msgpack.Unmarshal(plaintext, &payload); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
 	}
@@ -79,7 +79,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 
 	// 验证时间戳（防重放）
 	now := time.Now().Unix()
-	if payload.Timestamp < now-AuthTimestampMaxAge || payload.Timestamp > now+AuthTimestampMaxAge {
+	if payload.Timestamp < now-MaxAuthTimestampAge || payload.Timestamp > now+MaxAuthTimestampAge {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthTimestampExpired)
 	}
 
@@ -150,7 +150,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	_ = loginUpdate.Exec(ctx) // 非关键操作，失败不阻塞登录
 
 	// 构造加密响应: MsgPack → AES-256-GCM
-	resp := AuthResponse{
+	resp := HarukiAuthResponse{
 		SessionToken:      sessionToken,
 		ExpiresAt:         expiresAt,
 		NoiseServerPubKey: h.svc.noiseServerPubKey,
@@ -210,7 +210,7 @@ func (s *UserService) checkAndStoreNonce(ctx context.Context, payload []byte) (b
 	}
 
 	// 存储 nonce，TTL 等于时间戳容忍窗口
-	err = s.redisStore.Set(ctx, nonceKey, "1", AuthTimestampMaxAge*time.Second)
+	err = s.redisStore.Set(ctx, nonceKey, "1", MaxAuthTimestampAge*time.Second)
 	return err == nil, err
 }
 

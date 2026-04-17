@@ -181,7 +181,7 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	queryText := strings.TrimSpace(queries[0].Query)
 	var cards []*masterdata.Card
 	if queryText == "" {
-		cards, err = source.FilterCards(&CardQueryInfo{})
+		cards, err = source.FilterCards(&PjskCardQueryInfo{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to load cards for card box: %w", err)
 		}

@@ -263,8 +263,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		progressMessage = fmt.Sprintf("对话家具列表 - 共 %d 条对话", totalTalks)
 	} else {
 		progressMessage = fmt.Sprintf("未读对话家具列表 - 进度: %d/%d (%.1f%%)", totalReads, totalTalks, percent(totalReads, totalTalks))
-		prompt := "*仅展示未读对话家具，灰色表示未获得蓝图"
-		promptMessage = &prompt
+		promptMessage = new("*仅展示未读对话家具，灰色表示未获得蓝图")
 	}
 	return &drawing.MysekaiTalkListRequest{
 		Profile:          c.mysekaiProfileCard(region, merged, query.Profile, true),

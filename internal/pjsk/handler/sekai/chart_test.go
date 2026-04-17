@@ -8,8 +8,7 @@ import (
 )
 
 func TestChartHandleSkillPreviewSetsSkillFlag(t *testing.T) {
-	chartHandler := (sekaiHandlers{}).ChartHandle()
-	result, err := (&chartHandler).Handle(&handler.HandlerContext{
+	result, err := (new((sekaiHandlers{}).ChartHandle())).Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/技能预览",
 		ArgText:    "初音 future",

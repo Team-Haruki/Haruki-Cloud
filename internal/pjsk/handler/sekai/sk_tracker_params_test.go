@@ -8,9 +8,9 @@ import (
 )
 
 func TestBuildSKTrackerParamsDefaults(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: ""},
-		region:         renderregion.JP,
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: ""},
+		region:             renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -28,10 +28,10 @@ func TestBuildSKTrackerParamsDefaults(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: "初音未来"},
-		region:         renderregion.JP,
-		prefixArg:      "wl",
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: "初音未来"},
+		region:             renderregion.JP,
+		prefixArg:          "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -49,9 +49,9 @@ func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsParsesEventAndRanks(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: "event101 500 100"},
-		region:         renderregion.JP,
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: "event101 500 100"},
+		region:             renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -73,10 +73,10 @@ func TestBuildSKTrackerParamsParsesEventAndRanks(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsWlDefaultsToCurrentChapterSelector(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: "100 500"},
-		region:         renderregion.JP,
-		prefixArg:      "wl",
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: "100 500"},
+		region:             renderregion.JP,
+		prefixArg:          "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -94,9 +94,9 @@ func TestBuildSKTrackerParamsWlDefaultsToCurrentChapterSelector(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsParsesUIDWhenAllowed(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: "event101 1234567890"},
-		region:         renderregion.JP,
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: "event101 1234567890"},
+		region:             renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -113,9 +113,9 @@ func TestBuildSKTrackerParamsParsesUIDWhenAllowed(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsRejectsUIDWhenDisallowed(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: "1234567890"},
-		region:         renderregion.JP,
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: "1234567890"},
+		region:             renderregion.JP,
 	}
 
 	_, err := buildSKTrackerParams(ctx, false, false, false)
@@ -125,10 +125,10 @@ func TestBuildSKTrackerParamsRejectsUIDWhenDisallowed(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsUsesUIDArgWhenArgsEmpty(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: ""},
-		region:         renderregion.JP,
-		uidArg:         "1234567890",
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: ""},
+		region:             renderregion.JP,
+		uidArg:             "1234567890",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -142,8 +142,8 @@ func TestBuildSKTrackerParamsUsesUIDArgWhenArgsEmpty(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsAddsAtTargetMetadata(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{
 			ArgText:    "",
 			Platform:   "qq",
 			TriggerCmd: "/sk",
@@ -169,8 +169,8 @@ func TestBuildSKTrackerParamsAddsAtTargetMetadata(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsDefaultsToSelfWhenEnabled(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{
 			ArgText:    "",
 			Platform:   "qq",
 			UserId:     "24680",
@@ -193,8 +193,8 @@ func TestBuildSKTrackerParamsDefaultsToSelfWhenEnabled(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsAddsSelectorMetadata(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{
 			ArgText:    "",
 			Platform:   "qq",
 			UserId:     "24680",
@@ -225,10 +225,10 @@ func TestBuildSKTrackerParamsAddsSelectorMetadata(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: "初音未来 100 500"},
-		region:         renderregion.JP,
-		prefixArg:      "wl",
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: "初音未来 100 500"},
+		region:             renderregion.JP,
+		prefixArg:          "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -249,10 +249,10 @@ func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: "wl初音未来 100"},
-		region:         renderregion.JP,
-		prefixArg:      "wl",
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: "wl初音未来 100"},
+		region:             renderregion.JP,
+		prefixArg:          "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -270,9 +270,9 @@ func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
 }
 
 func TestBuildSKTrackerParamsParsesLeadingWlChapterSelector(t *testing.T) {
-	ctx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{ArgText: "wl2 100"},
-		region:         renderregion.JP,
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{ArgText: "wl2 100"},
+		region:             renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)

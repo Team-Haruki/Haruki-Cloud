@@ -55,8 +55,7 @@ func (s *testProfileSource) GetHonorByID(id int) (*masterdata.Honor, error) {
 	if !ok {
 		return nil, fmt.Errorf("honor not found: %d", id)
 	}
-	cloned := *item
-	return &cloned, nil
+	return new(*item), nil
 }
 
 func (s *testProfileSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
@@ -64,8 +63,7 @@ func (s *testProfileSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, e
 	if !ok {
 		return nil, fmt.Errorf("honor group not found: %d", id)
 	}
-	cloned := *item
-	return &cloned, nil
+	return new(*item), nil
 }
 
 func (s *testProfileSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
@@ -81,8 +79,7 @@ func (s *testProfileSource) GetPlayerFrameByID(id int) (*masterdata.PlayerFrame,
 	if !ok {
 		return nil, fmt.Errorf("player frame not found: %d", id)
 	}
-	cloned := *item
-	return &cloned, nil
+	return new(*item), nil
 }
 
 func (s *testProfileSource) GetPlayerFrameGroupByID(id int) (*masterdata.PlayerFrameGroup, error) {
@@ -90,8 +87,7 @@ func (s *testProfileSource) GetPlayerFrameGroupByID(id int) (*masterdata.PlayerF
 	if !ok {
 		return nil, fmt.Errorf("player frame group not found: %d", id)
 	}
-	cloned := *item
-	return &cloned, nil
+	return new(*item), nil
 }
 
 func (s *testProfileSource) GetCardByID(id int) (*masterdata.Card, error) {
@@ -99,8 +95,7 @@ func (s *testProfileSource) GetCardByID(id int) (*masterdata.Card, error) {
 	if !ok {
 		return nil, fmt.Errorf("card not found: %d", id)
 	}
-	cloned := *item
-	return &cloned, nil
+	return new(*item), nil
 }
 
 func (s *testProfileSource) GetEventIDByHonorID(honorID int) int {
@@ -425,7 +420,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
-	snapshot := &profileSnapshotStub{
+	snap := &profileSnapshotStub{
 		rawData: &snapshot.RawUserData{
 			UserFrames: []snapshot.RawUserFrame{
 				{PlayerFrameID: 10, PlayerFrameAttachStatus: "equipped"},
@@ -442,7 +437,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 		},
 	}
 
-	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snapshot)
+	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snap)
 	if err != nil {
 		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
 	}
@@ -478,7 +473,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotKeepsAPILeaderDisplayState(t *tes
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
-	snapshot := &profileSnapshotStub{
+	snap := &profileSnapshotStub{
 		rawData: &snapshot.RawUserData{
 			UserGamedata: snapshot.RawUserGamedata{Deck: 1},
 			UserDecks: []snapshot.RawUserDeck{
@@ -503,7 +498,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotKeepsAPILeaderDisplayState(t *tes
 		},
 	}
 
-	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snapshot)
+	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snap)
 	if err != nil {
 		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
 	}
@@ -532,7 +527,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotFallsBackToSnapshotDeckWhenAPIDec
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
-	snapshot := &profileSnapshotStub{
+	snap := &profileSnapshotStub{
 		rawData: &snapshot.RawUserData{
 			UserGamedata: snapshot.RawUserGamedata{Deck: 1},
 			UserDecks: []snapshot.RawUserDeck{
@@ -550,7 +545,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotFallsBackToSnapshotDeckWhenAPIDec
 		UserDeck:    sekai.UserDeck{},
 	}
 
-	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snapshot)
+	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snap)
 	if err != nil {
 		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
 	}
@@ -579,7 +574,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesSnapshotLeaderArtWhenAPICardS
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
-	snapshot := &profileSnapshotStub{
+	snap := &profileSnapshotStub{
 		rawData: &snapshot.RawUserData{
 			UserCards: []snapshot.RawUserCard{
 				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
@@ -593,7 +588,7 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesSnapshotLeaderArtWhenAPICardS
 		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
 	}
 
-	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snapshot)
+	payload, err := controller.BuildProfileRequestFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snap)
 	if err != nil {
 		t.Fatalf("BuildProfileRequestFromAPIWithSnapshot failed: %v", err)
 	}

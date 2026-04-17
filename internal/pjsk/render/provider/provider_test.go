@@ -285,10 +285,9 @@ func TestGetEnhancedValuesNil(t *testing.T) {
 }
 
 func TestGetEnhancedValuesUsesValue2(t *testing.T) {
-	v2 := 200
 	effect := &masterdata.SkillEffect{
 		SkillEffectDetails: []masterdata.SkillEffectDetail{
-			{ActivateEffectValue: 100, ActivateEffectValue2: &v2},
+			{ActivateEffectValue: 100, ActivateEffectValue2: new(200)},
 		},
 	}
 	got := getEnhancedValues(effect, []int{100})
@@ -312,10 +311,9 @@ func TestGetEnhancedValuesFallsBackToBase(t *testing.T) {
 }
 
 func TestGetEnhancedValuesMixed(t *testing.T) {
-	v2 := 300
 	effect := &masterdata.SkillEffect{
 		SkillEffectDetails: []masterdata.SkillEffectDetail{
-			{ActivateEffectValue: 100, ActivateEffectValue2: &v2},
+			{ActivateEffectValue: 100, ActivateEffectValue2: new(300)},
 			{ActivateEffectValue: 110},
 		},
 	}
@@ -435,16 +433,14 @@ func TestFormatDualEffectsValueModeAllSame(t *testing.T) {
 }
 
 func TestFormatDualEffectsEnhancedModeU(t *testing.T) {
-	v2a := 200
-	v2b := 80
 	e1 := &masterdata.SkillEffect{
 		SkillEffectDetails: []masterdata.SkillEffectDetail{
-			{ActivateEffectValue: 100, ActivateEffectValue2: &v2a},
+			{ActivateEffectValue: 100, ActivateEffectValue2: new(200)},
 		},
 	}
 	e2 := &masterdata.SkillEffect{
 		SkillEffectDetails: []masterdata.SkillEffectDetail{
-			{ActivateEffectValue: 50, ActivateEffectValue2: &v2b},
+			{ActivateEffectValue: 50, ActivateEffectValue2: new(80)},
 		},
 	}
 	got := formatDualEffects(e1, e2, "u")

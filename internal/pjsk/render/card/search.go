@@ -112,7 +112,7 @@ func (s *SearchService) visibleCardByCharacterAndSeq(characterID, sequence int, 
 		return nil, fmt.Errorf("card sequence must not be zero")
 	}
 
-	items, err := s.source.FilterCards(&CardQueryInfo{CharacterID: characterID})
+	items, err := s.source.FilterCards(&PjskCardQueryInfo{CharacterID: characterID})
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (s *SearchService) latestVisibleCard(sequence int, now int64) (*masterdata.
 		return nil, fmt.Errorf("card sequence must be negative: %d", sequence)
 	}
 
-	items, err := s.source.FilterCards(&CardQueryInfo{})
+	items, err := s.source.FilterCards(&PjskCardQueryInfo{})
 	if err != nil {
 		return nil, err
 	}

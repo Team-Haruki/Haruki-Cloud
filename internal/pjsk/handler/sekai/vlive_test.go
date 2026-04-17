@@ -13,7 +13,7 @@ func TestVLiveHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.LiveHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/vlive",
 	})

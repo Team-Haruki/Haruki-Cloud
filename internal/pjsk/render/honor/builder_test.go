@@ -44,24 +44,21 @@ func (s *testHonorSource) GetHonorByID(id int) (*masterdata.Honor, error) {
 
 func (s *testHonorSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
 	if item, ok := s.groups[id]; ok {
-		cp := *item
-		return &cp, nil
+		return new(*item), nil
 	}
 	return nil, fmt.Errorf("group not found: %d", id)
 }
 
 func (s *testHonorSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
 	if item, ok := s.bonds[id]; ok {
-		cp := *item
-		return &cp, nil
+		return new(*item), nil
 	}
 	return nil, fmt.Errorf("bonds not found: %d", id)
 }
 
 func (s *testHonorSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
 	if item, ok := s.gcuByID[id]; ok {
-		cp := *item
-		return &cp, true
+		return new(*item), true
 	}
 	return nil, false
 }
@@ -71,7 +68,6 @@ func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor", "honor_bg_001", "degree_main.png"))
 
 	source := newTestHonorSource(renderregion.JP)
-	bg := "honor_bg_001"
 	source.honors[100] = &masterdata.Honor{
 		ID:              100,
 		GroupID:         200,
@@ -84,7 +80,7 @@ func TestBuildHonorRequestNormalWorldLink(t *testing.T) {
 	source.groups[200] = &masterdata.HonorGroup{
 		ID:                        200,
 		HonorType:                 "world_link",
-		BackgroundAssetBundleName: &bg,
+		BackgroundAssetBundleName: new("honor_bg_001"),
 	}
 
 	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
@@ -195,8 +191,6 @@ func TestBuildHonorRequestBirthdayUsesDerivedBirthdayType(t *testing.T) {
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor_frame", "honor_frame_birthday_01_06", "frame_degree_s_4.png"))
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor_frame", "honor_frame_birthday_01_06", "frame_degree_level_4.png"))
 
-	bg := "honor_bg_birthday_01_06"
-	frame := "honor_frame_birthday_01_06"
 	source := newTestHonorSource(renderregion.JP)
 	source.honors[6833] = &masterdata.Honor{
 		ID:              6833,
@@ -207,8 +201,8 @@ func TestBuildHonorRequestBirthdayUsesDerivedBirthdayType(t *testing.T) {
 	source.groups[544] = &masterdata.HonorGroup{
 		ID:                        544,
 		HonorType:                 "birthday",
-		BackgroundAssetBundleName: &bg,
-		FrameName:                 &frame,
+		BackgroundAssetBundleName: new("honor_bg_birthday_01_06"),
+		FrameName:                 new("honor_frame_birthday_01_06"),
 	}
 
 	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
@@ -271,7 +265,6 @@ func TestBuildHonorRequestDetectsWorldLinkEventByAssetName(t *testing.T) {
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor", "honor_top_000100_event_wl_2nd_idol_cp1", "rank_main.png"))
 
 	source := newTestHonorSource(renderregion.JP)
-	bg := "honor_bg_event_wl_2nd_idol_cp1"
 	source.honors[5746] = &masterdata.Honor{
 		ID:              5746,
 		GroupID:         485,
@@ -281,7 +274,7 @@ func TestBuildHonorRequestDetectsWorldLinkEventByAssetName(t *testing.T) {
 	source.groups[485] = &masterdata.HonorGroup{
 		ID:                        485,
 		HonorType:                 "event",
-		BackgroundAssetBundleName: &bg,
+		BackgroundAssetBundleName: new("honor_bg_event_wl_2nd_idol_cp1"),
 	}
 
 	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
@@ -309,7 +302,6 @@ func TestBuildHonorRequestEventUsesResolvedAbsoluteRankPath(t *testing.T) {
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_top_000100_event_demo", "rank_sub.png"))
 
 	source := newTestHonorSource(renderregion.CN)
-	bg := "honor_bg_event_demo"
 	source.honors[6201] = &masterdata.Honor{
 		ID:              6201,
 		GroupID:         601,
@@ -319,7 +311,7 @@ func TestBuildHonorRequestEventUsesResolvedAbsoluteRankPath(t *testing.T) {
 	source.groups[601] = &masterdata.HonorGroup{
 		ID:                        601,
 		HonorType:                 "event",
-		BackgroundAssetBundleName: &bg,
+		BackgroundAssetBundleName: new("honor_bg_event_demo"),
 	}
 
 	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
@@ -344,7 +336,6 @@ func TestBuildHonorRequestLegacyWLEventUsesResolvedAbsoluteRankPath(t *testing.T
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_top_001000_event_beginning_cp6", "rank_sub.png"))
 
 	source := newTestHonorSource(renderregion.CN)
-	bg := "honor_bg_event_beginning_cp6"
 	source.honors[6101] = &masterdata.Honor{
 		ID:              6101,
 		GroupID:         501,
@@ -354,7 +345,7 @@ func TestBuildHonorRequestLegacyWLEventUsesResolvedAbsoluteRankPath(t *testing.T
 	source.groups[501] = &masterdata.HonorGroup{
 		ID:                        501,
 		HonorType:                 "event",
-		BackgroundAssetBundleName: &bg,
+		BackgroundAssetBundleName: new("honor_bg_event_beginning_cp6"),
 	}
 
 	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
@@ -427,13 +418,12 @@ func TestBuildHonorRequestFcApUsesOverrideLevelForDisplayedCount(t *testing.T) {
 	}
 
 	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
-	displayLevel := 15
 	req, err := builder.BuildHonorRequest(Query{
 		Region:              renderregion.JP,
 		HonorID:             3013,
 		HonorLevel:          20,
 		IsMain:              true,
-		FcOrApLevelOverride: &displayLevel,
+		FcOrApLevelOverride: new(15),
 	})
 	if err != nil {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
@@ -451,8 +441,6 @@ func TestBuildHonorRequestEventFrameFallsBackToStaticForLowRarity(t *testing.T) 
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_bg_event_underwater_cp1", "degree_sub.png"))
 
 	source := newTestHonorSource(renderregion.CN)
-	bg := "honor_bg_event_underwater_cp1"
-	frame := "event_underwater_cp1"
 	source.honors[4301] = &masterdata.Honor{
 		ID:              4301,
 		GroupID:         801,
@@ -462,8 +450,8 @@ func TestBuildHonorRequestEventFrameFallsBackToStaticForLowRarity(t *testing.T) 
 	source.groups[801] = &masterdata.HonorGroup{
 		ID:                        801,
 		HonorType:                 "event",
-		BackgroundAssetBundleName: &bg,
-		FrameName:                 &frame,
+		BackgroundAssetBundleName: new("honor_bg_event_underwater_cp1"),
+		FrameName:                 new("event_underwater_cp1"),
 	}
 
 	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
@@ -487,7 +475,6 @@ func TestBuildHonorRequestRankMatchUsesRankLiveBackground(t *testing.T) {
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "rank_live", "honor", "common", "tier_11", "sub.png"))
 
 	source := newTestHonorSource(renderregion.JP)
-	bg := "season_2025_winter"
 	source.honors[9001] = &masterdata.Honor{
 		ID:              9001,
 		GroupID:         901,
@@ -497,7 +484,7 @@ func TestBuildHonorRequestRankMatchUsesRankLiveBackground(t *testing.T) {
 	source.groups[901] = &masterdata.HonorGroup{
 		ID:                        901,
 		HonorType:                 "rank_match",
-		BackgroundAssetBundleName: &bg,
+		BackgroundAssetBundleName: new("season_2025_winter"),
 	}
 
 	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))

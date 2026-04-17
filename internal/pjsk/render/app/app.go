@@ -51,7 +51,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			MySekaiJSON:   cfg.UserSnapshot.MySekaiJSON,
 		})
 	}
-	var staticSnapshotProvider snapshot.SnapshotProvider
+	var staticSnapshotProvider snapshot.HarukiSnapshotProvider
 	if snapshotService != nil {
 		staticSnapshotProvider = snapshot.NewStaticSnapshotProvider(snapshotService)
 	}

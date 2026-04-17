@@ -160,10 +160,9 @@ func TestBuildFixtureListRequestSupportsOnlyCraftable(t *testing.T) {
 	})
 	controller := NewController(nil, service, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
 
-	onlyCraftable := true
 	req, err := controller.BuildFixtureListRequest(FixtureListQuery{
 		Region:        "jp",
-		OnlyCraftable: &onlyCraftable,
+		OnlyCraftable: new(true),
 		Profile:       &drawing.ProfileCardRequest{},
 	})
 	if err != nil {
@@ -267,8 +266,6 @@ func TestBuildFixtureListRequestSortsFixturesByIDWithinGroup(t *testing.T) {
 
 func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
-	suiteSource := "suite_dump"
-	mode := "leader"
 	profile := &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              "12345678901234567",
@@ -277,7 +274,7 @@ func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Suite数据", Source: &suiteSource, Mode: &mode},
+			{Name: "Suite数据", Source: new("suite_dump"), Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -316,7 +313,6 @@ func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
 	controller = controller.WithMySekaiData([]byte(`{"updatedResources":{"userMysekaiGamedata":{"mysekaiRank":8}},"upload_time":1776000000,"source":"toolbox_live"}`))
-	mode := "leader"
 	profile := &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              "GAME_USER_ID_REDACTED",
@@ -325,7 +321,7 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Sekai API", Mode: &mode},
+			{Name: "Sekai API", Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -356,8 +352,6 @@ func TestMysekaiProfileCardReplacesSingleSourceWhenUsingRawMySekaiOnly(t *testin
 
 func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
-	suiteSource := "suite_dump"
-	mode := "leader"
 	profile := &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              "GAME_USER_ID_REDACTED",
@@ -366,7 +360,7 @@ func TestMysekaiProfileCardKeepsBothSourcesWhenRequested(t *testing.T) {
 			LeaderImagePath: "user/leader.png",
 		},
 		DataSources: []drawing.ProfileDataSource{
-			{Name: "Suite数据", Source: &suiteSource, Mode: &mode},
+			{Name: "Suite数据", Source: new("suite_dump"), Mode: new("leader")},
 		},
 	}
 	merged := map[string]any{
@@ -681,10 +675,9 @@ func TestBuildDoorUpgradeRequestSupportsShowAll(t *testing.T) {
 		AllowFallback: true,
 	}).WithMySekaiData([]byte(mysekaiJSON))
 
-	showAll := true
 	req, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{
 		Region:  "jp",
-		ShowAll: &showAll,
+		ShowAll: new(true),
 		Profile: &drawing.ProfileCardRequest{},
 	})
 	if err != nil {

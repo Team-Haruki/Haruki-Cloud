@@ -245,8 +245,7 @@ func (p *dbEventProvider) GetWorldBloomChapters(ctx context.Context, eventID int
 	for _, item := range items {
 		var gameCharacterID *int
 		if item.GameCharacterID != 0 {
-			id := int(item.GameCharacterID)
-			gameCharacterID = &id
+			gameCharacterID = new(int(item.GameCharacterID))
 		}
 		result = append(result, &masterdata.WorldBloom{
 			ID:              item.ID,

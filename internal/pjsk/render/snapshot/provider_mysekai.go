@@ -151,8 +151,7 @@ func resolveExplicitMySekaiPayloadBinding(
 		if match != nil {
 			return nil, fmt.Errorf("snapshot: multiple bindings match pjsk user id %s; region is required", pjskUserID)
 		}
-		cp := item
-		match = &cp
+		match = new(item)
 	}
 	if match == nil {
 		return nil, fmt.Errorf("snapshot: binding %s not found", pjskUserID)

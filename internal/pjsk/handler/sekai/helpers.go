@@ -6,7 +6,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-func makeResolvedCmd(ctx SekaiHandlerContext, module parser.TargetModule, mode string) *parser.ResolvedCommand {
+func makeResolvedCmd(ctx HarrukiSekaiHandlerContext, module parser.TargetModule, mode string) *parser.ResolvedCommand {
 	return &parser.ResolvedCommand{
 		Module:            module,
 		Mode:              mode,
@@ -21,7 +21,7 @@ func makeResolvedCmd(ctx SekaiHandlerContext, module parser.TargetModule, mode s
 	}
 }
 
-func makeResolvedCmdWithParams(ctx SekaiHandlerContext, module parser.TargetModule, mode string, params any) *parser.ResolvedCommand {
+func makeResolvedCmdWithParams(ctx HarrukiSekaiHandlerContext, module parser.TargetModule, mode string, params any) *parser.ResolvedCommand {
 	resolved := makeResolvedCmd(ctx, module, mode)
 	if params == nil {
 		return resolved
@@ -32,7 +32,7 @@ func makeResolvedCmdWithParams(ctx SekaiHandlerContext, module parser.TargetModu
 	return resolved
 }
 
-func newSelfQueryParamsMap(ctx SekaiHandlerContext) (map[string]any, error) {
+func newSelfQueryParamsMap(ctx HarrukiSekaiHandlerContext) (map[string]any, error) {
 	params := map[string]any{}
 	if err := embedSelfQuery(params, ctx); err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func newSelfQueryParamsMap(ctx SekaiHandlerContext) (map[string]any, error) {
 
 // embedSelfQuery resolves self-only query params from ctx and merges them
 // into the given params map so the backend can resolve the correct binding.
-func embedSelfQuery(params map[string]any, ctx SekaiHandlerContext) error {
+func embedSelfQuery(params map[string]any, ctx HarrukiSekaiHandlerContext) error {
 	p, err := resolveSelfOnlyQueryParams(ctx)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func embedSelfQuery(params map[string]any, ctx SekaiHandlerContext) error {
 }
 
 // AllRegions lists every supported region; used as the default region set
-// when a SekaiCommandHandler leaves Regions empty.
+// when a HarukiSekaiCommandHandler leaves Regions empty.
 var AllRegions = []renderregion.Value{
 	renderregion.JP,
 	renderregion.CN,

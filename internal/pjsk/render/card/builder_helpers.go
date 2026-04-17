@@ -13,21 +13,14 @@ import (
 )
 
 func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Value) drawing.CardBasic {
-	characterID := card.CharacterID
-	rare := card.CardRarityType
-	attr := card.Attr
-	prefix := card.Prefix
-	assetBundleName := card.AssetBundleName
-	releaseAt := card.ReleaseAt
-
 	info := drawing.CardBasic{
 		CardID:          card.ID,
-		CharacterID:     &characterID,
-		Rare:            &rare,
-		Attr:            &attr,
-		Prefix:          &prefix,
-		AssetBundleName: &assetBundleName,
-		ReleaseAt:       &releaseAt,
+		CharacterID:     new(card.CharacterID),
+		Rare:            new(card.CardRarityType),
+		Attr:            new(card.Attr),
+		Prefix:          new(card.Prefix),
+		AssetBundleName: new(card.AssetBundleName),
+		ReleaseAt:       new(card.ReleaseAt),
 		IsAfterTraining: common.BoolPtr(false),
 		ThumbnailInfo:   b.buildThumbnailInfo(card, region),
 		Power:           b.calculatePower(card),
@@ -234,8 +227,7 @@ func (b *Builder) buildSkillTypeIconPath(skillType string, region renderregion.V
 	if strings.TrimSpace(skillType) == "" {
 		return nil
 	}
-	path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, fmt.Sprintf("skill_%s.png", skillType))
-	return &path
+	return new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, fmt.Sprintf("skill_%s.png", skillType)))
 }
 
 func (b *Builder) buildEventBannerPath(assetBundleName string, region renderregion.Value) string {

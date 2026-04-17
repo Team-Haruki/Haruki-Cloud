@@ -32,25 +32,25 @@ func resolveSnapshotBySelector(ctx context.Context, app *renderapp.App, selector
 			strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault)
 		return nil
 	}
-	snapshot, err := provider.Resolve(ctx, selector, opts)
+	snap, err := provider.Resolve(ctx, selector, opts)
 	if err != nil {
 		snapshotDebugLogger.Warnf("snapshot resolve failed: platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t err=%v",
 			strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault, err)
 		return nil
 	}
 	snapshotDebugLogger.Debugf("snapshot resolve succeeded: platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t raw_path=%q",
-		strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault, snapshot.RawFilePath())
-	return snapshot
+		strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault, snap.RawFilePath())
+	return snap
 }
 
 var snapshotProviderFactory = defaultSnapshotProviderFactory
 
-func defaultSnapshotProviderFactory(app *renderapp.App) snapshot.SnapshotProvider {
+func defaultSnapshotProviderFactory(app *renderapp.App) snapshot.HarukiSnapshotProvider {
 	if app == nil {
 		return nil
 	}
 
-	providers := make([]snapshot.SnapshotProvider, 0, 2)
+	providers := make([]snapshot.HarukiSnapshotProvider, 0, 2)
 	if primary := liveSnapshotProvider(app); primary != nil {
 		providers = append(providers, primary)
 	}
@@ -67,7 +67,7 @@ func defaultSnapshotProviderFactory(app *renderapp.App) snapshot.SnapshotProvide
 	}
 }
 
-func liveSnapshotProvider(app *renderapp.App) snapshot.SnapshotProvider {
+func liveSnapshotProvider(app *renderapp.App) snapshot.HarukiSnapshotProvider {
 	if app == nil || app.Bindings == nil {
 		return nil
 	}

@@ -24,8 +24,7 @@ func (s *detailMetaTestSource) SearchMusic(query string) (*masterdata.Music, err
 	query = strings.TrimSpace(strings.ToLower(query))
 	for _, item := range s.musics {
 		if item != nil && strings.ToLower(strings.TrimSpace(item.Title)) == query {
-			cp := *item
-			return &cp, nil
+			return new(*item), nil
 		}
 	}
 	return nil, errNotFound("music")
@@ -33,8 +32,7 @@ func (s *detailMetaTestSource) SearchMusic(query string) (*masterdata.Music, err
 
 func (s *detailMetaTestSource) GetMusicByID(id int) (*masterdata.Music, error) {
 	if item := s.musics[id]; item != nil {
-		cp := *item
-		return &cp, nil
+		return new(*item), nil
 	}
 	return nil, errNotFound("music")
 }
@@ -49,8 +47,7 @@ func (s *detailMetaTestSource) GetMusics() []*masterdata.Music {
 		if item == nil {
 			continue
 		}
-		cp := *item
-		result = append(result, &cp)
+		result = append(result, new(*item))
 	}
 	return result
 }
@@ -79,8 +76,7 @@ func (s *detailMetaTestSource) GetMusicDifficulties(musicID int) ([]*masterdata.
 		if item == nil {
 			continue
 		}
-		cp := *item
-		result = append(result, &cp)
+		result = append(result, new(*item))
 	}
 	return result, nil
 }
@@ -148,12 +144,12 @@ func TestBuildMusicDetailRequestIncludesMetadataFields(t *testing.T) {
 	}
 
 	assetHelper := assets.NewAssetHelper(root, nil)
-	snapshot := snapshot.NewLocalFileService(nil, assetHelper, snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, assetHelper, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
 	})
-	controller := NewController(source, nil, assetHelper, snapshot, nil)
+	controller := NewController(source, nil, assetHelper, snap, nil)
 
 	req, err := controller.BuildMusicDetailRequest(Query{Query: "Song A", Region: "jp"})
 	if err != nil {

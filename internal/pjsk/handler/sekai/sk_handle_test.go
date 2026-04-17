@@ -13,7 +13,7 @@ import (
 func TestSKDailySpeedHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.SKDailySpeedHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/日速",
 		ArgText:    "",
@@ -48,7 +48,7 @@ func TestSKDailySpeedHandleBuildsResolvedCommand(t *testing.T) {
 func TestSKSpeedHandleBuildsResolvedCommandWithHourDefaults(t *testing.T) {
 	h := sekaiHandlers{}.SKSpeedHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/时速",
 		ArgText:    "",
@@ -80,7 +80,7 @@ func TestSKSpeedHandleBuildsResolvedCommandWithHourDefaults(t *testing.T) {
 func TestSKLineHandleBuildsWorldLinkCurrentChapterSelector(t *testing.T) {
 	h := sekaiHandlers{}.SKLineHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/wlsk线",
 		ArgText:    "",
@@ -112,7 +112,7 @@ func TestSKLineHandleBuildsWorldLinkCurrentChapterSelector(t *testing.T) {
 func TestSKCheckRoomHandleDefaultsToSelfBinding(t *testing.T) {
 	h := sekaiHandlers{}.SKCheckRoomHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/cf",
 		ArgText:    "event101",
@@ -152,7 +152,7 @@ func TestSKCheckRoomHandleDefaultsToSelfBinding(t *testing.T) {
 func TestSKCheckRoomLiteHandleUsesFixedDefaultRanks(t *testing.T) {
 	h := sekaiHandlers{}.SKCheckRoomLiteHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/cfl",
 		ArgText:    "event101",
@@ -189,7 +189,7 @@ func TestSKCheckRoomLiteHandleUsesFixedDefaultRanks(t *testing.T) {
 func TestSKHandlersRespectWorldLinkPrefixAcrossCommands(t *testing.T) {
 	cases := []struct {
 		name       string
-		handler    SekaiCommandHandler
+		handler    HarukiSekaiCommandHandler
 		triggerCmd string
 		wantMode   string
 		wantWL     bool
@@ -220,7 +220,7 @@ func TestSKHandlersRespectWorldLinkPrefixAcrossCommands(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := tc.handler.Handle(&handler.HandlerContext{
+			result, err := tc.handler.Handle(&handler.PjskHandlerContext{
 				Context:    context.Background(),
 				TriggerCmd: tc.triggerCmd,
 				ArgText:    "",

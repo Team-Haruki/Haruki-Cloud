@@ -40,7 +40,7 @@ type RequestContext struct {
 
 	// Lazy self target / public profile resolution
 	selfTargetOnce    sync.Once
-	selfTarget        *resolvedGameTarget
+	selfTarget        *ResolvedGameTarget
 	publicProfileOnce sync.Once
 	publicProfileResp *sekaiapi.GetAnotherProfileResponse
 
@@ -179,7 +179,7 @@ func (rc *RequestContext) ResolveSnapshot(needMySekai bool) snapshot.Snapshot {
 	return rc.basicSnapshot
 }
 
-func (rc *RequestContext) GetSelfTarget() *resolvedGameTarget {
+func (rc *RequestContext) GetSelfTarget() *ResolvedGameTarget {
 	rc.selfTargetOnce.Do(func() {
 		if rc.App == nil || rc.App.Bindings == nil {
 			return
@@ -192,8 +192,7 @@ func (rc *RequestContext) GetSelfTarget() *resolvedGameTarget {
 		if err != nil {
 			return
 		}
-		copy := target
-		rc.selfTarget = &copy
+		rc.selfTarget = new(target)
 	})
 	return rc.selfTarget
 }
@@ -233,11 +232,11 @@ func (rc *RequestContext) resolveProfiles() {
 		if rc.detailedProfile == nil && rc.profileCard == nil {
 			rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc)
 		}
-		if snapshot := rc.ResolveSnapshot(false); snapshot != nil {
-			if detail := snapshot.DetailedProfile(rc.Region); detail != nil {
+		if snap := rc.ResolveSnapshot(false); snap != nil {
+			if detail := snap.DetailedProfile(rc.Region); detail != nil {
 				rc.detailedProfile = detail
 			}
-			if card := snapshot.ProfileCard(rc.Region); card != nil {
+			if card := snap.ProfileCard(rc.Region); card != nil {
 				rc.profileCard = card
 			}
 		}
@@ -281,11 +280,11 @@ func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBi
 		return binding, nil, nil
 	}
 
-	snapshot := rc.ResolveSnapshot(false)
-	if snapshot == nil {
+	snap := rc.ResolveSnapshot(false)
+	if snap == nil {
 		return binding, nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
 	}
-	return binding, snapshot, nil
+	return binding, snap, nil
 }
 
 // ImageMessage is a convenience method to store image bytes and return an image message.

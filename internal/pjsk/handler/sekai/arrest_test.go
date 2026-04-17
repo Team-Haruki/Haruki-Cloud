@@ -19,12 +19,12 @@ func TestArrestHandleParsesUserTargetModes(t *testing.T) {
 
 	tests := []struct {
 		name string
-		ctx  *handler.HandlerContext
+		ctx  *handler.PjskHandlerContext
 		want UserQueryParams
 	}{
 		{
 			name: "self",
-			ctx: &handler.HandlerContext{
+			ctx: &handler.PjskHandlerContext{
 				Context:    context.Background(),
 				Platform:   "qq",
 				UserId:     "10086",
@@ -38,7 +38,7 @@ func TestArrestHandleParsesUserTargetModes(t *testing.T) {
 		},
 		{
 			name: "at user",
-			ctx: &handler.HandlerContext{
+			ctx: &handler.PjskHandlerContext{
 				Context:    context.Background(),
 				Platform:   "qq",
 				UserId:     "10086",
@@ -54,7 +54,7 @@ func TestArrestHandleParsesUserTargetModes(t *testing.T) {
 		},
 		{
 			name: "game uid",
-			ctx: &handler.HandlerContext{
+			ctx: &handler.PjskHandlerContext{
 				Context:    context.Background(),
 				Platform:   "qq",
 				UserId:     "10086",

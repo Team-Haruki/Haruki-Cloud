@@ -3,16 +3,16 @@
 package onebot11
 
 const (
-	TYPE_TEXT  = "text"
-	TYPE_IMAGE = "image"
-	TYPE_AT    = "at"
+	TypeText  = "text"
+	TypeImage = "image"
+	TypeAt    = "at"
 )
 
 const (
-	KEY_TEXT = "text"
-	KEY_FILE = "file"
-	KEY_URL  = "url"
-	KEY_QQ   = "qq"
+	KeyText = "text"
+	KeyFile = "file"
+	KeyUrl  = "url"
+	KeyQQ   = "qq"
 )
 
 // Segment is a single OneBot v11 message segment.
@@ -40,17 +40,17 @@ type AtData struct {
 
 // Text returns a text message segment.
 func Text(text string) Segment {
-	return Segment{Type: TYPE_TEXT, Data: TextData{Text: text}}
+	return Segment{Type: TypeText, Data: TextData{Text: text}}
 }
 
 // Image returns an image message segment with the given URL or file path.
 func Image(file string, url string) Segment {
-	return Segment{Type: TYPE_IMAGE, Data: ImageData{File: file, Url: url}}
+	return Segment{Type: TypeImage, Data: ImageData{File: file, Url: url}}
 }
 
 // At returns an at (@mention) message segment targeting the given user ID.
 func At(userID string) Segment {
-	return Segment{Type: TYPE_AT, Data: AtData{QQ: userID}}
+	return Segment{Type: TypeAt, Data: AtData{QQ: userID}}
 }
 
 // Message is a slice of Segments, representing a full OneBot v11 message.

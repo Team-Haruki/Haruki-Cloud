@@ -25,8 +25,8 @@ type musicMetaQueriesParams struct {
 	Queries []string `json:"queries"`
 }
 
-func (sekaiHandlers) ScoreControlHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ScoreControlHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "score",
 			Commands: []string{
@@ -36,7 +36,7 @@ func (sekaiHandlers) ScoreControlHandle() SekaiCommandHandler {
 		},
 		Regions:    []renderregion.Value{renderregion.JP},
 		PrefixArgs: []string{"wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildScoreControlParams(ctx)
 			if err != nil {
 				return nil, err
@@ -46,7 +46,7 @@ func (sekaiHandlers) ScoreControlHandle() SekaiCommandHandler {
 	}
 }
 
-func buildScoreControlParams(ctx SekaiHandlerContext) (scoreControlParams, error) {
+func buildScoreControlParams(ctx HarrukiSekaiHandlerContext) (scoreControlParams, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	parts := strings.SplitN(args, " ", 2)
 	if len(parts) == 0 {
@@ -68,8 +68,8 @@ func buildScoreControlParams(ctx SekaiHandlerContext) (scoreControlParams, error
 	return params, nil
 }
 
-func (sekaiHandlers) CustomRoomScoreControlHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) CustomRoomScoreControlHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "score/custom-room",
 			Commands: []string{
@@ -79,7 +79,7 @@ func (sekaiHandlers) CustomRoomScoreControlHandle() SekaiCommandHandler {
 			},
 		},
 		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			targetPT, err := strconv.Atoi(args)
 			if err != nil || targetPT <= 0 {
@@ -92,8 +92,8 @@ func (sekaiHandlers) CustomRoomScoreControlHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MusicMetaHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MusicMetaHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "score/music-meta",
 			Commands: []string{
@@ -102,7 +102,7 @@ func (sekaiHandlers) MusicMetaHandle() SekaiCommandHandler {
 			},
 			Priority: 1,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			clean := splitMusicMetaQueries(args)
 			if len(clean) == 0 {
@@ -120,8 +120,8 @@ func splitMusicMetaQueries(args string) []string {
 	return rendermusic.SplitMusicQueries(args)
 }
 
-func (sekaiHandlers) MusicBoardHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MusicBoardHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "score/music-board",
 			Commands: []string{
@@ -131,7 +131,7 @@ func (sekaiHandlers) MusicBoardHandle() SekaiCommandHandler {
 			Priority: 1,
 		},
 		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildMusicBoardParams(ctx.GetArgs())
 			if err != nil {
 				return nil, err

@@ -32,7 +32,6 @@ func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
 		}
 		result := make([]MusicInfoSchema, len(rows))
 		for i, row := range rows {
-			deleted := row.IsDeleted
 			result[i] = MusicInfoSchema{
 				MusicID:        row.MusicID,
 				Title:          row.Title,
@@ -40,7 +39,7 @@ func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
 				Category:       row.Category,
 				Version:        row.Version,
 				ReleaseDate:    row.ReleaseDate,
-				IsDeleted:      &deleted,
+				IsDeleted:      new(row.IsDeleted),
 				DeletedVersion: row.DeletedVersion,
 			}
 		}
@@ -121,7 +120,6 @@ func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
 	if row == nil {
 		return api.JSONResponse(c, fiber.StatusNotFound, "Music not found")
 	}
-	deleted := row.IsDeleted
 	return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, "ok", MusicInfoSchema{
 		MusicID:        row.MusicID,
 		Title:          row.Title,
@@ -129,7 +127,7 @@ func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
 		Category:       row.Category,
 		Version:        row.Version,
 		ReleaseDate:    row.ReleaseDate,
-		IsDeleted:      &deleted,
+		IsDeleted:      new(row.IsDeleted),
 		DeletedVersion: row.DeletedVersion,
 	})
 }
@@ -217,7 +215,6 @@ func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {
 		var info MusicInfoSchema
 		var version *string
 		if music != nil {
-			deleted := music.IsDeleted
 			info = MusicInfoSchema{
 				MusicID:        music.MusicID,
 				Title:          music.Title,
@@ -225,21 +222,19 @@ func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {
 				Category:       music.Category,
 				Version:        music.Version,
 				ReleaseDate:    music.ReleaseDate,
-				IsDeleted:      &deleted,
+				IsDeleted:      new(music.IsDeleted),
 				DeletedVersion: music.DeletedVersion,
 			}
 			version = music.Version
 		} else {
 			title := "Unknown"
 			artist := "Unknown"
-			category := "Unknown"
-			isDeleted := false
 			info = MusicInfoSchema{
 				MusicID:   mid,
 				Title:     title,
 				Artist:    artist,
-				Category:  &category,
-				IsDeleted: &isDeleted,
+				Category:  new("Unknown"),
+				IsDeleted: new(false),
 			}
 			version = nil
 		}

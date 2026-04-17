@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func buildDeckQueryParams(ctx SekaiHandlerContext, mode string) (deckAutoQueryParams, error) {
+func buildDeckQueryParams(ctx HarrukiSekaiHandlerContext, mode string) (deckAutoQueryParams, error) {
 	args := strings.TrimSpace(strings.ToLower(ctx.GetArgs()))
 	params := deckAutoQueryParams{}
 	var err error

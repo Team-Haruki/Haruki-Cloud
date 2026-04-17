@@ -101,10 +101,10 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 
 	builders := []struct {
 		name string
-		make func() SekaiCommandHandler
+		make func() HarukiSekaiCommandHandler
 	}{
-		{name: "detail", make: func() SekaiCommandHandler { return sekaiHandlers{}.CardDetailHandle() }},
-		{name: "list", make: func() SekaiCommandHandler { return sekaiHandlers{}.CardListHandle() }},
+		{name: "detail", make: func() HarukiSekaiCommandHandler { return sekaiHandlers{}.CardDetailHandle() }},
+		{name: "list", make: func() HarukiSekaiCommandHandler { return sekaiHandlers{}.CardListHandle() }},
 	}
 
 	for _, builder := range builders {
@@ -113,7 +113,7 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 				h := builder.make()
 				h.Regions = []renderregion.Value{renderregion.JP}
 
-				result, err := h.Handle(&handler.HandlerContext{
+				result, err := h.Handle(&handler.PjskHandlerContext{
 					Context:    context.Background(),
 					TriggerCmd: "/查卡",
 					ArgText:    tt.args,
@@ -156,7 +156,7 @@ func TestCardListHandlePrefers25UnitAliasOverCardID(t *testing.T) {
 	h := sekaiHandlers{}.CardListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡牌列表",
 		ArgText:    "25",
@@ -186,7 +186,7 @@ func TestCardListHandlePrefersBare4RarityOverSingleCardID(t *testing.T) {
 	h := sekaiHandlers{}.CardListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡牌列表",
 		ArgText:    "4",
@@ -216,7 +216,7 @@ func TestCardListHandleSupportsLunabotCharacterAlias(t *testing.T) {
 	h := sekaiHandlers{}.CardListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡牌列表",
 		ArgText:    "tks 4",
@@ -246,7 +246,7 @@ func TestCardBoxHandleTreats25AsStrictFilterQuery(t *testing.T) {
 	h := sekaiHandlers{}.CardBoxHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/卡牌一览",
 		ArgText:    "25",
@@ -281,7 +281,7 @@ func TestCardListHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.CardListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -327,7 +327,7 @@ func TestCardBoxHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.CardBoxHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",

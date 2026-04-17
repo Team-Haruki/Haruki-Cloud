@@ -48,8 +48,8 @@ type ResolveOptions struct {
 	NeedMySekai         bool
 }
 
-// SnapshotProvider resolves request-scoped snapshots.
-type SnapshotProvider interface {
+// HarukiSnapshotProvider resolves request-scoped snapshots.
+type HarukiSnapshotProvider interface {
 	Resolve(ctx context.Context, selector Selector, opts ResolveOptions) (Snapshot, error)
 }
 

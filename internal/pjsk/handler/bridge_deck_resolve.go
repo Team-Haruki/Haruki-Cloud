@@ -85,7 +85,7 @@ func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*
 	return detail, snapshot, region, nil
 }
 
-func buildDeckDetailedProfileForTarget(rc *RequestContext, target resolvedGameTarget, region string, snapshot rendersnapshot.Snapshot) *drawing.DetailedProfileCardRequest {
+func buildDeckDetailedProfileForTarget(rc *RequestContext, target ResolvedGameTarget, region string, snapshot rendersnapshot.Snapshot) *drawing.DetailedProfileCardRequest {
 	if rc == nil || rc.App == nil || rc.App.Profiles == nil {
 		return nil
 	}
@@ -113,8 +113,7 @@ func normalizeDeckUserFacingError(err error) error {
 		return nil
 	}
 
-	var replyErr onebot11.ReplayError
-	if errors.As(err, &replyErr) {
+	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return err
 	}
 

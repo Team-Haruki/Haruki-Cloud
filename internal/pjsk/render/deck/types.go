@@ -80,7 +80,7 @@ type MusicMetaSource interface {
 	Get(region string) []byte
 }
 
-type DeckRecommender interface {
+type PjskDeckRecommender interface {
 	Enabled() bool
 	ExpandAlgorithms(option map[string]any) []map[string]any
 	Recommend(req RecommendRequest) (*RecommendResult, error)
@@ -88,7 +88,7 @@ type DeckRecommender interface {
 }
 
 type engineProvider interface {
-	Get(region string) (DeckRecommender, error)
+	Get(region string) (PjskDeckRecommender, error)
 }
 
 type RecommendRequest struct {
@@ -147,7 +147,7 @@ type remoteEngineProvider struct {
 	cfg          RecommendConfig
 	client       *http.Client
 	mu           sync.Mutex
-	recommenders map[string]DeckRecommender
+	recommenders map[string]PjskDeckRecommender
 }
 
 type RemoteDeckRecommender struct {

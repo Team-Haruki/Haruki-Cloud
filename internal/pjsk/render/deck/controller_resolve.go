@@ -14,8 +14,7 @@ import (
 
 func (c *Controller) resolveProfile(region renderregion.Value, override *drawing.DetailedProfileCardRequest, source string) *drawing.DetailedProfileCardRequest {
 	if override != nil {
-		profile := *override
-		return sanitizeDeckProfile(&profile)
+		return sanitizeDeckProfile(new(*override))
 	}
 	if c.snapshot != nil {
 		if profile := c.snapshot.DetailedProfile(region); profile != nil {

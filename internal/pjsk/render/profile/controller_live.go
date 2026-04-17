@@ -10,7 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/snapshot"
-	sekai "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/pjsk/sekai"
 )
 
 // BuildProfileRequestFromAPI builds a ProfileRequest from a live GetUserProfile API response.
@@ -49,8 +49,7 @@ func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.Ge
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
 	var framePath *string
 	if framePaths != nil {
-		path := framePaths.Base
-		framePath = &path
+		framePath = new(framePaths.Base)
 	}
 
 	musicCounts := buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil)
@@ -117,8 +116,7 @@ func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sek
 	framePaths, hasFrame := c.buildFramePaths(source, frames)
 	var framePath *string
 	if framePaths != nil {
-		path := framePaths.Base
-		framePath = &path
+		framePath = new(framePaths.Base)
 	}
 
 	return &drawing.DetailedProfileCardRequest{
@@ -140,7 +138,6 @@ func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnother
 	if err != nil {
 		return nil, err
 	}
-	source := detail.Source
 	return &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              detail.ID,
@@ -154,7 +151,7 @@ func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnother
 		DataSources: []drawing.ProfileDataSource{
 			{
 				Name:   "Sekai API",
-				Source: &source,
+				Source: new(detail.Source),
 				Mode:   common.CloneStringPtr(detail.Mode),
 			},
 		},
@@ -166,7 +163,6 @@ func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *seka
 	if err != nil {
 		return nil, err
 	}
-	source := detail.Source
 	return &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              detail.ID,
@@ -180,7 +176,7 @@ func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *seka
 		DataSources: []drawing.ProfileDataSource{
 			{
 				Name:   "Sekai API",
-				Source: &source,
+				Source: new(detail.Source),
 				Mode:   common.CloneStringPtr(detail.Mode),
 			},
 		},

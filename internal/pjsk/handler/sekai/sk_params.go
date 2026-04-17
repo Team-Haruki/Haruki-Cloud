@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-func buildSKTrackerParams(ctx SekaiHandlerContext, defaultFull bool, allowUID bool, selfWhenEmpty bool) (map[string]any, error) {
+func buildSKTrackerParams(ctx HarrukiSekaiHandlerContext, defaultFull bool, allowUID bool, selfWhenEmpty bool) (map[string]any, error) {
 	return buildSKTrackerParamsWithDefaultRanks(ctx, defaultFull, allowUID, selfWhenEmpty, nil)
 }
 
-func buildSKTrackerParamsWithDefaultRanks(ctx SekaiHandlerContext, defaultFull bool, allowUID bool, selfWhenEmpty bool, defaultRanksOverride []int) (map[string]any, error) {
+func buildSKTrackerParamsWithDefaultRanks(ctx HarrukiSekaiHandlerContext, defaultFull bool, allowUID bool, selfWhenEmpty bool, defaultRanksOverride []int) (map[string]any, error) {
 	eventID, wlCharacterID, wlCharacterQuery, full, rankArgs := extractSKMetaArgs(
 		strings.TrimSpace(ctx.GetArgs()),
 		defaultFull,
@@ -119,7 +119,7 @@ func applySKSpeedDefaults(params map[string]any, unit string, periodSeconds int6
 	}
 }
 
-func buildSKPlayerTraceParams(ctx SekaiHandlerContext) (map[string]any, error) {
+func buildSKPlayerTraceParams(ctx HarrukiSekaiHandlerContext) (map[string]any, error) {
 	eventID, wlCharacterID, wlCharacterQuery, _, rankArgs := extractSKMetaArgs(
 		strings.TrimSpace(ctx.GetArgs()),
 		false,

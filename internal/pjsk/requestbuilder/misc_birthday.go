@@ -179,13 +179,9 @@ func BuildMiscBirthdayRequest(ctx context.Context, r *parser.ResolvedCommand, ap
 		gachaEnd = nextTime.AddDate(0, 0, 3)
 		req.GachaTime = buildBirthdayEventTime(now, gachaStart, gachaEnd)
 
-		dropTime := buildBirthdayEventTime(now, nextTime.AddDate(0, 0, -3), nextTime)
-		flowerTime := buildBirthdayEventTime(now, nextTime.AddDate(0, 0, -3), nextTime.AddDate(0, 0, 3))
-		partyTime := buildBirthdayEventTime(now, nextTime, nextTime.AddDate(0, 0, 3))
-
-		req.DropTime = &dropTime
-		req.FlowerTime = &flowerTime
-		req.PartyTime = &partyTime
+		req.DropTime = new(buildBirthdayEventTime(now, nextTime.AddDate(0, 0, -3), nextTime))
+		req.FlowerTime = new(buildBirthdayEventTime(now, nextTime.AddDate(0, 0, -3), nextTime.AddDate(0, 0, 3)))
+		req.PartyTime = new(buildBirthdayEventTime(now, nextTime, nextTime.AddDate(0, 0, 3)))
 	}
 
 	return req, nil

@@ -30,9 +30,9 @@ func TestRegisterCommandHandler(t *testing.T) {
 }
 
 func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
-	skh := SekaiCommandHandler{
+	skh := HarukiSekaiCommandHandler{
 		ParseUIDArg: boolPtr(true),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if ctx.UIDArg() != "@987654321" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
 			}
@@ -43,7 +43,7 @@ func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 		},
 	}
 
-	baseCtx := &handler.HandlerContext{
+	baseCtx := &handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/sk",
 		ArgText:    "u2 12345678901234 @123456789 剩余参数",
@@ -56,9 +56,9 @@ func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {
 }
 
 func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
-	skh := SekaiCommandHandler{
+	skh := HarukiSekaiCommandHandler{
 		ParseUIDArg: boolPtr(false),
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			if ctx.UIDArg() != "" {
 				t.Fatalf("uidArg = %q", ctx.UIDArg())
 			}
@@ -69,7 +69,7 @@ func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 		},
 	}
 
-	baseCtx := &handler.HandlerContext{
+	baseCtx := &handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/绑定",
 		ArgText:    "u2 12345678901234 @123456789 剩余参数",

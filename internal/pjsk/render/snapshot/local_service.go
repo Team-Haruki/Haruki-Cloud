@@ -109,8 +109,6 @@ func (s *Service) ProfileCard(region renderregion.Value) *drawing.ProfileCardReq
 	if detail == nil {
 		return nil
 	}
-	source := detail.Source
-	update := detail.UpdateTime
 	return &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              detail.ID,
@@ -124,8 +122,8 @@ func (s *Service) ProfileCard(region renderregion.Value) *drawing.ProfileCardReq
 		DataSources: []drawing.ProfileDataSource{
 			{
 				Name:       "Suite数据",
-				Source:     &source,
-				UpdateTime: &update,
+				Source:     new(detail.Source),
+				UpdateTime: new(detail.UpdateTime),
 				Mode:       common.CloneStringPtr(detail.Mode),
 			},
 		},

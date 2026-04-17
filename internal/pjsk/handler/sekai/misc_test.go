@@ -63,7 +63,7 @@ func TestMiscBirthdayHandleBuildsResolvedCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := sekaiHandlers{}.MiscBirthdayHandle()
 
-			result, err := h.Handle(&handler.HandlerContext{
+			result, err := h.Handle(&handler.PjskHandlerContext{
 				Context:    context.Background(),
 				TriggerCmd: "/生日",
 				ArgText:    tt.args,

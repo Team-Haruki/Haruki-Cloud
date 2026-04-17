@@ -19,11 +19,11 @@ const (
 )
 
 const (
-	AliasTypeMusic     = "music"
-	AliasTypeCharacter = "character"
+	PjskAliasTypeMusic     = "music"
+	PjskAliasTypeCharacter = "character"
 )
 
-var supportedAliasTypes = []string{AliasTypeMusic, AliasTypeCharacter}
+var supportedAliasTypes = []string{PjskAliasTypeMusic, PjskAliasTypeCharacter}
 
 // ── Command params ──────────────────────────────────────────────────────────
 
@@ -84,7 +84,7 @@ type EntityRef struct {
 	Name      string
 }
 
-type AliasRecord struct {
+type PjskAliasRecord struct {
 	ReviewID int64
 	Entity   EntityRef
 	Alias    string

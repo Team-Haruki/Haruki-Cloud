@@ -131,10 +131,9 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 				Items: outItems,
 			})
 		}
-		levelCopy := currentLevel
 		gateMaterials = append(gateMaterials, drawing.MysekaiGateMaterials{
 			ID:             gateID,
-			Level:          &levelCopy,
+			Level:          new(currentLevel),
 			LevelMaterials: outLevels,
 		})
 	}

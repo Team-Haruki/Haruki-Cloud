@@ -1,6 +1,6 @@
 package pjsk
 
-import onebot11 "haruki-cloud/internal/pjsk/onebot11"
+import "haruki-cloud/internal/pjsk/onebot11"
 
 // BotCommandRequest is the unified POST body for per-feature bot endpoints.
 // All fields that were previously split across query params and request headers

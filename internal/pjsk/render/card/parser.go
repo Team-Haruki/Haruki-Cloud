@@ -11,15 +11,15 @@ func NewParser(nicknames map[string]int) *Parser {
 	return &Parser{extractor: NewExtractor(nicknames)}
 }
 
-func (p *Parser) Parse(args string) (*CardQueryInfo, error) {
+func (p *Parser) Parse(args string) (*PjskCardQueryInfo, error) {
 	return p.parse(args, false)
 }
 
-func (p *Parser) ParsePreferFilter(args string) (*CardQueryInfo, error) {
+func (p *Parser) ParsePreferFilter(args string) (*PjskCardQueryInfo, error) {
 	return p.parse(args, true)
 }
 
-func (p *Parser) ParseStrictFilter(args string) (*CardQueryInfo, error) {
+func (p *Parser) ParseStrictFilter(args string) (*PjskCardQueryInfo, error) {
 	args = strings.TrimSpace(args)
 	if info := p.tryParseFilter(args); info != nil {
 		return info, nil
@@ -27,7 +27,7 @@ func (p *Parser) ParseStrictFilter(args string) (*CardQueryInfo, error) {
 	return nil, fmt.Errorf("无法解析的指令: %s", args)
 }
 
-func (p *Parser) parse(args string, preferFilter bool) (*CardQueryInfo, error) {
+func (p *Parser) parse(args string, preferFilter bool) (*PjskCardQueryInfo, error) {
 	args = strings.TrimSpace(args)
 	if info := p.tryParseNicknameSeq(args); info != nil {
 		return info, nil
@@ -60,7 +60,7 @@ func LooksLikeSingleCardQueryPreferFilter(args string) bool {
 	return info.Type == QueryTypeID || info.Type == QueryTypeSeq || info.Type == QueryTypeLatest
 }
 
-func (p *Parser) tryParseNicknameSeq(args string) *CardQueryInfo {
+func (p *Parser) tryParseNicknameSeq(args string) *PjskCardQueryInfo {
 	result := p.extractor.ExtractCharacter(args)
 	if !result.Found {
 		return nil
@@ -74,7 +74,7 @@ func (p *Parser) tryParseNicknameSeq(args string) *CardQueryInfo {
 		return nil
 	}
 	sequence, _ := strconv.Atoi(remaining)
-	return &CardQueryInfo{
+	return &PjskCardQueryInfo{
 		Type:        QueryTypeSeq,
 		Sequence:    sequence,
 		CharacterID: result.Value,
@@ -82,7 +82,7 @@ func (p *Parser) tryParseNicknameSeq(args string) *CardQueryInfo {
 	}
 }
 
-func (p *Parser) tryParseID(args string) *CardQueryInfo {
+func (p *Parser) tryParseID(args string) *PjskCardQueryInfo {
 	if !isNumeric(args) {
 		return nil
 	}
@@ -90,14 +90,14 @@ func (p *Parser) tryParseID(args string) *CardQueryInfo {
 	if err != nil {
 		return nil
 	}
-	return &CardQueryInfo{
+	return &PjskCardQueryInfo{
 		Type:     QueryTypeID,
 		Value:    value,
 		Original: args,
 	}
 }
 
-func (p *Parser) tryParseLatestSeq(args string) *CardQueryInfo {
+func (p *Parser) tryParseLatestSeq(args string) *PjskCardQueryInfo {
 	args = strings.TrimSpace(args)
 	if len(args) < 2 || args[0] != '-' {
 		return nil
@@ -110,16 +110,16 @@ func (p *Parser) tryParseLatestSeq(args string) *CardQueryInfo {
 	if err != nil || sequence >= 0 {
 		return nil
 	}
-	return &CardQueryInfo{
+	return &PjskCardQueryInfo{
 		Type:     QueryTypeLatest,
 		Sequence: sequence,
 		Original: args,
 	}
 }
 
-func (p *Parser) tryParseFilter(args string) *CardQueryInfo {
+func (p *Parser) tryParseFilter(args string) *PjskCardQueryInfo {
 	current := args
-	info := &CardQueryInfo{Type: QueryTypeFilter, Original: args}
+	info := &PjskCardQueryInfo{Type: QueryTypeFilter, Original: args}
 	matched := false
 	suppressSingleRuneAttr := false
 

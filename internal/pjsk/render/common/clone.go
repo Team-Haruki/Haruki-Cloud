@@ -22,8 +22,7 @@ func CloneEvent(item *masterdata.Event) *masterdata.Event {
 	if item == nil {
 		return nil
 	}
-	c := *item
-	return &c
+	return new(*item)
 }
 
 // CloneCharacter returns a shallow copy of a Character.
@@ -31,8 +30,7 @@ func CloneCharacter(item *masterdata.Character) *masterdata.Character {
 	if item == nil {
 		return nil
 	}
-	c := *item
-	return &c
+	return new(*item)
 }
 
 // CloneGameCharacterUnit returns a shallow copy of a GameCharacterUnit.
@@ -40,8 +38,7 @@ func CloneGameCharacterUnit(item *masterdata.GameCharacterUnit) *masterdata.Game
 	if item == nil {
 		return nil
 	}
-	c := *item
-	return &c
+	return new(*item)
 }
 
 // CloneMusic returns a deep copy of a Music, including the Categories slice.
@@ -134,8 +131,7 @@ func CloneHonorGroup(src *masterdata.HonorGroup) *masterdata.HonorGroup {
 	if src == nil {
 		return nil
 	}
-	c := *src
-	return &c
+	return new(*src)
 }
 
 // CloneBondsHonor returns a shallow copy of a BondsHonor.
@@ -143,8 +139,7 @@ func CloneBondsHonor(src *masterdata.BondsHonor) *masterdata.BondsHonor {
 	if src == nil {
 		return nil
 	}
-	c := *src
-	return &c
+	return new(*src)
 }
 
 // CloneCostumes returns a deep-copied slice of Costume3d pointers, skipping nils.
@@ -157,8 +152,7 @@ func CloneCostumes(items []*masterdata.Costume3d) []*masterdata.Costume3d {
 		if item == nil {
 			continue
 		}
-		c := *item
-		result = append(result, &c)
+		result = append(result, new(*item))
 	}
 	return result
 }

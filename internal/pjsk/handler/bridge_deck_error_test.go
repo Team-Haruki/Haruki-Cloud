@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"testing"
 
-	onebot11 "haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 )
 
 func TestNormalizeDeckUserFacingError(t *testing.T) {
@@ -37,7 +38,8 @@ func TestNormalizeDeckUserFacingError(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := normalizeDeckUserFacingError(tc.input)
-			replyErr, ok := err.(onebot11.ReplayError)
+			var replyErr onebot11.ReplayError
+			ok := errors.As(err, &replyErr)
 			if !ok {
 				t.Fatalf("expected ReplayError, got %T (%v)", err, err)
 			}

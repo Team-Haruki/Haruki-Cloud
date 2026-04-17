@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -389,8 +390,7 @@ func (r *bridgeMusicAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Conte
 func (s *bridgeMusicSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
 		if strings.EqualFold(item.Title, query) {
-			cp := *item
-			return &cp, nil
+			return new(*item), nil
 		}
 	}
 	return nil, os.ErrNotExist
@@ -401,8 +401,7 @@ func (s *bridgeMusicSource) GetMusicByID(id int) (*masterdata.Music, error) {
 	if item == nil {
 		return nil, os.ErrNotExist
 	}
-	cp := *item
-	return &cp, nil
+	return new(*item), nil
 }
 
 func (s *bridgeMusicSource) GetMusicByEventID(int) (*masterdata.Music, error) {
@@ -412,8 +411,7 @@ func (s *bridgeMusicSource) GetMusicByEventID(int) (*masterdata.Music, error) {
 func (s *bridgeMusicSource) GetMusics() []*masterdata.Music {
 	out := make([]*masterdata.Music, 0, len(s.musics))
 	for _, item := range s.musics {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out
 }
@@ -426,8 +424,7 @@ func (s *bridgeMusicSource) GetMusicDifficulties(musicID int) ([]*masterdata.Mus
 	items := s.difficulties[musicID]
 	out := make([]*masterdata.MusicDifficulty, 0, len(items))
 	for _, item := range items {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out, nil
 }
@@ -1034,7 +1031,7 @@ func TestExecuteMusicRewardsReturnsNoBindingError(t *testing.T) {
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, app))
-	if err != accountdata.ErrNoBinding {
+	if !errors.Is(err, accountdata.ErrNoBinding) {
 		t.Fatalf("expected ErrNoBinding, got %v", err)
 	}
 }
@@ -1205,13 +1202,13 @@ func TestExecuteScoreMusicMetaBuildsRequestsFromQueries(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
 	})
 	app := &renderapp.App{
-		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snap, nil),
 		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
@@ -1283,13 +1280,13 @@ func TestExecuteScoreControlBuildsRequestFromParams(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
 	})
 	app := &renderapp.App{
-		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snap, nil),
 		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
@@ -1373,13 +1370,13 @@ func TestExecuteCustomRoomScoreBuildsRequestFromParams(t *testing.T) {
 			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_test"},
 		},
 	}
-	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
 	})
 	app := &renderapp.App{
-		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snap, nil),
 		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
@@ -1465,13 +1462,13 @@ func TestExecuteScoreMusicBoardBuildsRequestFromParams(t *testing.T) {
 			},
 		},
 	}
-	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
 	})
 	app := &renderapp.App{
-		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snap, nil),
 		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
@@ -1552,13 +1549,13 @@ func TestExecuteScoreMusicBoardDoesNotTreatModeArgsAsSpecQueries(t *testing.T) {
 			},
 		},
 	}
-	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, assets.NewAssetHelper(root, nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MusicMetaJSON: metaPath,
 	})
 	app := &renderapp.App{
-		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snapshot, nil),
+		Music:      music.NewController(source, nil, assets.NewAssetHelper(root, nil), snap, nil),
 		Score:      renderscore.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL)),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
@@ -2300,7 +2297,7 @@ func TestResolveGameCharacterIDByQueryUsesApprovedAlias(t *testing.T) {
 		t.Fatalf("create gamecharacter: %v", err)
 	}
 	if _, err := pjskClient.Alias.Create().
-		SetAliasType(pjskalias.AliasTypeCharacter).
+		SetAliasType(pjskalias.PjskAliasTypeCharacter).
 		SetAliasTypeID(21).
 		SetAlias("葱").
 		Save(ctx); err != nil {
@@ -2363,13 +2360,13 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 		t.Fatalf("write mysekai snapshot: %v", err)
 	}
 
-	snapshot := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      userPath,
 		MySekaiJSON:   mysekaiPath,
 	})
 	app := &renderapp.App{
-		MySekai:    rendermysekai.NewController(nil, snapshot, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
+		MySekai:    rendermysekai.NewController(nil, snap, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 		SekaiAPI:   sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
 	}
@@ -2470,8 +2467,7 @@ func (s *bridgeCardSource) DefaultRegion() renderregion.Value {
 func (s *bridgeCardSource) GetCardByID(id int) (*masterdata.Card, error) {
 	if s.cards != nil {
 		if card := s.cards[id]; card != nil {
-			cp := *card
-			return &cp, nil
+			return new(*card), nil
 		}
 		return nil, os.ErrNotExist
 	}
@@ -2492,7 +2488,7 @@ func (s *bridgeCardSource) GetCardByCharacterAndSeq(characterID, seq int) (*mast
 	return nil, os.ErrNotExist
 }
 
-func (s *bridgeCardSource) FilterCards(info *rendercard.CardQueryInfo) ([]*masterdata.Card, error) {
+func (s *bridgeCardSource) FilterCards(info *rendercard.PjskCardQueryInfo) ([]*masterdata.Card, error) {
 	if s.allowEmptyFilter && info != nil && info.CharacterID == 0 && info.Rarity == "" && info.Attr == "" &&
 		info.SkillType == "" && info.Unit == "" && info.MainUnit == "" && info.SupportUnit == "" &&
 		info.SupplyType == "" && info.Year == 0 && info.EventID == 0 && info.BanCharID == 0 && info.BanSeq == 0 {
@@ -2501,8 +2497,7 @@ func (s *bridgeCardSource) FilterCards(info *rendercard.CardQueryInfo) ([]*maste
 			if card == nil {
 				continue
 			}
-			cp := *card
-			result = append(result, &cp)
+			result = append(result, new(*card))
 		}
 		return result, nil
 	}
@@ -2674,7 +2669,7 @@ func TestExecuteCardBoxReturnsNoBindingError(t *testing.T) {
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, app))
-	if err != accountdata.ErrNoBinding {
+	if !errors.Is(err, accountdata.ErrNoBinding) {
 		t.Fatalf("expected ErrNoBinding, got %v", err)
 	}
 }
@@ -2744,7 +2739,7 @@ func TestExecuteCardListReturnsNoBindingError(t *testing.T) {
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, app))
-	if err != accountdata.ErrNoBinding {
+	if !errors.Is(err, accountdata.ErrNoBinding) {
 		t.Fatalf("expected ErrNoBinding, got %v", err)
 	}
 }

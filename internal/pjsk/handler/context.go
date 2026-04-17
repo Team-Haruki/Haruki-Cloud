@@ -40,8 +40,8 @@ type Context interface {
 	GetAtIds() []string
 }
 
-func BuildContext(ctx context.Context, event Event) (*HandlerContext, error) {
-	handleCtx := HandlerContext{
+func BuildContext(ctx context.Context, event Event) (*PjskHandlerContext, error) {
+	handleCtx := PjskHandlerContext{
 		Context:     ctx,
 		Event:       event,
 		Platform:    event.Platform,
@@ -58,7 +58,7 @@ func BuildContext(ctx context.Context, event Event) (*HandlerContext, error) {
 	return &handleCtx, nil
 }
 
-type HandlerContext struct {
+type PjskHandlerContext struct {
 	context.Context
 	Platform    string
 	TriggerCmd  string
@@ -73,44 +73,44 @@ type HandlerContext struct {
 	AtIds       []string
 }
 
-func (h *HandlerContext) GetTriggerCmd() string {
+func (h *PjskHandlerContext) GetTriggerCmd() string {
 	return h.TriggerCmd
 }
-func (h *HandlerContext) GetArgs() string {
+func (h *PjskHandlerContext) GetArgs() string {
 	return h.ArgText
 }
-func (h *HandlerContext) GetPlatform() string {
+func (h *PjskHandlerContext) GetPlatform() string {
 	return h.Platform
 }
-func (h *HandlerContext) GetMessageType() MessageType {
+func (h *PjskHandlerContext) GetMessageType() MessageType {
 	return h.MessageType
 }
-func (h *HandlerContext) GetEvent() Event {
+func (h *PjskHandlerContext) GetEvent() Event {
 	return h.Event
 }
-func (h *HandlerContext) GetMessage() onebot11.Message {
+func (h *PjskHandlerContext) GetMessage() onebot11.Message {
 	return h.Message
 }
-func (h *HandlerContext) GetMessageId() string {
+func (h *PjskHandlerContext) GetMessageId() string {
 	return h.MessageId
 }
-func (h *HandlerContext) GetUserId() string {
+func (h *PjskHandlerContext) GetUserId() string {
 	return h.UserId
 }
-func (h *HandlerContext) GetSenderName() string {
+func (h *PjskHandlerContext) GetSenderName() string {
 	return h.SenderName
 }
-func (h *HandlerContext) GetGroupId() string {
+func (h *PjskHandlerContext) GetGroupId() string {
 	return h.GroupId
 }
-func (h *HandlerContext) GetAtIds() []string {
+func (h *PjskHandlerContext) GetAtIds() []string {
 	return h.AtIds
 }
 
 func extractAtIds(segments onebot11.Message) []string {
 	var atIds []string
 	for _, seg := range segments {
-		if seg.Type != onebot11.TYPE_AT {
+		if seg.Type != onebot11.TypeAt {
 			continue
 		}
 
@@ -119,7 +119,7 @@ func extractAtIds(segments onebot11.Message) []string {
 			continue
 		}
 
-		if qq, ok := extractSegmentDataField(seg.Data, onebot11.KEY_QQ); ok && strings.TrimSpace(qq) != "" {
+		if qq, ok := extractSegmentDataField(seg.Data, onebot11.KeyQQ); ok && strings.TrimSpace(qq) != "" {
 			atIds = append(atIds, strings.TrimSpace(qq))
 		}
 	}
@@ -129,7 +129,7 @@ func extractAtIds(segments onebot11.Message) []string {
 func extractText(segments onebot11.Message) string {
 	var text string
 	for _, seg := range segments {
-		if seg.Type != onebot11.TYPE_TEXT {
+		if seg.Type != onebot11.TypeText {
 			continue
 		}
 
@@ -138,7 +138,7 @@ func extractText(segments onebot11.Message) string {
 			continue
 		}
 
-		if raw, ok := extractSegmentDataField(seg.Data, onebot11.KEY_TEXT); ok {
+		if raw, ok := extractSegmentDataField(seg.Data, onebot11.KeyText); ok {
 			text += stripInlineCQTags(raw)
 		}
 	}

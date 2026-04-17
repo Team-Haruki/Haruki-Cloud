@@ -33,9 +33,8 @@ func NewMusicHandler(svc *MusicService) *MusicHandler {
 // ================= AliasService Methods =================
 
 func (s *AliasService) ClearCache(ctx context.Context, musicID int, alias string) {
-	query := fmt.Sprintf("alias=%s", alias)
 	_ = harukiRedis.ClearCache(ctx, s.redisClient, CacheNSAlias, fmt.Sprintf("/chunithm/alias/%d", musicID), nil)
-	_ = harukiRedis.ClearCache(ctx, s.redisClient, CacheNSAlias, "/chunithm/alias/music-id", &query)
+	_ = harukiRedis.ClearCache(ctx, s.redisClient, CacheNSAlias, "/chunithm/alias/music-id", new(fmt.Sprintf("alias=%s", alias)))
 }
 
 // ================= Extract Helpers =================

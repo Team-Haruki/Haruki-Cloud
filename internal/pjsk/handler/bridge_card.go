@@ -33,11 +33,10 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		if _, bindErr := rc.requireBinding(); bindErr != nil {
 			return nil, bindErr
 		}
-		useAfterTraining := true
 		q := card.Query{
 			Query:            rc.Cmd.Query,
 			Region:           rc.Cmd.Region,
-			UseAfterTraining: &useAfterTraining,
+			UseAfterTraining: new(true),
 			Title:            resolveCardCatalogTitle(rc),
 			DetailedProfile:  resolveCardBoxDetailedProfile(rc),
 		}

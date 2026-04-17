@@ -72,8 +72,7 @@ func (c *Controller) buildMapResourceDrops(
 
 		var attachmentImagePath *string
 		if hasRecord {
-			path := c.staticPath("mysekai/music_record.png")
-			attachmentImagePath = &path
+			attachmentImagePath = new(c.staticPath("mysekai/music_record.png"))
 		}
 
 		positionX := floatNumber(drop["positionX"], floatNumber(drop["position_x"], 0))
@@ -161,8 +160,7 @@ func (c *Controller) buildMapResourceDrops(
 				item.Hide = true
 			}
 			if smallIconSet {
-				iconCopy := smallIcon
-				item.SmallIcon = &iconCopy
+				item.SmallIcon = new(smallIcon)
 			}
 			resourceDrops = append(resourceDrops, drawing.MysekaiMsrMapResourceDrop{
 				ID:                  item.ID,

@@ -130,13 +130,10 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 			}
 			if subID != -1 && len(grouped[genreID]) > 1 {
 				if info := subGenreMap[subID]; len(info) > 0 {
-					name := stringValue(info["name"])
-					imagePath := c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"])))
-					subGenre.Name = &name
-					subGenre.ImagePath = &imagePath
+					subGenre.Name = new(stringValue(info["name"]))
+					subGenre.ImagePath = new(c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"]))))
 					if total := subProgressAll[genreID][subID]; total > 0 {
-						message := fmt.Sprintf("%d/%d (%.1f%%)", subProgressObtained[genreID][subID], total, percent(subProgressObtained[genreID][subID], total))
-						subGenre.ProgressMessage = &message
+						subGenre.ProgressMessage = new(fmt.Sprintf("%d/%d (%.1f%%)", subProgressObtained[genreID][subID], total, percent(subProgressObtained[genreID][subID], total)))
 					}
 				}
 			}
@@ -153,8 +150,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 			SubGenres: subGenres,
 		}
 		if total := mainProgressAll[genreID]; total > 0 {
-			message := fmt.Sprintf("%d/%d (%.1f%%)", mainProgressObtained[genreID], total, percent(mainProgressObtained[genreID], total))
-			mainGenre.ProgressMessage = &message
+			mainGenre.ProgressMessage = new(fmt.Sprintf("%d/%d (%.1f%%)", mainProgressObtained[genreID], total, percent(mainProgressObtained[genreID], total)))
 		}
 		mainGenres = append(mainGenres, mainGenre)
 	}
@@ -165,8 +161,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		MainGenres: mainGenres,
 	}
 	if totalAll > 0 {
-		message := fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", totalObtained, totalAll, percent(totalObtained, totalAll))
-		request.ProgressMessage = &message
+		request.ProgressMessage = new(fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", totalObtained, totalAll, percent(totalObtained, totalAll)))
 	}
 	return request, nil
 }
@@ -234,10 +229,8 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 		}
 
 		if subGenreID != 0 {
-			subName := stringValue(subGenre["name"])
-			subPath := c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(subGenre["assetbundleName"])))
-			request.SubGenreName = &subName
-			request.SubGenreImagePath = &subPath
+			request.SubGenreName = new(stringValue(subGenre["name"]))
+			request.SubGenreImagePath = new(c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(subGenre["assetbundleName"]))))
 		}
 		if blueprint := findFixtureBlueprint(blueprints, fixtureID); blueprint != nil {
 			request.BasicInfo = append(request.BasicInfo, fixtureBlueprintInfo(blueprint)...)

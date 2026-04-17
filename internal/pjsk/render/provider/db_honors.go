@@ -124,12 +124,10 @@ func (p *dbHonorProvider) GetGroupByID(ctx context.Context, id int) (*masterdata
 	if model.HonorType == "birthday" && (model.BackgroundAssetBundleName == nil || model.FrameName == nil) {
 		if derived, ok := p.deriveBirthdayAssetsForGroup(ctx, int(entity.GameID), model.Name); ok {
 			if model.BackgroundAssetBundleName == nil && derived.background != "" {
-				value := derived.background
-				model.BackgroundAssetBundleName = &value
+				model.BackgroundAssetBundleName = new(derived.background)
 			}
 			if model.FrameName == nil && derived.frame != "" {
-				value := derived.frame
-				model.FrameName = &value
+				model.FrameName = new(derived.frame)
 			}
 			slog.Info(
 				"honor birthday derive trace",

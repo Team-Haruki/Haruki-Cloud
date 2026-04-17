@@ -6,8 +6,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKLineHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/line",
 			Commands: []string{
@@ -15,7 +15,7 @@ func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, true, true, false)
 			if err != nil {
 				return nil, err
@@ -25,14 +25,14 @@ func (sekaiHandlers) SKLineHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SKQueryHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKQueryHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{Path: "sk/query", Commands: []string{
 			"/sk-query", "/sk查询", "/sk查分", "/pjsk sk board", "/pjsk board",
 		},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err
@@ -42,8 +42,8 @@ func (sekaiHandlers) SKQueryHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKSpeedHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/speed",
 			Commands: []string{
@@ -52,7 +52,7 @@ func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -63,8 +63,8 @@ func (sekaiHandlers) SKSpeedHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKCheckRoomHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/check-room",
 			Commands: []string{
@@ -72,7 +72,7 @@ func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err
@@ -82,8 +82,8 @@ func (sekaiHandlers) SKCheckRoomHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SKCheckRoomLiteHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKCheckRoomLiteHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/check-room",
 			Commands: []string{
@@ -91,7 +91,7 @@ func (sekaiHandlers) SKCheckRoomLiteHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParamsWithDefaultRanks(ctx, false, true, false, defaultSKCheckRoomLiteRanks)
 			if err != nil {
 				return nil, err
@@ -101,8 +101,8 @@ func (sekaiHandlers) SKCheckRoomLiteHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SKPlayerTraceHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKPlayerTraceHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/player-trace",
 			Commands: []string{
@@ -110,7 +110,7 @@ func (sekaiHandlers) SKPlayerTraceHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKPlayerTraceParams(ctx)
 			if err != nil {
 				return nil, err
@@ -123,8 +123,8 @@ func (sekaiHandlers) SKPlayerTraceHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SKRankTraceHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKRankTraceHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/rank-trace",
 			Commands: []string{
@@ -132,7 +132,7 @@ func (sekaiHandlers) SKRankTraceHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -142,20 +142,20 @@ func (sekaiHandlers) SKRankTraceHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) WinratePredictHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) WinratePredictHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{Path: "sk/winrate", Commands: []string{
 			"/pjsk winrate predict", "/胜率预测", "/5v5预测", "/胜率", "/5v5胜率", "/预测胜率", "/预测5v5",
 		}},
 		Regions: []renderregion.Value{renderregion.JP},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return makeResolvedCmd(ctx, parser.ModuleSK, "sk-winrate"), nil
 		},
 	}
 }
 
-func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKDailySpeedHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/daily-speed",
 			Commands: []string{
@@ -163,7 +163,7 @@ func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -174,8 +174,8 @@ func (sekaiHandlers) SKDailySpeedHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SKPredictHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKPredictHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/predict",
 			Commands: []string{
@@ -183,7 +183,7 @@ func (sekaiHandlers) SKPredictHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, false, false, false)
 			if err != nil {
 				return nil, err
@@ -193,8 +193,8 @@ func (sekaiHandlers) SKPredictHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SKBoardHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SKBoardHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/query",
 			Commands: []string{
@@ -202,7 +202,7 @@ func (sekaiHandlers) SKBoardHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err
@@ -212,8 +212,8 @@ func (sekaiHandlers) SKBoardHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) CSBHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "sk/check-room",
 			Commands: []string{
@@ -221,7 +221,7 @@ func (sekaiHandlers) CSBHandle() SekaiCommandHandler {
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := buildSKTrackerParams(ctx, false, true, true)
 			if err != nil {
 				return nil, err

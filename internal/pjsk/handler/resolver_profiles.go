@@ -14,8 +14,8 @@ func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileC
 	if rc == nil || rc.App == nil {
 		return nil
 	}
-	if snapshot := resolveLiveSnapshot(rc, false); snapshot != nil {
-		if detail := snapshot.DetailedProfile(rc.Region); detail != nil && len(detail.UserCards) > 0 {
+	if snap := resolveLiveSnapshot(rc, false); snap != nil {
+		if detail := snap.DetailedProfile(rc.Region); detail != nil && len(detail.UserCards) > 0 {
 			return detail
 		}
 	}
@@ -38,11 +38,11 @@ func resolveCardCatalogTitle(rc *RequestContext) *string {
 		return stringPtr(CardCatalogTitleNoSuite)
 	}
 
-	snapshot := rc.ResolveSnapshot(false)
-	if snapshot == nil {
+	snap := rc.ResolveSnapshot(false)
+	if snap == nil {
 		return stringPtr(CardCatalogTitleNoSuite)
 	}
-	detail := snapshot.DetailedProfile(rc.Region)
+	detail := snap.DetailedProfile(rc.Region)
 	if detail == nil || len(detail.UserCards) == 0 {
 		return stringPtr(CardCatalogTitleNoSuite)
 	}
@@ -74,7 +74,7 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 
 func buildPublicMusicProfilesFromResolvedTarget(
 	ctx context.Context,
-	target resolvedGameTarget,
+	target ResolvedGameTarget,
 	region string,
 	platform string,
 	platformUserID string,
@@ -110,7 +110,7 @@ func buildPublicMusicProfilesFromResolvedTarget(
 // buildPublicProfileCardForTarget builds a ProfileCardRequest for a resolved
 // game target. Used by mysekai commands where the target is already resolved
 // through userQueryParams (supporting u[i] selectors and region binding).
-func buildPublicProfileCardForTarget(ctx context.Context, target resolvedGameTarget, region, platform, platformUserID string, app *renderapp.App) *drawing.ProfileCardRequest {
+func buildPublicProfileCardForTarget(ctx context.Context, target ResolvedGameTarget, region, platform, platformUserID string, app *renderapp.App) *drawing.ProfileCardRequest {
 	if app == nil || app.Profiles == nil {
 		return nil
 	}

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"haruki-cloud/internal/pjsk/drawing"
-	onebot11 "haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -49,7 +49,7 @@ func (s *botCardSource) GetCardByCharacterAndSeq(_, _ int) (*masterdata.Card, er
 	return nil, fmt.Errorf("not found")
 }
 
-func (s *botCardSource) FilterCards(_ *rendercard.CardQueryInfo) ([]*masterdata.Card, error) {
+func (s *botCardSource) FilterCards(_ *rendercard.PjskCardQueryInfo) ([]*masterdata.Card, error) {
 	return nil, nil
 }
 

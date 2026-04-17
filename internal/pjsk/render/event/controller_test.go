@@ -170,11 +170,10 @@ func TestControllerBuildEventDetailRequestResolvesNegativeSequenceLikeRefer(t *t
 	source.eventsByID[current.ID] = current
 	source.eventsByID[next.ID] = next
 
-	index := -2
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
 	req, err := controller.BuildEventDetailRequest(DetailQuery{
 		Region: renderregion.JP,
-		Index:  &index,
+		Index:  new(-2),
 	})
 	if err != nil {
 		t.Fatalf("BuildEventDetailRequest failed: %v", err)

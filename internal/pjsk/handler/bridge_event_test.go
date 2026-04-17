@@ -173,8 +173,7 @@ func TestBuildEventRecordFromSnapshotBackfillsRegularEventRankFromTracker(t *tes
 		if region != "jp" || eventID != 9101 || userID != 123456789 {
 			t.Fatalf("unexpected tracker lookup args: region=%s event=%d user=%d", region, eventID, userID)
 		}
-		rank := 456
-		return &rank, nil
+		return new(456), nil
 	}
 
 	rc := NewRequestContext(ctx, &parser.ResolvedCommand{

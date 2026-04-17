@@ -12,15 +12,15 @@ import (
 	"strings"
 )
 
-func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MusicListHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "music/list",
 			Commands: []string{
 				"/歌曲列表", "/歌曲一览", "/乐曲列表", "/乐曲一览", "/难度排行", "/定数表", "/歌曲定数", "/查乐曲", "/music-list", "/pjsk music list",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
@@ -46,8 +46,8 @@ func (sekaiHandlers) MusicListHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MusicRewardsHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MusicRewardsHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "music/rewards",
 			Commands: []string{
@@ -55,7 +55,7 @@ func (sekaiHandlers) MusicRewardsHandle() SekaiCommandHandler {
 				"/打歌奖励", "/歌曲挖矿", "/打歌挖矿", "/pjsk 曲目奖励",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
@@ -65,15 +65,15 @@ func (sekaiHandlers) MusicRewardsHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MusicProgressHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MusicProgressHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "music/progress",
 			Commands: []string{
 				"/打歌进度", "/歌曲进度", "/打歌信息", "/pjsk进度", "/progress", "/music-progress", "/pjsk music progress", "/pjsk progress",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
@@ -88,8 +88,8 @@ func (sekaiHandlers) MusicProgressHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) SongHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) SongHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "music",
 			Commands: []string{
@@ -97,7 +97,7 @@ func (sekaiHandlers) SongHandle() SekaiCommandHandler {
 				"/查曲", "/查歌", "/歌曲", "/查歌曲",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
 				return nil, onebot11.NewReplayError("请输入要查询的歌曲名或ID")
@@ -113,8 +113,8 @@ func (sekaiHandlers) SongHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) NoteNumHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "music/note-count",
 			Commands: []string{
@@ -122,7 +122,7 @@ func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 				"/物量", "/查物量",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			params := map[string]any{}
 			if diff, cleaned := extractMusicDifficulty(args); diff != "" {
@@ -141,15 +141,15 @@ func (sekaiHandlers) NoteNumHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) BPMHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) BPMHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "music/bpm",
 			Commands: []string{
 				"/pjsk bpm", "/查bpm", "/查BPM",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
 				return nil, onebot11.NewReplayError("请输入要查询的 BPM 数值")
@@ -171,8 +171,8 @@ func (sekaiHandlers) BPMHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) MusicCoverHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) MusicCoverHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "music/cover",
 			Commands: []string{
@@ -180,7 +180,7 @@ func (sekaiHandlers) MusicCoverHandle() SekaiCommandHandler {
 				"/查曲绘", "/曲绘",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
 			if query == "" {
 				return nil, fmt.Errorf("请输入要查询的歌曲名或ID")

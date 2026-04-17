@@ -13,8 +13,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-type SekaiHandlerContext struct {
-	handler.HandlerContext
+type HarrukiSekaiHandlerContext struct {
+	handler.PjskHandlerContext
 	region             renderregion.Value // 区服
 	explicitRegion     bool               // 是否由前缀或参数显式指定区服
 	originalTriggerCmd string             // 原始触发命令，未去除区服前缀
@@ -23,34 +23,34 @@ type SekaiHandlerContext struct {
 	flags              map[string]bool    // -verbose, -preview, -help 等开关
 }
 
-type SekaiCommandHandler struct {
+type HarukiSekaiCommandHandler struct {
 	handler.CommandHandlerBase
 	Regions     []renderregion.Value
 	PrefixArgs  []string
 	ParseUIDArg *bool
-	handleFunc  func(SekaiHandlerContext) (*parser.ResolvedCommand, error)
+	handleFunc  func(HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error)
 }
 
-func (s *SekaiHandlerContext) Region() renderregion.Value {
+func (s *HarrukiSekaiHandlerContext) Region() renderregion.Value {
 	return s.region
 }
-func (s *SekaiHandlerContext) HasExplicitRegion() bool {
+func (s *HarrukiSekaiHandlerContext) HasExplicitRegion() bool {
 	return s.explicitRegion
 }
-func (s *SekaiHandlerContext) PrefixArg() string {
+func (s *HarrukiSekaiHandlerContext) PrefixArg() string {
 	return s.prefixArg
 }
-func (s *SekaiHandlerContext) UIDArg() string {
+func (s *HarrukiSekaiHandlerContext) UIDArg() string {
 	return s.uidArg
 }
-func (s *SekaiHandlerContext) Flags() map[string]bool {
+func (s *HarrukiSekaiHandlerContext) Flags() map[string]bool {
 	return s.flags
 }
-func (s *SekaiHandlerContext) SetArgs(args string) {
+func (s *HarrukiSekaiHandlerContext) SetArgs(args string) {
 	s.ArgText = args
 }
 
-func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (*parser.ResolvedCommand, error) {
+func (skh *HarukiSekaiCommandHandler) Handle(ctx handler.Context) (*parser.ResolvedCommand, error) {
 	if skh.handleFunc == nil {
 		cmdName := "未定义"
 		if len(skh.Commands) > 0 {
@@ -132,8 +132,8 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (*parser.ResolvedCom
 		}
 	}
 
-	skCtx := SekaiHandlerContext{
-		HandlerContext: handler.HandlerContext{
+	skCtx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: handler.PjskHandlerContext{
 			Context:     ctx,
 			Platform:    ctx.GetPlatform(),
 			TriggerCmd:  triggerCmd,
@@ -156,7 +156,7 @@ func (skh *SekaiCommandHandler) Handle(ctx handler.Context) (*parser.ResolvedCom
 	return skh.handleFunc(skCtx)
 }
 
-func (skh *SekaiCommandHandler) shouldParseUIDArg() bool {
+func (skh *HarukiSekaiCommandHandler) shouldParseUIDArg() bool {
 	if skh.ParseUIDArg == nil {
 		return true
 	}
@@ -182,7 +182,7 @@ func RegisterSekaiCommandHandler() {
 func registerSekaiCommandHandlers() {
 	handlersVal := reflect.ValueOf(sekaiHandlers{})
 	handlersTyp := handlersVal.Type()
-	configTyp := reflect.TypeOf(SekaiCommandHandler{})
+	configTyp := reflect.TypeOf(HarukiSekaiCommandHandler{})
 	for i := 0; i < handlersVal.NumMethod(); i++ {
 		methodVal := handlersVal.Method(i)
 		methodTyp := methodVal.Type()
@@ -192,7 +192,7 @@ func registerSekaiCommandHandlers() {
 			methodTyp.Out(0) == configTyp {
 			slog.Info("注册指令解析器", "handler", methodName)
 			results := methodVal.Call(nil)
-			skHandler := results[0].Interface().(SekaiCommandHandler)
+			skHandler := results[0].Interface().(HarukiSekaiCommandHandler)
 
 			if len(skHandler.Regions) == 0 {
 				skHandler.Regions = AllRegions

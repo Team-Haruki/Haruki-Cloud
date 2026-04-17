@@ -40,8 +40,7 @@ func (p *dbPlayerFrameProvider) GetByID(ctx context.Context, id int) (*masterdat
 	p.frameMu.RLock()
 	if cached, ok := p.frameCache[id]; ok {
 		p.frameMu.RUnlock()
-		c := *cached
-		return &c, nil
+		return new(*cached), nil
 	}
 	p.frameMu.RUnlock()
 
@@ -64,8 +63,7 @@ func (p *dbPlayerFrameProvider) GetByID(ctx context.Context, id int) (*masterdat
 	p.frameCache[id] = model
 	p.frameMu.Unlock()
 
-	c := *model
-	return &c, nil
+	return new(*model), nil
 }
 
 func (p *dbPlayerFrameProvider) GetGroupByID(ctx context.Context, id int) (*masterdata.PlayerFrameGroup, error) {
@@ -77,8 +75,7 @@ func (p *dbPlayerFrameProvider) GetGroupByID(ctx context.Context, id int) (*mast
 	p.groupMu.RLock()
 	if cached, ok := p.groupCache[id]; ok {
 		p.groupMu.RUnlock()
-		c := *cached
-		return &c, nil
+		return new(*cached), nil
 	}
 	p.groupMu.RUnlock()
 
@@ -100,6 +97,5 @@ func (p *dbPlayerFrameProvider) GetGroupByID(ctx context.Context, id int) (*mast
 	p.groupCache[id] = model
 	p.groupMu.Unlock()
 
-	c := *model
-	return &c, nil
+	return new(*model), nil
 }

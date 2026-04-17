@@ -137,7 +137,7 @@ type Controller struct {
 
 // ProviderAdapter bridges provider.MasterDataProvider to education.DataSource.
 type ProviderAdapter struct {
-	provider.ProviderAdapterBase
+	provider.PjskProviderAdapterBase
 }
 
 // ── Snapshot helpers ────────────────────────────────────────────────────────

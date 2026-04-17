@@ -191,8 +191,7 @@ func (j *localWorldBloomJSON) toModel() *masterdata.WorldBloom {
 		ChapterType:    j.WorldBloomChapterType,
 	}
 	if j.GameCharacterID != 0 {
-		id := j.GameCharacterID
-		wb.GameCharacterID = &id
+		wb.GameCharacterID = new(j.GameCharacterID)
 	}
 	return wb
 }

@@ -34,8 +34,7 @@ func (s *testGachaSource) DefaultRegion() renderregion.Value { return s.region }
 
 func (s *testGachaSource) GetGachaByID(id int) (*masterdata.Gacha, error) {
 	if item, ok := s.gachaByID[id]; ok {
-		cp := *item
-		return &cp, nil
+		return new(*item), nil
 	}
 	return nil, fmt.Errorf("gacha not found: %d", id)
 }
@@ -43,8 +42,7 @@ func (s *testGachaSource) GetGachaByID(id int) (*masterdata.Gacha, error) {
 func (s *testGachaSource) GetGachas() []*masterdata.Gacha {
 	result := make([]*masterdata.Gacha, 0, len(s.gachas))
 	for _, item := range s.gachas {
-		cp := *item
-		result = append(result, &cp)
+		result = append(result, new(*item))
 	}
 	return result
 }
@@ -63,8 +61,7 @@ func (s *testGachaSource) GetGachaByEventID(eventID int) (*masterdata.Gacha, err
 	targetCardID := sorted[idx]
 	for _, item := range s.gachas {
 		if testGachaContainsPickup(item, targetCardID) {
-			cp := *item
-			return &cp, nil
+			return new(*item), nil
 		}
 	}
 	return nil, fmt.Errorf("gacha not found for event: %d", eventID)
@@ -81,8 +78,7 @@ func testGachaContainsPickup(gachaInfo *masterdata.Gacha, cardID int) bool {
 
 func (s *testGachaSource) GetCardByID(id int) (*masterdata.Card, error) {
 	if item, ok := s.cardByID[id]; ok {
-		cp := *item
-		return &cp, nil
+		return new(*item), nil
 	}
 	return nil, fmt.Errorf("card not found: %d", id)
 }

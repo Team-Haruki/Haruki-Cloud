@@ -23,8 +23,8 @@ const queryMultiEventHelp = `【查多个活动格式】
 
 const eventSearchHelp = querySingleEventHelp + "\n\n" + queryMultiEventHelp
 
-func (sekaiHandlers) EventHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) EventHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "event/list",
 			Commands: []string{
@@ -32,14 +32,14 @@ func (sekaiHandlers) EventHandle() SekaiCommandHandler {
 			},
 			Helper: eventSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveEventDetailOrList(ctx, true)
 		},
 	}
 }
 
-func (sekaiHandlers) EventDetailHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) EventDetailHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "event",
 			Commands: []string{
@@ -47,13 +47,13 @@ func (sekaiHandlers) EventDetailHandle() SekaiCommandHandler {
 			},
 			Helper: eventSearchHelp,
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			return resolveEventDetailOrList(ctx, false)
 		},
 	}
 }
 
-func resolveEventDetailOrList(ctx SekaiHandlerContext, preferList bool) (*parser.ResolvedCommand, error) {
+func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (*parser.ResolvedCommand, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args == "" {
 		if preferList {
@@ -146,8 +146,8 @@ func resolveAmbiguousEventListFilter(args string) (map[string]any, bool) {
 	}
 }
 
-func (sekaiHandlers) EventRecordHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) EventRecordHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "event/record",
 			Commands: []string{
@@ -155,7 +155,7 @@ func (sekaiHandlers) EventRecordHandle() SekaiCommandHandler {
 				"/活动记录", "/冲榜记录",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err

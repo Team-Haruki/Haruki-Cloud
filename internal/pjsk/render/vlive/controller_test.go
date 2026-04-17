@@ -135,7 +135,7 @@ func TestControllerWithContextClonesVLiveSource(t *testing.T) {
 
 	controller := NewController(&fakeSource{
 		defaultRegion: renderregion.JP,
-		wantKey:       vliveContextKey("trace"),
+		wantKey:       "trace",
 		wantValue:     "vlive-list",
 		lives: map[renderregion.Value][]*Live{
 			renderregion.JP: {

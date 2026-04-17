@@ -9,18 +9,18 @@ import (
 
 // ProviderAdapter bridges provider.MasterDataProvider to profile.DataSource.
 type ProviderAdapter struct {
-	provider.ProviderAdapterBase
+	provider.PjskProviderAdapterBase
 }
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
+	return &ProviderAdapter{PjskProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
+	return &ProviderAdapter{PjskProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
 // honor.DataSource methods

@@ -34,11 +34,11 @@ func NewHarukiDrawingClient(baseURL string, options ...ClientOption) *HarukiDraw
 		}
 	}
 
-	logger := logger.NewLogger("haruki.client", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
+	newLogger := logger.NewLogger("haruki.client", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
 	return &HarukiDrawingClient{
 		client:     client,
 		baseURL:    strings.TrimRight(baseURL, "/"),
-		logger:     logger,
+		logger:     newLogger,
 		localCache: newLocalRenderCache(0),
 	}
 }

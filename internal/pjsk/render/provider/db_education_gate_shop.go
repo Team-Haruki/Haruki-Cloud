@@ -133,8 +133,7 @@ func cloneEdMysekaiGateLevel(source *MysekaiGateLevel) *MysekaiGateLevel {
 	if source == nil {
 		return nil
 	}
-	c := *source
-	return &c
+	return new(*source)
 }
 
 func cloneEdShopItem(source *ShopItem) *ShopItem {

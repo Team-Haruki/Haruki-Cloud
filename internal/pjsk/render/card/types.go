@@ -18,7 +18,7 @@ type DataSource interface {
 	DefaultRegion() renderregion.Value
 	GetCardByID(id int) (*masterdata.Card, error)
 	GetCardByCharacterAndSeq(characterID, seq int) (*masterdata.Card, error)
-	FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error)
+	FilterCards(info *PjskCardQueryInfo) ([]*masterdata.Card, error)
 	GetCharacterColorCode(id int) (string, bool)
 	GetCharacterByID(id int) (*masterdata.Character, error)
 	GetUnitByCardID(cardID int) (string, error)
@@ -58,7 +58,7 @@ type Builder struct {
 
 // ProviderAdapter bridges provider.MasterDataProvider to card.DataSource.
 type ProviderAdapter struct {
-	provider.ProviderAdapterBase
+	provider.PjskProviderAdapterBase
 }
 
 type SearchService struct {
@@ -83,7 +83,7 @@ const (
 	QueryTypeFilter
 )
 
-type CardQueryInfo struct {
+type PjskCardQueryInfo struct {
 	Type        QueryType
 	Value       int
 	Sequence    int

@@ -21,9 +21,9 @@ type RegisterRequest struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-// AuthPayload 解密后的登录载荷（MsgPack 编码）
-// 请求体格式: nonce(12) || AES-256-GCM(key, nonce, MsgPack(AuthPayload))
-type AuthPayload struct {
+// HarukiAuthPayload 解密后的登录载荷（MsgPack 编码）
+// 请求体格式: nonce(12) || AES-256-GCM(key, nonce, MsgPack(HarukiAuthPayload))
+type HarukiAuthPayload struct {
 	BotID          string `msgpack:"bot_id"`
 	Credential     string `msgpack:"credential"`      // JWT 签名的 credential
 	Timestamp      int64  `msgpack:"timestamp"`       // 防重放攻击
@@ -45,8 +45,8 @@ type CredentialResponse struct {
 	Credential string `json:"credential"` // JWT 签名的 credential
 }
 
-// AuthResponse 登录成功响应（MsgPack 编码，AES-256-GCM 加密返回）
-type AuthResponse struct {
+// HarukiAuthResponse 登录成功响应（MsgPack 编码，AES-256-GCM 加密返回）
+type HarukiAuthResponse struct {
 	SessionToken      string `msgpack:"session_token"`
 	ExpiresAt         int64  `msgpack:"expires_at"`          // Unix 时间戳
 	NoiseServerPubKey string `msgpack:"noise_server_pubkey"` // hex 编码的 X25519 公钥
@@ -73,8 +73,8 @@ const (
 
 const (
 	VerifyCodeTTLMinutes = 10
-	// AuthTimestampMaxAge 认证时间戳最大偏差（秒），防重放攻击
-	AuthTimestampMaxAge = 300
+	// MaxAuthTimestampAge 认证时间戳最大偏差（秒），防重放攻击
+	MaxAuthTimestampAge = 300
 
 	// Rate limit settings
 	RateLimitSendMail    = 5  // 每 QQ 号每小时最多发送 5 次验证码

@@ -109,16 +109,14 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		}
 		hist.IsWlEvent = true
 		if wb.Rank > 0 {
-			rank := wb.Rank
-			hist.Rank = &rank
+			hist.Rank = new(wb.Rank)
 		}
 		if wb.GameCharacterID > 0 {
-			sdPath := assets.ResolveRegionAssetPath(
+			hist.WlCharaIconPath = new(assets.ResolveRegionAssetPath(
 				rc.App.Assets,
 				regionStr,
 				fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", wb.GameCharacterID),
-			)
-			hist.WlCharaIconPath = &sdPath
+			))
 		}
 		wlEventInfo = append(wlEventInfo, *hist)
 	}
@@ -155,8 +153,7 @@ func defaultEventRecordTrackerRankLookup(ctx context.Context, tracker *sekaiapi.
 		return nil, nil
 	}
 
-	rank := resp.RankData.Rank
-	return &rank, nil
+	return new(resp.RankData.Rank), nil
 }
 
 func fillEventRecordTrackerRanks(

@@ -7,7 +7,7 @@ import (
 )
 
 type FallbackSnapshotProvider struct {
-	providers     []SnapshotProvider
+	providers     []HarukiSnapshotProvider
 	allowFallback bool
 	logger        *logger.Logger
 }
@@ -16,8 +16,8 @@ type FallbackSnapshotProvider struct {
 // false only the first (primary) provider is tried — subsequent providers are
 // skipped and the primary error is returned directly. This is the intended
 // production mode where Toolbox is the sole data source.
-func NewFallbackSnapshotProvider(allowFallback bool, providers ...SnapshotProvider) *FallbackSnapshotProvider {
-	available := make([]SnapshotProvider, 0, len(providers))
+func NewFallbackSnapshotProvider(allowFallback bool, providers ...HarukiSnapshotProvider) *FallbackSnapshotProvider {
+	available := make([]HarukiSnapshotProvider, 0, len(providers))
 	for _, provider := range providers {
 		if provider != nil {
 			available = append(available, provider)

@@ -31,8 +31,7 @@ func isMusicAmbiguousError(err error) bool {
 	if err == nil {
 		return false
 	}
-	var target *musicAmbiguousQueryError
-	if errors.As(err, &target) {
+	if _, ok := errors.AsType[*musicAmbiguousQueryError](err); ok {
 		return true
 	}
 	return strings.Contains(err.Error(), "匹配到多个歌曲")
@@ -157,8 +156,7 @@ func selectUniqueMusicMatch(sourceName string, matches []*masterdata.Music) (*ma
 			if item == nil || item.ID != ids[0] {
 				continue
 			}
-			copy := *item
-			return &copy, nil
+			return new(*item), nil
 		}
 		return &masterdata.Music{ID: ids[0], Title: deduped[ids[0]]}, nil
 	}

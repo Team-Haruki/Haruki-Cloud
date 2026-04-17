@@ -188,8 +188,7 @@ func cloneEdBonds(source []*Bond) []*Bond {
 		if item == nil {
 			continue
 		}
-		c := *item
-		out = append(out, &c)
+		out = append(out, new(*item))
 	}
 	return out
 }
@@ -203,8 +202,7 @@ func cloneEdBondLevels(source []*BondLevel) []*BondLevel {
 		if item == nil {
 			continue
 		}
-		c := *item
-		out = append(out, &c)
+		out = append(out, new(*item))
 	}
 	return out
 }
@@ -213,8 +211,7 @@ func cloneEdGameCharacterStyle(source *GameCharacterStyle) *GameCharacterStyle {
 	if source == nil {
 		return nil
 	}
-	c := *source
-	return &c
+	return new(*source)
 }
 
 func cloneEdLeaderMissionRequirements(source []LeaderMissionRequirement) []LeaderMissionRequirement {

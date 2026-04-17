@@ -231,7 +231,7 @@ func TestExecuteEducationAreaUsesResolvedRequestContextRegion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeEducation() error = %v", err)
 	}
-	if len(message) != 1 || message[0].Type != onebot11.TYPE_IMAGE {
+	if len(message) != 1 || message[0].Type != onebot11.TypeImage {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 	if len(captured.AreaItems) != 1 {
@@ -341,7 +341,7 @@ func TestExecuteEducationPowerFallsBackToSuiteSnapshotWhenMySekaiSnapshotUnavail
 	}
 
 	originalFactory := snapshotProviderFactory
-	snapshotProviderFactory = func(app *renderapp.App) rendersnapshot.SnapshotProvider {
+	snapshotProviderFactory = func(app *renderapp.App) rendersnapshot.HarukiSnapshotProvider {
 		return provider
 	}
 	defer func() {
@@ -368,7 +368,7 @@ func TestExecuteEducationPowerFallsBackToSuiteSnapshotWhenMySekaiSnapshotUnavail
 	if err != nil {
 		t.Fatalf("executeEducation() error = %v", err)
 	}
-	if len(message) != 1 || message[0].Type != onebot11.TYPE_IMAGE {
+	if len(message) != 1 || message[0].Type != onebot11.TypeImage {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 	if len(captured.CharaBonuses) == 0 || len(captured.UnitBonuses) == 0 || len(captured.AttrBonuses) == 0 {

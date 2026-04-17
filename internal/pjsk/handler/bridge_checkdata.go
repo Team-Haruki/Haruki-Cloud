@@ -69,7 +69,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		bindingServer = binding.Server
 	default:
 		if p.Mode != "self" {
-			return nil, fmt.Errorf("Suite抓包相关内容仅支持查询自己的数据")
+			return nil, fmt.Errorf("suite抓包相关内容仅支持查询自己的数据")
 		}
 		binding, hid, err := resolveBinding(true, false)
 		if err != nil {

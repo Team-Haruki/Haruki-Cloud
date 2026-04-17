@@ -22,8 +22,7 @@ func (p *dbCardProvider) GetGachaByCardID(ctx context.Context, cardID int) (*mas
 	p.gachaMu.RLock()
 	if cached, ok := p.gachaByCard[cardID]; ok {
 		p.gachaMu.RUnlock()
-		c := *cached
-		return &c, nil
+		return new(*cached), nil
 	}
 	p.gachaMu.RUnlock()
 
@@ -64,8 +63,7 @@ func (p *dbCardProvider) GetGachaByCardID(ctx context.Context, cardID int) (*mas
 			p.gachaByCard[cardID] = model
 			p.gachaCache[model.ID] = model
 			p.gachaMu.Unlock()
-			c := *model
-			return &c, nil
+			return new(*model), nil
 		}
 	}
 	return nil, fmt.Errorf("gacha not found for card: %d", cardID)

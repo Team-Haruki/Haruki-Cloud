@@ -38,10 +38,8 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 	framePaths, hasFrame := c.buildFramePaths(source, raw.UserFrames)
 	var framePath *string
 	if framePaths != nil {
-		path := framePaths.Base
-		framePath = &path
+		framePath = new(framePaths.Base)
 	}
-	updateTime := detail.UpdateTime
 	musicCounts := buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats)
 
 	nickname := detail.Nickname
@@ -76,7 +74,7 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		MusicDifficultyCount: musicCounts,
 		CharacterRank:        buildCharacterRanks(raw.UserCharacters),
 		SoloLive:             buildSoloLive(raw.UserChallengeLiveSoloResults, raw.UserChallengeLiveSoloStages),
-		UpdateTime:           &updateTime,
+		UpdateTime:           new(detail.UpdateTime),
 		LvRankBgPath:         assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "lv_rank_bg.png"),
 		XIconPath:            assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "x_icon.png"),
 		IconClearPath:        assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "icon_clear.png"),

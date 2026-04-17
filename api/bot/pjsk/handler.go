@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/internal/middleware/secure"
 	commandhandler "haruki-cloud/internal/pjsk/handler"
 	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
-	onebot11 "haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -131,8 +131,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 
 		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req)
 		if err != nil && (legacySKPredictCompat || legacyMysekaiOverviewCompat) {
-			var validationErr *botValidationError
-			if errors.As(err, &validationErr) {
+			if validationErr, ok := errors.AsType[*botValidationError](err); ok {
 				switch {
 				case legacySKPredictCompat && strings.Contains(validationErr.Error(), "belongs to path sk/predict"):
 					resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/predict", req)
@@ -198,8 +197,7 @@ func botResponse(c fiber.Ctx, status int, message string, data ...any) error {
 }
 
 func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedCommand string) error {
-	var validationErr *botValidationError
-	if errors.As(err, &validationErr) {
+	if _, ok := errors.AsType[*botValidationError](err); ok {
 		return botResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
 			BotCommandErrorResponse{
 				Error:          err.Error(),
@@ -207,8 +205,7 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 				MatchedCommand: matchedCommand,
 			})
 	}
-	var replyErr onebot11.ReplayError
-	if errors.As(err, &replyErr) {
+	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return botResponse(c, fiber.StatusOK, "ok",
 			[]onebot11.Segment{onebot11.Text(string(replyErr))},
 		)

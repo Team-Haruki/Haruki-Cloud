@@ -37,7 +37,7 @@ func (s *Service) ensureAliasAvailable(ctx context.Context, aliasType string, ap
 
 func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, aliasText string) error {
 	switch aliasType {
-	case AliasTypeMusic:
+	case PjskAliasTypeMusic:
 		conflicts, err := s.sekai.Music.Query().
 			Where(sekaimusic.TitleEqualFold(aliasText)).
 			Count(ctx)
@@ -48,7 +48,7 @@ func (s *Service) ensureEntityNameAvailable(ctx context.Context, aliasType, alia
 			return fmt.Errorf("%s别名 %q 与已有%s重复", aliasTypeLabel(aliasType), aliasText, aliasTypeNameLabel(aliasType))
 		}
 		return nil
-	case AliasTypeCharacter:
+	case PjskAliasTypeCharacter:
 		rows, err := s.sekai.Gamecharacter.Query().
 			Where(gamecharacter.GameIDGT(0)).
 			All(ctx)

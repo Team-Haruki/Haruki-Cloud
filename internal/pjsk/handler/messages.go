@@ -54,8 +54,7 @@ func WrapDomainError(err error) error {
 	if err == nil {
 		return nil
 	}
-	var re onebot11.ReplayError
-	if errors.As(err, &re) {
+	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return err
 	}
 	switch {

@@ -28,7 +28,7 @@ type BuildInput struct {
 	RawFilePattern string
 }
 
-type SnapshotFactory interface {
+type HarukiSnapshotFactory interface {
 	Build(ctx context.Context, input BuildInput) (Snapshot, error)
 }
 

@@ -57,7 +57,7 @@ func TestMysekaiOverviewHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msam",
 		ArgText:    "13 all force",
@@ -100,7 +100,7 @@ func TestMysekaiMapHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "all",
@@ -132,7 +132,7 @@ func TestMysekaiMapHandleBuildsSingleMapParams(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "1",
@@ -167,7 +167,7 @@ func TestMysekaiMapHandleBuildsGardenMapParams(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "2",
@@ -198,7 +198,7 @@ func TestMysekaiMapHandleParsesCompactMapIndices(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "13 all",
@@ -230,7 +230,7 @@ func TestMysekaiMapHandleRejectsInvalidMapIndex(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	_, err := h.Handle(&handler.HandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "9",
@@ -250,7 +250,7 @@ func TestMysekaiPhotoHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msp",
 		ArgText:    "-1",
@@ -285,7 +285,7 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "",
@@ -313,7 +313,7 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("unexpected list params: %+v", listParams)
 	}
 
-	result, err = h.Handle(&handler.HandlerContext{
+	result, err = h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "miku ln all",
@@ -344,7 +344,7 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("unexpected talk params: %+v", talkParams)
 	}
 
-	result, err = h.Handle(&handler.HandlerContext{
+	result, err = h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "not-a-character",
@@ -366,7 +366,7 @@ func TestMysekaiBlueprintHandleSupportsCompactCharacterAliases(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiBlueprintHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "akt vbs all",
@@ -402,7 +402,7 @@ func TestMysekaiDoorUpgradeHandleSupportsShowAll(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiDoorUpgradeHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msg",
 		ArgText:    "all",

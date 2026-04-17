@@ -63,7 +63,7 @@ func TestAreaItemHandleBuildsResolvedCommand(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := sekaiHandlers{}.AreaItemHandle()
-			result, err := h.Handle(&handler.HandlerContext{
+			result, err := h.Handle(&handler.PjskHandlerContext{
 				Context:    context.Background(),
 				TriggerCmd: "/区域道具",
 				ArgText:    tt.args,
@@ -126,7 +126,7 @@ func TestBondsHandleBuildsResolvedCommand(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := sekaiHandlers{}.BondsHandle()
-			result, err := h.Handle(&handler.HandlerContext{
+			result, err := h.Handle(&handler.PjskHandlerContext{
 				Context:    context.Background(),
 				TriggerCmd: "/羁绊",
 				ArgText:    tt.args,
@@ -156,7 +156,7 @@ func TestEducationSelfHandlersEmbedSelector(t *testing.T) {
 	tests := []struct {
 		name string
 		mode string
-		run  func() SekaiCommandHandler
+		run  func() HarukiSekaiCommandHandler
 		cmd  string
 	}{
 		{name: "challenge", mode: "education-challenge", run: sekaiHandlers{}.ChallengeInfoHandle, cmd: "/挑战信息"},
@@ -167,7 +167,7 @@ func TestEducationSelfHandlersEmbedSelector(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := tt.run()
-			result, err := h.Handle(&handler.HandlerContext{
+			result, err := h.Handle(&handler.PjskHandlerContext{
 				Context:    context.Background(),
 				Platform:   "qq",
 				UserId:     "42",
@@ -204,7 +204,7 @@ func TestEducationSelfHandlersEmbedSelector(t *testing.T) {
 
 func TestAreaItemHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.AreaItemHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
@@ -244,7 +244,7 @@ func TestAreaItemHandleEmbedsSelfSelector(t *testing.T) {
 
 func TestBondsHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.BondsHandle()
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",

@@ -79,7 +79,7 @@ func resolveMySekaiRenderContext(
 	return result, nil
 }
 
-func forceMySekaiProfileBindingID(profile *drawing.ProfileCardRequest, target resolvedGameTarget, regionStr string) *drawing.ProfileCardRequest {
+func forceMySekaiProfileBindingID(profile *drawing.ProfileCardRequest, target ResolvedGameTarget, regionStr string) *drawing.ProfileCardRequest {
 	if profile == nil {
 		return nil
 	}
@@ -97,8 +97,7 @@ func forceMySekaiProfileBindingID(profile *drawing.ProfileCardRequest, target re
 		}
 		cloned.Profile = &drawing.BasicProfile{}
 	} else {
-		basic := *profile.Profile
-		cloned.Profile = &basic
+		cloned.Profile = new(*profile.Profile)
 	}
 
 	if uid != "" {

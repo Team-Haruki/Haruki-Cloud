@@ -24,7 +24,7 @@ type Controller struct {
 
 // ProviderAdapter bridges provider.MasterDataProvider to vlive.DataSource.
 type ProviderAdapter struct {
-	provider.ProviderAdapterBase
+	provider.PjskProviderAdapterBase
 }
 
 type ListQuery struct {

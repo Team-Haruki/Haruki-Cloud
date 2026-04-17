@@ -135,8 +135,7 @@ func extractDeckMultiliveOptions(args string, params *deckAutoQueryParams) (stri
 				return "", fmt.Errorf("无法解析指定的实效下限")
 			}
 			params.Target = "skill"
-			f := float64(value)
-			params.MultiLiveScoreUpLowerBound = &f
+			params.MultiLiveScoreUpLowerBound = new(float64(value))
 			idx += consumed - 1
 			continue
 		}

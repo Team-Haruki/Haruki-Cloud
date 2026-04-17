@@ -201,8 +201,7 @@ func (s *BindingService) bindingListItemByID(ctx context.Context, platform, plat
 	}
 	for _, item := range items {
 		if item.BindingID == bindingID {
-			cloned := item
-			return &cloned, nil
+			return new(item), nil
 		}
 	}
 	return nil, fmt.Errorf("未找到绑定记录 %d", bindingID)

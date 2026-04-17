@@ -167,8 +167,7 @@ func cloneEdAreaItem(source *AreaItem) *AreaItem {
 	if source == nil {
 		return nil
 	}
-	c := *source
-	return &c
+	return new(*source)
 }
 
 func cloneEdAreaItemLevels(source []*AreaItemLevel) []*AreaItemLevel {
@@ -180,8 +179,7 @@ func cloneEdAreaItemLevels(source []*AreaItemLevel) []*AreaItemLevel {
 		if item == nil {
 			continue
 		}
-		c := *item
-		out = append(out, &c)
+		out = append(out, new(*item))
 	}
 	return out
 }
@@ -190,14 +188,12 @@ func cloneEdAreaItemLevel(source *AreaItemLevel) *AreaItemLevel {
 	if source == nil {
 		return nil
 	}
-	c := *source
-	return &c
+	return new(*source)
 }
 
 func cloneEdCharacterRank(source *CharacterRank) *CharacterRank {
 	if source == nil {
 		return nil
 	}
-	c := *source
-	return &c
+	return new(*source)
 }

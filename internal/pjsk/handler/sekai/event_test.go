@@ -13,7 +13,7 @@ import (
 func TestEventDetailHandleUsesCurrentEventWhenArgsEmpty(t *testing.T) {
 	h := sekaiHandlers{}.EventDetailHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动",
 		ArgText:    "",
@@ -44,7 +44,7 @@ func TestEventDetailHandleUsesCurrentEventWhenArgsEmpty(t *testing.T) {
 func TestEventListHandleUsesFullRangeWhenArgsEmpty(t *testing.T) {
 	h := sekaiHandlers{}.EventHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动列表",
 		ArgText:    "",
@@ -76,7 +76,7 @@ func TestEventListHandleUsesFullRangeWhenArgsEmpty(t *testing.T) {
 func TestEventDetailHandleFallsBackToListForFilterQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventDetailHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动",
 		ArgText:    "紫 25h",
@@ -113,7 +113,7 @@ func TestEventDetailHandleFallsBackToListForFilterQuery(t *testing.T) {
 func TestEventDetailHandleTreatsBare25AsEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDetailHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/查活动",
 		ArgText:    "25",
@@ -144,7 +144,7 @@ func TestEventDetailHandleTreatsBare25AsEventID(t *testing.T) {
 func TestEventListHandleFallsBackToDetailForSingleEventQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动列表",
 		ArgText:    "mnr1",
@@ -176,7 +176,7 @@ func TestEventListHandleFallsBackToDetailForSingleEventQuery(t *testing.T) {
 func TestEventListHandleTreatsBare25AsUnitFilter(t *testing.T) {
 	h := sekaiHandlers{}.EventHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动列表",
 		ArgText:    "25",
@@ -212,7 +212,7 @@ func TestEventListHandleTreatsBare25AsUnitFilter(t *testing.T) {
 func TestEventHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventDetailHandle()
 
-	_, err := h.Handle(&handler.HandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动",
 		ArgText:    "???",
@@ -228,7 +228,7 @@ func TestEventHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
 func TestEventRecordHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.EventRecordHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",

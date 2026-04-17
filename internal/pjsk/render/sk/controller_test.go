@@ -491,16 +491,14 @@ type speedFallbackTrackerSource struct {
 
 func (speedFallbackTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
 	// rank=50 intentionally omits Growth/TimeDiff to exercise field-derivation fallback.
-	earlierTs := int64(1_000_000)
 	latestTs := int64(1_001_490)
-	earlierScore := 22_527_600
 	return []sekaiapi.ScoreGrowthPoint{
 		{
 			Rank:             50,
 			ScoreLatest:      23_171_700,
-			ScoreEarlier:     &earlierScore,
+			ScoreEarlier:     new(22_527_600),
 			TimestampLatest:  latestTs,
-			TimestampEarlier: &earlierTs,
+			TimestampEarlier: new(int64(1_000_000)),
 		},
 	}, nil
 }
@@ -1104,11 +1102,10 @@ func TestBuildPlayerTraceFromTrackerUserUsesResolvedName(t *testing.T) {
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
 	}, nil)
 
-	userID := int64(55667788990011)
 	payload, err := controller.BuildPlayerTraceFromTracker(TrackerRankQuery{
 		EventID: 101,
 		Region:  "jp",
-		UserID:  &userID,
+		UserID:  new(int64(55667788990011)),
 		Ranks:   []int{1},
 	})
 	if err != nil {
@@ -1256,11 +1253,10 @@ func TestBuildCheckRoomRequestFromTrackerSupportsUserQuery(t *testing.T) {
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
 	}, nil)
 
-	userID := int64(99887766)
 	payload, err := controller.BuildCheckRoomRequestFromTracker(TrackerRankQuery{
 		EventID: 101,
 		Region:  "jp",
-		UserID:  &userID,
+		UserID:  new(int64(99887766)),
 	})
 	if err != nil {
 		t.Fatalf("build check-room request: %v", err)
@@ -1639,12 +1635,11 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapt
 		scores: map[int]ForecastScore{100: {Score: 1234567, Timestamp: 1_700_000_000}},
 	})
 
-	cid := 21
 	payload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
 		EventID:       101,
 		Region:        "jp",
 		Ranks:         []int{100},
-		WlCharacterID: &cid,
+		WlCharacterID: new(21),
 	})
 	if err != nil {
 		t.Fatalf("build wl predict fallback: %v", err)
@@ -1719,7 +1714,7 @@ func TestBuildPredictLineRequestFromTrackerUsesControllerRequestContext(t *testi
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
 	}, nil)
 	controller.SetForecastProvider(contextAwareForecastProvider{
-		wantKey:   ctxKey("trace"),
+		wantKey:   "trace",
 		wantValue: "sk-predict",
 	})
 

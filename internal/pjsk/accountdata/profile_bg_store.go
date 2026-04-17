@@ -41,7 +41,7 @@ func randomHex8() string {
 func flattenToRGB(src image.Image) image.Image {
 	b := src.Bounds()
 	dst := image.NewRGBA(b)
-	draw.Draw(dst, b, &image.Uniform{color.White}, image.Point{}, draw.Src)
+	draw.Draw(dst, b, &image.Uniform{C: color.White}, image.Point{}, draw.Src)
 	draw.Draw(dst, b, src, b.Min, draw.Over)
 	return dst
 }

@@ -33,9 +33,8 @@ func (s *fakeProfileBGStore) SaveProfileBackground(ctx context.Context, server s
 	s.saved = append(s.saved, imageURL)
 	s.savedServers = append(s.savedServers, server)
 	s.savedUserIDs = append(s.savedUserIDs, userID)
-	path := accountdata.DefaultProfileBGRelativeDir + "/" + server + "/uid_" + userID + ".jpg"
 	return &drawing.ProfileBgSettings{
-		ImgPath:  &path,
+		ImgPath:  new(accountdata.DefaultProfileBGRelativeDir + "/" + server + "/uid_" + userID + ".jpg"),
 		Blur:     4,
 		Alpha:    80,
 		Vertical: false,
@@ -118,10 +117,7 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 		t.Fatalf("unexpected saved backgrounds: %+v", bgStore.saved)
 	}
 
-	blur := 7
-	alpha := 66
-	vertical := true
-	item, err = service.AdjustCurrentBindingProfileBG(ctx, "qq", "42", "jp", &blur, &alpha, &vertical)
+	item, err = service.AdjustCurrentBindingProfileBG(ctx, "qq", "42", "jp", new(7), new(66), new(true))
 	if err != nil {
 		t.Fatalf("adjust bg: %v", err)
 	}

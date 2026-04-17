@@ -105,10 +105,10 @@ func TestServiceSubmitApproveAndQueryMusic(t *testing.T) {
 	deps := newAliasTestDeps(t)
 
 	deps.addMusic(t, ctx, 5201, "群青讃歌")
-	deps.addApprovedAlias(t, ctx, AliasTypeMusic, 5201, "群青")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeMusic, 5201, "群青")
 	deps.addAdmin(t, ctx, "qq", "9001", "Alias Admin")
 
-	records, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "42", "群青", []string{"蓝歌", "群青歌"})
+	records, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "42", "群青", []string{"蓝歌", "群青歌"})
 	if err != nil {
 		t.Fatalf("Submit() error = %v", err)
 	}
@@ -119,19 +119,19 @@ func TestServiceSubmitApproveAndQueryMusic(t *testing.T) {
 		if record.ReviewID <= 0 {
 			t.Fatalf("record %d has invalid review id: %+v", i, record)
 		}
-		if record.Entity.AliasType != AliasTypeMusic || record.Entity.ID != 5201 || record.Entity.Name != "群青讃歌" {
+		if record.Entity.AliasType != PjskAliasTypeMusic || record.Entity.ID != 5201 || record.Entity.Name != "群青讃歌" {
 			t.Fatalf("record %d resolved wrong entity: %+v", i, record)
 		}
 	}
 
-	beforeApprove, err := deps.service.Query(ctx, AliasTypeMusic, "5201")
+	beforeApprove, err := deps.service.Query(ctx, PjskAliasTypeMusic, "5201")
 	if err != nil {
 		t.Fatalf("Query() before approve error = %v", err)
 	}
 	if !reflect.DeepEqual(beforeApprove.Aliases, []string{"群青"}) {
 		t.Fatalf("unexpected approved aliases before approve: %+v", beforeApprove.Aliases)
 	}
-	if _, err := deps.service.Query(ctx, AliasTypeMusic, "蓝歌"); err == nil {
+	if _, err := deps.service.Query(ctx, PjskAliasTypeMusic, "蓝歌"); err == nil {
 		t.Fatal("expected pending alias query to fail before approve")
 	}
 
@@ -151,7 +151,7 @@ func TestServiceSubmitApproveAndQueryMusic(t *testing.T) {
 		t.Fatalf("expected 2 approved aliases, got %d", len(approved))
 	}
 
-	afterApprove, err := deps.service.Query(ctx, AliasTypeMusic, "蓝歌")
+	afterApprove, err := deps.service.Query(ctx, PjskAliasTypeMusic, "蓝歌")
 	if err != nil {
 		t.Fatalf("Query() by approved alias error = %v", err)
 	}
@@ -167,10 +167,10 @@ func TestServiceSubmitApproveAndQueryCharacter(t *testing.T) {
 	deps := newAliasTestDeps(t)
 
 	deps.addCharacter(t, ctx, 1, "初音", "未来", "Hatsune", "Miku")
-	deps.addApprovedAlias(t, ctx, AliasTypeCharacter, 1, "miku")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeCharacter, 1, "miku")
 	deps.addAdmin(t, ctx, "qq", "9002", "Reviewer B")
 
-	records, err := deps.service.Submit(ctx, AliasTypeCharacter, "qq", "43", "初音未来", []string{"葱", "公主殿下"})
+	records, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "43", "初音未来", []string{"葱", "公主殿下"})
 	if err != nil {
 		t.Fatalf("Submit() error = %v", err)
 	}
@@ -178,12 +178,12 @@ func TestServiceSubmitApproveAndQueryCharacter(t *testing.T) {
 		t.Fatalf("expected 2 submitted aliases, got %d", len(records))
 	}
 	for i, record := range records {
-		if record.Entity.AliasType != AliasTypeCharacter || record.Entity.ID != 1 || record.Entity.Name != "初音未来" {
+		if record.Entity.AliasType != PjskAliasTypeCharacter || record.Entity.ID != 1 || record.Entity.Name != "初音未来" {
 			t.Fatalf("record %d resolved wrong entity: %+v", i, record)
 		}
 	}
 
-	if _, err := deps.service.Query(ctx, AliasTypeCharacter, "葱"); err == nil {
+	if _, err := deps.service.Query(ctx, PjskAliasTypeCharacter, "葱"); err == nil {
 		t.Fatal("expected pending character alias query to fail before approve")
 	}
 
@@ -195,7 +195,7 @@ func TestServiceSubmitApproveAndQueryCharacter(t *testing.T) {
 		t.Fatalf("expected 2 pending aliases, got %d", len(pending))
 	}
 	for _, record := range pending {
-		if record.Entity.AliasType != AliasTypeCharacter {
+		if record.Entity.AliasType != PjskAliasTypeCharacter {
 			t.Fatalf("expected character pending record, got %+v", record)
 		}
 	}
@@ -204,13 +204,13 @@ func TestServiceSubmitApproveAndQueryCharacter(t *testing.T) {
 		t.Fatalf("Approve() error = %v", err)
 	}
 
-	result, err := deps.service.Query(ctx, AliasTypeCharacter, "葱")
+	result, err := deps.service.Query(ctx, PjskAliasTypeCharacter, "葱")
 	if err != nil {
 		t.Fatalf("Query() by approved character alias error = %v", err)
 	}
 	wantAliases := []string{"miku", "公主殿下", "葱"}
 	sortAliasTexts(wantAliases)
-	if result.Entity.AliasType != AliasTypeCharacter || result.Entity.ID != 1 || result.Entity.Name != "初音未来" {
+	if result.Entity.AliasType != PjskAliasTypeCharacter || result.Entity.ID != 1 || result.Entity.Name != "初音未来" {
 		t.Fatalf("unexpected entity: %+v", result.Entity)
 	}
 	if !reflect.DeepEqual(result.Aliases, wantAliases) {
@@ -226,11 +226,11 @@ func TestServiceListPendingIncludesMultipleAliasTypes(t *testing.T) {
 	deps.addCharacter(t, ctx, 2, "天马", "司", "Tenma", "Tsukasa")
 	deps.addAdmin(t, ctx, "qq", "9007", "Reviewer C")
 
-	musicRecords, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "44", "5207", []string{"need"})
+	musicRecords, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "44", "5207", []string{"need"})
 	if err != nil {
 		t.Fatalf("music Submit() error = %v", err)
 	}
-	characterRecords, err := deps.service.Submit(ctx, AliasTypeCharacter, "qq", "45", "2", []string{"司君"})
+	characterRecords, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "45", "2", []string{"司君"})
 	if err != nil {
 		t.Fatalf("character Submit() error = %v", err)
 	}
@@ -242,10 +242,10 @@ func TestServiceListPendingIncludesMultipleAliasTypes(t *testing.T) {
 	if len(pending) != 2 {
 		t.Fatalf("expected 2 pending aliases, got %d", len(pending))
 	}
-	if pending[0].ReviewID != musicRecords[0].ReviewID || pending[0].Entity.AliasType != AliasTypeMusic {
+	if pending[0].ReviewID != musicRecords[0].ReviewID || pending[0].Entity.AliasType != PjskAliasTypeMusic {
 		t.Fatalf("unexpected first pending record: %+v", pending[0])
 	}
-	if pending[1].ReviewID != characterRecords[0].ReviewID || pending[1].Entity.AliasType != AliasTypeCharacter {
+	if pending[1].ReviewID != characterRecords[0].ReviewID || pending[1].Entity.AliasType != PjskAliasTypeCharacter {
 		t.Fatalf("unexpected second pending record: %+v", pending[1])
 	}
 }
@@ -257,7 +257,7 @@ func TestServiceRejectMovesAliasToRejectedTable(t *testing.T) {
 	deps.addMusic(t, ctx, 5202, "星空轨迹")
 	deps.addAdmin(t, ctx, "qq", "9003", "Reviewer A")
 
-	records, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "77", "5202", []string{"夜曲"})
+	records, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "77", "5202", []string{"夜曲"})
 	if err != nil {
 		t.Fatalf("Submit() error = %v", err)
 	}
@@ -280,7 +280,7 @@ func TestServiceRejectMovesAliasToRejectedTable(t *testing.T) {
 		t.Fatalf("unexpected rejected alias row: %+v", row)
 	}
 
-	result, err := deps.service.Query(ctx, AliasTypeMusic, "5202")
+	result, err := deps.service.Query(ctx, PjskAliasTypeMusic, "5202")
 	if err != nil {
 		t.Fatalf("Query() after reject error = %v", err)
 	}
@@ -294,11 +294,11 @@ func TestServiceDeleteRemovesApprovedAliases(t *testing.T) {
 	deps := newAliasTestDeps(t)
 
 	deps.addMusic(t, ctx, 5206, "群青交响")
-	deps.addApprovedAlias(t, ctx, AliasTypeMusic, 5206, "蓝歌")
-	deps.addApprovedAlias(t, ctx, AliasTypeMusic, 5206, "群青歌")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeMusic, 5206, "蓝歌")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeMusic, 5206, "群青歌")
 	deps.addAdmin(t, ctx, "qq", "9006", "Delete Admin")
 
-	deleted, err := deps.service.Delete(ctx, AliasTypeMusic, "qq", "9006", "5206", []string{"蓝歌"})
+	deleted, err := deps.service.Delete(ctx, PjskAliasTypeMusic, "qq", "9006", "5206", []string{"蓝歌"})
 	if err != nil {
 		t.Fatalf("Delete() error = %v", err)
 	}
@@ -306,14 +306,14 @@ func TestServiceDeleteRemovesApprovedAliases(t *testing.T) {
 		t.Fatalf("unexpected deleted aliases: %+v", deleted)
 	}
 
-	result, err := deps.service.Query(ctx, AliasTypeMusic, "5206")
+	result, err := deps.service.Query(ctx, PjskAliasTypeMusic, "5206")
 	if err != nil {
 		t.Fatalf("Query() after delete error = %v", err)
 	}
 	if !reflect.DeepEqual(result.Aliases, []string{"群青歌"}) {
 		t.Fatalf("unexpected aliases after delete: %+v", result.Aliases)
 	}
-	if _, err := deps.service.Query(ctx, AliasTypeMusic, "蓝歌"); err == nil {
+	if _, err := deps.service.Query(ctx, PjskAliasTypeMusic, "蓝歌"); err == nil {
 		t.Fatal("expected deleted alias to become unqueryable")
 	}
 }
@@ -323,11 +323,11 @@ func TestServiceDeleteRemovesApprovedCharacterAliases(t *testing.T) {
 	deps := newAliasTestDeps(t)
 
 	deps.addCharacter(t, ctx, 3, "东云", "绘名", "Shinonome", "Ena")
-	deps.addApprovedAlias(t, ctx, AliasTypeCharacter, 3, "Ena")
-	deps.addApprovedAlias(t, ctx, AliasTypeCharacter, 3, "えななん")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeCharacter, 3, "Ena")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeCharacter, 3, "えななん")
 	deps.addAdmin(t, ctx, "qq", "9008", "Delete Admin")
 
-	deleted, err := deps.service.Delete(ctx, AliasTypeCharacter, "qq", "9008", "3", []string{"Ena"})
+	deleted, err := deps.service.Delete(ctx, PjskAliasTypeCharacter, "qq", "9008", "3", []string{"Ena"})
 	if err != nil {
 		t.Fatalf("Delete() error = %v", err)
 	}
@@ -335,7 +335,7 @@ func TestServiceDeleteRemovesApprovedCharacterAliases(t *testing.T) {
 		t.Fatalf("unexpected deleted aliases: %+v", deleted)
 	}
 
-	result, err := deps.service.Query(ctx, AliasTypeCharacter, "3")
+	result, err := deps.service.Query(ctx, PjskAliasTypeCharacter, "3")
 	if err != nil {
 		t.Fatalf("Query() after delete error = %v", err)
 	}
@@ -349,8 +349,8 @@ func TestServiceReviewRequiresAdmin(t *testing.T) {
 	deps := newAliasTestDeps(t)
 
 	deps.addMusic(t, ctx, 5203, "梦想航线")
-	deps.addApprovedAlias(t, ctx, AliasTypeMusic, 5203, "梦航旧称")
-	records, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "88", "5203", []string{"梦航"})
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeMusic, 5203, "梦航旧称")
+	records, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "88", "5203", []string{"梦航"})
 	if err != nil {
 		t.Fatalf("Submit() error = %v", err)
 	}
@@ -364,7 +364,7 @@ func TestServiceReviewRequiresAdmin(t *testing.T) {
 	if _, err := deps.service.Reject(ctx, "qq", "not-admin", records[0].ReviewID, "no"); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
 		t.Fatalf("expected non-admin reject error, got %v", err)
 	}
-	if _, err := deps.service.Delete(ctx, AliasTypeMusic, "qq", "not-admin", "5203", []string{"梦航旧称"}); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+	if _, err := deps.service.Delete(ctx, PjskAliasTypeMusic, "qq", "not-admin", "5203", []string{"梦航旧称"}); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
 		t.Fatalf("expected non-admin delete error, got %v", err)
 	}
 }
@@ -375,21 +375,21 @@ func TestServiceSubmitRejectsMusicConflicts(t *testing.T) {
 
 	deps.addMusic(t, ctx, 5204, "群青讃歌")
 	deps.addMusic(t, ctx, 5205, "天ノ弱")
-	deps.addApprovedAlias(t, ctx, AliasTypeMusic, 5204, "蓝歌")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeMusic, 5204, "蓝歌")
 
-	if _, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "66", "5204", []string{"重复歌", " 重复歌 "}); err == nil || !strings.Contains(err.Error(), "重复") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"重复歌", " 重复歌 "}); err == nil || !strings.Contains(err.Error(), "重复") {
 		t.Fatalf("expected duplicate alias submission error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "66", "5204", []string{"天ノ弱"}); err == nil || !strings.Contains(err.Error(), "与已有曲名重复") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"天ノ弱"}); err == nil || !strings.Contains(err.Error(), "与已有曲名重复") {
 		t.Fatalf("expected title conflict error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "66", "5204", []string{"蓝歌"}); err == nil || !strings.Contains(err.Error(), "已审核列表") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"蓝歌"}); err == nil || !strings.Contains(err.Error(), "已审核列表") {
 		t.Fatalf("expected approved alias conflict error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "66", "5204", []string{"待审核歌"}); err != nil {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"待审核歌"}); err != nil {
 		t.Fatalf("Submit() for pending conflict setup error = %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, AliasTypeMusic, "qq", "66", "5204", []string{"待审核歌"}); err == nil || !strings.Contains(err.Error(), "待审核列表") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "66", "5204", []string{"待审核歌"}); err == nil || !strings.Contains(err.Error(), "待审核列表") {
 		t.Fatalf("expected pending alias conflict error, got %v", err)
 	}
 }
@@ -399,21 +399,21 @@ func TestServiceSubmitRejectsCharacterConflicts(t *testing.T) {
 	deps := newAliasTestDeps(t)
 
 	deps.addCharacter(t, ctx, 4, "天马", "司", "Tenma", "Tsukasa")
-	deps.addApprovedAlias(t, ctx, AliasTypeCharacter, 4, "司君")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeCharacter, 4, "司君")
 
-	if _, err := deps.service.Submit(ctx, AliasTypeCharacter, "qq", "67", "4", []string{"葱", " 葱 "}); err == nil || !strings.Contains(err.Error(), "重复") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"葱", " 葱 "}); err == nil || !strings.Contains(err.Error(), "重复") {
 		t.Fatalf("expected duplicate alias submission error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, AliasTypeCharacter, "qq", "67", "4", []string{"天马司"}); err == nil || !strings.Contains(err.Error(), "与已有角色名重复") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"天马司"}); err == nil || !strings.Contains(err.Error(), "与已有角色名重复") {
 		t.Fatalf("expected character name conflict error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, AliasTypeCharacter, "qq", "67", "4", []string{"司君"}); err == nil || !strings.Contains(err.Error(), "已审核列表") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"司君"}); err == nil || !strings.Contains(err.Error(), "已审核列表") {
 		t.Fatalf("expected approved alias conflict error, got %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, AliasTypeCharacter, "qq", "67", "4", []string{"王子殿下"}); err != nil {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"王子殿下"}); err != nil {
 		t.Fatalf("Submit() for pending conflict setup error = %v", err)
 	}
-	if _, err := deps.service.Submit(ctx, AliasTypeCharacter, "qq", "67", "4", []string{"王子殿下"}); err == nil || !strings.Contains(err.Error(), "待审核列表") {
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeCharacter, "qq", "67", "4", []string{"王子殿下"}); err == nil || !strings.Contains(err.Error(), "待审核列表") {
 		t.Fatalf("expected pending alias conflict error, got %v", err)
 	}
 }

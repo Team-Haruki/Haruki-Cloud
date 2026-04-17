@@ -7,8 +7,7 @@ func CloneStringPtr(value *string) *string {
 	if value == nil {
 		return nil
 	}
-	v := *value
-	return &v
+	return new(*value)
 }
 
 // BoolPtr returns a pointer to the given bool value.

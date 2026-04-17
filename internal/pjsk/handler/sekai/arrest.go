@@ -38,7 +38,7 @@ func isBindingSelector(value string) bool {
 	return true
 }
 
-func resolveUserQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
+func resolveUserQueryParams(ctx HarrukiSekaiHandlerContext) (UserQueryParams, error) {
 	p := UserQueryParams{
 		Platform:       ctx.GetPlatform(),
 		PlatformUserID: ctx.GetUserId(),
@@ -65,7 +65,7 @@ func resolveUserQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
 // resolveSelfOnlyQueryParams is like resolveUserQueryParams but restricts to
 // self-mode only (with optional u[i] selector). Used by commands that should
 // not support @mention or direct UID queries (e.g. sud, msd).
-func resolveSelfOnlyQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error) {
+func resolveSelfOnlyQueryParams(ctx HarrukiSekaiHandlerContext) (UserQueryParams, error) {
 	p := UserQueryParams{
 		Platform:       ctx.GetPlatform(),
 		PlatformUserID: ctx.GetUserId(),
@@ -82,8 +82,8 @@ func resolveSelfOnlyQueryParams(ctx SekaiHandlerContext) (UserQueryParams, error
 	return p, onebot11.NewReplayError("此命令仅支持查询自己的数据\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
 }
 
-func (sekaiHandlers) ArrestHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) ArrestHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		ParseUIDArg: common.BoolPtr(true),
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
@@ -91,7 +91,7 @@ func (sekaiHandlers) ArrestHandle() SekaiCommandHandler {
 			},
 			Path: "arrest",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			logger.Infof("uidArg: %s, event: %+v", ctx.UIDArg(), ctx.GetEvent().Message)
 			p, err := resolveUserQueryParams(ctx)
 			if err != nil {
@@ -102,15 +102,15 @@ func (sekaiHandlers) ArrestHandle() SekaiCommandHandler {
 	}
 }
 
-func (sekaiHandlers) RegTimeHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) RegTimeHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Commands: []string{
 				"/注册时间", "/pjsk reg time", "/pjsk 注册时间", "/查时间",
 			},
 			Path: "profile/reg-time",
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
 				return nil, err

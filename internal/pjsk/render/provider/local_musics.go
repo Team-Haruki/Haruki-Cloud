@@ -254,8 +254,7 @@ func (p *localMusicProvider) GetDifficulties(_ context.Context, musicID int) ([]
 	}
 	result := make([]*masterdata.MusicDifficulty, 0, len(diffs))
 	for _, d := range diffs {
-		c := *d
-		result = append(result, &c)
+		result = append(result, new(*d))
 	}
 	return result, nil
 }
@@ -338,8 +337,7 @@ func (p *localMusicProvider) GetLimitedTimeMusics(_ context.Context, musicID int
 	}
 	result := make([]*masterdata.LimitedTimeMusic, 0, len(items))
 	for _, item := range items {
-		c := *item
-		result = append(result, &c)
+		result = append(result, new(*item))
 	}
 	return result
 }

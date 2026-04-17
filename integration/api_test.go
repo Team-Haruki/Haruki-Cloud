@@ -22,10 +22,11 @@ import (
 
 	"encoding/base64"
 
-	"github.com/golang-jwt/jwt/v5"
-	_ "github.com/lib/pq"
 	botauth "haruki-cloud/api/bot/auth"
 	corecrypto "haruki-cloud/internal/core/crypto"
+
+	"github.com/golang-jwt/jwt/v5"
+	_ "github.com/lib/pq"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -386,7 +387,7 @@ func summarizeData(data interface{}) string {
 	}
 }
 
-func min(a, b int) int {
+func getMin(a, b int) int {
 	if a < b {
 		return a
 	}
@@ -953,7 +954,7 @@ func TestExternalAPIs(t *testing.T) {
 		if resp.StatusCode == 200 {
 			t.Log("✅ Sekai API profile OK")
 		} else {
-			t.Logf("⚠️  Sekai API profile: %s", string(body[:min(len(body), 200)]))
+			t.Logf("⚠️  Sekai API profile: %s", string(body[:getMin(len(body), 200)]))
 		}
 	})
 

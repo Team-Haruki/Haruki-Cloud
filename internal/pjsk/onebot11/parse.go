@@ -41,12 +41,12 @@ func ParseMessage(msg Message) Message {
 			data = d
 		}
 		switch s.Type {
-		case TYPE_TEXT:
-			segs = append(segs, Text(StripInlineCQTags(data[KEY_TEXT])))
-		case TYPE_IMAGE:
-			segs = append(segs, Image(data[KEY_FILE], data[KEY_URL]))
-		case TYPE_AT:
-			segs = append(segs, At(data[KEY_QQ]))
+		case TypeText:
+			segs = append(segs, Text(StripInlineCQTags(data[KeyText])))
+		case TypeImage:
+			segs = append(segs, Image(data[KeyFile], data[KeyUrl]))
+		case TypeAt:
+			segs = append(segs, At(data[KeyQQ]))
 		}
 	}
 	return segs

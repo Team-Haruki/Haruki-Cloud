@@ -7,7 +7,7 @@ import (
 
 const DefaultBotCommandMode = "POST"
 
-var DefaultBotAdditionalParams = []string{}
+var DefaultBotAdditionalParams []string
 
 type BotRoute struct {
 	Path             string

@@ -62,7 +62,7 @@ type Builder struct {
 
 // ProviderAdapter bridges provider.MasterDataProvider to music.DataSource.
 type ProviderAdapter struct {
-	provider.ProviderAdapterBase
+	provider.PjskProviderAdapterBase
 }
 
 type SearchService struct {

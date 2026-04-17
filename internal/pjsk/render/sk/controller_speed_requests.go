@@ -49,8 +49,7 @@ func (c *Controller) BuildSpeedRequestFromTracker(req TrackerRankQuery) (*drawin
 		Period:           speedPeriodSeconds,
 	}
 	if meta.bannerPath != "" {
-		banner := meta.bannerPath
-		payload.BannerImgPath = &banner
+		payload.BannerImgPath = new(meta.bannerPath)
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {

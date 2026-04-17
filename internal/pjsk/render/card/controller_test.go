@@ -68,7 +68,7 @@ func TestBuildCardListRequestResolvesAdvancedFiltersFromQuery(t *testing.T) {
 	source := &lookupTestSource{
 		cards:      []*masterdata.Card{cardInfo},
 		characters: map[int]*masterdata.Character{21: {ID: 21, FirstName: "初音", GivenName: "未来", Unit: "piapro"}},
-		filterFunc: func(info *CardQueryInfo) ([]*masterdata.Card, error) {
+		filterFunc: func(info *PjskCardQueryInfo) ([]*masterdata.Card, error) {
 			if info == nil {
 				t.Fatal("expected query info")
 			}
@@ -143,8 +143,7 @@ func TestBuildCardBoxRequestMarksOwnedCardsFromDetailedProfile(t *testing.T) {
 func TestBuildCardBoxRequestAppliesDisplayFlagsAndBeforeSetting(t *testing.T) {
 	source := &lookupTestSource{cards: []*masterdata.Card{{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"}}}
 	controller := NewController(source, nil, nil, nil)
-	useAfterTraining := false
-	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", ShowID: true, UseAfterTraining: &useAfterTraining}})
+	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", ShowID: true, UseAfterTraining: new(false)}})
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)
 	}
@@ -159,8 +158,7 @@ func TestBuildCardBoxRequestAppliesDisplayFlagsAndBeforeSetting(t *testing.T) {
 func TestBuildCardBoxRequestUsesOwnedCardDefaultImageEvenWhenBeforeIsSet(t *testing.T) {
 	source := &lookupTestSource{cards: []*masterdata.Card{{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"}}}
 	controller := NewController(source, nil, nil, nil)
-	useAfterTraining := false
-	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", UseAfterTraining: &useAfterTraining, DetailedProfile: &drawing.DetailedProfileCardRequest{UserCards: []any{map[string]any{"cardId": 1001, "defaultImage": "special_training", "specialTrainingStatus": "done"}}}}})
+	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", UseAfterTraining: new(false), DetailedProfile: &drawing.DetailedProfileCardRequest{UserCards: []any{map[string]any{"cardId": 1001, "defaultImage": "special_training", "specialTrainingStatus": "done"}}}}})
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)
 	}
@@ -172,8 +170,7 @@ func TestBuildCardBoxRequestUsesOwnedCardDefaultImageEvenWhenBeforeIsSet(t *test
 func TestBuildCardBoxRequestRejectsShowBoxWithoutOwnedCardData(t *testing.T) {
 	source := &lookupTestSource{cards: []*masterdata.Card{{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"}}}
 	controller := NewController(source, nil, nil, nil)
-	useAfterTraining := true
-	_, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", ShowBox: true, UseAfterTraining: &useAfterTraining}})
+	_, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", ShowBox: true, UseAfterTraining: new(true)}})
 	if err == nil {
 		t.Fatal("expected show_box without owned-card data to fail")
 	}
@@ -200,7 +197,7 @@ func TestBuildCardBoxRequestStrictFilterTreats25AsSchoolRefusalUnit(t *testing.T
 		cards: []*masterdata.Card{
 			{ID: 1001, CharacterID: 17, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Kana", AssetBundleName: "card_a"},
 		},
-		filterFunc: func(info *CardQueryInfo) ([]*masterdata.Card, error) {
+		filterFunc: func(info *PjskCardQueryInfo) ([]*masterdata.Card, error) {
 			if info == nil {
 				t.Fatal("expected query info")
 			}

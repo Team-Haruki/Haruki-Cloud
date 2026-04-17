@@ -27,7 +27,7 @@ func TestRegistryUsesDefaultAndRegionSpecificSource(t *testing.T) {
 		t.Fatalf("expected default region jp, got %q", got)
 	}
 
-	src, ok := registry.SourceForRegion(renderregion.Value("CN"))
+	src, ok := registry.SourceForRegion("CN")
 	if !ok {
 		t.Fatal("expected source for cn")
 	}

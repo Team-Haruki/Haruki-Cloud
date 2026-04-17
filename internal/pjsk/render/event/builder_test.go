@@ -40,8 +40,7 @@ func (s *testEventSource) DefaultRegion() renderregion.Value { return s.region }
 
 func (s *testEventSource) GetEventByID(id int) (*masterdata.Event, error) {
 	if eventInfo, ok := s.eventsByID[id]; ok {
-		cp := *eventInfo
-		return &cp, nil
+		return new(*eventInfo), nil
 	}
 	return nil, fmt.Errorf("event not found: %d", id)
 }
@@ -53,8 +52,7 @@ func (s *testEventSource) GetEventByCardID(cardID int) (*masterdata.Event, error
 func (s *testEventSource) GetEvents() []*masterdata.Event {
 	out := make([]*masterdata.Event, 0, len(s.events))
 	for _, eventInfo := range s.events {
-		cp := *eventInfo
-		out = append(out, &cp)
+		out = append(out, new(*eventInfo))
 	}
 	return out
 }
@@ -63,8 +61,7 @@ func (s *testEventSource) GetEventCards(eventID int) ([]*masterdata.Card, error)
 	items := s.cardsByEvent[eventID]
 	out := make([]*masterdata.Card, 0, len(items))
 	for _, item := range items {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out, nil
 }
@@ -80,16 +77,14 @@ func (s *testEventSource) GetEventDeckBonuses(eventID int) ([]*masterdata.EventD
 	items := s.bonusesByEvent[eventID]
 	out := make([]*masterdata.EventDeckBonus, 0, len(items))
 	for _, item := range items {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out, nil
 }
 
 func (s *testEventSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
 	if item, ok := s.gcuByID[id]; ok {
-		cp := *item
-		return &cp, nil
+		return new(*item), nil
 	}
 	return nil, fmt.Errorf("gcu not found: %d", id)
 }
@@ -98,8 +93,7 @@ func (s *testEventSource) GetBanEvents(charID int) []*masterdata.Event {
 	items := s.banEventsByChar[charID]
 	out := make([]*masterdata.Event, 0, len(items))
 	for _, item := range items {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out
 }
@@ -108,16 +102,14 @@ func (s *testEventSource) GetWorldBloomChapters(eventID int) []*masterdata.World
 	items := s.worldByEvent[eventID]
 	out := make([]*masterdata.WorldBloom, 0, len(items))
 	for _, item := range items {
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out
 }
 
 func (s *testEventSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	if item, ok := s.characterByID[id]; ok {
-		cp := *item
-		return &cp, nil
+		return new(*item), nil
 	}
 	return nil, fmt.Errorf("character not found: %d", id)
 }
@@ -204,12 +196,11 @@ func TestBuildEventListRequestBannerFilterOnlyKeepsBoxEvents(t *testing.T) {
 	source.gcuByID[105] = &masterdata.GameCharacterUnit{ID: 105, GameCharacterID: 5, Unit: "idol"}
 
 	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
-	bannerID := 10
 	req, err := builder.BuildEventListRequest(ListQuery{
 		Region:        renderregion.JP,
 		IncludePast:   true,
 		IncludeFuture: true,
-		BannerCharID:  &bannerID,
+		BannerCharID:  new(10),
 	})
 	if err != nil {
 		t.Fatalf("BuildEventListRequest failed: %v", err)

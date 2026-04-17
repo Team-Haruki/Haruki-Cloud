@@ -149,8 +149,7 @@ func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[st
 	if override != nil {
 		cloned := *override
 		if override.Profile != nil {
-			basic := *override.Profile
-			cloned.Profile = &basic
+			cloned.Profile = new(*override.Profile)
 		}
 		if len(override.DataSources) > 0 {
 			cloned.DataSources = slices.Clone(override.DataSources)
@@ -254,8 +253,7 @@ func mysekaiDataSourceFromMerged(profile *drawing.ProfileCardRequest, merged map
 		entry.Source = &sourceValue
 	}
 	if profile != nil && len(profile.DataSources) > 0 && profile.DataSources[0].Mode != nil {
-		mode := *profile.DataSources[0].Mode
-		entry.Mode = &mode
+		entry.Mode = new(*profile.DataSources[0].Mode)
 	}
 	return entry, true
 }

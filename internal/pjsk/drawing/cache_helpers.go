@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	hashstructure "github.com/mitchellh/hashstructure/v2"
+	"github.com/mitchellh/hashstructure/v2"
 )
 
 func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, error) {

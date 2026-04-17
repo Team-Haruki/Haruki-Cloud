@@ -45,8 +45,6 @@ func TestBuildRenderCachePolicyIgnoresEventRecordUserUpdateTime(t *testing.T) {
 }
 
 func TestBuildRenderCachePolicyKeepsProfileUpdateTime(t *testing.T) {
-	updateA := int64(1)
-	updateB := int64(2)
 	reqA := ProfileRequest{
 		Profile: BasicProfile{
 			ID:              "123",
@@ -55,10 +53,10 @@ func TestBuildRenderCachePolicyKeepsProfileUpdateTime(t *testing.T) {
 			IsHideUID:       true,
 			LeaderImagePath: "leader.png",
 		},
-		UpdateTime: &updateA,
+		UpdateTime: new(int64(1)),
 	}
 	reqB := reqA
-	reqB.UpdateTime = &updateB
+	reqB.UpdateTime = new(int64(2))
 
 	policyA, err := buildRenderCachePolicy("/api/pjsk/profile", reqA)
 	if err != nil {

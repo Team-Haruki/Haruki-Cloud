@@ -13,7 +13,7 @@ import (
 func TestScoreControlHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.ScoreControlHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/wl控分",
 		ArgText:    "100 Song A",
@@ -42,7 +42,7 @@ func TestScoreControlHandleBuildsResolvedCommand(t *testing.T) {
 func TestMusicMetaHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.MusicMetaHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲meta",
 		ArgText:    "Tell Your World / 初音未来的消失",
@@ -71,7 +71,7 @@ func TestMusicMetaHandleBuildsResolvedCommand(t *testing.T) {
 func TestMusicMetaHandleSplitsQueriesByNewline(t *testing.T) {
 	h := sekaiHandlers{}.MusicMetaHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲meta",
 		ArgText:    "Tell Your World\n初音未来的消失",
@@ -97,7 +97,7 @@ func TestMusicMetaHandleSplitsQueriesByNewline(t *testing.T) {
 func TestCustomRoomScoreControlHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.CustomRoomScoreControlHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/自定义房间控分",
 		ArgText:    "22",
@@ -126,7 +126,7 @@ func TestCustomRoomScoreControlHandleBuildsResolvedCommand(t *testing.T) {
 func TestMusicBoardHandleBuildsResolvedCommand(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲排行",
 		ArgText:    "多人 时速 升序 2页 ex >30 Song A / Song B",
@@ -164,7 +164,7 @@ func TestMusicBoardHandleBuildsResolvedCommand(t *testing.T) {
 func TestMusicBoardHandleSplitsSpecQueriesByWhitespaceLikeRefer(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲排行",
 		ArgText:    "虾ex 虾ma 龙hd",
@@ -190,7 +190,7 @@ func TestMusicBoardHandleSplitsSpecQueriesByWhitespaceLikeRefer(t *testing.T) {
 func TestMusicBoardHandleAllowsModeOnlyQueryWithoutSpecSongs(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲比较",
 		ArgText:    "多人 火效率",
@@ -219,7 +219,7 @@ func TestMusicBoardHandleAllowsModeOnlyQueryWithoutSpecSongs(t *testing.T) {
 func TestMusicBoardHandleParsesSkillsAndKeepsSpecQueryDifficulty(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲排行",
 		ArgText:    "solo max 技能 120 110 100 90 80 SongAex / music2ma",
@@ -257,7 +257,7 @@ func TestMusicBoardHandleParsesSkillsAndKeepsSpecQueryDifficulty(t *testing.T) {
 func TestMusicBoardHandleKeepsBareNumericSpecQuery(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲排行",
 		ArgText:    "多人 123",
@@ -289,7 +289,7 @@ func TestMusicBoardHandleKeepsBareNumericSpecQuery(t *testing.T) {
 func TestMusicBoardHandleParsesMultiSkillWithKeyword(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲排行",
 		ArgText:    "多人 200实效 Song A",
@@ -323,7 +323,7 @@ func TestMusicBoardHandleParsesMultiSkillWithKeyword(t *testing.T) {
 func TestMusicBoardHandleParsesPageWithTrailingP(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲排行",
 		ArgText:    "多人 2p SongA",
@@ -352,7 +352,7 @@ func TestMusicBoardHandleParsesPageWithTrailingP(t *testing.T) {
 func TestMusicBoardHandleExtractsLevelAndDiffFiltersFromAnyPosition(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 
-	result, err := h.Handle(&handler.HandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/歌曲排行",
 		ArgText:    "多人 SongA >30 ex",

@@ -99,8 +99,7 @@ func (c *Controller) resolveMusicDetailLength(region string, musicID int) *strin
 		return nil
 	}
 
-	text := formatMusicDetailLength(maxSeconds)
-	return &text
+	return new(formatMusicDetailLength(maxSeconds))
 }
 
 func formatMusicDetailLength(seconds float64) string {

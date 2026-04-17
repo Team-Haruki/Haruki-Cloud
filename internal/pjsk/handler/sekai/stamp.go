@@ -7,15 +7,15 @@ import (
 	"strings"
 )
 
-func (sekaiHandlers) StampHandle() SekaiCommandHandler {
-	return SekaiCommandHandler{
+func (sekaiHandlers) StampHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{
 			Path: "stamp",
 			Commands: []string{
 				"/贴纸", "/查贴纸", "/pjsk贴纸", "/pjsk表情", "/pjsk stamp", "/pjsk bq", "/stamp",
 			},
 		},
-		handleFunc: func(ctx SekaiHandlerContext) (*parser.ResolvedCommand, error) {
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if page, remaining, ok := parseStampPageWithRemaining(args); ok {
 				ctx.SetArgs(remaining)

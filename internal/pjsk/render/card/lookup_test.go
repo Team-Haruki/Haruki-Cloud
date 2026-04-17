@@ -21,7 +21,7 @@ type lookupTestSource struct {
 	costumesByCard   map[int][]*masterdata.Costume3d
 	unitByCard       map[int]string
 	supplyByCard     map[int]string
-	filterFunc       func(*CardQueryInfo) ([]*masterdata.Card, error)
+	filterFunc       func(*PjskCardQueryInfo) ([]*masterdata.Card, error)
 	allowEmptyFilter bool
 }
 
@@ -56,8 +56,7 @@ func (s *lookupTestSource) GetCardByCharacterAndSeq(characterID, seq int) (*mast
 	items := make([]*masterdata.Card, 0, len(s.cards))
 	for _, item := range s.cards {
 		if item != nil && item.CharacterID == characterID {
-			cp := *item
-			items = append(items, &cp)
+			items = append(items, new(*item))
 		}
 	}
 	if len(items) == 0 {
@@ -79,7 +78,7 @@ func (s *lookupTestSource) GetCardByCharacterAndSeq(characterID, seq int) (*mast
 	return items[index], nil
 }
 
-func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
+func (s *lookupTestSource) FilterCards(info *PjskCardQueryInfo) ([]*masterdata.Card, error) {
 	if s.filterFunc != nil {
 		return s.filterFunc(info)
 	}
@@ -94,8 +93,7 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 			if item == nil {
 				continue
 			}
-			cp := *item
-			out = append(out, &cp)
+			out = append(out, new(*item))
 		}
 		return out, nil
 	}
@@ -107,8 +105,7 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 		if item == nil {
 			continue
 		}
-		cp := *item
-		out = append(out, &cp)
+		out = append(out, new(*item))
 	}
 	return out, nil
 }
@@ -116,8 +113,7 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 func (s *lookupTestSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	if s.characters != nil {
 		if item := s.characters[id]; item != nil {
-			cp := *item
-			return &cp, nil
+			return new(*item), nil
 		}
 	}
 	return nil, fmt.Errorf("character %d not found", id)
@@ -165,8 +161,7 @@ func (s *lookupTestSource) GetCostume3dsByCardID(cardID int) ([]*masterdata.Cost
 			if item == nil {
 				continue
 			}
-			cp := *item
-			out = append(out, &cp)
+			out = append(out, new(*item))
 		}
 		return out, nil
 	}
@@ -251,7 +246,7 @@ func TestSearchServiceSupportsCharacterLatestVisibleCard(t *testing.T) {
 			{ID: 503, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Future", AssetBundleName: "card_future", ReleaseAt: now + 1000},
 		},
 	}
-	source.filterFunc = func(info *CardQueryInfo) ([]*masterdata.Card, error) {
+	source.filterFunc = func(info *PjskCardQueryInfo) ([]*masterdata.Card, error) {
 		if info == nil || info.CharacterID != 5 {
 			return nil, fmt.Errorf("filter not supported: %+v", info)
 		}
@@ -260,8 +255,7 @@ func TestSearchServiceSupportsCharacterLatestVisibleCard(t *testing.T) {
 			if item == nil || item.CharacterID != info.CharacterID {
 				continue
 			}
-			cp := *item
-			out = append(out, &cp)
+			out = append(out, new(*item))
 		}
 		return out, nil
 	}

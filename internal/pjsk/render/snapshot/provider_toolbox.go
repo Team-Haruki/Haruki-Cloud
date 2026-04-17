@@ -34,7 +34,7 @@ type musicMetaSource interface {
 type ToolboxSnapshotProvider struct {
 	bindings bindingLookup
 	client   privateDataClient
-	factory  SnapshotFactory
+	factory  HarukiSnapshotFactory
 	metas    musicMetaSource
 	logger   *logger.Logger
 }

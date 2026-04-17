@@ -55,10 +55,8 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 					if bonus == nil || bonus.CardAttr == "" {
 						continue
 					}
-					attr := bonus.CardAttr
-					eventInfo.BonusAttr = &attr
-					path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", bonus.CardAttr)))
-					eventAttrIconPath = &path
+					eventInfo.BonusAttr = new(bonus.CardAttr)
+					eventAttrIconPath = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", bonus.CardAttr))))
 				}
 
 				units := make(map[string]struct{})
@@ -76,8 +74,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 					for unit := range units {
 						eventInfo.Unit = &unit
 						if iconName := assets.UnitIconFilename(unit); iconName != "" {
-							path := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, iconName+".png")
-							eventUnitIconPath = &path
+							eventUnitIconPath = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, iconName+".png"))
 						}
 					}
 					if bannerCharacterID, err := b.events.GetEventBannerCharacterID(eventInfoModel.ID); err == nil {
@@ -131,8 +128,7 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 		}
 		cardInfo := b.BuildCardBasic(card, region)
 		if cardInfo.SupplyType != nil && *cardInfo.SupplyType == "甯搁┗" {
-			normal := "normal"
-			cardInfo.SupplyType = &normal
+			cardInfo.SupplyType = new("normal")
 		}
 		cards = append(cards, cardInfo)
 	}
@@ -140,14 +136,11 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 		return nil, fmt.Errorf("no valid cards found from provided ids")
 	}
 
-	termLimitedIconPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "term_limited.png"))
-	fesLimitedIconPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "fes_limited.png"))
-
 	return &drawing.CardListRequest{
 		Cards:               cards,
 		Region:              region.String(),
-		TermLimitedIconPath: &termLimitedIconPath,
-		FesLimitedIconPath:  &fesLimitedIconPath,
+		TermLimitedIconPath: new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "term_limited.png"))),
+		FesLimitedIconPath:  new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "fes_limited.png"))),
 	}, nil
 }
 
@@ -187,8 +180,6 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 	if len(items) == 0 {
 		return nil, fmt.Errorf("cards are required")
 	}
-	termLimitedIconPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "term_limited.png"))
-	fesLimitedIconPath := assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "fes_limited.png"))
 	return &drawing.CardBoxRequest{
 		Cards:               items,
 		Region:              region.String(),
@@ -196,8 +187,8 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		ShowBox:             showBox,
 		CharacterIconPaths:  characterIconPaths,
 		CharacterColorCodes: characterColorCodes,
-		TermLimitedIconPath: &termLimitedIconPath,
-		FesLimitedIconPath:  &fesLimitedIconPath,
+		TermLimitedIconPath: new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "term_limited.png"))),
+		FesLimitedIconPath:  new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "fes_limited.png"))),
 	}, nil
 }
 

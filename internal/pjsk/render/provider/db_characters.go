@@ -45,8 +45,7 @@ func (p *dbCharacterProvider) GetByID(ctx context.Context, id int) (*masterdata.
 	p.charMu.RLock()
 	if cached, ok := p.charCache[id]; ok {
 		p.charMu.RUnlock()
-		c := *cached
-		return &c, nil
+		return new(*cached), nil
 	}
 	p.charMu.RUnlock()
 
@@ -65,8 +64,7 @@ func (p *dbCharacterProvider) GetByID(ctx context.Context, id int) (*masterdata.
 	p.charMu.Lock()
 	p.charCache[id] = model
 	p.charMu.Unlock()
-	c := *model
-	return &c, nil
+	return new(*model), nil
 }
 
 func (p *dbCharacterProvider) GetColorCode(ctx context.Context, id int) (string, bool) {
@@ -104,8 +102,7 @@ func (p *dbCharacterProvider) GetGameCharacterUnit(ctx context.Context, id int) 
 	p.unitMu.RLock()
 	if cached, ok := p.unitCache[id]; ok {
 		p.unitMu.RUnlock()
-		c := *cached
-		return &c, nil
+		return new(*cached), nil
 	}
 	p.unitMu.RUnlock()
 
@@ -124,6 +121,5 @@ func (p *dbCharacterProvider) GetGameCharacterUnit(ctx context.Context, id int) 
 	p.unitMu.Lock()
 	p.unitCache[id] = model
 	p.unitMu.Unlock()
-	c := *model
-	return &c, nil
+	return new(*model), nil
 }

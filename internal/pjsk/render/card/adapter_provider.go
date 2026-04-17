@@ -9,14 +9,14 @@ import (
 )
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
-	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
+	return &ProviderAdapter{PjskProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }
 
 func (a *ProviderAdapter) WithContext(ctx context.Context) DataSource {
 	if a == nil {
 		return nil
 	}
-	return &ProviderAdapter{ProviderAdapterBase: a.CloneWithContext(ctx)}
+	return &ProviderAdapter{PjskProviderAdapterBase: a.CloneWithContext(ctx)}
 }
 
 func (a *ProviderAdapter) GetCardByID(id int) (*masterdata.Card, error) {
@@ -27,7 +27,7 @@ func (a *ProviderAdapter) GetCardByCharacterAndSeq(characterID, seq int) (*maste
 	return a.P.Cards().GetByCharacterAndSeq(a.Context(), characterID, seq)
 }
 
-func (a *ProviderAdapter) FilterCards(info *CardQueryInfo) ([]*masterdata.Card, error) {
+func (a *ProviderAdapter) FilterCards(info *PjskCardQueryInfo) ([]*masterdata.Card, error) {
 	if info == nil {
 		return nil, fmt.Errorf("card query info is required")
 	}

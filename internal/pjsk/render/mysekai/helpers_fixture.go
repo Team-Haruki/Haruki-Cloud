@@ -61,8 +61,7 @@ func fixtureColorImages(resolve pathResolver, item map[string]any) []drawing.Mys
 		}
 		var codePtr *string
 		if colorCode != "" {
-			code := colorCode
-			codePtr = &code
+			codePtr = new(colorCode)
 		}
 		images = append(images, drawing.MysekaiFixtureColorImage{
 			ImagePath: path,

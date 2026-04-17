@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/snapshot"
-	sekai "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/pjsk/sekai"
 
 	"github.com/bytedance/sonic"
 )

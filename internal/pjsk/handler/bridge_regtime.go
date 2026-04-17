@@ -8,6 +8,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/onebot11"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func executeRegTime(rc *RequestContext) (onebot11.Message, error) {
@@ -114,8 +115,8 @@ func formatRelativeDuration(d time.Duration) string {
 // JP/EN: the upper bits encode seconds since 2020-09-16T03:00:00 UTC.
 // TW/KR/CN: the raw bits encode an absolute Unix timestamp.
 func calcRegistrationTime(userID string, server string) (int64, error) {
-	switch strings.ToLower(server) {
-	case "jp", "en":
+	switch renderregion.Normalize(server) {
+	case renderregion.JP, renderregion.EN:
 		if len(userID) <= 3 {
 			return 0, fmt.Errorf("账号ID格式不正确")
 		}
@@ -124,7 +125,7 @@ func calcRegistrationTime(userID string, server string) (int64, error) {
 			return 0, fmt.Errorf("无效的账号ID：%w", err)
 		}
 		return 1600218000 + int64(float64(n)/(1024*4096)), nil
-	case "tw", "kr", "cn":
+	case renderregion.TW, renderregion.KR, renderregion.CN:
 		n, err := strconv.ParseInt(userID, 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("无效的账号ID：%w", err)

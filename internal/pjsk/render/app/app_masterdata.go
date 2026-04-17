@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func resolveRenderProviderMasterdataDir(cfg Config) string {
@@ -107,8 +109,8 @@ func hasRenderMasterdataRegionDirs(dir string) bool {
 func regionParentDir(path string) (string, bool) {
 	cleaned := filepath.Clean(strings.TrimSpace(path))
 	base := strings.ToLower(filepath.Base(cleaned))
-	switch base {
-	case "jp", "cn", "tw", "kr", "en":
+	switch renderregion.Value(base) {
+	case renderregion.JP, renderregion.CN, renderregion.TW, renderregion.KR, renderregion.EN:
 		parent := filepath.Dir(cleaned)
 		if parent != "" && parent != "." && parent != cleaned {
 			return parent, true

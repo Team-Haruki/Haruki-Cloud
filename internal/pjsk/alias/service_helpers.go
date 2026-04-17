@@ -10,6 +10,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"
 	sekaimusic "haruki-cloud/database/sekai/music"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (s *Service) loadMusicTitles(ctx context.Context, musicIDs []int) (map[int]string, error) {
@@ -177,16 +178,16 @@ func entityMapKey(aliasType string, id int) string {
 }
 
 func serverRegionRank(region string) int {
-	switch strings.ToLower(strings.TrimSpace(region)) {
-	case "jp":
+	switch renderregion.Normalize(region) {
+	case renderregion.JP:
 		return 0
-	case "cn":
+	case renderregion.CN:
 		return 1
-	case "tw":
+	case renderregion.TW:
 		return 2
-	case "kr":
+	case renderregion.KR:
 		return 3
-	case "en":
+	case renderregion.EN:
 		return 4
 	default:
 		return 5

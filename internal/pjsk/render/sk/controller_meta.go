@@ -140,8 +140,8 @@ func (c *Controller) eventSourceForRegion(region string) EventSource {
 }
 
 func normalizeTrackerServer(region string) string {
-	switch strings.ToLower(strings.TrimSpace(region)) {
-	case "jp", "cn", "tw", "kr", "en":
+	switch renderregion.Normalize(region) {
+	case renderregion.JP, renderregion.CN, renderregion.TW, renderregion.KR, renderregion.EN:
 		return strings.ToLower(strings.TrimSpace(region))
 	default:
 		return ""

@@ -32,7 +32,7 @@ func extractMysekaiGateInfo(merged map[string]any) (int, int, int) {
 
 var (
 	mysekaiBirthdayRefreshRegions = map[string]struct{}{
-		"jp": {},
+		string(renderregion.JP): {},
 	}
 	mysekaiCharacterBirthdays = map[int]struct {
 		Month int
@@ -66,11 +66,11 @@ var (
 		26: {Month: 2, Day: 17},
 	}
 	mysekaiRegionUTCOffsets = map[string]int{
-		"jp": 9,
-		"en": -8,
-		"cn": 8,
-		"tw": 8,
-		"kr": 9,
+		string(renderregion.JP): 9,
+		string(renderregion.EN): -8,
+		string(renderregion.CN): 8,
+		string(renderregion.TW): 8,
+		string(renderregion.KR): 9,
 	}
 )
 
@@ -206,7 +206,7 @@ func mysekaiRegionUTCOffset(region string, now time.Time) int {
 	if !ok {
 		return 8
 	}
-	if region == "en" {
+	if region == string(renderregion.EN) {
 		nowUTC := now.UTC()
 		dstStart := time.Date(nowUTC.Year(), 3, 8, 0, 0, 0, 0, time.UTC)
 		dstEnd := time.Date(nowUTC.Year(), 11, 1, 0, 0, 0, 0, time.UTC)

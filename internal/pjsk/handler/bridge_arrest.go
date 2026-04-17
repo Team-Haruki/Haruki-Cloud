@@ -9,6 +9,7 @@ import (
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/onebot11"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
@@ -135,16 +136,16 @@ func arrestDisplayUID(uid int64, visible bool) string {
 }
 
 func arrestCharacterRegionRank(region string) int {
-	switch strings.ToLower(strings.TrimSpace(region)) {
-	case "jp":
+	switch renderregion.Normalize(region) {
+	case renderregion.JP:
 		return 0
-	case "cn":
+	case renderregion.CN:
 		return 1
-	case "tw":
+	case renderregion.TW:
 		return 2
-	case "en":
+	case renderregion.EN:
 		return 3
-	case "kr":
+	case renderregion.KR:
 		return 4
 	default:
 		return 999

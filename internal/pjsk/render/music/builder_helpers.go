@@ -58,22 +58,22 @@ func selectLocalizedTitle(base string, region string, titles []string) string {
 		return ""
 	}
 
-	switch strings.ToLower(strings.TrimSpace(region)) {
-	case "cn", "tw":
+	switch renderregion.Normalize(region) {
+	case renderregion.CN, renderregion.TW:
 		for _, candidate := range candidates {
 			if hanPattern.MatchString(candidate) && !kanaPattern.MatchString(candidate) {
 				return candidate
 			}
 		}
 		return ""
-	case "kr":
+	case renderregion.KR:
 		for _, candidate := range candidates {
 			if hangulPattern.MatchString(candidate) {
 				return candidate
 			}
 		}
 		return ""
-	case "en":
+	case renderregion.EN:
 		for _, candidate := range candidates {
 			if latinPattern.MatchString(candidate) {
 				return candidate

@@ -22,7 +22,7 @@ import (
 type bridgeEducationRegionValidator struct{}
 
 func (bridgeEducationRegionValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {
-	if server == "cn" {
+	if server == string(renderregion.CN) {
 		return &sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 12345678901234,

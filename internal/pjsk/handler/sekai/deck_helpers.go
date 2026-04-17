@@ -182,12 +182,18 @@ func looksLikeDeckNumericToken(raw string) bool {
 	if raw == "" {
 		return false
 	}
+	raw = strings.TrimSuffix(raw, "%")
+	raw = strings.TrimSuffix(raw, "％")
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return false
+	}
 	for _, ch := range raw {
-		if ch >= '0' && ch <= '9' {
-			return true
+		if ch < '0' || ch > '9' {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func containsDeckKeyword(args string, keywords []string) bool {

@@ -29,12 +29,7 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) != "" {
 		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.WorldBloomCharacterQuery, "deck")
 		if err != nil {
-			if q.WorldBloomEventTurn == nil && strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
-				assignDeckFallbackMusicQuery(q, q.WorldBloomCharacterQuery)
-				q.WorldBloomCharacterQuery = ""
-			} else {
-				return err
-			}
+			return err
 		} else {
 			q.WorldBloomCharacterID = drawing.IntPtr(charID)
 			q.WorldBloomCharacterQuery = ""
@@ -137,13 +132,7 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 	if query != "" {
 		chapter, err := resolveTrackerWorldBloomChapterSelection(ctx, app, region, eventInfo, chapters, query)
 		if err != nil {
-			if strings.TrimSpace(q.MusicQuery) == "" && !isDeckWorldBloomSelectorQuery(query) && isCharacterNotFoundError(err) {
-				assignDeckFallbackMusicQuery(q, query)
-				q.WorldBloomCharacterQuery = ""
-				query = ""
-			} else {
-				return err
-			}
+			return err
 		} else {
 			if chapter.GameCharacterID <= 0 {
 				return fmt.Errorf("活动 %s-%d 的 World Link 章节缺少角色信息", strings.ToUpper(region.String()), eventID)

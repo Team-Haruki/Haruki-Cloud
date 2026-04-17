@@ -1656,6 +1656,66 @@ func TestNoEventDeckHandleRejectsFullAliasesWithNoEventHint(t *testing.T) {
 	}
 }
 
+func TestNoEventDeckHandleAllowsOnly25WithBareSkillTarget(t *testing.T) {
+	h := sekaiHandlers{}.NoEventDeckHandle()
+	result, err := h.Handle(&handler.PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/最强组卡",
+		ArgText:    "仅25 实效",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Target != "skill" {
+		t.Fatalf("unexpected target: %q", params.Target)
+	}
+	if params.MultiLiveScoreUpLowerBound != nil {
+		t.Fatalf("bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	}
+	if params.UnitFilter != "school_refusal" {
+		t.Fatalf("unexpected unit filter: %q", params.UnitFilter)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
+func TestNoEventDeckHandleAllowsOnly25hWithBareSkillTarget(t *testing.T) {
+	h := sekaiHandlers{}.NoEventDeckHandle()
+	result, err := h.Handle(&handler.PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/最强组卡",
+		ArgText:    "仅25h 实效",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Target != "skill" {
+		t.Fatalf("unexpected target: %q", params.Target)
+	}
+	if params.MultiLiveScoreUpLowerBound != nil {
+		t.Fatalf("bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	}
+	if params.UnitFilter != "school_refusal" {
+		t.Fatalf("unexpected unit filter: %q", params.UnitFilter)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
 func TestEventDeckHandleTreatsBareSingleNumberAsEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.PjskHandlerContext{

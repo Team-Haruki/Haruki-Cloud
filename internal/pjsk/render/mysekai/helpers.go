@@ -157,7 +157,7 @@ func mysekaiNaturalPhenom(resolve pathResolver, phenomIcons map[int]string, phen
 		RefreshReason:  "natural",
 		ImagePath:      resolve(fmt.Sprintf("mysekai/thumbnail/phenomena/%s.png", iconName)),
 		BackgroundFill: bg,
-		Text:           start.Format("15:04"),
+		StartAt:        start.UnixMilli(),
 		TextFill:       fg,
 	}
 }
@@ -179,7 +179,7 @@ func mysekaiBirthdayPhenom(resolve pathResolver, reason string, start time.Time,
 		RefreshReason:  reason,
 		ImagePath:      resolve(fmt.Sprintf("thumbnail/material/material%d.png", characterID+173)),
 		BackgroundFill: bg,
-		Text:           start.Format("15:04"),
+		StartAt:        start.UnixMilli(),
 		TextFill:       fg,
 	}
 }

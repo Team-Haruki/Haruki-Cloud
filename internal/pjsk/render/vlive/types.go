@@ -28,8 +28,9 @@ type ProviderAdapter struct {
 }
 
 type ListQuery struct {
-	Region string    `json:"region,omitempty"`
-	Now    time.Time `json:"-"`
+	Region   string    `json:"region,omitempty"`
+	TimeZone string    `json:"timezone,omitempty"`
+	Now      time.Time `json:"-"`
 }
 
 type Schedule struct {

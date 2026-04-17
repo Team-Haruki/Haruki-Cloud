@@ -46,7 +46,7 @@ type MusicDetailRequest struct {
 	CnName               *string              `json:"cn_name,omitempty"`
 	MusicJacketPath      string               `json:"music_jacket_path"`
 	EventBannerPath      *string              `json:"event_banner_path,omitempty"`
-	LimitedTimes         [][]string           `json:"limited_times,omitempty"` // List of (start, end) tuples
+	LimitedTimes         [][]int64            `json:"limited_times,omitempty"`
 	LeaderboardMatrix    [][]*LeaderboardInfo `json:"leaderboard_matrix,omitempty"`
 	LeaderboardMusicNum  *int                 `json:"leaderboard_music_num,omitempty"`
 	LeaderboardLiveTypes map[string]string    `json:"leaderboard_live_types,omitempty"`

@@ -84,7 +84,7 @@ func (c *Controller) buildPlaceholderProfile(region renderregion.Value) drawing.
 		Region:          strings.ToUpper(renderregion.WithDefault(region).String()),
 		Nickname:        "Lunabot",
 		Source:          "lunabot-service",
-		UpdateTime:      time.Now().Unix(),
+		UpdateTime:      time.Now().UnixMilli(),
 		Mode:            new("service"),
 		IsHideUID:       true,
 		LeaderImagePath: leaderPath,
@@ -100,7 +100,7 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 	}
 	update := detail.UpdateTime
 	if update == 0 {
-		update = time.Now().Unix()
+		update = time.Now().UnixMilli()
 	}
 	return drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{

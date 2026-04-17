@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/onebot11"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
@@ -106,18 +106,12 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		return nil, fmt.Errorf("解析更新时间失败：%w", err)
 	}
 
-	var tzOffset string
-	if rc.App.PJSK != nil && resolvedHarukiID > 0 {
-		if settings, sErr := accountdata.GetUserSettings(rc.Ctx, rc.App.PJSK, resolvedHarukiID); sErr == nil && settings != nil {
-			tzOffset = settings.TimeZoneOffset
-		}
-	}
-	tz, tzLabel := parseUserTimeZone(tzOffset)
-	uploadTime := time.Unix(ts, 0).In(tz)
-	relDur := formatRelativeDuration(time.Since(time.Unix(ts, 0)))
+	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, resolvedHarukiID)
+	uploadTime := displaytime.TimeFromUnixSeconds(ts, timeZone)
+	relDur := displaytime.FormatRelativeDuration(displaytime.Now(timeZone).Sub(displaytime.TimeFromUnixSeconds(ts, timeZone)))
 	maskedUID := maskPJSKUID(pjskUID, bindingVisible)
 
 	text := fmt.Sprintf("UID %s 的%s数据更新时间:\n%s (%s) (%s)",
-		maskedUID, label, uploadTime.Format("2006-01-02 15:04:05"), tzLabel, relDur)
+		maskedUID, label, displaytime.FormatTime(uploadTime, "2006-01-02 15:04:05"), timeZone, relDur)
 	return onebot11.Message{onebot11.Text(text)}, nil
 }

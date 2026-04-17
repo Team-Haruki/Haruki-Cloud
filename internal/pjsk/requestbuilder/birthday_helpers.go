@@ -216,40 +216,14 @@ func birthdayDaysUntil(now, next time.Time) int {
 	return int(next.Sub(now).Hours() / 24)
 }
 
-func buildBirthdayEventTime(now, start, end time.Time) drawing.BirthdayEventTime {
+func buildBirthdayEventTime(start, end time.Time) drawing.BirthdayEventTime {
 	displayEnd := end.Add(-time.Minute)
 	if displayEnd.Before(start) {
 		displayEnd = end
 	}
 	return drawing.BirthdayEventTime{
-		StartText: birthdayTimeText(now, start),
-		EndText:   birthdayTimeText(now, displayEnd),
-	}
-}
-
-func birthdayTimeText(now, target time.Time) string {
-	target = target.In(birthdayDisplayLocation)
-	return fmt.Sprintf("%s(%s)", target.Format("01-02 15:04"), birthdayReadableTime(now, target))
-}
-
-func birthdayReadableTime(now, target time.Time) string {
-	diff := target.Sub(now)
-	suffix := "后"
-	if diff < 0 {
-		suffix = "前"
-		diff = -diff
-	}
-
-	seconds := int(diff.Seconds())
-	switch {
-	case seconds < 60:
-		return fmt.Sprintf("%d秒%s", seconds, suffix)
-	case seconds < 60*60:
-		return fmt.Sprintf("%d分钟%s", seconds/60, suffix)
-	case seconds < 60*60*24:
-		return fmt.Sprintf("%d小时%d分钟%s", seconds/3600, seconds/60%60, suffix)
-	default:
-		return fmt.Sprintf("%d天%s", seconds/(60*60*24), suffix)
+		StartAt: start.UnixMilli(),
+		EndAt:   displayEnd.UnixMilli(),
 	}
 }
 

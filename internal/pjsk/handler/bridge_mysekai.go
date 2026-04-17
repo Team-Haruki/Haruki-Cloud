@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/mysekai"
 
@@ -191,7 +192,9 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		photoTime := "未知"
 		if !result.ObtainedAt.IsZero() {
-			photoTime = result.ObtainedAt.Format("2006-01-02 15:04")
+			timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, renderCtx.HarukiUserID)
+			loc, _ := displaytime.LoadLocation(timeZone)
+			photoTime = displaytime.FormatTime(result.ObtainedAt.In(loc), "2006-01-02 15:04")
 		}
 		return append(image, onebot11.Text(fmt.Sprintf("拍摄时间: %s", photoTime))), nil
 	case "mysekai-talk-list":

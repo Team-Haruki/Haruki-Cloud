@@ -74,7 +74,7 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 		EventName:   meta.name,
 		Region:      normalized.Region,
 		AggregateAt: meta.aggregateAt,
-		UpdateAt:    time.Now().UTC().Format(time.RFC3339),
+		UpdateAt:    time.Now().UTC().UnixMilli(),
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {

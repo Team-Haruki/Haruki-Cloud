@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/displaytime"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
@@ -113,24 +114,27 @@ func (c *Controller) RenderText(query ListQuery) (string, error) {
 		return "当前没有虚拟Live", nil
 	}
 
+	loc, timeZone := displaytime.LoadLocation(query.TimeZone)
+
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("%s 虚拟Live列表", strings.ToUpper(region.String())))
 	for _, live := range lives {
 		builder.WriteString("\n\n")
 		builder.WriteString(fmt.Sprintf("【%d】%s\n", live.ID, fallbackLiveName(live.Name, live.ID)))
-		builder.WriteString(fmt.Sprintf("开始: %s\n", live.StartAt.Format("2006-01-02 15:04")))
-		builder.WriteString(fmt.Sprintf("结束: %s\n", live.EndAt.Format("2006-01-02 15:04")))
+		builder.WriteString(fmt.Sprintf("开始: %s\n", displaytime.FormatTime(live.StartAt.In(loc), "2006-01-02 15:04")))
+		builder.WriteString(fmt.Sprintf("结束: %s\n", displaytime.FormatTime(live.EndAt.In(loc), "2006-01-02 15:04")))
 		builder.WriteString("状态: ")
 		switch {
 		case live.Living:
 			builder.WriteString("当前Live进行中")
 		case live.Current != nil:
-			builder.WriteString(fmt.Sprintf("下一场: %s", live.Current.StartAt.Format("2006-01-02 15:04")))
+			builder.WriteString(fmt.Sprintf("下一场: %s", displaytime.FormatTime(live.Current.StartAt.In(loc), "2006-01-02 15:04")))
 		default:
 			builder.WriteString("已结束")
 		}
 		builder.WriteString(fmt.Sprintf(" | 剩余场次: %d", live.RestCount))
 	}
+	builder.WriteString(fmt.Sprintf("\n\n时区: %s", timeZone))
 	return builder.String(), nil
 }
 

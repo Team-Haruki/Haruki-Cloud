@@ -11,7 +11,10 @@ func executeVLive(rc *RequestContext) (onebot11.Message, error) {
 	if rc.App == nil || rc.App.VLive == nil {
 		return nil, fmt.Errorf("vlive service unavailable: sekai client not configured")
 	}
-	query := vlive.ListQuery{Region: rc.Cmd.Region}
+	query := vlive.ListQuery{
+		Region:   rc.Cmd.Region,
+		TimeZone: resolveRequesterHarukiUserTimeZone(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
+	}
 	mergeParams(rc.Cmd.Params, &query)
 	text, err := rc.App.VLive.WithContext(rc.Ctx).RenderText(query)
 	if err != nil {

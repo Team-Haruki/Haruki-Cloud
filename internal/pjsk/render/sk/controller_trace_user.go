@@ -85,7 +85,7 @@ func (c *Controller) buildUserTraceFromTracker(server string, eventID int, userI
 	}
 
 	sort.Slice(result, func(i, j int) bool {
-		return fmt.Sprintf("%v", result[i].Time) < fmt.Sprintf("%v", result[j].Time)
+		return result[i].Time < result[j].Time
 	})
 	if len(result) == 0 {
 		latest, err := c.buildSingleUserFromTracker(server, eventID, userID, wlCharacterID)

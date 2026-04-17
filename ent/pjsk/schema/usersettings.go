@@ -20,9 +20,9 @@ type UserSettings struct {
 	// is permanently disabled at the user level (across all bindings).
 	NoncompliantBGCount int `json:"noncompliant_bg_count,omitempty"`
 
-	// TimeZoneOffset is the user's preferred UTC offset for time display,
-	// formatted as "+HH:MM" or "-HH:MM" (e.g. "+09:00"). Empty = UTC+8.
-	TimeZoneOffset string `json:"time_zone_offset,omitempty"`
+	// TimeZone is the user's preferred IANA time zone name for display,
+	// for example "Asia/Shanghai". Empty = Asia/Shanghai.
+	TimeZone string `json:"time_zone,omitempty"`
 }
 
 type UserPreference struct {

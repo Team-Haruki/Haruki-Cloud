@@ -148,7 +148,7 @@ func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) 
 		return normalizeTrackerUnixSeconds(normalized[i].timestamp) < normalizeTrackerUnixSeconds(normalized[j].timestamp)
 	})
 
-	info.RecordStartAt = formatTrackerTimestamp(normalized[0].timestamp)
+	info.RecordStartAt = drawing.Int64Ptr(formatTrackerTimestamp(normalized[0].timestamp))
 	if len(normalized) < 2 {
 		return
 	}

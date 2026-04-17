@@ -169,19 +169,19 @@ func BuildMiscBirthdayRequest(ctx context.Context, r *parser.ResolvedCommand, ap
 		CardImagePath: cardImagePath,
 		Cards:         cards,
 		IsFifthAnniv:  isFifthAnniv,
-		GachaTime:     buildBirthdayEventTime(now, gachaStart, gachaEnd),
-		LiveTime:      buildBirthdayEventTime(now, liveStart, liveEnd),
+		GachaTime:     buildBirthdayEventTime(gachaStart, gachaEnd),
+		LiveTime:      buildBirthdayEventTime(liveStart, liveEnd),
 		AllCharacters: buildBirthdayCalendar(app, infos),
 	}
 
 	if isFifthAnniv {
 		gachaStart = nextTime.AddDate(0, 0, -4)
 		gachaEnd = nextTime.AddDate(0, 0, 3)
-		req.GachaTime = buildBirthdayEventTime(now, gachaStart, gachaEnd)
+		req.GachaTime = buildBirthdayEventTime(gachaStart, gachaEnd)
 
-		req.DropTime = new(buildBirthdayEventTime(now, nextTime.AddDate(0, 0, -3), nextTime))
-		req.FlowerTime = new(buildBirthdayEventTime(now, nextTime.AddDate(0, 0, -3), nextTime.AddDate(0, 0, 3)))
-		req.PartyTime = new(buildBirthdayEventTime(now, nextTime, nextTime.AddDate(0, 0, 3)))
+		req.DropTime = new(buildBirthdayEventTime(nextTime.AddDate(0, 0, -3), nextTime))
+		req.FlowerTime = new(buildBirthdayEventTime(nextTime.AddDate(0, 0, -3), nextTime.AddDate(0, 0, 3)))
+		req.PartyTime = new(buildBirthdayEventTime(nextTime, nextTime.AddDate(0, 0, 3)))
 	}
 
 	return req, nil

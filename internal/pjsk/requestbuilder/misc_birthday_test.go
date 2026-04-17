@@ -97,7 +97,7 @@ func TestBuildMiscBirthdayRequestFromCharacterID(t *testing.T) {
 		t.Fatalf("unexpected second birthday card: %+v", req.Cards[1])
 	}
 
-	if req.GachaTime.StartText == "" || req.GachaTime.EndText == "" || req.LiveTime.StartText == "" || req.LiveTime.EndText == "" {
+	if req.GachaTime.StartAt <= 0 || req.GachaTime.EndAt <= 0 || req.LiveTime.StartAt <= 0 || req.LiveTime.EndAt <= 0 {
 		t.Fatalf("missing event times: %+v", req)
 	}
 	if !req.IsFifthAnniv || req.DropTime == nil || req.FlowerTime == nil || req.PartyTime == nil {

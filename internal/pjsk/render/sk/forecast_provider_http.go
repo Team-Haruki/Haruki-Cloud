@@ -110,9 +110,9 @@ func normalizeForecastTimestamp(ts int64) int64 {
 		return 0
 	}
 	if ts > 1_000_000_000_000 {
-		return ts / 1000
+		return ts
 	}
-	return ts
+	return ts * 1000
 }
 
 func parseForecastRFC3339(raw string) (int64, bool) {
@@ -124,5 +124,5 @@ func parseForecastRFC3339(raw string) (int64, bool) {
 	if err != nil {
 		return 0, false
 	}
-	return parsed.Unix(), true
+	return parsed.UnixMilli(), true
 }

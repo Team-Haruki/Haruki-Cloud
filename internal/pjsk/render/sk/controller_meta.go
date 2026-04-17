@@ -168,14 +168,14 @@ func normalizeRanks(values []int) []int {
 	return out
 }
 
-func formatTrackerTimestamp(ts int64) string {
+func formatTrackerTimestamp(ts int64) int64 {
 	if ts <= 0 {
-		return time.Now().UTC().Format(time.RFC3339)
+		return time.Now().UTC().UnixMilli()
 	}
 	if ts > 1_000_000_000_000 {
-		return time.UnixMilli(ts).UTC().Format(time.RFC3339)
+		return ts
 	}
-	return time.Unix(ts, 0).UTC().Format(time.RFC3339)
+	return time.Unix(ts, 0).UTC().UnixMilli()
 }
 
 func pickTrackerDisplayName(name string, rank int) string {

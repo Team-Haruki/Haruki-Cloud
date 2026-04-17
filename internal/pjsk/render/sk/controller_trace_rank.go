@@ -92,9 +92,7 @@ func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int,
 		}
 	}
 	sort.Slice(result, func(i, j int) bool {
-		ti := fmt.Sprintf("%v", result[i].Time)
-		tj := fmt.Sprintf("%v", result[j].Time)
-		return ti < tj
+		return result[i].Time < result[j].Time
 	})
 	if len(result) == 0 {
 		latest, err := c.buildSingleRankFromTracker(server, eventID, rank, wlCharacterID)

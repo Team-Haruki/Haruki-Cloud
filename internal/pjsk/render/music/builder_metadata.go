@@ -207,20 +207,19 @@ func (b *Builder) buildMusicAliases(music *masterdata.Music) []string {
 	return aliases
 }
 
-func (b *Builder) buildLimitedTimes(musicID int, region renderregion.Value) [][]string {
+func (b *Builder) buildLimitedTimes(musicID int, region renderregion.Value) [][]int64 {
 	items := b.source.GetLimitedTimeMusics(musicID)
 	if len(items) == 0 {
 		return nil
 	}
-	location := regionToLocation(region)
-	result := make([][]string, 0, len(items))
+	result := make([][]int64, 0, len(items))
 	for _, item := range items {
 		if item == nil {
 			continue
 		}
-		result = append(result, []string{
-			formatTimestamp(item.StartAt, location),
-			formatTimestamp(item.EndAt, location),
+		result = append(result, []int64{
+			item.StartAt,
+			item.EndAt,
 		})
 	}
 	return result

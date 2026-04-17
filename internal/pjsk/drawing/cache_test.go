@@ -86,7 +86,7 @@ func TestBuildRenderCachePolicyKeepsProfileUpdateTime(t *testing.T) {
 
 func TestBuildRenderCachePolicyIgnoresSKWinRateUpdatedAt(t *testing.T) {
 	reqA := WinRateRequest{
-		UpdatedAt:        "2026-03-22T00:00:00Z",
+		UpdatedAt:        1774118400000,
 		EventStartAt:     10,
 		EventAggregateAt: 20,
 		TeamInfo: []TeamInfo{
@@ -95,7 +95,7 @@ func TestBuildRenderCachePolicyIgnoresSKWinRateUpdatedAt(t *testing.T) {
 		},
 	}
 	reqB := reqA
-	reqB.UpdatedAt = "2026-03-22T00:05:00Z"
+	reqB.UpdatedAt = 1774118700000
 
 	policyA, err := buildRenderCachePolicy("/api/pjsk/sk/winrate", reqA)
 	if err != nil {

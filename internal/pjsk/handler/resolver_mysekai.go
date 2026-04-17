@@ -61,6 +61,7 @@ func resolveMySekaiRenderContext(
 	}
 	regionStr = resolvedTargetRegion(regionStr, target)
 	result.Region = regionStr
+	result.HarukiUserID = target.HarukiUserID
 
 	platform, platformUserID := platformCredentials(params)
 	if snap := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, true); snap != nil {

@@ -151,10 +151,10 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 			Ranks: rankInfos,
 		}
 		if forecastAt > 0 {
-			column.ForecastTime = formatTrackerTimestamp(forecastAt)
+			column.ForecastTime = drawing.Int64Ptr(formatTrackerTimestamp(forecastAt))
 		}
 		if sourceData.FetchedAt > 0 {
-			column.UpdateTime = formatTrackerTimestamp(sourceData.FetchedAt)
+			column.UpdateTime = drawing.Int64Ptr(formatTrackerTimestamp(sourceData.FetchedAt))
 		}
 		columns = append(columns, column)
 	}

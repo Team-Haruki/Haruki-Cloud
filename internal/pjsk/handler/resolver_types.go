@@ -27,7 +27,8 @@ type ResolvedGameTarget struct {
 }
 
 type mySekaiRenderContext struct {
-	Controller *rendermysekai.Controller
-	Profile    *drawing.ProfileCardRequest
-	Region     string
+	Controller   *rendermysekai.Controller
+	Profile      *drawing.ProfileCardRequest
+	Region       string
+	HarukiUserID int
 }

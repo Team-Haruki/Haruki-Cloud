@@ -6,7 +6,7 @@ type MysekaiPhenomRequest struct {
 	RefreshReason  string `json:"refresh_reason"`
 	ImagePath      string `json:"image_path"`
 	BackgroundFill []int  `json:"background_fill"` // Color tuple
-	Text           string `json:"text"`
+	StartAt        int64  `json:"start_at"`
 	TextFill       []int  `json:"text_fill"`
 }
 

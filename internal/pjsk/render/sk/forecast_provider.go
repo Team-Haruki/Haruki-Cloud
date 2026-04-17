@@ -81,7 +81,7 @@ func (p *RemoteForecastProvider) FetchBySource(ctx context.Context, region strin
 		}
 		out[src.name] = ForecastSourceData{
 			Scores:    items,
-			FetchedAt: time.Now().UTC().Unix(),
+			FetchedAt: time.Now().UTC().UnixMilli(),
 		}
 	}
 

@@ -17,8 +17,8 @@ type CharaBirthdayCard struct {
 }
 
 type BirthdayEventTime struct {
-	StartText string `json:"start_text"`
-	EndText   string `json:"end_text"`
+	StartAt int64 `json:"start_at"`
+	EndAt   int64 `json:"end_at"`
 }
 
 type CharaBirthdayData struct {

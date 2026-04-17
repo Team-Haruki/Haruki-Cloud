@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"haruki-cloud/internal/pjsk/displaytime"
 )
 
 const drawingTimestampMsThreshold = int64(100000000000)
@@ -23,6 +25,7 @@ func prepareDrawingRequestBody(endpoint string, body any, now time.Time) any {
 	if root == nil {
 		return body
 	}
+	root["timezone"] = displaytime.NormalizeTimeZone(scalarString(root["timezone"]))
 
 	nowMs := now.UnixMilli()
 	if parsed.Path == "/api/pjsk/profile" {

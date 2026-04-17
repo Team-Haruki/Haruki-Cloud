@@ -37,7 +37,7 @@ func TestExtractMysekaiPhenomsIncludesBirthdayRefreshSlot(t *testing.T) {
 
 	gotTexts := make([]string, 0, len(phenoms))
 	for _, item := range phenoms {
-		gotTexts = append(gotTexts, item.Text)
+		gotTexts = append(gotTexts, time.UnixMilli(item.StartAt).In(loc).Format("15:04"))
 	}
 	wantTexts := []string{"05:00", "17:00", "05:00", "17:00", "00:00"}
 	if !reflect.DeepEqual(gotTexts, wantTexts) {
@@ -83,7 +83,7 @@ func TestExtractMysekaiPhenomsPrefersFreshestSnapshotTime(t *testing.T) {
 
 	gotTexts := make([]string, 0, len(phenoms))
 	for _, item := range phenoms {
-		gotTexts = append(gotTexts, item.Text)
+		gotTexts = append(gotTexts, time.UnixMilli(item.StartAt).In(loc).Format("15:04"))
 	}
 	wantTexts := []string{"05:00", "17:00", "05:00", "17:00"}
 	if !reflect.DeepEqual(gotTexts, wantTexts) {

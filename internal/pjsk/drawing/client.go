@@ -50,21 +50,25 @@ func (c *HarukiDrawingClient) SetRenderCache(cache *RenderCacheClient) {
 	c.cache = cache
 }
 
-func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
+func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, render func(any) ([]byte, error)) ([]byte, error) {
+	prepared := prepareDrawingRequestBody(endpoint, request, time.Now())
 	if c == nil {
-		return render()
+		return render(prepared)
 	}
 	if c.cache != nil {
-		return c.cache.Render(endpoint, request, render)
+		return c.cache.Render(endpoint, prepared, func() ([]byte, error) {
+			return render(prepared)
+		})
 	}
 	if c.localCache != nil {
-		return c.localCache.Render(endpoint, request, render)
+		return c.localCache.Render(endpoint, prepared, func() ([]byte, error) {
+			return render(prepared)
+		})
 	}
-	return render()
+	return render(prepared)
 }
 
-func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
-	requestBody := prepareDrawingRequestBody(endpoint, body, time.Now())
+func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]byte, error) {
 	resp, err := c.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(requestBody).
@@ -80,6 +84,11 @@ func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
 	}
 	c.logger.Debugf("Response from %s: type %s, length %s", c.baseURL+endpoint, resp.Header().Get("Content-Type"), resp.Header().Get("content-length"))
 	return resp.Body(), nil
+}
+
+func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
+	requestBody := prepareDrawingRequestBody(endpoint, body, time.Now())
+	return c.postPrepared(endpoint, requestBody)
 }
 
 // =========================== Music API ===========================
@@ -113,8 +122,8 @@ func (c *HarukiDrawingClient) GenerateBasicMusicRewards(req *BasicMusicRewardsRe
 // =========================== Profile API ===========================
 
 func (c *HarukiDrawingClient) GenerateProfile(req *ProfileRequest) ([]byte, error) {
-	return c.RenderWithCache("/api/pjsk/profile", req, func() ([]byte, error) {
-		return c.post("/api/pjsk/profile", req)
+	return c.RenderWithCache("/api/pjsk/profile", req, func(prepared any) ([]byte, error) {
+		return c.postPrepared("/api/pjsk/profile", prepared)
 	})
 }
 

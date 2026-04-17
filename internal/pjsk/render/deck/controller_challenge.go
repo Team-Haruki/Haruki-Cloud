@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"slices"
 	"fmt"
 
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -41,7 +42,7 @@ func (c *Controller) prepareChallengeRecommend(query AutoQuery, option map[strin
 		return fmt.Errorf("你的该角色的当前挑战卡组不足5张，无法使用\"当前\"参数（更新当前挑战卡组需要抓包）")
 	}
 
-	option["fixed_cards"] = append([]int(nil), cards...)
+	option["fixed_cards"] = slices.Clone(cards)
 	delete(option, "fixed_characters")
 	option["best_skill_as_leader"] = false
 	return nil

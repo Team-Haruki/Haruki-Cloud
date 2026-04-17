@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"context"
 	"encoding/json"
 	"strings"
@@ -162,6 +163,6 @@ func cloneEdResourceBox(source *ResourceBox) *ResourceBox {
 		return nil
 	}
 	c := *source
-	c.Details = append([]ResourceBoxDetail(nil), source.Details...)
+	c.Details = slices.Clone(source.Details)
 	return &c
 }

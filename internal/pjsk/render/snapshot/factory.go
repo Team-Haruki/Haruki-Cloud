@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"slices"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -117,7 +118,7 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 		Rewards: convertChallengeRewards(raw.UserChallengeLiveSoloHighScoreRewards),
 	}
 	service.rawData = &raw
-	service.rawJSON = append([]byte(nil), data...)
+	service.rawJSON = slices.Clone(data)
 
 	if input.PersistRawFile {
 		pattern := strings.TrimSpace(input.RawFilePattern)

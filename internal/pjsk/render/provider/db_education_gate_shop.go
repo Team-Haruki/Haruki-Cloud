@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"context"
 	"encoding/json"
 
@@ -141,7 +142,7 @@ func cloneEdShopItem(source *ShopItem) *ShopItem {
 		return nil
 	}
 	c := *source
-	c.Costs = append([]ShopItemCost(nil), source.Costs...)
+	c.Costs = slices.Clone(source.Costs)
 	return &c
 }
 

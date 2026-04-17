@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"context"
 	"encoding/json"
 	"sort"
@@ -65,7 +66,7 @@ func (p *localVLiveProvider) GetLives(_ context.Context, _ renderregion.Value) (
 	result := make([]*VLive, 0, len(p.lives.v()))
 	for _, live := range p.lives.v() {
 		c := *live
-		c.Schedules = append([]VLiveSchedule(nil), live.Schedules...)
+		c.Schedules = slices.Clone(live.Schedules)
 		result = append(result, &c)
 	}
 	return result, nil

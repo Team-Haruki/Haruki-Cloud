@@ -1,6 +1,7 @@
 package card
 
 import (
+	"slices"
 	"fmt"
 	"strings"
 
@@ -32,7 +33,7 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 
 	copy := *cardInfo
 	if cardInfo.CardParameters != nil {
-		copy.CardParameters = append([]masterdata.CardParameter(nil), cardInfo.CardParameters...)
+		copy.CardParameters = slices.Clone(cardInfo.CardParameters)
 	}
 	return &ImageResult{
 		Card:  &copy,

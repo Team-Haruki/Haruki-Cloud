@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/common"
@@ -109,7 +110,7 @@ func normalizeMusicBoardSkills(skills []float64, liveType string) []float64 {
 	case liveType == "multi" && len(clean) == 1:
 		return []float64{clean[0], clean[0], clean[0], clean[0], clean[0]}
 	case len(clean) >= 5:
-		return append([]float64(nil), clean[:5]...)
+		return slices.Clone(clean[:5])
 	case liveType == "multi":
 		return []float64{
 			musicBoardDefaultMultiSkill,

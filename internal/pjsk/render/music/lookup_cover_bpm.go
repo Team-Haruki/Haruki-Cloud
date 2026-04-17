@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"bufio"
 	"fmt"
 	"math"
@@ -224,7 +225,7 @@ func buildLookupMusic(musicInfo *masterdata.Music, builder *Builder, region rend
 		ID:                 musicInfo.ID,
 		Seq:                musicInfo.Seq,
 		ReleaseConditionID: musicInfo.ReleaseConditionID,
-		Categories:         append([]string(nil), musicInfo.Categories...),
+		Categories:         slices.Clone(musicInfo.Categories),
 		Title:              builder.buildDisplayMusicTitle(musicInfo, region),
 		Pronunciation:      musicInfo.Pronunciation,
 		Lyricist:           musicInfo.Lyricist,

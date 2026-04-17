@@ -1,6 +1,7 @@
 package sekai
 
 import (
+	"slices"
 	"fmt"
 	"strings"
 )
@@ -63,7 +64,7 @@ func buildSKTrackerParamsWithDefaultRanks(ctx SekaiHandlerContext, defaultFull b
 
 	defaultRanks := defaultSKRanksByMode(wlMode)
 	if len(defaultRanksOverride) > 0 {
-		defaultRanks = append([]int(nil), defaultRanksOverride...)
+		defaultRanks = slices.Clone(defaultRanksOverride)
 	}
 	// Empty rank query should use mode-specific default lines.
 	if !rankArgsProvided && userID == nil && targetUserID == "" {

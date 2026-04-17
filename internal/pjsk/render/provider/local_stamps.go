@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"context"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -21,5 +22,5 @@ func (p *localStampProvider) GetAll(_ context.Context) ([]masterdata.Stamp, erro
 	}); err != nil {
 		return nil, err
 	}
-	return append([]masterdata.Stamp(nil), p.stamps.v()...), nil
+	return slices.Clone(p.stamps.v()), nil
 }

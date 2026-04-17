@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"slices"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -196,7 +197,7 @@ func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snap snaps
 		}
 	}
 	if state.activeDeckID == 0 && len(raw.UserDecks) > 0 {
-		state.decks = append([]snapshot.RawUserDeck(nil), raw.UserDecks...)
+		state.decks = slices.Clone(raw.UserDecks)
 		activeDeck := snapshot.FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
 		state.activeDeckID = raw.UserGamedata.Deck
 		if state.activeDeckID == 0 {
@@ -213,10 +214,10 @@ func resolveProfileRenderState(resp *sekai.GetAnotherProfileResponse, snap snaps
 
 func mergeProfileUserCards(primary []snapshot.RawUserCard, fallback []snapshot.RawUserCard) []snapshot.RawUserCard {
 	if len(primary) == 0 {
-		return append([]snapshot.RawUserCard(nil), fallback...)
+		return slices.Clone(fallback)
 	}
 
-	result := append([]snapshot.RawUserCard(nil), primary...)
+	result := slices.Clone(primary)
 	seen := make(map[int]struct{}, len(primary))
 	for _, card := range primary {
 		if card.CardID > 0 {

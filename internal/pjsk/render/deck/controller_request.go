@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"slices"
 	"fmt"
 	"sort"
 	"strings"
@@ -216,13 +217,13 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 		request.AttrFilter = drawing.StringPtr(attrFilter)
 	}
 	if excludedCards, ok := option["excluded_cards"].([]int); ok && len(excludedCards) > 0 {
-		request.ExcludedCards = append([]int(nil), excludedCards...)
+		request.ExcludedCards = slices.Clone(excludedCards)
 	}
 	if fixedCards, ok := option["fixed_cards"].([]int); ok {
-		request.FixedCardsID = append([]int(nil), fixedCards...)
+		request.FixedCardsID = slices.Clone(fixedCards)
 	}
 	if fixedCharacters, ok := option["fixed_characters"].([]int); ok {
-		request.FixedCharactersID = append([]int(nil), fixedCharacters...)
+		request.FixedCharactersID = slices.Clone(fixedCharacters)
 	}
 	if maxProfile, ok := option["max_profile"].(bool); ok {
 		request.IsMaxDeck = maxProfile

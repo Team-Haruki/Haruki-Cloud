@@ -1,6 +1,7 @@
 package sekai
 
 import (
+	"slices"
 	"fmt"
 	"strconv"
 	"strings"
@@ -95,7 +96,7 @@ func extractDeckRandomStrategies(args string, params *deckAutoQueryParams) (stri
 			return "", err
 		} else if consumed > 0 {
 			params.SkillOrderChooseStrategy = strategy
-			params.SpecificSkillOrder = append([]int(nil), order...)
+			params.SpecificSkillOrder = slices.Clone(order)
 			idx += consumed - 1
 			continue
 		}

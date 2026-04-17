@@ -1,6 +1,7 @@
 package mysekai
 
 import (
+	"slices"
 	"fmt"
 	"strings"
 	"time"
@@ -152,7 +153,7 @@ func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[st
 			cloned.Profile = &basic
 		}
 		if len(override.DataSources) > 0 {
-			cloned.DataSources = append([]drawing.ProfileDataSource(nil), override.DataSources...)
+			cloned.DataSources = slices.Clone(override.DataSources)
 		}
 		profile = &cloned
 	} else {

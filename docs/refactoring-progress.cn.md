@@ -2079,3 +2079,29 @@ internal/pjsk/
 | `render/mysekai/resource_fixes_test.go` | 测试期望值从 CST-relative 更新为 region-relative |
 
 **验证**：`go build ./...` ✅；`go test ./...` 全量 39 包通过，无回归。
+
+### R43：代码质量审计与改进（2026-04-18）
+
+对 `internal/` 包进行全面代码质量审计，修复中高优先级问题。
+
+#### 已完成项
+
+| # | 分类 | 文件 | 改动 |
+|---|------|------|------|
+| 1 | 日志迁移 | `middleware/secure/secure.go` | `log.Printf` → `slog.Warn`，`log.Fatal` → `panic`（启动时不变式） |
+| 2 | 输入验证 | `handler/bridge_regtime.go` | 时区分钟数添加 0-59 边界校验 |
+| 3 | 锁安全 | `handler/bridge_event_record.go` | `mu.Lock()` / `mu.Unlock()` → `defer mu.Unlock()` |
+| 4 | 大文件拆分 | `handler/bridge_deck_resolve.go`（586→186 行） | 拆分为 `_music.go`（130）、`_event.go`（292） |
+| 5 | 大文件拆分 | `render/deck/controller_prepare_userdata.go`（486→250 行） | 拆分为 `_json.go`（133）、`_log.go`（115） |
+| 6 | clone 现代化 | 47 个文件 | `append([]T(nil), s...)` → `slices.Clone(s)`，自动添加 import |
+| 7 | 错误处理 | `accountdata/binding_properties.go` | `GetUserSettings` / `IncrNoncompliantBGCount` 错误不再忽略，区分 not-found 与真实错误 |
+
+#### 评估后保留的项
+
+| 项 | 原因 |
+|----|------|
+| `context.TODO()`（16 处） | 均为 nil-ctx 防御性回退或 `ensureCtx()` 方法，语义正确；真正消除需从调用方逐层传递 context，属架构级变更 |
+| `deck_extractor.go`（449 行）| 已由 R42 拆出 types，函数小且聚合，无需再拆 |
+| Provider `cloneEd*` 泛型统一 | 8 个函数、收益低、类型约束复杂 |
+
+**验证**：`go build ./...` ✅；`go test ./...` 全量 39 包通过（含 accountdata），无回归。

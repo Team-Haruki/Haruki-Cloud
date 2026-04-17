@@ -120,7 +120,7 @@ func selectBinding(items []BindingListItem, selector, server string) (BindingLis
 
 func filterBindingsByServer(items []BindingListItem, server string) []BindingListItem {
 	if server == "" {
-		return append([]BindingListItem(nil), items...)
+		return slices.Clone(items)
 	}
 
 	filtered := make([]BindingListItem, 0, len(items))

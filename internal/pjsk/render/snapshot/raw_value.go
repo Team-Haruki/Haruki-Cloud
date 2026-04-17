@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"slices"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -25,5 +26,5 @@ func (s *Service) RawValue(key string) ([]byte, error) {
 	if !ok || len(value) == 0 {
 		return nil, fmt.Errorf("raw user snapshot key %q is unavailable", name)
 	}
-	return append([]byte(nil), value...), nil
+	return slices.Clone(value), nil
 }

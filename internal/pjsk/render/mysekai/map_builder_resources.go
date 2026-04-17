@@ -1,6 +1,7 @@
 package mysekai
 
 import (
+	"slices"
 	"fmt"
 	"strings"
 
@@ -184,7 +185,7 @@ func (c *Controller) buildMapResourceDrops(
 // resolveMysekaiMapSiteIDs resolves the map site IDs from the query.
 func resolveMysekaiMapSiteIDs(requested []int) []int {
 	if len(requested) == 0 {
-		return append([]int(nil), mysekaiMapSiteOrder...)
+		return slices.Clone(mysekaiMapSiteOrder)
 	}
 	result := make([]int, 0, len(requested))
 	seen := make(map[int]struct{}, len(requested))

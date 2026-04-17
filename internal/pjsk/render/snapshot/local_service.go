@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"slices"
 	"context"
 	"fmt"
 	"os"
@@ -99,7 +100,7 @@ func (s *Service) DetailedProfile(region renderregion.Value) *drawing.DetailedPr
 	}
 	profile.Mode = common.CloneStringPtr(s.baseProfile.Mode)
 	profile.FramePath = common.CloneStringPtr(s.baseProfile.FramePath)
-	profile.UserCards = append([]any(nil), s.baseProfile.UserCards...)
+	profile.UserCards = slices.Clone(s.baseProfile.UserCards)
 	return &profile
 }
 
@@ -160,9 +161,9 @@ func (s *Service) ChallengeLive() *ChallengeLiveData {
 		return nil
 	}
 	return &ChallengeLiveData{
-		Results: append([]ChallengeLiveResult(nil), s.challenge.Results...),
-		Stages:  append([]ChallengeLiveStage(nil), s.challenge.Stages...),
-		Rewards: append([]ChallengeLiveReward(nil), s.challenge.Rewards...),
+		Results: slices.Clone(s.challenge.Results),
+		Stages:  slices.Clone(s.challenge.Stages),
+		Rewards: slices.Clone(s.challenge.Rewards),
 	}
 }
 
@@ -170,7 +171,7 @@ func (s *Service) RawBytes() ([]byte, error) {
 	if s == nil || len(s.rawJSON) == 0 {
 		return nil, fmt.Errorf("raw user snapshot is unavailable")
 	}
-	return append([]byte(nil), s.rawJSON...), nil
+	return slices.Clone(s.rawJSON), nil
 }
 
 func (s *Service) RawFilePath() string {
@@ -191,7 +192,7 @@ func (s *Service) MusicMetaBytes() []byte {
 	if s == nil || len(s.musicMetaBytes) == 0 {
 		return nil
 	}
-	return append([]byte(nil), s.musicMetaBytes...)
+	return slices.Clone(s.musicMetaBytes)
 }
 
 func (s *Service) MusicMetaPath() string {

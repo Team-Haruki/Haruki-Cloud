@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"slices"
 	"context"
 	"fmt"
 	"strconv"
@@ -55,7 +56,7 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 	if len(payload) == 0 {
 		return nil, ErrSnapshotUnavailable
 	}
-	return append([]byte(nil), payload...), nil
+	return slices.Clone(payload), nil
 }
 
 type FallbackMySekaiPayloadProvider struct {

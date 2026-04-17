@@ -1,6 +1,7 @@
 package mysekai
 
 import (
+	"slices"
 	"fmt"
 	"strings"
 	"time"
@@ -67,7 +68,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			Scale:     0.8,
 		}
 		if len(config.CropBBox) > 0 {
-			site.CropBbox = append([]int(nil), config.CropBBox...)
+			site.CropBbox = slices.Clone(config.CropBBox)
 		}
 
 		harvestPoints := make([]drawing.MysekaiMsrMapHarvestPoint, 0, 16)

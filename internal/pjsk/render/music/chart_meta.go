@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"encoding/json"
 	"sort"
 	"strings"
@@ -129,7 +130,7 @@ func intValue(value any) int {
 func floatSliceValue(value any) []float64 {
 	switch items := value.(type) {
 	case []float64:
-		return append([]float64(nil), items...)
+		return slices.Clone(items)
 	case []any:
 		result := make([]float64, 0, len(items))
 		for _, item := range items {

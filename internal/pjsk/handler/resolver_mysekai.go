@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"slices"
 	"context"
 	"fmt"
 	"strings"
@@ -106,7 +107,7 @@ func forceMySekaiProfileBindingID(profile *drawing.ProfileCardRequest, target re
 
 	cloned := *profile
 	if len(profile.DataSources) > 0 {
-		cloned.DataSources = append([]drawing.ProfileDataSource(nil), profile.DataSources...)
+		cloned.DataSources = slices.Clone(profile.DataSources)
 	}
 
 	uid := strings.TrimSpace(target.PJSKUserID)

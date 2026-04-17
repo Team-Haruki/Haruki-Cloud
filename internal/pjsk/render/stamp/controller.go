@@ -1,6 +1,7 @@
 package stamp
 
 import (
+	"slices"
 	"context"
 	"fmt"
 	"math"
@@ -81,7 +82,7 @@ func (c *Controller) BuildStampListRequests(query ListQuery) ([]*drawing.StampLi
 		if end > len(items) {
 			end = len(items)
 		}
-		pageItems := append([]drawing.StampData(nil), items[start:end]...)
+		pageItems := slices.Clone(items[start:end])
 		pageText := fmt.Sprintf("第 %d / %d 页", pageNum, totalPages)
 		return &drawing.StampListRequest{
 			PromptMessage: &prompt,
@@ -207,7 +208,7 @@ func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregio
 	relCandidates := []string{
 		filepath.Join("stamp", item.AssetBundleName, item.AssetBundleName+".png"),
 	}
-	candidates := append([]string(nil), relCandidates...)
+	candidates := slices.Clone(relCandidates)
 	for _, rel := range relCandidates {
 		for _, mode := range []string{assets.RegionAssetStartApp, assets.RegionAssetOnDemand} {
 			drawingPath := filepath.ToSlash(filepath.Join(assets.RegionAssetDirByMode(region.String(), mode), rel))

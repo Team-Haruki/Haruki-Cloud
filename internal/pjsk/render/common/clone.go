@@ -1,6 +1,9 @@
 package common
 
-import "haruki-cloud/internal/pjsk/render/masterdata"
+import (
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	"slices"
+)
 
 // CloneCard returns a deep copy of a Card, including CardParameters.
 func CloneCard(item *masterdata.Card) *masterdata.Card {
@@ -9,7 +12,7 @@ func CloneCard(item *masterdata.Card) *masterdata.Card {
 	}
 	c := *item
 	if len(item.CardParameters) > 0 {
-		c.CardParameters = append([]masterdata.CardParameter(nil), item.CardParameters...)
+		c.CardParameters = slices.Clone(item.CardParameters)
 	}
 	return &c
 }
@@ -48,7 +51,7 @@ func CloneMusic(item *masterdata.Music) *masterdata.Music {
 	}
 	c := *item
 	if item.Categories != nil {
-		c.Categories = append([]string(nil), item.Categories...)
+		c.Categories = slices.Clone(item.Categories)
 	}
 	return &c
 }
@@ -74,7 +77,7 @@ func CloneSkill(item *masterdata.Skill) *masterdata.Skill {
 		for idx := range item.SkillEffects {
 			c.SkillEffects[idx] = item.SkillEffects[idx]
 			if len(item.SkillEffects[idx].SkillEffectDetails) > 0 {
-				c.SkillEffects[idx].SkillEffectDetails = append([]masterdata.SkillEffectDetail(nil), item.SkillEffects[idx].SkillEffectDetails...)
+				c.SkillEffects[idx].SkillEffectDetails = slices.Clone(item.SkillEffects[idx].SkillEffectDetails)
 			}
 		}
 	}
@@ -88,16 +91,16 @@ func CloneGacha(item *masterdata.Gacha) *masterdata.Gacha {
 	}
 	c := *item
 	if len(item.GachaCardRarityRates) > 0 {
-		c.GachaCardRarityRates = append([]masterdata.GachaCardRarityRate(nil), item.GachaCardRarityRates...)
+		c.GachaCardRarityRates = slices.Clone(item.GachaCardRarityRates)
 	}
 	if len(item.GachaPickups) > 0 {
-		c.GachaPickups = append([]masterdata.GachaPickup(nil), item.GachaPickups...)
+		c.GachaPickups = slices.Clone(item.GachaPickups)
 	}
 	if len(item.GachaDetails) > 0 {
-		c.GachaDetails = append([]masterdata.GachaDetail(nil), item.GachaDetails...)
+		c.GachaDetails = slices.Clone(item.GachaDetails)
 	}
 	if len(item.GachaBehaviors) > 0 {
-		c.GachaBehaviors = append([]masterdata.GachaBehavior(nil), item.GachaBehaviors...)
+		c.GachaBehaviors = slices.Clone(item.GachaBehaviors)
 	}
 	return &c
 }
@@ -121,7 +124,7 @@ func CloneHonor(src *masterdata.Honor) *masterdata.Honor {
 	}
 	c := *src
 	if src.Levels != nil {
-		c.Levels = append([]masterdata.HonorLevel(nil), src.Levels...)
+		c.Levels = slices.Clone(src.Levels)
 	}
 	return &c
 }

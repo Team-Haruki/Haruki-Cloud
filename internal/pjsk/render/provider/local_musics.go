@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"context"
 	"fmt"
 	"sort"
@@ -271,7 +272,7 @@ func (p *localMusicProvider) GetVocals(_ context.Context, musicID int) ([]*maste
 	for _, v := range vocals {
 		c := *v
 		if v.Characters != nil {
-			c.Characters = append([]masterdata.MusicVocalCharacter(nil), v.Characters...)
+			c.Characters = slices.Clone(v.Characters)
 		}
 		result = append(result, &c)
 	}
@@ -283,7 +284,7 @@ func (p *localMusicProvider) GetTags(_ context.Context, musicID int) ([]string, 
 		return nil, err
 	}
 	tags := p.tags.v()[musicID]
-	return append([]string(nil), tags...), nil
+	return slices.Clone(tags), nil
 }
 
 func (p *localMusicProvider) GetOutsideCharacterByID(_ context.Context, id int) (string, error) {

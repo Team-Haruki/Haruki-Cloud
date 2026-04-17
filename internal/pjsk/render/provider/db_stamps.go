@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"context"
 	"fmt"
 	"sync"
@@ -23,7 +24,7 @@ type dbStampProvider struct {
 func (p *dbStampProvider) GetAll(ctx context.Context) ([]masterdata.Stamp, error) {
 	p.mu.RLock()
 	if p.loaded {
-		out := append([]masterdata.Stamp(nil), p.stamps...)
+		out := slices.Clone(p.stamps)
 		p.mu.RUnlock()
 		return out, nil
 	}
@@ -49,5 +50,5 @@ func (p *dbStampProvider) GetAll(ctx context.Context) ([]masterdata.Stamp, error
 		p.stamps = stamps
 		p.loaded = true
 	}
-	return append([]masterdata.Stamp(nil), p.stamps...), nil
+	return slices.Clone(p.stamps), nil
 }

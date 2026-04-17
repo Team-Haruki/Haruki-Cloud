@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"context"
 	"strings"
 
@@ -220,5 +221,5 @@ func cloneEdLeaderMissionRequirements(source []LeaderMissionRequirement) []Leade
 	if len(source) == 0 {
 		return nil
 	}
-	return append([]LeaderMissionRequirement(nil), source...)
+	return slices.Clone(source)
 }

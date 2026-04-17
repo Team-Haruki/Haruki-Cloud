@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"fmt"
 	"sort"
 	"strings"
@@ -36,7 +37,7 @@ func (c *Controller) ResolveMusicCoverByTitleOrAlias(query Query) (*CoverResult,
 			ID:                 musicInfo.ID,
 			Seq:                musicInfo.Seq,
 			ReleaseConditionID: musicInfo.ReleaseConditionID,
-			Categories:         append([]string(nil), musicInfo.Categories...),
+			Categories:         slices.Clone(musicInfo.Categories),
 			Title:              builder.buildDisplayMusicTitle(musicInfo, region),
 			Pronunciation:      musicInfo.Pronunciation,
 			Lyricist:           musicInfo.Lyricist,

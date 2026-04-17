@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"slices"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -315,7 +316,7 @@ func compareMetaInt(value any) int {
 func compareMetaFloatSlice(value any) []float64 {
 	switch items := value.(type) {
 	case []float64:
-		return append([]float64(nil), items...)
+		return slices.Clone(items)
 	case []any:
 		result := make([]float64, 0, len(items))
 		for _, item := range items {

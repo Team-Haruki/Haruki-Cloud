@@ -1,6 +1,7 @@
 package source
 
 import (
+	"slices"
 	"reflect"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -91,7 +92,7 @@ func (r *Registry[T]) OrderedSources() []T {
 	if r == nil || len(r.order) == 0 {
 		return nil
 	}
-	return append([]T(nil), r.order...)
+	return slices.Clone(r.order)
 }
 
 func isNilValue(value any) bool {

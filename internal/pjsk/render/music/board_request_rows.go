@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"fmt"
 	"sort"
 
@@ -13,7 +14,7 @@ func (c *Controller) buildMusicBoardRows(region renderregion.Value, source DataS
 		return nil, fmt.Errorf("music board request has no items")
 	}
 
-	sortedSkills := append([]float64(nil), query.Skills...)
+	sortedSkills := slices.Clone(query.Skills)
 	switch query.SkillStrategy {
 	case "max":
 		sort.Slice(sortedSkills, func(i, j int) bool { return sortedSkills[i] > sortedSkills[j] })

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"context"
 	"fmt"
 	"sort"
@@ -129,7 +130,7 @@ func (p *dbMusicProvider) GetLocalizedTitles(ctx context.Context, musicID int) (
 	p.mu.RLock()
 	if titles, ok := p.localizedByID[musicID]; ok {
 		p.mu.RUnlock()
-		return append([]string(nil), titles...), nil
+		return slices.Clone(titles), nil
 	}
 	p.mu.RUnlock()
 
@@ -160,7 +161,7 @@ func (p *dbMusicProvider) GetLocalizedTitles(ctx context.Context, musicID int) (
 	}
 
 	p.mu.Lock()
-	p.localizedByID[musicID] = append([]string(nil), titles...)
+	p.localizedByID[musicID] = slices.Clone(titles)
 	p.mu.Unlock()
 	return titles, nil
 }

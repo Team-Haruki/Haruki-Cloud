@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"fmt"
 	"strings"
 
@@ -49,7 +50,7 @@ func (c *Controller) BuildMusicProgressRequest(query ProgressQuery) (*drawing.Pl
 	}
 	diff := normalizeDifficulty(query.Difficulty)
 
-	counts := append([]drawing.PlayProgressCount(nil), query.Counts...)
+	counts := slices.Clone(query.Counts)
 	if len(counts) == 0 {
 		if query.UserResults != nil {
 			counts = c.buildProgressCountsFromResults(source, builder, diff, query.UserResults)

@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"math"
 	"sort"
 	"strings"
@@ -11,7 +12,7 @@ func weightedMusicBoardSkill(skillScores []float64, sortedSkills []float64, lead
 		return 0
 	}
 
-	core := append([]float64(nil), skillScores...)
+	core := slices.Clone(skillScores)
 	extra := 0.0
 	if len(core) > 5 {
 		extra = core[5]

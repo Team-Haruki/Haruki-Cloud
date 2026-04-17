@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"slices"
 	"encoding/json"
 	"strings"
 )
@@ -34,7 +35,7 @@ func supplementResourceBoxDetailsFromStore(store *localStore, byPurpose map[stri
 				continue
 			}
 			if details := purposeDetails[id]; len(details) > 0 {
-				box.Details = append([]ResourceBoxDetail(nil), details...)
+				box.Details = slices.Clone(details)
 			}
 		}
 	}

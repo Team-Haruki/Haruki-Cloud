@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -36,7 +37,7 @@ func (b *Builder) BuildMusicDetailRequest(music *masterdata.Music, region render
 			Composer:     music.Composer,
 			Lyricist:     music.Lyricist,
 			Arranger:     music.Arranger,
-			MVInfo:       append([]string(nil), categories...),
+			MVInfo:       slices.Clone(categories),
 			Categories:   categories,
 			ReleaseAt:    music.PublishedAt,
 			IsFullLength: music.IsFullLength,

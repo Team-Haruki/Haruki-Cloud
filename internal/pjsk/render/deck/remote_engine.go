@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"slices"
 	"fmt"
 	"net/http"
 	"strings"
@@ -42,7 +43,7 @@ func (p *remoteEngineProvider) Get(region string) (DeckRecommender, error) {
 		return nil, fmt.Errorf("deck remote engine requires local masterdata dir")
 	}
 
-	algs := append([]string(nil), p.cfg.DefaultAlgs...)
+	algs := slices.Clone(p.cfg.DefaultAlgs)
 	if len(algs) == 0 {
 		algs = []string{"dfs", "sa", "ga"}
 	}

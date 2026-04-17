@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"slices"
 	"fmt"
 	"log/slog"
 	"path/filepath"
@@ -404,7 +405,7 @@ func buildSoloLive(results []snapshot.RawChallengeLiveResult, stages []snapshot.
 	if len(results) == 0 {
 		return nil
 	}
-	items := append([]snapshot.RawChallengeLiveResult(nil), results...)
+	items := slices.Clone(results)
 	sort.Slice(items, func(i, j int) bool { return items[i].HighScore > items[j].HighScore })
 	top := items[0]
 	rank := 1

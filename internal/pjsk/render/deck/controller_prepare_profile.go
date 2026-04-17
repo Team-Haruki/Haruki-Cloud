@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"slices"
 	"fmt"
 	"sort"
 	"strings"
@@ -209,7 +210,7 @@ func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *s
 		return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数（更新当前主队需要抓包）")
 	}
 
-	option["fixed_cards"] = append([]int(nil), cards...)
+	option["fixed_cards"] = slices.Clone(cards)
 	delete(option, "fixed_characters")
 	option["best_skill_as_leader"] = false
 	return nil

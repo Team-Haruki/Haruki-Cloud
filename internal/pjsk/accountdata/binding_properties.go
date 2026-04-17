@@ -2,6 +2,7 @@ package accountdata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -20,7 +21,10 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 	}
 
 	// User-level BG ban check: read from UserSettings (haruki_user_id granularity).
-	userSettings, _ := GetUserSettings(ctx, s.pjskDB, binding.HarukiUserID)
+	userSettings, err := GetUserSettings(ctx, s.pjskDB, binding.HarukiUserID)
+	if err != nil && !errors.Is(err, ErrUserSettingsNotFound) {
+		return nil, fmt.Errorf("读取用户设置失败: %w", err)
+	}
 	currentCount := 0
 	if userSettings != nil {
 		currentCount = userSettings.NoncompliantBGCount
@@ -32,7 +36,10 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 	// Image content moderation
 	if s.censor != nil {
 		if !s.censor.CensorImage(ctx, binding.HarukiUserID, imageURL) {
-			newCount, _ := IncrNoncompliantBGCount(ctx, s.pjskDB, binding.HarukiUserID)
+			newCount, incrErr := IncrNoncompliantBGCount(ctx, s.pjskDB, binding.HarukiUserID)
+			if incrErr != nil {
+				return nil, fmt.Errorf("背景图片内容审核未通过，且无法更新违规计数: %w", incrErr)
+			}
 			if newCount >= 3 {
 				return nil, fmt.Errorf("背景图片内容审核未通过，背景上传功能已被禁用（违规次数已达 3/3）")
 			}

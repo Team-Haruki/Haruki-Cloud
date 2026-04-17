@@ -1,6 +1,7 @@
 package app
 
 import (
+	"slices"
 	"context"
 	"strings"
 	"time"
@@ -82,7 +83,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Timeout:        cfg.DeckRecommend.Timeout,
 		MaxRetries:     cfg.DeckRecommend.MaxRetries,
 		RetryWaitTime:  cfg.DeckRecommend.RetryWaitTime,
-		DefaultAlgs:    append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
+		DefaultAlgs:    slices.Clone(cfg.DeckRecommend.DefaultAlgs),
 	}, cfg.MetaLoader)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
@@ -123,7 +124,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			Timeout:        cfg.DeckRecommend.Timeout,
 			MaxRetries:     cfg.DeckRecommend.MaxRetries,
 			RetryWaitTime:  cfg.DeckRecommend.RetryWaitTime,
-			DefaultAlgs:    append([]string(nil), cfg.DeckRecommend.DefaultAlgs...),
+			DefaultAlgs:    slices.Clone(cfg.DeckRecommend.DefaultAlgs),
 		}, cfg.MetaLoader)
 		deckController.RegisterMusicSource(musicAdapter)
 		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)

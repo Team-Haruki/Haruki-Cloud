@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"slices"
 	"bytes"
 	"encoding/json"
 	"strings"
@@ -10,7 +11,7 @@ func ResolveCharacterMissionV2Statuses(raw *RawUserData) []RawUserCharacterMissi
 	if raw == nil {
 		return nil
 	}
-	standard := append([]RawUserCharacterMissionV2Status(nil), raw.UserCharacterMissionV2Statuses...)
+	standard := slices.Clone(raw.UserCharacterMissionV2Statuses)
 	compact := decodeCompactCharacterMissionV2Statuses(raw.CompactUserCharacterMissionV2Statuses)
 	if len(standard) == 0 {
 		return compact

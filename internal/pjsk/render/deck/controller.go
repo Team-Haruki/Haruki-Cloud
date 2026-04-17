@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"slices"
 	"fmt"
 	"strings"
 	"time"
@@ -36,7 +37,7 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 			Timeout:        cfg.Timeout,
 			MaxRetries:     cfg.MaxRetries,
 			RetryWaitTime:  cfg.RetryWaitTime,
-			DefaultAlgs:    append([]string(nil), cfg.DefaultAlgs...),
+			DefaultAlgs:    slices.Clone(cfg.DefaultAlgs),
 		},
 		metaLoader: metaLoader,
 	}

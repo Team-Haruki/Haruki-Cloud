@@ -1,6 +1,9 @@
 package deck
 
-import "strings"
+import (
+	"strings"
+	"slices"
+)
 
 func applyRecommendOptionOverrides(option map[string]any, recType string, query AutoQuery) {
 	if option == nil {
@@ -22,7 +25,7 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 		option["music_diff"] = diff
 	}
 	if len(query.TargetBonuses) > 0 {
-		option["target_bonus_list"] = append([]int(nil), query.TargetBonuses...)
+		option["target_bonus_list"] = slices.Clone(query.TargetBonuses)
 	}
 	if query.Boost != nil && *query.Boost >= 0 {
 		option["boost"] = *query.Boost
@@ -37,7 +40,7 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 		option["attr_filter"] = query.AttrFilter
 	}
 	if len(query.ExcludedCards) > 0 {
-		option["excluded_cards"] = append([]int(nil), query.ExcludedCards...)
+		option["excluded_cards"] = slices.Clone(query.ExcludedCards)
 	}
 	if query.UseCurrentDeck {
 		option["use_current_deck"] = true
@@ -52,13 +55,13 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 		option["music_compare"] = true
 	}
 	if len(query.MusicCompareQueries) > 0 {
-		option["music_compare_queries"] = append([]string(nil), query.MusicCompareQueries...)
+		option["music_compare_queries"] = slices.Clone(query.MusicCompareQueries)
 	}
 	if len(query.SpecificSkillOrder) > 0 {
 		if strings.TrimSpace(query.SkillOrderChooseStrategy) == "" {
 			option["skill_order_choose_strategy"] = "specific"
 		}
-		option["specific_skill_order"] = append([]int(nil), query.SpecificSkillOrder...)
+		option["specific_skill_order"] = slices.Clone(query.SpecificSkillOrder)
 	}
 
 	explicitEventID := query.EventID != nil && *query.EventID > 0
@@ -92,10 +95,10 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 		option["challenge_live_character_id"] = *query.ChallengeLiveCharacterID
 	}
 	if len(query.FixedCards) > 0 {
-		option["fixed_cards"] = append([]int(nil), query.FixedCards...)
+		option["fixed_cards"] = slices.Clone(query.FixedCards)
 	}
 	if len(query.FixedCharacters) > 0 {
-		option["fixed_characters"] = append([]int(nil), query.FixedCharacters...)
+		option["fixed_characters"] = slices.Clone(query.FixedCharacters)
 	}
 
 	applyDeckConfigPatch(option, "rarity_1_config", query.Rarity1Config)

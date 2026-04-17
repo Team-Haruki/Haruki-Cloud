@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -168,13 +169,13 @@ func (b *Builder) buildDisplayMusicTitle(music *masterdata.Music, region renderr
 
 func (b *Builder) buildCategories(musicID int) []string {
 	if musicInfo, err := b.source.GetMusicByID(musicID); err == nil && musicInfo != nil && len(musicInfo.Categories) > 0 {
-		return append([]string(nil), musicInfo.Categories...)
+		return slices.Clone(musicInfo.Categories)
 	}
 	tags, err := b.source.GetMusicTags(musicID)
 	if err != nil {
 		return nil
 	}
-	return append([]string(nil), tags...)
+	return slices.Clone(tags)
 }
 
 func (b *Builder) buildMusicAliases(music *masterdata.Music) []string {

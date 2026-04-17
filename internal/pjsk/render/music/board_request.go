@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"fmt"
 	"math"
 	"sort"
@@ -144,7 +145,7 @@ func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (
 		filtered = append(filtered, row)
 	}
 
-	showRows := append([]musicBoardRow(nil), specRows...)
+	showRows := slices.Clone(specRows)
 	remainingSize := musicBoardPageSize - len(showRows)
 	totalPage := 1
 	if remainingSize <= 0 {

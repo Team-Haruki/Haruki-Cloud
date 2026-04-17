@@ -1,6 +1,7 @@
 package sekai
 
 import (
+	"slices"
 	"fmt"
 	"haruki-cloud/internal/pjsk/parser"
 	"sort"
@@ -150,7 +151,7 @@ func parseSKRanks(args string, allowUID bool) ([]int, *int64, error) {
 
 	switch cmd.Type {
 	case parser.CmdTypeEventQuerySelf:
-		return append([]int(nil), defaultSKRanks...), nil, nil
+		return slices.Clone(defaultSKRanks), nil, nil
 	case parser.CmdTypeEventQueryRank:
 		return normalizeRanks([]int{cmd.Param1}), nil, nil
 	case parser.CmdTypeEventQueryMultiRank:
@@ -232,9 +233,9 @@ var defaultSKRanks = defaultSKRanksNormal
 
 func defaultSKRanksByMode(wlMode bool) []int {
 	if wlMode {
-		return append([]int(nil), defaultSKRanksWorldLink...)
+		return slices.Clone(defaultSKRanksWorldLink)
 	}
-	return append([]int(nil), defaultSKRanksNormal...)
+	return slices.Clone(defaultSKRanksNormal)
 }
 
 func isDigits(value string) bool {

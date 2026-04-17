@@ -1,6 +1,7 @@
 package music
 
 import (
+	"slices"
 	"fmt"
 	"math"
 	"strconv"
@@ -123,7 +124,7 @@ func (c *Controller) resolveMusicDetailLeaderboard(region renderregion.Value, so
 	totalSongs := 0
 
 	for _, liveType := range musicDetailLeaderboardLiveTypeOrder {
-		skills := append([]float64(nil), musicDetailLeaderboardSkills[liveType]...)
+		skills := slices.Clone(musicDetailLeaderboardSkills[liveType])
 		rows, err := c.buildMusicBoardRows(region, source, builder, musicBoardResolvedQuery{
 			LiveType:      liveType,
 			Target:        "score",
@@ -140,7 +141,7 @@ func (c *Controller) resolveMusicDetailLeaderboard(region renderregion.Value, so
 
 		rowMatrix := make([]*drawing.LeaderboardInfo, 0, len(musicDetailLeaderboardTargetOrder))
 		for _, target := range musicDetailLeaderboardTargetOrder {
-			sortedRows := append([]musicBoardRow(nil), rows...)
+			sortedRows := slices.Clone(rows)
 			sortMusicBoardRows(sortedRows, target, liveType, false, true)
 
 			info, rankedSongs := findMusicDetailLeaderboardInfo(sortedRows, musicID, liveType, target)

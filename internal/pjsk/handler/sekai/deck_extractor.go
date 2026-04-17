@@ -134,8 +134,10 @@ func extractDeckMultiliveOptions(args string, params *deckAutoQueryParams) (stri
 			if err != nil {
 				return "", fmt.Errorf("无法解析指定的实效下限")
 			}
-			params.Target = "skill"
 			params.MultiLiveScoreUpLowerBound = new(float64(value))
+			// Match Lunabot semantics: lower-bound syntax does not change the
+			// ranking target, but it does override teammate score-up.
+			params.MultiLiveTeammateScoreUp = intPtr(value)
 			idx += consumed - 1
 			continue
 		}

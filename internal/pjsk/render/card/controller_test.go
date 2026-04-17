@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
 func TestBuildCardListRequestResolvesIDsFromQuery(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // ── Interface compliance (compile-time checks) ──────────────────────────

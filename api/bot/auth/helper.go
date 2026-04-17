@@ -168,4 +168,3 @@ func (s *UserService) checkRateLimit(ctx context.Context, action string, identif
 
 	return count <= int64(maxRequests), nil
 }
-

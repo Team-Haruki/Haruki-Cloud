@@ -8,10 +8,10 @@ import (
 
 // VLive holds a virtual live entry.
 type VLive struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	StartAt   int64  `json:"start_at"`
-	EndAt     int64  `json:"end_at"`
+	ID        int             `json:"id"`
+	Name      string          `json:"name"`
+	StartAt   int64           `json:"start_at"`
+	EndAt     int64           `json:"end_at"`
 	Schedules []VLiveSchedule `json:"schedules,omitempty"`
 }
 

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 )
 
 func TestExtractMysekaiPhenomsIncludesBirthdayRefreshSlot(t *testing.T) {

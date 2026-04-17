@@ -34,6 +34,8 @@ func resolveRenderProviderMasterdataDirFromWD(cfg Config, wd string) string {
 			rootCandidates = append(rootCandidates, dir)
 		case masterdataDirFlat:
 			flatCandidates = append(flatCandidates, dir)
+		default:
+			// masterdataDirInvalid: skip unrecognised directories
 		}
 	}
 
@@ -66,8 +68,6 @@ func resolveRenderProviderMasterdataDirFromWD(cfg Config, wd string) string {
 	}
 	return ""
 }
-
-
 
 func classifyRenderMasterdataDir(dir string) renderMasterdataDirKind {
 	info, err := os.Stat(dir)

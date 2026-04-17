@@ -11,9 +11,9 @@ import (
 	"haruki-cloud/database/sekai/gamecharacterunit"
 	sekaiHonor "haruki-cloud/database/sekai/honor"
 	"haruki-cloud/database/sekai/honorgroup"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type dbHonorProvider struct {

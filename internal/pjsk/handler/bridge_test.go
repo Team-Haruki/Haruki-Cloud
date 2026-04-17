@@ -389,8 +389,8 @@ func (r *bridgeMusicAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Conte
 func (s *bridgeMusicSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
 		if strings.EqualFold(item.Title, query) {
-			copy := *item
-			return &copy, nil
+			cp := *item
+			return &cp, nil
 		}
 	}
 	return nil, os.ErrNotExist
@@ -401,8 +401,8 @@ func (s *bridgeMusicSource) GetMusicByID(id int) (*masterdata.Music, error) {
 	if item == nil {
 		return nil, os.ErrNotExist
 	}
-	copy := *item
-	return &copy, nil
+	cp := *item
+	return &cp, nil
 }
 
 func (s *bridgeMusicSource) GetMusicByEventID(int) (*masterdata.Music, error) {
@@ -412,8 +412,8 @@ func (s *bridgeMusicSource) GetMusicByEventID(int) (*masterdata.Music, error) {
 func (s *bridgeMusicSource) GetMusics() []*masterdata.Music {
 	out := make([]*masterdata.Music, 0, len(s.musics))
 	for _, item := range s.musics {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out
 }
@@ -426,8 +426,8 @@ func (s *bridgeMusicSource) GetMusicDifficulties(musicID int) ([]*masterdata.Mus
 	items := s.difficulties[musicID]
 	out := make([]*masterdata.MusicDifficulty, 0, len(items))
 	for _, item := range items {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out, nil
 }
@@ -2470,8 +2470,8 @@ func (s *bridgeCardSource) DefaultRegion() renderregion.Value {
 func (s *bridgeCardSource) GetCardByID(id int) (*masterdata.Card, error) {
 	if s.cards != nil {
 		if card := s.cards[id]; card != nil {
-			copy := *card
-			return &copy, nil
+			cp := *card
+			return &cp, nil
 		}
 		return nil, os.ErrNotExist
 	}
@@ -2501,8 +2501,8 @@ func (s *bridgeCardSource) FilterCards(info *rendercard.CardQueryInfo) ([]*maste
 			if card == nil {
 				continue
 			}
-			copy := *card
-			result = append(result, &copy)
+			cp := *card
+			result = append(result, &cp)
 		}
 		return result, nil
 	}

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 )
 
 func TestNewLocalFileServiceSupportsExtendedJSONExport(t *testing.T) {

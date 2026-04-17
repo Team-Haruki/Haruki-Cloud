@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/accountdata"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestToolboxMySekaiPayloadProviderAllowsMySekaiOnlyBinding(t *testing.T) {

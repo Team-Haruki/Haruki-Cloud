@@ -3,8 +3,8 @@ package sekai
 import (
 	"context"
 	"encoding/json"
-	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	"log"
 	"testing"

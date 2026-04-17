@@ -1,12 +1,12 @@
 package mysekai
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"strings"
 
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 // buildMapResourceDrops builds the resource drops list for a single map site.

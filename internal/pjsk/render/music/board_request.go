@@ -1,13 +1,13 @@
 package music
 
 import (
-	"slices"
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 
-	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/render/common"
 )
 
 const (

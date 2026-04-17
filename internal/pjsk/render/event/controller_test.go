@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type eventContextKey string

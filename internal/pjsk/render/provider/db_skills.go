@@ -10,12 +10,12 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/skill"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-var skillPlaceholder = regexp.MustCompile(`\{\{(.*?)\}\}`)
+var skillPlaceholder = regexp.MustCompile(`{{(.*?)}}`)
 
 type dbSkillProvider struct {
 	client     *sekaiDB.Client

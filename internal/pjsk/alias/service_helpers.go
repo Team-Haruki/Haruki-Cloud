@@ -1,15 +1,15 @@
 package alias
 
 import (
-"context"
-"fmt"
-"sort"
-"strconv"
-"strings"
+	"context"
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
 
-sekaiDB "haruki-cloud/database/sekai"
-"haruki-cloud/database/sekai/gamecharacter"
-sekaimusic "haruki-cloud/database/sekai/music"
+	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/database/sekai/gamecharacter"
+	sekaimusic "haruki-cloud/database/sekai/music"
 )
 
 func (s *Service) loadMusicTitles(ctx context.Context, musicIDs []int) (map[int]string, error) {

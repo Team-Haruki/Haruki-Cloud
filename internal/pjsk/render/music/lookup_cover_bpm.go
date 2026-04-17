@@ -1,19 +1,19 @@
 package music
 
 import (
-	"slices"
 	"bufio"
 	"fmt"
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {

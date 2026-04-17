@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"haruki-cloud/internal/pjsk/onebot11"
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/pendingalias"
+	"haruki-cloud/internal/pjsk/onebot11"
 )
 
 func (s *Service) ListPending(ctx context.Context, platform, platformUserID string) ([]AliasRecord, error) {

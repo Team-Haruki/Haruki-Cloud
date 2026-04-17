@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type unavailableSnapshotProvider struct{}

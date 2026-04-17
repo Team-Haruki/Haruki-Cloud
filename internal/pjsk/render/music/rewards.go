@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
-	"haruki-cloud/internal/pjsk/drawing"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -341,4 +341,3 @@ func formatEstimatedReward(single int, count int) string {
 	total := single * count
 	return fmt.Sprintf("%d (%d×%d)", total, single, count)
 }
-

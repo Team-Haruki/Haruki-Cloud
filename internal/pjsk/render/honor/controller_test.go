@@ -3,9 +3,9 @@ package honor
 import (
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestControllerBuildHonorRequestUsesRequestedRegionSource(t *testing.T) {

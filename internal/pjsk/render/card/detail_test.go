@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	eventrender "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type detailEventSource struct {
@@ -21,16 +21,16 @@ func (s *detailEventSource) DefaultRegion() renderregion.Value { return renderre
 
 func (s *detailEventSource) GetEventByID(id int) (*masterdata.Event, error) {
 	if s.event != nil && s.event.ID == id {
-		copy := *s.event
-		return &copy, nil
+		cp := *s.event
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("event %d not found", id)
 }
 
 func (s *detailEventSource) GetEventByCardID(cardID int) (*masterdata.Event, error) {
 	if s.event != nil && s.cardID == cardID {
-		copy := *s.event
-		return &copy, nil
+		cp := *s.event
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("event for card %d not found", cardID)
 }
@@ -57,16 +57,16 @@ func (s *detailEventSource) GetEventDeckBonuses(eventID int) ([]*masterdata.Even
 		if item == nil {
 			continue
 		}
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out, nil
 }
 
 func (s *detailEventSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
 	if item := s.gcuByID[id]; item != nil {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("game character unit %d not found", id)
 }

@@ -1,12 +1,12 @@
 package music
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func (c *Controller) BuildMusicChartRequest(query ChartQuery) (*drawing.GenerateMusicChartRequest, error) {

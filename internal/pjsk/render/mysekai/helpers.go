@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func extractMysekaiGateInfo(merged map[string]any) (int, int, int) {
@@ -258,4 +258,3 @@ func mysekaiNextBirthdayLocal(region renderregion.Value, now time.Time, month, d
 	}
 	return nextBirthday
 }
-

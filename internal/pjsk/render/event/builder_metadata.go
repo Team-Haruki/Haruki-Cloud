@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (b *Builder) buildEventInfo(eventInfo *masterdata.Event) (drawing.EventInfo, error) {

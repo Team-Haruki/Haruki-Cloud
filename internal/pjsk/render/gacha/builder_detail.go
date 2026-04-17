@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDetailRequest, error) {
@@ -109,10 +109,9 @@ func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDeta
 		for rarity, fraction := range rarityRateFraction {
 			guaranteedRates[rarity] = fraction
 		}
-		if guaranteedType == "rarity_4" || guaranteedType == "rarity_3" {
-			guaranteedRates[guaranteedType] += guaranteedRates["rarity_2"]
-			guaranteedRates["rarity_2"] = 0
-		}
+		// guaranteedType is always "rarity_3" or "rarity_4" here (set from GachaBehaviors)
+		guaranteedRates[guaranteedType] += guaranteedRates["rarity_2"]
+		guaranteedRates["rarity_2"] = 0
 		if guaranteedType == "rarity_4" {
 			guaranteedRates[guaranteedType] += guaranteedRates["rarity_3"]
 			guaranteedRates["rarity_3"] = 0

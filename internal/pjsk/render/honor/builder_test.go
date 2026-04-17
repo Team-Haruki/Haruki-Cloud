@@ -33,35 +33,35 @@ func (s *testHonorSource) DefaultRegion() renderregion.Value { return s.region }
 
 func (s *testHonorSource) GetHonorByID(id int) (*masterdata.Honor, error) {
 	if item, ok := s.honors[id]; ok {
-		copy := *item
+		cp := *item
 		if item.Levels != nil {
-			copy.Levels = append([]masterdata.HonorLevel(nil), item.Levels...)
+			cp.Levels = append([]masterdata.HonorLevel(nil), item.Levels...)
 		}
-		return &copy, nil
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("honor not found: %d", id)
 }
 
 func (s *testHonorSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
 	if item, ok := s.groups[id]; ok {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("group not found: %d", id)
 }
 
 func (s *testHonorSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
 	if item, ok := s.bonds[id]; ok {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("bonds not found: %d", id)
 }
 
 func (s *testHonorSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
 	if item, ok := s.gcuByID[id]; ok {
-		copy := *item
-		return &copy, true
+		cp := *item
+		return &cp, true
 	}
 	return nil, false
 }

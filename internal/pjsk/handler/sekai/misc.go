@@ -2,9 +2,9 @@ package sekai
 
 import (
 	"fmt"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/handler"
 	"haruki-cloud/internal/pjsk/parser"
-	"haruki-cloud/internal/pjsk/accountdata"
 	"strconv"
 	"strings"
 )

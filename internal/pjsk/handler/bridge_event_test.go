@@ -6,13 +6,13 @@ import (
 	"time"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
-	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"

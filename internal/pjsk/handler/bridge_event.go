@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"haruki-cloud/internal/pjsk/onebot11"
-	"haruki-cloud/internal/pjsk/render/event"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/event"
 )
 
 func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
@@ -38,4 +38,3 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 	return rc.ImageMessage(data)
 }
-

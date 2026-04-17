@@ -3,8 +3,8 @@ package music
 import (
 	"fmt"
 
-	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 	sekai "haruki-cloud/internal/pjsk/sekai"
 )
 

@@ -1,8 +1,8 @@
 package mysekai
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -157,7 +157,7 @@ func (c *Controller) mysekaiProfileCard(region renderregion.Value, merged map[st
 		}
 		profile = &cloned
 	} else {
-		if c == nil || c.snapshot == nil {
+		if c.snapshot == nil {
 			return nil
 		}
 		profile = c.snapshot.ProfileCard(region)

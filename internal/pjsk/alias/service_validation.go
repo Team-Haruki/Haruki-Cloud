@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/onebot11"
 	pjskdb "haruki-cloud/database/pjsk"
 	aliasdb "haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/sekai/gamecharacter"
 	sekaimusic "haruki-cloud/database/sekai/music"
+	"haruki-cloud/internal/pjsk/onebot11"
 )
 
 func (s *Service) ensureAliasAvailable(ctx context.Context, aliasType string, approved *pjskdb.AliasClient, pending *pjskdb.PendingAliasClient, aliasText string) error {

@@ -3,8 +3,8 @@ package handler
 import (
 	"fmt"
 
-	"haruki-cloud/internal/pjsk/onebot11"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
+	"haruki-cloud/internal/pjsk/onebot11"
 )
 
 func executeAlias(rc *RequestContext) (onebot11.Message, error) {

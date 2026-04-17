@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type testEventSource struct {
@@ -40,8 +40,8 @@ func (s *testEventSource) DefaultRegion() renderregion.Value { return s.region }
 
 func (s *testEventSource) GetEventByID(id int) (*masterdata.Event, error) {
 	if eventInfo, ok := s.eventsByID[id]; ok {
-		copy := *eventInfo
-		return &copy, nil
+		cp := *eventInfo
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("event not found: %d", id)
 }
@@ -53,8 +53,8 @@ func (s *testEventSource) GetEventByCardID(cardID int) (*masterdata.Event, error
 func (s *testEventSource) GetEvents() []*masterdata.Event {
 	out := make([]*masterdata.Event, 0, len(s.events))
 	for _, eventInfo := range s.events {
-		copy := *eventInfo
-		out = append(out, &copy)
+		cp := *eventInfo
+		out = append(out, &cp)
 	}
 	return out
 }
@@ -63,8 +63,8 @@ func (s *testEventSource) GetEventCards(eventID int) ([]*masterdata.Card, error)
 	items := s.cardsByEvent[eventID]
 	out := make([]*masterdata.Card, 0, len(items))
 	for _, item := range items {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out, nil
 }
@@ -80,16 +80,16 @@ func (s *testEventSource) GetEventDeckBonuses(eventID int) ([]*masterdata.EventD
 	items := s.bonusesByEvent[eventID]
 	out := make([]*masterdata.EventDeckBonus, 0, len(items))
 	for _, item := range items {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out, nil
 }
 
 func (s *testEventSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
 	if item, ok := s.gcuByID[id]; ok {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("gcu not found: %d", id)
 }
@@ -98,8 +98,8 @@ func (s *testEventSource) GetBanEvents(charID int) []*masterdata.Event {
 	items := s.banEventsByChar[charID]
 	out := make([]*masterdata.Event, 0, len(items))
 	for _, item := range items {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out
 }
@@ -108,16 +108,16 @@ func (s *testEventSource) GetWorldBloomChapters(eventID int) []*masterdata.World
 	items := s.worldByEvent[eventID]
 	out := make([]*masterdata.WorldBloom, 0, len(items))
 	for _, item := range items {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out
 }
 
 func (s *testEventSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	if item, ok := s.characterByID[id]; ok {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("character not found: %d", id)
 }

@@ -3,24 +3,24 @@ package drawing
 // =========================== SK Models ===========================
 
 type RankInfo struct {
-	Rank            int         `json:"rank"`
-	Name            string      `json:"name"`
-	Score           *int        `json:"score,omitempty"`
-	Time            any `json:"time"` // datetime
-	AverageRound    *int        `json:"average_round,omitempty"`
-	AveragePt       *int        `json:"average_pt,omitempty"`
-	LatestPt        *int        `json:"latest_pt,omitempty"`
-	Speed           *int        `json:"speed,omitempty"`
-	Min20Time3Speed *int        `json:"min20_times_3_speed,omitempty"`
-	HourRound       *int        `json:"hour_round,omitempty"`
-	RecordStartAt   any `json:"record_start_at,omitempty"` // datetime
+	Rank            int    `json:"rank"`
+	Name            string `json:"name"`
+	Score           *int   `json:"score,omitempty"`
+	Time            any    `json:"time"` // datetime
+	AverageRound    *int   `json:"average_round,omitempty"`
+	AveragePt       *int   `json:"average_pt,omitempty"`
+	LatestPt        *int   `json:"latest_pt,omitempty"`
+	Speed           *int   `json:"speed,omitempty"`
+	Min20Time3Speed *int   `json:"min20_times_3_speed,omitempty"`
+	HourRound       *int   `json:"hour_round,omitempty"`
+	RecordStartAt   any    `json:"record_start_at,omitempty"` // datetime
 }
 
 type SpeedInfo struct {
-	Rank       int         `json:"rank"`
-	Score      int         `json:"score"`
-	Speed      *int        `json:"speed,omitempty"`
-	RecordTime any `json:"record_time"` // datetime
+	Rank       int  `json:"rank"`
+	Score      int  `json:"score"`
+	Speed      *int `json:"speed,omitempty"`
+	RecordTime any  `json:"record_time"` // datetime
 }
 
 type TeamInfo struct {
@@ -33,11 +33,11 @@ type TeamInfo struct {
 }
 
 type SKForecastColumn struct {
-	Key          string      `json:"key"`
-	Name         string      `json:"name"`
-	Ranks        []RankInfo  `json:"ranks"`
-	ForecastTime any `json:"forecast_time,omitempty"` // datetime
-	UpdateTime   any `json:"update_time,omitempty"`   // datetime
+	Key          string     `json:"key"`
+	Name         string     `json:"name"`
+	Ranks        []RankInfo `json:"ranks"`
+	ForecastTime any        `json:"forecast_time,omitempty"` // datetime
+	UpdateTime   any        `json:"update_time,omitempty"`   // datetime
 }
 
 type SklRequest struct {
@@ -67,15 +67,15 @@ type SKRequest struct {
 }
 
 type CFRequest struct {
-	Eid             int         `json:"eid"`
-	EventName       string      `json:"event_name"`
-	Region          string      `json:"region"`
-	Ranks           []RankInfo  `json:"ranks"`
-	PrevRank        *RankInfo   `json:"prev_rank,omitempty"`
-	NextRank        *RankInfo   `json:"next_rank,omitempty"`
-	AggregateAt     int64       `json:"aggregate_at"`
-	UpdateAt        any `json:"update_at"` // datetime
-	WlCharaIconPath *string     `json:"wl_chara_icon_path,omitempty"`
+	Eid             int        `json:"eid"`
+	EventName       string     `json:"event_name"`
+	Region          string     `json:"region"`
+	Ranks           []RankInfo `json:"ranks"`
+	PrevRank        *RankInfo  `json:"prev_rank,omitempty"`
+	NextRank        *RankInfo  `json:"next_rank,omitempty"`
+	AggregateAt     int64      `json:"aggregate_at"`
+	UpdateAt        any        `json:"update_at"` // datetime
+	WlCharaIconPath *string    `json:"wl_chara_icon_path,omitempty"`
 }
 
 type SpeedRequest struct {
@@ -110,10 +110,10 @@ type RankTraceRequest struct {
 }
 
 type WinRateRequest struct {
-	WlCharaIconPath  *string     `json:"wl_chara_icon_path,omitempty"`
-	UpdatedAt        any `json:"updated_at"` // datetime
-	EventStartAt     int64       `json:"event_start_at"`
-	EventAggregateAt int64       `json:"event_aggregate_at"`
-	BannerImgPath    *string     `json:"banner_img_path,omitempty"`
-	TeamInfo         []TeamInfo  `json:"team_info"`
+	WlCharaIconPath  *string    `json:"wl_chara_icon_path,omitempty"`
+	UpdatedAt        any        `json:"updated_at"` // datetime
+	EventStartAt     int64      `json:"event_start_at"`
+	EventAggregateAt int64      `json:"event_aggregate_at"`
+	BannerImgPath    *string    `json:"banner_img_path,omitempty"`
+	TeamInfo         []TeamInfo `json:"team_info"`
 }

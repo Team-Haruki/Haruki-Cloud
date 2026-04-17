@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	rendersource "haruki-cloud/internal/pjsk/render/source"
-	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/snapshot"
+	rendersource "haruki-cloud/internal/pjsk/render/source"
 )
 
 func NewController(drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
@@ -50,14 +50,14 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 		return nil, fmt.Errorf("education controller is not initialized")
 	}
 
-	snapshot := query.Snapshot
-	if snapshot == nil {
-		snapshot = c.snapshot
+	snap := query.Snapshot
+	if snap == nil {
+		snap = c.snapshot
 	}
-	if snapshot == nil {
+	if snap == nil {
 		return nil, fmt.Errorf("local user snapshot is not configured")
 	}
-	if err := snapshot.Require(); err != nil {
+	if err := snap.Require(); err != nil {
 		return nil, err
 	}
 
@@ -67,13 +67,13 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 		return nil, fmt.Errorf("education data source is not configured")
 	}
 
-	challenge := snapshot.ChallengeLive()
+	challenge := snap.ChallengeLive()
 	if challenge == nil {
 		return nil, fmt.Errorf("user snapshot is missing challenge live data")
 	}
 	profile := query.Profile
 	if profile == nil {
-		profile = snapshot.DetailedProfile(region)
+		profile = snap.DetailedProfile(region)
 	}
 	if profile == nil {
 		return nil, fmt.Errorf("user snapshot is missing profile data")

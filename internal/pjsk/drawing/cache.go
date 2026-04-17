@@ -206,4 +206,3 @@ func (c *RenderCacheClient) store(key string, apiPath string, userID string, ima
 func (c *RenderCacheClient) defaultFilePath(apiPath string, userID string, key string) string {
 	return filepath.Join(c.storageDir, filepath.FromSlash(apiPath), userID, key+"."+renderCacheFileExt)
 }
-

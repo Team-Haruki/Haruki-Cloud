@@ -118,10 +118,12 @@ func assetImageMessage(ctx context.Context, path string, app *renderapp.App, gro
 			return onebot11.Message{onebot11.Image(base+"/"+rel, "")}, nil
 		}
 	}
+	if app == nil {
+		return nil, fmt.Errorf("image storage is not configured")
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	return imageMessage(ctx, data, app, group)
 }
-

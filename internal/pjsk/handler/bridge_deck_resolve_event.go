@@ -8,9 +8,9 @@ import (
 
 	sekaidb "haruki-cloud/database/sekai"
 	eventdb "haruki-cloud/database/sekai/event"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/deck"
-	renderregion "haruki-cloud/internal/pjsk/region"
 
 	"haruki-cloud/internal/pjsk/drawing"
 )

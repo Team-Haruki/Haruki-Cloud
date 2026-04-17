@@ -9,8 +9,8 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"
 	"haruki-cloud/database/sekai/gamecharacterunit"
-	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
 type dbCharacterProvider struct {

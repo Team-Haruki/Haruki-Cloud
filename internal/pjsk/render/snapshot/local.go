@@ -1,8 +1,8 @@
 package snapshot
 
 import (
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type LocalFileConfig struct {

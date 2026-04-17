@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type adapterTestCardProvider struct {
@@ -26,8 +26,8 @@ func (p *adapterTestCardProvider) GetByCharacterAndSeq(_ context.Context, charac
 
 func (p *adapterTestCardProvider) Filter(_ context.Context, filter *provider.CardFilter) ([]*masterdata.Card, error) {
 	if filter != nil {
-		copy := *filter
-		p.lastFilter = &copy
+		cp := *filter
+		p.lastFilter = &cp
 	}
 	return p.filterResult, p.filterErr
 }

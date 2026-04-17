@@ -3,11 +3,11 @@ package sekai
 import (
 	"strings"
 
-	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
-	"haruki-cloud/internal/pjsk/accountdata"
 )
 
 func newProfileBindingParams(ctx SekaiHandlerContext, selector, scope string) accountdata.ProfileBindingCommandParams {

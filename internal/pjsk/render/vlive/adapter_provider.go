@@ -3,8 +3,8 @@ package vlive
 import (
 	"context"
 
-	"haruki-cloud/internal/pjsk/render/provider"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/provider"
 )
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {

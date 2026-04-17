@@ -51,14 +51,14 @@ func NewLocalProvider(dir string, region renderregion.Value) *LocalProvider {
 
 func (p *LocalProvider) Region() renderregion.Value        { return p.region }
 func (p *LocalProvider) Cards() CardProvider               { return p.cards }
-func (p *LocalProvider) Characters() CharacterProvider      { return p.characters }
-func (p *LocalProvider) Skills() SkillProvider              { return p.skills }
-func (p *LocalProvider) Events() EventProvider              { return p.events }
-func (p *LocalProvider) Musics() MusicProvider              { return p.musics }
-func (p *LocalProvider) Gachas() GachaProvider              { return p.gachas }
-func (p *LocalProvider) Honors() HonorProvider              { return p.honors }
-func (p *LocalProvider) Stamps() StampProvider              { return p.stamps }
-func (p *LocalProvider) VLives() VLiveProvider              { return p.vlives }
-func (p *LocalProvider) Education() EducationProvider       { return p.education }
-func (p *LocalProvider) PlayerFrames() PlayerFrameProvider  { return p.playerFrames }
-func (p *LocalProvider) MySekai() MySekaiProvider           { return p.mysekai }
+func (p *LocalProvider) Characters() CharacterProvider     { return p.characters }
+func (p *LocalProvider) Skills() SkillProvider             { return p.skills }
+func (p *LocalProvider) Events() EventProvider             { return p.events }
+func (p *LocalProvider) Musics() MusicProvider             { return p.musics }
+func (p *LocalProvider) Gachas() GachaProvider             { return p.gachas }
+func (p *LocalProvider) Honors() HonorProvider             { return p.honors }
+func (p *LocalProvider) Stamps() StampProvider             { return p.stamps }
+func (p *LocalProvider) VLives() VLiveProvider             { return p.vlives }
+func (p *LocalProvider) Education() EducationProvider      { return p.education }
+func (p *LocalProvider) PlayerFrames() PlayerFrameProvider { return p.playerFrames }
+func (p *LocalProvider) MySekai() MySekaiProvider          { return p.mysekai }

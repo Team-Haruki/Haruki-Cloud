@@ -1,16 +1,16 @@
 package deck
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
-	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	regionsource "haruki-cloud/internal/pjsk/render/source"
-	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/snapshot"
+	regionsource "haruki-cloud/internal/pjsk/render/source"
 )
 
 func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value) *Controller {

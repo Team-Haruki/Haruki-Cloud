@@ -1,10 +1,10 @@
 package profile
 
 import (
-	"slices"
 	"fmt"
 	"log/slog"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"

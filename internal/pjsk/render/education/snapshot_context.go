@@ -3,9 +3,9 @@ package education
 import (
 	"fmt"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 var areaFilterUnitAreaIDs = map[string]int{

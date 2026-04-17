@@ -19,8 +19,8 @@ type ScoreControlRequest struct {
 }
 
 type CustomRoomScoreRequest struct {
-	TargetPoint    int                              `json:"target_point"`
-	CandidatePairs [][]int                          `json:"candidate_pairs"` // List of (event_rate, event_bonus) tuples
+	TargetPoint    int                      `json:"target_point"`
+	CandidatePairs [][]int                  `json:"candidate_pairs"` // List of (event_rate, event_bonus) tuples
 	MusicListMap   map[int][]map[string]any `json:"music_list_map"`
 }
 
@@ -70,6 +70,6 @@ type MusicBoardRequest struct {
 	TotalPage    int              `json:"total_page"`
 	TitleText    string           `json:"title_text"`
 	Items        []MusicBoardItem `json:"items"`
-	SpecMidDiffs [][]any  `json:"spec_mid_diffs,omitempty"` // Tuple (int, str)
+	SpecMidDiffs [][]any          `json:"spec_mid_diffs,omitempty"` // Tuple (int, str)
 	Description  string           `json:"description"`
 }

@@ -1,16 +1,15 @@
 package handler
 
 import (
-	"slices"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
-	renderapp "haruki-cloud/internal/pjsk/render/app"
-	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, preferGlobalDefault bool) []byte {
@@ -40,26 +39,6 @@ func resolveTargetMySekaiPayload(
 	}, false)
 }
 
-func resolveTargetMySekaiController(
-	ctx context.Context,
-	app *renderapp.App,
-	regionStr string,
-	platform string,
-	platformUserID string,
-	pjskUserID string,
-) *rendermysekai.Controller {
-	if app == nil || app.MySekai == nil {
-		return nil
-	}
-	if snapshot := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, pjskUserID, true); snapshot != nil {
-		return app.MySekai.WithSnapshot(snapshot)
-	}
-	if data := resolveTargetMySekaiPayload(ctx, app, regionStr, platform, platformUserID, pjskUserID); len(data) > 0 {
-		return app.MySekai.WithMySekaiData(data)
-	}
-	return app.MySekai
-}
-
 func resolveMySekaiRenderContext(
 	ctx context.Context,
 	app *renderapp.App,
@@ -84,9 +63,9 @@ func resolveMySekaiRenderContext(
 	result.Region = regionStr
 
 	platform, platformUserID := platformCredentials(params)
-	if snapshot := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, true); snapshot != nil {
-		result.Controller = app.MySekai.WithSnapshot(snapshot)
-		result.Profile = forceMySekaiProfileBindingID(snapshot.ProfileCard(renderregion.Normalize(regionStr)), target, regionStr)
+	if snap := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, true); snap != nil {
+		result.Controller = app.MySekai.WithSnapshot(snap)
+		result.Profile = forceMySekaiProfileBindingID(snap.ProfileCard(renderregion.Normalize(regionStr)), target, regionStr)
 		if result.Profile == nil {
 			result.Profile = forceMySekaiProfileBindingID(buildPublicProfileCardForTarget(ctx, target, regionStr, platform, platformUserID, app), target, regionStr)
 		}

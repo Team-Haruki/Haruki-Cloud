@@ -2,11 +2,11 @@ package sekai
 
 import (
 	"fmt"
-	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
-	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"strconv"
 	"strings"
 )
@@ -140,4 +140,3 @@ func (sekaiHandlers) MusicBoardHandle() SekaiCommandHandler {
 		},
 	}
 }
-

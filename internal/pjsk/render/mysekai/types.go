@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
-	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 

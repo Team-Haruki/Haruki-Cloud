@@ -1,8 +1,8 @@
 package mysekai
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 

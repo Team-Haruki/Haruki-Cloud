@@ -3,9 +3,9 @@ package handler
 import (
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/education"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func executeEducation(rc *RequestContext) (message onebot11.Message, err error) {

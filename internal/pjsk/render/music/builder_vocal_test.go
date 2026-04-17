@@ -3,25 +3,27 @@ package music
 import (
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type vocalBuilderTestSource struct {
-	music         *masterdata.Music
-	vocals        []*masterdata.MusicVocal
-	characters    map[int]*masterdata.Character
-	outsideByID   map[int]string
-	difficulties  []*masterdata.MusicDifficulty
+	music        *masterdata.Music
+	vocals       []*masterdata.MusicVocal
+	characters   map[int]*masterdata.Character
+	outsideByID  map[int]string
+	difficulties []*masterdata.MusicDifficulty
 }
 
-func (s *vocalBuilderTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
+func (s *vocalBuilderTestSource) DefaultRegion() renderregion.Value             { return renderregion.JP }
 func (s *vocalBuilderTestSource) SearchMusic(string) (*masterdata.Music, error) { return s.music, nil }
-func (s *vocalBuilderTestSource) GetMusicByID(int) (*masterdata.Music, error) { return s.music, nil }
-func (s *vocalBuilderTestSource) GetMusicByEventID(int) (*masterdata.Music, error) { return nil, errNotFound("music") }
-func (s *vocalBuilderTestSource) GetMusics() []*masterdata.Music { return []*masterdata.Music{s.music} }
-func (s *vocalBuilderTestSource) GetBanEvents(int) []*masterdata.Event { return nil }
+func (s *vocalBuilderTestSource) GetMusicByID(int) (*masterdata.Music, error)   { return s.music, nil }
+func (s *vocalBuilderTestSource) GetMusicByEventID(int) (*masterdata.Music, error) {
+	return nil, errNotFound("music")
+}
+func (s *vocalBuilderTestSource) GetMusics() []*masterdata.Music                { return []*masterdata.Music{s.music} }
+func (s *vocalBuilderTestSource) GetBanEvents(int) []*masterdata.Event          { return nil }
 func (s *vocalBuilderTestSource) GetMusicLocalizedTitles(int) ([]string, error) { return nil, nil }
 func (s *vocalBuilderTestSource) GetMusicDifficulties(int) ([]*masterdata.MusicDifficulty, error) {
 	return append([]*masterdata.MusicDifficulty(nil), s.difficulties...), nil
@@ -32,8 +34,8 @@ func (s *vocalBuilderTestSource) GetMusicVocals(int) ([]*masterdata.MusicVocal, 
 func (s *vocalBuilderTestSource) GetMusicTags(int) ([]string, error) { return nil, nil }
 func (s *vocalBuilderTestSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	if item := s.characters[id]; item != nil {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, errNotFound("character")
 }

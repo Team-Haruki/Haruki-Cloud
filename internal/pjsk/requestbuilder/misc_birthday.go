@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"haruki-cloud/database/sekai/gamecharacter"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type miscBirthdaySelection struct {

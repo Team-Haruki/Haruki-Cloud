@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/requestbuilder"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func executeScore(rc *RequestContext) (message onebot11.Message, err error) {

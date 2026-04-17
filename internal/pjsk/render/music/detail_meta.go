@@ -1,14 +1,14 @@
 package music
 
 import (
-	"slices"
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 
-	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
 var (

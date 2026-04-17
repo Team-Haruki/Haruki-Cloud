@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 )
 
@@ -46,8 +46,8 @@ func (r *scoreControlTestAliasResolver) TryResolveMusicTitleOrAliasID(_ context.
 func (s *scoreControlTestSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
 		if strings.EqualFold(item.Title, strings.TrimSpace(query)) {
-			copy := *item
-			return &copy, nil
+			cp := *item
+			return &cp, nil
 		}
 	}
 	return nil, os.ErrNotExist
@@ -58,8 +58,8 @@ func (s *scoreControlTestSource) GetMusicByID(id int) (*masterdata.Music, error)
 	if item == nil {
 		return nil, os.ErrNotExist
 	}
-	copy := *item
-	return &copy, nil
+	cp := *item
+	return &cp, nil
 }
 
 func (s *scoreControlTestSource) GetMusicByEventID(int) (*masterdata.Music, error) {
@@ -69,8 +69,8 @@ func (s *scoreControlTestSource) GetMusicByEventID(int) (*masterdata.Music, erro
 func (s *scoreControlTestSource) GetMusics() []*masterdata.Music {
 	out := make([]*masterdata.Music, 0, len(s.musics))
 	for _, item := range s.musics {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out
 }

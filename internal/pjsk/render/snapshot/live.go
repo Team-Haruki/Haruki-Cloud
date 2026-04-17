@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	sekaiDB "haruki-cloud/database/sekai"
-	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 )
 
 // NewFromBytes constructs a Service from raw JSON bytes obtained from live API calls,

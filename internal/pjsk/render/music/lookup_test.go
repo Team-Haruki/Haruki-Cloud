@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type lookupTestSource struct {
@@ -99,8 +99,8 @@ func (r *contextAwareLookupTestAliasResolver) TryResolveMusicTitleOrAliasID(ctx 
 func (s *lookupTestSource) SearchMusic(query string) (*masterdata.Music, error) {
 	for _, item := range s.musics {
 		if strings.EqualFold(item.Title, query) {
-			copy := *item
-			return &copy, nil
+			cp := *item
+			return &cp, nil
 		}
 	}
 	return nil, errNotFound("music")
@@ -111,8 +111,8 @@ func (s *lookupTestSource) GetMusicByID(id int) (*masterdata.Music, error) {
 	if item == nil {
 		return nil, errNotFound("music")
 	}
-	copy := *item
-	return &copy, nil
+	cp := *item
+	return &cp, nil
 }
 
 func (s *lookupTestSource) GetMusicByEventID(int) (*masterdata.Music, error) {
@@ -122,8 +122,8 @@ func (s *lookupTestSource) GetMusicByEventID(int) (*masterdata.Music, error) {
 func (s *lookupTestSource) GetMusics() []*masterdata.Music {
 	out := make([]*masterdata.Music, 0, len(s.musics))
 	for _, item := range s.musics {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out
 }
@@ -136,8 +136,8 @@ func (s *lookupTestSource) GetMusicDifficulties(musicID int) ([]*masterdata.Musi
 	items := s.difficulties[musicID]
 	out := make([]*masterdata.MusicDifficulty, 0, len(items))
 	for _, item := range items {
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out, nil
 }

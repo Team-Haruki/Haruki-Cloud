@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 )
 
 func NewBuilder(source DataSource, fallback DataSource, assetHelper *assets.AssetHelper) *Builder {

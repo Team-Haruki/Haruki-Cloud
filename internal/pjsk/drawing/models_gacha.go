@@ -36,12 +36,12 @@ type GachaInfo struct {
 }
 
 type GachaBrief struct {
-	ID        int         `json:"id"`
-	Name      string      `json:"name"`
-	GachaType string      `json:"gacha_type"`
-	StartAt   any `json:"start_at"`
-	EndAt     any `json:"end_at"`
-	AssetName string      `json:"asset_name"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	GachaType string `json:"gacha_type"`
+	StartAt   any    `json:"start_at"`
+	EndAt     any    `json:"end_at"`
+	AssetName string `json:"asset_name"`
 }
 
 type GachaCardWeight struct {

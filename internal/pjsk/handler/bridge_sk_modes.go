@@ -3,8 +3,8 @@ package handler
 import (
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/render/sk"
 )
 
 func executeSKMode(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {

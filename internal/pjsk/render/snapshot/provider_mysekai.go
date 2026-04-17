@@ -1,14 +1,14 @@
 package snapshot
 
 import (
-	"slices"
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/accountdata"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type MySekaiPayloadProvider interface {
@@ -151,8 +151,8 @@ func resolveExplicitMySekaiPayloadBinding(
 		if match != nil {
 			return nil, fmt.Errorf("snapshot: multiple bindings match pjsk user id %s; region is required", pjskUserID)
 		}
-		copy := item
-		match = &copy
+		cp := item
+		match = &cp
 	}
 	if match == nil {
 		return nil, fmt.Errorf("snapshot: binding %s not found", pjskUserID)

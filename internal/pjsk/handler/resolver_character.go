@@ -8,9 +8,9 @@ import (
 
 	sekaidb "haruki-cloud/database/sekai"
 	gamecharacterdb "haruki-cloud/database/sekai/gamecharacter"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/card"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func resolveEducationAreaCharacterID(ctx context.Context, app *renderapp.App, region renderregion.Value, query string) (int, error) {

@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/onebot11"
 	aliasdb "haruki-cloud/database/pjsk/alias"
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"
 	sekaimusic "haruki-cloud/database/sekai/music"
+	"haruki-cloud/internal/pjsk/onebot11"
 )
 
 // TryResolveMusicID attempts to resolve a token to a music ID.

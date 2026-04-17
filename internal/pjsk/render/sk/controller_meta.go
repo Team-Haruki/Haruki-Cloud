@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (m *eventMeta) applyOverrides(req TrackerRankQuery) {

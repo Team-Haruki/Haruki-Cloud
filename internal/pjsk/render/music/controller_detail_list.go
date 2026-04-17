@@ -1,8 +1,8 @@
 package music
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -77,7 +77,11 @@ func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailR
 		return nil, err
 	}
 	c.appendApprovedMusicAliases(req, musicInfo.ID)
-	c.enrichMusicDetailRequest(req, region, source, builder, musicInfo, info.Difficulty)
+	var difficulty string
+	if info != nil {
+		difficulty = info.Difficulty
+	}
+	c.enrichMusicDetailRequest(req, region, source, builder, musicInfo, difficulty)
 	return req, nil
 }
 

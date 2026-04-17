@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type lookupTestSource struct {
@@ -34,19 +34,19 @@ func (s *lookupTestSource) DefaultRegion() renderregion.Value {
 
 func (s *lookupTestSource) GetCardByID(id int) (*masterdata.Card, error) {
 	if s.card != nil && s.card.ID == id {
-		copy := *s.card
+		cp := *s.card
 		if s.card.CardParameters != nil {
-			copy.CardParameters = append([]masterdata.CardParameter(nil), s.card.CardParameters...)
+			cp.CardParameters = append([]masterdata.CardParameter(nil), s.card.CardParameters...)
 		}
-		return &copy, nil
+		return &cp, nil
 	}
 	for _, item := range s.cards {
 		if item != nil && item.ID == id {
-			copy := *item
+			cp := *item
 			if item.CardParameters != nil {
-				copy.CardParameters = append([]masterdata.CardParameter(nil), item.CardParameters...)
+				cp.CardParameters = append([]masterdata.CardParameter(nil), item.CardParameters...)
 			}
-			return &copy, nil
+			return &cp, nil
 		}
 	}
 	return nil, fmt.Errorf("card %d not found", id)
@@ -56,8 +56,8 @@ func (s *lookupTestSource) GetCardByCharacterAndSeq(characterID, seq int) (*mast
 	items := make([]*masterdata.Card, 0, len(s.cards))
 	for _, item := range s.cards {
 		if item != nil && item.CharacterID == characterID {
-			copy := *item
-			items = append(items, &copy)
+			cp := *item
+			items = append(items, &cp)
 		}
 	}
 	if len(items) == 0 {
@@ -94,8 +94,8 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 			if item == nil {
 				continue
 			}
-			copy := *item
-			out = append(out, &copy)
+			cp := *item
+			out = append(out, &cp)
 		}
 		return out, nil
 	}
@@ -107,8 +107,8 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 		if item == nil {
 			continue
 		}
-		copy := *item
-		out = append(out, &copy)
+		cp := *item
+		out = append(out, &cp)
 	}
 	return out, nil
 }
@@ -116,8 +116,8 @@ func (s *lookupTestSource) FilterCards(info *CardQueryInfo) ([]*masterdata.Card,
 func (s *lookupTestSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	if s.characters != nil {
 		if item := s.characters[id]; item != nil {
-			copy := *item
-			return &copy, nil
+			cp := *item
+			return &cp, nil
 		}
 	}
 	return nil, fmt.Errorf("character %d not found", id)
@@ -165,8 +165,8 @@ func (s *lookupTestSource) GetCostume3dsByCardID(cardID int) ([]*masterdata.Cost
 			if item == nil {
 				continue
 			}
-			copy := *item
-			out = append(out, &copy)
+			cp := *item
+			out = append(out, &cp)
 		}
 		return out, nil
 	}
@@ -260,8 +260,8 @@ func TestSearchServiceSupportsCharacterLatestVisibleCard(t *testing.T) {
 			if item == nil || item.CharacterID != info.CharacterID {
 				continue
 			}
-			copy := *item
-			out = append(out, &copy)
+			cp := *item
+			out = append(out, &cp)
 		}
 		return out, nil
 	}

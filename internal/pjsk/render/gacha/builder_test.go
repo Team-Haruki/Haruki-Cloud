@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 type testGachaSource struct {
@@ -34,8 +34,8 @@ func (s *testGachaSource) DefaultRegion() renderregion.Value { return s.region }
 
 func (s *testGachaSource) GetGachaByID(id int) (*masterdata.Gacha, error) {
 	if item, ok := s.gachaByID[id]; ok {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("gacha not found: %d", id)
 }
@@ -43,8 +43,8 @@ func (s *testGachaSource) GetGachaByID(id int) (*masterdata.Gacha, error) {
 func (s *testGachaSource) GetGachas() []*masterdata.Gacha {
 	result := make([]*masterdata.Gacha, 0, len(s.gachas))
 	for _, item := range s.gachas {
-		copy := *item
-		result = append(result, &copy)
+		cp := *item
+		result = append(result, &cp)
 	}
 	return result
 }
@@ -63,8 +63,8 @@ func (s *testGachaSource) GetGachaByEventID(eventID int) (*masterdata.Gacha, err
 	targetCardID := sorted[idx]
 	for _, item := range s.gachas {
 		if testGachaContainsPickup(item, targetCardID) {
-			copy := *item
-			return &copy, nil
+			cp := *item
+			return &cp, nil
 		}
 	}
 	return nil, fmt.Errorf("gacha not found for event: %d", eventID)
@@ -81,8 +81,8 @@ func testGachaContainsPickup(gachaInfo *masterdata.Gacha, cardID int) bool {
 
 func (s *testGachaSource) GetCardByID(id int) (*masterdata.Card, error) {
 	if item, ok := s.cardByID[id]; ok {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, fmt.Errorf("card not found: %d", id)
 }

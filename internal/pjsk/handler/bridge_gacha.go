@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"haruki-cloud/internal/pjsk/onebot11"
-	"haruki-cloud/internal/pjsk/render/gacha"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/gacha"
 )
 
 func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {

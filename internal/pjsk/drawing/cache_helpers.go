@@ -1,16 +1,16 @@
 package drawing
 
 import (
-"crypto/sha256"
-"encoding/hex"
-"encoding/json"
-"fmt"
-"math"
-neturl "net/url"
-"strconv"
-"strings"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"math"
+	neturl "net/url"
+	"strconv"
+	"strings"
 
-hashstructure "github.com/mitchellh/hashstructure/v2"
+	hashstructure "github.com/mitchellh/hashstructure/v2"
 )
 
 func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, error) {

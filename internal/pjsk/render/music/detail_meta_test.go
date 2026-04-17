@@ -24,8 +24,8 @@ func (s *detailMetaTestSource) SearchMusic(query string) (*masterdata.Music, err
 	query = strings.TrimSpace(strings.ToLower(query))
 	for _, item := range s.musics {
 		if item != nil && strings.ToLower(strings.TrimSpace(item.Title)) == query {
-			copy := *item
-			return &copy, nil
+			cp := *item
+			return &cp, nil
 		}
 	}
 	return nil, errNotFound("music")
@@ -33,8 +33,8 @@ func (s *detailMetaTestSource) SearchMusic(query string) (*masterdata.Music, err
 
 func (s *detailMetaTestSource) GetMusicByID(id int) (*masterdata.Music, error) {
 	if item := s.musics[id]; item != nil {
-		copy := *item
-		return &copy, nil
+		cp := *item
+		return &cp, nil
 	}
 	return nil, errNotFound("music")
 }
@@ -49,8 +49,8 @@ func (s *detailMetaTestSource) GetMusics() []*masterdata.Music {
 		if item == nil {
 			continue
 		}
-		copy := *item
-		result = append(result, &copy)
+		cp := *item
+		result = append(result, &cp)
 	}
 	return result
 }
@@ -79,8 +79,8 @@ func (s *detailMetaTestSource) GetMusicDifficulties(musicID int) ([]*masterdata.
 		if item == nil {
 			continue
 		}
-		copy := *item
-		result = append(result, &copy)
+		cp := *item
+		result = append(result, &cp)
 	}
 	return result, nil
 }

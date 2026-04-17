@@ -1,8 +1,8 @@
 package provider
 
 import (
-	"slices"
 	"encoding/json"
+	"slices"
 	"strings"
 )
 

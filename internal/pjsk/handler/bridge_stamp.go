@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/onebot11"
-	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/stamp"
 )
 

@@ -1,8 +1,8 @@
 package deck
 
 import (
-	"strings"
 	"slices"
+	"strings"
 )
 
 func applyRecommendOptionOverrides(option map[string]any, recType string, query AutoQuery) {

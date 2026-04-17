@@ -1,8 +1,8 @@
 package deck
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 

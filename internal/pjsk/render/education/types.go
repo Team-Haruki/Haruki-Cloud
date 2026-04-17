@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"haruki-cloud/internal/pjsk/drawing"
-	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/provider"
-	rendersource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	rendersource "haruki-cloud/internal/pjsk/render/source"
 )
 
 // ── Data source ─────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ type CharacterRank struct {
 }
 
 type Bond struct {
-	GroupID       int
+	GroupID      int
 	CharacterID1 int
 	CharacterID2 int
 }

@@ -1,14 +1,14 @@
 package card
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"strings"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
@@ -31,12 +31,12 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 		return nil, fmt.Errorf("card %d does not have original image assets", cardInfo.ID)
 	}
 
-	copy := *cardInfo
+	cp := *cardInfo
 	if cardInfo.CardParameters != nil {
-		copy.CardParameters = slices.Clone(cardInfo.CardParameters)
+		cp.CardParameters = slices.Clone(cardInfo.CardParameters)
 	}
 	return &ImageResult{
-		Card:  &copy,
+		Card:  &cp,
 		Paths: paths,
 	}, nil
 }

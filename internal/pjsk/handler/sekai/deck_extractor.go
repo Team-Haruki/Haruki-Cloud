@@ -1,8 +1,8 @@
 package sekai
 
 import (
-	"slices"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 

@@ -13,4 +13,3 @@ func main() {
 	defer stop()
 	server.Run(ctx)
 }
-

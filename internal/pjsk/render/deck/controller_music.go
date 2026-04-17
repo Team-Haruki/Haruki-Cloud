@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 )
 
 func (c *Controller) resolveMusicSource(requested renderregion.Value) (renderregion.Value, MusicSource, bool) {

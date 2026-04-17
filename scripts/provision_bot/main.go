@@ -28,9 +28,9 @@ import (
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 
+	harukiConfig "haruki-cloud/config"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/user"
-	harukiConfig "haruki-cloud/config"
 )
 
 func main() {

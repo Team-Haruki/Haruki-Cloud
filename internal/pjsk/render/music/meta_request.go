@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
 func (c *Controller) ResolveMusicMetaRequests(region string, queries []string) ([]drawing.MusicMetaRequest, error) {

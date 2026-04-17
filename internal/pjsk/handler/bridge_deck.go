@@ -140,4 +140,3 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 	return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
 }
-

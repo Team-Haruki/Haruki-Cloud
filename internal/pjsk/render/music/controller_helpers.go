@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
-	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) currentSnapshot() snapshot.Snapshot {
@@ -25,8 +25,8 @@ func (c *Controller) currentSnapshot() snapshot.Snapshot {
 }
 
 func (c *Controller) detailedProfile(region renderregion.Value) drawing.DetailedProfileCardRequest {
-	if snapshot := c.currentSnapshot(); snapshot != nil {
-		if profile := snapshot.DetailedProfile(region); profile != nil {
+	if snap := c.currentSnapshot(); snap != nil {
+		if profile := snap.DetailedProfile(region); profile != nil {
 			return *profile
 		}
 	}
@@ -42,21 +42,21 @@ func (c *Controller) resolveDetailedProfile(override *drawing.DetailedProfileCar
 
 func (c *Controller) resolveMusicListProfile(override *drawing.DetailedProfileCardRequest, region renderregion.Value) *drawing.DetailedProfileCardRequest {
 	if override != nil {
-		copy := *override
-		return &copy
+		cp := *override
+		return &cp
 	}
-	if snapshot := c.currentSnapshot(); snapshot != nil {
-		if profile := snapshot.DetailedProfile(region); profile != nil {
-			copy := *profile
-			return &copy
+	if snap := c.currentSnapshot(); snap != nil {
+		if profile := snap.DetailedProfile(region); profile != nil {
+			cp := *profile
+			return &cp
 		}
 	}
 	return nil
 }
 
 func (c *Controller) profileCard(region renderregion.Value) drawing.ProfileCardRequest {
-	if snapshot := c.currentSnapshot(); snapshot != nil {
-		if profile := snapshot.ProfileCard(region); profile != nil {
+	if snap := c.currentSnapshot(); snap != nil {
+		if profile := snap.ProfileCard(region); profile != nil {
 			return *profile
 		}
 	}
@@ -75,8 +75,8 @@ func (c *Controller) profileCardWithMessage(override *drawing.ProfileCardRequest
 	if message == nil {
 		return card
 	}
-	copy := *message
-	card.ErrorMessage = &copy
+	cp := *message
+	card.ErrorMessage = &cp
 	return card
 }
 
@@ -137,11 +137,11 @@ func (c *Controller) buildPlayResultIconMap(_ renderregion.Value) map[string]str
 }
 
 func (c *Controller) buildUserResults(diff string) map[int]string {
-	snapshot := c.currentSnapshot()
-	if snapshot == nil {
+	snap := c.currentSnapshot()
+	if snap == nil {
 		return nil
 	}
-	return snapshot.MusicResults(diff)
+	return snap.MusicResults(diff)
 }
 
 func (c *Controller) buildDefaultProgressCounts(source DataSource, builder *Builder, diff string) []drawing.PlayProgressCount {
@@ -149,11 +149,11 @@ func (c *Controller) buildDefaultProgressCounts(source DataSource, builder *Buil
 }
 
 func (c *Controller) buildUserProgressCounts(source DataSource, builder *Builder, diff string) []drawing.PlayProgressCount {
-	snapshot := c.currentSnapshot()
-	if snapshot == nil {
+	snap := c.currentSnapshot()
+	if snap == nil {
 		return nil
 	}
-	return c.buildProgressCountsFromResults(source, builder, diff, snapshot.MusicResults(diff))
+	return c.buildProgressCountsFromResults(source, builder, diff, snap.MusicResults(diff))
 }
 
 func (c *Controller) buildProgressCountsFromResults(source DataSource, builder *Builder, diff string, userResults map[int]string) []drawing.PlayProgressCount {
@@ -254,8 +254,8 @@ func (c *Controller) resolveMusicChartMeta(region renderregion.Value, musicID in
 		}
 	}
 
-	if snapshot := c.currentSnapshot(); snapshot != nil {
-		if payload := snapshot.MusicMetaBytes(); len(payload) > 0 {
+	if snap := c.currentSnapshot(); snap != nil {
+		if payload := snap.MusicMetaBytes(); len(payload) > 0 {
 			if item := findMusicMeta(payload, musicID, diff); item != nil {
 				return item
 			}

@@ -37,15 +37,17 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		if strings.TrimSpace(q.Keyword) == "" {
 			q.Keyword = strings.TrimSpace(rc.Cmd.Query)
 		}
-		if suiteSnapshot != nil {
+		q.DetailedProfile = rc.GetDetailedProfile()
+		if q.DetailedProfile == nil && suiteSnapshot != nil {
 			q.DetailedProfile = suiteSnapshot.DetailedProfile(rc.Region)
-		} else {
-			q.DetailedProfile = rc.GetDetailedProfile()
 		}
 		data, err = musicCtrl.RenderMusicList(q)
 	case "music-chart":
 		q := music.ChartQuery{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
+		if strings.TrimSpace(q.Style) == "" {
+			q.Style = resolveRequesterHarukiUserChartStyle(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID)
+		}
 		data, err = musicCtrl.RenderMusicChart(q)
 	case "music-progress":
 		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
@@ -54,10 +56,14 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		q := music.ProgressQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
+		profile := rc.GetProfileCard()
+		if profile == nil && suiteSnapshot != nil {
+			profile = suiteSnapshot.ProfileCard(rc.Region)
+		}
 		if suiteSnapshot != nil {
-			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, suiteSnapshot.ProfileCard(rc.Region))
+			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, profile)
 		} else {
-			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, nil, rc.GetProfileCard())
+			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, nil, profile)
 		}
 	case "music-rewards":
 		data, err = renderMusicRewards(rc)
@@ -69,7 +75,13 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, resolveErr
 		}
 		if len(matches) == 1 {
-			data, err = renderSingleMusicLookupChart(musicCtrl, rc.Cmd.Region, matches[0].Music.ID, matches[0].Difficulty)
+			data, err = renderSingleMusicLookupChart(
+				musicCtrl,
+				rc.Cmd.Region,
+				matches[0].Music.ID,
+				matches[0].Difficulty,
+				resolveRequesterHarukiUserChartStyle(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
+			)
 			break
 		}
 		return renderNoteCountLookupListMessages(rc, musicCtrl, q, matches)
@@ -99,7 +111,13 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, resolveErr
 		}
 		if len(matches) == 1 {
-			data, err = renderSingleMusicLookupChart(musicCtrl, rc.Cmd.Region, matches[0].Music.ID, matches[0].Difficulty)
+			data, err = renderSingleMusicLookupChart(
+				musicCtrl,
+				rc.Cmd.Region,
+				matches[0].Music.ID,
+				matches[0].Difficulty,
+				resolveRequesterHarukiUserChartStyle(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
+			)
 			break
 		}
 		return renderBPMLookupListMessages(rc, musicCtrl, q, matches)
@@ -112,11 +130,12 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	return rc.ImageMessage(data)
 }
 
-func renderSingleMusicLookupChart(musicCtrl *music.Controller, region string, musicID int, difficulty string) ([]byte, error) {
+func renderSingleMusicLookupChart(musicCtrl *music.Controller, region string, musicID int, difficulty string, style string) ([]byte, error) {
 	return musicCtrl.RenderMusicChart(music.ChartQuery{
 		Query:      fmt.Sprintf("music%d", musicID),
 		Region:     region,
 		Difficulty: difficulty,
+		Style:      style,
 	})
 }
 

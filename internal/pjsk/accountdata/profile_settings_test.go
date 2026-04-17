@@ -467,3 +467,37 @@ func TestExecuteProfileSettingsCommandSetTimeZoneAmbiguousOffsetReturnsCandidate
 		t.Fatalf("unexpected ambiguous timezone candidates:\n%s", got)
 	}
 }
+
+func TestExecuteProfileSettingsCommandSetChartStyle(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{})
+
+	text, err := accountdata.ExecuteProfileSettingsCommand(context.Background(), service, accountdata.ProfileModeSetChartStyle, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		ChartStyle:     "white",
+	})
+	if err != nil {
+		t.Fatalf("set chart style: %v", err)
+	}
+	if got := string(text); got != "已设置谱面样式为 white" {
+		t.Fatalf("unexpected chart style set text:\n%s", got)
+	}
+}
+
+func TestExecuteProfileSettingsCommandSetChartStyleRejectsInvalidValue(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{})
+
+	_, err := accountdata.ExecuteProfileSettingsCommand(context.Background(), service, accountdata.ProfileModeSetChartStyle, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		ChartStyle:     "blue",
+	})
+	if err == nil {
+		t.Fatal("expected invalid chart style error, got nil")
+	}
+	if !strings.Contains(err.Error(), "white 或 black") {
+		t.Fatalf("unexpected chart style error: %v", err)
+	}
+}

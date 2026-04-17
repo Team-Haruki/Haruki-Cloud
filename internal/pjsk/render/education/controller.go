@@ -113,7 +113,7 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 		})
 	}
 
-	displayMax := c.estimateChallengeMaxScore(source)
+	displayMax := c.estimateChallengeMaxScore(region, source)
 	if maxScore > displayMax {
 		displayMax = maxScore
 	}
@@ -244,7 +244,7 @@ func (c *Controller) pickChallengeRewards(source DataSource, charID int, claimed
 	return jewelTotal, shardTotal
 }
 
-func (c *Controller) estimateChallengeMaxScore(source DataSource) int {
+func (c *Controller) estimateChallengeMaxScore(region renderregion.Value, source DataSource) int {
 	maxScore := 0
 	for characterID := 1; characterID <= 26; characterID++ {
 		for _, reward := range source.GetChallengeRewardsByCharacter(characterID) {
@@ -253,8 +253,12 @@ func (c *Controller) estimateChallengeMaxScore(source DataSource) int {
 			}
 		}
 	}
-	if maxScore < 3_000_000 {
-		maxScore = 3_000_000
+	minScore := 3_000_000
+	if renderregion.WithDefault(region) != renderregion.JP {
+		minScore = 2_500_000
+	}
+	if maxScore < minScore {
+		maxScore = minScore
 	}
 	return maxScore
 }

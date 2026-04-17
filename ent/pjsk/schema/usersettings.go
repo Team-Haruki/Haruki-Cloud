@@ -23,6 +23,10 @@ type UserSettings struct {
 	// TimeZone is the user's preferred IANA time zone name for display,
 	// for example "Asia/Shanghai". Empty = Asia/Shanghai.
 	TimeZone string `json:"time_zone,omitempty"`
+
+	// ChartStyle is the user's preferred chart preview style name.
+	// Supported values: "black", "white". Empty = black.
+	ChartStyle string `json:"chart_style,omitempty"`
 }
 
 type UserPreference struct {

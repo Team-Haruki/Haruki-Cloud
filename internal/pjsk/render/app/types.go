@@ -133,4 +133,5 @@ const (
 	masterdataDirInvalid renderMasterdataDirKind = iota
 	masterdataDirFlat
 	masterdataDirRegionRoot
+	masterdataDirRepoRoot
 )

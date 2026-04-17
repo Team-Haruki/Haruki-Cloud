@@ -188,6 +188,31 @@ func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
 	}
 }
 
+func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Commands: []string{
+				"/pjsk chart style",
+				"/谱面样式", "/谱面底色", "/设置谱面样式", "/设置谱面底色",
+			},
+			Path: "profile/chart-style",
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			if args == "" {
+				return nil, onebot11.NewReplayError(
+					"使用方式:\n%s <white|black>",
+					ctx.originalTriggerCmd,
+				)
+			}
+			params := newProfileSettingsParams(ctx)
+			params.ChartStyle = args
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeSetChartStyle, params), nil
+		},
+	}
+}
+
 func (sekaiHandlers) ProfileCheckDataHandle() HarukiSekaiCommandHandler {
 	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{

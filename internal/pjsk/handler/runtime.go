@@ -233,18 +233,23 @@ func (rc *RequestContext) resolveProfiles() {
 			rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc)
 		}
 		if snap := rc.ResolveSnapshot(false); snap != nil {
-			if detail := snap.DetailedProfile(rc.Region); detail != nil {
-				rc.detailedProfile = detail
+			if rc.detailedProfile == nil {
+				if detail := snap.DetailedProfile(rc.Region); detail != nil {
+					rc.detailedProfile = detail
+				}
 			}
-			if card := snap.ProfileCard(rc.Region); card != nil {
-				rc.profileCard = card
+			if rc.profileCard == nil {
+				if card := snap.ProfileCard(rc.Region); card != nil {
+					rc.profileCard = card
+				}
 			}
 		}
 	})
 }
 
 // GetDetailedProfile lazily resolves the user's detailed profile, preferring
-// live snapshot data over Sekai API data.
+// the public Sekai API profile and only falling back to snapshot data when the
+// API profile is unavailable.
 func (rc *RequestContext) GetDetailedProfile() *drawing.DetailedProfileCardRequest {
 	rc.resolveProfiles()
 	return rc.detailedProfile

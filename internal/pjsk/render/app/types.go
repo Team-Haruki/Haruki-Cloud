@@ -1,0 +1,136 @@
+package app
+
+import (
+	"context"
+	"time"
+
+	pjskDB "haruki-cloud/database/pjsk"
+	sekaiDB "haruki-cloud/database/sekai"
+	pjskalias "haruki-cloud/internal/pjsk/alias"
+	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/meta"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/internal/pjsk/render/deck"
+	"haruki-cloud/internal/pjsk/render/education"
+	"haruki-cloud/internal/pjsk/render/event"
+	"haruki-cloud/internal/pjsk/render/gacha"
+	"haruki-cloud/internal/pjsk/render/honor"
+	"haruki-cloud/internal/pjsk/render/misc"
+	"haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/internal/pjsk/render/mysekai"
+	"haruki-cloud/internal/pjsk/render/profile"
+	"haruki-cloud/internal/pjsk/render/provider"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/score"
+	"haruki-cloud/internal/pjsk/render/sk"
+	"haruki-cloud/internal/pjsk/render/stamp"
+	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/pjsk/render/vlive"
+	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/utils/censor"
+	"haruki-cloud/utils/imagecache"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+)
+
+// ── Config types ────────────────────────────────────────────────────────────
+
+type Config struct {
+	InitContext              context.Context
+	DefaultRegion            renderregion.Value
+	DrawingBaseURL           string
+	DrawingTimeout           time.Duration
+	DrawingRetryCount        int
+	DrawingCache             drawing.RenderCacheConfig
+	ImageCacheURI            string
+	ImageCacheDir            string
+	ImageCachePGURL          string // PostgreSQL DSN for image cache deduplication (optional)
+	CensorService            *censor.Service
+	AssetPrimaryDir          string
+	AssetLegacyDirs          []string
+	AssetsBaseURL            string // CDN base URL for direct asset serving; skips imagecache for region assets
+	LocalMasterdata          LocalMasterdataConfig
+	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
+	UserSnapshot             UserSnapshotConfig
+	MusicMetaRefreshInterval time.Duration
+	MetaLoader               *meta.Loader
+	DeckRecommend            DeckRecommendConfig
+	// Upstream HTTP clients. Caller constructs these from its own config
+	// (see cmd/server) and passes them here so the render runtime does not
+	// depend on package-level singletons.
+	SekaiAPI *sekaiapi.SekaiAPIClient
+	Toolbox  *sekaiapi.HarukiToolboxClient
+	Tracker  *sekaiapi.TrackerClient
+}
+
+const defaultMusicMetaRefreshInterval = 30 * time.Minute
+
+type LocalMasterdataConfig struct {
+	Enabled       bool
+	AllowFallback bool // when false, DB failure is fatal; when true, fallback to local files
+	Dir           string
+}
+
+type UserSnapshotConfig struct {
+	Provider      string
+	AllowFallback bool // when false, Toolbox failure is fatal; when true, fallback to local snapshot
+	UserJSON      string
+	MusicMetaJSON string
+	MySekaiJSON   string
+}
+
+type DeckRecommendConfig struct {
+	Enabled        bool
+	ServiceBaseURL string
+	MasterdataDir  string
+	Timeout        time.Duration
+	MaxRetries     int
+	RetryWaitTime  time.Duration
+	DefaultAlgs    []string
+}
+
+// ── App composite root ──────────────────────────────────────────────────────
+
+type App struct {
+	Sekai           *sekaiDB.Client
+	PJSK            *pjskDB.Client
+	Drawing         *drawing.HarukiDrawingClient
+	Assets          *assets.AssetHelper
+	MetaLoader      *meta.Loader
+	Provider        provider.MasterDataProvider
+	Cards           *card.Controller
+	Decks           *deck.Controller
+	Edu             *education.Controller
+	Events          *event.Controller
+	Gachas          *gacha.Controller
+	Honors          *honor.Controller
+	Misc            *misc.Controller
+	MySekai         *mysekai.Controller
+	Music           *music.Controller
+	Aliases         *pjskalias.Service
+	Profiles        *profile.Controller
+	Score           *score.Controller
+	SK              *sk.Controller
+	Stamps          *stamp.Controller
+	VLive           *vlive.Controller
+	Bindings        *accountdata.BindingService
+	BanChecker      *accountdata.BanService
+	Snapshots       snapshot.SnapshotProvider
+	MySekaiPayloads snapshot.MySekaiPayloadProvider
+	ImageCache      *imagecache.Client
+	Censor          *censor.Service
+	SekaiAPI        *sekaiapi.SekaiAPIClient
+	Toolbox         *sekaiapi.HarukiToolboxClient
+	Tracker         *sekaiapi.TrackerClient
+	Config          Config
+}
+
+// ── Masterdata types ────────────────────────────────────────────────────────
+
+type renderMasterdataDirKind int
+
+const (
+	masterdataDirInvalid renderMasterdataDirKind = iota
+	masterdataDirFlat
+	masterdataDirRegionRoot
+)

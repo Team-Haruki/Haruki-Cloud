@@ -1,64 +1,10 @@
 package parser
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 )
-
-// TargetModule identifies target module resolved from command.
-type TargetModule int
-
-const (
-	ModuleUnknown TargetModule = iota
-	ModuleCard
-	ModuleGacha
-	ModuleMusic
-	ModuleEvent
-	ModuleDeck
-	ModuleSK
-	ModuleMysekai
-	ModuleProfile
-	ModuleHelp
-	ModuleEducation
-	ModuleScore
-	ModuleStamp
-	ModuleMisc
-	ModuleVLive
-	ModuleArrest
-	ModuleRegTime
-	ModuleCheckData
-	ModuleAlias
-)
-
-// ResolvedCommand stores normalized command parsing result.
-type ResolvedCommand struct {
-	Module            TargetModule
-	Mode              string
-	Query             string
-	Region            string
-	RegionExplicit    bool // true when the region was set by a prefix (/jp…) or -r flag
-	Params            json.RawMessage
-	IsHelp            bool
-	IsVerbose         bool
-	IsPreview         bool
-	RequesterPlatform string
-	RequesterUserID   string
-	RequesterGroupID  string
-}
-
-// GlobalCommandResolver provides unified command parsing.
-type GlobalCommandResolver struct {
-	extractor *Extractor
-	routes    []route
-}
-
-type route struct {
-	pattern *regexp.Regexp
-	module  TargetModule
-	mode    string
-}
 
 var globalRoutes []route
 

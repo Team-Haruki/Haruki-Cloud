@@ -6,38 +6,6 @@ import (
 	"strings"
 )
 
-// CommandType 定义指令类型
-type CommandType int
-
-const (
-	CmdTypeUnknown CommandType = iota
-
-	// 查询类 (SK)
-	CmdTypeEventQuerySelf      // 查自己 (sk)
-	CmdTypeEventQueryAt        // 查别人 (sk @123)
-	CmdTypeEventQueryUID       // 查指定UID (sk 350...)
-	CmdTypeEventQueryRank      // 查指定排名 (sk 100)
-	CmdTypeEventQueryRankRange // 查排名范围 (sk 100-200)
-	CmdTypeEventQueryMultiRank // 查多个排名 (sk 1 2 3)
-
-	// 操作类 (Bind)
-	CmdTypeBind   // 绑定 (bind 350...)
-	CmdTypeUnbind // 解绑 (unbind)
-)
-
-// EventCommand 是提供给数据库开发者的接口结构体
-type EventCommand struct {
-	Type      CommandType
-	TargetID  string // QQ ID (@12345) 或 Game UID (350...)
-	Param1    int    // Rank Start, or Single Rank
-	Param2    int    // Rank End
-	MultiArgs []int  // Multiple Ranks
-	Original  string // 原始指令
-}
-
-// CommandParser 负责解析数据库相关指令
-type CommandParser struct{}
-
 func NewCommandParser() *CommandParser {
 	return &CommandParser{}
 }

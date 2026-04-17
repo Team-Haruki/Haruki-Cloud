@@ -3,26 +3,16 @@ package drawing
 import (
 	"encoding/json"
 	"fmt"
-	"haruki-cloud/utils/logger"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
 )
-
-type ClientOption func(*resty.Client)
-
-type HarukiDrawingClient struct {
-	client     *resty.Client
-	baseURL    string
-	cache      *RenderCacheClient
-	localCache *localRenderCache
-	logger     *logger.Logger
-}
 
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(client *resty.Client) {

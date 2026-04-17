@@ -7,54 +7,6 @@ import (
 	"strings"
 )
 
-const (
-	ModeDelete      = "alias-delete"
-	ModeAdd         = "alias-add"
-	ModeQuery       = "alias-query"
-	ModePendingList = "alias-pending-list"
-	ModeApprove     = "alias-approve"
-	ModeReject      = "alias-reject"
-)
-
-type DeleteCommandParams struct {
-	AliasType      string   `json:"alias_type"`
-	Platform       string   `json:"platform"`
-	PlatformUserID string   `json:"platform_user_id"`
-	Target         string   `json:"target"`
-	Aliases        []string `json:"aliases"`
-}
-
-type AddCommandParams struct {
-	AliasType      string   `json:"alias_type"`
-	Platform       string   `json:"platform"`
-	PlatformUserID string   `json:"platform_user_id"`
-	Target         string   `json:"target"`
-	Aliases        []string `json:"aliases"`
-}
-
-type QueryCommandParams struct {
-	AliasType string `json:"alias_type"`
-	Target    string `json:"target"`
-}
-
-type ReviewListCommandParams struct {
-	Platform       string `json:"platform"`
-	PlatformUserID string `json:"platform_user_id"`
-}
-
-type ApproveCommandParams struct {
-	Platform       string  `json:"platform"`
-	PlatformUserID string  `json:"platform_user_id"`
-	ReviewIDs      []int64 `json:"review_ids"`
-}
-
-type RejectCommandParams struct {
-	Platform       string `json:"platform"`
-	PlatformUserID string `json:"platform_user_id"`
-	ReviewID       int64  `json:"review_id"`
-	Reason         string `json:"reason"`
-}
-
 func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json.RawMessage) ([]byte, error) {
 	switch mode {
 	case ModeDelete:

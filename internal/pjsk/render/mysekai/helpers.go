@@ -88,6 +88,10 @@ func extractMysekaiPhenoms(region renderregion.Value, resolve pathResolver, phen
 	if nowMs > 0 {
 		now = time.UnixMilli(nowMs)
 	}
+	// Use region timezone for deterministic display regardless of local TZ.
+	regionOffset := mysekaiRegionUTCOffset(region.String(), now)
+	regionLoc := time.FixedZone(region.String(), regionOffset*3600)
+	now = now.In(regionLoc)
 	firstHour, secondHour := mysekaiRefreshHoursLocal(region, now)
 
 	phenomStart := time.Date(now.Year(), now.Month(), now.Day(), firstHour, 0, 0, 0, now.Location())

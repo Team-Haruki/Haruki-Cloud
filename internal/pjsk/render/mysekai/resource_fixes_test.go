@@ -39,7 +39,7 @@ func TestExtractMysekaiPhenomsIncludesBirthdayRefreshSlot(t *testing.T) {
 	for _, item := range phenoms {
 		gotTexts = append(gotTexts, item.Text)
 	}
-	wantTexts := []string{"04:00", "16:00", "04:00", "16:00", "23:00"}
+	wantTexts := []string{"05:00", "17:00", "05:00", "17:00", "00:00"}
 	if !reflect.DeepEqual(gotTexts, wantTexts) {
 		t.Fatalf("unexpected phenom card times: got=%v want=%v", gotTexts, wantTexts)
 	}
@@ -85,7 +85,7 @@ func TestExtractMysekaiPhenomsPrefersFreshestSnapshotTime(t *testing.T) {
 	for _, item := range phenoms {
 		gotTexts = append(gotTexts, item.Text)
 	}
-	wantTexts := []string{"04:00", "16:00", "04:00", "16:00"}
+	wantTexts := []string{"05:00", "17:00", "05:00", "17:00"}
 	if !reflect.DeepEqual(gotTexts, wantTexts) {
 		t.Fatalf("unexpected phenom card times with fresh upload: got=%v want=%v", gotTexts, wantTexts)
 	}

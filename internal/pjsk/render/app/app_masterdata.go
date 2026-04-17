@@ -67,13 +67,7 @@ func resolveRenderProviderMasterdataDirFromWD(cfg Config, wd string) string {
 	return ""
 }
 
-type renderMasterdataDirKind int
 
-const (
-	masterdataDirInvalid renderMasterdataDirKind = iota
-	masterdataDirFlat
-	masterdataDirRegionRoot
-)
 
 func classifyRenderMasterdataDir(dir string) renderMasterdataDirKind {
 	info, err := os.Stat(dir)

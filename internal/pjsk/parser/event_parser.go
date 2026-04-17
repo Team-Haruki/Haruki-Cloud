@@ -8,48 +8,6 @@ import (
 	"time"
 )
 
-// EventQueryType 定义活动查询类型
-type EventQueryType int
-
-const (
-	QueryTypeEventUnknown EventQueryType = iota
-	QueryTypeEventID                     // 指定 ID: event123
-	QueryTypeEventSeq                    // 索引: -1, 10, next, prev
-	QueryTypeEventBan                    // Ban主: mnr1
-	QueryTypeEventFilter                 // 筛选: 25h, wl
-)
-
-// EventFilter 活动筛选条件
-type EventFilter struct {
-	Unit         string // 25h, vbs, etc.
-	EventType    string // marathon, cheerful_carnival, world_bloom
-	Year         int    // 2024
-	CharacterID  int    // 筛选单个角色的活动
-	CharacterIDs []int  // 筛选多个角色的活动
-	BannerCharID int    // 箱活ban主
-	Blend        bool   // 混活
-	Attr         string // cute, cool, etc.
-}
-
-// EventQueryInfo 解析后的活动查询信息
-type EventQueryInfo struct {
-	Type       EventQueryType
-	EventID    int
-	Index      int         // 正数或负数索引
-	Keyword    string      // "next", "prev", "current"
-	BanCharID  int         // Ban主角色ID
-	BanSeq     int         // Ban主第几次箱活
-	Filter     EventFilter // 筛选条件
-	Original   string
-	IsDetailed bool // 是否需要详细信息
-}
-
-// EventParser 活动查询解析器
-type EventParser struct {
-	nicknames        map[string]int
-	orderedNicknames []string
-}
-
 // CharacterIDByNickname resolves a character nickname to character id.
 func (p *EventParser) CharacterIDByNickname(token string) (int, bool) {
 	if p == nil {

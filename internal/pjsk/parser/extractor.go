@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-type dictRule struct {
-	re  *regexp.Regexp
-	val string
-}
-
 func buildRules(m map[string]string) []dictRule {
 	var keys []string
 	for k := range m {
@@ -55,10 +50,7 @@ func extractByRules(text string, rules []dictRule) ExtractResult[string] {
 	return ExtractResult[string]{Value: "", Remaining: text, Found: false}
 }
 
-// Extractor 通用特征提取器
-type Extractor struct {
-	nicknames map[string]int // 昵称 -> CharacterID
-}
+// Extractor 通用特征提取器 — see types.go for struct definition.
 
 var supportedRegions = []string{"jp", "en", "cn", "tw", "kr"}
 
@@ -69,12 +61,7 @@ func NewExtractor(nicknames map[string]int) *Extractor {
 	}
 }
 
-// ExtractResult 提取结果
-type ExtractResult[T any] struct {
-	Value     T
-	Remaining string
-	Found     bool
-}
+// ExtractResult — see types.go for struct definition.
 
 // ExtractCharacter 提取角色 ID
 func (e *Extractor) ExtractCharacter(text string) ExtractResult[int] {
@@ -177,13 +164,6 @@ func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 }
 
 // --- 限定类型提取 ---
-
-const (
-	SupplyNormal   = "normal"
-	SupplyLimited  = "limited"
-	SupplyFes      = "festival"
-	SupplyBirthday = "birthday"
-)
 
 var supplyMap = map[string]string{
 	"fes": "festival", "fES": "festival",

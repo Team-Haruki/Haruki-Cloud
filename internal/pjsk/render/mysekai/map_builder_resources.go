@@ -1,6 +1,7 @@
 package mysekai
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -177,6 +178,18 @@ func (c *Controller) buildMapResourceDrops(
 			})
 		}
 	}
+	slices.SortFunc(resourceDrops, func(a, b drawing.MysekaiMsrMapResourceDrop) int {
+		if c := cmp.Compare(a.PositionX, b.PositionX); c != 0 {
+			return c
+		}
+		if c := cmp.Compare(a.PositionZ, b.PositionZ); c != 0 {
+			return c
+		}
+		if c := cmp.Compare(a.Type, b.Type); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.ID, b.ID)
+	})
 	return resourceDrops
 }
 

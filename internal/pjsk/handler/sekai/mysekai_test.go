@@ -57,7 +57,7 @@ func TestMysekaiOverviewHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msam",
 		ArgText:    "13 all force",
@@ -100,7 +100,7 @@ func TestMysekaiMapHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "all",
@@ -132,7 +132,7 @@ func TestMysekaiMapHandleBuildsSingleMapParams(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "1",
@@ -167,7 +167,7 @@ func TestMysekaiMapHandleBuildsGardenMapParams(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "2",
@@ -198,7 +198,7 @@ func TestMysekaiMapHandleParsesCompactMapIndices(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "13 all",
@@ -230,7 +230,7 @@ func TestMysekaiMapHandleRejectsInvalidMapIndex(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiMapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	_, err := h.Handle(&handler.PjskHandlerContext{
+	_, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msm",
 		ArgText:    "9",
@@ -250,7 +250,7 @@ func TestMysekaiPhotoHandleBuildsResolvedCommand(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msp",
 		ArgText:    "-1",
@@ -285,7 +285,7 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "",
@@ -313,7 +313,7 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("unexpected list params: %+v", listParams)
 	}
 
-	result, err = h.Handle(&handler.PjskHandlerContext{
+	result, err = h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "miku ln all",
@@ -344,21 +344,16 @@ func TestMysekaiBlueprintHandleBuildsResolvedCommands(t *testing.T) {
 		t.Fatalf("unexpected talk params: %+v", talkParams)
 	}
 
-	result, err = h.Handle(&handler.PjskHandlerContext{
+	_, err = h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "not-a-character",
 	})
-	if err != nil {
-		t.Fatalf("Handle() fallback list error = %v", err)
+	if err == nil {
+		t.Fatal("expected invalid character query to fail")
 	}
-
-	resolved = result
-	if resolved == nil {
-		t.Fatal("expected resolved command, got nil")
-	}
-	if resolved.Mode != "mysekai-fixture-list" {
-		t.Fatalf("unexpected fallback resolved command: %+v", resolved)
+	if !strings.Contains(err.Error(), "/msb 角色名") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
@@ -366,7 +361,7 @@ func TestMysekaiBlueprintHandleSupportsCompactCharacterAliases(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiBlueprintHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "akt vbs all",
@@ -398,11 +393,98 @@ func TestMysekaiBlueprintHandleSupportsCompactCharacterAliases(t *testing.T) {
 	}
 }
 
+func TestMysekaiBlueprintHandleRejectsFixtureIDs(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiBlueprintHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	_, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msb",
+		ArgText:    "123",
+	})
+	if err == nil {
+		t.Fatal("expected fixture id query to fail")
+	}
+	if !strings.Contains(err.Error(), "/msf 家具ID") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestMysekaiFurnitureHandleBuildsResolvedCommands(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiFurnitureHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msf",
+		ArgText:    "",
+	})
+	if err != nil {
+		t.Fatalf("Handle() list error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-fixture-list" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+
+	var listParams struct {
+		ShowID        bool `json:"show_id"`
+		OnlyCraftable bool `json:"only_craftable"`
+	}
+	if err := json.Unmarshal(resolved.Params, &listParams); err != nil {
+		t.Fatalf("unmarshal list params: %v", err)
+	}
+	if !listParams.ShowID || listParams.OnlyCraftable {
+		t.Fatalf("unexpected list params: %+v", listParams)
+	}
+
+	result, err = h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msf",
+		ArgText:    "1 2",
+	})
+	if err != nil {
+		t.Fatalf("Handle() detail error = %v", err)
+	}
+
+	resolved = result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-fixture-detail" {
+		t.Fatalf("unexpected resolved command: %+v", resolved)
+	}
+	if resolved.Query != "1 2" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+}
+
+func TestMysekaiFurnitureHandleRejectsCharacterQuery(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiFurnitureHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	_, err := h.Handle(&handler.HandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msf",
+		ArgText:    "miku",
+	})
+	if err == nil {
+		t.Fatal("expected character query to fail")
+	}
+	if !strings.Contains(err.Error(), "/msb 角色名") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestMysekaiDoorUpgradeHandleSupportsShowAll(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiDoorUpgradeHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.HandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msg",
 		ArgText:    "all",

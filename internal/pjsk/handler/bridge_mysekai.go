@@ -14,6 +14,22 @@ import (
 
 type concurrentMessageJob func(context.Context) (onebot11.Message, error)
 
+func isStaticMySekaiFixtureListQuery(q mysekai.FixtureListQuery) bool {
+	showProfile := true
+	if q.ShowProfile != nil {
+		showProfile = *q.ShowProfile
+	}
+	showProgress := true
+	if q.ShowProgress != nil {
+		showProgress = *q.ShowProgress
+	}
+	showObtained := true
+	if q.ShowObtained != nil {
+		showObtained = *q.ShowObtained
+	}
+	return !showProfile && !showProgress && !showObtained
+}
+
 func executeConcurrentMessages(ctx context.Context, jobs ...concurrentMessageJob) (onebot11.Message, error) {
 	if len(jobs) == 0 {
 		return nil, nil
@@ -78,6 +94,20 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 
 	regionStr := rc.RegionStr
+	staticFixtureListQuery := mysekai.FixtureListQuery{Region: regionStr}
+	if rc.Cmd.Mode == "mysekai-fixture-list" {
+		mergeParams(rc.Cmd.Params, &staticFixtureListQuery)
+		if isStaticMySekaiFixtureListQuery(staticFixtureListQuery) {
+			if strings.TrimSpace(staticFixtureListQuery.Region) == "" {
+				staticFixtureListQuery.Region = regionWithDefault(regionStr)
+			}
+			data, err := rc.App.MySekai.RenderFixtureList(staticFixtureListQuery)
+			if err != nil {
+				return nil, err
+			}
+			return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+		}
+	}
 
 	renderCtx, err := resolveMySekaiRenderContext(rc.Ctx, rc.App, p, regionStr, rc.Cmd.RegionExplicit)
 	if err != nil {

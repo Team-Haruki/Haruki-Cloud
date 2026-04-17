@@ -6,9 +6,26 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/handler"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 )
+
+func mysekaiFixtureUsageError(trigger string) error {
+	return onebot11.NewReplayError(
+		"使用方式:\n%s\n%s 家具ID\n查看角色未读家具请使用：/msb 角色名",
+		trigger,
+		trigger,
+	)
+}
+
+func mysekaiBlueprintUsageError(trigger string) error {
+	return onebot11.NewReplayError(
+		"使用方式:\n%s\n%s 角色名\n查看家具详情请使用：/msf 家具ID",
+		trigger,
+		trigger,
+	)
+}
 
 func (sekaiHandlers) MysekaiResourceHandle() SekaiCommandHandler {
 	return SekaiCommandHandler{
@@ -176,7 +193,6 @@ func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 				return resolved, nil
 			}
 
-			showAllTalks := strings.Contains(strings.ToLower(args), "all")
 			cleaned := cleanMysekaiArgs(args)
 			if cleaned == "" {
 				selfParams["show_id"] = true
@@ -184,11 +200,7 @@ func (sekaiHandlers) MysekaiFurnitureHandle() SekaiCommandHandler {
 				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 
-			selfParams["show_id"] = true
-			selfParams["show_all_talks"] = showAllTalks
-			resolved := makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", selfParams)
-			resolved.Query = cleaned
-			return resolved, nil
+			return nil, mysekaiFixtureUsageError(ctx.originalTriggerCmd)
 		},
 	}
 }
@@ -267,6 +279,9 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 			}
 
 			args := strings.TrimSpace(ctx.GetArgs())
+			if ids := parseMysekaiFixtureIDs(args); len(ids) > 0 {
+				return nil, mysekaiBlueprintUsageError(ctx.originalTriggerCmd)
+			}
 			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
 			if query == "" {
 				selfParams["show_id"] = true
@@ -274,9 +289,7 @@ func (sekaiHandlers) MysekaiBlueprintHandle() SekaiCommandHandler {
 				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
-				selfParams["show_id"] = true
-				selfParams["only_craftable"] = true
-				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
+				return nil, mysekaiBlueprintUsageError(ctx.originalTriggerCmd)
 			}
 			selfParams["show_id"] = true
 			selfParams["show_all_talks"] = showAllTalks

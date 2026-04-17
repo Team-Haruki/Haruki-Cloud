@@ -87,11 +87,15 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 		return extractDeckExplicitEventSelection(remaining, eventID, params)
 	}
 
-	if remaining, ok := extractDeckCurrentWorldBloomSelection(args, params); ok {
+	if remaining, ok, err := extractDeckCurrentWorldBloomSelection(args, params); err != nil {
+		return "", err
+	} else if ok {
 		return remaining, nil
 	}
 
-	if turn, charID, charQuery, remaining := extractDeckSimulatedWorldBloom(args); turn > 0 && (charID > 0 || charQuery != "") {
+	if turn, charID, charQuery, remaining, err := extractDeckSimulatedWorldBloom(args); err != nil {
+		return "", err
+	} else if turn > 0 && (charID > 0 || charQuery != "") {
 		params.WorldBloomEventTurn = intPtr(turn)
 		if charID > 0 {
 			params.WorldBloomCharacterID = intPtr(charID)
@@ -115,12 +119,8 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAutoQueryParams) (string, error) {
 	params.EventID = eventID
 	if selector, remaining := extractDeckWorldBloomSelectorCandidate(args); selector != "" {
-		if charID, _, leftover := extractDeckCharacterCandidate(remaining, false); charID > 0 {
-			params.WorldBloomCharacterID = intPtr(charID)
-			if params.EventUnit == "" {
-				params.EventUnit = deckCharacterUnit(charID)
-			}
-			return leftover, nil
+		if charID, _, _ := extractDeckCharacterCandidate(remaining, false); charID > 0 {
+			return "", invalidDeckWorldBloomMixedSelectorError()
 		}
 		params.WorldBloomCharacterQuery = selector
 		return remaining, nil
@@ -141,25 +141,22 @@ func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAu
 	return normalizeDeckSpaces(args), nil
 }
 
-func extractDeckCurrentWorldBloomSelection(args string, params *deckAutoQueryParams) (string, bool) {
+func extractDeckCurrentWorldBloomSelection(args string, params *deckAutoQueryParams) (string, bool, error) {
 	selector, remaining := extractDeckWorldBloomSelectorCandidate(args)
 	if selector == "" {
-		return normalizeDeckSpaces(args), false
+		return normalizeDeckSpaces(args), false, nil
 	}
 
 	if charID, _, leftover := extractDeckCharacterCandidate(remaining, false); charID > 0 {
 		if turn, ok := parseDeckWorldBloomTurn(selector); ok {
-			params.WorldBloomEventTurn = intPtr(turn)
-			params.WorldBloomCharacterID = intPtr(charID)
-			if params.EventUnit == "" {
-				params.EventUnit = deckCharacterUnit(charID)
-			}
-			return normalizeDeckSpaces(leftover), true
+			_ = turn
+			return "", false, invalidDeckWorldBloomMixedSelectorError()
 		}
+		_ = leftover
 	}
 
 	params.WorldBloomCharacterQuery = selector
-	return remaining, true
+	return remaining, true, nil
 }
 
 func extractDeckWorldBloomSelectorCandidate(args string) (string, string) {
@@ -206,22 +203,26 @@ func parseDeckWorldBloomTurn(value string) (int, bool) {
 	return turn, true
 }
 
-func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuery string, remaining string) {
+func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuery string, remaining string, err error) {
 	matches := deckWlTurnRegex.FindStringSubmatch(args)
 	if len(matches) < 2 {
-		return 0, 0, "", strings.TrimSpace(args)
+		return 0, 0, "", strings.TrimSpace(args), nil
 	}
 	turnValue, err := strconv.Atoi(matches[1])
 	if err != nil || turnValue <= 0 {
-		return 0, 0, "", strings.TrimSpace(args)
+		return 0, 0, "", strings.TrimSpace(args), nil
 	}
 
 	args = deckWlTurnRegex.ReplaceAllString(args, " ")
-	charID, charQuery, args = extractDeckCharacterCandidate(args, true)
+	charID, charQuery, args = extractDeckCharacterCandidate(args, false)
 	if charID <= 0 && charQuery == "" {
-		return 0, 0, "", strings.TrimSpace(args)
+		return 0, 0, "", strings.TrimSpace(args), nil
 	}
-	return turnValue, charID, charQuery, normalizeDeckSpaces(args)
+	return 0, 0, "", "", invalidDeckWorldBloomMixedSelectorError()
+}
+
+func invalidDeckWorldBloomMixedSelectorError() error {
+	return onebot11.NewReplayError("不能同时指定 WL 章节和角色，请只保留其中一种写法")
 }
 
 func extractDeckExplicitEventID(args string) (*int, string) {

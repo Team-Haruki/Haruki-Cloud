@@ -1,7 +1,7 @@
 package secure
 
 import (
-	"log"
+	"log/slog"
 
 	"haruki-cloud/internal/core/crypto"
 
@@ -21,7 +21,7 @@ type Config struct {
 //	Response body = Noise NK Message 2 (<- e, ee, payload)
 func New(config Config) fiber.Handler {
 	if config.ServerPrivateKey == nil {
-		log.Fatal("Secure middleware: ServerPrivateKey is required")
+		panic("secure middleware: ServerPrivateKey is required")
 	}
 
 	return func(c fiber.Ctx) error {
@@ -39,7 +39,7 @@ func New(config Config) fiber.Handler {
 
 		plaintext, err := nc.DecryptPacket(ciphertext)
 		if err != nil {
-			log.Printf("SecureMiddleware: Handshake/Decrypt failed: %v", err)
+			slog.Warn("SecureMiddleware: Handshake/Decrypt failed", "error", err)
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Secure handshake failed (Decrypt)"})
 		}
 
@@ -57,7 +57,7 @@ func New(config Config) fiber.Handler {
 		responseBody := c.Response().Body()
 		encrypted, err := nc.EncryptPacket(responseBody)
 		if err != nil {
-			log.Printf("SecureMiddleware: Encryption failed: %v", err)
+			slog.Warn("SecureMiddleware: Encryption failed", "error", err)
 			return c.SendStatus(fiber.StatusInternalServerError)
 		}
 

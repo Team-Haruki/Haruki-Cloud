@@ -215,10 +215,10 @@ func fillEventRecordTrackerRanks(
 			}
 
 			mu.Lock()
+			defer mu.Unlock()
 			if _, exists := rankByEvent[eventIDCopy]; !exists {
 				rankByEvent[eventIDCopy] = *rank
 			}
-			mu.Unlock()
 			return nil
 		})
 	}

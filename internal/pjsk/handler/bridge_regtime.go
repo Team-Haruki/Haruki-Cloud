@@ -66,7 +66,9 @@ func parseUserTimeZone(offset string) (*time.Location, string) {
 	}
 	minutes := 0
 	if len(parts) == 2 {
-		minutes, _ = strconv.Atoi(parts[1])
+		if m, err := strconv.Atoi(parts[1]); err == nil && m >= 0 && m < 60 {
+			minutes = m
+		}
 	}
 	totalSecs := sign * (hours*3600 + minutes*60)
 	var label string

@@ -78,11 +78,13 @@ func (c *Controller) extractVisitCharacters(region renderregion.Value, merged ma
 
 		var memoriaPath *string
 		if gameCharacterID := c.gameCharacterIDByUnitID(displayUnitID); gameCharacterID > 0 {
-			memoriaPath = new(c.regionPath(region, fmt.Sprintf("mysekai/item_preview/material/item_memoria_%d.png", gameCharacterID)))
+			path := c.regionPath(region, fmt.Sprintf("mysekai/item_preview/material/item_memoria_%d.png", gameCharacterID))
+			memoriaPath = &path
 		}
 		var reservationIconPath *string
 		if boolValue(entry["isReservation"]) {
-			reservationIconPath = new(c.staticPath("mysekai/invitationcard.png"))
+			path := c.staticPath("mysekai/invitationcard.png")
+			reservationIconPath = &path
 		}
 
 		result = append(result, drawing.MysekaiVisitCharacter{

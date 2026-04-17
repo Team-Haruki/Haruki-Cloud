@@ -22,6 +22,14 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		showID = *query.ShowID
 	}
 	onlyCraftable := query.OnlyCraftable != nil && *query.OnlyCraftable
+	showProfile := true
+	if query.ShowProfile != nil {
+		showProfile = *query.ShowProfile
+	}
+	showProgress := true
+	if query.ShowProgress != nil {
+		showProgress = *query.ShowProgress
+	}
 
 	fixturesData := c.masterdata.loadList("mysekaiFixtures.json")
 	mainGenreMap := c.masterdata.loadMapByID("mysekaiFixtureMainGenres.json")
@@ -130,10 +138,15 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 			}
 			if subID != -1 && len(grouped[genreID]) > 1 {
 				if info := subGenreMap[subID]; len(info) > 0 {
-					subGenre.Name = new(stringValue(info["name"]))
-					subGenre.ImagePath = new(c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"]))))
-					if total := subProgressAll[genreID][subID]; total > 0 {
-						subGenre.ProgressMessage = new(fmt.Sprintf("%d/%d (%.1f%%)", subProgressObtained[genreID][subID], total, percent(subProgressObtained[genreID][subID], total)))
+					name := stringValue(info["name"])
+					imagePath := c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"])))
+					subGenre.Name = &name
+					subGenre.ImagePath = &imagePath
+					if showProgress {
+						if total := subProgressAll[genreID][subID]; total > 0 {
+							message := fmt.Sprintf("%d/%d (%.1f%%)", subProgressObtained[genreID][subID], total, percent(subProgressObtained[genreID][subID], total))
+							subGenre.ProgressMessage = &message
+						}
 					}
 				}
 			}
@@ -149,19 +162,28 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainInfo["assetbundleName"]))),
 			SubGenres: subGenres,
 		}
-		if total := mainProgressAll[genreID]; total > 0 {
-			mainGenre.ProgressMessage = new(fmt.Sprintf("%d/%d (%.1f%%)", mainProgressObtained[genreID], total, percent(mainProgressObtained[genreID], total)))
+		if showProgress {
+			if total := mainProgressAll[genreID]; total > 0 {
+				message := fmt.Sprintf("%d/%d (%.1f%%)", mainProgressObtained[genreID], total, percent(mainProgressObtained[genreID], total))
+				mainGenre.ProgressMessage = &message
+			}
 		}
 		mainGenres = append(mainGenres, mainGenre)
 	}
 
+	var profile *drawing.ProfileCardRequest
+	if showProfile {
+		profile = c.mysekaiProfileCard(region, merged, query.Profile, false)
+	}
+
 	request := &drawing.MysekaiFixtureListRequest{
-		Profile:    c.mysekaiProfileCard(region, merged, query.Profile, false),
+		Profile:    profile,
 		ShowID:     showID,
 		MainGenres: mainGenres,
 	}
-	if totalAll > 0 {
-		request.ProgressMessage = new(fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", totalObtained, totalAll, percent(totalObtained, totalAll)))
+	if showProgress && totalAll > 0 {
+		message := fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", totalObtained, totalAll, percent(totalObtained, totalAll))
+		request.ProgressMessage = &message
 	}
 	return request, nil
 }
@@ -229,8 +251,10 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 		}
 
 		if subGenreID != 0 {
-			request.SubGenreName = new(stringValue(subGenre["name"]))
-			request.SubGenreImagePath = new(c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(subGenre["assetbundleName"]))))
+			subName := stringValue(subGenre["name"])
+			subPath := c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(subGenre["assetbundleName"])))
+			request.SubGenreName = &subName
+			request.SubGenreImagePath = &subPath
 		}
 		if blueprint := findFixtureBlueprint(blueprints, fixtureID); blueprint != nil {
 			request.BasicInfo = append(request.BasicInfo, fixtureBlueprintInfo(blueprint)...)

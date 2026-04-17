@@ -158,9 +158,13 @@ func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
 			if strings.Contains(strings.ToLower(args), "craft") {
 				onlyCraftable = true
 			}
+			showProfile := false
+			showProgress := false
 			params := map[string]any{
 				"show_id":        showID,
 				"only_craftable": onlyCraftable,
+				"show_profile":   showProfile,
+				"show_progress":  showProgress,
 			}
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
@@ -197,6 +201,8 @@ func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 			if cleaned == "" {
 				selfParams["show_id"] = true
 				selfParams["only_craftable"] = false
+				selfParams["show_profile"] = false
+				selfParams["show_progress"] = false
 				return makeResolvedCmdWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 

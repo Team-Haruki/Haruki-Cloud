@@ -264,6 +264,91 @@ func TestBuildFixtureListRequestSortsFixturesByIDWithinGroup(t *testing.T) {
 	}
 }
 
+func TestBuildFixtureListRequestCanHideProfile(t *testing.T) {
+	root := t.TempDir()
+	userPath := filepath.Join(root, "user.json")
+	mysekaiPath := filepath.Join(root, "mysekai.json")
+	masterdataDir := filepath.Join(root, "masterdata")
+
+	userJSON := `{
+  "now": 1700000000,
+  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
+  "userProfile": {},
+  "userDecks": [{"deckId": 1}],
+  "userCards": []
+}`
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiBlueprints": [{"mysekaiBlueprintId": 1001}]
+  }
+}`
+
+	if err := os.WriteFile(userPath, []byte(userJSON), 0o644); err != nil {
+		t.Fatalf("write user snapshot: %v", err)
+	}
+	if err := os.WriteFile(mysekaiPath, []byte(mysekaiJSON), 0o644); err != nil {
+		t.Fatalf("write mysekai snapshot: %v", err)
+	}
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{
+			"id":                        2001,
+			"name":                      "Wood Chair",
+			"assetbundleName":           "wood_chair",
+			"mysekaiFixtureType":        "furniture",
+			"mysekaiFixtureMainGenreId": 1,
+			"mysekaiFixtureSubGenreId":  11,
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 1, "name": "Main A", "assetbundleName": "main_a"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]any{
+		{"id": 11, "name": "Sub A", "assetbundleName": "sub_a"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{
+		{"id": 1001, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 2001},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
+
+	service := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
+		DefaultRegion: renderregion.JP,
+		UserJSON:      userPath,
+		MySekaiJSON:   mysekaiPath,
+	})
+	controller := NewController(nil, service, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
+
+	showProfile := false
+	showProgress := false
+	req, err := controller.BuildFixtureListRequest(FixtureListQuery{
+		Region:       "jp",
+		ShowProfile:  &showProfile,
+		ShowProgress: &showProgress,
+		Profile:      &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest() error = %v", err)
+	}
+	if req.Profile != nil {
+		t.Fatalf("expected fixture list profile to be hidden, got %+v", req.Profile)
+	}
+	if req.ProgressMessage != nil {
+		t.Fatalf("expected fixture list progress to be hidden, got %+v", req.ProgressMessage)
+	}
+	for _, mainGenre := range req.MainGenres {
+		if mainGenre.ProgressMessage != nil {
+			t.Fatalf("expected main genre progress to be hidden, got %+v", mainGenre.ProgressMessage)
+		}
+		for _, subGenre := range mainGenre.SubGenres {
+			if subGenre.ProgressMessage != nil {
+				t.Fatalf("expected sub genre progress to be hidden, got %+v", subGenre.ProgressMessage)
+			}
+		}
+	}
+}
+
 func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
 	profile := &drawing.ProfileCardRequest{

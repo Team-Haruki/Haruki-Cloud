@@ -4,12 +4,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
 	"time"
 
-	onebot11 "haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/onebot11"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -74,11 +75,11 @@ func (g *RequestGuard) Acquire(ctx context.Context, req BotCommandRequest) bool 
 
 	// 3. Dedup lock: only the first instance to SET NX for this exact event proceeds.
 	lockKey := dedupKey(req)
-	ok, err := g.redis.SetNX(ctx, lockKey, "1", dedupTTL).Result()
-	if err != nil {
-		return true // fail open on Redis error
+	res, err := g.redis.SetArgs(ctx, lockKey, "1", redis.SetArgs{TTL: dedupTTL, Mode: "NX"}).Result()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return true // fail open on real Redis error
 	}
-	return ok
+	return res == "OK"
 }
 
 // MarkComplete arms the per-user rate limit key. Call this after any request
@@ -118,14 +119,14 @@ func rateLimitKey(req BotCommandRequest) string {
 func extractMessageText(msg onebot11.Message) string {
 	var sb strings.Builder
 	for _, seg := range msg {
-		if seg.Type != onebot11.TYPE_TEXT {
+		if seg.Type != onebot11.TypeText {
 			continue
 		}
 		switch d := seg.Data.(type) {
 		case onebot11.TextData:
 			sb.WriteString(d.Text)
 		case map[string]string:
-			sb.WriteString(d[onebot11.KEY_TEXT])
+			sb.WriteString(d[onebot11.KeyText])
 		}
 	}
 	return sb.String()

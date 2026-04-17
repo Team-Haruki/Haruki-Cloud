@@ -11,22 +11,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
-type allCardSource interface {
-	GetAllCards() ([]*masterdata.Card, error)
-}
-
-type areaItemLevelCapSource interface {
-	AreaItemLevelCaps(limit int) map[int]int
-}
-
-type cardUnitSource interface {
-	GetUnitByCardID(cardID int) (string, error)
-}
-
-type characterSource interface {
-	GetCharacterByID(id int) (*masterdata.Character, error)
-}
-
 func (c *Controller) applyProfilePreset(region renderregion.Value, raw *snapshot.RawUserData, query AutoQuery) error {
 	if raw == nil || (!query.MaxProfile && !query.SubMaxProfile) {
 		return nil

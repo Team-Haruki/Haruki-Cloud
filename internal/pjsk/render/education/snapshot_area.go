@@ -272,11 +272,6 @@ var areaItemShopIDByAreaID = map[int]int{
 	13: 11,
 }
 
-type areaItemShopTarget struct {
-	itemID       int
-	sortedLevels []int
-}
-
 func (c *Controller) fillAreaItemShopItemsByShopSequence(
 	source DataSource,
 	itemIDs []int,

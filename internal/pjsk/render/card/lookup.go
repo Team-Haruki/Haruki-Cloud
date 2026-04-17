@@ -10,11 +10,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-type ImageResult struct {
-	Card  *masterdata.Card
-	Paths []string
-}
-
 func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 	if c == nil {
 		return nil, fmt.Errorf("card controller is not configured")

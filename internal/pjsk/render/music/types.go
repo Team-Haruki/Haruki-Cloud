@@ -1,6 +1,149 @@
 package music
 
-import "haruki-cloud/internal/pjsk/drawing"
+import (
+	"context"
+
+	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/meta"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/provider"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/internal/pjsk/render/snapshot"
+)
+
+// ── Data source ─────────────────────────────────────────────────────────────
+
+type DataSource interface {
+	DefaultRegion() renderregion.Value
+	SearchMusic(query string) (*masterdata.Music, error)
+	GetMusicByID(id int) (*masterdata.Music, error)
+	GetMusicByEventID(eventID int) (*masterdata.Music, error)
+	GetMusics() []*masterdata.Music
+	GetBanEvents(charID int) []*masterdata.Event
+	GetMusicLocalizedTitles(musicID int) ([]string, error)
+	GetMusicDifficulties(musicID int) ([]*masterdata.MusicDifficulty, error)
+	GetMusicVocals(musicID int) ([]*masterdata.MusicVocal, error)
+	GetMusicTags(musicID int) ([]string, error)
+	GetCharacterByID(id int) (*masterdata.Character, error)
+	GetOutsideCharacterByID(id int) (string, error)
+	GetPrimaryEventByMusicID(musicID int) (*masterdata.Event, error)
+	GetLimitedTimeMusics(musicID int) []*masterdata.LimitedTimeMusic
+}
+
+type contextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
+type musicAliasResolver interface {
+	TryResolveMusicID(ctx context.Context, token string) (int, bool, error)
+	TryResolveMusicTitleOrAliasID(ctx context.Context, token string) (int, bool, error)
+}
+
+// ── Controller & builder ────────────────────────────────────────────────────
+
+type Controller struct {
+	sources               *regionsource.Registry[DataSource]
+	drawing               *drawing.HarukiDrawingClient
+	assets                *assets.AssetHelper
+	banCharacterNicknames map[string]int
+	aliases               musicAliasResolver
+	snapshot              snapshot.Snapshot
+	metaLoader            *meta.Loader
+	requestCtx            context.Context
+}
+
+type Builder struct {
+	source   DataSource
+	fallback DataSource
+	assets   *assets.AssetHelper
+}
+
+// ProviderAdapter bridges provider.MasterDataProvider to music.DataSource.
+type ProviderAdapter struct {
+	provider.ProviderAdapterBase
+}
+
+type SearchService struct {
+	source        DataSource
+	parser        *Parser
+	titleResolver func(string) (*masterdata.Music, error)
+}
+
+// ── Parser ──────────────────────────────────────────────────────────────────
+
+type QueryType int
+
+const (
+	QueryTypeUnknown QueryType = iota
+	QueryTypeID
+	QueryTypeSeq
+	QueryTypeEvent
+	QueryTypeBan
+	QueryTypeTitle
+	QueryTypeChart
+)
+
+type QueryInfo struct {
+	Type               QueryType
+	Value              int
+	Diff               string
+	Difficulty         string
+	MusicID            int
+	Keyword            string
+	BanCharID          int
+	BanSeq             int
+	Original           string
+	AllowTitleFallback bool
+}
+
+type Parser struct {
+	banCharacterNicknames map[string]int
+}
+
+// ── Lookup result types ─────────────────────────────────────────────────────
+
+type NoteCountMatch struct {
+	Music          *masterdata.Music
+	Difficulty     string
+	PlayLevel      int
+	TotalNoteCount int
+}
+
+type CoverResult struct {
+	Music      *masterdata.Music
+	JacketPath string
+}
+
+type BPMEvent struct {
+	Bar      float64
+	BPM      float64
+	Duration float64
+}
+
+type BPMResult struct {
+	Music      *masterdata.Music
+	JacketPath string
+	Difficulty string
+	MainBPM    float64
+	Events     []BPMEvent
+	BarCount   int
+	Duration   float64
+}
+
+type BPMMatch struct {
+	Music      *masterdata.Music
+	Difficulty string
+	MainBPM    float64
+	Events     []BPMEvent
+}
+
+type noteCountFinder interface {
+	FindMusicDifficultiesByNoteCount(noteCount int) ([]*masterdata.MusicDifficulty, error)
+}
+
+// ── Query types ─────────────────────────────────────────────────────────────
 
 type Query struct {
 	Query      string `json:"query"`

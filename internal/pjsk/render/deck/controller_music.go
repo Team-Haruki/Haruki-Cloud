@@ -5,14 +5,8 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
-
-type MusicSource interface {
-	DefaultRegion() renderregion.Value
-	GetMusicByID(id int) (*masterdata.Music, error)
-}
 
 func (c *Controller) resolveMusicSource(requested renderregion.Value) (renderregion.Value, MusicSource, bool) {
 	if c == nil || c.musicSources == nil {

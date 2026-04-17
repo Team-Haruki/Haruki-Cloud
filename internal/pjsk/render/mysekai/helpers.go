@@ -9,9 +9,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-// pathResolver resolves a relative asset path to its full Drawing-API-relative path.
-type pathResolver func(relPath string) string
-
 func extractMysekaiGateInfo(merged map[string]any) (int, int, int) {
 	visit, ok := merged["userMysekaiGateCharacterVisit"].(map[string]any)
 	if !ok {

@@ -9,12 +9,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-type Builder struct {
-	source   DataSource
-	fallback DataSource
-	assets   *assets.AssetHelper
-}
-
 func NewBuilder(source DataSource, fallback DataSource, assetHelper *assets.AssetHelper) *Builder {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)

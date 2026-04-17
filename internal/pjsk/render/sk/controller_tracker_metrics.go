@@ -8,17 +8,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-type trackerScoreSample struct {
-	score     int
-	timestamp int64
-}
-
-type trackerRankScoreSample struct {
-	rank      int
-	score     int
-	timestamp int64
-}
-
 func (c *Controller) enrichRankInfoByRank(server string, eventID, rank int, wlCharacterID *int, info *drawing.RankInfo) {
 	if c == nil || c.tracker == nil || info == nil || rank <= 0 {
 		return

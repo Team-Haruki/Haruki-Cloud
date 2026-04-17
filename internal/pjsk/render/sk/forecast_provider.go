@@ -16,35 +16,6 @@ const (
 	forecastSekaURL        = "https://jiiku831.github.io/%sdata/sekarun.js"
 )
 
-// ForecastScore represents one forecasted final score for a rank.
-type ForecastScore struct {
-	Score     int
-	Timestamp int64
-	Source    string
-}
-
-// ForecastSourceData keeps one forecast source's scores and fetch metadata.
-type ForecastSourceData struct {
-	Scores    map[int]ForecastScore
-	FetchedAt int64
-}
-
-// ForecastProvider fetches sk forecast scores from external sources.
-type ForecastProvider interface {
-	Fetch(ctx context.Context, region string, eventID int, ranks []int) (map[int]ForecastScore, error)
-}
-
-// ForecastProviderBySource can return forecast scores grouped by data source.
-type ForecastProviderBySource interface {
-	FetchBySource(ctx context.Context, region string, eventID int, ranks []int) (map[string]ForecastSourceData, error)
-}
-
-// RemoteForecastProvider fetches forecast data from public remote sources
-// used by Lunabot (33kit / Moesekai / SekaRun).
-type RemoteForecastProvider struct {
-	http *resty.Client
-}
-
 // NewRemoteForecastProvider creates a forecast provider with sane HTTP defaults.
 func NewRemoteForecastProvider() *RemoteForecastProvider {
 	return &RemoteForecastProvider{

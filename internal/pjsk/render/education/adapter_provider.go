@@ -6,11 +6,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/provider"
 )
 
-// ProviderAdapter bridges provider.MasterDataProvider to education.DataSource.
-type ProviderAdapter struct {
-	provider.ProviderAdapterBase
-}
-
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
 	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }

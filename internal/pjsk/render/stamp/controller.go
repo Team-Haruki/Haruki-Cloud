@@ -15,18 +15,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-type Controller struct {
-	sources *regionsource.Registry[DataSource]
-	drawing *drawing.HarukiDrawingClient
-	assets  *assets.AssetHelper
-}
-
-type contextualDataSource interface {
-	WithContext(ctx context.Context) DataSource
-}
-
-const stampPageSize = 25
-
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)

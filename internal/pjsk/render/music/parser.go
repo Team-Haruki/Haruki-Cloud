@@ -6,35 +6,6 @@ import (
 	"strings"
 )
 
-type QueryType int
-
-const (
-	QueryTypeUnknown QueryType = iota
-	QueryTypeID
-	QueryTypeSeq
-	QueryTypeEvent
-	QueryTypeBan
-	QueryTypeTitle
-	QueryTypeChart
-)
-
-type QueryInfo struct {
-	Type               QueryType
-	Value              int
-	Diff               string
-	Difficulty         string
-	MusicID            int
-	Keyword            string
-	BanCharID          int
-	BanSeq             int
-	Original           string
-	AllowTitleFallback bool
-}
-
-type Parser struct {
-	banCharacterNicknames map[string]int
-}
-
 func NewParser(banCharacterNicknames map[string]int) *Parser {
 	return &Parser{banCharacterNicknames: cloneNicknames(banCharacterNicknames)}
 }

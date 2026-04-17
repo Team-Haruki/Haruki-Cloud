@@ -1,6 +1,31 @@
 package vlive
 
-import "time"
+import (
+	"context"
+	"time"
+
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/provider"
+)
+
+type DataSource interface {
+	DefaultRegion() renderregion.Value
+	GetLives(region renderregion.Value) ([]*Live, error)
+}
+
+type contextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
+type Controller struct {
+	source        DataSource
+	defaultRegion renderregion.Value
+}
+
+// ProviderAdapter bridges provider.MasterDataProvider to vlive.DataSource.
+type ProviderAdapter struct {
+	provider.ProviderAdapterBase
+}
 
 type ListQuery struct {
 	Region string    `json:"region,omitempty"`

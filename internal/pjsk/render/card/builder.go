@@ -13,13 +13,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-type Builder struct {
-	source      DataSource
-	translation DataSource
-	events      event.DataSource
-	assets      *assets.AssetHelper
-}
-
 func NewBuilder(source DataSource, translation DataSource, eventSource event.DataSource, assetHelper *assets.AssetHelper) *Builder {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)

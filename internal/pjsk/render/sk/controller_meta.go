@@ -12,13 +12,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-type eventMeta struct {
-	name        string
-	startAt     int64
-	aggregateAt int64
-	bannerPath  string
-}
-
 func (m *eventMeta) applyOverrides(req TrackerRankQuery) {
 	if req.EventName != nil && strings.TrimSpace(*req.EventName) != "" {
 		m.name = strings.TrimSpace(*req.EventName)

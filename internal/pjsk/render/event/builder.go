@@ -8,11 +8,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-type Builder struct {
-	source DataSource
-	assets *assets.AssetHelper
-}
-
 func NewBuilder(source DataSource, assetHelper *assets.AssetHelper) *Builder {
 	return &Builder{
 		source: source,

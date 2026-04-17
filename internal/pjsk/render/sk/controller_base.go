@@ -6,77 +6,10 @@ import (
 	"strings"
 
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/drawing"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
-
-type LineRequest struct {
-	drawing.SklRequest
-	Full bool `json:"full,omitempty"`
-}
-
-type TrackerSource interface {
-	GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error)
-	GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error)
-	GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error)
-	GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error)
-	GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error)
-	GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
-	GetWorldBloomRankingScoreGrowth(server string, eventID, characterID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
-	TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error)
-	TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error)
-	TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomTraceRankingResponse, error)
-	TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error)
-}
-
-type contextualTrackerSource interface {
-	WithContext(ctx context.Context) *sekaiapi.TrackerClient
-}
-
-type EventSource interface {
-	DefaultRegion() renderregion.Value
-	GetEventByID(id int) (*masterdata.Event, error)
-	GetEvents() []*masterdata.Event
-}
-
-type TrackerRankQuery struct {
-	EventID          int     `json:"event_id"`
-	Region           string  `json:"region"`
-	RegionExplicit   bool    `json:"region_explicit,omitempty"`
-	Ranks            []int   `json:"ranks"`
-	DefaultRanks     bool    `json:"default_ranks,omitempty"`
-	SpeedUnit        string  `json:"speed_unit,omitempty"`
-	SpeedPeriodSecs  int64   `json:"speed_period_seconds,omitempty"`
-	UserID           *int64  `json:"user_id,omitempty"`
-	TargetPlatform   string  `json:"target_platform,omitempty"`
-	TargetUserID     string  `json:"target_user_id,omitempty"`
-	TargetSelector   string  `json:"target_selector,omitempty"`
-	WlCharacterID    *int    `json:"wl_character_id,omitempty"`
-	WlCharacterQuery string  `json:"wl_character_query,omitempty"`
-	Full             bool    `json:"full,omitempty"`
-	EventName        *string `json:"event_name,omitempty"`
-	EventStartAt     *int64  `json:"event_start_at,omitempty"`
-	EventAggregateAt *int64  `json:"event_aggregate_at,omitempty"`
-	BannerImgPath    *string `json:"banner_img_path,omitempty"`
-}
-
-type Controller struct {
-	drawing    *drawing.HarukiDrawingClient
-	tracker    TrackerSource
-	forecast   ForecastProvider
-	events     *regionsource.Registry[EventSource]
-	assets     *renderassets.AssetHelper
-	censor     CensorService
-	requestCtx context.Context
-}
-
-// CensorService is a minimal interface for name censoring, satisfied by *censor.Service.
-type CensorService interface {
-	CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool
-}
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
 	return &Controller{

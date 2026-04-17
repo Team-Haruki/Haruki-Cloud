@@ -7,11 +7,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-// ProviderAdapter bridges provider.MasterDataProvider to vlive.DataSource.
-type ProviderAdapter struct {
-	provider.ProviderAdapterBase
-}
-
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
 	return &ProviderAdapter{ProviderAdapterBase: provider.NewProviderAdapterBase(p)}
 }

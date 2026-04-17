@@ -19,26 +19,6 @@ var hiddenMusicIDs = map[int]struct{}{
 	290: {},
 }
 
-type Controller struct {
-	sources               *regionsource.Registry[DataSource]
-	drawing               *drawing.HarukiDrawingClient
-	assets                *assets.AssetHelper
-	banCharacterNicknames map[string]int
-	aliases               musicAliasResolver
-	snapshot              snapshot.Snapshot
-	metaLoader            *meta.Loader
-	requestCtx            context.Context
-}
-
-type contextualDataSource interface {
-	WithContext(ctx context.Context) DataSource
-}
-
-type musicAliasResolver interface {
-	TryResolveMusicID(ctx context.Context, token string) (int, bool, error)
-	TryResolveMusicTitleOrAliasID(ctx context.Context, token string) (int, bool, error)
-}
-
 func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c == nil {
 		return nil

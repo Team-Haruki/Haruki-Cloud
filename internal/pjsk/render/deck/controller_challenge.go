@@ -6,8 +6,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
-const challengeCharacterCount = 26
-
 func (c *Controller) prepareChallengeRecommend(query AutoQuery, option map[string]any) error {
 	if option == nil {
 		return nil

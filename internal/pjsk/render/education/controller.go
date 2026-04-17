@@ -13,17 +13,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-type Controller struct {
-	drawing  *drawing.HarukiDrawingClient
-	assets   *assets.AssetHelper
-	sources  *rendersource.Registry[DataSource]
-	snapshot snapshot.Snapshot
-}
-
-type contextualDataSource interface {
-	WithContext(ctx context.Context) DataSource
-}
-
 func NewController(drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
 	return &Controller{
 		drawing:  drawingClient,

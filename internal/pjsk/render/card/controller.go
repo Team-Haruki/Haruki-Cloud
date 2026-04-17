@@ -15,24 +15,6 @@ import (
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 )
 
-const cardListAutoBoxThreshold = 90
-
-type Controller struct {
-	sources   *regionsource.Registry[DataSource]
-	events    *regionsource.Registry[event.DataSource]
-	drawing   *drawing.HarukiDrawingClient
-	assets    *assets.AssetHelper
-	nicknames map[string]int
-}
-
-type contextualDataSource interface {
-	WithContext(ctx context.Context) DataSource
-}
-
-type contextualEventSource interface {
-	WithContext(ctx context.Context) event.DataSource
-}
-
 func NewController(defaultSource DataSource, defaultEventSource event.DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)

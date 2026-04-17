@@ -7,39 +7,6 @@ import (
 	"unicode/utf8"
 )
 
-type QueryType int
-
-const (
-	QueryTypeUnknown QueryType = iota
-	QueryTypeID
-	QueryTypeSeq
-	QueryTypeLatest
-	QueryTypeFilter
-)
-
-type CardQueryInfo struct {
-	Type        QueryType
-	Value       int
-	Sequence    int
-	CharacterID int
-	Unit        string
-	MainUnit    string
-	SupportUnit string
-	Rarity      string
-	Attr        string
-	SkillType   string
-	SupplyType  string
-	Year        int
-	EventID     int
-	BanCharID   int
-	BanSeq      int
-	Original    string
-}
-
-type Parser struct {
-	extractor *Extractor
-}
-
 func NewParser(nicknames map[string]int) *Parser {
 	return &Parser{extractor: NewExtractor(nicknames)}
 }

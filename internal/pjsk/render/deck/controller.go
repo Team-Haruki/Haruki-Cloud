@@ -6,36 +6,11 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
-
-type CardSource interface {
-	DefaultRegion() renderregion.Value
-	GetCardByID(id int) (*masterdata.Card, error)
-}
-
-type EventSource interface {
-	DefaultRegion() renderregion.Value
-	GetEventByID(id int) (*masterdata.Event, error)
-	GetEvents() []*masterdata.Event
-}
-
-type Controller struct {
-	cardSources   *regionsource.Registry[CardSource]
-	eventSources  *regionsource.Registry[EventSource]
-	musicSources  *regionsource.Registry[MusicSource]
-	drawing       *drawing.HarukiDrawingClient
-	assets        *assets.AssetHelper
-	snapshot      snapshot.Snapshot
-	defaultRegion renderregion.Value
-	recommendCfg  RecommendConfig
-	metaLoader    MusicMetaSource
-	engine        engineProvider
-}
 
 func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
 	return NewControllerWithConfig(cards, events, drawingClient, assetHelper, snapshot, defaultRegion, RecommendConfig{}, nil)

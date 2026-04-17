@@ -11,20 +11,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-type ThumbnailOptions struct {
-	AfterTraining    bool
-	TrainedArt       bool
-	ThumbnailPath    string
-	RareImgPath      string
-	TrainRank        *int
-	TrainRankImgPath *string
-	Level            *int
-	BirthdayIconPath *string
-	CustomText       *string
-	CardLevel        map[string]any
-	IsPcard          bool
-}
-
 func ResolveCardMemberImagePath(helper *assets.AssetHelper, region renderregion.Value, assetBundleName string, fileName string) string {
 	assetBundleName = strings.TrimSpace(assetBundleName)
 	fileName = strings.TrimSpace(fileName)

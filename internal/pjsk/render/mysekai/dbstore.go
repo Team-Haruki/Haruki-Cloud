@@ -8,17 +8,6 @@ import (
 	"unicode"
 )
 
-// masterdataSource abstracts access to game masterdata so that the mysekai
-// controller can read from either local JSON files or a database.
-type masterdataSource interface {
-	Configured() bool
-	loadList(filename string) []map[string]any
-	loadMapByID(filename string) map[int]map[string]any
-	loadObject(filename string, target any) bool
-}
-
-// fileToTable maps the original game masterdata JSON filenames to the
-// corresponding PostgreSQL table names used by the sekai database.
 var fileToTable = map[string]string{
 	"mysekaiFixtures.json":                            "mysekaifixtures",
 	"mysekaiFixtureMainGenres.json":                   "mysekaifixturemaingenres",

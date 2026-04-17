@@ -3,44 +3,12 @@ package mysekai
 import (
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/drawing"
 )
-
-type Controller struct {
-	drawing        *drawing.HarukiDrawingClient
-	snapshot       snapshot.Snapshot
-	rawMySekaiJSON []byte // direct mysekai JSON (bypasses snapshot merge)
-	masterdata     masterdataSource
-	resolver       *masterdataResolver
-	defaultRegion  renderregion.Value
-	nicknames      map[string]int
-	assets         *assets.AssetHelper
-}
-
-type masterdataResolver struct {
-	dsn           string
-	localDir      string
-	allowFallback bool
-
-	mu    sync.Mutex
-	cache map[string]masterdataSource
-}
-
-type mysekaiMapSiteConfig struct {
-	SiteImageName string
-	GridSize      float64
-	OffsetX       float64
-	OffsetZ       float64
-	DirX          float64
-	DirZ          float64
-	RevXZ         bool
-	CropBBox      []int
-}
 
 var (
 	mysekaiMapSiteOrder   = []int{5, 6, 7, 8}
@@ -87,13 +55,6 @@ var (
 		},
 	}
 )
-
-// MasterdataOptions configures the masterdata source for NewController.
-type MasterdataOptions struct {
-	SekaiDSN      string
-	LocalDir      string
-	AllowFallback bool // when false, DB failure is fatal; when true, fallback to local files
-}
 
 func newMasterdataResolver(opts MasterdataOptions) *masterdataResolver {
 	return &masterdataResolver{

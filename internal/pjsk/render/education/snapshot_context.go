@@ -8,13 +8,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-const areaCoinMaterialID = -1
-
-const (
-	areaTreeAreaID   = 11
-	areaFlowerAreaID = 13
-)
-
 var areaFilterUnitAreaIDs = map[string]int{
 	"light_sound":    5,
 	"idol":           7,
@@ -55,14 +48,6 @@ var gateUnitByID = map[int]string{
 	3: "street",
 	4: "theme_park",
 	5: "school_refusal",
-}
-
-type resolvedSnapshotContext struct {
-	region   renderregion.Value
-	source   DataSource
-	snapshot snapshot.Snapshot
-	raw      *snapshot.RawUserData
-	profile  *drawing.DetailedProfileCardRequest
 }
 
 func (c *Controller) resolveSnapshotContext(

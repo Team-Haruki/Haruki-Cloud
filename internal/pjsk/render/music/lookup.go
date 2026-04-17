@@ -2,50 +2,10 @@ package music
 
 import (
 	"fmt"
-	"haruki-cloud/internal/pjsk/render/masterdata"
 	"regexp"
 	"sort"
 	"strings"
 )
-
-type NoteCountMatch struct {
-	Music          *masterdata.Music
-	Difficulty     string
-	PlayLevel      int
-	TotalNoteCount int
-}
-
-type CoverResult struct {
-	Music      *masterdata.Music
-	JacketPath string
-}
-
-type BPMEvent struct {
-	Bar      float64
-	BPM      float64
-	Duration float64
-}
-
-type BPMResult struct {
-	Music      *masterdata.Music
-	JacketPath string
-	Difficulty string
-	MainBPM    float64
-	Events     []BPMEvent
-	BarCount   int
-	Duration   float64
-}
-
-type BPMMatch struct {
-	Music      *masterdata.Music
-	Difficulty string
-	MainBPM    float64
-	Events     []BPMEvent
-}
-
-type noteCountFinder interface {
-	FindMusicDifficultiesByNoteCount(noteCount int) ([]*masterdata.MusicDifficulty, error)
-}
 
 var susLinePattern = regexp.MustCompile(`^#([A-Za-z0-9]{3})([A-Za-z0-9]{2})\s*:\s*(\S+)`)
 

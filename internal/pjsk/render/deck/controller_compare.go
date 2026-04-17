@@ -10,17 +10,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-const (
-	musicCompareDefaultShowNum = 8
-	musicCompareCandidateNum   = 40
-)
-
-type musicCompareResultItem struct {
-	selection MusicCompareSelection
-	deck      RecommendDeck
-	alg       string
-}
-
 func (c *Controller) prepareMusicCompareSelections(region renderregion.Value, recType string, query AutoQuery, option map[string]any, musicMeta []byte, musicMetaPath string) ([]MusicCompareSelection, int, error) {
 	if !query.MusicCompare {
 		return nil, 0, nil

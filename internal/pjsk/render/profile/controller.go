@@ -14,19 +14,6 @@ import (
 
 var wordTagPattern = regexp.MustCompile(`<#.*?>`)
 
-type Controller struct {
-	sources    *regionsource.Registry[DataSource]
-	drawing    *drawing.HarukiDrawingClient
-	assets     *assets.AssetHelper
-	snapshot   snapshot.Snapshot
-	censor     *censor.Service
-	requestCtx context.Context
-}
-
-type contextualDataSource interface {
-	WithContext(ctx context.Context) DataSource
-}
-
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)

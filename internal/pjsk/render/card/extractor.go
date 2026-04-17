@@ -68,24 +68,6 @@ func extractByRulesWithOptions(text string, rules []dictRule, allowSingleRuneNon
 	return ExtractResult[string]{Remaining: text}
 }
 
-type Extractor struct {
-	nicknames    map[string]int
-	banNicknames map[string]int
-}
-
-type BanEventRef struct {
-	CharacterID int
-	Sequence    int
-}
-
-type ExtractResult[T any] struct {
-	Value             T
-	Remaining         string
-	Found             bool
-	PrefixTightlyJoin bool
-	SuffixTightlyJoin bool
-}
-
 func NewExtractor(nicknames map[string]int) *Extractor {
 	return &Extractor{
 		nicknames:    sanitizeCharacterNicknames(nicknames),
@@ -159,16 +141,6 @@ func (e *Extractor) ExtractAttribute(text string) ExtractResult[string] {
 func (e *Extractor) ExtractAttributeWithoutSingleRune(text string) ExtractResult[string] {
 	return extractByRulesWithOptions(text, attrRules, false)
 }
-
-const (
-	SupplyNormal   = "normal"
-	SupplyLimited  = "limited"
-	SupplyFes      = "festival"
-	SupplyCFes     = "colorful_festival_limited"
-	SupplyBFes     = "bloom_festival_limited"
-	SupplyCollab   = "collaboration_limited"
-	SupplyBirthday = "birthday"
-)
 
 var skillRules = buildRules(map[string]string{
 	"奶卡": "life_recovery",

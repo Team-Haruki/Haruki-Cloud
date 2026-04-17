@@ -10,15 +10,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
-type Controller struct {
-	source        DataSource
-	defaultRegion renderregion.Value
-}
-
-type contextualDataSource interface {
-	WithContext(ctx context.Context) DataSource
-}
-
 func NewController(source DataSource, defaultRegion renderregion.Value) *Controller {
 	return &Controller{
 		source:        source,

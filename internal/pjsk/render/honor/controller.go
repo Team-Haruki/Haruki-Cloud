@@ -10,18 +10,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-// contextualDataSource is the local interface for type-asserting
-// DataSource implementations that support context injection.
-type contextualDataSource interface {
-	WithContext(ctx context.Context) DataSource
-}
-
-type Controller struct {
-	sources *regionsource.Registry[DataSource]
-	drawing *drawing.HarukiDrawingClient
-	assets  *assets.AssetHelper
-}
-
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)

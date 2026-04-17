@@ -7,12 +7,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-type SearchService struct {
-	source        DataSource
-	parser        *Parser
-	titleResolver func(string) (*masterdata.Music, error)
-}
-
 func NewSearchService(source DataSource, parser *Parser) *SearchService {
 	return &SearchService{source: source, parser: parser}
 }

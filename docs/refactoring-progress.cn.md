@@ -40,6 +40,7 @@
 > - 2026-04-17 R38 收尾：`accountdata/` 导出收窄（`BindingResolver`/`ProfileBGCleaner` 及其 `New*` 构造器降为 unexported，仅同包一处调用）；`internal/pjsk/render/deck/controller_prepare.go`（862 行）按职责拆为 `controller_prepare_userdata.go`（orchestrator + JSON encode/merge/log，486 行）与 `controller_prepare_profile.go`（preset / 卡牌过滤 / 当前主队 / area-item，386 行）；`internal/pjsk/render/userdata` 整体重命名为 `internal/pjsk/render/snapshot`（47 文件 import/选择器更新，`renderuserdata` alias 统一为 `rendersnapshot`，`profile/live_adapter.go` 同名参数改为 `snap` 消除 shadowing）
 > - 2026-04-17 测试修复与入口整理：修复 4 个基线失败测试（`TestResolveTrackerTargetUserSupportsSelector` / `TestResolveDeckMusicSelectionMusicCompareSelections` / `TestExecuteCardImageReturnsAllOriginalArts` / `TestResolveCardImagesSupportsStandardAndRipPaths`）；`resolveCardOriginalImagePaths` 在本地文件存在时通过 `helper.FirstExisting` 将相对路径转为绝对路径，避免 `os.ReadFile` 因 CWD 不符失败；`cmd/server/` 所有文件上移至项目根目录（`package main` 不变），构建命令由 `./cmd/server` 改为 `.`，Dockerfile 与部署脚本同步更新；`go test ./...` 全量 39 包均 ok
 > - 2026-04-17 R41 内部质量审计：Handler 全链路返回类型 `any` → `*parser.ResolvedCommand`（接口 + 85 个闭包 + 16 个测试文件移除 type assertion）；缓存并发去重（`singleflight.Group`）、15 处请求路径 `context.Background()` → `context.TODO()`、23 处 snapshot 错误前缀 `"userdata:"` → `"snapshot:"`、Tracker 客户端新增 429/503 处理、死代码清理（注释 handler / unused 参数 / stderr→slog）；`go test ./...` 全量 39 包通过
+> - 2026-04-18 R42 类型声明分离：17 个包的 type/struct/const/var 声明提取到专用 `types.go`（Tier 1 核心 4 包 + Tier 2 render 10 包 + Tier 3 小型 3 包），纯类型文件（`source.go`/`query.go`）合并删除；附带修复 mysekai 时区依赖 bug；`go test ./...` 全量 39 包通过
 >
 > 文中提到的历史 bridge 结构、legacy 路由或本地 native/deck 方案，都应视为当时阶段背景，而不是当前实现。
 
@@ -2021,5 +2022,60 @@ internal/pjsk/
 | `handler/sekai/handler.go` | `fmt.Fprintf(os.Stderr)` → `slog.Warn`，移除 `os` import |
 | `render/mysekai/helpers.go` | `mysekaiNextBirthdayLocal` 移除未使用的 `characterID` 参数 |
 | `render/education/snapshot_bonds.go` | `_ = getCharacterStyle(charID)` 补注释说明预热意图 |
+
+**验证**：`go build ./...` ✅；`go test ./...` 全量 39 包通过，无回归。
+
+### R42：类型声明分离——types.go 统一组织（2026-04-18）
+
+将 Go 包中与函数实现混合的 type / struct / const / var 声明提取到专用 `types.go` 文件，提升代码可发现性和维护性。
+
+#### 原则
+
+- 类型**跟着包走**（不跨包集中），Go 惯例：types close to consumers
+- 每个包至多 1-2 个 types 文件（`types.go` 为主，大包可拆 `{domain}_types.go`）
+- 只做组织搬迁，不改类型名 / 不改导出性 / 不改语义
+- 实现机制（编译正则 / 查找表 / logger）留在原文件
+- 纯类型文件（`source.go`、`query.go`）整体移入 `types.go` 后删除
+
+#### Tier 1：核心包（4 包）
+
+| 包 | 新建文件 | 搬迁内容 |
+|----|----------|----------|
+| `pjsk/drawing` | `cache_types.go`、`client_types.go` | 9 + 2 types |
+| `pjsk/alias` | `types.go` | 13 types + 2 const blocks + 1 var |
+| `pjsk/parser` | `types.go` | 14 types + 4 const blocks |
+| `render/app` | `types.go` | 6 types + 3 const blocks |
+
+#### Tier 2：render 子包（10 包）
+
+| 包 | 搬迁类型数 | 删除文件 |
+|----|-----------|----------|
+| `render/common` | 1 | — |
+| `render/honor` | 5 | `source.go`、`query.go` |
+| `render/gacha` | 6 | `source.go`、`query.go` |
+| `render/profile` | 4 | `source.go`、`query.go` |
+| `render/sk` | 15 | — |
+| `render/music` | ~35 | `source.go`、`query.go` |
+| `render/card` | ~20 | `source.go`、`query.go` |
+| `render/deck` | ~30 | `query.go` |
+| `render/education` | ~25 | `source.go`、`query.go` |
+| `render/mysekai` | ~12 | `query.go` |
+
+#### Tier 3：小型包（3 包）
+
+| 包 | 搬迁类型数 | 删除文件 |
+|----|-----------|----------|
+| `render/stamp` | 5 | `source.go`、`query.go` |
+| `render/vlive` | 8 | `source.go`、`query.go` |
+| `render/event` | 7 | `source.go`、`query.go` |
+
+跳过的包：`score`（1 struct，太小）、`source`（1 interface + 1 struct，单文件）、`assets`（类型与函数紧耦合）、`onebot11`（57 行）、`meta`（2 types）。
+
+#### 附带修复
+
+| 文件 | 修复 |
+|------|------|
+| `render/mysekai/helpers.go` | 时区依赖 bug：`time.UnixMilli(nowMs)` 返回 UTC location，`mysekaiLocalUTCOffset(now)` 使用 `now.Zone()` 取偏移——在非 CST 机器上产生错误时间。修复：统一在 `extractMysekaiPhenoms()` 末尾将 `now` 归一化到游戏区域时区 |
+| `render/mysekai/resource_fixes_test.go` | 测试期望值从 CST-relative 更新为 region-relative |
 
 **验证**：`go build ./...` ✅；`go test ./...` 全量 39 包通过，无回归。

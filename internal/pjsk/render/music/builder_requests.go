@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/chartstyle"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -218,13 +219,7 @@ func (b *Builder) BuildMusicChartRequest(query ChartQuery, music *masterdata.Mus
 	susRelative := filepath.Join("music", "music_score", fmt.Sprintf("%04d_01", music.ID), diff+".txt")
 	susPath := assets.ResolveRegionAssetPath(b.assets, region.String(), susRelative)
 
-	var stylePath string
-	if trimmed := strings.TrimSpace(query.Style); trimmed != "" {
-		stylePath = assets.ResolveAssetPath(b.assets, "", trimmed)
-	}
-	if stylePath == "" {
-		stylePath = assets.StaticImagesDir + "/chart_asset/css/black.css"
-	}
+	stylePath := chartstyle.CSSPath(query.Style)
 
 	assetBase := b.assets.Primary()
 	return &drawing.GenerateMusicChartRequest{

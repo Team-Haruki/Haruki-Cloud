@@ -9,24 +9,26 @@ import (
 
 	pjskdb "haruki-cloud/database/pjsk"
 	pjskschema "haruki-cloud/ent/pjsk/schema"
+	"haruki-cloud/internal/pjsk/chartstyle"
 	"haruki-cloud/internal/pjsk/displaytime"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/sekai"
 )
 
 const (
-	ProfileModeHideID      = "profile-hide-id"
-	ProfileModeShowID      = "profile-show-id"
-	ProfileModeHideSuite   = "profile-hide-suite"
-	ProfileModeShowSuite   = "profile-show-suite"
-	ProfileModeHideMySekai = "profile-hide-mysekai"
-	ProfileModeShowMySekai = "profile-show-mysekai"
-	ProfileModeVerify      = "profile-verify"
-	ProfileModeVerifyList  = "profile-verify-list"
-	ProfileModeSetTimeZone = "profile-set-timezone"
-	ProfileModeBGUpload    = "profile-bg-upload"
-	ProfileModeBGClear     = "profile-bg-clear"
-	ProfileModeBGAdjust    = "profile-bg-adjust"
+	ProfileModeHideID        = "profile-hide-id"
+	ProfileModeShowID        = "profile-show-id"
+	ProfileModeHideSuite     = "profile-hide-suite"
+	ProfileModeShowSuite     = "profile-show-suite"
+	ProfileModeHideMySekai   = "profile-hide-mysekai"
+	ProfileModeShowMySekai   = "profile-show-mysekai"
+	ProfileModeVerify        = "profile-verify"
+	ProfileModeVerifyList    = "profile-verify-list"
+	ProfileModeSetTimeZone   = "profile-set-timezone"
+	ProfileModeSetChartStyle = "profile-set-chart-style"
+	ProfileModeBGUpload      = "profile-bg-upload"
+	ProfileModeBGClear       = "profile-bg-clear"
+	ProfileModeBGAdjust      = "profile-bg-adjust"
 )
 
 type ProfileSettingsCommandParams struct {
@@ -36,6 +38,7 @@ type ProfileSettingsCommandParams struct {
 	RegionExplicit bool   `json:"region_explicit,omitempty"`
 	Selector       string `json:"selector,omitempty"`
 	TimeZone       string `json:"time_zone,omitempty"`
+	ChartStyle     string `json:"chart_style,omitempty"`
 	ImageURL       string `json:"image_url,omitempty"`
 	Blur           *int   `json:"blur,omitempty"`
 	Alpha          *int   `json:"alpha,omitempty"`
@@ -54,6 +57,7 @@ func DecodeProfileSettingsParams(raw json.RawMessage) (ProfileSettingsCommandPar
 	params.PlatformUserID = strings.TrimSpace(params.PlatformUserID)
 	params.Server = strings.TrimSpace(strings.ToLower(params.Server))
 	params.TimeZone = strings.TrimSpace(params.TimeZone)
+	params.ChartStyle = strings.TrimSpace(strings.ToLower(params.ChartStyle))
 	params.ImageURL = strings.TrimSpace(params.ImageURL)
 	if params.Platform == "" || params.PlatformUserID == "" {
 		return params, fmt.Errorf("bridge: missing profile settings identity context")
@@ -223,6 +227,32 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 			return nil, fmt.Errorf("保存用户时区失败: %w", err)
 		}
 		return []byte(fmt.Sprintf("已设置PJSK时区为 %s", resolvedTimeZone)), nil
+	case ProfileModeSetChartStyle:
+		resolvedChartStyle := chartstyle.Normalize(params.ChartStyle)
+		if resolvedChartStyle == "" {
+			return nil, fmt.Errorf("谱面样式只支持 white 或 black")
+		}
+
+		harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
+		if err != nil {
+			return nil, err
+		}
+
+		settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
+		if err != nil {
+			if !errors.Is(err, ErrUserSettingsNotFound) {
+				return nil, fmt.Errorf("读取用户设置失败: %w", err)
+			}
+			settings = newDefaultUserSettings()
+		}
+		if settings == nil {
+			settings = newDefaultUserSettings()
+		}
+		settings.ChartStyle = resolvedChartStyle
+		if err := UpsertUserSettings(ctx, service.pjskDB, harukiUserID, settings); err != nil {
+			return nil, fmt.Errorf("保存谱面样式失败: %w", err)
+		}
+		return []byte(fmt.Sprintf("已设置谱面样式为 %s", resolvedChartStyle)), nil
 	case ProfileModeBGUpload:
 		binding, err := resolveBinding()
 		if err != nil {

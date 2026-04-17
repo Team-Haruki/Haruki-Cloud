@@ -314,3 +314,53 @@ func TestProfileTimeZoneHandleRequiresArgs(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestProfileChartStyleHandleParsesArgs(t *testing.T) {
+	h := sekaiHandlers{}.ProfileChartStyleHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/设置谱面样式",
+		ArgText:    "white",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeSetChartStyle {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileSettingsCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.ChartStyle != "white" {
+		t.Fatalf("unexpected chart style param: %q", params.ChartStyle)
+	}
+}
+
+func TestProfileChartStyleHandleRequiresArgs(t *testing.T) {
+	h := sekaiHandlers{}.ProfileChartStyleHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	_, err := h.Handle(&handler.PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/设置谱面样式",
+	})
+	if err == nil {
+		t.Fatal("expected missing args error, got nil")
+	}
+	if !strings.Contains(err.Error(), "<white|black>") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}

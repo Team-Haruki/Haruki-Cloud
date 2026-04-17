@@ -165,7 +165,7 @@ func TestBuildMusicProgressRequestFromSnapshotUsesSnapshotData(t *testing.T) {
 	fallbackProfile := &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{Nickname: "Fallback User"},
 	}
-	snapshot := &progressSnapshotStub{
+	snap := &progressSnapshotStub{
 		profile: snapshotProfile,
 		results: map[string]map[int]string{
 			"master": {
@@ -178,7 +178,7 @@ func TestBuildMusicProgressRequestFromSnapshotUsesSnapshotData(t *testing.T) {
 	req, err := controller.BuildMusicProgressRequestFromSnapshot(ProgressQuery{
 		Region:     "jp",
 		Difficulty: "master",
-	}, snapshot, fallbackProfile)
+	}, snap, fallbackProfile)
 	if err != nil {
 		t.Fatalf("BuildMusicProgressRequestFromSnapshot() error = %v", err)
 	}
@@ -207,7 +207,7 @@ func TestBuildMusicProgressRequestFromSnapshotUsesCompactToolboxResults(t *testi
 		},
 	}
 
-	snapshot, err := snapshot.NewDefaultSnapshotFactory(nil, nil).Build(nil, snapshot.BuildInput{
+	snap, err := snapshot.NewDefaultSnapshotFactory(nil, nil).Build(nil, snapshot.BuildInput{
 		Region: renderregion.CN,
 		Source: "toolbox",
 		SuiteJSON: []byte(`{
@@ -246,7 +246,7 @@ func TestBuildMusicProgressRequestFromSnapshotUsesCompactToolboxResults(t *testi
 	req, err := controller.BuildMusicProgressRequestFromSnapshot(ProgressQuery{
 		Region:     "cn",
 		Difficulty: "master",
-	}, snapshot, nil)
+	}, snap, nil)
 	if err != nil {
 		t.Fatalf("BuildMusicProgressRequestFromSnapshot() error = %v", err)
 	}

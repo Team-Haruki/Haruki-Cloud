@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var inlineCQPattern = regexp.MustCompile(`(?i)\[cq:[^\]]+]`)
+var inlineCQPattern = regexp.MustCompile(`(?i)\[cq:[^]]+]`)
 
 // StripInlineCQTags removes [CQ:...] tags from text, replacing them with a space.
 func StripInlineCQTags(text string) string {

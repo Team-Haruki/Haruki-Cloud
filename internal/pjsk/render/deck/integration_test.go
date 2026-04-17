@@ -84,18 +84,18 @@ func buildIntegrationRequest(input integrationTestInput, cfg RecommendConfig) (*
 	}
 	integrationCards, _ := cardSource.(*integrationCardSource)
 
-	snapshot := snapshot.NewLocalFileService(nil, assets.NewAssetHelper("", nil), snapshot.LocalFileConfig{
+	snap := snapshot.NewLocalFileService(nil, assets.NewAssetHelper("", nil), snapshot.LocalFileConfig{
 		DefaultRegion: renderregion.JP,
 		UserJSON:      input.userJSON,
 		MusicMetaJSON: input.musicMetaJSON,
 	})
-	if err := snapshot.Require(); err != nil {
+	if err := snap.Require(); err != nil {
 		return nil, err
 	}
 
 	var fixedCharacters []int
 	if input.useFixedCharacters {
-		fixedCharacters = selectEligibleFixedCharacters(snapshot.RawData(), integrationCards)
+		fixedCharacters = selectEligibleFixedCharacters(snap.RawData(), integrationCards)
 	}
 
 	controller := NewControllerWithConfig(
@@ -103,7 +103,7 @@ func buildIntegrationRequest(input integrationTestInput, cfg RecommendConfig) (*
 		eventSource,
 		nil,
 		assets.NewAssetHelper("", nil),
-		snapshot,
+		snap,
 		renderregion.JP,
 		cfg,
 		nil,

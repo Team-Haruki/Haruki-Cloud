@@ -150,13 +150,13 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotUsesSnapshotAchievements(t *t
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
-	snapshot := &musicSnapshotStub{
+	snap := &musicSnapshotStub{
 		rawValues: map[string][]byte{
 			"userMusicAchievements": []byte(`[]`),
 		},
 	}
 
-	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snapshot)
+	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snap)
 	if err != nil {
 		t.Fatalf("BuildMusicRewardsDetailRequestFromSnapshot failed: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsColumnarAchievements(t
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
-	snapshot := &musicSnapshotStub{
+	snap := &musicSnapshotStub{
 		rawValues: map[string][]byte{
 			"userMusicAchievements": []byte(`{
 				"musicId": [1001, 1001, 1001, 1001, 1001, 1001, 1001, 1001],
@@ -201,7 +201,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsColumnarAchievements(t
 		},
 	}
 
-	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snapshot)
+	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snap)
 	if err != nil {
 		t.Fatalf("BuildMusicRewardsDetailRequestFromSnapshot failed: %v", err)
 	}
@@ -236,7 +236,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsCompactAchievements(t 
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
-	snapshot := &musicSnapshotStub{
+	snap := &musicSnapshotStub{
 		rawValues: map[string][]byte{
 			"compactUserMusicAchievements": []byte(`{
 				"musicId": [1001, 1001, 1001, 1001, 1001, 1001, 1001, 1001],
@@ -245,7 +245,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsCompactAchievements(t 
 		},
 	}
 
-	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snapshot)
+	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snap)
 	if err != nil {
 		t.Fatalf("BuildMusicRewardsDetailRequestFromSnapshot failed: %v", err)
 	}
@@ -280,7 +280,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsGroupedAchievements(t 
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
-	snapshot := &musicSnapshotStub{
+	snap := &musicSnapshotStub{
 		rawValues: map[string][]byte{
 			"userMusicAchievements": []byte(`{
 				"1001": [1, 2, 3, 4, 13, 14, 15, 16]
@@ -288,7 +288,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotAcceptsGroupedAchievements(t 
 		},
 	}
 
-	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snapshot)
+	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snap)
 	if err != nil {
 		t.Fatalf("BuildMusicRewardsDetailRequestFromSnapshot failed: %v", err)
 	}
@@ -323,7 +323,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotFindsNestedAchievements(t *te
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
-	snapshot := &musicSnapshotStub{
+	snap := &musicSnapshotStub{
 		rawValues: map[string][]byte{},
 		rawBytes: []byte(`{
 			"updatedResources": {
@@ -334,7 +334,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotFindsNestedAchievements(t *te
 		}`),
 	}
 
-	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snapshot)
+	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snap)
 	if err != nil {
 		t.Fatalf("BuildMusicRewardsDetailRequestFromSnapshot failed: %v", err)
 	}
@@ -369,7 +369,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotFindsNestedCompactAchievement
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
-	snapshot := &musicSnapshotStub{
+	snap := &musicSnapshotStub{
 		rawValues: map[string][]byte{},
 		rawBytes: []byte(`{
 			"updatedResources": {
@@ -381,7 +381,7 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotFindsNestedCompactAchievement
 		}`),
 	}
 
-	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snapshot)
+	payload, err := controller.BuildMusicRewardsDetailRequestFromSnapshot(RewardsDetailQuery{Region: "jp"}, snap)
 	if err != nil {
 		t.Fatalf("BuildMusicRewardsDetailRequestFromSnapshot failed: %v", err)
 	}

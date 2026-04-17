@@ -54,6 +54,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	}
 	clone := *c
 	clone.requestCtx = ctx
+	clone.drawing = c.drawing.WithContext(ctx)
 	if c.tracker != nil {
 		if contextual, ok := c.tracker.(contextualTrackerSource); ok {
 			clone.tracker = contextual.WithContext(ctx)

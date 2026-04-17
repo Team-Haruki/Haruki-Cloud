@@ -1,6 +1,8 @@
 package drawing
 
 import (
+	"context"
+
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
@@ -14,4 +16,5 @@ type HarukiDrawingClient struct {
 	cache      *RenderCacheClient
 	localCache *localRenderCache
 	logger     *logger.Logger
+	requestCtx context.Context
 }

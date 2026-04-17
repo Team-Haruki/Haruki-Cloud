@@ -21,7 +21,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		return nil, suiteErr
 	}
 	publicDetailedProfile := rc.GetDetailedProfile()
-	if suiteSnapshot != nil {
+	if publicDetailedProfile == nil && suiteSnapshot != nil {
 		publicDetailedProfile = suiteSnapshot.DetailedProfile(region)
 	}
 

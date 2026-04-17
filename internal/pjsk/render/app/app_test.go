@@ -61,6 +61,34 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 		}
 	})
 
+	t.Run("detects mounted multi-repo masterdata root from broken region config", func(t *testing.T) {
+		root := t.TempDir()
+		repoRoot := filepath.Join(root, "masterdata")
+		for _, repoDir := range []string{
+			"haruki-sekai-master",
+			"haruki-sekai-sc-master",
+			"haruki-sekai-tc-master",
+			"haruki-sekai-kr-master",
+			"haruki-sekai-en-master",
+		} {
+			masterDir := filepath.Join(repoRoot, repoDir, "master")
+			if err := os.MkdirAll(masterDir, 0o755); err != nil {
+				t.Fatalf("mkdir repo master dir: %v", err)
+			}
+			if err := os.WriteFile(filepath.Join(masterDir, "resourceBoxes.json"), []byte(`[]`), 0o644); err != nil {
+				t.Fatalf("write repo resourceBoxes.json: %v", err)
+			}
+		}
+
+		cfg := Config{
+			LocalMasterdata: LocalMasterdataConfig{Dir: filepath.Join(repoRoot, "jp")},
+		}
+
+		if got := resolveRenderProviderMasterdataDirFromWD(cfg, root); got != repoRoot {
+			t.Fatalf("expected repo-root masterdata dir, got %q", got)
+		}
+	})
+
 	t.Run("returns empty when both are unset", func(t *testing.T) {
 		if got := resolveRenderProviderMasterdataDirFromWD(Config{}, t.TempDir()); got != "" {
 			t.Fatalf("expected empty masterdata dir, got %q", got)

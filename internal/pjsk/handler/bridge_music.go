@@ -37,10 +37,9 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		if strings.TrimSpace(q.Keyword) == "" {
 			q.Keyword = strings.TrimSpace(rc.Cmd.Query)
 		}
-		if suiteSnapshot != nil {
+		q.DetailedProfile = rc.GetDetailedProfile()
+		if q.DetailedProfile == nil && suiteSnapshot != nil {
 			q.DetailedProfile = suiteSnapshot.DetailedProfile(rc.Region)
-		} else {
-			q.DetailedProfile = rc.GetDetailedProfile()
 		}
 		data, err = musicCtrl.RenderMusicList(q)
 	case "music-chart":
@@ -54,10 +53,14 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		q := music.ProgressQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
+		profile := rc.GetProfileCard()
+		if profile == nil && suiteSnapshot != nil {
+			profile = suiteSnapshot.ProfileCard(rc.Region)
+		}
 		if suiteSnapshot != nil {
-			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, suiteSnapshot.ProfileCard(rc.Region))
+			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, profile)
 		} else {
-			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, nil, rc.GetProfileCard())
+			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, nil, profile)
 		}
 	case "music-rewards":
 		data, err = renderMusicRewards(rc)

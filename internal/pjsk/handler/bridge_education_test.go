@@ -5,15 +5,19 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/education"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/imagecache"
@@ -373,6 +377,130 @@ func TestExecuteEducationPowerFallsBackToSuiteSnapshotWhenMySekaiSnapshotUnavail
 	}
 	if len(captured.CharaBonuses) == 0 || len(captured.UnitBonuses) == 0 || len(captured.AttrBonuses) == 0 {
 		t.Fatalf("expected power bonus request to fall back to suite snapshot, got %+v", captured)
+	}
+}
+
+func TestExecuteEducationAreaPrefersAPIProfileOverSuiteSnapshotProfile(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeEducationRegionValidator{})
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/cn/12345678901234/profile" {
+			http.NotFound(w, r)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 12345678901234,
+				Name:   "CN API User",
+			},
+			UserDeck: sekaiapi.UserDeck{
+				DeckID: 1,
+				Leader: 1001,
+			},
+			UserCards: []sekaiapi.AnotherUserCard{
+				{
+					CardID:       1001,
+					DefaultImage: "special_training",
+				},
+			},
+		})
+	}))
+	defer server.Close()
+
+	oldBaseURL := config.Cfg.SekaiAPI.BaseURL
+	oldToken := config.Cfg.SekaiAPI.Token
+	config.Cfg.SekaiAPI.BaseURL = server.URL
+	config.Cfg.SekaiAPI.Token = "test-token"
+	defer func() {
+		config.Cfg.SekaiAPI.BaseURL = oldBaseURL
+		config.Cfg.SekaiAPI.Token = oldToken
+	}()
+
+	snapshot := mustBridgeEducationSnapshot(t)
+
+	var captured drawing.AreaItemUpgradeMaterialsRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/education/area-item" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte{0x89, 'P', 'N', 'G'})
+	}))
+	defer drawingServer.Close()
+
+	cacheDir := t.TempDir()
+	controller := education.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, nil, renderregion.CN)
+	controller.RegisterSource(newHandlerTestEducationSource(renderregion.CN, 15, "cn_item"))
+	profileController := renderprofile.NewController(runtimeProfileDataSourceStub{
+		region: renderregion.CN,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				AssetBundleName: "card_test",
+			},
+		},
+	}, nil, nil, nil)
+
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Edu:        controller,
+		Profiles:   profileController,
+		Bindings:   service,
+		SekaiAPI:   sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
+		Snapshots:  rendersnapshot.NewStaticSnapshotProvider(snapshot),
+		ImageCache: imagecache.New("https://example.com", cacheDir),
+	}
+
+	params, err := json.Marshal(education.AreaItemQuery{Unit: "light_sound"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	rc := &RequestContext{
+		Ctx: ctx,
+		Cmd: &parser.ResolvedCommand{
+			Module:            parser.ModuleEducation,
+			Mode:              "education-area",
+			Region:            "cn",
+			Params:            params,
+			RequesterPlatform: "qq",
+			RequesterUserID:   "42",
+		},
+		App:            app,
+		Region:         renderregion.CN,
+		RegionStr:      "cn",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	}
+
+	message, err := executeEducation(rc)
+	if err != nil {
+		t.Fatalf("executeEducation() error = %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeImage {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if captured.Profile == nil {
+		t.Fatal("expected profile in area-item request")
+	}
+	if got := captured.Profile.Nickname; got != "CN API User" {
+		t.Fatalf("expected API profile nickname, got %q", got)
+	}
+	if got := captured.Profile.LeaderImagePath; got == "" || strings.Contains(got, "unknown") {
+		t.Fatalf("expected resolved API leader image path, got %q", got)
+	}
+	if got := filepath.ToSlash(captured.Profile.LeaderImagePath); got == "asset/user/snapshot.png" {
+		t.Fatalf("expected API leader image path, got snapshot fallback %q", got)
 	}
 }
 

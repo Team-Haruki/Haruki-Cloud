@@ -2,8 +2,13 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +20,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/imagecache"
 )
 
 type unavailableSnapshotProvider struct{}
@@ -197,6 +203,105 @@ func TestExecuteMySekaiRequiresController(t *testing.T) {
 	if !strings.Contains(err.Error(), "mysekai controller is not configured") {
 		t.Fatalf("unexpected error: %v", err)
 	}
+}
+
+func TestExecuteMySekaiFixtureListStaticSkipsBindingAndSnapshot(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeJSON := func(name string, data any) {
+		t.Helper()
+		raw, err := json.Marshal(data)
+		if err != nil {
+			t.Fatalf("marshal %s: %v", name, err)
+		}
+		if err := os.WriteFile(filepath.Join(masterdataDir, name), raw, 0o644); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+
+	writeJSON("mysekaiFixtures.json", []map[string]any{
+		{
+			"id":                        2001,
+			"name":                      "Wood Chair",
+			"assetbundleName":           "wood_chair",
+			"mysekaiFixtureType":        "furniture",
+			"mysekaiFixtureMainGenreId": 1,
+			"mysekaiFixtureSubGenreId":  11,
+		},
+	})
+	writeJSON("mysekaiFixtureMainGenres.json", []map[string]any{
+		{"id": 1, "name": "Main A", "assetbundleName": "main_a"},
+	})
+	writeJSON("mysekaiFixtureSubGenres.json", []map[string]any{
+		{"id": 11, "name": "Sub A", "assetbundleName": "sub_a"},
+	})
+	writeJSON("mysekaiBlueprints.json", []map[string]any{
+		{"id": 1001, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 2001},
+	})
+	writeJSON("gameCharacters.json", []map[string]any{})
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/mysekai/fixture-list" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.MysekaiFixtureListRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.Profile != nil {
+			t.Fatalf("expected static fixture list to skip profile, got %+v", req.Profile)
+		}
+		if req.ProgressMessage != nil {
+			t.Fatalf("expected static fixture list to skip progress, got %+v", req.ProgressMessage)
+		}
+		if len(req.MainGenres) != 1 || len(req.MainGenres[0].SubGenres) != 1 || len(req.MainGenres[0].SubGenres[0].Fixtures) != 1 {
+			t.Fatalf("unexpected fixture list payload: %+v", req.MainGenres)
+		}
+		if !req.MainGenres[0].SubGenres[0].Fixtures[0].Obtained {
+			t.Fatalf("expected static fixture list to render all fixtures as obtained, got %+v", req.MainGenres[0].SubGenres[0].Fixtures[0])
+		}
+		_, _ = w.Write([]byte("fixture-list"))
+	}))
+	defer drawingServer.Close()
+
+	app := &renderapp.App{
+		MySekai:    rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	showProfile := false
+	showProgress := false
+	showObtained := false
+	params, err := json.Marshal(rendermysekai.FixtureListQuery{
+		ShowID:       boolPtr(true),
+		ShowProfile:  &showProfile,
+		ShowProgress: &showProgress,
+		ShowObtained: &showObtained,
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMysekai(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module: parser.ModuleMysekai,
+		Mode:   "mysekai-fixture-list",
+		Region: "jp",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMysekai fixture list: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected static fixture list message: %+v", message)
+	}
+}
+
+func boolPtr(v bool) *bool {
+	return &v
 }
 
 func TestExecuteConcurrentMessagesRunsJobsInParallelAndPreservesOrder(t *testing.T) {

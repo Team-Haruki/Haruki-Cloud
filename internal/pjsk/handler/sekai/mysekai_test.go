@@ -436,11 +436,12 @@ func TestMysekaiFurnitureHandleBuildsResolvedCommands(t *testing.T) {
 		OnlyCraftable bool `json:"only_craftable"`
 		ShowProfile   bool `json:"show_profile"`
 		ShowProgress  bool `json:"show_progress"`
+		ShowObtained  bool `json:"show_obtained"`
 	}
 	if err := json.Unmarshal(resolved.Params, &listParams); err != nil {
 		t.Fatalf("unmarshal list params: %v", err)
 	}
-	if !listParams.ShowID || listParams.OnlyCraftable || listParams.ShowProfile || listParams.ShowProgress {
+	if !listParams.ShowID || listParams.OnlyCraftable || listParams.ShowProfile || listParams.ShowProgress || listParams.ShowObtained {
 		t.Fatalf("unexpected list params: %+v", listParams)
 	}
 

@@ -81,6 +81,7 @@ type FixtureListQuery struct {
 	OnlyCraftable *bool                       `json:"only_craftable,omitempty"`
 	ShowProfile   *bool                       `json:"show_profile,omitempty"`
 	ShowProgress  *bool                       `json:"show_progress,omitempty"`
+	ShowObtained  *bool                       `json:"show_obtained,omitempty"`
 	Profile       *drawing.ProfileCardRequest `json:"-"`
 }
 

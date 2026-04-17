@@ -266,29 +266,8 @@ func TestBuildFixtureListRequestSortsFixturesByIDWithinGroup(t *testing.T) {
 
 func TestBuildFixtureListRequestCanHideProfile(t *testing.T) {
 	root := t.TempDir()
-	userPath := filepath.Join(root, "user.json")
-	mysekaiPath := filepath.Join(root, "mysekai.json")
 	masterdataDir := filepath.Join(root, "masterdata")
 
-	userJSON := `{
-  "now": 1700000000,
-  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
-  "userProfile": {},
-  "userDecks": [{"deckId": 1}],
-  "userCards": []
-}`
-	mysekaiJSON := `{
-  "updatedResources": {
-    "userMysekaiBlueprints": [{"mysekaiBlueprintId": 1001}]
-  }
-}`
-
-	if err := os.WriteFile(userPath, []byte(userJSON), 0o644); err != nil {
-		t.Fatalf("write user snapshot: %v", err)
-	}
-	if err := os.WriteFile(mysekaiPath, []byte(mysekaiJSON), 0o644); err != nil {
-		t.Fatalf("write mysekai snapshot: %v", err)
-	}
 	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
@@ -313,19 +292,16 @@ func TestBuildFixtureListRequestCanHideProfile(t *testing.T) {
 	})
 	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
 
-	service := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
-		DefaultRegion: renderregion.JP,
-		UserJSON:      userPath,
-		MySekaiJSON:   mysekaiPath,
-	})
-	controller := NewController(nil, service, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
 
 	showProfile := false
 	showProgress := false
+	showObtained := false
 	req, err := controller.BuildFixtureListRequest(FixtureListQuery{
 		Region:       "jp",
 		ShowProfile:  &showProfile,
 		ShowProgress: &showProgress,
+		ShowObtained: &showObtained,
 		Profile:      &drawing.ProfileCardRequest{},
 	})
 	if err != nil {
@@ -344,6 +320,11 @@ func TestBuildFixtureListRequestCanHideProfile(t *testing.T) {
 		for _, subGenre := range mainGenre.SubGenres {
 			if subGenre.ProgressMessage != nil {
 				t.Fatalf("expected sub genre progress to be hidden, got %+v", subGenre.ProgressMessage)
+			}
+			for _, fixture := range subGenre.Fixtures {
+				if !fixture.Obtained {
+					t.Fatalf("expected fixture to be rendered as obtained, got %+v", fixture)
+				}
 			}
 		}
 	}

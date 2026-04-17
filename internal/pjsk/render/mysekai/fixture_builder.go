@@ -12,10 +12,6 @@ import (
 // BuildFixtureListRequest builds the request for rendering MySekai fixture list view.
 func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.MysekaiFixtureListRequest, error) {
 	c = c.withRegion(query.Region)
-	merged, region, err := c.prepareSnapshot(query.Region)
-	if err != nil {
-		return nil, err
-	}
 
 	showID := true
 	if query.ShowID != nil {
@@ -30,13 +26,38 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	if query.ShowProgress != nil {
 		showProgress = *query.ShowProgress
 	}
+	showObtained := true
+	if query.ShowObtained != nil {
+		showObtained = *query.ShowObtained
+	}
+	if c == nil {
+		return nil, fmt.Errorf("mysekai controller is not initialized")
+	}
+
+	region := c.resolveRegion(query.Region)
+	merged := map[string]any{}
+	staticListOnly := !showObtained && !showProfile && !showProgress
+	if staticListOnly {
+		if c.masterdata == nil || !c.masterdata.Configured() {
+			return nil, fmt.Errorf("mysekai masterdata is not configured")
+		}
+	} else {
+		var err error
+		merged, region, err = c.prepareSnapshot(query.Region)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	fixturesData := c.masterdata.loadList("mysekaiFixtures.json")
 	mainGenreMap := c.masterdata.loadMapByID("mysekaiFixtureMainGenres.json")
 	subGenreMap := c.masterdata.loadMapByID("mysekaiFixtureSubGenres.json")
 	blueprints := c.masterdata.loadMapByID("mysekaiBlueprints.json")
 	characters := c.masterdata.loadMapByID("gameCharacters.json")
-	obtainedFixtureIDs := c.obtainedMysekaiFixtureIDs(merged, blueprints)
+	obtainedFixtureIDs := map[int]struct{}{}
+	if showObtained {
+		obtainedFixtureIDs = c.obtainedMysekaiFixtureIDs(merged, blueprints)
+	}
 	craftableFixtureIDs := c.craftableMysekaiFixtureIDs(blueprints)
 
 	type fixtureRow struct {
@@ -78,6 +99,9 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		}
 
 		obtained := hasFixture(obtainedFixtureIDs, fixtureID)
+		if !showObtained {
+			obtained = true
+		}
 		var characterID *int
 		if charID := birthdayCharacterID(characters, stringValue(item["name"])); charID != 0 {
 			characterID = &charID

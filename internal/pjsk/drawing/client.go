@@ -226,11 +226,15 @@ func (c *HarukiDrawingClient) GenerateCharacterBirthday(req *CharaBirthdayReques
 // =========================== MySekai API ===========================
 
 func (c *HarukiDrawingClient) GenerateMysekaiResource(req *MysekaiResourceRequest) ([]byte, error) {
-	return c.post("/api/pjsk/mysekai/resource", req)
+	return c.RenderWithCache("/api/pjsk/mysekai/resource", req, func(prepared any) ([]byte, error) {
+		return c.postPrepared("/api/pjsk/mysekai/resource", prepared)
+	})
 }
 
 func (c *HarukiDrawingClient) GenerateMysekaiMap(req *MysekaiMsrMapRequest) ([]byte, error) {
-	return c.post("/api/pjsk/mysekai/map", req)
+	return c.RenderWithCache("/api/pjsk/mysekai/map", req, func(prepared any) ([]byte, error) {
+		return c.postPrepared("/api/pjsk/mysekai/map", prepared)
+	})
 }
 
 func (c *HarukiDrawingClient) GenerateMysekaiFixtureList(req *MysekaiFixtureListRequest) ([]byte, error) {

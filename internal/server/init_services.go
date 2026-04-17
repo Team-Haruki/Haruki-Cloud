@@ -117,6 +117,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		LocalMasterdata: renderapp.LocalMasterdataConfig{
 			Enabled:       harukiConfig.Cfg.PJSKRender.LocalMasterdata.Enabled,
 			AllowFallback: harukiConfig.Cfg.PJSKRender.LocalMasterdata.AllowFallback,
+			AllowLeaks:    harukiConfig.Cfg.PJSKRender.LocalMasterdata.AllowLeaks,
 			Dir:           harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
 		},
 		SekaiDSN: harukiConfig.Cfg.Sekai.DBURL,

@@ -2040,6 +2040,118 @@ func TestResolveDeckCharacterSelectionsResolvesDefaultWorldBloomChapterForExplic
 	}
 }
 
+func TestResolveDeckCharacterSelectionsPrefersWorldBloomCharacterAliasOverMusicForExplicitEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_alias_explicit?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(10).
+		SetFirstName("白石").
+		SetGivenName("杏").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 505, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 10},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       drawing.IntPtr(505),
+		MusicQuery:    "an",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 10 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.MusicQuery != "" {
+		t.Fatalf("expected music query to be consumed as WL character alias, got %q", query.MusicQuery)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsPrefersWorldBloomCharacterAliasOverMusicForCurrentEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_alias_current?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(10).
+		SetFirstName("白石").
+		SetGivenName("杏").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 506, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 10},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		MusicQuery:    "an",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 506 {
+		t.Fatalf("unexpected event id: %+v", query.EventID)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 10 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.MusicQuery != "" {
+		t.Fatalf("expected music query to be consumed as WL character alias, got %q", query.MusicQuery)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsPrefersWorldBloomCharacterFullNameOverMusicForExplicitEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_fullname_explicit?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 507, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       drawing.IntPtr(507),
+		MusicQuery:    "Hatsune Miku",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.MusicQuery != "" {
+		t.Fatalf("expected music query to be consumed as WL character full name, got %q", query.MusicQuery)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsRejectsUnknownWorldBloomQueryForWorldBloomEvent(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_music_fallback?mode=memory&cache=shared&_fk=1")

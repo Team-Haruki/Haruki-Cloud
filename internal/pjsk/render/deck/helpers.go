@@ -304,5 +304,12 @@ func float64Ptr(value float64) *float64 {
 // Card helpers
 
 func isAfterTraining(userCard snapshot.RawUserCard) bool {
-	return strings.EqualFold(userCard.SpecialTrainingStatus, "done")
+	switch strings.ToLower(strings.TrimSpace(userCard.DefaultImage)) {
+	case "special_training":
+		return true
+	case "normal":
+		return false
+	default:
+		return strings.EqualFold(userCard.SpecialTrainingStatus, "done")
+	}
 }

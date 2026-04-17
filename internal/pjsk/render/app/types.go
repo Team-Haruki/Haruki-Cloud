@@ -68,6 +68,7 @@ const defaultMusicMetaRefreshInterval = 30 * time.Minute
 type LocalMasterdataConfig struct {
 	Enabled       bool
 	AllowFallback bool // when false, DB failure is fatal; when true, fallback to local files
+	AllowLeaks    bool // when true, unopened event/worldbloom deck queries may fall back to local masterdata
 	Dir           string
 }
 

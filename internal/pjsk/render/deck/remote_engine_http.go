@@ -2,6 +2,7 @@ package deck
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/klauspost/compress/zstd"
 )
+
+const circuitBreakerHealthCheckTimeout = 3 * time.Second
 
 // isRetryableError returns true for transient errors that warrant a retry.
 func isRetryableError(err error, statusCode int) bool {
@@ -152,6 +155,27 @@ func parseRemoteHTTPError(statusCode int, payload []byte) error {
 		return fmt.Errorf("deck-service returned HTTP %d: %s", statusCode, trimmed)
 	}
 	return fmt.Errorf("deck-service returned HTTP %d", statusCode)
+}
+
+func (r *RemoteDeckRecommender) healthCheck() bool {
+	if r == nil || r.client == nil || strings.TrimSpace(r.baseURL) == "" {
+		return false
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), circuitBreakerHealthCheckTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, r.baseURL+"/health", nil)
+	if err != nil {
+		return false
+	}
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices
 }
 
 func buildMultipartPayload(segments ...[]byte) []byte {

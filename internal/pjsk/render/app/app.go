@@ -101,7 +101,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	if sekaiClient != nil {
 		renderMasterdataDir := resolveRenderProviderMasterdataDir(cfg)
 		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
-		masterDBProvider.SetLocalMasterdataDir(renderMasterdataDir)
+		masterDBProvider.SetLocalMasterdataDir(renderMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
 		masterProvider = masterDBProvider
 
 		// Create module adapters from the unified provider
@@ -148,7 +148,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 				continue
 			}
 			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
-			regionProvider.SetLocalMasterdataDir(renderMasterdataDir)
+			regionProvider.SetLocalMasterdataDir(renderMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
 			regionCardAdapter := card.NewProviderAdapter(regionProvider)
 			regionEventAdapter := event.NewProviderAdapter(regionProvider)
 			regionMusicAdapter := music.NewProviderAdapter(regionProvider)

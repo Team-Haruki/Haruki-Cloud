@@ -176,6 +176,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", &cfg.PJSKRender.DeckRecommend.MasterdataDir)
+	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", &cfg.PJSKRender.LocalMasterdata.AllowLeaks)
 }
 
 type BackendConfig struct {
@@ -227,6 +228,7 @@ type AssetDirsConfig struct {
 type LocalMasterdataConfig struct {
 	Enabled       bool   `yaml:"enabled"`
 	AllowFallback bool   `yaml:"allow_fallback"` // when false, DB failure is fatal (production); when true, fallback to local files (dev/test)
+	AllowLeaks    bool   `yaml:"allow_leaks"`    // when true, unopened event/worldbloom deck queries may fall back to local masterdata
 	Dir           string `yaml:"dir"`
 }
 

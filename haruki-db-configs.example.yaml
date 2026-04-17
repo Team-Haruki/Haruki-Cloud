@@ -107,6 +107,7 @@ pjsk_render:
   local_masterdata:
     enabled: true
     allow_fallback: true      # set false in production (DB failure is fatal); true for dev/test
+    allow_leaks: false        # when true, unopened event/worldbloom deck queries may fall back to local masterdata
     dir: "/data/HarukiServices/alpha/deckrec/masterdata"
 
   deck_recommend:

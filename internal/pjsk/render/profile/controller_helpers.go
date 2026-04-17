@@ -236,9 +236,15 @@ func (c *Controller) buildPCards(source DataSource, userCards []snapshot.RawUser
 			level = new(userCard.Level)
 			trainRank = new(userCard.MasterRank)
 		}
+		displayAfterTraining := isSnapshotCardTrainedArt(userCard)
+		rareImgPath := ""
+		if userCard != nil && strings.EqualFold(userCard.SpecialTrainingStatus, "done") {
+			rareImgPath = common.ResolveCardRareImagePath(c.assets, cardInfo, true)
+		}
 		result = append(result, common.BuildCardThumbnail(c.assets, cardInfo, region, common.ThumbnailOptions{
-			AfterTraining: userCard != nil && strings.EqualFold(userCard.SpecialTrainingStatus, "done"),
-			TrainedArt:    userCard != nil && strings.EqualFold(userCard.DefaultImage, "special_training"),
+			AfterTraining: displayAfterTraining,
+			TrainedArt:    displayAfterTraining,
+			RareImgPath:   rareImgPath,
 			TrainRank:     trainRank,
 			Level:         level,
 			IsPcard:       true,

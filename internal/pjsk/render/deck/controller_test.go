@@ -1122,6 +1122,64 @@ func TestBuildAutoRecommendRequestChallengeMusicCompareRequiresCharacter(t *test
 	}
 }
 
+func TestBuildDrawingRequestFromRecommendResultUsesDefaultImageForDisplayState(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	raw, err := snapshot.CloneRawUserData(controller.snapshot.RawData())
+	if err != nil {
+		t.Fatalf("CloneRawUserData() error = %v", err)
+	}
+	for i := range raw.UserCards {
+		if raw.UserCards[i].CardID != 1002 {
+			continue
+		}
+		raw.UserCards[i].SpecialTrainingStatus = "done"
+		raw.UserCards[i].DefaultImage = "normal"
+	}
+
+	request, err := controller.buildDrawingRequestFromRecommendResult(
+		renderregion.JP,
+		"event",
+		AutoQuery{Region: "jp", RecommendType: "event"},
+		map[string]any{"target": "score"},
+		raw,
+		&RecommendResult{
+			Decks: []RecommendDeck{{
+				Cards: []RecommendCard{{
+					CardID:          1002,
+					Level:           60,
+					MasterRank:      5,
+					DefaultImage:    "normal",
+					SkillLevel:      4,
+					SkillRate:       120,
+					IsAfterTraining: true,
+				}},
+				Score: 123,
+			}},
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("buildDrawingRequestFromRecommendResult() error = %v", err)
+	}
+	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
+		t.Fatalf("unexpected deck request: %+v", request.DeckData)
+	}
+	cardData := request.DeckData[0].CardData[0]
+	if cardData.IsAfterTraining {
+		t.Fatalf("expected displayed deck card state to stay before-training, got %+v", cardData)
+	}
+	if cardData.CardThumbnail.IsAfterTraining == nil || *cardData.CardThumbnail.IsAfterTraining {
+		t.Fatalf("expected thumbnail display state to stay before-training, got %+v", cardData.CardThumbnail.IsAfterTraining)
+	}
+	if !strings.Contains(cardData.CardThumbnail.CardThumbnailPath, "_normal.png") {
+		t.Fatalf("expected normal art thumbnail, got %q", cardData.CardThumbnail.CardThumbnailPath)
+	}
+	if !strings.Contains(cardData.CardThumbnail.RareImgPath, "rare_star_after_training.png") {
+		t.Fatalf("expected trained rarity marker to stay after-training, got %q", cardData.CardThumbnail.RareImgPath)
+	}
+}
+
 func TestBuildAutoRecommendRequestEventMusicCompareRequiresFixedDeckWhenQueriesOmitted(t *testing.T) {
 	server, masterdataRoot := newDeckRecommendStubServer(t)
 	defer server.Close()

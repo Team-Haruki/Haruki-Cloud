@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -23,6 +24,7 @@ type dbEventProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
 	once   sync.Once
+	local  *localEventProvider
 
 	eventMu    sync.RWMutex
 	eventCache map[int]*masterdata.Event
@@ -63,6 +65,11 @@ func (p *dbEventProvider) GetByID(ctx context.Context, id int) (*masterdata.Even
 		Where(event.ServerRegionEQ(p.region.String()), event.GameIDEQ(int64(id))).
 		Only(ctx)
 	if err != nil {
+		if p.local != nil {
+			if fallback, fallbackErr := p.local.GetByID(ctx, id); fallbackErr == nil && fallback != nil {
+				return fallback, nil
+			}
+		}
 		return nil, fmt.Errorf("query event %d: %w", id, err)
 	}
 	model := common.ConvertEventEntity(entity)
@@ -79,6 +86,11 @@ func (p *dbEventProvider) GetByCardID(ctx context.Context, cardID int) (*masterd
 		Order(eventcard.ByEventID()).
 		First(ctx)
 	if err != nil {
+		if p.local != nil {
+			if fallback, fallbackErr := p.local.GetByCardID(ctx, cardID); fallbackErr == nil && fallback != nil {
+				return fallback, nil
+			}
+		}
 		return nil, fmt.Errorf("query event by card %d: %w", cardID, err)
 	}
 	return p.GetByID(ctx, int(link.EventID))
@@ -91,6 +103,9 @@ func (p *dbEventProvider) GetAll(ctx context.Context) []*masterdata.Event {
 		Order(event.ByStartAt()).
 		All(ctx)
 	if err != nil {
+		if p.local != nil {
+			return p.local.GetAll(ctx)
+		}
 		return nil
 	}
 
@@ -102,6 +117,21 @@ func (p *dbEventProvider) GetAll(ctx context.Context) []*masterdata.Event {
 		p.eventCache[model.ID] = model
 		result = append(result, common.CloneEvent(model))
 	}
+	if p.local != nil {
+		for _, item := range p.local.GetAll(ctx) {
+			if item == nil {
+				continue
+			}
+			if _, ok := p.eventCache[item.ID]; ok {
+				continue
+			}
+			p.eventCache[item.ID] = common.CloneEvent(item)
+			result = append(result, common.CloneEvent(item))
+		}
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].StartAt < result[j].StartAt
+		})
+	}
 	return result
 }
 
@@ -112,9 +142,19 @@ func (p *dbEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterd
 		Order(eventcard.ByCardID()).
 		All(ctx)
 	if err != nil {
+		if p.local != nil {
+			if fallback, fallbackErr := p.local.GetCards(ctx, eventID); fallbackErr == nil && len(fallback) > 0 {
+				return fallback, nil
+			}
+		}
 		return nil, fmt.Errorf("query event cards for event %d: %w", eventID, err)
 	}
 	if len(links) == 0 {
+		if p.local != nil {
+			if fallback, fallbackErr := p.local.GetCards(ctx, eventID); fallbackErr == nil && len(fallback) > 0 {
+				return fallback, nil
+			}
+		}
 		return nil, fmt.Errorf("no cards found for event %d", eventID)
 	}
 
@@ -153,6 +193,11 @@ func (p *dbEventProvider) GetDeckBonuses(ctx context.Context, eventID int) ([]*m
 		Where(eventdeckbonuse.ServerRegionEQ(p.region.String()), eventdeckbonuse.EventIDEQ(int64(eventID))).
 		All(ctx)
 	if err != nil {
+		if p.local != nil {
+			if fallback, fallbackErr := p.local.GetDeckBonuses(ctx, eventID); fallbackErr == nil && fallback != nil {
+				return fallback, nil
+			}
+		}
 		return nil, fmt.Errorf("query deck bonuses for event %d: %w", eventID, err)
 	}
 
@@ -165,6 +210,11 @@ func (p *dbEventProvider) GetDeckBonuses(ctx context.Context, eventID int) ([]*m
 			CardAttr:            item.CardAttr,
 			BonusRate:           item.BonusRate,
 		})
+	}
+	if len(result) == 0 && p.local != nil {
+		if fallback, fallbackErr := p.local.GetDeckBonuses(ctx, eventID); fallbackErr == nil && fallback != nil {
+			return fallback, nil
+		}
 	}
 	return result, nil
 }
@@ -238,6 +288,9 @@ func (p *dbEventProvider) GetWorldBloomChapters(ctx context.Context, eventID int
 		Order(worldbloom.ByChapterStartAt()).
 		All(ctx)
 	if err != nil {
+		if p.local != nil {
+			return p.local.GetWorldBloomChapters(ctx, eventID)
+		}
 		return nil
 	}
 
@@ -258,6 +311,9 @@ func (p *dbEventProvider) GetWorldBloomChapters(ctx context.Context, eventID int
 			IsSupplemental:  item.IsSupplemental,
 			ChapterType:     item.WorldBloomChapterType,
 		})
+	}
+	if len(result) == 0 && p.local != nil {
+		return p.local.GetWorldBloomChapters(ctx, eventID)
 	}
 	return result
 }

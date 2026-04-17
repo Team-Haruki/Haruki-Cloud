@@ -22,6 +22,8 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 	if failures := r.consecutiveFailures.Load(); failures >= maxConsecutiveFailures {
 		if r.tryResetCircuitBreakerAfterCooldown(failures) {
 			r.logger.Infof("circuit breaker auto-reset after cooldown; allowing request to proceed")
+		} else if r.tryResetCircuitBreakerOnHealthyService(failures) {
+			r.logger.Infof("circuit breaker reset after successful health probe; allowing request to proceed")
 		} else {
 			r.logger.Warnf("circuit breaker open: %d consecutive failures, rejecting request", failures)
 			return nil, fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures)
@@ -42,8 +44,13 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 		return result, nil
 	}
 	if !shouldRewarmRemoteService(err) {
-		r.recordFailure()
-		r.logger.Warnf("recommend failed after %v: %v", elapsed, err)
+		if shouldCountCircuitBreakerFailure(err) {
+			r.recordFailure()
+			r.logger.Warnf("recommend failed after %v: %v", elapsed, err)
+		} else {
+			r.recordSuccess()
+			r.logger.Infof("recommend returned logical error after %v: %v", elapsed, err)
+		}
 		return nil, err
 	}
 
@@ -105,11 +112,36 @@ func (r *RemoteDeckRecommender) tryResetCircuitBreakerAfterCooldown(failures int
 	return true
 }
 
+func (r *RemoteDeckRecommender) tryResetCircuitBreakerOnHealthyService(failures int64) bool {
+	if !r.healthCheck() {
+		return false
+	}
+	r.logger.Infof("circuit breaker health probe succeeded; resetting from %d consecutive failures", failures)
+	r.ResetCircuitBreaker()
+	return true
+}
+
 func (r *RemoteDeckRecommender) timeNow() time.Time {
 	if r != nil && r.now != nil {
 		return r.now()
 	}
 	return time.Now()
+}
+
+func shouldCountCircuitBreakerFailure(err error) bool {
+	if err == nil {
+		return false
+	}
+	if shouldRewarmRemoteService(err) {
+		return true
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "deck-service returned http 5") ||
+		strings.Contains(message, "connection refused") ||
+		strings.Contains(message, "no such host") ||
+		strings.Contains(message, "i/o timeout") ||
+		strings.Contains(message, "context deadline exceeded") ||
+		strings.Contains(message, "eof")
 }
 
 func (r *RemoteDeckRecommender) doRecommendCompatible(req RecommendRequest) ([]remoteBatchRecommendResult, error) {

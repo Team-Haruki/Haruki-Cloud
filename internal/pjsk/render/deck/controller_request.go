@@ -46,9 +46,11 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 
 			userCard, hasUserCard := userCardMap[deckCard.CardID]
 			trainedArt := strings.EqualFold(deckCard.DefaultImage, "special_training")
-			originalTrained := deckCard.IsAfterTraining
-			if hasUserCard {
-				originalTrained = isAfterTraining(userCard)
+			displayAfterTraining := deckCard.IsAfterTraining
+			if strings.TrimSpace(deckCard.DefaultImage) != "" {
+				displayAfterTraining = trainedArt
+			} else if hasUserCard {
+				displayAfterTraining = isAfterTraining(userCard)
 			}
 
 			level := deckCard.Level
@@ -56,18 +58,23 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 				level = 60
 			}
 			masterRank := deckCard.MasterRank
+			rareImgPath := ""
+			if hasUserCard && strings.EqualFold(userCard.SpecialTrainingStatus, "done") {
+				rareImgPath = common.ResolveCardRareImagePath(c.assets, card, true)
+			}
 
 			cardData = append(cardData, drawing.DeckCardData{
 				CardThumbnail: common.BuildCardThumbnail(c.assets, card, region, common.ThumbnailOptions{
-					AfterTraining: originalTrained,
+					AfterTraining: displayAfterTraining,
 					TrainedArt:    trainedArt,
+					RareImgPath:   rareImgPath,
 					TrainRank:     drawing.IntPtr(masterRank),
 					Level:         drawing.IntPtr(level),
 					IsPcard:       true,
 				}),
 				CharaID:         card.CharacterID,
 				SkillLevel:      fmt.Sprintf("%d", deckCard.SkillLevel),
-				IsAfterTraining: originalTrained,
+				IsAfterTraining: displayAfterTraining,
 				SkillRate:       deckCard.SkillRate,
 				EventBonusRate:  deckCard.EventBonusRate,
 				IsBeforeStory:   deckCard.IsBeforeStory,

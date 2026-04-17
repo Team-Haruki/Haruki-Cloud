@@ -50,6 +50,20 @@ func ResolveCardThumbnailPath(helper *assets.AssetHelper, region renderregion.Va
 	return assets.ResolveRegionAssetPath(helper, region.String(), relPaths...)
 }
 
+func ResolveCardRareImagePath(helper *assets.AssetHelper, card *masterdata.Card, afterTraining bool) string {
+	if card == nil {
+		return ""
+	}
+	if card.CardRarityType == "rarity_birthday" {
+		return assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("card", "rare_birthday.png"))
+	}
+	fileName := "rare_star_normal.png"
+	if afterTraining {
+		fileName = "rare_star_after_training.png"
+	}
+	return assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("card", fileName))
+}
+
 func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, region renderregion.Value, opts ThumbnailOptions) drawing.CardFullThumbnailRequest {
 	thumbPath := opts.ThumbnailPath
 	if thumbPath == "" {
@@ -60,11 +74,7 @@ func BuildCardThumbnail(helper *assets.AssetHelper, card *masterdata.Card, regio
 
 	rareImg := opts.RareImgPath
 	if rareImg == "" {
-		fileName := "rare_star_normal.png"
-		if opts.AfterTraining {
-			fileName = "rare_star_after_training.png"
-		}
-		rareImg = assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("card", fileName))
+		rareImg = ResolveCardRareImagePath(helper, card, opts.AfterTraining)
 	} else {
 		rareImg = filepath.ToSlash(rareImg)
 	}

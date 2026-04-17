@@ -3,6 +3,7 @@ package profile
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/drawing"
@@ -697,6 +698,12 @@ func TestBuildProfileRequestFromAPIWithSnapshotFallsBackToSnapshotDeckWhenAPIDec
 	}
 	if len(payload.Pcards) != 1 || payload.Pcards[0].CardThumbnailPath != wantLeader {
 		t.Fatalf("expected snapshot fallback pcard thumbnail, got %+v", payload.Pcards)
+	}
+	if payload.Pcards[0].IsAfterTraining == nil || *payload.Pcards[0].IsAfterTraining {
+		t.Fatalf("expected pcard display state to stay before-training, got %+v", payload.Pcards[0].IsAfterTraining)
+	}
+	if !strings.Contains(payload.Pcards[0].RareImgPath, "rare_star_after_training.png") {
+		t.Fatalf("expected trained rarity marker to stay after-training, got %q", payload.Pcards[0].RareImgPath)
 	}
 }
 

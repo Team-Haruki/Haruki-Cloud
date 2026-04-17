@@ -311,3 +311,103 @@ func TestRemoteRecommendAutoResetsCircuitBreakerAfterCooldown(t *testing.T) {
 		t.Fatalf("expected circuit breaker to reset after successful request, got %d failures", failures)
 	}
 }
+
+func TestRemoteRecommendLogicalErrorsDoNotTripCircuitBreaker(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			_, _ = w.Write([]byte(`[{
+				"alg": "ga",
+				"error": "Event not found for eventId: 202"
+			}]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	recommender := &RemoteDeckRecommender{
+		baseURL:       server.URL,
+		client:        server.Client(),
+		defaultAlgs:   []string{"ga"},
+		masterdataDir: "/masterdata",
+		region:        "jp",
+		maxRetries:    0,
+		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
+	}
+
+	_, err := recommender.Recommend(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: []byte(`[{"music_id":10000,"difficulty":"master"}]`),
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	})
+	if err == nil || !strings.Contains(err.Error(), "Event not found for eventId: 202") {
+		t.Fatalf("expected logical event-not-found error, got %v", err)
+	}
+	if failures := recommender.consecutiveFailures.Load(); failures != 0 {
+		t.Fatalf("expected logical error not to trip circuit breaker, got %d failures", failures)
+	}
+}
+
+func TestRemoteRecommendAutoResetsCircuitBreakerWhenHealthProbeSucceeds(t *testing.T) {
+	now := time.Now()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/health":
+			_, _ = w.Write([]byte(`ok`))
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			_, _ = w.Write([]byte(`[{
+				"alg": "ga",
+				"error": "Event not found for eventId: 202"
+			}]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	recommender := &RemoteDeckRecommender{
+		baseURL:       server.URL,
+		client:        server.Client(),
+		defaultAlgs:   []string{"ga"},
+		masterdataDir: "/masterdata",
+		region:        "jp",
+		maxRetries:    0,
+		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
+		now: func() time.Time {
+			return now
+		},
+	}
+	recommender.consecutiveFailures.Store(maxConsecutiveFailures)
+	recommender.lastFailureAtNanos.Store(now.UnixNano())
+
+	_, err := recommender.Recommend(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: []byte(`[{"music_id":10000,"difficulty":"master"}]`),
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	})
+	if err == nil || !strings.Contains(err.Error(), "Event not found for eventId: 202") {
+		t.Fatalf("expected logical event-not-found error after health reset, got %v", err)
+	}
+	if failures := recommender.consecutiveFailures.Load(); failures != 0 {
+		t.Fatalf("expected health probe to reset circuit breaker, got %d failures", failures)
+	}
+}

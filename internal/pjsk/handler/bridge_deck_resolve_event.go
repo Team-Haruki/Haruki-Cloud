@@ -127,6 +127,12 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		return err
 	}
 
+	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
+		if err := tryResolveDeckMusicQueryAsWorldBloomCharacter(ctx, q, app, region, chapters); err != nil {
+			return err
+		}
+	}
+
 	if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
 		if !trackerWorldBloomHasCharacter(chapters, *q.WorldBloomCharacterID) {
 			return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(region.String()), eventID, *q.WorldBloomCharacterID)
@@ -163,6 +169,44 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 
 	charID := int(chapter.GameCharacterID)
 	q.WorldBloomCharacterID = drawing.IntPtr(charID)
+	if strings.TrimSpace(q.EventUnit) == "" {
+		q.EventUnit = resolveDeckCharacterUnit(charID)
+	}
+	return nil
+}
+
+func tryResolveDeckMusicQueryAsWorldBloomCharacter(
+	ctx context.Context,
+	q *deck.AutoQuery,
+	app *renderapp.App,
+	region renderregion.Value,
+	chapters []*sekaidb.Worldbloom,
+) error {
+	if q == nil || app == nil {
+		return nil
+	}
+	if strings.TrimSpace(q.MusicDiff) != "" {
+		return nil
+	}
+
+	query := strings.TrimSpace(q.MusicQuery)
+	if query == "" {
+		return nil
+	}
+
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, query, "deck")
+	if err != nil {
+		if isCharacterNotFoundError(err) {
+			return nil
+		}
+		return err
+	}
+	if !trackerWorldBloomHasCharacter(chapters, charID) {
+		return nil
+	}
+
+	q.WorldBloomCharacterID = drawing.IntPtr(charID)
+	q.MusicQuery = ""
 	if strings.TrimSpace(q.EventUnit) == "" {
 		q.EventUnit = resolveDeckCharacterUnit(charID)
 	}

@@ -36,3 +36,30 @@ func TestLocalMasterdataCandidateDirsPreferMatchingRegionRepoOverBrokenRegionDir
 		t.Fatalf("expected CN repo data to win, got %s", got)
 	}
 }
+
+func TestDatabaseProviderSetLocalMasterdataDirGatesEventLeaks(t *testing.T) {
+	root := t.TempDir()
+	jpDir := filepath.Join(root, "jp")
+	if err := os.MkdirAll(jpDir, 0o755); err != nil {
+		t.Fatalf("mkdir jp dir: %v", err)
+	}
+
+	provider := &DatabaseProvider{
+		region:    renderregion.JP,
+		education: &dbEducationProvider{},
+		events:    &dbEventProvider{},
+	}
+
+	provider.SetLocalMasterdataDir(root, false)
+	if provider.education.store == nil {
+		t.Fatalf("expected education local store to be configured")
+	}
+	if provider.events.local != nil {
+		t.Fatalf("expected event leak fallback to stay disabled")
+	}
+
+	provider.SetLocalMasterdataDir(root, true)
+	if provider.events.local == nil {
+		t.Fatalf("expected event leak fallback to be enabled")
+	}
+}

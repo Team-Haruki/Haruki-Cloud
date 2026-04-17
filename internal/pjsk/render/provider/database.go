@@ -55,23 +55,36 @@ func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value) *Dat
 	return p
 }
 
-func (p *DatabaseProvider) SetLocalMasterdataDir(root string) {
-	if p == nil || p.education == nil {
+func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
+	if p == nil || p.education == nil || p.events == nil {
 		return
 	}
 
 	root = strings.TrimSpace(root)
 	if root == "" {
 		p.education.store = nil
+		p.events.local = nil
 		return
 	}
 
 	dirs := localMasterdataCandidateDirs(root, p.region)
 	if len(dirs) == 0 {
 		p.education.store = nil
+		p.events.local = nil
 		return
 	}
-	p.education.store = newLocalStore(dirs...)
+	store := newLocalStore(dirs...)
+	p.education.store = store
+
+	if !allowLeaks {
+		p.events.local = nil
+		return
+	}
+
+	localCharacters := &localCharacterProvider{store: store}
+	localSkills := &localSkillProvider{store: store, characters: localCharacters}
+	localCards := &localCardProvider{store: store, characters: localCharacters, skills: localSkills}
+	p.events.local = &localEventProvider{store: store, cards: localCards}
 }
 
 func (p *DatabaseProvider) Region() renderregion.Value { return p.region }

@@ -1,6 +1,7 @@
 package drawing
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -50,8 +51,21 @@ func (c *HarukiDrawingClient) SetRenderCache(cache *RenderCacheClient) {
 	c.cache = cache
 }
 
+func (c *HarukiDrawingClient) WithContext(ctx context.Context) *HarukiDrawingClient {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.requestCtx = ctx
+	return &clone
+}
+
 func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, render func(any) ([]byte, error)) ([]byte, error) {
-	prepared := prepareDrawingRequestBody(endpoint, request, time.Now())
+	var requestCtx context.Context
+	if c != nil {
+		requestCtx = c.requestCtx
+	}
+	prepared := prepareDrawingRequestBody(endpoint, request, time.Now(), requestCtx)
 	if c == nil {
 		return render(prepared)
 	}
@@ -87,7 +101,11 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 }
 
 func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
-	requestBody := prepareDrawingRequestBody(endpoint, body, time.Now())
+	var requestCtx context.Context
+	if c != nil {
+		requestCtx = c.requestCtx
+	}
+	requestBody := prepareDrawingRequestBody(endpoint, body, time.Now(), requestCtx)
 	return c.postPrepared(endpoint, requestBody)
 }
 

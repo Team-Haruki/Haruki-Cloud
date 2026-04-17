@@ -102,7 +102,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 			if strings.TrimSpace(staticFixtureListQuery.Region) == "" {
 				staticFixtureListQuery.Region = regionWithDefault(regionStr)
 			}
-			data, err := rc.App.MySekai.RenderFixtureList(staticFixtureListQuery)
+			data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureList(staticFixtureListQuery)
 			if err != nil {
 				return nil, err
 			}

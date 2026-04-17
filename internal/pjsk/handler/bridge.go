@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -41,6 +42,11 @@ func Execute(ctx context.Context, resolved *parser.ResolvedCommand, app *rendera
 	// resolve it from the user's global default binding so e.g. a TW player
 	// doesn't always get JP results when typing bare commands.
 	resolved.Region = resolveRegionFromDefaultBinding(ctx, resolved, app)
+
+	ctx = displaytime.WithRequestTimeZone(
+		ctx,
+		resolveRequesterHarukiUserTimeZone(ctx, app, resolved.RequesterPlatform, resolved.RequesterUserID),
+	)
 
 	// Create request context for functions that support it.
 	rc := NewRequestContext(ctx, resolved, app)

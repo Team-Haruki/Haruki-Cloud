@@ -1,6 +1,7 @@
 package mysekai
 
 import (
+	"context"
 	"path/filepath"
 	"strings"
 
@@ -135,6 +136,15 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 		nicknames:     cloneNicknames(defaultNicknames),
 		assets:        assetHelper,
 	}
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.drawing = c.drawing.WithContext(ctx)
+	return &clone
 }
 
 // regionPath resolves a region-specific asset path through the AssetHelper.

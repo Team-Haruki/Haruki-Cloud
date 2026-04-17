@@ -1,6 +1,7 @@
 package mysekai
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 type Controller struct {
 	drawing        *drawing.HarukiDrawingClient
+	requestCtx     context.Context
 	snapshot       snapshot.Snapshot
 	rawMySekaiJSON []byte
 	masterdata     masterdataSource

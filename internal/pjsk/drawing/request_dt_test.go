@@ -1,8 +1,11 @@
 package drawing
 
 import (
+	"context"
 	"testing"
 	"time"
+
+	"haruki-cloud/internal/pjsk/displaytime"
 )
 
 func TestPrepareDrawingRequestBodyInjectsProfileUpdateTime(t *testing.T) {
@@ -14,7 +17,7 @@ func TestPrepareDrawingRequestBodyInjectsProfileUpdateTime(t *testing.T) {
 			Nickname:        "tester",
 			LeaderImagePath: "asset/test.png",
 		},
-	}, now)
+	}, now, nil)
 
 	root := mapAt(body)
 	if root == nil {
@@ -44,7 +47,7 @@ func TestPrepareDrawingRequestBodyInjectsProfileCardDataSourceUpdateTime(t *test
 				{Name: "User Data"},
 			},
 		},
-	}, now)
+	}, now, nil)
 
 	root := mapAt(body)
 	profile := mapAt(root, "profile")
@@ -74,7 +77,7 @@ func TestPrepareDrawingRequestBodyNormalizesDetailedProfileUpdateTimeToMilliseco
 			UpdateTime:      now.Unix(),
 			LeaderImagePath: "asset/test.png",
 		},
-	}, now)
+	}, now, nil)
 
 	root := mapAt(body)
 	userInfo := mapAt(root, "user_info")
@@ -87,5 +90,35 @@ func TestPrepareDrawingRequestBodyNormalizesDetailedProfileUpdateTimeToMilliseco
 	}
 	if got != now.UnixMilli() {
 		t.Fatalf("expected normalized update_time %d, got %d", now.UnixMilli(), got)
+	}
+}
+
+func TestPrepareDrawingRequestBodyInjectsTimeZoneFromContext(t *testing.T) {
+	now := time.Unix(1776322800, 0)
+	ctx := displaytime.WithRequestTimeZone(context.Background(), "Asia/Tokyo")
+	body := prepareDrawingRequestBody("/api/pjsk/event/list", &EventListRequest{}, now, ctx)
+
+	root := mapAt(body)
+	if root == nil {
+		t.Fatalf("expected request body map, got %#v", body)
+	}
+	if got := scalarString(root["timezone"]); got != "Asia/Tokyo" {
+		t.Fatalf("expected timezone Asia/Tokyo, got %q", got)
+	}
+}
+
+func TestPrepareDrawingRequestBodyKeepsExplicitTimeZone(t *testing.T) {
+	now := time.Unix(1776322800, 0)
+	ctx := displaytime.WithRequestTimeZone(context.Background(), "Asia/Tokyo")
+	body := prepareDrawingRequestBody("/api/pjsk/event/list", map[string]any{
+		"timezone": "Asia/Seoul",
+	}, now, ctx)
+
+	root := mapAt(body)
+	if root == nil {
+		t.Fatalf("expected request body map, got %#v", body)
+	}
+	if got := scalarString(root["timezone"]); got != "Asia/Seoul" {
+		t.Fatalf("expected explicit timezone Asia/Seoul, got %q", got)
 	}
 }

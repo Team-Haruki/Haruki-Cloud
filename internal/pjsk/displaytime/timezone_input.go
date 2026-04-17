@@ -27,6 +27,7 @@ var timeZoneAliases = map[string]string{
 	"sgt": "Asia/Singapore",
 	"ust": "UTC",
 	"utc": "UTC",
+	"pst": "America/Los_Angeles",
 }
 
 var preferredTimeZoneNames = []string{

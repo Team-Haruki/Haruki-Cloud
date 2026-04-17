@@ -7,6 +7,7 @@ import (
 )
 
 func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
+	miscCtrl := rc.App.Misc.WithContext(rc.Ctx)
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "misc-birthday":
@@ -19,7 +20,7 @@ func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			req = *reqPtr
 		}
-		data, err = rc.App.Misc.RenderCharaBirthday(req)
+		data, err = miscCtrl.RenderCharaBirthday(req)
 	default:
 		return nil, unsupportedModeError("misc", rc.Cmd.Mode)
 	}

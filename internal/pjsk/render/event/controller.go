@@ -35,6 +35,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.drawing = c.drawing.WithContext(ctx)
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {

@@ -1,6 +1,7 @@
 package drawing
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"time"
@@ -10,7 +11,7 @@ import (
 
 const drawingTimestampMsThreshold = int64(100000000000)
 
-func prepareDrawingRequestBody(endpoint string, body any, now time.Time) any {
+func prepareDrawingRequestBody(endpoint string, body any, now time.Time, ctx context.Context) any {
 	payload, err := normalizeRenderCachePayload(body)
 	if err != nil {
 		return body
@@ -25,7 +26,11 @@ func prepareDrawingRequestBody(endpoint string, body any, now time.Time) any {
 	if root == nil {
 		return body
 	}
-	root["timezone"] = displaytime.NormalizeTimeZone(scalarString(root["timezone"]))
+	timeZone := scalarString(root["timezone"])
+	if strings.TrimSpace(timeZone) == "" {
+		timeZone = displaytime.RequestTimeZoneFromContext(ctx)
+	}
+	root["timezone"] = displaytime.NormalizeTimeZone(timeZone)
 
 	nowMs := now.UnixMilli()
 	if parsed.Path == "/api/pjsk/profile" {

@@ -20,6 +20,14 @@ const (
 	ProfileDev        Profile = "dev"
 )
 
+// ================= Log Levels =================
+
+const (
+	LogLevelDebug = "DEBUG"
+	LogLevelInfo  = "INFO"
+	LogLevelWarn  = "WARN"
+)
+
 // ParseProfile normalises a raw string into a known Profile.
 // Empty string defaults to "dev".
 func ParseProfile(raw string) (Profile, error) {
@@ -364,11 +372,11 @@ func ApplyProfileDefaults(cfg *Config) {
 	if cfg.Backend.LogLevel == "" {
 		switch {
 		case p.IsProduction():
-			cfg.Backend.LogLevel = "WARN"
+			cfg.Backend.LogLevel = LogLevelWarn
 		case p.IsBeta():
-			cfg.Backend.LogLevel = "INFO"
+			cfg.Backend.LogLevel = LogLevelInfo
 		default:
-			cfg.Backend.LogLevel = "DEBUG"
+			cfg.Backend.LogLevel = LogLevelDebug
 		}
 	}
 

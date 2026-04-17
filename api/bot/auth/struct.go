@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"haruki-cloud/api"
 	ent "haruki-cloud/database/bot"
 )
 
@@ -64,7 +65,7 @@ type InternalVerifyResponse struct {
 const (
 	RedisKeyVerifyCode   = "hdb:bot:verify_code:%d"   // QQ号码
 	RedisKeyVerifyStatus = "hdb:bot:verify_status:%d" // QQ号码
-	RedisKeySessionToken = "hdb:bot:session:%s"       // bot_id
+	RedisKeySessionToken = api.RedisKeyBotSession
 	RedisKeyNonce        = "hdb:bot:nonce:%s"         // payload hash
 	RedisKeyRateLimit    = "hdb:bot:rl:%s:%s"         // action:identifier
 )

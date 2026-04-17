@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/database/censor/namelog"
 	"haruki-cloud/database/censor/result"
 	"haruki-cloud/database/censor/shortbio"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/utils/logger"
 )
 
@@ -29,7 +30,7 @@ type Service struct {
 }
 
 func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool {
-	if name == "" || strings.EqualFold(strings.TrimSpace(server), "cn") {
+	if name == "" || strings.EqualFold(strings.TrimSpace(server), string(renderregion.CN)) {
 		return true
 	}
 
@@ -96,7 +97,7 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 }
 
 func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID string, content string, server string) bool {
-	if content == "" || strings.EqualFold(strings.TrimSpace(server), "cn") {
+	if content == "" || strings.EqualFold(strings.TrimSpace(server), string(renderregion.CN)) {
 		return true
 	}
 

@@ -118,7 +118,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 
 		// Dedup + rate limit: acquire guard before doing any work.
 		if !guard.Acquire(c.Context(), req) {
-			return botResponse(c, fiber.StatusOK, "ok", make(onebot11.Message, 0))
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
 		}
 		// Backward compatibility:
 		// 1. /skp moved from sk/rank-trace to sk/predict.
@@ -163,7 +163,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
 		}
 		guard.MarkComplete(c.Context(), req)
-		return botResponse(c, fiber.StatusOK, "ok", responseData)
+		return botResponse(c, fiber.StatusOK, api.ResponseOK, responseData)
 	}
 }
 
@@ -206,11 +206,11 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 			})
 	}
 	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
-		return botResponse(c, fiber.StatusOK, "ok",
+		return botResponse(c, fiber.StatusOK, api.ResponseOK,
 			[]onebot11.Segment{onebot11.Text(string(replyErr))},
 		)
 	}
-	return botResponse(c, fiber.StatusOK, "ok",
+	return botResponse(c, fiber.StatusOK, api.ResponseOK,
 		[]onebot11.Segment{onebot11.Text(err.Error())},
 	)
 }
@@ -304,6 +304,6 @@ func buildManifestHandler(botDBClient *botDB.Client) fiber.Handler {
 				CommandAdditionalParams: r.CommandAdditionalParams,
 			})
 		}
-		return api.JSONResponse(c, fiber.StatusOK, "ok", ManifestResponse{Entries: entries})
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, ManifestResponse{Entries: entries})
 	}
 }

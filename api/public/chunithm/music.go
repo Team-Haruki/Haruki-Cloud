@@ -78,7 +78,7 @@ func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
 			Diff3:   record.Diff3Const,
 			Diff4:   record.Diff4Const,
 		}
-		return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, "ok", payload)
+		return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, api.ResponseOK, payload)
 	}
 	latest, _ := h.svc.client.ChunithmMusicDifficulty.
 		Query().
@@ -95,7 +95,7 @@ func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
 			Diff3:   latest.Diff3Const,
 			Diff4:   latest.Diff4Const,
 		}
-		return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, "ok", payload)
+		return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, api.ResponseOK, payload)
 	}
 	return api.JSONResponse(c, fiber.StatusNotFound, "No difficulty data")
 }
@@ -120,7 +120,7 @@ func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
 	if row == nil {
 		return api.JSONResponse(c, fiber.StatusNotFound, "Music not found")
 	}
-	return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, "ok", MusicInfoSchema{
+	return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, api.ResponseOK, MusicInfoSchema{
 		MusicID:        row.MusicID,
 		Title:          row.Title,
 		Artist:         row.Artist,
@@ -166,7 +166,7 @@ func (h *MusicHandler) GetChartData(c fiber.Ctx) error {
 			TotalCount: r.TotalCount,
 		}
 	}
-	return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, "ok", result)
+	return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, api.ResponseOK, result)
 }
 
 func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {

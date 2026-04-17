@@ -18,10 +18,12 @@ import (
 )
 
 const (
-	imsHost    = "ims.tencentcloudapi.com"
-	imsService = "ims"
-	imsVersion = "2020-12-29"
-	imsAction  = "ImageModeration"
+	imsHost             = "ims.tencentcloudapi.com"
+	imsService          = "ims"
+	imsVersion          = "2020-12-29"
+	imsAction           = "ImageModeration"
+	imsCanonicalHeaders = "content-type:application/json; charset=utf-8\nhost:" + imsHost + "\n"
+	imsSignedHeaders    = "content-type;host"
 )
 
 // IMSSuggestion is the content moderation verdict returned by Tencent IMS.
@@ -101,11 +103,10 @@ func (t *TencentIMSClient) doSignedRequest(ctx context.Context, payload []byte) 
 
 	// Step 1: Canonical request
 	payloadHash := tc3HexSHA256(payload)
-	canonicalHeaders := "content-type:application/json; charset=utf-8\nhost:" + imsHost + "\n"
 	canonicalRequest := strings.Join([]string{
 		"POST", "/", "",
-		canonicalHeaders,
-		"content-type;host",
+		imsCanonicalHeaders,
+		imsSignedHeaders,
 		payloadHash,
 	}, "\n")
 
@@ -121,7 +122,7 @@ func (t *TencentIMSClient) doSignedRequest(ctx context.Context, payload []byte) 
 
 	// Step 5: Authorization
 	authorization := fmt.Sprintf(
-		"TC3-HMAC-SHA256 Credential=%s/%s, SignedHeaders=content-type;host, Signature=%s",
+		"TC3-HMAC-SHA256 Credential=%s/%s, SignedHeaders="+imsSignedHeaders+", Signature=%s",
 		t.secretID, credScope, signature)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://"+imsHost, bytes.NewReader(payload))

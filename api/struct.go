@@ -38,6 +38,25 @@ const (
 	MaxPlatformLength = 20
 )
 
+// ================= Response Messages =================
+
+const (
+	ResponseOK = "ok"
+)
+
+// ================= Content Types =================
+
+const (
+	ContentTypeJSON    = "application/json"
+	ContentTypeMsgPack = "application/msgpack"
+)
+
+// ================= Auth =================
+
+const (
+	AuthBearerPrefix = "Bearer "
+)
+
 // ================= Error Messages =================
 
 const (
@@ -60,4 +79,12 @@ const (
 const (
 	UserCacheKeyPrefix = "user:info:"
 	UserCacheTTL       = 5 * 60
+)
+
+// ================= Redis Key Patterns =================
+
+const (
+	// RedisKeyBotSession is the Redis key pattern for bot session tokens.
+	// Used by both the session middleware (api/) and the auth package (api/bot/auth/).
+	RedisKeyBotSession = "hdb:bot:session:%s" // bot_id
 )

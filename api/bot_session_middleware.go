@@ -16,10 +16,6 @@ const (
 	HeaderBotID = "X-Haruki-Bot-Id"
 	// HeaderBotSessionToken carries the JWT session token issued by POST /bot/:bot_id/auth.
 	HeaderBotSessionToken = "X-Haruki-Bot-Session-Token"
-
-	// redisBotSessionKey is the Redis key pattern for stored session tokens.
-	// Matches the pattern defined in api/bot/struct.go (RedisKeySessionToken).
-	redisBotSessionKey = "hdb:bot:session:%s"
 )
 
 // VerifyBotSession returns a Fiber middleware that authenticates Bot requests by:
@@ -75,7 +71,7 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 		}
 
 		// Verify the session has not been revoked (Redis lookup).
-		key := fmt.Sprintf(redisBotSessionKey, headerBotID)
+		key := fmt.Sprintf(RedisKeyBotSession, headerBotID)
 		stored, err := redisClient.Get(c.Context(), key).Result()
 		if errors.Is(err, redis.Nil) {
 			return JSONResponse(c, fiber.StatusUnauthorized, "session expired or not found")

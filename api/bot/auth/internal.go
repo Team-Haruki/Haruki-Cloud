@@ -34,23 +34,23 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 		return []byte(config.Cfg.HarukiBotDB.SessionSignToken), nil
 	})
 	if err != nil || !decoded.Valid {
-		return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{Valid: false})
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
 	}
 
 	claims, ok := decoded.Claims.(jwt.MapClaims)
 	if !ok {
-		return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{Valid: false})
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
 	}
 
 	tokenBotID, ok := claims["bot_id"].(string)
 	if !ok || tokenBotID != req.BotID {
-		return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{Valid: false})
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
 	}
 
 	// 检查 Redis 中的 session 是否存在
 	storedSession, err := h.svc.getRedisKey(ctx, RedisKeySessionToken, req.BotID)
 	if errors.Is(err, redis.Nil) {
-		return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{Valid: false})
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
 	}
 	if err != nil {
 		return api.InternalError(c)
@@ -58,7 +58,7 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 
 	// 验证 session token 是否匹配
 	if storedSession != req.SessionToken {
-		return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{Valid: false})
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
 	}
 
 	// 获取用户信息
@@ -66,10 +66,10 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 		Where(user.BotIDEQ(mustAtoi(req.BotID))).
 		Only(ctx)
 	if err != nil {
-		return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{Valid: false})
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
 	}
 
-	return api.JSONResponse(c, fiber.StatusOK, "ok", InternalVerifyResponse{
+	return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{
 		Valid:       true,
 		OwnerUserID: u.OwnerUserID,
 		BotID:       u.BotID,

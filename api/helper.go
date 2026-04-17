@@ -49,7 +49,7 @@ func MsgPackResponse(c fiber.Ctx, status int, message string, data ...any) error
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
-	c.Set("Content-Type", "application/msgpack")
+	c.Set("Content-Type", ContentTypeMsgPack)
 	return c.Status(status).Send(encoded)
 }
 
@@ -83,10 +83,10 @@ func VerifyAPIAuthorization() fiber.Handler {
 		expectedAuth := strings.TrimSpace(config.Cfg.Backend.AcceptAuthorization)
 		if expectedAuth == "" {
 			if token := strings.TrimSpace(config.Cfg.HarukiBotDB.InternalAPIToken); token != "" {
-				if strings.HasPrefix(strings.ToLower(token), "bearer ") {
+				if strings.HasPrefix(strings.ToLower(token), strings.ToLower(AuthBearerPrefix)) {
 					expectedAuth = token
 				} else {
-					expectedAuth = "Bearer " + token
+					expectedAuth = AuthBearerPrefix + token
 				}
 			}
 		}
@@ -151,7 +151,7 @@ func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn
 		}
 		return InternalError(c)
 	}
-	return CachedJSONResponse(ctx, c, redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, "ok", data)
+	return CachedJSONResponse(ctx, c, redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, ResponseOK, data)
 }
 
 // CacheBypassError wraps a pre-built fiber response for WithCache fetch functions

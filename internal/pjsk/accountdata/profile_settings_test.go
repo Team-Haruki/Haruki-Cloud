@@ -428,3 +428,42 @@ func TestProfileBackgroundPersistsAcrossUnbindAndRebind(t *testing.T) {
 		t.Fatalf("expected background to persist after rebind, got %+v", items[0].Bg)
 	}
 }
+
+func TestExecuteProfileSettingsCommandSetTimeZone(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{})
+
+	text, err := accountdata.ExecuteProfileSettingsCommand(context.Background(), service, accountdata.ProfileModeSetTimeZone, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		TimeZone:       "Asia/Tokyo",
+	})
+	if err != nil {
+		t.Fatalf("set timezone: %v", err)
+	}
+	if got := string(text); got != "已设置PJSK时区为 Asia/Tokyo" {
+		t.Fatalf("unexpected timezone set text:\n%s", got)
+	}
+}
+
+func TestExecuteProfileSettingsCommandSetTimeZoneAmbiguousOffsetReturnsCandidates(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{})
+
+	text, err := accountdata.ExecuteProfileSettingsCommand(context.Background(), service, accountdata.ProfileModeSetTimeZone, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		TimeZone:       "+28800",
+	})
+	if err != nil {
+		t.Fatalf("set timezone with ambiguous offset: %v", err)
+	}
+
+	got := string(text)
+	if !strings.Contains(got, "匹配到多个时区") {
+		t.Fatalf("unexpected ambiguous timezone text:\n%s", got)
+	}
+	if !strings.Contains(got, "Asia/Shanghai") {
+		t.Fatalf("unexpected ambiguous timezone candidates:\n%s", got)
+	}
+}

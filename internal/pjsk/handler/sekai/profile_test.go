@@ -3,6 +3,7 @@ package sekai
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -261,5 +262,55 @@ func TestProfileBindListHandleKeepsServerWhenRegionExplicit(t *testing.T) {
 	}
 	if params.Server != "cn" {
 		t.Fatalf("unexpected server for explicit region: %q", params.Server)
+	}
+}
+
+func TestProfileTimeZoneHandleParsesArgs(t *testing.T) {
+	h := sekaiHandlers{}.ProfileTimeZoneHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&handler.PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/pjsktz",
+		ArgText:    "+28800",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected resolved command, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeSetTimeZone {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileSettingsCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.TimeZone != "+28800" {
+		t.Fatalf("unexpected timezone param: %q", params.TimeZone)
+	}
+}
+
+func TestProfileTimeZoneHandleRequiresArgs(t *testing.T) {
+	h := sekaiHandlers{}.ProfileTimeZoneHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	_, err := h.Handle(&handler.PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/pjsktz",
+	})
+	if err == nil {
+		t.Fatal("expected missing args error, got nil")
+	}
+	if !strings.Contains(err.Error(), "<时区名|偏移量>") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

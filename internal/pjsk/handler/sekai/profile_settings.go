@@ -160,6 +160,34 @@ func (sekaiHandlers) ProfileShowIDHandle() HarukiSekaiCommandHandler {
 	}
 }
 
+func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
+	return HarukiSekaiCommandHandler{
+		CommandHandlerBase: handler.CommandHandlerBase{
+			Commands: []string{
+				"/pjsk时区", "/pjsktimezone", "/pjsktz",
+			},
+			Path: "profile/timezone",
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*parser.ResolvedCommand, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			if args == "" {
+				return nil, onebot11.NewReplayError(
+					"使用方式:\n%s <时区名|偏移量>\n示例:\n%s Asia/Shanghai\n%s +8\n%s +09:00\n%s +28800",
+					ctx.originalTriggerCmd,
+					ctx.originalTriggerCmd,
+					ctx.originalTriggerCmd,
+					ctx.originalTriggerCmd,
+					ctx.originalTriggerCmd,
+				)
+			}
+			params := newProfileSettingsParams(ctx)
+			params.TimeZone = args
+			return makeResolvedCmdWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeSetTimeZone, params), nil
+		},
+	}
+}
+
 func (sekaiHandlers) ProfileCheckDataHandle() HarukiSekaiCommandHandler {
 	return HarukiSekaiCommandHandler{
 		CommandHandlerBase: handler.CommandHandlerBase{

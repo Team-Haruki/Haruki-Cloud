@@ -3,11 +3,15 @@ package accountdata
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
+	pjskschema "haruki-cloud/ent/pjsk/schema"
+	"haruki-cloud/internal/pjsk/displaytime"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/sekai"
 )
 
 const (
@@ -19,6 +23,7 @@ const (
 	ProfileModeShowMySekai = "profile-show-mysekai"
 	ProfileModeVerify      = "profile-verify"
 	ProfileModeVerifyList  = "profile-verify-list"
+	ProfileModeSetTimeZone = "profile-set-timezone"
 	ProfileModeBGUpload    = "profile-bg-upload"
 	ProfileModeBGClear     = "profile-bg-clear"
 	ProfileModeBGAdjust    = "profile-bg-adjust"
@@ -30,6 +35,7 @@ type ProfileSettingsCommandParams struct {
 	Server         string `json:"server"`
 	RegionExplicit bool   `json:"region_explicit,omitempty"`
 	Selector       string `json:"selector,omitempty"`
+	TimeZone       string `json:"time_zone,omitempty"`
 	ImageURL       string `json:"image_url,omitempty"`
 	Blur           *int   `json:"blur,omitempty"`
 	Alpha          *int   `json:"alpha,omitempty"`
@@ -47,6 +53,7 @@ func DecodeProfileSettingsParams(raw json.RawMessage) (ProfileSettingsCommandPar
 	params.Platform = strings.TrimSpace(params.Platform)
 	params.PlatformUserID = strings.TrimSpace(params.PlatformUserID)
 	params.Server = strings.TrimSpace(strings.ToLower(params.Server))
+	params.TimeZone = strings.TrimSpace(params.TimeZone)
 	params.ImageURL = strings.TrimSpace(params.ImageURL)
 	if params.Platform == "" || params.PlatformUserID == "" {
 		return params, fmt.Errorf("bridge: missing profile settings identity context")
@@ -187,6 +194,35 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 			return nil, err
 		}
 		return []byte(formatVerifyListText(items)), nil
+	case ProfileModeSetTimeZone:
+		resolvedTimeZone, candidates, err := displaytime.ResolveUserTimeZoneInput(params.TimeZone)
+		if err != nil {
+			return nil, err
+		}
+		if len(candidates) > 0 {
+			return []byte(formatTimeZoneCandidatesText(params.TimeZone, candidates)), nil
+		}
+
+		harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
+		if err != nil {
+			return nil, err
+		}
+
+		settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
+		if err != nil {
+			if !errors.Is(err, ErrUserSettingsNotFound) {
+				return nil, fmt.Errorf("读取用户设置失败: %w", err)
+			}
+			settings = newDefaultUserSettings()
+		}
+		if settings == nil {
+			settings = newDefaultUserSettings()
+		}
+		settings.TimeZone = resolvedTimeZone
+		if err := UpsertUserSettings(ctx, service.pjskDB, harukiUserID, settings); err != nil {
+			return nil, fmt.Errorf("保存用户时区失败: %w", err)
+		}
+		return []byte(fmt.Sprintf("已设置PJSK时区为 %s", resolvedTimeZone)), nil
 	case ProfileModeBGUpload:
 		binding, err := resolveBinding()
 		if err != nil {
@@ -279,4 +315,33 @@ func formatProfileBGSettingsText(item BindingListItem) string {
 		fmt.Sprintf("透明度: %d", item.Bg.Alpha),
 	)
 	return strings.Join(lines, "\n")
+}
+
+func formatTimeZoneCandidatesText(raw string, candidates []string) string {
+	const maxCandidates = 20
+
+	lines := []string{
+		fmt.Sprintf("偏移量 %q 匹配到多个时区，请使用时区名重新设置：", strings.TrimSpace(raw)),
+	}
+
+	limit := len(candidates)
+	if limit > maxCandidates {
+		limit = maxCandidates
+	}
+	for i := 0; i < limit; i++ {
+		lines = append(lines, candidates[i])
+	}
+	if len(candidates) > limit {
+		lines = append(lines, fmt.Sprintf("... 以及另外 %d 个候选", len(candidates)-limit))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func newDefaultUserSettings() *pjskschema.UserSettings {
+	return &pjskschema.UserSettings{
+		PJSKEnabledDifficulties: []sekai.MusicDifficultyType{
+			sekai.MusicDifficultyExpert,
+			sekai.MusicDifficultyMaster,
+		},
+	}
 }

@@ -95,6 +95,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		accountdata.ProfileModeHideSuite, accountdata.ProfileModeShowSuite,
 		accountdata.ProfileModeHideMySekai, accountdata.ProfileModeShowMySekai,
 		accountdata.ProfileModeVerify, accountdata.ProfileModeVerifyList,
+		accountdata.ProfileModeSetTimeZone,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear, accountdata.ProfileModeBGAdjust:
 		if rc.App.Bindings == nil {
 			return nil, accountdata.ErrBindingServiceUnavailable

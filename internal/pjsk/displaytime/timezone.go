@@ -19,11 +19,8 @@ func NormalizeTimeZone(value string) string {
 	if trimmed == "" {
 		return DefaultTimeZone
 	}
-	if strings.EqualFold(trimmed, DefaultTimeZone) {
-		return DefaultTimeZone
-	}
-	if _, err := time.LoadLocation(trimmed); err == nil {
-		return trimmed
+	if resolved, ok := resolveDirectTimeZoneName(trimmed); ok {
+		return resolved
 	}
 	return DefaultTimeZone
 }

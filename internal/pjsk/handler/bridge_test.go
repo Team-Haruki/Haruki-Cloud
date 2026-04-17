@@ -33,6 +33,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -945,6 +946,144 @@ func TestExecuteMusicListUsesSuiteSnapshotResults(t *testing.T) {
 	}
 	if got := captured.Profile.Nickname; got != "SnapshotUser" {
 		t.Fatalf("unexpected profile nickname: %q", got)
+	}
+	if got := captured.UserResults[1]; got != "ap" {
+		t.Fatalf("unexpected user result: %+v", got)
+	}
+}
+
+func TestExecuteMusicListPrefersAPIProfileOverSuiteSnapshotProfile(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/jp/12345678901234/profile" {
+			http.NotFound(w, r)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 12345678901234,
+				Name:   "API User",
+			},
+			UserDeck: sekaiapi.UserDeck{
+				DeckID: 1,
+				Leader: 1001,
+			},
+			UserCards: []sekaiapi.AnotherUserCard{
+				{
+					CardID:       1001,
+					DefaultImage: "special_training",
+				},
+			},
+		})
+	}))
+	defer server.Close()
+
+	oldBaseURL := config.Cfg.SekaiAPI.BaseURL
+	oldToken := config.Cfg.SekaiAPI.Token
+	config.Cfg.SekaiAPI.BaseURL = server.URL
+	config.Cfg.SekaiAPI.Token = "test-token"
+	defer func() {
+		config.Cfg.SekaiAPI.BaseURL = oldBaseURL
+		config.Cfg.SekaiAPI.Token = oldToken
+	}()
+
+	root := t.TempDir()
+	jacketPath := filepath.Join(root, "music", "jacket", "jacket_a", "jacket_a.png")
+	if err := os.MkdirAll(filepath.Dir(jacketPath), 0o755); err != nil {
+		t.Fatalf("mkdir jacket: %v", err)
+	}
+	if err := os.WriteFile(jacketPath, []byte("png"), 0o644); err != nil {
+		t.Fatalf("write jacket: %v", err)
+	}
+
+	var captured drawing.MusicListRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/api/pjsk/music/list") {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	profileController := renderprofile.NewController(runtimeProfileDataSourceStub{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				AssetBundleName: "card_test",
+			},
+		},
+	}, nil, nil, nil)
+
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Music:    music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
+		Profiles: profileController,
+		Bindings: service,
+		SekaiAPI: sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
+		Snapshots: snapshot.NewStaticSnapshotProvider(&runtimeSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				Nickname:        "SnapshotUser",
+				LeaderImagePath: "asset/user/snapshot.png",
+			},
+			musicResults: map[string]map[int]string{
+				"master": {
+					1: "ap",
+				},
+			},
+		}),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]string{"difficulty": "master"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-list",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic list: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected list message: %+v", message)
+	}
+	if captured.Profile == nil {
+		t.Fatal("expected profile in music list request")
+	}
+	if got := captured.Profile.Nickname; got != "API User" {
+		t.Fatalf("expected API profile nickname, got %q", got)
+	}
+	if got := captured.Profile.LeaderImagePath; got == "asset/user/snapshot.png" {
+		t.Fatalf("expected API leader image path, got snapshot fallback %q", got)
 	}
 	if got := captured.UserResults[1]; got != "ap" {
 		t.Fatalf("unexpected user result: %+v", got)

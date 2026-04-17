@@ -13,6 +13,61 @@ import (
 	"haruki-cloud/internal/pjsk/sekai"
 )
 
+func cloneProfileDataSources(sources []drawing.ProfileDataSource) []drawing.ProfileDataSource {
+	if len(sources) == 0 {
+		return nil
+	}
+	cloned := make([]drawing.ProfileDataSource, 0, len(sources))
+	for _, item := range sources {
+		entry := item
+		entry.Source = common.CloneStringPtr(item.Source)
+		entry.Mode = common.CloneStringPtr(item.Mode)
+		if item.UpdateTime != nil {
+			entry.UpdateTime = new(int64)
+			*entry.UpdateTime = *item.UpdateTime
+		}
+		cloned = append(cloned, entry)
+	}
+	return cloned
+}
+
+func inheritSnapshotProfileMetadata(detail *drawing.DetailedProfileCardRequest, snapshot snapshot.Snapshot, region renderregion.Value) {
+	if detail == nil || snapshot == nil {
+		return
+	}
+	snapshotDetail := snapshot.DetailedProfile(region)
+	if snapshotDetail == nil {
+		return
+	}
+	if strings.TrimSpace(snapshotDetail.Source) != "" {
+		detail.Source = snapshotDetail.Source
+	}
+	if snapshotDetail.UpdateTime > 0 {
+		detail.UpdateTime = snapshotDetail.UpdateTime
+	}
+	detail.Mode = common.CloneStringPtr(snapshotDetail.Mode)
+}
+
+func buildProfileCardDataSources(detail *drawing.DetailedProfileCardRequest, snapshot snapshot.Snapshot, region renderregion.Value) []drawing.ProfileDataSource {
+	if snapshot != nil {
+		if profile := snapshot.ProfileCard(region); profile != nil {
+			if cloned := cloneProfileDataSources(profile.DataSources); len(cloned) > 0 {
+				return cloned
+			}
+		}
+	}
+	if detail == nil {
+		return nil
+	}
+	return []drawing.ProfileDataSource{
+		{
+			Name:   "Sekai API",
+			Source: new(detail.Source),
+			Mode:   common.CloneStringPtr(detail.Mode),
+		},
+	}
+}
+
 // BuildProfileRequestFromAPI builds a ProfileRequest from a live GetUserProfile API response.
 // framesJSON is the optional raw bytes from a userPlayerFrames snapshot payload; pass nil to
 // render without a player frame.
@@ -119,7 +174,7 @@ func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sek
 		framePath = new(framePaths.Base)
 	}
 
-	return &drawing.DetailedProfileCardRequest{
+	detail := &drawing.DetailedProfileCardRequest{
 		ID:              strconv.FormatInt(resp.User.UserID, 10),
 		Region:          strings.ToUpper(region.String()),
 		Nickname:        resp.User.Name,
@@ -130,7 +185,9 @@ func (c *Controller) buildDetailedProfileCardFromAPIState(query Query, resp *sek
 		HasFrame:        hasFrame,
 		FramePath:       framePath,
 		UserCards:       state.detailedUserCards,
-	}, nil
+	}
+	inheritSnapshotProfileMetadata(detail, snapshot, region)
+	return detail, nil
 }
 
 func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnotherProfileResponse, framesJSON []byte) (*drawing.ProfileCardRequest, error) {
@@ -148,13 +205,7 @@ func (c *Controller) BuildProfileCardFromAPI(query Query, resp *sekai.GetAnother
 			HasFrame:        detail.HasFrame,
 			FramePath:       common.CloneStringPtr(detail.FramePath),
 		},
-		DataSources: []drawing.ProfileDataSource{
-			{
-				Name:   "Sekai API",
-				Source: new(detail.Source),
-				Mode:   common.CloneStringPtr(detail.Mode),
-			},
-		},
+		DataSources: buildProfileCardDataSources(detail, nil, renderregion.Normalize(query.Region)),
 	}, nil
 }
 
@@ -163,6 +214,7 @@ func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *seka
 	if err != nil {
 		return nil, err
 	}
+	region := renderregion.Normalize(query.Region)
 	return &drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              detail.ID,
@@ -173,13 +225,7 @@ func (c *Controller) BuildProfileCardFromAPIWithSnapshot(query Query, resp *seka
 			HasFrame:        detail.HasFrame,
 			FramePath:       common.CloneStringPtr(detail.FramePath),
 		},
-		DataSources: []drawing.ProfileDataSource{
-			{
-				Name:   "Sekai API",
-				Source: new(detail.Source),
-				Mode:   common.CloneStringPtr(detail.Mode),
-			},
-		},
+		DataSources: buildProfileCardDataSources(detail, snapshot, region),
 	}, nil
 }
 

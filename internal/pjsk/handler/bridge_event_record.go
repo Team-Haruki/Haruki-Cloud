@@ -128,7 +128,10 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	sortEventHistory(eventInfo)
 	sortEventHistory(wlEventInfo)
 
-	profile := snapshot.DetailedProfile(region)
+	profile := rc.GetDetailedProfile()
+	if profile == nil {
+		profile = snapshot.DetailedProfile(region)
+	}
 	if profile == nil {
 		return nil, fmt.Errorf("event record requires user profile data")
 	}

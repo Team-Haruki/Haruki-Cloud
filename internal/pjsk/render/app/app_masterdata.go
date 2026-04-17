@@ -34,6 +34,8 @@ func resolveRenderProviderMasterdataDirFromWD(cfg Config, wd string) string {
 		switch classifyRenderMasterdataDir(dir) {
 		case masterdataDirRegionRoot:
 			rootCandidates = append(rootCandidates, dir)
+		case masterdataDirRepoRoot:
+			rootCandidates = append(rootCandidates, dir)
 		case masterdataDirFlat:
 			flatCandidates = append(flatCandidates, dir)
 		default:
@@ -58,6 +60,7 @@ func resolveRenderProviderMasterdataDirFromWD(cfg Config, wd string) string {
 	wd = strings.TrimSpace(wd)
 	if wd != "" {
 		addCandidate(filepath.Join(wd, "deckrec", "masterdata"))
+		addCandidate(filepath.Join(wd, "data", "masterdata"))
 		addCandidate(filepath.Join(wd, "Data", "master", "haruki-sekai-master"))
 		addCandidate(filepath.Join(wd, "Data", "master", "haruki-sekai-master", "master"))
 	}
@@ -78,6 +81,9 @@ func classifyRenderMasterdataDir(dir string) renderMasterdataDirKind {
 	}
 	if hasRenderMasterdataRegionDirs(dir) {
 		return masterdataDirRegionRoot
+	}
+	if hasRenderMasterdataRepoDirs(dir) {
+		return masterdataDirRepoRoot
 	}
 	if hasRenderMasterdataFiles(dir) {
 		return masterdataDirFlat
@@ -104,6 +110,21 @@ func hasRenderMasterdataRegionDirs(dir string) bool {
 		}
 	}
 	return found > 0
+}
+
+func hasRenderMasterdataRepoDirs(dir string) bool {
+	for _, repoDir := range []string{
+		"haruki-sekai-master",
+		"haruki-sekai-sc-master",
+		"haruki-sekai-tc-master",
+		"haruki-sekai-kr-master",
+		"haruki-sekai-en-master",
+	} {
+		if hasRenderMasterdataFiles(filepath.Join(dir, repoDir, "master")) {
+			return true
+		}
+	}
+	return false
 }
 
 func regionParentDir(path string) (string, bool) {

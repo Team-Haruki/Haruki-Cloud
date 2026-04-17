@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"haruki-cloud/config"
@@ -81,6 +82,7 @@ type runtimeSnapshotProviderStub struct {
 
 type runtimeProfileDataSourceStub struct {
 	region renderregion.Value
+	cards  map[int]*masterdata.Card
 }
 
 func (s runtimeProfileDataSourceStub) DefaultRegion() renderregion.Value { return s.region }
@@ -109,8 +111,16 @@ func (runtimeProfileDataSourceStub) GetPlayerFrameGroupByID(int) (*masterdata.Pl
 	return nil, errors.New("not found")
 }
 
-func (runtimeProfileDataSourceStub) GetCardByID(int) (*masterdata.Card, error) {
-	return nil, errors.New("not found")
+func (s runtimeProfileDataSourceStub) GetCardByID(id int) (*masterdata.Card, error) {
+	if s.cards == nil {
+		return nil, errors.New("not found")
+	}
+	card := s.cards[id]
+	if card == nil {
+		return nil, errors.New("not found")
+	}
+	clone := *card
+	return &clone, nil
 }
 
 func (runtimeProfileDataSourceStub) GetEventIDByHonorID(int) int { return 0 }
@@ -426,5 +436,136 @@ func TestBuildPublicMusicProfilesUsesSelectorFromRequestParams(t *testing.T) {
 	}
 	if card == nil || card.Profile == nil || card.Profile.Nickname != "CN User" {
 		t.Fatalf("unexpected profile card: %+v", card)
+	}
+}
+
+func TestRequestContextPrefersAPIPublicProfilesOverSnapshotProfiles(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		defaultImage string
+		wantSuffix   string
+	}{
+		{
+			name:         "after training leader keeps flowered art",
+			defaultImage: "special_training",
+			wantSuffix:   "card_test_after_training.png",
+		},
+		{
+			name:         "normal leader keeps untrained art",
+			defaultImage: "normal",
+			wantSuffix:   "card_test_normal.png",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testRequestContextPrefersAPIPublicProfile(t, tc.defaultImage, tc.wantSuffix)
+		})
+	}
+}
+
+func testRequestContextPrefersAPIPublicProfile(t *testing.T, defaultImage string, wantSuffix string) {
+	t.Helper()
+
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/jp/12345678901234/profile" {
+			http.NotFound(w, r)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 12345678901234,
+				Name:   "API User",
+			},
+			UserDeck: sekaiapi.UserDeck{
+				DeckID: 1,
+				Leader: 1001,
+			},
+			UserCards: []sekaiapi.AnotherUserCard{
+				{
+					CardID:       1001,
+					DefaultImage: defaultImage,
+				},
+			},
+		})
+	}))
+	defer server.Close()
+
+	oldBaseURL := config.Cfg.SekaiAPI.BaseURL
+	oldToken := config.Cfg.SekaiAPI.Token
+	config.Cfg.SekaiAPI.BaseURL = server.URL
+	config.Cfg.SekaiAPI.Token = "test-token"
+	defer func() {
+		config.Cfg.SekaiAPI.BaseURL = oldBaseURL
+		config.Cfg.SekaiAPI.Token = oldToken
+	}()
+
+	profileController := renderprofile.NewController(runtimeProfileDataSourceStub{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				AssetBundleName: "card_test",
+			},
+		},
+	}, nil, nil, nil)
+
+	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings: service,
+		Profiles: profileController,
+		SekaiAPI: sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
+		Snapshots: &runtimeSnapshotProviderStub{
+			snapshot: &runtimeSnapshotStub{
+				detail: &drawing.DetailedProfileCardRequest{
+					Nickname:        "snapshot-detail",
+					LeaderImagePath: "asset/user/snapshot.png",
+				},
+				card: &drawing.ProfileCardRequest{
+					Profile: &drawing.BasicProfile{
+						Nickname:        "snapshot-card",
+						LeaderImagePath: "asset/user/snapshot.png",
+					},
+				},
+			},
+		},
+	})
+
+	detail := rc.GetDetailedProfile()
+	if detail == nil {
+		t.Fatal("expected detailed profile")
+	}
+	if detail.Nickname != "API User" {
+		t.Fatalf("expected API detailed profile, got %+v", detail)
+	}
+	if detail.LeaderImagePath == "asset/user/snapshot.png" {
+		t.Fatalf("expected API leader image path, got snapshot fallback: %+v", detail)
+	}
+	if !strings.Contains(detail.LeaderImagePath, wantSuffix) {
+		t.Fatalf("expected detailed profile leader art suffix %q, got %q", wantSuffix, detail.LeaderImagePath)
+	}
+
+	card := rc.GetProfileCard()
+	if card == nil || card.Profile == nil {
+		t.Fatalf("expected profile card, got %+v", card)
+	}
+	if card.Profile.Nickname != "API User" {
+		t.Fatalf("expected API profile card, got %+v", card)
+	}
+	if card.Profile.LeaderImagePath == "asset/user/snapshot.png" {
+		t.Fatalf("expected API profile card leader image path, got snapshot fallback: %+v", card)
+	}
+	if !strings.Contains(card.Profile.LeaderImagePath, wantSuffix) {
+		t.Fatalf("expected profile card leader art suffix %q, got %q", wantSuffix, card.Profile.LeaderImagePath)
 	}
 }

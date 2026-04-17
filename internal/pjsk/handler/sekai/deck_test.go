@@ -264,11 +264,11 @@ func TestEventDeckHandleParsesMultiSkillLowerBound(t *testing.T) {
 	if params.LiveType != "multi" {
 		t.Fatalf("unexpected live type: %q", params.LiveType)
 	}
-	if params.Target != "skill" {
+	if params.Target != "" {
 		t.Fatalf("unexpected target: %q", params.Target)
 	}
-	if params.MultiLiveTeammateScoreUp != nil {
-		t.Fatalf("generic skill lower bound should not overwrite teammate score up: %+v", params.MultiLiveTeammateScoreUp)
+	if params.MultiLiveTeammateScoreUp == nil || *params.MultiLiveTeammateScoreUp != 230 {
+		t.Fatalf("unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
 	}
 	if params.MultiLiveScoreUpLowerBound == nil || *params.MultiLiveScoreUpLowerBound != 230 {
 		t.Fatalf("unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
@@ -366,8 +366,11 @@ func TestEventDeckHandleParsesSplitSkillLowerBound(t *testing.T) {
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if params.Target != "skill" {
+	if params.Target != "" {
 		t.Fatalf("unexpected target: %q", params.Target)
+	}
+	if params.MultiLiveTeammateScoreUp == nil || *params.MultiLiveTeammateScoreUp != 230 {
+		t.Fatalf("unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
 	}
 	if params.MultiLiveScoreUpLowerBound == nil || *params.MultiLiveScoreUpLowerBound != 230 {
 		t.Fatalf("unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)

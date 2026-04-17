@@ -369,16 +369,18 @@ func TestBuildProfileRequestFromAPIFallsBackToJPCardMetadataForNonJPProfileCards
 
 type profileSnapshotStub struct {
 	rawData *snapshot.RawUserData
+	detail  *drawing.DetailedProfileCardRequest
+	profile *drawing.ProfileCardRequest
 }
 
 func (s *profileSnapshotStub) Require() error { return nil }
 
 func (s *profileSnapshotStub) DetailedProfile(renderregion.Value) *drawing.DetailedProfileCardRequest {
-	return nil
+	return s.detail
 }
 
 func (s *profileSnapshotStub) ProfileCard(renderregion.Value) *drawing.ProfileCardRequest {
-	return nil
+	return s.profile
 }
 
 func (s *profileSnapshotStub) MusicResults(string) map[int]string { return nil }
@@ -450,6 +452,145 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 	}
 	if payload.Profile.FramePath == nil || *payload.Profile.FramePath != payload.FramePaths.Base {
 		t.Fatalf("unexpected profile frame path: %+v", payload.Profile.FramePath)
+	}
+}
+
+func TestBuildDetailedProfileCardFromAPIWithSnapshotInheritsSnapshotMetadata(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	mode := "suite"
+	updateTime := int64(1776000000123)
+	snap := &profileSnapshotStub{
+		detail: &drawing.DetailedProfileCardRequest{
+			ID:              "12345",
+			Region:          "JP",
+			Nickname:        "Snapshot User",
+			Source:          "suite_dump",
+			UpdateTime:      updateTime,
+			Mode:            &mode,
+			LeaderImagePath: "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png",
+		},
+	}
+
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "API User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
+		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+		},
+	}
+
+	detail, err := controller.BuildDetailedProfileCardFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snap)
+	if err != nil {
+		t.Fatalf("BuildDetailedProfileCardFromAPIWithSnapshot failed: %v", err)
+	}
+
+	if detail.Source != "suite_dump" {
+		t.Fatalf("expected snapshot source metadata, got %q", detail.Source)
+	}
+	if detail.UpdateTime != updateTime {
+		t.Fatalf("expected snapshot update time %d, got %d", updateTime, detail.UpdateTime)
+	}
+	if detail.Mode == nil || *detail.Mode != mode {
+		t.Fatalf("expected snapshot mode %q, got %+v", mode, detail.Mode)
+	}
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_after_training.png"
+	if detail.LeaderImagePath != wantLeader {
+		t.Fatalf("expected API leader image path %q, got %q", wantLeader, detail.LeaderImagePath)
+	}
+}
+
+func TestBuildProfileCardFromAPIWithSnapshotInheritsSnapshotDataSources(t *testing.T) {
+	source := &testProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				CharacterID:     1,
+				AssetBundleName: "res001_no001",
+			},
+		},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+	mode := "suite"
+	updateTime := int64(1776000000456)
+	snapSource := "suite_dump"
+	snap := &profileSnapshotStub{
+		detail: &drawing.DetailedProfileCardRequest{
+			ID:              "12345",
+			Region:          "JP",
+			Nickname:        "Snapshot User",
+			Source:          snapSource,
+			UpdateTime:      updateTime,
+			Mode:            &mode,
+			LeaderImagePath: "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png",
+		},
+		profile: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{
+				ID:              "12345",
+				Region:          "JP",
+				Nickname:        "Snapshot User",
+				LeaderImagePath: "asset/jp-assets/startapp/thumbnail/chara/res001_no001_normal.png",
+			},
+			DataSources: []drawing.ProfileDataSource{
+				{
+					Name:       "Suite数据",
+					Source:     &snapSource,
+					UpdateTime: &updateTime,
+					Mode:       &mode,
+				},
+			},
+		},
+	}
+
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "API User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
+		UserDeck:    sekai.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+		UserCards: []sekai.AnotherUserCard{
+			{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+		},
+	}
+
+	card, err := controller.BuildProfileCardFromAPIWithSnapshot(Query{Region: "jp", Visible: true}, resp, snap)
+	if err != nil {
+		t.Fatalf("BuildProfileCardFromAPIWithSnapshot failed: %v", err)
+	}
+
+	if len(card.DataSources) != 1 {
+		t.Fatalf("expected 1 data source, got %+v", card.DataSources)
+	}
+	if card.DataSources[0].Name != "Suite数据" {
+		t.Fatalf("expected suite data source, got %+v", card.DataSources[0])
+	}
+	if card.DataSources[0].UpdateTime == nil || *card.DataSources[0].UpdateTime != updateTime {
+		t.Fatalf("expected suite update time %d, got %+v", updateTime, card.DataSources[0].UpdateTime)
+	}
+	if card.DataSources[0].Source == nil || *card.DataSources[0].Source != snapSource {
+		t.Fatalf("expected suite source %q, got %+v", snapSource, card.DataSources[0].Source)
+	}
+	if card.DataSources[0].Mode == nil || *card.DataSources[0].Mode != mode {
+		t.Fatalf("expected suite mode %q, got %+v", mode, card.DataSources[0].Mode)
+	}
+	wantLeader := "asset/jp-assets/startapp/thumbnail/chara/res001_no001_after_training.png"
+	if card.Profile == nil || card.Profile.LeaderImagePath != wantLeader {
+		t.Fatalf("expected API leader image path %q, got %+v", wantLeader, card.Profile)
 	}
 }
 

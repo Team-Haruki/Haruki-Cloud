@@ -66,7 +66,12 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string) {
 		return
 	}
 
-	p.education.store = newLocalStore(filepath.Join(root, p.region.String()), root)
+	dirs := localMasterdataCandidateDirs(root, p.region)
+	if len(dirs) == 0 {
+		p.education.store = nil
+		return
+	}
+	p.education.store = newLocalStore(dirs...)
 }
 
 func (p *DatabaseProvider) Region() renderregion.Value { return p.region }
@@ -83,3 +88,103 @@ func (p *DatabaseProvider) VLives() VLiveProvider             { return p.vlives 
 func (p *DatabaseProvider) Education() EducationProvider      { return p.education }
 func (p *DatabaseProvider) PlayerFrames() PlayerFrameProvider { return p.playerFrames }
 func (p *DatabaseProvider) MySekai() MySekaiProvider          { return p.mysekai }
+
+var localMasterdataRepoDirs = map[renderregion.Value]string{
+	renderregion.JP: "haruki-sekai-master",
+	renderregion.CN: "haruki-sekai-sc-master",
+	renderregion.TW: "haruki-sekai-tc-master",
+	renderregion.KR: "haruki-sekai-kr-master",
+	renderregion.EN: "haruki-sekai-en-master",
+}
+
+func localMasterdataCandidateDirs(root string, region renderregion.Value) []string {
+	root = filepath.Clean(strings.TrimSpace(root))
+	if root == "" {
+		return nil
+	}
+
+	region = renderregion.WithDefault(region)
+	targetRegion := region.String()
+	repoDir := localMasterdataRepoDirs[region]
+
+	result := make([]string, 0, 12)
+	seen := make(map[string]struct{}, 12)
+	add := func(dir string) {
+		dir = strings.TrimSpace(dir)
+		if dir == "" || dir == "." || dir == "/" {
+			return
+		}
+		dir = filepath.Clean(dir)
+		if _, ok := seen[dir]; ok {
+			return
+		}
+		seen[dir] = struct{}{}
+		result = append(result, dir)
+	}
+
+	add(filepath.Join(root, targetRegion))
+	if repoDir != "" {
+		add(filepath.Join(root, repoDir, "master"))
+	}
+	if inferred, ok := inferLocalMasterdataDirRegion(root); !ok || inferred == region {
+		add(root)
+	}
+
+	current := root
+	for depth := 0; depth < 4; depth++ {
+		parent := filepath.Dir(current)
+		if parent == "" || parent == "." || parent == "/" || parent == current {
+			break
+		}
+		current = parent
+		add(filepath.Join(current, targetRegion))
+		if repoDir != "" {
+			add(filepath.Join(current, repoDir, "master"))
+		}
+	}
+
+	return result
+}
+
+func inferLocalMasterdataDirRegion(dir string) (renderregion.Value, bool) {
+	base := strings.ToLower(strings.TrimSpace(filepath.Base(dir)))
+	if region, ok := parseMasterdataRegion(base); ok {
+		return region, true
+	}
+	if region, ok := regionForLocalMasterdataRepo(base); ok {
+		return region, true
+	}
+	if base == "master" {
+		parent := strings.ToLower(strings.TrimSpace(filepath.Base(filepath.Dir(dir))))
+		if region, ok := regionForLocalMasterdataRepo(parent); ok {
+			return region, true
+		}
+	}
+	return renderregion.Unknown, false
+}
+
+func parseMasterdataRegion(value string) (renderregion.Value, bool) {
+	switch renderregion.Normalize(value) {
+	case renderregion.JP:
+		return renderregion.JP, true
+	case renderregion.CN:
+		return renderregion.CN, true
+	case renderregion.TW:
+		return renderregion.TW, true
+	case renderregion.KR:
+		return renderregion.KR, true
+	case renderregion.EN:
+		return renderregion.EN, true
+	default:
+		return renderregion.Unknown, false
+	}
+}
+
+func regionForLocalMasterdataRepo(name string) (renderregion.Value, bool) {
+	for region, repoDir := range localMasterdataRepoDirs {
+		if strings.EqualFold(strings.TrimSpace(name), repoDir) {
+			return region, true
+		}
+	}
+	return renderregion.Unknown, false
+}

@@ -146,5 +146,7 @@ func optionHasWorldBloom(option map[string]any) bool {
 	if option == nil {
 		return false
 	}
-	return optionInt(option, "world_bloom_character_id") > 0 || optionInt(option, "world_bloom_event_turn") > 0
+	return optionInt(option, "world_bloom_character_id") > 0 ||
+		optionInt(option, "world_bloom_event_turn") > 0 ||
+		optionInt(option, "event_id") == 180
 }

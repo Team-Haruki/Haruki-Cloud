@@ -72,6 +72,12 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 }
 
 func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
+	if q != nil && q.EventID != nil && *q.EventID == 180 {
+		q.WorldBloomCharacterID = nil
+		q.WorldBloomCharacterQuery = ""
+		return nil
+	}
+
 	if q == nil || app == nil || app.Sekai == nil {
 		return nil
 	}

@@ -1951,6 +1951,32 @@ func TestResolveDeckCharacterSelectionsRejectsUnknownWorldBloomQueryForWorldBloo
 	}
 }
 
+func TestResolveDeckCharacterSelectionsTreatsFinalChapterAsWorldBloomWithoutSelector(t *testing.T) {
+	query := renderdeck.AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		EventID:                  drawing.IntPtr(180),
+		WorldBloomCharacterQuery: "wl2",
+		WorldBloomCharacterID:    drawing.IntPtr(21),
+	}
+
+	if err := resolveDeckCharacterSelections(context.Background(), &query, &renderapp.App{}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 180 {
+		t.Fatalf("unexpected event id: %+v", query.EventID)
+	}
+	if query.WorldBloomCharacterID != nil {
+		t.Fatalf("expected final chapter to clear explicit world bloom character: %+v", query.WorldBloomCharacterID)
+	}
+	if query.WorldBloomCharacterQuery != "" {
+		t.Fatalf("expected final chapter to clear world bloom selector: %q", query.WorldBloomCharacterQuery)
+	}
+	if query.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", query.MusicQuery)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsResolvesCurrentWorldBloomEventWhenEventIDMissing(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_default_current?mode=memory&cache=shared&_fk=1")

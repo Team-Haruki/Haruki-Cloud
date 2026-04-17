@@ -3,21 +3,22 @@ package deck
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/internal/pjsk/render/snapshot"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 )
 
-func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
+func NewController(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot rendersnapshot.Snapshot, defaultRegion renderregion.Value) *Controller {
 	return NewControllerWithConfig(cards, events, drawingClient, assetHelper, snapshot, defaultRegion, RecommendConfig{}, nil)
 }
 
-func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, defaultRegion renderregion.Value, cfg RecommendConfig, metaLoader MusicMetaSource) *Controller {
+func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot rendersnapshot.Snapshot, defaultRegion renderregion.Value, cfg RecommendConfig, metaLoader MusicMetaSource) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)
 	}
@@ -82,7 +83,7 @@ func (c *Controller) RegisterMusicSource(source MusicSource) {
 // WithSnapshot returns a shallow copy of this Controller that uses the given
 // snapshot instead of the one configured at construction time. This is used by
 // the bridge layer to inject a live Toolbox snapshot on a per-request basis.
-func (c *Controller) WithSnapshot(s snapshot.Snapshot) *Controller {
+func (c *Controller) WithSnapshot(s rendersnapshot.Snapshot) *Controller {
 	if c == nil {
 		return nil
 	}
@@ -119,16 +120,19 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 	if c.cardSources == nil {
 		return nil, fmt.Errorf("deck card source is not configured")
 	}
-	if c.snapshot == nil {
-		return nil, fmt.Errorf("user data is required for deck auto recommend")
-	}
-	if err := c.snapshot.Require(); err != nil {
-		return nil, err
-	}
 	if c.engine == nil {
 		return nil, fmt.Errorf("deck recommend service is not configured")
 	}
-	return c.buildAutoRecommendWithEngine(query)
+
+	active := c
+	snapshot, err := c.resolveAutoRecommendSnapshot(query)
+	if err != nil {
+		return nil, err
+	}
+	if snapshot != c.snapshot {
+		active = c.WithSnapshot(snapshot)
+	}
+	return active.buildAutoRecommendWithEngine(query)
 }
 
 func (c *Controller) RenderAutoRecommend(query AutoQuery) ([]byte, error) {
@@ -170,4 +174,69 @@ func (c *Controller) recommendTimeoutMs() int {
 		return 60000
 	}
 	return int(c.recommendCfg.Timeout / time.Millisecond)
+}
+
+func (c *Controller) resolveAutoRecommendSnapshot(query AutoQuery) (rendersnapshot.Snapshot, error) {
+	if c == nil {
+		return nil, fmt.Errorf("deck controller is not initialized")
+	}
+	if c.snapshot != nil {
+		if err := c.snapshot.Require(); err != nil {
+			return nil, err
+		}
+		return c.snapshot, nil
+	}
+	if !query.MaxProfile && !query.SubMaxProfile {
+		return nil, fmt.Errorf("user data is required for deck auto recommend")
+	}
+	if query.UseCurrentDeck {
+		return nil, fmt.Errorf("user data is required for deck auto recommend")
+	}
+
+	region, _, err := c.normalizeAutoQuery(query)
+	if err != nil {
+		return nil, err
+	}
+
+	raw := syntheticAutoRecommendRawUserData(query)
+	data, err := rendersnapshot.EncodeRawUserData(raw)
+	if err != nil {
+		return nil, fmt.Errorf("encode synthetic user data: %w", err)
+	}
+	snapshot, err := rendersnapshot.NewFromBytes(nil, c.assets, region, data, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("build synthetic user snapshot: %w", err)
+	}
+	if err := snapshot.Require(); err != nil {
+		return nil, err
+	}
+	return snapshot, nil
+}
+
+func syntheticAutoRecommendRawUserData(query AutoQuery) *rendersnapshot.RawUserData {
+	userID := int64(1)
+	name := "MaxProfile"
+	if profile := query.Profile; profile != nil {
+		if parsed, err := strconv.ParseInt(strings.TrimSpace(profile.ID), 10, 64); err == nil && parsed > 0 {
+			userID = parsed
+		}
+		if nickname := strings.TrimSpace(profile.Nickname); nickname != "" {
+			name = nickname
+		}
+	}
+	return &rendersnapshot.RawUserData{
+		Now: time.Now().UnixMilli(),
+		UserGamedata: rendersnapshot.RawUserGamedata{
+			UserID: userID,
+			Name:   name,
+			Deck:   1,
+		},
+		UserProfile: rendersnapshot.RawUserProfile{
+			ProfileImageType: "default",
+		},
+		UserDecks: []rendersnapshot.RawUserDeck{{
+			DeckID: 1,
+		}},
+		UserAreas: []rendersnapshot.RawUserArea{},
+	}
 }

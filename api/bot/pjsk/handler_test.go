@@ -311,6 +311,7 @@ func botPJSKPath(path string) string {
 func newBotPOSTRequest(path string, req BotCommandRequest) *http.Request {
 	body, _ := json.Marshal(req)
 	r, _ := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+	r.Host = "localhost"
 	r.Header.Set("Content-Type", "application/json")
 	return r
 }
@@ -1614,6 +1615,7 @@ func TestBotEndpointGetRejected(t *testing.T) {
 	app := testBotApp(t, "")
 
 	req, _ := http.NewRequest(http.MethodGet, botPJSKPath("card/detail"), nil)
+	req.Host = "localhost"
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -1630,6 +1632,7 @@ func TestBotManifestEndpoint(t *testing.T) {
 	app := testBotApp(t, "")
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v2/bot/"+testBotID+"/command/manifests", nil)
+	req.Host = "localhost"
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -1656,6 +1659,7 @@ func TestBotNilRenderAppSkipsRegistration(t *testing.T) {
 	RegisterPJSKBotRoutes(app, nil, nil, nil, nil)
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/v2/bot/"+testBotID+"/command/manifests", nil)
+	req.Host = "localhost"
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("request: %v", err)
@@ -1707,6 +1711,7 @@ func TestBotNoiseIKRoundTrip(t *testing.T) {
 	}
 
 	httpReq, _ := http.NewRequest(http.MethodPost, botPJSKPath("card/detail"), bytes.NewReader(ciphertext))
+	httpReq.Host = "localhost"
 	httpReq.Header.Set("Content-Type", "application/octet-stream")
 
 	resp, err := app.Test(httpReq)

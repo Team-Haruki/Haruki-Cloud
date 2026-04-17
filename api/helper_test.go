@@ -116,6 +116,7 @@ func sendHelperTestRequest(t *testing.T, app *fiber.App, headers map[string]stri
 	if err != nil {
 		t.Fatalf("create request: %v", err)
 	}
+	req.Host = "localhost"
 	req.Header.Set("Content-Type", "application/json")
 	for k, v := range headers {
 		req.Header.Set(k, v)

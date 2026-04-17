@@ -360,6 +360,7 @@ func sendJSONRequest(t *testing.T, app *fiber.App, method, path, body string, he
 	if err != nil {
 		t.Fatalf("create request: %v", err)
 	}
+	req.Host = "localhost"
 	req.Header.Set("Content-Type", "application/json")
 	for k, v := range headers {
 		req.Header.Set(k, v)
@@ -389,6 +390,7 @@ func sendRawRequest(t *testing.T, app *fiber.App, method, path string, body []by
 	if err != nil {
 		t.Fatalf("create request: %v", err)
 	}
+	req.Host = "localhost"
 	req.Header.Set("Content-Type", "application/octet-stream")
 	resp, err := app.Test(req)
 	if err != nil {

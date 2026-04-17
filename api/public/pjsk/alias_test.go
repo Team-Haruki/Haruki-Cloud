@@ -78,6 +78,7 @@ func requestPJSK(t *testing.T, app *fiber.App, method, path, body string) pjskEn
 	if err != nil {
 		t.Fatalf("create request: %v", err)
 	}
+	req.Host = "localhost"
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}

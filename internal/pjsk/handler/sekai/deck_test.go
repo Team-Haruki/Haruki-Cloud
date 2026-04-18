@@ -1487,6 +1487,53 @@ func TestNoEventDeckHandleRecognizesBoostToken(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesNewAlgorithmAliases(t *testing.T) {
+	testCases := []struct {
+		name      string
+		argText   string
+		algorithm string
+		music     string
+	}{
+		{
+			name:      "hybrid alias",
+			argText:   "event123 dfs_ga sage neo",
+			algorithm: "dfs_ga",
+			music:     "sage neo",
+		},
+		{
+			name:      "rl",
+			argText:   "event123 rl sage neo",
+			algorithm: "rl",
+			music:     "sage neo",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := sekaiHandlers{}.EventDeckHandle()
+			result, err := h.Handle(&handler.PjskHandlerContext{
+				Context:    context.Background(),
+				TriggerCmd: "/组卡",
+				ArgText:    tc.argText,
+			})
+			if err != nil {
+				t.Fatalf("Handle() error = %v", err)
+			}
+
+			var params deckAutoQueryParams
+			if err := json.Unmarshal(result.Params, &params); err != nil {
+				t.Fatalf("unmarshal params: %v", err)
+			}
+			if params.Algorithm != tc.algorithm {
+				t.Fatalf("unexpected algorithm: %q", params.Algorithm)
+			}
+			if params.MusicQuery != tc.music {
+				t.Fatalf("unexpected music query: %q", params.MusicQuery)
+			}
+		})
+	}
+}
+
 func TestMysekaiDeckHandleRecognizesBoostToken(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiDeckHandle()
 	result, err := h.Handle(&handler.PjskHandlerContext{

@@ -104,7 +104,7 @@ func aggregateRemoteRecommendResults(options []map[string]any, results []remoteB
 			continue
 		}
 
-		alg := strings.ToLower(strings.TrimSpace(item.Alg))
+		alg := displayRecommendAlgorithm(item.Alg)
 		if alg != "" {
 			agg.CostTimes[alg] = item.CostTime
 			agg.WaitTimes[alg] = item.WaitTime

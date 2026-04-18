@@ -33,8 +33,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
-	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
+	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -2003,6 +2003,34 @@ func TestResolveDeckCharacterSelectionsResolvesExplicitWorldBloomSelector(t *tes
 	}
 	if query.WorldBloomCharacterQuery != "" {
 		t.Fatalf("expected world bloom query to be cleared: %q", query.WorldBloomCharacterQuery)
+	}
+}
+
+func TestPreserveImplicitMysekaiWorldBloomMetadataSeparatesQueryState(t *testing.T) {
+	query := renderdeck.AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "mysekai",
+		EventID:                  drawing.IntPtr(420),
+		EventUnit:                "piapro",
+		EventAttr:                "cool",
+		WorldBloomEventTurn:      drawing.IntPtr(2),
+		WorldBloomCharacterID:    drawing.IntPtr(21),
+		WorldBloomCharacterQuery: "初音未来",
+	}
+
+	preserveImplicitMysekaiWorldBloomMetadata(&query)
+
+	if query.MetadataWorldBloomCharacterID == nil || *query.MetadataWorldBloomCharacterID != 21 {
+		t.Fatalf("expected wl metadata to be preserved for drawing: %+v", query.MetadataWorldBloomCharacterID)
+	}
+	if query.EventID != nil {
+		t.Fatalf("expected event id to be cleared from mysekai deck query: %+v", query.EventID)
+	}
+	if query.EventUnit != "" || query.EventAttr != "" {
+		t.Fatalf("expected simulated event filters to be cleared: %+v", query)
+	}
+	if query.WorldBloomEventTurn != nil || query.WorldBloomCharacterID != nil || query.WorldBloomCharacterQuery != "" {
+		t.Fatalf("expected wl query state to be cleared from mysekai deck query: %+v", query)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/profile"
@@ -63,8 +64,17 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 
 		q := deck.AutoQuery{Region: regionStr, RecommendType: recommendType}
 		mergeParams(combined.Deck, &q)
+		explicitMysekaiEventSelection := q.EventID != nil ||
+			strings.TrimSpace(q.EventUnit) != "" ||
+			strings.TrimSpace(q.EventAttr) != "" ||
+			q.WorldBloomEventTurn != nil ||
+			q.WorldBloomCharacterID != nil ||
+			strings.TrimSpace(q.WorldBloomCharacterQuery) != ""
 		if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 			return nil, err
+		}
+		if !explicitMysekaiEventSelection {
+			preserveImplicitMysekaiWorldBloomMetadata(&q)
 		}
 		if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
 			return nil, err
@@ -139,4 +149,21 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, imageErr
 	}
 	return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
+}
+
+func preserveImplicitMysekaiWorldBloomMetadata(q *deck.AutoQuery) {
+	if q == nil {
+		return
+	}
+	if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
+		q.MetadataWorldBloomCharacterID = drawing.IntPtr(*q.WorldBloomCharacterID)
+	}
+	// Keep the actual mysekai recommend query identical to the previous
+	// working behavior. WL data is retained only for drawing metadata.
+	q.EventID = nil
+	q.EventUnit = ""
+	q.EventAttr = ""
+	q.WorldBloomEventTurn = nil
+	q.WorldBloomCharacterID = nil
+	q.WorldBloomCharacterQuery = ""
 }

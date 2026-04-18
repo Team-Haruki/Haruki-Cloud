@@ -52,7 +52,7 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 	if optionHasUnitAttrEvent(option) && recType == "event" {
 		request.RecommendType = "unit_attr"
 	}
-	if optionHasWorldBloom(option) {
+	if optionHasWorldBloom(option) || queryHasWorldBloomMetadata(query) {
 		request.IsWl = true
 		switch recType {
 		case "event":
@@ -60,7 +60,14 @@ func (c *Controller) applyCommonRecommendMetadata(request *drawing.DeckRequest, 
 		case "bonus":
 			request.RecommendType = "wl_bonus"
 		}
-		if cid := optionInt(option, "world_bloom_character_id"); cid > 0 {
+		cid := optionInt(option, "world_bloom_character_id")
+		if cid <= 0 && query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0 {
+			cid = *query.WorldBloomCharacterID
+		}
+		if cid <= 0 && query.MetadataWorldBloomCharacterID != nil && *query.MetadataWorldBloomCharacterID > 0 {
+			cid = *query.MetadataWorldBloomCharacterID
+		}
+		if cid > 0 {
 			if icon := c.resolveCharacterIconPath(cid); icon != "" {
 				request.WlCharaIconPath = &icon
 				if request.CharaIconPath == nil {
@@ -126,6 +133,11 @@ func shouldUseFallbackEventMetadata(recType string, option map[string]any) bool 
 	default:
 		return false
 	}
+}
+
+func queryHasWorldBloomMetadata(query AutoQuery) bool {
+	return (query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0) ||
+		(query.MetadataWorldBloomCharacterID != nil && *query.MetadataWorldBloomCharacterID > 0)
 }
 
 func optionHasSimulatedEvent(option map[string]any) bool {

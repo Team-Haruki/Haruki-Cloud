@@ -874,6 +874,32 @@ func TestApplyCommonRecommendMetadataKeepsMysekaiWorldBloomChapterMetadata(t *te
 	}
 }
 
+func TestApplyCommonRecommendMetadataKeepsImplicitMysekaiWorldBloomBadgeWithoutEventTitle(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+	request := &drawing.DeckRequest{
+		Region:        "jp",
+		RecommendType: "mysekai",
+	}
+
+	controller.applyCommonRecommendMetadata(request, renderregion.JP, "mysekai", map[string]any{
+		"live_type": "mysekai",
+	}, AutoQuery{
+		Region:                        "jp",
+		RecommendType:                 "mysekai",
+		MetadataWorldBloomCharacterID: new(20),
+	})
+
+	if !request.IsWl {
+		t.Fatalf("expected mysekai request to preserve implicit wl metadata: %+v", request)
+	}
+	if request.EventID != nil {
+		t.Fatalf("implicit mysekai WL metadata should not change title event id: %+v", request.EventID)
+	}
+	if request.WlCharaName == nil || *request.WlCharaName != "晓山瑞希" {
+		t.Fatalf("unexpected wl character name: %+v", request.WlCharaName)
+	}
+}
+
 func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 	var recommendCalls atomic.Int32
 

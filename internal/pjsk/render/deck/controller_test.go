@@ -1674,6 +1674,114 @@ func TestBuildAutoRecommendRequestEventCurrentUsesSnapshotDeck(t *testing.T) {
 	}
 }
 
+func TestBuildAutoRecommendRequestEventFixedCardFallbackUsesBaseSkillAndMaster(t *testing.T) {
+	var (
+		recommendCalls atomic.Int32
+		cached         snapshot.RawUserData
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+				t.Fatalf("decode cached raw user data: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"event-fixed-card-fallback-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
+			}
+			options, ok := payload["batch_options"].([]any)
+			if !ok || len(options) != 1 {
+				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+			}
+			option, ok := options[0].(map[string]any)
+			if !ok {
+				t.Fatalf("unexpected batch option payload: %+v", options[0])
+			}
+			fixedCards, ok := option["fixed_cards"].([]any)
+			if !ok || len(fixedCards) != 1 || fixedCards[0] != 1006.0 {
+				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
+			}
+			_, _ = w.Write([]byte(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.5,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 100,
+							"live_score": 100,
+							"mysekai_event_point": 0,
+							"total_power": 200,
+							"event_bonus_rate": 20,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id": 1006, "level": 60, "master_rank": 0, "skill_level": 1, "skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
+						}]
+					}
+				}
+			]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		EventID:       new(7),
+		FixedCards:    []int{1006},
+		Algorithm:     "ga",
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+
+	if recommendCalls.Load() != 1 {
+		t.Fatalf("expected one recommend call, got %d", recommendCalls.Load())
+	}
+	if !reflect.DeepEqual(request.FixedCardsID, []int{1006}) {
+		t.Fatalf("unexpected fixed cards in request: %+v", request.FixedCardsID)
+	}
+	card1006 := snapshot.FindUserCard(cached.UserCards, 1006)
+	if card1006 == nil {
+		t.Fatalf("expected cached payload to include fallback fixed card 1006: %+v", cached.UserCards)
+	}
+	if card1006.Level != 60 || card1006.SkillLevel != 1 || card1006.MasterRank != 0 {
+		t.Fatalf("unexpected fallback fixed card 1006: %+v", card1006)
+	}
+}
+
 func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testing.T) {
 	var cached snapshot.RawUserData
 

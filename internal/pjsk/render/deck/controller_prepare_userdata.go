@@ -40,7 +40,7 @@ func (c *Controller) prepareRecommendUserData(region renderregion.Value, recType
 	if err := c.applyCurrentDeckOption(raw, original, recType, query, option); err != nil {
 		return nil, nil, err
 	}
-	if err := c.restoreFixedCards(raw, original, option, query.UseCurrentDeck); err != nil {
+	if err := c.restoreFixedCards(region, raw, original, option, query.UseCurrentDeck); err != nil {
 		return nil, nil, err
 	}
 	if err := c.applyAreaItemLevel(region, raw, optionInt(option, "area_item_level")); err != nil {
@@ -239,6 +239,9 @@ func normalizePreparedUserAreaJSON(area map[string]any) {
 
 func shouldPrepareRecommendUserData(query AutoQuery) bool {
 	if query.MaxProfile || query.SubMaxProfile {
+		return true
+	}
+	if len(query.FixedCards) > 0 {
 		return true
 	}
 	if query.UnitFilter != "" || query.AttrFilter != "" || len(query.ExcludedCards) > 0 {

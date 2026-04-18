@@ -258,7 +258,7 @@ func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *s
 	return nil
 }
 
-func (c *Controller) restoreFixedCards(raw *snapshot.RawUserData, original *snapshot.RawUserData, option map[string]any, preferOriginal bool) error {
+func (c *Controller) restoreFixedCards(region renderregion.Value, raw *snapshot.RawUserData, original *snapshot.RawUserData, option map[string]any, preferOriginal bool) error {
 	if raw == nil || original == nil || option == nil {
 		return nil
 	}
@@ -282,7 +282,16 @@ func (c *Controller) restoreFixedCards(raw *snapshot.RawUserData, original *snap
 			if _, ok := indexByCardID[cardID]; ok {
 				continue
 			}
-			return fmt.Errorf("当前卡组中的卡牌 %d 不在抓包数据中，请更新抓包数据", cardID)
+			fallbackCard, err := c.buildFallbackRecommendUserCard(region, cardID, raw.Now, preferOriginal)
+			if err != nil {
+				return err
+			}
+			if fallbackCard == nil {
+				return fmt.Errorf("当前卡组中的卡牌 %d 不在抓包数据中，请更新抓包数据", cardID)
+			}
+			raw.UserCards = append(raw.UserCards, *fallbackCard)
+			indexByCardID[cardID] = len(raw.UserCards) - 1
+			continue
 		}
 
 		if index, ok := indexByCardID[cardID]; ok {
@@ -297,6 +306,47 @@ func (c *Controller) restoreFixedCards(raw *snapshot.RawUserData, original *snap
 	}
 
 	return nil
+}
+
+func (c *Controller) buildFallbackRecommendUserCard(region renderregion.Value, cardID int, rawNow int64, preferOwnedState bool) (*snapshot.RawUserCard, error) {
+	if cardID <= 0 {
+		return nil, nil
+	}
+
+	_, source, err := c.resolveCardSource(region)
+	if err != nil {
+		return nil, err
+	}
+
+	cardInfo, err := source.GetCardByID(cardID)
+	if err != nil {
+		return nil, err
+	}
+	if cardInfo == nil {
+		return nil, nil
+	}
+
+	episodeSource, _ := source.(cardEpisodeSource)
+	episodes, err := maxProfileCardEpisodes(episodeSource, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &snapshot.RawUserCard{
+		CardID:                cardInfo.ID,
+		Level:                 maxProfileCardLevel(cardInfo.CardRarityType),
+		SpecialTrainingStatus: maxProfileTrainingStatus(cardInfo),
+		DefaultImage:          maxProfileDefaultImage(cardInfo),
+		Episodes:              episodes,
+	}
+	if preferOwnedState {
+		result.SkillLevel = 4
+		result.MasterRank = 5
+	} else {
+		result.SkillLevel = 1
+		result.MasterRank = 0
+	}
+	return result, nil
 }
 
 func (c *Controller) applyAreaItemCaps(region renderregion.Value, raw *snapshot.RawUserData, limit int) {

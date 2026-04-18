@@ -105,6 +105,8 @@ func (p *dbCardProvider) GetCostume3dsByCardID(ctx context.Context, cardID int) 
 			ID:              int(entity.GameID),
 			CharacterID:     int(entity.CharacterID),
 			AssetBundleName: entity.AssetbundleName,
+			PartType:        entity.PartType,
+			ColorID:         int(entity.ColorID),
 			Description:     entity.Name,
 		})
 	}

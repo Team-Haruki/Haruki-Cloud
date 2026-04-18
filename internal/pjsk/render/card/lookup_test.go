@@ -313,3 +313,38 @@ func TestBuildCardDetailRequestSkipsEmptyCostumeAssetBundlePaths(t *testing.T) {
 		t.Fatalf("unexpected costume path: %q", got)
 	}
 }
+
+func TestBuildCardDetailRequestBuildsCostumePathFromParts(t *testing.T) {
+	source := &lookupTestSource{
+		region: renderregion.CN,
+		card: &masterdata.Card{
+			ID:              1001,
+			CharacterID:     5,
+			CardRarityType:  "rarity_4",
+			Attr:            "cute",
+			Prefix:          "Test Card",
+			AssetBundleName: "card_test",
+		},
+		characters: map[int]*masterdata.Character{
+			5: {ID: 5, FirstName: "花里", GivenName: "实乃理", Unit: "idol"},
+		},
+		costumesByCard: map[int][]*masterdata.Costume3d{
+			1001: {
+				{ID: 25000, CharacterID: 5, AssetBundleName: "", PartType: "head", ColorID: 3},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardDetailRequest(Query{Query: "1001", Region: "cn"})
+	if err != nil {
+		t.Fatalf("BuildCardDetailRequest() error = %v", err)
+	}
+
+	if len(req.CostumeImagesPath) != 1 {
+		t.Fatalf("expected exactly one costume path, got %+v", req.CostumeImagesPath)
+	}
+	if got := req.CostumeImagesPath[0]; got != "asset/cn-assets/startapp/thumbnail/costume/cos0025_head_02.png" {
+		t.Fatalf("unexpected costume path: %q", got)
+	}
+}

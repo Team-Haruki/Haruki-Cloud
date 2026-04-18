@@ -187,6 +187,8 @@ func TestLocalCostume3dJSONToModelSupportsLegacyAssetBundleName(t *testing.T) {
 		"id": 1,
 		"characterId": 21,
 		"name": "legacy costume",
+		"partType": "head",
+		"colorId": 3,
 		"_assetbundleName": "head_default_01"
 	}`), &payload); err != nil {
 		t.Fatalf("unmarshal localCostume3dJSON: %v", err)
@@ -198,6 +200,12 @@ func TestLocalCostume3dJSONToModelSupportsLegacyAssetBundleName(t *testing.T) {
 	}
 	if model.AssetBundleName != "head_default_01" {
 		t.Fatalf("expected legacy asset bundle name, got %q", model.AssetBundleName)
+	}
+	if model.PartType != "head" {
+		t.Fatalf("expected partType=head, got %q", model.PartType)
+	}
+	if model.ColorID != 3 {
+		t.Fatalf("expected colorId=3, got %d", model.ColorID)
 	}
 }
 

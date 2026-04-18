@@ -188,13 +188,44 @@ func (b *Builder) buildCostumeImagePaths(card *masterdata.Card, region renderreg
 		if costume == nil {
 			continue
 		}
-		assetBundleName := strings.TrimSpace(costume.AssetBundleName)
+		assetBundleName := buildCostumeAssetBundleName(costume)
 		if assetBundleName == "" {
 			continue
 		}
 		paths = append(paths, assets.ResolveRegionAssetPath(b.assets, region.String(), filepath.Join("thumbnail", "costume", assetBundleName+".png")))
 	}
 	return paths
+}
+
+func buildCostumeAssetBundleName(costume *masterdata.Costume3d) string {
+	if costume == nil {
+		return ""
+	}
+
+	override := strings.TrimSpace(costume.AssetBundleName)
+	if strings.Contains(override, "_") {
+		return override
+	}
+
+	partType := strings.TrimSpace(costume.PartType)
+	if partType == "" {
+		return override
+	}
+
+	baseName := override
+	if baseName == "" {
+		baseName = fmt.Sprintf("%04d", costume.ID/1000)
+	}
+
+	var sb strings.Builder
+	sb.WriteString("cos")
+	sb.WriteString(baseName)
+	sb.WriteString("_")
+	sb.WriteString(partType)
+	if costume.ColorID >= 2 {
+		fmt.Fprintf(&sb, "_%02d", costume.ColorID-1)
+	}
+	return sb.String()
 }
 
 func (b *Builder) BuildCharacterIconPath(characterID int, unit string, region renderregion.Value) string {

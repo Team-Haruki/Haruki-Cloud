@@ -246,6 +246,8 @@ type Costume3d struct {
 	ID              int    `json:"id"`
 	CharacterID     int    `json:"characterId"`
 	AssetBundleName string `json:"assetbundleName"`
+	PartType        string `json:"partType"`
+	ColorID         int    `json:"colorId"`
 	Description     string `json:"description"`
 }
 

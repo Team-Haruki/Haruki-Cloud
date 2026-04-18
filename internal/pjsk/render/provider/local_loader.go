@@ -208,6 +208,8 @@ type localCostume3dJSON struct {
 	ID                    int    `json:"id"`
 	CharacterID           int    `json:"characterId"`
 	Name                  string `json:"name"`
+	PartType              string `json:"partType"`
+	ColorID               int    `json:"colorId"`
 	AssetBundleName       string `json:"assetbundleName"`
 	LegacyAssetBundleName string `json:"_assetbundleName"`
 }
@@ -221,6 +223,8 @@ func (j *localCostume3dJSON) toModel() *masterdata.Costume3d {
 		ID:              j.ID,
 		CharacterID:     j.CharacterID,
 		AssetBundleName: assetBundleName,
+		PartType:        j.PartType,
+		ColorID:         j.ColorID,
 		Description:     j.Name,
 	}
 }

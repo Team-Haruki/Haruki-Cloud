@@ -3,7 +3,6 @@ package deck
 import (
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 	"time"
 
@@ -43,9 +42,9 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 		return nil, fmt.Errorf("deck remote engine requires local masterdata dir")
 	}
 
-	algs := slices.Clone(p.cfg.DefaultAlgs)
+	algs := normalizeRecommendAlgorithmsForService(p.cfg.DefaultAlgs)
 	if len(algs) == 0 {
-		algs = []string{"dfs", "sa", "ga"}
+		algs = []string{"dfs", "ga", "dfs_ga", "rl"}
 	}
 
 	maxRetries := p.cfg.MaxRetries
@@ -82,7 +81,13 @@ func (r *RemoteDeckRecommender) ExpandAlgorithms(option map[string]any) []map[st
 		return nil
 	}
 	alg, _ := option["algorithm"].(string)
-	alg = strings.ToLower(strings.TrimSpace(alg))
+	if normalized := normalizeRecommendAlgorithmForService(alg); normalized != "" && normalized != alg {
+		option = cloneRecommendOption(option)
+		option["algorithm"] = normalized
+		alg = normalized
+	} else {
+		alg = strings.ToLower(strings.TrimSpace(alg))
+	}
 	if alg != "all" {
 		return []map[string]any{option}
 	}

@@ -78,11 +78,51 @@ func optionFloat(option map[string]any, key string) (float64, bool) {
 
 func normalizeRecommendAlgorithm(raw string) string {
 	switch strings.ToLower(strings.TrimSpace(raw)) {
-	case "dfs", "sa", "ga", "all":
-		return strings.ToLower(strings.TrimSpace(raw))
+	case "dfs":
+		return "dfs"
+	case "sa", "ga":
+		return "ga"
+	case "dfs-ga", "dfs_ga", "dfsga", "ga_dfs", "gadfs":
+		return "dfs_ga"
+	case "rl":
+		return "rl"
+	case "all":
+		return "all"
 	default:
 		return ""
 	}
+}
+
+func normalizeRecommendAlgorithmForService(raw string) string {
+	return normalizeRecommendAlgorithm(raw)
+}
+
+func displayRecommendAlgorithm(raw string) string {
+	if normalized := normalizeRecommendAlgorithm(raw); normalized != "" {
+		return normalized
+	}
+	return strings.ToLower(strings.TrimSpace(raw))
+}
+
+func normalizeRecommendAlgorithmsForService(raws []string) []string {
+	if len(raws) == 0 {
+		return nil
+	}
+
+	result := make([]string, 0, len(raws))
+	seen := make(map[string]struct{}, len(raws))
+	for _, raw := range raws {
+		alg := normalizeRecommendAlgorithmForService(raw)
+		if alg == "" || alg == "all" {
+			continue
+		}
+		if _, ok := seen[alg]; ok {
+			continue
+		}
+		seen[alg] = struct{}{}
+		result = append(result, alg)
+	}
+	return result
 }
 
 func normalizeRecommendLiveType(recType string, raw string) string {

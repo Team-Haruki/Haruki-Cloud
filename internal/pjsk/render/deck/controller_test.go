@@ -487,7 +487,7 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 		Region:                       "jp",
 		RecommendType:                "event",
 		EventID:                      new(123),
-		Algorithm:                    "sa",
+		Algorithm:                    "dfs-ga",
 		LiveType:                     "multi",
 		Target:                       "skill",
 		MusicID:                      new(456),
@@ -508,7 +508,7 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
 	}
 
-	if option["algorithm"] != "sa" {
+	if option["algorithm"] != "dfs_ga" {
 		t.Fatalf("unexpected algorithm: %+v", option["algorithm"])
 	}
 	if option["live_type"] != "multi" {

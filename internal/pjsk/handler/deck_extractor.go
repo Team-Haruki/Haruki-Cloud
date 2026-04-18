@@ -55,10 +55,30 @@ func extractDeckAlgorithm(args string, params *deckAutoQueryParams) string {
 	fields := strings.Fields(args)
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
-		switch field {
-		case "dfs", "sa", "ga", "all":
+		switch strings.ToLower(strings.TrimSpace(field)) {
+		case "dfs":
 			if params.Algorithm == "" {
-				params.Algorithm = field
+				params.Algorithm = "dfs"
+				continue
+			}
+		case "sa", "ga":
+			if params.Algorithm == "" {
+				params.Algorithm = "ga"
+				continue
+			}
+		case "dfs-ga", "dfs_ga", "dfsga", "ga_dfs", "gadfs":
+			if params.Algorithm == "" {
+				params.Algorithm = "dfs_ga"
+				continue
+			}
+		case "rl":
+			if params.Algorithm == "" {
+				params.Algorithm = "rl"
+				continue
+			}
+		case "all":
+			if params.Algorithm == "" {
+				params.Algorithm = "all"
 				continue
 			}
 		}

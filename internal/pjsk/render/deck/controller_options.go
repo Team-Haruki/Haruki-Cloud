@@ -9,7 +9,7 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if option == nil {
 		return
 	}
-	if algorithm := normalizeRecommendAlgorithm(query.Algorithm); algorithm != "" {
+	if algorithm := normalizeRecommendAlgorithmForService(query.Algorithm); algorithm != "" {
 		option["algorithm"] = algorithm
 	}
 	if liveType := normalizeRecommendLiveType(recType, query.LiveType); liveType != "" {

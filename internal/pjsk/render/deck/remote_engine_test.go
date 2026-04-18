@@ -73,6 +73,111 @@ func TestAggregateRemoteRecommendResultsMergesAlgorithmsForSameDeck(t *testing.T
 	}
 }
 
+func TestNormalizeRecommendAlgorithmAliases(t *testing.T) {
+	testCases := map[string]string{
+		"dfs":     "dfs",
+		"sa":      "ga",
+		"ga":      "ga",
+		"dfs-ga":  "dfs_ga",
+		"dfs_ga":  "dfs_ga",
+		"ga_dfs":  "dfs_ga",
+		"rl":      "rl",
+		"all":     "all",
+		"unknown": "",
+	}
+
+	for input, expected := range testCases {
+		if got := normalizeRecommendAlgorithm(input); got != expected {
+			t.Fatalf("normalizeRecommendAlgorithm(%q) = %q, want %q", input, got, expected)
+		}
+	}
+
+	if got := normalizeRecommendAlgorithmForService("dfs-ga"); got != "dfs_ga" {
+		t.Fatalf("normalizeRecommendAlgorithmForService(dfs-ga) = %q", got)
+	}
+	if got := normalizeRecommendAlgorithmForService("sa"); got != "ga" {
+		t.Fatalf("normalizeRecommendAlgorithmForService(sa) = %q", got)
+	}
+}
+
+func TestExpandAlgorithmsNormalizesConfiguredAndRequestedAlgorithms(t *testing.T) {
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: "http://example.com",
+		MasterdataDir:  "/masterdata",
+		DefaultAlgs:    []string{"dfs-ga", "sa", "rl", "dfs_ga"},
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	remote, ok := recommender.(*RemoteDeckRecommender)
+	if !ok {
+		t.Fatalf("unexpected recommender type: %T", recommender)
+	}
+	if strings.Join(remote.defaultAlgs, ",") != "dfs_ga,ga,rl" {
+		t.Fatalf("unexpected default algorithms: %+v", remote.defaultAlgs)
+	}
+
+	single := remote.ExpandAlgorithms(map[string]any{"algorithm": "dfs-ga", "target": "score"})
+	if len(single) != 1 || single[0]["algorithm"] != "dfs_ga" {
+		t.Fatalf("unexpected normalized single algorithm payload: %+v", single)
+	}
+
+	all := remote.ExpandAlgorithms(map[string]any{"algorithm": "all", "target": "score"})
+	if len(all) != 3 {
+		t.Fatalf("unexpected expanded algorithm count: %+v", all)
+	}
+	if all[0]["algorithm"] != "dfs_ga" || all[1]["algorithm"] != "ga" || all[2]["algorithm"] != "rl" {
+		t.Fatalf("unexpected expanded algorithms: %+v", all)
+	}
+}
+
+func TestAggregateRemoteRecommendResultsUsesDisplayAlgorithmNames(t *testing.T) {
+	options := []map[string]any{
+		{"algorithm": "dfs_ga", "target": "score", "live_type": "multi", "limit": 1},
+		{"algorithm": "rl", "target": "score", "live_type": "multi", "limit": 1},
+	}
+	results := []remoteBatchRecommendResult{
+		{
+			Alg:      "dfs_ga",
+			CostTime: 1.5,
+			WaitTime: 0.5,
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{{
+				Score:            200,
+				LiveScore:        200,
+				TotalPower:       300,
+				MultiLiveScoreUp: 140,
+				Cards:            []remoteRecommendCard{{CardID: 1001}},
+			}}},
+		},
+		{
+			Alg:      "rl",
+			CostTime: 0.9,
+			WaitTime: 0.2,
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{{
+				Score:            200,
+				LiveScore:        200,
+				TotalPower:       300,
+				MultiLiveScoreUp: 140,
+				Cards:            []remoteRecommendCard{{CardID: 1001}},
+			}}},
+		},
+	}
+
+	agg, err := aggregateRemoteRecommendResults(options, results)
+	if err != nil {
+		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
+	}
+	if len(agg.DeckAlgs) != 1 || agg.DeckAlgs[0] != "dfs_ga+rl" {
+		t.Fatalf("unexpected display deck algs: %+v", agg.DeckAlgs)
+	}
+	if agg.CostTimes["dfs_ga"] != 1.5 || agg.WaitTimes["dfs_ga"] != 0.5 {
+		t.Fatalf("unexpected dfs_ga timings: cost=%+v wait=%+v", agg.CostTimes, agg.WaitTimes)
+	}
+}
+
 func TestRemoteRecommendRewarmsOnLogicalMusicMetaError(t *testing.T) {
 	var masterdataCalls atomic.Int32
 	var musicMetaCalls atomic.Int32

@@ -1828,8 +1828,18 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 	if !ok {
 		t.Fatalf("expected synthetic payload to include userCharacters")
 	}
-	if string(userCharacters) != "[]" {
-		t.Fatalf("expected synthetic userCharacters to be an empty array, got %s", string(userCharacters))
+	var characterRanks []snapshot.RawUserCharacter
+	if err := json.Unmarshal(userCharacters, &characterRanks); err != nil {
+		t.Fatalf("decode synthetic userCharacters: %v", err)
+	}
+	if len(characterRanks) != challengeCharacterCount {
+		t.Fatalf("expected %d synthetic userCharacters, got %d", challengeCharacterCount, len(characterRanks))
+	}
+	if characterRanks[0].CharacterID != 1 || characterRanks[0].CharacterRank != 120 {
+		t.Fatalf("unexpected first synthetic userCharacter: %+v", characterRanks[0])
+	}
+	if characterRanks[len(characterRanks)-1].CharacterID != challengeCharacterCount || characterRanks[len(characterRanks)-1].CharacterRank != 120 {
+		t.Fatalf("unexpected last synthetic userCharacter: %+v", characterRanks[len(characterRanks)-1])
 	}
 	if len(cached.UserCards) != 7 {
 		t.Fatalf("unexpected max profile user card count without snapshot: %d", len(cached.UserCards))

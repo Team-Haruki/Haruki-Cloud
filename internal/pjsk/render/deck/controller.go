@@ -245,8 +245,20 @@ func syntheticAutoRecommendRawUserData(query AutoQuery) *rendersnapshot.RawUserD
 		UserDecks: []rendersnapshot.RawUserDeck{{
 			DeckID: 1,
 		}},
-		UserAreas: []rendersnapshot.RawUserArea{},
+		UserCharacters: buildSyntheticUserCharacters(),
+		UserAreas:      []rendersnapshot.RawUserArea{},
 	}
+}
+
+func buildSyntheticUserCharacters() []rendersnapshot.RawUserCharacter {
+	characters := make([]rendersnapshot.RawUserCharacter, 0, challengeCharacterCount)
+	for characterID := 1; characterID <= challengeCharacterCount; characterID++ {
+		characters = append(characters, rendersnapshot.RawUserCharacter{
+			CharacterID:   characterID,
+			CharacterRank: 120,
+		})
+	}
+	return characters
 }
 
 func encodeSyntheticAutoRecommendRawUserData(raw *rendersnapshot.RawUserData) ([]byte, error) {

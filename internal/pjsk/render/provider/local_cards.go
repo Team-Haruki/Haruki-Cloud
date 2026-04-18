@@ -30,6 +30,7 @@ type localCardProvider struct {
 	skills     *localSkillProvider
 
 	cards      lazyValue[cardIndex]
+	episodes   lazyValue[map[int][]*masterdata.CardEpisode]
 	supplies   lazyValue[map[int]string]
 	gachas     lazyValue[[]*masterdata.Gacha]
 	costumes   lazyValue[map[int][]*masterdata.Costume3d]
@@ -69,6 +70,29 @@ func (p *localCardProvider) ensureSupplies() error {
 			byID[item.ID] = cardNormalizeSupplyType(item.CardSupplyType)
 		}
 		return byID, nil
+	})
+}
+
+func (p *localCardProvider) ensureEpisodes() error {
+	return p.episodes.init(func() (map[int][]*masterdata.CardEpisode, error) {
+		items, err := loadJSON[localCardEpisodeJSON](p.store, "cardEpisodes.json")
+		if err != nil {
+			return nil, err
+		}
+		byCard := make(map[int][]*masterdata.CardEpisode)
+		for i := range items {
+			episode := items[i].toModel()
+			byCard[episode.CardID] = append(byCard[episode.CardID], episode)
+		}
+		for cardID := range byCard {
+			sort.Slice(byCard[cardID], func(i, j int) bool {
+				if byCard[cardID][i].Seq == byCard[cardID][j].Seq {
+					return byCard[cardID][i].ID < byCard[cardID][j].ID
+				}
+				return byCard[cardID][i].Seq < byCard[cardID][j].Seq
+			})
+		}
+		return byCard, nil
 	})
 }
 
@@ -339,4 +363,26 @@ func (p *localCardProvider) GetUnitByCardID(ctx context.Context, cardID int) (st
 		}
 	}
 	return "", fmt.Errorf("character not found for card %d", cardID)
+}
+
+func (p *localCardProvider) GetEpisodesByCardID(_ context.Context, cardID int) ([]*masterdata.CardEpisode, error) {
+	if cardID == 0 {
+		return nil, nil
+	}
+	if err := p.ensureEpisodes(); err != nil {
+		return nil, err
+	}
+	episodes := p.episodes.v()[cardID]
+	if len(episodes) == 0 {
+		return nil, nil
+	}
+	result := make([]*masterdata.CardEpisode, 0, len(episodes))
+	for _, episode := range episodes {
+		if episode == nil {
+			continue
+		}
+		cloned := *episode
+		result = append(result, &cloned)
+	}
+	return result, nil
 }

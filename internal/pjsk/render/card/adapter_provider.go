@@ -6,7 +6,12 @@ import (
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
+
+type cardEpisodeProvider interface {
+	GetEpisodesByCardID(ctx context.Context, cardID int) ([]*masterdata.CardEpisode, error)
+}
 
 func NewProviderAdapter(p provider.MasterDataProvider) *ProviderAdapter {
 	return &ProviderAdapter{PjskProviderAdapterBase: provider.NewProviderAdapterBase(p)}
@@ -96,6 +101,31 @@ func (a *ProviderAdapter) GetCharacterByID(id int) (*masterdata.Character, error
 
 func (a *ProviderAdapter) GetUnitByCardID(cardID int) (string, error) {
 	return a.P.Cards().GetUnitByCardID(a.Context(), cardID)
+}
+
+func (a *ProviderAdapter) GetCardEpisodes(cardID int) ([]snapshot.RawUserCardEpisode, error) {
+	providerWithEpisodes, ok := a.P.Cards().(cardEpisodeProvider)
+	if !ok {
+		return nil, fmt.Errorf("card episode lookup is not supported")
+	}
+	episodes, err := providerWithEpisodes.GetEpisodesByCardID(a.Context(), cardID)
+	if err != nil {
+		return nil, err
+	}
+	if len(episodes) == 0 {
+		return nil, nil
+	}
+	result := make([]snapshot.RawUserCardEpisode, 0, len(episodes))
+	for _, episode := range episodes {
+		if episode == nil || episode.ID == 0 {
+			continue
+		}
+		result = append(result, snapshot.RawUserCardEpisode{
+			CardEpisodeID:  episode.ID,
+			ScenarioStatus: "already_read",
+		})
+	}
+	return result, nil
 }
 
 func (a *ProviderAdapter) GetCardSupplyType(card *masterdata.Card) string {

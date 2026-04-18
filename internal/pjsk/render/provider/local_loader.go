@@ -282,6 +282,22 @@ type localCardCostume3dJSON struct {
 	Costume3dID int `json:"costume3dId"`
 }
 
+type localCardEpisodeJSON struct {
+	ID                  int    `json:"id"`
+	Seq                 int    `json:"seq"`
+	CardID              int    `json:"cardId"`
+	CardEpisodePartType string `json:"cardEpisodePartType"`
+}
+
+func (j *localCardEpisodeJSON) toModel() *masterdata.CardEpisode {
+	return &masterdata.CardEpisode{
+		ID:                  j.ID,
+		Seq:                 j.Seq,
+		CardID:              j.CardID,
+		CardEpisodePartType: j.CardEpisodePartType,
+	}
+}
+
 type localMusicTagJSON struct {
 	MusicID  int    `json:"musicId"`
 	MusicTag string `json:"musicTag"`

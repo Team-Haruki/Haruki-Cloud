@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"sync/atomic"
@@ -30,6 +31,7 @@ type testCardSource struct {
 	region            renderregion.Value
 	cards             map[int]*masterdata.Card
 	characters        map[int]*masterdata.Character
+	episodes          map[int][]snapshot.RawUserCardEpisode
 	areaItemLevelCaps map[int]int
 }
 
@@ -64,6 +66,10 @@ func (s *testCardSource) GetUnitByCardID(cardID int) (string, error) {
 		return "", nil
 	}
 	return character.Unit, nil
+}
+
+func (s *testCardSource) GetCardEpisodes(cardID int) ([]snapshot.RawUserCardEpisode, error) {
+	return slices.Clone(s.episodes[cardID]), nil
 }
 
 func (s *testCardSource) AreaItemLevelCaps(limit int) map[int]int {
@@ -1740,6 +1746,9 @@ func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testin
 	if card1006 == nil || card1006.Level != 60 || card1006.SkillLevel != 4 || card1006.MasterRank != 5 {
 		t.Fatalf("unexpected max profile card 1006: %+v", card1006)
 	}
+	if len(card1006.Episodes) != 2 || card1006.Episodes[0].ScenarioStatus != "already_read" || card1006.Episodes[1].ScenarioStatus != "already_read" {
+		t.Fatalf("expected max profile card 1006 episodes to be marked read: %+v", card1006)
+	}
 	card1007 := snapshot.FindUserCard(cached.UserCards, 1007)
 	if card1007 == nil || card1007.Level != 50 || card1007.DefaultImage != "special_training" {
 		t.Fatalf("unexpected max profile card 1007: %+v", card1007)
@@ -2712,6 +2721,15 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 					{CardParameterType: "param3", Power: 180},
 				},
 			},
+		},
+		episodes: map[int][]snapshot.RawUserCardEpisode{
+			1001: {{CardEpisodeID: 11001, ScenarioStatus: "already_read"}, {CardEpisodeID: 11002, ScenarioStatus: "already_read"}},
+			1002: {{CardEpisodeID: 12001, ScenarioStatus: "already_read"}, {CardEpisodeID: 12002, ScenarioStatus: "already_read"}},
+			1003: {{CardEpisodeID: 13001, ScenarioStatus: "already_read"}, {CardEpisodeID: 13002, ScenarioStatus: "already_read"}},
+			1004: {{CardEpisodeID: 14001, ScenarioStatus: "already_read"}, {CardEpisodeID: 14002, ScenarioStatus: "already_read"}},
+			1005: {{CardEpisodeID: 15001, ScenarioStatus: "already_read"}, {CardEpisodeID: 15002, ScenarioStatus: "already_read"}},
+			1006: {{CardEpisodeID: 16001, ScenarioStatus: "already_read"}, {CardEpisodeID: 16002, ScenarioStatus: "already_read"}},
+			1007: {{CardEpisodeID: 17001, ScenarioStatus: "already_read"}, {CardEpisodeID: 17002, ScenarioStatus: "already_read"}},
 		},
 		characters: map[int]*masterdata.Character{
 			1:  {ID: 1, FirstName: "星乃", GivenName: "一歌", Unit: "light_sound"},

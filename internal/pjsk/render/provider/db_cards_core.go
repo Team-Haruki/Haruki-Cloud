@@ -9,6 +9,7 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/card"
+	"haruki-cloud/database/sekai/cardepisode"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/predicate"
 	"haruki-cloud/internal/pjsk/render/common"
@@ -169,6 +170,34 @@ func (p *dbCardProvider) GetUnitByCardID(ctx context.Context, cardID int) (strin
 		}
 	}
 	return "", fmt.Errorf("character not found for card %d", cardID)
+}
+
+func (p *dbCardProvider) GetEpisodesByCardID(ctx context.Context, cardID int) ([]*masterdata.CardEpisode, error) {
+	if cardID == 0 {
+		return nil, nil
+	}
+
+	entities, err := p.client.Cardepisode.Query().
+		Where(cardepisode.ServerRegionEQ(p.region.String()), cardepisode.CardIDEQ(int64(cardID))).
+		Order(cardepisode.BySeq(), cardepisode.ByID()).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query card episodes for card %d: %w", cardID, err)
+	}
+	if len(entities) == 0 {
+		return nil, nil
+	}
+
+	result := make([]*masterdata.CardEpisode, 0, len(entities))
+	for _, entity := range entities {
+		result = append(result, &masterdata.CardEpisode{
+			ID:                  int(entity.GameID),
+			Seq:                 int(entity.Seq),
+			CardID:              int(entity.CardID),
+			CardEpisodePartType: entity.CardEpisodePartType,
+		})
+	}
+	return result, nil
 }
 
 func (p *dbCardProvider) resolveFilterEventCardIDs(ctx context.Context, filter *CardFilter) ([]int64, error) {

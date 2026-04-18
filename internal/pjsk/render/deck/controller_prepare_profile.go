@@ -53,6 +53,7 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 		now = time.Now().UnixMilli()
 	}
 
+	episodeSource, _ := source.(cardEpisodeSource)
 	result := make([]snapshot.RawUserCard, 0, len(allCards))
 	for _, card := range allCards {
 		if card == nil || card.ID <= 0 {
@@ -61,6 +62,10 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 		if card.ReleaseAt > 0 && card.ReleaseAt > now {
 			continue
 		}
+		episodes, err := maxProfileCardEpisodes(episodeSource, card.ID)
+		if err != nil {
+			return nil, err
+		}
 		result = append(result, snapshot.RawUserCard{
 			CardID:                card.ID,
 			Level:                 maxProfileCardLevel(card.CardRarityType),
@@ -68,6 +73,7 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 			MasterRank:            5,
 			SpecialTrainingStatus: maxProfileTrainingStatus(card),
 			DefaultImage:          maxProfileDefaultImage(card),
+			Episodes:              episodes,
 		})
 	}
 
@@ -75,6 +81,17 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 		return result[i].CardID < result[j].CardID
 	})
 	return result, nil
+}
+
+func maxProfileCardEpisodes(source cardEpisodeSource, cardID int) ([]snapshot.RawUserCardEpisode, error) {
+	if source == nil || cardID == 0 {
+		return nil, nil
+	}
+	episodes, err := source.GetCardEpisodes(cardID)
+	if err != nil {
+		return nil, err
+	}
+	return slices.Clone(episodes), nil
 }
 
 func maxProfileCardLevel(rarity string) int {

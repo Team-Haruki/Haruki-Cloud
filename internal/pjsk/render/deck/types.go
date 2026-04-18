@@ -45,6 +45,10 @@ type cardUnitSource interface {
 	GetUnitByCardID(cardID int) (string, error)
 }
 
+type cardEpisodeSource interface {
+	GetCardEpisodes(cardID int) ([]snapshot.RawUserCardEpisode, error)
+}
+
 type characterSource interface {
 	GetCharacterByID(id int) (*masterdata.Character, error)
 }

@@ -21,6 +21,13 @@ type Card struct {
 	InitialSpecialTrainingStatus    string
 }
 
+type CardEpisode struct {
+	ID                  int    `json:"id"`
+	Seq                 int    `json:"seq"`
+	CardID              int    `json:"cardId"`
+	CardEpisodePartType string `json:"cardEpisodePartType"`
+}
+
 type CardParameter struct {
 	ID                int    `json:"id"`
 	CardID            int    `json:"cardId"`

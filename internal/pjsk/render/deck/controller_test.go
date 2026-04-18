@@ -33,6 +33,8 @@ type testCardSource struct {
 	characters        map[int]*masterdata.Character
 	episodes          map[int][]snapshot.RawUserCardEpisode
 	areaItemLevelCaps map[int]int
+	mysekaiGates      []snapshot.RawUserMysekaiGate
+	fixtureBonuses    []snapshot.RawUserFixtureBonus
 }
 
 func (s *testCardSource) DefaultRegion() renderregion.Value { return s.region }
@@ -85,6 +87,14 @@ func (s *testCardSource) AreaItemLevelCaps(limit int) map[int]int {
 		result[itemID] = level
 	}
 	return result
+}
+
+func (s *testCardSource) GetMaxProfileMysekaiGates() []snapshot.RawUserMysekaiGate {
+	return slices.Clone(s.mysekaiGates)
+}
+
+func (s *testCardSource) GetMaxProfileMysekaiFixtureBonuses() []snapshot.RawUserFixtureBonus {
+	return slices.Clone(s.fixtureBonuses)
 }
 
 type testEventSource struct {
@@ -1745,6 +1755,21 @@ func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testin
 	if len(cached.UserMysekaiCanvases) != 7 {
 		t.Fatalf("unexpected max profile mysekai canvas count: %d", len(cached.UserMysekaiCanvases))
 	}
+	if !reflect.DeepEqual(cached.UserMysekaiGates, []snapshot.RawUserMysekaiGate{
+		{MysekaiGateID: 1, MysekaiGateLevel: 40},
+		{MysekaiGateID: 2, MysekaiGateLevel: 40},
+		{MysekaiGateID: 3, MysekaiGateLevel: 40},
+		{MysekaiGateID: 4, MysekaiGateLevel: 40},
+		{MysekaiGateID: 5, MysekaiGateLevel: 40},
+	}) {
+		t.Fatalf("unexpected max profile mysekai gates: %+v", cached.UserMysekaiGates)
+	}
+	if !reflect.DeepEqual(cached.UserMysekaiFixtureGameCharacterPerformanceBonuses, []snapshot.RawUserFixtureBonus{
+		{GameCharacterID: 1, TotalBonusRate: 100},
+		{GameCharacterID: 5, TotalBonusRate: 42},
+	}) {
+		t.Fatalf("unexpected max profile fixture bonuses: %+v", cached.UserMysekaiFixtureGameCharacterPerformanceBonuses)
+	}
 	card1006 := snapshot.FindUserCard(cached.UserCards, 1006)
 	if card1006 == nil || card1006.Level != 60 || card1006.SkillLevel != 4 || card1006.MasterRank != 5 {
 		t.Fatalf("unexpected max profile card 1006: %+v", card1006)
@@ -1839,6 +1864,21 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 	if len(cached.UserMysekaiCanvases) != 7 {
 		t.Fatalf("unexpected synthetic max profile mysekai canvas count: %d", len(cached.UserMysekaiCanvases))
 	}
+	if !reflect.DeepEqual(cached.UserMysekaiGates, []snapshot.RawUserMysekaiGate{
+		{MysekaiGateID: 1, MysekaiGateLevel: 40},
+		{MysekaiGateID: 2, MysekaiGateLevel: 40},
+		{MysekaiGateID: 3, MysekaiGateLevel: 40},
+		{MysekaiGateID: 4, MysekaiGateLevel: 40},
+		{MysekaiGateID: 5, MysekaiGateLevel: 40},
+	}) {
+		t.Fatalf("unexpected synthetic max profile mysekai gates: %+v", cached.UserMysekaiGates)
+	}
+	if !reflect.DeepEqual(cached.UserMysekaiFixtureGameCharacterPerformanceBonuses, []snapshot.RawUserFixtureBonus{
+		{GameCharacterID: 1, TotalBonusRate: 100},
+		{GameCharacterID: 5, TotalBonusRate: 42},
+	}) {
+		t.Fatalf("unexpected synthetic max profile fixture bonuses: %+v", cached.UserMysekaiFixtureGameCharacterPerformanceBonuses)
+	}
 	userCharacters, ok := cachedPayload["userCharacters"]
 	if !ok {
 		t.Fatalf("expected synthetic payload to include userCharacters")
@@ -1869,6 +1909,37 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 	}
 	if mysekaiCanvases[0].CardID != 1001 || mysekaiCanvases[0].Quantity != 1 {
 		t.Fatalf("unexpected first synthetic mysekai canvas: %+v", mysekaiCanvases[0])
+	}
+	mysekaiGates, ok := cachedPayload["userMysekaiGates"]
+	if !ok {
+		t.Fatalf("expected synthetic payload to include userMysekaiGates")
+	}
+	var decodedGates []snapshot.RawUserMysekaiGate
+	if err := json.Unmarshal(mysekaiGates, &decodedGates); err != nil {
+		t.Fatalf("decode synthetic userMysekaiGates: %v", err)
+	}
+	if !reflect.DeepEqual(decodedGates, []snapshot.RawUserMysekaiGate{
+		{MysekaiGateID: 1, MysekaiGateLevel: 40},
+		{MysekaiGateID: 2, MysekaiGateLevel: 40},
+		{MysekaiGateID: 3, MysekaiGateLevel: 40},
+		{MysekaiGateID: 4, MysekaiGateLevel: 40},
+		{MysekaiGateID: 5, MysekaiGateLevel: 40},
+	}) {
+		t.Fatalf("unexpected synthetic payload userMysekaiGates: %+v", decodedGates)
+	}
+	fixtureBonuses, ok := cachedPayload["userMysekaiFixtureGameCharacterPerformanceBonuses"]
+	if !ok {
+		t.Fatalf("expected synthetic payload to include userMysekaiFixtureGameCharacterPerformanceBonuses")
+	}
+	var decodedFixtureBonuses []snapshot.RawUserFixtureBonus
+	if err := json.Unmarshal(fixtureBonuses, &decodedFixtureBonuses); err != nil {
+		t.Fatalf("decode synthetic userMysekaiFixtureGameCharacterPerformanceBonuses: %v", err)
+	}
+	if !reflect.DeepEqual(decodedFixtureBonuses, []snapshot.RawUserFixtureBonus{
+		{GameCharacterID: 1, TotalBonusRate: 100},
+		{GameCharacterID: 5, TotalBonusRate: 42},
+	}) {
+		t.Fatalf("unexpected synthetic payload fixture bonuses: %+v", decodedFixtureBonuses)
 	}
 	if len(cached.UserCards) != 7 {
 		t.Fatalf("unexpected max profile user card count without snapshot: %d", len(cached.UserCards))
@@ -2764,6 +2835,17 @@ func newTestDeckControllerWithMeta(t *testing.T, cfg RecommendConfig, metaLoader
 		areaItemLevelCaps: map[int]int{
 			1: 20,
 			2: 20,
+		},
+		mysekaiGates: []snapshot.RawUserMysekaiGate{
+			{MysekaiGateID: 1, MysekaiGateLevel: 40},
+			{MysekaiGateID: 2, MysekaiGateLevel: 40},
+			{MysekaiGateID: 3, MysekaiGateLevel: 40},
+			{MysekaiGateID: 4, MysekaiGateLevel: 40},
+			{MysekaiGateID: 5, MysekaiGateLevel: 40},
+		},
+		fixtureBonuses: []snapshot.RawUserFixtureBonus{
+			{GameCharacterID: 1, TotalBonusRate: 100},
+			{GameCharacterID: 5, TotalBonusRate: 42},
 		},
 	}
 	eventSource := &testEventSource{

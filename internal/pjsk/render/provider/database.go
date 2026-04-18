@@ -56,35 +56,58 @@ func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value) *Dat
 }
 
 func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
-	if p == nil || p.education == nil || p.events == nil {
+	if p == nil {
 		return
 	}
 
 	root = strings.TrimSpace(root)
 	if root == "" {
-		p.education.store = nil
-		p.events.local = nil
+		if p.education != nil {
+			p.education.store = nil
+		}
+		if p.events != nil {
+			p.events.local = nil
+		}
+		if p.mysekai != nil {
+			p.mysekai.local = nil
+		}
 		return
 	}
 
 	dirs := localMasterdataCandidateDirs(root, p.region)
 	if len(dirs) == 0 {
-		p.education.store = nil
-		p.events.local = nil
+		if p.education != nil {
+			p.education.store = nil
+		}
+		if p.events != nil {
+			p.events.local = nil
+		}
+		if p.mysekai != nil {
+			p.mysekai.local = nil
+		}
 		return
 	}
 	store := newLocalStore(dirs...)
-	p.education.store = store
+	if p.education != nil {
+		p.education.store = store
+	}
+	if p.mysekai != nil {
+		p.mysekai.local = &localMySekaiProvider{store: store}
+	}
 
 	if !allowLeaks {
-		p.events.local = nil
+		if p.events != nil {
+			p.events.local = nil
+		}
 		return
 	}
 
 	localCharacters := &localCharacterProvider{store: store}
 	localSkills := &localSkillProvider{store: store, characters: localCharacters}
 	localCards := &localCardProvider{store: store, characters: localCharacters, skills: localSkills}
-	p.events.local = &localEventProvider{store: store, cards: localCards}
+	if p.events != nil {
+		p.events.local = &localEventProvider{store: store, cards: localCards}
+	}
 }
 
 func (p *DatabaseProvider) Region() renderregion.Value { return p.region }

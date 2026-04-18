@@ -53,6 +53,11 @@ type characterSource interface {
 	GetCharacterByID(id int) (*masterdata.Character, error)
 }
 
+type maxProfileMySekaiSource interface {
+	GetMaxProfileMysekaiGates() []snapshot.RawUserMysekaiGate
+	GetMaxProfileMysekaiFixtureBonuses() []snapshot.RawUserFixtureBonus
+}
+
 // ── Controller ──────────────────────────────────────────────────────────────
 
 type Controller struct {

@@ -2,12 +2,17 @@ package card
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 type adapterTestCardProvider struct {
@@ -170,5 +175,59 @@ func TestProviderAdapterFilterCardsRejectsOutOfRangeBanEvent(t *testing.T) {
 	}
 	if cardProvider.lastFilter != nil {
 		t.Fatalf("provider filter should not be called on invalid ban event: %+v", cardProvider.lastFilter)
+	}
+}
+
+func TestProviderAdapterBuildsMaxProfileMySekaiData(t *testing.T) {
+	root := t.TempDir()
+	writeAdapterProviderJSON(t, filepath.Join(root, "mysekaiGateLevels.json"), []map[string]any{
+		{"id": 1001, "mysekaiGateId": 1, "level": 40, "powerBonusRate": 4.0},
+		{"id": 2001, "mysekaiGateId": 2, "level": 35, "powerBonusRate": 3.5},
+		{"id": 5001, "mysekaiGateId": 5, "level": 10, "powerBonusRate": 1.0},
+	})
+	writeAdapterProviderJSON(t, filepath.Join(root, "mysekaiFixtures.json"), []map[string]any{
+		{"id": 1, "mysekaiFixtureGameCharacterGroupPerformanceBonusId": 10},
+		{"id": 2, "mysekaiFixtureGameCharacterGroupPerformanceBonusId": 20},
+		{"id": 3, "mysekaiFixtureGameCharacterGroupPerformanceBonusId": 30},
+		{"id": 4, "mysekaiFixtureGameCharacterGroupPerformanceBonusId": 40},
+	})
+	writeAdapterProviderJSON(t, filepath.Join(root, "mysekaiFixtureGameCharacterGroupPerformanceBonuses.json"), []map[string]any{
+		{"id": 10, "mysekaiFixtureGameCharacterGroupId": 100, "bonusRate": 60},
+		{"id": 20, "mysekaiFixtureGameCharacterGroupId": 100, "bonusRate": 50},
+		{"id": 30, "mysekaiFixtureGameCharacterGroupId": 200, "bonusRate": 6},
+		{"id": 40, "mysekaiFixtureGameCharacterGroupId": 200, "bonusRate": 3},
+	})
+	writeAdapterProviderJSON(t, filepath.Join(root, "mysekaiFixtureGameCharacterGroups.json"), []map[string]any{
+		{"id": 100, "groupId": 1, "gameCharacterId": 1},
+		{"id": 200, "groupId": 2, "gameCharacterId": 5},
+	})
+
+	adapter := NewProviderAdapter(provider.NewLocalProvider(root, renderregion.JP))
+
+	if got := adapter.GetMaxProfileMysekaiGates(); !reflect.DeepEqual(got, []snapshot.RawUserMysekaiGate{
+		{MysekaiGateID: 1, MysekaiGateLevel: 40},
+		{MysekaiGateID: 2, MysekaiGateLevel: 35},
+		{MysekaiGateID: 5, MysekaiGateLevel: 10},
+	}) {
+		t.Fatalf("unexpected max profile mysekai gates: %+v", got)
+	}
+
+	if got := adapter.GetMaxProfileMysekaiFixtureBonuses(); !reflect.DeepEqual(got, []snapshot.RawUserFixtureBonus{
+		{GameCharacterID: 1, TotalBonusRate: 100},
+		{GameCharacterID: 5, TotalBonusRate: 9},
+	}) {
+		t.Fatalf("unexpected max profile fixture bonuses: %+v", got)
+	}
+}
+
+func writeAdapterProviderJSON(t *testing.T, path string, value any) {
+	t.Helper()
+
+	data, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("marshal %s: %v", path, err)
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatalf("write %s: %v", path, err)
 	}
 }

@@ -24,6 +24,13 @@ func (c *Controller) applyProfilePreset(region renderregion.Value, raw *snapshot
 	raw.UserCards = userCards
 	raw.UserMysekaiCanvases = buildMaxProfileCanvases(userCards)
 
+	if _, source, err := c.resolveCardSource(region); err == nil {
+		if mysekaiSource, ok := source.(maxProfileMySekaiSource); ok {
+			raw.UserMysekaiGates = slices.Clone(mysekaiSource.GetMaxProfileMysekaiGates())
+			raw.UserMysekaiFixtureGameCharacterPerformanceBonuses = slices.Clone(mysekaiSource.GetMaxProfileMysekaiFixtureBonuses())
+		}
+	}
+
 	switch {
 	case query.MaxProfile:
 		c.applyAreaItemCaps(region, raw, 0)

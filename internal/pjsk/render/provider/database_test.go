@@ -48,11 +48,15 @@ func TestDatabaseProviderSetLocalMasterdataDirGatesEventLeaks(t *testing.T) {
 		region:    renderregion.JP,
 		education: &dbEducationProvider{},
 		events:    &dbEventProvider{},
+		mysekai:   &dbMySekaiProvider{},
 	}
 
 	provider.SetLocalMasterdataDir(root, false)
 	if provider.education.store == nil {
 		t.Fatalf("expected education local store to be configured")
+	}
+	if provider.mysekai.local == nil {
+		t.Fatalf("expected mysekai local fallback to be configured")
 	}
 	if provider.events.local != nil {
 		t.Fatalf("expected event leak fallback to stay disabled")

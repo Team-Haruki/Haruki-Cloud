@@ -2,7 +2,11 @@ package card
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"sort"
+	"strconv"
+	"strings"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
@@ -126,6 +130,153 @@ func (a *ProviderAdapter) GetCardEpisodes(cardID int) ([]snapshot.RawUserCardEpi
 		})
 	}
 	return result, nil
+}
+
+func (a *ProviderAdapter) GetMaxProfileMysekaiGates() []snapshot.RawUserMysekaiGate {
+	if a == nil || a.P == nil || a.P.Education() == nil {
+		return nil
+	}
+
+	result := make([]snapshot.RawUserMysekaiGate, 0, 5)
+	for gateID := 1; gateID <= 5; gateID++ {
+		for level := 40; level >= 1; level-- {
+			if a.P.Education().GetMysekaiGateLevel(a.Context(), gateID, level) == nil {
+				continue
+			}
+			result = append(result, snapshot.RawUserMysekaiGate{
+				MysekaiGateID:    gateID,
+				MysekaiGateLevel: level,
+			})
+			break
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+func (a *ProviderAdapter) GetMaxProfileMysekaiFixtureBonuses() []snapshot.RawUserFixtureBonus {
+	if a == nil || a.P == nil || a.P.MySekai() == nil || !a.P.MySekai().Configured() {
+		return nil
+	}
+
+	fixtures := a.P.MySekai().LoadList("mysekaiFixtures.json")
+	bonusesByID := a.P.MySekai().LoadMapByID("mysekaiFixtureGameCharacterGroupPerformanceBonuses.json")
+	groupsByID := a.P.MySekai().LoadMapByID("mysekaiFixtureGameCharacterGroups.json")
+	if len(fixtures) == 0 || len(bonusesByID) == 0 || len(groupsByID) == 0 {
+		return nil
+	}
+
+	totalByCharacter := make(map[int]float64)
+	for _, fixture := range fixtures {
+		bonusID, ok := maxProfileNumberToInt(fixture["mysekaiFixtureGameCharacterGroupPerformanceBonusId"])
+		if !ok || bonusID <= 0 {
+			continue
+		}
+
+		bonus := bonusesByID[bonusID]
+		if bonus == nil {
+			continue
+		}
+		groupID, ok := maxProfileNumberToInt(bonus["mysekaiFixtureGameCharacterGroupId"])
+		if !ok || groupID <= 0 {
+			continue
+		}
+
+		group := groupsByID[groupID]
+		if group == nil {
+			continue
+		}
+		characterID, ok := maxProfileNumberToInt(group["gameCharacterId"])
+		if !ok || characterID <= 0 {
+			continue
+		}
+
+		bonusRate, ok := maxProfileNumberToFloat64(bonus["bonusRate"])
+		if !ok || bonusRate <= 0 {
+			continue
+		}
+		totalByCharacter[characterID] += bonusRate
+	}
+	if len(totalByCharacter) == 0 {
+		return nil
+	}
+
+	characterIDs := make([]int, 0, len(totalByCharacter))
+	for characterID := range totalByCharacter {
+		characterIDs = append(characterIDs, characterID)
+	}
+	sort.Ints(characterIDs)
+
+	result := make([]snapshot.RawUserFixtureBonus, 0, len(characterIDs))
+	for _, characterID := range characterIDs {
+		bonusRate := totalByCharacter[characterID]
+		if bonusRate > 100 {
+			bonusRate = 100
+		}
+		result = append(result, snapshot.RawUserFixtureBonus{
+			GameCharacterID: characterID,
+			TotalBonusRate:  bonusRate,
+		})
+	}
+	return result
+}
+
+func maxProfileNumberToInt(value any) (int, bool) {
+	switch v := value.(type) {
+	case int:
+		return v, true
+	case int32:
+		return int(v), true
+	case int64:
+		return int(v), true
+	case float64:
+		return int(v), true
+	case json.Number:
+		n, err := v.Int64()
+		if err != nil {
+			return 0, false
+		}
+		return int(n), true
+	case string:
+		n, err := strconv.Atoi(strings.TrimSpace(v))
+		if err != nil {
+			return 0, false
+		}
+		return n, true
+	default:
+		return 0, false
+	}
+}
+
+func maxProfileNumberToFloat64(value any) (float64, bool) {
+	switch v := value.(type) {
+	case float64:
+		return v, true
+	case float32:
+		return float64(v), true
+	case int:
+		return float64(v), true
+	case int32:
+		return float64(v), true
+	case int64:
+		return float64(v), true
+	case json.Number:
+		n, err := v.Float64()
+		if err != nil {
+			return 0, false
+		}
+		return n, true
+	case string:
+		n, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
+		if err != nil {
+			return 0, false
+		}
+		return n, true
+	default:
+		return 0, false
+	}
 }
 
 func (a *ProviderAdapter) GetCardSupplyType(card *masterdata.Card) string {

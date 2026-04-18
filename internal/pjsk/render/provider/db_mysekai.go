@@ -8,20 +8,30 @@ import (
 type dbMySekaiProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	local  *localMySekaiProvider
 }
 
 func (p *dbMySekaiProvider) Configured() bool {
-	return false
+	return p != nil && p.local != nil && p.local.Configured()
 }
 
-func (p *dbMySekaiProvider) LoadList(_ string) []map[string]any {
-	return nil
+func (p *dbMySekaiProvider) LoadList(filename string) []map[string]any {
+	if p == nil || p.local == nil {
+		return nil
+	}
+	return p.local.LoadList(filename)
 }
 
-func (p *dbMySekaiProvider) LoadMapByID(_ string) map[int]map[string]any {
-	return nil
+func (p *dbMySekaiProvider) LoadMapByID(filename string) map[int]map[string]any {
+	if p == nil || p.local == nil {
+		return nil
+	}
+	return p.local.LoadMapByID(filename)
 }
 
-func (p *dbMySekaiProvider) LoadObject(_ string, _ any) bool {
-	return false
+func (p *dbMySekaiProvider) LoadObject(filename string, target any) bool {
+	if p == nil || p.local == nil {
+		return false
+	}
+	return p.local.LoadObject(filename, target)
 }

@@ -49,6 +49,37 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			return mySekaiRegionUnavailableMessage(), nil
 		}
 
+		q := deck.AutoQuery{Region: regionStr, RecommendType: recommendType}
+		mergeParams(combined.Deck, &q)
+
+		if isTheoreticalDeckQuery(q) {
+			explicitMysekaiEventSelection := q.EventID != nil ||
+				strings.TrimSpace(q.EventUnit) != "" ||
+				strings.TrimSpace(q.EventAttr) != "" ||
+				q.WorldBloomEventTurn != nil ||
+				q.WorldBloomCharacterID != nil ||
+				strings.TrimSpace(q.WorldBloomCharacterQuery) != ""
+			if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
+				return nil, err
+			}
+			if !explicitMysekaiEventSelection {
+				preserveImplicitMysekaiWorldBloomMetadata(&q)
+			}
+			if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
+				return nil, err
+			}
+
+			data, err = rc.App.Decks.RenderAutoRecommend(q)
+			if err != nil {
+				return nil, err
+			}
+			image, imageErr := rc.ImageMessage(data)
+			if imageErr != nil {
+				return nil, imageErr
+			}
+			return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
+		}
+
 		// Resolve target binding from user query params.
 		p := combined.Query
 		if p.Mode == "" {
@@ -68,8 +99,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		platform, platformUserID := platformCredentials(p)
 		targetSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, false)
 
-		q := deck.AutoQuery{Region: regionStr, RecommendType: recommendType}
-		mergeParams(combined.Deck, &q)
+		q.Region = regionStr
 		explicitMysekaiEventSelection := q.EventID != nil ||
 			strings.TrimSpace(q.EventUnit) != "" ||
 			strings.TrimSpace(q.EventAttr) != "" ||
@@ -172,4 +202,8 @@ func preserveImplicitMysekaiWorldBloomMetadata(q *deck.AutoQuery) {
 	q.WorldBloomEventTurn = nil
 	q.WorldBloomCharacterID = nil
 	q.WorldBloomCharacterQuery = ""
+}
+
+func isTheoreticalDeckQuery(q deck.AutoQuery) bool {
+	return !q.UseCurrentDeck && (q.MaxProfile || q.SubMaxProfile)
 }

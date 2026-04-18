@@ -1730,6 +1730,9 @@ func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testin
 	if !request.IsMaxDeck {
 		t.Fatalf("expected max profile request to set is_max_deck")
 	}
+	if cached.UserGamedata.UserID != 1 || cached.UserGamedata.Name != "MaxProfile" {
+		t.Fatalf("expected max profile request to ignore existing snapshot identity, got %+v", cached.UserGamedata)
+	}
 	if len(cached.UserCards) != 7 {
 		t.Fatalf("unexpected max profile user card count: %d", len(cached.UserCards))
 	}

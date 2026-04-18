@@ -180,19 +180,26 @@ func (c *Controller) resolveAutoRecommendSnapshot(query AutoQuery) (rendersnapsh
 	if c == nil {
 		return nil, fmt.Errorf("deck controller is not initialized")
 	}
+	if shouldUseSyntheticAutoRecommendSnapshot(query) {
+		return c.buildSyntheticAutoRecommendSnapshot(query)
+	}
 	if c.snapshot != nil {
 		if err := c.snapshot.Require(); err != nil {
 			return nil, err
 		}
 		return c.snapshot, nil
 	}
-	if !query.MaxProfile && !query.SubMaxProfile {
-		return nil, fmt.Errorf("user data is required for deck auto recommend")
-	}
 	if query.UseCurrentDeck {
 		return nil, fmt.Errorf("user data is required for deck auto recommend")
 	}
+	return nil, fmt.Errorf("user data is required for deck auto recommend")
+}
 
+func shouldUseSyntheticAutoRecommendSnapshot(query AutoQuery) bool {
+	return !query.UseCurrentDeck && (query.MaxProfile || query.SubMaxProfile)
+}
+
+func (c *Controller) buildSyntheticAutoRecommendSnapshot(query AutoQuery) (rendersnapshot.Snapshot, error) {
 	region, _, err := c.normalizeAutoQuery(query)
 	if err != nil {
 		return nil, err

@@ -53,7 +53,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return nil, err
 		}
 		if !hasUsableMySekaiData(binding) {
-			return nil, fmt.Errorf("当前账号没有可用的 MySekai 抓包数据")
+			return nil, newMySekaiDataNotFoundReplayError()
 		}
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
@@ -76,7 +76,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return nil, err
 		}
 		if !hasUsableSuiteData(binding) {
-			return nil, fmt.Errorf("当前账号没有可用的 Suite 抓包数据")
+			return nil, newSuiteDataNotFoundReplayError()
 		}
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {

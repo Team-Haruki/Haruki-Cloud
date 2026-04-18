@@ -206,6 +206,39 @@ func TestExecuteMySekaiRequiresController(t *testing.T) {
 	}
 }
 
+func TestExecuteMySekaiMissingSnapshotUsesStandardReplayError(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	params, err := json.Marshal(rendermysekai.PhotoQuery{Seq: 1})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	_, err = executeMysekai(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleMysekai,
+		Mode:              "mysekai-photo",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Bindings: service,
+		MySekai:  rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
+	}))
+
+	var replyErr onebot11.ReplayError
+	if !errors.As(WrapDomainError(err), &replyErr) {
+		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
+	}
+	if string(replyErr) != ErrMsgMySekaiDataNotFound {
+		t.Fatalf("unexpected replay error: %q", replyErr)
+	}
+}
+
 func TestExecuteMySekaiBlocksCNRegion(t *testing.T) {
 	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
 	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil

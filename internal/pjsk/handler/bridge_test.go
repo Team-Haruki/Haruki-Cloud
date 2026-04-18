@@ -131,7 +131,7 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if err.Error() != "当前账号没有可用的 MySekai 抓包数据" {
+	if err.Error() != ErrMsgMySekaiDataNotFound {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

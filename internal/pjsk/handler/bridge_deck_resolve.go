@@ -63,7 +63,22 @@ func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*
 
 	selector = strings.TrimSpace(selector)
 	if selector == "" {
-		return rc.GetDetailedProfile(), rc.ResolveSnapshot(false), rc.RegionStr, nil
+		binding, snapshot, err := rc.requireVisibleSuiteSnapshot()
+		if err != nil {
+			return nil, nil, "", err
+		}
+		region := rc.RegionStr
+		if binding != nil {
+			region = resolvedTargetRegion(region, ResolvedGameTarget{Binding: binding})
+			if snapshot == nil {
+				return nil, nil, region, newSuiteDataNotFoundReplayError()
+			}
+		}
+		detail := rc.GetDetailedProfile()
+		if detail == nil && snapshot != nil {
+			detail = snapshot.DetailedProfile(renderregion.Normalize(region))
+		}
+		return detail, snapshot, region, nil
 	}
 
 	target, err := resolveGameTarget(rc.Ctx, userQueryParams{
@@ -78,6 +93,9 @@ func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*
 	region := resolvedTargetRegion(rc.RegionStr, target)
 
 	snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, region, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
+	if target.Binding != nil && snapshot == nil {
+		return nil, nil, region, newSuiteDataNotFoundReplayError()
+	}
 	detail := buildDeckDetailedProfileForTarget(rc, target, region, snapshot)
 	if detail == nil && snapshot != nil {
 		detail = snapshot.DetailedProfile(renderregion.Normalize(region))
@@ -113,6 +131,10 @@ func normalizeDeckUserFacingError(err error) error {
 		return nil
 	}
 
+	if wrapped := WrapDomainError(err); wrapped != err {
+		return wrapped
+	}
+
 	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return err
 	}
@@ -127,11 +149,11 @@ func normalizeDeckUserFacingError(err error) error {
 		return onebot11.NewReplayError("未找到歌曲：%s", musicQuery)
 	case strings.Contains(message, "local user snapshot is not configured"),
 		strings.Contains(message, "user data is required for deck auto recommend"):
-		return onebot11.NewReplayError("组卡需要用户卡牌持有数据，请先绑定账号并上传 Suite 抓包或本地快照")
+		return newSuiteDataNotFoundReplayError()
 	case strings.Contains(message, "解析绑定账号失败"):
-		return onebot11.NewReplayError("组卡需要先绑定账号；如果已绑定，请确认该账号已上传 Suite 抓包数据")
+		return newBindingRequiredReplayError()
 	case strings.Contains(message, "未找到该用户的绑定账号"):
-		return onebot11.NewReplayError("未找到目标用户的绑定账号")
+		return newBindingRequiredReplayError()
 	case strings.Contains(message, "toolbox: request failed after retries"),
 		strings.Contains(message, "sekai api: request failed after retries"),
 		strings.Contains(message, "context deadline exceeded"):

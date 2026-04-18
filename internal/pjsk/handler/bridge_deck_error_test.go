@@ -1,10 +1,14 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/pjsk/parser"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
 
 func TestNormalizeDeckUserFacingError(t *testing.T) {
@@ -21,12 +25,12 @@ func TestNormalizeDeckUserFacingError(t *testing.T) {
 		{
 			name:    "snapshot required",
 			input:   errString("local user snapshot is not configured"),
-			wantErr: "组卡需要用户卡牌持有数据，请先绑定账号并上传 Suite 抓包或本地快照",
+			wantErr: ErrMsgSuiteDataNotFound,
 		},
 		{
 			name:    "binding missing",
-			input:   errString("解析绑定账号失败：record not found"),
-			wantErr: "组卡需要先绑定账号；如果已绑定，请确认该账号已上传 Suite 抓包数据",
+			input:   accountdata.ErrNoBinding,
+			wantErr: ErrMsgBindingNotFound,
 		},
 		{
 			name:    "upstream timeout",
@@ -54,4 +58,47 @@ type errString string
 
 func (e errString) Error() string {
 	return string(e)
+}
+
+func TestExecuteDeckReturnsStandardBindingReplayError(t *testing.T) {
+	_, err := executeDeck(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleDeck,
+		Mode:              "deck-event",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Bindings: newBridgeTestBindingService(t),
+	}))
+	assertReplayErrorText(t, err, ErrMsgBindingNotFound)
+}
+
+func TestExecuteDeckReturnsStandardSuiteReplayError(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	_, err := executeDeck(NewRequestContext(ctx, &parser.ResolvedCommand{
+		Module:            parser.ModuleDeck,
+		Mode:              "deck-event",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Bindings: service,
+	}))
+	assertReplayErrorText(t, err, ErrMsgSuiteDataNotFound)
+}
+
+func assertReplayErrorText(t *testing.T, err error, want string) {
+	t.Helper()
+	var replyErr onebot11.ReplayError
+	if !errors.As(err, &replyErr) {
+		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
+	}
+	if string(replyErr) != want {
+		t.Fatalf("unexpected replay error: %q", replyErr)
+	}
 }

@@ -22,6 +22,7 @@ func (c *Controller) applyProfilePreset(region renderregion.Value, raw *snapshot
 		return err
 	}
 	raw.UserCards = userCards
+	raw.UserMysekaiCanvases = buildMaxProfileCanvases(userCards)
 
 	switch {
 	case query.MaxProfile:
@@ -81,6 +82,23 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 		return result[i].CardID < result[j].CardID
 	})
 	return result, nil
+}
+
+func buildMaxProfileCanvases(cards []snapshot.RawUserCard) []snapshot.RawUserMysekaiCanvas {
+	if len(cards) == 0 {
+		return nil
+	}
+	canvases := make([]snapshot.RawUserMysekaiCanvas, 0, len(cards))
+	for _, card := range cards {
+		if card.CardID <= 0 {
+			continue
+		}
+		canvases = append(canvases, snapshot.RawUserMysekaiCanvas{
+			CardID:   card.CardID,
+			Quantity: 1,
+		})
+	}
+	return canvases
 }
 
 func maxProfileCardEpisodes(source cardEpisodeSource, cardID int) ([]snapshot.RawUserCardEpisode, error) {

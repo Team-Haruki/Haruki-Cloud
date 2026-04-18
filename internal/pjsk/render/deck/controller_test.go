@@ -1742,6 +1742,9 @@ func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testin
 	if len(cached.UserCards) != 7 {
 		t.Fatalf("unexpected max profile user card count: %d", len(cached.UserCards))
 	}
+	if len(cached.UserMysekaiCanvases) != 7 {
+		t.Fatalf("unexpected max profile mysekai canvas count: %d", len(cached.UserMysekaiCanvases))
+	}
 	card1006 := snapshot.FindUserCard(cached.UserCards, 1006)
 	if card1006 == nil || card1006.Level != 60 || card1006.SkillLevel != 4 || card1006.MasterRank != 5 {
 		t.Fatalf("unexpected max profile card 1006: %+v", card1006)
@@ -1833,6 +1836,9 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 	if cached.UserGamedata.UserID != 1 || cached.UserGamedata.Deck != 1 {
 		t.Fatalf("unexpected synthetic user gamedata: %+v", cached.UserGamedata)
 	}
+	if len(cached.UserMysekaiCanvases) != 7 {
+		t.Fatalf("unexpected synthetic max profile mysekai canvas count: %d", len(cached.UserMysekaiCanvases))
+	}
 	userCharacters, ok := cachedPayload["userCharacters"]
 	if !ok {
 		t.Fatalf("expected synthetic payload to include userCharacters")
@@ -1849,6 +1855,20 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 	}
 	if characterRanks[len(characterRanks)-1].CharacterID != challengeCharacterCount || characterRanks[len(characterRanks)-1].CharacterRank != 120 {
 		t.Fatalf("unexpected last synthetic userCharacter: %+v", characterRanks[len(characterRanks)-1])
+	}
+	canvases, ok := cachedPayload["userMysekaiCanvases"]
+	if !ok {
+		t.Fatalf("expected synthetic payload to include userMysekaiCanvases")
+	}
+	var mysekaiCanvases []snapshot.RawUserMysekaiCanvas
+	if err := json.Unmarshal(canvases, &mysekaiCanvases); err != nil {
+		t.Fatalf("decode synthetic userMysekaiCanvases: %v", err)
+	}
+	if len(mysekaiCanvases) != 7 {
+		t.Fatalf("expected 7 synthetic userMysekaiCanvases, got %d", len(mysekaiCanvases))
+	}
+	if mysekaiCanvases[0].CardID != 1001 || mysekaiCanvases[0].Quantity != 1 {
+		t.Fatalf("unexpected first synthetic mysekai canvas: %+v", mysekaiCanvases[0])
 	}
 	if len(cached.UserCards) != 7 {
 		t.Fatalf("unexpected max profile user card count without snapshot: %d", len(cached.UserCards))

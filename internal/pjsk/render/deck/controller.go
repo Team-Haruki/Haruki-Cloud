@@ -207,6 +207,9 @@ func (c *Controller) buildSyntheticAutoRecommendSnapshot(query AutoQuery) (rende
 	}
 
 	raw := syntheticAutoRecommendRawUserData(query)
+	if err := c.applyProfilePreset(region, raw, query); err != nil {
+		return nil, err
+	}
 	data, err := encodeSyntheticAutoRecommendRawUserData(raw)
 	if err != nil {
 		return nil, fmt.Errorf("encode synthetic user data: %w", err)
@@ -288,6 +291,7 @@ func encodeSyntheticAutoRecommendRawUserData(raw *rendersnapshot.RawUserData) ([
 		"userCharacterMissionV2Statuses":        sliceOrEmpty(raw.UserCharacterMissionV2Statuses),
 		"userAreas":                             sliceOrEmpty(raw.UserAreas),
 		"userMaterials":                         sliceOrEmpty(raw.UserMaterials),
+		"userMysekaiCanvases":                   sliceOrEmpty(raw.UserMysekaiCanvases),
 		"userMysekaiGates":                      sliceOrEmpty(raw.UserMysekaiGates),
 		"userMysekaiFixtureGameCharacterPerformanceBonuses": sliceOrEmpty(raw.UserMysekaiFixtureGameCharacterPerformanceBonuses),
 		"userMusicDifficultyClearCounts":                    sliceOrEmpty(raw.UserMusicClear),

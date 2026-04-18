@@ -23,6 +23,7 @@ type RawUserData struct {
 	CompactUserCharacterMissionV2Statuses             json.RawMessage                   `json:"compactUserCharacterMissionV2Statuses,omitempty"`
 	UserAreas                                         []RawUserArea                     `json:"userAreas,omitempty"`
 	UserMaterials                                     []RawUserMaterial                 `json:"userMaterials,omitempty"`
+	UserMysekaiCanvases                               []RawUserMysekaiCanvas            `json:"userMysekaiCanvases,omitempty"`
 	UserMysekaiGates                                  []RawUserMysekaiGate              `json:"userMysekaiGates,omitempty"`
 	UserMysekaiFixtureGameCharacterPerformanceBonuses []RawUserFixtureBonus             `json:"userMysekaiFixtureGameCharacterPerformanceBonuses,omitempty"`
 	UserMusicClear                                    []RawMusicClear                   `json:"userMusicDifficultyClearCounts,omitempty"`
@@ -160,6 +161,11 @@ type RawUserAreaItem struct {
 type RawUserMaterial struct {
 	MaterialID int `json:"materialId"`
 	Quantity   int `json:"quantity"`
+}
+
+type RawUserMysekaiCanvas struct {
+	CardID   int `json:"cardId"`
+	Quantity int `json:"quantity"`
 }
 
 type RawUserMysekaiGate struct {

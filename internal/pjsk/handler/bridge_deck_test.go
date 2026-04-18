@@ -7,9 +7,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	harukiConfig "haruki-cloud/config"
+	sekaienttest "haruki-cloud/database/sekai/enttest"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
@@ -19,6 +22,7 @@ import (
 	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/utils/imagecache"
 )
 
@@ -207,6 +211,110 @@ func TestExecuteDeckEventMaxProfileDoesNotRequireBinding(t *testing.T) {
 	}
 }
 
+func TestExecuteDeckUsesSelectedBindingRegionBeforeResolvingCurrentEvent(t *testing.T) {
+	ctx := context.Background()
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"jp": {
+				"33333333333333": "JP User 1",
+			},
+			"cn": {
+				"11111111111111": "CN User 1",
+			},
+		},
+	})
+
+	if _, err := service.Bind(ctx, "qq", "42", "33333333333333"); err != nil {
+		t.Fatalf("bind jp account: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind cn account: %v", err)
+	}
+
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_execute_deck_selector_region?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 640, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
+	raw := &rendersnapshot.RawUserData{
+		Now: now,
+		UserGamedata: rendersnapshot.RawUserGamedata{
+			UserID: 11111111111111,
+			Name:   "CN User 1",
+			Deck:   1,
+			Rank:   100,
+		},
+		UserDecks: []rendersnapshot.RawUserDeck{{
+			DeckID:    1,
+			Leader:    1001,
+			Member1:   1001,
+			Member2:   1001,
+			Member3:   1001,
+			Member4:   1001,
+			Member5:   1001,
+			SubLeader: 1001,
+		}},
+		UserCards: []rendersnapshot.RawUserCard{{
+			CardID:                1001,
+			Level:                 60,
+			SkillLevel:            4,
+			MasterRank:            5,
+			SpecialTrainingStatus: "done",
+			DefaultImage:          "special_training",
+		}},
+		UserAreas: []rendersnapshot.RawUserArea{{AreaItems: []rendersnapshot.RawUserAreaItem{}}},
+	}
+	rawBytes, err := rendersnapshot.EncodeRawUserData(raw)
+	if err != nil {
+		t.Fatalf("encode raw snapshot: %v", err)
+	}
+
+	params, err := json.Marshal(map[string]any{
+		"selector": "u1",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeDeck(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleDeck,
+		Mode:              "deck-event",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:    sekaiClient,
+		Bindings: service,
+		Snapshots: &runtimeSnapshotProviderStub{
+			snapshot: &runtimeSnapshotStub{
+				raw:      raw,
+				rawBytes: rawBytes,
+			},
+		},
+		Decks:      newHandlerTestDeckControllerForRegion(t, renderregion.CN, 640, "CN Deck Event"),
+		Music:      newHandlerTestMusicControllerForRegion(t, renderregion.CN),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}))
+	if err != nil {
+		t.Fatalf("executeDeck() error = %v", err)
+	}
+	if len(message) != 2 {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	textData, ok := message[0].Data.(onebot11.TextData)
+	if !ok {
+		t.Fatalf("unexpected text data: %+v", message[0].Data)
+	}
+	if !strings.Contains(textData.Text, "CN / 活动组卡 / event640") {
+		t.Fatalf("expected selected binding region event summary, got %q", textData.Text)
+	}
+}
+
 func assertSingleMySekaiUnavailableMessage(t *testing.T, message onebot11.Message) {
 	t.Helper()
 	if len(message) != 1 || message[0].Type != onebot11.TypeText {
@@ -328,6 +436,11 @@ func (s *handlerDeckMusicSource) GetLimitedTimeMusics(int) []*masterdata.Limited
 
 func newHandlerTestDeckController(t *testing.T) *renderdeck.Controller {
 	t.Helper()
+	return newHandlerTestDeckControllerForRegion(t, renderregion.JP, 7, "Deck Event")
+}
+
+func newHandlerTestDeckControllerForRegion(t *testing.T, region renderregion.Value, eventID int, eventName string) *renderdeck.Controller {
+	t.Helper()
 
 	recommendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -391,7 +504,7 @@ func newHandlerTestDeckController(t *testing.T) *renderdeck.Controller {
 	assetRoot := t.TempDir()
 	deckController := renderdeck.NewControllerWithConfig(
 		&handlerDeckCardSource{
-			region: renderregion.JP,
+			region: region,
 			cards: map[int]*masterdata.Card{
 				1001: {
 					ID:              1001,
@@ -403,15 +516,15 @@ func newHandlerTestDeckController(t *testing.T) *renderdeck.Controller {
 			},
 		},
 		&handlerDeckEventSource{
-			region: renderregion.JP,
+			region: region,
 			events: map[int]*masterdata.Event{
-				7: {ID: 7, Name: "Deck Event", AssetBundleName: "deck_event_banner"},
+				eventID: {ID: eventID, Name: eventName, AssetBundleName: "deck_event_banner"},
 			},
 		},
 		drawing.NewHarukiDrawingClient(drawingServer.URL),
 		renderassets.NewAssetHelper(assetRoot, nil),
 		nil,
-		renderregion.JP,
+		region,
 		renderdeck.RecommendConfig{
 			Enabled:        true,
 			ServiceBaseURL: recommendServer.URL,
@@ -423,18 +536,49 @@ func newHandlerTestDeckController(t *testing.T) *renderdeck.Controller {
 		},
 	)
 	deckController.RegisterMusicSource(&handlerDeckMusicSource{
-		region: renderregion.JP,
+		region: region,
 		musics: map[int]*masterdata.Music{
 			10000: {ID: 10000, Title: "おまかせ", AssetBundleName: "omakase"},
 		},
 	})
+	if region != renderregion.JP {
+		deckController.RegisterCardSource(&handlerDeckCardSource{
+			region: renderregion.JP,
+			cards: map[int]*masterdata.Card{
+				1001: {
+					ID:              1001,
+					CharacterID:     1,
+					CardRarityType:  "rarity_4",
+					Attr:            "cute",
+					AssetBundleName: "card_1001",
+				},
+			},
+		})
+		deckController.RegisterEventSource(&handlerDeckEventSource{
+			region: renderregion.JP,
+			events: map[int]*masterdata.Event{
+				eventID: {ID: eventID, Name: eventName, AssetBundleName: "deck_event_banner"},
+			},
+		})
+		deckController.RegisterMusicSource(&handlerDeckMusicSource{
+			region: renderregion.JP,
+			musics: map[int]*masterdata.Music{
+				10000: {ID: 10000, Title: "おまかせ", AssetBundleName: "omakase"},
+			},
+		})
+	}
 	return deckController
 }
 
 func newHandlerTestMusicController(t *testing.T) *rendermusic.Controller {
 	t.Helper()
+	return newHandlerTestMusicControllerForRegion(t, renderregion.JP)
+}
+
+func newHandlerTestMusicControllerForRegion(t *testing.T, region renderregion.Value) *rendermusic.Controller {
+	t.Helper()
 	return rendermusic.NewController(&handlerDeckMusicSource{
-		region: renderregion.JP,
+		region: region,
 		musics: map[int]*masterdata.Music{
 			10000: {ID: 10000, Title: "おまかせ", AssetBundleName: "omakase"},
 		},

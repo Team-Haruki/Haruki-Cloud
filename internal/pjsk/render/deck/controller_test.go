@@ -1674,6 +1674,143 @@ func TestBuildAutoRecommendRequestEventCurrentUsesSnapshotDeck(t *testing.T) {
 	}
 }
 
+func TestBuildAutoRecommendRequestEventCurrentAreaItemLevelFallsBackForMissingSnapshotCard(t *testing.T) {
+	var (
+		recommendCalls atomic.Int32
+		cached         snapshot.RawUserData
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+				t.Fatalf("decode cached raw user data: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"event-current-area-item-fallback-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
+			}
+			options, ok := payload["batch_options"].([]any)
+			if !ok || len(options) != 1 {
+				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+			}
+			option, ok := options[0].(map[string]any)
+			if !ok {
+				t.Fatalf("unexpected batch option payload: %+v", options[0])
+			}
+			if option["area_item_level"] != 15.0 {
+				t.Fatalf("unexpected area_item_level: %+v", option["area_item_level"])
+			}
+			fixedCards, ok := option["fixed_cards"].([]any)
+			if !ok || len(fixedCards) != 5 {
+				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
+			}
+			expected := []float64{1006, 1002, 1003, 1004, 1005}
+			for index, value := range fixedCards {
+				if value != expected[index] {
+					t.Fatalf("unexpected fixed card %d: %+v", index, value)
+				}
+			}
+			_, _ = w.Write([]byte(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.5,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 100,
+							"live_score": 100,
+							"mysekai_event_point": 0,
+							"total_power": 200,
+							"event_bonus_rate": 20,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id": 1006, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
+						}]
+					}
+				}
+			]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	snapshotJSON := []byte(`{
+		"now": 1700000000000,
+		"userGamedata": {"userId": 10001, "name": "Deck User", "deck": 1, "rank": 123},
+		"userProfile": {"profileImageType": "default"},
+		"userDecks": [{"deckId": 1, "leader": 1006, "subLeader": 1002, "member1": 1006, "member2": 1002, "member3": 1003, "member4": 1004, "member5": 1005}],
+		"userCards": [
+			{"cardId": 1002, "level": 60, "skillLevel": 4, "masterRank": 5, "specialTrainingStatus": "done", "defaultImage": "special_training", "episodes": []},
+			{"cardId": 1003, "level": 60, "skillLevel": 4, "masterRank": 5, "specialTrainingStatus": "done", "defaultImage": "special_training", "episodes": []},
+			{"cardId": 1004, "level": 60, "skillLevel": 4, "masterRank": 5, "specialTrainingStatus": "done", "defaultImage": "special_training", "episodes": []},
+			{"cardId": 1005, "level": 60, "skillLevel": 4, "masterRank": 5, "specialTrainingStatus": "done", "defaultImage": "special_training", "episodes": []}
+		],
+		"userAreas": [{"areaItems": [{"areaItemId": 1, "level": 3}, {"areaItemId": 2, "level": 7}]}]
+	}`)
+	customSnapshot, err := snapshot.NewFromBytes(nil, controller.assets, renderregion.JP, snapshotJSON, nil, nil)
+	if err != nil {
+		t.Fatalf("build custom snapshot: %v", err)
+	}
+	controller = controller.WithSnapshot(customSnapshot)
+
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:         "jp",
+		RecommendType:  "event",
+		EventID:        new(7),
+		UseCurrentDeck: true,
+		AreaItemLevel:  new(15),
+		Algorithm:      "ga",
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+
+	if recommendCalls.Load() != 1 {
+		t.Fatalf("expected one recommend call, got %d", recommendCalls.Load())
+	}
+	if !reflect.DeepEqual(request.FixedCardsID, []int{1006, 1002, 1003, 1004, 1005}) {
+		t.Fatalf("unexpected fixed cards in request: %+v", request.FixedCardsID)
+	}
+	card1006 := snapshot.FindUserCard(cached.UserCards, 1006)
+	if card1006 == nil {
+		t.Fatalf("expected cached payload to include fallback current deck card 1006: %+v", cached.UserCards)
+	}
+	if card1006.Level != 60 || card1006.SkillLevel != 4 || card1006.MasterRank != 5 {
+		t.Fatalf("unexpected fallback current deck card 1006: %+v", card1006)
+	}
+}
+
 func TestBuildAutoRecommendRequestEventFixedCardFallbackUsesBaseSkillAndMaster(t *testing.T) {
 	var (
 		recommendCalls atomic.Int32

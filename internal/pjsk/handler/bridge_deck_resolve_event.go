@@ -396,7 +396,7 @@ func queryDeckEvents(ctx context.Context, app *renderapp.App, region renderregio
 	if app == nil {
 		return nil, fmt.Errorf("deck event resolve requires app")
 	}
-	if app.Provider != nil && app.Provider.Events() != nil {
+	if deckEventProviderSupportsRegion(app, region) {
 		items := app.Provider.Events().GetAll(ctx)
 		events := make([]*sekaidb.Event, 0, len(items))
 		for _, item := range items {
@@ -423,7 +423,7 @@ func queryDeckEventByID(ctx context.Context, app *renderapp.App, region renderre
 	if eventID <= 0 {
 		return nil, fmt.Errorf("event id is required")
 	}
-	if app != nil && app.Provider != nil && app.Provider.Events() != nil {
+	if deckEventProviderSupportsRegion(app, region) {
 		item, err := app.Provider.Events().GetByID(ctx, eventID)
 		if err == nil && item != nil {
 			return deckEventFromMasterdata(item), nil
@@ -438,7 +438,7 @@ func queryDeckEventByID(ctx context.Context, app *renderapp.App, region renderre
 }
 
 func queryDeckWorldBloomChapters(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) ([]*sekaidb.Worldbloom, error) {
-	if app != nil && app.Provider != nil && app.Provider.Events() != nil {
+	if deckEventProviderSupportsRegion(app, region) {
 		items := app.Provider.Events().GetWorldBloomChapters(ctx, eventID)
 		if len(items) > 0 {
 			chapters := make([]*sekaidb.Worldbloom, 0, len(items))
@@ -494,7 +494,7 @@ func isDeckFutureEventAvailable(ctx context.Context, app *renderapp.App, region 
 }
 
 func deckEventLeakReleased(ctx context.Context, app *renderapp.App, eventID int, now int64) bool {
-	if app == nil || app.Provider == nil || app.Provider.Events() == nil {
+	if !deckEventProviderSupportsRegion(app, renderregion.JP) {
 		return false
 	}
 	cards, err := app.Provider.Events().GetCards(ctx, eventID)
@@ -511,6 +511,17 @@ func deckEventLeakReleased(ctx context.Context, app *renderapp.App, eventID int,
 		}
 	}
 	return earliest > 0 && earliest <= now
+}
+
+func deckEventProviderSupportsRegion(app *renderapp.App, region renderregion.Value) bool {
+	if app == nil || app.Provider == nil || app.Provider.Events() == nil {
+		return false
+	}
+	providerRegion := renderregion.Normalize(app.Provider.Region().String())
+	if providerRegion.IsZero() {
+		return false
+	}
+	return providerRegion == renderregion.Normalize(region.String())
 }
 
 func deckEventFromMasterdata(item *masterdata.Event) *sekaidb.Event {

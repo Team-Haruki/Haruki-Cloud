@@ -154,12 +154,6 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	mergeParams(rc.Cmd.Params, &q)
 	var targetParams deckUserTargetParams
 	mergeParams(rc.Cmd.Params, &targetParams)
-	if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
-		return nil, err
-	}
-	if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
-		return nil, err
-	}
 	detail, snapshot, region, err := resolveDeckRenderProfileAndSnapshot(rc, targetParams.Selector)
 	if err != nil {
 		return nil, err
@@ -167,6 +161,12 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	q.Region = region
 	if detail != nil {
 		q.Profile = detail
+	}
+	if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
+		return nil, err
+	}
+	if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
+		return nil, err
 	}
 
 	// Try to inject live Toolbox snapshot so the deck controller can operate

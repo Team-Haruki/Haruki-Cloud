@@ -2374,6 +2374,51 @@ func TestResolveDeckCharacterSelectionsFallsBackEventRecommendToNoEventWhenNoEve
 	}
 }
 
+func TestResolveDeckCharacterSelectionsUsesRequestedRegionInsteadOfDefaultProviderRegion(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_region_specific_provider?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 630, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
+
+	app := &renderapp.App{
+		Sekai: sekaiClient,
+		Provider: bridgeDeckTestMasterProvider{
+			region: renderregion.JP,
+			events: &bridgeDeckTestEventProvider{
+				events: []*masterdata.Event{{
+					ID:          701,
+					EventType:   "marathon",
+					Name:        "JP Default Event",
+					StartAt:     now - int64(48*time.Hour/time.Millisecond),
+					AggregateAt: now - int64(24*time.Hour/time.Millisecond),
+				}},
+			},
+		},
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:        "cn",
+		RecommendType: "event",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, app); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.RecommendType != "event" {
+		t.Fatalf("expected requested region to keep event recommend, got %q", query.RecommendType)
+	}
+	if query.EventID == nil || *query.EventID != 630 {
+		t.Fatalf("unexpected resolved event id: %+v", query.EventID)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+}
+
 func TestPickCurrentOrNextDeckEventAllowsJPFutureLeakAfterCardRelease(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_future_leak_after_release?mode=memory&cache=shared&_fk=1")
@@ -2491,10 +2536,16 @@ func TestResolveDeckCharacterSelectionsClearsWorldBloomCharacterForNonWorldBloom
 }
 
 type bridgeDeckTestMasterProvider struct {
+	region renderregion.Value
 	events renderprovider.EventProvider
 }
 
-func (p bridgeDeckTestMasterProvider) Region() renderregion.Value { return renderregion.JP }
+func (p bridgeDeckTestMasterProvider) Region() renderregion.Value {
+	if region := renderregion.Normalize(p.region.String()); !region.IsZero() {
+		return region
+	}
+	return renderregion.JP
+}
 func (p bridgeDeckTestMasterProvider) Cards() renderprovider.CardProvider {
 	return nil
 }
@@ -2531,8 +2582,9 @@ func (p bridgeDeckTestMasterProvider) MySekai() renderprovider.MySekaiProvider {
 }
 
 type bridgeDeckTestEventProvider struct {
-	events       []*masterdata.Event
-	cardsByEvent map[int][]*masterdata.Card
+	events            []*masterdata.Event
+	cardsByEvent      map[int][]*masterdata.Card
+	worldBloomByEvent map[int][]*masterdata.WorldBloom
 }
 
 func (p *bridgeDeckTestEventProvider) GetByID(_ context.Context, id int) (*masterdata.Event, error) {
@@ -2572,7 +2624,7 @@ func (p *bridgeDeckTestEventProvider) GetBanEvents(_ context.Context, charID int
 }
 
 func (p *bridgeDeckTestEventProvider) GetWorldBloomChapters(_ context.Context, eventID int) []*masterdata.WorldBloom {
-	return nil
+	return p.worldBloomByEvent[eventID]
 }
 
 type bridgeTestWorldBloomChapter struct {

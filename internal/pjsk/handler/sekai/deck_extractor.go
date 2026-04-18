@@ -238,6 +238,9 @@ func parseDeckAreaItemFields(fields []string, index int) (int, int, bool) {
 	if field == "" {
 		return 0, 0, false
 	}
+	if level, ok := parseDeckAreaItemToken(field); ok {
+		return level, 1, true
+	}
 
 	for _, keyword := range deckAreaItemKeywords {
 		keywordLower := strings.ToLower(keyword)
@@ -261,6 +264,22 @@ func parseDeckAreaItemFields(fields []string, index int) (int, int, bool) {
 		}
 	}
 	return 0, 0, false
+}
+
+func parseDeckAreaItemToken(field string) (int, bool) {
+	field = strings.TrimSpace(strings.ToLower(field))
+	if !strings.HasSuffix(field, "级") || len(field) <= len("级") {
+		return 0, false
+	}
+	raw := strings.TrimSpace(strings.TrimSuffix(field, "级"))
+	if !looksLikeDeckNumericToken(raw) {
+		return 0, false
+	}
+	level, err := strconv.Atoi(raw)
+	if err != nil || level <= 0 {
+		return 0, false
+	}
+	return level, true
 }
 
 func extractDeckUnitFilter(args string, params *deckAutoQueryParams) string {

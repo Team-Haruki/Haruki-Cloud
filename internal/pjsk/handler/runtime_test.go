@@ -25,6 +25,8 @@ type runtimeSnapshotStub struct {
 	detail       *drawing.DetailedProfileCardRequest
 	card         *drawing.ProfileCardRequest
 	musicResults map[string]map[int]string
+	raw          *rendersnapshot.RawUserData
+	rawBytes     []byte
 }
 
 func (s *runtimeSnapshotStub) Require() error { return nil }
@@ -61,13 +63,15 @@ func (s *runtimeSnapshotStub) GetMusicResult(musicID int, diff string) string {
 
 func (s *runtimeSnapshotStub) ChallengeLive() *rendersnapshot.ChallengeLiveData { return nil }
 
-func (s *runtimeSnapshotStub) RawBytes() ([]byte, error) { return nil, nil }
+func (s *runtimeSnapshotStub) RawBytes() ([]byte, error) {
+	return append([]byte(nil), s.rawBytes...), nil
+}
 
 func (s *runtimeSnapshotStub) RawValue(string) ([]byte, error) { return nil, nil }
 
 func (s *runtimeSnapshotStub) RawFilePath() string { return "" }
 
-func (s *runtimeSnapshotStub) RawData() *rendersnapshot.RawUserData { return nil }
+func (s *runtimeSnapshotStub) RawData() *rendersnapshot.RawUserData { return s.raw }
 
 func (s *runtimeSnapshotStub) MusicMetaBytes() []byte { return nil }
 

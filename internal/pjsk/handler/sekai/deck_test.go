@@ -727,6 +727,33 @@ func TestEventDeckHandleParsesAreaItemLevel(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesAreaItemLevelShorthand(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&handler.PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "event123 15级 当前 sage neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.AreaItemLevel == nil || *params.AreaItemLevel != 15 {
+		t.Fatalf("unexpected area item level: %+v", params.AreaItemLevel)
+	}
+	if !params.UseCurrentDeck {
+		t.Fatalf("expected use_current_deck to be enabled")
+	}
+	if params.MusicQuery != "sage neo" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
 func TestEventDeckHandleParsesSkillOrderAverage(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&handler.PjskHandlerContext{

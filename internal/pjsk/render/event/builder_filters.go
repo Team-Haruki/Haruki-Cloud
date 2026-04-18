@@ -39,7 +39,7 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 			continue
 		}
 		if query.Unit != "" || query.Blend || query.Attr != "" || query.CharacterID != 0 || len(query.CharacterIDs) > 0 {
-			if !b.matchEventBonus(eventInfo.ID, query.Unit, query.Blend, query.Attr, query.CharacterID, query.CharacterIDs) {
+			if !b.matchEventBonus(eventInfo.EventType, eventInfo.ID, query.Unit, query.Blend, query.Attr, query.CharacterID, query.CharacterIDs) {
 				continue
 			}
 		}
@@ -108,7 +108,7 @@ func (b *Builder) isBoxEvent(eventID int) bool {
 	return len(units) == 1
 }
 
-func (b *Builder) matchEventBonus(eventID int, unit string, blend bool, attr string, charID int, charIDs []int) bool {
+func (b *Builder) matchEventBonus(eventType string, eventID int, unit string, blend bool, attr string, charID int, charIDs []int) bool {
 	if unit == "" && !blend && attr == "" && charID == 0 && len(charIDs) == 0 {
 		return true
 	}
@@ -121,7 +121,16 @@ func (b *Builder) matchEventBonus(eventID int, unit string, blend bool, attr str
 
 	unitMatched := unit == ""
 	if unit != "" {
-		_, unitMatched = units[strings.ToLower(strings.TrimSpace(unit))]
+		normalizedUnit := strings.ToLower(strings.TrimSpace(unit))
+		if strings.EqualFold(eventType, "world_bloom") {
+			if chapterUnits, hasChapterData := b.extractWorldBloomChapterUnits(eventID); hasChapterData {
+				_, unitMatched = chapterUnits[normalizedUnit]
+			} else {
+				_, unitMatched = units[normalizedUnit]
+			}
+		} else {
+			_, unitMatched = units[normalizedUnit]
+		}
 	}
 	if blend || strings.EqualFold(strings.TrimSpace(unit), "blend") {
 		unitMatched = len(units) > 1
@@ -142,6 +151,30 @@ func (b *Builder) matchEventBonus(eventID int, unit string, blend bool, attr str
 	}
 
 	return attrMatched && unitMatched && charMatched
+}
+
+func (b *Builder) extractWorldBloomChapterUnits(eventID int) (map[string]struct{}, bool) {
+	chapters := b.source.GetWorldBloomChapters(eventID)
+	if len(chapters) == 0 {
+		return nil, false
+	}
+
+	units := make(map[string]struct{})
+	for _, chapter := range chapters {
+		if chapter == nil || chapter.GameCharacterID == nil || *chapter.GameCharacterID == 0 {
+			continue
+		}
+		character, err := b.source.GetCharacterByID(*chapter.GameCharacterID)
+		if err != nil || character == nil {
+			continue
+		}
+		unit := strings.ToLower(strings.TrimSpace(character.Unit))
+		if unit == "" {
+			continue
+		}
+		units[unit] = struct{}{}
+	}
+	return units, true
 }
 
 func (b *Builder) getBannerIndex(charID, eventID int) *int {

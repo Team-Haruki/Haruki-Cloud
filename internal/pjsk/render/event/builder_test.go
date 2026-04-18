@@ -212,3 +212,61 @@ func TestBuildEventListRequestBannerFilterOnlyKeepsBoxEvents(t *testing.T) {
 		t.Fatalf("unexpected banner-filter events: %+v", req.EventInfo)
 	}
 }
+
+func TestBuildEventListRequestWorldBloomUnitFilterUsesChapterUnits(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	streetEvent := &masterdata.Event{ID: 301, EventType: "world_bloom", Name: "street wl", AssetBundleName: "e301", StartAt: 100, AggregateAt: 200}
+	vsEvent := &masterdata.Event{ID: 302, EventType: "world_bloom", Name: "vs wl", AssetBundleName: "e302", StartAt: 300, AggregateAt: 400}
+	finaleEvent := &masterdata.Event{ID: 303, EventType: "world_bloom", Name: "finale", AssetBundleName: "e303", StartAt: 500, AggregateAt: 600}
+	source.events = []*masterdata.Event{streetEvent, vsEvent, finaleEvent}
+	source.eventsByID[streetEvent.ID] = streetEvent
+	source.eventsByID[vsEvent.ID] = vsEvent
+	source.eventsByID[finaleEvent.ID] = finaleEvent
+
+	source.bonusesByEvent[streetEvent.ID] = []*masterdata.EventDeckBonus{
+		{ID: 1, EventID: streetEvent.ID, GameCharacterUnitID: 10, CardAttr: "cool"},
+		{ID: 2, EventID: streetEvent.ID, GameCharacterUnitID: 21},
+	}
+	source.bonusesByEvent[vsEvent.ID] = []*masterdata.EventDeckBonus{
+		{ID: 3, EventID: vsEvent.ID, GameCharacterUnitID: 10, CardAttr: "cool"},
+		{ID: 4, EventID: vsEvent.ID, GameCharacterUnitID: 21},
+	}
+	source.bonusesByEvent[finaleEvent.ID] = []*masterdata.EventDeckBonus{
+		{ID: 5, EventID: finaleEvent.ID, GameCharacterUnitID: 10, CardAttr: "cool"},
+		{ID: 6, EventID: finaleEvent.ID, GameCharacterUnitID: 21},
+	}
+	source.gcuByID[10] = &masterdata.GameCharacterUnit{ID: 10, GameCharacterID: 10, Unit: "street"}
+	source.gcuByID[21] = &masterdata.GameCharacterUnit{ID: 21, GameCharacterID: 21, Unit: "piapro"}
+
+	streetCharID := 10
+	vsCharID := 21
+	source.worldByEvent[streetEvent.ID] = []*masterdata.WorldBloom{
+		{ID: 1, EventID: streetEvent.ID, ChapterNo: 1, GameCharacterID: &streetCharID},
+	}
+	source.worldByEvent[vsEvent.ID] = []*masterdata.WorldBloom{
+		{ID: 2, EventID: vsEvent.ID, ChapterNo: 1, GameCharacterID: &vsCharID},
+	}
+	source.worldByEvent[finaleEvent.ID] = []*masterdata.WorldBloom{
+		{ID: 3, EventID: finaleEvent.ID, ChapterNo: 1, ChapterType: "finale"},
+	}
+	source.characterByID[10] = &masterdata.Character{ID: 10, Unit: "street"}
+	source.characterByID[21] = &masterdata.Character{ID: 21, Unit: "piapro"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventListRequest(ListQuery{
+		Region:        renderregion.JP,
+		EventType:     "world_bloom",
+		Unit:          "street",
+		IncludePast:   true,
+		IncludeFuture: true,
+	})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected only street WL event, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].ID != streetEvent.ID {
+		t.Fatalf("unexpected world bloom unit filter result: %+v", req.EventInfo)
+	}
+}

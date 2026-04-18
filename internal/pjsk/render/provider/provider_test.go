@@ -108,6 +108,26 @@ func TestCloneSkillEmptyEffects(t *testing.T) {
 	}
 }
 
+func TestCloneMusicDifficultiesDeepCopy(t *testing.T) {
+	orig := []*masterdata.MusicDifficulty{
+		{ID: 1, MusicID: 1001, MusicDifficulty: "expert", PlayLevel: 26, TotalNoteCount: 700},
+		{ID: 2, MusicID: 1001, MusicDifficulty: "master", PlayLevel: 31, TotalNoteCount: 900},
+	}
+
+	clone := common.CloneMusicDifficulties(orig)
+	if len(clone) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(clone))
+	}
+	if clone[0] == orig[0] {
+		t.Fatal("clone must not share the same pointer")
+	}
+
+	clone[0].PlayLevel = 99
+	if orig[0].PlayLevel != 26 {
+		t.Fatal("mutation leaked to original")
+	}
+}
+
 // ── cloneCardFull ───────────────────────────────────────────────────────
 
 func TestCloneCardFullNil(t *testing.T) {
@@ -206,6 +226,30 @@ func TestLocalCostume3dJSONToModelSupportsLegacyAssetBundleName(t *testing.T) {
 	}
 	if model.ColorID != 3 {
 		t.Fatalf("expected colorId=3, got %d", model.ColorID)
+	}
+}
+
+func TestDBMusicProviderGetDifficultiesUsesCachedClone(t *testing.T) {
+	provider := &dbMusicProvider{}
+	provider.init()
+	provider.difficultiesByID[1001] = []*masterdata.MusicDifficulty{
+		{ID: 1, MusicID: 1001, MusicDifficulty: "expert", PlayLevel: 26, TotalNoteCount: 700},
+	}
+
+	got, err := provider.GetDifficulties(context.Background(), 1001)
+	if err != nil {
+		t.Fatalf("GetDifficulties() error = %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected 1 difficulty, got %d", len(got))
+	}
+	if got[0] == provider.difficultiesByID[1001][0] {
+		t.Fatal("cached difficulty should be cloned before returning")
+	}
+
+	got[0].PlayLevel = 99
+	if provider.difficultiesByID[1001][0].PlayLevel != 26 {
+		t.Fatal("mutation leaked into provider cache")
 	}
 }
 

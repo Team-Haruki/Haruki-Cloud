@@ -62,6 +62,26 @@ func CloneMusicList(items []*masterdata.Music) []*masterdata.Music {
 	return result
 }
 
+// CloneMusicDifficulty returns a shallow copy of a MusicDifficulty.
+func CloneMusicDifficulty(item *masterdata.MusicDifficulty) *masterdata.MusicDifficulty {
+	if item == nil {
+		return nil
+	}
+	return new(*item)
+}
+
+// CloneMusicDifficulties returns a deep-copied slice of MusicDifficulty pointers.
+func CloneMusicDifficulties(items []*masterdata.MusicDifficulty) []*masterdata.MusicDifficulty {
+	if len(items) == 0 {
+		return nil
+	}
+	result := make([]*masterdata.MusicDifficulty, 0, len(items))
+	for _, item := range items {
+		result = append(result, CloneMusicDifficulty(item))
+	}
+	return result
+}
+
 // CloneSkill returns a deep copy of a Skill, including SkillEffects and
 // nested SkillEffectDetails.
 func CloneSkill(item *masterdata.Skill) *masterdata.Skill {

@@ -19,6 +19,15 @@ import (
 )
 
 func (p *dbMusicProvider) GetDifficulties(ctx context.Context, musicID int) ([]*masterdata.MusicDifficulty, error) {
+	p.init()
+
+	p.mu.RLock()
+	if cached, ok := p.difficultiesByID[musicID]; ok {
+		p.mu.RUnlock()
+		return common.CloneMusicDifficulties(cached), nil
+	}
+	p.mu.RUnlock()
+
 	items, err := p.client.Musicdifficultie.Query().
 		Where(
 			musicdifficultie.ServerRegionEQ(p.region.String()),
@@ -43,7 +52,11 @@ func (p *dbMusicProvider) GetDifficulties(ctx context.Context, musicID int) ([]*
 			TotalNoteCount:  int(item.TotalNoteCount),
 		})
 	}
-	return result, nil
+
+	p.mu.Lock()
+	p.difficultiesByID[musicID] = result
+	p.mu.Unlock()
+	return common.CloneMusicDifficulties(result), nil
 }
 
 func (p *dbMusicProvider) GetVocals(ctx context.Context, musicID int) ([]*masterdata.MusicVocal, error) {

@@ -14,11 +14,12 @@ type dbMusicProvider struct {
 	events EventProvider
 	once   sync.Once
 
-	mu            sync.RWMutex
-	musicByID     map[int]*masterdata.Music
-	musicList     []*masterdata.Music
-	outsideByID   map[int]string
-	localizedByID map[int][]string
+	mu               sync.RWMutex
+	musicByID        map[int]*masterdata.Music
+	musicList        []*masterdata.Music
+	outsideByID      map[int]string
+	localizedByID    map[int][]string
+	difficultiesByID map[int][]*masterdata.MusicDifficulty
 }
 
 func (p *dbMusicProvider) init() {
@@ -26,5 +27,6 @@ func (p *dbMusicProvider) init() {
 		p.musicByID = make(map[int]*masterdata.Music)
 		p.outsideByID = make(map[int]string)
 		p.localizedByID = make(map[int][]string)
+		p.difficultiesByID = make(map[int][]*masterdata.MusicDifficulty)
 	})
 }

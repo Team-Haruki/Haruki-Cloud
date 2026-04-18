@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/mysekai"
@@ -68,20 +67,8 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
 	}
 
-	// MySekai is disabled for CN region unless the requester's
-	// platform+group is on the whitelist.
-	if strings.EqualFold(rc.Cmd.Region, "cn") {
-		allowed := false
-		for _, entry := range harukiConfig.Cfg.PJSK.AllowCNMySekai {
-			if strings.EqualFold(entry.Platform, rc.Cmd.RequesterPlatform) &&
-				entry.GroupID == rc.Cmd.RequesterGroupID {
-				allowed = true
-				break
-			}
-		}
-		if !allowed {
-			return onebot11.Message{onebot11.Text("MySekai 功能在此区服暂未开放")}, nil
-		}
+	if !isMySekaiRegionAllowed(rc.Cmd, regionWithDefault(rc.Cmd.Region)) {
+		return mySekaiRegionUnavailableMessage(), nil
 	}
 
 	// Resolve the target binding from params (supports u[i] selector and
@@ -125,6 +112,9 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	renderCtx, err := resolveMySekaiRenderContext(rc.Ctx, rc.App, p, regionStr, rc.Cmd.RegionExplicit)
 	if err != nil {
 		return nil, err
+	}
+	if !isMySekaiRegionAllowed(rc.Cmd, renderCtx.Region) {
+		return mySekaiRegionUnavailableMessage(), nil
 	}
 
 	var data []byte

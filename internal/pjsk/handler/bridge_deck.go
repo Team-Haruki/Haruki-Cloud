@@ -45,6 +45,9 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &combined)
 
 		regionStr := regionWithDefault(rc.Cmd.Region)
+		if !isMySekaiRegionAllowed(rc.Cmd, regionStr) {
+			return mySekaiRegionUnavailableMessage(), nil
+		}
 
 		// Resolve target binding from user query params.
 		p := combined.Query
@@ -59,6 +62,9 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 
 		regionStr = resolvedTargetRegion(regionStr, target)
+		if !isMySekaiRegionAllowed(rc.Cmd, regionStr) {
+			return mySekaiRegionUnavailableMessage(), nil
+		}
 		platform, platformUserID := platformCredentials(p)
 		targetSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, false)
 

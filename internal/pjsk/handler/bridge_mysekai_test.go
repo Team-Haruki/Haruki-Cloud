@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
@@ -203,6 +204,26 @@ func TestExecuteMySekaiRequiresController(t *testing.T) {
 	if !strings.Contains(err.Error(), "mysekai controller is not configured") {
 		t.Fatalf("unexpected error: %v", err)
 	}
+}
+
+func TestExecuteMySekaiBlocksCNRegion(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil
+	t.Cleanup(func() {
+		harukiConfig.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	message, err := executeMysekai(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module: parser.ModuleMysekai,
+		Mode:   "mysekai-photo",
+		Region: "cn",
+	}, &renderapp.App{
+		MySekai: rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
+	}))
+	if err != nil {
+		t.Fatalf("executeMysekai() error = %v", err)
+	}
+	assertSingleMySekaiUnavailableMessage(t, message)
 }
 
 func TestExecuteMySekaiFixtureListStaticSkipsBindingAndSnapshot(t *testing.T) {

@@ -2,9 +2,12 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
+	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -78,5 +81,51 @@ func TestResolveDeckRenderProfileAndSnapshotUsesSelectedBinding(t *testing.T) {
 	}
 	if selector.PJSKUserID != expectedBinding.PJSKUserID {
 		t.Fatalf("expected selected binding uid %q, got %q", expectedBinding.PJSKUserID, selector.PJSKUserID)
+	}
+}
+
+func TestExecuteDeckMySekaiBlocksCNRegion(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil
+	t.Cleanup(func() {
+		harukiConfig.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	params, err := json.Marshal(struct {
+		Deck  map[string]any `json:"deck"`
+		Query map[string]any `json:"query"`
+	}{
+		Deck:  map[string]any{},
+		Query: map[string]any{},
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeDeck(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleDeck,
+		Mode:              "deck-mysekai",
+		Region:            "cn",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{}))
+	if err != nil {
+		t.Fatalf("executeDeck() error = %v", err)
+	}
+	assertSingleMySekaiUnavailableMessage(t, message)
+}
+
+func assertSingleMySekaiUnavailableMessage(t *testing.T, message onebot11.Message) {
+	t.Helper()
+	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	data, ok := message[0].Data.(onebot11.TextData)
+	if !ok {
+		t.Fatalf("unexpected message data: %+v", message[0].Data)
+	}
+	if data.Text != "MySekai 功能在此区服暂未开放" {
+		t.Fatalf("unexpected text: %q", data.Text)
 	}
 }

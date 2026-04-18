@@ -300,6 +300,86 @@ func TestExecuteMySekaiFixtureListStaticSkipsBindingAndSnapshot(t *testing.T) {
 	}
 }
 
+func TestExecuteMySekaiFixtureDetailSkipsBindingAndSnapshot(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeJSON := func(name string, data any) {
+		t.Helper()
+		raw, err := json.Marshal(data)
+		if err != nil {
+			t.Fatalf("marshal %s: %v", name, err)
+		}
+		if err := os.WriteFile(filepath.Join(masterdataDir, name), raw, 0o644); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+
+	writeJSON("mysekaiFixtures.json", []map[string]any{
+		{
+			"id":                        2001,
+			"name":                      "Wood Chair",
+			"assetbundleName":           "wood_chair",
+			"mysekaiFixtureType":        "furniture",
+			"mysekaiFixtureMainGenreId": 1,
+			"mysekaiFixtureSubGenreId":  11,
+			"gridSize":                  map[string]any{"width": 2, "depth": 1, "height": 3},
+		},
+	})
+	writeJSON("mysekaiFixtureMainGenres.json", []map[string]any{
+		{"id": 1, "name": "Main A", "assetbundleName": "main_a"},
+	})
+	writeJSON("mysekaiFixtureSubGenres.json", []map[string]any{
+		{"id": 11, "name": "Sub A", "assetbundleName": "sub_a"},
+	})
+	writeJSON("mysekaiBlueprints.json", []map[string]any{
+		{"id": 1001, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 2001},
+	})
+	writeJSON("mysekaiBlueprintMysekaiMaterialCosts.json", []map[string]any{})
+	writeJSON("mysekaiFixtureOnlyDisassembleMaterials.json", []map[string]any{})
+	writeJSON("mysekaiFixtureTags.json", []map[string]any{})
+	writeJSON("mysekaiMaterials.json", []map[string]any{})
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/mysekai/fixture-detail" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var reqs []drawing.MysekaiFixtureDetailRequest
+		if err := json.NewDecoder(r.Body).Decode(&reqs); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if len(reqs) != 1 {
+			t.Fatalf("expected 1 fixture detail request, got %+v", reqs)
+		}
+		if reqs[0].Title != "【JP-2001】Wood Chair" {
+			t.Fatalf("unexpected title: %+v", reqs[0])
+		}
+		_, _ = w.Write([]byte("fixture-detail"))
+	}))
+	defer drawingServer.Close()
+
+	app := &renderapp.App{
+		MySekai:    rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeMysekai(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module: parser.ModuleMysekai,
+		Mode:   "mysekai-fixture-detail",
+		Region: "jp",
+		Query:  "2001",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMysekai fixture detail: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected fixture detail message: %+v", message)
+	}
+}
+
 func boolPtr(v bool) *bool {
 	return &v
 }

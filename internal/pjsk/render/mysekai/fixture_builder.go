@@ -227,7 +227,7 @@ func (c *Controller) RenderFixtureList(query FixtureListQuery) ([]byte, error) {
 // BuildFixtureDetailRequests builds the requests for rendering MySekai fixture detail views.
 func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]drawing.MysekaiFixtureDetailRequest, error) {
 	c = c.withRegion(query.Region)
-	if err := c.ensure(); err != nil {
+	if err := c.ensureMasterdata(); err != nil {
 		return nil, err
 	}
 

@@ -2,7 +2,10 @@ package handler
 
 import (
 	"fmt"
+	"strings"
 
+	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/onebot11"
 	"haruki-cloud/internal/pjsk/render/card"
 )
@@ -36,6 +39,13 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
+		if strings.TrimSpace(q.Query) == "" {
+			detail, detailErr := requireCardCatalogDetailedProfile(rc)
+			if detailErr != nil {
+				return nil, detailErr
+			}
+			q.DetailedProfile = detail
+		}
 		queries := []card.Query{q}
 		data, err = cardCtrl.RenderCardBox(queries)
 	case "card-image":
@@ -65,4 +75,29 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, err
 	}
 	return rc.ImageMessage(data)
+}
+
+func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedProfileCardRequest, error) {
+	if rc == nil {
+		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+	}
+	binding, _ := rc.GetBinding()
+	if binding == nil {
+		if rc.bindingErr != nil {
+			return nil, rc.bindingErr
+		}
+		return nil, accountdata.ErrNoBinding
+	}
+	if !binding.SuiteVisible {
+		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+	}
+	snap := rc.ResolveSnapshot(false)
+	if snap == nil {
+		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+	}
+	detail := snap.DetailedProfile(rc.Region)
+	if detail == nil || len(detail.UserCards) == 0 {
+		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+	}
+	return detail, nil
 }

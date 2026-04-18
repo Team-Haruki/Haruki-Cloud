@@ -109,6 +109,18 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 			return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 		}
 	}
+	if rc.Cmd.Mode == "mysekai-fixture-detail" {
+		q := mysekai.FixtureDetailQuery{Region: regionStr, Query: rc.Cmd.Query}
+		mergeParams(rc.Cmd.Params, &q)
+		if strings.TrimSpace(q.Region) == "" {
+			q.Region = regionWithDefault(regionStr)
+		}
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureDetail(q)
+		if err != nil {
+			return nil, err
+		}
+		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	}
 
 	renderCtx, err := resolveMySekaiRenderContext(rc.Ctx, rc.App, p, regionStr, rc.Cmd.RegionExplicit)
 	if err != nil {
@@ -161,10 +173,6 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderFixtureList(q)
-	case "mysekai-fixture-detail":
-		q := mysekai.FixtureDetailQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
-		mergeParams(rc.Cmd.Params, &q)
-		data, err = renderCtx.Controller.RenderFixtureDetail(q)
 	case "mysekai-door-upgrade":
 		q := mysekai.DoorUpgradeQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)

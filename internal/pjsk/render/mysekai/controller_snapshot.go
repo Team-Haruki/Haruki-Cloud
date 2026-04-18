@@ -63,6 +63,13 @@ func (c *Controller) ensure() error {
 	if err := c.ensureSnapshot(); err != nil {
 		return err
 	}
+	return c.ensureMasterdata()
+}
+
+func (c *Controller) ensureMasterdata() error {
+	if c == nil {
+		return fmt.Errorf("mysekai controller is not initialized")
+	}
 	if c.masterdata == nil || !c.masterdata.Configured() {
 		return fmt.Errorf("mysekai masterdata is not configured")
 	}

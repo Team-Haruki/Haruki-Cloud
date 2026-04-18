@@ -2924,7 +2924,7 @@ func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
 	}
 }
 
-func TestExecuteCardBoxAllowsNoBindingFallback(t *testing.T) {
+func TestExecuteCardBoxAllowsNoBindingFallbackWithQuery(t *testing.T) {
 	root := t.TempDir()
 	var captured drawing.CardBoxRequest
 	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2948,6 +2948,7 @@ func TestExecuteCardBoxAllowsNoBindingFallback(t *testing.T) {
 	message, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module:            parser.ModuleCard,
 		Mode:              "card-box",
+		Query:             "1001",
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
@@ -2960,6 +2961,32 @@ func TestExecuteCardBoxAllowsNoBindingFallback(t *testing.T) {
 	}
 	if captured.Title == nil || *captured.Title != CardCatalogTitleNoBinding {
 		t.Fatalf("expected no-binding title %q, got %+v", CardCatalogTitleNoBinding, captured.Title)
+	}
+}
+
+func TestExecuteCardBoxWithoutQueryReturnsNoBindingError(t *testing.T) {
+	root := t.TempDir()
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeTestBindingValidator{})
+	app := &renderapp.App{
+		Bindings:   service,
+		Cards:      rendercard.NewController(&bridgeCardSource{allowEmptyFilter: true, cards: map[int]*masterdata.Card{1001: {ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Test Card", AssetBundleName: "card_test", ReleaseAt: 1700000000000}}}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	_, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleCard,
+		Mode:              "card-box",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if !errors.Is(err, accountdata.ErrNoBinding) {
+		t.Fatalf("expected ErrNoBinding, got %v", err)
 	}
 }
 
@@ -2992,6 +3019,7 @@ func TestExecuteCardBoxAddsNoSuiteTitleToDrawing(t *testing.T) {
 	message, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
 		Module:            parser.ModuleCard,
 		Mode:              "card-box",
+		Query:             "1001",
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
@@ -3004,6 +3032,40 @@ func TestExecuteCardBoxAddsNoSuiteTitleToDrawing(t *testing.T) {
 	}
 	if captured.Title == nil || *captured.Title != CardCatalogTitleNoSuite {
 		t.Fatalf("expected no-suite title %q, got %+v", CardCatalogTitleNoSuite, captured.Title)
+	}
+}
+
+func TestExecuteCardBoxWithoutQueryRequiresSuiteData(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	service := newBridgeTestBindingServiceWithValidator(t, bridgeTestBindingValidator{})
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	app := &renderapp.App{
+		Bindings:   service,
+		Cards:      rendercard.NewController(&bridgeCardSource{allowEmptyFilter: true, cards: map[int]*masterdata.Card{1001: {ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Test Card", AssetBundleName: "card_test", ReleaseAt: 1700000000000}}}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	_, err := executeCard(NewRequestContext(context.Background(), &parser.ResolvedCommand{
+		Module:            parser.ModuleCard,
+		Mode:              "card-box",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err == nil {
+		t.Fatal("expected missing suite data to fail")
+	}
+	if err.Error() != ErrMsgCardCatalogRequiresSuite {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

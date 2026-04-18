@@ -13,9 +13,10 @@ import (
 // Common error messages for user-facing errors (Chinese).
 const (
 	// Data availability errors
-	ErrMsgSuiteDataUnavailable   = "当前账号没有可用的 Suite 抓包数据"
-	ErrMsgSuiteDataNotFound      = "找不到用户的 Suite 数据"
-	ErrMsgMySekaiDataUnavailable = "当前账号没有可用的 MySekai 抓包数据"
+	ErrMsgSuiteDataUnavailable     = "当前账号没有可用的 Suite 抓包数据"
+	ErrMsgSuiteDataNotFound        = "找不到用户的 Suite 数据"
+	ErrMsgMySekaiDataUnavailable   = "当前账号没有可用的 MySekai 抓包数据"
+	ErrMsgCardCatalogRequiresSuite = "卡牌一览单独使用需要可用的 Suite 卡牌数据，请先上传 Suite 抓包后再使用此命令"
 
 	// Permission errors
 	ErrMsgSelfQueryOnly = "%s仅支持查询自己的数据"

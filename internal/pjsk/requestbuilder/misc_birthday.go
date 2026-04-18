@@ -111,7 +111,7 @@ var (
 	}
 )
 
-func BuildMiscBirthdayRequest(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (*drawing.CharaBirthdayRequest, error) {
+func BuildMiscBirthdayRequest(ctx context.Context, r *CommandInput, app *renderapp.App) (*drawing.CharaBirthdayRequest, error) {
 	if app == nil || app.Sekai == nil {
 		return nil, fmt.Errorf("misc birthday service unavailable: sekai client not configured")
 	}
@@ -187,7 +187,7 @@ func BuildMiscBirthdayRequest(ctx context.Context, r *parser.ResolvedCommand, ap
 	return req, nil
 }
 
-func normalizeBirthdaySelection(r *parser.ResolvedCommand) (miscBirthdaySelection, error) {
+func normalizeBirthdaySelection(r *CommandInput) (miscBirthdaySelection, error) {
 	selection := miscBirthdaySelection{}
 	if r != nil {
 		MergeParams(r.Params, &selection)

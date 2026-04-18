@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	botDB "haruki-cloud/database/bot"
-	commandhandler "haruki-cloud/internal/pjsk/handler"
+	commandhandler "haruki-cloud/internal/handler"
 )
 
 // SeedCommandManifests synchronizes command_manifests from the registered

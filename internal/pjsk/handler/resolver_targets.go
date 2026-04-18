@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 
@@ -87,7 +86,7 @@ func resolveGameUID(ctx context.Context, p userQueryParams, region string, regio
 // user's global default binding (server = "default") and returns the server of
 // the bound account (e.g. "jp", "tw", "kr", "en"). Falls back to "jp" if the
 // user has no global default binding or if any lookup fails.
-func resolveRegionFromDefaultBinding(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) string {
+func resolveRegionFromDefaultBinding(ctx context.Context, r *CommandRequest, app *renderapp.App) string {
 	if r.RegionExplicit {
 		return r.Region
 	}

@@ -1,9 +1,6 @@
 package parser
 
-import (
-	"encoding/json"
-	"regexp"
-)
+import "regexp"
 
 // ── Command types ───────────────────────────────────────────────────────────
 
@@ -108,9 +105,9 @@ const (
 	SupplyBirthday = "birthday"
 )
 
-// ── Global resolver types ───────────────────────────────────────────────────
+// ── Shared command module types ─────────────────────────────────────────────
 
-// TargetModule identifies target module resolved from command.
+// TargetModule identifies the top-level PJSK feature module a command belongs to.
 type TargetModule int
 
 const (
@@ -134,34 +131,6 @@ const (
 	ModuleCheckData
 	ModuleAlias
 )
-
-// ResolvedCommand stores normalized command parsing result.
-type ResolvedCommand struct {
-	Module            TargetModule
-	Mode              string
-	Query             string
-	Region            string
-	RegionExplicit    bool // true when the region was set by a prefix (/jp…) or -r flag
-	Params            json.RawMessage
-	IsHelp            bool
-	IsVerbose         bool
-	IsPreview         bool
-	RequesterPlatform string
-	RequesterUserID   string
-	RequesterGroupID  string
-}
-
-// GlobalCommandResolver provides unified command parsing.
-type GlobalCommandResolver struct {
-	extractor *Extractor
-	routes    []route
-}
-
-type route struct {
-	pattern *regexp.Regexp
-	module  TargetModule
-	mode    string
-}
 
 // CommandParser 负责解析数据库相关指令
 type CommandParser struct{}

@@ -9,7 +9,7 @@ import (
 
 func TestResolveGameTargetSelectorUsesGlobalIndicesWithoutExplicitRegion(t *testing.T) {
 	ctx := context.Background()
-	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+	service := newHandlerTestBindingServiceWithValidator(t, handlerMultiRegionBindingValidator{
 		profiles: map[string]map[string]string{
 			"cn": {
 				"11111111111111": "CN User 1",
@@ -43,7 +43,7 @@ func TestResolveGameTargetSelectorUsesGlobalIndicesWithoutExplicitRegion(t *test
 
 func TestResolveGameTargetSelectorUsesServerScopedIndicesWithExplicitRegion(t *testing.T) {
 	ctx := context.Background()
-	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+	service := newHandlerTestBindingServiceWithValidator(t, handlerMultiRegionBindingValidator{
 		profiles: map[string]map[string]string{
 			"cn": {
 				"11111111111111": "CN User 1",
@@ -77,7 +77,7 @@ func TestResolveGameTargetSelectorUsesServerScopedIndicesWithExplicitRegion(t *t
 
 func TestResolveBindingWithFallbackSelectorUsesGlobalIndicesWithoutExplicitRegion(t *testing.T) {
 	ctx := context.Background()
-	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+	service := newHandlerTestBindingServiceWithValidator(t, handlerMultiRegionBindingValidator{
 		profiles: map[string]map[string]string{
 			"cn": {
 				"11111111111111": "CN User 1",

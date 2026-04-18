@@ -4,11 +4,10 @@ import (
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
-	"haruki-cloud/internal/pjsk/onebot11"
-	"haruki-cloud/internal/pjsk/parser"
+	"haruki-cloud/internal/onebot11"
 )
 
-func isMySekaiRegionAllowed(cmd *parser.ResolvedCommand, region string) bool {
+func isMySekaiRegionAllowed(cmd *CommandRequest, region string) bool {
 	region = strings.ToLower(strings.TrimSpace(region))
 	if region != "cn" {
 		return true

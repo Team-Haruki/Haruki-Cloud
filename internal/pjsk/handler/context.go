@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
-	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/onebot11"
 	"regexp"
 	"strings"
 )

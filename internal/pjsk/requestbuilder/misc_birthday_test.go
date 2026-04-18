@@ -9,7 +9,6 @@ import (
 	"time"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
-	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 
@@ -55,9 +54,7 @@ func TestBuildMiscBirthdayRequestFromCharacterID(t *testing.T) {
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	req, err := BuildMiscBirthdayRequest(context.Background(), &parser.ResolvedCommand{
-		Module: parser.ModuleMisc,
-		Mode:   "misc-birthday",
+	req, err := BuildMiscBirthdayRequest(context.Background(), &CommandInput{
 		Region: "jp",
 		Params: params,
 	}, &renderapp.App{
@@ -152,9 +149,7 @@ func TestBuildMiscBirthdayRequestFromRawQuery(t *testing.T) {
 		t.Fatalf("create birthday card: %v", err)
 	}
 
-	req, err := BuildMiscBirthdayRequest(context.Background(), &parser.ResolvedCommand{
-		Module: parser.ModuleMisc,
-		Mode:   "misc-birthday",
+	req, err := BuildMiscBirthdayRequest(context.Background(), &CommandInput{
 		Region: "jp",
 		Query:  "miku",
 	}, &renderapp.App{

@@ -3,12 +3,12 @@ package handler_test
 import (
 	"testing"
 
-	commandhandler "haruki-cloud/internal/pjsk/handler"
-	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
+	commandhandler "haruki-cloud/internal/handler"
+	pjskhandler "haruki-cloud/internal/pjsk/handler"
 )
 
 func TestListBotRoutes(t *testing.T) {
-	sekaihandler.EnsureCommandHandlersRegistered()
+	pjskhandler.EnsureCommandHandlersRegistered()
 
 	routes := commandhandler.ListBotRoutes()
 	if len(routes) == 0 {
@@ -33,8 +33,8 @@ func TestListBotRoutes(t *testing.T) {
 	if !ok {
 		t.Fatal("expected card/detail route to exist")
 	}
-	if cardDetail.Module != commandhandler.BotModulePJSK {
-		t.Fatalf("expected card/detail module=%s, got %s", commandhandler.BotModulePJSK, cardDetail.Module)
+	if cardDetail.Module != pjskhandler.BotModulePJSK {
+		t.Fatalf("expected card/detail module=%s, got %s", pjskhandler.BotModulePJSK, cardDetail.Module)
 	}
 	if !contains(cardDetail.Commands, "/查卡") {
 		t.Fatalf("expected card/detail commands to include /查卡, got %v", cardDetail.Commands)

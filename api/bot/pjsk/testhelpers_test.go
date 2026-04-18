@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
-	"haruki-cloud/internal/pjsk/onebot11"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"

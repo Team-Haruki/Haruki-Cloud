@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
-	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
 
@@ -40,7 +39,7 @@ type scoreControlSelection struct {
 	WL          bool   `json:"wl,omitempty"`
 }
 
-func BuildScoreControlRequest(ctx context.Context, r *parser.ResolvedCommand, app *renderapp.App) (*drawing.ScoreControlRequest, error) {
+func BuildScoreControlRequest(ctx context.Context, r *CommandInput, app *renderapp.App) (*drawing.ScoreControlRequest, error) {
 	if app == nil || app.Music == nil {
 		return nil, fmt.Errorf("score music service unavailable: music controller is not configured")
 	}
@@ -94,7 +93,7 @@ func BuildScoreControlRequest(ctx context.Context, r *parser.ResolvedCommand, ap
 	}, nil
 }
 
-func resolveScoreControlSelection(r *parser.ResolvedCommand) (scoreControlSelection, error) {
+func resolveScoreControlSelection(r *CommandInput) (scoreControlSelection, error) {
 	params := scoreControlSelection{}
 	if r != nil && r.Params != nil {
 		if err := json.Unmarshal(r.Params, &params); err != nil {

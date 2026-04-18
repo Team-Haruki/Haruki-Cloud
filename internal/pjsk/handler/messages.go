@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
-	"haruki-cloud/internal/pjsk/onebot11"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 

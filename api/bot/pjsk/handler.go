@@ -8,11 +8,10 @@ import (
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/internal/core/crypto"
+	commandregistry "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/middleware/secure"
+	"haruki-cloud/internal/onebot11"
 	commandhandler "haruki-cloud/internal/pjsk/handler"
-	sekaihandler "haruki-cloud/internal/pjsk/handler/sekai"
-	"haruki-cloud/internal/pjsk/onebot11"
-	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/logger"
@@ -68,7 +67,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 		initCtx = context.Background()
 	}
 
-	sekaihandler.EnsureCommandHandlersRegistered()
+	commandhandler.EnsureCommandHandlersRegistered()
 
 	if botDBClient != nil {
 		if err := SeedCommandManifests(initCtx, botDBClient); err != nil {
@@ -93,7 +92,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if noiseKeyPair != nil {
 		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
 	}
-	for _, route := range commandhandler.ListBotRoutes() {
+	for _, route := range commandregistry.ListBotRoutes() {
 		h := makeBotHandler(renderApp, guard, route.Path, route.Commands)
 		path := "/" + route.Path
 		pjsk.Post(path, h)
@@ -147,8 +146,9 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 
 		if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
 			if normalized := renderregion.Normalize(server); !normalized.IsZero() {
-				// Treat the transport-level server as authoritative so Execute()
-				// does not overwrite it with the user's global default binding.
+				// Treat the transport-level server as authoritative so the final
+				// command executor does not overwrite it with the user's global
+				// default binding.
 				resolved.Region = normalized.String()
 				resolved.RegionExplicit = true
 			} else {
@@ -156,7 +156,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 			}
 		}
 
-		responseData, err := commandhandler.Execute(c.Context(), resolved, renderApp)
+		responseData, err := commandhandler.ExecuteCommandRequest(c.Context(), resolved, renderApp)
 		if err != nil {
 			logger.Errorf("bot command render failed: mode=%s matched_command=%s err=%v", resolved.Mode, req.MatchedCommand, err)
 			guard.MarkComplete(c.Context(), req)
@@ -223,7 +223,7 @@ func (e *botValidationError) Error() string {
 	return e.msg
 }
 
-func resolveBotCommand(requestCtx context.Context, message onebot11.Message, expectedPath string, req BotCommandRequest) (*parser.ResolvedCommand, error) {
+func resolveBotCommand(requestCtx context.Context, message onebot11.Message, expectedPath string, req BotCommandRequest) (*commandhandler.CommandRequest, error) {
 
 	matchedCommand := req.MatchedCommand
 	messageType := commandhandler.MessageTypePrivate
@@ -243,8 +243,8 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	if err != nil {
 		return nil, fmt.Errorf("failed to build handler context: %w", err)
 	}
-	matched := commandhandler.MatchCommandHandler(ctx.GetArgs())
-	if matched.Handler == nil || matched.Handler.IsDisabled() {
+	matched, ok := commandregistry.LookupCommandHandler(matchedCommand)
+	if !ok || matched.Handler == nil || matched.Handler.IsDisabled() {
 		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
 	}
 	if matched.Handler.GetPath() == "" {
@@ -255,10 +255,28 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
 	}
 
-	ctx.TriggerCmd = matched.Command
-	ctx.ArgText = strings.TrimSpace(string(matched.ArgText))
+	args, ok := commandregistry.ExtractCommandArgs(ctx.GetArgs(), matchedCommand)
+	triggerCmd := matched.Command
+	if !ok {
+		actualMatched := commandregistry.MatchCommandHandler(ctx.GetArgs())
+		if actualMatched.Handler == nil || actualMatched.Handler.IsDisabled() {
+			return nil, &botValidationError{msg: fmt.Sprintf("message does not match matched_command: %s", matchedCommand)}
+		}
+		if actualMatched.Handler.GetPath() != matched.Handler.GetPath() {
+			return nil, &botValidationError{msg: fmt.Sprintf("message does not match matched_command: %s", matchedCommand)}
+		}
+		args = strings.TrimSpace(string(actualMatched.ArgText))
+		triggerCmd = actualMatched.Command
+	}
+
+	ctx.TriggerCmd = triggerCmd
+	ctx.ArgText = args
 	ctx.MessageType = messageType
-	resolved, err := matched.Handler.Handle(ctx)
+	executable, ok := matched.Handler.(commandhandler.CommandHandler)
+	if !ok {
+		return nil, fmt.Errorf("registered handler does not implement pjsk command handler: %T", matched.Handler)
+	}
+	resolved, err := executable.Handle(ctx)
 	if err != nil {
 		return nil, err
 	}

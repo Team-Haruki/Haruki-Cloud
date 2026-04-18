@@ -11,7 +11,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"
 	sekaimusic "haruki-cloud/database/sekai/music"
-	"haruki-cloud/internal/pjsk/onebot11"
+	"haruki-cloud/internal/onebot11"
 )
 
 // TryResolveMusicID attempts to resolve a token to a music ID.

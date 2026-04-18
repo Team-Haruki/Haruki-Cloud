@@ -12,7 +12,6 @@ import (
 	"haruki-cloud/config"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
-	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -146,7 +145,7 @@ func TestRequestContextCachesBasicSnapshotAndUsesSnapshotProfiles(t *testing.T) 
 		},
 	}
 
-	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+	rc := NewRequestContext(context.Background(), &CommandRequest{
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
@@ -187,7 +186,7 @@ func TestRequestContextCachesMySekaiSnapshotSeparately(t *testing.T) {
 		snapshot: &runtimeSnapshotStub{},
 	}
 
-	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+	rc := NewRequestContext(context.Background(), &CommandRequest{
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
@@ -227,7 +226,7 @@ func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
 		snapshotProviderFactory = originalFactory
 	}()
 
-	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+	rc := NewRequestContext(context.Background(), &CommandRequest{
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
@@ -251,7 +250,7 @@ func TestRequestContextUsesConfiguredSnapshotProviderFactory(t *testing.T) {
 
 func TestRequestContextResolveSnapshotUsesSelectedBindingFromParams(t *testing.T) {
 	ctx := context.Background()
-	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+	service := newHandlerTestBindingServiceWithValidator(t, handlerMultiRegionBindingValidator{
 		profiles: map[string]map[string]string{
 			"cn": {"11111111111111": "CN User"},
 			"jp": {"33333333333333": "JP User"},
@@ -284,7 +283,7 @@ func TestRequestContextResolveSnapshotUsesSelectedBindingFromParams(t *testing.T
 		snapshot: &runtimeSnapshotStub{},
 	}
 
-	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+	rc := NewRequestContext(ctx, &CommandRequest{
 		Region:            "jp",
 		Params:            params,
 		RequesterPlatform: "qq",
@@ -325,7 +324,7 @@ func TestResolveCardBoxDetailedProfileDoesNotFallbackToProfileControllerSnapshot
 		},
 	})
 
-	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+	rc := NewRequestContext(context.Background(), &CommandRequest{
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
@@ -339,9 +338,9 @@ func TestResolveCardBoxDetailedProfileDoesNotFallbackToProfileControllerSnapshot
 }
 
 func TestRequireVisibleSuiteSnapshotReturnsNoBindingSentinel(t *testing.T) {
-	service := newBridgeTestBindingServiceWithValidator(t, bridgeTestBindingValidator{})
+	service := newHandlerTestBindingServiceWithValidator(t, handlerTestBindingValidator{})
 
-	rc := NewRequestContext(context.Background(), &parser.ResolvedCommand{
+	rc := NewRequestContext(context.Background(), &CommandRequest{
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
@@ -360,7 +359,7 @@ func TestRequireVisibleSuiteSnapshotReturnsNoBindingSentinel(t *testing.T) {
 
 func TestBuildPublicMusicProfilesUsesSelectorFromRequestParams(t *testing.T) {
 	ctx := context.Background()
-	service := newBridgeTestBindingServiceWithValidator(t, bridgeMultiRegionBindingValidator{
+	service := newHandlerTestBindingServiceWithValidator(t, handlerMultiRegionBindingValidator{
 		profiles: map[string]map[string]string{
 			"jp": {"11111111111111": "JP User"},
 			"cn": {"22222222222222": "CN User"},
@@ -420,7 +419,7 @@ func TestBuildPublicMusicProfilesUsesSelectorFromRequestParams(t *testing.T) {
 	profileController := renderprofile.NewController(runtimeProfileDataSourceStub{region: renderregion.JP}, nil, nil, nil)
 	profileController.RegisterSource(runtimeProfileDataSourceStub{region: renderregion.CN})
 
-	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+	rc := NewRequestContext(ctx, &CommandRequest{
 		Region:            "jp",
 		Params:            params,
 		RequesterPlatform: "qq",
@@ -470,7 +469,7 @@ func testRequestContextPrefersAPIPublicProfile(t *testing.T, defaultImage string
 	t.Helper()
 
 	ctx := context.Background()
-	service := newBridgeTestBindingService(t)
+	service := newHandlerTestBindingService(t)
 	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
 		t.Fatalf("bind: %v", err)
 	}
@@ -518,7 +517,7 @@ func testRequestContextPrefersAPIPublicProfile(t *testing.T, defaultImage string
 		},
 	}, nil, nil, nil)
 
-	rc := NewRequestContext(ctx, &parser.ResolvedCommand{
+	rc := NewRequestContext(ctx, &CommandRequest{
 		Region:            "jp",
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",

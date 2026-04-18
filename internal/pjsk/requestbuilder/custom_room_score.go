@@ -10,7 +10,6 @@ import (
 
 	datafiles "haruki-cloud/data"
 	"haruki-cloud/internal/pjsk/drawing"
-	"haruki-cloud/internal/pjsk/parser"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
 
@@ -23,7 +22,7 @@ type customRoomScoreSelection struct {
 	TargetPoint int `json:"target_point"`
 }
 
-func BuildCustomRoomScoreRequest(r *parser.ResolvedCommand, app *renderapp.App) (*drawing.CustomRoomScoreRequest, error) {
+func BuildCustomRoomScoreRequest(r *CommandInput, app *renderapp.App) (*drawing.CustomRoomScoreRequest, error) {
 	if app == nil || app.Music == nil {
 		return nil, fmt.Errorf("score music service unavailable: music controller is not configured")
 	}
@@ -89,7 +88,7 @@ func BuildCustomRoomScoreRequest(r *parser.ResolvedCommand, app *renderapp.App) 
 	}, nil
 }
 
-func resolveCustomRoomScoreSelection(r *parser.ResolvedCommand) (customRoomScoreSelection, error) {
+func resolveCustomRoomScoreSelection(r *CommandInput) (customRoomScoreSelection, error) {
 	params := customRoomScoreSelection{}
 	if r != nil && r.Params != nil {
 		if err := json.Unmarshal(r.Params, &params); err != nil {

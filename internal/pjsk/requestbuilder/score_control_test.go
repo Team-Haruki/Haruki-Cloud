@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -144,9 +143,7 @@ func TestBuildScoreControlRequestPreservesControllerAliasResolver(t *testing.T) 
 		t.Fatalf("marshal params: %v", err)
 	}
 
-	req, err := BuildScoreControlRequest(context.Background(), &parser.ResolvedCommand{
-		Module: parser.ModuleScore,
-		Mode:   "score-control",
+	req, err := BuildScoreControlRequest(context.Background(), &CommandInput{
 		Region: "jp",
 		Params: params,
 	}, &renderapp.App{

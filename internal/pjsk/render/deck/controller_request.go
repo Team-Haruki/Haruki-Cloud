@@ -45,13 +45,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 			}
 
 			userCard, hasUserCard := userCardMap[deckCard.CardID]
-			trainedArt := strings.EqualFold(deckCard.DefaultImage, "special_training")
-			displayAfterTraining := deckCard.IsAfterTraining
-			if strings.TrimSpace(deckCard.DefaultImage) != "" {
-				displayAfterTraining = trainedArt
-			} else if hasUserCard {
-				displayAfterTraining = isAfterTraining(userCard)
-			}
+			displayAfterTraining, trainedArt := resolveRecommendCardDisplayState(deckCard)
 
 			level := deckCard.Level
 			if level <= 0 {
@@ -148,6 +142,28 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	c.applyOptionRequestFields(request, option, query)
 	c.applyCommonRecommendMetadata(request, region, recType, option, query)
 	return request, nil
+}
+
+func resolveRecommendCardDisplayState(deckCard RecommendCard) (displayAfterTraining bool, trainedArt bool) {
+	trainedArt, hasDefaultImage := normalizeRecommendCardDefaultImage(deckCard.DefaultImage)
+	displayAfterTraining = deckCard.IsAfterTraining
+	if hasDefaultImage {
+		displayAfterTraining = trainedArt
+	} else {
+		trainedArt = displayAfterTraining
+	}
+	return displayAfterTraining, trainedArt
+}
+
+func normalizeRecommendCardDefaultImage(raw string) (trainedArt bool, ok bool) {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "special_training", "after_training", "card_after_training", "trained":
+		return true, true
+	case "normal", "original", "before_training", "card_normal":
+		return false, true
+	default:
+		return false, false
+	}
 }
 
 func (c *Controller) cardByIDWithFallback(source CardSource, region renderregion.Value, cardID int) (*masterdata.Card, error) {

@@ -377,33 +377,58 @@ func TestEventDeckHandleParsesSplitSkillLowerBound(t *testing.T) {
 	}
 }
 
-func TestEventDeckHandleRejectsMixedWorldBloomChapterAndCharacter(t *testing.T) {
+func TestEventDeckHandleParsesSimulatedWorldBloomTurnAndCharacter(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	_, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "miku wl4",
 	})
-	if err == nil {
-		t.Fatalf("expected mixed WL chapter and character to be rejected")
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
 	}
-	if !strings.Contains(err.Error(), "不能同时指定 WL 章节和角色") {
-		t.Fatalf("unexpected error: %v", err)
+
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID != nil {
+		t.Fatalf("unexpected explicit event id: %+v", params.EventID)
+	}
+	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 4 {
+		t.Fatalf("unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+	}
+	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
 	}
 }
 
-func TestEventDeckHandleRejectsMixedWorldBloomChapterAndFullCharacterName(t *testing.T) {
+func TestEventDeckHandleParsesSimulatedWorldBloomTurnWithTrailingMusicQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	_, err := h.Handle(&handler.PjskHandlerContext{
+	result, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
-		ArgText:    "初音未来 wl3",
+		ArgText:    "sage wl3 初音未来",
 	})
-	if err == nil {
-		t.Fatalf("expected mixed WL chapter and character to be rejected")
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
 	}
-	if !strings.Contains(err.Error(), "不能同时指定 WL 章节和角色") {
-		t.Fatalf("unexpected error: %v", err)
+
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 3 {
+		t.Fatalf("unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+	}
+	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.MusicQuery != "sage" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
 	}
 }
 
@@ -435,153 +460,33 @@ func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing
 	}
 }
 
-func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventID(t *testing.T) {
+func TestEventDeckHandleRejectsDeprecatedWorldBloomChapterSelectorAfterEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/组卡",
 		ArgText:    "140 wl3 sage",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
+	if err == nil {
+		t.Fatalf("expected deprecated wl chapter selector to be rejected")
 	}
-
-	resolved := result
-	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if params.EventID == nil || *params.EventID != 140 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
-	}
-	if params.WorldBloomCharacterID != nil {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
-	}
-	if params.WorldBloomCharacterQuery != "wl3" {
-		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
-	}
-	if params.MusicQuery != "sage" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	if !strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
-func TestEventDeckHandleParsesWorldBloomChapterSelectorAfterEventIDWithTrailingOrder(t *testing.T) {
+func TestEventDeckHandleRejectsDeprecatedStandaloneWorldBloomChapterSelector(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.PjskHandlerContext{
-		Context:    context.Background(),
-		TriggerCmd: "/组卡",
-		ArgText:    "140 sage wl4",
-	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
-
-	resolved := result
-	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if params.EventID == nil || *params.EventID != 140 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
-	}
-	if params.WorldBloomCharacterID != nil {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
-	}
-	if params.WorldBloomCharacterQuery != "wl4" {
-		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
-	}
-	if params.MusicQuery != "sage" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-}
-
-func TestEventDeckHandleParsesStandaloneWorldBloomSelectorForCurrentEvent(t *testing.T) {
-	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.PjskHandlerContext{
-		Context:    context.Background(),
-		TriggerCmd: "/活动组卡",
-		ArgText:    "wl3",
-	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
-
-	resolved := result
-	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if params.EventID != nil {
-		t.Fatalf("unexpected explicit event id: %+v", params.EventID)
-	}
-	if params.WorldBloomCharacterID != nil {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
-	}
-	if params.WorldBloomCharacterQuery != "wl3" {
-		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-}
-
-func TestEventDeckHandleParsesMusicQueryBeforeStandaloneWorldBloomSelectorForCurrentEvent(t *testing.T) {
-	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.PjskHandlerContext{
+	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动组卡",
 		ArgText:    "sage wl3",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
+	if err == nil {
+		t.Fatalf("expected deprecated wl chapter selector to be rejected")
 	}
-
-	resolved := result
-	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if params.WorldBloomEventTurn != nil {
-		t.Fatalf("unexpected world bloom event turn: %+v", params.WorldBloomEventTurn)
-	}
-	if params.WorldBloomCharacterID != nil {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
-	}
-	if params.WorldBloomCharacterQuery != "wl3" {
-		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
-	}
-	if params.MusicQuery != "sage" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-}
-
-func TestEventDeckHandleParsesMusicQueryBeforeWorldBloomSelectorAfterEventID(t *testing.T) {
-	h := sekaiHandlers{}.EventDeckHandle()
-	result, err := h.Handle(&handler.PjskHandlerContext{
-		Context:    context.Background(),
-		TriggerCmd: "/组卡",
-		ArgText:    "140 sage wl3",
-	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
-
-	resolved := result
-	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if params.EventID == nil || *params.EventID != 140 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
-	}
-	if params.WorldBloomCharacterID != nil {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
-	}
-	if params.WorldBloomCharacterQuery != "wl3" {
-		t.Fatalf("unexpected world bloom selector: %q", params.WorldBloomCharacterQuery)
-	}
-	if params.MusicQuery != "sage" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	if !strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
@@ -1633,7 +1538,7 @@ func TestNoEventDeckHandleRejectsFullAliasesWithNoEventHint(t *testing.T) {
 	}
 }
 
-func TestEventDeckHandleRejectsMixedWorldBloomSelectorAndCharacterAfterEventID(t *testing.T) {
+func TestEventDeckHandleRejectsDeprecatedWorldBloomSelectorAndCharacterAfterEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	_, err := h.Handle(&handler.PjskHandlerContext{
 		Context:    context.Background(),
@@ -1641,9 +1546,9 @@ func TestEventDeckHandleRejectsMixedWorldBloomSelectorAndCharacterAfterEventID(t
 		ArgText:    "140 wl3 miku",
 	})
 	if err == nil {
-		t.Fatalf("expected mixed WL chapter and character to be rejected")
+		t.Fatalf("expected deprecated WL chapter selector to be rejected")
 	}
-	if !strings.Contains(err.Error(), "不能同时指定 WL 章节和角色") {
+	if !strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

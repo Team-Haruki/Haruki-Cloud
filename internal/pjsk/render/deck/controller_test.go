@@ -836,6 +836,44 @@ func TestApplyCommonRecommendMetadataDoesNotBackfillMysekaiEvent(t *testing.T) {
 	}
 }
 
+func TestApplyCommonRecommendMetadataKeepsMysekaiWorldBloomChapterMetadata(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+	request := &drawing.DeckRequest{
+		Region:        "jp",
+		RecommendType: "mysekai",
+	}
+
+	controller.applyCommonRecommendMetadata(request, renderregion.JP, "mysekai", map[string]any{
+		"live_type":                "mysekai",
+		"event_id":                 7,
+		"world_bloom_character_id": 20,
+	}, AutoQuery{
+		Region:                "jp",
+		RecommendType:         "mysekai",
+		EventID:               new(7),
+		WorldBloomCharacterID: new(20),
+	})
+
+	if !request.IsWl {
+		t.Fatalf("expected mysekai request to preserve wl metadata: %+v", request)
+	}
+	if request.RecommendType != "mysekai" {
+		t.Fatalf("unexpected recommend type: %q", request.RecommendType)
+	}
+	if request.EventID == nil || *request.EventID != 7 {
+		t.Fatalf("unexpected event id: %+v", request.EventID)
+	}
+	if request.WlCharaIconPath == nil || *request.WlCharaIconPath == "" {
+		t.Fatalf("expected wl character icon: %+v", request.WlCharaIconPath)
+	}
+	if request.WlCharaName == nil || *request.WlCharaName != "晓山瑞希" {
+		t.Fatalf("unexpected wl character name: %+v", request.WlCharaName)
+	}
+	if request.CharaName == nil || *request.CharaName != "晓山瑞希" {
+		t.Fatalf("unexpected shared character name: %+v", request.CharaName)
+	}
+}
+
 func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 	var recommendCalls atomic.Int32
 
@@ -1177,6 +1215,48 @@ func TestBuildDrawingRequestFromRecommendResultUsesDefaultImageForDisplayState(t
 	}
 	if !strings.Contains(cardData.CardThumbnail.RareImgPath, "rare_star_after_training.png") {
 		t.Fatalf("expected trained rarity marker to stay after-training, got %q", cardData.CardThumbnail.RareImgPath)
+	}
+}
+
+func TestBuildDrawingRequestFromRecommendResultUsesAfterTrainingFlagWhenDefaultImageMissing(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	request, err := controller.buildDrawingRequestFromRecommendResult(
+		renderregion.JP,
+		"event",
+		AutoQuery{Region: "jp", RecommendType: "event"},
+		map[string]any{"target": "score"},
+		nil,
+		&RecommendResult{
+			Decks: []RecommendDeck{{
+				Cards: []RecommendCard{{
+					CardID:          1002,
+					Level:           60,
+					MasterRank:      5,
+					SkillLevel:      4,
+					SkillRate:       120,
+					IsAfterTraining: true,
+				}},
+				Score: 123,
+			}},
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("buildDrawingRequestFromRecommendResult() error = %v", err)
+	}
+	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
+		t.Fatalf("unexpected deck request: %+v", request.DeckData)
+	}
+	cardData := request.DeckData[0].CardData[0]
+	if !cardData.IsAfterTraining {
+		t.Fatalf("expected deck card state to follow after_training flag, got %+v", cardData)
+	}
+	if cardData.CardThumbnail.IsAfterTraining == nil || !*cardData.CardThumbnail.IsAfterTraining {
+		t.Fatalf("expected thumbnail state to follow after_training flag, got %+v", cardData.CardThumbnail.IsAfterTraining)
+	}
+	if !strings.Contains(cardData.CardThumbnail.CardThumbnailPath, "_after_training.png") {
+		t.Fatalf("expected after-training art thumbnail, got %q", cardData.CardThumbnail.CardThumbnailPath)
 	}
 }
 

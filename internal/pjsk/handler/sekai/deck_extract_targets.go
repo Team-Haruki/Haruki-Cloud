@@ -72,7 +72,7 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
 	if eventID, remaining := extractDeckExplicitEventID(args); eventID != nil {
-		return extractDeckExplicitEventSelection(remaining, eventID, params)
+		return extractDeckExplicitEventSelection(remaining, eventID, params, trigger)
 	}
 
 	if attr, unit, remaining, partial := extractDeckSimulatedEvent(args); attr != "" && unit != "" {
@@ -84,13 +84,7 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 	}
 
 	if eventID, remaining := extractDeckEventID(args); eventID != nil {
-		return extractDeckExplicitEventSelection(remaining, eventID, params)
-	}
-
-	if remaining, ok, err := extractDeckCurrentWorldBloomSelection(args, params); err != nil {
-		return "", err
-	} else if ok {
-		return remaining, nil
+		return extractDeckExplicitEventSelection(remaining, eventID, params, trigger)
 	}
 
 	if turn, charID, charQuery, remaining, err := extractDeckSimulatedWorldBloom(args); err != nil {
@@ -108,6 +102,12 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 		return remaining, nil
 	}
 
+	if remaining, ok, err := extractDeckCurrentWorldBloomSelection(args, params, trigger); err != nil {
+		return "", err
+	} else if ok {
+		return remaining, nil
+	}
+
 	if selector, remaining := extractDeckWorldBloomSelectorCandidate(args); selector != "" {
 		params.WorldBloomCharacterQuery = selector
 		return remaining, nil
@@ -116,9 +116,12 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 	return normalizeDeckSpaces(args), nil
 }
 
-func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAutoQueryParams) (string, error) {
+func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAutoQueryParams, trigger string) (string, error) {
 	params.EventID = eventID
 	if selector, remaining := extractDeckWorldBloomSelectorCandidate(args); selector != "" {
+		if _, ok := parseDeckWorldBloomTurn(selector); ok {
+			return "", invalidDeckWorldBloomTurnUsageError(trigger)
+		}
 		if charID, _, _ := extractDeckCharacterCandidate(remaining, false); charID > 0 {
 			return "", invalidDeckWorldBloomMixedSelectorError()
 		}
@@ -141,10 +144,14 @@ func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAu
 	return normalizeDeckSpaces(args), nil
 }
 
-func extractDeckCurrentWorldBloomSelection(args string, params *deckAutoQueryParams) (string, bool, error) {
+func extractDeckCurrentWorldBloomSelection(args string, params *deckAutoQueryParams, trigger string) (string, bool, error) {
 	selector, remaining := extractDeckWorldBloomSelectorCandidate(args)
 	if selector == "" {
 		return normalizeDeckSpaces(args), false, nil
+	}
+
+	if _, ok := parseDeckWorldBloomTurn(selector); ok {
+		return "", false, invalidDeckWorldBloomTurnUsageError(trigger)
 	}
 
 	if charID, _, leftover := extractDeckCharacterCandidate(remaining, false); charID > 0 {
@@ -218,11 +225,19 @@ func extractDeckSimulatedWorldBloom(args string) (turn int, charID int, charQuer
 	if charID <= 0 && charQuery == "" {
 		return 0, 0, "", strings.TrimSpace(args), nil
 	}
-	return 0, 0, "", "", invalidDeckWorldBloomMixedSelectorError()
+	return turnValue, charID, charQuery, normalizeDeckSpaces(args), nil
 }
 
 func invalidDeckWorldBloomMixedSelectorError() error {
 	return onebot11.NewReplayError("不能同时指定 WL 章节和角色，请只保留其中一种写法")
+}
+
+func invalidDeckWorldBloomTurnUsageError(trigger string) error {
+	trigger = strings.TrimSpace(trigger)
+	if trigger == "" {
+		return onebot11.NewReplayError("不再支持 wl2 这种 WL 章节写法，请改用 wl1 miku 或 event123 miku")
+	}
+	return onebot11.NewReplayError("不再支持 wl2 这种 WL 章节写法，请改用:\n%s wl1 miku\n%s event123 miku", trigger, trigger)
 }
 
 func extractDeckExplicitEventID(args string) (*int, string) {

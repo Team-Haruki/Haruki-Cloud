@@ -33,6 +33,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	renderscore "haruki-cloud/internal/pjsk/render/score"
 	rendersk "haruki-cloud/internal/pjsk/render/sk"
@@ -1815,6 +1816,13 @@ func TestResolveDeckCharacterSelectionsUsesMasterdataQueries(t *testing.T) {
 	}
 	createCharacter(21, "初音", "未来", "Hatsune", "Miku")
 	createCharacter(24, "巡音", "流歌", "Megurine", "Luka")
+	now := time.Now().UnixMilli()
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 410, now-int64(72*time.Hour/time.Millisecond), now-int64(48*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(71*time.Hour/time.Millisecond), aggregateAt: now - int64(69*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 420, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
 
 	query := renderdeck.AutoQuery{
 		Region:                      "jp",
@@ -1830,6 +1838,9 @@ func TestResolveDeckCharacterSelectionsUsesMasterdataQueries(t *testing.T) {
 	}
 	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
 		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.EventID == nil || *query.EventID != 420 {
+		t.Fatalf("unexpected resolved event id: %+v", query.EventID)
 	}
 	if query.EventUnit != "piapro" {
 		t.Fatalf("unexpected world bloom event unit: %q", query.EventUnit)
@@ -2262,6 +2273,148 @@ func TestResolveDeckCharacterSelectionsResolvesCurrentWorldBloomEventWhenEventID
 	}
 }
 
+func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnToConcreteEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_world_bloom_turn?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	for _, item := range []struct {
+		id    int64
+		first string
+		last  string
+	}{
+		{id: 21, first: "初音", last: "未来"},
+		{id: 24, first: "巡音", last: "流歌"},
+	} {
+		if _, err := sekaiClient.Gamecharacter.Create().
+			SetServerRegion("jp").
+			SetGameID(item.id).
+			SetFirstName(item.first).
+			SetGivenName(item.last).
+			Save(ctx); err != nil {
+			t.Fatalf("create gamecharacter %d: %v", item.id, err)
+		}
+	}
+
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 510, now-int64(96*time.Hour/time.Millisecond), now-int64(72*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(95*time.Hour/time.Millisecond), aggregateAt: now - int64(93*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedBridgeTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 520, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []bridgeTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 24},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		WorldBloomEventTurn:      drawing.IntPtr(2),
+		WorldBloomCharacterQuery: "巡音流歌",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 520 {
+		t.Fatalf("unexpected resolved event id: %+v", query.EventID)
+	}
+	if query.WorldBloomEventTurn != nil {
+		t.Fatalf("expected wl event turn to be consumed: %+v", query.WorldBloomEventTurn)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 24 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsFallsBackEventRecommendToNoEventWhenNoEventAvailable(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_event_fallback_no_event?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.RecommendType != "no_event" {
+		t.Fatalf("expected recommend type fallback to no_event, got %q", query.RecommendType)
+	}
+	if query.EventID != nil {
+		t.Fatalf("expected event id to stay empty after fallback: %+v", query.EventID)
+	}
+}
+
+func TestPickCurrentOrNextDeckEventAllowsJPFutureLeakAfterCardRelease(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_future_leak_after_release?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	app := &renderapp.App{
+		Sekai: sekaiClient,
+		Provider: bridgeDeckTestMasterProvider{
+			events: &bridgeDeckTestEventProvider{
+				events: []*masterdata.Event{{
+					ID:          701,
+					EventType:   "marathon",
+					Name:        "Future Leak",
+					StartAt:     now + int64(time.Hour/time.Millisecond),
+					AggregateAt: now + int64(3*time.Hour/time.Millisecond),
+				}},
+				cardsByEvent: map[int][]*masterdata.Card{
+					701: {{
+						ID:        9001,
+						ReleaseAt: now - int64(time.Minute/time.Millisecond),
+					}},
+				},
+			},
+		},
+	}
+
+	eventInfo, err := pickCurrentOrNextDeckEvent(ctx, app, renderregion.JP)
+	if err != nil {
+		t.Fatalf("pickCurrentOrNextDeckEvent() error = %v", err)
+	}
+	if eventInfo == nil || int(eventInfo.GameID) != 701 {
+		t.Fatalf("unexpected future leak event: %+v", eventInfo)
+	}
+}
+
+func TestPickCurrentOrNextDeckEventRejectsJPFutureLeakBeforeCardRelease(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_future_leak_before_release?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	app := &renderapp.App{
+		Sekai: sekaiClient,
+		Provider: bridgeDeckTestMasterProvider{
+			events: &bridgeDeckTestEventProvider{
+				events: []*masterdata.Event{{
+					ID:          702,
+					EventType:   "marathon",
+					Name:        "Future Leak",
+					StartAt:     now + int64(time.Hour/time.Millisecond),
+					AggregateAt: now + int64(3*time.Hour/time.Millisecond),
+				}},
+				cardsByEvent: map[int][]*masterdata.Card{
+					702: {{
+						ID:        9002,
+						ReleaseAt: now + int64(time.Minute/time.Millisecond),
+					}},
+				},
+			},
+		},
+	}
+
+	eventInfo, err := pickCurrentOrNextDeckEvent(ctx, app, renderregion.JP)
+	if err == nil {
+		t.Fatalf("expected future leak without released cards to be rejected, got %+v", eventInfo)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsRejectsWorldBloomSelectorOnNonWorldBloomEvent(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:bridge_test_deck_non_wl_selector?mode=memory&cache=shared&_fk=1")
@@ -2307,6 +2460,91 @@ func TestResolveDeckCharacterSelectionsClearsWorldBloomCharacterForNonWorldBloom
 	if query.WorldBloomCharacterID != nil {
 		t.Fatalf("expected world bloom character id to be cleared: %+v", query.WorldBloomCharacterID)
 	}
+}
+
+type bridgeDeckTestMasterProvider struct {
+	events renderprovider.EventProvider
+}
+
+func (p bridgeDeckTestMasterProvider) Region() renderregion.Value { return renderregion.JP }
+func (p bridgeDeckTestMasterProvider) Cards() renderprovider.CardProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) Characters() renderprovider.CharacterProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) Skills() renderprovider.SkillProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) Events() renderprovider.EventProvider { return p.events }
+func (p bridgeDeckTestMasterProvider) Musics() renderprovider.MusicProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) Gachas() renderprovider.GachaProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) Honors() renderprovider.HonorProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) Stamps() renderprovider.StampProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) VLives() renderprovider.VLiveProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) Education() renderprovider.EducationProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) PlayerFrames() renderprovider.PlayerFrameProvider {
+	return nil
+}
+func (p bridgeDeckTestMasterProvider) MySekai() renderprovider.MySekaiProvider {
+	return nil
+}
+
+type bridgeDeckTestEventProvider struct {
+	events       []*masterdata.Event
+	cardsByEvent map[int][]*masterdata.Card
+}
+
+func (p *bridgeDeckTestEventProvider) GetByID(_ context.Context, id int) (*masterdata.Event, error) {
+	for _, item := range p.events {
+		if item != nil && item.ID == id {
+			return item, nil
+		}
+	}
+	return nil, fmt.Errorf("event %d not found", id)
+}
+
+func (p *bridgeDeckTestEventProvider) GetByCardID(_ context.Context, cardID int) (*masterdata.Event, error) {
+	return nil, fmt.Errorf("event not found for card %d", cardID)
+}
+
+func (p *bridgeDeckTestEventProvider) GetAll(_ context.Context) []*masterdata.Event {
+	return p.events
+}
+
+func (p *bridgeDeckTestEventProvider) GetCards(_ context.Context, eventID int) ([]*masterdata.Card, error) {
+	if cards, ok := p.cardsByEvent[eventID]; ok {
+		return cards, nil
+	}
+	return nil, fmt.Errorf("cards for event %d not found", eventID)
+}
+
+func (p *bridgeDeckTestEventProvider) GetBannerCharacterID(_ context.Context, eventID int) (int, error) {
+	return 0, fmt.Errorf("banner character not found for event %d", eventID)
+}
+
+func (p *bridgeDeckTestEventProvider) GetDeckBonuses(_ context.Context, eventID int) ([]*masterdata.EventDeckBonus, error) {
+	return nil, nil
+}
+
+func (p *bridgeDeckTestEventProvider) GetBanEvents(_ context.Context, charID int) []*masterdata.Event {
+	return nil
+}
+
+func (p *bridgeDeckTestEventProvider) GetWorldBloomChapters(_ context.Context, eventID int) []*masterdata.WorldBloom {
+	return nil
 }
 
 type bridgeTestWorldBloomChapter struct {

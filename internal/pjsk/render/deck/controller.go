@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strconv"
@@ -206,7 +207,7 @@ func (c *Controller) buildSyntheticAutoRecommendSnapshot(query AutoQuery) (rende
 	}
 
 	raw := syntheticAutoRecommendRawUserData(query)
-	data, err := rendersnapshot.EncodeRawUserData(raw)
+	data, err := encodeSyntheticAutoRecommendRawUserData(raw)
 	if err != nil {
 		return nil, fmt.Errorf("encode synthetic user data: %w", err)
 	}
@@ -246,4 +247,52 @@ func syntheticAutoRecommendRawUserData(query AutoQuery) *rendersnapshot.RawUserD
 		}},
 		UserAreas: []rendersnapshot.RawUserArea{},
 	}
+}
+
+func encodeSyntheticAutoRecommendRawUserData(raw *rendersnapshot.RawUserData) ([]byte, error) {
+	if raw == nil {
+		return nil, fmt.Errorf("raw user snapshot is unavailable")
+	}
+
+	// The deck service treats several suite keys as required even when they are
+	// logically empty, so synthetic theoretical profiles must preserve them as
+	// empty arrays instead of omitting them via `omitempty`.
+	payload := map[string]any{
+		"now":                                   raw.Now,
+		"userGamedata":                          raw.UserGamedata,
+		"userProfile":                           raw.UserProfile,
+		"userDecks":                             sliceOrEmpty(raw.UserDecks),
+		"userCards":                             sliceOrEmpty(raw.UserCards),
+		"userBonds":                             sliceOrEmpty(raw.UserBonds),
+		"userMusicResults":                      sliceOrEmpty(raw.UserMusicStats),
+		"userMusics":                            sliceOrEmpty(raw.UserMusics),
+		"userChallengeLiveSoloDecks":            sliceOrEmpty(raw.UserChallengeLiveSoloDecks),
+		"userChallengeLiveSoloResults":          sliceOrEmpty(raw.UserChallengeLiveSoloResults),
+		"userChallengeLiveSoloStages":           sliceOrEmpty(raw.UserChallengeLiveSoloStages),
+		"userChallengeLiveSoloHighScoreRewards": sliceOrEmpty(raw.UserChallengeLiveSoloHighScoreRewards),
+		"userCharacters":                        sliceOrEmpty(raw.UserCharacters),
+		"userCharacterMissionV2s":               sliceOrEmpty(raw.UserCharacterMissionV2s),
+		"userCharacterLiveUsageCounts":          sliceOrEmpty(raw.UserCharacterLiveUsageCounts),
+		"userCharacterMissionV2Statuses":        sliceOrEmpty(raw.UserCharacterMissionV2Statuses),
+		"userAreas":                             sliceOrEmpty(raw.UserAreas),
+		"userMaterials":                         sliceOrEmpty(raw.UserMaterials),
+		"userMysekaiGates":                      sliceOrEmpty(raw.UserMysekaiGates),
+		"userMysekaiFixtureGameCharacterPerformanceBonuses": sliceOrEmpty(raw.UserMysekaiFixtureGameCharacterPerformanceBonuses),
+		"userMusicDifficultyClearCounts":                    sliceOrEmpty(raw.UserMusicClear),
+		"userHonors":                                        sliceOrEmpty(raw.UserHonors),
+		"userProfileHonors":                                 sliceOrEmpty(raw.UserProfileHonors),
+		"userPlayerFrames":                                  sliceOrEmpty(raw.UserFrames),
+		"userEvents":                                        sliceOrEmpty(raw.UserEvents),
+		"userEventResults":                                  sliceOrEmpty(raw.UserEventResults),
+		"userWorldBlooms":                                   sliceOrEmpty(raw.UserWorldBlooms),
+	}
+
+	return json.Marshal(payload)
+}
+
+func sliceOrEmpty[T any](items []T) []T {
+	if items == nil {
+		return []T{}
+	}
+	return items
 }

@@ -1748,6 +1748,7 @@ func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testin
 
 func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot(t *testing.T) {
 	var cached snapshot.RawUserData
+	var cachedPayload map[string]json.RawMessage
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -1759,6 +1760,9 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 			var payloads [][]byte
 			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
 				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			if err := json.Unmarshal(payloads[0], &cachedPayload); err != nil {
+				t.Fatalf("decode cached raw user data payload: %v", err)
 			}
 			if err := json.Unmarshal(payloads[0], &cached); err != nil {
 				t.Fatalf("decode cached raw user data: %v", err)
@@ -1819,6 +1823,13 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 	}
 	if cached.UserGamedata.UserID != 1 || cached.UserGamedata.Deck != 1 {
 		t.Fatalf("unexpected synthetic user gamedata: %+v", cached.UserGamedata)
+	}
+	userCharacters, ok := cachedPayload["userCharacters"]
+	if !ok {
+		t.Fatalf("expected synthetic payload to include userCharacters")
+	}
+	if string(userCharacters) != "[]" {
+		t.Fatalf("expected synthetic userCharacters to be an empty array, got %s", string(userCharacters))
 	}
 	if len(cached.UserCards) != 7 {
 		t.Fatalf("unexpected max profile user card count without snapshot: %d", len(cached.UserCards))

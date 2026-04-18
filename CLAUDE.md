@@ -31,7 +31,7 @@
 - 若新增测试涉及真实 Sekai HTTP 调用（`httptest.NewServer` + `config.Cfg.SekaiAPI.BaseURL`），**记得把 `SekaiAPI: sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI)` 塞进 App 字面量**（参考 `TestExecuteMysekaiPhoto`、`TestBuildPublicMusicProfilesUsesSelectorFromRequestParams`）。
 
 ### 包命名避坑
-- `handler/sekai`（bot 命令解析）≠ `pjsk/sekai`（上游 HTTP 客户端）。后者 import 一律 alias 为 **`sekaiapi`**。
+- `handler`（bot 命令解析，`internal/pjsk/handler/`）≠ `pjsk/sekai`（上游 HTTP 客户端）。后者 import 一律 alias 为 **`sekaiapi`**。
 - `accountdata/`（用户绑定 / profile 设置）≠ `render/snapshot/`（游戏快照 Snapshot，曾名 `render/userdata`）。
 
 ### 用户身份 / 快照链路
@@ -57,5 +57,5 @@
 ## 常见陷阱
 
 - 服务器主入口只有 `main.go` 在**项目根**，信号设置后调用 `server.Run(ctx)`。启动初始化逻辑（`init_*.go`、`fiber.go`、`run.go`）在 `internal/server/` 包（`package server`），构建命令是 `go build .`。`cmd/` 下只剩 `cmd/migrate/` 和 `cmd/extractor/`。
-- Remote merge 后检查 `resolver_snapshot.go`、`runtime_test.go`、`bridge_test.go` 等 — 这些是早期 singleton migration 的高频冲突点，合并方可能把旧 API（`sekaiapi.GetToolboxClient()`）恢复进来。
+- Remote merge 后检查 `resolver_snapshot.go`、`runtime_test.go`、`command_execution_test.go` 等 — 这些是早期 singleton migration 的高频冲突点，合并方可能把旧 API（`sekaiapi.GetToolboxClient()`）恢复进来。
 - 删除 `parser/parser.go` 之后，`internal/pjsk/parser/` 包内再无 `CardParser` 系列。card 查询解析统一走 `internal/pjsk/render/card/parser.go`。

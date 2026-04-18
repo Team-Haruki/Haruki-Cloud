@@ -2,6 +2,8 @@
 
 > 更新日期：2026-03-31
 >
+> 2026-04-18 注意：本文中的 `handler/sekai/` 路径引用均为历史快照；该子包已在 2026-04-18 扁平化至 `internal/pjsk/handler/`，`bridge_*.go` 文件已全部删除。当前架构请参阅 [architecture.cn.md](architecture.cn.md) 和 [project-completion-tracker.cn.md](project-completion-tracker.cn.md)。
+>
 > 2026-04-09 补充说明：本文是 2026-03-31 当时的阶段性进度快照，不是当前架构总览。
 >
 > - `api/legacy/pjsk/` 已从仓库与运行时移除

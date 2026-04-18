@@ -7,6 +7,8 @@
 > 2026-04-15 状态：在 v17.5 实战联调稳定化基础上，本轮引入 Profile 部署环境机制（`production` / `beta` / `dev`），完成项目从"Haruki Database Backend"到"Haruki Cloud"的正式更名（配置文件 → `haruki-cloud.yaml`），并修复 API 层 6 项安全审计问题。项目进入 **运维配置标准化** 阶段。详见 [项目完成度跟踪](project-completion-tracker.cn.md)。已知 bug 追踪见 [known-bugs.cn.md](known-bugs.cn.md)。
 >
 > `api/legacy/pjsk/` 与 `internal/pjsk/render/deck/deck_cgo/` 历史目录已移除。本文保留了 2026-03 ~ 2026-04-01 的阶段性记录，凡与当前运行事实冲突之处，以 [项目完成度跟踪](project-completion-tracker.cn.md) 为准。
+>
+> 2026-04-18 注意：`handler/sekai/` 子包、`bridge_*.go` 文件、`global_resolver.go` 等本文中频繁引用的路径已在后续重构中删除/合并。当前路径请以 [architecture.cn.md](architecture.cn.md) 为准。
 
 ## 1. 当前结论
 

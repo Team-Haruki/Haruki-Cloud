@@ -29,6 +29,7 @@
 > 21. 2026-04-10 本轮后续又继续清理了一批热点文件：`handler/sekai/deck_extractor.go`、`render/provider/db_musics.go`、`render/gacha/builder.go`、`handler/sekai/score_board_params.go`、`render/music/board_helpers.go`、`render/music/lookup.go`、`render/music/builder.go`、`render/event/builder.go`、`render/honor/builder.go`、`render/provider/db_honors.go` 均已进一步按职责拆分；`music/event/honor/provider` 相关 targeted tests 与 `go test ./...` 现已保持通过。
 > 22. 2026-04-10 本轮继续收尾后，`render/userdata/local.go`、`render/sk/controller_trace.go`、`render/mysekai/helpers.go`、`render/music/board_request.go`、`render/mysekai/map_builder.go`、`render/profile/controller.go`、`render/provider/contextual.go` 也已进一步按职责拆分；同时补平了 `render/music/lookup.go` 上一轮拆分残留的重复定义编译债务，`music/sk/userdata/mysekai/profile/provider/handler` 定向回归已恢复通过。
 > 23. 截至 2026-04-10，`go test ./...` 仍保持全绿；重构工作已从“主链架构收口”进入“剩余局部热点清理”阶段。
+> 24. 2026-04-18 handler 重构：`internal/pjsk/handler/sekai/` 子包已扁平化至 `internal/pjsk/handler/`；所有 `bridge_*.go`（15 个）已删除，执行逻辑合并进各命令文件；`internal/pjsk/onebot11/` 上移至 `internal/onebot11/`；`internal/handler/` 新增统一命令注册表；`internal/pjsk/parser/global_resolver.go` 已删除。本次重构涉及 125 文件，~5500 行新增 / ~5300 行删除。
 
 ## 1. 范围与方法
 
@@ -51,7 +52,7 @@
 
 1. 阅读服务入口、路由注册、运行时装配与核心业务链路。
 2. 对照 `docs/` 中的设计文档、状态文档与合并说明。
-3. 读取 `internal/pjsk/handler/sekai/` 与 `internal/pjsk/render/` 的实现和测试。
+3. 读取 `internal/pjsk/handler/` 与 `internal/pjsk/render/` 的实现和测试。
 4. 运行 `go test ./...`，记录当前失败包与原因。
 
 ## 2. 当前结论
@@ -394,7 +395,7 @@ HARUKI_RUN_INTEGRATION=1 go test ./integration -count=1
 | 位置 | 修复方式 |
 |------|----------|
 | `api/bot/pjsk` | 修正 `SK speed` 测试预期；补齐 `player-trace` tracker stub |
-| `internal/pjsk/handler/sekai` | 将 `education/area` 测试与当前显式参数要求对齐 |
+| `internal/pjsk/handler` | 将 `education/area` 测试与当前显式参数要求对齐 |
 | `internal/pjsk/render/event` | 修正 `EventBrief.EventType` 输出为展示值 |
 | `internal/pjsk/render/music` | `ResolveMusicBPM` 补齐普通本地路径 + `asset/{region}-assets/startapp/...` 双路径支持 |
 | `internal/pjsk/render/profile` | 测试补齐显式 `CN` source 注册 |
@@ -449,7 +450,7 @@ go test ./...
 | `api/bot/pjsk/handler_test.go:1111` | `sk/speed` 期望 `request_type=tracker`，当前实际为另一种请求类型 |
 | `api/bot/pjsk/handler_test.go:1301` | `sk/player-trace` 返回了文本错误而非图片消息 |
 | 历史 `api/legacy/pjsk/render_route_test.go:3308` | `routeGachaSource` 未实现 `GetGachaByEventID`（对应文件现已随 legacy 路由移除） |
-| `internal/pjsk/handler/sekai/education_test.go:70` | `education/area` 空参数默认行为测试失败 |
+| `internal/pjsk/handler/education_test.go` | `education/area` 空参数默认行为测试失败 |
 | `internal/pjsk/render/event/builder_test.go:147` | 期望 `WorldLink`，实际得到 `world_bloom` |
 | `internal/pjsk/render/music/lookup_test.go:198` | 当前环境没有可读取的本地谱面文件，无法查询 BPM |
 | `internal/pjsk/render/music/lookup_test.go:241` | 同上 |

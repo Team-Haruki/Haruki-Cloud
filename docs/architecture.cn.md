@@ -1,6 +1,12 @@
 # Haruki-Cloud 项目架构文档
 
-> 最后更新：2026-04-09（v1.7）
+> 最后更新：2026-04-18（v1.8）
+>
+> 2026-04-18 补充：
+> 1. `internal/pjsk/handler/sekai/` 子包已扁平化至 `internal/pjsk/handler/`；所有 `bridge_*.go` 分发文件已删除，执行逻辑合并进各命令文件。
+> 2. `internal/pjsk/onebot11/` 已上移至 `internal/onebot11/`（通用工具包，不专属 pjsk）。
+> 3. `internal/handler/` 新增统一命令注册表（`handler.go` + `bot_route.go`）。
+> 4. `internal/pjsk/parser/global_resolver.go` 已删除。
 >
 > 2026-04-09 补充：
 > 1. `api/legacy/pjsk/` 已从仓库与运行时移除。
@@ -377,42 +383,50 @@ Schema 定义在 `ent/<module>/schema/` 下，通过 `go generate` 自动生成 
 
 ```
 internal/pjsk/parser/
-├── global_resolver.go    # 兼容型全局解析器，供测试、调试和历史辅助逻辑使用
 ├── extractor.go          # Extractor：从文本中提取区服、角色、稀有度、属性、年份、uidArg 等
 ├── event_parser.go       # EventParser + EventQueryInfo
 ├── command_parser.go     # 其他命令解析辅助
 ├── utils.go              # isNumeric 等工具函数
+├── types.go              # 共享类型定义
 └── parser_test.go        # 测试（聚焦 Extractor）
 ```
 
-> 历史上曾存在 `parser.go` (`CardParser`/`CardQueryInfo`)，已在 R38 删除：功能由 `internal/pjsk/render/card/parser.go` 独立实现覆盖，原版本零外部调用方。
+> 历史上曾存在 `parser.go` (`CardParser`/`CardQueryInfo`)，已在 R38 删除。`global_resolver.go`（兼容型全局解析器）也已在后续 handler 重构中删除。card 查询解析统一走 `internal/pjsk/render/card/parser.go`。
 
-**核心概念：**
-- `GlobalCommandResolver.Resolve(text)` 当前主要服务测试、调试与历史辅助逻辑，不是运行时 Bot 主协议入口
-- `ResolvedCommand` 包含：Module, Mode, Query, Region, Params, IsHelp, IsVerbose, IsPreview
-- parser 包同时向各 path 绑定的 handler 提供通用提取器和类型化解析能力
-- `Extractor.ExtractUid` 当前支持 `u[i]`、游戏 UID、`@qq` 三类账号指定参数
-
-### 8.2 handler — 指令处理 + Bridge
+### 8.2 handler — 指令处理
 
 ```
-internal/pjsk/handler/
-├── bridge.go             # Execute(ctx, resolved, app) → onebot11.Message + error
-├── bot_route.go          # Bot route registry：聚合 module/path/commands/method
-├── context.go            # Event, Context 接口, HandlerContext；从消息段提取文本和 at.qq 列表
-├── handler.go            # Trie 注册、命令匹配、参数截取
-├── profile_mode.go       # Profile 渲染模式常量
-├── result.go             # bridge 内部辅助结果类型（当前主要供 executeProfile 等路径使用）
-└── sekai/                # 各功能 handler
-    ├── handler.go        # SekaiCommandHandler 注册；含 ParseUIDArg / uidArg 公共处理
-    ├── helpers.go        # 工具函数
-    ├── card.go ... vlive.go  # 各功能处理器
-    └── handler_test.go
+internal/handler/                 # 统一命令注册表
+├── handler.go                    # 路由元数据、命令注册、manifest 分发
+└── bot_route.go                  # Bot route 类型定义
+
+internal/onebot11/                # OneBot11 协议工具（已从 pjsk 上移）
+├── segment.go                    # 消息段类型与构造器
+├── parse.go                      # CQ 码解析
+└── error.go                      # ReplayError
+
+internal/pjsk/handler/            # PJSK 功能命令（已扁平化，无子包）
+├── handler.go                    # Trie 注册、命令匹配、参数截取
+├── sekai_registry.go             # 各命令注册入口
+├── command_executor.go           # 执行器绑定
+├── command_request.go            # 类型化命令输入
+├── execute_prelude.go            # 统一执行前置（封禁检查、区服默认值、时区、上下文构建）
+├── execution_helpers.go          # 执行辅助函数（缓存落盘、segment 封装）
+├── context.go                    # Event, Context 接口, HandlerContext
+├── runtime.go                    # 运行时装配
+├── messages.go                   # 消息构建辅助
+├── helpers.go                    # 工具函数
+├── alias.go ... vlive.go         # 各功能命令（解析 + 执行一体化）
+├── deck_*.go                     # 组卡相关（builder, config, extractor, helpers, types 等）
+├── sk_*.go                       # 冲榜相关（params, parse）
+├── score_*.go                    # 分数相关（board_params 等）
+├── profile_*.go                  # Profile 相关（settings, bg）
+├── mysekai_*.go                  # MySekai 相关（parse, gate）
+├── resolver_*.go                 # 各类解析器（snapshot, profiles, targets, character 等）
+└── *_test.go                     # 测试文件
 ```
 
-**Bridge 设计：** `bridge.go` 是指令解析与执行层之间的零开销桥梁，将 `ResolvedCommand` 直接路由到对应执行入口，并直接返回 `onebot11.Message`。图片执行器在 bridge 内完成缓存落盘和 `image` segment 封装，文本执行器直接返回 `text` segment，无 HTTP 往返。
-
-`context.go` 当前只识别 OneBot `at` 段中的 `qq` 字段，不包含任何额外兼容字段。
+**设计说明：** 原有的 `bridge_*.go` 分发层和 `sekai/` 子包已在 2026-04-18 的 handler 重构中合并。每个命令文件（如 `card.go`、`music.go`）现在同时包含解析逻辑和执行逻辑，不再需要中间桥梁层。`execute_prelude.go` 提供统一的执行前置处理（封禁检查、区服默认值、时区设置），各命令执行器直接返回 `onebot11.Message`。
 
 ### 8.3 render — 渲染子系统
 
@@ -475,7 +489,7 @@ internal/pjsk/chardata/
 | 本地用户快照 | `render/userdata/local.go` 读取本地 JSON 文件（user.json, music_metas.json, mysekai.json），应迁移至 DB 驱动 |
 | MySekai Masterdata | 依赖本地文件，未完全转为 DB 驱动 |
 | Deck 引擎 | 简化版实现，原生 CGo 引擎未迁入 |
-| Profile 扩展命令未完成 | `internal/pjsk/handler/sekai/profile.go` | 绑定/解绑/默认绑定已接入；`swap bind`、隐藏/展示抓包、隐藏/展示 ID、注册时间、服务状态、抓包模式仍为 disabled/TODO |
+| Profile 扩展命令未完成 | `internal/pjsk/handler/profile.go` | 绑定/解绑/默认绑定已接入；`swap bind`、隐藏/展示抓包、隐藏/展示 ID、注册时间、服务状态、抓包模式仍为 disabled/TODO |
 
 ---
 
@@ -483,7 +497,7 @@ internal/pjsk/chardata/
 
 ```bash
 # 构建主服务
-go build ./cmd/server/...
+go build .
 
 # 运行全部测试
 go test ./...
@@ -492,7 +506,7 @@ go test ./...
 go test ./api/public/...                     # 公开 API（pjsk alias, chunithm）
 go test ./api/bot/...                        # Bot 端点（auth + pjsk）
 go test ./internal/pjsk/parser/...          # 指令解析器
-go test ./internal/pjsk/handler/sekai/...   # Handler 子系统
+go test ./internal/pjsk/handler/...         # Handler 子系统
 go test ./internal/pjsk/render/...          # 渲染子系统
 ```
 

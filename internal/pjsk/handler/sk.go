@@ -78,7 +78,7 @@ func (sekaiHandlers) SKCheckRoomHandle() HarukiSekaiCommandHandler {
 		CommandHandlerBase: CommandHandlerBase{
 			Path: "sk/check-room",
 			Commands: []string{
-				"/sk-check-room", "/sk查房", "/查房", "/cf", "/pjsk查房", "/csb", "/冲水板", "/pjsk冲水板",
+				"/sk-check-room", "/sk查房", "/查房", "/cf", "/pjsk查房",
 			},
 		},
 		PrefixArgs: []string{"", "wl"},
@@ -225,7 +225,7 @@ func (sekaiHandlers) SKBoardHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) CSBHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/check-room",
+			Path: "sk/csb",
 			Commands: []string{
 				"/csb", "/查水表", "/pjsk查水表", "/停车时间",
 			},
@@ -236,7 +236,7 @@ func (sekaiHandlers) CSBHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-check-room", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-csb", params), nil
 		},
 	}, executeSK)
 }
@@ -261,6 +261,8 @@ func executeSKMode(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
 		return executeSKQuery(rc, skCtrl)
 	case "sk-check-room":
 		return executeSKCheckRoom(rc, skCtrl)
+	case "sk-csb":
+		return executeSKCSB(rc, skCtrl)
 	case "sk-speed", "sk-daily-speed":
 		return executeSKSpeed(rc, skCtrl)
 	case "sk-player-trace":
@@ -322,6 +324,22 @@ func executeSKCheckRoom(rc *RequestContext, skCtrl *sk.Controller) ([]byte, erro
 	req := drawing.CFRequest{}
 	mergeParams(rc.Cmd.Params, &req)
 	return skCtrl.RenderCheckRoom(req)
+}
+
+func executeSKCSB(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
+	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
+		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
+			return nil, err
+		}
+		payload, err := skCtrl.BuildCSBRequestFromTracker(trackerReq)
+		if err != nil {
+			return nil, err
+		}
+		return skCtrl.RenderCSB(*payload)
+	}
+	req := drawing.CSBRequest{}
+	mergeParams(rc.Cmd.Params, &req)
+	return skCtrl.RenderCSB(req)
 }
 
 func executeSKSpeed(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {

@@ -1199,6 +1199,25 @@ func TestBuildPlayerTraceFromTrackerRankUsesCurrentPlayerHistory(t *testing.T) {
 	}
 }
 
+type checkRoomOutOfTop100TrackerSource struct {
+	testTrackerSource
+}
+
+func (checkRoomOutOfTop100TrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     1_234_567,
+			Rank:      120,
+			Timestamp: 6000,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "OutTop100",
+		},
+	}, nil
+}
+
 func TestBuildCheckRoomRequestFromTrackerKeepsPlayerNameAndUsesWindowMetrics(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
@@ -1546,6 +1565,126 @@ func TestBuildCheckRoomRequestFromTrackerUsesRankPlaceholderWhenOnlyEventTitleAv
 	}
 	if payload.Ranks[0].Name != "Rank 1" {
 		t.Fatalf("expected rank placeholder when only event title exists, got %+v", payload.Ranks[0])
+	}
+}
+
+func TestBuildCheckRoomRequestFromTrackerRejectsRanksOutsideTop100(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	_, err := controller.BuildCheckRoomRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{101},
+	})
+	if err == nil {
+		t.Fatal("expected top-100 limit error, got nil")
+	}
+	if got := err.Error(); got != "查房/查水表目前仅支持前100名查询" {
+		t.Fatalf("unexpected error: %v", got)
+	}
+}
+
+func TestBuildCheckRoomRequestFromTrackerRejectsUserOutsideTop100(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(checkRoomOutOfTop100TrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	_, err := controller.BuildCheckRoomRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		UserID:  new(int64(99887766)),
+	})
+	if err == nil {
+		t.Fatal("expected top-100 limit error, got nil")
+	}
+	if got := err.Error(); got != "查房/查水表目前仅支持前100名查询" {
+		t.Fatalf("unexpected error: %v", got)
+	}
+}
+
+func TestBuildCSBRequestFromTrackerBuildsTracePayload(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildCSBRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1},
+	})
+	if err != nil {
+		t.Fatalf("build csb request: %v", err)
+	}
+	if payload.EventName != eventInfo.Name {
+		t.Fatalf("unexpected event name: %q", payload.EventName)
+	}
+	if len(payload.Ranks) != 31 {
+		t.Fatalf("unexpected trace point count: %d", len(payload.Ranks))
+	}
+	if payload.Ranks[len(payload.Ranks)-1].Rank != 1 {
+		t.Fatalf("unexpected latest rank: %+v", payload.Ranks[len(payload.Ranks)-1])
+	}
+	if payload.Ranks[len(payload.Ranks)-1].Name != "Player-1" {
+		t.Fatalf("unexpected latest name: %+v", payload.Ranks[len(payload.Ranks)-1])
+	}
+	if payload.UpdateAt <= 0 {
+		t.Fatalf("expected update time to be set, got %d", payload.UpdateAt)
+	}
+}
+
+func TestBuildCSBRequestFromTrackerRejectsMultipleRanks(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	_, err := controller.BuildCSBRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1, 2},
+	})
+	if err == nil {
+		t.Fatal("expected single-target error, got nil")
+	}
+	if got := err.Error(); got != "查水表目前仅支持单人查询" {
+		t.Fatalf("unexpected error: %v", got)
 	}
 }
 

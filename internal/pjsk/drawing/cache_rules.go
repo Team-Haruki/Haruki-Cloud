@@ -103,6 +103,11 @@ var (
 			TTL:              skRenderCacheBucket,
 			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "aggregate_at", "update_at", "time", "record_start_at"),
 		},
+		"/api/pjsk/sk/csb": {
+			Enabled:          true,
+			TTL:              skRenderCacheBucket,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "aggregate_at", "update_at", "time", "record_start_at"),
+		},
 		"/api/pjsk/sk/speed": {
 			Enabled:          true,
 			TTL:              skRenderCacheBucket,

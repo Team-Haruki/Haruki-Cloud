@@ -305,6 +305,10 @@ func (c *HarukiDrawingClient) GenerateSKCheckRoom(req *CFRequest) ([]byte, error
 	return c.cachedPost("/api/pjsk/sk/check-room", req)
 }
 
+func (c *HarukiDrawingClient) GenerateSKCSB(req *CSBRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/sk/csb", req)
+}
+
 func (c *HarukiDrawingClient) GenerateSKSpeed(req *SpeedRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/sk/speed", req)
 }

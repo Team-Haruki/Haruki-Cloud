@@ -78,6 +78,16 @@ type CFRequest struct {
 	WlCharaIconPath *string    `json:"wl_chara_icon_path,omitempty"`
 }
 
+type CSBRequest struct {
+	Eid             int        `json:"eid"`
+	EventName       string     `json:"event_name"`
+	Region          string     `json:"region"`
+	Ranks           []RankInfo `json:"ranks"`
+	AggregateAt     int64      `json:"aggregate_at"`
+	UpdateAt        int64      `json:"update_at"`
+	WlCharaIconPath *string    `json:"wl_chara_icon_path,omitempty"`
+}
+
 type SpeedRequest struct {
 	EventID          int         `json:"event_id"`
 	Region           string      `json:"region"`

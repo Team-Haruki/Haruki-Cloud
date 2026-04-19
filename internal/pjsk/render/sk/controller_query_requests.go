@@ -8,6 +8,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
+const skCheckRoomRankLimit = 100
+
 func (c *Controller) BuildQueryRequest(req drawing.SKRequest) (*drawing.SKRequest, error) {
 	if len(req.Ranks) == 0 {
 		return nil, fmt.Errorf("sk query request has no ranks")
@@ -59,6 +61,9 @@ func (c *Controller) BuildCheckRoomRequest(req drawing.CFRequest) (*drawing.CFRe
 	if len(req.Ranks) == 0 {
 		return nil, fmt.Errorf("sk check-room request has no ranks")
 	}
+	if err := validateSKCheckRoomSupportedRanks(req.Ranks); err != nil {
+		return nil, err
+	}
 	return &req, nil
 }
 
@@ -88,6 +93,9 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 		if err != nil {
 			return nil, fmt.Errorf("tracker user query failed: %w", err)
 		}
+		if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
+			return nil, err
+		}
 		payload.Ranks = []drawing.RankInfo{info}
 		targetRank = info.Rank
 	} else {
@@ -96,9 +104,12 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 		if err != nil {
 			return nil, err
 		}
+		if err := validateSKCheckRoomSupportedRanks(rankInfos); err != nil {
+			return nil, err
+		}
 		payload.Ranks = rankInfos
-		if len(normalized.Ranks) > 0 {
-			targetRank = normalized.Ranks[0]
+		if len(rankInfos) > 0 {
+			targetRank = rankInfos[0].Rank
 		}
 	}
 
@@ -124,4 +135,103 @@ func (c *Controller) RenderCheckRoom(req drawing.CFRequest) ([]byte, error) {
 		return nil, err
 	}
 	return c.drawing.GenerateSKCheckRoom(payload)
+}
+
+func (c *Controller) BuildCSBRequest(req drawing.CSBRequest) (*drawing.CSBRequest, error) {
+	if len(req.Ranks) == 0 {
+		return nil, fmt.Errorf("sk csb request has no ranks")
+	}
+	if err := validateSKCheckRoomSupportedRank(req.Ranks[len(req.Ranks)-1].Rank); err != nil {
+		return nil, err
+	}
+	return &req, nil
+}
+
+func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.CSBRequest, error) {
+	normalized, err := c.validateTrackerQuery(req)
+	if err != nil {
+		return nil, err
+	}
+	if normalized.UserID == nil && len(normalized.Ranks) > 1 {
+		return nil, fmt.Errorf("查水表目前仅支持单人查询")
+	}
+
+	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
+	meta.applyOverrides(req)
+	payload := drawing.CSBRequest{
+		Eid:         normalized.EventID,
+		EventName:   meta.name,
+		Region:      normalized.Region,
+		AggregateAt: meta.aggregateAt,
+		UpdateAt:    time.Now().UTC().UnixMilli(),
+	}
+	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
+		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
+			payload.WlCharaIconPath = &icon
+		}
+	}
+
+	if normalized.UserID != nil && *normalized.UserID > 0 {
+		info, err := c.buildSingleUserFromTracker(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID)
+		if err != nil {
+			return nil, fmt.Errorf("tracker user query failed: %w", err)
+		}
+		if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
+			return nil, err
+		}
+		trace, err := c.buildUserTraceFromTracker(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID)
+		if err != nil {
+			return nil, err
+		}
+		payload.Ranks = trace
+		return c.BuildCSBRequest(payload)
+	}
+
+	if len(normalized.Ranks) == 0 {
+		return nil, fmt.Errorf("查水表目前仅支持单人查询")
+	}
+	info, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
+		return nil, err
+	}
+	userID, err := c.resolveTrackerUserIDByRank(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
+	if err != nil {
+		return nil, err
+	}
+	trace, err := c.buildUserTraceFromTracker(normalized.Region, normalized.EventID, userID, normalized.WlCharacterID)
+	if err != nil {
+		return nil, err
+	}
+	payload.Ranks = trace
+	return c.BuildCSBRequest(payload)
+}
+
+func (c *Controller) RenderCSB(req drawing.CSBRequest) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	payload, err := c.BuildCSBRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateSKCSB(payload)
+}
+
+func validateSKCheckRoomSupportedRanks(ranks []drawing.RankInfo) error {
+	for _, rank := range ranks {
+		if err := validateSKCheckRoomSupportedRank(rank.Rank); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateSKCheckRoomSupportedRank(rank int) error {
+	if rank > skCheckRoomRankLimit {
+		return fmt.Errorf("查房/查水表目前仅支持前100名查询")
+	}
+	return nil
 }

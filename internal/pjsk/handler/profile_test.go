@@ -264,6 +264,73 @@ func TestProfileBindListHandleKeepsServerWhenRegionExplicit(t *testing.T) {
 	}
 }
 
+func TestProfileBindSwapHandleParsesArgs(t *testing.T) {
+	h := sekaiHandlers{}.ProfileBindSwapHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/绑定交换",
+		ArgText:    "u1 u2",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeBindSwap {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileBindingCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Selector != "u1" || params.SelectorOther != "u2" {
+		t.Fatalf("unexpected swap params: %+v", params)
+	}
+	if params.Server != "" {
+		t.Fatalf("unexpected implicit server: %q", params.Server)
+	}
+}
+
+func TestProfileBindHandleRedirectsSwapArgs(t *testing.T) {
+	h := sekaiHandlers{}.ProfileBindHandle()
+	h.Regions = []renderregion.Value{renderregion.JP, renderregion.CN}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/cn绑定",
+		ArgText:    "交换 u1 u2",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeBindSwap {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileBindingCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Selector != "u1" || params.SelectorOther != "u2" || params.Server != "cn" {
+		t.Fatalf("unexpected redirected swap params: %+v", params)
+	}
+}
+
 func TestProfileTimeZoneHandleParsesArgs(t *testing.T) {
 	h := sekaiHandlers{}.ProfileTimeZoneHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}

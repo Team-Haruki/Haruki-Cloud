@@ -131,7 +131,7 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 		option["live_type"] = "multi"
 		option["event_id"] = nil
 	case "bonus":
-		option["algorithm"] = "dfs"
+		option["algorithm"] = "all"
 		option["live_type"] = "solo"
 		option["target"] = "bonus"
 		option["target_bonus_list"] = pickBonusTargets(query.TargetBonuses, query.Args)
@@ -144,7 +144,7 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 			option["event_id"] = eventID
 		}
 	case "mysekai":
-		option["algorithm"] = "ga"
+		option["algorithm"] = "all"
 		option["live_type"] = "mysekai"
 		option["event_id"] = nil
 		option["rarity_1_config"] = noChangeDeckConfig()

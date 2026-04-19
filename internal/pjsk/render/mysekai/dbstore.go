@@ -20,6 +20,7 @@ var fileToTable = map[string]string{
 	"mysekaiGateCharacterLotteries.json":              "mysekaigatecharacterlotteries",
 	"mysekaiGates.json":                               "mysekaigates",
 	"mysekaiPhenomenas.json":                          "mysekaiphenomenas",
+	"mysekaiPhenomenaBackgroundColors.json":           "mysekaiphenomenabackgroundcolors",
 	"mysekaiMusicRecords.json":                        "mysekaimusicrecords",
 	"mysekaiCharacterTalkConditions.json":             "mysekaicharactertalkconditions",
 	"mysekaiCharacterTalkConditionGroups.json":        "mysekaicharactertalkconditiongroups",

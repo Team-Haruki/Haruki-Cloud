@@ -98,6 +98,7 @@ func normalizeRenderCachePayload(request any) (any, error) {
 }
 
 func sanitizeRenderCachePayload(endpointPath string, payload any) {
+	deleteKeyAt(payload, "dt")
 	switch endpointPath {
 	case "/api/pjsk/deck/recommend":
 		deleteKeyAt(payload, "model_name")

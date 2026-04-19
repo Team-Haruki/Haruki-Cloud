@@ -9,6 +9,20 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
+var (
+	mysekaiMapRareOutlineColor      = []int{255, 50, 50, 150}
+	mysekaiMapSmallIconOutlineColor = []int{50, 50, 255, 100}
+)
+
+const (
+	mysekaiMapSpawnSize          = 20
+	mysekaiMapLargeIconSize      = 35
+	mysekaiMapSmallIconSize      = 17
+	mysekaiMapIconZOffset        = -32
+	mysekaiMapRareLargeLightSize = 315
+	mysekaiMapRareSmallLightSize = 225
+)
+
 // BuildMapRequest builds the request for rendering MySekai map view.
 func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequest, error) {
 	c = c.withRegion(query.Region)
@@ -178,11 +192,17 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 	}
 
 	return &drawing.MysekaiMsrMapRequest{
-		Maps:          maps,
-		ShowHarvested: showHarvested,
+		Maps:                 maps,
+		ShowHarvested:        showHarvested,
+		PhenomenaGroundColor: c.currentMysekaiPhenomenaGroundColor(region, merged),
 		SpawnImagePath: drawing.StringPtr(
 			c.staticPath("mysekai/mark.png"),
 		),
+		SpawnSize:          mysekaiMapSpawnSize,
+		RareLightImagePath: drawing.StringPtr(c.staticPath("mysekai/light.png")),
+		LargeIconSize:      mysekaiMapLargeIconSize,
+		SmallIconSize:      mysekaiMapSmallIconSize,
+		IconZOffset:        mysekaiMapIconZOffset,
 	}, nil
 }
 

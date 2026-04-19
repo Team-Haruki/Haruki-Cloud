@@ -13,6 +13,7 @@ const (
 	ProfileModeRender       = "profile"
 	ProfileModeBind         = "profile-bind"
 	ProfileModeBindList     = "profile-bind-list"
+	ProfileModeBindSwap     = "profile-bind-swap"
 	ProfileModeUnbind       = "profile-unbind"
 	ProfileModeDefaultSet   = "profile-default-set"
 	ProfileModeDefaultClear = "profile-default-clear"
@@ -22,6 +23,7 @@ type ProfileBindingCommandParams struct {
 	Platform       string `json:"platform"`
 	PlatformUserID string `json:"platform_user_id"`
 	Selector       string `json:"selector,omitempty"`
+	SelectorOther  string `json:"selector_other,omitempty"`
 	Server         string `json:"server,omitempty"`
 	Scope          string `json:"scope,omitempty"`
 }
@@ -37,6 +39,7 @@ func DecodeProfileBindingParams(raw json.RawMessage) (ProfileBindingCommandParam
 	params.Platform = strings.TrimSpace(params.Platform)
 	params.PlatformUserID = strings.TrimSpace(params.PlatformUserID)
 	params.Selector = strings.TrimSpace(params.Selector)
+	params.SelectorOther = strings.TrimSpace(params.SelectorOther)
 	params.Server = strings.TrimSpace(strings.ToLower(params.Server))
 	params.Scope = strings.TrimSpace(params.Scope)
 	if params.Platform == "" || params.PlatformUserID == "" {
@@ -73,6 +76,15 @@ func ExecuteProfileBindingCommand(ctx context.Context, service *BindingService, 
 			items = filterBindingsByServer(items, params.Server)
 		}
 		return []byte(formatBindingListText(items, params.Server)), nil
+	case ProfileModeBindSwap:
+		items, err := service.Swap(ctx, params.Platform, params.PlatformUserID, params.Selector, params.SelectorOther, params.Server)
+		if err != nil {
+			return nil, err
+		}
+		if params.Server != "" {
+			items = filterBindingsByServer(items, params.Server)
+		}
+		return []byte(formatBindingSwapResultText(params.Selector, params.SelectorOther, params.Server, items)), nil
 	case ProfileModeUnbind:
 		result, err := service.Unbind(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Server)
 		if err != nil {
@@ -176,6 +188,14 @@ func formatDefaultBindingResultText(prefix string, result *DefaultBindingResult)
 		scopeLabel = strings.ToUpper(result.Server) + "服默认绑定"
 	}
 	return fmt.Sprintf("%s%s为 [%s] %s", prefix, strings.TrimSpace(scopeLabel), strings.ToUpper(result.Binding.Server), formatBindingUID(result.Binding))
+}
+
+func formatBindingSwapResultText(left, right, server string, items []BindingListItem) string {
+	header := fmt.Sprintf("已交换 %s 和 %s 的顺序", strings.TrimSpace(left), strings.TrimSpace(right))
+	if server != "" {
+		header = fmt.Sprintf("已交换%s服 %s 和 %s 的顺序", strings.ToUpper(server), strings.TrimSpace(left), strings.TrimSpace(right))
+	}
+	return header + "\n" + formatBindingListText(items, server)
 }
 
 func formatBindingUID(item BindingListItem) string {

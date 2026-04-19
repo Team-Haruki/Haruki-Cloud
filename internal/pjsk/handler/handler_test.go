@@ -235,3 +235,24 @@ func TestDispatchSupportsMysekaiOverviewAlias(t *testing.T) {
 		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
 	}
 }
+
+func TestDispatchSupportsMysekaiResourceAliasWithoutMapMode(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	resolved, err := dispatchForTest(context.Background(), Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]any{"text": "/msa all"}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-resource" {
+		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	}
+}

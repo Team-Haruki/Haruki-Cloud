@@ -173,6 +173,131 @@ func TestExecuteDeckMySekaiMaxProfileDoesNotRequireBinding(t *testing.T) {
 	}
 }
 
+func TestExecuteDeckMySekaiResolvesFullSnapshot(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	raw := &rendersnapshot.RawUserData{
+		Now:          1700000000000,
+		UserGamedata: rendersnapshot.RawUserGamedata{UserID: 12345678901234, Name: "JPUser", Deck: 1, Rank: 100},
+		UserProfile:  rendersnapshot.RawUserProfile{ProfileImageType: "default"},
+		UserDecks: []rendersnapshot.RawUserDeck{{
+			DeckID:    1,
+			Leader:    1001,
+			SubLeader: 1001,
+			Member1:   1001,
+			Member2:   1001,
+			Member3:   1001,
+			Member4:   1001,
+			Member5:   1001,
+		}},
+		UserCards: []rendersnapshot.RawUserCard{{
+			CardID:                1001,
+			Level:                 60,
+			SkillLevel:            4,
+			MasterRank:            5,
+			SpecialTrainingStatus: "done",
+			DefaultImage:          "special_training",
+		}},
+	}
+	rawBytes, err := rendersnapshot.EncodeRawUserData(raw)
+	if err != nil {
+		t.Fatalf("encode raw user data: %v", err)
+	}
+
+	provider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{
+			raw:      raw,
+			rawBytes: rawBytes,
+		},
+	}
+
+	params, err := json.Marshal(struct {
+		Deck  map[string]any `json:"deck"`
+		Query map[string]any `json:"query"`
+	}{
+		Deck:  map[string]any{},
+		Query: map[string]any{},
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeDeck(NewRequestContext(ctx, &CommandRequest{
+		Module:            parser.ModuleDeck,
+		Mode:              "deck-mysekai",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:  service,
+		Snapshots: provider,
+		Decks:     newHandlerTestDeckController(t),
+		Music:     newHandlerTestMusicController(t),
+		ImageCache: imagecache.New(
+			"https://image-cache.test",
+			t.TempDir(),
+		),
+	}))
+	if err != nil {
+		t.Fatalf("executeDeck() error = %v", err)
+	}
+	if len(message) != 2 {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if len(provider.resolveNeedFlags) != 1 || !provider.resolveNeedFlags[0] {
+		t.Fatalf("unexpected snapshot resolve flags: %+v", provider.resolveNeedFlags)
+	}
+}
+
+func TestExecuteDeckMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingMySekaiVisible(ctx, "qq", "42", "jp", false); err != nil {
+		t.Fatalf("hide mysekai: %v", err)
+	}
+
+	params, err := json.Marshal(struct {
+		Deck  map[string]any `json:"deck"`
+		Query map[string]any `json:"query"`
+	}{
+		Deck:  map[string]any{},
+		Query: map[string]any{},
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	_, err = executeDeck(NewRequestContext(ctx, &CommandRequest{
+		Module:            parser.ModuleDeck,
+		Mode:              "deck-mysekai",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings: service,
+		Decks:    newHandlerTestDeckController(t),
+		Music:    newHandlerTestMusicController(t),
+	}))
+	if err == nil || !strings.Contains(err.Error(), ErrMsgMySekaiDataNotFound) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestExecuteDeckEventMaxProfileDoesNotRequireBinding(t *testing.T) {
 	deckController := newHandlerTestDeckController(t)
 
@@ -271,7 +396,7 @@ func TestExecuteDeckUsesSelectedBindingRegionBeforeResolvingCurrentEvent(t *test
 	}
 
 	params, err := json.Marshal(map[string]any{
-		"selector": "u1",
+		"selector": "u2",
 	})
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)

@@ -62,6 +62,11 @@ func (s *Service) TryResolveMusicTitleOrAliasID(ctx context.Context, token strin
 	} else if ok {
 		return ref.ID, true, nil
 	}
+	if ref, ok, err := s.tryResolveMusicByApprovedAliasContains(ctx, token); err != nil {
+		return 0, false, err
+	} else if ok {
+		return ref.ID, true, nil
+	}
 	return 0, false, nil
 }
 
@@ -202,6 +207,48 @@ func (s *Service) tryResolveMusicByApprovedAlias(ctx context.Context, token stri
 	titles, err := s.loadMusicTitles(ctx, musicIDs)
 	if err != nil {
 		return EntityRef{}, true, err
+	}
+	return EntityRef{
+		AliasType: PjskAliasTypeMusic,
+		ID:        musicIDs[0],
+		Name:      titles[musicIDs[0]],
+	}, true, nil
+}
+
+func (s *Service) tryResolveMusicByApprovedAliasContains(ctx context.Context, token string) (EntityRef, bool, error) {
+	if !shouldTryPartialMusicAlias(token) {
+		return EntityRef{}, false, nil
+	}
+
+	rows, err := s.pjsk.Alias.Query().
+		Where(
+			aliasdb.AliasTypeEQ(PjskAliasTypeMusic),
+			aliasdb.AliasContainsFold(token),
+		).
+		All(ctx)
+	if err != nil {
+		return EntityRef{}, true, err
+	}
+	if len(rows) == 0 {
+		return EntityRef{}, false, nil
+	}
+
+	musicIDs := make([]int, 0, len(rows))
+	seen := make(map[int]struct{}, len(rows))
+	for _, row := range rows {
+		if _, ok := seen[row.AliasTypeID]; ok {
+			continue
+		}
+		seen[row.AliasTypeID] = struct{}{}
+		musicIDs = append(musicIDs, row.AliasTypeID)
+	}
+	sort.Ints(musicIDs)
+	titles, err := s.loadMusicTitles(ctx, musicIDs)
+	if err != nil {
+		return EntityRef{}, true, err
+	}
+	if len(musicIDs) > 1 {
+		return EntityRef{}, true, ambiguousEntityError(PjskAliasTypeMusic, "别名", musicIDs, titles)
 	}
 	return EntityRef{
 		AliasType: PjskAliasTypeMusic,

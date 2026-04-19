@@ -2,6 +2,7 @@ package mysekai
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -182,6 +183,71 @@ func mysekaiBirthdayPhenom(resolve pathResolver, reason string, start time.Time,
 		StartAt:        start.UnixMilli(),
 		TextFill:       fg,
 	}
+}
+
+func (c *Controller) currentMysekaiPhenomenaGroundColor(region renderregion.Value, merged map[string]any) []int {
+	if c == nil || c.masterdata == nil {
+		return nil
+	}
+
+	phenomID := currentMysekaiPhenomenaID(region, merged)
+	if phenomID == 0 {
+		return nil
+	}
+
+	backgroundColors := c.masterdata.loadMapByID("mysekaiPhenomenaBackgroundColors.json")
+	if len(backgroundColors) == 0 {
+		return nil
+	}
+
+	return parseMysekaiColorCode(stringValue(backgroundColors[phenomID]["groundColor"]))
+}
+
+func currentMysekaiPhenomenaID(region renderregion.Value, merged map[string]any) int {
+	rawSchedules, ok := merged["mysekaiPhenomenaSchedules"].([]any)
+	if !ok || len(rawSchedules) == 0 {
+		return 0
+	}
+
+	nowMs := resolveMysekaiSnapshotTimeMs(merged)
+	now := time.Now()
+	if nowMs > 0 {
+		now = time.UnixMilli(nowMs)
+	}
+	regionLoc := time.FixedZone(region.String(), mysekaiRegionUTCOffset(region.String(), now)*3600)
+	now = now.In(regionLoc)
+
+	firstHour, secondHour := mysekaiRefreshHoursLocal(region, now)
+	currentIdx := 1
+	if now.Hour() >= firstHour && now.Hour() < secondHour {
+		currentIdx = 0
+	}
+	if currentIdx >= len(rawSchedules) {
+		currentIdx = 0
+	}
+
+	schedule, ok := rawSchedules[currentIdx].(map[string]any)
+	if !ok {
+		return 0
+	}
+	return intNumber(schedule["mysekaiPhenomenaId"], 0)
+}
+
+func parseMysekaiColorCode(code string) []int {
+	colorCode := strings.TrimSpace(strings.TrimPrefix(code, "#"))
+	if len(colorCode) != 6 {
+		return nil
+	}
+
+	color := []int{0, 0, 0, 255}
+	for idx := 0; idx < 3; idx++ {
+		value, err := strconv.ParseInt(colorCode[idx*2:idx*2+2], 16, 64)
+		if err != nil {
+			return nil
+		}
+		color[idx] = int(value)
+	}
+	return color
 }
 
 func mysekaiRefreshHoursLocal(region renderregion.Value, now time.Time) (int, int) {

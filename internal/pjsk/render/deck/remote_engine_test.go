@@ -65,10 +65,10 @@ func TestAggregateRemoteRecommendResultsMergesAlgorithmsForSameDeck(t *testing.T
 	if len(agg.Decks) != 1 {
 		t.Fatalf("expected 1 merged deck, got %+v", agg.Decks)
 	}
-	if len(agg.DeckAlgs) != 1 || agg.DeckAlgs[0] != "dfs+ga" {
+	if len(agg.DeckAlgs) != 1 || agg.DeckAlgs[0] != "DFS+GA" {
 		t.Fatalf("unexpected deck algs: %+v", agg.DeckAlgs)
 	}
-	if agg.CostTimes["dfs"] != 1.2 || agg.CostTimes["ga"] != 2.3 {
+	if agg.CostTimes["DFS"] != 1.2 || agg.CostTimes["GA"] != 2.3 {
 		t.Fatalf("unexpected cost times: %+v", agg.CostTimes)
 	}
 }
@@ -104,7 +104,7 @@ func TestExpandAlgorithmsNormalizesConfiguredAndRequestedAlgorithms(t *testing.T
 	provider := newRemoteEngineProvider(RecommendConfig{
 		ServiceBaseURL: "http://example.com",
 		MasterdataDir:  "/masterdata",
-		DefaultAlgs:    []string{"dfs-ga", "sa", "rl", "dfs_ga"},
+		DefaultAlgs:    []string{"dfs", "dfs-ga", "sa", "rl", "dfs_ga"},
 	})
 
 	recommender, err := provider.Get("jp")
@@ -116,7 +116,7 @@ func TestExpandAlgorithmsNormalizesConfiguredAndRequestedAlgorithms(t *testing.T
 	if !ok {
 		t.Fatalf("unexpected recommender type: %T", recommender)
 	}
-	if strings.Join(remote.defaultAlgs, ",") != "dfs_ga,ga,rl" {
+	if strings.Join(remote.defaultAlgs, ",") != "dfs,dfs_ga,ga,rl" {
 		t.Fatalf("unexpected default algorithms: %+v", remote.defaultAlgs)
 	}
 
@@ -131,6 +131,14 @@ func TestExpandAlgorithmsNormalizesConfiguredAndRequestedAlgorithms(t *testing.T
 	}
 	if all[0]["algorithm"] != "dfs_ga" || all[1]["algorithm"] != "ga" || all[2]["algorithm"] != "rl" {
 		t.Fatalf("unexpected expanded algorithms: %+v", all)
+	}
+
+	skill := remote.ExpandAlgorithms(map[string]any{"algorithm": "all", "target": "skill"})
+	if len(skill) != 4 {
+		t.Fatalf("unexpected skill algorithm count: %+v", skill)
+	}
+	if skill[0]["algorithm"] != "dfs" || skill[1]["algorithm"] != "dfs_ga" || skill[2]["algorithm"] != "ga" || skill[3]["algorithm"] != "rl" {
+		t.Fatalf("unexpected expanded skill algorithms: %+v", skill)
 	}
 }
 
@@ -170,11 +178,14 @@ func TestAggregateRemoteRecommendResultsUsesDisplayAlgorithmNames(t *testing.T) 
 	if err != nil {
 		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
 	}
-	if len(agg.DeckAlgs) != 1 || agg.DeckAlgs[0] != "dfs_ga+rl" {
+	if len(agg.DeckAlgs) != 1 || agg.DeckAlgs[0] != "DGA+RL" {
 		t.Fatalf("unexpected display deck algs: %+v", agg.DeckAlgs)
 	}
-	if agg.CostTimes["dfs_ga"] != 1.5 || agg.WaitTimes["dfs_ga"] != 0.5 {
+	if agg.CostTimes["DGA"] != 1.5 || agg.WaitTimes["DGA"] != 0.5 {
 		t.Fatalf("unexpected dfs_ga timings: cost=%+v wait=%+v", agg.CostTimes, agg.WaitTimes)
+	}
+	if agg.CostTimes["RL"] != 0.9 || agg.WaitTimes["RL"] != 0.2 {
+		t.Fatalf("unexpected rl timings: cost=%+v wait=%+v", agg.CostTimes, agg.WaitTimes)
 	}
 }
 

@@ -18,6 +18,8 @@ const (
 	FieldUserID = "user_id"
 	// FieldServer holds the string denoting the server field in the database.
 	FieldServer = "server"
+	// FieldDisplayOrder holds the string denoting the display_order field in the database.
+	FieldDisplayOrder = "display_order"
 	// FieldVisible holds the string denoting the visible field in the database.
 	FieldVisible = "visible"
 	// FieldSuiteVisible holds the string denoting the suite_visible field in the database.
@@ -45,6 +47,7 @@ var Columns = []string{
 	FieldHarukiUserID,
 	FieldUserID,
 	FieldServer,
+	FieldDisplayOrder,
 	FieldVisible,
 	FieldSuiteVisible,
 	FieldMysekaiVisible,
@@ -66,6 +69,8 @@ var (
 	UserIDValidator func(string) error
 	// ServerValidator is a validator for the "server" field. It is called by the builders before save.
 	ServerValidator func(string) error
+	// DefaultDisplayOrder holds the default value on creation for the "display_order" field.
+	DefaultDisplayOrder int
 	// DefaultVisible holds the default value on creation for the "visible" field.
 	DefaultVisible bool
 	// DefaultSuiteVisible holds the default value on creation for the "suite_visible" field.
@@ -97,6 +102,11 @@ func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 // ByServer orders the results by the server field.
 func ByServer(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServer, opts...).ToFunc()
+}
+
+// ByDisplayOrder orders the results by the display_order field.
+func ByDisplayOrder(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDisplayOrder, opts...).ToFunc()
 }
 
 // ByVisible orders the results by the visible field.

@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"slices"
@@ -90,6 +91,15 @@ func (c *Controller) WithSnapshot(s rendersnapshot.Snapshot) *Controller {
 	}
 	clone := *c
 	clone.snapshot = s
+	return &clone
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.drawing = c.drawing.WithContext(ctx)
 	return &clone
 }
 

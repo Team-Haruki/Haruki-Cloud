@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/gamecharacter"
@@ -320,6 +321,14 @@ func buildActorLabel(platform, platformUserID string) string {
 
 func normalizeCompareText(text string) string {
 	return strings.ToLower(strings.TrimSpace(text))
+}
+
+func shouldTryPartialMusicAlias(token string) bool {
+	token = normalizeCompareText(token)
+	if token == "" {
+		return false
+	}
+	return utf8.RuneCountInString(token) >= 2
 }
 
 func sortAliasTexts(values []string) {

@@ -104,6 +104,11 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 	if c != nil && c.aliases != nil {
 		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), query)
 		if err != nil {
+			if ids := ExtractAmbiguousMusicIDs(err); len(ids) > 0 {
+				if normalizedMusic, normalizedErr := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now)); normalizedMusic != nil || normalizedErr != nil {
+					return normalizedMusic, normalizedErr
+				}
+			}
 			return nil, err
 		}
 		if ok {
@@ -115,7 +120,16 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 		}
 	}
 
-	return resolveUniqueMusicQuery(source, query)
+	musicInfo, err := resolveUniqueMusicQuery(source, query)
+	if err == nil || isMusicAmbiguousError(err) {
+		return musicInfo, err
+	}
+
+	fuzzyMusic, fuzzyErr := resolveFuzzyMusicQuery(source, query)
+	if fuzzyErr == nil || isMusicAmbiguousError(fuzzyErr) {
+		return fuzzyMusic, fuzzyErr
+	}
+	return nil, err
 }
 
 func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword string) (*int, string, error) {

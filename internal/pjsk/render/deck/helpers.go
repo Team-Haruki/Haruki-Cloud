@@ -98,8 +98,17 @@ func normalizeRecommendAlgorithmForService(raw string) string {
 }
 
 func displayRecommendAlgorithm(raw string) string {
-	if normalized := normalizeRecommendAlgorithm(raw); normalized != "" {
-		return normalized
+	switch normalizeRecommendAlgorithm(raw) {
+	case "dfs":
+		return "DFS"
+	case "ga":
+		return "GA"
+	case "dfs_ga":
+		return "DGA"
+	case "rl":
+		return "RL"
+	case "all":
+		return "ALL"
 	}
 	return strings.ToLower(strings.TrimSpace(raw))
 }

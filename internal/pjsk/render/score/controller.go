@@ -1,6 +1,7 @@
 package score
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,15 @@ type Controller struct {
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
 	return &Controller{drawing: drawingClient}
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.drawing = c.drawing.WithContext(ctx)
+	return &clone
 }
 
 func (c *Controller) BuildScoreControlRequest(req drawing.ScoreControlRequest) (*drawing.ScoreControlRequest, error) {

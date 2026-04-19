@@ -371,6 +371,8 @@ type bridgeMusicAliasResolver struct {
 	ids map[string]int
 }
 
+type bridgeAmbiguousMusicAliasResolver struct{}
+
 func (s *bridgeMusicSource) DefaultRegion() renderregion.Value { return renderregion.JP }
 
 func (r *bridgeMusicAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
@@ -387,6 +389,17 @@ func (r *bridgeMusicAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Conte
 	}
 	id, ok := r.ids[strings.ToLower(strings.TrimSpace(token))]
 	return id, ok, nil
+}
+
+func (r *bridgeAmbiguousMusicAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
+	return r.TryResolveMusicTitleOrAliasID(context.Background(), token)
+}
+
+func (r *bridgeAmbiguousMusicAliasResolver) TryResolveMusicTitleOrAliasID(_ context.Context, token string) (int, bool, error) {
+	if strings.ToLower(strings.TrimSpace(token)) != "shared alias" {
+		return 0, false, nil
+	}
+	return 0, false, fmt.Errorf("别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic1/Song A\nmusic2/Song B")
 }
 
 func (s *bridgeMusicSource) SearchMusic(query string) (*masterdata.Music, error) {
@@ -630,6 +643,71 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 		t.Fatalf("expected 1 music-brief-list render call, got %d", briefListCalls)
 	}
 	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+		t.Fatalf("unexpected title list: %+v", titles)
+	}
+}
+
+func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
+	briefListCalls := 0
+	titles := make([]string, 0, 1)
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/pjsk/music/brief-list":
+			briefListCalls++
+			var req drawing.MusicBriefListRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode music-brief-list request: %v", err)
+			}
+			if req.Title == nil {
+				t.Fatalf("expected list title, got nil")
+			}
+			titles = append(titles, *req.Title)
+			if len(req.MusicList) != 2 {
+				t.Fatalf("expected 2 list items, got %d", len(req.MusicList))
+			}
+			if req.MusicList[0].ID != 1 || req.MusicList[1].ID != 2 {
+				t.Fatalf("unexpected ambiguous alias ids: %+v", req.MusicList)
+			}
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31}},
+			2: {{MusicID: 2, MusicDifficulty: "master", PlayLevel: 32}},
+		},
+	}
+	ctrl := music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil)
+	ctrl.SetAliasResolver(&bridgeAmbiguousMusicAliasResolver{})
+	app := &renderapp.App{
+		Music:      ctrl,
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeMusic(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMusic,
+		Mode:   "music-detail",
+		Query:  "Shared Alias",
+		Region: "jp",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic detail: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected detail message: %+v", message)
+	}
+	if briefListCalls != 1 {
+		t.Fatalf("expected 1 brief-list render call, got %d", briefListCalls)
+	}
+	if len(titles) != 1 || titles[0] != "匹配到多个歌曲，请使用 /查歌 <id> 查询：" {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }

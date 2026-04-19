@@ -2,6 +2,7 @@ package music
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -457,6 +458,27 @@ func TestResolveMusicCoverUsesApprovedAlias(t *testing.T) {
 	}
 }
 
+func TestResolveMusicTitleQueryNormalizesAmbiguousAliasToVisibleRegionMatch(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetAliasResolver(&lookupTestAliasResolver{
+		err: fmt.Errorf("failed to search music: 别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic2/Song B\nmusic1/Song A"),
+	})
+
+	musicInfo, err := controller.resolveMusicTitleQuery(source, "song a")
+	if err != nil {
+		t.Fatalf("resolveMusicTitleQuery() error = %v", err)
+	}
+	if musicInfo == nil || musicInfo.ID != 1 {
+		t.Fatalf("unexpected normalized music: %+v", musicInfo)
+	}
+}
+
 func TestResolveMusicCoverRejectsAmbiguousTitleQuery(t *testing.T) {
 	source := &lookupTestSource{
 		musics: map[int]*masterdata.Music{
@@ -475,6 +497,48 @@ func TestResolveMusicCoverRejectsAmbiguousTitleQuery(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "music1/Song A") || !strings.Contains(err.Error(), "music2/Song Alpha") {
 		t.Fatalf("expected music id hints in error, got %v", err)
+	}
+}
+
+func TestResolveFuzzyMusicQueryMatchesTypoTitle(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Hello World"},
+			2: {ID: 2, Title: "Goodbye Song"},
+		},
+	}
+
+	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo World")
+	if err != nil {
+		t.Fatalf("resolveFuzzyMusicQuery() error = %v", err)
+	}
+	if musicInfo == nil || musicInfo.ID != 1 {
+		t.Fatalf("unexpected fuzzy result: %+v", musicInfo)
+	}
+}
+
+func TestResolveFuzzyMusicQueryMatchesTypoInPartialTitle(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Hello World"},
+			2: {ID: 2, Title: "Goodbye Song"},
+		},
+	}
+
+	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo")
+	if err != nil {
+		t.Fatalf("resolveFuzzyMusicQuery() error = %v", err)
+	}
+	if musicInfo == nil || musicInfo.ID != 1 {
+		t.Fatalf("unexpected fuzzy partial result: %+v", musicInfo)
+	}
+}
+
+func TestExtractAmbiguousMusicIDsParsesAliasStyleErrors(t *testing.T) {
+	err := fmt.Errorf("failed to search music: 别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic2/Beta\nmusic1/Alpha")
+	ids := ExtractAmbiguousMusicIDs(err)
+	if len(ids) != 2 || ids[0] != 1 || ids[1] != 2 {
+		t.Fatalf("unexpected ambiguous ids: %+v", ids)
 	}
 }
 

@@ -38,6 +38,20 @@ func (_c *UserBindingCreate) SetServer(v string) *UserBindingCreate {
 	return _c
 }
 
+// SetDisplayOrder sets the "display_order" field.
+func (_c *UserBindingCreate) SetDisplayOrder(v int) *UserBindingCreate {
+	_c.mutation.SetDisplayOrder(v)
+	return _c
+}
+
+// SetNillableDisplayOrder sets the "display_order" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableDisplayOrder(v *int) *UserBindingCreate {
+	if v != nil {
+		_c.SetDisplayOrder(*v)
+	}
+	return _c
+}
+
 // SetVisible sets the "visible" field.
 func (_c *UserBindingCreate) SetVisible(v bool) *UserBindingCreate {
 	_c.mutation.SetVisible(v)
@@ -150,6 +164,10 @@ func (_c *UserBindingCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *UserBindingCreate) defaults() {
+	if _, ok := _c.mutation.DisplayOrder(); !ok {
+		v := userbinding.DefaultDisplayOrder
+		_c.mutation.SetDisplayOrder(v)
+	}
 	if _, ok := _c.mutation.Visible(); !ok {
 		v := userbinding.DefaultVisible
 		_c.mutation.SetVisible(v)
@@ -188,6 +206,9 @@ func (_c *UserBindingCreate) check() error {
 		if err := userbinding.ServerValidator(v); err != nil {
 			return &ValidationError{Name: "server", err: fmt.Errorf(`pjsk: validator failed for field "UserBinding.server": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.DisplayOrder(); !ok {
+		return &ValidationError{Name: "display_order", err: errors.New(`pjsk: missing required field "UserBinding.display_order"`)}
 	}
 	if _, ok := _c.mutation.Visible(); !ok {
 		return &ValidationError{Name: "visible", err: errors.New(`pjsk: missing required field "UserBinding.visible"`)}
@@ -244,6 +265,10 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Server(); ok {
 		_spec.SetField(userbinding.FieldServer, field.TypeString, value)
 		_node.Server = value
+	}
+	if value, ok := _c.mutation.DisplayOrder(); ok {
+		_spec.SetField(userbinding.FieldDisplayOrder, field.TypeInt, value)
+		_node.DisplayOrder = value
 	}
 	if value, ok := _c.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)

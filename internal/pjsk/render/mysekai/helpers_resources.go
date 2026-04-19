@@ -104,6 +104,9 @@ func sortKeysByResource(counts map[string]int, materialRarityMap map[int]string)
 }
 
 func adjustedResourceSortScore(key string, count int, materialRarityMap map[int]string) int {
+	if strings.HasPrefix(key, "mysekai_music_record") {
+		return count + 10000000
+	}
 	switch resourceRarity(key, materialRarityMap) {
 	case 2:
 		return count + 1000000

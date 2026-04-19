@@ -29,9 +29,60 @@ func (sekaiHandlers) ProfileBindHandle() HarukiSekaiCommandHandler {
 			if args == "" {
 				return nil, onebot11.NewReplayError("使用方式:\n%s 账号ID", ctx.originalTriggerCmd)
 			}
+			if rerouted, handled, err := tryRerouteProfileBindCommand(ctx, args); handled {
+				return rerouted, err
+			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBind, newProfileBindingParams(ctx, args, "")), nil
 		},
 	}, executeProfile)
+}
+
+func tryRerouteProfileBindCommand(ctx HarrukiSekaiHandlerContext, args string) (*CommandRequest, bool, error) {
+	tokens := strings.Fields(strings.TrimSpace(args))
+	if len(tokens) == 0 {
+		return nil, false, nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(tokens[0])) {
+	case "列表", "list":
+		if len(tokens) != 1 {
+			return nil, true, onebot11.NewReplayError("使用方式:\n%s", buildProfileBindDerivedTrigger(ctx, "list"))
+		}
+		params := newProfileBindingParams(ctx, "", "")
+		if !ctx.HasExplicitRegion() {
+			params.Server = ""
+		}
+		return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, params), true, nil
+	case "交换", "swap":
+		if len(tokens) != 3 {
+			return nil, true, onebot11.NewReplayError("使用方式:\n%s u1 u2", buildProfileBindDerivedTrigger(ctx, "swap"))
+		}
+		params := newProfileBindingParams(ctx, tokens[1], "")
+		params.SelectorOther = tokens[2]
+		if !ctx.HasExplicitRegion() {
+			params.Server = ""
+		}
+		return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindSwap, params), true, nil
+	default:
+		return nil, false, nil
+	}
+}
+
+func buildProfileBindDerivedTrigger(ctx HarrukiSekaiHandlerContext, mode string) string {
+	switch mode {
+	case "list":
+		if ctx.HasExplicitRegion() {
+			return fmt.Sprintf("/%s绑定列表", ctx.Region().String())
+		}
+		return "/绑定列表"
+	case "swap":
+		if ctx.HasExplicitRegion() {
+			return fmt.Sprintf("/%s绑定交换", ctx.Region().String())
+		}
+		return "/绑定交换"
+	default:
+		return ctx.originalTriggerCmd
+	}
 }
 
 func (sekaiHandlers) ProfileBindListHandle() HarukiSekaiCommandHandler {
@@ -52,6 +103,31 @@ func (sekaiHandlers) ProfileBindListHandle() HarukiSekaiCommandHandler {
 				params.Server = ""
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindList, params), nil
+		},
+	}, executeProfile)
+}
+
+func (sekaiHandlers) ProfileBindSwapHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Commands: []string{
+				"/绑定交换", "/pjsk bind swap", "/pjsk绑定交换",
+			},
+			Path: "profile/bind/swap",
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			args := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
+			if len(args) != 2 {
+				return nil, onebot11.NewReplayError("使用方式:\n%s u1 u2", ctx.originalTriggerCmd)
+			}
+
+			params := newProfileBindingParams(ctx, args[0], "")
+			params.SelectorOther = args[1]
+			if !ctx.HasExplicitRegion() {
+				params.Server = ""
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeBindSwap, params), nil
 		},
 	}, executeProfile)
 }
@@ -198,7 +274,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 			"duration_ms", time.Since(messageStart).Milliseconds(),
 		)
 		return message, nil
-	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
+	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeBindSwap, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		if rc.App.Bindings == nil {
 			return nil, accountdata.ErrBindingServiceUnavailable
 		}

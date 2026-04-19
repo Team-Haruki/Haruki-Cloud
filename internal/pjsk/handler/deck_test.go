@@ -1510,7 +1510,7 @@ func TestEventDeckHandleParsesNewAlgorithmAliases(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			h := sekaiHandlers{}.EventDeckHandle()
-			result, err := h.Handle(&handler.PjskHandlerContext{
+			result, err := h.Handle(&PjskHandlerContext{
 				Context:    context.Background(),
 				TriggerCmd: "/组卡",
 				ArgText:    tc.argText,

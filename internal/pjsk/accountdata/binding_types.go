@@ -68,6 +68,7 @@ type BindResult struct {
 type BindingListItem struct {
 	Index           int
 	BindingID       int
+	DisplayOrder    int
 	Server          string
 	UserID          string
 	Visible         bool

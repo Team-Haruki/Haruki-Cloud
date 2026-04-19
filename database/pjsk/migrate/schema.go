@@ -126,6 +126,7 @@ var (
 		{Name: "haruki_user_id", Type: field.TypeInt},
 		{Name: "user_id", Type: field.TypeString, Size: 30},
 		{Name: "server", Type: field.TypeString, Size: 2},
+		{Name: "display_order", Type: field.TypeInt, Default: 0},
 		{Name: "visible", Type: field.TypeBool, Default: true},
 		{Name: "suite_visible", Type: field.TypeBool, Default: true},
 		{Name: "mysekai_visible", Type: field.TypeBool, Default: true},

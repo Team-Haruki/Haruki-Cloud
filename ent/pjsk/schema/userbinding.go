@@ -17,6 +17,7 @@ func (UserBinding) Fields() []ent.Field {
 		field.Int("haruki_user_id").Comment("Reference to users table"),
 		field.String("user_id").MaxLen(30),
 		field.String("server").MaxLen(2),
+		field.Int("display_order").Default(0).Comment("Persistent binding display order"),
 		field.Bool("visible").Default(true),
 		field.Bool("suite_visible").Default(true).Comment("Controls visibility of suite/capture data"),
 		field.Bool("mysekai_visible").Default(true).Comment("Controls visibility of mysekai private data"),

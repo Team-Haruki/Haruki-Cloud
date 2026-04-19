@@ -19,16 +19,16 @@ func TestBuildBindingListAssignsPerServerIndicesAndSelectsWithinServer(t *testin
 		t.Fatalf("expected 5 items, got %d", len(items))
 	}
 
-	if items[0].Server != "cn" || items[0].Index != 1 {
+	if items[0].Server != "jp" || items[0].Index != 1 {
 		t.Fatalf("unexpected first item: %+v", items[0])
 	}
-	if items[1].Server != "cn" || items[1].Index != 2 {
+	if items[1].Server != "cn" || items[1].Index != 1 {
 		t.Fatalf("unexpected second item: %+v", items[1])
 	}
-	if items[2].Server != "jp" || items[2].Index != 1 {
+	if items[2].Server != "jp" || items[2].Index != 2 {
 		t.Fatalf("unexpected third item: %+v", items[2])
 	}
-	if items[3].Server != "jp" || items[3].Index != 2 {
+	if items[3].Server != "cn" || items[3].Index != 2 {
 		t.Fatalf("unexpected fourth item: %+v", items[3])
 	}
 	if items[4].Server != "en" || items[4].Index != 1 {
@@ -55,11 +55,26 @@ func TestBuildBindingListAssignsPerServerIndicesAndSelectsWithinServer(t *testin
 	if err != nil {
 		t.Fatalf("select global u3: %v", err)
 	}
-	if globalThird.Server != "jp" || globalThird.UserID != "2000" {
+	if globalThird.Server != "jp" || globalThird.UserID != "3000" {
 		t.Fatalf("unexpected global u3 target: %+v", globalThird)
 	}
 
 	if _, err := selectBinding(items, "u2", "en"); err == nil {
 		t.Fatalf("expected en u2 to fail")
+	}
+}
+
+func TestBuildBindingListUsesDisplayOrderBeforeBindingID(t *testing.T) {
+	items := buildBindingList([]*pjskdb.UserBinding{
+		{ID: 1, DisplayOrder: 3, Server: "jp", UserID: "2000"},
+		{ID: 2, DisplayOrder: 1, Server: "cn", UserID: "1000"},
+		{ID: 3, DisplayOrder: 2, Server: "jp", UserID: "3000"},
+	}, nil)
+
+	if len(items) != 3 {
+		t.Fatalf("expected 3 items, got %d", len(items))
+	}
+	if items[0].BindingID != 2 || items[1].BindingID != 3 || items[2].BindingID != 1 {
+		t.Fatalf("unexpected binding order: %+v", items)
 	}
 }

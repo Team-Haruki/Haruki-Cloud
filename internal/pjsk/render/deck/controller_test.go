@@ -373,6 +373,55 @@ func TestBuildDrawingRequestFromRecommendResultFallsBackToJPCardSource(t *testin
 	}
 }
 
+func TestBuildDrawingRequestFromRecommendResultNormalizesDisplayRates(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	request, err := controller.buildDrawingRequestFromRecommendResult(
+		renderregion.JP,
+		"no_event",
+		AutoQuery{Region: "jp"},
+		map[string]any{},
+		nil,
+		&RecommendResult{
+			Decks: []RecommendDeck{
+				{
+					Cards: []RecommendCard{
+						{
+							CardID:       1001,
+							Level:        50,
+							MasterRank:   1,
+							DefaultImage: "normal",
+							SkillLevel:   4,
+							SkillRate:    112.4999999,
+						},
+					},
+					EventBonusRate:       120.0000001,
+					SupportDeckBonusRate: 10.2499999,
+					MultiLiveScoreUp:     233.2499999,
+				},
+			},
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("buildDrawingRequestFromRecommendResult returned error: %v", err)
+	}
+
+	card := request.DeckData[0].CardData[0]
+	if card.SkillRate != 112.5 {
+		t.Fatalf("unexpected normalized skill rate: %+v", card.SkillRate)
+	}
+	if request.DeckData[0].EventBonusRate == nil || *request.DeckData[0].EventBonusRate != 120 {
+		t.Fatalf("unexpected normalized event bonus: %+v", request.DeckData[0].EventBonusRate)
+	}
+	if request.DeckData[0].SupportDeckBonusRate == nil || *request.DeckData[0].SupportDeckBonusRate != 10.2 {
+		t.Fatalf("unexpected normalized support bonus: %+v", request.DeckData[0].SupportDeckBonusRate)
+	}
+	if request.DeckData[0].MultiLiveScoreUp == nil || *request.DeckData[0].MultiLiveScoreUp != 233.2 {
+		t.Fatalf("unexpected normalized multi live score up: %+v", request.DeckData[0].MultiLiveScoreUp)
+	}
+}
+
 func TestBuildAutoRecommendRequestRequiresRemoteServiceWhenEngineEnabled(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{
 		Enabled: true,
@@ -406,7 +455,7 @@ func TestBuildRecommendOptionBonusTargets(t *testing.T) {
 	if option["target"] != "bonus" {
 		t.Fatalf("unexpected target: %+v", option["target"])
 	}
-	if option["algorithm"] != "dfs" {
+	if option["algorithm"] != "all" {
 		t.Fatalf("unexpected algorithm: %+v", option["algorithm"])
 	}
 	targets, ok := option["target_bonus_list"].([]int)
@@ -477,6 +526,25 @@ func TestBuildRecommendOptionKeepsNoEventAllWithConfiguredAlgorithms(t *testing.
 
 	if option["algorithm"] != "all" {
 		t.Fatalf("unexpected no_event algorithm with configured algs: %+v", option["algorithm"])
+	}
+}
+
+func TestBuildRecommendOptionDefaultsMySekaiToAllAlgorithms(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	option, err := controller.buildRecommendOption(renderregion.JP, "mysekai", AutoQuery{
+		Region:        "jp",
+		RecommendType: "mysekai",
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	if option["algorithm"] != "all" {
+		t.Fatalf("unexpected mysekai algorithm: %+v", option["algorithm"])
+	}
+	if option["live_type"] != "mysekai" {
+		t.Fatalf("unexpected live_type: %+v", option["live_type"])
 	}
 }
 
@@ -2685,6 +2753,7 @@ func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T
 		Region:        "jp",
 		RecommendType: "event",
 		EventID:       new(7),
+		Target:        "skill",
 		Limit:         1,
 	})
 	if err != nil {
@@ -2693,7 +2762,7 @@ func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T
 	if recommendCalls.Load() != 1 {
 		t.Fatalf("expected one batched recommend call, got %d", recommendCalls.Load())
 	}
-	if len(request.ModelName) != 1 || request.ModelName[0] != "dfs+ga" {
+	if len(request.ModelName) != 1 || request.ModelName[0] != "DFS+GA" {
 		t.Fatalf("unexpected model names: %+v", request.ModelName)
 	}
 }

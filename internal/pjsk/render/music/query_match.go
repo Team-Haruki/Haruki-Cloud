@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -35,6 +36,75 @@ func isMusicAmbiguousError(err error) bool {
 		return true
 	}
 	return strings.Contains(err.Error(), "匹配到多个歌曲")
+}
+
+func ExtractAmbiguousMusicIDs(err error) []int {
+	if err == nil {
+		return nil
+	}
+	var ambiguous *musicAmbiguousQueryError
+	if errors.As(err, &ambiguous) {
+		ids := make([]int, 0, len(ambiguous.candidates))
+		for _, item := range ambiguous.candidates {
+			if item.ID <= 0 {
+				continue
+			}
+			ids = append(ids, item.ID)
+		}
+		return ids
+	}
+
+	lines := strings.Split(err.Error(), "\n")
+	ids := make([]int, 0, len(lines))
+	seen := make(map[int]struct{}, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(strings.ToLower(line), "music") {
+			continue
+		}
+		raw := strings.TrimSpace(line[5:])
+		slashIdx := strings.Index(raw, "/")
+		if slashIdx <= 0 {
+			continue
+		}
+		id, convErr := strconv.Atoi(strings.TrimSpace(raw[:slashIdx]))
+		if convErr != nil || id <= 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	sort.Ints(ids)
+	return ids
+}
+
+func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64) []*masterdata.Music {
+	if source == nil || len(ids) == 0 {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0, len(ids))
+	seen := make(map[int]struct{}, len(ids))
+	for _, id := range ids {
+		if id <= 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		musicInfo, err := source.GetMusicByID(id)
+		if err != nil || !isMusicVisibleAt(musicInfo, now) {
+			continue
+		}
+		matches = append(matches, musicInfo)
+	}
+	return matches
 }
 
 func resolveUniqueMusicQuery(source DataSource, query string) (*masterdata.Music, error) {

@@ -79,14 +79,11 @@ func TestBindingServiceBindListAndDefaultSwitch(t *testing.T) {
 	if items[0].Visible || items[1].Visible {
 		t.Fatalf("expected new bindings to hide uid by default, got %+v", items)
 	}
-	if items[0].UserID != "1000" || items[1].UserID != "2000" {
-		t.Fatalf("expected bindings sorted by uid asc, got %+v", items)
+	if items[0].UserID != "2000" || items[1].UserID != "1000" {
+		t.Fatalf("expected bindings sorted by bind order, got %+v", items)
 	}
-	if items[0].IsGlobalDefault {
-		t.Fatalf("expected global default to remain on first bound account, got %+v", items)
-	}
-	if !items[1].IsGlobalDefault || !items[1].IsServerDefault {
-		t.Fatalf("expected JP binding to keep defaults, got %+v", items[1])
+	if !items[0].IsGlobalDefault || !items[0].IsServerDefault {
+		t.Fatalf("expected JP binding to keep defaults, got %+v", items[0])
 	}
 
 	result, err := service.SetDefault(ctx, "qq", "42", "u1", "cn", "")
@@ -101,7 +98,7 @@ func TestBindingServiceBindListAndDefaultSwitch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list after set default: %v", err)
 	}
-	if !items[0].IsGlobalDefault || items[1].IsGlobalDefault {
+	if items[0].IsGlobalDefault || !items[1].IsGlobalDefault {
 		t.Fatalf("expected CN binding to become global default, got %+v", items)
 	}
 }
@@ -153,5 +150,53 @@ func TestBindingServiceUnbindReassignsDefaults(t *testing.T) {
 	}
 	if items[0].Visible {
 		t.Fatalf("expected remaining binding to stay hidden by default, got %+v", items[0])
+	}
+}
+
+func TestBindingServiceSwapUsesPersistentDisplayOrder(t *testing.T) {
+	pjskClient := pjskenttest.Open(t, "sqlite3", "file:pjsk_swap_test?mode=memory&cache=shared&_fk=1")
+	defer pjskClient.Close()
+	usersClient := usersenttest.Open(t, "sqlite3", "file:users_swap_test?mode=memory&cache=shared&_fk=1")
+	defer usersClient.Close()
+
+	service := accountdata.NewBindingService(
+		pjskClient,
+		identity.NewResolver(usersClient),
+		&fakeProfileValidator{
+			profiles: map[string]map[string]string{
+				"jp": {"2000": "JP A", "3000": "JP B"},
+				"cn": {"1000": "CN A"},
+			},
+		},
+	)
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "77", "2000"); err != nil {
+		t.Fatalf("bind jp first: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "77", "1000"); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "77", "3000"); err != nil {
+		t.Fatalf("bind jp second: %v", err)
+	}
+
+	items, err := service.Swap(ctx, "qq", "77", "u1", "u3", "")
+	if err != nil {
+		t.Fatalf("swap bindings: %v", err)
+	}
+	if len(items) != 3 {
+		t.Fatalf("expected 3 bindings after swap, got %d", len(items))
+	}
+	if items[0].UserID != "3000" || items[1].UserID != "1000" || items[2].UserID != "2000" {
+		t.Fatalf("unexpected swapped order: %+v", items)
+	}
+
+	items, err = service.List(ctx, "qq", "77")
+	if err != nil {
+		t.Fatalf("list after swap: %v", err)
+	}
+	if items[0].UserID != "3000" || items[1].UserID != "1000" || items[2].UserID != "2000" {
+		t.Fatalf("expected swapped order to persist, got %+v", items)
 	}
 }

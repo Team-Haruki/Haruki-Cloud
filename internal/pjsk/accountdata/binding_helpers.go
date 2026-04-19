@@ -35,6 +35,7 @@ func buildBindingListWithBackgrounds(bindings []*pjskdb.UserBinding, defaults []
 	for _, binding := range bindings {
 		list = append(list, BindingListItem{
 			BindingID:       binding.ID,
+			DisplayOrder:    effectiveBindingDisplayOrder(binding),
 			Server:          binding.Server,
 			UserID:          binding.UserID,
 			Visible:         binding.Visible,
@@ -48,7 +49,7 @@ func buildBindingListWithBackgrounds(bindings []*pjskdb.UserBinding, defaults []
 	}
 
 	slices.SortFunc(list, func(a, b BindingListItem) int {
-		if cmp := compareNumericString(a.UserID, b.UserID); cmp != 0 {
+		if cmp := effectiveBindingListDisplayOrder(a) - effectiveBindingListDisplayOrder(b); cmp != 0 {
 			return cmp
 		}
 		if a.Server < b.Server {
@@ -158,29 +159,6 @@ func isNumericUID(value string) bool {
 		}
 	}
 	return true
-}
-
-func compareNumericString(a, b string) int {
-	a = strings.TrimLeft(a, "0")
-	b = strings.TrimLeft(b, "0")
-	if a == "" {
-		a = "0"
-	}
-	if b == "" {
-		b = "0"
-	}
-	switch {
-	case len(a) < len(b):
-		return -1
-	case len(a) > len(b):
-		return 1
-	case a < b:
-		return -1
-	case a > b:
-		return 1
-	default:
-		return 0
-	}
 }
 
 func (s *BindingService) currentBindingEntity(ctx context.Context, platform, platformUserID, server string) (*pjskdb.UserBinding, error) {

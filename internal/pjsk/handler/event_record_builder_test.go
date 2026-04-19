@@ -584,3 +584,96 @@ func TestBuildEventRecordFromSnapshotStopsTrackerFallbackAfterFatalError(t *test
 		}
 	}
 }
+
+func TestBuildEventRecordFromSnapshotSkipsWorldBloomTrackerFallback(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_skip_wl_tracker?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	now := time.Now()
+	startAt := now.Add(-2 * time.Hour).UnixMilli()
+	aggregateAt := now.Add(-time.Hour).UnixMilli()
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("jp").
+		SetGameID(9401).
+		SetEventType("world_bloom").
+		SetName("WL Event").
+		SetAssetbundleName("wl_skip_tracker").
+		SetStartAt(startAt).
+		SetAggregateAt(aggregateAt).
+		SetClosedAt(aggregateAt + 1000).
+		Save(ctx); err != nil {
+		t.Fatalf("create wl event: %v", err)
+	}
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("jp").
+		SetGameID(9400).
+		SetEventType("marathon").
+		SetName("Regular Event").
+		SetAssetbundleName("regular_skip_tracker").
+		SetStartAt(startAt - int64(time.Hour/time.Millisecond)).
+		SetAggregateAt(aggregateAt - int64(time.Hour/time.Millisecond)).
+		SetClosedAt(aggregateAt + 1000 - int64(time.Hour/time.Millisecond)).
+		Save(ctx); err != nil {
+		t.Fatalf("create regular event: %v", err)
+	}
+
+	originalLookup := eventRecordTrackerRankLookup
+	t.Cleanup(func() {
+		eventRecordTrackerRankLookup = originalLookup
+	})
+
+	calls := make([]int, 0, 2)
+	eventRecordTrackerRankLookup = func(_ context.Context, _ *sekaiapi.TrackerClient, _ string, eventID int, _ int64) (*int, error) {
+		calls = append(calls, eventID)
+		return new(321), nil
+	}
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "jp",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "JP",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &rendersnapshot.RawUserData{
+				UserGamedata: rendersnapshot.RawUserGamedata{UserID: 123456789},
+				UserEvents: []rendersnapshot.RawUserEvent{
+					{EventID: 9401, EventPoint: 9999},
+					{EventID: 9400, EventPoint: 8888},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(calls) != 1 || calls[0] != 9400 {
+		t.Fatalf("expected tracker fallback only for regular event, got calls=%v", calls)
+	}
+	if len(req.EventInfo) != 2 {
+		t.Fatalf("expected 2 event entries, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].ID != 9401 || !req.EventInfo[0].IsWlEvent {
+		t.Fatalf("unexpected first event info: %+v", req.EventInfo[0])
+	}
+	if req.EventInfo[0].Rank != nil {
+		t.Fatalf("expected wl total event to keep empty rank, got %+v", req.EventInfo[0].Rank)
+	}
+	if req.EventInfo[1].Rank == nil || *req.EventInfo[1].Rank != 321 {
+		t.Fatalf("expected regular event rank from tracker, got %+v", req.EventInfo[1].Rank)
+	}
+}

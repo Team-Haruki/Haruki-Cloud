@@ -26,7 +26,7 @@ var eventRecordDebugLogger = logger.NewLoggerFromGlobal("EventRecord")
 
 var eventRecordTrackerRankLookup = defaultEventRecordTrackerRankLookup
 
-const eventRecordTrackerFallbackEventLimit = 8
+const eventRecordTrackerFallbackEventLimit = 2
 
 var errStopEventRecordTrackerFallback = errors.New("event record tracker fallback aborted")
 
@@ -57,8 +57,6 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 			rankByEvent[userEvent.EventID] = userEvent.Rank
 		}
 	}
-	fillEventRecordTrackerRanks(rc.Ctx, rc.App.Tracker, region, rawData.UserGamedata.UserID, rawData.UserEvents, rankByEvent)
-
 	eventEntities, err := rc.App.Sekai.Event.Query().
 		Where(eventdb.ServerRegionEQ(region.String())).
 		All(rc.Ctx)
@@ -86,6 +84,8 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 			wlEventIDs[intVal(ev, "id")] = struct{}{}
 		}
 	}
+
+	fillEventRecordTrackerRanks(rc.Ctx, rc.App.Tracker, region, rawData.UserGamedata.UserID, rawData.UserEvents, rankByEvent, wlEventIDs)
 
 	regionStr := regionWithDefault(region.String())
 
@@ -133,9 +133,9 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	sortEventHistory(eventInfo)
 	sortEventHistory(wlEventInfo)
 
-	profile := rc.GetDetailedProfile()
+	profile := snapshot.DetailedProfile(region)
 	if profile == nil {
-		profile = snapshot.DetailedProfile(region)
+		profile = rc.GetDetailedProfile()
 	}
 	if profile == nil {
 		return nil, fmt.Errorf("event record requires user profile data")
@@ -171,6 +171,7 @@ func fillEventRecordTrackerRanks(
 	userID int64,
 	userEvents []rendersnapshot.RawUserEvent,
 	rankByEvent map[int]int,
+	wlEventIDs map[int]struct{},
 ) {
 	if userID <= 0 || len(userEvents) == 0 || len(rankByEvent) >= len(userEvents) {
 		return
@@ -181,7 +182,7 @@ func fillEventRecordTrackerRanks(
 		return
 	}
 
-	eventIDs := collectEventRecordTrackerFallbackEventIDs(userEvents, rankByEvent)
+	eventIDs := collectEventRecordTrackerFallbackEventIDs(userEvents, rankByEvent, wlEventIDs)
 	if len(eventIDs) == 0 {
 		return
 	}
@@ -233,12 +234,19 @@ func fillEventRecordTrackerRanks(
 	}
 }
 
-func collectEventRecordTrackerFallbackEventIDs(userEvents []rendersnapshot.RawUserEvent, rankByEvent map[int]int) []int {
+func collectEventRecordTrackerFallbackEventIDs(
+	userEvents []rendersnapshot.RawUserEvent,
+	rankByEvent map[int]int,
+	wlEventIDs map[int]struct{},
+) []int {
 	seen := make(map[int]struct{}, len(userEvents))
 	eventIDs := make([]int, 0, len(userEvents))
 	for _, userEvent := range userEvents {
 		eventID := userEvent.EventID
 		if eventID <= 0 {
+			continue
+		}
+		if _, isWL := wlEventIDs[eventID]; isWL {
 			continue
 		}
 		if _, ok := seen[eventID]; ok {

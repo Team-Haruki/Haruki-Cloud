@@ -122,3 +122,50 @@ func TestPrepareDrawingRequestBodyKeepsExplicitTimeZone(t *testing.T) {
 		t.Fatalf("expected explicit timezone Asia/Seoul, got %q", got)
 	}
 }
+
+func TestPrepareDrawingRequestBodyInjectsRootDT(t *testing.T) {
+	now := time.Unix(1776322800, 0)
+	ctx := displaytime.WithRequestTimeZone(context.Background(), "Asia/Tokyo")
+	body := prepareDrawingRequestBody("/api/pjsk/event/list", &EventListRequest{}, now, ctx)
+
+	root := mapAt(body)
+	if root == nil {
+		t.Fatalf("expected request body map, got %#v", body)
+	}
+	got, ok := parseDrawingUpdateTime(root["dt"])
+	if !ok {
+		t.Fatalf("expected dt value, got %#v", root["dt"])
+	}
+	if got != now.UnixMilli() {
+		t.Fatalf("expected dt %d, got %d", now.UnixMilli(), got)
+	}
+}
+
+func TestPrepareDrawingRequestBodyInjectsDTAndTimeZoneIntoSliceRequests(t *testing.T) {
+	now := time.Unix(1776322800, 0)
+	ctx := displaytime.WithRequestTimeZone(context.Background(), "Asia/Tokyo")
+	body := prepareDrawingRequestBody("/api/pjsk/score/music-meta", []MusicMetaRequest{{
+		MusicID:        1,
+		MusicTitle:     "test",
+		MusicCoverPath: "music/jacket/test.png",
+	}}, now, ctx)
+
+	items := sliceAt(body)
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	root := mapAt(items[0])
+	if root == nil {
+		t.Fatalf("expected request item map, got %#v", items[0])
+	}
+	if got := scalarString(root["timezone"]); got != "Asia/Tokyo" {
+		t.Fatalf("expected timezone Asia/Tokyo, got %q", got)
+	}
+	got, ok := parseDrawingUpdateTime(root["dt"])
+	if !ok {
+		t.Fatalf("expected dt value, got %#v", root["dt"])
+	}
+	if got != now.UnixMilli() {
+		t.Fatalf("expected dt %d, got %d", now.UnixMilli(), got)
+	}
+}

@@ -145,6 +145,10 @@ func (sekaiHandlers) MusicBoardHandle() HarukiSekaiCommandHandler {
 
 func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 	var musicCtrl *rendermusic.Controller
+	scoreCtrl := rc.App.Score
+	if scoreCtrl != nil {
+		scoreCtrl = scoreCtrl.WithContext(rc.Ctx)
+	}
 	if rc.App != nil && rc.App.Music != nil {
 		musicCtrl = rc.App.Music.WithContext(rc.Ctx)
 		if rc.App.Aliases != nil {
@@ -163,7 +167,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			req = *reqPtr
 		}
-		data, err = rc.App.Score.RenderScoreControl(req)
+		data, err = scoreCtrl.RenderScoreControl(req)
 	case "score-custom-room":
 		req := drawing.CustomRoomScoreRequest{}
 		mergeParams(rc.Cmd.Params, &req)
@@ -174,7 +178,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			req = *reqPtr
 		}
-		data, err = rc.App.Score.RenderCustomRoomScore(req)
+		data, err = scoreCtrl.RenderCustomRoomScore(req)
 	case "score-music-meta":
 		var params struct {
 			Queries []string `json:"queries"`
@@ -191,7 +195,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		data, err = rc.App.Score.RenderMusicMeta(req)
+		data, err = scoreCtrl.RenderMusicMeta(req)
 	case "score-music-board":
 		req := drawing.MusicBoardRequest{}
 		mergeParams(rc.Cmd.Params, &req)
@@ -210,7 +214,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			req = *reqPtr
 		}
-		data, err = rc.App.Score.RenderMusicBoard(req)
+		data, err = scoreCtrl.RenderMusicBoard(req)
 	default:
 		return nil, unsupportedModeError("score", rc.Cmd.Mode)
 	}

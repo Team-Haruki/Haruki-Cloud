@@ -192,3 +192,33 @@ func TestBuildRenderCachePolicySKQueryIgnoresTopLevelEventIDForUserID(t *testing
 		t.Fatalf("unexpected api_path: %s", policy.APIPath)
 	}
 }
+
+func TestBuildRenderCachePolicyIgnoresRootDT(t *testing.T) {
+	policyA, err := buildRenderCachePolicy("/api/pjsk/event/list", map[string]any{
+		"region": "JP",
+		"dt":     1774118400000,
+	})
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqA: %v", err)
+	}
+	policyB, err := buildRenderCachePolicy("/api/pjsk/event/list", map[string]any{
+		"region": "JP",
+		"dt":     1774118700000,
+	})
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqB: %v", err)
+	}
+
+	keyA, err := buildRenderCacheKey(policyA)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqA: %v", err)
+	}
+	keyB, err := buildRenderCacheKey(policyB)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqB: %v", err)
+	}
+
+	if keyA != keyB {
+		t.Fatalf("expected dt to be ignored by cache key: %s != %s", keyA, keyB)
+	}
+}

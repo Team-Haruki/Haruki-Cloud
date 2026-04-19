@@ -284,7 +284,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 		}
 
-		deckCtrl := rc.App.Decks
+		deckCtrl := rc.App.Decks.WithContext(rc.Ctx)
 		if targetSnapshot != nil {
 			deckCtrl = deckCtrl.WithSnapshot(targetSnapshot)
 		}
@@ -327,7 +327,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, err
 	}
 
-	deckCtrl := rc.App.Decks
+	deckCtrl := rc.App.Decks.WithContext(rc.Ctx)
 	if snapshot != nil {
 		deckCtrl = deckCtrl.WithSnapshot(snapshot)
 	}

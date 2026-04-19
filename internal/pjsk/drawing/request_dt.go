@@ -22,24 +22,41 @@ func prepareDrawingRequestBody(endpoint string, body any, now time.Time, ctx con
 		return body
 	}
 
-	root := mapAt(payload)
-	if root == nil {
-		return body
+	nowMs := now.UnixMilli()
+	timeZone := displaytime.RequestTimeZoneFromContext(ctx)
+	if root := mapAt(payload); root != nil {
+		applyDrawingRequestTimeContext(parsed.Path, root, nowMs, timeZone)
+		return payload
 	}
+
+	for _, item := range sliceAt(payload) {
+		root := mapAt(item)
+		if root == nil {
+			continue
+		}
+		applyDrawingRequestTimeContext(parsed.Path, root, nowMs, timeZone)
+	}
+	return payload
+}
+
+func applyDrawingRequestTimeContext(endpointPath string, root map[string]any, nowMs int64, fallbackTimeZone string) {
+	if root == nil {
+		return
+	}
+
 	timeZone := scalarString(root["timezone"])
 	if strings.TrimSpace(timeZone) == "" {
-		timeZone = displaytime.RequestTimeZoneFromContext(ctx)
+		timeZone = fallbackTimeZone
 	}
 	root["timezone"] = displaytime.NormalizeTimeZone(timeZone)
+	root["dt"] = normalizeDrawingUpdateTime(root["dt"], nowMs)
 
-	nowMs := now.UnixMilli()
-	if parsed.Path == "/api/pjsk/profile" {
+	if endpointPath == "/api/pjsk/profile" {
 		root["update_time"] = normalizeDrawingUpdateTime(root["update_time"], nowMs)
 	}
 
 	applyDrawingProfileDT(root, "profile", nowMs)
 	applyDrawingProfileDT(root, "user_info", nowMs)
-	return payload
 }
 
 func applyDrawingProfileDT(root map[string]any, key string, nowMs int64) {

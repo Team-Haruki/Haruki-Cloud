@@ -59,6 +59,7 @@ type renderCachePolicy struct {
 	APIPath  string
 	UserID   string
 	Params   any
+	TTL      time.Duration
 }
 
 type renderCacheKeyMaterial struct {

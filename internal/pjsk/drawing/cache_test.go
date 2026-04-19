@@ -1,6 +1,9 @@
 package drawing
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestBuildRenderCachePolicyIgnoresEventRecordUserUpdateTime(t *testing.T) {
 	reqA := EventRecordRequest{
@@ -84,18 +87,22 @@ func TestBuildRenderCachePolicyKeepsProfileUpdateTime(t *testing.T) {
 	}
 }
 
-func TestBuildRenderCachePolicyIgnoresSKWinRateUpdatedAt(t *testing.T) {
+func TestBuildRenderCachePolicyBucketsSKWinRateUpdatedAtBy10Seconds(t *testing.T) {
 	reqA := WinRateRequest{
 		UpdatedAt:        1774118400000,
 		EventStartAt:     10,
-		EventAggregateAt: 20,
+		EventAggregateAt: 1774118404000,
 		TeamInfo: []TeamInfo{
 			{TeamID: 1, TeamName: "A", WinRate: 0.5},
 			{TeamID: 2, TeamName: "B", WinRate: 0.5},
 		},
 	}
 	reqB := reqA
-	reqB.UpdatedAt = 1774118700000
+	reqB.UpdatedAt = 1774118409000
+	reqB.EventAggregateAt = 1774118409000
+	reqC := reqA
+	reqC.UpdatedAt = 1774118411000
+	reqC.EventAggregateAt = 1774118411000
 
 	policyA, err := buildRenderCachePolicy("/api/pjsk/sk/winrate", reqA)
 	if err != nil {
@@ -104,6 +111,10 @@ func TestBuildRenderCachePolicyIgnoresSKWinRateUpdatedAt(t *testing.T) {
 	policyB, err := buildRenderCachePolicy("/api/pjsk/sk/winrate", reqB)
 	if err != nil {
 		t.Fatalf("buildRenderCachePolicy reqB: %v", err)
+	}
+	policyC, err := buildRenderCachePolicy("/api/pjsk/sk/winrate", reqC)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqC: %v", err)
 	}
 
 	keyA, err := buildRenderCacheKey(policyA)
@@ -114,9 +125,19 @@ func TestBuildRenderCachePolicyIgnoresSKWinRateUpdatedAt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildRenderCacheKey reqB: %v", err)
 	}
+	keyC, err := buildRenderCacheKey(policyC)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqC: %v", err)
+	}
 
 	if keyA != keyB {
-		t.Fatalf("winrate key should ignore updated_at: %s != %s", keyA, keyB)
+		t.Fatalf("winrate key should bucket updated_at/event_aggregate_at within 10s: %s != %s", keyA, keyB)
+	}
+	if keyA == keyC {
+		t.Fatalf("winrate key should change after 10s bucket boundary")
+	}
+	if policyA.TTL != 10*time.Second {
+		t.Fatalf("expected 10s ttl for winrate cache, got %v", policyA.TTL)
 	}
 }
 
@@ -190,6 +211,60 @@ func TestBuildRenderCachePolicySKQueryIgnoresTopLevelEventIDForUserID(t *testing
 	}
 	if policy.APIPath != "api/pjsk/sk/query" {
 		t.Fatalf("unexpected api_path: %s", policy.APIPath)
+	}
+}
+
+func TestBuildRenderCachePolicyBucketsSKQueryTimesBy10Seconds(t *testing.T) {
+	reqA := SKRequest{
+		ID:          1,
+		Region:      "JP",
+		Name:        "Event",
+		AggregateAt: 1774118404000,
+		Ranks: []RankInfo{
+			{Rank: 100, Name: "Tester", Time: 1774118405000},
+		},
+	}
+	reqB := reqA
+	reqB.AggregateAt = 1774118409000
+	reqB.Ranks[0].Time = 1774118409000
+	reqC := reqA
+	reqC.AggregateAt = 1774118410000
+	reqC.Ranks[0].Time = 1774118410000
+
+	policyA, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqA)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqA: %v", err)
+	}
+	policyB, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqB)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqB: %v", err)
+	}
+	policyC, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqC)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqC: %v", err)
+	}
+
+	keyA, err := buildRenderCacheKey(policyA)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqA: %v", err)
+	}
+	keyB, err := buildRenderCacheKey(policyB)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqB: %v", err)
+	}
+	keyC, err := buildRenderCacheKey(policyC)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqC: %v", err)
+	}
+
+	if keyA != keyB {
+		t.Fatalf("sk query key should stay stable within the same 10s bucket: %s != %s", keyA, keyB)
+	}
+	if keyA == keyC {
+		t.Fatalf("sk query key should change after the 10s bucket boundary")
+	}
+	if policyA.TTL != 10*time.Second {
+		t.Fatalf("expected 10s ttl for sk query cache, got %v", policyA.TTL)
 	}
 }
 

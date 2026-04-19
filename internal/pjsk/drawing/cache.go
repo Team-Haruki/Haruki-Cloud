@@ -1,9 +1,6 @@
 package drawing
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
@@ -21,7 +18,7 @@ import (
 const (
 	renderCacheFileExt    = "png"
 	renderCachePublic     = "public"
-	renderCacheKeyVersion = 2
+	renderCacheKeyVersion = 3
 )
 
 func newLocalRenderCache(ttl time.Duration) *localRenderCache {
@@ -32,25 +29,6 @@ func newLocalRenderCache(ttl time.Duration) *localRenderCache {
 		entries: make(map[string]*localRenderEntry),
 		ttl:     ttl,
 	}
-}
-
-func (lc *localRenderCache) buildKey(endpoint string, request any) (string, error) {
-	payload, err := normalizeRenderCachePayload(request)
-	if err != nil {
-		return "", err
-	}
-	sanitizeRenderCachePayload(endpoint, payload)
-
-	b, err := json.Marshal(map[string]any{
-		"v":        renderCacheKeyVersion,
-		"endpoint": endpoint,
-		"payload":  payload,
-	})
-	if err != nil {
-		return "", err
-	}
-	sum := sha256.Sum256(b)
-	return hex.EncodeToString(sum[:]), nil
 }
 
 func (lc *localRenderCache) get(key string) ([]byte, bool) {
@@ -69,10 +47,13 @@ func (lc *localRenderCache) get(key string) ([]byte, bool) {
 	return entry.data, true
 }
 
-func (lc *localRenderCache) set(key string, data []byte) {
+func (lc *localRenderCache) set(key string, data []byte, ttl time.Duration) {
+	if ttl <= 0 {
+		ttl = lc.ttl
+	}
 	entry := &localRenderEntry{
 		data:      data,
-		expiresAt: time.Now().Add(lc.ttl),
+		expiresAt: time.Now().Add(ttl),
 	}
 	lc.mu.Lock()
 	lc.entries[key] = entry
@@ -82,10 +63,15 @@ func (lc *localRenderCache) set(key string, data []byte) {
 // Render returns cached bytes for identical requests; otherwise calls render() and stores the result.
 // Concurrent calls with the same key are deduplicated via singleflight.
 func (lc *localRenderCache) Render(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
-	key, err := lc.buildKey(endpoint, request)
+	policy, err := buildRenderCachePolicy(endpoint, request)
 	if err != nil {
 		return render()
 	}
+	key, err := buildRenderCacheKey(policy)
+	if err != nil {
+		return render()
+	}
+	ttl := policy.TTL
 	if cached, ok := lc.get(key); ok {
 		return cached, nil
 	}
@@ -97,7 +83,7 @@ func (lc *localRenderCache) Render(endpoint string, request any, render func() (
 		if err != nil {
 			return nil, err
 		}
-		lc.set(key, data)
+		lc.set(key, data, ttl)
 		return data, nil
 	})
 	if err != nil {
@@ -130,7 +116,7 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 	if policyErr == nil {
 		key, keyErr := buildRenderCacheKey(policy)
 		if keyErr == nil {
-			if cached, hit := c.lookup(key); hit {
+			if cached, hit := c.lookup(key, policy.APIPath); hit {
 				return cached, nil
 			}
 		}
@@ -141,7 +127,11 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 		}
 
 		if keyErr == nil {
-			_ = c.store(key, policy.APIPath, policy.UserID, image)
+			ttl := policy.TTL
+			if ttl <= 0 {
+				ttl = c.ttl
+			}
+			_ = c.store(key, policy.APIPath, policy.UserID, image, ttl)
 		}
 		return image, nil
 	}
@@ -149,15 +139,18 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 	return render()
 }
 
-func (c *RenderCacheClient) lookup(key string) ([]byte, bool) {
+func (c *RenderCacheClient) lookup(key string, apiPath string) ([]byte, bool) {
 	var record renderCacheRecord
 	var apiErr renderCacheAPIError
 
-	resp, err := c.http.R().
+	request := c.http.R().
 		SetQueryParam("key", key).
 		SetResult(&record).
-		SetError(&apiErr).
-		Get(c.baseURL + "/cache")
+		SetError(&apiErr)
+	if strings.TrimSpace(apiPath) != "" {
+		request.SetQueryParam("api_path", apiPath)
+	}
+	resp, err := request.Get(c.baseURL + "/cache")
 	if err != nil {
 		return nil, false
 	}
@@ -172,7 +165,10 @@ func (c *RenderCacheClient) lookup(key string) ([]byte, bool) {
 	return body, true
 }
 
-func (c *RenderCacheClient) store(key string, apiPath string, userID string, image []byte) error {
+func (c *RenderCacheClient) store(key string, apiPath string, userID string, image []byte, ttl time.Duration) error {
+	if ttl <= 0 {
+		ttl = c.ttl
+	}
 	targetPath := c.defaultFilePath(apiPath, userID, key)
 	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
 		return err
@@ -185,7 +181,7 @@ func (c *RenderCacheClient) store(key string, apiPath string, userID string, ima
 	resp, err := c.http.R().
 		SetFormData(map[string]string{
 			"key":       key,
-			"ttl":       strconv.Itoa(int(math.Ceil(c.ttl.Seconds()))),
+			"ttl":       strconv.Itoa(int(math.Ceil(ttl.Seconds()))),
 			"api_path":  apiPath,
 			"user_id":   userID,
 			"ext":       renderCacheFileExt,

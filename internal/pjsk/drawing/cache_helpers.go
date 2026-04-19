@@ -23,7 +23,10 @@ func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, er
 	if err != nil {
 		return renderCachePolicy{}, err
 	}
-	sanitizeRenderCachePayload(parsedEndpoint.Path, payload)
+	rule := sanitizeRenderCachePayload(parsedEndpoint.Path, payload)
+	if !rule.Enabled {
+		return renderCachePolicy{}, fmt.Errorf("render cache disabled for endpoint %s", parsedEndpoint.Path)
+	}
 
 	userID := normalizeRenderCacheUserID(extractRenderCacheUserID(payload))
 	apiPath := buildRenderCacheAPIPath(parsedEndpoint, userID, payload)
@@ -36,6 +39,7 @@ func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, er
 		APIPath:  apiPath,
 		UserID:   userID,
 		Params:   payload,
+		TTL:      rule.TTL,
 	}, nil
 }
 
@@ -95,33 +99,6 @@ func normalizeRenderCachePayload(request any) (any, error) {
 		return nil, fmt.Errorf("decode render cache payload: %w", err)
 	}
 	return payload, nil
-}
-
-func sanitizeRenderCachePayload(endpointPath string, payload any) {
-	deleteKeyAt(payload, "dt")
-	switch endpointPath {
-	case "/api/pjsk/deck/recommend":
-		deleteKeyAt(payload, "model_name")
-		deleteKeyAt(payload, "cost_times")
-		deleteKeyAt(payload, "wait_times")
-		deleteKeyAt(payload, "profile", "update_time")
-	case "/api/pjsk/event/record":
-		deleteKeyAt(payload, "user_info", "update_time")
-	case "/api/pjsk/music/list":
-		deleteKeyAt(payload, "profile", "update_time")
-	case "/api/pjsk/music/progress", "/api/pjsk/music/rewards/detail", "/api/pjsk/music/rewards/basic",
-		"/api/pjsk/mysekai/resource", "/api/pjsk/mysekai/fixture-list", "/api/pjsk/mysekai/door-upgrade",
-		"/api/pjsk/mysekai/music-record", "/api/pjsk/mysekai/talk-list":
-		deleteDataSourceUpdateTimes(payload, "profile")
-	case "/api/pjsk/education/challenge-live", "/api/pjsk/education/power-bonus",
-		"/api/pjsk/education/area-item", "/api/pjsk/education/bonds", "/api/pjsk/education/leader-count":
-		deleteKeyAt(payload, "profile", "update_time")
-		deleteDataSourceUpdateTimes(payload, "profile")
-	case "/api/pjsk/sk/check-room":
-		deleteKeyAt(payload, "update_at")
-	case "/api/pjsk/sk/winrate":
-		deleteKeyAt(payload, "updated_at")
-	}
 }
 
 func buildRenderCacheAPIPath(endpoint renderCacheEndpoint, userID string, payload any) string {

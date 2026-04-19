@@ -517,6 +517,23 @@ func TestResolveFuzzyMusicQueryMatchesTypoTitle(t *testing.T) {
 	}
 }
 
+func TestResolveFuzzyMusicQueryMatchesTypoInPartialTitle(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Hello World"},
+			2: {ID: 2, Title: "Goodbye Song"},
+		},
+	}
+
+	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo")
+	if err != nil {
+		t.Fatalf("resolveFuzzyMusicQuery() error = %v", err)
+	}
+	if musicInfo == nil || musicInfo.ID != 1 {
+		t.Fatalf("unexpected fuzzy partial result: %+v", musicInfo)
+	}
+}
+
 func TestExtractAmbiguousMusicIDsParsesAliasStyleErrors(t *testing.T) {
 	err := fmt.Errorf("failed to search music: 别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic2/Beta\nmusic1/Alpha")
 	ids := ExtractAmbiguousMusicIDs(err)

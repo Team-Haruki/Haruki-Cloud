@@ -105,8 +105,10 @@ func scoreMusicFuzzyCandidate(normalizedQuery string, candidate string) (musicFu
 	if normalizedCandidate == "" || normalizedQuery == "" {
 		return musicFuzzyScore{}, false
 	}
-	queryLen := len([]rune(normalizedQuery))
-	candidateLen := len([]rune(normalizedCandidate))
+	queryRunes := []rune(normalizedQuery)
+	candidateRunes := []rune(normalizedCandidate)
+	queryLen := len(queryRunes)
+	candidateLen := len(candidateRunes)
 	switch {
 	case normalizedCandidate == normalizedQuery:
 		return musicFuzzyScore{
@@ -121,12 +123,17 @@ func scoreMusicFuzzyCandidate(normalizedQuery string, candidate string) (musicFu
 		}, true
 	}
 
-	distance := levenshteinDistance([]rune(normalizedQuery), []rune(normalizedCandidate))
+	if score, ok := scoreMusicFuzzySubstring(queryRunes, candidateRunes); ok {
+		score.textLen = candidateLen
+		return score, true
+	}
+
+	distance := levenshteinDistance(queryRunes, candidateRunes)
 	if distance > fuzzyDistanceLimit(queryLen) {
 		return musicFuzzyScore{}, false
 	}
 	return musicFuzzyScore{
-		matchType: 2,
+		matchType: 3,
 		distance:  distance,
 		lengthGap: absInt(candidateLen - queryLen),
 		textLen:   candidateLen,
@@ -171,6 +178,38 @@ func fuzzyDistanceLimit(length int) int {
 	}
 }
 
+func scoreMusicFuzzySubstring(queryRunes []rune, candidateRunes []rune) (musicFuzzyScore, bool) {
+	queryLen := len(queryRunes)
+	candidateLen := len(candidateRunes)
+	if queryLen < 4 || candidateLen <= queryLen {
+		return musicFuzzyScore{}, false
+	}
+
+	limit := fuzzyDistanceLimit(queryLen)
+	minWindowLen := maxFuzzyInt(1, queryLen-limit)
+	maxWindowLen := minFuzzyInt(candidateLen, queryLen+limit)
+	best := musicFuzzyScore{}
+	found := false
+	for windowLen := minWindowLen; windowLen <= maxWindowLen; windowLen++ {
+		for start := 0; start+windowLen <= candidateLen; start++ {
+			distance := levenshteinDistance(queryRunes, candidateRunes[start:start+windowLen])
+			if distance > limit {
+				continue
+			}
+			score := musicFuzzyScore{
+				matchType: 2,
+				distance:  distance,
+				lengthGap: absInt(windowLen - queryLen),
+			}
+			if !found || compareMusicFuzzyScore(score, best) < 0 {
+				best = score
+				found = true
+			}
+		}
+	}
+	return best, found
+}
+
 func levenshteinDistance(left []rune, right []rune) int {
 	if len(left) == 0 {
 		return len(right)
@@ -212,6 +251,20 @@ func min3Int(left, middle, right int) int {
 		best = right
 	}
 	return best
+}
+
+func minFuzzyInt(left, right int) int {
+	if left < right {
+		return left
+	}
+	return right
+}
+
+func maxFuzzyInt(left, right int) int {
+	if left > right {
+		return left
+	}
+	return right
 }
 
 func absInt(value int) int {

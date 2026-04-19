@@ -91,8 +91,9 @@ func (r *RemoteDeckRecommender) ExpandAlgorithms(option map[string]any) []map[st
 	if alg != "all" {
 		return []map[string]any{option}
 	}
-	result := make([]map[string]any, 0, len(r.defaultAlgs))
-	for _, a := range r.defaultAlgs {
+	selected := r.defaultAlgorithmsForOption(option)
+	result := make([]map[string]any, 0, len(selected))
+	for _, a := range selected {
 		copied := make(map[string]any, len(option))
 		for k, v := range option {
 			copied[k] = v
@@ -101,4 +102,25 @@ func (r *RemoteDeckRecommender) ExpandAlgorithms(option map[string]any) []map[st
 		result = append(result, copied)
 	}
 	return result
+}
+
+func (r *RemoteDeckRecommender) defaultAlgorithmsForOption(option map[string]any) []string {
+	if len(r.defaultAlgs) == 0 {
+		return nil
+	}
+	if optionString(option, "target") == "skill" {
+		return r.defaultAlgs
+	}
+
+	filtered := make([]string, 0, len(r.defaultAlgs))
+	for _, alg := range r.defaultAlgs {
+		if normalizeRecommendAlgorithmForService(alg) == "dfs" {
+			continue
+		}
+		filtered = append(filtered, alg)
+	}
+	if len(filtered) == 0 {
+		return r.defaultAlgs
+	}
+	return filtered
 }

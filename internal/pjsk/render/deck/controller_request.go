@@ -2,6 +2,7 @@ package deck
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"sort"
 	"strings"
@@ -69,8 +70,8 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 				CharaID:         card.CharacterID,
 				SkillLevel:      fmt.Sprintf("%d", deckCard.SkillLevel),
 				IsAfterTraining: displayAfterTraining,
-				SkillRate:       deckCard.SkillRate,
-				EventBonusRate:  deckCard.EventBonusRate,
+				SkillRate:       normalizeDeckDisplayRate(deckCard.SkillRate),
+				EventBonusRate:  normalizeDeckDisplayRate(deckCard.EventBonusRate),
 				IsBeforeStory:   deckCard.IsBeforeStory,
 				IsAfterStory:    deckCard.IsAfterStory,
 				HasCanvasBonus:  deckCard.HasCanvasBonus,
@@ -100,9 +101,9 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 			Score:                drawing.IntPtr(deckInfo.Score),
 			LiveScore:            drawing.IntPtr(deckInfo.LiveScore),
 			MySekaiEventPoint:    drawing.IntPtr(deckInfo.MysekaiEventPoint),
-			EventBonusRate:       float64Ptr(deckInfo.EventBonusRate),
-			SupportDeckBonusRate: float64Ptr(deckInfo.SupportDeckBonusRate),
-			MultiLiveScoreUp:     float64Ptr(deckInfo.MultiLiveScoreUp),
+			EventBonusRate:       float64Ptr(normalizeDeckDisplayRate(deckInfo.EventBonusRate)),
+			SupportDeckBonusRate: float64Ptr(normalizeDeckDisplayRate(deckInfo.SupportDeckBonusRate)),
+			MultiLiveScoreUp:     float64Ptr(normalizeDeckDisplayRate(deckInfo.MultiLiveScoreUp)),
 			TotalPower:           drawing.IntPtr(deckInfo.TotalPower),
 			ChallengeScoreDelta:  drawing.IntPtr(deckInfo.ChallengeScoreDelta),
 		}
@@ -142,6 +143,14 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	c.applyOptionRequestFields(request, option, query)
 	c.applyCommonRecommendMetadata(request, region, recType, option, query)
 	return request, nil
+}
+
+func normalizeDeckDisplayRate(value float64) float64 {
+	rounded := math.Round(value*10) / 10
+	if math.Abs(rounded-math.Round(rounded)) < 1e-9 {
+		return math.Round(rounded)
+	}
+	return rounded
 }
 
 func resolveRecommendCardDisplayState(deckCard RecommendCard) (displayAfterTraining bool, trainedArt bool) {

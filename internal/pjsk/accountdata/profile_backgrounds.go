@@ -19,17 +19,45 @@ func resolveBindingProfileBG(bgMap map[string]*drawing.ProfileBgSettings, bindin
 	}
 	if bgMap != nil {
 		if bg := bgMap[profileBackgroundKey(binding.Server, binding.UserID)]; bg != nil {
+			if !hasCustomProfileBGImage(bg) {
+				return nil
+			}
 			return cloneProfileBGSettings(bg)
 		}
 	}
 	return nil
 }
 
+func hasCustomProfileBGImage(bg *drawing.ProfileBgSettings) bool {
+	return bg != nil && bg.ImgPath != nil && strings.TrimSpace(*bg.ImgPath) != ""
+}
+
 func sameProfileBGPath(left, right *drawing.ProfileBgSettings) bool {
-	if left == nil || right == nil || left.ImgPath == nil || right.ImgPath == nil {
+	if !hasCustomProfileBGImage(left) || !hasCustomProfileBGImage(right) {
 		return false
 	}
 	return strings.TrimSpace(*left.ImgPath) == strings.TrimSpace(*right.ImgPath)
+}
+
+func mergeUploadedProfileBGSettings(current, uploaded *drawing.ProfileBgSettings) *drawing.ProfileBgSettings {
+	if current == nil {
+		return cloneProfileBGSettings(uploaded)
+	}
+	merged := cloneProfileBGSettings(current)
+	if uploaded != nil && uploaded.ImgPath != nil {
+		path := strings.TrimSpace(*uploaded.ImgPath)
+		merged.ImgPath = &path
+	}
+	return merged
+}
+
+func clearProfileBGImagePath(current *drawing.ProfileBgSettings) *drawing.ProfileBgSettings {
+	if current == nil {
+		return nil
+	}
+	cleared := cloneProfileBGSettings(current)
+	cleared.ImgPath = nil
+	return cleared
 }
 
 func loadProfileBackground(ctx context.Context, db *pjskdb.Client, server, userID string) (*drawing.ProfileBgSettings, error) {

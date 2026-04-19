@@ -2,6 +2,7 @@ package accountdata_test
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -33,8 +34,9 @@ func (s *fakeProfileBGStore) SaveProfileBackground(ctx context.Context, server s
 	s.saved = append(s.saved, imageURL)
 	s.savedServers = append(s.savedServers, server)
 	s.savedUserIDs = append(s.savedUserIDs, userID)
+	index := strconv.Itoa(len(s.saved))
 	return &drawing.ProfileBgSettings{
-		ImgPath:  new(accountdata.DefaultProfileBGRelativeDir + "/" + server + "/uid_" + userID + ".jpg"),
+		ImgPath:  new(accountdata.DefaultProfileBGRelativeDir + "/" + server + "/uid_" + userID + "_" + index + ".jpg"),
 		Blur:     4,
 		Alpha:    80,
 		Vertical: false,
@@ -125,6 +127,17 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 		t.Fatalf("unexpected adjusted bg: %+v", item.Bg)
 	}
 
+	item, err = service.SetCurrentBindingProfileBG(ctx, "qq", "42", "jp", "https://example.com/bg2.png")
+	if err != nil {
+		t.Fatalf("replace bg: %v", err)
+	}
+	if item.Bg == nil || item.Bg.Blur != 7 || item.Bg.Alpha != 66 || !item.Bg.Vertical {
+		t.Fatalf("expected bg params to persist across image replace, got %+v", item.Bg)
+	}
+	if len(bgStore.deleted) != 1 {
+		t.Fatalf("expected replaced image to delete previous file, got %+v", bgStore.deleted)
+	}
+
 	item, err = service.ClearCurrentBindingProfileBG(ctx, "qq", "42", "jp")
 	if err != nil {
 		t.Fatalf("clear bg: %v", err)
@@ -132,8 +145,16 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 	if item.Bg != nil {
 		t.Fatalf("expected bg to be cleared, got %+v", item.Bg)
 	}
-	if len(bgStore.deleted) != 1 {
-		t.Fatalf("expected one deleted background, got %+v", bgStore.deleted)
+	if len(bgStore.deleted) != 2 {
+		t.Fatalf("expected clear to delete current background file, got %+v", bgStore.deleted)
+	}
+
+	item, err = service.SetCurrentBindingProfileBG(ctx, "qq", "42", "jp", "https://example.com/bg3.png")
+	if err != nil {
+		t.Fatalf("re-upload bg after clear: %v", err)
+	}
+	if item.Bg == nil || item.Bg.Blur != 7 || item.Bg.Alpha != 66 || !item.Bg.Vertical {
+		t.Fatalf("expected bg params to persist after clear and re-upload, got %+v", item.Bg)
 	}
 }
 

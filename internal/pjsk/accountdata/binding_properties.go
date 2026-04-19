@@ -51,10 +51,11 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 	if err != nil {
 		return nil, err
 	}
-	settings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.UserID, imageURL)
+	uploadedSettings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.UserID, imageURL)
 	if err != nil {
 		return nil, err
 	}
+	settings := mergeUploadedProfileBGSettings(oldBg, uploadedSettings)
 	if err := upsertProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID, settings); err != nil {
 		return nil, err
 	}
@@ -81,8 +82,14 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 			return nil, err
 		}
 	}
-	if err := deleteProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID); err != nil {
-		return nil, err
+	if settings != nil {
+		if err := upsertProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID, clearProfileBGImagePath(settings)); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := deleteProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID); err != nil {
+			return nil, err
+		}
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 }

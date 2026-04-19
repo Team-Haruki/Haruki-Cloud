@@ -116,7 +116,7 @@ func TestExtractMysekaiPhenomsUsesMasterdataIconName(t *testing.T) {
 	}
 }
 
-func TestSortKeysByResourceMovesRareEntriesToFront(t *testing.T) {
+func TestSortKeysByResourceMovesMusicRecordsToFront(t *testing.T) {
 	counts := map[string]int{
 		"material_1":             485,
 		"mysekai_material_1":     9,
@@ -131,9 +131,9 @@ func TestSortKeysByResourceMovesRareEntriesToFront(t *testing.T) {
 
 	got := sortKeysByResource(counts, materialRarityMap)
 	want := []string{
+		"mysekai_music_record_1",
 		"material_179",
 		"mysekai_material_24",
-		"mysekai_music_record_1",
 		"material_1",
 		"mysekai_material_1",
 	}

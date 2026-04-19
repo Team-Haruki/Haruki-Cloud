@@ -866,6 +866,88 @@ func TestBuildResourceRequestUsesMysekaiSourceOnly(t *testing.T) {
 	}
 }
 
+func TestBuildResourceRequestPlacesMusicRecordsFirstInSiteSummary(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]any{
+		{"id": 1, "assetbundleName": "mdl_non0001_gate_default"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
+		{"id": 1, "iconAssetbundleName": "mat_1", "mysekaiMaterialRarityType": "rarity_1"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{
+		{"id": 1, "mysekaiMusicTrackType": "music", "externalId": 101},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{
+		{"id": 101, "assetbundleName": "jacket_s_101", "publishedAt": 1},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiPhenomenas.json"), []map[string]any{})
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(`{
+  "upload_time": 1776000000,
+  "source": "toolbox_live",
+  "userMysekaiGamedata": {"mysekaiRank": 8},
+  "updatedResources": {
+    "userMysekaiMusicRecords": [{"mysekaiMusicRecordId": 1}],
+    "userMysekaiHarvestMaps": [
+      {
+        "mysekaiSiteId": 5,
+        "userMysekaiSiteHarvestResourceDrops": [
+          {
+            "resourceType": "mysekai_material",
+            "resourceId": 1,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "quantity": 99
+          },
+          {
+            "resourceType": "mysekai_music_record",
+            "resourceId": 1,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "userMysekaiGateCharacterVisit": {
+    "userMysekaiGate": {
+      "mysekaiGateId": 1,
+      "mysekaiGateLevel": 5
+    }
+  }
+}`))
+
+	req, err := controller.BuildResourceRequest(ResourceQuery{
+		Region:  "jp",
+		Profile: &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildResourceRequest() error = %v", err)
+	}
+	if len(req.SiteResourceNumbers) != 1 {
+		t.Fatalf("expected 1 site resource summary, got %+v", req.SiteResourceNumbers)
+	}
+	if len(req.SiteResourceNumbers[0].ResourceNumbers) < 2 {
+		t.Fatalf("expected resource numbers, got %+v", req.SiteResourceNumbers[0].ResourceNumbers)
+	}
+	first := req.SiteResourceNumbers[0].ResourceNumbers[0]
+	if got, want := first.ImagePath, "asset/jp-assets/startapp/music/jacket/jacket_s_101/jacket_s_101.png"; got != want {
+		t.Fatalf("expected music record first, got %q want %q", got, want)
+	}
+	if !first.HasMusicRecord || first.MusicRecordIconPath == nil {
+		t.Fatalf("expected music record badge on first resource, got %+v", first)
+	}
+}
+
 func TestBuildMusicRecordRequestUsesRegionScopedMasterdata(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")

@@ -81,18 +81,33 @@ func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 	}
 
 	// 2. Fallback: first visible binding for this server.
-	b, err := r.db.UserBinding.Query().
+	bindings, err := r.db.UserBinding.Query().
 		Where(
 			userbinding.HarukiUserID(harukiUserID),
 			userbinding.Server(server),
 			userbinding.Visible(true),
 		).
-		First(ctx)
+		All(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
 			return nil, ErrNoBinding
 		}
 		return nil, err
+	}
+	if len(bindings) == 0 {
+		return nil, ErrNoBinding
+	}
+	items := buildBindingList(bindings, nil)
+	targetBindingID := items[0].BindingID
+	var b *pjskdb.UserBinding
+	for _, binding := range bindings {
+		if binding.ID == targetBindingID {
+			b = binding
+			break
+		}
+	}
+	if b == nil {
+		return nil, ErrNoBinding
 	}
 	bg, err := loadProfileBackground(ctx, r.db, b.Server, b.UserID)
 	if err != nil {

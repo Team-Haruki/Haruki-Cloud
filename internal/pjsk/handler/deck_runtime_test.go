@@ -396,7 +396,7 @@ func TestExecuteDeckUsesSelectedBindingRegionBeforeResolvingCurrentEvent(t *test
 	}
 
 	params, err := json.Marshal(map[string]any{
-		"selector": "u1",
+		"selector": "u2",
 	})
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)

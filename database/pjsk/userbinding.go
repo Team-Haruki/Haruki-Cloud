@@ -22,6 +22,8 @@ type UserBinding struct {
 	UserID string `json:"user_id,omitempty"`
 	// Server holds the value of the "server" field.
 	Server string `json:"server,omitempty"`
+	// Persistent binding display order
+	DisplayOrder int `json:"display_order,omitempty"`
 	// Visible holds the value of the "visible" field.
 	Visible bool `json:"visible,omitempty"`
 	// Controls visibility of suite/capture data
@@ -61,7 +63,7 @@ func (*UserBinding) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case userbinding.FieldVisible, userbinding.FieldSuiteVisible, userbinding.FieldMysekaiVisible, userbinding.FieldVerified:
 			values[i] = new(sql.NullBool)
-		case userbinding.FieldID, userbinding.FieldHarukiUserID:
+		case userbinding.FieldID, userbinding.FieldHarukiUserID, userbinding.FieldDisplayOrder:
 			values[i] = new(sql.NullInt64)
 		case userbinding.FieldUserID, userbinding.FieldServer:
 			values[i] = new(sql.NullString)
@@ -103,6 +105,12 @@ func (_m *UserBinding) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field server", values[i])
 			} else if value.Valid {
 				_m.Server = value.String
+			}
+		case userbinding.FieldDisplayOrder:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field display_order", values[i])
+			} else if value.Valid {
+				_m.DisplayOrder = int(value.Int64)
 			}
 		case userbinding.FieldVisible:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -177,6 +185,9 @@ func (_m *UserBinding) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("server=")
 	builder.WriteString(_m.Server)
+	builder.WriteString(", ")
+	builder.WriteString("display_order=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DisplayOrder))
 	builder.WriteString(", ")
 	builder.WriteString("visible=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Visible))

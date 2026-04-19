@@ -115,7 +115,16 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 		}
 	}
 
-	return resolveUniqueMusicQuery(source, query)
+	musicInfo, err := resolveUniqueMusicQuery(source, query)
+	if err == nil || isMusicAmbiguousError(err) {
+		return musicInfo, err
+	}
+
+	fuzzyMusic, fuzzyErr := resolveFuzzyMusicQuery(source, query)
+	if fuzzyErr == nil || isMusicAmbiguousError(fuzzyErr) {
+		return fuzzyMusic, fuzzyErr
+	}
+	return nil, err
 }
 
 func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword string) (*int, string, error) {

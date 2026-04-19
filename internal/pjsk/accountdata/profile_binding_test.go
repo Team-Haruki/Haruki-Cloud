@@ -34,6 +34,7 @@ func TestDecodeProfileBindingParams(t *testing.T) {
 		"platform": " qq ",
 		"platform_user_id": " 42 ",
 		"selector": " u1 ",
+		"selector_other": " u2 ",
 		"server": " jp ",
 		"scope": " jp "
 	}`))
@@ -41,7 +42,7 @@ func TestDecodeProfileBindingParams(t *testing.T) {
 		t.Fatalf("decode params: %v", err)
 	}
 
-	if params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u1" || params.Server != "jp" || params.Scope != "jp" {
+	if params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u1" || params.SelectorOther != "u2" || params.Server != "jp" || params.Scope != "jp" {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }
@@ -175,5 +176,43 @@ func TestExecuteProfileBindingCommandBindListMasksUIDByDefault(t *testing.T) {
 	expectedList := "已绑定账号列表（u序号全局编号）:\nu1 [JP] 123********234 (全局默认 / JP服默认)"
 	if string(listText) != expectedList {
 		t.Fatalf("unexpected masked list text:\n%s", string(listText))
+	}
+}
+
+func TestExecuteProfileBindingCommandSwap(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"2000": "JP User"},
+		"cn": {"3000": "CN User"},
+	})
+
+	ctx := context.Background()
+	if _, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "2000",
+	}); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "3000",
+	}); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+
+	swapText, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBindSwap, accountdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "u1",
+		SelectorOther:  "u2",
+	})
+	if err != nil {
+		t.Fatalf("execute swap: %v", err)
+	}
+
+	expected := "已交换 u1 和 u2 的顺序\n已绑定账号列表（u序号全局编号）:\nu1 [CN] 3000 (CN服默认)\nu2 [JP] 2000 (全局默认 / JP服默认)"
+	if string(swapText) != expected {
+		t.Fatalf("unexpected swap text:\n%s", string(swapText))
 	}
 }

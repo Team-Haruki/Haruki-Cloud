@@ -3187,6 +3187,8 @@ type UserBindingMutation struct {
 	addharuki_user_id   *int
 	user_id             *string
 	server              *string
+	display_order       *int
+	adddisplay_order    *int
 	visible             *bool
 	suite_visible       *bool
 	mysekai_visible     *bool
@@ -3432,6 +3434,62 @@ func (m *UserBindingMutation) ResetServer() {
 	m.server = nil
 }
 
+// SetDisplayOrder sets the "display_order" field.
+func (m *UserBindingMutation) SetDisplayOrder(i int) {
+	m.display_order = &i
+	m.adddisplay_order = nil
+}
+
+// DisplayOrder returns the value of the "display_order" field in the mutation.
+func (m *UserBindingMutation) DisplayOrder() (r int, exists bool) {
+	v := m.display_order
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisplayOrder returns the old "display_order" field's value of the UserBinding entity.
+// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBindingMutation) OldDisplayOrder(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisplayOrder is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisplayOrder requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisplayOrder: %w", err)
+	}
+	return oldValue.DisplayOrder, nil
+}
+
+// AddDisplayOrder adds i to the "display_order" field.
+func (m *UserBindingMutation) AddDisplayOrder(i int) {
+	if m.adddisplay_order != nil {
+		*m.adddisplay_order += i
+	} else {
+		m.adddisplay_order = &i
+	}
+}
+
+// AddedDisplayOrder returns the value that was added to the "display_order" field in this mutation.
+func (m *UserBindingMutation) AddedDisplayOrder() (r int, exists bool) {
+	v := m.adddisplay_order
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDisplayOrder resets all changes to the "display_order" field.
+func (m *UserBindingMutation) ResetDisplayOrder() {
+	m.display_order = nil
+	m.adddisplay_order = nil
+}
+
 // SetVisible sets the "visible" field.
 func (m *UserBindingMutation) SetVisible(b bool) {
 	m.visible = &b
@@ -3664,7 +3722,7 @@ func (m *UserBindingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserBindingMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.haruki_user_id != nil {
 		fields = append(fields, userbinding.FieldHarukiUserID)
 	}
@@ -3673,6 +3731,9 @@ func (m *UserBindingMutation) Fields() []string {
 	}
 	if m.server != nil {
 		fields = append(fields, userbinding.FieldServer)
+	}
+	if m.display_order != nil {
+		fields = append(fields, userbinding.FieldDisplayOrder)
 	}
 	if m.visible != nil {
 		fields = append(fields, userbinding.FieldVisible)
@@ -3700,6 +3761,8 @@ func (m *UserBindingMutation) Field(name string) (ent.Value, bool) {
 		return m.UserID()
 	case userbinding.FieldServer:
 		return m.Server()
+	case userbinding.FieldDisplayOrder:
+		return m.DisplayOrder()
 	case userbinding.FieldVisible:
 		return m.Visible()
 	case userbinding.FieldSuiteVisible:
@@ -3723,6 +3786,8 @@ func (m *UserBindingMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldUserID(ctx)
 	case userbinding.FieldServer:
 		return m.OldServer(ctx)
+	case userbinding.FieldDisplayOrder:
+		return m.OldDisplayOrder(ctx)
 	case userbinding.FieldVisible:
 		return m.OldVisible(ctx)
 	case userbinding.FieldSuiteVisible:
@@ -3760,6 +3825,13 @@ func (m *UserBindingMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetServer(v)
+		return nil
+	case userbinding.FieldDisplayOrder:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisplayOrder(v)
 		return nil
 	case userbinding.FieldVisible:
 		v, ok := value.(bool)
@@ -3800,6 +3872,9 @@ func (m *UserBindingMutation) AddedFields() []string {
 	if m.addharuki_user_id != nil {
 		fields = append(fields, userbinding.FieldHarukiUserID)
 	}
+	if m.adddisplay_order != nil {
+		fields = append(fields, userbinding.FieldDisplayOrder)
+	}
 	return fields
 }
 
@@ -3810,6 +3885,8 @@ func (m *UserBindingMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case userbinding.FieldHarukiUserID:
 		return m.AddedHarukiUserID()
+	case userbinding.FieldDisplayOrder:
+		return m.AddedDisplayOrder()
 	}
 	return nil, false
 }
@@ -3825,6 +3902,13 @@ func (m *UserBindingMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddHarukiUserID(v)
+		return nil
+	case userbinding.FieldDisplayOrder:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDisplayOrder(v)
 		return nil
 	}
 	return fmt.Errorf("unknown UserBinding numeric field %s", name)
@@ -3861,6 +3945,9 @@ func (m *UserBindingMutation) ResetField(name string) error {
 		return nil
 	case userbinding.FieldServer:
 		m.ResetServer()
+		return nil
+	case userbinding.FieldDisplayOrder:
+		m.ResetDisplayOrder()
 		return nil
 	case userbinding.FieldVisible:
 		m.ResetVisible()

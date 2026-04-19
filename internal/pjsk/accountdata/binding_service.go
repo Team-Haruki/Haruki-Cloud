@@ -102,10 +102,15 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 	case err == nil:
 		alreadyBound = true
 	case pjskdb.IsNotFound(err):
+		displayOrder, orderErr := nextBindingDisplayOrderTx(ctx, tx, harukiUserID)
+		if orderErr != nil {
+			return nil, orderErr
+		}
 		binding, err = tx.UserBinding.Create().
 			SetHarukiUserID(harukiUserID).
 			SetServer(target.Server).
 			SetUserID(target.UserID).
+			SetDisplayOrder(displayOrder).
 			SetVisible(false).
 			Save(ctx)
 		if err != nil {

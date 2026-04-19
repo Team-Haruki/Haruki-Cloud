@@ -388,6 +388,16 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = musicCtrl.RenderMusicDetail(q)
+		if err != nil {
+			if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 0 {
+				items := make([]rendermusic.BriefListItemQuery, 0, len(ids))
+				for _, musicID := range ids {
+					items = append(items, rendermusic.BriefListItemQuery{MusicID: musicID})
+				}
+				return renderMusicBriefLookupListMessages(rc, musicCtrl, q.Region, "歌曲", strings.TrimSpace(q.Query), items)
+			}
+			return nil, err
+		}
 	case "music-list":
 		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
 		if suiteErr != nil {

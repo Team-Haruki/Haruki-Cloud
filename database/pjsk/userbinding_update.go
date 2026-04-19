@@ -77,6 +77,27 @@ func (_u *UserBindingUpdate) SetNillableServer(v *string) *UserBindingUpdate {
 	return _u
 }
 
+// SetDisplayOrder sets the "display_order" field.
+func (_u *UserBindingUpdate) SetDisplayOrder(v int) *UserBindingUpdate {
+	_u.mutation.ResetDisplayOrder()
+	_u.mutation.SetDisplayOrder(v)
+	return _u
+}
+
+// SetNillableDisplayOrder sets the "display_order" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableDisplayOrder(v *int) *UserBindingUpdate {
+	if v != nil {
+		_u.SetDisplayOrder(*v)
+	}
+	return _u
+}
+
+// AddDisplayOrder adds value to the "display_order" field.
+func (_u *UserBindingUpdate) AddDisplayOrder(v int) *UserBindingUpdate {
+	_u.mutation.AddDisplayOrder(v)
+	return _u
+}
+
 // SetVisible sets the "visible" field.
 func (_u *UserBindingUpdate) SetVisible(v bool) *UserBindingUpdate {
 	_u.mutation.SetVisible(v)
@@ -240,6 +261,12 @@ func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.Server(); ok {
 		_spec.SetField(userbinding.FieldServer, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.DisplayOrder(); ok {
+		_spec.SetField(userbinding.FieldDisplayOrder, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedDisplayOrder(); ok {
+		_spec.AddField(userbinding.FieldDisplayOrder, field.TypeInt, value)
+	}
 	if value, ok := _u.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)
 	}
@@ -363,6 +390,27 @@ func (_u *UserBindingUpdateOne) SetNillableServer(v *string) *UserBindingUpdateO
 	if v != nil {
 		_u.SetServer(*v)
 	}
+	return _u
+}
+
+// SetDisplayOrder sets the "display_order" field.
+func (_u *UserBindingUpdateOne) SetDisplayOrder(v int) *UserBindingUpdateOne {
+	_u.mutation.ResetDisplayOrder()
+	_u.mutation.SetDisplayOrder(v)
+	return _u
+}
+
+// SetNillableDisplayOrder sets the "display_order" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableDisplayOrder(v *int) *UserBindingUpdateOne {
+	if v != nil {
+		_u.SetDisplayOrder(*v)
+	}
+	return _u
+}
+
+// AddDisplayOrder adds value to the "display_order" field.
+func (_u *UserBindingUpdateOne) AddDisplayOrder(v int) *UserBindingUpdateOne {
+	_u.mutation.AddDisplayOrder(v)
 	return _u
 }
 
@@ -558,6 +606,12 @@ func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding
 	}
 	if value, ok := _u.mutation.Server(); ok {
 		_spec.SetField(userbinding.FieldServer, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.DisplayOrder(); ok {
+		_spec.SetField(userbinding.FieldDisplayOrder, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedDisplayOrder(); ok {
+		_spec.AddField(userbinding.FieldDisplayOrder, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.Visible(); ok {
 		_spec.SetField(userbinding.FieldVisible, field.TypeBool, value)

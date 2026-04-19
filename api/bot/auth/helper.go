@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"haruki-cloud/config"
 	ent "haruki-cloud/database/bot"
 
 	"github.com/redis/go-redis/v9"
@@ -60,12 +59,9 @@ func (s *redisKVStore) Expire(ctx context.Context, key string, ttl time.Duration
 // ================= Service Constructors =================
 
 func NewUserService(dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) *UserService {
-	cfg := config.Cfg.HarukiBotDB
 	return NewUserServiceWithDependencies(
 		dbClient,
 		newRedisKVStore(redisClient),
-		newTurnstileClient(cfg.TurnstileSecretKey),
-		newSMTPClient(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom),
 		authEncryptionKey,
 		noiseServerPubKey,
 	)
@@ -74,8 +70,6 @@ func NewUserService(dbClient *ent.Client, redisClient *redis.Client, authEncrypt
 func NewUserServiceWithDependencies(
 	dbClient *ent.Client,
 	redisStore RedisKVStore,
-	turnstileClient TurnstileVerifier,
-	smtpClient VerificationMailer,
 	authEncryptionKey []byte,
 	noiseServerPubKey string,
 ) *UserService {
@@ -85,8 +79,6 @@ func NewUserServiceWithDependencies(
 	return &UserService{
 		dbClient:          dbClient,
 		redisStore:        redisStore,
-		turnstileClient:   turnstileClient,
-		smtpClient:        smtpClient,
 		authEncryptionKey: authEncryptionKey,
 		noiseServerPubKey: noiseServerPubKey,
 	}
@@ -136,11 +128,6 @@ func (s *UserService) getRedisKey(ctx context.Context, pattern string, id any) (
 func (s *UserService) delRedisKey(ctx context.Context, pattern string, id any) error {
 	key := fmt.Sprintf(pattern, id)
 	return s.redisStore.Del(ctx, key)
-}
-
-func (s *UserService) cleanupRegistrationKeys(ctx context.Context, qqNumber int64) {
-	_ = s.delRedisKey(ctx, RedisKeyVerifyCode, qqNumber)
-	_ = s.delRedisKey(ctx, RedisKeyVerifyStatus, qqNumber)
 }
 
 // ================= InternalService Methods =================

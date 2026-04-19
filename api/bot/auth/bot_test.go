@@ -17,52 +17,19 @@ import (
 	"haruki-cloud/config"
 	ent "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/requestsranking"
-	"haruki-cloud/database/bot/user"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/redis/go-redis/v9"
 	noiseMP "github.com/shamaton/msgpack/v3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type testEnvelope struct {
 	Status  int             `json:"status"`
 	Message string          `json:"message"`
 	Data    json.RawMessage `json:"data"`
-}
-
-type mockTurnstile struct {
-	valid bool
-	err   error
-	token string
-	ip    string
-}
-
-func (m *mockTurnstile) VerifyToken(token, remoteIP string) (bool, error) {
-	m.token = token
-	m.ip = remoteIP
-	if m.err != nil {
-		return false, m.err
-	}
-	return m.valid, nil
-}
-
-type mockSMTP struct {
-	err  error
-	sent []mailEvent
-}
-
-type mailEvent struct {
-	qq   int64
-	code string
-}
-
-func (m *mockSMTP) SendVerificationCode(qqNumber int64, code string) error {
-	if m.err != nil {
-		return m.err
-	}
-	m.sent = append(m.sent, mailEvent{qq: qqNumber, code: code})
-	return nil
 }
 
 type memoryRedisStore struct {
@@ -126,21 +93,10 @@ func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
 
 	prev := config.Cfg
 	config.Cfg.Backend.AcceptAuthorization = "Bearer route-test"
-	config.Cfg.HarukiBotDB.EnableRegistration = true
 	t.Cleanup(func() { config.Cfg = prev })
 
 	app := fiber.New()
 	RegisterBotRoutes(app, client, nil, nil, "")
-
-	sendResp := sendJSONRequest(t, app, http.MethodPost, "/api/v2/bot/send-mail", `{"qq_number":0}`, nil)
-	if sendResp.Status != fiber.StatusBadRequest {
-		t.Fatalf("expected /api/v2/bot/send-mail to be registered, got status=%d message=%s", sendResp.Status, sendResp.Message)
-	}
-
-	registerResp := sendJSONRequest(t, app, http.MethodPost, "/api/v2/bot/register", `{"qq_number":0}`, nil)
-	if registerResp.Status != fiber.StatusBadRequest {
-		t.Fatalf("expected /api/v2/bot/register to be registered, got status=%d message=%s", registerResp.Status, registerResp.Message)
-	}
 
 	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/api/v2/bot/12345678/auth", []byte("garbage"))
 	authHTTPResp.Body.Close()
@@ -157,7 +113,7 @@ func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
 	}
 }
 
-func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
+func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 	ctx := context.Background()
 	client := newBotTestClient(t, "flow")
 	defer func() { _ = client.Close() }()
@@ -169,74 +125,49 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	config.Cfg.HarukiBotDB.CredentialSignToken = "credential-sign-token"
 	config.Cfg.HarukiBotDB.SessionSignToken = "session-sign-token"
 	config.Cfg.HarukiBotDB.SessionTTLDays = 7
-	config.Cfg.HarukiBotDB.EnableRegistration = true
 	config.Cfg.Backend.AcceptAuthorization = "Bearer internal-test"
 	config.Cfg.Backend.AcceptUserAgent = ""
 	t.Cleanup(func() { config.Cfg = prev })
 
 	store := newMemoryRedisStore()
-	turnstileMock := &mockTurnstile{valid: true}
-	smtpMock := &mockSMTP{}
-
 	testAuthKey := []byte("01234567890123456789012345678901") // 32 bytes
-	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, turnstileMock, smtpMock, testAuthKey, "deadbeef"))
+	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, testAuthKey, "deadbeef"))
 	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store))
 	statsHandler := NewStatisticsHandler(NewStatisticsService(client))
 
 	app := fiber.New()
 	public := app.Group("/bot")
-	public.Post("/send-mail", userHandler.SendMail)
-	public.Post("/register", userHandler.Register)
 	public.Post("/:bot_id/auth", userHandler.Auth)
 	internal := app.Group("/internal/bot", api.VerifyAPIAuthorization())
 	internal.Post("/verify-session", internalHandler.VerifySession)
 	app.Post("/internal/bot/statistics/record/:botID", api.VerifyAPIAuthorization(), statsHandler.RecordStatistics)
 
+	// Seed a user directly in the database
 	const qqNumber int64 = 123456789
-	sendMailResp := sendJSONRequest(t, app, http.MethodPost, "/bot/send-mail", fmt.Sprintf(`{"qq_number":%d,"turnstile_token":"ts-token"}`, qqNumber), nil)
-	if sendMailResp.Status != fiber.StatusOK {
-		t.Fatalf("send-mail failed: status=%d message=%s", sendMailResp.Status, sendMailResp.Message)
-	}
-	if turnstileMock.token != "ts-token" {
-		t.Fatalf("turnstile token mismatch: %q", turnstileMock.token)
-	}
-	if len(smtpMock.sent) != 1 {
-		t.Fatalf("expected one mock mail, got %d", len(smtpMock.sent))
-	}
-	verificationCode := smtpMock.sent[0].code
-	if verificationCode == "" {
-		t.Fatalf("verification code should not be empty")
-	}
-
-	registerResp := sendJSONRequest(t, app, http.MethodPost, "/bot/register", fmt.Sprintf(`{"qq_number":%d,"verification_code":"%s"}`, qqNumber, verificationCode), nil)
-	if registerResp.Status != fiber.StatusCreated {
-		t.Fatalf("register failed: status=%d message=%s", registerResp.Status, registerResp.Message)
-	}
-
-	var registerData CredentialResponse
-	if err := json.Unmarshal(registerResp.Data, &registerData); err != nil {
-		t.Fatalf("decode register response: %v", err)
-	}
-	if registerData.BotID == "" || registerData.Credential == "" {
-		t.Fatalf("register response missing bot_id or credential")
-	}
-
-	botID, err := strconv.Atoi(registerData.BotID)
+	const botID = 10042042
+	credential := "test-credential-value"
+	hashedCred, err := bcrypt.GenerateFromPassword([]byte(credential), bcrypt.DefaultCost)
 	if err != nil {
-		t.Fatalf("parse bot_id: %v", err)
+		t.Fatalf("hash credential: %v", err)
 	}
-
-	dbUser, err := client.User.Query().Where(user.BotIDEQ(botID)).Only(ctx)
+	_, err = client.User.Create().
+		SetOwnerUserID(qqNumber).
+		SetBotID(botID).
+		SetCredential(string(hashedCred)).
+		Save(ctx)
 	if err != nil {
-		t.Fatalf("load bot user: %v", err)
-	}
-	if dbUser.OwnerUserID != qqNumber {
-		t.Fatalf("owner user mismatch: got=%d want=%d", dbUser.OwnerUserID, qqNumber)
+		t.Fatalf("seed user: %v", err)
 	}
 
+	botIDStr := strconv.Itoa(botID)
+
+	// Sign credential as JWT (mimicking what register would return)
+	credentialJWT := signTestCredential(t, botIDStr, credential)
+
+	// Auth flow
 	authPayload := HarukiAuthPayload{
-		BotID:      registerData.BotID,
-		Credential: registerData.Credential,
+		BotID:      botIDStr,
+		Credential: credentialJWT,
 		Timestamp:  time.Now().Unix(),
 	}
 	payloadBytes, err := noiseMP.Marshal(authPayload)
@@ -248,7 +179,7 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 		t.Fatalf("encrypt auth payload: %v", err)
 	}
 
-	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/bot/"+registerData.BotID+"/auth", encryptedBody)
+	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/bot/"+botIDStr+"/auth", encryptedBody)
 	if authHTTPResp.StatusCode != fiber.StatusOK {
 		body, _ := io.ReadAll(authHTTPResp.Body)
 		t.Fatalf("auth failed: status=%d body=%s", authHTTPResp.StatusCode, string(body))
@@ -271,7 +202,7 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 		t.Fatalf("expected noise pubkey 'deadbeef', got '%s'", authData.NoiseServerPubKey)
 	}
 
-	verifyBody := fmt.Sprintf(`{"bot_id":"%s","session_token":"%s"}`, registerData.BotID, authData.SessionToken)
+	verifyBody := fmt.Sprintf(`{"bot_id":"%s","session_token":"%s"}`, botIDStr, authData.SessionToken)
 	verifyResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
@@ -286,13 +217,13 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 		t.Fatalf("unexpected verify response: %+v", verifyData)
 	}
 
-	statsResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+registerData.BotID, `{}`, map[string]string{
+	statsResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+botIDStr, `{}`, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
 	if statsResp.Status != fiber.StatusOK {
 		t.Fatalf("statistics failed: status=%d message=%s", statsResp.Status, statsResp.Message)
 	}
-	statsResp = sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+registerData.BotID, `{}`, map[string]string{
+	statsResp = sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+botIDStr, `{}`, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
 	if statsResp.Status != fiber.StatusOK {
@@ -324,33 +255,18 @@ func TestBotAuthFlow_WithMockMailAndTurnstile(t *testing.T) {
 	}
 }
 
-func TestBotSendMail_TurnstileFailure(t *testing.T) {
-	ctx := context.Background()
-	client := newBotTestClient(t, "turnstile-fail")
-	defer func() { _ = client.Close() }()
-	if err := client.Schema.Create(ctx); err != nil {
-		t.Fatalf("create schema: %v", err)
+func signTestCredential(t *testing.T, botID, credential string) string {
+	t.Helper()
+	payload := jwt.MapClaims{
+		"bot_id":     botID,
+		"credential": credential,
 	}
-
-	prev := config.Cfg
-	config.Cfg.HarukiBotDB.EnableRegistration = true
-	t.Cleanup(func() { config.Cfg = prev })
-
-	store := newMemoryRedisStore()
-	turnstileMock := &mockTurnstile{valid: false}
-	smtpMock := &mockSMTP{}
-
-	h := NewUserHandler(NewUserServiceWithDependencies(client, store, turnstileMock, smtpMock, nil, ""))
-	app := fiber.New()
-	app.Post("/bot/send-mail", h.SendMail)
-
-	resp := sendJSONRequest(t, app, http.MethodPost, "/bot/send-mail", `{"qq_number":10001,"turnstile_token":"invalid"}`, nil)
-	if resp.Status != fiber.StatusBadRequest {
-		t.Fatalf("expected bad request for invalid turnstile, got status=%d message=%s", resp.Status, resp.Message)
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, payload).
+		SignedString([]byte(config.Cfg.HarukiBotDB.CredentialSignToken))
+	if err != nil {
+		t.Fatalf("sign test credential: %v", err)
 	}
-	if len(smtpMock.sent) != 0 {
-		t.Fatalf("smtp mock should not send mail on turnstile failure")
-	}
+	return token
 }
 
 func sendJSONRequest(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) testEnvelope {

@@ -124,18 +124,21 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 		// 2. /msam may still be posted to mysekai/resource until manifests refresh.
 		legacySKPredictCompat := expectedPath == "sk/rank-trace"
 		legacyMysekaiOverviewCompat := expectedPath == "mysekai/resource"
-		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat && !legacyMysekaiOverviewCompat {
+		legacySKCSBCompat := expectedPath == "sk/check-room"
+		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat && !legacyMysekaiOverviewCompat && !legacySKCSBCompat {
 			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
 		}
 
 		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req)
-		if err != nil && (legacySKPredictCompat || legacyMysekaiOverviewCompat) {
+		if err != nil && (legacySKPredictCompat || legacyMysekaiOverviewCompat || legacySKCSBCompat) {
 			if validationErr, ok := errors.AsType[*botValidationError](err); ok {
 				switch {
 				case legacySKPredictCompat && strings.Contains(validationErr.Error(), "belongs to path sk/predict"):
 					resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/predict", req)
 				case legacyMysekaiOverviewCompat && strings.Contains(validationErr.Error(), "belongs to path mysekai/overview"):
 					resolved, err = resolveBotCommand(c.Context(), req.Message, "mysekai/overview", req)
+				case legacySKCSBCompat && strings.Contains(validationErr.Error(), "belongs to path sk/csb"):
+					resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/csb", req)
 				}
 			}
 		}

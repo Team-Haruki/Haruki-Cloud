@@ -215,6 +215,44 @@ func TestDispatchSupportsSKPredictMode(t *testing.T) {
 	}
 }
 
+func TestDispatchSupportsCSBMode(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	cases := []struct {
+		message  string
+		wantMode string
+	}{
+		{message: "/csb 1", wantMode: "sk-csb"},
+		{message: "/查水表 1", wantMode: "sk-csb"},
+		{message: "/停车时间 1", wantMode: "sk-csb"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.message, func(t *testing.T) {
+			matched := corehandler.MatchCommandHandler(tc.message)
+			if matched.Handler == nil {
+				t.Fatalf("expected matched handler, got nil")
+			}
+			resolved, err := dispatchForTest(context.Background(), Event{
+				Platform: "qq",
+				Message: onebot11.Message{
+					{Type: "text", Data: map[string]any{"text": tc.message}},
+				},
+				UserId: "12345",
+			})
+			if err != nil {
+				t.Fatalf("dispatch: %v", err)
+			}
+			if resolved == nil {
+				t.Fatal("expected command request, got nil")
+			}
+			if resolved.Module != parser.ModuleSK || resolved.Mode != tc.wantMode {
+				t.Fatalf("unexpected resolved target: module=%v mode=%s matched=%s", resolved.Module, resolved.Mode, matched.Command)
+			}
+		})
+	}
+}
+
 func TestDispatchSupportsMysekaiOverviewAlias(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 

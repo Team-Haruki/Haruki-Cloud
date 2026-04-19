@@ -267,6 +267,48 @@ func (botTrackerSource) TraceWorldBloomRankingByUser(server string, eventID, cha
 	}, nil
 }
 
+type botCSBTrackerSource struct {
+	botTrackerSource
+}
+
+func (botCSBTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     5_000_001,
+			Rank:      1,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "BotCSBUser",
+		},
+	}, nil
+}
+
+func (botCSBTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{
+				UserID:    strconv.FormatInt(userID, 10),
+				Score:     5_000_001,
+				Rank:      1,
+				Timestamp: 1704067200,
+			},
+			{
+				UserID:    strconv.FormatInt(userID, 10),
+				Score:     5_005_001,
+				Rank:      1,
+				Timestamp: 1704070800,
+			},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "BotCSBUser",
+		},
+	}, nil
+}
+
 // testBotApp registers bot routes on a fresh Fiber instance.
 func testBotApp(t *testing.T, drawingURL string) *fiber.App {
 	t.Helper()
@@ -645,7 +687,7 @@ func TestBotEndpointMysekaiOverviewAcceptsLegacyResourceEndpoint(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "drawing client is not configured")
+	assertSingleTextMessageContains(t, body, "没有找到有效的 mysekai 数据")
 }
 
 func TestBotEndpointSKQueryTreatsRequestServerAsExplicitRegion(t *testing.T) {
@@ -1343,13 +1385,13 @@ func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
 		if req.Eid != 101 {
 			t.Fatalf("unexpected event id: %d", req.Eid)
 		}
-		if len(req.Ranks) != 1 || req.Ranks[0].Rank != 777 {
+		if len(req.Ranks) != 1 || req.Ranks[0].Rank != 1 {
 			t.Fatalf("expected self-bound check-room payload, got %+v", req.Ranks)
 		}
-		if req.PrevRank == nil || req.PrevRank.Rank != 776 {
+		if req.PrevRank != nil {
 			t.Fatalf("unexpected prev rank: %+v", req.PrevRank)
 		}
-		if req.NextRank == nil || req.NextRank.Rank != 778 {
+		if req.NextRank == nil || req.NextRank.Rank != 2 {
 			t.Fatalf("unexpected next rank: %+v", req.NextRank)
 		}
 		w.WriteHeader(http.StatusOK)
@@ -1365,7 +1407,7 @@ func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.SK.SetTrackerIntegration(botCSBTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -1418,6 +1460,52 @@ func TestBotEndpointSKCheckRoomLiteUsesFixedRanks(t *testing.T) {
 	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/cfl",
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cfl event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
+func TestBotEndpointSKCheckRoomLegacyCSBCompat(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/csb" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.CSBRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.Eid != 101 {
+			t.Fatalf("unexpected event id: %d", req.Eid)
+		}
+		if len(req.Ranks) == 0 {
+			t.Fatalf("expected csb trace payload, got empty ranks")
+		}
+		if req.Ranks[len(req.Ranks)-1].Rank != 1 {
+			t.Fatalf("unexpected latest rank payload: %+v", req.Ranks[len(req.Ranks)-1])
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKCSBPNG"))
+	}))
+	defer srv.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botCSBTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/csb",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/csb event101 1"}}},
 	})
 	resp, err := app.Test(req)
 	if err != nil {

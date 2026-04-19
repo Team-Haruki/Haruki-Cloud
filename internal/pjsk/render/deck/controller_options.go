@@ -71,7 +71,7 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 
 	attr := normalizeRecommendAttr(query.EventAttr)
 	unit := normalizeRecommendUnit(query.EventUnit)
-	hasSimulatedWorldBloomTurn := query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0
+	hasSimulatedWorldBloomTurn := !explicitEventID && query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0
 	fakeEvent := hasSimulatedWorldBloomTurn || (!explicitEventID && (attr != "" || unit != ""))
 
 	if attr != "" && fakeEvent {

@@ -901,6 +901,35 @@ func TestBuildRecommendOptionExplicitEventWorldBloomCharacterKeepsEventID(t *tes
 	}
 }
 
+func TestBuildRecommendOptionExplicitEventIgnoresResolvedWorldBloomTurn(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	option, err := controller.buildRecommendOption(renderregion.CN, "event", AutoQuery{
+		Region:                "cn",
+		RecommendType:         "event",
+		EventID:               new(170),
+		EventUnit:             "school_refusal",
+		WorldBloomEventTurn:   new(2),
+		WorldBloomCharacterID: new(20),
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	if option["event_id"] != 170 {
+		t.Fatalf("explicit event should be preserved: %+v", option["event_id"])
+	}
+	if value, ok := option["world_bloom_event_turn"]; ok && value != nil {
+		t.Fatalf("resolved explicit event should not keep simulated world bloom turn: %+v", value)
+	}
+	if value, ok := option["event_type"]; ok && value != nil {
+		t.Fatalf("resolved explicit event should not force fake event_type: %+v", value)
+	}
+	if option["world_bloom_character_id"] != 20 {
+		t.Fatalf("unexpected world bloom character: %+v", option["world_bloom_character_id"])
+	}
+}
+
 func TestApplyCommonRecommendMetadataDoesNotBackfillMysekaiEvent(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 	request := &drawing.DeckRequest{

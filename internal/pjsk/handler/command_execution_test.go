@@ -2497,6 +2497,55 @@ func TestResolveDeckCharacterSelectionsUsesRequestedRegionInsteadOfDefaultProvid
 	}
 }
 
+func TestResolveDeckCharacterSelectionsClearsWorldBloomTurnAfterResolvingExplicitCNEvent(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_cn_world_bloom_turn_resolve?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("cn").
+		SetGameID(20).
+		SetFirstName("晓山").
+		SetGivenName("瑞希").
+		SetFirstNameEnglish("Akiyama").
+		SetGivenNameEnglish("Mizuki").
+		Save(ctx); err != nil {
+		t.Fatalf("create cn gamecharacter: %v", err)
+	}
+
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 160, now-int64(72*time.Hour/time.Millisecond), now-int64(48*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(71*time.Hour/time.Millisecond), aggregateAt: now - int64(69*time.Hour/time.Millisecond), characterID: 17},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 170, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(3*time.Hour/time.Millisecond), aggregateAt: now - int64(2*time.Hour/time.Millisecond), characterID: 17},
+		{chapterNo: 2, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now - int64(time.Hour/time.Millisecond), characterID: 19},
+		{chapterNo: 3, startAt: now - int64(time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 20},
+		{chapterNo: 4, startAt: now + int64(time.Hour/time.Millisecond), aggregateAt: now + int64(2*time.Hour/time.Millisecond), characterID: 18},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:                "cn",
+		RecommendType:         "event",
+		WorldBloomEventTurn:   drawing.IntPtr(2),
+		WorldBloomCharacterID: drawing.IntPtr(20),
+		EventUnit:             "school_refusal",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 170 {
+		t.Fatalf("unexpected resolved event id: %+v", query.EventID)
+	}
+	if query.WorldBloomEventTurn != nil {
+		t.Fatalf("expected world bloom turn to be cleared after event resolution: %+v", query.WorldBloomEventTurn)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 20 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+}
+
 func TestPickCurrentOrNextDeckEventAllowsJPFutureLeakAfterCardRelease(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_future_leak_after_release?mode=memory&cache=shared&_fk=1")

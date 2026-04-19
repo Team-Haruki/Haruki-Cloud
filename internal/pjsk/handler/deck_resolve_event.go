@@ -92,7 +92,7 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		q.EventID = drawing.IntPtr(int(eventInfo.GameID))
 		q.WorldBloomEventTurn = nil
 	}
-	if strings.TrimSpace(q.EventUnit) != "" || strings.TrimSpace(q.EventAttr) != "" {
+	if !hasPendingDeckWorldBloomSelection(q) && (strings.TrimSpace(q.EventUnit) != "" || strings.TrimSpace(q.EventAttr) != "") {
 		return nil
 	}
 
@@ -182,6 +182,15 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		q.EventUnit = resolveDeckCharacterUnit(charID)
 	}
 	return nil
+}
+
+func hasPendingDeckWorldBloomSelection(q *deck.AutoQuery) bool {
+	if q == nil {
+		return false
+	}
+	return (q.WorldBloomEventTurn != nil && *q.WorldBloomEventTurn > 0) ||
+		(q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0) ||
+		strings.TrimSpace(q.WorldBloomCharacterQuery) != ""
 }
 
 func tryResolveDeckMusicQueryAsWorldBloomCharacter(

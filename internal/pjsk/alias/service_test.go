@@ -318,6 +318,23 @@ func TestServiceDeleteRemovesApprovedAliases(t *testing.T) {
 	}
 }
 
+func TestTryResolveMusicTitleOrAliasIDSupportsPartialApprovedAlias(t *testing.T) {
+	ctx := context.Background()
+	deps := newAliasTestDeps(t)
+
+	deps.addMusic(t, ctx, 186, "初音天地開闢神話")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeMusic, 186, "开天辟地")
+	deps.addApprovedAlias(t, ctx, PjskAliasTypeMusic, 186, "初音开天辟地神话")
+
+	id, ok, err := deps.service.TryResolveMusicTitleOrAliasID(ctx, "开天")
+	if err != nil {
+		t.Fatalf("TryResolveMusicTitleOrAliasID() error = %v", err)
+	}
+	if !ok || id != 186 {
+		t.Fatalf("unexpected partial alias result: ok=%v id=%d", ok, id)
+	}
+}
+
 func TestServiceDeleteRemovesApprovedCharacterAliases(t *testing.T) {
 	ctx := context.Background()
 	deps := newAliasTestDeps(t)

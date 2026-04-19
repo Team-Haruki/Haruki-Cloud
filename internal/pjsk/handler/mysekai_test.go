@@ -280,7 +280,7 @@ func TestMysekaiPhotoHandleBuildsCommandRequest(t *testing.T) {
 func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiBlueprintHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
-	if h.GetPath() != "mysekai/blueprint" {
+	if h.GetPath() != "mysekai/talk-list" {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
 

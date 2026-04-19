@@ -303,7 +303,7 @@ func (sekaiHandlers) MysekaiMusicRecordHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/blueprint",
+			Path: "mysekai/talk-list",
 			Commands: []string{
 				"/pjsk mysekai blueprint", "/mysekai blueprint",
 				"/msb", "/mysekai 蓝图",

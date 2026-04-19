@@ -92,10 +92,20 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if noiseKeyPair != nil {
 		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
 	}
-	for _, route := range commandregistry.ListBotRoutes() {
+	routes := commandregistry.ListBotRoutes()
+	hasMysekaiBlueprintRoute := false
+	for _, route := range routes {
 		h := makeBotHandler(renderApp, guard, route.Path, route.Commands)
 		path := "/" + route.Path
 		pjsk.Post(path, h)
+		if route.Path == "mysekai/blueprint" {
+			hasMysekaiBlueprintRoute = true
+		}
+	}
+	if !hasMysekaiBlueprintRoute {
+		// Keep the retired endpoint alive so older manifests can continue posting
+		// /msb until they refresh to the canonical mysekai/talk-list path.
+		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, guard, "mysekai/blueprint", nil))
 	}
 }
 
@@ -122,21 +132,25 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 		// Backward compatibility:
 		// 1. /skp moved from sk/rank-trace to sk/predict.
 		// 2. /msam may still be posted to mysekai/resource until manifests refresh.
+		// 3. /msb may still be posted to mysekai/blueprint until manifests refresh.
 		legacySKPredictCompat := expectedPath == "sk/rank-trace"
 		legacyMysekaiOverviewCompat := expectedPath == "mysekai/resource"
+		legacyMysekaiTalkListCompat := expectedPath == "mysekai/blueprint"
 		legacySKCSBCompat := expectedPath == "sk/check-room"
-		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat && !legacyMysekaiOverviewCompat && !legacySKCSBCompat {
+		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat && !legacyMysekaiOverviewCompat && !legacyMysekaiTalkListCompat && !legacySKCSBCompat {
 			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
 		}
 
 		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req)
-		if err != nil && (legacySKPredictCompat || legacyMysekaiOverviewCompat || legacySKCSBCompat) {
+		if err != nil && (legacySKPredictCompat || legacyMysekaiOverviewCompat || legacyMysekaiTalkListCompat || legacySKCSBCompat) {
 			if validationErr, ok := errors.AsType[*botValidationError](err); ok {
 				switch {
 				case legacySKPredictCompat && strings.Contains(validationErr.Error(), "belongs to path sk/predict"):
 					resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/predict", req)
 				case legacyMysekaiOverviewCompat && strings.Contains(validationErr.Error(), "belongs to path mysekai/overview"):
 					resolved, err = resolveBotCommand(c.Context(), req.Message, "mysekai/overview", req)
+				case legacyMysekaiTalkListCompat && strings.Contains(validationErr.Error(), "belongs to path mysekai/talk-list"):
+					resolved, err = resolveBotCommand(c.Context(), req.Message, "mysekai/talk-list", req)
 				case legacySKCSBCompat && strings.Contains(validationErr.Error(), "belongs to path sk/csb"):
 					resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/csb", req)
 				}

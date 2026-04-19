@@ -88,12 +88,18 @@ func TestListBotRoutes(t *testing.T) {
 		t.Fatalf("expected alias/character commands to include /角色别名, got %v", characterAliasRoute.Commands)
 	}
 
-	mysekaiBlueprintRoute, ok := byPath["mysekai/blueprint"]
+	mysekaiTalkListRoute, ok := byPath["mysekai/talk-list"]
 	if !ok {
-		t.Fatal("expected mysekai/blueprint route to exist")
+		t.Fatal("expected mysekai/talk-list route to exist")
 	}
-	if !contains(mysekaiBlueprintRoute.Commands, "/msb") {
-		t.Fatalf("expected mysekai/blueprint commands to include /msb, got %v", mysekaiBlueprintRoute.Commands)
+	if !contains(mysekaiTalkListRoute.Commands, "/msb") {
+		t.Fatalf("expected mysekai/talk-list commands to include /msb, got %v", mysekaiTalkListRoute.Commands)
+	}
+	if !contains(mysekaiTalkListRoute.Commands, "/烤森对话列表") {
+		t.Fatalf("expected mysekai/talk-list commands to include /烤森对话列表, got %v", mysekaiTalkListRoute.Commands)
+	}
+	if _, ok := byPath["mysekai/blueprint"]; ok {
+		t.Fatal("did not expect mysekai/blueprint to remain an active bot route")
 	}
 
 	mysekaiOverviewRoute, ok := byPath["mysekai/overview"]

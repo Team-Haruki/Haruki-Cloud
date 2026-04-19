@@ -690,6 +690,52 @@ func TestBotEndpointMysekaiOverviewAcceptsLegacyResourceEndpoint(t *testing.T) {
 	assertSingleTextMessageContains(t, body, "没有找到有效的 mysekai 数据")
 }
 
+func TestBotEndpointMysekaiTalkListAcceptsMSBCommand(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.MySekai = rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true})
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("mysekai/talk-list"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/msb",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/msb"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "烤森服务未就绪")
+}
+
+func TestBotEndpointMysekaiTalkListAcceptsLegacyBlueprintEndpoint(t *testing.T) {
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.MySekai = rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true})
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("mysekai/blueprint"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/msb",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/msb"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "烤森服务未就绪")
+}
+
 func TestBotEndpointSKQueryTreatsRequestServerAsExplicitRegion(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/query" {

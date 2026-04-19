@@ -2,6 +2,7 @@ package music
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 type lookupTestSource struct {
@@ -264,8 +266,16 @@ func TestResolveMusicCoverHidesUnreleasedMusic(t *testing.T) {
 	}
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
-	if _, err := controller.ResolveMusicCover(Query{Query: "music9", Region: "jp"}); err == nil {
+	_, err := controller.ResolveMusicCover(Query{Query: "music9", Region: "jp"})
+	if err == nil {
 		t.Fatal("expected unreleased music query to fail")
+	}
+	var unreleased *releasecheck.UnreleasedError
+	if !errors.As(err, &unreleased) {
+		t.Fatalf("expected unreleased error, got %T (%v)", err, err)
+	}
+	if unreleased.Kind != releasecheck.KindMusic || unreleased.ID != 9 {
+		t.Fatalf("unexpected unreleased error: %+v", unreleased)
 	}
 }
 
@@ -531,6 +541,28 @@ func TestResolveFuzzyMusicQueryMatchesTypoInPartialTitle(t *testing.T) {
 	}
 	if musicInfo == nil || musicInfo.ID != 1 {
 		t.Fatalf("unexpected fuzzy partial result: %+v", musicInfo)
+	}
+}
+
+func TestResolveFuzzyMusicQueryReturnsUnreleasedErrorWhenOnlyFutureMatchExists(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Hello World", PublishedAt: now + 60_000},
+			2: {ID: 2, Title: "Goodbye Song", PublishedAt: now - 60_000},
+		},
+	}
+
+	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo World")
+	if err == nil {
+		t.Fatalf("expected unreleased music error, got %+v", musicInfo)
+	}
+	var unreleased *releasecheck.UnreleasedError
+	if !errors.As(err, &unreleased) {
+		t.Fatalf("expected unreleased error, got %T (%v)", err, err)
+	}
+	if unreleased.Kind != releasecheck.KindMusic {
+		t.Fatalf("unexpected unreleased error: %+v", unreleased)
 	}
 }
 

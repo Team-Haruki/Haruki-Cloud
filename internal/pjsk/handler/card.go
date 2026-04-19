@@ -183,6 +183,10 @@ func (sekaiHandlers) CardImgHandle() HarukiSekaiCommandHandler {
 }
 
 func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
+	defer func() {
+		err = normalizeCardUserFacingError(err)
+	}()
+
 	if rc.App.Cards == nil {
 		return nil, fmt.Errorf("card service unavailable: sekai client not configured")
 	}

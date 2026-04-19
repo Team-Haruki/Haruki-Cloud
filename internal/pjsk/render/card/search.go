@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 func NewSearchService(source DataSource, parser *Parser) *SearchService {
@@ -26,7 +27,7 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 			return nil, err
 		}
 		if !isCardVisibleAt(card, now) {
-			return nil, fmt.Errorf("card %d not found", info.Value)
+			return nil, releasecheck.New(releasecheck.KindCard, "", info.Value)
 		}
 		return card, nil
 	case QueryTypeSeq:
@@ -46,12 +47,15 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 		if err != nil {
 			return nil, err
 		}
-		items = filterVisibleCards(items, now)
-		if len(items) == 0 {
+		visibleItems := filterVisibleCards(items, now)
+		if len(visibleItems) == 0 {
+			if len(items) > 0 {
+				return nil, releasecheck.New(releasecheck.KindCard, query, 0)
+			}
 			return nil, fmt.Errorf("card not found (filter): %s", query)
 		}
-		sortCardsByReleaseAndID(items)
-		return items[len(items)-1], nil
+		sortCardsByReleaseAndID(visibleItems)
+		return visibleItems[len(visibleItems)-1], nil
 	default:
 		return nil, fmt.Errorf("无法解析的指令: %s", query)
 	}
@@ -81,7 +85,7 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 			return nil, err
 		}
 		if !isCardVisibleAt(card, now) {
-			return nil, fmt.Errorf("card %d not found", info.Value)
+			return nil, releasecheck.New(releasecheck.KindCard, "", info.Value)
 		}
 		return []*masterdata.Card{card}, nil
 	case QueryTypeSeq:
@@ -116,23 +120,26 @@ func (s *SearchService) visibleCardByCharacterAndSeq(characterID, sequence int, 
 	if err != nil {
 		return nil, err
 	}
-	items = filterVisibleCards(items, now)
-	if len(items) == 0 {
+	visibleItems := filterVisibleCards(items, now)
+	if len(visibleItems) == 0 {
+		if len(items) > 0 {
+			return nil, releasecheck.New(releasecheck.KindCard, "", 0)
+		}
 		return nil, fmt.Errorf("card not found: %d/%d", characterID, sequence)
 	}
 
-	sortCardsByReleaseAndID(items)
+	sortCardsByReleaseAndID(visibleItems)
 
 	index := 0
 	if sequence < 0 {
-		index = len(items) + sequence
+		index = len(visibleItems) + sequence
 	} else {
 		index = sequence - 1
 	}
-	if index < 0 || index >= len(items) {
+	if index < 0 || index >= len(visibleItems) {
 		return nil, fmt.Errorf("card not found: %d/%d", characterID, sequence)
 	}
-	return items[index], nil
+	return visibleItems[index], nil
 }
 
 func (s *SearchService) latestVisibleCard(sequence int, now int64) (*masterdata.Card, error) {
@@ -147,15 +154,18 @@ func (s *SearchService) latestVisibleCard(sequence int, now int64) (*masterdata.
 	if err != nil {
 		return nil, err
 	}
-	items = filterVisibleCards(items, now)
-	if len(items) == 0 {
+	visibleItems := filterVisibleCards(items, now)
+	if len(visibleItems) == 0 {
+		if len(items) > 0 {
+			return nil, releasecheck.New(releasecheck.KindCard, "", 0)
+		}
 		return nil, fmt.Errorf("no released cards found")
 	}
 
-	sortCardsByReleaseAndID(items)
-	index := len(items) + sequence
-	if index < 0 || index >= len(items) {
+	sortCardsByReleaseAndID(visibleItems)
+	index := len(visibleItems) + sequence
+	if index < 0 || index >= len(visibleItems) {
 		return nil, fmt.Errorf("card not found: latest/%d", sequence)
 	}
-	return items[index], nil
+	return visibleItems[index], nil
 }

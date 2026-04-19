@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 type musicAmbiguousQueryError struct {
@@ -138,6 +139,26 @@ func resolveUniqueMusicQuery(source DataSource, query string) (*masterdata.Music
 	}, now); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
+	if matches := collectUnreleasedMusicMatches(source, func(musicInfo *masterdata.Music) bool {
+		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
+	}, now); len(matches) > 0 {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
+	if matches := collectUnreleasedMusicMatches(source, func(musicInfo *masterdata.Music) bool {
+		return strings.Contains(strings.ToLower(strings.TrimSpace(musicInfo.Title)), queryLower)
+	}, now); len(matches) > 0 {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
+	if matches := collectUnreleasedLocalizedMusicMatches(source, func(title string) bool {
+		return strings.EqualFold(strings.TrimSpace(title), query)
+	}, now); len(matches) > 0 {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
+	if matches := collectUnreleasedLocalizedMusicMatches(source, func(title string) bool {
+		return strings.Contains(strings.ToLower(strings.TrimSpace(title)), queryLower)
+	}, now); len(matches) > 0 {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
 
 	return nil, fmt.Errorf("music not found: %s", query)
 }
@@ -183,6 +204,44 @@ func collectLocalizedMusicMatches(source DataSource, matcher func(string) bool, 
 	matches := make([]*masterdata.Music, 0)
 	for _, item := range source.GetMusics() {
 		if !isMusicVisibleAt(item, now) {
+			continue
+		}
+		titles, err := source.GetMusicLocalizedTitles(item.ID)
+		if err != nil {
+			continue
+		}
+		for _, title := range titles {
+			if !matcher(title) {
+				continue
+			}
+			matches = append(matches, item)
+			break
+		}
+	}
+	return matches
+}
+
+func collectUnreleasedMusicMatches(source DataSource, matcher func(*masterdata.Music) bool, now int64) []*masterdata.Music {
+	if source == nil || matcher == nil {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0)
+	for _, item := range source.GetMusics() {
+		if item == nil || isMusicVisibleAt(item, now) || !matcher(item) {
+			continue
+		}
+		matches = append(matches, item)
+	}
+	return matches
+}
+
+func collectUnreleasedLocalizedMusicMatches(source DataSource, matcher func(string) bool, now int64) []*masterdata.Music {
+	if source == nil || matcher == nil {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0)
+	for _, item := range source.GetMusics() {
+		if item == nil || isMusicVisibleAt(item, now) {
 			continue
 		}
 		titles, err := source.GetMusicLocalizedTitles(item.ID)

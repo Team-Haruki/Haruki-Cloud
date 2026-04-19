@@ -168,6 +168,10 @@ func (sekaiHandlers) EventRecordHandle() HarukiSekaiCommandHandler {
 }
 
 func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
+	defer func() {
+		err = normalizeEventUserFacingError(err)
+	}()
+
 	if rc.App.Events == nil {
 		return nil, fmt.Errorf("event service unavailable: sekai client not configured")
 	}

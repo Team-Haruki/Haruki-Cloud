@@ -375,6 +375,10 @@ func joinMusicListTokensExcluding(tokens []string, skipIndexes ...int) string {
 }
 
 func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
+	defer func() {
+		err = normalizeMusicUserFacingError(err)
+	}()
+
 	if rc.App == nil || rc.App.Music == nil {
 		return nil, fmt.Errorf("music service unavailable: music controller is not configured")
 	}

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 func NewSearchService(source DataSource, parser *Parser) *SearchService {
@@ -52,8 +53,11 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 	switch info.Type {
 	case QueryTypeID:
 		musicInfo, err := s.source.GetMusicByID(info.Value)
-		if err == nil && musicInfo != nil && isMusicVisibleAt(musicInfo, now) {
-			return musicInfo, nil
+		if err == nil && musicInfo != nil {
+			if isMusicVisibleAt(musicInfo, now) {
+				return musicInfo, nil
+			}
+			return nil, releasecheck.New(releasecheck.KindMusic, "", info.Value)
 		}
 		if info.AllowTitleFallback {
 			if fallback := strings.TrimSpace(info.Keyword); fallback != "" {
@@ -108,7 +112,7 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 	case QueryTypeTitle, QueryTypeChart:
 		if info.MusicID != 0 {
 			if musicInfo, err := s.source.GetMusicByID(info.MusicID); err == nil && musicInfo != nil {
-				return musicInfo, nil
+				return ensureVisibleMusic(musicInfo, now, info.MusicID)
 			}
 		}
 		keyword := strings.TrimSpace(info.Keyword)

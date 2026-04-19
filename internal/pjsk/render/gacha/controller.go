@@ -10,6 +10,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 )
 
@@ -93,6 +94,13 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		return query, nil, fmt.Errorf("no gacha data source for region %s", query.Region)
 	}
 	if query.GachaID != 0 {
+		gachaInfo, err := src.GetGachaByID(query.GachaID)
+		if err != nil {
+			return query, src, err
+		}
+		if gachaInfo != nil && gachaInfo.StartAt > time.Now().UnixMilli() {
+			return query, src, releasecheck.New(releasecheck.KindGacha, "", gachaInfo.ID)
+		}
 		return query, src, nil
 	}
 	if query.NegIndex < 0 {
@@ -125,6 +133,9 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		gachaInfo, err := src.GetGachaByEventID(query.EventID)
 		if err != nil {
 			return query, src, err
+		}
+		if gachaInfo != nil && gachaInfo.StartAt > time.Now().UnixMilli() {
+			return query, src, releasecheck.New(releasecheck.KindGacha, "", gachaInfo.ID)
 		}
 		query.GachaID = gachaInfo.ID
 		return query, src, nil

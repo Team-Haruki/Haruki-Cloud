@@ -122,6 +122,9 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		}
 		return fmt.Errorf("query deck event %d failed: %w", eventID, err)
 	}
+	if err := ensureDeckEventUnlocked(ctx, app, region, eventInfo); err != nil {
+		return err
+	}
 
 	if !strings.EqualFold(eventInfo.EventType, "world_bloom") {
 		if q.WorldBloomCharacterQuery != "" && isDeckWorldBloomSelectorQuery(q.WorldBloomCharacterQuery) {
@@ -290,6 +293,7 @@ func pickCurrentOrNextDeckEvent(ctx context.Context, app *renderapp.App, region 
 	now := time.Now().UnixMilli()
 	var current *sekaidb.Event
 	var next *sekaidb.Event
+	var blockedNext *sekaidb.Event
 	for _, eventInfo := range events {
 		if eventInfo == nil {
 			continue
@@ -302,6 +306,9 @@ func pickCurrentOrNextDeckEvent(ctx context.Context, app *renderapp.App, region 
 		}
 		if eventInfo.StartAt > now {
 			if !isDeckFutureEventAvailable(ctx, app, region, eventInfo, dbEventIDs, now) {
+				if blockedNext == nil || eventInfo.StartAt < blockedNext.StartAt {
+					blockedNext = eventInfo
+				}
 				continue
 			}
 			if next == nil || eventInfo.StartAt < next.StartAt {
@@ -315,7 +322,25 @@ func pickCurrentOrNextDeckEvent(ctx context.Context, app *renderapp.App, region 
 	if next != nil {
 		return next, nil
 	}
+	if blockedNext != nil {
+		return nil, &deckEventLockedError{EventID: int(blockedNext.GameID)}
+	}
 	return nil, fmt.Errorf("当前没有可用活动")
+}
+
+func ensureDeckEventUnlocked(ctx context.Context, app *renderapp.App, region renderregion.Value, eventInfo *sekaidb.Event) error {
+	now := time.Now().UnixMilli()
+	if eventInfo == nil || eventInfo.StartAt <= now {
+		return nil
+	}
+	dbEventIDs, err := queryDeckDBEventIDs(ctx, app, region)
+	if err != nil {
+		return err
+	}
+	if isDeckFutureEventAvailable(ctx, app, region, eventInfo, dbEventIDs, now) {
+		return nil
+	}
+	return &deckEventLockedError{EventID: int(eventInfo.GameID)}
 }
 
 func pickDeckDefaultWorldBloomChapter(eventInfo *sekaidb.Event, chapters []*sekaidb.Worldbloom) *sekaidb.Worldbloom {

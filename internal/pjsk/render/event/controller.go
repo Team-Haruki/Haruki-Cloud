@@ -10,6 +10,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 )
 
@@ -120,6 +121,13 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		return query, nil, fmt.Errorf("no event data source for region %s", query.Region)
 	}
 	if query.EventID != 0 {
+		eventInfo, err := src.GetEventByID(query.EventID)
+		if err != nil {
+			return query, src, err
+		}
+		if eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
+			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
+		}
 		return query, src, nil
 	}
 
@@ -138,6 +146,13 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 			return query, src, fmt.Errorf("character %d only has %d ban events", query.BanCharID, len(events))
 		}
 		query.EventID = events[query.BanSeq-1].ID
+		eventInfo, err := src.GetEventByID(query.EventID)
+		if err != nil {
+			return query, src, err
+		}
+		if eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
+			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
+		}
 		return query, src, nil
 	}
 
@@ -155,6 +170,13 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 			return query, src, err
 		}
 		query.EventID = events[index].ID
+		eventInfo, err := src.GetEventByID(query.EventID)
+		if err != nil {
+			return query, src, err
+		}
+		if eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
+			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
+		}
 		return query, src, nil
 	}
 
@@ -185,6 +207,13 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		return query, src, err
 	}
 	query.EventID = events[index].ID
+	eventInfo, err := src.GetEventByID(query.EventID)
+	if err != nil {
+		return query, src, err
+	}
+	if eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
+		return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
+	}
 	return query, src, nil
 }
 

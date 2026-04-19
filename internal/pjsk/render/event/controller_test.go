@@ -2,12 +2,14 @@ package event
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 type eventContextKey string
@@ -110,7 +112,7 @@ func TestControllerBuildEventDetailRequestUsesCurrentEventWhenRequested(t *testi
 	}
 }
 
-func TestControllerBuildEventDetailRequestFallsBackToNextEvent(t *testing.T) {
+func TestControllerBuildEventDetailRequestRejectsUnreleasedNextEvent(t *testing.T) {
 	now := time.Now().UnixMilli()
 
 	source := newTestEventSource(renderregion.JP)
@@ -125,11 +127,15 @@ func TestControllerBuildEventDetailRequestFallsBackToNextEvent(t *testing.T) {
 		Region:     renderregion.JP,
 		UseCurrent: true,
 	})
-	if err != nil {
-		t.Fatalf("BuildEventDetailRequest failed: %v", err)
+	if err == nil {
+		t.Fatalf("expected unreleased next event to fail, got %+v", req)
 	}
-	if req.EventInfo.ID != 20 {
-		t.Fatalf("expected next event id 20, got %v", req.EventInfo.ID)
+	var unreleased *releasecheck.UnreleasedError
+	if !errors.As(err, &unreleased) {
+		t.Fatalf("expected unreleased error, got %T (%v)", err, err)
+	}
+	if unreleased.Kind != releasecheck.KindEvent || unreleased.ID != 20 {
+		t.Fatalf("unexpected unreleased error: %+v", unreleased)
 	}
 }
 

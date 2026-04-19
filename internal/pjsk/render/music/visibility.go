@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 func currentMusicVisibilityTime() int64 {
@@ -28,12 +29,21 @@ func ensureVisibleMusic(musicInfo *masterdata.Music, now int64, fallback any) (*
 	}
 	switch value := fallback.(type) {
 	case int:
+		if musicInfo != nil {
+			return nil, releasecheck.New(releasecheck.KindMusic, "", value)
+		}
 		return nil, fmt.Errorf("music not found: %d", value)
 	case string:
 		value = stringsTrimSpace(value)
 		if value != "" {
+			if musicInfo != nil {
+				return nil, releasecheck.New(releasecheck.KindMusic, value, 0)
+			}
 			return nil, fmt.Errorf("music not found: %s", value)
 		}
+	}
+	if musicInfo != nil {
+		return nil, releasecheck.New(releasecheck.KindMusic, "", musicInfo.ID)
 	}
 	return nil, fmt.Errorf("music not found")
 }

@@ -144,6 +144,10 @@ func parseMultiGachaQuery(args string) (map[string]any, string) {
 }
 
 func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {
+	defer func() {
+		err = normalizeGachaUserFacingError(err)
+	}()
+
 	if rc.App.Gachas == nil {
 		return nil, fmt.Errorf("gacha service unavailable: sekai client not configured")
 	}

@@ -1,6 +1,7 @@
 package card
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 func TestBuildCardListRequestResolvesIDsFromQuery(t *testing.T) {
@@ -40,8 +42,16 @@ func TestBuildCardListRequestRejectsUnreleasedCardQuery(t *testing.T) {
 		},
 	}
 	controller := NewController(source, nil, nil, nil)
-	if _, err := controller.BuildCardListRequest(ListRequest{Query: "1001", Region: "jp"}); err == nil {
+	_, err := controller.BuildCardListRequest(ListRequest{Query: "1001", Region: "jp"})
+	if err == nil {
 		t.Fatal("expected unreleased card query to fail")
+	}
+	var unreleased *releasecheck.UnreleasedError
+	if !errors.As(err, &unreleased) {
+		t.Fatalf("expected unreleased error, got %T (%v)", err, err)
+	}
+	if unreleased.Kind != releasecheck.KindCard || unreleased.ID != 1001 {
+		t.Fatalf("unexpected unreleased error: %+v", unreleased)
 	}
 }
 

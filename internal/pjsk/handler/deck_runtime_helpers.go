@@ -135,6 +135,11 @@ func normalizeDeckUserFacingError(err error) error {
 		return wrapped
 	}
 
+	var deckLocked *deckEventLockedError
+	if errors.As(err, &deckLocked) {
+		return onebot11.NewReplayError("该活动组卡将于卡池开放后解禁")
+	}
+
 	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return err
 	}

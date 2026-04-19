@@ -37,6 +37,11 @@ func TestNormalizeDeckUserFacingError(t *testing.T) {
 			input:   errString("toolbox: request failed after retries: context deadline exceeded"),
 			wantErr: "获取组卡所需数据超时，请稍后重试",
 		},
+		{
+			name:    "future event locked",
+			input:   &deckEventLockedError{EventID: 170},
+			wantErr: "该活动组卡将于卡池开放后解禁",
+		},
 	}
 
 	for _, tc := range testCases {

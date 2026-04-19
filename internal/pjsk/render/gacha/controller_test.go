@@ -2,12 +2,14 @@ package gacha
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 type gachaContextKey string
@@ -206,6 +208,45 @@ func TestControllerBuildGachaDetailRequestUsesEventID(t *testing.T) {
 	}
 	if req.Gacha.ID != 30 {
 		t.Fatalf("expected event gacha id 30, got %d", req.Gacha.ID)
+	}
+}
+
+func TestControllerBuildGachaDetailRequestRejectsUnreleasedGacha(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := newTestGachaSource(renderregion.JP)
+
+	future := &masterdata.Gacha{
+		ID:              40,
+		Name:            "Future",
+		GachaType:       "ceil",
+		AssetBundleName: "future",
+		StartAt:         now + 20_000,
+		EndAt:           now + 30_000,
+		GachaDetails: []masterdata.GachaDetail{
+			{CardID: 1004, Weight: 100},
+		},
+		GachaCardRarityRates: []masterdata.GachaCardRarityRate{
+			{CardRarityType: "rarity_4", LotteryType: "normal", Rate: 100},
+		},
+	}
+	source.gachas = []*masterdata.Gacha{future}
+	source.gachaByID[future.ID] = future
+	source.cardByID[1004] = &masterdata.Card{ID: 1004, CardRarityType: "rarity_4", Attr: "cool", AssetBundleName: "card_1004"}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	req, err := controller.BuildGachaDetailRequest(DetailQuery{
+		Region:  renderregion.JP,
+		GachaID: future.ID,
+	})
+	if err == nil {
+		t.Fatalf("expected unreleased gacha to fail, got %+v", req)
+	}
+	var unreleased *releasecheck.UnreleasedError
+	if !errors.As(err, &unreleased) {
+		t.Fatalf("expected unreleased error, got %T (%v)", err, err)
+	}
+	if unreleased.Kind != releasecheck.KindGacha || unreleased.ID != future.ID {
+		t.Fatalf("unexpected unreleased error: %+v", unreleased)
 	}
 }
 

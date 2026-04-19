@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
 type musicFuzzyScore struct {
@@ -41,6 +42,14 @@ func resolveFuzzyMusicQuery(source DataSource, query string) (*masterdata.Music,
 		bestScores[musicInfo.ID] = score
 	}
 	if len(matches) == 0 {
+		for _, musicInfo := range source.GetMusics() {
+			if musicInfo == nil || isMusicVisibleAt(musicInfo, now) {
+				continue
+			}
+			if _, ok := scoreMusicFuzzyMatch(source, musicInfo, normalizedQuery); ok {
+				return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+			}
+		}
 		return nil, fmt.Errorf("music not found: %s", query)
 	}
 

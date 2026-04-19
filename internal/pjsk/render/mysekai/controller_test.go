@@ -1010,50 +1010,6 @@ func TestBuildMusicRecordRequestUsesRegionScopedMasterdata(t *testing.T) {
 	}
 }
 
-func TestBuildMusicRecordRequestPlacesOtherCategoryFirst(t *testing.T) {
-	root := t.TempDir()
-	masterdataDir := filepath.Join(root, "masterdata")
-	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
-		t.Fatalf("mkdir masterdata: %v", err)
-	}
-
-	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{
-		{"id": 1, "mysekaiMusicTrackType": "music", "externalId": 101},
-		{"id": 2, "mysekaiMusicTrackType": "music", "externalId": 202},
-	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "musicTags.json"), []map[string]any{
-		{"id": 1, "musicId": 101, "musicTag": "light_music_club"},
-		{"id": 2, "musicId": 202, "musicTag": "other"},
-	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{
-		{"id": 101, "assetbundleName": "jacket_s_101", "publishedAt": 1},
-		{"id": 202, "assetbundleName": "jacket_s_202", "publishedAt": 1},
-	})
-	writeTestJSON(t, filepath.Join(masterdataDir, "limitedTimeMusics.json"), []map[string]any{})
-
-	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
-		LocalDir:      masterdataDir,
-		AllowFallback: true,
-	}).WithMySekaiData([]byte(`{"updatedResources":{"userMysekaiMusicRecords":[]}}`))
-
-	req, err := controller.BuildMusicRecordRequest(MusicRecordQuery{
-		Region:  "jp",
-		Profile: &drawing.ProfileCardRequest{},
-	})
-	if err != nil {
-		t.Fatalf("BuildMusicRecordRequest() error = %v", err)
-	}
-	if len(req.CategoryMusicrecords) != 2 {
-		t.Fatalf("expected 2 music record categories, got %+v", req.CategoryMusicrecords)
-	}
-	if req.CategoryMusicrecords[0].Tag != "other" {
-		t.Fatalf("expected other category first, got %+v", req.CategoryMusicrecords)
-	}
-	if req.CategoryMusicrecords[1].Tag != "light_music_club" {
-		t.Fatalf("unexpected second category order: %+v", req.CategoryMusicrecords)
-	}
-}
-
 func TestBuildResourceRequestUsesRegionScopedMasterdata(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")

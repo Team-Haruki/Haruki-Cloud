@@ -707,7 +707,7 @@ func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 	if briefListCalls != 1 {
 		t.Fatalf("expected 1 brief-list render call, got %d", briefListCalls)
 	}
-	if len(titles) != 1 || titles[0] != "别名匹配到多个歌曲，请使用查歌 <id> 查询：" {
+	if len(titles) != 1 || titles[0] != "匹配到多个歌曲，请使用查歌 <id> 查询：" {
 		t.Fatalf("unexpected title list: %+v", titles)
 	}
 }

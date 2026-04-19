@@ -597,8 +597,9 @@ func renderAmbiguousMusicDetailListMessages(rc *RequestContext, musicCtrl *rende
 }
 
 func buildAmbiguousMusicDetailListTitle(sourceErr error) string {
+	const fallbackTitle = "匹配到多个歌曲，请使用查歌 <id> 查询："
 	if sourceErr == nil {
-		return "匹配到多个歌曲，请使用查歌 <id> 查询："
+		return fallbackTitle
 	}
 	line := strings.TrimSpace(strings.Split(sourceErr.Error(), "\n")[0])
 	line = strings.TrimPrefix(line, "failed to search music: ")
@@ -607,7 +608,10 @@ func buildAmbiguousMusicDetailListTitle(sourceErr error) string {
 	line = strings.ReplaceAll(line, "请使用 查歌", "请使用查歌")
 	line = strings.TrimSpace(line)
 	if line == "" {
-		return "匹配到多个歌曲，请使用查歌 <id> 查询："
+		return fallbackTitle
+	}
+	if strings.Contains(line, "匹配到多个歌曲") {
+		return fallbackTitle
 	}
 	return line
 }

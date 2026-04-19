@@ -458,6 +458,27 @@ func TestResolveMusicCoverUsesApprovedAlias(t *testing.T) {
 	}
 }
 
+func TestResolveMusicTitleQueryNormalizesAmbiguousAliasToVisibleRegionMatch(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetAliasResolver(&lookupTestAliasResolver{
+		err: fmt.Errorf("failed to search music: 别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic2/Song B\nmusic1/Song A"),
+	})
+
+	musicInfo, err := controller.resolveMusicTitleQuery(source, "song a")
+	if err != nil {
+		t.Fatalf("resolveMusicTitleQuery() error = %v", err)
+	}
+	if musicInfo == nil || musicInfo.ID != 1 {
+		t.Fatalf("unexpected normalized music: %+v", musicInfo)
+	}
+}
+
 func TestResolveMusicCoverRejectsAmbiguousTitleQuery(t *testing.T) {
 	source := &lookupTestSource{
 		musics: map[int]*masterdata.Music{

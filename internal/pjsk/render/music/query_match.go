@@ -84,6 +84,29 @@ func ExtractAmbiguousMusicIDs(err error) []int {
 	return ids
 }
 
+func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64) []*masterdata.Music {
+	if source == nil || len(ids) == 0 {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0, len(ids))
+	seen := make(map[int]struct{}, len(ids))
+	for _, id := range ids {
+		if id <= 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		musicInfo, err := source.GetMusicByID(id)
+		if err != nil || !isMusicVisibleAt(musicInfo, now) {
+			continue
+		}
+		matches = append(matches, musicInfo)
+	}
+	return matches
+}
+
 func resolveUniqueMusicQuery(source DataSource, query string) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {

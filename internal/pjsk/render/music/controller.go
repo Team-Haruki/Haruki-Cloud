@@ -104,6 +104,11 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 	if c != nil && c.aliases != nil {
 		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), query)
 		if err != nil {
+			if ids := ExtractAmbiguousMusicIDs(err); len(ids) > 0 {
+				if normalizedMusic, normalizedErr := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now)); normalizedMusic != nil || normalizedErr != nil {
+					return normalizedMusic, normalizedErr
+				}
+			}
 			return nil, err
 		}
 		if ok {

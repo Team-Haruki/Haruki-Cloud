@@ -324,3 +324,16 @@ func mysekaiNextBirthdayLocal(region renderregion.Value, now time.Time, month, d
 	}
 	return nextBirthday
 }
+
+func isMysekaiSnapshotExpired(region renderregion.Value, merged map[string]any, now time.Time) bool {
+	snapshotTimeMs := resolveMysekaiSnapshotTimeMs(merged)
+	if snapshotTimeMs <= 0 {
+		return false
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	lastRefresh, _ := mysekaiLastRefreshTimeAndReason(region, now)
+	return time.UnixMilli(snapshotTimeMs).Before(lastRefresh)
+}

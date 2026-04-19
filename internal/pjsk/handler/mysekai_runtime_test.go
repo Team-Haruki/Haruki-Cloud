@@ -259,6 +259,115 @@ func TestExecuteMySekaiBlocksCNRegion(t *testing.T) {
 	assertSingleMySekaiUnavailableMessage(t, message)
 }
 
+func TestExecuteMySekaiMapPrependsExpiredNotice(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeJSON := func(name string, data any) {
+		t.Helper()
+		raw, err := json.Marshal(data)
+		if err != nil {
+			t.Fatalf("marshal %s: %v", name, err)
+		}
+		if err := os.WriteFile(filepath.Join(masterdataDir, name), raw, 0o644); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+
+	writeJSON("mysekaiSiteHarvestFixtures.json", []map[string]any{
+		{
+			"id":                                  1001,
+			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
+			"mysekaiSiteHarvestFixtureType":       "wood",
+			"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
+		},
+	})
+	writeJSON("mysekaiMaterials.json", []map[string]any{})
+	writeJSON("mysekaiItems.json", []map[string]any{})
+	writeJSON("mysekaiFixtures.json", []map[string]any{})
+	writeJSON("mysekaiMusicRecords.json", []map[string]any{})
+	writeJSON("gameCharacters.json", []map[string]any{})
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/mysekai/map" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.MysekaiMsrMapRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if len(req.Maps) != 1 {
+			t.Fatalf("expected 1 map in drawing request, got %+v", req.Maps)
+		}
+		_, _ = w.Write([]byte("mysekai-map"))
+	}))
+	defer drawingServer.Close()
+
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	staleSnapshot, err := json.Marshal(map[string]any{
+		"upload_time": time.Now().Add(-48 * time.Hour).UnixMilli(),
+		"userMysekaiHarvestMaps": []map[string]any{{
+			"mysekaiSiteId": 5,
+			"userMysekaiSiteHarvestFixtures": []map[string]any{{
+				"mysekaiSiteHarvestFixtureId":         1001,
+				"userMysekaiSiteHarvestFixtureStatus": "spawned",
+				"positionX":                           0,
+				"positionZ":                           0,
+			}},
+			"userMysekaiSiteHarvestResourceDrops": []map[string]any{},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("marshal stale snapshot: %v", err)
+	}
+
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings: service,
+		MySekai:  rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		Snapshots: &runtimeSnapshotProviderStub{
+			snapshot: &runtimeSnapshotStub{rawBytes: staleSnapshot},
+		},
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+		Module:            parser.ModuleMysekai,
+		Mode:              "mysekai-map",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMysekai map: %v", err)
+	}
+	if len(message) != 3 {
+		t.Fatalf("unexpected message segments: %+v", message)
+	}
+	if message[0].Type != onebot11.TypeText {
+		t.Fatalf("expected warning text first, got %+v", message[0])
+	}
+	textData, ok := message[0].Data.(onebot11.TextData)
+	if !ok || !strings.Contains(textData.Text, "Mysekai数据已过期要刷新请重新上传数据") {
+		t.Fatalf("unexpected warning text: %+v", message[0].Data)
+	}
+	if message[1].Type != onebot11.TypeImage {
+		t.Fatalf("expected image after warning, got %+v", message[1])
+	}
+	if message[2].Type != onebot11.TypeAt {
+		t.Fatalf("expected at mention after image, got %+v", message[2])
+	}
+}
+
 func TestExecuteMySekaiFixtureListStaticSkipsBindingAndSnapshot(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")

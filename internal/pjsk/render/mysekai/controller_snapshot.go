@@ -118,6 +118,14 @@ func (c *Controller) prepareSnapshotOnly(region string) (map[string]any, renderr
 	return c.decodeSnapshot(region)
 }
 
+func (c *Controller) SnapshotExpired(region string) (bool, error) {
+	merged, resolvedRegion, err := c.prepareSnapshotOnly(region)
+	if err != nil {
+		return false, err
+	}
+	return isMysekaiSnapshotExpired(resolvedRegion, merged, time.Now()), nil
+}
+
 func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion.Value, error) {
 	var rawBytes []byte
 	var err error

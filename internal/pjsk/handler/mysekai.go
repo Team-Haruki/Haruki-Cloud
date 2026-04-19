@@ -364,6 +364,8 @@ func (sekaiHandlers) MysekaiPhotoHandle() HarukiSekaiCommandHandler {
 
 type concurrentMessageJob func(context.Context) (onebot11.Message, error)
 
+const mysekaiExpiredNoticeText = "Mysekai数据已过期要刷新请重新上传数据\n"
+
 func isStaticMySekaiFixtureListQuery(q rendermysekai.FixtureListQuery) bool {
 	showProfile := true
 	if q.ShowProfile != nil {
@@ -378,6 +380,43 @@ func isStaticMySekaiFixtureListQuery(q rendermysekai.FixtureListQuery) bool {
 		showObtained = *q.ShowObtained
 	}
 	return !showProfile && !showProgress && !showObtained
+}
+
+func shouldCheckMysekaiExpiry(params []byte) bool {
+	var payload struct {
+		CheckTime *bool `json:"check_time,omitempty"`
+	}
+	mergeParams(params, &payload)
+	if payload.CheckTime == nil {
+		return true
+	}
+	return *payload.CheckTime
+}
+
+func shouldPrependMysekaiExpiryNotice(mode string, expired bool) bool {
+	if !expired {
+		return false
+	}
+	return mysekaiExpiryNoticeMode(mode)
+}
+
+func mysekaiExpiryNoticeMode(mode string) bool {
+	switch mode {
+	case "mysekai-resource", "mysekai-resource-map", "mysekai-map":
+		return true
+	default:
+		return false
+	}
+}
+
+func prependMysekaiExpiryNotice(message onebot11.Message) onebot11.Message {
+	if len(message) == 0 {
+		return onebot11.Message{onebot11.Text(mysekaiExpiredNoticeText)}
+	}
+	result := make(onebot11.Message, 0, len(message)+1)
+	result = append(result, onebot11.Text(mysekaiExpiredNoticeText))
+	result = append(result, message...)
+	return result
 }
 
 func executeConcurrentMessages(ctx context.Context, jobs ...concurrentMessageJob) (onebot11.Message, error) {
@@ -473,6 +512,14 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return mySekaiRegionUnavailableMessage(), nil
 	}
 
+	expiredNotice := false
+	if mysekaiExpiryNoticeMode(rc.Cmd.Mode) && shouldCheckMysekaiExpiry(rc.Cmd.Params) {
+		expiredNotice, err = renderCtx.Controller.SnapshotExpired(renderCtx.Region)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "mysekai-resource":
@@ -486,7 +533,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		resourceQuery.Profile = renderCtx.Profile
 		mapQuery := rendermysekai.MapQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &mapQuery)
-		return executeConcurrentMessages(
+		message, runErr := executeConcurrentMessages(
 			rc.Ctx,
 			func(ctx context.Context) (onebot11.Message, error) {
 				resourceData, resourceErr := renderCtx.Controller.RenderResource(resourceQuery)
@@ -503,6 +550,13 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 				return imageMessage(ctx, mapData, rc.App, BotModulePJSK)
 			},
 		)
+		if runErr != nil {
+			return nil, runErr
+		}
+		if shouldPrependMysekaiExpiryNotice(rc.Cmd.Mode, expiredNotice) {
+			message = prependMysekaiExpiryNotice(message)
+		}
+		return message, nil
 	case "mysekai-map":
 		q := rendermysekai.MapQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
@@ -513,6 +567,9 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 
 		replayMessage = append(replayMessage, onebot11.At(rc.PlatformUserID))
+		if shouldPrependMysekaiExpiryNotice(rc.Cmd.Mode, expiredNotice) {
+			replayMessage = prependMysekaiExpiryNotice(replayMessage)
+		}
 		return replayMessage, nil
 	case "mysekai-fixture-list":
 		q := rendermysekai.FixtureListQuery{Region: renderCtx.Region}
@@ -562,5 +619,12 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	message, err = imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	if err != nil {
+		return nil, err
+	}
+	if shouldPrependMysekaiExpiryNotice(rc.Cmd.Mode, expiredNotice) {
+		message = prependMysekaiExpiryNotice(message)
+	}
+	return message, nil
 }

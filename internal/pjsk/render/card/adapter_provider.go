@@ -61,6 +61,7 @@ func (a *ProviderAdapter) FilterCards(info *PjskCardQueryInfo) ([]*masterdata.Ca
 		Rarity:      info.Rarity,
 		Attr:        info.Attr,
 		SkillType:   info.SkillType,
+		SkillIDs:    append([]int(nil), info.SkillIDs...),
 		SupplyType:  info.SupplyType,
 		Year:        info.Year,
 		EventID:     eventID,

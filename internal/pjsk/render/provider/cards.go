@@ -27,6 +27,7 @@ type CardFilter struct {
 	Rarity      string
 	Attr        string
 	SkillType   string
+	SkillIDs    []int
 	SupplyType  string
 	Year        int
 	EventID     int

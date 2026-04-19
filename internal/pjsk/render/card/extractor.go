@@ -15,6 +15,12 @@ type dictRule struct {
 	singleRuneNonASCII bool
 }
 
+type intSliceRule struct {
+	re     *regexp.Regexp
+	vals   []int
+	length int
+}
+
 func buildRules(items map[string]string) []dictRule {
 	keys := make([]string, 0, len(items))
 	for key := range items {
@@ -51,6 +57,43 @@ func buildRules(items map[string]string) []dictRule {
 	return rules
 }
 
+func buildIntSliceRules(items map[string][]int) []intSliceRule {
+	keys := make([]string, 0, len(items))
+	for key := range items {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if len(keys[i]) != len(keys[j]) {
+			return len(keys[i]) > len(keys[j])
+		}
+		return keys[i] > keys[j]
+	})
+
+	rules := make([]intSliceRule, 0, len(keys))
+	for _, key := range keys {
+		isASCII := true
+		for _, ch := range key {
+			if ch > 127 {
+				isASCII = false
+				break
+			}
+		}
+		pattern := "(?i)"
+		if isASCII {
+			pattern += `\b` + regexp.QuoteMeta(key) + `\b`
+		} else {
+			pattern += regexp.QuoteMeta(key)
+		}
+		vals := append([]int(nil), items[key]...)
+		rules = append(rules, intSliceRule{
+			re:     regexp.MustCompile(pattern),
+			vals:   vals,
+			length: len(key),
+		})
+	}
+	return rules
+}
+
 func extractByRules(text string, rules []dictRule) ExtractResult[string] {
 	return extractByRulesWithOptions(text, rules, true)
 }
@@ -66,6 +109,20 @@ func extractByRulesWithOptions(text string, rules []dictRule, allowSingleRuneNon
 		}
 	}
 	return ExtractResult[string]{Remaining: text}
+}
+
+func extractIntSliceByRules(text string, rules []intSliceRule) ExtractResult[[]int] {
+	for _, rule := range rules {
+		if rule.re.MatchString(text) {
+			remaining := rule.re.ReplaceAllString(text, "")
+			return ExtractResult[[]int]{
+				Value:     append([]int(nil), rule.vals...),
+				Remaining: strings.TrimSpace(remaining),
+				Found:     true,
+			}
+		}
+	}
+	return ExtractResult[[]int]{Remaining: text}
 }
 
 func NewExtractor(nicknames map[string]int) *Extractor {
@@ -156,8 +213,18 @@ var skillRules = buildRules(map[string]string{
 	"奶":  "life_recovery",
 })
 
+var detailSkillRules = buildIntSliceRules(map[string][]int{
+	"血分": {12},
+	"组分": {15, 16, 17, 18, 19},
+	"团分": {15, 16, 17, 18, 19},
+})
+
 func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 	return extractByRules(text, skillRules)
+}
+
+func (e *Extractor) ExtractDetailedSkillIDs(text string) ExtractResult[[]int] {
+	return extractIntSliceByRules(text, detailSkillRules)
 }
 
 var supplyRules = buildRules(map[string]string{

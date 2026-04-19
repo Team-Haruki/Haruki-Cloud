@@ -112,3 +112,31 @@ func TestCardSkillTypesMatchSupportsLegacyJudgmentAlias(t *testing.T) {
 		})
 	}
 }
+
+func TestLocalCardProviderFilterHonorsDetailedSkillIDs(t *testing.T) {
+	cardData := cardIndex{
+		all: []*masterdata.Card{
+			{ID: 101, SkillID: 12},
+			{ID: 102, SkillID: 15},
+			{ID: 103, SkillID: 1},
+		},
+	}
+	provider := &localCardProvider{}
+	provider.cards.init(func() (cardIndex, error) { return cardData, nil })
+
+	results, err := provider.Filter(context.Background(), &CardFilter{SkillIDs: []int{12}})
+	if err != nil {
+		t.Fatalf("Filter(blood score) error = %v", err)
+	}
+	if len(results) != 1 || results[0].ID != 101 {
+		t.Fatalf("unexpected blood-score filter results: %+v", results)
+	}
+
+	results, err = provider.Filter(context.Background(), &CardFilter{SkillIDs: []int{15, 16, 17, 18, 19}})
+	if err != nil {
+		t.Fatalf("Filter(group score) error = %v", err)
+	}
+	if len(results) != 1 || results[0].ID != 102 {
+		t.Fatalf("unexpected group-score filter results: %+v", results)
+	}
+}

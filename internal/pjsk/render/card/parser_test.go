@@ -1,6 +1,9 @@
 package card
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestLooksLikeSingleCardQuerySupportsIDAndNicknameSequence(t *testing.T) {
 	if !LooksLikeSingleCardQuery("1001") {
@@ -108,10 +111,13 @@ func TestParserSupportsLunabotSkillAliases(t *testing.T) {
 	tests := []struct {
 		query     string
 		skillType string
+		skillIDs  []int
 	}{
 		{query: "判卡", skillType: "judgment_up"},
 		{query: "分卡", skillType: "score_up"},
 		{query: "奶卡", skillType: "life_recovery"},
+		{query: "血分", skillIDs: []int{12}},
+		{query: "团分", skillIDs: []int{15, 16, 17, 18, 19}},
 	}
 
 	for _, tt := range tests {
@@ -124,6 +130,9 @@ func TestParserSupportsLunabotSkillAliases(t *testing.T) {
 		}
 		if info.SkillType != tt.skillType {
 			t.Fatalf("unexpected skill type for %q: got=%q want=%q", tt.query, info.SkillType, tt.skillType)
+		}
+		if !slices.Equal(info.SkillIDs, tt.skillIDs) {
+			t.Fatalf("unexpected skill IDs for %q: got=%v want=%v", tt.query, info.SkillIDs, tt.skillIDs)
 		}
 	}
 }

@@ -247,6 +247,9 @@ func (p *localCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*
 		if filter.Attr != "" && card.Attr != filter.Attr {
 			continue
 		}
+		if len(filter.SkillIDs) > 0 && !containsInt(filter.SkillIDs, card.SkillID) {
+			continue
+		}
 		if filter.Year != 0 {
 			start := time.Date(filter.Year, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
 			end := time.Date(filter.Year+1, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
@@ -278,6 +281,15 @@ func (p *localCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*
 		}
 	}
 	return results, nil
+}
+
+func containsInt(values []int, target int) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *localCardProvider) matchesUnitFilter(ctx context.Context, filter *CardFilter, card *masterdata.Card) bool {

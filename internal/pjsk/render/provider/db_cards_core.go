@@ -131,6 +131,9 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		if !p.matchesUnitFilter(ctx, filter, model) {
 			continue
 		}
+		if len(filter.SkillIDs) > 0 && !containsInt(filter.SkillIDs, model.SkillID) {
+			continue
+		}
 		if filter.SkillType != "" {
 			if p.skills != nil {
 				skillInfo, sErr := p.skills.GetByID(ctx, model.SkillID)

@@ -160,6 +160,11 @@ func (p *Parser) tryParseFilter(args string) *PjskCardQueryInfo {
 			matched = true
 		}
 	}
+	if result := p.extractor.ExtractDetailedSkillIDs(current); result.Found {
+		info.SkillIDs = result.Value
+		current = result.Remaining
+		matched = true
+	}
 	if result := p.extractor.ExtractSkill(current); result.Found {
 		info.SkillType = result.Value
 		current = result.Remaining

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 
 	eventdb "haruki-cloud/database/sekai/event"
@@ -24,6 +25,10 @@ import (
 var eventRecordDebugLogger = logger.NewLoggerFromGlobal("EventRecord")
 
 var eventRecordTrackerRankLookup = defaultEventRecordTrackerRankLookup
+
+const eventRecordTrackerFallbackEventLimit = 8
+
+var errStopEventRecordTrackerFallback = errors.New("event record tracker fallback aborted")
 
 // buildEventRecordFromSnapshot constructs an EventRecordRequest from live
 // Toolbox suite data, cross-referencing with master data for event metadata.
@@ -176,30 +181,25 @@ func fillEventRecordTrackerRanks(
 		return
 	}
 
+	eventIDs := collectEventRecordTrackerFallbackEventIDs(userEvents, rankByEvent)
+	if len(eventIDs) == 0 {
+		return
+	}
+
 	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(4)
+	group.SetLimit(1)
 
 	var (
 		mu      sync.Mutex
 		logOnce sync.Once
 	)
-	seen := make(map[int]struct{}, len(userEvents))
-
-	for _, ue := range userEvents {
-		eventID := ue.EventID
-		if eventID <= 0 {
-			continue
-		}
-		if _, ok := seen[eventID]; ok {
-			continue
-		}
-		seen[eventID] = struct{}{}
-		if _, ok := rankByEvent[eventID]; ok {
-			continue
-		}
-
+	for _, eventID := range eventIDs {
 		eventIDCopy := eventID
 		group.Go(func() error {
+			if groupCtx.Err() != nil {
+				return nil
+			}
+
 			rank, err := eventRecordTrackerRankLookup(groupCtx, tracker, regionStr, eventIDCopy, userID)
 			if err != nil {
 				if !errors.Is(err, sekaiapi.ErrRankingNotFound) {
@@ -207,6 +207,9 @@ func fillEventRecordTrackerRanks(
 						eventRecordDebugLogger.Debugf("event record tracker rank fallback unavailable: region=%s user=%s err=%v",
 							regionStr, maskDebugID(strconv.FormatInt(userID, 10)), err)
 					})
+					if shouldStopEventRecordTrackerFallback(err) {
+						return errStopEventRecordTrackerFallback
+					}
 				}
 				return nil
 			}
@@ -223,7 +226,59 @@ func fillEventRecordTrackerRanks(
 		})
 	}
 
-	_ = group.Wait()
+	waitErr := group.Wait()
+	if waitErr != nil && !errors.Is(waitErr, errStopEventRecordTrackerFallback) {
+		eventRecordDebugLogger.Debugf("event record tracker rank fallback ended early: region=%s user=%s err=%v",
+			regionStr, maskDebugID(strconv.FormatInt(userID, 10)), waitErr)
+	}
+}
+
+func collectEventRecordTrackerFallbackEventIDs(userEvents []rendersnapshot.RawUserEvent, rankByEvent map[int]int) []int {
+	seen := make(map[int]struct{}, len(userEvents))
+	eventIDs := make([]int, 0, len(userEvents))
+	for _, userEvent := range userEvents {
+		eventID := userEvent.EventID
+		if eventID <= 0 {
+			continue
+		}
+		if _, ok := seen[eventID]; ok {
+			continue
+		}
+		seen[eventID] = struct{}{}
+		if _, ok := rankByEvent[eventID]; ok {
+			continue
+		}
+		eventIDs = append(eventIDs, eventID)
+	}
+
+	sort.Slice(eventIDs, func(i, j int) bool {
+		return eventIDs[i] > eventIDs[j]
+	})
+	if len(eventIDs) > eventRecordTrackerFallbackEventLimit {
+		eventIDs = eventIDs[:eventRecordTrackerFallbackEventLimit]
+	}
+	return eventIDs
+}
+
+func shouldStopEventRecordTrackerFallback(err error) bool {
+	if err == nil || errors.Is(err, sekaiapi.ErrRankingNotFound) {
+		return false
+	}
+	if errors.Is(err, sekaiapi.ErrServerMaintenance) {
+		return true
+	}
+
+	var trackerErr *sekaiapi.TrackerAPIError
+	if errors.As(err, &trackerErr) {
+		if trackerErr.StatusCode >= 500 || trackerErr.StatusCode == 429 {
+			return true
+		}
+		message := strings.ToLower(strings.TrimSpace(trackerErr.Message))
+		return strings.Contains(message, "doesn't exist") ||
+			strings.Contains(message, "failed to fetch latest ranking")
+	}
+
+	return false
 }
 
 // buildEventHistoryFromMaster creates an EventHistory from master data.

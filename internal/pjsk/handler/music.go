@@ -389,12 +389,12 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = musicCtrl.RenderMusicDetail(q)
 		if err != nil {
-			if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 0 {
+			if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 1 {
 				items := make([]rendermusic.BriefListItemQuery, 0, len(ids))
 				for _, musicID := range ids {
 					items = append(items, rendermusic.BriefListItemQuery{MusicID: musicID})
 				}
-				return renderMusicBriefLookupListMessages(rc, musicCtrl, q.Region, "歌曲", strings.TrimSpace(q.Query), items)
+				return renderAmbiguousMusicDetailListMessages(rc, musicCtrl, q.Region, err, items)
 			}
 			return nil, err
 		}
@@ -577,6 +577,39 @@ func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *rendermus
 		return nil, err
 	}
 	return rc.ImageMessage(data)
+}
+
+func renderAmbiguousMusicDetailListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, sourceErr error, items []rendermusic.BriefListItemQuery) (onebot11.Message, error) {
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no music matched the current filters")
+	}
+	title := buildAmbiguousMusicDetailListTitle(sourceErr)
+	data, err := musicCtrl.RenderMusicBriefList(rendermusic.BriefListQuery{
+		Items:       items,
+		Region:      region,
+		Title:       stringPtr(title),
+		TitleShadow: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return rc.ImageMessage(data)
+}
+
+func buildAmbiguousMusicDetailListTitle(sourceErr error) string {
+	if sourceErr == nil {
+		return "匹配到多个歌曲，请使用查歌 <id> 查询："
+	}
+	line := strings.TrimSpace(strings.Split(sourceErr.Error(), "\n")[0])
+	line = strings.TrimPrefix(line, "failed to search music: ")
+	line = strings.ReplaceAll(line, "music<id>", "查歌 <id>")
+	line = strings.ReplaceAll(line, "请改用", "请使用")
+	line = strings.ReplaceAll(line, "请使用 查歌", "请使用查歌")
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return "匹配到多个歌曲，请使用查歌 <id> 查询："
+	}
+	return line
 }
 
 func dedupeBPMMatchesByMusic(matches []rendermusic.BPMMatch) []rendermusic.BPMMatch {

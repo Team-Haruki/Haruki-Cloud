@@ -30,6 +30,22 @@ func mysekaiBlueprintUsageError(trigger string) error {
 	)
 }
 
+func mysekaiTalkListUsageError(trigger string) error {
+	return onebot11.NewReplayError(
+		"使用方式:\n%s\n%s 角色名\n查看家具详情请使用：/msf 家具ID",
+		trigger,
+		trigger,
+	)
+}
+
+func applyMysekaiStaticFixtureListParams(params map[string]any, onlyCraftable bool) {
+	params["show_id"] = true
+	params["only_craftable"] = onlyCraftable
+	params["show_profile"] = false
+	params["show_progress"] = false
+	params["show_obtained"] = false
+}
+
 func (sekaiHandlers) MysekaiResourceHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
@@ -129,18 +145,27 @@ func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
 			},
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
-			showAllTalks := strings.Contains(strings.ToLower(args), "all")
-			cleaned := cleanMysekaiArgs(args)
-			params := map[string]any{
-				"show_id":        true,
-				"show_all_talks": showAllTalks,
-			}
-			if err := embedSelfQuery(params, ctx); err != nil {
+			selfParams := map[string]any{}
+			if err := embedSelfQuery(selfParams, ctx); err != nil {
 				return nil, err
 			}
-			resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", params)
-			resolved.Query = cleaned
+
+			args := strings.TrimSpace(ctx.GetArgs())
+			if ids := parseMysekaiFixtureIDs(args); len(ids) > 0 {
+				return nil, mysekaiTalkListUsageError(ctx.originalTriggerCmd)
+			}
+			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
+			if query == "" {
+				applyMysekaiStaticFixtureListParams(selfParams, true)
+				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
+			}
+			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
+				return nil, mysekaiTalkListUsageError(ctx.originalTriggerCmd)
+			}
+			selfParams["show_id"] = true
+			selfParams["show_all_talks"] = showAllTalks
+			resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", selfParams)
+			resolved.Query = buildMysekaiTalkQuery(unit, query)
 			return resolved, nil
 		},
 	}, executeMysekai)
@@ -296,8 +321,7 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 			}
 			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
 			if query == "" {
-				selfParams["show_id"] = true
-				selfParams["only_craftable"] = true
+				applyMysekaiStaticFixtureListParams(selfParams, true)
 				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
@@ -389,6 +413,14 @@ func executeConcurrentMessages(ctx context.Context, jobs ...concurrentMessageJob
 }
 
 func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
+	defer func() {
+		mode := ""
+		if rc != nil && rc.Cmd != nil {
+			mode = rc.Cmd.Mode
+		}
+		err = normalizeMySekaiUserFacingError(err, mode)
+	}()
+
 	if rc.App == nil || rc.App.MySekai == nil {
 		return nil, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
 	}

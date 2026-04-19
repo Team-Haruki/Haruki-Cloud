@@ -201,7 +201,7 @@ func TestExecuteMySekaiRequiresController(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !strings.Contains(err.Error(), "mysekai controller is not configured") {
+	if !strings.Contains(err.Error(), "烤森服务未就绪") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

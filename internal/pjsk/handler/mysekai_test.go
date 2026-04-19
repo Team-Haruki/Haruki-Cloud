@@ -304,11 +304,17 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 	var listParams struct {
 		ShowID        bool `json:"show_id"`
 		OnlyCraftable bool `json:"only_craftable"`
+		ShowProfile   bool `json:"show_profile"`
+		ShowProgress  bool `json:"show_progress"`
+		ShowObtained  bool `json:"show_obtained"`
 	}
 	if err := json.Unmarshal(resolved.Params, &listParams); err != nil {
 		t.Fatalf("unmarshal list params: %v", err)
 	}
 	if !listParams.ShowID || !listParams.OnlyCraftable {
+		t.Fatalf("unexpected list params: %+v", listParams)
+	}
+	if listParams.ShowProfile || listParams.ShowProgress || listParams.ShowObtained {
 		t.Fatalf("unexpected list params: %+v", listParams)
 	}
 
@@ -388,6 +394,81 @@ func TestMysekaiBlueprintHandleSupportsCompactCharacterAliases(t *testing.T) {
 		t.Fatalf("unmarshal params: %v", err)
 	}
 	if !params.ShowID || !params.ShowAllTalks {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestMysekaiTalkListHandleBuildsCommandRequests(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiTalkListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/烤森对话列表",
+		ArgText:    "miku ln all",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-talk-list" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+	if resolved.Query != "light_sound miku" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+
+	var params struct {
+		ShowID       bool `json:"show_id"`
+		ShowAllTalks bool `json:"show_all_talks"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.ShowID || !params.ShowAllTalks {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestMysekaiTalkListHandleWithoutQueryFallsBackToFixtureList(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiTalkListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/烤森对话列表",
+		ArgText:    "",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-fixture-list" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params struct {
+		ShowID        bool `json:"show_id"`
+		OnlyCraftable bool `json:"only_craftable"`
+		ShowProfile   bool `json:"show_profile"`
+		ShowProgress  bool `json:"show_progress"`
+		ShowObtained  bool `json:"show_obtained"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.ShowID || !params.OnlyCraftable {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+	if params.ShowProfile || params.ShowProgress || params.ShowObtained {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }

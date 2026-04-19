@@ -163,6 +163,27 @@ func (c *Controller) buildMapResourceDrops(
 			if smallIconSet {
 				item.SmallIcon = new(smallIcon)
 			}
+
+			var outlineColor []int
+			var outlineWidth *int
+			switch {
+			case item.Rarity >= 2:
+				outlineColor = slices.Clone(mysekaiMapRareOutlineColor)
+				outlineWidth = drawing.IntPtr(2)
+			case item.SmallIcon != nil && *item.SmallIcon:
+				outlineColor = slices.Clone(mysekaiMapSmallIconOutlineColor)
+				outlineWidth = drawing.IntPtr(1)
+			}
+
+			var lightSize *int
+			if item.Rarity >= 2 && !strings.HasPrefix(key, "material_") {
+				if item.SmallIcon != nil && *item.SmallIcon {
+					lightSize = drawing.IntPtr(mysekaiMapRareSmallLightSize)
+				} else {
+					lightSize = drawing.IntPtr(mysekaiMapRareLargeLightSize)
+				}
+			}
+
 			resourceDrops = append(resourceDrops, drawing.MysekaiMsrMapResourceDrop{
 				ID:                  item.ID,
 				Type:                item.Type,
@@ -175,6 +196,9 @@ func (c *Controller) buildMapResourceDrops(
 				Hide:                item.Hide,
 				Rarity:              item.Rarity,
 				AttachmentImagePath: item.AttachmentImagePath,
+				OutlineColor:        outlineColor,
+				OutlineWidth:        outlineWidth,
+				LightSize:           lightSize,
 			})
 		}
 	}

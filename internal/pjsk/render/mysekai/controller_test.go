@@ -928,6 +928,50 @@ func TestBuildMusicRecordRequestUsesRegionScopedMasterdata(t *testing.T) {
 	}
 }
 
+func TestBuildMusicRecordRequestPlacesOtherCategoryFirst(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{
+		{"id": 1, "mysekaiMusicTrackType": "music", "externalId": 101},
+		{"id": 2, "mysekaiMusicTrackType": "music", "externalId": 202},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musicTags.json"), []map[string]any{
+		{"id": 1, "musicId": 101, "musicTag": "light_music_club"},
+		{"id": 2, "musicId": 202, "musicTag": "other"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{
+		{"id": 101, "assetbundleName": "jacket_s_101", "publishedAt": 1},
+		{"id": 202, "assetbundleName": "jacket_s_202", "publishedAt": 1},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "limitedTimeMusics.json"), []map[string]any{})
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(`{"updatedResources":{"userMysekaiMusicRecords":[]}}`))
+
+	req, err := controller.BuildMusicRecordRequest(MusicRecordQuery{
+		Region:  "jp",
+		Profile: &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildMusicRecordRequest() error = %v", err)
+	}
+	if len(req.CategoryMusicrecords) != 2 {
+		t.Fatalf("expected 2 music record categories, got %+v", req.CategoryMusicrecords)
+	}
+	if req.CategoryMusicrecords[0].Tag != "other" {
+		t.Fatalf("expected other category first, got %+v", req.CategoryMusicrecords)
+	}
+	if req.CategoryMusicrecords[1].Tag != "light_music_club" {
+		t.Fatalf("unexpected second category order: %+v", req.CategoryMusicrecords)
+	}
+}
+
 func TestBuildResourceRequestUsesRegionScopedMasterdata(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")
@@ -1153,6 +1197,127 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 	}
 	if sideDrop.SmallIcon == nil || !*sideDrop.SmallIcon {
 		t.Fatalf("expected side-drop to be rendered as small icon, got %+v", sideDrop.SmallIcon)
+	}
+}
+
+func TestBuildMapRequestAddsRareGlowAndPhenomenaTint(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
+		{"id": 24, "iconAssetbundleName": "item_tone_8", "mysekaiMaterialRarityType": "rarity_3"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiItems.json"), []map[string]any{
+		{"id": 501, "iconAssetbundleName": "drop_note"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMusicRecords.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "musics.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiPhenomenaBackgroundColors.json"), []map[string]any{
+		{"id": 1, "groundColor": "#112233"},
+		{"id": 2, "groundColor": "#445566"},
+	})
+
+	nowMs := time.Date(2026, 4, 19, 12, 0, 0, 0, time.FixedZone("JST", 9*3600)).UnixMilli()
+	mysekaiJSON := fmt.Sprintf(`{
+  "now": %d,
+  "mysekaiPhenomenaSchedules": [
+    {"mysekaiPhenomenaId": 1},
+    {"mysekaiPhenomenaId": 2}
+  ],
+  "updatedResources": {
+    "userMysekaiHarvestMaps": [
+      {
+        "mysekaiSiteId": 5,
+        "userMysekaiSiteHarvestFixtures": [],
+        "userMysekaiSiteHarvestResourceDrops": [
+          {
+            "resourceType": "mysekai_material",
+            "resourceId": 24,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 1,
+            "positionZ": 2,
+            "quantity": 1
+          },
+          {
+            "resourceType": "mysekai_item",
+            "resourceId": 501,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 1,
+            "positionZ": 2,
+            "quantity": 1
+          },
+          {
+            "resourceType": "material",
+            "resourceId": 179,
+            "mysekaiSiteHarvestResourceDropStatus": "before_drop",
+            "positionX": 3,
+            "positionZ": 4,
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  }
+}`, nowMs)
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(mysekaiJSON))
+
+	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{5}})
+	if err != nil {
+		t.Fatalf("BuildMapRequest() error = %v", err)
+	}
+	if got, want := req.RareLightImagePath, drawing.StringPtr("static_images/mysekai/light.png"); got == nil || *got != *want {
+		t.Fatalf("unexpected rare light image path: %+v", req.RareLightImagePath)
+	}
+	if !reflect.DeepEqual(req.PhenomenaGroundColor, []int{17, 34, 51, 255}) {
+		t.Fatalf("unexpected phenomena ground color: %+v", req.PhenomenaGroundColor)
+	}
+	if req.SpawnSize != mysekaiMapSpawnSize || req.LargeIconSize != mysekaiMapLargeIconSize || req.SmallIconSize != mysekaiMapSmallIconSize || req.IconZOffset != mysekaiMapIconZOffset {
+		t.Fatalf("unexpected map render sizes: %+v", req)
+	}
+
+	var rareMysekaiMaterial *drawing.MysekaiMsrMapResourceDrop
+	var rareEventMaterial *drawing.MysekaiMsrMapResourceDrop
+	var sideDrop *drawing.MysekaiMsrMapResourceDrop
+	for i := range req.Maps[0].ResourceDrops {
+		drop := &req.Maps[0].ResourceDrops[i]
+		switch {
+		case drop.Type == "mysekai_material" && drop.ID == 24:
+			rareMysekaiMaterial = drop
+		case drop.Type == "material" && drop.ID == 179:
+			rareEventMaterial = drop
+		case drop.Type == "mysekai_item" && drop.ID == 501:
+			sideDrop = drop
+		}
+	}
+	if rareMysekaiMaterial == nil || rareEventMaterial == nil || sideDrop == nil {
+		t.Fatalf("missing expected resource drops: %+v", req.Maps[0].ResourceDrops)
+	}
+	if rareMysekaiMaterial.LightSize == nil || *rareMysekaiMaterial.LightSize != mysekaiMapRareLargeLightSize {
+		t.Fatalf("expected rare mysekai material glow, got %+v", rareMysekaiMaterial)
+	}
+	if !reflect.DeepEqual(rareMysekaiMaterial.OutlineColor, mysekaiMapRareOutlineColor) || rareMysekaiMaterial.OutlineWidth == nil || *rareMysekaiMaterial.OutlineWidth != 2 {
+		t.Fatalf("expected rare mysekai material outline, got %+v", rareMysekaiMaterial)
+	}
+	if rareEventMaterial.LightSize != nil {
+		t.Fatalf("expected event material to skip glow, got %+v", rareEventMaterial)
+	}
+	if !reflect.DeepEqual(rareEventMaterial.OutlineColor, mysekaiMapRareOutlineColor) {
+		t.Fatalf("expected rare event material outline, got %+v", rareEventMaterial)
+	}
+	if sideDrop.SmallIcon == nil || !*sideDrop.SmallIcon {
+		t.Fatalf("expected side drop to stay small, got %+v", sideDrop)
+	}
+	if !reflect.DeepEqual(sideDrop.OutlineColor, mysekaiMapSmallIconOutlineColor) || sideDrop.OutlineWidth == nil || *sideDrop.OutlineWidth != 1 {
+		t.Fatalf("expected side drop small-icon outline, got %+v", sideDrop)
 	}
 }
 

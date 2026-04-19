@@ -108,7 +108,7 @@ func (c *Controller) BuildMusicRecordRequest(query MusicRecordQuery) (*drawing.M
 		"vocaloid":         c.staticPath("icon_piapro.png"),
 		"other":            "",
 	}
-	order := []string{"light_music_club", "street", "idol", "theme_park", "school_refusal", "vocaloid", "other"}
+	order := []string{"other", "light_music_club", "street", "idol", "theme_park", "school_refusal", "vocaloid"}
 
 	totalCount := 0
 	obtainedCount := 0

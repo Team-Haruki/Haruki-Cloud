@@ -52,11 +52,110 @@ func shouldRunChallengeAll(option map[string]any) bool {
 	return optionInt(option, "challenge_live_character_id") <= 0
 }
 
+type rawBatchChallengeRecommender interface {
+	RecommendBatch(req RecommendRequest) ([]remoteBatchRecommendResult, error)
+}
+
 func (c *Controller) recommendChallengeAll(recommender PjskDeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
 	if recommender == nil {
 		return nil, fmt.Errorf("deck recommender is not configured")
 	}
 
+	if batchRecommender, ok := recommender.(rawBatchChallengeRecommender); ok {
+		return c.recommendChallengeAllBatch(recommender, batchRecommender, req, option)
+	}
+	return c.recommendChallengeAllSequential(recommender, req, option)
+}
+
+func (c *Controller) recommendChallengeAllBatch(recommender PjskDeckRecommender, batchRecommender rawBatchChallengeRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
+	agg := &RecommendResult{
+		CostTimes: make(map[string]float64),
+		WaitTimes: make(map[string]float64),
+	}
+	costSamples := make(map[string][]float64)
+	waitSamples := make(map[string][]float64)
+	raw := c.snapshot.RawData()
+
+	type characterBatch struct {
+		charID  int
+		options []map[string]any
+	}
+
+	characters := make([]characterBatch, 0, challengeCharacterCount)
+	batchOptions := make([]map[string]any, 0, challengeCharacterCount)
+	for charID := 1; charID <= challengeCharacterCount; charID++ {
+		challengeOption := cloneRecommendOption(option)
+		challengeOption["challenge_live_character_id"] = charID
+		challengeOption["limit"] = 1
+
+		expanded := recommender.ExpandAlgorithms(challengeOption)
+		if len(expanded) == 0 {
+			return nil, fmt.Errorf("deck recommend service returned no algorithms for challenge character %d", charID)
+		}
+
+		characters = append(characters, characterBatch{
+			charID:  charID,
+			options: expanded,
+		})
+		batchOptions = append(batchOptions, expanded...)
+	}
+
+	results, err := batchRecommender.RecommendBatch(RecommendRequest{
+		Region:            req.Region,
+		UserData:          req.UserData,
+		UserDataFilePath:  req.UserDataFilePath,
+		MusicMeta:         req.MusicMeta,
+		MusicMetaFilePath: req.MusicMetaFilePath,
+		BatchOption:       batchOptions,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(results) != len(batchOptions) {
+		return nil, fmt.Errorf("deck recommend service returned %d batch results, expected %d", len(results), len(batchOptions))
+	}
+
+	offset := 0
+	for _, character := range characters {
+		nextOffset := offset + len(character.options)
+		result, err := aggregateRemoteRecommendResults(character.options, results[offset:nextOffset])
+		if err != nil {
+			return nil, err
+		}
+		offset = nextOffset
+
+		applyChallengeScoreDelta(result, character.charID, raw)
+		if len(result.Decks) > 0 {
+			agg.Decks = append(agg.Decks, result.Decks[0])
+			if len(result.DeckAlgs) > 0 {
+				agg.DeckAlgs = append(agg.DeckAlgs, result.DeckAlgs[0])
+			} else {
+				agg.DeckAlgs = append(agg.DeckAlgs, "")
+			}
+		}
+
+		for alg, cost := range result.CostTimes {
+			costSamples[alg] = append(costSamples[alg], cost)
+		}
+		for alg, wait := range result.WaitTimes {
+			waitSamples[alg] = append(waitSamples[alg], wait)
+		}
+	}
+
+	if len(agg.Decks) == 0 {
+		return nil, fmt.Errorf("deck recommend service returned no deck results")
+	}
+
+	for alg, values := range costSamples {
+		agg.CostTimes[alg] = averageChallengeSamples(values)
+	}
+	for alg, values := range waitSamples {
+		agg.WaitTimes[alg] = averageChallengeSamples(values)
+	}
+	return agg, nil
+}
+
+func (c *Controller) recommendChallengeAllSequential(recommender PjskDeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
 	agg := &RecommendResult{
 		CostTimes: make(map[string]float64),
 		WaitTimes: make(map[string]float64),

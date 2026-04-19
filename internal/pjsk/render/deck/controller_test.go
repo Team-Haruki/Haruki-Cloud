@@ -1039,49 +1039,55 @@ func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
+			if !ok || len(options) != challengeCharacterCount {
 				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
 			}
-			option, ok := options[0].(map[string]any)
-			if !ok {
-				t.Fatalf("unexpected batch option payload: %+v", options[0])
-			}
-			charID, ok := option["challenge_live_character_id"].(float64)
-			if !ok || int(charID) <= 0 {
-				t.Fatalf("unexpected challenge_live_character_id: %+v", option["challenge_live_character_id"])
-			}
-			score := 1000000 + int(charID)
-			_, _ = w.Write([]byte(fmt.Sprintf(`[
-				{
-					"alg": "ga",
+			response := make([]map[string]any, 0, len(options))
+			for index, rawOption := range options {
+				option, ok := rawOption.(map[string]any)
+				if !ok {
+					t.Fatalf("unexpected batch option payload: %+v", rawOption)
+				}
+				charID, ok := option["challenge_live_character_id"].(float64)
+				if !ok || int(charID) != index+1 {
+					t.Fatalf("unexpected challenge_live_character_id at %d: %+v", index, option["challenge_live_character_id"])
+				}
+				score := 1000000 + int(charID)
+				response = append(response, map[string]any{
+					"alg":       "ga",
 					"cost_time": 0.5,
 					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": %d,
-							"live_score": %d,
-							"mysekai_event_point": 0,
-							"total_power": 345678,
-							"event_bonus_rate": 0,
+					"result": map[string]any{
+						"decks": []map[string]any{{
+							"score":                   score,
+							"live_score":              score,
+							"mysekai_event_point":     0,
+							"total_power":             345678,
+							"event_bonus_rate":        0,
 							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 120,
-							"cards": [{
-								"card_id": 1001,
-								"level": 50,
-								"master_rank": 1,
-								"skill_level": 4,
-								"skill_score_up": 100,
+							"multi_live_score_up":     120,
+							"cards": []map[string]any{{
+								"card_id":          1001,
+								"level":            50,
+								"master_rank":      1,
+								"skill_level":      4,
+								"skill_score_up":   100,
 								"event_bonus_rate": 0,
-								"episode1_read": true,
-								"episode2_read": true,
-								"after_training": false,
-								"default_image": "normal",
-								"has_canvas_bonus": false
-							}]
-						}]
-					}
-				}
-			]`, score, score)))
+								"episode1_read":    true,
+								"episode2_read":    true,
+								"after_training":   false,
+								"default_image":    "normal",
+								"has_canvas_bonus": false,
+							}},
+						}},
+					},
+				})
+			}
+			encoded, err := json.Marshal(response)
+			if err != nil {
+				t.Fatalf("encode recommend response: %v", err)
+			}
+			_, _ = w.Write(encoded)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1111,8 +1117,8 @@ func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
 	}
 
-	if recommendCalls.Load() != 26 {
-		t.Fatalf("expected 26 recommend calls, got %d", recommendCalls.Load())
+	if recommendCalls.Load() != 1 {
+		t.Fatalf("expected 1 recommend call, got %d", recommendCalls.Load())
 	}
 	if len(request.DeckData) != 26 {
 		t.Fatalf("unexpected challenge-all deck count: %d", len(request.DeckData))

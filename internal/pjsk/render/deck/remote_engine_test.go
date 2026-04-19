@@ -2,6 +2,7 @@ package deck
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -345,6 +346,82 @@ func TestRemoteRecommendFallsBackToLegacyWhenUserdataHashMissing(t *testing.T) {
 	}
 	if legacyRecommendCalls.Load() != 1 {
 		t.Fatalf("expected 1 legacy recommend call, got %d", legacyRecommendCalls.Load())
+	}
+}
+
+func TestRemoteRecommendBatchFallsBackToLegacyAndPreservesOptionOrder(t *testing.T) {
+	var batchRecommendCalls atomic.Int32
+	var legacyRecommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			if strings.Contains(r.Header.Get("Content-Type"), "application/octet-stream") {
+				batchRecommendCalls.Add(1)
+				http.NotFound(w, r)
+				return
+			}
+
+			legacyRecommendCalls.Add(1)
+			var payload map[string]any
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode legacy recommend payload: %v", err)
+			}
+			charID, _ := payload["challenge_live_character_id"].(float64)
+			if int(charID) == 1 {
+				time.Sleep(50 * time.Millisecond)
+			}
+
+			score := 1000 + int(charID)
+			_, _ = w.Write([]byte(fmt.Sprintf(`{"decks":[{"score":%d,"live_score":%d,"mysekai_event_point":0,"total_power":200,"event_bonus_rate":20,"support_deck_bonus_rate":0,"multi_live_score_up":110,"cards":[{"card_id":1001,"level":60,"master_rank":5,"skill_level":4,"skill_score_up":120,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":true,"default_image":"special_training","has_canvas_bonus":false}]}]}`, score, score)))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	recommender := &RemoteDeckRecommender{
+		baseURL:       server.URL,
+		client:        server.Client(),
+		defaultAlgs:   []string{"ga"},
+		masterdataDir: "/masterdata",
+		region:        "jp",
+		maxRetries:    0,
+		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
+	}
+
+	results, err := recommender.RecommendBatch(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: []byte(`[{"music_id":10000,"difficulty":"master"}]`),
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "challenge", "limit": 1, "challenge_live_character_id": 1},
+			{"algorithm": "ga", "target": "score", "live_type": "challenge", "limit": 1, "challenge_live_character_id": 2},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RecommendBatch() error = %v", err)
+	}
+	if batchRecommendCalls.Load() != 1 {
+		t.Fatalf("expected 1 batch recommend call, got %d", batchRecommendCalls.Load())
+	}
+	if legacyRecommendCalls.Load() != 2 {
+		t.Fatalf("expected 2 legacy recommend calls, got %d", legacyRecommendCalls.Load())
+	}
+	if len(results) != 2 {
+		t.Fatalf("unexpected RecommendBatch result count: %d", len(results))
+	}
+	if results[0].Result == nil || len(results[0].Result.Decks) != 1 || results[0].Result.Decks[0].Score != 1001 {
+		t.Fatalf("unexpected first RecommendBatch result: %+v", results[0])
+	}
+	if results[1].Result == nil || len(results[1].Result.Decks) != 1 || results[1].Result.Decks[0].Score != 1002 {
+		t.Fatalf("unexpected second RecommendBatch result: %+v", results[1])
 	}
 }
 

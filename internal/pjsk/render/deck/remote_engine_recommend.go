@@ -8,14 +8,16 @@ import (
 )
 
 func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResult, error) {
-	if len(req.BatchOption) == 0 {
-		return nil, fmt.Errorf("deck remote engine requires batch_options")
+	results, err := r.RecommendBatch(req)
+	if err != nil {
+		return nil, err
 	}
-	if len(req.UserData) == 0 && strings.TrimSpace(req.UserDataFilePath) == "" {
-		return nil, fmt.Errorf("deck remote engine requires user_data bytes or file path")
-	}
-	if len(req.MusicMeta) == 0 && strings.TrimSpace(req.MusicMetaFilePath) == "" {
-		return nil, fmt.Errorf("deck remote engine requires music meta bytes or file path")
+	return aggregateRemoteRecommendResults(req.BatchOption, results)
+}
+
+func (r *RemoteDeckRecommender) RecommendBatch(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+	if err := validateRemoteRecommendRequest(req); err != nil {
+		return nil, err
 	}
 
 	// Circuit breaker: reject early when service is consistently failing.
@@ -36,12 +38,15 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 	}
 
 	start := time.Now()
-	result, err := r.recommendOnce(req)
+	results, err := r.recommendBatchOnce(req)
 	elapsed := time.Since(start)
+	if err == nil {
+		err = firstRemoteBatchError(results)
+	}
 	if err == nil {
 		r.recordSuccess()
 		r.logger.Debugf("recommend completed in %v", elapsed)
-		return result, nil
+		return results, nil
 	}
 	if !shouldRewarmRemoteService(err) {
 		if shouldCountCircuitBreakerFailure(err) {
@@ -61,7 +66,10 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 		r.recordFailure()
 		return nil, warmErr
 	}
-	result, err = r.recommendOnce(req)
+	results, err = r.recommendBatchOnce(req)
+	if err == nil {
+		err = firstRemoteBatchError(results)
+	}
 	if err != nil {
 		r.recordFailure()
 		r.logger.Warnf("recommend failed after rewarm: %v", err)
@@ -69,15 +77,44 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 	}
 	r.recordSuccess()
 	r.logger.Debugf("recommend completed after rewarm")
-	return result, nil
+	return results, nil
 }
 
-func (r *RemoteDeckRecommender) recommendOnce(req RecommendRequest) (*RecommendResult, error) {
-	results, err := r.doRecommendCompatible(req)
-	if err != nil {
-		return nil, err
+func validateRemoteRecommendRequest(req RecommendRequest) error {
+	if len(req.BatchOption) == 0 {
+		return fmt.Errorf("deck remote engine requires batch_options")
 	}
-	return aggregateRemoteRecommendResults(req.BatchOption, results)
+	if len(req.UserData) == 0 && strings.TrimSpace(req.UserDataFilePath) == "" {
+		return fmt.Errorf("deck remote engine requires user_data bytes or file path")
+	}
+	if len(req.MusicMeta) == 0 && strings.TrimSpace(req.MusicMetaFilePath) == "" {
+		return fmt.Errorf("deck remote engine requires music meta bytes or file path")
+	}
+	return nil
+}
+
+func (r *RemoteDeckRecommender) recommendBatchOnce(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+	return r.doRecommendCompatible(req)
+}
+
+func firstRemoteBatchError(results []remoteBatchRecommendResult) error {
+	if len(results) == 0 {
+		return nil
+	}
+
+	var firstErr error
+	for _, item := range results {
+		if item.Result != nil && len(item.Result.Decks) > 0 {
+			return nil
+		}
+		if len(item.Decks) > 0 {
+			return nil
+		}
+		if firstErr == nil && strings.TrimSpace(item.Error) != "" {
+			firstErr = fmt.Errorf("%s", strings.TrimSpace(item.Error))
+		}
+	}
+	return firstErr
 }
 
 func (r *RemoteDeckRecommender) recordSuccess() {
@@ -188,44 +225,55 @@ func (r *RemoteDeckRecommender) doRecommendBatch(req RecommendRequest) ([]remote
 
 func (r *RemoteDeckRecommender) doRecommendLegacy(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
 	type partial struct {
-		item remoteBatchRecommendResult
-		err  error
+		index int
+		item  remoteBatchRecommendResult
+		err   error
 	}
 
 	results := make(chan partial, len(req.BatchOption))
-	for _, option := range req.BatchOption {
+	for index, option := range req.BatchOption {
 		opt := cloneRecommendOption(option)
-		go func() {
+		go func(index int) {
 			alg, _ := opt["algorithm"].(string)
 			start := time.Now()
 			decks, err := r.doRecommendLegacyOption(req, opt)
 			if err != nil {
-				results <- partial{err: err}
+				results <- partial{
+					index: index,
+					item: remoteBatchRecommendResult{
+						Alg:   alg,
+						Error: err.Error(),
+					},
+					err: err,
+				}
 				return
 			}
 			results <- partial{
+				index: index,
 				item: remoteBatchRecommendResult{
 					Alg:      alg,
 					CostTime: time.Since(start).Seconds(),
 					Result:   &remoteRecommendResult{Decks: decks},
 				},
 			}
-		}()
+		}(index)
 	}
 
-	out := make([]remoteBatchRecommendResult, 0, len(req.BatchOption))
+	out := make([]remoteBatchRecommendResult, len(req.BatchOption))
 	var firstErr error
+	successCount := 0
 	for range req.BatchOption {
 		item := <-results
 		if item.err != nil {
 			if firstErr == nil {
 				firstErr = item.err
 			}
-			continue
+		} else {
+			successCount++
 		}
-		out = append(out, item.item)
+		out[item.index] = item.item
 	}
-	if len(out) == 0 && firstErr != nil {
+	if successCount == 0 && firstErr != nil {
 		return nil, firstErr
 	}
 	return out, nil

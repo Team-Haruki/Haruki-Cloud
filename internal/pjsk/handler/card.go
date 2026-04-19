@@ -198,7 +198,6 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		q := card.ListRequest{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
-		q.Title = resolveCardCatalogTitle(rc)
 		q.DetailedProfile = rc.GetDetailedProfile()
 		data, err = cardCtrl.RenderCardList(q)
 	case "card-box":
@@ -211,7 +210,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
-		if strings.TrimSpace(q.Query) == "" {
+		if (q.ShowBox || strings.TrimSpace(q.Query) == "") && !hasCardCatalogOwnedData(q.DetailedProfile) {
 			detail, detailErr := requireCardCatalogDetailedProfile(rc)
 			if detailErr != nil {
 				return nil, detailErr
@@ -247,6 +246,10 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, err
 	}
 	return rc.ImageMessage(data)
+}
+
+func hasCardCatalogOwnedData(detail *drawing.DetailedProfileCardRequest) bool {
+	return detail != nil && len(detail.UserCards) > 0
 }
 
 func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedProfileCardRequest, error) {

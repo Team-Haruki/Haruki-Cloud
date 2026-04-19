@@ -3565,15 +3565,21 @@ func TestExecuteCardListAllowsNoBindingFallback(t *testing.T) {
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected message: %+v", message)
 	}
-	if captured.Title == nil || *captured.Title != CardCatalogTitleNoBinding {
-		t.Fatalf("expected no-binding title %q, got %+v", CardCatalogTitleNoBinding, captured.Title)
+	if captured.Title != nil {
+		t.Fatalf("expected card-list to omit fallback title, got %+v", captured.Title)
 	}
 }
 
 func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
 	root := t.TempDir()
+	service := newHandlerTestBindingServiceWithValidator(t, handlerTestBindingValidator{})
 	app := &renderapp.App{
-		Cards: rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient("https://drawing.invalid"), assets.NewAssetHelper(root, nil)),
+		Bindings:   service,
+		Cards:      rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient("https://drawing.invalid"), assets.NewAssetHelper(root, nil)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
 	}
 	params, err := json.Marshal(map[string]any{
 		"show_box": true,
@@ -3583,16 +3589,18 @@ func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
 	}
 
 	_, err = executeCard(NewRequestContext(context.Background(), &CommandRequest{
-		Module: parser.ModuleCard,
-		Mode:   "card-box",
-		Query:  "1001",
-		Region: "jp",
-		Params: params,
+		Module:            parser.ModuleCard,
+		Mode:              "card-box",
+		Query:             "1001",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
 	}, app))
 	if err == nil {
 		t.Fatal("expected missing owned-card data to fail")
 	}
-	if !strings.Contains(err.Error(), "box 模式需要用户卡牌持有数据") {
+	if err.Error() != ErrMsgCardCatalogRequiresSuite {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

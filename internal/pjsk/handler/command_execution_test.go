@@ -2379,7 +2379,7 @@ func TestResolveDeckCharacterSelectionsResolvesCurrentWorldBloomEventWhenEventID
 	}
 }
 
-func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnToConcreteEvent(t *testing.T) {
+func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByCharacterOccurrence(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_turn?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = sekaiClient.Close() })
@@ -2404,7 +2404,7 @@ func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnToConcreteEven
 	}
 
 	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 510, now-int64(96*time.Hour/time.Millisecond), now-int64(72*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
-		{chapterNo: 1, startAt: now - int64(95*time.Hour/time.Millisecond), aggregateAt: now - int64(93*time.Hour/time.Millisecond), characterID: 21},
+		{chapterNo: 1, startAt: now - int64(95*time.Hour/time.Millisecond), aggregateAt: now - int64(93*time.Hour/time.Millisecond), characterID: 24},
 	})
 	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 520, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
 		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 24},
@@ -2497,7 +2497,7 @@ func TestResolveDeckCharacterSelectionsUsesRequestedRegionInsteadOfDefaultProvid
 	}
 }
 
-func TestResolveDeckCharacterSelectionsClearsWorldBloomTurnAfterResolvingExplicitCNEvent(t *testing.T) {
+func TestResolveDeckCharacterSelectionsClearsWorldBloomTurnAfterResolvingCharacterRoundCNEvent(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_cn_world_bloom_turn_resolve?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = sekaiClient.Close() })
@@ -2514,8 +2514,17 @@ func TestResolveDeckCharacterSelectionsClearsWorldBloomTurnAfterResolvingExplici
 		t.Fatalf("create cn gamecharacter: %v", err)
 	}
 
-	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 160, now-int64(72*time.Hour/time.Millisecond), now-int64(48*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
-		{chapterNo: 1, startAt: now - int64(71*time.Hour/time.Millisecond), aggregateAt: now - int64(69*time.Hour/time.Millisecond), characterID: 17},
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 112, now-int64(120*time.Hour/time.Millisecond), now-int64(96*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(119*time.Hour/time.Millisecond), aggregateAt: now - int64(113*time.Hour/time.Millisecond), characterID: 17},
+		{chapterNo: 2, startAt: now - int64(113*time.Hour/time.Millisecond), aggregateAt: now - int64(107*time.Hour/time.Millisecond), characterID: 20},
+		{chapterNo: 3, startAt: now - int64(107*time.Hour/time.Millisecond), aggregateAt: now - int64(101*time.Hour/time.Millisecond), characterID: 19},
+		{chapterNo: 4, startAt: now - int64(101*time.Hour/time.Millisecond), aggregateAt: now - int64(96*time.Hour/time.Millisecond), characterID: 18},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 130, now-int64(72*time.Hour/time.Millisecond), now-int64(48*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(71*time.Hour/time.Millisecond), aggregateAt: now - int64(65*time.Hour/time.Millisecond), characterID: 7},
+		{chapterNo: 2, startAt: now - int64(65*time.Hour/time.Millisecond), aggregateAt: now - int64(59*time.Hour/time.Millisecond), characterID: 6},
+		{chapterNo: 3, startAt: now - int64(59*time.Hour/time.Millisecond), aggregateAt: now - int64(53*time.Hour/time.Millisecond), characterID: 8},
+		{chapterNo: 4, startAt: now - int64(53*time.Hour/time.Millisecond), aggregateAt: now - int64(48*time.Hour/time.Millisecond), characterID: 5},
 	})
 	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 170, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
 		{chapterNo: 1, startAt: now - int64(3*time.Hour/time.Millisecond), aggregateAt: now - int64(2*time.Hour/time.Millisecond), characterID: 17},

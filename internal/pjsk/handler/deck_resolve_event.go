@@ -85,7 +85,10 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 	}
 
 	if q.WorldBloomEventTurn != nil && *q.WorldBloomEventTurn > 0 {
-		eventInfo, err := resolveDeckWorldBloomEventByTurn(ctx, app, region, *q.WorldBloomEventTurn)
+		if err := resolveDeckWorldBloomTurnCharacterSelection(ctx, q, app, region); err != nil {
+			return err
+		}
+		eventInfo, err := resolveDeckWorldBloomEventByTurnSelection(ctx, app, region, q)
 		if err != nil {
 			return err
 		}
@@ -178,6 +181,32 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 
 	charID := int(chapter.GameCharacterID)
 	q.WorldBloomCharacterID = drawing.IntPtr(charID)
+	if strings.TrimSpace(q.EventUnit) == "" {
+		q.EventUnit = resolveDeckCharacterUnit(charID)
+	}
+	return nil
+}
+
+func resolveDeckWorldBloomTurnCharacterSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
+	if q == nil || app == nil {
+		return nil
+	}
+	if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
+		return nil
+	}
+
+	query := strings.TrimSpace(q.WorldBloomCharacterQuery)
+	if query == "" || isDeckWorldBloomSelectorQuery(query) {
+		return nil
+	}
+
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, query, "deck")
+	if err != nil {
+		return err
+	}
+
+	q.WorldBloomCharacterID = drawing.IntPtr(charID)
+	q.WorldBloomCharacterQuery = ""
 	if strings.TrimSpace(q.EventUnit) == "" {
 		q.EventUnit = resolveDeckCharacterUnit(charID)
 	}
@@ -399,6 +428,114 @@ func resolveDeckWorldBloomEventByTurn(ctx context.Context, app *renderapp.App, r
 		return nil, fmt.Errorf("当前仅有 %d 个 WL 活动，无法解析 wl%d", len(worldBloomEvents), turn)
 	}
 	return worldBloomEvents[turn-1], nil
+}
+
+func resolveDeckWorldBloomEventByTurnSelection(ctx context.Context, app *renderapp.App, region renderregion.Value, q *deck.AutoQuery) (*sekaidb.Event, error) {
+	if q == nil || q.WorldBloomEventTurn == nil || *q.WorldBloomEventTurn <= 0 {
+		return nil, fmt.Errorf("无效的 WL 活动序号")
+	}
+
+	turn := *q.WorldBloomEventTurn
+	if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
+		return resolveDeckWorldBloomEventByCharacterTurn(ctx, app, region, turn, *q.WorldBloomCharacterID)
+	}
+
+	unit := strings.TrimSpace(q.EventUnit)
+	if unit != "" {
+		return resolveDeckWorldBloomEventByUnitTurn(ctx, app, region, turn, unit)
+	}
+
+	return nil, fmt.Errorf("wl%d 需要指定角色，例如 wl%d miku", turn, turn)
+}
+
+func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn, charID int) (*sekaidb.Event, error) {
+	if charID <= 0 {
+		return nil, fmt.Errorf("无效的 WL 角色ID: %d", charID)
+	}
+
+	worldBloomEvents, err := queryDeckWorldBloomEvents(ctx, app, region)
+	if err != nil {
+		return nil, err
+	}
+
+	matched := make([]*sekaidb.Event, 0, len(worldBloomEvents))
+	for _, eventInfo := range worldBloomEvents {
+		chapters, err := queryDeckWorldBloomChapters(ctx, app, region, int(eventInfo.GameID))
+		if err != nil {
+			return nil, err
+		}
+		if trackerWorldBloomHasCharacter(chapters, charID) {
+			matched = append(matched, eventInfo)
+		}
+	}
+
+	if turn > len(matched) {
+		return nil, fmt.Errorf("角色 %d 当前仅有 %d 次 WL，无法解析 wl%d", charID, len(matched), turn)
+	}
+	return matched[turn-1], nil
+}
+
+func resolveDeckWorldBloomEventByUnitTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn int, unit string) (*sekaidb.Event, error) {
+	unit = strings.TrimSpace(unit)
+	if unit == "" {
+		return nil, fmt.Errorf("wl%d 需要指定角色或团名", turn)
+	}
+
+	worldBloomEvents, err := queryDeckWorldBloomEvents(ctx, app, region)
+	if err != nil {
+		return nil, err
+	}
+
+	matched := make([]*sekaidb.Event, 0, len(worldBloomEvents))
+	for _, eventInfo := range worldBloomEvents {
+		chapters, err := queryDeckWorldBloomChapters(ctx, app, region, int(eventInfo.GameID))
+		if err != nil {
+			return nil, err
+		}
+		if deckWorldBloomHasUnit(chapters, unit) {
+			matched = append(matched, eventInfo)
+		}
+	}
+
+	if turn > len(matched) {
+		return nil, fmt.Errorf("团 %s 当前仅有 %d 次 WL，无法解析 wl%d", unit, len(matched), turn)
+	}
+	return matched[turn-1], nil
+}
+
+func queryDeckWorldBloomEvents(ctx context.Context, app *renderapp.App, region renderregion.Value) ([]*sekaidb.Event, error) {
+	events, err := queryDeckEvents(ctx, app, region)
+	if err != nil {
+		return nil, fmt.Errorf("query deck world bloom events failed: %w", err)
+	}
+
+	worldBloomEvents := make([]*sekaidb.Event, 0, len(events))
+	for _, eventInfo := range events {
+		if eventInfo == nil || !strings.EqualFold(eventInfo.EventType, "world_bloom") {
+			continue
+		}
+		worldBloomEvents = append(worldBloomEvents, eventInfo)
+	}
+	if len(worldBloomEvents) == 0 {
+		return nil, fmt.Errorf("当前没有可用的 WL 活动")
+	}
+	return worldBloomEvents, nil
+}
+
+func deckWorldBloomHasUnit(chapters []*sekaidb.Worldbloom, unit string) bool {
+	unit = strings.TrimSpace(unit)
+	if unit == "" {
+		return false
+	}
+	for _, chapter := range chapters {
+		if chapter == nil || chapter.GameCharacterID <= 0 {
+			continue
+		}
+		if resolveDeckCharacterUnit(int(chapter.GameCharacterID)) == unit {
+			return true
+		}
+	}
+	return false
 }
 
 func queryDeckEvents(ctx context.Context, app *renderapp.App, region renderregion.Value) ([]*sekaidb.Event, error) {

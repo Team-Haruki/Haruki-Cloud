@@ -1140,6 +1140,36 @@ func TestChallengeDeckHandleParsesMusicCompareQueries(t *testing.T) {
 	}
 }
 
+func TestChallengeDeckHandleParsesMusicCompareAliasQueries(t *testing.T) {
+	h := sekaiHandlers{}.ChallengeDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/挑战组卡",
+		ArgText:    "mzk 歌曲对比 群青apd 火花apd",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 20 {
+		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	}
+	if !params.MusicCompare {
+		t.Fatalf("expected music_compare to be enabled")
+	}
+	if !reflect.DeepEqual(params.MusicCompareQueries, []string{"群青apd", "火花apd"}) {
+		t.Fatalf("unexpected music compare queries: %+v", params.MusicCompareQueries)
+	}
+	if params.MusicQuery != "" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+}
+
 func TestChallengeDeckHandlePreservesCharacterQuery(t *testing.T) {
 	h := sekaiHandlers{}.ChallengeDeckHandle()
 	result, err := h.Handle(&PjskHandlerContext{

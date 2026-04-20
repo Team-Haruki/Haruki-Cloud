@@ -81,7 +81,7 @@ var (
 var deckPowerTargetKeywords = []string{"综合力", "综合", "总合力", "总和", "power"}
 var deckSkillTargetKeywords = []string{"倍率", "实效", "skill", "时效"}
 var deckCurrentDeckKeywords = []string{"当前", "目前"}
-var deckMusicCompareKeywords = []string{"歌曲比较", "歌曲排行", "歌曲排名", "歌曲推荐"}
+var deckMusicCompareKeywords = []string{"歌曲比较", "歌曲对比", "歌曲排行", "歌曲排名", "歌曲推荐"}
 var deckBoostKeywords = []string{"boost", "火", "体力", "体"}
 var deckAreaItemKeywords = []string{"区域道具", "道具", "areaitem"}
 var deckMaxProfileKeywords = []string{"顶配", "满配"}

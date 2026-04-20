@@ -54,6 +54,50 @@ func resolveSettingsSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 	return "", onebot11.NewReplayError("此设置仅支持操作自己的账号\n使用方式：%s [u序号]", ctx.originalTriggerCmd)
 }
 
+var profileTimeZoneBaseCommands = []string{
+	"/pjsk时区", "/pjsktimezone", "/pjsktz",
+}
+
+func profileTimeZoneCommands() []string {
+	commands := append([]string(nil), profileTimeZoneBaseCommands...)
+	seen := make(map[string]struct{}, len(commands))
+	for _, command := range commands {
+		seen[command] = struct{}{}
+	}
+
+	for _, prefix := range []string{"/pjsktimezone", "/pjsktz"} {
+		for _, alias := range displaytime.KnownTimeZoneAliases() {
+			command := prefix + alias
+			if _, ok := seen[command]; ok {
+				continue
+			}
+			seen[command] = struct{}{}
+			commands = append(commands, command)
+		}
+	}
+	return commands
+}
+
+func extractProfileTimeZoneArg(ctx HarrukiSekaiHandlerContext) string {
+	if args := strings.TrimSpace(ctx.GetArgs()); args != "" {
+		return args
+	}
+
+	triggerCmd := strings.TrimSpace(ctx.GetTriggerCmd())
+	for _, prefix := range profileTimeZoneBaseCommands {
+		if len(triggerCmd) <= len(prefix) {
+			continue
+		}
+		if !strings.HasPrefix(strings.ToLower(triggerCmd), strings.ToLower(prefix)) {
+			continue
+		}
+		if suffix := strings.TrimSpace(triggerCmd[len(prefix):]); suffix != "" {
+			return suffix
+		}
+	}
+	return ""
+}
+
 func (sekaiHandlers) ProfileHideSuiteHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
@@ -166,14 +210,12 @@ func (sekaiHandlers) ProfileShowIDHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk时区", "/pjsktimezone", "/pjsktz",
-			},
-			Path: "profile/timezone",
+			Commands: profileTimeZoneCommands(),
+			Path:     "profile/timezone",
 		},
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			args := strings.TrimSpace(ctx.GetArgs())
+			args := extractProfileTimeZoneArg(ctx)
 			if args == "" {
 				return nil, onebot11.NewReplayError(
 					"使用方式:\n%s <时区名|偏移量>\n示例:\n%s Asia/Shanghai\n%s +8\n%s +09:00\n%s +28800",

@@ -130,15 +130,8 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		if !guard.Acquire(c.Context(), req) {
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
 		}
-		// Backward compatibility:
-		// 1. /skp moved from sk/rank-trace to sk/predict.
-		// 2. /msam may still be posted to mysekai/resource until manifests refresh.
-		// 3. /msb may still be posted to mysekai/blueprint until manifests refresh.
-		legacySKPredictCompat := expectedPath == "sk/rank-trace"
-		legacyMysekaiOverviewCompat := expectedPath == "mysekai/resource"
-		legacyMysekaiTalkListCompat := expectedPath == "mysekai/blueprint"
-		legacySKCSBCompat := expectedPath == "sk/check-room"
-		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat && !legacyMysekaiOverviewCompat && !legacyMysekaiTalkListCompat && !legacySKCSBCompat {
+		allowCompatReroute := allowBotCompatReroute(expectedPath)
+		if !slices.Contains(commands, req.MatchedCommand) && !allowCompatReroute {
 			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
 		}
 		if botDBClient != nil {
@@ -158,18 +151,10 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		}
 
 		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req)
-		if err != nil && (legacySKPredictCompat || legacyMysekaiOverviewCompat || legacyMysekaiTalkListCompat || legacySKCSBCompat) {
-			if validationErr, ok := errors.AsType[*botValidationError](err); ok {
-				switch {
-				case legacySKPredictCompat && strings.Contains(validationErr.Error(), "belongs to path sk/predict"):
-					resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/predict", req)
-				case legacyMysekaiOverviewCompat && strings.Contains(validationErr.Error(), "belongs to path mysekai/overview"):
-					resolved, err = resolveBotCommand(c.Context(), req.Message, "mysekai/overview", req)
-				case legacyMysekaiTalkListCompat && strings.Contains(validationErr.Error(), "belongs to path mysekai/talk-list"):
-					resolved, err = resolveBotCommand(c.Context(), req.Message, "mysekai/talk-list", req)
-				case legacySKCSBCompat && strings.Contains(validationErr.Error(), "belongs to path sk/csb"):
-					resolved, err = resolveBotCommand(c.Context(), req.Message, "sk/csb", req)
-				}
+		if err != nil && allowCompatReroute {
+			if validationErr, ok := errors.AsType[*botValidationError](err); ok && canRetryBotPathCompat(expectedPath, validationErr.actualPath) {
+				logger.Warnf("bot command compat reroute: matched_command=%s expected_path=%s actual_path=%s", req.MatchedCommand, expectedPath, validationErr.actualPath)
+				resolved, err = resolveBotCommand(c.Context(), req.Message, validationErr.actualPath, req)
 			}
 		}
 		if err != nil {
@@ -249,11 +234,46 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 }
 
 type botValidationError struct {
-	msg string
+	msg        string
+	actualPath string
 }
 
 func (e *botValidationError) Error() string {
 	return e.msg
+}
+
+var botCompatPathFamilies = map[string]struct{}{
+	"mysekai": {},
+	"profile": {},
+	"sk":      {},
+}
+
+func allowBotCompatReroute(path string) bool {
+	_, ok := botCompatPathFamilies[botPathFamily(path)]
+	return ok
+}
+
+func canRetryBotPathCompat(expectedPath, actualPath string) bool {
+	if expectedPath == "" || actualPath == "" || expectedPath == actualPath {
+		return false
+	}
+	expectedFamily := botPathFamily(expectedPath)
+	if expectedFamily == "" || expectedFamily != botPathFamily(actualPath) {
+		return false
+	}
+	_, ok := botCompatPathFamilies[expectedFamily]
+	return ok
+}
+
+func botPathFamily(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return ""
+	}
+	if idx := strings.IndexByte(path, '/'); idx >= 0 {
+		return path[:idx]
+	}
+	return path
 }
 
 func resolveBotCommand(requestCtx context.Context, message onebot11.Message, expectedPath string, req BotCommandRequest) (*commandhandler.CommandRequest, error) {
@@ -289,7 +309,10 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	}
 
 	if matched.Handler.GetPath() != expectedPath {
-		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
+		return nil, &botValidationError{
+			msg:        fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath()),
+			actualPath: matched.Handler.GetPath(),
+		}
 	}
 
 	args, ok := commandregistry.ExtractCommandArgs(ctx.GetArgs(), matched.Command)

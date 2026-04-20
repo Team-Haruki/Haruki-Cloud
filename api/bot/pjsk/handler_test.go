@@ -572,7 +572,7 @@ func TestResolveBotCommandFallsBackToMessageMatchForCompactTimeZoneCommand(t *te
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if params.TimeZone != "HKT" {
+	if !strings.EqualFold(params.TimeZone, "HKT") {
 		t.Fatalf("unexpected timezone param: %q", params.TimeZone)
 	}
 	if resolved.RequesterPlatform != "qq" || resolved.RequesterUserID != "12345" {
@@ -1783,6 +1783,27 @@ func TestBotEndpointSKPlayerTraceSupportsTwoRanks(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleImageMessage(t, body)
+}
+
+func TestBotEndpointProfileTimeZoneCompatReroutesLegacyProfilePath(t *testing.T) {
+	app := testBotAppWithBindings(t, "", testBindingService(t))
+
+	req := newBotPOSTRequest(botPJSKPath("profile/check-data"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/pjsktz",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/pjsktz HKT"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessage(t, body, "已设置PJSK时区为 Asia/Hong_Kong")
 }
 
 func TestBotEndpointWrongCommandRejects400(t *testing.T) {

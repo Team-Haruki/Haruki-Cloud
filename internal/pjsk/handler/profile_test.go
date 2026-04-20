@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 	"testing"
 
@@ -359,6 +360,44 @@ func TestProfileTimeZoneHandleParsesArgs(t *testing.T) {
 		t.Fatalf("unmarshal params: %v", err)
 	}
 	if params.TimeZone != "+28800" {
+		t.Fatalf("unexpected timezone param: %q", params.TimeZone)
+	}
+}
+
+func TestProfileTimeZoneHandleIncludesCompactAliases(t *testing.T) {
+	h := sekaiHandlers{}.ProfileTimeZoneHandle()
+	if !slices.Contains(h.GetCommands(), "/pjsktzhkt") {
+		t.Fatalf("expected compact alias /pjsktzhkt in commands, got %v", h.GetCommands())
+	}
+}
+
+func TestProfileTimeZoneHandleParsesCompactTriggerArg(t *testing.T) {
+	h := sekaiHandlers{}.ProfileTimeZoneHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/pjsktzhkt",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeSetTimeZone {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileSettingsCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.TimeZone != "hkt" {
 		t.Fatalf("unexpected timezone param: %q", params.TimeZone)
 	}
 }

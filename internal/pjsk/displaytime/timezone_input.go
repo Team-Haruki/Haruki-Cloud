@@ -76,6 +76,15 @@ var preferredTimeZoneNames = []string{
 
 var preferredTimeZoneRank = buildPreferredTimeZoneRank(preferredTimeZoneNames)
 
+func KnownTimeZoneAliases() []string {
+	aliases := make([]string, 0, len(timeZoneAliases))
+	for alias := range timeZoneAliases {
+		aliases = append(aliases, alias)
+	}
+	sort.Strings(aliases)
+	return aliases
+}
+
 func ResolveUserTimeZoneInput(raw string) (string, []string, error) {
 	input := strings.TrimSpace(raw)
 	if input == "" {

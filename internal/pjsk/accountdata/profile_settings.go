@@ -25,24 +25,31 @@ const (
 	ProfileModeVerify        = "profile-verify"
 	ProfileModeVerifyList    = "profile-verify-list"
 	ProfileModeSetTimeZone   = "profile-set-timezone"
+	ProfileModeSetArrestDiff = "profile-set-arrest-difficulty"
 	ProfileModeSetChartStyle = "profile-set-chart-style"
 	ProfileModeBGUpload      = "profile-bg-upload"
 	ProfileModeBGClear       = "profile-bg-clear"
 	ProfileModeBGAdjust      = "profile-bg-adjust"
 )
 
+type ProfileDifficultyToggle struct {
+	Difficulty sekai.MusicDifficultyType `json:"difficulty"`
+	Enabled    bool                      `json:"enabled"`
+}
+
 type ProfileSettingsCommandParams struct {
-	Platform       string `json:"platform"`
-	PlatformUserID string `json:"platform_user_id"`
-	Server         string `json:"server"`
-	RegionExplicit bool   `json:"region_explicit,omitempty"`
-	Selector       string `json:"selector,omitempty"`
-	TimeZone       string `json:"time_zone,omitempty"`
-	ChartStyle     string `json:"chart_style,omitempty"`
-	ImageURL       string `json:"image_url,omitempty"`
-	Blur           *int   `json:"blur,omitempty"`
-	Alpha          *int   `json:"alpha,omitempty"`
-	Vertical       *bool  `json:"vertical,omitempty"`
+	Platform          string                    `json:"platform"`
+	PlatformUserID    string                    `json:"platform_user_id"`
+	Server            string                    `json:"server"`
+	RegionExplicit    bool                      `json:"region_explicit,omitempty"`
+	Selector          string                    `json:"selector,omitempty"`
+	TimeZone          string                    `json:"time_zone,omitempty"`
+	DifficultyToggles []ProfileDifficultyToggle `json:"difficulty_toggles,omitempty"`
+	ChartStyle        string                    `json:"chart_style,omitempty"`
+	ImageURL          string                    `json:"image_url,omitempty"`
+	Blur              *int                      `json:"blur,omitempty"`
+	Alpha             *int                      `json:"alpha,omitempty"`
+	Vertical          *bool                     `json:"vertical,omitempty"`
 }
 
 func DecodeProfileSettingsParams(raw json.RawMessage) (ProfileSettingsCommandParams, error) {
@@ -59,6 +66,9 @@ func DecodeProfileSettingsParams(raw json.RawMessage) (ProfileSettingsCommandPar
 	params.TimeZone = strings.TrimSpace(params.TimeZone)
 	params.ChartStyle = strings.TrimSpace(strings.ToLower(params.ChartStyle))
 	params.ImageURL = strings.TrimSpace(params.ImageURL)
+	for i := range params.DifficultyToggles {
+		params.DifficultyToggles[i].Difficulty = normalizeProfileDifficulty(params.DifficultyToggles[i].Difficulty)
+	}
 	if params.Platform == "" || params.PlatformUserID == "" {
 		return params, fmt.Errorf("bridge: missing profile settings identity context")
 	}
@@ -227,6 +237,36 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 			return nil, fmt.Errorf("保存用户时区失败: %w", err)
 		}
 		return []byte(fmt.Sprintf("已设置PJSK时区为 %s", resolvedTimeZone)), nil
+	case ProfileModeSetArrestDiff:
+		if len(params.DifficultyToggles) == 0 {
+			return nil, fmt.Errorf("请至少指定一个逮捕难度开关")
+		}
+
+		harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
+		if err != nil {
+			return nil, err
+		}
+
+		settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
+		if err != nil {
+			if !errors.Is(err, ErrUserSettingsNotFound) {
+				return nil, fmt.Errorf("读取用户设置失败: %w", err)
+			}
+			settings = newDefaultUserSettings()
+		}
+		if settings == nil {
+			settings = newDefaultUserSettings()
+		}
+
+		nextDiffs, err := applyProfileDifficultyToggles(settings.PJSKEnabledDifficulties, params.DifficultyToggles)
+		if err != nil {
+			return nil, err
+		}
+		settings.PJSKEnabledDifficulties = nextDiffs
+		if err := UpsertUserSettings(ctx, service.pjskDB, harukiUserID, settings); err != nil {
+			return nil, fmt.Errorf("保存逮捕难度设置失败: %w", err)
+		}
+		return []byte(fmt.Sprintf("已设置逮捕难度为 %s", formatProfileDifficultySummary(settings.PJSKEnabledDifficulties))), nil
 	case ProfileModeSetChartStyle:
 		resolvedChartStyle := chartstyle.Normalize(params.ChartStyle)
 		if resolvedChartStyle == "" {
@@ -365,6 +405,70 @@ func formatTimeZoneCandidatesText(raw string, candidates []string) string {
 		lines = append(lines, fmt.Sprintf("... 以及另外 %d 个候选", len(candidates)-limit))
 	}
 	return strings.Join(lines, "\n")
+}
+
+func normalizeProfileDifficulty(value sekai.MusicDifficultyType) sekai.MusicDifficultyType {
+	switch strings.ToLower(strings.TrimSpace(string(value))) {
+	case string(sekai.MusicDifficultyEasy):
+		return sekai.MusicDifficultyEasy
+	case string(sekai.MusicDifficultyNormal):
+		return sekai.MusicDifficultyNormal
+	case string(sekai.MusicDifficultyHard):
+		return sekai.MusicDifficultyHard
+	case string(sekai.MusicDifficultyExpert):
+		return sekai.MusicDifficultyExpert
+	case string(sekai.MusicDifficultyMaster):
+		return sekai.MusicDifficultyMaster
+	case string(sekai.MusicDifficultyAppend):
+		return sekai.MusicDifficultyAppend
+	default:
+		return ""
+	}
+}
+
+func applyProfileDifficultyToggles(current []sekai.MusicDifficultyType, toggles []ProfileDifficultyToggle) ([]sekai.MusicDifficultyType, error) {
+	enabled := make(map[sekai.MusicDifficultyType]bool, len(sekai.AllMusicDifficulties))
+	for _, diff := range current {
+		normalized := normalizeProfileDifficulty(diff)
+		if normalized != "" {
+			enabled[normalized] = true
+		}
+	}
+	for _, toggle := range toggles {
+		diff := normalizeProfileDifficulty(toggle.Difficulty)
+		if diff == "" {
+			return nil, fmt.Errorf("不支持的难度: %q", toggle.Difficulty)
+		}
+		enabled[diff] = toggle.Enabled
+	}
+
+	result := make([]sekai.MusicDifficultyType, 0, len(sekai.AllMusicDifficulties))
+	for _, diff := range sekai.AllMusicDifficulties {
+		if enabled[diff] {
+			result = append(result, diff)
+		}
+	}
+	return result, nil
+}
+
+func formatProfileDifficultySummary(enabled []sekai.MusicDifficultyType) string {
+	enabledSet := make(map[sekai.MusicDifficultyType]bool, len(enabled))
+	for _, diff := range enabled {
+		normalized := normalizeProfileDifficulty(diff)
+		if normalized != "" {
+			enabledSet[normalized] = true
+		}
+	}
+
+	parts := make([]string, 0, len(sekai.AllMusicDifficulties))
+	for _, diff := range sekai.AllMusicDifficulties {
+		status := "关闭"
+		if enabledSet[diff] {
+			status = "开启"
+		}
+		parts = append(parts, fmt.Sprintf("%s%s", diff, status))
+	}
+	return strings.Join(parts, " ")
 }
 
 func newDefaultUserSettings() *pjskschema.UserSettings {

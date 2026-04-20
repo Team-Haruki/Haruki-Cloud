@@ -469,3 +469,62 @@ func TestProfileChartStyleHandleRequiresArgs(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestProfileArrestDifficultyHandleParsesArgs(t *testing.T) {
+	h := sekaiHandlers{}.ProfileArrestDifficultyHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/逮捕难度",
+		ArgText:    "easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeSetArrestDiff {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileSettingsCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if len(params.DifficultyToggles) != 6 {
+		t.Fatalf("unexpected toggle count: %d", len(params.DifficultyToggles))
+	}
+	if params.DifficultyToggles[0].Difficulty != "easy" || params.DifficultyToggles[0].Enabled {
+		t.Fatalf("unexpected first toggle: %+v", params.DifficultyToggles[0])
+	}
+	if params.DifficultyToggles[4].Difficulty != "master" || !params.DifficultyToggles[4].Enabled {
+		t.Fatalf("unexpected master toggle: %+v", params.DifficultyToggles[4])
+	}
+	if params.DifficultyToggles[5].Difficulty != "append" || !params.DifficultyToggles[5].Enabled {
+		t.Fatalf("unexpected append toggle: %+v", params.DifficultyToggles[5])
+	}
+}
+
+func TestProfileArrestDifficultyHandleRequiresArgs(t *testing.T) {
+	h := sekaiHandlers{}.ProfileArrestDifficultyHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/逮捕难度",
+	})
+	if err == nil {
+		t.Fatal("expected missing args error, got nil")
+	}
+	if !strings.Contains(err.Error(), "easy关闭") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}

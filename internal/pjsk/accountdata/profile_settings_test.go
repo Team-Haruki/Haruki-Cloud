@@ -522,3 +522,47 @@ func TestExecuteProfileSettingsCommandSetChartStyleRejectsInvalidValue(t *testin
 		t.Fatalf("unexpected chart style error: %v", err)
 	}
 }
+
+func TestExecuteProfileSettingsCommandSetArrestDifficulty(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{})
+
+	text, err := accountdata.ExecuteProfileSettingsCommand(context.Background(), service, accountdata.ProfileModeSetArrestDiff, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		DifficultyToggles: []accountdata.ProfileDifficultyToggle{
+			{Difficulty: sekaiapi.MusicDifficultyEasy, Enabled: false},
+			{Difficulty: sekaiapi.MusicDifficultyNormal, Enabled: false},
+			{Difficulty: sekaiapi.MusicDifficultyHard, Enabled: false},
+			{Difficulty: sekaiapi.MusicDifficultyExpert, Enabled: false},
+			{Difficulty: sekaiapi.MusicDifficultyMaster, Enabled: true},
+			{Difficulty: sekaiapi.MusicDifficultyAppend, Enabled: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("set arrest difficulty: %v", err)
+	}
+	if got := string(text); got != "已设置逮捕难度为 easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启" {
+		t.Fatalf("unexpected arrest difficulty text:\n%s", got)
+	}
+}
+
+func TestExecuteProfileSettingsCommandSetArrestDifficultyPreservesUntouchedValues(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{})
+
+	text, err := accountdata.ExecuteProfileSettingsCommand(context.Background(), service, accountdata.ProfileModeSetArrestDiff, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		DifficultyToggles: []accountdata.ProfileDifficultyToggle{
+			{Difficulty: sekaiapi.MusicDifficultyExpert, Enabled: false},
+			{Difficulty: sekaiapi.MusicDifficultyAppend, Enabled: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("set arrest difficulty: %v", err)
+	}
+	if got := string(text); got != "已设置逮捕难度为 easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启" {
+		t.Fatalf("unexpected arrest difficulty text:\n%s", got)
+	}
+}

@@ -98,6 +98,88 @@ func extractProfileTimeZoneArg(ctx HarrukiSekaiHandlerContext) string {
 	return ""
 }
 
+func parseProfileDifficultyToken(raw string) sekaiapi.MusicDifficultyType {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "easy":
+		return sekaiapi.MusicDifficultyEasy
+	case "normal":
+		return sekaiapi.MusicDifficultyNormal
+	case "hard":
+		return sekaiapi.MusicDifficultyHard
+	case "expert":
+		return sekaiapi.MusicDifficultyExpert
+	case "master":
+		return sekaiapi.MusicDifficultyMaster
+	case "append":
+		return sekaiapi.MusicDifficultyAppend
+	default:
+		return ""
+	}
+}
+
+func parseProfileDifficultyState(raw string) (bool, bool) {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "开启", "开", "on", "enable", "enabled", "true", "1":
+		return true, true
+	case "关闭", "关", "off", "disable", "disabled", "false", "0":
+		return false, true
+	default:
+		return false, false
+	}
+}
+
+func parseProfileDifficultyCompactToggle(raw string) (accountdata.ProfileDifficultyToggle, bool) {
+	lower := strings.ToLower(strings.TrimSpace(raw))
+	if lower == "" {
+		return accountdata.ProfileDifficultyToggle{}, false
+	}
+
+	for _, suffix := range []string{"开启", "关闭", "开", "关"} {
+		if !strings.HasSuffix(lower, suffix) {
+			continue
+		}
+		diff := parseProfileDifficultyToken(strings.TrimSpace(strings.TrimSuffix(lower, suffix)))
+		if diff == "" {
+			return accountdata.ProfileDifficultyToggle{}, false
+		}
+		enabled, _ := parseProfileDifficultyState(suffix)
+		return accountdata.ProfileDifficultyToggle{Difficulty: diff, Enabled: enabled}, true
+	}
+
+	return accountdata.ProfileDifficultyToggle{}, false
+}
+
+func parseProfileDifficultyToggles(raw string) ([]accountdata.ProfileDifficultyToggle, error) {
+	normalized := strings.NewReplacer("，", " ", ",", " ", "、", " ", "\n", " ", "\t", " ").Replace(strings.TrimSpace(raw))
+	fields := strings.Fields(normalized)
+	if len(fields) == 0 {
+		return nil, fmt.Errorf("empty")
+	}
+
+	toggles := make([]accountdata.ProfileDifficultyToggle, 0, len(fields))
+	for i := 0; i < len(fields); i++ {
+		if toggle, ok := parseProfileDifficultyCompactToggle(fields[i]); ok {
+			toggles = append(toggles, toggle)
+			continue
+		}
+
+		if i+1 >= len(fields) {
+			return nil, fmt.Errorf("invalid token %q", fields[i])
+		}
+		diff := parseProfileDifficultyToken(fields[i])
+		enabled, ok := parseProfileDifficultyState(fields[i+1])
+		if diff == "" || !ok {
+			return nil, fmt.Errorf("invalid token %q", fields[i])
+		}
+		toggles = append(toggles, accountdata.ProfileDifficultyToggle{
+			Difficulty: diff,
+			Enabled:    enabled,
+		})
+		i++
+	}
+	return toggles, nil
+}
+
 func (sekaiHandlers) ProfileHideSuiteHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
@@ -254,6 +336,39 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 			params := newProfileSettingsParams(ctx)
 			params.ChartStyle = args
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeSetChartStyle, params), nil
+		},
+	}, executeProfile)
+}
+
+func (sekaiHandlers) ProfileArrestDifficultyHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Commands: []string{
+				"/逮捕难度", "/pjsk逮捕难度", "/pjsk arrest difficulty",
+			},
+			Path: "profile/arrest-difficulty",
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			if args == "" {
+				return nil, onebot11.NewReplayError(
+					"使用方式:\n%s easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启",
+					ctx.originalTriggerCmd,
+				)
+			}
+
+			toggles, err := parseProfileDifficultyToggles(args)
+			if err != nil {
+				return nil, onebot11.NewReplayError(
+					"无效的逮捕难度参数\n使用方式:\n%s easy关闭 normal关闭 hard关闭 expert关闭 master开启 append开启",
+					ctx.originalTriggerCmd,
+				)
+			}
+
+			params := newProfileSettingsParams(ctx)
+			params.DifficultyToggles = toggles
+			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeSetArrestDiff, params), nil
 		},
 	}, executeProfile)
 }

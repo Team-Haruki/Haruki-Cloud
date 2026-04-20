@@ -18,26 +18,17 @@ func (h *StatisticsHandler) RecordStatistics(c fiber.Ctx) error {
 	if botID <= 0 {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "botID required")
 	}
-	loc, err := time.LoadLocation("Asia/Shanghai")
-	if err != nil {
+	if err := RecordRequestStatistics(c.Context(), h.svc.client, botID, telemetryNow()); err != nil {
 		return api.InternalError(c)
-	}
-	now := time.Now().In(loc)
-	ctx := c.Context()
-	for _, update := range []func(context.Context) error{
-		func(ctx context.Context) error { return h.updateRequestsRanking(ctx, botID) },
-		func(ctx context.Context) error { return h.updateHourlyRequests(ctx, now) },
-		func(ctx context.Context) error { return h.updateDailyRequests(ctx, now, loc) },
-	} {
-		if err := update(ctx); err != nil {
-			return api.InternalError(c)
-		}
 	}
 
 	return api.JSONResponse(c, fiber.StatusOK, "Statistics recorded")
 }
 
 func (h *StatisticsHandler) updateRequestsRanking(ctx context.Context, botID int) error {
+	if h == nil || h.svc == nil {
+		return nil
+	}
 	return incrementStatisticCounter(
 		func() error {
 			_, err := h.svc.client.RequestsRanking.
@@ -58,6 +49,9 @@ func (h *StatisticsHandler) updateRequestsRanking(ctx context.Context, botID int
 }
 
 func (h *StatisticsHandler) updateHourlyRequests(ctx context.Context, now time.Time) error {
+	if h == nil || h.svc == nil {
+		return nil
+	}
 	hourKey := now.Truncate(time.Hour)
 	return incrementStatisticCounter(
 		func() error {
@@ -79,6 +73,9 @@ func (h *StatisticsHandler) updateHourlyRequests(ctx context.Context, now time.T
 }
 
 func (h *StatisticsHandler) updateDailyRequests(ctx context.Context, now time.Time, loc *time.Location) error {
+	if h == nil || h.svc == nil {
+		return nil
+	}
 	dateKey := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	return incrementStatisticCounter(
 		func() error {

@@ -4,13 +4,21 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	botDB "haruki-cloud/database/bot"
+	botcommandlog "haruki-cloud/database/bot/commandlog"
+	botdailyrequests "haruki-cloud/database/bot/dailyrequests"
+	botenttest "haruki-cloud/database/bot/enttest"
+	bothourlyrequests "haruki-cloud/database/bot/hourlyrequests"
+	botrequestsranking "haruki-cloud/database/bot/requestsranking"
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	noiseCrypto "haruki-cloud/internal/core/crypto"
@@ -312,10 +320,15 @@ func (botCSBTrackerSource) TraceRankingByUser(server string, eventID int, userID
 // testBotApp registers bot routes on a fresh Fiber instance.
 func testBotApp(t *testing.T, drawingURL string) *fiber.App {
 	t.Helper()
-	return testBotAppWithBindings(t, drawingURL, nil)
+	return testBotAppWithDependencies(t, drawingURL, nil, nil)
 }
 
 func testBotAppWithBindings(t *testing.T, drawingURL string, bindingService *accountdata.BindingService) *fiber.App {
+	t.Helper()
+	return testBotAppWithDependencies(t, drawingURL, bindingService, nil)
+}
+
+func testBotAppWithDependencies(t *testing.T, drawingURL string, bindingService *accountdata.BindingService, botDBClient *botDB.Client) *fiber.App {
 	t.Helper()
 	var client *drawing.HarukiDrawingClient
 	if drawingURL != "" {
@@ -324,8 +337,14 @@ func testBotAppWithBindings(t *testing.T, drawingURL string, bindingService *acc
 	app := fiber.New()
 	runtime := testRenderApp(t, client)
 	runtime.Bindings = bindingService
-	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+	RegisterPJSKBotRoutes(app, runtime, nil, botDBClient, nil)
 	return app
+}
+
+func newBotCommandTestClient(t *testing.T, name string) *botDB.Client {
+	t.Helper()
+	dsn := fmt.Sprintf("file:bot_pjsk_%s_%d?mode=memory&cache=shared&_fk=1", name, time.Now().UnixNano())
+	return botenttest.Open(t, "sqlite3", dsn)
 }
 
 func testBindingService(t *testing.T) *accountdata.BindingService {
@@ -451,6 +470,81 @@ func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
 	}
 
 	assertSingleTextMessage(t, body, "你还没有绑定任何PJSK账号")
+}
+
+func TestBotEndpointRecordsDistributedStatisticsAndCommandLog(t *testing.T) {
+	ctx := context.Background()
+	botClient := newBotCommandTestClient(t, "telemetry")
+	t.Cleanup(func() { _ = botClient.Close() })
+	app := testBotAppWithDependencies(t, "", testBindingService(t), botClient)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/bind/list"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", PlatformGroupID: "67890",
+		Server: "jp", MatchedCommand: "/绑定列表",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/绑定列表"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+
+	rankingRow, err := botClient.RequestsRanking.Query().Where(botrequestsranking.BotIDEQ(11451419)).Only(ctx)
+	if err != nil {
+		t.Fatalf("load requests ranking: %v", err)
+	}
+	if rankingRow.Counts != 1 {
+		t.Fatalf("unexpected requests ranking counts: got=%d want=1", rankingRow.Counts)
+	}
+
+	hourlyRows, err := botClient.HourlyRequests.Query().Where(bothourlyrequests.CountEQ(1)).All(ctx)
+	if err != nil {
+		t.Fatalf("load hourly requests: %v", err)
+	}
+	if len(hourlyRows) != 1 {
+		t.Fatalf("expected 1 hourly row, got %+v", hourlyRows)
+	}
+
+	dailyRows, err := botClient.DailyRequests.Query().Where(botdailyrequests.CountEQ(1)).All(ctx)
+	if err != nil {
+		t.Fatalf("load daily requests: %v", err)
+	}
+	if len(dailyRows) != 1 {
+		t.Fatalf("expected 1 daily row, got %+v", dailyRows)
+	}
+
+	logRow, err := botClient.CommandLog.Query().Only(ctx)
+	if err != nil {
+		t.Fatalf("load command log: %v", err)
+	}
+	if logRow.Platform != "qq" || logRow.Pid != testBotID || logRow.Gid != "67890" || logRow.UID != "12345" || logRow.Command != "/绑定列表" {
+		t.Fatalf("unexpected command log row: %+v", logRow)
+	}
+	if logRow.CreatedAt.IsZero() {
+		t.Fatalf("expected command log created_at to be set, got %+v", logRow)
+	}
+
+	count, err := botClient.CommandLog.Query().
+		Where(
+			botcommandlog.PlatformEQ("qq"),
+			botcommandlog.PidEQ(testBotID),
+			botcommandlog.GidEQ("67890"),
+			botcommandlog.UIDEQ("12345"),
+			botcommandlog.CommandEQ("/绑定列表"),
+		).
+		Count(ctx)
+	if err != nil {
+		t.Fatalf("count command logs: %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("expected 1 matching command log row, got %d", count)
+	}
 }
 
 func TestBotEndpointGetWithGroupHeadersReturnsImage(t *testing.T) {

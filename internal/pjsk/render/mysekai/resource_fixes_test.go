@@ -12,8 +12,9 @@ import (
 )
 
 func TestExtractMysekaiPhenomsIncludesBirthdayRefreshSlot(t *testing.T) {
-	loc := time.FixedZone("CST", 8*3600)
-	now := time.Date(2026, 4, 12, 16, 37, 0, 0, loc)
+	inputLoc := time.FixedZone("CST", 8*3600)
+	now := time.Date(2026, 4, 12, 16, 37, 0, 0, inputLoc)
+	loc := time.FixedZone("JST", 9*3600) // display in region tz
 	phenomIcons := map[int]string{
 		1: "env_sunny",
 		2: "env_evening",
@@ -53,9 +54,10 @@ func TestExtractMysekaiPhenomsIncludesBirthdayRefreshSlot(t *testing.T) {
 }
 
 func TestExtractMysekaiPhenomsPrefersFreshestSnapshotTime(t *testing.T) {
-	loc := time.FixedZone("CST", 8*3600)
-	staleNow := time.Date(2026, 4, 12, 16, 37, 0, 0, loc)
-	freshUpload := time.Date(2026, 4, 14, 16, 1, 0, 0, loc)
+	inputLoc := time.FixedZone("CST", 8*3600)
+	staleNow := time.Date(2026, 4, 12, 16, 37, 0, 0, inputLoc)
+	freshUpload := time.Date(2026, 4, 14, 16, 1, 0, 0, inputLoc)
+	loc := time.FixedZone("JST", 9*3600) // display in region tz
 	phenomIcons := map[int]string{
 		1: "env_sunny",
 		2: "env_evening",

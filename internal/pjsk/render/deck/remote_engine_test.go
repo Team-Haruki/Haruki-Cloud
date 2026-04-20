@@ -251,6 +251,18 @@ func TestExpandRecommendBatchOptionsAddsFallbacksForMysekaiRL(t *testing.T) {
 	if options[0]["algorithm"] != "rl" || options[1]["algorithm"] != "ga" || options[2]["algorithm"] != "dfs_ga" {
 		t.Fatalf("unexpected rl mysekai fallback batch order: %+v", options)
 	}
+	for _, item := range options {
+		gaOptions, ok := item["ga_options"].(map[string]any)
+		if !ok {
+			t.Fatalf("expected rl mysekai fallback to include ga_options, got %+v", item)
+		}
+		if gaOptions["max_iter"] != 256 || gaOptions["max_no_improve_iter"] != 6 {
+			t.Fatalf("unexpected rl mysekai ga_options: %+v", gaOptions)
+		}
+		if gaOptions["pop_size"] != 8000 || gaOptions["parent_size"] != 800 || gaOptions["elite_size"] != 80 {
+			t.Fatalf("unexpected rl mysekai population tuning: %+v", gaOptions)
+		}
+	}
 
 	plain := expandRecommendBatchOptions(recommender, "event", map[string]any{
 		"algorithm": "rl",
@@ -259,6 +271,94 @@ func TestExpandRecommendBatchOptionsAddsFallbacksForMysekaiRL(t *testing.T) {
 	})
 	if len(plain) != 1 || plain[0]["algorithm"] != "rl" {
 		t.Fatalf("non-mysekai rl request should stay single-algorithm, got %+v", plain)
+	}
+	if _, ok := plain[0]["ga_options"]; ok {
+		t.Fatalf("non-mysekai rl request should not inject ga_options, got %+v", plain[0])
+	}
+}
+
+func TestExpandRecommendBatchOptionsPreservesExplicitMysekaiRLGaOptions(t *testing.T) {
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: "http://example.com",
+		MasterdataDir:  "/masterdata",
+		DefaultAlgs:    []string{"dfs_ga", "ga", "rl"},
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	options := expandRecommendBatchOptions(recommender, "mysekai", map[string]any{
+		"algorithm": "rl",
+		"live_type": "mysekai",
+		"target":    "score",
+		"ga_options": map[string]any{
+			"max_iter": 1024,
+			"seed":     42,
+		},
+	})
+	if len(options) != 3 {
+		t.Fatalf("expected rl mysekai fallback batch to include 3 algorithms, got %+v", options)
+	}
+
+	gaOptions, ok := options[0]["ga_options"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected explicit ga_options to survive, got %+v", options[0])
+	}
+	if gaOptions["max_iter"] != 1024 {
+		t.Fatalf("expected explicit max_iter to be preserved, got %+v", gaOptions)
+	}
+	if gaOptions["seed"] != 42 {
+		t.Fatalf("expected explicit seed to be preserved, got %+v", gaOptions)
+	}
+	if gaOptions["pop_size"] != 8000 || gaOptions["parent_size"] != 800 || gaOptions["elite_size"] != 80 {
+		t.Fatalf("expected tuned defaults to be merged, got %+v", gaOptions)
+	}
+}
+
+func TestExpandRecommendBatchOptionsAddsTuningForMysekaiAll(t *testing.T) {
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: "http://example.com",
+		MasterdataDir:  "/masterdata",
+		DefaultAlgs:    []string{"dfs_ga", "ga", "rl"},
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	options := expandRecommendBatchOptions(recommender, "mysekai", map[string]any{
+		"algorithm": "all",
+		"live_type": "mysekai",
+		"target":    "score",
+	})
+	if len(options) != 3 {
+		t.Fatalf("expected mysekai all batch to include 3 algorithms, got %+v", options)
+	}
+	if options[0]["algorithm"] != "dfs_ga" || options[1]["algorithm"] != "ga" || options[2]["algorithm"] != "rl" {
+		t.Fatalf("unexpected mysekai all batch order: %+v", options)
+	}
+	for _, item := range options {
+		gaOptions, ok := item["ga_options"].(map[string]any)
+		if !ok {
+			t.Fatalf("expected mysekai all batch to include ga_options, got %+v", item)
+		}
+		if gaOptions["max_iter"] != 256 || gaOptions["pop_size"] != 8000 {
+			t.Fatalf("unexpected mysekai all ga_options: %+v", gaOptions)
+		}
+	}
+
+	plain := expandRecommendBatchOptions(recommender, "event", map[string]any{
+		"algorithm": "all",
+		"live_type": "multi",
+		"target":    "score",
+	})
+	for _, item := range plain {
+		if _, ok := item["ga_options"]; ok {
+			t.Fatalf("non-mysekai all request should not inject ga_options, got %+v", item)
+		}
 	}
 }
 

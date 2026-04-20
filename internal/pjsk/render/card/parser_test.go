@@ -112,8 +112,11 @@ func TestParserExtractsBanEventOCUnitSkillAndAttr(t *testing.T) {
 	if info.MainUnit != "piapro" || info.SupportUnit != "none" {
 		t.Fatalf("unexpected unit filter: %+v", info)
 	}
-	if info.SkillType != "judgment_up" {
-		t.Fatalf("unexpected skill filter: %+v", info)
+	if !slices.Equal(info.SkillIDs, []int{13}) {
+		t.Fatalf("unexpected detailed skill filter: %+v", info)
+	}
+	if info.SkillType != "" {
+		t.Fatalf("did not expect generic skill type for 判分: %+v", info)
 	}
 	if info.Attr != "cool" {
 		t.Fatalf("unexpected attr filter: %+v", info)
@@ -131,6 +134,9 @@ func TestParserSupportsLunabotSkillAliases(t *testing.T) {
 		{query: "判卡", skillType: "judgment_up"},
 		{query: "分卡", skillType: "score_up"},
 		{query: "奶卡", skillType: "life_recovery"},
+		{query: "大分", skillIDs: []int{4}},
+		{query: "p分", skillIDs: []int{11}},
+		{query: "判分", skillIDs: []int{13}},
 		{query: "血分", skillIDs: []int{12}},
 		{query: "团分", skillIDs: []int{15, 16, 17, 18, 19}},
 	}

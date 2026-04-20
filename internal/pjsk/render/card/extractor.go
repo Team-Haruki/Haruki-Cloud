@@ -203,9 +203,6 @@ var skillRules = buildRules(map[string]string{
 	"奶卡": "life_recovery",
 	"分卡": "score_up",
 	"判卡": "judgment_up",
-	"p分": "perfect_score_up",
-	"判分": "judgment_up",
-	"大分": "great_score_up",
 	"分":  "score_up",
 	"判定": "judgment_up",
 	"判":  "judgment_up",
@@ -214,6 +211,9 @@ var skillRules = buildRules(map[string]string{
 })
 
 var detailSkillRules = buildIntSliceRules(map[string][]int{
+	"大分": {4},
+	"p分": {11},
+	"判分": {13},
 	"血分": {12},
 	"组分": {15, 16, 17, 18, 19},
 	"团分": {15, 16, 17, 18, 19},

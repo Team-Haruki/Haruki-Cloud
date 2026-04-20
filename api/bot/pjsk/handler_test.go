@@ -580,6 +580,38 @@ func TestResolveBotCommandFallsBackToMessageMatchForCompactTimeZoneCommand(t *te
 	}
 }
 
+func TestResolveBotCommandCorrectsShortMatchedCommandToArrestDifficulty(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+
+	resolved, err := resolveBotCommand(context.Background(), onebot11.Message{
+		{Type: "text", Data: onebot11.TextData{Text: "/逮捕难度 master关闭"}},
+	}, "arrest", BotCommandRequest{
+		Platform:       "qq",
+		PlatformUserID: "12345",
+		MatchedCommand: "/逮捕",
+	})
+	if err != nil {
+		t.Fatalf("resolveBotCommand() error = %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeSetArrestDiff {
+		t.Fatalf("unexpected mode: %s", resolved.Mode)
+	}
+
+	var params accountdata.ProfileSettingsCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if len(params.DifficultyToggles) != 1 {
+		t.Fatalf("unexpected toggle count: %d", len(params.DifficultyToggles))
+	}
+	if params.DifficultyToggles[0].Difficulty != "master" || params.DifficultyToggles[0].Enabled {
+		t.Fatalf("unexpected toggle: %+v", params.DifficultyToggles[0])
+	}
+}
+
 func TestBotEndpointGetWithGroupHeadersReturnsImage(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

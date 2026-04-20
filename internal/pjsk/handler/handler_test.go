@@ -253,6 +253,18 @@ func TestDispatchSupportsCSBMode(t *testing.T) {
 	}
 }
 
+func TestMatchCommandHandlerPrefersArrestDifficultyOverArrest(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	matched := corehandler.MatchCommandHandler("/逮捕难度 master关闭")
+	if matched.Handler == nil {
+		t.Fatal("expected matched handler, got nil")
+	}
+	if matched.Command != "/逮捕难度" {
+		t.Fatalf("unexpected matched command: %s", matched.Command)
+	}
+}
+
 func TestDispatchSupportsMysekaiOverviewAlias(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 

@@ -296,9 +296,15 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	if err != nil {
 		return nil, fmt.Errorf("failed to build handler context: %w", err)
 	}
+	actualMatched := commandregistry.MatchCommandHandler(ctx.GetArgs())
 	matched, ok := commandregistry.LookupCommandHandler(matchedCommand)
+	if shouldPreferMoreSpecificMessageMatch(ctx.GetArgs(), matched, ok, actualMatched) {
+		logger.Warnf("bot command corrected matched_command from %s to %s", matchedCommand, actualMatched.Command)
+		matched = actualMatched
+		ok = true
+		expectedPath = actualMatched.Handler.GetPath()
+	}
 	if !ok || matched.Handler == nil || matched.Handler.IsDisabled() || matched.Handler.GetPath() == "" {
-		actualMatched := commandregistry.MatchCommandHandler(ctx.GetArgs())
 		if actualMatched.Handler == nil || actualMatched.Handler.IsDisabled() {
 			if !ok || matched.Handler == nil || matched.Handler.IsDisabled() {
 				return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
@@ -347,6 +353,29 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	resolved.RequesterUserID = req.PlatformUserID
 	resolved.RequesterGroupID = req.PlatformGroupID
 	return resolved, nil
+}
+
+func shouldPreferMoreSpecificMessageMatch(message string, matched commandregistry.MatchedHandler, lookupOK bool, actual commandregistry.MatchedHandler) bool {
+	if !lookupOK || matched.Handler == nil || matched.Handler.IsDisabled() {
+		return false
+	}
+	if actual.Handler == nil || actual.Handler.IsDisabled() || actual.Command == "" || matched.Command == "" {
+		return false
+	}
+	if actual.Command == matched.Command {
+		return false
+	}
+
+	providedPrefixLength, ok := commandregistry.MatchCommandPrefix(message, matched.Command)
+	if !ok || actual.PrefixLength <= providedPrefixLength {
+		return false
+	}
+
+	actualCommandPrefixLength, ok := commandregistry.MatchCommandPrefix(actual.Command, matched.Command)
+	if !ok {
+		return false
+	}
+	return actualCommandPrefixLength < len([]rune(actual.Command))
 }
 
 // ---------------------------------------------------------------------------

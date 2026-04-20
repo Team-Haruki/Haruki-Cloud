@@ -282,7 +282,7 @@ func sendJSONRequest(t *testing.T, app *fiber.App, method, path, body string, he
 		req.Header.Set(k, v)
 	}
 
-	resp, err := app.Test(req)
+	resp, err := app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
 	if err != nil {
 		t.Fatalf("execute request: %v", err)
 	}
@@ -308,7 +308,7 @@ func sendRawRequest(t *testing.T, app *fiber.App, method, path string, body []by
 	}
 	req.Host = "localhost"
 	req.Header.Set("Content-Type", "application/octet-stream")
-	resp, err := app.Test(req)
+	resp, err := app.Test(req, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
 	if err != nil {
 		t.Fatalf("execute request: %v", err)
 	}

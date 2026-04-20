@@ -99,6 +99,7 @@ type App struct {
 	Assets          *assets.AssetHelper
 	MetaLoader      *meta.Loader
 	Provider        provider.MasterDataProvider
+	Providers       map[renderregion.Value]provider.MasterDataProvider
 	Cards           *card.Controller
 	Decks           *deck.Controller
 	Edu             *education.Controller

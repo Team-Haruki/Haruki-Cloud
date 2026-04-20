@@ -13,6 +13,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 
 	"haruki-cloud/internal/pjsk/drawing"
 )
@@ -567,8 +568,8 @@ func queryDeckEvents(ctx context.Context, app *renderapp.App, region renderregio
 	if app == nil {
 		return nil, fmt.Errorf("deck event resolve requires app")
 	}
-	if deckEventProviderSupportsRegion(app, region) {
-		items := app.Provider.Events().GetAll(ctx)
+	if provider := deckEventProviderForRegion(app, region); provider != nil && provider.Events() != nil {
+		items := provider.Events().GetAll(ctx)
 		events := make([]*sekaidb.Event, 0, len(items))
 		for _, item := range items {
 			if item == nil {
@@ -594,8 +595,8 @@ func queryDeckEventByID(ctx context.Context, app *renderapp.App, region renderre
 	if eventID <= 0 {
 		return nil, fmt.Errorf("event id is required")
 	}
-	if deckEventProviderSupportsRegion(app, region) {
-		item, err := app.Provider.Events().GetByID(ctx, eventID)
+	if provider := deckEventProviderForRegion(app, region); provider != nil && provider.Events() != nil {
+		item, err := provider.Events().GetByID(ctx, eventID)
 		if err == nil && item != nil {
 			return deckEventFromMasterdata(item), nil
 		}
@@ -609,8 +610,8 @@ func queryDeckEventByID(ctx context.Context, app *renderapp.App, region renderre
 }
 
 func queryDeckWorldBloomChapters(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) ([]*sekaidb.Worldbloom, error) {
-	if deckEventProviderSupportsRegion(app, region) {
-		items := app.Provider.Events().GetWorldBloomChapters(ctx, eventID)
+	if provider := deckEventProviderForRegion(app, region); provider != nil && provider.Events() != nil {
+		items := provider.Events().GetWorldBloomChapters(ctx, eventID)
 		if len(items) > 0 {
 			chapters := make([]*sekaidb.Worldbloom, 0, len(items))
 			for _, item := range items {
@@ -665,10 +666,11 @@ func isDeckFutureEventAvailable(ctx context.Context, app *renderapp.App, region 
 }
 
 func deckEventLeakReleased(ctx context.Context, app *renderapp.App, eventID int, now int64) bool {
-	if !deckEventProviderSupportsRegion(app, renderregion.JP) {
+	provider := deckEventProviderForRegion(app, renderregion.JP)
+	if provider == nil || provider.Events() == nil {
 		return false
 	}
-	cards, err := app.Provider.Events().GetCards(ctx, eventID)
+	cards, err := provider.Events().GetCards(ctx, eventID)
 	if err != nil || len(cards) == 0 {
 		return false
 	}
@@ -684,15 +686,11 @@ func deckEventLeakReleased(ctx context.Context, app *renderapp.App, eventID int,
 	return earliest > 0 && earliest <= now
 }
 
-func deckEventProviderSupportsRegion(app *renderapp.App, region renderregion.Value) bool {
-	if app == nil || app.Provider == nil || app.Provider.Events() == nil {
-		return false
+func deckEventProviderForRegion(app *renderapp.App, region renderregion.Value) renderprovider.MasterDataProvider {
+	if app == nil {
+		return nil
 	}
-	providerRegion := renderregion.Normalize(app.Provider.Region().String())
-	if providerRegion.IsZero() {
-		return false
-	}
-	return providerRegion == renderregion.Normalize(region.String())
+	return app.ProviderForRegion(region)
 }
 
 func deckEventFromMasterdata(item *masterdata.Event) *sekaidb.Event {

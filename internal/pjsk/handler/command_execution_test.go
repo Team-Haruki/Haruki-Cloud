@@ -2624,6 +2624,51 @@ func TestPickCurrentOrNextDeckEventRejectsJPFutureLeakBeforeCardRelease(t *testi
 	}
 }
 
+func TestQueryDeckEventByIDUsesRegionProviderForNonDefaultRegion(t *testing.T) {
+	ctx := context.Background()
+
+	jpProvider := bridgeDeckTestMasterProvider{
+		region: renderregion.JP,
+		events: &bridgeDeckTestEventProvider{
+			events: []*masterdata.Event{{
+				ID:          100,
+				EventType:   "marathon",
+				Name:        "JP Event",
+				StartAt:     time.Now().Add(-time.Hour).UnixMilli(),
+				AggregateAt: time.Now().Add(time.Hour).UnixMilli(),
+			}},
+		},
+	}
+	enProvider := bridgeDeckTestMasterProvider{
+		region: renderregion.EN,
+		events: &bridgeDeckTestEventProvider{
+			events: []*masterdata.Event{{
+				ID:          163,
+				EventType:   "marathon",
+				Name:        "EN Event 163",
+				StartAt:     time.Now().Add(-time.Hour).UnixMilli(),
+				AggregateAt: time.Now().Add(time.Hour).UnixMilli(),
+			}},
+		},
+	}
+
+	app := &renderapp.App{
+		Provider: jpProvider,
+		Providers: map[renderregion.Value]renderprovider.MasterDataProvider{
+			renderregion.JP: jpProvider,
+			renderregion.EN: enProvider,
+		},
+	}
+
+	eventInfo, err := queryDeckEventByID(ctx, app, renderregion.EN, 163)
+	if err != nil {
+		t.Fatalf("queryDeckEventByID() error = %v", err)
+	}
+	if eventInfo == nil || int(eventInfo.GameID) != 163 {
+		t.Fatalf("unexpected event info: %+v", eventInfo)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsRejectsWorldBloomSelectorOnNonWorldBloomEvent(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_non_wl_selector?mode=memory&cache=shared&_fk=1")

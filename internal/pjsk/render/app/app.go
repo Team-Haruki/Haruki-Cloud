@@ -98,11 +98,22 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var stampController *stamp.Controller
 	var vliveController *vlive.Controller
 	var masterProvider provider.MasterDataProvider
+	providersByRegion := make(map[renderregion.Value]provider.MasterDataProvider)
+	registerProvider := func(src provider.MasterDataProvider) {
+		if src == nil {
+			return
+		}
+		region := renderregion.WithDefault(src.Region())
+		providersByRegion[region] = src
+		if masterProvider == nil {
+			masterProvider = src
+		}
+	}
 	if sekaiClient != nil {
 		renderMasterdataDir := resolveRenderProviderMasterdataDir(cfg)
 		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
 		masterDBProvider.SetLocalMasterdataDir(renderMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
-		masterProvider = masterDBProvider
+		registerProvider(masterDBProvider)
 
 		// Create module adapters from the unified provider
 		cardAdapter := card.NewProviderAdapter(masterProvider)
@@ -149,6 +160,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			}
 			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
 			regionProvider.SetLocalMasterdataDir(renderMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
+			registerProvider(regionProvider)
 			regionCardAdapter := card.NewProviderAdapter(regionProvider)
 			regionEventAdapter := event.NewProviderAdapter(regionProvider)
 			regionMusicAdapter := music.NewProviderAdapter(regionProvider)
@@ -211,6 +223,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Assets:     assetHelper,
 		MetaLoader: cfg.MetaLoader,
 		Provider:   masterProvider,
+		Providers:  providersByRegion,
 		Cards:      cardController,
 		Decks:      deckController,
 		Edu:        educationController,

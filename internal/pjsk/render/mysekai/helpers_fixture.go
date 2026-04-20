@@ -38,7 +38,14 @@ func fixtureColorImages(resolve pathResolver, item map[string]any) []drawing.Mys
 		return nil
 	}
 
-	images := []drawing.MysekaiFixtureColorImage{{ImagePath: base}}
+	var baseColorCode *string
+	if code := stringValue(item["colorCode"]); code != "" {
+		baseColorCode = drawing.StringPtr(code)
+	}
+	images := []drawing.MysekaiFixtureColorImage{{
+		ImagePath: base,
+		ColorCode: baseColorCode,
+	}}
 	rawColors, ok := item["mysekaiFixtureAnotherColors"].([]any)
 	if !ok {
 		return images
@@ -59,14 +66,13 @@ func fixtureColorImages(resolve pathResolver, item map[string]any) []drawing.Mys
 			}
 			path = resolve(fmt.Sprintf("mysekai/thumbnail/surface_appearance/%s/tex_%s_%s_%d.png", assetbundleName, assetbundleName, layoutType, index+2))
 		}
-		var codePtr *string
-		if colorCode != "" {
-			codePtr = new(colorCode)
-		}
 		images = append(images, drawing.MysekaiFixtureColorImage{
 			ImagePath: path,
-			ColorCode: codePtr,
+			ColorCode: drawing.StringPtr(colorCode),
 		})
+		if colorCode == "" {
+			images[len(images)-1].ColorCode = nil
+		}
 	}
 	return images
 }

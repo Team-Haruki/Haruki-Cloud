@@ -330,6 +330,70 @@ func TestBuildFixtureListRequestCanHideProfile(t *testing.T) {
 	}
 }
 
+func TestBuildFixtureDetailRequestsIncludeBaseColorCode(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{
+			"id":                        1139,
+			"name":                      "コズミックシャトルの植物",
+			"assetbundleName":           "mdl_env0006_fixture_shelf1",
+			"mysekaiFixtureType":        "normal",
+			"mysekaiFixtureMainGenreId": 2,
+			"mysekaiFixtureSubGenreId":  9,
+			"colorCode":                 "#9DE7FF",
+			"mysekaiFixtureAnotherColors": []map[string]any{
+				{"textureId": 2, "colorCode": "#B2CCFF"},
+				{"textureId": 3, "colorCode": "#BFF1B7"},
+			},
+			"gridSize": map[string]any{
+				"width":  4,
+				"depth":  2,
+				"height": 3,
+			},
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 2, "name": "一般", "assetbundleName": "general"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]any{
+		{"id": 9, "name": "その他", "assetbundleName": "others"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprintMysekaiMaterialCosts.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureOnlyDisassembleMaterials.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureTags.json"), []map[string]any{})
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
+
+	reqs, err := controller.BuildFixtureDetailRequests(FixtureDetailQuery{
+		Region: "jp",
+		Query:  "1139",
+	})
+	if err != nil {
+		t.Fatalf("BuildFixtureDetailRequests() error = %v", err)
+	}
+	if len(reqs) != 1 {
+		t.Fatalf("expected 1 fixture request, got %+v", reqs)
+	}
+	if len(reqs[0].Images) != 3 {
+		t.Fatalf("expected 3 fixture images, got %+v", reqs[0].Images)
+	}
+	if reqs[0].Images[0].ColorCode == nil || *reqs[0].Images[0].ColorCode != "#9DE7FF" {
+		t.Fatalf("expected base fixture color code to be preserved, got %+v", reqs[0].Images[0].ColorCode)
+	}
+	if reqs[0].Images[1].ColorCode == nil || *reqs[0].Images[1].ColorCode != "#B2CCFF" {
+		t.Fatalf("unexpected second fixture color code: %+v", reqs[0].Images[1].ColorCode)
+	}
+	if reqs[0].Images[2].ColorCode == nil || *reqs[0].Images[2].ColorCode != "#BFF1B7" {
+		t.Fatalf("unexpected third fixture color code: %+v", reqs[0].Images[2].ColorCode)
+	}
+}
+
 func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{AllowFallback: true})
 	profile := &drawing.ProfileCardRequest{

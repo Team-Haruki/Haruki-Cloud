@@ -14,7 +14,10 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/sk"
+	"haruki-cloud/utils/logger"
 )
+
+var skTrackerDebugLogger = logger.NewLoggerFromGlobal("SKTracker")
 
 func (sekaiHandlers) SKLineHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
@@ -487,6 +490,10 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 		if !trackerWorldBloomHasCharacter(chapters, *req.WlCharacterID) {
 			return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(region.String()), req.EventID, *req.WlCharacterID)
 		}
+		skTrackerDebugLogger.Debugf(
+			"resolved wl tracker selection: region=%s event=%d char=%d query=%q source=explicit",
+			region.String(), req.EventID, *req.WlCharacterID, query,
+		)
 		req.WlCharacterQuery = ""
 		return nil
 	}
@@ -502,6 +509,10 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 	charID := int(chapter.GameCharacterID)
 	req.WlCharacterID = drawing.IntPtr(charID)
 	req.WlCharacterQuery = ""
+	skTrackerDebugLogger.Debugf(
+		"resolved wl tracker selection: region=%s event=%d chapter=%d char=%d query=%q",
+		region.String(), req.EventID, chapter.ChapterNo, charID, query,
+	)
 	return nil
 }
 

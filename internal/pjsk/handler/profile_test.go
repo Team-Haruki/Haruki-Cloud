@@ -511,6 +511,47 @@ func TestProfileArrestDifficultyHandleParsesArgs(t *testing.T) {
 	}
 }
 
+func TestProfileArrestDifficultyHandleParsesAliases(t *testing.T) {
+	h := sekaiHandlers{}.ProfileArrestDifficultyHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/逮捕难度",
+		ArgText:    "hd关闭 ex开启 apd开启",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeSetArrestDiff {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params accountdata.ProfileSettingsCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if len(params.DifficultyToggles) != 3 {
+		t.Fatalf("unexpected toggle count: %d", len(params.DifficultyToggles))
+	}
+	if params.DifficultyToggles[0].Difficulty != "hard" || params.DifficultyToggles[0].Enabled {
+		t.Fatalf("unexpected hard alias toggle: %+v", params.DifficultyToggles[0])
+	}
+	if params.DifficultyToggles[1].Difficulty != "expert" || !params.DifficultyToggles[1].Enabled {
+		t.Fatalf("unexpected expert alias toggle: %+v", params.DifficultyToggles[1])
+	}
+	if params.DifficultyToggles[2].Difficulty != "append" || !params.DifficultyToggles[2].Enabled {
+		t.Fatalf("unexpected append alias toggle: %+v", params.DifficultyToggles[2])
+	}
+}
+
 func TestProfileArrestDifficultyHandleRequiresArgs(t *testing.T) {
 	h := sekaiHandlers{}.ProfileArrestDifficultyHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}

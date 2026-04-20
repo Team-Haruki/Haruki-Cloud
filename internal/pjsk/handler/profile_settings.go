@@ -104,13 +104,13 @@ func parseProfileDifficultyToken(raw string) sekaiapi.MusicDifficultyType {
 		return sekaiapi.MusicDifficultyEasy
 	case "normal":
 		return sekaiapi.MusicDifficultyNormal
-	case "hard":
+	case "hard", "hd":
 		return sekaiapi.MusicDifficultyHard
-	case "expert":
+	case "expert", "ex":
 		return sekaiapi.MusicDifficultyExpert
 	case "master":
 		return sekaiapi.MusicDifficultyMaster
-	case "append":
+	case "append", "apd":
 		return sekaiapi.MusicDifficultyAppend
 	default:
 		return ""

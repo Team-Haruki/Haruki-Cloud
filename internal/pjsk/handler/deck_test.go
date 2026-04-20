@@ -21,6 +21,8 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 		UseCurrentDeck:      true,
 		MaxProfile:          true,
 		SubMaxProfile:       true,
+		SupportMasterMax:    true,
+		SupportSkillMax:     true,
 		MusicCompare:        true,
 		MusicCompareQueries: []string{"龙hard", "虾expert", "sage"},
 		SpecificSkillOrder:  []int{0, 1, 2, 3, 4},
@@ -51,7 +53,7 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 	if !reflect.DeepEqual(decoded.ExcludedCards, []int{123, 456}) {
 		t.Fatalf("unexpected excluded cards: %+v", decoded.ExcludedCards)
 	}
-	if !decoded.UseCurrentDeck || !decoded.MaxProfile || !decoded.SubMaxProfile || !decoded.MusicCompare {
+	if !decoded.UseCurrentDeck || !decoded.MaxProfile || !decoded.SubMaxProfile || !decoded.SupportMasterMax || !decoded.SupportSkillMax || !decoded.MusicCompare {
 		t.Fatalf("unexpected flags: %+v", decoded)
 	}
 	if !reflect.DeepEqual(decoded.MusicCompareQueries, []string{"龙hard", "虾expert", "sage"}) {
@@ -108,6 +110,34 @@ func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 	}
 	if params.Rarity1Config == nil || !params.Rarity1Config.SkillMax {
 		t.Fatalf("unexpected rarity patch: %+v", params.Rarity1Config)
+	}
+}
+
+func TestEventDeckHandleParsesSupportMaxOptionsWithoutAffectingMainDeck(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/活动组卡",
+		ArgText:    "event123 支援满突破满技能",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected command request, got nil")
+	}
+
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.SupportMasterMax || !params.SupportSkillMax {
+		t.Fatalf("unexpected support flags: %+v", params)
+	}
+	if params.Rarity1Config != nil || params.Rarity2Config != nil || params.Rarity3Config != nil || params.Rarity4Config != nil || params.RarityBirthdayConfig != nil {
+		t.Fatalf("support options should not leak into main deck config: %+v", params)
 	}
 }
 

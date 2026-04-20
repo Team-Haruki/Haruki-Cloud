@@ -268,6 +268,8 @@ type AutoQuery struct {
 	UseCurrentDeck                bool                                `json:"use_current_deck,omitempty"`
 	MaxProfile                    bool                                `json:"max_profile,omitempty"`
 	SubMaxProfile                 bool                                `json:"sub_max_profile,omitempty"`
+	SupportMasterMax              bool                                `json:"support_master_max,omitempty"`
+	SupportSkillMax               bool                                `json:"support_skill_max,omitempty"`
 	MusicCompare                  bool                                `json:"music_compare,omitempty"`
 	MusicCompareQueries           []string                            `json:"music_compare_queries,omitempty"`
 	MusicCompareSelections        []MusicCompareSelection             `json:"music_compare_selections,omitempty"`

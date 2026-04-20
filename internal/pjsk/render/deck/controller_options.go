@@ -51,6 +51,12 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if query.SubMaxProfile {
 		option["sub_max_profile"] = true
 	}
+	if query.SupportMasterMax {
+		option["support_master_max"] = true
+	}
+	if query.SupportSkillMax {
+		option["support_skill_max"] = true
+	}
 	if query.MusicCompare {
 		option["music_compare"] = true
 	}

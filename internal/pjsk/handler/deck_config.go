@@ -9,6 +9,9 @@ func extractDeckCardConfigs(args string, params *deckAutoQueryParams) string {
 	fields := strings.Fields(args)
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
+		if applied := applyDeckSupportConfig(field, params); applied {
+			continue
+		}
 		if applied := applyDeckRarityConfig(field, params); applied {
 			continue
 		}
@@ -29,6 +32,24 @@ func extractDeckCardConfigs(args string, params *deckAutoQueryParams) string {
 		}
 	}
 	return normalizeDeckSpaces(args)
+}
+
+func applyDeckSupportConfig(field string, params *deckAutoQueryParams) bool {
+	const prefix = "支援"
+	if !strings.HasPrefix(field, prefix) {
+		return false
+	}
+	patch, ok := parseDeckSupportConfigPatch(field[len(prefix):])
+	if !ok {
+		return true
+	}
+	if patch.MasterMax {
+		params.SupportMasterMax = true
+	}
+	if patch.SkillMax {
+		params.SupportSkillMax = true
+	}
+	return true
 }
 
 func applyDeckRarityConfig(field string, params *deckAutoQueryParams) bool {
@@ -97,6 +118,23 @@ func extractGlobalDeckCardConfig(args string) (string, renderdeck.CardConfigPatc
 		}
 	}
 	return normalizeDeckSpaces(args), patch
+}
+
+func parseDeckSupportConfigPatch(segment string) (renderdeck.CardConfigPatch, bool) {
+	patch := renderdeck.CardConfigPatch{}
+	for _, keyword := range deckSkillMaxKeywords {
+		if strings.Contains(segment, keyword) {
+			patch.SkillMax = true
+			break
+		}
+	}
+	for _, keyword := range deckMasterMaxKeywords {
+		if strings.Contains(segment, keyword) {
+			patch.MasterMax = true
+			break
+		}
+	}
+	return patch, patch.MasterMax || patch.SkillMax
 }
 
 func parseDeckCardConfigPatch(segment string) (renderdeck.CardConfigPatch, bool) {

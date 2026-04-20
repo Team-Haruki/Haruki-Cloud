@@ -654,6 +654,8 @@ func TestBuildRecommendOptionAppliesExtendedOverrides(t *testing.T) {
 		UseCurrentDeck:      true,
 		MaxProfile:          true,
 		SubMaxProfile:       true,
+		SupportMasterMax:    true,
+		SupportSkillMax:     true,
 		MusicCompare:        true,
 		MusicCompareQueries: []string{"龙hard", "虾expert", "sage"},
 		SpecificSkillOrder:  []int{0, 1, 2, 3, 4},
@@ -680,6 +682,9 @@ func TestBuildRecommendOptionAppliesExtendedOverrides(t *testing.T) {
 	}
 	if option["max_profile"] != true || option["sub_max_profile"] != true {
 		t.Fatalf("unexpected profile flags: max=%+v sub=%+v", option["max_profile"], option["sub_max_profile"])
+	}
+	if option["support_master_max"] != true || option["support_skill_max"] != true {
+		t.Fatalf("unexpected support flags: master=%+v skill=%+v", option["support_master_max"], option["support_skill_max"])
 	}
 	if option["music_compare"] != true {
 		t.Fatalf("unexpected music_compare: %+v", option["music_compare"])

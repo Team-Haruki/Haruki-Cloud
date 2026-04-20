@@ -47,7 +47,7 @@ func TestBuildRenderCachePolicyIgnoresEventRecordUserUpdateTime(t *testing.T) {
 	}
 }
 
-func TestBuildRenderCachePolicyKeepsProfileUpdateTime(t *testing.T) {
+func TestBuildRenderCachePolicyIgnoresUnusedProfileUpdateTime(t *testing.T) {
 	reqA := ProfileRequest{
 		Profile: BasicProfile{
 			ID:              "123",
@@ -79,8 +79,8 @@ func TestBuildRenderCachePolicyKeepsProfileUpdateTime(t *testing.T) {
 		t.Fatalf("buildRenderCacheKey reqB: %v", err)
 	}
 
-	if keyA == keyB {
-		t.Fatalf("profile key should change with update_time")
+	if keyA != keyB {
+		t.Fatalf("profile key should ignore unused update_time: %s != %s", keyA, keyB)
 	}
 	if policyA.APIPath != policyB.APIPath {
 		t.Fatalf("profile api_path should stay stable: %s != %s", policyA.APIPath, policyB.APIPath)

@@ -28,6 +28,10 @@ var (
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("model_name", "cost_times", "wait_times", "profile.update_time"),
 		},
+		"/api/pjsk/profile": {
+			Enabled:     true,
+			IgnorePaths: renderCacheStringSet("update_time"),
+		},
 		"/api/pjsk/event/record": {
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("user_info.update_time"),

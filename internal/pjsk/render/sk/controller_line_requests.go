@@ -15,7 +15,7 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 		return nil, err
 	}
 	skipMissing := shouldSkipMissingTrackerRanks(normalized)
-	rankInfos, err := c.buildRanksOrUserFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.UserID, normalized.WlCharacterID, skipMissing)
+	rankInfos, err := c.buildLineRanksOrUserFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.UserID, normalized.WlCharacterID, skipMissing)
 	if err != nil {
 		return nil, err
 	}

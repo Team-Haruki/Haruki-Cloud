@@ -21,7 +21,9 @@ var (
 		IgnoreFieldNames: renderCacheStringSet("dt"),
 	}
 
-	skRenderCacheBucket = 10 * time.Second
+	skRenderCacheBucketJPAndCN = 10 * time.Second
+	skRenderCacheBucketTW      = 30 * time.Second
+	skRenderCacheBucketENAndKR = time.Minute
 
 	renderCacheRules = map[string]renderCacheRule{
 		"/api/pjsk/deck/recommend": {
@@ -94,43 +96,43 @@ var (
 		},
 		"/api/pjsk/sk/line": {
 			Enabled:          true,
-			TTL:              skRenderCacheBucket,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "aggregate_at", "time", "record_start_at", "forecast_time", "update_time"),
+			TTL:              skRenderCacheBucketJPAndCN,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "aggregate_at", "time", "record_start_at", "forecast_time", "update_time"),
 		},
 		"/api/pjsk/sk/query": {
 			Enabled:          true,
-			TTL:              skRenderCacheBucket,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "aggregate_at", "time", "record_start_at"),
+			TTL:              skRenderCacheBucketJPAndCN,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "aggregate_at", "time", "record_start_at"),
 		},
 		"/api/pjsk/sk/check-room": {
 			Enabled:          true,
-			TTL:              skRenderCacheBucket,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "aggregate_at", "update_at", "time", "record_start_at"),
+			TTL:              skRenderCacheBucketJPAndCN,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "aggregate_at", "update_at", "time", "record_start_at"),
 		},
 		"/api/pjsk/sk/csb": {
 			Enabled:          true,
-			TTL:              skRenderCacheBucket,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "aggregate_at", "update_at", "time", "record_start_at"),
+			TTL:              skRenderCacheBucketJPAndCN,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "aggregate_at", "update_at", "time", "record_start_at"),
 		},
 		"/api/pjsk/sk/speed": {
 			Enabled:          true,
-			TTL:              skRenderCacheBucket,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "event_aggregate_at", "record_time"),
+			TTL:              skRenderCacheBucketJPAndCN,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "event_aggregate_at", "record_time"),
 		},
 		"/api/pjsk/sk/player-trace": {
 			Enabled:          true,
-			TTL:              skRenderCacheBucket,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "time", "record_start_at"),
+			TTL:              skRenderCacheBucketJPAndCN,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "time", "record_start_at"),
 		},
 		"/api/pjsk/sk/rank-trace": {
 			Enabled:          true,
-			TTL:              skRenderCacheBucket,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "time", "record_start_at"),
+			TTL:              skRenderCacheBucketJPAndCN,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "time", "record_start_at"),
 		},
 		"/api/pjsk/sk/winrate": {
 			Enabled:          true,
-			TTL:              skRenderCacheBucket,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucket, "dt", "updated_at", "event_aggregate_at"),
+			TTL:              skRenderCacheBucketJPAndCN,
+			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "updated_at", "event_aggregate_at"),
 		},
 	}
 )
@@ -229,12 +231,55 @@ func renderCacheBucketSet(bucket time.Duration, values ...string) map[string]tim
 }
 
 func sanitizeRenderCachePayload(endpointPath string, payload any) renderCacheRule {
-	rule := resolveRenderCacheRule(endpointPath)
+	rule := adjustRenderCacheRuleForPayload(endpointPath, payload, resolveRenderCacheRule(endpointPath))
 	if !rule.Enabled {
 		return rule
 	}
 	normalizeRenderCacheNode(payload, nil, rule)
 	return rule
+}
+
+func adjustRenderCacheRuleForPayload(endpointPath string, payload any, rule renderCacheRule) renderCacheRule {
+	if !strings.HasPrefix(strings.TrimSpace(endpointPath), "/api/pjsk/sk/") {
+		return rule
+	}
+
+	bucket := resolveSKRenderCacheBucket(payload)
+	if bucket <= 0 {
+		return rule
+	}
+
+	if rule.TTL > 0 {
+		rule.TTL = bucket
+	}
+	for key := range rule.BucketFieldNames {
+		rule.BucketFieldNames[key] = bucket
+	}
+	for key := range rule.BucketPaths {
+		rule.BucketPaths[key] = bucket
+	}
+	return rule
+}
+
+func resolveSKRenderCacheBucket(payload any) time.Duration {
+	switch strings.ToUpper(strings.TrimSpace(extractRenderCacheRegion(payload))) {
+	case "TW":
+		return skRenderCacheBucketTW
+	case "KR", "EN":
+		return skRenderCacheBucketENAndKR
+	case "JP", "CN":
+		return skRenderCacheBucketJPAndCN
+	default:
+		return skRenderCacheBucketJPAndCN
+	}
+}
+
+func extractRenderCacheRegion(payload any) string {
+	root := mapAt(payload)
+	if root == nil {
+		return ""
+	}
+	return scalarString(root["region"])
 }
 
 func normalizeRenderCacheNode(node any, path []string, rule renderCacheRule) any {

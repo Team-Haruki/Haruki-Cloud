@@ -268,6 +268,114 @@ func TestBuildRenderCachePolicyBucketsSKQueryTimesBy10Seconds(t *testing.T) {
 	}
 }
 
+func TestBuildRenderCachePolicyBucketsTWSKQueryTimesBy30Seconds(t *testing.T) {
+	reqA := SKRequest{
+		ID:          1,
+		Region:      "TW",
+		Name:        "Event",
+		AggregateAt: 1774118404000,
+		Ranks: []RankInfo{
+			{Rank: 100, Name: "Tester", Time: 1774118405000},
+		},
+	}
+	reqB := reqA
+	reqB.AggregateAt = 1774118429000
+	reqB.Ranks[0].Time = 1774118429000
+	reqC := reqA
+	reqC.AggregateAt = 1774118430000
+	reqC.Ranks[0].Time = 1774118430000
+
+	policyA, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqA)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqA: %v", err)
+	}
+	policyB, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqB)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqB: %v", err)
+	}
+	policyC, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqC)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqC: %v", err)
+	}
+
+	keyA, err := buildRenderCacheKey(policyA)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqA: %v", err)
+	}
+	keyB, err := buildRenderCacheKey(policyB)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqB: %v", err)
+	}
+	keyC, err := buildRenderCacheKey(policyC)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqC: %v", err)
+	}
+
+	if keyA != keyB {
+		t.Fatalf("tw sk query key should stay stable within the same 30s bucket: %s != %s", keyA, keyB)
+	}
+	if keyA == keyC {
+		t.Fatalf("tw sk query key should change after the 30s bucket boundary")
+	}
+	if policyA.TTL != 30*time.Second {
+		t.Fatalf("expected 30s ttl for tw sk query cache, got %v", policyA.TTL)
+	}
+}
+
+func TestBuildRenderCachePolicyBucketsENSKQueryTimesByMinute(t *testing.T) {
+	reqA := SKRequest{
+		ID:          1,
+		Region:      "EN",
+		Name:        "Event",
+		AggregateAt: 1774118404000,
+		Ranks: []RankInfo{
+			{Rank: 100, Name: "Tester", Time: 1774118405000},
+		},
+	}
+	reqB := reqA
+	reqB.AggregateAt = 1774118459000
+	reqB.Ranks[0].Time = 1774118459000
+	reqC := reqA
+	reqC.AggregateAt = 1774118460000
+	reqC.Ranks[0].Time = 1774118460000
+
+	policyA, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqA)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqA: %v", err)
+	}
+	policyB, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqB)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqB: %v", err)
+	}
+	policyC, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqC)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqC: %v", err)
+	}
+
+	keyA, err := buildRenderCacheKey(policyA)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqA: %v", err)
+	}
+	keyB, err := buildRenderCacheKey(policyB)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqB: %v", err)
+	}
+	keyC, err := buildRenderCacheKey(policyC)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqC: %v", err)
+	}
+
+	if keyA != keyB {
+		t.Fatalf("en sk query key should stay stable within the same 1m bucket: %s != %s", keyA, keyB)
+	}
+	if keyA == keyC {
+		t.Fatalf("en sk query key should change after the 1m bucket boundary")
+	}
+	if policyA.TTL != time.Minute {
+		t.Fatalf("expected 1m ttl for en sk query cache, got %v", policyA.TTL)
+	}
+}
+
 func TestBuildRenderCachePolicyIgnoresRootDT(t *testing.T) {
 	policyA, err := buildRenderCachePolicy("/api/pjsk/event/list", map[string]any{
 		"region": "JP",

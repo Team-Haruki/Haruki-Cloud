@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"haruki-cloud/api"
+	botauth "haruki-cloud/api/bot/auth"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/internal/core/crypto"
@@ -95,7 +96,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	routes := commandregistry.ListBotRoutes()
 	hasMysekaiBlueprintRoute := false
 	for _, route := range routes {
-		h := makeBotHandler(renderApp, guard, route.Path, route.Commands)
+		h := makeBotHandler(renderApp, guard, botDBClient, route.Path, route.Commands)
 		path := "/" + route.Path
 		pjsk.Post(path, h)
 		if route.Path == "mysekai/blueprint" {
@@ -105,14 +106,14 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if !hasMysekaiBlueprintRoute {
 		// Keep the retired endpoint alive so older manifests can continue posting
 		// /msb until they refresh to the canonical mysekai/talk-list path.
-		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, guard, "mysekai/blueprint", nil))
+		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, guard, botDBClient, "mysekai/blueprint", nil))
 	}
 }
 
 // makeBotHandler returns a POST-only fiber.Handler that validates the matched
 // command field belongs to the current endpoint path, then lets the registered
 // handler parse the OneBot message segments and produce a resolved render command.
-func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath string, commands []string) fiber.Handler {
+func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *botDB.Client, expectedPath string, commands []string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
@@ -139,6 +140,21 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, expectedPath 
 		legacySKCSBCompat := expectedPath == "sk/check-room"
 		if !slices.Contains(commands, req.MatchedCommand) && !legacySKPredictCompat && !legacyMysekaiOverviewCompat && !legacyMysekaiTalkListCompat && !legacySKCSBCompat {
 			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
+		}
+		if botDBClient != nil {
+			botID := fiber.Params[int](c, "botId", 0)
+			entry := botauth.CommandLogEntry{
+				Platform: req.Platform,
+				PID:      strings.TrimSpace(c.Params("botId")),
+				GID:      req.PlatformGroupID,
+				UID:      req.PlatformUserID,
+				Command:  req.MatchedCommand,
+			}
+			defer func() {
+				if err := botauth.RecordCommandTelemetry(c.Context(), botDBClient, botID, entry); err != nil {
+					logger.Warnf("bot command telemetry failed: bot_id=%d path=%s matched_command=%s err=%v", botID, expectedPath, req.MatchedCommand, err)
+				}
+			}()
 		}
 
 		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req)

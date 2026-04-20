@@ -8,6 +8,18 @@ import (
 	"haruki-cloud/database/bot"
 )
 
+// The CommandLogFunc type is an adapter to allow the use of ordinary
+// function as CommandLog mutator.
+type CommandLogFunc func(context.Context, *bot.CommandLogMutation) (bot.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CommandLogFunc) Mutate(ctx context.Context, m bot.Mutation) (bot.Value, error) {
+	if mv, ok := m.(*bot.CommandLogMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *bot.CommandLogMutation", m)
+}
+
 // The CommandManifestFunc type is an adapter to allow the use of ordinary
 // function as CommandManifest mutator.
 type CommandManifestFunc func(context.Context, *bot.CommandManifestMutation) (bot.Value, error)

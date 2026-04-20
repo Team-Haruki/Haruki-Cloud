@@ -20,8 +20,9 @@ type cardIndex struct {
 }
 
 type cardEventIndex struct {
-	cardsByEvent map[int][]int
-	eventByCard  map[int]int
+	cardsByEvent     map[int][]int
+	eventByCard      map[int]int
+	worldLink3ByCard map[int]bool
 }
 
 type localCardProvider struct {
@@ -147,13 +148,27 @@ func (p *localCardProvider) ensureEventCards() error {
 			return cardEventIndex{}, err
 		}
 		idx := cardEventIndex{
-			cardsByEvent: make(map[int][]int),
-			eventByCard:  make(map[int]int),
+			cardsByEvent:     make(map[int][]int),
+			eventByCard:      make(map[int]int),
+			worldLink3ByCard: make(map[int]bool),
+		}
+		events, err := loadJSON[localEventJSON](p.store, "events.json")
+		if err != nil {
+			return cardEventIndex{}, err
+		}
+		worldLink3Events := make(map[int]struct{})
+		for _, item := range events {
+			if isWorldLink3Event(item.toModel()) {
+				worldLink3Events[item.ID] = struct{}{}
+			}
 		}
 		for _, item := range items {
 			idx.cardsByEvent[item.EventID] = append(idx.cardsByEvent[item.EventID], item.CardID)
 			if _, ok := idx.eventByCard[item.CardID]; !ok {
 				idx.eventByCard[item.CardID] = item.EventID
+			}
+			if _, ok := worldLink3Events[item.EventID]; ok {
+				idx.worldLink3ByCard[item.CardID] = true
 			}
 		}
 		return idx, nil
@@ -323,9 +338,22 @@ func (p *localCardProvider) GetSupplyType(_ context.Context, cardInfo *masterdat
 		return cardNormalizeSupplyType("")
 	}
 	if v, ok := p.supplies.v()[cardInfo.CardSupplyID]; ok {
+		if v == "term_limited" && p.isWorldLink3Card(cardInfo.ID) {
+			return cardNormalizeSupplyType("unit_event_limited")
+		}
 		return v
 	}
 	return cardNormalizeSupplyType("")
+}
+
+func (p *localCardProvider) isWorldLink3Card(cardID int) bool {
+	if cardID == 0 {
+		return false
+	}
+	if err := p.ensureEventCards(); err != nil {
+		return false
+	}
+	return p.eventCards.v().worldLink3ByCard[cardID]
 }
 
 func (p *localCardProvider) GetGachaByCardID(_ context.Context, cardID int) (*masterdata.Gacha, error) {

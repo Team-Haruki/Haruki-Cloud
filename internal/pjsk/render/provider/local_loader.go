@@ -147,6 +147,7 @@ func (j *localMusicJSON) toModel() *masterdata.Music {
 type localEventJSON struct {
 	ID                       int             `json:"id"`
 	EventType                string          `json:"eventType"`
+	Unit                     string          `json:"unit"`
 	Name                     string          `json:"name"`
 	AssetBundleName          string          `json:"assetbundleName"`
 	StartAt                  int64           `json:"startAt"`
@@ -159,6 +160,7 @@ func (j *localEventJSON) toModel() *masterdata.Event {
 	return &masterdata.Event{
 		ID:              j.ID,
 		EventType:       j.EventType,
+		Unit:            j.Unit,
 		Name:            j.Name,
 		AssetBundleName: j.AssetBundleName,
 		StartAt:         j.StartAt,

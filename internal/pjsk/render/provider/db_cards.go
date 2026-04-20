@@ -21,6 +21,9 @@ type dbCardProvider struct {
 	supplyMu   sync.RWMutex
 	supplyByID map[int]string
 
+	worldLink3Mu     sync.RWMutex
+	worldLink3ByCard map[int]bool
+
 	gachaMu     sync.RWMutex
 	gachaByCard map[int]*masterdata.Gacha
 	gachaCache  map[int]*masterdata.Gacha
@@ -33,6 +36,7 @@ func (p *dbCardProvider) init() {
 	p.once.Do(func() {
 		p.cardCache = make(map[int]*masterdata.Card)
 		p.supplyByID = make(map[int]string)
+		p.worldLink3ByCard = make(map[int]bool)
 		p.gachaByCard = make(map[int]*masterdata.Gacha)
 		p.gachaCache = make(map[int]*masterdata.Gacha)
 		p.costumeByCard = make(map[int][]*masterdata.Costume3d)

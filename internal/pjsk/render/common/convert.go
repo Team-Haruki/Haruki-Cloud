@@ -59,6 +59,7 @@ func ConvertEventEntity(entity *sekaiDB.Event) *masterdata.Event {
 	return &masterdata.Event{
 		ID:              int(entity.GameID),
 		EventType:       entity.EventType,
+		Unit:            entity.Unit,
 		Name:            entity.Name,
 		AssetBundleName: entity.AssetbundleName,
 		StartAt:         entity.StartAt,

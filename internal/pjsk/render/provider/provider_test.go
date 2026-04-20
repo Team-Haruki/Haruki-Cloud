@@ -591,6 +591,24 @@ func TestCardNormalizeSupplyType(t *testing.T) {
 	}
 }
 
+func TestIsWorldLink3Event(t *testing.T) {
+	tests := []struct {
+		name string
+		ev   *masterdata.Event
+		want bool
+	}{
+		{name: "nil", ev: nil, want: false},
+		{name: "normal world bloom unit", ev: &masterdata.Event{EventType: "world_bloom", Unit: "idol"}, want: false},
+		{name: "world link 3", ev: &masterdata.Event{EventType: "world_bloom", Unit: "none"}, want: true},
+		{name: "non world bloom none unit", ev: &masterdata.Event{EventType: "marathon", Unit: "none"}, want: false},
+	}
+	for _, tt := range tests {
+		if got := isWorldLink3Event(tt.ev); got != tt.want {
+			t.Errorf("isWorldLink3Event(%s) = %v, want %v", tt.name, got, tt.want)
+		}
+	}
+}
+
 func TestCardMatchesSupplyFilter(t *testing.T) {
 	tests := []struct {
 		filter, raw string
@@ -602,6 +620,8 @@ func TestCardMatchesSupplyFilter(t *testing.T) {
 		{"colorful_festival_limited", "bloom_festival_limited", false},
 		{"bloom_festival_limited", "bloom_festival_limited", true},
 		{"bloom_festival_limited", "colorful_festival_limited", false},
+		{"unit_event_limited", "unit_event_limited", true},
+		{"unit_event_limited", "term_limited", false},
 		{"limited", "colorful_festival_limited", true},
 		{"limited", "term_limited", true},
 		{"limited", "unit_event_limited", true},
@@ -622,6 +642,27 @@ func TestCardMatchesSupplyFilter(t *testing.T) {
 		if got := cardMatchesSupplyFilter(tt.filter, tt.raw); got != tt.want {
 			t.Errorf("cardMatchesSupplyFilter(%q, %q) = %v, want %v", tt.filter, tt.raw, got, tt.want)
 		}
+	}
+}
+
+func TestLocalCardProviderGetSupplyTypeTreatsWorldLink3TermLimitedAsWL(t *testing.T) {
+	provider := &localCardProvider{}
+	provider.supplies.init(func() (map[int]string, error) {
+		return map[int]string{3: "term_limited"}, nil
+	})
+	provider.eventCards.init(func() (cardEventIndex, error) {
+		return cardEventIndex{
+			worldLink3ByCard: map[int]bool{
+				1374: true,
+			},
+		}, nil
+	})
+
+	if got := provider.GetSupplyType(context.Background(), &masterdata.Card{ID: 1374, CardSupplyID: 3}); got != "unit_event_limited" {
+		t.Fatalf("expected WL3 card to normalize as unit_event_limited, got %q", got)
+	}
+	if got := provider.GetSupplyType(context.Background(), &masterdata.Card{ID: 2000, CardSupplyID: 3}); got != "term_limited" {
+		t.Fatalf("expected non-WL3 term limited card to stay term_limited, got %q", got)
 	}
 }
 

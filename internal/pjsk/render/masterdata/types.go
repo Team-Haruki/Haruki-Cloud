@@ -79,6 +79,7 @@ type Character struct {
 type Event struct {
 	ID              int
 	EventType       string
+	Unit            string
 	Name            string
 	AssetBundleName string
 	StartAt         int64

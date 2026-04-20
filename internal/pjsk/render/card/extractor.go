@@ -228,21 +228,23 @@ func (e *Extractor) ExtractDetailedSkillIDs(text string) ExtractResult[[]int] {
 }
 
 var supplyRules = buildRules(map[string]string{
-	"联动":     SupplyCollab,
-	"联动限定":   SupplyCollab,
-	"collab": SupplyCollab,
-	"bfes限定": SupplyBFes,
-	"bfes":   SupplyBFes,
-	"cfes限定": SupplyCFes,
-	"cfes":   SupplyCFes,
-	"期间限定":   SupplyLimited,
-	"fes":    SupplyFes,
-	"非限定":    SupplyNormal,
-	"限定":     SupplyLimited,
-	"limit":  SupplyLimited,
-	"常驻":     SupplyNormal,
-	"非限":     SupplyNormal,
-	"生日":     SupplyBirthday,
+	"联动":          SupplyCollab,
+	"联动限定":        SupplyCollab,
+	"collab":      SupplyCollab,
+	"bfes限定":      SupplyBFes,
+	"bfes":        SupplyBFes,
+	"cfes限定":      SupplyCFes,
+	"cfes":        SupplyCFes,
+	"worldlink限定": SupplyWL,
+	"wl限定":        SupplyWL,
+	"期间限定":        SupplyLimited,
+	"fes":         SupplyFes,
+	"非限定":         SupplyNormal,
+	"限定":          SupplyLimited,
+	"limit":       SupplyLimited,
+	"常驻":          SupplyNormal,
+	"非限":          SupplyNormal,
+	"生日":          SupplyBirthday,
 })
 
 func (e *Extractor) ExtractSupply(text string) ExtractResult[string] {

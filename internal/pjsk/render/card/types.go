@@ -133,6 +133,7 @@ const (
 	SupplyFes      = "festival"
 	SupplyCFes     = "colorful_festival_limited"
 	SupplyBFes     = "bloom_festival_limited"
+	SupplyWL       = "unit_event_limited"
 	SupplyCollab   = "collaboration_limited"
 	SupplyBirthday = "birthday"
 )

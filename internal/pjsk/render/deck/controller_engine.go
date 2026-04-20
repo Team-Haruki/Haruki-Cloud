@@ -146,7 +146,9 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 	case "mysekai":
 		option["algorithm"] = "all"
 		option["live_type"] = "mysekai"
-		option["event_id"] = nil
+		if eventID > 0 {
+			option["event_id"] = eventID
+		}
 		option["rarity_1_config"] = noChangeDeckConfig()
 		option["rarity_2_config"] = noChangeDeckConfig()
 		option["rarity_3_config"] = noChangeDeckConfig()

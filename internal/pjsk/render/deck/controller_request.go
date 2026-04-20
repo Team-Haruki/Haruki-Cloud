@@ -141,8 +141,23 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	}
 
 	c.applyOptionRequestFields(request, option, query)
-	c.applyCommonRecommendMetadata(request, region, recType, option, query)
+	c.applyCommonRecommendMetadata(request, region, recType, metadataOption(option, recType, query), query)
 	return request, nil
+}
+
+func metadataOption(option map[string]any, recType string, query AutoQuery) map[string]any {
+	if recType != "mysekai" || option == nil {
+		return option
+	}
+	if query.EventID != nil || optionHasSimulatedEvent(option) || optionInt(option, "event_id") <= 0 {
+		return option
+	}
+	cloned := make(map[string]any, len(option))
+	for key, value := range option {
+		cloned[key] = value
+	}
+	delete(cloned, "event_id")
+	return cloned
 }
 
 func normalizeDeckDisplayRate(value float64) float64 {

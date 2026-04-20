@@ -81,6 +81,21 @@ func TestParserExtractsAdvancedCardFilters(t *testing.T) {
 	}
 }
 
+func TestParserExtractsWLSupplyFilter(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParseStrictFilter("wl限定")
+	if err != nil {
+		t.Fatalf("ParseStrictFilter() error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("expected filter query, got %+v", info)
+	}
+	if info.SupplyType != SupplyWL {
+		t.Fatalf("unexpected wl supply filter: %+v", info)
+	}
+}
+
 func TestParserExtractsBanEventOCUnitSkillAndAttr(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 

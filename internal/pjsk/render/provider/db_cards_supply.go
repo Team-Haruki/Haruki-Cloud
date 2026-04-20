@@ -5,6 +5,9 @@ import (
 	"strings"
 
 	"haruki-cloud/database/sekai/cardsupplie"
+	"haruki-cloud/database/sekai/event"
+	"haruki-cloud/database/sekai/eventcard"
+	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -22,6 +25,9 @@ func (p *dbCardProvider) GetSupplyType(ctx context.Context, cardInfo *masterdata
 	p.supplyMu.RLock()
 	if cached, ok := p.supplyByID[cardInfo.CardSupplyID]; ok {
 		p.supplyMu.RUnlock()
+		if cached == "term_limited" && p.isWorldLink3Card(ctx, cardInfo.ID) {
+			return cardNormalizeSupplyType("unit_event_limited")
+		}
 		return cached
 	}
 	p.supplyMu.RUnlock()
@@ -34,10 +40,46 @@ func (p *dbCardProvider) GetSupplyType(ctx context.Context, cardInfo *masterdata
 	}
 
 	value := cardNormalizeSupplyType(entity.CardSupplyType)
+	if value == "term_limited" && p.isWorldLink3Card(ctx, cardInfo.ID) {
+		return cardNormalizeSupplyType("unit_event_limited")
+	}
 	p.supplyMu.Lock()
 	p.supplyByID[cardInfo.CardSupplyID] = value
 	p.supplyMu.Unlock()
 	return value
+}
+
+func (p *dbCardProvider) isWorldLink3Card(ctx context.Context, cardID int) bool {
+	if cardID == 0 {
+		return false
+	}
+	p.init()
+
+	p.worldLink3Mu.RLock()
+	if cached, ok := p.worldLink3ByCard[cardID]; ok {
+		p.worldLink3Mu.RUnlock()
+		return cached
+	}
+	p.worldLink3Mu.RUnlock()
+
+	link, err := p.client.Eventcard.Query().
+		Where(eventcard.ServerRegionEQ(p.region.String()), eventcard.CardIDEQ(int64(cardID))).
+		Order(eventcard.ByEventID()).
+		First(ctx)
+	if err != nil {
+		return false
+	}
+	entity, err := p.client.Event.Query().
+		Where(event.ServerRegionEQ(p.region.String()), event.GameIDEQ(link.EventID)).
+		Only(ctx)
+	if err != nil {
+		return false
+	}
+	isWL3 := isWorldLink3Event(common.ConvertEventEntity(entity))
+	p.worldLink3Mu.Lock()
+	p.worldLink3ByCard[cardID] = isWL3
+	p.worldLink3Mu.Unlock()
+	return isWL3
 }
 
 func cardNormalizeSupportUnit(raw string) string {
@@ -88,6 +130,14 @@ func cardNormalizeSupplyType(raw string) string {
 	default:
 		return strings.TrimSpace(raw)
 	}
+}
+
+func isWorldLink3Event(eventInfo *masterdata.Event) bool {
+	if eventInfo == nil {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(eventInfo.EventType), "world_bloom") &&
+		strings.EqualFold(strings.TrimSpace(eventInfo.Unit), "none")
 }
 
 func cardMatchesSupplyFilter(filter, raw string) bool {

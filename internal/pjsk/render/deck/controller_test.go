@@ -546,6 +546,9 @@ func TestBuildRecommendOptionDefaultsMySekaiToAllAlgorithms(t *testing.T) {
 	if option["live_type"] != "mysekai" {
 		t.Fatalf("unexpected live_type: %+v", option["live_type"])
 	}
+	if option["event_id"] != 7 {
+		t.Fatalf("expected mysekai to inherit current event for engine bonus calculation, got %+v", option["event_id"])
+	}
 }
 
 func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
@@ -946,6 +949,40 @@ func TestApplyCommonRecommendMetadataDoesNotBackfillMysekaiEvent(t *testing.T) {
 
 	if request.EventID != nil {
 		t.Fatalf("mysekai should not auto-fill current event: %+v", request.EventID)
+	}
+}
+
+func TestBuildDrawingRequestFromRecommendResultDoesNotExposeImplicitMysekaiEventMetadata(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	request, err := controller.buildDrawingRequestFromRecommendResult(
+		renderregion.JP,
+		"mysekai",
+		AutoQuery{Region: "jp", RecommendType: "mysekai"},
+		map[string]any{"live_type": "mysekai", "event_id": 7, "target": "score"},
+		nil,
+		&RecommendResult{
+			Decks: []RecommendDeck{{
+				Cards: []RecommendCard{{
+					CardID:       1001,
+					Level:        50,
+					MasterRank:   1,
+					SkillLevel:   4,
+					SkillRate:    100,
+					DefaultImage: "normal",
+				}},
+				Score:             123,
+				MysekaiEventPoint: 456,
+				EventBonusRate:    25,
+			}},
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("buildDrawingRequestFromRecommendResult() error = %v", err)
+	}
+	if request.EventID != nil {
+		t.Fatalf("implicit mysekai event should stay hidden in metadata: %+v", request.EventID)
 	}
 }
 

@@ -302,11 +302,11 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 	}
 
 	var listParams struct {
-		ShowID        bool `json:"show_id"`
-		OnlyCraftable bool `json:"only_craftable"`
-		ShowProfile   bool `json:"show_profile"`
-		ShowProgress  bool `json:"show_progress"`
-		ShowObtained  bool `json:"show_obtained"`
+		ShowID        bool  `json:"show_id"`
+		OnlyCraftable bool  `json:"only_craftable"`
+		ShowProfile   *bool `json:"show_profile"`
+		ShowProgress  *bool `json:"show_progress"`
+		ShowObtained  *bool `json:"show_obtained"`
 	}
 	if err := json.Unmarshal(resolved.Params, &listParams); err != nil {
 		t.Fatalf("unmarshal list params: %v", err)
@@ -314,7 +314,7 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 	if !listParams.ShowID || !listParams.OnlyCraftable {
 		t.Fatalf("unexpected list params: %+v", listParams)
 	}
-	if listParams.ShowProfile || listParams.ShowProgress || listParams.ShowObtained {
+	if listParams.ShowProfile != nil || listParams.ShowProgress != nil || listParams.ShowObtained != nil {
 		t.Fatalf("unexpected list params: %+v", listParams)
 	}
 
@@ -456,11 +456,11 @@ func TestMysekaiTalkListHandleWithoutQueryFallsBackToFixtureList(t *testing.T) {
 	}
 
 	var params struct {
-		ShowID        bool `json:"show_id"`
-		OnlyCraftable bool `json:"only_craftable"`
-		ShowProfile   bool `json:"show_profile"`
-		ShowProgress  bool `json:"show_progress"`
-		ShowObtained  bool `json:"show_obtained"`
+		ShowID        bool  `json:"show_id"`
+		OnlyCraftable bool  `json:"only_craftable"`
+		ShowProfile   *bool `json:"show_profile"`
+		ShowProgress  *bool `json:"show_progress"`
+		ShowObtained  *bool `json:"show_obtained"`
 	}
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
@@ -468,7 +468,7 @@ func TestMysekaiTalkListHandleWithoutQueryFallsBackToFixtureList(t *testing.T) {
 	if !params.ShowID || !params.OnlyCraftable {
 		t.Fatalf("unexpected params: %+v", params)
 	}
-	if params.ShowProfile || params.ShowProgress || params.ShowObtained {
+	if params.ShowProfile != nil || params.ShowProgress != nil || params.ShowObtained != nil {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }

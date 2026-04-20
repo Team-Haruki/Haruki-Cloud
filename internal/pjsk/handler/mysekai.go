@@ -156,7 +156,8 @@ func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
 			}
 			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
 			if query == "" {
-				applyMysekaiStaticFixtureListParams(selfParams, true)
+				selfParams["show_id"] = true
+				selfParams["only_craftable"] = true
 				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
@@ -229,11 +230,7 @@ func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 
 			cleaned := cleanMysekaiArgs(args)
 			if cleaned == "" {
-				selfParams["show_id"] = true
-				selfParams["only_craftable"] = false
-				selfParams["show_profile"] = false
-				selfParams["show_progress"] = false
-				selfParams["show_obtained"] = false
+				applyMysekaiStaticFixtureListParams(selfParams, false)
 				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 
@@ -321,7 +318,8 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 			}
 			query, unit, showAllTalks := parseMysekaiBlueprintArgs(args)
 			if query == "" {
-				applyMysekaiStaticFixtureListParams(selfParams, true)
+				selfParams["show_id"] = true
+				selfParams["only_craftable"] = true
 				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {

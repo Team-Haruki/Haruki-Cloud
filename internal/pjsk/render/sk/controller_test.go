@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -216,6 +217,148 @@ func (worldBloomLineTrackerSource) GetLatestWorldBloomRankingByRank(server strin
 		UserData: sekaiapi.RankingUserData{
 			UserID: "",
 			Name:   "WorldBloomLineUser",
+		},
+	}, nil
+}
+
+type lineMetricsOnlyTrackerSource struct {
+	latestRankCalls      atomic.Int32
+	traceRankCalls       atomic.Int32
+	latestUserCalls      atomic.Int32
+	traceUserCalls       atomic.Int32
+	userEventDataCalls   atomic.Int32
+	latestWorldUserCalls atomic.Int32
+	traceWorldUserCalls  atomic.Int32
+	latestWorldRankCalls atomic.Int32
+	traceWorldRankCalls  atomic.Int32
+}
+
+func (s *lineMetricsOnlyTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	s.latestRankCalls.Add(1)
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.Itoa(90000 + rank),
+			Score:     1_000_000 + rank,
+			Rank:      rank,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.Itoa(90000 + rank),
+			Name:   "ShouldNotMatter",
+		},
+	}, nil
+}
+
+func (s *lineMetricsOnlyTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	s.latestUserCalls.Add(1)
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     2_000_000,
+			Rank:      12,
+			Timestamp: 1704067200,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "ShouldNotMatter",
+		},
+	}, nil
+}
+
+func (s *lineMetricsOnlyTrackerSource) GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	s.latestWorldRankCalls.Add(1)
+	charID := characterID
+	return &sekaiapi.WorldBloomLatestRankingResponse{
+		RankData: sekaiapi.WorldBloomRankDataPoint{
+			RankDataPoint: sekaiapi.RankDataPoint{
+				UserID:    strconv.Itoa(70000 + rank),
+				Score:     3_000_000 + rank + characterID,
+				Rank:      rank,
+				Timestamp: 1704067200,
+			},
+			CharacterID: &charID,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.Itoa(70000 + rank),
+			Name:   "ShouldNotMatter",
+		},
+	}, nil
+}
+
+func (s *lineMetricsOnlyTrackerSource) GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	s.latestWorldUserCalls.Add(1)
+	charID := characterID
+	return &sekaiapi.WorldBloomLatestRankingResponse{
+		RankData: sekaiapi.WorldBloomRankDataPoint{
+			RankDataPoint: sekaiapi.RankDataPoint{
+				UserID:    strconv.FormatInt(userID, 10),
+				Score:     4_000_000 + characterID,
+				Rank:      8,
+				Timestamp: 1704067200,
+			},
+			CharacterID: &charID,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "ShouldNotMatter",
+		},
+	}, nil
+}
+
+func (s *lineMetricsOnlyTrackerSource) GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error) {
+	s.userEventDataCalls.Add(1)
+	return &sekaiapi.UserEventData{
+		UserID: strconv.FormatInt(userID, 10),
+		Name:   "ShouldNotMatter",
+	}, nil
+}
+
+func (s *lineMetricsOnlyTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *lineMetricsOnlyTrackerSource) GetWorldBloomRankingScoreGrowth(server string, eventID, characterID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *lineMetricsOnlyTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	s.traceRankCalls.Add(1)
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{Score: 900000 + rank, Timestamp: 1704060000},
+			{Score: 1000000 + rank, Timestamp: 1704067200},
+		},
+	}, nil
+}
+
+func (s *lineMetricsOnlyTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	s.traceUserCalls.Add(1)
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{Score: 1900000, Timestamp: 1704060000},
+			{Score: 2000000, Timestamp: 1704067200},
+		},
+	}, nil
+}
+
+func (s *lineMetricsOnlyTrackerSource) TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
+	s.traceWorldRankCalls.Add(1)
+	charID := characterID
+	return &sekaiapi.WorldBloomTraceRankingResponse{
+		RankData: []sekaiapi.WorldBloomRankDataPoint{
+			{RankDataPoint: sekaiapi.RankDataPoint{Score: 2900000 + rank, Timestamp: 1704060000}, CharacterID: &charID},
+			{RankDataPoint: sekaiapi.RankDataPoint{Score: 3000000 + rank, Timestamp: 1704067200}, CharacterID: &charID},
+		},
+	}, nil
+}
+
+func (s *lineMetricsOnlyTrackerSource) TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
+	s.traceWorldUserCalls.Add(1)
+	charID := characterID
+	return &sekaiapi.WorldBloomTraceRankingResponse{
+		RankData: []sekaiapi.WorldBloomRankDataPoint{
+			{RankDataPoint: sekaiapi.RankDataPoint{Score: 3900000, Timestamp: 1704060000}, CharacterID: &charID},
+			{RankDataPoint: sekaiapi.RankDataPoint{Score: 4000000, Timestamp: 1704067200}, CharacterID: &charID},
 		},
 	}, nil
 }
@@ -906,6 +1049,96 @@ func TestBuildLineRequestFromTrackerOmitsPlayerNames(t *testing.T) {
 		if rank.Name != "" {
 			t.Fatalf("expected line payload name to be empty, got %+v", rank)
 		}
+	}
+}
+
+func TestBuildLineRequestFromTrackerSkipsUserNameLookupRequests(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	tracker := &lineMetricsOnlyTrackerSource{}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1, 100},
+	})
+	if err != nil {
+		t.Fatalf("build line request: %v", err)
+	}
+	if len(payload.Ranks) != 2 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	if tracker.userEventDataCalls.Load() != 0 {
+		t.Fatalf("line request should not query user event data, got %d calls", tracker.userEventDataCalls.Load())
+	}
+	if tracker.latestUserCalls.Load() != 0 {
+		t.Fatalf("line request should not query latest ranking by user, got %d calls", tracker.latestUserCalls.Load())
+	}
+	if tracker.traceUserCalls.Load() != 0 {
+		t.Fatalf("line request should not query trace ranking by user, got %d calls", tracker.traceUserCalls.Load())
+	}
+	if tracker.latestRankCalls.Load() != 2 {
+		t.Fatalf("expected 2 latest rank calls, got %d", tracker.latestRankCalls.Load())
+	}
+	if tracker.traceRankCalls.Load() != 2 {
+		t.Fatalf("expected 2 trace rank calls, got %d", tracker.traceRankCalls.Load())
+	}
+}
+
+func TestBuildWorldBloomLineRequestFromTrackerSkipsUserNameLookupRequests(t *testing.T) {
+	now := time.Now().UnixMilli()
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		EventType:   "world_bloom",
+		Name:        "World Bloom Event",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(time.Hour/time.Millisecond),
+	}
+	tracker := &lineMetricsOnlyTrackerSource{}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	charaID := 21
+	payload, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		EventID:       eventInfo.ID,
+		Region:        "jp",
+		Ranks:         []int{1, 100},
+		WlCharacterID: &charaID,
+	})
+	if err != nil {
+		t.Fatalf("build wl line request: %v", err)
+	}
+	if len(payload.Ranks) != 2 {
+		t.Fatalf("unexpected wl ranks len: %d", len(payload.Ranks))
+	}
+	if tracker.userEventDataCalls.Load() != 0 {
+		t.Fatalf("wl line request should not query user event data, got %d calls", tracker.userEventDataCalls.Load())
+	}
+	if tracker.latestWorldUserCalls.Load() != 0 {
+		t.Fatalf("wl line request should not query latest world bloom ranking by user, got %d calls", tracker.latestWorldUserCalls.Load())
+	}
+	if tracker.traceWorldUserCalls.Load() != 0 {
+		t.Fatalf("wl line request should not query trace world bloom ranking by user, got %d calls", tracker.traceWorldUserCalls.Load())
+	}
+	if tracker.latestWorldRankCalls.Load() != 2 {
+		t.Fatalf("expected 2 latest world bloom rank calls, got %d", tracker.latestWorldRankCalls.Load())
+	}
+	if tracker.traceWorldRankCalls.Load() != 2 {
+		t.Fatalf("expected 2 trace world bloom rank calls, got %d", tracker.traceWorldRankCalls.Load())
 	}
 }
 

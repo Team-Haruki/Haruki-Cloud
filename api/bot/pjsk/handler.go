@@ -277,18 +277,22 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 		return nil, fmt.Errorf("failed to build handler context: %w", err)
 	}
 	matched, ok := commandregistry.LookupCommandHandler(matchedCommand)
-	if !ok || matched.Handler == nil || matched.Handler.IsDisabled() {
-		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
-	}
-	if matched.Handler.GetPath() == "" {
-		return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not exposed by the bot api: %s", matchedCommand)}
+	if !ok || matched.Handler == nil || matched.Handler.IsDisabled() || matched.Handler.GetPath() == "" {
+		actualMatched := commandregistry.MatchCommandHandler(ctx.GetArgs())
+		if actualMatched.Handler == nil || actualMatched.Handler.IsDisabled() {
+			if !ok || matched.Handler == nil || matched.Handler.IsDisabled() {
+				return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
+			}
+			return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not exposed by the bot api: %s", matchedCommand)}
+		}
+		matched = actualMatched
 	}
 
 	if matched.Handler.GetPath() != expectedPath {
 		return nil, &botValidationError{msg: fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath())}
 	}
 
-	args, ok := commandregistry.ExtractCommandArgs(ctx.GetArgs(), matchedCommand)
+	args, ok := commandregistry.ExtractCommandArgs(ctx.GetArgs(), matched.Command)
 	triggerCmd := matched.Command
 	if !ok {
 		actualMatched := commandregistry.MatchCommandHandler(ctx.GetArgs())

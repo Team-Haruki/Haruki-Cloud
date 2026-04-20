@@ -26,6 +26,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
+	commandhandler "haruki-cloud/internal/pjsk/handler"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
@@ -544,6 +545,38 @@ func TestBotEndpointRecordsDistributedStatisticsAndCommandLog(t *testing.T) {
 	}
 	if count != 1 {
 		t.Fatalf("expected 1 matching command log row, got %d", count)
+	}
+}
+
+func TestResolveBotCommandFallsBackToMessageMatchForCompactTimeZoneCommand(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+
+	resolved, err := resolveBotCommand(context.Background(), onebot11.Message{
+		{Type: "text", Data: onebot11.TextData{Text: "/pjsktzHKT"}},
+	}, "profile/timezone", BotCommandRequest{
+		Platform:       "qq",
+		PlatformUserID: "12345",
+		MatchedCommand: "/pjsktzHKT",
+	})
+	if err != nil {
+		t.Fatalf("resolveBotCommand() error = %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != accountdata.ProfileModeSetTimeZone {
+		t.Fatalf("unexpected mode: %s", resolved.Mode)
+	}
+
+	var params accountdata.ProfileSettingsCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.TimeZone != "HKT" {
+		t.Fatalf("unexpected timezone param: %q", params.TimeZone)
+	}
+	if resolved.RequesterPlatform != "qq" || resolved.RequesterUserID != "12345" {
+		t.Fatalf("unexpected requester info: platform=%q user=%q", resolved.RequesterPlatform, resolved.RequesterUserID)
 	}
 }
 

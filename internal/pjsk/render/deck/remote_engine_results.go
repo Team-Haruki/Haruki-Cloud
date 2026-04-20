@@ -154,31 +154,7 @@ func aggregateRemoteRecommendResults(options []map[string]any, results []remoteB
 	sort.SliceStable(pairs, func(i, j int) bool {
 		d1 := pairs[i].Deck
 		d2 := pairs[j].Deck
-		if liveType == "mysekai" {
-			if d1.MysekaiEventPoint != d2.MysekaiEventPoint {
-				return d1.MysekaiEventPoint > d2.MysekaiEventPoint
-			}
-			return d1.TotalPower > d2.TotalPower
-		}
-		if target == "power" {
-			return d1.TotalPower > d2.TotalPower
-		}
-		if target == "skill" {
-			return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
-		}
-		if target == "bonus" {
-			if d1.EventBonusRate != d2.EventBonusRate {
-				return d1.EventBonusRate < d2.EventBonusRate
-			}
-			if d1.Score != d2.Score {
-				return d1.Score > d2.Score
-			}
-			return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
-		}
-		if d1.Score != d2.Score {
-			return d1.Score > d2.Score
-		}
-		return d1.MultiLiveScoreUp > d2.MultiLiveScoreUp
+		return compareRecommendDecks(liveType, target, d1, d2)
 	})
 
 	limitFloat, _ := options[0]["limit"].(float64)

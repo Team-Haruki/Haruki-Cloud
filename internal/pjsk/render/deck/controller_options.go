@@ -84,8 +84,16 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 		option["world_bloom_event_turn"] = *query.WorldBloomEventTurn
 		option["event_type"] = "world_bloom"
 	}
+	worldBloomCharacterID := 0
 	if query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0 {
-		option["world_bloom_character_id"] = *query.WorldBloomCharacterID
+		worldBloomCharacterID = *query.WorldBloomCharacterID
+	} else if recType == "mysekai" && query.MetadataWorldBloomCharacterID != nil && *query.MetadataWorldBloomCharacterID > 0 {
+		// Keep the implicitly resolved WL chapter hidden from the title text,
+		// while still passing it to the recommend service so support bonus is calculated.
+		worldBloomCharacterID = *query.MetadataWorldBloomCharacterID
+	}
+	if worldBloomCharacterID > 0 {
+		option["world_bloom_character_id"] = worldBloomCharacterID
 	}
 	if fakeEvent {
 		option["event_id"] = nil

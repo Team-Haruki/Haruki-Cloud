@@ -190,6 +190,78 @@ func TestAggregateRemoteRecommendResultsUsesDisplayAlgorithmNames(t *testing.T) 
 	}
 }
 
+func TestAggregateRemoteRecommendResultsPrefersMysekaiInternalPointOnTie(t *testing.T) {
+	options := []map[string]any{
+		{"algorithm": "ga", "target": "score", "live_type": "mysekai", "limit": 2},
+	}
+	results := []remoteBatchRecommendResult{
+		{
+			Alg: "ga",
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{
+				{
+					MysekaiEventPoint:    1000,
+					TotalPower:           460000,
+					EventBonusRate:       20,
+					SupportDeckBonusRate: 0,
+					Cards:                []remoteRecommendCard{{CardID: 1001}},
+				},
+				{
+					MysekaiEventPoint:    1000,
+					TotalPower:           460000,
+					EventBonusRate:       20,
+					SupportDeckBonusRate: 5,
+					Cards:                []remoteRecommendCard{{CardID: 1002}},
+				},
+			}},
+		},
+	}
+
+	agg, err := aggregateRemoteRecommendResults(options, results)
+	if err != nil {
+		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
+	}
+	if len(agg.Decks) != 2 {
+		t.Fatalf("expected 2 mysekai decks, got %+v", agg.Decks)
+	}
+	if agg.Decks[0].SupportDeckBonusRate != 5 {
+		t.Fatalf("expected higher-support mysekai deck to win tie-break, got %+v", agg.Decks[0])
+	}
+}
+
+func TestExpandRecommendBatchOptionsAddsFallbacksForMysekaiRL(t *testing.T) {
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: "http://example.com",
+		MasterdataDir:  "/masterdata",
+		DefaultAlgs:    []string{"dfs_ga", "ga", "rl"},
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	options := expandRecommendBatchOptions(recommender, "mysekai", map[string]any{
+		"algorithm": "rl",
+		"live_type": "mysekai",
+		"target":    "score",
+	})
+	if len(options) != 3 {
+		t.Fatalf("expected rl mysekai fallback batch to include 3 algorithms, got %+v", options)
+	}
+	if options[0]["algorithm"] != "rl" || options[1]["algorithm"] != "ga" || options[2]["algorithm"] != "dfs_ga" {
+		t.Fatalf("unexpected rl mysekai fallback batch order: %+v", options)
+	}
+
+	plain := expandRecommendBatchOptions(recommender, "event", map[string]any{
+		"algorithm": "rl",
+		"live_type": "multi",
+		"target":    "score",
+	})
+	if len(plain) != 1 || plain[0]["algorithm"] != "rl" {
+		t.Fatalf("non-mysekai rl request should stay single-algorithm, got %+v", plain)
+	}
+}
+
 func TestRemoteRecommendRewarmsOnLogicalMusicMetaError(t *testing.T) {
 	var masterdataCalls atomic.Int32
 	var musicMetaCalls atomic.Int32

@@ -551,6 +551,26 @@ func TestBuildRecommendOptionDefaultsMySekaiToAllAlgorithms(t *testing.T) {
 	}
 }
 
+func TestBuildRecommendOptionMySekaiUsesImplicitWorldBloomMetadataForSupport(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	option, err := controller.buildRecommendOption(renderregion.JP, "mysekai", AutoQuery{
+		Region:                        "jp",
+		RecommendType:                 "mysekai",
+		MetadataWorldBloomCharacterID: new(20),
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+
+	if option["event_id"] != 7 {
+		t.Fatalf("expected implicit mysekai WL to retain current event for service calculation, got %+v", option["event_id"])
+	}
+	if option["world_bloom_character_id"] != 20 {
+		t.Fatalf("expected implicit mysekai WL metadata to be forwarded to service, got %+v", option["world_bloom_character_id"])
+	}
+}
+
 func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 

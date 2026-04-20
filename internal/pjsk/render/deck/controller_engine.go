@@ -67,7 +67,7 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 		} else if shouldRunChallengeAll(option) {
 			result, err = c.recommendChallengeAll(recommender, recommendRequest, option)
 		} else {
-			recommendRequest.BatchOption = recommender.ExpandAlgorithms(option)
+			recommendRequest.BatchOption = expandRecommendBatchOptions(recommender, recType, option)
 			result, err = recommender.Recommend(recommendRequest)
 			if err == nil {
 				applyChallengeScoreDelta(result, optionInt(option, "challenge_live_character_id"), c.snapshot.RawData())
@@ -76,7 +76,7 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 	} else if query.MusicCompare {
 		result, musicCompareSelections, err = c.recommendMusicCompare(recommender, recommendRequest, option, musicCompareSelections, musicCompareShowNum, recType)
 	} else {
-		recommendRequest.BatchOption = recommender.ExpandAlgorithms(option)
+		recommendRequest.BatchOption = expandRecommendBatchOptions(recommender, recType, option)
 		result, err = recommender.Recommend(recommendRequest)
 	}
 	if err != nil {

@@ -206,7 +206,7 @@ func (c *Controller) recommendMusicCompare(recommender PjskDeckRecommender, req 
 			UserDataFilePath:  req.UserDataFilePath,
 			MusicMeta:         req.MusicMeta,
 			MusicMetaFilePath: req.MusicMetaFilePath,
-			BatchOption:       recommender.ExpandAlgorithms(compareOption),
+			BatchOption:       expandRecommendBatchOptions(recommender, recType, compareOption),
 		})
 		if err != nil {
 			return nil, nil, err
@@ -240,7 +240,7 @@ func (c *Controller) recommendMusicCompare(recommender PjskDeckRecommender, req 
 	}
 
 	sort.SliceStable(items, func(i, j int) bool {
-		return compareDeckSortScore(recType, items[i].deck) > compareDeckSortScore(recType, items[j].deck)
+		return compareRecommendDecks(recType, optionString(option, "target"), items[i].deck, items[j].deck)
 	})
 
 	if showNum <= 0 || showNum > len(items) {
@@ -267,18 +267,6 @@ func (c *Controller) recommendMusicCompare(recommender PjskDeckRecommender, req 
 		agg.WaitTimes[alg] = averageChallengeSamples(values)
 	}
 	return agg, orderedSelections, nil
-}
-
-func compareDeckSortScore(recType string, deck RecommendDeck) int {
-	switch recType {
-	case "mysekai":
-		return deck.MysekaiEventPoint
-	case "no_event":
-		if deck.LiveScore > 0 {
-			return deck.LiveScore
-		}
-	}
-	return deck.Score
 }
 
 func normalizeMusicCompareDifficulty(diff string) string {

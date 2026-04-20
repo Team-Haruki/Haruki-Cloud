@@ -1305,6 +1305,148 @@ func TestBuildAutoRecommendRequestChallengeMusicCompareRequiresCharacter(t *test
 	}
 }
 
+func TestBuildAutoRecommendRequestChallengeMusicCompareCurrentDeckBuildsCandidatesAndSorts(t *testing.T) {
+	var recommendCalls atomic.Int32
+	seenMusicIDs := make([]int, 0, 3)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"challenge-compare-current-userdata-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
+			}
+			options, ok := payload["batch_options"].([]any)
+			if !ok || len(options) != 1 {
+				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+			}
+			option := options[0].(map[string]any)
+			if option["challenge_live_character_id"] != 21.0 {
+				t.Fatalf("unexpected challenge_live_character_id: %+v", option["challenge_live_character_id"])
+			}
+			if option["limit"] != 1.0 {
+				t.Fatalf("unexpected compare limit: %+v", option["limit"])
+			}
+			fixedCards, ok := option["fixed_cards"].([]any)
+			if !ok || len(fixedCards) != 5 {
+				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
+			}
+			if option["best_skill_as_leader"] != false {
+				t.Fatalf("expected compare mode to disable best_skill_as_leader: %+v", option["best_skill_as_leader"])
+			}
+
+			musicID := int(option["music_id"].(float64))
+			seenMusicIDs = append(seenMusicIDs, musicID)
+			scoreByMusicID := map[int]int{
+				1: 1200000,
+				2: 1300000,
+				3: 1250000,
+			}
+			score := scoreByMusicID[musicID]
+			_, _ = w.Write([]byte(fmt.Sprintf(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.5,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": %d,
+							"live_score": %d,
+							"mysekai_event_point": 0,
+							"total_power": 200000,
+							"event_bonus_rate": 25,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]
+						}]
+					}
+				}
+			]`, score, score)))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[
+			{"music_id":1,"difficulty":"master","music_time":100,"event_rate":100,"base_score":60,"base_score_auto":60,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100},
+			{"music_id":2,"difficulty":"master","music_time":100,"event_rate":120,"base_score":50,"base_score_auto":50,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100},
+			{"music_id":3,"difficulty":"expert","music_time":100,"event_rate":90,"base_score":40,"base_score_auto":40,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}
+		]`),
+	})
+
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "challenge",
+		ChallengeLiveCharacterID: new(21),
+		UseCurrentDeck:           true,
+		MusicCompare:             true,
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+	if recommendCalls.Load() != 3 {
+		t.Fatalf("expected three recommend calls, got %d", recommendCalls.Load())
+	}
+	if !reflect.DeepEqual(seenMusicIDs, []int{1, 2, 3}) {
+		t.Fatalf("unexpected recommend music ids: %+v", seenMusicIDs)
+	}
+	if !request.MusicCompare {
+		t.Fatalf("expected music_compare in request")
+	}
+	if !reflect.DeepEqual(request.FixedCardsID, []int{1001, 1002, 1003, 1004, 1005}) {
+		t.Fatalf("unexpected fixed cards in compare request: %+v", request.FixedCardsID)
+	}
+	if request.CharaName == nil || *request.CharaName != "初音未来" {
+		t.Fatalf("unexpected challenge character metadata: %+v", request.CharaName)
+	}
+	if len(request.DeckData) != 3 {
+		t.Fatalf("unexpected compare deck count: %d", len(request.DeckData))
+	}
+	gotMusicIDs := make([]int, 0, len(request.DeckData))
+	for _, item := range request.DeckData {
+		if item.MusicID == nil {
+			t.Fatalf("missing compare music id in deck data: %+v", item)
+		}
+		gotMusicIDs = append(gotMusicIDs, *item.MusicID)
+	}
+	if !reflect.DeepEqual(gotMusicIDs, []int{2, 3, 1}) {
+		t.Fatalf("unexpected compare sort order: %+v", gotMusicIDs)
+	}
+	if request.DeckData[0].MusicTitle == nil || *request.DeckData[0].MusicTitle != "Song B" {
+		t.Fatalf("unexpected first compare title: %+v", request.DeckData[0].MusicTitle)
+	}
+	if request.DeckData[0].ChallengeScoreDelta == nil || *request.DeckData[0].ChallengeScoreDelta != 200000 {
+		t.Fatalf("unexpected first compare challenge delta: %+v", request.DeckData[0].ChallengeScoreDelta)
+	}
+}
+
 func TestBuildDrawingRequestFromRecommendResultUsesDefaultImageForDisplayState(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 

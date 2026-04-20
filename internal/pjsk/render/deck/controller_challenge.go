@@ -13,11 +13,8 @@ func (c *Controller) prepareChallengeRecommend(query AutoQuery, option map[strin
 	}
 
 	charID := optionInt(option, "challenge_live_character_id")
-	if query.MusicCompare {
-		if charID <= 0 {
-			return fmt.Errorf("挑战组卡必须指定一个角色才能进行歌曲比较")
-		}
-		return fmt.Errorf("挑战组卡歌曲比较将在后续步骤实现")
+	if query.MusicCompare && charID <= 0 {
+		return fmt.Errorf("挑战组卡必须指定一个角色才能进行歌曲比较")
 	}
 
 	if !query.UseCurrentDeck {

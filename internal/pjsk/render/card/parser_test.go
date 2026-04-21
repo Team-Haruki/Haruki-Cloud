@@ -240,6 +240,40 @@ func TestParserSupportsApprovedAliasNicknamesBeforeAttributeKeywords(t *testing.
 	}
 }
 
+func TestParserIgnoresApprovedAliasesThatConflictWithCardAttributeKeywords(t *testing.T) {
+	tests := []struct {
+		query string
+		attr  string
+	}{
+		{query: "绿草", attr: "pure"},
+		{query: "粉花", attr: "cute"},
+		{query: "蓝星", attr: "cool"},
+		{query: "橙心", attr: "happy"},
+		{query: "紫月", attr: "mysterious"},
+		{query: "纯洁", attr: "pure"},
+	}
+
+	for _, tt := range tests {
+		nicknames := cloneNicknames(defaultNicknames)
+		nicknames[tt.query] = 20
+		parser := NewParser(nicknames)
+
+		info, err := parser.ParseStrictFilter(tt.query)
+		if err != nil {
+			t.Fatalf("ParseStrictFilter(%q) error = %v", tt.query, err)
+		}
+		if info.Type != QueryTypeFilter {
+			t.Fatalf("expected filter query for %q, got %+v", tt.query, info)
+		}
+		if info.Attr != tt.attr {
+			t.Fatalf("unexpected attr for %q: %+v", tt.query, info)
+		}
+		if info.CharacterID != 0 {
+			t.Fatalf("did not expect character alias to hijack attr keyword %q: %+v", tt.query, info)
+		}
+	}
+}
+
 func TestParserIgnoresNumericApprovedAliases(t *testing.T) {
 	nicknames := cloneNicknames(defaultNicknames)
 	nicknames["2"] = 2

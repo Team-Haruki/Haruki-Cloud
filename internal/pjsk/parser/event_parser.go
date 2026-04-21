@@ -183,7 +183,7 @@ func (p *EventParser) tryParseFilter(args string) *EventQueryInfo {
 	attrAliases := map[string]string{
 		"cute": "cute", "可爱": "cute", "粉": "cute",
 		"cool": "cool", "帅气": "cool", "蓝": "cool",
-		"pure": "pure", "纯真": "pure", "草": "pure", "绿": "pure",
+		"pure": "pure", "纯真": "pure", "纯洁": "pure", "草": "pure", "绿": "pure",
 		"happy": "happy", "快乐": "happy", "橙": "happy",
 		"mysterious": "mysterious", "神秘": "mysterious", "紫": "mysterious",
 	}

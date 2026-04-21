@@ -20,9 +20,25 @@ func sanitizeCharacterNicknames(items map[string]int) map[string]int {
 		if isAllDigits(normalized) {
 			continue
 		}
+		if isReservedCardAttributeAlias(normalized) {
+			continue
+		}
 		result[normalized] = value
 	}
 	return result
+}
+
+var reservedCardAttributeAliases = map[string]struct{}{
+	"cute": {}, "可爱": {}, "粉花": {}, "粉": {}, "pink": {},
+	"cool": {}, "帅气": {}, "蓝星": {}, "蓝": {}, "blue": {},
+	"pure": {}, "纯真": {}, "纯洁": {}, "绿草": {}, "草": {}, "绿": {}, "green": {},
+	"happy": {}, "快乐": {}, "橙心": {}, "橙": {}, "黄": {}, "orange": {},
+	"mysterious": {}, "神秘": {}, "紫月": {}, "紫": {}, "purple": {},
+}
+
+func isReservedCardAttributeAlias(text string) bool {
+	_, ok := reservedCardAttributeAliases[text]
+	return ok
 }
 
 func DefaultCharacterNicknames() map[string]int {

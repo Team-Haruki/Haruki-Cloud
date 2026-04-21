@@ -112,7 +112,7 @@ var deckUnitFilterKeywords = map[string][]string{
 var deckAttrFilterAliases = map[string][]string{
 	"cute":       {"cute", "可爱", "粉花", "粉", "pink"},
 	"cool":       {"cool", "帅气", "蓝星", "蓝", "blue"},
-	"pure":       {"pure", "纯真", "绿草", "草", "绿", "green"},
+	"pure":       {"pure", "纯真", "纯洁", "绿草", "草", "绿", "green"},
 	"happy":      {"happy", "快乐", "橙心", "橙", "orange"},
 	"mysterious": {"mysterious", "神秘", "紫月", "紫", "purple"},
 }

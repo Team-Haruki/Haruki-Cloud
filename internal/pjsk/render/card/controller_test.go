@@ -1,9 +1,8 @@
 package card
 
 import (
+	"encoding/json"
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -315,19 +314,47 @@ func TestRenderCardListAutoSwitchesToCardBoxWhenTooManyCards(t *testing.T) {
 	for i := 1; i <= cardListAutoBoxThreshold; i++ {
 		source.cards = append(source.cards, &masterdata.Card{ID: 2000 + i, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card", AssetBundleName: "card_a"})
 	}
-	var calledPath string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calledPath = r.URL.Path; _, _ = w.Write([]byte("png")) }))
-	defer server.Close()
-	controller := NewController(source, nil, drawing.NewHarukiDrawingClient(server.URL), nil)
+	controller := NewController(source, nil, nil, nil)
 	cardIDs := make([]int, 0, len(source.cards))
 	for _, card := range source.cards {
 		cardIDs = append(cardIDs, card.ID)
 	}
-	_, err := controller.RenderCardList(ListRequest{CardIDs: cardIDs, Region: "jp"})
+	reqAny, autoBox, err := controller.buildCardListRenderRequest(ListRequest{
+		CardIDs: cardIDs,
+		Region:  "jp",
+		DetailedProfile: &drawing.DetailedProfileCardRequest{
+			UserCards: []any{
+				map[string]any{"cardId": cardIDs[0]},
+			},
+		},
+	})
 	if err != nil {
-		t.Fatalf("RenderCardList() error = %v", err)
+		t.Fatalf("buildCardListRenderRequest() error = %v", err)
 	}
-	if calledPath != "/api/pjsk/card/box" {
-		t.Fatalf("expected card box render path, got %q", calledPath)
+	if !autoBox {
+		t.Fatal("expected card list auto fallback to card box request")
+	}
+	req, ok := reqAny.(*drawing.CardBoxRequest)
+	if !ok {
+		t.Fatalf("expected card box request, got %T", reqAny)
+	}
+	raw, err := json.Marshal(req)
+	if err != nil {
+		t.Fatalf("marshal card box request: %v", err)
+	}
+	var captured drawing.CardBoxRequest
+	if err := json.Unmarshal(raw, &captured); err != nil {
+		t.Fatalf("unmarshal card box request: %v", err)
+	}
+	if captured.UserInfo != nil {
+		t.Fatalf("expected auto-switched card box request to omit user info, got %+v", captured.UserInfo)
+	}
+	if len(captured.Cards) != cardListAutoBoxThreshold {
+		t.Fatalf("expected %d cards in card box request, got %d", cardListAutoBoxThreshold, len(captured.Cards))
+	}
+	for _, item := range captured.Cards {
+		if item.HasCard {
+			t.Fatalf("expected auto-switched card box request to mark all cards as unowned, got %+v", item)
+		}
 	}
 }

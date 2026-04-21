@@ -145,25 +145,36 @@ func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	region, _, builder, cards, err := c.resolveCardsForListRequest(query)
+	req, autoBox, err := c.buildCardListRenderRequest(query)
 	if err != nil {
 		return nil, err
 	}
+	if autoBox {
+		return c.drawing.GenerateCardBox(req.(*drawing.CardBoxRequest))
+	}
+	return c.drawing.GenerateCardList(req.(*drawing.CardListRequest))
+}
+
+func (c *Controller) buildCardListRenderRequest(query ListRequest) (any, bool, error) {
+	region, _, builder, cards, err := c.resolveCardsForListRequest(query)
+	if err != nil {
+		return nil, false, err
+	}
 	if len(cards) >= cardListAutoBoxThreshold {
-		req, buildErr := builder.BuildCardBoxRequest(cards, region, query.DetailedProfile, false, false, true)
+		req, buildErr := builder.BuildCardBoxRequest(cards, region, nil, false, false, true)
 		if buildErr != nil {
-			return nil, buildErr
+			return nil, false, buildErr
 		}
 		if query.Title != nil {
 			req.Title = query.Title
 		}
-		return c.drawing.GenerateCardBox(req)
+		return req, true, nil
 	}
 	req, err := c.BuildCardListRequest(query)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return c.drawing.GenerateCardList(req)
+	return req, false, nil
 }
 
 func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxRequest, error) {

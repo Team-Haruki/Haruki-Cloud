@@ -13,6 +13,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/utils/logger"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // ── Data sources ────────────────────────────────────────────────────────────
@@ -172,6 +174,7 @@ type RemoteDeckRecommender struct {
 	mu              sync.Mutex
 	masterdataReady bool
 	musicMetaHash   string
+	readyGroup      singleflight.Group
 
 	consecutiveFailures atomic.Int64
 	lastFailureAtNanos  atomic.Int64

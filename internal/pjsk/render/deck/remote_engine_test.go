@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -140,6 +141,41 @@ func TestExpandAlgorithmsNormalizesConfiguredAndRequestedAlgorithms(t *testing.T
 	}
 	if skill[0]["algorithm"] != "dfs" || skill[1]["algorithm"] != "dfs_ga" || skill[2]["algorithm"] != "ga" || skill[3]["algorithm"] != "rl" {
 		t.Fatalf("unexpected expanded skill algorithms: %+v", skill)
+	}
+}
+
+func TestExpandAlgorithmsAppliesAlgorithmSubsetWithoutLeakingLocalKeys(t *testing.T) {
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: "http://example.com",
+		MasterdataDir:  "/masterdata",
+		DefaultAlgs:    []string{"dfs", "dfs_ga", "ga", "rl"},
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	remote, ok := recommender.(*RemoteDeckRecommender)
+	if !ok {
+		t.Fatalf("unexpected recommender type: %T", recommender)
+	}
+
+	options := remote.ExpandAlgorithms(map[string]any{
+		"algorithm":                 "all",
+		"target":                    "score",
+		recommendAlgorithmSubsetKey: []string{"dfs_ga", "rl", "ga"},
+	})
+	if len(options) != 3 {
+		t.Fatalf("unexpected subset option count: %+v", options)
+	}
+	if options[0]["algorithm"] != "dfs_ga" || options[1]["algorithm"] != "rl" || options[2]["algorithm"] != "ga" {
+		t.Fatalf("unexpected subset algorithms: %+v", options)
+	}
+	for _, option := range options {
+		if _, ok := option[recommendAlgorithmSubsetKey]; ok {
+			t.Fatalf("local subset key should not be forwarded: %+v", option)
+		}
 	}
 }
 
@@ -499,6 +535,93 @@ func TestRemoteRecommendRewarmsOnLogicalMusicMetaError(t *testing.T) {
 	}
 	if recommendCalls.Load() != 2 {
 		t.Fatalf("expected 2 recommend calls, got %d", recommendCalls.Load())
+	}
+}
+
+func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
+	var masterdataCalls atomic.Int32
+	var musicMetaCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata":
+			masterdataCalls.Add(1)
+			time.Sleep(50 * time.Millisecond)
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/update/musicmetas/string":
+			musicMetaCalls.Add(1)
+			time.Sleep(50 * time.Millisecond)
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  "/masterdata",
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	remote, ok := recommender.(*RemoteDeckRecommender)
+	if !ok {
+		t.Fatalf("unexpected recommender type: %T", recommender)
+	}
+
+	firstMeta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
+
+	const workers = 8
+	start := make(chan struct{})
+	errs := make(chan error, workers)
+	var wg sync.WaitGroup
+	for range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			errs <- remote.ensureReady("jp", firstMeta, "")
+		}()
+	}
+	close(start)
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("ensureReady() error = %v", err)
+		}
+	}
+
+	if masterdataCalls.Load() != 1 {
+		t.Fatalf("expected 1 masterdata update, got %d", masterdataCalls.Load())
+	}
+	if musicMetaCalls.Load() != 1 {
+		t.Fatalf("expected 1 music meta update, got %d", musicMetaCalls.Load())
+	}
+
+	if err := remote.ensureReady("jp", firstMeta, ""); err != nil {
+		t.Fatalf("ensureReady() repeat error = %v", err)
+	}
+	if masterdataCalls.Load() != 1 || musicMetaCalls.Load() != 1 {
+		t.Fatalf("repeat ensureReady should not rewarm, got masterdata=%d music=%d", masterdataCalls.Load(), musicMetaCalls.Load())
+	}
+
+	secondMeta := []byte(`[{"music_id":10001,"difficulty":"expert"}]`)
+	if err := remote.ensureReady("jp", secondMeta, ""); err != nil {
+		t.Fatalf("ensureReady() new meta error = %v", err)
+	}
+	if masterdataCalls.Load() != 1 {
+		t.Fatalf("new meta should not refresh masterdata, got %d", masterdataCalls.Load())
+	}
+	if musicMetaCalls.Load() != 2 {
+		t.Fatalf("new meta should refresh music metas once, got %d", musicMetaCalls.Load())
 	}
 }
 

@@ -89,15 +89,16 @@ func (r *RemoteDeckRecommender) ExpandAlgorithms(option map[string]any) []map[st
 		alg = strings.ToLower(strings.TrimSpace(alg))
 	}
 	if alg != "all" {
-		return []map[string]any{option}
+		return []map[string]any{sanitizeLocalRecommendOption(option)}
 	}
 	selected := r.defaultAlgorithmsForOption(option)
+	if subset := selectRecommendAlgorithmSubset(option, selected); len(subset) > 0 {
+		selected = subset
+	}
+	baseOption := sanitizeLocalRecommendOption(option)
 	result := make([]map[string]any, 0, len(selected))
 	for _, a := range selected {
-		copied := make(map[string]any, len(option))
-		for k, v := range option {
-			copied[k] = v
-		}
+		copied := cloneRecommendOption(baseOption)
 		copied["algorithm"] = a
 		result = append(result, copied)
 	}
@@ -123,4 +124,16 @@ func (r *RemoteDeckRecommender) defaultAlgorithmsForOption(option map[string]any
 		return r.defaultAlgs
 	}
 	return filtered
+}
+
+func sanitizeLocalRecommendOption(option map[string]any) map[string]any {
+	if option == nil {
+		return nil
+	}
+	if _, ok := option[recommendAlgorithmSubsetKey]; !ok {
+		return option
+	}
+	copied := cloneRecommendOption(option)
+	delete(copied, recommendAlgorithmSubsetKey)
+	return copied
 }

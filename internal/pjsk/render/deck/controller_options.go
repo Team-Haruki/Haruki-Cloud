@@ -159,7 +159,10 @@ func applyRecommendChallengeAllDefaults(option map[string]any, recType string, q
 	if normalizeRecommendTarget(query.Target) == "skill" {
 		return
 	}
-	option["algorithm"] = "dfs_ga"
+	if normalizeRecommendAlgorithmForService(optionString(option, "algorithm")) != "all" {
+		return
+	}
+	applyRecommendAlgorithmSubset(option, []string{"dfs_ga", "rl"})
 }
 
 func normalizeRecommendLiveOptions(option map[string]any) {

@@ -314,39 +314,67 @@ func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, mus
 		region = r.region
 	}
 
-	if !masterReady {
-		req := map[string]any{
-			"base_dir": r.masterdataDir,
-			"region":   region,
-		}
-		if err := r.postJSON("/update/masterdata", req, nil); err != nil {
-			return fmt.Errorf("deck remote engine: update masterdata: %w", err)
-		}
+	if masterReady && (hash == "" || musicReady) {
+		return nil
 	}
 
-	if hash != "" && !musicReady {
-		req := map[string]any{"region": region}
-		// Prefer sending bytes directly — container cannot access host file paths.
-		if len(musicMeta) > 0 {
-			req["data"] = string(musicMeta)
-			if err := r.postJSON("/update/musicmetas/string", req, nil); err != nil {
-				return fmt.Errorf("deck remote engine: update music metas: %w", err)
+	for {
+		_, err, _ := r.readyGroup.Do("ready", func() (any, error) {
+			r.mu.Lock()
+			masterReady = r.masterdataReady
+			musicReady = hash != "" && hash == r.musicMetaHash
+			r.mu.Unlock()
+
+			if masterReady && (hash == "" || musicReady) {
+				return nil, nil
 			}
-		} else if musicMetaPath != "" {
-			req["file_path"] = musicMetaPath
-			if err := r.postJSON("/update/musicmetas", req, nil); err != nil {
-				return fmt.Errorf("deck remote engine: update music metas: %w", err)
+
+			if !masterReady {
+				req := map[string]any{
+					"base_dir": r.masterdataDir,
+					"region":   region,
+				}
+				if err := r.postJSON("/update/masterdata", req, nil); err != nil {
+					return nil, fmt.Errorf("deck remote engine: update masterdata: %w", err)
+				}
 			}
+
+			if hash != "" && !musicReady {
+				req := map[string]any{"region": region}
+				// Prefer sending bytes directly — container cannot access host file paths.
+				if len(musicMeta) > 0 {
+					req["data"] = string(musicMeta)
+					if err := r.postJSON("/update/musicmetas/string", req, nil); err != nil {
+						return nil, fmt.Errorf("deck remote engine: update music metas: %w", err)
+					}
+				} else if musicMetaPath != "" {
+					req["file_path"] = musicMetaPath
+					if err := r.postJSON("/update/musicmetas", req, nil); err != nil {
+						return nil, fmt.Errorf("deck remote engine: update music metas: %w", err)
+					}
+				}
+			}
+
+			r.mu.Lock()
+			r.masterdataReady = true
+			if hash != "" {
+				r.musicMetaHash = hash
+			}
+			r.mu.Unlock()
+			return nil, nil
+		})
+		if err != nil {
+			return err
+		}
+
+		r.mu.Lock()
+		masterReady = r.masterdataReady
+		musicReady = hash != "" && hash == r.musicMetaHash
+		r.mu.Unlock()
+		if masterReady && (hash == "" || musicReady) {
+			return nil
 		}
 	}
-
-	r.mu.Lock()
-	r.masterdataReady = true
-	if hash != "" {
-		r.musicMetaHash = hash
-	}
-	r.mu.Unlock()
-	return nil
 }
 
 func (r *RemoteDeckRecommender) invalidate() {

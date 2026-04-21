@@ -113,6 +113,8 @@ func displayRecommendAlgorithm(raw string) string {
 	return strings.ToLower(strings.TrimSpace(raw))
 }
 
+const recommendAlgorithmSubsetKey = "_algorithm_subset"
+
 func normalizeRecommendAlgorithmsForService(raws []string) []string {
 	if len(raws) == 0 {
 		return nil
@@ -132,6 +134,75 @@ func normalizeRecommendAlgorithmsForService(raws []string) []string {
 		result = append(result, alg)
 	}
 	return result
+}
+
+func normalizeRecommendAlgorithmSubset(raw any) []string {
+	switch typed := raw.(type) {
+	case []string:
+		return normalizeRecommendAlgorithmsForService(typed)
+	case []any:
+		values := make([]string, 0, len(typed))
+		for _, item := range typed {
+			text, ok := item.(string)
+			if !ok {
+				continue
+			}
+			values = append(values, text)
+		}
+		return normalizeRecommendAlgorithmsForService(values)
+	default:
+		return nil
+	}
+}
+
+func applyRecommendAlgorithmSubset(option map[string]any, algorithms []string) {
+	if option == nil {
+		return
+	}
+	normalized := normalizeRecommendAlgorithmsForService(algorithms)
+	if len(normalized) == 0 {
+		delete(option, recommendAlgorithmSubsetKey)
+		return
+	}
+	option[recommendAlgorithmSubsetKey] = normalized
+}
+
+func selectRecommendAlgorithmSubset(option map[string]any, available []string) []string {
+	if option == nil || len(available) == 0 {
+		return nil
+	}
+
+	subset := normalizeRecommendAlgorithmSubset(option[recommendAlgorithmSubsetKey])
+	if len(subset) == 0 {
+		return nil
+	}
+
+	allowed := make(map[string]struct{}, len(available))
+	for _, alg := range available {
+		normalized := normalizeRecommendAlgorithmForService(alg)
+		if normalized == "" || normalized == "all" {
+			continue
+		}
+		allowed[normalized] = struct{}{}
+	}
+
+	filtered := make([]string, 0, len(subset))
+	seen := make(map[string]struct{}, len(subset))
+	for _, alg := range subset {
+		normalized := normalizeRecommendAlgorithmForService(alg)
+		if normalized == "" || normalized == "all" {
+			continue
+		}
+		if _, ok := allowed[normalized]; !ok {
+			continue
+		}
+		if _, ok := seen[normalized]; ok {
+			continue
+		}
+		seen[normalized] = struct{}{}
+		filtered = append(filtered, normalized)
+	}
+	return filtered
 }
 
 func normalizeRecommendLiveType(recType string, raw string) string {

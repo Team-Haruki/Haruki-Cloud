@@ -1212,7 +1212,7 @@ func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 	}
 }
 
-func TestBuildAutoRecommendRequestChallengeAllDefaultsToSingleAlgorithm(t *testing.T) {
+func TestBuildAutoRecommendRequestChallengeAllDefaultsToPreferredAlgorithms(t *testing.T) {
 	var recommendCalls atomic.Int32
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1238,7 +1238,7 @@ func TestBuildAutoRecommendRequestChallengeAllDefaultsToSingleAlgorithm(t *testi
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != challengeCharacterCount {
+			if !ok || len(options) != challengeCharacterCount*2 {
 				t.Fatalf("unexpected challenge-all default batch_options: %+v", payload["batch_options"])
 			}
 			response := make([]map[string]any, 0, len(options))
@@ -1247,16 +1247,20 @@ func TestBuildAutoRecommendRequestChallengeAllDefaultsToSingleAlgorithm(t *testi
 				if !ok {
 					t.Fatalf("unexpected batch option payload: %+v", rawOption)
 				}
-				if option["algorithm"] != "dfs_ga" {
-					t.Fatalf("expected challenge-all default algorithm dfs_ga at %d, got %+v", index, option["algorithm"])
+				expectedAlg := "dfs_ga"
+				if index%2 == 1 {
+					expectedAlg = "rl"
+				}
+				if option["algorithm"] != expectedAlg {
+					t.Fatalf("expected challenge-all default algorithm %s at %d, got %+v", expectedAlg, index, option["algorithm"])
 				}
 				charID, ok := option["challenge_live_character_id"].(float64)
-				if !ok || int(charID) != index+1 {
+				if !ok || int(charID) != index/2+1 {
 					t.Fatalf("unexpected challenge_live_character_id at %d: %+v", index, option["challenge_live_character_id"])
 				}
 				score := 1000000 + int(charID)
 				response = append(response, map[string]any{
-					"alg":       "dfs_ga",
+					"alg":       expectedAlg,
 					"cost_time": 0.2,
 					"wait_time": 0.0,
 					"result": map[string]any{
@@ -1324,7 +1328,7 @@ func TestBuildAutoRecommendRequestChallengeAllDefaultsToSingleAlgorithm(t *testi
 	if len(request.DeckData) != challengeCharacterCount {
 		t.Fatalf("unexpected challenge-all deck count: %d", len(request.DeckData))
 	}
-	if len(request.ModelName) != challengeCharacterCount || request.ModelName[0] != "DGA" {
+	if len(request.ModelName) != challengeCharacterCount || request.ModelName[0] != "DGA+RL" {
 		t.Fatalf("unexpected challenge-all model names: %+v", request.ModelName)
 	}
 }

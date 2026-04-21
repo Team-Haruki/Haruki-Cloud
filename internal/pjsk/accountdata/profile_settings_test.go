@@ -131,8 +131,8 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("replace bg: %v", err)
 	}
-	if item.Bg == nil || item.Bg.Blur != 7 || item.Bg.Alpha != 66 || !item.Bg.Vertical {
-		t.Fatalf("expected bg params to persist across image replace, got %+v", item.Bg)
+	if item.Bg == nil || item.Bg.Blur != 7 || item.Bg.Alpha != 66 || item.Bg.Vertical {
+		t.Fatalf("expected blur/alpha to persist and vertical to refresh on image replace, got %+v", item.Bg)
 	}
 	if len(bgStore.deleted) != 1 {
 		t.Fatalf("expected replaced image to delete previous file, got %+v", bgStore.deleted)
@@ -153,8 +153,8 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("re-upload bg after clear: %v", err)
 	}
-	if item.Bg == nil || item.Bg.Blur != 7 || item.Bg.Alpha != 66 || !item.Bg.Vertical {
-		t.Fatalf("expected bg params to persist after clear and re-upload, got %+v", item.Bg)
+	if item.Bg == nil || item.Bg.Blur != 7 || item.Bg.Alpha != 66 || item.Bg.Vertical {
+		t.Fatalf("expected blur/alpha to persist and vertical to refresh after clear and re-upload, got %+v", item.Bg)
 	}
 }
 

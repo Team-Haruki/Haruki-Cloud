@@ -24,8 +24,8 @@ import (
 
 const (
 	DefaultProfileBGRelativeDir = "user_upload/profile_bg"
-	defaultProfileBGBlur        = 4
-	defaultProfileBGAlpha       = 80
+	defaultProfileBGBlur        = 1
+	defaultProfileBGAlpha       = 50
 	maxProfileBGSizeBytes       = 1 * 1024 * 1024 // 1 MB
 )
 

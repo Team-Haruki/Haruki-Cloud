@@ -44,9 +44,14 @@ func mergeUploadedProfileBGSettings(current, uploaded *drawing.ProfileBgSettings
 		return cloneProfileBGSettings(uploaded)
 	}
 	merged := cloneProfileBGSettings(current)
-	if uploaded != nil && uploaded.ImgPath != nil {
-		path := strings.TrimSpace(*uploaded.ImgPath)
-		merged.ImgPath = &path
+	if uploaded != nil {
+		if uploaded.ImgPath != nil {
+			path := strings.TrimSpace(*uploaded.ImgPath)
+			merged.ImgPath = &path
+		}
+		// A newly uploaded image should always refresh the auto-detected orientation,
+		// matching lunabot's behavior instead of inheriting the previous image layout.
+		merged.Vertical = uploaded.Vertical
 	}
 	return merged
 }

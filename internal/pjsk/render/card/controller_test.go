@@ -3,6 +3,9 @@ package card
 import (
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -356,5 +359,60 @@ func TestRenderCardListAutoSwitchesToCardBoxWhenTooManyCards(t *testing.T) {
 		if item.HasCard {
 			t.Fatalf("expected auto-switched card box request to mark all cards as unowned, got %+v", item)
 		}
+	}
+}
+
+func TestRenderCardListAutoSwitchesToCardBoxKeepsUserInfo(t *testing.T) {
+	source := &lookupTestSource{}
+	for i := 1; i <= cardListAutoBoxThreshold; i++ {
+		source.cards = append(source.cards, &masterdata.Card{ID: 3000 + i, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card", AssetBundleName: "card_a"})
+	}
+
+	var (
+		calledPath string
+		payload    map[string]any
+	)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calledPath = r.URL.Path
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("failed to read request body: %v", err)
+		}
+		if err := json.Unmarshal(body, &payload); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer server.Close()
+
+	controller := NewController(source, nil, drawing.NewHarukiDrawingClient(server.URL), nil)
+	cardIDs := make([]int, 0, len(source.cards))
+	for _, card := range source.cards {
+		cardIDs = append(cardIDs, card.ID)
+	}
+	profile := &drawing.DetailedProfileCardRequest{
+		ID:              "123456789",
+		Region:          "jp",
+		Nickname:        "tester",
+		Source:          "suite",
+		UpdateTime:      1710000000000,
+		LeaderImagePath: "leader.png",
+		UserCards:       []any{map[string]any{"cardId": 3001}},
+	}
+
+	_, err := controller.RenderCardList(ListRequest{CardIDs: cardIDs, Region: "jp", DetailedProfile: profile})
+	if err != nil {
+		t.Fatalf("RenderCardList() error = %v", err)
+	}
+	if calledPath != "/api/pjsk/card/box" {
+		t.Fatalf("expected card box render path, got %q", calledPath)
+	}
+
+	userInfo, ok := payload["user_info"].(map[string]any)
+	if !ok || userInfo == nil {
+		t.Fatalf("expected user_info in auto-switched card box payload, got %#v", payload["user_info"])
+	}
+	if got := userInfo["id"]; got != profile.ID {
+		t.Fatalf("expected user_info.id=%q, got %#v", profile.ID, got)
 	}
 }

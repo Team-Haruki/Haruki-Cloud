@@ -168,6 +168,9 @@ func (c *Controller) buildCardListRenderRequest(query ListRequest) (any, bool, e
 		if query.Title != nil {
 			req.Title = query.Title
 		}
+		if query.DetailedProfile != nil {
+			req.UserInfo = query.DetailedProfile
+		}
 		return req, true, nil
 	}
 	req, err := c.BuildCardListRequest(query)

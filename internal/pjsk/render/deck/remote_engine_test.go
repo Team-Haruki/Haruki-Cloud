@@ -190,6 +190,46 @@ func TestAggregateRemoteRecommendResultsUsesDisplayAlgorithmNames(t *testing.T) 
 	}
 }
 
+func TestAggregateRemoteRecommendResultsSortsBonusByHigherRateFirst(t *testing.T) {
+	options := []map[string]any{
+		{"algorithm": "ga", "target": "bonus", "live_type": "multi", "limit": 2},
+	}
+	results := []remoteBatchRecommendResult{
+		{
+			Alg: "ga",
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{
+				{
+					Score:            900,
+					LiveScore:        900,
+					TotalPower:       300000,
+					EventBonusRate:   20,
+					MultiLiveScoreUp: 100,
+					Cards:            []remoteRecommendCard{{CardID: 1001}},
+				},
+				{
+					Score:            800,
+					LiveScore:        800,
+					TotalPower:       290000,
+					EventBonusRate:   25,
+					MultiLiveScoreUp: 90,
+					Cards:            []remoteRecommendCard{{CardID: 1002}},
+				},
+			}},
+		},
+	}
+
+	agg, err := aggregateRemoteRecommendResults(options, results)
+	if err != nil {
+		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
+	}
+	if len(agg.Decks) != 2 {
+		t.Fatalf("expected 2 bonus decks, got %+v", agg.Decks)
+	}
+	if agg.Decks[0].EventBonusRate != 25 {
+		t.Fatalf("expected higher bonus deck first, got %+v", agg.Decks)
+	}
+}
+
 func TestAggregateRemoteRecommendResultsPrefersMysekaiInternalPointOnTie(t *testing.T) {
 	options := []map[string]any{
 		{"algorithm": "ga", "target": "score", "live_type": "mysekai", "limit": 2},

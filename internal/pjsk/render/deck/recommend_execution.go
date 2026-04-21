@@ -107,7 +107,7 @@ func compareRecommendDecks(recType, target string, left, right RecommendDeck) bo
 	}
 	if target == "bonus" {
 		if left.EventBonusRate != right.EventBonusRate {
-			return left.EventBonusRate < right.EventBonusRate
+			return left.EventBonusRate > right.EventBonusRate
 		}
 		if left.Score != right.Score {
 			return left.Score > right.Score

@@ -2,9 +2,8 @@ package handler
 
 import (
 	"fmt"
+	"haruki-cloud/internal/pjsk/queryrule"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
-	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -261,37 +260,15 @@ func newDeckUnitAliasRules() []deckAliasRule {
 		aliases[alias] = unit
 	}
 
-	keys := make([]string, 0, len(aliases))
-	for key := range aliases {
-		keys = append(keys, key)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return len(keys[i]) > len(keys[j])
-	})
-
-	rules := make([]deckAliasRule, 0, len(keys))
-	for _, key := range keys {
-		pattern := "(?i)"
-		if isDeckASCIIAlias(key) {
-			pattern += `\b` + regexp.QuoteMeta(key) + `\b`
-		} else {
-			pattern += regexp.QuoteMeta(key)
-		}
+	compiled := queryrule.BuildStringRules(aliases)
+	rules := make([]deckAliasRule, 0, len(compiled))
+	for _, rule := range compiled {
 		rules = append(rules, deckAliasRule{
-			re:   regexp.MustCompile(pattern),
-			unit: aliases[key],
+			re:   rule.Re,
+			unit: rule.Value,
 		})
 	}
 	return rules
-}
-
-func isDeckASCIIAlias(raw string) bool {
-	for _, ch := range raw {
-		if ch > 127 {
-			return false
-		}
-	}
-	return true
 }
 
 func intPtr(value int) *int {

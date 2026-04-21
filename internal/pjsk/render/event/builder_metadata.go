@@ -84,16 +84,13 @@ func (b *Builder) buildEventAssets(eventInfo *masterdata.Event, info drawing.Eve
 
 func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregion.Value) (drawing.EventBrief, error) {
 	brief := drawing.EventBrief{
-		ID:            eventInfo.ID,
-		EventName:     eventInfo.Name,
-		EventType:     b.displayEventType(eventInfo.EventType),
-		EventTypeName: b.displayEventType(eventInfo.EventType),
-		StartAt:       eventInfo.StartAt,
-		EndAt:         eventInfo.AggregateAt + 1000,
-		EventBannerPath: assets.ResolveRegionAssetPath(b.assets, region.String(),
-			filepath.Join("home", "banner", eventInfo.AssetBundleName, eventInfo.AssetBundleName+".png"),
-			filepath.Join("event", eventInfo.AssetBundleName, "banner.png"),
-		),
+		ID:              eventInfo.ID,
+		EventName:       eventInfo.Name,
+		EventType:       b.displayEventType(eventInfo.EventType),
+		EventTypeName:   b.displayEventType(eventInfo.EventType),
+		StartAt:         eventInfo.StartAt,
+		EndAt:           eventInfo.AggregateAt + 1000,
+		EventBannerPath: assets.ResolveEventBannerPath(b.assets, region.String(), eventInfo.AssetBundleName),
 	}
 
 	cards, err := b.source.GetEventCards(eventInfo.ID)

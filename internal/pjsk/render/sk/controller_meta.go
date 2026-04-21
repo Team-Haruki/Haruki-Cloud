@@ -63,11 +63,7 @@ func (c *Controller) resolveEventBannerPath(assetBundleName string, region rende
 	if c == nil || c.assets == nil || strings.TrimSpace(assetBundleName) == "" {
 		return ""
 	}
-	return renderassets.ResolveRegionAssetPath(
-		c.assets, renderregion.WithDefault(region).String(),
-		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
-		filepath.Join("event", assetBundleName, "banner.png"),
-	)
+	return renderassets.ResolveEventBannerPath(c.assets, renderregion.WithDefault(region).String(), assetBundleName)
 }
 
 func (c *Controller) resolveCharacterIconPath(characterID int, _ renderregion.Value) string {

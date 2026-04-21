@@ -190,6 +190,25 @@ func TestResolveRegionAssetPathPrefersOnDemandForGacha(t *testing.T) {
 	}
 }
 
+func TestResolveEventBannerPathFallsBackToEventStoryBanner(t *testing.T) {
+	tmpDir := t.TempDir()
+	helper := NewAssetHelper(tmpDir, nil)
+	rel := filepath.Join("event_story", "event_angelclover_2021", "screen_image", "banner_event_story.png")
+
+	onDemand := filepath.Join(tmpDir, "asset", "jp-assets", "ondemand", rel)
+	if err := os.MkdirAll(filepath.Dir(onDemand), 0o755); err != nil {
+		t.Fatalf("mkdir ondemand: %v", err)
+	}
+	if err := os.WriteFile(onDemand, []byte("ondemand"), 0o644); err != nil {
+		t.Fatalf("write ondemand file: %v", err)
+	}
+
+	got := ResolveEventBannerPath(helper, "jp", "event_angelclover_2021")
+	if want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "ondemand", rel)); got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
 func TestResolveRegionAssetPathFallsBackToRelativePathWhenHelperMisses(t *testing.T) {
 	helper := NewAssetHelper("/srv/haruki-assets", nil)
 	rel := filepath.Join("thumbnail", "chara", "res001_no001_normal.png")

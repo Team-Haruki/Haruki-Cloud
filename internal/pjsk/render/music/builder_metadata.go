@@ -2,7 +2,6 @@ package music
 
 import (
 	"fmt"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -226,12 +225,5 @@ func (b *Builder) buildLimitedTimes(musicID int, region renderregion.Value) [][]
 }
 
 func (b *Builder) buildEventBannerPath(assetBundleName string, region renderregion.Value) string {
-	if strings.TrimSpace(assetBundleName) == "" {
-		return ""
-	}
-	return assets.ResolveRegionAssetPath(
-		b.assets, region.String(),
-		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
-		filepath.Join("event", assetBundleName, "banner.png"),
-	)
+	return assets.ResolveEventBannerPath(b.assets, region.String(), assetBundleName)
 }

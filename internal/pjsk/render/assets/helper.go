@@ -285,6 +285,20 @@ func ResolveRegionAssetPath(helper *AssetHelper, region string, relPaths ...stri
 	return candidates[0]
 }
 
+func ResolveEventBannerPath(helper *AssetHelper, region, assetBundleName string) string {
+	assetBundleName = strings.TrimSpace(assetBundleName)
+	if assetBundleName == "" {
+		return ""
+	}
+	return ResolveRegionAssetPath(
+		helper,
+		region,
+		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
+		filepath.Join("event", assetBundleName, "banner.png"),
+		filepath.Join("event_story", assetBundleName, "screen_image", "banner_event_story.png"),
+	)
+}
+
 // StaticImagesDir is the base directory for Drawing API static UI images
 // (card frames, rarity icons, attribute icons, character icons, unit logos,
 // skill icons, play-result icons, etc.) within the Drawing API data root.

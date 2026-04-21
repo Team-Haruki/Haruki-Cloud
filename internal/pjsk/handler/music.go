@@ -426,7 +426,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		if strings.TrimSpace(q.Style) == "" {
 			q.Style = resolveRequesterHarukiUserChartStyle(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID)
 		}
-		data, err = musicCtrl.RenderMusicChart(q)
+		return renderMusicChartMessage(rc, musicCtrl, q)
 	case "music-progress":
 		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
 		if suiteErr != nil {
@@ -453,14 +453,14 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, resolveErr
 		}
 		if len(matches) == 1 {
-			data, err = renderSingleMusicLookupChart(
+			return renderSingleMusicLookupChartMessage(
+				rc,
 				musicCtrl,
 				rc.Cmd.Region,
 				matches[0].Music.ID,
 				matches[0].Difficulty,
 				resolveRequesterHarukiUserChartStyle(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
 			)
-			break
 		}
 		return renderNoteCountLookupListMessages(rc, musicCtrl, q, matches)
 	case "music-cover":
@@ -489,14 +489,14 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, resolveErr
 		}
 		if len(matches) == 1 {
-			data, err = renderSingleMusicLookupChart(
+			return renderSingleMusicLookupChartMessage(
+				rc,
 				musicCtrl,
 				rc.Cmd.Region,
 				matches[0].Music.ID,
 				matches[0].Difficulty,
 				resolveRequesterHarukiUserChartStyle(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
 			)
-			break
 		}
 		return renderBPMLookupListMessages(rc, musicCtrl, q, matches)
 	default:
@@ -506,15 +506,6 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, err
 	}
 	return rc.ImageMessage(data)
-}
-
-func renderSingleMusicLookupChart(musicCtrl *rendermusic.Controller, region string, musicID int, difficulty string, style string) ([]byte, error) {
-	return musicCtrl.RenderMusicChart(rendermusic.ChartQuery{
-		Query:      fmt.Sprintf("music%d", musicID),
-		Region:     region,
-		Difficulty: difficulty,
-		Style:      style,
-	})
 }
 
 func renderNoteCountLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, query rendermusic.NoteCountQuery, matches []rendermusic.NoteCountMatch) (onebot11.Message, error) {

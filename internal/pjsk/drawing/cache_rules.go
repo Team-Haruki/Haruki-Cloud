@@ -16,8 +16,12 @@ type renderCacheRule struct {
 }
 
 var (
+	renderCacheTTLHalfDay = 12 * time.Hour
+	renderCacheTTLOneDay  = 24 * time.Hour
+
 	defaultRenderCacheRule = renderCacheRule{
 		Enabled:          true,
+		TTL:              renderCacheTTLOneDay,
 		IgnoreFieldNames: renderCacheStringSet("dt"),
 	}
 
@@ -28,6 +32,7 @@ var (
 	renderCacheRules = map[string]renderCacheRule{
 		"/api/pjsk/deck/recommend": {
 			Enabled:     true,
+			TTL:         renderCacheTTLHalfDay,
 			IgnorePaths: renderCacheStringSet("model_name", "cost_times", "wait_times", "profile.update_time"),
 		},
 		"/api/pjsk/profile": {
@@ -48,10 +53,12 @@ var (
 		},
 		"/api/pjsk/music/rewards/detail": {
 			Enabled:     true,
+			TTL:         renderCacheTTLHalfDay,
 			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
 		},
 		"/api/pjsk/music/rewards/basic": {
 			Enabled:     true,
+			TTL:         renderCacheTTLHalfDay,
 			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
 		},
 		"/api/pjsk/education/challenge-live": {
@@ -76,7 +83,12 @@ var (
 		},
 		"/api/pjsk/mysekai/resource": {
 			Enabled:     true,
+			TTL:         renderCacheTTLHalfDay,
 			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+		},
+		"/api/pjsk/mysekai/map": {
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/mysekai/fixture-list": {
 			Enabled:     true,
@@ -92,6 +104,7 @@ var (
 		},
 		"/api/pjsk/mysekai/talk-list": {
 			Enabled:     true,
+			TTL:         renderCacheTTLHalfDay,
 			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
 		},
 		"/api/pjsk/sk/line": {

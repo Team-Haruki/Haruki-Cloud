@@ -5,6 +5,29 @@ import (
 	"time"
 )
 
+func TestResolveRenderCacheRuleUsesOneDayTTLByDefault(t *testing.T) {
+	rule := resolveRenderCacheRule("/api/pjsk/card/detail")
+	if rule.TTL != renderCacheTTLOneDay {
+		t.Fatalf("expected default ttl %s, got %s", renderCacheTTLOneDay, rule.TTL)
+	}
+}
+
+func TestResolveRenderCacheRuleUsesHalfDayTTLForSelectedEndpoints(t *testing.T) {
+	for _, endpoint := range []string{
+		"/api/pjsk/deck/recommend",
+		"/api/pjsk/music/rewards/basic",
+		"/api/pjsk/music/rewards/detail",
+		"/api/pjsk/mysekai/map",
+		"/api/pjsk/mysekai/resource",
+		"/api/pjsk/mysekai/talk-list",
+	} {
+		rule := resolveRenderCacheRule(endpoint)
+		if rule.TTL != renderCacheTTLHalfDay {
+			t.Fatalf("%s ttl = %s, want %s", endpoint, rule.TTL, renderCacheTTLHalfDay)
+		}
+	}
+}
+
 func TestBuildRenderCachePolicyIgnoresEventRecordUserUpdateTime(t *testing.T) {
 	reqA := EventRecordRequest{
 		EventInfo: []EventHistory{{ID: 1, EventName: "Event"}},

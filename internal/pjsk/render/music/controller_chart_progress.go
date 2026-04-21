@@ -40,6 +40,16 @@ func (c *Controller) RenderMusicChart(query ChartQuery) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	return c.RenderMusicChartRequest(payload)
+}
+
+func (c *Controller) RenderMusicChartRequest(payload *drawing.GenerateMusicChartRequest) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	if payload == nil {
+		return nil, fmt.Errorf("music chart payload is required")
+	}
 	return c.drawing.GenerateMusicChart(payload)
 }
 

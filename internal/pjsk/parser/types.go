@@ -1,7 +1,5 @@
 package parser
 
-import "regexp"
-
 // ── Command types ───────────────────────────────────────────────────────────
 
 // CommandType 定义指令类型
@@ -78,11 +76,6 @@ type EventParser struct {
 }
 
 // ── Extractor types ─────────────────────────────────────────────────────────
-
-type dictRule struct {
-	re  *regexp.Regexp
-	val string
-}
 
 // Extractor 通用特征提取器
 type Extractor struct {

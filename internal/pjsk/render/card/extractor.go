@@ -1,122 +1,37 @@
 package card
 
 import (
+	"haruki-cloud/internal/pjsk/queryrule"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 )
 
-type dictRule struct {
-	re                 *regexp.Regexp
-	val                string
-	singleRuneNonASCII bool
-}
-
-type intSliceRule struct {
-	re     *regexp.Regexp
-	vals   []int
-	length int
-}
-
-func buildRules(items map[string]string) []dictRule {
-	keys := make([]string, 0, len(items))
-	for key := range items {
-		keys = append(keys, key)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		if len(keys[i]) != len(keys[j]) {
-			return len(keys[i]) > len(keys[j])
-		}
-		return keys[i] > keys[j]
-	})
-
-	rules := make([]dictRule, 0, len(keys))
-	for _, key := range keys {
-		isASCII := true
-		for _, ch := range key {
-			if ch > 127 {
-				isASCII = false
-				break
-			}
-		}
-		pattern := "(?i)"
-		if isASCII {
-			pattern += `\b` + regexp.QuoteMeta(key) + `\b`
-		} else {
-			pattern += regexp.QuoteMeta(key)
-		}
-		rules = append(rules, dictRule{
-			re:                 regexp.MustCompile(pattern),
-			val:                items[key],
-			singleRuneNonASCII: !isASCII && utf8.RuneCountInString(key) == 1,
-		})
-	}
-	return rules
-}
-
-func buildIntSliceRules(items map[string][]int) []intSliceRule {
-	keys := make([]string, 0, len(items))
-	for key := range items {
-		keys = append(keys, key)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		if len(keys[i]) != len(keys[j]) {
-			return len(keys[i]) > len(keys[j])
-		}
-		return keys[i] > keys[j]
-	})
-
-	rules := make([]intSliceRule, 0, len(keys))
-	for _, key := range keys {
-		isASCII := true
-		for _, ch := range key {
-			if ch > 127 {
-				isASCII = false
-				break
-			}
-		}
-		pattern := "(?i)"
-		if isASCII {
-			pattern += `\b` + regexp.QuoteMeta(key) + `\b`
-		} else {
-			pattern += regexp.QuoteMeta(key)
-		}
-		vals := append([]int(nil), items[key]...)
-		rules = append(rules, intSliceRule{
-			re:     regexp.MustCompile(pattern),
-			vals:   vals,
-			length: len(key),
-		})
-	}
-	return rules
-}
-
-func extractByRules(text string, rules []dictRule) ExtractResult[string] {
+func extractByRules(text string, rules []queryrule.StringRule) ExtractResult[string] {
 	return extractByRulesWithOptions(text, rules, true)
 }
 
-func extractByRulesWithOptions(text string, rules []dictRule, allowSingleRuneNonASCII bool) ExtractResult[string] {
+func extractByRulesWithOptions(text string, rules []queryrule.StringRule, allowSingleRuneNonASCII bool) ExtractResult[string] {
 	for _, rule := range rules {
-		if !allowSingleRuneNonASCII && rule.singleRuneNonASCII {
+		if !allowSingleRuneNonASCII && rule.SingleRuneNonASCII {
 			continue
 		}
-		if rule.re.MatchString(text) {
-			remaining := rule.re.ReplaceAllString(text, "")
-			return ExtractResult[string]{Value: rule.val, Remaining: strings.TrimSpace(remaining), Found: true}
+		if rule.Re.MatchString(text) {
+			remaining := rule.Re.ReplaceAllString(text, "")
+			return ExtractResult[string]{Value: rule.Value, Remaining: strings.TrimSpace(remaining), Found: true}
 		}
 	}
 	return ExtractResult[string]{Remaining: text}
 }
 
-func extractIntSliceByRules(text string, rules []intSliceRule) ExtractResult[[]int] {
+func extractIntSliceByRules(text string, rules []queryrule.IntSliceRule) ExtractResult[[]int] {
 	for _, rule := range rules {
-		if rule.re.MatchString(text) {
-			remaining := rule.re.ReplaceAllString(text, "")
+		if rule.Re.MatchString(text) {
+			remaining := rule.Re.ReplaceAllString(text, "")
 			return ExtractResult[[]int]{
-				Value:     append([]int(nil), rule.vals...),
+				Value:     append([]int(nil), rule.Values...),
 				Remaining: strings.TrimSpace(remaining),
 				Found:     true,
 			}
@@ -171,25 +86,30 @@ func (e *Extractor) ExtractCharacter(text string) ExtractResult[int] {
 	}
 }
 
-var rarityRules = buildRules(map[string]string{
-	"4星": "rarity_4", "4star": "rarity_4", "4x": "rarity_4", "4": "rarity_4", "四星": "rarity_4",
-	"3星": "rarity_3", "3star": "rarity_3", "3x": "rarity_3", "3": "rarity_3", "三星": "rarity_3",
-	"2星": "rarity_2", "2star": "rarity_2", "2x": "rarity_2", "2": "rarity_2", "二星": "rarity_2",
-	"1星": "rarity_1", "1star": "rarity_1", "1x": "rarity_1", "1": "rarity_1", "一星": "rarity_1",
-	"生日": "rarity_birthday", "birthday": "rarity_birthday",
-})
+var cardRarityAliasGroups = map[string][]string{
+	"rarity_4": {"4x", "4"},
+	"rarity_3": {"3x", "3"},
+	"rarity_2": {"2x", "2"},
+	"rarity_1": {"1x", "1"},
+}
+
+var rarityRules = queryrule.BuildStringRulesFromGroups(queryrule.MergeAliasGroups(
+	queryrule.RarityAliasGroups(),
+	cardRarityAliasGroups,
+))
 
 func (e *Extractor) ExtractRarity(text string) ExtractResult[string] {
 	return extractByRules(text, rarityRules)
 }
 
-var attrRules = buildRules(map[string]string{
-	"cute": "cute", "可爱": "cute", "粉花": "cute", "粉": "cute",
-	"cool": "cool", "帅气": "cool", "蓝星": "cool", "蓝": "cool",
-	"pure": "pure", "纯真": "pure", "绿草": "pure", "草": "pure", "绿": "pure",
-	"happy": "happy", "快乐": "happy", "橙心": "happy", "橙": "happy", "黄": "happy",
-	"mysterious": "mysterious", "神秘": "mysterious", "紫月": "mysterious", "紫": "mysterious",
-})
+var cardAttrAliasGroups = map[string][]string{
+	"happy": {"黄"},
+}
+
+var attrRules = queryrule.BuildStringRulesFromGroups(queryrule.MergeAliasGroups(
+	queryrule.AttributeAliasGroups(),
+	cardAttrAliasGroups,
+))
 
 func (e *Extractor) ExtractAttribute(text string) ExtractResult[string] {
 	return extractByRules(text, attrRules)
@@ -199,18 +119,9 @@ func (e *Extractor) ExtractAttributeWithoutSingleRune(text string) ExtractResult
 	return extractByRulesWithOptions(text, attrRules, false)
 }
 
-var skillRules = buildRules(map[string]string{
-	"奶卡": "life_recovery",
-	"分卡": "score_up",
-	"判卡": "judgment_up",
-	"分":  "score_up",
-	"判定": "judgment_up",
-	"判":  "judgment_up",
-	"回复": "life_recovery",
-	"奶":  "life_recovery",
-})
+var skillRules = queryrule.BuildStringRulesFromGroups(queryrule.SkillAliasGroups())
 
-var detailSkillRules = buildIntSliceRules(map[string][]int{
+var detailSkillRules = queryrule.BuildIntSliceRules(map[string][]int{
 	"大分": {4},
 	"p分": {11},
 	"判分": {13},
@@ -227,31 +138,25 @@ func (e *Extractor) ExtractDetailedSkillIDs(text string) ExtractResult[[]int] {
 	return extractIntSliceByRules(text, detailSkillRules)
 }
 
-var supplyRules = buildRules(map[string]string{
-	"联动":          SupplyCollab,
-	"联动限定":        SupplyCollab,
-	"collab":      SupplyCollab,
-	"bfes限定":      SupplyBFes,
-	"bfes":        SupplyBFes,
-	"cfes限定":      SupplyCFes,
-	"cfes":        SupplyCFes,
-	"worldlink限定": SupplyWL,
-	"wl限定":        SupplyWL,
-	"期间限定":        SupplyLimited,
-	"fes":         SupplyFes,
-	"非限定":         SupplyNormal,
-	"限定":          SupplyLimited,
-	"limit":       SupplyLimited,
-	"常驻":          SupplyNormal,
-	"非限":          SupplyNormal,
-	"生日":          SupplyBirthday,
-})
+var cardSupplyAliasGroups = map[string][]string{
+	SupplyCollab:  {"联动限定", "联动", "collab"},
+	SupplyBFes:    {"bfes限定", "bfes"},
+	SupplyCFes:    {"cfes限定", "cfes"},
+	SupplyWL:      {"worldlink限定", "wl限定"},
+	SupplyLimited: {"期间限定"},
+	SupplyNormal:  {"非限定"},
+}
+
+var supplyRules = queryrule.BuildStringRulesFromGroups(queryrule.MergeAliasGroups(
+	queryrule.SupplyAliasGroups(),
+	cardSupplyAliasGroups,
+))
 
 func (e *Extractor) ExtractSupply(text string) ExtractResult[string] {
 	return extractByRules(text, supplyRules)
 }
 
-var unitRules = buildRules(map[string]string{
+var unitRules = queryrule.BuildStringRules(map[string]string{
 	"light_sound":    "light_sound",
 	"ln":             "light_sound",
 	"idol":           "idol",
@@ -273,7 +178,7 @@ func (e *Extractor) ExtractUnit(text string) ExtractResult[string] {
 	return extractByRules(text, unitRules)
 }
 
-var vsUnitRules = buildRules(map[string]string{
+var vsUnitRules = queryrule.BuildStringRules(map[string]string{
 	"lnvs":  "light_sound",
 	"lnv":   "light_sound",
 	"mmjvs": "idol",
@@ -294,7 +199,7 @@ func (e *Extractor) ExtractVSUnit(text string) ExtractResult[string] {
 	return extractByRules(text, vsUnitRules)
 }
 
-var ocUnitRules = buildRules(map[string]string{
+var ocUnitRules = queryrule.BuildStringRules(map[string]string{
 	"lnoc":  "light_sound",
 	"纯ln":   "light_sound",
 	"mmjoc": "idol",

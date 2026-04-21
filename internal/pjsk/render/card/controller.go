@@ -284,14 +284,14 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 			cards = append(cards, card)
 		}
 		if len(cards) == 0 {
-			return region, nil, nil, nil, fmt.Errorf("card ids are required")
+			return region, nil, nil, nil, fmt.Errorf("查找卡牌失败，请检查卡牌 ID 是否正确")
 		}
 		return region, source, builder, cards, nil
 	}
 
 	rawQuery := strings.TrimSpace(query.Query)
 	if rawQuery == "" {
-		return region, nil, nil, nil, fmt.Errorf("card ids are required")
+		return region, nil, nil, nil, fmt.Errorf("请输入正确的查询参数")
 	}
 
 	if query.StrictFilterOnly {

@@ -36,6 +36,7 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 	if err != nil {
 		return nil, err
 	}
+	applyRecommendChallengeAllDefaults(option, recType, query)
 	if recType == "challenge" {
 		if err := c.prepareChallengeRecommend(query, option); err != nil {
 			return nil, err

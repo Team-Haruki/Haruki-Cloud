@@ -640,6 +640,22 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	}
 }
 
+func TestApplyRecommendChallengeAllDefaultsKeepsExplicitAlgorithm(t *testing.T) {
+	option := map[string]any{
+		"algorithm": "all",
+		"target":    "score",
+	}
+
+	applyRecommendChallengeAllDefaults(option, "challenge", AutoQuery{
+		RecommendType: "challenge",
+		Algorithm:     "all",
+	})
+
+	if option["algorithm"] != "all" {
+		t.Fatalf("expected explicit algorithm to be preserved, got %+v", option["algorithm"])
+	}
+}
+
 func TestBuildRecommendOptionAppliesExtendedOverrides(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
@@ -1193,6 +1209,123 @@ func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 	}
 	if request.CharaName != nil {
 		t.Fatalf("challenge-all request should not set single character metadata: %+v", request.CharaName)
+	}
+}
+
+func TestBuildAutoRecommendRequestChallengeAllDefaultsToSingleAlgorithm(t *testing.T) {
+	var recommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"challenge-all-default-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
+			}
+			options, ok := payload["batch_options"].([]any)
+			if !ok || len(options) != challengeCharacterCount {
+				t.Fatalf("unexpected challenge-all default batch_options: %+v", payload["batch_options"])
+			}
+			response := make([]map[string]any, 0, len(options))
+			for index, rawOption := range options {
+				option, ok := rawOption.(map[string]any)
+				if !ok {
+					t.Fatalf("unexpected batch option payload: %+v", rawOption)
+				}
+				if option["algorithm"] != "dfs_ga" {
+					t.Fatalf("expected challenge-all default algorithm dfs_ga at %d, got %+v", index, option["algorithm"])
+				}
+				charID, ok := option["challenge_live_character_id"].(float64)
+				if !ok || int(charID) != index+1 {
+					t.Fatalf("unexpected challenge_live_character_id at %d: %+v", index, option["challenge_live_character_id"])
+				}
+				score := 1000000 + int(charID)
+				response = append(response, map[string]any{
+					"alg":       "dfs_ga",
+					"cost_time": 0.2,
+					"wait_time": 0.0,
+					"result": map[string]any{
+						"decks": []map[string]any{{
+							"score":                   score,
+							"live_score":              score,
+							"mysekai_event_point":     0,
+							"total_power":             345678,
+							"event_bonus_rate":        0,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up":     120,
+							"cards": []map[string]any{{
+								"card_id":          1001,
+								"level":            50,
+								"master_rank":      1,
+								"skill_level":      4,
+								"skill_score_up":   100,
+								"event_bonus_rate": 0,
+								"episode1_read":    true,
+								"episode2_read":    true,
+								"after_training":   false,
+								"default_image":    "normal",
+								"has_canvas_bonus": false,
+							}},
+						}},
+					},
+				})
+			}
+			encoded, err := json.Marshal(response)
+			if err != nil {
+				t.Fatalf("encode recommend response: %v", err)
+			}
+			_, _ = w.Write(encoded)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	masterdataRoot := t.TempDir()
+	if err := os.Mkdir(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir jp masterdata dir: %v", err)
+	}
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"dfs_ga", "ga", "rl"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:        "jp",
+		RecommendType: "challenge",
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+
+	if recommendCalls.Load() != 1 {
+		t.Fatalf("expected 1 recommend call, got %d", recommendCalls.Load())
+	}
+	if len(request.DeckData) != challengeCharacterCount {
+		t.Fatalf("unexpected challenge-all deck count: %d", len(request.DeckData))
+	}
+	if len(request.ModelName) != challengeCharacterCount || request.ModelName[0] != "DGA" {
+		t.Fatalf("unexpected challenge-all model names: %+v", request.ModelName)
 	}
 }
 

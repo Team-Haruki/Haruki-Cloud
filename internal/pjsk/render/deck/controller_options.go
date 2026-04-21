@@ -146,6 +146,22 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	}
 }
 
+func applyRecommendChallengeAllDefaults(option map[string]any, recType string, query AutoQuery) {
+	if option == nil || recType != "challenge" {
+		return
+	}
+	if strings.TrimSpace(query.Algorithm) != "" {
+		return
+	}
+	if query.ChallengeLiveCharacterID != nil && *query.ChallengeLiveCharacterID > 0 {
+		return
+	}
+	if normalizeRecommendTarget(query.Target) == "skill" {
+		return
+	}
+	option["algorithm"] = "dfs_ga"
+}
+
 func normalizeRecommendLiveOptions(option map[string]any) {
 	if option == nil {
 		return

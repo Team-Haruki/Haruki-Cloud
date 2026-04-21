@@ -1,10 +1,14 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -63,6 +67,18 @@ type handlerMultiRegionBindingValidator struct {
 	profiles map[string]map[string]string
 }
 
+type handlerTestFastVerifier struct {
+	bindings []sekaiapi.UserGameBinding
+	err      error
+}
+
+func (f handlerTestFastVerifier) GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID string) ([]sekaiapi.UserGameBinding, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return append([]sekaiapi.UserGameBinding(nil), f.bindings...), nil
+}
+
 func (v handlerMultiRegionBindingValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {
 	regionProfiles, ok := v.profiles[strings.ToLower(strings.TrimSpace(server))]
 	if !ok {
@@ -100,6 +116,21 @@ func newHandlerTestBindingServiceWithValidator(t *testing.T, validator accountda
 func newHandlerTestBindingService(t *testing.T) *accountdata.BindingService {
 	t.Helper()
 	return newHandlerTestBindingServiceWithValidator(t, handlerTestBindingValidator{})
+}
+
+func mustEncodeTestPNG(t *testing.T, width, height int) []byte {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			img.Set(x, y, color.RGBA{R: uint8(40 + x), G: uint8(90 + y), B: 180, A: 255})
+		}
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		t.Fatalf("encode png: %v", err)
+	}
+	return buf.Bytes()
 }
 
 func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
@@ -1166,6 +1197,163 @@ func TestExecuteMusicListPrefersAPIProfileOverSuiteSnapshotProfile(t *testing.T)
 	}
 	if got := captured.UserResults[1]; got != "ap" {
 		t.Fatalf("unexpected user result: %+v", got)
+	}
+}
+
+func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	service.SetFastVerificationProvider(handlerTestFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{{
+			Server:     "jp",
+			GameUserID: "12345678901234",
+		}},
+	})
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp"); err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+
+	bgRoot := t.TempDir()
+	service.SetProfileBGStorage(accountdata.NewLocalProfileBGStore(bgRoot))
+
+	bgBytes := mustEncodeTestPNG(t, 6, 12)
+	bgServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write(bgBytes)
+	}))
+	defer bgServer.Close()
+
+	if _, err := service.SetCurrentBindingProfileBG(ctx, "qq", "42", "jp", bgServer.URL+"/bg.png"); err != nil {
+		t.Fatalf("set current binding profile bg: %v", err)
+	}
+
+	var requestedPath string
+	apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		if r.URL.Path != "/api/jp/12345678901234/profile" {
+			http.NotFound(w, r)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 12345678901234,
+				Name:   "API User",
+			},
+			UserProfile: sekaiapi.UserProfile{
+				Word: "Hello",
+			},
+			UserDeck: sekaiapi.UserDeck{
+				DeckID: 1,
+				Leader: 1001,
+			},
+			UserCards: []sekaiapi.AnotherUserCard{{
+				CardID:       1001,
+				DefaultImage: "normal",
+			}},
+		})
+	}))
+	defer apiServer.Close()
+
+	oldBaseURL := config.Cfg.SekaiAPI.BaseURL
+	oldToken := config.Cfg.SekaiAPI.Token
+	config.Cfg.SekaiAPI.BaseURL = apiServer.URL
+	config.Cfg.SekaiAPI.Token = "test-token"
+	defer func() {
+		config.Cfg.SekaiAPI.BaseURL = oldBaseURL
+		config.Cfg.SekaiAPI.Token = oldToken
+	}()
+
+	var captured drawing.ProfileRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/profile" {
+			http.NotFound(w, r)
+			return
+		}
+		defer r.Body.Close()
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode profile request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	profileController := renderprofile.NewController(runtimeProfileDataSourceStub{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {
+				ID:              1001,
+				AssetBundleName: "card_test",
+			},
+		},
+	}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil)
+
+	blur := 7
+	alpha := 66
+	vertical := true
+	params, err := json.Marshal(accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		RegionExplicit: true,
+		Blur:           &blur,
+		Alpha:          &alpha,
+		Vertical:       &vertical,
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeProfile(NewRequestContext(ctx, &CommandRequest{
+		Module:            parser.ModuleProfile,
+		Mode:              accountdata.ProfileModeBGAdjust,
+		Region:            "jp",
+		RegionExplicit:    true,
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:   service,
+		Profiles:   profileController,
+		SekaiAPI:   sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}))
+	if err != nil {
+		t.Fatalf("executeProfile bg-adjust: %v", err)
+	}
+	if requestedPath != "/api/jp/12345678901234/profile" {
+		t.Fatalf("unexpected profile api path: %q", requestedPath)
+	}
+	if len(message) < 2 {
+		t.Fatalf("expected image preview plus text summary, got %+v", message)
+	}
+	if message[0].Type != "image" {
+		t.Fatalf("expected first segment to be image, got %+v", message)
+	}
+	if message[1].Type != "text" {
+		t.Fatalf("expected second segment to be text, got %+v", message)
+	}
+	textData, ok := message[1].Data.(onebot11.TextData)
+	if !ok {
+		t.Fatalf("unexpected text segment data: %+v", message[1].Data)
+	}
+	if !strings.Contains(textData.Text, "已更新JP服个人信息背景设置") {
+		t.Fatalf("unexpected text summary: %q", textData.Text)
+	}
+	if captured.BgSettings == nil {
+		t.Fatalf("expected bg settings in profile request, got %+v", captured)
+	}
+	if captured.BgSettings.Blur != blur || captured.BgSettings.Alpha != alpha || captured.BgSettings.Vertical != vertical {
+		t.Fatalf("unexpected bg settings: %+v", captured.BgSettings)
+	}
+	if captured.Profile.Nickname != "API User" {
+		t.Fatalf("expected rendered profile to use API data, got %+v", captured.Profile)
 	}
 }
 

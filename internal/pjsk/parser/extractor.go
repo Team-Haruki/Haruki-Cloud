@@ -1,18 +1,50 @@
 package parser
 
 import (
-	"haruki-cloud/internal/pjsk/queryrule"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func extractByRules(text string, rules []queryrule.StringRule) ExtractResult[string] {
+func buildRules(m map[string]string) []dictRule {
+	var keys []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	var rules []dictRule
+	for _, k := range keys {
+		isAscii := true
+		for _, char := range k {
+			if char > 127 {
+				isAscii = false
+				break
+			}
+		}
+		pattern := "(?i)"
+		if isAscii {
+			pattern += `\b` + regexp.QuoteMeta(k) + `\b`
+		} else {
+			pattern += regexp.QuoteMeta(k)
+		}
+		rules = append(rules, dictRule{
+			re:  regexp.MustCompile(pattern),
+			val: m[k],
+		})
+	}
+	return rules
+}
+
+func extractByRules(text string, rules []dictRule) ExtractResult[string] {
 	for _, rule := range rules {
-		if rule.Re.MatchString(text) {
-			remaining := rule.Re.ReplaceAllString(text, "")
-			return ExtractResult[string]{Value: rule.Value, Remaining: strings.TrimSpace(remaining), Found: true}
+		if rule.re.MatchString(text) {
+			remaining := rule.re.ReplaceAllString(text, "")
+			return ExtractResult[string]{Value: rule.val, Remaining: strings.TrimSpace(remaining), Found: true}
 		}
 	}
 	return ExtractResult[string]{Value: "", Remaining: text, Found: false}
@@ -58,7 +90,15 @@ func (e *Extractor) ExtractCharacter(text string) ExtractResult[int] {
 
 // --- 稀有度提取 ---
 
-var rarityRules = queryrule.BuildStringRulesFromGroups(queryrule.RarityAliasGroups())
+var rarityMap = map[string]string{
+	"4星": "rarity_4", "4star": "rarity_4", "四星": "rarity_4",
+	"3星": "rarity_3", "3star": "rarity_3", "三星": "rarity_3",
+	"2星": "rarity_2", "2star": "rarity_2", "二星": "rarity_2",
+	"1星": "rarity_1", "1star": "rarity_1", "一星": "rarity_1",
+	"生日": "rarity_birthday", "birthday": "rarity_birthday",
+}
+
+var rarityRules = buildRules(rarityMap)
 
 func (e *Extractor) ExtractRarity(text string) ExtractResult[string] {
 	return extractByRules(text, rarityRules)
@@ -94,7 +134,15 @@ func isAsciiLetter(ch byte) bool {
 
 // --- 属性提取 ---
 
-var attrRules = queryrule.BuildStringRulesFromGroups(queryrule.AttributeAliasGroups())
+var attrMap = map[string]string{
+	"cute": "cute", "可爱": "cute", "粉花": "cute", "粉": "cute", "pink": "cute",
+	"cool": "cool", "帅气": "cool", "蓝星": "cool", "蓝": "cool", "blue": "cool",
+	"pure": "pure", "纯真": "pure", "绿草": "pure", "草": "pure", "绿": "pure", "green": "pure",
+	"happy": "happy", "快乐": "happy", "橙心": "happy", "橙": "happy", "orange": "happy",
+	"mysterious": "mysterious", "神秘": "mysterious", "紫月": "mysterious", "紫": "mysterious", "purple": "mysterious",
+}
+
+var attrRules = buildRules(attrMap)
 
 func (e *Extractor) ExtractAttribute(text string) ExtractResult[string] {
 	return extractByRules(text, attrRules)
@@ -102,16 +150,14 @@ func (e *Extractor) ExtractAttribute(text string) ExtractResult[string] {
 
 // --- 技能提取 ---
 
-var parserSkillAliasGroups = map[string][]string{
-	"perfect_score_up": {"p分"},
-	"great_score_up":   {"大分"},
-	"judgment_up":      {"判分"},
+var skillMap = map[string]string{
+	"分": "score_up", "p分": "perfect_score_up", "大分": "great_score_up",
+	"判卡": "judgment_up", "分卡": "score_up", "奶卡": "life_recovery",
+	"判": "judgment_up", "判定": "judgment_up", "判分": "judgment_up",
+	"奶": "life_recovery", "回复": "life_recovery",
 }
 
-var skillRules = queryrule.BuildStringRulesFromGroups(queryrule.MergeAliasGroups(
-	queryrule.SkillAliasGroups(),
-	parserSkillAliasGroups,
-))
+var skillRules = buildRules(skillMap)
 
 func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 	return extractByRules(text, skillRules)
@@ -119,7 +165,14 @@ func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 
 // --- 限定类型提取 ---
 
-var supplyRules = queryrule.BuildStringRulesFromGroups(queryrule.SupplyAliasGroups())
+var supplyMap = map[string]string{
+	"fes": "festival", "fES": "festival",
+	"限定": "limited", "limit": "limited",
+	"常驻": "normal", "非限": "normal",
+	"生日": "birthday",
+}
+
+var supplyRules = buildRules(supplyMap)
 
 func (e *Extractor) ExtractSupply(text string) ExtractResult[string] {
 	return extractByRules(text, supplyRules)

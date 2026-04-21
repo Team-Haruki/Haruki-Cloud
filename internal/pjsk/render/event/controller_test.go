@@ -112,7 +112,76 @@ func TestControllerBuildEventDetailRequestUsesCurrentEventWhenRequested(t *testi
 	}
 }
 
-func TestControllerBuildEventDetailRequestRejectsUnreleasedNextEvent(t *testing.T) {
+func TestControllerBuildEventDetailRequestReturnsNoOngoingEventAfterAggregateBeforeNextStart(t *testing.T) {
+	now := time.Now().UnixMilli()
+
+	source := newTestEventSource(renderregion.JP)
+	prev := &masterdata.Event{
+		ID:              10,
+		EventType:       "marathon",
+		Name:            "Prev",
+		AssetBundleName: "prev",
+		StartAt:         now - 10_000,
+		AggregateAt:     now - 5_000,
+		ClosedAt:        now + 5_000,
+	}
+	next := &masterdata.Event{
+		ID:              20,
+		EventType:       "marathon",
+		Name:            "Next",
+		AssetBundleName: "next",
+		StartAt:         now + 10_000,
+		AggregateAt:     now + 20_000,
+		ClosedAt:        now + 25_000,
+	}
+	source.events = []*masterdata.Event{prev, next}
+	source.eventsByID[prev.ID] = prev
+	source.eventsByID[next.ID] = next
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	req, err := controller.BuildEventDetailRequest(DetailQuery{
+		Region:     renderregion.JP,
+		UseCurrent: true,
+	})
+	if err == nil {
+		t.Fatalf("expected no ongoing event error, got %+v", req)
+	}
+	if !errors.Is(err, ErrNoOngoingEvent) {
+		t.Fatalf("expected ErrNoOngoingEvent, got %v", err)
+	}
+}
+
+func TestResolveCurrentEventIndexUsesClosedWindowBeforeNextStart(t *testing.T) {
+	now := time.Now().UnixMilli()
+	events := []*masterdata.Event{
+		{
+			ID:          10,
+			EventType:   "marathon",
+			Name:        "Prev",
+			StartAt:     now - 10_000,
+			AggregateAt: now - 5_000,
+			ClosedAt:    now + 5_000,
+		},
+		{
+			ID:          20,
+			EventType:   "marathon",
+			Name:        "Next",
+			StartAt:     now + 10_000,
+			AggregateAt: now + 20_000,
+			ClosedAt:    now + 25_000,
+		},
+	}
+
+	index, err := resolveCurrentEventIndex(events, "next_first")
+	if err != nil {
+		t.Fatalf("resolveCurrentEventIndex() error = %v", err)
+	}
+	if index != 0 {
+		t.Fatalf("expected closed-window current index 0, got %d", index)
+	}
+}
+
+func TestControllerBuildEventDetailRequestRejectsExplicitUnreleasedNextEvent(t *testing.T) {
 	now := time.Now().UnixMilli()
 
 	source := newTestEventSource(renderregion.JP)
@@ -124,8 +193,8 @@ func TestControllerBuildEventDetailRequestRejectsUnreleasedNextEvent(t *testing.
 
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
 	req, err := controller.BuildEventDetailRequest(DetailQuery{
-		Region:     renderregion.JP,
-		UseCurrent: true,
+		Region:  renderregion.JP,
+		Keyword: "next",
 	})
 	if err == nil {
 		t.Fatalf("expected unreleased next event to fail, got %+v", req)
@@ -136,6 +205,28 @@ func TestControllerBuildEventDetailRequestRejectsUnreleasedNextEvent(t *testing.
 	}
 	if unreleased.Kind != releasecheck.KindEvent || unreleased.ID != 20 {
 		t.Fatalf("unexpected unreleased error: %+v", unreleased)
+	}
+}
+
+func TestControllerBuildEventDetailRequestAllowsExplicitUnreleasedEventForNonJPLookup(t *testing.T) {
+	now := time.Now().UnixMilli()
+
+	source := newTestEventSource(renderregion.CN)
+	next := &masterdata.Event{ID: 20, EventType: "marathon", Name: "Next", AssetBundleName: "next", StartAt: now + 10_000, AggregateAt: now + 20_000}
+	source.events = []*masterdata.Event{next}
+	source.eventsByID[next.ID] = next
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil))
+	req, err := controller.BuildEventDetailRequest(DetailQuery{
+		Region:          renderregion.CN,
+		EventID:         20,
+		AllowUnreleased: true,
+	})
+	if err != nil {
+		t.Fatalf("BuildEventDetailRequest failed: %v", err)
+	}
+	if req.EventInfo.ID != 20 {
+		t.Fatalf("expected future event id 20, got %v", req.EventInfo.ID)
 	}
 }
 

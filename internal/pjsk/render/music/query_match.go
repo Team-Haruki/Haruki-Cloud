@@ -85,7 +85,7 @@ func ExtractAmbiguousMusicIDs(err error) []int {
 	return ids
 }
 
-func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64) []*masterdata.Music {
+func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64, allowUnreleased bool) []*masterdata.Music {
 	if source == nil || len(ids) == 0 {
 		return nil
 	}
@@ -100,7 +100,7 @@ func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64) []*
 		}
 		seen[id] = struct{}{}
 		musicInfo, err := source.GetMusicByID(id)
-		if err != nil || !isMusicVisibleAt(musicInfo, now) {
+		if err != nil || !isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
 			continue
 		}
 		matches = append(matches, musicInfo)
@@ -108,7 +108,7 @@ func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64) []*
 	return matches
 }
 
-func resolveUniqueMusicQuery(source DataSource, query string) (*masterdata.Music, error) {
+func resolveUniqueMusicQuery(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, fmt.Errorf("music not found: empty query")
@@ -118,26 +118,29 @@ func resolveUniqueMusicQuery(source DataSource, query string) (*masterdata.Music
 	now := currentMusicVisibilityTime()
 	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
-	}, now); len(matches) > 0 {
+	}, now, allowUnreleased); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
 
 	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.Contains(strings.ToLower(strings.TrimSpace(musicInfo.Title)), queryLower)
-	}, now); len(matches) > 0 {
+	}, now, allowUnreleased); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
 
 	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
 		return strings.EqualFold(strings.TrimSpace(title), query)
-	}, now); len(matches) > 0 {
+	}, now, allowUnreleased); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
 	}
 
 	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
 		return strings.Contains(strings.ToLower(strings.TrimSpace(title)), queryLower)
-	}, now); len(matches) > 0 {
+	}, now, allowUnreleased); len(matches) > 0 {
 		return selectUniqueMusicMatch("曲名/别名", matches)
+	}
+	if allowUnreleased {
+		return nil, fmt.Errorf("music not found: %s", query)
 	}
 	if matches := collectUnreleasedMusicMatches(source, func(musicInfo *masterdata.Music) bool {
 		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
@@ -163,7 +166,7 @@ func resolveUniqueMusicQuery(source DataSource, query string) (*masterdata.Music
 	return nil, fmt.Errorf("music not found: %s", query)
 }
 
-func resolveUniqueMusicKeyword(source DataSource, keyword string) (*masterdata.Music, error) {
+func resolveUniqueMusicKeyword(source DataSource, keyword string, allowUnreleased bool) (*masterdata.Music, error) {
 	keyword = strings.ToLower(strings.TrimSpace(keyword))
 	if keyword == "" {
 		return nil, fmt.Errorf("music query is empty")
@@ -172,7 +175,7 @@ func resolveUniqueMusicKeyword(source DataSource, keyword string) (*masterdata.M
 	now := currentMusicVisibilityTime()
 	matches := make([]*masterdata.Music, 0)
 	for _, item := range source.GetMusics() {
-		if !isMusicVisibleAt(item, now) || !matchesMusicKeyword(source, item, keyword) {
+		if !isMusicAccessibleAt(item, now, allowUnreleased) || !matchesMusicKeyword(source, item, keyword) {
 			continue
 		}
 		matches = append(matches, item)
@@ -183,13 +186,13 @@ func resolveUniqueMusicKeyword(source DataSource, keyword string) (*masterdata.M
 	return selectUniqueMusicMatch("曲名/别名", matches)
 }
 
-func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool, now int64) []*masterdata.Music {
+func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool, now int64, allowUnreleased bool) []*masterdata.Music {
 	if source == nil || matcher == nil {
 		return nil
 	}
 	matches := make([]*masterdata.Music, 0)
 	for _, item := range source.GetMusics() {
-		if !isMusicVisibleAt(item, now) || !matcher(item) {
+		if !isMusicAccessibleAt(item, now, allowUnreleased) || !matcher(item) {
 			continue
 		}
 		matches = append(matches, item)
@@ -197,13 +200,13 @@ func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool
 	return matches
 }
 
-func collectLocalizedMusicMatches(source DataSource, matcher func(string) bool, now int64) []*masterdata.Music {
+func collectLocalizedMusicMatches(source DataSource, matcher func(string) bool, now int64, allowUnreleased bool) []*masterdata.Music {
 	if source == nil || matcher == nil {
 		return nil
 	}
 	matches := make([]*masterdata.Music, 0)
 	for _, item := range source.GetMusics() {
-		if !isMusicVisibleAt(item, now) {
+		if !isMusicAccessibleAt(item, now, allowUnreleased) {
 			continue
 		}
 		titles, err := source.GetMusicLocalizedTitles(item.ID)

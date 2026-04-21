@@ -19,7 +19,8 @@ func (c *Controller) ResolveMusicCoverByTitleOrAlias(query Query) (*CoverResult,
 	if err != nil {
 		return nil, err
 	}
-	musicInfo, err := c.resolveMusicTitleQuery(source, query.Query)
+	allowUnreleased := c.shouldAllowLookupLeaks(query.Region, query.AllowUnreleased)
+	musicInfo, err := c.resolveMusicTitleQuery(source, query.Query, allowUnreleased)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music by title or alias: %w", err)
 	}
@@ -59,7 +60,8 @@ func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailR
 	if err != nil {
 		return nil, err
 	}
-	searcher := c.newSearchService(source)
+	allowUnreleased := c.shouldAllowLookupLeaks(query.Region, query.AllowUnreleased)
+	searcher := c.newSearchService(source, allowUnreleased)
 	info, err := searcher.parser.Parse(query.Query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music: %w", err)
@@ -151,22 +153,29 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		minLevel, maxLevel = maxLevel, minLevel
 	}
 
-	userResults := buildMusicListUserResults(query.UserResults, c.buildUserResults(diff))
-	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(source, query.Keyword)
+	fallbackUserResults := c.buildUserResults(diff)
+	userResults := buildMusicListUserResults(query.UserResults, fallbackUserResults)
+	includeLeaks := query.IncludeLeaks
+	if !includeLeaks && c.resolveRegion(query.Region) != renderregion.JP &&
+		query.DetailedProfile == nil && len(query.UserResults) == 0 &&
+		len(fallbackUserResults) == 0 && strings.TrimSpace(query.ResultFilter) == "" {
+		includeLeaks = true
+	}
+	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(source, query.Keyword, includeLeaks)
 	if err != nil {
 		return nil, err
 	}
 	list := make([]map[string]any, 0)
 	jackets := make(map[int]string)
 	if len(query.Items) > 0 {
-		list, jackets = c.buildMusicListEntriesFromItems(source, builder, region, diff, query.Items, query.IncludeLeaks)
+		list, jackets = c.buildMusicListEntriesFromItems(source, builder, region, diff, query.Items, includeLeaks)
 	} else {
 		now := currentMusicVisibilityTime()
 		for _, musicInfo := range source.GetMusics() {
 			if musicInfo == nil {
 				continue
 			}
-			if !query.IncludeLeaks && !isMusicVisibleAt(musicInfo, now) {
+			if !includeLeaks && !isMusicVisibleAt(musicInfo, now) {
 				continue
 			}
 			if filterMusicID != nil && musicInfo.ID != *filterMusicID {
@@ -316,7 +325,14 @@ func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateMusicList(payload, query.ShowID, query.IncludeLeaks)
+	includeLeaks := query.IncludeLeaks
+	if !includeLeaks && c.resolveRegion(query.Region) != renderregion.JP &&
+		query.DetailedProfile == nil && len(query.UserResults) == 0 &&
+		len(c.buildUserResults(normalizeDifficulty(query.Difficulty))) == 0 &&
+		strings.TrimSpace(query.ResultFilter) == "" {
+		includeLeaks = true
+	}
+	return c.drawing.GenerateMusicList(payload, query.ShowID, includeLeaks)
 }
 
 func buildMusicListUserResults(primary map[int]string, fallback map[int]string) map[int]string {

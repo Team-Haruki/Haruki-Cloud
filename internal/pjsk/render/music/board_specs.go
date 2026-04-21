@@ -13,7 +13,7 @@ func (c *Controller) resolveMusicBoardSpecs(source DataSource, rows []musicBoard
 		return nil, nil
 	}
 
-	searcher := c.newSearchService(source)
+	searcher := c.newSearchService(source, false)
 	available := make(map[int][]string)
 	for _, row := range rows {
 		available[row.MusicID] = appendUniqueString(available[row.MusicID], row.Difficulty)

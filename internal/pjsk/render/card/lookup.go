@@ -20,7 +20,7 @@ func (c *Controller) ResolveCardImages(query Query) (*ImageResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	searcher := NewSearchService(source, NewParser(c.nicknames))
+	searcher := NewSearchService(source, NewParser(c.nicknames)).WithAllowUnreleased(query.AllowUnreleased)
 	cardInfo, err := searcher.Search(query.Query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search card: %w", err)

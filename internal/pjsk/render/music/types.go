@@ -66,9 +66,10 @@ type ProviderAdapter struct {
 }
 
 type SearchService struct {
-	source        DataSource
-	parser        *Parser
-	titleResolver func(string) (*masterdata.Music, error)
+	source          DataSource
+	parser          *Parser
+	titleResolver   func(string) (*masterdata.Music, error)
+	allowUnreleased bool
 }
 
 // ── Parser ──────────────────────────────────────────────────────────────────
@@ -146,10 +147,11 @@ type noteCountFinder interface {
 // ── Query types ─────────────────────────────────────────────────────────────
 
 type Query struct {
-	Query      string `json:"query"`
-	Region     string `json:"region"`
-	Difficulty string `json:"difficulty,omitempty"`
-	UserID     string `json:"user_id,omitempty"`
+	Query           string `json:"query"`
+	Region          string `json:"region"`
+	Difficulty      string `json:"difficulty,omitempty"`
+	UserID          string `json:"user_id,omitempty"`
+	AllowUnreleased bool   `json:"allow_unreleased,omitempty"`
 }
 
 type BPMQuery struct {

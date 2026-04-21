@@ -6,6 +6,7 @@ import (
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
+	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
@@ -22,6 +23,11 @@ func TestNormalizeMusicUserFacingErrorReturnsUnreleasedReplayError(t *testing.T)
 func TestNormalizeEventUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {
 	err := normalizeEventUserFacingError(releasecheck.New(releasecheck.KindEvent, "", 2001))
 	assertReplayErrorText(t, err, "该活动还未上线")
+}
+
+func TestNormalizeEventUserFacingErrorReturnsNoOngoingReplayError(t *testing.T) {
+	err := normalizeEventUserFacingError(renderevent.ErrNoOngoingEvent)
+	assertReplayErrorText(t, err, "当前无正在举办的活动")
 }
 
 func TestNormalizeGachaUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {

@@ -53,7 +53,7 @@ func (c *Controller) ResolveMusicMetaRequests(region string, queries []string) (
 }
 
 func (c *Controller) resolveMusicMetaQuery(source DataSource, query string) (*masterdata.Music, error) {
-	searcher := c.newSearchService(source)
+	searcher := c.newSearchService(source, false)
 	musicInfo, err := searcher.Search(query)
 	if err == nil {
 		return musicInfo, nil
@@ -72,7 +72,7 @@ func (c *Controller) resolveMusicMetaQuery(source DataSource, query string) (*ma
 		return nil, fmt.Errorf("music query is empty")
 	}
 
-	musicInfo, keywordErr := resolveUniqueMusicKeyword(source, lower)
+	musicInfo, keywordErr := resolveUniqueMusicKeyword(source, lower, false)
 	if keywordErr != nil {
 		return nil, keywordErr
 	}

@@ -24,7 +24,7 @@ func (c *Controller) ResolveMusicCover(query Query) (*CoverResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	searcher := c.newSearchService(source)
+	searcher := c.newSearchService(source, c.shouldAllowLookupLeaks(query.Region, query.AllowUnreleased))
 	musicInfo, err := searcher.Search(query.Query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search music: %w", err)
@@ -111,7 +111,7 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	searcher := c.newSearchService(source)
+	searcher := c.newSearchService(source, false)
 	searcher.parser = parser
 	musicInfo, err := searcher.Search(query.Query)
 	if err != nil {

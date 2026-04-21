@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"haruki-cloud/internal/onebot11"
+	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
 
@@ -45,6 +46,9 @@ func normalizeEventUserFacingError(err error) error {
 	var unreleased *releasecheck.UnreleasedError
 	if errors.As(err, &unreleased) && unreleased.Kind == releasecheck.KindEvent {
 		return onebot11.NewReplayError("该活动还未上线")
+	}
+	if errors.Is(err, renderevent.ErrNoOngoingEvent) {
+		return onebot11.NewReplayError("当前无正在举办的活动")
 	}
 	return err
 }

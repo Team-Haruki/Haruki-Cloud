@@ -46,13 +46,14 @@ type ProviderAdapter struct {
 }
 
 type DetailQuery struct {
-	Region     renderregion.Value `json:"region"`
-	EventID    int                `json:"event_id"`
-	UseCurrent bool               `json:"use_current"`
-	Index      *int               `json:"index,omitempty"`
-	Keyword    string             `json:"keyword,omitempty"`
-	BanCharID  int                `json:"ban_char_id,omitempty"`
-	BanSeq     int                `json:"ban_seq,omitempty"`
+	Region          renderregion.Value `json:"region"`
+	EventID         int                `json:"event_id"`
+	UseCurrent      bool               `json:"use_current"`
+	AllowUnreleased bool               `json:"allow_unreleased,omitempty"`
+	Index           *int               `json:"index,omitempty"`
+	Keyword         string             `json:"keyword,omitempty"`
+	BanCharID       int                `json:"ban_char_id,omitempty"`
+	BanSeq          int                `json:"ban_seq,omitempty"`
 }
 
 type ListQuery struct {

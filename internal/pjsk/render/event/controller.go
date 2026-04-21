@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/eventutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -125,7 +126,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		if err != nil {
 			return query, src, err
 		}
-		if eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
+		if !query.AllowUnreleased && eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
 			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
 		}
 		return query, src, nil
@@ -150,7 +151,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		if err != nil {
 			return query, src, err
 		}
-		if eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
+		if !query.AllowUnreleased && eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
 			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
 		}
 		return query, src, nil
@@ -174,7 +175,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		if err != nil {
 			return query, src, err
 		}
-		if eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
+		if !query.AllowUnreleased && eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
 			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
 		}
 		return query, src, nil
@@ -202,7 +203,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	if !query.UseCurrent {
 		return query, src, fmt.Errorf("event id is required")
 	}
-	index, err := resolveCurrentEventIndex(events, "next_first")
+	index, err := resolveOngoingEventIndex(events)
 	if err != nil {
 		return query, src, err
 	}
@@ -211,7 +212,7 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	if err != nil {
 		return query, src, err
 	}
-	if eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
+	if !query.AllowUnreleased && eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
 		return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
 	}
 	return query, src, nil
@@ -223,10 +224,10 @@ func resolveCurrentEventIndex(events []*masterdata.Event, fallback string) (int,
 	currentIndex := -1
 	nextIndex := -1
 	for i, eventInfo := range events {
-		if eventInfo.StartAt <= now && now < eventInfo.AggregateAt+1000 {
+		if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
 			currentIndex = i
 		}
-		if eventInfo.AggregateAt+1000 < now {
+		if eventutil.IsPast(eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
 			prevIndex = i
 		}
 		if nextIndex == -1 && eventInfo.StartAt > now {
@@ -263,12 +264,26 @@ func resolveCurrentEventIndex(events []*masterdata.Event, fallback string) (int,
 	return -1, fmt.Errorf("no current event found")
 }
 
+func resolveOngoingEventIndex(events []*masterdata.Event) (int, error) {
+	now := time.Now().UnixMilli()
+	currentIndex := -1
+	for i, eventInfo := range events {
+		if eventutil.IsRankingOpen(eventInfo.StartAt, eventInfo.AggregateAt, now) {
+			currentIndex = i
+		}
+	}
+	if currentIndex >= 0 {
+		return currentIndex, nil
+	}
+	return -1, ErrNoOngoingEvent
+}
+
 func resolveEventKeywordIndex(events []*masterdata.Event, keyword string) (int, error) {
 	now := time.Now().UnixMilli()
 	prevIndex := -1
 	nextIndex := -1
 	for i, eventInfo := range events {
-		if eventInfo.AggregateAt+1000 < now {
+		if eventutil.IsPast(eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
 			prevIndex = i
 		}
 		if nextIndex == -1 && eventInfo.StartAt > now {

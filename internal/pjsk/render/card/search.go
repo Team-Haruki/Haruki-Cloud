@@ -14,6 +14,14 @@ func NewSearchService(source DataSource, parser *Parser) *SearchService {
 	}
 }
 
+func (s *SearchService) WithAllowUnreleased(allow bool) *SearchService {
+	if s == nil {
+		return nil
+	}
+	s.allowUnreleased = allow
+	return s
+}
+
 func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 	now := currentCardVisibilityTime()
 	info, err := s.parser.Parse(query)
@@ -26,18 +34,18 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 		if err != nil {
 			return nil, err
 		}
-		if !isCardVisibleAt(card, now) {
+		if !s.allowUnreleased && !isCardVisibleAt(card, now) {
 			return nil, releasecheck.New(releasecheck.KindCard, "", info.Value)
 		}
 		return card, nil
 	case QueryTypeSeq:
-		card, err := s.visibleCardByCharacterAndSeq(info.CharacterID, info.Sequence, now)
+		card, err := s.cardByCharacterAndSeq(info.CharacterID, info.Sequence, now)
 		if err != nil {
 			return nil, err
 		}
 		return card, nil
 	case QueryTypeLatest:
-		card, err := s.latestVisibleCard(info.Sequence, now)
+		card, err := s.latestCard(info.Sequence, now)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +55,10 @@ func (s *SearchService) Search(query string) (*masterdata.Card, error) {
 		if err != nil {
 			return nil, err
 		}
-		visibleItems := filterVisibleCards(items, now)
+		visibleItems := items
+		if !s.allowUnreleased {
+			visibleItems = filterVisibleCards(items, now)
+		}
 		if len(visibleItems) == 0 {
 			if len(items) > 0 {
 				return nil, releasecheck.New(releasecheck.KindCard, query, 0)
@@ -73,7 +84,9 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 		if err != nil {
 			return nil, err
 		}
-		items = filterVisibleCards(items, now)
+		if !s.allowUnreleased {
+			items = filterVisibleCards(items, now)
+		}
 		if len(items) == 0 {
 			return nil, fmt.Errorf("no cards found for filter: %s", query)
 		}
@@ -84,18 +97,18 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 		if err != nil {
 			return nil, err
 		}
-		if !isCardVisibleAt(card, now) {
+		if !s.allowUnreleased && !isCardVisibleAt(card, now) {
 			return nil, releasecheck.New(releasecheck.KindCard, "", info.Value)
 		}
 		return []*masterdata.Card{card}, nil
 	case QueryTypeSeq:
-		card, err := s.visibleCardByCharacterAndSeq(info.CharacterID, info.Sequence, now)
+		card, err := s.cardByCharacterAndSeq(info.CharacterID, info.Sequence, now)
 		if err != nil {
 			return nil, err
 		}
 		return []*masterdata.Card{card}, nil
 	case QueryTypeLatest:
-		card, err := s.latestVisibleCard(info.Sequence, now)
+		card, err := s.latestCard(info.Sequence, now)
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +118,7 @@ func (s *SearchService) SearchList(query string) ([]*masterdata.Card, error) {
 	}
 }
 
-func (s *SearchService) visibleCardByCharacterAndSeq(characterID, sequence int, now int64) (*masterdata.Card, error) {
+func (s *SearchService) cardByCharacterAndSeq(characterID, sequence int, now int64) (*masterdata.Card, error) {
 	if s == nil || s.source == nil {
 		return nil, fmt.Errorf("card data source is not configured")
 	}
@@ -120,7 +133,10 @@ func (s *SearchService) visibleCardByCharacterAndSeq(characterID, sequence int, 
 	if err != nil {
 		return nil, err
 	}
-	visibleItems := filterVisibleCards(items, now)
+	visibleItems := items
+	if !s.allowUnreleased {
+		visibleItems = filterVisibleCards(items, now)
+	}
 	if len(visibleItems) == 0 {
 		if len(items) > 0 {
 			return nil, releasecheck.New(releasecheck.KindCard, "", 0)
@@ -142,7 +158,7 @@ func (s *SearchService) visibleCardByCharacterAndSeq(characterID, sequence int, 
 	return visibleItems[index], nil
 }
 
-func (s *SearchService) latestVisibleCard(sequence int, now int64) (*masterdata.Card, error) {
+func (s *SearchService) latestCard(sequence int, now int64) (*masterdata.Card, error) {
 	if s == nil || s.source == nil {
 		return nil, fmt.Errorf("card data source is not configured")
 	}
@@ -154,7 +170,10 @@ func (s *SearchService) latestVisibleCard(sequence int, now int64) (*masterdata.
 	if err != nil {
 		return nil, err
 	}
-	visibleItems := filterVisibleCards(items, now)
+	visibleItems := items
+	if !s.allowUnreleased {
+		visibleItems = filterVisibleCards(items, now)
+	}
 	if len(visibleItems) == 0 {
 		if len(items) > 0 {
 			return nil, releasecheck.New(releasecheck.KindCard, "", 0)

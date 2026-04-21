@@ -1020,6 +1020,42 @@ func TestValidateTrackerQuerySelectsCurrentEventByRegion(t *testing.T) {
 	}
 }
 
+func TestValidateTrackerQueryUsesClosedWindowEventBeforeNextStart(t *testing.T) {
+	now := time.Now().UnixMilli()
+	prev := &masterdata.Event{
+		ID:          119,
+		Name:        "CN Prev",
+		StartAt:     now - int64(2*time.Hour/time.Millisecond),
+		AggregateAt: now - int64(time.Hour/time.Millisecond),
+		ClosedAt:    now + int64(time.Hour/time.Millisecond),
+	}
+	next := &masterdata.Event{
+		ID:          120,
+		Name:        "CN Next",
+		StartAt:     now + int64(2*time.Hour/time.Millisecond),
+		AggregateAt: now + int64(4*time.Hour/time.Millisecond),
+		ClosedAt:    now + int64(5*time.Hour/time.Millisecond),
+	}
+
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(testTrackerSource{}, &testEventSource{
+		region: renderregion.CN,
+		events: []*masterdata.Event{prev, next},
+		byID:   map[int]*masterdata.Event{prev.ID: prev, next.ID: next},
+	}, nil)
+
+	normalized, err := controller.validateTrackerQuery(TrackerRankQuery{
+		Region: "cn",
+		Ranks:  []int{100},
+	})
+	if err != nil {
+		t.Fatalf("validateTrackerQuery() error = %v", err)
+	}
+	if normalized.EventID != prev.ID {
+		t.Fatalf("expected closed-window event %d, got %d", prev.ID, normalized.EventID)
+	}
+}
+
 func TestBuildLineRequestFromTrackerOmitsPlayerNames(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,

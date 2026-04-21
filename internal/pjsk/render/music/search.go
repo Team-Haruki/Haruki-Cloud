@@ -20,6 +20,14 @@ func (s *SearchService) WithTitleResolver(resolver func(string) (*masterdata.Mus
 	return s
 }
 
+func (s *SearchService) WithAllowUnreleased(allow bool) *SearchService {
+	if s == nil {
+		return nil
+	}
+	s.allowUnreleased = allow
+	return s
+}
+
 func (s *SearchService) Search(query string) (*masterdata.Music, error) {
 	info, err := s.parser.Parse(query)
 	if err != nil {
@@ -54,7 +62,7 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 	case QueryTypeID:
 		musicInfo, err := s.source.GetMusicByID(info.Value)
 		if err == nil && musicInfo != nil {
-			if isMusicVisibleAt(musicInfo, now) {
+			if isMusicAccessibleAt(musicInfo, now, s.allowUnreleased) {
 				return musicInfo, nil
 			}
 			return nil, releasecheck.New(releasecheck.KindMusic, "", info.Value)
@@ -72,7 +80,7 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		return nil, fmt.Errorf("music not found: %d", info.Value)
 
 	case QueryTypeSeq:
-		musics := visibleMusicsSortedByPublishedAt(s.source, now)
+		musics := accessibleMusicsSortedByPublishedAt(s.source, now, s.allowUnreleased)
 		if len(musics) == 0 {
 			return nil, fmt.Errorf("no music data available")
 		}
@@ -93,7 +101,7 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		if err != nil {
 			return nil, err
 		}
-		return ensureVisibleMusic(musicInfo, now, info.Value)
+		return ensureAccessibleMusic(musicInfo, now, info.Value, s.allowUnreleased)
 
 	case QueryTypeBan:
 		events := s.source.GetBanEvents(info.BanCharID)
@@ -107,12 +115,12 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		if err != nil {
 			return nil, err
 		}
-		return ensureVisibleMusic(musicInfo, now, events[info.BanSeq-1].ID)
+		return ensureAccessibleMusic(musicInfo, now, events[info.BanSeq-1].ID, s.allowUnreleased)
 
 	case QueryTypeTitle, QueryTypeChart:
 		if info.MusicID != 0 {
 			if musicInfo, err := s.source.GetMusicByID(info.MusicID); err == nil && musicInfo != nil {
-				return ensureVisibleMusic(musicInfo, now, info.MusicID)
+				return ensureAccessibleMusic(musicInfo, now, info.MusicID, s.allowUnreleased)
 			}
 		}
 		keyword := strings.TrimSpace(info.Keyword)
@@ -137,5 +145,9 @@ func (s *SearchService) resolveTitle(query string) (*masterdata.Music, error) {
 	if s.titleResolver != nil {
 		return s.titleResolver(query)
 	}
-	return s.source.SearchMusic(query)
+	musicInfo, err := s.source.SearchMusic(query)
+	if err != nil {
+		return nil, err
+	}
+	return ensureAccessibleMusic(musicInfo, currentMusicVisibilityTime(), query, s.allowUnreleased)
 }

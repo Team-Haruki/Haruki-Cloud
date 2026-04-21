@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/eventutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -104,7 +105,7 @@ func (c *Controller) pickCurrentOrNextEventID(region string) int {
 		if latest == nil || eventInfo.StartAt > latest.StartAt {
 			latest = eventInfo
 		}
-		if eventInfo.StartAt <= now && now <= eventInfo.AggregateAt {
+		if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
 			if current == nil || eventInfo.StartAt > current.StartAt {
 				current = eventInfo
 			}

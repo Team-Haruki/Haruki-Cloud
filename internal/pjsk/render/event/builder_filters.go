@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/eventutil"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -25,7 +26,7 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 
 	for _, eventInfo := range events {
 		start := time.UnixMilli(eventInfo.StartAt)
-		end := time.UnixMilli(eventInfo.AggregateAt + 1000)
+		end := time.UnixMilli(eventutil.EffectiveClosedAt(eventInfo.AggregateAt, eventInfo.ClosedAt))
 		if !includePast && end.Before(now) {
 			continue
 		}

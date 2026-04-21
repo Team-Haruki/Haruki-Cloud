@@ -62,8 +62,9 @@ type ProviderAdapter struct {
 }
 
 type SearchService struct {
-	source DataSource
-	parser *Parser
+	source          DataSource
+	parser          *Parser
+	allowUnreleased bool
 }
 
 type ImageResult struct {
@@ -145,6 +146,7 @@ type Query struct {
 	Region           string                              `json:"region"`
 	UserID           string                              `json:"user_id,omitempty"`
 	Mode             string                              `json:"mode,omitempty"`
+	AllowUnreleased  bool                                `json:"allow_unreleased,omitempty"`
 	ShowID           bool                                `json:"show_id,omitempty"`
 	ShowBox          bool                                `json:"show_box,omitempty"`
 	StrictFilterOnly bool                                `json:"strict_filter_only,omitempty"`
@@ -157,6 +159,7 @@ type ListRequest struct {
 	Query            string                              `json:"query,omitempty"`
 	CardIDs          []int                               `json:"card_ids"`
 	Region           string                              `json:"region"`
+	AllowUnreleased  bool                                `json:"allow_unreleased,omitempty"`
 	StrictFilterOnly bool                                `json:"strict_filter_only,omitempty"`
 	Title            *string                             `json:"-"`
 	DetailedProfile  *drawing.DetailedProfileCardRequest `json:"-"`

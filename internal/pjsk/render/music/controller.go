@@ -80,13 +80,26 @@ func (c *Controller) contextOrBackground() context.Context {
 	return context.TODO()
 }
 
-func (c *Controller) newSearchService(source DataSource) *SearchService {
-	return NewSearchService(source, NewParser(c.banCharacterNicknames)).WithTitleResolver(func(query string) (*masterdata.Music, error) {
-		return c.resolveMusicTitleQuery(source, query)
-	})
+func (c *Controller) newSearchService(source DataSource, allowUnreleased ...bool) *SearchService {
+	allow := false
+	if len(allowUnreleased) > 0 {
+		allow = allowUnreleased[0]
+	}
+	return NewSearchService(source, NewParser(c.banCharacterNicknames)).
+		WithAllowUnreleased(allow).
+		WithTitleResolver(func(query string) (*masterdata.Music, error) {
+			return c.resolveMusicTitleQuery(source, query, allow)
+		})
 }
 
-func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*masterdata.Music, error) {
+func (c *Controller) shouldAllowLookupLeaks(region string, explicit bool) bool {
+	if explicit {
+		return true
+	}
+	return c.resolveRegion(region) != renderregion.JP
+}
+
+func (c *Controller) resolveMusicTitleQuery(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, fmt.Errorf("music query is empty")
@@ -98,14 +111,14 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 		if err != nil {
 			return nil, err
 		}
-		return ensureVisibleMusic(musicInfo, now, musicID)
+		return ensureAccessibleMusic(musicInfo, now, musicID, allowUnreleased)
 	}
 
 	if c != nil && c.aliases != nil {
 		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), query)
 		if err != nil {
 			if ids := ExtractAmbiguousMusicIDs(err); len(ids) > 0 {
-				if normalizedMusic, normalizedErr := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now)); normalizedMusic != nil || normalizedErr != nil {
+				if normalizedMusic, normalizedErr := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now, allowUnreleased)); normalizedMusic != nil || normalizedErr != nil {
 					return normalizedMusic, normalizedErr
 				}
 			}
@@ -116,23 +129,23 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string) (*m
 			if getErr != nil {
 				return nil, getErr
 			}
-			return ensureVisibleMusic(musicInfo, now, query)
+			return ensureAccessibleMusic(musicInfo, now, query, allowUnreleased)
 		}
 	}
 
-	musicInfo, err := resolveUniqueMusicQuery(source, query)
+	musicInfo, err := resolveUniqueMusicQuery(source, query, allowUnreleased)
 	if err == nil || isMusicAmbiguousError(err) {
 		return musicInfo, err
 	}
 
-	fuzzyMusic, fuzzyErr := resolveFuzzyMusicQuery(source, query)
+	fuzzyMusic, fuzzyErr := resolveFuzzyMusicQuery(source, query, allowUnreleased)
 	if fuzzyErr == nil || isMusicAmbiguousError(fuzzyErr) {
 		return fuzzyMusic, fuzzyErr
 	}
 	return nil, err
 }
 
-func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword string) (*int, string, error) {
+func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword string, allowUnreleased bool) (*int, string, error) {
 	keyword = strings.TrimSpace(keyword)
 	if keyword == "" {
 		return nil, "", nil
@@ -147,7 +160,7 @@ func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword st
 		if err != nil {
 			return nil, "", err
 		}
-		if _, err := ensureVisibleMusic(musicInfo, now, musicID); err != nil {
+		if _, err := ensureAccessibleMusic(musicInfo, now, musicID, allowUnreleased); err != nil {
 			return nil, "", err
 		}
 		return &musicID, "", nil
@@ -155,7 +168,7 @@ func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword st
 
 	if musicID, ok := ParseImplicitMusicID(keyword); ok {
 		if source != nil {
-			if musicInfo, err := source.GetMusicByID(musicID); err == nil && isMusicVisibleAt(musicInfo, now) {
+			if musicInfo, err := source.GetMusicByID(musicID); err == nil && isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
 				return &musicID, "", nil
 			}
 		}
@@ -172,7 +185,7 @@ func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword st
 				if getErr != nil {
 					return nil, "", getErr
 				}
-				if _, visibleErr := ensureVisibleMusic(musicInfo, now, keyword); visibleErr != nil {
+				if _, visibleErr := ensureAccessibleMusic(musicInfo, now, keyword, allowUnreleased); visibleErr != nil {
 					return nil, "", visibleErr
 				}
 			}

@@ -182,6 +182,7 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 	case "event-detail":
 		q := event.DetailQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
+		q.AllowUnreleased = allowReadOnlyLeaks(region.String())
 		data, err = eventCtrl.RenderEventDetail(q)
 	case "event-list":
 		q := event.ListQuery{Region: region}

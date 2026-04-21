@@ -14,17 +14,25 @@ func currentMusicVisibilityTime() int64 {
 }
 
 func isMusicVisibleAt(musicInfo *masterdata.Music, now int64) bool {
+	return isMusicAccessibleAt(musicInfo, now, false)
+}
+
+func isMusicAccessibleAt(musicInfo *masterdata.Music, now int64, allowUnreleased bool) bool {
 	if musicInfo == nil {
 		return false
 	}
 	if _, blocked := hiddenMusicIDs[musicInfo.ID]; blocked {
 		return false
 	}
-	return musicInfo.PublishedAt <= now
+	return allowUnreleased || musicInfo.PublishedAt <= now
 }
 
 func ensureVisibleMusic(musicInfo *masterdata.Music, now int64, fallback any) (*masterdata.Music, error) {
-	if isMusicVisibleAt(musicInfo, now) {
+	return ensureAccessibleMusic(musicInfo, now, fallback, false)
+}
+
+func ensureAccessibleMusic(musicInfo *masterdata.Music, now int64, fallback any, allowUnreleased bool) (*masterdata.Music, error) {
+	if isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
 		return musicInfo, nil
 	}
 	switch value := fallback.(type) {
@@ -49,12 +57,16 @@ func ensureVisibleMusic(musicInfo *masterdata.Music, now int64, fallback any) (*
 }
 
 func filterVisibleMusics(items []*masterdata.Music, now int64) []*masterdata.Music {
+	return filterAccessibleMusics(items, now, false)
+}
+
+func filterAccessibleMusics(items []*masterdata.Music, now int64, allowUnreleased bool) []*masterdata.Music {
 	if len(items) == 0 {
 		return nil
 	}
 	filtered := make([]*masterdata.Music, 0, len(items))
 	for _, item := range items {
-		if !isMusicVisibleAt(item, now) {
+		if !isMusicAccessibleAt(item, now, allowUnreleased) {
 			continue
 		}
 		filtered = append(filtered, item)
@@ -63,10 +75,14 @@ func filterVisibleMusics(items []*masterdata.Music, now int64) []*masterdata.Mus
 }
 
 func visibleMusicsSortedByPublishedAt(source DataSource, now int64) []*masterdata.Music {
+	return accessibleMusicsSortedByPublishedAt(source, now, false)
+}
+
+func accessibleMusicsSortedByPublishedAt(source DataSource, now int64, allowUnreleased bool) []*masterdata.Music {
 	if source == nil {
 		return nil
 	}
-	musics := filterVisibleMusics(source.GetMusics(), now)
+	musics := filterAccessibleMusics(source.GetMusics(), now, allowUnreleased)
 	sort.Slice(musics, func(i, j int) bool {
 		if musics[i].PublishedAt == musics[j].PublishedAt {
 			return musics[i].ID < musics[j].ID

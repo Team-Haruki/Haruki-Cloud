@@ -387,3 +387,28 @@ func TestBuildCardDetailRequestBuildsCostumePathFromParts(t *testing.T) {
 		t.Fatalf("unexpected costume path: %q", got)
 	}
 }
+
+func TestBuildCardDetailRequestAllowsUnreleasedCardForNonJPLookup(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		region: renderregion.CN,
+		card: &masterdata.Card{
+			ID:              1001,
+			CharacterID:     5,
+			CardRarityType:  "rarity_4",
+			Attr:            "cute",
+			Prefix:          "Future Card",
+			AssetBundleName: "card_test",
+			ReleaseAt:       now + 60_000,
+		},
+	}
+
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardDetailRequest(Query{Query: "1001", Region: "cn", AllowUnreleased: true})
+	if err != nil {
+		t.Fatalf("BuildCardDetailRequest() error = %v", err)
+	}
+	if req.CardInfo.CardID != 1001 {
+		t.Fatalf("unexpected future card detail: %+v", req.CardInfo)
+	}
+}

@@ -9,6 +9,7 @@ import (
 
 	sekaidb "haruki-cloud/database/sekai"
 	eventdb "haruki-cloud/database/sekai/event"
+	"haruki-cloud/internal/pjsk/eventutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/deck"
@@ -104,7 +105,7 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		if !shouldResolveDeckEventByRecommendType(q.RecommendType) {
 			return nil
 		}
-		eventInfo, err := pickCurrentOrNextDeckEvent(ctx, app, region)
+		eventInfo, err := pickDeckAutoEvent(ctx, app, region, q.RecommendType)
 		if err != nil || eventInfo == nil {
 			if shouldFallbackDeckEventRecommendToNoEvent(q) {
 				clearDeckAutoEventSelection(q)
@@ -274,6 +275,10 @@ func shouldResolveDeckEventByRecommendType(recommendType string) bool {
 }
 
 func pickCurrentOrNextDeckEvent(ctx context.Context, app *renderapp.App, region renderregion.Value) (*sekaidb.Event, error) {
+	return pickDeckAutoEvent(ctx, app, region, "")
+}
+
+func pickDeckAutoEvent(ctx context.Context, app *renderapp.App, region renderregion.Value, recommendType string) (*sekaidb.Event, error) {
 	if app == nil {
 		return nil, fmt.Errorf("deck event resolve requires sekai client")
 	}
@@ -292,6 +297,8 @@ func pickCurrentOrNextDeckEvent(ctx context.Context, app *renderapp.App, region 
 	}
 
 	now := time.Now().UnixMilli()
+	isJPEventFallback := region == renderregion.JP && strings.EqualFold(strings.TrimSpace(recommendType), "event")
+	var active *sekaidb.Event
 	var current *sekaidb.Event
 	var next *sekaidb.Event
 	var blockedNext *sekaidb.Event
@@ -299,7 +306,12 @@ func pickCurrentOrNextDeckEvent(ctx context.Context, app *renderapp.App, region 
 		if eventInfo == nil {
 			continue
 		}
-		if eventInfo.StartAt <= now && now <= eventInfo.AggregateAt {
+		if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
+			if active == nil || eventInfo.StartAt > active.StartAt {
+				active = eventInfo
+			}
+		}
+		if eventutil.IsRankingOpen(eventInfo.StartAt, eventInfo.AggregateAt, now) {
 			if current == nil || eventInfo.StartAt > current.StartAt {
 				current = eventInfo
 			}
@@ -319,6 +331,21 @@ func pickCurrentOrNextDeckEvent(ctx context.Context, app *renderapp.App, region 
 	}
 	if current != nil {
 		return current, nil
+	}
+	if active != nil {
+		if next != nil {
+			if isJPEventFallback {
+				return nil, nil
+			}
+			return next, nil
+		}
+		if blockedNext != nil {
+			if isJPEventFallback {
+				return nil, nil
+			}
+			return nil, &deckEventLockedError{EventID: int(blockedNext.GameID)}
+		}
+		return active, nil
 	}
 	if next != nil {
 		return next, nil

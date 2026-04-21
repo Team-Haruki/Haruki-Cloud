@@ -17,6 +17,7 @@ import (
 )
 
 type lookupTestSource struct {
+	region       renderregion.Value
 	musics       map[int]*masterdata.Music
 	difficulties map[int][]*masterdata.MusicDifficulty
 }
@@ -35,7 +36,12 @@ type contextAwareLookupTestAliasResolver struct {
 	id        int
 }
 
-func (s *lookupTestSource) DefaultRegion() renderregion.Value { return renderregion.JP }
+func (s *lookupTestSource) DefaultRegion() renderregion.Value {
+	if s.region.IsZero() {
+		return renderregion.JP
+	}
+	return s.region
+}
 
 func (r *lookupTestAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
 	if r == nil {
@@ -468,6 +474,30 @@ func TestResolveMusicCoverUsesApprovedAlias(t *testing.T) {
 	}
 }
 
+func TestBuildMusicDetailRequestAllowsUnreleasedMusicForNonJPLookup(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		region: renderregion.CN,
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Future Song", AssetBundleName: "jacket_test", PublishedAt: now + 60_000},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 777},
+			},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	req, err := controller.BuildMusicDetailRequest(Query{Query: "1", Region: "cn", AllowUnreleased: true})
+	if err != nil {
+		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
+	}
+	if req.MusicInfo.ID != 1 {
+		t.Fatalf("unexpected future music detail: %+v", req.MusicInfo)
+	}
+}
+
 func TestResolveMusicTitleQueryNormalizesAmbiguousAliasToVisibleRegionMatch(t *testing.T) {
 	source := &lookupTestSource{
 		musics: map[int]*masterdata.Music{
@@ -480,7 +510,7 @@ func TestResolveMusicTitleQueryNormalizesAmbiguousAliasToVisibleRegionMatch(t *t
 		err: fmt.Errorf("failed to search music: 别名匹配到多个歌曲，请改用 music<id> 查询：\nmusic2/Song B\nmusic1/Song A"),
 	})
 
-	musicInfo, err := controller.resolveMusicTitleQuery(source, "song a")
+	musicInfo, err := controller.resolveMusicTitleQuery(source, "song a", false)
 	if err != nil {
 		t.Fatalf("resolveMusicTitleQuery() error = %v", err)
 	}
@@ -518,7 +548,7 @@ func TestResolveFuzzyMusicQueryMatchesTypoTitle(t *testing.T) {
 		},
 	}
 
-	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo World")
+	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo World", false)
 	if err != nil {
 		t.Fatalf("resolveFuzzyMusicQuery() error = %v", err)
 	}
@@ -535,7 +565,7 @@ func TestResolveFuzzyMusicQueryMatchesTypoInPartialTitle(t *testing.T) {
 		},
 	}
 
-	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo")
+	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo", false)
 	if err != nil {
 		t.Fatalf("resolveFuzzyMusicQuery() error = %v", err)
 	}
@@ -553,7 +583,7 @@ func TestResolveFuzzyMusicQueryReturnsUnreleasedErrorWhenOnlyFutureMatchExists(t
 		},
 	}
 
-	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo World")
+	musicInfo, err := resolveFuzzyMusicQuery(source, "Helo World", false)
 	if err == nil {
 		t.Fatalf("expected unreleased music error, got %+v", musicInfo)
 	}

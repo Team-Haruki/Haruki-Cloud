@@ -10,6 +10,7 @@ import (
 	sekaidb "haruki-cloud/database/sekai"
 	eventdb "haruki-cloud/database/sekai/event"
 	worldbloomdb "haruki-cloud/database/sekai/worldbloom"
+	"haruki-cloud/internal/pjsk/eventutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
@@ -70,11 +71,11 @@ func pickCurrentOrPreviousWorldBloomEvent(ctx context.Context, app *renderapp.Ap
 		if eventInfo == nil {
 			continue
 		}
-		if eventInfo.StartAt <= now && now < eventInfo.AggregateAt+1000 {
+		if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
 			current = eventInfo
 			continue
 		}
-		if eventInfo.AggregateAt+1000 < now {
+		if eventutil.IsPast(eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
 			previous = eventInfo
 		}
 	}

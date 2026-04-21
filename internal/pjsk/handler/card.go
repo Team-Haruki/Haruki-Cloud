@@ -197,11 +197,13 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
+		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
 		data, err = cardCtrl.RenderCardDetail(q)
 	case "card-list":
 		q := card.ListRequest{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
+		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
 		q.DetailedProfile = rc.GetDetailedProfile()
 		data, err = cardCtrl.RenderCardList(q)
 	case "card-box":
@@ -227,6 +229,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
+		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
 		result, resolveErr := cardCtrl.ResolveCardImages(q)
 		if resolveErr != nil {
 			return nil, resolveErr

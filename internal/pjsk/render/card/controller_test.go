@@ -75,6 +75,31 @@ func TestBuildCardListRequestFiltersUnreleasedCardsFromQuery(t *testing.T) {
 	}
 }
 
+func TestBuildCardListRequestAllowsAndMarksUnreleasedCardsForNonJPLookup(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		region: renderregion.CN,
+		cards: []*masterdata.Card{
+			{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Released Card", AssetBundleName: "card_a", ReleaseAt: now - 60_000},
+			{ID: 1002, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cool", Prefix: "Future Card", AssetBundleName: "card_b", ReleaseAt: now + 60_000},
+		},
+	}
+	controller := NewController(source, nil, nil, nil)
+	req, err := controller.BuildCardListRequest(ListRequest{Query: "mnr 4星", Region: "cn", AllowUnreleased: true})
+	if err != nil {
+		t.Fatalf("BuildCardListRequest() error = %v", err)
+	}
+	if len(req.Cards) != 2 {
+		t.Fatalf("expected 2 cards, got %d", len(req.Cards))
+	}
+	if req.Cards[1].CardID != 1002 {
+		t.Fatalf("expected future card to stay in list, got %+v", req.Cards)
+	}
+	if len(req.Cards[1].ThumbnailInfo) == 0 || req.Cards[1].ThumbnailInfo[0].CustomText == nil || *req.Cards[1].ThumbnailInfo[0].CustomText != "未上线" {
+		t.Fatalf("expected unreleased label on future card, got %+v", req.Cards[1].ThumbnailInfo)
+	}
+}
+
 func TestBuildCardListRequestResolvesAdvancedFiltersFromQuery(t *testing.T) {
 	cardInfo := &masterdata.Card{ID: 1003, CharacterID: 21, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card C", AssetBundleName: "card_c", SupportUnit: "idol"}
 	source := &lookupTestSource{

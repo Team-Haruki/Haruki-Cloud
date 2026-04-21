@@ -17,7 +17,7 @@ type musicFuzzyScore struct {
 	textLen   int
 }
 
-func resolveFuzzyMusicQuery(source DataSource, query string) (*masterdata.Music, error) {
+func resolveFuzzyMusicQuery(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, fmt.Errorf("music not found: empty query")
@@ -31,7 +31,7 @@ func resolveFuzzyMusicQuery(source DataSource, query string) (*masterdata.Music,
 	matches := make([]*masterdata.Music, 0)
 	bestScores := make(map[int]musicFuzzyScore)
 	for _, musicInfo := range source.GetMusics() {
-		if !isMusicVisibleAt(musicInfo, now) {
+		if !isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
 			continue
 		}
 		score, ok := scoreMusicFuzzyMatch(source, musicInfo, normalizedQuery)
@@ -42,6 +42,9 @@ func resolveFuzzyMusicQuery(source DataSource, query string) (*masterdata.Music,
 		bestScores[musicInfo.ID] = score
 	}
 	if len(matches) == 0 {
+		if allowUnreleased {
+			return nil, fmt.Errorf("music not found: %s", query)
+		}
 		for _, musicInfo := range source.GetMusics() {
 			if musicInfo == nil || isMusicVisibleAt(musicInfo, now) {
 				continue

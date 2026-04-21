@@ -278,6 +278,45 @@ func TestSearchServiceSupportsCharacterLatestVisibleCard(t *testing.T) {
 	}
 }
 
+func TestSearchServiceTreatsFullAttributeKeywordAsFilterEvenWithApprovedSingleRuneAlias(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{}
+	source.filterFunc = func(info *PjskCardQueryInfo) ([]*masterdata.Card, error) {
+		if info == nil {
+			return nil, fmt.Errorf("missing filter info")
+		}
+		if info.Type != QueryTypeFilter {
+			return nil, fmt.Errorf("expected filter query, got %+v", info)
+		}
+		if info.Attr != "cute" || info.CharacterID != 0 {
+			return nil, fmt.Errorf("unexpected filter info: %+v", info)
+		}
+		return []*masterdata.Card{
+			{ID: 1501, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Cute Card", AssetBundleName: "card_cute", ReleaseAt: now - 1000},
+		}, nil
+	}
+
+	nicknames := cloneNicknames(defaultNicknames)
+	nicknames["花"] = 5
+	searcher := NewSearchService(source, NewParser(nicknames))
+
+	cardInfo, err := searcher.Search("粉花")
+	if err != nil {
+		t.Fatalf("Search(粉花) error = %v", err)
+	}
+	if cardInfo.ID != 1501 {
+		t.Fatalf("unexpected Search result: %+v", cardInfo)
+	}
+
+	list, err := searcher.SearchList("粉花")
+	if err != nil {
+		t.Fatalf("SearchList(粉花) error = %v", err)
+	}
+	if len(list) != 1 || list[0].ID != 1501 {
+		t.Fatalf("unexpected SearchList result: %+v", list)
+	}
+}
+
 func TestBuildCardDetailRequestSkipsEmptyCostumeAssetBundlePaths(t *testing.T) {
 	source := &lookupTestSource{
 		region: renderregion.CN,

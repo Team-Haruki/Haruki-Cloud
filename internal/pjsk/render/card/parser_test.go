@@ -274,6 +274,52 @@ func TestParserIgnoresApprovedAliasesThatConflictWithCardAttributeKeywords(t *te
 	}
 }
 
+func TestParserIgnoresApprovedSingleRuneAliasesInsideCardAttributeKeywords(t *testing.T) {
+	tests := []struct {
+		query string
+		alias string
+		attr  string
+	}{
+		{query: "粉花", alias: "花", attr: "cute"},
+		{query: "蓝星", alias: "星", attr: "cool"},
+		{query: "绿草", alias: "草", attr: "pure"},
+		{query: "橙心", alias: "心", attr: "happy"},
+		{query: "紫月", alias: "月", attr: "mysterious"},
+		{query: "可爱", alias: "爱", attr: "cute"},
+		{query: "快乐", alias: "乐", attr: "happy"},
+		{query: "神秘", alias: "秘", attr: "mysterious"},
+	}
+
+	for _, tt := range tests {
+		nicknames := cloneNicknames(defaultNicknames)
+		nicknames[tt.alias] = 5
+		parser := NewParser(nicknames)
+
+		for _, parse := range []struct {
+			name string
+			fn   func(string) (*PjskCardQueryInfo, error)
+		}{
+			{name: "Parse", fn: parser.Parse},
+			{name: "ParsePreferFilter", fn: parser.ParsePreferFilter},
+			{name: "ParseStrictFilter", fn: parser.ParseStrictFilter},
+		} {
+			info, err := parse.fn(tt.query)
+			if err != nil {
+				t.Fatalf("%s(%q) error = %v", parse.name, tt.query, err)
+			}
+			if info.Type != QueryTypeFilter {
+				t.Fatalf("%s(%q) expected filter query, got %+v", parse.name, tt.query, info)
+			}
+			if info.Attr != tt.attr {
+				t.Fatalf("%s(%q) unexpected attr: %+v", parse.name, tt.query, info)
+			}
+			if info.CharacterID != 0 {
+				t.Fatalf("%s(%q) did not expect single-rune alias %q to hijack attr keyword: %+v", parse.name, tt.query, tt.alias, info)
+			}
+		}
+	}
+}
+
 func TestParserIgnoresNumericApprovedAliases(t *testing.T) {
 	nicknames := cloneNicknames(defaultNicknames)
 	nicknames["2"] = 2

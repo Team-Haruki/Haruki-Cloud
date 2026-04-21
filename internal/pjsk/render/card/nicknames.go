@@ -1,6 +1,10 @@
 package card
 
-import "haruki-cloud/internal/pjsk/render/common"
+import (
+	"unicode/utf8"
+
+	"haruki-cloud/internal/pjsk/render/common"
+)
 
 // Package-local aliases for readability at the many in-package call sites.
 // The canonical definitions live in render/common.
@@ -23,6 +27,9 @@ func sanitizeCharacterNicknames(items map[string]int) map[string]int {
 		if isReservedCardAttributeAlias(normalized) {
 			continue
 		}
+		if isReservedCardAttributeFragmentAlias(normalized) {
+			continue
+		}
 		result[normalized] = value
 	}
 	return result
@@ -38,6 +45,29 @@ var reservedCardAttributeAliases = map[string]struct{}{
 
 func isReservedCardAttributeAlias(text string) bool {
 	_, ok := reservedCardAttributeAliases[text]
+	return ok
+}
+
+var reservedCardAttributeFragmentAliases = buildReservedCardAttributeFragmentAliases()
+
+func buildReservedCardAttributeFragmentAliases() map[string]struct{} {
+	result := make(map[string]struct{})
+	for alias := range reservedCardAttributeAliases {
+		if utf8.RuneCountInString(alias) <= 1 || isASCIIOnly(alias) {
+			continue
+		}
+		for _, r := range alias {
+			result[string(r)] = struct{}{}
+		}
+	}
+	return result
+}
+
+func isReservedCardAttributeFragmentAlias(text string) bool {
+	if utf8.RuneCountInString(text) != 1 || isASCIIOnly(text) {
+		return false
+	}
+	_, ok := reservedCardAttributeFragmentAliases[text]
 	return ok
 }
 
@@ -68,4 +98,13 @@ func isAllDigits(text string) bool {
 		}
 	}
 	return true
+}
+
+func isASCIIOnly(text string) bool {
+	for _, ch := range text {
+		if ch > 127 {
+			return false
+		}
+	}
+	return text != ""
 }

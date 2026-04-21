@@ -8,6 +8,7 @@ import (
 	harukiLogger "haruki-cloud/utils/logger"
 
 	botPJSK "haruki-cloud/api/bot/pjsk"
+	groupGuardAPI "haruki-cloud/api/groupguard"
 
 	"github.com/gofiber/fiber/v3/middleware/static"
 
@@ -34,6 +35,9 @@ func Run(ctx context.Context) {
 	renderRuntime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
 	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, censorService)
+	if renderRuntime != nil {
+		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)
+	}
 	noiseKeyPair := initNoiseKeyPair(mainLogger)
 	authEncryptionKey := initAuthEncryptionKey(mainLogger)
 	var noiseServerPubKeyHex string

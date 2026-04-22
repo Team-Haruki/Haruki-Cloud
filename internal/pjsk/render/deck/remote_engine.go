@@ -75,7 +75,10 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 		logger:        logger.NewLoggerFromGlobal("DeckRemote"),
 	}
 	for _, target := range p.targets {
-		recommender.targetStates[remoteTargetKey(target)] = &remoteTargetState{target: target}
+		recommender.targetStates[remoteTargetKey(target)] = &remoteTargetState{
+			target:          target,
+			masterdataReady: true,
+		}
 	}
 	p.recommenders[region] = recommender
 	return recommender, nil

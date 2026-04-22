@@ -19,7 +19,10 @@ func newStandaloneTestRemoteDeckRecommender(baseURL string, client *http.Client)
 	targets := upstream.ResolveTargets(baseURL, nil, "deck-service")
 	targetStates := make(map[string]*remoteTargetState, len(targets))
 	for _, target := range targets {
-		targetStates[remoteTargetKey(target)] = &remoteTargetState{target: target}
+		targetStates[remoteTargetKey(target)] = &remoteTargetState{
+			target:          target,
+			masterdataReady: true,
+		}
 	}
 	return &RemoteDeckRecommender{
 		client:       client,
@@ -557,11 +560,101 @@ func TestRemoteRecommendRewarmsOnLogicalMusicMetaError(t *testing.T) {
 	if result == nil || len(result.Decks) != 1 {
 		t.Fatalf("unexpected recommend result: %+v", result)
 	}
-	if masterdataCalls.Load() != 1 {
-		t.Fatalf("expected 1 masterdata rewarm call, got %d", masterdataCalls.Load())
+	if masterdataCalls.Load() != 0 {
+		t.Fatalf("music meta rewarm should not refresh masterdata, got %d", masterdataCalls.Load())
 	}
 	if musicMetaCalls.Load() != 1 {
 		t.Fatalf("expected 1 music meta rewarm call, got %d", musicMetaCalls.Load())
+	}
+	if recommendCalls.Load() != 2 {
+		t.Fatalf("expected 2 recommend calls, got %d", recommendCalls.Load())
+	}
+}
+
+func TestRemoteRecommendRewarmsOnLogicalMasterdataError(t *testing.T) {
+	var masterdataCalls atomic.Int32
+	var musicMetaCalls atomic.Int32
+	var recommendCalls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata":
+			masterdataCalls.Add(1)
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/update/musicmetas/string":
+			musicMetaCalls.Add(1)
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			call := recommendCalls.Add(1)
+			if call == 1 {
+				_, _ = w.Write([]byte(`[
+					{
+						"alg": "ga",
+						"error": "Master data not found for region: jp"
+					}
+				]`))
+				return
+			}
+			_, _ = w.Write([]byte(`[
+				{
+					"alg": "ga",
+					"cost_time": 0.1,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 100,
+							"live_score": 100,
+							"mysekai_event_point": 0,
+							"total_power": 200,
+							"event_bonus_rate": 20,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id": 1001, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
+						}]
+					}
+				}
+			]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	musicMeta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.defaultAlgs = []string{"ga"}
+	recommender.masterdataDir = "/masterdata"
+	recommender.region = "jp"
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
+
+	state := testRemoteTargetState(t, recommender)
+	state.masterdataReady = true
+	state.musicMetaHash = hashPayload(musicMeta)
+
+	result, err := recommender.Recommend(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: musicMeta,
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if result == nil || len(result.Decks) != 1 {
+		t.Fatalf("unexpected recommend result: %+v", result)
+	}
+	if masterdataCalls.Load() != 1 {
+		t.Fatalf("expected 1 masterdata rewarm call, got %d", masterdataCalls.Load())
+	}
+	if musicMetaCalls.Load() != 0 {
+		t.Fatalf("masterdata rewarm should not refresh music metas, got %d", musicMetaCalls.Load())
 	}
 	if recommendCalls.Load() != 2 {
 		t.Fatalf("expected 2 recommend calls, got %d", recommendCalls.Load())
@@ -631,8 +724,8 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 		}
 	}
 
-	if masterdataCalls.Load() != 1 {
-		t.Fatalf("expected 1 masterdata update, got %d", masterdataCalls.Load())
+	if masterdataCalls.Load() != 0 {
+		t.Fatalf("expected 0 masterdata updates, got %d", masterdataCalls.Load())
 	}
 	if musicMetaCalls.Load() != 1 {
 		t.Fatalf("expected 1 music meta update, got %d", musicMetaCalls.Load())
@@ -643,7 +736,7 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 		t.Fatalf("ensureReady() repeat error = %v", err)
 	}
 	exec.Release()
-	if masterdataCalls.Load() != 1 || musicMetaCalls.Load() != 1 {
+	if masterdataCalls.Load() != 0 || musicMetaCalls.Load() != 1 {
 		t.Fatalf("repeat ensureReady should not rewarm, got masterdata=%d music=%d", masterdataCalls.Load(), musicMetaCalls.Load())
 	}
 
@@ -653,7 +746,7 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 		t.Fatalf("ensureReady() new meta error = %v", err)
 	}
 	exec.Release()
-	if masterdataCalls.Load() != 1 {
+	if masterdataCalls.Load() != 0 {
 		t.Fatalf("new meta should not refresh masterdata, got %d", masterdataCalls.Load())
 	}
 	if musicMetaCalls.Load() != 2 {
@@ -762,7 +855,7 @@ func TestRemoteRecommendBatchKeepsSingleRequestOnSameTarget(t *testing.T) {
 			if item.cache != 1 || item.recommend != 1 {
 				t.Fatalf("expected chosen target to handle cache and recommend exactly once, got %+v", item)
 			}
-			if item.masterdata != 1 || item.musicMeta != 1 {
+			if item.masterdata != 0 || item.musicMeta != 1 {
 				t.Fatalf("expected warmup calls to stay on the same target, got %+v", item)
 			}
 		}

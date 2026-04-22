@@ -53,7 +53,8 @@ func (r *RemoteDeckRecommender) RecommendBatch(req RecommendRequest) ([]remoteBa
 		r.logger.Debugf("recommend completed in %v", elapsed)
 		return results, nil
 	}
-	if !shouldRewarmRemoteService(err) {
+	rewarmKind := classifyRemoteRewarm(err)
+	if rewarmKind == remoteRewarmNone {
 		if shouldCountCircuitBreakerFailure(err) {
 			r.recordFailure(exec.state)
 			r.logger.Warnf("recommend failed after %v: %v", elapsed, err)
@@ -66,7 +67,7 @@ func (r *RemoteDeckRecommender) RecommendBatch(req RecommendRequest) ([]remoteBa
 
 	// Rewarm and retry once.
 	r.logger.Infof("rewarming remote service after: %v", err)
-	r.invalidate(exec.state)
+	r.invalidate(exec.state, rewarmKind)
 	if warmErr := r.ensureReady(exec, req.Region, req.MusicMeta, req.MusicMetaFilePath); warmErr != nil {
 		r.recordFailure(exec.state)
 		return nil, warmErr
@@ -381,9 +382,16 @@ func (r *RemoteDeckRecommender) ensureReady(exec *remoteExecution, region string
 	}
 }
 
-func (r *RemoteDeckRecommender) invalidate(state *remoteTargetState) {
+func (r *RemoteDeckRecommender) invalidate(state *remoteTargetState, kind remoteRewarmKind) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	state.masterdataReady = false
-	state.musicMetaHash = ""
+	switch kind {
+	case remoteRewarmMasterdata:
+		state.masterdataReady = false
+	case remoteRewarmMusicMeta:
+		state.musicMetaHash = ""
+	default:
+		state.masterdataReady = false
+		state.musicMetaHash = ""
+	}
 }

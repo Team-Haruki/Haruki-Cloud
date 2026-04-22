@@ -10,6 +10,14 @@ import (
 	"strings"
 )
 
+type remoteRewarmKind int
+
+const (
+	remoteRewarmNone remoteRewarmKind = iota
+	remoteRewarmMasterdata
+	remoteRewarmMusicMeta
+)
+
 func convertRemoteDecks(src []remoteRecommendDeck) []RecommendDeck {
 	out := make([]RecommendDeck, 0, len(src))
 	for _, d := range src {
@@ -177,13 +185,23 @@ func aggregateRemoteRecommendResults(options []map[string]any, results []remoteB
 }
 
 func shouldRewarmRemoteService(err error) bool {
+	return classifyRemoteRewarm(err) != remoteRewarmNone
+}
+
+func classifyRemoteRewarm(err error) remoteRewarmKind {
 	if err == nil {
-		return false
+		return remoteRewarmNone
 	}
 	message := strings.ToLower(err.Error())
-	return strings.Contains(message, "master data not found") ||
-		strings.Contains(message, "music metas not found") ||
-		strings.Contains(message, "music meta not found")
+	switch {
+	case strings.Contains(message, "master data not found"):
+		return remoteRewarmMasterdata
+	case strings.Contains(message, "music metas not found"),
+		strings.Contains(message, "music meta not found"):
+		return remoteRewarmMusicMeta
+	default:
+		return remoteRewarmNone
+	}
 }
 
 func isUnsupportedBatchProtocolError(err error) bool {

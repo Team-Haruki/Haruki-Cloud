@@ -3012,7 +3012,7 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 	if request.DeckData[0].CardData[0].CardThumbnail.CardID != 1002 {
 		t.Fatalf("unexpected remote card order: %+v", request.DeckData[0].CardData)
 	}
-	if masterdataCalls.Load() != 1 || musicMetaCalls.Load() != 1 || recommendCalls.Load() != 1 {
+	if masterdataCalls.Load() != 0 || musicMetaCalls.Load() != 1 || recommendCalls.Load() != 1 {
 		t.Fatalf("unexpected call counts: masterdata=%d musicmeta=%d recommend=%d", masterdataCalls.Load(), musicMetaCalls.Load(), recommendCalls.Load())
 	}
 
@@ -3026,7 +3026,7 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second BuildAutoRecommendRequest returned error: %v", err)
 	}
-	if masterdataCalls.Load() != 1 || musicMetaCalls.Load() != 1 || recommendCalls.Load() != 2 {
+	if masterdataCalls.Load() != 0 || musicMetaCalls.Load() != 1 || recommendCalls.Load() != 2 {
 		t.Fatalf("unexpected cached call counts: masterdata=%d musicmeta=%d recommend=%d", masterdataCalls.Load(), musicMetaCalls.Load(), recommendCalls.Load())
 	}
 }

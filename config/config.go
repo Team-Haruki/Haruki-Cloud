@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/upstream"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -234,13 +236,14 @@ type UserSnapshotConfig struct {
 }
 
 type DeckRecommendConfig struct {
-	Enabled        bool          `yaml:"enabled"`
-	ServiceBaseURL string        `yaml:"service_base_url"`
-	MasterdataDir  string        `yaml:"masterdata_dir"`
-	Timeout        time.Duration `yaml:"timeout"`
-	MaxRetries     int           `yaml:"max_retries"`
-	RetryWaitTime  time.Duration `yaml:"retry_wait_time"`
-	DefaultAlgs    []string      `yaml:"default_algs"`
+	Enabled        bool                    `yaml:"enabled"`
+	ServiceBaseURL string                  `yaml:"service_base_url"`
+	Targets        []upstream.TargetConfig `yaml:"targets"`
+	MasterdataDir  string                  `yaml:"masterdata_dir"`
+	Timeout        time.Duration           `yaml:"timeout"`
+	MaxRetries     int                     `yaml:"max_retries"`
+	RetryWaitTime  time.Duration           `yaml:"retry_wait_time"`
+	DefaultAlgs    []string                `yaml:"default_algs"`
 }
 
 type RenderCacheConfig struct {
@@ -267,17 +270,18 @@ type MySekaiCNWhitelistEntry struct {
 }
 
 type PJSKRenderConfig struct {
-	Enabled           bool                  `yaml:"enabled"`
-	DrawingBaseURL    string                `yaml:"drawing_base_url"`
-	DrawingTimeout    time.Duration         `yaml:"drawing_timeout"`
-	DrawingRetryCount int                   `yaml:"drawing_retry_count"`
-	DrawingCache      RenderCacheConfig     `yaml:"drawing_cache"`
-	ImageCache        ImageCacheConfig      `yaml:"image_cache"`
-	AssetDirs         AssetDirsConfig       `yaml:"asset_dirs"`
-	LocalMasterdata   LocalMasterdataConfig `yaml:"local_masterdata"`
-	UserSnapshot      UserSnapshotConfig    `yaml:"user_snapshot"`
-	MusicMeta         MusicMetaConfig       `yaml:"music_meta"`
-	DeckRecommend     DeckRecommendConfig   `yaml:"deck_recommend"`
+	Enabled           bool                    `yaml:"enabled"`
+	DrawingBaseURL    string                  `yaml:"drawing_base_url"`
+	DrawingTargets    []upstream.TargetConfig `yaml:"drawing_targets"`
+	DrawingTimeout    time.Duration           `yaml:"drawing_timeout"`
+	DrawingRetryCount int                     `yaml:"drawing_retry_count"`
+	DrawingCache      RenderCacheConfig       `yaml:"drawing_cache"`
+	ImageCache        ImageCacheConfig        `yaml:"image_cache"`
+	AssetDirs         AssetDirsConfig         `yaml:"asset_dirs"`
+	LocalMasterdata   LocalMasterdataConfig   `yaml:"local_masterdata"`
+	UserSnapshot      UserSnapshotConfig      `yaml:"user_snapshot"`
+	MusicMeta         MusicMetaConfig         `yaml:"music_meta"`
+	DeckRecommend     DeckRecommendConfig     `yaml:"deck_recommend"`
 }
 
 type CensorConfig struct {
@@ -317,8 +321,9 @@ type RedisConfig struct {
 }
 
 type SekaiAPIConfig struct {
-	BaseURL string `yaml:"base_url"`
-	Token   string `yaml:"token"`
+	BaseURL string                  `yaml:"base_url"`
+	Token   string                  `yaml:"token"`
+	Targets []upstream.TargetConfig `yaml:"targets"`
 }
 
 type TrackerConfig struct {

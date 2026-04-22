@@ -6,7 +6,7 @@ import (
 )
 
 func TestResolveRenderCacheRuleUsesOneDayTTLByDefault(t *testing.T) {
-	rule := resolveRenderCacheRule("/api/pjsk/card/detail")
+	rule := resolveRenderCacheRule("/api/pjsk/profile")
 	if rule.TTL != renderCacheTTLOneDay {
 		t.Fatalf("expected default ttl %s, got %s", renderCacheTTLOneDay, rule.TTL)
 	}
@@ -25,6 +25,42 @@ func TestResolveRenderCacheRuleUsesHalfDayTTLForSelectedEndpoints(t *testing.T) 
 		if rule.TTL != renderCacheTTLHalfDay {
 			t.Fatalf("%s ttl = %s, want %s", endpoint, rule.TTL, renderCacheTTLHalfDay)
 		}
+	}
+}
+
+func TestResolveRenderCacheRuleUsesInfiniteTTLForStaticEndpoints(t *testing.T) {
+	for _, endpoint := range []string{
+		"/api/pjsk/card/detail",
+		"/api/pjsk/card/list",
+		"/api/pjsk/event/list",
+		"/api/pjsk/mysekai/fixture-list",
+		"/api/pjsk/mysekai/fixture-detail",
+	} {
+		rule := resolveRenderCacheRule(endpoint)
+		if !rule.Infinite {
+			t.Fatalf("%s should use infinite ttl", endpoint)
+		}
+		if rule.TTL != 0 {
+			t.Fatalf("%s ttl = %s, want 0 for infinite ttl", endpoint, rule.TTL)
+		}
+	}
+}
+
+func TestBuildRenderCachePolicyMarksCardListAsInfinite(t *testing.T) {
+	policy, err := buildRenderCachePolicy("/api/pjsk/card/list", CardListRequest{
+		Region: "JP",
+		Cards: []CardBasic{
+			{CardID: 1001},
+		},
+	})
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy: %v", err)
+	}
+	if !policy.Infinite {
+		t.Fatalf("expected card list cache policy to be infinite")
+	}
+	if policy.TTL != 0 {
+		t.Fatalf("expected infinite cache policy ttl to be 0, got %s", policy.TTL)
 	}
 }
 

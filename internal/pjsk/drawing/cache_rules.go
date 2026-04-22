@@ -9,6 +9,7 @@ import (
 type renderCacheRule struct {
 	Enabled          bool
 	TTL              time.Duration
+	Infinite         bool
 	IgnoreFieldNames map[string]struct{}
 	IgnorePaths      map[string]struct{}
 	BucketFieldNames map[string]time.Duration
@@ -35,9 +36,21 @@ var (
 			TTL:         renderCacheTTLHalfDay,
 			IgnorePaths: renderCacheStringSet("model_name", "cost_times", "wait_times", "profile.update_time"),
 		},
+		"/api/pjsk/card/detail": {
+			Enabled:  true,
+			Infinite: true,
+		},
+		"/api/pjsk/card/list": {
+			Enabled:  true,
+			Infinite: true,
+		},
 		"/api/pjsk/profile": {
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("update_time"),
+		},
+		"/api/pjsk/event/list": {
+			Enabled:  true,
+			Infinite: true,
 		},
 		"/api/pjsk/event/record": {
 			Enabled:     true,
@@ -92,7 +105,12 @@ var (
 		},
 		"/api/pjsk/mysekai/fixture-list": {
 			Enabled:     true,
+			Infinite:    true,
 			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+		},
+		"/api/pjsk/mysekai/fixture-detail": {
+			Enabled:  true,
+			Infinite: true,
 		},
 		"/api/pjsk/mysekai/door-upgrade": {
 			Enabled:     true,
@@ -165,6 +183,7 @@ func cloneRenderCacheRule(rule renderCacheRule) renderCacheRule {
 	return renderCacheRule{
 		Enabled:          rule.Enabled,
 		TTL:              rule.TTL,
+		Infinite:         rule.Infinite,
 		IgnoreFieldNames: cloneRenderCacheStringSet(rule.IgnoreFieldNames),
 		IgnorePaths:      cloneRenderCacheStringSet(rule.IgnorePaths),
 		BucketFieldNames: cloneRenderCacheBucketMap(rule.BucketFieldNames),
@@ -177,8 +196,13 @@ func mergeRenderCacheRule(base renderCacheRule, override renderCacheRule) render
 	if override.Enabled {
 		merged.Enabled = true
 	}
+	if override.Infinite {
+		merged.Infinite = true
+		merged.TTL = 0
+	}
 	if override.TTL > 0 {
 		merged.TTL = override.TTL
+		merged.Infinite = false
 	}
 	for key := range override.IgnoreFieldNames {
 		merged.IgnoreFieldNames[key] = struct{}{}

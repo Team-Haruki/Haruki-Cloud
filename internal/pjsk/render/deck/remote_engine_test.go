@@ -11,8 +11,40 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/utils/logger"
 )
+
+func newStandaloneTestRemoteDeckRecommender(baseURL string, client *http.Client) *RemoteDeckRecommender {
+	targets := upstream.ResolveTargets(baseURL, nil, "deck-service")
+	targetStates := make(map[string]*remoteTargetState, len(targets))
+	for _, target := range targets {
+		targetStates[remoteTargetKey(target)] = &remoteTargetState{target: target}
+	}
+	return &RemoteDeckRecommender{
+		client:       client,
+		pool:         upstream.NewPool(targets),
+		targetStates: targetStates,
+	}
+}
+
+func testRemoteTargetState(t *testing.T, recommender *RemoteDeckRecommender) *remoteTargetState {
+	t.Helper()
+	for _, state := range recommender.targetStates {
+		return state
+	}
+	t.Fatalf("expected at least one target state")
+	return nil
+}
+
+func testRemoteExecution(t *testing.T, recommender *RemoteDeckRecommender) *remoteExecution {
+	t.Helper()
+	exec, err := recommender.acquireExecution()
+	if err != nil {
+		t.Fatalf("acquireExecution() error = %v", err)
+	}
+	return exec
+}
 
 func TestParseRemoteRecommendBatchSupportsLegacySingleResponse(t *testing.T) {
 	raw := json.RawMessage(`{"decks":[{"score":100,"live_score":100,"mysekai_event_point":0,"total_power":200,"event_bonus_rate":25,"support_deck_bonus_rate":0,"multi_live_score_up":120,"cards":[]} ]}`)
@@ -499,19 +531,17 @@ func TestRemoteRecommendRewarmsOnLogicalMusicMetaError(t *testing.T) {
 	defer server.Close()
 
 	musicMeta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
-	recommender := &RemoteDeckRecommender{
-		baseURL:       server.URL,
-		client:        server.Client(),
-		defaultAlgs:   []string{"ga"},
-		masterdataDir: "/masterdata",
-		region:        "jp",
-		maxRetries:    0,
-		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
-	}
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.defaultAlgs = []string{"ga"}
+	recommender.masterdataDir = "/masterdata"
+	recommender.region = "jp"
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
 
 	// Simulate a stale Cloud-side ready cache after deck-service restart.
-	recommender.masterdataReady = true
-	recommender.musicMetaHash = hashPayload(musicMeta)
+	state := testRemoteTargetState(t, recommender)
+	state.masterdataReady = true
+	state.musicMetaHash = hashPayload(musicMeta)
 
 	result, err := recommender.Recommend(RecommendRequest{
 		Region:    "jp",
@@ -586,7 +616,9 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			errs <- remote.ensureReady("jp", firstMeta, "")
+			exec := testRemoteExecution(t, remote)
+			defer exec.Release()
+			errs <- remote.ensureReady(exec, "jp", firstMeta, "")
 		}()
 	}
 	close(start)
@@ -606,22 +638,137 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 		t.Fatalf("expected 1 music meta update, got %d", musicMetaCalls.Load())
 	}
 
-	if err := remote.ensureReady("jp", firstMeta, ""); err != nil {
+	exec := testRemoteExecution(t, remote)
+	if err := remote.ensureReady(exec, "jp", firstMeta, ""); err != nil {
 		t.Fatalf("ensureReady() repeat error = %v", err)
 	}
+	exec.Release()
 	if masterdataCalls.Load() != 1 || musicMetaCalls.Load() != 1 {
 		t.Fatalf("repeat ensureReady should not rewarm, got masterdata=%d music=%d", masterdataCalls.Load(), musicMetaCalls.Load())
 	}
 
 	secondMeta := []byte(`[{"music_id":10001,"difficulty":"expert"}]`)
-	if err := remote.ensureReady("jp", secondMeta, ""); err != nil {
+	exec = testRemoteExecution(t, remote)
+	if err := remote.ensureReady(exec, "jp", secondMeta, ""); err != nil {
 		t.Fatalf("ensureReady() new meta error = %v", err)
 	}
+	exec.Release()
 	if masterdataCalls.Load() != 1 {
 		t.Fatalf("new meta should not refresh masterdata, got %d", masterdataCalls.Load())
 	}
 	if musicMetaCalls.Load() != 2 {
 		t.Fatalf("new meta should refresh music metas once, got %d", musicMetaCalls.Load())
+	}
+}
+
+func TestRemoteRecommendBatchKeepsSingleRequestOnSameTarget(t *testing.T) {
+	type counts struct {
+		masterdata atomic.Int32
+		musicMeta  atomic.Int32
+		cache      atomic.Int32
+		recommend  atomic.Int32
+	}
+
+	newServer := func(counter *counts) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			switch strings.TrimSuffix(r.URL.Path, "/") {
+			case "/update/masterdata":
+				counter.masterdata.Add(1)
+				_, _ = w.Write([]byte(`{"status":"ok"}`))
+			case "/update/musicmetas/string":
+				counter.musicMeta.Add(1)
+				_, _ = w.Write([]byte(`{"status":"ok"}`))
+			case "/cache_userdata":
+				counter.cache.Add(1)
+				_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+			case "/recommend":
+				counter.recommend.Add(1)
+				_, _ = w.Write([]byte(`[{
+					"alg": "ga",
+					"cost_time": 0.1,
+					"wait_time": 0.0,
+					"result": {
+						"decks": [{
+							"score": 100,
+							"live_score": 100,
+							"mysekai_event_point": 0,
+							"total_power": 200,
+							"event_bonus_rate": 20,
+							"support_deck_bonus_rate": 0,
+							"multi_live_score_up": 110,
+							"cards": [{"card_id": 1001, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
+						}]
+					}
+				}]`))
+			default:
+				http.NotFound(w, r)
+			}
+		}))
+	}
+
+	var first counts
+	var second counts
+	firstServer := newServer(&first)
+	defer firstServer.Close()
+	secondServer := newServer(&second)
+	defer secondServer.Close()
+
+	provider := newRemoteEngineProvider(RecommendConfig{
+		MasterdataDir: "/masterdata",
+		Targets: []upstream.TargetConfig{
+			{Name: "first", BaseURL: firstServer.URL, Concurrency: 1},
+			{Name: "second", BaseURL: secondServer.URL, Concurrency: 1},
+		},
+		DefaultAlgs: []string{"ga"},
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	result, err := recommender.Recommend(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: []byte(`[{"music_id":10000,"difficulty":"master"}]`),
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if result == nil || len(result.Decks) != 1 {
+		t.Fatalf("unexpected recommend result: %+v", result)
+	}
+
+	type total struct {
+		masterdata int32
+		musicMeta  int32
+		cache      int32
+		recommend  int32
+	}
+	totals := []total{
+		{masterdata: first.masterdata.Load(), musicMeta: first.musicMeta.Load(), cache: first.cache.Load(), recommend: first.recommend.Load()},
+		{masterdata: second.masterdata.Load(), musicMeta: second.musicMeta.Load(), cache: second.cache.Load(), recommend: second.recommend.Load()},
+	}
+
+	activeServers := 0
+	for _, item := range totals {
+		if item.cache > 0 || item.recommend > 0 {
+			activeServers++
+			if item.cache != 1 || item.recommend != 1 {
+				t.Fatalf("expected chosen target to handle cache and recommend exactly once, got %+v", item)
+			}
+			if item.masterdata != 1 || item.musicMeta != 1 {
+				t.Fatalf("expected warmup calls to stay on the same target, got %+v", item)
+			}
+		}
+	}
+	if activeServers != 1 {
+		t.Fatalf("expected exactly one target to serve the whole request, got %+v", totals)
 	}
 }
 
@@ -652,15 +799,12 @@ func TestRemoteRecommendFallsBackToLegacyWhenUserdataHashMissing(t *testing.T) {
 	defer server.Close()
 
 	musicMeta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
-	recommender := &RemoteDeckRecommender{
-		baseURL:       server.URL,
-		client:        server.Client(),
-		defaultAlgs:   []string{"ga"},
-		masterdataDir: "/masterdata",
-		region:        "jp",
-		maxRetries:    0,
-		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
-	}
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.defaultAlgs = []string{"ga"}
+	recommender.masterdataDir = "/masterdata"
+	recommender.region = "jp"
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
 
 	result, err := recommender.Recommend(RecommendRequest{
 		Region:    "jp",
@@ -721,15 +865,12 @@ func TestRemoteRecommendBatchFallsBackToLegacyAndPreservesOptionOrder(t *testing
 	}))
 	defer server.Close()
 
-	recommender := &RemoteDeckRecommender{
-		baseURL:       server.URL,
-		client:        server.Client(),
-		defaultAlgs:   []string{"ga"},
-		masterdataDir: "/masterdata",
-		region:        "jp",
-		maxRetries:    0,
-		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
-	}
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.defaultAlgs = []string{"ga"}
+	recommender.masterdataDir = "/masterdata"
+	recommender.region = "jp"
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
 
 	results, err := recommender.RecommendBatch(RecommendRequest{
 		Region:    "jp",
@@ -800,20 +941,18 @@ func TestRemoteRecommendAutoResetsCircuitBreakerAfterCooldown(t *testing.T) {
 
 	now := time.Now()
 	musicMeta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
-	recommender := &RemoteDeckRecommender{
-		baseURL:       server.URL,
-		client:        server.Client(),
-		defaultAlgs:   []string{"ga"},
-		masterdataDir: "/masterdata",
-		region:        "jp",
-		maxRetries:    0,
-		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
-		now: func() time.Time {
-			return now
-		},
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.defaultAlgs = []string{"ga"}
+	recommender.masterdataDir = "/masterdata"
+	recommender.region = "jp"
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
+	recommender.now = func() time.Time {
+		return now
 	}
-	recommender.consecutiveFailures.Store(maxConsecutiveFailures)
-	recommender.lastFailureAtNanos.Store(now.Add(-circuitBreakerCooldown - time.Second).UnixNano())
+	state := testRemoteTargetState(t, recommender)
+	state.consecutiveFailures.Store(maxConsecutiveFailures)
+	state.lastFailureAtNanos.Store(now.Add(-circuitBreakerCooldown - time.Second).UnixNano())
 
 	result, err := recommender.Recommend(RecommendRequest{
 		Region:    "jp",
@@ -835,7 +974,7 @@ func TestRemoteRecommendAutoResetsCircuitBreakerAfterCooldown(t *testing.T) {
 	if got := recommendCalls.Load(); got != 1 {
 		t.Fatalf("expected recommend to run once after auto-reset, got %d", got)
 	}
-	if failures := recommender.consecutiveFailures.Load(); failures != 0 {
+	if failures := state.consecutiveFailures.Load(); failures != 0 {
 		t.Fatalf("expected circuit breaker to reset after successful request, got %d failures", failures)
 	}
 }
@@ -860,15 +999,12 @@ func TestRemoteRecommendLogicalErrorsDoNotTripCircuitBreaker(t *testing.T) {
 	}))
 	defer server.Close()
 
-	recommender := &RemoteDeckRecommender{
-		baseURL:       server.URL,
-		client:        server.Client(),
-		defaultAlgs:   []string{"ga"},
-		masterdataDir: "/masterdata",
-		region:        "jp",
-		maxRetries:    0,
-		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
-	}
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.defaultAlgs = []string{"ga"}
+	recommender.masterdataDir = "/masterdata"
+	recommender.region = "jp"
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
 
 	_, err := recommender.Recommend(RecommendRequest{
 		Region:    "jp",
@@ -881,7 +1017,8 @@ func TestRemoteRecommendLogicalErrorsDoNotTripCircuitBreaker(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "Event not found for eventId: 202") {
 		t.Fatalf("expected logical event-not-found error, got %v", err)
 	}
-	if failures := recommender.consecutiveFailures.Load(); failures != 0 {
+	state := testRemoteTargetState(t, recommender)
+	if failures := state.consecutiveFailures.Load(); failures != 0 {
 		t.Fatalf("expected logical error not to trip circuit breaker, got %d failures", failures)
 	}
 }
@@ -909,20 +1046,18 @@ func TestRemoteRecommendAutoResetsCircuitBreakerWhenHealthProbeSucceeds(t *testi
 	}))
 	defer server.Close()
 
-	recommender := &RemoteDeckRecommender{
-		baseURL:       server.URL,
-		client:        server.Client(),
-		defaultAlgs:   []string{"ga"},
-		masterdataDir: "/masterdata",
-		region:        "jp",
-		maxRetries:    0,
-		logger:        logger.NewLogger("DeckRemoteTest", "DEBUG", nil),
-		now: func() time.Time {
-			return now
-		},
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.defaultAlgs = []string{"ga"}
+	recommender.masterdataDir = "/masterdata"
+	recommender.region = "jp"
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
+	recommender.now = func() time.Time {
+		return now
 	}
-	recommender.consecutiveFailures.Store(maxConsecutiveFailures)
-	recommender.lastFailureAtNanos.Store(now.UnixNano())
+	state := testRemoteTargetState(t, recommender)
+	state.consecutiveFailures.Store(maxConsecutiveFailures)
+	state.lastFailureAtNanos.Store(now.UnixNano())
 
 	_, err := recommender.Recommend(RecommendRequest{
 		Region:    "jp",
@@ -935,7 +1070,7 @@ func TestRemoteRecommendAutoResetsCircuitBreakerWhenHealthProbeSucceeds(t *testi
 	if err == nil || !strings.Contains(err.Error(), "Event not found for eventId: 202") {
 		t.Fatalf("expected logical event-not-found error after health reset, got %v", err)
 	}
-	if failures := recommender.consecutiveFailures.Load(); failures != 0 {
+	if failures := state.consecutiveFailures.Load(); failures != 0 {
 		t.Fatalf("expected health probe to reset circuit breaker, got %d failures", failures)
 	}
 }

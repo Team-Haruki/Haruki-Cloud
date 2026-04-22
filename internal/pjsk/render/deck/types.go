@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -78,13 +79,15 @@ type Controller struct {
 // ── Recommender ─────────────────────────────────────────────────────────────
 
 type RecommendConfig struct {
-	Enabled        bool
-	ServiceBaseURL string
-	MasterdataDir  string
-	Timeout        time.Duration
-	MaxRetries     int
-	RetryWaitTime  time.Duration
-	DefaultAlgs    []string
+	Enabled         bool
+	ServiceBaseURL  string
+	Targets         []upstream.TargetConfig
+	SharedResources *upstream.SharedResources
+	MasterdataDir   string
+	Timeout         time.Duration
+	MaxRetries      int
+	RetryWaitTime   time.Duration
+	DefaultAlgs     []string
 }
 
 type MusicMetaSource interface {
@@ -157,19 +160,28 @@ const (
 type remoteEngineProvider struct {
 	cfg          RecommendConfig
 	client       *http.Client
+	pool         *upstream.Pool
+	targets      []upstream.TargetConfig
 	mu           sync.Mutex
 	recommenders map[string]PjskDeckRecommender
 }
 
 type RemoteDeckRecommender struct {
-	baseURL       string
 	client        *http.Client
+	pool          *upstream.Pool
+	targetStates  map[string]*remoteTargetState
 	defaultAlgs   []string
 	masterdataDir string
 	region        string
 	maxRetries    int
 	retryWaitTime time.Duration
 	logger        *logger.Logger
+
+	now func() time.Time
+}
+
+type remoteTargetState struct {
+	target upstream.TargetConfig
 
 	mu              sync.Mutex
 	masterdataReady bool
@@ -178,8 +190,30 @@ type RemoteDeckRecommender struct {
 
 	consecutiveFailures atomic.Int64
 	lastFailureAtNanos  atomic.Int64
+}
 
-	now func() time.Time
+type remoteExecution struct {
+	lease *upstream.Lease
+	state *remoteTargetState
+}
+
+func (e *remoteExecution) Release() {
+	if e == nil || e.lease == nil {
+		return
+	}
+	e.lease.Release()
+	e.lease = nil
+}
+
+func (e *remoteExecution) BaseURL() string {
+	if e == nil || e.state == nil {
+		return ""
+	}
+	return e.state.target.BaseURL
+}
+
+func remoteTargetKey(target upstream.TargetConfig) string {
+	return target.Name + "\x00" + target.BaseURL
 }
 
 type remoteRecommendResult struct {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
@@ -28,6 +29,23 @@ func WithRetryCount(retryCount int) ClientOption {
 }
 
 func NewHarukiDrawingClient(baseURL string, options ...ClientOption) *HarukiDrawingClient {
+	return newHarukiDrawingClient(false, baseURL, nil, nil, options...)
+}
+
+func NewHarukiDrawingClientWithTargets(legacyBaseURL string, targets []upstream.TargetConfig, options ...ClientOption) *HarukiDrawingClient {
+	return newHarukiDrawingClient(true, legacyBaseURL, targets, nil, options...)
+}
+
+func NewHarukiDrawingClientWithTargetsAndResources(legacyBaseURL string, targets []upstream.TargetConfig, shared *upstream.SharedResources, options ...ClientOption) *HarukiDrawingClient {
+	return newHarukiDrawingClient(true, legacyBaseURL, targets, shared, options...)
+}
+
+func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstream.TargetConfig, shared *upstream.SharedResources, options ...ClientOption) *HarukiDrawingClient {
+	resolvedTargets := upstream.ResolveTargets(legacyBaseURL, targets, "drawing")
+	if strict && len(resolvedTargets) == 0 {
+		return nil
+	}
+
 	client := resty.New()
 	for _, option := range options {
 		if option != nil {
@@ -36,9 +54,14 @@ func NewHarukiDrawingClient(baseURL string, options ...ClientOption) *HarukiDraw
 	}
 
 	newLogger := logger.NewLogger("haruki.client", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
+	baseURL := ""
+	if len(resolvedTargets) > 0 {
+		baseURL = resolvedTargets[0].BaseURL
+	}
 	return &HarukiDrawingClient{
 		client:     client,
-		baseURL:    strings.TrimRight(baseURL, "/"),
+		baseURL:    baseURL,
+		pool:       upstream.NewPoolWithResources(resolvedTargets, shared),
 		logger:     newLogger,
 		localCache: newLocalRenderCache(0),
 	}
@@ -83,12 +106,36 @@ func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, rend
 }
 
 func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]byte, error) {
-	resp, err := c.client.R().
+	if c == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+
+	requestCtx := c.requestCtx
+	targetBaseURL := c.baseURL
+	var lease *upstream.Lease
+	var err error
+	if c.pool != nil && c.pool.Enabled() {
+		lease, err = c.pool.Acquire(requestCtx)
+		if err != nil {
+			return nil, fmt.Errorf("drawing upstream is unavailable: %w", err)
+		}
+		defer lease.Release()
+		targetBaseURL = lease.Target.BaseURL
+	}
+	if strings.TrimSpace(targetBaseURL) == "" {
+		return nil, fmt.Errorf("drawing client base_url is empty")
+	}
+
+	request := c.client.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(requestBody).
-		Post(c.baseURL + endpoint)
+		SetBody(requestBody)
+	if requestCtx != nil {
+		request.SetContext(requestCtx)
+	}
+
+	resp, err := request.Post(targetBaseURL + endpoint)
 	data, _ := json.Marshal(requestBody)
-	c.logger.Debugf("POST %s: %s", c.baseURL+endpoint, string(data))
+	c.logger.Debugf("POST %s: %s", targetBaseURL+endpoint, string(data))
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +143,7 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("api request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
-	c.logger.Debugf("Response from %s: type %s, length %s", c.baseURL+endpoint, resp.Header().Get("Content-Type"), resp.Header().Get("content-length"))
+	c.logger.Debugf("Response from %s: type %s, length %s", targetBaseURL+endpoint, resp.Header().Get("Content-Type"), resp.Header().Get("content-length"))
 	return resp.Body(), nil
 }
 

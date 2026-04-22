@@ -8,6 +8,7 @@ import (
 
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/core/upstream"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
@@ -40,6 +41,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		initCtx = context.Background()
 	}
 	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval)
+	if cfg.SharedUpstreamResources == nil {
+		cfg.SharedUpstreamResources = &upstream.SharedResources{}
+	}
 
 	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
 	var snapshotService snapshot.Snapshot
@@ -56,16 +60,16 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		staticSnapshotProvider = snapshot.NewStaticSnapshotProvider(snapshotService)
 	}
 
-	var drawingClient *drawing.HarukiDrawingClient
-	if strings.TrimSpace(cfg.DrawingBaseURL) != "" {
-		var options []drawing.ClientOption
-		if cfg.DrawingTimeout > 0 {
-			options = append(options, drawing.WithTimeout(cfg.DrawingTimeout))
-		}
-		if cfg.DrawingRetryCount > 0 {
-			options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
-		}
-		drawingClient = drawing.NewHarukiDrawingClient(cfg.DrawingBaseURL, options...)
+	var options []drawing.ClientOption
+	if cfg.DrawingTimeout > 0 {
+		options = append(options, drawing.WithTimeout(cfg.DrawingTimeout))
+	}
+	if cfg.DrawingRetryCount > 0 {
+		options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
+	}
+
+	drawingClient := drawing.NewHarukiDrawingClientWithTargetsAndResources(cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, options...)
+	if drawingClient != nil {
 		drawingClient.SetRenderCache(drawing.NewRenderCacheClient(cfg.DrawingCache))
 	}
 
@@ -77,13 +81,15 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	})
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
-		Enabled:        cfg.DeckRecommend.Enabled,
-		ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
-		MasterdataDir:  cfg.DeckRecommend.MasterdataDir,
-		Timeout:        cfg.DeckRecommend.Timeout,
-		MaxRetries:     cfg.DeckRecommend.MaxRetries,
-		RetryWaitTime:  cfg.DeckRecommend.RetryWaitTime,
-		DefaultAlgs:    slices.Clone(cfg.DeckRecommend.DefaultAlgs),
+		Enabled:         cfg.DeckRecommend.Enabled,
+		ServiceBaseURL:  cfg.DeckRecommend.ServiceBaseURL,
+		Targets:         slices.Clone(cfg.DeckRecommend.Targets),
+		SharedResources: cfg.SharedUpstreamResources,
+		MasterdataDir:   cfg.DeckRecommend.MasterdataDir,
+		Timeout:         cfg.DeckRecommend.Timeout,
+		MaxRetries:      cfg.DeckRecommend.MaxRetries,
+		RetryWaitTime:   cfg.DeckRecommend.RetryWaitTime,
+		DefaultAlgs:     slices.Clone(cfg.DeckRecommend.DefaultAlgs),
 	}, cfg.MetaLoader)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
@@ -129,13 +135,15 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		// Initialize controllers with provider adapters.
 		skController.SetTrackerIntegration(cfg.Tracker, eventAdapter, assetHelper)
 		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
-			Enabled:        cfg.DeckRecommend.Enabled,
-			ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
-			MasterdataDir:  cfg.DeckRecommend.MasterdataDir,
-			Timeout:        cfg.DeckRecommend.Timeout,
-			MaxRetries:     cfg.DeckRecommend.MaxRetries,
-			RetryWaitTime:  cfg.DeckRecommend.RetryWaitTime,
-			DefaultAlgs:    slices.Clone(cfg.DeckRecommend.DefaultAlgs),
+			Enabled:         cfg.DeckRecommend.Enabled,
+			ServiceBaseURL:  cfg.DeckRecommend.ServiceBaseURL,
+			Targets:         slices.Clone(cfg.DeckRecommend.Targets),
+			SharedResources: cfg.SharedUpstreamResources,
+			MasterdataDir:   cfg.DeckRecommend.MasterdataDir,
+			Timeout:         cfg.DeckRecommend.Timeout,
+			MaxRetries:      cfg.DeckRecommend.MaxRetries,
+			RetryWaitTime:   cfg.DeckRecommend.RetryWaitTime,
+			DefaultAlgs:     slices.Clone(cfg.DeckRecommend.DefaultAlgs),
 		}, cfg.MetaLoader)
 		deckController.RegisterMusicSource(musicAdapter)
 		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)

@@ -101,6 +101,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		Toolbox:           toolboxClient,
 		Tracker:           trackerClient,
 		DrawingBaseURL:    harukiConfig.Cfg.PJSKRender.DrawingBaseURL,
+		DrawingTargets:    harukiConfig.Cfg.PJSKRender.DrawingTargets,
 		DrawingTimeout:    harukiConfig.Cfg.PJSKRender.DrawingTimeout,
 		DrawingRetryCount: harukiConfig.Cfg.PJSKRender.DrawingRetryCount,
 		DrawingCache: drawing.RenderCacheConfig{
@@ -132,6 +133,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
 			ServiceBaseURL: harukiConfig.Cfg.PJSKRender.DeckRecommend.ServiceBaseURL,
+			Targets:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Targets,
 			MasterdataDir:  resolveDeckRecommendMasterdataDir(),
 			Timeout:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
 			MaxRetries:     harukiConfig.Cfg.PJSKRender.DeckRecommend.MaxRetries,

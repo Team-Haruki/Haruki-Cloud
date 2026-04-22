@@ -38,6 +38,9 @@ func (lc *localRenderCache) get(key string) ([]byte, bool) {
 	if !ok {
 		return nil, false
 	}
+	if entry.permanent {
+		return entry.data, true
+	}
 	if time.Now().After(entry.expiresAt) {
 		lc.mu.Lock()
 		delete(lc.entries, key)
@@ -47,13 +50,16 @@ func (lc *localRenderCache) get(key string) ([]byte, bool) {
 	return entry.data, true
 }
 
-func (lc *localRenderCache) set(key string, data []byte, ttl time.Duration) {
-	if ttl <= 0 {
+func (lc *localRenderCache) set(key string, data []byte, ttl time.Duration, permanent bool) {
+	if !permanent && ttl <= 0 {
 		ttl = lc.ttl
 	}
 	entry := &localRenderEntry{
 		data:      data,
-		expiresAt: time.Now().Add(ttl),
+		permanent: permanent,
+	}
+	if !permanent {
+		entry.expiresAt = time.Now().Add(ttl)
 	}
 	lc.mu.Lock()
 	lc.entries[key] = entry
@@ -83,7 +89,7 @@ func (lc *localRenderCache) Render(endpoint string, request any, render func() (
 		if err != nil {
 			return nil, err
 		}
-		lc.set(key, data, ttl)
+		lc.set(key, data, ttl, policy.Infinite)
 		return data, nil
 	})
 	if err != nil {
@@ -128,10 +134,10 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 
 		if keyErr == nil {
 			ttl := policy.TTL
-			if ttl <= 0 {
+			if ttl <= 0 && !policy.Infinite {
 				ttl = c.ttl
 			}
-			_ = c.store(key, policy.APIPath, policy.UserID, image, ttl)
+			_ = c.store(key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
 		}
 		return image, nil
 	}
@@ -165,8 +171,8 @@ func (c *RenderCacheClient) lookup(key string, apiPath string) ([]byte, bool) {
 	return body, true
 }
 
-func (c *RenderCacheClient) store(key string, apiPath string, userID string, image []byte, ttl time.Duration) error {
-	if ttl <= 0 {
+func (c *RenderCacheClient) store(key string, apiPath string, userID string, image []byte, ttl time.Duration, infinite bool) error {
+	if ttl <= 0 && !infinite {
 		ttl = c.ttl
 	}
 	targetPath := c.defaultFilePath(apiPath, userID, key)
@@ -178,10 +184,15 @@ func (c *RenderCacheClient) store(key string, apiPath string, userID string, ima
 	}
 
 	var apiErr renderCacheAPIError
+	ttlSeconds := "0"
+	if !infinite {
+		ttlSeconds = strconv.Itoa(int(math.Ceil(ttl.Seconds())))
+	}
+
 	resp, err := c.http.R().
 		SetFormData(map[string]string{
 			"key":       key,
-			"ttl":       strconv.Itoa(int(math.Ceil(ttl.Seconds()))),
+			"ttl":       ttlSeconds,
 			"api_path":  apiPath,
 			"user_id":   userID,
 			"ext":       renderCacheFileExt,

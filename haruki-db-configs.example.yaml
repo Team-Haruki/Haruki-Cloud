@@ -79,6 +79,13 @@ users_db:
 
 sekai_api:
   base_url: "https://api.sekai.haruki.example.com"
+  # targets:
+  #   - name: "sekai-a"
+  #     base_url: "https://api-a.sekai.haruki.example.com"
+  #     concurrency: 8
+  #   - name: "sekai-b"
+  #     base_url: "https://api-b.sekai.haruki.example.com"
+  #     concurrency: 8
   token: "your-haruki-sekai-api-token"
 
 tracker:
@@ -88,6 +95,13 @@ tracker:
 pjsk_render:
   enabled: true
   drawing_base_url: "http://INTERNAL_IP_1:28000"
+  # drawing_targets:
+  #   - name: "vm100"          # same name across services => share one machine queue
+  #     base_url: "http://INTERNAL_IP_1:28000"
+  #     concurrency: 8
+  #   - name: "vm101"
+  #     base_url: "http://INTERNAL_IP_3:28000"
+  #     concurrency: 8
   drawing_cache:
     base_url: "http://127.0.0.1:8080"  # Haruki-Cache service
     storage_dir: "/data/haruki/cache/drawing"
@@ -117,6 +131,13 @@ pjsk_render:
   deck_recommend:
     enabled: true
     service_base_url: "http://127.0.0.1:3000"    # required for deck recommend auto; runtime is HTTP-service-only
+    # targets:
+    #   - name: "vm100"        # same name as drawing target => share one machine queue
+    #     base_url: "http://127.0.0.1:3000"
+    #     concurrency: 8
+    #   - name: "vm101"
+    #     base_url: "http://127.0.0.1:3001"
+    #     concurrency: 8
     masterdata_dir: "/data/HarukiServices/alpha/Data/master/haruki-sekai-master" # root dir; Cloud will resolve the region subdir
     timeout: "10s"
     max_retries: 3            # HTTP-level retry count for transient failures

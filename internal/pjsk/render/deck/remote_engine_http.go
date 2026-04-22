@@ -33,10 +33,14 @@ func isRetryableError(err error, statusCode int) bool {
 	return statusCode >= 500
 }
 
-func (r *RemoteDeckRecommender) postJSON(path string, requestBody any, responseBody any) error {
+func (r *RemoteDeckRecommender) postJSON(exec *remoteExecution, path string, requestBody any, responseBody any) error {
 	body, err := json.Marshal(requestBody)
 	if err != nil {
 		return err
+	}
+	baseURL := exec.BaseURL()
+	if strings.TrimSpace(baseURL) == "" {
+		return fmt.Errorf("deck-service target base_url is empty")
 	}
 
 	var lastErr error
@@ -46,7 +50,7 @@ func (r *RemoteDeckRecommender) postJSON(path string, requestBody any, responseB
 			r.logger.Debugf("retry %d/%d for POST %s", attempt, r.maxRetries, path)
 		}
 
-		req, err := http.NewRequest(http.MethodPost, r.baseURL+path, bytes.NewReader(body))
+		req, err := http.NewRequest(http.MethodPost, baseURL+path, bytes.NewReader(body))
 		if err != nil {
 			return err
 		}
@@ -92,7 +96,12 @@ func (r *RemoteDeckRecommender) postJSON(path string, requestBody any, responseB
 	return lastErr
 }
 
-func (r *RemoteDeckRecommender) postBinary(path string, payload []byte, responseBody any) error {
+func (r *RemoteDeckRecommender) postBinary(exec *remoteExecution, path string, payload []byte, responseBody any) error {
+	baseURL := exec.BaseURL()
+	if strings.TrimSpace(baseURL) == "" {
+		return fmt.Errorf("deck-service target base_url is empty")
+	}
+
 	var lastErr error
 	for attempt := 0; attempt <= r.maxRetries; attempt++ {
 		if attempt > 0 {
@@ -100,7 +109,7 @@ func (r *RemoteDeckRecommender) postBinary(path string, payload []byte, response
 			r.logger.Debugf("retry %d/%d for POST %s (binary)", attempt, r.maxRetries, path)
 		}
 
-		req, err := http.NewRequest(http.MethodPost, r.baseURL+path, bytes.NewReader(payload))
+		req, err := http.NewRequest(http.MethodPost, baseURL+path, bytes.NewReader(payload))
 		if err != nil {
 			return err
 		}
@@ -157,15 +166,15 @@ func parseRemoteHTTPError(statusCode int, payload []byte) error {
 	return fmt.Errorf("deck-service returned HTTP %d", statusCode)
 }
 
-func (r *RemoteDeckRecommender) healthCheck() bool {
-	if r == nil || r.client == nil || strings.TrimSpace(r.baseURL) == "" {
+func (r *RemoteDeckRecommender) healthCheck(baseURL string) bool {
+	if r == nil || r.client == nil || strings.TrimSpace(baseURL) == "" {
 		return false
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), circuitBreakerHealthCheckTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, r.baseURL+"/health", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/health", nil)
 	if err != nil {
 		return false
 	}

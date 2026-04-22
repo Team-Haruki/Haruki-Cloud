@@ -40,6 +40,7 @@ func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, er
 		UserID:   userID,
 		Params:   payload,
 		TTL:      rule.TTL,
+		Infinite: rule.Infinite,
 	}, nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/utils/logger"
 )
 
@@ -14,9 +15,12 @@ func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 	if timeout <= 0 {
 		timeout = 75 * time.Second
 	}
+	targets := upstream.ResolveTargets(cfg.ServiceBaseURL, cfg.Targets, "deck-service")
 	return &remoteEngineProvider{
 		cfg:          cfg,
 		client:       &http.Client{Timeout: timeout},
+		pool:         upstream.NewPoolWithResources(targets, cfg.SharedResources),
+		targets:      targets,
 		recommenders: make(map[string]PjskDeckRecommender),
 	}
 }
@@ -41,6 +45,9 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 	if masterdataDir == "" {
 		return nil, fmt.Errorf("deck remote engine requires local masterdata dir")
 	}
+	if p.pool == nil || !p.pool.Enabled() || len(p.targets) == 0 {
+		return nil, fmt.Errorf("deck recommend service is not configured")
+	}
 
 	algs := normalizeRecommendAlgorithmsForService(p.cfg.DefaultAlgs)
 	if len(algs) == 0 {
@@ -57,8 +64,9 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 	}
 
 	recommender := &RemoteDeckRecommender{
-		baseURL:       strings.TrimRight(strings.TrimSpace(p.cfg.ServiceBaseURL), "/"),
 		client:        p.client,
+		pool:          p.pool,
+		targetStates:  make(map[string]*remoteTargetState, len(p.targets)),
 		defaultAlgs:   algs,
 		masterdataDir: masterdataDir,
 		region:        region,
@@ -66,12 +74,15 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 		retryWaitTime: retryWait,
 		logger:        logger.NewLoggerFromGlobal("DeckRemote"),
 	}
+	for _, target := range p.targets {
+		recommender.targetStates[remoteTargetKey(target)] = &remoteTargetState{target: target}
+	}
 	p.recommenders[region] = recommender
 	return recommender, nil
 }
 
 func (r *RemoteDeckRecommender) Enabled() bool {
-	return r != nil && r.client != nil && r.baseURL != ""
+	return r != nil && r.client != nil && r.pool != nil && r.pool.Enabled() && len(r.targetStates) > 0
 }
 
 func (r *RemoteDeckRecommender) Close() {}
@@ -124,6 +135,26 @@ func (r *RemoteDeckRecommender) defaultAlgorithmsForOption(option map[string]any
 		return r.defaultAlgs
 	}
 	return filtered
+}
+
+func (r *RemoteDeckRecommender) acquireExecution() (*remoteExecution, error) {
+	if r == nil || r.client == nil || r.pool == nil || !r.pool.Enabled() {
+		return nil, fmt.Errorf("deck recommend service is not configured")
+	}
+
+	lease, err := r.pool.Acquire(nil)
+	if err != nil {
+		return nil, fmt.Errorf("deck-service upstream is unavailable: %w", err)
+	}
+	state := r.targetStates[remoteTargetKey(lease.Target)]
+	if state == nil {
+		lease.Release()
+		return nil, fmt.Errorf("deck-service target state is not initialized: %s", lease.Target.Name)
+	}
+	return &remoteExecution{
+		lease: lease,
+		state: state,
+	}, nil
 }
 
 func sanitizeLocalRecommendOption(option map[string]any) map[string]any {

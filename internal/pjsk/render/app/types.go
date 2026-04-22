@@ -6,6 +6,7 @@ import (
 
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/pjsk/accountdata"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -39,6 +40,7 @@ type Config struct {
 	InitContext              context.Context
 	DefaultRegion            renderregion.Value
 	DrawingBaseURL           string
+	DrawingTargets           []upstream.TargetConfig
 	DrawingTimeout           time.Duration
 	DrawingRetryCount        int
 	DrawingCache             drawing.RenderCacheConfig
@@ -54,6 +56,7 @@ type Config struct {
 	UserSnapshot             UserSnapshotConfig
 	MusicMetaRefreshInterval time.Duration
 	MetaLoader               *meta.Loader
+	SharedUpstreamResources  *upstream.SharedResources
 	DeckRecommend            DeckRecommendConfig
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not
@@ -81,13 +84,15 @@ type UserSnapshotConfig struct {
 }
 
 type DeckRecommendConfig struct {
-	Enabled        bool
-	ServiceBaseURL string
-	MasterdataDir  string
-	Timeout        time.Duration
-	MaxRetries     int
-	RetryWaitTime  time.Duration
-	DefaultAlgs    []string
+	Enabled         bool
+	ServiceBaseURL  string
+	Targets         []upstream.TargetConfig
+	SharedResources *upstream.SharedResources
+	MasterdataDir   string
+	Timeout         time.Duration
+	MaxRetries      int
+	RetryWaitTime   time.Duration
+	DefaultAlgs     []string
 }
 
 // ── App composite root ──────────────────────────────────────────────────────

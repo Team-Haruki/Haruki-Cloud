@@ -22,6 +22,7 @@ type localRenderCache struct {
 type localRenderEntry struct {
 	data      []byte
 	expiresAt time.Time
+	permanent bool
 }
 
 type RenderCacheConfig struct {
@@ -60,6 +61,7 @@ type renderCachePolicy struct {
 	UserID   string
 	Params   any
 	TTL      time.Duration
+	Infinite bool
 }
 
 type renderCacheKeyMaterial struct {

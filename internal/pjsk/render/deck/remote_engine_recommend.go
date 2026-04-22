@@ -19,12 +19,17 @@ func (r *RemoteDeckRecommender) RecommendBatch(req RecommendRequest) ([]remoteBa
 	if err := validateRemoteRecommendRequest(req); err != nil {
 		return nil, err
 	}
+	exec, err := r.acquireExecution()
+	if err != nil {
+		return nil, err
+	}
+	defer exec.Release()
 
 	// Circuit breaker: reject early when service is consistently failing.
-	if failures := r.consecutiveFailures.Load(); failures >= maxConsecutiveFailures {
-		if r.tryResetCircuitBreakerAfterCooldown(failures) {
+	if failures := exec.state.consecutiveFailures.Load(); failures >= maxConsecutiveFailures {
+		if r.tryResetCircuitBreakerAfterCooldown(exec.state, failures) {
 			r.logger.Infof("circuit breaker auto-reset after cooldown; allowing request to proceed")
-		} else if r.tryResetCircuitBreakerOnHealthyService(failures) {
+		} else if r.tryResetCircuitBreakerOnHealthyService(exec.state, failures) {
 			r.logger.Infof("circuit breaker reset after successful health probe; allowing request to proceed")
 		} else {
 			r.logger.Warnf("circuit breaker open: %d consecutive failures, rejecting request", failures)
@@ -32,28 +37,28 @@ func (r *RemoteDeckRecommender) RecommendBatch(req RecommendRequest) ([]remoteBa
 		}
 	}
 
-	if err := r.ensureReady(req.Region, req.MusicMeta, req.MusicMetaFilePath); err != nil {
-		r.recordFailure()
+	if err := r.ensureReady(exec, req.Region, req.MusicMeta, req.MusicMetaFilePath); err != nil {
+		r.recordFailure(exec.state)
 		return nil, err
 	}
 
 	start := time.Now()
-	results, err := r.recommendBatchOnce(req)
+	results, err := r.recommendBatchOnce(exec, req)
 	elapsed := time.Since(start)
 	if err == nil {
 		err = firstRemoteBatchError(results)
 	}
 	if err == nil {
-		r.recordSuccess()
+		r.recordSuccess(exec.state)
 		r.logger.Debugf("recommend completed in %v", elapsed)
 		return results, nil
 	}
 	if !shouldRewarmRemoteService(err) {
 		if shouldCountCircuitBreakerFailure(err) {
-			r.recordFailure()
+			r.recordFailure(exec.state)
 			r.logger.Warnf("recommend failed after %v: %v", elapsed, err)
 		} else {
-			r.recordSuccess()
+			r.recordSuccess(exec.state)
 			r.logger.Infof("recommend returned logical error after %v: %v", elapsed, err)
 		}
 		return nil, err
@@ -61,21 +66,21 @@ func (r *RemoteDeckRecommender) RecommendBatch(req RecommendRequest) ([]remoteBa
 
 	// Rewarm and retry once.
 	r.logger.Infof("rewarming remote service after: %v", err)
-	r.invalidate()
-	if warmErr := r.ensureReady(req.Region, req.MusicMeta, req.MusicMetaFilePath); warmErr != nil {
-		r.recordFailure()
+	r.invalidate(exec.state)
+	if warmErr := r.ensureReady(exec, req.Region, req.MusicMeta, req.MusicMetaFilePath); warmErr != nil {
+		r.recordFailure(exec.state)
 		return nil, warmErr
 	}
-	results, err = r.recommendBatchOnce(req)
+	results, err = r.recommendBatchOnce(exec, req)
 	if err == nil {
 		err = firstRemoteBatchError(results)
 	}
 	if err != nil {
-		r.recordFailure()
+		r.recordFailure(exec.state)
 		r.logger.Warnf("recommend failed after rewarm: %v", err)
 		return nil, err
 	}
-	r.recordSuccess()
+	r.recordSuccess(exec.state)
 	r.logger.Debugf("recommend completed after rewarm")
 	return results, nil
 }
@@ -93,8 +98,8 @@ func validateRemoteRecommendRequest(req RecommendRequest) error {
 	return nil
 }
 
-func (r *RemoteDeckRecommender) recommendBatchOnce(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
-	return r.doRecommendCompatible(req)
+func (r *RemoteDeckRecommender) recommendBatchOnce(exec *remoteExecution, req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+	return r.doRecommendCompatible(exec, req)
 }
 
 func firstRemoteBatchError(results []remoteBatchRecommendResult) error {
@@ -117,26 +122,24 @@ func firstRemoteBatchError(results []remoteBatchRecommendResult) error {
 	return firstErr
 }
 
-func (r *RemoteDeckRecommender) recordSuccess() {
-	r.consecutiveFailures.Store(0)
-	r.lastFailureAtNanos.Store(0)
+func (r *RemoteDeckRecommender) recordSuccess(state *remoteTargetState) {
+	state.consecutiveFailures.Store(0)
+	state.lastFailureAtNanos.Store(0)
 }
 
-func (r *RemoteDeckRecommender) recordFailure() {
-	r.consecutiveFailures.Add(1)
-	r.lastFailureAtNanos.Store(r.timeNow().UnixNano())
+func (r *RemoteDeckRecommender) recordFailure(state *remoteTargetState) {
+	state.consecutiveFailures.Add(1)
+	state.lastFailureAtNanos.Store(r.timeNow().UnixNano())
 }
 
-// ResetCircuitBreaker allows external callers (e.g. health checks) to
-// re-enable the service after recovery.
-func (r *RemoteDeckRecommender) ResetCircuitBreaker() {
-	r.consecutiveFailures.Store(0)
-	r.lastFailureAtNanos.Store(0)
+func (r *RemoteDeckRecommender) resetCircuitBreaker(state *remoteTargetState) {
+	state.consecutiveFailures.Store(0)
+	state.lastFailureAtNanos.Store(0)
 	r.logger.Infof("circuit breaker reset")
 }
 
-func (r *RemoteDeckRecommender) tryResetCircuitBreakerAfterCooldown(failures int64) bool {
-	lastNanos := r.lastFailureAtNanos.Load()
+func (r *RemoteDeckRecommender) tryResetCircuitBreakerAfterCooldown(state *remoteTargetState, failures int64) bool {
+	lastNanos := state.lastFailureAtNanos.Load()
 	if lastNanos <= 0 {
 		return false
 	}
@@ -145,16 +148,16 @@ func (r *RemoteDeckRecommender) tryResetCircuitBreakerAfterCooldown(failures int
 		return false
 	}
 	r.logger.Infof("circuit breaker cooldown elapsed after %v; resetting from %d consecutive failures", elapsed, failures)
-	r.ResetCircuitBreaker()
+	r.resetCircuitBreaker(state)
 	return true
 }
 
-func (r *RemoteDeckRecommender) tryResetCircuitBreakerOnHealthyService(failures int64) bool {
-	if !r.healthCheck() {
+func (r *RemoteDeckRecommender) tryResetCircuitBreakerOnHealthyService(state *remoteTargetState, failures int64) bool {
+	if !r.healthCheck(state.target.BaseURL) {
 		return false
 	}
 	r.logger.Infof("circuit breaker health probe succeeded; resetting from %d consecutive failures", failures)
-	r.ResetCircuitBreaker()
+	r.resetCircuitBreaker(state)
 	return true
 }
 
@@ -181,25 +184,25 @@ func shouldCountCircuitBreakerFailure(err error) bool {
 		strings.Contains(message, "eof")
 }
 
-func (r *RemoteDeckRecommender) doRecommendCompatible(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
-	results, err := r.doRecommendBatch(req)
+func (r *RemoteDeckRecommender) doRecommendCompatible(exec *remoteExecution, req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+	results, err := r.doRecommendBatch(exec, req)
 	if err == nil {
 		return results, nil
 	}
 	if !isUnsupportedBatchProtocolError(err) && !isMissingUserdataHashError(err) {
 		return nil, err
 	}
-	return r.doRecommendLegacy(req)
+	return r.doRecommendLegacy(exec, req)
 }
 
-func (r *RemoteDeckRecommender) doRecommendBatch(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+func (r *RemoteDeckRecommender) doRecommendBatch(exec *remoteExecution, req RecommendRequest) ([]remoteBatchRecommendResult, error) {
 	userData := req.UserData
 	if len(userData) == 0 {
 		return nil, fmt.Errorf("deck remote engine: no user data bytes available")
 	}
 
 	var cacheResp remoteUserDataCacheResponse
-	if err := r.postBinary("/cache_userdata", buildMultipartPayload(userData), &cacheResp); err != nil {
+	if err := r.postBinary(exec, "/cache_userdata", buildMultipartPayload(userData), &cacheResp); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(cacheResp.UserdataHash) == "" {
@@ -217,13 +220,13 @@ func (r *RemoteDeckRecommender) doRecommendBatch(req RecommendRequest) ([]remote
 	}
 
 	var raw json.RawMessage
-	if err := r.postBinary("/recommend", buildMultipartPayload(recommendJSON), &raw); err != nil {
+	if err := r.postBinary(exec, "/recommend", buildMultipartPayload(recommendJSON), &raw); err != nil {
 		return nil, err
 	}
 	return parseRemoteRecommendBatch(raw, req.BatchOption)
 }
 
-func (r *RemoteDeckRecommender) doRecommendLegacy(req RecommendRequest) ([]remoteBatchRecommendResult, error) {
+func (r *RemoteDeckRecommender) doRecommendLegacy(exec *remoteExecution, req RecommendRequest) ([]remoteBatchRecommendResult, error) {
 	type partial struct {
 		index int
 		item  remoteBatchRecommendResult
@@ -236,7 +239,7 @@ func (r *RemoteDeckRecommender) doRecommendLegacy(req RecommendRequest) ([]remot
 		go func(index int) {
 			alg, _ := opt["algorithm"].(string)
 			start := time.Now()
-			decks, err := r.doRecommendLegacyOption(req, opt)
+			decks, err := r.doRecommendLegacyOption(exec, req, opt)
 			if err != nil {
 				results <- partial{
 					index: index,
@@ -279,7 +282,7 @@ func (r *RemoteDeckRecommender) doRecommendLegacy(req RecommendRequest) ([]remot
 	return out, nil
 }
 
-func (r *RemoteDeckRecommender) doRecommendLegacyOption(req RecommendRequest, option map[string]any) ([]remoteRecommendDeck, error) {
+func (r *RemoteDeckRecommender) doRecommendLegacyOption(exec *remoteExecution, req RecommendRequest, option map[string]any) ([]remoteRecommendDeck, error) {
 	payload := cloneRecommendOption(option)
 	payload["region"] = strings.ToLower(strings.TrimSpace(req.Region))
 	if len(req.UserData) > 0 {
@@ -291,23 +294,24 @@ func (r *RemoteDeckRecommender) doRecommendLegacyOption(req RecommendRequest, op
 	}
 
 	var response remoteRecommendResult
-	if err := r.postJSON("/recommend", payload, &response); err != nil {
+	if err := r.postJSON(exec, "/recommend", payload, &response); err != nil {
 		return nil, err
 	}
 	return response.Decks, nil
 }
 
-func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, musicMetaPath string) error {
+func (r *RemoteDeckRecommender) ensureReady(exec *remoteExecution, region string, musicMeta []byte, musicMetaPath string) error {
 	musicMetaPath = strings.TrimSpace(musicMetaPath)
 	hash := hashPayload(musicMeta)
 	if hash == "" && musicMetaPath != "" {
 		hash = "path:" + musicMetaPath
 	}
 
-	r.mu.Lock()
-	masterReady := r.masterdataReady
-	musicReady := hash != "" && hash == r.musicMetaHash
-	r.mu.Unlock()
+	state := exec.state
+	state.mu.Lock()
+	masterReady := state.masterdataReady
+	musicReady := hash != "" && hash == state.musicMetaHash
+	state.mu.Unlock()
 
 	region = strings.ToLower(strings.TrimSpace(region))
 	if region == "" {
@@ -319,11 +323,11 @@ func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, mus
 	}
 
 	for {
-		_, err, _ := r.readyGroup.Do("ready", func() (any, error) {
-			r.mu.Lock()
-			masterReady = r.masterdataReady
-			musicReady = hash != "" && hash == r.musicMetaHash
-			r.mu.Unlock()
+		_, err, _ := state.readyGroup.Do("ready", func() (any, error) {
+			state.mu.Lock()
+			masterReady = state.masterdataReady
+			musicReady = hash != "" && hash == state.musicMetaHash
+			state.mu.Unlock()
 
 			if masterReady && (hash == "" || musicReady) {
 				return nil, nil
@@ -334,7 +338,7 @@ func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, mus
 					"base_dir": r.masterdataDir,
 					"region":   region,
 				}
-				if err := r.postJSON("/update/masterdata", req, nil); err != nil {
+				if err := r.postJSON(exec, "/update/masterdata", req, nil); err != nil {
 					return nil, fmt.Errorf("deck remote engine: update masterdata: %w", err)
 				}
 			}
@@ -344,42 +348,42 @@ func (r *RemoteDeckRecommender) ensureReady(region string, musicMeta []byte, mus
 				// Prefer sending bytes directly — container cannot access host file paths.
 				if len(musicMeta) > 0 {
 					req["data"] = string(musicMeta)
-					if err := r.postJSON("/update/musicmetas/string", req, nil); err != nil {
+					if err := r.postJSON(exec, "/update/musicmetas/string", req, nil); err != nil {
 						return nil, fmt.Errorf("deck remote engine: update music metas: %w", err)
 					}
 				} else if musicMetaPath != "" {
 					req["file_path"] = musicMetaPath
-					if err := r.postJSON("/update/musicmetas", req, nil); err != nil {
+					if err := r.postJSON(exec, "/update/musicmetas", req, nil); err != nil {
 						return nil, fmt.Errorf("deck remote engine: update music metas: %w", err)
 					}
 				}
 			}
 
-			r.mu.Lock()
-			r.masterdataReady = true
+			state.mu.Lock()
+			state.masterdataReady = true
 			if hash != "" {
-				r.musicMetaHash = hash
+				state.musicMetaHash = hash
 			}
-			r.mu.Unlock()
+			state.mu.Unlock()
 			return nil, nil
 		})
 		if err != nil {
 			return err
 		}
 
-		r.mu.Lock()
-		masterReady = r.masterdataReady
-		musicReady = hash != "" && hash == r.musicMetaHash
-		r.mu.Unlock()
+		state.mu.Lock()
+		masterReady = state.masterdataReady
+		musicReady = hash != "" && hash == state.musicMetaHash
+		state.mu.Unlock()
 		if masterReady && (hash == "" || musicReady) {
 			return nil
 		}
 	}
 }
 
-func (r *RemoteDeckRecommender) invalidate() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.masterdataReady = false
-	r.musicMetaHash = ""
+func (r *RemoteDeckRecommender) invalidate(state *remoteTargetState) {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	state.masterdataReady = false
+	state.musicMetaHash = ""
 }

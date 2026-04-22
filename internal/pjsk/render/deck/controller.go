@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -34,19 +35,21 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 		snapshot:      snapshot,
 		defaultRegion: resolvedDefaultRegion,
 		recommendCfg: RecommendConfig{
-			Enabled:        cfg.Enabled,
-			ServiceBaseURL: strings.TrimSpace(cfg.ServiceBaseURL),
-			MasterdataDir:  cfg.MasterdataDir,
-			Timeout:        cfg.Timeout,
-			MaxRetries:     cfg.MaxRetries,
-			RetryWaitTime:  cfg.RetryWaitTime,
-			DefaultAlgs:    slices.Clone(cfg.DefaultAlgs),
+			Enabled:         cfg.Enabled,
+			ServiceBaseURL:  strings.TrimSpace(cfg.ServiceBaseURL),
+			Targets:         slices.Clone(cfg.Targets),
+			SharedResources: cfg.SharedResources,
+			MasterdataDir:   cfg.MasterdataDir,
+			Timeout:         cfg.Timeout,
+			MaxRetries:      cfg.MaxRetries,
+			RetryWaitTime:   cfg.RetryWaitTime,
+			DefaultAlgs:     slices.Clone(cfg.DefaultAlgs),
 		},
 		metaLoader: metaLoader,
 	}
 	controller.RegisterCardSource(cards)
 	controller.RegisterEventSource(events)
-	if cfg.Enabled && controller.recommendCfg.ServiceBaseURL != "" {
+	if cfg.Enabled && len(upstream.ResolveTargets(controller.recommendCfg.ServiceBaseURL, controller.recommendCfg.Targets, "deck-service")) > 0 {
 		controller.engine = newRemoteEngineProvider(controller.recommendCfg)
 	}
 	return controller

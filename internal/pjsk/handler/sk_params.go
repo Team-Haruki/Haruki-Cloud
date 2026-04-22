@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -105,18 +106,52 @@ func buildSKTrackerParamsWithDefaultRanks(ctx HarrukiSekaiHandlerContext, defaul
 	return params, nil
 }
 
-func applySKSpeedDefaults(params map[string]any, unit string, periodSeconds int64) {
-	if params == nil {
-		return
+func buildSKSpeedTrackerParams(ctx HarrukiSekaiHandlerContext, unit string, defaultPeriodValue int64, periodScaleSeconds int64) (map[string]any, error) {
+	eventID, wlCharacterID, wlCharacterQuery, _, periodArgs := extractSKMetaArgs(
+		strings.TrimSpace(ctx.GetArgs()),
+		false,
+		ctx.PrefixArg() == "wl",
+	)
+	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
+		wlCharacterQuery = "wl"
 	}
+
 	unit = strings.ToLower(strings.TrimSpace(unit))
 	if unit == "" {
 		unit = "h"
 	}
-	params["speed_unit"] = unit
-	if periodSeconds > 0 {
-		params["speed_period_seconds"] = periodSeconds
+	if defaultPeriodValue <= 0 {
+		defaultPeriodValue = 1
 	}
+	if periodScaleSeconds <= 0 {
+		periodScaleSeconds = 60 * 60
+	}
+
+	periodValue := defaultPeriodValue
+	if raw := strings.TrimSpace(periodArgs); raw != "" {
+		if parsed, err := strconv.ParseInt(raw, 10, 64); err == nil && parsed > 0 {
+			periodValue = parsed
+		}
+	}
+
+	params := map[string]any{
+		"region":               strings.ToLower(strings.TrimSpace(ctx.Region().String())),
+		"region_explicit":      ctx.HasExplicitRegion(),
+		"ranks":                slices.Clone(defaultSKSpeedRanks),
+		"default_ranks":        true,
+		"speed_unit":           unit,
+		"speed_period_seconds": periodValue * periodScaleSeconds,
+	}
+	if eventID > 0 {
+		params["event_id"] = eventID
+	}
+	if wlCharacterID > 0 {
+		params["wl_character_id"] = wlCharacterID
+	}
+	if strings.TrimSpace(wlCharacterQuery) != "" {
+		params["wl_character_query"] = strings.TrimSpace(wlCharacterQuery)
+	}
+	return params, nil
 }
 
 func buildSKPlayerTraceParams(ctx HarrukiSekaiHandlerContext) (map[string]any, error) {

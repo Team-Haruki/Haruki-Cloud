@@ -687,6 +687,29 @@ func (speedTraceOnlyTrackerSource) TraceRankingByRank(server string, eventID, ra
 	}, nil
 }
 
+type speedWindowTraceTrackerSource struct {
+	testTrackerSource
+}
+
+func (speedWindowTraceTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	return nil, nil
+}
+
+func (speedWindowTraceTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	if rank != 50 {
+		return nil, fmt.Errorf("unexpected rank")
+	}
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{UserID: "50050", Score: 0, Rank: 50, Timestamp: 0},
+			{UserID: "50050", Score: 3_500, Rank: 50, Timestamp: 3_500},
+			{UserID: "50050", Score: 3_600, Rank: 50, Timestamp: 3_700},
+			{UserID: "50050", Score: 7_200, Rank: 50, Timestamp: 7_200},
+		},
+		UserData: sekaiapi.RankingUserData{UserID: "50050", Name: "SpeedPlayer"},
+	}, nil
+}
+
 type missingDefaultRankSpeedTrackerSource struct {
 	testTrackerSource
 }
@@ -1744,6 +1767,39 @@ func TestBuildSpeedRequestFromTrackerFallsBackToTraceWhenGrowthPointMissing(t *t
 	got := payload.Ranks[0]
 	if got.Speed == nil || *got.Speed != 1556214 {
 		t.Fatalf("expected speed from trace fallback, got %+v", got.Speed)
+	}
+}
+
+func TestBuildSpeedRequestFromTrackerTraceUsesFirstPointAfterWindowStart(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(speedWindowTraceTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildSpeedRequestFromTracker(TrackerRankQuery{
+		EventID:         101,
+		Region:          "jp",
+		Ranks:           []int{50},
+		SpeedUnit:       "h",
+		SpeedPeriodSecs: 60 * 60,
+	})
+	if err != nil {
+		t.Fatalf("build speed request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	got := payload.Ranks[0]
+	if got.Speed == nil || *got.Speed != 3702 {
+		t.Fatalf("expected speed from first point after window start, got %+v", got.Speed)
 	}
 }
 

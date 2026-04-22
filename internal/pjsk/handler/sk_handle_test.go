@@ -39,6 +39,9 @@ func TestSKDailySpeedHandleBuildsCommandRequest(t *testing.T) {
 	if params.SpeedPeriodSecs != 24*60*60 {
 		t.Fatalf("unexpected speed period: %+v", params)
 	}
+	if len(params.Ranks) != len(defaultSKSpeedRanks) {
+		t.Fatalf("unexpected default speed ranks len: %+v", params)
+	}
 	if !params.DefaultRanks {
 		t.Fatalf("expected default ranks flag: %+v", params)
 	}
@@ -73,6 +76,57 @@ func TestSKSpeedHandleBuildsCommandRequestWithHourDefaults(t *testing.T) {
 	}
 	if params.SpeedPeriodSecs != 60*60 {
 		t.Fatalf("unexpected speed period: %+v", params)
+	}
+	if len(params.Ranks) != len(defaultSKSpeedRanks) {
+		t.Fatalf("unexpected default speed ranks len: %+v", params)
+	}
+}
+
+func TestSKSpeedHandleTreatsArgumentAsMinutePeriod(t *testing.T) {
+	h := sekaiHandlers{}.SKSpeedHandle()
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/时速",
+		ArgText:    "30",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params sk.TrackerRankQuery
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.SpeedUnit != "h" || params.SpeedPeriodSecs != 30*60 {
+		t.Fatalf("unexpected speed params: %+v", params)
+	}
+	if len(params.Ranks) != len(defaultSKSpeedRanks) || params.Ranks[0] != 10 || params.Ranks[len(params.Ranks)-1] != 500000 {
+		t.Fatalf("unexpected speed ranks: %+v", params.Ranks)
+	}
+}
+
+func TestSKDailySpeedHandleTreatsArgumentAsDayPeriod(t *testing.T) {
+	h := sekaiHandlers{}.SKDailySpeedHandle()
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/日速",
+		ArgText:    "2",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params sk.TrackerRankQuery
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.SpeedUnit != "d" || params.SpeedPeriodSecs != 2*24*60*60 {
+		t.Fatalf("unexpected speed params: %+v", params)
+	}
+	if len(params.Ranks) != len(defaultSKSpeedRanks) || params.Ranks[0] != 10 || params.Ranks[len(params.Ranks)-1] != 500000 {
+		t.Fatalf("unexpected speed ranks: %+v", params.Ranks)
 	}
 }
 

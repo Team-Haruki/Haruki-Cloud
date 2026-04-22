@@ -66,11 +66,10 @@ func (sekaiHandlers) SKSpeedHandle() HarukiSekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			params, err := buildSKTrackerParams(ctx, false, false, false)
+			params, err := buildSKSpeedTrackerParams(ctx, "h", 60, 60)
 			if err != nil {
 				return nil, err
 			}
-			applySKSpeedDefaults(params, "h", 60*60)
 			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-speed", params), nil
 		},
 	}, executeSK)
@@ -177,11 +176,10 @@ func (sekaiHandlers) SKDailySpeedHandle() HarukiSekaiCommandHandler {
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			params, err := buildSKTrackerParams(ctx, false, false, false)
+			params, err := buildSKSpeedTrackerParams(ctx, "d", 1, 24*60*60)
 			if err != nil {
 				return nil, err
 			}
-			applySKSpeedDefaults(params, "d", 24*60*60)
 			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-daily-speed", params), nil
 		},
 	}, executeSK)

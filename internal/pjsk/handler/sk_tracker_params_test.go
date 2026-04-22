@@ -247,6 +247,53 @@ func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {
 	}
 }
 
+func TestBuildSKSpeedTrackerParamsUsesFixedRanksAndMinutePeriod(t *testing.T) {
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: PjskHandlerContext{ArgText: "event101 30"},
+		region:             renderregion.JP,
+	}
+
+	params, err := buildSKSpeedTrackerParams(ctx, "h", 60, 60)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if got, ok := params["event_id"].(int); !ok || got != 101 {
+		t.Fatalf("unexpected event_id: %#v", params["event_id"])
+	}
+	ranks, _ := params["ranks"].([]int)
+	if len(ranks) != len(defaultSKSpeedRanks) {
+		t.Fatalf("unexpected speed ranks len=%d", len(ranks))
+	}
+	if got, ok := params["speed_period_seconds"].(int64); !ok || got != 30*60 {
+		t.Fatalf("unexpected speed period: %#v", params["speed_period_seconds"])
+	}
+}
+
+func TestBuildSKSpeedTrackerParamsPreservesWorldLinkSelector(t *testing.T) {
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: PjskHandlerContext{ArgText: "初音未来 30"},
+		region:             renderregion.JP,
+		prefixArg:          "wl",
+	}
+
+	params, err := buildSKSpeedTrackerParams(ctx, "h", 60, 60)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if got, ok := params["wl_character_query"].(string); !ok || got != "初音未来" {
+		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
+	}
+	if got, ok := params["speed_period_seconds"].(int64); !ok || got != 30*60 {
+		t.Fatalf("unexpected speed period: %#v", params["speed_period_seconds"])
+	}
+	ranks, _ := params["ranks"].([]int)
+	if len(ranks) != len(defaultSKSpeedRanks) {
+		t.Fatalf("unexpected speed ranks len=%d", len(ranks))
+	}
+}
+
 func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
 		PjskHandlerContext: PjskHandlerContext{ArgText: "wl初音未来 100"},

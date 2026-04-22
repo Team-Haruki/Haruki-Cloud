@@ -183,7 +183,7 @@ func (c *Controller) BuildListRequest(query ListQuery) (*drawing.VLiveListReques
 			EndAt:      live.EndAt.UnixMilli(),
 			Living:     live.Living,
 			RestCount:  live.RestCount,
-			BannerPath: c.bannerPath(region, live.AssetBundleName),
+			BannerPath: c.bannerPath(source, region, live),
 			Rewards:    c.buildRewardItems(source, live),
 			Characters: c.buildCharacterItems(source, live),
 		}
@@ -248,16 +248,88 @@ func (c *Controller) resolveRegion(region string) renderregion.Value {
 	return renderregion.WithDefault(renderregion.Normalize(region))
 }
 
-func (c *Controller) bannerPath(region renderregion.Value, assetBundleName string) string {
-	assetBundleName = strings.TrimSpace(assetBundleName)
+func (c *Controller) bannerPath(source DataSource, region renderregion.Value, live ResolvedLive) string {
+	if bannerPath := c.eventBannerPath(source, region, live.ID); bannerPath != "" {
+		return bannerPath
+	}
+	if bannerPath := c.birthdayBannerPath(source, region, live); bannerPath != "" {
+		return bannerPath
+	}
+
+	assetBundleName := strings.TrimSpace(live.AssetBundleName)
 	if assetBundleName == "" {
 		return ""
 	}
 	return assets.ResolveRegionAssetPath(
 		c.assets,
 		region.String(),
+		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
+		filepath.Join("virtual_live", "select", "banner", assetBundleName, assetBundleName+".png"),
 		filepath.Join("virtual_live", "select", "banner", assetBundleName+"_rip", assetBundleName+".png"),
 	)
+}
+
+func (c *Controller) eventBannerPath(source DataSource, region renderregion.Value, liveID int) string {
+	if source == nil || liveID <= 0 {
+		return ""
+	}
+	eventSource, ok := source.(eventBannerDataSource)
+	if !ok {
+		return ""
+	}
+	eventInfo, err := eventSource.GetEventByVirtualLiveID(liveID)
+	if err != nil || eventInfo == nil {
+		return ""
+	}
+	return assets.ResolveEventBannerPath(c.assets, region.String(), eventInfo.AssetBundleName)
+}
+
+func (c *Controller) birthdayBannerPath(source DataSource, region renderregion.Value, live ResolvedLive) string {
+	if !isBirthdayLive(live.Name) {
+		return ""
+	}
+	nickname := primaryLiveCharacterNickname(source, live.Characters)
+	if nickname == "" {
+		return ""
+	}
+	assetBundleName := fmt.Sprintf("banner_birthday_%s_%d", nickname, live.StartAt.Year())
+	return assets.ResolveRegionAssetPath(
+		c.assets,
+		region.String(),
+		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
+	)
+}
+
+func isBirthdayLive(name string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(name))
+	return strings.Contains(normalized, "birthday") ||
+		strings.Contains(normalized, "生日") ||
+		strings.Contains(normalized, "誕生日")
+}
+
+func primaryLiveCharacterNickname(source DataSource, characters []Character) string {
+	if source == nil || len(characters) == 0 {
+		return ""
+	}
+	for _, wantType := range []string{"main_only", "both", ""} {
+		for _, item := range characters {
+			performanceType := strings.TrimSpace(item.VirtualLivePerformanceType)
+			if wantType != "" && performanceType != wantType {
+				continue
+			}
+			if wantType == "" && performanceType != "" && performanceType != "both" {
+				continue
+			}
+			unit, err := source.GetGameCharacterUnit(item.GameCharacterUnitID)
+			if err != nil || unit == nil {
+				continue
+			}
+			if nickname, ok := assets.CharacterIDToNickname[unit.GameCharacterID]; ok && nickname != "" {
+				return nickname
+			}
+		}
+	}
+	return ""
 }
 
 func (c *Controller) buildRewardItems(source DataSource, live ResolvedLive) []drawing.VLiveRewardItem {

@@ -2,6 +2,7 @@ package vlive
 
 import (
 	"context"
+	"fmt"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -67,6 +68,20 @@ func (a *ProviderAdapter) GetLives(region renderregion.Value) ([]*Live, error) {
 
 func (a *ProviderAdapter) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
 	return a.P.Characters().GetGameCharacterUnit(a.Context(), id)
+}
+
+func (a *ProviderAdapter) GetEventByVirtualLiveID(id int) (*masterdata.Event, error) {
+	if id <= 0 {
+		return nil, fmt.Errorf("virtual live id is required")
+	}
+	for _, item := range a.P.Events().GetAll(a.Context()) {
+		if item == nil || item.VirtualLiveID != id {
+			continue
+		}
+		clone := *item
+		return &clone, nil
+	}
+	return nil, fmt.Errorf("event for virtual live %d not found", id)
 }
 
 func (a *ProviderAdapter) GetResourceBoxByPurpose(purpose string, id int) *provider.ResourceBox {

@@ -23,6 +23,10 @@ type contextualDataSource interface {
 	WithContext(ctx context.Context) DataSource
 }
 
+type eventBannerDataSource interface {
+	GetEventByVirtualLiveID(id int) (*masterdata.Event, error)
+}
+
 type Controller struct {
 	sources *regionsource.Registry[DataSource]
 	drawing *drawing.HarukiDrawingClient

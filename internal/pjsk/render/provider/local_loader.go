@@ -153,6 +153,7 @@ type localEventJSON struct {
 	StartAt                  int64           `json:"startAt"`
 	AggregateAt              int64           `json:"aggregateAt"`
 	ClosedAt                 int64           `json:"closedAt"`
+	VirtualLiveID            int             `json:"virtualLiveId"`
 	EventRankingRewardRanges json.RawMessage `json:"eventRankingRewardRanges"`
 }
 
@@ -166,6 +167,7 @@ func (j *localEventJSON) toModel() *masterdata.Event {
 		StartAt:         j.StartAt,
 		AggregateAt:     j.AggregateAt,
 		ClosedAt:        j.ClosedAt,
+		VirtualLiveID:   j.VirtualLiveID,
 	}
 }
 

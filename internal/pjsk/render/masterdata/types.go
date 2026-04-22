@@ -85,6 +85,7 @@ type Event struct {
 	StartAt         int64
 	AggregateAt     int64
 	ClosedAt        int64
+	VirtualLiveID   int
 }
 
 type EventDeckBonus struct {

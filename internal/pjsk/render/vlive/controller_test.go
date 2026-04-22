@@ -17,6 +17,7 @@ type fakeSource struct {
 	defaultRegion renderregion.Value
 	lives         map[renderregion.Value][]*Live
 	characters    map[int]*masterdata.GameCharacterUnit
+	events        map[int]*masterdata.Event
 	resourceBoxes map[int]*provider.ResourceBox
 	ctx           context.Context
 	wantKey       vliveContextKey
@@ -45,6 +46,13 @@ func (f *fakeSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit
 		return nil, nil
 	}
 	return f.characters[id], nil
+}
+
+func (f *fakeSource) GetEventByVirtualLiveID(id int) (*masterdata.Event, error) {
+	if f.events == nil {
+		return nil, nil
+	}
+	return f.events[id], nil
 }
 
 func (f *fakeSource) GetResourceBoxByPurpose(_ string, id int) *provider.ResourceBox {
@@ -202,6 +210,13 @@ func TestBuildListRequestIncludesBannerRewardsAndCharacters(t *testing.T) {
 				},
 			},
 		},
+		events: map[int]*masterdata.Event{
+			371: {
+				ID:              9001,
+				AssetBundleName: "event_painful_2022",
+				VirtualLiveID:   371,
+			},
+		},
 		characters: map[int]*masterdata.GameCharacterUnit{
 			21: {ID: 21, GameCharacterID: 21, Unit: "piapro"},
 			22: {ID: 22, GameCharacterID: 22, Unit: "piapro"},
@@ -235,7 +250,7 @@ func TestBuildListRequestIncludesBannerRewardsAndCharacters(t *testing.T) {
 		t.Fatalf("unexpected lives len: %d", len(req.Lives))
 	}
 	live := req.Lives[0]
-	if live.BannerPath != "asset/jp-assets/startapp/virtual_live/select/banner/vlentrance_00371_re_rip/vlentrance_00371_re.png" {
+	if live.BannerPath != "asset/jp-assets/startapp/home/banner/event_painful_2022/event_painful_2022.png" {
 		t.Fatalf("unexpected banner path: %q", live.BannerPath)
 	}
 	if !live.Living || live.RestCount != 1 {
@@ -258,5 +273,43 @@ func TestBuildListRequestIncludesBannerRewardsAndCharacters(t *testing.T) {
 	}
 	if live.Characters[1].IconPath != "static_images/chara_icon/rin.png" {
 		t.Fatalf("unexpected second character path: %q", live.Characters[1].IconPath)
+	}
+}
+
+func TestBuildListRequestBirthdayLiveUsesBirthdayBanner(t *testing.T) {
+	now := time.Date(2026, 4, 22, 10, 0, 0, 0, time.UTC)
+	ms := func(tm time.Time) int64 { return tm.UnixMilli() }
+
+	controller := NewControllerWithDrawing(&fakeSource{
+		defaultRegion: renderregion.JP,
+		lives: map[renderregion.Value][]*Live{
+			renderregion.JP: {
+				{
+					ID:      373,
+					Name:    "HAPPY BIRTHDAY演唱会 结名 2026",
+					StartAt: ms(now.Add(24 * time.Hour)),
+					EndAt:   ms(now.Add(72 * time.Hour)),
+					Characters: []Character{
+						{GameCharacterUnitID: 19, VirtualLivePerformanceType: "main_only"},
+						{GameCharacterUnitID: 21, VirtualLivePerformanceType: "both"},
+					},
+				},
+			},
+		},
+		characters: map[int]*masterdata.GameCharacterUnit{
+			19: {ID: 19, GameCharacterID: 19, Unit: "25ji"},
+			21: {ID: 21, GameCharacterID: 21, Unit: "piapro"},
+		},
+	}, nil, nil, renderregion.JP)
+
+	req, err := controller.BuildListRequest(ListQuery{Region: "jp", Now: now})
+	if err != nil {
+		t.Fatalf("BuildListRequest() error = %v", err)
+	}
+	if len(req.Lives) != 1 {
+		t.Fatalf("unexpected lives len: %d", len(req.Lives))
+	}
+	if got := req.Lives[0].BannerPath; got != "asset/jp-assets/startapp/home/banner/banner_birthday_ena_2026/banner_birthday_ena_2026.png" {
+		t.Fatalf("unexpected birthday banner path: %q", got)
 	}
 }

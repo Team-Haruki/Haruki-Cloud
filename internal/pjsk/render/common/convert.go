@@ -65,6 +65,7 @@ func ConvertEventEntity(entity *sekaiDB.Event) *masterdata.Event {
 		StartAt:         entity.StartAt,
 		AggregateAt:     entity.AggregateAt,
 		ClosedAt:        entity.ClosedAt,
+		VirtualLiveID:   int(entity.VirtualLiveID),
 	}
 }
 

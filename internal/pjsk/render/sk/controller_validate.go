@@ -52,25 +52,23 @@ func shouldSkipMissingTrackerRanks(req TrackerRankQuery) bool {
 	return req.DefaultRanks && req.UserID == nil
 }
 
-func normalizeTrackerSpeedConfig(req TrackerRankQuery) (periodSeconds int64, unitText string) {
+func normalizeTrackerSpeedConfig(req TrackerRankQuery) (periodSeconds int64, unitPeriodSeconds int64, unitText string) {
 	unit := strings.ToLower(strings.TrimSpace(req.SpeedUnit))
 	switch unit {
 	case "d", "day", "daily", "日":
+		unitPeriodSeconds = 24 * 60 * 60
 		unitText = "日"
 	default:
+		unitPeriodSeconds = 60 * 60
 		unitText = "时"
 	}
 
 	periodSeconds = req.SpeedPeriodSecs
 	if periodSeconds <= 0 {
-		if unitText == "日" {
-			periodSeconds = 24 * 60 * 60
-		} else {
-			periodSeconds = 60 * 60
-		}
+		periodSeconds = unitPeriodSeconds
 	}
 
-	return periodSeconds, unitText
+	return periodSeconds, unitPeriodSeconds, unitText
 }
 
 func shouldSkipMissingTrackerRankError(skipMissing bool, err error) bool {

@@ -22,14 +22,14 @@ func (c *Controller) BuildSpeedRequestFromTracker(req TrackerRankQuery) (*drawin
 	if normalized.UserID != nil {
 		return nil, fmt.Errorf("speed 暂不支持按用户查询，请使用排名")
 	}
-	speedPeriodSeconds, speedUnitText := normalizeTrackerSpeedConfig(normalized)
+	speedPeriodSeconds, speedUnitPeriodSeconds, speedUnitText := normalizeTrackerSpeedConfig(normalized)
 	speedInfos, err := c.buildSpeedInfosFromTracker(
 		normalized.Region,
 		normalized.EventID,
 		normalized.Ranks,
 		normalized.WlCharacterID,
 		int(speedPeriodSeconds),
-		speedPeriodSeconds,
+		speedUnitPeriodSeconds,
 		shouldSkipMissingTrackerRanks(normalized),
 	)
 	if err != nil {

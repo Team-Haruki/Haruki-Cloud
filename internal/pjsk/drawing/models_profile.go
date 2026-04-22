@@ -65,6 +65,11 @@ type SoloLiveRank struct {
 	Rank        int `json:"rank"`
 }
 
+type MultiLiveTopScoreCount struct {
+	MVP       int `json:"mvp"`
+	SuperStar int `json:"super_star"`
+}
+
 // ProfileRequest represents request for /profile/profile
 type ProfileRequest struct {
 	Profile              BasicProfile               `json:"profile"`
@@ -77,6 +82,7 @@ type ProfileRequest struct {
 	MusicDifficultyCount []MusicClearCount          `json:"music_difficulty_count"`
 	CharacterRank        []CharacterRank            `json:"character_rank"`
 	SoloLive             *SoloLiveRank              `json:"solo_live,omitempty"`
+	MultiLive            *MultiLiveTopScoreCount    `json:"multi_live,omitempty"`
 	UpdateTime           *int64                     `json:"update_time,omitempty"`
 	LvRankBgPath         string                     `json:"lv_rank_bg_path"`
 	XIconPath            string                     `json:"x_icon_path"`

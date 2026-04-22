@@ -120,6 +120,13 @@ func adaptAPIChallengeLiveStages(stages []sekai.AnotherUserChallengeLiveSoloStag
 	return result
 }
 
+func adaptAPIMultiLiveTopScoreCount(count sekai.AnotherUserMultiLiveTopScoreCount) snapshot.RawUserMultiLiveTopScoreCount {
+	return snapshot.RawUserMultiLiveTopScoreCount{
+		MVP:       count.MVP,
+		SuperStar: count.SuperStar,
+	}
+}
+
 // parseFramesJSON parses the raw bytes from a userPlayerFrames snapshot payload into the
 // RawUserFrame slice used by buildFramePaths. Returns nil on empty input or parse error so
 // that the caller renders without a player frame.

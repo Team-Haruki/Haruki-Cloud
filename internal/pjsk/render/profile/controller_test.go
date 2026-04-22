@@ -219,6 +219,38 @@ func TestBuildProfileRequestFromAPIFollowsLeaderCardInsteadOfCustomProfileImage(
 	}
 }
 
+func TestBuildProfileRequestFromAPIIncludesMultiLiveTopScoreCounts(t *testing.T) {
+	source := &testProfileSource{
+		region:      renderregion.JP,
+		cards:       map[int]*masterdata.Card{},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil)
+
+	resp := &sekai.GetAnotherProfileResponse{
+		User:        sekai.AnotherUser{UserID: 12345, Name: "Multi User", Rank: 100},
+		UserProfile: sekai.UserProfile{ProfileImageType: "default"},
+		UserMultiLiveTopScoreCount: sekai.AnotherUserMultiLiveTopScoreCount{
+			MVP:       12,
+			SuperStar: 34,
+		},
+	}
+
+	payload, err := controller.BuildProfileRequestFromAPI(Query{Region: "jp", Visible: true}, resp, nil)
+	if err != nil {
+		t.Fatalf("BuildProfileRequestFromAPI failed: %v", err)
+	}
+
+	if payload.MultiLive == nil {
+		t.Fatalf("expected multi live stats, got nil")
+	}
+	if payload.MultiLive.MVP != 12 || payload.MultiLive.SuperStar != 34 {
+		t.Fatalf("unexpected multi live stats: %+v", payload.MultiLive)
+	}
+}
+
 func TestBuildProfileRequestFromAPIUsesCurrentCardDisplayState(t *testing.T) {
 	source := &testProfileSource{
 		region: renderregion.JP,
@@ -453,6 +485,49 @@ func TestBuildProfileRequestFromAPIWithSnapshotUsesUserFrames(t *testing.T) {
 	}
 	if payload.Profile.FramePath == nil || *payload.Profile.FramePath != payload.FramePaths.Base {
 		t.Fatalf("unexpected profile frame path: %+v", payload.Profile.FramePath)
+	}
+}
+
+func TestBuildProfileRequestFromSnapshotIncludesMultiLiveTopScoreCounts(t *testing.T) {
+	source := &testProfileSource{
+		region:      renderregion.JP,
+		cards:       map[int]*masterdata.Card{},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), &profileSnapshotStub{
+		rawData: &snapshot.RawUserData{
+			UserGamedata: snapshot.RawUserGamedata{
+				UserID: 12345,
+				Rank:   88,
+			},
+			UserProfile: snapshot.RawUserProfile{
+				ProfileImageType: "default",
+			},
+			UserMultiLiveTopScoreCount: snapshot.RawUserMultiLiveTopScoreCount{
+				MVP:       7,
+				SuperStar: 9,
+			},
+		},
+		detail: &drawing.DetailedProfileCardRequest{
+			ID:              "12345",
+			Region:          "JP",
+			Nickname:        "Snapshot User",
+			LeaderImagePath: "",
+		},
+	})
+
+	payload, err := controller.BuildProfileRequest(Query{Region: "jp", Visible: true})
+	if err != nil {
+		t.Fatalf("BuildProfileRequest failed: %v", err)
+	}
+
+	if payload.MultiLive == nil {
+		t.Fatalf("expected multi live stats, got nil")
+	}
+	if payload.MultiLive.MVP != 7 || payload.MultiLive.SuperStar != 9 {
+		t.Fatalf("unexpected multi live stats: %+v", payload.MultiLive)
 	}
 }
 

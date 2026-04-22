@@ -132,6 +132,7 @@ func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.Ge
 		MusicDifficultyCount: musicCounts,
 		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),
 		SoloLive:             buildSoloLive(adaptAPIChallengeLiveResult(resp.UserChallengeLiveSoloResult), adaptAPIChallengeLiveStages(resp.UserChallengeLiveSoloStages)),
+		MultiLive:            buildMultiLive(adaptAPIMultiLiveTopScoreCount(resp.UserMultiLiveTopScoreCount)),
 		UpdateTime:           nil,
 		LvRankBgPath:         assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "lv_rank_bg.png"),
 		XIconPath:            assets.ResolveAssetPath(c.assets, assets.StaticImagesDir, "x_icon.png"),

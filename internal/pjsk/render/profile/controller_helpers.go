@@ -423,6 +423,16 @@ func buildSoloLive(results []snapshot.RawChallengeLiveResult, stages []snapshot.
 	}
 }
 
+func buildMultiLive(count snapshot.RawUserMultiLiveTopScoreCount) *drawing.MultiLiveTopScoreCount {
+	if count.MVP <= 0 && count.SuperStar <= 0 {
+		return nil
+	}
+	return &drawing.MultiLiveTopScoreCount{
+		MVP:       count.MVP,
+		SuperStar: count.SuperStar,
+	}
+}
+
 func buildCharaIconMap(helper *assets.AssetHelper) map[string]string {
 	result := make(map[string]string, len(assets.CharacterIDToNickname))
 	for id, nickname := range assets.CharacterIDToNickname {

@@ -16,6 +16,7 @@ type RawUserData struct {
 	UserChallengeLiveSoloResults                      []RawChallengeLiveResult          `json:"userChallengeLiveSoloResults,omitempty"`
 	UserChallengeLiveSoloStages                       []RawChallengeLiveStage           `json:"userChallengeLiveSoloStages,omitempty"`
 	UserChallengeLiveSoloHighScoreRewards             []RawChallengeLiveReward          `json:"userChallengeLiveSoloHighScoreRewards,omitempty"`
+	UserMultiLiveTopScoreCount                        RawUserMultiLiveTopScoreCount     `json:"userMultiLiveTopScoreCount"`
 	UserCharacters                                    []RawUserCharacter                `json:"userCharacters,omitempty"`
 	UserCharacterMissionV2s                           []RawUserCharacterMissionV2       `json:"userCharacterMissionV2s,omitempty"`
 	UserCharacterLiveUsageCounts                      []RawUserCharacterLiveUsageCount  `json:"userCharacterLiveUsageCounts,omitempty"`
@@ -119,6 +120,11 @@ type RawChallengeLiveDeck struct {
 type RawChallengeLiveStage struct {
 	CharacterID int `json:"characterId"`
 	Rank        int `json:"rank"`
+}
+
+type RawUserMultiLiveTopScoreCount struct {
+	MVP       int `json:"mvp"`
+	SuperStar int `json:"superStar"`
 }
 
 type RawChallengeLiveReward struct {

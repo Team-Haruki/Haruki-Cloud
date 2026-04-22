@@ -25,8 +25,8 @@ func renderMusicChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controll
 		return nil, err
 	}
 
-	relativePath := musicChartCacheRelativePath(query, payload)
-	if cached, hit, err := cachedStaticImageMessage(rc.App, relativePath); err != nil {
+	storageRelativePath, publicRelativePath := musicChartCachePaths(query, payload)
+	if cached, hit, err := cachedStaticImageMessage(rc.App, chartStaticBaseURL(rc.App), publicRelativePath, storageRelativePath); err != nil {
 		return nil, err
 	} else if hit {
 		return cached, nil
@@ -36,7 +36,7 @@ func renderMusicChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controll
 	if err != nil {
 		return nil, err
 	}
-	return staticCachedImageMessage(rc.Ctx, data, rc.App, relativePath)
+	return staticCachedImageMessage(rc.Ctx, data, rc.App, chartStaticBaseURL(rc.App), publicRelativePath, storageRelativePath)
 }
 
 func renderSingleMusicLookupChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, musicID int, difficulty string, style string) (onebot11.Message, error) {
@@ -48,7 +48,7 @@ func renderSingleMusicLookupChartMessage(rc *RequestContext, musicCtrl *rendermu
 	})
 }
 
-func musicChartCacheRelativePath(query rendermusic.ChartQuery, payload *drawing.GenerateMusicChartRequest) string {
+func musicChartCachePaths(query rendermusic.ChartQuery, payload *drawing.GenerateMusicChartRequest) (string, string) {
 	style := chartstyle.Normalize(query.Style)
 	if style == "" {
 		style = chartstyle.Default
@@ -68,12 +68,15 @@ func musicChartCacheRelativePath(query rendermusic.ChartQuery, payload *drawing.
 	if payload.Skill {
 		variant = "skill"
 	}
+	fileName := variant + ".png"
 
-	return filepath.ToSlash(filepath.Join("charts", style, region, musicID, difficulty+"-"+variant+".png"))
+	storageRelativePath := filepath.ToSlash(filepath.Join("charts", style, region, musicID, difficulty, fileName))
+	publicRelativePath := filepath.ToSlash(filepath.Join(style, region, musicID, difficulty, fileName))
+	return storageRelativePath, publicRelativePath
 }
 
-func cachedStaticImageMessage(app *renderapp.App, relativePath string) (onebot11.Message, bool, error) {
-	url, targetPath, err := resolveStaticImageLocation(app, relativePath)
+func cachedStaticImageMessage(app *renderapp.App, baseURL string, publicRelativePath string, storageRelativePath string) (onebot11.Message, bool, error) {
+	url, targetPath, err := resolveStaticImageLocation(app, baseURL, publicRelativePath, storageRelativePath)
 	if err != nil {
 		return nil, false, nil
 	}
@@ -86,8 +89,8 @@ func cachedStaticImageMessage(app *renderapp.App, relativePath string) (onebot11
 	return onebot11.Message{onebot11.Image(url, "")}, true, nil
 }
 
-func staticCachedImageMessage(ctx context.Context, data []byte, app *renderapp.App, relativePath string) (onebot11.Message, error) {
-	url, targetPath, err := resolveStaticImageLocation(app, relativePath)
+func staticCachedImageMessage(ctx context.Context, data []byte, app *renderapp.App, baseURL string, publicRelativePath string, storageRelativePath string) (onebot11.Message, error) {
+	url, targetPath, err := resolveStaticImageLocation(app, baseURL, publicRelativePath, storageRelativePath)
 	if err != nil {
 		if app == nil || app.ImageCache == nil {
 			return nil, err
@@ -104,22 +107,40 @@ func staticCachedImageMessage(ctx context.Context, data []byte, app *renderapp.A
 	return onebot11.Message{onebot11.Image(url, "")}, nil
 }
 
-func resolveStaticImageLocation(app *renderapp.App, relativePath string) (string, string, error) {
+func chartStaticBaseURL(app *renderapp.App) string {
+	if app == nil {
+		return ""
+	}
+	baseURL := strings.TrimRight(strings.TrimSpace(app.Config.ChartsBaseURL), "/")
+	if baseURL != "" {
+		return baseURL
+	}
+	imageCacheBaseURL := strings.TrimRight(strings.TrimSpace(app.Config.ImageCacheURI), "/")
+	if imageCacheBaseURL == "" {
+		return ""
+	}
+	return imageCacheBaseURL + "/charts"
+}
+
+func resolveStaticImageLocation(app *renderapp.App, baseURL string, publicRelativePath string, storageRelativePath string) (string, string, error) {
 	if app == nil {
 		return "", "", fmt.Errorf("image storage is not configured")
 	}
 
-	baseURL := strings.TrimRight(strings.TrimSpace(app.Config.ImageCacheURI), "/")
 	rootDir := strings.TrimSpace(app.Config.ImageCacheDir)
 	if baseURL == "" || rootDir == "" {
 		return "", "", fmt.Errorf("static image cache is not configured")
 	}
 
-	cleanRelative, err := normalizeStaticImageRelativePath(relativePath)
+	cleanPublicRelative, err := normalizeStaticImageRelativePath(publicRelativePath)
 	if err != nil {
 		return "", "", err
 	}
-	return baseURL + "/" + cleanRelative, filepath.Join(rootDir, filepath.FromSlash(cleanRelative)), nil
+	cleanStorageRelative, err := normalizeStaticImageRelativePath(storageRelativePath)
+	if err != nil {
+		return "", "", err
+	}
+	return baseURL + "/" + cleanPublicRelative, filepath.Join(rootDir, filepath.FromSlash(cleanStorageRelative)), nil
 }
 
 func normalizeStaticImageRelativePath(relativePath string) (string, error) {

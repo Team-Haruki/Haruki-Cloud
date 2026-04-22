@@ -166,6 +166,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	// PJSK Render
 	envBool("HARUKI_PJSK_RENDER_ENABLED", &cfg.PJSKRender.Enabled)
 	envStr("HARUKI_PJSK_RENDER_DRAWING_BASE_URL", &cfg.PJSKRender.DrawingBaseURL)
+	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
@@ -253,9 +254,10 @@ type RenderCacheConfig struct {
 }
 
 type ImageCacheConfig struct {
-	URI   string `yaml:"uri"`
-	Dir   string `yaml:"dir"`
-	PGURL string `yaml:"pg_url"` // PostgreSQL DSN for deduplication store (optional)
+	URI       string `yaml:"uri"`
+	ChartsURI string `yaml:"charts_uri"`
+	Dir       string `yaml:"dir"`
+	PGURL     string `yaml:"pg_url"` // PostgreSQL DSN for deduplication store (optional)
 }
 
 type MusicMetaConfig struct {

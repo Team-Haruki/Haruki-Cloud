@@ -45,6 +45,7 @@ type Config struct {
 	DrawingRetryCount        int
 	DrawingCache             drawing.RenderCacheConfig
 	ImageCacheURI            string
+	ChartsBaseURL            string
 	ImageCacheDir            string
 	ImageCachePGURL          string // PostgreSQL DSN for image cache deduplication (optional)
 	CensorService            *censor.Service

@@ -118,8 +118,9 @@ pjsk_render:
     # music_meta_json is the legacy local fallback path; leave empty when music_meta loader is active
     music_meta_json: ""
   image_cache:
-    uri: ""    # CDN base URL, e.g. "https://image-cache.example.com"
-    dir: ""    # local filesystem directory for cached images
+    uri: ""         # CDN base URL for generic image cache, e.g. "https://image-cache.example.com"
+    charts_uri: ""  # dedicated chart CDN/domain base URL, e.g. "https://charts.example.com"
+    dir: ""         # local filesystem directory for cached images
     pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"
   
   local_masterdata:

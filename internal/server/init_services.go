@@ -110,6 +110,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			TTL:        harukiConfig.Cfg.PJSKRender.DrawingCache.TTL,
 		},
 		ImageCacheURI:   harukiConfig.Cfg.PJSKRender.ImageCache.URI,
+		ChartsBaseURL:   harukiConfig.Cfg.PJSKRender.ImageCache.ChartsURI,
 		ImageCacheDir:   harukiConfig.Cfg.PJSKRender.ImageCache.Dir,
 		ImageCachePGURL: harukiConfig.Cfg.PJSKRender.ImageCache.PGURL,
 		AssetPrimaryDir: harukiConfig.Cfg.PJSKRender.AssetDirs.Primary,

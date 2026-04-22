@@ -602,6 +602,7 @@ func TestExecuteMusicChartUsesStaticChartCachePath(t *testing.T) {
 		Music: music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
 		Config: renderapp.Config{
 			ImageCacheURI: "https://image-cache.test",
+			ChartsBaseURL: "https://charts.test",
 			ImageCacheDir: chartCacheDir,
 		},
 	}
@@ -633,11 +634,11 @@ func TestExecuteMusicChartUsesStaticChartCachePath(t *testing.T) {
 	if !ok {
 		t.Fatalf("unexpected image data: %#v", first[0].Data)
 	}
-	if imageData.File != "https://image-cache.test/charts/white/jp/1/expert-no-skill.png" {
+	if imageData.File != "https://charts.test/white/jp/1/expert/no-skill.png" {
 		t.Fatalf("unexpected chart cache url: %q", imageData.File)
 	}
 
-	expectedPath := filepath.Join(chartCacheDir, "charts", "white", "jp", "1", "expert-no-skill.png")
+	expectedPath := filepath.Join(chartCacheDir, "charts", "white", "jp", "1", "expert", "no-skill.png")
 	if _, err := os.Stat(expectedPath); err != nil {
 		t.Fatalf("expected chart cache file %s: %v", expectedPath, err)
 	}
@@ -684,6 +685,7 @@ func TestExecuteMusicChartUsesSkillSpecificStaticChartCachePath(t *testing.T) {
 		Music: music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
 		Config: renderapp.Config{
 			ImageCacheURI: "https://image-cache.test",
+			ChartsBaseURL: "https://charts.test",
 			ImageCacheDir: chartCacheDir,
 		},
 	}
@@ -716,11 +718,11 @@ func TestExecuteMusicChartUsesSkillSpecificStaticChartCachePath(t *testing.T) {
 	if !ok {
 		t.Fatalf("unexpected image data: %#v", first[0].Data)
 	}
-	if imageData.File != "https://image-cache.test/charts/white/jp/1/expert-skill.png" {
+	if imageData.File != "https://charts.test/white/jp/1/expert/skill.png" {
 		t.Fatalf("unexpected skill chart cache url: %q", imageData.File)
 	}
 
-	expectedPath := filepath.Join(chartCacheDir, "charts", "white", "jp", "1", "expert-skill.png")
+	expectedPath := filepath.Join(chartCacheDir, "charts", "white", "jp", "1", "expert", "skill.png")
 	if _, err := os.Stat(expectedPath); err != nil {
 		t.Fatalf("expected skill chart cache file %s: %v", expectedPath, err)
 	}

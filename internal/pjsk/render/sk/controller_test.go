@@ -1770,7 +1770,7 @@ func TestBuildSpeedRequestFromTrackerFallsBackToTraceWhenGrowthPointMissing(t *t
 	}
 }
 
-func TestBuildSpeedRequestFromTrackerTraceUsesFirstPointAfterWindowStart(t *testing.T) {
+func TestBuildSpeedRequestFromTrackerTraceUsesLastPointBeforeWindowStart(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
@@ -1798,8 +1798,8 @@ func TestBuildSpeedRequestFromTrackerTraceUsesFirstPointAfterWindowStart(t *test
 		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
 	}
 	got := payload.Ranks[0]
-	if got.Speed == nil || *got.Speed != 3702 {
-		t.Fatalf("expected speed from first point after window start, got %+v", got.Speed)
+	if got.Speed == nil || *got.Speed != 3600 {
+		t.Fatalf("expected speed from last point before window start, got %+v", got.Speed)
 	}
 }
 

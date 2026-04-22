@@ -149,13 +149,14 @@ func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, w
 
 	endSec := normalizeTrackerUnixSeconds(last.timestamp)
 	windowStart := endSec - int64(interval)
-	baseIdx := len(samples) - 1
+	baseIdx := 0
 	for i := range samples {
 		sec := normalizeTrackerUnixSeconds(samples[i].timestamp)
-		if sec >= windowStart {
+		if sec <= windowStart {
 			baseIdx = i
-			break
+			continue
 		}
+		break
 	}
 	base := samples[baseIdx]
 	baseSec := normalizeTrackerUnixSeconds(base.timestamp)

@@ -1337,6 +1337,12 @@ func TestBotEndpointSKQueryDefaultsToSelfBinding(t *testing.T) {
 		if len(req.Ranks) != 1 || req.Ranks[0].Rank != 777 {
 			t.Fatalf("expected self-bound rank payload, got %+v", req.Ranks)
 		}
+		if req.PrevRanks == nil || req.PrevRanks.Rank != 500 {
+			t.Fatalf("unexpected prev ranks: %+v", req.PrevRanks)
+		}
+		if req.NextRanks == nil || req.NextRanks.Rank != 1000 {
+			t.Fatalf("unexpected next ranks: %+v", req.NextRanks)
+		}
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("SKSELFPNG"))
 	}))

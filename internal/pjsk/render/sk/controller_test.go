@@ -1629,6 +1629,62 @@ func TestBuildCheckRoomRequestFromTrackerSupportsUserQuery(t *testing.T) {
 	}
 }
 
+func TestBuildQueryRequestFromTrackerSupportsUserQueryAdjacentRanks(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		UserID:  new(int64(99887766)),
+	})
+	if err != nil {
+		t.Fatalf("build query request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	if payload.Ranks[0].Rank != 25 || payload.Ranks[0].Name != "SelfPlayer" {
+		t.Fatalf("unexpected user rank payload: %+v", payload.Ranks[0])
+	}
+	if payload.PrevRanks == nil || payload.PrevRanks.Rank != 20 || payload.PrevRanks.Name != "Player-20" {
+		t.Fatalf("unexpected prev ranks: %+v", payload.PrevRanks)
+	}
+	if payload.NextRanks == nil || payload.NextRanks.Rank != 30 || payload.NextRanks.Name != "Player-30" {
+		t.Fatalf("unexpected next ranks: %+v", payload.NextRanks)
+	}
+}
+
+func TestQueryAdjacentSKLineRanksUsesNearestNodes(t *testing.T) {
+	prev, next, hasPrev, hasNext := queryAdjacentSKLineRanks(25, false)
+	if !hasPrev || prev != 20 {
+		t.Fatalf("unexpected prev rank: hasPrev=%t prev=%d", hasPrev, prev)
+	}
+	if !hasNext || next != 30 {
+		t.Fatalf("unexpected next rank: hasNext=%t next=%d", hasNext, next)
+	}
+}
+
+func TestQueryAdjacentSKLineRanksUsesNeighboringNodesWhenTargetIsNode(t *testing.T) {
+	prev, next, hasPrev, hasNext := queryAdjacentSKLineRanks(10, false)
+	if !hasPrev || prev != 9 {
+		t.Fatalf("unexpected prev rank: hasPrev=%t prev=%d", hasPrev, prev)
+	}
+	if !hasNext || next != 20 {
+		t.Fatalf("unexpected next rank: hasNext=%t next=%d", hasNext, next)
+	}
+}
+
 func TestBuildCheckRoomRequestFromTrackerResolvesPlayerNameWhenLatestNameIsEventTitle(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,

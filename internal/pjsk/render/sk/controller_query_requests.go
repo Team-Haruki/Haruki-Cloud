@@ -10,6 +10,21 @@ import (
 
 const skCheckRoomRankLimit = 100
 
+var queryAdjacentRanksNormal = []int{
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+	20, 30, 40, 50, 100, 200, 300, 400, 500,
+	1000, 1500, 2000, 2500, 3000, 4000, 5000,
+	10000, 20000, 30000, 40000, 50000,
+	100000, 200000, 300000,
+}
+
+var queryAdjacentRanksWorldLink = []int{
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+	20, 30, 40, 50, 100, 200, 300, 400, 500,
+	1000, 2000, 3000, 4000, 5000, 7000,
+	10000, 20000, 30000, 40000, 50000, 70000, 100000,
+}
+
 func (c *Controller) BuildQueryRequest(req drawing.SKRequest) (*drawing.SKRequest, error) {
 	if len(req.Ranks) == 0 {
 		return nil, fmt.Errorf("sk query request has no ranks")
@@ -47,6 +62,20 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 		AggregateAt: meta.aggregateAt,
 		Ranks:       rankInfos,
 	}
+	if len(rankInfos) == 1 {
+		targetRank := rankInfos[0].Rank
+		prevRank, nextRank, hasPrev, hasNext := queryAdjacentSKLineRanks(targetRank, normalized.WlCharacterID != nil)
+		if hasPrev {
+			if prev, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, prevRank, normalized.WlCharacterID); err == nil {
+				payload.PrevRanks = &prev
+			}
+		}
+		if hasNext {
+			if next, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, nextRank, normalized.WlCharacterID); err == nil {
+				payload.NextRanks = &next
+			}
+		}
+	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region))
 		if icon != "" {
@@ -55,6 +84,43 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 		}
 	}
 	return c.BuildQueryRequest(payload)
+}
+
+func queryAdjacentSKLineRanks(rank int, wlMode bool) (prev int, next int, hasPrev bool, hasNext bool) {
+	if rank <= 0 {
+		return 0, 0, false, false
+	}
+	nodes := queryAdjacentRanksNormal
+	if wlMode {
+		nodes = queryAdjacentRanksWorldLink
+	}
+	for i, node := range nodes {
+		if node >= rank {
+			if node == rank {
+				if i > 0 {
+					prev = nodes[i-1]
+					hasPrev = true
+				}
+				if i+1 < len(nodes) {
+					next = nodes[i+1]
+					hasNext = true
+				}
+				return prev, next, hasPrev, hasNext
+			}
+			if i > 0 {
+				prev = nodes[i-1]
+				hasPrev = true
+			}
+			next = node
+			hasNext = true
+			return prev, next, hasPrev, hasNext
+		}
+	}
+	if len(nodes) > 0 {
+		prev = nodes[len(nodes)-1]
+		hasPrev = true
+	}
+	return prev, 0, hasPrev, false
 }
 
 func (c *Controller) BuildCheckRoomRequest(req drawing.CFRequest) (*drawing.CFRequest, error) {

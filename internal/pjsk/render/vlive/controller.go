@@ -2,20 +2,52 @@ package vlive
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
 	"haruki-cloud/internal/pjsk/displaytime"
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
+	regionsource "haruki-cloud/internal/pjsk/render/source"
 )
 
+var ErrNoLives = errors.New("no virtual lives")
+
 func NewController(source DataSource, defaultRegion renderregion.Value) *Controller {
-	return &Controller{
-		source:        source,
-		defaultRegion: renderregion.WithDefault(defaultRegion),
+	return NewControllerWithDrawing(source, nil, nil, defaultRegion)
+}
+
+func NewControllerWithDrawing(
+	source DataSource,
+	drawingClient *drawing.HarukiDrawingClient,
+	assetHelper *assets.AssetHelper,
+	defaultRegion renderregion.Value,
+) *Controller {
+	if assetHelper == nil {
+		assetHelper = assets.NewAssetHelper("", nil)
 	}
+	ctrl := &Controller{
+		sources: regionsource.NewRegistry[DataSource](renderregion.WithDefault(defaultRegion)),
+		drawing: drawingClient,
+		assets:  assetHelper,
+	}
+	ctrl.RegisterSource(source)
+	return ctrl
+}
+
+func (c *Controller) RegisterSource(source DataSource) {
+	if c == nil || source == nil {
+		return
+	}
+	if c.sources == nil {
+		c.sources = regionsource.NewRegistry[DataSource](source.DefaultRegion())
+	}
+	c.sources.RegisterSource(source)
 }
 
 func (c *Controller) WithContext(ctx context.Context) *Controller {
@@ -23,24 +55,37 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
-	if contextual, ok := any(c.source).(contextualDataSource); ok {
-		clone.source = contextual.WithContext(ctx)
+	clone.drawing = c.drawing.WithContext(ctx)
+	clone.sources = regionsource.NewRegistry[DataSource](c.resolveRegion(""))
+	if c.sources != nil {
+		for _, source := range c.sources.OrderedSources() {
+			if contextual, ok := any(source).(contextualDataSource); ok {
+				clone.sources.RegisterSource(contextual.WithContext(ctx))
+				continue
+			}
+			clone.sources.RegisterSource(source)
+		}
 	}
 	return &clone
 }
 
 func (c *Controller) ResolveLives(query ListQuery) ([]ResolvedLive, renderregion.Value, error) {
-	if c == nil || c.source == nil {
+	if c == nil || c.sources == nil {
 		return nil, renderregion.Unknown, fmt.Errorf("vlive controller is not configured")
 	}
 
 	region := c.resolveRegion(query.Region)
+	source, ok := c.sources.SourceForRegion(region)
+	if !ok {
+		return nil, region, fmt.Errorf("no vlive data source for region %s", region)
+	}
+
 	now := query.Now
 	if now.IsZero() {
 		now = time.Now()
 	}
 
-	lives, err := c.source.GetLives(region)
+	lives, err := source.GetLives(region)
 	if err != nil {
 		return nil, region, err
 	}
@@ -68,14 +113,18 @@ func (c *Controller) ResolveLives(query ListQuery) ([]ResolvedLive, renderregion
 
 		schedules := normalizeSchedules(live.Schedules)
 		resolved := ResolvedLive{
-			ID:      live.ID,
-			Name:    strings.TrimSpace(live.Name),
-			StartAt: startAt,
-			EndAt:   endAt,
+			ID:              live.ID,
+			Name:            strings.TrimSpace(live.Name),
+			AssetBundleName: strings.TrimSpace(live.AssetBundleName),
+			StartAt:         startAt,
+			EndAt:           endAt,
+			Rewards:         append([]Reward(nil), live.Rewards...),
+			Characters:      append([]Character(nil), live.Characters...),
 		}
 		for _, schedule := range schedules {
 			if now.Before(schedule.EndAt) {
-				resolved.Current = new(schedule)
+				resolved.Current = new(Window)
+				*resolved.Current = schedule
 				resolved.Living = !now.Before(schedule.StartAt)
 				break
 			}
@@ -103,6 +152,60 @@ func (c *Controller) ResolveLives(query ListQuery) ([]ResolvedLive, renderregion
 		return result[i].StartAt.Before(result[j].StartAt)
 	})
 	return result, region, nil
+}
+
+func (c *Controller) BuildListRequest(query ListQuery) (*drawing.VLiveListRequest, error) {
+	lives, region, err := c.ResolveLives(query)
+	if err != nil {
+		return nil, err
+	}
+	if len(lives) == 0 {
+		return nil, ErrNoLives
+	}
+	source, ok := c.sources.SourceForRegion(region)
+	if !ok {
+		return nil, fmt.Errorf("no vlive data source for region %s", region)
+	}
+
+	req := &drawing.VLiveListRequest{
+		Region:   region.String(),
+		TimeZone: query.TimeZone,
+	}
+	if !query.Now.IsZero() {
+		req.DT = query.Now.UnixMilli()
+	}
+
+	for _, live := range lives {
+		item := drawing.VLiveBrief{
+			ID:         live.ID,
+			Name:       fallbackLiveName(live.Name, live.ID),
+			StartAt:    live.StartAt.UnixMilli(),
+			EndAt:      live.EndAt.UnixMilli(),
+			Living:     live.Living,
+			RestCount:  live.RestCount,
+			BannerPath: c.bannerPath(region, live.AssetBundleName),
+			Rewards:    c.buildRewardItems(source, live),
+			Characters: c.buildCharacterItems(source, live),
+		}
+		if live.Current != nil {
+			item.CurrentStartAt = live.Current.StartAt.UnixMilli()
+			item.CurrentEndAt = live.Current.EndAt.UnixMilli()
+		}
+		req.Lives = append(req.Lives, item)
+	}
+
+	return req, nil
+}
+
+func (c *Controller) RenderList(query ListQuery) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	req, err := c.BuildListRequest(query)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateVLiveList(req)
 }
 
 func (c *Controller) RenderText(query ListQuery) (string, error) {
@@ -139,14 +242,126 @@ func (c *Controller) RenderText(query ListQuery) (string, error) {
 }
 
 func (c *Controller) resolveRegion(region string) renderregion.Value {
-	normalized := renderregion.Normalize(region)
-	if !normalized.IsZero() {
-		return normalized
+	if c != nil && c.sources != nil {
+		return c.sources.ResolveRegion(renderregion.Normalize(region))
 	}
-	if c.defaultRegion.IsZero() && c.source != nil {
-		return renderregion.WithDefault(c.source.DefaultRegion())
+	return renderregion.WithDefault(renderregion.Normalize(region))
+}
+
+func (c *Controller) bannerPath(region renderregion.Value, assetBundleName string) string {
+	assetBundleName = strings.TrimSpace(assetBundleName)
+	if assetBundleName == "" {
+		return ""
 	}
-	return renderregion.WithDefault(c.defaultRegion)
+	return assets.ResolveRegionAssetPath(
+		c.assets,
+		region.String(),
+		filepath.Join("virtual_live", "select", "banner", assetBundleName+"_rip", assetBundleName+".png"),
+	)
+}
+
+func (c *Controller) buildRewardItems(source DataSource, live ResolvedLive) []drawing.VLiveRewardItem {
+	if source == nil {
+		return nil
+	}
+	var items []drawing.VLiveRewardItem
+	for _, reward := range live.Rewards {
+		if kind := strings.ToLower(strings.TrimSpace(reward.VirtualLiveType)); kind != "" && kind != "normal" {
+			continue
+		}
+		box := source.GetResourceBoxByPurpose("virtual_live_reward", reward.ResourceBoxID)
+		if box == nil {
+			continue
+		}
+		for _, detail := range box.Details {
+			imagePath := c.rewardImagePath(detail.ResourceType, detail.ResourceID)
+			if strings.TrimSpace(imagePath) == "" {
+				continue
+			}
+			quantity := detail.ResourceQuantity
+			if quantity <= 0 {
+				quantity = 1
+			}
+			items = append(items, drawing.VLiveRewardItem{
+				ImagePath: imagePath,
+				Quantity:  quantity,
+			})
+		}
+		if len(items) > 0 {
+			break
+		}
+	}
+	return items
+}
+
+func (c *Controller) buildCharacterItems(source DataSource, live ResolvedLive) []drawing.VLiveCharacterItem {
+	if source == nil {
+		return nil
+	}
+	items := make([]drawing.VLiveCharacterItem, 0, len(live.Characters))
+	seen := make(map[string]struct{}, len(live.Characters))
+	for _, character := range live.Characters {
+		performanceType := strings.ToLower(strings.TrimSpace(character.VirtualLivePerformanceType))
+		if performanceType != "" && performanceType != "main_only" && performanceType != "both" {
+			continue
+		}
+		gameCharacterUnit, err := source.GetGameCharacterUnit(character.GameCharacterUnitID)
+		if err != nil || gameCharacterUnit == nil || gameCharacterUnit.GameCharacterID <= 0 {
+			continue
+		}
+		iconPath := c.characterIconPath(gameCharacterUnit.GameCharacterID)
+		if iconPath == "" {
+			continue
+		}
+		if _, ok := seen[iconPath]; ok {
+			continue
+		}
+		seen[iconPath] = struct{}{}
+		items = append(items, drawing.VLiveCharacterItem{IconPath: iconPath})
+	}
+	return items
+}
+
+func (c *Controller) characterIconPath(characterID int) string {
+	if nickname, ok := assets.CharacterIDToNickname[characterID]; ok {
+		return assets.ResolveAssetPath(
+			c.assets,
+			assets.StaticImagesDir,
+			filepath.Join("chara_icon", nickname+".png"),
+			filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
+		)
+	}
+	return assets.ResolveAssetPath(
+		c.assets,
+		assets.StaticImagesDir,
+		filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)),
+	)
+}
+
+func (c *Controller) rewardImagePath(resourceType string, resourceID int) string {
+	resourceType = strings.ToLower(strings.TrimSpace(resourceType))
+	if resourceType == "paid_jewel" {
+		resourceType = "jewel"
+	}
+	switch resourceType {
+	case "coin", "virtual_coin", "jewel":
+		return assets.ResolveRegionAssetPath(
+			c.assets,
+			"jp",
+			filepath.Join("thumbnail", "common_material", resourceType+".png"),
+		)
+	case "material":
+		if resourceID <= 0 {
+			return ""
+		}
+		return assets.ResolveRegionAssetPath(
+			c.assets,
+			"jp",
+			filepath.Join("thumbnail", "material", fmt.Sprintf("material%d.png", resourceID)),
+		)
+	default:
+		return ""
+	}
 }
 
 func normalizeSchedules(items []Schedule) []Window {

@@ -32,10 +32,11 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 	lives := make([]*VLive, 0, len(entities))
 	for _, entity := range entities {
 		live := &VLive{
-			ID:      int(entity.GameID),
-			Name:    entity.Name,
-			StartAt: entity.StartAt,
-			EndAt:   entity.EndAt,
+			ID:              int(entity.GameID),
+			Name:            entity.Name,
+			AssetBundleName: entity.AssetbundleName,
+			StartAt:         entity.StartAt,
+			EndAt:           entity.EndAt,
 		}
 		var schedules []map[string]any
 		if len(entity.VirtualLiveSchedules) > 0 {
@@ -50,6 +51,34 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 			live.Schedules = append(live.Schedules, VLiveSchedule{
 				StartAt: startAt,
 				EndAt:   endAt,
+			})
+		}
+		var rewards []map[string]any
+		if len(entity.VirtualLiveRewards) > 0 {
+			_ = json.Unmarshal(entity.VirtualLiveRewards, &rewards)
+		}
+		for _, item := range rewards {
+			resourceBoxID := vliveIntNumber(item["resourceBoxId"])
+			if resourceBoxID <= 0 {
+				continue
+			}
+			live.Rewards = append(live.Rewards, VLiveReward{
+				VirtualLiveType: vliveString(item["virtualLiveType"]),
+				ResourceBoxID:   resourceBoxID,
+			})
+		}
+		var characters []map[string]any
+		if len(entity.VirtualLiveCharacters) > 0 {
+			_ = json.Unmarshal(entity.VirtualLiveCharacters, &characters)
+		}
+		for _, item := range characters {
+			gameCharacterUnitID := vliveIntNumber(item["gameCharacterUnitId"])
+			if gameCharacterUnitID <= 0 {
+				continue
+			}
+			live.Characters = append(live.Characters, VLiveCharacter{
+				GameCharacterUnitID:        gameCharacterUnitID,
+				VirtualLivePerformanceType: vliveString(item["virtualLivePerformanceType"]),
 			})
 		}
 		lives = append(lives, live)
@@ -77,6 +106,17 @@ func vliveInt64Number(value any) int64 {
 	default:
 		return 0
 	}
+}
+
+func vliveIntNumber(value any) int {
+	return int(vliveInt64Number(value))
+}
+
+func vliveString(value any) string {
+	if text, ok := value.(string); ok {
+		return text
+	}
+	return ""
 }
 
 // Ensure the entity type is used to avoid import issues.

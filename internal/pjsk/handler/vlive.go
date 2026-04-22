@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 
 	"haruki-cloud/internal/onebot11"
@@ -29,9 +30,12 @@ func executeVLive(rc *RequestContext) (onebot11.Message, error) {
 		TimeZone: resolveRequesterHarukiUserTimeZone(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
 	}
 	mergeParams(rc.Cmd.Params, &query)
-	text, err := rc.App.VLive.WithContext(rc.Ctx).RenderText(query)
+	data, err := rc.App.VLive.WithContext(rc.Ctx).RenderList(query)
 	if err != nil {
+		if errors.Is(err, vlive.ErrNoLives) {
+			return onebot11.Message{onebot11.Text("当前没有虚拟Live")}, nil
+		}
 		return nil, err
 	}
-	return onebot11.Message{onebot11.Text(text)}, nil
+	return rc.ImageMessage(data)
 }

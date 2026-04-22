@@ -27,10 +27,11 @@ func (p *localVLiveProvider) ensureLoaded() error {
 		lives := make([]*VLive, 0, len(items))
 		for _, item := range items {
 			live := &VLive{
-				ID:      item.ID,
-				Name:    item.Name,
-				StartAt: item.StartAt,
-				EndAt:   item.EndAt,
+				ID:              item.ID,
+				Name:            item.Name,
+				AssetBundleName: item.AssetBundleName,
+				StartAt:         item.StartAt,
+				EndAt:           item.EndAt,
 			}
 			var schedules []map[string]any
 			if len(item.VirtualLiveSchedules) > 0 {
@@ -45,6 +46,34 @@ func (p *localVLiveProvider) ensureLoaded() error {
 				live.Schedules = append(live.Schedules, VLiveSchedule{
 					StartAt: startAt,
 					EndAt:   endAt,
+				})
+			}
+			var rewards []map[string]any
+			if len(item.VirtualLiveRewards) > 0 {
+				_ = json.Unmarshal(item.VirtualLiveRewards, &rewards)
+			}
+			for _, reward := range rewards {
+				resourceBoxID := vliveIntNumber(reward["resourceBoxId"])
+				if resourceBoxID <= 0 {
+					continue
+				}
+				live.Rewards = append(live.Rewards, VLiveReward{
+					VirtualLiveType: vliveString(reward["virtualLiveType"]),
+					ResourceBoxID:   resourceBoxID,
+				})
+			}
+			var characters []map[string]any
+			if len(item.VirtualLiveCharacters) > 0 {
+				_ = json.Unmarshal(item.VirtualLiveCharacters, &characters)
+			}
+			for _, character := range characters {
+				gameCharacterUnitID := vliveIntNumber(character["gameCharacterUnitId"])
+				if gameCharacterUnitID <= 0 {
+					continue
+				}
+				live.Characters = append(live.Characters, VLiveCharacter{
+					GameCharacterUnitID:        gameCharacterUnitID,
+					VirtualLivePerformanceType: vliveString(character["virtualLivePerformanceType"]),
 				})
 			}
 			lives = append(lives, live)
@@ -67,6 +96,8 @@ func (p *localVLiveProvider) GetLives(_ context.Context, _ renderregion.Value) (
 	for _, live := range p.lives.v() {
 		c := *live
 		c.Schedules = slices.Clone(live.Schedules)
+		c.Rewards = slices.Clone(live.Rewards)
+		c.Characters = slices.Clone(live.Characters)
 		result = append(result, &c)
 	}
 	return result, nil

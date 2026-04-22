@@ -252,6 +252,12 @@ func (c *HarukiDrawingClient) GenerateEventList(req *EventListRequest) ([]byte, 
 	return c.cachedPost("/api/pjsk/event/list", req)
 }
 
+// =========================== VLive API ===========================
+
+func (c *HarukiDrawingClient) GenerateVLiveList(req *VLiveListRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/vlive/list", req)
+}
+
 // =========================== Gacha API ===========================
 
 func (c *HarukiDrawingClient) GenerateGachaList(req *GachaListRequest) ([]byte, error) {

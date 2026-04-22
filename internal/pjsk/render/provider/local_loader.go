@@ -199,11 +199,14 @@ func (j *localWorldBloomJSON) toModel() *masterdata.WorldBloom {
 }
 
 type localVirtualLiveJSON struct {
-	ID                   int             `json:"id"`
-	Name                 string          `json:"name"`
-	StartAt              int64           `json:"startAt"`
-	EndAt                int64           `json:"endAt"`
-	VirtualLiveSchedules json.RawMessage `json:"virtualLiveSchedules"`
+	ID                    int             `json:"id"`
+	Name                  string          `json:"name"`
+	AssetBundleName       string          `json:"assetbundleName"`
+	StartAt               int64           `json:"startAt"`
+	EndAt                 int64           `json:"endAt"`
+	VirtualLiveSchedules  json.RawMessage `json:"virtualLiveSchedules"`
+	VirtualLiveCharacters json.RawMessage `json:"virtualLiveCharacters"`
+	VirtualLiveRewards    json.RawMessage `json:"virtualLiveRewards"`
 }
 
 type localCostume3dJSON struct {

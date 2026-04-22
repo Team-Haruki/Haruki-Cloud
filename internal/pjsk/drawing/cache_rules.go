@@ -52,6 +52,11 @@ var (
 			Enabled:  true,
 			Infinite: true,
 		},
+		"/api/pjsk/vlive/list": {
+			Enabled:          true,
+			TTL:              time.Minute,
+			BucketFieldNames: renderCacheBucketSet(time.Minute, "dt"),
+		},
 		"/api/pjsk/event/record": {
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("user_info.update_time"),

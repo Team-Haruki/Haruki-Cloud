@@ -3525,7 +3525,9 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 }
 
 type bridgeVLiveSource struct {
-	lives []*rendervlive.Live
+	lives         []*rendervlive.Live
+	characters    map[int]*masterdata.GameCharacterUnit
+	resourceBoxes map[int]*renderprovider.ResourceBox
 }
 
 func (s *bridgeVLiveSource) DefaultRegion() renderregion.Value { return renderregion.JP }
@@ -3534,24 +3536,61 @@ func (s *bridgeVLiveSource) GetLives(region renderregion.Value) ([]*rendervlive.
 	return s.lives, nil
 }
 
-func TestExecuteVLiveReturnsText(t *testing.T) {
+func (s *bridgeVLiveSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
+	if s.characters == nil {
+		return nil, nil
+	}
+	return s.characters[id], nil
+}
+
+func (s *bridgeVLiveSource) GetResourceBoxByPurpose(_ string, id int) *renderprovider.ResourceBox {
+	if s.resourceBoxes == nil {
+		return nil
+	}
+	return s.resourceBoxes[id]
+}
+
+func TestExecuteVLiveReturnsImage(t *testing.T) {
 	now := time.Now()
 	ms := func(tm time.Time) int64 { return tm.UnixMilli() }
 
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/vlive/list" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write(mustEncodeTestPNG(t, 32, 24))
+	}))
+	defer drawingServer.Close()
+
 	app := &renderapp.App{
-		VLive: rendervlive.NewController(&bridgeVLiveSource{
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+		VLive: rendervlive.NewControllerWithDrawing(&bridgeVLiveSource{
 			lives: []*rendervlive.Live{
 				{
-					ID:      3001,
-					Name:    "Test Virtual Live",
-					StartAt: ms(now.Add(time.Hour)),
-					EndAt:   ms(now.Add(2 * time.Hour)),
+					ID:              3001,
+					Name:            "Test Virtual Live",
+					AssetBundleName: "vlentrance_03001_re",
+					StartAt:         ms(now.Add(time.Hour)),
+					EndAt:           ms(now.Add(2 * time.Hour)),
 					Schedules: []rendervlive.Schedule{
 						{StartAt: ms(now.Add(time.Hour)), EndAt: ms(now.Add(2 * time.Hour))},
 					},
+					Rewards: []rendervlive.Reward{
+						{VirtualLiveType: "normal", ResourceBoxID: 11},
+					},
+					Characters: []rendervlive.Character{
+						{GameCharacterUnitID: 21, VirtualLivePerformanceType: "main_only"},
+					},
 				},
 			},
-		}, renderregion.JP),
+			characters: map[int]*masterdata.GameCharacterUnit{
+				21: {ID: 21, GameCharacterID: 21, Unit: "piapro"},
+			},
+			resourceBoxes: map[int]*renderprovider.ResourceBox{
+				11: {ID: 11, Details: []renderprovider.ResourceBoxDetail{{ResourceType: "jewel", ResourceQuantity: 100}}},
+			},
+		}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), renderregion.JP),
 	}
 
 	params, err := json.Marshal(rendervlive.ListQuery{})
@@ -3567,15 +3606,15 @@ func TestExecuteVLiveReturnsText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeVLive: %v", err)
 	}
-	if len(message) != 1 || message[0].Type != "text" {
+	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected vlive message: %+v", message)
 	}
-	textData, ok := message[0].Data.(onebot11.TextData)
+	imageData, ok := message[0].Data.(onebot11.ImageData)
 	if !ok {
-		t.Fatalf("unexpected text data type: %T", message[0].Data)
+		t.Fatalf("unexpected image data type: %T", message[0].Data)
 	}
-	if !strings.Contains(textData.Text, "Test Virtual Live") || !strings.Contains(textData.Text, "虚拟Live列表") {
-		t.Fatalf("unexpected vlive text: %q", textData.Text)
+	if imageData.File == "" {
+		t.Fatalf("expected cached image url, got empty image data: %+v", imageData)
 	}
 }
 

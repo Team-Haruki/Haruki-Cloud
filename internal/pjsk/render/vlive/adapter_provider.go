@@ -4,6 +4,7 @@ import (
 	"context"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
 )
 
@@ -26,10 +27,11 @@ func (a *ProviderAdapter) GetLives(region renderregion.Value) ([]*Live, error) {
 	result := make([]*Live, len(pvLives))
 	for i, pv := range pvLives {
 		live := &Live{
-			ID:      pv.ID,
-			Name:    pv.Name,
-			StartAt: pv.StartAt,
-			EndAt:   pv.EndAt,
+			ID:              pv.ID,
+			Name:            pv.Name,
+			AssetBundleName: pv.AssetBundleName,
+			StartAt:         pv.StartAt,
+			EndAt:           pv.EndAt,
 		}
 		if len(pv.Schedules) > 0 {
 			live.Schedules = make([]Schedule, len(pv.Schedules))
@@ -40,7 +42,33 @@ func (a *ProviderAdapter) GetLives(region renderregion.Value) ([]*Live, error) {
 				}
 			}
 		}
+		if len(pv.Rewards) > 0 {
+			live.Rewards = make([]Reward, len(pv.Rewards))
+			for j, reward := range pv.Rewards {
+				live.Rewards[j] = Reward{
+					VirtualLiveType: reward.VirtualLiveType,
+					ResourceBoxID:   reward.ResourceBoxID,
+				}
+			}
+		}
+		if len(pv.Characters) > 0 {
+			live.Characters = make([]Character, len(pv.Characters))
+			for j, character := range pv.Characters {
+				live.Characters[j] = Character{
+					GameCharacterUnitID:        character.GameCharacterUnitID,
+					VirtualLivePerformanceType: character.VirtualLivePerformanceType,
+				}
+			}
+		}
 		result[i] = live
 	}
 	return result, nil
+}
+
+func (a *ProviderAdapter) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
+	return a.P.Characters().GetGameCharacterUnit(a.Context(), id)
+}
+
+func (a *ProviderAdapter) GetResourceBoxByPurpose(purpose string, id int) *provider.ResourceBox {
+	return a.P.Education().GetResourceBoxByPurpose(a.Context(), purpose, id)
 }

@@ -7,6 +7,8 @@ import (
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/provider"
 )
 
 type vliveContextKey string
@@ -14,6 +16,8 @@ type vliveContextKey string
 type fakeSource struct {
 	defaultRegion renderregion.Value
 	lives         map[renderregion.Value][]*Live
+	characters    map[int]*masterdata.GameCharacterUnit
+	resourceBoxes map[int]*provider.ResourceBox
 	ctx           context.Context
 	wantKey       vliveContextKey
 	wantValue     string
@@ -34,6 +38,20 @@ func (f *fakeSource) GetLives(region renderregion.Value) ([]*Live, error) {
 		}
 	}
 	return f.lives[region], nil
+}
+
+func (f *fakeSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {
+	if f.characters == nil {
+		return nil, nil
+	}
+	return f.characters[id], nil
+}
+
+func (f *fakeSource) GetResourceBoxByPurpose(_ string, id int) *provider.ResourceBox {
+	if f.resourceBoxes == nil {
+		return nil
+	}
+	return f.resourceBoxes[id]
 }
 
 func (f *fakeSource) WithContext(ctx context.Context) DataSource {
@@ -151,5 +169,94 @@ func TestControllerWithContextClonesVLiveSource(t *testing.T) {
 	}
 	if !strings.Contains(text, "Ctx Live") {
 		t.Fatalf("unexpected vlive text: %q", text)
+	}
+}
+
+func TestBuildListRequestIncludesBannerRewardsAndCharacters(t *testing.T) {
+	now := time.Date(2026, 4, 22, 10, 0, 0, 0, time.UTC)
+	ms := func(tm time.Time) int64 { return tm.UnixMilli() }
+
+	controller := NewControllerWithDrawing(&fakeSource{
+		defaultRegion: renderregion.JP,
+		lives: map[renderregion.Value][]*Live{
+			renderregion.JP: {
+				{
+					ID:              371,
+					Name:            "Turning Pain into Drive",
+					AssetBundleName: "vlentrance_00371_re",
+					StartAt:         ms(now.Add(-2 * time.Hour)),
+					EndAt:           ms(now.Add(20 * time.Hour)),
+					Schedules: []Schedule{
+						{StartAt: ms(now.Add(-30 * time.Minute)), EndAt: ms(now.Add(30 * time.Minute))},
+						{StartAt: ms(now.Add(2 * time.Hour)), EndAt: ms(now.Add(3 * time.Hour))},
+					},
+					Rewards: []Reward{
+						{VirtualLiveType: "normal", ResourceBoxID: 7},
+					},
+					Characters: []Character{
+						{GameCharacterUnitID: 21, VirtualLivePerformanceType: "main_only"},
+						{GameCharacterUnitID: 22, VirtualLivePerformanceType: "both"},
+						{GameCharacterUnitID: 22, VirtualLivePerformanceType: "both"},
+						{GameCharacterUnitID: 25, VirtualLivePerformanceType: "guest"},
+					},
+				},
+			},
+		},
+		characters: map[int]*masterdata.GameCharacterUnit{
+			21: {ID: 21, GameCharacterID: 21, Unit: "piapro"},
+			22: {ID: 22, GameCharacterID: 22, Unit: "piapro"},
+			25: {ID: 25, GameCharacterID: 25, Unit: "piapro"},
+		},
+		resourceBoxes: map[int]*provider.ResourceBox{
+			7: {
+				ID: 7,
+				Details: []provider.ResourceBoxDetail{
+					{ResourceType: "jewel", ResourceQuantity: 300},
+					{ResourceType: "material", ResourceID: 12, ResourceQuantity: 2},
+				},
+			},
+		},
+	}, nil, nil, renderregion.JP)
+
+	req, err := controller.BuildListRequest(ListQuery{Region: "jp", TimeZone: "Asia/Tokyo", Now: now})
+	if err != nil {
+		t.Fatalf("BuildListRequest() error = %v", err)
+	}
+	if req.Region != "jp" {
+		t.Fatalf("unexpected region: %q", req.Region)
+	}
+	if req.TimeZone != "Asia/Tokyo" {
+		t.Fatalf("unexpected timezone: %q", req.TimeZone)
+	}
+	if req.DT != now.UnixMilli() {
+		t.Fatalf("unexpected dt: %d", req.DT)
+	}
+	if len(req.Lives) != 1 {
+		t.Fatalf("unexpected lives len: %d", len(req.Lives))
+	}
+	live := req.Lives[0]
+	if live.BannerPath != "asset/jp-assets/startapp/virtual_live/select/banner/vlentrance_00371_re_rip/vlentrance_00371_re.png" {
+		t.Fatalf("unexpected banner path: %q", live.BannerPath)
+	}
+	if !live.Living || live.RestCount != 1 {
+		t.Fatalf("unexpected live state: living=%v rest=%d", live.Living, live.RestCount)
+	}
+	if len(live.Rewards) != 2 {
+		t.Fatalf("unexpected rewards len: %d", len(live.Rewards))
+	}
+	if live.Rewards[0].ImagePath != "asset/jp-assets/startapp/thumbnail/common_material/jewel.png" {
+		t.Fatalf("unexpected jewel reward path: %q", live.Rewards[0].ImagePath)
+	}
+	if live.Rewards[1].ImagePath != "asset/jp-assets/startapp/thumbnail/material/material12.png" {
+		t.Fatalf("unexpected material reward path: %q", live.Rewards[1].ImagePath)
+	}
+	if len(live.Characters) != 2 {
+		t.Fatalf("unexpected characters len: %d", len(live.Characters))
+	}
+	if live.Characters[0].IconPath != "static_images/chara_icon/miku.png" {
+		t.Fatalf("unexpected first character path: %q", live.Characters[0].IconPath)
+	}
+	if live.Characters[1].IconPath != "static_images/chara_icon/rin.png" {
+		t.Fatalf("unexpected second character path: %q", live.Characters[1].IconPath)
 	}
 }

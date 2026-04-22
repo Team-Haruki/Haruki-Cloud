@@ -154,7 +154,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		musicController = music.NewController(musicAdapter, drawingClient, assetHelper, snapshotService, cfg.MetaLoader)
 		profileController = profile.NewController(profileAdapter, drawingClient, assetHelper, snapshotService)
 		stampController = stamp.NewController(stampAdapter, drawingClient, assetHelper)
-		vliveController = vlive.NewController(vliveAdapter, cfg.DefaultRegion)
+		vliveController = vlive.NewControllerWithDrawing(vliveAdapter, drawingClient, assetHelper, cfg.DefaultRegion)
 
 		for _, region := range []renderregion.Value{
 			renderregion.JP,
@@ -175,6 +175,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			regionGachaAdapter := gacha.NewProviderAdapter(regionProvider)
 			regionHonorAdapter := honor.NewProviderAdapter(regionProvider)
 			regionStampAdapter := stamp.NewProviderAdapter(regionProvider)
+			regionVLiveAdapter := vlive.NewProviderAdapter(regionProvider)
 			regionProfileAdapter := profile.NewProviderAdapter(regionProvider)
 			regionEducationAdapter := education.NewProviderAdapter(regionProvider)
 
@@ -191,6 +192,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			profileController.RegisterSource(regionProfileAdapter)
 			skController.RegisterEventSource(regionEventAdapter)
 			stampController.RegisterSource(regionStampAdapter)
+			vliveController.RegisterSource(regionVLiveAdapter)
 		}
 	}
 

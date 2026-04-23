@@ -247,6 +247,122 @@ func nextDisplayOrder(ctx context.Context, pjsk *pjskDB.Client, harukiUserID int
 	return len(bindings), nil
 }
 
+// globalServerPriority defines the preference order when selecting a global default
+// among users with multiple server bindings.
+var globalServerPriority = []string{"jp", "cn", "tw", "en", "kr"}
+
+// setDefaultBindings creates UserDefaultBinding rows for every user:
+//   - 1 binding total   → global default ("default") + server default
+//   - multiple bindings → global default by priority (jp>cn>tw>en>kr); per-server default
+//
+// Existing defaults are skipped (idempotent).
+func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) error {
+	// Load all bindings with their game accounts.
+	allBindings, err := pjsk.UserBinding.Query().
+		WithGameAccount().
+		All(ctx)
+	if err != nil {
+		return fmt.Errorf("query bindings: %w", err)
+	}
+
+	type bindInfo struct {
+		bindingID int
+		server    string
+	}
+	// Group by haruki_user_id.
+	byUser := make(map[int][]bindInfo, len(allBindings)/2)
+	for _, b := range allBindings {
+		if b.Edges.GameAccount == nil {
+			continue
+		}
+		byUser[b.HarukiUserID] = append(byUser[b.HarukiUserID], bindInfo{
+			bindingID: b.ID,
+			server:    b.Edges.GameAccount.Server,
+		})
+	}
+
+	log.Printf("[defaults] %d users to process", len(byUser))
+
+	if dryRun {
+		log.Printf("[defaults] dry-run — skipping writes")
+		return nil
+	}
+
+	// Load existing defaults to avoid redundant writes.
+	existingDefaults, err := pjsk.UserDefaultBinding.Query().All(ctx)
+	if err != nil {
+		return fmt.Errorf("query existing defaults: %w", err)
+	}
+	type scopeKey struct{ userID int; server string }
+	alreadySet := make(map[scopeKey]bool, len(existingDefaults))
+	for _, d := range existingDefaults {
+		alreadySet[scopeKey{d.HarukiUserID, d.Server}] = true
+	}
+
+	globalDefaultScope := "default"
+	inserted, skipped, failed := 0, 0, 0
+
+	createDefault := func(harukiUserID, bindingID int, scope string) {
+		if alreadySet[scopeKey{harukiUserID, scope}] {
+			skipped++
+			return
+		}
+		_, err := pjsk.UserDefaultBinding.Create().
+			SetHarukiUserID(harukiUserID).
+			SetServer(scope).
+			SetBindingID(bindingID).
+			Save(ctx)
+		if err != nil {
+			if pjskDB.IsConstraintError(err) {
+				skipped++
+				return
+			}
+			log.Printf("[defaults] WARN user %d scope %s: %v", harukiUserID, scope, err)
+			failed++
+			return
+		}
+		alreadySet[scopeKey{harukiUserID, scope}] = true
+		inserted++
+	}
+
+	for harukiUserID, binds := range byUser {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		if len(binds) == 1 {
+			// Single account: global default + server default.
+			createDefault(harukiUserID, binds[0].bindingID, globalDefaultScope)
+			createDefault(harukiUserID, binds[0].bindingID, binds[0].server)
+			continue
+		}
+
+		// Multiple accounts: build per-server map (first encountered per server).
+		byServer := make(map[string]int)
+		for _, b := range binds {
+			if _, exists := byServer[b.server]; !exists {
+				byServer[b.server] = b.bindingID
+			}
+		}
+
+		// Global default: first server in priority list that the user has.
+		for _, srv := range globalServerPriority {
+			if bindID, ok := byServer[srv]; ok {
+				createDefault(harukiUserID, bindID, globalDefaultScope)
+				break
+			}
+		}
+
+		// Server-specific defaults: one per server.
+		for srv, bindID := range byServer {
+			createDefault(harukiUserID, bindID, srv)
+		}
+	}
+
+	log.Printf("[defaults] inserted=%d skipped=%d failed=%d", inserted, skipped, failed)
+	return nil
+}
+
 func importCharacterAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Client, dryRun bool) error {
 	records, err := loadJSON[charAliasRecord](exportsDir + "/character_alias.json")
 	if err != nil {
@@ -432,7 +548,7 @@ func resolveDBConfig(envURL, envType, cfgURL, cfgType, defaultType string) (dbTy
 
 func main() {
 	exportsDir := flag.String("exports-dir", "./exports", "directory containing the JSON export files")
-	targetFlag := flag.String("target", "all", "comma-separated targets: all, bindings, character-aliases, music-aliases, group-aliases")
+	targetFlag := flag.String("target", "all", "comma-separated targets: all, bindings, character-aliases, music-aliases, group-aliases, defaults")
 	dryRun := flag.Bool("dry-run", false, "parse and count records without writing to DB")
 	configPath := flag.String("config", "haruki-cloud.yaml", "path to haruki-cloud.yaml")
 	flag.Parse()
@@ -450,6 +566,7 @@ func main() {
 	runCharAliases := runAll || targets["character-aliases"]
 	runMusicAliases := runAll || targets["music-aliases"]
 	runGroupAliases := runAll || targets["group-aliases"]
+	runDefaults := runAll || targets["defaults"]
 
 	if *dryRun {
 		log.Println("[importer] DRY RUN mode — no writes will be performed")
@@ -489,7 +606,7 @@ func main() {
 
 	// Open Users DB (needed only for bindings; skipped in dry-run)
 	var users *usersDB.Client
-	if runBindings && !*dryRun {
+	if (runBindings || runDefaults) && !*dryRun {
 		var cfgUsersURL, cfgUsersType string
 		if cfg != nil {
 			cfgUsersURL = cfg.UsersDB.DBURL
@@ -534,6 +651,12 @@ func main() {
 	if runGroupAliases {
 		if err := importGroupAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
 			log.Fatalf("[group-aliases] fatal: %v", err)
+		}
+	}
+	// defaults must run after bindings are in place.
+	if runDefaults {
+		if err := setDefaultBindings(ctx, pjsk, *dryRun); err != nil {
+			log.Fatalf("[defaults] fatal: %v", err)
 		}
 	}
 

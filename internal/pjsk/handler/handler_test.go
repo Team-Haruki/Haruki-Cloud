@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	corehandler "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/onebot11"

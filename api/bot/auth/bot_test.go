@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"io"
 	"net/http"
@@ -210,7 +211,7 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 		t.Fatalf("verify-session failed: status=%d message=%s", verifyResp.Status, verifyResp.Message)
 	}
 	var verifyData InternalVerifyResponse
-	if err := json.Unmarshal(verifyResp.Data, &verifyData); err != nil {
+	if err := sonic.Unmarshal(verifyResp.Data, &verifyData); err != nil {
 		t.Fatalf("decode verify response: %v", err)
 	}
 	if !verifyData.Valid || verifyData.BotID != botID || verifyData.OwnerUserID != qqNumber {
@@ -294,7 +295,7 @@ func sendJSONRequest(t *testing.T, app *fiber.App, method, path, body string, he
 	}
 
 	var envelope testEnvelope
-	if err := json.Unmarshal(respBody, &envelope); err != nil {
+	if err := sonic.Unmarshal(respBody, &envelope); err != nil {
 		t.Fatalf("decode response body: %v\nraw=%s", err, string(respBody))
 	}
 	return envelope

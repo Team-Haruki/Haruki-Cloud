@@ -2,7 +2,7 @@ package deck
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	"slices"
 	"strconv"

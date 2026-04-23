@@ -3,6 +3,7 @@ package snapshot
 import (
 	"bytes"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"os"
 	"strings"
@@ -15,7 +16,7 @@ func normalizeSnapshotJSON(data []byte) ([]byte, error) {
 	}
 
 	var raw any
-	decoder := json.NewDecoder(bytes.NewReader(trimmed))
+	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(trimmed))
 	decoder.UseNumber()
 	if err := decoder.Decode(&raw); err != nil {
 		return nil, fmt.Errorf("decode snapshot JSON: %w", err)
@@ -26,7 +27,7 @@ func normalizeSnapshotJSON(data []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	encoded, err := json.Marshal(normalized)
+	encoded, err := sonic.Marshal(normalized)
 	if err != nil {
 		return nil, fmt.Errorf("encode normalized snapshot JSON: %w", err)
 	}

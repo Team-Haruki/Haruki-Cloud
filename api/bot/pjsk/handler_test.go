@@ -3,7 +3,7 @@ package pjsk
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	"io"
 	"net/http"
@@ -700,7 +700,7 @@ func TestBotEndpointSKQueryUsesTrackerPayload(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -746,7 +746,7 @@ func TestBotEndpointSKQuerySupportsRegionPrefixedCommand(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Region != "cn" {
@@ -792,7 +792,7 @@ func TestBotEndpointSKQueryAcceptsBaseMatchedCommandForRegionPrefixedInput(t *te
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Region != "cn" {
@@ -901,7 +901,7 @@ func TestBotEndpointSKQueryTreatsRequestServerAsExplicitRegion(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Region != "en" {
@@ -947,7 +947,7 @@ func TestBotEndpointSKLineUsesTrackerPayload(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SklRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -993,7 +993,7 @@ func TestBotEndpointSKQueryUsesTrackerUIDPayload(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -1039,7 +1039,7 @@ func TestBotEndpointSKQueryRankOneShowsPlayerName(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -1085,7 +1085,7 @@ func TestBotEndpointSKLineUsesTrackerUIDPayload(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SklRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -1134,7 +1134,7 @@ func TestBotEndpointSKLineDefaultsToExpandedRanksAndOmitsNames(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SklRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -1182,7 +1182,7 @@ func TestBotEndpointSKQueryUsesTrackerAtBindingPayload(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -1237,7 +1237,7 @@ func TestBotEndpointSKQueryHandlesInlineCQAtInTextSegment(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -1328,7 +1328,7 @@ func TestBotEndpointSKQueryDefaultsToSelfBinding(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -1424,7 +1424,7 @@ func TestBotEndpointSKQueryAllowsHiddenSelfBinding(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SKRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.ID != 101 {
@@ -1476,7 +1476,7 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.SpeedRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.EventID != 101 {
@@ -1551,7 +1551,7 @@ func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.CFRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Eid != 101 {
@@ -1600,7 +1600,7 @@ func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.CFRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Eid != 101 {
@@ -1655,7 +1655,7 @@ func TestBotEndpointSKCheckRoomLiteUsesFixedRanks(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.CFRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		wantRanks := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 100}
@@ -1701,7 +1701,7 @@ func TestBotEndpointSKCheckRoomLegacyCSBCompat(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.CSBRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Eid != 101 {
@@ -1747,7 +1747,7 @@ func TestBotEndpointSKRankTraceUsesTrackerPayload(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.RankTraceRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.EventID != 101 {
@@ -1793,7 +1793,7 @@ func TestBotEndpointSKPlayerTraceSupportsTwoRanks(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.PlayerTraceRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.EventID != 101 {

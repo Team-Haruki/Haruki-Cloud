@@ -2,6 +2,7 @@ package masterdata
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"testing"
 )
 
@@ -88,7 +89,7 @@ func TestCardUnmarshalJSONAcceptsObjectCardParameters(t *testing.T) {
 	}`)
 
 	var card Card
-	if err := json.Unmarshal(raw, &card); err != nil {
+	if err := sonic.Unmarshal(raw, &card); err != nil {
 		t.Fatalf("unmarshal card: %v", err)
 	}
 	if len(card.CardParameters) != 3 {
@@ -122,7 +123,7 @@ func TestCardUnmarshalJSONAcceptsSeriesCardParameters(t *testing.T) {
 	}`)
 
 	var card Card
-	if err := json.Unmarshal(raw, &card); err != nil {
+	if err := sonic.Unmarshal(raw, &card); err != nil {
 		t.Fatalf("unmarshal card: %v", err)
 	}
 	if len(card.CardParameters) != 3 {

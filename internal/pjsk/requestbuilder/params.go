@@ -2,6 +2,7 @@ package requestbuilder
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 
 	"haruki-cloud/utils/logger"
 )
@@ -13,7 +14,7 @@ func MergeParams(params json.RawMessage, target any) {
 	if len(params) == 0 {
 		return
 	}
-	if err := json.Unmarshal(params, target); err != nil {
+	if err := sonic.Unmarshal(params, target); err != nil {
 		logger.Warnf("pjsk: failed to parse command params into %T: %v (raw_len=%d)", target, err, len(params))
 	}
 }

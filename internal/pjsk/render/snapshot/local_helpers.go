@@ -2,7 +2,7 @@ package snapshot
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	"path/filepath"
 	"strings"

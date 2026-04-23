@@ -2,7 +2,7 @@ package deck
 
 import (
 	"bytes"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -64,7 +64,7 @@ func encodePreparedRecommendUserData(originalBytes []byte, original, raw *snapsh
 	}
 
 	var payload map[string]any
-	decoder := json.NewDecoder(bytes.NewReader(originalBytes))
+	decoder := json.ConfigDefault.NewDecoder(bytes.NewReader(originalBytes))
 	decoder.UseNumber()
 	if err := decoder.Decode(&payload); err != nil {
 		return nil, fmt.Errorf("decode original user snapshot: %w", err)

@@ -2,7 +2,7 @@ package education
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"math"
 	"strings"
 	"testing"

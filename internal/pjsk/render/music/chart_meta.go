@@ -1,7 +1,7 @@
 package music
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"slices"
 	"sort"
 	"strings"

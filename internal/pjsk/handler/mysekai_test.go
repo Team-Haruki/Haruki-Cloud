@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"reflect"
 	"slices"
 	"strings"

@@ -3,6 +3,7 @@ package alias
 import (
 	"context"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"strings"
 )
@@ -109,7 +110,7 @@ func decodeDeleteParams(raw json.RawMessage) (DeleteCommandParams, error) {
 	if len(raw) == 0 {
 		return params, fmt.Errorf("bridge: missing alias delete params")
 	}
-	if err := json.Unmarshal(raw, &params); err != nil {
+	if err := sonic.Unmarshal(raw, &params); err != nil {
 		return params, fmt.Errorf("bridge: unmarshal alias delete params: %w", err)
 	}
 	params.Platform = strings.TrimSpace(params.Platform)
@@ -132,7 +133,7 @@ func decodeAddParams(raw json.RawMessage) (AddCommandParams, error) {
 	if len(raw) == 0 {
 		return params, fmt.Errorf("bridge: missing alias add params")
 	}
-	if err := json.Unmarshal(raw, &params); err != nil {
+	if err := sonic.Unmarshal(raw, &params); err != nil {
 		return params, fmt.Errorf("bridge: unmarshal alias add params: %w", err)
 	}
 	params.Platform = strings.TrimSpace(params.Platform)
@@ -152,7 +153,7 @@ func decodeQueryParams(raw json.RawMessage) (QueryCommandParams, error) {
 	if len(raw) == 0 {
 		return params, fmt.Errorf("bridge: missing alias query params")
 	}
-	if err := json.Unmarshal(raw, &params); err != nil {
+	if err := sonic.Unmarshal(raw, &params); err != nil {
 		return params, fmt.Errorf("bridge: unmarshal alias query params: %w", err)
 	}
 	params.Target = strings.TrimSpace(params.Target)
@@ -170,7 +171,7 @@ func decodeReviewListParams(raw json.RawMessage) (ReviewListCommandParams, error
 	if len(raw) == 0 {
 		return params, fmt.Errorf("bridge: missing alias review list params")
 	}
-	if err := json.Unmarshal(raw, &params); err != nil {
+	if err := sonic.Unmarshal(raw, &params); err != nil {
 		return params, fmt.Errorf("bridge: unmarshal alias review list params: %w", err)
 	}
 	params.Platform = strings.TrimSpace(params.Platform)
@@ -186,7 +187,7 @@ func decodeApproveParams(raw json.RawMessage) (ApproveCommandParams, error) {
 	if len(raw) == 0 {
 		return params, fmt.Errorf("bridge: missing alias approve params")
 	}
-	if err := json.Unmarshal(raw, &params); err != nil {
+	if err := sonic.Unmarshal(raw, &params); err != nil {
 		return params, fmt.Errorf("bridge: unmarshal alias approve params: %w", err)
 	}
 	params.Platform = strings.TrimSpace(params.Platform)
@@ -202,7 +203,7 @@ func decodeRejectParams(raw json.RawMessage) (RejectCommandParams, error) {
 	if len(raw) == 0 {
 		return params, fmt.Errorf("bridge: missing alias reject params")
 	}
-	if err := json.Unmarshal(raw, &params); err != nil {
+	if err := sonic.Unmarshal(raw, &params); err != nil {
 		return params, fmt.Errorf("bridge: unmarshal alias reject params: %w", err)
 	}
 	params.Platform = strings.TrimSpace(params.Platform)

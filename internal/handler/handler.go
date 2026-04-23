@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"log/slog"
 	"strings"
 	"sync"
@@ -290,7 +291,7 @@ func (t *handlerTreeNode) Json() []byte {
 		}
 		jsonMap["children"] = childrenMap
 	}
-	result, err := json.Marshal(jsonMap)
+	result, err := sonic.Marshal(jsonMap)
 	if err != nil {
 		slog.Error("failed to marshal handler tree", "error", err)
 	}

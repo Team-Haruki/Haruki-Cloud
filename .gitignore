@@ -67,6 +67,9 @@ haruki-server
 deploy_alpha_native_deck.sh
 # Build artifacts and test data
 haruki-server-linux
+haruki-server-linux.gz
+importer
+importer-linux-amd64
 collections.suite.json
 music_metas.json
 test/

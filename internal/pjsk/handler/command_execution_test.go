@@ -3,7 +3,7 @@ package handler
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"errors"
 	"fmt"
 	"image"
@@ -507,7 +507,7 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 		case "/api/pjsk/chart":
 			chartCalls++
 			var req drawing.GenerateMusicChartRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode chart request: %v", err)
 			}
 			if req.Difficulty != "expert" {
@@ -771,7 +771,7 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 		case "/api/pjsk/music/brief-list":
 			briefListCalls++
 			var req drawing.MusicBriefListRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-brief-list request: %v", err)
 			}
 			if req.Title == nil {
@@ -853,7 +853,7 @@ func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 		case "/api/pjsk/music/brief-list":
 			briefListCalls++
 			var req drawing.MusicBriefListRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-brief-list request: %v", err)
 			}
 			if req.Title == nil {
@@ -918,7 +918,7 @@ func TestExecuteMusicNoteCountUsesSingleMusicListImageWithoutSummaryText(t *test
 		case "/api/pjsk/music/list":
 			listCalls++
 			var req drawing.MusicListRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-list request: %v", err)
 			}
 			if req.Title == nil {
@@ -988,7 +988,7 @@ func TestExecuteMusicListUsesQueryKeywordAndAlias(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.MusicListRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if len(req.MusicList) != 1 {
@@ -1163,7 +1163,7 @@ func TestExecuteMusicListUsesSuiteSnapshotResults(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -1241,7 +1241,7 @@ func TestExecuteMusicListPrefersAPIProfileOverSuiteSnapshotProfile(t *testing.T)
 			http.NotFound(w, r)
 			return
 		}
-		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 12345678901234,
 				Name:   "API User",
@@ -1284,7 +1284,7 @@ func TestExecuteMusicListPrefersAPIProfileOverSuiteSnapshotProfile(t *testing.T)
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -1404,7 +1404,7 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 12345678901234,
 				Name:   "API User",
@@ -1440,7 +1440,7 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 			return
 		}
 		defer r.Body.Close()
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode profile request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -1732,7 +1732,7 @@ func TestExecuteScoreMusicMetaBuildsRequestsFromQueries(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req []drawing.MusicMetaRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if len(req) != 1 {
@@ -1813,7 +1813,7 @@ func TestExecuteScoreControlBuildsRequestFromParams(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.ScoreControlRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if req.MusicID != 1 || req.MusicTitle != "Song A" || req.MusicBasicPoint != 100 {
@@ -1897,7 +1897,7 @@ func TestExecuteCustomRoomScoreBuildsRequestFromParams(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.CustomRoomScoreRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if req.TargetPoint != 22 {
@@ -1981,7 +1981,7 @@ func TestExecuteScoreMusicBoardBuildsRequestFromParams(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.MusicBoardRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if req.LiveType != "solo" || req.Target != "score" {
@@ -2073,7 +2073,7 @@ func TestExecuteScoreMusicBoardDoesNotTreatModeArgsAsSpecQueries(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.MusicBoardRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if req.LiveType != "multi" || req.Target != "pt" {
@@ -3776,7 +3776,7 @@ func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/box" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -3824,7 +3824,7 @@ func TestExecuteCardBoxAllowsNoBindingFallbackWithQuery(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/box" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -3891,7 +3891,7 @@ func TestExecuteCardBoxAddsNoSuiteTitleToDrawing(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/box" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -3969,7 +3969,7 @@ func TestExecuteCardListAllowsNoBindingFallback(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/list" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -4051,7 +4051,7 @@ func TestExecuteCardListKeepsResolvedRegionInsteadOfStaleParamRegion(t *testing.
 		if r.URL.Path != "/api/pjsk/card/list" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))

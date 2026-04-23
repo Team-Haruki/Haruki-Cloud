@@ -2,6 +2,7 @@ package provider
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"slices"
 	"strings"
 )
@@ -172,7 +173,7 @@ func decodeCompactEnumValues(raw json.RawMessage) map[string][]string {
 	}
 
 	var values map[string][]string
-	if err := json.Unmarshal([]byte(trimmed), &values); err != nil {
+	if err := sonic.Unmarshal([]byte(trimmed), &values); err != nil {
 		return nil
 	}
 	return values

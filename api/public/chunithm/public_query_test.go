@@ -3,6 +3,7 @@ package chunithm
 import (
 	"context"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"io"
 	"net/http"
@@ -56,7 +57,7 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 	var aliasData struct {
 		MatchIDs []int `json:"match_ids"`
 	}
-	if err := json.Unmarshal(aliasResp.Data, &aliasData); err != nil {
+	if err := sonic.Unmarshal(aliasResp.Data, &aliasData); err != nil {
 		t.Fatalf("decode alias response: %v", err)
 	}
 	if len(aliasData.MatchIDs) != 1 || aliasData.MatchIDs[0] != 1001 {
@@ -123,7 +124,7 @@ func requestAPI(t *testing.T, app *fiber.App, method, path, body string) apiEnve
 	}
 
 	var envelope apiEnvelope
-	if err := json.Unmarshal(payload, &envelope); err != nil {
+	if err := sonic.Unmarshal(payload, &envelope); err != nil {
 		t.Fatalf("decode response: %v raw=%s", err, string(payload))
 	}
 	return envelope

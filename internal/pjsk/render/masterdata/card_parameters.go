@@ -3,6 +3,7 @@ package masterdata
 import (
 	"bytes"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"sort"
 	"strconv"
@@ -18,19 +19,19 @@ func DecodeCardParameters(raw json.RawMessage) ([]CardParameter, error) {
 	}
 
 	var items []CardParameter
-	if err := json.Unmarshal(raw, &items); err == nil {
+	if err := sonic.Unmarshal(raw, &items); err == nil {
 		normalizeCardParameters(items, 0)
 		return items, nil
 	}
 
 	var single CardParameter
-	if err := json.Unmarshal(raw, &single); err == nil && cardParameterMeaningful(single) {
+	if err := sonic.Unmarshal(raw, &single); err == nil && cardParameterMeaningful(single) {
 		single.CardParameterType = normalizeCardParameterType(single.CardParameterType)
 		return []CardParameter{single}, nil
 	}
 
 	var values map[string]json.RawMessage
-	if err := json.Unmarshal(raw, &values); err != nil {
+	if err := sonic.Unmarshal(raw, &values); err != nil {
 		return nil, err
 	}
 	if len(values) == 0 {
@@ -72,7 +73,7 @@ func (c *Card) UnmarshalJSON(data []byte) error {
 	}{
 		alias: (*alias)(c),
 	}
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := sonic.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
@@ -97,7 +98,7 @@ func decodeCardParameterEntry(key string, raw json.RawMessage) (CardParameter, b
 	}
 
 	var item CardParameter
-	if err := json.Unmarshal(raw, &item); err == nil && cardParameterMeaningful(item) {
+	if err := sonic.Unmarshal(raw, &item); err == nil && cardParameterMeaningful(item) {
 		if strings.TrimSpace(item.CardParameterType) == "" {
 			item.CardParameterType = normalizeCardParameterType(key)
 		} else {
@@ -107,7 +108,7 @@ func decodeCardParameterEntry(key string, raw json.RawMessage) (CardParameter, b
 	}
 
 	var intValue int
-	if err := json.Unmarshal(raw, &intValue); err == nil {
+	if err := sonic.Unmarshal(raw, &intValue); err == nil {
 		return CardParameter{
 			CardParameterType: normalizeCardParameterType(key),
 			Power:             intValue,
@@ -115,7 +116,7 @@ func decodeCardParameterEntry(key string, raw json.RawMessage) (CardParameter, b
 	}
 
 	var floatValue float64
-	if err := json.Unmarshal(raw, &floatValue); err == nil {
+	if err := sonic.Unmarshal(raw, &floatValue); err == nil {
 		return CardParameter{
 			CardParameterType: normalizeCardParameterType(key),
 			Power:             int(floatValue),
@@ -123,7 +124,7 @@ func decodeCardParameterEntry(key string, raw json.RawMessage) (CardParameter, b
 	}
 
 	var stringValue string
-	if err := json.Unmarshal(raw, &stringValue); err == nil {
+	if err := sonic.Unmarshal(raw, &stringValue); err == nil {
 		stringValue = strings.TrimSpace(stringValue)
 		if stringValue == "" {
 			return CardParameter{}, false, nil
@@ -152,7 +153,7 @@ func decodeCardParameterEntry(key string, raw json.RawMessage) (CardParameter, b
 
 func decodeCardParameterPowerSeries(raw json.RawMessage) (int, bool, error) {
 	var items []json.RawMessage
-	if err := json.Unmarshal(raw, &items); err != nil {
+	if err := sonic.Unmarshal(raw, &items); err != nil {
 		return 0, false, nil
 	}
 	if len(items) == 0 {
@@ -184,17 +185,17 @@ func decodeCardParameterPowerValue(raw json.RawMessage) (int, bool, error) {
 	}
 
 	var intValue int
-	if err := json.Unmarshal(raw, &intValue); err == nil {
+	if err := sonic.Unmarshal(raw, &intValue); err == nil {
 		return intValue, true, nil
 	}
 
 	var floatValue float64
-	if err := json.Unmarshal(raw, &floatValue); err == nil {
+	if err := sonic.Unmarshal(raw, &floatValue); err == nil {
 		return int(floatValue), true, nil
 	}
 
 	var stringValue string
-	if err := json.Unmarshal(raw, &stringValue); err == nil {
+	if err := sonic.Unmarshal(raw, &stringValue); err == nil {
 		stringValue = strings.TrimSpace(stringValue)
 		if stringValue == "" {
 			return 0, false, nil
@@ -207,7 +208,7 @@ func decodeCardParameterPowerValue(raw json.RawMessage) (int, bool, error) {
 	}
 
 	var object map[string]json.RawMessage
-	if err := json.Unmarshal(raw, &object); err == nil {
+	if err := sonic.Unmarshal(raw, &object); err == nil {
 		for _, field := range []string{"power", "Power", "value", "Value"} {
 			if fieldRaw, ok := object[field]; ok {
 				return decodeCardParameterPowerValue(fieldRaw)

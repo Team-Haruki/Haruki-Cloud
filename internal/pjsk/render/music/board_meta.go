@@ -1,7 +1,7 @@
 package music
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"sort"
 
 	"haruki-cloud/internal/pjsk/drawing"

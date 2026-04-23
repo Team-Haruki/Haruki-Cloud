@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"math"
 	neturl "net/url"
@@ -90,13 +91,13 @@ func normalizeRenderCachePayload(request any) (any, error) {
 		return nil, nil
 	}
 
-	body, err := json.Marshal(request)
+	body, err := sonic.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("marshal render cache payload: %w", err)
 	}
 
 	var payload any
-	if err := json.Unmarshal(body, &payload); err != nil {
+	if err := sonic.Unmarshal(body, &payload); err != nil {
 		return nil, fmt.Errorf("decode render cache payload: %w", err)
 	}
 	return payload, nil

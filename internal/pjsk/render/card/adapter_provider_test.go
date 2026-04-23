@@ -2,7 +2,7 @@ package card
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"os"
 	"path/filepath"
 	"reflect"

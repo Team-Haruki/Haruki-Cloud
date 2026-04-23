@@ -2,7 +2,7 @@ package requestbuilder
 
 import (
 	"encoding/csv"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	"sort"
 	"strconv"

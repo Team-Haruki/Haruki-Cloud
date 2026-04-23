@@ -1,7 +1,7 @@
 package mysekai
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	"os"
 	"path/filepath"

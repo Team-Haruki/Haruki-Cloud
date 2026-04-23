@@ -3,17 +3,18 @@ package deck
 import (
 	"bytes"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"sort"
 )
 
 func structToJSONObject(value any) (map[string]any, error) {
-	encoded, err := json.Marshal(value)
+	encoded, err := sonic.Marshal(value)
 	if err != nil {
 		return nil, err
 	}
 
 	var object map[string]any
-	decoder := json.NewDecoder(bytes.NewReader(encoded))
+	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(encoded))
 	decoder.UseNumber()
 	if err := decoder.Decode(&object); err != nil {
 		return nil, err

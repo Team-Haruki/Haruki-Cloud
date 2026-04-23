@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -134,7 +134,7 @@ func TestResolveDeckRenderProfileSnapshotAndPublicReturnsSelectedPublicProfile(t
 		requestedPath = r.URL.Path
 		switch r.URL.Path {
 		case "/api/cn/11111111111111/profile":
-			_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 				User: sekaiapi.AnotherUser{
 					UserID: 11111111111111,
 					Name:   "CN User 1",

@@ -1,7 +1,7 @@
 package snapshot
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"os"
 	"path/filepath"
 	"strings"

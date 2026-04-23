@@ -2,6 +2,7 @@ package deck
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"strings"
 	"time"
@@ -215,7 +216,7 @@ func (r *RemoteDeckRecommender) doRecommendBatch(exec *remoteExecution, req Reco
 		"batch_options": req.BatchOption,
 		"userdata_hash": cacheResp.UserdataHash,
 	}
-	recommendJSON, err := json.Marshal(recommendPayload)
+	recommendJSON, err := sonic.Marshal(recommendPayload)
 	if err != nil {
 		return nil, err
 	}

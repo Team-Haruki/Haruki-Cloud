@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -301,7 +302,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
 	case "deck-score-up":
 		var msg string
-		err := json.Unmarshal(rc.Cmd.Params, &msg)
+		err := sonic.Unmarshal(rc.Cmd.Params, &msg)
 		if err != nil {
 			return nil, err
 		}

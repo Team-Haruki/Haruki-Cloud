@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"sort"
 	"strings"
@@ -59,7 +60,7 @@ func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([
 
 	if trimmed[0] == '[' {
 		var items []remoteBatchRecommendResult
-		if err := json.Unmarshal(trimmed, &items); err != nil {
+		if err := sonic.Unmarshal(trimmed, &items); err != nil {
 			return nil, err
 		}
 		for i := range items {
@@ -73,7 +74,7 @@ func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([
 	}
 
 	var single remoteRecommendResult
-	if err := json.Unmarshal(trimmed, &single); err != nil {
+	if err := sonic.Unmarshal(trimmed, &single); err != nil {
 		return nil, err
 	}
 	item := remoteBatchRecommendResult{Result: &single}

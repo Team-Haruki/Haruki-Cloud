@@ -3,6 +3,7 @@ package education
 import (
 	"bytes"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"sort"
 	"strings"
 
@@ -145,7 +146,7 @@ func leaderMissionStatuses(snapshot rendersnapshot.Snapshot, raw *rendersnapshot
 	}
 
 	var payload map[string]json.RawMessage
-	if err := json.Unmarshal(rawBytes, &payload); err != nil {
+	if err := sonic.Unmarshal(rawBytes, &payload); err != nil {
 		return nil
 	}
 
@@ -166,12 +167,12 @@ func decodeLegacyLeaderMissionStatuses(raw json.RawMessage) []rendersnapshot.Raw
 	}
 
 	var items []rendersnapshot.RawUserCharacterMissionV2Status
-	if err := json.Unmarshal(raw, &items); err == nil && len(items) > 0 {
+	if err := sonic.Unmarshal(raw, &items); err == nil && len(items) > 0 {
 		return items
 	}
 
 	var item rendersnapshot.RawUserCharacterMissionV2Status
-	if err := json.Unmarshal(raw, &item); err == nil && item.CharacterID > 0 {
+	if err := sonic.Unmarshal(raw, &item); err == nil && item.CharacterID > 0 {
 		return []rendersnapshot.RawUserCharacterMissionV2Status{item}
 	}
 

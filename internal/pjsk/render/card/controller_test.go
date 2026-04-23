@@ -1,7 +1,7 @@
 package card
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"errors"
 	"io"
 	"net/http"

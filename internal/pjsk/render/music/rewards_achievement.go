@@ -3,6 +3,7 @@ package music
 import (
 	"bytes"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"strconv"
 	"strings"
@@ -17,11 +18,11 @@ func decodeUserMusicAchievements(raw []byte) ([]userMusicAchievement, error) {
 	}
 
 	var direct []userMusicAchievement
-	if err := json.Unmarshal(trimmed, &direct); err == nil {
+	if err := sonic.Unmarshal(trimmed, &direct); err == nil {
 		return direct, nil
 	}
 
-	decoder := json.NewDecoder(bytes.NewReader(trimmed))
+	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(trimmed))
 	decoder.UseNumber()
 
 	var payload any
@@ -60,7 +61,7 @@ func extractNestedAchievementsJSON(snapshot snapshot.Snapshot) ([]byte, error) {
 		return nil, err
 	}
 
-	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
 
 	var payload any
@@ -71,7 +72,7 @@ func extractNestedAchievementsJSON(snapshot snapshot.Snapshot) ([]byte, error) {
 	for _, key := range snapshotAchievementKeys {
 		want := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(key), "_", ""), "-", ""))
 		if value, ok := findNestedJSONValue(payload, want); ok {
-			data, err := json.Marshal(value)
+			data, err := sonic.Marshal(value)
 			if err != nil {
 				return nil, err
 			}

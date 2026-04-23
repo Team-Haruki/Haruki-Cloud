@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )

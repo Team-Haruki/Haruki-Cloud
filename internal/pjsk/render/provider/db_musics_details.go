@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"strconv"
 	"strings"
@@ -204,7 +205,7 @@ func parseMusicVocalCharactersFromRaw(raw json.RawMessage, vocalID int, musicID 
 		return nil
 	}
 	var items []map[string]any
-	if err := json.Unmarshal(raw, &items); err != nil {
+	if err := sonic.Unmarshal(raw, &items); err != nil {
 		return nil
 	}
 

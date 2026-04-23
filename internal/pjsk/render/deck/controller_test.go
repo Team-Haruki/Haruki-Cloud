@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"io"
 	"net/http"
@@ -1114,7 +1115,7 @@ func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -1162,7 +1163,7 @@ func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 					},
 				})
 			}
-			encoded, err := json.Marshal(response)
+			encoded, err := sonic.Marshal(response)
 			if err != nil {
 				t.Fatalf("encode recommend response: %v", err)
 			}
@@ -1235,7 +1236,7 @@ func TestBuildAutoRecommendRequestChallengeAllDefaultsToPreferredAlgorithms(t *t
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -1290,7 +1291,7 @@ func TestBuildAutoRecommendRequestChallengeAllDefaultsToPreferredAlgorithms(t *t
 					},
 				})
 			}
-			encoded, err := json.Marshal(response)
+			encoded, err := sonic.Marshal(response)
 			if err != nil {
 				t.Fatalf("encode recommend response: %v", err)
 			}
@@ -1382,7 +1383,7 @@ func TestBuildAutoRecommendRequestChallengeCurrentUsesSnapshotDeck(t *testing.T)
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -1528,7 +1529,7 @@ func TestBuildAutoRecommendRequestChallengeMusicCompareCurrentDeckBuildsCandidat
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -1797,7 +1798,7 @@ func TestBuildAutoRecommendRequestEventMusicCompareUsesResolvedSelections(t *tes
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -1919,7 +1920,7 @@ func TestBuildAutoRecommendRequestEventMusicCompareCurrentDeckBuildsCandidatesAn
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -2037,7 +2038,7 @@ func TestBuildAutoRecommendRequestEventCurrentUsesSnapshotDeck(t *testing.T) {
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -2136,7 +2137,7 @@ func TestBuildAutoRecommendRequestEventCurrentAreaItemLevelFallsBackForMissingSn
 			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
 				t.Fatalf("decode cache_userdata payload: %v", err)
 			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &cached); err != nil {
 				t.Fatalf("decode cached raw user data: %v", err)
 			}
 			_, _ = w.Write([]byte(`{"userdata_hash":"event-current-area-item-fallback-hash"}`))
@@ -2147,7 +2148,7 @@ func TestBuildAutoRecommendRequestEventCurrentAreaItemLevelFallsBackForMissingSn
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -2273,7 +2274,7 @@ func TestBuildAutoRecommendRequestEventCurrentDeckPrefersPublicProfileDeck(t *te
 			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
 				t.Fatalf("decode cache_userdata payload: %v", err)
 			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &cached); err != nil {
 				t.Fatalf("decode cached raw user data: %v", err)
 			}
 			_, _ = w.Write([]byte(`{"userdata_hash":"event-current-public-deck-hash"}`))
@@ -2284,7 +2285,7 @@ func TestBuildAutoRecommendRequestEventCurrentDeckPrefersPublicProfileDeck(t *te
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -2417,7 +2418,7 @@ func TestBuildAutoRecommendRequestEventFixedCardFallbackUsesBaseSkillAndMaster(t
 			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
 				t.Fatalf("decode cache_userdata payload: %v", err)
 			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &cached); err != nil {
 				t.Fatalf("decode cached raw user data: %v", err)
 			}
 			_, _ = w.Write([]byte(`{"userdata_hash":"event-fixed-card-fallback-hash"}`))
@@ -2428,7 +2429,7 @@ func TestBuildAutoRecommendRequestEventFixedCardFallbackUsesBaseSkillAndMaster(t
 				t.Fatalf("decode recommend payload: %v", err)
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -2522,7 +2523,7 @@ func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testin
 			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
 				t.Fatalf("decode cache_userdata payload: %v", err)
 			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &cached); err != nil {
 				t.Fatalf("decode cached raw user data: %v", err)
 			}
 			_, _ = w.Write([]byte(`{"userdata_hash":"max-profile-hash"}`))
@@ -2632,10 +2633,10 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
 				t.Fatalf("decode cache_userdata payload: %v", err)
 			}
-			if err := json.Unmarshal(payloads[0], &cachedPayload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &cachedPayload); err != nil {
 				t.Fatalf("decode cached raw user data payload: %v", err)
 			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &cached); err != nil {
 				t.Fatalf("decode cached raw user data: %v", err)
 			}
 			_, _ = w.Write([]byte(`{"userdata_hash":"max-profile-no-snapshot-hash"}`))
@@ -2718,7 +2719,7 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 		t.Fatalf("expected synthetic payload to include userCharacters")
 	}
 	var characterRanks []snapshot.RawUserCharacter
-	if err := json.Unmarshal(userCharacters, &characterRanks); err != nil {
+	if err := sonic.Unmarshal(userCharacters, &characterRanks); err != nil {
 		t.Fatalf("decode synthetic userCharacters: %v", err)
 	}
 	if len(characterRanks) != challengeCharacterCount {
@@ -2735,7 +2736,7 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 		t.Fatalf("expected synthetic payload to include userMysekaiCanvases")
 	}
 	var mysekaiCanvases []snapshot.RawUserMysekaiCanvas
-	if err := json.Unmarshal(canvases, &mysekaiCanvases); err != nil {
+	if err := sonic.Unmarshal(canvases, &mysekaiCanvases); err != nil {
 		t.Fatalf("decode synthetic userMysekaiCanvases: %v", err)
 	}
 	if len(mysekaiCanvases) != 7 {
@@ -2749,7 +2750,7 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 		t.Fatalf("expected synthetic payload to include userMysekaiGates")
 	}
 	var decodedGates []snapshot.RawUserMysekaiGate
-	if err := json.Unmarshal(mysekaiGates, &decodedGates); err != nil {
+	if err := sonic.Unmarshal(mysekaiGates, &decodedGates); err != nil {
 		t.Fatalf("decode synthetic userMysekaiGates: %v", err)
 	}
 	if !reflect.DeepEqual(decodedGates, []snapshot.RawUserMysekaiGate{
@@ -2766,7 +2767,7 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 		t.Fatalf("expected synthetic payload to include userMysekaiFixtureGameCharacterPerformanceBonuses")
 	}
 	var decodedFixtureBonuses []snapshot.RawUserFixtureBonus
-	if err := json.Unmarshal(fixtureBonuses, &decodedFixtureBonuses); err != nil {
+	if err := sonic.Unmarshal(fixtureBonuses, &decodedFixtureBonuses); err != nil {
 		t.Fatalf("decode synthetic userMysekaiFixtureGameCharacterPerformanceBonuses: %v", err)
 	}
 	if !reflect.DeepEqual(decodedFixtureBonuses, []snapshot.RawUserFixtureBonus{
@@ -2798,7 +2799,7 @@ func TestBuildAutoRecommendRequestSubMaxProfilePromotesAreaItemsTo15(t *testing.
 			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
 				t.Fatalf("decode cache_userdata payload: %v", err)
 			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &cached); err != nil {
 				t.Fatalf("decode cached raw user data: %v", err)
 			}
 			_, _ = w.Write([]byte(`{"userdata_hash":"sub-max-profile-hash"}`))
@@ -2876,7 +2877,7 @@ func TestBuildAutoRecommendRequestFilterAndExcludeTrimUserCards(t *testing.T) {
 			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
 				t.Fatalf("decode cache_userdata payload: %v", err)
 			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &cached); err != nil {
 				t.Fatalf("decode cached raw user data: %v", err)
 			}
 			_, _ = w.Write([]byte(`{"userdata_hash":"filtered-userdata-hash"}`))
@@ -2998,7 +2999,7 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 		case "/update/masterdata":
 			masterdataCalls.Add(1)
 			var payload map[string]any
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode masterdata request: %v", err)
 			}
 			if payload["region"] != "jp" {
@@ -3012,12 +3013,12 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 		case "/update/musicmetas/string":
 			musicMetaCalls.Add(1)
 			var payload map[string]any
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode music meta request: %v", err)
 			}
 			data, _ := payload["data"].(string)
 			var metas []map[string]any
-			if err := json.Unmarshal([]byte(data), &metas); err != nil || len(metas) == 0 {
+			if err := sonic.Unmarshal([]byte(data), &metas); err != nil || len(metas) == 0 {
 				http.Error(w, "invalid music meta payload", http.StatusBadRequest)
 				return
 			}
@@ -3047,7 +3048,7 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -3204,7 +3205,7 @@ func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T
 				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
 			}
 			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
@@ -3302,7 +3303,7 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyProtocol(t *test
 		case "/recommend":
 			recommendCalls.Add(1)
 			var payload map[string]any
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode recommend request: %v", err)
 			}
 			if payload["algorithm"] != "ga" {
@@ -3378,7 +3379,7 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyWhenUserdataHash
 
 			legacyRecommendCalls.Add(1)
 			var payload map[string]any
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode legacy recommend request: %v", err)
 			}
 			if payload["algorithm"] != "ga" {

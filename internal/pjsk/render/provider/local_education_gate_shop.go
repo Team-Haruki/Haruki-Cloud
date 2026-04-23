@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 )
 
 func (p *localEducationProvider) ensureGateLevels() error {

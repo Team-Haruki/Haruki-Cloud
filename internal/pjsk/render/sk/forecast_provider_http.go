@@ -2,7 +2,7 @@ package sk
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	"strconv"
 	"strings"

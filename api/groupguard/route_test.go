@@ -2,6 +2,7 @@ package groupguard
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -30,7 +31,7 @@ func TestCheckBindingReturnsBoundResult(t *testing.T) {
 		if got := r.URL.Query().Get("platform_user_id"); got != "123" {
 			t.Fatalf("unexpected platform_user_id: %q", got)
 		}
-		_ = json.NewEncoder(w).Encode([]map[string]string{
+		_ = sonic.ConfigDefault.NewEncoder(w).Encode([]map[string]string{
 			{"server": "jp", "gameUserId": "111"},
 		})
 	}))
@@ -40,7 +41,7 @@ func TestCheckBindingReturnsBoundResult(t *testing.T) {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
 	var data BindingCheckResult
-	if err := json.Unmarshal(resp.Data, &data); err != nil {
+	if err := sonic.Unmarshal(resp.Data, &data); err != nil {
 		t.Fatalf("unmarshal data: %v", err)
 	}
 	if !data.Bound || data.Banned || len(data.Bindings) != 1 || data.Bindings[0].Server != "jp" || data.Bindings[0].GameUserID != "111" {
@@ -59,7 +60,7 @@ func TestCheckBindingTreatsInvalidPlatformAsUnbound(t *testing.T) {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
 	var data BindingCheckResult
-	if err := json.Unmarshal(resp.Data, &data); err != nil {
+	if err := sonic.Unmarshal(resp.Data, &data); err != nil {
 		t.Fatalf("unmarshal data: %v", err)
 	}
 	if data.Bound || data.Banned || len(data.Bindings) != 0 {
@@ -78,7 +79,7 @@ func TestCheckBindingTreatsBannedAsNonBound(t *testing.T) {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
 	var data BindingCheckResult
-	if err := json.Unmarshal(resp.Data, &data); err != nil {
+	if err := sonic.Unmarshal(resp.Data, &data); err != nil {
 		t.Fatalf("unmarshal data: %v", err)
 	}
 	if data.Bound || !data.Banned || len(data.Bindings) != 0 {
@@ -91,7 +92,7 @@ func TestCheckBindingBatchReturnsResults(t *testing.T) {
 		platformUserID := r.URL.Query().Get("platform_user_id")
 		switch platformUserID {
 		case "123":
-			_ = json.NewEncoder(w).Encode([]map[string]string{
+			_ = sonic.ConfigDefault.NewEncoder(w).Encode([]map[string]string{
 				{"server": "jp", "gameUserId": "111"},
 			})
 		case "456":
@@ -107,7 +108,7 @@ func TestCheckBindingBatchReturnsResults(t *testing.T) {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
 	var data BindingCheckBatchResponse
-	if err := json.Unmarshal(resp.Data, &data); err != nil {
+	if err := sonic.Unmarshal(resp.Data, &data); err != nil {
 		t.Fatalf("unmarshal data: %v", err)
 	}
 	if len(data.Results) != 2 {
@@ -174,7 +175,7 @@ func sendGroupGuardRequest(t *testing.T, app *fiber.App, path string, body strin
 	defer resp.Body.Close()
 
 	var envelope testEnvelope
-	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+	if err := sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&envelope); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	return envelope

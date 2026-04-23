@@ -1,6 +1,6 @@
 package meta
 
-import "encoding/json"
+import json "github.com/bytedance/sonic"
 
 // InjectOmakase ensures music_metas JSON contains a synthetic "omakase" entry
 // (music_id 10000) for each difficulty in [master, expert, hard].

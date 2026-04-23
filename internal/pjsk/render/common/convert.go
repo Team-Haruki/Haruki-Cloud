@@ -1,7 +1,7 @@
 package common
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 
 	sekaiDB "haruki-cloud/database/sekai"

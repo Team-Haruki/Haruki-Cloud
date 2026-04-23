@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"os"
 
 	"haruki-cloud/database/sekai/migrate"

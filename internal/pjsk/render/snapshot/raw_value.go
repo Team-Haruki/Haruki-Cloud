@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"slices"
 	"strings"
@@ -18,7 +19,7 @@ func (s *Service) RawValue(key string) ([]byte, error) {
 	}
 
 	var payload map[string]json.RawMessage
-	if err := json.Unmarshal(s.rawJSON, &payload); err != nil {
+	if err := sonic.Unmarshal(s.rawJSON, &payload); err != nil {
 		return nil, fmt.Errorf("decode raw user snapshot: %w", err)
 	}
 

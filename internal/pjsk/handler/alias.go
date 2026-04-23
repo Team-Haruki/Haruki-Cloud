@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	"log/slog"
 	"strconv"

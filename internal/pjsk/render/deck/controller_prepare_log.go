@@ -1,7 +1,7 @@
 package deck
 
 import (
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"fmt"
 	"sort"
 	"strings"

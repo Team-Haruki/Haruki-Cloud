@@ -16,7 +16,7 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	json "github.com/bytedance/sonic"
 	"errors"
 	"flag"
 	"fmt"
@@ -97,7 +97,7 @@ func loadJSON[T any](path string) ([]T, error) {
 	}
 	defer f.Close()
 	var records []T
-	if err := json.NewDecoder(f).Decode(&records); err != nil {
+	if err := json.ConfigDefault.NewDecoder(f).Decode(&records); err != nil {
 		return nil, fmt.Errorf("decode %s: %w", path, err)
 	}
 	return records, nil

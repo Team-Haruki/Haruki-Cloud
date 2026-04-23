@@ -2,6 +2,7 @@ package provider
 
 import (
 	"encoding/json"
+	sonic "github.com/bytedance/sonic"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -95,7 +96,7 @@ func loadJSON[T any](store *localStore, filename string) ([]T, error) {
 		return nil, err
 	}
 	var items []T
-	if err := json.Unmarshal(data, &items); err != nil {
+	if err := sonic.Unmarshal(data, &items); err != nil {
 		return nil, fmt.Errorf("unmarshal %s: %w", filename, err)
 	}
 	return items, nil

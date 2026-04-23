@@ -20,7 +20,7 @@ require (
 	golang.org/x/crypto v0.50.0
 	golang.org/x/sync v0.20.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.48.2
+	modernc.org/sqlite v1.49.1
 )
 
 require (
@@ -37,8 +37,8 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-openapi/inflect v0.21.5 // indirect
-	github.com/gofiber/schema v1.7.0 // indirect
-	github.com/gofiber/utils/v2 v2.0.2 // indirect
+	github.com/gofiber/schema v1.7.1 // indirect
+	github.com/gofiber/utils/v2 v2.0.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.24.0 // indirect

@@ -190,6 +190,33 @@ func TestResolveRegionAssetPathPrefersOnDemandForGacha(t *testing.T) {
 	}
 }
 
+func TestResolveRegionAssetPathPrefersOnDemandForVirtualLive(t *testing.T) {
+	tmpDir := t.TempDir()
+	helper := NewAssetHelper(tmpDir, nil)
+	rel := filepath.Join("virtual_live", "select", "banner", "vlentrance_00371", "vlentrance_00371.png")
+
+	startApp := filepath.Join(tmpDir, "asset", "jp-assets", "startapp", rel)
+	if err := os.MkdirAll(filepath.Dir(startApp), 0o755); err != nil {
+		t.Fatalf("mkdir startapp: %v", err)
+	}
+	if err := os.WriteFile(startApp, []byte("startapp"), 0o644); err != nil {
+		t.Fatalf("write startapp file: %v", err)
+	}
+
+	onDemand := filepath.Join(tmpDir, "asset", "jp-assets", "ondemand", rel)
+	if err := os.MkdirAll(filepath.Dir(onDemand), 0o755); err != nil {
+		t.Fatalf("mkdir ondemand: %v", err)
+	}
+	if err := os.WriteFile(onDemand, []byte("ondemand"), 0o644); err != nil {
+		t.Fatalf("write ondemand file: %v", err)
+	}
+
+	got := ResolveRegionAssetPath(helper, "jp", rel)
+	if want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "ondemand", rel)); got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
 func TestResolveEventBannerPathFallsBackToEventStoryBanner(t *testing.T) {
 	tmpDir := t.TempDir()
 	helper := NewAssetHelper(tmpDir, nil)

@@ -194,10 +194,11 @@ const (
 )
 
 var onDemandPreferredTopLevel = map[string]struct{}{
-	"event":       {},
-	"event_story": {},
-	"gacha":       {},
-	"mysekai":     {},
+	"event":        {},
+	"event_story":  {},
+	"gacha":        {},
+	"mysekai":      {},
+	"virtual_live": {},
 }
 
 // RegionAssetDir returns the region-specific startapp asset subdirectory prefix

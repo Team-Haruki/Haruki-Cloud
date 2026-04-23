@@ -249,39 +249,41 @@ func (c *Controller) resolveRegion(region string) renderregion.Value {
 }
 
 func (c *Controller) bannerPath(source DataSource, region renderregion.Value, live ResolvedLive) string {
-	if bannerPath := c.eventBannerPath(source, region, live.ID); bannerPath != "" {
-		return bannerPath
-	}
-	if bannerPath := c.birthdayBannerPath(source, region, live); bannerPath != "" {
-		return bannerPath
-	}
-
-	assetBundleName := strings.TrimSpace(live.AssetBundleName)
-	if assetBundleName == "" {
+	candidates := c.bannerCandidates(source, live)
+	if len(candidates) == 0 {
 		return ""
 	}
-	return assets.ResolveRegionAssetPath(
-		c.assets,
-		region.String(),
-		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
-		filepath.Join("virtual_live", "select", "banner", assetBundleName, assetBundleName+".png"),
-		filepath.Join("virtual_live", "select", "banner", assetBundleName+"_rip", assetBundleName+".png"),
-	)
+	return assets.ResolveRegionAssetPath(c.assets, region.String(), candidates...)
 }
 
-func (c *Controller) eventBannerPath(source DataSource, region renderregion.Value, liveID int) string {
+func (c *Controller) bannerCandidates(source DataSource, live ResolvedLive) []string {
+	if assetBundleName := strings.TrimSpace(live.AssetBundleName); assetBundleName != "" {
+		return []string{filepath.Join("virtual_live", "select", "banner", assetBundleName, assetBundleName+".png")}
+	}
+	return c.eventBannerCandidates(source, live.ID)
+}
+
+func (c *Controller) eventBannerCandidates(source DataSource, liveID int) []string {
 	if source == nil || liveID <= 0 {
-		return ""
+		return nil
 	}
 	eventSource, ok := source.(eventBannerDataSource)
 	if !ok {
-		return ""
+		return nil
 	}
 	eventInfo, err := eventSource.GetEventByVirtualLiveID(liveID)
 	if err != nil || eventInfo == nil {
-		return ""
+		return nil
 	}
-	return assets.ResolveEventBannerPath(c.assets, region.String(), eventInfo.AssetBundleName)
+	assetBundleName := strings.TrimSpace(eventInfo.AssetBundleName)
+	if assetBundleName == "" {
+		return nil
+	}
+	return []string{
+		filepath.Join("home", "banner", assetBundleName, assetBundleName+".png"),
+		filepath.Join("event", assetBundleName, "banner.png"),
+		filepath.Join("event_story", assetBundleName, "screen_image", "banner_event_story.png"),
+	}
 }
 
 func (c *Controller) birthdayBannerPath(source DataSource, region renderregion.Value, live ResolvedLive) string {

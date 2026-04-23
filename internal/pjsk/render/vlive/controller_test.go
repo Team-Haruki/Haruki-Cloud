@@ -250,7 +250,7 @@ func TestBuildListRequestIncludesBannerRewardsAndCharacters(t *testing.T) {
 		t.Fatalf("unexpected lives len: %d", len(req.Lives))
 	}
 	live := req.Lives[0]
-	if live.BannerPath != "asset/jp-assets/startapp/home/banner/event_painful_2022/event_painful_2022.png" {
+	if live.BannerPath != "asset/jp-assets/ondemand/virtual_live/select/banner/vlentrance_00371_re/vlentrance_00371_re.png" {
 		t.Fatalf("unexpected banner path: %q", live.BannerPath)
 	}
 	if !live.Living || live.RestCount != 1 {
@@ -276,7 +276,7 @@ func TestBuildListRequestIncludesBannerRewardsAndCharacters(t *testing.T) {
 	}
 }
 
-func TestBuildListRequestBirthdayLiveUsesBirthdayBanner(t *testing.T) {
+func TestBuildListRequestBirthdayLiveUsesVirtualLiveBanner(t *testing.T) {
 	now := time.Date(2026, 4, 22, 10, 0, 0, 0, time.UTC)
 	ms := func(tm time.Time) int64 { return tm.UnixMilli() }
 
@@ -285,10 +285,11 @@ func TestBuildListRequestBirthdayLiveUsesBirthdayBanner(t *testing.T) {
 		lives: map[renderregion.Value][]*Live{
 			renderregion.JP: {
 				{
-					ID:      373,
-					Name:    "HAPPY BIRTHDAY演唱会 结名 2026",
-					StartAt: ms(now.Add(24 * time.Hour)),
-					EndAt:   ms(now.Add(72 * time.Hour)),
+					ID:              373,
+					Name:            "HAPPY BIRTHDAY演唱会 结名 2026",
+					AssetBundleName: "vlentrance_00373",
+					StartAt:         ms(now.Add(24 * time.Hour)),
+					EndAt:           ms(now.Add(72 * time.Hour)),
 					Characters: []Character{
 						{GameCharacterUnitID: 19, VirtualLivePerformanceType: "main_only"},
 						{GameCharacterUnitID: 21, VirtualLivePerformanceType: "both"},
@@ -309,7 +310,7 @@ func TestBuildListRequestBirthdayLiveUsesBirthdayBanner(t *testing.T) {
 	if len(req.Lives) != 1 {
 		t.Fatalf("unexpected lives len: %d", len(req.Lives))
 	}
-	if got := req.Lives[0].BannerPath; got != "asset/jp-assets/startapp/home/banner/banner_birthday_ena_2026/banner_birthday_ena_2026.png" {
-		t.Fatalf("unexpected birthday banner path: %q", got)
+	if got := req.Lives[0].BannerPath; got != "asset/jp-assets/ondemand/virtual_live/select/banner/vlentrance_00373/vlentrance_00373.png" {
+		t.Fatalf("unexpected virtual live banner path: %q", got)
 	}
 }

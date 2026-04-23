@@ -128,6 +128,39 @@ func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 	}
 }
 
+func TestDispatchSupportsRegionPrefixedCheckRoomWithoutWhitespace(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	resolved, err := dispatchForTest(context.Background(), Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]any{"text": "/cncf1"}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-check-room" {
+		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	}
+	if resolved.Region != "cn" {
+		t.Fatalf("unexpected region: %s", resolved.Region)
+	}
+
+	var params map[string]any
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	ranks, ok := params["ranks"].([]any)
+	if !ok || len(ranks) != 1 || int(ranks[0].(float64)) != 1 {
+		t.Fatalf("unexpected ranks payload: %#v", params["ranks"])
+	}
+}
+
 func TestDispatchSupportsRegionPrefixedWorldBloomSKLineWithCharacterOnly(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 

@@ -275,8 +275,9 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, err
 		}
 
-		if rc.App.Profiles != nil {
-			if resp, apiErr := rc.App.SekaiAPI.GetUserProfile(regionStr, target.PJSKUserID); apiErr == nil {
+		if resp := resolveDeckPublicProfileForTarget(rc, target, regionStr); resp != nil {
+			q.PublicProfileResp = resp
+			if rc.App.Profiles != nil {
 				pq := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
 				if detail, buildErr := rc.App.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(pq, resp, targetSnapshot); buildErr == nil {
 					q.Profile = detail
@@ -312,7 +313,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	mergeParams(rc.Cmd.Params, &q)
 	var targetParams deckUserTargetParams
 	mergeParams(rc.Cmd.Params, &targetParams)
-	detail, snapshot, region, err := resolveDeckRenderProfileAndSnapshot(rc, targetParams.Selector)
+	detail, snapshot, region, publicResp, err := resolveDeckRenderProfileSnapshotAndPublic(rc, targetParams.Selector)
 	if err != nil {
 		return nil, err
 	}
@@ -320,6 +321,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	if detail != nil {
 		q.Profile = detail
 	}
+	q.PublicProfileResp = publicResp
 	if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 		return nil, err
 	}

@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/logger"
 
 	"golang.org/x/sync/singleflight"
@@ -344,6 +345,7 @@ type AutoQuery struct {
 	SkillReferenceChooseStrategy  string                              `json:"skill_reference_choose_strategy,omitempty"`
 	KeepAfterTrainingState        bool                                `json:"keep_after_training_state,omitempty"`
 	Profile                       *drawing.DetailedProfileCardRequest `json:"-"`
+	PublicProfileResp             *sekai.GetAnotherProfileResponse    `json:"-"`
 }
 
 // ── Compare ─────────────────────────────────────────────────────────────────

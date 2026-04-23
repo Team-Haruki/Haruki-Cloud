@@ -10,6 +10,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/pjsk/sekai"
 )
 
 func (c *Controller) applyProfilePreset(region renderregion.Value, raw *snapshot.RawUserData, query AutoQuery) error {
@@ -234,8 +235,40 @@ func (c *Controller) resolveCardUnit(source CardSource, card *masterdata.Card, u
 	return ""
 }
 
+func publicProfileCurrentDeck(resp *sekai.GetAnotherProfileResponse) *snapshot.RawUserDeck {
+	if resp == nil {
+		return nil
+	}
+	deck := resp.UserDeck
+	if deck.DeckID <= 0 && deck.Member1 <= 0 && deck.Member2 <= 0 && deck.Member3 <= 0 && deck.Member4 <= 0 && deck.Member5 <= 0 {
+		return nil
+	}
+	return &snapshot.RawUserDeck{
+		DeckID:    deck.DeckID,
+		Leader:    deck.Leader,
+		SubLeader: deck.SubLeader,
+		Member1:   deck.Member1,
+		Member2:   deck.Member2,
+		Member3:   deck.Member3,
+		Member4:   deck.Member4,
+		Member5:   deck.Member5,
+	}
+}
+
 func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *snapshot.RawUserData, recType string, query AutoQuery, option map[string]any) error {
 	if !query.UseCurrentDeck || recType == "challenge" {
+		return nil
+	}
+
+	if deckInfo := publicProfileCurrentDeck(query.PublicProfileResp); deckInfo != nil {
+		cards, ok := snapshot.UserDeckCardIDs(deckInfo)
+		if !ok {
+			return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数")
+		}
+
+		option["fixed_cards"] = slices.Clone(cards)
+		delete(option, "fixed_characters")
+		option["best_skill_as_leader"] = false
 		return nil
 	}
 	if original == nil {
@@ -244,12 +277,12 @@ func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *s
 
 	deckInfo := snapshot.FindActiveDeck(original.UserDecks, original.UserGamedata.Deck)
 	if deckInfo.DeckID == 0 {
-		return fmt.Errorf("找不到你的当前主队配置（更新当前主队需要抓包）")
+		return fmt.Errorf("找不到你的当前主队配置")
 	}
 
 	cards, ok := snapshot.UserDeckCardIDs(&deckInfo)
 	if !ok {
-		return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数（更新当前主队需要抓包）")
+		return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数")
 	}
 
 	option["fixed_cards"] = slices.Clone(cards)

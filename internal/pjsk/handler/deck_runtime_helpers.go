@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/profile"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func formatDeckQuerySummary(q deck.AutoQuery) string {
@@ -57,28 +58,33 @@ func formatDeckQuerySummary(q deck.AutoQuery) string {
 }
 
 func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, rendersnapshot.Snapshot, string, error) {
+	detail, snapshot, region, _, err := resolveDeckRenderProfileSnapshotAndPublic(rc, selector)
+	return detail, snapshot, region, err
+}
+
+func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, rendersnapshot.Snapshot, string, *sekaiapi.GetAnotherProfileResponse, error) {
 	if rc == nil {
-		return nil, nil, "", nil
+		return nil, nil, "", nil, nil
 	}
 
 	selector = strings.TrimSpace(selector)
 	if selector == "" {
 		binding, snapshot, err := rc.requireVisibleSuiteSnapshot()
 		if err != nil {
-			return nil, nil, "", err
+			return nil, nil, "", nil, err
 		}
 		region := rc.RegionStr
 		if binding != nil {
 			region = resolvedTargetRegion(region, ResolvedGameTarget{Binding: binding})
 			if snapshot == nil {
-				return nil, nil, region, newSuiteDataNotFoundReplayError()
+				return nil, nil, region, nil, newSuiteDataNotFoundReplayError()
 			}
 		}
 		detail := rc.GetDetailedProfile()
 		if detail == nil && snapshot != nil {
 			detail = snapshot.DetailedProfile(renderregion.Normalize(region))
 		}
-		return detail, snapshot, region, nil
+		return detail, snapshot, region, rc.GetPublicProfileResponse(), nil
 	}
 
 	target, err := resolveGameTarget(rc.Ctx, userQueryParams{
@@ -88,29 +94,44 @@ func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*
 		Selector:       selector,
 	}, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, "", nil, err
 	}
 	region := resolvedTargetRegion(rc.RegionStr, target)
 
 	snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, region, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
 	if target.Binding != nil && snapshot == nil {
-		return nil, nil, region, newSuiteDataNotFoundReplayError()
+		return nil, nil, region, nil, newSuiteDataNotFoundReplayError()
 	}
-	detail := buildDeckDetailedProfileForTarget(rc, target, region, snapshot)
+	resp := resolveDeckPublicProfileForTarget(rc, target, region)
+	detail := buildDeckDetailedProfileForTargetWithResponse(rc, target, region, snapshot, resp)
 	if detail == nil && snapshot != nil {
 		detail = snapshot.DetailedProfile(renderregion.Normalize(region))
 	}
-	return detail, snapshot, region, nil
+	return detail, snapshot, region, resp, nil
 }
 
 func buildDeckDetailedProfileForTarget(rc *RequestContext, target ResolvedGameTarget, region string, snapshot rendersnapshot.Snapshot) *drawing.DetailedProfileCardRequest {
+	return buildDeckDetailedProfileForTargetWithResponse(rc, target, region, snapshot, resolveDeckPublicProfileForTarget(rc, target, region))
+}
+
+func resolveDeckPublicProfileForTarget(rc *RequestContext, target ResolvedGameTarget, region string) *sekaiapi.GetAnotherProfileResponse {
+	if rc == nil || rc.App == nil || rc.App.SekaiAPI == nil {
+		return nil
+	}
+	region = resolvedTargetRegion(region, target)
+	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
+	if err != nil {
+		return nil
+	}
+	return resp
+}
+
+func buildDeckDetailedProfileForTargetWithResponse(rc *RequestContext, target ResolvedGameTarget, region string, snapshot rendersnapshot.Snapshot, resp *sekaiapi.GetAnotherProfileResponse) *drawing.DetailedProfileCardRequest {
 	if rc == nil || rc.App == nil || rc.App.Profiles == nil {
 		return nil
 	}
 	region = resolvedTargetRegion(region, target)
-
-	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
-	if err != nil {
+	if resp == nil {
 		return nil
 	}
 

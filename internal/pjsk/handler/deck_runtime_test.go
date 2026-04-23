@@ -23,6 +23,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/imagecache"
 )
 
@@ -92,6 +93,114 @@ func TestResolveDeckRenderProfileAndSnapshotUsesSelectedBinding(t *testing.T) {
 	if selector.Region != renderregion.CN {
 		t.Fatalf("unexpected selector region: %+v", selector.Region)
 	}
+	if selector.PJSKUserID != expectedBinding.PJSKUserID {
+		t.Fatalf("expected selected binding uid %q, got %q", expectedBinding.PJSKUserID, selector.PJSKUserID)
+	}
+}
+
+func TestResolveDeckRenderProfileSnapshotAndPublicReturnsSelectedPublicProfile(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingServiceWithValidator(t, handlerMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"cn": {
+				"11111111111111": "CN User 1",
+			},
+			"jp": {
+				"33333333333333": "JP User 1",
+			},
+		},
+	})
+
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind first account: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "33333333333333"); err != nil {
+		t.Fatalf("bind second account: %v", err)
+	}
+
+	_, expectedBinding, err := service.ResolveUserBindingBySelector(ctx, "qq", "42", "", "u1")
+	if err != nil {
+		t.Fatalf("resolve selector binding: %v", err)
+	}
+
+	provider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{Nickname: "selector-snapshot"},
+		},
+	}
+
+	var requestedPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		switch r.URL.Path {
+		case "/api/cn/11111111111111/profile":
+			_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+				User: sekaiapi.AnotherUser{
+					UserID: 11111111111111,
+					Name:   "CN User 1",
+				},
+				UserDeck: sekaiapi.UserDeck{
+					DeckID:    9,
+					Leader:    2001,
+					SubLeader: 2002,
+					Member1:   2001,
+					Member2:   2002,
+					Member3:   2003,
+					Member4:   2004,
+					Member5:   2005,
+				},
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	oldBaseURL := harukiConfig.Cfg.SekaiAPI.BaseURL
+	oldToken := harukiConfig.Cfg.SekaiAPI.Token
+	harukiConfig.Cfg.SekaiAPI.BaseURL = server.URL
+	harukiConfig.Cfg.SekaiAPI.Token = "test-token"
+	t.Cleanup(func() {
+		harukiConfig.Cfg.SekaiAPI.BaseURL = oldBaseURL
+		harukiConfig.Cfg.SekaiAPI.Token = oldToken
+	})
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:  service,
+		Snapshots: provider,
+		SekaiAPI:  sekaiapi.NewSekaiAPIClient(&harukiConfig.Cfg.SekaiAPI),
+	})
+
+	detail, snap, region, resp, err := resolveDeckRenderProfileSnapshotAndPublic(rc, "u1")
+	if err != nil {
+		t.Fatalf("resolveDeckRenderProfileSnapshotAndPublic() error = %v", err)
+	}
+	if snap == nil {
+		t.Fatal("expected snapshot")
+	}
+	if detail == nil || detail.Nickname != "selector-snapshot" {
+		t.Fatalf("unexpected detail: %+v", detail)
+	}
+	if region != "cn" {
+		t.Fatalf("expected resolved region cn, got %q", region)
+	}
+	if requestedPath != "/api/cn/11111111111111/profile" {
+		t.Fatalf("unexpected public profile path: %q", requestedPath)
+	}
+	if resp == nil || resp.UserDeck.Member1 != 2001 || resp.UserDeck.Member5 != 2005 {
+		t.Fatalf("unexpected public profile resp: %+v", resp)
+	}
+	if len(provider.selectors) != 1 {
+		t.Fatalf("expected one snapshot selector, got %d", len(provider.selectors))
+	}
+	selector := provider.selectors[0]
 	if selector.PJSKUserID != expectedBinding.PJSKUserID {
 		t.Fatalf("expected selected binding uid %q, got %q", expectedBinding.PJSKUserID, selector.PJSKUserID)
 	}

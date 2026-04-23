@@ -15,14 +15,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func boolPtr(v bool) *bool {
-	return &v
-}
-
-func stringPtr(v string) *string {
-	return &v
-}
-
 func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
 	now := time.Now()
 	return api.WithCache(c, h.svc.redisClient, CacheNSMusic, func(_ string) (any, error) {
@@ -47,7 +39,7 @@ func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
 				Category:       row.Category,
 				Version:        row.Version,
 				ReleaseDate:    row.ReleaseDate,
-				IsDeleted:      boolPtr(row.IsDeleted),
+				IsDeleted:      new(row.IsDeleted),
 				DeletedVersion: row.DeletedVersion,
 			}
 		}
@@ -135,7 +127,7 @@ func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
 		Category:       row.Category,
 		Version:        row.Version,
 		ReleaseDate:    row.ReleaseDate,
-		IsDeleted:      boolPtr(row.IsDeleted),
+		IsDeleted:      new(row.IsDeleted),
 		DeletedVersion: row.DeletedVersion,
 	})
 }
@@ -230,7 +222,7 @@ func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {
 				Category:       music.Category,
 				Version:        music.Version,
 				ReleaseDate:    music.ReleaseDate,
-				IsDeleted:      boolPtr(music.IsDeleted),
+				IsDeleted:      new(music.IsDeleted),
 				DeletedVersion: music.DeletedVersion,
 			}
 			version = music.Version
@@ -241,8 +233,8 @@ func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {
 				MusicID:   mid,
 				Title:     title,
 				Artist:    artist,
-				Category:  stringPtr("Unknown"),
-				IsDeleted: boolPtr(false),
+				Category:  new("Unknown"),
+				IsDeleted: new(false),
 			}
 			version = nil
 		}

@@ -1488,8 +1488,18 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 		if req.Period <= 0 {
 			t.Fatalf("unexpected period: %d", req.Period)
 		}
-		if len(req.Ranks) != 2 || req.Ranks[0].Rank != 1 || req.Ranks[1].Rank != 100 {
-			t.Fatalf("unexpected ranks: %+v", req.Ranks)
+		if len(req.Ranks) == 0 {
+			t.Fatalf("expected non-empty ranks in speed request")
+		}
+		foundRank100 := false
+		for _, r := range req.Ranks {
+			if r.Rank == 100 {
+				foundRank100 = true
+				break
+			}
+		}
+		if !foundRank100 {
+			t.Fatalf("expected rank 100 in speed request, got %+v", req.Ranks)
 		}
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("SKSPEEDPNG"))

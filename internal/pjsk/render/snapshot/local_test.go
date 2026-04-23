@@ -15,11 +15,11 @@ func TestNewLocalFileServiceSupportsExtendedJSONExport(t *testing.T) {
 	tempDir := t.TempDir()
 	userJSONPath := filepath.Join(tempDir, "collections.suite.json")
 	userJSON := `[{
-		"_id": {"$numberLong": "GAME_USER_ID_REDACTED"},
+		"_id": {"$numberLong": "1000000001"},
 		"server": "jp",
 		"now": {"$numberLong": "1774852453796"},
 		"userGamedata": {
-			"userId": {"$numberLong": "GAME_USER_ID_REDACTED"},
+			"userId": {"$numberLong": "1000000001"},
 			"name": "Deck User",
 			"deck": 1,
 			"rank": 123
@@ -47,7 +47,7 @@ func TestNewLocalFileServiceSupportsExtendedJSONExport(t *testing.T) {
 	if raw == nil {
 		t.Fatal("expected raw data")
 	}
-	if raw.UserGamedata.UserID != GAME_USER_ID_REDACTED {
+	if raw.UserGamedata.UserID != 1000000001 {
 		t.Fatalf("unexpected user id: %d", raw.UserGamedata.UserID)
 	}
 	if raw.Now != 1774852453796 {

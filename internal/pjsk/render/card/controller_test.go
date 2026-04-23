@@ -350,11 +350,6 @@ func TestRenderCardListAutoSwitchesToCardBoxWhenTooManyCards(t *testing.T) {
 	reqAny, autoBox, err := controller.buildCardListRenderRequest(ListRequest{
 		CardIDs: cardIDs,
 		Region:  "jp",
-		DetailedProfile: &drawing.DetailedProfileCardRequest{
-			UserCards: []any{
-				map[string]any{"cardId": cardIDs[0]},
-			},
-		},
 	})
 	if err != nil {
 		t.Fatalf("buildCardListRenderRequest() error = %v", err)

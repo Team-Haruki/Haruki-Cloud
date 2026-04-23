@@ -6,13 +6,21 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 )
 
+func binding(id int, server, userID string) *pjskdb.UserBinding {
+	return &pjskdb.UserBinding{ID: id, Edges: pjskdb.UserBindingEdges{GameAccount: &pjskdb.GameAccount{Server: server, UserID: userID}}}
+}
+
+func bindingWithOrder(id, displayOrder int, server, userID string) *pjskdb.UserBinding {
+	return &pjskdb.UserBinding{ID: id, DisplayOrder: displayOrder, Edges: pjskdb.UserBindingEdges{GameAccount: &pjskdb.GameAccount{Server: server, UserID: userID}}}
+}
+
 func TestBuildBindingListAssignsPerServerIndicesAndSelectsWithinServer(t *testing.T) {
 	items := buildBindingList([]*pjskdb.UserBinding{
-		{ID: 1, Server: "jp", UserID: "2000"},
-		{ID: 2, Server: "cn", UserID: "1000"},
-		{ID: 3, Server: "jp", UserID: "3000"},
-		{ID: 4, Server: "cn", UserID: "1500"},
-		{ID: 5, Server: "en", UserID: "4000"},
+		binding(1, "jp", "2000"),
+		binding(2, "cn", "1000"),
+		binding(3, "jp", "3000"),
+		binding(4, "cn", "1500"),
+		binding(5, "en", "4000"),
 	}, nil)
 
 	if len(items) != 5 {
@@ -66,9 +74,9 @@ func TestBuildBindingListAssignsPerServerIndicesAndSelectsWithinServer(t *testin
 
 func TestBuildBindingListUsesDisplayOrderBeforeBindingID(t *testing.T) {
 	items := buildBindingList([]*pjskdb.UserBinding{
-		{ID: 1, DisplayOrder: 3, Server: "jp", UserID: "2000"},
-		{ID: 2, DisplayOrder: 1, Server: "cn", UserID: "1000"},
-		{ID: 3, DisplayOrder: 2, Server: "jp", UserID: "3000"},
+		bindingWithOrder(1, 3, "jp", "2000"),
+		bindingWithOrder(2, 1, "cn", "1000"),
+		bindingWithOrder(3, 2, "jp", "3000"),
 	}, nil)
 
 	if len(items) != 3 {

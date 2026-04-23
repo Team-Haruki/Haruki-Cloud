@@ -1,10 +1,12 @@
 # Haruki-Cloud PJSK 账号绑定实现说明
 
-> 最后更新：2026-03-25
+> 最后更新：2026-04-23
 >
 > 本文档记录 2026-03-24 这轮账号绑定相关改造的最终收口结果，重点说明命令链路、分层边界、代码落点、测试覆盖和后续注意事项。
 >
 > 2026-04-09 补充说明：文中涉及 `api/legacy/pjsk/*` 的章节与测试命令仅代表当时的兼容入口；相关 legacy 路由现已从仓库和运行时移除，当前应以 Bot 主协议与 `internal/pjsk/handler` / `internal/pjsk/userdata` 的现状为准。
+>
+> 2026-04-23 补充说明：PJSK 绑定持久化现已稳定收口为 `game_accounts` + `user_bindings.game_account_id` + `user_default_bindings`。启动阶段的 legacy 数据回填逻辑已移除，不再依赖兼容迁移。
 
 ## 1. 文档目的
 
@@ -393,13 +395,20 @@
 
 当前使用：
 
-1. `pjsk.user_bindings`
-2. `pjsk.user_default_bindings`
+1. `pjsk.game_accounts`
+2. `pjsk.user_bindings`
+3. `pjsk.user_default_bindings`
 
 分别保存：
 
-1. 用户绑定的游戏账号
-2. 用户的全局默认绑定和区服默认绑定
+1. 游戏账号主键、区服、UID 以及背景图设置
+2. Haruki 用户与游戏账号之间的绑定关系，以及显示 / 验证等绑定级状态
+3. 用户的全局默认绑定和区服默认绑定
+
+补充说明：
+
+1. `user_bindings` 通过 `game_account_id` 关联 `game_accounts`，不再以 `(server, user_id)` 作为运行时主链。
+2. 旧结构到新结构的一次性迁移已经完成，服务启动时现在只执行 `Schema.Create()`，不再做 legacy backfill。
 
 ### 6.3 UID 存在性校验
 

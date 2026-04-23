@@ -1,0 +1,30 @@
+name: Lint
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - refactor/test2
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Go vet
+        run: go vet ./...
+
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@2026.1
+
+      - name: Run staticcheck
+        run: staticcheck ./...

@@ -4,13 +4,15 @@ FROM golang:1.26-alpine AS builder
 # gcc + musl-dev required for github.com/mattn/go-sqlite3 (cgo)
 RUN apk add --no-cache gcc musl-dev
 
+ARG VERSION=dev
+
 WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 RUN CGO_ENABLED=1 GOOS=linux \
-    go build -ldflags="-w -s" -o haruki-server .
+    go build -ldflags="-w -s -X haruki-cloud/version.Version=${VERSION}" -o haruki-server .
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM alpine:latest

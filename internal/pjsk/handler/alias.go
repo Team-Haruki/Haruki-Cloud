@@ -1,15 +1,25 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
 	aliases "haruki-cloud/internal/pjsk/alias"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/common"
 )
+
+const aliasImageThreshold = 20
+
+type aliasMusicCoverResolver interface {
+	ResolveMusicCover(query rendermusic.Query) (*rendermusic.CoverResult, error)
+}
 
 func (sekaiHandlers) MusicAliasQueryHandle() HarukiSekaiCommandHandler {
 	return newEntityAliasQueryHandler(
@@ -331,9 +341,101 @@ func executeAlias(rc *RequestContext) (onebot11.Message, error) {
 	if rc.App == nil || rc.App.Aliases == nil {
 		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
 	}
+	if message, ok, err := tryRenderAliasQueryAsImage(rc); ok {
+		return message, err
+	}
 	data, err := aliases.ExecuteCommand(rc.Ctx, rc.App.Aliases, rc.Cmd.Mode, rc.Cmd.Params)
 	if err != nil {
 		return nil, err
 	}
 	return onebot11.Message{onebot11.Text(string(data))}, nil
+}
+
+func tryRenderAliasQueryAsImage(rc *RequestContext) (onebot11.Message, bool, error) {
+	if rc == nil || rc.App == nil || rc.App.Aliases == nil || rc.App.Music == nil {
+		return nil, false, nil
+	}
+	if rc.Cmd == nil || rc.Cmd.Mode != aliases.ModeQuery {
+		return nil, false, nil
+	}
+
+	var params aliases.QueryCommandParams
+	if err := json.Unmarshal(rc.Cmd.Params, &params); err != nil {
+		return nil, false, err
+	}
+	params.AliasType = strings.TrimSpace(params.AliasType)
+	params.Target = strings.TrimSpace(params.Target)
+	if params.Target == "" {
+		return nil, false, nil
+	}
+
+	result, err := rc.App.Aliases.Query(rc.Ctx, params.AliasType, params.Target)
+	if err != nil {
+		return nil, false, err
+	}
+	if !shouldRenderAliasQueryAsImage(params.AliasType, result.Aliases) {
+		return nil, false, nil
+	}
+
+	req, ok := buildAliasListImageRequest(rc.App.Music.WithContext(rc.Ctx), params.AliasType, result)
+	if !ok || rc.App.Misc == nil {
+		return nil, false, nil
+	}
+	payload, renderErr := rc.App.Misc.WithContext(rc.Ctx).RenderAliasList(req)
+	if renderErr != nil {
+		slog.Warn("alias image fallback render failed",
+			"alias_type", params.AliasType,
+			"target", params.Target,
+			"entity_id", result.Entity.ID,
+			"alias_count", len(result.Aliases),
+			"error", renderErr,
+		)
+		return nil, false, nil
+	}
+	message, err := imageMessage(rc.Ctx, payload, rc.App, BotModulePJSK)
+	if err != nil {
+		return nil, false, err
+	}
+	return message, true, nil
+}
+
+func shouldRenderAliasQueryAsImage(aliasType string, aliasesList []string) bool {
+	switch strings.TrimSpace(aliasType) {
+	case aliases.PjskAliasTypeMusic, aliases.PjskAliasTypeCharacter:
+		return len(aliasesList) >= aliasImageThreshold
+	default:
+		return false
+	}
+}
+
+func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType string, result *aliases.QueryResult) (drawing.AliasListRequest, bool) {
+	if result == nil {
+		return drawing.AliasListRequest{}, false
+	}
+	switch strings.TrimSpace(aliasType) {
+	case aliases.PjskAliasTypeMusic:
+		req := drawing.AliasListRequest{
+			Title:       "歌曲别名",
+			EntityLabel: "歌曲ID",
+			EntityID:    result.Entity.ID,
+			EntityName:  result.Entity.Name,
+			Aliases:     result.Aliases,
+		}
+		if musicCtrl != nil && result.Entity.ID > 0 {
+			if cover, err := musicCtrl.ResolveMusicCover(rendermusic.Query{Query: fmt.Sprintf("music%d", result.Entity.ID)}); err == nil && cover != nil && strings.TrimSpace(cover.JacketPath) != "" {
+				req.MusicJacketPath = drawing.StringPtr(strings.TrimSpace(cover.JacketPath))
+			}
+		}
+		return req, true
+	case aliases.PjskAliasTypeCharacter:
+		return drawing.AliasListRequest{
+			Title:       "角色别名",
+			EntityLabel: "角色ID",
+			EntityID:    result.Entity.ID,
+			EntityName:  result.Entity.Name,
+			Aliases:     result.Aliases,
+		}, true
+	default:
+		return drawing.AliasListRequest{}, false
+	}
 }

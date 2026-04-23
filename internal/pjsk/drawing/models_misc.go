@@ -48,6 +48,15 @@ type CharaBirthdayRequest struct {
 	AllCharacters     []CharaBirthdayData `json:"all_characters"`
 }
 
+type AliasListRequest struct {
+	Title           string   `json:"title"`
+	EntityLabel     string   `json:"entity_label"`
+	EntityID        int      `json:"entity_id"`
+	EntityName      string   `json:"entity_name"`
+	MusicJacketPath *string  `json:"music_jacket_path,omitempty"`
+	Aliases         []string `json:"aliases"`
+}
+
 // =========================== Stamp Models ===========================
 
 type StampData struct {

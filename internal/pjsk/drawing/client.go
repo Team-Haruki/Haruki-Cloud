@@ -280,6 +280,10 @@ func (c *HarukiDrawingClient) GenerateCharacterBirthday(req *CharaBirthdayReques
 	return c.cachedPost("/api/pjsk/misc/chara-birthday", req)
 }
 
+func (c *HarukiDrawingClient) GenerateAliasList(req *AliasListRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/misc/alias-list", req)
+}
+
 // =========================== MySekai API ===========================
 
 func (c *HarukiDrawingClient) GenerateMysekaiResource(req *MysekaiResourceRequest) ([]byte, error) {

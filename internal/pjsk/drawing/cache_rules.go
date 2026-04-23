@@ -57,6 +57,10 @@ var (
 			TTL:              time.Minute,
 			BucketFieldNames: renderCacheBucketSet(time.Minute, "dt"),
 		},
+		"/api/pjsk/misc/alias-list": {
+			Enabled:  true,
+			Infinite: true,
+		},
 		"/api/pjsk/event/record": {
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("user_info.update_time"),

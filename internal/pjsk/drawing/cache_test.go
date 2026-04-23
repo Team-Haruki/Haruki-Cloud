@@ -28,6 +28,53 @@ func TestResolveRenderCacheRuleUsesHalfDayTTLForSelectedEndpoints(t *testing.T) 
 	}
 }
 
+func TestBuildRenderCachePolicyAliasListIsInfiniteAndIgnoresDT(t *testing.T) {
+	reqA := map[string]any{
+		"title":        "角色别名",
+		"entity_label": "角色ID",
+		"entity_id":    5,
+		"entity_name":  "花里みのり",
+		"aliases":      []any{"花里", "花里みのり", "minori"},
+		"dt":           int64(1713852000000), // 2024-04-23 12:00:00 UTC
+	}
+	reqB := map[string]any{
+		"title":        "角色别名",
+		"entity_label": "角色ID",
+		"entity_id":    5,
+		"entity_name":  "花里みのり",
+		"aliases":      []any{"花里", "花里みのり", "minori"},
+		"dt":           int64(1713852660000), // +11m
+	}
+
+	policyA, err := buildRenderCachePolicy("/api/pjsk/misc/alias-list", reqA)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqA: %v", err)
+	}
+	policyB, err := buildRenderCachePolicy("/api/pjsk/misc/alias-list", reqB)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqB: %v", err)
+	}
+
+	keyA, err := buildRenderCacheKey(policyA)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqA: %v", err)
+	}
+	keyB, err := buildRenderCacheKey(policyB)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqB: %v", err)
+	}
+
+	if keyA != keyB {
+		t.Fatalf("alias-list key should ignore dt when aliases are unchanged: %s != %s", keyA, keyB)
+	}
+	if !policyA.Infinite {
+		t.Fatalf("expected alias-list cache policy to be infinite")
+	}
+	if policyA.TTL != 0 {
+		t.Fatalf("expected infinite alias-list cache ttl to be 0, got %v", policyA.TTL)
+	}
+}
+
 func TestResolveRenderCacheRuleUsesInfiniteTTLForStaticEndpoints(t *testing.T) {
 	for _, endpoint := range []string{
 		"/api/pjsk/card/detail",

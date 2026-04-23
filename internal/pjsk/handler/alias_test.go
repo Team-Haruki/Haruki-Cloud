@@ -8,7 +8,19 @@ import (
 	aliases "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 )
+
+type stubAliasMusicCoverResolver struct {
+	cover     *rendermusic.CoverResult
+	err       error
+	lastQuery rendermusic.Query
+}
+
+func (s *stubAliasMusicCoverResolver) ResolveMusicCover(query rendermusic.Query) (*rendermusic.CoverResult, error) {
+	s.lastQuery = query
+	return s.cover, s.err
+}
 
 func TestMusicAliasAddHandleBuildsCommandRequest(t *testing.T) {
 	h := sekaiHandlers{}.MusicAliasAddHandle()
@@ -202,5 +214,68 @@ func TestAliasRejectHandleParsesReason(t *testing.T) {
 	}
 	if params.ReviewID != 21 || params.Reason != "与现有别名冲突" {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestShouldRenderAliasQueryAsImageForMusicThreshold(t *testing.T) {
+	aliasList := make([]string, aliasImageThreshold)
+	for i := range aliasList {
+		aliasList[i] = "alias"
+	}
+	if !shouldRenderAliasQueryAsImage(aliases.PjskAliasTypeMusic, aliasList) {
+		t.Fatalf("expected music aliases at threshold to use image")
+	}
+}
+
+func TestShouldRenderAliasQueryAsImageBelowThreshold(t *testing.T) {
+	aliasList := make([]string, aliasImageThreshold-1)
+	for i := range aliasList {
+		aliasList[i] = "alias"
+	}
+	if shouldRenderAliasQueryAsImage(aliases.PjskAliasTypeMusic, aliasList) {
+		t.Fatalf("expected music aliases below threshold to use text")
+	}
+}
+
+func TestShouldRenderAliasQueryAsImageDoesNotApplyToCharacterAlias(t *testing.T) {
+	aliasList := make([]string, aliasImageThreshold)
+	for i := range aliasList {
+		aliasList[i] = "alias"
+	}
+	if !shouldRenderAliasQueryAsImage(aliases.PjskAliasTypeCharacter, aliasList) {
+		t.Fatalf("expected character aliases at threshold to use image")
+	}
+}
+
+func TestShouldRenderAliasQueryAsImageDoesNotApplyToUnsupportedAlias(t *testing.T) {
+	aliasList := make([]string, aliasImageThreshold)
+	for i := range aliasList {
+		aliasList[i] = "alias"
+	}
+	if shouldRenderAliasQueryAsImage("unsupported", aliasList) {
+		t.Fatalf("expected unsupported alias type to remain text")
+	}
+}
+
+func TestBuildAliasListImageRequestIncludesMusicJacketPath(t *testing.T) {
+	resolver := &stubAliasMusicCoverResolver{
+		cover: &rendermusic.CoverResult{JacketPath: "music/jacket/jacket_test/jacket_test.png"},
+	}
+	req, ok := buildAliasListImageRequest(resolver, aliases.PjskAliasTypeMusic, &aliases.QueryResult{
+		Entity: aliases.EntityRef{
+			AliasType: aliases.PjskAliasTypeMusic,
+			ID:        123,
+			Name:      "Song A",
+		},
+		Aliases: []string{"song a", "蓝歌"},
+	})
+	if !ok {
+		t.Fatal("expected music alias request to be built")
+	}
+	if resolver.lastQuery.Query != "music123" {
+		t.Fatalf("unexpected music cover lookup query: %+v", resolver.lastQuery)
+	}
+	if req.MusicJacketPath == nil || *req.MusicJacketPath != "music/jacket/jacket_test/jacket_test.png" {
+		t.Fatalf("unexpected music jacket path: %+v", req.MusicJacketPath)
 	}
 }

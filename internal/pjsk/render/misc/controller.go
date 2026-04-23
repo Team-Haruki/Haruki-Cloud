@@ -3,6 +3,7 @@ package misc
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
 )
@@ -43,4 +44,34 @@ func (c *Controller) RenderCharaBirthday(req drawing.CharaBirthdayRequest) ([]by
 		return nil, err
 	}
 	return c.drawing.GenerateCharacterBirthday(validated)
+}
+
+func (c *Controller) BuildAliasListRequest(req drawing.AliasListRequest) (*drawing.AliasListRequest, error) {
+	if strings.TrimSpace(req.Title) == "" {
+		return nil, fmt.Errorf("alias list title is required")
+	}
+	if strings.TrimSpace(req.EntityLabel) == "" {
+		return nil, fmt.Errorf("alias list entity label is required")
+	}
+	if req.EntityID <= 0 {
+		return nil, fmt.Errorf("alias list entity id is invalid")
+	}
+	if strings.TrimSpace(req.EntityName) == "" {
+		return nil, fmt.Errorf("alias list entity name is required")
+	}
+	if len(req.Aliases) == 0 {
+		return nil, fmt.Errorf("alias list aliases are required")
+	}
+	return &req, nil
+}
+
+func (c *Controller) RenderAliasList(req drawing.AliasListRequest) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	validated, err := c.BuildAliasListRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	return c.drawing.GenerateAliasList(validated)
 }

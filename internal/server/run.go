@@ -18,8 +18,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var Version = "2.0.0-dev"
-
 func Run(ctx context.Context) {
 	loggerWriter := setupLogging()
 	mainLogger := harukiLogger.NewLogger("Main", harukiConfig.Cfg.Backend.LogLevel, loggerWriter)

@@ -52,5 +52,7 @@ type ManifestEntry struct {
 
 // ManifestResponse is returned by GET /api/v2/bot/:botId/command/manifests.
 type ManifestResponse struct {
-	Entries []ManifestEntry `json:"entries" msgpack:"entries"`
+	Entries                   []ManifestEntry `json:"entries" msgpack:"entries"`
+	CurrentHarukiCloudVersion string          `json:"currentHarukiCloudVersion" msgpack:"currentHarukiCloudVersion"`
+	LatestHarukiClientVersion string          `json:"latestHarukiClientVersion" msgpack:"latestHarukiClientVersion"`
 }

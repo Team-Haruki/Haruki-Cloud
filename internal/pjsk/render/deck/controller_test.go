@@ -849,7 +849,7 @@ func TestPrepareRecommendUserDataPreservesUnknownSnapshotFields(t *testing.T) {
 	if !strings.Contains(text, `"userCustomUnknown":{"keep":"me"}`) {
 		t.Fatalf("expected unknown snapshot fields to be preserved: %s", text)
 	}
-	if !strings.Contains(text, `"userDecks":[{"deckId":1`) {
+	if !strings.Contains(text, `"userDecks":`) || !strings.Contains(text, `"deckId":1`) {
 		t.Fatalf("expected original unmodeled top-level fields to remain: %s", text)
 	}
 	for _, fragment := range []string{

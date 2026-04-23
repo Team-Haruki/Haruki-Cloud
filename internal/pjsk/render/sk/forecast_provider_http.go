@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"haruki-cloud/version"
 )
 
 func parseSekaRunRow(row string) []string {
@@ -23,7 +25,7 @@ func parseSekaRunRow(row string) []string {
 func (p *RemoteForecastProvider) getJSON(ctx context.Context, url string, out any) error {
 	resp, err := p.http.R().
 		SetContext(ctx).
-		SetHeader("User-Agent", "HarukiCloud/1.0").
+		SetHeader("User-Agent", version.UserAgent()).
 		Get(url)
 	if err != nil {
 		return err
@@ -40,7 +42,7 @@ func (p *RemoteForecastProvider) getJSON(ctx context.Context, url string, out an
 func (p *RemoteForecastProvider) getText(ctx context.Context, url string) (string, error) {
 	resp, err := p.http.R().
 		SetContext(ctx).
-		SetHeader("User-Agent", "HarukiCloud/1.0").
+		SetHeader("User-Agent", version.UserAgent()).
 		Get(url)
 	if err != nil {
 		return "", err

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/version"
 	harukiLogger "haruki-cloud/utils/logger"
 )
 
@@ -52,7 +53,7 @@ func closeMainLogFile(mainLogger *harukiLogger.Logger) {
 }
 
 func logStartupInfo(mainLogger *harukiLogger.Logger) {
-	mainLogger.Infof("========================= Haruki Cloud %s =========================", Version)
+	mainLogger.Infof("========================= Haruki Cloud %s =========================", version.Get())
 	mainLogger.Infof("Powered By Haruki Dev Team")
 	mainLogger.Infof("Profile: %s", harukiConfig.Cfg.Profile)
 	mainLogger.Infof("Log Level: %s", harukiConfig.Cfg.Backend.LogLevel)

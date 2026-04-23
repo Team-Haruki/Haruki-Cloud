@@ -119,7 +119,7 @@ pjsk_render:
     music_meta_json: ""
   image_cache:
     uri: ""         # CDN base URL for generic image cache, e.g. "https://image-cache.example.com"
-    charts_uri: ""  # dedicated chart CDN/domain base URL, e.g. "https://charts.example.com"
+    charts_uri: "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts"
     dir: ""         # local filesystem directory for cached images
     pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"
   

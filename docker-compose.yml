@@ -183,6 +183,7 @@ services:
       # ── PJSK Render ───────────────────────────────────────────────────────
       HARUKI_PJSK_RENDER_ENABLED: ${HARUKI_PJSK_RENDER_ENABLED:-false}
       HARUKI_PJSK_RENDER_DRAWING_BASE_URL: ${HARUKI_PJSK_RENDER_DRAWING_BASE_URL:-}
+      HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI: ${HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI:-https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts}
 
     depends_on:
       postgres:

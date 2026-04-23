@@ -137,3 +137,14 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 		t.Fatalf("expected local masterdata allow_leaks override to be true")
 	}
 }
+
+func TestApplyEnvOverridesPJSKRenderChartsURI(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts")
+
+	cfg := &Config{}
+	ApplyEnvOverrides(cfg)
+
+	if cfg.PJSKRender.ImageCache.ChartsURI != "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts" {
+		t.Fatalf("unexpected charts uri override: %q", cfg.PJSKRender.ImageCache.ChartsURI)
+	}
+}

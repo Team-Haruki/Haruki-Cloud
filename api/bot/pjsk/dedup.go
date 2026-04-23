@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"haruki-cloud/internal/onebot11"
@@ -39,6 +40,8 @@ const (
 //  5. Call MarkComplete to arm the per-user rate limit for the next 3 s.
 type RequestGuard struct {
 	redis *redis.Client
+	mu    sync.Mutex
+	rng   *rand.Rand
 }
 
 // NewRequestGuard returns a new RequestGuard. Returns nil if rc is nil.
@@ -46,7 +49,10 @@ func NewRequestGuard(rc *redis.Client) *RequestGuard {
 	if rc == nil {
 		return nil
 	}
-	return &RequestGuard{redis: rc}
+	return &RequestGuard{
+		redis: rc,
+		rng:   rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
 }
 
 // Acquire performs jitter, rate-limit check, and dedup lock acquisition.
@@ -60,7 +66,7 @@ func (g *RequestGuard) Acquire(ctx context.Context, req BotCommandRequest) bool 
 	}
 
 	// 1. Random jitter delay.
-	jitter := jitterMin + time.Duration(rand.Int63n(int64(jitterMax-jitterMin)))
+	jitter := jitterMin + g.randomJitterOffset()
 	select {
 	case <-time.After(jitter):
 	case <-ctx.Done():
@@ -90,6 +96,15 @@ func (g *RequestGuard) MarkComplete(ctx context.Context, req BotCommandRequest) 
 		return
 	}
 	_ = g.redis.Set(ctx, rateLimitKey(req), "1", rateLimitTTL).Err()
+}
+
+func (g *RequestGuard) randomJitterOffset() time.Duration {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.rng == nil {
+		g.rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
+	return time.Duration(g.rng.Int63n(int64(jitterMax - jitterMin)))
 }
 
 // dedupKey returns the Redis key that uniquely identifies a command event.

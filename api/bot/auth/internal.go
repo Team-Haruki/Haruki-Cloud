@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"strconv"
 
 	"haruki-cloud/api"
 	"haruki-cloud/config"
@@ -62,8 +63,13 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 	}
 
 	// 获取用户信息
+	botID, err := strconv.Atoi(req.BotID)
+	if err != nil {
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
+	}
+
 	u, err := h.svc.dbClient.User.Query().
-		Where(user.BotIDEQ(mustAtoi(req.BotID))).
+		Where(user.BotIDEQ(botID)).
 		Only(ctx)
 	if err != nil {
 		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
@@ -74,17 +80,6 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 		OwnerUserID: u.OwnerUserID,
 		BotID:       u.BotID,
 	})
-}
-
-// mustAtoi 安全转换字符串为整数，失败返回 0
-func mustAtoi(s string) int {
-	var n int
-	for _, c := range s {
-		if c >= '0' && c <= '9' {
-			n = n*10 + int(c-'0')
-		}
-	}
-	return n
 }
 
 func registerInternalRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client) {

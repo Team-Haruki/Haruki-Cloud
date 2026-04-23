@@ -1,6 +1,6 @@
 # Haruki-Cloud 项目架构文档
 
-> 最后更新：2026-04-18（v1.8）
+> 最后更新：2026-04-23（v1.9）
 >
 > 2026-04-18 补充：
 > 1. `internal/pjsk/handler/sekai/` 子包已扁平化至 `internal/pjsk/handler/`；所有 `bridge_*.go` 分发文件已删除，执行逻辑合并进各命令文件。
@@ -12,7 +12,7 @@
 > 1. `api/legacy/pjsk/` 已从仓库与运行时移除。
 > 2. PJSK Bot 主协议已经收口到 `POST /api/v2/bot/:botId/pjsk/<path>`。
 > 3. `internal/pjsk/render/deck/deck_cgo/` 历史目录已从仓库移除，deck recommend 运行时仅保留 HTTP 外部服务。
-> 4. 当前活跃 Bot path 数量与模块分档，请优先参考 [项目完成度跟踪](project-completion-tracker.cn.md)。
+> 4. `internal/pjsk/render/snapshot/` 已由 `render/userdata/` 重命名，快照来源统一走 Toolbox（生产不回落本地）。
 
 ---
 
@@ -32,7 +32,7 @@
 | ORM | Ent (entgo.io) |
 | 数据库 | PostgreSQL / MySQL / SQLite |
 | 缓存 | Redis |
-| 认证 | JWT (golang-jwt/v5) + AES-256-GCM + Noise IK |
+| 认证 | JWT (golang-jwt/v5) + AES-256-GCM + Noise NK |
 | JSON | bytedance/sonic（高性能替代 encoding/json） |
 | Go 版本 | 1.26.1 |
 
@@ -42,15 +42,17 @@
 
 ```
 Haruki-Cloud/
-├── cmd/                          # ── 入口程序 ──
-│   ├── server/main.go            #   主服务入口（唯一运行的进程）
-│   ├── migrate/main.go           #   数据库迁移工具
+├── main.go                       # ── 主服务入口（唯一运行的进程）──
+│
+├── cmd/                          # ── 一次性 CLI 工具 ──
+│   ├── importer/main.go          #   旧数据迁移工具（历史数据导入）
 │   └── extractor/main.go         #   Schema 提取工具
 │
 ├── api/                          # ── API 层（路由 + Handler） ──
 │   ├── helper.go                 #   通用响应构建、VerifyAPIAuthorization 中间件
 │   ├── struct.go                 #   通用结构体、错误常量
 │   ├── bot_session_middleware.go  #   VerifyBotSession 中间件（JWT+Redis）
+│   ├── groupguard/               #   群组管理端点
 │   ├── public/                   #   公开端点（无鉴权）
 │   │   ├── pjsk/                 #     PJSK 别名查询 → /api/v2/public/pjsk/alias/*
 │   │   └── chunithm/             #     CHUNITHM 别名 + 曲目查询 → /api/v2/public/chunithm/*
@@ -59,11 +61,24 @@ Haruki-Cloud/
 │       └── pjsk/                 #     Bot 指令端点（由 handler registry 动态注册）→ /api/v2/bot/:botId/pjsk/*
 │
 ├── internal/                     # ── 内部业务逻辑（不对外暴露） ──
-│   ├── core/crypto/              #   Noise 协议加密工具
+│   ├── core/crypto/              #   Noise NK 协议加密工具
+│   ├── handler/                  #   统一命令注册表（handler.go + bot_route.go）
+│   ├── identity/                 #   平台用户身份解析
 │   ├── middleware/secure/        #   安全中间件
+│   ├── onebot11/                 #   OneBot11 协议工具（消息段、CQ 码、错误）
 │   └── pjsk/                     #   PJSK 核心子系统
-│       ├── parser/               #     指令解析与提取能力
+│       ├── accountdata/          #     账号绑定与 Profile 服务
+│       ├── alias/                #     别名系统
+│       ├── chartstyle/           #     谱面风格工具
+│       ├── displaytime/          #     时间展示工具
+│       ├── drawing/              #     Drawing API 客户端 + 缓存
+│       ├── eventutil/            #     活动工具
 │       ├── handler/              #     命令注册、端点归属、执行桥接
+│       ├── meta/                 #     元数据工具
+│       ├── parser/               #     指令解析与提取能力
+│       ├── region/               #     区服类型定义
+│       ├── requestbuilder/       #     请求构建器
+│       ├── sekai/                #     上游 Sekai/Toolbox HTTP 客户端
 │       └── render/               #     渲染与执行子系统
 │
 ├── config/                       # ── 配置 ──
@@ -86,7 +101,6 @@ Haruki-Cloud/
 │   └── users/schema/             #   用户表定义
 │
 ├── utils/                        # ── 工具库 ──
-│   ├── drawing/                  #   Drawing API 客户端 + 缓存
 │   ├── redis/                    #   Redis 缓存管理
 │   ├── query/                    #   统一查询门面（跨4个DB的 Client，含输入校验+哨兵错误）
 │   ├── logger/                   #   日志
@@ -108,8 +122,7 @@ Haruki-Cloud/
 ├── exports/                      # ── 导出产物/临时数据 ──
 │
 ├── cmd/extractor/                #   数据提取脚本入口
-├── cmd/migrate/                  #   Sekai Ent 迁移脚本入口
-├── cmd/server/                   #   主服务入口
+├── cmd/importer/                 #   旧数据迁移 CLI
 ├── schema_info.json              #   Sekai 表结构元数据
 ├── go.mod / go.sum               #   Go 模块定义
 └── haruki-cloud.example.yaml  #   配置文件模板
@@ -240,7 +253,7 @@ X-Haruki-Bot-Session-Token: <jwt>
 1. Manifest 端点始终为 `GET + JSON`
 2. PJSK Bot 业务端点为 `POST`
 3. 请求体使用 `BotCommandRequest`
-4. 当服务端配置了 `noise_private_key` 时，请求体为 `Noise IK + MsgPack(BotCommandRequest)`
+4. 当服务端配置了 `noise_private_key` 时，请求体为 `Noise NK + MsgPack(BotCommandRequest)`
 5. 当服务端未配置 `noise_private_key` 时，退回 `JSON(BotCommandRequest)` 明文模式
 
 代表性端点包括：
@@ -317,7 +330,7 @@ Bot 客户端
          X-Haruki-Bot-Id
          X-Haruki-Bot-Session-Token
        Body:
-         Noise IK + MsgPack(BotCommandRequest)
+         Noise NK + MsgPack(BotCommandRequest)
          或 JSON(BotCommandRequest)
        │
        ▼ VerifyBotSession middleware
@@ -345,7 +358,7 @@ Bot 客户端
 
 现状是：
 
-1. Bot 端点直接进入 `handler -> Execute -> render/userdata`
+1. Bot 端点直接进入 `handler -> Execute -> render/snapshot`
 2. 渲染控制器仍然存在，但仅作为代码内部执行层
 3. 图片命令最终通过 Drawing API + ImageCache 返回 OneBot11 `image` segment
 
@@ -432,17 +445,18 @@ internal/pjsk/handler/            # PJSK 功能命令（已扁平化，无子包
 
 ```
 internal/pjsk/render/
-├── app/app.go            # App 结构体：包含 14 个 Controller 字段
-├── region/region.go      # Value 类型（JP/CN/TW/EN/KR）
-├── source/registry.go    # 数据源注册中心
-├── masterdata/types.go   # Masterdata 类型定义
-├── userdata/local.go     # 本地用户快照读取
+├── app/app.go            # App 结构体：组合根，包含所有 Controller 字段
+├── source/               # 数据源注册中心
+├── masterdata/           # Masterdata 类型定义
+├── snapshot/             # 用户游戏快照（live + local fallback）
+├── provider/             # 大型 Masterdata 数据 Provider（DB/local 双源）
+├── releasecheck/         # 资源版本检查
 ├── common/               # 共享工具（卡图缩略图）
 ├── assets/               # 素材管理
 │
-│   ── 14 个功能模块（其中 vlive 为文本模块） ──
-├── card/                 # 卡片（detail, list, box）— 11 文件
-├── music/                # 曲目（detail, list, chart, progress, rewards）— 8 文件
+│   ── 功能模块（其中 vlive 为文本模块） ──
+├── card/                 # 卡片（detail, list, box）
+├── music/                # 曲目（detail, list, chart, progress, rewards）
 ├── event/                # 活动（detail, list, record）
 ├── gacha/                # 卡池（detail, list）
 ├── deck/                 # 组卡推荐
@@ -463,11 +477,11 @@ internal/pjsk/render/
 - `builder.go` — 构建渲染请求 payload
 - `source.go` / `source_cloud.go` — 数据获取层
 
-### 8.4 chardata — 角色数据
+### 8.4 chartstyle — 谱面风格工具
 
 ```
-internal/pjsk/chardata/
-└── loader.go             # 从 Sekai DB 加载角色昵称映射，后台定时刷新
+internal/pjsk/chartstyle/
+└── style.go              # 谱面风格路径解析与映射
 ```
 
 ---
@@ -478,15 +492,13 @@ internal/pjsk/chardata/
 
 | 问题 | 位置 | 说明 |
 |------|------|------|
-| `internal/core/` 半空 | `internal/core/pjsk/`, `internal/core/middleware/` | 目录存在但无实际代码或为空 |
-| `api/legacy/pjsk/` 历史兼容层 | `api/legacy/pjsk/` | 已于 2026-04-09 从仓库与运行时移除 |
 | `exports/` 混合导出与临时产物 | `exports/` | 当前包含 alias 导出与 DB dump，尚未形成清晰约束与归档规则 |
 
 ### ⚠ 技术债
 
 | 项目 | 说明 |
 |------|------|
-| 本地用户快照 | `render/userdata/local.go` 读取本地 JSON 文件（user.json, music_metas.json, mysekai.json），应迁移至 DB 驱动 |
+| 本地用户快照 | `render/snapshot/local.go` 读取本地 JSON 文件（user.json, music_metas.json, mysekai.json），应迁移至 DB 驱动 |
 | MySekai Masterdata | 依赖本地文件，未完全转为 DB 驱动 |
 | Deck 引擎 | 简化版实现，原生 CGo 引擎未迁入 |
 | Profile 扩展命令未完成 | `internal/pjsk/handler/profile.go` | 绑定/解绑/默认绑定已接入；`swap bind`、隐藏/展示抓包、隐藏/展示 ID、注册时间、服务状态、抓包模式仍为 disabled/TODO |
@@ -567,28 +579,19 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | `handler_test.go` | 覆盖 OneBot 解码、POST/Noise 往返、端点匹配、文本/图片返回、manifest 行为 | — |
 | `testhelpers_test.go` | 测试辅助：`testRenderApp`、`renderEnvelope` | — |
 
-### api/legacy/pjsk/（已移除）
-
-该目录已于 2026-04-09 删除，仅保留历史文档记录。
-
 ---
 
 ## 12. 相关文档索引
 
 | 文档 | 说明 |
 |------|------|
-| `docs/database-schemas.cn.md` | 数据库 Schema 详解（全 7 个 DB 模块） |
+| `docs/database-schemas.cn.md` | 数据库 Schema 详解 |
 | `docs/pjsk-command-system.cn.md` | PJSK 指令解析 + 请求构建系统技术文档 |
-| `docs/pjsk-profile-binding-implementation.cn.md` | PJSK 账号绑定与执行链路收口说明 |
-| `docs/pjsk-vlive-text-plan.cn.md` | Virtual Live 文本链路实现说明 |
-| `docs/README.cn.md` | 项目 README |
-| `docs/service-test-merge-plan.cn.md` | Service-Test 合并方案 |
-| `docs/service-test-merge-status.cn.md` | Service-Test 合并状态 |
-| `docs/pjsk-user-snapshot-provider-design.cn.md` | 用户快照 Provider 设计 |
-| `docs/zerobot-render-followup.cn.md` | ZeroBot 接入说明 |
+| `docs/toolbox-api.cn.md` | 上游 Toolbox API 契约 |
+| `docs/deck_refer_help.md` | `deck` 命令族用户帮助文本 |
 
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v1.7  
+**文档版本**：v1.9  
 **创建日期**：2026-03-23

@@ -19,6 +19,9 @@ import (
 	"slices"
 	"strings"
 
+	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/version"
+
 	"entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
@@ -411,6 +414,11 @@ func buildManifestHandler(botDBClient *botDB.Client) fiber.Handler {
 				CommandAdditionalParams: r.CommandAdditionalParams,
 			})
 		}
-		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, ManifestResponse{Entries: entries})
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, ManifestResponse{
+			Entries:                   entries,
+			CurrentHarukiCloudVersion: version.Get(),
+			LatestHarukiClientVersion: harukiConfig.Cfg.Backend.LatestHarukiClientVersion,
+			Profile:                   string(harukiConfig.Cfg.Profile),
+		})
 	}
 }

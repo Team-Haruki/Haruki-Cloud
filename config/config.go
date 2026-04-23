@@ -103,6 +103,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_BACKEND_ACCEPT_AUTHORIZATION", &cfg.Backend.AcceptAuthorization)
 	envStr("HARUKI_BACKEND_ACCEPT_USER_AGENT", &cfg.Backend.AcceptUserAgent)
 	envBool("HARUKI_BACKEND_ALLOW_INSECURE_INTERNAL_API", &cfg.Backend.AllowInsecureInternalAPI)
+	envStr("HARUKI_LATEST_CLIENT_VERSION", &cfg.Backend.LatestHarukiClientVersion)
 
 	// Redis
 	envStr("HARUKI_REDIS_HOST", &cfg.Redis.Host)
@@ -192,6 +193,7 @@ type BackendConfig struct {
 	EnableTrustProxy         bool          `yaml:"enable_trust_proxy"`
 	TrustProxies             []string      `yaml:"trusted_proxies"`
 	ProxyHeader              string        `yaml:"proxy_header"`
+	LatestHarukiClientVersion string       `yaml:"latest_haruki_client_version"`
 }
 
 type ChunithmConfig struct {

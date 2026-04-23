@@ -6,12 +6,11 @@ import (
 	"strings"
 
 	"haruki-cloud/config"
+	"haruki-cloud/version"
 
 	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
 )
-
-const defaultTrackerUserAgent = "Haruki-Cloud/TrackerClient"
 
 type TrackerClient struct {
 	http       *resty.Client
@@ -51,7 +50,7 @@ func (c *TrackerClient) userAgent() string {
 			return ua
 		}
 	}
-	return defaultTrackerUserAgent
+	return version.UserAgent()
 }
 
 // GetLatestRankingByRank fetches the latest ranking snapshot for a specific rank

@@ -21,6 +21,9 @@ backend:
     - "100.64.0.0/10"
     - "10.0.0.0/8"
   proxy_header: "X-Forwarded-For"
+  # Latest Haruki bot client version advertised via manifest API.
+  # Can also be set via HARUKI_LATEST_CLIENT_VERSION env var.
+  latest_haruki_client_version: ""
 
 chunithm:
   enabled: true

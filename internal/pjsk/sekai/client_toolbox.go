@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"haruki-cloud/config"
+	"haruki-cloud/version"
 
 	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
@@ -18,8 +19,6 @@ type HarukiToolboxClient struct {
 	http   *resty.Client
 	config *config.ToolboxConfig
 }
-
-const defaultToolboxUserAgent = "Haruki-Cloud/ToolboxClient"
 
 // NewToolboxClient constructs a HarukiToolboxClient bound to the supplied config.
 // Callers own the returned client; pass it via dependency injection rather than
@@ -37,7 +36,7 @@ func (c *HarukiToolboxClient) userAgent() string {
 			return ua
 		}
 	}
-	return defaultToolboxUserAgent
+	return version.UserAgent()
 }
 
 // GetPrivateData fetches private game-data snapshots from the Toolbox API.

@@ -39,6 +39,14 @@ func main() {
 		})
 	}
 
-	bytes, _ := json.MarshalIndent(tables, "", "  ")
-	os.WriteFile("schema_info.json", bytes, 0644)
+	bytes, err := json.MarshalIndent(tables, "", "  ")
+	if err != nil {
+		_, _ = os.Stderr.WriteString("failed to marshal schema info: " + err.Error() + "\n")
+		os.Exit(1)
+	}
+
+	if err := os.WriteFile("schema_info.json", bytes, 0644); err != nil {
+		_, _ = os.Stderr.WriteString("failed to write schema_info.json: " + err.Error() + "\n")
+		os.Exit(1)
+	}
 }

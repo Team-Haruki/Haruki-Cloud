@@ -12,14 +12,14 @@ type Alias func(*sql.Selector)
 // AliasAdmin is the predicate function for aliasadmin builders.
 type AliasAdmin func(*sql.Selector)
 
+// GameAccount is the predicate function for gameaccount builders.
+type GameAccount func(*sql.Selector)
+
 // GroupAlias is the predicate function for groupalias builders.
 type GroupAlias func(*sql.Selector)
 
 // PendingAlias is the predicate function for pendingalias builders.
 type PendingAlias func(*sql.Selector)
-
-// ProfileBackground is the predicate function for profilebackground builders.
-type ProfileBackground func(*sql.Selector)
 
 // RejectedAlias is the predicate function for rejectedalias builders.
 type RejectedAlias func(*sql.Selector)

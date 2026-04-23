@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/predicate"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -24,6 +25,7 @@ type UserBindingQuery struct {
 	order           []userbinding.OrderOption
 	inters          []Interceptor
 	predicates      []predicate.UserBinding
+	withGameAccount *GameAccountQuery
 	withDefaultRefs *UserDefaultBindingQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -59,6 +61,28 @@ func (_q *UserBindingQuery) Unique(unique bool) *UserBindingQuery {
 func (_q *UserBindingQuery) Order(o ...userbinding.OrderOption) *UserBindingQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryGameAccount chains the current query on the "game_account" edge.
+func (_q *UserBindingQuery) QueryGameAccount() *GameAccountQuery {
+	query := (&GameAccountClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userbinding.Table, userbinding.FieldID, selector),
+			sqlgraph.To(gameaccount.Table, gameaccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userbinding.GameAccountTable, userbinding.GameAccountColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryDefaultRefs chains the current query on the "default_refs" edge.
@@ -275,11 +299,23 @@ func (_q *UserBindingQuery) Clone() *UserBindingQuery {
 		order:           append([]userbinding.OrderOption{}, _q.order...),
 		inters:          append([]Interceptor{}, _q.inters...),
 		predicates:      append([]predicate.UserBinding{}, _q.predicates...),
+		withGameAccount: _q.withGameAccount.Clone(),
 		withDefaultRefs: _q.withDefaultRefs.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithGameAccount tells the query-builder to eager-load the nodes that are connected to
+// the "game_account" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserBindingQuery) WithGameAccount(opts ...func(*GameAccountQuery)) *UserBindingQuery {
+	query := (&GameAccountClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withGameAccount = query
+	return _q
 }
 
 // WithDefaultRefs tells the query-builder to eager-load the nodes that are connected to
@@ -371,7 +407,8 @@ func (_q *UserBindingQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	var (
 		nodes       = []*UserBinding{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
+			_q.withGameAccount != nil,
 			_q.withDefaultRefs != nil,
 		}
 	)
@@ -393,6 +430,12 @@ func (_q *UserBindingQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withGameAccount; query != nil {
+		if err := _q.loadGameAccount(ctx, query, nodes, nil,
+			func(n *UserBinding, e *GameAccount) { n.Edges.GameAccount = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withDefaultRefs; query != nil {
 		if err := _q.loadDefaultRefs(ctx, query, nodes,
 			func(n *UserBinding) { n.Edges.DefaultRefs = []*UserDefaultBinding{} },
@@ -403,6 +446,38 @@ func (_q *UserBindingQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	return nodes, nil
 }
 
+func (_q *UserBindingQuery) loadGameAccount(ctx context.Context, query *GameAccountQuery, nodes []*UserBinding, init func(*UserBinding), assign func(*UserBinding, *GameAccount)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*UserBinding)
+	for i := range nodes {
+		if nodes[i].GameAccountID == nil {
+			continue
+		}
+		fk := *nodes[i].GameAccountID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(gameaccount.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "game_account_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (_q *UserBindingQuery) loadDefaultRefs(ctx context.Context, query *UserDefaultBindingQuery, nodes []*UserBinding, init func(*UserBinding), assign func(*UserBinding, *UserDefaultBinding)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*UserBinding)
@@ -458,6 +533,9 @@ func (_q *UserBindingQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != userbinding.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withGameAccount != nil {
+			_spec.Node.AddColumnOnce(userbinding.FieldGameAccountID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

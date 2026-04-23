@@ -87,10 +87,10 @@ func (c *profileBGCleaner) Run(ctx context.Context) (int, error) {
 		return 0, nil
 	}
 
-	rows, err := c.db.ProfileBackground.Query().
+	rows, err := c.db.GameAccount.Query().
 		All(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("profile bg cleanup: query profile backgrounds: %w", err)
+		return 0, fmt.Errorf("profile bg cleanup: query game accounts: %w", err)
 	}
 
 	active := make(map[string]bool, len(rows))

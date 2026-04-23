@@ -13,9 +13,9 @@ import (
 
 	"haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/pendingalias"
-	"haruki-cloud/database/pjsk/profilebackground"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -36,12 +36,12 @@ type Client struct {
 	Alias *AliasClient
 	// AliasAdmin is the client for interacting with the AliasAdmin builders.
 	AliasAdmin *AliasAdminClient
+	// GameAccount is the client for interacting with the GameAccount builders.
+	GameAccount *GameAccountClient
 	// GroupAlias is the client for interacting with the GroupAlias builders.
 	GroupAlias *GroupAliasClient
 	// PendingAlias is the client for interacting with the PendingAlias builders.
 	PendingAlias *PendingAliasClient
-	// ProfileBackground is the client for interacting with the ProfileBackground builders.
-	ProfileBackground *ProfileBackgroundClient
 	// RejectedAlias is the client for interacting with the RejectedAlias builders.
 	RejectedAlias *RejectedAliasClient
 	// UserBinding is the client for interacting with the UserBinding builders.
@@ -63,9 +63,9 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Alias = NewAliasClient(c.config)
 	c.AliasAdmin = NewAliasAdminClient(c.config)
+	c.GameAccount = NewGameAccountClient(c.config)
 	c.GroupAlias = NewGroupAliasClient(c.config)
 	c.PendingAlias = NewPendingAliasClient(c.config)
-	c.ProfileBackground = NewProfileBackgroundClient(c.config)
 	c.RejectedAlias = NewRejectedAliasClient(c.config)
 	c.UserBinding = NewUserBindingClient(c.config)
 	c.UserDefaultBinding = NewUserDefaultBindingClient(c.config)
@@ -164,9 +164,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:             cfg,
 		Alias:              NewAliasClient(cfg),
 		AliasAdmin:         NewAliasAdminClient(cfg),
+		GameAccount:        NewGameAccountClient(cfg),
 		GroupAlias:         NewGroupAliasClient(cfg),
 		PendingAlias:       NewPendingAliasClient(cfg),
-		ProfileBackground:  NewProfileBackgroundClient(cfg),
 		RejectedAlias:      NewRejectedAliasClient(cfg),
 		UserBinding:        NewUserBindingClient(cfg),
 		UserDefaultBinding: NewUserDefaultBindingClient(cfg),
@@ -192,9 +192,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:             cfg,
 		Alias:              NewAliasClient(cfg),
 		AliasAdmin:         NewAliasAdminClient(cfg),
+		GameAccount:        NewGameAccountClient(cfg),
 		GroupAlias:         NewGroupAliasClient(cfg),
 		PendingAlias:       NewPendingAliasClient(cfg),
-		ProfileBackground:  NewProfileBackgroundClient(cfg),
 		RejectedAlias:      NewRejectedAliasClient(cfg),
 		UserBinding:        NewUserBindingClient(cfg),
 		UserDefaultBinding: NewUserDefaultBindingClient(cfg),
@@ -228,7 +228,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Alias, c.AliasAdmin, c.GroupAlias, c.PendingAlias, c.ProfileBackground,
+		c.Alias, c.AliasAdmin, c.GameAccount, c.GroupAlias, c.PendingAlias,
 		c.RejectedAlias, c.UserBinding, c.UserDefaultBinding, c.UserPreference,
 	} {
 		n.Use(hooks...)
@@ -239,7 +239,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Alias, c.AliasAdmin, c.GroupAlias, c.PendingAlias, c.ProfileBackground,
+		c.Alias, c.AliasAdmin, c.GameAccount, c.GroupAlias, c.PendingAlias,
 		c.RejectedAlias, c.UserBinding, c.UserDefaultBinding, c.UserPreference,
 	} {
 		n.Intercept(interceptors...)
@@ -253,12 +253,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Alias.mutate(ctx, m)
 	case *AliasAdminMutation:
 		return c.AliasAdmin.mutate(ctx, m)
+	case *GameAccountMutation:
+		return c.GameAccount.mutate(ctx, m)
 	case *GroupAliasMutation:
 		return c.GroupAlias.mutate(ctx, m)
 	case *PendingAliasMutation:
 		return c.PendingAlias.mutate(ctx, m)
-	case *ProfileBackgroundMutation:
-		return c.ProfileBackground.mutate(ctx, m)
 	case *RejectedAliasMutation:
 		return c.RejectedAlias.mutate(ctx, m)
 	case *UserBindingMutation:
@@ -538,6 +538,155 @@ func (c *AliasAdminClient) mutate(ctx context.Context, m *AliasAdminMutation) (V
 	}
 }
 
+// GameAccountClient is a client for the GameAccount schema.
+type GameAccountClient struct {
+	config
+}
+
+// NewGameAccountClient returns a client for the GameAccount from the given config.
+func NewGameAccountClient(c config) *GameAccountClient {
+	return &GameAccountClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `gameaccount.Hooks(f(g(h())))`.
+func (c *GameAccountClient) Use(hooks ...Hook) {
+	c.hooks.GameAccount = append(c.hooks.GameAccount, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `gameaccount.Intercept(f(g(h())))`.
+func (c *GameAccountClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GameAccount = append(c.inters.GameAccount, interceptors...)
+}
+
+// Create returns a builder for creating a GameAccount entity.
+func (c *GameAccountClient) Create() *GameAccountCreate {
+	mutation := newGameAccountMutation(c.config, OpCreate)
+	return &GameAccountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GameAccount entities.
+func (c *GameAccountClient) CreateBulk(builders ...*GameAccountCreate) *GameAccountCreateBulk {
+	return &GameAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GameAccountClient) MapCreateBulk(slice any, setFunc func(*GameAccountCreate, int)) *GameAccountCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GameAccountCreateBulk{err: fmt.Errorf("calling to GameAccountClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GameAccountCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GameAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GameAccount.
+func (c *GameAccountClient) Update() *GameAccountUpdate {
+	mutation := newGameAccountMutation(c.config, OpUpdate)
+	return &GameAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GameAccountClient) UpdateOne(_m *GameAccount) *GameAccountUpdateOne {
+	mutation := newGameAccountMutation(c.config, OpUpdateOne, withGameAccount(_m))
+	return &GameAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GameAccountClient) UpdateOneID(id int) *GameAccountUpdateOne {
+	mutation := newGameAccountMutation(c.config, OpUpdateOne, withGameAccountID(id))
+	return &GameAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GameAccount.
+func (c *GameAccountClient) Delete() *GameAccountDelete {
+	mutation := newGameAccountMutation(c.config, OpDelete)
+	return &GameAccountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GameAccountClient) DeleteOne(_m *GameAccount) *GameAccountDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GameAccountClient) DeleteOneID(id int) *GameAccountDeleteOne {
+	builder := c.Delete().Where(gameaccount.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GameAccountDeleteOne{builder}
+}
+
+// Query returns a query builder for GameAccount.
+func (c *GameAccountClient) Query() *GameAccountQuery {
+	return &GameAccountQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGameAccount},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GameAccount entity by its id.
+func (c *GameAccountClient) Get(ctx context.Context, id int) (*GameAccount, error) {
+	return c.Query().Where(gameaccount.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GameAccountClient) GetX(ctx context.Context, id int) *GameAccount {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBindings queries the bindings edge of a GameAccount.
+func (c *GameAccountClient) QueryBindings(_m *GameAccount) *UserBindingQuery {
+	query := (&UserBindingClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gameaccount.Table, gameaccount.FieldID, id),
+			sqlgraph.To(userbinding.Table, userbinding.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gameaccount.BindingsTable, gameaccount.BindingsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GameAccountClient) Hooks() []Hook {
+	return c.hooks.GameAccount
+}
+
+// Interceptors returns the client interceptors.
+func (c *GameAccountClient) Interceptors() []Interceptor {
+	return c.inters.GameAccount
+}
+
+func (c *GameAccountClient) mutate(ctx context.Context, m *GameAccountMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GameAccountCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GameAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GameAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GameAccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("pjsk: unknown GameAccount mutation op: %q", m.Op())
+	}
+}
+
 // GroupAliasClient is a client for the GroupAlias schema.
 type GroupAliasClient struct {
 	config
@@ -804,139 +953,6 @@ func (c *PendingAliasClient) mutate(ctx context.Context, m *PendingAliasMutation
 	}
 }
 
-// ProfileBackgroundClient is a client for the ProfileBackground schema.
-type ProfileBackgroundClient struct {
-	config
-}
-
-// NewProfileBackgroundClient returns a client for the ProfileBackground from the given config.
-func NewProfileBackgroundClient(c config) *ProfileBackgroundClient {
-	return &ProfileBackgroundClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `profilebackground.Hooks(f(g(h())))`.
-func (c *ProfileBackgroundClient) Use(hooks ...Hook) {
-	c.hooks.ProfileBackground = append(c.hooks.ProfileBackground, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `profilebackground.Intercept(f(g(h())))`.
-func (c *ProfileBackgroundClient) Intercept(interceptors ...Interceptor) {
-	c.inters.ProfileBackground = append(c.inters.ProfileBackground, interceptors...)
-}
-
-// Create returns a builder for creating a ProfileBackground entity.
-func (c *ProfileBackgroundClient) Create() *ProfileBackgroundCreate {
-	mutation := newProfileBackgroundMutation(c.config, OpCreate)
-	return &ProfileBackgroundCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of ProfileBackground entities.
-func (c *ProfileBackgroundClient) CreateBulk(builders ...*ProfileBackgroundCreate) *ProfileBackgroundCreateBulk {
-	return &ProfileBackgroundCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *ProfileBackgroundClient) MapCreateBulk(slice any, setFunc func(*ProfileBackgroundCreate, int)) *ProfileBackgroundCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &ProfileBackgroundCreateBulk{err: fmt.Errorf("calling to ProfileBackgroundClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*ProfileBackgroundCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &ProfileBackgroundCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for ProfileBackground.
-func (c *ProfileBackgroundClient) Update() *ProfileBackgroundUpdate {
-	mutation := newProfileBackgroundMutation(c.config, OpUpdate)
-	return &ProfileBackgroundUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *ProfileBackgroundClient) UpdateOne(_m *ProfileBackground) *ProfileBackgroundUpdateOne {
-	mutation := newProfileBackgroundMutation(c.config, OpUpdateOne, withProfileBackground(_m))
-	return &ProfileBackgroundUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *ProfileBackgroundClient) UpdateOneID(id int) *ProfileBackgroundUpdateOne {
-	mutation := newProfileBackgroundMutation(c.config, OpUpdateOne, withProfileBackgroundID(id))
-	return &ProfileBackgroundUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for ProfileBackground.
-func (c *ProfileBackgroundClient) Delete() *ProfileBackgroundDelete {
-	mutation := newProfileBackgroundMutation(c.config, OpDelete)
-	return &ProfileBackgroundDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *ProfileBackgroundClient) DeleteOne(_m *ProfileBackground) *ProfileBackgroundDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ProfileBackgroundClient) DeleteOneID(id int) *ProfileBackgroundDeleteOne {
-	builder := c.Delete().Where(profilebackground.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &ProfileBackgroundDeleteOne{builder}
-}
-
-// Query returns a query builder for ProfileBackground.
-func (c *ProfileBackgroundClient) Query() *ProfileBackgroundQuery {
-	return &ProfileBackgroundQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeProfileBackground},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a ProfileBackground entity by its id.
-func (c *ProfileBackgroundClient) Get(ctx context.Context, id int) (*ProfileBackground, error) {
-	return c.Query().Where(profilebackground.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *ProfileBackgroundClient) GetX(ctx context.Context, id int) *ProfileBackground {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *ProfileBackgroundClient) Hooks() []Hook {
-	return c.hooks.ProfileBackground
-}
-
-// Interceptors returns the client interceptors.
-func (c *ProfileBackgroundClient) Interceptors() []Interceptor {
-	return c.inters.ProfileBackground
-}
-
-func (c *ProfileBackgroundClient) mutate(ctx context.Context, m *ProfileBackgroundMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&ProfileBackgroundCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&ProfileBackgroundUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&ProfileBackgroundUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&ProfileBackgroundDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("pjsk: unknown ProfileBackground mutation op: %q", m.Op())
-	}
-}
-
 // RejectedAliasClient is a client for the RejectedAlias schema.
 type RejectedAliasClient struct {
 	config
@@ -1176,6 +1192,22 @@ func (c *UserBindingClient) GetX(ctx context.Context, id int) *UserBinding {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryGameAccount queries the game_account edge of a UserBinding.
+func (c *UserBindingClient) QueryGameAccount(_m *UserBinding) *GameAccountQuery {
+	query := (&GameAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userbinding.Table, userbinding.FieldID, id),
+			sqlgraph.To(gameaccount.Table, gameaccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userbinding.GameAccountTable, userbinding.GameAccountColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // QueryDefaultRefs queries the default_refs edge of a UserBinding.
@@ -1504,11 +1536,11 @@ func (c *UserPreferenceClient) mutate(ctx context.Context, m *UserPreferenceMuta
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Alias, AliasAdmin, GroupAlias, PendingAlias, ProfileBackground, RejectedAlias,
+		Alias, AliasAdmin, GameAccount, GroupAlias, PendingAlias, RejectedAlias,
 		UserBinding, UserDefaultBinding, UserPreference []ent.Hook
 	}
 	inters struct {
-		Alias, AliasAdmin, GroupAlias, PendingAlias, ProfileBackground, RejectedAlias,
+		Alias, AliasAdmin, GameAccount, GroupAlias, PendingAlias, RejectedAlias,
 		UserBinding, UserDefaultBinding, UserPreference []ent.Interceptor
 	}
 )

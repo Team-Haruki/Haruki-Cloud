@@ -32,6 +32,18 @@ func (f AliasAdminFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.AliasAdminMutation", m)
 }
 
+// The GameAccountFunc type is an adapter to allow the use of ordinary
+// function as GameAccount mutator.
+type GameAccountFunc func(context.Context, *pjsk.GameAccountMutation) (pjsk.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GameAccountFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value, error) {
+	if mv, ok := m.(*pjsk.GameAccountMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.GameAccountMutation", m)
+}
+
 // The GroupAliasFunc type is an adapter to allow the use of ordinary
 // function as GroupAlias mutator.
 type GroupAliasFunc func(context.Context, *pjsk.GroupAliasMutation) (pjsk.Value, error)
@@ -54,18 +66,6 @@ func (f PendingAliasFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Val
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.PendingAliasMutation", m)
-}
-
-// The ProfileBackgroundFunc type is an adapter to allow the use of ordinary
-// function as ProfileBackground mutator.
-type ProfileBackgroundFunc func(context.Context, *pjsk.ProfileBackgroundMutation) (pjsk.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ProfileBackgroundFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value, error) {
-	if mv, ok := m.(*pjsk.ProfileBackgroundMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.ProfileBackgroundMutation", m)
 }
 
 // The RejectedAliasFunc type is an adapter to allow the use of ordinary

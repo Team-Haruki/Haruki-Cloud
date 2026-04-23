@@ -14,10 +14,8 @@ const (
 	FieldID = "id"
 	// FieldHarukiUserID holds the string denoting the haruki_user_id field in the database.
 	FieldHarukiUserID = "haruki_user_id"
-	// FieldUserID holds the string denoting the user_id field in the database.
-	FieldUserID = "user_id"
-	// FieldServer holds the string denoting the server field in the database.
-	FieldServer = "server"
+	// FieldGameAccountID holds the string denoting the game_account_id field in the database.
+	FieldGameAccountID = "game_account_id"
 	// FieldDisplayOrder holds the string denoting the display_order field in the database.
 	FieldDisplayOrder = "display_order"
 	// FieldVisible holds the string denoting the visible field in the database.
@@ -28,10 +26,19 @@ const (
 	FieldMysekaiVisible = "mysekai_visible"
 	// FieldVerified holds the string denoting the verified field in the database.
 	FieldVerified = "verified"
+	// EdgeGameAccount holds the string denoting the game_account edge name in mutations.
+	EdgeGameAccount = "game_account"
 	// EdgeDefaultRefs holds the string denoting the default_refs edge name in mutations.
 	EdgeDefaultRefs = "default_refs"
 	// Table holds the table name of the userbinding in the database.
 	Table = "user_bindings"
+	// GameAccountTable is the table that holds the game_account relation/edge.
+	GameAccountTable = "user_bindings"
+	// GameAccountInverseTable is the table name for the GameAccount entity.
+	// It exists in this package in order to avoid circular dependency with the "gameaccount" package.
+	GameAccountInverseTable = "game_accounts"
+	// GameAccountColumn is the table column denoting the game_account relation/edge.
+	GameAccountColumn = "game_account_id"
 	// DefaultRefsTable is the table that holds the default_refs relation/edge.
 	DefaultRefsTable = "user_default_bindings"
 	// DefaultRefsInverseTable is the table name for the UserDefaultBinding entity.
@@ -45,8 +52,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldHarukiUserID,
-	FieldUserID,
-	FieldServer,
+	FieldGameAccountID,
 	FieldDisplayOrder,
 	FieldVisible,
 	FieldSuiteVisible,
@@ -65,10 +71,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	UserIDValidator func(string) error
-	// ServerValidator is a validator for the "server" field. It is called by the builders before save.
-	ServerValidator func(string) error
 	// DefaultDisplayOrder holds the default value on creation for the "display_order" field.
 	DefaultDisplayOrder int
 	// DefaultVisible holds the default value on creation for the "visible" field.
@@ -94,14 +96,9 @@ func ByHarukiUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHarukiUserID, opts...).ToFunc()
 }
 
-// ByUserID orders the results by the user_id field.
-func ByUserID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUserID, opts...).ToFunc()
-}
-
-// ByServer orders the results by the server field.
-func ByServer(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldServer, opts...).ToFunc()
+// ByGameAccountID orders the results by the game_account_id field.
+func ByGameAccountID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGameAccountID, opts...).ToFunc()
 }
 
 // ByDisplayOrder orders the results by the display_order field.
@@ -129,6 +126,13 @@ func ByVerified(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVerified, opts...).ToFunc()
 }
 
+// ByGameAccountField orders the results by game_account field.
+func ByGameAccountField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newGameAccountStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByDefaultRefsCount orders the results by default_refs count.
 func ByDefaultRefsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -141,6 +145,13 @@ func ByDefaultRefs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newDefaultRefsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
+}
+func newGameAccountStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(GameAccountInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, GameAccountTable, GameAccountColumn),
+	)
 }
 func newDefaultRefsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(

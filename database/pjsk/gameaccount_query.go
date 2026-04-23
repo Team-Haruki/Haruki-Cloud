@@ -4,9 +4,11 @@ package pjsk
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/predicate"
-	"haruki-cloud/database/pjsk/profilebackground"
+	"haruki-cloud/database/pjsk/userbinding"
 	"math"
 
 	"entgo.io/ent"
@@ -15,64 +17,87 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// ProfileBackgroundQuery is the builder for querying ProfileBackground entities.
-type ProfileBackgroundQuery struct {
+// GameAccountQuery is the builder for querying GameAccount entities.
+type GameAccountQuery struct {
 	config
-	ctx        *QueryContext
-	order      []profilebackground.OrderOption
-	inters     []Interceptor
-	predicates []predicate.ProfileBackground
+	ctx          *QueryContext
+	order        []gameaccount.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.GameAccount
+	withBindings *UserBindingQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the ProfileBackgroundQuery builder.
-func (_q *ProfileBackgroundQuery) Where(ps ...predicate.ProfileBackground) *ProfileBackgroundQuery {
+// Where adds a new predicate for the GameAccountQuery builder.
+func (_q *GameAccountQuery) Where(ps ...predicate.GameAccount) *GameAccountQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *ProfileBackgroundQuery) Limit(limit int) *ProfileBackgroundQuery {
+func (_q *GameAccountQuery) Limit(limit int) *GameAccountQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *ProfileBackgroundQuery) Offset(offset int) *ProfileBackgroundQuery {
+func (_q *GameAccountQuery) Offset(offset int) *GameAccountQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *ProfileBackgroundQuery) Unique(unique bool) *ProfileBackgroundQuery {
+func (_q *GameAccountQuery) Unique(unique bool) *GameAccountQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *ProfileBackgroundQuery) Order(o ...profilebackground.OrderOption) *ProfileBackgroundQuery {
+func (_q *GameAccountQuery) Order(o ...gameaccount.OrderOption) *GameAccountQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// First returns the first ProfileBackground entity from the query.
-// Returns a *NotFoundError when no ProfileBackground was found.
-func (_q *ProfileBackgroundQuery) First(ctx context.Context) (*ProfileBackground, error) {
+// QueryBindings chains the current query on the "bindings" edge.
+func (_q *GameAccountQuery) QueryBindings() *UserBindingQuery {
+	query := (&UserBindingClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gameaccount.Table, gameaccount.FieldID, selector),
+			sqlgraph.To(userbinding.Table, userbinding.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gameaccount.BindingsTable, gameaccount.BindingsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// First returns the first GameAccount entity from the query.
+// Returns a *NotFoundError when no GameAccount was found.
+func (_q *GameAccountQuery) First(ctx context.Context) (*GameAccount, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{profilebackground.Label}
+		return nil, &NotFoundError{gameaccount.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *ProfileBackgroundQuery) FirstX(ctx context.Context) *ProfileBackground {
+func (_q *GameAccountQuery) FirstX(ctx context.Context) *GameAccount {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -80,22 +105,22 @@ func (_q *ProfileBackgroundQuery) FirstX(ctx context.Context) *ProfileBackground
 	return node
 }
 
-// FirstID returns the first ProfileBackground ID from the query.
-// Returns a *NotFoundError when no ProfileBackground ID was found.
-func (_q *ProfileBackgroundQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first GameAccount ID from the query.
+// Returns a *NotFoundError when no GameAccount ID was found.
+func (_q *GameAccountQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{profilebackground.Label}
+		err = &NotFoundError{gameaccount.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *ProfileBackgroundQuery) FirstIDX(ctx context.Context) int {
+func (_q *GameAccountQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -103,10 +128,10 @@ func (_q *ProfileBackgroundQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single ProfileBackground entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one ProfileBackground entity is found.
-// Returns a *NotFoundError when no ProfileBackground entities are found.
-func (_q *ProfileBackgroundQuery) Only(ctx context.Context) (*ProfileBackground, error) {
+// Only returns a single GameAccount entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one GameAccount entity is found.
+// Returns a *NotFoundError when no GameAccount entities are found.
+func (_q *GameAccountQuery) Only(ctx context.Context) (*GameAccount, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -115,14 +140,14 @@ func (_q *ProfileBackgroundQuery) Only(ctx context.Context) (*ProfileBackground,
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{profilebackground.Label}
+		return nil, &NotFoundError{gameaccount.Label}
 	default:
-		return nil, &NotSingularError{profilebackground.Label}
+		return nil, &NotSingularError{gameaccount.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *ProfileBackgroundQuery) OnlyX(ctx context.Context) *ProfileBackground {
+func (_q *GameAccountQuery) OnlyX(ctx context.Context) *GameAccount {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -130,10 +155,10 @@ func (_q *ProfileBackgroundQuery) OnlyX(ctx context.Context) *ProfileBackground 
 	return node
 }
 
-// OnlyID is like Only, but returns the only ProfileBackground ID in the query.
-// Returns a *NotSingularError when more than one ProfileBackground ID is found.
+// OnlyID is like Only, but returns the only GameAccount ID in the query.
+// Returns a *NotSingularError when more than one GameAccount ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *ProfileBackgroundQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (_q *GameAccountQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -142,15 +167,15 @@ func (_q *ProfileBackgroundQuery) OnlyID(ctx context.Context) (id int, err error
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{profilebackground.Label}
+		err = &NotFoundError{gameaccount.Label}
 	default:
-		err = &NotSingularError{profilebackground.Label}
+		err = &NotSingularError{gameaccount.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *ProfileBackgroundQuery) OnlyIDX(ctx context.Context) int {
+func (_q *GameAccountQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -158,18 +183,18 @@ func (_q *ProfileBackgroundQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of ProfileBackgrounds.
-func (_q *ProfileBackgroundQuery) All(ctx context.Context) ([]*ProfileBackground, error) {
+// All executes the query and returns a list of GameAccounts.
+func (_q *GameAccountQuery) All(ctx context.Context) ([]*GameAccount, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*ProfileBackground, *ProfileBackgroundQuery]()
-	return withInterceptors[[]*ProfileBackground](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*GameAccount, *GameAccountQuery]()
+	return withInterceptors[[]*GameAccount](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *ProfileBackgroundQuery) AllX(ctx context.Context) []*ProfileBackground {
+func (_q *GameAccountQuery) AllX(ctx context.Context) []*GameAccount {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -177,20 +202,20 @@ func (_q *ProfileBackgroundQuery) AllX(ctx context.Context) []*ProfileBackground
 	return nodes
 }
 
-// IDs executes the query and returns a list of ProfileBackground IDs.
-func (_q *ProfileBackgroundQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of GameAccount IDs.
+func (_q *GameAccountQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(profilebackground.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(gameaccount.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *ProfileBackgroundQuery) IDsX(ctx context.Context) []int {
+func (_q *GameAccountQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -199,16 +224,16 @@ func (_q *ProfileBackgroundQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (_q *ProfileBackgroundQuery) Count(ctx context.Context) (int, error) {
+func (_q *GameAccountQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*ProfileBackgroundQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*GameAccountQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *ProfileBackgroundQuery) CountX(ctx context.Context) int {
+func (_q *GameAccountQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -217,7 +242,7 @@ func (_q *ProfileBackgroundQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *ProfileBackgroundQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *GameAccountQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -230,7 +255,7 @@ func (_q *ProfileBackgroundQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *ProfileBackgroundQuery) ExistX(ctx context.Context) bool {
+func (_q *GameAccountQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -238,22 +263,34 @@ func (_q *ProfileBackgroundQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the ProfileBackgroundQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the GameAccountQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *ProfileBackgroundQuery) Clone() *ProfileBackgroundQuery {
+func (_q *GameAccountQuery) Clone() *GameAccountQuery {
 	if _q == nil {
 		return nil
 	}
-	return &ProfileBackgroundQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]profilebackground.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.ProfileBackground{}, _q.predicates...),
+	return &GameAccountQuery{
+		config:       _q.config,
+		ctx:          _q.ctx.Clone(),
+		order:        append([]gameaccount.OrderOption{}, _q.order...),
+		inters:       append([]Interceptor{}, _q.inters...),
+		predicates:   append([]predicate.GameAccount{}, _q.predicates...),
+		withBindings: _q.withBindings.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithBindings tells the query-builder to eager-load the nodes that are connected to
+// the "bindings" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *GameAccountQuery) WithBindings(opts ...func(*UserBindingQuery)) *GameAccountQuery {
+	query := (&UserBindingClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withBindings = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -262,19 +299,19 @@ func (_q *ProfileBackgroundQuery) Clone() *ProfileBackgroundQuery {
 // Example:
 //
 //	var v []struct {
-//		Server string `json:"server,omitempty"`
+//		UserID string `json:"user_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.ProfileBackground.Query().
-//		GroupBy(profilebackground.FieldServer).
+//	client.GameAccount.Query().
+//		GroupBy(gameaccount.FieldUserID).
 //		Aggregate(pjsk.Count()).
 //		Scan(ctx, &v)
-func (_q *ProfileBackgroundQuery) GroupBy(field string, fields ...string) *ProfileBackgroundGroupBy {
+func (_q *GameAccountQuery) GroupBy(field string, fields ...string) *GameAccountGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &ProfileBackgroundGroupBy{build: _q}
+	grbuild := &GameAccountGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = profilebackground.Label
+	grbuild.label = gameaccount.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -285,26 +322,26 @@ func (_q *ProfileBackgroundQuery) GroupBy(field string, fields ...string) *Profi
 // Example:
 //
 //	var v []struct {
-//		Server string `json:"server,omitempty"`
+//		UserID string `json:"user_id,omitempty"`
 //	}
 //
-//	client.ProfileBackground.Query().
-//		Select(profilebackground.FieldServer).
+//	client.GameAccount.Query().
+//		Select(gameaccount.FieldUserID).
 //		Scan(ctx, &v)
-func (_q *ProfileBackgroundQuery) Select(fields ...string) *ProfileBackgroundSelect {
+func (_q *GameAccountQuery) Select(fields ...string) *GameAccountSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &ProfileBackgroundSelect{ProfileBackgroundQuery: _q}
-	sbuild.label = profilebackground.Label
+	sbuild := &GameAccountSelect{GameAccountQuery: _q}
+	sbuild.label = gameaccount.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a ProfileBackgroundSelect configured with the given aggregations.
-func (_q *ProfileBackgroundQuery) Aggregate(fns ...AggregateFunc) *ProfileBackgroundSelect {
+// Aggregate returns a GameAccountSelect configured with the given aggregations.
+func (_q *GameAccountQuery) Aggregate(fns ...AggregateFunc) *GameAccountSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *ProfileBackgroundQuery) prepareQuery(ctx context.Context) error {
+func (_q *GameAccountQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("pjsk: uninitialized interceptor (forgotten import pjsk/runtime?)")
@@ -316,7 +353,7 @@ func (_q *ProfileBackgroundQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !profilebackground.ValidColumn(f) {
+		if !gameaccount.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("pjsk: invalid field %q for query", f)}
 		}
 	}
@@ -330,17 +367,21 @@ func (_q *ProfileBackgroundQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *ProfileBackgroundQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ProfileBackground, error) {
+func (_q *GameAccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*GameAccount, error) {
 	var (
-		nodes = []*ProfileBackground{}
-		_spec = _q.querySpec()
+		nodes       = []*GameAccount{}
+		_spec       = _q.querySpec()
+		loadedTypes = [1]bool{
+			_q.withBindings != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*ProfileBackground).scanValues(nil, columns)
+		return (*GameAccount).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &ProfileBackground{config: _q.config}
+		node := &GameAccount{config: _q.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -352,10 +393,51 @@ func (_q *ProfileBackgroundQuery) sqlAll(ctx context.Context, hooks ...queryHook
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withBindings; query != nil {
+		if err := _q.loadBindings(ctx, query, nodes,
+			func(n *GameAccount) { n.Edges.Bindings = []*UserBinding{} },
+			func(n *GameAccount, e *UserBinding) { n.Edges.Bindings = append(n.Edges.Bindings, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
-func (_q *ProfileBackgroundQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *GameAccountQuery) loadBindings(ctx context.Context, query *UserBindingQuery, nodes []*GameAccount, init func(*GameAccount), assign func(*GameAccount, *UserBinding)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*GameAccount)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(userbinding.FieldGameAccountID)
+	}
+	query.Where(predicate.UserBinding(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(gameaccount.BindingsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.GameAccountID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "game_account_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "game_account_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+
+func (_q *GameAccountQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -364,8 +446,8 @@ func (_q *ProfileBackgroundQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *ProfileBackgroundQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(profilebackground.Table, profilebackground.Columns, sqlgraph.NewFieldSpec(profilebackground.FieldID, field.TypeInt))
+func (_q *GameAccountQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(gameaccount.Table, gameaccount.Columns, sqlgraph.NewFieldSpec(gameaccount.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -374,9 +456,9 @@ func (_q *ProfileBackgroundQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, profilebackground.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, gameaccount.FieldID)
 		for i := range fields {
-			if fields[i] != profilebackground.FieldID {
+			if fields[i] != gameaccount.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -404,12 +486,12 @@ func (_q *ProfileBackgroundQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *ProfileBackgroundQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *GameAccountQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(profilebackground.Table)
+	t1 := builder.Table(gameaccount.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = profilebackground.Columns
+		columns = gameaccount.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -436,28 +518,28 @@ func (_q *ProfileBackgroundQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// ProfileBackgroundGroupBy is the group-by builder for ProfileBackground entities.
-type ProfileBackgroundGroupBy struct {
+// GameAccountGroupBy is the group-by builder for GameAccount entities.
+type GameAccountGroupBy struct {
 	selector
-	build *ProfileBackgroundQuery
+	build *GameAccountQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *ProfileBackgroundGroupBy) Aggregate(fns ...AggregateFunc) *ProfileBackgroundGroupBy {
+func (_g *GameAccountGroupBy) Aggregate(fns ...AggregateFunc) *GameAccountGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *ProfileBackgroundGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *GameAccountGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*ProfileBackgroundQuery, *ProfileBackgroundGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*GameAccountQuery, *GameAccountGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *ProfileBackgroundGroupBy) sqlScan(ctx context.Context, root *ProfileBackgroundQuery, v any) error {
+func (_g *GameAccountGroupBy) sqlScan(ctx context.Context, root *GameAccountQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -484,28 +566,28 @@ func (_g *ProfileBackgroundGroupBy) sqlScan(ctx context.Context, root *ProfileBa
 	return sql.ScanSlice(rows, v)
 }
 
-// ProfileBackgroundSelect is the builder for selecting fields of ProfileBackground entities.
-type ProfileBackgroundSelect struct {
-	*ProfileBackgroundQuery
+// GameAccountSelect is the builder for selecting fields of GameAccount entities.
+type GameAccountSelect struct {
+	*GameAccountQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *ProfileBackgroundSelect) Aggregate(fns ...AggregateFunc) *ProfileBackgroundSelect {
+func (_s *GameAccountSelect) Aggregate(fns ...AggregateFunc) *GameAccountSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *ProfileBackgroundSelect) Scan(ctx context.Context, v any) error {
+func (_s *GameAccountSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*ProfileBackgroundQuery, *ProfileBackgroundSelect](ctx, _s.ProfileBackgroundQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*GameAccountQuery, *GameAccountSelect](ctx, _s.GameAccountQuery, _s, _s.inters, v)
 }
 
-func (_s *ProfileBackgroundSelect) sqlScan(ctx context.Context, root *ProfileBackgroundQuery, v any) error {
+func (_s *GameAccountSelect) sqlScan(ctx context.Context, root *GameAccountQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

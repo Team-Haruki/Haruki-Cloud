@@ -40,6 +40,26 @@ var (
 		Columns:    AliasAdminsColumns,
 		PrimaryKey: []*schema.Column{AliasAdminsColumns[0]},
 	}
+	// GameAccountsColumns holds the columns for the "game_accounts" table.
+	GameAccountsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "user_id", Type: field.TypeString, Size: 30},
+		{Name: "server", Type: field.TypeString, Size: 2},
+		{Name: "bg", Type: field.TypeJSON, Nullable: true},
+	}
+	// GameAccountsTable holds the schema information for the "game_accounts" table.
+	GameAccountsTable = &schema.Table{
+		Name:       "game_accounts",
+		Columns:    GameAccountsColumns,
+		PrimaryKey: []*schema.Column{GameAccountsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "gameaccount_server_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{GameAccountsColumns[2], GameAccountsColumns[1]},
+			},
+		},
+	}
 	// GroupAliasColumns holds the columns for the "group_alias" table.
 	GroupAliasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -84,26 +104,6 @@ var (
 			},
 		},
 	}
-	// ProfileBackgroundsColumns holds the columns for the "profile_backgrounds" table.
-	ProfileBackgroundsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "server", Type: field.TypeString, Size: 2},
-		{Name: "user_id", Type: field.TypeString, Size: 30},
-		{Name: "bg", Type: field.TypeJSON},
-	}
-	// ProfileBackgroundsTable holds the schema information for the "profile_backgrounds" table.
-	ProfileBackgroundsTable = &schema.Table{
-		Name:       "profile_backgrounds",
-		Columns:    ProfileBackgroundsColumns,
-		PrimaryKey: []*schema.Column{ProfileBackgroundsColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "profilebackground_server_user_id",
-				Unique:  true,
-				Columns: []*schema.Column{ProfileBackgroundsColumns[1], ProfileBackgroundsColumns[2]},
-			},
-		},
-	}
 	// RejectedAliasColumns holds the columns for the "rejected_alias" table.
 	RejectedAliasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -124,24 +124,31 @@ var (
 	UserBindingsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "haruki_user_id", Type: field.TypeInt},
-		{Name: "user_id", Type: field.TypeString, Size: 30},
-		{Name: "server", Type: field.TypeString, Size: 2},
 		{Name: "display_order", Type: field.TypeInt, Default: 0},
 		{Name: "visible", Type: field.TypeBool, Default: true},
 		{Name: "suite_visible", Type: field.TypeBool, Default: true},
 		{Name: "mysekai_visible", Type: field.TypeBool, Default: true},
 		{Name: "verified", Type: field.TypeBool, Default: false},
+		{Name: "game_account_id", Type: field.TypeInt, Nullable: true},
 	}
 	// UserBindingsTable holds the schema information for the "user_bindings" table.
 	UserBindingsTable = &schema.Table{
 		Name:       "user_bindings",
 		Columns:    UserBindingsColumns,
 		PrimaryKey: []*schema.Column{UserBindingsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_bindings_game_accounts_bindings",
+				Columns:    []*schema.Column{UserBindingsColumns[7]},
+				RefColumns: []*schema.Column{GameAccountsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "userbinding_haruki_user_id_server_user_id",
+				Name:    "userbinding_haruki_user_id_game_account_id",
 				Unique:  true,
-				Columns: []*schema.Column{UserBindingsColumns[1], UserBindingsColumns[3], UserBindingsColumns[2]},
+				Columns: []*schema.Column{UserBindingsColumns[1], UserBindingsColumns[7]},
 			},
 		},
 	}
@@ -189,9 +196,9 @@ var (
 	Tables = []*schema.Table{
 		AliasTable,
 		AliasAdminsTable,
+		GameAccountsTable,
 		GroupAliasTable,
 		PendingAliasTable,
-		ProfileBackgroundsTable,
 		RejectedAliasTable,
 		UserBindingsTable,
 		UserDefaultBindingsTable,
@@ -200,5 +207,6 @@ var (
 )
 
 func init() {
+	UserBindingsTable.ForeignKeys[0].RefTable = GameAccountsTable
 	UserDefaultBindingsTable.ForeignKeys[0].RefTable = UserBindingsTable
 }

@@ -281,7 +281,9 @@ func (c *HarukiDrawingClient) GenerateCharacterBirthday(req *CharaBirthdayReques
 }
 
 func (c *HarukiDrawingClient) GenerateAliasList(req *AliasListRequest) ([]byte, error) {
-	return c.cachedPost("/api/pjsk/misc/alias-list", req)
+	// Alias-list watermarks include request DT, so we intentionally bypass the
+	// render cache here to avoid serving stale timestamps.
+	return c.post("/api/pjsk/misc/alias-list", req)
 }
 
 // =========================== MySekai API ===========================

@@ -17,7 +17,7 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 		return nil, fmt.Errorf("未找到要设置背景的绑定账号")
 	}
 	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法设置个人信息背景", strings.ToUpper(binding.Server))
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法设置个人信息背景", strings.ToUpper(bindingServer(binding)))
 	}
 
 	// User-level BG ban check: read from UserSettings (haruki_user_id granularity).
@@ -47,16 +47,20 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 		}
 	}
 
-	oldBg, err := loadProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID)
+	server := bindingServer(binding)
+	userID := bindingUserID(binding)
+	gameAccountID := bindingGameAccountID(binding)
+
+	oldBg, err := loadProfileBackground(ctx, s.pjskDB, gameAccountID)
 	if err != nil {
 		return nil, err
 	}
-	uploadedSettings, err := s.bgStorage.SaveProfileBackground(ctx, binding.Server, binding.UserID, imageURL)
+	uploadedSettings, err := s.bgStorage.SaveProfileBackground(ctx, server, userID, imageURL)
 	if err != nil {
 		return nil, err
 	}
 	settings := mergeUploadedProfileBGSettings(oldBg, uploadedSettings)
-	if err := upsertProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID, settings); err != nil {
+	if err := upsertProfileBackground(ctx, s.pjskDB, gameAccountID, settings); err != nil {
 		return nil, err
 	}
 	// Remove the old background file after the DB record is updated.
@@ -71,9 +75,10 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 		return nil, fmt.Errorf("未找到要清除背景的绑定账号")
 	}
 	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法清除个人信息背景", strings.ToUpper(binding.Server))
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法清除个人信息背景", strings.ToUpper(bindingServer(binding)))
 	}
-	settings, err := loadProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID)
+	gameAccountID := bindingGameAccountID(binding)
+	settings, err := loadProfileBackground(ctx, s.pjskDB, gameAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -83,11 +88,11 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 		}
 	}
 	if settings != nil {
-		if err := upsertProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID, clearProfileBGImagePath(settings)); err != nil {
+		if err := upsertProfileBackground(ctx, s.pjskDB, gameAccountID, clearProfileBGImagePath(settings)); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := deleteProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID); err != nil {
+		if err := deleteProfileBackground(ctx, s.pjskDB, gameAccountID); err != nil {
 			return nil, err
 		}
 	}
@@ -99,14 +104,15 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 		return nil, fmt.Errorf("未找到要调整背景的绑定账号")
 	}
 	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法调整个人信息背景", strings.ToUpper(binding.Server))
+		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法调整个人信息背景", strings.ToUpper(bindingServer(binding)))
 	}
-	currentBg, err := loadProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID)
+	gameAccountID := bindingGameAccountID(binding)
+	currentBg, err := loadProfileBackground(ctx, s.pjskDB, gameAccountID)
 	if err != nil {
 		return nil, err
 	}
 	if currentBg == nil || currentBg.ImgPath == nil || strings.TrimSpace(*currentBg.ImgPath) == "" {
-		return nil, fmt.Errorf("当前%s服还没有自定义个人信息背景", strings.ToUpper(binding.Server))
+		return nil, fmt.Errorf("当前%s服还没有自定义个人信息背景", strings.ToUpper(bindingServer(binding)))
 	}
 
 	settings := cloneProfileBGSettings(currentBg)
@@ -120,7 +126,7 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 		settings.Vertical = *vertical
 	}
 
-	if err := upsertProfileBackground(ctx, s.pjskDB, binding.Server, binding.UserID, settings); err != nil {
+	if err := upsertProfileBackground(ctx, s.pjskDB, gameAccountID, settings); err != nil {
 		return nil, err
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
@@ -181,14 +187,14 @@ func (s *BindingService) verifyBindingEntity(ctx context.Context, platform, plat
 	}
 	matched := false
 	for _, record := range records {
-		if strings.EqualFold(strings.TrimSpace(record.Server), binding.Server) &&
-			strings.TrimSpace(record.GameUserID) == binding.UserID {
+		if strings.EqualFold(strings.TrimSpace(record.Server), bindingServer(binding)) &&
+			strings.TrimSpace(record.GameUserID) == bindingUserID(binding) {
 			matched = true
 			break
 		}
 	}
 	if !matched {
-		return nil, false, fmt.Errorf("当前%s服绑定账号未出现在快速验证列表中", strings.ToUpper(binding.Server))
+		return nil, false, fmt.Errorf("当前%s服绑定账号未出现在快速验证列表中", strings.ToUpper(bindingServer(binding)))
 	}
 	if _, err := s.pjskDB.UserBinding.UpdateOneID(binding.ID).
 		SetVerified(true).

@@ -11,8 +11,9 @@ import (
 	aliases "haruki-cloud/internal/pjsk/alias"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
-	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 )
 
 const aliasImageThreshold = 20
@@ -408,6 +409,14 @@ func shouldRenderAliasQueryAsImage(aliasType string, aliasesList []string) bool 
 	}
 }
 
+func buildCharacterAliasTrimPath(characterID int) *string {
+	if characterID <= 0 {
+		return nil
+	}
+	assetBase := renderassets.RegionAssetDirByMode("", renderassets.RegionAssetStartApp)
+	return drawing.StringPtr(fmt.Sprintf("%s/character/character_trim/chr_trim_%d.png", assetBase, characterID))
+}
+
 func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType string, result *aliases.QueryResult) (drawing.AliasListRequest, bool) {
 	if result == nil {
 		return drawing.AliasListRequest{}, false
@@ -429,11 +438,12 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 		return req, true
 	case aliases.PjskAliasTypeCharacter:
 		return drawing.AliasListRequest{
-			Title:       "角色别名",
-			EntityLabel: "角色ID",
-			EntityID:    result.Entity.ID,
-			EntityName:  result.Entity.Name,
-			Aliases:     result.Aliases,
+			Title:             "角色别名",
+			EntityLabel:       "角色ID",
+			EntityID:          result.Entity.ID,
+			EntityName:        result.Entity.Name,
+			CharacterTrimPath: buildCharacterAliasTrimPath(result.Entity.ID),
+			Aliases:           result.Aliases,
 		}, true
 	default:
 		return drawing.AliasListRequest{}, false

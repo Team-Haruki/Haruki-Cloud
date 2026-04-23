@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -89,12 +90,17 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 		}
 	}()
 
+	account, err := getOrCreateGameAccountTx(ctx, tx, target.Server, target.UserID)
+	if err != nil {
+		return nil, err
+	}
+
 	binding, err := tx.UserBinding.Query().
 		Where(
 			userbinding.HarukiUserID(harukiUserID),
-			userbinding.Server(target.Server),
-			userbinding.UserID(target.UserID),
+			userbinding.GameAccountIDEQ(account.ID),
 		).
+		WithGameAccount().
 		Only(ctx)
 
 	alreadyBound := false
@@ -108,8 +114,7 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 		}
 		binding, err = tx.UserBinding.Create().
 			SetHarukiUserID(harukiUserID).
-			SetServer(target.Server).
-			SetUserID(target.UserID).
+			SetGameAccountID(account.ID).
 			SetDisplayOrder(displayOrder).
 			SetVisible(false).
 			Save(ctx)
@@ -155,6 +160,7 @@ func (s *BindingService) List(ctx context.Context, platform, platformUserID stri
 	}
 	bindings, err := s.pjskDB.UserBinding.Query().
 		Where(userbinding.HarukiUserID(harukiUserID)).
+		WithGameAccount().
 		All(ctx)
 	if err != nil {
 		return nil, err
@@ -165,11 +171,7 @@ func (s *BindingService) List(ctx context.Context, platform, platformUserID stri
 	if err != nil {
 		return nil, err
 	}
-	bgMap, err := loadProfileBackgroundMap(ctx, s.pjskDB, bindings)
-	if err != nil {
-		return nil, err
-	}
-	return buildBindingListWithBackgrounds(bindings, defaults, bgMap), nil
+	return buildBindingListWithBackgrounds(bindings, defaults), nil
 }
 
 func (s *BindingService) Unbind(ctx context.Context, platform, platformUserID, selector, server string) (*UnbindResult, error) {
@@ -183,6 +185,7 @@ func (s *BindingService) Unbind(ctx context.Context, platform, platformUserID, s
 
 	bindings, err := s.pjskDB.UserBinding.Query().
 		Where(userbinding.HarukiUserID(harukiUserID)).
+		WithGameAccount().
 		All(ctx)
 	if err != nil {
 		return nil, err
@@ -226,6 +229,7 @@ func (s *BindingService) Unbind(ctx context.Context, platform, platformUserID, s
 
 	remainingBindings, err := tx.UserBinding.Query().
 		Where(userbinding.HarukiUserID(harukiUserID)).
+		WithGameAccount().
 		All(ctx)
 	if err != nil {
 		return nil, err
@@ -311,4 +315,30 @@ func (s *BindingService) probeUID(ctx context.Context, uid string) ([]profilePro
 		return nil, fmt.Errorf("所有支持的服务器尝试绑定失败，请检查ID是否正确\n%s", strings.Join(failures, "\n"))
 	}
 	return results, nil
+}
+
+func getOrCreateGameAccountTx(ctx context.Context, tx *pjskdb.Tx, server, userID string) (*pjskdb.GameAccount, error) {
+	server = strings.TrimSpace(strings.ToLower(server))
+	userID = strings.TrimSpace(userID)
+	if server == "" || userID == "" {
+		return nil, fmt.Errorf("invalid game account identity")
+	}
+
+	account, err := tx.GameAccount.Query().
+		Where(
+			gameaccount.ServerEQ(server),
+			gameaccount.UserIDEQ(userID),
+		).
+		Only(ctx)
+	switch {
+	case err == nil:
+		return account, nil
+	case !pjskdb.IsNotFound(err):
+		return nil, err
+	}
+
+	return tx.GameAccount.Create().
+		SetServer(server).
+		SetUserID(userID).
+		Save(ctx)
 }

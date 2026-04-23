@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/predicate"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -49,31 +50,23 @@ func (_u *UserBindingUpdate) AddHarukiUserID(v int) *UserBindingUpdate {
 	return _u
 }
 
-// SetUserID sets the "user_id" field.
-func (_u *UserBindingUpdate) SetUserID(v string) *UserBindingUpdate {
-	_u.mutation.SetUserID(v)
+// SetGameAccountID sets the "game_account_id" field.
+func (_u *UserBindingUpdate) SetGameAccountID(v int) *UserBindingUpdate {
+	_u.mutation.SetGameAccountID(v)
 	return _u
 }
 
-// SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (_u *UserBindingUpdate) SetNillableUserID(v *string) *UserBindingUpdate {
+// SetNillableGameAccountID sets the "game_account_id" field if the given value is not nil.
+func (_u *UserBindingUpdate) SetNillableGameAccountID(v *int) *UserBindingUpdate {
 	if v != nil {
-		_u.SetUserID(*v)
+		_u.SetGameAccountID(*v)
 	}
 	return _u
 }
 
-// SetServer sets the "server" field.
-func (_u *UserBindingUpdate) SetServer(v string) *UserBindingUpdate {
-	_u.mutation.SetServer(v)
-	return _u
-}
-
-// SetNillableServer sets the "server" field if the given value is not nil.
-func (_u *UserBindingUpdate) SetNillableServer(v *string) *UserBindingUpdate {
-	if v != nil {
-		_u.SetServer(*v)
-	}
+// ClearGameAccountID clears the value of the "game_account_id" field.
+func (_u *UserBindingUpdate) ClearGameAccountID() *UserBindingUpdate {
+	_u.mutation.ClearGameAccountID()
 	return _u
 }
 
@@ -154,6 +147,11 @@ func (_u *UserBindingUpdate) SetNillableVerified(v *bool) *UserBindingUpdate {
 	return _u
 }
 
+// SetGameAccount sets the "game_account" edge to the GameAccount entity.
+func (_u *UserBindingUpdate) SetGameAccount(v *GameAccount) *UserBindingUpdate {
+	return _u.SetGameAccountID(v.ID)
+}
+
 // AddDefaultRefIDs adds the "default_refs" edge to the UserDefaultBinding entity by IDs.
 func (_u *UserBindingUpdate) AddDefaultRefIDs(ids ...int) *UserBindingUpdate {
 	_u.mutation.AddDefaultRefIDs(ids...)
@@ -172,6 +170,12 @@ func (_u *UserBindingUpdate) AddDefaultRefs(v ...*UserDefaultBinding) *UserBindi
 // Mutation returns the UserBindingMutation object of the builder.
 func (_u *UserBindingUpdate) Mutation() *UserBindingMutation {
 	return _u.mutation
+}
+
+// ClearGameAccount clears the "game_account" edge to the GameAccount entity.
+func (_u *UserBindingUpdate) ClearGameAccount() *UserBindingUpdate {
+	_u.mutation.ClearGameAccount()
+	return _u
 }
 
 // ClearDefaultRefs clears all "default_refs" edges to the UserDefaultBinding entity.
@@ -222,25 +226,7 @@ func (_u *UserBindingUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (_u *UserBindingUpdate) check() error {
-	if v, ok := _u.mutation.UserID(); ok {
-		if err := userbinding.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`pjsk: validator failed for field "UserBinding.user_id": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.Server(); ok {
-		if err := userbinding.ServerValidator(v); err != nil {
-			return &ValidationError{Name: "server", err: fmt.Errorf(`pjsk: validator failed for field "UserBinding.server": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	if err := _u.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(userbinding.Table, userbinding.Columns, sqlgraph.NewFieldSpec(userbinding.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -254,12 +240,6 @@ func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.AddedHarukiUserID(); ok {
 		_spec.AddField(userbinding.FieldHarukiUserID, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.UserID(); ok {
-		_spec.SetField(userbinding.FieldUserID, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Server(); ok {
-		_spec.SetField(userbinding.FieldServer, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.DisplayOrder(); ok {
 		_spec.SetField(userbinding.FieldDisplayOrder, field.TypeInt, value)
@@ -278,6 +258,35 @@ func (_u *UserBindingUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.Verified(); ok {
 		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)
+	}
+	if _u.mutation.GameAccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userbinding.GameAccountTable,
+			Columns: []string{userbinding.GameAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameaccount.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.GameAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userbinding.GameAccountTable,
+			Columns: []string{userbinding.GameAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameaccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.DefaultRefsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -365,31 +374,23 @@ func (_u *UserBindingUpdateOne) AddHarukiUserID(v int) *UserBindingUpdateOne {
 	return _u
 }
 
-// SetUserID sets the "user_id" field.
-func (_u *UserBindingUpdateOne) SetUserID(v string) *UserBindingUpdateOne {
-	_u.mutation.SetUserID(v)
+// SetGameAccountID sets the "game_account_id" field.
+func (_u *UserBindingUpdateOne) SetGameAccountID(v int) *UserBindingUpdateOne {
+	_u.mutation.SetGameAccountID(v)
 	return _u
 }
 
-// SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (_u *UserBindingUpdateOne) SetNillableUserID(v *string) *UserBindingUpdateOne {
+// SetNillableGameAccountID sets the "game_account_id" field if the given value is not nil.
+func (_u *UserBindingUpdateOne) SetNillableGameAccountID(v *int) *UserBindingUpdateOne {
 	if v != nil {
-		_u.SetUserID(*v)
+		_u.SetGameAccountID(*v)
 	}
 	return _u
 }
 
-// SetServer sets the "server" field.
-func (_u *UserBindingUpdateOne) SetServer(v string) *UserBindingUpdateOne {
-	_u.mutation.SetServer(v)
-	return _u
-}
-
-// SetNillableServer sets the "server" field if the given value is not nil.
-func (_u *UserBindingUpdateOne) SetNillableServer(v *string) *UserBindingUpdateOne {
-	if v != nil {
-		_u.SetServer(*v)
-	}
+// ClearGameAccountID clears the value of the "game_account_id" field.
+func (_u *UserBindingUpdateOne) ClearGameAccountID() *UserBindingUpdateOne {
+	_u.mutation.ClearGameAccountID()
 	return _u
 }
 
@@ -470,6 +471,11 @@ func (_u *UserBindingUpdateOne) SetNillableVerified(v *bool) *UserBindingUpdateO
 	return _u
 }
 
+// SetGameAccount sets the "game_account" edge to the GameAccount entity.
+func (_u *UserBindingUpdateOne) SetGameAccount(v *GameAccount) *UserBindingUpdateOne {
+	return _u.SetGameAccountID(v.ID)
+}
+
 // AddDefaultRefIDs adds the "default_refs" edge to the UserDefaultBinding entity by IDs.
 func (_u *UserBindingUpdateOne) AddDefaultRefIDs(ids ...int) *UserBindingUpdateOne {
 	_u.mutation.AddDefaultRefIDs(ids...)
@@ -488,6 +494,12 @@ func (_u *UserBindingUpdateOne) AddDefaultRefs(v ...*UserDefaultBinding) *UserBi
 // Mutation returns the UserBindingMutation object of the builder.
 func (_u *UserBindingUpdateOne) Mutation() *UserBindingMutation {
 	return _u.mutation
+}
+
+// ClearGameAccount clears the "game_account" edge to the GameAccount entity.
+func (_u *UserBindingUpdateOne) ClearGameAccount() *UserBindingUpdateOne {
+	_u.mutation.ClearGameAccount()
+	return _u
 }
 
 // ClearDefaultRefs clears all "default_refs" edges to the UserDefaultBinding entity.
@@ -551,25 +563,7 @@ func (_u *UserBindingUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (_u *UserBindingUpdateOne) check() error {
-	if v, ok := _u.mutation.UserID(); ok {
-		if err := userbinding.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`pjsk: validator failed for field "UserBinding.user_id": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.Server(); ok {
-		if err := userbinding.ServerValidator(v); err != nil {
-			return &ValidationError{Name: "server", err: fmt.Errorf(`pjsk: validator failed for field "UserBinding.server": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding, err error) {
-	if err := _u.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(userbinding.Table, userbinding.Columns, sqlgraph.NewFieldSpec(userbinding.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
 	if !ok {
@@ -601,12 +595,6 @@ func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding
 	if value, ok := _u.mutation.AddedHarukiUserID(); ok {
 		_spec.AddField(userbinding.FieldHarukiUserID, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.UserID(); ok {
-		_spec.SetField(userbinding.FieldUserID, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Server(); ok {
-		_spec.SetField(userbinding.FieldServer, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.DisplayOrder(); ok {
 		_spec.SetField(userbinding.FieldDisplayOrder, field.TypeInt, value)
 	}
@@ -624,6 +612,35 @@ func (_u *UserBindingUpdateOne) sqlSave(ctx context.Context) (_node *UserBinding
 	}
 	if value, ok := _u.mutation.Verified(); ok {
 		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)
+	}
+	if _u.mutation.GameAccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userbinding.GameAccountTable,
+			Columns: []string{userbinding.GameAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameaccount.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.GameAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userbinding.GameAccountTable,
+			Columns: []string{userbinding.GameAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameaccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.DefaultRefsCleared() {
 		edge := &sqlgraph.EdgeSpec{

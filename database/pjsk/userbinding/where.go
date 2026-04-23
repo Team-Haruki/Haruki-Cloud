@@ -59,14 +59,9 @@ func HarukiUserID(v int) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldEQ(FieldHarukiUserID, v))
 }
 
-// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEQ(FieldUserID, v))
-}
-
-// Server applies equality check predicate on the "server" field. It's identical to ServerEQ.
-func Server(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEQ(FieldServer, v))
+// GameAccountID applies equality check predicate on the "game_account_id" field. It's identical to GameAccountIDEQ.
+func GameAccountID(v int) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldGameAccountID, v))
 }
 
 // DisplayOrder applies equality check predicate on the "display_order" field. It's identical to DisplayOrderEQ.
@@ -134,134 +129,34 @@ func HarukiUserIDLTE(v int) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldLTE(FieldHarukiUserID, v))
 }
 
-// UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEQ(FieldUserID, v))
+// GameAccountIDEQ applies the EQ predicate on the "game_account_id" field.
+func GameAccountIDEQ(v int) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldEQ(FieldGameAccountID, v))
 }
 
-// UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldNEQ(FieldUserID, v))
+// GameAccountIDNEQ applies the NEQ predicate on the "game_account_id" field.
+func GameAccountIDNEQ(v int) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNEQ(FieldGameAccountID, v))
 }
 
-// UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldIn(FieldUserID, vs...))
+// GameAccountIDIn applies the In predicate on the "game_account_id" field.
+func GameAccountIDIn(vs ...int) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldIn(FieldGameAccountID, vs...))
 }
 
-// UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldNotIn(FieldUserID, vs...))
+// GameAccountIDNotIn applies the NotIn predicate on the "game_account_id" field.
+func GameAccountIDNotIn(vs ...int) predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNotIn(FieldGameAccountID, vs...))
 }
 
-// UserIDGT applies the GT predicate on the "user_id" field.
-func UserIDGT(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldGT(FieldUserID, v))
+// GameAccountIDIsNil applies the IsNil predicate on the "game_account_id" field.
+func GameAccountIDIsNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldIsNull(FieldGameAccountID))
 }
 
-// UserIDGTE applies the GTE predicate on the "user_id" field.
-func UserIDGTE(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldGTE(FieldUserID, v))
-}
-
-// UserIDLT applies the LT predicate on the "user_id" field.
-func UserIDLT(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldLT(FieldUserID, v))
-}
-
-// UserIDLTE applies the LTE predicate on the "user_id" field.
-func UserIDLTE(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldLTE(FieldUserID, v))
-}
-
-// UserIDContains applies the Contains predicate on the "user_id" field.
-func UserIDContains(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldContains(FieldUserID, v))
-}
-
-// UserIDHasPrefix applies the HasPrefix predicate on the "user_id" field.
-func UserIDHasPrefix(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldHasPrefix(FieldUserID, v))
-}
-
-// UserIDHasSuffix applies the HasSuffix predicate on the "user_id" field.
-func UserIDHasSuffix(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldHasSuffix(FieldUserID, v))
-}
-
-// UserIDEqualFold applies the EqualFold predicate on the "user_id" field.
-func UserIDEqualFold(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEqualFold(FieldUserID, v))
-}
-
-// UserIDContainsFold applies the ContainsFold predicate on the "user_id" field.
-func UserIDContainsFold(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldContainsFold(FieldUserID, v))
-}
-
-// ServerEQ applies the EQ predicate on the "server" field.
-func ServerEQ(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEQ(FieldServer, v))
-}
-
-// ServerNEQ applies the NEQ predicate on the "server" field.
-func ServerNEQ(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldNEQ(FieldServer, v))
-}
-
-// ServerIn applies the In predicate on the "server" field.
-func ServerIn(vs ...string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldIn(FieldServer, vs...))
-}
-
-// ServerNotIn applies the NotIn predicate on the "server" field.
-func ServerNotIn(vs ...string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldNotIn(FieldServer, vs...))
-}
-
-// ServerGT applies the GT predicate on the "server" field.
-func ServerGT(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldGT(FieldServer, v))
-}
-
-// ServerGTE applies the GTE predicate on the "server" field.
-func ServerGTE(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldGTE(FieldServer, v))
-}
-
-// ServerLT applies the LT predicate on the "server" field.
-func ServerLT(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldLT(FieldServer, v))
-}
-
-// ServerLTE applies the LTE predicate on the "server" field.
-func ServerLTE(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldLTE(FieldServer, v))
-}
-
-// ServerContains applies the Contains predicate on the "server" field.
-func ServerContains(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldContains(FieldServer, v))
-}
-
-// ServerHasPrefix applies the HasPrefix predicate on the "server" field.
-func ServerHasPrefix(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldHasPrefix(FieldServer, v))
-}
-
-// ServerHasSuffix applies the HasSuffix predicate on the "server" field.
-func ServerHasSuffix(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldHasSuffix(FieldServer, v))
-}
-
-// ServerEqualFold applies the EqualFold predicate on the "server" field.
-func ServerEqualFold(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldEqualFold(FieldServer, v))
-}
-
-// ServerContainsFold applies the ContainsFold predicate on the "server" field.
-func ServerContainsFold(v string) predicate.UserBinding {
-	return predicate.UserBinding(sql.FieldContainsFold(FieldServer, v))
+// GameAccountIDNotNil applies the NotNil predicate on the "game_account_id" field.
+func GameAccountIDNotNil() predicate.UserBinding {
+	return predicate.UserBinding(sql.FieldNotNull(FieldGameAccountID))
 }
 
 // DisplayOrderEQ applies the EQ predicate on the "display_order" field.
@@ -342,6 +237,29 @@ func VerifiedEQ(v bool) predicate.UserBinding {
 // VerifiedNEQ applies the NEQ predicate on the "verified" field.
 func VerifiedNEQ(v bool) predicate.UserBinding {
 	return predicate.UserBinding(sql.FieldNEQ(FieldVerified, v))
+}
+
+// HasGameAccount applies the HasEdge predicate on the "game_account" edge.
+func HasGameAccount() predicate.UserBinding {
+	return predicate.UserBinding(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, GameAccountTable, GameAccountColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGameAccountWith applies the HasEdge predicate on the "game_account" edge with a given conditions (other predicates).
+func HasGameAccountWith(preds ...predicate.GameAccount) predicate.UserBinding {
+	return predicate.UserBinding(func(s *sql.Selector) {
+		step := newGameAccountStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // HasDefaultRefs applies the HasEdge predicate on the "default_refs" edge.

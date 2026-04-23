@@ -5,9 +5,9 @@ package pjsk
 import (
 	"haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/pendingalias"
-	"haruki-cloud/database/pjsk/profilebackground"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -35,6 +35,16 @@ func init() {
 	aliasadminDescName := aliasadminFields[1].Descriptor()
 	// aliasadmin.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	aliasadmin.NameValidator = aliasadminDescName.Validators[0].(func(string) error)
+	gameaccountFields := schema.GameAccount{}.Fields()
+	_ = gameaccountFields
+	// gameaccountDescUserID is the schema descriptor for user_id field.
+	gameaccountDescUserID := gameaccountFields[1].Descriptor()
+	// gameaccount.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	gameaccount.UserIDValidator = gameaccountDescUserID.Validators[0].(func(string) error)
+	// gameaccountDescServer is the schema descriptor for server field.
+	gameaccountDescServer := gameaccountFields[2].Descriptor()
+	// gameaccount.ServerValidator is a validator for the "server" field. It is called by the builders before save.
+	gameaccount.ServerValidator = gameaccountDescServer.Validators[0].(func(string) error)
 	groupaliasFields := schema.GroupAlias{}.Fields()
 	_ = groupaliasFields
 	// groupaliasDescPlatform is the schema descriptor for platform field.
@@ -67,16 +77,6 @@ func init() {
 	pendingaliasDescSubmittedBy := pendingaliasFields[4].Descriptor()
 	// pendingalias.SubmittedByValidator is a validator for the "submitted_by" field. It is called by the builders before save.
 	pendingalias.SubmittedByValidator = pendingaliasDescSubmittedBy.Validators[0].(func(string) error)
-	profilebackgroundFields := schema.ProfileBackground{}.Fields()
-	_ = profilebackgroundFields
-	// profilebackgroundDescServer is the schema descriptor for server field.
-	profilebackgroundDescServer := profilebackgroundFields[1].Descriptor()
-	// profilebackground.ServerValidator is a validator for the "server" field. It is called by the builders before save.
-	profilebackground.ServerValidator = profilebackgroundDescServer.Validators[0].(func(string) error)
-	// profilebackgroundDescUserID is the schema descriptor for user_id field.
-	profilebackgroundDescUserID := profilebackgroundFields[2].Descriptor()
-	// profilebackground.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	profilebackground.UserIDValidator = profilebackgroundDescUserID.Validators[0].(func(string) error)
 	rejectedaliasFields := schema.RejectedAlias{}.Fields()
 	_ = rejectedaliasFields
 	// rejectedaliasDescAliasType is the schema descriptor for alias_type field.
@@ -97,32 +97,24 @@ func init() {
 	rejectedalias.ReasonValidator = rejectedaliasDescReason.Validators[0].(func(string) error)
 	userbindingFields := schema.UserBinding{}.Fields()
 	_ = userbindingFields
-	// userbindingDescUserID is the schema descriptor for user_id field.
-	userbindingDescUserID := userbindingFields[2].Descriptor()
-	// userbinding.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
-	userbinding.UserIDValidator = userbindingDescUserID.Validators[0].(func(string) error)
-	// userbindingDescServer is the schema descriptor for server field.
-	userbindingDescServer := userbindingFields[3].Descriptor()
-	// userbinding.ServerValidator is a validator for the "server" field. It is called by the builders before save.
-	userbinding.ServerValidator = userbindingDescServer.Validators[0].(func(string) error)
 	// userbindingDescDisplayOrder is the schema descriptor for display_order field.
-	userbindingDescDisplayOrder := userbindingFields[4].Descriptor()
+	userbindingDescDisplayOrder := userbindingFields[3].Descriptor()
 	// userbinding.DefaultDisplayOrder holds the default value on creation for the display_order field.
 	userbinding.DefaultDisplayOrder = userbindingDescDisplayOrder.Default.(int)
 	// userbindingDescVisible is the schema descriptor for visible field.
-	userbindingDescVisible := userbindingFields[5].Descriptor()
+	userbindingDescVisible := userbindingFields[4].Descriptor()
 	// userbinding.DefaultVisible holds the default value on creation for the visible field.
 	userbinding.DefaultVisible = userbindingDescVisible.Default.(bool)
 	// userbindingDescSuiteVisible is the schema descriptor for suite_visible field.
-	userbindingDescSuiteVisible := userbindingFields[6].Descriptor()
+	userbindingDescSuiteVisible := userbindingFields[5].Descriptor()
 	// userbinding.DefaultSuiteVisible holds the default value on creation for the suite_visible field.
 	userbinding.DefaultSuiteVisible = userbindingDescSuiteVisible.Default.(bool)
 	// userbindingDescMysekaiVisible is the schema descriptor for mysekai_visible field.
-	userbindingDescMysekaiVisible := userbindingFields[7].Descriptor()
+	userbindingDescMysekaiVisible := userbindingFields[6].Descriptor()
 	// userbinding.DefaultMysekaiVisible holds the default value on creation for the mysekai_visible field.
 	userbinding.DefaultMysekaiVisible = userbindingDescMysekaiVisible.Default.(bool)
 	// userbindingDescVerified is the schema descriptor for verified field.
-	userbindingDescVerified := userbindingFields[8].Descriptor()
+	userbindingDescVerified := userbindingFields[7].Descriptor()
 	// userbinding.DefaultVerified holds the default value on creation for the verified field.
 	userbinding.DefaultVerified = userbindingDescVerified.Default.(bool)
 	userdefaultbindingFields := schema.UserDefaultBinding{}.Fields()

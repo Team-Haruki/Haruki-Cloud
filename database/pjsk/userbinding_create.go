@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 
@@ -26,15 +27,17 @@ func (_c *UserBindingCreate) SetHarukiUserID(v int) *UserBindingCreate {
 	return _c
 }
 
-// SetUserID sets the "user_id" field.
-func (_c *UserBindingCreate) SetUserID(v string) *UserBindingCreate {
-	_c.mutation.SetUserID(v)
+// SetGameAccountID sets the "game_account_id" field.
+func (_c *UserBindingCreate) SetGameAccountID(v int) *UserBindingCreate {
+	_c.mutation.SetGameAccountID(v)
 	return _c
 }
 
-// SetServer sets the "server" field.
-func (_c *UserBindingCreate) SetServer(v string) *UserBindingCreate {
-	_c.mutation.SetServer(v)
+// SetNillableGameAccountID sets the "game_account_id" field if the given value is not nil.
+func (_c *UserBindingCreate) SetNillableGameAccountID(v *int) *UserBindingCreate {
+	if v != nil {
+		_c.SetGameAccountID(*v)
+	}
 	return _c
 }
 
@@ -114,6 +117,11 @@ func (_c *UserBindingCreate) SetID(v int) *UserBindingCreate {
 	return _c
 }
 
+// SetGameAccount sets the "game_account" edge to the GameAccount entity.
+func (_c *UserBindingCreate) SetGameAccount(v *GameAccount) *UserBindingCreate {
+	return _c.SetGameAccountID(v.ID)
+}
+
 // AddDefaultRefIDs adds the "default_refs" edge to the UserDefaultBinding entity by IDs.
 func (_c *UserBindingCreate) AddDefaultRefIDs(ids ...int) *UserBindingCreate {
 	_c.mutation.AddDefaultRefIDs(ids...)
@@ -191,22 +199,6 @@ func (_c *UserBindingCreate) check() error {
 	if _, ok := _c.mutation.HarukiUserID(); !ok {
 		return &ValidationError{Name: "haruki_user_id", err: errors.New(`pjsk: missing required field "UserBinding.haruki_user_id"`)}
 	}
-	if _, ok := _c.mutation.UserID(); !ok {
-		return &ValidationError{Name: "user_id", err: errors.New(`pjsk: missing required field "UserBinding.user_id"`)}
-	}
-	if v, ok := _c.mutation.UserID(); ok {
-		if err := userbinding.UserIDValidator(v); err != nil {
-			return &ValidationError{Name: "user_id", err: fmt.Errorf(`pjsk: validator failed for field "UserBinding.user_id": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.Server(); !ok {
-		return &ValidationError{Name: "server", err: errors.New(`pjsk: missing required field "UserBinding.server"`)}
-	}
-	if v, ok := _c.mutation.Server(); ok {
-		if err := userbinding.ServerValidator(v); err != nil {
-			return &ValidationError{Name: "server", err: fmt.Errorf(`pjsk: validator failed for field "UserBinding.server": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.DisplayOrder(); !ok {
 		return &ValidationError{Name: "display_order", err: errors.New(`pjsk: missing required field "UserBinding.display_order"`)}
 	}
@@ -258,14 +250,6 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 		_spec.SetField(userbinding.FieldHarukiUserID, field.TypeInt, value)
 		_node.HarukiUserID = value
 	}
-	if value, ok := _c.mutation.UserID(); ok {
-		_spec.SetField(userbinding.FieldUserID, field.TypeString, value)
-		_node.UserID = value
-	}
-	if value, ok := _c.mutation.Server(); ok {
-		_spec.SetField(userbinding.FieldServer, field.TypeString, value)
-		_node.Server = value
-	}
 	if value, ok := _c.mutation.DisplayOrder(); ok {
 		_spec.SetField(userbinding.FieldDisplayOrder, field.TypeInt, value)
 		_node.DisplayOrder = value
@@ -285,6 +269,23 @@ func (_c *UserBindingCreate) createSpec() (*UserBinding, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Verified(); ok {
 		_spec.SetField(userbinding.FieldVerified, field.TypeBool, value)
 		_node.Verified = value
+	}
+	if nodes := _c.mutation.GameAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   userbinding.GameAccountTable,
+			Columns: []string{userbinding.GameAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameaccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.GameAccountID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.DefaultRefsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

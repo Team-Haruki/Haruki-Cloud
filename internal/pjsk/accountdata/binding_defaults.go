@@ -43,7 +43,9 @@ func (s *BindingService) clearDefaultByScope(ctx context.Context, platform, plat
 			userdefaultbinding.HarukiUserID(harukiUserID),
 			userdefaultbinding.Server(scope),
 		).
-		WithBinding().
+		WithBinding(func(q *pjskdb.UserBindingQuery) {
+			q.WithGameAccount()
+		}).
 		Only(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
@@ -82,6 +84,7 @@ func (s *BindingService) updateDefault(ctx context.Context, platform, platformUs
 
 	bindings, err := s.pjskDB.UserBinding.Query().
 		Where(userbinding.HarukiUserID(harukiUserID)).
+		WithGameAccount().
 		All(ctx)
 	if err != nil {
 		return nil, err

@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	pjskdb "haruki-cloud/database/pjsk"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -54,26 +55,24 @@ func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 			userdefaultbinding.HarukiUserID(harukiUserID),
 			userdefaultbinding.Server(server),
 		).
-		WithBinding().
+		WithBinding(func(q *pjskdb.UserBindingQuery) {
+			q.WithGameAccount()
+		}).
 		Only(ctx)
 	if err == nil {
 		b := defaultBind.Edges.Binding
 		if b == nil {
 			return nil, ErrNoBinding
 		}
-		bg, err := loadProfileBackground(ctx, r.db, b.Server, b.UserID)
-		if err != nil {
-			return nil, err
-		}
 		return &ResolvedBinding{
 			BindingID:      b.ID,
-			PJSKUserID:     b.UserID,
-			Server:         b.Server,
+			PJSKUserID:     bindingUserID(b),
+			Server:         bindingServer(b),
 			Visible:        b.Visible,
 			SuiteVisible:   b.SuiteVisible,
 			MySekaiVisible: b.MysekaiVisible,
 			Verified:       b.Verified,
-			Bg:             cloneProfileBGSettings(bg),
+			Bg:             resolveBindingProfileBG(b),
 		}, nil
 	}
 	if !pjskdb.IsNotFound(err) {
@@ -84,9 +83,10 @@ func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 	bindings, err := r.db.UserBinding.Query().
 		Where(
 			userbinding.HarukiUserID(harukiUserID),
-			userbinding.Server(server),
+			userbinding.HasGameAccountWith(gameaccount.ServerEQ(server)),
 			userbinding.Visible(true),
 		).
+		WithGameAccount().
 		All(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
@@ -109,20 +109,15 @@ func (r *bindingResolver) Resolve(ctx context.Context, harukiUserID int, server 
 	if b == nil {
 		return nil, ErrNoBinding
 	}
-	bg, err := loadProfileBackground(ctx, r.db, b.Server, b.UserID)
-	if err != nil {
-		return nil, err
-	}
-
 	return &ResolvedBinding{
 		BindingID:      b.ID,
-		PJSKUserID:     b.UserID,
-		Server:         b.Server,
+		PJSKUserID:     bindingUserID(b),
+		Server:         bindingServer(b),
 		Visible:        b.Visible,
 		SuiteVisible:   b.SuiteVisible,
 		MySekaiVisible: b.MysekaiVisible,
 		Verified:       b.Verified,
-		Bg:             cloneProfileBGSettings(bg),
+		Bg:             resolveBindingProfileBG(b),
 	}, nil
 }
 
@@ -132,7 +127,8 @@ func cloneProfileBGSettings(bg *drawing.ProfileBgSettings) *drawing.ProfileBgSet
 	}
 	cloned := *bg
 	if bg.ImgPath != nil {
-		cloned.ImgPath = new(*bg.ImgPath)
+		path := *bg.ImgPath
+		cloned.ImgPath = &path
 	}
 	return &cloned
 }

@@ -4,6 +4,7 @@ package pjsk
 
 import (
 	"fmt"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/userbinding"
 	"strings"
 
@@ -18,10 +19,8 @@ type UserBinding struct {
 	ID int `json:"id,omitempty"`
 	// Reference to users table
 	HarukiUserID int `json:"haruki_user_id,omitempty"`
-	// UserID holds the value of the "user_id" field.
-	UserID string `json:"user_id,omitempty"`
-	// Server holds the value of the "server" field.
-	Server string `json:"server,omitempty"`
+	// Reference to game_accounts table
+	GameAccountID *int `json:"game_account_id,omitempty"`
 	// Persistent binding display order
 	DisplayOrder int `json:"display_order,omitempty"`
 	// Visible holds the value of the "visible" field.
@@ -40,17 +39,30 @@ type UserBinding struct {
 
 // UserBindingEdges holds the relations/edges for other nodes in the graph.
 type UserBindingEdges struct {
+	// GameAccount holds the value of the game_account edge.
+	GameAccount *GameAccount `json:"game_account,omitempty"`
 	// DefaultRefs holds the value of the default_refs edge.
 	DefaultRefs []*UserDefaultBinding `json:"default_refs,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
+}
+
+// GameAccountOrErr returns the GameAccount value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserBindingEdges) GameAccountOrErr() (*GameAccount, error) {
+	if e.GameAccount != nil {
+		return e.GameAccount, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: gameaccount.Label}
+	}
+	return nil, &NotLoadedError{edge: "game_account"}
 }
 
 // DefaultRefsOrErr returns the DefaultRefs value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserBindingEdges) DefaultRefsOrErr() ([]*UserDefaultBinding, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		return e.DefaultRefs, nil
 	}
 	return nil, &NotLoadedError{edge: "default_refs"}
@@ -63,10 +75,8 @@ func (*UserBinding) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case userbinding.FieldVisible, userbinding.FieldSuiteVisible, userbinding.FieldMysekaiVisible, userbinding.FieldVerified:
 			values[i] = new(sql.NullBool)
-		case userbinding.FieldID, userbinding.FieldHarukiUserID, userbinding.FieldDisplayOrder:
+		case userbinding.FieldID, userbinding.FieldHarukiUserID, userbinding.FieldGameAccountID, userbinding.FieldDisplayOrder:
 			values[i] = new(sql.NullInt64)
-		case userbinding.FieldUserID, userbinding.FieldServer:
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -94,17 +104,12 @@ func (_m *UserBinding) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.HarukiUserID = int(value.Int64)
 			}
-		case userbinding.FieldUserID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+		case userbinding.FieldGameAccountID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field game_account_id", values[i])
 			} else if value.Valid {
-				_m.UserID = value.String
-			}
-		case userbinding.FieldServer:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field server", values[i])
-			} else if value.Valid {
-				_m.Server = value.String
+				_m.GameAccountID = new(int)
+				*_m.GameAccountID = int(value.Int64)
 			}
 		case userbinding.FieldDisplayOrder:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -149,6 +154,11 @@ func (_m *UserBinding) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
+// QueryGameAccount queries the "game_account" edge of the UserBinding entity.
+func (_m *UserBinding) QueryGameAccount() *GameAccountQuery {
+	return NewUserBindingClient(_m.config).QueryGameAccount(_m)
+}
+
 // QueryDefaultRefs queries the "default_refs" edge of the UserBinding entity.
 func (_m *UserBinding) QueryDefaultRefs() *UserDefaultBindingQuery {
 	return NewUserBindingClient(_m.config).QueryDefaultRefs(_m)
@@ -180,11 +190,10 @@ func (_m *UserBinding) String() string {
 	builder.WriteString("haruki_user_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.HarukiUserID))
 	builder.WriteString(", ")
-	builder.WriteString("user_id=")
-	builder.WriteString(_m.UserID)
-	builder.WriteString(", ")
-	builder.WriteString("server=")
-	builder.WriteString(_m.Server)
+	if v := _m.GameAccountID; v != nil {
+		builder.WriteString("game_account_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("display_order=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DisplayOrder))

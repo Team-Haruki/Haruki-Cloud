@@ -8,15 +8,15 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
-	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/database/pjsk/userbinding"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func buildBindingList(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDefaultBinding) []BindingListItem {
-	return buildBindingListWithBackgrounds(bindings, defaults, nil)
+	return buildBindingListWithBackgrounds(bindings, defaults)
 }
 
-func buildBindingListWithBackgrounds(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDefaultBinding, bgMap map[string]*drawing.ProfileBgSettings) []BindingListItem {
+func buildBindingListWithBackgrounds(bindings []*pjskdb.UserBinding, defaults []*pjskdb.UserDefaultBinding) []BindingListItem {
 	if len(bindings) == 0 {
 		return nil
 	}
@@ -33,18 +33,20 @@ func buildBindingListWithBackgrounds(bindings []*pjskdb.UserBinding, defaults []
 
 	list := make([]BindingListItem, 0, len(bindings))
 	for _, binding := range bindings {
+		server := bindingServer(binding)
+		userID := bindingUserID(binding)
 		list = append(list, BindingListItem{
 			BindingID:       binding.ID,
 			DisplayOrder:    effectiveBindingDisplayOrder(binding),
-			Server:          binding.Server,
-			UserID:          binding.UserID,
+			Server:          server,
+			UserID:          userID,
 			Visible:         binding.Visible,
 			SuiteVisible:    binding.SuiteVisible,
 			MySekaiVisible:  binding.MysekaiVisible,
 			Verified:        binding.Verified,
-			Bg:              resolveBindingProfileBG(bgMap, binding),
+			Bg:              resolveBindingProfileBG(binding),
 			IsGlobalDefault: binding.ID == globalDefaultID,
-			IsServerDefault: binding.ID == serverDefaultByServer[binding.Server],
+			IsServerDefault: binding.ID == serverDefaultByServer[server],
 		})
 	}
 
@@ -169,7 +171,10 @@ func (s *BindingService) currentBindingEntity(ctx context.Context, platform, pla
 	if err != nil {
 		return nil, err
 	}
-	return s.pjskDB.UserBinding.Get(ctx, resolved.BindingID)
+	return s.pjskDB.UserBinding.Query().
+		Where(userbinding.ID(resolved.BindingID)).
+		WithGameAccount().
+		Only(ctx)
 }
 
 func (s *BindingService) bindingListItemByID(ctx context.Context, platform, platformUserID string, bindingID int) (*BindingListItem, error) {
@@ -240,5 +245,8 @@ func (s *BindingService) currentBindingEntityBySelector(ctx context.Context, pla
 	if err != nil {
 		return nil, err
 	}
-	return s.pjskDB.UserBinding.Get(ctx, resolved.BindingID)
+	return s.pjskDB.UserBinding.Query().
+		Where(userbinding.ID(resolved.BindingID)).
+		WithGameAccount().
+		Only(ctx)
 }

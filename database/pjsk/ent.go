@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/pendingalias"
-	"haruki-cloud/database/pjsk/profilebackground"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -83,9 +83,9 @@ func checkColumn(t, c string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			alias.Table:              alias.ValidColumn,
 			aliasadmin.Table:         aliasadmin.ValidColumn,
+			gameaccount.Table:        gameaccount.ValidColumn,
 			groupalias.Table:         groupalias.ValidColumn,
 			pendingalias.Table:       pendingalias.ValidColumn,
-			profilebackground.Table:  profilebackground.ValidColumn,
 			rejectedalias.Table:      rejectedalias.ValidColumn,
 			userbinding.Table:        userbinding.ValidColumn,
 			userdefaultbinding.Table: userdefaultbinding.ValidColumn,

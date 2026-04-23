@@ -35,6 +35,7 @@ func effectiveBindingListDisplayOrder(item BindingListItem) int {
 func nextBindingDisplayOrderTx(ctx context.Context, tx *pjskdb.Tx, harukiUserID int) (int, error) {
 	bindings, err := tx.UserBinding.Query().
 		Where(userbinding.HarukiUserID(harukiUserID)).
+		WithGameAccount().
 		All(ctx)
 	if err != nil {
 		return 0, err
@@ -52,6 +53,7 @@ func nextBindingDisplayOrderTx(ctx context.Context, tx *pjskdb.Tx, harukiUserID 
 func ensureBindingDisplayOrdersTx(ctx context.Context, tx *pjskdb.Tx, harukiUserID int) error {
 	bindings, err := tx.UserBinding.Query().
 		Where(userbinding.HarukiUserID(harukiUserID)).
+		WithGameAccount().
 		All(ctx)
 	if err != nil {
 		return err

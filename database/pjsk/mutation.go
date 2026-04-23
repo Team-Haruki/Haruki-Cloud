@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/predicate"
-	"haruki-cloud/database/pjsk/profilebackground"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
@@ -36,9 +36,9 @@ const (
 	// Node types.
 	TypeAlias              = "Alias"
 	TypeAliasAdmin         = "AliasAdmin"
+	TypeGameAccount        = "GameAccount"
 	TypeGroupAlias         = "GroupAlias"
 	TypePendingAlias       = "PendingAlias"
-	TypeProfileBackground  = "ProfileBackground"
 	TypeRejectedAlias      = "RejectedAlias"
 	TypeUserBinding        = "UserBinding"
 	TypeUserDefaultBinding = "UserDefaultBinding"
@@ -935,6 +935,561 @@ func (m *AliasAdminMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *AliasAdminMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown AliasAdmin edge %s", name)
+}
+
+// GameAccountMutation represents an operation that mutates the GameAccount nodes in the graph.
+type GameAccountMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *int
+	user_id         *string
+	server          *string
+	bg              **drawing.ProfileBgSettings
+	clearedFields   map[string]struct{}
+	bindings        map[int]struct{}
+	removedbindings map[int]struct{}
+	clearedbindings bool
+	done            bool
+	oldValue        func(context.Context) (*GameAccount, error)
+	predicates      []predicate.GameAccount
+}
+
+var _ ent.Mutation = (*GameAccountMutation)(nil)
+
+// gameaccountOption allows management of the mutation configuration using functional options.
+type gameaccountOption func(*GameAccountMutation)
+
+// newGameAccountMutation creates new mutation for the GameAccount entity.
+func newGameAccountMutation(c config, op Op, opts ...gameaccountOption) *GameAccountMutation {
+	m := &GameAccountMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeGameAccount,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withGameAccountID sets the ID field of the mutation.
+func withGameAccountID(id int) gameaccountOption {
+	return func(m *GameAccountMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *GameAccount
+		)
+		m.oldValue = func(ctx context.Context) (*GameAccount, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().GameAccount.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withGameAccount sets the old GameAccount of the mutation.
+func withGameAccount(node *GameAccount) gameaccountOption {
+	return func(m *GameAccountMutation) {
+		m.oldValue = func(context.Context) (*GameAccount, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m GameAccountMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m GameAccountMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("pjsk: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of GameAccount entities.
+func (m *GameAccountMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *GameAccountMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *GameAccountMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().GameAccount.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *GameAccountMutation) SetUserID(s string) {
+	m.user_id = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *GameAccountMutation) UserID() (r string, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the GameAccount entity.
+// If the GameAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GameAccountMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *GameAccountMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetServer sets the "server" field.
+func (m *GameAccountMutation) SetServer(s string) {
+	m.server = &s
+}
+
+// Server returns the value of the "server" field in the mutation.
+func (m *GameAccountMutation) Server() (r string, exists bool) {
+	v := m.server
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServer returns the old "server" field's value of the GameAccount entity.
+// If the GameAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GameAccountMutation) OldServer(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServer is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServer requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServer: %w", err)
+	}
+	return oldValue.Server, nil
+}
+
+// ResetServer resets all changes to the "server" field.
+func (m *GameAccountMutation) ResetServer() {
+	m.server = nil
+}
+
+// SetBg sets the "bg" field.
+func (m *GameAccountMutation) SetBg(dbs *drawing.ProfileBgSettings) {
+	m.bg = &dbs
+}
+
+// Bg returns the value of the "bg" field in the mutation.
+func (m *GameAccountMutation) Bg() (r *drawing.ProfileBgSettings, exists bool) {
+	v := m.bg
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBg returns the old "bg" field's value of the GameAccount entity.
+// If the GameAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GameAccountMutation) OldBg(ctx context.Context) (v *drawing.ProfileBgSettings, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBg is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBg requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBg: %w", err)
+	}
+	return oldValue.Bg, nil
+}
+
+// ClearBg clears the value of the "bg" field.
+func (m *GameAccountMutation) ClearBg() {
+	m.bg = nil
+	m.clearedFields[gameaccount.FieldBg] = struct{}{}
+}
+
+// BgCleared returns if the "bg" field was cleared in this mutation.
+func (m *GameAccountMutation) BgCleared() bool {
+	_, ok := m.clearedFields[gameaccount.FieldBg]
+	return ok
+}
+
+// ResetBg resets all changes to the "bg" field.
+func (m *GameAccountMutation) ResetBg() {
+	m.bg = nil
+	delete(m.clearedFields, gameaccount.FieldBg)
+}
+
+// AddBindingIDs adds the "bindings" edge to the UserBinding entity by ids.
+func (m *GameAccountMutation) AddBindingIDs(ids ...int) {
+	if m.bindings == nil {
+		m.bindings = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.bindings[ids[i]] = struct{}{}
+	}
+}
+
+// ClearBindings clears the "bindings" edge to the UserBinding entity.
+func (m *GameAccountMutation) ClearBindings() {
+	m.clearedbindings = true
+}
+
+// BindingsCleared reports if the "bindings" edge to the UserBinding entity was cleared.
+func (m *GameAccountMutation) BindingsCleared() bool {
+	return m.clearedbindings
+}
+
+// RemoveBindingIDs removes the "bindings" edge to the UserBinding entity by IDs.
+func (m *GameAccountMutation) RemoveBindingIDs(ids ...int) {
+	if m.removedbindings == nil {
+		m.removedbindings = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.bindings, ids[i])
+		m.removedbindings[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedBindings returns the removed IDs of the "bindings" edge to the UserBinding entity.
+func (m *GameAccountMutation) RemovedBindingsIDs() (ids []int) {
+	for id := range m.removedbindings {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// BindingsIDs returns the "bindings" edge IDs in the mutation.
+func (m *GameAccountMutation) BindingsIDs() (ids []int) {
+	for id := range m.bindings {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetBindings resets all changes to the "bindings" edge.
+func (m *GameAccountMutation) ResetBindings() {
+	m.bindings = nil
+	m.clearedbindings = false
+	m.removedbindings = nil
+}
+
+// Where appends a list predicates to the GameAccountMutation builder.
+func (m *GameAccountMutation) Where(ps ...predicate.GameAccount) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the GameAccountMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *GameAccountMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.GameAccount, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *GameAccountMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *GameAccountMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (GameAccount).
+func (m *GameAccountMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *GameAccountMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.user_id != nil {
+		fields = append(fields, gameaccount.FieldUserID)
+	}
+	if m.server != nil {
+		fields = append(fields, gameaccount.FieldServer)
+	}
+	if m.bg != nil {
+		fields = append(fields, gameaccount.FieldBg)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *GameAccountMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case gameaccount.FieldUserID:
+		return m.UserID()
+	case gameaccount.FieldServer:
+		return m.Server()
+	case gameaccount.FieldBg:
+		return m.Bg()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *GameAccountMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case gameaccount.FieldUserID:
+		return m.OldUserID(ctx)
+	case gameaccount.FieldServer:
+		return m.OldServer(ctx)
+	case gameaccount.FieldBg:
+		return m.OldBg(ctx)
+	}
+	return nil, fmt.Errorf("unknown GameAccount field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *GameAccountMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case gameaccount.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case gameaccount.FieldServer:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServer(v)
+		return nil
+	case gameaccount.FieldBg:
+		v, ok := value.(*drawing.ProfileBgSettings)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBg(v)
+		return nil
+	}
+	return fmt.Errorf("unknown GameAccount field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *GameAccountMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *GameAccountMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *GameAccountMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown GameAccount numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *GameAccountMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(gameaccount.FieldBg) {
+		fields = append(fields, gameaccount.FieldBg)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *GameAccountMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *GameAccountMutation) ClearField(name string) error {
+	switch name {
+	case gameaccount.FieldBg:
+		m.ClearBg()
+		return nil
+	}
+	return fmt.Errorf("unknown GameAccount nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *GameAccountMutation) ResetField(name string) error {
+	switch name {
+	case gameaccount.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case gameaccount.FieldServer:
+		m.ResetServer()
+		return nil
+	case gameaccount.FieldBg:
+		m.ResetBg()
+		return nil
+	}
+	return fmt.Errorf("unknown GameAccount field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *GameAccountMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.bindings != nil {
+		edges = append(edges, gameaccount.EdgeBindings)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *GameAccountMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case gameaccount.EdgeBindings:
+		ids := make([]ent.Value, 0, len(m.bindings))
+		for id := range m.bindings {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *GameAccountMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedbindings != nil {
+		edges = append(edges, gameaccount.EdgeBindings)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *GameAccountMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case gameaccount.EdgeBindings:
+		ids := make([]ent.Value, 0, len(m.removedbindings))
+		for id := range m.removedbindings {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *GameAccountMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedbindings {
+		edges = append(edges, gameaccount.EdgeBindings)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *GameAccountMutation) EdgeCleared(name string) bool {
+	switch name {
+	case gameaccount.EdgeBindings:
+		return m.clearedbindings
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *GameAccountMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown GameAccount unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *GameAccountMutation) ResetEdge(name string) error {
+	switch name {
+	case gameaccount.EdgeBindings:
+		m.ResetBindings()
+		return nil
+	}
+	return fmt.Errorf("unknown GameAccount edge %s", name)
 }
 
 // GroupAliasMutation represents an operation that mutates the GroupAlias nodes in the graph.
@@ -2099,446 +2654,6 @@ func (m *PendingAliasMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown PendingAlias edge %s", name)
 }
 
-// ProfileBackgroundMutation represents an operation that mutates the ProfileBackground nodes in the graph.
-type ProfileBackgroundMutation struct {
-	config
-	op            Op
-	typ           string
-	id            *int
-	server        *string
-	user_id       *string
-	bg            **drawing.ProfileBgSettings
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*ProfileBackground, error)
-	predicates    []predicate.ProfileBackground
-}
-
-var _ ent.Mutation = (*ProfileBackgroundMutation)(nil)
-
-// profilebackgroundOption allows management of the mutation configuration using functional options.
-type profilebackgroundOption func(*ProfileBackgroundMutation)
-
-// newProfileBackgroundMutation creates new mutation for the ProfileBackground entity.
-func newProfileBackgroundMutation(c config, op Op, opts ...profilebackgroundOption) *ProfileBackgroundMutation {
-	m := &ProfileBackgroundMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeProfileBackground,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withProfileBackgroundID sets the ID field of the mutation.
-func withProfileBackgroundID(id int) profilebackgroundOption {
-	return func(m *ProfileBackgroundMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *ProfileBackground
-		)
-		m.oldValue = func(ctx context.Context) (*ProfileBackground, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().ProfileBackground.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withProfileBackground sets the old ProfileBackground of the mutation.
-func withProfileBackground(node *ProfileBackground) profilebackgroundOption {
-	return func(m *ProfileBackgroundMutation) {
-		m.oldValue = func(context.Context) (*ProfileBackground, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m ProfileBackgroundMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m ProfileBackgroundMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("pjsk: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of ProfileBackground entities.
-func (m *ProfileBackgroundMutation) SetID(id int) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *ProfileBackgroundMutation) ID() (id int, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *ProfileBackgroundMutation) IDs(ctx context.Context) ([]int, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []int{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().ProfileBackground.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetServer sets the "server" field.
-func (m *ProfileBackgroundMutation) SetServer(s string) {
-	m.server = &s
-}
-
-// Server returns the value of the "server" field in the mutation.
-func (m *ProfileBackgroundMutation) Server() (r string, exists bool) {
-	v := m.server
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldServer returns the old "server" field's value of the ProfileBackground entity.
-// If the ProfileBackground object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ProfileBackgroundMutation) OldServer(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldServer is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldServer requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldServer: %w", err)
-	}
-	return oldValue.Server, nil
-}
-
-// ResetServer resets all changes to the "server" field.
-func (m *ProfileBackgroundMutation) ResetServer() {
-	m.server = nil
-}
-
-// SetUserID sets the "user_id" field.
-func (m *ProfileBackgroundMutation) SetUserID(s string) {
-	m.user_id = &s
-}
-
-// UserID returns the value of the "user_id" field in the mutation.
-func (m *ProfileBackgroundMutation) UserID() (r string, exists bool) {
-	v := m.user_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUserID returns the old "user_id" field's value of the ProfileBackground entity.
-// If the ProfileBackground object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ProfileBackgroundMutation) OldUserID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUserID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
-	}
-	return oldValue.UserID, nil
-}
-
-// ResetUserID resets all changes to the "user_id" field.
-func (m *ProfileBackgroundMutation) ResetUserID() {
-	m.user_id = nil
-}
-
-// SetBg sets the "bg" field.
-func (m *ProfileBackgroundMutation) SetBg(dbs *drawing.ProfileBgSettings) {
-	m.bg = &dbs
-}
-
-// Bg returns the value of the "bg" field in the mutation.
-func (m *ProfileBackgroundMutation) Bg() (r *drawing.ProfileBgSettings, exists bool) {
-	v := m.bg
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBg returns the old "bg" field's value of the ProfileBackground entity.
-// If the ProfileBackground object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ProfileBackgroundMutation) OldBg(ctx context.Context) (v *drawing.ProfileBgSettings, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBg is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBg requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBg: %w", err)
-	}
-	return oldValue.Bg, nil
-}
-
-// ResetBg resets all changes to the "bg" field.
-func (m *ProfileBackgroundMutation) ResetBg() {
-	m.bg = nil
-}
-
-// Where appends a list predicates to the ProfileBackgroundMutation builder.
-func (m *ProfileBackgroundMutation) Where(ps ...predicate.ProfileBackground) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the ProfileBackgroundMutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *ProfileBackgroundMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.ProfileBackground, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *ProfileBackgroundMutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *ProfileBackgroundMutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (ProfileBackground).
-func (m *ProfileBackgroundMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *ProfileBackgroundMutation) Fields() []string {
-	fields := make([]string, 0, 3)
-	if m.server != nil {
-		fields = append(fields, profilebackground.FieldServer)
-	}
-	if m.user_id != nil {
-		fields = append(fields, profilebackground.FieldUserID)
-	}
-	if m.bg != nil {
-		fields = append(fields, profilebackground.FieldBg)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *ProfileBackgroundMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case profilebackground.FieldServer:
-		return m.Server()
-	case profilebackground.FieldUserID:
-		return m.UserID()
-	case profilebackground.FieldBg:
-		return m.Bg()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *ProfileBackgroundMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case profilebackground.FieldServer:
-		return m.OldServer(ctx)
-	case profilebackground.FieldUserID:
-		return m.OldUserID(ctx)
-	case profilebackground.FieldBg:
-		return m.OldBg(ctx)
-	}
-	return nil, fmt.Errorf("unknown ProfileBackground field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *ProfileBackgroundMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case profilebackground.FieldServer:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetServer(v)
-		return nil
-	case profilebackground.FieldUserID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUserID(v)
-		return nil
-	case profilebackground.FieldBg:
-		v, ok := value.(*drawing.ProfileBgSettings)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBg(v)
-		return nil
-	}
-	return fmt.Errorf("unknown ProfileBackground field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *ProfileBackgroundMutation) AddedFields() []string {
-	return nil
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *ProfileBackgroundMutation) AddedField(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *ProfileBackgroundMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown ProfileBackground numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *ProfileBackgroundMutation) ClearedFields() []string {
-	return nil
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *ProfileBackgroundMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *ProfileBackgroundMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown ProfileBackground nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *ProfileBackgroundMutation) ResetField(name string) error {
-	switch name {
-	case profilebackground.FieldServer:
-		m.ResetServer()
-		return nil
-	case profilebackground.FieldUserID:
-		m.ResetUserID()
-		return nil
-	case profilebackground.FieldBg:
-		m.ResetBg()
-		return nil
-	}
-	return fmt.Errorf("unknown ProfileBackground field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *ProfileBackgroundMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *ProfileBackgroundMutation) AddedIDs(name string) []ent.Value {
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *ProfileBackgroundMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *ProfileBackgroundMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *ProfileBackgroundMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *ProfileBackgroundMutation) EdgeCleared(name string) bool {
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *ProfileBackgroundMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown ProfileBackground unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *ProfileBackgroundMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown ProfileBackground edge %s", name)
-}
-
 // RejectedAliasMutation represents an operation that mutates the RejectedAlias nodes in the graph.
 type RejectedAliasMutation struct {
 	config
@@ -3185,8 +3300,6 @@ type UserBindingMutation struct {
 	id                  *int
 	haruki_user_id      *int
 	addharuki_user_id   *int
-	user_id             *string
-	server              *string
 	display_order       *int
 	adddisplay_order    *int
 	visible             *bool
@@ -3194,6 +3307,8 @@ type UserBindingMutation struct {
 	mysekai_visible     *bool
 	verified            *bool
 	clearedFields       map[string]struct{}
+	game_account        *int
+	clearedgame_account bool
 	default_refs        map[int]struct{}
 	removeddefault_refs map[int]struct{}
 	cleareddefault_refs bool
@@ -3362,76 +3477,53 @@ func (m *UserBindingMutation) ResetHarukiUserID() {
 	m.addharuki_user_id = nil
 }
 
-// SetUserID sets the "user_id" field.
-func (m *UserBindingMutation) SetUserID(s string) {
-	m.user_id = &s
+// SetGameAccountID sets the "game_account_id" field.
+func (m *UserBindingMutation) SetGameAccountID(i int) {
+	m.game_account = &i
 }
 
-// UserID returns the value of the "user_id" field in the mutation.
-func (m *UserBindingMutation) UserID() (r string, exists bool) {
-	v := m.user_id
+// GameAccountID returns the value of the "game_account_id" field in the mutation.
+func (m *UserBindingMutation) GameAccountID() (r int, exists bool) {
+	v := m.game_account
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUserID returns the old "user_id" field's value of the UserBinding entity.
+// OldGameAccountID returns the old "game_account_id" field's value of the UserBinding entity.
 // If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserBindingMutation) OldUserID(ctx context.Context) (v string, err error) {
+func (m *UserBindingMutation) OldGameAccountID(ctx context.Context) (v *int, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+		return v, errors.New("OldGameAccountID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUserID requires an ID field in the mutation")
+		return v, errors.New("OldGameAccountID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+		return v, fmt.Errorf("querying old value for OldGameAccountID: %w", err)
 	}
-	return oldValue.UserID, nil
+	return oldValue.GameAccountID, nil
 }
 
-// ResetUserID resets all changes to the "user_id" field.
-func (m *UserBindingMutation) ResetUserID() {
-	m.user_id = nil
+// ClearGameAccountID clears the value of the "game_account_id" field.
+func (m *UserBindingMutation) ClearGameAccountID() {
+	m.game_account = nil
+	m.clearedFields[userbinding.FieldGameAccountID] = struct{}{}
 }
 
-// SetServer sets the "server" field.
-func (m *UserBindingMutation) SetServer(s string) {
-	m.server = &s
+// GameAccountIDCleared returns if the "game_account_id" field was cleared in this mutation.
+func (m *UserBindingMutation) GameAccountIDCleared() bool {
+	_, ok := m.clearedFields[userbinding.FieldGameAccountID]
+	return ok
 }
 
-// Server returns the value of the "server" field in the mutation.
-func (m *UserBindingMutation) Server() (r string, exists bool) {
-	v := m.server
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldServer returns the old "server" field's value of the UserBinding entity.
-// If the UserBinding object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserBindingMutation) OldServer(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldServer is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldServer requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldServer: %w", err)
-	}
-	return oldValue.Server, nil
-}
-
-// ResetServer resets all changes to the "server" field.
-func (m *UserBindingMutation) ResetServer() {
-	m.server = nil
+// ResetGameAccountID resets all changes to the "game_account_id" field.
+func (m *UserBindingMutation) ResetGameAccountID() {
+	m.game_account = nil
+	delete(m.clearedFields, userbinding.FieldGameAccountID)
 }
 
 // SetDisplayOrder sets the "display_order" field.
@@ -3634,6 +3726,33 @@ func (m *UserBindingMutation) ResetVerified() {
 	m.verified = nil
 }
 
+// ClearGameAccount clears the "game_account" edge to the GameAccount entity.
+func (m *UserBindingMutation) ClearGameAccount() {
+	m.clearedgame_account = true
+	m.clearedFields[userbinding.FieldGameAccountID] = struct{}{}
+}
+
+// GameAccountCleared reports if the "game_account" edge to the GameAccount entity was cleared.
+func (m *UserBindingMutation) GameAccountCleared() bool {
+	return m.GameAccountIDCleared() || m.clearedgame_account
+}
+
+// GameAccountIDs returns the "game_account" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GameAccountID instead. It exists only for internal usage by the builders.
+func (m *UserBindingMutation) GameAccountIDs() (ids []int) {
+	if id := m.game_account; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGameAccount resets all changes to the "game_account" edge.
+func (m *UserBindingMutation) ResetGameAccount() {
+	m.game_account = nil
+	m.clearedgame_account = false
+}
+
 // AddDefaultRefIDs adds the "default_refs" edge to the UserDefaultBinding entity by ids.
 func (m *UserBindingMutation) AddDefaultRefIDs(ids ...int) {
 	if m.default_refs == nil {
@@ -3722,15 +3841,12 @@ func (m *UserBindingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserBindingMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 7)
 	if m.haruki_user_id != nil {
 		fields = append(fields, userbinding.FieldHarukiUserID)
 	}
-	if m.user_id != nil {
-		fields = append(fields, userbinding.FieldUserID)
-	}
-	if m.server != nil {
-		fields = append(fields, userbinding.FieldServer)
+	if m.game_account != nil {
+		fields = append(fields, userbinding.FieldGameAccountID)
 	}
 	if m.display_order != nil {
 		fields = append(fields, userbinding.FieldDisplayOrder)
@@ -3757,10 +3873,8 @@ func (m *UserBindingMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case userbinding.FieldHarukiUserID:
 		return m.HarukiUserID()
-	case userbinding.FieldUserID:
-		return m.UserID()
-	case userbinding.FieldServer:
-		return m.Server()
+	case userbinding.FieldGameAccountID:
+		return m.GameAccountID()
 	case userbinding.FieldDisplayOrder:
 		return m.DisplayOrder()
 	case userbinding.FieldVisible:
@@ -3782,10 +3896,8 @@ func (m *UserBindingMutation) OldField(ctx context.Context, name string) (ent.Va
 	switch name {
 	case userbinding.FieldHarukiUserID:
 		return m.OldHarukiUserID(ctx)
-	case userbinding.FieldUserID:
-		return m.OldUserID(ctx)
-	case userbinding.FieldServer:
-		return m.OldServer(ctx)
+	case userbinding.FieldGameAccountID:
+		return m.OldGameAccountID(ctx)
 	case userbinding.FieldDisplayOrder:
 		return m.OldDisplayOrder(ctx)
 	case userbinding.FieldVisible:
@@ -3812,19 +3924,12 @@ func (m *UserBindingMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetHarukiUserID(v)
 		return nil
-	case userbinding.FieldUserID:
-		v, ok := value.(string)
+	case userbinding.FieldGameAccountID:
+		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetUserID(v)
-		return nil
-	case userbinding.FieldServer:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetServer(v)
+		m.SetGameAccountID(v)
 		return nil
 	case userbinding.FieldDisplayOrder:
 		v, ok := value.(int)
@@ -3917,7 +4022,11 @@ func (m *UserBindingMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserBindingMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(userbinding.FieldGameAccountID) {
+		fields = append(fields, userbinding.FieldGameAccountID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -3930,6 +4039,11 @@ func (m *UserBindingMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserBindingMutation) ClearField(name string) error {
+	switch name {
+	case userbinding.FieldGameAccountID:
+		m.ClearGameAccountID()
+		return nil
+	}
 	return fmt.Errorf("unknown UserBinding nullable field %s", name)
 }
 
@@ -3940,11 +4054,8 @@ func (m *UserBindingMutation) ResetField(name string) error {
 	case userbinding.FieldHarukiUserID:
 		m.ResetHarukiUserID()
 		return nil
-	case userbinding.FieldUserID:
-		m.ResetUserID()
-		return nil
-	case userbinding.FieldServer:
-		m.ResetServer()
+	case userbinding.FieldGameAccountID:
+		m.ResetGameAccountID()
 		return nil
 	case userbinding.FieldDisplayOrder:
 		m.ResetDisplayOrder()
@@ -3967,7 +4078,10 @@ func (m *UserBindingMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserBindingMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.game_account != nil {
+		edges = append(edges, userbinding.EdgeGameAccount)
+	}
 	if m.default_refs != nil {
 		edges = append(edges, userbinding.EdgeDefaultRefs)
 	}
@@ -3978,6 +4092,10 @@ func (m *UserBindingMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *UserBindingMutation) AddedIDs(name string) []ent.Value {
 	switch name {
+	case userbinding.EdgeGameAccount:
+		if id := m.game_account; id != nil {
+			return []ent.Value{*id}
+		}
 	case userbinding.EdgeDefaultRefs:
 		ids := make([]ent.Value, 0, len(m.default_refs))
 		for id := range m.default_refs {
@@ -3990,7 +4108,7 @@ func (m *UserBindingMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserBindingMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removeddefault_refs != nil {
 		edges = append(edges, userbinding.EdgeDefaultRefs)
 	}
@@ -4013,7 +4131,10 @@ func (m *UserBindingMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserBindingMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.clearedgame_account {
+		edges = append(edges, userbinding.EdgeGameAccount)
+	}
 	if m.cleareddefault_refs {
 		edges = append(edges, userbinding.EdgeDefaultRefs)
 	}
@@ -4024,6 +4145,8 @@ func (m *UserBindingMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *UserBindingMutation) EdgeCleared(name string) bool {
 	switch name {
+	case userbinding.EdgeGameAccount:
+		return m.clearedgame_account
 	case userbinding.EdgeDefaultRefs:
 		return m.cleareddefault_refs
 	}
@@ -4034,6 +4157,9 @@ func (m *UserBindingMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *UserBindingMutation) ClearEdge(name string) error {
 	switch name {
+	case userbinding.EdgeGameAccount:
+		m.ClearGameAccount()
+		return nil
 	}
 	return fmt.Errorf("unknown UserBinding unique edge %s", name)
 }
@@ -4042,6 +4168,9 @@ func (m *UserBindingMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *UserBindingMutation) ResetEdge(name string) error {
 	switch name {
+	case userbinding.EdgeGameAccount:
+		m.ResetGameAccount()
+		return nil
 	case userbinding.EdgeDefaultRefs:
 		m.ResetDefaultRefs()
 		return nil

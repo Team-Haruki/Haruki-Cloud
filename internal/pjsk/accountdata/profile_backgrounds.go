@@ -5,27 +5,52 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
-	"haruki-cloud/database/pjsk/profilebackground"
+	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
-func profileBackgroundKey(server, userID string) string {
-	return strings.TrimSpace(strings.ToLower(server)) + "\x00" + strings.TrimSpace(userID)
-}
-
-func resolveBindingProfileBG(bgMap map[string]*drawing.ProfileBgSettings, binding *pjskdb.UserBinding) *drawing.ProfileBgSettings {
+func bindingGameAccount(binding *pjskdb.UserBinding) *pjskdb.GameAccount {
 	if binding == nil {
 		return nil
 	}
-	if bgMap != nil {
-		if bg := bgMap[profileBackgroundKey(binding.Server, binding.UserID)]; bg != nil {
-			if !hasCustomProfileBGImage(bg) {
-				return nil
-			}
-			return cloneProfileBGSettings(bg)
-		}
+	return binding.Edges.GameAccount
+}
+
+func bindingGameAccountID(binding *pjskdb.UserBinding) int {
+	if binding == nil {
+		return 0
 	}
-	return nil
+	if binding.GameAccountID != nil {
+		return *binding.GameAccountID
+	}
+	if account := bindingGameAccount(binding); account != nil {
+		return account.ID
+	}
+	return 0
+}
+
+func bindingServer(binding *pjskdb.UserBinding) string {
+	account := bindingGameAccount(binding)
+	if account == nil {
+		return ""
+	}
+	return strings.TrimSpace(strings.ToLower(account.Server))
+}
+
+func bindingUserID(binding *pjskdb.UserBinding) string {
+	account := bindingGameAccount(binding)
+	if account == nil {
+		return ""
+	}
+	return strings.TrimSpace(account.UserID)
+}
+
+func resolveBindingProfileBG(binding *pjskdb.UserBinding) *drawing.ProfileBgSettings {
+	account := bindingGameAccount(binding)
+	if account == nil || !hasCustomProfileBGImage(account.Bg) {
+		return nil
+	}
+	return cloneProfileBGSettings(account.Bg)
 }
 
 func hasCustomProfileBGImage(bg *drawing.ProfileBgSettings) bool {
@@ -65,15 +90,12 @@ func clearProfileBGImagePath(current *drawing.ProfileBgSettings) *drawing.Profil
 	return cleared
 }
 
-func loadProfileBackground(ctx context.Context, db *pjskdb.Client, server, userID string) (*drawing.ProfileBgSettings, error) {
-	if db == nil {
+func loadProfileBackground(ctx context.Context, db *pjskdb.Client, gameAccountID int) (*drawing.ProfileBgSettings, error) {
+	if db == nil || gameAccountID <= 0 {
 		return nil, nil
 	}
-	row, err := db.ProfileBackground.Query().
-		Where(
-			profilebackground.ServerEQ(strings.TrimSpace(strings.ToLower(server))),
-			profilebackground.UserIDEQ(strings.TrimSpace(userID)),
-		).
+	row, err := db.GameAccount.Query().
+		Where(gameaccount.IDEQ(gameAccountID)).
 		Only(ctx)
 	if err != nil {
 		if pjskdb.IsNotFound(err) {
@@ -84,104 +106,25 @@ func loadProfileBackground(ctx context.Context, db *pjskdb.Client, server, userI
 	return cloneProfileBGSettings(row.Bg), nil
 }
 
-func loadProfileBackgroundMap(ctx context.Context, db *pjskdb.Client, bindings []*pjskdb.UserBinding) (map[string]*drawing.ProfileBgSettings, error) {
-	if db == nil || len(bindings) == 0 {
-		return nil, nil
-	}
-
-	serverSet := make(map[string]struct{}, len(bindings))
-	userIDSet := make(map[string]struct{}, len(bindings))
-	bindingKeys := make(map[string]struct{}, len(bindings))
-	for _, binding := range bindings {
-		if binding == nil {
-			continue
-		}
-		server := strings.TrimSpace(strings.ToLower(binding.Server))
-		userID := strings.TrimSpace(binding.UserID)
-		if server == "" || userID == "" {
-			continue
-		}
-		serverSet[server] = struct{}{}
-		userIDSet[userID] = struct{}{}
-		bindingKeys[profileBackgroundKey(server, userID)] = struct{}{}
-	}
-	if len(bindingKeys) == 0 {
-		return nil, nil
-	}
-
-	servers := make([]string, 0, len(serverSet))
-	for server := range serverSet {
-		servers = append(servers, server)
-	}
-	userIDs := make([]string, 0, len(userIDSet))
-	for userID := range userIDSet {
-		userIDs = append(userIDs, userID)
-	}
-
-	rows, err := db.ProfileBackground.Query().
-		Where(
-			profilebackground.ServerIn(servers...),
-			profilebackground.UserIDIn(userIDs...),
-		).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string]*drawing.ProfileBgSettings, len(rows))
-	for _, row := range rows {
-		if row == nil {
-			continue
-		}
-		key := profileBackgroundKey(row.Server, row.UserID)
-		if _, ok := bindingKeys[key]; !ok {
-			continue
-		}
-		result[key] = cloneProfileBGSettings(row.Bg)
-	}
-	return result, nil
-}
-
-func upsertProfileBackground(ctx context.Context, db *pjskdb.Client, server, userID string, settings *drawing.ProfileBgSettings) error {
-	if db == nil || settings == nil {
+func upsertProfileBackground(ctx context.Context, db *pjskdb.Client, gameAccountID int, settings *drawing.ProfileBgSettings) error {
+	if db == nil || gameAccountID <= 0 || settings == nil {
 		return nil
 	}
-
-	server = strings.TrimSpace(strings.ToLower(server))
-	userID = strings.TrimSpace(userID)
-	existing, err := db.ProfileBackground.Query().
-		Where(
-			profilebackground.ServerEQ(server),
-			profilebackground.UserIDEQ(userID),
-		).
-		Only(ctx)
-	switch {
-	case err == nil:
-		_, err = db.ProfileBackground.UpdateOneID(existing.ID).
-			SetBg(cloneProfileBGSettings(settings)).
-			Save(ctx)
-		return err
-	case pjskdb.IsNotFound(err):
-		_, err = db.ProfileBackground.Create().
-			SetServer(server).
-			SetUserID(userID).
-			SetBg(cloneProfileBGSettings(settings)).
-			Save(ctx)
-		return err
-	default:
-		return err
-	}
+	_, err := db.GameAccount.UpdateOneID(gameAccountID).
+		SetBg(cloneProfileBGSettings(settings)).
+		Save(ctx)
+	return err
 }
 
-func deleteProfileBackground(ctx context.Context, db *pjskdb.Client, server, userID string) error {
-	if db == nil {
+func deleteProfileBackground(ctx context.Context, db *pjskdb.Client, gameAccountID int) error {
+	if db == nil || gameAccountID <= 0 {
 		return nil
 	}
-	_, err := db.ProfileBackground.Delete().
-		Where(
-			profilebackground.ServerEQ(strings.TrimSpace(strings.ToLower(server))),
-			profilebackground.UserIDEQ(strings.TrimSpace(userID)),
-		).
-		Exec(ctx)
+	_, err := db.GameAccount.UpdateOneID(gameAccountID).
+		ClearBg().
+		Save(ctx)
+	if pjskdb.IsNotFound(err) {
+		return nil
+	}
 	return err
 }

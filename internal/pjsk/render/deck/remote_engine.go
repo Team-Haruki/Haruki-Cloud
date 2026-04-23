@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -145,7 +146,7 @@ func (r *RemoteDeckRecommender) acquireExecution() (*remoteExecution, error) {
 		return nil, fmt.Errorf("deck recommend service is not configured")
 	}
 
-	lease, err := r.pool.Acquire(nil)
+	lease, err := r.pool.Acquire(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("deck-service upstream is unavailable: %w", err)
 	}

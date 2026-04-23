@@ -459,30 +459,6 @@ func missingDeckWorldBloomChapterError(q *deck.AutoQuery, eventID int) error {
 	}
 }
 
-func resolveDeckWorldBloomEventByTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn int) (*sekaidb.Event, error) {
-	if turn <= 0 {
-		return nil, fmt.Errorf("无效的 WL 活动序号: %d", turn)
-	}
-	events, err := queryDeckEvents(ctx, app, region)
-	if err != nil {
-		return nil, fmt.Errorf("query deck world bloom events failed: %w", err)
-	}
-	worldBloomEvents := make([]*sekaidb.Event, 0, len(events))
-	for _, eventInfo := range events {
-		if eventInfo == nil || !strings.EqualFold(eventInfo.EventType, "world_bloom") {
-			continue
-		}
-		worldBloomEvents = append(worldBloomEvents, eventInfo)
-	}
-	if len(worldBloomEvents) == 0 {
-		return nil, fmt.Errorf("当前没有可用的 WL 活动")
-	}
-	if turn > len(worldBloomEvents) {
-		return nil, fmt.Errorf("当前仅有 %d 个 WL 活动，无法解析 wl%d", len(worldBloomEvents), turn)
-	}
-	return worldBloomEvents[turn-1], nil
-}
-
 func resolveDeckWorldBloomEventByTurnSelection(ctx context.Context, app *renderapp.App, region renderregion.Value, q *deck.AutoQuery) (*sekaidb.Event, error) {
 	if q == nil || q.WorldBloomEventTurn == nil || *q.WorldBloomEventTurn <= 0 {
 		return nil, fmt.Errorf("无效的 WL 活动序号")

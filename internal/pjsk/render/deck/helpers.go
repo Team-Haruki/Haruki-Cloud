@@ -10,7 +10,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
-	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 // Option extractors
@@ -419,17 +418,4 @@ func toInterfaceMap(values map[string]float64) map[string]any {
 
 func float64Ptr(value float64) *float64 {
 	return &value
-}
-
-// Card helpers
-
-func isAfterTraining(userCard snapshot.RawUserCard) bool {
-	switch strings.ToLower(strings.TrimSpace(userCard.DefaultImage)) {
-	case "special_training":
-		return true
-	case "normal":
-		return false
-	default:
-		return strings.EqualFold(userCard.SpecialTrainingStatus, "done")
-	}
 }

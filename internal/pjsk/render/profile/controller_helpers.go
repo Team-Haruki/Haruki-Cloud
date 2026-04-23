@@ -159,28 +159,6 @@ func (c *Controller) buildLeaderImagePathFromSource(source DataSource, cardID in
 	return fallback
 }
 
-func (c *Controller) buildProfileImagePathFromSource(
-	source DataSource,
-	profileCardID int,
-	profileAfterTraining bool,
-	leaderCardID int,
-	leaderAfterTraining bool,
-	region renderregion.Value,
-) string {
-	helper := c.assets
-	fallback := profileUnknownImagePath(helper)
-
-	if path := c.buildLeaderImagePathFromSource(source, profileCardID, profileAfterTraining, region); path != fallback {
-		return path
-	}
-	if profileCardID != leaderCardID {
-		if path := c.buildLeaderImagePathFromSource(source, leaderCardID, leaderAfterTraining, region); path != fallback {
-			return path
-		}
-	}
-	return fallback
-}
-
 func profileUnknownImagePath(helper *assets.AssetHelper) string {
 	return assets.ResolveProfilePlaceholderPath(helper)
 }

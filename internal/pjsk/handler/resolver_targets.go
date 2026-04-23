@@ -67,20 +67,6 @@ func resolveGameTarget(ctx context.Context, p userQueryParams, region string, re
 	}
 }
 
-// resolveGameUID resolves a game UID from userQueryParams using the identity and
-// binding layers in the renderapp. For "at_user" mode the caller's visibility
-// is checked; if the target has hidden their profile an error is returned.
-//
-// Returns (harukiUserID, pjskUserID, visible, error).
-// harukiUserID is 0 and visible is true when the mode is "uid".
-func resolveGameUID(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (int, string, bool, error) {
-	target, err := resolveGameTarget(ctx, p, region, regionExplicit, app)
-	if err != nil {
-		return 0, "", false, err
-	}
-	return target.HarukiUserID, target.PJSKUserID, target.Visible, nil
-}
-
 // resolveRegionFromDefaultBinding resolves the region for a command where the
 // user did not provide an explicit region prefix or -r flag. It looks up the
 // user's global default binding (server = "default") and returns the server of

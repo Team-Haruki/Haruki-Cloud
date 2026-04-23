@@ -8,7 +8,6 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -175,35 +174,6 @@ func (b *Builder) buildCategories(musicID int) []string {
 		return nil
 	}
 	return slices.Clone(tags)
-}
-
-func (b *Builder) buildMusicAliases(music *masterdata.Music) []string {
-	if music == nil {
-		return nil
-	}
-	var aliases []string
-	if localized, err := b.source.GetMusicLocalizedTitles(music.ID); err == nil {
-		for _, title := range localized {
-			title = strings.TrimSpace(title)
-			if title == "" || common.ContainsString(aliases, title) {
-				continue
-			}
-			aliases = append(aliases, title)
-		}
-	}
-	if pronunciation := strings.TrimSpace(music.Pronunciation); pronunciation != "" && !common.ContainsString(aliases, pronunciation) {
-		aliases = append(aliases, pronunciation)
-	}
-	if tags, err := b.source.GetMusicTags(music.ID); err == nil {
-		for _, tag := range tags {
-			tag = strings.TrimSpace(tag)
-			if tag == "" || common.ContainsString(aliases, tag) {
-				continue
-			}
-			aliases = append(aliases, tag)
-		}
-	}
-	return aliases
 }
 
 func (b *Builder) buildLimitedTimes(musicID int, region renderregion.Value) [][]int64 {

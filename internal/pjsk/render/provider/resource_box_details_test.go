@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,7 +20,7 @@ func TestLocalEducationProviderLoadsStandaloneResourceBoxDetails(t *testing.T) {
 	]`)
 
 	provider := &localEducationProvider{store: newLocalStore(root)}
-	box := provider.GetResourceBoxByPurpose(nil, "challenge_live_high_score", 1)
+	box := provider.GetResourceBoxByPurpose(context.TODO(), "challenge_live_high_score", 1)
 	if box == nil {
 		t.Fatal("expected resource box")
 	}
@@ -30,7 +31,7 @@ func TestLocalEducationProviderLoadsStandaloneResourceBoxDetails(t *testing.T) {
 		t.Fatalf("unexpected first detail: %+v", got)
 	}
 
-	shopBox := provider.GetResourceBoxByPurpose(nil, "shop_item", 2)
+	shopBox := provider.GetResourceBoxByPurpose(context.TODO(), "shop_item", 2)
 	if shopBox == nil || len(shopBox.Details) != 1 {
 		t.Fatalf("expected shop item detail, got %+v", shopBox)
 	}
@@ -58,7 +59,7 @@ func TestLocalEducationProviderLoadsCompactResourceBoxDetailsFallback(t *testing
 	}`)
 
 	provider := &localEducationProvider{store: newLocalStore(root)}
-	box := provider.GetResourceBoxByPurpose(nil, "challenge_live_high_score", 4)
+	box := provider.GetResourceBoxByPurpose(context.TODO(), "challenge_live_high_score", 4)
 	if box == nil {
 		t.Fatal("expected compact resource box")
 	}

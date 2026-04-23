@@ -27,10 +27,6 @@ func isMusicAccessibleAt(musicInfo *masterdata.Music, now int64, allowUnreleased
 	return allowUnreleased || musicInfo.PublishedAt <= now
 }
 
-func ensureVisibleMusic(musicInfo *masterdata.Music, now int64, fallback any) (*masterdata.Music, error) {
-	return ensureAccessibleMusic(musicInfo, now, fallback, false)
-}
-
 func ensureAccessibleMusic(musicInfo *masterdata.Music, now int64, fallback any, allowUnreleased bool) (*masterdata.Music, error) {
 	if isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
 		return musicInfo, nil
@@ -56,10 +52,6 @@ func ensureAccessibleMusic(musicInfo *masterdata.Music, now int64, fallback any,
 	return nil, fmt.Errorf("music not found")
 }
 
-func filterVisibleMusics(items []*masterdata.Music, now int64) []*masterdata.Music {
-	return filterAccessibleMusics(items, now, false)
-}
-
 func filterAccessibleMusics(items []*masterdata.Music, now int64, allowUnreleased bool) []*masterdata.Music {
 	if len(items) == 0 {
 		return nil
@@ -72,10 +64,6 @@ func filterAccessibleMusics(items []*masterdata.Music, now int64, allowUnrelease
 		filtered = append(filtered, item)
 	}
 	return filtered
-}
-
-func visibleMusicsSortedByPublishedAt(source DataSource, now int64) []*masterdata.Music {
-	return accessibleMusicsSortedByPublishedAt(source, now, false)
 }
 
 func accessibleMusicsSortedByPublishedAt(source DataSource, now int64, allowUnreleased bool) []*masterdata.Music {

@@ -7,9 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
-
-	pjskdb "haruki-cloud/database/pjsk"
 )
 
 // CleanupOrphanedFiles walks the profile background directory and removes any
@@ -61,47 +58,3 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 	return deleted, nil
 }
 
-// profileBGCleaner queries the database for all active background image paths
-// and removes any orphaned files from the profile background directory.
-// It is stateless — call Run on whatever schedule suits the deployment
-// (e.g. time.Ticker, cron, startup hook).
-type profileBGCleaner struct {
-	store *LocalProfileBGStore
-	db    *pjskdb.Client
-}
-
-// newProfileBGCleaner returns a new profileBGCleaner.
-// Returns nil if either argument is nil.
-func newProfileBGCleaner(store *LocalProfileBGStore, db *pjskdb.Client) *profileBGCleaner {
-	if store == nil || db == nil {
-		return nil
-	}
-	return &profileBGCleaner{store: store, db: db}
-}
-
-// Run queries all active background paths from the database, then deletes any
-// files in the background directory that are no longer referenced.
-// Returns the number of deleted files and any non-fatal walk error.
-func (c *profileBGCleaner) Run(ctx context.Context) (int, error) {
-	if c == nil {
-		return 0, nil
-	}
-
-	rows, err := c.db.GameAccount.Query().
-		All(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("profile bg cleanup: query game accounts: %w", err)
-	}
-
-	active := make(map[string]bool, len(rows))
-	for _, row := range rows {
-		if row.Bg != nil && row.Bg.ImgPath != nil {
-			p := filepath.ToSlash(strings.TrimSpace(*row.Bg.ImgPath))
-			if p != "" {
-				active[p] = true
-			}
-		}
-	}
-
-	return c.store.CleanupOrphanedFiles(ctx, active)
-}

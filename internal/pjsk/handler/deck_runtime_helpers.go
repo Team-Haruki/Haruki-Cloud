@@ -110,10 +110,6 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 	return detail, snapshot, region, resp, nil
 }
 
-func buildDeckDetailedProfileForTarget(rc *RequestContext, target ResolvedGameTarget, region string, snapshot rendersnapshot.Snapshot) *drawing.DetailedProfileCardRequest {
-	return buildDeckDetailedProfileForTargetWithResponse(rc, target, region, snapshot, resolveDeckPublicProfileForTarget(rc, target, region))
-}
-
 func resolveDeckPublicProfileForTarget(rc *RequestContext, target ResolvedGameTarget, region string) *sekaiapi.GetAnotherProfileResponse {
 	if rc == nil || rc.App == nil || rc.App.SekaiAPI == nil {
 		return nil

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -16,26 +15,6 @@ func normalizeDifficulty(value string) string {
 		return "master"
 	}
 	return diff
-}
-
-func regionToLocation(region renderregion.Value) *time.Location {
-	switch region {
-	case renderregion.JP, renderregion.KR:
-		return time.FixedZone("UTC+9", 9*3600)
-	case renderregion.CN, renderregion.TW:
-		return time.FixedZone("UTC+8", 8*3600)
-	case renderregion.EN:
-		return time.UTC
-	default:
-		return time.FixedZone("UTC+9", 9*3600)
-	}
-}
-
-func formatTimestamp(ts int64, location *time.Location) string {
-	if location == nil {
-		location = time.UTC
-	}
-	return time.UnixMilli(ts).In(location).Format("2006-01-02 15:04")
 }
 
 var (

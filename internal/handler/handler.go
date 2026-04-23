@@ -230,7 +230,7 @@ func shouldReplaceRegisteredHandler(existing, incoming CommandHandler) bool {
 
 func normalizeCommandKey(command string) string {
 	var normalized []rune
-	for _, r := range []rune(command) {
+	for _, r := range command {
 		if IsCommandSeg(r) {
 			continue
 		}

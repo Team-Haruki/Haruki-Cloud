@@ -1,6 +1,7 @@
 package music
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -207,7 +208,7 @@ func TestBuildMusicProgressRequestFromSnapshotUsesCompactToolboxResults(t *testi
 		},
 	}
 
-	snap, err := snapshot.NewDefaultSnapshotFactory(nil, nil).Build(nil, snapshot.BuildInput{
+	snap, err := snapshot.NewDefaultSnapshotFactory(nil, nil).Build(context.TODO(), snapshot.BuildInput{
 		Region: renderregion.CN,
 		Source: "toolbox",
 		SuiteJSON: []byte(`{

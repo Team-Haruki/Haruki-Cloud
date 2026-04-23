@@ -1,13 +1,14 @@
 package snapshot
 
 import (
+	"context"
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 func TestSnapshotFactoryBuildParsesMusicResultsFromUserMusics(t *testing.T) {
-	snapshot, err := NewDefaultSnapshotFactory(nil, nil).Build(nil, BuildInput{
+	snapshot, err := NewDefaultSnapshotFactory(nil, nil).Build(context.TODO(), BuildInput{
 		Region: renderregion.CN,
 		Source: "toolbox",
 		SuiteJSON: []byte(`{
@@ -74,7 +75,7 @@ func TestSnapshotFactoryBuildParsesCompactUserMusicResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			snapshot, err := NewDefaultSnapshotFactory(nil, nil).Build(nil, BuildInput{
+			snapshot, err := NewDefaultSnapshotFactory(nil, nil).Build(context.TODO(), BuildInput{
 				Region: renderregion.CN,
 				Source: "toolbox",
 				SuiteJSON: []byte(`{

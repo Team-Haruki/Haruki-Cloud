@@ -469,9 +469,7 @@ func (s *bridgeMusicSource) GetMusicLocalizedTitles(int) ([]string, error) { ret
 func (s *bridgeMusicSource) GetMusicDifficulties(musicID int) ([]*masterdata.MusicDifficulty, error) {
 	items := s.difficulties[musicID]
 	out := make([]*masterdata.MusicDifficulty, 0, len(items))
-	for _, item := range items {
-		out = append(out, item)
-	}
+	out = append(out, items...)
 	return out, nil
 }
 

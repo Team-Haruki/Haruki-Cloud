@@ -24,22 +24,6 @@ func (c *Controller) currentSnapshot() snapshot.Snapshot {
 	return c.snapshot
 }
 
-func (c *Controller) detailedProfile(region renderregion.Value) drawing.DetailedProfileCardRequest {
-	if snap := c.currentSnapshot(); snap != nil {
-		if profile := snap.DetailedProfile(region); profile != nil {
-			return *profile
-		}
-	}
-	return c.buildPlaceholderProfile(region)
-}
-
-func (c *Controller) resolveDetailedProfile(override *drawing.DetailedProfileCardRequest, region renderregion.Value) drawing.DetailedProfileCardRequest {
-	if override != nil {
-		return *override
-	}
-	return c.detailedProfile(region)
-}
-
 func (c *Controller) resolveMusicListProfile(override *drawing.DetailedProfileCardRequest, region renderregion.Value) *drawing.DetailedProfileCardRequest {
 	if override != nil {
 		return new(*override)

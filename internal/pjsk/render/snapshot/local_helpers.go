@@ -4,7 +4,6 @@ import (
 	"context"
 	json "github.com/bytedance/sonic"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
@@ -136,19 +135,6 @@ func fallbackLeaderImagePath(assetHelper *assets.AssetHelper) string {
 	return assets.ResolveProfilePlaceholderPath(assetHelper)
 }
 
-func makeRelativeAsset(assetHelper *assets.AssetHelper, target string) string {
-	if assetHelper == nil {
-		return filepath.ToSlash(filepath.Clean(target))
-	}
-	for _, root := range assetHelper.Roots() {
-		relative := assets.MakeRelative(root, target)
-		if relative != target {
-			return relative
-		}
-	}
-	return filepath.ToSlash(filepath.Clean(target))
-}
-
 func buildUserCardEntries(cards []RawUserCard) []any {
 	seen := make(map[int]struct{}, len(cards))
 	entries := make([]any, 0, len(cards))
@@ -257,20 +243,6 @@ func ChallengeLiveDeckCardIDs(deck *RawChallengeLiveDeck) ([]int, bool) {
 		}
 	}
 	return cards, true
-}
-
-func isAfterTraining(cardInfo *RawUserCard) bool {
-	if cardInfo == nil {
-		return false
-	}
-	switch strings.ToLower(strings.TrimSpace(cardInfo.DefaultImage)) {
-	case "special_training":
-		return true
-	case "normal":
-		return false
-	default:
-		return strings.EqualFold(cardInfo.SpecialTrainingStatus, "done")
-	}
 }
 
 func leaderCardUsesTrainedArt(cardInfo *RawUserCard) bool {

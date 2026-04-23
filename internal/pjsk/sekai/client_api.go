@@ -43,8 +43,11 @@ func NewSekaiAPIClient(cfg *config.SekaiAPIConfig) *HarukiSekaiAPIClient {
 
 // authReq returns a pre-configured request with the token header set.
 func (c *HarukiSekaiAPIClient) authReq() *resty.Request {
+	if c == nil {
+		return newRestyClient().R()
+	}
 	request := c.http.R()
-	if c != nil && c.config != nil && c.config.Token != "" {
+	if c.config != nil && c.config.Token != "" {
 		request.SetHeader(tokenHeader, c.config.Token)
 	}
 	return request

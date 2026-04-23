@@ -208,28 +208,6 @@ func normalizeRenderCacheUserID(userID string) string {
 	return trimmed
 }
 
-func deleteKeyAt(root any, path ...string) {
-	if len(path) == 0 {
-		return
-	}
-
-	parent := mapAt(root, path[:len(path)-1]...)
-	if parent == nil {
-		return
-	}
-	delete(parent, path[len(path)-1])
-}
-
-func deleteDataSourceUpdateTimes(root any, path ...string) {
-	node := mapAt(root, path...)
-	if node == nil {
-		return
-	}
-	for _, item := range sliceAt(node, "data_sources") {
-		delete(mapAt(item), "update_time")
-	}
-}
-
 func valueAt(root any, path ...string) any {
 	current := root
 	for _, key := range path {

@@ -15,7 +15,7 @@ func (Alias) Fields() []ent.Field {
 		field.Int64("id"),
 		field.String("alias_type").MaxLen(20),
 		field.Int("alias_type_id"),
-		field.String("alias").MaxLen(100),
+		field.String("alias").MaxLen(500),
 	}
 }
 

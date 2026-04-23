@@ -65,7 +65,7 @@ func resolveMySekaiRenderContext(
 
 	platform, platformUserID := platformCredentials(params)
 	if snap := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, true); snap != nil {
-		result.Controller = app.MySekai.WithSnapshot(snap)
+		result.Controller = result.Controller.WithSnapshot(snap)
 		result.Profile = forceMySekaiProfileBindingID(snap.ProfileCard(renderregion.Normalize(regionStr)), target, regionStr)
 		if result.Profile == nil {
 			result.Profile = forceMySekaiProfileBindingID(buildPublicProfileCardForTarget(ctx, target, regionStr, platform, platformUserID, app), target, regionStr)
@@ -75,7 +75,7 @@ func resolveMySekaiRenderContext(
 
 	result.Profile = forceMySekaiProfileBindingID(buildPublicProfileCardForTarget(ctx, target, regionStr, platform, platformUserID, app), target, regionStr)
 	if data := resolveTargetMySekaiPayload(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID); len(data) > 0 {
-		result.Controller = app.MySekai.WithMySekaiData(data)
+		result.Controller = result.Controller.WithMySekaiData(data)
 	}
 	return result, nil
 }

@@ -1,0 +1,307 @@
+package music
+
+import (
+	"errors"
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/releasecheck"
+)
+
+type musicAmbiguousQueryError struct {
+	sourceName string
+	candidates []musicQueryCandidate
+}
+
+type musicQueryCandidate struct {
+	ID    int
+	Title string
+}
+
+func (e *musicAmbiguousQueryError) Error() string {
+	parts := make([]string, 0, len(e.candidates))
+	for _, item := range e.candidates {
+		parts = append(parts, fmt.Sprintf("music%d/%s", item.ID, item.Title))
+	}
+	return fmt.Sprintf("%s匹配到多个歌曲，请改用 music<id> 查询：\n%s", e.sourceName, strings.Join(parts, "\n"))
+}
+
+func isMusicAmbiguousError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if _, ok := errors.AsType[*musicAmbiguousQueryError](err); ok {
+		return true
+	}
+	return strings.Contains(err.Error(), "匹配到多个歌曲")
+}
+
+func ExtractAmbiguousMusicIDs(err error) []int {
+	if err == nil {
+		return nil
+	}
+	var ambiguous *musicAmbiguousQueryError
+	if errors.As(err, &ambiguous) {
+		ids := make([]int, 0, len(ambiguous.candidates))
+		for _, item := range ambiguous.candidates {
+			if item.ID <= 0 {
+				continue
+			}
+			ids = append(ids, item.ID)
+		}
+		return ids
+	}
+
+	lines := strings.Split(err.Error(), "\n")
+	ids := make([]int, 0, len(lines))
+	seen := make(map[int]struct{}, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(strings.ToLower(line), "music") {
+			continue
+		}
+		raw := strings.TrimSpace(line[5:])
+		slashIdx := strings.Index(raw, "/")
+		if slashIdx <= 0 {
+			continue
+		}
+		id, convErr := strconv.Atoi(strings.TrimSpace(raw[:slashIdx]))
+		if convErr != nil || id <= 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	sort.Ints(ids)
+	return ids
+}
+
+func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64, allowUnreleased bool) []*masterdata.Music {
+	if source == nil || len(ids) == 0 {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0, len(ids))
+	seen := make(map[int]struct{}, len(ids))
+	for _, id := range ids {
+		if id <= 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		musicInfo, err := source.GetMusicByID(id)
+		if err != nil || !isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
+			continue
+		}
+		matches = append(matches, musicInfo)
+	}
+	return matches
+}
+
+func resolveUniqueMusicQuery(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil, fmt.Errorf("music not found: empty query")
+	}
+
+	queryLower := strings.ToLower(query)
+	now := currentMusicVisibilityTime()
+	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
+		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
+	}, now, allowUnreleased); len(matches) > 0 {
+		return selectUniqueMusicMatch("曲名/别名", matches)
+	}
+
+	if matches := collectMusicMatches(source, func(musicInfo *masterdata.Music) bool {
+		return strings.Contains(strings.ToLower(strings.TrimSpace(musicInfo.Title)), queryLower)
+	}, now, allowUnreleased); len(matches) > 0 {
+		return selectUniqueMusicMatch("曲名/别名", matches)
+	}
+
+	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
+		return strings.EqualFold(strings.TrimSpace(title), query)
+	}, now, allowUnreleased); len(matches) > 0 {
+		return selectUniqueMusicMatch("曲名/别名", matches)
+	}
+
+	if matches := collectLocalizedMusicMatches(source, func(title string) bool {
+		return strings.Contains(strings.ToLower(strings.TrimSpace(title)), queryLower)
+	}, now, allowUnreleased); len(matches) > 0 {
+		return selectUniqueMusicMatch("曲名/别名", matches)
+	}
+	if allowUnreleased {
+		return nil, fmt.Errorf("music not found: %s", query)
+	}
+	if matches := collectUnreleasedMusicMatches(source, func(musicInfo *masterdata.Music) bool {
+		return strings.EqualFold(strings.TrimSpace(musicInfo.Title), query)
+	}, now); len(matches) > 0 {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
+	if matches := collectUnreleasedMusicMatches(source, func(musicInfo *masterdata.Music) bool {
+		return strings.Contains(strings.ToLower(strings.TrimSpace(musicInfo.Title)), queryLower)
+	}, now); len(matches) > 0 {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
+	if matches := collectUnreleasedLocalizedMusicMatches(source, func(title string) bool {
+		return strings.EqualFold(strings.TrimSpace(title), query)
+	}, now); len(matches) > 0 {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
+	if matches := collectUnreleasedLocalizedMusicMatches(source, func(title string) bool {
+		return strings.Contains(strings.ToLower(strings.TrimSpace(title)), queryLower)
+	}, now); len(matches) > 0 {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
+
+	return nil, fmt.Errorf("music not found: %s", query)
+}
+
+func resolveUniqueMusicKeyword(source DataSource, keyword string, allowUnreleased bool) (*masterdata.Music, error) {
+	keyword = strings.ToLower(strings.TrimSpace(keyword))
+	if keyword == "" {
+		return nil, fmt.Errorf("music query is empty")
+	}
+
+	now := currentMusicVisibilityTime()
+	matches := make([]*masterdata.Music, 0)
+	for _, item := range source.GetMusics() {
+		if !isMusicAccessibleAt(item, now, allowUnreleased) || !matchesMusicKeyword(source, item, keyword) {
+			continue
+		}
+		matches = append(matches, item)
+	}
+	if len(matches) == 0 {
+		return nil, nil
+	}
+	return selectUniqueMusicMatch("曲名/别名", matches)
+}
+
+func collectMusicMatches(source DataSource, matcher func(*masterdata.Music) bool, now int64, allowUnreleased bool) []*masterdata.Music {
+	if source == nil || matcher == nil {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0)
+	for _, item := range source.GetMusics() {
+		if !isMusicAccessibleAt(item, now, allowUnreleased) || !matcher(item) {
+			continue
+		}
+		matches = append(matches, item)
+	}
+	return matches
+}
+
+func collectLocalizedMusicMatches(source DataSource, matcher func(string) bool, now int64, allowUnreleased bool) []*masterdata.Music {
+	if source == nil || matcher == nil {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0)
+	for _, item := range source.GetMusics() {
+		if !isMusicAccessibleAt(item, now, allowUnreleased) {
+			continue
+		}
+		titles, err := source.GetMusicLocalizedTitles(item.ID)
+		if err != nil {
+			continue
+		}
+		for _, title := range titles {
+			if !matcher(title) {
+				continue
+			}
+			matches = append(matches, item)
+			break
+		}
+	}
+	return matches
+}
+
+func collectUnreleasedMusicMatches(source DataSource, matcher func(*masterdata.Music) bool, now int64) []*masterdata.Music {
+	if source == nil || matcher == nil {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0)
+	for _, item := range source.GetMusics() {
+		if item == nil || isMusicVisibleAt(item, now) || !matcher(item) {
+			continue
+		}
+		matches = append(matches, item)
+	}
+	return matches
+}
+
+func collectUnreleasedLocalizedMusicMatches(source DataSource, matcher func(string) bool, now int64) []*masterdata.Music {
+	if source == nil || matcher == nil {
+		return nil
+	}
+	matches := make([]*masterdata.Music, 0)
+	for _, item := range source.GetMusics() {
+		if item == nil || isMusicVisibleAt(item, now) {
+			continue
+		}
+		titles, err := source.GetMusicLocalizedTitles(item.ID)
+		if err != nil {
+			continue
+		}
+		for _, title := range titles {
+			if !matcher(title) {
+				continue
+			}
+			matches = append(matches, item)
+			break
+		}
+	}
+	return matches
+}
+
+func selectUniqueMusicMatch(sourceName string, matches []*masterdata.Music) (*masterdata.Music, error) {
+	deduped := make(map[int]string, len(matches))
+	for _, item := range matches {
+		if item == nil || item.ID <= 0 {
+			continue
+		}
+		title := strings.TrimSpace(item.Title)
+		if title == "" {
+			title = fmt.Sprintf("music%d", item.ID)
+		}
+		deduped[item.ID] = title
+	}
+	if len(deduped) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]int, 0, len(deduped))
+	for id := range deduped {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	if len(ids) == 1 {
+		for _, item := range matches {
+			if item == nil || item.ID != ids[0] {
+				continue
+			}
+			return new(*item), nil
+		}
+		return &masterdata.Music{ID: ids[0], Title: deduped[ids[0]]}, nil
+	}
+
+	candidates := make([]musicQueryCandidate, 0, len(ids))
+	for _, id := range ids {
+		candidates = append(candidates, musicQueryCandidate{
+			ID:    id,
+			Title: deduped[id],
+		})
+	}
+	return nil, &musicAmbiguousQueryError{
+		sourceName: sourceName,
+		candidates: candidates,
+	}
+}

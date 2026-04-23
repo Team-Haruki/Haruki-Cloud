@@ -1,0 +1,149 @@
+backend:
+  host: "0.0.0.0"
+  port: 6666
+  ssl: false
+  ssl_cert: ""
+  ssl_key: ""
+  log_level: "INFO"
+  main_log_file: "main.log"
+  access_log: "[${time}] ${status} - ${latency} ${method} ${path}\n"
+  access_log_path: "access.log"
+  accept_authorization: null
+  accept_user_agent: null
+  allow_insecure_internal_api: false
+  api_cache_ttl: "300s"
+  enable_trust_proxy: true
+  trusted_proxies:
+    - "127.0.0.0/8"
+    - "::1/128"
+    - "192.168.0.0/16"
+    - "172.16.0.0/12"
+    - "100.64.0.0/10"
+    - "10.0.0.0/8"
+  proxy_header: "X-Forwarded-For"
+  # Latest Haruki bot client version advertised via manifest API.
+  # Can also be set via HARUKI_LATEST_CLIENT_VERSION env var.
+  latest_haruki_client_version: ""
+
+chunithm:
+  enabled: true
+  music_db_type: "postgres"
+  music_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_chunithm sslmode=disable"
+  binding_db_type: "postgres"
+  binding_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_chunithm sslmode=disable"
+
+pjsk:
+  enabled: true
+  db_type: "postgres"
+  db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_pjsk sslmode=disable"
+  # MySekai is disabled for CN region by default. Add platform+group_id
+  # entries below to whitelist specific groups.
+  allow_cn_mysekai:
+    # - platform: "qq"
+    #   group_id: "12345678"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+
+censor:
+  # Text censor — Baidu AI Content Censor
+  baidu_api_key: ""
+  baidu_secret: ""
+  # Image censor — Tencent Cloud Image Moderation Service (IMS)
+  tencent_secret_id: ""
+  tencent_secret_key: ""
+  tencent_region: "ap-guangzhou"   # IMS region; ap-guangzhou recommended
+  tencent_biz_type: ""             # optional Biz type tag configured in Tencent console
+  # Censor result database
+  censor_db_type: "postgres"
+  censor_db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_censor sslmode=disable"
+
+haruki_bot:
+  db_type: "postgres"
+  db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_bot sslmode=disable"
+  enable_registration: true
+  turnstile_secret_key: "0x4AAAAAAxxxxxxxx"
+  smtp_host: "smtp.example.com"
+  smtp_port: 587
+  smtp_username: "noreply@example.com"
+  smtp_password: "your-smtp-password"
+  smtp_from: "Haruki Bot <noreply@example.com>"
+  credential_sign_token: "your-credential-sign-token-32chars"
+  session_sign_token: "your-session-sign-token-32chars"
+  internal_api_token: "your-internal-api-token"
+  session_ttl_days: 7
+  noise_private_key: ""  # hex-encoded 32-byte X25519 private key for Noise IK transport encryption (leave empty to disable)
+
+users_db:
+  db_type: "postgres"
+  db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_users sslmode=disable"
+
+sekai_api:
+  base_url: "https://api.sekai.haruki.example.com"
+  # targets:
+  #   - name: "sekai-a"
+  #     base_url: "https://api-a.sekai.haruki.example.com"
+  #     concurrency: 8
+  #   - name: "sekai-b"
+  #     base_url: "https://api-b.sekai.haruki.example.com"
+  #     concurrency: 8
+  token: "your-haruki-sekai-api-token"
+
+tracker:
+  base_url: "https://tracker.haruki.example.com"
+  user_agent: "HarukiCloud/1.0"
+
+pjsk_render:
+  enabled: true
+  drawing_base_url: "http://INTERNAL_IP_1:28000"
+  # drawing_targets:
+  #   - name: "vm100"          # same name across services => share one machine queue
+  #     base_url: "http://INTERNAL_IP_1:28000"
+  #     concurrency: 8
+  #   - name: "vm101"
+  #     base_url: "http://INTERNAL_IP_3:28000"
+  #     concurrency: 8
+  drawing_cache:
+    base_url: "http://127.0.0.1:8080"  # Haruki-Cache service
+    storage_dir: "/data/haruki/cache/drawing"
+    ttl: "10m"                         # endpoint rules may override this (e.g. /sk uses 10s buckets)
+  drawing_timeout: "30s"
+  drawing_retry_count: 2
+  music_meta:
+    refresh_interval: "30m"   # how often to re-check sekai-data.3-3.dev for music_metas updates
+  user_snapshot:
+    provider: "local_file"    # future: "internal_cloud"
+    allow_fallback: true      # set false in production (Toolbox is sole source); true for dev/test
+    user_json: ""
+    mysekai_json: ""
+    # music_meta_json is the legacy local fallback path; leave empty when music_meta loader is active
+    music_meta_json: ""
+  image_cache:
+    uri: ""         # CDN base URL for generic image cache, e.g. "https://image-cache.example.com"
+    charts_uri: "https://public-beta-image-cache-sha01-direct.example.haruki.local:40011/charts"
+    dir: ""         # local filesystem directory for cached images
+    pg_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_imagecache sslmode=disable"
+  
+  local_masterdata:
+    enabled: true
+    allow_fallback: true      # set false in production (DB failure is fatal); true for dev/test
+    allow_leaks: false        # when true, unopened event/worldbloom deck queries may fall back to local masterdata
+    dir: "/data/HarukiServices/alpha/deckrec/masterdata"
+
+  deck_recommend:
+    enabled: true
+    service_base_url: "http://127.0.0.1:3000"    # required for deck recommend auto; runtime is HTTP-service-only
+    # targets:
+    #   - name: "vm100"        # same name as drawing target => share one machine queue
+    #     base_url: "http://127.0.0.1:3000"
+    #     concurrency: 8
+    #   - name: "vm101"
+    #     base_url: "http://127.0.0.1:3001"
+    #     concurrency: 8
+    masterdata_dir: "/data/HarukiServices/alpha/Data/master/haruki-sekai-master" # root dir; Cloud will resolve the region subdir
+    timeout: "10s"
+    max_retries: 3            # HTTP-level retry count for transient failures
+    retry_wait_time: "1s"     # wait between retries
+    default_algs: ["dfs", "ga"]

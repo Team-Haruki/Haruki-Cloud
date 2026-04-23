@@ -1,0 +1,44 @@
+package provider
+
+import (
+	"sync"
+
+	sekaiDB "haruki-cloud/database/sekai"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+)
+
+type dbCardProvider struct {
+	client     *sekaiDB.Client
+	region     renderregion.Value
+	characters *dbCharacterProvider
+	skills     *dbSkillProvider
+	once       sync.Once
+
+	cardMu    sync.RWMutex
+	cardCache map[int]*masterdata.Card
+
+	supplyMu   sync.RWMutex
+	supplyByID map[int]string
+
+	worldLink3Mu     sync.RWMutex
+	worldLink3ByCard map[int]bool
+
+	gachaMu     sync.RWMutex
+	gachaByCard map[int]*masterdata.Gacha
+	gachaCache  map[int]*masterdata.Gacha
+
+	costumeMu     sync.RWMutex
+	costumeByCard map[int][]*masterdata.Costume3d
+}
+
+func (p *dbCardProvider) init() {
+	p.once.Do(func() {
+		p.cardCache = make(map[int]*masterdata.Card)
+		p.supplyByID = make(map[int]string)
+		p.worldLink3ByCard = make(map[int]bool)
+		p.gachaByCard = make(map[int]*masterdata.Gacha)
+		p.gachaCache = make(map[int]*masterdata.Gacha)
+		p.costumeByCard = make(map[int][]*masterdata.Costume3d)
+	})
+}

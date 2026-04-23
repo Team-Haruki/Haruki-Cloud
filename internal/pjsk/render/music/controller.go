@@ -1,0 +1,223 @@
+package music
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/meta"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
+	regionsource "haruki-cloud/internal/pjsk/render/source"
+)
+
+var hiddenMusicIDs = map[int]struct{}{
+	241: {},
+	290: {},
+}
+
+func (c *Controller) WithContext(ctx context.Context) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.requestCtx = ctx
+	clone.drawing = c.drawing.WithContext(ctx)
+	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
+	for _, source := range c.sources.OrderedSources() {
+		if contextual, ok := any(source).(contextualDataSource); ok {
+			clone.sources.RegisterSource(contextual.WithContext(ctx))
+			continue
+		}
+		clone.sources.RegisterSource(source)
+	}
+	return &clone
+}
+
+func (c *Controller) WithSnapshot(snapshot snapshot.Snapshot) *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.snapshot = snapshot
+	return &clone
+}
+
+func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, metaLoader *meta.Loader) *Controller {
+	if assetHelper == nil {
+		assetHelper = assets.NewAssetHelper("", nil)
+	}
+	controller := &Controller{
+		sources:               regionsource.NewRegistry[DataSource](renderregion.JP),
+		drawing:               drawingClient,
+		assets:                assetHelper,
+		banCharacterNicknames: cloneNicknames(defaultBanCharacterNicknames),
+		snapshot:              snapshot,
+		metaLoader:            metaLoader,
+	}
+	controller.RegisterSource(defaultSource)
+	return controller
+}
+
+func (c *Controller) RegisterSource(source DataSource) {
+	c.sources.RegisterSource(source)
+}
+
+func (c *Controller) SetAliasResolver(resolver musicAliasResolver) {
+	if c == nil {
+		return
+	}
+	c.aliases = resolver
+}
+
+func (c *Controller) contextOrBackground() context.Context {
+	if c != nil && c.requestCtx != nil {
+		return c.requestCtx
+	}
+	return context.TODO()
+}
+
+func (c *Controller) newSearchService(source DataSource, allowUnreleased ...bool) *SearchService {
+	allow := false
+	if len(allowUnreleased) > 0 {
+		allow = allowUnreleased[0]
+	}
+	return NewSearchService(source, NewParser(c.banCharacterNicknames)).
+		WithAllowUnreleased(allow).
+		WithTitleResolver(func(query string) (*masterdata.Music, error) {
+			return c.resolveMusicTitleQuery(source, query, allow)
+		})
+}
+
+func (c *Controller) shouldAllowLookupLeaks(region string, explicit bool) bool {
+	if explicit {
+		return true
+	}
+	return c.resolveRegion(region) != renderregion.JP
+}
+
+func (c *Controller) resolveMusicTitleQuery(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil, fmt.Errorf("music query is empty")
+	}
+	now := currentMusicVisibilityTime()
+
+	if musicID, ok := ParseExplicitMusicID(query); ok {
+		musicInfo, err := source.GetMusicByID(musicID)
+		if err != nil {
+			return nil, err
+		}
+		return ensureAccessibleMusic(musicInfo, now, musicID, allowUnreleased)
+	}
+
+	if c != nil && c.aliases != nil {
+		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), query)
+		if err != nil {
+			if ids := ExtractAmbiguousMusicIDs(err); len(ids) > 0 {
+				if normalizedMusic, normalizedErr := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now, allowUnreleased)); normalizedMusic != nil || normalizedErr != nil {
+					return normalizedMusic, normalizedErr
+				}
+			}
+			return nil, err
+		}
+		if ok {
+			musicInfo, getErr := source.GetMusicByID(musicID)
+			if getErr != nil {
+				return nil, getErr
+			}
+			return ensureAccessibleMusic(musicInfo, now, query, allowUnreleased)
+		}
+	}
+
+	musicInfo, err := resolveUniqueMusicQuery(source, query, allowUnreleased)
+	if err == nil || isMusicAmbiguousError(err) {
+		return musicInfo, err
+	}
+
+	fuzzyMusic, fuzzyErr := resolveFuzzyMusicQuery(source, query, allowUnreleased)
+	if fuzzyErr == nil || isMusicAmbiguousError(fuzzyErr) {
+		return fuzzyMusic, fuzzyErr
+	}
+	return nil, err
+}
+
+func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword string, allowUnreleased bool) (*int, string, error) {
+	keyword = strings.TrimSpace(keyword)
+	if keyword == "" {
+		return nil, "", nil
+	}
+	now := currentMusicVisibilityTime()
+
+	if musicID, ok := ParseExplicitMusicID(keyword); ok {
+		if source == nil {
+			return nil, "", fmt.Errorf("music data source is not configured")
+		}
+		musicInfo, err := source.GetMusicByID(musicID)
+		if err != nil {
+			return nil, "", err
+		}
+		if _, err := ensureAccessibleMusic(musicInfo, now, musicID, allowUnreleased); err != nil {
+			return nil, "", err
+		}
+		return &musicID, "", nil
+	}
+
+	if musicID, ok := ParseImplicitMusicID(keyword); ok {
+		if source != nil {
+			if musicInfo, err := source.GetMusicByID(musicID); err == nil && isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
+				return &musicID, "", nil
+			}
+		}
+	}
+
+	if c != nil && c.aliases != nil {
+		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), keyword)
+		if err != nil {
+			return nil, "", err
+		}
+		if ok {
+			if source != nil {
+				musicInfo, getErr := source.GetMusicByID(musicID)
+				if getErr != nil {
+					return nil, "", getErr
+				}
+				if _, visibleErr := ensureAccessibleMusic(musicInfo, now, keyword, allowUnreleased); visibleErr != nil {
+					return nil, "", visibleErr
+				}
+			}
+			return &musicID, "", nil
+		}
+	}
+
+	return nil, strings.ToLower(keyword), nil
+}
+
+func (c *Controller) resolveBuilder(region string) (renderregion.Value, DataSource, *Builder, error) {
+	resolved := c.sources.ResolveRegion(renderregion.Normalize(region))
+	source, ok := c.sources.SourceForRegion(resolved)
+	if !ok {
+		return resolved, nil, nil, fmt.Errorf("no music data source for region %s", resolved)
+	}
+	return resolved, source, NewBuilder(source, c.fallbackSource(resolved), c.assets), nil
+}
+
+func (c *Controller) fallbackSource(region renderregion.Value) DataSource {
+	if region == renderregion.JP {
+		return nil
+	}
+	if source, ok := c.sources.SourceForRegion(renderregion.JP); ok {
+		return source
+	}
+	return nil
+}
+
+func (c *Controller) resolveRegion(region string) renderregion.Value {
+	if c == nil || c.sources == nil {
+		return renderregion.WithDefault(renderregion.Normalize(region))
+	}
+	return c.sources.ResolveRegion(renderregion.Normalize(region))
+}

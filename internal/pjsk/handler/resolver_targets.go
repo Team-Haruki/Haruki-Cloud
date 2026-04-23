@@ -1,0 +1,109 @@
+package handler
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	renderregion "haruki-cloud/internal/pjsk/region"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
+
+	"haruki-cloud/internal/pjsk/accountdata"
+)
+
+func resolveGameTarget(ctx context.Context, p userQueryParams, region string, regionExplicit bool, app *renderapp.App) (ResolvedGameTarget, error) {
+	if app == nil || app.Bindings == nil {
+		return ResolvedGameTarget{}, accountdata.ErrBindingServiceUnavailable
+	}
+	switch p.Mode {
+	case "self":
+		var hid int
+		var binding *accountdata.ResolvedBinding
+		var err error
+		if p.Selector != "" {
+			hid, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, p.Platform, p.PlatformUserID, selectorBindingServer(region, regionExplicit), p.Selector)
+		} else if !regionExplicit {
+			// No explicit region prefix — use global default binding directly,
+			// so the user's global default account is picked instead of a
+			// potentially different server-specific default.
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, accountdata.GlobalDefaultBindingScope)
+			if err != nil {
+				hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+			}
+		} else {
+			hid, binding, err = app.Bindings.ResolveUserBinding(ctx, p.Platform, p.PlatformUserID, region)
+		}
+		if err != nil {
+			return ResolvedGameTarget{}, normalizeBindingLookupError(err, "解析绑定账号失败")
+		}
+		return ResolvedGameTarget{
+			HarukiUserID: hid,
+			PJSKUserID:   binding.PJSKUserID,
+			Visible:      binding.Visible,
+			BgSettings:   binding.Bg,
+			Binding:      binding,
+		}, nil
+	case "at_user":
+		_, binding, err := app.Bindings.ResolveUserBinding(ctx, p.Platform, p.AtUserID, region)
+		if err != nil {
+			return ResolvedGameTarget{}, normalizeBindingLookupError(err, "未找到该用户的绑定账号")
+		}
+		if !binding.Visible {
+			return ResolvedGameTarget{}, fmt.Errorf("该用户已隐藏个人信息")
+		}
+		return ResolvedGameTarget{
+			PJSKUserID: binding.PJSKUserID,
+			Visible:    binding.Visible,
+			BgSettings: binding.Bg,
+			Binding:    binding,
+		}, nil
+	case "uid":
+		return ResolvedGameTarget{
+			PJSKUserID: p.PJSKUserID,
+			Visible:    true,
+		}, nil
+	default:
+		return ResolvedGameTarget{}, fmt.Errorf("未知的查询模式：%q", p.Mode)
+	}
+}
+
+// resolveRegionFromDefaultBinding resolves the region for a command where the
+// user did not provide an explicit region prefix or -r flag. It looks up the
+// user's global default binding (server = "default") and returns the server of
+// the bound account (e.g. "jp", "tw", "kr", "en"). Falls back to "jp" if the
+// user has no global default binding or if any lookup fails.
+func resolveRegionFromDefaultBinding(ctx context.Context, r *CommandRequest, app *renderapp.App) string {
+	if r.RegionExplicit {
+		return r.Region
+	}
+	platform := strings.TrimSpace(r.RequesterPlatform)
+	platformUserID := strings.TrimSpace(r.RequesterUserID)
+	if platform == "" || platformUserID == "" || app.Bindings == nil {
+		return r.Region
+	}
+	_, binding, err := app.Bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
+	if err != nil || binding == nil || strings.TrimSpace(binding.Server) == "" {
+		return r.Region
+	}
+	normalized := renderregion.Normalize(binding.Server)
+	if normalized.IsZero() {
+		return r.Region
+	}
+	return normalized.String()
+}
+
+func selectorBindingServer(region string, regionExplicit bool) string {
+	if !regionExplicit {
+		return ""
+	}
+	return strings.TrimSpace(region)
+}
+
+func resolvedTargetRegion(region string, target ResolvedGameTarget) string {
+	if target.Binding != nil {
+		if normalized := renderregion.Normalize(target.Binding.Server); !normalized.IsZero() {
+			return normalized.String()
+		}
+	}
+	return regionWithDefault(region)
+}

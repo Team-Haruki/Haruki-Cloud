@@ -1,0 +1,101 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+	"sync"
+
+	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/database/sekai/playerframe"
+	"haruki-cloud/database/sekai/playerframegroup"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+)
+
+type dbPlayerFrameProvider struct {
+	client *sekaiDB.Client
+	region renderregion.Value
+	once   sync.Once
+
+	frameMu    sync.RWMutex
+	frameCache map[int]*masterdata.PlayerFrame
+
+	groupMu    sync.RWMutex
+	groupCache map[int]*masterdata.PlayerFrameGroup
+}
+
+func (p *dbPlayerFrameProvider) init() {
+	p.once.Do(func() {
+		p.frameCache = make(map[int]*masterdata.PlayerFrame)
+		p.groupCache = make(map[int]*masterdata.PlayerFrameGroup)
+	})
+}
+
+func (p *dbPlayerFrameProvider) GetByID(ctx context.Context, id int) (*masterdata.PlayerFrame, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("invalid player frame id")
+	}
+	p.init()
+
+	p.frameMu.RLock()
+	if cached, ok := p.frameCache[id]; ok {
+		p.frameMu.RUnlock()
+		return new(*cached), nil
+	}
+	p.frameMu.RUnlock()
+
+	entity, err := p.client.Playerframe.Query().
+		Where(playerframe.ServerRegionEQ(p.region.String()), playerframe.GameIDEQ(int64(id))).
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query player frame %d: %w", id, err)
+	}
+
+	model := &masterdata.PlayerFrame{
+		ID:                 int(entity.GameID),
+		Seq:                int(entity.Seq),
+		PlayerFrameGroupID: int(entity.PlayerFrameGroupID),
+		Description:        entity.Description,
+		GameCharacterID:    int(entity.GameCharacterID),
+	}
+
+	p.frameMu.Lock()
+	p.frameCache[id] = model
+	p.frameMu.Unlock()
+
+	return new(*model), nil
+}
+
+func (p *dbPlayerFrameProvider) GetGroupByID(ctx context.Context, id int) (*masterdata.PlayerFrameGroup, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("invalid player frame group id")
+	}
+	p.init()
+
+	p.groupMu.RLock()
+	if cached, ok := p.groupCache[id]; ok {
+		p.groupMu.RUnlock()
+		return new(*cached), nil
+	}
+	p.groupMu.RUnlock()
+
+	entity, err := p.client.Playerframegroup.Query().
+		Where(playerframegroup.ServerRegionEQ(p.region.String()), playerframegroup.GameIDEQ(int64(id))).
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query player frame group %d: %w", id, err)
+	}
+
+	model := &masterdata.PlayerFrameGroup{
+		ID:              int(entity.GameID),
+		Seq:             int(entity.Seq),
+		Name:            entity.Name,
+		AssetBundleName: entity.AssetbundleName,
+	}
+
+	p.groupMu.Lock()
+	p.groupCache[id] = model
+	p.groupMu.Unlock()
+
+	return new(*model), nil
+}

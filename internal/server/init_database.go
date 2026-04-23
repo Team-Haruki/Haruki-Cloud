@@ -108,12 +108,7 @@ func initPJSKIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, app
 		func() (*pjskDB.Client, error) {
 			return pjskDB.Open(harukiConfig.Cfg.PJSK.DBType, harukiConfig.Cfg.PJSK.DBURL)
 		},
-		func(c *pjskDB.Client, ctx context.Context) error {
-			if err := c.Schema.Create(ctx); err != nil {
-				return err
-			}
-			return c.BackfillLegacyGameAccounts(ctx)
-		},
+		func(c *pjskDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
 	)
 
 	publicPJSK.RegisterPJSKRoutes(app, pjskClient, redisClient)

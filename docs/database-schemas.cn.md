@@ -1,6 +1,6 @@
 # Haruki-Cloud 数据库 Schema 文档
 
-> 最后更新：2026-03-26（v1.2）
+> 最后更新：2026-04-23（v1.3）
 
 ---
 
@@ -16,7 +16,7 @@
 | **censor** | `ent/censor/schema/` | `database/censor/` | MySQL | 3 |
 | **chunithm/maindb** | `ent/chunithm/maindb/schema/` | `database/chunithm/maindb/` | MySQL/PostgreSQL | 3 |
 | **chunithm/music** | `ent/chunithm/music/schema/` | `database/chunithm/music/` | MySQL/PostgreSQL | 3 |
-| **pjsk** | `ent/pjsk/schema/` | `database/pjsk/` | PostgreSQL | 8 |
+| **pjsk** | `ent/pjsk/schema/` | `database/pjsk/` | PostgreSQL | 9 |
 | **sekai** | `ent/sekai/schema/` | `database/sekai/` | PostgreSQL | 83 |
 | **users** | `ent/users/schema/` | `database/users/` | PostgreSQL | 1 |
 
@@ -270,20 +270,43 @@ CHUNITHM 数据分为两个独立数据库：**maindb**（用户数据）和 **m
 
 唯一索引：`(platform, group_id, alias_type, alias_type_id, alias)`
 
-### 6.3 `user_bindings` 表（PJSK 账号绑定）
+### 6.3 `game_accounts` 表（PJSK 游戏账号）
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | int | PK | 主键 |
+| `user_id` | string(30) | — | PJSK 游戏内 UID |
+| `server` | string(2) | — | 服务器区域（jp/cn/tw/en/kr） |
+| `bg` | JSONB | optional | 个人信息背景图设置（`drawing.ProfileBgSettings`） |
+
+唯一索引：`(server, user_id)`  
+Edge：`← user_bindings`（一对多）
+
+补充说明：
+
+1. `game_accounts` 是当前 PJSK 账号身份与背景图的唯一持久化表。
+2. 2026-04-23 起服务启动阶段不再执行 legacy 回填，默认假设线上数据已完成一次性迁移。
+
+### 6.4 `user_bindings` 表（PJSK 用户绑定）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | `id` | int | PK | 主键 |
 | `haruki_user_id` | int | — | Haruki 用户 ID（关联 users 表） |
-| `user_id` | string(30) | — | PJSK 游戏内 UID |
-| `server` | string(2) | — | 服务器区域（jp/cn/tw/en/kr） |
-| `visible` | bool | default true | 是否公开展示 |
+| `game_account_id` | int | FK, nullable | 指向 `game_accounts.id` |
+| `display_order` | int | default 0 | 绑定列表中的持久化排序 |
+| `visible` | bool | default true | 是否公开展示 UID |
+| `suite_visible` | bool | default true | 是否公开展示抓包 / suite 数据 |
+| `mysekai_visible` | bool | default true | 是否公开展示 MySekai 私有数据 |
+| `verified` | bool | default false | 当前绑定账号是否已验证 |
 
-唯一索引：`(haruki_user_id, server, user_id)`  
-Edge：`→ user_default_bindings`（一对多）
+唯一索引：`(haruki_user_id, game_account_id)`  
+Edge：
 
-### 6.4 `user_default_bindings` 表（默认绑定指针）
+1. `→ game_accounts`（多对一，`game_account_id`）
+2. `→ user_default_bindings`（一对多）
+
+### 6.5 `user_default_bindings` 表（默认绑定指针）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -295,18 +318,20 @@ Edge：`→ user_default_bindings`（一对多）
 唯一索引：`(haruki_user_id, server)`  
 Edge：`← user_bindings`（多对一，CASCADE 删除）
 
-### 6.5 `user_preferences` 表
+### 6.6 `user_preferences` 表
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | `id` | auto | PK | 自动主键 |
-| `haruki_user_id` | int | — | Haruki 用户 ID |
-| `option` | string(50) | — | 偏好键（如 theme / difficulty） |
-| `value` | string(50) | — | 偏好值 |
+| `haruki_user_id` | int | UNIQUE | Haruki 用户 ID |
+| `settings` | JSONB | NOT NULL | 用户设置聚合 JSON（`UserSettings`） |
 
-唯一索引：`(haruki_user_id, option)`
+补充说明：
 
-### 6.6 `alias_admins` 表（别名管理员）
+1. `settings` 当前承载 `pjsk_enabled_difficulties`、`noncompliant_bg_count`、`time_zone`、`chart_style` 等配置。
+2. 新增设置项通过 JSONB 向后兼容，不再为每个选项单独开列。
+
+### 6.7 `alias_admins` 表（别名管理员）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -314,7 +339,7 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 | `haruki_user_id` | int | UNIQUE | Haruki 用户 ID（一人一条） |
 | `name` | string(100) | — | 管理员昵称 |
 
-### 6.7 `pending_alias` 表（待审核别名）
+### 6.8 `pending_alias` 表（待审核别名）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
@@ -333,7 +358,7 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 2. `/music alias add` 与 `/chara alias add` 都不会直接写入正式 `alias` 表，而是先写入这里
 3. 当前审核链路已使用 `alias_type = music | character`
 
-### 6.8 `rejected_alias` 表（已拒绝别名）
+### 6.9 `rejected_alias` 表（已拒绝别名）
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|

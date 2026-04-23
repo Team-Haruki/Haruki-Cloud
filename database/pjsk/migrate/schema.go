@@ -13,7 +13,7 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "alias_type", Type: field.TypeString, Size: 20},
 		{Name: "alias_type_id", Type: field.TypeInt},
-		{Name: "alias", Type: field.TypeString, Size: 100},
+		{Name: "alias", Type: field.TypeString, Size: 500},
 	}
 	// AliasTable holds the schema information for the "alias" table.
 	AliasTable = &schema.Table{
@@ -67,7 +67,7 @@ var (
 		{Name: "group_id", Type: field.TypeString, Size: 50},
 		{Name: "alias_type", Type: field.TypeString, Size: 20},
 		{Name: "alias_type_id", Type: field.TypeInt},
-		{Name: "alias", Type: field.TypeString, Size: 100},
+		{Name: "alias", Type: field.TypeString, Size: 500},
 	}
 	// GroupAliasTable holds the schema information for the "group_alias" table.
 	GroupAliasTable = &schema.Table{

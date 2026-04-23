@@ -16,7 +16,7 @@ func (GroupAlias) Fields() []ent.Field {
 		field.String("group_id").MaxLen(50),
 		field.String("alias_type").MaxLen(20),
 		field.Int("alias_type_id"),
-		field.String("alias").MaxLen(100),
+		field.String("alias").MaxLen(500),
 	}
 }
 

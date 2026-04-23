@@ -257,6 +257,10 @@ var globalServerPriority = []string{"jp", "cn", "tw", "en", "kr"}
 //
 // Existing defaults are skipped (idempotent).
 func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) error {
+	if dryRun {
+		log.Printf("[defaults] dry-run — skipping")
+		return nil
+	}
 	// Load all bindings with their game accounts.
 	allBindings, err := pjsk.UserBinding.Query().
 		WithGameAccount().
@@ -282,11 +286,6 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 	}
 
 	log.Printf("[defaults] %d users to process", len(byUser))
-
-	if dryRun {
-		log.Printf("[defaults] dry-run — skipping writes")
-		return nil
-	}
 
 	// Load existing defaults to avoid redundant writes.
 	existingDefaults, err := pjsk.UserDefaultBinding.Query().All(ctx)

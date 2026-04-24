@@ -270,3 +270,29 @@ func TestBuildEventListRequestWorldBloomUnitFilterUsesChapterUnits(t *testing.T)
 		t.Fatalf("unexpected world bloom unit filter result: %+v", req.EventInfo)
 	}
 }
+
+func TestBuildEventDetailRequestMixedEventDoesNotExposeBoxMetadata(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	eventInfo := &masterdata.Event{ID: 401, EventType: "marathon", Name: "mixed", AssetBundleName: "e401", StartAt: 100, AggregateAt: 200}
+	source.events = []*masterdata.Event{eventInfo}
+	source.eventsByID[eventInfo.ID] = eventInfo
+	source.bannerByEvent[eventInfo.ID] = 10
+	source.bonusesByEvent[eventInfo.ID] = []*masterdata.EventDeckBonus{
+		{ID: 1, EventID: eventInfo.ID, GameCharacterUnitID: 10, CardAttr: "cool"},
+		{ID: 2, EventID: eventInfo.ID, GameCharacterUnitID: 105},
+	}
+	source.gcuByID[10] = &masterdata.GameCharacterUnit{ID: 10, GameCharacterID: 10, Unit: "street"}
+	source.gcuByID[105] = &masterdata.GameCharacterUnit{ID: 105, GameCharacterID: 5, Unit: "idol"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventDetailRequest(DetailQuery{Region: renderregion.JP, EventID: eventInfo.ID})
+	if err != nil {
+		t.Fatalf("BuildEventDetailRequest failed: %v", err)
+	}
+	if req.EventInfo.BannerCid != 0 {
+		t.Fatalf("expected mixed event banner cid to stay empty, got %+v", req.EventInfo)
+	}
+	if req.EventInfo.BannerIndex != 0 {
+		t.Fatalf("expected mixed event banner index to stay empty, got %+v", req.EventInfo)
+	}
+}

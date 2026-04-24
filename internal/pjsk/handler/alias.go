@@ -1,14 +1,15 @@
 package handler
 
 import (
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"log/slog"
 	"strconv"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
 	aliases "haruki-cloud/internal/pjsk/alias"
+	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
@@ -378,7 +379,12 @@ func tryRenderAliasQueryAsImage(rc *RequestContext) (onebot11.Message, bool, err
 		return nil, false, nil
 	}
 
-	req, ok := buildAliasListImageRequest(rc.App.Music.WithContext(rc.Ctx), params.AliasType, result)
+	req, ok := buildAliasListImageRequest(
+		rc.App.Music.WithContext(rc.Ctx),
+		params.AliasType,
+		result,
+		resolveRequesterHarukiUserTimeZone(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
+	)
 	if !ok || rc.App.Misc == nil {
 		return nil, false, nil
 	}
@@ -417,10 +423,12 @@ func buildCharacterAliasTrimPath(characterID int) *string {
 	return drawing.StringPtr(fmt.Sprintf("%s/character/character_trim/chr_trim_%d.png", assetBase, characterID))
 }
 
-func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType string, result *aliases.QueryResult) (drawing.AliasListRequest, bool) {
+func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType string, result *aliases.QueryResult, timeZone string) (drawing.AliasListRequest, bool) {
 	if result == nil {
 		return drawing.AliasListRequest{}, false
 	}
+	trimPath := buildCharacterAliasTrimPath(result.Entity.ID)
+	now := displaytime.Now(timeZone).UnixMilli()
 	switch strings.TrimSpace(aliasType) {
 	case aliases.PjskAliasTypeMusic:
 		req := drawing.AliasListRequest{
@@ -428,6 +436,8 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 			EntityLabel: "歌曲ID",
 			EntityID:    result.Entity.ID,
 			EntityName:  result.Entity.Name,
+			TimeZone:    timeZone,
+			DT:          now,
 			Aliases:     result.Aliases,
 		}
 		if musicCtrl != nil && result.Entity.ID > 0 {
@@ -438,12 +448,15 @@ func buildAliasListImageRequest(musicCtrl aliasMusicCoverResolver, aliasType str
 		return req, true
 	case aliases.PjskAliasTypeCharacter:
 		return drawing.AliasListRequest{
-			Title:             "角色别名",
-			EntityLabel:       "角色ID",
-			EntityID:          result.Entity.ID,
-			EntityName:        result.Entity.Name,
-			CharacterTrimPath: buildCharacterAliasTrimPath(result.Entity.ID),
-			Aliases:           result.Aliases,
+			Title:                   "角色别名",
+			EntityLabel:             "角色ID",
+			EntityID:                result.Entity.ID,
+			EntityName:              result.Entity.Name,
+			TimeZone:                timeZone,
+			DT:                      now,
+			CharacterTrimPath:       trimPath,
+			CharacterSilhouettePath: trimPath,
+			Aliases:                 result.Aliases,
 		}, true
 	default:
 		return drawing.AliasListRequest{}, false

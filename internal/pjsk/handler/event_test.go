@@ -2,11 +2,16 @@ package handler
 
 import (
 	"context"
+	"errors"
 	json "github.com/bytedance/sonic"
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
+	renderevent "haruki-cloud/internal/pjsk/render/event"
 )
 
 func TestEventDetailHandleUsesCurrentEventWhenArgsEmpty(t *testing.T) {
@@ -257,5 +262,54 @@ func TestEventRecordHandleEmbedsSelfSelector(t *testing.T) {
 	}
 	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestExecuteEventRecordReturnsBindingErrorBeforeSuiteMessage(t *testing.T) {
+	_, err := executeEvent(NewRequestContext(context.Background(), &CommandRequest{
+		Module:            parser.ModuleEvent,
+		Mode:              "event-record",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Events:   renderevent.NewController(nil, nil, nil),
+		Bindings: newHandlerTestBindingService(t),
+	}))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var replyErr onebot11.ReplayError
+	if !errors.As(WrapDomainError(err), &replyErr) {
+		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
+	}
+	if string(replyErr) != ErrMsgBindingNotFound {
+		t.Fatalf("unexpected replay error: %q", replyErr)
+	}
+}
+
+func TestExecuteEventRecordReturnsContextualSuiteMessageWhenSnapshotMissing(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	_, err := executeEvent(NewRequestContext(ctx, &CommandRequest{
+		Module:            parser.ModuleEvent,
+		Mode:              "event-record",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Events:   renderevent.NewController(nil, nil, nil),
+		Bindings: service,
+	}))
+	if err == nil || err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

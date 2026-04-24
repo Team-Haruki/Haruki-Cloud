@@ -3,9 +3,9 @@ package handler
 import (
 	"bytes"
 	"context"
-	json "github.com/bytedance/sonic"
 	"errors"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"image"
 	"image/color"
 	"image/png"
@@ -162,7 +162,11 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if err.Error() != ErrMsgMySekaiDataNotFound {
+	if err.Error() != buildPrivateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -1081,7 +1085,11 @@ func TestExecuteMusicListRequiresSuiteSnapshotWhenBindingVisible(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing suite snapshot to fail")
 	}
-	if err.Error() != ErrMsgSuiteDataNotFound {
+	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -1583,7 +1591,11 @@ func TestExecuteMusicProgressRequiresResolvableSuiteSnapshot(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected snapshot error, got nil")
 	}
-	if err.Error() != ErrMsgSuiteDataNotFound {
+	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -1629,7 +1641,11 @@ func TestExecuteMusicRewardsRequiresSuiteSnapshot(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing suite snapshot to fail")
 	}
-	if err.Error() != ErrMsgSuiteDataNotFound {
+	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -2619,6 +2635,50 @@ func TestResolveDeckCharacterSelectionsPrefersWorldBloomCharacterFullNameOverMus
 	}
 	if query.MusicQuery != "" {
 		t.Fatalf("expected music query to be consumed as WL character full name, got %q", query.MusicQuery)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsSplitsLeadingWorldBloomCharacterFromMusicQuery(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_prefix_music_split?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 508, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		MusicQuery:    "miku 虾",
+		MusicDiff:     "expert",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 508 {
+		t.Fatalf("unexpected event id: %+v", query.EventID)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.MusicQuery != "虾" {
+		t.Fatalf("expected remaining music query to stay as song alias, got %q", query.MusicQuery)
+	}
+	if query.MusicDiff != "expert" {
+		t.Fatalf("expected music diff to be preserved, got %q", query.MusicDiff)
 	}
 }
 
@@ -3955,7 +4015,11 @@ func TestExecuteCardBoxWithoutQueryRequiresSuiteData(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing suite data to fail")
 	}
-	if err.Error() != ErrMsgCardCatalogRequiresSuite {
+	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -4037,7 +4101,11 @@ func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing owned-card data to fail")
 	}
-	if err.Error() != ErrMsgCardCatalogRequiresSuite {
+	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

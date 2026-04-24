@@ -268,7 +268,7 @@ func TestBuildAliasListImageRequestIncludesMusicJacketPath(t *testing.T) {
 			Name:      "Song A",
 		},
 		Aliases: []string{"song a", "蓝歌"},
-	})
+	}, "Asia/Shanghai")
 	if !ok {
 		t.Fatal("expected music alias request to be built")
 	}
@@ -277,5 +277,32 @@ func TestBuildAliasListImageRequestIncludesMusicJacketPath(t *testing.T) {
 	}
 	if req.MusicJacketPath == nil || *req.MusicJacketPath != "music/jacket/jacket_test/jacket_test.png" {
 		t.Fatalf("unexpected music jacket path: %+v", req.MusicJacketPath)
+	}
+}
+
+func TestBuildAliasListImageRequestCharacterIncludesTrimTimezoneAndSilhouette(t *testing.T) {
+	req, ok := buildAliasListImageRequest(nil, aliases.PjskAliasTypeCharacter, &aliases.QueryResult{
+		Entity: aliases.EntityRef{
+			AliasType: aliases.PjskAliasTypeCharacter,
+			ID:        21,
+			Name:      "桃井爱莉",
+		},
+		Aliases: []string{"爱莉", "桃桃"},
+	}, "Asia/Shanghai")
+	if !ok {
+		t.Fatal("expected character alias request to be built")
+	}
+	if req.TimeZone != "Asia/Shanghai" {
+		t.Fatalf("unexpected timezone: %q", req.TimeZone)
+	}
+	if req.DT <= 0 {
+		t.Fatalf("expected dt to be populated, got %d", req.DT)
+	}
+	wantTrim := "asset/jp-assets/startapp/character/character_trim/chr_trim_21.png"
+	if req.CharacterTrimPath == nil || *req.CharacterTrimPath != wantTrim {
+		t.Fatalf("unexpected trim path: %+v", req.CharacterTrimPath)
+	}
+	if req.CharacterSilhouettePath == nil || *req.CharacterSilhouettePath != wantTrim {
+		t.Fatalf("unexpected silhouette path: %+v", req.CharacterSilhouettePath)
 	}
 }

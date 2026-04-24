@@ -11,6 +11,7 @@ import (
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -287,7 +288,11 @@ func TestExecuteEducationAreaRequiresSuiteSnapshotWhenBindingVisible(t *testing.
 	if err == nil {
 		t.Fatal("expected missing suite snapshot to fail")
 	}
-	if err.Error() != ErrMsgSuiteDataNotFound {
+	if err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "cn",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

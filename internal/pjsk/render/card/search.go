@@ -133,10 +133,7 @@ func (s *SearchService) cardByCharacterAndSeq(characterID, sequence int, now int
 	if err != nil {
 		return nil, err
 	}
-	visibleItems := items
-	if !s.allowUnreleased {
-		visibleItems = filterVisibleCards(items, now)
-	}
+	visibleItems := filterVisibleCards(items, now)
 	if len(visibleItems) == 0 {
 		if len(items) > 0 {
 			return nil, releasecheck.New(releasecheck.KindCard, "", 0)
@@ -170,10 +167,7 @@ func (s *SearchService) latestCard(sequence int, now int64) (*masterdata.Card, e
 	if err != nil {
 		return nil, err
 	}
-	visibleItems := items
-	if !s.allowUnreleased {
-		visibleItems = filterVisibleCards(items, now)
-	}
+	visibleItems := filterVisibleCards(items, now)
 	if len(visibleItems) == 0 {
 		if len(items) > 0 {
 			return nil, releasecheck.New(releasecheck.KindCard, "", 0)

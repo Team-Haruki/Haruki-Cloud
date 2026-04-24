@@ -141,7 +141,6 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 	return rc.binding, rc.harukiUserID
 }
 
-
 // ResolveSnapshot resolves a request-scoped snapshot via the configured
 // snapshot provider chain. In production this should be the live
 // Toolbox/internal-cloud provider only; dev/test may still enable static
@@ -270,7 +269,7 @@ func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBi
 
 	snap := rc.ResolveSnapshot(false)
 	if snap == nil {
-		return binding, nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+		return binding, nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 	return binding, snap, nil
 }

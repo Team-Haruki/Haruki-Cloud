@@ -94,7 +94,11 @@ func TestExecuteDeckReturnsStandardSuiteReplayError(t *testing.T) {
 	}, &renderapp.App{
 		Bindings: service,
 	}))
-	assertReplayErrorText(t, err, ErrMsgSuiteDataNotFound)
+	assertReplayErrorText(t, err, buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}))
 }
 
 func assertReplayErrorText(t *testing.T, err error, want string) {

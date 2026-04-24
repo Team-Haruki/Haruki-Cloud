@@ -237,6 +237,27 @@ func TestSearchServiceSupportsGlobalLatestVisibleCard(t *testing.T) {
 	}
 }
 
+func TestSearchServiceLatestSelectorsIgnoreUnreleasedEvenWhenExplicitlyAllowed(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 201, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Old", AssetBundleName: "card_old", ReleaseAt: now - 3000},
+			{ID: 202, CharacterID: 6, CardRarityType: "rarity_4", Prefix: "Latest Visible", AssetBundleName: "card_latest", ReleaseAt: now - 1000},
+			{ID: 203, CharacterID: 7, CardRarityType: "rarity_4", Prefix: "Future", AssetBundleName: "card_future", ReleaseAt: now + 1000},
+		},
+		allowEmptyFilter: true,
+	}
+
+	searcher := NewSearchService(source, NewParser(defaultNicknames)).WithAllowUnreleased(true)
+	cardInfo, err := searcher.Search("-1")
+	if err != nil {
+		t.Fatalf("Search(-1) error = %v", err)
+	}
+	if cardInfo.ID != 202 {
+		t.Fatalf("expected latest visible card 202 even with allowUnreleased, got %+v", cardInfo)
+	}
+}
+
 func TestSearchServiceSupportsCharacterLatestVisibleCard(t *testing.T) {
 	now := time.Now().UnixMilli()
 	source := &lookupTestSource{
@@ -275,6 +296,39 @@ func TestSearchServiceSupportsCharacterLatestVisibleCard(t *testing.T) {
 	}
 	if len(list) != 1 || list[0].ID != 501 {
 		t.Fatalf("expected second latest visible character card 501, got %+v", list)
+	}
+}
+
+func TestSearchServiceCharacterLatestSelectorsIgnoreUnreleasedEvenWhenExplicitlyAllowed(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		cards: []*masterdata.Card{
+			{ID: 601, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Old Visible", AssetBundleName: "card_old_visible", ReleaseAt: now - 3000},
+			{ID: 602, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Latest Visible", AssetBundleName: "card_latest_visible", ReleaseAt: now - 1000},
+			{ID: 603, CharacterID: 5, CardRarityType: "rarity_4", Prefix: "Future", AssetBundleName: "card_future", ReleaseAt: now + 1000},
+		},
+	}
+	source.filterFunc = func(info *PjskCardQueryInfo) ([]*masterdata.Card, error) {
+		if info == nil || info.CharacterID != 5 {
+			return nil, fmt.Errorf("filter not supported: %+v", info)
+		}
+		out := make([]*masterdata.Card, 0, 3)
+		for _, item := range source.cards {
+			if item == nil || item.CharacterID != info.CharacterID {
+				continue
+			}
+			out = append(out, new(*item))
+		}
+		return out, nil
+	}
+
+	searcher := NewSearchService(source, NewParser(defaultNicknames)).WithAllowUnreleased(true)
+	cardInfo, err := searcher.Search("mnr-1")
+	if err != nil {
+		t.Fatalf("Search(mnr-1) error = %v", err)
+	}
+	if cardInfo.ID != 602 {
+		t.Fatalf("expected latest visible character card 602 even with allowUnreleased, got %+v", cardInfo)
 	}
 }
 

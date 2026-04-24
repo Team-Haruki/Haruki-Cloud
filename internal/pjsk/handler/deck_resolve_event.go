@@ -150,6 +150,12 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		}
 	}
 
+	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
+		if err := tryResolveDeckMusicQueryPrefixAsWorldBloomCharacter(ctx, q, app, region, chapters); err != nil {
+			return err
+		}
+	}
+
 	if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
 		if !trackerWorldBloomHasCharacter(chapters, *q.WorldBloomCharacterID) {
 			return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(region.String()), eventID, *q.WorldBloomCharacterID)
@@ -237,9 +243,6 @@ func tryResolveDeckMusicQueryAsWorldBloomCharacter(
 	if q == nil || app == nil {
 		return nil
 	}
-	if strings.TrimSpace(q.MusicDiff) != "" {
-		return nil
-	}
 
 	query := strings.TrimSpace(q.MusicQuery)
 	if query == "" {
@@ -262,6 +265,52 @@ func tryResolveDeckMusicQueryAsWorldBloomCharacter(
 	if strings.TrimSpace(q.EventUnit) == "" {
 		q.EventUnit = resolveDeckCharacterUnit(charID)
 	}
+	return nil
+}
+
+func tryResolveDeckMusicQueryPrefixAsWorldBloomCharacter(
+	ctx context.Context,
+	q *deck.AutoQuery,
+	app *renderapp.App,
+	region renderregion.Value,
+	chapters []*sekaidb.Worldbloom,
+) error {
+	if q == nil || app == nil {
+		return nil
+	}
+
+	query := strings.TrimSpace(q.MusicQuery)
+	fields := strings.Fields(query)
+	if len(fields) < 2 {
+		return nil
+	}
+
+	for split := len(fields) - 1; split >= 1; split-- {
+		charQuery := strings.TrimSpace(strings.Join(fields[:split], " "))
+		musicQuery := strings.TrimSpace(strings.Join(fields[split:], " "))
+		if charQuery == "" || musicQuery == "" {
+			continue
+		}
+
+		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, charQuery, "deck")
+		if err != nil {
+			if isCharacterNotFoundError(err) {
+				continue
+			}
+			return err
+		}
+		if !trackerWorldBloomHasCharacter(chapters, charID) {
+			continue
+		}
+
+		q.WorldBloomCharacterID = drawing.IntPtr(charID)
+		q.MusicQuery = musicQuery
+		if strings.TrimSpace(q.EventUnit) == "" {
+			q.EventUnit = resolveDeckCharacterUnit(charID)
+		}
+		return nil
+	}
+
 	return nil
 }
 

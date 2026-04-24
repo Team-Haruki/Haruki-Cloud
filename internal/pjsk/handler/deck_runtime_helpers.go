@@ -77,7 +77,7 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 		if binding != nil {
 			region = resolvedTargetRegion(region, ResolvedGameTarget{Binding: binding})
 			if snapshot == nil {
-				return nil, nil, region, nil, newSuiteDataNotFoundReplayError()
+				return nil, nil, region, nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 			}
 		}
 		detail := rc.GetDetailedProfile()
@@ -100,7 +100,7 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 
 	snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, region, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
 	if target.Binding != nil && snapshot == nil {
-		return nil, nil, region, nil, newSuiteDataNotFoundReplayError()
+		return nil, nil, region, nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)
 	}
 	resp := resolveDeckPublicProfileForTarget(rc, target, region)
 	detail := buildDeckDetailedProfileForTargetWithResponse(rc, target, region, snapshot, resp)

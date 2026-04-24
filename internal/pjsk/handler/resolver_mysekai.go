@@ -76,6 +76,10 @@ func resolveMySekaiRenderContext(
 	result.Profile = forceMySekaiProfileBindingID(buildPublicProfileCardForTarget(ctx, target, regionStr, platform, platformUserID, app), target, regionStr)
 	if data := resolveTargetMySekaiPayload(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID); len(data) > 0 {
 		result.Controller = result.Controller.WithMySekaiData(data)
+		return result, nil
+	}
+	if target.Binding != nil {
+		return mySekaiRenderContext{}, newMySekaiDataNotFoundReplayErrorForBinding(target.Binding)
 	}
 	return result, nil
 }

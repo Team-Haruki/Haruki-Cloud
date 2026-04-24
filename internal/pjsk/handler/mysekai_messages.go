@@ -68,7 +68,7 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 
 	case strings.HasPrefix(message, "mysekai resource requires profile data"),
 		strings.HasPrefix(message, "mysekai music record requires profile data"):
-		return onebot11.NewReplayError("缺少烤森信息数据，请重新上传 MySekai 抓包后重试")
+		return newMySekaiDataNotFoundReplayError()
 
 	case strings.HasPrefix(message, "queried gate already max level"):
 		return onebot11.NewReplayError("指定的大门已经满级")

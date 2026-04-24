@@ -2,8 +2,8 @@ package handler
 
 import (
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"fmt"
+	sonic "github.com/bytedance/sonic"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
@@ -256,7 +256,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		platform, platformUserID := platformCredentials(p)
 		targetSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, true)
 		if target.Binding != nil && targetSnapshot == nil {
-			return nil, newMySekaiDataNotFoundReplayError()
+			return nil, newMySekaiDataNotFoundReplayErrorForBinding(target.Binding)
 		}
 
 		q.Region = regionStr

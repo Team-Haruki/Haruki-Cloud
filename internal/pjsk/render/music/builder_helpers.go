@@ -162,10 +162,6 @@ var vocalLocalizationByRegion = map[renderregion.Value]map[string]string{
 }
 
 func normalizeVocalCaption(raw string, vocalType string, assetBundleName string, region renderregion.Value) string {
-	if preferred := classifyVocalByAssetBundle(assetBundleName, region); preferred != "" {
-		return preferred
-	}
-
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" {
 		trimmed = strings.TrimSpace(vocalType)
@@ -185,6 +181,12 @@ func normalizeVocalCaption(raw string, vocalType string, assetBundleName string,
 
 	if resolved, ok := vocalCaptionOverrides[key]; ok {
 		return localizeVocalCaption(resolved, region)
+	}
+	if trimmed != "" {
+		return trimmed
+	}
+	if preferred := classifyVocalByAssetBundle(assetBundleName, region); preferred != "" {
+		return preferred
 	}
 	if resolved, ok := vocalTypeFallbacks[strings.ToLower(strings.TrimSpace(vocalType))]; ok {
 		return localizeVocalCaption(resolved, region)

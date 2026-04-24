@@ -24,13 +24,11 @@ func (b *Builder) buildEventInfo(eventInfo *masterdata.Event) (drawing.EventInfo
 		BonusCharaID:  []int{},
 	}
 
-	if !isWLEvent {
+	if !isWLEvent && b.isBoxEvent(eventInfo.ID) {
 		if bannerCID, err := b.source.GetEventBannerCharacterID(eventInfo.ID); err == nil && bannerCID != 0 {
 			info.BannerCid = bannerCID
 			if idx := b.getBannerIndex(bannerCID, eventInfo.ID); idx != nil {
 				info.BannerIndex = *idx
-			} else {
-				info.BannerIndex = 1
 			}
 		}
 	}

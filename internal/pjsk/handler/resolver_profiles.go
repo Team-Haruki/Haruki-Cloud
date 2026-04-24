@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -75,6 +76,102 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 	}
 
 	return buildPublicMusicProfilesFromResolvedTarget(rc.Ctx, target, region, rc.Platform, rc.PlatformUserID, resp, rc.App)
+}
+
+func resolveCurrentTargetPublicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
+	if rc == nil {
+		return nil, nil
+	}
+	target := rc.GetSelfTarget()
+	if target == nil {
+		return nil, nil
+	}
+	resp := rc.GetPublicProfileResponse()
+	if resp == nil {
+		return nil, nil
+	}
+	region := resolvedTargetRegion(rc.RegionStr, *target)
+	return buildPublicMusicProfilesFromResolvedTarget(rc.Ctx, *target, region, rc.Platform, rc.PlatformUserID, resp, rc.App)
+}
+
+func cloneDetailedProfileForTarget(detail *drawing.DetailedProfileCardRequest, target ResolvedGameTarget, region string) *drawing.DetailedProfileCardRequest {
+	if detail == nil {
+		return nil
+	}
+	cloned := *detail
+	cloned.Mode = commonCloneStringPtr(detail.Mode)
+	cloned.FramePath = commonCloneStringPtr(detail.FramePath)
+	cloned.UserCards = append([]any(nil), detail.UserCards...)
+	cloned.IsHideUID = !target.Visible
+	if resolvedRegion := strings.TrimSpace(resolvedTargetRegion(region, target)); resolvedRegion != "" {
+		cloned.Region = strings.ToUpper(resolvedRegion)
+	}
+	return &cloned
+}
+
+func cloneProfileCardForTarget(card *drawing.ProfileCardRequest, target ResolvedGameTarget, region string) *drawing.ProfileCardRequest {
+	if card == nil {
+		return nil
+	}
+	cloned := *card
+	if card.Profile != nil {
+		profile := *card.Profile
+		profile.FramePath = commonCloneStringPtr(card.Profile.FramePath)
+		profile.IsHideUID = !target.Visible
+		if resolvedRegion := strings.TrimSpace(resolvedTargetRegion(region, target)); resolvedRegion != "" {
+			profile.Region = strings.ToUpper(resolvedRegion)
+		}
+		cloned.Profile = &profile
+	}
+	if len(card.DataSources) > 0 {
+		cloned.DataSources = make([]drawing.ProfileDataSource, 0, len(card.DataSources))
+		for _, item := range card.DataSources {
+			entry := item
+			entry.Source = commonCloneStringPtr(item.Source)
+			entry.Mode = commonCloneStringPtr(item.Mode)
+			if item.UpdateTime != nil {
+				entry.UpdateTime = new(int64)
+				*entry.UpdateTime = *item.UpdateTime
+			}
+			cloned.DataSources = append(cloned.DataSources, entry)
+		}
+	}
+	if card.MysekaiLevel != nil {
+		cloned.MysekaiLevel = new(int)
+		*cloned.MysekaiLevel = *card.MysekaiLevel
+	}
+	cloned.ErrorMessage = commonCloneStringPtr(card.ErrorMessage)
+	return &cloned
+}
+
+func resolveCommandDisplayProfiles(rc *RequestContext, snap snapshot.Snapshot) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {
+	detail, card := resolveCurrentTargetPublicProfiles(rc)
+	target := rc.GetSelfTarget()
+
+	if target != nil && snap != nil {
+		if detail == nil {
+			detail = cloneDetailedProfileForTarget(snap.DetailedProfile(rc.Region), *target, rc.RegionStr)
+		}
+		if card == nil {
+			card = cloneProfileCardForTarget(snap.ProfileCard(rc.Region), *target, rc.RegionStr)
+		}
+	}
+
+	if detail == nil {
+		detail = rc.GetDetailedProfile()
+	}
+	if card == nil {
+		card = rc.GetProfileCard()
+	}
+	return detail, card
+}
+
+func commonCloneStringPtr(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	cloned := *value
+	return &cloned
 }
 
 func buildPublicMusicProfilesFromResolvedTarget(

@@ -415,10 +415,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		if strings.TrimSpace(q.Keyword) == "" {
 			q.Keyword = strings.TrimSpace(rc.Cmd.Query)
 		}
-		q.DetailedProfile = rc.GetDetailedProfile()
-		if q.DetailedProfile == nil && suiteSnapshot != nil {
-			q.DetailedProfile = suiteSnapshot.DetailedProfile(rc.Region)
-		}
+		q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, suiteSnapshot)
 		data, err = musicCtrl.RenderMusicList(q)
 	case "music-chart":
 		q := rendermusic.ChartQuery{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
@@ -434,10 +431,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		q := rendermusic.ProgressQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		profile := rc.GetProfileCard()
-		if profile == nil && suiteSnapshot != nil {
-			profile = suiteSnapshot.ProfileCard(rc.Region)
-		}
+		_, profile := resolveCommandDisplayProfiles(rc, suiteSnapshot)
 		if suiteSnapshot != nil {
 			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, profile)
 		} else {
@@ -670,19 +664,19 @@ func renderMusicRewards(rc *RequestContext) ([]byte, error) {
 	if rc.App.Aliases != nil {
 		musicCtrl.SetAliasResolver(rc.App.Aliases)
 	}
-	_, snapshot, err := rc.requireVisibleSuiteSnapshot()
+	binding, snapshot, err := rc.requireVisibleSuiteSnapshot()
 	if err != nil {
 		return nil, err
 	}
 	if snapshot == nil {
-		return nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 
 	detailQuery := rendermusic.RewardsDetailQuery{Region: rc.Cmd.Region}
 	mergeParams(rc.Cmd.Params, &detailQuery)
-	detailQuery.Profile = rc.GetProfileCard()
+	_, detailQuery.Profile = resolveCommandDisplayProfiles(rc, snapshot)
 	if _, buildErr := musicCtrl.BuildMusicRewardsDetailRequestFromSnapshot(detailQuery, snapshot); buildErr != nil {
-		return nil, onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
+		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 	return musicCtrl.RenderMusicRewardsDetailFromSnapshot(detailQuery, snapshot)
 }

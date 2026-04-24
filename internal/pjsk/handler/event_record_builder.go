@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -34,9 +33,21 @@ var errStopEventRecordTrackerFallback = errors.New("event record tracker fallbac
 // Toolbox suite data, cross-referencing with master data for event metadata.
 // Regular events come from userEvents; world bloom events come from userWorldBlooms.
 func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value) (*drawing.EventRecordRequest, error) {
-	snapshot := rc.ResolveSnapshot(false)
-	if snapshot == nil {
-		return nil, fmt.Errorf("event record requires user data (suite snapshot unavailable)")
+	var snapshot rendersnapshot.Snapshot
+	if rc != nil && rc.App != nil && rc.App.Bindings != nil && strings.TrimSpace(rc.Platform) != "" && strings.TrimSpace(rc.PlatformUserID) != "" {
+		binding, resolvedSnapshot, err := rc.requireVisibleSuiteSnapshot()
+		if err != nil {
+			return nil, err
+		}
+		if resolvedSnapshot == nil {
+			return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+		}
+		snapshot = resolvedSnapshot
+	} else {
+		snapshot = rc.ResolveSnapshot(false)
+		if snapshot == nil {
+			return nil, fmt.Errorf("event record requires user data (suite snapshot unavailable)")
+		}
 	}
 	rawData := snapshot.RawData()
 	if rawData == nil || (len(rawData.UserEvents) == 0 && len(rawData.UserWorldBlooms) == 0) {
@@ -133,10 +144,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	sortEventHistory(eventInfo)
 	sortEventHistory(wlEventInfo)
 
-	profile := snapshot.DetailedProfile(region)
-	if profile == nil {
-		profile = rc.GetDetailedProfile()
-	}
+	profile, _ := resolveCommandDisplayProfiles(rc, snapshot)
 	if profile == nil {
 		return nil, fmt.Errorf("event record requires user profile data")
 	}
@@ -295,9 +303,7 @@ func buildEventHistoryFromMaster(master map[string]any, eventID, eventPoint int,
 		return nil
 	}
 	assetBundle := stringVal(master, "assetbundleName")
-	bannerPath := assets.ResolveRegionAssetPath(assetHelper, regionStr,
-		filepath.Join("home", "banner", assetBundle, assetBundle+".png"),
-		filepath.Join("event", assetBundle, "banner.png"))
+	bannerPath := assets.ResolveEventBannerPath(assetHelper, regionStr, assetBundle)
 	return &drawing.EventHistory{
 		ID:         eventID,
 		EventName:  stringVal(master, "name"),

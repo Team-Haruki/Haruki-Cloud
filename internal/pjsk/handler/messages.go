@@ -14,12 +14,13 @@ import (
 const (
 	ErrMsgBindingNotFound = "未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令\n" +
 		"如果已经绑定，请确保已设置默认账号或绑定的账号在当前服务器可见"
-	ErrMsgToolboxURL = "工具箱地址：https://haruki.seiunx.com/"
+	ErrMsgToolboxURL            = "工具箱地址：https://haruki.seiunx.com/"
+	ErrMsgPrivateDataSetupGuide = "请前往工具箱先注册账号、绑定自己QQ账号、再绑定游戏账号后上传自己的数据，才能使用此功能"
 
 	// Data availability errors
-	ErrMsgSuiteDataUnavailable     = "没有找到有效的 suite 数据，请前往工具箱上传数据后再使用此命令\n" + ErrMsgToolboxURL
+	ErrMsgSuiteDataUnavailable     = "没有找到有效的 suite 数据，" + ErrMsgPrivateDataSetupGuide + "\n" + ErrMsgToolboxURL
 	ErrMsgSuiteDataNotFound        = ErrMsgSuiteDataUnavailable
-	ErrMsgMySekaiDataUnavailable   = "没有找到有效的 mysekai 数据，请前往工具箱上传数据后再使用此命令\n" + ErrMsgToolboxURL
+	ErrMsgMySekaiDataUnavailable   = "没有找到有效的 mysekai 数据，" + ErrMsgPrivateDataSetupGuide + "\n" + ErrMsgToolboxURL
 	ErrMsgMySekaiDataNotFound      = ErrMsgMySekaiDataUnavailable
 	ErrMsgCardCatalogRequiresSuite = ErrMsgSuiteDataNotFound
 
@@ -61,8 +62,42 @@ func newSuiteDataNotFoundReplayError() error {
 	return onebot11.NewReplayError(ErrMsgSuiteDataNotFound)
 }
 
+func newSuiteDataNotFoundReplayErrorForBinding(binding *accountdata.ResolvedBinding) error {
+	return onebot11.NewReplayError("%s", buildPrivateDataNotFoundMessage("suite", binding))
+}
+
 func newMySekaiDataNotFoundReplayError() error {
 	return onebot11.NewReplayError(ErrMsgMySekaiDataNotFound)
+}
+
+func newMySekaiDataNotFoundReplayErrorForBinding(binding *accountdata.ResolvedBinding) error {
+	return onebot11.NewReplayError("%s", buildPrivateDataNotFoundMessage("mysekai", binding))
+}
+
+func buildPrivateDataNotFoundMessage(dataLabel string, binding *accountdata.ResolvedBinding) string {
+	dataLabel = strings.TrimSpace(strings.ToLower(dataLabel))
+	if dataLabel == "" {
+		dataLabel = "suite"
+	}
+
+	if binding == nil {
+		return fmt.Sprintf("没有找到有效的 %s 数据，%s\n%s", dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
+	}
+
+	server := strings.ToUpper(strings.TrimSpace(binding.Server))
+	uid := maskUserFacingGameID(binding.PJSKUserID, binding.Visible)
+	if server == "" || uid == "" {
+		return fmt.Sprintf("没有找到有效的 %s 数据，%s\n%s", dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
+	}
+	return fmt.Sprintf("当前%s服%s没有找到有效的 %s 数据，%s\n%s", server, uid, dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
+}
+
+func maskUserFacingGameID(uid string, visible bool) string {
+	uid = strings.TrimSpace(uid)
+	if uid == "" || visible || len(uid) <= 6 {
+		return uid
+	}
+	return uid[:3] + strings.Repeat("*", len(uid)-6) + uid[len(uid)-3:]
 }
 
 // WrapDomainError converts well-known domain errors into ReplayError so that

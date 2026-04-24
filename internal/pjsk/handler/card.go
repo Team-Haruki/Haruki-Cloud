@@ -204,7 +204,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
 		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
-		q.DetailedProfile = rc.GetDetailedProfile()
+		q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, rc.ResolveSnapshot(false))
 		data, err = cardCtrl.RenderCardList(q)
 	case "card-box":
 		q := card.Query{
@@ -271,15 +271,15 @@ func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedPro
 		return nil, accountdata.ErrNoBinding
 	}
 	if !binding.SuiteVisible {
-		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 	snap := rc.ResolveSnapshot(false)
 	if snap == nil {
-		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 	detail := snap.DetailedProfile(rc.Region)
 	if detail == nil || len(detail.UserCards) == 0 {
-		return nil, onebot11.NewReplayError(ErrMsgCardCatalogRequiresSuite)
+		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 	return detail, nil
 }

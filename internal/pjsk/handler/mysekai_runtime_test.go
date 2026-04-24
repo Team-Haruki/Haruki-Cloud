@@ -2,9 +2,9 @@ package handler
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"errors"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,6 +15,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -234,7 +235,34 @@ func TestExecuteMySekaiMissingSnapshotUsesStandardReplayError(t *testing.T) {
 	if !errors.As(WrapDomainError(err), &replyErr) {
 		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
 	}
-	if string(replyErr) != ErrMsgMySekaiDataNotFound {
+	if string(replyErr) != buildPrivateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
+		t.Fatalf("unexpected replay error: %q", replyErr)
+	}
+}
+
+func TestExecuteMySekaiReturnsBindingErrorBeforeDataMessage(t *testing.T) {
+	_, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+		Module:            parser.ModuleMysekai,
+		Mode:              "mysekai-photo",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Bindings: newHandlerTestBindingService(t),
+		MySekai:  rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
+	}))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var replyErr onebot11.ReplayError
+	if !errors.As(WrapDomainError(err), &replyErr) {
+		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
+	}
+	if string(replyErr) != ErrMsgBindingNotFound {
 		t.Fatalf("unexpected replay error: %q", replyErr)
 	}
 }

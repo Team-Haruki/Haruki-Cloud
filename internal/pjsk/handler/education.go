@@ -271,10 +271,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	if suiteErr != nil {
 		return nil, suiteErr
 	}
-	publicDetailedProfile := rc.GetDetailedProfile()
-	if publicDetailedProfile == nil && suiteSnapshot != nil {
-		publicDetailedProfile = suiteSnapshot.DetailedProfile(region)
-	}
+	publicDetailedProfile, _ := resolveCommandDisplayProfiles(rc, suiteSnapshot)
 
 	platform := rc.Platform
 	platformUserID := rc.PlatformUserID

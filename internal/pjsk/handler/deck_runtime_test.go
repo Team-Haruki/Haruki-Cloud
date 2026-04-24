@@ -14,6 +14,7 @@ import (
 	harukiConfig "haruki-cloud/config"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -402,7 +403,11 @@ func TestExecuteDeckMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 		Decks:    newHandlerTestDeckController(t),
 		Music:    newHandlerTestMusicController(t),
 	}))
-	if err == nil || !strings.Contains(err.Error(), ErrMsgMySekaiDataNotFound) {
+	if err == nil || err.Error() != buildPrivateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

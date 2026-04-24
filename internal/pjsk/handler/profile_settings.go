@@ -490,7 +490,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return nil, err
 		}
 		if !hasUsableMySekaiData(binding) {
-			return nil, newMySekaiDataNotFoundReplayError()
+			return nil, newMySekaiDataNotFoundReplayErrorForBinding(binding)
 		}
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
@@ -513,7 +513,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 			return nil, err
 		}
 		if !hasUsableSuiteData(binding) {
-			return nil, newSuiteDataNotFoundReplayError()
+			return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 		}
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {

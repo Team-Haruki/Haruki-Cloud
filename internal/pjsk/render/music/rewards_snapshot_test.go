@@ -161,6 +161,9 @@ func TestBuildMusicRewardsDetailRequestFromSnapshotUsesSnapshotAchievements(t *t
 	if payload.RankRewards != 110 {
 		t.Fatalf("unexpected rank rewards: %d", payload.RankRewards)
 	}
+	if payload.Profile.BgAlpha == nil || *payload.Profile.BgAlpha != 80 {
+		t.Fatalf("unexpected profile bg alpha: %+v", payload.Profile.BgAlpha)
+	}
 	rewards := payload.ComboRewards["hard"]
 	if len(rewards) != 1 || rewards[0].Level != 10 || rewards[0].Reward != 50 {
 		t.Fatalf("unexpected hard combo rewards: %+v", rewards)

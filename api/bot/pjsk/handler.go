@@ -153,11 +153,12 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 			}()
 		}
 
-		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req)
+		botID := strings.TrimSpace(c.Params("botId"))
+		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req, botID)
 		if err != nil && allowCompatReroute {
 			if validationErr, ok := errors.AsType[*botValidationError](err); ok && canRetryBotPathCompat(expectedPath, validationErr.actualPath) {
 				logger.Warnf("bot command compat reroute: matched_command=%s expected_path=%s actual_path=%s", req.MatchedCommand, expectedPath, validationErr.actualPath)
-				resolved, err = resolveBotCommand(c.Context(), req.Message, validationErr.actualPath, req)
+				resolved, err = resolveBotCommand(c.Context(), req.Message, validationErr.actualPath, req, botID)
 			}
 		}
 		if err != nil {
@@ -279,7 +280,7 @@ func botPathFamily(path string) string {
 	return path
 }
 
-func resolveBotCommand(requestCtx context.Context, message onebot11.Message, expectedPath string, req BotCommandRequest) (*commandhandler.CommandRequest, error) {
+func resolveBotCommand(requestCtx context.Context, message onebot11.Message, expectedPath string, req BotCommandRequest, botID string) (*commandhandler.CommandRequest, error) {
 
 	matchedCommand := req.MatchedCommand
 	messageType := commandhandler.MessageTypePrivate
@@ -355,6 +356,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	resolved.RequesterPlatform = req.Platform
 	resolved.RequesterUserID = req.PlatformUserID
 	resolved.RequesterGroupID = req.PlatformGroupID
+	resolved.RequesterBotID = strings.TrimSpace(botID)
 	return resolved, nil
 }
 

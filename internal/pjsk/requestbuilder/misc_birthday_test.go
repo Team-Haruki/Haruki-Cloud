@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
+	"haruki-cloud/internal/pjsk/alias"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 
@@ -160,6 +162,68 @@ func TestBuildMiscBirthdayRequestFromRawQuery(t *testing.T) {
 		t.Fatalf("BuildMiscBirthdayRequest() error = %v", err)
 	}
 	if req.Cid != 21 {
+		t.Fatalf("unexpected birthday target cid: %d", req.Cid)
+	}
+}
+
+func TestBuildMiscBirthdayRequestUsesApprovedCharacterAlias(t *testing.T) {
+	ctx := context.Background()
+	suffix := time.Now().UnixNano()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:misc_birthday_alias_sekai_%d?mode=memory&cache=shared&_fk=1", suffix))
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	pjskClient := pjskenttest.Open(t, "sqlite3", fmt.Sprintf("file:misc_birthday_alias_pjsk_%d?mode=memory&cache=shared&_fk=1", suffix))
+	t.Cleanup(func() { _ = pjskClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(11).
+		SetFirstName("东云").
+		SetGivenName("彰人").
+		SetFirstNameEnglish("Shinonome").
+		SetGivenNameEnglish("Akito").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	if _, err := sekaiClient.Gamecharacterunit.Create().
+		SetServerRegion("jp").
+		SetGameCharacterID(11).
+		SetColorCode("#FFAA33").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacterunit: %v", err)
+	}
+
+	if _, err := sekaiClient.Card.Create().
+		SetServerRegion("jp").
+		SetGameID(91101).
+		SetCharacterID(11).
+		SetCardRarityType("rarity_birthday").
+		SetAssetbundleName("birthday_card_test_akito").
+		SetReleaseAt(1).
+		Save(ctx); err != nil {
+		t.Fatalf("create birthday card: %v", err)
+	}
+
+	if _, err := pjskClient.Alias.Create().
+		SetAliasType(alias.PjskAliasTypeCharacter).
+		SetAliasTypeID(11).
+		SetAlias("akt").
+		Save(ctx); err != nil {
+		t.Fatalf("create approved alias: %v", err)
+	}
+
+	req, err := BuildMiscBirthdayRequest(context.Background(), &CommandInput{
+		Region: "jp",
+		Query:  "akt",
+	}, &renderapp.App{
+		Sekai:   sekaiClient,
+		Assets:  assets.NewAssetHelper(t.TempDir(), nil),
+		Aliases: alias.NewService(sekaiClient, pjskClient, nil),
+	})
+	if err != nil {
+		t.Fatalf("BuildMiscBirthdayRequest() error = %v", err)
+	}
+	if req.Cid != 11 {
 		t.Fatalf("unexpected birthday target cid: %d", req.Cid)
 	}
 }

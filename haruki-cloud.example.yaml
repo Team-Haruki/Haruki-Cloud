@@ -41,6 +41,7 @@ pjsk:
   allow_cn_mysekai:
     # - platform: "qq"
     #   group_id: "12345678"
+    #   bot_id: "11451419"
 
 redis:
   host: "localhost"

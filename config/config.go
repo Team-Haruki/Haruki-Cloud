@@ -271,6 +271,7 @@ type MusicMetaConfig struct {
 type MySekaiCNWhitelistEntry struct {
 	Platform string `yaml:"platform"`
 	GroupID  string `yaml:"group_id"`
+	BotID    string `yaml:"bot_id"`
 }
 
 type PJSKRenderConfig struct {

@@ -1,0 +1,64 @@
+package handler
+
+import (
+	"testing"
+
+	harukiConfig "haruki-cloud/config"
+)
+
+func TestIsMySekaiRegionAllowedMatchesWhitelistedBot(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = []harukiConfig.MySekaiCNWhitelistEntry{
+		{Platform: "qq", GroupID: "123456", BotID: "11451419"},
+	}
+	t.Cleanup(func() {
+		harukiConfig.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	allowed := isMySekaiRegionAllowed(&CommandRequest{
+		RequesterPlatform: "qq",
+		RequesterGroupID:  "123456",
+		RequesterBotID:    "11451419",
+	}, "cn")
+	if !allowed {
+		t.Fatal("expected whitelisted bot to be allowed")
+	}
+}
+
+func TestIsMySekaiRegionAllowedRejectsDifferentBot(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = []harukiConfig.MySekaiCNWhitelistEntry{
+		{Platform: "qq", GroupID: "123456", BotID: "11451419"},
+	}
+	t.Cleanup(func() {
+		harukiConfig.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	allowed := isMySekaiRegionAllowed(&CommandRequest{
+		RequesterPlatform: "qq",
+		RequesterGroupID:  "123456",
+		RequesterBotID:    "1919810",
+	}, "cn")
+	if allowed {
+		t.Fatal("expected different bot to be rejected")
+	}
+}
+
+func TestIsMySekaiRegionAllowedKeepsLegacyGroupWhitelist(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = []harukiConfig.MySekaiCNWhitelistEntry{
+		{Platform: "qq", GroupID: "123456"},
+	}
+	t.Cleanup(func() {
+		harukiConfig.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	allowed := isMySekaiRegionAllowed(&CommandRequest{
+		RequesterPlatform: "qq",
+		RequesterGroupID:  "123456",
+		RequesterBotID:    "1919810",
+	}, "cn")
+	if !allowed {
+		t.Fatal("expected legacy whitelist entry without bot id to remain valid")
+	}
+}

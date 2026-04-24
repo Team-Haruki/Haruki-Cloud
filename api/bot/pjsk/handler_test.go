@@ -557,7 +557,7 @@ func TestResolveBotCommandFallsBackToMessageMatchForCompactTimeZoneCommand(t *te
 		Platform:       "qq",
 		PlatformUserID: "12345",
 		MatchedCommand: "/pjsktzHKT",
-	})
+	}, testBotID)
 	if err != nil {
 		t.Fatalf("resolveBotCommand() error = %v", err)
 	}
@@ -578,6 +578,9 @@ func TestResolveBotCommandFallsBackToMessageMatchForCompactTimeZoneCommand(t *te
 	if resolved.RequesterPlatform != "qq" || resolved.RequesterUserID != "12345" {
 		t.Fatalf("unexpected requester info: platform=%q user=%q", resolved.RequesterPlatform, resolved.RequesterUserID)
 	}
+	if resolved.RequesterBotID != testBotID {
+		t.Fatalf("unexpected requester bot id: %q", resolved.RequesterBotID)
+	}
 }
 
 func TestResolveBotCommandCorrectsShortMatchedCommandToArrestDifficulty(t *testing.T) {
@@ -589,7 +592,7 @@ func TestResolveBotCommandCorrectsShortMatchedCommandToArrestDifficulty(t *testi
 		Platform:       "qq",
 		PlatformUserID: "12345",
 		MatchedCommand: "/逮捕",
-	})
+	}, testBotID)
 	if err != nil {
 		t.Fatalf("resolveBotCommand() error = %v", err)
 	}

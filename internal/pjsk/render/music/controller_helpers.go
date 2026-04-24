@@ -14,6 +14,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
+const musicInfoPanelAlpha = 80
+
 func (c *Controller) currentSnapshot() snapshot.Snapshot {
 	if c == nil || c.snapshot == nil {
 		return nil
@@ -47,9 +49,9 @@ func (c *Controller) profileCard(region renderregion.Value) drawing.ProfileCardR
 
 func (c *Controller) resolveProfileCard(override *drawing.ProfileCardRequest, region renderregion.Value) drawing.ProfileCardRequest {
 	if override != nil {
-		return *override
+		return normalizeMusicProfileCard(*override)
 	}
-	return c.profileCard(region)
+	return normalizeMusicProfileCard(c.profileCard(region))
 }
 
 func (c *Controller) profileCardWithMessage(override *drawing.ProfileCardRequest, region renderregion.Value, message *string) drawing.ProfileCardRequest {
@@ -86,6 +88,7 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 	if update == 0 {
 		update = time.Now().UnixMilli()
 	}
+	bgAlpha := musicInfoPanelAlpha
 	return drawing.ProfileCardRequest{
 		Profile: &drawing.BasicProfile{
 			ID:              detail.ID,
@@ -104,7 +107,16 @@ func convertDetailedProfileToCard(detail drawing.DetailedProfileCardRequest) dra
 				Mode:       common.CloneStringPtr(detail.Mode),
 			},
 		},
+		BgAlpha: &bgAlpha,
 	}
+}
+
+func normalizeMusicProfileCard(card drawing.ProfileCardRequest) drawing.ProfileCardRequest {
+	if card.BgAlpha == nil {
+		bgAlpha := musicInfoPanelAlpha
+		card.BgAlpha = &bgAlpha
+	}
+	return card
 }
 
 func (c *Controller) buildPlayResultIconMap(_ renderregion.Value) map[string]string {

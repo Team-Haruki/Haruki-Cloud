@@ -14,6 +14,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
+	rendercard "haruki-cloud/internal/pjsk/render/card"
 )
 
 type miscBirthdaySelection struct {
@@ -262,6 +263,18 @@ func resolveBirthdayCharacterID(ctx context.Context, app *renderapp.App, region 
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return 0, fmt.Errorf("请输入角色名")
+	}
+
+	if app != nil && app.Aliases != nil {
+		if charID, ok, err := app.Aliases.TryResolveCharacterID(ctx, query); err != nil {
+			return 0, err
+		} else if ok && charID > 0 {
+			return charID, nil
+		}
+	}
+
+	if charID, ok := rendercard.ResolveDefaultCharacterNickname(query); ok && charID > 0 {
+		return charID, nil
 	}
 
 	extractor := parser.NewExtractor(miscBirthdayDefaultNicknames)

@@ -17,7 +17,8 @@ func isMySekaiRegionAllowed(cmd *CommandRequest, region string) bool {
 	}
 	for _, entry := range harukiConfig.Cfg.PJSK.AllowCNMySekai {
 		if strings.EqualFold(entry.Platform, cmd.RequesterPlatform) &&
-			entry.GroupID == cmd.RequesterGroupID {
+			entry.GroupID == cmd.RequesterGroupID &&
+			(strings.TrimSpace(entry.BotID) == "" || entry.BotID == cmd.RequesterBotID) {
 			return true
 		}
 	}

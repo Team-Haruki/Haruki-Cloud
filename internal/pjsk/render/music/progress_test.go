@@ -86,6 +86,9 @@ func TestBuildMusicProgressRequestUsesStaticPlaceholderLeaderImage(t *testing.T)
 	if req.Profile.Profile.LeaderImagePath != "static_images/unknown.jpg" {
 		t.Fatalf("unexpected placeholder leader path: %q", req.Profile.Profile.LeaderImagePath)
 	}
+	if req.Profile.BgAlpha == nil || *req.Profile.BgAlpha != 80 {
+		t.Fatalf("unexpected profile bg alpha: %+v", req.Profile.BgAlpha)
+	}
 }
 
 type progressSnapshotStub struct {

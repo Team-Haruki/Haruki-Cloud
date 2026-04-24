@@ -23,6 +23,7 @@ type ProfileCardRequest struct {
 	Profile      *BasicProfile       `json:"profile,omitempty"`
 	DataSources  []ProfileDataSource `json:"data_sources"`
 	MysekaiLevel *int                `json:"mysekai_level,omitempty"`
+	BgAlpha      *int                `json:"bg_alpha,omitempty"`
 	ErrorMessage *string             `json:"error_message,omitempty"`
 }
 

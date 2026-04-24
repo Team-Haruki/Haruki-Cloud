@@ -24,6 +24,7 @@ type CommandRequest struct {
 	RequesterPlatform string
 	RequesterUserID   string
 	RequesterGroupID  string
+	RequesterBotID    string
 
 	executor commandExecutor
 }

@@ -142,7 +142,7 @@ type ProviderAdapter struct {
 
 // ── Snapshot helpers ────────────────────────────────────────────────────────
 
-const maxRenderedBonds = 10
+const maxRenderedBonds = 20
 
 const areaCoinMaterialID = -1
 

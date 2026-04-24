@@ -232,7 +232,7 @@ func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.B
 		}
 		return bonds[i].CharaID2 < bonds[j].CharaID2
 	})
-	if len(bonds) > maxRenderedBonds {
+	if query.Cid <= 0 && len(bonds) > maxRenderedBonds {
 		bonds = bonds[:maxRenderedBonds]
 	}
 

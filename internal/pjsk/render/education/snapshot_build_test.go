@@ -705,11 +705,11 @@ func TestBuildBondsRequestFromSnapshotUsesBaseCharacterForStyledPairs(t *testing
 	}
 }
 
-func TestBuildBondsRequestFromSnapshotLimitsToTopTen(t *testing.T) {
-	userBonds := make([]map[string]any, 0, 12)
-	bondsMaster := make([]*Bond, 0, 12)
-	bondLevels := make([]*BondLevel, 0, 12)
-	for i := 1; i <= 12; i++ {
+func TestBuildBondsRequestFromSnapshotLimitsToTopTwenty(t *testing.T) {
+	userBonds := make([]map[string]any, 0, 24)
+	bondsMaster := make([]*Bond, 0, 24)
+	bondLevels := make([]*BondLevel, 0, 24)
+	for i := 1; i <= 24; i++ {
 		groupID := 3000 + i
 		userBonds = append(userBonds, map[string]any{
 			"bondsGroupId": groupID,
@@ -757,14 +757,80 @@ func TestBuildBondsRequestFromSnapshotLimitsToTopTen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildBondsRequestFromSnapshot() error = %v", err)
 	}
-	if len(req.Bonds) != 10 {
-		t.Fatalf("expected top 10 bonds, got %d", len(req.Bonds))
+	if len(req.Bonds) != 20 {
+		t.Fatalf("expected top 20 bonds, got %d", len(req.Bonds))
 	}
-	if req.Bonds[0].BondLevel != 12 {
+	if req.Bonds[0].BondLevel != 24 {
 		t.Fatalf("expected highest bond level first, got %+v", req.Bonds[0])
 	}
-	if req.Bonds[len(req.Bonds)-1].BondLevel != 3 {
-		t.Fatalf("expected tenth bond level to be 3, got %+v", req.Bonds[len(req.Bonds)-1])
+	if req.Bonds[len(req.Bonds)-1].BondLevel != 5 {
+		t.Fatalf("expected twentieth bond level to be 5, got %+v", req.Bonds[len(req.Bonds)-1])
+	}
+}
+
+func TestBuildBondsRequestFromSnapshotDoesNotLimitCharacterScopedResults(t *testing.T) {
+	userBonds := make([]map[string]any, 0, 24)
+	bondsMaster := make([]*Bond, 0, 24)
+	bondLevels := make([]*BondLevel, 0, 24)
+	for i := 1; i <= 24; i++ {
+		groupID := 5000 + i
+		userBonds = append(userBonds, map[string]any{
+			"bondsGroupId": groupID,
+			"rank":         i,
+			"exp":          0,
+		})
+		bondsMaster = append(bondsMaster, &Bond{
+			GroupID:      groupID,
+			CharacterID1: 1,
+			CharacterID2: 100 + i,
+		})
+		bondLevels = append(bondLevels, &BondLevel{
+			Level:    i,
+			TotalExp: i * 10,
+		})
+	}
+
+	snap := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userBonds": userBonds,
+		"userCharacters": []map[string]any{
+			{"characterId": 1, "characterRank": 50},
+		},
+	})
+
+	controller := NewController(nil, nil, snap, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region:     renderregion.JP,
+		bonds:      bondsMaster,
+		bondLevels: bondLevels,
+	})
+
+	req, err := controller.BuildBondsRequestFromSnapshot(BondsQuery{Region: renderregion.JP, Cid: 1})
+	if err != nil {
+		t.Fatalf("BuildBondsRequestFromSnapshot() error = %v", err)
+	}
+	if len(req.Bonds) != 24 {
+		t.Fatalf("expected all 24 character-scoped bonds, got %d", len(req.Bonds))
+	}
+	if req.Bonds[0].BondLevel != 24 {
+		t.Fatalf("expected highest bond level first, got %+v", req.Bonds[0])
+	}
+	if req.Bonds[len(req.Bonds)-1].BondLevel != 1 {
+		t.Fatalf("expected last bond level to be 1, got %+v", req.Bonds[len(req.Bonds)-1])
 	}
 }
 

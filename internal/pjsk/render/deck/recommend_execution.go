@@ -9,6 +9,7 @@ func expandRecommendBatchOptions(recommender PjskDeckRecommender, recType string
 	if recommender == nil || option == nil {
 		return nil
 	}
+	option = normalizeBonusExactSolverOption(recType, option)
 	if shouldTuneMysekaiRLGaOptions(recommender, recType, option) {
 		option = applyMysekaiRLTunedGaOptions(option)
 	}
@@ -44,6 +45,29 @@ func expandRecommendBatchOptions(recommender PjskDeckRecommender, recType string
 		appendOption(fallback)
 	}
 	return result
+}
+
+func normalizeBonusExactSolverOption(recType string, option map[string]any) map[string]any {
+	if option == nil {
+		return nil
+	}
+	if recType != "bonus" && normalizeRecommendTarget(optionString(option, "target")) != "bonus" {
+		return option
+	}
+	// Exact target-bonus solving still relies on the dedicated DFS path, so
+	// accept any caller-facing algorithm hint but collapse the actual service
+	// request to a single DFS execution to keep the semantics correct.
+	if normalizeRecommendAlgorithmForService(optionString(option, "algorithm")) == "dfs" {
+		if _, ok := option[recommendAlgorithmSubsetKey]; !ok {
+			return option
+		}
+	}
+
+	copied := cloneRecommendOption(option)
+	copied["algorithm"] = "dfs"
+	delete(copied, recommendAlgorithmSubsetKey)
+	delete(copied, "ga_options")
+	return copied
 }
 
 func shouldUseMysekaiRLFallback(recType string, option map[string]any) bool {

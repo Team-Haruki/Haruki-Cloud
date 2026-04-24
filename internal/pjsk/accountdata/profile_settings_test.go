@@ -173,7 +173,8 @@ func TestProfileBackgroundRequiresVerifiedBinding(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected unverified binding to reject bg upload")
 	}
-	if !strings.Contains(err.Error(), "尚未验证") {
+	want := "当前JP服绑定账号尚未验证，无法设置个人信息背景，请前往工具箱https://haruki.seiunx.com/通过游戏账号验证后再发送/jppjsk verify来进行验证"
+	if err.Error() != want {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

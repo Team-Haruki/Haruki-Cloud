@@ -9,6 +9,16 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 )
 
+func unverifiedBindingProfileBGError(binding *pjskdb.UserBinding, action string) error {
+	server := strings.ToLower(strings.TrimSpace(bindingServer(binding)))
+	return fmt.Errorf(
+		"当前%s服绑定账号尚未验证，无法%s个人信息背景，请前往工具箱https://haruki.seiunx.com/通过游戏账号验证后再发送/%spjsk verify来进行验证",
+		strings.ToUpper(server),
+		action,
+		server,
+	)
+}
+
 func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding, imageURL string) (*BindingListItem, error) {
 	if s == nil || s.bgStorage == nil {
 		return nil, fmt.Errorf("pjsk: profile background storage is not configured")
@@ -17,7 +27,7 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 		return nil, fmt.Errorf("未找到要设置背景的绑定账号")
 	}
 	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法设置个人信息背景", strings.ToUpper(bindingServer(binding)))
+		return nil, unverifiedBindingProfileBGError(binding, "设置")
 	}
 
 	// User-level BG ban check: read from UserSettings (haruki_user_id granularity).
@@ -75,7 +85,7 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 		return nil, fmt.Errorf("未找到要清除背景的绑定账号")
 	}
 	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法清除个人信息背景", strings.ToUpper(bindingServer(binding)))
+		return nil, unverifiedBindingProfileBGError(binding, "清除")
 	}
 	gameAccountID := bindingGameAccountID(binding)
 	settings, err := loadProfileBackground(ctx, s.pjskDB, gameAccountID)
@@ -104,7 +114,7 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 		return nil, fmt.Errorf("未找到要调整背景的绑定账号")
 	}
 	if !binding.Verified {
-		return nil, fmt.Errorf("当前%s服绑定账号尚未验证，无法调整个人信息背景", strings.ToUpper(bindingServer(binding)))
+		return nil, unverifiedBindingProfileBGError(binding, "调整")
 	}
 	gameAccountID := bindingGameAccountID(binding)
 	currentBg, err := loadProfileBackground(ctx, s.pjskDB, gameAccountID)

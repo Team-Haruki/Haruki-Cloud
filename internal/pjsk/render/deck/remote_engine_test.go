@@ -2,8 +2,8 @@ package deck
 
 import (
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"fmt"
+	sonic "github.com/bytedance/sonic"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -386,6 +386,42 @@ func TestExpandRecommendBatchOptionsAddsFallbacksForMysekaiRL(t *testing.T) {
 	}
 	if _, ok := plain[0]["ga_options"]; ok {
 		t.Fatalf("non-mysekai rl request should not inject ga_options, got %+v", plain[0])
+	}
+}
+
+func TestExpandRecommendBatchOptionsForcesBonusToExactDFS(t *testing.T) {
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: "http://example.com",
+		MasterdataDir:  "/masterdata",
+		DefaultAlgs:    []string{"dfs_ga", "ga", "rl"},
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	options := expandRecommendBatchOptions(recommender, "bonus", map[string]any{
+		"algorithm":                 "all",
+		"live_type":                 "solo",
+		"target":                    "bonus",
+		"target_bonus_list":         []int{150, 160},
+		recommendAlgorithmSubsetKey: []string{"rl", "ga", "dfs_ga"},
+		"ga_options": map[string]any{
+			"max_iter": 512,
+		},
+	})
+	if len(options) != 1 {
+		t.Fatalf("expected bonus batch to collapse to one exact dfs request, got %+v", options)
+	}
+	if options[0]["algorithm"] != "dfs" {
+		t.Fatalf("expected bonus batch to force dfs, got %+v", options[0])
+	}
+	if _, ok := options[0][recommendAlgorithmSubsetKey]; ok {
+		t.Fatalf("bonus dfs request should not keep algorithm subset, got %+v", options[0])
+	}
+	if _, ok := options[0]["ga_options"]; ok {
+		t.Fatalf("bonus dfs request should not keep ga_options, got %+v", options[0])
 	}
 }
 

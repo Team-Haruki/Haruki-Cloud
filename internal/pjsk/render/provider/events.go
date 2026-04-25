@@ -12,6 +12,7 @@ type EventProvider interface {
 	GetByCardID(ctx context.Context, cardID int) (*masterdata.Event, error)
 	GetAll(ctx context.Context) []*masterdata.Event
 	GetCards(ctx context.Context, eventID int) ([]*masterdata.Card, error)
+	GetRankingHonorRewards(ctx context.Context, eventID int) ([]masterdata.EventRankingHonorReward, error)
 	GetBannerCharacterID(ctx context.Context, eventID int) (int, error)
 	GetDeckBonuses(ctx context.Context, eventID int) ([]*masterdata.EventDeckBonus, error)
 	GetBanEvents(ctx context.Context, charID int) []*masterdata.Event

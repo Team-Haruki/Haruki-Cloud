@@ -97,6 +97,12 @@ type EventDeckBonus struct {
 	BonusRate           float64
 }
 
+type EventRankingHonorReward struct {
+	FromRank int
+	ToRank   int
+	HonorID  int
+}
+
 type GameCharacterUnit struct {
 	ID              int
 	GameCharacterID int

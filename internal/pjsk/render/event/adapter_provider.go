@@ -34,6 +34,10 @@ func (a *ProviderAdapter) GetEventCards(eventID int) ([]*masterdata.Card, error)
 	return a.P.Events().GetCards(a.Context(), eventID)
 }
 
+func (a *ProviderAdapter) GetEventRankingHonorRewards(eventID int) ([]masterdata.EventRankingHonorReward, error) {
+	return a.P.Events().GetRankingHonorRewards(a.Context(), eventID)
+}
+
 func (a *ProviderAdapter) GetEventBannerCharacterID(eventID int) (int, error) {
 	return a.P.Events().GetBannerCharacterID(a.Context(), eventID)
 }

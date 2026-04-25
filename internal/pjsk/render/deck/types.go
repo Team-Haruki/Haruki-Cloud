@@ -62,6 +62,10 @@ type maxProfileMySekaiSource interface {
 	GetMaxProfileMysekaiFixtureBonuses() []snapshot.RawUserFixtureBonus
 }
 
+type eventRankingHonorSource interface {
+	GetEventRankingHonorRewards(eventID int) ([]masterdata.EventRankingHonorReward, error)
+}
+
 // ── Controller ──────────────────────────────────────────────────────────────
 
 type Controller struct {

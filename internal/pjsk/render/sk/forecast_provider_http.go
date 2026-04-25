@@ -2,8 +2,9 @@ package sk
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +21,70 @@ func parseSekaRunRow(row string) []string {
 		out = append(out, clean)
 	}
 	return out
+}
+
+func extractSekaRunAssignment(body string, name string) string {
+	idx := strings.Index(body, name)
+	if idx < 0 {
+		return ""
+	}
+	remaining := body[idx+len(name):]
+	eq := strings.IndexByte(remaining, '=')
+	if eq < 0 {
+		return ""
+	}
+	remaining = strings.TrimSpace(remaining[eq+1:])
+	end := strings.IndexAny(remaining, ";\n\r")
+	if end >= 0 {
+		remaining = remaining[:end]
+	}
+	return strings.Trim(strings.TrimSpace(remaining), "\"'")
+}
+
+func extractSekaRunRows(body string) (string, []string, error) {
+	currentEvent := extractSekaRunAssignment(body, "currentEvent")
+
+	if start := strings.Index(body, "data = [["); start >= 0 {
+		start += len("data = [[")
+		end := strings.Index(body[start:], "]];")
+		if end < 0 {
+			return currentEvent, nil, fmt.Errorf("unexpected sekarun data payload")
+		}
+		payload := body[start : start+end]
+		if strings.TrimSpace(payload) == "" {
+			return currentEvent, nil, nil
+		}
+		return currentEvent, strings.Split(payload, "], ["), nil
+	}
+
+	start := strings.Index(body, "[[")
+	end := strings.LastIndex(body, "]]")
+	if start < 0 || end <= start+2 {
+		return currentEvent, nil, fmt.Errorf("unexpected sekarun payload")
+	}
+	return currentEvent, strings.Split(body[start+2:end], "], ["), nil
+}
+
+func parseSekaRunScore(values []string) (int, bool) {
+	if len(values) > 4 {
+		score, err := strconv.ParseFloat(values[4], 64)
+		if err == nil && score > 0 {
+			return int(math.Round(score)), true
+		}
+	}
+	if len(values) <= 9 {
+		return 0, false
+	}
+	lower, errLower := strconv.ParseFloat(values[8], 64)
+	upper, errUpper := strconv.ParseFloat(values[9], 64)
+	if errLower != nil || errUpper != nil {
+		return 0, false
+	}
+	score := int(math.Round((lower + upper) / 2))
+	if score <= 0 {
+		return 0, false
+	}
+	return score, true
 }
 
 func (p *RemoteForecastProvider) getJSON(ctx context.Context, url string, out any) error {

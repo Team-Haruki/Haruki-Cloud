@@ -31,6 +31,7 @@ func (c *Controller) applyProfilePreset(region renderregion.Value, raw *snapshot
 			raw.UserMysekaiFixtureGameCharacterPerformanceBonuses = slices.Clone(mysekaiSource.GetMaxProfileMysekaiFixtureBonuses())
 		}
 	}
+	c.applyMaxProfileEventHonors(region, raw, query)
 
 	switch {
 	case query.MaxProfile:
@@ -233,6 +234,162 @@ func (c *Controller) resolveCardUnit(source CardSource, card *masterdata.Card, u
 		}
 	}
 	return ""
+}
+
+func (c *Controller) applyMaxProfileEventHonors(region renderregion.Value, raw *snapshot.RawUserData, query AutoQuery) {
+	if raw == nil || query.EventID == nil || *query.EventID != 180 {
+		return
+	}
+
+	_, source, ok := c.resolveEventSource(region)
+	if !ok || source == nil {
+		return
+	}
+
+	rewardSource, ok := source.(eventRankingHonorSource)
+	if !ok {
+		return
+	}
+
+	rewards, err := rewardSource.GetEventRankingHonorRewards(*query.EventID)
+	if err != nil {
+		return
+	}
+
+	reward, ok := pickMaxProfileRankingHonorReward(rewards, 1000)
+	if !ok || reward.HonorID <= 0 {
+		return
+	}
+
+	raw.UserHonors = upsertMaxProfileUserHonor(raw.UserHonors, reward.HonorID)
+	raw.UserProfileHonors = upsertMaxProfileProfileHonor(raw.UserProfileHonors, reward.HonorID)
+}
+
+func pickMaxProfileRankingHonorReward(rewards []masterdata.EventRankingHonorReward, targetRank int) (masterdata.EventRankingHonorReward, bool) {
+	if len(rewards) == 0 {
+		return masterdata.EventRankingHonorReward{}, false
+	}
+
+	bestIndex := -1
+	bestScore := -1
+	for i, reward := range rewards {
+		if reward.HonorID <= 0 {
+			continue
+		}
+		score := 0
+		switch {
+		case reward.ToRank == targetRank:
+			score = 3
+		case rewardContainsRank(reward, targetRank):
+			score = 2
+		default:
+			score = 1
+		}
+		if score > bestScore {
+			bestIndex = i
+			bestScore = score
+			continue
+		}
+		if score == bestScore && bestIndex >= 0 && rankingHonorRewardLess(reward, rewards[bestIndex]) {
+			bestIndex = i
+		}
+	}
+	if bestIndex < 0 {
+		return masterdata.EventRankingHonorReward{}, false
+	}
+	return rewards[bestIndex], true
+}
+
+func rewardContainsRank(reward masterdata.EventRankingHonorReward, rank int) bool {
+	if rank <= 0 {
+		return false
+	}
+	if reward.FromRank > 0 && rank < reward.FromRank {
+		return false
+	}
+	if reward.ToRank > 0 && rank > reward.ToRank {
+		return false
+	}
+	return true
+}
+
+func rankingHonorRewardLess(left, right masterdata.EventRankingHonorReward) bool {
+	leftTo := left.ToRank
+	rightTo := right.ToRank
+	if leftTo <= 0 {
+		leftTo = int(^uint(0) >> 1)
+	}
+	if rightTo <= 0 {
+		rightTo = int(^uint(0) >> 1)
+	}
+	if leftTo != rightTo {
+		return leftTo < rightTo
+	}
+	if left.FromRank != right.FromRank {
+		return left.FromRank < right.FromRank
+	}
+	return left.HonorID < right.HonorID
+}
+
+func upsertMaxProfileUserHonor(items []snapshot.RawUserHonor, honorID int) []snapshot.RawUserHonor {
+	if honorID <= 0 {
+		return items
+	}
+
+	result := slices.Clone(items)
+	maxSeq := 0
+	for i := range result {
+		if result[i].HonorID == honorID {
+			result[i].HonorLevel = 1
+			result[i].ProfilePlayer = true
+			return result
+		}
+		if result[i].Seq > maxSeq {
+			maxSeq = result[i].Seq
+		}
+	}
+
+	result = append(result, snapshot.RawUserHonor{
+		Seq:           maxSeq + 1,
+		HonorID:       honorID,
+		HonorLevel:    1,
+		ProfilePlayer: true,
+	})
+	return result
+}
+
+func upsertMaxProfileProfileHonor(items []snapshot.RawUserProfileHonor, honorID int) []snapshot.RawUserProfileHonor {
+	if honorID <= 0 {
+		return items
+	}
+
+	result := make([]snapshot.RawUserProfileHonor, 0, len(items)+1)
+	replaced := false
+	for _, item := range items {
+		if item.Seq == 1 {
+			result = append(result, snapshot.RawUserProfileHonor{
+				Seq:              1,
+				ProfileHonorType: "normal",
+				HonorID:          honorID,
+				HonorLevel:       1,
+			})
+			replaced = true
+			continue
+		}
+		result = append(result, item)
+	}
+	if !replaced {
+		result = append(result, snapshot.RawUserProfileHonor{
+			Seq:              1,
+			ProfileHonorType: "normal",
+			HonorID:          honorID,
+			HonorLevel:       1,
+		})
+	}
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].Seq < result[j].Seq
+	})
+	return result
 }
 
 func publicProfileCurrentDeck(resp *sekai.GetAnotherProfileResponse) *snapshot.RawUserDeck {

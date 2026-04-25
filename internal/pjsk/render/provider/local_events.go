@@ -165,6 +165,20 @@ func (p *localEventProvider) GetCards(ctx context.Context, eventID int) ([]*mast
 	return result, nil
 }
 
+func (p *localEventProvider) GetRankingHonorRewards(_ context.Context, eventID int) ([]masterdata.EventRankingHonorReward, error) {
+	items, err := loadJSON[localEventJSON](p.store, "events.json")
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range items {
+		if item.ID != eventID {
+			continue
+		}
+		return parseEventRankingHonorRewards(item.EventRankingRewardRanges), nil
+	}
+	return nil, fmt.Errorf("event %d not found", eventID)
+}
+
 func (p *localEventProvider) GetBannerCharacterID(ctx context.Context, eventID int) (int, error) {
 	cards, err := p.GetCards(ctx, eventID)
 	if err != nil {

@@ -46,7 +46,7 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 			}
 
 			userCard, hasUserCard := userCardMap[deckCard.CardID]
-			displayAfterTraining, trainedArt := resolveRecommendCardDisplayState(deckCard)
+			displayAfterTraining, trainedArt := resolveRecommendCardDisplayState(card, deckCard)
 
 			level := deckCard.Level
 			if level <= 0 {
@@ -168,7 +168,11 @@ func normalizeDeckDisplayRate(value float64) float64 {
 	return rounded
 }
 
-func resolveRecommendCardDisplayState(deckCard RecommendCard) (displayAfterTraining bool, trainedArt bool) {
+func resolveRecommendCardDisplayState(card *masterdata.Card, deckCard RecommendCard) (displayAfterTraining bool, trainedArt bool) {
+	if cardUsesDynamicRecommendArt(card) {
+		return deckCard.IsAfterTraining, deckCard.IsAfterTraining
+	}
+
 	trainedArt, hasDefaultImage := normalizeRecommendCardDefaultImage(deckCard.DefaultImage)
 	displayAfterTraining = deckCard.IsAfterTraining
 	if hasDefaultImage {
@@ -177,6 +181,10 @@ func resolveRecommendCardDisplayState(deckCard RecommendCard) (displayAfterTrain
 		trainedArt = displayAfterTraining
 	}
 	return displayAfterTraining, trainedArt
+}
+
+func cardUsesDynamicRecommendArt(card *masterdata.Card) bool {
+	return card != nil && card.SpecialTrainingSkillID > 0
 }
 
 func normalizeRecommendCardDefaultImage(raw string) (trainedArt bool, ok bool) {

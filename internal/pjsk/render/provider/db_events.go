@@ -165,6 +165,28 @@ func (p *dbEventProvider) GetCards(ctx context.Context, eventID int) ([]*masterd
 	return p.getCardsByIDs(ctx, cardIDs)
 }
 
+func (p *dbEventProvider) GetRankingHonorRewards(ctx context.Context, eventID int) ([]masterdata.EventRankingHonorReward, error) {
+	entity, err := p.client.Event.Query().
+		Where(event.ServerRegionEQ(p.region.String()), event.GameIDEQ(int64(eventID))).
+		Only(ctx)
+	if err != nil {
+		if p.local != nil {
+			if fallback, fallbackErr := p.local.GetRankingHonorRewards(ctx, eventID); fallbackErr == nil {
+				return fallback, nil
+			}
+		}
+		return nil, fmt.Errorf("query ranking honor rewards for event %d: %w", eventID, err)
+	}
+
+	rewards := parseEventRankingHonorRewards(entity.EventRankingRewardRanges)
+	if len(rewards) == 0 && p.local != nil {
+		if fallback, fallbackErr := p.local.GetRankingHonorRewards(ctx, eventID); fallbackErr == nil {
+			return fallback, nil
+		}
+	}
+	return rewards, nil
+}
+
 func (p *dbEventProvider) GetBannerCharacterID(ctx context.Context, eventID int) (int, error) {
 	cards, err := p.GetCards(ctx, eventID)
 	if err != nil {

@@ -2,8 +2,8 @@ package deck
 
 import (
 	"bytes"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -85,9 +85,19 @@ func encodePreparedRecommendUserData(originalBytes []byte, original, raw *snapsh
 	if err != nil {
 		return nil, err
 	}
+	userHonors, err := mergePreparedUserHonors(payload["userHonors"], raw.UserHonors)
+	if err != nil {
+		return nil, err
+	}
+	userProfileHonors, err := mergePreparedUserProfileHonors(payload["userProfileHonors"], raw.UserProfileHonors)
+	if err != nil {
+		return nil, err
+	}
 
 	payload["userCards"] = userCards
 	payload["userAreas"] = userAreas
+	payload["userHonors"] = userHonors
+	payload["userProfileHonors"] = userProfileHonors
 
 	encoded, err := json.Marshal(payload)
 	if err != nil {
@@ -190,6 +200,62 @@ func mergePreparedAreaItems(original any, items []snapshot.RawUserAreaItem) ([]a
 			itemMap = mergeJSONObjects(existing, itemMap)
 		}
 		merged = append(merged, itemMap)
+	}
+	return merged, nil
+}
+
+func mergePreparedUserHonors(original any, honors []snapshot.RawUserHonor) ([]any, error) {
+	if len(honors) == 0 {
+		return []any{}, nil
+	}
+
+	originalItems := jsonArrayToObjects(original)
+	originalByHonorID := make(map[int]map[string]any, len(originalItems))
+	for _, item := range originalItems {
+		honorID, _ := jsonNumberToInt(item["honorId"])
+		if honorID > 0 {
+			originalByHonorID[honorID] = item
+		}
+	}
+
+	merged := make([]any, 0, len(honors))
+	for _, honor := range honors {
+		honorMap, err := structToJSONObject(honor)
+		if err != nil {
+			return nil, fmt.Errorf("encode prepared user honor %d: %w", honor.HonorID, err)
+		}
+		if existing := originalByHonorID[honor.HonorID]; existing != nil {
+			honorMap = mergeJSONObjects(existing, honorMap)
+		}
+		merged = append(merged, honorMap)
+	}
+	return merged, nil
+}
+
+func mergePreparedUserProfileHonors(original any, honors []snapshot.RawUserProfileHonor) ([]any, error) {
+	if len(honors) == 0 {
+		return []any{}, nil
+	}
+
+	originalItems := jsonArrayToObjects(original)
+	originalBySeq := make(map[int]map[string]any, len(originalItems))
+	for _, item := range originalItems {
+		seq, _ := jsonNumberToInt(item["seq"])
+		if seq > 0 {
+			originalBySeq[seq] = item
+		}
+	}
+
+	merged := make([]any, 0, len(honors))
+	for _, honor := range honors {
+		honorMap, err := structToJSONObject(honor)
+		if err != nil {
+			return nil, fmt.Errorf("encode prepared user profile honor seq %d: %w", honor.Seq, err)
+		}
+		if existing := originalBySeq[honor.Seq]; existing != nil {
+			honorMap = mergeJSONObjects(existing, honorMap)
+		}
+		merged = append(merged, honorMap)
 	}
 	return merged, nil
 }

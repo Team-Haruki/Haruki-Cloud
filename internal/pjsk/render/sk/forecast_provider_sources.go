@@ -3,7 +3,6 @@ package sk
 import (
 	"context"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 )
@@ -203,23 +202,38 @@ func (p *RemoteForecastProvider) fetchSekaRun(ctx context.Context, region string
 	if err != nil {
 		return nil, err
 	}
-	start := strings.Index(body, "[[")
-	end := strings.LastIndex(body, "]]")
-	if start < 0 || end <= start+2 {
-		return nil, fmt.Errorf("unexpected sekarun payload")
+	return parseSekaRunForecast(body, eventID, rankFilter)
+}
+
+func parseSekaRunForecast(body string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+	currentEvent, rows, err := extractSekaRunRows(body)
+	if err != nil {
+		return nil, err
 	}
 
 	targetEvent := strconv.Itoa(eventID)
-	rows := strings.Split(body[start+2:end], "], [")
-	out := make(map[int]ForecastScore)
+	currentScores := make(map[int]ForecastScore)
+	historicalScores := make(map[int]ForecastScore)
+	matchedEvent := false
 	for _, row := range rows {
 		values := parseSekaRunRow(row)
 		if len(values) < 10 {
 			continue
 		}
-		if values[0] != targetEvent || values[1] != "p" {
+		if values[0] != targetEvent {
 			continue
 		}
+		matchedEvent = true
+
+		targetScores := currentScores
+		switch values[1] {
+		case "p":
+		case "h":
+			targetScores = historicalScores
+		default:
+			continue
+		}
+
 		rank, err := strconv.Atoi(values[5])
 		if err != nil || rank <= 0 {
 			continue
@@ -230,13 +244,8 @@ func (p *RemoteForecastProvider) fetchSekaRun(ctx context.Context, region string
 			}
 		}
 
-		lower, errLower := strconv.ParseFloat(values[8], 64)
-		upper, errUpper := strconv.ParseFloat(values[9], 64)
-		if errLower != nil || errUpper != nil {
-			continue
-		}
-		score := int(math.Round((lower + upper) / 2))
-		if score <= 0 {
+		score, ok := parseSekaRunScore(values)
+		if !ok {
 			continue
 		}
 
@@ -246,10 +255,22 @@ func (p *RemoteForecastProvider) fetchSekaRun(ctx context.Context, region string
 			Timestamp: normalizeForecastTimestamp(ts),
 			Source:    "sekarun",
 		}
-		existing, ok := out[rank]
+		existing, ok := targetScores[rank]
 		if !ok || item.Score > existing.Score {
-			out[rank] = item
+			targetScores[rank] = item
 		}
 	}
-	return out, nil
+
+	for rank, item := range historicalScores {
+		if _, ok := currentScores[rank]; !ok {
+			currentScores[rank] = item
+		}
+	}
+	if len(currentScores) > 0 {
+		return currentScores, nil
+	}
+	if !matchedEvent && currentEvent != "" && currentEvent != targetEvent {
+		return nil, fmt.Errorf("event mismatch: got %s want %s", currentEvent, targetEvent)
+	}
+	return nil, nil
 }

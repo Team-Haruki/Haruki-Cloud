@@ -75,13 +75,14 @@ type CensorService interface {
 // ── Controller ──────────────────────────────────────────────────────────────
 
 type Controller struct {
-	drawing    *drawing.HarukiDrawingClient
-	tracker    TrackerSource
-	forecast   ForecastProvider
-	events     *regionsource.Registry[EventSource]
-	assets     *renderassets.AssetHelper
-	censor     CensorService
-	requestCtx context.Context
+	drawing      *drawing.HarukiDrawingClient
+	tracker      TrackerSource
+	forecast     ForecastProvider
+	events       *regionsource.Registry[EventSource]
+	assets       *renderassets.AssetHelper
+	censor       CensorService
+	predictCache *predictRenderCache
+	requestCtx   context.Context
 }
 
 // ── Forecast ────────────────────────────────────────────────────────────────

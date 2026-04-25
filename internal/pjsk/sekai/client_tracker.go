@@ -22,8 +22,12 @@ type TrackerClient struct {
 // Callers own the returned client; pass it via dependency injection rather than
 // reaching for a package-level singleton.
 func NewTrackerClient(cfg *config.TrackerConfig) *TrackerClient {
+	timeout := config.TrackerHTTPClientTimeout
+	if cfg != nil && cfg.Timeout > 0 {
+		timeout = cfg.Timeout
+	}
 	return &TrackerClient{
-		http:   newRestyClient().SetTimeout(apiTimeout),
+		http:   newRestyClient().SetTimeout(timeout),
 		config: cfg,
 	}
 }

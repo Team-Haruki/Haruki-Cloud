@@ -13,10 +13,11 @@ import (
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
 	return &Controller{
-		drawing:  drawingClient,
-		forecast: NewRemoteForecastProvider(),
-		events:   regionsource.NewRegistry[EventSource](renderregion.JP),
-		assets:   renderassets.NewAssetHelper("", nil),
+		drawing:      drawingClient,
+		forecast:     NewRemoteForecastProvider(),
+		events:       regionsource.NewRegistry[EventSource](renderregion.JP),
+		assets:       renderassets.NewAssetHelper("", nil),
+		predictCache: newPredictRenderCache(),
 	}
 }
 

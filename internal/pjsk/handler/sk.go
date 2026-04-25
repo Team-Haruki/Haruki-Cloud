@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"strconv"
 	"strings"
 
@@ -415,11 +415,7 @@ func executeSKPredict(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error)
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 			return nil, err
 		}
-		payload, err := skCtrl.BuildPredictLineRequestFromTracker(trackerReq)
-		if err != nil {
-			return nil, err
-		}
-		return skCtrl.RenderLine(*payload)
+		return skCtrl.RenderPredictLineFromTracker(trackerReq)
 	}
 	req := sk.LineRequest{}
 	mergeParams(rc.Cmd.Params, &req)

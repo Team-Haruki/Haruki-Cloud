@@ -3,11 +3,14 @@ package sk
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -26,6 +29,11 @@ type contextAwareForecastProvider struct {
 	wantValue string
 }
 
+type countingForecastProvider struct {
+	calls    atomic.Int32
+	bySource map[string]ForecastSourceData
+}
+
 func (p contextAwareForecastProvider) Fetch(ctx context.Context, _ string, _ int, ranks []int) (map[int]ForecastScore, error) {
 	value, _ := ctx.Value(p.wantKey).(string)
 	if value != p.wantValue {
@@ -37,6 +45,36 @@ func (p contextAwareForecastProvider) Fetch(ctx context.Context, _ string, _ int
 			Score:     8_000_000 + rank,
 			Timestamp: 1_700_000_000,
 			Source:    "forecast",
+		}
+	}
+	return out, nil
+}
+
+func (p *countingForecastProvider) Fetch(context.Context, string, int, []int) (map[int]ForecastScore, error) {
+	p.calls.Add(1)
+	out := make(map[int]ForecastScore)
+	for _, source := range p.bySource {
+		for rank, score := range source.Scores {
+			existing, ok := out[rank]
+			if !ok || score.Score > existing.Score {
+				out[rank] = score
+			}
+		}
+	}
+	return out, nil
+}
+
+func (p *countingForecastProvider) FetchBySource(context.Context, string, int, []int) (map[string]ForecastSourceData, error) {
+	p.calls.Add(1)
+	out := make(map[string]ForecastSourceData, len(p.bySource))
+	for source, data := range p.bySource {
+		copied := make(map[int]ForecastScore, len(data.Scores))
+		for rank, score := range data.Scores {
+			copied[rank] = score
+		}
+		out[source] = ForecastSourceData{
+			Scores:    copied,
+			FetchedAt: data.FetchedAt,
 		}
 	}
 	return out, nil
@@ -2367,5 +2405,72 @@ func TestBuildPredictLineRequestFromTrackerUsesControllerRequestContext(t *testi
 	}
 	if len(payload.ForecastColumns) != 1 || payload.ForecastColumns[0].Key != "forecast" {
 		t.Fatalf("unexpected forecast columns: %+v", payload.ForecastColumns)
+	}
+}
+
+func TestRenderPredictLineFromTrackerCachesRenderedBytes(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+
+	tracker := &lineMetricsOnlyTrackerSource{}
+	forecast := &countingForecastProvider{
+		bySource: map[string]ForecastSourceData{
+			"33kit": {
+				Scores: map[int]ForecastScore{
+					50:  {Score: 12_345_678, Timestamp: 1_700_000_000, Source: "33kit"},
+					100: {Score: 9_876_543, Timestamp: 1_700_000_100, Source: "33kit"},
+				},
+				FetchedAt: 1_700_000_200,
+			},
+		},
+	}
+
+	var drawingCalls atomic.Int32
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/line" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		drawingCalls.Add(1)
+		_, _ = w.Write([]byte("predict-render"))
+	}))
+	defer drawingServer.Close()
+
+	controller := NewController(drawing.NewHarukiDrawingClient(drawingServer.URL))
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+	controller.SetForecastProvider(forecast)
+
+	req := TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100, 50},
+	}
+
+	first, err := controller.RenderPredictLineFromTracker(req)
+	if err != nil {
+		t.Fatalf("first render predict line: %v", err)
+	}
+	second, err := controller.RenderPredictLineFromTracker(req)
+	if err != nil {
+		t.Fatalf("second render predict line: %v", err)
+	}
+	if string(first) != "predict-render" || string(second) != "predict-render" {
+		t.Fatalf("unexpected rendered bytes: %q / %q", string(first), string(second))
+	}
+	if got := tracker.latestRankCalls.Load(); got != 2 {
+		t.Fatalf("expected tracker latest-rank calls to stay at 2 for cached repeat, got %d", got)
+	}
+	if got := forecast.calls.Load(); got != 1 {
+		t.Fatalf("expected forecast fetch to run once, got %d", got)
+	}
+	if got := drawingCalls.Load(); got != 1 {
+		t.Fatalf("expected drawing render to run once, got %d", got)
 	}
 }

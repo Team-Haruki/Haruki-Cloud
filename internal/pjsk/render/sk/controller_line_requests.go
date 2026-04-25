@@ -192,6 +192,27 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	return c.BuildLineRequest(line)
 }
 
+func (c *Controller) RenderPredictLineFromTracker(req TrackerRankQuery) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	key, err := buildPredictRenderCacheKey(req)
+	if err != nil {
+		return c.renderPredictLineFromTracker(req)
+	}
+	return c.predictCache.Render(key, predictRenderCacheTTL(req.Region), func() ([]byte, error) {
+		return c.renderPredictLineFromTracker(req)
+	})
+}
+
+func (c *Controller) renderPredictLineFromTracker(req TrackerRankQuery) ([]byte, error) {
+	payload, err := c.BuildPredictLineRequestFromTracker(req)
+	if err != nil {
+		return nil, err
+	}
+	return c.RenderLine(*payload)
+}
+
 func (c *Controller) buildPredictRealtimeFallbackLine(
 	normalized TrackerRankQuery,
 	meta eventMeta,

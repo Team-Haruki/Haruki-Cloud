@@ -153,6 +153,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	// Tracker
 	envStr("HARUKI_TRACKER_BASE_URL", &cfg.Tracker.BaseURL)
 	envStr("HARUKI_TRACKER_USER_AGENT", &cfg.Tracker.UserAgent)
+	envDuration("HARUKI_TRACKER_TIMEOUT", &cfg.Tracker.Timeout)
 
 	// Censor
 	envStr("HARUKI_CENSOR_BAIDU_API_KEY", &cfg.Censor.BaiduAPIKey)
@@ -177,23 +178,23 @@ func ApplyEnvOverrides(cfg *Config) {
 }
 
 type BackendConfig struct {
-	Host                     string        `yaml:"host"`
-	Port                     int           `yaml:"port"`
-	SSL                      bool          `yaml:"ssl"`
-	SSLCert                  string        `yaml:"ssl_cert"`
-	SSLKey                   string        `yaml:"ssl_key"`
-	LogLevel                 string        `yaml:"log_level"`
-	MainLogFile              string        `yaml:"main_log_file"`
-	AccessLog                string        `yaml:"access_log"`
-	APICacheTTL              time.Duration `yaml:"api_cache_ttl"`
-	AccessLogPath            string        `yaml:"access_log_path"`
-	AcceptAuthorization      string        `yaml:"accept_authorization"`
-	AcceptUserAgent          string        `yaml:"accept_user_agent"`
-	AllowInsecureInternalAPI bool          `yaml:"allow_insecure_internal_api"`
-	EnableTrustProxy         bool          `yaml:"enable_trust_proxy"`
-	TrustProxies             []string      `yaml:"trusted_proxies"`
-	ProxyHeader              string        `yaml:"proxy_header"`
-	LatestHarukiClientVersion string       `yaml:"latest_haruki_client_version"`
+	Host                      string        `yaml:"host"`
+	Port                      int           `yaml:"port"`
+	SSL                       bool          `yaml:"ssl"`
+	SSLCert                   string        `yaml:"ssl_cert"`
+	SSLKey                    string        `yaml:"ssl_key"`
+	LogLevel                  string        `yaml:"log_level"`
+	MainLogFile               string        `yaml:"main_log_file"`
+	AccessLog                 string        `yaml:"access_log"`
+	APICacheTTL               time.Duration `yaml:"api_cache_ttl"`
+	AccessLogPath             string        `yaml:"access_log_path"`
+	AcceptAuthorization       string        `yaml:"accept_authorization"`
+	AcceptUserAgent           string        `yaml:"accept_user_agent"`
+	AllowInsecureInternalAPI  bool          `yaml:"allow_insecure_internal_api"`
+	EnableTrustProxy          bool          `yaml:"enable_trust_proxy"`
+	TrustProxies              []string      `yaml:"trusted_proxies"`
+	ProxyHeader               string        `yaml:"proxy_header"`
+	LatestHarukiClientVersion string        `yaml:"latest_haruki_client_version"`
 }
 
 type ChunithmConfig struct {
@@ -332,8 +333,9 @@ type SekaiAPIConfig struct {
 }
 
 type TrackerConfig struct {
-	BaseURL   string `yaml:"base_url"`
-	UserAgent string `yaml:"user_agent"`
+	BaseURL   string        `yaml:"base_url"`
+	UserAgent string        `yaml:"user_agent"`
+	Timeout   time.Duration `yaml:"timeout"`
 }
 
 type ToolboxConfig struct {

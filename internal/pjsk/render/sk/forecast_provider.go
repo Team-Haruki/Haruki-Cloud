@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/config"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -20,7 +22,7 @@ const (
 func NewRemoteForecastProvider() *RemoteForecastProvider {
 	return &RemoteForecastProvider{
 		http: resty.New().
-			SetTimeout(8 * time.Second).
+			SetTimeout(config.SKForecastHTTPClientTimeout).
 			SetRetryCount(1),
 	}
 }

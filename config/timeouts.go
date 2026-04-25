@@ -7,6 +7,12 @@ const (
 	// HTTPClientTimeout is the default timeout for outgoing HTTP requests.
 	HTTPClientTimeout = 10 * time.Second
 
+	// TrackerHTTPClientTimeout is the default timeout for tracker requests.
+	TrackerHTTPClientTimeout = 20 * time.Second
+
+	// SKForecastHTTPClientTimeout is the default timeout for SK forecast sources.
+	SKForecastHTTPClientTimeout = 15 * time.Second
+
 	// TencentIMSTimeout is the timeout for Tencent IMS content moderation requests.
 	TencentIMSTimeout = 15 * time.Second
 

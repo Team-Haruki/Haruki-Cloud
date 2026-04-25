@@ -135,3 +135,25 @@ go run ./cmd/importer --target all
 - `parser/parser.go` 已删除，`CardParser` 系列不存在；不要因为合并把它带回。
 - `cmd/server/` 已经上移到根；不要再恢复 `cmd/server/main.go`。
 - `cmd/migrate/` 已删除；auto-migrate 已经覆盖。
+
+## 10. 排查服务器配置问题 — .env 优先级
+
+生产环境 compose 文件在 `/data/HarukiServices/configs/`，配置优先级（高到低）：
+
+1. **环境变量**（通过 `.env` + `docker-compose.yml` `environment:` 注入）
+2. **`haruki-cloud.yaml`**（挂载到容器）
+
+**排查配置不生效时，第一步先检查 `.env`**，env var 会静默覆盖 YAML，容易漏查。
+
+```bash
+# 查看容器实际生效的所有 HARUKI_ 环境变量
+docker exec haruki-cloud env | grep HARUKI_
+
+# 修改 .env 后重建容器
+docker compose -p haruki-production --env-file .env \
+  -f docker-compose.yml -f docker-compose.production.yml \
+  up -d haruki-cloud --force-recreate --no-deps
+```
+
+注意：compose project name 是 `haruki-production`（`.env` 里 `COMPOSE_PROJECT_NAME`
+设定）。执行 compose 命令时必须带 `-p haruki-production` 或 `--env-file .env`。

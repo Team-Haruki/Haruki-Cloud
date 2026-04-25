@@ -299,9 +299,41 @@ the code wins; please update the doc in the same change.
 - Server entry: only `main.go` at the repo root, build with `go build .`.
   Init logic (`init_*.go`, `fiber.go`, `run.go`) lives in `internal/server/`.
 
+## 10. Production deployment — config debugging
+
+The production compose stack is at `/data/HarukiServices/configs/` on the
+server. Config is layered; the effective value for any setting is (highest
+priority first):
+
+1. **Environment variable** (e.g. `HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI`)
+   — injected via `.env` + `docker-compose.yml` `environment:` block.
+2. **`haruki-cloud.yaml`** — mounted into the container.
+
+**Always check `.env` first when a config value is not taking effect.**
+A stale or incorrect env var silently overrides the YAML. Key file:
+`/data/HarukiServices/configs/.env`.
+
+To verify what a running container actually sees:
+
+```bash
+docker exec haruki-cloud env | grep HARUKI_
+```
+
+To apply `.env` changes, recreate the container:
+
+```bash
+docker compose -p haruki-production --env-file .env \
+  -f docker-compose.yml -f docker-compose.production.yml \
+  up -d haruki-cloud --force-recreate --no-deps
+```
+
+Note: the compose project name is `haruki-production` (set via
+`COMPOSE_PROJECT_NAME` in `.env`). Always pass `-p haruki-production` or
+`--env-file .env` so Docker Compose resolves the correct project.
+
 ---
 
-## 10. Status snapshot
+## 11. Status snapshot
 
 As of this revision the project is **considered functionally complete**:
 

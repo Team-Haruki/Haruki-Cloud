@@ -100,20 +100,18 @@ func forceMySekaiProfileBindingID(profile *drawing.ProfileCardRequest, target Re
 		return nil
 	}
 
-	cloned := *profile
-	if len(profile.DataSources) > 0 {
-		cloned.DataSources = slices.Clone(profile.DataSources)
+	cloned := cloneProfileCardForTarget(profile, target, regionStr)
+	if cloned == nil {
+		return nil
 	}
 
 	uid := strings.TrimSpace(target.PJSKUserID)
 	normalizedRegion := renderregion.Normalize(regionStr)
 	if profile.Profile == nil {
 		if uid == "" && normalizedRegion.IsZero() {
-			return &cloned
+			return cloned
 		}
 		cloned.Profile = &drawing.BasicProfile{}
-	} else {
-		cloned.Profile = new(*profile.Profile)
 	}
 
 	if uid != "" {
@@ -122,5 +120,8 @@ func forceMySekaiProfileBindingID(profile *drawing.ProfileCardRequest, target Re
 	if !normalizedRegion.IsZero() {
 		cloned.Profile.Region = strings.ToUpper(normalizedRegion.String())
 	}
-	return &cloned
+	if len(profile.DataSources) > 0 {
+		cloned.DataSources = slices.Clone(profile.DataSources)
+	}
+	return cloned
 }

@@ -86,6 +86,9 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
 		t.Fatalf("bind: %v", err)
 	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "42", "jp", true); err != nil {
+		t.Fatalf("show id: %v", err)
+	}
 
 	controller := rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true})
 	snapshot := &runtimeSnapshotStub{
@@ -115,6 +118,9 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 	}
 	if result.Profile == nil || result.Profile.Profile == nil || result.Profile.Profile.Nickname != "snapshot-card" {
 		t.Fatalf("expected snapshot profile card, got %+v", result.Profile)
+	}
+	if result.Profile.Profile.IsHideUID {
+		t.Fatalf("expected visible profile card id state, got %+v", result.Profile.Profile)
 	}
 	if result.Profile.Profile.ID != "12345678901234" {
 		t.Fatalf("expected binding uid to override snapshot profile id, got %q", result.Profile.Profile.ID)

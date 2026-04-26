@@ -92,6 +92,84 @@ func buildPrivateDataNotFoundMessage(dataLabel string, binding *accountdata.Reso
 	return fmt.Sprintf("当前%s服%s没有找到有效的 %s 数据，%s\n%s", server, uid, dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
 }
 
+func normalizeToolboxDataLabel(dataLabel string) string {
+	dataLabel = strings.TrimSpace(strings.ToLower(dataLabel))
+	switch dataLabel {
+	case "mysekai":
+		return "mysekai"
+	default:
+		return "suite"
+	}
+}
+
+func normalizeToolboxDataFetchError(err error, dataLabel string, binding *accountdata.ResolvedBinding) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+		return err
+	}
+
+	dataLabel = normalizeToolboxDataLabel(dataLabel)
+	switch {
+	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound):
+		return onebot11.NewReplayError(
+			"你还没有在工具箱绑定游戏账号，无法获取%s数据，请前往工具箱绑定游戏账号并上传数据后重试\n%s",
+			dataLabel,
+			ErrMsgToolboxURL,
+		)
+	case errors.Is(err, sekaiapi.ErrGameDataNotFound):
+		if dataLabel == "mysekai" {
+			return newMySekaiDataNotFoundReplayErrorForBinding(binding)
+		}
+		return newSuiteDataNotFoundReplayErrorForBinding(binding)
+	case errors.Is(err, sekaiapi.ErrInvalidPlatformUser):
+		return onebot11.NewReplayError(
+			"当前QQ号未在工具箱完成绑定，或无权访问该%s数据，请前往工具箱绑定当前QQ号后重试\n%s",
+			dataLabel,
+			ErrMsgToolboxURL,
+		)
+	case errors.Is(err, sekaiapi.ErrAccountOwnerBanned):
+		return onebot11.NewReplayError("工具箱账号已被封禁，无法获取%s数据", dataLabel)
+	}
+
+	message := strings.TrimSpace(err.Error())
+	switch {
+	case strings.Contains(message, "toolbox: request failed after retries"),
+		strings.Contains(message, "context deadline exceeded"),
+		strings.Contains(message, "Client.Timeout exceeded"):
+		return onebot11.NewReplayError("连接工具箱超时或网络异常，请稍后再试")
+	case strings.Contains(message, "toolbox: zstd reader init failed"),
+		strings.Contains(message, "toolbox: zstd decompression failed"),
+		strings.Contains(message, "toolbox: failed to parse game bindings response"):
+		return onebot11.NewReplayError("工具箱返回数据解析失败，请稍后再试")
+	}
+
+	var apiErr *sekaiapi.ToolboxAPIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.StatusCode {
+		case 503:
+			return onebot11.NewReplayError("工具箱服务暂时不可用，请稍后再试")
+		case 403:
+			if strings.TrimSpace(apiErr.Message) == "" {
+				return onebot11.NewReplayError("工具箱拒绝了当前%s数据请求", dataLabel)
+			}
+			return onebot11.NewReplayError("工具箱拒绝了当前%s数据请求：%s", dataLabel, strings.TrimSpace(apiErr.Message))
+		case 404:
+			if strings.TrimSpace(apiErr.Message) == "" {
+				return onebot11.NewReplayError("工具箱未找到当前%s数据", dataLabel)
+			}
+			return onebot11.NewReplayError("工具箱未找到当前%s数据：%s", dataLabel, strings.TrimSpace(apiErr.Message))
+		default:
+			if strings.TrimSpace(apiErr.Message) == "" {
+				return onebot11.NewReplayError("工具箱请求失败（状态 %d）", apiErr.StatusCode)
+			}
+			return onebot11.NewReplayError("工具箱请求失败（状态 %d）：%s", apiErr.StatusCode, strings.TrimSpace(apiErr.Message))
+		}
+	}
+	return err
+}
+
 func maskUserFacingGameID(uid string, visible bool) string {
 	uid = strings.TrimSpace(uid)
 	if uid == "" || visible || len(uid) <= 6 {
@@ -116,17 +194,11 @@ func WrapDomainError(err error) error {
 		return newBindingRequiredReplayError()
 	case errors.Is(err, accountdata.ErrBindingServiceUnavailable):
 		return onebot11.NewReplayError("绑定服务未就绪，请稍后再试")
-	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound):
-		return onebot11.NewReplayError(
-			"你还没有在工具箱绑定账号，请前往工具箱绑定你的账号并上传 suite 数据后再使用此命令\n" +
-				ErrMsgToolboxURL,
-		)
-	case errors.Is(err, sekaiapi.ErrGameDataNotFound):
-		return newSuiteDataNotFoundReplayError()
-	case errors.Is(err, sekaiapi.ErrInvalidPlatformUser):
-		return onebot11.NewReplayError("你无权查看这个账号的数据")
-	case errors.Is(err, sekaiapi.ErrAccountOwnerBanned):
-		return onebot11.NewReplayError("你被禁止使用此命令")
+	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound),
+		errors.Is(err, sekaiapi.ErrGameDataNotFound),
+		errors.Is(err, sekaiapi.ErrInvalidPlatformUser),
+		errors.Is(err, sekaiapi.ErrAccountOwnerBanned):
+		return normalizeToolboxDataFetchError(err, "suite", nil)
 	case strings.Contains(message, "当前账号没有可用的 Suite 抓包数据"),
 		strings.Contains(message, "找不到用户的 Suite 数据"),
 		strings.Contains(message, "local user snapshot is not configured"):
@@ -135,6 +207,9 @@ func WrapDomainError(err error) error {
 		strings.Contains(message, "找不到用户的 MySekai 数据"),
 		strings.Contains(message, "user snapshot is not available (bind Toolbox or provide snapshot)"):
 		return newMySekaiDataNotFoundReplayError()
+	case strings.Contains(message, "toolbox:"),
+		strings.Contains(message, "toolbox api error:"):
+		return normalizeToolboxDataFetchError(err, "suite", nil)
 	}
 	return err
 }

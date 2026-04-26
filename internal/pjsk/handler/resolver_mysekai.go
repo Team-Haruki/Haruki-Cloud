@@ -12,15 +12,18 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
-func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, preferGlobalDefault bool) []byte {
+func resolveMySekaiPayloadBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, preferGlobalDefault bool) ([]byte, error) {
 	if app == nil || app.MySekaiPayloads == nil {
-		return nil
+		return nil, nil
 	}
 	payload, err := app.MySekaiPayloads.Resolve(ctx, selector, preferGlobalDefault)
-	if err != nil || len(payload) == 0 {
-		return nil
+	if err != nil {
+		return nil, err
 	}
-	return payload
+	if len(payload) == 0 {
+		return nil, nil
+	}
+	return payload, nil
 }
 
 func resolveTargetMySekaiPayload(
@@ -31,12 +34,13 @@ func resolveTargetMySekaiPayload(
 	platformUserID string,
 	pjskUserID string,
 ) []byte {
-	return resolveMySekaiPayloadBySelector(ctx, app, snapshot.Selector{
+	data, _ := resolveMySekaiPayloadBySelector(ctx, app, snapshot.Selector{
 		IMPlatform: strings.TrimSpace(platform),
 		IMUserID:   strings.TrimSpace(platformUserID),
 		Region:     renderregion.Normalize(regionStr),
 		PJSKUserID: strings.TrimSpace(pjskUserID),
 	}, false)
+	return data
 }
 
 func resolveMySekaiRenderContext(
@@ -74,7 +78,14 @@ func resolveMySekaiRenderContext(
 	}
 
 	result.Profile = forceMySekaiProfileBindingID(buildPublicProfileCardForTarget(ctx, target, regionStr, platform, platformUserID, app), target, regionStr)
-	if data := resolveTargetMySekaiPayload(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID); len(data) > 0 {
+	if data, payloadErr := resolveMySekaiPayloadBySelector(ctx, app, snapshot.Selector{
+		IMPlatform: strings.TrimSpace(platform),
+		IMUserID:   strings.TrimSpace(platformUserID),
+		Region:     renderregion.Normalize(regionStr),
+		PJSKUserID: strings.TrimSpace(target.PJSKUserID),
+	}, false); payloadErr != nil {
+		return mySekaiRenderContext{}, normalizeToolboxDataFetchError(payloadErr, "mysekai", target.Binding)
+	} else if len(data) > 0 {
 		result.Controller = result.Controller.WithMySekaiData(data)
 		return result, nil
 	}

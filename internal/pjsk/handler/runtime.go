@@ -34,8 +34,10 @@ type RequestContext struct {
 	// Lazy snapshot resolution
 	basicSnapshotOnce sync.Once
 	basicSnapshot     snapshot.Snapshot
+	basicSnapshotErr  error
 	fullSnapshotOnce  sync.Once
 	fullSnapshot      snapshot.Snapshot
+	fullSnapshotErr   error
 
 	// Lazy self target / public profile resolution
 	selfTargetOnce    sync.Once
@@ -150,15 +152,26 @@ func (rc *RequestContext) ResolveSnapshot(needMySekai bool) snapshot.Snapshot {
 	if needMySekai {
 		rc.fullSnapshotOnce.Do(func() {
 			selector, opts := rc.snapshotSelector(true)
-			rc.fullSnapshot = resolveSnapshotBySelector(rc.Ctx, rc.App, selector, opts)
+			rc.fullSnapshot, rc.fullSnapshotErr = resolveSnapshotBySelectorWithError(rc.Ctx, rc.App, selector, opts)
 		})
 		return rc.fullSnapshot
 	}
 	rc.basicSnapshotOnce.Do(func() {
 		selector, opts := rc.snapshotSelector(false)
-		rc.basicSnapshot = resolveSnapshotBySelector(rc.Ctx, rc.App, selector, opts)
+		rc.basicSnapshot, rc.basicSnapshotErr = resolveSnapshotBySelectorWithError(rc.Ctx, rc.App, selector, opts)
 	})
 	return rc.basicSnapshot
+}
+
+func (rc *RequestContext) SnapshotError(needMySekai bool) error {
+	if rc == nil {
+		return nil
+	}
+	_ = rc.ResolveSnapshot(needMySekai)
+	if needMySekai {
+		return rc.fullSnapshotErr
+	}
+	return rc.basicSnapshotErr
 }
 
 func (rc *RequestContext) GetSelfTarget() *ResolvedGameTarget {
@@ -269,6 +282,9 @@ func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBi
 
 	snap := rc.ResolveSnapshot(false)
 	if snap == nil {
+		if snapshotErr := rc.SnapshotError(false); snapshotErr != nil {
+			return binding, nil, normalizeToolboxDataFetchError(snapshotErr, "suite", binding)
+		}
 		return binding, nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 	return binding, snap, nil

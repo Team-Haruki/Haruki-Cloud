@@ -463,6 +463,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 	var bindingVisible bool
 	var resolvedHarukiID int
 	var bindingServer string
+	var currentBinding *accountdata.ResolvedBinding
 
 	resolveBinding := func(requireSuite, requireMySekai bool) (*accountdata.ResolvedBinding, int, error) {
 		hid, binding, err := resolveBindingWithFallback(
@@ -492,6 +493,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		if !hasUsableMySekaiData(binding) {
 			return nil, newMySekaiDataNotFoundReplayErrorForBinding(binding)
 		}
+		currentBinding = binding
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("无效的账号ID：%w", err)
@@ -515,6 +517,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		if !hasUsableSuiteData(binding) {
 			return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 		}
+		currentBinding = binding
 		uid, err = strconv.ParseInt(binding.PJSKUserID, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("无效的账号ID：%w", err)
@@ -535,6 +538,9 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 
 	raw, err := rc.App.Toolbox.GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
+		if normalized := normalizeToolboxDataFetchError(err, label, currentBinding); normalized != nil {
+			return nil, normalized
+		}
 		return nil, fmt.Errorf("获取%s更新时间失败：%w", label, err)
 	}
 

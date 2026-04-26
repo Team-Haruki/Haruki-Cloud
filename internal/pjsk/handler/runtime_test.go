@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"errors"
+	json "github.com/bytedance/sonic"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -78,6 +78,7 @@ func (s *runtimeSnapshotStub) MusicMetaPath() string { return "" }
 
 type runtimeSnapshotProviderStub struct {
 	snapshot         rendersnapshot.Snapshot
+	err              error
 	resolveCount     int
 	resolveNeedFlags []bool
 	selectors        []rendersnapshot.Selector
@@ -132,7 +133,7 @@ func (p *runtimeSnapshotProviderStub) Resolve(_ context.Context, selector render
 	p.resolveCount++
 	p.resolveNeedFlags = append(p.resolveNeedFlags, opts.NeedMySekai)
 	p.selectors = append(p.selectors, selector)
-	return p.snapshot, nil
+	return p.snapshot, p.err
 }
 
 func TestRequestContextCachesBasicSnapshotAndUsesSnapshotProfiles(t *testing.T) {

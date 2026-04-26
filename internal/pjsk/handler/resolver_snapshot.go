@@ -26,21 +26,26 @@ func resolveLiveSnapshot(rc *RequestContext, needMySekai bool) snapshot.Snapshot
 }
 
 func resolveSnapshotBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, opts snapshot.ResolveOptions) snapshot.Snapshot {
+	snap, _ := resolveSnapshotBySelectorWithError(ctx, app, selector, opts)
+	return snap
+}
+
+func resolveSnapshotBySelectorWithError(ctx context.Context, app *renderapp.App, selector snapshot.Selector, opts snapshot.ResolveOptions) (snapshot.Snapshot, error) {
 	provider := snapshotProviderFactory(app)
 	if provider == nil {
 		snapshotDebugLogger.Debugf("snapshot resolve skipped: provider is unavailable platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t",
 			strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault)
-		return nil
+		return nil, nil
 	}
 	snap, err := provider.Resolve(ctx, selector, opts)
 	if err != nil {
 		snapshotDebugLogger.Warnf("snapshot resolve failed: platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t err=%v",
 			strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault, err)
-		return nil
+		return nil, err
 	}
 	snapshotDebugLogger.Debugf("snapshot resolve succeeded: platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t raw_path=%q",
 		strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault, snap.RawFilePath())
-	return snap
+	return snap, nil
 }
 
 var snapshotProviderFactory = defaultSnapshotProviderFactory

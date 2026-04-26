@@ -135,39 +135,32 @@ var (
 			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
 		},
 		"/api/pjsk/sk/line": {
-			Enabled:          true,
-			TTL:              skRenderCacheBucketJPAndCN,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "aggregate_at", "time", "record_start_at", "forecast_time", "update_time"),
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/sk/query": {
-			Enabled:          true,
-			TTL:              skRenderCacheBucketJPAndCN,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "aggregate_at", "time", "record_start_at"),
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/sk/check-room": {
-			Enabled:          true,
-			TTL:              skRenderCacheBucketJPAndCN,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "aggregate_at", "update_at", "time", "record_start_at"),
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/sk/csb": {
-			Enabled:          true,
-			TTL:              skRenderCacheBucketJPAndCN,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "aggregate_at", "update_at", "time", "record_start_at"),
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/sk/speed": {
-			Enabled:          true,
-			TTL:              skRenderCacheBucketJPAndCN,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "event_aggregate_at", "record_time"),
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/sk/player-trace": {
-			Enabled:          true,
-			TTL:              skRenderCacheBucketJPAndCN,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "time", "record_start_at"),
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/sk/rank-trace": {
-			Enabled:          true,
-			TTL:              skRenderCacheBucketJPAndCN,
-			BucketFieldNames: renderCacheBucketSet(skRenderCacheBucketJPAndCN, "dt", "time", "record_start_at"),
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/sk/winrate": {
 			Enabled:          true,
@@ -295,7 +288,7 @@ func adjustRenderCacheRuleForPayload(endpointPath string, payload any, rule rend
 		return rule
 	}
 
-	if rule.TTL > 0 {
+	if rule.TTL > 0 && (len(rule.BucketFieldNames) > 0 || len(rule.BucketPaths) > 0) {
 		rule.TTL = bucket
 	}
 	for key := range rule.BucketFieldNames {

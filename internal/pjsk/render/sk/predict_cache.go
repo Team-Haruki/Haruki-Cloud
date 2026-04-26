@@ -28,6 +28,7 @@ type predictRenderCacheKey struct {
 	Region           string `json:"region"`
 	EventID          int    `json:"event_id"`
 	WlCharacterID    int    `json:"wl_character_id,omitempty"`
+	BucketStart      int64  `json:"bucket_start"`
 	Full             bool   `json:"full,omitempty"`
 	Ranks            []int  `json:"ranks,omitempty"`
 	EventName        string `json:"event_name,omitempty"`
@@ -41,6 +42,12 @@ func newPredictRenderCache() *predictRenderCache {
 		entries: make(map[string]predictRenderCacheEntry),
 	}
 }
+
+const (
+	predictRenderRefreshInterval = 30 * time.Minute
+	predictFreezeBeforeEnd       = time.Hour
+	predictRenderCacheRetention  = 2 * time.Hour
+)
 
 func (c *predictRenderCache) Render(key string, ttl time.Duration, render func() ([]byte, error)) ([]byte, error) {
 	if c == nil || ttl <= 0 {
@@ -92,18 +99,19 @@ func (c *predictRenderCache) set(key string, data []byte, ttl time.Duration) {
 	c.mu.Unlock()
 }
 
-func buildPredictRenderCacheKey(req TrackerRankQuery) (string, error) {
+func buildPredictRenderCacheKey(req TrackerRankQuery, aggregateAt int64, now time.Time) (string, error) {
 	ranks := append([]int(nil), req.Ranks...)
 	sort.Ints(ranks)
 	key := predictRenderCacheKey{
 		Version:          1,
 		Region:           strings.ToLower(strings.TrimSpace(req.Region)),
 		EventID:          req.EventID,
+		BucketStart:      predictRenderBucketStart(now, aggregateAt),
 		Full:             req.Full,
 		Ranks:            ranks,
 		EventName:        strings.TrimSpace(stringValue(req.EventName)),
 		EventStartAt:     int64Value(req.EventStartAt),
-		EventAggregateAt: int64Value(req.EventAggregateAt),
+		EventAggregateAt: aggregateAt,
 		BannerImgPath:    strings.TrimSpace(stringValue(req.BannerImgPath)),
 	}
 	if req.WlCharacterID != nil {
@@ -117,15 +125,34 @@ func buildPredictRenderCacheKey(req TrackerRankQuery) (string, error) {
 	return hex.EncodeToString(digest[:]), nil
 }
 
-func predictRenderCacheTTL(region string) time.Duration {
-	switch strings.ToLower(strings.TrimSpace(region)) {
-	case "tw":
-		return 30 * time.Second
-	case "en", "kr":
-		return time.Minute
-	default:
-		return 10 * time.Second
+func predictRenderBucketStart(now time.Time, aggregateAt int64) int64 {
+	nowMs := now.UnixMilli()
+	if aggregateAt > 0 {
+		freezeStart := aggregateAt - int64(predictFreezeBeforeEnd/time.Millisecond)
+		if nowMs >= freezeStart {
+			return floorToBucketMillis(maxInt64(0, freezeStart-1), predictRenderRefreshInterval)
+		}
 	}
+	return floorToBucketMillis(nowMs, predictRenderRefreshInterval)
+}
+
+func predictRenderCacheTTL() time.Duration {
+	return predictRenderCacheRetention
+}
+
+func floorToBucketMillis(value int64, interval time.Duration) int64 {
+	bucket := int64(interval / time.Millisecond)
+	if bucket <= 0 {
+		return value
+	}
+	return value / bucket * bucket
+}
+
+func maxInt64(a, b int64) int64 {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func cloneBytes(data []byte) []byte {

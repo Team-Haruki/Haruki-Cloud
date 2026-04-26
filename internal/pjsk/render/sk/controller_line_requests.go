@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -196,11 +197,13 @@ func (c *Controller) RenderPredictLineFromTracker(req TrackerRankQuery) ([]byte,
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	key, err := buildPredictRenderCacheKey(req)
+	meta := c.resolveEventMeta(req.EventID, renderregion.Normalize(req.Region))
+	meta.applyOverrides(req)
+	key, err := buildPredictRenderCacheKey(req, meta.aggregateAt, time.Now())
 	if err != nil {
 		return c.renderPredictLineFromTracker(req)
 	}
-	return c.predictCache.Render(key, predictRenderCacheTTL(req.Region), func() ([]byte, error) {
+	return c.predictCache.Render(key, predictRenderCacheTTL(), func() ([]byte, error) {
 		return c.renderPredictLineFromTracker(req)
 	})
 }

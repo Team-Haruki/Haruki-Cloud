@@ -320,7 +320,7 @@ func TestBuildRenderCachePolicySKQueryIgnoresTopLevelEventIDForUserID(t *testing
 	}
 }
 
-func TestBuildRenderCachePolicyBucketsSKQueryTimesBy10Seconds(t *testing.T) {
+func TestBuildRenderCachePolicySKQueryOnlyChangesWhenPulledInfoChanges(t *testing.T) {
 	reqA := SKRequest{
 		ID:          1,
 		Region:      "JP",
@@ -331,11 +331,9 @@ func TestBuildRenderCachePolicyBucketsSKQueryTimesBy10Seconds(t *testing.T) {
 		},
 	}
 	reqB := reqA
-	reqB.AggregateAt = 1774118409000
-	reqB.Ranks[0].Time = 1774118409000
 	reqC := reqA
-	reqC.AggregateAt = 1774118410000
-	reqC.Ranks[0].Time = 1774118410000
+	reqC.AggregateAt = 1774118420000
+	reqC.Ranks[0].Time = 1774118420000
 
 	policyA, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqA)
 	if err != nil {
@@ -364,17 +362,17 @@ func TestBuildRenderCachePolicyBucketsSKQueryTimesBy10Seconds(t *testing.T) {
 	}
 
 	if keyA != keyB {
-		t.Fatalf("sk query key should stay stable within the same 10s bucket: %s != %s", keyA, keyB)
+		t.Fatalf("sk query key should stay stable when pulled info is unchanged: %s != %s", keyA, keyB)
 	}
 	if keyA == keyC {
-		t.Fatalf("sk query key should change after the 10s bucket boundary")
+		t.Fatalf("sk query key should change after pulled info changes")
 	}
-	if policyA.TTL != 10*time.Second {
-		t.Fatalf("expected 10s ttl for sk query cache, got %v", policyA.TTL)
+	if policyA.TTL != renderCacheTTLHalfDay {
+		t.Fatalf("expected half-day ttl for sk query cache, got %v", policyA.TTL)
 	}
 }
 
-func TestBuildRenderCachePolicyBucketsTWSKQueryTimesBy30Seconds(t *testing.T) {
+func TestBuildRenderCachePolicyTWSKQueryDoesNotBucketByTime(t *testing.T) {
 	reqA := SKRequest{
 		ID:          1,
 		Region:      "TW",
@@ -388,8 +386,8 @@ func TestBuildRenderCachePolicyBucketsTWSKQueryTimesBy30Seconds(t *testing.T) {
 	reqB.AggregateAt = 1774118429000
 	reqB.Ranks[0].Time = 1774118429000
 	reqC := reqA
-	reqC.AggregateAt = 1774118430000
-	reqC.Ranks[0].Time = 1774118430000
+	reqC.AggregateAt = 1774118404000
+	reqC.Ranks[0].Time = 1774118405000
 
 	policyA, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqA)
 	if err != nil {
@@ -417,18 +415,18 @@ func TestBuildRenderCachePolicyBucketsTWSKQueryTimesBy30Seconds(t *testing.T) {
 		t.Fatalf("buildRenderCacheKey reqC: %v", err)
 	}
 
-	if keyA != keyB {
-		t.Fatalf("tw sk query key should stay stable within the same 30s bucket: %s != %s", keyA, keyB)
+	if keyA == keyB {
+		t.Fatalf("tw sk query key should change when tracker timestamps differ")
 	}
-	if keyA == keyC {
-		t.Fatalf("tw sk query key should change after the 30s bucket boundary")
+	if keyA != keyC {
+		t.Fatalf("tw sk query key should remain identical for identical content: %s != %s", keyA, keyC)
 	}
-	if policyA.TTL != 30*time.Second {
-		t.Fatalf("expected 30s ttl for tw sk query cache, got %v", policyA.TTL)
+	if policyA.TTL != renderCacheTTLHalfDay {
+		t.Fatalf("expected half-day ttl for tw sk query cache, got %v", policyA.TTL)
 	}
 }
 
-func TestBuildRenderCachePolicyBucketsENSKQueryTimesByMinute(t *testing.T) {
+func TestBuildRenderCachePolicyENSKQueryDoesNotBucketByTime(t *testing.T) {
 	reqA := SKRequest{
 		ID:          1,
 		Region:      "EN",
@@ -442,8 +440,8 @@ func TestBuildRenderCachePolicyBucketsENSKQueryTimesByMinute(t *testing.T) {
 	reqB.AggregateAt = 1774118459000
 	reqB.Ranks[0].Time = 1774118459000
 	reqC := reqA
-	reqC.AggregateAt = 1774118460000
-	reqC.Ranks[0].Time = 1774118460000
+	reqC.AggregateAt = 1774118404000
+	reqC.Ranks[0].Time = 1774118405000
 
 	policyA, err := buildRenderCachePolicy("/api/pjsk/sk/query", reqA)
 	if err != nil {
@@ -471,14 +469,14 @@ func TestBuildRenderCachePolicyBucketsENSKQueryTimesByMinute(t *testing.T) {
 		t.Fatalf("buildRenderCacheKey reqC: %v", err)
 	}
 
-	if keyA != keyB {
-		t.Fatalf("en sk query key should stay stable within the same 1m bucket: %s != %s", keyA, keyB)
+	if keyA == keyB {
+		t.Fatalf("en sk query key should change when tracker timestamps differ")
 	}
-	if keyA == keyC {
-		t.Fatalf("en sk query key should change after the 1m bucket boundary")
+	if keyA != keyC {
+		t.Fatalf("en sk query key should remain identical for identical content: %s != %s", keyA, keyC)
 	}
-	if policyA.TTL != time.Minute {
-		t.Fatalf("expected 1m ttl for en sk query cache, got %v", policyA.TTL)
+	if policyA.TTL != renderCacheTTLHalfDay {
+		t.Fatalf("expected half-day ttl for en sk query cache, got %v", policyA.TTL)
 	}
 }
 

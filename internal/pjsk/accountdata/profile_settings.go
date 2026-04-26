@@ -208,7 +208,12 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		if err != nil {
 			return nil, err
 		}
-		return []byte(formatVerifyListText(items)), nil
+		server := ""
+		if params.RegionExplicit {
+			server = params.Server
+			items = filterBindingsByServer(items, server)
+		}
+		return []byte(formatVerifyListText(items, server)), nil
 	case ProfileModeSetTimeZone:
 		resolvedTimeZone, candidates, err := displaytime.ResolveUserTimeZoneInput(params.TimeZone)
 		if err != nil {
@@ -340,17 +345,31 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 	}
 }
 
-func formatVerifyListText(items []BindingListItem) string {
+func formatVerifyListText(items []BindingListItem, server string) string {
 	if len(items) == 0 {
+		if server != "" {
+			return fmt.Sprintf("你还没有绑定任何%s服PJSK账号", strings.ToUpper(server))
+		}
 		return "你还没有绑定任何PJSK账号"
 	}
-	lines := []string{"已绑定账号验证状态（u序号按区服分别编号）:"}
-	for _, item := range items {
+
+	var lines []string
+	if server != "" {
+		lines = []string{fmt.Sprintf("已绑定%s服账号验证状态（u序号按该区服编号）:", strings.ToUpper(server))}
+	} else {
+		lines = []string{"已绑定账号验证状态（u序号全局编号）:"}
+	}
+
+	for i, item := range items {
 		status := "❌"
 		if item.Verified {
 			status = "✅"
 		}
-		line := fmt.Sprintf("u%d [%s] %s %s", item.Index, strings.ToUpper(item.Server), formatBindingUID(item), status)
+		displayIdx := i + 1
+		if server != "" {
+			displayIdx = item.Index
+		}
+		line := fmt.Sprintf("u%d [%s] %s %s", displayIdx, strings.ToUpper(item.Server), formatBindingUID(item), status)
 		marks := make([]string, 0, 2)
 		if item.IsGlobalDefault {
 			marks = append(marks, "全局默认")
@@ -359,7 +378,7 @@ func formatVerifyListText(items []BindingListItem) string {
 			marks = append(marks, strings.ToUpper(item.Server)+"服默认")
 		}
 		if len(marks) > 0 {
-			line += " (" + strings.Join(marks, "/") + ")"
+			line += " (" + strings.Join(marks, " / ") + ")"
 		}
 		lines = append(lines, line)
 	}

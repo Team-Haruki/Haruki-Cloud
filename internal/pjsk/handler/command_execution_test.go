@@ -3221,6 +3221,10 @@ func (p *bridgeDeckTestEventProvider) GetWorldBloomChapters(_ context.Context, e
 	return p.worldBloomByEvent[eventID]
 }
 
+func (p *bridgeDeckTestEventProvider) GetRankingHonorRewards(_ context.Context, eventID int) ([]masterdata.EventRankingHonorReward, error) {
+	return nil, nil
+}
+
 type handlerTestWorldBloomChapter struct {
 	chapterNo   int64
 	startAt     int64

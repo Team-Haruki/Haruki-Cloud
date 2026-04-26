@@ -95,8 +95,17 @@
 
 ## 6. 测试基线
 
-- `go test ./...` 全绿。
+**每次改动后，提交前必须确保以下三项全部通过：**
+
+```bash
+go vet ./...
+go test ./...
+staticcheck ./...
+```
+
+- 三项基线均为全绿，无已知基础失败。
 - `integration/` 目录默认跳过；只有 `HARUKI_RUN_INTEGRATION=1` 时执行。
+- 新增或扩展 interface 时，所有测试中的 mock 实现都必须同步补齐新方法。
 
 ## 7. 服务器启动 / 构建
 

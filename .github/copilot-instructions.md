@@ -211,11 +211,21 @@ parses files and counts records without touching the DB.
 
 ## 6. Testing
 
-- Baseline: `go test ./...` is **all green** (no known basal failures).
+**After every code change, all three checks must pass before committing:**
+
+```bash
+go vet ./...
+go test ./...
+staticcheck ./...
+```
+
+- Baseline: all three are **green** (no known basal failures).
 - Integration tests under `integration/` are gated by environment variable —
   they only run when `HARUKI_RUN_INTEGRATION=1` is set.
 - Render-layer tests prefer constructing minimal `&renderapp.App{...}` literals
   with only the dependencies under test populated (the rest are nil-safe).
+- When adding or extending an interface, all test mock implementations of that
+  interface must be updated to implement the new methods.
 
 ---
 

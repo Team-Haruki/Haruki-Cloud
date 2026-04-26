@@ -179,7 +179,7 @@ func TestProfileBackgroundRequiresVerifiedBinding(t *testing.T) {
 	}
 }
 
-func TestExecuteProfileSettingsCommandVerifyListMasksUID(t *testing.T) {
+func TestExecuteProfileSettingsCommandVerifyListImplicitRegionUsesGlobalIndex(t *testing.T) {
 	service := newProfileBindingTestService(t, map[string]map[string]string{
 		"jp": {"12345678901234": "JP User"},
 	})
@@ -198,18 +198,144 @@ func TestExecuteProfileSettingsCommandVerifyListMasksUID(t *testing.T) {
 		t.Fatalf("verify: %v", err)
 	}
 
+	// RegionExplicit=false (implicit region) → global sequential index, no server filter
 	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeVerifyList, accountdata.ProfileSettingsCommandParams{
 		Platform:       "qq",
 		PlatformUserID: "42",
 		Server:         "jp",
+		RegionExplicit: false,
 	})
 	if err != nil {
 		t.Fatalf("verify list: %v", err)
 	}
 
-	expected := "已绑定账号验证状态（u序号按区服分别编号）:\nu1 [JP] 123********234 ✅ (全局默认/JP服默认)"
+	expected := "已绑定账号验证状态（u序号全局编号）:\nu1 [JP] 123********234 ✅ (全局默认 / JP服默认)"
 	if string(text) != expected {
 		t.Fatalf("unexpected verify list text:\n%s", text)
+	}
+}
+
+func TestExecuteProfileSettingsCommandVerifyListExplicitRegionFiltersAndUsesServerIndex(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"12345678901234": "JP User"},
+	})
+	service.SetFastVerificationProvider(fakeFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{{Server: "jp", GameUserID: "12345678901234"}},
+	})
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp"); err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+
+	// RegionExplicit=true → filter to JP only, per-server index
+	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeVerifyList, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		RegionExplicit: true,
+	})
+	if err != nil {
+		t.Fatalf("verify list explicit region: %v", err)
+	}
+
+	expected := "已绑定JP服账号验证状态（u序号按该区服编号）:\nu1 [JP] 123********234 ✅ (全局默认 / JP服默认)"
+	if string(text) != expected {
+		t.Fatalf("unexpected verify list text:\n%s", text)
+	}
+}
+
+func TestExecuteProfileSettingsCommandVerifyListMultiServerImplicitRegionShowsGlobalIndex(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"11111111111111": "JP User"},
+		"tw": {"22222222222222": "TW User"},
+	})
+	service.SetFastVerificationProvider(fakeFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{
+			{Server: "jp", GameUserID: "11111111111111"},
+		},
+	})
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "22222222222222"); err != nil {
+		t.Fatalf("bind tw: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp"); err != nil {
+		t.Fatalf("verify jp: %v", err)
+	}
+
+	// implicit region → both servers shown with global sequential index (jp sorted before tw)
+	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeVerifyList, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		RegionExplicit: false,
+	})
+	if err != nil {
+		t.Fatalf("verify list multi-server: %v", err)
+	}
+
+	got := string(text)
+	// global u1 → JP (first in sort order), global u2 → TW
+	if !strings.Contains(got, "全局编号") {
+		t.Fatalf("expected global-index header, got:\n%s", got)
+	}
+	if !strings.Contains(got, "u1 [JP]") {
+		t.Fatalf("expected JP as global u1, got:\n%s", got)
+	}
+	if !strings.Contains(got, "u2 [TW]") {
+		t.Fatalf("expected TW as global u2, got:\n%s", got)
+	}
+	if strings.Contains(got, "u1 [TW]") {
+		t.Fatalf("TW should not appear as u1 in global index, got:\n%s", got)
+	}
+}
+
+func TestExecuteProfileSettingsCommandVerifyListExplicitRegionExcludesOtherServers(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"11111111111111": "JP User"},
+		"tw": {"22222222222222": "TW User"},
+	})
+	service.SetFastVerificationProvider(fakeFastVerifier{
+		bindings: []sekaiapi.UserGameBinding{
+			{Server: "jp", GameUserID: "11111111111111"},
+		},
+	})
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := service.Bind(ctx, "qq", "42", "22222222222222"); err != nil {
+		t.Fatalf("bind tw: %v", err)
+	}
+	if _, _, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp"); err != nil {
+		t.Fatalf("verify jp: %v", err)
+	}
+
+	// explicit JP → only JP shown, TW excluded
+	text, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeVerifyList, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "jp",
+		RegionExplicit: true,
+	})
+	if err != nil {
+		t.Fatalf("verify list explicit jp: %v", err)
+	}
+
+	got := string(text)
+	if strings.Contains(got, "TW") || strings.Contains(got, "22222222222222") {
+		t.Fatalf("explicit JP verify list should not contain TW, got:\n%s", got)
+	}
+	if !strings.Contains(got, "u1 [JP]") {
+		t.Fatalf("expected JP u1 in explicit-region verify list, got:\n%s", got)
 	}
 }
 

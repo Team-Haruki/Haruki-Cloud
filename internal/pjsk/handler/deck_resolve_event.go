@@ -536,8 +536,12 @@ func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *rendera
 		return nil, err
 	}
 
+	charUnit := resolveDeckCharacterUnit(charID)
 	matched := make([]*sekaidb.Event, 0, len(worldBloomEvents))
 	for _, eventInfo := range worldBloomEvents {
+		if charUnit == "piapro" && normalizeDeckUnit(eventInfo.Unit) != "piapro" {
+			continue
+		}
 		chapters, err := queryDeckWorldBloomChapters(ctx, app, region, int(eventInfo.GameID))
 		if err != nil {
 			return nil, err
@@ -554,7 +558,7 @@ func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *rendera
 }
 
 func resolveDeckWorldBloomEventByUnitTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn int, unit string) (*sekaidb.Event, error) {
-	unit = strings.TrimSpace(unit)
+	unit = normalizeDeckUnit(unit)
 	if unit == "" {
 		return nil, fmt.Errorf("wl%d 需要指定角色或团名", turn)
 	}
@@ -566,6 +570,14 @@ func resolveDeckWorldBloomEventByUnitTurn(ctx context.Context, app *renderapp.Ap
 
 	matched := make([]*sekaidb.Event, 0, len(worldBloomEvents))
 	for _, eventInfo := range worldBloomEvents {
+		eventUnit := normalizeDeckUnit(eventInfo.Unit)
+		if eventUnit != "" {
+			if eventUnit == unit {
+				matched = append(matched, eventInfo)
+			}
+			continue
+		}
+
 		chapters, err := queryDeckWorldBloomChapters(ctx, app, region, int(eventInfo.GameID))
 		if err != nil {
 			return nil, err

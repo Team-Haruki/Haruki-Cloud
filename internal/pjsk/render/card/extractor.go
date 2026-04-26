@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"haruki-cloud/internal/pjsk/filteralias"
 )
 
 type dictRule struct {
@@ -183,13 +185,7 @@ func (e *Extractor) ExtractRarity(text string) ExtractResult[string] {
 	return extractByRules(text, rarityRules)
 }
 
-var attrRules = buildRules(map[string]string{
-	"cute": "cute", "可爱": "cute", "粉花": "cute", "粉": "cute",
-	"cool": "cool", "帅气": "cool", "蓝星": "cool", "蓝": "cool",
-	"pure": "pure", "纯真": "pure", "纯洁": "pure", "绿草": "pure", "草": "pure", "绿": "pure",
-	"happy": "happy", "快乐": "happy", "橙心": "happy", "橙": "happy", "黄": "happy",
-	"mysterious": "mysterious", "神秘": "mysterious", "紫月": "mysterious", "紫": "mysterious",
-})
+var attrRules = buildRules(filteralias.AttributeMap())
 
 func (e *Extractor) ExtractAttribute(text string) ExtractResult[string] {
 	return extractByRules(text, attrRules)
@@ -227,47 +223,22 @@ func (e *Extractor) ExtractDetailedSkillIDs(text string) ExtractResult[[]int] {
 	return extractIntSliceByRules(text, detailSkillRules)
 }
 
-var supplyRules = buildRules(map[string]string{
-	"联动":          SupplyCollab,
-	"联动限定":        SupplyCollab,
-	"collab":      SupplyCollab,
-	"bfes限定":      SupplyBFes,
-	"bfes":        SupplyBFes,
-	"cfes限定":      SupplyCFes,
-	"cfes":        SupplyCFes,
-	"worldlink限定": SupplyWL,
-	"wl限定":        SupplyWL,
-	"期间限定":        SupplyLimited,
-	"fes":         SupplyFes,
-	"非限定":         SupplyNormal,
-	"限定":          SupplyLimited,
-	"limit":       SupplyLimited,
-	"常驻":          SupplyNormal,
-	"非限":          SupplyNormal,
-	"生日":          SupplyBirthday,
-})
+var supplyRules = buildRules(filteralias.SupplyMap(
+	SupplyFes,
+	SupplyCFes,
+	SupplyBFes,
+	SupplyWL,
+	SupplyCollab,
+	SupplyLimited,
+	SupplyNormal,
+	SupplyBirthday,
+))
 
 func (e *Extractor) ExtractSupply(text string) ExtractResult[string] {
 	return extractByRules(text, supplyRules)
 }
 
-var unitRules = buildRules(map[string]string{
-	"light_sound":    "light_sound",
-	"ln":             "light_sound",
-	"idol":           "idol",
-	"mmj":            "idol",
-	"street":         "street",
-	"vbs":            "street",
-	"theme_park":     "theme_park",
-	"ws":             "theme_park",
-	"school_refusal": "school_refusal",
-	"25h":            "school_refusal",
-	"25时":            "school_refusal",
-	"25":             "school_refusal",
-	"piapro":         "piapro",
-	"vs":             "piapro",
-	"v":              "piapro",
-})
+var unitRules = buildRules(filteralias.UnitMap())
 
 func (e *Extractor) ExtractUnit(text string) ExtractResult[string] {
 	return extractByRules(text, unitRules)

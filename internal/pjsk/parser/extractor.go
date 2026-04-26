@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"haruki-cloud/internal/pjsk/filteralias"
 )
 
 func buildRules(m map[string]string) []dictRule {
@@ -134,13 +136,7 @@ func isAsciiLetter(ch byte) bool {
 
 // --- 属性提取 ---
 
-var attrMap = map[string]string{
-	"cute": "cute", "可爱": "cute", "粉花": "cute", "粉": "cute", "pink": "cute",
-	"cool": "cool", "帅气": "cool", "蓝星": "cool", "蓝": "cool", "blue": "cool",
-	"pure": "pure", "纯真": "pure", "纯洁": "pure", "绿草": "pure", "草": "pure", "绿": "pure", "green": "pure",
-	"happy": "happy", "快乐": "happy", "橙心": "happy", "橙": "happy", "orange": "happy",
-	"mysterious": "mysterious", "神秘": "mysterious", "紫月": "mysterious", "紫": "mysterious", "purple": "mysterious",
-}
+var attrMap = filteralias.AttributeMap()
 
 var attrRules = buildRules(attrMap)
 
@@ -165,12 +161,12 @@ func (e *Extractor) ExtractSkill(text string) ExtractResult[string] {
 
 // --- 限定类型提取 ---
 
-var supplyMap = map[string]string{
-	"fes": "festival", "fES": "festival",
-	"限定": "limited", "limit": "limited",
-	"常驻": "normal", "非限": "normal",
-	"生日": "birthday",
-}
+var supplyMap = filteralias.SupplyMap(
+	SupplyFes,
+	SupplyLimited,
+	SupplyNormal,
+	SupplyBirthday,
+)
 
 var supplyRules = buildRules(supplyMap)
 

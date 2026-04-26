@@ -227,3 +227,12 @@ func resolveDeckCharacterUnit(charID int) string {
 		return ""
 	}
 }
+
+func normalizeDeckUnit(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "light_sound", "idol", "street", "theme_park", "school_refusal", "piapro":
+		return strings.ToLower(strings.TrimSpace(raw))
+	default:
+		return ""
+	}
+}

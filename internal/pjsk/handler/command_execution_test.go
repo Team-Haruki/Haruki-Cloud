@@ -2844,6 +2844,118 @@ func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByCharacterOcc
 	}
 }
 
+func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByVSCharacterWithinPiaproEventsOnly(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_turn_vs_unit_scope?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 510, now-int64(144*time.Hour/time.Millisecond), now-int64(120*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(143*time.Hour/time.Millisecond), aggregateAt: now - int64(141*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 520, now-int64(96*time.Hour/time.Millisecond), now-int64(72*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(95*time.Hour/time.Millisecond), aggregateAt: now - int64(93*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 530, now-int64(48*time.Hour/time.Millisecond), now-int64(24*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(47*time.Hour/time.Millisecond), aggregateAt: now - int64(45*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 540, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
+
+	for eventID, unit := range map[int64]string{
+		510: "light_sound",
+		520: "piapro",
+		530: "street",
+		540: "piapro",
+	} {
+		if _, err := sekaiClient.Event.Update().
+			Where(eventdb.ServerRegionEQ("jp"), eventdb.GameIDEQ(eventID)).
+			SetUnit(unit).
+			Save(ctx); err != nil {
+			t.Fatalf("set event unit %d=%s: %v", eventID, unit, err)
+		}
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		WorldBloomEventTurn:      drawing.IntPtr(2),
+		WorldBloomCharacterQuery: "初音未来",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 540 {
+		t.Fatalf("unexpected resolved event id: %+v", query.EventID)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.EventUnit != "piapro" {
+		t.Fatalf("unexpected world bloom event unit: %q", query.EventUnit)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByPiaproUnitOnly(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_turn_piapro_unit_only?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 610, now-int64(144*time.Hour/time.Millisecond), now-int64(120*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(143*time.Hour/time.Millisecond), aggregateAt: now - int64(141*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 620, now-int64(96*time.Hour/time.Millisecond), now-int64(72*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(95*time.Hour/time.Millisecond), aggregateAt: now - int64(93*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 630, now-int64(48*time.Hour/time.Millisecond), now-int64(24*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(47*time.Hour/time.Millisecond), aggregateAt: now - int64(45*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 640, now-int64(4*time.Hour/time.Millisecond), now+int64(4*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(2*time.Hour/time.Millisecond), aggregateAt: now + int64(time.Hour/time.Millisecond), characterID: 21},
+	})
+	for eventID, unit := range map[int64]string{
+		610: "light_sound",
+		620: "piapro",
+		630: "street",
+		640: "piapro",
+	} {
+		if _, err := sekaiClient.Event.Update().
+			Where(eventdb.ServerRegionEQ("jp"), eventdb.GameIDEQ(eventID)).
+			SetUnit(unit).
+			Save(ctx); err != nil {
+			t.Fatalf("set event unit %d=%s: %v", eventID, unit, err)
+		}
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:              "jp",
+		RecommendType:       "event",
+		WorldBloomEventTurn: drawing.IntPtr(2),
+		EventUnit:           "piapro",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 640 {
+		t.Fatalf("unexpected resolved event id: %+v", query.EventID)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsFallsBackEventRecommendToNoEventWhenNoEventAvailable(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_event_fallback_no_event?mode=memory&cache=shared&_fk=1")

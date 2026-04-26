@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"haruki-cloud/internal/pjsk/filteralias"
 	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	"regexp"
 )
@@ -109,13 +110,7 @@ var deckUnitFilterKeywords = map[string][]string{
 	"school_refusal": {"纯25h", "纯25时", "纯25", "仅25h", "仅25时", "仅25"},
 	"piapro":         {"纯vs", "纯v", "仅vs", "仅v"},
 }
-var deckAttrFilterAliases = map[string][]string{
-	"cute":       {"cute", "可爱", "粉花", "粉", "pink"},
-	"cool":       {"cool", "帅气", "蓝星", "蓝", "blue"},
-	"pure":       {"pure", "纯真", "纯洁", "绿草", "草", "绿", "green"},
-	"happy":      {"happy", "快乐", "橙心", "橙", "orange"},
-	"mysterious": {"mysterious", "神秘", "紫月", "紫", "purple"},
-}
+var deckAttrFilterAliases = filteralias.AttributeGroups()
 var deckInlineDifficultySuffixes = []string{
 	"append", "expert", "master", "normal", "easy", "hard",
 	"粉谱", "红谱", "紫谱", "蓝谱", "绿谱", "黄谱",

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"haruki-cloud/internal/pjsk/filteralias"
 )
 
 // CharacterIDByNickname resolves a character nickname to character id.
@@ -165,14 +167,7 @@ func (p *EventParser) tryParseFilter(args string) *EventQueryInfo {
 		return nil
 	}
 
-	units := map[string]string{
-		"l/n": "light_sound", "ln": "light_sound", "leoneed": "light_sound",
-		"mmj": "idol", "moremorejump": "idol",
-		"vbs": "street", "vividbadsquad": "street",
-		"ws": "theme_park", "wxs": "theme_park", "wonderlands": "theme_park",
-		"25h": "school_refusal", "niigo": "school_refusal", "25": "school_refusal",
-		"vs": "piapro", "virtualsinger": "piapro",
-	}
+	units := filteralias.UnitMap()
 
 	types := map[string]string{
 		"marathon": "marathon", "普活": "marathon", "马拉松": "marathon",
@@ -180,13 +175,7 @@ func (p *EventParser) tryParseFilter(args string) *EventQueryInfo {
 		"wl": "world_bloom", "worldlink": "world_bloom", "world": "world_bloom",
 	}
 
-	attrAliases := map[string]string{
-		"cute": "cute", "可爱": "cute", "粉": "cute",
-		"cool": "cool", "帅气": "cool", "蓝": "cool",
-		"pure": "pure", "纯真": "pure", "纯洁": "pure", "草": "pure", "绿": "pure",
-		"happy": "happy", "快乐": "happy", "橙": "happy",
-		"mysterious": "mysterious", "神秘": "mysterious", "紫": "mysterious",
-	}
+	attrAliases := filteralias.AttributeMap()
 
 	charSet := make(map[int]struct{})
 	for _, part := range parts {

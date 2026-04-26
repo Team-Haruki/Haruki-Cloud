@@ -40,7 +40,7 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 			continue
 		}
 		if query.Unit != "" || query.Blend || query.Attr != "" || query.CharacterID != 0 || len(query.CharacterIDs) > 0 {
-			if !b.matchEventBonus(eventInfo.EventType, eventInfo.ID, query.Unit, query.Blend, query.Attr, query.CharacterID, query.CharacterIDs) {
+			if !b.matchEventBonus(eventInfo.EventType, eventInfo.ID, eventInfo.Unit, query.Unit, query.Blend, query.Attr, query.CharacterID, query.CharacterIDs) {
 				continue
 			}
 		}
@@ -109,7 +109,7 @@ func (b *Builder) isBoxEvent(eventID int) bool {
 	return len(units) == 1
 }
 
-func (b *Builder) matchEventBonus(eventType string, eventID int, unit string, blend bool, attr string, charID int, charIDs []int) bool {
+func (b *Builder) matchEventBonus(eventType string, eventID int, eventUnit string, unit string, blend bool, attr string, charID int, charIDs []int) bool {
 	if unit == "" && !blend && attr == "" && charID == 0 && len(charIDs) == 0 {
 		return true
 	}
@@ -124,7 +124,9 @@ func (b *Builder) matchEventBonus(eventType string, eventID int, unit string, bl
 	if unit != "" {
 		normalizedUnit := strings.ToLower(strings.TrimSpace(unit))
 		if strings.EqualFold(eventType, "world_bloom") {
-			if chapterUnits, hasChapterData := b.extractWorldBloomChapterUnits(eventID); hasChapterData {
+			if normalizedEventUnit := strings.ToLower(strings.TrimSpace(eventUnit)); normalizedEventUnit != "" {
+				unitMatched = normalizedUnit == normalizedEventUnit
+			} else if chapterUnits, hasChapterData := b.extractWorldBloomChapterUnits(eventID); hasChapterData {
 				_, unitMatched = chapterUnits[normalizedUnit]
 			} else {
 				_, unitMatched = units[normalizedUnit]

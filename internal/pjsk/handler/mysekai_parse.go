@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"haruki-cloud/internal/pjsk/filteralias"
 )
 
 var mysekaiMapIndexToID = map[int]int{
@@ -99,9 +101,7 @@ func cleanMysekaiArgs(args string) string {
 	if len(fields) == 0 {
 		return ""
 	}
-	unitTokens := map[string]struct{}{
-		"ln": {}, "mmj": {}, "vbs": {}, "ws": {}, "wxs": {}, "25": {}, "25h": {}, "25ji": {}, "niigo": {}, "vs": {}, "piapro": {},
-	}
+	unitTokens := filteralias.UnitAliasSet()
 	var kept []string
 	for _, field := range fields {
 		lower := strings.ToLower(strings.TrimSpace(field))
@@ -116,44 +116,9 @@ func cleanMysekaiArgs(args string) string {
 	return strings.TrimSpace(strings.Join(kept, " "))
 }
 
-var mysekaiBlueprintUnitAliases = map[string]string{
-	"l/n":                    "light_sound",
-	"ln":                     "light_sound",
-	"leoneed":                "light_sound",
-	"light_sound":            "light_sound",
-	"lightsound":             "light_sound",
-	"light_sound_club":       "light_sound",
-	"leo/need":               "light_sound",
-	"mmj":                    "idol",
-	"moremorejump":           "idol",
-	"more_more_jump":         "idol",
-	"idol":                   "idol",
-	"vbs":                    "street",
-	"vividbadsquad":          "street",
-	"vivid_bad_squad":        "street",
-	"street":                 "street",
-	"ws":                     "theme_park",
-	"wxs":                    "theme_park",
-	"wonderlands":            "theme_park",
-	"wonderlandsxshowtime":   "theme_park",
-	"wonderlands_x_showtime": "theme_park",
-	"theme_park":             "theme_park",
-	"themepark":              "theme_park",
-	"25":                     "school_refusal",
-	"25h":                    "school_refusal",
-	"25ji":                   "school_refusal",
-	"niigo":                  "school_refusal",
-	"nightcord":              "school_refusal",
-	"school_refusal":         "school_refusal",
-	"schoolrefusal":          "school_refusal",
-	"25_ji_night_cord_de":    "school_refusal",
-}
+var mysekaiBlueprintUnitAliases = filteralias.UnitMapWithout("piapro")
 
-var mysekaiBlueprintDiscardedUnitTokens = map[string]struct{}{
-	"vs":            {},
-	"piapro":        {},
-	"virtualsinger": {},
-}
+var mysekaiBlueprintDiscardedUnitTokens = filteralias.UnitAliasSetFor("piapro")
 
 func extractMysekaiGateID(args string) (int, string) {
 	lower := strings.ToLower(strings.TrimSpace(args))

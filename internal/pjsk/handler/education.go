@@ -3,6 +3,7 @@ package handler
 import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/filteralias"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/education"
 	"strings"
@@ -129,44 +130,7 @@ func (sekaiHandlers) LeaderCountHandle() HarukiSekaiCommandHandler {
 	}, executeEducation)
 }
 
-var educationAreaUnitAliases = map[string]string{
-	"l/n":                    "light_sound",
-	"ln":                     "light_sound",
-	"leoneed":                "light_sound",
-	"light_sound_club":       "light_sound",
-	"light_sound":            "light_sound",
-	"lightsound":             "light_sound",
-	"leo/need":               "light_sound",
-	"mmj":                    "idol",
-	"moremorejump":           "idol",
-	"more_more_jump":         "idol",
-	"idol":                   "idol",
-	"vbs":                    "street",
-	"vividbadsquad":          "street",
-	"vivid_bad_squad":        "street",
-	"street":                 "street",
-	"ws":                     "theme_park",
-	"wxs":                    "theme_park",
-	"wonderlands":            "theme_park",
-	"wonderlandsxshowtime":   "theme_park",
-	"wonderlands_x_showtime": "theme_park",
-	"theme_park":             "theme_park",
-	"themepark":              "theme_park",
-	"25":                     "school_refusal",
-	"25h":                    "school_refusal",
-	"25时":                    "school_refusal",
-	"25ji":                   "school_refusal",
-	"25_ji_night_cord_de":    "school_refusal",
-	"niigo":                  "school_refusal",
-	"nightcord":              "school_refusal",
-	"school_refusal":         "school_refusal",
-	"schoolrefusal":          "school_refusal",
-	"vs":                     "piapro",
-	"v":                      "piapro",
-	"piapro":                 "piapro",
-	"virtualsinger":          "piapro",
-	"vocaloid":               "piapro",
-}
+var educationAreaUnitAliases = filteralias.UnitMap()
 
 func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItemQuery, error) {
 	args = strings.TrimSpace(args)

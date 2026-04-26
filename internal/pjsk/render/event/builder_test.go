@@ -271,6 +271,45 @@ func TestBuildEventListRequestWorldBloomUnitFilterUsesChapterUnits(t *testing.T)
 	}
 }
 
+func TestBuildEventListRequestWorldBloomUnitFilterPrefersEventUnit(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	eventInfo := &masterdata.Event{
+		ID:              304,
+		EventType:       "world_bloom",
+		Unit:            "street",
+		Name:            "street wl with vs chapter",
+		AssetBundleName: "e304",
+		StartAt:         700,
+		AggregateAt:     800,
+	}
+	source.events = []*masterdata.Event{eventInfo}
+	source.eventsByID[eventInfo.ID] = eventInfo
+	source.bonusesByEvent[eventInfo.ID] = []*masterdata.EventDeckBonus{
+		{ID: 1, EventID: eventInfo.ID, GameCharacterUnitID: 10, CardAttr: "cool"},
+		{ID: 2, EventID: eventInfo.ID, GameCharacterUnitID: 21},
+	}
+	source.gcuByID[10] = &masterdata.GameCharacterUnit{ID: 10, GameCharacterID: 10, Unit: "street"}
+	source.gcuByID[21] = &masterdata.GameCharacterUnit{ID: 21, GameCharacterID: 21, Unit: "piapro"}
+
+	vsCharID := 21
+	source.worldByEvent[eventInfo.ID] = []*masterdata.WorldBloom{
+		{ID: 1, EventID: eventInfo.ID, ChapterNo: 1, GameCharacterID: &vsCharID},
+	}
+	source.characterByID[21] = &masterdata.Character{ID: 21, Unit: "piapro"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	matched := builder.filterEvents(ListQuery{
+		Region:        renderregion.JP,
+		EventType:     "world_bloom",
+		Unit:          "piapro",
+		IncludePast:   true,
+		IncludeFuture: true,
+	})
+	if len(matched) != 0 {
+		t.Fatalf("expected no piapro WL events, got %+v", matched)
+	}
+}
+
 func TestBuildEventDetailRequestMixedEventDoesNotExposeBoxMetadata(t *testing.T) {
 	source := newTestEventSource(renderregion.JP)
 	eventInfo := &masterdata.Event{ID: 401, EventType: "marathon", Name: "mixed", AssetBundleName: "e401", StartAt: 100, AggregateAt: 200}

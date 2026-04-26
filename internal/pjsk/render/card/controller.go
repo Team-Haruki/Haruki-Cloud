@@ -162,12 +162,15 @@ func (c *Controller) buildCardListRenderRequest(query ListRequest) (any, bool, e
 		return nil, false, err
 	}
 	if len(cards) >= cardListAutoBoxThreshold {
-		req, buildErr := builder.BuildCardBoxRequest(cards, region, nil, false, false, true)
+		req, buildErr := builder.BuildCardBoxRequest(cards, region, query.DetailedProfile, false, false, true)
 		if buildErr != nil {
 			return nil, false, buildErr
 		}
 		if query.Title != nil {
 			req.Title = query.Title
+		}
+		if query.DetailedProfile != nil {
+			req.UserInfo = query.DetailedProfile
 		}
 		return req, true, nil
 	}

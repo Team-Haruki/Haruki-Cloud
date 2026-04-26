@@ -148,17 +148,13 @@ func normalizeDeckUserFacingError(err error) error {
 		return nil
 	}
 
-	if wrapped := WrapDomainError(err); wrapped != err {
-		return wrapped
+	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+		return err
 	}
 
 	var deckLocked *deckEventLockedError
 	if errors.As(err, &deckLocked) {
 		return onebot11.NewReplayError("该活动组卡将于卡池开放后解禁")
-	}
-
-	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
-		return err
 	}
 
 	message := strings.TrimSpace(err.Error())
@@ -180,9 +176,13 @@ func normalizeDeckUserFacingError(err error) error {
 		strings.Contains(message, "sekai api: request failed after retries"),
 		strings.Contains(message, "context deadline exceeded"):
 		return onebot11.NewReplayError("获取组卡所需数据超时，请稍后重试")
-	default:
-		return err
 	}
+
+	if wrapped := WrapDomainError(err); wrapped != err {
+		return wrapped
+	}
+
+	return err
 }
 
 func validateDeckCharacterIDs(values []int) error {

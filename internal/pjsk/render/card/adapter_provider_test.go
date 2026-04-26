@@ -88,6 +88,10 @@ func (p *adapterTestEventProvider) GetWorldBloomChapters(_ context.Context, even
 	return nil
 }
 
+func (p *adapterTestEventProvider) GetRankingHonorRewards(_ context.Context, eventID int) ([]masterdata.EventRankingHonorReward, error) {
+	return nil, nil
+}
+
 type adapterTestMasterDataProvider struct {
 	cards  provider.CardProvider
 	events provider.EventProvider

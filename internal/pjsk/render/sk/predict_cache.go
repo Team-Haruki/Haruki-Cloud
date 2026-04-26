@@ -44,7 +44,7 @@ func newPredictRenderCache() *predictRenderCache {
 }
 
 const (
-	predictRenderRefreshInterval = 30 * time.Minute
+	predictRenderRefreshInterval = 5 * time.Minute
 	predictFreezeBeforeEnd       = time.Hour
 	predictRenderCacheRetention  = 2 * time.Hour
 )

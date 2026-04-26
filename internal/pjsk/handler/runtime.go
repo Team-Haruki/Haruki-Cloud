@@ -230,12 +230,12 @@ func (rc *RequestContext) resolveProfiles() {
 		if snap := rc.ResolveSnapshot(false); snap != nil {
 			if rc.detailedProfile == nil {
 				if detail := snap.DetailedProfile(rc.Region); detail != nil {
-					rc.detailedProfile = detail
+					rc.detailedProfile = cloneDetailedProfileForCurrentTarget(rc, detail)
 				}
 			}
 			if rc.profileCard == nil {
 				if card := snap.ProfileCard(rc.Region); card != nil {
-					rc.profileCard = card
+					rc.profileCard = cloneProfileCardForCurrentTarget(rc, card)
 				}
 			}
 		}

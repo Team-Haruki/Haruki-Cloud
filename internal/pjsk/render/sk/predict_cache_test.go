@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-func TestPredictRenderBucketStartUsesThirtyMinuteBuckets(t *testing.T) {
+func TestPredictRenderBucketStartUsesFiveMinuteBuckets(t *testing.T) {
 	now := time.Date(2026, 4, 26, 18, 17, 25, 0, time.UTC)
 	got := predictRenderBucketStart(now, 0)
-	want := time.Date(2026, 4, 26, 18, 0, 0, 0, time.UTC).UnixMilli()
+	want := time.Date(2026, 4, 26, 18, 15, 0, 0, time.UTC).UnixMilli()
 	if got != want {
 		t.Fatalf("predict bucket start = %d, want %d", got, want)
 	}
@@ -18,7 +18,7 @@ func TestPredictRenderBucketStartFreezesDuringFinalHour(t *testing.T) {
 	aggregateAt := time.Date(2026, 4, 26, 20, 0, 0, 0, time.UTC).UnixMilli()
 
 	gotEarly := predictRenderBucketStart(time.Date(2026, 4, 26, 18, 59, 59, 0, time.UTC), aggregateAt)
-	wantEarly := time.Date(2026, 4, 26, 18, 30, 0, 0, time.UTC).UnixMilli()
+	wantEarly := time.Date(2026, 4, 26, 18, 55, 0, 0, time.UTC).UnixMilli()
 	if gotEarly != wantEarly {
 		t.Fatalf("predict bucket before final hour = %d, want %d", gotEarly, wantEarly)
 	}

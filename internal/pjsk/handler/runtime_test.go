@@ -182,6 +182,58 @@ func TestRequestContextCachesBasicSnapshotAndUsesSnapshotProfiles(t *testing.T) 
 	}
 }
 
+func TestRequestContextSnapshotProfileFallbackRespectsVisibleIDSetting(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "42", "jp", true); err != nil {
+		t.Fatalf("show id: %v", err)
+	}
+
+	provider := &runtimeSnapshotProviderStub{
+		snapshot: &runtimeSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				Nickname:   "snapshot-detail",
+				IsHideUID:  true,
+				UserCards:  []any{map[string]any{"card_id": 1001}},
+				Region:     "JP",
+				FramePath:  stringPtr("frame.png"),
+				UpdateTime: 123,
+			},
+			card: &drawing.ProfileCardRequest{
+				Profile: &drawing.BasicProfile{
+					Nickname:  "snapshot-card",
+					IsHideUID: true,
+					Region:    "JP",
+				},
+			},
+		},
+	}
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:  service,
+		Snapshots: provider,
+	})
+
+	detail := rc.GetDetailedProfile()
+	if detail == nil || detail.IsHideUID {
+		t.Fatalf("expected visible detailed profile, got %+v", detail)
+	}
+	card := rc.GetProfileCard()
+	if card == nil || card.Profile == nil || card.Profile.IsHideUID {
+		t.Fatalf("expected visible profile card, got %+v", card)
+	}
+}
+
 func TestRequestContextCachesMySekaiSnapshotSeparately(t *testing.T) {
 	provider := &runtimeSnapshotProviderStub{
 		snapshot: &runtimeSnapshotStub{},
@@ -335,6 +387,42 @@ func TestResolveCardBoxDetailedProfileDoesNotFallbackToProfileControllerSnapshot
 
 	if detail := resolveCardBoxDetailedProfile(rc); detail != nil {
 		t.Fatalf("expected nil detail without snapshot provider, got %+v", detail)
+	}
+}
+
+func TestResolveCardBoxDetailedProfileRespectsVisibleIDSetting(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "42", "jp", true); err != nil {
+		t.Fatalf("show id: %v", err)
+	}
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings: service,
+		Snapshots: &runtimeSnapshotProviderStub{
+			snapshot: &runtimeSnapshotStub{
+				detail: &drawing.DetailedProfileCardRequest{
+					Nickname:  "snapshot-detail",
+					IsHideUID: true,
+					UserCards: []any{map[string]any{"card_id": 1001}},
+				},
+			},
+		},
+	})
+
+	detail := resolveCardBoxDetailedProfile(rc)
+	if detail == nil || detail.IsHideUID {
+		t.Fatalf("expected card-box detail to show id, got %+v", detail)
 	}
 }
 

@@ -281,5 +281,5 @@ func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedPro
 	if detail == nil || len(detail.UserCards) == 0 {
 		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
-	return detail, nil
+	return cloneDetailedProfileForCurrentTarget(rc, detail), nil
 }

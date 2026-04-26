@@ -19,7 +19,7 @@ func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileC
 	}
 	if snap := resolveLiveSnapshot(rc, false); snap != nil {
 		if detail := snap.DetailedProfile(rc.Region); detail != nil && len(detail.UserCards) > 0 {
-			return detail
+			return cloneDetailedProfileForCurrentTarget(rc, detail)
 		}
 	}
 	return nil
@@ -107,6 +107,28 @@ func cloneDetailedProfileForTarget(detail *drawing.DetailedProfileCardRequest, t
 		cloned.Region = strings.ToUpper(resolvedRegion)
 	}
 	return &cloned
+}
+
+func cloneDetailedProfileForCurrentTarget(rc *RequestContext, detail *drawing.DetailedProfileCardRequest) *drawing.DetailedProfileCardRequest {
+	if rc == nil || detail == nil {
+		return detail
+	}
+	target := rc.GetSelfTarget()
+	if target == nil {
+		return detail
+	}
+	return cloneDetailedProfileForTarget(detail, *target, rc.RegionStr)
+}
+
+func cloneProfileCardForCurrentTarget(rc *RequestContext, card *drawing.ProfileCardRequest) *drawing.ProfileCardRequest {
+	if rc == nil || card == nil {
+		return card
+	}
+	target := rc.GetSelfTarget()
+	if target == nil {
+		return card
+	}
+	return cloneProfileCardForTarget(card, *target, rc.RegionStr)
 }
 
 func cloneProfileCardForTarget(card *drawing.ProfileCardRequest, target ResolvedGameTarget, region string) *drawing.ProfileCardRequest {

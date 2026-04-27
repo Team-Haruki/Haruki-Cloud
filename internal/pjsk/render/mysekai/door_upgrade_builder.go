@@ -134,6 +134,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 		gateMaterials = append(gateMaterials, drawing.MysekaiGateMaterials{
 			ID:             gateID,
 			Level:          new(currentLevel),
+			GateIconPath:   new(c.resolveGateIconPath(region, gateID, 0)),
 			LevelMaterials: outLevels,
 		})
 	}

@@ -1,8 +1,8 @@
 package mysekai
 
 import (
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -818,6 +818,53 @@ func TestBuildDoorUpgradeRequestSupportsShowAll(t *testing.T) {
 	}
 	if req.GateMaterials[0].ID != 1 || req.GateMaterials[1].ID != 2 {
 		t.Fatalf("unexpected gate material order: %+v", req.GateMaterials)
+	}
+}
+
+func TestBuildDoorUpgradeRequestUsesGateLargeThumbnailPath(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]any{
+		{"id": 4, "assetbundleName": "mdl_non0006_gate_wns1"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateMaterialGroups.json"), []map[string]any{
+		{"groupId": 4001, "mysekaiMaterialId": 1, "quantity": 2},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
+		{"id": 1, "iconAssetbundleName": "mat_1"},
+	})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiMaterials": [{"mysekaiMaterialId": 1, "quantity": 5}],
+    "userMysekaiGates": [{"mysekaiGateId": 4, "mysekaiGateLevel": 5}]
+  }
+}`
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(mysekaiJSON))
+
+	req, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{
+		Region:  "jp",
+		Query:   "4",
+		Profile: &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildDoorUpgradeRequest() error = %v", err)
+	}
+	if len(req.GateMaterials) != 1 {
+		t.Fatalf("expected 1 gate material group, got %+v", req.GateMaterials)
+	}
+
+	want := "asset/jp-assets/ondemand/mysekai/thumbnail/gate_large/mdl_non0006_gate_wns1.png"
+	if req.GateMaterials[0].GateIconPath == nil || *req.GateMaterials[0].GateIconPath != want {
+		t.Fatalf("unexpected msg gate icon path: got=%v want=%q", req.GateMaterials[0].GateIconPath, want)
 	}
 }
 

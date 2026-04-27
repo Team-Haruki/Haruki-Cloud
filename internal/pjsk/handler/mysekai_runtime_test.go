@@ -20,8 +20,12 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
+	renderprofile "haruki-cloud/internal/pjsk/render/profile"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/imagecache"
 )
 
@@ -40,6 +44,49 @@ func (p fixedMySekaiPayloadProvider) Resolve(context.Context, rendersnapshot.Sel
 		return nil, errors.New("payload is unavailable")
 	}
 	return append([]byte(nil), p.payload...), nil
+}
+
+type handlerMySekaiProfileSource struct {
+	region renderregion.Value
+	cards  map[int]*masterdata.Card
+}
+
+func (s *handlerMySekaiProfileSource) DefaultRegion() renderregion.Value { return s.region }
+
+func (s *handlerMySekaiProfileSource) GetHonorByID(id int) (*masterdata.Honor, error) {
+	return nil, fmt.Errorf("honor not found: %d", id)
+}
+
+func (s *handlerMySekaiProfileSource) GetHonorGroupByID(id int) (*masterdata.HonorGroup, error) {
+	return nil, fmt.Errorf("honor group not found: %d", id)
+}
+
+func (s *handlerMySekaiProfileSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, error) {
+	return nil, fmt.Errorf("bonds honor not found: %d", id)
+}
+
+func (s *handlerMySekaiProfileSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
+	return nil, false
+}
+
+func (s *handlerMySekaiProfileSource) GetPlayerFrameByID(id int) (*masterdata.PlayerFrame, error) {
+	return nil, fmt.Errorf("player frame not found: %d", id)
+}
+
+func (s *handlerMySekaiProfileSource) GetPlayerFrameGroupByID(id int) (*masterdata.PlayerFrameGroup, error) {
+	return nil, fmt.Errorf("player frame group not found: %d", id)
+}
+
+func (s *handlerMySekaiProfileSource) GetCardByID(id int) (*masterdata.Card, error) {
+	item, ok := s.cards[id]
+	if !ok {
+		return nil, fmt.Errorf("card not found: %d", id)
+	}
+	return new(*item), nil
+}
+
+func (s *handlerMySekaiProfileSource) GetEventIDByHonorID(honorID int) int {
+	return 0
 }
 
 func TestResolveMySekaiRenderContextFallsBackToPayloadProvider(t *testing.T) {
@@ -130,6 +177,100 @@ func TestResolveMySekaiRenderContextPrefersSnapshotProfileCard(t *testing.T) {
 	}
 	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != "Suite数据" {
 		t.Fatalf("expected suite data source, got %+v", result.Profile.DataSources)
+	}
+}
+
+func TestResolveMySekaiRenderContextPrefersPublicProfileCardWhenAvailable(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := service.SetBindingVisible(ctx, "qq", "42", "jp", true); err != nil {
+		t.Fatalf("show id: %v", err)
+	}
+
+	sekaiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/jp/12345678901234/profile" {
+			t.Fatalf("unexpected sekai api path: %s", r.URL.Path)
+		}
+		resp := &sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 12345678901234,
+				Name:   "JPUser",
+				Rank:   100,
+			},
+			UserProfile: sekaiapi.UserProfile{ProfileImageType: "default"},
+			UserDeck:    sekaiapi.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+			UserCards: []sekaiapi.AnotherUserCard{
+				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+			},
+		}
+		raw, err := json.Marshal(resp)
+		if err != nil {
+			t.Fatalf("marshal sekai api response: %v", err)
+		}
+		_, _ = w.Write(raw)
+	}))
+	defer sekaiServer.Close()
+
+	controller := rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true})
+	snapshot := &runtimeSnapshotStub{
+		card: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{
+				ID:              "99999999999999",
+				Region:          "TW",
+				Nickname:        "snapshot-card",
+				LeaderImagePath: "asset/user/snapshot.png",
+			},
+			DataSources: []drawing.ProfileDataSource{
+				{Name: "Suite数据"},
+			},
+		},
+	}
+	profileSource := &handlerMySekaiProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {ID: 1001, CharacterID: 1, AssetBundleName: "res001_no001"},
+		},
+	}
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:  service,
+		MySekai:   controller,
+		Snapshots: &runtimeSnapshotProviderStub{snapshot: snapshot},
+		Profiles:  renderprofile.NewController(profileSource, nil, assets.NewAssetHelper("", nil), nil),
+		SekaiAPI:  sekaiapi.NewSekaiAPIClient(&harukiConfig.SekaiAPIConfig{BaseURL: sekaiServer.URL}),
+	}
+
+	result, err := resolveMySekaiRenderContext(ctx, app, userQueryParams{
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	}, "jp", false)
+	if err != nil {
+		t.Fatalf("resolveMySekaiRenderContext() error = %v", err)
+	}
+	if result.Profile == nil || result.Profile.Profile == nil {
+		t.Fatalf("expected public profile card, got %+v", result.Profile)
+	}
+	if result.Profile.Profile.Nickname != "JPUser" {
+		t.Fatalf("expected public profile nickname, got %+v", result.Profile.Profile)
+	}
+	if got := result.Profile.Profile.LeaderImagePath; got == "asset/user/snapshot.png" || !strings.Contains(got, "res001_no001_after_training.png") {
+		t.Fatalf("expected public leader art instead of snapshot leader art, got %q", got)
+	}
+	if result.Profile.Profile.ID != "12345678901234" {
+		t.Fatalf("expected binding uid to override public profile id, got %q", result.Profile.Profile.ID)
+	}
+	if result.Profile.Profile.Region != "JP" {
+		t.Fatalf("expected normalized profile region JP, got %q", result.Profile.Profile.Region)
+	}
+	if len(result.Profile.DataSources) == 0 || result.Profile.DataSources[0].Name != "Suite数据" {
+		t.Fatalf("expected suite data source metadata to remain, got %+v", result.Profile.DataSources)
 	}
 }
 

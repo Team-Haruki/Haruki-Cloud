@@ -186,6 +186,7 @@ type MysekaiGateLevelMaterials struct {
 type MysekaiGateMaterials struct {
 	ID             int                         `json:"id"`
 	Level          *int                        `json:"level,omitempty"`
+	GateIconPath   *string                     `json:"gate_icon_path,omitempty"`
 	LevelMaterials []MysekaiGateLevelMaterials `json:"level_materials"`
 }
 

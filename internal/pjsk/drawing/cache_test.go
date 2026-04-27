@@ -79,7 +79,6 @@ func TestResolveRenderCacheRuleUsesInfiniteTTLForStaticEndpoints(t *testing.T) {
 	for _, endpoint := range []string{
 		"/api/pjsk/card/detail",
 		"/api/pjsk/card/list",
-		"/api/pjsk/event/list",
 		"/api/pjsk/mysekai/fixture-list",
 		"/api/pjsk/mysekai/fixture-detail",
 	} {
@@ -90,6 +89,70 @@ func TestResolveRenderCacheRuleUsesInfiniteTTLForStaticEndpoints(t *testing.T) {
 		if rule.TTL != 0 {
 			t.Fatalf("%s ttl = %s, want 0 for infinite ttl", endpoint, rule.TTL)
 		}
+	}
+}
+
+func TestBuildRenderCachePolicyEventListUsesDynamicWindowTTL(t *testing.T) {
+	now := int64(1774118400000)
+	endAt := now + int64((2*time.Hour)/time.Millisecond)
+	policy, err := buildRenderCachePolicy("/api/pjsk/event/list", map[string]any{
+		"dt": now,
+		"event_info": []any{
+			map[string]any{
+				"id":       101,
+				"start_at": now - int64((time.Hour)/time.Millisecond),
+				"end_at":   endAt,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy: %v", err)
+	}
+	want := 2*time.Hour + renderCacheWindowTTLBuffer
+	if policy.TTL != want {
+		t.Fatalf("event list ttl = %v, want %v", policy.TTL, want)
+	}
+	if policy.Infinite {
+		t.Fatal("event list should no longer use infinite ttl")
+	}
+}
+
+func TestBuildRenderCachePolicyVLiveUsesDynamicWindowTTL(t *testing.T) {
+	now := int64(1774118400000)
+	endAt := now + int64((90*time.Minute)/time.Millisecond)
+	policy, err := buildRenderCachePolicy("/api/pjsk/vlive/list", map[string]any{
+		"dt": now,
+		"lives": []any{
+			map[string]any{
+				"id":     1,
+				"end_at": endAt,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy: %v", err)
+	}
+	want := 90*time.Minute + renderCacheWindowTTLBuffer
+	if policy.TTL != want {
+		t.Fatalf("vlive ttl = %v, want %v", policy.TTL, want)
+	}
+}
+
+func TestBuildRenderCachePolicyWindowTTLUsesMinimumForPastData(t *testing.T) {
+	now := int64(1774118400000)
+	endAt := now - int64((time.Hour)/time.Millisecond)
+	policy, err := buildRenderCachePolicy("/api/pjsk/event/detail", map[string]any{
+		"dt": now,
+		"event_info": map[string]any{
+			"id":     101,
+			"end_at": endAt,
+		},
+	})
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy: %v", err)
+	}
+	if policy.TTL != renderCacheWindowTTLMin {
+		t.Fatalf("past event detail ttl = %v, want %v", policy.TTL, renderCacheWindowTTLMin)
 	}
 }
 

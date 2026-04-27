@@ -1,6 +1,7 @@
 package drawing
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,11 @@ type renderCacheRule struct {
 var (
 	renderCacheTTLHalfDay = 12 * time.Hour
 	renderCacheTTLOneDay  = 24 * time.Hour
+	renderCacheTTLTwoHour = 2 * time.Hour
+
+	renderCacheWindowTTLBuffer = 30 * time.Minute
+	renderCacheWindowTTLMin    = 10 * time.Minute
+	renderCacheWindowTTLMax    = 14 * 24 * time.Hour
 
 	defaultRenderCacheRule = renderCacheRule{
 		Enabled:          true,
@@ -48,13 +54,17 @@ var (
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("update_time"),
 		},
+		"/api/pjsk/event/detail": {
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
+		},
 		"/api/pjsk/event/list": {
-			Enabled:  true,
-			Infinite: true,
+			Enabled: true,
+			TTL:     renderCacheTTLHalfDay,
 		},
 		"/api/pjsk/vlive/list": {
 			Enabled:          true,
-			TTL:              time.Minute,
+			TTL:              renderCacheTTLTwoHour,
 			BucketFieldNames: renderCacheBucketSet(time.Minute, "dt"),
 		},
 		"/api/pjsk/misc/alias-list": {
@@ -279,6 +289,11 @@ func sanitizeRenderCachePayload(endpointPath string, payload any) renderCacheRul
 }
 
 func adjustRenderCacheRuleForPayload(endpointPath string, payload any, rule renderCacheRule) renderCacheRule {
+	if ttl, ok := resolveRenderCacheWindowTTL(endpointPath, payload); ok {
+		rule.TTL = ttl
+		rule.Infinite = false
+	}
+
 	if !strings.HasPrefix(strings.TrimSpace(endpointPath), "/api/pjsk/sk/") {
 		return rule
 	}
@@ -298,6 +313,117 @@ func adjustRenderCacheRuleForPayload(endpointPath string, payload any, rule rend
 		rule.BucketPaths[key] = bucket
 	}
 	return rule
+}
+
+func resolveRenderCacheWindowTTL(endpointPath string, payload any) (time.Duration, bool) {
+	switch strings.TrimSpace(endpointPath) {
+	case "/api/pjsk/event/detail":
+		root := mapAt(payload)
+		if root == nil {
+			return 0, false
+		}
+		nowMs := renderCacheNowMillis(root)
+		if nowMs <= 0 {
+			return 0, false
+		}
+		if endMs, ok := renderCacheMillis(valueAt(root, "event_info", "end_at")); ok {
+			return clampRenderCacheWindowTTL(endMs - nowMs), true
+		}
+	case "/api/pjsk/event/list":
+		root := mapAt(payload)
+		if root == nil {
+			return 0, false
+		}
+		nowMs := renderCacheNowMillis(root)
+		if nowMs <= 0 {
+			return 0, false
+		}
+		maxEnd := int64(0)
+		for _, item := range sliceAt(root, "event_info") {
+			if endMs, ok := renderCacheMillis(valueAt(item, "end_at")); ok && endMs > maxEnd {
+				maxEnd = endMs
+			}
+		}
+		if maxEnd > 0 {
+			return clampRenderCacheWindowTTL(maxEnd - nowMs), true
+		}
+	case "/api/pjsk/vlive/list":
+		root := mapAt(payload)
+		if root == nil {
+			return 0, false
+		}
+		nowMs := renderCacheNowMillis(root)
+		if nowMs <= 0 {
+			return 0, false
+		}
+		maxEnd := int64(0)
+		for _, item := range sliceAt(root, "lives") {
+			if endMs, ok := renderCacheMillis(valueAt(item, "end_at")); ok && endMs > maxEnd {
+				maxEnd = endMs
+			}
+		}
+		if maxEnd > 0 {
+			return clampRenderCacheWindowTTL(maxEnd - nowMs), true
+		}
+	}
+	return 0, false
+}
+
+func renderCacheNowMillis(root map[string]any) int64 {
+	if root == nil {
+		return 0
+	}
+	if dt, ok := renderCacheMillis(root["dt"]); ok && dt > 0 {
+		return dt
+	}
+	return time.Now().UnixMilli()
+}
+
+func renderCacheMillis(value any) (int64, bool) {
+	switch typed := value.(type) {
+	case nil:
+		return 0, false
+	case int64:
+		if typed > 0 {
+			return typed, true
+		}
+	case int:
+		if typed > 0 {
+			return int64(typed), true
+		}
+	case float64:
+		if typed > 0 {
+			return int64(typed), true
+		}
+	case float32:
+		if typed > 0 {
+			return int64(typed), true
+		}
+	case json.Number:
+		if parsed, err := typed.Int64(); err == nil && parsed > 0 {
+			return parsed, true
+		}
+	case string:
+		text := strings.TrimSpace(typed)
+		if text == "" {
+			return 0, false
+		}
+		if parsed, err := strconv.ParseInt(text, 10, 64); err == nil && parsed > 0 {
+			return parsed, true
+		}
+	}
+	return 0, false
+}
+
+func clampRenderCacheWindowTTL(remainingMs int64) time.Duration {
+	ttl := time.Duration(remainingMs)*time.Millisecond + renderCacheWindowTTLBuffer
+	if ttl < renderCacheWindowTTLMin {
+		return renderCacheWindowTTLMin
+	}
+	if ttl > renderCacheWindowTTLMax {
+		return renderCacheWindowTTLMax
+	}
+	return ttl
 }
 
 func resolveSKRenderCacheBucket(payload any) time.Duration {

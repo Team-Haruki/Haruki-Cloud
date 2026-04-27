@@ -100,7 +100,7 @@ func (sekaiHandlers) ArrestHandle() HarukiSekaiCommandHandler {
 			Path: "arrest",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			logger.Infof("uidArg: %s, event: %+v", ctx.UIDArg(), ctx.GetEvent().Message)
+			logger.Debugf("uidArg: %s, event: %+v", ctx.UIDArg(), ctx.GetEvent().Message)
 			p, err := resolveUserQueryParams(ctx)
 			if err != nil {
 				return nil, err

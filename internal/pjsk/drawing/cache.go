@@ -11,9 +11,12 @@ import (
 	"time"
 
 	"haruki-cloud/config"
+	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
 )
+
+var cacheLogger = logger.NewLoggerFromGlobal("DrawingCache")
 
 const (
 	renderCacheFileExt    = "png"
@@ -79,8 +82,10 @@ func (lc *localRenderCache) Render(endpoint string, request any, render func() (
 	}
 	ttl := policy.TTL
 	if cached, ok := lc.get(key); ok {
+		cacheLogger.Debugf("local cache hit: endpoint=%s", endpoint)
 		return cached, nil
 	}
+	tRender := time.Now()
 	v, err, _ := lc.flight.Do(key, func() (any, error) {
 		if cached, ok := lc.get(key); ok {
 			return cached, nil
@@ -95,6 +100,7 @@ func (lc *localRenderCache) Render(endpoint string, request any, render func() (
 	if err != nil {
 		return nil, err
 	}
+	cacheLogger.Infof("local cache miss → rendered: endpoint=%s elapsed=%dms", endpoint, time.Since(tRender).Milliseconds())
 	return v.([]byte), nil
 }
 
@@ -122,15 +128,20 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 	if policyErr == nil {
 		key, keyErr := buildRenderCacheKey(policy)
 		if keyErr == nil {
+			tLookup := time.Now()
 			if cached, hit := c.lookup(key, policy.APIPath); hit {
+				cacheLogger.Debugf("remote cache hit: endpoint=%s lookup=%dms", endpoint, time.Since(tLookup).Milliseconds())
 				return cached, nil
 			}
+			cacheLogger.Debugf("remote cache miss: endpoint=%s lookup=%dms", endpoint, time.Since(tLookup).Milliseconds())
 		}
 
+		tRender := time.Now()
 		image, err := render()
 		if err != nil {
 			return nil, err
 		}
+		cacheLogger.Infof("remote cache miss → rendered: endpoint=%s render=%dms", endpoint, time.Since(tRender).Milliseconds())
 
 		if keyErr == nil {
 			ttl := policy.TTL

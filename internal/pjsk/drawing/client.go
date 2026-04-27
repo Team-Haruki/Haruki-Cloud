@@ -5,11 +5,9 @@ import (
 	json "github.com/bytedance/sonic"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
-	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/utils/logger"
 
@@ -53,7 +51,7 @@ func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstrea
 		}
 	}
 
-	newLogger := logger.NewLogger("haruki.client", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
+	newLogger := logger.NewLoggerFromGlobal("haruki.client")
 	baseURL := ""
 	if len(resolvedTargets) > 0 {
 		baseURL = resolvedTargets[0].BaseURL
@@ -133,7 +131,9 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		request.SetContext(requestCtx)
 	}
 
+	tPost := time.Now()
 	resp, err := request.Post(targetBaseURL + endpoint)
+	elapsed := time.Since(tPost)
 	data, _ := json.Marshal(requestBody)
 	c.logger.Debugf("POST %s: %s", targetBaseURL+endpoint, string(data))
 	if err != nil {
@@ -143,7 +143,8 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("api request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
-	c.logger.Debugf("Response from %s: type %s, length %s", targetBaseURL+endpoint, resp.Header().Get("Content-Type"), resp.Header().Get("content-length"))
+	c.logger.Infof("drawing POST %s: status=%d elapsed=%dms len=%s",
+		targetBaseURL+endpoint, resp.StatusCode(), elapsed.Milliseconds(), resp.Header().Get("content-length"))
 	return resp.Body(), nil
 }
 

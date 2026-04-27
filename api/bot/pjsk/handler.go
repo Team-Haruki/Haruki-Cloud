@@ -203,9 +203,9 @@ func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
 	} else if err := c.Bind().Body(&req); err != nil {
 		return BotCommandRequest{}, err
 	}
-	logger.Infof("before parse: %+v", req.Message)
+	logger.Debugf("before parse: %+v", req.Message)
 	req.Message = onebot11.ParseMessage(req.Message)
-	logger.Infof("after parse: %+v", req.Message)
+	logger.Debugf("after parse: %+v", req.Message)
 	return req, nil
 }
 

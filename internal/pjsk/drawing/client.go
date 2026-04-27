@@ -5,11 +5,9 @@ import (
 	json "github.com/bytedance/sonic"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
-	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/utils/logger"
 
@@ -53,7 +51,7 @@ func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstrea
 		}
 	}
 
-	newLogger := logger.NewLogger("haruki.client", harukiConfig.Cfg.Backend.LogLevel, os.Stdout)
+	newLogger := logger.NewLoggerFromGlobal("haruki.client")
 	baseURL := ""
 	if len(resolvedTargets) > 0 {
 		baseURL = resolvedTargets[0].BaseURL

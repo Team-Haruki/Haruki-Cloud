@@ -131,7 +131,9 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		request.SetContext(requestCtx)
 	}
 
+	tPost := time.Now()
 	resp, err := request.Post(targetBaseURL + endpoint)
+	elapsed := time.Since(tPost)
 	data, _ := json.Marshal(requestBody)
 	c.logger.Debugf("POST %s: %s", targetBaseURL+endpoint, string(data))
 	if err != nil {
@@ -141,7 +143,8 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("api request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
-	c.logger.Debugf("Response from %s: type %s, length %s", targetBaseURL+endpoint, resp.Header().Get("Content-Type"), resp.Header().Get("content-length"))
+	c.logger.Infof("drawing POST %s: status=%d elapsed=%dms len=%s",
+		targetBaseURL+endpoint, resp.StatusCode(), elapsed.Milliseconds(), resp.Header().Get("content-length"))
 	return resp.Body(), nil
 }
 

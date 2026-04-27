@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -67,6 +68,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		return nil, fmt.Errorf("snapshot: snapshot selector is incomplete")
 	}
 
+	tResolve := time.Now()
 	region := renderregion.WithDefault(selector.Region)
 	binding, err := resolveSnapshotBinding(ctx, p.bindings, platform, imUserID, region, selector.PJSKUserID, opts)
 	if err != nil {
@@ -82,10 +84,12 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		return nil, fmt.Errorf("snapshot: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
 	}
 
+	tSuite := time.Now()
 	suiteJSON, err := p.client.GetSuiteData(binding.Server, uid, platform, imUserID)
+	suiteElapsed := time.Since(tSuite)
 	if err != nil {
-		p.logger.Warnf("toolbox suite fetch failed: platform=%s user=%s binding=%s err=%v",
-			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), err)
+		p.logger.Warnf("toolbox suite fetch failed: elapsed=%dms platform=%s user=%s binding=%s err=%v",
+			suiteElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), err)
 		return nil, err
 	}
 	if len(suiteJSON) == 0 {
@@ -93,19 +97,21 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding))
 		return nil, fmt.Errorf("snapshot: suite snapshot is empty")
 	}
-	p.logger.Debugf("toolbox suite fetch succeeded: platform=%s user=%s binding=%s suite_bytes=%d",
-		platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(suiteJSON))
+	p.logger.Infof("toolbox suite fetch: elapsed=%dms platform=%s user=%s binding=%s bytes=%d",
+		suiteElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(suiteJSON))
 
 	var mysekaiJSON []byte
 	if opts.NeedMySekai {
+		tMysekai := time.Now()
 		mysekaiJSON, err = p.client.GetMySekaiData(binding.Server, uid, platform, imUserID)
+		mysekaiElapsed := time.Since(tMysekai)
 		if err != nil {
-			p.logger.Warnf("toolbox mysekai fetch failed: platform=%s user=%s binding=%s err=%v",
-				platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), err)
+			p.logger.Warnf("toolbox mysekai fetch failed: elapsed=%dms platform=%s user=%s binding=%s err=%v",
+				mysekaiElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), err)
 			return nil, err
 		}
-		p.logger.Debugf("toolbox mysekai fetch succeeded: platform=%s user=%s binding=%s mysekai_bytes=%d",
-			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(mysekaiJSON))
+		p.logger.Infof("toolbox mysekai fetch: elapsed=%dms platform=%s user=%s binding=%s bytes=%d",
+			mysekaiElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(mysekaiJSON))
 	}
 
 	metaRegion := region
@@ -130,7 +136,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), snapshotRegion.String(), len(suiteJSON), len(mysekaiJSON), err)
 		return nil, err
 	}
-	p.logger.Debugf("toolbox snapshot build succeeded: platform=%s user=%s binding=%s snapshot_region=%s",
-		platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), snapshotRegion.String())
+	p.logger.Infof("toolbox snapshot resolve: elapsed=%dms platform=%s user=%s binding=%s region=%s",
+		time.Since(tResolve).Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), snapshotRegion.String())
 	return snapshot, nil
 }

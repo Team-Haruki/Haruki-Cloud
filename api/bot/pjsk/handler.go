@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 	"haruki-cloud/api"
 	botauth "haruki-cloud/api/bot/auth"
 	botDB "haruki-cloud/database/bot"
@@ -153,6 +154,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 			}()
 		}
 
+		tStart := time.Now()
 		botID := strings.TrimSpace(c.Params("botId"))
 		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req, botID)
 		if err != nil && allowCompatReroute {
@@ -161,8 +163,9 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 				resolved, err = resolveBotCommand(c.Context(), req.Message, validationErr.actualPath, req, botID)
 			}
 		}
+		tResolved := time.Now()
 		if err != nil {
-			logger.Warnf("bot command resolve failed: path=%s matched_command=%s err=%v", expectedPath, req.MatchedCommand, err)
+			logger.Warnf("bot command resolve failed: path=%s matched_command=%s parse=%dms err=%v", expectedPath, req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), err)
 			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
 		}
 
@@ -179,11 +182,15 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		}
 
 		responseData, err := commandhandler.ExecuteCommandRequest(c.Context(), resolved, renderApp)
+		tDone := time.Now()
 		if err != nil {
-			logger.Errorf("bot command render failed: mode=%s matched_command=%s err=%v", resolved.Mode, req.MatchedCommand, err)
+			logger.Errorf("bot command render failed: matched_command=%s parse=%dms exec=%dms total=%dms err=%v",
+				req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds(), err)
 			guard.MarkComplete(c.Context(), req)
 			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
 		}
+		logger.Infof("bot command completed: matched_command=%s parse=%dms exec=%dms total=%dms",
+			req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds())
 		guard.MarkComplete(c.Context(), req)
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, responseData)
 	}

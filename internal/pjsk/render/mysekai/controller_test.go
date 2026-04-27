@@ -458,6 +458,66 @@ func TestBuildFixtureDetailRequestsUsesReactionDataRipFallback(t *testing.T) {
 	}
 }
 
+func TestBuildFixtureDetailRequestsUsesAssetReactionDataFallback(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	assetDir := filepath.Join(root, "asset")
+
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(assetDir, "jp-assets", "ondemand", "mysekai", "system", "fixture_reaction_data"), 0o755); err != nil {
+		t.Fatalf("mkdir asset reaction dir: %v", err)
+	}
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{
+			"id":                        1139,
+			"name":                      "コズミックシャトルの植物",
+			"assetbundleName":           "mdl_env0006_fixture_shelf1",
+			"mysekaiFixtureType":        "normal",
+			"mysekaiFixtureMainGenreId": 2,
+			"mysekaiFixtureSubGenreId":  9,
+			"gridSize": map[string]any{
+				"width":  4,
+				"depth":  2,
+				"height": 3,
+			},
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 2, "name": "一般", "assetbundleName": "general"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]any{
+		{"id": 9, "name": "其他", "assetbundleName": "others"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprintMysekaiMaterialCosts.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureOnlyDisassembleMaterials.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureTags.json"), []map[string]any{})
+	if err := os.WriteFile(
+		filepath.Join(assetDir, "jp-assets", "ondemand", "mysekai", "system", "fixture_reaction_data", "fixture_reaction_data.json"),
+		[]byte(`{"FixturerRactions":[{"FixtureId":1139,"ReactionCharacter":[{"CharacterUnitIds":[1,2]}]}]}`),
+		0o644,
+	); err != nil {
+		t.Fatalf("write asset reaction file: %v", err)
+	}
+
+	controller := NewController(nil, nil, renderregion.JP, assets.NewAssetHelper(assetDir, nil), MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
+	reqs, err := controller.BuildFixtureDetailRequests(FixtureDetailQuery{
+		Region: "jp",
+		Query:  "1139",
+	})
+	if err != nil {
+		t.Fatalf("BuildFixtureDetailRequests() error = %v", err)
+	}
+	if len(reqs) != 1 || len(reqs[0].ReactionCharacterGroups) != 1 {
+		t.Fatalf("expected 1 reaction group from asset fallback, got %+v", reqs)
+	}
+	if reqs[0].ReactionCharacterGroups[0].Number != 2 {
+		t.Fatalf("unexpected asset fallback reaction group: %+v", reqs[0].ReactionCharacterGroups[0])
+	}
+}
+
 func TestBuildFixtureDetailRequestsIncludesFixtureFriendcodes(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")

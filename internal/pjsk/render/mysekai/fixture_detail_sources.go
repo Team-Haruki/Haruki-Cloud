@@ -12,6 +12,7 @@ import (
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
+	renderassets "haruki-cloud/internal/pjsk/render/assets"
 )
 
 var (
@@ -40,6 +41,9 @@ func (c *Controller) loadFixtureReactionObject(region renderregion.Value, target
 		if c.loadLocalMasterdataObject(region, path, target) {
 			return true
 		}
+		if c.loadLocalAssetObject(region, path, target) {
+			return true
+		}
 	}
 	return false
 }
@@ -47,6 +51,32 @@ func (c *Controller) loadFixtureReactionObject(region renderregion.Value, target
 func (c *Controller) loadLocalMasterdataObject(region renderregion.Value, filename string, target any) bool {
 	for _, dir := range c.localMasterdataDirs(region) {
 		data, err := os.ReadFile(filepath.Join(dir, filepath.Clean(filename)))
+		if err != nil {
+			continue
+		}
+		return decodeJSONUseNumber(data, target) == nil
+	}
+	return false
+}
+
+func (c *Controller) loadLocalAssetObject(region renderregion.Value, relPath string, target any) bool {
+	if c == nil || c.assets == nil {
+		return false
+	}
+	regionName := strings.ToLower(strings.TrimSpace(renderregion.WithDefault(region).String()))
+	if regionName == "" {
+		return false
+	}
+	candidates := []string{
+		filepath.ToSlash(filepath.Join(renderassets.RegionAssetDirByMode(regionName, renderassets.RegionAssetOnDemand), relPath)),
+		filepath.ToSlash(filepath.Join(regionName+"-assets", renderassets.RegionAssetOnDemand, relPath)),
+	}
+	for _, candidate := range candidates {
+		resolved := c.assets.FirstExisting(candidate)
+		if strings.TrimSpace(resolved) == "" {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Clean(resolved))
 		if err != nil {
 			continue
 		}

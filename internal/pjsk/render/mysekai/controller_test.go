@@ -3,6 +3,8 @@ package mysekai
 import (
 	"fmt"
 	json "github.com/bytedance/sonic"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -391,6 +393,156 @@ func TestBuildFixtureDetailRequestsIncludeBaseColorCode(t *testing.T) {
 	}
 	if reqs[0].Images[2].ColorCode == nil || *reqs[0].Images[2].ColorCode != "#BFF1B7" {
 		t.Fatalf("unexpected third fixture color code: %+v", reqs[0].Images[2].ColorCode)
+	}
+}
+
+func TestBuildFixtureDetailRequestsUsesReactionDataRipFallback(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+
+	if err := os.MkdirAll(filepath.Join(masterdataDir, "mysekai", "system", "fixture_reaction_data_rip"), 0o755); err != nil {
+		t.Fatalf("mkdir reaction fallback dir: %v", err)
+	}
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{
+			"id":                        1139,
+			"name":                      "コズミックシャトルの植物",
+			"assetbundleName":           "mdl_env0006_fixture_shelf1",
+			"mysekaiFixtureType":        "normal",
+			"mysekaiFixtureMainGenreId": 2,
+			"mysekaiFixtureSubGenreId":  9,
+			"gridSize": map[string]any{
+				"width":  4,
+				"depth":  2,
+				"height": 3,
+			},
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 2, "name": "一般", "assetbundleName": "general"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]any{
+		{"id": 9, "name": "其他", "assetbundleName": "others"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprintMysekaiMaterialCosts.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureOnlyDisassembleMaterials.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureTags.json"), []map[string]any{})
+	if err := os.WriteFile(
+		filepath.Join(masterdataDir, "mysekai", "system", "fixture_reaction_data_rip", "fixture_reaction_data.asset"),
+		[]byte(`{"FixturerRactions":[{"FixtureId":1139,"ReactionCharacter":[{"CharacterUnitIds":[1,2]},{"CharacterUnitIds":[27]}]}]}`),
+		0o644,
+	); err != nil {
+		t.Fatalf("write reaction fallback file: %v", err)
+	}
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
+	reqs, err := controller.BuildFixtureDetailRequests(FixtureDetailQuery{
+		Region: "jp",
+		Query:  "1139",
+	})
+	if err != nil {
+		t.Fatalf("BuildFixtureDetailRequests() error = %v", err)
+	}
+	if len(reqs) != 1 {
+		t.Fatalf("expected 1 fixture request, got %+v", reqs)
+	}
+	if len(reqs[0].ReactionCharacterGroups) != 2 {
+		t.Fatalf("expected 2 reaction groups from rip fallback, got %+v", reqs[0].ReactionCharacterGroups)
+	}
+	if reqs[0].ReactionCharacterGroups[0].Number != 1 || len(reqs[0].ReactionCharacterGroups[0].CharaIconPathGroups) != 1 {
+		t.Fatalf("unexpected single-reaction group: %+v", reqs[0].ReactionCharacterGroups[0])
+	}
+	if reqs[0].ReactionCharacterGroups[1].Number != 2 || len(reqs[0].ReactionCharacterGroups[1].CharaIconPathGroups) != 1 {
+		t.Fatalf("unexpected multi-reaction group: %+v", reqs[0].ReactionCharacterGroups[1])
+	}
+}
+
+func TestBuildFixtureDetailRequestsIncludesFixtureFriendcodes(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{
+			"id":                        1139,
+			"name":                      "コズミックシャトルの植物",
+			"assetbundleName":           "mdl_env0006_fixture_shelf1",
+			"mysekaiFixtureType":        "normal",
+			"mysekaiFixtureMainGenreId": 2,
+			"mysekaiFixtureSubGenreId":  9,
+			"gridSize": map[string]any{
+				"width":  4,
+				"depth":  2,
+				"height": 3,
+			},
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 2, "name": "一般", "assetbundleName": "general"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]any{
+		{"id": 9, "name": "其他", "assetbundleName": "others"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{
+		{
+			"id":                  2001,
+			"mysekaiCraftType":    "mysekai_fixture",
+			"craftTargetId":       1139,
+			"isEnableSketch":      true,
+			"isObtainedByConvert": true,
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprintMysekaiMaterialCosts.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureOnlyDisassembleMaterials.json"), []map[string]any{})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureTags.json"), []map[string]any{})
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" && r.URL.Path != "/api/fixtures/" {
+			t.Fatalf("unexpected friendcode path: %s", r.URL.Path)
+		}
+		_, _ = w.Write([]byte(`{"fixtures":[{"id":1139,"friendCodes":["A1","B2","C3","D4","E5"]}]}`))
+	}))
+	defer server.Close()
+
+	prevURL := sekai8823FixtureFriendcodeURL
+	prevTTL := sekai8823FixtureFriendcodeTTL
+	prevClient := sekai8823FixtureHTTPClient
+	fixtureFriendcodeCacheMu.Lock()
+	fixtureFriendcodeCacheByID = nil
+	fixtureFriendcodeCacheFetchedAt = time.Time{}
+	fixtureFriendcodeCacheMu.Unlock()
+	sekai8823FixtureFriendcodeURL = server.URL + "/api/fixtures/"
+	sekai8823FixtureFriendcodeTTL = time.Hour
+	sekai8823FixtureHTTPClient = server.Client()
+	t.Cleanup(func() {
+		sekai8823FixtureFriendcodeURL = prevURL
+		sekai8823FixtureFriendcodeTTL = prevTTL
+		sekai8823FixtureHTTPClient = prevClient
+		fixtureFriendcodeCacheMu.Lock()
+		fixtureFriendcodeCacheByID = nil
+		fixtureFriendcodeCacheFetchedAt = time.Time{}
+		fixtureFriendcodeCacheMu.Unlock()
+	})
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
+	reqs, err := controller.BuildFixtureDetailRequests(FixtureDetailQuery{
+		Region: "jp",
+		Query:  "1139",
+	})
+	if err != nil {
+		t.Fatalf("BuildFixtureDetailRequests() error = %v", err)
+	}
+	if len(reqs) != 1 {
+		t.Fatalf("expected 1 fixture request, got %+v", reqs)
+	}
+	if got := reqs[0].Friendcodes; !reflect.DeepEqual(got, []string{"A1", "B2", "C3", "D4"}) {
+		t.Fatalf("unexpected fixture friendcodes: %+v", got)
+	}
+	if reqs[0].FriendcodeSource != "sekai.8823.eu.org" {
+		t.Fatalf("unexpected fixture friendcode source: %q", reqs[0].FriendcodeSource)
 	}
 }
 

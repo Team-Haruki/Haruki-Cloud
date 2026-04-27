@@ -283,6 +283,12 @@ func (c *Controller) BuildFixtureDetailRequests(query FixtureDetailQuery) ([]dra
 		if blueprint := findFixtureBlueprint(blueprints, fixtureID); blueprint != nil {
 			request.BasicInfo = append(request.BasicInfo, fixtureBlueprintInfo(blueprint)...)
 			request.CostMaterials = c.fixtureCostMaterials(region, intNumber(blueprint["id"], 0), blueprintCosts)
+			request.Friendcodes, request.FriendcodeSource = c.fixtureFriendcodes(
+				region,
+				fixtureID,
+				stringValue(fixture["name"]),
+				boolValue(blueprint["isEnableSketch"]),
+			)
 		}
 		requests = append(requests, request)
 	}
@@ -353,7 +359,7 @@ func (c *Controller) fixtureRecycleMaterials(region renderregion.Value, fixtureI
 // fixtureReactionCharacterGroups builds the reaction character groups for a fixture.
 func (c *Controller) fixtureReactionCharacterGroups(fixtureID int) []drawing.MysekaiReactionCharacterGroups {
 	var parsed map[string]any
-	if !c.masterdata.loadObject("mysekai/system/fixture_reaction_data/fixture_reaction_data.json", &parsed) {
+	if !c.loadFixtureReactionObject(c.defaultRegion, &parsed) {
 		return nil
 	}
 

@@ -14,6 +14,7 @@ import (
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
 	return &Controller{
 		drawing:      drawingClient,
+		drawingBase:  drawingClient,
 		forecast:     NewRemoteForecastProvider(),
 		events:       regionsource.NewRegistry[EventSource](renderregion.JP),
 		assets:       renderassets.NewAssetHelper("", nil),
@@ -26,6 +27,7 @@ func (c *Controller) SetTrackerIntegration(tracker TrackerSource, events EventSo
 		return
 	}
 	c.tracker = tracker
+	c.trackerBase = tracker
 	c.RegisterEventSource(events)
 	if assetHelper != nil {
 		c.assets = assetHelper
@@ -55,11 +57,30 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	}
 	clone := *c
 	clone.requestCtx = ctx
-	clone.drawing = c.drawing.WithContext(ctx)
+	if c.drawingBase != nil {
+		clone.drawing = c.drawingBase.WithContext(ctx)
+	} else if c.drawing != nil {
+		clone.drawing = c.drawing.WithContext(ctx)
+	}
 	if c.tracker != nil {
 		if contextual, ok := c.tracker.(contextualTrackerSource); ok {
 			clone.tracker = contextual.WithContext(ctx)
 		}
+	}
+	return &clone
+}
+
+func (c *Controller) withoutRequestContext() *Controller {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.requestCtx = nil
+	if c.drawingBase != nil {
+		clone.drawing = c.drawingBase
+	}
+	if c.trackerBase != nil {
+		clone.tracker = c.trackerBase
 	}
 	return &clone
 }

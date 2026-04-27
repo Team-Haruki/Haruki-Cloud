@@ -4,23 +4,25 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"sort"
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/sync/singleflight"
 )
 
 type predictRenderCache struct {
-	mu      sync.RWMutex
-	entries map[string]predictRenderCacheEntry
-	flight  singleflight.Group
+	mu      sync.Mutex
+	entries map[string]*predictRenderCacheEntry
 }
 
 type predictRenderCacheEntry struct {
-	data      []byte
-	expiresAt time.Time
+	data          []byte
+	lastError     string
+	nextRefreshAt time.Time
+	expiresAt     time.Time
+	running       bool
+	readyCh       chan struct{}
 }
 
 type predictRenderCacheKey struct {
@@ -28,7 +30,6 @@ type predictRenderCacheKey struct {
 	Region           string `json:"region"`
 	EventID          int    `json:"event_id"`
 	WlCharacterID    int    `json:"wl_character_id,omitempty"`
-	BucketStart      int64  `json:"bucket_start"`
 	Full             bool   `json:"full,omitempty"`
 	Ranks            []int  `json:"ranks,omitempty"`
 	EventName        string `json:"event_name,omitempty"`
@@ -39,74 +40,179 @@ type predictRenderCacheKey struct {
 
 func newPredictRenderCache() *predictRenderCache {
 	return &predictRenderCache{
-		entries: make(map[string]predictRenderCacheEntry),
+		entries: make(map[string]*predictRenderCacheEntry),
 	}
 }
 
-const (
-	predictRenderRefreshInterval = 5 * time.Minute
-	predictFreezeBeforeEnd       = time.Hour
-	predictRenderCacheRetention  = 2 * time.Hour
+var (
+	predictRenderRefreshInterval      = 5 * time.Minute
+	predictRenderFailureRetryInterval = 10 * time.Second
+	predictRenderFailureRetryLimit    = 5
+	predictRenderCacheRetention       = 2 * time.Hour
 )
 
-func (c *predictRenderCache) Render(key string, ttl time.Duration, render func() ([]byte, error)) ([]byte, error) {
-	if c == nil || ttl <= 0 {
+func (c *predictRenderCache) StartManaged(key string, now time.Time, render func() ([]byte, error)) {
+	if c == nil || render == nil {
+		return
+	}
+	c.ensureWorker(key, now, render)
+}
+
+func (c *predictRenderCache) RenderManaged(key string, now time.Time, render func() ([]byte, error)) ([]byte, error) {
+	if c == nil || render == nil {
 		return render()
 	}
-	if cached, ok := c.get(key); ok {
-		return cached, nil
+	entry := c.ensureWorker(key, now, render)
+	if entry == nil {
+		return nil, errors.New("predict cache is not initialized")
 	}
 
-	v, err, _ := c.flight.Do(key, func() (any, error) {
-		if cached, ok := c.get(key); ok {
-			return cached, nil
-		}
-		data, err := render()
-		if err != nil {
-			return nil, err
-		}
-		c.set(key, data, ttl)
-		return cloneBytes(data), nil
-	})
-	if err != nil {
-		return nil, err
+	if len(entry.data) > 0 {
+		return cloneBytes(entry.data), nil
 	}
-	return cloneBytes(v.([]byte)), nil
+	if entry.readyCh != nil {
+		<-entry.readyCh
+	}
+	return c.result(key, time.Now())
 }
 
-func (c *predictRenderCache) get(key string) ([]byte, bool) {
-	c.mu.RLock()
-	entry, ok := c.entries[key]
-	c.mu.RUnlock()
-	if !ok {
-		return nil, false
-	}
-	if time.Now().After(entry.expiresAt) {
-		c.mu.Lock()
-		delete(c.entries, key)
-		c.mu.Unlock()
-		return nil, false
-	}
-	return cloneBytes(entry.data), true
-}
-
-func (c *predictRenderCache) set(key string, data []byte, ttl time.Duration) {
+func (c *predictRenderCache) ensureWorker(key string, now time.Time, render func() ([]byte, error)) *predictRenderCacheEntry {
 	c.mu.Lock()
-	c.entries[key] = predictRenderCacheEntry{
-		data:      cloneBytes(data),
-		expiresAt: time.Now().Add(ttl),
+	entry := c.entries[key]
+	startWorker := false
+	if entry == nil || (now.After(entry.expiresAt) && !entry.running) {
+		entry = &predictRenderCacheEntry{}
+		c.entries[key] = entry
 	}
+	if !entry.running {
+		entry.running = true
+		if len(entry.data) == 0 && entry.readyCh == nil {
+			entry.readyCh = make(chan struct{})
+		}
+		startWorker = true
+	}
+	clone := *entry
 	c.mu.Unlock()
+
+	if startWorker {
+		go c.runWorker(key, render)
+	}
+	return &clone
 }
 
-func buildPredictRenderCacheKey(req TrackerRankQuery, aggregateAt int64, now time.Time) (string, error) {
+func (c *predictRenderCache) runWorker(key string, render func() ([]byte, error)) {
+	for {
+		if wait := c.waitUntilNextRefresh(key, time.Now()); wait > 0 {
+			time.Sleep(wait)
+		}
+
+		data, err := c.runRefreshCycle(render)
+		now := time.Now()
+		if err == nil {
+			c.finishSuccess(key, now, data)
+			continue
+		}
+		c.finishFailure(key, now, err)
+	}
+}
+
+func (c *predictRenderCache) waitUntilNextRefresh(key string, now time.Time) time.Duration {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	entry := c.entries[key]
+	if entry == nil || entry.nextRefreshAt.IsZero() || !now.Before(entry.nextRefreshAt) {
+		return 0
+	}
+	return entry.nextRefreshAt.Sub(now)
+}
+
+func (c *predictRenderCache) runRefreshCycle(render func() ([]byte, error)) ([]byte, error) {
+	var lastErr error
+	for attempt := 1; attempt <= predictRenderFailureRetryLimit; attempt++ {
+		data, err := render()
+		if err == nil && len(data) > 0 {
+			return data, nil
+		}
+		if err == nil {
+			err = errors.New("forecast render returned empty payload")
+		}
+		lastErr = err
+		if attempt < predictRenderFailureRetryLimit {
+			time.Sleep(predictRenderFailureRetryInterval)
+		}
+	}
+	return nil, lastErr
+}
+
+func (c *predictRenderCache) finishSuccess(key string, now time.Time, data []byte) {
+	c.mu.Lock()
+	entry := c.entries[key]
+	if entry == nil {
+		entry = &predictRenderCacheEntry{}
+		c.entries[key] = entry
+	}
+	waitCh := entry.readyCh
+	entry.data = cloneBytes(data)
+	entry.lastError = ""
+	entry.nextRefreshAt = now.Add(predictRenderRefreshInterval)
+	entry.expiresAt = now.Add(predictRenderCacheRetention)
+	entry.running = true
+	entry.readyCh = nil
+	c.mu.Unlock()
+
+	if waitCh != nil {
+		close(waitCh)
+	}
+}
+
+func (c *predictRenderCache) finishFailure(key string, now time.Time, err error) {
+	c.mu.Lock()
+	entry := c.entries[key]
+	if entry == nil {
+		entry = &predictRenderCacheEntry{}
+		c.entries[key] = entry
+	}
+	waitCh := entry.readyCh
+	entry.lastError = err.Error()
+	entry.nextRefreshAt = now.Add(predictRenderRefreshInterval)
+	entry.expiresAt = now.Add(predictRenderCacheRetention)
+	entry.running = true
+	entry.readyCh = nil
+	c.mu.Unlock()
+
+	if waitCh != nil {
+		close(waitCh)
+	}
+}
+
+func (c *predictRenderCache) result(key string, now time.Time) ([]byte, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	entry := c.entries[key]
+	if entry == nil {
+		return nil, errors.New("predict cache entry not found")
+	}
+	if now.After(entry.expiresAt) && len(entry.data) == 0 {
+		return nil, errors.New("predict cache entry expired")
+	}
+	if len(entry.data) > 0 {
+		return cloneBytes(entry.data), nil
+	}
+	if entry.lastError != "" {
+		return nil, errors.New(entry.lastError)
+	}
+	return nil, errors.New("predict cache entry is empty")
+}
+
+func buildPredictRenderCacheKey(req TrackerRankQuery, aggregateAt int64) (string, error) {
 	ranks := append([]int(nil), req.Ranks...)
 	sort.Ints(ranks)
 	key := predictRenderCacheKey{
-		Version:          1,
+		Version:          4,
 		Region:           strings.ToLower(strings.TrimSpace(req.Region)),
 		EventID:          req.EventID,
-		BucketStart:      predictRenderBucketStart(now, aggregateAt),
 		Full:             req.Full,
 		Ranks:            ranks,
 		EventName:        strings.TrimSpace(stringValue(req.EventName)),
@@ -125,34 +231,8 @@ func buildPredictRenderCacheKey(req TrackerRankQuery, aggregateAt int64, now tim
 	return hex.EncodeToString(digest[:]), nil
 }
 
-func predictRenderBucketStart(now time.Time, aggregateAt int64) int64 {
-	nowMs := now.UnixMilli()
-	if aggregateAt > 0 {
-		freezeStart := aggregateAt - int64(predictFreezeBeforeEnd/time.Millisecond)
-		if nowMs >= freezeStart {
-			return floorToBucketMillis(maxInt64(0, freezeStart-1), predictRenderRefreshInterval)
-		}
-	}
-	return floorToBucketMillis(nowMs, predictRenderRefreshInterval)
-}
-
 func predictRenderCacheTTL() time.Duration {
 	return predictRenderCacheRetention
-}
-
-func floorToBucketMillis(value int64, interval time.Duration) int64 {
-	bucket := int64(interval / time.Millisecond)
-	if bucket <= 0 {
-		return value
-	}
-	return value / bucket * bucket
-}
-
-func maxInt64(a, b int64) int64 {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 func cloneBytes(data []byte) []byte {

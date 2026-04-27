@@ -226,6 +226,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		}
 	}
 
+	skController.StartDefaultPredictWarmup()
+
 	return &App{
 		Sekai:      sekaiClient,
 		PJSK:       pjskClient,

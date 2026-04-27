@@ -76,7 +76,9 @@ type CensorService interface {
 
 type Controller struct {
 	drawing      *drawing.HarukiDrawingClient
+	drawingBase  *drawing.HarukiDrawingClient
 	tracker      TrackerSource
+	trackerBase  TrackerSource
 	forecast     ForecastProvider
 	events       *regionsource.Registry[EventSource]
 	assets       *renderassets.AssetHelper

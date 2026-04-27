@@ -199,12 +199,17 @@ func (c *Controller) RenderPredictLineFromTracker(req TrackerRankQuery) ([]byte,
 	}
 	meta := c.resolveEventMeta(req.EventID, renderregion.Normalize(req.Region))
 	meta.applyOverrides(req)
-	key, err := buildPredictRenderCacheKey(req, meta.aggregateAt, time.Now())
+	now := time.Now()
+	key, err := buildPredictRenderCacheKey(req, int64Value(req.EventAggregateAt))
 	if err != nil {
 		return c.renderPredictLineFromTracker(req)
 	}
-	return c.predictCache.Render(key, predictRenderCacheTTL(), func() ([]byte, error) {
-		return c.renderPredictLineFromTracker(req)
+	refreshController := c.withoutRequestContext()
+	if refreshController == nil {
+		refreshController = c
+	}
+	return c.predictCache.RenderManaged(key, now, func() ([]byte, error) {
+		return refreshController.renderPredictLineFromTracker(req)
 	})
 }
 

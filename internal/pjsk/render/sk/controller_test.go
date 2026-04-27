@@ -2474,3 +2474,75 @@ func TestRenderPredictLineFromTrackerCachesRenderedBytes(t *testing.T) {
 		t.Fatalf("expected drawing render to run once, got %d", got)
 	}
 }
+
+func TestStartDefaultPredictWarmupPrimesDefaultPredictCache(t *testing.T) {
+	now := time.Now().UnixMilli()
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(time.Hour/time.Millisecond),
+	}
+
+	tracker := &lineMetricsOnlyTrackerSource{}
+	forecast := &countingForecastProvider{
+		bySource: map[string]ForecastSourceData{
+			"33kit": {
+				Scores: map[int]ForecastScore{
+					1:      {Score: 20_000_001, Timestamp: 1_700_000_000, Source: "33kit"},
+					300000: {Score: 12_345_678, Timestamp: 1_700_000_100, Source: "33kit"},
+				},
+				FetchedAt: 1_700_000_200,
+			},
+		},
+	}
+
+	var drawingCalls atomic.Int32
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/line" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		drawingCalls.Add(1)
+		_, _ = w.Write([]byte("predict-render"))
+	}))
+	defer drawingServer.Close()
+
+	controller := NewController(drawing.NewHarukiDrawingClient(drawingServer.URL))
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+	controller.SetForecastProvider(forecast)
+	controller.StartDefaultPredictWarmup()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if forecast.calls.Load() >= 1 && drawingCalls.Load() >= 1 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for startup warmup: forecast=%d drawing=%d", forecast.calls.Load(), drawingCalls.Load())
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	req := TrackerRankQuery{
+		Region:       "jp",
+		Ranks:        append([]int(nil), defaultPredictWarmupRanks...),
+		DefaultRanks: true,
+	}
+	got, err := controller.RenderPredictLineFromTracker(req)
+	if err != nil {
+		t.Fatalf("render warmed predict line: %v", err)
+	}
+	if string(got) != "predict-render" {
+		t.Fatalf("unexpected warmed predict bytes: %q", string(got))
+	}
+	if calls := forecast.calls.Load(); calls != 1 {
+		t.Fatalf("expected warmed request to avoid extra forecast fetch, got %d", calls)
+	}
+	if calls := drawingCalls.Load(); calls != 1 {
+		t.Fatalf("expected warmed request to avoid extra drawing render, got %d", calls)
+	}
+}

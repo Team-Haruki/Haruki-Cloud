@@ -22,7 +22,28 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			wantErr: true,
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
+				if query.ShowFull || query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
+					t.Fatalf("unexpected query: %+v", query)
+				}
+			},
+		},
+		{
+			name:    "full without filter still requires explicit target",
+			args:    "full",
+			wantErr: true,
+			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
+				t.Helper()
+				if query.ShowFull || query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
+					t.Fatalf("unexpected query: %+v", query)
+				}
+			},
+		},
+		{
+			name: "full can be combined with filter",
+			args: "25h full",
+			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
+				t.Helper()
+				if !query.ShowFull || query.Unit != "school_refusal" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
 					t.Fatalf("unexpected query: %+v", query)
 				}
 			},

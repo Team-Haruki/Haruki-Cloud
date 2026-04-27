@@ -48,14 +48,15 @@ const (
 
 // EventFilter 活动筛选条件
 type EventFilter struct {
-	Unit         string // 25h, vbs, etc.
-	EventType    string // marathon, cheerful_carnival, world_bloom
-	Year         int    // 2024
-	CharacterID  int    // 筛选单个角色的活动
-	CharacterIDs []int  // 筛选多个角色的活动
-	BannerCharID int    // 箱活ban主
-	Blend        bool   // 混活
-	Attr         string // cute, cool, etc.
+	Unit           string // 25h, vbs, etc.
+	EventType      string // marathon, cheerful_carnival, world_bloom
+	WorldBloomTurn int    // wl1, wl2, wl3...
+	Year           int    // 2024
+	CharacterID    int    // 筛选单个角色的活动
+	CharacterIDs   []int  // 筛选多个角色的活动
+	BannerCharID   int    // 箱活ban主
+	Blend          bool   // 混活
+	Attr           string // cute, cool, etc.
 }
 
 // EventQueryInfo 解析后的活动查询信息

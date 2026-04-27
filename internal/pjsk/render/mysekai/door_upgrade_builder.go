@@ -10,9 +10,19 @@ import (
 // BuildDoorUpgradeRequest builds the request for rendering MySekai door upgrade view.
 func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.MysekaiDoorUpgradeRequest, error) {
 	c = c.withRegion(query.Region)
-	merged, region, err := c.prepareSnapshot(query.Region)
-	if err != nil {
-		return nil, err
+	showFull := query.ShowFull != nil && *query.ShowFull
+	region := c.resolveRegion(query.Region)
+	merged := map[string]any{}
+	if showFull {
+		if err := c.ensureMasterdata(); err != nil {
+			return nil, err
+		}
+	} else {
+		var err error
+		merged, region, err = c.prepareSnapshot(query.Region)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	specGateID := 0
@@ -22,17 +32,21 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 	showAll := query.ShowAll != nil && *query.ShowAll
 
 	userMaterials := map[int]int{}
-	for _, raw := range nestedList(merged, "userMysekaiMaterials") {
-		item, _ := raw.(map[string]any)
-		userMaterials[intNumber(item["mysekaiMaterialId"], 0)] = intNumber(item["quantity"], 0)
+	if !showFull {
+		for _, raw := range nestedList(merged, "userMysekaiMaterials") {
+			item, _ := raw.(map[string]any)
+			userMaterials[intNumber(item["mysekaiMaterialId"], 0)] = intNumber(item["quantity"], 0)
+		}
 	}
 
 	specLevels := map[int]int{}
-	for _, raw := range nestedList(merged, "userMysekaiGates") {
-		item, _ := raw.(map[string]any)
-		gateID := intNumber(item["mysekaiGateId"], 0)
-		if gateID != 0 {
-			specLevels[gateID] = intNumber(item["mysekaiGateLevel"], 0)
+	if !showFull {
+		for _, raw := range nestedList(merged, "userMysekaiGates") {
+			item, _ := raw.(map[string]any)
+			gateID := intNumber(item["mysekaiGateId"], 0)
+			if gateID != 0 {
+				specLevels[gateID] = intNumber(item["mysekaiGateLevel"], 0)
+			}
 		}
 	}
 
@@ -63,7 +77,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 		})
 	}
 
-	if specGateID == 0 && !showAll {
+	if specGateID == 0 && !showAll && !showFull {
 		bestLevel := 0
 		for gateID, level := range specLevels {
 			if level == gateMaxLevel || level <= bestLevel {
@@ -74,7 +88,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 		}
 	}
 	if specGateID != 0 {
-		if level := specLevels[specGateID]; level == gateMaxLevel {
+		if level := specLevels[specGateID]; !showFull && level == gateMaxLevel {
 			return nil, fmt.Errorf("queried gate already max level")
 		}
 		if mats, ok := gateTemp[specGateID]; ok {
@@ -96,7 +110,9 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 	for _, gateID := range gateIDs {
 		levelMats := gateTemp[gateID]
 		currentLevel := specLevels[gateID]
-		if currentLevel > 0 && currentLevel < len(levelMats) {
+		if showFull {
+			currentLevel = 0
+		} else if currentLevel > 0 && currentLevel < len(levelMats) {
 			levelMats = levelMats[currentLevel:]
 		} else if currentLevel >= len(levelMats) {
 			levelMats = nil
@@ -114,7 +130,11 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 				sumMaterials[item.MaterialID] += item.Quantity
 				userQty := userMaterials[item.MaterialID]
 				color := green
-				if userQty < sumMaterials[item.MaterialID] {
+				sumQuantity := fmt.Sprintf("%s/%d", formatMysekaiQuantity(userQty), sumMaterials[item.MaterialID])
+				if showFull {
+					color = levelColor
+					sumQuantity = formatMysekaiQuantity(sumMaterials[item.MaterialID])
+				} else if userQty < sumMaterials[item.MaterialID] {
 					color = red
 					levelColor = red
 				}
@@ -122,7 +142,7 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 					ImagePath:   c.regionPath(region, fmt.Sprintf("mysekai/thumbnail/material/%s.png", materialIcons[item.MaterialID])),
 					Quantity:    item.Quantity,
 					Color:       color,
-					SumQuantity: fmt.Sprintf("%s/%d", formatMysekaiQuantity(userQty), sumMaterials[item.MaterialID]),
+					SumQuantity: sumQuantity,
 				})
 			}
 			outLevels = append(outLevels, drawing.MysekaiGateLevelMaterials{
@@ -131,17 +151,24 @@ func (c *Controller) BuildDoorUpgradeRequest(query DoorUpgradeQuery) (*drawing.M
 				Items: outItems,
 			})
 		}
+		var level *int
+		if !showFull {
+			level = new(currentLevel)
+		}
 		gateMaterials = append(gateMaterials, drawing.MysekaiGateMaterials{
 			ID:             gateID,
-			Level:          new(currentLevel),
+			Level:          level,
 			GateIconPath:   new(c.resolveGateIconPath(region, gateID, 0)),
 			LevelMaterials: outLevels,
 		})
 	}
 
-	profile := c.mysekaiProfileCard(region, merged, query.Profile, false)
-	if profile != nil && len(profile.DataSources) > 0 {
-		profile.DataSources[0].Name = "Suite数据"
+	var profile *drawing.ProfileCardRequest
+	if !showFull {
+		profile = c.mysekaiProfileCard(region, merged, query.Profile, false)
+		if profile != nil && len(profile.DataSources) > 0 {
+			profile.DataSources[0].Name = "Suite数据"
+		}
 	}
 
 	return &drawing.MysekaiDoorUpgradeRequest{

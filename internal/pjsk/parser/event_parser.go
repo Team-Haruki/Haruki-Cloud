@@ -207,6 +207,12 @@ func (p *EventParser) tryParseFilter(args string) *EventQueryInfo {
 			matched = true
 			continue
 		}
+		if turn, ok := parseEventWorldBloomTurn(token); ok {
+			filter.EventType = "world_bloom"
+			filter.WorldBloomTurn = turn
+			matched = true
+			continue
+		}
 
 		if attr, ok := attrAliases[token]; ok {
 			filter.Attr = attr
@@ -287,6 +293,24 @@ func (p *EventParser) tryParseFilter(args string) *EventQueryInfo {
 	}
 
 	return nil
+}
+
+func parseEventWorldBloomTurn(token string) (int, bool) {
+	token = normalizeEventToken(token)
+	for _, prefix := range []string{"wl", "worldlink", "world"} {
+		if !strings.HasPrefix(token, prefix) || len(token) <= len(prefix) {
+			continue
+		}
+		raw := strings.TrimPrefix(token, prefix)
+		if !isNumeric(raw) {
+			continue
+		}
+		turn, err := strconv.Atoi(raw)
+		if err == nil && turn > 0 {
+			return turn, true
+		}
+	}
+	return 0, false
 }
 
 func normalizeEventToken(text string) string {

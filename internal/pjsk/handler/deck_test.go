@@ -490,6 +490,35 @@ func TestEventDeckHandleParsesSimulatedWorldBloomTurnWithTrailingMusicQuery(t *t
 	}
 }
 
+func TestEventDeckHandleParsesWorldBloomTurnCharacterAndMusicQuery(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "wl1 miku 虾 ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 1 {
+		t.Fatalf("unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+	}
+	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	}
+	if params.MusicQuery != "虾" {
+		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != "expert" {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
+	}
+}
+
 func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&PjskHandlerContext{

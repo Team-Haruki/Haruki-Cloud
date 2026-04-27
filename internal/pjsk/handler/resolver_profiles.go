@@ -234,7 +234,7 @@ func buildPublicMusicProfilesFromResolvedTarget(
 // buildPublicProfileCardForTarget builds a ProfileCardRequest for a resolved
 // game target. Used by mysekai commands where the target is already resolved
 // through userQueryParams (supporting u[i] selectors and region binding).
-func buildPublicProfileCardForTarget(ctx context.Context, target ResolvedGameTarget, region, platform, platformUserID string, app *renderapp.App) *drawing.ProfileCardRequest {
+func buildPublicProfileCardForTarget(target ResolvedGameTarget, region string, app *renderapp.App, profileSnapshot snapshot.Snapshot) *drawing.ProfileCardRequest {
 	if app == nil || app.Profiles == nil {
 		return nil
 	}
@@ -244,6 +244,22 @@ func buildPublicProfileCardForTarget(ctx context.Context, target ResolvedGameTar
 	if err != nil {
 		return nil
 	}
-	_, card := buildPublicMusicProfilesFromResolvedTarget(ctx, target, region, platform, platformUserID, resp, app)
+	q := profile.Query{
+		Region:     region,
+		Visible:    target.Visible,
+		BgSettings: target.BgSettings,
+	}
+	var (
+		card     *drawing.ProfileCardRequest
+		buildErr error
+	)
+	if profileSnapshot != nil {
+		card, buildErr = app.Profiles.BuildProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
+	} else {
+		card, buildErr = app.Profiles.BuildProfileCardFromAPI(q, resp, nil)
+	}
+	if buildErr != nil {
+		return nil
+	}
 	return card
 }

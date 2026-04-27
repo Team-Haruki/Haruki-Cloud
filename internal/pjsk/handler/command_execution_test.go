@@ -22,6 +22,7 @@ import (
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaidb "haruki-cloud/database/sekai"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
+	eventdb "haruki-cloud/database/sekai/event"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/onebot11"
@@ -1091,6 +1092,73 @@ func TestExecuteMusicListRequiresSuiteSnapshotWhenBindingVisible(t *testing.T) {
 		Visible:    false,
 	}) {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestExecuteMusicListFullSkipsSuiteSnapshotAndProfile(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	var captured drawing.MusicListRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/api/pjsk/music/list") {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		defer r.Body.Close()
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil),
+		Bindings:   service,
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]any{"difficulty": "master", "full": true})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(ctx, &CommandRequest{
+		Module:            parser.ModuleMusic,
+		Mode:              "music-list",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic full list: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected list message: %+v", message)
+	}
+	if captured.Profile != nil {
+		t.Fatalf("expected full list to omit profile, got %+v", captured.Profile)
+	}
+	if len(captured.UserResults) != 0 {
+		t.Fatalf("expected full list to omit user results, got %+v", captured.UserResults)
+	}
+	if len(captured.PlayResultIconPathMap) != 0 {
+		t.Fatalf("expected full list to omit play result icons, got %+v", captured.PlayResultIconPathMap)
 	}
 }
 
@@ -2844,7 +2912,7 @@ func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByCharacterOcc
 	}
 }
 
-func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByVSCharacterWithinPiaproEventsOnly(t *testing.T) {
+func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByVSCharacterAcrossUnits(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_turn_vs_unit_scope?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = sekaiClient.Close() })
@@ -2898,7 +2966,7 @@ func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByVSCharacterW
 	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
 		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
 	}
-	if query.EventID == nil || *query.EventID != 540 {
+	if query.EventID == nil || *query.EventID != 520 {
 		t.Fatalf("unexpected resolved event id: %+v", query.EventID)
 	}
 	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
@@ -2906,6 +2974,70 @@ func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByVSCharacterW
 	}
 	if query.EventUnit != "piapro" {
 		t.Fatalf("unexpected world bloom event unit: %q", query.EventUnit)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsResolvesMikuWorldBloomTurnWithLateChapter(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_turn_miku_late_chapter?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 140, now-int64(240*time.Hour/time.Millisecond), now-int64(216*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(239*time.Hour/time.Millisecond), aggregateAt: now - int64(237*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 179, now-int64(144*time.Hour/time.Millisecond), now-int64(120*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(143*time.Hour/time.Millisecond), aggregateAt: now - int64(141*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 202, now-int64(48*time.Hour/time.Millisecond), now-int64(24*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(47*time.Hour/time.Millisecond), aggregateAt: now - int64(46*time.Hour/time.Millisecond), characterID: 17},
+		{chapterNo: 2, startAt: now - int64(45*time.Hour/time.Millisecond), aggregateAt: now - int64(44*time.Hour/time.Millisecond), characterID: 18},
+		{chapterNo: 3, startAt: now - int64(43*time.Hour/time.Millisecond), aggregateAt: now - int64(42*time.Hour/time.Millisecond), characterID: 19},
+		{chapterNo: 4, startAt: now - int64(41*time.Hour/time.Millisecond), aggregateAt: now - int64(40*time.Hour/time.Millisecond), characterID: 20},
+		{chapterNo: 5, startAt: now - int64(39*time.Hour/time.Millisecond), aggregateAt: now - int64(38*time.Hour/time.Millisecond), characterID: 21},
+	})
+	if _, err := sekaiClient.Event.Update().
+		Where(eventdb.ServerRegionEQ("jp"), eventdb.GameIDEQ(202)).
+		SetUnit("school_refusal").
+		Save(ctx); err != nil {
+		t.Fatalf("set event unit 202: %v", err)
+	}
+
+	for _, tc := range []struct {
+		turn        int
+		wantEventID int
+	}{
+		{turn: 1, wantEventID: 140},
+		{turn: 2, wantEventID: 179},
+		{turn: 3, wantEventID: 202},
+	} {
+		query := renderdeck.AutoQuery{
+			Region:                   "jp",
+			RecommendType:            "event",
+			WorldBloomEventTurn:      drawing.IntPtr(tc.turn),
+			WorldBloomCharacterQuery: "miku",
+		}
+
+		if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+			t.Fatalf("resolveDeckCharacterSelections(wl%d miku) error = %v", tc.turn, err)
+		}
+		if query.EventID == nil || *query.EventID != tc.wantEventID {
+			t.Fatalf("unexpected resolved event id for wl%d miku: %+v", tc.turn, query.EventID)
+		}
+		if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+			t.Fatalf("unexpected world bloom character id for wl%d miku: %+v", tc.turn, query.WorldBloomCharacterID)
+		}
 	}
 }
 
@@ -3356,7 +3488,15 @@ func seedHandlerTestWorldBloomEvent(
 ) {
 	t.Helper()
 
-	if _, err := sekaiClient.Event.Create().
+	unit := ""
+	for _, chapter := range chapters {
+		if chapter.characterID > 0 {
+			unit = resolveDeckCharacterUnit(int(chapter.characterID))
+			break
+		}
+	}
+
+	create := sekaiClient.Event.Create().
 		SetServerRegion(region).
 		SetGameID(eventID).
 		SetEventType("world_bloom").
@@ -3364,8 +3504,11 @@ func seedHandlerTestWorldBloomEvent(
 		SetAssetbundleName(fmt.Sprintf("wl_%d", eventID)).
 		SetStartAt(startAt).
 		SetAggregateAt(aggregateAt).
-		SetClosedAt(aggregateAt + int64(time.Hour/time.Millisecond)).
-		Save(ctx); err != nil {
+		SetClosedAt(aggregateAt + int64(time.Hour/time.Millisecond))
+	if unit != "" {
+		create.SetUnit(unit)
+	}
+	if _, err := create.Save(ctx); err != nil {
 		t.Fatalf("create wl event %d: %v", eventID, err)
 	}
 

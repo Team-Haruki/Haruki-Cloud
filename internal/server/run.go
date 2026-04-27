@@ -26,6 +26,7 @@ func Run(ctx context.Context) {
 	logStartupInfo(mainLogger)
 	redisClient := initRedis(ctx, mainLogger)
 	app := createFiberApp(mainLogger)
+	drawingCacheService := initDrawingCacheIfConfigured(ctx, mainLogger, app)
 	usersClient := initUsers(ctx, mainLogger)
 	chunithmMainClient, chunithmMusicClient := initChunithmIfEnabled(ctx, mainLogger, app, redisClient)
 	pjskClient := initPJSKIfEnabled(ctx, mainLogger, app, redisClient)
@@ -51,6 +52,9 @@ func Run(ctx context.Context) {
 	}
 
 	defer closeClients(redisClient, censorService, usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
+	if drawingCacheService != nil {
+		defer func() { _ = drawingCacheService.Close() }()
+	}
 	if renderRuntime != nil {
 		defer func() { _ = renderRuntime.Close() }()
 	}

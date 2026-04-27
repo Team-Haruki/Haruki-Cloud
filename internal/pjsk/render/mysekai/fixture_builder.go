@@ -52,6 +52,10 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	fixturesData := c.masterdata.loadList("mysekaiFixtures.json")
 	mainGenreMap := c.masterdata.loadMapByID("mysekaiFixtureMainGenres.json")
 	subGenreMap := c.masterdata.loadMapByID("mysekaiFixtureSubGenres.json")
+	categoryFilter, err := resolveFixtureCategoryFilter(query.CategoryQuery, mainGenreMap, subGenreMap)
+	if err != nil {
+		return nil, err
+	}
 	blueprints := c.masterdata.loadMapByID("mysekaiBlueprints.json")
 	characters := c.masterdata.loadMapByID("gameCharacters.json")
 	obtainedFixtureIDs := map[int]struct{}{}
@@ -90,6 +94,9 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		}
 		if _, ok := map[int]struct{}{4: {}, 5: {}, 7: {}, 8: {}, 9: {}, 10: {}, 11: {}, 12: {}, 13: {}}[mainGenreID]; ok {
 			subGenreID = -1
+		}
+		if !categoryFilter.allows(mainGenreID, subGenreID) {
+			continue
 		}
 
 		if _, ok := grouped[mainGenreID]; !ok {

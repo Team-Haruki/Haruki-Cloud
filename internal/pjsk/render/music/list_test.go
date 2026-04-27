@@ -3,8 +3,11 @@ package music
 import (
 	"testing"
 
+	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func TestBuildMusicListRequestFiltersByApprovedAlias(t *testing.T) {
@@ -349,3 +352,94 @@ func TestBuildMusicListRequestFiltersByResultStatus(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildMusicListRequestFullIgnoresProfileAndPlayResults(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Seq: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Seq: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31}},
+			2: {{MusicID: 2, MusicDifficulty: "master", PlayLevel: 31}},
+		},
+	}
+
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil).
+		WithSnapshot(&musicListSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{Nickname: "SnapshotUser"},
+			results: map[string]map[int]string{
+				"master": {
+					1: "ap",
+					2: "fc",
+				},
+			},
+		})
+	req, err := controller.BuildMusicListRequest(ListQuery{
+		Region:       "jp",
+		Difficulty:   "master",
+		Full:         true,
+		ResultFilter: "not_ap",
+		UserResults:  map[int]string{1: "ap"},
+		DetailedProfile: &drawing.DetailedProfileCardRequest{
+			Nickname: "OverrideUser",
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildMusicListRequest() error = %v", err)
+	}
+	if req.Profile != nil {
+		t.Fatalf("expected full list to omit profile, got %+v", req.Profile)
+	}
+	if len(req.UserResults) != 0 {
+		t.Fatalf("expected full list to omit user results, got %+v", req.UserResults)
+	}
+	if len(req.PlayResultIconPathMap) != 0 {
+		t.Fatalf("expected full list to omit play result icons, got %+v", req.PlayResultIconPathMap)
+	}
+	if len(req.MusicList) != 2 {
+		t.Fatalf("expected result filter to be ignored for full list, got %+v", req.MusicList)
+	}
+}
+
+type musicListSnapshotStub struct {
+	detail  *drawing.DetailedProfileCardRequest
+	results map[string]map[int]string
+}
+
+func (s *musicListSnapshotStub) Require() error { return nil }
+
+func (s *musicListSnapshotStub) DetailedProfile(renderregion.Value) *drawing.DetailedProfileCardRequest {
+	return s.detail
+}
+
+func (s *musicListSnapshotStub) ProfileCard(renderregion.Value) *drawing.ProfileCardRequest {
+	return nil
+}
+
+func (s *musicListSnapshotStub) MusicResults(diff string) map[int]string {
+	source := s.results[diff]
+	out := make(map[int]string, len(source))
+	for musicID, result := range source {
+		out[musicID] = result
+	}
+	return out
+}
+
+func (s *musicListSnapshotStub) GetMusicResult(musicID int, diff string) string {
+	return s.results[diff][musicID]
+}
+
+func (s *musicListSnapshotStub) ChallengeLive() *snapshot.ChallengeLiveData { return nil }
+
+func (s *musicListSnapshotStub) RawBytes() ([]byte, error) { return nil, nil }
+
+func (s *musicListSnapshotStub) RawValue(string) ([]byte, error) { return nil, nil }
+
+func (s *musicListSnapshotStub) RawFilePath() string { return "" }
+
+func (s *musicListSnapshotStub) RawData() *snapshot.RawUserData { return nil }
+
+func (s *musicListSnapshotStub) MusicMetaBytes() []byte { return nil }
+
+func (s *musicListSnapshotStub) MusicMetaPath() string { return "" }

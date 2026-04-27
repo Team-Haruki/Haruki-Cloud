@@ -168,6 +168,14 @@ func ApplyEnvOverrides(cfg *Config) {
 	// PJSK Render
 	envBool("HARUKI_PJSK_RENDER_ENABLED", &cfg.PJSKRender.Enabled)
 	envStr("HARUKI_PJSK_RENDER_DRAWING_BASE_URL", &cfg.PJSKRender.DrawingBaseURL)
+	envStr("CACHE_STORAGE_DIR", &cfg.PJSKRender.DrawingCache.StorageDir)
+	envStr("CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
+	envDuration("CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
+	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_BASE_URL", &cfg.PJSKRender.DrawingCache.BaseURL)
+	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_STORAGE_DIR", &cfg.PJSKRender.DrawingCache.StorageDir)
+	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", &cfg.PJSKRender.DrawingCache.TTL)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
@@ -254,6 +262,8 @@ type RenderCacheConfig struct {
 	BaseURL    string        `yaml:"base_url"`
 	StorageDir string        `yaml:"storage_dir"`
 	TTL        time.Duration `yaml:"ttl"`
+	DBPath     string        `yaml:"db_path"`
+	GCInterval time.Duration `yaml:"gc_interval"`
 }
 
 type ImageCacheConfig struct {

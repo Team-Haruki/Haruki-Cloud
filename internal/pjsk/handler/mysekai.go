@@ -14,14 +14,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func mysekaiFixtureUsageError(trigger string) error {
-	return onebot11.NewReplayError(
-		"使用方式:\n%s\n%s 家具ID\n查看角色未读家具请使用：/msb 角色名",
-		trigger,
-		trigger,
-	)
-}
-
 func mysekaiBlueprintUsageError(trigger string) error {
 	return onebot11.NewReplayError(
 		"使用方式:\n%s\n%s 角色名\n查看家具详情请使用：/msf 家具ID",
@@ -182,6 +174,8 @@ func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			fullList, cleanedArgs := extractMysekaiFullOnlyFlag(args)
+			args = cleanedArgs
 			showID := !strings.Contains(strings.ToLower(args), "noid")
 			onlyCraftable := false
 			if strings.Contains(strings.ToLower(args), "craft") {
@@ -196,6 +190,9 @@ func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
 				"show_profile":   showProfile,
 				"show_progress":  showProgress,
 				"show_obtained":  showObtained,
+			}
+			if fullList {
+				params["only_craftable"] = false
 			}
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
@@ -228,13 +225,21 @@ func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 				return resolved, nil
 			}
 
-			cleaned := cleanMysekaiArgs(args)
-			if cleaned == "" {
+			fullList, cleaned := extractMysekaiFullFlag(args)
+			if fullList {
 				applyMysekaiStaticFixtureListParams(selfParams, false)
+				if cleaned != "" {
+					selfParams["category_query"] = cleaned
+				}
 				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 			}
 
-			return nil, mysekaiFixtureUsageError(ctx.originalTriggerCmd)
+			cleaned = cleanMysekaiArgs(cleaned)
+			selfParams["show_id"] = true
+			if cleaned != "" {
+				selfParams["category_query"] = cleaned
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
 		},
 	}, executeMysekai)
 }
@@ -249,12 +254,17 @@ func (sekaiHandlers) MysekaiDoorUpgradeHandle() HarukiSekaiCommandHandler {
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
+			showFull, cleanedArgs := extractMysekaiFullOnlyFlag(args)
+			args = cleanedArgs
 			showAll, cleanedArgs := extractMysekaiAllFlag(args)
 			args = cleanedArgs
 			ctx.SetArgs(args)
 			params := map[string]any{}
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
+			}
+			if showFull {
+				params["show_full"] = true
 			}
 			if showAll {
 				params["show_all"] = true
@@ -380,6 +390,10 @@ func isStaticMySekaiFixtureListQuery(q rendermysekai.FixtureListQuery) bool {
 	return !showProfile && !showProgress && !showObtained
 }
 
+func isStaticMySekaiDoorUpgradeQuery(q rendermysekai.DoorUpgradeQuery) bool {
+	return q.ShowFull != nil && *q.ShowFull
+}
+
 func shouldCheckMysekaiExpiry(params []byte) bool {
 	var payload struct {
 		CheckTime *bool `json:"check_time,omitempty"`
@@ -404,6 +418,31 @@ func mysekaiExpiryNoticeMode(mode string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions {
+	switch mode {
+	case "mysekai-map", "mysekai-photo":
+		return mySekaiRenderContextOptions{
+			NeedProfile:          false,
+			PreferMySekaiPayload: true,
+			MySekaiPayloadOnly:   true,
+		}
+	case "mysekai-resource", "mysekai-resource-map", "mysekai-fixture-list",
+		"mysekai-music-record":
+		return mySekaiRenderContextOptions{
+			NeedProfile:          true,
+			PreferMySekaiPayload: true,
+			MySekaiPayloadOnly:   true,
+		}
+	case "mysekai-door-upgrade":
+		return mySekaiRenderContextOptions{
+			NeedProfile:       true,
+			SuiteOnlySnapshot: true,
+		}
+	default:
+		return mySekaiRenderContextOptions{NeedProfile: true}
 	}
 }
 
@@ -501,8 +540,22 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 	}
+	staticDoorUpgradeQuery := rendermysekai.DoorUpgradeQuery{Region: regionStr, Query: rc.Cmd.Query}
+	if rc.Cmd.Mode == "mysekai-door-upgrade" {
+		mergeParams(rc.Cmd.Params, &staticDoorUpgradeQuery)
+		if isStaticMySekaiDoorUpgradeQuery(staticDoorUpgradeQuery) {
+			if strings.TrimSpace(staticDoorUpgradeQuery.Region) == "" {
+				staticDoorUpgradeQuery.Region = regionWithDefault(regionStr)
+			}
+			data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderDoorUpgrade(staticDoorUpgradeQuery)
+			if err != nil {
+				return nil, err
+			}
+			return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+		}
+	}
 
-	renderCtx, err := resolveMySekaiRenderContext(rc.Ctx, rc.App, p, regionStr, rc.Cmd.RegionExplicit)
+	renderCtx, err := resolveMySekaiRenderContextWithOptions(rc.Ctx, rc.App, p, regionStr, rc.Cmd.RegionExplicit, mysekaiRenderContextOptionsForMode(rc.Cmd.Mode))
 	if err != nil {
 		return nil, err
 	}

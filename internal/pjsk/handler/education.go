@@ -65,6 +65,9 @@ func (sekaiHandlers) AreaItemHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
+			if query.ShowFull {
+				params["show_full"] = true
+			}
 			if query.Unit != "" {
 				params["unit"] = query.Unit
 			}
@@ -134,10 +137,11 @@ var educationAreaUnitAliases = filteralias.UnitMap()
 
 func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItemQuery, error) {
 	args = strings.TrimSpace(args)
+	full, args := extractEducationAreaFullFlag(args)
 	if args == "" {
 		return education.AreaItemQuery{}, onebot11.NewReplayError(
-			"使用方式:\n%s 团名\n%s 角色名\n%s 属性\n%s 树\n%s 花",
-			triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd,
+			"使用方式:\n%s 团名\n%s 角色名\n%s 属性\n%s 树\n%s 花\n%s full",
+			triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd,
 		)
 	}
 
@@ -149,12 +153,13 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 
 	if args != "" {
 		return education.AreaItemQuery{}, onebot11.NewReplayError(
-			"使用方式:\n%s 团名\n%s 角色名\n%s 属性\n%s 树\n%s 花",
-			triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd,
+			"使用方式:\n%s 团名\n%s 角色名\n%s 属性\n%s 树\n%s 花\n%s full",
+			triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd,
 		)
 	}
 
 	return education.AreaItemQuery{
+		ShowFull:       full,
 		Unit:           unit,
 		Cid:            cid,
 		CharacterQuery: characterQuery,
@@ -162,6 +167,25 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 		Tree:           tree,
 		Flower:         flower,
 	}, nil
+}
+
+func extractEducationAreaFullFlag(args string) (bool, string) {
+	fields := strings.Fields(args)
+	if len(fields) == 0 {
+		return false, strings.TrimSpace(args)
+	}
+
+	full := false
+	remaining := make([]string, 0, len(fields))
+	for _, field := range fields {
+		switch strings.ToLower(strings.TrimSpace(field)) {
+		case "full", "全部":
+			full = true
+		default:
+			remaining = append(remaining, field)
+		}
+	}
+	return full, strings.TrimSpace(strings.Join(remaining, " "))
 }
 
 func extractEducationAreaCharacter(args string) (int, string, string) {
@@ -231,6 +255,32 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	var data []byte
 	region := rc.Region
 	regionStr := rc.RegionStr
+
+	if rc.Cmd.Mode == "education-area" {
+		query := education.AreaItemQuery{Region: region}
+		mergeParams(rc.Cmd.Params, &query)
+		if query.Region.IsZero() {
+			query.Region = region
+		}
+		if query.ShowFull {
+			if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
+				query.Cid, err = resolveEducationAreaCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
+				if err != nil {
+					return nil, err
+				}
+			}
+			builtReq, buildErr := eduCtrl.BuildAreaItemUpgradeMaterialsRequestFull(query)
+			if buildErr != nil {
+				return nil, buildErr
+			}
+			data, err = eduCtrl.RenderAreaItemUpgradeMaterials(*builtReq)
+			if err != nil {
+				return nil, err
+			}
+			return rc.ImageMessage(data)
+		}
+	}
+
 	binding, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
 	if suiteErr != nil {
 		return nil, suiteErr

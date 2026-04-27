@@ -210,6 +210,7 @@ type ListQuery struct {
 	TitleShadow     bool                                `json:"title_shadow,omitempty"`
 	Keyword         string                              `json:"keyword,omitempty"`
 	ShowID          bool                                `json:"show_id,omitempty"`
+	Full            bool                                `json:"full,omitempty"`
 	DetailedProfile *drawing.DetailedProfileCardRequest `json:"-"`
 }
 

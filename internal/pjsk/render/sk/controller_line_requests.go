@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -58,57 +57,47 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	if normalized.UserID != nil {
 		return nil, fmt.Errorf("榜线预测暂不支持按用户查询，请使用排名")
 	}
-	if c.forecast == nil {
-		return nil, fmt.Errorf("forecast provider is not configured")
+	if c.forecastCache == nil {
+		return nil, fmt.Errorf("forecast cache is not configured")
 	}
 
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
 
-	currentRanks, currentErr := c.buildRanksFromTracker(
-		normalized.Region,
-		normalized.EventID,
-		normalized.Ranks,
-		normalized.WlCharacterID,
-		shouldSkipMissingTrackerRanks(normalized),
-	)
-	if currentErr == nil {
-		for i := range currentRanks {
-			// SK line keeps names empty to reduce visual noise.
-			currentRanks[i].Name = ""
-		}
-		sort.Slice(currentRanks, func(i, j int) bool {
-			return currentRanks[i].Rank < currentRanks[j].Rank
-		})
-	}
-
 	// WL chapter requests currently have no chapter-level forecast source, so they
 	// always fall back to the real-time line for the selected chapter.
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
+		currentRanks, currentErr := c.buildRanksFromTracker(
+			normalized.Region,
+			normalized.EventID,
+			normalized.Ranks,
+			normalized.WlCharacterID,
+			shouldSkipMissingTrackerRanks(normalized),
+		)
+		if currentErr == nil {
+			for i := range currentRanks {
+				// SK line keeps names empty to reduce visual noise.
+				currentRanks[i].Name = ""
+			}
+			sort.Slice(currentRanks, func(i, j int) bool {
+				return currentRanks[i].Rank < currentRanks[j].Rank
+			})
+		}
 		return c.buildPredictRealtimeFallbackLine(normalized, meta, currentRanks, currentErr)
 	}
 
-	sourceOrder := []string{"33kit", "moesekai", "sekarun"}
+	bySource, forecastErr := c.forecastCache.CachedBySource(normalized.Region, normalized.EventID, normalized.Ranks)
+	if forecastErr != nil {
+		c.forecastCache.StartRefresh(normalized.Region, normalized.EventID)
+		return nil, fmt.Errorf("预测数据尚未就绪，请稍后再试: %w", forecastErr)
+	}
+
+	sourceOrder := forecastSourceDisplayOrder(normalized.Region, bySource)
 	sourceNames := map[string]string{
 		"33kit":    "33Kit预测",
 		"moesekai": "Moesekai预测",
 		"sekarun":  "SekaRun预测",
 		"forecast": "预测",
-	}
-
-	bySource := make(map[string]ForecastSourceData)
-	var forecastErr error
-	if provider, ok := c.forecast.(ForecastProviderBySource); ok {
-		bySource, forecastErr = provider.FetchBySource(c.contextOrBackground(), normalized.Region, normalized.EventID, normalized.Ranks)
-	} else {
-		merged, err := c.forecast.Fetch(c.contextOrBackground(), normalized.Region, normalized.EventID, normalized.Ranks)
-		forecastErr = err
-		if len(merged) > 0 {
-			bySource["forecast"] = ForecastSourceData{
-				Scores: merged,
-			}
-			sourceOrder = append(sourceOrder, "forecast")
-		}
 	}
 
 	columns := make([]drawing.SKForecastColumn, 0, len(sourceOrder))
@@ -160,15 +149,26 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		columns = append(columns, column)
 	}
 
-	// Fallback to real-time tracker line when all forecast sources are unavailable.
 	if len(columns) == 0 {
-		if currentErr != nil {
-			if forecastErr != nil {
-				return nil, fmt.Errorf("forecast query failed: %w; fallback tracker query failed: %w", forecastErr, currentErr)
-			}
-			return nil, fmt.Errorf("预测源暂无这些档位的数据，且回退实时档线失败: %w", currentErr)
+		c.forecastCache.StartRefresh(normalized.Region, normalized.EventID)
+		return nil, fmt.Errorf("预测缓存暂无这些档位的数据")
+	}
+
+	currentRanks, currentErr := c.buildRanksFromTracker(
+		normalized.Region,
+		normalized.EventID,
+		normalized.Ranks,
+		normalized.WlCharacterID,
+		shouldSkipMissingTrackerRanks(normalized),
+	)
+	if currentErr == nil {
+		for i := range currentRanks {
+			// SK line keeps names empty to reduce visual noise.
+			currentRanks[i].Name = ""
 		}
-		return c.buildPredictRealtimeFallbackLine(normalized, meta, currentRanks, nil)
+		sort.Slice(currentRanks, func(i, j int) bool {
+			return currentRanks[i].Rank < currentRanks[j].Rank
+		})
 	}
 
 	// Keep rendering available forecast sources even when current tracker line fails.
@@ -197,20 +197,7 @@ func (c *Controller) RenderPredictLineFromTracker(req TrackerRankQuery) ([]byte,
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	meta := c.resolveEventMeta(req.EventID, renderregion.Normalize(req.Region))
-	meta.applyOverrides(req)
-	now := time.Now()
-	key, err := buildPredictRenderCacheKey(req, int64Value(req.EventAggregateAt))
-	if err != nil {
-		return c.renderPredictLineFromTracker(req)
-	}
-	refreshController := c.withoutRequestContext()
-	if refreshController == nil {
-		refreshController = c
-	}
-	return c.predictCache.RenderManaged(key, now, func() ([]byte, error) {
-		return refreshController.renderPredictLineFromTracker(req)
-	})
+	return c.renderPredictLineFromTracker(req)
 }
 
 func (c *Controller) renderPredictLineFromTracker(req TrackerRankQuery) ([]byte, error) {

@@ -16,16 +16,12 @@ var defaultPredictWarmupRanks = []int{
 }
 
 func (c *Controller) StartDefaultPredictWarmup() {
-	if c == nil || c.predictCache == nil || c.forecast == nil || c.tracker == nil || c.events == nil {
+	if c == nil || c.forecastCache == nil || c.events == nil {
 		return
 	}
 
-	refreshController := c.withoutRequestContext()
-	if refreshController == nil {
-		refreshController = c
-	}
-
 	seen := make(map[string]struct{})
+	regions := make([]string, 0)
 	for _, source := range c.events.OrderedSources() {
 		if source == nil {
 			continue
@@ -38,19 +34,35 @@ func (c *Controller) StartDefaultPredictWarmup() {
 		if _, ok := seen[region]; ok {
 			continue
 		}
-		seen[region] = struct{}{}
-
-		req := TrackerRankQuery{
-			Region:       region,
-			Ranks:        append([]int(nil), defaultPredictWarmupRanks...),
-			DefaultRanks: true,
-		}
-		key, err := buildPredictRenderCacheKey(req, 0)
-		if err != nil {
+		if len(forecastSourceOrderForRegion(region)) == 0 {
 			continue
 		}
-		c.predictCache.StartManaged(key, time.Now(), func() ([]byte, error) {
-			return refreshController.renderPredictLineFromTracker(req)
-		})
+		seen[region] = struct{}{}
+		regions = append(regions, region)
+	}
+	if len(regions) == 0 {
+		return
+	}
+
+	go c.runDefaultPredictWarmup(regions)
+}
+
+func (c *Controller) runDefaultPredictWarmup(regions []string) {
+	c.refreshDefaultPredictData(regions)
+
+	ticker := time.NewTicker(forecastDataRefreshInterval)
+	defer ticker.Stop()
+	for range ticker.C {
+		c.refreshDefaultPredictData(regions)
+	}
+}
+
+func (c *Controller) refreshDefaultPredictData(regions []string) {
+	for _, region := range regions {
+		eventID := c.pickCurrentOrNextEventID(region)
+		if eventID <= 0 {
+			continue
+		}
+		c.forecastCache.StartRefresh(region, eventID)
 	}
 }

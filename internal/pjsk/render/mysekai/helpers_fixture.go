@@ -192,9 +192,6 @@ func intsEqual(a, b []int) bool {
 }
 
 func hasFixture(obtained map[int]struct{}, fixtureID int) bool {
-	if len(obtained) == 0 {
-		return true
-	}
 	_, ok := obtained[fixtureID]
 	return ok
 }

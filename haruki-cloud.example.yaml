@@ -107,8 +107,10 @@ pjsk_render:
   #     base_url: "http://INTERNAL_IP_3:28000"
   #     concurrency: 8
   drawing_cache:
-    base_url: "http://127.0.0.1:8080"  # Haruki-Cache service
+    base_url: "http://127.0.0.1:6666"  # Cloud exposes Haruki-Cache-compatible /cache routes
     storage_dir: "/data/haruki/cache/drawing"
+    db_path: "/data/haruki/cache/drawing/cache.db"
+    gc_interval: "24h"                  # set a negative duration to disable background cleanup
     ttl: "10m"                         # endpoint rules may override this (e.g. /sk uses 10s buckets)
   drawing_timeout: "30s"
   drawing_retry_count: 2

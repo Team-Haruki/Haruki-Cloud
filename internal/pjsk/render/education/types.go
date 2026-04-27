@@ -196,6 +196,7 @@ type AreaItemQuery struct {
 	Region         renderregion.Value                  `json:"region,omitempty"`
 	Profile        *drawing.DetailedProfileCardRequest `json:"-"`
 	Snapshot       snapshot.Snapshot                   `json:"-"`
+	ShowFull       bool                                `json:"show_full,omitempty"`
 	Unit           string                              `json:"unit,omitempty"`
 	Cid            int                                 `json:"cid,omitempty"`
 	CharacterQuery string                              `json:"character_query,omitempty"`

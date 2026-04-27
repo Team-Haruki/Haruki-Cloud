@@ -66,6 +66,16 @@ func normalizeMySekaiUserFacingError(err error, mode string) error {
 	case strings.HasPrefix(message, "mysekai fixture detail render requires exactly one fixture id"):
 		return onebot11.NewReplayError("家具详情一次只能查询一个家具ID")
 
+	case strings.HasPrefix(message, "mysekai fixture category not found:"):
+		query := strings.TrimSpace(strings.TrimPrefix(message, "mysekai fixture category not found:"))
+		if query == "" {
+			return onebot11.NewReplayError("未找到对应的家具类别")
+		}
+		return onebot11.NewReplayError("未找到家具类别：%s", query)
+
+	case strings.HasPrefix(message, "mysekai fixture category not found"):
+		return onebot11.NewReplayError("未找到对应的家具类别")
+
 	case strings.HasPrefix(message, "mysekai resource requires profile data"),
 		strings.HasPrefix(message, "mysekai music record requires profile data"):
 		return newMySekaiDataNotFoundReplayError()

@@ -38,6 +38,13 @@ func (c *Controller) resolveMusicListProfile(override *drawing.DetailedProfileCa
 	return nil
 }
 
+func (c *Controller) resolveMusicListProfileForQuery(query ListQuery, region renderregion.Value) *drawing.DetailedProfileCardRequest {
+	if query.Full {
+		return nil
+	}
+	return c.resolveMusicListProfile(query.DetailedProfile, region)
+}
+
 func (c *Controller) profileCard(region renderregion.Value) drawing.ProfileCardRequest {
 	if snap := c.currentSnapshot(); snap != nil {
 		if profile := snap.ProfileCard(region); profile != nil {

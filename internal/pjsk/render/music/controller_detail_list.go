@@ -138,6 +138,9 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		return nil, err
 	}
 	resultFilter := normalizeMusicListResultFilter(query.ResultFilter)
+	if query.Full {
+		resultFilter = ""
+	}
 	diff := ""
 	if strings.TrimSpace(query.Difficulty) != "" || len(query.Items) == 0 {
 		diff = normalizeDifficulty(query.Difficulty)
@@ -153,12 +156,17 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		minLevel, maxLevel = maxLevel, minLevel
 	}
 
-	fallbackUserResults := c.buildUserResults(diff)
-	userResults := buildMusicListUserResults(query.UserResults, fallbackUserResults)
+	var fallbackUserResults map[int]string
+	var queryUserResults map[int]string
+	if !query.Full {
+		fallbackUserResults = c.buildUserResults(diff)
+		queryUserResults = query.UserResults
+	}
+	userResults := buildMusicListUserResults(queryUserResults, fallbackUserResults)
 	includeLeaks := query.IncludeLeaks
 	if !includeLeaks && c.resolveRegion(query.Region) != renderregion.JP &&
-		query.DetailedProfile == nil && len(query.UserResults) == 0 &&
-		len(fallbackUserResults) == 0 && strings.TrimSpace(query.ResultFilter) == "" {
+		(query.Full || query.DetailedProfile == nil) && (query.Full || len(query.UserResults) == 0) &&
+		len(fallbackUserResults) == 0 && resultFilter == "" {
 		includeLeaks = true
 	}
 	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(source, query.Keyword, includeLeaks)
@@ -253,12 +261,12 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 		MusicList:            list,
 		JacketsPathList:      jackets,
 		RequiredDifficulties: diff,
-		Profile:              c.resolveMusicListProfile(query.DetailedProfile, region),
+		Profile:              c.resolveMusicListProfileForQuery(query, region),
 		Title:                query.Title,
 		TitleStyle:           query.TitleStyle,
 		TitleShadow:          query.TitleShadow,
 	}
-	if len(userResults) > 0 {
+	if len(userResults) > 0 && !query.Full {
 		req.PlayResultIconPathMap = c.buildPlayResultIconMap(region)
 	}
 	return req, nil
@@ -327,9 +335,9 @@ func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
 	}
 	includeLeaks := query.IncludeLeaks
 	if !includeLeaks && c.resolveRegion(query.Region) != renderregion.JP &&
-		query.DetailedProfile == nil && len(query.UserResults) == 0 &&
-		len(c.buildUserResults(normalizeDifficulty(query.Difficulty))) == 0 &&
-		strings.TrimSpace(query.ResultFilter) == "" {
+		(query.Full || query.DetailedProfile == nil) && (query.Full || len(query.UserResults) == 0) &&
+		(query.Full || len(c.buildUserResults(normalizeDifficulty(query.Difficulty))) == 0) &&
+		(query.Full || strings.TrimSpace(query.ResultFilter) == "") {
 		includeLeaks = true
 	}
 	return c.drawing.GenerateMusicList(payload, query.ShowID, includeLeaks)

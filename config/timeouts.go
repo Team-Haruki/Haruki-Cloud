@@ -11,7 +11,10 @@ const (
 	TrackerHTTPClientTimeout = 20 * time.Second
 
 	// SKForecastHTTPClientTimeout is the default timeout for SK forecast sources.
-	SKForecastHTTPClientTimeout = 15 * time.Second
+	SKForecastHTTPClientTimeout = 30 * time.Second
+
+	// SKForecastRefreshTimeout is the timeout for one scheduled SK forecast refresh cycle.
+	SKForecastRefreshTimeout = 2 * time.Minute
 
 	// TencentIMSTimeout is the timeout for Tencent IMS content moderation requests.
 	TencentIMSTimeout = 15 * time.Second

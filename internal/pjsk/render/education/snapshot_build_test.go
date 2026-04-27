@@ -447,6 +447,85 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshot(t *testing.T) {
 	}
 }
 
+func TestBuildAreaItemUpgradeMaterialsRequestFullWithoutSnapshot(t *testing.T) {
+	controller := NewController(nil, nil, nil, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		boxes: map[string]map[int]*ResourceBox{
+			"shop_item": {
+				11: {ID: 11, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 101, ResourceLevel: 2}}},
+				12: {ID: 12, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 101, ResourceLevel: 3}}},
+				20: {ID: 20, Details: []ResourceBoxDetail{{ResourceType: "area_item", ResourceID: 102, ResourceLevel: 2}}},
+			},
+		},
+		areaItems: map[int]*AreaItem{
+			101: {ID: 101, AreaID: 5, AssetbundleName: "item_101"},
+			102: {ID: 102, AreaID: 8, AssetbundleName: "item_102"},
+		},
+		areaLevels: map[int]map[int]*AreaItemLevel{
+			101: {
+				1: {AreaItemID: 101, Level: 1, TargetUnit: "light_sound", Power1BonusRate: 1.0},
+				2: {AreaItemID: 101, Level: 2, TargetUnit: "light_sound", Power1BonusRate: 2.0},
+				3: {AreaItemID: 101, Level: 3, TargetUnit: "light_sound", Power1BonusRate: 3.0},
+			},
+			102: {
+				1: {AreaItemID: 102, Level: 1, TargetUnit: "street", Power1BonusRate: 0.5},
+				2: {AreaItemID: 102, Level: 2, TargetUnit: "street", Power1BonusRate: 1.0},
+			},
+		},
+		shopItems: map[int]*ShopItem{
+			11: {ID: 10011, ResourceBoxID: 11, StartAt: maxAreaItemShopTimestampMs, Costs: []ShopItemCost{
+				{ResourceType: "coin", Quantity: 100},
+				{ResourceType: "material", ResourceID: 201, Quantity: 5},
+			}},
+			12: {ID: 10012, ResourceBoxID: 12, StartAt: maxAreaItemShopTimestampMs, Costs: []ShopItemCost{
+				{ResourceType: "coin", Quantity: 200},
+				{ResourceType: "material", ResourceID: 201, Quantity: 10},
+			}},
+			20: {ID: 10020, ResourceBoxID: 20, StartAt: maxAreaItemShopTimestampMs, Costs: []ShopItemCost{
+				{ResourceType: "material", ResourceID: 202, Quantity: 2},
+			}},
+		},
+	})
+
+	_, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.JP})
+	if err == nil {
+		t.Fatal("expected unfiltered full area item request to fail")
+	}
+
+	req, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.JP, Unit: "light_sound"})
+	if err != nil {
+		t.Fatalf("BuildAreaItemUpgradeMaterialsRequestFull(filtered) error = %v", err)
+	}
+	if req.HasProfile || req.Profile != nil {
+		t.Fatalf("expected full area item request to hide profile, got %+v", req.Profile)
+	}
+	if len(req.AreaItems) != 1 {
+		t.Fatalf("expected filtered area items, got %d", len(req.AreaItems))
+	}
+	first := req.AreaItems[0]
+	if first.ItemID != 101 || first.CurrentLevel != 0 || len(first.Levels) != 3 {
+		t.Fatalf("unexpected full area item payload: %+v", first)
+	}
+	if got := first.Levels[0]; got.Level != 1 || len(got.Materials) != 0 {
+		t.Fatalf("expected base level without materials, got %+v", got)
+	}
+	if got := first.Levels[1].Materials[0]; got.MaterialID != areaCoinMaterialID || got.Quantity != 100 || got.HaveQuantity != 0 || got.SumQuantity != 100 || !got.IsEnough {
+		t.Fatalf("unexpected full material payload: %+v", got)
+	}
+	if got := first.Levels[2].Materials[1]; got.MaterialID != 201 || got.SumQuantity != 15 || !got.IsEnough {
+		t.Fatalf("unexpected cumulative full material payload: %+v", got)
+	}
+
+	filtered, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.JP, Unit: "street"})
+	if err != nil {
+		t.Fatalf("BuildAreaItemUpgradeMaterialsRequestFull(filtered) error = %v", err)
+	}
+	if len(filtered.AreaItems) != 1 || filtered.AreaItems[0].ItemID != 102 {
+		t.Fatalf("unexpected filtered full payload: %+v", filtered.AreaItems)
+	}
+}
+
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotAppliesFilters(t *testing.T) {
 	snap := mustSnapshot(t, map[string]any{
 		"now": 12345,

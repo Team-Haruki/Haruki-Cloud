@@ -11,6 +11,19 @@ import (
 
 func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
 	result := map[int]struct{}{}
+	if fixtures := nestedList(merged, "userMysekaiFixtures"); fixtures != nil {
+		for _, raw := range fixtures {
+			item, ok := raw.(map[string]any)
+			if !ok {
+				continue
+			}
+			if fixtureID := userMysekaiFixtureID(item); fixtureID != 0 {
+				result[fixtureID] = struct{}{}
+			}
+		}
+		return result
+	}
+
 	for _, raw := range nestedList(merged, "userMysekaiBlueprints") {
 		item, ok := raw.(map[string]any)
 		if !ok {
@@ -27,6 +40,25 @@ func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]any, blueprints
 		}
 	}
 	return result
+}
+
+func userMysekaiFixtureID(item map[string]any) int {
+	for _, key := range []string{
+		"mysekaiFixtureId",
+		"mysekaiFixtureID",
+		"mysekai_fixture_id",
+		"fixtureId",
+		"fixtureID",
+		"id",
+	} {
+		if fixtureID := intNumber(item[key], 0); fixtureID != 0 {
+			return fixtureID
+		}
+	}
+	if fixture, ok := item["mysekaiFixture"].(map[string]any); ok {
+		return intNumber(fixture["id"], 0)
+	}
+	return 0
 }
 
 func (c *Controller) craftableMysekaiFixtureIDs(blueprints map[int]map[string]any) map[int]struct{} {

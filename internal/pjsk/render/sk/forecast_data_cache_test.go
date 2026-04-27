@@ -1,0 +1,100 @@
+package sk
+
+import (
+	"context"
+	"errors"
+	"reflect"
+	"sync/atomic"
+	"testing"
+	"time"
+)
+
+type sequencedForecastProvider struct {
+	calls atomic.Int32
+	data  []map[string]ForecastSourceData
+	errs  []error
+}
+
+func (p *sequencedForecastProvider) Fetch(context.Context, string, int, []int) (map[int]ForecastScore, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (p *sequencedForecastProvider) FetchBySource(context.Context, string, int, []int) (map[string]ForecastSourceData, error) {
+	idx := int(p.calls.Add(1)) - 1
+	if idx < len(p.errs) && p.errs[idx] != nil {
+		return nil, p.errs[idx]
+	}
+	if idx < len(p.data) {
+		return cloneForecastSourceDataMap(p.data[idx]), nil
+	}
+	return nil, errors.New("unexpected forecast fetch")
+}
+
+func TestForecastDataCacheKeepsPreviousDataWhenRefreshFails(t *testing.T) {
+	prevRetryLimit := forecastDataRefreshRetryLimit
+	prevRetryInterval := forecastDataRefreshRetryInterval
+	t.Cleanup(func() {
+		forecastDataRefreshRetryLimit = prevRetryLimit
+		forecastDataRefreshRetryInterval = prevRetryInterval
+	})
+	forecastDataRefreshRetryLimit = 1
+	forecastDataRefreshRetryInterval = time.Millisecond
+
+	provider := &sequencedForecastProvider{
+		data: []map[string]ForecastSourceData{
+			{
+				"33kit": {
+					Scores: map[int]ForecastScore{
+						100: {Score: 1_234_567, Timestamp: 1_700_000_000, Source: "33kit"},
+					},
+					FetchedAt: 1_700_000_100,
+				},
+			},
+		},
+		errs: []error{
+			nil,
+			errors.New("forecast source down"),
+		},
+	}
+	cache := newForecastDataCache(provider)
+
+	if err := cache.RefreshNow(context.Background(), "jp", 101); err != nil {
+		t.Fatalf("initial refresh: %v", err)
+	}
+	if err := cache.RefreshNow(context.Background(), "jp", 101); err == nil {
+		t.Fatal("expected failed refresh, got nil")
+	}
+
+	got, err := cache.CachedBySource("jp", 101, []int{100})
+	if err != nil {
+		t.Fatalf("cached data after failed refresh: %v", err)
+	}
+	score := got["33kit"].Scores[100]
+	if score.Score != 1_234_567 {
+		t.Fatalf("failed refresh overwrote cached score: %+v", score)
+	}
+}
+
+func TestRemoteForecastProviderSourcesMatchSupportedRegions(t *testing.T) {
+	provider := NewRemoteForecastProvider()
+	tests := []struct {
+		region string
+		want   []string
+	}{
+		{region: "jp", want: []string{"33kit", "moesekai"}},
+		{region: "cn", want: []string{"moesekai"}},
+		{region: "en", want: []string{"sekarun"}},
+		{region: "tw", want: nil},
+		{region: "kr", want: nil},
+	}
+	for _, tt := range tests {
+		sources := provider.sourcesForRegion(tt.region)
+		var got []string
+		for _, source := range sources {
+			got = append(got, source.name)
+		}
+		if !reflect.DeepEqual(got, tt.want) {
+			t.Fatalf("sources for %s = %v, want %v", tt.region, got, tt.want)
+		}
+	}
+}

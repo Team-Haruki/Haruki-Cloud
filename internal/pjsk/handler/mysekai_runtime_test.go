@@ -46,6 +46,23 @@ func (p fixedMySekaiPayloadProvider) Resolve(context.Context, rendersnapshot.Sel
 	return append([]byte(nil), p.payload...), nil
 }
 
+type recordingMySekaiPayloadProvider struct {
+	payload       []byte
+	resolveCount  int
+	selectors     []rendersnapshot.Selector
+	preferGlobals []bool
+}
+
+func (p *recordingMySekaiPayloadProvider) Resolve(_ context.Context, selector rendersnapshot.Selector, preferGlobalDefault bool) ([]byte, error) {
+	p.resolveCount++
+	p.selectors = append(p.selectors, selector)
+	p.preferGlobals = append(p.preferGlobals, preferGlobalDefault)
+	if len(p.payload) == 0 {
+		return nil, errors.New("payload is unavailable")
+	}
+	return append([]byte(nil), p.payload...), nil
+}
+
 type handlerMySekaiProfileSource struct {
 	region renderregion.Value
 	cards  map[int]*masterdata.Card
@@ -507,8 +524,9 @@ func TestExecuteMySekaiMapPrependsExpiredNotice(t *testing.T) {
 		Config: renderapp.Config{
 			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
 		},
-		Bindings: service,
-		MySekai:  rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		Bindings:        service,
+		MySekai:         rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		MySekaiPayloads: fixedMySekaiPayloadProvider{payload: staleSnapshot},
 		Snapshots: &runtimeSnapshotProviderStub{
 			snapshot: &runtimeSnapshotStub{rawBytes: staleSnapshot},
 		},
@@ -540,6 +558,343 @@ func TestExecuteMySekaiMapPrependsExpiredNotice(t *testing.T) {
 	}
 	if message[2].Type != onebot11.TypeAt {
 		t.Fatalf("expected at mention after image, got %+v", message[2])
+	}
+}
+
+func TestExecuteMySekaiMapUsesPayloadProviderWithoutSnapshot(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeJSON := func(name string, data any) {
+		t.Helper()
+		raw, err := json.Marshal(data)
+		if err != nil {
+			t.Fatalf("marshal %s: %v", name, err)
+		}
+		if err := os.WriteFile(filepath.Join(masterdataDir, name), raw, 0o644); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+
+	writeJSON("mysekaiSiteHarvestFixtures.json", []map[string]any{
+		{
+			"id":                                  1001,
+			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
+			"mysekaiSiteHarvestFixtureType":       "wood",
+			"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
+		},
+	})
+	writeJSON("mysekaiMaterials.json", []map[string]any{})
+	writeJSON("mysekaiItems.json", []map[string]any{})
+	writeJSON("mysekaiFixtures.json", []map[string]any{})
+	writeJSON("mysekaiMusicRecords.json", []map[string]any{})
+	writeJSON("gameCharacters.json", []map[string]any{})
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/mysekai/map" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.MysekaiMsrMapRequest
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if len(req.Maps) != 1 {
+			t.Fatalf("expected 1 map in drawing request, got %+v", req.Maps)
+		}
+		_, _ = w.Write([]byte("mysekai-map"))
+	}))
+	defer drawingServer.Close()
+
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	payload, err := json.Marshal(map[string]any{
+		"upload_time": time.Now().UnixMilli(),
+		"updatedResources": map[string]any{
+			"userMysekaiHarvestMaps": []map[string]any{{
+				"mysekaiSiteId": 5,
+				"userMysekaiSiteHarvestFixtures": []map[string]any{{
+					"mysekaiSiteHarvestFixtureId":         1001,
+					"userMysekaiSiteHarvestFixtureStatus": "spawned",
+					"positionX":                           0,
+					"positionZ":                           0,
+				}},
+				"userMysekaiSiteHarvestResourceDrops": []map[string]any{},
+			}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	snapshotProvider := &runtimeSnapshotProviderStub{err: errors.New("snapshot should not be used")}
+	payloadProvider := &recordingMySekaiPayloadProvider{payload: payload}
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:        service,
+		MySekai:         rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		Snapshots:       snapshotProvider,
+		MySekaiPayloads: payloadProvider,
+		ImageCache:      imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+		Module:            parser.ModuleMysekai,
+		Mode:              "mysekai-map",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMysekai map: %v", err)
+	}
+	if snapshotProvider.resolveCount != 0 {
+		t.Fatalf("expected map query to skip snapshot provider, got %d resolves", snapshotProvider.resolveCount)
+	}
+	if payloadProvider.resolveCount != 1 {
+		t.Fatalf("expected one mysekai payload resolve, got %d", payloadProvider.resolveCount)
+	}
+	if len(payloadProvider.selectors) != 1 {
+		t.Fatalf("expected one payload selector, got %d", len(payloadProvider.selectors))
+	}
+	selector := payloadProvider.selectors[0]
+	if selector.PJSKUserID != "12345678901234" || selector.Region != renderregion.JP {
+		t.Fatalf("unexpected payload selector: %+v", selector)
+	}
+	if len(payloadProvider.preferGlobals) != 1 || payloadProvider.preferGlobals[0] {
+		t.Fatalf("expected explicit target payload lookup, got %+v", payloadProvider.preferGlobals)
+	}
+	if len(message) != 2 || message[0].Type != onebot11.TypeImage || message[1].Type != onebot11.TypeAt {
+		t.Fatalf("unexpected map reply segments: %+v", message)
+	}
+}
+
+func TestMysekaiRenderContextOptionsUsePayloadOnlyForMysekaiDataModes(t *testing.T) {
+	for _, mode := range []string{
+		"mysekai-resource",
+		"mysekai-resource-map",
+		"mysekai-map",
+		"mysekai-fixture-list",
+		"mysekai-music-record",
+		"mysekai-photo",
+	} {
+		t.Run(mode, func(t *testing.T) {
+			opts := mysekaiRenderContextOptionsForMode(mode)
+			if !opts.PreferMySekaiPayload || !opts.MySekaiPayloadOnly {
+				t.Fatalf("expected payload-only options for %s, got %+v", mode, opts)
+			}
+			wantProfile := mode != "mysekai-map" && mode != "mysekai-photo"
+			if opts.NeedProfile != wantProfile {
+				t.Fatalf("unexpected NeedProfile for %s: got %t want %t", mode, opts.NeedProfile, wantProfile)
+			}
+		})
+	}
+}
+
+func TestMysekaiRenderContextOptionsKeepSuiteModesOnSnapshot(t *testing.T) {
+	doorOpts := mysekaiRenderContextOptionsForMode("mysekai-door-upgrade")
+	if !doorOpts.SuiteOnlySnapshot || doorOpts.PreferMySekaiPayload || doorOpts.MySekaiPayloadOnly {
+		t.Fatalf("expected door upgrade to use suite-only snapshot, got %+v", doorOpts)
+	}
+	if !doorOpts.NeedProfile {
+		t.Fatalf("expected door upgrade to keep profile")
+	}
+
+	talkOpts := mysekaiRenderContextOptionsForMode("mysekai-talk-list")
+	if talkOpts.SuiteOnlySnapshot || talkOpts.PreferMySekaiPayload || talkOpts.MySekaiPayloadOnly {
+		t.Fatalf("expected talk list to use merged suite+mysekai snapshot, got %+v", talkOpts)
+	}
+	if !talkOpts.NeedProfile {
+		t.Fatalf("expected talk list to keep profile")
+	}
+}
+
+func TestResolveMySekaiRenderContextSnapshotNeedFlagsForSuiteModes(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	snapshot := &runtimeSnapshotStub{
+		card: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{ID: "12345678901234", Region: "JP", Nickname: "snapshot-card"},
+		},
+	}
+
+	for _, tc := range []struct {
+		mode        string
+		wantMySekai bool
+	}{
+		{mode: "mysekai-door-upgrade", wantMySekai: false},
+		{mode: "mysekai-talk-list", wantMySekai: true},
+	} {
+		t.Run(tc.mode, func(t *testing.T) {
+			provider := &runtimeSnapshotProviderStub{snapshot: snapshot}
+			app := &renderapp.App{
+				Config: renderapp.Config{
+					UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+				},
+				Bindings:  service,
+				MySekai:   rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
+				Snapshots: provider,
+			}
+			_, err := resolveMySekaiRenderContextWithOptions(ctx, app, userQueryParams{
+				Mode:           "self",
+				Platform:       "qq",
+				PlatformUserID: "42",
+			}, "jp", false, mysekaiRenderContextOptionsForMode(tc.mode))
+			if err != nil {
+				t.Fatalf("resolveMySekaiRenderContextWithOptions() error = %v", err)
+			}
+			if len(provider.resolveNeedFlags) != 1 || provider.resolveNeedFlags[0] != tc.wantMySekai {
+				t.Fatalf("unexpected snapshot NeedMySekai flags for %s: got %+v want [%t]", tc.mode, provider.resolveNeedFlags, tc.wantMySekai)
+			}
+		})
+	}
+}
+
+func TestExecuteMySekaiResourceUsesPayloadProviderWithoutSnapshot(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeJSON := func(name string, data any) {
+		t.Helper()
+		raw, err := json.Marshal(data)
+		if err != nil {
+			t.Fatalf("marshal %s: %v", name, err)
+		}
+		if err := os.WriteFile(filepath.Join(masterdataDir, name), raw, 0o644); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+
+	writeJSON("mysekaiGates.json", []map[string]any{
+		{"id": 1, "assetbundleName": "mdl_non0001_gate_default"},
+	})
+	writeJSON("mysekaiPhenomenas.json", []map[string]any{})
+	writeJSON("mysekaiGameCharacterUnitGroups.json", []map[string]any{})
+	writeJSON("gameCharacters.json", []map[string]any{})
+	writeJSON("mysekaiMaterials.json", []map[string]any{})
+	writeJSON("mysekaiItems.json", []map[string]any{})
+	writeJSON("mysekaiFixtures.json", []map[string]any{})
+	writeJSON("mysekaiMusicRecords.json", []map[string]any{})
+	writeJSON("musics.json", []map[string]any{})
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/mysekai/resource" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.MysekaiResourceRequest
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.Profile.MysekaiLevel == nil || *req.Profile.MysekaiLevel != 9 {
+			t.Fatalf("expected mysekai rank on profile, got %+v", req.Profile.MysekaiLevel)
+		}
+		if len(req.Profile.DataSources) != 1 || req.Profile.DataSources[0].Name != "Mysekai数据" {
+			t.Fatalf("expected mysekai-only profile data source, got %+v", req.Profile.DataSources)
+		}
+		_, _ = w.Write([]byte("mysekai-resource"))
+	}))
+	defer drawingServer.Close()
+
+	sekaiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/jp/12345678901234/profile" {
+			t.Fatalf("unexpected sekai api path: %s", r.URL.Path)
+		}
+		resp := &sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 12345678901234,
+				Name:   "JPUser",
+				Rank:   100,
+			},
+			UserProfile: sekaiapi.UserProfile{ProfileImageType: "default"},
+			UserDeck:    sekaiapi.UserDeck{DeckID: 1, Leader: 1001, Member1: 1001},
+			UserCards: []sekaiapi.AnotherUserCard{
+				{CardID: 1001, Level: 60, MasterRank: 5, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+			},
+		}
+		raw, err := json.Marshal(resp)
+		if err != nil {
+			t.Fatalf("marshal sekai api response: %v", err)
+		}
+		_, _ = w.Write(raw)
+	}))
+	defer sekaiServer.Close()
+
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	payload, err := json.Marshal(map[string]any{
+		"upload_time": time.Now().UnixMilli(),
+		"source":      "toolbox_live",
+		"updatedResources": map[string]any{
+			"userMysekaiGamedata": map[string]any{"mysekaiRank": 9},
+			"userMysekaiGateCharacterVisit": map[string]any{
+				"userMysekaiGate": map[string]any{
+					"mysekaiGateId":    1,
+					"mysekaiGateLevel": 2,
+				},
+				"userMysekaiGateCharacters": []map[string]any{},
+			},
+			"userMysekaiHarvestMaps": []map[string]any{},
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	snapshotProvider := &runtimeSnapshotProviderStub{err: errors.New("snapshot should not be used")}
+	payloadProvider := &recordingMySekaiPayloadProvider{payload: payload}
+	profileSource := &handlerMySekaiProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {ID: 1001, CharacterID: 1, AssetBundleName: "res001_no001"},
+		},
+	}
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings:        service,
+		MySekai:         rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		Profiles:        renderprofile.NewController(profileSource, nil, assets.NewAssetHelper("", nil), nil),
+		SekaiAPI:        sekaiapi.NewSekaiAPIClient(&harukiConfig.SekaiAPIConfig{BaseURL: sekaiServer.URL}),
+		Snapshots:       snapshotProvider,
+		MySekaiPayloads: payloadProvider,
+		ImageCache:      imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+		Module:            parser.ModuleMysekai,
+		Mode:              "mysekai-resource",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMysekai resource: %v", err)
+	}
+	if snapshotProvider.resolveCount != 0 {
+		t.Fatalf("expected resource query to skip snapshot provider, got %d resolves", snapshotProvider.resolveCount)
+	}
+	if payloadProvider.resolveCount != 1 {
+		t.Fatalf("expected one mysekai payload resolve, got %d", payloadProvider.resolveCount)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeImage {
+		t.Fatalf("unexpected resource reply segments: %+v", message)
 	}
 }
 
@@ -715,6 +1070,85 @@ func TestExecuteMySekaiFixtureDetailSkipsBindingAndSnapshot(t *testing.T) {
 	}
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected fixture detail message: %+v", message)
+	}
+}
+
+func TestExecuteMySekaiDoorUpgradeFullSkipsBindingAndSnapshot(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeJSON := func(name string, data any) {
+		t.Helper()
+		raw, err := json.Marshal(data)
+		if err != nil {
+			t.Fatalf("marshal %s: %v", name, err)
+		}
+		if err := os.WriteFile(filepath.Join(masterdataDir, name), raw, 0o644); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+
+	writeJSON("mysekaiGates.json", []map[string]any{
+		{"id": 1, "assetbundleName": "mdl_non0001_gate_default"},
+		{"id": 2, "assetbundleName": "mdl_non0002_gate_default"},
+	})
+	writeJSON("mysekaiGateMaterialGroups.json", []map[string]any{
+		{"groupId": 1001, "mysekaiMaterialId": 1, "quantity": 2},
+		{"groupId": 2001, "mysekaiMaterialId": 1, "quantity": 3},
+	})
+	writeJSON("mysekaiMaterials.json", []map[string]any{
+		{"id": 1, "iconAssetbundleName": "mat_1"},
+	})
+
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/mysekai/door-upgrade" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.MysekaiDoorUpgradeRequest
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.Profile != nil {
+			t.Fatalf("expected full door upgrade to skip profile, got %+v", req.Profile)
+		}
+		if len(req.GateMaterials) != 2 {
+			t.Fatalf("expected all gate materials, got %+v", req.GateMaterials)
+		}
+		for _, gate := range req.GateMaterials {
+			if gate.Level != nil {
+				t.Fatalf("expected full door upgrade to omit current levels, got %+v", gate)
+			}
+		}
+		_, _ = w.Write([]byte("door-upgrade"))
+	}))
+	defer drawingServer.Close()
+
+	app := &renderapp.App{
+		MySekai:    rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(rendermysekai.DoorUpgradeQuery{
+		ShowFull: boolPtr(true),
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMysekai,
+		Mode:   "mysekai-door-upgrade",
+		Region: "jp",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMysekai door upgrade full: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected full door upgrade message: %+v", message)
 	}
 }
 

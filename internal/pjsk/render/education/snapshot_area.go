@@ -8,8 +8,49 @@ import (
 	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 )
+
+const maxAreaItemShopTimestampMs int64 = 1<<63 - 1
+
+type areaItemBuildOptions struct {
+	region         renderregion.Value
+	source         DataSource
+	query          AreaItemQuery
+	userAreaLevels map[int]int
+	userMaterials  map[int]int
+	profile        *drawing.DetailedProfileCardRequest
+	hasProfile     bool
+	showFull       bool
+	nowMs          int64
+}
+
+func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFull(query AreaItemQuery) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
+	if c == nil || c.sources == nil {
+		return nil, fmt.Errorf("education controller is not initialized")
+	}
+	if !hasAreaItemFilter(query) {
+		return nil, fmt.Errorf("area item full query requires a filter")
+	}
+
+	region := c.sources.ResolveRegion(query.Region)
+	source, ok := c.sources.SourceForRegion(region)
+	if !ok {
+		return nil, fmt.Errorf("education data source is not configured")
+	}
+
+	query.ShowFull = true
+	return c.buildAreaItemUpgradeMaterialsRequest(areaItemBuildOptions{
+		region:         region,
+		source:         source,
+		query:          query,
+		userAreaLevels: map[int]int{},
+		userMaterials:  map[int]int{},
+		showFull:       true,
+		nowMs:          maxAreaItemShopTimestampMs,
+	})
+}
 
 func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query AreaItemQuery) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
@@ -42,17 +83,37 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		userMaterials[item.MaterialID] = item.Quantity
 	}
 
-	itemIDs := c.resolveAreaItemIDs(ctx.source, userAreaLevels, query)
-	if len(itemIDs) == 0 {
-		return nil, fmt.Errorf("area item masterdata is not available")
-	}
-
 	nowMs := ctx.raw.Now
 	if nowMs <= 0 {
 		nowMs = time.Now().UnixMilli()
 	}
-	levelShopItems := c.resolveAreaItemShopItems(ctx.source, itemIDs, nowMs)
-	releasedLevelCaps := c.resolveReleasedAreaItemLevelCaps(ctx.source, itemIDs, levelShopItems)
+	return c.buildAreaItemUpgradeMaterialsRequest(areaItemBuildOptions{
+		region:         ctx.region,
+		source:         ctx.source,
+		query:          query,
+		userAreaLevels: userAreaLevels,
+		userMaterials:  userMaterials,
+		profile:        ctx.profile,
+		hasProfile:     true,
+		nowMs:          nowMs,
+	})
+}
+
+func (c *Controller) buildAreaItemUpgradeMaterialsRequest(opts areaItemBuildOptions) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
+	itemIDs := c.resolveAreaItemIDs(opts.source, opts.userAreaLevels, opts.query)
+	if len(itemIDs) == 0 {
+		return nil, fmt.Errorf("area item masterdata is not available")
+	}
+
+	nowMs := opts.nowMs
+	if nowMs <= 0 {
+		nowMs = time.Now().UnixMilli()
+	}
+	levelShopItems := c.resolveAreaItemShopItems(opts.source, itemIDs, nowMs)
+	releasedLevelCaps := c.resolveReleasedAreaItemLevelCaps(opts.source, itemIDs, levelShopItems)
+	if opts.showFull {
+		releasedLevelCaps = nil
+	}
 
 	type areaItemRenderState struct {
 		itemID          int
@@ -66,10 +127,13 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 	}
 
 	states := make([]areaItemRenderState, 0, len(itemIDs))
-	minCurrentLevel := -1
+	minCurrentLevel := 0
+	if !opts.showFull {
+		minCurrentLevel = -1
+	}
 	for _, itemID := range itemIDs {
-		master := ctx.source.GetAreaItem(itemID)
-		levels := ctx.source.GetAreaItemLevels(itemID)
+		master := opts.source.GetAreaItem(itemID)
+		levels := opts.source.GetAreaItemLevels(itemID)
 		if master == nil || len(levels) == 0 {
 			continue
 		}
@@ -82,19 +146,24 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 			levelMap[level.Level] = level
 		}
 
-		currentLevel := userAreaLevels[itemID]
-		if releasedCap := releasedLevelCaps[itemID]; releasedCap > 0 && currentLevel > releasedCap {
-			currentLevel = releasedCap
-		}
-
-		maxVisibleLevel := currentLevel
-		if releasedCap := releasedLevelCaps[itemID]; releasedCap > maxVisibleLevel {
-			maxVisibleLevel = releasedCap
+		currentLevel := opts.userAreaLevels[itemID]
+		maxVisibleLevel := 0
+		if opts.showFull {
+			currentLevel = 0
+			maxVisibleLevel = maxAreaItemLevel(levels)
+		} else {
+			if releasedCap := releasedLevelCaps[itemID]; releasedCap > 0 && currentLevel > releasedCap {
+				currentLevel = releasedCap
+			}
+			maxVisibleLevel = currentLevel
+			if releasedCap := releasedLevelCaps[itemID]; releasedCap > maxVisibleLevel {
+				maxVisibleLevel = releasedCap
+			}
 		}
 		if maxVisibleLevel <= 0 {
 			continue
 		}
-		if minCurrentLevel == -1 || currentLevel < minCurrentLevel {
+		if !opts.showFull && (minCurrentLevel == -1 || currentLevel < minCurrentLevel) {
 			minCurrentLevel = currentLevel
 		}
 
@@ -143,8 +212,11 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 							materialID = areaCoinMaterialID
 						}
 						sumMaterials[materialID] += cost.Quantity
-						haveQuantity := userMaterials[materialID]
+						haveQuantity := opts.userMaterials[materialID]
 						isEnough := haveQuantity >= sumMaterials[materialID]
+						if !opts.hasProfile {
+							isEnough = true
+						}
 						if !isEnough {
 							row.CanUpgrade = false
 						}
@@ -166,7 +238,7 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 		areaItem := drawing.AreaItemInfo{
 			ItemID:       state.itemID,
 			CurrentLevel: state.currentLevel,
-			ItemIconPath: assets.ResolveRegionAssetPath(c.assets, ctx.region.String(),
+			ItemIconPath: assets.ResolveRegionAssetPath(c.assets, opts.region.String(),
 				filepath.Join("areaitem", state.master.AssetbundleName, state.master.AssetbundleName+".png")),
 			Levels: levelInfos,
 		}
@@ -177,9 +249,9 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query Area
 	}
 
 	return c.BuildAreaItemUpgradeMaterialsRequest(drawing.AreaItemUpgradeMaterialsRequest{
-		Profile:    ctx.profile,
+		Profile:    opts.profile,
 		AreaItems:  areaItems,
-		HasProfile: true,
+		HasProfile: opts.hasProfile,
 	})
 }
 
@@ -382,6 +454,19 @@ func sortedAreaItemLevels(levels []*AreaItemLevel) []int {
 	}
 	sort.Ints(result)
 	return result
+}
+
+func maxAreaItemLevel(levels []*AreaItemLevel) int {
+	maxLevel := 0
+	for _, level := range levels {
+		if level == nil {
+			continue
+		}
+		if level.Level > maxLevel {
+			maxLevel = level.Level
+		}
+	}
+	return maxLevel
 }
 
 func (c *Controller) resolveReleasedAreaItemLevelCaps(source DataSource, itemIDs []int, levelShopItems map[int]map[int]*ShopItem) map[int]int {

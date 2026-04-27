@@ -144,6 +144,10 @@ func buildDeckDetailedProfileForTargetWithResponse(rc *RequestContext, target Re
 }
 
 func normalizeDeckUserFacingError(err error) error {
+	return normalizeDeckUserFacingErrorForRegion(err, DefaultRegionStr)
+}
+
+func normalizeDeckUserFacingErrorForRegion(err error, region string) error {
 	if err == nil {
 		return nil
 	}
@@ -160,11 +164,8 @@ func normalizeDeckUserFacingError(err error) error {
 	message := strings.TrimSpace(err.Error())
 	switch {
 	case strings.Contains(message, "failed to search music by title or alias: music not found:"):
-		musicQuery := strings.TrimSpace(strings.TrimPrefix(message, "failed to search music by title or alias: music not found:"))
-		if musicQuery == "" {
-			return onebot11.NewReplayError("未找到对应歌曲，请检查歌曲名或别名后重试")
-		}
-		return onebot11.NewReplayError("未找到歌曲：%s", musicQuery)
+		musicQuery, _ := extractMusicNotFoundQuery(err, "")
+		return newMusicNotFoundReplayError(region, musicQuery)
 	case strings.Contains(message, "local user snapshot is not configured"),
 		strings.Contains(message, "user data is required for deck auto recommend"):
 		return newSuiteDataNotFoundReplayError()

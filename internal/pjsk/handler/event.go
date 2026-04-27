@@ -17,7 +17,7 @@ const querySingleEventHelp = `【查单个活动格式】
 3. ban主昵称+序号：mnr1`
 
 const queryMultiEventHelp = `【查多个活动格式】
-1. 活动类型：5v5 普活 wl
+1. 活动类型：5v5 普活 wl wl1 wl2 wl3
 2. 颜色和团：紫 25h
 3. 年份：25年 去年
 4. 活动角色：mnr hrk 可以加多个
@@ -87,6 +87,9 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 		}
 		if info.Filter.EventType != "" {
 			params["event_type"] = info.Filter.EventType
+		}
+		if info.Filter.WorldBloomTurn != 0 {
+			params["world_bloom_turn"] = info.Filter.WorldBloomTurn
 		}
 		if info.Filter.Unit != "" {
 			params["unit"] = info.Filter.Unit

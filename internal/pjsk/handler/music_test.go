@@ -283,6 +283,40 @@ func TestMusicListHandleBuildsCommandRequestWithLevelRangeAndDiff(t *testing.T) 
 	}
 }
 
+func TestMusicListHandleBuildsCommandRequestWithFullFlag(t *testing.T) {
+	h := sekaiHandlers{}.MusicListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/难度排行",
+		ArgText:    "full 31 ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Query != "" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+
+	var params struct {
+		Full       bool   `json:"full"`
+		Difficulty string `json:"difficulty"`
+		Level      int    `json:"level"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.Full || params.Difficulty != "expert" || params.Level != 31 {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
 func TestMusicListHandleEmbedsSelfSelector(t *testing.T) {
 	h := sekaiHandlers{}.MusicListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}

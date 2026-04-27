@@ -536,12 +536,8 @@ func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *rendera
 		return nil, err
 	}
 
-	charUnit := resolveDeckCharacterUnit(charID)
 	matched := make([]*sekaidb.Event, 0, len(worldBloomEvents))
 	for _, eventInfo := range worldBloomEvents {
-		if charUnit == "piapro" && normalizeDeckUnit(eventInfo.Unit) != "piapro" {
-			continue
-		}
 		chapters, err := queryDeckWorldBloomChapters(ctx, app, region, int(eventInfo.GameID))
 		if err != nil {
 			return nil, err
@@ -764,6 +760,7 @@ func deckEventFromMasterdata(item *masterdata.Event) *sekaidb.Event {
 	return &sekaidb.Event{
 		GameID:          int64(item.ID),
 		EventType:       item.EventType,
+		Unit:            item.Unit,
 		Name:            item.Name,
 		AssetbundleName: item.AssetBundleName,
 		StartAt:         item.StartAt,

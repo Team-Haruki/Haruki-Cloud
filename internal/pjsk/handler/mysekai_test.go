@@ -473,6 +473,42 @@ func TestMysekaiTalkListHandleWithoutQueryFallsBackToFixtureList(t *testing.T) {
 	}
 }
 
+func TestMysekaiFixtureListHandleSupportsFull(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiFixtureListHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/烤森家具列表",
+		ArgText:    "full",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-fixture-list" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params struct {
+		ShowID        bool `json:"show_id"`
+		OnlyCraftable bool `json:"only_craftable"`
+		ShowProfile   bool `json:"show_profile"`
+		ShowProgress  bool `json:"show_progress"`
+		ShowObtained  bool `json:"show_obtained"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.ShowID || params.OnlyCraftable || params.ShowProfile || params.ShowProgress || params.ShowObtained {
+		t.Fatalf("expected full fixture list to be static without profile/progress/obtained, got %+v", params)
+	}
+}
+
 func TestMysekaiBlueprintHandleRejectsFixtureIDs(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiBlueprintHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
@@ -512,17 +548,75 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	}
 
 	var listParams struct {
-		ShowID        bool `json:"show_id"`
-		OnlyCraftable bool `json:"only_craftable"`
-		ShowProfile   bool `json:"show_profile"`
-		ShowProgress  bool `json:"show_progress"`
-		ShowObtained  bool `json:"show_obtained"`
+		ShowID        *bool  `json:"show_id"`
+		OnlyCraftable *bool  `json:"only_craftable"`
+		ShowProfile   *bool  `json:"show_profile"`
+		ShowProgress  *bool  `json:"show_progress"`
+		ShowObtained  *bool  `json:"show_obtained"`
+		CategoryQuery string `json:"category_query"`
 	}
 	if err := json.Unmarshal(resolved.Params, &listParams); err != nil {
 		t.Fatalf("unmarshal list params: %v", err)
 	}
-	if !listParams.ShowID || listParams.OnlyCraftable || listParams.ShowProfile || listParams.ShowProgress || listParams.ShowObtained {
+	if listParams.ShowID == nil || !*listParams.ShowID {
 		t.Fatalf("unexpected list params: %+v", listParams)
+	}
+	if listParams.OnlyCraftable != nil || listParams.ShowProfile != nil || listParams.ShowProgress != nil || listParams.ShowObtained != nil || listParams.CategoryQuery != "" {
+		t.Fatalf("expected default /msf to use dynamic fixture list defaults, got %+v", listParams)
+	}
+
+	result, err = h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msf",
+		ArgText:    "full",
+	})
+	if err != nil {
+		t.Fatalf("Handle() full list error = %v", err)
+	}
+	resolved = result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-fixture-list" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+	var fullParams struct {
+		ShowID       bool `json:"show_id"`
+		ShowProfile  bool `json:"show_profile"`
+		ShowProgress bool `json:"show_progress"`
+		ShowObtained bool `json:"show_obtained"`
+	}
+	if err := json.Unmarshal(resolved.Params, &fullParams); err != nil {
+		t.Fatalf("unmarshal full params: %v", err)
+	}
+	if !fullParams.ShowID || fullParams.ShowProfile || fullParams.ShowProgress || fullParams.ShowObtained {
+		t.Fatalf("expected /msf full to use static all-lit params, got %+v", fullParams)
+	}
+
+	result, err = h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msf",
+		ArgText:    "テーブル",
+	})
+	if err != nil {
+		t.Fatalf("Handle() category list error = %v", err)
+	}
+	resolved = result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-fixture-list" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+	var categoryParams struct {
+		ShowID        *bool  `json:"show_id"`
+		CategoryQuery string `json:"category_query"`
+	}
+	if err := json.Unmarshal(resolved.Params, &categoryParams); err != nil {
+		t.Fatalf("unmarshal category params: %v", err)
+	}
+	if categoryParams.ShowID == nil || !*categoryParams.ShowID || categoryParams.CategoryQuery != "テーブル" {
+		t.Fatalf("unexpected category params: %+v", categoryParams)
 	}
 
 	result, err = h.Handle(&PjskHandlerContext{
@@ -546,20 +640,29 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	}
 }
 
-func TestMysekaiFurnitureHandleRejectsCharacterQuery(t *testing.T) {
+func TestMysekaiFurnitureHandleTreatsUnknownTextAsCategoryQuery(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiFurnitureHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
-	_, err := h.Handle(&PjskHandlerContext{
+	result, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msf",
 		ArgText:    "miku",
 	})
-	if err == nil {
-		t.Fatal("expected character query to fail")
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
 	}
-	if !strings.Contains(err.Error(), "/msb 角色名") {
-		t.Fatalf("unexpected error: %v", err)
+	if result == nil || result.Module != parser.ModuleMysekai || result.Mode != "mysekai-fixture-list" {
+		t.Fatalf("unexpected command request: %+v", result)
+	}
+	var params struct {
+		CategoryQuery string `json:"category_query"`
+	}
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.CategoryQuery != "miku" {
+		t.Fatalf("category_query = %q", params.CategoryQuery)
 	}
 }
 
@@ -603,5 +706,43 @@ func TestMysekaiDoorUpgradeHandleSupportsShowAll(t *testing.T) {
 	}
 	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "10001" {
 		t.Fatalf("unexpected self params: %+v", params)
+	}
+}
+
+func TestMysekaiDoorUpgradeHandleSupportsShowFull(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiDoorUpgradeHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msg",
+		ArgText:    "full",
+		UserId:     "10001",
+		Platform:   "qq",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-door-upgrade" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+	if strings.TrimSpace(resolved.Query) != "" {
+		t.Fatalf("expected empty query for /msg full, got %q", resolved.Query)
+	}
+
+	var params struct {
+		ShowAll  bool `json:"show_all"`
+		ShowFull bool `json:"show_full"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.ShowFull || params.ShowAll {
+		t.Fatalf("expected show_full without show_all, got %+v", params)
 	}
 }

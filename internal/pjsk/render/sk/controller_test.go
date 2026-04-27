@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -38,6 +39,9 @@ func (p contextAwareForecastProvider) Fetch(ctx context.Context, _ string, _ int
 	value, _ := ctx.Value(p.wantKey).(string)
 	if value != p.wantValue {
 		return nil, context.Canceled
+	}
+	if len(ranks) == 0 {
+		ranks = []int{100}
 	}
 	out := make(map[int]ForecastScore, len(ranks))
 	for _, rank := range ranks {
@@ -2255,6 +2259,9 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 			},
 		},
 	})
+	if err := controller.forecastCache.RefreshNow(context.Background(), "jp", 101); err != nil {
+		t.Fatalf("prime forecast cache: %v", err)
+	}
 
 	payload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
 		EventID: 101,
@@ -2334,7 +2341,7 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapt
 	}
 }
 
-func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeWhenForecastFails(t *testing.T) {
+func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissing(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
@@ -2351,32 +2358,20 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeWhenForecastFails(
 		err: fmt.Errorf("all forecast sources failed"),
 	})
 
-	payload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+	_, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
 		EventID: 101,
 		Region:  "jp",
 		Ranks:   []int{100},
 	})
-	if err != nil {
-		t.Fatalf("build predict line request with fallback: %v", err)
+	if err == nil {
+		t.Fatal("expected missing forecast cache error, got nil")
 	}
-	if payload.Name != "Tracker Event 预测(实时)" {
-		t.Fatalf("unexpected fallback payload name: %s", payload.Name)
-	}
-	if len(payload.ForecastColumns) != 0 {
-		t.Fatalf("fallback payload should not include forecast columns")
-	}
-	if len(payload.Ranks) != 1 {
-		t.Fatalf("unexpected fallback ranks len: %d", len(payload.Ranks))
-	}
-	if payload.Ranks[0].Rank != 100 || payload.Ranks[0].Score == nil || *payload.Ranks[0].Score != 1000100 {
-		t.Fatalf("unexpected fallback rank payload: %+v", payload.Ranks[0])
-	}
-	if payload.Ranks[0].Name != "" {
-		t.Fatalf("fallback rank name should stay empty, got %+v", payload.Ranks[0])
+	if got := err.Error(); !strings.Contains(got, "预测数据尚未就绪") {
+		t.Fatalf("unexpected error: %v", got)
 	}
 }
 
-func TestBuildPredictLineRequestFromTrackerUsesControllerRequestContext(t *testing.T) {
+func TestBuildPredictLineRequestFromTrackerUsesCachedGenericForecast(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
@@ -2395,6 +2390,9 @@ func TestBuildPredictLineRequestFromTrackerUsesControllerRequestContext(t *testi
 	})
 
 	ctx := context.WithValue(context.Background(), ctxKey("trace"), "sk-predict")
+	if err := controller.forecastCache.RefreshNow(ctx, "jp", 101); err != nil {
+		t.Fatalf("prime forecast cache with context: %v", err)
+	}
 	payload, err := controller.WithContext(ctx).BuildPredictLineRequestFromTracker(TrackerRankQuery{
 		EventID: 101,
 		Region:  "jp",
@@ -2408,7 +2406,7 @@ func TestBuildPredictLineRequestFromTrackerUsesControllerRequestContext(t *testi
 	}
 }
 
-func TestRenderPredictLineFromTrackerCachesRenderedBytes(t *testing.T) {
+func TestRenderPredictLineFromTrackerUsesCachedForecastData(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
@@ -2446,6 +2444,9 @@ func TestRenderPredictLineFromTrackerCachesRenderedBytes(t *testing.T) {
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
 	}, nil)
 	controller.SetForecastProvider(forecast)
+	if err := controller.forecastCache.RefreshNow(context.Background(), "jp", 101); err != nil {
+		t.Fatalf("prime forecast cache: %v", err)
+	}
 
 	req := TrackerRankQuery{
 		EventID: 101,
@@ -2464,14 +2465,14 @@ func TestRenderPredictLineFromTrackerCachesRenderedBytes(t *testing.T) {
 	if string(first) != "predict-render" || string(second) != "predict-render" {
 		t.Fatalf("unexpected rendered bytes: %q / %q", string(first), string(second))
 	}
-	if got := tracker.latestRankCalls.Load(); got != 2 {
-		t.Fatalf("expected tracker latest-rank calls to stay at 2 for cached repeat, got %d", got)
+	if got := tracker.latestRankCalls.Load(); got != 4 {
+		t.Fatalf("expected tracker latest-rank calls to run for each render, got %d", got)
 	}
 	if got := forecast.calls.Load(); got != 1 {
 		t.Fatalf("expected forecast fetch to run once, got %d", got)
 	}
 	if got := drawingCalls.Load(); got != 1 {
-		t.Fatalf("expected drawing render to run once, got %d", got)
+		t.Fatalf("expected drawing client cache to reuse rendered payload, got %d", got)
 	}
 }
 
@@ -2518,11 +2519,11 @@ func TestStartDefaultPredictWarmupPrimesDefaultPredictCache(t *testing.T) {
 
 	deadline := time.Now().Add(2 * time.Second)
 	for {
-		if forecast.calls.Load() >= 1 && drawingCalls.Load() >= 1 {
+		if _, err := controller.forecastCache.CachedBySource("jp", 101, defaultPredictWarmupRanks); err == nil {
 			break
 		}
 		if time.Now().After(deadline) {
-			t.Fatalf("timed out waiting for startup warmup: forecast=%d drawing=%d", forecast.calls.Load(), drawingCalls.Load())
+			t.Fatalf("timed out waiting for startup warmup: forecast=%d", forecast.calls.Load())
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -2543,6 +2544,6 @@ func TestStartDefaultPredictWarmupPrimesDefaultPredictCache(t *testing.T) {
 		t.Fatalf("expected warmed request to avoid extra forecast fetch, got %d", calls)
 	}
 	if calls := drawingCalls.Load(); calls != 1 {
-		t.Fatalf("expected warmed request to avoid extra drawing render, got %d", calls)
+		t.Fatalf("expected warmed request to render once, got %d", calls)
 	}
 }

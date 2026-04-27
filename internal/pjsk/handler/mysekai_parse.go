@@ -116,6 +116,50 @@ func cleanMysekaiArgs(args string) string {
 	return strings.TrimSpace(strings.Join(kept, " "))
 }
 
+func extractMysekaiFullFlag(args string) (bool, string) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) == 0 {
+		return false, ""
+	}
+
+	full := false
+	remaining := make([]string, 0, len(fields))
+	for _, field := range fields {
+		switch strings.ToLower(strings.TrimSpace(field)) {
+		case "", "all", "full", "全部":
+			if strings.TrimSpace(field) != "" {
+				full = true
+			}
+			continue
+		default:
+			remaining = append(remaining, field)
+		}
+	}
+	return full, strings.TrimSpace(strings.Join(remaining, " "))
+}
+
+func extractMysekaiFullOnlyFlag(args string) (bool, string) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) == 0 {
+		return false, ""
+	}
+
+	full := false
+	remaining := make([]string, 0, len(fields))
+	for _, field := range fields {
+		switch strings.ToLower(strings.TrimSpace(field)) {
+		case "", "full":
+			if strings.TrimSpace(field) != "" {
+				full = true
+			}
+			continue
+		default:
+			remaining = append(remaining, field)
+		}
+	}
+	return full, strings.TrimSpace(strings.Join(remaining, " "))
+}
+
 var mysekaiBlueprintUnitAliases = filteralias.UnitMapWithout("piapro")
 
 var mysekaiBlueprintDiscardedUnitTokens = filteralias.UnitAliasSetFor("piapro")

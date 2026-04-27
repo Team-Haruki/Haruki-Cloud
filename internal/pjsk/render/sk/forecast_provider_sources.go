@@ -189,7 +189,7 @@ func (p *RemoteForecastProvider) fetchSnowyLegacy(ctx context.Context, region st
 }
 
 func (p *RemoteForecastProvider) fetchSekaRun(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
-	if region != "jp" && region != "en" && region != "tw" && region != "kr" {
+	if region != "en" {
 		return nil, nil
 	}
 	regionPrefix := ""

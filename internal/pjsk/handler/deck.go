@@ -176,7 +176,11 @@ type deckUserTargetParams struct {
 
 func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	defer func() {
-		err = normalizeDeckUserFacingError(err)
+		region := ""
+		if rc != nil {
+			region = rc.RegionStr
+		}
+		err = normalizeDeckUserFacingErrorForRegion(err, region)
 	}()
 
 	var data []byte

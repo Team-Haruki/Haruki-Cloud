@@ -266,6 +266,115 @@ func TestBuildFixtureListRequestSortsFixturesByIDWithinGroup(t *testing.T) {
 	}
 }
 
+func TestBuildFixtureListRequestUsesUserFixturesAndCategoryAliases(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{
+			"id":                        2001,
+			"name":                      "Simple Bed",
+			"assetbundleName":           "simple_bed",
+			"mysekaiFixtureType":        "furniture",
+			"mysekaiFixtureMainGenreId": 1,
+			"mysekaiFixtureSubGenreId":  11,
+		},
+		{
+			"id":                        2002,
+			"name":                      "Simple Table",
+			"assetbundleName":           "simple_table",
+			"mysekaiFixtureType":        "furniture",
+			"mysekaiFixtureMainGenreId": 1,
+			"mysekaiFixtureSubGenreId":  12,
+		},
+		{
+			"id":                        2003,
+			"name":                      "Plush",
+			"assetbundleName":           "plush",
+			"mysekaiFixtureType":        "furniture",
+			"mysekaiFixtureMainGenreId": 2,
+			"mysekaiFixtureSubGenreId":  -1,
+		},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 1, "name": "一般", "assetbundleName": "general"},
+		{"id": 2, "name": "ぬいぐるみ", "assetbundleName": "plush"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureSubGenres.json"), []map[string]any{
+		{"id": 11, "name": "ベッド", "assetbundleName": "bed"},
+		{"id": 12, "name": "テーブル", "assetbundleName": "table"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{
+		{"id": 1001, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 2001},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiFixtures": [{"mysekaiFixtureId": 2002}],
+    "userMysekaiBlueprints": [{"mysekaiBlueprintId": 1001}],
+    "userMysekaiGamedata": {"mysekaiRank": 42}
+  }
+}`
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	}).WithMySekaiData([]byte(mysekaiJSON))
+
+	req, err := controller.BuildFixtureListRequest(FixtureListQuery{
+		Region: "jp",
+		Profile: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{Nickname: "Tester"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest() error = %v", err)
+	}
+	if req.Profile == nil || req.Profile.MysekaiLevel == nil || *req.Profile.MysekaiLevel != 42 {
+		t.Fatalf("expected mysekai profile panel with level, got %+v", req.Profile)
+	}
+	if req.ProgressMessage == nil || !strings.Contains(*req.ProgressMessage, "1/3") {
+		t.Fatalf("expected total progress from userMysekaiFixtures, got %v", req.ProgressMessage)
+	}
+	obtainedByID := map[int]bool{}
+	for _, mainGenre := range req.MainGenres {
+		for _, subGenre := range mainGenre.SubGenres {
+			for _, fixture := range subGenre.Fixtures {
+				obtainedByID[fixture.ID] = fixture.Obtained
+			}
+		}
+	}
+	if obtainedByID[2001] {
+		t.Fatalf("expected userMysekaiFixtures to take precedence over blueprint fallback, got %+v", obtainedByID)
+	}
+	if !obtainedByID[2002] || obtainedByID[2003] {
+		t.Fatalf("unexpected obtained fixtures: %+v", obtainedByID)
+	}
+
+	tableReq, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp", CategoryQuery: "桌子"})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest(table alias) error = %v", err)
+	}
+	if got := collectFixtureIDs(tableReq); !reflect.DeepEqual(got, []int{2002}) {
+		t.Fatalf("桌子 should resolve to テーブル, got %v", got)
+	}
+
+	plushReq, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp", CategoryQuery: "玩偶"})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest(plush alias) error = %v", err)
+	}
+	if got := collectFixtureIDs(plushReq); !reflect.DeepEqual(got, []int{2003}) {
+		t.Fatalf("玩偶 should resolve to ぬいぐるみ, got %v", got)
+	}
+
+	if _, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp", CategoryQuery: "不存在"}); err == nil {
+		t.Fatal("expected unknown fixture category to fail")
+	}
+}
+
 func TestBuildFixtureListRequestCanHideProfile(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")
@@ -895,6 +1004,21 @@ func TestBuildTalkListRequestSortsSingleTalkFixturesByGroupSizeAndFixtureID(t *t
 	}
 }
 
+func collectFixtureIDs(req *drawing.MysekaiFixtureListRequest) []int {
+	if req == nil {
+		return nil
+	}
+	var ids []int
+	for _, mainGenre := range req.MainGenres {
+		for _, subGenre := range mainGenre.SubGenres {
+			for _, fixture := range subGenre.Fixtures {
+				ids = append(ids, fixture.ID)
+			}
+		}
+	}
+	return ids
+}
+
 func writeTestJSON(t *testing.T, path string, value any) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -1030,6 +1154,56 @@ func TestBuildDoorUpgradeRequestSupportsShowAll(t *testing.T) {
 	}
 	if req.GateMaterials[0].ID != 1 || req.GateMaterials[1].ID != 2 {
 		t.Fatalf("unexpected gate material order: %+v", req.GateMaterials)
+	}
+}
+
+func TestBuildDoorUpgradeRequestSupportsShowFullWithoutSnapshot(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGates.json"), []map[string]any{
+		{"id": 1, "assetbundleName": "mdl_non0001_gate_default"},
+		{"id": 2, "assetbundleName": "mdl_non0002_gate_default"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGateMaterialGroups.json"), []map[string]any{
+		{"groupId": 1001, "mysekaiMaterialId": 1, "quantity": 2},
+		{"groupId": 1002, "mysekaiMaterialId": 2, "quantity": 3},
+		{"groupId": 2001, "mysekaiMaterialId": 1, "quantity": 4},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiMaterials.json"), []map[string]any{
+		{"id": 1, "iconAssetbundleName": "mat_1"},
+		{"id": 2, "iconAssetbundleName": "mat_2"},
+	})
+
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:      masterdataDir,
+		AllowFallback: true,
+	})
+	req, err := controller.BuildDoorUpgradeRequest(DoorUpgradeQuery{
+		Region:   "jp",
+		ShowFull: new(true),
+		Profile:  &drawing.ProfileCardRequest{},
+	})
+	if err != nil {
+		t.Fatalf("BuildDoorUpgradeRequest() error = %v", err)
+	}
+	if req.Profile != nil {
+		t.Fatalf("expected full door upgrade to hide profile, got %+v", req.Profile)
+	}
+	if len(req.GateMaterials) != 2 {
+		t.Fatalf("expected all gate materials, got %+v", req.GateMaterials)
+	}
+	if req.GateMaterials[0].Level != nil || req.GateMaterials[1].Level != nil {
+		t.Fatalf("expected full door upgrade to omit current levels, got %+v", req.GateMaterials)
+	}
+	if len(req.GateMaterials[0].LevelMaterials) != 2 || len(req.GateMaterials[1].LevelMaterials) != 1 {
+		t.Fatalf("expected all levels from level 1, got %+v", req.GateMaterials)
+	}
+	if got := req.GateMaterials[0].LevelMaterials[1].Items[0].SumQuantity; got != "3" {
+		t.Fatalf("expected full total quantity without user ratio, got %q", got)
 	}
 }
 

@@ -297,6 +297,73 @@ func TestExecuteEducationAreaRequiresSuiteSnapshotWhenBindingVisible(t *testing.
 	}
 }
 
+func TestExecuteEducationAreaFullSkipsBindingAndSnapshot(t *testing.T) {
+	ctx := context.Background()
+	params, err := json.Marshal(education.AreaItemQuery{ShowFull: true, Unit: "light_sound"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	var captured drawing.AreaItemUpgradeMaterialsRequest
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/education/area-item" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		defer r.Body.Close()
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte{0x89, 'P', 'N', 'G'})
+	}))
+	defer server.Close()
+
+	cacheDir := t.TempDir()
+	controller := education.NewController(drawing.NewHarukiDrawingClient(server.URL), nil, nil, renderregion.JP)
+	controller.RegisterSource(newHandlerTestEducationSource(renderregion.JP, 3, "jp_item"))
+
+	app := &renderapp.App{
+		Edu:        controller,
+		ImageCache: imagecache.New("https://example.com", cacheDir),
+	}
+
+	message, err := executeEducation(&RequestContext{
+		Ctx: ctx,
+		Cmd: &CommandRequest{
+			Module:            parser.ModuleEducation,
+			Mode:              "education-area",
+			Region:            "jp",
+			Params:            params,
+			RequesterPlatform: "qq",
+			RequesterUserID:   "42",
+		},
+		App:            app,
+		Region:         renderregion.JP,
+		RegionStr:      "jp",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	})
+	if err != nil {
+		t.Fatalf("executeEducation() error = %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeImage {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if captured.HasProfile || captured.Profile != nil {
+		t.Fatalf("expected /区域道具 full to skip profile, got %+v", captured.Profile)
+	}
+	if len(captured.AreaItems) != 1 {
+		t.Fatalf("expected 1 area item, got %d", len(captured.AreaItems))
+	}
+	item := captured.AreaItems[0]
+	if item.CurrentLevel != 0 || len(item.Levels) != 3 {
+		t.Fatalf("expected all levels without current state, got %+v", item)
+	}
+	if item.ItemIconPath != "asset/jp-assets/startapp/areaitem/jp_item/jp_item.png" {
+		t.Fatalf("unexpected item icon path: %s", item.ItemIconPath)
+	}
+}
+
 type handlerEducationSnapshotProviderStub struct {
 	basicSnapshot rendersnapshot.Snapshot
 	fullErr       error

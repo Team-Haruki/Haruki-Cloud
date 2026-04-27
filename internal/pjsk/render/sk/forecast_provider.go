@@ -3,6 +3,7 @@ package sk
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -23,7 +24,7 @@ func NewRemoteForecastProvider() *RemoteForecastProvider {
 	return &RemoteForecastProvider{
 		http: resty.New().
 			SetTimeout(config.SKForecastHTTPClientTimeout).
-			SetRetryCount(1),
+			SetRetryCount(2),
 	}
 }
 
@@ -60,14 +61,9 @@ func (p *RemoteForecastProvider) FetchBySource(ctx context.Context, region strin
 		}
 	}
 
-	type source struct {
-		name string
-		fn   func(context.Context, string, int, map[int]struct{}) (map[int]ForecastScore, error)
-	}
-	sources := []source{
-		{name: "33kit", fn: p.fetch33Kit},
-		{name: "moesekai", fn: p.fetchMoesekai},
-		{name: "sekarun", fn: p.fetchSekaRun},
+	sources := p.sourcesForRegion(normalizedRegion)
+	if len(sources) == 0 {
+		return nil, fmt.Errorf("no forecast source supports region %s", normalizedRegion)
 	}
 
 	out := make(map[string]ForecastSourceData, len(sources))
@@ -91,4 +87,67 @@ func (p *RemoteForecastProvider) FetchBySource(ctx context.Context, region strin
 		return nil, fmt.Errorf("all forecast sources failed: %s", strings.Join(errs, "; "))
 	}
 	return out, nil
+}
+
+type remoteForecastSource struct {
+	name string
+	fn   func(context.Context, string, int, map[int]struct{}) (map[int]ForecastScore, error)
+}
+
+func (p *RemoteForecastProvider) sourcesForRegion(region string) []remoteForecastSource {
+	switch strings.ToLower(strings.TrimSpace(region)) {
+	case "jp":
+		return []remoteForecastSource{
+			{name: "33kit", fn: p.fetch33Kit},
+			{name: "moesekai", fn: p.fetchMoesekai},
+		}
+	case "cn":
+		return []remoteForecastSource{
+			{name: "moesekai", fn: p.fetchMoesekai},
+		}
+	case "en":
+		return []remoteForecastSource{
+			{name: "sekarun", fn: p.fetchSekaRun},
+		}
+	default:
+		return nil
+	}
+}
+
+func forecastSourceOrderForRegion(region string) []string {
+	switch strings.ToLower(strings.TrimSpace(region)) {
+	case "jp":
+		return []string{"33kit", "moesekai"}
+	case "cn":
+		return []string{"moesekai"}
+	case "en":
+		return []string{"sekarun"}
+	default:
+		return nil
+	}
+}
+
+func forecastSourceDisplayOrder(region string, data map[string]ForecastSourceData) []string {
+	if len(data) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(data))
+	out := make([]string, 0, len(data))
+	for _, source := range forecastSourceOrderForRegion(region) {
+		if _, ok := data[source]; !ok {
+			continue
+		}
+		seen[source] = struct{}{}
+		out = append(out, source)
+	}
+
+	extras := make([]string, 0, len(data))
+	for source := range data {
+		if _, ok := seen[source]; ok {
+			continue
+		}
+		extras = append(extras, source)
+	}
+	sort.Strings(extras)
+	return append(out, extras...)
 }

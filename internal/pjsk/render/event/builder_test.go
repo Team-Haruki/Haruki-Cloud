@@ -310,6 +310,71 @@ func TestBuildEventListRequestWorldBloomUnitFilterPrefersEventUnit(t *testing.T)
 	}
 }
 
+func TestBuildEventListRequestCharacterFilterUsesEventCards(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	bonusOnlyEvent := &masterdata.Event{ID: 501, EventType: "marathon", Name: "bonus only", AssetBundleName: "e501", StartAt: 100, AggregateAt: 200}
+	cardEvent := &masterdata.Event{ID: 502, EventType: "marathon", Name: "card event", AssetBundleName: "e502", StartAt: 300, AggregateAt: 400}
+	source.events = []*masterdata.Event{bonusOnlyEvent, cardEvent}
+	source.eventsByID[bonusOnlyEvent.ID] = bonusOnlyEvent
+	source.eventsByID[cardEvent.ID] = cardEvent
+	source.cardsByEvent[bonusOnlyEvent.ID] = []*masterdata.Card{{ID: 5001, CharacterID: 5, Attr: "cool", AssetBundleName: "card_5001"}}
+	source.cardsByEvent[cardEvent.ID] = []*masterdata.Card{{ID: 5002, CharacterID: 21, Attr: "cool", AssetBundleName: "card_5002"}}
+	source.bonusesByEvent[bonusOnlyEvent.ID] = []*masterdata.EventDeckBonus{{ID: 1, EventID: bonusOnlyEvent.ID, GameCharacterUnitID: 210, CardAttr: "cool"}}
+	source.gcuByID[210] = &masterdata.GameCharacterUnit{ID: 210, GameCharacterID: 21, Unit: "piapro"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventListRequest(ListQuery{
+		Region:        renderregion.JP,
+		CharacterID:   21,
+		IncludePast:   true,
+		IncludeFuture: true,
+	})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 1 || req.EventInfo[0].ID != cardEvent.ID {
+		t.Fatalf("expected only event with Miku card, got %+v", req.EventInfo)
+	}
+}
+
+func TestBuildEventListRequestWorldBloomTurnUsesFilteredEvents(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	first := &masterdata.Event{ID: 140, EventType: "world_bloom", Name: "miku wl1", AssetBundleName: "e140", StartAt: 100, AggregateAt: 200}
+	other := &masterdata.Event{ID: 150, EventType: "world_bloom", Name: "other wl", AssetBundleName: "e150", StartAt: 300, AggregateAt: 400}
+	second := &masterdata.Event{ID: 179, EventType: "world_bloom", Name: "miku wl2", AssetBundleName: "e179", StartAt: 500, AggregateAt: 600}
+	third := &masterdata.Event{ID: 202, EventType: "world_bloom", Name: "miku wl3", AssetBundleName: "e202", StartAt: 700, AggregateAt: 800}
+	source.events = []*masterdata.Event{first, other, second, third}
+	for _, eventInfo := range source.events {
+		source.eventsByID[eventInfo.ID] = eventInfo
+	}
+	source.cardsByEvent[first.ID] = []*masterdata.Card{{ID: 14001, CharacterID: 21, Attr: "cool", AssetBundleName: "card_14001"}}
+	source.cardsByEvent[other.ID] = []*masterdata.Card{{ID: 15001, CharacterID: 5, Attr: "cool", AssetBundleName: "card_15001"}}
+	source.cardsByEvent[second.ID] = []*masterdata.Card{{ID: 17901, CharacterID: 21, Attr: "cool", AssetBundleName: "card_17901"}}
+	source.cardsByEvent[third.ID] = []*masterdata.Card{
+		{ID: 20201, CharacterID: 17, Attr: "cool", AssetBundleName: "card_20201"},
+		{ID: 20202, CharacterID: 18, Attr: "cool", AssetBundleName: "card_20202"},
+		{ID: 20203, CharacterID: 19, Attr: "cool", AssetBundleName: "card_20203"},
+		{ID: 20204, CharacterID: 20, Attr: "cool", AssetBundleName: "card_20204"},
+		{ID: 20205, CharacterID: 21, Attr: "cool", AssetBundleName: "card_20205"},
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventListRequest(ListQuery{
+		Region:         renderregion.JP,
+		EventType:      "world_bloom",
+		WorldBloomTurn: 3,
+		CharacterID:    21,
+		IncludePast:    true,
+		IncludeFuture:  true,
+	})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 1 || req.EventInfo[0].ID != third.ID {
+		t.Fatalf("expected Miku wl3 event 202, got %+v", req.EventInfo)
+	}
+}
+
 func TestBuildEventDetailRequestMixedEventDoesNotExposeBoxMetadata(t *testing.T) {
 	source := newTestEventSource(renderregion.JP)
 	eventInfo := &masterdata.Event{ID: 401, EventType: "marathon", Name: "mixed", AssetBundleName: "e401", StartAt: 100, AggregateAt: 200}

@@ -148,3 +148,33 @@ func TestApplyEnvOverridesPJSKRenderChartsURI(t *testing.T) {
 		t.Fatalf("unexpected charts uri override: %q", cfg.PJSKRender.ImageCache.ChartsURI)
 	}
 }
+
+func TestApplyEnvOverridesDrawingCache(t *testing.T) {
+	t.Setenv("CACHE_STORAGE_DIR", "/legacy/cache")
+	t.Setenv("CACHE_DB_PATH", "/legacy/cache/cache.db")
+	t.Setenv("CACHE_GC_INTERVAL", "12h")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_BASE_URL", "http://haruki-cloud:6666")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_STORAGE_DIR", "/data/drawing-cache")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_DB_PATH", "/data/drawing-cache/cache.db")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", "10m")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_CACHE_GC_INTERVAL", "24h")
+
+	cfg := &Config{}
+	ApplyEnvOverrides(cfg)
+
+	if cfg.PJSKRender.DrawingCache.BaseURL != "http://haruki-cloud:6666" {
+		t.Fatalf("unexpected drawing cache base url: %q", cfg.PJSKRender.DrawingCache.BaseURL)
+	}
+	if cfg.PJSKRender.DrawingCache.StorageDir != "/data/drawing-cache" {
+		t.Fatalf("unexpected drawing cache storage dir: %q", cfg.PJSKRender.DrawingCache.StorageDir)
+	}
+	if cfg.PJSKRender.DrawingCache.DBPath != "/data/drawing-cache/cache.db" {
+		t.Fatalf("unexpected drawing cache db path: %q", cfg.PJSKRender.DrawingCache.DBPath)
+	}
+	if cfg.PJSKRender.DrawingCache.TTL != 10*time.Minute {
+		t.Fatalf("unexpected drawing cache ttl: %v", cfg.PJSKRender.DrawingCache.TTL)
+	}
+	if cfg.PJSKRender.DrawingCache.GCInterval != 24*time.Hour {
+		t.Fatalf("unexpected drawing cache gc interval: %v", cfg.PJSKRender.DrawingCache.GCInterval)
+	}
+}

@@ -250,6 +250,68 @@ func TestEventListHandleSupportsSharedUnitAndAttrAliases(t *testing.T) {
 	}
 }
 
+func TestEventDetailHandleParsesWorldBloomTurnAndCharacterFilter(t *testing.T) {
+	h := sekaiHandlers{}.EventDetailHandle()
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/查活动",
+		ArgText:    "wl3 miku",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-list" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params struct {
+		EventType      string `json:"event_type"`
+		WorldBloomTurn int    `json:"world_bloom_turn"`
+		CharacterID    int    `json:"character_id"`
+		IncludePast    bool   `json:"include_past"`
+		IncludeFuture  bool   `json:"include_future"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventType != "world_bloom" || params.WorldBloomTurn != 3 || params.CharacterID != 21 {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+	if !params.IncludePast || !params.IncludeFuture {
+		t.Fatalf("unexpected range params: %+v", params)
+	}
+}
+
+func TestEventDetailHandleKeepsBareWorldBloomFilter(t *testing.T) {
+	h := sekaiHandlers{}.EventDetailHandle()
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/查活动",
+		ArgText:    "wl",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params struct {
+		EventType      string `json:"event_type"`
+		WorldBloomTurn int    `json:"world_bloom_turn"`
+	}
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventType != "world_bloom" || params.WorldBloomTurn != 0 {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
 func TestEventHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventDetailHandle()
 

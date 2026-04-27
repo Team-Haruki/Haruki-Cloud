@@ -82,6 +82,7 @@ type FixtureListQuery struct {
 	ShowProfile   *bool                       `json:"show_profile,omitempty"`
 	ShowProgress  *bool                       `json:"show_progress,omitempty"`
 	ShowObtained  *bool                       `json:"show_obtained,omitempty"`
+	CategoryQuery string                      `json:"category_query,omitempty"`
 	Profile       *drawing.ProfileCardRequest `json:"-"`
 }
 
@@ -91,10 +92,11 @@ type FixtureDetailQuery struct {
 }
 
 type DoorUpgradeQuery struct {
-	Region  string                      `json:"region,omitempty"`
-	Query   string                      `json:"query,omitempty"`
-	ShowAll *bool                       `json:"show_all,omitempty"`
-	Profile *drawing.ProfileCardRequest `json:"-"`
+	Region   string                      `json:"region,omitempty"`
+	Query    string                      `json:"query,omitempty"`
+	ShowAll  *bool                       `json:"show_all,omitempty"`
+	ShowFull *bool                       `json:"show_full,omitempty"`
+	Profile  *drawing.ProfileCardRequest `json:"-"`
 }
 
 type MusicRecordQuery struct {

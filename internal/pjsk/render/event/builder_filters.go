@@ -36,6 +36,9 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 		if query.EventType != "" && !strings.EqualFold(eventInfo.EventType, query.EventType) {
 			continue
 		}
+		if query.WorldBloomTurn > 0 && !strings.EqualFold(eventInfo.EventType, "world_bloom") {
+			continue
+		}
 		if query.Year != 0 && start.Year() != query.Year {
 			continue
 		}
@@ -56,6 +59,12 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].StartAt < result[j].StartAt
 	})
+	if query.WorldBloomTurn > 0 {
+		if query.WorldBloomTurn > len(result) {
+			return nil
+		}
+		result = result[query.WorldBloomTurn-1 : query.WorldBloomTurn]
+	}
 	if query.Limit > 0 && len(result) > query.Limit {
 		result = result[:query.Limit]
 	}
@@ -114,46 +123,70 @@ func (b *Builder) matchEventBonus(eventType string, eventID int, eventUnit strin
 		return true
 	}
 
-	bonusAttr, units, charSet := b.extractEventBonusMeta(eventID)
-	if len(units) == 0 && len(charSet) == 0 && bonusAttr == "" {
-		return false
-	}
-	attrMatched := attr == "" || strings.EqualFold(bonusAttr, attr)
+	if unit != "" || blend || attr != "" {
+		bonusAttr, units, charSet := b.extractEventBonusMeta(eventID)
+		if len(units) == 0 && len(charSet) == 0 && bonusAttr == "" {
+			return false
+		}
+		attrMatched := attr == "" || strings.EqualFold(bonusAttr, attr)
 
-	unitMatched := unit == ""
-	if unit != "" {
-		normalizedUnit := strings.ToLower(strings.TrimSpace(unit))
-		if strings.EqualFold(eventType, "world_bloom") {
-			if normalizedEventUnit := strings.ToLower(strings.TrimSpace(eventUnit)); normalizedEventUnit != "" {
-				unitMatched = normalizedUnit == normalizedEventUnit
-			} else if chapterUnits, hasChapterData := b.extractWorldBloomChapterUnits(eventID); hasChapterData {
-				_, unitMatched = chapterUnits[normalizedUnit]
+		unitMatched := unit == ""
+		if unit != "" {
+			normalizedUnit := strings.ToLower(strings.TrimSpace(unit))
+			if strings.EqualFold(eventType, "world_bloom") {
+				if normalizedEventUnit := strings.ToLower(strings.TrimSpace(eventUnit)); normalizedEventUnit != "" {
+					unitMatched = normalizedUnit == normalizedEventUnit
+				} else if chapterUnits, hasChapterData := b.extractWorldBloomChapterUnits(eventID); hasChapterData {
+					_, unitMatched = chapterUnits[normalizedUnit]
+				} else {
+					_, unitMatched = units[normalizedUnit]
+				}
 			} else {
 				_, unitMatched = units[normalizedUnit]
 			}
-		} else {
-			_, unitMatched = units[normalizedUnit]
+		}
+		if blend || strings.EqualFold(strings.TrimSpace(unit), "blend") {
+			unitMatched = len(units) > 1
+		}
+		if !attrMatched || !unitMatched {
+			return false
 		}
 	}
-	if blend || strings.EqualFold(strings.TrimSpace(unit), "blend") {
-		unitMatched = len(units) > 1
+
+	if charID != 0 || len(charIDs) > 0 {
+		return b.eventHasCardCharacters(eventID, charID, charIDs)
 	}
 
-	charMatched := true
+	return true
+}
+
+func (b *Builder) eventHasCardCharacters(eventID int, charID int, charIDs []int) bool {
+	cards, err := b.source.GetEventCards(eventID)
+	if err != nil || len(cards) == 0 {
+		return false
+	}
+
+	cardChars := make(map[int]struct{}, len(cards))
+	for _, cardInfo := range cards {
+		if cardInfo == nil || cardInfo.CharacterID == 0 {
+			continue
+		}
+		cardChars[cardInfo.CharacterID] = struct{}{}
+	}
 	if charID != 0 {
-		_, charMatched = charSet[charID]
+		if _, ok := cardChars[charID]; !ok {
+			return false
+		}
 	}
 	for _, cid := range charIDs {
 		if cid == 0 {
 			continue
 		}
-		if _, ok := charSet[cid]; !ok {
-			charMatched = false
-			break
+		if _, ok := cardChars[cid]; !ok {
+			return false
 		}
 	}
-
-	return attrMatched && unitMatched && charMatched
+	return true
 }
 
 func (b *Builder) extractWorldBloomChapterUnits(eventID int) (map[string]struct{}, bool) {

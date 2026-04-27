@@ -20,6 +20,16 @@ func TestNormalizeMusicUserFacingErrorReturnsUnreleasedReplayError(t *testing.T)
 	assertReplayErrorText(t, err, "该歌曲还未上线")
 }
 
+func TestNormalizeMusicUserFacingErrorReturnsRegionSpecificNotFoundReplayError(t *testing.T) {
+	err := normalizeMusicUserFacingErrorForLookup(errString("music not found: Tell Your World"), "cn", "")
+	assertReplayErrorText(t, err, "cn服找不到特定的歌: Tell Your World\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀，防止用户想查别的服的歌查到别的服去了")
+}
+
+func TestNormalizeMusicUserFacingErrorExtractsWrappedNotFoundQuery(t *testing.T) {
+	err := normalizeMusicUserFacingErrorForLookup(errString("failed to search music by title or alias: music not found: 虾ex"), "jp", "fallback")
+	assertReplayErrorText(t, err, "jp服找不到特定的歌: 虾ex\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀，防止用户想查别的服的歌查到别的服去了")
+}
+
 func TestNormalizeEventUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {
 	err := normalizeEventUserFacingError(releasecheck.New(releasecheck.KindEvent, "", 2001))
 	assertReplayErrorText(t, err, "该活动还未上线")

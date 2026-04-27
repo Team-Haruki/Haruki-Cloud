@@ -12,13 +12,14 @@ import (
 )
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
+	forecast := NewRemoteForecastProvider()
 	return &Controller{
-		drawing:      drawingClient,
-		drawingBase:  drawingClient,
-		forecast:     NewRemoteForecastProvider(),
-		events:       regionsource.NewRegistry[EventSource](renderregion.JP),
-		assets:       renderassets.NewAssetHelper("", nil),
-		predictCache: newPredictRenderCache(),
+		drawing:       drawingClient,
+		drawingBase:   drawingClient,
+		forecast:      forecast,
+		forecastCache: newForecastDataCache(forecast),
+		events:        regionsource.NewRegistry[EventSource](renderregion.JP),
+		assets:        renderassets.NewAssetHelper("", nil),
 	}
 }
 
@@ -70,21 +71,6 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	return &clone
 }
 
-func (c *Controller) withoutRequestContext() *Controller {
-	if c == nil {
-		return nil
-	}
-	clone := *c
-	clone.requestCtx = nil
-	if c.drawingBase != nil {
-		clone.drawing = c.drawingBase
-	}
-	if c.trackerBase != nil {
-		clone.tracker = c.trackerBase
-	}
-	return &clone
-}
-
 func (c *Controller) contextOrBackground() context.Context {
 	if c != nil && c.requestCtx != nil {
 		return c.requestCtx
@@ -97,6 +83,11 @@ func (c *Controller) SetForecastProvider(provider ForecastProvider) {
 		return
 	}
 	c.forecast = provider
+	if c.forecastCache == nil {
+		c.forecastCache = newForecastDataCache(provider)
+	} else {
+		c.forecastCache.SetProvider(provider)
+	}
 }
 
 // censorTrackerName runs the name through CensorService for logging only and

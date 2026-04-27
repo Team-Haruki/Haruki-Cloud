@@ -5,6 +5,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"math"
 	"regexp"
 	"sort"
@@ -25,6 +26,10 @@ func (sekaiHandlers) MusicListHandle() HarukiSekaiCommandHandler {
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
+			}
+			if full, cleaned := extractMusicListFullFlag(args); full {
+				args = cleaned
+				params["full"] = true
 			}
 			if resultFilter, cleaned, ok := extractMusicListResultFilter(args); ok {
 				args = cleaned
@@ -222,6 +227,25 @@ func normalizeMusicListResultFilterToken(token string) string {
 	}
 }
 
+func extractMusicListFullFlag(args string) (bool, string) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) == 0 {
+		return false, strings.TrimSpace(args)
+	}
+
+	full := false
+	remaining := make([]string, 0, len(fields))
+	for _, field := range fields {
+		switch strings.ToLower(strings.TrimSpace(field)) {
+		case "full", "-f", "--full", "全部":
+			full = true
+		default:
+			remaining = append(remaining, field)
+		}
+	}
+	return full, strings.TrimSpace(strings.Join(remaining, " "))
+}
+
 func extractMusicDifficulty(args string) (string, string) {
 	return rendermusic.ExtractMusicDifficulty(args)
 }
@@ -376,7 +400,15 @@ func joinMusicListTokensExcluding(tokens []string, skipIndexes ...int) string {
 
 func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	defer func() {
-		err = normalizeMusicUserFacingError(err)
+		region := ""
+		query := ""
+		if rc != nil {
+			region = rc.RegionStr
+			if rc.Cmd != nil {
+				query = rc.Cmd.Query
+			}
+		}
+		err = normalizeMusicUserFacingErrorForLookup(err, region, query)
 	}()
 
 	if rc.App == nil || rc.App.Music == nil {
@@ -403,19 +435,25 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, err
 		}
 	case "music-list":
-		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
-		if suiteErr != nil {
-			return nil, suiteErr
-		}
-		if suiteSnapshot != nil {
-			musicCtrl = musicCtrl.WithSnapshot(suiteSnapshot)
-		}
 		q := rendermusic.ListQuery{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
+		var suiteSnapshot rendersnapshot.Snapshot
+		if !q.Full {
+			_, resolvedSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
+			if suiteErr != nil {
+				return nil, suiteErr
+			}
+			suiteSnapshot = resolvedSnapshot
+			if suiteSnapshot != nil {
+				musicCtrl = musicCtrl.WithSnapshot(suiteSnapshot)
+			}
+		}
 		if strings.TrimSpace(q.Keyword) == "" {
 			q.Keyword = strings.TrimSpace(rc.Cmd.Query)
 		}
-		q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, suiteSnapshot)
+		if !q.Full {
+			q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, suiteSnapshot)
+		}
 		data, err = musicCtrl.RenderMusicList(q)
 	case "music-chart":
 		q := rendermusic.ChartQuery{Query: rc.Cmd.Query, Region: rc.Cmd.Region}

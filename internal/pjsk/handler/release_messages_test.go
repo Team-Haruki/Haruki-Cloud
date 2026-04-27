@@ -22,12 +22,22 @@ func TestNormalizeMusicUserFacingErrorReturnsUnreleasedReplayError(t *testing.T)
 
 func TestNormalizeMusicUserFacingErrorReturnsRegionSpecificNotFoundReplayError(t *testing.T) {
 	err := normalizeMusicUserFacingErrorForLookup(errString("music not found: Tell Your World"), "cn", "")
-	assertReplayErrorText(t, err, "cn服找不到特定的歌: Tell Your World\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀，防止用户想查别的服的歌查到别的服去了")
+	assertReplayErrorText(t, err, "CN服找不到特定的歌: Tell Your World\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀")
 }
 
 func TestNormalizeMusicUserFacingErrorExtractsWrappedNotFoundQuery(t *testing.T) {
 	err := normalizeMusicUserFacingErrorForLookup(errString("failed to search music by title or alias: music not found: 虾ex"), "jp", "fallback")
-	assertReplayErrorText(t, err, "jp服找不到特定的歌: 虾ex\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀，防止用户想查别的服的歌查到别的服去了")
+	assertReplayErrorText(t, err, "JP服找不到特定的歌: 虾ex\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀")
+}
+
+func TestNormalizeMusicUserFacingErrorExtractsSekaiMusicNotFound(t *testing.T) {
+	err := normalizeMusicUserFacingErrorForLookup(errString("failed to search music: query music 662: sekai: music not found"), "cn", "")
+	assertReplayErrorText(t, err, "CN服找不到特定的歌: 662\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀")
+}
+
+func TestNormalizeMusicUserFacingErrorTreatsBanIndexAsLookupMiss(t *testing.T) {
+	err := normalizeMusicUserFacingErrorForLookup(errString("failed to search music: ban event index out of range: 6"), "jp", "miku6")
+	assertReplayErrorText(t, err, "JP服找不到特定的歌: miku6\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀")
 }
 
 func TestNormalizeEventUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {

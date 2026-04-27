@@ -339,10 +339,10 @@ func TestBuildEventListRequestCharacterFilterUsesEventCards(t *testing.T) {
 
 func TestBuildEventListRequestWorldBloomTurnUsesFilteredEvents(t *testing.T) {
 	source := newTestEventSource(renderregion.JP)
-	first := &masterdata.Event{ID: 140, EventType: "world_bloom", Name: "miku wl1", AssetBundleName: "e140", StartAt: 100, AggregateAt: 200}
-	other := &masterdata.Event{ID: 150, EventType: "world_bloom", Name: "other wl", AssetBundleName: "e150", StartAt: 300, AggregateAt: 400}
-	second := &masterdata.Event{ID: 179, EventType: "world_bloom", Name: "miku wl2", AssetBundleName: "e179", StartAt: 500, AggregateAt: 600}
-	third := &masterdata.Event{ID: 202, EventType: "world_bloom", Name: "miku wl3", AssetBundleName: "e202", StartAt: 700, AggregateAt: 800}
+	first := &masterdata.Event{ID: 140, EventType: "world_bloom", Unit: "none", Name: "miku wl1", AssetBundleName: "e140", StartAt: 100, AggregateAt: 200}
+	other := &masterdata.Event{ID: 150, EventType: "world_bloom", Unit: "street", Name: "other wl", AssetBundleName: "e150", StartAt: 300, AggregateAt: 400}
+	second := &masterdata.Event{ID: 179, EventType: "world_bloom", Unit: "none", Name: "miku wl2", AssetBundleName: "e179", StartAt: 500, AggregateAt: 600}
+	third := &masterdata.Event{ID: 202, EventType: "world_bloom", Unit: "none", Name: "miku wl3", AssetBundleName: "e202", StartAt: 700, AggregateAt: 800}
 	source.events = []*masterdata.Event{first, other, second, third}
 	for _, eventInfo := range source.events {
 		source.eventsByID[eventInfo.ID] = eventInfo
@@ -372,6 +372,56 @@ func TestBuildEventListRequestWorldBloomTurnUsesFilteredEvents(t *testing.T) {
 	}
 	if len(req.EventInfo) != 1 || req.EventInfo[0].ID != third.ID {
 		t.Fatalf("expected Miku wl3 event 202, got %+v", req.EventInfo)
+	}
+}
+
+func TestBuildEventListRequestWorldBloomTurnMatchesEachUnitRound(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	events := []*masterdata.Event{
+		{ID: 112, EventType: "world_bloom", Unit: "school_refusal", Name: "n25 wl1", AssetBundleName: "e112", StartAt: 100, AggregateAt: 110},
+		{ID: 118, EventType: "world_bloom", Unit: "street", Name: "vbs wl1", AssetBundleName: "e118", StartAt: 200, AggregateAt: 210},
+		{ID: 140, EventType: "world_bloom", Unit: "none", Name: "vs wl1", AssetBundleName: "e140", StartAt: 300, AggregateAt: 310},
+		{ID: 163, EventType: "world_bloom", Unit: "street", Name: "vbs wl2", AssetBundleName: "e163", StartAt: 400, AggregateAt: 410},
+		{ID: 179, EventType: "world_bloom", Unit: "none", Name: "vs wl2", AssetBundleName: "e179", StartAt: 500, AggregateAt: 510},
+		{ID: 180, EventType: "world_bloom", Unit: "none", Name: "vs finale", AssetBundleName: "e180", StartAt: 600, AggregateAt: 610},
+		{ID: 202, EventType: "world_bloom", Unit: "none", Name: "vs wl3", AssetBundleName: "e202", StartAt: 700, AggregateAt: 710},
+	}
+	source.events = events
+	for _, eventInfo := range source.events {
+		source.eventsByID[eventInfo.ID] = eventInfo
+	}
+	source.worldByEvent[180] = []*masterdata.WorldBloom{{EventID: 180, ChapterType: "finale"}}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	testCases := []struct {
+		name string
+		turn int
+		want []int
+	}{
+		{name: "wl1", turn: 1, want: []int{112, 118, 140}},
+		{name: "wl2", turn: 2, want: []int{163, 179}},
+		{name: "wl3", turn: 3, want: []int{202}},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := builder.BuildEventListRequest(ListQuery{
+				Region:         renderregion.JP,
+				EventType:      "world_bloom",
+				WorldBloomTurn: tc.turn,
+				IncludePast:    true,
+				IncludeFuture:  true,
+			})
+			if err != nil {
+				t.Fatalf("BuildEventListRequest failed: %v", err)
+			}
+			got := make([]int, 0, len(req.EventInfo))
+			for _, eventInfo := range req.EventInfo {
+				got = append(got, eventInfo.ID)
+			}
+			if fmt.Sprint(got) != fmt.Sprint(tc.want) {
+				t.Fatalf("unexpected %s events: got %v, want %v", tc.name, got, tc.want)
+			}
+		})
 	}
 }
 

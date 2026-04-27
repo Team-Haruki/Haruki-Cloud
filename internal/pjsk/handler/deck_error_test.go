@@ -20,7 +20,7 @@ func TestNormalizeDeckUserFacingError(t *testing.T) {
 		{
 			name:    "music not found",
 			input:   errString("failed to search music by title or alias: music not found: 虾ex"),
-			wantErr: "jp服找不到特定的歌: 虾ex\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀，防止用户想查别的服的歌查到别的服去了",
+			wantErr: "JP服找不到特定的歌: 虾ex\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀",
 		},
 		{
 			name:    "snapshot required",

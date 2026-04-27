@@ -18,6 +18,7 @@ type renderCacheRule struct {
 }
 
 var (
+	renderCacheTTLOneHour = time.Hour
 	renderCacheTTLHalfDay = 12 * time.Hour
 	renderCacheTTLOneDay  = 24 * time.Hour
 	renderCacheTTLTwoHour = 2 * time.Hour
@@ -56,7 +57,7 @@ var (
 		},
 		"/api/pjsk/event/detail": {
 			Enabled: true,
-			TTL:     renderCacheTTLHalfDay,
+			TTL:     renderCacheTTLOneHour,
 		},
 		"/api/pjsk/event/list": {
 			Enabled: true,
@@ -317,18 +318,6 @@ func adjustRenderCacheRuleForPayload(endpointPath string, payload any, rule rend
 
 func resolveRenderCacheWindowTTL(endpointPath string, payload any) (time.Duration, bool) {
 	switch strings.TrimSpace(endpointPath) {
-	case "/api/pjsk/event/detail":
-		root := mapAt(payload)
-		if root == nil {
-			return 0, false
-		}
-		nowMs := renderCacheNowMillis(root)
-		if nowMs <= 0 {
-			return 0, false
-		}
-		if endMs, ok := renderCacheMillis(valueAt(root, "event_info", "end_at")); ok {
-			return clampRenderCacheWindowTTL(endMs - nowMs), true
-		}
 	case "/api/pjsk/event/list":
 		root := mapAt(payload)
 		if root == nil {

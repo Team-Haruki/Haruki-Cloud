@@ -13,6 +13,10 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 	events := b.source.GetEvents()
 	now := time.Now()
 	result := make([]*masterdata.Event, 0, len(events))
+	var worldBloomTurnByEvent map[int]int
+	if query.WorldBloomTurn > 0 {
+		worldBloomTurnByEvent = b.buildWorldBloomTurnByEvent(events)
+	}
 	includePast := query.IncludePast
 	includeFuture := query.IncludeFuture
 	if !query.OnlyFuture && !includePast && !includeFuture {
@@ -39,6 +43,9 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 		if query.WorldBloomTurn > 0 && !strings.EqualFold(eventInfo.EventType, "world_bloom") {
 			continue
 		}
+		if query.WorldBloomTurn > 0 && worldBloomTurnByEvent[eventInfo.ID] != query.WorldBloomTurn {
+			continue
+		}
 		if query.Year != 0 && start.Year() != query.Year {
 			continue
 		}
@@ -59,16 +66,47 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].StartAt < result[j].StartAt
 	})
-	if query.WorldBloomTurn > 0 {
-		if query.WorldBloomTurn > len(result) {
-			return nil
-		}
-		result = result[query.WorldBloomTurn-1 : query.WorldBloomTurn]
-	}
 	if query.Limit > 0 && len(result) > query.Limit {
 		result = result[:query.Limit]
 	}
 	return result
+}
+
+func (b *Builder) buildWorldBloomTurnByEvent(events []*masterdata.Event) map[int]int {
+	worldBloomEvents := make([]*masterdata.Event, 0)
+	for _, eventInfo := range events {
+		if eventInfo == nil || !strings.EqualFold(eventInfo.EventType, "world_bloom") {
+			continue
+		}
+		if b.isWorldBloomFinaleEvent(eventInfo.ID) {
+			continue
+		}
+		worldBloomEvents = append(worldBloomEvents, eventInfo)
+	}
+	sort.Slice(worldBloomEvents, func(i, j int) bool {
+		return worldBloomEvents[i].StartAt < worldBloomEvents[j].StartAt
+	})
+
+	turnByEvent := make(map[int]int, len(worldBloomEvents))
+	turnByUnit := make(map[string]int)
+	for _, eventInfo := range worldBloomEvents {
+		key := strings.ToLower(strings.TrimSpace(eventInfo.Unit))
+		if key == "" {
+			key = "unknown"
+		}
+		turnByUnit[key]++
+		turnByEvent[eventInfo.ID] = turnByUnit[key]
+	}
+	return turnByEvent
+}
+
+func (b *Builder) isWorldBloomFinaleEvent(eventID int) bool {
+	for _, chapter := range b.source.GetWorldBloomChapters(eventID) {
+		if chapter != nil && strings.EqualFold(strings.TrimSpace(chapter.ChapterType), "finale") {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *Builder) extractEventBonuses(eventID int) (string, []int) {

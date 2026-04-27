@@ -28,6 +28,13 @@ func TestResolveRenderCacheRuleUsesHalfDayTTLForSelectedEndpoints(t *testing.T) 
 	}
 }
 
+func TestResolveRenderCacheRuleUsesOneHourTTLForEventDetail(t *testing.T) {
+	rule := resolveRenderCacheRule("/api/pjsk/event/detail")
+	if rule.TTL != renderCacheTTLOneHour {
+		t.Fatalf("event detail ttl = %s, want %s", rule.TTL, renderCacheTTLOneHour)
+	}
+}
+
 func TestBuildRenderCachePolicyAliasListIsInfiniteAndIgnoresDT(t *testing.T) {
 	reqA := map[string]any{
 		"title":        "角色别名",
@@ -138,7 +145,7 @@ func TestBuildRenderCachePolicyVLiveUsesDynamicWindowTTL(t *testing.T) {
 	}
 }
 
-func TestBuildRenderCachePolicyWindowTTLUsesMinimumForPastData(t *testing.T) {
+func TestBuildRenderCachePolicyEventDetailUsesOneHourTTL(t *testing.T) {
 	now := int64(1774118400000)
 	endAt := now - int64((time.Hour)/time.Millisecond)
 	policy, err := buildRenderCachePolicy("/api/pjsk/event/detail", map[string]any{
@@ -151,8 +158,8 @@ func TestBuildRenderCachePolicyWindowTTLUsesMinimumForPastData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildRenderCachePolicy: %v", err)
 	}
-	if policy.TTL != renderCacheWindowTTLMin {
-		t.Fatalf("past event detail ttl = %v, want %v", policy.TTL, renderCacheWindowTTLMin)
+	if policy.TTL != renderCacheTTLOneHour {
+		t.Fatalf("event detail ttl = %v, want %v", policy.TTL, renderCacheTTLOneHour)
 	}
 }
 

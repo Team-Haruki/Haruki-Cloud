@@ -46,7 +46,7 @@ func normalizeMusicUserFacingErrorForLookup(err error, region string, fallbackQu
 
 func newMusicNotFoundReplayError(region string, query string) error {
 	return onebot11.NewReplayError(
-		"%s服找不到特定的歌: %s\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀，防止用户想查别的服的歌查到别的服去了",
+		"%s服找不到特定的歌: %s\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀",
 		musicNotFoundRegionLabel(region),
 		musicNotFoundQueryOrFallback(query, ""),
 	)
@@ -57,7 +57,7 @@ func musicNotFoundRegionLabel(region string) string {
 	if region == "" {
 		return DefaultRegionStr
 	}
-	return region
+	return strings.ToUpper(region)
 }
 
 func extractMusicNotFoundQuery(err error, fallbackQuery string) (string, bool) {
@@ -80,6 +80,12 @@ func extractMusicNotFoundQuery(err error, fallbackQuery string) (string, bool) {
 		raw := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(message, "music "), " not found"))
 		return musicNotFoundQueryOrFallback(raw, fallbackQuery), true
 	}
+	if strings.Contains(message, "music not found") {
+		return musicNotFoundQueryOrFallback(extractQueryMusicIDFromError(message), fallbackQuery), true
+	}
+	if strings.Contains(message, "ban event index out of range") {
+		return musicNotFoundQueryOrFallback("", fallbackQuery), true
+	}
 	return "", false
 }
 
@@ -92,6 +98,20 @@ func musicNotFoundQueryOrFallback(query string, fallback string) string {
 		return "未知"
 	}
 	return query
+}
+
+func extractQueryMusicIDFromError(message string) string {
+	const marker = "query music "
+	idx := strings.LastIndex(message, marker)
+	if idx < 0 {
+		return ""
+	}
+	rest := message[idx+len(marker):]
+	end := 0
+	for end < len(rest) && rest[end] >= '0' && rest[end] <= '9' {
+		end++
+	}
+	return strings.TrimSpace(rest[:end])
 }
 
 func normalizeEventUserFacingError(err error) error {

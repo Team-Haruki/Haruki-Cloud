@@ -354,6 +354,28 @@ func TestBuildFixtureListRequestUsesUserFixturesAndCategoryAliases(t *testing.T)
 		t.Fatalf("unexpected obtained fixtures: %+v", obtainedByID)
 	}
 
+	blueprintReq, err := controller.BuildFixtureListRequest(FixtureListQuery{
+		Region:         "jp",
+		ObtainedSource: "blueprint",
+		Profile: &drawing.ProfileCardRequest{
+			Profile: &drawing.BasicProfile{Nickname: "Tester"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildFixtureListRequest(blueprint source) error = %v", err)
+	}
+	blueprintObtainedByID := map[int]bool{}
+	for _, mainGenre := range blueprintReq.MainGenres {
+		for _, subGenre := range mainGenre.SubGenres {
+			for _, fixture := range subGenre.Fixtures {
+				blueprintObtainedByID[fixture.ID] = fixture.Obtained
+			}
+		}
+	}
+	if !blueprintObtainedByID[2001] || blueprintObtainedByID[2002] || blueprintObtainedByID[2003] {
+		t.Fatalf("expected blueprint source to ignore userMysekaiFixtures, got %+v", blueprintObtainedByID)
+	}
+
 	tableReq, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp", CategoryQuery: "桌子"})
 	if err != nil {
 		t.Fatalf("BuildFixtureListRequest(table alias) error = %v", err)
@@ -961,6 +983,9 @@ func TestBuildTalkListRequestSortsSingleTalkFixturesByGroupSizeAndFixtureID(t *t
 
 	mysekaiJSON := `{
   "updatedResources": {
+    "userMysekaiFixtures": [
+      {"mysekaiFixtureId": 13}
+    ],
     "userMysekaiBlueprints": [
       {"mysekaiBlueprintId": 10011},
       {"mysekaiBlueprintId": 10012},
@@ -988,6 +1013,9 @@ func TestBuildTalkListRequestSortsSingleTalkFixturesByGroupSizeAndFixtureID(t *t
 	for _, group := range req.SingleMainGenres[0].SubGenres[0] {
 		ids := make([]int, 0, len(group.Fixtures))
 		for _, fixture := range group.Fixtures {
+			if !fixture.Obtained {
+				t.Fatalf("talk list should use blueprint ownership, fixture rendered as not obtained: %+v", fixture)
+			}
 			ids = append(ids, fixture.ID)
 		}
 		got = append(got, ids)

@@ -10,20 +10,28 @@ import (
 )
 
 func (c *Controller) obtainedMysekaiFixtureIDs(merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
-	result := map[int]struct{}{}
 	if fixtures := nestedList(merged, "userMysekaiFixtures"); fixtures != nil {
-		for _, raw := range fixtures {
-			item, ok := raw.(map[string]any)
-			if !ok {
-				continue
-			}
-			if fixtureID := userMysekaiFixtureID(item); fixtureID != 0 {
-				result[fixtureID] = struct{}{}
-			}
-		}
-		return result
+		return userMysekaiFixtureIDs(fixtures)
 	}
+	return userMysekaiBlueprintFixtureIDs(merged, blueprints)
+}
 
+func userMysekaiFixtureIDs(fixtures []any) map[int]struct{} {
+	result := map[int]struct{}{}
+	for _, raw := range fixtures {
+		item, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if fixtureID := userMysekaiFixtureID(item); fixtureID != 0 {
+			result[fixtureID] = struct{}{}
+		}
+	}
+	return result
+}
+
+func userMysekaiBlueprintFixtureIDs(merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
+	result := map[int]struct{}{}
 	for _, raw := range nestedList(merged, "userMysekaiBlueprints") {
 		item, ok := raw.(map[string]any)
 		if !ok {

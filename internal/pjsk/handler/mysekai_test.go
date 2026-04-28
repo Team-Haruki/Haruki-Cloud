@@ -302,17 +302,21 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 	}
 
 	var listParams struct {
-		ShowID        bool  `json:"show_id"`
-		OnlyCraftable bool  `json:"only_craftable"`
-		ShowProfile   *bool `json:"show_profile"`
-		ShowProgress  *bool `json:"show_progress"`
-		ShowObtained  *bool `json:"show_obtained"`
+		ShowID         bool   `json:"show_id"`
+		OnlyCraftable  bool   `json:"only_craftable"`
+		ObtainedSource string `json:"obtained_source"`
+		ShowProfile    *bool  `json:"show_profile"`
+		ShowProgress   *bool  `json:"show_progress"`
+		ShowObtained   *bool  `json:"show_obtained"`
 	}
 	if err := json.Unmarshal(resolved.Params, &listParams); err != nil {
 		t.Fatalf("unmarshal list params: %v", err)
 	}
 	if !listParams.ShowID || !listParams.OnlyCraftable {
 		t.Fatalf("unexpected list params: %+v", listParams)
+	}
+	if listParams.ObtainedSource != "blueprint" {
+		t.Fatalf("expected /msb list to use blueprint obtained source, got %+v", listParams)
 	}
 	if listParams.ShowProfile != nil || listParams.ShowProgress != nil || listParams.ShowObtained != nil {
 		t.Fatalf("unexpected list params: %+v", listParams)
@@ -456,17 +460,21 @@ func TestMysekaiTalkListHandleWithoutQueryFallsBackToFixtureList(t *testing.T) {
 	}
 
 	var params struct {
-		ShowID        bool  `json:"show_id"`
-		OnlyCraftable bool  `json:"only_craftable"`
-		ShowProfile   *bool `json:"show_profile"`
-		ShowProgress  *bool `json:"show_progress"`
-		ShowObtained  *bool `json:"show_obtained"`
+		ShowID         bool   `json:"show_id"`
+		OnlyCraftable  bool   `json:"only_craftable"`
+		ObtainedSource string `json:"obtained_source"`
+		ShowProfile    *bool  `json:"show_profile"`
+		ShowProgress   *bool  `json:"show_progress"`
+		ShowObtained   *bool  `json:"show_obtained"`
 	}
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
 	if !params.ShowID || !params.OnlyCraftable {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+	if params.ObtainedSource != "blueprint" {
+		t.Fatalf("expected talk list fallback to use blueprint obtained source, got %+v", params)
 	}
 	if params.ShowProfile != nil || params.ShowProgress != nil || params.ShowObtained != nil {
 		t.Fatalf("unexpected params: %+v", params)
@@ -548,18 +556,22 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	}
 
 	var listParams struct {
-		ShowID        *bool  `json:"show_id"`
-		OnlyCraftable *bool  `json:"only_craftable"`
-		ShowProfile   *bool  `json:"show_profile"`
-		ShowProgress  *bool  `json:"show_progress"`
-		ShowObtained  *bool  `json:"show_obtained"`
-		CategoryQuery string `json:"category_query"`
+		ShowID         *bool  `json:"show_id"`
+		OnlyCraftable  *bool  `json:"only_craftable"`
+		ObtainedSource string `json:"obtained_source"`
+		ShowProfile    *bool  `json:"show_profile"`
+		ShowProgress   *bool  `json:"show_progress"`
+		ShowObtained   *bool  `json:"show_obtained"`
+		CategoryQuery  string `json:"category_query"`
 	}
 	if err := json.Unmarshal(resolved.Params, &listParams); err != nil {
 		t.Fatalf("unmarshal list params: %v", err)
 	}
 	if listParams.ShowID == nil || !*listParams.ShowID {
 		t.Fatalf("unexpected list params: %+v", listParams)
+	}
+	if listParams.ObtainedSource != "fixture" {
+		t.Fatalf("expected default /msf to use fixture obtained source, got %+v", listParams)
 	}
 	if listParams.OnlyCraftable != nil || listParams.ShowProfile != nil || listParams.ShowProgress != nil || listParams.ShowObtained != nil || listParams.CategoryQuery != "" {
 		t.Fatalf("expected default /msf to use dynamic fixture list defaults, got %+v", listParams)

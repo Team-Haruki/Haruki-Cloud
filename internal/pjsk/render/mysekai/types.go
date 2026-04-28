@@ -76,14 +76,15 @@ type MapQuery struct {
 }
 
 type FixtureListQuery struct {
-	Region        string                      `json:"region,omitempty"`
-	ShowID        *bool                       `json:"show_id,omitempty"`
-	OnlyCraftable *bool                       `json:"only_craftable,omitempty"`
-	ShowProfile   *bool                       `json:"show_profile,omitempty"`
-	ShowProgress  *bool                       `json:"show_progress,omitempty"`
-	ShowObtained  *bool                       `json:"show_obtained,omitempty"`
-	CategoryQuery string                      `json:"category_query,omitempty"`
-	Profile       *drawing.ProfileCardRequest `json:"-"`
+	Region         string                      `json:"region,omitempty"`
+	ShowID         *bool                       `json:"show_id,omitempty"`
+	OnlyCraftable  *bool                       `json:"only_craftable,omitempty"`
+	ShowProfile    *bool                       `json:"show_profile,omitempty"`
+	ShowProgress   *bool                       `json:"show_progress,omitempty"`
+	ShowObtained   *bool                       `json:"show_obtained,omitempty"`
+	ObtainedSource string                      `json:"obtained_source,omitempty"`
+	CategoryQuery  string                      `json:"category_query,omitempty"`
+	Profile        *drawing.ProfileCardRequest `json:"-"`
 }
 
 type FixtureDetailQuery struct {

@@ -60,7 +60,7 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	characters := c.masterdata.loadMapByID("gameCharacters.json")
 	obtainedFixtureIDs := map[int]struct{}{}
 	if showObtained {
-		obtainedFixtureIDs = c.obtainedMysekaiFixtureIDs(merged, blueprints)
+		obtainedFixtureIDs = c.fixtureListObtainedIDs(query.ObtainedSource, merged, blueprints)
 	}
 	craftableFixtureIDs := c.craftableMysekaiFixtureIDs(blueprints)
 
@@ -217,6 +217,17 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 		request.ProgressMessage = &message
 	}
 	return request, nil
+}
+
+func (c *Controller) fixtureListObtainedIDs(source string, merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {
+	switch strings.ToLower(strings.TrimSpace(source)) {
+	case "fixture", "fixtures", "crafted", "craft":
+		return userMysekaiFixtureIDs(nestedList(merged, "userMysekaiFixtures"))
+	case "blueprint", "blueprints":
+		return userMysekaiBlueprintFixtureIDs(merged, blueprints)
+	default:
+		return c.obtainedMysekaiFixtureIDs(merged, blueprints)
+	}
 }
 
 // RenderFixtureList renders the MySekai fixture list view.

@@ -29,7 +29,8 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		return nil, fmt.Errorf("mysekai talk list invalid character query: %s", query.Query)
 	}
 
-	obtainedFixtureIDs := c.obtainedMysekaiFixtureIDs(merged, c.masterdata.loadMapByID("mysekaiBlueprints.json"))
+	blueprints := c.masterdata.loadMapByID("mysekaiBlueprints.json")
+	obtainedFixtureIDs := userMysekaiBlueprintFixtureIDs(merged, blueprints)
 	fixturesData := c.masterdata.loadList("mysekaiFixtures.json")
 	fixtureMap := c.masterdata.loadMapByID("mysekaiFixtures.json")
 	mainGenreMap := c.masterdata.loadMapByID("mysekaiFixtureMainGenres.json")

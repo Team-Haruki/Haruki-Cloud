@@ -3681,7 +3681,7 @@ func TestResolveTrackerCharacterSelectionResolvesWorldBloomChapterSelector(t *te
 	}
 }
 
-func TestResolveTrackerCharacterSelectionFallsBackToPreviousWorldBloomEvent(t *testing.T) {
+func TestResolveTrackerCharacterSelectionRejectsWhenNoCurrentWorldBloomEvent(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_tracker_wl_prev?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = sekaiClient.Close() })
@@ -3715,14 +3715,20 @@ func TestResolveTrackerCharacterSelectionFallsBackToPreviousWorldBloomEvent(t *t
 		WlCharacterQuery: "wl",
 	}
 
-	if err := resolveTrackerCharacterSelection(ctx, &renderapp.App{Sekai: sekaiClient}, &req); err != nil {
-		t.Fatalf("resolveTrackerCharacterSelection() error = %v", err)
+	err := resolveTrackerCharacterSelection(ctx, &renderapp.App{Sekai: sekaiClient}, &req)
+	if err == nil {
+		t.Fatalf("expected current world bloom error")
 	}
-	if req.EventID != 401 {
-		t.Fatalf("expected previous wl event 401, got %d", req.EventID)
+	if err.Error() != "当前JP服不在wl活动期间，请使用/jpsk" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	req.EventID = 401
+	if err := resolveTrackerCharacterSelection(ctx, &renderapp.App{Sekai: sekaiClient}, &req); err != nil {
+		t.Fatalf("explicit previous world bloom event should still resolve: %v", err)
 	}
 	if req.WlCharacterID == nil || *req.WlCharacterID != 24 {
-		t.Fatalf("unexpected wl character id: %+v", req.WlCharacterID)
+		t.Fatalf("unexpected explicit wl character id: %+v", req.WlCharacterID)
 	}
 }
 

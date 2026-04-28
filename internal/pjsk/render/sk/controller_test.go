@@ -2,6 +2,7 @@ package sk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -1592,6 +1593,44 @@ func (checkRoomOutOfTop100TrackerSource) GetLatestRankingByUser(server string, e
 	}, nil
 }
 
+type latestUserWithoutRankTrackerSource struct {
+	testTrackerSource
+}
+
+func (latestUserWithoutRankTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     0,
+			Rank:      0,
+			Timestamp: 0,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "ProfileOnly",
+		},
+	}, nil
+}
+
+func (latestUserWithoutRankTrackerSource) GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	charID := characterID
+	return &sekaiapi.WorldBloomLatestRankingResponse{
+		RankData: sekaiapi.WorldBloomRankDataPoint{
+			RankDataPoint: sekaiapi.RankDataPoint{
+				UserID:    strconv.FormatInt(userID, 10),
+				Score:     0,
+				Rank:      0,
+				Timestamp: 0,
+			},
+			CharacterID: &charID,
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "ProfileOnly",
+		},
+	}, nil
+}
+
 func TestBuildCheckRoomRequestFromTrackerKeepsPlayerNameAndUsesWindowMetrics(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
@@ -1704,6 +1743,69 @@ func TestBuildQueryRequestFromTrackerSupportsUserQueryAdjacentRanks(t *testing.T
 	}
 	if payload.NextRanks == nil || payload.NextRanks.Rank != 30 || payload.NextRanks.Name != "Player-30" {
 		t.Fatalf("unexpected next ranks: %+v", payload.NextRanks)
+	}
+}
+
+func TestBuildQueryRequestFromTrackerRejectsUserResponseWithoutRank(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(latestUserWithoutRankTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	_, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		UserID:  new(int64(99887766)),
+	})
+	if err == nil {
+		t.Fatal("expected user query without rank to fail")
+	}
+	if err.Error() != "tracker user query failed: tracker: ranking record not found" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !errors.Is(err, sekaiapi.ErrRankingNotFound) {
+		t.Fatalf("expected ErrRankingNotFound, got %v", err)
+	}
+}
+
+func TestBuildQueryRequestFromTrackerRejectsWorldBloomUserResponseWithoutRank(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		EventType:   "world_bloom",
+		Name:        "World Bloom Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(latestUserWithoutRankTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	charaID := 21
+	_, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		EventID:       101,
+		Region:        "jp",
+		UserID:        new(int64(99887766)),
+		WlCharacterID: &charaID,
+	})
+	if err == nil {
+		t.Fatal("expected world bloom user query without rank to fail")
+	}
+	if err.Error() != "tracker user query failed: tracker: ranking record not found" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !errors.Is(err, sekaiapi.ErrRankingNotFound) {
+		t.Fatalf("expected ErrRankingNotFound, got %v", err)
 	}
 }
 

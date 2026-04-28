@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, error) {
@@ -105,10 +106,10 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 		if err != nil {
 			return drawing.RankInfo{}, err
 		}
-		rankValue := latest.RankData.Rank
-		if rankValue <= 0 {
-			rankValue = 1
+		if latest == nil || latest.RankData.Rank <= 0 {
+			return drawing.RankInfo{}, sekaiapi.ErrRankingNotFound
 		}
+		rankValue := latest.RankData.Rank
 		score := latest.RankData.Score
 		name := strings.TrimSpace(latest.UserData.Name)
 		if c.shouldResolveTrackerNameByUser(server, eventID, name) {
@@ -133,10 +134,10 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 	if err != nil {
 		return drawing.RankInfo{}, err
 	}
-	rankValue := latest.RankData.Rank
-	if rankValue <= 0 {
-		rankValue = 1
+	if latest == nil || latest.RankData.Rank <= 0 {
+		return drawing.RankInfo{}, sekaiapi.ErrRankingNotFound
 	}
+	rankValue := latest.RankData.Rank
 	score := latest.RankData.Score
 	name := strings.TrimSpace(latest.UserData.Name)
 	if c.shouldResolveTrackerNameByUser(server, eventID, name) {

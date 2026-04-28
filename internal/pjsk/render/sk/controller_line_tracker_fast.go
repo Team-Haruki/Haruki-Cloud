@@ -118,11 +118,11 @@ func (c *Controller) buildSingleUserLineFromTracker(server string, eventID int, 
 		if err != nil {
 			return drawing.RankInfo{}, err
 		}
+		if latest == nil || latest.RankData.Rank <= 0 {
+			return drawing.RankInfo{}, sekaiapi.ErrRankingNotFound
+		}
 
 		rankValue := latest.RankData.Rank
-		if rankValue <= 0 {
-			rankValue = 1
-		}
 
 		info := drawing.RankInfo{
 			Rank:  rankValue,
@@ -138,11 +138,11 @@ func (c *Controller) buildSingleUserLineFromTracker(server string, eventID int, 
 	if err != nil {
 		return drawing.RankInfo{}, err
 	}
+	if latest == nil || latest.RankData.Rank <= 0 {
+		return drawing.RankInfo{}, sekaiapi.ErrRankingNotFound
+	}
 
 	rankValue := latest.RankData.Rank
-	if rankValue <= 0 {
-		rankValue = 1
-	}
 
 	info := drawing.RankInfo{
 		Rank:  rankValue,

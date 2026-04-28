@@ -40,7 +40,7 @@ func resolveTrackerWorldBloomEvent(ctx context.Context, app *renderapp.App, regi
 		return eventInfo, chapters, nil
 	}
 
-	eventInfo, err := pickCurrentOrPreviousWorldBloomEvent(ctx, app, region)
+	eventInfo, err := pickCurrentWorldBloomEvent(ctx, app, region)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -52,7 +52,7 @@ func resolveTrackerWorldBloomEvent(ctx context.Context, app *renderapp.App, regi
 	return eventInfo, chapters, nil
 }
 
-func pickCurrentOrPreviousWorldBloomEvent(ctx context.Context, app *renderapp.App, region renderregion.Value) (*sekaidb.Event, error) {
+func pickCurrentWorldBloomEvent(ctx context.Context, app *renderapp.App, region renderregion.Value) (*sekaidb.Event, error) {
 	events, err := app.Sekai.Event.Query().
 		Where(eventdb.ServerRegionEQ(region.String()), eventdb.EventTypeEQ("world_bloom")).
 		Order(eventdb.ByStartAt()).
@@ -61,31 +61,25 @@ func pickCurrentOrPreviousWorldBloomEvent(ctx context.Context, app *renderapp.Ap
 		return nil, fmt.Errorf("query World Link events failed: %w", err)
 	}
 	if len(events) == 0 {
-		return nil, fmt.Errorf("当前没有可用的 World Link 活动")
+		return nil, currentWorldBloomUnavailableError(region)
 	}
 
 	now := time.Now().UnixMilli()
-	var current *sekaidb.Event
-	var previous *sekaidb.Event
 	for _, eventInfo := range events {
 		if eventInfo == nil {
 			continue
 		}
 		if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
-			current = eventInfo
-			continue
-		}
-		if eventutil.IsPast(eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
-			previous = eventInfo
+			return eventInfo, nil
 		}
 	}
-	if current != nil {
-		return current, nil
-	}
-	if previous != nil {
-		return previous, nil
-	}
-	return nil, fmt.Errorf("当前没有进行中或已结束的 World Link 活动")
+	return nil, currentWorldBloomUnavailableError(region)
+}
+
+func currentWorldBloomUnavailableError(region renderregion.Value) error {
+	server := strings.ToUpper(region.String())
+	commandPrefix := strings.ToLower(region.String())
+	return fmt.Errorf("当前%s服不在wl活动期间，请使用/%ssk", server, commandPrefix)
 }
 
 func queryTrackerWorldBloomChapters(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) ([]*sekaidb.Worldbloom, error) {

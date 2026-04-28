@@ -191,6 +191,37 @@ func TestBuildSKTrackerParamsDefaultsToSelfWhenEnabled(t *testing.T) {
 	}
 }
 
+func TestBuildSKTrackerParamsWorldLinkDefaultsToSelfWhenEnabled(t *testing.T) {
+	ctx := HarrukiSekaiHandlerContext{
+		PjskHandlerContext: PjskHandlerContext{
+			ArgText:    "",
+			Platform:   "qq",
+			UserId:     "24680",
+			TriggerCmd: "/wlsk",
+		},
+		region:    renderregion.JP,
+		prefixArg: "wl",
+	}
+
+	params, err := buildSKTrackerParams(ctx, false, true, true)
+	if err != nil {
+		t.Fatalf("build params: %v", err)
+	}
+
+	if _, ok := params["ranks"]; ok {
+		t.Fatalf("expected no default ranks for self world link query, got %#v", params["ranks"])
+	}
+	if got, ok := params["target_platform"].(string); !ok || got != "qq" {
+		t.Fatalf("unexpected target_platform: %#v", params["target_platform"])
+	}
+	if got, ok := params["target_user_id"].(string); !ok || got != "24680" {
+		t.Fatalf("unexpected target_user_id: %#v", params["target_user_id"])
+	}
+	if got, ok := params["wl_character_query"].(string); !ok || got != "wl" {
+		t.Fatalf("unexpected wl_character_query: %#v", params["wl_character_query"])
+	}
+}
+
 func TestBuildSKTrackerParamsAddsSelectorMetadata(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
 		PjskHandlerContext: PjskHandlerContext{

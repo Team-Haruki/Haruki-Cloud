@@ -202,6 +202,43 @@ func TestSKCheckRoomHandleDefaultsToSelfBinding(t *testing.T) {
 	}
 }
 
+func TestSKBoardHandleWorldLinkEmptyDefaultsToSelf(t *testing.T) {
+	h := sekaiHandlers{}.SKBoardHandle()
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/wlsk",
+		ArgText:    "",
+		Platform:   "qq",
+		UserId:     "24680",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-query" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params sk.TrackerRankQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.TargetPlatform != "qq" || params.TargetUserID != "24680" {
+		t.Fatalf("expected self target metadata for /wlsk, got %+v", params)
+	}
+	if params.WlCharacterQuery != "wl" {
+		t.Fatalf("expected wl selector, got %+v", params)
+	}
+	if len(params.Ranks) != 0 || params.DefaultRanks {
+		t.Fatalf("expected no default ranks for /wlsk self query, got %+v", params)
+	}
+}
+
 func TestSKCheckRoomLiteHandleUsesFixedDefaultRanks(t *testing.T) {
 	h := sekaiHandlers{}.SKCheckRoomLiteHandle()
 

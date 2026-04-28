@@ -67,6 +67,10 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 		return nil, nil, "", nil, nil
 	}
 
+	if isTheoreticalDeckRequest(rc) {
+		return nil, nil, regionWithDefault(rc.RegionStr), nil, nil
+	}
+
 	selector = strings.TrimSpace(selector)
 	if selector == "" {
 		binding, snapshot, err := rc.requireVisibleSuiteSnapshot()
@@ -108,6 +112,21 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 		detail = snapshot.DetailedProfile(renderregion.Normalize(region))
 	}
 	return detail, snapshot, region, resp, nil
+}
+
+func isTheoreticalDeckRequest(rc *RequestContext) bool {
+	if rc == nil || rc.Cmd == nil || len(rc.Cmd.Params) == 0 {
+		return false
+	}
+	switch rc.Cmd.Mode {
+	case "deck-event", "deck-challenge", "deck-no-event", "deck-bonus":
+	default:
+		return false
+	}
+
+	var q deck.AutoQuery
+	mergeParams(rc.Cmd.Params, &q)
+	return isTheoreticalDeckQuery(q)
 }
 
 func resolveDeckPublicProfileForTarget(rc *RequestContext, target ResolvedGameTarget, region string) *sekaiapi.GetAnotherProfileResponse {

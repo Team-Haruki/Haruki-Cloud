@@ -178,19 +178,40 @@ func (p *EventParser) tryParseFilter(args string) *EventQueryInfo {
 	attrAliases := filteralias.AttributeMap()
 
 	charSet := make(map[int]struct{})
+	onlyUnitNext := false
 	for _, part := range parts {
 		token := normalizeEventToken(part)
 		if token == "" {
 			continue
 		}
 
-		if u, ok := units[token]; ok {
+		if token == "仅" || token == "純" || token == "纯" || token == "only" {
+			onlyUnitNext = true
+			matched = true
+			continue
+		}
+
+		unitToken := token
+		onlyUnit := onlyUnitNext
+		if stripped, ok := stripEventOnlyUnitPrefix(token); ok {
+			unitToken = stripped
+			onlyUnit = true
+		}
+		onlyUnitNext = false
+
+		if u, ok := units[unitToken]; ok {
 			if filter.Blend {
 				return nil
 			}
 			filter.Unit = u
+			if onlyUnit {
+				filter.OnlyUnit = true
+			}
 			matched = true
 			continue
+		}
+		if onlyUnit {
+			return nil
 		}
 
 		if token == "混活" || token == "混" || token == "blend" || token == "mixed" {
@@ -284,7 +305,14 @@ func (p *EventParser) tryParseFilter(args string) *EventQueryInfo {
 		}
 	}
 
+	if onlyUnitNext {
+		return nil
+	}
+
 	if matched {
+		if filter.OnlyUnit && filter.Unit == "" {
+			return nil
+		}
 		return &EventQueryInfo{
 			Type:     QueryTypeEventFilter,
 			Filter:   filter,
@@ -311,6 +339,15 @@ func parseEventWorldBloomTurn(token string) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+func stripEventOnlyUnitPrefix(token string) (string, bool) {
+	for _, prefix := range []string{"仅", "純", "纯", "only"} {
+		if strings.HasPrefix(token, prefix) && len(token) > len(prefix) {
+			return strings.TrimPrefix(token, prefix), true
+		}
+	}
+	return token, false
 }
 
 func normalizeEventToken(text string) string {

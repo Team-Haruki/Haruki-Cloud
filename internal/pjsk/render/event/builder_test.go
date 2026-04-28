@@ -337,6 +337,48 @@ func TestBuildEventListRequestCharacterFilterUsesEventCards(t *testing.T) {
 	}
 }
 
+func TestBuildEventListRequestOnlyUnitUsesAllEventCards(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	pureEvent := &masterdata.Event{ID: 601, EventType: "marathon", Name: "pure mmj", AssetBundleName: "e601", StartAt: 100, AggregateAt: 200}
+	mixedEvent := &masterdata.Event{ID: 602, EventType: "marathon", Name: "mixed mmj", AssetBundleName: "e602", StartAt: 300, AggregateAt: 400}
+	vsEvent := &masterdata.Event{ID: 603, EventType: "marathon", Name: "vs only", AssetBundleName: "e603", StartAt: 500, AggregateAt: 600}
+	source.events = []*masterdata.Event{pureEvent, mixedEvent, vsEvent}
+	for _, eventInfo := range source.events {
+		source.eventsByID[eventInfo.ID] = eventInfo
+	}
+	source.characterByID[5] = &masterdata.Character{ID: 5, Unit: "idol"}
+	source.characterByID[6] = &masterdata.Character{ID: 6, Unit: "idol"}
+	source.characterByID[10] = &masterdata.Character{ID: 10, Unit: "street"}
+	source.characterByID[21] = &masterdata.Character{ID: 21, Unit: "piapro"}
+	source.cardsByEvent[pureEvent.ID] = []*masterdata.Card{
+		{ID: 60101, CharacterID: 5, AssetBundleName: "card_60101"},
+		{ID: 60102, CharacterID: 21, SupportUnit: "idol", AssetBundleName: "card_60102"},
+		{ID: 60103, CharacterID: 6, AssetBundleName: "card_60103"},
+	}
+	source.cardsByEvent[mixedEvent.ID] = []*masterdata.Card{
+		{ID: 60201, CharacterID: 5, AssetBundleName: "card_60201"},
+		{ID: 60202, CharacterID: 21, SupportUnit: "street", AssetBundleName: "card_60202"},
+	}
+	source.cardsByEvent[vsEvent.ID] = []*masterdata.Card{
+		{ID: 60301, CharacterID: 21, SupportUnit: "none", AssetBundleName: "card_60301"},
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventListRequest(ListQuery{
+		Region:        renderregion.JP,
+		Unit:          "idol",
+		OnlyUnit:      true,
+		IncludePast:   true,
+		IncludeFuture: true,
+	})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 1 || req.EventInfo[0].ID != pureEvent.ID {
+		t.Fatalf("expected only pure MMJ event, got %+v", req.EventInfo)
+	}
+}
+
 func TestBuildEventListRequestWorldBloomTurnUsesFilteredEvents(t *testing.T) {
 	source := newTestEventSource(renderregion.JP)
 	first := &masterdata.Event{ID: 140, EventType: "world_bloom", Unit: "none", Name: "miku wl1", AssetBundleName: "e140", StartAt: 100, AggregateAt: 200}

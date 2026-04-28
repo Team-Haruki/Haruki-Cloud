@@ -49,8 +49,17 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 		if query.Year != 0 && start.Year() != query.Year {
 			continue
 		}
-		if query.Unit != "" || query.Blend || query.Attr != "" || query.CharacterID != 0 || len(query.CharacterIDs) > 0 {
-			if !b.matchEventBonus(eventInfo.EventType, eventInfo.ID, eventInfo.Unit, query.Unit, query.Blend, query.Attr, query.CharacterID, query.CharacterIDs) {
+		bonusUnit := query.Unit
+		if query.OnlyUnit {
+			bonusUnit = ""
+		}
+		if bonusUnit != "" || query.Blend || query.Attr != "" || query.CharacterID != 0 || len(query.CharacterIDs) > 0 {
+			if !b.matchEventBonus(eventInfo.EventType, eventInfo.ID, eventInfo.Unit, bonusUnit, query.Blend, query.Attr, query.CharacterID, query.CharacterIDs) {
+				continue
+			}
+		}
+		if query.OnlyUnit {
+			if !b.eventCardsAllInUnit(eventInfo.ID, query.Unit) {
 				continue
 			}
 		}
@@ -225,6 +234,57 @@ func (b *Builder) eventHasCardCharacters(eventID int, charID int, charIDs []int)
 		}
 	}
 	return true
+}
+
+func (b *Builder) eventCardsAllInUnit(eventID int, unit string) bool {
+	targetUnit := normalizeEventUnit(unit)
+	if targetUnit == "" {
+		return false
+	}
+
+	cards, err := b.source.GetEventCards(eventID)
+	if err != nil || len(cards) == 0 {
+		return false
+	}
+
+	for _, cardInfo := range cards {
+		cardUnit, ok := b.eventCardUnit(cardInfo)
+		if !ok || cardUnit != targetUnit {
+			return false
+		}
+	}
+	return true
+}
+
+func (b *Builder) eventCardUnit(cardInfo *masterdata.Card) (string, bool) {
+	if cardInfo == nil || cardInfo.CharacterID == 0 {
+		return "", false
+	}
+
+	character, err := b.source.GetCharacterByID(cardInfo.CharacterID)
+	if err != nil || character == nil {
+		return "", false
+	}
+	mainUnit := normalizeEventUnit(character.Unit)
+	if mainUnit == "piapro" {
+		supportUnit := normalizeEventUnit(cardInfo.SupportUnit)
+		if supportUnit != "" && supportUnit != "none" {
+			return supportUnit, true
+		}
+		return "piapro", true
+	}
+	if mainUnit != "" {
+		return mainUnit, true
+	}
+	supportUnit := normalizeEventUnit(cardInfo.SupportUnit)
+	if supportUnit != "" && supportUnit != "none" {
+		return supportUnit, true
+	}
+	return "", false
+}
+
+func normalizeEventUnit(unit string) string {
+	return strings.ToLower(strings.TrimSpace(unit))
 }
 
 func (b *Builder) extractWorldBloomChapterUnits(eventID int) (map[string]struct{}, bool) {

@@ -102,3 +102,34 @@ func TestExtractUid(t *testing.T) {
 		})
 	}
 }
+
+func TestEventParserParsesOnlyUnitAliases(t *testing.T) {
+	p := NewEventParser(nil)
+
+	tests := []struct {
+		args string
+		unit string
+	}{
+		{args: "仅25h", unit: "school_refusal"},
+		{args: "仅mmj", unit: "idol"},
+		{args: "仅leoneed", unit: "light_sound"},
+		{args: "仅ws", unit: "theme_park"},
+		{args: "仅vbs", unit: "street"},
+		{args: "仅 leoneed", unit: "light_sound"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.args, func(t *testing.T) {
+			info, err := p.Parse(tt.args)
+			if err != nil {
+				t.Fatalf("Parse(%q) error = %v", tt.args, err)
+			}
+			if info.Type != QueryTypeEventFilter {
+				t.Fatalf("type = %v, want %v", info.Type, QueryTypeEventFilter)
+			}
+			if info.Filter.Unit != tt.unit || !info.Filter.OnlyUnit {
+				t.Fatalf("filter = %+v, want unit=%q only_unit=true", info.Filter, tt.unit)
+			}
+		})
+	}
+}

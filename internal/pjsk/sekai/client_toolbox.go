@@ -73,7 +73,7 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		return decompress(resp)
 
 	case http.StatusForbidden:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
 			return nil, ErrInvalidPlatformUser
@@ -84,7 +84,7 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		}
 
 	case http.StatusNotFound:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		switch {
 		case strings.Contains(msg, "account binding not found"):
 			return nil, ErrAccountBindingNotFound
@@ -98,7 +98,7 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
 
 	default:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
 }
@@ -131,6 +131,7 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).
 		SetHeader("User-Agent", c.userAgent()).
+		SetHeader("Accept-Encoding", "zstd").
 		SetQueryParams(map[string]string{
 			"platform":         platform,
 			"platform_user_id": platformUserID,
@@ -143,9 +144,9 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		return resp.Body(), nil
+		return decompress(resp)
 	case http.StatusForbidden:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
 			return nil, ErrInvalidPlatformUser
@@ -155,7 +156,7 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 			return nil, &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
 		}
 	case http.StatusNotFound:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		switch {
 		case strings.Contains(msg, "account binding not found"):
 			return nil, ErrAccountBindingNotFound
@@ -167,7 +168,7 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 	case http.StatusServiceUnavailable:
 		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
 	default:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
 }
@@ -221,6 +222,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 	resp, err := c.http.R().
 		SetHeader("Authorization", c.config.APIToken).
 		SetHeader("User-Agent", c.userAgent()).
+		SetHeader("Accept-Encoding", "zstd").
 		SetQueryParams(map[string]string{
 			"platform":         platform,
 			"platform_user_id": platformUserID,
@@ -233,13 +235,17 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 	switch resp.StatusCode() {
 	case http.StatusOK:
 		var bindings []UserGameBinding
-		if err := sonic.Unmarshal(resp.Body(), &bindings); err != nil {
+		body, err := decompress(resp)
+		if err != nil {
+			return nil, err
+		}
+		if err := sonic.Unmarshal(body, &bindings); err != nil {
 			return nil, fmt.Errorf("toolbox: failed to parse game bindings response: %w", err)
 		}
 		return bindings, nil
 
 	case http.StatusForbidden:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
 			return nil, ErrInvalidPlatformUser
@@ -250,7 +256,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 		}
 
 	case http.StatusNotFound:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		if strings.Contains(msg, "account binding not found") {
 			return nil, ErrAccountBindingNotFound
 		}
@@ -260,9 +266,17 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
 
 	default:
-		msg := parseMessage(resp.Body())
+		msg := parseMessage(toolboxResponseBody(resp))
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
+}
+
+func toolboxResponseBody(resp *resty.Response) []byte {
+	body, err := decompress(resp)
+	if err != nil {
+		return resp.Body()
+	}
+	return body
 }
 
 // decompress handles transparent zstd decompression when the server indicates it.

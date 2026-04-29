@@ -101,7 +101,7 @@ GET /api/private/game-data/{server}/{data_type}/{user_id}
 #### 响应
 
 - `200 OK`：原始 JSON 体（完整快照）；若服务端支持，响应头可能带 `Content-Encoding: zstd`，客户端自动解压。
-- `200 OK`（指定 `key`）：该 key 的原始值（如整数 `1774339266`），不是 JSON 对象。
+- `200 OK`（指定 `key`）：该 key 的原始值（如整数 `1774339266`），不是 JSON 对象；若指定多个 key，则返回 JSON 对象。响应同样支持 `Content-Encoding: zstd` 自动解压。
 
 #### Go 封装函数
 
@@ -363,9 +363,9 @@ Toolbox 服务端根据这个信息做授权校验（该调用方是否有权查
 
 ## 9. 底层行为备注
 
-- **zstd 解压**：`GetPrivateData` 在响应头含 `Content-Encoding: zstd` 时自动解压，
-  调用方收到的始终是解压后的原始 JSON bytes。
-- **`key` 参数**：`GetPrivateDataValue` 不做 zstd 解压（单 key 查询不会返回压缩体）。
+- **zstd 解压**：`GetPrivateData`、`GetPrivateDataValue` 和 `GetPrivateDataValues` 都发送
+  `Accept-Encoding: zstd`，并在响应头含 `Content-Encoding: zstd` 时自动解压。调用方收到的始终是解压后的原始 bytes。
+- **`key` 参数**：单 key 通常很小，服务端可能不会压缩；多 key 返回 JSON 对象时也走同一套自动解压逻辑。
 - **重试策略**：网络错误和 HTTP 5xx 均会触发重试，4xx 不重试。
 
 ---

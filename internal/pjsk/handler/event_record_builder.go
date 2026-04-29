@@ -1,33 +1,22 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
+	"time"
 
 	eventdb "haruki-cloud/database/sekai/event"
+	"haruki-cloud/database/sekai/resourceboxe"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
-	"haruki-cloud/utils/logger"
-
-	"golang.org/x/sync/errgroup"
 )
 
-var eventRecordDebugLogger = logger.NewLoggerFromGlobal("EventRecord")
-
-var eventRecordTrackerRankLookup = defaultEventRecordTrackerRankLookup
-
-const eventRecordTrackerFallbackEventLimit = 2
-
-var errStopEventRecordTrackerFallback = errors.New("event record tracker fallback aborted")
+type eventMasterEntry = map[string]any
 
 // buildEventRecordFromSnapshot constructs an EventRecordRequest from live
 // Toolbox suite data, cross-referencing with master data for event metadata.
@@ -74,8 +63,10 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	if err != nil || len(eventEntities) == 0 {
 		return nil, fmt.Errorf("event master data not available")
 	}
-	type eventMasterEntry = map[string]any
 	eventMaster := make(map[int]eventMasterEntry, len(eventEntities))
+	eventRankBoundaries := make(map[int]map[int]struct{}, len(eventEntities))
+	eventHonorTiers := make(map[int]map[int]int, len(eventEntities))
+	resourceBoxHonorIDs := eventRecordResourceBoxHonorIDs(rc, region)
 	for _, e := range eventEntities {
 		id := int(e.GameID)
 		eventMaster[id] = eventMasterEntry{
@@ -85,6 +76,12 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 			"name":            e.Name,
 			"startAt":         float64(e.StartAt),
 			"closedAt":        float64(e.ClosedAt),
+		}
+		if boundaries := eventRecordRankBoundaries(e.EventRankingRewardRanges); len(boundaries) > 0 {
+			eventRankBoundaries[id] = boundaries
+		}
+		if tiers := eventRecordHonorTiers(e.EventRankingRewardRanges, resourceBoxHonorIDs); len(tiers) > 0 {
+			eventHonorTiers[id] = tiers
 		}
 	}
 
@@ -96,7 +93,8 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		}
 	}
 
-	fillEventRecordTrackerRanks(rc.Ctx, rc.App.Tracker, region, rawData.UserGamedata.UserID, rawData.UserEvents, rankByEvent, wlEventIDs)
+	dropUntrustedEventRecordSnapshotRanks(region, rankByEvent, eventRankBoundaries)
+	rankDisplayByEvent := buildEventRecordHonorRankDisplays(rawData, eventMaster, eventHonorTiers, rankByEvent)
 
 	regionStr := regionWithDefault(region.String())
 
@@ -112,6 +110,9 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		}
 		if rank, ok := rankByEvent[ue.EventID]; ok {
 			hist.Rank = &rank
+		} else if display, ok := rankDisplayByEvent[ue.EventID]; ok {
+			hist.RankDisplay = stringPtr(display.text)
+			hist.RankTier = intPtr(display.tier)
 		}
 		eventInfo = append(eventInfo, *hist)
 	}
@@ -153,148 +154,285 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		EventInfo:   eventInfo,
 		WlEventInfo: wlEventInfo,
 		UserInfo:    *profile,
+		RankNote:    eventRecordRankNote(region),
 	}, nil
 }
 
-func defaultEventRecordTrackerRankLookup(ctx context.Context, tracker *sekaiapi.TrackerClient, region string, eventID int, userID int64) (*int, error) {
-	if tracker == nil {
-		return nil, nil
+type eventRecordRankingRewardRange struct {
+	FromRank                   int                              `json:"fromRank"`
+	ToRank                     int                              `json:"toRank"`
+	EventRankingRewards        []eventRecordRankingReward       `json:"eventRankingRewards"`
+	EventRankingRewards2       []eventRecordRankingReward       `json:"event_ranking_rewards"`
+	EventRankingRewardDetails  []eventRecordRankingRewardDetail `json:"eventRankingRewardDetails"`
+	EventRankingRewardDetails2 []eventRecordRankingRewardDetail `json:"event_ranking_reward_details"`
+}
+
+type eventRecordRankingReward struct {
+	ResourceBoxID  int `json:"resourceBoxId"`
+	ResourceBoxID2 int `json:"resource_box_id"`
+}
+
+type eventRecordRankingRewardDetail struct {
+	ResourceType  string `json:"resourceType"`
+	ResourceType2 string `json:"resource_type"`
+	ResourceID    int    `json:"resourceId"`
+	ResourceID2   int    `json:"resource_id"`
+}
+
+func eventRecordRankBoundaries(raw json.RawMessage) map[int]struct{} {
+	if len(raw) == 0 {
+		return nil
+	}
+	var ranges []eventRecordRankingRewardRange
+	if err := json.Unmarshal(raw, &ranges); err != nil {
+		return nil
+	}
+	boundaries := make(map[int]struct{}, len(ranges)*2)
+	for _, item := range ranges {
+		if item.FromRank > 0 {
+			boundaries[item.FromRank] = struct{}{}
+			if item.FromRank > 1 {
+				boundaries[item.FromRank-1] = struct{}{}
+			}
+		}
+		if item.ToRank > 0 {
+			boundaries[item.ToRank] = struct{}{}
+		}
+	}
+	return boundaries
+}
+
+type eventRecordHonorRankDisplay struct {
+	text string
+	tier int
+}
+
+func eventRecordHonorTiers(raw json.RawMessage, resourceBoxHonorIDs map[int][]int) map[int]int {
+	if len(raw) == 0 {
+		return nil
+	}
+	var ranges []eventRecordRankingRewardRange
+	if err := json.Unmarshal(raw, &ranges); err != nil {
+		return nil
+	}
+	tiers := make(map[int]int)
+	for _, item := range ranges {
+		if item.ToRank <= 0 {
+			continue
+		}
+		for _, honorID := range eventRecordHonorIDsFromRewardRange(item, resourceBoxHonorIDs) {
+			if honorID <= 0 {
+				continue
+			}
+			if current, ok := tiers[honorID]; !ok || item.ToRank < current {
+				tiers[honorID] = item.ToRank
+			}
+		}
+	}
+	return tiers
+}
+
+func eventRecordHonorIDsFromRewardRange(item eventRecordRankingRewardRange, resourceBoxHonorIDs map[int][]int) []int {
+	var ids []int
+	for _, detail := range append(item.EventRankingRewardDetails, item.EventRankingRewardDetails2...) {
+		if eventRecordDetailResourceType(detail) == "honor" && eventRecordDetailResourceID(detail) > 0 {
+			ids = append(ids, eventRecordDetailResourceID(detail))
+		}
+	}
+	for _, reward := range append(item.EventRankingRewards, item.EventRankingRewards2...) {
+		boxID := reward.ResourceBoxID
+		if boxID <= 0 {
+			boxID = reward.ResourceBoxID2
+		}
+		if boxID <= 0 {
+			continue
+		}
+		ids = append(ids, resourceBoxHonorIDs[boxID]...)
+	}
+	return ids
+}
+
+func eventRecordResourceBoxHonorIDs(rc *RequestContext, region renderregion.Value) map[int][]int {
+	if rc == nil || rc.App == nil {
+		return nil
+	}
+	if ids := eventRecordResourceBoxHonorIDsFromProvider(rc, region); len(ids) > 0 {
+		return ids
+	}
+	if rc.App.Sekai == nil || rc.Ctx == nil {
+		return nil
 	}
 
-	resp, err := tracker.WithContext(ctx).GetLatestRankingByUser(region, eventID, userID)
+	items, err := rc.App.Sekai.Resourceboxe.Query().
+		Where(
+			resourceboxe.ServerRegionEQ(region.String()),
+			resourceboxe.ResourceBoxPurposeEQ("event_ranking_reward"),
+		).
+		All(rc.Ctx)
 	if err != nil {
-		return nil, err
-	}
-	if resp == nil || resp.RankData.Rank <= 0 {
-		return nil, nil
+		return nil
 	}
 
-	return intPtr(resp.RankData.Rank), nil
+	out := make(map[int][]int)
+	for _, item := range items {
+		if item == nil || item.GameID <= 0 || len(item.Details) == 0 {
+			continue
+		}
+		var details []eventRecordRankingRewardDetail
+		if err := json.Unmarshal(item.Details, &details); err != nil {
+			continue
+		}
+		eventRecordAddHonorDetails(out, int(item.GameID), details)
+	}
+	return out
 }
 
-func fillEventRecordTrackerRanks(
-	ctx context.Context,
-	tracker *sekaiapi.TrackerClient,
-	region renderregion.Value,
-	userID int64,
-	userEvents []rendersnapshot.RawUserEvent,
-	rankByEvent map[int]int,
-	wlEventIDs map[int]struct{},
-) {
-	if userID <= 0 || len(userEvents) == 0 || len(rankByEvent) >= len(userEvents) {
+func eventRecordResourceBoxHonorIDsFromProvider(rc *RequestContext, region renderregion.Value) map[int][]int {
+	source := rc.App.ProviderForRegion(region)
+	if source == nil || rc.Ctx == nil {
+		return nil
+	}
+	education := source.Education()
+	if education == nil {
+		return nil
+	}
+	boxes := education.GetResourceBoxesByPurpose(rc.Ctx, "event_ranking_reward")
+	out := make(map[int][]int)
+	for _, box := range boxes {
+		if box == nil || box.ID <= 0 {
+			continue
+		}
+		details := make([]eventRecordRankingRewardDetail, 0, len(box.Details))
+		for _, detail := range box.Details {
+			details = append(details, eventRecordRankingRewardDetail{
+				ResourceType: detail.ResourceType,
+				ResourceID:   detail.ResourceID,
+			})
+		}
+		eventRecordAddHonorDetails(out, box.ID, details)
+	}
+	return out
+}
+
+func eventRecordAddHonorDetails(out map[int][]int, boxID int, details []eventRecordRankingRewardDetail) {
+	if boxID <= 0 {
 		return
 	}
-
-	regionStr := regionWithDefault(region.String())
-	if regionStr == "" {
-		return
-	}
-
-	eventIDs := collectEventRecordTrackerFallbackEventIDs(userEvents, rankByEvent, wlEventIDs)
-	if len(eventIDs) == 0 {
-		return
-	}
-
-	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(1)
-
-	var (
-		mu      sync.Mutex
-		logOnce sync.Once
-	)
-	for _, eventID := range eventIDs {
-		eventIDCopy := eventID
-		group.Go(func() error {
-			if groupCtx.Err() != nil {
-				return nil
-			}
-
-			rank, err := eventRecordTrackerRankLookup(groupCtx, tracker, regionStr, eventIDCopy, userID)
-			if err != nil {
-				if !errors.Is(err, sekaiapi.ErrRankingNotFound) {
-					logOnce.Do(func() {
-						eventRecordDebugLogger.Debugf("event record tracker rank fallback unavailable: region=%s user=%s err=%v",
-							regionStr, maskDebugID(strconv.FormatInt(userID, 10)), err)
-					})
-					if shouldStopEventRecordTrackerFallback(err) {
-						return errStopEventRecordTrackerFallback
-					}
-				}
-				return nil
-			}
-			if rank == nil || *rank <= 0 {
-				return nil
-			}
-
-			mu.Lock()
-			defer mu.Unlock()
-			if _, exists := rankByEvent[eventIDCopy]; !exists {
-				rankByEvent[eventIDCopy] = *rank
-			}
-			return nil
-		})
-	}
-
-	waitErr := group.Wait()
-	if waitErr != nil && !errors.Is(waitErr, errStopEventRecordTrackerFallback) {
-		eventRecordDebugLogger.Debugf("event record tracker rank fallback ended early: region=%s user=%s err=%v",
-			regionStr, maskDebugID(strconv.FormatInt(userID, 10)), waitErr)
+	for _, detail := range details {
+		if eventRecordDetailResourceType(detail) != "honor" {
+			continue
+		}
+		if id := eventRecordDetailResourceID(detail); id > 0 {
+			out[boxID] = append(out[boxID], id)
+		}
 	}
 }
 
-func collectEventRecordTrackerFallbackEventIDs(
-	userEvents []rendersnapshot.RawUserEvent,
-	rankByEvent map[int]int,
-	wlEventIDs map[int]struct{},
-) []int {
-	seen := make(map[int]struct{}, len(userEvents))
-	eventIDs := make([]int, 0, len(userEvents))
-	for _, userEvent := range userEvents {
-		eventID := userEvent.EventID
-		if eventID <= 0 {
-			continue
-		}
-		if _, isWL := wlEventIDs[eventID]; isWL {
-			continue
-		}
-		if _, ok := seen[eventID]; ok {
-			continue
-		}
-		seen[eventID] = struct{}{}
-		if _, ok := rankByEvent[eventID]; ok {
-			continue
-		}
-		eventIDs = append(eventIDs, eventID)
+func eventRecordDetailResourceType(detail eventRecordRankingRewardDetail) string {
+	if value := strings.TrimSpace(detail.ResourceType); value != "" {
+		return strings.ToLower(value)
 	}
-
-	sort.Slice(eventIDs, func(i, j int) bool {
-		return eventIDs[i] > eventIDs[j]
-	})
-	if len(eventIDs) > eventRecordTrackerFallbackEventLimit {
-		eventIDs = eventIDs[:eventRecordTrackerFallbackEventLimit]
-	}
-	return eventIDs
+	return strings.ToLower(strings.TrimSpace(detail.ResourceType2))
 }
 
-func shouldStopEventRecordTrackerFallback(err error) bool {
-	if err == nil || errors.Is(err, sekaiapi.ErrRankingNotFound) {
-		return false
+func eventRecordDetailResourceID(detail eventRecordRankingRewardDetail) int {
+	if detail.ResourceID > 0 {
+		return detail.ResourceID
 	}
-	if errors.Is(err, sekaiapi.ErrServerMaintenance) {
-		return true
+	return detail.ResourceID2
+}
+
+func buildEventRecordHonorRankDisplays(rawData *rendersnapshot.RawUserData, eventMaster map[int]eventMasterEntry, eventHonorTiers map[int]map[int]int, rankByEvent map[int]int) map[int]eventRecordHonorRankDisplay {
+	if rawData == nil || len(eventHonorTiers) == 0 {
+		return nil
+	}
+	userHonorIDs := collectEventRecordUserHonorIDs(rawData)
+	if len(userHonorIDs) == 0 {
+		return nil
 	}
 
-	var trackerErr *sekaiapi.TrackerAPIError
-	if errors.As(err, &trackerErr) {
-		if trackerErr.StatusCode >= 500 || trackerErr.StatusCode == 429 {
-			return true
+	now := rawData.Now
+	if now <= 0 {
+		now = time.Now().UnixMilli()
+	}
+
+	out := make(map[int]eventRecordHonorRankDisplay)
+	for eventID, tiers := range eventHonorTiers {
+		if _, hasRank := rankByEvent[eventID]; hasRank {
+			continue
 		}
-		message := strings.ToLower(strings.TrimSpace(trackerErr.Message))
-		return strings.Contains(message, "doesn't exist") ||
-			strings.Contains(message, "failed to fetch latest ranking")
+		if !eventRecordClosed(eventMaster[eventID], now) {
+			continue
+		}
+		bestTier := 0
+		for honorID := range userHonorIDs {
+			tier, ok := tiers[honorID]
+			if !ok || tier <= 0 {
+				continue
+			}
+			if bestTier == 0 || tier < bestTier {
+				bestTier = tier
+			}
+		}
+		if bestTier > 0 {
+			out[eventID] = eventRecordHonorRankDisplay{
+				text: fmt.Sprintf("T%d", bestTier),
+				tier: bestTier,
+			}
+		}
 	}
+	return out
+}
 
-	return false
+func collectEventRecordUserHonorIDs(rawData *rendersnapshot.RawUserData) map[int]struct{} {
+	if rawData == nil {
+		return nil
+	}
+	ids := make(map[int]struct{}, len(rawData.UserHonors)+len(rawData.UserProfileHonors))
+	for _, honor := range rawData.UserHonors {
+		if honor.HonorID > 0 {
+			ids[honor.HonorID] = struct{}{}
+		}
+	}
+	for _, honor := range rawData.UserProfileHonors {
+		if honor.HonorID > 0 {
+			ids[honor.HonorID] = struct{}{}
+		}
+		if honor.HonorId2 > 0 {
+			ids[honor.HonorId2] = struct{}{}
+		}
+	}
+	return ids
+}
+
+func eventRecordClosed(master map[string]any, now int64) bool {
+	closedAt := int64Val(master, "closedAt")
+	return closedAt > 0 && now >= closedAt
+}
+
+func eventRecordRankNote(region renderregion.Value) *string {
+	switch renderregion.WithDefault(region) {
+	case renderregion.CN, renderregion.KR, renderregion.TW:
+		return stringPtr("CN/KR/TW服没有排名数据，仅显示Txxx名")
+	default:
+		return nil
+	}
+}
+
+func dropUntrustedEventRecordSnapshotRanks(region renderregion.Value, rankByEvent map[int]int, boundariesByEvent map[int]map[int]struct{}) {
+	if region == renderregion.JP || len(rankByEvent) == 0 || len(boundariesByEvent) == 0 {
+		return
+	}
+	for eventID, rank := range rankByEvent {
+		if rank < 1000 {
+			continue
+		}
+		if boundaries, ok := boundariesByEvent[eventID]; ok {
+			if _, suspicious := boundaries[rank]; suspicious {
+				delete(rankByEvent, eventID)
+			}
+		}
+	}
 }
 
 // buildEventHistoryFromMaster creates an EventHistory from master data.
@@ -316,10 +454,49 @@ func buildEventHistoryFromMaster(master map[string]any, eventID, eventPoint int,
 
 func sortEventHistory(items []drawing.EventHistory) {
 	sort.SliceStable(items, func(i, j int) bool {
+		if ri, okI := eventHistorySortRank(items[i]); okI {
+			if rj, okJ := eventHistorySortRank(items[j]); okJ {
+				if ri != rj {
+					return ri < rj
+				}
+			} else {
+				return true
+			}
+		} else if _, okJ := eventHistorySortRank(items[j]); okJ {
+			return false
+		}
+		if items[i].EventPoint != items[j].EventPoint {
+			return items[i].EventPoint > items[j].EventPoint
+		}
 		si, _ := items[i].StartAt.(float64)
 		sj, _ := items[j].StartAt.(float64)
 		return si > sj
 	})
+}
+
+func eventHistorySortRank(item drawing.EventHistory) (int, bool) {
+	if item.Rank != nil && *item.Rank > 0 {
+		return *item.Rank, true
+	}
+	if item.RankTier != nil && *item.RankTier > 0 {
+		return *item.RankTier, true
+	}
+	if item.RankDisplay != nil {
+		return eventHistorySortRankDisplay(*item.RankDisplay)
+	}
+	return 0, false
+}
+
+func eventHistorySortRankDisplay(text string) (int, bool) {
+	text = strings.TrimSpace(strings.ToUpper(text))
+	if !strings.HasPrefix(text, "T") {
+		return 0, false
+	}
+	rank, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(text, "T")))
+	if err != nil || rank <= 0 {
+		return 0, false
+	}
+	return rank, true
 }
 
 func stringVal(m map[string]any, key string) string {
@@ -341,6 +518,23 @@ func intVal(m map[string]any, key string) int {
 		case json.Number:
 			i, _ := n.Int64()
 			return int(i)
+		}
+	}
+	return 0
+}
+
+func int64Val(m map[string]any, key string) int64 {
+	if v, ok := m[key]; ok {
+		switch n := v.(type) {
+		case float64:
+			return int64(n)
+		case int:
+			return int64(n)
+		case int64:
+			return n
+		case json.Number:
+			i, _ := n.Int64()
+			return i
 		}
 	}
 	return 0

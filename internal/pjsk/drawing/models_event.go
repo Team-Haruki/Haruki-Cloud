@@ -22,6 +22,8 @@ type EventHistory struct {
 	StartAt         any     `json:"start_at"`
 	EndAt           any     `json:"end_at"`
 	Rank            *int    `json:"rank,omitempty"`
+	RankDisplay     *string `json:"rank_display,omitempty"`
+	RankTier        *int    `json:"rank_tier,omitempty"`
 	EventPoint      int     `json:"event_point"`
 	IsWlEvent       bool    `json:"is_wl_event"`
 	BannerPath      string  `json:"banner_path"`
@@ -63,6 +65,7 @@ type EventRecordRequest struct {
 	EventInfo   []EventHistory             `json:"event_info"`
 	WlEventInfo []EventHistory             `json:"wl_event_info"`
 	UserInfo    DetailedProfileCardRequest `json:"user_info"`
+	RankNote    *string                    `json:"rank_note,omitempty"`
 }
 
 type EventListRequest struct {

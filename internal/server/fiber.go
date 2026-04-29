@@ -29,7 +29,7 @@ var accessLogFileHandle *os.File
 func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 	accessLogFileHandle = nil
 	app := fiber.New(fiber.Config{
-		BodyLimit:   30 * 1024 * 1024,
+		BodyLimit:   300 * 1024 * 1024,
 		JSONEncoder: sonic.Marshal,
 		JSONDecoder: sonic.Unmarshal,
 		ProxyHeader: harukiConfig.Cfg.Backend.ProxyHeader,

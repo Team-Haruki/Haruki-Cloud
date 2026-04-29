@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"fmt"
+	sonic "github.com/bytedance/sonic"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -1703,6 +1703,70 @@ func TestBuildDrawingRequestFromRecommendResultUsesDefaultImageForDisplayState(t
 	}
 	if !strings.Contains(cardData.CardThumbnail.RareImgPath, "rare_star_after_training.png") {
 		t.Fatalf("expected trained rarity marker to stay after-training, got %q", cardData.CardThumbnail.RareImgPath)
+	}
+}
+
+func TestBuildDrawingRequestFromRecommendResultUsesDefaultImageForBfesSkillArt(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+	controller.RegisterCardSource(&testCardSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			949: {
+				ID:                           949,
+				CharacterID:                  25,
+				CardRarityType:               "rarity_4",
+				Attr:                         "cute",
+				AssetBundleName:              "card_949",
+				SpecialTrainingSkillID:       22,
+				InitialSpecialTrainingStatus: "not_doing",
+			},
+		},
+	})
+
+	request, err := controller.buildDrawingRequestFromRecommendResult(
+		renderregion.JP,
+		"event",
+		AutoQuery{Region: "jp", RecommendType: "event"},
+		map[string]any{"target": "score"},
+		&snapshot.RawUserData{
+			UserCards: []snapshot.RawUserCard{
+				{CardID: 949, SpecialTrainingStatus: "done", DefaultImage: "special_training"},
+			},
+		},
+		&RecommendResult{
+			Decks: []RecommendDeck{{
+				Cards: []RecommendCard{{
+					CardID:          949,
+					Level:           60,
+					MasterRank:      5,
+					DefaultImage:    "original",
+					SkillLevel:      4,
+					SkillRate:       147.5,
+					IsAfterTraining: true,
+				}},
+				Score: 123,
+			}},
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("buildDrawingRequestFromRecommendResult() error = %v", err)
+	}
+	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
+		t.Fatalf("unexpected deck request: %+v", request.DeckData)
+	}
+	cardData := request.DeckData[0].CardData[0]
+	if cardData.IsAfterTraining {
+		t.Fatalf("expected BFes display state to follow selected flower-before skill, got %+v", cardData)
+	}
+	if cardData.CardThumbnail.IsAfterTraining == nil || *cardData.CardThumbnail.IsAfterTraining {
+		t.Fatalf("expected BFes thumbnail state to stay flower-before, got %+v", cardData.CardThumbnail.IsAfterTraining)
+	}
+	if !strings.Contains(cardData.CardThumbnail.CardThumbnailPath, "_normal.png") {
+		t.Fatalf("expected BFes flower-before art thumbnail, got %q", cardData.CardThumbnail.CardThumbnailPath)
+	}
+	if !strings.Contains(cardData.CardThumbnail.RareImgPath, "rare_star_after_training.png") {
+		t.Fatalf("expected owned trained rarity marker to remain after-training, got %q", cardData.CardThumbnail.RareImgPath)
 	}
 }
 

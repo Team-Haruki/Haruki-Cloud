@@ -34,18 +34,16 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		return nil, fmt.Errorf("decode mysekai snapshot: %w", err)
 	}
 
+	updatedKeys := make(map[string]struct{})
 	if updatedResources, ok := mySekaiMap["updatedResources"].(map[string]any); ok {
 		for key, value := range updatedResources {
 			if shouldPreserveSuiteSnapshotKey(key) {
 				continue
 			}
+			updatedKeys[key] = struct{}{}
 			// Don't overwrite a non-empty suite array with an empty mysekai delta.
-			if existing, exists := baseMap[key]; exists {
-				if existingSlice, ok := existing.([]any); ok && len(existingSlice) > 0 {
-					if newSlice, ok := value.([]any); ok && len(newSlice) == 0 {
-						continue
-					}
-				}
+			if shouldSkipEmptyMySekaiOverride(baseMap, key, value) {
+				continue
 			}
 			baseMap[key] = value
 		}
@@ -60,6 +58,9 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		if !shouldMergeMySekaiTopLevelKey(key) {
 			continue
 		}
+		if shouldSkipMySekaiTopLevelOverride(baseMap, updatedKeys, key, value) {
+			continue
+		}
 		baseMap[key] = value
 	}
 
@@ -68,6 +69,51 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		return nil, fmt.Errorf("encode merged mysekai snapshot: %w", err)
 	}
 	return merged, nil
+}
+
+func shouldSkipEmptyMySekaiOverride(baseMap map[string]any, key string, value any) bool {
+	existing, exists := baseMap[key]
+	if !exists {
+		return false
+	}
+	existingSlice, ok := existing.([]any)
+	if !ok || len(existingSlice) == 0 {
+		return false
+	}
+	newSlice, ok := value.([]any)
+	return ok && len(newSlice) == 0
+}
+
+func shouldSkipMySekaiTopLevelOverride(baseMap map[string]any, updatedKeys map[string]struct{}, key string, value any) bool {
+	if _, ok := updatedKeys[key]; ok {
+		return true
+	}
+	if shouldSkipEmptyMySekaiOverride(baseMap, key, value) {
+		return true
+	}
+	if !strings.HasPrefix(key, "userMysekai") && !strings.HasPrefix(key, "mysekai") {
+		return false
+	}
+	existing, exists := baseMap[key]
+	if !exists {
+		return false
+	}
+	return !isEmptySnapshotValue(existing)
+}
+
+func isEmptySnapshotValue(value any) bool {
+	switch typed := value.(type) {
+	case nil:
+		return true
+	case []any:
+		return len(typed) == 0
+	case map[string]any:
+		return len(typed) == 0
+	case string:
+		return strings.TrimSpace(typed) == ""
+	default:
+		return false
+	}
 }
 
 func shouldPreserveSuiteSnapshotKey(key string) bool {

@@ -123,6 +123,24 @@ func TestParserExtractsBanEventOCUnitSkillAndAttr(t *testing.T) {
 	}
 }
 
+func TestParserTreatsOriginalVAliasAsPiaproOCUnit(t *testing.T) {
+	parser := NewParser(defaultNicknames)
+
+	info, err := parser.ParseStrictFilter("原v 4星")
+	if err != nil {
+		t.Fatalf("ParseStrictFilter() error = %v", err)
+	}
+	if info.Type != QueryTypeFilter {
+		t.Fatalf("unexpected query type: %+v", info)
+	}
+	if info.MainUnit != "piapro" || info.SupportUnit != "none" {
+		t.Fatalf("unexpected unit filter: %+v", info)
+	}
+	if info.Rarity != "rarity_4" {
+		t.Fatalf("unexpected rarity filter: %+v", info)
+	}
+}
+
 func TestParserSupportsLunabotSkillAliases(t *testing.T) {
 	parser := NewParser(defaultNicknames)
 

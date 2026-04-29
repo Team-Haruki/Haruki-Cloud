@@ -284,6 +284,8 @@ var ocUnitRules = buildRules(map[string]string{
 	"voc":   "piapro",
 	"纯vs":   "piapro",
 	"纯v":    "piapro",
+	"原vs":   "piapro",
+	"原v":    "piapro",
 })
 
 func (e *Extractor) ExtractOCUnit(text string) ExtractResult[string] {

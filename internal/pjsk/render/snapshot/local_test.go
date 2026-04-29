@@ -216,3 +216,45 @@ func TestMergeMySekaiDataPreservesSuiteCharacterTalkReads(t *testing.T) {
 		t.Fatalf("expected mysekai gamedata to still be merged, got %+v", payload["userMysekaiGamedata"])
 	}
 }
+
+func TestMergeMySekaiDataPrefersUpdatedResourcesOverTopLevelMysekaiSnapshot(t *testing.T) {
+	suiteJSON := []byte(`{
+		"now": 1710000000,
+		"userGamedata": {"userId": 7057130168569158401, "name": "Suite User", "deck": 1, "rank": 100, "coin": 0},
+		"userProfile": {"profileImageType": "default"},
+		"userDecks": [{"deckId": 1, "leader": 1001, "subLeader": 0, "member1": 0, "member2": 0, "member3": 0, "member4": 0, "member5": 0}],
+		"userCards": [{"cardId": 1001, "level": 50, "masterRank": 1, "specialTrainingStatus": "not_done", "defaultImage": "normal", "episodes": []}],
+		"userMysekaiGates": [{"mysekaiGateId": 1, "mysekaiGateLevel": 14}],
+		"userMysekaiFixtureGameCharacterPerformanceBonuses": [{"gameCharacterId": 5, "totalBonusRate": 20}]
+	}`)
+	mysekaiJSON := []byte(`{
+		"now": 1710000100,
+		"updatedResources": {
+			"now": 1710000200,
+			"userMysekaiGates": [{"mysekaiGateId": 1, "mysekaiGateLevel": 40}]
+		},
+		"userMysekaiGates": [{"mysekaiGateId": 1, "mysekaiGateLevel": 2}],
+		"userMysekaiFixtureGameCharacterPerformanceBonuses": []
+	}`)
+
+	merged, err := mergeMySekaiData(suiteJSON, mysekaiJSON)
+	if err != nil {
+		t.Fatalf("mergeMySekaiData() error = %v", err)
+	}
+
+	var raw RawUserData
+	if err := json.Unmarshal(merged, &raw); err != nil {
+		t.Fatalf("decode merged payload: %v", err)
+	}
+	if raw.Now != 1710000200 {
+		t.Fatalf("expected updatedResources now to win over stale top-level now, got %d", raw.Now)
+	}
+	if len(raw.UserMysekaiGates) != 1 || raw.UserMysekaiGates[0].MysekaiGateLevel != 40 {
+		t.Fatalf("expected updatedResources gate level to win, got %+v", raw.UserMysekaiGates)
+	}
+	if len(raw.UserMysekaiFixtureGameCharacterPerformanceBonuses) != 1 ||
+		raw.UserMysekaiFixtureGameCharacterPerformanceBonuses[0].GameCharacterID != 5 ||
+		raw.UserMysekaiFixtureGameCharacterPerformanceBonuses[0].TotalBonusRate != 20 {
+		t.Fatalf("expected suite fixture bonus to survive empty top-level mysekai field, got %+v", raw.UserMysekaiFixtureGameCharacterPerformanceBonuses)
+	}
+}

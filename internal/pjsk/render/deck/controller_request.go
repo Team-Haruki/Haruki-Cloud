@@ -169,10 +169,9 @@ func normalizeDeckDisplayRate(value float64) float64 {
 }
 
 func resolveRecommendCardDisplayState(card *masterdata.Card, deckCard RecommendCard) (displayAfterTraining bool, trainedArt bool) {
-	if cardUsesDynamicRecommendArt(card) {
-		return deckCard.IsAfterTraining, deckCard.IsAfterTraining
-	}
-
+	// For BFes/double-skill cards, deck-service uses default_image to report the
+	// actual selected skill/art state. after_training only means the owned card is
+	// trained; using it here would turn flower-before skills into flower-after art.
 	trainedArt, hasDefaultImage := normalizeRecommendCardDefaultImage(deckCard.DefaultImage)
 	displayAfterTraining = deckCard.IsAfterTraining
 	if hasDefaultImage {
@@ -181,10 +180,6 @@ func resolveRecommendCardDisplayState(card *masterdata.Card, deckCard RecommendC
 		trainedArt = displayAfterTraining
 	}
 	return displayAfterTraining, trainedArt
-}
-
-func cardUsesDynamicRecommendArt(card *masterdata.Card) bool {
-	return card != nil && card.SpecialTrainingSkillID > 0
 }
 
 func normalizeRecommendCardDefaultImage(raw string) (trainedArt bool, ok bool) {

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -17,7 +18,9 @@ import (
 var mergeParams = requestbuilder.MergeParams
 
 func imageMessage(ctx context.Context, img []byte, app *renderapp.App, group string) (onebot11.Message, error) {
+	tStore := time.Now()
 	url, err := app.ImageCache.StoreAndGetURL(ctx, img, group)
+	recordCommandStage(ctx, "image_store", time.Since(tStore))
 	if err != nil {
 		return nil, err
 	}

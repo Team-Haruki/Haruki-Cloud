@@ -4,9 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
+
 	"haruki-cloud/api"
 	botauth "haruki-cloud/api/bot/auth"
+	harukiConfig "haruki-cloud/config"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
 	"haruki-cloud/internal/core/crypto"
@@ -17,10 +21,6 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/logger"
-	"slices"
-	"strings"
-
-	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/version"
 
 	"entgo.io/ent/dialect/sql"
@@ -30,6 +30,8 @@ import (
 )
 
 const botRouteBase = "/api/v2/bot"
+
+const slowCommandTraceThreshold = 1500 * time.Millisecond
 
 // RegisterPJSKBotRoutes registers per-feature bot endpoints under
 //
@@ -123,6 +125,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		if err != nil {
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
+		requestCtx, commandTrace := commandhandler.WithCommandTrace(c.Context())
 		if len(req.Message) == 0 {
 			return botResponse(c, fiber.StatusBadRequest, "message is required")
 		}
@@ -131,7 +134,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		}
 
 		// Dedup + rate limit: acquire guard before doing any work.
-		if !guard.Acquire(c.Context(), req) {
+		if !guard.Acquire(requestCtx, req) {
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
 		}
 		allowCompatReroute := allowBotCompatReroute(expectedPath)
@@ -148,7 +151,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 				Command:  req.MatchedCommand,
 			}
 			defer func() {
-				if err := botauth.RecordCommandTelemetry(c.Context(), botDBClient, botID, entry); err != nil {
+				if err := botauth.RecordCommandTelemetry(requestCtx, botDBClient, botID, entry); err != nil {
 					logger.Warnf("bot command telemetry failed: bot_id=%d path=%s matched_command=%s err=%v", botID, expectedPath, req.MatchedCommand, err)
 				}
 			}()
@@ -156,11 +159,11 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 
 		tStart := time.Now()
 		botID := strings.TrimSpace(c.Params("botId"))
-		resolved, err := resolveBotCommand(c.Context(), req.Message, expectedPath, req, botID)
+		resolved, err := resolveBotCommand(requestCtx, req.Message, expectedPath, req, botID)
 		if err != nil && allowCompatReroute {
 			if validationErr, ok := errors.AsType[*botValidationError](err); ok && canRetryBotPathCompat(expectedPath, validationErr.actualPath) {
 				logger.Warnf("bot command compat reroute: matched_command=%s expected_path=%s actual_path=%s", req.MatchedCommand, expectedPath, validationErr.actualPath)
-				resolved, err = resolveBotCommand(c.Context(), req.Message, validationErr.actualPath, req, botID)
+				resolved, err = resolveBotCommand(requestCtx, req.Message, validationErr.actualPath, req, botID)
 			}
 		}
 		tResolved := time.Now()
@@ -181,19 +184,32 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 			}
 		}
 
-		responseData, err := commandhandler.ExecuteCommandRequest(c.Context(), resolved, renderApp)
+		responseData, err := commandhandler.ExecuteCommandRequest(requestCtx, resolved, renderApp)
 		tDone := time.Now()
+		logSlowCommandTrace(commandTrace, req.MatchedCommand, expectedPath, tStart, tDone)
 		if err != nil {
 			logger.Errorf("bot command render failed: matched_command=%s parse=%dms exec=%dms total=%dms err=%v",
 				req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds(), err)
-			guard.MarkComplete(c.Context(), req)
+			guard.MarkComplete(requestCtx, req)
 			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
 		}
 		logger.Infof("bot command completed: matched_command=%s parse=%dms exec=%dms total=%dms",
 			req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds())
-		guard.MarkComplete(c.Context(), req)
+		guard.MarkComplete(requestCtx, req)
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, responseData)
 	}
+}
+
+func logSlowCommandTrace(trace *commandhandler.CommandTrace, matchedCommand, expectedPath string, startedAt, finishedAt time.Time) {
+	if trace == nil || finishedAt.Sub(startedAt) < slowCommandTraceThreshold {
+		return
+	}
+	summary := trace.Summary()
+	if summary == "" {
+		return
+	}
+	logger.Infof("bot command trace: matched_command=%s path=%s total=%dms %s",
+		matchedCommand, expectedPath, finishedAt.Sub(startedAt).Milliseconds(), summary)
 }
 
 // parseBotRequest binds BotCommandRequest from the POST body.

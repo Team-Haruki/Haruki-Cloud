@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -37,7 +38,9 @@ func resolveSnapshotBySelectorWithError(ctx context.Context, app *renderapp.App,
 			strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault)
 		return nil, nil
 	}
+	tProvider := time.Now()
 	snap, err := provider.Resolve(ctx, selector, opts)
+	recordCommandStage(ctx, "snapshot_provider", time.Since(tProvider))
 	if err != nil {
 		snapshotDebugLogger.Warnf("snapshot resolve failed: platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t err=%v",
 			strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault, err)

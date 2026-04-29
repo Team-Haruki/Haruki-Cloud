@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"time"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -123,6 +124,10 @@ func (rc *RequestContext) snapshotSelector(needMySekai bool) (snapshot.Selector,
 // regional fallback pattern. Returns (binding, harukiUserID). Binding may be nil.
 func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 	rc.bindingOnce.Do(func() {
+		tBinding := time.Now()
+		defer func() {
+			recordCommandStage(rc.Ctx, "binding_resolve", time.Since(tBinding))
+		}()
 		if rc.App == nil || rc.App.Bindings == nil {
 			return
 		}
@@ -151,12 +156,20 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 func (rc *RequestContext) ResolveSnapshot(needMySekai bool) snapshot.Snapshot {
 	if needMySekai {
 		rc.fullSnapshotOnce.Do(func() {
+			tSnapshot := time.Now()
+			defer func() {
+				recordCommandStage(rc.Ctx, "snapshot_resolve_full", time.Since(tSnapshot))
+			}()
 			selector, opts := rc.snapshotSelector(true)
 			rc.fullSnapshot, rc.fullSnapshotErr = resolveSnapshotBySelectorWithError(rc.Ctx, rc.App, selector, opts)
 		})
 		return rc.fullSnapshot
 	}
 	rc.basicSnapshotOnce.Do(func() {
+		tSnapshot := time.Now()
+		defer func() {
+			recordCommandStage(rc.Ctx, "snapshot_resolve_basic", time.Since(tSnapshot))
+		}()
 		selector, opts := rc.snapshotSelector(false)
 		rc.basicSnapshot, rc.basicSnapshotErr = resolveSnapshotBySelectorWithError(rc.Ctx, rc.App, selector, opts)
 	})
@@ -194,6 +207,10 @@ func (rc *RequestContext) GetSelfTarget() *ResolvedGameTarget {
 
 func (rc *RequestContext) GetPublicProfileResponse() *sekaiapi.GetAnotherProfileResponse {
 	rc.publicProfileOnce.Do(func() {
+		tProfile := time.Now()
+		defer func() {
+			recordCommandStage(rc.Ctx, "sekai_profile", time.Since(tProfile))
+		}()
 		target := rc.GetSelfTarget()
 		if target == nil || rc.App == nil || rc.App.SekaiAPI == nil {
 			return

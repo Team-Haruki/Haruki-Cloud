@@ -108,6 +108,48 @@ func TestToolboxSnapshotProviderFallsBackToRegionBinding(t *testing.T) {
 	}
 }
 
+func TestToolboxSnapshotProviderReusesRequestCachedSuiteData(t *testing.T) {
+	client := &fakePrivateDataClient{
+		suiteJSON:   []byte(minimalSuiteJSON),
+		mysekaiJSON: []byte(`{"updatedResources":{}}`),
+	}
+	provider := NewToolboxSnapshotProvider(
+		&fakeBindingLookup{
+			bindings: map[string]*accountdata.ResolvedBinding{
+				"jp": {
+					PJSKUserID:     "123456789",
+					Server:         "jp",
+					SuiteVisible:   true,
+					MySekaiVisible: true,
+				},
+			},
+		},
+		client,
+		nil,
+		nil,
+	)
+
+	ctx := WithRequestCache(context.Background())
+	selector := Selector{
+		IMPlatform: "qq",
+		IMUserID:   "10001",
+		Region:     renderregion.JP,
+	}
+	if _, err := provider.Resolve(ctx, selector, ResolveOptions{NeedMySekai: false}); err != nil {
+		t.Fatalf("Resolve(suite) error = %v", err)
+	}
+	if _, err := provider.Resolve(ctx, selector, ResolveOptions{NeedMySekai: true}); err != nil {
+		t.Fatalf("Resolve(mysekai) error = %v", err)
+	}
+
+	if got := len(client.suiteCalls); got != 1 {
+		t.Fatalf("expected one suite fetch with request cache, got %d", got)
+	}
+	if got := len(client.mysekaiCalls); got != 1 {
+		t.Fatalf("expected one mysekai fetch, got %d", got)
+	}
+}
+
 func TestToolboxSnapshotProviderSupportsExplicitBoundAccount(t *testing.T) {
 	client := &fakePrivateDataClient{
 		suiteJSON: []byte(minimalSuiteJSON),

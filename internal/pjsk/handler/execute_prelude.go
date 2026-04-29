@@ -8,6 +8,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/displaytime"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 // ExecutionRuntime captures the request-scoped runtime prepared before a PJSK
@@ -47,6 +48,7 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 		ctx,
 		resolveRequesterHarukiUserTimeZone(ctx, app, resolved.RequesterPlatform, resolved.RequesterUserID),
 	)
+	ctx = rendersnapshot.WithRequestCache(ctx)
 
 	return &ExecutionRuntime{
 		Context:  ctx,

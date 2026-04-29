@@ -85,7 +85,16 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	}
 
 	tSuite := time.Now()
-	suiteJSON, err := p.client.GetSuiteData(binding.Server, uid, platform, imUserID)
+	var suiteCacheHit bool
+	suiteJSON, err, suiteCacheHit := cachedPrivateData(ctx, privateDataCacheKey{
+		Server:         binding.Server,
+		DataType:       "suite",
+		UserID:         uid,
+		Platform:       platform,
+		PlatformUserID: imUserID,
+	}, func() ([]byte, error) {
+		return p.client.GetSuiteData(binding.Server, uid, platform, imUserID)
+	})
 	suiteElapsed := time.Since(tSuite)
 	if err != nil {
 		p.logger.Warnf("toolbox suite fetch failed: elapsed=%dms platform=%s user=%s binding=%s err=%v",
@@ -97,21 +106,40 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 			platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding))
 		return nil, fmt.Errorf("snapshot: suite snapshot is empty")
 	}
-	p.logger.Infof("toolbox suite fetch: elapsed=%dms platform=%s user=%s binding=%s bytes=%d",
-		suiteElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(suiteJSON))
+	if suiteCacheHit {
+		p.logger.Infof("toolbox suite cache hit: elapsed=%dms platform=%s user=%s binding=%s bytes=%d",
+			suiteElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(suiteJSON))
+	} else {
+		p.logger.Infof("toolbox suite fetch: elapsed=%dms platform=%s user=%s binding=%s bytes=%d",
+			suiteElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(suiteJSON))
+	}
 
 	var mysekaiJSON []byte
 	if opts.NeedMySekai {
 		tMysekai := time.Now()
-		mysekaiJSON, err = p.client.GetMySekaiData(binding.Server, uid, platform, imUserID)
+		var mysekaiCacheHit bool
+		mysekaiJSON, err, mysekaiCacheHit = cachedPrivateData(ctx, privateDataCacheKey{
+			Server:         binding.Server,
+			DataType:       "mysekai",
+			UserID:         uid,
+			Platform:       platform,
+			PlatformUserID: imUserID,
+		}, func() ([]byte, error) {
+			return p.client.GetMySekaiData(binding.Server, uid, platform, imUserID)
+		})
 		mysekaiElapsed := time.Since(tMysekai)
 		if err != nil {
 			p.logger.Warnf("toolbox mysekai fetch failed: elapsed=%dms platform=%s user=%s binding=%s err=%v",
 				mysekaiElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), err)
 			return nil, err
 		}
-		p.logger.Infof("toolbox mysekai fetch: elapsed=%dms platform=%s user=%s binding=%s bytes=%d",
-			mysekaiElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(mysekaiJSON))
+		if mysekaiCacheHit {
+			p.logger.Infof("toolbox mysekai cache hit: elapsed=%dms platform=%s user=%s binding=%s bytes=%d",
+				mysekaiElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(mysekaiJSON))
+		} else {
+			p.logger.Infof("toolbox mysekai fetch: elapsed=%dms platform=%s user=%s binding=%s bytes=%d",
+				mysekaiElapsed.Milliseconds(), platform, maskBindingDebugID(imUserID), formatSnapshotBindingDebug(binding), len(mysekaiJSON))
+		}
 	}
 
 	metaRegion := region

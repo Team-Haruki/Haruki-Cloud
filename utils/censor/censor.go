@@ -22,10 +22,14 @@ const (
 	ResultNonCompliant ResultStatus = "不合规"
 )
 
+type ImageModerator interface {
+	ImageModerationURL(ctx context.Context, imageURL string) (IMSSuggestion, error)
+}
+
 type Service struct {
 	Client         *ent.Client
 	TextCensorAPI  *BaiduTextCensorClient // text censor (Baidu)
-	ImageCensorAPI *TencentIMSClient      // image censor (Tencent IMS); nil = disabled
+	ImageCensorAPI ImageModerator         // image censor (Tencent IMS); nil = disabled
 	Logger         *logger.Logger
 }
 
@@ -139,7 +143,7 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 
 // CensorImage submits an image CDN URL to Tencent IMS for content moderation.
 // Results are cached in the ent image_mod_cache table to avoid redundant API calls.
-// Returns true if the image passes (or if image censor is not configured).
+// Returns true if the image passes, the image censor is not configured, or the request fails.
 func (s *Service) CensorImage(ctx context.Context, harukiUserID int, imageURL string) bool {
 	if s.ImageCensorAPI == nil {
 		return true
@@ -155,8 +159,8 @@ func (s *Service) CensorImage(ctx context.Context, harukiUserID int, imageURL st
 
 	suggestion, err := s.ImageCensorAPI.ImageModerationURL(ctx, imageURL)
 	if err != nil {
-		s.Logger.Errorf("图片审核失败: %v", err)
-		return false
+		s.Logger.Errorf("图片审核请求失败，跳过审核并按通过处理: %v", err)
+		return true
 	}
 	if suggestion != IMSSuggestionPass {
 		s.Logger.Debugf("图片审核不通过 (suggestion=%s): %s", suggestion, imageURL)
@@ -184,7 +188,7 @@ func NewService(
 	tencentSecretID, tencentSecretKey, tencentRegion, tencentBizType string,
 	client *ent.Client,
 ) *Service {
-	var imageCensor *TencentIMSClient
+	var imageCensor ImageModerator
 	if tencentSecretID != "" && tencentSecretKey != "" {
 		imageCensor = NewTencentIMSClient(tencentSecretID, tencentSecretKey, tencentRegion, tencentBizType)
 	}

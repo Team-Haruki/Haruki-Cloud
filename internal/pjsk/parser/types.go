@@ -49,6 +49,7 @@ const (
 // EventFilter 活动筛选条件
 type EventFilter struct {
 	Unit           string // 25h, vbs, etc.
+	OnlyUnit       bool   // 仅25h: all event cards must belong to Unit
 	EventType      string // marathon, cheerful_carnival, world_bloom
 	WorldBloomTurn int    // wl1, wl2, wl3...
 	Year           int    // 2024

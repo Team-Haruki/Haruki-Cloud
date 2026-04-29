@@ -24,27 +24,22 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 	}
 
 	fixedCards := make([]int, 0, len(fields))
-	allInts := true
-	for _, field := range fields {
-		value, err := strconv.Atoi(strings.TrimSpace(field))
-		if err != nil || value <= 0 {
-			allInts = false
-			break
-		}
-		fixedCards = append(fixedCards, value)
-	}
-	if allInts {
-		if err := validateDeckUniqueIDs(fixedCards, 5, "固定卡牌"); err != nil {
-			return "", err
-		}
-		params.FixedCards = fixedCards
-		return strings.TrimSpace(prefix), nil
-	}
-
 	fixedCharacters := make([]int, 0, len(fields))
 	fixedCharacterQueries := make([]string, 0, len(fields))
 	for _, field := range fields {
-		charID, charQuery := resolveDeckCharacterToken(field)
+		token := strings.TrimLeft(strings.TrimSpace(field), "#")
+		if token == "" {
+			return "", fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
+		}
+		if value, err := strconv.Atoi(token); err == nil {
+			if value <= 0 {
+				return "", fmt.Errorf("固定卡牌ID必须为正整数")
+			}
+			fixedCards = append(fixedCards, value)
+			continue
+		}
+
+		charID, charQuery := resolveDeckCharacterToken(token)
 		if charID <= 0 {
 			if charQuery == "" {
 				return "", fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
@@ -54,19 +49,31 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 		}
 		fixedCharacters = append(fixedCharacters, charID)
 	}
-	if len(fixedCharacters)+len(fixedCharacterQueries) > 5 {
-		return "", fmt.Errorf("固定角色数量不能超过5个")
+	if len(fixedCards)+len(fixedCharacters)+len(fixedCharacterQueries) > 5 {
+		return "", fmt.Errorf("固定卡牌和固定角色总数不能超过5个")
 	}
-	if len(fixedCharacterQueries) == 0 {
+	if len(fixedCards) > 0 {
+		if err := validateDeckUniqueIDs(fixedCards, 5, "固定卡牌"); err != nil {
+			return "", err
+		}
+	}
+	if len(fixedCharacters) > 0 && len(fixedCharacterQueries) == 0 {
 		if err := validateDeckUniqueIDs(fixedCharacters, 5, "固定角色"); err != nil {
 			return "", err
 		}
 	}
-	if len(fixedCharacters) == 0 && len(fixedCharacterQueries) == 0 {
-		return "", fmt.Errorf("固定角色不能为空")
+	if len(fixedCards) == 0 && len(fixedCharacters) == 0 && len(fixedCharacterQueries) == 0 {
+		return "", fmt.Errorf("固定卡牌或固定角色不能为空")
 	}
-	params.FixedCharacters = fixedCharacters
-	params.FixedCharacterQueries = fixedCharacterQueries
+	if len(fixedCards) > 0 {
+		params.FixedCards = fixedCards
+	}
+	if len(fixedCharacters) > 0 {
+		params.FixedCharacters = fixedCharacters
+	}
+	if len(fixedCharacterQueries) > 0 {
+		params.FixedCharacterQueries = fixedCharacterQueries
+	}
 	return strings.TrimSpace(prefix), nil
 }
 

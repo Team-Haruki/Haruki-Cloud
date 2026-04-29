@@ -18,7 +18,7 @@ const querySingleEventHelp = `【查单个活动格式】
 
 const queryMultiEventHelp = `【查多个活动格式】
 1. 活动类型：5v5 普活 wl wl1 wl2 wl3
-2. 颜色和团：紫 25h
+2. 颜色和团：紫 25h 仅25h
 3. 年份：25年 去年
 4. 活动角色：mnr hrk 可以加多个
 5. 活动ban主：mnr箱`
@@ -93,6 +93,9 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 		}
 		if info.Filter.Unit != "" {
 			params["unit"] = info.Filter.Unit
+		}
+		if info.Filter.OnlyUnit {
+			params["only_unit"] = true
 		}
 		if info.Filter.Blend {
 			params["blend"] = true

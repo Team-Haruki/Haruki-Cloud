@@ -62,6 +62,118 @@ func TestResolveDeckCharacterSelectionsFallsBackJPEventRecommendToNoEventDuringP
 	}
 }
 
+func TestResolveDeckCharacterSelectionsFallsBackJPEventRecommendToNoEventBeforeNextEvent(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now().UnixMilli()
+
+	provider := bridgeDeckTestMasterProvider{
+		region: renderregion.JP,
+		events: &bridgeDeckTestEventProvider{
+			events: []*masterdata.Event{
+				{
+					ID:          711,
+					EventType:   "marathon",
+					Name:        "JP Previous",
+					StartAt:     now - int64(72*time.Hour/time.Millisecond),
+					AggregateAt: now - int64(48*time.Hour/time.Millisecond),
+					ClosedAt:    now - int64(47*time.Hour/time.Millisecond),
+				},
+				{
+					ID:          712,
+					EventType:   "marathon",
+					Name:        "JP Future",
+					StartAt:     now + int64(3*time.Hour/time.Millisecond),
+					AggregateAt: now + int64(6*time.Hour/time.Millisecond),
+					ClosedAt:    now + int64(7*time.Hour/time.Millisecond),
+				},
+			},
+			cardsByEvent: map[int][]*masterdata.Card{
+				712: {{
+					ID:        9012,
+					ReleaseAt: now + int64(time.Minute/time.Millisecond),
+				}},
+			},
+		},
+	}
+
+	app := &renderapp.App{
+		Provider: provider,
+		Providers: map[renderregion.Value]renderprovider.MasterDataProvider{
+			renderregion.JP: provider,
+		},
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+	}
+	if err := resolveDeckCharacterSelections(ctx, &query, app); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.RecommendType != "no_event" {
+		t.Fatalf("expected jp event recommend to fallback to no_event before next event, got %q", query.RecommendType)
+	}
+	if query.EventID != nil {
+		t.Fatalf("expected event id to be cleared before next event fallback, got %+v", query.EventID)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsUsesJPNextEventAfterCardRelease(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now().UnixMilli()
+
+	provider := bridgeDeckTestMasterProvider{
+		region: renderregion.JP,
+		events: &bridgeDeckTestEventProvider{
+			events: []*masterdata.Event{
+				{
+					ID:          721,
+					EventType:   "marathon",
+					Name:        "JP Previous",
+					StartAt:     now - int64(72*time.Hour/time.Millisecond),
+					AggregateAt: now - int64(48*time.Hour/time.Millisecond),
+					ClosedAt:    now - int64(47*time.Hour/time.Millisecond),
+				},
+				{
+					ID:          722,
+					EventType:   "marathon",
+					Name:        "JP Released Future",
+					StartAt:     now + int64(3*time.Hour/time.Millisecond),
+					AggregateAt: now + int64(6*time.Hour/time.Millisecond),
+					ClosedAt:    now + int64(7*time.Hour/time.Millisecond),
+				},
+			},
+			cardsByEvent: map[int][]*masterdata.Card{
+				722: {{
+					ID:        9022,
+					ReleaseAt: now - int64(time.Minute/time.Millisecond),
+				}},
+			},
+		},
+	}
+
+	app := &renderapp.App{
+		Provider: provider,
+		Providers: map[renderregion.Value]renderprovider.MasterDataProvider{
+			renderregion.JP: provider,
+		},
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+	}
+	if err := resolveDeckCharacterSelections(ctx, &query, app); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.RecommendType != "event" {
+		t.Fatalf("expected jp event recommend to stay event after card release, got %q", query.RecommendType)
+	}
+	if query.EventID == nil || *query.EventID != 722 {
+		t.Fatalf("expected jp next event 722 after card release, got %+v", query.EventID)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsUsesNextEventOutsideJPDuringPostAggregateGap(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now().UnixMilli()

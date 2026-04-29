@@ -33,6 +33,46 @@ func intNumber(value any, fallback int) int {
 	return fallback
 }
 
+func intNumberFrom(item map[string]any, fallback int, keys ...string) int {
+	for _, key := range keys {
+		if item == nil {
+			break
+		}
+		if value, ok := item[key]; ok {
+			if n := intNumber(value, fallback); n != fallback {
+				return n
+			}
+		}
+	}
+	return fallback
+}
+
+func boolValueFrom(item map[string]any, keys ...string) bool {
+	for _, key := range keys {
+		if item == nil {
+			break
+		}
+		if value, ok := item[key]; ok {
+			return boolValue(value)
+		}
+	}
+	return false
+}
+
+func stringValueFrom(item map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if item == nil {
+			break
+		}
+		if value, ok := item[key]; ok {
+			if text := stringValue(value); text != "" {
+				return text
+			}
+		}
+	}
+	return ""
+}
+
 func floatNumber(value any, fallback float64) float64 {
 	switch v := value.(type) {
 	case float64:
@@ -85,8 +125,29 @@ func int64Number(value any, fallback int64) int64 {
 }
 
 func boolValue(value any) bool {
-	v, ok := value.(bool)
-	return ok && v
+	switch v := value.(type) {
+	case bool:
+		return v
+	case float64:
+		return v != 0
+	case float32:
+		return v != 0
+	case int:
+		return v != 0
+	case int32:
+		return v != 0
+	case int64:
+		return v != 0
+	case json.Number:
+		n, err := v.Int64()
+		return err == nil && n != 0
+	case string:
+		switch strings.ToLower(strings.TrimSpace(v)) {
+		case "true", "1", "yes", "y":
+			return true
+		}
+	}
+	return false
 }
 
 func stringValue(value any) string {

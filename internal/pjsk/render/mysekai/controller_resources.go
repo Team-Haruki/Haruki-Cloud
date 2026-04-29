@@ -102,12 +102,12 @@ func (c *Controller) extractVisitCharacters(region renderregion.Value, merged ma
 		if !ok {
 			continue
 		}
-		groupID := intNumber(entry["mysekaiGameCharacterUnitGroupId"], 0)
+		groupID := intNumberFrom(entry, 0, "mysekaiGameCharacterUnitGroupId", "mysekai_game_character_unit_group_id")
 		group := groupMap[groupID]
-		if len(group) == 0 || intNumber(group["gameCharacterUnitId2"], 0) != 0 {
+		if len(group) == 0 || intNumberFrom(group, 0, "gameCharacterUnitId2", "game_character_unit_id2", "game_character_unit_id_2") != 0 {
 			continue
 		}
-		displayUnitID := intNumber(group["gameCharacterUnitId1"], 0)
+		displayUnitID := intNumberFrom(group, 0, "gameCharacterUnitId1", "game_character_unit_id1", "game_character_unit_id_1")
 		if displayUnitID == 0 {
 			continue
 		}

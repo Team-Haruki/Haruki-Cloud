@@ -113,6 +113,37 @@ func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesMixedFixedCharactersAndCards(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/组卡",
+		ArgText:    "180 #len #1237",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 180 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if !reflect.DeepEqual(params.FixedCharacters, []int{23}) {
+		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
+	}
+	if !reflect.DeepEqual(params.FixedCards, []int{1237}) {
+		t.Fatalf("unexpected fixed cards: %+v", params.FixedCards)
+	}
+	if len(params.FixedCharacterQueries) != 0 {
+		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+	}
+}
+
 func TestEventDeckHandleParsesSupportMaxOptionsWithoutAffectingMainDeck(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&PjskHandlerContext{

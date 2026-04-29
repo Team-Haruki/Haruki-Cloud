@@ -61,6 +61,7 @@ type ListQuery struct {
 	EventType      string             `json:"event_type,omitempty"`
 	WorldBloomTurn int                `json:"world_bloom_turn,omitempty"`
 	Unit           string             `json:"unit,omitempty"`
+	OnlyUnit       bool               `json:"only_unit,omitempty"`
 	Blend          bool               `json:"blend,omitempty"`
 	Attr           string             `json:"attr,omitempty"`
 	Year           int                `json:"year,omitempty"`

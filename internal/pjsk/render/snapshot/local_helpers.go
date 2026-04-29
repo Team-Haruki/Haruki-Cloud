@@ -2,9 +2,10 @@ package snapshot
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"fmt"
 	"strings"
+
+	json "github.com/bytedance/sonic"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/card"
@@ -53,6 +54,9 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		if key == "updatedResources" {
 			continue
 		}
+		if shouldPreserveSuiteSnapshotKey(key) {
+			continue
+		}
 		if !shouldMergeMySekaiTopLevelKey(key) {
 			continue
 		}
@@ -70,6 +74,9 @@ func shouldPreserveSuiteSnapshotKey(key string) bool {
 	key = strings.TrimSpace(key)
 	if key == "" {
 		return false
+	}
+	if key == "userMysekaiCharacterTalks" {
+		return true
 	}
 	if strings.HasPrefix(key, "userMysekai") || strings.HasPrefix(key, "mysekai") {
 		return false

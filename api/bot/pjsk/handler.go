@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
-	"strings"
 	"time"
-
 	"haruki-cloud/api"
 	botauth "haruki-cloud/api/bot/auth"
 	harukiConfig "haruki-cloud/config"
@@ -21,6 +18,10 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/utils/logger"
+	"slices"
+	"strings"
+
+	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/version"
 
 	"entgo.io/ent/dialect/sql"
@@ -395,7 +396,11 @@ func shouldPreferMoreSpecificMessageMatch(message string, matched commandregistr
 	}
 
 	providedPrefixLength, ok := commandregistry.MatchCommandPrefix(message, matched.Command)
-	if !ok || actual.PrefixLength <= providedPrefixLength {
+	if !ok {
+		_, related := commandregistry.MatchCommandPrefix(matched.Command, actual.Command)
+		return related
+	}
+	if actual.PrefixLength <= providedPrefixLength {
 		return false
 	}
 

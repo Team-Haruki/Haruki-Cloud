@@ -250,6 +250,43 @@ func TestEventListHandleSupportsSharedUnitAndAttrAliases(t *testing.T) {
 	}
 }
 
+func TestEventDetailHandleParsesOnlyUnitFilter(t *testing.T) {
+	h := sekaiHandlers{}.EventDetailHandle()
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/查活动",
+		ArgText:    "仅mmj",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleEvent || resolved.Mode != "event-list" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params struct {
+		Unit          string `json:"unit"`
+		OnlyUnit      bool   `json:"only_unit"`
+		IncludePast   bool   `json:"include_past"`
+		IncludeFuture bool   `json:"include_future"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Unit != "idol" || !params.OnlyUnit {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+	if !params.IncludePast || !params.IncludeFuture {
+		t.Fatalf("unexpected range params: %+v", params)
+	}
+}
+
 func TestEventDetailHandleParsesWorldBloomTurnAndCharacterFilter(t *testing.T) {
 	h := sekaiHandlers{}.EventDetailHandle()
 

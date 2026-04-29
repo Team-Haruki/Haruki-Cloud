@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -31,7 +32,10 @@ func (b *Builder) BuildEventDetailRequest(query DetailQuery) (*drawing.EventDeta
 
 	cards, err := b.source.GetEventCards(eventInfo.ID)
 	if err != nil {
-		return nil, err
+		if !isMissingEventCardsError(err) {
+			return nil, err
+		}
+		cards = nil
 	}
 	cardThumbs := make([]drawing.CardFullThumbnailRequest, 0, len(cards))
 	for _, card := range cards {
@@ -49,6 +53,10 @@ func (b *Builder) BuildEventDetailRequest(query DetailQuery) (*drawing.EventDeta
 		EventAssets: b.buildEventAssets(eventInfo, info, region),
 		EventCards:  cardThumbs,
 	}, nil
+}
+
+func isMissingEventCardsError(err error) bool {
+	return err != nil && strings.Contains(strings.ToLower(err.Error()), "no cards found for event")
 }
 
 func (b *Builder) BuildEventListRequest(query ListQuery) (*drawing.EventListRequest, error) {

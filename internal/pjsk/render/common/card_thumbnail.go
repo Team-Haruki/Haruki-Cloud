@@ -34,20 +34,11 @@ func ResolveCardThumbnailPath(helper *assets.AssetHelper, region renderregion.Va
 	}
 
 	fileSuffix := "_normal.png"
-	memberFile := "card_normal.png"
 	if trainedArt {
 		fileSuffix = "_after_training.png"
-		memberFile = "card_after_training.png"
 	}
 
-	relPaths := []string{
-		filepath.Join("thumbnail", "chara", assetBundleName+fileSuffix),
-		filepath.Join("character", "member", assetBundleName, memberFile),
-	}
-	if !strings.HasSuffix(assetBundleName, "_rip") {
-		relPaths = append(relPaths, filepath.Join("character", "member", assetBundleName+"_rip", memberFile))
-	}
-	return assets.ResolveRegionAssetPath(helper, region.String(), relPaths...)
+	return assets.ResolveRegionAssetPath(helper, region.String(), filepath.Join("thumbnail", "chara", assetBundleName+fileSuffix))
 }
 
 func ResolveCardRareImagePath(helper *assets.AssetHelper, card *masterdata.Card, afterTraining bool) string {

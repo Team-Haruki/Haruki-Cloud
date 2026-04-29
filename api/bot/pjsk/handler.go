@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 	"haruki-cloud/api"
 	botauth "haruki-cloud/api/bot/auth"
 	botDB "haruki-cloud/database/bot"
@@ -19,6 +18,7 @@ import (
 	"haruki-cloud/utils/logger"
 	"slices"
 	"strings"
+	"time"
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/version"
@@ -379,7 +379,11 @@ func shouldPreferMoreSpecificMessageMatch(message string, matched commandregistr
 	}
 
 	providedPrefixLength, ok := commandregistry.MatchCommandPrefix(message, matched.Command)
-	if !ok || actual.PrefixLength <= providedPrefixLength {
+	if !ok {
+		_, related := commandregistry.MatchCommandPrefix(matched.Command, actual.Command)
+		return related
+	}
+	if actual.PrefixLength <= providedPrefixLength {
 		return false
 	}
 

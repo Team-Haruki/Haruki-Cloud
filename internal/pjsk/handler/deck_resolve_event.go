@@ -381,23 +381,17 @@ func pickDeckAutoEvent(ctx context.Context, app *renderapp.App, region renderreg
 	if current != nil {
 		return current, nil
 	}
+	if next != nil {
+		return next, nil
+	}
+	if isJPEventFallback {
+		return nil, nil
+	}
 	if active != nil {
-		if next != nil {
-			if isJPEventFallback {
-				return nil, nil
-			}
-			return next, nil
-		}
 		if blockedNext != nil {
-			if isJPEventFallback {
-				return nil, nil
-			}
 			return nil, &deckEventLockedError{EventID: int(blockedNext.GameID)}
 		}
 		return active, nil
-	}
-	if next != nil {
-		return next, nil
 	}
 	if blockedNext != nil {
 		return nil, &deckEventLockedError{EventID: int(blockedNext.GameID)}
@@ -713,16 +707,16 @@ func isDeckFutureEventAvailable(ctx context.Context, app *renderapp.App, region 
 	if eventInfo.StartAt <= now {
 		return true
 	}
+	if region == renderregion.JP {
+		return deckEventLeakReleased(ctx, app, int(eventInfo.GameID), now)
+	}
 	if dbEventIDs == nil {
 		return true
 	}
 	if _, ok := dbEventIDs[int(eventInfo.GameID)]; ok {
 		return true
 	}
-	if region != renderregion.JP {
-		return false
-	}
-	return deckEventLeakReleased(ctx, app, int(eventInfo.GameID), now)
+	return false
 }
 
 func deckEventLeakReleased(ctx context.Context, app *renderapp.App, eventID int, now int64) bool {

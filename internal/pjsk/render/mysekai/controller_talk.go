@@ -29,8 +29,8 @@ func (c *Controller) resolveTalkCharacter(query string) (int, int, error) {
 	if len(strings.Fields(cleanedQuery)) == 1 {
 		if target, err := strconv.Atoi(cleanedQuery); err == nil && target > 0 {
 			for _, item := range gameCharacterUnits {
-				if intNumber(item["id"], 0) == target {
-					return intNumber(item["gameCharacterId"], 0), target, nil
+				if intNumberFrom(item, 0, "id", "game_id") == target {
+					return intNumberFrom(item, 0, "gameCharacterId", "game_character_id"), target, nil
 				}
 			}
 			return c.resolveTalkCharacterUnit(cleanedQuery, unit, target, gameCharacterUnits)
@@ -74,14 +74,14 @@ func (c *Controller) lookupTalkCharacterID(query string) int {
 	characters := c.masterdata.loadMapByID("gameCharacters.json")
 	for characterID, item := range characters {
 		candidates := []string{
-			stringValue(item["firstName"]),
-			stringValue(item["givenName"]),
-			strings.TrimSpace(stringValue(item["firstName"]) + stringValue(item["givenName"])),
-			strings.TrimSpace(stringValue(item["firstName"]) + " " + stringValue(item["givenName"])),
-			stringValue(item["firstNameEnglish"]),
-			stringValue(item["givenNameEnglish"]),
-			strings.TrimSpace(stringValue(item["firstNameEnglish"]) + stringValue(item["givenNameEnglish"])),
-			strings.TrimSpace(stringValue(item["firstNameEnglish"]) + " " + stringValue(item["givenNameEnglish"])),
+			stringValueFrom(item, "firstName", "first_name"),
+			stringValueFrom(item, "givenName", "given_name"),
+			strings.TrimSpace(stringValueFrom(item, "firstName", "first_name") + stringValueFrom(item, "givenName", "given_name")),
+			strings.TrimSpace(stringValueFrom(item, "firstName", "first_name") + " " + stringValueFrom(item, "givenName", "given_name")),
+			stringValueFrom(item, "firstNameEnglish", "first_name_english"),
+			stringValueFrom(item, "givenNameEnglish", "given_name_english"),
+			strings.TrimSpace(stringValueFrom(item, "firstNameEnglish", "first_name_english") + stringValueFrom(item, "givenNameEnglish", "given_name_english")),
+			strings.TrimSpace(stringValueFrom(item, "firstNameEnglish", "first_name_english") + " " + stringValueFrom(item, "givenNameEnglish", "given_name_english")),
 		}
 		for _, candidate := range candidates {
 			if normalizeMysekaiTalkCharacterQuery(candidate) == normalized {
@@ -95,7 +95,7 @@ func (c *Controller) lookupTalkCharacterID(query string) int {
 func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID int, gameCharacterUnits []map[string]any) (int, int, error) {
 	candidates := make([]map[string]any, 0, 6)
 	for _, item := range gameCharacterUnits {
-		if intNumber(item["gameCharacterId"], 0) != characterID {
+		if intNumberFrom(item, 0, "gameCharacterId", "game_character_id") != characterID {
 			continue
 		}
 		candidates = append(candidates, item)
@@ -115,20 +115,20 @@ func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID in
 	if unit != "" {
 		normalizedUnit := normalizeMysekaiTalkUnit(unit)
 		for _, item := range candidates {
-			if normalizeMysekaiTalkUnit(stringValue(item["unit"])) == normalizedUnit {
-				return characterID, intNumber(item["id"], 0), nil
+			if normalizeMysekaiTalkUnit(stringValueFrom(item, "unit")) == normalizedUnit {
+				return characterID, intNumberFrom(item, 0, "id", "game_id"), nil
 			}
 		}
 		return 0, 0, fmt.Errorf("找不到要查询的角色")
 	}
 
 	if len(candidates) == 1 {
-		return characterID, intNumber(candidates[0]["id"], 0), nil
+		return characterID, intNumberFrom(candidates[0], 0, "id", "game_id"), nil
 	}
 	if characterID == 21 {
 		return 0, 0, fmt.Errorf("查询存在多个组合的V家角色时需要同时指定组合，例如\"%s ln\"", strings.TrimSpace(query))
 	}
-	return characterID, intNumber(candidates[0]["id"], 0), nil
+	return characterID, intNumberFrom(candidates[0], 0, "id", "game_id"), nil
 }
 
 func (c *Controller) filterMysekaiVirtualSingerCandidates(characterID int, candidates []map[string]any) []map[string]any {
@@ -141,7 +141,7 @@ func (c *Controller) filterMysekaiVirtualSingerCandidates(characterID int, candi
 	}
 	filtered := make([]map[string]any, 0, len(candidates))
 	for _, item := range candidates {
-		if _, ok := available[intNumber(item["id"], 0)]; ok {
+		if _, ok := available[intNumberFrom(item, 0, "id", "game_id")]; ok {
 			filtered = append(filtered, item)
 		}
 	}
@@ -158,10 +158,7 @@ func (c *Controller) availableMysekaiCharacterUnitIDs() map[int]struct{} {
 	}
 	result := make(map[int]struct{}, len(items))
 	for _, item := range items {
-		unitID := intNumber(item["gameCharacterUnitId"], 0)
-		if unitID == 0 {
-			unitID = intNumber(item["game_character_unit_id"], 0)
-		}
+		unitID := intNumberFrom(item, 0, "gameCharacterUnitId", "game_character_unit_id")
 		if unitID == 0 {
 			continue
 		}

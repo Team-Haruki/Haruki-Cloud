@@ -2,15 +2,17 @@ package handler
 
 import (
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"log/slog"
 	"strings"
 	"sync"
 	"unicode"
+
+	sonic "github.com/bytedance/sonic"
 )
 
 var commandHandlerTree handlerTreeNode
 var commandLookupRegistry = map[string]*lookupEntry{}
+var commandMatchRegistry []*lookupEntry
 var treeMutex = &sync.RWMutex{}
 var maxDepth int
 
@@ -67,6 +69,17 @@ func MatchCommandHandler(message string) MatchedHandler {
 	defer treeMutex.RUnlock()
 	messageRune := []rune(message)
 	matched := commandHandlerTree.get(messageRune, 0, MatchedHandler{})
+	if matched.Handler != nil && !matched.Handler.IsDisabled() {
+		if prefixLength, ok := MatchCommandPrefix(message, matched.Command); ok {
+			matched.PrefixLength = prefixLength
+			matched.ArgText = messageRune[prefixLength:]
+			return matched
+		}
+	}
+	matched = matchCommandHandlerStrictLocked(message)
+	if matched.Handler == nil || matched.Handler.IsDisabled() {
+		return MatchedHandler{}
+	}
 	matched.ArgText = messageRune[matched.PrefixLength:]
 	return matched
 }
@@ -116,15 +129,21 @@ func MatchCommandPrefix(message, command string) (int, bool) {
 	commandIndex := 0
 
 	for commandIndex < len(commandRunes) {
+		skippedCommandSeg := false
 		for commandIndex < len(commandRunes) && IsCommandSeg(commandRunes[commandIndex]) {
+			skippedCommandSeg = true
 			commandIndex++
 		}
 		if commandIndex >= len(commandRunes) {
 			break
 		}
 
-		for messageIndex < len(messageRunes) && IsCommandSeg(messageRunes[messageIndex]) {
-			messageIndex++
+		if skippedCommandSeg {
+			for messageIndex < len(messageRunes) && IsCommandSeg(messageRunes[messageIndex]) {
+				messageIndex++
+			}
+		} else if messageIndex < len(messageRunes) && IsCommandSeg(messageRunes[messageIndex]) {
+			return 0, false
 		}
 		if messageIndex >= len(messageRunes) {
 			return 0, false
@@ -205,6 +224,10 @@ func registerCommandLookupLocked(command string, handler CommandHandler) {
 	if key == "" {
 		return
 	}
+	commandMatchRegistry = append(commandMatchRegistry, &lookupEntry{
+		command: command,
+		handler: handler,
+	})
 
 	existing := commandLookupRegistry[key]
 	if existing != nil && existing.handler != nil && !existing.handler.IsDisabled() {
@@ -237,6 +260,47 @@ func normalizeCommandKey(command string) string {
 		normalized = append(normalized, unicode.ToLower(r))
 	}
 	return string(normalized)
+}
+
+func matchCommandHandlerStrictLocked(message string) MatchedHandler {
+	var best MatchedHandler
+	for _, entry := range commandMatchRegistry {
+		if entry == nil || entry.handler == nil || entry.handler.IsDisabled() {
+			continue
+		}
+		prefixLength, ok := MatchCommandPrefix(message, entry.command)
+		if !ok {
+			continue
+		}
+		if !shouldPreferCommandMatch(entry, prefixLength, best) {
+			continue
+		}
+		best.Command = entry.command
+		best.PrefixLength = prefixLength
+		best.Handler = entry.handler
+	}
+	return best
+}
+
+func shouldPreferCommandMatch(entry *lookupEntry, prefixLength int, current MatchedHandler) bool {
+	if current.Handler == nil || current.Handler.IsDisabled() {
+		return true
+	}
+	if prefixLength != current.PrefixLength {
+		return prefixLength > current.PrefixLength
+	}
+	entryPriority := entry.handler.GetPriority()
+	currentPriority := current.Handler.GetPriority()
+	if entryPriority != currentPriority {
+		if entryPriority == 0 {
+			return false
+		}
+		if currentPriority == 0 {
+			return true
+		}
+		return entryPriority < currentPriority
+	}
+	return len([]rune(entry.command)) > len([]rune(current.Command))
 }
 
 func (t *handlerTreeNode) get(command []rune, prefixLength int, matched MatchedHandler) MatchedHandler {

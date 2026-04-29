@@ -18,12 +18,12 @@ func birthdayCharacterID(characters map[int]map[string]any, fixtureName string) 
 }
 
 func fixtureThumbnailPath(resolve pathResolver, item map[string]any) string {
-	assetbundleName := stringValue(item["assetbundleName"])
+	assetbundleName := stringValueFrom(item, "assetbundleName", "assetbundle_name")
 	if assetbundleName == "" {
 		return ""
 	}
-	if stringValue(item["mysekaiFixtureType"]) == "surface_appearance" {
-		layoutType := stringValue(item["mysekaiSettableLayoutType"])
+	if stringValueFrom(item, "mysekaiFixtureType", "mysekai_fixture_type") == "surface_appearance" {
+		layoutType := stringValueFrom(item, "mysekaiSettableLayoutType", "mysekai_settable_layout_type")
 		if layoutType == "" {
 			layoutType = "floor_appearance"
 		}
@@ -50,17 +50,17 @@ func fixtureColorImages(resolve pathResolver, item map[string]any) []drawing.Mys
 	if !ok {
 		return images
 	}
-	assetbundleName := stringValue(item["assetbundleName"])
+	assetbundleName := stringValueFrom(item, "assetbundleName", "assetbundle_name")
 	if assetbundleName == "" {
 		return images
 	}
 
 	for index, raw := range rawColors {
 		color, _ := raw.(map[string]any)
-		colorCode := stringValue(color["colorCode"])
+		colorCode := stringValueFrom(color, "colorCode", "color_code")
 		path := resolve(fmt.Sprintf("mysekai/thumbnail/fixture/%s_%d.png", assetbundleName, index+2))
-		if stringValue(item["mysekaiFixtureType"]) == "surface_appearance" {
-			layoutType := stringValue(item["mysekaiSettableLayoutType"])
+		if stringValueFrom(item, "mysekaiFixtureType", "mysekai_fixture_type") == "surface_appearance" {
+			layoutType := stringValueFrom(item, "mysekaiSettableLayoutType", "mysekai_settable_layout_type")
 			if layoutType == "" {
 				layoutType = "floor_appearance"
 			}
@@ -162,7 +162,13 @@ func charaIconName(cuid int) string {
 func extractGroupCuids(group map[string]any) []int {
 	result := make([]int, 0, 9)
 	for i := 1; i <= 9; i++ {
-		id := intNumber(group[fmt.Sprintf("gameCharacterUnitId%d", i)], 0)
+		id := intNumberFrom(
+			group,
+			0,
+			fmt.Sprintf("gameCharacterUnitId%d", i),
+			fmt.Sprintf("game_character_unit_id%d", i),
+			fmt.Sprintf("game_character_unit_id_%d", i),
+		)
 		if id != 0 {
 			result = append(result, id)
 		}

@@ -1032,6 +1032,64 @@ func TestBuildTalkListRequestSortsSingleTalkFixturesByGroupSizeAndFixtureID(t *t
 	}
 }
 
+func TestBuildTalkListRequestSupportsAlternateFieldNames(t *testing.T) {
+	root := t.TempDir()
+	masterdataDir := filepath.Join(root, "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacters.json"), []map[string]any{
+		{"id": 1, "first_name": "星乃", "given_name": "一歌"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacterUnits.json"), []map[string]any{
+		{"id": 101, "game_character_id": 1, "unit": "light_sound"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtureMainGenres.json"), []map[string]any{
+		{"id": 1, "name": "Main A", "assetbundle_name": "main_a"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiFixtures.json"), []map[string]any{
+		{"id": 11, "assetbundle_name": "fixture_11", "mysekai_fixture_type": "furniture", "mysekai_fixture_main_genre_id": 1},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiBlueprints.json"), []map[string]any{
+		{"id": 10011, "mysekaiCraftType": "mysekai_fixture", "craftTargetId": 11},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGameCharacterUnitGroups.json"), []map[string]any{
+		{"id": 1, "game_character_unit_id_1": 101},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "characterArchiveMysekaiCharacterTalkGroups.json"), []map[string]any{
+		{"id": 100, "archive_display_type": "normal"},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiCharacterTalkConditions.json"), []map[string]any{
+		{"id": 2011, "mysekai_character_talk_condition_type": "mysekai_fixture_id", "mysekai_character_talk_condition_type_value": 11},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiCharacterTalkConditionGroups.json"), []map[string]any{
+		{"id": 3011, "mysekai_character_talk_condition_id": 2011},
+	})
+	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiCharacterTalks.json"), []map[string]any{
+		{"id": 4011, "mysekai_game_character_unit_group_id": 1, "mysekai_character_talk_condition_group_id": 3011, "character_archive_mysekai_character_talk_group_id": 100},
+	})
+
+	mysekaiJSON := `{
+  "updatedResources": {
+    "userMysekaiBlueprints": [{"mysekaiBlueprintId": 10011}],
+    "userMysekaiCharacterTalks": [{"mysekai_character_talk_id": 4011, "is_read": true}]
+  }
+}`
+
+	controller := NewController(nil, nil, renderregion.TW, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
+	req, err := controller.BuildTalkListRequest(TalkListQuery{Region: "tw", Query: "101"})
+	if err != nil {
+		t.Fatalf("BuildTalkListRequest() error = %v", err)
+	}
+	if req.ProgressMessage == nil || !strings.Contains(*req.ProgressMessage, "1/1") {
+		t.Fatalf("expected alternate fields to count read progress 1/1, got %v", req.ProgressMessage)
+	}
+	if len(req.SingleMainGenres) != 0 {
+		t.Fatalf("read talk should be filtered out from unread list: %+v", req.SingleMainGenres)
+	}
+}
+
 func collectFixtureIDs(req *drawing.MysekaiFixtureListRequest) []int {
 	if req == nil {
 		return nil

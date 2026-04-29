@@ -44,7 +44,11 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 	if !showAllTalks {
 		for _, raw := range nestedList(merged, "userMysekaiCharacterTalks") {
 			item, _ := raw.(map[string]any)
-			userTalkReads[intNumber(item["mysekaiCharacterTalkId"], 0)] = boolValue(item["isRead"])
+			talkID := intNumberFrom(item, 0, "mysekaiCharacterTalkId", "mysekai_character_talk_id", "mysekaiCharacterTalkID")
+			if talkID == 0 {
+				continue
+			}
+			userTalkReads[talkID] = boolValueFrom(item, "isRead", "is_read")
 		}
 	}
 
@@ -59,31 +63,31 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 
 	conditionIDsByFixture := map[int][]int{}
 	for _, condition := range conditions {
-		if stringValue(condition["mysekaiCharacterTalkConditionType"]) != "mysekai_fixture_id" {
+		if stringValueFrom(condition, "mysekaiCharacterTalkConditionType", "mysekai_character_talk_condition_type") != "mysekai_fixture_id" {
 			continue
 		}
-		fixtureID := intNumber(condition["mysekaiCharacterTalkConditionTypeValue"], 0)
+		fixtureID := intNumberFrom(condition, 0, "mysekaiCharacterTalkConditionTypeValue", "mysekai_character_talk_condition_type_value")
 		if fixtureID != 0 {
-			conditionIDsByFixture[fixtureID] = append(conditionIDsByFixture[fixtureID], intNumber(condition["id"], 0))
+			conditionIDsByFixture[fixtureID] = append(conditionIDsByFixture[fixtureID], intNumberFrom(condition, 0, "id", "game_id"))
 		}
 	}
 
 	groupIDsByCondition := map[int][]int{}
 	for _, group := range conditionGroups {
-		conditionID := intNumber(group["mysekaiCharacterTalkConditionId"], 0)
-		groupIDsByCondition[conditionID] = append(groupIDsByCondition[conditionID], intNumber(group["id"], 0))
+		conditionID := intNumberFrom(group, 0, "mysekaiCharacterTalkConditionId", "mysekai_character_talk_condition_id")
+		groupIDsByCondition[conditionID] = append(groupIDsByCondition[conditionID], intNumberFrom(group, 0, "id", "game_id"))
 	}
 
 	talksByGroup := map[int][]map[string]any{}
 	for _, talk := range talks {
-		groupID := intNumber(talk["mysekaiCharacterTalkConditionGroupId"], 0)
+		groupID := intNumberFrom(talk, 0, "mysekaiCharacterTalkConditionGroupId", "mysekai_character_talk_condition_group_id")
 		talksByGroup[groupID] = append(talksByGroup[groupID], talk)
 	}
 
 	archiveReads := map[int]*talkRead{}
 	for _, fixture := range fixturesData {
-		fixtureID := intNumber(fixture["id"], 0)
-		if fixtureID == 0 || stringValue(fixture["mysekaiFixtureType"]) == "gate" {
+		fixtureID := intNumberFrom(fixture, 0, "id", "game_id")
+		if fixtureID == 0 || stringValueFrom(fixture, "mysekaiFixtureType", "mysekai_fixture_type") == "gate" {
 			continue
 		}
 
@@ -95,8 +99,8 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		}
 		for groupID := range groupIDs {
 			for _, talk := range talksByGroup[groupID] {
-				talkID := intNumber(talk["id"], 0)
-				group := gameCharacterUnitGroups[intNumber(talk["mysekaiGameCharacterUnitGroupId"], 0)]
+				talkID := intNumberFrom(talk, 0, "id", "game_id")
+				group := gameCharacterUnitGroups[intNumberFrom(talk, 0, "mysekaiGameCharacterUnitGroupId", "mysekai_game_character_unit_group_id")]
 				if len(group) == 0 {
 					continue
 				}
@@ -105,9 +109,9 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 					continue
 				}
 
-				archiveID := intNumber(talk["characterArchiveMysekaiCharacterTalkGroupId"], 0)
+				archiveID := intNumberFrom(talk, 0, "characterArchiveMysekaiCharacterTalkGroupId", "character_archive_mysekai_character_talk_group_id")
 				archive := archiveGroups[archiveID]
-				if len(archive) > 0 && stringValue(archive["archiveDisplayType"]) != "normal" {
+				if len(archive) > 0 && stringValueFrom(archive, "archiveDisplayType", "archive_display_type") != "normal" {
 					continue
 				}
 				if _, ok := archiveReads[archiveID]; !ok {
@@ -170,7 +174,7 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		if len(fixtureIDs) == 0 {
 			continue
 		}
-		mainGenreID := intNumber(fixtureMap[fixtureIDs[0]]["mysekaiFixtureMainGenreId"], 0)
+		mainGenreID := intNumberFrom(fixtureMap[fixtureIDs[0]], 0, "mysekaiFixtureMainGenreId", "mysekai_fixture_main_genre_id")
 		fixtures := make([]drawing.MysekaiFixture, 0, len(fixtureIDs))
 		for _, fixtureID := range fixtureIDs {
 			fixture := fixtureMap[fixtureID]
@@ -198,8 +202,8 @@ func (c *Controller) BuildTalkListRequest(query TalkListQuery) (*drawing.Mysekai
 		fixtures := groupedSingle[mainGenreID]
 		sortSingleTalkFixtures(fixtures)
 		singleMainGenres = append(singleMainGenres, drawing.MysekaiSingleTalkMainGenre{
-			Name:      stringValue(info["name"]),
-			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"]))),
+			Name:      stringValueFrom(info, "name"),
+			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValueFrom(info, "assetbundleName", "assetbundle_name"))),
 			SubGenres: [][]drawing.MysekaiTalkFixtures{fixtures},
 		})
 	}

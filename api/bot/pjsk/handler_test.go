@@ -3,8 +3,9 @@ package pjsk
 import (
 	"bytes"
 	"context"
-	json "github.com/bytedance/sonic"
+	"errors"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -612,6 +613,78 @@ func TestResolveBotCommandCorrectsShortMatchedCommandToArrestDifficulty(t *testi
 	}
 	if params.DifficultyToggles[0].Difficulty != "master" || params.DifficultyToggles[0].Enabled {
 		t.Fatalf("unexpected toggle: %+v", params.DifficultyToggles[0])
+	}
+}
+
+func TestResolveBotCommandCorrectsEventsMatchedAcrossMessageSeparator(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+
+	resolved, err := resolveBotCommand(context.Background(), onebot11.Message{
+		{Type: "text", Data: onebot11.TextData{Text: "/event saki"}},
+	}, "event/list", BotCommandRequest{
+		Platform:       "qq",
+		PlatformUserID: "12345",
+		MatchedCommand: "/events",
+	}, testBotID)
+	if err != nil {
+		t.Fatalf("resolveBotCommand() error = %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != "event-list" {
+		t.Fatalf("unexpected mode: %s", resolved.Mode)
+	}
+
+	var params map[string]any
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if got, ok := params["character_id"].(float64); !ok || int(got) != 2 {
+		t.Fatalf("unexpected character_id: %#v", params["character_id"])
+	}
+}
+
+func TestResolveBotCommandCorrectsCardsMatchedAcrossMessageSeparator(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+
+	resolved, err := resolveBotCommand(context.Background(), onebot11.Message{
+		{Type: "text", Data: onebot11.TextData{Text: "/card saki"}},
+	}, "card/list", BotCommandRequest{
+		Platform:       "qq",
+		PlatformUserID: "12345",
+		MatchedCommand: "/cards",
+	}, testBotID)
+	if err != nil {
+		t.Fatalf("resolveBotCommand() error = %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != "card-image" {
+		t.Fatalf("unexpected mode: %s", resolved.Mode)
+	}
+	if resolved.Query != "saki" {
+		t.Fatalf("unexpected query: %q", resolved.Query)
+	}
+}
+
+func TestResolveBotCommandRejectsUnrelatedMatchedCommandAcrossEndpoint(t *testing.T) {
+	commandhandler.EnsureCommandHandlersRegistered()
+
+	_, err := resolveBotCommand(context.Background(), onebot11.Message{
+		{Type: "text", Data: onebot11.TextData{Text: "/card saki"}},
+	}, "event/list", BotCommandRequest{
+		Platform:       "qq",
+		PlatformUserID: "12345",
+		MatchedCommand: "/events",
+	}, testBotID)
+	if err == nil {
+		t.Fatal("expected resolveBotCommand() error")
+	}
+	var validationErr *botValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected botValidationError, got %T: %v", err, err)
 	}
 }
 

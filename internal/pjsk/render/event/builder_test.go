@@ -14,6 +14,7 @@ type testEventSource struct {
 	events          []*masterdata.Event
 	eventsByID      map[int]*masterdata.Event
 	cardsByEvent    map[int][]*masterdata.Card
+	cardErrByEvent  map[int]error
 	bannerByEvent   map[int]int
 	bonusesByEvent  map[int][]*masterdata.EventDeckBonus
 	gcuByID         map[int]*masterdata.GameCharacterUnit
@@ -27,6 +28,7 @@ func newTestEventSource(region renderregion.Value) *testEventSource {
 		region:          region,
 		eventsByID:      make(map[int]*masterdata.Event),
 		cardsByEvent:    make(map[int][]*masterdata.Card),
+		cardErrByEvent:  make(map[int]error),
 		bannerByEvent:   make(map[int]int),
 		bonusesByEvent:  make(map[int][]*masterdata.EventDeckBonus),
 		gcuByID:         make(map[int]*masterdata.GameCharacterUnit),
@@ -58,6 +60,9 @@ func (s *testEventSource) GetEvents() []*masterdata.Event {
 }
 
 func (s *testEventSource) GetEventCards(eventID int) ([]*masterdata.Card, error) {
+	if err, ok := s.cardErrByEvent[eventID]; ok {
+		return nil, err
+	}
 	items := s.cardsByEvent[eventID]
 	out := make([]*masterdata.Card, 0, len(items))
 	for _, item := range items {
@@ -490,5 +495,31 @@ func TestBuildEventDetailRequestMixedEventDoesNotExposeBoxMetadata(t *testing.T)
 	}
 	if req.EventInfo.BannerIndex != 0 {
 		t.Fatalf("expected mixed event banner index to stay empty, got %+v", req.EventInfo)
+	}
+}
+
+func TestBuildEventDetailRequestAllowsEventWithoutCards(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	eventInfo := &masterdata.Event{
+		ID:              166,
+		EventType:       "marathon",
+		Name:            "No Card Event",
+		AssetBundleName: "event_166",
+		StartAt:         1000,
+		AggregateAt:     2000,
+	}
+	source.eventsByID[eventInfo.ID] = eventInfo
+	source.cardErrByEvent[eventInfo.ID] = fmt.Errorf("no cards found for event %d", eventInfo.ID)
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventDetailRequest(DetailQuery{Region: renderregion.JP, EventID: eventInfo.ID})
+	if err != nil {
+		t.Fatalf("BuildEventDetailRequest failed: %v", err)
+	}
+	if req.EventInfo.ID != eventInfo.ID {
+		t.Fatalf("unexpected event info: %+v", req.EventInfo)
+	}
+	if len(req.EventCards) != 0 {
+		t.Fatalf("expected no event cards, got %+v", req.EventCards)
 	}
 }

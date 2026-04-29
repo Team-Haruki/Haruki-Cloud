@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	corehandler "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
@@ -295,6 +295,26 @@ func TestMatchCommandHandlerPrefersArrestDifficultyOverArrest(t *testing.T) {
 	}
 	if matched.Command != "/逮捕难度" {
 		t.Fatalf("unexpected matched command: %s", matched.Command)
+	}
+}
+
+func TestRegisteredCommandAliasesDoNotConsumeArgumentPrefix(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	for _, route := range corehandler.ListBotRoutes() {
+		for _, command := range route.Commands {
+			message := command + " saki"
+			matched := corehandler.MatchCommandHandler(message)
+			if matched.Handler == nil {
+				t.Fatalf("%q did not match any command", message)
+			}
+			if gotPath := matched.Handler.GetPath(); gotPath != route.Path {
+				t.Fatalf("%q matched %q (%s), want route %s", message, matched.Command, gotPath, route.Path)
+			}
+			if gotArg := strings.TrimSpace(string(matched.ArgText)); gotArg != "saki" {
+				t.Fatalf("%q arg text = %q, want saki (matched %q)", message, gotArg, matched.Command)
+			}
+		}
 	}
 }
 

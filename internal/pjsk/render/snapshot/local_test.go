@@ -175,3 +175,44 @@ func TestMergeMySekaiDataPreservesSuiteUserGamedataFromUpdatedResources(t *testi
 		t.Fatalf("expected plain suite profile card to not set mysekai level, got %+v", card.MysekaiLevel)
 	}
 }
+
+func TestMergeMySekaiDataPreservesSuiteCharacterTalkReads(t *testing.T) {
+	suiteJSON := []byte(`{
+		"now": 1710000000,
+		"userGamedata": {"userId": 12345004, "name": "Suite User", "deck": 1, "rank": 100, "coin": 0},
+		"userProfile": {"profileImageType": "default"},
+		"userDecks": [{"deckId": 1, "leader": 1001, "subLeader": 0, "member1": 0, "member2": 0, "member3": 0, "member4": 0, "member5": 0}],
+		"userCards": [{"cardId": 1001, "level": 50, "masterRank": 1, "specialTrainingStatus": "not_done", "defaultImage": "normal", "episodes": []}],
+		"userMysekaiCharacterTalks": [{"mysekaiCharacterTalkId": 33, "isRead": true}]
+	}`)
+	mysekaiJSON := []byte(`{
+		"now": 1710000100,
+		"upload_time": 1710000200,
+		"source": "toolbox_live",
+		"updatedResources": {
+			"userMysekaiCharacterTalks": [{"mysekaiCharacterTalkId": 33, "isRead": false}],
+			"userMysekaiGamedata": {"mysekaiRank": 12}
+		}
+	}`)
+
+	merged, err := mergeMySekaiData(suiteJSON, mysekaiJSON)
+	if err != nil {
+		t.Fatalf("mergeMySekaiData() error = %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(merged, &payload); err != nil {
+		t.Fatalf("decode merged payload: %v", err)
+	}
+	records, ok := payload["userMysekaiCharacterTalks"].([]any)
+	if !ok || len(records) != 1 {
+		t.Fatalf("expected suite talk records to be preserved, got %+v", payload["userMysekaiCharacterTalks"])
+	}
+	record, ok := records[0].(map[string]any)
+	if !ok || record["isRead"] != true {
+		t.Fatalf("expected suite read state to win, got %+v", records[0])
+	}
+	if _, ok := payload["userMysekaiGamedata"].(map[string]any); !ok {
+		t.Fatalf("expected mysekai gamedata to still be merged, got %+v", payload["userMysekaiGamedata"])
+	}
+}

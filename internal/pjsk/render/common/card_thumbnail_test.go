@@ -10,7 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-func TestResolveCardThumbnailPathFallsBackToRipMemberAsset(t *testing.T) {
+func TestResolveCardThumbnailPathDoesNotFallBackToMemberAsset(t *testing.T) {
 	root := t.TempDir()
 	helper := assets.NewAssetHelper(root, nil)
 	target := filepath.Join(root, "asset", "cn-assets", "startapp", "character", "member", "card_test_rip", "card_after_training.png")
@@ -22,13 +22,13 @@ func TestResolveCardThumbnailPathFallsBackToRipMemberAsset(t *testing.T) {
 	}
 
 	got := ResolveCardThumbnailPath(helper, renderregion.CN, "card_test", true)
-	want := filepath.ToSlash(filepath.Join("asset", "cn-assets", "startapp", "character", "member", "card_test_rip", "card_after_training.png"))
+	want := filepath.ToSlash(filepath.Join("asset", "cn-assets", "startapp", "thumbnail", "chara", "card_test_after_training.png"))
 	if got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }
 
-func TestBuildCardThumbnailUsesRipMemberAssetWhenThumbnailMissing(t *testing.T) {
+func TestBuildCardThumbnailUsesThumbnailPathWhenMemberAssetExists(t *testing.T) {
 	root := t.TempDir()
 	helper := assets.NewAssetHelper(root, nil)
 	target := filepath.Join(root, "asset", "cn-assets", "startapp", "character", "member", "card_test_rip", "card_after_training.png")
@@ -51,16 +51,16 @@ func TestBuildCardThumbnailUsesRipMemberAssetWhenThumbnailMissing(t *testing.T) 
 		TrainedArt:    true,
 	})
 
-	want := filepath.ToSlash(filepath.Join("asset", "cn-assets", "startapp", "character", "member", "card_test_rip", "card_after_training.png"))
+	want := filepath.ToSlash(filepath.Join("asset", "cn-assets", "startapp", "thumbnail", "chara", "card_test_after_training.png"))
 	if got.CardThumbnailPath != want {
 		t.Fatalf("expected %q, got %q", want, got.CardThumbnailPath)
 	}
 }
 
-func TestResolveCardThumbnailPathSupportsOnDemandMemberAsset(t *testing.T) {
+func TestResolveCardThumbnailPathSupportsOnDemandThumbnailAsset(t *testing.T) {
 	root := t.TempDir()
 	helper := assets.NewAssetHelper(root, nil)
-	target := filepath.Join(root, "asset", "en-assets", "ondemand", "character", "member", "card_test", "card_after_training.png")
+	target := filepath.Join(root, "asset", "en-assets", "ondemand", "thumbnail", "chara", "card_test_after_training.png")
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestResolveCardThumbnailPathSupportsOnDemandMemberAsset(t *testing.T) {
 	}
 
 	got := ResolveCardThumbnailPath(helper, renderregion.EN, "card_test", true)
-	want := filepath.ToSlash(filepath.Join("asset", "en-assets", "ondemand", "character", "member", "card_test", "card_after_training.png"))
+	want := filepath.ToSlash(filepath.Join("asset", "en-assets", "ondemand", "thumbnail", "chara", "card_test_after_training.png"))
 	if got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}

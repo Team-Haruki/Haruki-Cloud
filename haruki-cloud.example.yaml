@@ -48,6 +48,12 @@ redis:
   port: 6379
   password: ""
 
+hmes:
+  # Public HTTP base URL used by Client for long-poll delivery.
+  # HMES is optional; when empty, subscriptions are still stored in Cloud but
+  # Client will not receive real-time push connection actions.
+  public_base_url: "http://127.0.0.1:7910"
+
 censor:
   # Text censor — Baidu AI Content Censor
   baidu_api_key: ""

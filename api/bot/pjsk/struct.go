@@ -9,6 +9,7 @@ type BotCommandRequest struct {
 	Platform        string           `json:"platform" msgpack:"platform"`
 	PlatformUserID  string           `json:"platform_user_id" msgpack:"platform_user_id"`
 	PlatformGroupID string           `json:"platform_group_id,omitempty" msgpack:"platform_group_id,omitempty"`
+	SelfID          string           `json:"self_id,omitempty" msgpack:"self_id,omitempty"`
 	Server          string           `json:"server,omitempty" msgpack:"server,omitempty"`
 	MatchedCommand  string           `json:"matched_command" msgpack:"matched_command"`
 	Message         onebot11.Message `json:"message" msgpack:"message"`

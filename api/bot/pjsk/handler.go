@@ -97,6 +97,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if noiseKeyPair != nil {
 		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
 	}
+	registerBirthdayMonitorRoutes(pjsk, app, renderApp)
 	routes := commandregistry.ListBotRoutes()
 	hasMysekaiBlueprintRoute := false
 	for _, route := range routes {

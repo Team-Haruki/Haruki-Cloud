@@ -56,6 +56,30 @@ func (f GroupAliasFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.GroupAliasMutation", m)
 }
 
+// The MysekaiBirthdaySubscriptionFunc type is an adapter to allow the use of ordinary
+// function as MysekaiBirthdaySubscription mutator.
+type MysekaiBirthdaySubscriptionFunc func(context.Context, *pjsk.MysekaiBirthdaySubscriptionMutation) (pjsk.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MysekaiBirthdaySubscriptionFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value, error) {
+	if mv, ok := m.(*pjsk.MysekaiBirthdaySubscriptionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.MysekaiBirthdaySubscriptionMutation", m)
+}
+
+// The MysekaiBirthdaySubscriptionEventFunc type is an adapter to allow the use of ordinary
+// function as MysekaiBirthdaySubscriptionEvent mutator.
+type MysekaiBirthdaySubscriptionEventFunc func(context.Context, *pjsk.MysekaiBirthdaySubscriptionEventMutation) (pjsk.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MysekaiBirthdaySubscriptionEventFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value, error) {
+	if mv, ok := m.(*pjsk.MysekaiBirthdaySubscriptionEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.MysekaiBirthdaySubscriptionEventMutation", m)
+}
+
 // The PendingAliasFunc type is an adapter to allow the use of ordinary
 // function as PendingAlias mutator.
 type PendingAliasFunc func(context.Context, *pjsk.PendingAliasMutation) (pjsk.Value, error)

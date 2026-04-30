@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -79,6 +80,136 @@ var (
 				Name:    "groupalias_platform_group_id_alias_type_alias_type_id_alias",
 				Unique:  true,
 				Columns: []*schema.Column{GroupAliasColumns[1], GroupAliasColumns[2], GroupAliasColumns[3], GroupAliasColumns[4], GroupAliasColumns[5]},
+			},
+		},
+	}
+	// MysekaiBirthdaySubscriptionsColumns holds the columns for the "mysekai_birthday_subscriptions" table.
+	MysekaiBirthdaySubscriptionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "region", Type: field.TypeString, Size: 7},
+		{Name: "uid", Type: field.TypeString, Size: 30},
+		{Name: "platform", Type: field.TypeString, Size: 32},
+		{Name: "platform_user_id", Type: field.TypeString, Size: 128},
+		{Name: "platform_group_id", Type: field.TypeString, Size: 128},
+		{Name: "cloud_bot_id", Type: field.TypeString, Size: 64},
+		{Name: "self_id", Type: field.TypeString, Size: 64},
+		{Name: "materials", Type: field.TypeJSON},
+		{Name: "token", Type: field.TypeString, Size: 128},
+		{Name: "active", Type: field.TypeBool, Default: true},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "cancelled_at", Type: field.TypeTime, Nullable: true},
+	}
+	// MysekaiBirthdaySubscriptionsTable holds the schema information for the "mysekai_birthday_subscriptions" table.
+	MysekaiBirthdaySubscriptionsTable = &schema.Table{
+		Name:       "mysekai_birthday_subscriptions",
+		Columns:    MysekaiBirthdaySubscriptionsColumns,
+		PrimaryKey: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaibirthdaysubscription_region_uid",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[1], MysekaiBirthdaySubscriptionsColumns[2]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscription_platform_platform_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[3], MysekaiBirthdaySubscriptionsColumns[4]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscription_platform_group_id",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[5]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscription_cloud_bot_id",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[6]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscription_self_id",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[7]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscription_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[11]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscription_active",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[10]},
+			},
+		},
+	}
+	// MysekaiBirthdaySubscriptionEventsColumns holds the columns for the "mysekai_birthday_subscription_events" table.
+	MysekaiBirthdaySubscriptionEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "region", Type: field.TypeString, Size: 7},
+		{Name: "uid", Type: field.TypeString, Size: 30},
+		{Name: "platform", Type: field.TypeString, Size: 32},
+		{Name: "platform_user_id", Type: field.TypeString, Size: 128},
+		{Name: "platform_group_id", Type: field.TypeString, Size: 128},
+		{Name: "cloud_bot_id", Type: field.TypeString, Size: 64},
+		{Name: "self_id", Type: field.TypeString, Size: 64},
+		{Name: "matched_material_ids", Type: field.TypeJSON},
+		{Name: "empty_result", Type: field.TypeBool, Default: false},
+		{Name: "filtered_payload", Type: field.TypeBytes, Nullable: true},
+		{Name: "upload_time", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "acknowledged_at", Type: field.TypeTime, Nullable: true},
+		{Name: "subscription_id", Type: field.TypeInt},
+	}
+	// MysekaiBirthdaySubscriptionEventsTable holds the schema information for the "mysekai_birthday_subscription_events" table.
+	MysekaiBirthdaySubscriptionEventsTable = &schema.Table{
+		Name:       "mysekai_birthday_subscription_events",
+		Columns:    MysekaiBirthdaySubscriptionEventsColumns,
+		PrimaryKey: []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "mysekai_birthday_subscription_events_mysekai_birthday_subscriptions_events",
+				Columns:    []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[14]},
+				RefColumns: []*schema.Column{MysekaiBirthdaySubscriptionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaibirthdaysubscriptionevent_subscription_id",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[14]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscriptionevent_region_uid",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[1], MysekaiBirthdaySubscriptionEventsColumns[2]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscriptionevent_cloud_bot_id",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[6]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscriptionevent_platform_group_id",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[5]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscriptionevent_self_id",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[7]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscriptionevent_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[12]},
+			},
+			{
+				Name:    "mysekaibirthdaysubscriptionevent_acknowledged_at",
+				Unique:  false,
+				Columns: []*schema.Column{MysekaiBirthdaySubscriptionEventsColumns[13]},
 			},
 		},
 	}
@@ -198,6 +329,8 @@ var (
 		AliasAdminsTable,
 		GameAccountsTable,
 		GroupAliasTable,
+		MysekaiBirthdaySubscriptionsTable,
+		MysekaiBirthdaySubscriptionEventsTable,
 		PendingAliasTable,
 		RejectedAliasTable,
 		UserBindingsTable,
@@ -207,6 +340,13 @@ var (
 )
 
 func init() {
+	MysekaiBirthdaySubscriptionsTable.Annotation = &entsql.Annotation{
+		Table: "mysekai_birthday_subscriptions",
+	}
+	MysekaiBirthdaySubscriptionEventsTable.ForeignKeys[0].RefTable = MysekaiBirthdaySubscriptionsTable
+	MysekaiBirthdaySubscriptionEventsTable.Annotation = &entsql.Annotation{
+		Table: "mysekai_birthday_subscription_events",
+	}
 	UserBindingsTable.ForeignKeys[0].RefTable = GameAccountsTable
 	UserDefaultBindingsTable.ForeignKeys[0].RefTable = UserBindingsTable
 }

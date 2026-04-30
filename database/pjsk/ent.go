@@ -10,6 +10,8 @@ import (
 	"haruki-cloud/database/pjsk/aliasadmin"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
+	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
+	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
@@ -81,15 +83,17 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			alias.Table:              alias.ValidColumn,
-			aliasadmin.Table:         aliasadmin.ValidColumn,
-			gameaccount.Table:        gameaccount.ValidColumn,
-			groupalias.Table:         groupalias.ValidColumn,
-			pendingalias.Table:       pendingalias.ValidColumn,
-			rejectedalias.Table:      rejectedalias.ValidColumn,
-			userbinding.Table:        userbinding.ValidColumn,
-			userdefaultbinding.Table: userdefaultbinding.ValidColumn,
-			userpreference.Table:     userpreference.ValidColumn,
+			alias.Table:                            alias.ValidColumn,
+			aliasadmin.Table:                       aliasadmin.ValidColumn,
+			gameaccount.Table:                      gameaccount.ValidColumn,
+			groupalias.Table:                       groupalias.ValidColumn,
+			mysekaibirthdaysubscription.Table:      mysekaibirthdaysubscription.ValidColumn,
+			mysekaibirthdaysubscriptionevent.Table: mysekaibirthdaysubscriptionevent.ValidColumn,
+			pendingalias.Table:                     pendingalias.ValidColumn,
+			rejectedalias.Table:                    rejectedalias.ValidColumn,
+			userbinding.Table:                      userbinding.ValidColumn,
+			userdefaultbinding.Table:               userdefaultbinding.ValidColumn,
+			userpreference.Table:                   userpreference.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

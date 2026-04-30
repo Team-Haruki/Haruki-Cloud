@@ -93,7 +93,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}, cfg.MetaLoader)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
-	skController := sk.NewController(drawingClient)
+	skController := sk.NewControllerWithConfig(drawingClient, cfg.SKForecast)
 	skController.SetTrackerIntegration(cfg.Tracker, nil, assetHelper)
 
 	var cardController *card.Controller

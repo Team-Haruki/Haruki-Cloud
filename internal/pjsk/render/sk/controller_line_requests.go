@@ -1,12 +1,19 @@
 package sk
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+)
+
+const (
+	skPredictionNotice      = "预测数据仅供参考，请以实际为准规划好冲榜计划"
+	skPredictionStopMessage = "结活前最后一个小时停止提供预测"
 )
 
 func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineRequest, error) {
@@ -48,7 +55,7 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 }
 
 // BuildPredictLineRequestFromTracker builds an SK line payload using external
-// forecast sources (33kit / Moesekai / SekaRun) for final score prediction.
+// forecast sources (33kit / Moesekai / SekaRun / local) for final score prediction.
 func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*LineRequest, error) {
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
@@ -63,6 +70,10 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
+	meta = c.applyWorldBloomChapterMeta(normalized, meta)
+	if err := ensureSKPredictionAllowed(meta); err != nil {
+		return nil, err
+	}
 
 	// WL chapter requests currently have no chapter-level forecast source, so they
 	// always fall back to the real-time line for the selected chapter.
@@ -97,6 +108,7 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		"33kit":    "33Kit预测",
 		"moesekai": "Moesekai预测",
 		"sekarun":  "SekaRun预测",
+		"local":    "本地预测",
 		"forecast": "预测",
 	}
 
@@ -178,15 +190,16 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 
 	line := LineRequest{
 		SklRequest: drawing.SklRequest{
-			ID:              normalized.EventID,
-			Region:          normalized.Region,
-			StartAt:         meta.startAt,
-			AggregateAt:     meta.aggregateAt,
-			Name:            strings.TrimSpace(meta.name + " 预测"),
-			BannerImgPath:   meta.bannerPath,
-			Ranks:           currentRanks,
-			CurrentRanks:    currentRanks,
-			ForecastColumns: columns,
+			ID:               normalized.EventID,
+			Region:           normalized.Region,
+			StartAt:          meta.startAt,
+			AggregateAt:      meta.aggregateAt,
+			Name:             strings.TrimSpace(meta.name + " 预测"),
+			BannerImgPath:    meta.bannerPath,
+			Ranks:            currentRanks,
+			CurrentRanks:     currentRanks,
+			ForecastColumns:  columns,
+			PredictionNotice: skPredictionNotice,
 		},
 		Full: normalized.Full,
 	}
@@ -220,14 +233,15 @@ func (c *Controller) buildPredictRealtimeFallbackLine(
 
 	line := LineRequest{
 		SklRequest: drawing.SklRequest{
-			ID:            normalized.EventID,
-			Region:        normalized.Region,
-			StartAt:       meta.startAt,
-			AggregateAt:   meta.aggregateAt,
-			Name:          strings.TrimSpace(meta.name + " 预测(实时)"),
-			BannerImgPath: meta.bannerPath,
-			Ranks:         currentRanks,
-			CurrentRanks:  currentRanks,
+			ID:               normalized.EventID,
+			Region:           normalized.Region,
+			StartAt:          meta.startAt,
+			AggregateAt:      meta.aggregateAt,
+			Name:             strings.TrimSpace(meta.name + " 预测(实时)"),
+			BannerImgPath:    meta.bannerPath,
+			Ranks:            currentRanks,
+			CurrentRanks:     currentRanks,
+			PredictionNotice: skPredictionNotice,
 		},
 		Full: normalized.Full,
 	}
@@ -239,4 +253,15 @@ func (c *Controller) buildPredictRealtimeFallbackLine(
 		}
 	}
 	return c.BuildLineRequest(line)
+}
+
+func ensureSKPredictionAllowed(meta eventMeta) error {
+	if meta.aggregateAt <= 0 {
+		return nil
+	}
+	stopAt := meta.aggregateAt - int64(time.Hour/time.Millisecond)
+	if time.Now().UnixMilli() >= stopAt {
+		return errors.New(skPredictionStopMessage)
+	}
+	return nil
 }

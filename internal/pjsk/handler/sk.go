@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	sekaidb "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
@@ -481,9 +482,11 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 
 	req.EventID = int(eventInfo.GameID)
 	if req.WlCharacterID != nil {
-		if !trackerWorldBloomHasCharacter(chapters, *req.WlCharacterID) {
+		chapter := findWorldBloomChapterByCharacterID(chapters, *req.WlCharacterID)
+		if chapter == nil {
 			return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(region.String()), req.EventID, *req.WlCharacterID)
 		}
+		applyTrackerWorldBloomChapterTiming(req, chapter)
 		skTrackerDebugLogger.Debugf(
 			"resolved wl tracker selection: region=%s event=%d char=%d query=%q source=explicit",
 			region.String(), req.EventID, *req.WlCharacterID, query,
@@ -503,11 +506,24 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 	charID := int(chapter.GameCharacterID)
 	req.WlCharacterID = drawing.IntPtr(charID)
 	req.WlCharacterQuery = ""
+	applyTrackerWorldBloomChapterTiming(req, chapter)
 	skTrackerDebugLogger.Debugf(
 		"resolved wl tracker selection: region=%s event=%d chapter=%d char=%d query=%q",
 		region.String(), req.EventID, chapter.ChapterNo, charID, query,
 	)
 	return nil
+}
+
+func applyTrackerWorldBloomChapterTiming(req *sk.TrackerRankQuery, chapter *sekaidb.Worldbloom) {
+	if req == nil || chapter == nil {
+		return
+	}
+	if chapter.ChapterStartAt > 0 {
+		req.EventStartAt = drawing.Int64Ptr(chapter.ChapterStartAt)
+	}
+	if chapter.AggregateAt > 0 {
+		req.EventAggregateAt = drawing.Int64Ptr(chapter.AggregateAt)
+	}
 }
 
 func resolveRequesterGameUID(rc *RequestContext) int64 {

@@ -81,11 +81,11 @@ func TestRemoteForecastProviderSourcesMatchSupportedRegions(t *testing.T) {
 		region string
 		want   []string
 	}{
-		{region: "jp", want: []string{"33kit", "moesekai"}},
-		{region: "cn", want: []string{"moesekai"}},
-		{region: "en", want: []string{"sekarun"}},
-		{region: "tw", want: nil},
-		{region: "kr", want: nil},
+		{region: "jp", want: []string{"33kit", "moesekai", "local"}},
+		{region: "cn", want: []string{"moesekai", "local"}},
+		{region: "en", want: []string{"sekarun", "local"}},
+		{region: "tw", want: []string{"local"}},
+		{region: "kr", want: []string{"local"}},
 	}
 	for _, tt := range tests {
 		sources := provider.sourcesForRegion(tt.region)

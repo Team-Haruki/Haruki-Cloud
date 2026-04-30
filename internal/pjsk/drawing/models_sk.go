@@ -41,17 +41,18 @@ type SKForecastColumn struct {
 }
 
 type SklRequest struct {
-	ID              int                `json:"id"`
-	Region          string             `json:"region"`
-	StartAt         int64              `json:"start_at"`
-	AggregateAt     int64              `json:"aggregate_at"`
-	Name            string             `json:"name"`
-	BannerImgPath   string             `json:"banner_img_path"`
-	WlCid           *int               `json:"wl_cid,omitempty"`
-	CharaIconPath   *string            `json:"chara_icon_path,omitempty"`
-	Ranks           []RankInfo         `json:"ranks"`
-	CurrentRanks    []RankInfo         `json:"current_ranks,omitempty"`
-	ForecastColumns []SKForecastColumn `json:"forecast_columns,omitempty"`
+	ID               int                `json:"id"`
+	Region           string             `json:"region"`
+	StartAt          int64              `json:"start_at"`
+	AggregateAt      int64              `json:"aggregate_at"`
+	Name             string             `json:"name"`
+	BannerImgPath    string             `json:"banner_img_path"`
+	WlCid            *int               `json:"wl_cid,omitempty"`
+	CharaIconPath    *string            `json:"chara_icon_path,omitempty"`
+	Ranks            []RankInfo         `json:"ranks"`
+	CurrentRanks     []RankInfo         `json:"current_ranks,omitempty"`
+	ForecastColumns  []SKForecastColumn `json:"forecast_columns,omitempty"`
+	PredictionNotice string             `json:"prediction_notice,omitempty"`
 }
 
 type SKRequest struct {

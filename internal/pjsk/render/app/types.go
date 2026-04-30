@@ -58,6 +58,7 @@ type Config struct {
 	MusicMetaRefreshInterval time.Duration
 	MetaLoader               *meta.Loader
 	SharedUpstreamResources  *upstream.SharedResources
+	SKForecast               sk.ForecastConfig
 	DeckRecommend            DeckRecommendConfig
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not
@@ -95,6 +96,8 @@ type DeckRecommendConfig struct {
 	RetryWaitTime   time.Duration
 	DefaultAlgs     []string
 }
+
+type SKForecastConfig = sk.ForecastConfig
 
 // ── App composite root ──────────────────────────────────────────────────────
 

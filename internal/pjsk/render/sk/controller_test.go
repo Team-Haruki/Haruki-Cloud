@@ -1003,9 +1003,10 @@ func (playerTracePrefersUserHistoryTrackerSource) TraceRankingByUser(server stri
 }
 
 type testEventSource struct {
-	region renderregion.Value
-	events []*masterdata.Event
-	byID   map[int]*masterdata.Event
+	region             renderregion.Value
+	events             []*masterdata.Event
+	byID               map[int]*masterdata.Event
+	worldBloomChapters map[int][]*masterdata.WorldBloom
 }
 
 func (s *testEventSource) DefaultRegion() renderregion.Value { return s.region }
@@ -1041,7 +1042,9 @@ func (s *testEventSource) GetGameCharacterUnit(id int) (*masterdata.GameCharacte
 
 func (s *testEventSource) GetBanEvents(charID int) []*masterdata.Event { return nil }
 
-func (s *testEventSource) GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom { return nil }
+func (s *testEventSource) GetWorldBloomChapters(_ context.Context, eventID int) []*masterdata.WorldBloom {
+	return s.worldBloomChapters[eventID]
+}
 
 func (s *testEventSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	return nil, fmt.Errorf("not found")
@@ -2332,11 +2335,12 @@ func TestBuildCSBRequestFromTrackerRejectsMultipleRanks(t *testing.T) {
 }
 
 func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
+	now := time.Now().UnixMilli()
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
-		StartAt:     111,
-		AggregateAt: 222,
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(2*time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
 	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
@@ -2359,6 +2363,12 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 				},
 				FetchedAt: 1_700_000_400,
 			},
+			"local": {
+				Scores: map[int]ForecastScore{
+					50: {Score: 13_333_333, Timestamp: 1_700_000_500, Source: "local"},
+				},
+				FetchedAt: 1_700_000_600,
+			},
 		},
 	})
 	if err := controller.forecastCache.RefreshNow(context.Background(), "jp", 101); err != nil {
@@ -2376,6 +2386,9 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	if payload.Name != "Tracker Event 预测" {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
+	if payload.PredictionNotice != skPredictionNotice {
+		t.Fatalf("unexpected prediction notice: %q", payload.PredictionNotice)
+	}
 	if len(payload.Ranks) != 2 {
 		t.Fatalf("unexpected current ranks len: %d", len(payload.Ranks))
 	}
@@ -2385,7 +2398,7 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	if payload.Ranks[1].Rank != 100 || payload.Ranks[1].Score == nil || *payload.Ranks[1].Score != 1_000_100 {
 		t.Fatalf("unexpected second current rank payload: %+v", payload.Ranks[1])
 	}
-	if len(payload.ForecastColumns) != 2 {
+	if len(payload.ForecastColumns) != 3 {
 		t.Fatalf("unexpected forecast column len: %d", len(payload.ForecastColumns))
 	}
 	if payload.ForecastColumns[0].Key != "33kit" || payload.ForecastColumns[0].Name != "33Kit预测" {
@@ -2397,24 +2410,39 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	if payload.ForecastColumns[0].Ranks[0].Rank != 50 || payload.ForecastColumns[0].Ranks[0].Score == nil || *payload.ForecastColumns[0].Ranks[0].Score != 12_345_678 {
 		t.Fatalf("unexpected 33kit p50 payload: %+v", payload.ForecastColumns[0].Ranks[0])
 	}
-	if payload.ForecastColumns[1].Key != "sekarun" {
-		t.Fatalf("unexpected second forecast column key: %s", payload.ForecastColumns[1].Key)
+	if payload.ForecastColumns[1].Key != "local" || payload.ForecastColumns[1].Name != "本地预测" {
+		t.Fatalf("unexpected second forecast column: %+v", payload.ForecastColumns[1])
+	}
+	if payload.ForecastColumns[2].Key != "sekarun" {
+		t.Fatalf("unexpected third forecast column key: %s", payload.ForecastColumns[2].Key)
 	}
 }
 
 func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapter(t *testing.T) {
+	now := time.Now().UnixMilli()
+	charaID := 21
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "WL Event",
 		EventType:   "world_bloom",
-		StartAt:     111,
-		AggregateAt: 222,
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(5*time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
 	controller.SetTrackerIntegration(worldBloomLineTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+		worldBloomChapters: map[int][]*masterdata.WorldBloom{
+			101: {
+				{
+					EventID:         101,
+					GameCharacterID: &charaID,
+					ChapterStartAt:  now - int64(time.Hour/time.Millisecond),
+					AggregateAt:     now + int64(2*time.Hour/time.Millisecond),
+				},
+			},
+		},
 	}, nil)
 	controller.SetForecastProvider(testForecastProvider{
 		scores: map[int]ForecastScore{100: {Score: 1234567, Timestamp: 1_700_000_000}},
@@ -2432,6 +2460,12 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapt
 	if payload.Name != "WL Event 预测(实时)" {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
+	if payload.AggregateAt != now+int64(2*time.Hour/time.Millisecond) {
+		t.Fatalf("expected chapter aggregate time, got %d", payload.AggregateAt)
+	}
+	if payload.PredictionNotice != skPredictionNotice {
+		t.Fatalf("unexpected prediction notice: %q", payload.PredictionNotice)
+	}
 	if payload.WlCid == nil || *payload.WlCid != 21 {
 		t.Fatalf("expected wl chapter id to be preserved, got %+v", payload.WlCid)
 	}
@@ -2443,12 +2477,88 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapt
 	}
 }
 
-func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissing(t *testing.T) {
+func TestBuildPredictLineRequestFromTrackerStopsInLastEventHour(t *testing.T) {
+	now := time.Now().UnixMilli()
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
-		StartAt:     111,
-		AggregateAt: 222,
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(30*time.Minute/time.Millisecond),
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+	controller.SetForecastProvider(testForecastProvider{
+		scores: map[int]ForecastScore{100: {Score: 1234567, Timestamp: 1_700_000_000}},
+	})
+
+	_, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100},
+	})
+	if err == nil {
+		t.Fatal("expected last-hour prediction stop error, got nil")
+	}
+	if got := err.Error(); got != skPredictionStopMessage {
+		t.Fatalf("unexpected error: %v", got)
+	}
+}
+
+func TestBuildPredictLineRequestFromTrackerStopsInLastWorldBloomChapterHour(t *testing.T) {
+	now := time.Now().UnixMilli()
+	charaID := 21
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "WL Event",
+		EventType:   "world_bloom",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(6*time.Hour/time.Millisecond),
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(worldBloomLineTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+		worldBloomChapters: map[int][]*masterdata.WorldBloom{
+			101: {
+				{
+					EventID:         101,
+					GameCharacterID: &charaID,
+					ChapterStartAt:  now - int64(time.Hour/time.Millisecond),
+					AggregateAt:     now + int64(30*time.Minute/time.Millisecond),
+				},
+			},
+		},
+	}, nil)
+	controller.SetForecastProvider(testForecastProvider{
+		scores: map[int]ForecastScore{100: {Score: 1234567, Timestamp: 1_700_000_000}},
+	})
+
+	_, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+		EventID:       101,
+		Region:        "jp",
+		Ranks:         []int{100},
+		WlCharacterID: &charaID,
+	})
+	if err == nil {
+		t.Fatal("expected last-hour prediction stop error, got nil")
+	}
+	if got := err.Error(); got != skPredictionStopMessage {
+		t.Fatalf("unexpected error: %v", got)
+	}
+}
+
+func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissing(t *testing.T) {
+	now := time.Now().UnixMilli()
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(2*time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
 	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
@@ -2474,11 +2584,12 @@ func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissi
 }
 
 func TestBuildPredictLineRequestFromTrackerUsesCachedGenericForecast(t *testing.T) {
+	now := time.Now().UnixMilli()
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
-		StartAt:     111,
-		AggregateAt: 222,
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(2*time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
 	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
@@ -2509,11 +2620,12 @@ func TestBuildPredictLineRequestFromTrackerUsesCachedGenericForecast(t *testing.
 }
 
 func TestRenderPredictLineFromTrackerUsesCachedForecastData(t *testing.T) {
+	now := time.Now().UnixMilli()
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
-		StartAt:     111,
-		AggregateAt: 222,
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(2*time.Hour/time.Millisecond),
 	}
 
 	tracker := &lineMetricsOnlyTrackerSource{}
@@ -2584,7 +2696,7 @@ func TestStartDefaultPredictWarmupPrimesDefaultPredictCache(t *testing.T) {
 		ID:          101,
 		Name:        "Tracker Event",
 		StartAt:     now - int64(time.Hour/time.Millisecond),
-		AggregateAt: now + int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(2*time.Hour/time.Millisecond),
 	}
 
 	tracker := &lineMetricsOnlyTrackerSource{}

@@ -67,6 +67,10 @@ type EventSource interface {
 	GetEvents() []*masterdata.Event
 }
 
+type WorldBloomChapterSource interface {
+	GetWorldBloomChapters(ctx context.Context, eventID int) []*masterdata.WorldBloom
+}
+
 // CensorService is a minimal interface for name censoring, satisfied by *censor.Service.
 type CensorService interface {
 	CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool
@@ -109,7 +113,12 @@ type ForecastProviderBySource interface {
 }
 
 type RemoteForecastProvider struct {
-	http *resty.Client
+	http             *resty.Client
+	localForecastURL string
+}
+
+type ForecastConfig struct {
+	LocalBaseURL string
 }
 
 // ── Internal helpers ────────────────────────────────────────────────────────

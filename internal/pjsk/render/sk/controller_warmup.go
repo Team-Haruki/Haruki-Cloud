@@ -63,6 +63,10 @@ func (c *Controller) refreshDefaultPredictData(regions []string) {
 		if eventID <= 0 {
 			continue
 		}
+		meta := c.resolveEventMeta(eventID, renderregion.Normalize(region))
+		if ensureSKPredictionAllowed(meta) != nil {
+			continue
+		}
 		c.forecastCache.StartRefresh(region, eventID)
 	}
 }

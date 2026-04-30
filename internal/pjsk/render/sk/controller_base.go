@@ -12,7 +12,11 @@ import (
 )
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
-	forecast := NewRemoteForecastProvider()
+	return NewControllerWithConfig(drawingClient, ForecastConfig{})
+}
+
+func NewControllerWithConfig(drawingClient *drawing.HarukiDrawingClient, forecastConfig ForecastConfig) *Controller {
+	forecast := NewRemoteForecastProviderWithConfig(forecastConfig)
 	return &Controller{
 		drawing:       drawingClient,
 		drawingBase:   drawingClient,

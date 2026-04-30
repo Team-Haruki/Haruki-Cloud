@@ -59,6 +59,30 @@ func (c *Controller) resolveEventMeta(eventID int, region renderregion.Value) ev
 	return meta
 }
 
+func (c *Controller) applyWorldBloomChapterMeta(req TrackerRankQuery, meta eventMeta) eventMeta {
+	if req.WlCharacterID == nil || *req.WlCharacterID <= 0 {
+		return meta
+	}
+	eventSource := c.eventSourceForRegion(req.Region)
+	chapterSource, ok := eventSource.(WorldBloomChapterSource)
+	if !ok || chapterSource == nil {
+		return meta
+	}
+	for _, chapter := range chapterSource.GetWorldBloomChapters(c.contextOrBackground(), req.EventID) {
+		if chapter == nil || chapter.GameCharacterID == nil || *chapter.GameCharacterID != *req.WlCharacterID {
+			continue
+		}
+		if chapter.ChapterStartAt > 0 {
+			meta.startAt = chapter.ChapterStartAt
+		}
+		if chapter.AggregateAt > 0 {
+			meta.aggregateAt = chapter.AggregateAt
+		}
+		return meta
+	}
+	return meta
+}
+
 func (c *Controller) resolveEventBannerPath(assetBundleName string, region renderregion.Value) string {
 	if c == nil || c.assets == nil || strings.TrimSpace(assetBundleName) == "" {
 		return ""

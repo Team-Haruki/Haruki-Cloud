@@ -205,6 +205,77 @@ func (p *RemoteForecastProvider) fetchSekaRun(ctx context.Context, region string
 	return parseSekaRunForecast(body, eventID, rankFilter)
 }
 
+func (p *RemoteForecastProvider) fetchLocalForecast(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+	baseURL := strings.TrimRight(strings.TrimSpace(p.localForecastURL), "/")
+	if baseURL == "" {
+		return nil, nil
+	}
+	url := fmt.Sprintf("%s/prediction/%s", baseURL, region)
+
+	var resp struct {
+		Region    string `json:"region"`
+		EventID   int    `json:"event_id"`
+		UpdatedAt any    `json:"updated_at"`
+		Lines     []struct {
+			LeaderboardScope string `json:"leaderboard_scope"`
+			CurrentTimestamp any    `json:"current_timestamp"`
+			Rows             []struct {
+				Rank             any `json:"rank"`
+				Prediction       any `json:"prediction"`
+				CurrentTimestamp any `json:"current_timestamp"`
+			} `json:"rows"`
+		} `json:"lines"`
+	}
+	if err := p.getJSON(ctx, url, &resp); err != nil {
+		return nil, err
+	}
+	if resp.EventID > 0 && resp.EventID != eventID {
+		return nil, fmt.Errorf("event mismatch: got %d want %d", resp.EventID, eventID)
+	}
+	if payloadRegion := strings.ToLower(strings.TrimSpace(resp.Region)); payloadRegion != "" && payloadRegion != region {
+		return nil, fmt.Errorf("region mismatch: got %s want %s", payloadRegion, region)
+	}
+
+	payloadTimestamp := int64(0)
+	if ts, ok := asInt64(resp.UpdatedAt); ok {
+		payloadTimestamp = normalizeForecastTimestamp(ts)
+	}
+
+	out := make(map[int]ForecastScore)
+	for _, line := range resp.Lines {
+		lineTimestamp := payloadTimestamp
+		if ts, ok := asInt64(line.CurrentTimestamp); ok {
+			lineTimestamp = normalizeForecastTimestamp(ts)
+		}
+		for _, row := range line.Rows {
+			rank, ok := asInt(row.Rank)
+			if !ok || rank <= 0 {
+				continue
+			}
+			if len(rankFilter) > 0 {
+				if _, ok := rankFilter[rank]; !ok {
+					continue
+				}
+			}
+			score, ok := asInt(row.Prediction)
+			if !ok || score <= 0 {
+				continue
+			}
+
+			timestamp := lineTimestamp
+			if ts, ok := asInt64(row.CurrentTimestamp); ok {
+				timestamp = normalizeForecastTimestamp(ts)
+			}
+			out[rank] = ForecastScore{
+				Score:     score,
+				Timestamp: timestamp,
+				Source:    "local",
+			}
+		}
+	}
+	return out, nil
+}
+
 func parseSekaRunForecast(body string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
 	currentEvent, rows, err := extractSekaRunRows(body)
 	if err != nil {

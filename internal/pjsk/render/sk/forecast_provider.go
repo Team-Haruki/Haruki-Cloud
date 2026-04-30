@@ -17,14 +17,24 @@ const (
 	forecastMoesekaiURL    = "https://rk.exmeaning.com/public/event/%d/latest?region=%s"
 	forecastSnowyLegacyURL = "https://sekaibangdan.exmeaning.com/api/public/v1/%sdata/%d"
 	forecastSekaURL        = "https://jiiku831.github.io/%sdata/sekarun.js"
+	forecastLocalBaseURL   = "http://100.109.13.111:18746"
 )
 
 // NewRemoteForecastProvider creates a forecast provider with sane HTTP defaults.
 func NewRemoteForecastProvider() *RemoteForecastProvider {
+	return NewRemoteForecastProviderWithConfig(ForecastConfig{})
+}
+
+func NewRemoteForecastProviderWithConfig(cfg ForecastConfig) *RemoteForecastProvider {
+	localBaseURL := strings.TrimRight(strings.TrimSpace(cfg.LocalBaseURL), "/")
+	if localBaseURL == "" {
+		localBaseURL = forecastLocalBaseURL
+	}
 	return &RemoteForecastProvider{
 		http: resty.New().
 			SetTimeout(config.SKForecastHTTPClientTimeout).
 			SetRetryCount(2),
+		localForecastURL: localBaseURL,
 	}
 }
 
@@ -100,14 +110,21 @@ func (p *RemoteForecastProvider) sourcesForRegion(region string) []remoteForecas
 		return []remoteForecastSource{
 			{name: "33kit", fn: p.fetch33Kit},
 			{name: "moesekai", fn: p.fetchMoesekai},
+			{name: "local", fn: p.fetchLocalForecast},
 		}
 	case "cn":
 		return []remoteForecastSource{
 			{name: "moesekai", fn: p.fetchMoesekai},
+			{name: "local", fn: p.fetchLocalForecast},
 		}
 	case "en":
 		return []remoteForecastSource{
 			{name: "sekarun", fn: p.fetchSekaRun},
+			{name: "local", fn: p.fetchLocalForecast},
+		}
+	case "tw", "kr":
+		return []remoteForecastSource{
+			{name: "local", fn: p.fetchLocalForecast},
 		}
 	default:
 		return nil
@@ -117,11 +134,13 @@ func (p *RemoteForecastProvider) sourcesForRegion(region string) []remoteForecas
 func forecastSourceOrderForRegion(region string) []string {
 	switch strings.ToLower(strings.TrimSpace(region)) {
 	case "jp":
-		return []string{"33kit", "moesekai"}
+		return []string{"33kit", "moesekai", "local"}
 	case "cn":
-		return []string{"moesekai"}
+		return []string{"moesekai", "local"}
 	case "en":
-		return []string{"sekarun"}
+		return []string{"sekarun", "local"}
+	case "tw", "kr":
+		return []string{"local"}
 	default:
 		return nil
 	}

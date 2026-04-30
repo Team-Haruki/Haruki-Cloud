@@ -131,6 +131,9 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			MySekaiJSON:   harukiConfig.Cfg.PJSKRender.UserSnapshot.MySekaiJSON,
 		},
 		MetaLoader: metaLoader,
+		SKForecast: renderapp.SKForecastConfig{
+			LocalBaseURL: harukiConfig.Cfg.PJSKRender.SKForecast.LocalBaseURL,
+		},
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
 			ServiceBaseURL: harukiConfig.Cfg.PJSKRender.DeckRecommend.ServiceBaseURL,

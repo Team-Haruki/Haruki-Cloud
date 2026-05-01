@@ -41,6 +41,8 @@ type deckAutoQueryParams struct {
 	WorldBloomCharacterID        *int                               `json:"world_bloom_character_id,omitempty"`
 	WorldBloomCharacterQuery     string                             `json:"world_bloom_character_query,omitempty"`
 	WorldBloomEventTurn          *int                               `json:"world_bloom_event_turn,omitempty"`
+	ForcedLeaderCharacterID      *int                               `json:"forced_leader_character_id,omitempty"`
+	ForcedLeaderCharacterQuery   string                             `json:"forced_leader_character_query,omitempty"`
 	ChallengeLiveCharacterID     *int                               `json:"challenge_live_character_id,omitempty"`
 	ChallengeLiveCharacterQuery  string                             `json:"challenge_live_character_query,omitempty"`
 	FixedCards                   []int                              `json:"fixed_cards,omitempty"`

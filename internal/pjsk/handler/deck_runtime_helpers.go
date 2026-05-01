@@ -49,6 +49,11 @@ func formatDeckQuerySummary(q deck.AutoQuery) string {
 	} else if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
 		parts = append(parts, fmt.Sprintf("wl角色%d", *q.WorldBloomCharacterID))
 	}
+	if q.ForcedLeaderCharacterQuery != "" {
+		parts = append(parts, q.ForcedLeaderCharacterQuery)
+	} else if q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
+		parts = append(parts, fmt.Sprintf("队长角色%d", *q.ForcedLeaderCharacterID))
+	}
 	if q.ChallengeLiveCharacterQuery != "" {
 		parts = append(parts, q.ChallengeLiveCharacterQuery)
 	} else if q.ChallengeLiveCharacterID != nil && *q.ChallengeLiveCharacterID > 0 {

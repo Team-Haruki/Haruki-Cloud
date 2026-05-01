@@ -12,20 +12,22 @@ import (
 
 func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 	original := deckAutoQueryParams{
-		Boost:               intPtr(5),
-		AreaItemLevel:       intPtr(15),
-		Selector:            "u2",
-		UnitFilter:          "idol",
-		AttrFilter:          "cool",
-		ExcludedCards:       []int{123, 456},
-		UseCurrentDeck:      true,
-		MaxProfile:          true,
-		SubMaxProfile:       true,
-		SupportMasterMax:    true,
-		SupportSkillMax:     true,
-		MusicCompare:        true,
-		MusicCompareQueries: []string{"龙hard", "虾expert", "sage"},
-		SpecificSkillOrder:  []int{0, 1, 2, 3, 4},
+		Boost:                      intPtr(5),
+		AreaItemLevel:              intPtr(15),
+		Selector:                   "u2",
+		UnitFilter:                 "idol",
+		AttrFilter:                 "cool",
+		ExcludedCards:              []int{123, 456},
+		UseCurrentDeck:             true,
+		MaxProfile:                 true,
+		SubMaxProfile:              true,
+		SupportMasterMax:           true,
+		SupportSkillMax:            true,
+		MusicCompare:               true,
+		MusicCompareQueries:        []string{"龙hard", "虾expert", "sage"},
+		SpecificSkillOrder:         []int{0, 1, 2, 3, 4},
+		ForcedLeaderCharacterID:    intPtr(21),
+		ForcedLeaderCharacterQuery: "miku",
 	}
 
 	data, err := json.Marshal(original)
@@ -61,6 +63,12 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 	}
 	if !reflect.DeepEqual(decoded.SpecificSkillOrder, []int{0, 1, 2, 3, 4}) {
 		t.Fatalf("unexpected specific skill order: %+v", decoded.SpecificSkillOrder)
+	}
+	if decoded.ForcedLeaderCharacterID == nil || *decoded.ForcedLeaderCharacterID != 21 {
+		t.Fatalf("unexpected forced leader id: %+v", decoded.ForcedLeaderCharacterID)
+	}
+	if decoded.ForcedLeaderCharacterQuery != "miku" {
+		t.Fatalf("unexpected forced leader query: %q", decoded.ForcedLeaderCharacterQuery)
 	}
 }
 
@@ -141,6 +149,40 @@ func TestEventDeckHandleParsesMixedFixedCharactersAndCards(t *testing.T) {
 	}
 	if len(params.FixedCharacterQueries) != 0 {
 		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+	}
+}
+
+func TestEventDeckHandleParsesFinalChapterForcedLeader(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/组卡",
+		ArgText:    "180 miku #len #1237",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID == nil || *params.EventID != 180 {
+		t.Fatalf("unexpected event id: %+v", params.EventID)
+	}
+	if params.ForcedLeaderCharacterID == nil || *params.ForcedLeaderCharacterID != 21 {
+		t.Fatalf("unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+	}
+	if params.WorldBloomCharacterID != nil || params.WorldBloomCharacterQuery != "" {
+		t.Fatalf("unexpected world bloom selection: id=%+v query=%q", params.WorldBloomCharacterID, params.WorldBloomCharacterQuery)
+	}
+	if !reflect.DeepEqual(params.FixedCharacters, []int{23}) {
+		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
+	}
+	if !reflect.DeepEqual(params.FixedCards, []int{1237}) {
+		t.Fatalf("unexpected fixed cards: %+v", params.FixedCards)
 	}
 }
 

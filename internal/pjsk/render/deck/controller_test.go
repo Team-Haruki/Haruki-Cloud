@@ -642,6 +642,36 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	}
 }
 
+func TestBuildRecommendOptionForwardsFinalChapterForcedLeader(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
+		Region:                  "jp",
+		RecommendType:           "event",
+		EventID:                 new(180),
+		ForcedLeaderCharacterID: new(21),
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+	if option["forced_leader_character_id"] != 21 {
+		t.Fatalf("unexpected forced leader: %+v", option["forced_leader_character_id"])
+	}
+
+	option, err = controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
+		Region:                  "jp",
+		RecommendType:           "event",
+		EventID:                 new(181),
+		ForcedLeaderCharacterID: new(21),
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+	if _, ok := option["forced_leader_character_id"]; ok {
+		t.Fatalf("forced leader should only be forwarded for final chapter: %+v", option["forced_leader_character_id"])
+	}
+}
+
 func TestApplyRecommendChallengeAllDefaultsKeepsExplicitAlgorithm(t *testing.T) {
 	option := map[string]any{
 		"algorithm": "all",

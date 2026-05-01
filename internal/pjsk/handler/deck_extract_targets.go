@@ -136,6 +136,10 @@ func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAu
 		return remaining, nil
 	}
 	if charID, charQuery, remaining := extractDeckCharacterCandidate(args, true); charID > 0 {
+		if eventID != nil && *eventID == 180 {
+			params.ForcedLeaderCharacterID = intPtr(charID)
+			return remaining, nil
+		}
 		params.WorldBloomCharacterID = intPtr(charID)
 		if params.EventUnit == "" {
 			params.EventUnit = deckCharacterUnit(charID)
@@ -144,6 +148,10 @@ func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAu
 	} else if charQuery != "" {
 		if remaining == "" && looksLikeInlineMusicQuery(charQuery) {
 			return args, nil
+		}
+		if eventID != nil && *eventID == 180 {
+			params.ForcedLeaderCharacterQuery = charQuery
+			return remaining, nil
 		}
 		params.WorldBloomCharacterQuery = charQuery
 		return remaining, nil

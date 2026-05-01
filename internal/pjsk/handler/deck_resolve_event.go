@@ -30,6 +30,19 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 		return err
 	}
 
+	if q.EventID == nil || *q.EventID != 180 {
+		q.ForcedLeaderCharacterID = nil
+		q.ForcedLeaderCharacterQuery = ""
+	}
+	if q.ForcedLeaderCharacterID == nil && strings.TrimSpace(q.ForcedLeaderCharacterQuery) != "" {
+		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.ForcedLeaderCharacterQuery, "deck")
+		if err != nil {
+			return err
+		}
+		q.ForcedLeaderCharacterID = drawing.IntPtr(charID)
+		q.ForcedLeaderCharacterQuery = ""
+	}
+
 	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) != "" {
 		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.WorldBloomCharacterQuery, "deck")
 		if err != nil {
@@ -77,6 +90,12 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 
 func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
 	if q != nil && q.EventID != nil && *q.EventID == 180 {
+		if q.ForcedLeaderCharacterID == nil && q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
+			q.ForcedLeaderCharacterID = drawing.IntPtr(*q.WorldBloomCharacterID)
+		}
+		if strings.TrimSpace(q.ForcedLeaderCharacterQuery) == "" && q.WorldBloomCharacterQuery != "" && !isDeckWorldBloomSelectorQuery(q.WorldBloomCharacterQuery) {
+			q.ForcedLeaderCharacterQuery = q.WorldBloomCharacterQuery
+		}
 		q.WorldBloomCharacterID = nil
 		q.WorldBloomCharacterQuery = ""
 		return nil

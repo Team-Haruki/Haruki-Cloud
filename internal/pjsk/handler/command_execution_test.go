@@ -2821,6 +2821,9 @@ func TestResolveDeckCharacterSelectionsTreatsFinalChapterAsWorldBloomWithoutSele
 	if query.WorldBloomCharacterQuery != "" {
 		t.Fatalf("expected final chapter to clear world bloom selector: %q", query.WorldBloomCharacterQuery)
 	}
+	if query.ForcedLeaderCharacterID == nil || *query.ForcedLeaderCharacterID != 21 {
+		t.Fatalf("expected final chapter to convert explicit world bloom character to forced leader: %+v", query.ForcedLeaderCharacterID)
+	}
 	if query.MusicQuery != "" {
 		t.Fatalf("unexpected music query: %q", query.MusicQuery)
 	}

@@ -24,7 +24,32 @@ func StartGCWorker(ctx context.Context, db *sql.DB, storageDir string, interval 
 		ctx = context.Background()
 	}
 
+	runCleanup := func() {
+		totalCleaned := 0
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			cleaned, err := cleanupExpiredBatch(db, storageDir, defaultGCBatchSize)
+			if err != nil {
+				log.Printf("[drawing-cache-gc] cleanup failed: %v", err)
+				return
+			}
+			totalCleaned += cleaned
+			if cleaned < defaultGCBatchSize {
+				break
+			}
+		}
+		if totalCleaned > 0 {
+			log.Printf("[drawing-cache-gc] cleaned %d expired cache records", totalCleaned)
+		}
+	}
+
 	go func() {
+		runCleanup()
+
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
@@ -33,14 +58,7 @@ func StartGCWorker(ctx context.Context, db *sql.DB, storageDir string, interval 
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				cleaned, err := cleanupExpiredBatch(db, storageDir, defaultGCBatchSize)
-				if err != nil {
-					log.Printf("[drawing-cache-gc] cleanup failed: %v", err)
-					continue
-				}
-				if cleaned > 0 {
-					log.Printf("[drawing-cache-gc] cleaned %d expired cache records", cleaned)
-				}
+				runCleanup()
 			}
 		}
 	}()

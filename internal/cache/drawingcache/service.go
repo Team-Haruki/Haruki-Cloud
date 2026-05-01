@@ -13,7 +13,7 @@ import (
 
 const (
 	DefaultDBFilename = "cache.db"
-	DefaultGCInterval = 24 * time.Hour
+	DefaultGCInterval = time.Hour
 )
 
 type Config struct {

@@ -1,6 +1,7 @@
 package drawingcache
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -245,6 +246,49 @@ func TestCleanupExpiredBatchIgnoresInfiniteTTLRecords(t *testing.T) {
 	if _, err := dao.GetRecord(infiniteKey); err != nil {
 		t.Fatalf("expected infinite record to remain, got error: %v", err)
 	}
+}
+
+func TestStartGCWorkerRunsInitialCleanup(t *testing.T) {
+	db := openTestDB(t)
+	dao := NewDAO(db)
+	storageDir := t.TempDir()
+	now := time.Now().UTC().Add(-2 * time.Hour)
+
+	expiredKey := strings.Repeat("9", 64)
+	expiredPath := filepath.Join(storageDir, "api", "pjsk", "profile", "public", expiredKey+".png")
+	writeTestCacheFile(t, expiredPath, []byte("expired"))
+	if err := dao.SaveRecord(&CacheRecord{
+		Sha256Key:  expiredKey,
+		APIPath:    "api/pjsk/profile",
+		UserID:     "public",
+		FilePath:   expiredPath,
+		CreatedAt:  now,
+		LastUsedAt: now,
+		TTLSeconds: 60,
+		ExpiresAt:  now.Add(-time.Hour),
+	}); err != nil {
+		t.Fatalf("save expired record: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+	StartGCWorker(ctx, db, storageDir, time.Hour)
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		_, err := dao.GetRecord(expiredKey)
+		if errors.Is(err, ErrRecordNotFound) {
+			if _, statErr := os.Stat(expiredPath); !errors.Is(statErr, os.ErrNotExist) {
+				t.Fatalf("expected expired file to be removed, stat error: %v", statErr)
+			}
+			return
+		}
+		if err != nil {
+			t.Fatalf("GetRecord: %v", err)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("expired record was not cleaned during worker startup")
 }
 
 func TestCacheServiceDefaultsDBPathAndRegistersRoutes(t *testing.T) {

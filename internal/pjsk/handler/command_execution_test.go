@@ -4339,6 +4339,97 @@ func TestExecuteCardListAllowsNoBindingFallback(t *testing.T) {
 	}
 }
 
+func TestExecuteCardListAutoFallbackToCardBoxOmitsUserInfo(t *testing.T) {
+	const autoBoxThreshold = 90
+	root := t.TempDir()
+	var captured drawing.CardBoxRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/card/box" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	service := newHandlerTestBindingServiceWithValidator(t, handlerTestBindingValidator{})
+	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	cardMap := make(map[int]*masterdata.Card, autoBoxThreshold)
+	cardIDs := make([]int, 0, autoBoxThreshold)
+	for i := 1; i <= autoBoxThreshold; i++ {
+		cardID := 5000 + i
+		cardMap[cardID] = &masterdata.Card{
+			ID:              cardID,
+			CharacterID:     5,
+			CardRarityType:  "rarity_4",
+			Attr:            "cute",
+			Prefix:          "Test Card",
+			AssetBundleName: "card_test",
+			ReleaseAt:       1700000000000,
+		}
+		cardIDs = append(cardIDs, cardID)
+	}
+
+	app := &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings: service,
+		Cards: rendercard.NewController(
+			&bridgeCardSource{allowEmptyFilter: true, cards: cardMap},
+			&bridgeCardEventSource{},
+			drawing.NewHarukiDrawingClient(drawingServer.URL),
+			assets.NewAssetHelper(root, nil),
+		),
+		Snapshots: snapshot.NewStaticSnapshotProvider(&runtimeSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "12345678901234",
+				Region:          "JP",
+				Nickname:        "SnapshotUser",
+				LeaderImagePath: "asset/user/leader.png",
+				UserCards:       []any{map[string]any{"cardId": cardIDs[0]}},
+			},
+		}),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(rendercard.ListRequest{
+		CardIDs: cardIDs,
+		Region:  "jp",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeCard(NewRequestContext(context.Background(), &CommandRequest{
+		Module:            parser.ModuleCard,
+		Mode:              "card-list",
+		Region:            "jp",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeCard list: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if captured.UserInfo != nil {
+		t.Fatalf("expected auto-fallback card box to omit user info, got %+v", captured.UserInfo)
+	}
+	for _, item := range captured.Cards {
+		if item.HasCard {
+			t.Fatalf("expected auto-fallback card box to mark cards as unowned, got %+v", item)
+		}
+	}
+}
+
 func TestExecuteCardBoxRequiresOwnedCardDataWhenShowBoxEnabled(t *testing.T) {
 	root := t.TempDir()
 	service := newHandlerTestBindingServiceWithValidator(t, handlerTestBindingValidator{})

@@ -1,11 +1,8 @@
 package card
 
 import (
-	json "github.com/bytedance/sonic"
 	"errors"
-	"io"
-	"net/http"
-	"net/http/httptest"
+	json "github.com/bytedance/sonic"
 	"strings"
 	"testing"
 	"time"
@@ -195,9 +192,16 @@ func TestBuildCardBoxRequestAppliesDisplayFlagsAndBeforeSetting(t *testing.T) {
 func TestBuildCardBoxRequestUsesOwnedCardDefaultImageEvenWhenBeforeIsSet(t *testing.T) {
 	source := &lookupTestSource{cards: []*masterdata.Card{{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"}}}
 	controller := NewController(source, nil, nil, nil)
-	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", UseAfterTraining: new(false), DetailedProfile: &drawing.DetailedProfileCardRequest{UserCards: []any{map[string]any{"cardId": 1001, "defaultImage": "special_training", "specialTrainingStatus": "done"}}}}})
+	profile := &drawing.DetailedProfileCardRequest{
+		ID:        "123456789",
+		UserCards: []any{map[string]any{"cardId": 1001, "defaultImage": "special_training", "specialTrainingStatus": "done"}},
+	}
+	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", UseAfterTraining: new(false), DetailedProfile: profile}})
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if req.UserInfo != profile {
+		t.Fatalf("expected explicit card box request to keep user info, got %+v", req.UserInfo)
 	}
 	if len(req.Cards) != 1 || req.Cards[0].Card.IsAfterTraining == nil || !*req.Cards[0].Card.IsAfterTraining {
 		t.Fatalf("expected owned card to keep special_training default image: %+v", req.Cards)
@@ -382,30 +386,12 @@ func TestRenderCardListAutoSwitchesToCardBoxWhenTooManyCards(t *testing.T) {
 	}
 }
 
-func TestRenderCardListAutoSwitchesToCardBoxKeepsUserInfo(t *testing.T) {
+func TestRenderCardListAutoSwitchesToCardBoxOmitsUserInfo(t *testing.T) {
 	source := &lookupTestSource{}
 	for i := 1; i <= cardListAutoBoxThreshold; i++ {
 		source.cards = append(source.cards, &masterdata.Card{ID: 3000 + i, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card", AssetBundleName: "card_a"})
 	}
-
-	var (
-		calledPath string
-		payload    map[string]any
-	)
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calledPath = r.URL.Path
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			t.Fatalf("failed to read request body: %v", err)
-		}
-		if err := json.Unmarshal(body, &payload); err != nil {
-			t.Fatalf("failed to decode request body: %v", err)
-		}
-		_, _ = w.Write([]byte("png"))
-	}))
-	defer server.Close()
-
-	controller := NewController(source, nil, drawing.NewHarukiDrawingClient(server.URL), nil)
+	controller := NewController(source, nil, nil, nil)
 	cardIDs := make([]int, 0, len(source.cards))
 	for _, card := range source.cards {
 		cardIDs = append(cardIDs, card.ID)
@@ -420,19 +406,23 @@ func TestRenderCardListAutoSwitchesToCardBoxKeepsUserInfo(t *testing.T) {
 		UserCards:       []any{map[string]any{"cardId": 3001}},
 	}
 
-	_, err := controller.RenderCardList(ListRequest{CardIDs: cardIDs, Region: "jp", DetailedProfile: profile})
+	reqAny, autoBox, err := controller.buildCardListRenderRequest(ListRequest{CardIDs: cardIDs, Region: "jp", DetailedProfile: profile})
 	if err != nil {
-		t.Fatalf("RenderCardList() error = %v", err)
+		t.Fatalf("buildCardListRenderRequest() error = %v", err)
 	}
-	if calledPath != "/api/pjsk/card/box" {
-		t.Fatalf("expected card box render path, got %q", calledPath)
+	if !autoBox {
+		t.Fatal("expected card list auto fallback to card box request")
 	}
-
-	userInfo, ok := payload["user_info"].(map[string]any)
-	if !ok || userInfo == nil {
-		t.Fatalf("expected user_info in auto-switched card box payload, got %#v", payload["user_info"])
+	req, ok := reqAny.(*drawing.CardBoxRequest)
+	if !ok {
+		t.Fatalf("expected card box request, got %T", reqAny)
 	}
-	if got := userInfo["id"]; got != profile.ID {
-		t.Fatalf("expected user_info.id=%q, got %#v", profile.ID, got)
+	if req.UserInfo != nil {
+		t.Fatalf("expected auto-switched card box request to omit user info, got %+v", req.UserInfo)
+	}
+	for _, item := range req.Cards {
+		if item.HasCard {
+			t.Fatalf("expected auto-switched card box request to mark all cards as unowned, got %+v", item)
+		}
 	}
 }

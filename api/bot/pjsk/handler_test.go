@@ -474,6 +474,60 @@ func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
 	assertSingleTextMessage(t, body, "你还没有绑定任何PJSK账号")
 }
 
+func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {
+	app := testBotApp(t, "")
+	secretParam := "super-secret-param"
+
+	req := newBotPOSTRequest(botPJSKPath("event"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查活动",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查活动 " + secretParam}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	text := singleTextMessageText(t, body)
+	if strings.Contains(text, secretParam) {
+		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
+	}
+	if !strings.Contains(text, "活动查询参数错误") || !strings.Contains(text, "【查单个活动格式】") {
+		t.Fatalf("expected redacted parse error with help text, got %q", text)
+	}
+}
+
+func TestBotEndpointAllowsParamEchoWhenEnabled(t *testing.T) {
+	app := testBotApp(t, "")
+	secretParam := "super-secret-param"
+
+	req := newBotPOSTRequest(botPJSKPath("event"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查活动",
+		Message:         onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查活动 " + secretParam}}},
+		EnableParamEcho: true,
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	text := singleTextMessageText(t, body)
+	if !strings.Contains(text, secretParam) {
+		t.Fatalf("expected response to echo param %q, got %q", secretParam, text)
+	}
+}
+
 func TestBotEndpointRecordsDistributedStatisticsAndCommandLog(t *testing.T) {
 	ctx := context.Background()
 	botClient := newBotCommandTestClient(t, "telemetry")
@@ -1607,6 +1661,14 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 
 func assertSingleTextMessageContains(t *testing.T, body []byte, wantPart string) {
 	t.Helper()
+	text := singleTextMessageText(t, body)
+	if !strings.Contains(text, wantPart) {
+		t.Fatalf("expected text to contain %q, got %q", wantPart, text)
+	}
+}
+
+func singleTextMessageText(t *testing.T, body []byte) string {
+	t.Helper()
 	message := decodeSuccessMessage(t, body)
 	if len(message) != 1 || message[0].Type != "text" {
 		t.Fatalf("expected single text message, got %+v", message)
@@ -1616,9 +1678,7 @@ func assertSingleTextMessageContains(t *testing.T, body []byte, wantPart string)
 		t.Fatalf("unexpected text segment data: %#v", message[0].Data)
 	}
 	text, _ := data["text"].(string)
-	if !strings.Contains(text, wantPart) {
-		t.Fatalf("expected text to contain %q, got %q", wantPart, text)
-	}
+	return text
 }
 
 func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {

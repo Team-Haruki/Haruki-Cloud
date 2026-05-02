@@ -12,6 +12,9 @@ type BotCommandRequest struct {
 	Server          string           `json:"server,omitempty" msgpack:"server,omitempty"`
 	MatchedCommand  string           `json:"matched_command" msgpack:"matched_command"`
 	Message         onebot11.Message `json:"message" msgpack:"message"`
+	// EnableParamEcho allows clients to opt in to receiving the concrete
+	// parameter text in parse-error responses. The default is false.
+	EnableParamEcho bool `json:"enableParamEcho,omitempty" msgpack:"enableParamEcho,omitempty"`
 }
 
 // BotCommandErrorResponse is returned when a bot endpoint cannot process the request.

@@ -115,6 +115,7 @@ Bot 端点不应该再把“请求发到哪个端点”这个问题重新交给�
 2. Noise 模式下使用 `MsgPack` 解码
 3. 明文模式下使用 `JSON` 解码
 4. `HandlerContext` 从消息段中提取纯文本参数与 `at` 列表
+5. 除非请求显式设置 `enableParamEcho: true`，否则参数解析失败时返回给客户端的错误文本不会回显具体参数
 
 当前 `at` 信息只识别 OneBot `at` 段中的 `qq` 字段。
 

@@ -255,6 +255,7 @@ X-Haruki-Bot-Session-Token: <jwt>
 3. 请求体使用 `BotCommandRequest`
 4. 当服务端配置了 `noise_private_key` 时，请求体为 `Noise NK + MsgPack(BotCommandRequest)`
 5. 当服务端未配置 `noise_private_key` 时，退回 `JSON(BotCommandRequest)` 明文模式
+6. `BotCommandRequest.enableParamEcho` 默认为 `false`；客户端只有显式传 `true` 时，参数解析错误才会回显具体参数
 
 代表性端点包括：
 

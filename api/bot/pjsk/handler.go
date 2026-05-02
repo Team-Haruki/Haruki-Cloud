@@ -47,7 +47,8 @@ const slowCommandTraceThreshold = 1500 * time.Millisecond
 //	Content-Type: application/json
 //
 //	{"platform":"qq","platform_user_id":"12345","server":"jp",
-//	 "matched_command":"/cmd","message":[{"type":"text","data":{"text":"/cmd args"}}]}
+//	 "matched_command":"/cmd","message":[{"type":"text","data":{"text":"/cmd args"}}],
+//	 "enableParamEcho":false}
 //
 // When noiseKeyPair is non-nil, the Noise IK transport encryption middleware is applied
 // to the pjsk route group. Clients must then send Noise IK Message 1 containing a
@@ -169,7 +170,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		tResolved := time.Now()
 		if err != nil {
 			logger.Warnf("bot command resolve failed: path=%s matched_command=%s parse=%dms err=%v", expectedPath, req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), err)
-			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
+			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand, req.EnableParamEcho)
 		}
 
 		if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
@@ -191,7 +192,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 			logger.Errorf("bot command render failed: matched_command=%s parse=%dms exec=%dms total=%dms err=%v",
 				req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds(), err)
 			guard.MarkComplete(requestCtx, req)
-			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand)
+			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand, req.EnableParamEcho)
 		}
 		logger.Infof("bot command completed: matched_command=%s parse=%dms exec=%dms total=%dms",
 			req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds())
@@ -241,7 +242,7 @@ func botResponse(c fiber.Ctx, status int, message string, data ...any) error {
 	return api.JSONResponse(c, status, message, data...)
 }
 
-func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedCommand string) error {
+func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedCommand string, enableParamEcho bool) error {
 	if _, ok := errors.AsType[*botValidationError](err); ok {
 		return botResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
 			BotCommandErrorResponse{
@@ -252,11 +253,11 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 	}
 	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return botResponse(c, fiber.StatusOK, api.ResponseOK,
-			[]onebot11.Segment{onebot11.Text(string(replyErr))},
+			[]onebot11.Segment{onebot11.Text(clientErrorText(string(replyErr), enableParamEcho))},
 		)
 	}
 	return botResponse(c, fiber.StatusOK, api.ResponseOK,
-		[]onebot11.Segment{onebot11.Text(err.Error())},
+		[]onebot11.Segment{onebot11.Text(clientErrorText(err.Error(), enableParamEcho))},
 	)
 }
 

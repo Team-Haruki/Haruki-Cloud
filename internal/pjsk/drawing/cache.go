@@ -1,6 +1,7 @@
 package drawing
 
 import (
+	"crypto/tls"
 	"fmt"
 	"math"
 	"net/http"
@@ -112,7 +113,9 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 	}
 
 	return &RenderCacheClient{
-		http:       resty.New().SetTimeout(config.HTTPClientTimeout),
+		http: resty.New().
+			SetTimeout(config.HTTPClientTimeout).
+			SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
 		baseURL:    baseURL,
 		storageDir: storageDir,
 		ttl:        cfg.TTL,

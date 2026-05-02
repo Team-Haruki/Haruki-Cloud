@@ -1,6 +1,12 @@
 package drawing
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -32,6 +38,44 @@ func TestResolveRenderCacheRuleUsesOneHourTTLForEventDetail(t *testing.T) {
 	rule := resolveRenderCacheRule("/api/pjsk/event/detail")
 	if rule.TTL != renderCacheTTLOneHour {
 		t.Fatalf("event detail ttl = %s, want %s", rule.TTL, renderCacheTTLOneHour)
+	}
+}
+
+func TestRenderCacheClientAllowsInternalSelfSignedHTTPS(t *testing.T) {
+	storageDir := t.TempDir()
+	cacheKey := strings.Repeat("a", 64)
+	cachePath := filepath.Join(storageDir, "cached.png")
+	if err := os.WriteFile(cachePath, []byte("cached-image"), 0o644); err != nil {
+		t.Fatalf("write cache file: %v", err)
+	}
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cache" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if got := r.URL.Query().Get("key"); got != cacheKey {
+			t.Fatalf("unexpected key: %s", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintf(w, `{"key":%q,"file_path":%q}`, cacheKey, cachePath)
+	}))
+	defer server.Close()
+
+	client := NewRenderCacheClient(RenderCacheConfig{
+		BaseURL:    server.URL,
+		StorageDir: storageDir,
+		TTL:        time.Minute,
+	})
+	if client == nil {
+		t.Fatal("expected render cache client")
+	}
+
+	data, ok := client.lookup(cacheKey, "api/pjsk/profile")
+	if !ok {
+		t.Fatal("expected self-signed HTTPS cache lookup to hit")
+	}
+	if string(data) != "cached-image" {
+		t.Fatalf("unexpected cache data: %q", string(data))
 	}
 }
 

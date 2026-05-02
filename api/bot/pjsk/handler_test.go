@@ -1449,7 +1449,7 @@ func TestBotEndpointSKQueryReturnsTextWhenTrackerQueryFails(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessageContains(t, body, "event_id is required")
+	assertSingleTextMessageContains(t, body, "当前没有可推断的活动，请指定活动ID")
 }
 
 func TestBotEndpointSKQueryDefaultsToSelfBinding(t *testing.T) {
@@ -2014,7 +2014,7 @@ func TestBotEndpointWrongCommandRejects400(t *testing.T) {
 	if err := json.Unmarshal(respBody, &envelope); err != nil {
 		t.Fatalf("decode response: %v raw=%s", err, respBody)
 	}
-	if envelope.Message != "matched command is not allowed for this endpoint" {
+	if envelope.Message != "当前接口不允许使用该 matched_command" {
 		t.Fatalf("unexpected message: %s", envelope.Message)
 	}
 }
@@ -2115,8 +2115,8 @@ func TestBotManifestEndpoint(t *testing.T) {
 	if err := json.Unmarshal(respBody, &envelope); err != nil {
 		t.Fatalf("decode manifest: %v raw=%s", err, respBody)
 	}
-	if !strings.Contains(envelope.Message, "not available") {
-		t.Fatalf("expected 'not available' message, got: %s", envelope.Message)
+	if !strings.Contains(envelope.Message, "指令清单不可用") {
+		t.Fatalf("expected unavailable manifest message, got: %s", envelope.Message)
 	}
 }
 

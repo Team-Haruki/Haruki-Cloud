@@ -15,9 +15,29 @@ func TestNormalizeCardUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) 
 	assertReplayErrorText(t, err, "该卡牌还未上线")
 }
 
+func TestNormalizeCardUserFacingErrorExtractsSekaiCardNotFound(t *testing.T) {
+	err := normalizeCardUserFacingError(errString("failed to search card: query card 662: sekai: card not found"))
+	assertReplayErrorText(t, err, "找不到特定的卡牌: 662")
+}
+
+func TestNormalizeCardUserFacingErrorExtractsFilterCardNotFound(t *testing.T) {
+	err := normalizeCardUserFacingError(errString("failed to search card list: no cards found for filter: miku secret"))
+	assertReplayErrorText(t, err, "找不到特定的卡牌: miku secret")
+}
+
+func TestNormalizeCardUserFacingErrorTranslatesCardServiceErrors(t *testing.T) {
+	err := normalizeCardUserFacingError(errString("no card data source for region jp"))
+	assertReplayErrorText(t, err, "卡牌服务未就绪，请稍后再试")
+}
+
 func TestNormalizeMusicUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {
 	err := normalizeMusicUserFacingError(releasecheck.New(releasecheck.KindMusic, "Future Song", 0))
 	assertReplayErrorText(t, err, "该歌曲还未上线")
+}
+
+func TestNormalizeMusicUserFacingErrorTranslatesServiceErrors(t *testing.T) {
+	err := normalizeMusicUserFacingError(errString("music controller is not configured"))
+	assertReplayErrorText(t, err, "歌曲服务未就绪，请稍后再试")
 }
 
 func TestNormalizeMusicUserFacingErrorReturnsRegionSpecificNotFoundReplayError(t *testing.T) {
@@ -50,9 +70,19 @@ func TestNormalizeEventUserFacingErrorReturnsNoOngoingReplayError(t *testing.T) 
 	assertReplayErrorText(t, err, "当前无正在举办的活动")
 }
 
+func TestNormalizeEventUserFacingErrorTranslatesRequiredID(t *testing.T) {
+	err := normalizeEventUserFacingError(errString("event id is required"))
+	assertReplayErrorText(t, err, "请提供要查询的活动")
+}
+
 func TestNormalizeGachaUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {
 	err := normalizeGachaUserFacingError(releasecheck.New(releasecheck.KindGacha, "", 3001))
 	assertReplayErrorText(t, err, "该卡池还未上线")
+}
+
+func TestNormalizeGachaUserFacingErrorTranslatesNotFound(t *testing.T) {
+	err := normalizeGachaUserFacingError(errString("gacha not found for event: 42"))
+	assertReplayErrorText(t, err, "找不到特定的卡池")
 }
 
 func TestNormalizeReleaseMessagesPreserveNonReleaseErrors(t *testing.T) {
@@ -65,6 +95,11 @@ func TestNormalizeReleaseMessagesPreserveNonReleaseErrors(t *testing.T) {
 			name:      "card no binding",
 			normalize: normalizeCardUserFacingError,
 			input:     accountdata.ErrNoBinding,
+		},
+		{
+			name:      "card costume query failure",
+			normalize: normalizeCardUserFacingError,
+			input:     errString("query card costumes for card 123: database unavailable"),
 		},
 		{
 			name:      "music replay error",

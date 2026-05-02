@@ -13,13 +13,13 @@ import (
 func (h *StatisticsHandler) RecordStatistics(c fiber.Ctx) error {
 	botID := fiber.Params[int](c, "botID", 0)
 	if botID <= 0 {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "botID required")
+		return api.JSONResponse(c, fiber.StatusBadRequest, "缺少 botID")
 	}
 	if err := RecordRequestStatistics(c.Context(), h.svc.client, botID, telemetryNow()); err != nil {
 		return api.InternalError(c)
 	}
 
-	return api.JSONResponse(c, fiber.StatusOK, "Statistics recorded")
+	return api.JSONResponse(c, fiber.StatusOK, "统计已记录")
 }
 
 func (h *StatisticsHandler) updateRequestsRanking(ctx context.Context, botID int) error {

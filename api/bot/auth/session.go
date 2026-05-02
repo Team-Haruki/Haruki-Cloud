@@ -179,7 +179,7 @@ func (h *UserHandler) Logout(c fiber.Ctx) error {
 	// 验证请求携带的 session token 与 Redis 中存储的一致
 	sessionToken := c.Get("X-Haruki-Bot-Session-Token")
 	if sessionToken == "" {
-		return api.JSONResponse(c, fiber.StatusUnauthorized, "session token required for logout")
+		return api.JSONResponse(c, fiber.StatusUnauthorized, "缺少注销所需的会话令牌")
 	}
 	stored, err := h.svc.getRedisKey(ctx, RedisKeySessionToken, botIDStr)
 	if err != nil || stored != sessionToken {

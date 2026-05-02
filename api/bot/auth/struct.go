@@ -64,14 +64,14 @@ const (
 // ================= Error Messages =================
 
 const (
-	ErrInvalidCredential    = "invalid credential"
-	ErrInvalidEncryptedData = "invalid encrypted payload"
-	ErrAuthTimestampExpired = "auth request expired"
-	ErrBotIDMismatch        = "bot_id mismatch"
-	ErrAuthFailed           = "authentication failed"
-	ErrSessionExpired       = "session expired or invalid"
-	ErrRateLimitExceeded    = "rate limit exceeded, please try again later"
-	ErrReplayDetected       = "duplicate request detected"
+	ErrInvalidCredential    = "凭证无效"
+	ErrInvalidEncryptedData = "加密载荷无效"
+	ErrAuthTimestampExpired = "认证请求已过期"
+	ErrBotIDMismatch        = "bot_id 不匹配"
+	ErrAuthFailed           = "认证失败"
+	ErrSessionExpired       = "会话已过期或无效"
+	ErrRateLimitExceeded    = "请求过于频繁，请稍后再试"
+	ErrReplayDetected       = "检测到重复请求"
 )
 
 // ================= Service Structs =================

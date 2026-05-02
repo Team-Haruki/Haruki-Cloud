@@ -21,7 +21,12 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 		{
 			name: "english token",
 			in:   "invalid token \"super-secret\"",
-			want: "invalid token",
+			want: "无效的参数",
+		},
+		{
+			name: "wrapped card query",
+			in:   "failed to search card: query card 662: sekai: card not found",
+			want: "找不到特定的卡牌",
 		},
 		{
 			name: "music not found",
@@ -29,9 +34,29 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 			want: "CN服找不到特定的歌\n如果需要查其他区服的歌曲请加区服前缀",
 		},
 		{
+			name: "card not found",
+			in:   "找不到特定的卡牌: super-secret",
+			want: "找不到特定的卡牌",
+		},
+		{
 			name: "non echo error",
 			in:   "event_id is required",
-			want: "event_id is required",
+			want: "当前没有可推断的活动，请指定活动ID",
+		},
+		{
+			name: "service error",
+			in:   "misc birthday service unavailable: sekai client not configured",
+			want: "生日服务未就绪，请稍后再试",
+		},
+		{
+			name: "unknown english error",
+			in:   "handler returned nil\nsuper-secret",
+			want: "请求处理失败，请稍后再试",
+		},
+		{
+			name: "mixed chinese latin error",
+			in:   "BPM 必须大于 0",
+			want: "BPM 必须大于 0",
 		},
 	}
 

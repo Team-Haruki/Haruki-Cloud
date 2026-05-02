@@ -244,6 +244,10 @@ func (sekaiHandlers) CSBHandle() HarukiSekaiCommandHandler {
 }
 
 func executeSK(rc *RequestContext) (message onebot11.Message, err error) {
+	defer func() {
+		err = normalizeSKUserFacingError(err)
+	}()
+
 	if rc == nil || rc.App == nil || rc.App.SK == nil {
 		return nil, fmt.Errorf("sk service unavailable: tracker controller is not configured")
 	}

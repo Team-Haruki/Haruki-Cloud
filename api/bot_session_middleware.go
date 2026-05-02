@@ -30,7 +30,7 @@ const (
 func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		if redisClient == nil {
-			return JSONResponse(c, fiber.StatusServiceUnavailable, "session store unavailable")
+			return JSONResponse(c, fiber.StatusServiceUnavailable, "会话存储不可用")
 		}
 
 		headerBotID := c.Get(HeaderBotID)
@@ -38,14 +38,14 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 
 		if headerBotID == "" || sessionToken == "" {
 			return JSONResponse(c, fiber.StatusUnauthorized,
-				"missing "+HeaderBotID+" or "+HeaderBotSessionToken+" header")
+				"缺少 "+HeaderBotID+" 或 "+HeaderBotSessionToken+" 请求头")
 		}
 
 		// The URL parameter name is "botId" as registered by the route group.
 		urlBotID := c.Params("botId")
 		if urlBotID != headerBotID {
 			return JSONResponse(c, fiber.StatusForbidden,
-				"bot_id in header does not match URL parameter")
+				"请求头中的 bot_id 与 URL 参数不一致")
 		}
 
 		// Validate JWT signature and expiry.
@@ -56,31 +56,31 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 			return []byte(config.Cfg.HarukiBotDB.SessionSignToken), nil
 		})
 		if err != nil || !decoded.Valid {
-			return JSONResponse(c, fiber.StatusUnauthorized, "invalid or expired session token")
+			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌无效或已过期")
 		}
 
 		claims, ok := decoded.Claims.(jwt.MapClaims)
 		if !ok {
-			return JSONResponse(c, fiber.StatusUnauthorized, "invalid token claims")
+			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌声明无效")
 		}
 
 		claimBotID, _ := claims["bot_id"].(string)
 		if claimBotID != headerBotID {
 			return JSONResponse(c, fiber.StatusForbidden,
-				"token bot_id does not match request bot_id")
+				"会话令牌中的 bot_id 与请求 bot_id 不一致")
 		}
 
 		// Verify the session has not been revoked (Redis lookup).
 		key := fmt.Sprintf(RedisKeyBotSession, headerBotID)
 		stored, err := redisClient.Get(c.Context(), key).Result()
 		if errors.Is(err, redis.Nil) {
-			return JSONResponse(c, fiber.StatusUnauthorized, "session expired or not found")
+			return JSONResponse(c, fiber.StatusUnauthorized, "会话已过期或不存在")
 		}
 		if err != nil {
 			return InternalError(c)
 		}
 		if stored != sessionToken {
-			return JSONResponse(c, fiber.StatusUnauthorized, "session token mismatch")
+			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌不匹配")
 		}
 
 		return c.Next()

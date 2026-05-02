@@ -20,11 +20,11 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 
 	var req InternalVerifyRequest
 	if err := c.Bind().Body(&req); err != nil {
-		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+		return api.JSONResponse(c, fiber.StatusBadRequest, "请求格式错误")
 	}
 
 	if req.BotID == "" || req.SessionToken == "" {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "bot_id and session_token are required")
+		return api.JSONResponse(c, fiber.StatusBadRequest, "缺少 bot_id 或 session_token")
 	}
 
 	// 验证 JWT session token

@@ -124,14 +124,14 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
-			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+			return botResponse(c, fiber.StatusBadRequest, "请求格式错误")
 		}
 		requestCtx, commandTrace := commandhandler.WithCommandTrace(c.Context())
 		if len(req.Message) == 0 {
-			return botResponse(c, fiber.StatusBadRequest, "message is required")
+			return botResponse(c, fiber.StatusBadRequest, "缺少 message")
 		}
 		if req.MatchedCommand == "" {
-			return botResponse(c, fiber.StatusBadRequest, "matched_command is required")
+			return botResponse(c, fiber.StatusBadRequest, "缺少 matched_command")
 		}
 
 		// Dedup + rate limit: acquire guard before doing any work.
@@ -140,7 +140,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		}
 		allowCompatReroute := allowBotCompatReroute(expectedPath)
 		if !slices.Contains(commands, req.MatchedCommand) && !allowCompatReroute {
-			return botResponse(c, fiber.StatusBadRequest, "matched command is not allowed for this endpoint")
+			return botResponse(c, fiber.StatusBadRequest, "当前接口不允许使用该 matched_command")
 		}
 		if botDBClient != nil {
 			botID := fiber.Params[int](c, "botId", 0)
@@ -244,7 +244,7 @@ func botResponse(c fiber.Ctx, status int, message string, data ...any) error {
 
 func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedCommand string, enableParamEcho bool) error {
 	if _, ok := errors.AsType[*botValidationError](err); ok {
-		return botResponse(c, fiber.StatusBadRequest, "command does not match this endpoint",
+		return botResponse(c, fiber.StatusBadRequest, "指令与当前接口不匹配",
 			BotCommandErrorResponse{
 				Error:          err.Error(),
 				ExpectedPath:   expectedPath,
@@ -322,7 +322,7 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 
 	ctx, err := commandhandler.BuildContext(requestCtx, event)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build handler context: %w", err)
+		return nil, fmt.Errorf("构建指令上下文失败: %w", err)
 	}
 	actualMatched := commandregistry.MatchCommandHandler(ctx.GetArgs())
 	matched, ok := commandregistry.LookupCommandHandler(matchedCommand)
@@ -335,16 +335,16 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	if !ok || matched.Handler == nil || matched.Handler.IsDisabled() || matched.Handler.GetPath() == "" {
 		if actualMatched.Handler == nil || actualMatched.Handler.IsDisabled() {
 			if !ok || matched.Handler == nil || matched.Handler.IsDisabled() {
-				return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not registered: %s", matchedCommand)}
+				return nil, &botValidationError{msg: fmt.Sprintf("matched_command 未注册: %s", matchedCommand)}
 			}
-			return nil, &botValidationError{msg: fmt.Sprintf("matched_command is not exposed by the bot api: %s", matchedCommand)}
+			return nil, &botValidationError{msg: fmt.Sprintf("matched_command 未开放给 Bot API: %s", matchedCommand)}
 		}
 		matched = actualMatched
 	}
 
 	if matched.Handler.GetPath() != expectedPath {
 		return nil, &botValidationError{
-			msg:        fmt.Sprintf("matched_command belongs to path %s", matched.Handler.GetPath()),
+			msg:        fmt.Sprintf("matched_command 属于接口路径 %s", matched.Handler.GetPath()),
 			actualPath: matched.Handler.GetPath(),
 		}
 	}
@@ -354,10 +354,10 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	if !ok {
 		actualMatched := commandregistry.MatchCommandHandler(ctx.GetArgs())
 		if actualMatched.Handler == nil || actualMatched.Handler.IsDisabled() {
-			return nil, &botValidationError{msg: fmt.Sprintf("message does not match matched_command: %s", matchedCommand)}
+			return nil, &botValidationError{msg: fmt.Sprintf("message 与 matched_command 不匹配: %s", matchedCommand)}
 		}
 		if actualMatched.Handler.GetPath() != matched.Handler.GetPath() {
-			return nil, &botValidationError{msg: fmt.Sprintf("message does not match matched_command: %s", matchedCommand)}
+			return nil, &botValidationError{msg: fmt.Sprintf("message 与 matched_command 不匹配: %s", matchedCommand)}
 		}
 		args = strings.TrimSpace(string(actualMatched.ArgText))
 		triggerCmd = actualMatched.Command
@@ -368,14 +368,14 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	ctx.MessageType = messageType
 	executable, ok := matched.Handler.(commandhandler.CommandHandler)
 	if !ok {
-		return nil, fmt.Errorf("registered handler does not implement pjsk command handler: %T", matched.Handler)
+		return nil, fmt.Errorf("注册的指令处理器未实现 PJSK 指令接口: %T", matched.Handler)
 	}
 	resolved, err := executable.Handle(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if resolved == nil {
-		return nil, fmt.Errorf("handler returned nil")
+		return nil, fmt.Errorf("指令处理器返回空结果")
 	}
 	resolved.RequesterPlatform = req.Platform
 	resolved.RequesterUserID = req.PlatformUserID
@@ -423,14 +423,14 @@ func buildManifestHandler(botDBClient *botDB.Client) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		if botDBClient == nil {
 			return api.JSONResponse(c, fiber.StatusNotImplemented,
-				"command manifests not available — bot DB not configured", nil)
+				"指令清单不可用：bot 数据库未配置", nil)
 		}
 
 		rows, err := botDBClient.CommandManifest.Query().
 			Order(commandmanifest.ByCommandPriority(sql.OrderDesc())).
 			All(c.Context())
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusInternalServerError, "failed to load manifests", nil)
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "加载指令清单失败", nil)
 		}
 
 		entries := make([]ManifestEntry, 0, len(rows))

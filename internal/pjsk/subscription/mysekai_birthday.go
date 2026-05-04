@@ -6,16 +6,20 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"haruki-cloud/config"
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"entgo.io/ent/dialect/sql"
 )
@@ -62,6 +66,8 @@ var materialByName = func() map[string]BirthdayMaterial {
 	return result
 }()
 
+var hmesCloseHTTPClient = &http.Client{Timeout: 5 * time.Second}
+
 type BirthdayMonitorAction struct {
 	Type           string `json:"type" msgpack:"type"`
 	SubscriptionID string `json:"subscription_id" msgpack:"subscription_id"`
@@ -71,10 +77,12 @@ type BirthdayMonitorAction struct {
 }
 
 type BirthdayMonitorResult struct {
-	Subscription *pjskdb.MysekaiBirthdaySubscription
-	Duration     time.Duration
-	Materials    []string
-	Token        string
+	Subscription        *pjskdb.MysekaiBirthdaySubscription
+	Duration            time.Duration
+	Materials           []string
+	Token               string
+	SubscriptionVersion string
+	NotifyEmpty         bool
 }
 
 type ActiveUploadSubscription struct {
@@ -108,9 +116,20 @@ type PendingBirthdayEvent struct {
 }
 
 type TokenValidationResult struct {
-	Valid         bool
-	Subscription  *pjskdb.MysekaiBirthdaySubscription
-	PendingEvents []PendingBirthdayEvent
+	Valid               bool
+	Subscription        *pjskdb.MysekaiBirthdaySubscription
+	SubscriptionVersion string
+	PendingEvents       []PendingBirthdayEvent
+}
+
+type ClientBirthdayEvent struct {
+	EventID         string
+	SubscriptionID  string
+	Region          string
+	UID             string
+	PlatformUserID  string
+	EmptyResult     bool
+	FilteredPayload []byte
 }
 
 type BirthdayMonitorCommand struct {
@@ -123,10 +142,15 @@ type BirthdayMonitorCommand struct {
 type Service struct {
 	db       *pjskdb.Client
 	bindings *accountdata.BindingService
+	toolbox  *sekaiapi.HarukiToolboxClient
 }
 
 func NewService(db *pjskdb.Client, bindings *accountdata.BindingService) *Service {
 	return &Service{db: db, bindings: bindings}
+}
+
+func NewServiceWithToolbox(db *pjskdb.Client, bindings *accountdata.BindingService, toolbox *sekaiapi.HarukiToolboxClient) *Service {
+	return &Service{db: db, bindings: bindings, toolbox: toolbox}
 }
 
 func (s *Service) Ready() bool {
@@ -143,6 +167,7 @@ func (s *Service) CreateOrUpdate(
 	server string,
 	regionExplicit bool,
 	message string,
+	notifyEmpty bool,
 ) (*BirthdayMonitorResult, error) {
 	if err := s.requireReady(); err != nil {
 		return nil, err
@@ -173,7 +198,7 @@ func (s *Service) CreateOrUpdate(
 		return nil, fmt.Errorf("该账号尚未验证，请先在 Toolbox 验证账号")
 	}
 
-	token, err := randomToken()
+	version, token, err := randomVersionedToken()
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +219,9 @@ func (s *Service) CreateOrUpdate(
 		if err := s.ackPendingEvents(ctx, existing.ID, now); err != nil {
 			return nil, err
 		}
+		if err := s.syncBirthdayMonitor(ctx, existing.ID, version, region, uid, command.Materials, expiresAt, notifyEmpty); err != nil {
+			return nil, err
+		}
 		updated, err := s.db.MysekaiBirthdaySubscription.UpdateOneID(existing.ID).
 			SetPlatform(strings.TrimSpace(platform)).
 			SetPlatformUserID(strings.TrimSpace(platformUserID)).
@@ -210,10 +238,12 @@ func (s *Service) CreateOrUpdate(
 			return nil, err
 		}
 		return &BirthdayMonitorResult{
-			Subscription: updated,
-			Duration:     duration,
-			Materials:    command.Materials,
-			Token:        token,
+			Subscription:        updated,
+			Duration:            duration,
+			Materials:           command.Materials,
+			Token:               token,
+			SubscriptionVersion: version,
+			NotifyEmpty:         notifyEmpty,
 		}, nil
 	case pjskdb.IsNotFound(err):
 		created, err := s.db.MysekaiBirthdaySubscription.Create().
@@ -226,17 +256,34 @@ func (s *Service) CreateOrUpdate(
 			SetSelfID(strings.TrimSpace(selfID)).
 			SetMaterials(command.Materials).
 			SetToken(token).
-			SetActive(true).
+			SetActive(false).
 			SetExpiresAt(expiresAt).
 			Save(ctx)
 		if err != nil {
 			return nil, err
 		}
+		if err := s.syncBirthdayMonitor(ctx, created.ID, version, region, uid, command.Materials, expiresAt, notifyEmpty); err != nil {
+			_, _ = s.db.MysekaiBirthdaySubscription.UpdateOneID(created.ID).
+				SetActive(false).
+				SetCancelledAt(now).
+				Save(ctx)
+			return nil, err
+		}
+		activated, err := s.db.MysekaiBirthdaySubscription.UpdateOneID(created.ID).
+			SetActive(true).
+			ClearCancelledAt().
+			Save(ctx)
+		if err != nil {
+			_ = s.deleteBirthdayMonitor(ctx, created.ID, version)
+			return nil, err
+		}
 		return &BirthdayMonitorResult{
-			Subscription: created,
-			Duration:     duration,
-			Materials:    command.Materials,
-			Token:        token,
+			Subscription:        activated,
+			Duration:            duration,
+			Materials:           command.Materials,
+			Token:               token,
+			SubscriptionVersion: version,
+			NotifyEmpty:         notifyEmpty,
 		}, nil
 	default:
 		return nil, err
@@ -296,6 +343,9 @@ func (s *Service) Cancel(
 		sub.SelfID != strings.TrimSpace(selfID) {
 		return nil, fmt.Errorf("当前账号没有由你创建的活跃生日材料监听")
 	}
+	if err := s.deleteBirthdayMonitor(ctx, sub.ID, tokenVersion(sub.Token)); err != nil {
+		return nil, err
+	}
 	if err := s.ackPendingEvents(ctx, sub.ID, now); err != nil {
 		return nil, err
 	}
@@ -307,6 +357,7 @@ func (s *Service) Cancel(
 	if err != nil {
 		return nil, err
 	}
+	_ = s.closeBirthdayMonitorConnection(ctx, cancelled.ID, tokenVersion(sub.Token))
 	return cancelled, nil
 }
 
@@ -328,6 +379,72 @@ func (s *Service) ActiveForUpload(ctx context.Context, region string, uid string
 		MaterialIDs:    MaterialIDs(sub.Materials),
 		NotifyEmpty:    true,
 	}, nil
+}
+
+func (s *Service) syncBirthdayMonitor(ctx context.Context, subscriptionID int, version string, region string, uid string, materials []string, expiresAt time.Time, notifyEmpty bool) error {
+	if s == nil || s.toolbox == nil {
+		return fmt.Errorf("Toolbox 监听同步服务未配置，订阅失败，请稍后重试")
+	}
+	if err := s.toolbox.UpsertMysekaiBirthdayMonitor(ctx, sekaiapi.MysekaiBirthdayMonitorUpsertRequest{
+		SubscriptionID:      strconv.Itoa(subscriptionID),
+		SubscriptionVersion: version,
+		Region:              region,
+		UID:                 uid,
+		Materials:           slices.Clone(materials),
+		MaterialIDs:         MaterialIDs(materials),
+		ExpiresAt:           expiresAt.Unix(),
+		NotifyEmpty:         notifyEmpty,
+	}); err != nil {
+		return fmt.Errorf("同步 Toolbox 监听失败，订阅未生效，请稍后重试: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) deleteBirthdayMonitor(ctx context.Context, subscriptionID int, version string) error {
+	if s == nil || s.toolbox == nil {
+		return nil
+	}
+	if err := s.toolbox.DeleteMysekaiBirthdayMonitor(ctx, strconv.Itoa(subscriptionID), version); err != nil {
+		return fmt.Errorf("清理 Toolbox 监听失败，请稍后重试: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) closeBirthdayMonitorConnection(ctx context.Context, subscriptionID int, version string) error {
+	base := strings.TrimRight(strings.TrimSpace(config.Cfg.HMES.InternalBaseURL), "/")
+	version = strings.TrimSpace(version)
+	if base == "" || subscriptionID <= 0 || version == "" {
+		return nil
+	}
+	u, err := url.Parse(fmt.Sprintf("%s/internal/subscriptions/%d/close", base, subscriptionID))
+	if err != nil {
+		return err
+	}
+	query := u.Query()
+	query.Set("subscription_version", version)
+	u.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
+	if err != nil {
+		return err
+	}
+	if token := strings.TrimSpace(config.Cfg.HMES.InternalToken); token != "" {
+		req.Header.Set("Authorization", token)
+	}
+	if userAgent := strings.TrimSpace(config.Cfg.HMES.UserAgent); userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
+	} else {
+		req.Header.Set("User-Agent", "Haruki-Cloud")
+	}
+	resp, err := hmesCloseHTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("hmes close returned status %d", resp.StatusCode)
+	}
+	return nil
 }
 
 func (s *Service) StoreEvent(ctx context.Context, payload BirthdayEventPayload) (*StoredBirthdayEvent, error) {
@@ -376,7 +493,7 @@ func (s *Service) StoreEvent(ctx context.Context, payload BirthdayEventPayload) 
 	}, nil
 }
 
-func (s *Service) ValidateToken(ctx context.Context, subscriptionID string, token string) (*TokenValidationResult, error) {
+func (s *Service) ValidateToken(ctx context.Context, subscriptionID string, subscriptionVersion string, token string) (*TokenValidationResult, error) {
 	if err := s.requireDB(); err != nil {
 		return nil, err
 	}
@@ -398,11 +515,15 @@ func (s *Service) ValidateToken(ctx context.Context, subscriptionID string, toke
 	if err != nil {
 		return nil, err
 	}
+	version := tokenVersion(sub.Token)
+	if wanted := strings.TrimSpace(subscriptionVersion); wanted != "" && wanted != version {
+		return &TokenValidationResult{Valid: false}, nil
+	}
 	pending, err := s.pendingEventsForSubscription(ctx, sub)
 	if err != nil {
 		return nil, err
 	}
-	return &TokenValidationResult{Valid: true, Subscription: sub, PendingEvents: pending}, nil
+	return &TokenValidationResult{Valid: true, Subscription: sub, SubscriptionVersion: version, PendingEvents: pending}, nil
 }
 
 func (s *Service) PendingEvents(ctx context.Context, subscriptionID int) ([]PendingBirthdayEvent, error) {
@@ -427,8 +548,8 @@ func (s *Service) PendingEvents(ctx context.Context, subscriptionID int) ([]Pend
 	return result, nil
 }
 
-func (s *Service) EventForClient(ctx context.Context, eventID string, subscriptionID string, token string, cloudBotID string, platformGroupID string, platformUserID string, selfID string) (*pjskdb.MysekaiBirthdaySubscriptionEvent, error) {
-	validation, err := s.ValidateToken(ctx, subscriptionID, token)
+func (s *Service) EventForClient(ctx context.Context, eventID string, subscriptionID string, subscriptionVersion string, token string, cloudBotID string, platformGroupID string, platformUserID string, selfID string) (*ClientBirthdayEvent, error) {
+	validation, err := s.ValidateToken(ctx, subscriptionID, subscriptionVersion, token)
 	if err != nil {
 		return nil, err
 	}
@@ -441,6 +562,25 @@ func (s *Service) EventForClient(ctx context.Context, eventID string, subscripti
 		sub.PlatformUserID != strings.TrimSpace(platformUserID) ||
 		sub.SelfID != strings.TrimSpace(selfID) {
 		return nil, fmt.Errorf("subscription context mismatch")
+	}
+	if strings.TrimSpace(subscriptionVersion) != "" && s.toolbox != nil {
+		event, err := s.toolbox.GetMysekaiBirthdayEvent(ctx, sekaiapi.MysekaiBirthdayEventLookupRequest{
+			EventID:             strings.TrimSpace(eventID),
+			SubscriptionID:      strconv.Itoa(sub.ID),
+			SubscriptionVersion: validation.SubscriptionVersion,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &ClientBirthdayEvent{
+			EventID:         event.EventID,
+			SubscriptionID:  event.SubscriptionID,
+			Region:          event.Region,
+			UID:             event.UID,
+			PlatformUserID:  sub.PlatformUserID,
+			EmptyResult:     event.EmptyResult,
+			FilteredPayload: slices.Clone(event.FilteredPayload),
+		}, nil
 	}
 	id, err := strconv.Atoi(strings.TrimSpace(eventID))
 	if err != nil || id <= 0 {
@@ -461,18 +601,34 @@ func (s *Service) EventForClient(ctx context.Context, eventID string, subscripti
 		event.SelfID != strings.TrimSpace(selfID) {
 		return nil, fmt.Errorf("event context mismatch")
 	}
-	return event, nil
+	return &ClientBirthdayEvent{
+		EventID:         strconv.Itoa(event.ID),
+		SubscriptionID:  strconv.Itoa(event.SubscriptionID),
+		Region:          event.Region,
+		UID:             event.UID,
+		PlatformUserID:  event.PlatformUserID,
+		EmptyResult:     event.EmptyResult,
+		FilteredPayload: slices.Clone(event.FilteredPayload),
+	}, nil
 }
 
-func (s *Service) AckEvent(ctx context.Context, eventID string, subscriptionID string, token string, cloudBotID string, platformGroupID string, platformUserID string, selfID string) error {
-	event, err := s.EventForClient(ctx, eventID, subscriptionID, token, cloudBotID, platformGroupID, platformUserID, selfID)
+func (s *Service) AckEvent(ctx context.Context, eventID string, subscriptionID string, subscriptionVersion string, token string, cloudBotID string, platformGroupID string, platformUserID string, selfID string) error {
+	event, err := s.EventForClient(ctx, eventID, subscriptionID, subscriptionVersion, token, cloudBotID, platformGroupID, platformUserID, selfID)
 	if err != nil {
 		return err
 	}
-	if event.AcknowledgedAt != nil {
-		return nil
+	if strings.TrimSpace(subscriptionVersion) != "" && s.toolbox != nil {
+		return s.toolbox.AckMysekaiBirthdayEvent(ctx, sekaiapi.MysekaiBirthdayEventLookupRequest{
+			EventID:             event.EventID,
+			SubscriptionID:      event.SubscriptionID,
+			SubscriptionVersion: strings.TrimSpace(subscriptionVersion),
+		})
 	}
-	return s.db.MysekaiBirthdaySubscriptionEvent.UpdateOneID(event.ID).
+	id, err := strconv.Atoi(event.EventID)
+	if err != nil || id <= 0 {
+		return fmt.Errorf("invalid event_id")
+	}
+	return s.db.MysekaiBirthdaySubscriptionEvent.UpdateOneID(id).
 		SetAcknowledgedAt(time.Now()).
 		Exec(ctx)
 }
@@ -762,6 +918,30 @@ func randomToken() (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(buf[:]), nil
+}
+
+func randomVersionedToken() (string, string, error) {
+	versionBytes := make([]byte, 12)
+	if _, err := rand.Read(versionBytes); err != nil {
+		return "", "", err
+	}
+	secret, err := randomToken()
+	if err != nil {
+		return "", "", err
+	}
+	version := base64.RawURLEncoding.EncodeToString(versionBytes)
+	return version, version + "." + secret, nil
+}
+
+func tokenVersion(token string) string {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return ""
+	}
+	if version, _, ok := strings.Cut(token, "."); ok {
+		return strings.TrimSpace(version)
+	}
+	return ""
 }
 
 func normalizeUploadTime(value int64) time.Time {

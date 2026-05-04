@@ -18,21 +18,23 @@ import (
 )
 
 type birthdayMonitorClientAction struct {
-	Type           string `json:"type" msgpack:"type"`
-	SubscriptionID string `json:"subscription_id" msgpack:"subscription_id"`
-	Endpoint       string `json:"endpoint" msgpack:"endpoint"`
-	Token          string `json:"token" msgpack:"token"`
-	ExpiresAt      int64  `json:"expires_at" msgpack:"expires_at"`
+	Type                string `json:"type" msgpack:"type"`
+	SubscriptionID      string `json:"subscription_id" msgpack:"subscription_id"`
+	SubscriptionVersion string `json:"subscription_version" msgpack:"subscription_version"`
+	Endpoint            string `json:"endpoint" msgpack:"endpoint"`
+	Token               string `json:"token" msgpack:"token"`
+	ExpiresAt           int64  `json:"expires_at" msgpack:"expires_at"`
 }
 
 type birthdayRenderRequest struct {
-	Platform        string `json:"platform" msgpack:"platform"`
-	PlatformUserID  string `json:"platform_user_id" msgpack:"platform_user_id"`
-	PlatformGroupID string `json:"platform_group_id" msgpack:"platform_group_id"`
-	SelfID          string `json:"self_id" msgpack:"self_id"`
-	SubscriptionID  string `json:"subscription_id" msgpack:"subscription_id"`
-	Token           string `json:"token" msgpack:"token"`
-	EventID         string `json:"event_id" msgpack:"event_id"`
+	Platform            string `json:"platform" msgpack:"platform"`
+	PlatformUserID      string `json:"platform_user_id" msgpack:"platform_user_id"`
+	PlatformGroupID     string `json:"platform_group_id" msgpack:"platform_group_id"`
+	SelfID              string `json:"self_id" msgpack:"self_id"`
+	SubscriptionID      string `json:"subscription_id" msgpack:"subscription_id"`
+	SubscriptionVersion string `json:"subscription_version" msgpack:"subscription_version"`
+	Token               string `json:"token" msgpack:"token"`
+	EventID             string `json:"event_id" msgpack:"event_id"`
 }
 
 type activeBirthdaySubscriptionResponse struct {
@@ -60,10 +62,11 @@ type birthdayEventWriteResponse struct {
 }
 
 type birthdayTokenValidationResponse struct {
-	Valid          bool                                `json:"valid"`
-	SubscriptionID string                              `json:"subscription_id,omitempty"`
-	ExpiresAt      int64                               `json:"expires_at,omitempty"`
-	PendingEvents  []subscription.PendingBirthdayEvent `json:"pending_events,omitempty"`
+	Valid               bool                                `json:"valid"`
+	SubscriptionID      string                              `json:"subscription_id,omitempty"`
+	SubscriptionVersion string                              `json:"subscription_version,omitempty"`
+	ExpiresAt           int64                               `json:"expires_at,omitempty"`
+	PendingEvents       []subscription.PendingBirthdayEvent `json:"pending_events,omitempty"`
 }
 
 func registerBirthdayMonitorRoutes(pjsk fiber.Router, app *fiber.App, renderApp *renderapp.App) {
@@ -88,7 +91,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App) fiber.Handler {
 		}
 		req.SelfID = strings.TrimSpace(req.SelfID)
 		botID := strings.TrimSpace(c.Params("botId"))
-		service := subscription.NewService(renderApp.PJSK, renderApp.Bindings)
+		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
 		text := requestMessageText(req)
 		regionExplicit := strings.TrimSpace(req.Server) != ""
 
@@ -100,7 +103,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App) fiber.Handler {
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森生日材料监听已取消。")})
 		}
 
-		result, err := service.CreateOrUpdate(c.Context(), req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text)
+		result, err := service.CreateOrUpdate(c.Context(), req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text, req.NotifyEmpty)
 		if err != nil {
 			logger.Warnf("birthday monitor upsert failed: bot_id=%s user=%s err=%v", botID, req.PlatformUserID, err)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(err.Error())})
@@ -119,8 +122,8 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
 		botID := strings.TrimSpace(c.Params("botId"))
-		service := subscription.NewService(renderApp.PJSK, renderApp.Bindings)
-		event, err := service.EventForClient(c.Context(), req.EventID, req.SubscriptionID, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID)
+		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+		event, err := service.EventForClient(c.Context(), req.EventID, req.SubscriptionID, req.SubscriptionVersion, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID)
 		if err != nil {
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(err.Error())})
 		}
@@ -158,8 +161,8 @@ func makeBirthdayMonitorAckHandler(renderApp *renderapp.App) fiber.Handler {
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
 		botID := strings.TrimSpace(c.Params("botId"))
-		service := subscription.NewService(renderApp.PJSK, renderApp.Bindings)
-		if err := service.AckEvent(c.Context(), req.EventID, req.SubscriptionID, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID); err != nil {
+		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+		if err := service.AckEvent(c.Context(), req.EventID, req.SubscriptionID, req.SubscriptionVersion, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID); err != nil {
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(err.Error())})
 		}
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
@@ -168,7 +171,7 @@ func makeBirthdayMonitorAckHandler(renderApp *renderapp.App) fiber.Handler {
 
 func makeBirthdayMonitorActiveHandler(renderApp *renderapp.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		service := subscription.NewService(renderApp.PJSK, renderApp.Bindings)
+		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
 		result, err := service.ActiveForUpload(c.Context(), c.Query("region"), c.Query("uid"))
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusInternalServerError, err.Error())
@@ -185,14 +188,15 @@ func makeBirthdayMonitorActiveHandler(renderApp *renderapp.App) fiber.Handler {
 
 func makeBirthdayMonitorTokenValidateHandler(renderApp *renderapp.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		service := subscription.NewService(renderApp.PJSK, renderApp.Bindings)
-		result, err := service.ValidateToken(c.Context(), c.Query("subscription_id"), c.Query("token"))
+		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+		result, err := service.ValidateToken(c.Context(), c.Query("subscription_id"), c.Query("subscription_version"), c.Query("token"))
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusInternalServerError, err.Error())
 		}
 		resp := birthdayTokenValidationResponse{Valid: result.Valid}
 		if result.Valid && result.Subscription != nil {
 			resp.SubscriptionID = fmt.Sprint(result.Subscription.ID)
+			resp.SubscriptionVersion = result.SubscriptionVersion
 			resp.ExpiresAt = result.Subscription.ExpiresAt.Unix()
 			resp.PendingEvents = result.PendingEvents
 		}
@@ -237,11 +241,12 @@ func birthdayMonitorActions(result *subscription.BirthdayMonitorResult) []birthd
 		return nil
 	}
 	return []birthdayMonitorClientAction{{
-		Type:           "hmes_connect",
-		SubscriptionID: fmt.Sprint(result.Subscription.ID),
-		Endpoint:       base + "/poll",
-		Token:          result.Token,
-		ExpiresAt:      result.Subscription.ExpiresAt.Unix(),
+		Type:                "hmes_sse",
+		SubscriptionID:      fmt.Sprint(result.Subscription.ID),
+		SubscriptionVersion: result.SubscriptionVersion,
+		Endpoint:            base + "/sse",
+		Token:               result.Token,
+		ExpiresAt:           result.Subscription.ExpiresAt.Unix(),
 	}}
 }
 

@@ -152,6 +152,9 @@ func ApplyEnvOverrides(cfg *Config) {
 
 	// HMES
 	envStr("HARUKI_HMES_PUBLIC_BASE_URL", &cfg.HMES.PublicBaseURL)
+	envStr("HARUKI_HMES_INTERNAL_BASE_URL", &cfg.HMES.InternalBaseURL)
+	envStr("HARUKI_HMES_INTERNAL_TOKEN", &cfg.HMES.InternalToken)
+	envStr("HARUKI_HMES_USER_AGENT", &cfg.HMES.UserAgent)
 
 	// Tracker
 	envStr("HARUKI_TRACKER_BASE_URL", &cfg.Tracker.BaseURL)
@@ -358,7 +361,10 @@ type ToolboxConfig struct {
 }
 
 type HMESConfig struct {
-	PublicBaseURL string `yaml:"public_base_url"`
+	PublicBaseURL   string `yaml:"public_base_url"`
+	InternalBaseURL string `yaml:"internal_base_url"`
+	InternalToken   string `yaml:"internal_token"`
+	UserAgent       string `yaml:"user_agent"`
 }
 
 type Config struct {

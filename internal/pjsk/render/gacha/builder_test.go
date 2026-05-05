@@ -18,6 +18,7 @@ type testGachaSource struct {
 	gachas     []*masterdata.Gacha
 	gachaByID  map[int]*masterdata.Gacha
 	cardByID   map[int]*masterdata.Card
+	ceilByID   map[int]string
 	eventCards map[int][]int
 }
 
@@ -26,6 +27,7 @@ func newTestGachaSource(region renderregion.Value) *testGachaSource {
 		region:     region,
 		gachaByID:  make(map[int]*masterdata.Gacha),
 		cardByID:   make(map[int]*masterdata.Card),
+		ceilByID:   make(map[int]string),
 		eventCards: make(map[int][]int),
 	}
 }
@@ -81,6 +83,13 @@ func (s *testGachaSource) GetCardByID(id int) (*masterdata.Card, error) {
 		return new(*item), nil
 	}
 	return nil, fmt.Errorf("card not found: %d", id)
+}
+
+func (s *testGachaSource) GetGachaCeilItemAssetbundleName(id int) (string, error) {
+	if item, ok := s.ceilByID[id]; ok {
+		return item, nil
+	}
+	return "", fmt.Errorf("gacha ceil item not found: %d", id)
 }
 
 func TestBuildGachaListRequestOnlyCurrentFiltersAndOrdersByNewest(t *testing.T) {
@@ -222,6 +231,7 @@ func TestBuildGachaDetailRequestComputesRatesAndPickupCards(t *testing.T) {
 		AssetBundleName: "banner_gacha100",
 		StartAt:         1000,
 		EndAt:           2000,
+		GachaCeilItemID: new(88),
 		GachaCardRarityRates: []masterdata.GachaCardRarityRate{
 			{CardRarityType: "rarity_2", LotteryType: "normal", Rate: 87},
 			{CardRarityType: "rarity_4", LotteryType: "normal", Rate: 13},
@@ -246,6 +256,7 @@ func TestBuildGachaDetailRequestComputesRatesAndPickupCards(t *testing.T) {
 	source.gachaByID[gachaInfo.ID] = gachaInfo
 	source.cardByID[2001] = &masterdata.Card{ID: 2001, CardRarityType: "rarity_4", Attr: "cool", AssetBundleName: "card_2001"}
 	source.cardByID[2002] = &masterdata.Card{ID: 2002, CardRarityType: "rarity_2", Attr: "cute", AssetBundleName: "card_2002"}
+	source.ceilByID[88] = "ceil_item_limited"
 
 	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
 	req, err := builder.BuildGachaDetailRequest(DetailQuery{Region: renderregion.JP, GachaID: 100})
@@ -278,6 +289,9 @@ func TestBuildGachaDetailRequestComputesRatesAndPickupCards(t *testing.T) {
 	}
 	if req.Gacha.Behaviors[1].CostIconPath == nil || *req.Gacha.Behaviors[1].CostIconPath != "asset/jp-assets/startapp/thumbnail/gacha_ticket/gacha_ticket.png" {
 		t.Fatalf("unexpected ticket cost icon path: %+v", req.Gacha.Behaviors[1].CostIconPath)
+	}
+	if req.Gacha.CeilItemImgPath == nil || *req.Gacha.CeilItemImgPath != "asset/jp-assets/startapp/thumbnail/gacha_item/ceil_item_limited.png" {
+		t.Fatalf("unexpected ceil item icon path: %+v", req.Gacha.CeilItemImgPath)
 	}
 }
 

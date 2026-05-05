@@ -9,6 +9,7 @@ import (
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/card"
 	gachaent "haruki-cloud/database/sekai/gacha"
+	gachaceilitement "haruki-cloud/database/sekai/gachaceilitem"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -25,12 +26,16 @@ type dbGachaProvider struct {
 
 	cardMu    sync.RWMutex
 	cardCache map[int]*masterdata.Card
+
+	ceilMu    sync.RWMutex
+	ceilCache map[int]string
 }
 
 func (p *dbGachaProvider) init() {
 	p.once.Do(func() {
 		p.gachaCache = make(map[int]*masterdata.Gacha)
 		p.cardCache = make(map[int]*masterdata.Card)
+		p.ceilCache = make(map[int]string)
 	})
 }
 
@@ -154,4 +159,34 @@ func (p *dbGachaProvider) GetCardByID(ctx context.Context, id int) (*masterdata.
 	p.cardMu.Unlock()
 
 	return new(*model), nil
+}
+
+func (p *dbGachaProvider) GetCeilItemAssetbundleName(ctx context.Context, id int) (string, error) {
+	if id == 0 {
+		return "", fmt.Errorf("invalid gacha ceil item id")
+	}
+	p.init()
+
+	p.ceilMu.RLock()
+	if cached, ok := p.ceilCache[id]; ok {
+		p.ceilMu.RUnlock()
+		return cached, nil
+	}
+	p.ceilMu.RUnlock()
+
+	entity, err := p.client.Gachaceilitem.Query().
+		Where(gachaceilitement.ServerRegionEQ(p.region.String()), gachaceilitement.GameIDEQ(int64(id))).
+		Only(ctx)
+	if err != nil {
+		return "", fmt.Errorf("query gacha ceil item %d: %w", id, err)
+	}
+	name := entity.AssetbundleName
+	if name == "" {
+		return "", fmt.Errorf("gacha ceil item %d has empty assetbundle name", id)
+	}
+
+	p.ceilMu.Lock()
+	p.ceilCache[id] = name
+	p.ceilMu.Unlock()
+	return name, nil
 }

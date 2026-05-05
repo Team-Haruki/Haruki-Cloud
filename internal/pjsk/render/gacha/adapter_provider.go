@@ -60,3 +60,7 @@ func (a *ProviderAdapter) GetGachas() []*masterdata.Gacha {
 func (a *ProviderAdapter) GetCardByID(id int) (*masterdata.Card, error) {
 	return a.P.Cards().GetByID(a.Context(), id)
 }
+
+func (a *ProviderAdapter) GetGachaCeilItemAssetbundleName(id int) (string, error) {
+	return a.P.Gachas().GetCeilItemAssetbundleName(a.Context(), id)
+}

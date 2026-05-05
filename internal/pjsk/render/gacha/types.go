@@ -18,6 +18,7 @@ type DataSource interface {
 	GetGachaByEventID(eventID int) (*masterdata.Gacha, error)
 	GetGachas() []*masterdata.Gacha
 	GetCardByID(id int) (*masterdata.Card, error)
+	GetGachaCeilItemAssetbundleName(id int) (string, error)
 }
 
 type contextualDataSource interface {

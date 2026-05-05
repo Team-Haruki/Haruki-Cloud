@@ -242,8 +242,19 @@ func (b *Builder) buildGachaThumbnail(cardInfo *masterdata.Card, region renderre
 	return common.BuildCardThumbnail(b.assets, cardInfo, region, common.ThumbnailOptions{AfterTraining: false})
 }
 
-func (b *Builder) buildCeilItemIconPath(_ int, region renderregion.Value) string {
-	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, "shard.png")
+func (b *Builder) buildCeilItemIconPath(ceilItemID int, region renderregion.Value) string {
+	if ceilItemID <= 0 {
+		return ""
+	}
+	assetbundleName, err := b.source.GetGachaCeilItemAssetbundleName(ceilItemID)
+	if err != nil || strings.TrimSpace(assetbundleName) == "" {
+		return ""
+	}
+	return assets.ResolveRegionAssetPath(
+		b.assets,
+		region.String(),
+		filepath.Join("thumbnail", "gacha_item", assetbundleName+".png"),
+	)
 }
 
 func (b *Builder) convertBehaviors(gachaInfo *masterdata.Gacha, region renderregion.Value) []drawing.GachaBehavior {

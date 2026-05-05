@@ -22,6 +22,12 @@ type localGachaProvider struct {
 	store  *localStore
 	gachas lazyValue[gachaIndex]
 	cards  lazyValue[map[int]*masterdata.Card]
+	ceils  lazyValue[map[int]string]
+}
+
+type localGachaCeilItemJSON struct {
+	ID              int    `json:"id"`
+	AssetbundleName string `json:"assetbundleName"`
 }
 
 func (p *localGachaProvider) ensureGachas() error {
@@ -63,6 +69,22 @@ func (p *localGachaProvider) ensureCards() error {
 	})
 }
 
+func (p *localGachaProvider) ensureCeils() error {
+	return p.ceils.init(func() (map[int]string, error) {
+		items, err := loadJSON[localGachaCeilItemJSON](p.store, "gachaCeilItems.json")
+		if err != nil {
+			return nil, err
+		}
+		byID := make(map[int]string, len(items))
+		for _, item := range items {
+			if item.ID > 0 && item.AssetbundleName != "" {
+				byID[item.ID] = item.AssetbundleName
+			}
+		}
+		return byID, nil
+	})
+}
+
 func (p *localGachaProvider) GetByID(_ context.Context, id int) (*masterdata.Gacha, error) {
 	if id == 0 {
 		return nil, fmt.Errorf("gacha id is required")
@@ -96,4 +118,18 @@ func (p *localGachaProvider) GetCardByID(_ context.Context, id int) (*masterdata
 		return nil, fmt.Errorf("card %d not found", id)
 	}
 	return new(*card), nil
+}
+
+func (p *localGachaProvider) GetCeilItemAssetbundleName(_ context.Context, id int) (string, error) {
+	if id == 0 {
+		return "", fmt.Errorf("invalid gacha ceil item id")
+	}
+	if err := p.ensureCeils(); err != nil {
+		return "", err
+	}
+	name, ok := p.ceils.v()[id]
+	if !ok {
+		return "", fmt.Errorf("gacha ceil item %d not found", id)
+	}
+	return name, nil
 }

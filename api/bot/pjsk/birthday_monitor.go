@@ -80,6 +80,10 @@ var birthdayMonitorCommandPrefixes = []string{
 	"/ms生日监听",
 }
 
+var birthdayMonitorCommandPrefixRegions = []string{"jp", "tw", "kr", "en", "cn"}
+
+var birthdayMonitorManifestCommandPrefixes = buildBirthdayMonitorManifestCommandPrefixes(birthdayMonitorCommandPrefixes)
+
 func registerBirthdayMonitorRoutes(pjsk fiber.Router, app *fiber.App, renderApp *renderapp.App) {
 	if renderApp == nil {
 		return
@@ -103,7 +107,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App) fiber.Handler {
 		req.SelfID = strings.TrimSpace(req.SelfID)
 		botID := strings.TrimSpace(c.Params("botId"))
 		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
-		text := requestMessageText(req)
+		text := birthdayMonitorCommandText(req)
 		regionExplicit := strings.TrimSpace(req.Server) != ""
 
 		if isCancelBirthdayMonitorText(text) {
@@ -305,6 +309,45 @@ func requestMessageText(req BotCommandRequest) string {
 		}
 	}
 	return strings.TrimSpace(builder.String())
+}
+
+func birthdayMonitorCommandText(req BotCommandRequest) string {
+	text := requestMessageText(req)
+	if _, err := subscription.ParseBirthdayMonitorCommand(text); err == nil {
+		return text
+	}
+
+	matchedCommand := strings.TrimSpace(req.MatchedCommand)
+	if matchedCommand == "" {
+		return text
+	}
+	if text == "" {
+		return matchedCommand
+	}
+	return strings.TrimSpace(matchedCommand + " " + text)
+}
+
+func buildBirthdayMonitorManifestCommandPrefixes(commands []string) []string {
+	result := make([]string, 0, len(commands)*(len(birthdayMonitorCommandPrefixRegions)+1))
+	seen := make(map[string]struct{}, len(commands))
+	add := func(command string) {
+		command = strings.TrimSpace(command)
+		if command == "" {
+			return
+		}
+		if _, ok := seen[command]; ok {
+			return
+		}
+		seen[command] = struct{}{}
+		result = append(result, command)
+	}
+	for _, command := range commands {
+		add(command)
+		for _, region := range birthdayMonitorCommandPrefixRegions {
+			add("/" + region + strings.TrimPrefix(command, "/"))
+		}
+	}
+	return result
 }
 
 func isCancelBirthdayMonitorText(text string) bool {

@@ -1,9 +1,24 @@
 package subscription
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"testing"
+	"time"
+
+	"haruki-cloud/config"
+	pjskenttest "haruki-cloud/database/pjsk/enttest"
+	usersenttest "haruki-cloud/database/users/enttest"
+	"haruki-cloud/internal/identity"
+	"haruki-cloud/internal/pjsk/accountdata"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+
+	json "github.com/bytedance/sonic"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func TestParseBirthdayMonitorCommandDefaultsToDiamond(t *testing.T) {
@@ -38,6 +53,25 @@ func TestParseBirthdayMonitorCommandSupportsSelectorDurationAndMaterials(t *test
 	}
 }
 
+func TestParseBirthdayMonitorCommandSupportsRegionPrefix(t *testing.T) {
+	cmd, err := ParseBirthdayMonitorCommand("/jp烤森生日监听 u2 钻石 四叶草 10")
+	if err != nil {
+		t.Fatalf("ParseBirthdayMonitorCommand returned error: %v", err)
+	}
+	if !cmd.RegionExplicit || cmd.Region != "jp" {
+		t.Fatalf("region = %q explicit=%t, want jp explicit", cmd.Region, cmd.RegionExplicit)
+	}
+	if cmd.Selector != "u2" {
+		t.Fatalf("selector = %q, want u2", cmd.Selector)
+	}
+	if cmd.DurationMinutes != 10 {
+		t.Fatalf("duration = %d, want 10", cmd.DurationMinutes)
+	}
+	if !slices.Equal(cmd.Materials, []string{"diamond", "clover"}) {
+		t.Fatalf("materials = %+v, want [diamond clover]", cmd.Materials)
+	}
+}
+
 func TestParseBirthdayMonitorCommandRejectsAllMaterialsDisabled(t *testing.T) {
 	_, err := ParseBirthdayMonitorCommand("/烤森生日监听 钻石关闭")
 	if err == nil || !strings.Contains(err.Error(), "至少需要开启一种监听材料") {
@@ -63,4 +97,71 @@ func TestParseBirthdayMonitorCancelCommand(t *testing.T) {
 	if cmd.Selector != "u1" {
 		t.Fatalf("selector = %q, want u1", cmd.Selector)
 	}
+}
+
+func TestCreateOrUpdateUsesRegionPrefixedSelectorBinding(t *testing.T) {
+	ctx := context.Background()
+	pjskClient := pjskenttest.Open(t, "sqlite3", fmt.Sprintf("file:birthday_monitor_pjsk_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = pjskClient.Close() })
+	usersClient := usersenttest.Open(t, "sqlite3", fmt.Sprintf("file:birthday_monitor_users_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = usersClient.Close() })
+
+	bindings := accountdata.NewBindingService(
+		pjskClient,
+		identity.NewResolver(usersClient),
+		birthdayMonitorProfileValidator{},
+	)
+	if _, err := bindings.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind first account: %v", err)
+	}
+	if _, err := bindings.Bind(ctx, "qq", "42", "22222222222222"); err != nil {
+		t.Fatalf("bind second account: %v", err)
+	}
+	if err := pjskClient.UserBinding.Update().SetVerified(true).Exec(ctx); err != nil {
+		t.Fatalf("mark bindings verified: %v", err)
+	}
+
+	var captured sekaiapi.MysekaiBirthdayMonitorUpsertRequest
+	toolboxServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut || !strings.HasPrefix(r.URL.Path, "/internal/mysekai-birthday-monitors/") {
+			http.NotFound(w, r)
+			return
+		}
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer toolboxServer.Close()
+
+	service := NewServiceWithToolbox(
+		pjskClient,
+		bindings,
+		sekaiapi.NewToolboxClient(&config.ToolboxConfig{BaseURL: toolboxServer.URL, APIToken: "test"}),
+	)
+	result, err := service.CreateOrUpdate(ctx, "qq", "42", "100", "bot", "self", "", false, "/jp烤森生日监听 u2 钻石", false)
+	if err != nil {
+		t.Fatalf("CreateOrUpdate returned error: %v", err)
+	}
+	if result.Subscription.Region != "jp" || result.Subscription.UID != "22222222222222" {
+		t.Fatalf("subscription target = %s/%s, want jp/22222222222222", result.Subscription.Region, result.Subscription.UID)
+	}
+	if captured.Region != "jp" || captured.UID != "22222222222222" {
+		t.Fatalf("toolbox target = %s/%s, want jp/22222222222222", captured.Region, captured.UID)
+	}
+}
+
+type birthdayMonitorProfileValidator struct{}
+
+func (birthdayMonitorProfileValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {
+	if strings.EqualFold(server, "jp") {
+		return &sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 1234567890,
+				Name:   userID,
+			},
+		}, nil
+	}
+	return nil, sekaiapi.ErrUserNotFound
 }

@@ -134,6 +134,8 @@ type ClientBirthdayEvent struct {
 
 type BirthdayMonitorCommand struct {
 	Cancel          bool
+	Region          string
+	RegionExplicit  bool
 	Selector        string
 	DurationMinutes int
 	Materials       []string
@@ -185,6 +187,10 @@ func (s *Service) CreateOrUpdate(
 	}
 	if command.Cancel {
 		return nil, fmt.Errorf("请使用取消监听接口")
+	}
+	if command.RegionExplicit {
+		server = command.Region
+		regionExplicit = true
 	}
 
 	binding, err := s.resolveBinding(ctx, platform, platformUserID, server, regionExplicit, command.Selector)
@@ -313,6 +319,10 @@ func (s *Service) Cancel(
 	}
 	if !command.Cancel {
 		return nil, fmt.Errorf("请使用监听接口")
+	}
+	if command.RegionExplicit {
+		server = command.Region
+		regionExplicit = true
 	}
 	binding, err := s.resolveBinding(ctx, platform, platformUserID, server, regionExplicit, command.Selector)
 	if err != nil {
@@ -729,13 +739,16 @@ func (s *Service) requireDB() error {
 
 func ParseBirthdayMonitorCommand(message string) (BirthdayMonitorCommand, error) {
 	trimmed := strings.TrimSpace(message)
-	commandText, cancel, ok := stripBirthdayMonitorCommand(trimmed)
+	region, regionExplicit, normalizedCommand := stripBirthdayMonitorRegionPrefix(trimmed)
+	commandText, cancel, ok := stripBirthdayMonitorCommand(normalizedCommand)
 	if !ok {
 		return BirthdayMonitorCommand{}, fmt.Errorf("未识别的生日材料监听命令")
 	}
 	fields := strings.Fields(commandText)
 	result := BirthdayMonitorCommand{
 		Cancel:          cancel,
+		Region:          region,
+		RegionExplicit:  regionExplicit,
 		DurationMinutes: DefaultBirthdayMonitorMinutes,
 	}
 	enabled := map[string]bool{}
@@ -842,6 +855,35 @@ func stripBirthdayMonitorCommand(message string) (string, bool, bool) {
 		}
 	}
 	return "", false, false
+}
+
+func stripBirthdayMonitorRegionPrefix(message string) (string, bool, string) {
+	trimmed := strings.TrimSpace(message)
+	if !strings.HasPrefix(trimmed, "/") {
+		return "", false, trimmed
+	}
+	afterSlash := trimmed[1:]
+	for _, region := range []renderregion.Value{
+		renderregion.JP,
+		renderregion.TW,
+		renderregion.KR,
+		renderregion.EN,
+		renderregion.CN,
+	} {
+		prefix := region.String()
+		if len(afterSlash) < len(prefix) || !strings.EqualFold(afterSlash[:len(prefix)], prefix) {
+			continue
+		}
+		rest := afterSlash[len(prefix):]
+		rest = strings.TrimLeftFunc(rest, func(r rune) bool {
+			return r == '/' || r == ' ' || r == '\t'
+		})
+		if rest == "" {
+			return prefix, true, "/"
+		}
+		return prefix, true, "/" + rest
+	}
+	return "", false, trimmed
 }
 
 func parseDurationToken(token string) (int, bool) {

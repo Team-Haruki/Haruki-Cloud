@@ -42,4 +42,9 @@ func TestSeedCommandManifestsIncludesBirthdayMonitor(t *testing.T) {
 			t.Fatalf("expected birthday monitor manifest to include %q, got %v", command, row.CommandPrefixes)
 		}
 	}
+	for _, command := range []string{"/jp烤森生日监听", "/tw烤森生日取消监听", "/enmysekai birthday monitor"} {
+		if !slices.Contains(row.CommandPrefixes, command) {
+			t.Fatalf("expected birthday monitor manifest to include region-prefixed %q, got %v", command, row.CommandPrefixes)
+		}
+	}
 }

@@ -68,7 +68,7 @@ func birthdayMonitorManifestRoute() commandhandler.BotRoute {
 	return commandhandler.BotRoute{
 		Path:             birthdayMonitorCommandPath,
 		Module:           pjskhandler.BotModulePJSK,
-		Commands:         slices.Clone(birthdayMonitorCommandPrefixes),
+		Commands:         slices.Clone(birthdayMonitorManifestCommandPrefixes),
 		CommandMode:      commandhandler.DefaultBotCommandMode,
 		AdditionalParams: slices.Clone(commandhandler.DefaultBotAdditionalParams),
 	}

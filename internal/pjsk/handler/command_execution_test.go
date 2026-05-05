@@ -2750,7 +2750,7 @@ func TestResolveDeckCharacterSelectionsSplitsLeadingWorldBloomCharacterFromMusic
 	}
 }
 
-func TestResolveDeckCharacterSelectionsRejectsUnknownWorldBloomQueryForWorldBloomEvent(t *testing.T) {
+func TestResolveDeckCharacterSelectionsFallsBackUnknownWorldBloomQueryToMusicAndFirstChapter(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_music_fallback?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = sekaiClient.Close() })
@@ -2785,18 +2785,17 @@ func TestResolveDeckCharacterSelectionsRejectsUnknownWorldBloomQueryForWorldBloo
 		WorldBloomCharacterQuery: "虾",
 	}
 
-	err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient})
-	if err == nil {
-		t.Fatalf("expected unknown WL chapter character query to fail")
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
 	}
-	if !isCharacterNotFoundError(err) {
-		t.Fatalf("unexpected error: %v", err)
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("expected fallback to first world bloom chapter character, got %+v", query.WorldBloomCharacterID)
 	}
-	if query.WorldBloomCharacterID != nil {
-		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	if query.WorldBloomCharacterQuery != "" {
+		t.Fatalf("expected world bloom character query to be cleared, got %q", query.WorldBloomCharacterQuery)
 	}
-	if query.MusicQuery != "" {
-		t.Fatalf("unexpected music query fallback: %q", query.MusicQuery)
+	if query.MusicQuery != "虾" {
+		t.Fatalf("expected unknown wl query to fallback to music query, got %q", query.MusicQuery)
 	}
 }
 

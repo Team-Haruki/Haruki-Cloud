@@ -186,7 +186,14 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 	if query != "" {
 		chapter, err := resolveTrackerWorldBloomChapterSelection(ctx, app, region, eventInfo, chapters, query)
 		if err != nil {
-			return err
+			if isCharacterNotFoundError(err) {
+				if strings.TrimSpace(q.MusicQuery) == "" {
+					assignDeckFallbackMusicQuery(q, query)
+				}
+				q.WorldBloomCharacterQuery = ""
+			} else {
+				return err
+			}
 		} else {
 			if chapter.GameCharacterID <= 0 {
 				return fmt.Errorf("活动 %s-%d 的 World Link 章节缺少角色信息", strings.ToUpper(region.String()), eventID)

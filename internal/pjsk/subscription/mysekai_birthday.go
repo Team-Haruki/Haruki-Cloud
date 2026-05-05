@@ -383,7 +383,7 @@ func (s *Service) ActiveForUpload(ctx context.Context, region string, uid string
 
 func (s *Service) syncBirthdayMonitor(ctx context.Context, subscriptionID int, version string, region string, uid string, materials []string, expiresAt time.Time, notifyEmpty bool) error {
 	if s == nil || s.toolbox == nil {
-		return fmt.Errorf("Toolbox 监听同步服务未配置，订阅失败，请稍后重试")
+		return fmt.Errorf("toolbox 监听同步服务未配置，订阅失败，请稍后重试")
 	}
 	if err := s.toolbox.UpsertMysekaiBirthdayMonitor(ctx, sekaiapi.MysekaiBirthdayMonitorUpsertRequest{
 		SubscriptionID:      strconv.Itoa(subscriptionID),

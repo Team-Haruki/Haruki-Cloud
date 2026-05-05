@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/bytedance/sonic v1.15.0
+	github.com/bytedance/sonic v1.15.1
 	github.com/flynn/noise v1.1.0
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/go-sql-driver/mysql v1.9.3

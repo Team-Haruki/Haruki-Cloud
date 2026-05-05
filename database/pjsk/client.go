@@ -15,6 +15,8 @@ import (
 	"haruki-cloud/database/pjsk/aliasadmin"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
+	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
+	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
@@ -40,6 +42,10 @@ type Client struct {
 	GameAccount *GameAccountClient
 	// GroupAlias is the client for interacting with the GroupAlias builders.
 	GroupAlias *GroupAliasClient
+	// MysekaiBirthdaySubscription is the client for interacting with the MysekaiBirthdaySubscription builders.
+	MysekaiBirthdaySubscription *MysekaiBirthdaySubscriptionClient
+	// MysekaiBirthdaySubscriptionEvent is the client for interacting with the MysekaiBirthdaySubscriptionEvent builders.
+	MysekaiBirthdaySubscriptionEvent *MysekaiBirthdaySubscriptionEventClient
 	// PendingAlias is the client for interacting with the PendingAlias builders.
 	PendingAlias *PendingAliasClient
 	// RejectedAlias is the client for interacting with the RejectedAlias builders.
@@ -65,6 +71,8 @@ func (c *Client) init() {
 	c.AliasAdmin = NewAliasAdminClient(c.config)
 	c.GameAccount = NewGameAccountClient(c.config)
 	c.GroupAlias = NewGroupAliasClient(c.config)
+	c.MysekaiBirthdaySubscription = NewMysekaiBirthdaySubscriptionClient(c.config)
+	c.MysekaiBirthdaySubscriptionEvent = NewMysekaiBirthdaySubscriptionEventClient(c.config)
 	c.PendingAlias = NewPendingAliasClient(c.config)
 	c.RejectedAlias = NewRejectedAliasClient(c.config)
 	c.UserBinding = NewUserBindingClient(c.config)
@@ -160,17 +168,19 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		Alias:              NewAliasClient(cfg),
-		AliasAdmin:         NewAliasAdminClient(cfg),
-		GameAccount:        NewGameAccountClient(cfg),
-		GroupAlias:         NewGroupAliasClient(cfg),
-		PendingAlias:       NewPendingAliasClient(cfg),
-		RejectedAlias:      NewRejectedAliasClient(cfg),
-		UserBinding:        NewUserBindingClient(cfg),
-		UserDefaultBinding: NewUserDefaultBindingClient(cfg),
-		UserPreference:     NewUserPreferenceClient(cfg),
+		ctx:                              ctx,
+		config:                           cfg,
+		Alias:                            NewAliasClient(cfg),
+		AliasAdmin:                       NewAliasAdminClient(cfg),
+		GameAccount:                      NewGameAccountClient(cfg),
+		GroupAlias:                       NewGroupAliasClient(cfg),
+		MysekaiBirthdaySubscription:      NewMysekaiBirthdaySubscriptionClient(cfg),
+		MysekaiBirthdaySubscriptionEvent: NewMysekaiBirthdaySubscriptionEventClient(cfg),
+		PendingAlias:                     NewPendingAliasClient(cfg),
+		RejectedAlias:                    NewRejectedAliasClient(cfg),
+		UserBinding:                      NewUserBindingClient(cfg),
+		UserDefaultBinding:               NewUserDefaultBindingClient(cfg),
+		UserPreference:                   NewUserPreferenceClient(cfg),
 	}, nil
 }
 
@@ -188,17 +198,19 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		Alias:              NewAliasClient(cfg),
-		AliasAdmin:         NewAliasAdminClient(cfg),
-		GameAccount:        NewGameAccountClient(cfg),
-		GroupAlias:         NewGroupAliasClient(cfg),
-		PendingAlias:       NewPendingAliasClient(cfg),
-		RejectedAlias:      NewRejectedAliasClient(cfg),
-		UserBinding:        NewUserBindingClient(cfg),
-		UserDefaultBinding: NewUserDefaultBindingClient(cfg),
-		UserPreference:     NewUserPreferenceClient(cfg),
+		ctx:                              ctx,
+		config:                           cfg,
+		Alias:                            NewAliasClient(cfg),
+		AliasAdmin:                       NewAliasAdminClient(cfg),
+		GameAccount:                      NewGameAccountClient(cfg),
+		GroupAlias:                       NewGroupAliasClient(cfg),
+		MysekaiBirthdaySubscription:      NewMysekaiBirthdaySubscriptionClient(cfg),
+		MysekaiBirthdaySubscriptionEvent: NewMysekaiBirthdaySubscriptionEventClient(cfg),
+		PendingAlias:                     NewPendingAliasClient(cfg),
+		RejectedAlias:                    NewRejectedAliasClient(cfg),
+		UserBinding:                      NewUserBindingClient(cfg),
+		UserDefaultBinding:               NewUserDefaultBindingClient(cfg),
+		UserPreference:                   NewUserPreferenceClient(cfg),
 	}, nil
 }
 
@@ -228,8 +240,10 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Alias, c.AliasAdmin, c.GameAccount, c.GroupAlias, c.PendingAlias,
-		c.RejectedAlias, c.UserBinding, c.UserDefaultBinding, c.UserPreference,
+		c.Alias, c.AliasAdmin, c.GameAccount, c.GroupAlias,
+		c.MysekaiBirthdaySubscription, c.MysekaiBirthdaySubscriptionEvent,
+		c.PendingAlias, c.RejectedAlias, c.UserBinding, c.UserDefaultBinding,
+		c.UserPreference,
 	} {
 		n.Use(hooks...)
 	}
@@ -239,8 +253,10 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Alias, c.AliasAdmin, c.GameAccount, c.GroupAlias, c.PendingAlias,
-		c.RejectedAlias, c.UserBinding, c.UserDefaultBinding, c.UserPreference,
+		c.Alias, c.AliasAdmin, c.GameAccount, c.GroupAlias,
+		c.MysekaiBirthdaySubscription, c.MysekaiBirthdaySubscriptionEvent,
+		c.PendingAlias, c.RejectedAlias, c.UserBinding, c.UserDefaultBinding,
+		c.UserPreference,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -257,6 +273,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.GameAccount.mutate(ctx, m)
 	case *GroupAliasMutation:
 		return c.GroupAlias.mutate(ctx, m)
+	case *MysekaiBirthdaySubscriptionMutation:
+		return c.MysekaiBirthdaySubscription.mutate(ctx, m)
+	case *MysekaiBirthdaySubscriptionEventMutation:
+		return c.MysekaiBirthdaySubscriptionEvent.mutate(ctx, m)
 	case *PendingAliasMutation:
 		return c.PendingAlias.mutate(ctx, m)
 	case *RejectedAliasMutation:
@@ -817,6 +837,304 @@ func (c *GroupAliasClient) mutate(ctx context.Context, m *GroupAliasMutation) (V
 		return (&GroupAliasDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("pjsk: unknown GroupAlias mutation op: %q", m.Op())
+	}
+}
+
+// MysekaiBirthdaySubscriptionClient is a client for the MysekaiBirthdaySubscription schema.
+type MysekaiBirthdaySubscriptionClient struct {
+	config
+}
+
+// NewMysekaiBirthdaySubscriptionClient returns a client for the MysekaiBirthdaySubscription from the given config.
+func NewMysekaiBirthdaySubscriptionClient(c config) *MysekaiBirthdaySubscriptionClient {
+	return &MysekaiBirthdaySubscriptionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaibirthdaysubscription.Hooks(f(g(h())))`.
+func (c *MysekaiBirthdaySubscriptionClient) Use(hooks ...Hook) {
+	c.hooks.MysekaiBirthdaySubscription = append(c.hooks.MysekaiBirthdaySubscription, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaibirthdaysubscription.Intercept(f(g(h())))`.
+func (c *MysekaiBirthdaySubscriptionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MysekaiBirthdaySubscription = append(c.inters.MysekaiBirthdaySubscription, interceptors...)
+}
+
+// Create returns a builder for creating a MysekaiBirthdaySubscription entity.
+func (c *MysekaiBirthdaySubscriptionClient) Create() *MysekaiBirthdaySubscriptionCreate {
+	mutation := newMysekaiBirthdaySubscriptionMutation(c.config, OpCreate)
+	return &MysekaiBirthdaySubscriptionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MysekaiBirthdaySubscription entities.
+func (c *MysekaiBirthdaySubscriptionClient) CreateBulk(builders ...*MysekaiBirthdaySubscriptionCreate) *MysekaiBirthdaySubscriptionCreateBulk {
+	return &MysekaiBirthdaySubscriptionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaiBirthdaySubscriptionClient) MapCreateBulk(slice any, setFunc func(*MysekaiBirthdaySubscriptionCreate, int)) *MysekaiBirthdaySubscriptionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaiBirthdaySubscriptionCreateBulk{err: fmt.Errorf("calling to MysekaiBirthdaySubscriptionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaiBirthdaySubscriptionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaiBirthdaySubscriptionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MysekaiBirthdaySubscription.
+func (c *MysekaiBirthdaySubscriptionClient) Update() *MysekaiBirthdaySubscriptionUpdate {
+	mutation := newMysekaiBirthdaySubscriptionMutation(c.config, OpUpdate)
+	return &MysekaiBirthdaySubscriptionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaiBirthdaySubscriptionClient) UpdateOne(_m *MysekaiBirthdaySubscription) *MysekaiBirthdaySubscriptionUpdateOne {
+	mutation := newMysekaiBirthdaySubscriptionMutation(c.config, OpUpdateOne, withMysekaiBirthdaySubscription(_m))
+	return &MysekaiBirthdaySubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaiBirthdaySubscriptionClient) UpdateOneID(id int) *MysekaiBirthdaySubscriptionUpdateOne {
+	mutation := newMysekaiBirthdaySubscriptionMutation(c.config, OpUpdateOne, withMysekaiBirthdaySubscriptionID(id))
+	return &MysekaiBirthdaySubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MysekaiBirthdaySubscription.
+func (c *MysekaiBirthdaySubscriptionClient) Delete() *MysekaiBirthdaySubscriptionDelete {
+	mutation := newMysekaiBirthdaySubscriptionMutation(c.config, OpDelete)
+	return &MysekaiBirthdaySubscriptionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaiBirthdaySubscriptionClient) DeleteOne(_m *MysekaiBirthdaySubscription) *MysekaiBirthdaySubscriptionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaiBirthdaySubscriptionClient) DeleteOneID(id int) *MysekaiBirthdaySubscriptionDeleteOne {
+	builder := c.Delete().Where(mysekaibirthdaysubscription.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaiBirthdaySubscriptionDeleteOne{builder}
+}
+
+// Query returns a query builder for MysekaiBirthdaySubscription.
+func (c *MysekaiBirthdaySubscriptionClient) Query() *MysekaiBirthdaySubscriptionQuery {
+	return &MysekaiBirthdaySubscriptionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaiBirthdaySubscription},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MysekaiBirthdaySubscription entity by its id.
+func (c *MysekaiBirthdaySubscriptionClient) Get(ctx context.Context, id int) (*MysekaiBirthdaySubscription, error) {
+	return c.Query().Where(mysekaibirthdaysubscription.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaiBirthdaySubscriptionClient) GetX(ctx context.Context, id int) *MysekaiBirthdaySubscription {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEvents queries the events edge of a MysekaiBirthdaySubscription.
+func (c *MysekaiBirthdaySubscriptionClient) QueryEvents(_m *MysekaiBirthdaySubscription) *MysekaiBirthdaySubscriptionEventQuery {
+	query := (&MysekaiBirthdaySubscriptionEventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(mysekaibirthdaysubscription.Table, mysekaibirthdaysubscription.FieldID, id),
+			sqlgraph.To(mysekaibirthdaysubscriptionevent.Table, mysekaibirthdaysubscriptionevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, mysekaibirthdaysubscription.EventsTable, mysekaibirthdaysubscription.EventsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaiBirthdaySubscriptionClient) Hooks() []Hook {
+	return c.hooks.MysekaiBirthdaySubscription
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaiBirthdaySubscriptionClient) Interceptors() []Interceptor {
+	return c.inters.MysekaiBirthdaySubscription
+}
+
+func (c *MysekaiBirthdaySubscriptionClient) mutate(ctx context.Context, m *MysekaiBirthdaySubscriptionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaiBirthdaySubscriptionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaiBirthdaySubscriptionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaiBirthdaySubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaiBirthdaySubscriptionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("pjsk: unknown MysekaiBirthdaySubscription mutation op: %q", m.Op())
+	}
+}
+
+// MysekaiBirthdaySubscriptionEventClient is a client for the MysekaiBirthdaySubscriptionEvent schema.
+type MysekaiBirthdaySubscriptionEventClient struct {
+	config
+}
+
+// NewMysekaiBirthdaySubscriptionEventClient returns a client for the MysekaiBirthdaySubscriptionEvent from the given config.
+func NewMysekaiBirthdaySubscriptionEventClient(c config) *MysekaiBirthdaySubscriptionEventClient {
+	return &MysekaiBirthdaySubscriptionEventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaibirthdaysubscriptionevent.Hooks(f(g(h())))`.
+func (c *MysekaiBirthdaySubscriptionEventClient) Use(hooks ...Hook) {
+	c.hooks.MysekaiBirthdaySubscriptionEvent = append(c.hooks.MysekaiBirthdaySubscriptionEvent, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaibirthdaysubscriptionevent.Intercept(f(g(h())))`.
+func (c *MysekaiBirthdaySubscriptionEventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MysekaiBirthdaySubscriptionEvent = append(c.inters.MysekaiBirthdaySubscriptionEvent, interceptors...)
+}
+
+// Create returns a builder for creating a MysekaiBirthdaySubscriptionEvent entity.
+func (c *MysekaiBirthdaySubscriptionEventClient) Create() *MysekaiBirthdaySubscriptionEventCreate {
+	mutation := newMysekaiBirthdaySubscriptionEventMutation(c.config, OpCreate)
+	return &MysekaiBirthdaySubscriptionEventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MysekaiBirthdaySubscriptionEvent entities.
+func (c *MysekaiBirthdaySubscriptionEventClient) CreateBulk(builders ...*MysekaiBirthdaySubscriptionEventCreate) *MysekaiBirthdaySubscriptionEventCreateBulk {
+	return &MysekaiBirthdaySubscriptionEventCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaiBirthdaySubscriptionEventClient) MapCreateBulk(slice any, setFunc func(*MysekaiBirthdaySubscriptionEventCreate, int)) *MysekaiBirthdaySubscriptionEventCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaiBirthdaySubscriptionEventCreateBulk{err: fmt.Errorf("calling to MysekaiBirthdaySubscriptionEventClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaiBirthdaySubscriptionEventCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaiBirthdaySubscriptionEventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MysekaiBirthdaySubscriptionEvent.
+func (c *MysekaiBirthdaySubscriptionEventClient) Update() *MysekaiBirthdaySubscriptionEventUpdate {
+	mutation := newMysekaiBirthdaySubscriptionEventMutation(c.config, OpUpdate)
+	return &MysekaiBirthdaySubscriptionEventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaiBirthdaySubscriptionEventClient) UpdateOne(_m *MysekaiBirthdaySubscriptionEvent) *MysekaiBirthdaySubscriptionEventUpdateOne {
+	mutation := newMysekaiBirthdaySubscriptionEventMutation(c.config, OpUpdateOne, withMysekaiBirthdaySubscriptionEvent(_m))
+	return &MysekaiBirthdaySubscriptionEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaiBirthdaySubscriptionEventClient) UpdateOneID(id int) *MysekaiBirthdaySubscriptionEventUpdateOne {
+	mutation := newMysekaiBirthdaySubscriptionEventMutation(c.config, OpUpdateOne, withMysekaiBirthdaySubscriptionEventID(id))
+	return &MysekaiBirthdaySubscriptionEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MysekaiBirthdaySubscriptionEvent.
+func (c *MysekaiBirthdaySubscriptionEventClient) Delete() *MysekaiBirthdaySubscriptionEventDelete {
+	mutation := newMysekaiBirthdaySubscriptionEventMutation(c.config, OpDelete)
+	return &MysekaiBirthdaySubscriptionEventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaiBirthdaySubscriptionEventClient) DeleteOne(_m *MysekaiBirthdaySubscriptionEvent) *MysekaiBirthdaySubscriptionEventDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaiBirthdaySubscriptionEventClient) DeleteOneID(id int) *MysekaiBirthdaySubscriptionEventDeleteOne {
+	builder := c.Delete().Where(mysekaibirthdaysubscriptionevent.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaiBirthdaySubscriptionEventDeleteOne{builder}
+}
+
+// Query returns a query builder for MysekaiBirthdaySubscriptionEvent.
+func (c *MysekaiBirthdaySubscriptionEventClient) Query() *MysekaiBirthdaySubscriptionEventQuery {
+	return &MysekaiBirthdaySubscriptionEventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaiBirthdaySubscriptionEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MysekaiBirthdaySubscriptionEvent entity by its id.
+func (c *MysekaiBirthdaySubscriptionEventClient) Get(ctx context.Context, id int) (*MysekaiBirthdaySubscriptionEvent, error) {
+	return c.Query().Where(mysekaibirthdaysubscriptionevent.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaiBirthdaySubscriptionEventClient) GetX(ctx context.Context, id int) *MysekaiBirthdaySubscriptionEvent {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySubscription queries the subscription edge of a MysekaiBirthdaySubscriptionEvent.
+func (c *MysekaiBirthdaySubscriptionEventClient) QuerySubscription(_m *MysekaiBirthdaySubscriptionEvent) *MysekaiBirthdaySubscriptionQuery {
+	query := (&MysekaiBirthdaySubscriptionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(mysekaibirthdaysubscriptionevent.Table, mysekaibirthdaysubscriptionevent.FieldID, id),
+			sqlgraph.To(mysekaibirthdaysubscription.Table, mysekaibirthdaysubscription.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, mysekaibirthdaysubscriptionevent.SubscriptionTable, mysekaibirthdaysubscriptionevent.SubscriptionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaiBirthdaySubscriptionEventClient) Hooks() []Hook {
+	return c.hooks.MysekaiBirthdaySubscriptionEvent
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaiBirthdaySubscriptionEventClient) Interceptors() []Interceptor {
+	return c.inters.MysekaiBirthdaySubscriptionEvent
+}
+
+func (c *MysekaiBirthdaySubscriptionEventClient) mutate(ctx context.Context, m *MysekaiBirthdaySubscriptionEventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaiBirthdaySubscriptionEventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaiBirthdaySubscriptionEventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaiBirthdaySubscriptionEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaiBirthdaySubscriptionEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("pjsk: unknown MysekaiBirthdaySubscriptionEvent mutation op: %q", m.Op())
 	}
 }
 
@@ -1536,11 +1854,13 @@ func (c *UserPreferenceClient) mutate(ctx context.Context, m *UserPreferenceMuta
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Alias, AliasAdmin, GameAccount, GroupAlias, PendingAlias, RejectedAlias,
-		UserBinding, UserDefaultBinding, UserPreference []ent.Hook
+		Alias, AliasAdmin, GameAccount, GroupAlias, MysekaiBirthdaySubscription,
+		MysekaiBirthdaySubscriptionEvent, PendingAlias, RejectedAlias, UserBinding,
+		UserDefaultBinding, UserPreference []ent.Hook
 	}
 	inters struct {
-		Alias, AliasAdmin, GameAccount, GroupAlias, PendingAlias, RejectedAlias,
-		UserBinding, UserDefaultBinding, UserPreference []ent.Interceptor
+		Alias, AliasAdmin, GameAccount, GroupAlias, MysekaiBirthdaySubscription,
+		MysekaiBirthdaySubscriptionEvent, PendingAlias, RejectedAlias, UserBinding,
+		UserDefaultBinding, UserPreference []ent.Interceptor
 	}
 )

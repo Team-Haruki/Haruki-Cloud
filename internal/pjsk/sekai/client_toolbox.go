@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,37 @@ import (
 type HarukiToolboxClient struct {
 	http   *resty.Client
 	config *config.ToolboxConfig
+}
+
+type MysekaiBirthdayMonitorUpsertRequest struct {
+	SubscriptionID      string   `json:"subscription_id"`
+	SubscriptionVersion string   `json:"subscription_version"`
+	Region              string   `json:"region"`
+	UID                 string   `json:"uid"`
+	Materials           []string `json:"materials"`
+	MaterialIDs         []int    `json:"material_ids"`
+	ExpiresAt           int64    `json:"expires_at"`
+	NotifyEmpty         bool     `json:"notify_empty"`
+}
+
+type MysekaiBirthdayEventLookupRequest struct {
+	EventID             string `json:"event_id"`
+	SubscriptionID      string `json:"subscription_id"`
+	SubscriptionVersion string `json:"subscription_version"`
+}
+
+type MysekaiBirthdayEvent struct {
+	EventID             string                 `json:"event_id"`
+	SubscriptionID      string                 `json:"subscription_id"`
+	SubscriptionVersion string                 `json:"subscription_version"`
+	PayloadRef          string                 `json:"payload_ref,omitempty"`
+	Region              string                 `json:"region"`
+	UID                 string                 `json:"uid"`
+	MatchedMaterialIDs  []int                  `json:"matched_material_ids"`
+	EmptyResult         bool                   `json:"empty_result"`
+	FilteredPayload     sonic.NoCopyRawMessage `json:"filtered_payload,omitempty"`
+	UploadTime          int64                  `json:"upload_time"`
+	CreatedAt           int64                  `json:"created_at"`
 }
 
 // NewToolboxClient constructs a HarukiToolboxClient bound to the supplied config.
@@ -37,6 +69,88 @@ func (c *HarukiToolboxClient) userAgent() string {
 		}
 	}
 	return version.UserAgent()
+}
+
+func (c *HarukiToolboxClient) internalRequest(ctx context.Context) (*resty.Request, error) {
+	if c == nil || c.config == nil || strings.TrimSpace(c.config.BaseURL) == "" {
+		return nil, ErrClientNotConfigured
+	}
+	req := c.http.R().
+		SetContext(ctx).
+		SetHeader("Authorization", c.config.APIToken).
+		SetHeader("User-Agent", c.userAgent())
+	return req, nil
+}
+
+func (c *HarukiToolboxClient) UpsertMysekaiBirthdayMonitor(ctx context.Context, req MysekaiBirthdayMonitorUpsertRequest) error {
+	r, err := c.internalRequest(ctx)
+	if err != nil {
+		return err
+	}
+	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-monitors/%s", strings.TrimRight(c.config.BaseURL, "/"), req.SubscriptionID)
+	resp, err := r.SetBody(req).Put(endpoint)
+	if err != nil {
+		return fmt.Errorf("toolbox: birthday monitor upsert failed: %w", sanitizeNetworkError(err))
+	}
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
+	}
+	return nil
+}
+
+func (c *HarukiToolboxClient) DeleteMysekaiBirthdayMonitor(ctx context.Context, subscriptionID string, subscriptionVersion string) error {
+	r, err := c.internalRequest(ctx)
+	if err != nil {
+		return err
+	}
+	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-monitors/%s", strings.TrimRight(c.config.BaseURL, "/"), subscriptionID)
+	resp, err := r.SetQueryParam("subscription_version", subscriptionVersion).Delete(endpoint)
+	if err != nil {
+		return fmt.Errorf("toolbox: birthday monitor delete failed: %w", sanitizeNetworkError(err))
+	}
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
+	}
+	return nil
+}
+
+func (c *HarukiToolboxClient) GetMysekaiBirthdayEvent(ctx context.Context, req MysekaiBirthdayEventLookupRequest) (*MysekaiBirthdayEvent, error) {
+	r, err := c.internalRequest(ctx)
+	if err != nil {
+		return nil, err
+	}
+	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-events/%s", strings.TrimRight(c.config.BaseURL, "/"), req.EventID)
+	resp, err := r.SetQueryParams(map[string]string{
+		"subscription_id":      req.SubscriptionID,
+		"subscription_version": req.SubscriptionVersion,
+	}).Get(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("toolbox: birthday event fetch failed: %w", sanitizeNetworkError(err))
+	}
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
+	}
+	var event MysekaiBirthdayEvent
+	if err := sonic.Unmarshal(resp.Body(), &event); err != nil {
+		return nil, fmt.Errorf("toolbox: failed to parse birthday event response: %w", err)
+	}
+	return &event, nil
+}
+
+func (c *HarukiToolboxClient) AckMysekaiBirthdayEvent(ctx context.Context, req MysekaiBirthdayEventLookupRequest) error {
+	r, err := c.internalRequest(ctx)
+	if err != nil {
+		return err
+	}
+	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-events/%s/ack", strings.TrimRight(c.config.BaseURL, "/"), req.EventID)
+	resp, err := r.SetBody(req).Post(endpoint)
+	if err != nil {
+		return fmt.Errorf("toolbox: birthday event ack failed: %w", sanitizeNetworkError(err))
+	}
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
+	}
+	return nil
 }
 
 // GetPrivateData fetches private game-data snapshots from the Toolbox API.

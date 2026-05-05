@@ -10,6 +10,8 @@ import (
 	"haruki-cloud/database/pjsk/aliasadmin"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
+	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
+	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/predicate"
 	"haruki-cloud/database/pjsk/rejectedalias"
@@ -34,15 +36,17 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAlias              = "Alias"
-	TypeAliasAdmin         = "AliasAdmin"
-	TypeGameAccount        = "GameAccount"
-	TypeGroupAlias         = "GroupAlias"
-	TypePendingAlias       = "PendingAlias"
-	TypeRejectedAlias      = "RejectedAlias"
-	TypeUserBinding        = "UserBinding"
-	TypeUserDefaultBinding = "UserDefaultBinding"
-	TypeUserPreference     = "UserPreference"
+	TypeAlias                            = "Alias"
+	TypeAliasAdmin                       = "AliasAdmin"
+	TypeGameAccount                      = "GameAccount"
+	TypeGroupAlias                       = "GroupAlias"
+	TypeMysekaiBirthdaySubscription      = "MysekaiBirthdaySubscription"
+	TypeMysekaiBirthdaySubscriptionEvent = "MysekaiBirthdaySubscriptionEvent"
+	TypePendingAlias                     = "PendingAlias"
+	TypeRejectedAlias                    = "RejectedAlias"
+	TypeUserBinding                      = "UserBinding"
+	TypeUserDefaultBinding               = "UserDefaultBinding"
+	TypeUserPreference                   = "UserPreference"
 )
 
 // AliasMutation represents an operation that mutates the Alias nodes in the graph.
@@ -2068,6 +2072,2319 @@ func (m *GroupAliasMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *GroupAliasMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown GroupAlias edge %s", name)
+}
+
+// MysekaiBirthdaySubscriptionMutation represents an operation that mutates the MysekaiBirthdaySubscription nodes in the graph.
+type MysekaiBirthdaySubscriptionMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int
+	region            *string
+	uid               *string
+	platform          *string
+	platform_user_id  *string
+	platform_group_id *string
+	cloud_bot_id      *string
+	self_id           *string
+	materials         *[]string
+	appendmaterials   []string
+	token             *string
+	active            *bool
+	expires_at        *time.Time
+	created_at        *time.Time
+	updated_at        *time.Time
+	cancelled_at      *time.Time
+	clearedFields     map[string]struct{}
+	events            map[int]struct{}
+	removedevents     map[int]struct{}
+	clearedevents     bool
+	done              bool
+	oldValue          func(context.Context) (*MysekaiBirthdaySubscription, error)
+	predicates        []predicate.MysekaiBirthdaySubscription
+}
+
+var _ ent.Mutation = (*MysekaiBirthdaySubscriptionMutation)(nil)
+
+// mysekaibirthdaysubscriptionOption allows management of the mutation configuration using functional options.
+type mysekaibirthdaysubscriptionOption func(*MysekaiBirthdaySubscriptionMutation)
+
+// newMysekaiBirthdaySubscriptionMutation creates new mutation for the MysekaiBirthdaySubscription entity.
+func newMysekaiBirthdaySubscriptionMutation(c config, op Op, opts ...mysekaibirthdaysubscriptionOption) *MysekaiBirthdaySubscriptionMutation {
+	m := &MysekaiBirthdaySubscriptionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMysekaiBirthdaySubscription,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMysekaiBirthdaySubscriptionID sets the ID field of the mutation.
+func withMysekaiBirthdaySubscriptionID(id int) mysekaibirthdaysubscriptionOption {
+	return func(m *MysekaiBirthdaySubscriptionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *MysekaiBirthdaySubscription
+		)
+		m.oldValue = func(ctx context.Context) (*MysekaiBirthdaySubscription, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().MysekaiBirthdaySubscription.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMysekaiBirthdaySubscription sets the old MysekaiBirthdaySubscription of the mutation.
+func withMysekaiBirthdaySubscription(node *MysekaiBirthdaySubscription) mysekaibirthdaysubscriptionOption {
+	return func(m *MysekaiBirthdaySubscriptionMutation) {
+		m.oldValue = func(context.Context) (*MysekaiBirthdaySubscription, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MysekaiBirthdaySubscriptionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MysekaiBirthdaySubscriptionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("pjsk: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of MysekaiBirthdaySubscription entities.
+func (m *MysekaiBirthdaySubscriptionMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MysekaiBirthdaySubscriptionMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().MysekaiBirthdaySubscription.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetRegion sets the "region" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetRegion(s string) {
+	m.region = &s
+}
+
+// Region returns the value of the "region" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) Region() (r string, exists bool) {
+	v := m.region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegion returns the old "region" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegion: %w", err)
+	}
+	return oldValue.Region, nil
+}
+
+// ResetRegion resets all changes to the "region" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetRegion() {
+	m.region = nil
+}
+
+// SetUID sets the "uid" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetUID(s string) {
+	m.uid = &s
+}
+
+// UID returns the value of the "uid" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) UID() (r string, exists bool) {
+	v := m.uid
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUID returns the old "uid" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldUID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUID: %w", err)
+	}
+	return oldValue.UID, nil
+}
+
+// ResetUID resets all changes to the "uid" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetUID() {
+	m.uid = nil
+}
+
+// SetPlatform sets the "platform" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetPlatform(s string) {
+	m.platform = &s
+}
+
+// Platform returns the value of the "platform" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) Platform() (r string, exists bool) {
+	v := m.platform
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatform returns the old "platform" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldPlatform(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatform is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatform requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatform: %w", err)
+	}
+	return oldValue.Platform, nil
+}
+
+// ResetPlatform resets all changes to the "platform" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetPlatform() {
+	m.platform = nil
+}
+
+// SetPlatformUserID sets the "platform_user_id" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetPlatformUserID(s string) {
+	m.platform_user_id = &s
+}
+
+// PlatformUserID returns the value of the "platform_user_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) PlatformUserID() (r string, exists bool) {
+	v := m.platform_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatformUserID returns the old "platform_user_id" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldPlatformUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatformUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatformUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatformUserID: %w", err)
+	}
+	return oldValue.PlatformUserID, nil
+}
+
+// ResetPlatformUserID resets all changes to the "platform_user_id" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetPlatformUserID() {
+	m.platform_user_id = nil
+}
+
+// SetPlatformGroupID sets the "platform_group_id" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetPlatformGroupID(s string) {
+	m.platform_group_id = &s
+}
+
+// PlatformGroupID returns the value of the "platform_group_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) PlatformGroupID() (r string, exists bool) {
+	v := m.platform_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatformGroupID returns the old "platform_group_id" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldPlatformGroupID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatformGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatformGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatformGroupID: %w", err)
+	}
+	return oldValue.PlatformGroupID, nil
+}
+
+// ResetPlatformGroupID resets all changes to the "platform_group_id" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetPlatformGroupID() {
+	m.platform_group_id = nil
+}
+
+// SetCloudBotID sets the "cloud_bot_id" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetCloudBotID(s string) {
+	m.cloud_bot_id = &s
+}
+
+// CloudBotID returns the value of the "cloud_bot_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) CloudBotID() (r string, exists bool) {
+	v := m.cloud_bot_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCloudBotID returns the old "cloud_bot_id" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldCloudBotID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCloudBotID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCloudBotID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCloudBotID: %w", err)
+	}
+	return oldValue.CloudBotID, nil
+}
+
+// ResetCloudBotID resets all changes to the "cloud_bot_id" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetCloudBotID() {
+	m.cloud_bot_id = nil
+}
+
+// SetSelfID sets the "self_id" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetSelfID(s string) {
+	m.self_id = &s
+}
+
+// SelfID returns the value of the "self_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) SelfID() (r string, exists bool) {
+	v := m.self_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSelfID returns the old "self_id" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldSelfID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSelfID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSelfID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSelfID: %w", err)
+	}
+	return oldValue.SelfID, nil
+}
+
+// ResetSelfID resets all changes to the "self_id" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetSelfID() {
+	m.self_id = nil
+}
+
+// SetMaterials sets the "materials" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetMaterials(s []string) {
+	m.materials = &s
+	m.appendmaterials = nil
+}
+
+// Materials returns the value of the "materials" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) Materials() (r []string, exists bool) {
+	v := m.materials
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaterials returns the old "materials" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldMaterials(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaterials is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaterials requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaterials: %w", err)
+	}
+	return oldValue.Materials, nil
+}
+
+// AppendMaterials adds s to the "materials" field.
+func (m *MysekaiBirthdaySubscriptionMutation) AppendMaterials(s []string) {
+	m.appendmaterials = append(m.appendmaterials, s...)
+}
+
+// AppendedMaterials returns the list of values that were appended to the "materials" field in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) AppendedMaterials() ([]string, bool) {
+	if len(m.appendmaterials) == 0 {
+		return nil, false
+	}
+	return m.appendmaterials, true
+}
+
+// ResetMaterials resets all changes to the "materials" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetMaterials() {
+	m.materials = nil
+	m.appendmaterials = nil
+}
+
+// SetToken sets the "token" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetToken(s string) {
+	m.token = &s
+}
+
+// Token returns the value of the "token" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) Token() (r string, exists bool) {
+	v := m.token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldToken returns the old "token" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldToken: %w", err)
+	}
+	return oldValue.Token, nil
+}
+
+// ResetToken resets all changes to the "token" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetToken() {
+	m.token = nil
+}
+
+// SetActive sets the "active" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetActive(b bool) {
+	m.active = &b
+}
+
+// Active returns the value of the "active" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) Active() (r bool, exists bool) {
+	v := m.active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActive returns the old "active" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActive: %w", err)
+	}
+	return oldValue.Active, nil
+}
+
+// ResetActive resets all changes to the "active" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetActive() {
+	m.active = nil
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetExpiresAt() {
+	m.expires_at = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetCancelledAt sets the "cancelled_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) SetCancelledAt(t time.Time) {
+	m.cancelled_at = &t
+}
+
+// CancelledAt returns the value of the "cancelled_at" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) CancelledAt() (r time.Time, exists bool) {
+	v := m.cancelled_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCancelledAt returns the old "cancelled_at" field's value of the MysekaiBirthdaySubscription entity.
+// If the MysekaiBirthdaySubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionMutation) OldCancelledAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCancelledAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCancelledAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCancelledAt: %w", err)
+	}
+	return oldValue.CancelledAt, nil
+}
+
+// ClearCancelledAt clears the value of the "cancelled_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ClearCancelledAt() {
+	m.cancelled_at = nil
+	m.clearedFields[mysekaibirthdaysubscription.FieldCancelledAt] = struct{}{}
+}
+
+// CancelledAtCleared returns if the "cancelled_at" field was cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) CancelledAtCleared() bool {
+	_, ok := m.clearedFields[mysekaibirthdaysubscription.FieldCancelledAt]
+	return ok
+}
+
+// ResetCancelledAt resets all changes to the "cancelled_at" field.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetCancelledAt() {
+	m.cancelled_at = nil
+	delete(m.clearedFields, mysekaibirthdaysubscription.FieldCancelledAt)
+}
+
+// AddEventIDs adds the "events" edge to the MysekaiBirthdaySubscriptionEvent entity by ids.
+func (m *MysekaiBirthdaySubscriptionMutation) AddEventIDs(ids ...int) {
+	if m.events == nil {
+		m.events = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.events[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEvents clears the "events" edge to the MysekaiBirthdaySubscriptionEvent entity.
+func (m *MysekaiBirthdaySubscriptionMutation) ClearEvents() {
+	m.clearedevents = true
+}
+
+// EventsCleared reports if the "events" edge to the MysekaiBirthdaySubscriptionEvent entity was cleared.
+func (m *MysekaiBirthdaySubscriptionMutation) EventsCleared() bool {
+	return m.clearedevents
+}
+
+// RemoveEventIDs removes the "events" edge to the MysekaiBirthdaySubscriptionEvent entity by IDs.
+func (m *MysekaiBirthdaySubscriptionMutation) RemoveEventIDs(ids ...int) {
+	if m.removedevents == nil {
+		m.removedevents = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.events, ids[i])
+		m.removedevents[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEvents returns the removed IDs of the "events" edge to the MysekaiBirthdaySubscriptionEvent entity.
+func (m *MysekaiBirthdaySubscriptionMutation) RemovedEventsIDs() (ids []int) {
+	for id := range m.removedevents {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EventsIDs returns the "events" edge IDs in the mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) EventsIDs() (ids []int) {
+	for id := range m.events {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEvents resets all changes to the "events" edge.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetEvents() {
+	m.events = nil
+	m.clearedevents = false
+	m.removedevents = nil
+}
+
+// Where appends a list predicates to the MysekaiBirthdaySubscriptionMutation builder.
+func (m *MysekaiBirthdaySubscriptionMutation) Where(ps ...predicate.MysekaiBirthdaySubscription) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MysekaiBirthdaySubscriptionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MysekaiBirthdaySubscriptionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.MysekaiBirthdaySubscription, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MysekaiBirthdaySubscriptionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MysekaiBirthdaySubscriptionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (MysekaiBirthdaySubscription).
+func (m *MysekaiBirthdaySubscriptionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MysekaiBirthdaySubscriptionMutation) Fields() []string {
+	fields := make([]string, 0, 14)
+	if m.region != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldRegion)
+	}
+	if m.uid != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldUID)
+	}
+	if m.platform != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldPlatform)
+	}
+	if m.platform_user_id != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldPlatformUserID)
+	}
+	if m.platform_group_id != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldPlatformGroupID)
+	}
+	if m.cloud_bot_id != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldCloudBotID)
+	}
+	if m.self_id != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldSelfID)
+	}
+	if m.materials != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldMaterials)
+	}
+	if m.token != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldToken)
+	}
+	if m.active != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldActive)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldExpiresAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldUpdatedAt)
+	}
+	if m.cancelled_at != nil {
+		fields = append(fields, mysekaibirthdaysubscription.FieldCancelledAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MysekaiBirthdaySubscriptionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case mysekaibirthdaysubscription.FieldRegion:
+		return m.Region()
+	case mysekaibirthdaysubscription.FieldUID:
+		return m.UID()
+	case mysekaibirthdaysubscription.FieldPlatform:
+		return m.Platform()
+	case mysekaibirthdaysubscription.FieldPlatformUserID:
+		return m.PlatformUserID()
+	case mysekaibirthdaysubscription.FieldPlatformGroupID:
+		return m.PlatformGroupID()
+	case mysekaibirthdaysubscription.FieldCloudBotID:
+		return m.CloudBotID()
+	case mysekaibirthdaysubscription.FieldSelfID:
+		return m.SelfID()
+	case mysekaibirthdaysubscription.FieldMaterials:
+		return m.Materials()
+	case mysekaibirthdaysubscription.FieldToken:
+		return m.Token()
+	case mysekaibirthdaysubscription.FieldActive:
+		return m.Active()
+	case mysekaibirthdaysubscription.FieldExpiresAt:
+		return m.ExpiresAt()
+	case mysekaibirthdaysubscription.FieldCreatedAt:
+		return m.CreatedAt()
+	case mysekaibirthdaysubscription.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case mysekaibirthdaysubscription.FieldCancelledAt:
+		return m.CancelledAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MysekaiBirthdaySubscriptionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case mysekaibirthdaysubscription.FieldRegion:
+		return m.OldRegion(ctx)
+	case mysekaibirthdaysubscription.FieldUID:
+		return m.OldUID(ctx)
+	case mysekaibirthdaysubscription.FieldPlatform:
+		return m.OldPlatform(ctx)
+	case mysekaibirthdaysubscription.FieldPlatformUserID:
+		return m.OldPlatformUserID(ctx)
+	case mysekaibirthdaysubscription.FieldPlatformGroupID:
+		return m.OldPlatformGroupID(ctx)
+	case mysekaibirthdaysubscription.FieldCloudBotID:
+		return m.OldCloudBotID(ctx)
+	case mysekaibirthdaysubscription.FieldSelfID:
+		return m.OldSelfID(ctx)
+	case mysekaibirthdaysubscription.FieldMaterials:
+		return m.OldMaterials(ctx)
+	case mysekaibirthdaysubscription.FieldToken:
+		return m.OldToken(ctx)
+	case mysekaibirthdaysubscription.FieldActive:
+		return m.OldActive(ctx)
+	case mysekaibirthdaysubscription.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	case mysekaibirthdaysubscription.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case mysekaibirthdaysubscription.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case mysekaibirthdaysubscription.FieldCancelledAt:
+		return m.OldCancelledAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown MysekaiBirthdaySubscription field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MysekaiBirthdaySubscriptionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case mysekaibirthdaysubscription.FieldRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegion(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldUID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUID(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldPlatform:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatform(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldPlatformUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatformUserID(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldPlatformGroupID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatformGroupID(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldCloudBotID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCloudBotID(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldSelfID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSelfID(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldMaterials:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaterials(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetToken(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActive(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case mysekaibirthdaysubscription.FieldCancelledAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCancelledAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscription field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MysekaiBirthdaySubscriptionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscription numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(mysekaibirthdaysubscription.FieldCancelledAt) {
+		fields = append(fields, mysekaibirthdaysubscription.FieldCancelledAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionMutation) ClearField(name string) error {
+	switch name {
+	case mysekaibirthdaysubscription.FieldCancelledAt:
+		m.ClearCancelledAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscription nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetField(name string) error {
+	switch name {
+	case mysekaibirthdaysubscription.FieldRegion:
+		m.ResetRegion()
+		return nil
+	case mysekaibirthdaysubscription.FieldUID:
+		m.ResetUID()
+		return nil
+	case mysekaibirthdaysubscription.FieldPlatform:
+		m.ResetPlatform()
+		return nil
+	case mysekaibirthdaysubscription.FieldPlatformUserID:
+		m.ResetPlatformUserID()
+		return nil
+	case mysekaibirthdaysubscription.FieldPlatformGroupID:
+		m.ResetPlatformGroupID()
+		return nil
+	case mysekaibirthdaysubscription.FieldCloudBotID:
+		m.ResetCloudBotID()
+		return nil
+	case mysekaibirthdaysubscription.FieldSelfID:
+		m.ResetSelfID()
+		return nil
+	case mysekaibirthdaysubscription.FieldMaterials:
+		m.ResetMaterials()
+		return nil
+	case mysekaibirthdaysubscription.FieldToken:
+		m.ResetToken()
+		return nil
+	case mysekaibirthdaysubscription.FieldActive:
+		m.ResetActive()
+		return nil
+	case mysekaibirthdaysubscription.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	case mysekaibirthdaysubscription.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case mysekaibirthdaysubscription.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case mysekaibirthdaysubscription.FieldCancelledAt:
+		m.ResetCancelledAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscription field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.events != nil {
+		edges = append(edges, mysekaibirthdaysubscription.EdgeEvents)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case mysekaibirthdaysubscription.EdgeEvents:
+		ids := make([]ent.Value, 0, len(m.events))
+		for id := range m.events {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedevents != nil {
+		edges = append(edges, mysekaibirthdaysubscription.EdgeEvents)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case mysekaibirthdaysubscription.EdgeEvents:
+		ids := make([]ent.Value, 0, len(m.removedevents))
+		for id := range m.removedevents {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedevents {
+		edges = append(edges, mysekaibirthdaysubscription.EdgeEvents)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case mysekaibirthdaysubscription.EdgeEvents:
+		return m.clearedevents
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscription unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionMutation) ResetEdge(name string) error {
+	switch name {
+	case mysekaibirthdaysubscription.EdgeEvents:
+		m.ResetEvents()
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscription edge %s", name)
+}
+
+// MysekaiBirthdaySubscriptionEventMutation represents an operation that mutates the MysekaiBirthdaySubscriptionEvent nodes in the graph.
+type MysekaiBirthdaySubscriptionEventMutation struct {
+	config
+	op                         Op
+	typ                        string
+	id                         *int
+	region                     *string
+	uid                        *string
+	platform                   *string
+	platform_user_id           *string
+	platform_group_id          *string
+	cloud_bot_id               *string
+	self_id                    *string
+	matched_material_ids       *[]int
+	appendmatched_material_ids []int
+	empty_result               *bool
+	filtered_payload           *[]byte
+	upload_time                *time.Time
+	created_at                 *time.Time
+	acknowledged_at            *time.Time
+	clearedFields              map[string]struct{}
+	subscription               *int
+	clearedsubscription        bool
+	done                       bool
+	oldValue                   func(context.Context) (*MysekaiBirthdaySubscriptionEvent, error)
+	predicates                 []predicate.MysekaiBirthdaySubscriptionEvent
+}
+
+var _ ent.Mutation = (*MysekaiBirthdaySubscriptionEventMutation)(nil)
+
+// mysekaibirthdaysubscriptioneventOption allows management of the mutation configuration using functional options.
+type mysekaibirthdaysubscriptioneventOption func(*MysekaiBirthdaySubscriptionEventMutation)
+
+// newMysekaiBirthdaySubscriptionEventMutation creates new mutation for the MysekaiBirthdaySubscriptionEvent entity.
+func newMysekaiBirthdaySubscriptionEventMutation(c config, op Op, opts ...mysekaibirthdaysubscriptioneventOption) *MysekaiBirthdaySubscriptionEventMutation {
+	m := &MysekaiBirthdaySubscriptionEventMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMysekaiBirthdaySubscriptionEvent,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMysekaiBirthdaySubscriptionEventID sets the ID field of the mutation.
+func withMysekaiBirthdaySubscriptionEventID(id int) mysekaibirthdaysubscriptioneventOption {
+	return func(m *MysekaiBirthdaySubscriptionEventMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *MysekaiBirthdaySubscriptionEvent
+		)
+		m.oldValue = func(ctx context.Context) (*MysekaiBirthdaySubscriptionEvent, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().MysekaiBirthdaySubscriptionEvent.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMysekaiBirthdaySubscriptionEvent sets the old MysekaiBirthdaySubscriptionEvent of the mutation.
+func withMysekaiBirthdaySubscriptionEvent(node *MysekaiBirthdaySubscriptionEvent) mysekaibirthdaysubscriptioneventOption {
+	return func(m *MysekaiBirthdaySubscriptionEventMutation) {
+		m.oldValue = func(context.Context) (*MysekaiBirthdaySubscriptionEvent, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MysekaiBirthdaySubscriptionEventMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MysekaiBirthdaySubscriptionEventMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("pjsk: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of MysekaiBirthdaySubscriptionEvent entities.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().MysekaiBirthdaySubscriptionEvent.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSubscriptionID sets the "subscription_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetSubscriptionID(i int) {
+	m.subscription = &i
+}
+
+// SubscriptionID returns the value of the "subscription_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SubscriptionID() (r int, exists bool) {
+	v := m.subscription
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubscriptionID returns the old "subscription_id" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldSubscriptionID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubscriptionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubscriptionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubscriptionID: %w", err)
+	}
+	return oldValue.SubscriptionID, nil
+}
+
+// ResetSubscriptionID resets all changes to the "subscription_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetSubscriptionID() {
+	m.subscription = nil
+}
+
+// SetRegion sets the "region" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetRegion(s string) {
+	m.region = &s
+}
+
+// Region returns the value of the "region" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) Region() (r string, exists bool) {
+	v := m.region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegion returns the old "region" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegion: %w", err)
+	}
+	return oldValue.Region, nil
+}
+
+// ResetRegion resets all changes to the "region" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetRegion() {
+	m.region = nil
+}
+
+// SetUID sets the "uid" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetUID(s string) {
+	m.uid = &s
+}
+
+// UID returns the value of the "uid" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) UID() (r string, exists bool) {
+	v := m.uid
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUID returns the old "uid" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldUID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUID: %w", err)
+	}
+	return oldValue.UID, nil
+}
+
+// ResetUID resets all changes to the "uid" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetUID() {
+	m.uid = nil
+}
+
+// SetPlatform sets the "platform" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetPlatform(s string) {
+	m.platform = &s
+}
+
+// Platform returns the value of the "platform" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) Platform() (r string, exists bool) {
+	v := m.platform
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatform returns the old "platform" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldPlatform(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatform is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatform requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatform: %w", err)
+	}
+	return oldValue.Platform, nil
+}
+
+// ResetPlatform resets all changes to the "platform" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetPlatform() {
+	m.platform = nil
+}
+
+// SetPlatformUserID sets the "platform_user_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetPlatformUserID(s string) {
+	m.platform_user_id = &s
+}
+
+// PlatformUserID returns the value of the "platform_user_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) PlatformUserID() (r string, exists bool) {
+	v := m.platform_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatformUserID returns the old "platform_user_id" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldPlatformUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatformUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatformUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatformUserID: %w", err)
+	}
+	return oldValue.PlatformUserID, nil
+}
+
+// ResetPlatformUserID resets all changes to the "platform_user_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetPlatformUserID() {
+	m.platform_user_id = nil
+}
+
+// SetPlatformGroupID sets the "platform_group_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetPlatformGroupID(s string) {
+	m.platform_group_id = &s
+}
+
+// PlatformGroupID returns the value of the "platform_group_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) PlatformGroupID() (r string, exists bool) {
+	v := m.platform_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatformGroupID returns the old "platform_group_id" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldPlatformGroupID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatformGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatformGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatformGroupID: %w", err)
+	}
+	return oldValue.PlatformGroupID, nil
+}
+
+// ResetPlatformGroupID resets all changes to the "platform_group_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetPlatformGroupID() {
+	m.platform_group_id = nil
+}
+
+// SetCloudBotID sets the "cloud_bot_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetCloudBotID(s string) {
+	m.cloud_bot_id = &s
+}
+
+// CloudBotID returns the value of the "cloud_bot_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) CloudBotID() (r string, exists bool) {
+	v := m.cloud_bot_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCloudBotID returns the old "cloud_bot_id" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldCloudBotID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCloudBotID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCloudBotID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCloudBotID: %w", err)
+	}
+	return oldValue.CloudBotID, nil
+}
+
+// ResetCloudBotID resets all changes to the "cloud_bot_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetCloudBotID() {
+	m.cloud_bot_id = nil
+}
+
+// SetSelfID sets the "self_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetSelfID(s string) {
+	m.self_id = &s
+}
+
+// SelfID returns the value of the "self_id" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SelfID() (r string, exists bool) {
+	v := m.self_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSelfID returns the old "self_id" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldSelfID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSelfID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSelfID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSelfID: %w", err)
+	}
+	return oldValue.SelfID, nil
+}
+
+// ResetSelfID resets all changes to the "self_id" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetSelfID() {
+	m.self_id = nil
+}
+
+// SetMatchedMaterialIds sets the "matched_material_ids" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetMatchedMaterialIds(i []int) {
+	m.matched_material_ids = &i
+	m.appendmatched_material_ids = nil
+}
+
+// MatchedMaterialIds returns the value of the "matched_material_ids" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) MatchedMaterialIds() (r []int, exists bool) {
+	v := m.matched_material_ids
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMatchedMaterialIds returns the old "matched_material_ids" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldMatchedMaterialIds(ctx context.Context) (v []int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMatchedMaterialIds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMatchedMaterialIds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMatchedMaterialIds: %w", err)
+	}
+	return oldValue.MatchedMaterialIds, nil
+}
+
+// AppendMatchedMaterialIds adds i to the "matched_material_ids" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AppendMatchedMaterialIds(i []int) {
+	m.appendmatched_material_ids = append(m.appendmatched_material_ids, i...)
+}
+
+// AppendedMatchedMaterialIds returns the list of values that were appended to the "matched_material_ids" field in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AppendedMatchedMaterialIds() ([]int, bool) {
+	if len(m.appendmatched_material_ids) == 0 {
+		return nil, false
+	}
+	return m.appendmatched_material_ids, true
+}
+
+// ResetMatchedMaterialIds resets all changes to the "matched_material_ids" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetMatchedMaterialIds() {
+	m.matched_material_ids = nil
+	m.appendmatched_material_ids = nil
+}
+
+// SetEmptyResult sets the "empty_result" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetEmptyResult(b bool) {
+	m.empty_result = &b
+}
+
+// EmptyResult returns the value of the "empty_result" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) EmptyResult() (r bool, exists bool) {
+	v := m.empty_result
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmptyResult returns the old "empty_result" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldEmptyResult(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmptyResult is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmptyResult requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmptyResult: %w", err)
+	}
+	return oldValue.EmptyResult, nil
+}
+
+// ResetEmptyResult resets all changes to the "empty_result" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetEmptyResult() {
+	m.empty_result = nil
+}
+
+// SetFilteredPayload sets the "filtered_payload" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetFilteredPayload(b []byte) {
+	m.filtered_payload = &b
+}
+
+// FilteredPayload returns the value of the "filtered_payload" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) FilteredPayload() (r []byte, exists bool) {
+	v := m.filtered_payload
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFilteredPayload returns the old "filtered_payload" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldFilteredPayload(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFilteredPayload is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFilteredPayload requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFilteredPayload: %w", err)
+	}
+	return oldValue.FilteredPayload, nil
+}
+
+// ClearFilteredPayload clears the value of the "filtered_payload" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ClearFilteredPayload() {
+	m.filtered_payload = nil
+	m.clearedFields[mysekaibirthdaysubscriptionevent.FieldFilteredPayload] = struct{}{}
+}
+
+// FilteredPayloadCleared returns if the "filtered_payload" field was cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) FilteredPayloadCleared() bool {
+	_, ok := m.clearedFields[mysekaibirthdaysubscriptionevent.FieldFilteredPayload]
+	return ok
+}
+
+// ResetFilteredPayload resets all changes to the "filtered_payload" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetFilteredPayload() {
+	m.filtered_payload = nil
+	delete(m.clearedFields, mysekaibirthdaysubscriptionevent.FieldFilteredPayload)
+}
+
+// SetUploadTime sets the "upload_time" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetUploadTime(t time.Time) {
+	m.upload_time = &t
+}
+
+// UploadTime returns the value of the "upload_time" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) UploadTime() (r time.Time, exists bool) {
+	v := m.upload_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUploadTime returns the old "upload_time" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldUploadTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUploadTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUploadTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUploadTime: %w", err)
+	}
+	return oldValue.UploadTime, nil
+}
+
+// ResetUploadTime resets all changes to the "upload_time" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetUploadTime() {
+	m.upload_time = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetAcknowledgedAt sets the "acknowledged_at" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetAcknowledgedAt(t time.Time) {
+	m.acknowledged_at = &t
+}
+
+// AcknowledgedAt returns the value of the "acknowledged_at" field in the mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AcknowledgedAt() (r time.Time, exists bool) {
+	v := m.acknowledged_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAcknowledgedAt returns the old "acknowledged_at" field's value of the MysekaiBirthdaySubscriptionEvent entity.
+// If the MysekaiBirthdaySubscriptionEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldAcknowledgedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAcknowledgedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAcknowledgedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAcknowledgedAt: %w", err)
+	}
+	return oldValue.AcknowledgedAt, nil
+}
+
+// ClearAcknowledgedAt clears the value of the "acknowledged_at" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ClearAcknowledgedAt() {
+	m.acknowledged_at = nil
+	m.clearedFields[mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt] = struct{}{}
+}
+
+// AcknowledgedAtCleared returns if the "acknowledged_at" field was cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AcknowledgedAtCleared() bool {
+	_, ok := m.clearedFields[mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt]
+	return ok
+}
+
+// ResetAcknowledgedAt resets all changes to the "acknowledged_at" field.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetAcknowledgedAt() {
+	m.acknowledged_at = nil
+	delete(m.clearedFields, mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt)
+}
+
+// ClearSubscription clears the "subscription" edge to the MysekaiBirthdaySubscription entity.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ClearSubscription() {
+	m.clearedsubscription = true
+	m.clearedFields[mysekaibirthdaysubscriptionevent.FieldSubscriptionID] = struct{}{}
+}
+
+// SubscriptionCleared reports if the "subscription" edge to the MysekaiBirthdaySubscription entity was cleared.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SubscriptionCleared() bool {
+	return m.clearedsubscription
+}
+
+// SubscriptionIDs returns the "subscription" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SubscriptionID instead. It exists only for internal usage by the builders.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SubscriptionIDs() (ids []int) {
+	if id := m.subscription; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSubscription resets all changes to the "subscription" edge.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetSubscription() {
+	m.subscription = nil
+	m.clearedsubscription = false
+}
+
+// Where appends a list predicates to the MysekaiBirthdaySubscriptionEventMutation builder.
+func (m *MysekaiBirthdaySubscriptionEventMutation) Where(ps ...predicate.MysekaiBirthdaySubscriptionEvent) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MysekaiBirthdaySubscriptionEventMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MysekaiBirthdaySubscriptionEventMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.MysekaiBirthdaySubscriptionEvent, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MysekaiBirthdaySubscriptionEventMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (MysekaiBirthdaySubscriptionEvent).
+func (m *MysekaiBirthdaySubscriptionEventMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MysekaiBirthdaySubscriptionEventMutation) Fields() []string {
+	fields := make([]string, 0, 14)
+	if m.subscription != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldSubscriptionID)
+	}
+	if m.region != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldRegion)
+	}
+	if m.uid != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldUID)
+	}
+	if m.platform != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldPlatform)
+	}
+	if m.platform_user_id != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldPlatformUserID)
+	}
+	if m.platform_group_id != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldPlatformGroupID)
+	}
+	if m.cloud_bot_id != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldCloudBotID)
+	}
+	if m.self_id != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldSelfID)
+	}
+	if m.matched_material_ids != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldMatchedMaterialIds)
+	}
+	if m.empty_result != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldEmptyResult)
+	}
+	if m.filtered_payload != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldFilteredPayload)
+	}
+	if m.upload_time != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldUploadTime)
+	}
+	if m.created_at != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldCreatedAt)
+	}
+	if m.acknowledged_at != nil {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MysekaiBirthdaySubscriptionEventMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.FieldSubscriptionID:
+		return m.SubscriptionID()
+	case mysekaibirthdaysubscriptionevent.FieldRegion:
+		return m.Region()
+	case mysekaibirthdaysubscriptionevent.FieldUID:
+		return m.UID()
+	case mysekaibirthdaysubscriptionevent.FieldPlatform:
+		return m.Platform()
+	case mysekaibirthdaysubscriptionevent.FieldPlatformUserID:
+		return m.PlatformUserID()
+	case mysekaibirthdaysubscriptionevent.FieldPlatformGroupID:
+		return m.PlatformGroupID()
+	case mysekaibirthdaysubscriptionevent.FieldCloudBotID:
+		return m.CloudBotID()
+	case mysekaibirthdaysubscriptionevent.FieldSelfID:
+		return m.SelfID()
+	case mysekaibirthdaysubscriptionevent.FieldMatchedMaterialIds:
+		return m.MatchedMaterialIds()
+	case mysekaibirthdaysubscriptionevent.FieldEmptyResult:
+		return m.EmptyResult()
+	case mysekaibirthdaysubscriptionevent.FieldFilteredPayload:
+		return m.FilteredPayload()
+	case mysekaibirthdaysubscriptionevent.FieldUploadTime:
+		return m.UploadTime()
+	case mysekaibirthdaysubscriptionevent.FieldCreatedAt:
+		return m.CreatedAt()
+	case mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt:
+		return m.AcknowledgedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MysekaiBirthdaySubscriptionEventMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.FieldSubscriptionID:
+		return m.OldSubscriptionID(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldRegion:
+		return m.OldRegion(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldUID:
+		return m.OldUID(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldPlatform:
+		return m.OldPlatform(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldPlatformUserID:
+		return m.OldPlatformUserID(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldPlatformGroupID:
+		return m.OldPlatformGroupID(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldCloudBotID:
+		return m.OldCloudBotID(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldSelfID:
+		return m.OldSelfID(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldMatchedMaterialIds:
+		return m.OldMatchedMaterialIds(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldEmptyResult:
+		return m.OldEmptyResult(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldFilteredPayload:
+		return m.OldFilteredPayload(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldUploadTime:
+		return m.OldUploadTime(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt:
+		return m.OldAcknowledgedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown MysekaiBirthdaySubscriptionEvent field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MysekaiBirthdaySubscriptionEventMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.FieldSubscriptionID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubscriptionID(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegion(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldUID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUID(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldPlatform:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatform(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldPlatformUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatformUserID(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldPlatformGroupID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatformGroupID(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldCloudBotID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCloudBotID(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldSelfID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSelfID(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldMatchedMaterialIds:
+		v, ok := value.([]int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMatchedMaterialIds(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldEmptyResult:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmptyResult(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldFilteredPayload:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFilteredPayload(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldUploadTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUploadTime(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAcknowledgedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscriptionEvent field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscriptionEvent numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(mysekaibirthdaysubscriptionevent.FieldFilteredPayload) {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldFilteredPayload)
+	}
+	if m.FieldCleared(mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt) {
+		fields = append(fields, mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ClearField(name string) error {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.FieldFilteredPayload:
+		m.ClearFilteredPayload()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt:
+		m.ClearAcknowledgedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscriptionEvent nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetField(name string) error {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.FieldSubscriptionID:
+		m.ResetSubscriptionID()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldRegion:
+		m.ResetRegion()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldUID:
+		m.ResetUID()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldPlatform:
+		m.ResetPlatform()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldPlatformUserID:
+		m.ResetPlatformUserID()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldPlatformGroupID:
+		m.ResetPlatformGroupID()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldCloudBotID:
+		m.ResetCloudBotID()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldSelfID:
+		m.ResetSelfID()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldMatchedMaterialIds:
+		m.ResetMatchedMaterialIds()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldEmptyResult:
+		m.ResetEmptyResult()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldFilteredPayload:
+		m.ResetFilteredPayload()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldUploadTime:
+		m.ResetUploadTime()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case mysekaibirthdaysubscriptionevent.FieldAcknowledgedAt:
+		m.ResetAcknowledgedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscriptionEvent field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.subscription != nil {
+		edges = append(edges, mysekaibirthdaysubscriptionevent.EdgeSubscription)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.EdgeSubscription:
+		if id := m.subscription; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedsubscription {
+		edges = append(edges, mysekaibirthdaysubscriptionevent.EdgeSubscription)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MysekaiBirthdaySubscriptionEventMutation) EdgeCleared(name string) bool {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.EdgeSubscription:
+		return m.clearedsubscription
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ClearEdge(name string) error {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.EdgeSubscription:
+		m.ClearSubscription()
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscriptionEvent unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MysekaiBirthdaySubscriptionEventMutation) ResetEdge(name string) error {
+	switch name {
+	case mysekaibirthdaysubscriptionevent.EdgeSubscription:
+		m.ResetSubscription()
+		return nil
+	}
+	return fmt.Errorf("unknown MysekaiBirthdaySubscriptionEvent edge %s", name)
 }
 
 // PendingAliasMutation represents an operation that mutates the PendingAlias nodes in the graph.

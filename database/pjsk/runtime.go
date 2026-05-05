@@ -7,12 +7,15 @@ import (
 	"haruki-cloud/database/pjsk/aliasadmin"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
+	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
+	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/database/pjsk/pendingalias"
 	"haruki-cloud/database/pjsk/rejectedalias"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
 	"haruki-cloud/database/pjsk/userpreference"
 	"haruki-cloud/ent/pjsk/schema"
+	"time"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -63,6 +66,92 @@ func init() {
 	groupaliasDescAlias := groupaliasFields[4].Descriptor()
 	// groupalias.AliasValidator is a validator for the "alias" field. It is called by the builders before save.
 	groupalias.AliasValidator = groupaliasDescAlias.Validators[0].(func(string) error)
+	mysekaibirthdaysubscriptionFields := schema.MysekaiBirthdaySubscription{}.Fields()
+	_ = mysekaibirthdaysubscriptionFields
+	// mysekaibirthdaysubscriptionDescRegion is the schema descriptor for region field.
+	mysekaibirthdaysubscriptionDescRegion := mysekaibirthdaysubscriptionFields[1].Descriptor()
+	// mysekaibirthdaysubscription.RegionValidator is a validator for the "region" field. It is called by the builders before save.
+	mysekaibirthdaysubscription.RegionValidator = mysekaibirthdaysubscriptionDescRegion.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptionDescUID is the schema descriptor for uid field.
+	mysekaibirthdaysubscriptionDescUID := mysekaibirthdaysubscriptionFields[2].Descriptor()
+	// mysekaibirthdaysubscription.UIDValidator is a validator for the "uid" field. It is called by the builders before save.
+	mysekaibirthdaysubscription.UIDValidator = mysekaibirthdaysubscriptionDescUID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptionDescPlatform is the schema descriptor for platform field.
+	mysekaibirthdaysubscriptionDescPlatform := mysekaibirthdaysubscriptionFields[3].Descriptor()
+	// mysekaibirthdaysubscription.PlatformValidator is a validator for the "platform" field. It is called by the builders before save.
+	mysekaibirthdaysubscription.PlatformValidator = mysekaibirthdaysubscriptionDescPlatform.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptionDescPlatformUserID is the schema descriptor for platform_user_id field.
+	mysekaibirthdaysubscriptionDescPlatformUserID := mysekaibirthdaysubscriptionFields[4].Descriptor()
+	// mysekaibirthdaysubscription.PlatformUserIDValidator is a validator for the "platform_user_id" field. It is called by the builders before save.
+	mysekaibirthdaysubscription.PlatformUserIDValidator = mysekaibirthdaysubscriptionDescPlatformUserID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptionDescPlatformGroupID is the schema descriptor for platform_group_id field.
+	mysekaibirthdaysubscriptionDescPlatformGroupID := mysekaibirthdaysubscriptionFields[5].Descriptor()
+	// mysekaibirthdaysubscription.PlatformGroupIDValidator is a validator for the "platform_group_id" field. It is called by the builders before save.
+	mysekaibirthdaysubscription.PlatformGroupIDValidator = mysekaibirthdaysubscriptionDescPlatformGroupID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptionDescCloudBotID is the schema descriptor for cloud_bot_id field.
+	mysekaibirthdaysubscriptionDescCloudBotID := mysekaibirthdaysubscriptionFields[6].Descriptor()
+	// mysekaibirthdaysubscription.CloudBotIDValidator is a validator for the "cloud_bot_id" field. It is called by the builders before save.
+	mysekaibirthdaysubscription.CloudBotIDValidator = mysekaibirthdaysubscriptionDescCloudBotID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptionDescSelfID is the schema descriptor for self_id field.
+	mysekaibirthdaysubscriptionDescSelfID := mysekaibirthdaysubscriptionFields[7].Descriptor()
+	// mysekaibirthdaysubscription.SelfIDValidator is a validator for the "self_id" field. It is called by the builders before save.
+	mysekaibirthdaysubscription.SelfIDValidator = mysekaibirthdaysubscriptionDescSelfID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptionDescToken is the schema descriptor for token field.
+	mysekaibirthdaysubscriptionDescToken := mysekaibirthdaysubscriptionFields[9].Descriptor()
+	// mysekaibirthdaysubscription.TokenValidator is a validator for the "token" field. It is called by the builders before save.
+	mysekaibirthdaysubscription.TokenValidator = mysekaibirthdaysubscriptionDescToken.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptionDescActive is the schema descriptor for active field.
+	mysekaibirthdaysubscriptionDescActive := mysekaibirthdaysubscriptionFields[10].Descriptor()
+	// mysekaibirthdaysubscription.DefaultActive holds the default value on creation for the active field.
+	mysekaibirthdaysubscription.DefaultActive = mysekaibirthdaysubscriptionDescActive.Default.(bool)
+	// mysekaibirthdaysubscriptionDescCreatedAt is the schema descriptor for created_at field.
+	mysekaibirthdaysubscriptionDescCreatedAt := mysekaibirthdaysubscriptionFields[12].Descriptor()
+	// mysekaibirthdaysubscription.DefaultCreatedAt holds the default value on creation for the created_at field.
+	mysekaibirthdaysubscription.DefaultCreatedAt = mysekaibirthdaysubscriptionDescCreatedAt.Default.(func() time.Time)
+	// mysekaibirthdaysubscriptionDescUpdatedAt is the schema descriptor for updated_at field.
+	mysekaibirthdaysubscriptionDescUpdatedAt := mysekaibirthdaysubscriptionFields[13].Descriptor()
+	// mysekaibirthdaysubscription.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	mysekaibirthdaysubscription.DefaultUpdatedAt = mysekaibirthdaysubscriptionDescUpdatedAt.Default.(func() time.Time)
+	// mysekaibirthdaysubscription.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	mysekaibirthdaysubscription.UpdateDefaultUpdatedAt = mysekaibirthdaysubscriptionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	mysekaibirthdaysubscriptioneventFields := schema.MysekaiBirthdaySubscriptionEvent{}.Fields()
+	_ = mysekaibirthdaysubscriptioneventFields
+	// mysekaibirthdaysubscriptioneventDescRegion is the schema descriptor for region field.
+	mysekaibirthdaysubscriptioneventDescRegion := mysekaibirthdaysubscriptioneventFields[2].Descriptor()
+	// mysekaibirthdaysubscriptionevent.RegionValidator is a validator for the "region" field. It is called by the builders before save.
+	mysekaibirthdaysubscriptionevent.RegionValidator = mysekaibirthdaysubscriptioneventDescRegion.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptioneventDescUID is the schema descriptor for uid field.
+	mysekaibirthdaysubscriptioneventDescUID := mysekaibirthdaysubscriptioneventFields[3].Descriptor()
+	// mysekaibirthdaysubscriptionevent.UIDValidator is a validator for the "uid" field. It is called by the builders before save.
+	mysekaibirthdaysubscriptionevent.UIDValidator = mysekaibirthdaysubscriptioneventDescUID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptioneventDescPlatform is the schema descriptor for platform field.
+	mysekaibirthdaysubscriptioneventDescPlatform := mysekaibirthdaysubscriptioneventFields[4].Descriptor()
+	// mysekaibirthdaysubscriptionevent.PlatformValidator is a validator for the "platform" field. It is called by the builders before save.
+	mysekaibirthdaysubscriptionevent.PlatformValidator = mysekaibirthdaysubscriptioneventDescPlatform.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptioneventDescPlatformUserID is the schema descriptor for platform_user_id field.
+	mysekaibirthdaysubscriptioneventDescPlatformUserID := mysekaibirthdaysubscriptioneventFields[5].Descriptor()
+	// mysekaibirthdaysubscriptionevent.PlatformUserIDValidator is a validator for the "platform_user_id" field. It is called by the builders before save.
+	mysekaibirthdaysubscriptionevent.PlatformUserIDValidator = mysekaibirthdaysubscriptioneventDescPlatformUserID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptioneventDescPlatformGroupID is the schema descriptor for platform_group_id field.
+	mysekaibirthdaysubscriptioneventDescPlatformGroupID := mysekaibirthdaysubscriptioneventFields[6].Descriptor()
+	// mysekaibirthdaysubscriptionevent.PlatformGroupIDValidator is a validator for the "platform_group_id" field. It is called by the builders before save.
+	mysekaibirthdaysubscriptionevent.PlatformGroupIDValidator = mysekaibirthdaysubscriptioneventDescPlatformGroupID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptioneventDescCloudBotID is the schema descriptor for cloud_bot_id field.
+	mysekaibirthdaysubscriptioneventDescCloudBotID := mysekaibirthdaysubscriptioneventFields[7].Descriptor()
+	// mysekaibirthdaysubscriptionevent.CloudBotIDValidator is a validator for the "cloud_bot_id" field. It is called by the builders before save.
+	mysekaibirthdaysubscriptionevent.CloudBotIDValidator = mysekaibirthdaysubscriptioneventDescCloudBotID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptioneventDescSelfID is the schema descriptor for self_id field.
+	mysekaibirthdaysubscriptioneventDescSelfID := mysekaibirthdaysubscriptioneventFields[8].Descriptor()
+	// mysekaibirthdaysubscriptionevent.SelfIDValidator is a validator for the "self_id" field. It is called by the builders before save.
+	mysekaibirthdaysubscriptionevent.SelfIDValidator = mysekaibirthdaysubscriptioneventDescSelfID.Validators[0].(func(string) error)
+	// mysekaibirthdaysubscriptioneventDescEmptyResult is the schema descriptor for empty_result field.
+	mysekaibirthdaysubscriptioneventDescEmptyResult := mysekaibirthdaysubscriptioneventFields[10].Descriptor()
+	// mysekaibirthdaysubscriptionevent.DefaultEmptyResult holds the default value on creation for the empty_result field.
+	mysekaibirthdaysubscriptionevent.DefaultEmptyResult = mysekaibirthdaysubscriptioneventDescEmptyResult.Default.(bool)
+	// mysekaibirthdaysubscriptioneventDescCreatedAt is the schema descriptor for created_at field.
+	mysekaibirthdaysubscriptioneventDescCreatedAt := mysekaibirthdaysubscriptioneventFields[13].Descriptor()
+	// mysekaibirthdaysubscriptionevent.DefaultCreatedAt holds the default value on creation for the created_at field.
+	mysekaibirthdaysubscriptionevent.DefaultCreatedAt = mysekaibirthdaysubscriptioneventDescCreatedAt.Default.(func() time.Time)
 	pendingaliasFields := schema.PendingAlias{}.Fields()
 	_ = pendingaliasFields
 	// pendingaliasDescAliasType is the schema descriptor for alias_type field.

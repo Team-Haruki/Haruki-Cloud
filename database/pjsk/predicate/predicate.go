@@ -18,6 +18,12 @@ type GameAccount func(*sql.Selector)
 // GroupAlias is the predicate function for groupalias builders.
 type GroupAlias func(*sql.Selector)
 
+// MysekaiBirthdaySubscription is the predicate function for mysekaibirthdaysubscription builders.
+type MysekaiBirthdaySubscription func(*sql.Selector)
+
+// MysekaiBirthdaySubscriptionEvent is the predicate function for mysekaibirthdaysubscriptionevent builders.
+type MysekaiBirthdaySubscriptionEvent func(*sql.Selector)
+
 // PendingAlias is the predicate function for pendingalias builders.
 type PendingAlias func(*sql.Selector)
 

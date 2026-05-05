@@ -20,6 +20,10 @@ type Tx struct {
 	GameAccount *GameAccountClient
 	// GroupAlias is the client for interacting with the GroupAlias builders.
 	GroupAlias *GroupAliasClient
+	// MysekaiBirthdaySubscription is the client for interacting with the MysekaiBirthdaySubscription builders.
+	MysekaiBirthdaySubscription *MysekaiBirthdaySubscriptionClient
+	// MysekaiBirthdaySubscriptionEvent is the client for interacting with the MysekaiBirthdaySubscriptionEvent builders.
+	MysekaiBirthdaySubscriptionEvent *MysekaiBirthdaySubscriptionEventClient
 	// PendingAlias is the client for interacting with the PendingAlias builders.
 	PendingAlias *PendingAliasClient
 	// RejectedAlias is the client for interacting with the RejectedAlias builders.
@@ -165,6 +169,8 @@ func (tx *Tx) init() {
 	tx.AliasAdmin = NewAliasAdminClient(tx.config)
 	tx.GameAccount = NewGameAccountClient(tx.config)
 	tx.GroupAlias = NewGroupAliasClient(tx.config)
+	tx.MysekaiBirthdaySubscription = NewMysekaiBirthdaySubscriptionClient(tx.config)
+	tx.MysekaiBirthdaySubscriptionEvent = NewMysekaiBirthdaySubscriptionEventClient(tx.config)
 	tx.PendingAlias = NewPendingAliasClient(tx.config)
 	tx.RejectedAlias = NewRejectedAliasClient(tx.config)
 	tx.UserBinding = NewUserBindingClient(tx.config)

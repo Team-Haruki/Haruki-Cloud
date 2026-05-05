@@ -48,6 +48,16 @@ redis:
   port: 6379
   password: ""
 
+hmes:
+  # Public HTTP base URL used by Client for SSE delivery.
+  # HMES is optional; when empty, subscriptions are still stored in Cloud but
+  # Client will not receive real-time push connection actions.
+  public_base_url: "http://127.0.0.1:7910"
+  # Internal HTTP base URL used by Cloud to close stale SSE subscriptions.
+  internal_base_url: "http://127.0.0.1:7910"
+  internal_token: ""
+  user_agent: "Haruki-Cloud"
+
 censor:
   # Text censor — Baidu AI Content Censor
   baidu_api_key: ""

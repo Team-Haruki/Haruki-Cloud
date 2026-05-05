@@ -150,6 +150,12 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_TOOLBOX_API_TOKEN", &cfg.Toolbox.APIToken)
 	envStr("HARUKI_TOOLBOX_USER_AGENT", &cfg.Toolbox.UserAgent)
 
+	// HMES
+	envStr("HARUKI_HMES_PUBLIC_BASE_URL", &cfg.HMES.PublicBaseURL)
+	envStr("HARUKI_HMES_INTERNAL_BASE_URL", &cfg.HMES.InternalBaseURL)
+	envStr("HARUKI_HMES_INTERNAL_TOKEN", &cfg.HMES.InternalToken)
+	envStr("HARUKI_HMES_USER_AGENT", &cfg.HMES.UserAgent)
+
 	// Tracker
 	envStr("HARUKI_TRACKER_BASE_URL", &cfg.Tracker.BaseURL)
 	envStr("HARUKI_TRACKER_USER_AGENT", &cfg.Tracker.UserAgent)
@@ -360,6 +366,13 @@ type ToolboxConfig struct {
 	UserAgent string `yaml:"user_agent"`
 }
 
+type HMESConfig struct {
+	PublicBaseURL   string `yaml:"public_base_url"`
+	InternalBaseURL string `yaml:"internal_base_url"`
+	InternalToken   string `yaml:"internal_token"`
+	UserAgent       string `yaml:"user_agent"`
+}
+
 type Config struct {
 	Profile     Profile           `yaml:"profile"`
 	Backend     BackendConfig     `yaml:"backend"`
@@ -372,6 +385,7 @@ type Config struct {
 	UsersDB     UsersDBConfig     `yaml:"users_db"`
 	Redis       RedisConfig       `yaml:"redis"`
 	Toolbox     ToolboxConfig     `yaml:"toolbox"`
+	HMES        HMESConfig        `yaml:"hmes"`
 	SekaiAPI    SekaiAPIConfig    `yaml:"sekai_api"`
 	Tracker     TrackerConfig     `yaml:"tracker"`
 }

@@ -1,7 +1,6 @@
 package pjsk
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -13,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/subscription"
 	"haruki-cloud/utils/logger"
 
+	json "github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/shamaton/msgpack/v3"
 )

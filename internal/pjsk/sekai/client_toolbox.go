@@ -3,7 +3,6 @@ package sekai
 import (
 	"bytes"
 	"context"
-	stdjson "encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -40,17 +39,17 @@ type MysekaiBirthdayEventLookupRequest struct {
 }
 
 type MysekaiBirthdayEvent struct {
-	EventID             string             `json:"event_id"`
-	SubscriptionID      string             `json:"subscription_id"`
-	SubscriptionVersion string             `json:"subscription_version"`
-	PayloadRef          string             `json:"payload_ref,omitempty"`
-	Region              string             `json:"region"`
-	UID                 string             `json:"uid"`
-	MatchedMaterialIDs  []int              `json:"matched_material_ids"`
-	EmptyResult         bool               `json:"empty_result"`
-	FilteredPayload     stdjson.RawMessage `json:"filtered_payload,omitempty"`
-	UploadTime          int64              `json:"upload_time"`
-	CreatedAt           int64              `json:"created_at"`
+	EventID             string                 `json:"event_id"`
+	SubscriptionID      string                 `json:"subscription_id"`
+	SubscriptionVersion string                 `json:"subscription_version"`
+	PayloadRef          string                 `json:"payload_ref,omitempty"`
+	Region              string                 `json:"region"`
+	UID                 string                 `json:"uid"`
+	MatchedMaterialIDs  []int                  `json:"matched_material_ids"`
+	EmptyResult         bool                   `json:"empty_result"`
+	FilteredPayload     sonic.NoCopyRawMessage `json:"filtered_payload,omitempty"`
+	UploadTime          int64                  `json:"upload_time"`
+	CreatedAt           int64                  `json:"created_at"`
 }
 
 // NewToolboxClient constructs a HarukiToolboxClient bound to the supplied config.
@@ -132,7 +131,7 @@ func (c *HarukiToolboxClient) GetMysekaiBirthdayEvent(ctx context.Context, req M
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
 	}
 	var event MysekaiBirthdayEvent
-	if err := stdjson.Unmarshal(resp.Body(), &event); err != nil {
+	if err := sonic.Unmarshal(resp.Body(), &event); err != nil {
 		return nil, fmt.Errorf("toolbox: failed to parse birthday event response: %w", err)
 	}
 	return &event, nil

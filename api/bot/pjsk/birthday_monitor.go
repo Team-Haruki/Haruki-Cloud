@@ -69,13 +69,24 @@ type birthdayTokenValidationResponse struct {
 	PendingEvents       []subscription.PendingBirthdayEvent `json:"pending_events,omitempty"`
 }
 
+const birthdayMonitorCommandPath = "mysekai/birthday-monitor"
+
+var birthdayMonitorCommandPrefixes = []string{
+	"/烤森生日取消监听",
+	"/mysekai birthday unmonitor",
+	"/ms生日取消监听",
+	"/烤森生日监听",
+	"/mysekai birthday monitor",
+	"/ms生日监听",
+}
+
 func registerBirthdayMonitorRoutes(pjsk fiber.Router, app *fiber.App, renderApp *renderapp.App) {
 	if renderApp == nil {
 		return
 	}
-	pjsk.Post("/mysekai/birthday-monitor", makeBirthdayMonitorHandler(renderApp))
-	pjsk.Post("/mysekai/birthday-monitor/render", makeBirthdayMonitorRenderHandler(renderApp))
-	pjsk.Post("/mysekai/birthday-monitor/ack", makeBirthdayMonitorAckHandler(renderApp))
+	pjsk.Post("/"+birthdayMonitorCommandPath, makeBirthdayMonitorHandler(renderApp))
+	pjsk.Post("/"+birthdayMonitorCommandPath+"/render", makeBirthdayMonitorRenderHandler(renderApp))
+	pjsk.Post("/"+birthdayMonitorCommandPath+"/ack", makeBirthdayMonitorAckHandler(renderApp))
 
 	internal := app.Group("/internal", api.VerifyAPIAuthorization())
 	internal.Get("/subscriptions/mysekai-birthday/active", makeBirthdayMonitorActiveHandler(renderApp))

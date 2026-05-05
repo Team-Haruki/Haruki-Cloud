@@ -60,8 +60,8 @@ const slowCommandTraceThreshold = 1500 * time.Millisecond
 // Pass nil for redisClient in unit tests (auth is skipped).
 //
 // When botDBClient is non-nil, the manifest table is synchronized from the
-// registered handler routes on startup and the manifest endpoint returns live
-// data from the database.
+// registered command manifest routes on startup and the manifest endpoint returns
+// live data from the database.
 // Pass nil to keep the placeholder response (e.g. in unit tests).
 func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) {
 	RegisterPJSKBotRoutesWithContext(context.Background(), app, renderApp, redisClient, botDBClient, noiseKeyPair)

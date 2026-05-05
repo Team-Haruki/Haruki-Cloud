@@ -3,13 +3,15 @@ package pjsk
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	botDB "haruki-cloud/database/bot"
 	commandhandler "haruki-cloud/internal/handler"
+	pjskhandler "haruki-cloud/internal/pjsk/handler"
 )
 
 // SeedCommandManifests synchronizes command_manifests from the registered
-// handler-derived bot routes. Existing rows keep their
+// command manifest routes. Existing rows keep their
 // current priority, but path-level protocol fields are refreshed on startup.
 //
 // This is called automatically by RegisterPJSKBotRoutes when a botDBClient is provided.
@@ -19,7 +21,7 @@ func SeedCommandManifests(ctx context.Context, client *botDB.Client) error {
 		return err
 	}
 
-	routes := commandhandler.ListBotRoutes()
+	routes := commandManifestRoutes()
 	existingByKey := make(map[string]*botDB.CommandManifest, len(rows))
 	for _, row := range rows {
 		existingByKey[manifestKey(row.CommandModule, row.CommandPath)] = row
@@ -55,6 +57,55 @@ func SeedCommandManifests(ctx context.Context, client *botDB.Client) error {
 	}
 	_, err = client.CommandManifest.CreateBulk(bulk...).Save(ctx)
 	return err
+}
+
+func commandManifestRoutes() []commandhandler.BotRoute {
+	routes := commandhandler.ListBotRoutes()
+	return appendSpecialCommandManifestRoute(routes, birthdayMonitorManifestRoute())
+}
+
+func birthdayMonitorManifestRoute() commandhandler.BotRoute {
+	return commandhandler.BotRoute{
+		Path:             birthdayMonitorCommandPath,
+		Module:           pjskhandler.BotModulePJSK,
+		Commands:         slices.Clone(birthdayMonitorCommandPrefixes),
+		CommandMode:      commandhandler.DefaultBotCommandMode,
+		AdditionalParams: slices.Clone(commandhandler.DefaultBotAdditionalParams),
+	}
+}
+
+func appendSpecialCommandManifestRoute(routes []commandhandler.BotRoute, special commandhandler.BotRoute) []commandhandler.BotRoute {
+	specialKey := manifestKey(special.Module, special.Path)
+	for index := range routes {
+		if manifestKey(routes[index].Module, routes[index].Path) != specialKey {
+			continue
+		}
+		routes[index].Commands = mergeCommandPrefixes(routes[index].Commands, special.Commands)
+		if routes[index].CommandMode == "" {
+			routes[index].CommandMode = special.CommandMode
+		}
+		if len(routes[index].AdditionalParams) == 0 {
+			routes[index].AdditionalParams = slices.Clone(special.AdditionalParams)
+		}
+		return routes
+	}
+	return append(routes, special)
+}
+
+func mergeCommandPrefixes(left, right []string) []string {
+	seen := make(map[string]struct{}, len(left)+len(right))
+	merged := make([]string, 0, len(left)+len(right))
+	for _, commands := range [][]string{left, right} {
+		for _, command := range commands {
+			if _, ok := seen[command]; ok {
+				continue
+			}
+			seen[command] = struct{}{}
+			merged = append(merged, command)
+		}
+	}
+	slices.Sort(merged)
+	return merged
 }
 
 func manifestKey(module, path string) string {

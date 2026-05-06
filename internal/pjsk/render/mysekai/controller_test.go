@@ -1660,8 +1660,17 @@ func TestResolveMysekaiMapSiteIDs(t *testing.T) {
 func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")
+	assetRoot := filepath.Join(root, "asset")
 	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
 		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	birthdayYear := time.Now().Year() - 1
+	birthdayDir := filepath.Join(assetRoot, "jp-assets", "ondemand", "mysekai", "birthday", fmt.Sprintf("haruka_%d", birthdayYear))
+	if err := os.MkdirAll(birthdayDir, 0o755); err != nil {
+		t.Fatalf("mkdir birthday asset dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(birthdayDir, "icon_refresh.png"), []byte("png"), 0o644); err != nil {
+		t.Fatalf("write birthday asset: %v", err)
 	}
 
 	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiSiteHarvestFixtures.json"), []map[string]any{
@@ -1740,7 +1749,7 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
   }
 }`
 
-	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
+	controller := NewController(nil, nil, renderregion.JP, assets.NewAssetHelper(assetRoot, nil), MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}).WithMySekaiData([]byte(mysekaiJSON))
 	req, err := controller.BuildMapRequest(MapQuery{Region: "jp", MapIDs: []int{5}})
 	if err != nil {
 		t.Fatalf("BuildMapRequest() error = %v", err)
@@ -1776,7 +1785,7 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 		t.Fatalf("unexpected normal point offset_z: %v", normalPoint.OffsetZ)
 	}
 
-	if birthdayPoint.ImagePath != fmt.Sprintf("static_images/mysekai/birthday/haruka_%d/icon_refresh.png", time.Now().Year()) {
+	if birthdayPoint.ImagePath != fmt.Sprintf("asset/jp-assets/ondemand/mysekai/birthday/haruka_%d/icon_refresh.png", birthdayYear) {
 		t.Fatalf("unexpected birthday point image path: %q", birthdayPoint.ImagePath)
 	}
 	gotFallback := "<nil>"

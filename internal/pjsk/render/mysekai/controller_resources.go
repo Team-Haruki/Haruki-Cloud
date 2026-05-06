@@ -2,7 +2,11 @@ package mysekai
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -332,6 +336,72 @@ func mysekaiBirthdayCharacterImageName(item map[string]any) string {
 		return ""
 	}
 	return strings.ToLower(strings.TrimSpace(stringValue(item["givenNameEnglish"])))
+}
+
+func (c *Controller) resolveMysekaiBirthdayRefreshIconPath(region renderregion.Value, item map[string]any, now time.Time) string {
+	if c == nil || c.assets == nil {
+		return ""
+	}
+	imageName := mysekaiBirthdayCharacterImageName(item)
+	if imageName == "" {
+		return ""
+	}
+
+	currentYear := now.Year()
+	choose := ""
+	chooseYear := 0
+	chooseFuture := false
+
+	for _, root := range c.assets.Roots() {
+		root = strings.TrimSpace(root)
+		if root == "" || strings.HasPrefix(root, "http://") || strings.HasPrefix(root, "https://") {
+			continue
+		}
+		baseDir := filepath.Join(root, strings.ToLower(strings.TrimSpace(region.String()))+"-assets", assets.RegionAssetOnDemand, "mysekai", "birthday")
+		entries, err := os.ReadDir(baseDir)
+		if err != nil {
+			continue
+		}
+		prefix := imageName + "_"
+		for _, entry := range entries {
+			if !entry.IsDir() || !strings.HasPrefix(entry.Name(), prefix) {
+				continue
+			}
+			iconPath := filepath.Join(baseDir, entry.Name(), "icon_refresh.png")
+			if _, err := os.Stat(iconPath); err != nil {
+				continue
+			}
+			year, err := strconv.Atoi(strings.TrimPrefix(entry.Name(), prefix))
+			if err != nil {
+				continue
+			}
+			if year == currentYear {
+				return assets.ResolveRegionAssetPath(c.assets, region.String(), filepath.ToSlash(filepath.Join("mysekai", "birthday", entry.Name(), "icon_refresh.png")))
+			}
+			isFuture := year > currentYear
+			switch {
+			case choose == "":
+				choose = entry.Name()
+				chooseYear = year
+				chooseFuture = isFuture
+			case !isFuture && chooseFuture:
+				choose = entry.Name()
+				chooseYear = year
+				chooseFuture = false
+			case !isFuture && !chooseFuture && year > chooseYear:
+				choose = entry.Name()
+				chooseYear = year
+			case isFuture && chooseFuture && year < chooseYear:
+				choose = entry.Name()
+				chooseYear = year
+			}
+		}
+	}
+
+	if choose == "" {
+		return ""
+	}
+	return assets.ResolveRegionAssetPath(c.assets, region.String(), filepath.ToSlash(filepath.Join("mysekai", "birthday", choose, "icon_refresh.png")))
 }
 
 func mysekaiIsBirthdayDrop(resourceType string, resourceID int) bool {

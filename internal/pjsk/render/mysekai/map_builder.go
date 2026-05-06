@@ -155,8 +155,8 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 			if fixtureType == "birthday_plant" {
 				fallbackImagePath = new(c.staticPath("mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png"))
 				if characterID := birthdayCharacterByPos[posKey]; characterID > 0 {
-					if imageName := mysekaiBirthdayCharacterImageName(characterMap[characterID]); imageName != "" {
-						imageRelPath = fmt.Sprintf("mysekai/birthday/%s_%d/icon_refresh.png", imageName, time.Now().Year())
+					if birthdayPath := c.resolveMysekaiBirthdayRefreshIconPath(region, characterMap[characterID], time.Now()); birthdayPath != "" {
+						imageRelPath = birthdayPath
 					}
 				}
 				size = new(50)
@@ -164,9 +164,14 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 				offsetZ = 0
 			}
 
+			imagePath := c.staticPath(imageRelPath)
+			if strings.HasPrefix(imageRelPath, "asset/") {
+				imagePath = imageRelPath
+			}
+
 			harvestPoints = append(harvestPoints, drawing.MysekaiMsrMapHarvestPoint{
 				ID:                pointID,
-				ImagePath:         c.staticPath(imageRelPath),
+				ImagePath:         imagePath,
 				FallbackImagePath: fallbackImagePath,
 				PositionX:         positionX,
 				PositionZ:         positionZ,

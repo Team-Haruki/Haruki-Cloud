@@ -119,11 +119,29 @@ func (c *Controller) prepareSnapshotOnly(region string) (map[string]any, renderr
 }
 
 func (c *Controller) SnapshotExpired(region string) (bool, error) {
-	merged, resolvedRegion, err := c.prepareSnapshotOnly(region)
+	status, err := c.SnapshotStatus(region, time.Now())
 	if err != nil {
 		return false, err
 	}
-	return isMysekaiSnapshotExpired(resolvedRegion, merged, time.Now()), nil
+	return status.Expired, nil
+}
+
+func (c *Controller) SnapshotStatus(region string, now time.Time) (SnapshotStatus, error) {
+	merged, resolvedRegion, err := c.prepareSnapshotOnly(region)
+	if err != nil {
+		return SnapshotStatus{}, err
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+
+	status := SnapshotStatus{
+		Expired: isMysekaiSnapshotExpired(resolvedRegion, merged, now),
+	}
+	if updateTimeMs := normalizeMySekaiTimestampMs(int64Number(merged["upload_time"], 0)); updateTimeMs > 0 {
+		status.LastUpdatedAt = time.UnixMilli(updateTimeMs)
+	}
+	return status, nil
 }
 
 func (c *Controller) decodeSnapshot(region string) (map[string]any, renderregion.Value, error) {

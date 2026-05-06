@@ -487,7 +487,7 @@ func TestExecuteMySekaiBlocksCNRegion(t *testing.T) {
 	assertSingleMySekaiUnavailableMessage(t, message)
 }
 
-func TestExecuteMySekaiMapPrependsExpiredNotice(t *testing.T) {
+func TestExecuteMySekaiMapRejectsExpiredSnapshotUnlessForced(t *testing.T) {
 	root := t.TempDir()
 	masterdataDir := filepath.Join(root, "masterdata")
 	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
@@ -539,8 +539,9 @@ func TestExecuteMySekaiMapPrependsExpiredNotice(t *testing.T) {
 		t.Fatalf("bind: %v", err)
 	}
 
+	staleUploadTime := time.Now().Add(-48 * time.Hour).UnixMilli()
 	staleSnapshot, err := json.Marshal(map[string]any{
-		"upload_time": time.Now().Add(-48 * time.Hour).UnixMilli(),
+		"upload_time": staleUploadTime,
 		"userMysekaiHarvestMaps": []map[string]any{{
 			"mysekaiSiteId": 5,
 			"userMysekaiSiteHarvestFixtures": []map[string]any{{
@@ -569,32 +570,67 @@ func TestExecuteMySekaiMapPrependsExpiredNotice(t *testing.T) {
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 
-	message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
-		Module:            parser.ModuleMysekai,
-		Mode:              "mysekai-map",
-		Region:            "jp",
-		RequesterPlatform: "qq",
-		RequesterUserID:   "42",
-	}, app))
-	if err != nil {
-		t.Fatalf("executeMysekai map: %v", err)
-	}
-	if len(message) != 3 {
-		t.Fatalf("unexpected message segments: %+v", message)
-	}
-	if message[0].Type != onebot11.TypeText {
-		t.Fatalf("expected warning text first, got %+v", message[0])
-	}
-	textData, ok := message[0].Data.(onebot11.TextData)
-	if !ok || !strings.Contains(textData.Text, "Mysekai数据已过期要刷新请重新上传数据") {
-		t.Fatalf("unexpected warning text: %+v", message[0].Data)
-	}
-	if message[1].Type != onebot11.TypeImage {
-		t.Fatalf("expected image after warning, got %+v", message[1])
-	}
-	if message[2].Type != onebot11.TypeAt {
-		t.Fatalf("expected at mention after image, got %+v", message[2])
-	}
+	t.Run("default", func(t *testing.T) {
+		message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+			Module:            parser.ModuleMysekai,
+			Mode:              "mysekai-map",
+			Region:            "jp",
+			RequesterPlatform: "qq",
+			RequesterUserID:   "42",
+		}, app))
+		if err == nil {
+			t.Fatal("expected expired mysekai error, got nil")
+		}
+		if len(message) != 0 {
+			t.Fatalf("expected no image message when expired, got %+v", message)
+		}
+		lines := strings.Split(err.Error(), "\n")
+		if len(lines) != 4 {
+			t.Fatalf("unexpected expired error lines: %+v", lines)
+		}
+		if lines[0] != "您的mysekai数据已过期" {
+			t.Fatalf("unexpected expired title: %q", lines[0])
+		}
+		if !strings.HasPrefix(lines[1], "上次更新时间: ") || strings.TrimSpace(strings.TrimPrefix(lines[1], "上次更新时间: ")) == "" {
+			t.Fatalf("unexpected last update line: %q", lines[1])
+		}
+		if lines[2] != "如果需要查看新的，请重新上传" {
+			t.Fatalf("unexpected refresh hint: %q", lines[2])
+		}
+		if lines[3] != "如果确定需要看目前数据，请在指令上加force参数" {
+			t.Fatalf("unexpected force hint: %q", lines[3])
+		}
+		if !strings.Contains(lines[1], time.UnixMilli(staleUploadTime).Format("2006")) {
+			t.Fatalf("expected last update line to contain upload year, got %q", lines[1])
+		}
+	})
+
+	t.Run("force", func(t *testing.T) {
+		params, marshalErr := json.Marshal(map[string]any{"check_time": false})
+		if marshalErr != nil {
+			t.Fatalf("marshal params: %v", marshalErr)
+		}
+		message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+			Module:            parser.ModuleMysekai,
+			Mode:              "mysekai-map",
+			Region:            "jp",
+			Params:            params,
+			RequesterPlatform: "qq",
+			RequesterUserID:   "42",
+		}, app))
+		if err != nil {
+			t.Fatalf("executeMysekai map force: %v", err)
+		}
+		if len(message) != 2 {
+			t.Fatalf("unexpected forced message segments: %+v", message)
+		}
+		if message[0].Type != onebot11.TypeImage {
+			t.Fatalf("expected image first when force is set, got %+v", message[0])
+		}
+		if message[1].Type != onebot11.TypeAt {
+			t.Fatalf("expected at mention after image when force is set, got %+v", message[1])
+		}
+	})
 }
 
 func TestExecuteMySekaiMapUsesPayloadProviderWithoutSnapshot(t *testing.T) {

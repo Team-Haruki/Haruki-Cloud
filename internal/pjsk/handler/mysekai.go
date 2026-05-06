@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/displaytime"
@@ -52,11 +53,7 @@ func (sekaiHandlers) MysekaiResourceHandle() HarukiSekaiCommandHandler {
 			if strings.Contains(strings.ToLower(args), "all") {
 				params["show_harvested"] = true
 			}
-			if !strings.Contains(strings.ToLower(args), "force") {
-				params["check_time"] = true
-			} else {
-				params["check_time"] = false
-			}
+			params["check_time"] = !hasMysekaiForceFlag(args)
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
 			}
@@ -79,11 +76,7 @@ func (sekaiHandlers) MysekaiOverviewHandle() HarukiSekaiCommandHandler {
 			if strings.Contains(strings.ToLower(args), "all") {
 				params["show_harvested"] = true
 			}
-			if !strings.Contains(strings.ToLower(args), "force") {
-				params["check_time"] = true
-			} else {
-				params["check_time"] = false
-			}
+			params["check_time"] = !hasMysekaiForceFlag(args)
 			mapIDs, parseErr := parseMysekaiMapIDs(args)
 			if parseErr != nil {
 				return nil, parseErr
@@ -113,6 +106,7 @@ func (sekaiHandlers) MysekaiMapHandle() HarukiSekaiCommandHandler {
 			if strings.Contains(strings.ToLower(args), "all") {
 				params["show_harvested"] = true
 			}
+			params["check_time"] = !hasMysekaiForceFlag(args)
 			mapIDs, parseErr := parseMysekaiMapIDs(args)
 			if parseErr != nil {
 				return nil, parseErr
@@ -375,8 +369,6 @@ func (sekaiHandlers) MysekaiPhotoHandle() HarukiSekaiCommandHandler {
 
 type concurrentMessageJob func(context.Context) (onebot11.Message, error)
 
-const mysekaiExpiredNoticeText = "Mysekai数据已过期要刷新请重新上传数据\n"
-
 func isStaticMySekaiFixtureListQuery(q rendermysekai.FixtureListQuery) bool {
 	showProfile := true
 	if q.ShowProfile != nil {
@@ -408,14 +400,17 @@ func shouldCheckMysekaiExpiry(params []byte) bool {
 	return *payload.CheckTime
 }
 
-func shouldPrependMysekaiExpiryNotice(mode string, expired bool) bool {
-	if !expired {
-		return false
+func hasMysekaiForceFlag(args string) bool {
+	fields := strings.Fields(strings.ToLower(strings.TrimSpace(args)))
+	for _, field := range fields {
+		if field == "force" {
+			return true
+		}
 	}
-	return mysekaiExpiryNoticeMode(mode)
+	return false
 }
 
-func mysekaiExpiryNoticeMode(mode string) bool {
+func shouldEnforceMysekaiExpiry(mode string) bool {
 	switch mode {
 	case "mysekai-resource", "mysekai-resource-map", "mysekai-map":
 		return true
@@ -449,14 +444,20 @@ func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions
 	}
 }
 
-func prependMysekaiExpiryNotice(message onebot11.Message) onebot11.Message {
-	if len(message) == 0 {
-		return onebot11.Message{onebot11.Text(mysekaiExpiredNoticeText)}
+func buildMysekaiExpiredReplayError(rc *RequestContext, harukiUserID int, status rendermysekai.SnapshotStatus) error {
+	lastUpdated := "未知"
+	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, harukiUserID)
+	if harukiUserID <= 0 {
+		timeZone = resolveRequesterHarukiUserTimeZone(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID)
 	}
-	result := make(onebot11.Message, 0, len(message)+1)
-	result = append(result, onebot11.Text(mysekaiExpiredNoticeText))
-	result = append(result, message...)
-	return result
+	if !status.LastUpdatedAt.IsZero() {
+		loc, _ := displaytime.LoadLocation(timeZone)
+		lastUpdated = displaytime.FormatTime(status.LastUpdatedAt.In(loc), "2006-01-02 15:04:05")
+	}
+	return onebot11.NewReplayError(
+		"您的mysekai数据已过期\n上次更新时间: %s\n如果需要查看新的，请重新上传\n如果确定需要看目前数据，请在指令上加force参数",
+		lastUpdated,
+	)
 }
 
 func executeConcurrentMessages(ctx context.Context, jobs ...concurrentMessageJob) (onebot11.Message, error) {
@@ -566,11 +567,13 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return mySekaiRegionUnavailableMessage(), nil
 	}
 
-	expiredNotice := false
-	if mysekaiExpiryNoticeMode(rc.Cmd.Mode) && shouldCheckMysekaiExpiry(rc.Cmd.Params) {
-		expiredNotice, err = renderCtx.Controller.SnapshotExpired(renderCtx.Region)
-		if err != nil {
-			return nil, err
+	if shouldEnforceMysekaiExpiry(rc.Cmd.Mode) && shouldCheckMysekaiExpiry(rc.Cmd.Params) {
+		status, statusErr := renderCtx.Controller.SnapshotStatus(renderCtx.Region, time.Now())
+		if statusErr != nil {
+			return nil, statusErr
+		}
+		if status.Expired {
+			return nil, buildMysekaiExpiredReplayError(rc, renderCtx.HarukiUserID, status)
 		}
 	}
 
@@ -607,9 +610,6 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		if runErr != nil {
 			return nil, runErr
 		}
-		if shouldPrependMysekaiExpiryNotice(rc.Cmd.Mode, expiredNotice) {
-			message = prependMysekaiExpiryNotice(message)
-		}
 		return message, nil
 	case "mysekai-map":
 		q := rendermysekai.MapQuery{Region: renderCtx.Region}
@@ -621,9 +621,6 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 
 		replayMessage = append(replayMessage, onebot11.At(rc.PlatformUserID))
-		if shouldPrependMysekaiExpiryNotice(rc.Cmd.Mode, expiredNotice) {
-			replayMessage = prependMysekaiExpiryNotice(replayMessage)
-		}
 		return replayMessage, nil
 	case "mysekai-fixture-list":
 		q := rendermysekai.FixtureListQuery{Region: renderCtx.Region}
@@ -676,9 +673,6 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	message, err = imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 	if err != nil {
 		return nil, err
-	}
-	if shouldPrependMysekaiExpiryNotice(rc.Cmd.Mode, expiredNotice) {
-		message = prependMysekaiExpiryNotice(message)
 	}
 	return message, nil
 }

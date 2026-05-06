@@ -49,6 +49,11 @@ type MasterdataOptions struct {
 	AllowFallback bool
 }
 
+type SnapshotStatus struct {
+	Expired       bool
+	LastUpdatedAt time.Time
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 type pathResolver func(relPath string) string

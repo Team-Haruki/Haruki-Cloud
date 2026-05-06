@@ -118,12 +118,52 @@ func TestMysekaiMapHandleBuildsCommandRequest(t *testing.T) {
 
 	var params struct {
 		ShowHarvested bool `json:"show_harvested"`
+		CheckTime     bool `json:"check_time"`
 	}
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
 	if !params.ShowHarvested {
 		t.Fatalf("params.ShowHarvested = %v", params.ShowHarvested)
+	}
+	if !params.CheckTime {
+		t.Fatalf("params.CheckTime = %v", params.CheckTime)
+	}
+}
+
+func TestMysekaiMapHandleBuildsCommandRequestWithForce(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiMapHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msm",
+		ArgText:    "all force",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-map" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params struct {
+		ShowHarvested bool `json:"show_harvested"`
+		CheckTime     bool `json:"check_time"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if !params.ShowHarvested {
+		t.Fatalf("params.ShowHarvested = %v", params.ShowHarvested)
+	}
+	if params.CheckTime {
+		t.Fatalf("params.CheckTime = %v", params.CheckTime)
 	}
 }
 

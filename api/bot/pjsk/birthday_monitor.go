@@ -84,11 +84,11 @@ var birthdayMonitorCommandPrefixRegions = []string{"jp", "tw", "kr", "en", "cn"}
 
 var birthdayMonitorManifestCommandPrefixes = buildBirthdayMonitorManifestCommandPrefixes(birthdayMonitorCommandPrefixes)
 
-func registerBirthdayMonitorRoutes(pjsk fiber.Router, app *fiber.App, renderApp *renderapp.App) {
+func registerBirthdayMonitorRoutes(pjsk fiber.Router, app *fiber.App, renderApp *renderapp.App, guard commandRequestGuard) {
 	if renderApp == nil {
 		return
 	}
-	pjsk.Post("/"+birthdayMonitorCommandPath, makeBirthdayMonitorHandler(renderApp))
+	pjsk.Post("/"+birthdayMonitorCommandPath, makeBirthdayMonitorHandler(renderApp, guard))
 	pjsk.Post("/"+birthdayMonitorCommandPath+"/render", makeBirthdayMonitorRenderHandler(renderApp))
 	pjsk.Post("/"+birthdayMonitorCommandPath+"/ack", makeBirthdayMonitorAckHandler(renderApp))
 
@@ -98,12 +98,17 @@ func registerBirthdayMonitorRoutes(pjsk fiber.Router, app *fiber.App, renderApp 
 	internal.Post("/subscription-events/mysekai-birthday", makeBirthdayMonitorEventWriteHandler(renderApp))
 }
 
-func makeBirthdayMonitorHandler(renderApp *renderapp.App) fiber.Handler {
+func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGuard) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
+		if !acquireRequestGuard(c.Context(), guard, req) {
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
+		}
+		defer markRequestGuardComplete(c.Context(), guard, req)
+
 		req.SelfID = strings.TrimSpace(req.SelfID)
 		botID := strings.TrimSpace(c.Params("botId"))
 		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)

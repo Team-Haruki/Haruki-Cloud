@@ -100,7 +100,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if noiseKeyPair != nil {
 		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
 	}
-	registerBirthdayMonitorRoutes(pjsk, app, renderApp)
+	registerBirthdayMonitorRoutes(pjsk, app, renderApp, guard)
 	routes := commandregistry.ListBotRoutes()
 	hasMysekaiBlueprintRoute := false
 	for _, route := range routes {
@@ -121,7 +121,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 // makeBotHandler returns a POST-only fiber.Handler that validates the matched
 // command field belongs to the current endpoint path, then lets the registered
 // handler parse the OneBot message segments and produce a resolved render command.
-func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *botDB.Client, expectedPath string, commands []string) fiber.Handler {
+func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBClient *botDB.Client, expectedPath string, commands []string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
 		if err != nil {
@@ -136,7 +136,7 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		}
 
 		// Dedup + rate limit: acquire guard before doing any work.
-		if !guard.Acquire(requestCtx, req) {
+		if !acquireRequestGuard(requestCtx, guard, req) {
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
 		}
 		allowCompatReroute := allowBotCompatReroute(expectedPath)
@@ -192,12 +192,12 @@ func makeBotHandler(renderApp *renderapp.App, guard *RequestGuard, botDBClient *
 		if err != nil {
 			logger.Errorf("bot command render failed: matched_command=%s parse=%dms exec=%dms total=%dms err=%v",
 				req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds(), err)
-			guard.MarkComplete(requestCtx, req)
+			markRequestGuardComplete(requestCtx, guard, req)
 			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand, req.EnableParamEcho)
 		}
 		logger.Infof("bot command completed: matched_command=%s parse=%dms exec=%dms total=%dms",
 			req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds())
-		guard.MarkComplete(requestCtx, req)
+		markRequestGuardComplete(requestCtx, guard, req)
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, responseData)
 	}
 }

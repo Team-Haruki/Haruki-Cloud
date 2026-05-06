@@ -44,6 +44,11 @@ type RequestGuard struct {
 	rng   *rand.Rand
 }
 
+type commandRequestGuard interface {
+	Acquire(ctx context.Context, req BotCommandRequest) bool
+	MarkComplete(ctx context.Context, req BotCommandRequest)
+}
+
 // NewRequestGuard returns a new RequestGuard. Returns nil if rc is nil.
 func NewRequestGuard(rc *redis.Client) *RequestGuard {
 	if rc == nil {
@@ -96,6 +101,20 @@ func (g *RequestGuard) MarkComplete(ctx context.Context, req BotCommandRequest) 
 		return
 	}
 	_ = g.redis.Set(ctx, rateLimitKey(req), "1", rateLimitTTL).Err()
+}
+
+func acquireRequestGuard(ctx context.Context, guard commandRequestGuard, req BotCommandRequest) bool {
+	if guard == nil {
+		return true
+	}
+	return guard.Acquire(ctx, req)
+}
+
+func markRequestGuardComplete(ctx context.Context, guard commandRequestGuard, req BotCommandRequest) {
+	if guard == nil {
+		return
+	}
+	guard.MarkComplete(ctx, req)
 }
 
 func (g *RequestGuard) randomJitterOffset() time.Duration {

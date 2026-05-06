@@ -96,6 +96,14 @@ func normalizeRecommendAlgorithmForService(raw string) string {
 	return normalizeRecommendAlgorithm(raw)
 }
 
+func normalizeRecommendAlgorithmForTarget(raw string, target string) string {
+	normalized := normalizeRecommendAlgorithmForService(raw)
+	if normalized == "dfs" && normalizeRecommendTarget(target) == "skill" {
+		return "dfs_ga"
+	}
+	return normalized
+}
+
 func displayRecommendAlgorithm(raw string) string {
 	switch normalizeRecommendAlgorithm(raw) {
 	case "dfs":
@@ -171,6 +179,7 @@ func selectRecommendAlgorithmSubset(option map[string]any, available []string) [
 		return nil
 	}
 
+	target := optionString(option, "target")
 	subset := normalizeRecommendAlgorithmSubset(option[recommendAlgorithmSubsetKey])
 	if len(subset) == 0 {
 		return nil
@@ -178,7 +187,7 @@ func selectRecommendAlgorithmSubset(option map[string]any, available []string) [
 
 	allowed := make(map[string]struct{}, len(available))
 	for _, alg := range available {
-		normalized := normalizeRecommendAlgorithmForService(alg)
+		normalized := normalizeRecommendAlgorithmForTarget(alg, target)
 		if normalized == "" || normalized == "all" {
 			continue
 		}
@@ -188,7 +197,7 @@ func selectRecommendAlgorithmSubset(option map[string]any, available []string) [
 	filtered := make([]string, 0, len(subset))
 	seen := make(map[string]struct{}, len(subset))
 	for _, alg := range subset {
-		normalized := normalizeRecommendAlgorithmForService(alg)
+		normalized := normalizeRecommendAlgorithmForTarget(alg, target)
 		if normalized == "" || normalized == "all" {
 			continue
 		}

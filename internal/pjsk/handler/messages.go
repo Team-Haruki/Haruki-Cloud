@@ -147,25 +147,65 @@ func normalizeToolboxDataFetchError(err error, dataLabel string, binding *accoun
 
 	var apiErr *sekaiapi.ToolboxAPIError
 	if errors.As(err, &apiErr) {
+		if translated, ok := translateToolboxAPIDetail(dataLabel, apiErr.Message); ok {
+			return onebot11.NewReplayError("%s", translated)
+		}
 		switch apiErr.StatusCode {
 		case 503:
 			return onebot11.NewReplayError("工具箱服务暂时不可用，请稍后再试")
 		case 403:
-			if strings.TrimSpace(apiErr.Message) == "" {
-				return onebot11.NewReplayError("工具箱拒绝了当前%s数据请求", dataLabel)
-			}
-			return onebot11.NewReplayError("工具箱拒绝了当前%s数据请求：%s", dataLabel, strings.TrimSpace(apiErr.Message))
+			return onebot11.NewReplayError("工具箱拒绝了当前%s数据请求", dataLabel)
 		case 404:
-			if strings.TrimSpace(apiErr.Message) == "" {
-				return onebot11.NewReplayError("工具箱未找到当前%s数据", dataLabel)
-			}
-			return onebot11.NewReplayError("工具箱未找到当前%s数据：%s", dataLabel, strings.TrimSpace(apiErr.Message))
+			return onebot11.NewReplayError("工具箱未找到当前%s数据", dataLabel)
 		default:
-			if strings.TrimSpace(apiErr.Message) == "" {
-				return onebot11.NewReplayError("工具箱请求失败（状态 %d）", apiErr.StatusCode)
-			}
-			return onebot11.NewReplayError("工具箱请求失败（状态 %d）：%s", apiErr.StatusCode, strings.TrimSpace(apiErr.Message))
+			return onebot11.NewReplayError("工具箱请求失败（状态 %d）", apiErr.StatusCode)
 		}
+	}
+	return err
+}
+
+func normalizeSekaiAPIFetchError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+		return err
+	}
+
+	switch {
+	case errors.Is(err, sekaiapi.ErrClientNotConfigured):
+		return onebot11.NewReplayError("SekaiAPI 服务未就绪，请稍后再试")
+	case errors.Is(err, sekaiapi.ErrServerMaintenance):
+		return onebot11.NewReplayError("SekaiAPI 拉取失败：当前游戏服务器维护中，请稍后再试")
+	case errors.Is(err, sekaiapi.ErrUserNotFound):
+		return onebot11.NewReplayError("SekaiAPI 拉取失败：找不到该玩家公开信息")
+	}
+
+	message := strings.TrimSpace(err.Error())
+	switch {
+	case strings.Contains(message, "sekai api: request failed after retries"),
+		strings.Contains(message, "context deadline exceeded"),
+		strings.Contains(message, "Client.Timeout exceeded"):
+		return onebot11.NewReplayError("SekaiAPI 拉取失败：连接超时或网络异常，请稍后再试")
+	}
+
+	var apiErr *sekaiapi.APIError
+	if errors.As(err, &apiErr) {
+		if translated, ok := translateSekaiAPIDetail(apiErr.Message); ok {
+			return onebot11.NewReplayError("SekaiAPI 拉取失败：%s", translated)
+		}
+		if strings.TrimSpace(apiErr.Message) == "" {
+			return onebot11.NewReplayError("SekaiAPI 拉取失败（状态 %d）", apiErr.StatusCode)
+		}
+		return onebot11.NewReplayError("SekaiAPI 拉取失败（状态 %d）", apiErr.StatusCode)
+	}
+
+	if translated, ok := translateSekaiAPIDetail(message); ok && (strings.Contains(message, "sekai api") || strings.Contains(strings.ToLower(message), "sekaiapi")) {
+		return onebot11.NewReplayError("SekaiAPI 拉取失败：%s", translated)
+	}
+
+	if strings.Contains(message, "sekai api:") || strings.Contains(strings.ToLower(message), "sekaiapi") {
+		return onebot11.NewReplayError("SekaiAPI 拉取失败，请稍后再试")
 	}
 	return err
 }
@@ -210,6 +250,28 @@ func WrapDomainError(err error) error {
 	case strings.Contains(message, "toolbox:"),
 		strings.Contains(message, "toolbox api error:"):
 		return normalizeToolboxDataFetchError(err, "suite", nil)
+	case strings.Contains(message, "sekai api:"),
+		strings.Contains(strings.ToLower(message), "sekaiapi"):
+		if normalized := normalizeSekaiAPIFetchError(err); normalized != err {
+			return normalized
+		}
+	case strings.Contains(message, "tracker:"),
+		strings.Contains(message, "tracker api error:"):
+		if normalized := normalizeTrackerUserFacingError(err); normalized != err {
+			return normalized
+		}
+	case strings.Contains(strings.ToLower(message), "deck-service"):
+		if normalized := normalizeDeckServiceUserFacingError(err); normalized != err {
+			return normalized
+		}
+	case message == "drawing client is not configured",
+		message == "image storage is not configured",
+		strings.Contains(strings.ToLower(message), "drawing "),
+		strings.HasPrefix(strings.ToLower(message), "api request failed with status:"),
+		strings.Contains(strings.ToLower(message), "asset path is empty"):
+		if normalized := normalizeDrawingUserFacingError(err); normalized != err {
+			return normalized
+		}
 	}
 	return err
 }

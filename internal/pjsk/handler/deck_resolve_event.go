@@ -106,6 +106,7 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 	}
 
 	if q.WorldBloomEventTurn != nil && *q.WorldBloomEventTurn > 0 {
+		turn := *q.WorldBloomEventTurn
 		if err := resolveDeckWorldBloomTurnCharacterSelection(ctx, q, app, region); err != nil {
 			return err
 		}
@@ -114,6 +115,7 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 			return err
 		}
 		q.EventID = drawing.IntPtr(int(eventInfo.GameID))
+		q.MetadataWorldBloomEventTurn = drawing.IntPtr(turn)
 		q.WorldBloomEventTurn = nil
 	}
 	if !hasPendingDeckWorldBloomSelection(q) && (strings.TrimSpace(q.EventUnit) != "" || strings.TrimSpace(q.EventAttr) != "") {
@@ -179,6 +181,7 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		if !trackerWorldBloomHasCharacter(chapters, *q.WorldBloomCharacterID) {
 			return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(region.String()), eventID, *q.WorldBloomCharacterID)
 		}
+		ensureDeckWorldBloomEventTurnMetadata(ctx, app, region, eventInfo, chapters, q)
 		return nil
 	}
 
@@ -204,6 +207,7 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 			if strings.TrimSpace(q.EventUnit) == "" {
 				q.EventUnit = resolveDeckCharacterUnit(charID)
 			}
+			ensureDeckWorldBloomEventTurnMetadata(ctx, app, region, eventInfo, chapters, q)
 			return nil
 		}
 	}
@@ -221,7 +225,111 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 	if strings.TrimSpace(q.EventUnit) == "" {
 		q.EventUnit = resolveDeckCharacterUnit(charID)
 	}
+	ensureDeckWorldBloomEventTurnMetadata(ctx, app, region, eventInfo, chapters, q)
 	return nil
+}
+
+func ensureDeckWorldBloomEventTurnMetadata(ctx context.Context, app *renderapp.App, region renderregion.Value, eventInfo *sekaidb.Event, chapters []*sekaidb.Worldbloom, q *deck.AutoQuery) {
+	if q == nil || q.MetadataWorldBloomEventTurn != nil {
+		return
+	}
+	if turn := resolveDeckWorldBloomEventTurn(ctx, app, region, eventInfo, chapters, q); turn > 0 {
+		q.MetadataWorldBloomEventTurn = drawing.IntPtr(turn)
+	}
+}
+
+func resolveDeckWorldBloomEventTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, eventInfo *sekaidb.Event, chapters []*sekaidb.Worldbloom, q *deck.AutoQuery) int {
+	if eventInfo == nil || q == nil {
+		return 0
+	}
+	eventID := int(eventInfo.GameID)
+	charID := 0
+	if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
+		charID = *q.WorldBloomCharacterID
+	} else if chapter := pickDeckDefaultWorldBloomChapter(eventInfo, chapters); chapter != nil && chapter.GameCharacterID > 0 {
+		charID = int(chapter.GameCharacterID)
+	}
+	if charID > 0 {
+		if turn, err := resolveDeckWorldBloomCharacterTurnForEvent(ctx, app, region, eventID, charID); err == nil && turn > 0 {
+			return turn
+		}
+	}
+
+	unit := strings.TrimSpace(q.EventUnit)
+	if unit == "" {
+		unit = normalizeDeckUnit(eventInfo.Unit)
+	}
+	if unit != "" {
+		if turn, err := resolveDeckWorldBloomUnitTurnForEvent(ctx, app, region, eventID, unit); err == nil && turn > 0 {
+			return turn
+		}
+	}
+	return 0
+}
+
+func resolveDeckWorldBloomCharacterTurnForEvent(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID, charID int) (int, error) {
+	if eventID <= 0 || charID <= 0 {
+		return 0, nil
+	}
+	worldBloomEvents, err := queryDeckWorldBloomEvents(ctx, app, region)
+	if err != nil {
+		return 0, err
+	}
+	turn := 0
+	for _, item := range worldBloomEvents {
+		if item == nil {
+			continue
+		}
+		chapters, err := queryDeckWorldBloomChapters(ctx, app, region, int(item.GameID))
+		if err != nil {
+			return 0, err
+		}
+		if !trackerWorldBloomHasCharacter(chapters, charID) {
+			continue
+		}
+		turn++
+		if int(item.GameID) == eventID {
+			return turn, nil
+		}
+	}
+	return 0, nil
+}
+
+func resolveDeckWorldBloomUnitTurnForEvent(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int, unit string) (int, error) {
+	if eventID <= 0 {
+		return 0, nil
+	}
+	unit = normalizeDeckUnit(unit)
+	if unit == "" {
+		return 0, nil
+	}
+	worldBloomEvents, err := queryDeckWorldBloomEvents(ctx, app, region)
+	if err != nil {
+		return 0, err
+	}
+	turn := 0
+	for _, item := range worldBloomEvents {
+		if item == nil {
+			continue
+		}
+		eventUnit := normalizeDeckUnit(item.Unit)
+		hasUnit := eventUnit == unit
+		if !hasUnit {
+			chapters, err := queryDeckWorldBloomChapters(ctx, app, region, int(item.GameID))
+			if err != nil {
+				return 0, err
+			}
+			hasUnit = deckWorldBloomHasUnit(chapters, unit)
+		}
+		if !hasUnit {
+			continue
+		}
+		turn++
+		if int(item.GameID) == eventID {
+			return turn, nil
+		}
+	}
+	return 0, nil
 }
 
 func resolveDeckWorldBloomTurnCharacterSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {

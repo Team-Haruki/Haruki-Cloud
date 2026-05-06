@@ -243,6 +243,108 @@ func TestBuildAutoRecommendRequestSetsWorldBloomCharacterMetadata(t *testing.T) 
 	}
 }
 
+func TestBuildAutoRecommendRequestSimulatesWorldBloomWhenDeckMasterdataMissesEvent(t *testing.T) {
+	masterdataRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(masterdataRoot, "jp"), 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(masterdataRoot, "jp", "events.json"), []byte(`[{"id":7}]`), 0o644); err != nil {
+		t.Fatalf("write events.json: %v", err)
+	}
+
+	var capturedOption map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch r.URL.Path {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode cache_userdata payload: %v", err)
+			}
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			var payloads [][]byte
+			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+				t.Fatalf("decode recommend payload: %v", err)
+			}
+			var payload map[string]any
+			if err := sonic.Unmarshal(payloads[0], &payload); err != nil {
+				t.Fatalf("decode recommend json: %v", err)
+			}
+			options := jsonArrayToObjects(payload["batch_options"])
+			if len(options) != 1 {
+				t.Fatalf("unexpected batch options: %+v", payload["batch_options"])
+			}
+			capturedOption = options[0]
+			_, _ = w.Write([]byte(`[{
+				"alg": "ga",
+				"result": {
+					"decks": [{
+						"score": 123,
+						"live_score": 123,
+						"total_power": 456,
+						"event_bonus_rate": 25,
+						"support_deck_bonus_rate": 0,
+						"multi_live_score_up": 110,
+						"cards": [{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]
+					}]
+				}
+			}]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  masterdataRoot,
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master","music_time":100,"event_rate":120,"base_score":1,"base_score_auto":1,"skill_score_solo":[1,1,1,1,1,1],"skill_score_auto":[1,1,1,1,1,1],"skill_score_multi":[1,1,1,1,1,1],"fever_score":1,"fever_end_time":1,"tap_count":100}]`),
+	})
+
+	eventID := 167
+	request, err := controller.BuildAutoRecommendRequest(AutoQuery{
+		Region:                      "jp",
+		RecommendType:               "event",
+		Algorithm:                   "ga",
+		EventID:                     &eventID,
+		EventUnit:                   "theme_park",
+		WorldBloomCharacterID:       deckIntPtr(13),
+		MetadataWorldBloomEventTurn: deckIntPtr(2),
+	})
+	if err != nil {
+		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
+	}
+
+	if value, ok := capturedOption["event_id"]; ok && value != nil {
+		t.Fatalf("expected event_id to be cleared for simulated wl, got %+v", value)
+	}
+	if capturedOption["event_type"] != "world_bloom" {
+		t.Fatalf("unexpected event type: %+v", capturedOption["event_type"])
+	}
+	if optionInt(capturedOption, "world_bloom_event_turn") != 2 {
+		t.Fatalf("unexpected wl turn: %+v", capturedOption["world_bloom_event_turn"])
+	}
+	if optionInt(capturedOption, "world_bloom_character_id") != 13 {
+		t.Fatalf("unexpected wl character: %+v", capturedOption["world_bloom_character_id"])
+	}
+	if capturedOption["event_unit"] != "theme_park" {
+		t.Fatalf("unexpected event unit: %+v", capturedOption["event_unit"])
+	}
+	if request.EventID != nil {
+		t.Fatalf("simulated wl request should not expose real event id: %+v", request.EventID)
+	}
+	if !request.IsWl || request.RecommendType != "wl" {
+		t.Fatalf("unexpected wl metadata: %+v", request)
+	}
+}
+
 func TestBuildAutoRecommendRequestUsesExplicitRegionSources(t *testing.T) {
 	server, masterdataRoot := newDeckRecommendStubServer(t)
 	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
@@ -580,7 +682,7 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 		Region:                       "jp",
 		RecommendType:                "event",
 		EventID:                      new(123),
-		Algorithm:                    "dfs-ga",
+		Algorithm:                    "dfs",
 		LiveType:                     "multi",
 		Target:                       "skill",
 		MusicID:                      new(456),

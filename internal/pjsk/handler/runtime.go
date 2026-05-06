@@ -216,7 +216,7 @@ func (rc *RequestContext) GetPublicProfileResponse() *sekaiapi.GetAnotherProfile
 			return
 		}
 		region := resolvedTargetRegion(rc.RegionStr, *target)
-		resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
+		resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, target.PJSKUserID)
 		if err != nil {
 			return
 		}

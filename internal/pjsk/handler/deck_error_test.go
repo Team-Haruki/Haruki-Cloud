@@ -20,7 +20,7 @@ func TestNormalizeDeckUserFacingError(t *testing.T) {
 		{
 			name:    "music not found",
 			input:   errString("failed to search music by title or alias: music not found: 虾ex"),
-			wantErr: "JP服找不到特定的歌: 虾ex\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀",
+			wantErr: "JP服找不到特定的歌: 虾ex\n如果需要查其他服务器歌曲请加区服前缀",
 		},
 		{
 			name:    "snapshot required",
@@ -42,6 +42,11 @@ func TestNormalizeDeckUserFacingError(t *testing.T) {
 			input:   &deckEventLockedError{EventID: 170},
 			wantErr: "该活动组卡将于卡池开放后解禁",
 		},
+		{
+			name:    "deck masterdata event missing",
+			input:   errString("Event not found for eventId: 167"),
+			wantErr: "组卡服务找不到该活动的 masterdata，请更新 masterdata 后重试",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -57,6 +62,11 @@ func TestNormalizeDeckUserFacingError(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNormalizeDeckUserFacingErrorForEventMusicNotFound(t *testing.T) {
+	err := normalizeDeckUserFacingErrorForCommand(errString("failed to search music by title or alias: music not found: 虾ex"), "jp", "deck-event")
+	assertReplayErrorText(t, err, "当前区服没有该歌曲")
 }
 
 type errString string

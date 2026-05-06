@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	json "github.com/bytedance/sonic"
 )
 
 var deckMasterdataRegions = map[string]struct{}{
@@ -13,6 +15,14 @@ var deckMasterdataRegions = map[string]struct{}{
 	"tw": {},
 	"kr": {},
 	"en": {},
+}
+
+var deckMasterdataRepoDirs = map[string]string{
+	"jp": "haruki-sekai-master",
+	"cn": "haruki-sekai-sc-master",
+	"tw": "haruki-sekai-tc-master",
+	"kr": "haruki-sekai-kr-master",
+	"en": "haruki-sekai-en-master",
 }
 
 func resolveDeckMasterdataDir(configured, region string) (string, error) {
@@ -59,6 +69,61 @@ func resolveDeckRemoteMasterdataDir(configured string) string {
 		}
 	}
 	return root
+}
+
+func deckMasterdataContainsEvent(configured, region string, eventID int) (bool, bool) {
+	if eventID <= 0 {
+		return false, false
+	}
+	eventsFile, ok := resolveDeckMasterdataEventsFile(configured, region)
+	if !ok {
+		return false, false
+	}
+	data, err := os.ReadFile(eventsFile)
+	if err != nil {
+		return false, false
+	}
+	var events []struct {
+		ID int `json:"id"`
+	}
+	if err := json.Unmarshal(data, &events); err != nil {
+		return false, false
+	}
+	for _, eventInfo := range events {
+		if eventInfo.ID == eventID {
+			return true, true
+		}
+	}
+	return false, true
+}
+
+func resolveDeckMasterdataEventsFile(configured, region string) (string, bool) {
+	configured = strings.TrimSpace(configured)
+	if configured == "" {
+		return "", false
+	}
+	root := filepath.Clean(configured)
+	region = strings.ToLower(strings.TrimSpace(region))
+	if region == "" {
+		region = "jp"
+	}
+
+	candidates := []string{
+		filepath.Join(root, region, "events.json"),
+		filepath.Join(root, "events.json"),
+	}
+	if repoDir := deckMasterdataRepoDirs[region]; repoDir != "" {
+		candidates = append(candidates,
+			filepath.Join(root, repoDir, "master", "events.json"),
+			filepath.Join(root, "master", "events.json"),
+		)
+	}
+	for _, candidate := range candidates {
+		if fileExists(candidate) {
+			return candidate, true
+		}
+	}
+	return "", false
 }
 
 func hasDeckRegionSubdirs(root string) bool {

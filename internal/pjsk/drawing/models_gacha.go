@@ -65,6 +65,7 @@ type GachaListRequest struct {
 	PageSize     int            `json:"page_size"`
 	Region       string         `json:"region"`
 	GachaLogos   map[int]string `json:"gacha_logos"`
+	GachaBanners map[int]string `json:"gacha_banners,omitempty"`
 	Filter       GachaFilter    `json:"filter"`
 	CurrentPage  int            `json:"current_page,omitempty"`
 	TotalPage    int            `json:"total_page,omitempty"`

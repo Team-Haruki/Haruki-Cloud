@@ -9,14 +9,14 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if option == nil {
 		return
 	}
-	if algorithm := normalizeRecommendAlgorithmForService(query.Algorithm); algorithm != "" {
-		option["algorithm"] = algorithm
-	}
 	if liveType := normalizeRecommendLiveType(recType, query.LiveType); liveType != "" {
 		option["live_type"] = liveType
 	}
 	if target := normalizeRecommendTarget(query.Target); target != "" {
 		option["target"] = target
+	}
+	if algorithm := normalizeRecommendAlgorithmForTarget(query.Algorithm, optionString(option, "target")); algorithm != "" {
+		option["algorithm"] = algorithm
 	}
 	if query.MusicID != nil && *query.MusicID > 0 {
 		option["music_id"] = *query.MusicID

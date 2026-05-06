@@ -91,7 +91,12 @@ func resolveMySekaiRenderContextWithOptions(
 		if !opts.NeedProfile {
 			return
 		}
-		result.Profile = forceMySekaiProfileBindingID(buildPublicProfileCardForTarget(target, regionStr, app, snap), target, regionStr)
+		profile, profileErr := buildPublicProfileCardForTarget(ctx, target, regionStr, app, snap)
+		if profileErr != nil {
+			err = normalizeSekaiAPIFetchError(profileErr)
+			return
+		}
+		result.Profile = forceMySekaiProfileBindingID(profile, target, regionStr)
 		if result.Profile == nil && snap != nil {
 			result.Profile = forceMySekaiProfileBindingID(snap.ProfileCard(renderregion.Normalize(regionStr)), target, regionStr)
 		}
@@ -104,6 +109,9 @@ func resolveMySekaiRenderContextWithOptions(
 		}
 		if resolved {
 			resolveProfile(nil)
+			if err != nil {
+				return mySekaiRenderContext{}, err
+			}
 			return result, nil
 		}
 		if opts.MySekaiPayloadOnly {
@@ -117,10 +125,16 @@ func resolveMySekaiRenderContextWithOptions(
 	if snap := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, !opts.SuiteOnlySnapshot); snap != nil {
 		result.Controller = result.Controller.WithSnapshot(snap)
 		resolveProfile(snap)
+		if err != nil {
+			return mySekaiRenderContext{}, err
+		}
 		return result, nil
 	}
 
 	resolveProfile(nil)
+	if err != nil {
+		return mySekaiRenderContext{}, err
+	}
 	if !opts.PreferMySekaiPayload {
 		resolved, payloadErr := resolvePayload()
 		if payloadErr != nil {

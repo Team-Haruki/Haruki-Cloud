@@ -63,6 +63,10 @@ func (botBindingJPValidator) GetUserProfile(server, userID string) (*sekaiapi.Ge
 
 type botTrackerSource struct{}
 
+type botTrackerMissingUserSource struct {
+	botTrackerSource
+}
+
 func (botTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
 	score := 3000000 + rank
 	return &sekaiapi.LatestRankingResponse{
@@ -93,6 +97,22 @@ func (botTrackerSource) GetLatestRankingByUser(server string, eventID int, userI
 			Name:   "BotTrackerUIDUser",
 		},
 	}, nil
+}
+
+func (botTrackerMissingUserSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	return nil, sekaiapi.ErrRankingNotFound
+}
+
+func (botTrackerMissingUserSource) GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
+	return nil, sekaiapi.ErrRankingNotFound
+}
+
+func (botTrackerMissingUserSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	return nil, sekaiapi.ErrRankingNotFound
+}
+
+func (botTrackerMissingUserSource) TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error) {
+	return nil, sekaiapi.ErrRankingNotFound
 }
 
 func (botTrackerSource) GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error) {
@@ -502,7 +522,7 @@ func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {
 	}
 }
 
-func TestBotEndpointAllowsParamEchoWhenEnabled(t *testing.T) {
+func TestBotEndpointStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	app := testBotApp(t, "")
 	secretParam := "super-secret-param"
 
@@ -523,8 +543,11 @@ func TestBotEndpointAllowsParamEchoWhenEnabled(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	text := singleTextMessageText(t, body)
-	if !strings.Contains(text, secretParam) {
-		t.Fatalf("expected response to echo param %q, got %q", secretParam, text)
+	if strings.Contains(text, secretParam) {
+		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
+	}
+	if !strings.Contains(text, "活动查询参数错误") || !strings.Contains(text, "【查单个活动格式】") {
+		t.Fatalf("expected redacted parse error with help text, got %q", text)
 	}
 }
 
@@ -1505,6 +1528,146 @@ func TestBotEndpointSKQueryDefaultsToSelfBinding(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleImageMessage(t, body)
+}
+
+func TestBotEndpointSKQueryReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing endpoint should not be called when self ranking is missing")
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sk event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+}
+
+func TestBotEndpointSKCheckRoomReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing endpoint should not be called when self ranking is missing")
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/cf",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cf event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+}
+
+func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing endpoint should not be called when self ranking is missing")
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/csb"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/csb",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/csb event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+}
+
+func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing endpoint should not be called when self ranking is missing")
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/player-trace"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/ptr",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/ptr event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
 }
 
 func TestBotEndpointSKQueryReturnsTextWhenTargetUserIsHidden(t *testing.T) {

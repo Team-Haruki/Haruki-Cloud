@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -70,7 +71,7 @@ func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardR
 	}
 	region := resolvedTargetRegion(rc.RegionStr, target)
 
-	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
+	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, target.PJSKUserID)
 	if err != nil {
 		return nil, nil
 	}
@@ -234,15 +235,15 @@ func buildPublicMusicProfilesFromResolvedTarget(
 // buildPublicProfileCardForTarget builds a ProfileCardRequest for a resolved
 // game target. Used by mysekai commands where the target is already resolved
 // through userQueryParams (supporting u[i] selectors and region binding).
-func buildPublicProfileCardForTarget(target ResolvedGameTarget, region string, app *renderapp.App, profileSnapshot snapshot.Snapshot) *drawing.ProfileCardRequest {
+func buildPublicProfileCardForTarget(ctx context.Context, target ResolvedGameTarget, region string, app *renderapp.App, profileSnapshot snapshot.Snapshot) (*drawing.ProfileCardRequest, error) {
 	if app == nil || app.Profiles == nil {
-		return nil
+		return nil, nil
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := app.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
+	resp, err := fetchCachedSekaiUserProfile(ctx, app, region, target.PJSKUserID)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("sekaiapi profile fetch failed: %w", err)
 	}
 	q := profile.Query{
 		Region:     region,
@@ -259,7 +260,7 @@ func buildPublicProfileCardForTarget(target ResolvedGameTarget, region string, a
 		card, buildErr = app.Profiles.BuildProfileCardFromAPI(q, resp, nil)
 	}
 	if buildErr != nil {
-		return nil
+		return nil, fmt.Errorf("sekaiapi profile build failed: %w", buildErr)
 	}
-	return card
+	return card, nil
 }

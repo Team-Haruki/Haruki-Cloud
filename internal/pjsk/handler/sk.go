@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	json "github.com/bytedance/sonic"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/sk"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/logger"
 )
 
@@ -286,12 +288,13 @@ func executeSKMode(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
 
 func executeSKLine(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
 	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
+		selfQuery := isSKSelfTrackerQuery(rc, trackerReq)
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 			return nil, err
 		}
 		payload, err := skCtrl.BuildLineRequestFromTracker(trackerReq)
 		if err != nil {
-			return nil, err
+			return nil, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
 		return skCtrl.RenderLine(*payload)
 	}
@@ -302,12 +305,13 @@ func executeSKLine(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
 
 func executeSKQuery(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
 	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
+		selfQuery := isSKSelfTrackerQuery(rc, trackerReq)
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 			return nil, err
 		}
 		payload, err := skCtrl.BuildQueryRequestFromTracker(trackerReq)
 		if err != nil {
-			return nil, err
+			return nil, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
 		return skCtrl.RenderQuery(*payload)
 	}
@@ -318,12 +322,13 @@ func executeSKQuery(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
 
 func executeSKCheckRoom(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
 	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
+		selfQuery := isSKSelfTrackerQuery(rc, trackerReq)
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 			return nil, err
 		}
 		payload, err := skCtrl.BuildCheckRoomRequestFromTracker(trackerReq)
 		if err != nil {
-			return nil, err
+			return nil, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
 		return skCtrl.RenderCheckRoom(*payload)
 	}
@@ -334,12 +339,13 @@ func executeSKCheckRoom(rc *RequestContext, skCtrl *sk.Controller) ([]byte, erro
 
 func executeSKCSB(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {
 	if trackerReq, ok := trackerRankQueryFromParams(rc.Cmd); ok {
+		selfQuery := isSKSelfTrackerQuery(rc, trackerReq)
 		if err := prepareTrackerRankQuery(rc.Ctx, rc.App, &trackerReq, rc.Cmd.RequesterPlatform, rc.Cmd.RequesterUserID); err != nil {
 			return nil, err
 		}
 		payload, err := skCtrl.BuildCSBRequestFromTracker(trackerReq)
 		if err != nil {
-			return nil, err
+			return nil, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
 		return skCtrl.RenderCSB(*payload)
 	}
@@ -372,6 +378,7 @@ func executeSKPlayerTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, er
 			trackerReq.Region = DefaultRegionStr
 		}
 	}
+	selfQuery := isSKSelfTrackerQuery(rc, trackerReq)
 	if err := resolveTrackerCharacterSelection(rc.Ctx, rc.App, &trackerReq); err != nil {
 		return nil, err
 	}
@@ -390,7 +397,7 @@ func executeSKPlayerTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, er
 	if trackerReq.UserID != nil || len(trackerReq.Ranks) > 0 {
 		payload, err := skCtrl.BuildPlayerTraceFromTracker(trackerReq)
 		if err != nil {
-			return nil, err
+			return nil, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
 		return skCtrl.RenderPlayerTrace(*payload)
 	}
@@ -413,6 +420,33 @@ func executeSKRankTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, erro
 	req := drawing.RankTraceRequest{}
 	mergeParams(rc.Cmd.Params, &req)
 	return skCtrl.RenderRankTrace(req)
+}
+
+func isSKSelfTrackerQuery(rc *RequestContext, req sk.TrackerRankQuery) bool {
+	if rc == nil || rc.Cmd == nil {
+		return false
+	}
+	targetPlatform := strings.TrimSpace(req.TargetPlatform)
+	targetUserID := strings.TrimSpace(req.TargetUserID)
+	requesterPlatform := strings.TrimSpace(rc.Cmd.RequesterPlatform)
+	requesterUserID := strings.TrimSpace(rc.Cmd.RequesterUserID)
+	if targetPlatform != "" && targetUserID != "" && requesterPlatform != "" && requesterUserID != "" {
+		return strings.EqualFold(targetPlatform, requesterPlatform) && targetUserID == requesterUserID
+	}
+	if req.UserID != nil || len(req.Ranks) > 0 {
+		return false
+	}
+	return targetPlatform == "" && targetUserID == ""
+}
+
+func normalizeSKSelfRankingNotFoundError(selfQuery bool, region string, err error) error {
+	if !selfQuery || err == nil || !errors.Is(err, sekaiapi.ErrRankingNotFound) {
+		return err
+	}
+	return onebot11.NewReplayError(
+		"当前%s服活动没有找到你的排行榜数据",
+		musicNotFoundRegionLabel(region),
+	)
 }
 
 func executeSKPredict(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {

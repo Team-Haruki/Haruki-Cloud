@@ -127,7 +127,7 @@ func normalizeMusicUserFacingErrorForLookup(err error, region string, fallbackQu
 
 func newMusicNotFoundReplayError(region string, query string) error {
 	return onebot11.NewReplayError(
-		"%s服找不到特定的歌: %s\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀",
+		"%s服找不到特定的歌: %s\n如果需要查其他服务器歌曲请加区服前缀",
 		musicNotFoundRegionLabel(region),
 		musicNotFoundQueryOrFallback(query, ""),
 	)
@@ -199,6 +199,10 @@ func readNumberAfter(rest string) string {
 }
 
 func normalizeEventUserFacingError(err error) error {
+	return normalizeEventUserFacingErrorForRegion(err, DefaultRegionStr)
+}
+
+func normalizeEventUserFacingErrorForRegion(err error, region string) error {
 	if err == nil {
 		return nil
 	}
@@ -214,6 +218,8 @@ func normalizeEventUserFacingError(err error) error {
 	}
 	message := strings.TrimSpace(err.Error())
 	switch {
+	case isEventDataNotFoundMessage(message):
+		return onebot11.NewReplayError("当前%s服未找到该活动数据，如需查询其他服务器活动请加对应区服前缀", musicNotFoundRegionLabel(region))
 	case strings.Contains(message, "event id is required"):
 		return onebot11.NewReplayError("请提供要查询的活动")
 	case strings.Contains(message, "no events matched filters"):
@@ -226,6 +232,15 @@ func normalizeEventUserFacingError(err error) error {
 		return onebot11.NewReplayError("活动记录数据不足，无法渲染")
 	}
 	return err
+}
+
+func isEventDataNotFoundMessage(message string) bool {
+	message = strings.ToLower(strings.TrimSpace(message))
+	if message == "" {
+		return false
+	}
+	return strings.Contains(message, "event not found") ||
+		strings.Contains(message, "no events found for region")
 }
 
 func normalizeGachaUserFacingError(err error) error {

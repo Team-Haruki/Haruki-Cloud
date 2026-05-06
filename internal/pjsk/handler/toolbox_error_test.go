@@ -61,6 +61,24 @@ func TestNormalizeToolboxDataFetchError(t *testing.T) {
 			wantErr:   "工具箱服务暂时不可用，请稍后再试",
 		},
 		{
+			name:      "generic forbidden detail is hidden",
+			input:     &sekaiapi.ToolboxAPIError{StatusCode: 403, Message: "forbidden: some internal detail"},
+			dataLabel: "suite",
+			wantErr:   "工具箱拒绝了当前suite数据请求",
+		},
+		{
+			name:      "generic not found detail is hidden",
+			input:     &sekaiapi.ToolboxAPIError{StatusCode: 404, Message: "unexpected missing payload detail"},
+			dataLabel: "suite",
+			wantErr:   "工具箱未找到当前suite数据",
+		},
+		{
+			name:      "generic upstream detail is hidden",
+			input:     &sekaiapi.ToolboxAPIError{StatusCode: 500, Message: "raw upstream detail"},
+			dataLabel: "suite",
+			wantErr:   "工具箱请求失败（状态 500）",
+		},
+		{
 			name:      "network timeout",
 			input:     errString("toolbox: request failed after retries: context deadline exceeded"),
 			dataLabel: "suite",

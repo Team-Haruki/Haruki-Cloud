@@ -52,7 +52,7 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 
 	algs := normalizeRecommendAlgorithmsForService(p.cfg.DefaultAlgs)
 	if len(algs) == 0 {
-		algs = []string{"dfs", "ga", "dfs_ga", "rl"}
+		algs = []string{"ga", "dfs_ga", "rl"}
 	}
 
 	maxRetries := p.cfg.MaxRetries
@@ -95,8 +95,9 @@ func (r *RemoteDeckRecommender) ExpandAlgorithms(option map[string]any) []map[st
 	if option == nil {
 		return nil
 	}
+	target := optionString(option, "target")
 	alg, _ := option["algorithm"].(string)
-	if normalized := normalizeRecommendAlgorithmForService(alg); normalized != "" && normalized != alg {
+	if normalized := normalizeRecommendAlgorithmForTarget(alg, target); normalized != "" && normalized != alg {
 		option = cloneRecommendOption(option)
 		option["algorithm"] = normalized
 		alg = normalized
@@ -124,19 +125,26 @@ func (r *RemoteDeckRecommender) defaultAlgorithmsForOption(option map[string]any
 	if len(r.defaultAlgs) == 0 {
 		return nil
 	}
-	if optionString(option, "target") == "skill" {
-		return r.defaultAlgs
-	}
+	target := optionString(option, "target")
 
 	filtered := make([]string, 0, len(r.defaultAlgs))
+	seen := make(map[string]struct{}, len(r.defaultAlgs))
 	for _, alg := range r.defaultAlgs {
-		if normalizeRecommendAlgorithmForService(alg) == "dfs" {
+		normalized := normalizeRecommendAlgorithmForTarget(alg, target)
+		if normalized == "" || normalized == "all" {
 			continue
 		}
-		filtered = append(filtered, alg)
+		if normalized == "dfs" {
+			continue
+		}
+		if _, ok := seen[normalized]; ok {
+			continue
+		}
+		seen[normalized] = struct{}{}
+		filtered = append(filtered, normalized)
 	}
 	if len(filtered) == 0 {
-		return r.defaultAlgs
+		return normalizeRecommendAlgorithmsForService(r.defaultAlgs)
 	}
 	return filtered
 }

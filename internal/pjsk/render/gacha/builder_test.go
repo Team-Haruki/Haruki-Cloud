@@ -328,3 +328,49 @@ func TestBuildGachaListRequestUsesOnDemandLogoFallback(t *testing.T) {
 		t.Fatalf("expected logo path %q, got %q", want, got)
 	}
 }
+
+func TestBuildGachaListRequestIncludesBannerFallbackPath(t *testing.T) {
+	dir := t.TempDir()
+	bannerPath := filepath.Join(
+		dir,
+		"asset",
+		"jp-assets",
+		"ondemand",
+		"gacha",
+		"ab_gacha_401",
+		"screen",
+		"texture",
+		"bg_gacha401.png",
+	)
+	if err := os.MkdirAll(filepath.Dir(bannerPath), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(bannerPath, []byte("png"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	now := time.Now().UnixMilli()
+	source := newTestGachaSource(renderregion.JP)
+	item := &masterdata.Gacha{
+		ID:              401,
+		Name:            "Banner Fallback Gacha",
+		GachaType:       "ceil",
+		AssetBundleName: "",
+		StartAt:         now - 60_000,
+		EndAt:           now + 60_000,
+	}
+	source.gachas = []*masterdata.Gacha{item}
+	source.gachaByID[item.ID] = item
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildGachaListRequest(ListQuery{Region: renderregion.JP, PageSize: 1})
+	if err != nil {
+		t.Fatalf("BuildGachaListRequest failed: %v", err)
+	}
+	got := req.GachaBanners[item.ID]
+	if want := filepath.ToSlash(
+		filepath.Join("asset", "jp-assets", "ondemand", "gacha", "ab_gacha_401", "screen", "texture", "bg_gacha401.png"),
+	); got != want {
+		t.Fatalf("expected banner path %q, got %q", want, got)
+	}
+}

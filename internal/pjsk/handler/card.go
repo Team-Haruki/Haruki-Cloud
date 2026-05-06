@@ -191,6 +191,12 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, fmt.Errorf("card service unavailable: sekai client not configured")
 	}
 	cardCtrl := rc.App.Cards.WithContext(rc.Ctx)
+	buildDoneText := func(summary string) string {
+		if strings.TrimSpace(summary) == "" {
+			return ""
+		}
+		return fmt.Sprintf("已处理%s。", summary)
+	}
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "card-detail":
@@ -199,6 +205,10 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		q.Region = rc.Cmd.Region
 		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
 		data, err = cardCtrl.RenderCardDetail(q)
+		if err != nil {
+			return nil, err
+		}
+		return rc.ImageMessage(data)
 	case "card-list":
 		q := card.ListRequest{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
@@ -206,6 +216,17 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
 		q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, rc.ResolveSnapshot(false))
 		data, err = cardCtrl.RenderCardList(q)
+		if err != nil {
+			return nil, err
+		}
+		image, imageErr := rc.ImageMessage(data)
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		if !cardCtrl.ShouldShowSummaryForList(q) {
+			return image, nil
+		}
+		return append(onebot11.Message{onebot11.Text(buildDoneText(cardCtrl.SummaryForList(q)))}, image...), nil
 	case "card-box":
 		q := card.Query{
 			Query:            rc.Cmd.Query,
@@ -225,6 +246,17 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		queries := []card.Query{q}
 		data, err = cardCtrl.RenderCardBox(queries)
+		if err != nil {
+			return nil, err
+		}
+		image, imageErr := rc.ImageMessage(data)
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		if !cardCtrl.ShouldShowSummaryForBox(q) {
+			return image, nil
+		}
+		return append(onebot11.Message{onebot11.Text(buildDoneText(cardCtrl.SummaryForBox(q)))}, image...), nil
 	case "card-image":
 		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
@@ -249,10 +281,6 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 	default:
 		return nil, unsupportedModeError("card", rc.Cmd.Mode)
 	}
-	if err != nil {
-		return nil, err
-	}
-	return rc.ImageMessage(data)
 }
 
 func hasCardCatalogOwnedData(detail *drawing.DetailedProfileCardRequest) bool {

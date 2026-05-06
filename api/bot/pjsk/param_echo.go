@@ -48,6 +48,16 @@ var paramEchoRedactions = []paramEchoRedaction{
 	{prefix: "failed to resolve deck music selection", replacement: "无法解析歌曲查询参数"},
 	{prefix: "failed to resolve compare music selection", replacement: "无法解析要比较的歌曲"},
 	{prefix: "failed to resolve music meta query", replacement: "无法解析歌曲查询参数"},
+	{prefix: "toolbox api error", replacement: "工具箱请求失败，请稍后再试"},
+	{prefix: "toolbox: request failed after retries", replacement: "连接工具箱超时或网络异常，请稍后再试"},
+	{prefix: "sekai api error", replacement: "SekaiAPI 拉取失败，请稍后再试"},
+	{prefix: "sekaiapi profile fetch failed", replacement: "SekaiAPI 拉取失败，请稍后再试"},
+	{prefix: "tracker api error", replacement: "查榜请求失败，请稍后再试"},
+	{prefix: "tracker: request failed after retries", replacement: "连接查榜服务超时或网络异常，请稍后再试"},
+	{prefix: "deck-service returned http", replacement: "组卡服务请求失败，请稍后再试"},
+	{prefix: "deck-service unavailable", replacement: "组卡服务未就绪，请稍后再试"},
+	{prefix: "deck-service upstream is unavailable", replacement: "组卡服务未就绪，请稍后再试"},
+	{prefix: "fixed_characters and fixed_cards cannot be used together", replacement: "组卡服务版本过旧，暂不支持同时固定角色和卡牌，请更新组卡服务后重试"},
 	{prefix: "music not found", replacement: "找不到特定的歌"},
 	{prefix: "card not found (filter)", replacement: "找不到特定的卡牌"},
 	{prefix: "no cards found for filter", replacement: "找不到特定的卡牌"},
@@ -76,6 +86,7 @@ var paramEchoRedactions = []paramEchoRedaction{
 	{prefix: "sk service unavailable", replacement: "查榜服务未就绪，请稍后再试"},
 	{prefix: "deck music resolve requires music controller", replacement: "组卡服务未就绪，请稍后再试"},
 	{prefix: "drawing client is not configured", replacement: "渲染服务未就绪，请稍后再试"},
+	{prefix: "api request failed with status", replacement: "渲染请求失败，请稍后再试"},
 	{prefix: "image storage is not configured", replacement: "图片服务未就绪，请稍后再试"},
 	{prefix: "asset path is empty", replacement: "图片资源不可用"},
 }
@@ -92,9 +103,7 @@ var paramEchoSeparatorMarkers = []string{
 }
 
 func clientErrorText(message string, enableParamEcho bool) string {
-	if enableParamEcho {
-		return message
-	}
+	_ = enableParamEcho
 	return redactParamEcho(message)
 }
 

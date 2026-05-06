@@ -172,11 +172,74 @@ func TestExpandAlgorithmsNormalizesConfiguredAndRequestedAlgorithms(t *testing.T
 	}
 
 	skill := remote.ExpandAlgorithms(map[string]any{"algorithm": "all", "target": "skill"})
-	if len(skill) != 4 {
+	if len(skill) != 3 {
 		t.Fatalf("unexpected skill algorithm count: %+v", skill)
 	}
-	if skill[0]["algorithm"] != "dfs" || skill[1]["algorithm"] != "dfs_ga" || skill[2]["algorithm"] != "ga" || skill[3]["algorithm"] != "rl" {
+	if skill[0]["algorithm"] != "dfs_ga" || skill[1]["algorithm"] != "ga" || skill[2]["algorithm"] != "rl" {
 		t.Fatalf("unexpected expanded skill algorithms: %+v", skill)
+	}
+}
+
+func TestExpandAlgorithmsSkillDefaultsExcludeDFS(t *testing.T) {
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: "http://example.com",
+		MasterdataDir:  "/masterdata",
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	remote, ok := recommender.(*RemoteDeckRecommender)
+	if !ok {
+		t.Fatalf("unexpected recommender type: %T", recommender)
+	}
+	if strings.Join(remote.defaultAlgs, ",") != "ga,dfs_ga,rl" {
+		t.Fatalf("unexpected default algorithms: %+v", remote.defaultAlgs)
+	}
+
+	skill := remote.ExpandAlgorithms(map[string]any{"algorithm": "all", "target": "skill"})
+	if len(skill) != 3 {
+		t.Fatalf("unexpected skill algorithm count: %+v", skill)
+	}
+	if skill[0]["algorithm"] != "ga" || skill[1]["algorithm"] != "dfs_ga" || skill[2]["algorithm"] != "rl" {
+		t.Fatalf("unexpected expanded skill algorithms: %+v", skill)
+	}
+}
+
+func TestExpandAlgorithmsSkillNormalizesExplicitDFSAndSubset(t *testing.T) {
+	provider := newRemoteEngineProvider(RecommendConfig{
+		ServiceBaseURL: "http://example.com",
+		MasterdataDir:  "/masterdata",
+		DefaultAlgs:    []string{"dfs", "dfs_ga", "ga", "rl"},
+	})
+
+	recommender, err := provider.Get("jp")
+	if err != nil {
+		t.Fatalf("provider.Get() error = %v", err)
+	}
+
+	remote, ok := recommender.(*RemoteDeckRecommender)
+	if !ok {
+		t.Fatalf("unexpected recommender type: %T", recommender)
+	}
+
+	single := remote.ExpandAlgorithms(map[string]any{"algorithm": "dfs", "target": "skill"})
+	if len(single) != 1 || single[0]["algorithm"] != "dfs_ga" {
+		t.Fatalf("unexpected explicit skill dfs expansion: %+v", single)
+	}
+
+	subset := remote.ExpandAlgorithms(map[string]any{
+		"algorithm":                 "all",
+		"target":                    "skill",
+		recommendAlgorithmSubsetKey: []string{"dfs", "ga"},
+	})
+	if len(subset) != 2 {
+		t.Fatalf("unexpected skill subset algorithm count: %+v", subset)
+	}
+	if subset[0]["algorithm"] != "dfs_ga" || subset[1]["algorithm"] != "ga" {
+		t.Fatalf("unexpected skill subset algorithms: %+v", subset)
 	}
 }
 

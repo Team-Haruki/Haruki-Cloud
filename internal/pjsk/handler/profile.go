@@ -302,7 +302,7 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 	}
 	region = resolvedTargetRegion(region, target)
 
-	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
+	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, target.PJSKUserID)
 	if err != nil {
 		return zeroTarget, nil, fmt.Errorf("获取玩家信息失败：%w", err)
 	}

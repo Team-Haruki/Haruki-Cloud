@@ -37,6 +37,7 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 		return nil, err
 	}
 	applyRecommendChallengeAllDefaults(option, recType, query)
+	query, option = c.applyWorldBloomSimulationFallbackIfMasterdataMissing(region, recType, query, option)
 	if recType == "challenge" {
 		if err := c.prepareChallengeRecommend(query, option); err != nil {
 			return nil, err
@@ -79,6 +80,20 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 	} else {
 		recommendRequest.BatchOption = expandRecommendBatchOptions(recommender, recType, option)
 		result, err = recommender.Recommend(recommendRequest)
+		if err != nil {
+			if fallbackQuery, fallbackOption, ok := buildWorldBloomSimulationFallbackOnError(query, option, recType, err); ok {
+				fallbackRequest := recommendRequest
+				fallbackRequest.BatchOption = expandRecommendBatchOptions(recommender, recType, fallbackOption)
+				if fallbackResult, fallbackErr := recommender.Recommend(fallbackRequest); fallbackErr == nil {
+					query = fallbackQuery
+					option = fallbackOption
+					result = fallbackResult
+					err = nil
+				} else {
+					err = fallbackErr
+				}
+			}
+		}
 	}
 	if err != nil {
 		return nil, err

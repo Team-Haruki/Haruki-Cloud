@@ -408,6 +408,42 @@ func TestExecuteMySekaiMissingSnapshotUsesStandardReplayError(t *testing.T) {
 	}
 }
 
+func TestExecuteMySekaiPayloadProfileFetchFailureReturnsSekaiAPIError(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	sekaiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	}))
+	defer sekaiServer.Close()
+
+	profileSource := &handlerMySekaiProfileSource{
+		region: renderregion.JP,
+		cards: map[int]*masterdata.Card{
+			1001: {ID: 1001, CharacterID: 1, AssetBundleName: "res001_no001"},
+		},
+	}
+
+	_, err := executeMysekai(NewRequestContext(ctx, &CommandRequest{
+		Module:            parser.ModuleMysekai,
+		Mode:              "mysekai-resource-map",
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Bindings:        service,
+		MySekai:         rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{AllowFallback: true}),
+		MySekaiPayloads: fixedMySekaiPayloadProvider{payload: []byte(`{"updatedResources":{"userMysekaiHarvestMaps":[]}}`)},
+		Profiles:        renderprofile.NewController(profileSource, nil, assets.NewAssetHelper("", nil), nil),
+		SekaiAPI:        sekaiapi.NewSekaiAPIClient(&harukiConfig.SekaiAPIConfig{BaseURL: sekaiServer.URL}),
+	}))
+
+	assertReplayErrorText(t, err, "SekaiAPI 拉取失败：找不到该玩家公开信息")
+}
+
 func TestExecuteMySekaiReturnsBindingErrorBeforeDataMessage(t *testing.T) {
 	_, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
 		Module:            parser.ModuleMysekai,

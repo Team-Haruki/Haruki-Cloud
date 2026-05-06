@@ -35,5 +35,13 @@ func normalizeSKUserFacingError(err error) error {
 		strings.Contains(message, "drawing client is not configured"):
 		return onebot11.NewReplayError("查榜服务未就绪，请稍后再试")
 	}
+
+	if normalized := normalizeTrackerUserFacingError(err); normalized != err {
+		return normalized
+	}
+
+	if normalized := normalizeDrawingUserFacingError(err); normalized != err {
+		return normalized
+	}
 	return err
 }

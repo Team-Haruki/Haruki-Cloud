@@ -139,7 +139,7 @@ func resolveDeckPublicProfileForTarget(rc *RequestContext, target ResolvedGameTa
 		return nil
 	}
 	region = resolvedTargetRegion(region, target)
-	resp, err := rc.App.SekaiAPI.GetUserProfile(region, target.PJSKUserID)
+	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, target.PJSKUserID)
 	if err != nil {
 		return nil
 	}
@@ -168,10 +168,10 @@ func buildDeckDetailedProfileForTargetWithResponse(rc *RequestContext, target Re
 }
 
 func normalizeDeckUserFacingError(err error) error {
-	return normalizeDeckUserFacingErrorForRegion(err, DefaultRegionStr)
+	return normalizeDeckUserFacingErrorForCommand(err, DefaultRegionStr, "")
 }
 
-func normalizeDeckUserFacingErrorForRegion(err error, region string) error {
+func normalizeDeckUserFacingErrorForCommand(err error, region string, mode string) error {
 	if err == nil {
 		return nil
 	}
@@ -186,10 +186,17 @@ func normalizeDeckUserFacingErrorForRegion(err error, region string) error {
 	}
 
 	message := strings.TrimSpace(err.Error())
-	switch {
-	case strings.Contains(message, "failed to search music by title or alias: music not found:"):
+	if _, ok := extractMusicNotFoundQuery(err, ""); ok {
+		if mode == "deck-event" {
+			return onebot11.NewReplayError("当前区服没有该歌曲")
+		}
 		musicQuery, _ := extractMusicNotFoundQuery(err, "")
 		return newMusicNotFoundReplayError(region, musicQuery)
+	}
+
+	switch {
+	case strings.Contains(strings.ToLower(message), "event not found for eventid:"):
+		return onebot11.NewReplayError("组卡服务找不到该活动的 masterdata，请更新 masterdata 后重试")
 	case strings.Contains(message, "local user snapshot is not configured"),
 		strings.Contains(message, "user data is required for deck auto recommend"):
 		return newSuiteDataNotFoundReplayError()
@@ -205,6 +212,14 @@ func normalizeDeckUserFacingErrorForRegion(err error, region string) error {
 
 	if wrapped := WrapDomainError(err); wrapped != err {
 		return wrapped
+	}
+
+	if normalized := normalizeDeckServiceUserFacingError(err); normalized != err {
+		return normalized
+	}
+
+	if normalized := normalizeDrawingUserFacingError(err); normalized != err {
+		return normalized
 	}
 
 	return err

@@ -42,22 +42,22 @@ func TestNormalizeMusicUserFacingErrorTranslatesServiceErrors(t *testing.T) {
 
 func TestNormalizeMusicUserFacingErrorReturnsRegionSpecificNotFoundReplayError(t *testing.T) {
 	err := normalizeMusicUserFacingErrorForLookup(errString("music not found: Tell Your World"), "cn", "")
-	assertReplayErrorText(t, err, "CN服找不到特定的歌: Tell Your World\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀")
+	assertReplayErrorText(t, err, "CN服找不到特定的歌: Tell Your World\n如果需要查其他服务器歌曲请加区服前缀")
 }
 
 func TestNormalizeMusicUserFacingErrorExtractsWrappedNotFoundQuery(t *testing.T) {
 	err := normalizeMusicUserFacingErrorForLookup(errString("failed to search music by title or alias: music not found: 虾ex"), "jp", "fallback")
-	assertReplayErrorText(t, err, "JP服找不到特定的歌: 虾ex\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀")
+	assertReplayErrorText(t, err, "JP服找不到特定的歌: 虾ex\n如果需要查其他服务器歌曲请加区服前缀")
 }
 
 func TestNormalizeMusicUserFacingErrorExtractsSekaiMusicNotFound(t *testing.T) {
 	err := normalizeMusicUserFacingErrorForLookup(errString("failed to search music: query music 662: sekai: music not found"), "cn", "")
-	assertReplayErrorText(t, err, "CN服找不到特定的歌: 662\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀")
+	assertReplayErrorText(t, err, "CN服找不到特定的歌: 662\n如果需要查其他服务器歌曲请加区服前缀")
 }
 
 func TestNormalizeMusicUserFacingErrorTreatsBanIndexAsLookupMiss(t *testing.T) {
 	err := normalizeMusicUserFacingErrorForLookup(errString("failed to search music: ban event index out of range: 6"), "jp", "miku6")
-	assertReplayErrorText(t, err, "JP服找不到特定的歌: miku6\n如果需要查其他区服的歌曲请加区服前缀，如需要查日服的请加jp区服前缀")
+	assertReplayErrorText(t, err, "JP服找不到特定的歌: miku6\n如果需要查其他服务器歌曲请加区服前缀")
 }
 
 func TestNormalizeEventUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {
@@ -73,6 +73,16 @@ func TestNormalizeEventUserFacingErrorReturnsNoOngoingReplayError(t *testing.T) 
 func TestNormalizeEventUserFacingErrorTranslatesRequiredID(t *testing.T) {
 	err := normalizeEventUserFacingError(errString("event id is required"))
 	assertReplayErrorText(t, err, "请提供要查询的活动")
+}
+
+func TestNormalizeEventUserFacingErrorTranslatesMissingMasterdata(t *testing.T) {
+	err := normalizeEventUserFacingErrorForRegion(errString("query event 203: ent: event not found"), "tw")
+	assertReplayErrorText(t, err, "当前TW服未找到该活动数据，如需查询其他服务器活动请加对应区服前缀")
+}
+
+func TestNormalizeEventUserFacingErrorTranslatesEmptyRegionEventData(t *testing.T) {
+	err := normalizeEventUserFacingErrorForRegion(errString("no events found for region cn"), "cn")
+	assertReplayErrorText(t, err, "当前CN服未找到该活动数据，如需查询其他服务器活动请加对应区服前缀")
 }
 
 func TestNormalizeGachaUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {

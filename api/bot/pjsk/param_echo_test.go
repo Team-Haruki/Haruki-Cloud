@@ -30,8 +30,8 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 		},
 		{
 			name: "music not found",
-			in:   "CN服找不到特定的歌: super-secret\n如果需要查其他区服的歌曲请加区服前缀",
-			want: "CN服找不到特定的歌\n如果需要查其他区服的歌曲请加区服前缀",
+			in:   "CN服找不到特定的歌: super-secret\n如果需要查其他服务器歌曲请加区服前缀",
+			want: "CN服找不到特定的歌\n如果需要查其他服务器歌曲请加区服前缀",
 		},
 		{
 			name: "card not found",
@@ -47,6 +47,21 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 			name: "service error",
 			in:   "misc birthday service unavailable: sekai client not configured",
 			want: "生日服务未就绪，请稍后再试",
+		},
+		{
+			name: "deck fixed conflict",
+			in:   "fixed_characters and fixed_cards cannot be used together",
+			want: "组卡服务版本过旧，暂不支持同时固定角色和卡牌，请更新组卡服务后重试",
+		},
+		{
+			name: "drawing api error",
+			in:   "api request failed with status: 500, body: {\"detail\":\"Content size is too large\"}",
+			want: "渲染请求失败，请稍后再试",
+		},
+		{
+			name: "sekai api error",
+			in:   "sekai api error: status 401, message: \"Invalid token\"",
+			want: "SekaiAPI 拉取失败，请稍后再试",
 		},
 		{
 			name: "unknown english error",
@@ -69,9 +84,10 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 	}
 }
 
-func TestClientErrorTextKeepsParamEchoWhenEnabled(t *testing.T) {
+func TestClientErrorTextStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	in := "活动查询参数错误: \"super-secret\"\n【查单个活动格式】"
-	if got := clientErrorText(in, true); got != in {
-		t.Fatalf("clientErrorText() = %q, want %q", got, in)
+	want := "活动查询参数错误\n【查单个活动格式】"
+	if got := clientErrorText(in, true); got != want {
+		t.Fatalf("clientErrorText() = %q, want %q", got, want)
 	}
 }

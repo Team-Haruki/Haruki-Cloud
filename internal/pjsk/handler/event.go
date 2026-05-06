@@ -175,7 +175,11 @@ func (sekaiHandlers) EventRecordHandle() HarukiSekaiCommandHandler {
 
 func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 	defer func() {
-		err = normalizeEventUserFacingError(err)
+		region := ""
+		if rc != nil && rc.Cmd != nil {
+			region = rc.Cmd.Region
+		}
+		err = normalizeEventUserFacingErrorForRegion(err, region)
 	}()
 
 	if rc.App.Events == nil {

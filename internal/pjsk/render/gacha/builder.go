@@ -91,6 +91,7 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 
 	briefs := make([]drawing.GachaBrief, 0, len(filtered))
 	logos := make(map[int]string, len(filtered))
+	banners := make(map[int]string, len(filtered))
 	for _, item := range filtered {
 		briefs = append(briefs, drawing.GachaBrief{
 			ID:        item.ID,
@@ -101,6 +102,7 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 			AssetName: item.AssetBundleName,
 		})
 		logos[item.ID] = b.buildGachaLogoPath(item, region)
+		banners[item.ID] = b.buildGachaBannerPath(item, region)
 	}
 
 	totalPages := 1
@@ -122,8 +124,10 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 	briefs = briefs[startIndex:endIndex]
 
 	pagedLogos := make(map[int]string, len(briefs))
+	pagedBanners := make(map[int]string, len(briefs))
 	for _, brief := range briefs {
 		pagedLogos[brief.ID] = logos[brief.ID]
+		pagedBanners[brief.ID] = banners[brief.ID]
 	}
 
 	return &drawing.GachaListRequest{
@@ -131,6 +135,7 @@ func (b *Builder) BuildGachaListRequest(query ListQuery) (*drawing.GachaListRequ
 		PageSize:     pageSize,
 		Region:       region.String(),
 		GachaLogos:   pagedLogos,
+		GachaBanners: pagedBanners,
 		CurrentPage:  currentPage,
 		TotalPage:    totalPages,
 		PrePaginated: true,

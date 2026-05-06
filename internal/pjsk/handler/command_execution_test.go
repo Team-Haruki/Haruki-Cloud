@@ -2909,6 +2909,9 @@ func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByCharacterOcc
 	if query.WorldBloomEventTurn != nil {
 		t.Fatalf("expected wl event turn to be consumed: %+v", query.WorldBloomEventTurn)
 	}
+	if query.MetadataWorldBloomEventTurn == nil || *query.MetadataWorldBloomEventTurn != 2 {
+		t.Fatalf("unexpected wl event turn metadata: %+v", query.MetadataWorldBloomEventTurn)
+	}
 	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 24 {
 		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
 	}
@@ -4056,6 +4059,25 @@ func (s *bridgeCardEventSource) GetCharacterByID(id int) (*masterdata.Character,
 	return nil, os.ErrNotExist
 }
 
+func assertCardSummaryMessage(t *testing.T, message onebot11.Message, fragments ...string) {
+	t.Helper()
+	if len(message) != 2 {
+		t.Fatalf("expected text summary plus image, got %+v", message)
+	}
+	if message[0].Type != "text" || message[1].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	textData, ok := message[0].Data.(onebot11.TextData)
+	if !ok {
+		t.Fatalf("unexpected text segment data: %+v", message[0].Data)
+	}
+	for _, fragment := range fragments {
+		if !strings.Contains(textData.Text, fragment) {
+			t.Fatalf("expected text summary %q to contain %q", textData.Text, fragment)
+		}
+	}
+}
+
 func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 	root := t.TempDir()
 	for _, rel := range []string{
@@ -4091,6 +4113,35 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 		if segment.Type != "image" {
 			t.Fatalf("unexpected segment: %+v", segment)
 		}
+	}
+}
+
+func TestExecuteCardDetailOmitsSummaryText(t *testing.T) {
+	root := t.TempDir()
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/card/detail" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	app := &renderapp.App{
+		Cards:      rendercard.NewController(&bridgeCardSource{}, &bridgeCardEventSource{}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil)),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeCard(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleCard,
+		Mode:   "card-detail",
+		Query:  "1001",
+		Region: "jp",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeCard detail: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
 	}
 }
 
@@ -4416,9 +4467,7 @@ func TestExecuteCardListAutoFallbackToCardBoxOmitsUserInfo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeCard list: %v", err)
 	}
-	if len(message) != 1 || message[0].Type != "image" {
-		t.Fatalf("unexpected message: %+v", message)
-	}
+	assertCardSummaryMessage(t, message, "已处理JP / 卡牌列表 / 90张指定卡牌。")
 	if captured.UserInfo != nil {
 		t.Fatalf("expected auto-fallback card box to omit user info, got %+v", captured.UserInfo)
 	}

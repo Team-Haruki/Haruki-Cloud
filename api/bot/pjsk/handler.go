@@ -174,7 +174,10 @@ func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBCl
 			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand, req.EnableParamEcho)
 		}
 
-		if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
+		if region, ok := explicitRegionFromBotRequest(req); ok {
+			resolved.Region = region
+			resolved.RegionExplicit = true
+		} else if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
 			if normalized := renderregion.Normalize(server); !normalized.IsZero() {
 				// Treat the transport-level server as authoritative so the final
 				// command executor does not overwrite it with the user's global
@@ -260,6 +263,59 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 	return botResponse(c, fiber.StatusOK, api.ResponseOK,
 		[]onebot11.Segment{onebot11.Text(clientErrorText(err.Error(), enableParamEcho))},
 	)
+}
+
+func explicitRegionFromBotRequest(req BotCommandRequest) (string, bool) {
+	candidates := []string{
+		strings.TrimSpace(req.MatchedCommand),
+		extractBotCommandText(req.Message),
+	}
+	for _, candidate := range candidates {
+		if region, ok := explicitRegionFromCommandText(candidate); ok {
+			return region, true
+		}
+	}
+	return "", false
+}
+
+func explicitRegionFromCommandText(text string) (string, bool) {
+	text = strings.ToLower(strings.TrimSpace(text))
+	if text == "" {
+		return "", false
+	}
+	for _, region := range []renderregion.Value{
+		renderregion.JP,
+		renderregion.CN,
+		renderregion.TW,
+		renderregion.KR,
+		renderregion.EN,
+	} {
+		prefix := "/" + region.String()
+		if strings.HasPrefix(text, prefix) {
+			return region.String(), true
+		}
+	}
+	return "", false
+}
+
+func extractBotCommandText(message onebot11.Message) string {
+	var builder strings.Builder
+	for _, seg := range message {
+		if seg.Type != onebot11.TypeText {
+			continue
+		}
+		switch data := seg.Data.(type) {
+		case onebot11.TextData:
+			builder.WriteString(data.Text)
+		case map[string]any:
+			if raw, ok := data[onebot11.KeyText]; ok {
+				builder.WriteString(fmt.Sprint(raw))
+			}
+		case map[string]string:
+			builder.WriteString(data[onebot11.KeyText])
+		}
+	}
+	return strings.TrimSpace(builder.String())
 }
 
 type botValidationError struct {

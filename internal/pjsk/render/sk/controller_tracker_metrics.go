@@ -4,9 +4,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 )
+
+const trackerRealtimeTailMaxLagSeconds = int64(30 * 24 * time.Hour / time.Second)
 
 func (c *Controller) enrichRankInfoByRank(server string, eventID, rank int, wlCharacterID *int, info *drawing.RankInfo) {
 	if c == nil || c.tracker == nil || info == nil || rank <= 0 {
@@ -129,6 +132,10 @@ func (c *Controller) enrichRankInfoByUser(server string, eventID int, userID int
 }
 
 func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) {
+	applyRankInfoMetricsAt(info, samples, time.Now().UTC())
+}
+
+func applyRankInfoMetricsAt(info *drawing.RankInfo, samples []trackerScoreSample, now time.Time) {
 	if info == nil || len(samples) == 0 {
 		return
 	}
@@ -181,7 +188,7 @@ func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) 
 	}
 
 	last := normalized[len(normalized)-1]
-	endSec := normalizeTrackerUnixSeconds(last.timestamp)
+	endSec := effectiveTrackerWindowEndUnixSeconds(last.timestamp, now)
 
 	// Speed/HourRound use the last ~1h window to match tracker "近1小时" semantics.
 	hourStart := endSec - 60*60
@@ -189,17 +196,18 @@ func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) 
 	if hourBaseIdx >= 0 {
 		hourBase := normalized[hourBaseIdx]
 		hourBaseSec := normalizeTrackerUnixSeconds(hourBase.timestamp)
-		if endSec > hourBaseSec && last.score >= hourBase.score {
+		if endSec > hourBaseSec {
 			hourGain := last.score - hourBase.score
+			if hourGain < 0 {
+				hourGain = 0
+			}
 			hourElapsed := endSec - hourBaseSec
 			speed := int((int64(hourGain) * 3600) / hourElapsed)
 			info.Speed = drawing.IntPtr(speed)
 		}
 
 		hourRound := countPositiveDeltas(normalized[hourBaseIdx:])
-		if hourRound > 0 {
-			info.HourRound = drawing.IntPtr(hourRound)
-		}
+		info.HourRound = drawing.IntPtr(hourRound)
 	}
 
 	// 20min×3 is computed as gain in last 20min multiplied by 3.
@@ -208,12 +216,11 @@ func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) 
 	if windowBaseIdx >= 0 {
 		windowBase := normalized[windowBaseIdx]
 		windowGain := last.score - windowBase.score
-		if windowGain > 0 {
-			windowSpeed := windowGain * 3
-			if windowSpeed > 0 {
-				info.Min20Time3Speed = drawing.IntPtr(windowSpeed)
-			}
+		if windowGain < 0 {
+			windowGain = 0
 		}
+		windowSpeed := windowGain * 3
+		info.Min20Time3Speed = drawing.IntPtr(windowSpeed)
 	}
 }
 
@@ -222,6 +229,39 @@ func normalizeTrackerUnixSeconds(ts int64) int64 {
 		return ts / 1000
 	}
 	return ts
+}
+
+func effectiveTrackerWindowEndUnixSeconds(lastTimestamp int64, now time.Time) int64 {
+	lastSec := normalizeTrackerUnixSeconds(lastTimestamp)
+	if lastSec <= 0 {
+		return lastSec
+	}
+
+	nowSec := now.UTC().Unix()
+	if nowSec <= lastSec {
+		return lastSec
+	}
+	if nowSec-lastSec > trackerRealtimeTailMaxLagSeconds {
+		return lastSec
+	}
+	return nowSec
+}
+
+func appendIdleTrackerRankTraceAt(ranks []drawing.RankInfo, now time.Time) []drawing.RankInfo {
+	if len(ranks) == 0 {
+		return ranks
+	}
+
+	last := ranks[len(ranks)-1]
+	lastSec := normalizeTrackerUnixSeconds(last.Time)
+	endSec := effectiveTrackerWindowEndUnixSeconds(last.Time, now)
+	if endSec <= lastSec {
+		return ranks
+	}
+
+	idle := last
+	idle.Time = time.Unix(endSec, 0).UTC().UnixMilli()
+	return append(ranks, idle)
 }
 
 func findWindowBaselineIndex(samples []trackerScoreSample, windowStart int64) int {

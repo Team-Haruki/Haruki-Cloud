@@ -224,12 +224,13 @@ func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.
 
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
+	now := time.Now().UTC()
 	payload := drawing.CSBRequest{
 		Eid:         normalized.EventID,
 		EventName:   meta.name,
 		Region:      normalized.Region,
 		AggregateAt: meta.aggregateAt,
-		UpdateAt:    time.Now().UTC().UnixMilli(),
+		UpdateAt:    now.UnixMilli(),
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
@@ -249,7 +250,7 @@ func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.
 		if err != nil {
 			return nil, err
 		}
-		payload.Ranks = trace
+		payload.Ranks = appendIdleTrackerRankTraceAt(trace, now)
 		return c.BuildCSBRequest(payload)
 	}
 
@@ -271,7 +272,7 @@ func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.
 	if err != nil {
 		return nil, err
 	}
-	payload.Ranks = trace
+	payload.Ranks = appendIdleTrackerRankTraceAt(trace, now)
 	return c.BuildCSBRequest(payload)
 }
 

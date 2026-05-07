@@ -61,6 +61,20 @@ func (botBindingJPValidator) GetUserProfile(server, userID string) (*sekaiapi.Ge
 	return nil, sekaiapi.ErrUserNotFound
 }
 
+type botBindingCNValidator struct{}
+
+func (botBindingCNValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {
+	if strings.EqualFold(server, "cn") {
+		return &sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 2234567890,
+				Name:   "CNBoundUser",
+			},
+		}, nil
+	}
+	return nil, sekaiapi.ErrUserNotFound
+}
+
 type botTrackerSource struct{}
 
 type botTrackerMissingUserSource struct {
@@ -1668,6 +1682,82 @@ func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenSelfRankingIsMissing(
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+}
+
+func TestBotEndpointSKQueryRegionPrefixedCommandDoesNotFallbackToTransportServer(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing endpoint should not be called when tw binding is missing")
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingCNValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "2234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "cn", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/twsk"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "未找到绑定的游戏账号")
+	if strings.Contains(string(body), "当前CN服活动没有找到你的排行榜数据") {
+		t.Fatalf("unexpected fallback to cn binding: %s", body)
+	}
+}
+
+func TestBotEndpointSKCSBRegionPrefixedCommandDoesNotFallbackToTransportServer(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing endpoint should not be called when tw binding is missing")
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingCNValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "2234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/csb"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "cn", MatchedCommand: "/csb",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/twcsb"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "未找到绑定的游戏账号")
+	if strings.Contains(string(body), "当前CN服活动没有找到你的排行榜数据") {
+		t.Fatalf("unexpected fallback to cn binding: %s", body)
+	}
 }
 
 func TestBotEndpointSKQueryReturnsTextWhenTargetUserIsHidden(t *testing.T) {

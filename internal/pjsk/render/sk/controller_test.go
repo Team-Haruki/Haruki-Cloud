@@ -775,6 +775,95 @@ func (speedParkedTraceTrackerSource) TraceRankingByRank(server string, eventID, 
 	}, nil
 }
 
+type staleSpeedGrowthTrackerSource struct {
+	testTrackerSource
+}
+
+func (staleSpeedGrowthTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	now := time.Now().UTC()
+	latestTs := now.Add(-70 * time.Minute).Unix()
+	earlierTs := now.Add(-130 * time.Minute).Unix()
+	scoreEarlier := 1_000
+	timeDiff := int64(60 * 60)
+	growth := 1_000
+	return []sekaiapi.ScoreGrowthPoint{
+		{
+			Rank:             50,
+			ScoreLatest:      2_000,
+			ScoreEarlier:     &scoreEarlier,
+			TimestampLatest:  latestTs,
+			TimestampEarlier: &earlierTs,
+			TimeDiff:         &timeDiff,
+			Growth:           &growth,
+		},
+	}, nil
+}
+
+func (staleSpeedGrowthTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	if rank != 50 {
+		return nil, fmt.Errorf("unexpected rank")
+	}
+	now := time.Now().UTC()
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{UserID: "50050", Score: 1_000, Rank: 50, Timestamp: now.Add(-130 * time.Minute).Unix()},
+			{UserID: "50050", Score: 2_000, Rank: 50, Timestamp: now.Add(-70 * time.Minute).Unix()},
+		},
+		UserData: sekaiapi.RankingUserData{UserID: "50050", Name: "SpeedPlayer"},
+	}, nil
+}
+
+type staleCSBTrackerSource struct {
+	testTrackerSource
+}
+
+func (staleCSBTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
+	now := time.Now().UTC()
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    "60001",
+			Score:     2_000,
+			Rank:      rank,
+			Timestamp: now.Add(-70 * time.Minute).Unix(),
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "60001",
+			Name:   "TracePlayer",
+		},
+	}, nil
+}
+
+func (staleCSBTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	now := time.Now().UTC()
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    strconv.FormatInt(userID, 10),
+			Score:     2_000,
+			Rank:      1,
+			Timestamp: now.Add(-70 * time.Minute).Unix(),
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: strconv.FormatInt(userID, 10),
+			Name:   "TracePlayer",
+		},
+	}, nil
+}
+
+func (staleCSBTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	now := time.Now().UTC()
+	uid := strconv.FormatInt(userID, 10)
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{UserID: uid, Score: 1_000, Rank: 1, Timestamp: now.Add(-130 * time.Minute).Unix()},
+			{UserID: uid, Score: 2_000, Rank: 1, Timestamp: now.Add(-70 * time.Minute).Unix()},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: uid,
+			Name:   "TracePlayer",
+		},
+	}, nil
+}
+
 type missingDefaultRankSpeedTrackerSource struct {
 	testTrackerSource
 }
@@ -2118,6 +2207,37 @@ func TestSpeedInfoFromGrowthPointReturnsZeroWhenParked(t *testing.T) {
 	}
 }
 
+func TestBuildSpeedRequestFromTrackerTreatsStaleTrackerGrowthAsStopped(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(staleSpeedGrowthTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildSpeedRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{50},
+	})
+	if err != nil {
+		t.Fatalf("build speed request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	got := payload.Ranks[0]
+	if got.Speed == nil || *got.Speed != 0 {
+		t.Fatalf("expected stopped speed to decay to zero, got %+v", got.Speed)
+	}
+}
+
 func TestBuildDailySpeedRequestFromTrackerUsesDayPeriod(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
@@ -2390,6 +2510,48 @@ func TestBuildCSBRequestFromTrackerBuildsTracePayload(t *testing.T) {
 	}
 	if payload.UpdateAt <= 0 {
 		t.Fatalf("expected update time to be set, got %d", payload.UpdateAt)
+	}
+}
+
+func TestBuildCSBRequestFromTrackerAppendsIdleTailForStoppedUser(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(staleCSBTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	before := time.Now().UTC().UnixMilli()
+	payload, err := controller.BuildCSBRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1},
+	})
+	if err != nil {
+		t.Fatalf("build csb request: %v", err)
+	}
+	if len(payload.Ranks) != 3 {
+		t.Fatalf("expected idle tail to be appended, got %d points", len(payload.Ranks))
+	}
+	last := payload.Ranks[len(payload.Ranks)-1]
+	prev := payload.Ranks[len(payload.Ranks)-2]
+	if last.Score == nil || prev.Score == nil || *last.Score != *prev.Score {
+		t.Fatalf("expected idle tail to keep same score, got prev=%+v last=%+v", prev.Score, last.Score)
+	}
+	if last.Time <= prev.Time {
+		t.Fatalf("expected idle tail time to move forward, got prev=%d last=%d", prev.Time, last.Time)
+	}
+	if last.Time < before-1000 {
+		t.Fatalf("expected idle tail to extend near now, got %d before %d", last.Time, before)
+	}
+	if payload.UpdateAt < last.Time {
+		t.Fatalf("expected payload update time to be no earlier than idle tail, got update=%d tail=%d", payload.UpdateAt, last.Time)
 	}
 }
 

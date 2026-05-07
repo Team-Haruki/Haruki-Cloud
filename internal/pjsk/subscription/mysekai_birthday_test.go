@@ -173,7 +173,7 @@ func TestCreateOrUpdateRejectsUnverifiedBindingWithGuidance(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected unverified binding error")
 	}
-	want := "该账号尚未验证，请先在工具箱验证账号再发送/pjsk验证后才可使用"
+	want := "该账号尚未验证，请先在工具箱验证账号再发送\"/pjsk验证\"后才可使用"
 	if err.Error() != want {
 		t.Fatalf("error = %q, want %q", err.Error(), want)
 	}

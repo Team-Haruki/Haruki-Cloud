@@ -3,12 +3,14 @@ package sk
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, interval int, unitPeriodSeconds int64, skipMissing bool) ([]drawing.SpeedInfo, error) {
+	now := time.Now().UTC()
 	var (
 		points []sekaiapi.ScoreGrowthPoint
 		err    error
@@ -36,8 +38,8 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 	for _, rank := range ranks {
 		if point, ok := pointByRank[rank]; ok {
 			info := speedInfoFromGrowthPoint(point, unitPeriodSeconds)
-			if info.Speed == nil {
-				if traceInfo, traceOK := c.buildSpeedInfoFromTrace(server, eventID, rank, wlCharacterID, interval, unitPeriodSeconds); traceOK {
+			if info.Speed == nil || effectiveTrackerWindowEndUnixSeconds(point.TimestampLatest, now) > normalizeTrackerUnixSeconds(point.TimestampLatest) {
+				if traceInfo, traceOK := c.buildSpeedInfoFromTraceAt(server, eventID, rank, wlCharacterID, interval, unitPeriodSeconds, now); traceOK {
 					if info.Score > 0 {
 						traceInfo.Score = info.Score
 					}
@@ -51,7 +53,7 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 			result = append(result, info)
 			continue
 		}
-		if traceInfo, traceOK := c.buildSpeedInfoFromTrace(server, eventID, rank, wlCharacterID, interval, unitPeriodSeconds); traceOK {
+		if traceInfo, traceOK := c.buildSpeedInfoFromTraceAt(server, eventID, rank, wlCharacterID, interval, unitPeriodSeconds, now); traceOK {
 			result = append(result, traceInfo)
 			continue
 		}
@@ -79,6 +81,10 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 }
 
 func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, wlCharacterID *int, interval int, unitPeriodSeconds int64) (drawing.SpeedInfo, bool) {
+	return c.buildSpeedInfoFromTraceAt(server, eventID, rank, wlCharacterID, interval, unitPeriodSeconds, time.Now().UTC())
+}
+
+func (c *Controller) buildSpeedInfoFromTraceAt(server string, eventID, rank int, wlCharacterID *int, interval int, unitPeriodSeconds int64, now time.Time) (drawing.SpeedInfo, bool) {
 	if c == nil || c.tracker == nil || rank <= 0 {
 		return drawing.SpeedInfo{}, false
 	}
@@ -147,7 +153,7 @@ func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, w
 		return info, true
 	}
 
-	endSec := normalizeTrackerUnixSeconds(last.timestamp)
+	endSec := effectiveTrackerWindowEndUnixSeconds(last.timestamp, now)
 	windowStart := endSec - int64(interval)
 	baseIdx := 0
 	for i := range samples {
@@ -160,8 +166,12 @@ func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, w
 	}
 	base := samples[baseIdx]
 	baseSec := normalizeTrackerUnixSeconds(base.timestamp)
-	if endSec > baseSec && last.score >= base.score {
-		speed := int((int64(last.score-base.score) * unitPeriodSeconds) / (endSec - baseSec))
+	if endSec > baseSec {
+		gain := last.score - base.score
+		if gain < 0 {
+			gain = 0
+		}
+		speed := int((int64(gain) * unitPeriodSeconds) / (endSec - baseSec))
 		info.Speed = drawing.IntPtr(speed)
 	}
 	return info, true
@@ -174,7 +184,7 @@ func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint, unitPeriodSeconds
 	}
 
 	growth := point.Growth
-	if (growth == nil || *growth <= 0) && point.ScoreEarlier != nil {
+	if growth == nil && point.ScoreEarlier != nil {
 		val := point.ScoreLatest - *point.ScoreEarlier
 		if val >= 0 {
 			growth = &val

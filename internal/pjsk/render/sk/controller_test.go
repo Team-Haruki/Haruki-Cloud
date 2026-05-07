@@ -753,6 +753,28 @@ func (speedWindowTraceTrackerSource) TraceRankingByRank(server string, eventID, 
 	}, nil
 }
 
+type speedParkedTraceTrackerSource struct {
+	testTrackerSource
+}
+
+func (speedParkedTraceTrackerSource) GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error) {
+	return nil, nil
+}
+
+func (speedParkedTraceTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	if rank != 50 {
+		return nil, fmt.Errorf("unexpected rank")
+	}
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{UserID: "50050", Score: 22_527_600, Rank: 50, Timestamp: 1_000_100},
+			{UserID: "50050", Score: 23_171_700, Rank: 50, Timestamp: 1_000_490},
+			{UserID: "50050", Score: 23_171_700, Rank: 50, Timestamp: 1_004_090},
+		},
+		UserData: sekaiapi.RankingUserData{UserID: "50050", Name: "SpeedPlayer"},
+	}, nil
+}
+
 type missingDefaultRankSpeedTrackerSource struct {
 	testTrackerSource
 }
@@ -2045,6 +2067,57 @@ func TestBuildSpeedRequestFromTrackerTraceUsesLastPointBeforeWindowStart(t *test
 	}
 }
 
+func TestBuildSpeedRequestFromTrackerReturnsZeroWhenTraceShowsParkedWindow(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(speedParkedTraceTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildSpeedRequestFromTracker(TrackerRankQuery{
+		EventID:         101,
+		Region:          "jp",
+		Ranks:           []int{50},
+		SpeedUnit:       "h",
+		SpeedPeriodSecs: 60 * 60,
+	})
+	if err != nil {
+		t.Fatalf("build speed request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	got := payload.Ranks[0]
+	if got.Speed == nil || *got.Speed != 0 {
+		t.Fatalf("expected parked trace speed to be zero, got %+v", got.Speed)
+	}
+}
+
+func TestSpeedInfoFromGrowthPointReturnsZeroWhenParked(t *testing.T) {
+	scoreEarlier := 23_171_700
+	timestampEarlier := int64(1_000_490)
+	point := sekaiapi.ScoreGrowthPoint{
+		Rank:             50,
+		ScoreLatest:      23_171_700,
+		ScoreEarlier:     &scoreEarlier,
+		TimestampLatest:  1_004_090,
+		TimestampEarlier: &timestampEarlier,
+	}
+
+	info := speedInfoFromGrowthPoint(point, 60*60)
+
+	if info.Speed == nil || *info.Speed != 0 {
+		t.Fatalf("expected parked growth point speed to be zero, got %+v", info.Speed)
+	}
+}
+
 func TestBuildDailySpeedRequestFromTrackerUsesDayPeriod(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
@@ -2120,6 +2193,19 @@ func TestBuildDailySpeedRequestFromTrackerKeepsDailyNormalizationForCustomWindow
 	got := payload.Ranks[0]
 	if got.Speed == nil || *got.Speed != 37349154 {
 		t.Fatalf("expected daily normalized speed, got %+v", got.Speed)
+	}
+}
+
+func TestApplyRankInfoMetricsReturnsZeroSpeedWhenParked(t *testing.T) {
+	info := drawing.RankInfo{}
+	applyRankInfoMetrics(&info, []trackerScoreSample{
+		{score: 22_527_600, timestamp: 1_000_100},
+		{score: 23_171_700, timestamp: 1_000_490},
+		{score: 23_171_700, timestamp: 1_004_090},
+	})
+
+	if info.Speed == nil || *info.Speed != 0 {
+		t.Fatalf("expected parked line speed to be zero, got %+v", info.Speed)
 	}
 }
 

@@ -160,11 +160,9 @@ func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, w
 	}
 	base := samples[baseIdx]
 	baseSec := normalizeTrackerUnixSeconds(base.timestamp)
-	if endSec > baseSec && last.score > base.score {
+	if endSec > baseSec && last.score >= base.score {
 		speed := int((int64(last.score-base.score) * unitPeriodSeconds) / (endSec - baseSec))
-		if speed > 0 {
-			info.Speed = drawing.IntPtr(speed)
-		}
+		info.Speed = drawing.IntPtr(speed)
 	}
 	return info, true
 }
@@ -178,7 +176,7 @@ func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint, unitPeriodSeconds
 	growth := point.Growth
 	if (growth == nil || *growth <= 0) && point.ScoreEarlier != nil {
 		val := point.ScoreLatest - *point.ScoreEarlier
-		if val > 0 {
+		if val >= 0 {
 			growth = &val
 		}
 	}
@@ -193,7 +191,7 @@ func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint, unitPeriodSeconds
 		}
 	}
 
-	if growth != nil && *growth > 0 && timeDiff != nil && *timeDiff > 0 {
+	if growth != nil && *growth >= 0 && timeDiff != nil && *timeDiff > 0 {
 		speed = new(int((int64(*growth) * unitPeriodSeconds) / *timeDiff))
 	}
 	score := point.ScoreLatest

@@ -189,13 +189,11 @@ func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) 
 	if hourBaseIdx >= 0 {
 		hourBase := normalized[hourBaseIdx]
 		hourBaseSec := normalizeTrackerUnixSeconds(hourBase.timestamp)
-		if endSec > hourBaseSec && last.score > hourBase.score {
+		if endSec > hourBaseSec && last.score >= hourBase.score {
 			hourGain := last.score - hourBase.score
 			hourElapsed := endSec - hourBaseSec
 			speed := int((int64(hourGain) * 3600) / hourElapsed)
-			if speed > 0 {
-				info.Speed = drawing.IntPtr(speed)
-			}
+			info.Speed = drawing.IntPtr(speed)
 		}
 
 		hourRound := countPositiveDeltas(normalized[hourBaseIdx:])

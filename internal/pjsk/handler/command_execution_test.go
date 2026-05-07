@@ -3046,6 +3046,57 @@ func TestResolveDeckCharacterSelectionsResolvesMikuWorldBloomTurnWithLateChapter
 	}
 }
 
+func TestResolveDeckCharacterSelectionsKeepsFutureWorldBloomTurnForSimulation(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_turn_future_simulation?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 140, now-int64(240*time.Hour/time.Millisecond), now-int64(216*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(239*time.Hour/time.Millisecond), aggregateAt: now - int64(237*time.Hour/time.Millisecond), characterID: 21},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 179, now-int64(144*time.Hour/time.Millisecond), now-int64(120*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - int64(143*time.Hour/time.Millisecond), aggregateAt: now - int64(141*time.Hour/time.Millisecond), characterID: 21},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		WorldBloomEventTurn:      drawing.IntPtr(3),
+		WorldBloomCharacterQuery: "miku",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID != nil {
+		t.Fatalf("future simulated wl turn should not resolve event id: %+v", query.EventID)
+	}
+	if query.WorldBloomEventTurn == nil || *query.WorldBloomEventTurn != 3 {
+		t.Fatalf("future simulated wl turn should be preserved: %+v", query.WorldBloomEventTurn)
+	}
+	if query.MetadataWorldBloomEventTurn != nil {
+		t.Fatalf("future simulated wl turn should not backfill metadata yet: %+v", query.MetadataWorldBloomEventTurn)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
+		t.Fatalf("unexpected world bloom character id for simulated wl3: %+v", query.WorldBloomCharacterID)
+	}
+	if query.EventUnit != "piapro" {
+		t.Fatalf("unexpected world bloom event unit for simulated wl3: %q", query.EventUnit)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsResolvesWorldBloomEventTurnByPiaproUnitOnly(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_turn_piapro_unit_only?mode=memory&cache=shared&_fk=1")

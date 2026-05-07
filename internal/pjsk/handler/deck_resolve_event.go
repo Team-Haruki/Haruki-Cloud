@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -112,6 +113,10 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 		}
 		eventInfo, err := resolveDeckWorldBloomEventByTurnSelection(ctx, app, region, q)
 		if err != nil {
+			var futureTurnErr *deckFutureWorldBloomTurnError
+			if errors.As(err, &futureTurnErr) && shouldKeepDeckWorldBloomSimulationSelection(q) {
+				return nil
+			}
 			return err
 		}
 		q.EventID = drawing.IntPtr(int(eventInfo.GameID))
@@ -676,7 +681,11 @@ func resolveDeckWorldBloomEventByCharacterTurn(ctx context.Context, app *rendera
 	}
 
 	if turn > len(matched) {
-		return nil, fmt.Errorf("角色 %d 当前仅有 %d 次 WL，无法解析 wl%d", charID, len(matched), turn)
+		return nil, &deckFutureWorldBloomTurnError{
+			Turn:      turn,
+			Available: len(matched),
+			Character: charID,
+		}
 	}
 	return matched[turn-1], nil
 }
@@ -712,9 +721,37 @@ func resolveDeckWorldBloomEventByUnitTurn(ctx context.Context, app *renderapp.Ap
 	}
 
 	if turn > len(matched) {
-		return nil, fmt.Errorf("团 %s 当前仅有 %d 次 WL，无法解析 wl%d", unit, len(matched), turn)
+		return nil, &deckFutureWorldBloomTurnError{
+			Turn:      turn,
+			Available: len(matched),
+			Unit:      unit,
+		}
 	}
 	return matched[turn-1], nil
+}
+
+type deckFutureWorldBloomTurnError struct {
+	Turn      int
+	Available int
+	Character int
+	Unit      string
+}
+
+func (e *deckFutureWorldBloomTurnError) Error() string {
+	if e == nil {
+		return "无法解析未来 WL 轮次"
+	}
+	if e.Character > 0 {
+		return fmt.Sprintf("角色 %d 当前仅有 %d 次 WL，无法解析 wl%d", e.Character, e.Available, e.Turn)
+	}
+	return fmt.Sprintf("团 %s 当前仅有 %d 次 WL，无法解析 wl%d", e.Unit, e.Available, e.Turn)
+}
+
+func shouldKeepDeckWorldBloomSimulationSelection(q *deck.AutoQuery) bool {
+	if q == nil {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(q.RecommendType), "event")
 }
 
 func queryDeckWorldBloomEvents(ctx context.Context, app *renderapp.App, region renderregion.Value) ([]*sekaidb.Event, error) {

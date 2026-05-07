@@ -25,6 +25,17 @@ func isMySekaiRegionAllowed(cmd *CommandRequest, region string) bool {
 	return false
 }
 
+func isMySekaiDeckRegionAllowed(cmd *CommandRequest, region string) bool {
+	region = strings.ToLower(strings.TrimSpace(region))
+	if region != "cn" {
+		return true
+	}
+	if cmd != nil && strings.EqualFold(strings.TrimSpace(cmd.Mode), "deck-mysekai") {
+		return true
+	}
+	return isMySekaiRegionAllowed(cmd, region)
+}
+
 func mySekaiRegionUnavailableMessage() onebot11.Message {
 	return onebot11.Message{onebot11.Text("MySekai 功能在此区服暂未开放")}
 }

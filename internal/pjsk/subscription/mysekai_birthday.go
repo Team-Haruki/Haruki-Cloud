@@ -201,7 +201,7 @@ func (s *Service) CreateOrUpdate(
 		return nil, fmt.Errorf("未找到可监听的绑定账号")
 	}
 	if !binding.Verified {
-		return nil, fmt.Errorf("该账号尚未验证，请先在 Toolbox 验证账号")
+		return nil, fmt.Errorf("该账号尚未验证，请先在工具箱验证账号再发送/pjsk验证后才可使用")
 	}
 
 	version, token, err := randomVersionedToken()

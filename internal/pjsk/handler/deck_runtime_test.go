@@ -207,7 +207,7 @@ func TestResolveDeckRenderProfileSnapshotAndPublicReturnsSelectedPublicProfile(t
 	}
 }
 
-func TestExecuteDeckMySekaiBlocksCNRegion(t *testing.T) {
+func TestExecuteDeckMySekaiAllowsCNRegion(t *testing.T) {
 	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
 	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil
 	t.Cleanup(func() {
@@ -218,7 +218,11 @@ func TestExecuteDeckMySekaiBlocksCNRegion(t *testing.T) {
 		Deck  map[string]any `json:"deck"`
 		Query map[string]any `json:"query"`
 	}{
-		Deck:  map[string]any{},
+		Deck: map[string]any{
+			"max_profile": true,
+			"event_unit":  "idol",
+			"event_attr":  "cute",
+		},
 		Query: map[string]any{},
 	})
 	if err != nil {
@@ -232,11 +236,23 @@ func TestExecuteDeckMySekaiBlocksCNRegion(t *testing.T) {
 		Params:            params,
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
-	}, &renderapp.App{}))
+	}, &renderapp.App{
+		Decks:      newHandlerTestDeckControllerForRegion(t, renderregion.CN, 640, "CN Deck Event"),
+		Music:      newHandlerTestMusicControllerForRegion(t, renderregion.CN),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}))
 	if err != nil {
 		t.Fatalf("executeDeck() error = %v", err)
 	}
-	assertSingleMySekaiUnavailableMessage(t, message)
+	if len(message) != 2 {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if message[0].Type != onebot11.TypeText {
+		t.Fatalf("unexpected first segment: %+v", message[0])
+	}
+	if message[1].Type != onebot11.TypeImage {
+		t.Fatalf("unexpected second segment: %+v", message[1])
+	}
 }
 
 func TestExecuteDeckMySekaiMaxProfileDoesNotRequireBinding(t *testing.T) {

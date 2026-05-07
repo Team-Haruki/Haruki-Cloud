@@ -195,7 +195,10 @@ func normalizeDeckUserFacingErrorForCommand(err error, region string, mode strin
 	}
 
 	switch {
-	case strings.Contains(strings.ToLower(message), "event not found for eventid:"):
+	case isDeckEventMasterdataMissingMessage(message):
+		if mode == "deck-event" {
+			return onebot11.NewReplayError("组卡服务找不到该活动的数据，请使用/组卡模拟对应颜色和团的组卡")
+		}
 		return onebot11.NewReplayError("组卡服务找不到该活动的 masterdata，请更新 masterdata 后重试")
 	case strings.Contains(message, "local user snapshot is not configured"),
 		strings.Contains(message, "user data is required for deck auto recommend"):
@@ -223,6 +226,15 @@ func normalizeDeckUserFacingErrorForCommand(err error, region string, mode strin
 	}
 
 	return err
+}
+
+func isDeckEventMasterdataMissingMessage(message string) bool {
+	lower := strings.ToLower(strings.TrimSpace(message))
+	detailLower := strings.ToLower(strings.TrimSpace(parseEmbeddedErrorText(message)))
+	return strings.Contains(lower, "event not found for eventid:") ||
+		strings.Contains(lower, "master data not found") ||
+		strings.Contains(detailLower, "event not found for eventid:") ||
+		strings.Contains(detailLower, "master data not found")
 }
 
 func validateDeckCharacterIDs(values []int) error {

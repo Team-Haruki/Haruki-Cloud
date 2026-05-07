@@ -211,7 +211,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &combined)
 
 		regionStr := regionWithDefault(rc.Cmd.Region)
-		if !isMySekaiRegionAllowed(rc.Cmd, regionStr) {
+		if !isMySekaiDeckRegionAllowed(rc.Cmd, regionStr) {
 			return mySekaiRegionUnavailableMessage(), nil
 		}
 
@@ -258,7 +258,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 
 		regionStr = resolvedTargetRegion(regionStr, target)
-		if !isMySekaiRegionAllowed(rc.Cmd, regionStr) {
+		if !isMySekaiDeckRegionAllowed(rc.Cmd, regionStr) {
 			return mySekaiRegionUnavailableMessage(), nil
 		}
 		platform, platformUserID := platformCredentials(p)

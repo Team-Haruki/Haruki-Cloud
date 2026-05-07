@@ -152,6 +152,33 @@ func TestCreateOrUpdateUsesRegionPrefixedSelectorBinding(t *testing.T) {
 	}
 }
 
+func TestCreateOrUpdateRejectsUnverifiedBindingWithGuidance(t *testing.T) {
+	ctx := context.Background()
+	pjskClient := pjskenttest.Open(t, "sqlite3", fmt.Sprintf("file:birthday_monitor_pjsk_unverified_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = pjskClient.Close() })
+	usersClient := usersenttest.Open(t, "sqlite3", fmt.Sprintf("file:birthday_monitor_users_unverified_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = usersClient.Close() })
+
+	bindings := accountdata.NewBindingService(
+		pjskClient,
+		identity.NewResolver(usersClient),
+		birthdayMonitorProfileValidator{},
+	)
+	if _, err := bindings.Bind(ctx, "qq", "42", "11111111111111"); err != nil {
+		t.Fatalf("bind account: %v", err)
+	}
+
+	service := NewService(pjskClient, bindings)
+	_, err := service.CreateOrUpdate(ctx, "qq", "42", "100", "bot", "self", "", false, "/烤森生日监听", false)
+	if err == nil {
+		t.Fatal("expected unverified binding error")
+	}
+	want := "该账号尚未验证，请先在工具箱验证账号再发送/pjsk验证后才可使用"
+	if err.Error() != want {
+		t.Fatalf("error = %q, want %q", err.Error(), want)
+	}
+}
+
 type birthdayMonitorProfileValidator struct{}
 
 func (birthdayMonitorProfileValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {

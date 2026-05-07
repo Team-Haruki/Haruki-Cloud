@@ -62,3 +62,21 @@ func TestIsMySekaiRegionAllowedKeepsLegacyGroupWhitelist(t *testing.T) {
 		t.Fatal("expected legacy whitelist entry without bot id to remain valid")
 	}
 }
+
+func TestIsMySekaiDeckRegionAllowedAlwaysAllowsCNDeckMode(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil
+	t.Cleanup(func() {
+		harukiConfig.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	allowed := isMySekaiDeckRegionAllowed(&CommandRequest{
+		Mode:              "deck-mysekai",
+		RequesterPlatform: "qq",
+		RequesterGroupID:  "123456",
+		RequesterBotID:    "1919810",
+	}, "cn")
+	if !allowed {
+		t.Fatal("expected deck-mysekai to bypass CN mysekai whitelist")
+	}
+}

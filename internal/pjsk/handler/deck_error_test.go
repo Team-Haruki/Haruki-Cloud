@@ -69,6 +69,11 @@ func TestNormalizeDeckUserFacingErrorForEventMusicNotFound(t *testing.T) {
 	assertReplayErrorText(t, err, "当前区服没有该歌曲")
 }
 
+func TestNormalizeDeckUserFacingErrorForFutureEventMasterdataMissing(t *testing.T) {
+	err := normalizeDeckUserFacingErrorForCommand(errString("Event not found for eventId: 204"), "jp", "deck-event")
+	assertReplayErrorText(t, err, "组卡服务找不到该活动的数据，请使用/组卡模拟对应颜色和团的组卡")
+}
+
 type errString string
 
 func (e errString) Error() string {

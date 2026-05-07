@@ -216,6 +216,33 @@ func TestTrackerRankQueryFromParamsKeepsExplicitRegion(t *testing.T) {
 	}
 }
 
+func TestTrackerRankQueryFromParamsPromotesExplicitRegionFromCommand(t *testing.T) {
+	raw, err := json.Marshal(rendersk.TrackerRankQuery{
+		Region:         "cn",
+		RegionExplicit: false,
+		TargetPlatform: "qq",
+		TargetUserID:   "9001",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	req, ok := trackerRankQueryFromParams(&CommandRequest{
+		Region:         "tw",
+		RegionExplicit: true,
+		Params:         raw,
+	})
+	if !ok {
+		t.Fatal("expected tracker request to be parsed")
+	}
+	if !req.RegionExplicit {
+		t.Fatal("expected explicit region to be promoted from command request")
+	}
+	if req.Region != "tw" {
+		t.Fatalf("expected region tw, got %q", req.Region)
+	}
+}
+
 func TestTrackerRankQueryFromParamsAcceptsWlSelectorWithoutRanks(t *testing.T) {
 	raw, err := json.Marshal(rendersk.TrackerRankQuery{
 		Region:           "jp",

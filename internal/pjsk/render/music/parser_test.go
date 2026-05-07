@@ -106,3 +106,23 @@ func TestSearchNegativeSequenceIgnoresUnreleasedMusic(t *testing.T) {
 		t.Fatalf("expected second latest released music 1, got %+v", musicInfo)
 	}
 }
+
+func TestSearchNegativeSequenceStillIgnoresUnreleasedMusicWhenLookupLeaksEnabled(t *testing.T) {
+	now := time.Now().UnixMilli()
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", PublishedAt: now - 30_000},
+			2: {ID: 2, Title: "Song B", PublishedAt: now - 10_000},
+			3: {ID: 3, Title: "Song C", PublishedAt: now + 60_000},
+		},
+	}
+	searcher := NewSearchService(source, NewParser(nil)).WithAllowUnreleased(true)
+
+	musicInfo, err := searcher.Search("-1")
+	if err != nil {
+		t.Fatalf("Search(-1) error = %v", err)
+	}
+	if musicInfo.ID != 2 {
+		t.Fatalf("expected latest released music 2 even with allowUnreleased, got %+v", musicInfo)
+	}
+}

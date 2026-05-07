@@ -476,7 +476,12 @@ func trackerRankQueryFromParams(r *CommandRequest) (sk.TrackerRankQuery, bool) {
 		return sk.TrackerRankQuery{}, false
 	}
 	resolvedRegion := strings.TrimSpace(r.Region)
-	if !req.RegionExplicit && resolvedRegion != "" {
+	if r.RegionExplicit {
+		req.RegionExplicit = true
+		if resolvedRegion != "" {
+			req.Region = resolvedRegion
+		}
+	} else if !req.RegionExplicit && resolvedRegion != "" {
 		req.Region = resolvedRegion
 	} else if req.Region == "" {
 		req.Region = resolvedRegion

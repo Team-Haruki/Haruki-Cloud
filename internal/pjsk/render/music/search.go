@@ -80,7 +80,10 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		return nil, fmt.Errorf("music not found: %d", info.Value)
 
 	case QueryTypeSeq:
-		musics := accessibleMusicsSortedByPublishedAt(s.source, now, s.allowUnreleased)
+		// Sequence lookup should stay anchored to songs that are already
+		// released in the target region, even when title/id lookup is allowed
+		// to peek at unreleased data.
+		musics := accessibleMusicsSortedByPublishedAt(s.source, now, false)
 		if len(musics) == 0 {
 			return nil, fmt.Errorf("no music data available")
 		}

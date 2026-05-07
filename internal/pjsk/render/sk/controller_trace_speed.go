@@ -80,10 +80,6 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 	return result, nil
 }
 
-func (c *Controller) buildSpeedInfoFromTrace(server string, eventID, rank int, wlCharacterID *int, interval int, unitPeriodSeconds int64) (drawing.SpeedInfo, bool) {
-	return c.buildSpeedInfoFromTraceAt(server, eventID, rank, wlCharacterID, interval, unitPeriodSeconds, time.Now().UTC())
-}
-
 func (c *Controller) buildSpeedInfoFromTraceAt(server string, eventID, rank int, wlCharacterID *int, interval int, unitPeriodSeconds int64, now time.Time) (drawing.SpeedInfo, bool) {
 	if c == nil || c.tracker == nil || rank <= 0 {
 		return drawing.SpeedInfo{}, false

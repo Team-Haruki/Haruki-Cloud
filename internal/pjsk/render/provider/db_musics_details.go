@@ -3,8 +3,8 @@ package provider
 import (
 	"context"
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"fmt"
+	sonic "github.com/bytedance/sonic"
 	"strconv"
 	"strings"
 
@@ -21,6 +21,14 @@ import (
 
 func (p *dbMusicProvider) GetDifficulties(ctx context.Context, musicID int) ([]*masterdata.MusicDifficulty, error) {
 	p.init()
+	if p.local != nil {
+		if result, err := p.local.GetDifficulties(ctx, musicID); err == nil && len(result) > 0 {
+			p.mu.Lock()
+			p.difficultiesByID[musicID] = common.CloneMusicDifficulties(result)
+			p.mu.Unlock()
+			return result, nil
+		}
+	}
 
 	p.mu.RLock()
 	if cached, ok := p.difficultiesByID[musicID]; ok {
@@ -61,6 +69,11 @@ func (p *dbMusicProvider) GetDifficulties(ctx context.Context, musicID int) ([]*
 }
 
 func (p *dbMusicProvider) GetVocals(ctx context.Context, musicID int) ([]*masterdata.MusicVocal, error) {
+	if p.local != nil {
+		if result, err := p.local.GetVocals(ctx, musicID); err == nil && len(result) > 0 {
+			return result, nil
+		}
+	}
 	items, err := p.client.Musicvocal.Query().
 		Where(
 			musicvocal.ServerRegionEQ(p.region.String()),
@@ -90,6 +103,11 @@ func (p *dbMusicProvider) GetVocals(ctx context.Context, musicID int) ([]*master
 }
 
 func (p *dbMusicProvider) GetTags(ctx context.Context, musicID int) ([]string, error) {
+	if p.local != nil {
+		if result, err := p.local.GetTags(ctx, musicID); err == nil {
+			return result, nil
+		}
+	}
 	items, err := p.client.Musictag.Query().
 		Where(
 			musictag.ServerRegionEQ(p.region.String()),
@@ -116,6 +134,14 @@ func (p *dbMusicProvider) GetOutsideCharacterByID(ctx context.Context, id int) (
 		return "", fmt.Errorf("invalid outside character id: %d", id)
 	}
 	p.init()
+	if p.local != nil {
+		if name, err := p.local.GetOutsideCharacterByID(ctx, id); err == nil && strings.TrimSpace(name) != "" {
+			p.mu.Lock()
+			p.outsideByID[id] = name
+			p.mu.Unlock()
+			return name, nil
+		}
+	}
 
 	p.mu.RLock()
 	if cached, ok := p.outsideByID[id]; ok {
@@ -139,6 +165,11 @@ func (p *dbMusicProvider) GetOutsideCharacterByID(ctx context.Context, id int) (
 }
 
 func (p *dbMusicProvider) GetPrimaryEventByMusicID(ctx context.Context, musicID int) (*masterdata.Event, error) {
+	if p.local != nil {
+		if eventInfo, err := p.local.GetPrimaryEventByMusicID(ctx, musicID); err == nil && eventInfo != nil {
+			return eventInfo, nil
+		}
+	}
 	links, err := p.client.Eventmusic.Query().
 		Where(
 			eventmusic.ServerRegionEQ(p.region.String()),
@@ -177,6 +208,11 @@ func (p *dbMusicProvider) GetPrimaryEventByMusicID(ctx context.Context, musicID 
 }
 
 func (p *dbMusicProvider) GetLimitedTimeMusics(ctx context.Context, musicID int) []*masterdata.LimitedTimeMusic {
+	if p.local != nil {
+		if result := p.local.GetLimitedTimeMusics(ctx, musicID); len(result) > 0 {
+			return result
+		}
+	}
 	items, err := p.client.Limitedtimemusic.Query().
 		Where(
 			limitedtimemusic.ServerRegionEQ(p.region.String()),

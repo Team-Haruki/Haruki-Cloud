@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	json "github.com/bytedance/sonic"
+	"os"
+	"path/filepath"
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -250,6 +252,42 @@ func TestDBMusicProviderGetDifficultiesUsesCachedClone(t *testing.T) {
 	got[0].PlayLevel = 99
 	if provider.difficultiesByID[1001][0].PlayLevel != 26 {
 		t.Fatal("mutation leaked into provider cache")
+	}
+}
+
+func TestDBMusicProviderGetAllPrefersLocalMasterdataOverStaleCache(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "musics.json"), []byte(`[
+		{"id":681,"seq":2264301,"title":"星に一番近い場所","publishedAt":1778072700000,"releasedAt":1777993200000,"assetbundleName":"old_song"},
+		{"id":740,"seq":2464401,"title":"羽歌","publishedAt":1778220000000,"releasedAt":1778166000000,"assetbundleName":"new_song"}
+	]`), 0o644); err != nil {
+		t.Fatalf("write musics.json: %v", err)
+	}
+
+	provider := &dbMusicProvider{
+		region: renderregion.JP,
+		local:  &localMusicProvider{store: newLocalStore(root)},
+	}
+	provider.init()
+	provider.musicList = []*masterdata.Music{
+		{ID: 681, Seq: 2264301, Title: "星に一番近い場所", PublishedAt: 1778072700000},
+	}
+	provider.musicByID[681] = &masterdata.Music{ID: 681, Seq: 2264301, Title: "星に一番近い場所", PublishedAt: 1778072700000}
+
+	got := provider.GetAll(context.Background())
+	if len(got) != 2 {
+		t.Fatalf("expected 2 musics from local masterdata, got %d", len(got))
+	}
+	if got[1].ID != 740 {
+		t.Fatalf("expected latest local music 740, got %+v", got[1])
+	}
+
+	byID, err := provider.GetByID(context.Background(), 740)
+	if err != nil {
+		t.Fatalf("GetByID(740) error = %v", err)
+	}
+	if byID.ID != 740 || byID.Title != "羽歌" {
+		t.Fatalf("unexpected local music by id: %+v", byID)
 	}
 }
 

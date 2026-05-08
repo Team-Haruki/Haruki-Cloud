@@ -65,6 +65,9 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
 		if p.education != nil {
 			p.education.store = nil
 		}
+		if p.musics != nil {
+			p.musics.local = nil
+		}
 		if p.events != nil {
 			p.events.local = nil
 		}
@@ -79,6 +82,9 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
 		if p.education != nil {
 			p.education.store = nil
 		}
+		if p.musics != nil {
+			p.musics.local = nil
+		}
 		if p.events != nil {
 			p.events.local = nil
 		}
@@ -90,6 +96,9 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
 	store := newLocalStore(dirs...)
 	if p.education != nil {
 		p.education.store = store
+	}
+	if p.musics != nil {
+		p.musics.local = &localMusicProvider{store: store, events: p.events}
 	}
 	if p.mysekai != nil {
 		p.mysekai.local = &localMySekaiProvider{store: store}

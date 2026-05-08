@@ -47,6 +47,7 @@ func TestDatabaseProviderSetLocalMasterdataDirGatesEventLeaks(t *testing.T) {
 	provider := &DatabaseProvider{
 		region:    renderregion.JP,
 		education: &dbEducationProvider{},
+		musics:    &dbMusicProvider{},
 		events:    &dbEventProvider{},
 		mysekai:   &dbMySekaiProvider{},
 	}
@@ -57,6 +58,9 @@ func TestDatabaseProviderSetLocalMasterdataDirGatesEventLeaks(t *testing.T) {
 	}
 	if provider.mysekai.local == nil {
 		t.Fatalf("expected mysekai local fallback to be configured")
+	}
+	if provider.musics.local == nil {
+		t.Fatalf("expected music local fallback to be configured")
 	}
 	if provider.events.local != nil {
 		t.Fatalf("expected event leak fallback to stay disabled")

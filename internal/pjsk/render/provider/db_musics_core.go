@@ -19,6 +19,11 @@ func (p *dbMusicProvider) Search(ctx context.Context, query string) (*masterdata
 	if query == "" {
 		return nil, fmt.Errorf("music not found: empty query")
 	}
+	if p.local != nil {
+		if musicInfo, err := p.local.Search(ctx, query); err == nil && musicInfo != nil {
+			return musicInfo, nil
+		}
+	}
 
 	if id, err := strconv.Atoi(query); err == nil {
 		return p.GetByID(ctx, id)
@@ -43,6 +48,14 @@ func (p *dbMusicProvider) GetByID(ctx context.Context, id int) (*masterdata.Musi
 		return nil, fmt.Errorf("invalid music id: %d", id)
 	}
 	p.init()
+	if p.local != nil {
+		if musicInfo, err := p.local.GetByID(ctx, id); err == nil && musicInfo != nil {
+			p.mu.Lock()
+			p.musicByID[id] = common.CloneMusic(musicInfo)
+			p.mu.Unlock()
+			return musicInfo, nil
+		}
+	}
 
 	p.mu.RLock()
 	if cached, ok := p.musicByID[id]; ok {
@@ -66,6 +79,11 @@ func (p *dbMusicProvider) GetByID(ctx context.Context, id int) (*masterdata.Musi
 }
 
 func (p *dbMusicProvider) GetByEventID(ctx context.Context, eventID int) (*masterdata.Music, error) {
+	if p.local != nil {
+		if musicInfo, err := p.local.GetByEventID(ctx, eventID); err == nil && musicInfo != nil {
+			return musicInfo, nil
+		}
+	}
 	links, err := p.client.Eventmusic.Query().
 		Where(eventmusic.ServerRegionEQ(p.region.String()), eventmusic.EventIDEQ(int64(eventID))).
 		Order(eventmusic.BySeq()).
@@ -81,6 +99,23 @@ func (p *dbMusicProvider) GetByEventID(ctx context.Context, eventID int) (*maste
 
 func (p *dbMusicProvider) GetAll(ctx context.Context) []*masterdata.Music {
 	p.init()
+	if p.local != nil {
+		if localItems := p.local.GetAll(ctx); len(localItems) > 0 {
+			cachedList := common.CloneMusicList(localItems)
+			cachedByID := make(map[int]*masterdata.Music, len(cachedList))
+			for _, item := range cachedList {
+				if item == nil {
+					continue
+				}
+				cachedByID[item.ID] = item
+			}
+			p.mu.Lock()
+			p.musicList = cachedList
+			p.musicByID = cachedByID
+			p.mu.Unlock()
+			return common.CloneMusicList(cachedList)
+		}
+	}
 
 	p.mu.RLock()
 	if len(p.musicList) > 0 {
@@ -126,6 +161,14 @@ func (p *dbMusicProvider) GetLocalizedTitles(ctx context.Context, musicID int) (
 		return nil, fmt.Errorf("invalid music id: %d", musicID)
 	}
 	p.init()
+	if p.local != nil {
+		if titles, err := p.local.GetLocalizedTitles(ctx, musicID); err == nil && len(titles) > 0 {
+			p.mu.Lock()
+			p.localizedByID[musicID] = slices.Clone(titles)
+			p.mu.Unlock()
+			return slices.Clone(titles), nil
+		}
+	}
 
 	p.mu.RLock()
 	if titles, ok := p.localizedByID[musicID]; ok {

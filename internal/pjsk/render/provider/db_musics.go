@@ -13,6 +13,7 @@ type dbMusicProvider struct {
 	region renderregion.Value
 	events EventProvider
 	once   sync.Once
+	local  *localMusicProvider
 
 	mu               sync.RWMutex
 	musicByID        map[int]*masterdata.Music

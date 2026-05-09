@@ -310,12 +310,3 @@ type BondsHonorWord struct {
 	Name            string
 	Description     string
 }
-
-type BondsHonorWord struct {
-	ID              int
-	Seq             int
-	BondsGroupID    int
-	AssetBundleName string
-	Name            string
-	Description     string
-}

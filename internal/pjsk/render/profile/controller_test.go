@@ -71,6 +71,10 @@ func (s *testProfileSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, e
 	return nil, fmt.Errorf("bonds honor not found: %d", id)
 }
 
+func (s *testProfileSource) GetBondsHonorWordByID(id int) (*masterdata.BondsHonorWord, error) {
+	return nil, fmt.Errorf("bonds honor word not found: %d", id)
+}
+
 func (s *testProfileSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
 	return nil, false
 }

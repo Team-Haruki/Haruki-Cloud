@@ -37,6 +37,10 @@ func (a *ProviderAdapter) GetBondsHonorByID(id int) (*masterdata.BondsHonor, err
 	return a.P.Honors().GetBondsHonorByID(a.Context(), id)
 }
 
+func (a *ProviderAdapter) GetBondsHonorWordByID(id int) (*masterdata.BondsHonorWord, error) {
+	return a.P.Honors().GetBondsHonorWordByID(a.Context(), id)
+}
+
 func (a *ProviderAdapter) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
 	return a.P.Honors().GetGameCharacterUnitByID(a.Context(), id)
 }

@@ -82,6 +82,10 @@ func (s *handlerMySekaiProfileSource) GetBondsHonorByID(id int) (*masterdata.Bon
 	return nil, fmt.Errorf("bonds honor not found: %d", id)
 }
 
+func (s *handlerMySekaiProfileSource) GetBondsHonorWordByID(id int) (*masterdata.BondsHonorWord, error) {
+	return nil, fmt.Errorf("bonds honor word not found: %d", id)
+}
+
 func (s *handlerMySekaiProfileSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
 	return nil, false
 }

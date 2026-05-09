@@ -103,6 +103,10 @@ func (runtimeProfileDataSourceStub) GetBondsHonorByID(int) (*masterdata.BondsHon
 	return nil, errors.New("not found")
 }
 
+func (runtimeProfileDataSourceStub) GetBondsHonorWordByID(int) (*masterdata.BondsHonorWord, error) {
+	return nil, errors.New("not found")
+}
+
 func (runtimeProfileDataSourceStub) GetGameCharacterUnitByID(int) (*masterdata.GameCharacterUnit, bool) {
 	return nil, false
 }

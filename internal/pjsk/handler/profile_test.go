@@ -203,6 +203,97 @@ func TestProfileHandleParsesVerticalArg(t *testing.T) {
 	}
 }
 
+func TestProfileCustomProfileCardHandleDefaultsToSeqOne(t *testing.T) {
+	h := sekaiHandlers{}.ProfileCustomProfileCardHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/自定义档案",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != profileModeCustomProfileCardThumbnail {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params profileCustomProfileCardThumbnailParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Mode != "self" {
+		t.Fatalf("unexpected mode: %q", params.Mode)
+	}
+	if params.Seq != 1 {
+		t.Fatalf("unexpected seq: %d", params.Seq)
+	}
+	if params.CustomProfileID != 0 || params.CustomProfileCardID != 0 {
+		t.Fatalf("unexpected custom profile ids: %+v", params)
+	}
+}
+
+func TestProfileCustomProfileCardHandleParsesIDsAndSelector(t *testing.T) {
+	h := sekaiHandlers{}.ProfileCustomProfileCardHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/自定义档案",
+		ArgText:    "u2 3 4",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Mode != profileModeCustomProfileCardThumbnail {
+		t.Fatalf("resolved.Mode = %q", resolved.Mode)
+	}
+
+	var params profileCustomProfileCardThumbnailParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Selector != "u2" {
+		t.Fatalf("unexpected selector: %q", params.Selector)
+	}
+	if params.CustomProfileID != 3 || params.CustomProfileCardID != 4 {
+		t.Fatalf("unexpected custom profile ids: %+v", params)
+	}
+	if params.Seq != 0 {
+		t.Fatalf("unexpected seq for explicit ids: %d", params.Seq)
+	}
+}
+
+func TestProfileCustomProfileCardHandleRejectsSingleNumberArg(t *testing.T) {
+	h := sekaiHandlers{}.ProfileCustomProfileCardHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/自定义档案",
+		ArgText:    "1",
+	})
+	if err == nil {
+		t.Fatal("expected usage error")
+	}
+}
+
 func TestProfileBindListHandleOmitsServerWhenRegionImplicit(t *testing.T) {
 	h := sekaiHandlers{}.ProfileBindListHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}

@@ -214,6 +214,8 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		mergeParams(rc.Cmd.Params, &p)
 		_, message, err := renderProfileMessageForQuery(rc, p, rc.Cmd.Region, rc.Cmd.RegionExplicit)
 		return message, err
+	case profileModeCustomProfileCardThumbnail:
+		return executeProfileCustomProfileCardThumbnail(rc)
 	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeBindSwap, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		if rc.App.Bindings == nil {
 			return nil, accountdata.ErrBindingServiceUnavailable

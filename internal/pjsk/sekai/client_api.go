@@ -126,6 +126,20 @@ func (c *HarukiSekaiAPIClient) GetMySekaiImage(server, imagePath string) ([]byte
 	return c.get(url)
 }
 
+// GetCustomProfileCardThumbnail downloads a custom profile card thumbnail image.
+//
+//	GET /image/{server}/custom-profile-card/thumbnail/{imagePath}
+//
+// imagePath is the raw thumbnailPath value from suite.userCustomProfileCards,
+// e.g. "{64-char-hex}/{uuid}" for colorful palette servers.
+func (c *HarukiSekaiAPIClient) GetCustomProfileCardThumbnail(server, imagePath string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
+	url := fmt.Sprintf("/image/%s/custom-profile-card/thumbnail/%s", server, imagePath)
+	return c.get(url)
+}
+
 // get executes a GET request with auth and maps HTTP status codes to typed errors.
 func (c *HarukiSekaiAPIClient) get(path string) ([]byte, error) {
 	baseURL, lease, err := c.acquireTarget()

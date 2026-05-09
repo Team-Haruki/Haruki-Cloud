@@ -41,6 +41,26 @@ func (p *dbEducationProvider) GetGameCharacterStyle(ctx context.Context, gameID 
 	return cloneEdGameCharacterStyle(p.stylesByGameID[gameID])
 }
 
+func (p *dbEducationProvider) GetCharacterMissions(ctx context.Context, characterID int) []*CharacterMission {
+	if characterID <= 0 || !p.ensureLeaderMissionsLoaded(ctx) {
+		return nil
+	}
+
+	p.missionMu.RLock()
+	defer p.missionMu.RUnlock()
+	return cloneEdCharacterMissions(p.characterMissionsByCharacter[characterID])
+}
+
+func (p *dbEducationProvider) GetCharacterMissionParameterGroups(ctx context.Context, parameterGroupID int) []*CharacterMissionParameterGroup {
+	if parameterGroupID <= 0 || !p.ensureLeaderMissionsLoaded(ctx) {
+		return nil
+	}
+
+	p.missionMu.RLock()
+	defer p.missionMu.RUnlock()
+	return cloneEdCharacterMissionParameterGroups(p.characterMissionGroupsByID[parameterGroupID])
+}
+
 func (p *dbEducationProvider) GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int) {
 	if !p.ensureLeaderMissionsLoaded(ctx) {
 		return nil, 0
@@ -150,18 +170,40 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 		return true
 	}
 
+	if p.store != nil && p.store.Configured() {
+		if missions, err := loadJSON[localCharacterMissionJSON](p.store, "characterMissionV2s.json"); err == nil {
+			for _, item := range missions {
+				mission := &CharacterMission{
+					ID:                   item.ID,
+					CharacterID:          item.CharacterID,
+					CharacterMissionType: item.CharacterMissionType,
+					ParameterGroupID:     item.ParameterGroupID,
+					IsAchievementMission: item.IsAchievementMission,
+				}
+				p.characterMissionsByCharacter[mission.CharacterID] = append(p.characterMissionsByCharacter[mission.CharacterID], mission)
+			}
+		}
+	}
+
 	items, err := p.client.Charactermissionv2Parametergroup.Query().
 		Where(
 			charactermissionv2parametergroup.ServerRegionEQ(p.region.String()),
-			charactermissionv2parametergroup.GameIDIn(1, 101),
 		).
-		Order(charactermissionv2parametergroup.ByGameID(), charactermissionv2parametergroup.BySeq()).
+		Order(charactermissionv2parametergroup.ByID(), charactermissionv2parametergroup.ByGameID(), charactermissionv2parametergroup.BySeq()).
 		All(ctx)
 	if err != nil {
 		return false
 	}
 	p.leaderRequirements = make([]LeaderMissionRequirement, 0)
 	for _, item := range items {
+		group := &CharacterMissionParameterGroup{
+			GameID:      int(item.GameID),
+			Seq:         int(item.Seq),
+			Requirement: int(item.Requirement),
+			Exp:         int(item.Exp),
+			Quantity:    int(item.Quantity),
+		}
+		p.characterMissionGroupsByID[item.ID] = append(p.characterMissionGroupsByID[item.ID], group)
 		switch item.GameID {
 		case 1:
 			if requirement := int(item.Requirement); requirement > p.leaderMaxPlayLimit {
@@ -219,4 +261,32 @@ func cloneEdLeaderMissionRequirements(source []LeaderMissionRequirement) []Leade
 		return nil
 	}
 	return slices.Clone(source)
+}
+
+func cloneEdCharacterMissions(source []*CharacterMission) []*CharacterMission {
+	if len(source) == 0 {
+		return nil
+	}
+	out := make([]*CharacterMission, 0, len(source))
+	for _, item := range source {
+		if item == nil {
+			continue
+		}
+		out = append(out, new(*item))
+	}
+	return out
+}
+
+func cloneEdCharacterMissionParameterGroups(source []*CharacterMissionParameterGroup) []*CharacterMissionParameterGroup {
+	if len(source) == 0 {
+		return nil
+	}
+	out := make([]*CharacterMissionParameterGroup, 0, len(source))
+	for _, item := range source {
+		if item == nil {
+			continue
+		}
+		out = append(out, new(*item))
+	}
+	return out
 }

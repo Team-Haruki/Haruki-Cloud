@@ -11,6 +11,7 @@ type HonorProvider interface {
 	GetByID(ctx context.Context, id int) (*masterdata.Honor, error)
 	GetGroupByID(ctx context.Context, id int) (*masterdata.HonorGroup, error)
 	GetBondsHonorByID(ctx context.Context, id int) (*masterdata.BondsHonor, error)
+	GetBondsHonorWordByID(ctx context.Context, id int) (*masterdata.BondsHonorWord, error)
 	GetGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool)
 	GetEventIDByHonorID(ctx context.Context, honorID int) int
 }

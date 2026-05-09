@@ -19,6 +19,7 @@ import (
 type dbHonorProvider struct {
 	client *sekaiDB.Client
 	region renderregion.Value
+	store  *localStore
 	once   sync.Once
 
 	honorMu    sync.RWMutex
@@ -29,6 +30,10 @@ type dbHonorProvider struct {
 
 	bondsMu    sync.RWMutex
 	bondsCache map[int]*masterdata.BondsHonor
+
+	bondsWordMu     sync.RWMutex
+	bondsWordCache  map[int]*masterdata.BondsHonorWord
+	bondsWordLoaded bool
 
 	gcuMu    sync.RWMutex
 	gcuCache map[int]*masterdata.GameCharacterUnit
@@ -53,6 +58,7 @@ func (p *dbHonorProvider) init() {
 		p.honorCache = make(map[int]*masterdata.Honor)
 		p.groupCache = make(map[int]*masterdata.HonorGroup)
 		p.bondsCache = make(map[int]*masterdata.BondsHonor)
+		p.bondsWordCache = make(map[int]*masterdata.BondsHonorWord)
 		p.gcuCache = make(map[int]*masterdata.GameCharacterUnit)
 		p.birthdayByGroup = make(map[int]honorBirthdayAssets)
 		p.eventByHonorID = make(map[int]int)
@@ -178,6 +184,53 @@ func (p *dbHonorProvider) GetBondsHonorByID(ctx context.Context, id int) (*maste
 	p.bondsCache[id] = model
 	p.bondsMu.Unlock()
 	return common.CloneBondsHonor(model), nil
+}
+
+func (p *dbHonorProvider) GetBondsHonorWordByID(_ context.Context, id int) (*masterdata.BondsHonorWord, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("invalid bonds honor word id")
+	}
+	p.init()
+
+	if !p.ensureBondsHonorWordsLoaded() {
+		return nil, fmt.Errorf("bonds honor words are not configured")
+	}
+
+	p.bondsWordMu.RLock()
+	defer p.bondsWordMu.RUnlock()
+	if cached, ok := p.bondsWordCache[id]; ok {
+		return new(*cached), nil
+	}
+	return nil, fmt.Errorf("bonds honor word %d not found", id)
+}
+
+func (p *dbHonorProvider) ensureBondsHonorWordsLoaded() bool {
+	p.init()
+	p.bondsWordMu.RLock()
+	if p.bondsWordLoaded {
+		p.bondsWordMu.RUnlock()
+		return true
+	}
+	p.bondsWordMu.RUnlock()
+
+	p.bondsWordMu.Lock()
+	defer p.bondsWordMu.Unlock()
+	if p.bondsWordLoaded {
+		return true
+	}
+	if p.store == nil || !p.store.Configured() {
+		return false
+	}
+	items, err := loadJSON[masterdata.BondsHonorWord](p.store, "bondsHonorWords.json")
+	if err != nil {
+		return false
+	}
+	for i := range items {
+		item := items[i]
+		p.bondsWordCache[item.ID] = &item
+	}
+	p.bondsWordLoaded = true
+	return true
 }
 
 func (p *dbHonorProvider) GetGameCharacterUnitByID(ctx context.Context, id int) (*masterdata.GameCharacterUnit, bool) {

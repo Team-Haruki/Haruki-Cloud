@@ -17,6 +17,7 @@ type DataSource interface {
 	GetHonorByID(id int) (*masterdata.Honor, error)
 	GetHonorGroupByID(id int) (*masterdata.HonorGroup, error)
 	GetBondsHonorByID(id int) (*masterdata.BondsHonor, error)
+	GetBondsHonorWordByID(id int) (*masterdata.BondsHonorWord, error)
 	GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool)
 }
 

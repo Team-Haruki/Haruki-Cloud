@@ -119,6 +119,42 @@ func (a *ProviderAdapter) GetGameCharacterStyle(gameID int) *GameCharacterStyle 
 	}
 }
 
+func (a *ProviderAdapter) GetCharacterMissions(characterID int) []*CharacterMission {
+	pvItems := a.P.Education().GetCharacterMissions(a.Context(), characterID)
+	result := make([]*CharacterMission, len(pvItems))
+	for i, item := range pvItems {
+		if item == nil {
+			continue
+		}
+		result[i] = &CharacterMission{
+			ID:                   item.ID,
+			CharacterID:          item.CharacterID,
+			CharacterMissionType: item.CharacterMissionType,
+			ParameterGroupID:     item.ParameterGroupID,
+			IsAchievementMission: item.IsAchievementMission,
+		}
+	}
+	return result
+}
+
+func (a *ProviderAdapter) GetCharacterMissionParameterGroups(parameterGroupID int) []*CharacterMissionParameterGroup {
+	pvItems := a.P.Education().GetCharacterMissionParameterGroups(a.Context(), parameterGroupID)
+	result := make([]*CharacterMissionParameterGroup, len(pvItems))
+	for i, item := range pvItems {
+		if item == nil {
+			continue
+		}
+		result[i] = &CharacterMissionParameterGroup{
+			GameID:      item.GameID,
+			Seq:         item.Seq,
+			Requirement: item.Requirement,
+			Exp:         item.Exp,
+			Quantity:    item.Quantity,
+		}
+	}
+	return result
+}
+
 func (a *ProviderAdapter) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {
 	pvRequirements, maxPlayLimit := a.P.Education().GetLeaderMissionRequirements(a.Context())
 	result := make([]LeaderMissionRequirement, len(pvRequirements))

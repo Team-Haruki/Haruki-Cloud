@@ -63,17 +63,15 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 		if wordID == 0 {
 			wordID = honorInfo.ID
 		}
-		viewSuffix := "01"
-		if bondsHonorViewTypeIsReverse(bondsHonorViewType) {
-			viewSuffix = "02"
-		}
 		var bundleName string
-		if absInt(honorInfo.ID-wordID) < 100 {
-			bundleName = fmt.Sprintf("honorname_%02d%02d_%02d_%s", cid1, cid2, wordID%100, viewSuffix)
+		if wordInfo, err := b.source.GetBondsHonorWordByID(wordID); err == nil && wordInfo != nil && strings.TrimSpace(wordInfo.AssetBundleName) != "" {
+			bundleName = strings.TrimSpace(wordInfo.AssetBundleName)
+		} else if absInt(honorInfo.ID-wordID) < 100 {
+			bundleName = fmt.Sprintf("honorname_%02d%02d_%02d_01", cid1, cid2, wordID%100)
 		} else if wordID%10 == 1 {
-			bundleName = fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_%s", cid1, cid2, cid1, cid2, viewSuffix)
+			bundleName = fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_01", cid1, cid2, cid1, cid2)
 		} else {
-			bundleName = fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_%s", cid1, cid2, cid2, cid1, viewSuffix)
+			bundleName = fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_01", cid1, cid2, cid2, cid1)
 		}
 		req.WordImgPath = new(resolveGameAsset(fmt.Sprintf("bonds_honor/word/%s.png", bundleName)))
 	}

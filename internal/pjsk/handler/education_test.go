@@ -294,3 +294,82 @@ func TestBondsHandleEmbedsSelfSelector(t *testing.T) {
 		t.Fatalf("unexpected params: %+v", params)
 	}
 }
+
+func TestCharacterMissionHandleBuildsOverviewRequest(t *testing.T) {
+	h := sekaiHandlers{}.CharacterMissionHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/cr任务",
+		ArgText:    "u2 miku",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-character-mission" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params struct {
+		Mode           string `json:"mode"`
+		Platform       string `json:"platform"`
+		PlatformUserID string `json:"platform_user_id"`
+		Selector       string `json:"selector"`
+		CharacterQuery string `json:"character_query"`
+		ShowAll        bool   `json:"show_all"`
+		MissionType    string `json:"mission_type"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
+		t.Fatalf("unexpected self params: %+v", params)
+	}
+	if params.CharacterQuery != "miku" || params.ShowAll || params.MissionType != "" {
+		t.Fatalf("unexpected character mission params: %+v", params)
+	}
+}
+
+func TestCharacterMissionHandleBuildsAllRequest(t *testing.T) {
+	h := sekaiHandlers{}.CharacterMissionHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/cr任务",
+		ArgText:    "u2 miku all 队长次数",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-character-mission" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params struct {
+		Mode           string `json:"mode"`
+		Platform       string `json:"platform"`
+		PlatformUserID string `json:"platform_user_id"`
+		Selector       string `json:"selector"`
+		CharacterQuery string `json:"character_query"`
+		ShowAll        bool   `json:"show_all"`
+		MissionType    string `json:"mission_type"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.CharacterQuery != "miku" || !params.ShowAll || params.MissionType != "play_live" {
+		t.Fatalf("unexpected character mission all params: %+v", params)
+	}
+}

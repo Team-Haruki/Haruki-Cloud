@@ -62,6 +62,9 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
 
 	root = strings.TrimSpace(root)
 	if root == "" {
+		if p.honors != nil {
+			p.honors.store = nil
+		}
 		if p.education != nil {
 			p.education.store = nil
 		}
@@ -79,6 +82,9 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
 
 	dirs := localMasterdataCandidateDirs(root, p.region)
 	if len(dirs) == 0 {
+		if p.honors != nil {
+			p.honors.store = nil
+		}
 		if p.education != nil {
 			p.education.store = nil
 		}
@@ -94,6 +100,9 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
 		return
 	}
 	store := newLocalStore(dirs...)
+	if p.honors != nil {
+		p.honors.store = store
+	}
 	if p.education != nil {
 		p.education.store = store
 	}

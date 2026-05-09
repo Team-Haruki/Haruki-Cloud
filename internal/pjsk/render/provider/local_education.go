@@ -17,6 +17,8 @@ type bondData struct {
 }
 
 type missionData struct {
+	missions     map[int][]*CharacterMission
+	groupsByID   map[int][]*CharacterMissionParameterGroup
 	requirements []LeaderMissionRequirement
 	maxPlayLimit int
 }

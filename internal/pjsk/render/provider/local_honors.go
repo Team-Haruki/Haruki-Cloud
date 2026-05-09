@@ -2,8 +2,8 @@ package provider
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"log/slog"
 	"strings"
 	"sync"
@@ -25,12 +25,13 @@ type honorBirthdayData struct {
 type localHonorProvider struct {
 	store *localStore
 
-	honors      lazyValue[map[int]*masterdata.Honor]
-	groups      lazyValue[map[int]*masterdata.HonorGroup]
-	bondsHonors lazyValue[map[int]*masterdata.BondsHonor]
-	gcu         lazyValue[map[int]*masterdata.GameCharacterUnit]
-	birthday    lazyValue[honorBirthdayData]
-	eventHonors lazyValue[map[int]int]
+	honors          lazyValue[map[int]*masterdata.Honor]
+	groups          lazyValue[map[int]*masterdata.HonorGroup]
+	bondsHonors     lazyValue[map[int]*masterdata.BondsHonor]
+	bondsHonorWords lazyValue[map[int]*masterdata.BondsHonorWord]
+	gcu             lazyValue[map[int]*masterdata.GameCharacterUnit]
+	birthday        lazyValue[honorBirthdayData]
+	eventHonors     lazyValue[map[int]int]
 
 	// birthdayMu guards mutation of birthday.v().byGroup cache
 	birthdayMu sync.Mutex
@@ -71,6 +72,20 @@ func (p *localHonorProvider) ensureBonds() error {
 			return nil, err
 		}
 		byID := make(map[int]*masterdata.BondsHonor, len(items))
+		for i := range items {
+			byID[items[i].ID] = &items[i]
+		}
+		return byID, nil
+	})
+}
+
+func (p *localHonorProvider) ensureBondsHonorWords() error {
+	return p.bondsHonorWords.init(func() (map[int]*masterdata.BondsHonorWord, error) {
+		items, err := loadJSON[masterdata.BondsHonorWord](p.store, "bondsHonorWords.json")
+		if err != nil {
+			return nil, err
+		}
+		byID := make(map[int]*masterdata.BondsHonorWord, len(items))
 		for i := range items {
 			byID[items[i].ID] = &items[i]
 		}
@@ -241,6 +256,20 @@ func (p *localHonorProvider) GetBondsHonorByID(_ context.Context, id int) (*mast
 		return nil, fmt.Errorf("bonds honor %d not found", id)
 	}
 	return common.CloneBondsHonor(b), nil
+}
+
+func (p *localHonorProvider) GetBondsHonorWordByID(_ context.Context, id int) (*masterdata.BondsHonorWord, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("invalid bonds honor word id")
+	}
+	if err := p.ensureBondsHonorWords(); err != nil {
+		return nil, err
+	}
+	word, ok := p.bondsHonorWords.v()[id]
+	if !ok {
+		return nil, fmt.Errorf("bonds honor word %d not found", id)
+	}
+	return new(*word), nil
 }
 
 func (p *localHonorProvider) GetGameCharacterUnitByID(_ context.Context, id int) (*masterdata.GameCharacterUnit, bool) {

@@ -26,6 +26,8 @@ type DataSource interface {
 	GetBonds() []*Bond
 	GetBondLevels() []*BondLevel
 	GetGameCharacterStyle(gameID int) *GameCharacterStyle
+	GetCharacterMissions(characterID int) []*CharacterMission
+	GetCharacterMissionParameterGroups(parameterGroupID int) []*CharacterMissionParameterGroup
 	GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int)
 	GetMysekaiGateLevel(gateID, level int) *MysekaiGateLevel
 	GetShopItemByResourceBoxID(resourceBoxID int) *ShopItem
@@ -97,6 +99,22 @@ type GameCharacterStyle struct {
 	GameID      int
 	CharacterID int
 	ColorCode   string
+}
+
+type CharacterMission struct {
+	ID                   int
+	CharacterID          int
+	CharacterMissionType string
+	ParameterGroupID     int
+	IsAchievementMission bool
+}
+
+type CharacterMissionParameterGroup struct {
+	GameID      int
+	Seq         int
+	Requirement int
+	Exp         int
+	Quantity    int
 }
 
 type LeaderMissionRequirement struct {
@@ -190,6 +208,16 @@ type LeaderCountQuery struct {
 	Region   renderregion.Value                  `json:"region,omitempty"`
 	Profile  *drawing.DetailedProfileCardRequest `json:"-"`
 	Snapshot snapshot.Snapshot                   `json:"-"`
+}
+
+type CharacterMissionQuery struct {
+	Region         renderregion.Value                  `json:"region,omitempty"`
+	Profile        *drawing.DetailedProfileCardRequest `json:"-"`
+	Snapshot       snapshot.Snapshot                   `json:"-"`
+	Cid            int                                 `json:"cid,omitempty"`
+	CharacterQuery string                              `json:"character_query,omitempty"`
+	MissionType    string                              `json:"mission_type,omitempty"`
+	ShowAll        bool                                `json:"show_all,omitempty"`
 }
 
 type AreaItemQuery struct {

@@ -91,10 +91,20 @@ func decodeCompactCharacterMissionV2Statuses(raw json.RawMessage) []RawUserChara
 			ParameterGroupID: parameterGroupID,
 			Seq:              seq,
 			CharacterID:      characterID,
+			MissionID:        compactIntFromColumnsOrZero(columns, "missionId", index),
+			MissionStatus:    status,
 		})
 	}
 
 	return statuses
+}
+
+func compactIntFromColumnsOrZero(columns map[string][]any, key string, index int) int {
+	value, ok := compactIntFromColumns(columns, key, index)
+	if !ok {
+		return 0
+	}
+	return value
 }
 
 func compactMissionStatusString(columns map[string][]any, enumValues map[string][]string, index int) string {

@@ -41,10 +41,12 @@ type dbEducationProvider struct {
 	stylesByGameID map[int]*GameCharacterStyle
 	stylesLoaded   bool
 
-	missionMu            sync.RWMutex
-	leaderRequirements   []LeaderMissionRequirement
-	leaderMaxPlayLimit   int
-	leaderMissionsLoaded bool
+	missionMu                    sync.RWMutex
+	characterMissionsByCharacter map[int][]*CharacterMission
+	characterMissionGroupsByID   map[int][]*CharacterMissionParameterGroup
+	leaderRequirements           []LeaderMissionRequirement
+	leaderMaxPlayLimit           int
+	leaderMissionsLoaded         bool
 
 	gateMu      sync.RWMutex
 	gateByID    map[int]map[int]*MysekaiGateLevel
@@ -66,6 +68,8 @@ func (p *dbEducationProvider) init() {
 		p.areaLevelByItem = make(map[int]map[int]*AreaItemLevel)
 		p.rankByChar = make(map[int]map[int]*CharacterRank)
 		p.stylesByGameID = make(map[int]*GameCharacterStyle)
+		p.characterMissionsByCharacter = make(map[int][]*CharacterMission)
+		p.characterMissionGroupsByID = make(map[int][]*CharacterMissionParameterGroup)
 		p.gateByID = make(map[int]map[int]*MysekaiGateLevel)
 		p.shopByBoxID = make(map[int]*ShopItem)
 		p.shopItems = nil

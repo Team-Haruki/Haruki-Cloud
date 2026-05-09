@@ -46,6 +46,8 @@ type testSource struct {
 	bonds              []*Bond
 	bondLevels         []*BondLevel
 	charStyles         map[int]*GameCharacterStyle
+	characterMissions  map[int][]*CharacterMission
+	missionGroups      map[int][]*CharacterMissionParameterGroup
 	leaderRequirements []LeaderMissionRequirement
 	leaderMaxPlayLimit int
 	gates              map[int]map[int]*MysekaiGateLevel
@@ -120,6 +122,14 @@ func (s *testSource) GetBondLevels() []*BondLevel {
 
 func (s *testSource) GetGameCharacterStyle(gameID int) *GameCharacterStyle {
 	return s.charStyles[gameID]
+}
+
+func (s *testSource) GetCharacterMissions(characterID int) []*CharacterMission {
+	return s.characterMissions[characterID]
+}
+
+func (s *testSource) GetCharacterMissionParameterGroups(parameterGroupID int) []*CharacterMissionParameterGroup {
+	return s.missionGroups[parameterGroupID]
 }
 
 func (s *testSource) GetLeaderMissionRequirements() ([]LeaderMissionRequirement, int) {

@@ -16,6 +16,8 @@ type EducationProvider interface {
 	GetBonds(ctx context.Context) []*Bond
 	GetBondLevels(ctx context.Context) []*BondLevel
 	GetGameCharacterStyle(ctx context.Context, gameID int) *GameCharacterStyle
+	GetCharacterMissions(ctx context.Context, characterID int) []*CharacterMission
+	GetCharacterMissionParameterGroups(ctx context.Context, parameterGroupID int) []*CharacterMissionParameterGroup
 	GetLeaderMissionRequirements(ctx context.Context) ([]LeaderMissionRequirement, int)
 	GetMysekaiGateLevel(ctx context.Context, gateID, level int) *MysekaiGateLevel
 	GetShopItemByResourceBoxID(ctx context.Context, resourceBoxID int) *ShopItem
@@ -83,6 +85,22 @@ type GameCharacterStyle struct {
 	GameID      int
 	CharacterID int
 	ColorCode   string
+}
+
+type CharacterMission struct {
+	ID                   int
+	CharacterID          int
+	CharacterMissionType string
+	ParameterGroupID     int
+	IsAchievementMission bool
+}
+
+type CharacterMissionParameterGroup struct {
+	GameID      int
+	Seq         int
+	Requirement int
+	Exp         int
+	Quantity    int
 }
 
 type LeaderMissionRequirement struct {

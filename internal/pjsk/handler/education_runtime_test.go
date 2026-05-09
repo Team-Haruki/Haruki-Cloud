@@ -39,20 +39,24 @@ func (handlerEducationRegionValidator) GetUserProfile(server, userID string) (*s
 }
 
 type handlerTestEducationSource struct {
-	region    renderregion.Value
-	maxLevel  int
-	assetName string
-	boxes     map[int]*education.ResourceBox
-	shopItems map[int]*education.ShopItem
+	region            renderregion.Value
+	maxLevel          int
+	assetName         string
+	boxes             map[int]*education.ResourceBox
+	shopItems         map[int]*education.ShopItem
+	characterMissions map[int][]*education.CharacterMission
+	missionGroups     map[int][]*education.CharacterMissionParameterGroup
 }
 
 func newHandlerTestEducationSource(region renderregion.Value, maxLevel int, assetName string) *handlerTestEducationSource {
 	source := &handlerTestEducationSource{
-		region:    region,
-		maxLevel:  maxLevel,
-		assetName: assetName,
-		boxes:     make(map[int]*education.ResourceBox),
-		shopItems: make(map[int]*education.ShopItem),
+		region:            region,
+		maxLevel:          maxLevel,
+		assetName:         assetName,
+		boxes:             make(map[int]*education.ResourceBox),
+		shopItems:         make(map[int]*education.ShopItem),
+		characterMissions: make(map[int][]*education.CharacterMission),
+		missionGroups:     make(map[int][]*education.CharacterMissionParameterGroup),
 	}
 	for level := 2; level <= maxLevel; level++ {
 		boxID := 1000 + level
@@ -152,6 +156,12 @@ func (s *handlerTestEducationSource) GetBondLevels() []*education.BondLevel {
 }
 func (s *handlerTestEducationSource) GetGameCharacterStyle(gameID int) *education.GameCharacterStyle {
 	return nil
+}
+func (s *handlerTestEducationSource) GetCharacterMissions(characterID int) []*education.CharacterMission {
+	return s.characterMissions[characterID]
+}
+func (s *handlerTestEducationSource) GetCharacterMissionParameterGroups(parameterGroupID int) []*education.CharacterMissionParameterGroup {
+	return s.missionGroups[parameterGroupID]
 }
 func (s *handlerTestEducationSource) GetLeaderMissionRequirements() ([]education.LeaderMissionRequirement, int) {
 	return nil, 0

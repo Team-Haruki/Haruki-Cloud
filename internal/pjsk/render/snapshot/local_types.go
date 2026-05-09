@@ -135,6 +135,8 @@ type RawChallengeLiveReward struct {
 type RawUserCharacter struct {
 	CharacterID   int `json:"characterId"`
 	CharacterRank int `json:"characterRank"`
+	TotalExp      int `json:"totalExp,omitempty"`
+	Exp           int `json:"exp,omitempty"`
 }
 
 type RawUserCharacterMissionV2 struct {
@@ -150,9 +152,11 @@ type RawUserCharacterLiveUsageCount struct {
 }
 
 type RawUserCharacterMissionV2Status struct {
-	ParameterGroupID int `json:"parameterGroupId"`
-	Seq              int `json:"seq"`
-	CharacterID      int `json:"characterId"`
+	ParameterGroupID int    `json:"parameterGroupId"`
+	Seq              int    `json:"seq"`
+	CharacterID      int    `json:"characterId"`
+	MissionID        int    `json:"missionId,omitempty"`
+	MissionStatus    string `json:"missionStatus,omitempty"`
 }
 
 type RawUserArea struct {

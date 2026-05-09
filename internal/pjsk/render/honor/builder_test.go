@@ -16,6 +16,7 @@ type testHonorSource struct {
 	honors  map[int]*masterdata.Honor
 	groups  map[int]*masterdata.HonorGroup
 	bonds   map[int]*masterdata.BondsHonor
+	words   map[int]*masterdata.BondsHonorWord
 	gcuByID map[int]*masterdata.GameCharacterUnit
 }
 
@@ -25,6 +26,7 @@ func newTestHonorSource(region renderregion.Value) *testHonorSource {
 		honors:  make(map[int]*masterdata.Honor),
 		groups:  make(map[int]*masterdata.HonorGroup),
 		bonds:   make(map[int]*masterdata.BondsHonor),
+		words:   make(map[int]*masterdata.BondsHonorWord),
 		gcuByID: make(map[int]*masterdata.GameCharacterUnit),
 	}
 }
@@ -54,6 +56,13 @@ func (s *testHonorSource) GetBondsHonorByID(id int) (*masterdata.BondsHonor, err
 		return new(*item), nil
 	}
 	return nil, fmt.Errorf("bonds not found: %d", id)
+}
+
+func (s *testHonorSource) GetBondsHonorWordByID(id int) (*masterdata.BondsHonorWord, error) {
+	if item, ok := s.words[id]; ok {
+		return new(*item), nil
+	}
+	return nil, fmt.Errorf("bonds word not found: %d", id)
 }
 
 func (s *testHonorSource) GetGameCharacterUnitByID(id int) (*masterdata.GameCharacterUnit, bool) {
@@ -113,6 +122,10 @@ func TestBuildHonorRequestBondsMain(t *testing.T) {
 		GameCharacterUnitID2: 22,
 		HonorRarity:          "highest",
 	}
+	source.words[1020501] = &masterdata.BondsHonorWord{
+		ID:              1020501,
+		AssetBundleName: "honorname_0205_01",
+	}
 	source.gcuByID[11] = &masterdata.GameCharacterUnit{ID: 11, GameCharacterID: 2}
 	source.gcuByID[22] = &masterdata.GameCharacterUnit{ID: 22, GameCharacterID: 5}
 
@@ -133,7 +146,7 @@ func TestBuildHonorRequestBondsMain(t *testing.T) {
 	if req.WordImgPath == nil || *req.WordImgPath == "" {
 		t.Fatalf("expected word image path, got %#v", req.WordImgPath)
 	}
-	if *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_01_01.png" {
+	if *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_01.png" {
 		t.Fatalf("unexpected word image path: %#v", req.WordImgPath)
 	}
 	if req.CharaID == nil || *req.CharaID != "11" || req.CharaID2 == nil || *req.CharaID2 != "22" {
@@ -148,6 +161,10 @@ func TestBuildHonorRequestBondsReverseViewUsesReverseDisplayOrder(t *testing.T) 
 		GameCharacterUnitID1: 11,
 		GameCharacterUnitID2: 22,
 		HonorRarity:          "highest",
+	}
+	source.words[10205002] = &masterdata.BondsHonorWord{
+		ID:              10205002,
+		AssetBundleName: "honorname_0205_default_0502",
 	}
 	source.gcuByID[11] = &masterdata.GameCharacterUnit{ID: 11, GameCharacterID: 2}
 	source.gcuByID[22] = &masterdata.GameCharacterUnit{ID: 22, GameCharacterID: 5}
@@ -165,7 +182,7 @@ func TestBuildHonorRequestBondsReverseViewUsesReverseDisplayOrder(t *testing.T) 
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
 
-	if req.WordImgPath == nil || *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_default_0502_02.png" {
+	if req.WordImgPath == nil || *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_default_0502.png" {
 		t.Fatalf("unexpected reverse word image path: %#v", req.WordImgPath)
 	}
 	if req.CharaID == nil || *req.CharaID != "22" || req.CharaID2 == nil || *req.CharaID2 != "11" {

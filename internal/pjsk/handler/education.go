@@ -133,6 +133,72 @@ func (sekaiHandlers) LeaderCountHandle() HarukiSekaiCommandHandler {
 	}, executeEducation)
 }
 
+func educationCharacterMissionUsageError(triggerCmd string) error {
+	return onebot11.NewReplayError(
+		"使用方式:\n%s 角色名\n%s 角色名 all 任务名",
+		triggerCmd,
+		triggerCmd,
+	)
+}
+
+func (sekaiHandlers) CharacterMissionHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Path: "education/character-mission",
+			Commands: []string{
+				"/cr任务", "/角色等级任务",
+			},
+		},
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			if args == "" {
+				return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
+			}
+			lower := strings.ToLower(args)
+			if lower == "help" || args == "帮助" {
+				return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
+			}
+
+			params, err := newSelfQueryParamsMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			all, remaining := education.ExtractCharacterMissionAllFlag(args)
+			query, rest := splitFirstArg(strings.TrimSpace(remaining))
+			if strings.TrimSpace(query) == "" {
+				return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
+			}
+
+			params["character_query"] = query
+
+			if all {
+				missionType, unresolved := education.ExtractCharacterMissionType(rest)
+				if strings.TrimSpace(missionType) == "" || strings.TrimSpace(unresolved) != "" {
+					return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
+				}
+				params["show_all"] = true
+				params["mission_type"] = missionType
+			} else if strings.TrimSpace(rest) != "" {
+				return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
+			}
+
+			return makeCommandRequestWithParams(ctx, parser.ModuleEducation, "education-character-mission", params), nil
+		},
+	}, executeEducation)
+}
+
+func splitFirstArg(args string) (string, string) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) == 0 {
+		return "", ""
+	}
+	if len(fields) == 1 {
+		return fields[0], ""
+	}
+	return fields[0], strings.TrimSpace(strings.Join(fields[1:], " "))
+}
+
 var educationAreaUnitAliases = filteralias.UnitMap()
 
 func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItemQuery, error) {
@@ -349,6 +415,34 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 			}
 		}
 		data, err = eduCtrl.RenderLeaderCount(req)
+
+	case "education-character-mission":
+		query := education.CharacterMissionQuery{Region: region}
+		mergeParams(rc.Cmd.Params, &query)
+		if query.Region.IsZero() {
+			query.Region = region
+		}
+		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
+			query.Cid, err = resolveEducationBondsCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
+			if err != nil {
+				return nil, err
+			}
+		}
+		query.Profile = publicDetailedProfile
+		query.Snapshot = suiteSnapshot
+		if query.ShowAll {
+			req, buildErr := eduCtrl.BuildCharacterMissionAllRequestFromSnapshot(query)
+			if buildErr != nil {
+				return nil, buildErr
+			}
+			data, err = eduCtrl.RenderCharacterMissionAll(*req)
+		} else {
+			req, buildErr := eduCtrl.BuildCharacterMissionOverviewRequestFromSnapshot(query)
+			if buildErr != nil {
+				return nil, buildErr
+			}
+			data, err = eduCtrl.RenderCharacterMissionOverview(*req)
+		}
 
 	case "education-power":
 		req := drawing.PowerBonusDetailRequest{}

@@ -62,12 +62,36 @@ func (p *localEducationProvider) ensureGameCharacterStyles() error {
 
 func (p *localEducationProvider) ensureLeaderMissionRequirements() error {
 	return p.missions.init(func() (missionData, error) {
+		data := missionData{
+			missions:   make(map[int][]*CharacterMission),
+			groupsByID: make(map[int][]*CharacterMissionParameterGroup),
+		}
+		missions, err := loadJSON[localCharacterMissionJSON](p.store, "characterMissionV2s.json")
+		if err == nil {
+			for _, item := range missions {
+				mission := &CharacterMission{
+					ID:                   item.ID,
+					CharacterID:          item.CharacterID,
+					CharacterMissionType: item.CharacterMissionType,
+					ParameterGroupID:     item.ParameterGroupID,
+					IsAchievementMission: item.IsAchievementMission,
+				}
+				data.missions[mission.CharacterID] = append(data.missions[mission.CharacterID], mission)
+			}
+		}
+
 		items, err := loadJSON[localLeaderMissionRequirementJSON](p.store, "characterMissionV2ParameterGroups.json")
 		if err != nil {
 			return missionData{}, err
 		}
-		data := missionData{}
 		for _, item := range items {
+			data.groupsByID[item.ID] = append(data.groupsByID[item.ID], &CharacterMissionParameterGroup{
+				GameID:      item.GameID,
+				Seq:         item.Seq,
+				Requirement: item.Requirement,
+				Exp:         item.Exp,
+				Quantity:    item.Quantity,
+			})
 			switch item.GameID {
 			case 1:
 				if item.Requirement > data.maxPlayLimit {
@@ -109,6 +133,26 @@ func (p *localEducationProvider) GetGameCharacterStyle(_ context.Context, gameID
 	return cloneEdGameCharacterStyle(p.styles.v()[gameID])
 }
 
+func (p *localEducationProvider) GetCharacterMissions(_ context.Context, characterID int) []*CharacterMission {
+	if characterID <= 0 {
+		return nil
+	}
+	if err := p.ensureLeaderMissionRequirements(); err != nil {
+		return nil
+	}
+	return cloneEdCharacterMissions(p.missions.v().missions[characterID])
+}
+
+func (p *localEducationProvider) GetCharacterMissionParameterGroups(_ context.Context, parameterGroupID int) []*CharacterMissionParameterGroup {
+	if parameterGroupID <= 0 {
+		return nil
+	}
+	if err := p.ensureLeaderMissionRequirements(); err != nil {
+		return nil
+	}
+	return cloneEdCharacterMissionParameterGroups(p.missions.v().groupsByID[parameterGroupID])
+}
+
 func (p *localEducationProvider) GetLeaderMissionRequirements(_ context.Context) ([]LeaderMissionRequirement, int) {
 	if err := p.ensureLeaderMissionRequirements(); err != nil {
 		return nil, 0
@@ -132,4 +176,15 @@ type localLeaderMissionRequirementJSON struct {
 	GameID      int `json:"gameId"`
 	Seq         int `json:"seq"`
 	Requirement int `json:"requirement"`
+	Exp         int `json:"exp"`
+	Quantity    int `json:"quantity"`
+	ID          int `json:"id"`
+}
+
+type localCharacterMissionJSON struct {
+	ID                   int    `json:"id"`
+	CharacterID          int    `json:"characterId"`
+	CharacterMissionType string `json:"characterMissionType"`
+	ParameterGroupID     int    `json:"parameterGroupId"`
+	IsAchievementMission bool   `json:"isAchievementMission"`
 }

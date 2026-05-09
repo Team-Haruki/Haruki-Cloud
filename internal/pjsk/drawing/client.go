@@ -2,8 +2,8 @@ package drawing
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"net/http"
 	"strings"
 	"time"
@@ -237,6 +237,14 @@ func (c *HarukiDrawingClient) GenerateBonds(req *BondsRequest) ([]byte, error) {
 
 func (c *HarukiDrawingClient) GenerateLeaderCount(req *LeaderCountRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/education/leader-count", req)
+}
+
+func (c *HarukiDrawingClient) GenerateCharacterMissionOverview(req *CharacterMissionOverviewRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/education/character-mission-overview", req)
+}
+
+func (c *HarukiDrawingClient) GenerateCharacterMissionAll(req *CharacterMissionAllRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/education/character-mission-all", req)
 }
 
 // =========================== Event API ===========================

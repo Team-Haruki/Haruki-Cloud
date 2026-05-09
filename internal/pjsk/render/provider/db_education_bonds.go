@@ -203,7 +203,7 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 			Exp:         int(item.Exp),
 			Quantity:    int(item.Quantity),
 		}
-		p.characterMissionGroupsByID[item.ID] = append(p.characterMissionGroupsByID[item.ID], group)
+		p.characterMissionGroupsByID[int(item.GameID)] = append(p.characterMissionGroupsByID[int(item.GameID)], group)
 		switch item.GameID {
 		case 1:
 			if requirement := int(item.Requirement); requirement > p.leaderMaxPlayLimit {

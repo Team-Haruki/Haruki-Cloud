@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,8 +18,10 @@ type forecastDataCache struct {
 }
 
 type forecastDataCacheKey struct {
-	Region  string
-	EventID int
+	Region        string
+	EventID       int
+	Scope         ForecastScope
+	WlCharacterID int
 }
 
 type forecastDataCacheEntry struct {
@@ -58,10 +59,20 @@ func (c *forecastDataCache) SetProvider(provider ForecastProvider) {
 }
 
 func (c *forecastDataCache) CachedBySource(region string, eventID int, ranks []int) (map[string]ForecastSourceData, error) {
+	return c.CachedBySourceQuery(ForecastQuery{
+		Region:  region,
+		EventID: eventID,
+		Ranks:   ranks,
+		Scope:   ForecastScopeTotal,
+	})
+}
+
+func (c *forecastDataCache) CachedBySourceQuery(query ForecastQuery) (map[string]ForecastSourceData, error) {
 	if c == nil {
 		return nil, errors.New("forecast cache is not configured")
 	}
-	key, ok := newForecastDataCacheKey(region, eventID)
+	normalizedQuery := normalizeForecastQuery(query)
+	key, ok := newForecastDataCacheKey(normalizedQuery)
 	if !ok {
 		return nil, errors.New("invalid forecast cache params")
 	}
@@ -79,7 +90,7 @@ func (c *forecastDataCache) CachedBySource(region string, eventID int, ranks []i
 		}
 		return nil, errors.New("forecast cache is not ready")
 	}
-	data := filterForecastSourceDataMap(entry.data, ranks)
+	data := filterForecastSourceDataMap(entry.data, normalizedQuery.Ranks)
 	c.mu.Unlock()
 
 	if lenNonEmptyForecastData(data) == 0 {
@@ -89,21 +100,38 @@ func (c *forecastDataCache) CachedBySource(region string, eventID int, ranks []i
 }
 
 func (c *forecastDataCache) StartRefresh(region string, eventID int) {
+	c.StartRefreshQuery(ForecastQuery{
+		Region:  region,
+		EventID: eventID,
+		Scope:   ForecastScopeTotal,
+	})
+}
+
+func (c *forecastDataCache) StartRefreshQuery(query ForecastQuery) {
 	if c == nil {
 		return
 	}
 	go func() {
 		ctx, cancel := context.WithTimeout(context.TODO(), config.SKForecastRefreshTimeout)
 		defer cancel()
-		_ = c.RefreshNow(ctx, region, eventID)
+		_ = c.RefreshNowQuery(ctx, query)
 	}()
 }
 
 func (c *forecastDataCache) RefreshNow(ctx context.Context, region string, eventID int) error {
+	return c.RefreshNowQuery(ctx, ForecastQuery{
+		Region:  region,
+		EventID: eventID,
+		Scope:   ForecastScopeTotal,
+	})
+}
+
+func (c *forecastDataCache) RefreshNowQuery(ctx context.Context, query ForecastQuery) error {
 	if c == nil {
 		return errors.New("forecast cache is not configured")
 	}
-	key, ok := newForecastDataCacheKey(region, eventID)
+	normalizedQuery := normalizeForecastQuery(query)
+	key, ok := newForecastDataCacheKey(normalizedQuery)
 	if !ok {
 		return errors.New("invalid forecast cache params")
 	}
@@ -112,7 +140,7 @@ func (c *forecastDataCache) RefreshNow(ctx context.Context, region string, event
 		return err
 	}
 
-	data, refreshErr := fetchForecastDataWithRetry(ctx, provider, key.Region, key.EventID)
+	data, refreshErr := fetchForecastDataWithRetry(ctx, provider, normalizedQuery)
 	now := time.Now().UTC()
 	if refreshErr != nil {
 		c.finishFailure(key, now, refreshErr)
@@ -173,13 +201,13 @@ func (c *forecastDataCache) finishFailure(key forecastDataCacheKey, now time.Tim
 	delete(c.inFlight, key)
 }
 
-func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, region string, eventID int) (map[string]ForecastSourceData, error) {
+func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, query ForecastQuery) (map[string]ForecastSourceData, error) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
 	var lastErr error
 	for attempt := 1; attempt <= forecastDataRefreshRetryLimit; attempt++ {
-		data, err := fetchForecastData(ctx, provider, region, eventID)
+		data, err := fetchForecastData(ctx, provider, query)
 		if err == nil && lenNonEmptyForecastData(data) > 0 {
 			return data, nil
 		}
@@ -201,14 +229,35 @@ func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, 
 	return nil, lastErr
 }
 
-func fetchForecastData(ctx context.Context, provider ForecastProvider, region string, eventID int) (map[string]ForecastSourceData, error) {
+func fetchForecastData(ctx context.Context, provider ForecastProvider, query ForecastQuery) (map[string]ForecastSourceData, error) {
 	if provider == nil {
 		return nil, errors.New("forecast provider is not configured")
 	}
-	if bySource, ok := provider.(ForecastProviderBySource); ok {
-		return bySource.FetchBySource(ctx, region, eventID, nil)
+	if bySourceQuery, ok := provider.(ForecastProviderBySourceQuery); ok {
+		return bySourceQuery.FetchBySourceQuery(ctx, query)
 	}
-	merged, err := provider.Fetch(ctx, region, eventID, nil)
+	if bySource, ok := provider.(ForecastProviderBySource); ok {
+		if query.Scope != ForecastScopeTotal || query.WlCharacterID != nil {
+			return nil, errors.New("forecast provider does not support scoped forecast query")
+		}
+		return bySource.FetchBySource(ctx, query.Region, query.EventID, nil)
+	}
+	if byQuery, ok := provider.(ForecastProviderQuery); ok {
+		merged, err := byQuery.FetchQuery(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+		if len(merged) == 0 {
+			return nil, nil
+		}
+		return map[string]ForecastSourceData{
+			"forecast": {
+				Scores:    cloneForecastScores(merged),
+				FetchedAt: time.Now().UTC().UnixMilli(),
+			},
+		}, nil
+	}
+	merged, err := provider.Fetch(ctx, query.Region, query.EventID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -223,12 +272,21 @@ func fetchForecastData(ctx context.Context, provider ForecastProvider, region st
 	}, nil
 }
 
-func newForecastDataCacheKey(region string, eventID int) (forecastDataCacheKey, bool) {
-	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
-	if normalizedRegion == "" || eventID <= 0 {
+func newForecastDataCacheKey(query ForecastQuery) (forecastDataCacheKey, bool) {
+	normalizedQuery := normalizeForecastQuery(query)
+	if normalizedQuery.Region == "" || normalizedQuery.EventID <= 0 {
 		return forecastDataCacheKey{}, false
 	}
-	return forecastDataCacheKey{Region: normalizedRegion, EventID: eventID}, true
+	wlCharacterID := 0
+	if normalizedQuery.WlCharacterID != nil && *normalizedQuery.WlCharacterID > 0 {
+		wlCharacterID = *normalizedQuery.WlCharacterID
+	}
+	return forecastDataCacheKey{
+		Region:        normalizedQuery.Region,
+		EventID:       normalizedQuery.EventID,
+		Scope:         normalizedQuery.Scope,
+		WlCharacterID: wlCharacterID,
+	}, true
 }
 
 func filterForecastSourceDataMap(in map[string]ForecastSourceData, ranks []int) map[string]ForecastSourceData {

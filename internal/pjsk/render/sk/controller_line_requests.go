@@ -74,32 +74,10 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	if err := ensureSKPredictionAllowed(meta); err != nil {
 		return nil, err
 	}
-
-	// WL chapter requests currently have no chapter-level forecast source, so they
-	// always fall back to the real-time line for the selected chapter.
-	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		currentRanks, currentErr := c.buildRanksFromTracker(
-			normalized.Region,
-			normalized.EventID,
-			normalized.Ranks,
-			normalized.WlCharacterID,
-			shouldSkipMissingTrackerRanks(normalized),
-		)
-		if currentErr == nil {
-			for i := range currentRanks {
-				// SK line keeps names empty to reduce visual noise.
-				currentRanks[i].Name = ""
-			}
-			sort.Slice(currentRanks, func(i, j int) bool {
-				return currentRanks[i].Rank < currentRanks[j].Rank
-			})
-		}
-		return c.buildPredictRealtimeFallbackLine(normalized, meta, currentRanks, currentErr)
-	}
-
-	bySource, forecastErr := c.forecastCache.CachedBySource(normalized.Region, normalized.EventID, normalized.Ranks)
+	forecastQuery := buildForecastQuery(normalized)
+	bySource, forecastErr := c.forecastCache.CachedBySourceQuery(forecastQuery)
 	if forecastErr != nil {
-		c.forecastCache.StartRefresh(normalized.Region, normalized.EventID)
+		c.forecastCache.StartRefreshQuery(forecastQuery)
 		return nil, fmt.Errorf("预测数据尚未就绪，请稍后再试: %w", forecastErr)
 	}
 
@@ -162,7 +140,7 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	}
 
 	if len(columns) == 0 {
-		c.forecastCache.StartRefresh(normalized.Region, normalized.EventID)
+		c.forecastCache.StartRefreshQuery(forecastQuery)
 		return nil, fmt.Errorf("预测缓存暂无这些档位的数据")
 	}
 
@@ -203,6 +181,13 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		},
 		Full: normalized.Full,
 	}
+	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
+		wl := *normalized.WlCharacterID
+		line.WlCid = &wl
+		if icon := c.resolveCharacterIconPath(wl, renderregion.Normalize(normalized.Region)); icon != "" {
+			line.CharaIconPath = &icon
+		}
+	}
 	return c.BuildLineRequest(line)
 }
 
@@ -221,38 +206,18 @@ func (c *Controller) renderPredictLineFromTracker(req TrackerRankQuery) ([]byte,
 	return c.RenderLine(*payload)
 }
 
-func (c *Controller) buildPredictRealtimeFallbackLine(
-	normalized TrackerRankQuery,
-	meta eventMeta,
-	currentRanks []drawing.RankInfo,
-	currentErr error,
-) (*LineRequest, error) {
-	if currentErr != nil {
-		return nil, currentErr
+func buildForecastQuery(req TrackerRankQuery) ForecastQuery {
+	query := ForecastQuery{
+		Region:  req.Region,
+		EventID: req.EventID,
+		Ranks:   req.Ranks,
+		Scope:   ForecastScopeTotal,
 	}
-
-	line := LineRequest{
-		SklRequest: drawing.SklRequest{
-			ID:               normalized.EventID,
-			Region:           normalized.Region,
-			StartAt:          meta.startAt,
-			AggregateAt:      meta.aggregateAt,
-			Name:             strings.TrimSpace(meta.name + " 预测(实时)"),
-			BannerImgPath:    meta.bannerPath,
-			Ranks:            currentRanks,
-			CurrentRanks:     currentRanks,
-			PredictionNotice: skPredictionNotice,
-		},
-		Full: normalized.Full,
+	if req.WlCharacterID != nil && *req.WlCharacterID > 0 {
+		query.Scope = ForecastScopeChapter
+		query.WlCharacterID = req.WlCharacterID
 	}
-	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		wl := *normalized.WlCharacterID
-		line.WlCid = &wl
-		if icon := c.resolveCharacterIconPath(wl, renderregion.Normalize(normalized.Region)); icon != "" {
-			line.CharaIconPath = &icon
-		}
-	}
-	return c.BuildLineRequest(line)
+	return query
 }
 
 func ensureSKPredictionAllowed(meta eventMeta) error {

@@ -9,7 +9,7 @@ import (
 
 func TestRemoteForecastProviderFetchesLocalForecast(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/prediction/cn" {
+		if r.URL.Path != "/prediction/cn/total" && r.URL.Path != "/prediction/cn" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -50,6 +50,58 @@ func TestRemoteForecastProviderFetchesLocalForecast(t *testing.T) {
 	}
 	if _, ok := got[200]; ok {
 		t.Fatalf("null prediction should be skipped: %+v", got[200])
+	}
+}
+
+func TestRemoteForecastProviderFetchesLocalForecastChapterByCharacter(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/prediction/tw/chapter" && r.URL.Path != "/prediction/tw" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"region": "tw",
+			"event_id": 167,
+			"leaderboard_scope": "chapter",
+			"updated_at": 1777537304,
+			"lines": [
+				{
+					"character_id": 21,
+					"leaderboard_scope": "chapter",
+					"current_timestamp": 1777536872,
+					"rows": [
+						{"rank": 100, "prediction": 11111111, "current_timestamp": 1777536873}
+					]
+				},
+				{
+					"character_id": 22,
+					"leaderboard_scope": "chapter",
+					"current_timestamp": 1777536972,
+					"rows": [
+						{"rank": 100, "prediction": 22222222, "current_timestamp": 1777536973}
+					]
+				}
+			]
+		}`))
+	}))
+	defer server.Close()
+
+	charaID := 22
+	provider := NewRemoteForecastProviderWithConfig(ForecastConfig{LocalBaseURL: server.URL})
+	got, err := provider.fetchLocalForecastByQuery(context.Background(), ForecastQuery{
+		Region:        "tw",
+		EventID:       167,
+		Scope:         ForecastScopeChapter,
+		WlCharacterID: &charaID,
+	}, map[int]struct{}{100: {}})
+	if err != nil {
+		t.Fatalf("fetch local chapter forecast: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("unexpected score count: %d", len(got))
+	}
+	if score := got[100]; score.Score != 22_222_222 || score.Timestamp != 1_777_536_973_000 || score.Source != "local" {
+		t.Fatalf("unexpected chapter p100 score: %+v", score)
 	}
 }
 

@@ -39,7 +39,16 @@ func NewRemoteForecastProviderWithConfig(cfg ForecastConfig) *RemoteForecastProv
 }
 
 func (p *RemoteForecastProvider) Fetch(ctx context.Context, region string, eventID int, ranks []int) (map[int]ForecastScore, error) {
-	bySource, err := p.FetchBySource(ctx, region, eventID, ranks)
+	return p.FetchQuery(ctx, ForecastQuery{
+		Region:  region,
+		EventID: eventID,
+		Ranks:   ranks,
+		Scope:   ForecastScopeTotal,
+	})
+}
+
+func (p *RemoteForecastProvider) FetchQuery(ctx context.Context, query ForecastQuery) (map[int]ForecastScore, error) {
+	bySource, err := p.FetchBySourceQuery(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -56,30 +65,39 @@ func (p *RemoteForecastProvider) Fetch(ctx context.Context, region string, event
 }
 
 func (p *RemoteForecastProvider) FetchBySource(ctx context.Context, region string, eventID int, ranks []int) (map[string]ForecastSourceData, error) {
+	return p.FetchBySourceQuery(ctx, ForecastQuery{
+		Region:  region,
+		EventID: eventID,
+		Ranks:   ranks,
+		Scope:   ForecastScopeTotal,
+	})
+}
+
+func (p *RemoteForecastProvider) FetchBySourceQuery(ctx context.Context, query ForecastQuery) (map[string]ForecastSourceData, error) {
 	if p == nil || p.http == nil {
 		return nil, fmt.Errorf("remote forecast provider is not configured")
 	}
-	normalizedRegion := strings.ToLower(strings.TrimSpace(region))
-	if normalizedRegion == "" || eventID <= 0 {
+	normalizedQuery := normalizeForecastQuery(query)
+	if normalizedQuery.Region == "" || normalizedQuery.EventID <= 0 {
 		return nil, fmt.Errorf("invalid forecast params")
 	}
 
-	rankFilter := make(map[int]struct{}, len(ranks))
-	for _, rank := range ranks {
+	rankFilter := make(map[int]struct{}, len(normalizedQuery.Ranks))
+	for _, rank := range normalizedQuery.Ranks {
 		if rank > 0 {
 			rankFilter[rank] = struct{}{}
 		}
 	}
 
-	sources := p.sourcesForRegion(normalizedRegion)
+	sources := p.sourcesForQuery(normalizedQuery)
 	if len(sources) == 0 {
-		return nil, fmt.Errorf("no forecast source supports region %s", normalizedRegion)
+		return nil, fmt.Errorf("no forecast source supports region %s", normalizedQuery.Region)
 	}
 
 	out := make(map[string]ForecastSourceData, len(sources))
 	errs := make([]string, 0, len(sources))
 	for _, src := range sources {
-		items, err := src.fn(ctx, normalizedRegion, eventID, rankFilter)
+		items, err := src.fn(ctx, normalizedQuery, rankFilter)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("%s=%v", src.name, err))
 			continue
@@ -101,33 +119,73 @@ func (p *RemoteForecastProvider) FetchBySource(ctx context.Context, region strin
 
 type remoteForecastSource struct {
 	name string
-	fn   func(context.Context, string, int, map[int]struct{}) (map[int]ForecastScore, error)
+	fn   func(context.Context, ForecastQuery, map[int]struct{}) (map[int]ForecastScore, error)
 }
 
 func (p *RemoteForecastProvider) sourcesForRegion(region string) []remoteForecastSource {
-	switch strings.ToLower(strings.TrimSpace(region)) {
+	return p.sourcesForQuery(ForecastQuery{Region: region, Scope: ForecastScopeTotal})
+}
+
+func (p *RemoteForecastProvider) sourcesForQuery(query ForecastQuery) []remoteForecastSource {
+	region := strings.ToLower(strings.TrimSpace(query.Region))
+	scope := normalizeForecastScope(query.Scope)
+	if scope == ForecastScopeChapter {
+		switch region {
+		case "jp", "cn", "en", "tw", "kr":
+			return []remoteForecastSource{
+				{name: "local", fn: p.fetchLocalForecastByQuery},
+			}
+		default:
+			return nil
+		}
+	}
+
+	switch region {
 	case "jp":
 		return []remoteForecastSource{
-			{name: "33kit", fn: p.fetch33Kit},
-			{name: "moesekai", fn: p.fetchMoesekai},
-			{name: "local", fn: p.fetchLocalForecast},
+			{name: "33kit", fn: p.fetch33KitByQuery},
+			{name: "moesekai", fn: p.fetchMoesekaiByQuery},
+			{name: "local", fn: p.fetchLocalForecastByQuery},
 		}
 	case "cn":
 		return []remoteForecastSource{
-			{name: "moesekai", fn: p.fetchMoesekai},
-			{name: "local", fn: p.fetchLocalForecast},
+			{name: "moesekai", fn: p.fetchMoesekaiByQuery},
+			{name: "local", fn: p.fetchLocalForecastByQuery},
 		}
 	case "en":
 		return []remoteForecastSource{
-			{name: "sekarun", fn: p.fetchSekaRun},
-			{name: "local", fn: p.fetchLocalForecast},
+			{name: "sekarun", fn: p.fetchSekaRunByQuery},
+			{name: "local", fn: p.fetchLocalForecastByQuery},
 		}
 	case "tw", "kr":
 		return []remoteForecastSource{
-			{name: "local", fn: p.fetchLocalForecast},
+			{name: "local", fn: p.fetchLocalForecastByQuery},
 		}
 	default:
 		return nil
+	}
+}
+
+func normalizeForecastQuery(query ForecastQuery) ForecastQuery {
+	normalized := query
+	normalized.Region = strings.ToLower(strings.TrimSpace(query.Region))
+	normalized.Ranks = normalizeRanks(query.Ranks)
+	normalized.Scope = normalizeForecastScope(query.Scope)
+	if normalized.Scope == ForecastScopeTotal {
+		normalized.WlCharacterID = nil
+	}
+	if normalized.WlCharacterID != nil && *normalized.WlCharacterID <= 0 {
+		normalized.WlCharacterID = nil
+	}
+	return normalized
+}
+
+func normalizeForecastScope(scope ForecastScope) ForecastScope {
+	switch strings.ToLower(strings.TrimSpace(string(scope))) {
+	case string(ForecastScopeChapter):
+		return ForecastScopeChapter
+	default:
+		return ForecastScopeTotal
 	}
 }
 

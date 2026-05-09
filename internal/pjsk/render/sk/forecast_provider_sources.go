@@ -7,7 +7,13 @@ import (
 	"strings"
 )
 
-func (p *RemoteForecastProvider) fetch33Kit(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+func (p *RemoteForecastProvider) fetch33KitByQuery(ctx context.Context, query ForecastQuery, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+	query = normalizeForecastQuery(query)
+	if query.Scope != ForecastScopeTotal {
+		return nil, nil
+	}
+	region := query.Region
+	eventID := query.EventID
 	if region != "jp" {
 		return nil, nil
 	}
@@ -57,7 +63,13 @@ func (p *RemoteForecastProvider) fetch33Kit(ctx context.Context, region string, 
 	return out, nil
 }
 
-func (p *RemoteForecastProvider) fetchMoesekai(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+func (p *RemoteForecastProvider) fetchMoesekaiByQuery(ctx context.Context, query ForecastQuery, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+	query = normalizeForecastQuery(query)
+	if query.Scope != ForecastScopeTotal {
+		return nil, nil
+	}
+	region := query.Region
+	eventID := query.EventID
 	if region != "jp" && region != "cn" {
 		return nil, nil
 	}
@@ -188,7 +200,13 @@ func (p *RemoteForecastProvider) fetchSnowyLegacy(ctx context.Context, region st
 	return out, nil
 }
 
-func (p *RemoteForecastProvider) fetchSekaRun(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+func (p *RemoteForecastProvider) fetchSekaRunByQuery(ctx context.Context, query ForecastQuery, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+	query = normalizeForecastQuery(query)
+	if query.Scope != ForecastScopeTotal {
+		return nil, nil
+	}
+	region := query.Region
+	eventID := query.EventID
 	if region != "en" {
 		return nil, nil
 	}
@@ -206,18 +224,54 @@ func (p *RemoteForecastProvider) fetchSekaRun(ctx context.Context, region string
 }
 
 func (p *RemoteForecastProvider) fetchLocalForecast(ctx context.Context, region string, eventID int, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+	return p.fetchLocalForecastByQuery(ctx, ForecastQuery{
+		Region:  region,
+		EventID: eventID,
+		Scope:   ForecastScopeTotal,
+	}, rankFilter)
+}
+
+func (p *RemoteForecastProvider) fetchLocalForecastByQuery(ctx context.Context, query ForecastQuery, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
+	query = normalizeForecastQuery(query)
+	if query.Region == "" || query.EventID <= 0 {
+		return nil, fmt.Errorf("invalid local forecast params")
+	}
+
 	baseURL := strings.TrimRight(strings.TrimSpace(p.localForecastURL), "/")
 	if baseURL == "" {
 		return nil, nil
 	}
-	url := fmt.Sprintf("%s/prediction/%s", baseURL, region)
+	urls := buildLocalForecastURLs(baseURL, query)
+	var lastErr error
+	for _, url := range urls {
+		items, err := p.fetchLocalForecastURL(ctx, url, query, rankFilter)
+		if err == nil {
+			return items, nil
+		}
+		lastErr = err
+	}
+	return nil, lastErr
+}
 
+func buildLocalForecastURLs(baseURL string, query ForecastQuery) []string {
+	basePath := fmt.Sprintf("%s/prediction/%s", baseURL, query.Region)
+	switch normalizeForecastScope(query.Scope) {
+	case ForecastScopeChapter:
+		return []string{basePath + "/chapter", basePath}
+	default:
+		return []string{basePath + "/total", basePath}
+	}
+}
+
+func (p *RemoteForecastProvider) fetchLocalForecastURL(ctx context.Context, url string, query ForecastQuery, rankFilter map[int]struct{}) (map[int]ForecastScore, error) {
 	var resp struct {
 		Region    string `json:"region"`
 		EventID   int    `json:"event_id"`
 		UpdatedAt any    `json:"updated_at"`
+		Scope     string `json:"leaderboard_scope"`
 		Lines     []struct {
 			LeaderboardScope string `json:"leaderboard_scope"`
+			CharacterID      any    `json:"character_id"`
 			CurrentTimestamp any    `json:"current_timestamp"`
 			Rows             []struct {
 				Rank             any `json:"rank"`
@@ -229,11 +283,11 @@ func (p *RemoteForecastProvider) fetchLocalForecast(ctx context.Context, region 
 	if err := p.getJSON(ctx, url, &resp); err != nil {
 		return nil, err
 	}
-	if resp.EventID > 0 && resp.EventID != eventID {
-		return nil, fmt.Errorf("event mismatch: got %d want %d", resp.EventID, eventID)
+	if resp.EventID > 0 && resp.EventID != query.EventID {
+		return nil, fmt.Errorf("event mismatch: got %d want %d", resp.EventID, query.EventID)
 	}
-	if payloadRegion := strings.ToLower(strings.TrimSpace(resp.Region)); payloadRegion != "" && payloadRegion != region {
-		return nil, fmt.Errorf("region mismatch: got %s want %s", payloadRegion, region)
+	if payloadRegion := strings.ToLower(strings.TrimSpace(resp.Region)); payloadRegion != "" && payloadRegion != query.Region {
+		return nil, fmt.Errorf("region mismatch: got %s want %s", payloadRegion, query.Region)
 	}
 
 	payloadTimestamp := int64(0)
@@ -242,7 +296,19 @@ func (p *RemoteForecastProvider) fetchLocalForecast(ctx context.Context, region 
 	}
 
 	out := make(map[int]ForecastScore)
+	targetScope := string(normalizeForecastScope(query.Scope))
 	for _, line := range resp.Lines {
+		lineScope := strings.ToLower(strings.TrimSpace(line.LeaderboardScope))
+		if lineScope != "" && lineScope != targetScope {
+			continue
+		}
+		if targetScope == string(ForecastScopeChapter) && query.WlCharacterID != nil {
+			characterID, ok := asInt(line.CharacterID)
+			if !ok || characterID <= 0 || characterID != *query.WlCharacterID {
+				continue
+			}
+		}
+
 		lineTimestamp := payloadTimestamp
 		if ts, ok := asInt64(line.CurrentTimestamp); ok {
 			lineTimestamp = normalizeForecastTimestamp(ts)

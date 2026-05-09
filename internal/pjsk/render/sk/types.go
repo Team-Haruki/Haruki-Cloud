@@ -104,12 +104,35 @@ type ForecastSourceData struct {
 	FetchedAt int64
 }
 
+type ForecastScope string
+
+const (
+	ForecastScopeTotal   ForecastScope = "total"
+	ForecastScopeChapter ForecastScope = "chapter"
+)
+
+type ForecastQuery struct {
+	Region        string
+	EventID       int
+	Ranks         []int
+	Scope         ForecastScope
+	WlCharacterID *int
+}
+
 type ForecastProvider interface {
 	Fetch(ctx context.Context, region string, eventID int, ranks []int) (map[int]ForecastScore, error)
 }
 
 type ForecastProviderBySource interface {
 	FetchBySource(ctx context.Context, region string, eventID int, ranks []int) (map[string]ForecastSourceData, error)
+}
+
+type ForecastProviderQuery interface {
+	FetchQuery(ctx context.Context, query ForecastQuery) (map[int]ForecastScore, error)
+}
+
+type ForecastProviderBySourceQuery interface {
+	FetchBySourceQuery(ctx context.Context, query ForecastQuery) (map[string]ForecastSourceData, error)
 }
 
 type RemoteForecastProvider struct {

@@ -36,6 +36,11 @@ type countingForecastProvider struct {
 	bySource map[string]ForecastSourceData
 }
 
+type scopedForecastProvider struct {
+	queries []ForecastQuery
+	data    map[string]map[string]ForecastSourceData
+}
+
 func (p contextAwareForecastProvider) Fetch(ctx context.Context, _ string, _ int, ranks []int) (map[int]ForecastScore, error) {
 	value, _ := ctx.Value(p.wantKey).(string)
 	if value != p.wantValue {
@@ -73,6 +78,35 @@ func (p *countingForecastProvider) FetchBySource(context.Context, string, int, [
 	p.calls.Add(1)
 	out := make(map[string]ForecastSourceData, len(p.bySource))
 	for source, data := range p.bySource {
+		copied := make(map[int]ForecastScore, len(data.Scores))
+		for rank, score := range data.Scores {
+			copied[rank] = score
+		}
+		out[source] = ForecastSourceData{
+			Scores:    copied,
+			FetchedAt: data.FetchedAt,
+		}
+	}
+	return out, nil
+}
+
+func (p *scopedForecastProvider) Fetch(context.Context, string, int, []int) (map[int]ForecastScore, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (p *scopedForecastProvider) FetchBySourceQuery(_ context.Context, query ForecastQuery) (map[string]ForecastSourceData, error) {
+	normalized := normalizeForecastQuery(query)
+	p.queries = append(p.queries, normalized)
+	key := string(normalized.Scope)
+	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
+		key += ":" + strconv.Itoa(*normalized.WlCharacterID)
+	}
+	sourceData, ok := p.data[key]
+	if !ok {
+		return nil, errors.New("unexpected forecast query")
+	}
+	out := make(map[string]ForecastSourceData, len(sourceData))
+	for source, data := range sourceData {
 		copied := make(map[int]ForecastScore, len(data.Scores))
 		for rank, score := range data.Scores {
 			copied[rank] = score
@@ -2666,7 +2700,7 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	}
 }
 
-func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapter(t *testing.T) {
+func TestBuildPredictLineRequestFromTrackerUsesWorldBloomChapterMeta(t *testing.T) {
 	now := time.Now().UnixMilli()
 	charaID := 21
 	eventInfo := &masterdata.Event{
@@ -2692,9 +2726,26 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapt
 			},
 		},
 	}, nil)
-	controller.SetForecastProvider(testForecastProvider{
-		scores: map[int]ForecastScore{100: {Score: 1234567, Timestamp: 1_700_000_000}},
+	controller.SetForecastProvider(&scopedForecastProvider{
+		data: map[string]map[string]ForecastSourceData{
+			"chapter:21": {
+				"local": {
+					Scores: map[int]ForecastScore{
+						100: {Score: 1_234_567, Timestamp: 1_700_000_000, Source: "local"},
+					},
+					FetchedAt: 1_700_000_100,
+				},
+			},
+		},
 	})
+	if err := controller.forecastCache.RefreshNowQuery(context.Background(), ForecastQuery{
+		Region:        "jp",
+		EventID:       101,
+		Scope:         ForecastScopeChapter,
+		WlCharacterID: &charaID,
+	}); err != nil {
+		t.Fatalf("prime wl chapter forecast cache: %v", err)
+	}
 
 	payload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
 		EventID:       101,
@@ -2703,9 +2754,9 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapt
 		WlCharacterID: new(21),
 	})
 	if err != nil {
-		t.Fatalf("build wl predict fallback: %v", err)
+		t.Fatalf("build wl chapter predict line request: %v", err)
 	}
-	if payload.Name != "WL Event 预测(实时)" {
+	if payload.Name != "WL Event 预测" {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
 	if payload.AggregateAt != now+int64(2*time.Hour/time.Millisecond) {
@@ -2717,11 +2768,126 @@ func TestBuildPredictLineRequestFromTrackerFallsBackToRealtimeForWorldBloomChapt
 	if payload.WlCid == nil || *payload.WlCid != 21 {
 		t.Fatalf("expected wl chapter id to be preserved, got %+v", payload.WlCid)
 	}
-	if len(payload.Ranks) != 1 {
-		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	if len(payload.ForecastColumns) != 1 {
+		t.Fatalf("unexpected forecast columns len: %d", len(payload.ForecastColumns))
 	}
-	if payload.Ranks[0].Score == nil || *payload.Ranks[0].Score != 2_000_121 {
-		t.Fatalf("unexpected fallback rank payload: %+v", payload.Ranks[0])
+	if payload.ForecastColumns[0].Ranks[0].Score == nil || *payload.ForecastColumns[0].Ranks[0].Score != 1_234_567 {
+		t.Fatalf("unexpected chapter forecast payload: %+v", payload.ForecastColumns[0].Ranks[0])
+	}
+}
+
+func TestBuildPredictLineRequestFromTrackerUsesSeparateScopesForWorldBloom(t *testing.T) {
+	now := time.Now().UnixMilli()
+	charaID := 21
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "WL Event",
+		EventType:   "world_bloom",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(5*time.Hour/time.Millisecond),
+	}
+	provider := &scopedForecastProvider{
+		data: map[string]map[string]ForecastSourceData{
+			"total": {
+				"local": {
+					Scores: map[int]ForecastScore{
+						100: {Score: 8_888_888, Timestamp: 1_700_000_000, Source: "local"},
+					},
+					FetchedAt: 1_700_000_100,
+				},
+			},
+			"chapter:21": {
+				"local": {
+					Scores: map[int]ForecastScore{
+						100: {Score: 9_999_999, Timestamp: 1_700_000_200, Source: "local"},
+					},
+					FetchedAt: 1_700_000_300,
+				},
+			},
+		},
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(worldBloomLineTrackerSource{}, &testEventSource{
+		region: renderregion.TW,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+		worldBloomChapters: map[int][]*masterdata.WorldBloom{
+			101: {
+				{
+					EventID:         101,
+					GameCharacterID: &charaID,
+					ChapterStartAt:  now - int64(time.Hour/time.Millisecond),
+					AggregateAt:     now + int64(2*time.Hour/time.Millisecond),
+				},
+			},
+		},
+	}, nil)
+	controller.SetForecastProvider(provider)
+
+	if err := controller.forecastCache.RefreshNowQuery(context.Background(), ForecastQuery{
+		Region:  "tw",
+		EventID: 101,
+		Scope:   ForecastScopeTotal,
+	}); err != nil {
+		t.Fatalf("prime wl total forecast cache: %v", err)
+	}
+	if err := controller.forecastCache.RefreshNowQuery(context.Background(), ForecastQuery{
+		Region:        "tw",
+		EventID:       101,
+		Scope:         ForecastScopeChapter,
+		WlCharacterID: &charaID,
+	}); err != nil {
+		t.Fatalf("prime wl chapter forecast cache: %v", err)
+	}
+
+	totalPayload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "tw",
+		Ranks:   []int{100},
+	})
+	if err != nil {
+		t.Fatalf("build wl total predict line request: %v", err)
+	}
+	if totalPayload.WlCid != nil {
+		t.Fatalf("expected wl total predict line to avoid chapter id, got %+v", totalPayload.WlCid)
+	}
+	if len(totalPayload.ForecastColumns) != 1 || len(totalPayload.ForecastColumns[0].Ranks) != 1 {
+		t.Fatalf("unexpected wl total forecast columns: %+v", totalPayload.ForecastColumns)
+	}
+	if totalPayload.ForecastColumns[0].Ranks[0].Score == nil || *totalPayload.ForecastColumns[0].Ranks[0].Score != 8_888_888 {
+		t.Fatalf("unexpected wl total forecast score: %+v", totalPayload.ForecastColumns[0].Ranks[0])
+	}
+
+	chapterPayload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+		EventID:       101,
+		Region:        "tw",
+		Ranks:         []int{100},
+		WlCharacterID: &charaID,
+	})
+	if err != nil {
+		t.Fatalf("build wl chapter predict line request: %v", err)
+	}
+	if chapterPayload.Name != "WL Event 预测" {
+		t.Fatalf("unexpected wl chapter predict payload name: %s", chapterPayload.Name)
+	}
+	if chapterPayload.WlCid == nil || *chapterPayload.WlCid != charaID {
+		t.Fatalf("expected wl chapter id %d, got %+v", charaID, chapterPayload.WlCid)
+	}
+	if len(chapterPayload.ForecastColumns) != 1 || len(chapterPayload.ForecastColumns[0].Ranks) != 1 {
+		t.Fatalf("unexpected wl chapter forecast columns: %+v", chapterPayload.ForecastColumns)
+	}
+	if chapterPayload.ForecastColumns[0].Ranks[0].Score == nil || *chapterPayload.ForecastColumns[0].Ranks[0].Score != 9_999_999 {
+		t.Fatalf("unexpected wl chapter forecast score: %+v", chapterPayload.ForecastColumns[0].Ranks[0])
+	}
+
+	if len(provider.queries) != 2 {
+		t.Fatalf("expected two scoped forecast queries, got %d", len(provider.queries))
+	}
+	if provider.queries[0].Scope != ForecastScopeTotal || provider.queries[0].WlCharacterID != nil {
+		t.Fatalf("unexpected first scoped forecast query: %+v", provider.queries[0])
+	}
+	if provider.queries[1].Scope != ForecastScopeChapter || provider.queries[1].WlCharacterID == nil || *provider.queries[1].WlCharacterID != charaID {
+		t.Fatalf("unexpected second scoped forecast query: %+v", provider.queries[1])
 	}
 }
 

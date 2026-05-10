@@ -146,7 +146,7 @@ func TestBuildHonorRequestBondsMain(t *testing.T) {
 	if req.WordImgPath == nil || *req.WordImgPath == "" {
 		t.Fatalf("expected word image path, got %#v", req.WordImgPath)
 	}
-	if *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_01.png" {
+	if *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_01_01.png" {
 		t.Fatalf("unexpected word image path: %#v", req.WordImgPath)
 	}
 	if req.CharaID == nil || *req.CharaID != "11" || req.CharaID2 == nil || *req.CharaID2 != "22" {
@@ -182,7 +182,7 @@ func TestBuildHonorRequestBondsReverseViewUsesReverseDisplayOrder(t *testing.T) 
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
 
-	if req.WordImgPath == nil || *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_default_0502.png" {
+	if req.WordImgPath == nil || *req.WordImgPath != "asset/jp-assets/startapp/bonds_honor/word/honorname_0205_default_0502_01.png" {
 		t.Fatalf("unexpected reverse word image path: %#v", req.WordImgPath)
 	}
 	if req.CharaID == nil || *req.CharaID != "22" || req.CharaID2 == nil || *req.CharaID2 != "11" {

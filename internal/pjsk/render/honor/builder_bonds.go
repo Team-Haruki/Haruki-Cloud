@@ -65,7 +65,8 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 		}
 		var bundleName string
 		if wordInfo, err := b.source.GetBondsHonorWordByID(wordID); err == nil && wordInfo != nil && strings.TrimSpace(wordInfo.AssetBundleName) != "" {
-			bundleName = strings.TrimSpace(wordInfo.AssetBundleName)
+			tierSuffix := max(1, honorInfo.ID%100)
+			bundleName = fmt.Sprintf("%s_%02d", strings.TrimSpace(wordInfo.AssetBundleName), tierSuffix)
 		} else if absInt(honorInfo.ID-wordID) < 100 {
 			bundleName = fmt.Sprintf("honorname_%02d%02d_%02d_01", cid1, cid2, wordID%100)
 		} else if wordID%10 == 1 {

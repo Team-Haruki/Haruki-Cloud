@@ -106,7 +106,16 @@ func executeProfileCustomProfileCardThumbnail(rc *RequestContext) (onebot11.Mess
 		return nil, onebot11.NewReplayError("当前%s服暂不支持自定义档案缩略图", strings.ToUpper(region.String()))
 	}
 
-	thumbnailPath, err := resolveCustomProfileCardThumbnailPath(suiteSnapshot, params)
+	cards, err := resolveSuiteCustomProfileCards(suiteSnapshot)
+	if err != nil {
+		return nil, err
+	}
+	if len(cards) == 0 {
+		if resp := rc.GetPublicProfileResponse(); resp != nil {
+			cards = append(cards, resp.UserCustomProfileCards...)
+		}
+	}
+	thumbnailPath, err := resolveCustomProfileCardThumbnailPath(cards, params)
 	if err != nil {
 		return nil, err
 	}
@@ -118,22 +127,26 @@ func executeProfileCustomProfileCardThumbnail(rc *RequestContext) (onebot11.Mess
 	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 }
 
-func resolveCustomProfileCardThumbnailPath(suiteSnapshot rendersnapshot.Snapshot, params profileCustomProfileCardThumbnailParams) (string, error) {
+func resolveSuiteCustomProfileCards(suiteSnapshot rendersnapshot.Snapshot) ([]sekaiapi.UserCustomProfileCard, error) {
 	if suiteSnapshot == nil {
-		return "", newSuiteDataNotFoundReplayError()
+		return nil, newSuiteDataNotFoundReplayError()
 	}
 
 	raw, err := suiteSnapshot.RawValue("userCustomProfileCards")
 	if err != nil {
-		return "", onebot11.NewReplayError("当前suite数据中没有找到自定义档案信息")
+		return nil, onebot11.NewReplayError("当前suite数据中没有找到自定义档案信息")
 	}
 
 	var cards []sekaiapi.UserCustomProfileCard
 	if err := json.Unmarshal(raw, &cards); err != nil {
-		return "", fmt.Errorf("解析自定义档案数据失败：%w", err)
+		return nil, fmt.Errorf("解析自定义档案数据失败：%w", err)
 	}
+	return cards, nil
+}
+
+func resolveCustomProfileCardThumbnailPath(cards []sekaiapi.UserCustomProfileCard, params profileCustomProfileCardThumbnailParams) (string, error) {
 	if len(cards) == 0 {
-		return "", onebot11.NewReplayError("当前suite数据中没有自定义档案")
+		return "", onebot11.NewReplayError("当前suite与公开profile中都没有自定义档案")
 	}
 
 	var target *sekaiapi.UserCustomProfileCard

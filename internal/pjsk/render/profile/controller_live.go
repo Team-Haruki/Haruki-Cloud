@@ -109,9 +109,15 @@ func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.Ge
 
 	musicCounts := buildMusicCounts(adaptAPIMusicClearCount(resp.UserMusicDifficultyClearCount), nil)
 
-	// 拼接drawing的背景路径
-	if query.BgSettings != nil && query.BgSettings.ImgPath != nil && *query.BgSettings.ImgPath != "" {
-		*query.BgSettings.ImgPath = fmt.Sprintf("asset/%s", *query.BgSettings.ImgPath)
+	bgSettings := applyProfileBGVerticalOverride(query.BgSettings, query.VerticalOverride)
+	// 拼接drawing的背景路径。这里必须只改克隆后的副本，不能原地污染 query.BgSettings，
+	// 否则同一用户的后续 profile 请求会出现 asset/ 前缀重复拼接，导致整图缓存 key 漂移。
+	if bgSettings != nil && bgSettings.ImgPath != nil && *bgSettings.ImgPath != "" {
+		path := strings.TrimSpace(*bgSettings.ImgPath)
+		if !strings.HasPrefix(path, "asset/") {
+			path = fmt.Sprintf("asset/%s", path)
+		}
+		bgSettings.ImgPath = &path
 	}
 	return &drawing.ProfileRequest{
 		Profile: drawing.BasicProfile{
@@ -127,7 +133,7 @@ func (c *Controller) buildProfileRequestFromAPIState(query Query, resp *sekai.Ge
 		TwitterID:            resp.UserProfile.TwitterID,
 		Word:                 cleanWord(resp.UserProfile.Word),
 		Pcards:               c.buildPCards(source, state.userCards, state.decks, state.activeDeckID, region),
-		BgSettings:           applyProfileBGVerticalOverride(query.BgSettings, query.VerticalOverride),
+		BgSettings:           bgSettings,
 		Honors:               c.buildHonors(source, region, adaptAPIProfileHonors(resp.UserProfileHonors), adaptAPIUserHonors(resp.UserHonors), musicCounts),
 		MusicDifficultyCount: musicCounts,
 		CharacterRank:        buildCharacterRanks(adaptAPICharacters(resp.UserCharacters)),

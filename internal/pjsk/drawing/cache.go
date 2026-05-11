@@ -133,10 +133,24 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 		if keyErr == nil {
 			tLookup := time.Now()
 			if cached, hit := c.lookup(key, policy.APIPath); hit {
-				cacheLogger.Debugf("remote cache hit: endpoint=%s lookup=%dms", endpoint, time.Since(tLookup).Milliseconds())
+				cacheLogger.Debugf(
+					"remote cache hit: endpoint=%s api_path=%s user_id=%s key=%s lookup=%dms",
+					endpoint,
+					policy.APIPath,
+					policy.UserID,
+					shortRenderCacheKey(key),
+					time.Since(tLookup).Milliseconds(),
+				)
 				return cached, nil
 			}
-			cacheLogger.Debugf("remote cache miss: endpoint=%s lookup=%dms", endpoint, time.Since(tLookup).Milliseconds())
+			cacheLogger.Debugf(
+				"remote cache miss: endpoint=%s api_path=%s user_id=%s key=%s lookup=%dms",
+				endpoint,
+				policy.APIPath,
+				policy.UserID,
+				shortRenderCacheKey(key),
+				time.Since(tLookup).Milliseconds(),
+			)
 		}
 
 		tRender := time.Now()
@@ -144,7 +158,14 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 		if err != nil {
 			return nil, err
 		}
-		cacheLogger.Infof("remote cache miss → rendered: endpoint=%s render=%dms", endpoint, time.Since(tRender).Milliseconds())
+		cacheLogger.Infof(
+			"remote cache miss → rendered: endpoint=%s api_path=%s user_id=%s key=%s render=%dms",
+			endpoint,
+			policy.APIPath,
+			policy.UserID,
+			shortRenderCacheKey(key),
+			time.Since(tRender).Milliseconds(),
+		)
 
 		if keyErr == nil {
 			ttl := policy.TTL
@@ -157,6 +178,14 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 	}
 
 	return render()
+}
+
+func shortRenderCacheKey(key string) string {
+	key = strings.TrimSpace(key)
+	if len(key) <= 12 {
+		return key
+	}
+	return key[:12]
 }
 
 func (c *RenderCacheClient) lookup(key string, apiPath string) ([]byte, bool) {

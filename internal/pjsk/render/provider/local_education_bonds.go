@@ -27,17 +27,29 @@ func (p *localEducationProvider) ensureBondMaster() error {
 		if err != nil {
 			return bondData{}, err
 		}
-		data.levels = make([]*BondLevel, 0)
+		data.bondLevels = make([]*BondLevel, 0)
+		data.characterLevels = make([]*CharacterLevel, 0)
 		for _, item := range levels {
-			if !strings.EqualFold(item.LevelType, "bonds") || item.Level <= 0 {
+			if item.Level <= 0 {
 				continue
 			}
-			data.levels = append(data.levels, &BondLevel{
-				Level:    item.Level,
-				TotalExp: item.TotalExp,
-			})
+			switch {
+			case strings.EqualFold(item.LevelType, "bonds"):
+				data.bondLevels = append(data.bondLevels, &BondLevel{
+					Level:    item.Level,
+					TotalExp: item.TotalExp,
+				})
+			case strings.EqualFold(item.LevelType, "character"):
+				data.characterLevels = append(data.characterLevels, &CharacterLevel{
+					Level:    item.Level,
+					TotalExp: item.TotalExp,
+				})
+			}
 		}
-		sort.Slice(data.levels, func(i, j int) bool { return data.levels[i].Level < data.levels[j].Level })
+		sort.Slice(data.bondLevels, func(i, j int) bool { return data.bondLevels[i].Level < data.bondLevels[j].Level })
+		sort.Slice(data.characterLevels, func(i, j int) bool {
+			return data.characterLevels[i].Level < data.characterLevels[j].Level
+		})
 		return data, nil
 	})
 }
@@ -120,7 +132,14 @@ func (p *localEducationProvider) GetBondLevels(_ context.Context) []*BondLevel {
 	if err := p.ensureBondMaster(); err != nil {
 		return nil
 	}
-	return cloneEdBondLevels(p.bonds.v().levels)
+	return cloneEdBondLevels(p.bonds.v().bondLevels)
+}
+
+func (p *localEducationProvider) GetCharacterLevels(_ context.Context) []*CharacterLevel {
+	if err := p.ensureBondMaster(); err != nil {
+		return nil
+	}
+	return cloneEdCharacterLevels(p.bonds.v().characterLevels)
 }
 
 func (p *localEducationProvider) GetGameCharacterStyle(_ context.Context, gameID int) *GameCharacterStyle {

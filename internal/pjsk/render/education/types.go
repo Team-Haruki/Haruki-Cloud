@@ -22,6 +22,7 @@ type DataSource interface {
 	GetAreaItem(id int) *AreaItem
 	GetAreaItemLevels(areaItemID int) []*AreaItemLevel
 	GetAreaItemLevel(areaItemID, level int) *AreaItemLevel
+	GetCharacterLevels() []*CharacterLevel
 	GetCharacterRank(characterID, rank int) *CharacterRank
 	GetBonds() []*Bond
 	GetBondLevels() []*BondLevel
@@ -76,6 +77,11 @@ type AreaItemLevel struct {
 	TargetCardAttr        string
 	TargetGameCharacterID int
 	Power1BonusRate       float64
+}
+
+type CharacterLevel struct {
+	Level    int
+	TotalExp int
 }
 
 type CharacterRank struct {

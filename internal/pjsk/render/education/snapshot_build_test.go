@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
@@ -42,6 +43,7 @@ type testSource struct {
 	boxes              map[string]map[int]*ResourceBox
 	areaItems          map[int]*AreaItem
 	areaLevels         map[int]map[int]*AreaItemLevel
+	characterLevels    []*CharacterLevel
 	ranks              map[int]map[int]*CharacterRank
 	bonds              []*Bond
 	bondLevels         []*BondLevel
@@ -106,6 +108,10 @@ func (s *testSource) GetAreaItemLevels(areaItemID int) []*AreaItemLevel {
 
 func (s *testSource) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel {
 	return s.areaLevels[areaItemID][level]
+}
+
+func (s *testSource) GetCharacterLevels() []*CharacterLevel {
+	return s.characterLevels
 }
 
 func (s *testSource) GetCharacterRank(characterID, rank int) *CharacterRank {
@@ -1258,6 +1264,265 @@ func TestBuildLeaderCountRequestFromSnapshotShowsNextExStageWhenProgressIsZero(t
 	}
 	if first.ExLevel != 31 || first.ExCount != 28500 {
 		t.Fatalf("unexpected zero-progress ex stage: %+v", first)
+	}
+}
+
+func TestBuildCharacterMissionOverviewRequestFromSnapshotUsesCharacterLevelCurve(t *testing.T) {
+	snap := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacters": []map[string]any{
+			{"characterId": 1, "characterRank": 10, "totalExp": 1190},
+		},
+		"userCharacterMissionV2Statuses": []map[string]any{
+			{"parameterGroupId": 1, "seq": 1, "characterId": 1, "missionStatus": "achieved"},
+		},
+	})
+
+	controller := NewController(nil, nil, snap, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		characterLevels: []*CharacterLevel{
+			{Level: 1, TotalExp: 0},
+			{Level: 10, TotalExp: 1000},
+			{Level: 11, TotalExp: 1200},
+			{Level: 12, TotalExp: 1500},
+		},
+		characterMissions: map[int][]*CharacterMission{
+			1: {
+				{ID: 1001, CharacterID: 1, CharacterMissionType: "collect_member", ParameterGroupID: 1},
+			},
+		},
+		missionGroups: map[int][]*CharacterMissionParameterGroup{
+			1: {
+				{Seq: 1, Requirement: 10, Exp: 50},
+			},
+		},
+	})
+
+	req, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{
+		Region: renderregion.JP,
+		Cid:    1,
+	})
+	if err != nil {
+		t.Fatalf("BuildCharacterMissionOverviewRequestFromSnapshot() error = %v", err)
+	}
+	if req.CurrentLevel != 10 || req.CurrentExp != 190 {
+		t.Fatalf("unexpected current level progress: level=%d exp=%d", req.CurrentLevel, req.CurrentExp)
+	}
+	if req.PendingExp != 50 {
+		t.Fatalf("unexpected pending exp: %d", req.PendingExp)
+	}
+	if req.FinalLevel != 11 || req.FinalExp != 40 {
+		t.Fatalf("unexpected final level progress: level=%d exp=%d", req.FinalLevel, req.FinalExp)
+	}
+}
+
+func TestBuildCharacterMissionOverviewRequestFromSnapshotUsesExStepFunction(t *testing.T) {
+	snap := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacters": []map[string]any{
+			{"characterId": 1, "characterRank": 10, "totalExp": 1000},
+		},
+		"userCharacterMissionV2s": []map[string]any{
+			{"characterMissionType": "play_live_ex", "characterId": 1, "progress": 0},
+		},
+		"userCharacterMissionV2Statuses": []map[string]any{
+			{"missionId": 1101, "parameterGroupId": 101, "seq": 30, "characterId": 1, "missionStatus": "received"},
+		},
+	})
+
+	controller := NewController(nil, nil, snap, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		characterLevels: []*CharacterLevel{
+			{Level: 1, TotalExp: 0},
+			{Level: 10, TotalExp: 1000},
+		},
+		characterMissions: map[int][]*CharacterMission{
+			1: {
+				{ID: 1001, CharacterID: 1, CharacterMissionType: "play_live", ParameterGroupID: 1, IsAchievementMission: true},
+				{ID: 1101, CharacterID: 1, CharacterMissionType: "play_live_ex", ParameterGroupID: 101, IsAchievementMission: true},
+			},
+		},
+		missionGroups: map[int][]*CharacterMissionParameterGroup{
+			1: {
+				{Seq: 1, Requirement: 10, Exp: 1},
+			},
+			101: {
+				{Seq: 1, Requirement: 500, Exp: 1},
+				{Seq: 4, Requirement: 600, Exp: 1},
+				{Seq: 7, Requirement: 700, Exp: 1},
+				{Seq: 10, Requirement: 800, Exp: 1},
+				{Seq: 13, Requirement: 900, Exp: 1},
+				{Seq: 16, Requirement: 1000, Exp: 1},
+				{Seq: 19, Requirement: 1100, Exp: 1},
+				{Seq: 22, Requirement: 1200, Exp: 1},
+				{Seq: 25, Requirement: 1300, Exp: 1},
+				{Seq: 28, Requirement: 1400, Exp: 1},
+				{Seq: 31, Requirement: 1500, Exp: 0},
+			},
+		},
+	})
+
+	req, err := controller.BuildCharacterMissionOverviewRequestFromSnapshot(CharacterMissionQuery{
+		Region: renderregion.JP,
+		Cid:    1,
+	})
+	if err != nil {
+		t.Fatalf("BuildCharacterMissionOverviewRequestFromSnapshot() error = %v", err)
+	}
+	var exRow *drawing.CharacterMissionOverviewRow
+	for i := range req.AchievementRows {
+		if req.AchievementRows[i].MissionType == "play_live_ex" {
+			exRow = &req.AchievementRows[i]
+			break
+		}
+	}
+	if exRow == nil {
+		t.Fatalf("expected play_live_ex row")
+	}
+	if exRow.Current != 28500 {
+		t.Fatalf("unexpected ex current total: %d", exRow.Current)
+	}
+	if exRow.Upper == nil || *exRow.Upper != 28500 {
+		t.Fatalf("unexpected ex upper: %+v", exRow.Upper)
+	}
+	if exRow.CurrentRound == nil || *exRow.CurrentRound != 31 {
+		t.Fatalf("unexpected ex current round: %+v", exRow.CurrentRound)
+	}
+	if exRow.CurrentRoundNeed == nil || *exRow.CurrentRoundNeed != 1500 {
+		t.Fatalf("unexpected ex current round need: %+v", exRow.CurrentRoundNeed)
+	}
+}
+
+func TestBuildCharacterMissionAllRequestFromSnapshotExpandsExRoundsByStepFunction(t *testing.T) {
+	snap := mustSnapshot(t, map[string]any{
+		"now": 12345,
+		"userGamedata": map[string]any{
+			"userId": 1001,
+			"name":   "tester",
+			"deck":   1,
+		},
+		"userProfile": map[string]any{
+			"profileImageType": "normal",
+		},
+		"userDecks": []map[string]any{
+			{"deckId": 1, "leader": 1, "member1": 1, "member2": 1, "member3": 1, "member4": 1, "member5": 1},
+		},
+		"userCards": []map[string]any{
+			{"cardId": 1, "level": 1},
+		},
+		"userCharacters": []map[string]any{
+			{"characterId": 1, "characterRank": 10, "totalExp": 1000},
+		},
+		"userCharacterMissionV2s": []map[string]any{
+			{"characterMissionType": "play_live_ex", "characterId": 1, "progress": 200},
+		},
+		"userCharacterMissionV2Statuses": []map[string]any{
+			{"missionId": 1101, "parameterGroupId": 101, "seq": 30, "characterId": 1, "missionStatus": "received"},
+		},
+	})
+
+	controller := NewController(nil, nil, snap, renderregion.JP)
+	controller.RegisterSource(&testSource{
+		region: renderregion.JP,
+		characterLevels: []*CharacterLevel{
+			{Level: 1, TotalExp: 0},
+			{Level: 10, TotalExp: 1000},
+		},
+		characterMissions: map[int][]*CharacterMission{
+			1: {
+				{ID: 1001, CharacterID: 1, CharacterMissionType: "play_live", ParameterGroupID: 1, IsAchievementMission: true},
+				{ID: 1101, CharacterID: 1, CharacterMissionType: "play_live_ex", ParameterGroupID: 101, IsAchievementMission: true},
+			},
+		},
+		missionGroups: map[int][]*CharacterMissionParameterGroup{
+			1: {
+				{Seq: 1, Requirement: 10, Exp: 1},
+			},
+			101: {
+				{Seq: 1, Requirement: 500, Exp: 1},
+				{Seq: 4, Requirement: 600, Exp: 1},
+				{Seq: 7, Requirement: 700, Exp: 1},
+				{Seq: 10, Requirement: 800, Exp: 1},
+				{Seq: 13, Requirement: 900, Exp: 1},
+				{Seq: 16, Requirement: 1000, Exp: 1},
+				{Seq: 19, Requirement: 1100, Exp: 1},
+				{Seq: 22, Requirement: 1200, Exp: 1},
+				{Seq: 25, Requirement: 1300, Exp: 1},
+				{Seq: 28, Requirement: 1400, Exp: 1},
+				{Seq: 31, Requirement: 1500, Exp: 0},
+			},
+		},
+	})
+
+	req, err := controller.BuildCharacterMissionAllRequestFromSnapshot(CharacterMissionQuery{
+		Region:      renderregion.JP,
+		Cid:         1,
+		MissionType: "play_live",
+	})
+	if err != nil {
+		t.Fatalf("BuildCharacterMissionAllRequestFromSnapshot() error = %v", err)
+	}
+	var exSection *drawing.CharacterMissionAllSection
+	for i := range req.Sections {
+		if req.Sections[i].MissionType == "play_live_ex" {
+			exSection = &req.Sections[i]
+			break
+		}
+	}
+	if exSection == nil {
+		t.Fatalf("expected play_live_ex section")
+	}
+	if exSection.CurrentTotal != 28700 {
+		t.Fatalf("unexpected ex current total: %d", exSection.CurrentTotal)
+	}
+	if exSection.Upper == nil || *exSection.Upper != 28500 {
+		t.Fatalf("unexpected ex upper: %+v", exSection.Upper)
+	}
+	if exSection.CurrentRoundNo == nil || *exSection.CurrentRoundNo != 31 {
+		t.Fatalf("unexpected ex current round: %+v", exSection.CurrentRoundNo)
+	}
+	if len(exSection.DisplayRows) != 31 {
+		t.Fatalf("unexpected ex display row count: %d", len(exSection.DisplayRows))
+	}
+	if exSection.DisplayRows[1].Seq != 2 || exSection.DisplayRows[1].Requirement != 500 {
+		t.Fatalf("unexpected round 2 row: %+v", exSection.DisplayRows[1])
+	}
+	if exSection.DisplayRows[3].Seq != 4 || exSection.DisplayRows[3].Requirement != 600 {
+		t.Fatalf("unexpected round 4 row: %+v", exSection.DisplayRows[3])
+	}
+	last := exSection.DisplayRows[len(exSection.DisplayRows)-1]
+	if last.Seq != 31 || last.Requirement != 1500 || last.AccRequirement != 30000 {
+		t.Fatalf("unexpected last ex row: %+v", last)
 	}
 }
 

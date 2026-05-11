@@ -12,6 +12,7 @@ type EducationProvider interface {
 	GetAreaItem(ctx context.Context, id int) *AreaItem
 	GetAreaItemLevels(ctx context.Context, areaItemID int) []*AreaItemLevel
 	GetAreaItemLevel(ctx context.Context, areaItemID, level int) *AreaItemLevel
+	GetCharacterLevels(ctx context.Context) []*CharacterLevel
 	GetCharacterRank(ctx context.Context, characterID, rank int) *CharacterRank
 	GetBonds(ctx context.Context) []*Bond
 	GetBondLevels(ctx context.Context) []*BondLevel
@@ -62,6 +63,11 @@ type AreaItemLevel struct {
 	TargetCardAttr        string
 	TargetGameCharacterID int
 	Power1BonusRate       float64
+}
+
+type CharacterLevel struct {
+	Level    int
+	TotalExp int
 }
 
 type CharacterRank struct {

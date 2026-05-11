@@ -28,6 +28,10 @@ type dbEducationProvider struct {
 	areaLevelByItem  map[int]map[int]*AreaItemLevel
 	areaMasterLoaded bool
 
+	levelMu               sync.RWMutex
+	characterLevels       []*CharacterLevel
+	characterLevelsLoaded bool
+
 	rankMu      sync.RWMutex
 	rankByChar  map[int]map[int]*CharacterRank
 	ranksLoaded bool

@@ -162,23 +162,37 @@ func (c *Controller) buildCharacterMissionAll(
 		displayRows := make([]drawing.CharacterMissionAllTableRow, 0, len(groupRows))
 		accRequirement := 0
 		accExp := 0
-		for _, groupRow := range groupRows {
-			if groupRow == nil {
-				continue
+		if _, ok := CharacterMissionExTypes[sectionType]; ok {
+			maxRound := maxInt(derefInt(base.CurrentRound), characterMissionMaxExplicitSeq(groupRows))
+			displayRows = make([]drawing.CharacterMissionAllTableRow, 0, maxRound)
+			for roundNo := 1; roundNo <= maxRound; roundNo++ {
+				requirement := characterMissionRequirementForRound(groupRows, roundNo)
+				exp := characterMissionExpForRound(groupRows, roundNo)
+				accRequirement += requirement
+				accExp += exp
+				displayRows = append(displayRows, drawing.CharacterMissionAllTableRow{
+					Seq:            roundNo,
+					Requirement:    requirement,
+					AccRequirement: accRequirement,
+					Exp:            exp,
+					AccExp:         accExp,
+				})
 			}
-			if _, ok := CharacterMissionExTypes[sectionType]; ok {
-				accRequirement += groupRow.Requirement
-			} else {
+		} else {
+			for _, groupRow := range groupRows {
+				if groupRow == nil {
+					continue
+				}
 				accRequirement = groupRow.Requirement
+				accExp += groupRow.Exp
+				displayRows = append(displayRows, drawing.CharacterMissionAllTableRow{
+					Seq:            groupRow.Seq,
+					Requirement:    groupRow.Requirement,
+					AccRequirement: accRequirement,
+					Exp:            groupRow.Exp,
+					AccExp:         accExp,
+				})
 			}
-			accExp += groupRow.Exp
-			displayRows = append(displayRows, drawing.CharacterMissionAllTableRow{
-				Seq:            groupRow.Seq,
-				Requirement:    groupRow.Requirement,
-				AccRequirement: accRequirement,
-				Exp:            groupRow.Exp,
-				AccExp:         accExp,
-			})
 		}
 		sections = append(sections, drawing.CharacterMissionAllSection{
 			MissionType:          base.MissionType,
@@ -227,6 +241,19 @@ func (c *Controller) buildCharacterMissionRows(
 		currentExp = userCharacter.Exp
 		currentTotalExp = userCharacter.TotalExp
 	}
+	characterLevels := cloneCharacterLevels(ctx.source.GetCharacterLevels())
+	levelTotalExpByLevel := make(map[int]int, len(characterLevels))
+	for _, item := range characterLevels {
+		if item == nil || item.Level <= 0 {
+			continue
+		}
+		levelTotalExpByLevel[item.Level] = item.TotalExp
+	}
+	if currentLevel > 0 && currentTotalExp > 0 {
+		if baseTotalExp, ok := levelTotalExpByLevel[currentLevel]; ok && currentTotalExp >= baseTotalExp {
+			currentExp = currentTotalExp - baseTotalExp
+		}
+	}
 
 	statuses := characterMissionStatusesForCharacter(ctx.raw, cid)
 	pendingExp := 0
@@ -237,8 +264,28 @@ func (c *Controller) buildCharacterMissionRows(
 	}
 	finalLevel := currentLevel
 	finalExp := currentExp + pendingExp
-	if currentTotalExp > 0 {
-		finalExp = currentTotalExp + pendingExp
+	baseTotalExp := currentTotalExp
+	if baseTotalExp <= 0 && currentLevel > 0 {
+		if levelStart, ok := levelTotalExpByLevel[currentLevel]; ok {
+			baseTotalExp = levelStart + currentExp
+		}
+	}
+	if len(characterLevels) > 0 {
+		finalTotalExp := maxInt(baseTotalExp, 0) + pendingExp
+		finalLevel = 1
+		levelStart := 0
+		for _, item := range characterLevels {
+			if item == nil || item.Level <= 0 {
+				continue
+			}
+			if item.TotalExp <= finalTotalExp {
+				finalLevel = item.Level
+				levelStart = item.TotalExp
+				continue
+			}
+			break
+		}
+		finalExp = finalTotalExp - levelStart
 	}
 
 	userByTypeProgress := make(map[string]int)
@@ -434,6 +481,23 @@ func cloneCharacterMissionParameterGroups(source []*CharacterMissionParameterGro
 	return out
 }
 
+func cloneCharacterLevels(source []*CharacterLevel) []*CharacterLevel {
+	if len(source) == 0 {
+		return nil
+	}
+	out := make([]*CharacterLevel, 0, len(source))
+	for _, item := range source {
+		if item == nil {
+			continue
+		}
+		out = append(out, &CharacterLevel{
+			Level:    item.Level,
+			TotalExp: item.TotalExp,
+		})
+	}
+	return out
+}
+
 func findRawUserCharacter(items []rendersnapshot.RawUserCharacter, cid int) *rendersnapshot.RawUserCharacter {
 	for i := range items {
 		if items[i].CharacterID == cid {
@@ -505,14 +569,8 @@ func characterMissionClearedTotal(groups []*CharacterMissionParameterGroup, seq 
 		return 0
 	}
 	total := 0
-	for _, item := range groups {
-		if item == nil {
-			continue
-		}
-		if item.Seq > seq {
-			break
-		}
-		total += item.Requirement
+	for roundNo := 1; roundNo <= seq; roundNo++ {
+		total += characterMissionRequirementForRound(groups, roundNo)
 	}
 	return total
 }
@@ -523,11 +581,8 @@ func characterMissionUpper(groups []*CharacterMissionParameterGroup, isEx bool) 
 	}
 	if isEx {
 		total := 0
-		for _, item := range groups {
-			if item == nil {
-				continue
-			}
-			total += item.Requirement
+		for roundNo := 1; roundNo <= 30; roundNo++ {
+			total += characterMissionRequirementForRound(groups, roundNo)
 		}
 		return characterMissionNextPtr(total)
 	}
@@ -544,21 +599,14 @@ func characterMissionUpper(groups []*CharacterMissionParameterGroup, isEx bool) 
 func characterMissionCurrentRound(groups []*CharacterMissionParameterGroup, total int) (int, int, int) {
 	total = maxInt(total, 0)
 	roundNo := 1
-	for _, item := range groups {
-		if item == nil {
-			continue
+	for {
+		requirement := characterMissionRequirementForRound(groups, roundNo)
+		if requirement <= 0 || total < requirement {
+			return roundNo, total, requirement
 		}
-		if total < item.Requirement {
-			return roundNo, total, item.Requirement
-		}
-		total -= item.Requirement
+		total -= requirement
 		roundNo++
 	}
-	lastRequirement := 0
-	if len(groups) > 0 && groups[len(groups)-1] != nil {
-		lastRequirement = groups[len(groups)-1].Requirement
-	}
-	return roundNo, total, lastRequirement
 }
 
 func characterMissionNextTarget(groups []*CharacterMissionParameterGroup, current int, isEx bool) (*int, *int) {
@@ -568,7 +616,7 @@ func characterMissionNextTarget(groups []*CharacterMissionParameterGroup, curren
 			return nil, nil
 		}
 		nextNeed := current + maxInt(roundNeed-inRoundProgress, 0)
-		nextExp := characterMissionGroupExp(groups, roundNo)
+		nextExp := characterMissionExpForRound(groups, roundNo)
 		return characterMissionNextPtr(nextNeed), characterMissionNextPtr(nextExp)
 	}
 
@@ -581,6 +629,51 @@ func characterMissionNextTarget(groups []*CharacterMissionParameterGroup, curren
 		}
 	}
 	return nil, nil
+}
+
+func characterMissionRequirementForRound(groups []*CharacterMissionParameterGroup, roundNo int) int {
+	if roundNo <= 0 {
+		return 0
+	}
+	value := 0
+	for _, item := range groups {
+		if item == nil {
+			continue
+		}
+		if item.Seq > roundNo {
+			break
+		}
+		value = item.Requirement
+	}
+	return value
+}
+
+func characterMissionExpForRound(groups []*CharacterMissionParameterGroup, roundNo int) int {
+	if roundNo <= 0 {
+		return 0
+	}
+	value := 0
+	for _, item := range groups {
+		if item == nil {
+			continue
+		}
+		if item.Seq > roundNo {
+			break
+		}
+		value = item.Exp
+	}
+	return value
+}
+
+func characterMissionMaxExplicitSeq(groups []*CharacterMissionParameterGroup) int {
+	maxSeq := 0
+	for _, item := range groups {
+		if item == nil || item.Seq <= maxSeq {
+			continue
+		}
+		maxSeq = item.Seq
+	}
+	return maxSeq
 }
 
 func calcCharacterMissionReachedSeq(rows []drawing.CharacterMissionAllTableRow, current int, isEx bool, currentRound int) int {

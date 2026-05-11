@@ -6,6 +6,7 @@ import (
 	"haruki-cloud/database/sekai/areaitem"
 	"haruki-cloud/database/sekai/areaitemlevel"
 	"haruki-cloud/database/sekai/characterrank"
+	"haruki-cloud/database/sekai/level"
 )
 
 func (p *dbEducationProvider) GetAreaItem(ctx context.Context, id int) *AreaItem {
@@ -67,6 +68,16 @@ func (p *dbEducationProvider) GetCharacterRank(ctx context.Context, characterID,
 		return cloneEdCharacterRank(ranks[rank])
 	}
 	return nil
+}
+
+func (p *dbEducationProvider) GetCharacterLevels(ctx context.Context) []*CharacterLevel {
+	if !p.ensureCharacterLevelsLoaded(ctx) {
+		return nil
+	}
+
+	p.levelMu.RLock()
+	defer p.levelMu.RUnlock()
+	return cloneEdCharacterLevels(p.characterLevels)
 }
 
 func (p *dbEducationProvider) ensureAreaMasterLoaded(ctx context.Context) bool {
@@ -163,6 +174,43 @@ func (p *dbEducationProvider) ensureCharacterRanksLoaded(ctx context.Context) bo
 	return true
 }
 
+func (p *dbEducationProvider) ensureCharacterLevelsLoaded(ctx context.Context) bool {
+	p.init()
+	p.levelMu.RLock()
+	if p.characterLevelsLoaded {
+		p.levelMu.RUnlock()
+		return true
+	}
+	p.levelMu.RUnlock()
+
+	p.levelMu.Lock()
+	defer p.levelMu.Unlock()
+
+	if p.characterLevelsLoaded {
+		return true
+	}
+
+	items, err := p.client.Level.Query().
+		Where(level.ServerRegionEQ(p.region.String()), level.LevelTypeEQ("character")).
+		Order(level.ByLevel()).
+		All(ctx)
+	if err != nil {
+		return false
+	}
+	p.characterLevels = make([]*CharacterLevel, 0, len(items))
+	for _, item := range items {
+		if item.Level <= 0 {
+			continue
+		}
+		p.characterLevels = append(p.characterLevels, &CharacterLevel{
+			Level:    int(item.Level),
+			TotalExp: int(item.TotalExp),
+		})
+	}
+	p.characterLevelsLoaded = true
+	return true
+}
+
 func cloneEdAreaItem(source *AreaItem) *AreaItem {
 	if source == nil {
 		return nil
@@ -196,4 +244,18 @@ func cloneEdCharacterRank(source *CharacterRank) *CharacterRank {
 		return nil
 	}
 	return new(*source)
+}
+
+func cloneEdCharacterLevels(source []*CharacterLevel) []*CharacterLevel {
+	if len(source) == 0 {
+		return nil
+	}
+	out := make([]*CharacterLevel, 0, len(source))
+	for _, item := range source {
+		if item == nil {
+			continue
+		}
+		out = append(out, new(*item))
+	}
+	return out
 }

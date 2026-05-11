@@ -70,6 +70,21 @@ func (a *ProviderAdapter) GetAreaItemLevel(areaItemID, level int) *AreaItemLevel
 	return convertAreaItemLevel(a.P.Education().GetAreaItemLevel(a.Context(), areaItemID, level))
 }
 
+func (a *ProviderAdapter) GetCharacterLevels() []*CharacterLevel {
+	pvLevels := a.P.Education().GetCharacterLevels(a.Context())
+	result := make([]*CharacterLevel, len(pvLevels))
+	for i, item := range pvLevels {
+		if item == nil {
+			continue
+		}
+		result[i] = &CharacterLevel{
+			Level:    item.Level,
+			TotalExp: item.TotalExp,
+		}
+	}
+	return result
+}
+
 func (a *ProviderAdapter) GetCharacterRank(characterID, rank int) *CharacterRank {
 	pv := a.P.Education().GetCharacterRank(a.Context(), characterID, rank)
 	if pv == nil {

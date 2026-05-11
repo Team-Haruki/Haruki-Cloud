@@ -12,8 +12,9 @@ type areaIndex struct {
 }
 
 type bondData struct {
-	bonds  []*Bond
-	levels []*BondLevel
+	bonds           []*Bond
+	bondLevels      []*BondLevel
+	characterLevels []*CharacterLevel
 }
 
 type missionData struct {

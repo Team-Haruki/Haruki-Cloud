@@ -147,6 +147,9 @@ func (s *handlerTestEducationSource) GetAreaItemLevel(areaItemID, level int) *ed
 		Power1BonusRate: float64(level),
 	}
 }
+func (s *handlerTestEducationSource) GetCharacterLevels() []*education.CharacterLevel {
+	return nil
+}
 func (s *handlerTestEducationSource) GetCharacterRank(characterID, rank int) *education.CharacterRank {
 	return nil
 }

@@ -131,50 +131,57 @@ func (c *RenderCacheClient) Render(endpoint string, request any, render func() (
 	if policyErr == nil {
 		key, keyErr := buildRenderCacheKey(policy)
 		if keyErr == nil {
-			tLookup := time.Now()
-			if cached, hit := c.lookup(key, policy.APIPath); hit {
+			v, err, _ := c.flight.Do(key, func() (any, error) {
+				tLookup := time.Now()
+				if cached, hit := c.lookup(key, policy.APIPath); hit {
+					cacheLogger.Debugf(
+						"remote cache hit: endpoint=%s api_path=%s user_id=%s key=%s lookup=%dms",
+						endpoint,
+						policy.APIPath,
+						policy.UserID,
+						shortRenderCacheKey(key),
+						time.Since(tLookup).Milliseconds(),
+					)
+					return cached, nil
+				}
 				cacheLogger.Debugf(
-					"remote cache hit: endpoint=%s api_path=%s user_id=%s key=%s lookup=%dms",
+					"remote cache miss: endpoint=%s api_path=%s user_id=%s key=%s lookup=%dms",
 					endpoint,
 					policy.APIPath,
 					policy.UserID,
 					shortRenderCacheKey(key),
 					time.Since(tLookup).Milliseconds(),
 				)
-				return cached, nil
-			}
-			cacheLogger.Debugf(
-				"remote cache miss: endpoint=%s api_path=%s user_id=%s key=%s lookup=%dms",
-				endpoint,
-				policy.APIPath,
-				policy.UserID,
-				shortRenderCacheKey(key),
-				time.Since(tLookup).Milliseconds(),
-			)
-		}
 
-		tRender := time.Now()
-		image, err := render()
-		if err != nil {
-			return nil, err
-		}
-		cacheLogger.Infof(
-			"remote cache miss → rendered: endpoint=%s api_path=%s user_id=%s key=%s render=%dms",
-			endpoint,
-			policy.APIPath,
-			policy.UserID,
-			shortRenderCacheKey(key),
-			time.Since(tRender).Milliseconds(),
-		)
+				tRender := time.Now()
+				image, err := render()
+				if err != nil {
+					return nil, err
+				}
+				cacheLogger.Infof(
+					"remote cache miss → rendered: endpoint=%s api_path=%s user_id=%s key=%s render=%dms",
+					endpoint,
+					policy.APIPath,
+					policy.UserID,
+					shortRenderCacheKey(key),
+					time.Since(tRender).Milliseconds(),
+				)
 
-		if keyErr == nil {
-			ttl := policy.TTL
-			if ttl <= 0 && !policy.Infinite {
-				ttl = c.ttl
+				ttl := policy.TTL
+				if ttl <= 0 && !policy.Infinite {
+					ttl = c.ttl
+				}
+				_ = c.store(key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
+				return image, nil
+			})
+			if err != nil {
+				return nil, err
 			}
-			_ = c.store(key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
+			if data, ok := v.([]byte); ok {
+				return data, nil
+			}
+			return nil, fmt.Errorf("remote render cache returned unexpected type %T", v)
 		}
-		return image, nil
 	}
 
 	return render()

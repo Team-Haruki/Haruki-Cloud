@@ -36,6 +36,7 @@ type RenderCacheClient struct {
 	baseURL    string
 	storageDir string
 	ttl        time.Duration
+	flight     singleflight.Group
 }
 
 type renderCacheRecord struct {

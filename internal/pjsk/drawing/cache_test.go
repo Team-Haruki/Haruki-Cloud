@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -76,6 +78,69 @@ func TestRenderCacheClientAllowsInternalSelfSignedHTTPS(t *testing.T) {
 	}
 	if string(data) != "cached-image" {
 		t.Fatalf("unexpected cache data: %q", string(data))
+	}
+}
+
+func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
+	storageDir := t.TempDir()
+	var renderCalls int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/cache":
+			http.Error(w, `{"error":"miss"}`, http.StatusNotFound)
+		case r.Method == http.MethodPost && r.URL.Path == "/cache":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"ok":true}`))
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client := NewRenderCacheClient(RenderCacheConfig{
+		BaseURL:    server.URL,
+		StorageDir: storageDir,
+		TTL:        time.Minute,
+	})
+	if client == nil {
+		t.Fatal("expected render cache client")
+	}
+
+	endpoint := "/api/pjsk/sk/query"
+	request := map[string]any{
+		"region": "jp",
+		"ranks":  []any{1, 2, 3},
+	}
+	render := func() ([]byte, error) {
+		atomic.AddInt32(&renderCalls, 1)
+		time.Sleep(50 * time.Millisecond)
+		return []byte("rendered-image"), nil
+	}
+
+	const callers = 8
+	var wg sync.WaitGroup
+	results := make([][]byte, callers)
+	errs := make([]error, callers)
+	wg.Add(callers)
+	for i := 0; i < callers; i++ {
+		go func(idx int) {
+			defer wg.Done()
+			results[idx], errs[idx] = client.Render(endpoint, request, render)
+		}(i)
+	}
+	wg.Wait()
+
+	if got := atomic.LoadInt32(&renderCalls); got != 1 {
+		t.Fatalf("render called %d times, want 1", got)
+	}
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("call %d returned error: %v", i, err)
+		}
+		if string(results[i]) != "rendered-image" {
+			t.Fatalf("call %d returned %q, want %q", i, string(results[i]), "rendered-image")
+		}
 	}
 }
 

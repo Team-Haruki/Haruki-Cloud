@@ -240,6 +240,47 @@ func TestBuildHonorRequestBirthdayUsesDerivedBirthdayType(t *testing.T) {
 	}
 }
 
+func TestBuildHonorRequestBirthdayPrefersBirthdayFramePathForMiddleRarity(t *testing.T) {
+	dir := t.TempDir()
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor", "honor_bg_birthday_01_06", "degree_sub.png"))
+
+	source := newTestHonorSource(renderregion.JP)
+	source.honors[6206] = &masterdata.Honor{
+		ID:              6206,
+		GroupID:         544,
+		HonorRarity:     "middle",
+		AssetBundleName: "honor_6206",
+	}
+	source.groups[544] = &masterdata.HonorGroup{
+		ID:                        544,
+		HonorType:                 "birthday",
+		BackgroundAssetBundleName: new("honor_bg_birthday_01_06"),
+		FrameName:                 new("honor_frame_birthday_01_06"),
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:     renderregion.JP,
+		HonorID:    6206,
+		HonorLevel: 2,
+		IsMain:     false,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	if req.HonorType == nil || *req.HonorType != "birthday" {
+		t.Fatalf("unexpected honor type: %#v", req.HonorType)
+	}
+	wantFrame := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_s_2.png"
+	if req.FrameImgPath == nil || *req.FrameImgPath != wantFrame {
+		t.Fatalf("expected birthday frame path, got %#v", req.FrameImgPath)
+	}
+	wantLevel := "asset/jp-assets/startapp/honor_frame/honor_frame_birthday_01_06/frame_degree_level_2.png"
+	if req.FrameDegreeLevelImgPath == nil || *req.FrameDegreeLevelImgPath != wantLevel {
+		t.Fatalf("expected birthday level frame path, got %#v", req.FrameDegreeLevelImgPath)
+	}
+}
+
 func TestBuildHonorRequestFallsBackToLevelAssetWhenTopLevelAssetIsEmpty(t *testing.T) {
 	dir := t.TempDir()
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "ondemand", "honor", "honor_3009_100", "degree_main.png"))

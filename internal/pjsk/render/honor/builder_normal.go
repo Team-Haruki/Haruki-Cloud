@@ -115,17 +115,20 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	rarityRank := mapHonorRarity(rarity)
 	staticFramePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), rarityRank)
 	if frameName != "" {
+		isBirthdayFrame := strings.HasPrefix(frameName, "honor_frame_birthday")
 		startRare := 2
 		if strings.HasPrefix(frameName, "event") {
 			startRare = 3
 		}
 		framePath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_%s_%d.png", frameName, string(mode[0]), rarityRank))
-		if rarityRank >= startRare && b.assetExists(framePath) {
+		if isBirthdayFrame {
+			req.FrameImgPath = &framePath
+		} else if rarityRank >= startRare && b.assetExists(framePath) {
 			req.FrameImgPath = &framePath
 		} else {
 			req.FrameImgPath = &staticFramePath
 		}
-		if strings.HasPrefix(frameName, "honor_frame_birthday") && req.FrameImgPath != nil && *req.FrameImgPath == framePath {
+		if isBirthdayFrame && req.FrameImgPath != nil && *req.FrameImgPath == framePath {
 			req.FrameDegreeLevelImgPath = new(resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_level_%d.png", frameName, rarityRank)))
 		}
 	} else {

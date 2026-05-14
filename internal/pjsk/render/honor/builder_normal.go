@@ -113,26 +113,47 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	}
 	req.HonorType = &honorType
 	rarityRank := mapHonorRarity(rarity)
-	staticFramePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), rarityRank)
-	if frameName != "" {
-		isBirthdayFrame := strings.HasPrefix(frameName, "honor_frame_birthday")
-		startRare := 2
-		if strings.HasPrefix(frameName, "event") {
-			startRare = 3
+
+	// Level-1 birthday honors render as the plain background without any frame overlay.
+	// Some groups still expose birthday frame bundle names, but the actual assets are
+	// incomplete or intentionally absent for rarity rank 1.
+	if honorType == "birthday" && rarityRank <= 1 {
+		req.FrameImgPath = nil
+		req.FrameDegreeLevelImgPath = nil
+	} else {
+		staticFramePath := fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), rarityRank)
+
+		if honorType == "birthday" && frameName == "" {
+			switch {
+			case strings.HasPrefix(bgAssetName, "honor_bg_birthday_"):
+				frameName = "honor_frame_birthday_" + strings.TrimPrefix(bgAssetName, "honor_bg_birthday_")
+			case strings.HasPrefix(assetName, "honor_bg_birthday_"):
+				frameName = "honor_frame_birthday_" + strings.TrimPrefix(assetName, "honor_bg_birthday_")
+			}
 		}
-		framePath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_%s_%d.png", frameName, string(mode[0]), rarityRank))
-		if isBirthdayFrame {
-			req.FrameImgPath = &framePath
-		} else if rarityRank >= startRare && b.assetExists(framePath) {
-			req.FrameImgPath = &framePath
+		if frameName != "" {
+			isBirthdayFrame := strings.HasPrefix(frameName, "honor_frame_birthday")
+			startRare := 2
+			if strings.HasPrefix(frameName, "event") {
+				startRare = 3
+			}
+			framePath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_%s_%d.png", frameName, string(mode[0]), rarityRank))
+			if isBirthdayFrame && b.assetExists(framePath) {
+				req.FrameImgPath = &framePath
+			} else if rarityRank >= startRare && b.assetExists(framePath) {
+				req.FrameImgPath = &framePath
+			} else {
+				req.FrameImgPath = &staticFramePath
+			}
+			if isBirthdayFrame && req.FrameImgPath != nil && *req.FrameImgPath == framePath {
+				levelPath := resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_level_%d.png", frameName, rarityRank))
+				if b.assetExists(levelPath) {
+					req.FrameDegreeLevelImgPath = new(levelPath)
+				}
+			}
 		} else {
 			req.FrameImgPath = &staticFramePath
 		}
-		if isBirthdayFrame && req.FrameImgPath != nil && *req.FrameImgPath == framePath {
-			req.FrameDegreeLevelImgPath = new(resolveGameAsset(fmt.Sprintf("honor_frame/%s/frame_degree_level_%d.png", frameName, rarityRank)))
-		}
-	} else {
-		req.FrameImgPath = &staticFramePath
 	}
 
 	_, hasScore := diffScoreMap[honorID]

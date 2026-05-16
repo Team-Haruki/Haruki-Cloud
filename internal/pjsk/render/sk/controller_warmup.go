@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/pjsk/eventutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
@@ -64,9 +65,47 @@ func (c *Controller) refreshDefaultPredictData(regions []string) {
 			continue
 		}
 		meta := c.resolveEventMeta(eventID, renderregion.Normalize(region))
-		if ensureSKPredictionAllowed(meta) != nil {
+		if ensureSKPredictionAllowed(meta) == nil {
+			c.forecastCache.StartRefresh(region, eventID)
+		}
+		c.refreshCurrentWorldBloomChapterPredictData(region, eventID)
+	}
+}
+
+func (c *Controller) refreshCurrentWorldBloomChapterPredictData(region string, eventID int) {
+	eventSource := c.eventSourceForRegion(region)
+	chapterSource, ok := eventSource.(WorldBloomChapterSource)
+	if !ok || chapterSource == nil {
+		return
+	}
+	now := time.Now().UnixMilli()
+	var characterID int
+	var chapterStartAt int64
+	var chapterAggregateAt int64
+	for _, chapter := range chapterSource.GetWorldBloomChapters(c.contextOrBackground(), eventID) {
+		if chapter == nil || chapter.GameCharacterID == nil || *chapter.GameCharacterID <= 0 {
 			continue
 		}
-		c.forecastCache.StartRefresh(region, eventID)
+		if !eventutil.IsRankingOpen(chapter.ChapterStartAt, chapter.AggregateAt, now) {
+			continue
+		}
+		if characterID > 0 && chapter.ChapterStartAt <= chapterStartAt {
+			continue
+		}
+		characterID = *chapter.GameCharacterID
+		chapterStartAt = chapter.ChapterStartAt
+		chapterAggregateAt = chapter.AggregateAt
 	}
+	if characterID <= 0 {
+		return
+	}
+	if ensureSKPredictionAllowed(eventMeta{aggregateAt: chapterAggregateAt}) != nil {
+		return
+	}
+	c.forecastCache.StartRefreshQuery(ForecastQuery{
+		Region:        region,
+		EventID:       eventID,
+		Scope:         ForecastScopeChapter,
+		WlCharacterID: &characterID,
+	})
 }

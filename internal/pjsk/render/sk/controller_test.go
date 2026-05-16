@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -37,6 +38,7 @@ type countingForecastProvider struct {
 }
 
 type scopedForecastProvider struct {
+	mu      sync.Mutex
 	queries []ForecastQuery
 	data    map[string]map[string]ForecastSourceData
 }
@@ -96,7 +98,9 @@ func (p *scopedForecastProvider) Fetch(context.Context, string, int, []int) (map
 
 func (p *scopedForecastProvider) FetchBySourceQuery(_ context.Context, query ForecastQuery) (map[string]ForecastSourceData, error) {
 	normalized := normalizeForecastQuery(query)
+	p.mu.Lock()
 	p.queries = append(p.queries, normalized)
+	p.mu.Unlock()
 	key := string(normalized.Scope)
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		key += ":" + strconv.Itoa(*normalized.WlCharacterID)
@@ -117,6 +121,12 @@ func (p *scopedForecastProvider) FetchBySourceQuery(_ context.Context, query For
 		}
 	}
 	return out, nil
+}
+
+func (p *scopedForecastProvider) querySnapshot() []ForecastQuery {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return append([]ForecastQuery(nil), p.queries...)
 }
 
 func (p testForecastProvider) Fetch(context.Context, string, int, []int) (map[int]ForecastScore, error) {
@@ -3173,5 +3183,166 @@ func TestStartDefaultPredictWarmupPrimesDefaultPredictCache(t *testing.T) {
 	}
 	if calls := drawingCalls.Load(); calls != 1 {
 		t.Fatalf("expected warmed request to render once, got %d", calls)
+	}
+}
+
+func TestRefreshDefaultPredictDataPrimesCurrentWorldBloomChapterPredictCache(t *testing.T) {
+	now := time.Now().UnixMilli()
+	charaID := 15
+	nextCharaID := 16
+	eventInfo := &masterdata.Event{
+		ID:          167,
+		Name:        "World Bloom Event",
+		EventType:   "world_bloom",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(8*time.Hour/time.Millisecond),
+	}
+	provider := &scopedForecastProvider{
+		data: map[string]map[string]ForecastSourceData{
+			"total": {
+				"local": {
+					Scores: map[int]ForecastScore{
+						100: {Score: 8_888_888, Timestamp: 1_700_000_000, Source: "local"},
+					},
+					FetchedAt: 1_700_000_100,
+				},
+			},
+			"chapter:15": {
+				"local": {
+					Scores: map[int]ForecastScore{
+						100: {Score: 9_999_999, Timestamp: 1_700_000_200, Source: "local"},
+					},
+					FetchedAt: 1_700_000_300,
+				},
+			},
+		},
+	}
+	controller := NewController(nil)
+	controller.RegisterEventSource(&testEventSource{
+		region: renderregion.CN,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+		worldBloomChapters: map[int][]*masterdata.WorldBloom{
+			167: {
+				{
+					EventID:         167,
+					GameCharacterID: &charaID,
+					ChapterStartAt:  now - int64(time.Hour/time.Millisecond),
+					AggregateAt:     now + int64(2*time.Hour/time.Millisecond),
+				},
+				{
+					EventID:         167,
+					GameCharacterID: &nextCharaID,
+					ChapterStartAt:  now + int64(3*time.Hour/time.Millisecond),
+					AggregateAt:     now + int64(5*time.Hour/time.Millisecond),
+				},
+			},
+		},
+	})
+	controller.SetForecastProvider(provider)
+
+	controller.refreshDefaultPredictData([]string{"cn"})
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, err := controller.forecastCache.CachedBySourceQuery(ForecastQuery{
+			Region:  "cn",
+			EventID: 167,
+			Scope:   ForecastScopeTotal,
+			Ranks:   []int{100},
+		}); err == nil {
+			if _, err := controller.forecastCache.CachedBySourceQuery(ForecastQuery{
+				Region:        "cn",
+				EventID:       167,
+				Scope:         ForecastScopeChapter,
+				WlCharacterID: &charaID,
+				Ranks:         []int{100},
+			}); err == nil {
+				break
+			}
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for world bloom warmup: queries=%+v", provider.querySnapshot())
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	var sawTotal, sawChapter bool
+	for _, query := range provider.querySnapshot() {
+		switch {
+		case query.Scope == ForecastScopeTotal && query.WlCharacterID == nil:
+			sawTotal = true
+		case query.Scope == ForecastScopeChapter && query.WlCharacterID != nil && *query.WlCharacterID == charaID:
+			sawChapter = true
+		case query.Scope == ForecastScopeChapter && query.WlCharacterID != nil && *query.WlCharacterID == nextCharaID:
+			t.Fatalf("unexpected future world bloom chapter warmup: %+v", query)
+		}
+	}
+	if !sawTotal || !sawChapter {
+		t.Fatalf("expected total and current chapter warmup, got %+v", provider.querySnapshot())
+	}
+}
+
+func TestForecastDataCacheRefreshesStaleWorldBloomChapterInBackground(t *testing.T) {
+	charaID := 15
+	provider := &scopedForecastProvider{
+		data: map[string]map[string]ForecastSourceData{
+			"chapter:15": {
+				"local": {
+					Scores: map[int]ForecastScore{
+						100: {Score: 1_000_000, Timestamp: 1_700_000_000, Source: "local"},
+					},
+					FetchedAt: 1_700_000_100,
+				},
+			},
+		},
+	}
+	cache := newForecastDataCache(provider)
+	query := ForecastQuery{
+		Region:        "cn",
+		EventID:       167,
+		Scope:         ForecastScopeChapter,
+		WlCharacterID: &charaID,
+		Ranks:         []int{100},
+	}
+	if err := cache.RefreshNowQuery(context.Background(), query); err != nil {
+		t.Fatalf("prime chapter forecast cache: %v", err)
+	}
+	key, ok := newForecastDataCacheKey(query)
+	if !ok {
+		t.Fatal("invalid test forecast query")
+	}
+	cache.mu.Lock()
+	staleAt := time.Now().UTC().Add(-forecastDataRefreshInterval - time.Second)
+	cache.entries[key].refreshedAt = staleAt
+	cache.entries[key].lastAttemptAt = staleAt
+	cache.mu.Unlock()
+
+	next := provider.data["chapter:15"]["local"]
+	next.Scores[100] = ForecastScore{Score: 2_000_000, Timestamp: 1_700_000_500, Source: "local"}
+	next.FetchedAt = 1_700_000_600
+	provider.data["chapter:15"]["local"] = next
+
+	cached, err := cache.CachedBySourceQuery(query)
+	if err != nil {
+		t.Fatalf("read stale chapter forecast cache: %v", err)
+	}
+	if got := cached["local"].Scores[100].Score; got != 1_000_000 {
+		t.Fatalf("expected stale read to return old score, got %d", got)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		cached, err = cache.CachedBySourceQuery(query)
+		if err == nil && cached["local"].Scores[100].Score == 2_000_000 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for stale chapter refresh: queries=%+v cached=%+v err=%v", provider.querySnapshot(), cached, err)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if got := len(provider.querySnapshot()); got < 2 {
+		t.Fatalf("expected stale cache read to trigger background refresh, got %d queries", got)
 	}
 }

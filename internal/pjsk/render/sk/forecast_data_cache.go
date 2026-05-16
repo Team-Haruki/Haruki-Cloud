@@ -90,9 +90,18 @@ func (c *forecastDataCache) CachedBySourceQuery(query ForecastQuery) (map[string
 		}
 		return nil, errors.New("forecast cache is not ready")
 	}
+	var refreshProvider ForecastProvider
+	if shouldRefreshForecastEntry(entry, time.Now().UTC()) {
+		if provider, err := c.beginRefreshLocked(key); err == nil {
+			refreshProvider = provider
+		}
+	}
 	data := filterForecastSourceDataMap(entry.data, normalizedQuery.Ranks)
 	c.mu.Unlock()
 
+	if refreshProvider != nil {
+		c.startRefreshWithProvider(refreshProvider, key, normalizedQuery)
+	}
 	if lenNonEmptyForecastData(data) == 0 {
 		return nil, errors.New("预测缓存暂无这些档位的数据")
 	}
@@ -139,7 +148,10 @@ func (c *forecastDataCache) RefreshNowQuery(ctx context.Context, query ForecastQ
 	if err != nil {
 		return err
 	}
+	return c.refreshNowWithProvider(ctx, provider, key, normalizedQuery)
+}
 
+func (c *forecastDataCache) refreshNowWithProvider(ctx context.Context, provider ForecastProvider, key forecastDataCacheKey, normalizedQuery ForecastQuery) error {
 	data, refreshErr := fetchForecastDataWithRetry(ctx, provider, normalizedQuery)
 	now := time.Now().UTC()
 	if refreshErr != nil {
@@ -158,7 +170,10 @@ func (c *forecastDataCache) RefreshNowQuery(ctx context.Context, query ForecastQ
 func (c *forecastDataCache) beginRefresh(key forecastDataCacheKey) (ForecastProvider, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	return c.beginRefreshLocked(key)
+}
 
+func (c *forecastDataCache) beginRefreshLocked(key forecastDataCacheKey) (ForecastProvider, error) {
 	if c.provider == nil {
 		return nil, errors.New("forecast provider is not configured")
 	}
@@ -167,6 +182,14 @@ func (c *forecastDataCache) beginRefresh(key forecastDataCacheKey) (ForecastProv
 	}
 	c.inFlight[key] = struct{}{}
 	return c.provider, nil
+}
+
+func (c *forecastDataCache) startRefreshWithProvider(provider ForecastProvider, key forecastDataCacheKey, query ForecastQuery) {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.TODO(), config.SKForecastRefreshTimeout)
+		defer cancel()
+		_ = c.refreshNowWithProvider(ctx, provider, key, query)
+	}()
 }
 
 func (c *forecastDataCache) finishSuccess(key forecastDataCacheKey, now time.Time, data map[string]ForecastSourceData) {
@@ -199,6 +222,16 @@ func (c *forecastDataCache) finishFailure(key forecastDataCacheKey, now time.Tim
 		entry.lastError = err.Error()
 	}
 	delete(c.inFlight, key)
+}
+
+func shouldRefreshForecastEntry(entry *forecastDataCacheEntry, now time.Time) bool {
+	if entry == nil || lenNonEmptyForecastData(entry.data) == 0 {
+		return false
+	}
+	if !entry.refreshedAt.IsZero() && now.Sub(entry.refreshedAt) < forecastDataRefreshInterval {
+		return false
+	}
+	return entry.lastAttemptAt.IsZero() || now.Sub(entry.lastAttemptAt) >= forecastDataRefreshRetryInterval
 }
 
 func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, query ForecastQuery) (map[string]ForecastSourceData, error) {

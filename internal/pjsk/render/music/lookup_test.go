@@ -574,6 +574,23 @@ func TestResolveFuzzyMusicQueryMatchesTypoInPartialTitle(t *testing.T) {
 	}
 }
 
+func TestResolveFuzzyMusicQueryMatchesHanSkeletonTitle(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			192: {ID: 192, Title: "去り人達のワルツ"},
+			300: {ID: 300, Title: "Other Song"},
+		},
+	}
+
+	musicInfo, err := resolveFuzzyMusicQuery(source, "去人達", false)
+	if err != nil {
+		t.Fatalf("resolveFuzzyMusicQuery() error = %v", err)
+	}
+	if musicInfo == nil || musicInfo.ID != 192 {
+		t.Fatalf("unexpected fuzzy han result: %+v", musicInfo)
+	}
+}
+
 func TestResolveFuzzyMusicQueryReturnsUnreleasedErrorWhenOnlyFutureMatchExists(t *testing.T) {
 	now := time.Now().UnixMilli()
 	source := &lookupTestSource{

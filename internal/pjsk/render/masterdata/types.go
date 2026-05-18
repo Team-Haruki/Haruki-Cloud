@@ -103,6 +103,15 @@ type EventRankingHonorReward struct {
 	HonorID  int
 }
 
+type WorldBloomChapterRankingRewardRange struct {
+	ID              int
+	EventID         int
+	GameCharacterID int
+	FromRank        int
+	ToRank          int
+	ResourceBoxID   int
+}
+
 type GameCharacterUnit struct {
 	ID              int
 	GameCharacterID int

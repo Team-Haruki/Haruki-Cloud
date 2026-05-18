@@ -88,6 +88,10 @@ func (p *adapterTestEventProvider) GetWorldBloomChapters(_ context.Context, even
 	return nil
 }
 
+func (p *adapterTestEventProvider) GetWorldBloomChapterRankingRewardRanges(_ context.Context, eventID, gameCharacterID int) ([]masterdata.WorldBloomChapterRankingRewardRange, error) {
+	return nil, nil
+}
+
 func (p *adapterTestEventProvider) GetRankingHonorRewards(_ context.Context, eventID int) ([]masterdata.EventRankingHonorReward, error) {
 	return nil, nil
 }

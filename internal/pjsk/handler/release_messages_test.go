@@ -60,6 +60,11 @@ func TestNormalizeMusicUserFacingErrorTreatsBanIndexAsLookupMiss(t *testing.T) {
 	assertReplayErrorText(t, err, "JP服找不到特定的歌: miku6\n如果需要查其他服务器歌曲请加区服前缀")
 }
 
+func TestNormalizeMusicUserFacingErrorTreatsMissingBanEventsAsLookupMiss(t *testing.T) {
+	err := normalizeMusicUserFacingErrorForLookup(errString("failed to search music: no ban events found for character 20"), "cn", "mzk5")
+	assertReplayErrorText(t, err, "CN服找不到特定的歌: mzk5\n如果需要查其他服务器歌曲请加区服前缀")
+}
+
 func TestNormalizeEventUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) {
 	err := normalizeEventUserFacingError(releasecheck.New(releasecheck.KindEvent, "", 2001))
 	assertReplayErrorText(t, err, "该活动还未上线")

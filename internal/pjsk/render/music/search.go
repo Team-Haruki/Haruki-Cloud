@@ -107,6 +107,13 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 		return ensureAccessibleMusic(musicInfo, now, info.Value, s.allowUnreleased)
 
 	case QueryTypeBan:
+		if fallback := strings.TrimSpace(info.Keyword); fallback != "" {
+			if resolved, fallbackErr := s.resolveTitle(fallback); fallbackErr == nil && resolved != nil {
+				return resolved, nil
+			} else if fallbackErr != nil && isMusicAmbiguousError(fallbackErr) {
+				return nil, fallbackErr
+			}
+		}
 		events := s.source.GetBanEvents(info.BanCharID)
 		if len(events) == 0 {
 			return nil, fmt.Errorf("no ban events found for character %d", info.BanCharID)

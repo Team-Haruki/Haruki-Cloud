@@ -6,6 +6,8 @@ import (
 	"strings"
 	"unicode"
 
+	"golang.org/x/text/width"
+
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 )
@@ -114,6 +116,25 @@ func musicFuzzyCandidates(source DataSource, musicInfo *masterdata.Music) []stri
 
 func scoreMusicFuzzyCandidate(normalizedQuery string, candidate string) (musicFuzzyScore, bool) {
 	normalizedCandidate := normalizeMusicFuzzyText(candidate)
+	if score, ok := scoreNormalizedMusicFuzzyCandidate(normalizedQuery, normalizedCandidate); ok {
+		return score, true
+	}
+
+	queryHan := normalizeMusicFuzzyHanText(normalizedQuery)
+	candidateHan := normalizeMusicFuzzyHanText(candidate)
+	if queryHan != "" && candidateHan != "" && (queryHan != normalizedQuery || candidateHan != normalizedCandidate) {
+		if score, ok := scoreNormalizedMusicFuzzyCandidate(queryHan, candidateHan); ok {
+			score.matchType += 1
+			if score.matchType >= 2 {
+				score.matchType++
+			}
+			return score, true
+		}
+	}
+	return musicFuzzyScore{}, false
+}
+
+func scoreNormalizedMusicFuzzyCandidate(normalizedQuery string, normalizedCandidate string) (musicFuzzyScore, bool) {
 	if normalizedCandidate == "" || normalizedQuery == "" {
 		return musicFuzzyScore{}, false
 	}
@@ -168,13 +189,74 @@ func compareMusicFuzzyScore(a, b musicFuzzyScore) int {
 func normalizeMusicFuzzyText(value string) string {
 	var builder strings.Builder
 	builder.Grow(len(value))
-	for _, r := range strings.ToLower(strings.TrimSpace(value)) {
+	for _, r := range normalizeMusicFuzzyWidth(strings.ToLower(strings.TrimSpace(value))) {
 		if unicode.IsSpace(r) || unicode.IsPunct(r) || unicode.IsSymbol(r) {
 			continue
 		}
-		builder.WriteRune(r)
+		builder.WriteRune(normalizeMusicFuzzyVariantRune(r))
 	}
 	return builder.String()
+}
+
+func normalizeMusicFuzzyHanText(value string) string {
+	var builder strings.Builder
+	builder.Grow(len(value))
+	for _, r := range normalizeMusicFuzzyWidth(strings.ToLower(strings.TrimSpace(value))) {
+		if !unicode.Is(unicode.Han, r) {
+			continue
+		}
+		builder.WriteRune(normalizeMusicFuzzyVariantRune(r))
+	}
+	return builder.String()
+}
+
+func normalizeMusicFuzzyWidth(value string) string {
+	return width.Fold.String(value)
+}
+
+func normalizeMusicFuzzyVariantRune(r rune) rune {
+	switch r {
+	case '達':
+		return '达'
+	case '戀':
+		return '恋'
+	case '體':
+		return '体'
+	case '驗':
+		return '验'
+	case '華':
+		return '华'
+	case '離':
+		return '离'
+	case '鈴':
+		return '铃'
+	case '臺':
+		return '台'
+	case '彈':
+		return '弹'
+	case '聲':
+		return '声'
+	case '夢':
+		return '梦'
+	case '愛':
+		return '爱'
+	case '類':
+		return '类'
+	case '寧':
+		return '宁'
+	case '遙':
+		return '遥'
+	case '穂':
+		return '穗'
+	case '絵':
+		return '绘'
+	case '鏡':
+		return '镜'
+	case '連':
+		return '连'
+	default:
+		return r
+	}
 }
 
 func fuzzyDistanceLimit(length int) int {

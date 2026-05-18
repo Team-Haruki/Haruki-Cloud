@@ -126,3 +126,26 @@ func TestSearchNegativeSequenceStillIgnoresUnreleasedMusicWhenLookupLeaksEnabled
 		t.Fatalf("expected latest released music 2 even with allowUnreleased, got %+v", musicInfo)
 	}
 }
+
+func TestSearchBanLikeAliasPrefersTitleResolver(t *testing.T) {
+	source := &lookupTestSource{
+		musics: map[int]*masterdata.Music{
+			5: {ID: 5, Title: "Mizuki Alias Song"},
+		},
+	}
+	searcher := NewSearchService(source, NewParser(defaultBanCharacterNicknames)).
+		WithTitleResolver(func(query string) (*masterdata.Music, error) {
+			if query != "mzk5" {
+				t.Fatalf("unexpected title resolver query: %q", query)
+			}
+			return source.GetMusicByID(5)
+		})
+
+	musicInfo, err := searcher.Search("mzk5")
+	if err != nil {
+		t.Fatalf("Search() error = %v", err)
+	}
+	if musicInfo == nil || musicInfo.ID != 5 {
+		t.Fatalf("expected alias resolver result, got %+v", musicInfo)
+	}
+}

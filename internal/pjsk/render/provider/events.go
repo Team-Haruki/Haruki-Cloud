@@ -17,4 +17,5 @@ type EventProvider interface {
 	GetDeckBonuses(ctx context.Context, eventID int) ([]*masterdata.EventDeckBonus, error)
 	GetBanEvents(ctx context.Context, charID int) []*masterdata.Event
 	GetWorldBloomChapters(ctx context.Context, eventID int) []*masterdata.WorldBloom
+	GetWorldBloomChapterRankingRewardRanges(ctx context.Context, eventID, gameCharacterID int) ([]masterdata.WorldBloomChapterRankingRewardRange, error)
 }

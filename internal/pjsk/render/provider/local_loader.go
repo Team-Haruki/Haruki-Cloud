@@ -2,8 +2,8 @@ package provider
 
 import (
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"fmt"
+	sonic "github.com/bytedance/sonic"
 	"os"
 	"path/filepath"
 	"strings"
@@ -199,6 +199,26 @@ func (j *localWorldBloomJSON) toModel() *masterdata.WorldBloom {
 		wb.GameCharacterID = new(j.GameCharacterID)
 	}
 	return wb
+}
+
+type localWorldBloomChapterRankingRewardRangeJSON struct {
+	ID              int `json:"id"`
+	EventID         int `json:"eventId"`
+	GameCharacterID int `json:"gameCharacterId"`
+	FromRank        int `json:"fromRank"`
+	ToRank          int `json:"toRank"`
+	ResourceBoxID   int `json:"resourceBoxId"`
+}
+
+func (j *localWorldBloomChapterRankingRewardRangeJSON) toModel() masterdata.WorldBloomChapterRankingRewardRange {
+	return masterdata.WorldBloomChapterRankingRewardRange{
+		ID:              j.ID,
+		EventID:         j.EventID,
+		GameCharacterID: j.GameCharacterID,
+		FromRank:        j.FromRank,
+		ToRank:          j.ToRank,
+		ResourceBoxID:   j.ResourceBoxID,
+	}
 }
 
 type localVirtualLiveJSON struct {

@@ -25,6 +25,7 @@ type dbEventProvider struct {
 	region renderregion.Value
 	once   sync.Once
 	local  *localEventProvider
+	store  *localStore
 
 	eventMu    sync.RWMutex
 	eventCache map[int]*masterdata.Event
@@ -338,6 +339,23 @@ func (p *dbEventProvider) GetWorldBloomChapters(ctx context.Context, eventID int
 		return p.local.GetWorldBloomChapters(ctx, eventID)
 	}
 	return result
+}
+
+func (p *dbEventProvider) GetWorldBloomChapterRankingRewardRanges(ctx context.Context, eventID, gameCharacterID int) ([]masterdata.WorldBloomChapterRankingRewardRange, error) {
+	if eventID <= 0 || gameCharacterID <= 0 {
+		return nil, nil
+	}
+	if p.local != nil {
+		ranges, err := p.local.GetWorldBloomChapterRankingRewardRanges(ctx, eventID, gameCharacterID)
+		if err == nil && len(ranges) > 0 {
+			return ranges, nil
+		}
+	}
+	if p.store == nil || !p.store.Configured() {
+		return nil, nil
+	}
+	local := &localEventProvider{store: p.store}
+	return local.GetWorldBloomChapterRankingRewardRanges(ctx, eventID, gameCharacterID)
 }
 
 func (p *dbEventProvider) getCardsByIDs(ctx context.Context, ids []int64) ([]*masterdata.Card, error) {

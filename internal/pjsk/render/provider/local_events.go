@@ -24,14 +24,20 @@ type eventCardIndex struct {
 	cardsByEvent map[int][]int
 }
 
+type worldBloomChapterRankingRewardKey struct {
+	eventID         int
+	gameCharacterID int
+}
+
 type localEventProvider struct {
 	store *localStore
 	cards *localCardProvider
 
-	events     lazyValue[eventIndex]
-	eventCards lazyValue[eventCardIndex]
-	deckBonus  lazyValue[map[int][]*masterdata.EventDeckBonus]
-	worldBloom lazyValue[map[int][]*masterdata.WorldBloom]
+	events                               lazyValue[eventIndex]
+	eventCards                           lazyValue[eventCardIndex]
+	deckBonus                            lazyValue[map[int][]*masterdata.EventDeckBonus]
+	worldBloom                           lazyValue[map[int][]*masterdata.WorldBloom]
+	worldBloomChapterRankingRewardRanges lazyValue[map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange]
 }
 
 func (p *localEventProvider) ensureEvents() error {
@@ -107,6 +113,36 @@ func (p *localEventProvider) ensureWorldBlooms() error {
 			})
 		}
 		return byEvent, nil
+	})
+}
+
+func (p *localEventProvider) ensureWorldBloomChapterRankingRewardRanges() error {
+	return p.worldBloomChapterRankingRewardRanges.init(func() (map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange, error) {
+		items, err := loadJSON[localWorldBloomChapterRankingRewardRangeJSON](p.store, "worldBloomChapterRankingRewardRanges.json")
+		if err != nil {
+			return nil, err
+		}
+		byChapter := make(map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange)
+		for i := range items {
+			model := items[i].toModel()
+			if model.EventID <= 0 || model.GameCharacterID <= 0 {
+				continue
+			}
+			key := worldBloomChapterRankingRewardKey{
+				eventID:         model.EventID,
+				gameCharacterID: model.GameCharacterID,
+			}
+			byChapter[key] = append(byChapter[key], model)
+		}
+		for _, ranges := range byChapter {
+			sort.Slice(ranges, func(i, j int) bool {
+				if ranges[i].ToRank != ranges[j].ToRank {
+					return ranges[i].ToRank < ranges[j].ToRank
+				}
+				return ranges[i].FromRank < ranges[j].FromRank
+			})
+		}
+		return byChapter, nil
 	})
 }
 
@@ -270,4 +306,21 @@ func (p *localEventProvider) GetWorldBloomChapters(_ context.Context, eventID in
 		result = append(result, new(*wb))
 	}
 	return result
+}
+
+func (p *localEventProvider) GetWorldBloomChapterRankingRewardRanges(_ context.Context, eventID, gameCharacterID int) ([]masterdata.WorldBloomChapterRankingRewardRange, error) {
+	if eventID <= 0 || gameCharacterID <= 0 {
+		return nil, nil
+	}
+	if err := p.ensureWorldBloomChapterRankingRewardRanges(); err != nil {
+		return nil, err
+	}
+	key := worldBloomChapterRankingRewardKey{eventID: eventID, gameCharacterID: gameCharacterID}
+	ranges := p.worldBloomChapterRankingRewardRanges.v()[key]
+	if len(ranges) == 0 {
+		return nil, nil
+	}
+	result := make([]masterdata.WorldBloomChapterRankingRewardRange, len(ranges))
+	copy(result, ranges)
+	return result, nil
 }

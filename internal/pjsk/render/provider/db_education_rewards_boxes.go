@@ -139,8 +139,30 @@ func (p *dbEducationProvider) ensureResourceBoxesLoaded(ctx context.Context) boo
 		p.boxByPurpose[box.ResourceBoxPurpose][box.ID] = box
 	}
 	supplementResourceBoxDetailsFromStore(p.store, p.boxByPurpose)
+	p.mergeLocalResourceBoxes(ctx)
 	p.boxesLoaded = true
 	return true
+}
+
+func (p *dbEducationProvider) mergeLocalResourceBoxes(ctx context.Context) {
+	if p.store == nil || !p.store.Configured() {
+		return
+	}
+	local := &localEducationProvider{store: p.store}
+	for _, item := range local.GetResourceBoxesByPurpose(ctx, "") {
+		if item == nil || item.ID <= 0 {
+			continue
+		}
+		if _, ok := p.boxByID[item.ID]; ok {
+			continue
+		}
+		box := cloneEdResourceBox(item)
+		p.boxByID[box.ID] = box
+		if _, ok := p.boxByPurpose[box.ResourceBoxPurpose]; !ok {
+			p.boxByPurpose[box.ResourceBoxPurpose] = make(map[int]*ResourceBox)
+		}
+		p.boxByPurpose[box.ResourceBoxPurpose][box.ID] = box
+	}
 }
 
 func cloneEdChallengeRewards(source []*ChallengeReward) []*ChallengeReward {

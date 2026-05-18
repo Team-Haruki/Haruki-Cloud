@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
+	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -312,6 +315,86 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromHonor(t 
 	}
 }
 
+func TestBuildEventRecordFromSnapshotOverlaysSuiteRankAfterHonorScan(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_honor_then_rank?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	now := time.Now()
+	startAt := now.Add(-48 * time.Hour).UnixMilli()
+	closedAt := now.Add(-24 * time.Hour).UnixMilli()
+	rewardRanges, err := json.Marshal([]map[string]any{{
+		"fromRank": 4001,
+		"toRank":   5000,
+		"eventRankingRewardDetails": []map[string]any{
+			{"resourceType": "honor", "resourceId": 5005},
+		},
+	}})
+	if err != nil {
+		t.Fatalf("marshal reward ranges: %v", err)
+	}
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("jp").
+		SetGameID(9301).
+		SetEventType("marathon").
+		SetName("Rank Overlay Event").
+		SetAssetbundleName("honor_9301").
+		SetStartAt(startAt).
+		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+		SetClosedAt(closedAt).
+		SetEventRankingRewardRanges(rewardRanges).
+		Save(ctx); err != nil {
+		t.Fatalf("create event 9301: %v", err)
+	}
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "jp",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "JP",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &rendersnapshot.RawUserData{
+				Now: now.UnixMilli(),
+				UserEvents: []rendersnapshot.RawUserEvent{
+					{EventID: 9301, EventPoint: 123456},
+				},
+				UserEventResults: []rendersnapshot.RawUserEventResult{
+					{EventID: 9301, Rank: 4971},
+				},
+				UserHonors: []rendersnapshot.RawUserHonor{
+					{HonorID: 5005, HonorLevel: 1},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 4971 {
+		t.Fatalf("expected exact suite rank to overlay honor display, got %+v", req.EventInfo[0].Rank)
+	}
+	if req.EventInfo[0].RankDisplay != nil || req.EventInfo[0].RankTier != nil {
+		t.Fatalf("expected exact rank to hide T display, got %+v", req.EventInfo[0])
+	}
+}
+
 func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromResourceBoxHonor(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_resource_box_honor?mode=memory&cache=shared&_fk=1")
@@ -402,6 +485,262 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromResource
 	}
 	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
 		t.Fatalf("expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
+	}
+}
+
+func TestBuildEventRecordFromSnapshotBackfillsClosedWorldBloomChapterRankDisplayFromHonor(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_wl_chapter_honor?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	now := time.Now()
+	startAt := now.Add(-72 * time.Hour).UnixMilli()
+	chapterEndAt := now.Add(-48 * time.Hour).UnixMilli()
+	closedAt := now.Add(-24 * time.Hour).UnixMilli()
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("cn").
+		SetGameID(9501).
+		SetEventType("world_bloom").
+		SetName("WL Chapter Honor Event").
+		SetAssetbundleName("wl_chapter_honor").
+		SetStartAt(startAt).
+		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+		SetClosedAt(closedAt).
+		Save(ctx); err != nil {
+		t.Fatalf("create wl event: %v", err)
+	}
+	if _, err := sekaiClient.Worldbloom.Create().
+		SetServerRegion("cn").
+		SetGameID(950101).
+		SetEventID(9501).
+		SetGameCharacterID(21).
+		SetWorldBloomChapterType("game_character").
+		SetChapterNo(1).
+		SetChapterStartAt(startAt).
+		SetAggregateAt(chapterEndAt - 1000).
+		SetChapterEndAt(chapterEndAt).
+		Save(ctx); err != nil {
+		t.Fatalf("create world bloom chapter 21: %v", err)
+	}
+	if _, err := sekaiClient.Worldbloom.Create().
+		SetServerRegion("cn").
+		SetGameID(950102).
+		SetEventID(9501).
+		SetGameCharacterID(22).
+		SetWorldBloomChapterType("game_character").
+		SetChapterNo(2).
+		SetChapterStartAt(startAt).
+		SetAggregateAt(chapterEndAt - 1000).
+		SetChapterEndAt(chapterEndAt).
+		Save(ctx); err != nil {
+		t.Fatalf("create world bloom chapter 22: %v", err)
+	}
+
+	root := t.TempDir()
+	writeJSONFile(t, filepath.Join(root, "worldBloomChapterRankingRewardRanges.json"), []map[string]any{
+		{
+			"id":              95010101,
+			"eventId":         9501,
+			"gameCharacterId": 21,
+			"fromRank":        4001,
+			"toRank":          5000,
+			"resourceBoxId":   95010101,
+		},
+		{
+			"id":              95010201,
+			"eventId":         9501,
+			"gameCharacterId": 22,
+			"fromRank":        4001,
+			"toRank":          5000,
+			"resourceBoxId":   95010201,
+		},
+	})
+	writeJSONFile(t, filepath.Join(root, "resourceBoxes.json"), []map[string]any{
+		{
+			"id":                 95010101,
+			"resourceBoxPurpose": "world_bloom_chapter_ranking_reward",
+			"resourceBoxType":    "expand",
+			"details": []map[string]any{
+				{"resourceType": "honor", "resourceId": 950121},
+			},
+		},
+		{
+			"id":                 95010201,
+			"resourceBoxPurpose": "world_bloom_chapter_ranking_reward",
+			"resourceBoxType":    "expand",
+			"details": []map[string]any{
+				{"resourceType": "honor", "resourceId": 950122},
+			},
+		},
+	})
+
+	provider := renderprovider.NewDatabaseProvider(sekaiClient, renderregion.CN)
+	provider.SetLocalMasterdataDir(root, false)
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "cn",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:    sekaiClient,
+		Provider: provider,
+		Events:   renderevent.NewController(nil, nil, nil),
+		Assets:   assets.NewAssetHelper("", nil),
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "CN",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &rendersnapshot.RawUserData{
+				Now: now.UnixMilli(),
+				UserWorldBlooms: []rendersnapshot.RawUserWorldBloom{
+					{EventID: 9501, GameCharacterID: 21, WorldBloomChapterPoint: 123456},
+					{EventID: 9501, GameCharacterID: 22, WorldBloomChapterPoint: 999999},
+				},
+				UserHonors: []rendersnapshot.RawUserHonor{
+					{HonorID: 950121, HonorLevel: 1},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.WlEventInfo) != 2 {
+		t.Fatalf("expected 2 WL entries, got %+v", req.WlEventInfo)
+	}
+	var char21, char22 *drawing.EventHistory
+	for i := range req.WlEventInfo {
+		item := &req.WlEventInfo[i]
+		switch item.EventPoint {
+		case 123456:
+			char21 = item
+		case 999999:
+			char22 = item
+		}
+	}
+	if char21 == nil || char22 == nil {
+		t.Fatalf("expected both character entries, got %+v", req.WlEventInfo)
+	}
+	if char21.RankDisplay == nil || *char21.RankDisplay != "T5000" {
+		t.Fatalf("expected character 21 T5000 display, got %+v", char21.RankDisplay)
+	}
+	if char21.RankTier == nil || *char21.RankTier != 5000 {
+		t.Fatalf("expected character 21 rank_tier=5000, got %+v", char21.RankTier)
+	}
+	if char22.RankDisplay != nil || char22.RankTier != nil {
+		t.Fatalf("expected character 22 to avoid character 21 honor fallback, got %+v", char22)
+	}
+}
+
+func TestBuildEventRecordFromSnapshotOverlaysWorldBloomChapterSuiteRankAfterHonorScan(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_wl_chapter_rank_overlay?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	now := time.Now()
+	startAt := now.Add(-72 * time.Hour).UnixMilli()
+	chapterEndAt := now.Add(-48 * time.Hour).UnixMilli()
+	closedAt := now.Add(-24 * time.Hour).UnixMilli()
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("cn").
+		SetGameID(9502).
+		SetEventType("world_bloom").
+		SetName("WL Chapter Rank Overlay Event").
+		SetAssetbundleName("wl_chapter_rank_overlay").
+		SetStartAt(startAt).
+		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+		SetClosedAt(closedAt).
+		Save(ctx); err != nil {
+		t.Fatalf("create wl event: %v", err)
+	}
+	if _, err := sekaiClient.Worldbloom.Create().
+		SetServerRegion("cn").
+		SetGameID(950201).
+		SetEventID(9502).
+		SetGameCharacterID(21).
+		SetWorldBloomChapterType("game_character").
+		SetChapterNo(1).
+		SetChapterStartAt(startAt).
+		SetAggregateAt(chapterEndAt - 1000).
+		SetChapterEndAt(chapterEndAt).
+		Save(ctx); err != nil {
+		t.Fatalf("create world bloom chapter: %v", err)
+	}
+
+	root := t.TempDir()
+	writeJSONFile(t, filepath.Join(root, "worldBloomChapterRankingRewardRanges.json"), []map[string]any{
+		{
+			"id":              95020101,
+			"eventId":         9502,
+			"gameCharacterId": 21,
+			"fromRank":        4001,
+			"toRank":          5000,
+			"resourceBoxId":   95020101,
+		},
+	})
+	writeJSONFile(t, filepath.Join(root, "resourceBoxes.json"), []map[string]any{
+		{
+			"id":                 95020101,
+			"resourceBoxPurpose": "world_bloom_chapter_ranking_reward",
+			"resourceBoxType":    "expand",
+			"details": []map[string]any{
+				{"resourceType": "honor", "resourceId": 950221},
+			},
+		},
+	})
+
+	provider := renderprovider.NewDatabaseProvider(sekaiClient, renderregion.CN)
+	provider.SetLocalMasterdataDir(root, false)
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "cn",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:    sekaiClient,
+		Provider: provider,
+		Events:   renderevent.NewController(nil, nil, nil),
+		Assets:   assets.NewAssetHelper("", nil),
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "CN",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &rendersnapshot.RawUserData{
+				Now: now.UnixMilli(),
+				UserWorldBlooms: []rendersnapshot.RawUserWorldBloom{
+					{EventID: 9502, GameCharacterID: 21, WorldBloomChapterPoint: 123456, Rank: 4971},
+				},
+				UserHonors: []rendersnapshot.RawUserHonor{
+					{HonorID: 950221, HonorLevel: 1},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.WlEventInfo) != 1 {
+		t.Fatalf("expected 1 WL entry, got %+v", req.WlEventInfo)
+	}
+	if req.WlEventInfo[0].Rank == nil || *req.WlEventInfo[0].Rank != 4971 {
+		t.Fatalf("expected exact suite WL rank to overlay honor display, got %+v", req.WlEventInfo[0].Rank)
+	}
+	if req.WlEventInfo[0].RankDisplay != nil || req.WlEventInfo[0].RankTier != nil {
+		t.Fatalf("expected exact WL rank to hide T display, got %+v", req.WlEventInfo[0])
 	}
 }
 
@@ -768,5 +1107,16 @@ func TestSortEventHistoryUsesRankDisplayTier(t *testing.T) {
 		if got[i] != want[i] {
 			t.Fatalf("expected T5000 to sort as 5000, got order %v", got)
 		}
+	}
+}
+
+func writeJSONFile(t *testing.T, path string, value any) {
+	t.Helper()
+	data, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("marshal %s: %v", path, err)
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatalf("write %s: %v", path, err)
 	}
 }

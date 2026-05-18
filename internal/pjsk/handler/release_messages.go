@@ -112,6 +112,7 @@ func normalizeMusicUserFacingErrorForLookup(err error, region string, fallbackQu
 		return onebot11.NewReplayError("歌曲服务未就绪，请稍后再试")
 	case strings.Contains(message, "music ids are required"),
 		strings.Contains(message, "music query is empty"),
+		strings.Contains(message, "music title query is empty"),
 		strings.Contains(message, "music meta request is empty"):
 		return onebot11.NewReplayError("请输入要查询的歌曲名或ID")
 	case strings.Contains(message, "no music matched the current filters"),
@@ -165,6 +166,9 @@ func extractMusicNotFoundQuery(err error, fallbackQuery string) (string, bool) {
 		return musicNotFoundQueryOrFallback(extractQueryMusicIDFromError(message), fallbackQuery), true
 	}
 	if strings.Contains(message, "ban event index out of range") {
+		return musicNotFoundQueryOrFallback("", fallbackQuery), true
+	}
+	if strings.Contains(message, "no ban events found for character") {
 		return musicNotFoundQueryOrFallback("", fallbackQuery), true
 	}
 	return "", false

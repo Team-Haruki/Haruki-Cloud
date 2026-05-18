@@ -136,6 +136,7 @@ func (p *Parser) tryParseBan(args string) *QueryInfo {
 			Type:      QueryTypeBan,
 			BanCharID: characterID,
 			BanSeq:    seq,
+			Keyword:   strings.TrimSpace(args),
 		}
 	}
 	return nil

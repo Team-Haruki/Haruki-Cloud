@@ -115,7 +115,7 @@ func TestBuildEventRecordFromSnapshotSeparatesWorldBloomTotalAndSingleRank(t *te
 	if len(req.EventInfo) != 1 {
 		t.Fatalf("expected 1 total event entry, got %+v", req.EventInfo)
 	}
-	if req.EventInfo[0].EventPoint != 9999 {
+	if eventHistoryPoint(req.EventInfo[0]) != 9999 {
 		t.Fatalf("unexpected total WL point: %+v", req.EventInfo[0])
 	}
 	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 123 {
@@ -125,7 +125,7 @@ func TestBuildEventRecordFromSnapshotSeparatesWorldBloomTotalAndSingleRank(t *te
 	if len(req.WlEventInfo) != 2 {
 		t.Fatalf("expected 2 WL single-rank entries, got %+v", req.WlEventInfo)
 	}
-	if req.WlEventInfo[0].EventPoint != 111 || req.WlEventInfo[1].EventPoint != 222 {
+	if eventHistoryPoint(req.WlEventInfo[0]) != 111 || eventHistoryPoint(req.WlEventInfo[1]) != 222 {
 		t.Fatalf("unexpected WL single points: %+v", req.WlEventInfo)
 	}
 	if req.WlEventInfo[0].Rank == nil || *req.WlEventInfo[0].Rank != 10 {
@@ -488,6 +488,86 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromResource
 	}
 }
 
+func TestBuildEventRecordFromSnapshotAddsBadgeOnlyEventRankDisplayFromHonor(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_badge_only_honor?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	now := time.Now()
+	startAt := now.Add(-48 * time.Hour).UnixMilli()
+	closedAt := now.Add(-24 * time.Hour).UnixMilli()
+	rewardRanges, err := json.Marshal([]map[string]any{{
+		"fromRank": 4001,
+		"toRank":   5000,
+		"eventRankingRewardDetails": []map[string]any{
+			{"resourceType": "honor", "resourceId": 6205},
+		},
+	}})
+	if err != nil {
+		t.Fatalf("marshal reward ranges: %v", err)
+	}
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("cn").
+		SetGameID(9204).
+		SetEventType("marathon").
+		SetName("Badge Only Event").
+		SetAssetbundleName("badge_only_9204").
+		SetStartAt(startAt).
+		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+		SetClosedAt(closedAt).
+		SetEventRankingRewardRanges(rewardRanges).
+		Save(ctx); err != nil {
+		t.Fatalf("create event 9204: %v", err)
+	}
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "cn",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "CN",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &rendersnapshot.RawUserData{
+				Now: now.UnixMilli(),
+				UserHonors: []rendersnapshot.RawUserHonor{
+					{HonorID: 6205, HonorLevel: 1},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected badge-only event entry, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].ID != 9204 {
+		t.Fatalf("expected badge-only event 9204, got %+v", req.EventInfo[0])
+	}
+	if req.EventInfo[0].EventPoint != nil {
+		t.Fatalf("expected badge-only event point to be omitted, got %+v", req.EventInfo[0].EventPoint)
+	}
+	if req.EventInfo[0].RankDisplay == nil || *req.EventInfo[0].RankDisplay != "T5000" {
+		t.Fatalf("expected badge-only T5000 display, got %+v", req.EventInfo[0].RankDisplay)
+	}
+	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
+		t.Fatalf("expected badge-only rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
+	}
+}
+
 func TestBuildEventRecordFromSnapshotBackfillsClosedWorldBloomChapterRankDisplayFromHonor(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_wl_chapter_honor?mode=memory&cache=shared&_fk=1")
@@ -618,7 +698,7 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedWorldBloomChapterRankDisplay
 	var char21, char22 *drawing.EventHistory
 	for i := range req.WlEventInfo {
 		item := &req.WlEventInfo[i]
-		switch item.EventPoint {
+		switch eventHistoryPoint(*item) {
 		case 123456:
 			char21 = item
 		case 999999:
@@ -636,6 +716,117 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedWorldBloomChapterRankDisplay
 	}
 	if char22.RankDisplay != nil || char22.RankTier != nil {
 		t.Fatalf("expected character 22 to avoid character 21 honor fallback, got %+v", char22)
+	}
+}
+
+func TestBuildEventRecordFromSnapshotAddsBadgeOnlyWorldBloomChapterRankDisplayFromHonor(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_wl_chapter_badge_only?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	now := time.Now()
+	startAt := now.Add(-72 * time.Hour).UnixMilli()
+	chapterEndAt := now.Add(-48 * time.Hour).UnixMilli()
+	closedAt := now.Add(-24 * time.Hour).UnixMilli()
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("cn").
+		SetGameID(9503).
+		SetEventType("world_bloom").
+		SetName("WL Chapter Badge Only Event").
+		SetAssetbundleName("wl_chapter_badge_only").
+		SetStartAt(startAt).
+		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+		SetClosedAt(closedAt).
+		Save(ctx); err != nil {
+		t.Fatalf("create wl event: %v", err)
+	}
+	if _, err := sekaiClient.Worldbloom.Create().
+		SetServerRegion("cn").
+		SetGameID(950301).
+		SetEventID(9503).
+		SetGameCharacterID(21).
+		SetWorldBloomChapterType("game_character").
+		SetChapterNo(1).
+		SetChapterStartAt(startAt).
+		SetAggregateAt(chapterEndAt - 1000).
+		SetChapterEndAt(chapterEndAt).
+		Save(ctx); err != nil {
+		t.Fatalf("create world bloom chapter: %v", err)
+	}
+
+	root := t.TempDir()
+	writeJSONFile(t, filepath.Join(root, "worldBloomChapterRankingRewardRanges.json"), []map[string]any{
+		{
+			"id":              95030101,
+			"eventId":         9503,
+			"gameCharacterId": 21,
+			"fromRank":        4001,
+			"toRank":          5000,
+			"resourceBoxId":   95030101,
+		},
+	})
+	writeJSONFile(t, filepath.Join(root, "resourceBoxes.json"), []map[string]any{
+		{
+			"id":                 95030101,
+			"resourceBoxPurpose": "world_bloom_chapter_ranking_reward",
+			"resourceBoxType":    "expand",
+			"details": []map[string]any{
+				{"resourceType": "honor", "resourceId": 950321},
+			},
+		},
+	})
+
+	provider := renderprovider.NewDatabaseProvider(sekaiClient, renderregion.CN)
+	provider.SetLocalMasterdataDir(root, false)
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "cn",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:    sekaiClient,
+		Provider: provider,
+		Events:   renderevent.NewController(nil, nil, nil),
+		Assets:   assets.NewAssetHelper("", nil),
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "CN",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &rendersnapshot.RawUserData{
+				Now: now.UnixMilli(),
+				UserHonors: []rendersnapshot.RawUserHonor{
+					{HonorID: 950321, HonorLevel: 1},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.WlEventInfo) != 1 {
+		t.Fatalf("expected badge-only WL entry, got %+v", req.WlEventInfo)
+	}
+	if req.WlEventInfo[0].ID != 9503 {
+		t.Fatalf("expected badge-only WL event 9503, got %+v", req.WlEventInfo[0])
+	}
+	if req.WlEventInfo[0].EventPoint != nil {
+		t.Fatalf("expected badge-only WL point to be omitted, got %+v", req.WlEventInfo[0].EventPoint)
+	}
+	if req.WlEventInfo[0].RankDisplay == nil || *req.WlEventInfo[0].RankDisplay != "T5000" {
+		t.Fatalf("expected badge-only WL T5000 display, got %+v", req.WlEventInfo[0].RankDisplay)
+	}
+	if req.WlEventInfo[0].RankTier == nil || *req.WlEventInfo[0].RankTier != 5000 {
+		t.Fatalf("expected badge-only WL rank_tier=5000, got %+v", req.WlEventInfo[0].RankTier)
+	}
+	if req.WlEventInfo[0].WlCharaIconPath == nil {
+		t.Fatalf("expected badge-only WL character icon, got %+v", req.WlEventInfo[0])
 	}
 }
 
@@ -1093,10 +1284,10 @@ func TestBuildEventRecordFromSnapshotLeavesWorldBloomAndRegularRanksEmptyWithout
 
 func TestSortEventHistoryUsesRankDisplayTier(t *testing.T) {
 	items := []drawing.EventHistory{
-		{ID: 1, RankDisplay: stringPtr("T5000"), EventPoint: 10},
-		{ID: 2, Rank: intPtr(8000), EventPoint: 999999},
-		{ID: 3, EventPoint: 1000000},
-		{ID: 4, Rank: intPtr(3000), EventPoint: 1},
+		{ID: 1, RankDisplay: stringPtr("T5000"), EventPoint: intPtr(10)},
+		{ID: 2, Rank: intPtr(8000), EventPoint: intPtr(999999)},
+		{ID: 3, EventPoint: intPtr(1000000)},
+		{ID: 4, Rank: intPtr(3000), EventPoint: intPtr(1)},
 	}
 
 	sortEventHistory(items)

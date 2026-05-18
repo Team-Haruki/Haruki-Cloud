@@ -40,7 +40,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		}
 	}
 	rawData := snapshot.RawData()
-	if rawData == nil || (len(rawData.UserEvents) == 0 && len(rawData.UserWorldBlooms) == 0) {
+	if rawData == nil || !hasEventRecordHistorySource(rawData) {
 		return nil, fmt.Errorf("event record requires at least one history entry")
 	}
 
@@ -96,14 +96,15 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 
 	dropUntrustedEventRecordSnapshotRanks(region, rankByEvent, eventRankBoundaries)
 	rankDisplayByEvent := buildEventRecordHonorRankDisplays(rawData, eventMaster, eventHonorTiers)
-	wlRankDisplayByChapter := buildEventRecordWorldBloomChapterHonorRankDisplays(rc, region, rawData)
+	wlRankDisplayByChapter := buildEventRecordWorldBloomChapterHonorRankDisplays(rc, region, rawData, eventMaster)
 
 	regionStr := regionWithDefault(region.String())
 
 	// --- Build regular event entries from userEvents ---
 	eventInfo := make([]drawing.EventHistory, 0)
+	eventInfoByID := make(map[int]int)
 	for _, ue := range rawData.UserEvents {
-		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, ue.EventPoint, rc.App.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, intPtr(ue.EventPoint), rc.App.Assets, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -120,12 +121,50 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 			hist.RankTier = nil
 		}
 		eventInfo = append(eventInfo, *hist)
+		eventInfoByID[ue.EventID] = len(eventInfo) - 1
+	}
+	for eventID, display := range rankDisplayByEvent {
+		if _, exists := eventInfoByID[eventID]; exists {
+			continue
+		}
+		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, nil, rc.App.Assets, regionStr)
+		if hist == nil {
+			continue
+		}
+		if _, isWL := wlEventIDs[eventID]; isWL {
+			hist.IsWlEvent = true
+		}
+		hist.RankDisplay = stringPtr(display.text)
+		hist.RankTier = intPtr(display.tier)
+		if rank, ok := rankByEvent[eventID]; ok {
+			hist.Rank = &rank
+			hist.RankDisplay = nil
+			hist.RankTier = nil
+		}
+		eventInfo = append(eventInfo, *hist)
+		eventInfoByID[eventID] = len(eventInfo) - 1
+	}
+	for eventID, rank := range rankByEvent {
+		if _, exists := eventInfoByID[eventID]; exists {
+			continue
+		}
+		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, nil, rc.App.Assets, regionStr)
+		if hist == nil {
+			continue
+		}
+		if _, isWL := wlEventIDs[eventID]; isWL {
+			hist.IsWlEvent = true
+		}
+		hist.Rank = &rank
+		eventInfo = append(eventInfo, *hist)
+		eventInfoByID[eventID] = len(eventInfo) - 1
 	}
 
 	// --- Build world bloom single-board entries from userWorldBlooms ---
 	wlEventInfo := make([]drawing.EventHistory, 0, len(rawData.UserWorldBlooms))
+	wlEventInfoByKey := make(map[eventRecordWorldBloomChapterKey]int)
 	for _, wb := range rawData.UserWorldBlooms {
-		hist := buildEventHistoryFromMaster(eventMaster[wb.EventID], wb.EventID, wb.WorldBloomChapterPoint, rc.App.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[wb.EventID], wb.EventID, intPtr(wb.WorldBloomChapterPoint), rc.App.Assets, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -151,6 +190,28 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 			))
 		}
 		wlEventInfo = append(wlEventInfo, *hist)
+		wlEventInfoByKey[key] = len(wlEventInfo) - 1
+	}
+	for key, display := range wlRankDisplayByChapter {
+		if _, exists := wlEventInfoByKey[key]; exists {
+			continue
+		}
+		hist := buildEventHistoryFromMaster(eventMaster[key.eventID], key.eventID, nil, rc.App.Assets, regionStr)
+		if hist == nil {
+			continue
+		}
+		hist.IsWlEvent = true
+		hist.RankDisplay = stringPtr(display.text)
+		hist.RankTier = intPtr(display.tier)
+		if key.gameCharacterID > 0 {
+			hist.WlCharaIconPath = stringPtr(assets.ResolveRegionAssetPath(
+				rc.App.Assets,
+				regionStr,
+				fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", key.gameCharacterID),
+			))
+		}
+		wlEventInfo = append(wlEventInfo, *hist)
+		wlEventInfoByKey[key] = len(wlEventInfo) - 1
 	}
 
 	if len(eventInfo) == 0 && len(wlEventInfo) == 0 {
@@ -171,6 +232,17 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		UserInfo:    *profile,
 		RankNote:    eventRecordRankNote(region),
 	}, nil
+}
+
+func hasEventRecordHistorySource(rawData *rendersnapshot.RawUserData) bool {
+	if rawData == nil {
+		return false
+	}
+	return len(rawData.UserEvents) > 0 ||
+		len(rawData.UserWorldBlooms) > 0 ||
+		len(rawData.UserEventResults) > 0 ||
+		len(rawData.UserHonors) > 0 ||
+		len(rawData.UserProfileHonors) > 0
 }
 
 type eventRecordRankingRewardRange struct {
@@ -342,8 +414,8 @@ type eventRecordWorldBloomChapterKey struct {
 	gameCharacterID int
 }
 
-func buildEventRecordWorldBloomChapterHonorRankDisplays(rc *RequestContext, region renderregion.Value, rawData *rendersnapshot.RawUserData) map[eventRecordWorldBloomChapterKey]eventRecordHonorRankDisplay {
-	if rc == nil || rc.App == nil || rc.Ctx == nil || rawData == nil || len(rawData.UserWorldBlooms) == 0 {
+func buildEventRecordWorldBloomChapterHonorRankDisplays(rc *RequestContext, region renderregion.Value, rawData *rendersnapshot.RawUserData, eventMaster map[int]eventMasterEntry) map[eventRecordWorldBloomChapterKey]eventRecordHonorRankDisplay {
+	if rc == nil || rc.App == nil || rc.Ctx == nil || rawData == nil || len(eventMaster) == 0 {
 		return nil
 	}
 	userHonorIDs := collectEventRecordUserHonorIDs(rawData)
@@ -366,38 +438,44 @@ func buildEventRecordWorldBloomChapterHonorRankDisplays(rc *RequestContext, regi
 	}
 
 	out := make(map[eventRecordWorldBloomChapterKey]eventRecordHonorRankDisplay)
-	for _, wb := range rawData.UserWorldBlooms {
-		if wb.EventID <= 0 || wb.GameCharacterID <= 0 {
+	for eventID, master := range eventMaster {
+		if stringVal(master, "eventType") != "world_bloom" {
 			continue
 		}
-		if !eventRecordWorldBloomChapterClosed(source.Events().GetWorldBloomChapters(rc.Ctx, wb.EventID), wb.GameCharacterID, now) {
-			continue
-		}
-		ranges, err := source.Events().GetWorldBloomChapterRankingRewardRanges(rc.Ctx, wb.EventID, wb.GameCharacterID)
-		if err != nil || len(ranges) == 0 {
-			continue
-		}
+		for _, chapter := range source.Events().GetWorldBloomChapters(rc.Ctx, eventID) {
+			if chapter == nil || chapter.GameCharacterID == nil || *chapter.GameCharacterID <= 0 {
+				continue
+			}
+			gameCharacterID := *chapter.GameCharacterID
+			if !eventRecordWorldBloomChapterClosed(chapter, now) {
+				continue
+			}
+			ranges, err := source.Events().GetWorldBloomChapterRankingRewardRanges(rc.Ctx, eventID, gameCharacterID)
+			if err != nil || len(ranges) == 0 {
+				continue
+			}
 
-		bestTier := 0
-		for _, item := range ranges {
-			if item.ToRank <= 0 || item.ResourceBoxID <= 0 {
-				continue
+			bestTier := 0
+			for _, item := range ranges {
+				if item.ToRank <= 0 || item.ResourceBoxID <= 0 {
+					continue
+				}
+				if !eventRecordUserHasAnyHonor(userHonorIDs, resourceBoxHonorIDs[item.ResourceBoxID]) {
+					continue
+				}
+				if bestTier == 0 || item.ToRank < bestTier {
+					bestTier = item.ToRank
+				}
 			}
-			if !eventRecordUserHasAnyHonor(userHonorIDs, resourceBoxHonorIDs[item.ResourceBoxID]) {
-				continue
-			}
-			if bestTier == 0 || item.ToRank < bestTier {
-				bestTier = item.ToRank
-			}
-		}
-		if bestTier > 0 {
-			key := eventRecordWorldBloomChapterKey{
-				eventID:         wb.EventID,
-				gameCharacterID: wb.GameCharacterID,
-			}
-			out[key] = eventRecordHonorRankDisplay{
-				text: fmt.Sprintf("T%d", bestTier),
-				tier: bestTier,
+			if bestTier > 0 {
+				key := eventRecordWorldBloomChapterKey{
+					eventID:         eventID,
+					gameCharacterID: gameCharacterID,
+				}
+				out[key] = eventRecordHonorRankDisplay{
+					text: fmt.Sprintf("T%d", bestTier),
+					tier: bestTier,
+				}
 			}
 		}
 	}
@@ -416,18 +494,15 @@ func eventRecordUserHasAnyHonor(userHonorIDs map[int]struct{}, honorIDs []int) b
 	return false
 }
 
-func eventRecordWorldBloomChapterClosed(chapters []*masterdata.WorldBloom, gameCharacterID int, now int64) bool {
-	for _, chapter := range chapters {
-		if chapter == nil || chapter.GameCharacterID == nil || *chapter.GameCharacterID != gameCharacterID {
-			continue
-		}
-		closedAt := chapter.ChapterEndAt
-		if closedAt <= 0 {
-			closedAt = chapter.AggregateAt
-		}
-		return closedAt > 0 && now >= closedAt
+func eventRecordWorldBloomChapterClosed(chapter *masterdata.WorldBloom, now int64) bool {
+	if chapter == nil {
+		return false
 	}
-	return false
+	closedAt := chapter.ChapterEndAt
+	if closedAt <= 0 {
+		closedAt = chapter.AggregateAt
+	}
+	return closedAt > 0 && now >= closedAt
 }
 
 func eventRecordAddHonorDetails(out map[int][]int, boxID int, details []eventRecordRankingRewardDetail) {
@@ -549,7 +624,7 @@ func dropUntrustedEventRecordSnapshotRanks(region renderregion.Value, rankByEven
 }
 
 // buildEventHistoryFromMaster creates an EventHistory from master data.
-func buildEventHistoryFromMaster(master map[string]any, eventID, eventPoint int, assetHelper *assets.AssetHelper, regionStr string) *drawing.EventHistory {
+func buildEventHistoryFromMaster(master map[string]any, eventID int, eventPoint *int, assetHelper *assets.AssetHelper, regionStr string) *drawing.EventHistory {
 	if len(master) == 0 {
 		return nil
 	}
@@ -578,13 +653,22 @@ func sortEventHistory(items []drawing.EventHistory) {
 		} else if _, okJ := eventHistorySortRank(items[j]); okJ {
 			return false
 		}
-		if items[i].EventPoint != items[j].EventPoint {
-			return items[i].EventPoint > items[j].EventPoint
+		pointI := eventHistoryPoint(items[i])
+		pointJ := eventHistoryPoint(items[j])
+		if pointI != pointJ {
+			return pointI > pointJ
 		}
 		si, _ := items[i].StartAt.(float64)
 		sj, _ := items[j].StartAt.(float64)
 		return si > sj
 	})
+}
+
+func eventHistoryPoint(item drawing.EventHistory) int {
+	if item.EventPoint == nil {
+		return 0
+	}
+	return *item.EventPoint
 }
 
 func eventHistorySortRank(item drawing.EventHistory) (int, bool) {

@@ -142,6 +142,7 @@ type RemoteForecastProvider struct {
 
 type ForecastConfig struct {
 	LocalBaseURL string
+	CachePath    string
 }
 
 // ── Internal helpers ────────────────────────────────────────────────────────

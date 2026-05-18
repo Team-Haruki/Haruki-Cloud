@@ -24,7 +24,7 @@ type EventHistory struct {
 	Rank            *int    `json:"rank,omitempty"`
 	RankDisplay     *string `json:"rank_display,omitempty"`
 	RankTier        *int    `json:"rank_tier,omitempty"`
-	EventPoint      int     `json:"event_point"`
+	EventPoint      *int    `json:"event_point,omitempty"`
 	IsWlEvent       bool    `json:"is_wl_event"`
 	BannerPath      string  `json:"banner_path"`
 	WlCharaIconPath *string `json:"wl_chara_icon_path,omitempty"`

@@ -14,6 +14,7 @@ import (
 const (
 	skPredictionNotice      = "预测数据仅供参考，请以实际为准规划好冲榜计划"
 	skPredictionStopMessage = "结活前最后一个小时停止提供预测"
+	skPredictionNoActiveMsg = "当前无进行中的活动"
 )
 
 func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineRequest, error) {
@@ -224,8 +225,12 @@ func ensureSKPredictionAllowed(meta eventMeta) error {
 	if meta.aggregateAt <= 0 {
 		return nil
 	}
+	now := time.Now().UnixMilli()
+	if now >= meta.aggregateAt {
+		return errors.New(skPredictionNoActiveMsg)
+	}
 	stopAt := meta.aggregateAt - int64(time.Hour/time.Millisecond)
-	if time.Now().UnixMilli() >= stopAt {
+	if now >= stopAt {
 		return errors.New(skPredictionStopMessage)
 	}
 	return nil

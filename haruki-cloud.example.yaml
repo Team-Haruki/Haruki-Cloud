@@ -128,6 +128,7 @@ pjsk_render:
     refresh_interval: "30m"   # how often to re-check sekai-data.3-3.dev for music_metas updates
   sk_forecast:
     local_base_url: "http://100.109.13.111:18746"
+    cache_path: "/data/haruki/cache/drawing/sk_forecast_cache.json"
   user_snapshot:
     provider: "local_file"    # future: "internal_cloud"
     allow_fallback: true      # set false in production (Toolbox is sole source); true for dev/test

@@ -187,6 +187,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_LOCAL_BASE_URL", &cfg.PJSKRender.SKForecast.LocalBaseURL)
+	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", &cfg.PJSKRender.SKForecast.CachePath)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", &cfg.PJSKRender.DeckRecommend.MasterdataDir)
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", &cfg.PJSKRender.LocalMasterdata.AllowLeaks)
@@ -286,6 +287,7 @@ type MusicMetaConfig struct {
 
 type SKForecastConfig struct {
 	LocalBaseURL string `yaml:"local_base_url"`
+	CachePath    string `yaml:"cache_path"`
 }
 
 // MySekaiCNWhitelistEntry defines a platform+group pair allowed to use

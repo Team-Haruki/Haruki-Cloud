@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,6 +16,8 @@ type forecastDataCache struct {
 	provider ForecastProvider
 	entries  map[forecastDataCacheKey]*forecastDataCacheEntry
 	inFlight map[forecastDataCacheKey]struct{}
+
+	persistencePath string
 }
 
 type forecastDataCacheKey struct {
@@ -45,6 +48,13 @@ func newForecastDataCache(provider ForecastProvider) *forecastDataCache {
 		entries:  make(map[forecastDataCacheKey]*forecastDataCacheEntry),
 		inFlight: make(map[forecastDataCacheKey]struct{}),
 	}
+}
+
+func newForecastDataCacheWithPath(provider ForecastProvider, cachePath string) *forecastDataCache {
+	cache := newForecastDataCache(provider)
+	cache.persistencePath = strings.TrimSpace(cachePath)
+	cache.loadPersisted()
+	return cache
 }
 
 func (c *forecastDataCache) SetProvider(provider ForecastProvider) {
@@ -194,7 +204,6 @@ func (c *forecastDataCache) startRefreshWithProvider(provider ForecastProvider, 
 
 func (c *forecastDataCache) finishSuccess(key forecastDataCacheKey, now time.Time, data map[string]ForecastSourceData) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	entry := c.entries[key]
 	if entry == nil {
@@ -206,6 +215,14 @@ func (c *forecastDataCache) finishSuccess(key forecastDataCacheKey, now time.Tim
 	entry.lastAttemptAt = now
 	entry.lastError = ""
 	delete(c.inFlight, key)
+
+	persistPath := c.persistencePath
+	persisted := c.snapshotForPersistenceLocked()
+	c.mu.Unlock()
+
+	if persistPath != "" {
+		_ = writeForecastCacheFile(persistPath, persisted)
+	}
 }
 
 func (c *forecastDataCache) finishFailure(key forecastDataCacheKey, now time.Time, err error) {
@@ -319,7 +336,19 @@ func newForecastDataCacheKey(query ForecastQuery) (forecastDataCacheKey, bool) {
 		EventID:       normalizedQuery.EventID,
 		Scope:         normalizedQuery.Scope,
 		WlCharacterID: wlCharacterID,
-	}, true
+	}.normalized()
+}
+
+func (key forecastDataCacheKey) normalized() (forecastDataCacheKey, bool) {
+	key.Region = strings.ToLower(strings.TrimSpace(key.Region))
+	key.Scope = normalizeForecastScope(key.Scope)
+	if key.Scope == ForecastScopeTotal {
+		key.WlCharacterID = 0
+	}
+	if key.Region == "" || key.EventID <= 0 {
+		return forecastDataCacheKey{}, false
+	}
+	return key, true
 }
 
 func filterForecastSourceDataMap(in map[string]ForecastSourceData, ranks []int) map[string]ForecastSourceData {

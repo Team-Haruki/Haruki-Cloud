@@ -21,7 +21,7 @@ func NewControllerWithConfig(drawingClient *drawing.HarukiDrawingClient, forecas
 		drawing:       drawingClient,
 		drawingBase:   drawingClient,
 		forecast:      forecast,
-		forecastCache: newForecastDataCache(forecast),
+		forecastCache: newForecastDataCacheWithPath(forecast, forecastConfig.CachePath),
 		events:        regionsource.NewRegistry[EventSource](renderregion.JP),
 		assets:        renderassets.NewAssetHelper("", nil),
 	}

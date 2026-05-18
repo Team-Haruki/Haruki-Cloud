@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"os"
+	"path/filepath"
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
@@ -133,6 +134,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		MetaLoader: metaLoader,
 		SKForecast: renderapp.SKForecastConfig{
 			LocalBaseURL: harukiConfig.Cfg.PJSKRender.SKForecast.LocalBaseURL,
+			CachePath:    resolveSKForecastCachePath(),
 		},
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:        harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
@@ -159,6 +161,16 @@ func resolveDeckRecommendMasterdataDir() string {
 		return dir
 	}
 	return strings.TrimSpace(harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir)
+}
+
+func resolveSKForecastCachePath() string {
+	if path := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.SKForecast.CachePath); path != "" {
+		return path
+	}
+	if dir := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir); dir != "" {
+		return filepath.Join(dir, "sk_forecast_cache.json")
+	}
+	return ""
 }
 
 func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {

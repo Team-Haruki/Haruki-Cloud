@@ -119,6 +119,7 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", "/srv/masterdata")
 	t.Setenv("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", "45m")
 	t.Setenv("HARUKI_PJSK_RENDER_SK_FORECAST_LOCAL_BASE_URL", "http://100.109.13.111:18746")
+	t.Setenv("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", "/data/haruki/cache/sk_forecast_cache.json")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", "http://127.0.0.1:48080")
 	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", "true")
 
@@ -136,6 +137,9 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	}
 	if cfg.PJSKRender.SKForecast.LocalBaseURL != "http://100.109.13.111:18746" {
 		t.Fatalf("unexpected sk forecast local base url override: %q", cfg.PJSKRender.SKForecast.LocalBaseURL)
+	}
+	if cfg.PJSKRender.SKForecast.CachePath != "/data/haruki/cache/sk_forecast_cache.json" {
+		t.Fatalf("unexpected sk forecast cache path override: %q", cfg.PJSKRender.SKForecast.CachePath)
 	}
 	if !cfg.PJSKRender.LocalMasterdata.AllowLeaks {
 		t.Fatalf("expected local masterdata allow_leaks override to be true")

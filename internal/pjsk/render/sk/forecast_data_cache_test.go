@@ -3,6 +3,7 @@ package sk
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"reflect"
 	"sync/atomic"
 	"testing"
@@ -72,6 +73,42 @@ func TestForecastDataCacheKeepsPreviousDataWhenRefreshFails(t *testing.T) {
 	score := got["33kit"].Scores[100]
 	if score.Score != 1_234_567 {
 		t.Fatalf("failed refresh overwrote cached score: %+v", score)
+	}
+}
+
+func TestForecastDataCacheLoadsPersistedData(t *testing.T) {
+	cachePath := filepath.Join(t.TempDir(), "sk_forecast_cache.json")
+	provider := &sequencedForecastProvider{
+		data: []map[string]ForecastSourceData{
+			{
+				"local": {
+					Scores: map[int]ForecastScore{
+						100: {Score: 8_765_432, Timestamp: 1_700_000_000, Source: "local"},
+					},
+					FetchedAt: 1_700_000_100,
+				},
+			},
+		},
+	}
+	cache := newForecastDataCacheWithPath(provider, cachePath)
+	if err := cache.RefreshNow(context.Background(), "cn", 202); err != nil {
+		t.Fatalf("initial refresh: %v", err)
+	}
+
+	loadedProvider := &sequencedForecastProvider{
+		errs: []error{errors.New("should not fetch while persisted cache is fresh")},
+	}
+	loaded := newForecastDataCacheWithPath(loadedProvider, cachePath)
+	got, err := loaded.CachedBySource("cn", 202, []int{100})
+	if err != nil {
+		t.Fatalf("read persisted forecast cache: %v", err)
+	}
+	score := got["local"].Scores[100]
+	if score.Score != 8_765_432 {
+		t.Fatalf("unexpected persisted score: %+v", score)
+	}
+	if calls := loadedProvider.calls.Load(); calls != 0 {
+		t.Fatalf("persisted cache should avoid cold fetch, got %d calls", calls)
 	}
 }
 

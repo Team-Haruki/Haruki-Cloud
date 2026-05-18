@@ -2932,6 +2932,38 @@ func TestBuildPredictLineRequestFromTrackerStopsInLastEventHour(t *testing.T) {
 	}
 }
 
+func TestBuildPredictLineRequestFromTrackerReportsNoActiveAfterEventEnded(t *testing.T) {
+	now := time.Now().UnixMilli()
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     now - int64(2*time.Hour/time.Millisecond),
+		AggregateAt: now - int64(time.Minute/time.Millisecond),
+		ClosedAt:    now + int64(time.Hour/time.Millisecond),
+	}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+	controller.SetForecastProvider(testForecastProvider{
+		scores: map[int]ForecastScore{100: {Score: 1234567, Timestamp: 1_700_000_000}},
+	})
+
+	_, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100},
+	})
+	if err == nil {
+		t.Fatal("expected no-active prediction error, got nil")
+	}
+	if got := err.Error(); got != skPredictionNoActiveMsg {
+		t.Fatalf("unexpected error: %v", got)
+	}
+}
+
 func TestBuildPredictLineRequestFromTrackerStopsInLastWorldBloomChapterHour(t *testing.T) {
 	now := time.Now().UnixMilli()
 	charaID := 21

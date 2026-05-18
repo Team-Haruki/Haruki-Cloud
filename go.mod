@@ -15,7 +15,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.42
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/redis/go-redis/v9 v9.19.0
-	github.com/shamaton/msgpack/v3 v3.1.0
+	github.com/shamaton/msgpack/v3 v3.1.1
 	golang.org/x/crypto v0.50.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/text v0.36.0

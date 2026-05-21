@@ -418,7 +418,7 @@ func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *s
 	}
 
 	if deckInfo := publicProfileCurrentDeck(query.PublicProfileResp); deckInfo != nil {
-		cards, ok := snapshot.UserDeckCardIDs(deckInfo)
+		cards, ok := currentDeckFixedCardIDs(deckInfo)
 		if !ok {
 			return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数")
 		}
@@ -437,7 +437,7 @@ func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *s
 		return fmt.Errorf("找不到你的当前主队配置")
 	}
 
-	cards, ok := snapshot.UserDeckCardIDs(&deckInfo)
+	cards, ok := currentDeckFixedCardIDs(&deckInfo)
 	if !ok {
 		return fmt.Errorf("你的当前主队不足5张，无法使用\"当前\"参数")
 	}
@@ -446,6 +446,22 @@ func (c *Controller) applyCurrentDeckOption(_ *snapshot.RawUserData, original *s
 	delete(option, "fixed_characters")
 	option["best_skill_as_leader"] = false
 	return nil
+}
+
+func currentDeckFixedCardIDs(deck *snapshot.RawUserDeck) ([]int, bool) {
+	cards, ok := snapshot.UserDeckCardIDs(deck)
+	if !ok || deck == nil || deck.Leader <= 0 {
+		return cards, ok
+	}
+	leaderIndex := slices.Index(cards, deck.Leader)
+	if leaderIndex <= 0 {
+		return cards, ok
+	}
+	ordered := make([]int, 0, len(cards))
+	ordered = append(ordered, deck.Leader)
+	ordered = append(ordered, cards[:leaderIndex]...)
+	ordered = append(ordered, cards[leaderIndex+1:]...)
+	return ordered, true
 }
 
 func (c *Controller) restoreFixedCards(region renderregion.Value, raw *snapshot.RawUserData, original *snapshot.RawUserData, option map[string]any, preferOriginal bool) error {

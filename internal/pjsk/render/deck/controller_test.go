@@ -1493,6 +1493,33 @@ func TestBuildAutoRecommendRequestChallengeCurrentRequiresCharacter(t *testing.T
 	}
 }
 
+func TestApplyCurrentDeckOptionMovesSnapshotLeaderToFixedCardFront(t *testing.T) {
+	controller := &Controller{}
+	option := map[string]any{}
+	original := &snapshot.RawUserData{
+		UserGamedata: snapshot.RawUserGamedata{Deck: 1},
+		UserDecks: []snapshot.RawUserDeck{{
+			DeckID:  1,
+			Leader:  1005,
+			Member1: 1001,
+			Member2: 1002,
+			Member3: 1003,
+			Member4: 1004,
+			Member5: 1005,
+		}},
+	}
+
+	if err := controller.applyCurrentDeckOption(nil, original, "event", AutoQuery{UseCurrentDeck: true}, option); err != nil {
+		t.Fatalf("applyCurrentDeckOption returned error: %v", err)
+	}
+	if got, ok := option["fixed_cards"].([]int); !ok || !reflect.DeepEqual(got, []int{1005, 1001, 1002, 1003, 1004}) {
+		t.Fatalf("unexpected fixed cards: %+v", option["fixed_cards"])
+	}
+	if option["best_skill_as_leader"] != false {
+		t.Fatalf("expected best_skill_as_leader to be disabled: %+v", option["best_skill_as_leader"])
+	}
+}
+
 func TestBuildAutoRecommendRequestChallengeCurrentUsesSnapshotDeck(t *testing.T) {
 	var recommendCalls atomic.Int32
 

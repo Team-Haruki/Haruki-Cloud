@@ -17,6 +17,7 @@ import (
 	commandregistry "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/middleware/secure"
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	commandhandler "haruki-cloud/internal/pjsk/handler"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -24,6 +25,7 @@ import (
 	"haruki-cloud/version"
 
 	"entgo.io/ent/dialect/sql"
+	sonic "github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 	"github.com/shamaton/msgpack/v3"
@@ -177,6 +179,7 @@ func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBCl
 		if region, ok := explicitRegionFromBotRequest(req); ok {
 			resolved.Region = region
 			resolved.RegionExplicit = true
+			syncExplicitRegionToProfileBindingParams(resolved, region)
 		} else if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
 			if normalized := renderregion.Normalize(server); !normalized.IsZero() {
 				// Treat the transport-level server as authoritative so the final
@@ -202,6 +205,38 @@ func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBCl
 			req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds())
 		markRequestGuardComplete(requestCtx, guard, req)
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, responseData)
+	}
+}
+
+func syncExplicitRegionToProfileBindingParams(resolved *commandhandler.CommandRequest, region string) {
+	if resolved == nil {
+		return
+	}
+	normalized := renderregion.Normalize(region)
+	if normalized.IsZero() {
+		return
+	}
+	switch resolved.Mode {
+	case accountdata.ProfileModeBindList,
+		accountdata.ProfileModeBindSwap,
+		accountdata.ProfileModeUnbind,
+		accountdata.ProfileModeDefaultSet,
+		accountdata.ProfileModeDefaultClear:
+	default:
+		return
+	}
+
+	params, err := accountdata.DecodeProfileBindingParams(resolved.Params)
+	if err != nil {
+		return
+	}
+	params.Server = normalized.String()
+	switch resolved.Mode {
+	case accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
+		params.Scope = normalized.String()
+	}
+	if data, err := sonic.Marshal(params); err == nil {
+		resolved.Params = data
 	}
 }
 

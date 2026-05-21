@@ -6,17 +6,22 @@ import (
 	"fmt"
 	"testing"
 
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 type customChartClientStub struct {
-	body      []byte
-	published *sekaiapi.UserCustomMusicScorePublishedResponse
+	body         []byte
+	published    *sekaiapi.UserCustomMusicScorePublishedResponse
+	publishedErr error
 }
 
 func (s customChartClientStub) GetCustomMusicScorePublished(_ string, _ string) (*sekaiapi.UserCustomMusicScorePublishedResponse, error) {
+	if s.publishedErr != nil {
+		return nil, s.publishedErr
+	}
 	if s.published == nil {
 		return nil, sekaiapi.ErrUserNotFound
 	}
@@ -29,6 +34,14 @@ func (s customChartClientStub) GetCustomMusicScore(_ string, scorePath string) (
 
 type customChartDirectSource struct {
 	*vocalBuilderTestSource
+	region renderregion.Value
+}
+
+func (s *customChartDirectSource) DefaultRegion() renderregion.Value {
+	if s.region != "" {
+		return s.region
+	}
+	return renderregion.JP
 }
 
 func (s *customChartDirectSource) SearchMusic(string) (*masterdata.Music, error) {
@@ -84,6 +97,54 @@ func TestBuildCustomMusicChartRequestUsesDirectPublishedIDWithoutSnapshot(t *tes
 	}
 	if req.Difficulty != "master" || req.PlayLevel != 31 {
 		t.Fatalf("unexpected difficulty meta: difficulty=%q playLevel=%#v", req.Difficulty, req.PlayLevel)
+	}
+}
+
+func TestBuildCustomMusicChartRequestRejectsNonJPRegion(t *testing.T) {
+	source := &customChartDirectSource{
+		region: renderregion.CN,
+		vocalBuilderTestSource: &vocalBuilderTestSource{
+			music: &masterdata.Music{
+				ID:              47,
+				Title:           "メルト",
+				AssetBundleName: "jacket_s_047",
+			},
+		},
+	}
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetCustomMusicScoreClient(customChartClientStub{})
+
+	_, err := controller.BuildMusicChartRequest(ChartQuery{
+		Query:  "_g5yakrvqobnfq6hafdob7ed8jwm",
+		Region: "cn",
+	})
+	if err == nil || err.Error() != "当前服务器暂未支持自定义谱面请使用jp前缀查询" {
+		t.Fatalf("BuildMusicChartRequest() error = %v", err)
+	}
+}
+
+func TestBuildCustomMusicChartRequestMapsCustomScoreNotFound(t *testing.T) {
+	source := &customChartDirectSource{vocalBuilderTestSource: &vocalBuilderTestSource{
+		music: &masterdata.Music{
+			ID:              47,
+			Title:           "メルト",
+			AssetBundleName: "jacket_s_047",
+		},
+	}}
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetCustomMusicScoreClient(customChartClientStub{
+		publishedErr: &sekaiapi.APIError{
+			StatusCode: 500,
+			Message:    "upstream failed: status=404 body=<html>Not Found</html>",
+		},
+	})
+
+	_, err := controller.BuildMusicChartRequest(ChartQuery{
+		Query:  "_g5yakrvqobnfq6hafdob7ed8jwm",
+		Region: "jp",
+	})
+	if err == nil || err.Error() != "未找到对应自定义谱面" {
+		t.Fatalf("BuildMusicChartRequest() error = %v", err)
 	}
 }
 

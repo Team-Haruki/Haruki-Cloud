@@ -68,6 +68,9 @@ func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataS
 	if c.customScores == nil {
 		return nil, fmt.Errorf("自制谱面数据源未配置")
 	}
+	if region != renderregion.JP {
+		return nil, fmt.Errorf("当前服务器暂未支持自定义谱面请使用jp前缀查询")
+	}
 
 	keyword := strings.TrimSpace(query.Query)
 	if stripped, ok := stripCustomChartPrefix(keyword); ok {
@@ -167,16 +170,31 @@ func buildCustomChartTitle(originalTitle string, customTitle string) string {
 func (c *Controller) fetchCustomChartEntryByID(region string, scoreID string) (customChartEntry, error) {
 	published, err := c.customScores.GetCustomMusicScorePublished(region, scoreID)
 	if err != nil {
-		if errors.Is(err, sekaiapi.ErrUserNotFound) {
-			return customChartEntry{}, fmt.Errorf("未查找到该自定义谱面")
+		if isCustomChartNotFoundError(err) {
+			return customChartEntry{}, fmt.Errorf("未找到对应自定义谱面")
 		}
 		return customChartEntry{}, fmt.Errorf("获取自定义谱面信息失败: %w", err)
 	}
 	entry := customChartEntryFromPublishedResponse(published)
 	if strings.TrimSpace(entry.ID) == "" || strings.TrimSpace(entry.Path) == "" {
-		return customChartEntry{}, fmt.Errorf("未查找到该自定义谱面")
+		return customChartEntry{}, fmt.Errorf("未找到对应自定义谱面")
 	}
 	return entry, nil
+}
+
+func isCustomChartNotFoundError(err error) bool {
+	if errors.Is(err, sekaiapi.ErrUserNotFound) {
+		return true
+	}
+	var apiErr *sekaiapi.APIError
+	if errors.As(err, &apiErr) {
+		if apiErr.StatusCode == 404 {
+			return true
+		}
+		message := strings.ToLower(apiErr.Message)
+		return strings.Contains(message, "status=404") || strings.Contains(message, "status 404") || strings.Contains(message, "not found")
+	}
+	return false
 }
 
 func customChartEntryFromPublishedResponse(value *sekaiapi.UserCustomMusicScorePublishedResponse) customChartEntry {

@@ -152,6 +152,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		gachaController = gacha.NewController(gachaAdapter, drawingClient, assetHelper)
 		honorController = honor.NewController(honorAdapter, drawingClient, assetHelper)
 		musicController = music.NewController(musicAdapter, drawingClient, assetHelper, snapshotService, cfg.MetaLoader)
+		musicController.SetCustomMusicScoreClient(cfg.SekaiAPI)
 		profileController = profile.NewController(profileAdapter, drawingClient, assetHelper, snapshotService)
 		stampController = stamp.NewController(stampAdapter, drawingClient, assetHelper)
 		vliveController = vlive.NewControllerWithDrawing(vliveAdapter, drawingClient, assetHelper, cfg.DefaultRegion)

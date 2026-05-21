@@ -135,7 +135,8 @@ type GenerateMusicChartRequest struct {
 	PlayLevel            any            `json:"play_level"` // str | int
 	Skill                bool           `json:"skill"`
 	JacketPath           string         `json:"jacket_path"`
-	SusPath              string         `json:"sus_path"`
+	SusPath              string         `json:"sus_path,omitempty"`
+	ChartJSON            *string        `json:"chart_json,omitempty"`
 	StylePath            *string        `json:"style_path,omitempty"`
 	NoteHost             string         `json:"note_host"`
 	MusicMeta            map[string]any `json:"music_meta,omitempty"`

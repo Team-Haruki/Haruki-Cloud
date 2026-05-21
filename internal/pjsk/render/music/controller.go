@@ -46,6 +46,13 @@ func (c *Controller) WithSnapshot(snapshot snapshot.Snapshot) *Controller {
 	return &clone
 }
 
+func (c *Controller) SetCustomMusicScoreClient(client customMusicScoreClient) {
+	if c == nil {
+		return
+	}
+	c.customScores = client
+}
+
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshot snapshot.Snapshot, metaLoader *meta.Loader) *Controller {
 	if assetHelper == nil {
 		assetHelper = assets.NewAssetHelper("", nil)

@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/provider"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 // ── Data source ─────────────────────────────────────────────────────────────
@@ -41,6 +42,11 @@ type musicAliasResolver interface {
 	TryResolveMusicTitleOrAliasID(ctx context.Context, token string) (int, bool, error)
 }
 
+type customMusicScoreClient interface {
+	GetCustomMusicScorePublished(server, scoreID string) (*sekaiapi.UserCustomMusicScorePublishedResponse, error)
+	GetCustomMusicScore(server, scorePath string) ([]byte, error)
+}
+
 // ── Controller & builder ────────────────────────────────────────────────────
 
 type Controller struct {
@@ -52,6 +58,7 @@ type Controller struct {
 	snapshot              snapshot.Snapshot
 	metaLoader            *meta.Loader
 	requestCtx            context.Context
+	customScores          customMusicScoreClient
 }
 
 type Builder struct {
@@ -183,6 +190,7 @@ type ChartQuery struct {
 	Difficulty string `json:"difficulty,omitempty"`
 	Skill      bool   `json:"skill,omitempty"`
 	Style      string `json:"style,omitempty"`
+	Custom     bool   `json:"custom,omitempty"`
 }
 
 type BriefListQuery struct {

@@ -3,6 +3,7 @@ package sekai
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -137,6 +138,51 @@ func (c *HarukiSekaiAPIClient) GetCustomProfileCardThumbnail(server, imagePath s
 		return nil, ErrClientNotConfigured
 	}
 	url := fmt.Sprintf("/image/%s/custom-profile-card/thumbnail/%s", server, imagePath)
+	return c.get(url)
+}
+
+// GetCustomMusicScorePublished fetches a published custom music score by its
+// share ID.
+//
+//	GET /api/{server}/user/%user_id/custom-music-score/published/search/{scoreID}
+func (c *HarukiSekaiAPIClient) GetCustomMusicScorePublished(server, scoreID string) (*UserCustomMusicScorePublishedResponse, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
+	scoreID = strings.TrimSpace(scoreID)
+	if scoreID == "" {
+		return nil, ErrUserNotFound
+	}
+	path := fmt.Sprintf(
+		"/api/%s/user/%%25user_id/custom-music-score/published/search/%s",
+		server,
+		url.PathEscape(scoreID),
+	)
+	body, err := c.get(path)
+	if err != nil {
+		return nil, err
+	}
+	var result CustomMusicScorePublishedSearchResponse
+	if err := sonic.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("sekai api: failed to unmarshal custom music score response: %w", err)
+	}
+	if result.UserCustomMusicScoreInfoJSON == nil {
+		return nil, ErrUserNotFound
+	}
+	return result.UserCustomMusicScoreInfoJSON, nil
+}
+
+// GetCustomMusicScore downloads a published custom music score JSON blob.
+//
+//	GET /image/{server}/blob/custom-music-score/full/{scorePath}
+//
+// scorePath is the raw userCustomMusicScorePath value from suite custom score
+// responses, e.g. "{64-char-hex}/{64-char-hex}" for colorful palette servers.
+func (c *HarukiSekaiAPIClient) GetCustomMusicScore(server, scorePath string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
+	url := fmt.Sprintf("/image/%s/blob/custom-music-score/full/%s", server, strings.TrimLeft(scorePath, "/"))
 	return c.get(url)
 }
 

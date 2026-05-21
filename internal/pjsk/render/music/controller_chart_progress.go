@@ -14,6 +14,9 @@ func (c *Controller) BuildMusicChartRequest(query ChartQuery) (*drawing.Generate
 	if err != nil {
 		return nil, err
 	}
+	if query.Custom || IsCustomChartQuery(query.Query) || IsCustomChartIDQuery(query.Query) {
+		return c.buildCustomMusicChartRequest(query, source, builder, region)
+	}
 	searcher := c.newSearchService(source)
 	info, musicInfo, err := searcher.SearchChart(query.Query)
 	if err != nil {

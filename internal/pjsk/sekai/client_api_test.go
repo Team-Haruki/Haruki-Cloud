@@ -83,3 +83,72 @@ func TestSekaiAPIClientSupportsLegacyBaseURL(t *testing.T) {
 		t.Fatalf("expected legacy base_url to receive 1 request, got %d", got)
 	}
 }
+
+func TestSekaiAPIClientGetsCustomMusicScoreBlob(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/image/jp/blob/custom-music-score/full/hash-a/hash-b" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if token := r.Header.Get(tokenHeader); token != "legacy-secret" {
+			t.Fatalf("unexpected token header: %q", token)
+		}
+		_, _ = w.Write([]byte(`{"NoteList":[]}`))
+	}))
+	defer server.Close()
+
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{
+		BaseURL: server.URL,
+		Token:   "legacy-secret",
+	})
+
+	body, err := client.GetCustomMusicScore("jp", "/hash-a/hash-b")
+	if err != nil {
+		t.Fatalf("GetCustomMusicScore() error = %v", err)
+	}
+	if string(body) != `{"NoteList":[]}` {
+		t.Fatalf("unexpected body: %s", body)
+	}
+}
+
+func TestSekaiAPIClientGetsCustomMusicScorePublishedByID(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.EscapedPath() != "/api/jp/user/%25user_id/custom-music-score/published/search/_g5yakrvqobnfq6hafdob7ed8jwm" {
+			t.Fatalf("unexpected path: %s", r.URL.EscapedPath())
+		}
+		if token := r.Header.Get(tokenHeader); token != "legacy-secret" {
+			t.Fatalf("unexpected token header: %q", token)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"userCustomMusicScoreInfoJson": {
+				"userCustomMusicScoreId": "_g5yakrvqobnfq6hafdob7ed8jwm",
+				"userName": "Maker",
+				"musicId": 47,
+				"musicDifficultyType": "master",
+				"playLevel": 31,
+				"userCustomMusicScoreInfoJson": {
+					"musicId": 47,
+					"title": "Direct Custom",
+					"userCustomMusicScorePath": "hash-a/hash-b"
+				}
+			}
+		}`))
+	}))
+	defer server.Close()
+
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{
+		BaseURL: server.URL,
+		Token:   "legacy-secret",
+	})
+
+	item, err := client.GetCustomMusicScorePublished("jp", "_g5yakrvqobnfq6hafdob7ed8jwm")
+	if err != nil {
+		t.Fatalf("GetCustomMusicScorePublished() error = %v", err)
+	}
+	if item.UserCustomMusicScoreID != "_g5yakrvqobnfq6hafdob7ed8jwm" {
+		t.Fatalf("unexpected score id: %#v", item.UserCustomMusicScoreID)
+	}
+	if item.UserCustomMusicScoreInfoJSON == nil || item.UserCustomMusicScoreInfoJSON.UserCustomMusicScorePath != "hash-a/hash-b" {
+		t.Fatalf("unexpected score info: %#v", item.UserCustomMusicScoreInfoJSON)
+	}
+}

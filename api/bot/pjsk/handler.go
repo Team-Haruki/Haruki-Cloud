@@ -187,6 +187,7 @@ func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBCl
 				// default binding.
 				resolved.Region = normalized.String()
 				resolved.RegionExplicit = true
+				syncExplicitRegionToProfileBindingParams(resolved, normalized.String())
 			} else {
 				resolved.Region = server
 			}

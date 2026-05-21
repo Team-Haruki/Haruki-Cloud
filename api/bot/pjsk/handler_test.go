@@ -513,7 +513,7 @@ func TestBotEndpointGetReturnsTextJSON(t *testing.T) {
 	app := testBotAppWithBindings(t, "", testBindingService(t))
 
 	req := newBotPOSTRequest(botPJSKPath("profile/bind/list"), BotCommandRequest{
-		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/绑定列表",
+		Platform: "qq", PlatformUserID: "12345", MatchedCommand: "/绑定列表",
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/绑定列表"}}},
 	})
 
@@ -544,6 +544,35 @@ func TestBotEndpointRegionPrefixedBindListFiltersBindings(t *testing.T) {
 	req := newBotPOSTRequest(botPJSKPath("profile/bind/list"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", Server: "cn", MatchedCommand: "/绑定列表",
 		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cn绑定列表"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+
+	assertSingleTextMessage(t, body, "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 748********663 (全局默认 / CN服默认)")
+}
+
+func TestBotEndpointBindListFiltersTransportRegionAfterClientStripsPrefix(t *testing.T) {
+	bindings := testBindingServiceWithValidator(t, botBindingMultiRegionValidator{})
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "74800000000663"); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "13200000000982"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/bind/list"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "cn", MatchedCommand: "/绑定列表",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/绑定列表"}}},
 	})
 
 	resp, err := app.Test(req)

@@ -262,9 +262,9 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			return mySekaiRegionUnavailableMessage(), nil
 		}
 		platform, platformUserID := platformCredentials(p)
-		targetSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, true)
+		targetSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, false)
 		if target.Binding != nil && targetSnapshot == nil {
-			return nil, newMySekaiDataNotFoundReplayErrorForBinding(target.Binding)
+			return nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)
 		}
 
 		q.Region = regionStr

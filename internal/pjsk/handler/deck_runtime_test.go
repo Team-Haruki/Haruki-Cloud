@@ -299,7 +299,7 @@ func TestExecuteDeckMySekaiMaxProfileDoesNotRequireBinding(t *testing.T) {
 	}
 }
 
-func TestExecuteDeckMySekaiResolvesFullSnapshot(t *testing.T) {
+func TestExecuteDeckMySekaiResolvesSuiteSnapshot(t *testing.T) {
 	ctx := context.Background()
 	service := newHandlerTestBindingService(t)
 	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
@@ -378,19 +378,19 @@ func TestExecuteDeckMySekaiResolvesFullSnapshot(t *testing.T) {
 	if len(message) != 2 {
 		t.Fatalf("unexpected message: %+v", message)
 	}
-	if len(provider.resolveNeedFlags) != 1 || !provider.resolveNeedFlags[0] {
+	if len(provider.resolveNeedFlags) != 1 || provider.resolveNeedFlags[0] {
 		t.Fatalf("unexpected snapshot resolve flags: %+v", provider.resolveNeedFlags)
 	}
 }
 
-func TestExecuteDeckMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
+func TestExecuteDeckMySekaiRequiresVisibleSuiteSnapshot(t *testing.T) {
 	ctx := context.Background()
 	service := newHandlerTestBindingService(t)
 	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
 		t.Fatalf("bind: %v", err)
 	}
-	if _, err := service.SetBindingMySekaiVisible(ctx, "qq", "42", "jp", false); err != nil {
-		t.Fatalf("hide mysekai: %v", err)
+	if _, err := service.SetBindingSuiteVisible(ctx, "qq", "42", "jp", false); err != nil {
+		t.Fatalf("hide suite: %v", err)
 	}
 
 	params, err := json.Marshal(struct {
@@ -419,7 +419,7 @@ func TestExecuteDeckMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 		Decks:    newHandlerTestDeckController(t),
 		Music:    newHandlerTestMusicController(t),
 	}))
-	if err == nil || err.Error() != buildPrivateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{
+	if err == nil || err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
 		Visible:    false,

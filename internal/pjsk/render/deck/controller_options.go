@@ -45,6 +45,14 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if query.UseCurrentDeck {
 		option["use_current_deck"] = true
 	}
+	if query.UseExactCardState {
+		option["rarity_1_config"] = noChangeDeckConfig()
+		option["rarity_2_config"] = noChangeDeckConfig()
+		option["rarity_3_config"] = noChangeDeckConfig()
+		option["rarity_4_config"] = noChangeDeckConfig()
+		option["rarity_birthday_config"] = noChangeDeckConfig()
+		option["keep_after_training_state"] = true
+	}
 	if query.MaxProfile {
 		option["max_profile"] = true
 	}

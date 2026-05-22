@@ -148,6 +148,68 @@ func TestBuildCustomMusicChartRequestMapsCustomScoreNotFound(t *testing.T) {
 	}
 }
 
+func TestBuildCustomMusicDetailRequestUsesDirectPublishedID(t *testing.T) {
+	chartJSON := `{"MusicScoreEventDataList":[{"id":1,"ticks":0,"eventType":0,"changeValue":180},{"id":2,"ticks":480,"eventType":0,"changeValue":210}],"NoteList":[{"id":1},{"id":2},{"id":3}]}`
+	scoreBody := gzipBytes(t, []byte(chartJSON))
+	source := &customChartDirectSource{vocalBuilderTestSource: &vocalBuilderTestSource{
+		music: &masterdata.Music{
+			ID:              47,
+			Title:           "メルト",
+			Composer:        "ryo",
+			Lyricist:        "ryo",
+			Arranger:        "ryo",
+			AssetBundleName: "jacket_s_047",
+			PublishedAt:     1700000000000,
+		},
+		difficulties: []*masterdata.MusicDifficulty{{MusicID: 47, MusicDifficulty: "master", PlayLevel: 30, TotalNoteCount: 1000}},
+	}}
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+	controller.SetCustomMusicScoreClient(customChartClientStub{
+		body: scoreBody,
+		published: &sekaiapi.UserCustomMusicScorePublishedResponse{
+			UserCustomMusicScoreID: "_g5yakrvqobnfq6hafdob7ed8jwm",
+			UserName:               "Maker",
+			MusicID:                47,
+			MusicDifficultyType:    "master",
+			PlayLevel:              31,
+			Description:            "hello chart",
+			PreviewStartTimeSec:    12.5,
+			PublishedAt:            1710000000000,
+			ReviewCount:            23,
+			PlayCount:              456,
+			FullComboRate:          0.125,
+			UserCustomMusicScoreInfoJSON: &sekaiapi.UserCustomMusicScoreInfo{
+				MusicID:                  47,
+				Title:                    "Direct Custom",
+				UserCustomMusicScorePath: "hash-a/hash-b",
+			},
+		},
+	})
+
+	req, err := controller.BuildMusicDetailRequest(Query{
+		Query:  "_g5yakrvqobnfq6hafdob7ed8jwm",
+		Region: "jp",
+	})
+	if err != nil {
+		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
+	}
+	if req.CustomChartInfo == nil {
+		t.Fatal("CustomChartInfo is nil")
+	}
+	if req.CustomChartInfo.Title != "Direct Custom" || req.CustomChartInfo.Author != "Maker" {
+		t.Fatalf("unexpected custom chart info: %+v", req.CustomChartInfo)
+	}
+	if req.CustomChartInfo.NoteCount != 3 || req.CustomChartInfo.BPM != "180 / 210" {
+		t.Fatalf("unexpected custom chart stats: %+v", req.CustomChartInfo)
+	}
+	if len(req.Difficulty.Level) != 1 || req.Difficulty.Level[0] != 31 || req.Difficulty.NoteCount[0] != 3 {
+		t.Fatalf("unexpected difficulty: %+v", req.Difficulty)
+	}
+	if len(req.Alias) != 0 || req.LeaderboardMatrix != nil {
+		t.Fatalf("custom detail should not include alias or leaderboard: alias=%v leaderboard=%v", req.Alias, req.LeaderboardMatrix)
+	}
+}
+
 func gzipBytes(t *testing.T, raw []byte) []byte {
 	t.Helper()
 	var buf bytes.Buffer

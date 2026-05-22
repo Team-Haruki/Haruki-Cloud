@@ -1,5 +1,7 @@
 package drawing
 
+import sekaiapi "haruki-cloud/internal/pjsk/sekai"
+
 // =========================== Profile Models ===========================
 
 type BasicProfile struct {
@@ -92,4 +94,76 @@ type ProfileRequest struct {
 	IconApPath           string                     `json:"icon_ap_path"`
 	CharaRankIconPathMap map[string]string          `json:"chara_rank_icon_path_map"`
 	FramePaths           *PlayerFramePaths          `json:"frame_paths,omitempty"`
+}
+
+const CustomProfileCardRequestKind = "pjsk_custom_profile_card"
+
+type CustomProfileContext struct {
+	User                          sekaiapi.AnotherUser                            `json:"user"`
+	UserProfile                   sekaiapi.UserProfile                            `json:"userProfile"`
+	UserDeck                      sekaiapi.UserDeck                               `json:"userDeck"`
+	UserCards                     []sekaiapi.AnotherUserCard                      `json:"userCards"`
+	UserCharacters                []sekaiapi.AnotherUserCharacter                 `json:"userCharacters"`
+	UserChallengeLiveSoloResult   sekaiapi.UserChallengeLiveSoloResult            `json:"userChallengeLiveSoloResult"`
+	UserChallengeLiveSoloStages   []sekaiapi.AnotherUserChallengeLiveSoloStage    `json:"userChallengeLiveSoloStages"`
+	UserMusicDifficultyClearCount []sekaiapi.AnotherUserMusicDifficultyClearCount `json:"userMusicDifficultyClearCount"`
+	UserProfileHonors             []sekaiapi.UserProfileHonor                     `json:"userProfileHonors"`
+	UserHonors                    []sekaiapi.UserHonor                            `json:"userHonors"`
+	UserBondsHonors               []sekaiapi.UserBondsHonor                       `json:"userBondsHonors"`
+	UserStoryFavorites            []sekaiapi.UserStoryFavorite                    `json:"userStoryFavorites"`
+	UserConfig                    sekaiapi.AnotherUserConfig                      `json:"userConfig"`
+	UserMultiLiveTopScoreCount    sekaiapi.AnotherUserMultiLiveTopScoreCount      `json:"userMultiLiveTopScoreCount"`
+	TotalPower                    sekaiapi.AnotherTotalPower                      `json:"totalPower"`
+	UserHonorMissions             []sekaiapi.UserHonorMission                     `json:"userHonorMissions"`
+	IsMysekaiOwnerAcceptVisit     bool                                            `json:"isMysekaiOwnerAcceptVisit"`
+}
+
+type CustomProfileCardRenderRequest struct {
+	SchemaVersion  int                            `json:"schema_version"`
+	Kind           string                         `json:"kind"`
+	Region         string                         `json:"region"`
+	Card           sekaiapi.UserCustomProfileCard `json:"card"`
+	Resources      CustomProfileResources         `json:"resources"`
+	ProfileContext CustomProfileContext           `json:"profile_context"`
+}
+
+type CustomProfileResources map[string]any
+
+func NewCustomProfileCardRenderRequest(region string, card sekaiapi.UserCustomProfileCard, resp *sekaiapi.GetAnotherProfileResponse, resources CustomProfileResources) *CustomProfileCardRenderRequest {
+	if resources == nil {
+		resources = CustomProfileResources{}
+	}
+	return &CustomProfileCardRenderRequest{
+		SchemaVersion:  1,
+		Kind:           CustomProfileCardRequestKind,
+		Region:         region,
+		Card:           card,
+		Resources:      resources,
+		ProfileContext: NewCustomProfileContext(resp),
+	}
+}
+
+func NewCustomProfileContext(resp *sekaiapi.GetAnotherProfileResponse) CustomProfileContext {
+	if resp == nil {
+		return CustomProfileContext{}
+	}
+	return CustomProfileContext{
+		User:                          resp.User,
+		UserProfile:                   resp.UserProfile,
+		UserDeck:                      resp.UserDeck,
+		UserCards:                     resp.UserCards,
+		UserCharacters:                resp.UserCharacters,
+		UserChallengeLiveSoloResult:   resp.UserChallengeLiveSoloResult,
+		UserChallengeLiveSoloStages:   resp.UserChallengeLiveSoloStages,
+		UserMusicDifficultyClearCount: resp.UserMusicDifficultyClearCount,
+		UserProfileHonors:             resp.UserProfileHonors,
+		UserHonors:                    resp.UserHonors,
+		UserBondsHonors:               resp.UserBondsHonors,
+		UserStoryFavorites:            resp.UserStoryFavorites,
+		UserConfig:                    resp.UserConfig,
+		UserMultiLiveTopScoreCount:    resp.UserMultiLiveTopScoreCount,
+		TotalPower:                    resp.TotalPower,
+		UserHonorMissions:             resp.UserHonorMissions,
+		IsMysekaiOwnerAcceptVisit:     resp.IsMysekaiOwnerAcceptVisit,
+	}
 }

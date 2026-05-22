@@ -43,6 +43,13 @@ func TestResolveRenderCacheRuleUsesOneHourTTLForEventDetail(t *testing.T) {
 	}
 }
 
+func TestResolveRenderCacheRuleUsesSevenDayTTLForCustomProfileCard(t *testing.T) {
+	rule := resolveRenderCacheRule("/api/pjsk/profile/custom-profile-card")
+	if rule.TTL != renderCacheTTLSevenDay {
+		t.Fatalf("custom profile card ttl = %s, want %s", rule.TTL, renderCacheTTLSevenDay)
+	}
+}
+
 func TestRenderCacheClientAllowsInternalSelfSignedHTTPS(t *testing.T) {
 	storageDir := t.TempDir()
 	cacheKey := strings.Repeat("a", 64)

@@ -182,12 +182,19 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 		err = normalizeEventUserFacingErrorForRegion(err, region)
 	}()
 
+	region := renderregion.Value(rc.Cmd.Region)
+	switch rc.Cmd.Mode {
+	case "event-planner-help":
+		return onebot11.Message{onebot11.Text(eventPlannerHelp)}, nil
+	case "event-planner":
+		return executeEventPlanner(rc)
+	}
+
 	if rc.App.Events == nil {
 		return nil, fmt.Errorf("event service unavailable: sekai client not configured")
 	}
 	eventCtrl := rc.App.Events.WithContext(rc.Ctx)
 	var data []byte
-	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
 	case "event-detail":
 		q := event.DetailQuery{Region: region}

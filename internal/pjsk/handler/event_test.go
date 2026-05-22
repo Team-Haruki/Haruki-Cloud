@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 )
@@ -398,6 +399,113 @@ func TestEventRecordHandleEmbedsSelfSelector(t *testing.T) {
 	}
 	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestEventPlannerHandleRequiresExplicitRegion(t *testing.T) {
+	h := sekaiHandlers{}.EventPlannerHandle()
+
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/活动规划",
+		ArgText:    "pt500w 当前",
+	})
+	if err == nil || !strings.Contains(err.Error(), "需要在指令前加区服") {
+		t.Fatalf("expected explicit region error, got %v", err)
+	}
+}
+
+func TestEventPlannerHandleParsesPlannerParams(t *testing.T) {
+	h := sekaiHandlers{}.EventPlannerHandle()
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/cn活动规划",
+		ArgText:    "event154 当前pt320w pt1200w #123 456 789 101 112 歌 虾ex 龙mas 5火",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if result == nil || result.Module != parser.ModuleEvent || result.Mode != "event-planner" {
+		t.Fatalf("unexpected command request: %+v", result)
+	}
+
+	var params eventPlannerCommandParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID != 154 || params.TargetPoint != 12_000_000 || params.CurrentPoint != 3_200_000 {
+		t.Fatalf("unexpected point params: %+v", params)
+	}
+	if len(params.Deck.FixedCards) != 5 || params.Deck.FixedCards[0] != 123 {
+		t.Fatalf("unexpected deck params: %+v", params)
+	}
+	if len(params.Boosts) != 1 || params.Boosts[0] != 5 {
+		t.Fatalf("unexpected boosts: %+v", params.Boosts)
+	}
+	if len(params.Songs) != 2 || params.Songs[0].Query != "虾" || params.Songs[0].Difficulty != "expert" ||
+		params.Songs[1].Query != "龙" || params.Songs[1].Difficulty != "master" {
+		t.Fatalf("unexpected songs: %+v", params.Songs)
+	}
+}
+
+func TestEventPlannerDefaultDragonUsesLostAndFound(t *testing.T) {
+	params, err := parseEventPlannerParams("pt1200w", "/cn活动规划")
+	if err != nil {
+		t.Fatalf("parseEventPlannerParams() error = %v", err)
+	}
+	songs := eventPlannerSongsForRequest(params, buildEventPlannerBaseDeckQuery(renderregion.CN, params.Deck))
+	if len(songs) != 2 || songs[1].Query != "龙" || songs[1].MusicID != eventPlannerLostAndFoundMusicID {
+		t.Fatalf("unexpected default songs: %+v", songs)
+	}
+}
+
+func TestEventPlannerFixedCardIDsDoNotBecomeTargetPoint(t *testing.T) {
+	_, err := parseEventPlannerParams("#12345 23456 34567 45678 56789 歌 虾 5火", "/cn活动规划")
+	if err == nil || !strings.Contains(err.Error(), "需要提供目标 pt") {
+		t.Fatalf("expected missing target error, got %v", err)
+	}
+}
+
+func TestEventPlannerParsesDeckLikeOptions(t *testing.T) {
+	params, err := parseEventPlannerParams("pt1000w 当前pt100w wl3 mzk 歌 野车 10火 队友综合25w 队友实效200", "/jp活动规划")
+	if err != nil {
+		t.Fatalf("parseEventPlannerParams() error = %v", err)
+	}
+	if params.TargetPoint != 10_000_000 || params.CurrentPoint != 1_000_000 || !params.CurrentPointSet {
+		t.Fatalf("unexpected point params: %+v", params)
+	}
+	if params.Deck.WorldBloomEventTurn == nil || *params.Deck.WorldBloomEventTurn != 3 || params.Deck.WorldBloomCharacterID == nil || *params.Deck.WorldBloomCharacterID <= 0 {
+		t.Fatalf("unexpected wl params: %+v", params.Deck)
+	}
+	if params.Deck.MultiLiveTeammatePower == nil || *params.Deck.MultiLiveTeammatePower != 250_000 {
+		t.Fatalf("unexpected teammate power: %+v", params.Deck.MultiLiveTeammatePower)
+	}
+	if params.Deck.MultiLiveTeammateScoreUp == nil || *params.Deck.MultiLiveTeammateScoreUp != 200 {
+		t.Fatalf("unexpected teammate score up: %+v", params.Deck.MultiLiveTeammateScoreUp)
+	}
+	if len(params.Boosts) != 1 || params.Boosts[0] != 10 {
+		t.Fatalf("unexpected boosts: %+v", params.Boosts)
+	}
+	if len(params.Songs) != 1 || params.Songs[0].Query != "野车" || params.Songs[0].MusicID != eventPlannerOmakaseMusicID {
+		t.Fatalf("unexpected parsed songs: %+v", params.Songs)
+	}
+	songs := eventPlannerSongsForRequest(params, buildEventPlannerBaseDeckQuery(renderregion.JP, params.Deck))
+	if len(songs) != 1 || songs[0].MusicID != eventPlannerOmakaseMusicID {
+		t.Fatalf("unexpected resolved songs: %+v", songs)
+	}
+}
+
+func TestEventPlannerKeepsLiveTypeAfterSongMarker(t *testing.T) {
+	params, err := parseEventPlannerParams("pt1000w 歌 虾ex solo", "/jp活动规划")
+	if err != nil {
+		t.Fatalf("parseEventPlannerParams() error = %v", err)
+	}
+	if params.Deck.LiveType != "solo" {
+		t.Fatalf("expected solo live type, got %+v", params.Deck)
+	}
+	if len(params.Songs) != 1 || params.Songs[0].Query != "虾" || params.Songs[0].Difficulty != "expert" {
+		t.Fatalf("unexpected songs: %+v", params.Songs)
 	}
 }
 

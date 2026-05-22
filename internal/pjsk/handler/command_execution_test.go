@@ -3936,67 +3936,77 @@ func TestExecuteMysekaiPhoto(t *testing.T) {
 	}
 }
 
-func TestExecuteProfileCustomProfileCardThumbnail(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/image/jp/custom-profile-card/thumbnail/be8ad11a1f254d85d2de8cd104cf08b0a9e8811f09318fe1072c6c5b0b3a40d3/d3bdebe5-9e3f-4120-a2c8-5613548baf46" {
-			t.Fatalf("unexpected path: %s", r.URL.Path)
+func TestExecuteProfileCustomProfileCard(t *testing.T) {
+	sekaiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/jp/77777777777777/profile" {
+			t.Fatalf("unexpected sekai path: %s", r.URL.Path)
 		}
-		if got := r.Header.Get("X-Haruki-Sekai-Token"); got != "test-token" {
-			t.Fatalf("unexpected token: %q", got)
-		}
-		_, _ = w.Write([]byte("image-bytes"))
+		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 77777777777777,
+				Name:   "Tester",
+			},
+			UserProfile: sekaiapi.UserProfile{Word: "hello"},
+			UserCustomProfileCards: []sekaiapi.UserCustomProfileCard{
+				{
+					CustomProfileID:     1,
+					CustomProfileCardID: 1,
+					Seq:                 1,
+					ThumbnailPath:       "legacy-thumbnail-path",
+					CustomProfileCard: sekaiapi.ProfileCardData{
+						Version: 1,
+					},
+				},
+			},
+		})
 	}))
-	defer server.Close()
+	defer sekaiServer.Close()
 
 	oldBaseURL := config.Cfg.SekaiAPI.BaseURL
 	oldToken := config.Cfg.SekaiAPI.Token
-	config.Cfg.SekaiAPI.BaseURL = server.URL
+	config.Cfg.SekaiAPI.BaseURL = sekaiServer.URL
 	config.Cfg.SekaiAPI.Token = "test-token"
 	t.Cleanup(func() {
 		config.Cfg.SekaiAPI.BaseURL = oldBaseURL
 		config.Cfg.SekaiAPI.Token = oldToken
 	})
 
-	root := t.TempDir()
-	userPath := filepath.Join(root, "user.json")
-	if err := os.WriteFile(userPath, []byte(`{
-  "now": 1700000000,
-  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
-  "userProfile": {},
-  "userDecks": [{"deckId": 1}],
-  "userCards": [],
-  "userCustomProfileCards": [
-    {
-      "customProfileId": 1,
-      "customProfileCardId": 1,
-      "seq": 1,
-      "thumbnailPath": "be8ad11a1f254d85d2de8cd104cf08b0a9e8811f09318fe1072c6c5b0b3a40d3/d3bdebe5-9e3f-4120-a2c8-5613548baf46",
-      "customProfileCard": {}
-    }
-  ]
-}`), 0o644); err != nil {
-		t.Fatalf("write user snapshot: %v", err)
-	}
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/profile/custom-profile-card" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.CustomProfileCardRenderRequest
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.Kind != drawing.CustomProfileCardRequestKind || req.SchemaVersion != 1 {
+			t.Fatalf("unexpected drawing request header: %+v", req)
+		}
+		if req.Region != "jp" {
+			t.Fatalf("unexpected drawing region: %q", req.Region)
+		}
+		if req.Card.CustomProfileID != 1 || req.Card.CustomProfileCardID != 1 || req.Card.Seq != 1 {
+			t.Fatalf("unexpected custom profile card: %+v", req.Card)
+		}
+		if req.ProfileContext.User.Name != "Tester" || req.ProfileContext.UserProfile.Word != "hello" {
+			t.Fatalf("unexpected profile context: %+v", req.ProfileContext)
+		}
+		_, _ = w.Write([]byte("image-bytes"))
+	}))
+	defer drawingServer.Close()
 
-	snap := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
-		DefaultRegion: renderregion.JP,
-		UserJSON:      userPath,
-	})
 	service := newHandlerTestBindingServiceWithValidator(t, handlerTestBindingValidator{})
-	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
+	if _, err := service.Bind(context.Background(), "qq", "42", "77777777777777"); err != nil {
 		t.Fatalf("bind account: %v", err)
 	}
 	app := &renderapp.App{
 		Bindings:   service,
-		Snapshots:  snapshot.NewStaticSnapshotProvider(snap),
+		Drawing:    drawing.NewHarukiDrawingClient(drawingServer.URL),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 		SekaiAPI:   sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
-		Config: renderapp.Config{
-			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
-		},
 	}
 
-	params, err := json.Marshal(profileCustomProfileCardThumbnailParams{
+	params, err := json.Marshal(profileCustomProfileCardParams{
 		UserQueryParams: UserQueryParams{
 			Mode:           "self",
 			Platform:       "qq",
@@ -4010,96 +4020,77 @@ func TestExecuteProfileCustomProfileCardThumbnail(t *testing.T) {
 
 	message, err := executeProfile(NewRequestContext(context.Background(), &CommandRequest{
 		Module:            parser.ModuleProfile,
-		Mode:              profileModeCustomProfileCardThumbnail,
+		Mode:              profileModeCustomProfileCard,
 		Region:            "jp",
 		Params:            params,
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, app))
 	if err != nil {
-		t.Fatalf("executeProfile custom profile thumbnail: %v", err)
+		t.Fatalf("executeProfile custom profile: %v", err)
 	}
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 }
 
-func TestExecuteProfileCustomProfileCardThumbnailFallsBackToPublicProfile(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/jp/12345678901234/profile":
-			_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
-				User: sekaiapi.AnotherUser{
-					UserID: 12345678901234,
-					Name:   "Tester",
-				},
-				UserCustomProfileCards: []sekaiapi.UserCustomProfileCard{
-					{
-						CustomProfileID:     1,
-						CustomProfileCardID: 1,
-						Seq:                 1,
-						ThumbnailPath:       "be8ad11a1f254d85d2de8cd104cf08b0a9e8811f09318fe1072c6c5b0b3a40d3/d3bdebe5-9e3f-4120-a2c8-5613548baf46",
-					},
-				},
-			})
-		case "/image/jp/custom-profile-card/thumbnail/be8ad11a1f254d85d2de8cd104cf08b0a9e8811f09318fe1072c6c5b0b3a40d3/d3bdebe5-9e3f-4120-a2c8-5613548baf46":
-			if got := r.Header.Get("X-Haruki-Sekai-Token"); got != "test-token" {
-				t.Fatalf("unexpected token: %q", got)
-			}
-			_, _ = w.Write([]byte("image-bytes"))
-		default:
-			t.Fatalf("unexpected path: %s", r.URL.Path)
+func TestExecuteProfileCustomProfileCardSelectsSeq(t *testing.T) {
+	sekaiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/jp/88888888888888/profile" {
+			t.Fatalf("unexpected sekai path: %s", r.URL.Path)
 		}
+		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 88888888888888,
+				Name:   "Tester",
+			},
+			UserCustomProfileCards: []sekaiapi.UserCustomProfileCard{
+				{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
+				{CustomProfileID: 3, CustomProfileCardID: 4, Seq: 2},
+			},
+		})
 	}))
-	defer server.Close()
+	defer sekaiServer.Close()
 
 	oldBaseURL := config.Cfg.SekaiAPI.BaseURL
-	oldToken := config.Cfg.SekaiAPI.Token
-	config.Cfg.SekaiAPI.BaseURL = server.URL
-	config.Cfg.SekaiAPI.Token = "test-token"
+	config.Cfg.SekaiAPI.BaseURL = sekaiServer.URL
 	t.Cleanup(func() {
 		config.Cfg.SekaiAPI.BaseURL = oldBaseURL
-		config.Cfg.SekaiAPI.Token = oldToken
 	})
 
-	root := t.TempDir()
-	userPath := filepath.Join(root, "user.json")
-	if err := os.WriteFile(userPath, []byte(`{
-  "now": 1700000000,
-  "userGamedata": {"userId": 12345678901234, "name": "Tester", "deck": 1},
-  "userProfile": {},
-  "userDecks": [{"deckId": 1}],
-  "userCards": [],
-  "userCustomProfileCards": []
-}`), 0o644); err != nil {
-		t.Fatalf("write user snapshot: %v", err)
-	}
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/profile/custom-profile-card" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.CustomProfileCardRenderRequest
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if req.Card.CustomProfileID != 3 || req.Card.CustomProfileCardID != 4 || req.Card.Seq != 2 {
+			t.Fatalf("unexpected selected card: %+v", req.Card)
+		}
+		_, _ = w.Write([]byte("image-bytes"))
+	}))
+	defer drawingServer.Close()
 
-	snap := snapshot.NewLocalFileService(nil, nil, snapshot.LocalFileConfig{
-		DefaultRegion: renderregion.JP,
-		UserJSON:      userPath,
-	})
 	service := newHandlerTestBindingServiceWithValidator(t, handlerTestBindingValidator{})
-	if _, err := service.Bind(context.Background(), "qq", "42", "12345678901234"); err != nil {
+	if _, err := service.Bind(context.Background(), "qq", "42", "88888888888888"); err != nil {
 		t.Fatalf("bind account: %v", err)
 	}
 	app := &renderapp.App{
 		Bindings:   service,
-		Snapshots:  snapshot.NewStaticSnapshotProvider(snap),
+		Drawing:    drawing.NewHarukiDrawingClient(drawingServer.URL),
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 		SekaiAPI:   sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
-		Config: renderapp.Config{
-			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
-		},
 	}
 
-	params, err := json.Marshal(profileCustomProfileCardThumbnailParams{
+	params, err := json.Marshal(profileCustomProfileCardParams{
 		UserQueryParams: UserQueryParams{
 			Mode:           "self",
 			Platform:       "qq",
 			PlatformUserID: "42",
 		},
-		Seq: 1,
+		Seq: 2,
 	})
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
@@ -4107,14 +4098,14 @@ func TestExecuteProfileCustomProfileCardThumbnailFallsBackToPublicProfile(t *tes
 
 	message, err := executeProfile(NewRequestContext(context.Background(), &CommandRequest{
 		Module:            parser.ModuleProfile,
-		Mode:              profileModeCustomProfileCardThumbnail,
+		Mode:              profileModeCustomProfileCard,
 		Region:            "jp",
 		Params:            params,
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, app))
 	if err != nil {
-		t.Fatalf("executeProfile custom profile thumbnail fallback: %v", err)
+		t.Fatalf("executeProfile custom profile seq: %v", err)
 	}
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected message: %+v", message)

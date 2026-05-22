@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
+	"strconv"
 	"strings"
 
 	"haruki-cloud/internal/pjsk/chartstyle"
@@ -18,13 +20,24 @@ import (
 )
 
 type customChartEntry struct {
-	ID         string
-	Title      string
-	Path       string
-	MusicID    int
-	Difficulty string
-	PlayLevel  int
-	UserName   string
+	ID                  string
+	Title               string
+	Path                string
+	MusicID             int
+	Difficulty          string
+	PlayLevel           int
+	UserName            string
+	Description         string
+	PreviewStartTimeSec float64
+	PublishedAt         int64
+	ReviewCount         int
+	PlayCount           int
+	FullComboRate       float64
+}
+
+type customChartStats struct {
+	NoteCount int
+	BPM       string
 }
 
 var customChartPrefixes = map[string]struct{}{
@@ -139,6 +152,81 @@ func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataS
 	return req, nil
 }
 
+func (c *Controller) buildCustomMusicDetailRequest(query Query, source DataSource, builder *Builder, region renderregion.Value) (*drawing.MusicDetailRequest, error) {
+	if c == nil {
+		return nil, fmt.Errorf("music controller is not configured")
+	}
+	if c.customScores == nil {
+		return nil, fmt.Errorf("自制谱面数据源未配置")
+	}
+	if region != renderregion.JP {
+		return nil, fmt.Errorf("当前服务器暂未支持自定义谱面请使用jp前缀查询")
+	}
+
+	scoreID, ok := customChartIDFromQuery(query.Query)
+	if !ok {
+		return nil, fmt.Errorf("请提供28位自定义谱面ID")
+	}
+	entry, err := c.fetchCustomChartEntryByID(region.String(), scoreID)
+	if err != nil {
+		return nil, err
+	}
+
+	rawScore, err := c.customScores.GetCustomMusicScore(region.String(), entry.Path)
+	if err != nil {
+		return nil, fmt.Errorf("获取自制谱面 JSON 失败: %w", err)
+	}
+	chartJSON, err := decodeCustomMusicScoreJSON(rawScore)
+	if err != nil {
+		return nil, err
+	}
+	stats := parseCustomMusicScoreStats(chartJSON)
+
+	musicInfo, err := source.GetMusicByID(entry.MusicID)
+	if err != nil || musicInfo == nil {
+		return nil, fmt.Errorf("自制谱面对应的原曲数据不存在")
+	}
+
+	req, err := builder.BuildMusicDetailRequest(musicInfo, region)
+	if err != nil {
+		return nil, err
+	}
+	c.enrichMusicDetailRequest(req, region, source, builder, musicInfo, entry.Difficulty)
+
+	diff := strings.ToLower(strings.TrimSpace(entry.Difficulty))
+	if diff == "" {
+		diff = "master"
+	}
+	req.Difficulty = drawing.DifficultyInfo{
+		Level:     []int{entry.PlayLevel},
+		NoteCount: []int{stats.NoteCount},
+		HasAppend: diff == "append",
+		Order:     []string{diff},
+	}
+	req.Alias = nil
+	req.LeaderboardMatrix = nil
+	req.LeaderboardMusicNum = nil
+	req.LeaderboardLiveTypes = nil
+	req.LeaderboardTargets = nil
+	req.CustomChartInfo = &drawing.CustomChartInfo{
+		ScoreID:             entry.ID,
+		Title:               entry.Title,
+		Author:              entry.UserName,
+		Description:         entry.Description,
+		Difficulty:          diff,
+		PlayLevel:           entry.PlayLevel,
+		NoteCount:           stats.NoteCount,
+		BPM:                 stats.BPM,
+		PublishedAt:         entry.PublishedAt,
+		PreviewStartTimeSec: entry.PreviewStartTimeSec,
+		ReviewCount:         entry.ReviewCount,
+		PlayCount:           entry.PlayCount,
+		FullComboRate:       entry.FullComboRate,
+		Tags:                req.MusicInfo.Categories,
+	}
+	return req, nil
+}
+
 func buildCustomChartArtist(entry customChartEntry) string {
 	userName := strings.TrimSpace(entry.UserName)
 	scoreID := strings.TrimSpace(entry.ID)
@@ -203,11 +291,17 @@ func customChartEntryFromPublishedResponse(value *sekaiapi.UserCustomMusicScoreP
 	}
 	info := value.UserCustomMusicScoreInfoJSON
 	entry := customChartEntry{
-		ID:         strings.TrimSpace(value.UserCustomMusicScoreID),
-		MusicID:    value.MusicID,
-		Difficulty: strings.TrimSpace(value.MusicDifficultyType),
-		PlayLevel:  value.PlayLevel,
-		UserName:   strings.TrimSpace(value.UserName),
+		ID:                  strings.TrimSpace(value.UserCustomMusicScoreID),
+		MusicID:             value.MusicID,
+		Difficulty:          strings.TrimSpace(value.MusicDifficultyType),
+		PlayLevel:           value.PlayLevel,
+		UserName:            strings.TrimSpace(value.UserName),
+		Description:         strings.TrimSpace(value.Description),
+		PreviewStartTimeSec: value.PreviewStartTimeSec,
+		PublishedAt:         value.PublishedAt,
+		ReviewCount:         value.ReviewCount,
+		PlayCount:           value.PlayCount,
+		FullComboRate:       value.FullComboRate,
 	}
 	if info != nil {
 		entry.Title = strings.TrimSpace(info.Title)
@@ -217,6 +311,99 @@ func customChartEntryFromPublishedResponse(value *sekaiapi.UserCustomMusicScoreP
 		}
 	}
 	return entry
+}
+
+func parseCustomMusicScoreStats(chartJSON string) customChartStats {
+	raw := []byte(strings.TrimSpace(chartJSON))
+	if len(raw) == 0 {
+		return customChartStats{}
+	}
+
+	var root map[string]stdjson.RawMessage
+	if err := stdjson.Unmarshal(raw, &root); err != nil {
+		return customChartStats{}
+	}
+	chartRaw := raw
+	if nested, ok := root["chart"]; ok && len(nested) > 0 {
+		chartRaw = nested
+	}
+
+	var chart struct {
+		MusicScoreEventDataList []struct {
+			EventType   int `json:"eventType"`
+			ChangeValue any `json:"changeValue"`
+		} `json:"MusicScoreEventDataList"`
+		NoteList []stdjson.RawMessage `json:"NoteList"`
+	}
+	if err := stdjson.Unmarshal(chartRaw, &chart); err != nil {
+		return customChartStats{}
+	}
+
+	return customChartStats{
+		NoteCount: len(chart.NoteList),
+		BPM:       formatCustomChartBPMs(chart.MusicScoreEventDataList),
+	}
+}
+
+func formatCustomChartBPMs(events []struct {
+	EventType   int `json:"eventType"`
+	ChangeValue any `json:"changeValue"`
+}) string {
+	values := make([]float64, 0, len(events))
+	seen := make(map[string]struct{})
+	for _, event := range events {
+		if event.EventType != 0 {
+			continue
+		}
+		bpm, ok := customChartFloatValue(event.ChangeValue)
+		if !ok || bpm <= 0 {
+			continue
+		}
+		key := formatCustomChartFloat(bpm)
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+		values = append(values, bpm)
+	}
+	if len(values) == 0 {
+		return ""
+	}
+	if len(values) <= 3 {
+		labels := make([]string, 0, len(values))
+		for _, bpm := range values {
+			labels = append(labels, formatCustomChartFloat(bpm))
+		}
+		return strings.Join(labels, " / ")
+	}
+	sortedValues := append([]float64(nil), values...)
+	sort.Float64s(sortedValues)
+	return fmt.Sprintf("%s-%s（%d段）", formatCustomChartFloat(sortedValues[0]), formatCustomChartFloat(sortedValues[len(sortedValues)-1]), len(values))
+}
+
+func customChartFloatValue(value any) (float64, bool) {
+	switch v := value.(type) {
+	case float64:
+		return v, true
+	case float32:
+		return float64(v), true
+	case int:
+		return float64(v), true
+	case int64:
+		return float64(v), true
+	case stdjson.Number:
+		parsed, err := v.Float64()
+		return parsed, err == nil
+	case string:
+		parsed, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
+		return parsed, err == nil
+	default:
+		return 0, false
+	}
+}
+
+func formatCustomChartFloat(value float64) string {
+	return strings.TrimRight(strings.TrimRight(strconv.FormatFloat(value, 'f', 2, 64), "0"), ".")
 }
 
 func decodeCustomMusicScoreJSON(raw []byte) (string, error) {

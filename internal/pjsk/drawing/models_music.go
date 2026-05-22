@@ -33,6 +33,23 @@ type LeaderboardInfo struct {
 	Value string `json:"value"`
 }
 
+type CustomChartInfo struct {
+	ScoreID             string   `json:"score_id"`
+	Title               string   `json:"title,omitempty"`
+	Author              string   `json:"author,omitempty"`
+	Description         string   `json:"description,omitempty"`
+	Difficulty          string   `json:"difficulty,omitempty"`
+	PlayLevel           int      `json:"play_level,omitempty"`
+	NoteCount           int      `json:"note_count,omitempty"`
+	BPM                 string   `json:"bpm,omitempty"`
+	PublishedAt         int64    `json:"published_at,omitempty"`
+	PreviewStartTimeSec float64  `json:"preview_start_time_sec,omitempty"`
+	ReviewCount         int      `json:"review_count,omitempty"`
+	PlayCount           int      `json:"play_count,omitempty"`
+	FullComboRate       float64  `json:"full_combo_rate,omitempty"`
+	Tags                []string `json:"tags,omitempty"`
+}
+
 // MusicDetailRequest represents request for /music/detail
 type MusicDetailRequest struct {
 	Region               string               `json:"region"`
@@ -51,6 +68,7 @@ type MusicDetailRequest struct {
 	LeaderboardMusicNum  *int                 `json:"leaderboard_music_num,omitempty"`
 	LeaderboardLiveTypes map[string]string    `json:"leaderboard_live_types,omitempty"`
 	LeaderboardTargets   map[string]string    `json:"leaderboard_targets,omitempty"`
+	CustomChartInfo      *CustomChartInfo     `json:"custom_chart_info,omitempty"`
 }
 
 type MusicBriefList struct {

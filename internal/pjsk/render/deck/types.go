@@ -308,6 +308,7 @@ type AutoQuery struct {
 	AttrFilter                    string                              `json:"attr_filter,omitempty"`
 	ExcludedCards                 []int                               `json:"excluded_cards,omitempty"`
 	UseCurrentDeck                bool                                `json:"use_current_deck,omitempty"`
+	UseExactCardState             bool                                `json:"use_exact_card_state,omitempty"`
 	MaxProfile                    bool                                `json:"max_profile,omitempty"`
 	SubMaxProfile                 bool                                `json:"sub_max_profile,omitempty"`
 	SupportMasterMax              bool                                `json:"support_master_max,omitempty"`

@@ -71,3 +71,49 @@ type EventRecordRequest struct {
 type EventListRequest struct {
 	EventInfo []EventBrief `json:"event_info"`
 }
+
+type EventPlannerDeckCard struct {
+	CardThumbnail  CardFullThumbnailRequest `json:"card_thumbnail"`
+	SkillLevel     string                   `json:"skill_level,omitempty"`
+	SkillRate      float64                  `json:"skill_rate,omitempty"`
+	EventBonusRate float64                  `json:"event_bonus_rate,omitempty"`
+}
+
+type EventPlannerBoostRow struct {
+	Boost        int   `json:"boost"`
+	PointPerPlay int64 `json:"point_per_play"`
+	Plays        int64 `json:"plays"`
+	Energy       int64 `json:"energy"`
+}
+
+type EventPlannerSong struct {
+	MusicID        int                    `json:"music_id,omitempty"`
+	Query          string                 `json:"query,omitempty"`
+	Title          string                 `json:"title"`
+	MusicCoverPath string                 `json:"music_cover_path,omitempty"`
+	Difficulty     string                 `json:"difficulty,omitempty"`
+	Rows           []EventPlannerBoostRow `json:"rows"`
+}
+
+type EventPlannerRequest struct {
+	Title           string                      `json:"title"`
+	Region          string                      `json:"region"`
+	EventID         int                         `json:"event_id,omitempty"`
+	EventName       string                      `json:"event_name,omitempty"`
+	EventBannerPath string                      `json:"event_banner_path,omitempty"`
+	LiveName        string                      `json:"live_name,omitempty"`
+	Profile         *DetailedProfileCardRequest `json:"profile,omitempty"`
+	TargetPoint     int64                       `json:"target_point"`
+	CurrentPoint    int64                       `json:"current_point,omitempty"`
+	RemainingPoint  int64                       `json:"remaining_point"`
+	DailyPoint      int64                       `json:"daily_point,omitempty"`
+	TargetSource    string                      `json:"target_source,omitempty"`
+	DeckSummary     string                      `json:"deck_summary,omitempty"`
+	DeckCards       []EventPlannerDeckCard      `json:"deck_cards,omitempty"`
+	DeckTotalPower  int                         `json:"deck_total_power,omitempty"`
+	DeckEventBonus  float64                     `json:"deck_event_bonus,omitempty"`
+	DeckSkillUp     float64                     `json:"deck_skill_up,omitempty"`
+	Songs           []EventPlannerSong          `json:"songs"`
+	Warnings        []string                    `json:"warnings,omitempty"`
+	DeckRequest     *DeckRequest                `json:"deck_request,omitempty"`
+}

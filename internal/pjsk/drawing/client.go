@@ -197,6 +197,10 @@ func (c *HarukiDrawingClient) GenerateProfile(req *ProfileRequest) ([]byte, erro
 	return c.cachedPost("/api/pjsk/profile", req)
 }
 
+func (c *HarukiDrawingClient) GenerateCustomProfileCard(req *CustomProfileCardRenderRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/profile/custom-profile-card", req)
+}
+
 // =========================== Card API ===========================
 
 func (c *HarukiDrawingClient) GenerateCardDetail(req *CardDetailRequest) ([]byte, error) {
@@ -259,6 +263,10 @@ func (c *HarukiDrawingClient) GenerateEventRecord(req *EventRecordRequest) ([]by
 
 func (c *HarukiDrawingClient) GenerateEventList(req *EventListRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/event/list", req)
+}
+
+func (c *HarukiDrawingClient) GenerateEventPlanner(req *EventPlannerRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/event/planner", req)
 }
 
 // =========================== VLive API ===========================

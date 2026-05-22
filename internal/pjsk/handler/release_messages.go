@@ -104,9 +104,14 @@ func normalizeMusicUserFacingErrorForLookup(err error, region string, fallbackQu
 	}
 	message := strings.TrimSpace(err.Error())
 	switch {
+	case strings.Contains(message, "未找到对应自定义谱面"):
+		return onebot11.NewReplayError("未找到对应自定义谱面")
+	case strings.Contains(message, "当前服务器暂未支持自定义谱面"):
+		return onebot11.NewReplayError("当前服务器暂未支持自定义谱面请使用jp前缀查询")
 	case strings.Contains(message, "music controller is not configured"),
 		strings.Contains(message, "music service unavailable"),
 		strings.Contains(message, "music data source is not configured"),
+		strings.Contains(message, "自制谱面数据源未配置"),
 		strings.Contains(message, "no music data source for region"),
 		strings.Contains(message, "drawing client is not configured"):
 		return onebot11.NewReplayError("歌曲服务未就绪，请稍后再试")

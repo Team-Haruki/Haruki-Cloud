@@ -5,18 +5,15 @@ import (
 	"strconv"
 	"strings"
 
-	json "github.com/bytedance/sonic"
-
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
-	renderregion "haruki-cloud/internal/pjsk/region"
-	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
-const profileModeCustomProfileCardThumbnail = "profile-custom-profile-card-thumbnail"
+const profileModeCustomProfileCard = "profile-custom-profile-card"
 
-type profileCustomProfileCardThumbnailParams struct {
+type profileCustomProfileCardParams struct {
 	UserQueryParams
 	CustomProfileID     int `json:"custom_profile_id,omitempty"`
 	CustomProfileCardID int `json:"custom_profile_card_id,omitempty"`
@@ -29,124 +26,112 @@ func (sekaiHandlers) ProfileCustomProfileCardHandle() HarukiSekaiCommandHandler 
 		CommandHandlerBase: CommandHandlerBase{
 			Path: "profile/custom-profile-card",
 			Commands: []string{
-				"/自定义档案", "/pjsk custom profile", "/custom-profile",
+				"/自定义个人信息", "/自定义档案", "/pjsk custom profile", "/custom-profile",
 			},
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			params, err := buildProfileCustomProfileCardThumbnailParams(ctx)
+			params, err := buildProfileCustomProfileCardParams(ctx)
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, profileModeCustomProfileCardThumbnail, params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, profileModeCustomProfileCard, params), nil
 		},
 	}, executeProfile)
 }
 
-func buildProfileCustomProfileCardThumbnailParams(ctx HarrukiSekaiHandlerContext) (profileCustomProfileCardThumbnailParams, error) {
+func buildProfileCustomProfileCardParams(ctx HarrukiSekaiHandlerContext) (profileCustomProfileCardParams, error) {
 	query, err := resolveSelfOnlyQueryParams(ctx)
 	if err != nil {
-		return profileCustomProfileCardThumbnailParams{}, err
+		return profileCustomProfileCardParams{}, err
 	}
 
-	params := profileCustomProfileCardThumbnailParams{UserQueryParams: query, Seq: 1}
+	params := profileCustomProfileCardParams{UserQueryParams: query, Seq: 1}
 	args := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
-	if len(args) == 0 {
-		return params, nil
-	}
-	if len(args) != 2 {
-		return params, onebot11.NewReplayError("使用方式:\n%s\n%s 组ID 档案ID\n%s u2\n%s 组ID 档案ID u2",
-			ctx.originalTriggerCmd,
+	if len(args) != 1 {
+		return params, onebot11.NewReplayError("使用方式:\n%s 1\n%s 2\n%s u2 3\n数字为要渲染的自定义个人信息页序号，每次只渲染一张",
 			ctx.originalTriggerCmd,
 			ctx.originalTriggerCmd,
 			ctx.originalTriggerCmd,
 		)
 	}
 
-	customProfileID, ok := parsePositiveIntArg(args[0])
+	seq, ok := parsePositiveIntArg(args[0])
 	if !ok {
-		return params, onebot11.NewReplayError("组ID必须是正整数")
-	}
-	customProfileCardID, ok := parsePositiveIntArg(args[1])
-	if !ok {
-		return params, onebot11.NewReplayError("档案ID必须是正整数")
+		return params, onebot11.NewReplayError("自定义个人信息页序号必须是正整数")
 	}
 
-	params.Seq = 0
-	params.CustomProfileID = customProfileID
-	params.CustomProfileCardID = customProfileCardID
+	params.Seq = seq
 	return params, nil
 }
 
-func executeProfileCustomProfileCardThumbnail(rc *RequestContext) (onebot11.Message, error) {
-	if rc == nil || rc.App == nil || rc.App.SekaiAPI == nil {
+func executeProfileCustomProfileCard(rc *RequestContext) (onebot11.Message, error) {
+	if rc == nil || rc.App == nil || rc.Cmd == nil {
+		return nil, fmt.Errorf("profile service unavailable")
+	}
+	if rc.App.SekaiAPI == nil {
 		return nil, fmt.Errorf("sekai api service unavailable")
 	}
-
-	binding, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
-	if suiteErr != nil {
-		return nil, suiteErr
-	}
-	if suiteSnapshot == nil {
-		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
+	if rc.App.Drawing == nil {
+		return nil, fmt.Errorf("drawing service unavailable")
 	}
 
-	var params profileCustomProfileCardThumbnailParams
+	var params profileCustomProfileCardParams
 	mergeParams(rc.Cmd.Params, &params)
 
-	region := renderregion.Normalize(rc.RegionStr)
-	if binding != nil {
-		if bindingRegion := renderregion.Normalize(binding.Server); !bindingRegion.IsZero() {
-			region = bindingRegion
-		}
-	}
-	if region.IsZero() {
-		region = renderregion.JP
-	}
-	if region != renderregion.JP && region != renderregion.EN {
-		return nil, onebot11.NewReplayError("当前%s服暂不支持自定义档案缩略图", strings.ToUpper(region.String()))
-	}
-
-	cards, err := resolveSuiteCustomProfileCards(suiteSnapshot)
+	region := regionWithDefault(rc.Cmd.Region)
+	target, err := resolveGameTarget(rc.Ctx, params.userQueryParams(), region, rc.Cmd.RegionExplicit, rc.App)
 	if err != nil {
 		return nil, err
 	}
-	if len(cards) == 0 {
-		if resp := rc.GetPublicProfileResponse(); resp != nil {
-			cards = append(cards, resp.UserCustomProfileCards...)
+	region = resolvedTargetRegion(region, target)
+
+	resp, err := fetchCachedSekaiUserProfile(rc.Ctx, rc.App, region, target.PJSKUserID)
+	if err != nil {
+		return nil, fmt.Errorf("获取玩家信息失败：%w", err)
+	}
+	if rc.App.Censor != nil {
+		if !rc.App.Censor.CensorName(rc.Ctx, target.HarukiUserID, target.PJSKUserID, resp.User.Name, region) {
+			resp.User.Name = ""
+		}
+		if !rc.App.Censor.CensorShortBio(rc.Ctx, target.HarukiUserID, target.PJSKUserID, resp.UserProfile.Word, region) {
+			resp.UserProfile.Word = ""
 		}
 	}
-	thumbnailPath, err := resolveCustomProfileCardThumbnailPath(cards, params)
+
+	card, err := resolveCustomProfileCard(resp.UserCustomProfileCards, params)
 	if err != nil {
 		return nil, err
 	}
-
-	data, err := rc.App.SekaiAPI.GetCustomProfileCardThumbnail(region.String(), thumbnailPath)
+	resources, err := buildCustomProfileResources(rc.Ctx, rc.App, region, *card, resp)
 	if err != nil {
-		return nil, fmt.Errorf("获取自定义档案缩略图失败：%w", err)
+		return nil, fmt.Errorf("解析自定义档案资源失败：%w", err)
+	}
+	req := drawing.NewCustomProfileCardRenderRequest(region, *card, resp, resources)
+	data, err := rc.App.Drawing.WithContext(rc.Ctx).GenerateCustomProfileCard(req)
+	if err != nil {
+		return nil, fmt.Errorf("渲染自定义档案失败：%w", err)
 	}
 	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 }
 
-func resolveSuiteCustomProfileCards(suiteSnapshot rendersnapshot.Snapshot) ([]sekaiapi.UserCustomProfileCard, error) {
-	if suiteSnapshot == nil {
-		return nil, newSuiteDataNotFoundReplayError()
+func (p profileCustomProfileCardParams) userQueryParams() userQueryParams {
+	mode := strings.TrimSpace(p.Mode)
+	if mode == "" {
+		mode = "self"
 	}
-
-	raw, err := suiteSnapshot.RawValue("userCustomProfileCards")
-	if err != nil {
-		return nil, onebot11.NewReplayError("当前suite数据中没有找到自定义档案信息")
+	return userQueryParams{
+		Mode:           mode,
+		Platform:       p.Platform,
+		PlatformUserID: p.PlatformUserID,
+		AtUserID:       p.AtUserID,
+		PJSKUserID:     p.PJSKUserID,
+		Selector:       p.Selector,
 	}
-
-	var cards []sekaiapi.UserCustomProfileCard
-	if err := json.Unmarshal(raw, &cards); err != nil {
-		return nil, fmt.Errorf("解析自定义档案数据失败：%w", err)
-	}
-	return cards, nil
 }
 
-func resolveCustomProfileCardThumbnailPath(cards []sekaiapi.UserCustomProfileCard, params profileCustomProfileCardThumbnailParams) (string, error) {
+func resolveCustomProfileCard(cards []sekaiapi.UserCustomProfileCard, params profileCustomProfileCardParams) (*sekaiapi.UserCustomProfileCard, error) {
 	if len(cards) == 0 {
-		return "", onebot11.NewReplayError("当前suite与公开profile中都没有自定义档案")
+		return nil, onebot11.NewReplayError("当前公开profile中没有自定义档案")
 	}
 
 	var target *sekaiapi.UserCustomProfileCard
@@ -159,7 +144,7 @@ func resolveCustomProfileCardThumbnailPath(cards []sekaiapi.UserCustomProfileCar
 			}
 		}
 		if target == nil {
-			return "", onebot11.NewReplayError("未找到第%d组第%d张自定义档案", params.CustomProfileID, params.CustomProfileCardID)
+			return nil, onebot11.NewReplayError("未找到第%d组第%d张自定义档案", params.CustomProfileID, params.CustomProfileCardID)
 		}
 	} else {
 		targetSeq := params.Seq
@@ -174,23 +159,10 @@ func resolveCustomProfileCardThumbnailPath(cards []sekaiapi.UserCustomProfileCar
 			}
 		}
 		if target == nil {
-			return "", onebot11.NewReplayError("未找到序号为%d的自定义档案", targetSeq)
+			return nil, onebot11.NewReplayError("未找到序号为%d的自定义档案", targetSeq)
 		}
 	}
-
-	thumbnailPath := strings.TrimSpace(target.ThumbnailPath)
-	if thumbnailPath == "" {
-		return "", onebot11.NewReplayError("目标自定义档案没有可用的缩略图")
-	}
-	if !looksLikeTwoSegmentImagePath(thumbnailPath) {
-		return "", onebot11.NewReplayError("目标自定义档案的缩略图路径格式无效")
-	}
-	return thumbnailPath, nil
-}
-
-func looksLikeTwoSegmentImagePath(value string) bool {
-	parts := strings.Split(strings.TrimSpace(value), "/")
-	return len(parts) == 2 && strings.TrimSpace(parts[0]) != "" && strings.TrimSpace(parts[1]) != ""
+	return target, nil
 }
 
 func parsePositiveIntArg(value string) (int, bool) {

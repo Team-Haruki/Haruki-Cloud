@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func TestProfileUploadBGHandleExtractsImageURL(t *testing.T) {
@@ -203,7 +204,7 @@ func TestProfileHandleParsesVerticalArg(t *testing.T) {
 	}
 }
 
-func TestProfileCustomProfileCardHandleDefaultsToSeqOne(t *testing.T) {
+func TestProfileCustomProfileCardHandleParsesSeq(t *testing.T) {
 	h := sekaiHandlers{}.ProfileCustomProfileCardHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
@@ -211,7 +212,8 @@ func TestProfileCustomProfileCardHandleDefaultsToSeqOne(t *testing.T) {
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
-		TriggerCmd: "/自定义档案",
+		TriggerCmd: "/自定义个人信息",
+		ArgText:    "1",
 	})
 	if err != nil {
 		t.Fatalf("Handle() error = %v", err)
@@ -221,11 +223,11 @@ func TestProfileCustomProfileCardHandleDefaultsToSeqOne(t *testing.T) {
 	if resolved == nil {
 		t.Fatal("expected command request, got nil")
 	}
-	if resolved.Mode != profileModeCustomProfileCardThumbnail {
+	if resolved.Mode != profileModeCustomProfileCard {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
 	}
 
-	var params profileCustomProfileCardThumbnailParams
+	var params profileCustomProfileCardParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
@@ -240,7 +242,7 @@ func TestProfileCustomProfileCardHandleDefaultsToSeqOne(t *testing.T) {
 	}
 }
 
-func TestProfileCustomProfileCardHandleParsesIDsAndSelector(t *testing.T) {
+func TestProfileCustomProfileCardHandleParsesSeqAndSelector(t *testing.T) {
 	h := sekaiHandlers{}.ProfileCustomProfileCardHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
@@ -248,8 +250,8 @@ func TestProfileCustomProfileCardHandleParsesIDsAndSelector(t *testing.T) {
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
-		TriggerCmd: "/自定义档案",
-		ArgText:    "u2 3 4",
+		TriggerCmd: "/自定义个人信息",
+		ArgText:    "u2 3",
 	})
 	if err != nil {
 		t.Fatalf("Handle() error = %v", err)
@@ -259,26 +261,26 @@ func TestProfileCustomProfileCardHandleParsesIDsAndSelector(t *testing.T) {
 	if resolved == nil {
 		t.Fatal("expected command request, got nil")
 	}
-	if resolved.Mode != profileModeCustomProfileCardThumbnail {
+	if resolved.Mode != profileModeCustomProfileCard {
 		t.Fatalf("resolved.Mode = %q", resolved.Mode)
 	}
 
-	var params profileCustomProfileCardThumbnailParams
+	var params profileCustomProfileCardParams
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
 	if params.Selector != "u2" {
 		t.Fatalf("unexpected selector: %q", params.Selector)
 	}
-	if params.CustomProfileID != 3 || params.CustomProfileCardID != 4 {
-		t.Fatalf("unexpected custom profile ids: %+v", params)
+	if params.Seq != 3 {
+		t.Fatalf("unexpected seq: %d", params.Seq)
 	}
-	if params.Seq != 0 {
-		t.Fatalf("unexpected seq for explicit ids: %d", params.Seq)
+	if params.CustomProfileID != 0 || params.CustomProfileCardID != 0 {
+		t.Fatalf("unexpected custom profile ids: %+v", params)
 	}
 }
 
-func TestProfileCustomProfileCardHandleRejectsSingleNumberArg(t *testing.T) {
+func TestProfileCustomProfileCardHandleRequiresOneSeqArg(t *testing.T) {
 	h := sekaiHandlers{}.ProfileCustomProfileCardHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
@@ -286,11 +288,46 @@ func TestProfileCustomProfileCardHandleRejectsSingleNumberArg(t *testing.T) {
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "42",
-		TriggerCmd: "/自定义档案",
-		ArgText:    "1",
+		TriggerCmd: "/自定义个人信息",
 	})
 	if err == nil {
 		t.Fatal("expected usage error")
+	}
+}
+
+func TestProfileCustomProfileCardHandleAllowsArbitraryPositiveSeq(t *testing.T) {
+	h := sekaiHandlers{}.ProfileCustomProfileCardHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/自定义个人信息",
+		ArgText:    "99",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params profileCustomProfileCardParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Seq != 99 {
+		t.Fatalf("unexpected seq: %d", params.Seq)
+	}
+}
+
+func TestResolveCustomProfileCardReturnsErrorForMissingSeq(t *testing.T) {
+	_, err := resolveCustomProfileCard([]sekaiapi.UserCustomProfileCard{
+		{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
+	}, profileCustomProfileCardParams{Seq: 99})
+	if err == nil {
+		t.Fatal("expected missing seq error")
+	}
+	if !strings.Contains(err.Error(), "未找到序号为99的自定义档案") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

@@ -18,10 +18,11 @@ type renderCacheRule struct {
 }
 
 var (
-	renderCacheTTLOneHour = time.Hour
-	renderCacheTTLHalfDay = 12 * time.Hour
-	renderCacheTTLOneDay  = 24 * time.Hour
-	renderCacheTTLTwoHour = 2 * time.Hour
+	renderCacheTTLOneHour  = time.Hour
+	renderCacheTTLHalfDay  = 12 * time.Hour
+	renderCacheTTLOneDay   = 24 * time.Hour
+	renderCacheTTLTwoHour  = 2 * time.Hour
+	renderCacheTTLSevenDay = 7 * 24 * time.Hour
 
 	renderCacheWindowTTLBuffer = 30 * time.Minute
 	renderCacheWindowTTLMin    = 10 * time.Minute
@@ -54,6 +55,10 @@ var (
 		"/api/pjsk/profile": {
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("update_time"),
+		},
+		"/api/pjsk/profile/custom-profile-card": {
+			Enabled: true,
+			TTL:     renderCacheTTLSevenDay,
 		},
 		"/api/pjsk/event/detail": {
 			Enabled: true,

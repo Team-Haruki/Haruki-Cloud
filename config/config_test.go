@@ -118,6 +118,7 @@ func TestEnvOverrideProfile(t *testing.T) {
 func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", "/srv/masterdata")
 	t.Setenv("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", "45m")
+	t.Setenv("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", "/srv/masterdata")
 	t.Setenv("HARUKI_PJSK_RENDER_SK_FORECAST_LOCAL_BASE_URL", "http://100.109.13.111:18746")
 	t.Setenv("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", "/data/haruki/cache/sk_forecast_cache.json")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", "http://127.0.0.1:48080")
@@ -134,6 +135,9 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	}
 	if cfg.PJSKRender.MusicMeta.RefreshInterval != 45*time.Minute {
 		t.Fatalf("unexpected music meta refresh interval: %v", cfg.PJSKRender.MusicMeta.RefreshInterval)
+	}
+	if cfg.PJSKRender.MusicMeta.OutputDir != "/srv/masterdata" {
+		t.Fatalf("unexpected music meta output dir override: %q", cfg.PJSKRender.MusicMeta.OutputDir)
 	}
 	if cfg.PJSKRender.SKForecast.LocalBaseURL != "http://100.109.13.111:18746" {
 		t.Fatalf("unexpected sk forecast local base url override: %q", cfg.PJSKRender.SKForecast.LocalBaseURL)

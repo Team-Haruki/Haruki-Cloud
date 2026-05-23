@@ -126,6 +126,7 @@ pjsk_render:
   drawing_retry_count: 2
   music_meta:
     refresh_interval: "30m"   # how often to re-check sekai-data.3-3.dev for music_metas updates
+    output_dir: ""            # optional: persist music_metas*.json into this directory after updates
   sk_forecast:
     local_base_url: "http://100.109.13.111:18746"
     cache_path: "/data/haruki/cache/drawing/sk_forecast_cache.json"

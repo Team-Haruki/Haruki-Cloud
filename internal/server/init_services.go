@@ -85,12 +85,13 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	if metaRefreshInterval <= 0 {
 		metaRefreshInterval = harukiConfig.MetaRefreshInterval
 	}
-	metaLoader := meta.NewLoader(harukiLogger.NewLoggerFromGlobal("MusicMeta"))
+	metaOutputDir := harukiConfig.Cfg.PJSKRender.MusicMeta.OutputDir
+	metaLoader := meta.NewLoader(harukiLogger.NewLoggerFromGlobal("MusicMeta"), meta.WithOutputDir(metaOutputDir))
 	if err := metaLoader.LoadAll(ctx); err != nil {
 		mainLogger.Warnf("music meta initial load partially failed: %v", err)
 	}
 	metaLoader.StartBackgroundRefresh(ctx, metaRefreshInterval)
-	mainLogger.Infof("Music meta loader started (refresh=%s)", metaRefreshInterval)
+	mainLogger.Infof("Music meta loader started (refresh=%s output_dir=%q)", metaRefreshInterval, metaOutputDir)
 
 	sekaiAPIClient := sekaiAPI.NewSekaiAPIClient(&harukiConfig.Cfg.SekaiAPI)
 	toolboxClient := sekaiAPI.NewToolboxClient(&harukiConfig.Cfg.Toolbox)
@@ -131,7 +132,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			MusicMetaJSON: harukiConfig.Cfg.PJSKRender.UserSnapshot.MusicMetaJSON,
 			MySekaiJSON:   harukiConfig.Cfg.PJSKRender.UserSnapshot.MySekaiJSON,
 		},
-		MetaLoader: metaLoader,
+		MusicMetaOutputDir: metaOutputDir,
+		MetaLoader:         metaLoader,
 		SKForecast: renderapp.SKForecastConfig{
 			LocalBaseURL: harukiConfig.Cfg.PJSKRender.SKForecast.LocalBaseURL,
 			CachePath:    resolveSKForecastCachePath(),

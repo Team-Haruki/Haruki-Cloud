@@ -186,6 +186,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
+	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_LOCAL_BASE_URL", &cfg.PJSKRender.SKForecast.LocalBaseURL)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", &cfg.PJSKRender.SKForecast.CachePath)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
@@ -283,6 +284,7 @@ type ImageCacheConfig struct {
 
 type MusicMetaConfig struct {
 	RefreshInterval time.Duration `yaml:"refresh_interval"` // default: 30m
+	OutputDir       string        `yaml:"output_dir"`       // optional directory to persist fetched music_metas JSON
 }
 
 type SKForecastConfig struct {

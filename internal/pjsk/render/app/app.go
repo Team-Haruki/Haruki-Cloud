@@ -40,7 +40,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	if initCtx == nil {
 		initCtx = context.Background()
 	}
-	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval)
+	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, cfg.MusicMetaOutputDir)
 	if cfg.SharedUpstreamResources == nil {
 		cfg.SharedUpstreamResources = &upstream.SharedResources{}
 	}
@@ -278,7 +278,7 @@ func shouldEnableLocalSnapshotFallback(cfg Config) bool {
 	}
 }
 
-func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration) *meta.Loader {
+func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refreshInterval time.Duration, outputDir string) *meta.Loader {
 	if configured != nil {
 		return configured
 	}
@@ -291,7 +291,7 @@ func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refresh
 		refreshInterval = defaultMusicMetaRefreshInterval
 	}
 
-	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"))
+	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), meta.WithOutputDir(outputDir))
 	if err := loader.LoadAll(initCtx); err != nil {
 		logger.Warnf("meta: initial load failed: %v", err)
 	}

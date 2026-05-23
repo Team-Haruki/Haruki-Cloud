@@ -56,6 +56,7 @@ type Config struct {
 	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
 	UserSnapshot             UserSnapshotConfig
 	MusicMetaRefreshInterval time.Duration
+	MusicMetaOutputDir       string
 	MetaLoader               *meta.Loader
 	SharedUpstreamResources  *upstream.SharedResources
 	SKForecast               sk.ForecastConfig

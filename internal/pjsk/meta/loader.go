@@ -3,6 +3,9 @@ package meta
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,20 +26,36 @@ type regionEntry struct {
 // It uses ETag / Last-Modified for conditional HTTP requests so
 // unchanged responses cost only a single round-trip with no body transfer.
 type Loader struct {
-	http   *resty.Client
-	mu     sync.RWMutex
-	cache  map[string]*regionEntry
-	logger *logger.Logger
+	http      *resty.Client
+	mu        sync.RWMutex
+	cache     map[string]*regionEntry
+	logger    *logger.Logger
+	outputDir string
+}
+
+type LoaderOption func(*Loader)
+
+// WithOutputDir enables atomic persistence of fetched music_metas JSON.
+func WithOutputDir(dir string) LoaderOption {
+	return func(l *Loader) {
+		l.outputDir = strings.TrimSpace(dir)
+	}
 }
 
 // NewLoader creates a Loader ready to use.
 // Pass nil for log to silence all output.
-func NewLoader(log *logger.Logger) *Loader {
-	return &Loader{
+func NewLoader(log *logger.Logger, options ...LoaderOption) *Loader {
+	l := &Loader{
 		http:   resty.New(),
 		cache:  make(map[string]*regionEntry),
 		logger: log,
 	}
+	for _, option := range options {
+		if option != nil {
+			option(l)
+		}
+	}
+	return l
 }
 
 // LoadAll fetches all known regions concurrently.
@@ -113,6 +132,9 @@ func (l *Loader) load(ctx context.Context, region string) error {
 		l.mu.Lock()
 		l.cache[region] = entry
 		l.mu.Unlock()
+		if err := l.persist(region, processed); err != nil {
+			return fmt.Errorf("meta: persist %s: %w", region, err)
+		}
 		if l.logger != nil {
 			l.logger.Infof("meta: %s updated (%d bytes)", region, len(processed))
 		}
@@ -121,6 +143,41 @@ func (l *Loader) load(ctx context.Context, region string) error {
 	default:
 		return fmt.Errorf("meta: fetch %s returned HTTP %d", region, resp.StatusCode())
 	}
+}
+
+func (l *Loader) persist(region string, data []byte) error {
+	if l == nil || strings.TrimSpace(l.outputDir) == "" {
+		return nil
+	}
+	filename, ok := regionFilenames[region]
+	if !ok {
+		return fmt.Errorf("unknown region %q", region)
+	}
+	dir := filepath.Clean(l.outputDir)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(dir, "."+filename+".tmp-*")
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+	defer func() {
+		_ = os.Remove(tmpName)
+	}()
+
+	if _, err := tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Chmod(0o644); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpName, filepath.Join(dir, filename))
 }
 
 // Get returns a copy of the cached music_metas JSON for region.

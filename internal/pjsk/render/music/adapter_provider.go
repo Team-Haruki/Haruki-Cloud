@@ -2,6 +2,7 @@ package music
 
 import (
 	"context"
+	"strings"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
@@ -52,6 +53,42 @@ func (a *ProviderAdapter) GetMusicVocals(musicID int) ([]*masterdata.MusicVocal,
 
 func (a *ProviderAdapter) GetMusicTags(musicID int) ([]string, error) {
 	return a.P.Musics().GetTags(a.Context(), musicID)
+}
+
+func (a *ProviderAdapter) GetCustomMusicScoreTagNames(tagIDs []int) []string {
+	if a == nil || a.P == nil || a.P.MySekai() == nil || len(tagIDs) == 0 {
+		return nil
+	}
+	items := a.P.MySekai().LoadList("customMusicScoreTags.json")
+	if len(items) == 0 {
+		return nil
+	}
+
+	namesByID := make(map[int]string, len(items))
+	for _, item := range items {
+		id, ok := customChartIntValue(item["id"])
+		if !ok || id <= 0 {
+			continue
+		}
+		name, _ := item["name"].(string)
+		name = strings.TrimSpace(name)
+		if name != "" {
+			namesByID[id] = name
+		}
+	}
+
+	result := make([]string, 0, len(tagIDs))
+	seen := make(map[int]struct{}, len(tagIDs))
+	for _, id := range tagIDs {
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+		if name := strings.TrimSpace(namesByID[id]); name != "" {
+			result = append(result, name)
+		}
+	}
+	return result
 }
 
 func (a *ProviderAdapter) GetCharacterByID(id int) (*masterdata.Character, error) {

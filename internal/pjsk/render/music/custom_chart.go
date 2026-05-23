@@ -33,12 +33,31 @@ type customChartEntry struct {
 	ReviewCount         int
 	PlayCount           int
 	FullComboRate       float64
+	TagIDs              []int
 }
 
 type customChartStats struct {
 	NoteCount int
 	BPM       string
 }
+
+type customChartNote struct {
+	ID                   int
+	Ticks                int
+	PreviousConnectionID int
+	NextConnectionID     int
+	IsSkip               bool
+	hasTicks             bool
+	hasPrevious          bool
+	hasNext              bool
+}
+
+type customMusicScoreTagResolver interface {
+	GetCustomMusicScoreTagNames(tagIDs []int) []string
+}
+
+// Long-note combo ticks advance every 240 custom-score ticks.
+const customChartComboTickInterval = 240
 
 var customChartPrefixes = map[string]struct{}{
 	"custom":      {},
@@ -222,7 +241,7 @@ func (c *Controller) buildCustomMusicDetailRequest(query Query, source DataSourc
 		ReviewCount:         entry.ReviewCount,
 		PlayCount:           entry.PlayCount,
 		FullComboRate:       entry.FullComboRate,
-		Tags:                req.MusicInfo.Categories,
+		Tags:                resolveCustomChartTags(source, entry.TagIDs),
 	}
 	return req, nil
 }
@@ -302,6 +321,7 @@ func customChartEntryFromPublishedResponse(value *sekaiapi.UserCustomMusicScoreP
 		ReviewCount:         value.ReviewCount,
 		PlayCount:           value.PlayCount,
 		FullComboRate:       value.FullComboRate,
+		TagIDs:              append([]int(nil), value.CustomMusicScoreTags...),
 	}
 	if info != nil {
 		entry.Title = strings.TrimSpace(info.Title)
@@ -333,16 +353,121 @@ func parseCustomMusicScoreStats(chartJSON string) customChartStats {
 			EventType   int `json:"eventType"`
 			ChangeValue any `json:"changeValue"`
 		} `json:"MusicScoreEventDataList"`
-		NoteList []stdjson.RawMessage `json:"NoteList"`
+		NoteList []customChartNote `json:"NoteList"`
 	}
 	if err := stdjson.Unmarshal(chartRaw, &chart); err != nil {
 		return customChartStats{}
 	}
-
 	return customChartStats{
-		NoteCount: len(chart.NoteList),
+		NoteCount: calculateCustomChartComboCount(chart.NoteList),
 		BPM:       formatCustomChartBPMs(chart.MusicScoreEventDataList),
 	}
+}
+
+func (n *customChartNote) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ID                   int   `json:"id"`
+		Ticks                *int  `json:"ticks"`
+		PreviousConnectionID *int  `json:"previousConnectionId"`
+		NextConnectionID     *int  `json:"nextConnectionId"`
+		IsSkip               *bool `json:"isSkip"`
+	}
+	if err := stdjson.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	n.ID = raw.ID
+	if raw.Ticks != nil {
+		n.Ticks = *raw.Ticks
+		n.hasTicks = true
+	}
+	if raw.PreviousConnectionID != nil {
+		n.PreviousConnectionID = *raw.PreviousConnectionID
+		n.hasPrevious = true
+	}
+	if raw.NextConnectionID != nil {
+		n.NextConnectionID = *raw.NextConnectionID
+		n.hasNext = true
+	}
+	if raw.IsSkip != nil {
+		n.IsSkip = *raw.IsSkip
+	}
+	return nil
+}
+
+func (n customChartNote) validForCombo() bool {
+	return n.ID != 0 && n.hasTicks && n.hasPrevious && n.hasNext
+}
+
+func calculateCustomChartComboCount(notes []customChartNote) int {
+	if len(notes) == 0 {
+		return 0
+	}
+
+	byID := make(map[int]customChartNote, len(notes))
+	for _, note := range notes {
+		if note.validForCombo() {
+			byID[note.ID] = note
+		}
+	}
+	if len(byID) == 0 {
+		return 0
+	}
+
+	total := 0
+	for _, note := range notes {
+		if !note.validForCombo() {
+			continue
+		}
+		switch {
+		case note.PreviousConnectionID == -1 && note.NextConnectionID == -1:
+			if !note.IsSkip {
+				total++
+			}
+		case note.PreviousConnectionID == -1 && note.NextConnectionID != -1:
+			total += calculateCustomChartChainComboCount(note, byID)
+		}
+	}
+	return total
+}
+
+func calculateCustomChartChainComboCount(start customChartNote, byID map[int]customChartNote) int {
+	chain := []customChartNote{start}
+	seen := map[int]struct{}{start.ID: {}}
+	current := start
+	for current.NextConnectionID != -1 {
+		next, ok := byID[current.NextConnectionID]
+		if !ok {
+			break
+		}
+		if _, exists := seen[next.ID]; exists {
+			break
+		}
+		chain = append(chain, next)
+		seen[next.ID] = struct{}{}
+		current = next
+	}
+	if len(chain) == 0 {
+		return 0
+	}
+
+	duration := chain[len(chain)-1].Ticks - chain[0].Ticks
+	if duration < 0 {
+		duration = 0
+	}
+	combo := ceilPositiveDiv(duration, customChartComboTickInterval) + 1
+	for _, note := range chain {
+		if note.IsSkip {
+			combo++
+		}
+	}
+	return combo
+}
+
+func ceilPositiveDiv(value int, divisor int) int {
+	if value <= 0 || divisor <= 0 {
+		return 0
+	}
+	return (value + divisor - 1) / divisor
 }
 
 func formatCustomChartBPMs(events []struct {
@@ -404,6 +529,51 @@ func customChartFloatValue(value any) (float64, bool) {
 
 func formatCustomChartFloat(value float64) string {
 	return strings.TrimRight(strings.TrimRight(strconv.FormatFloat(value, 'f', 2, 64), "0"), ".")
+}
+
+func customChartIntValue(value any) (int, bool) {
+	switch v := value.(type) {
+	case int:
+		return v, true
+	case int64:
+		return int(v), true
+	case float64:
+		return int(v), true
+	case stdjson.Number:
+		if parsed, err := v.Int64(); err == nil {
+			return int(parsed), true
+		}
+		parsed, err := v.Float64()
+		return int(parsed), err == nil
+	case string:
+		parsed, err := strconv.Atoi(strings.TrimSpace(v))
+		return parsed, err == nil
+	default:
+		return 0, false
+	}
+}
+
+func resolveCustomChartTags(source DataSource, tagIDs []int) []string {
+	if len(tagIDs) == 0 {
+		return nil
+	}
+	if source != nil {
+		if resolver, ok := any(source).(customMusicScoreTagResolver); ok {
+			return compactCustomChartStrings(resolver.GetCustomMusicScoreTagNames(tagIDs))
+		}
+	}
+	return nil
+}
+
+func compactCustomChartStrings(values []string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 func decodeCustomMusicScoreJSON(raw []byte) (string, error) {

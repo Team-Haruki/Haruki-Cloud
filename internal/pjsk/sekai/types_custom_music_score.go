@@ -13,6 +13,7 @@ type UserCustomMusicScorePublishedResponse struct {
 	UserID                       int64                     `json:"userId"`
 	UserName                     string                    `json:"userName"`
 	MusicID                      int                       `json:"musicId"`
+	CustomMusicScoreTags         []int                     `json:"customMusicScoreTags"`
 	MusicDifficultyType          string                    `json:"musicDifficultyType"`
 	PlayLevel                    int                       `json:"playLevel"`
 	Description                  string                    `json:"description"`

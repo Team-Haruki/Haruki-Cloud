@@ -124,6 +124,7 @@ func TestSekaiAPIClientGetsCustomMusicScorePublishedByID(t *testing.T) {
 				"userCustomMusicScoreId": "_g5yakrvqobnfq6hafdob7ed8jwm",
 				"userName": "Maker",
 				"musicId": 47,
+				"customMusicScoreTags": [9, 6, 4],
 				"musicDifficultyType": "master",
 				"playLevel": 31,
 				"userCustomMusicScoreInfoJson": {
@@ -150,5 +151,8 @@ func TestSekaiAPIClientGetsCustomMusicScorePublishedByID(t *testing.T) {
 	}
 	if item.UserCustomMusicScoreInfoJSON == nil || item.UserCustomMusicScoreInfoJSON.UserCustomMusicScorePath != "hash-a/hash-b" {
 		t.Fatalf("unexpected score info: %#v", item.UserCustomMusicScoreInfoJSON)
+	}
+	if len(item.CustomMusicScoreTags) != 3 || item.CustomMusicScoreTags[0] != 9 || item.CustomMusicScoreTags[2] != 4 {
+		t.Fatalf("unexpected custom score tags: %#v", item.CustomMusicScoreTags)
 	}
 }

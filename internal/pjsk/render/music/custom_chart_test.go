@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"reflect"
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -34,7 +35,9 @@ func (s customChartClientStub) GetCustomMusicScore(_ string, scorePath string) (
 
 type customChartDirectSource struct {
 	*vocalBuilderTestSource
-	region renderregion.Value
+	region         renderregion.Value
+	musicTags      []string
+	customTagNames map[int]string
 }
 
 func (s *customChartDirectSource) DefaultRegion() renderregion.Value {
@@ -46,6 +49,25 @@ func (s *customChartDirectSource) DefaultRegion() renderregion.Value {
 
 func (s *customChartDirectSource) SearchMusic(string) (*masterdata.Music, error) {
 	return nil, fmt.Errorf("music not found")
+}
+
+func (s *customChartDirectSource) GetMusicTags(int) ([]string, error) {
+	return append([]string(nil), s.musicTags...), nil
+}
+
+func (s *customChartDirectSource) GetCustomMusicScoreTagNames(tagIDs []int) []string {
+	result := make([]string, 0, len(tagIDs))
+	seen := make(map[int]struct{}, len(tagIDs))
+	for _, id := range tagIDs {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		if value := s.customTagNames[id]; value != "" {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 func TestBuildCustomMusicChartRequestUsesDirectPublishedIDWithoutSnapshot(t *testing.T) {
@@ -149,7 +171,7 @@ func TestBuildCustomMusicChartRequestMapsCustomScoreNotFound(t *testing.T) {
 }
 
 func TestBuildCustomMusicDetailRequestUsesDirectPublishedID(t *testing.T) {
-	chartJSON := `{"MusicScoreEventDataList":[{"id":1,"ticks":0,"eventType":0,"changeValue":180},{"id":2,"ticks":480,"eventType":0,"changeValue":210}],"NoteList":[{"id":1},{"id":2},{"id":3}]}`
+	chartJSON := `{"MusicScoreEventDataList":[{"id":1,"ticks":0,"eventType":0,"changeValue":180},{"id":2,"ticks":480,"eventType":0,"changeValue":210}],"NoteList":[{"id":1,"ticks":0,"previousConnectionId":-1,"nextConnectionId":2,"isSkip":false},{"id":2,"ticks":491760,"previousConnectionId":1,"nextConnectionId":-1,"isSkip":false}]}`
 	scoreBody := gzipBytes(t, []byte(chartJSON))
 	source := &customChartDirectSource{vocalBuilderTestSource: &vocalBuilderTestSource{
 		music: &masterdata.Music{
@@ -160,8 +182,13 @@ func TestBuildCustomMusicDetailRequestUsesDirectPublishedID(t *testing.T) {
 			Arranger:        "ryo",
 			AssetBundleName: "jacket_s_047",
 			PublishedAt:     1700000000000,
+			Categories:      []string{"mv_3d"},
 		},
 		difficulties: []*masterdata.MusicDifficulty{{MusicID: 47, MusicDifficulty: "master", PlayLevel: 30, TotalNoteCount: 1000}},
+	}, musicTags: []string{"vocaloid", "light_music_club"}, customTagNames: map[int]string{
+		4: "観賞用譜面",
+		6: "物量譜面",
+		9: "縦連",
 	}}
 	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
 	controller.SetCustomMusicScoreClient(customChartClientStub{
@@ -172,6 +199,7 @@ func TestBuildCustomMusicDetailRequestUsesDirectPublishedID(t *testing.T) {
 			MusicID:                47,
 			MusicDifficultyType:    "master",
 			PlayLevel:              31,
+			CustomMusicScoreTags:   []int{9, 6, 4},
 			Description:            "hello chart",
 			PreviewStartTimeSec:    12.5,
 			PublishedAt:            1710000000000,
@@ -199,14 +227,34 @@ func TestBuildCustomMusicDetailRequestUsesDirectPublishedID(t *testing.T) {
 	if req.CustomChartInfo.Title != "Direct Custom" || req.CustomChartInfo.Author != "Maker" {
 		t.Fatalf("unexpected custom chart info: %+v", req.CustomChartInfo)
 	}
-	if req.CustomChartInfo.NoteCount != 3 || req.CustomChartInfo.BPM != "180 / 210" {
+	if req.CustomChartInfo.NoteCount != 2050 || req.CustomChartInfo.BPM != "180 / 210" {
 		t.Fatalf("unexpected custom chart stats: %+v", req.CustomChartInfo)
 	}
-	if len(req.Difficulty.Level) != 1 || req.Difficulty.Level[0] != 31 || req.Difficulty.NoteCount[0] != 3 {
+	if len(req.Difficulty.Level) != 1 || req.Difficulty.Level[0] != 31 || req.Difficulty.NoteCount[0] != 2050 {
 		t.Fatalf("unexpected difficulty: %+v", req.Difficulty)
+	}
+	if want := []string{"縦連", "物量譜面", "観賞用譜面"}; !reflect.DeepEqual(req.CustomChartInfo.Tags, want) {
+		t.Fatalf("unexpected tags: got %v want %v", req.CustomChartInfo.Tags, want)
 	}
 	if len(req.Alias) != 0 || req.LeaderboardMatrix != nil {
 		t.Fatalf("custom detail should not include alias or leaderboard: alias=%v leaderboard=%v", req.Alias, req.LeaderboardMatrix)
+	}
+}
+
+func TestParseCustomMusicScoreStatsDoesNotFallbackToNoteListLength(t *testing.T) {
+	stats := parseCustomMusicScoreStats(`{"MusicScoreEventDataList":[],"NoteList":[{"id":1},{"id":2},{"id":3}]}`)
+	if stats.NoteCount != 0 {
+		t.Fatalf("NoteCount = %d, want 0", stats.NoteCount)
+	}
+
+	stats = parseCustomMusicScoreStats(`{"chart":{"totalNoteCount":2050,"MusicScoreEventDataList":[],"NoteList":[{"id":1}]}}`)
+	if stats.NoteCount != 0 {
+		t.Fatalf("NoteCount = %d, want 0", stats.NoteCount)
+	}
+
+	stats = parseCustomMusicScoreStats(`{"MusicScoreEventDataList":[],"NoteList":[{"id":1,"ticks":0,"previousConnectionId":-1,"nextConnectionId":2,"isSkip":false},{"id":2,"ticks":491760,"previousConnectionId":1,"nextConnectionId":-1,"isSkip":false}]}`)
+	if stats.NoteCount != 2050 {
+		t.Fatalf("NoteCount = %d, want 2050", stats.NoteCount)
 	}
 }
 

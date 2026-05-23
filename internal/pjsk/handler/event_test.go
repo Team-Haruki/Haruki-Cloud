@@ -402,16 +402,30 @@ func TestEventRecordHandleEmbedsSelfSelector(t *testing.T) {
 	}
 }
 
-func TestEventPlannerHandleRequiresExplicitRegion(t *testing.T) {
+func TestEventPlannerHandleAllowsDefaultRegion(t *testing.T) {
 	h := sekaiHandlers{}.EventPlannerHandle()
 
-	_, err := h.Handle(&PjskHandlerContext{
+	result, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/活动规划",
 		ArgText:    "pt500w 当前",
 	})
-	if err == nil || !strings.Contains(err.Error(), "需要在指令前加区服") {
-		t.Fatalf("expected explicit region error, got %v", err)
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if result == nil || result.Module != parser.ModuleEvent || result.Mode != "event-planner" {
+		t.Fatalf("unexpected command request: %+v", result)
+	}
+	if result.RegionExplicit {
+		t.Fatalf("expected implicit region, got %+v", result)
+	}
+
+	var params eventPlannerCommandParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.TargetPoint != 5_000_000 || !params.Deck.UseCurrentDeck {
+		t.Fatalf("unexpected planner params: %+v", params)
 	}
 }
 
@@ -464,6 +478,9 @@ func TestEventPlannerFixedCardIDsDoNotBecomeTargetPoint(t *testing.T) {
 	_, err := parseEventPlannerParams("#12345 23456 34567 45678 56789 歌 虾 5火", "/cn活动规划")
 	if err == nil || !strings.Contains(err.Error(), "需要提供目标 pt") {
 		t.Fatalf("expected missing target error, got %v", err)
+	}
+	if strings.Contains(err.Error(), "活动规划用法") {
+		t.Fatalf("expected concise missing target error, got %v", err)
 	}
 }
 

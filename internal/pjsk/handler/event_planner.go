@@ -26,12 +26,12 @@ import (
 )
 
 const eventPlannerHelp = `活动规划用法:
-/cn活动规划 pt1000w
-/cn活动规划 pt1000w 当前pt120w 歌 虾ex 龙hd
+/活动规划 pt1000w
+/活动规划 pt1000w 当前pt120w 歌 虾ex 龙hd
 /jp活动规划 t100 event202 knd 歌 野车 10火
 /cn活动规划 pt1200w wl3 mzk #123 456 789 101 112 队友综合25w 队友实效200
 
-必须在指令前写区服: jp/cn/en/tw/kr。
+不写区服时使用默认绑定区服，也可以加 jp/cn/en/tw/kr 前缀指定。
 参数: pt/目标, t排名, 当前pt, 1-10火, 歌曲/难度, 野车, event活动ID, wl章节角色, #固定卡/角色, 当前/顶配/画布/已读/队友综合/队友实效等活动组卡参数。
 不写歌曲时默认算虾 EXPERT 和 龙 HARD；不写火数时默认算 5火 和 10火；不写卡组时默认使用最优卡组。`
 
@@ -87,9 +87,6 @@ func (sekaiHandlers) EventPlannerHandle() HarukiSekaiCommandHandler {
 		},
 		Regions: AllRegions,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			if !ctx.HasExplicitRegion() {
-				return nil, onebot11.NewReplayError("需要在指令前加区服，例如：/cn活动规划 pt500w 当前\n\n%s", eventPlannerHelp)
-			}
 			if ctx.Flags()["is_help"] {
 				return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-planner-help", nil), nil
 			}
@@ -105,7 +102,7 @@ func (sekaiHandlers) EventPlannerHandle() HarukiSekaiCommandHandler {
 func parseEventPlannerParams(args string, trigger string) (eventPlannerCommandParams, error) {
 	args = strings.TrimSpace(args)
 	if args == "" || eventPlannerContainsAny(args, "help", "帮助", "用法", "?") {
-		return eventPlannerCommandParams{}, onebot11.NewReplayError("%s", eventPlannerHelp)
+		return eventPlannerCommandParams{}, onebot11.NewReplayError("需要提供目标 pt 或目标排名，例如：%s pt1000w\n查看完整用法：%s help", trigger, trigger)
 	}
 
 	params := eventPlannerCommandParams{
@@ -145,7 +142,7 @@ func parseEventPlannerParams(args string, trigger string) (eventPlannerCommandPa
 	}
 
 	if params.TargetPoint == 0 && params.TargetRank == 0 {
-		return eventPlannerCommandParams{}, onebot11.NewReplayError("需要提供目标 pt 或目标排名，例如：/cn活动规划 pt500w 当前\n\n%s", eventPlannerHelp)
+		return eventPlannerCommandParams{}, onebot11.NewReplayError("需要提供目标 pt 或目标排名，例如：%s pt1000w", trigger)
 	}
 	return params, nil
 }

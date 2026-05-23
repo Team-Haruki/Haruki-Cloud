@@ -106,6 +106,12 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	if got := cardAsset["afterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member/res010_no034/card_after_training.png" {
 		t.Fatalf("unexpected card after-training path: %s", got)
 	}
+	if got := cardAsset["deckAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_cutout/res010_no034/after_training.png" {
+		t.Fatalf("unexpected deck after-training path: %s", got)
+	}
+	if got := cardAsset["smallAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_small/res010_no034/card_after_training.png" {
+		t.Fatalf("unexpected small after-training path: %s", got)
+	}
 	honorRequests := resources["honorRequests"].(map[string]any)
 	honorReq := honorRequests["7001:1:main"].(*drawing.HonorRequest)
 	if honorReq.HonorImgPath == nil || !strings.HasSuffix(*honorReq.HonorImgPath, "honor/honor_bg_event_demo/degree_main.png") {

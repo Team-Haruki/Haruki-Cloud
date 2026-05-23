@@ -443,15 +443,34 @@ func customProfileCardAssetMap(app *renderapp.App, region renderregion.Value, ca
 	item["afterTrainingPath"] = common.ResolveCardMemberImagePath(helper, region, card.AssetBundleName, "card_after_training.png")
 	item["deckNormalPath"] = resolveCustomProfileDeckCardImagePath(app, region, card.AssetBundleName, false)
 	item["deckAfterTrainingPath"] = resolveCustomProfileDeckCardImagePath(app, region, card.AssetBundleName, true)
+	item["smallNormalPath"] = resolveCustomProfileSmallCardImagePath(app, region, card.AssetBundleName, false)
+	item["smallAfterTrainingPath"] = resolveCustomProfileSmallCardImagePath(app, region, card.AssetBundleName, true)
 	return item
+}
+
+func resolveCustomProfileSmallCardImagePath(app *renderapp.App, region renderregion.Value, bundle string, afterTraining bool) string {
+	fileName := "card_normal.png"
+	if afterTraining {
+		fileName = "card_after_training.png"
+	}
+	helper := (*assets.AssetHelper)(nil)
+	if app != nil {
+		helper = app.Assets
+	}
+	return assets.ResolveRegionAssetPath(helper, region.String(),
+		filepath.Join("character", "member_small", bundle, fileName),
+		filepath.Join("character", "member_small", bundle+"_rip", fileName),
+	)
 }
 
 func resolveCustomProfileDeckCardImagePath(app *renderapp.App, region renderregion.Value, bundle string, afterTraining bool) string {
 	fullFile := "card_normal.png"
 	cutoutFile := "normal.png"
+	cutoutTrimFile := "card_normal_trim.png"
 	if afterTraining {
 		fullFile = "card_after_training.png"
 		cutoutFile = "after_training.png"
+		cutoutTrimFile = "card_after_training_trim.png"
 	}
 	helper := (*assets.AssetHelper)(nil)
 	if app != nil {
@@ -463,7 +482,9 @@ func resolveCustomProfileDeckCardImagePath(app *renderapp.App, region renderregi
 	}
 	return assets.ResolveRegionAssetPath(helper, region.String(),
 		filepath.Join("character", "member_cutout", bundle, cutoutFile),
+		filepath.Join("character", "member_cutout", bundle, cutoutTrimFile),
 		filepath.Join("character", "member_cutout", bundle+"_rip", cutoutFile),
+		filepath.Join("character", "member_cutout", bundle+"_rip", cutoutTrimFile),
 		filepath.Join("character", "member_cutout", bundle, "deck.png"),
 		filepath.Join("character", "member_cutout", bundle+"_rip", "deck.png"),
 		filepath.Join("character", "member", bundle, fullFile),

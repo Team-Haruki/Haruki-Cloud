@@ -102,6 +102,10 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	if got := stamp["imagePath"].(string); got != "asset/cn-assets/startapp/stamp/stamp0230/stamp0230.png" {
 		t.Fatalf("unexpected stamp image path: %s", got)
 	}
+	charaIcons := resources["charaRankIconPathMap"].(map[string]string)
+	if got := charaIcons["21"]; got != "static_images/chara_rank_icon/miku.png" {
+		t.Fatalf("unexpected chara rank icon path: %s", got)
+	}
 	cardAsset := resources["cardAssets"].(map[int]map[string]any)[915]
 	if got := cardAsset["afterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member/res010_no034/card_after_training.png" {
 		t.Fatalf("unexpected card after-training path: %s", got)
@@ -124,6 +128,25 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	}
 	if bondsReq.CharaID == nil || *bondsReq.CharaID != "22" || bondsReq.CharaID2 == nil || *bondsReq.CharaID2 != "11" {
 		t.Fatalf("unexpected reverse bonds honor character order: %+v %+v", bondsReq.CharaID, bondsReq.CharaID2)
+	}
+}
+
+func TestCustomProfileHonorFcApLevelsUseMusicClearCounts(t *testing.T) {
+	levels := customProfileHonorFcApLevels(&sekaiapi.GetAnotherProfileResponse{
+		UserMusicDifficultyClearCount: []sekaiapi.AnotherUserMusicDifficultyClearCount{
+			{MusicDifficultyType: "master", FullCombo: 394, AllPerfect: 12},
+			{MusicDifficultyType: "append", FullCombo: 3, AllPerfect: 1},
+		},
+	})
+
+	if got := *levels[3013]; got != 394 {
+		t.Fatalf("master fc level = %d, want 394", got)
+	}
+	if got := *levels[3014]; got != 12 {
+		t.Fatalf("master ap level = %d, want 12", got)
+	}
+	if got := *levels[4700]; got != 3 {
+		t.Fatalf("append fc level = %d, want 3", got)
 	}
 }
 

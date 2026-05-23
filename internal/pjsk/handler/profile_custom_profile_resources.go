@@ -24,6 +24,7 @@ import (
 func buildCustomProfileResources(ctx context.Context, app *renderapp.App, region string, card sekaiapi.UserCustomProfileCard, resp *sekaiapi.GetAnotherProfileResponse) (drawing.CustomProfileResources, error) {
 	resources := drawing.CustomProfileResources{}
 	regionValue := renderregion.WithDefault(renderregion.Normalize(region))
+	resources["charaRankIconPathMap"] = customProfileCharaRankIconPathMap(app)
 	collector := newCustomProfileResourceCollector(card, resp)
 
 	if err := collectCustomProfileMasterResources(app, regionValue, collector, resources); err != nil {
@@ -40,6 +41,18 @@ func buildCustomProfileResources(ctx context.Context, app *renderapp.App, region
 	}
 
 	return resources, nil
+}
+
+func customProfileCharaRankIconPathMap(app *renderapp.App) map[string]string {
+	helper := (*assets.AssetHelper)(nil)
+	if app != nil {
+		helper = app.Assets
+	}
+	result := make(map[string]string, len(assets.CharacterIDToNickname))
+	for id, nickname := range assets.CharacterIDToNickname {
+		result[strconv.Itoa(id)] = assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("chara_rank_icon", nickname+".png"))
+	}
+	return result
 }
 
 type customProfileResourceCollector struct {
@@ -78,6 +91,7 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 	}
 
 	data := card.CustomProfileCard
+	fcApLevels := customProfileHonorFcApLevels(resp)
 	for _, item := range data.Generals {
 		addID(c.playerInfoIDs, item.PlayerInfoResourceID)
 	}
@@ -120,11 +134,12 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 		}
 		for _, row := range resp.UserProfileHonors {
 			query := renderhonor.Query{
-				HonorID:            row.HonorID,
-				HonorLevel:         row.HonorLevel,
-				IsMain:             row.Seq == 1,
-				BondsHonorViewType: row.BondsHonorViewType,
-				BondsHonorWordID:   row.BondsHonorWordID,
+				HonorID:             row.HonorID,
+				HonorLevel:          row.HonorLevel,
+				IsMain:              row.Seq == 1,
+				BondsHonorViewType:  row.BondsHonorViewType,
+				BondsHonorWordID:    row.BondsHonorWordID,
+				FcOrApLevelOverride: fcApLevels[row.HonorID],
 			}
 			if query.HonorID <= 0 {
 				continue
@@ -138,9 +153,10 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 	for _, item := range data.Honors {
 		level := customProfileUserHonorLevel(resp, item.ID)
 		query := renderhonor.Query{
-			HonorID:    item.ID,
-			HonorLevel: level,
-			IsMain:     item.FullSize,
+			HonorID:             item.ID,
+			HonorLevel:          level,
+			IsMain:              item.FullSize,
+			FcOrApLevelOverride: fcApLevels[item.ID],
 		}
 		if query.HonorID > 0 {
 			c.honorQueries[customProfileHonorRequestKey(item.ID, level, item.FullSize)] = query
@@ -549,6 +565,41 @@ func customProfileUserHonorLevel(resp *sekaiapi.GetAnotherProfileResponse, honor
 		}
 	}
 	return 0
+}
+
+func customProfileHonorFcApLevels(resp *sekaiapi.GetAnotherProfileResponse) map[int]*int {
+	if resp == nil || len(resp.UserMusicDifficultyClearCount) == 0 {
+		return nil
+	}
+	counts := make(map[string]sekaiapi.AnotherUserMusicDifficultyClearCount, len(resp.UserMusicDifficultyClearCount))
+	for _, count := range resp.UserMusicDifficultyClearCount {
+		difficulty := strings.ToLower(strings.TrimSpace(string(count.MusicDifficultyType)))
+		if difficulty != "" {
+			counts[difficulty] = count
+		}
+	}
+	result := make(map[int]*int)
+	for _, honorID := range []int{3009, 3010, 3011, 3012, 3013, 3014, 4700, 4701} {
+		difficulty, score, ok := renderhonor.LookupFcApCounter(honorID)
+		if !ok {
+			continue
+		}
+		count, ok := counts[strings.ToLower(strings.TrimSpace(difficulty))]
+		if !ok {
+			continue
+		}
+		value := 0
+		switch score {
+		case "fullCombo":
+			value = count.FullCombo
+		case "allPerfect":
+			value = count.AllPerfect
+		default:
+			continue
+		}
+		result[honorID] = new(value)
+	}
+	return result
 }
 
 func customProfileUserBondsHonorLevel(resp *sekaiapi.GetAnotherProfileResponse, bondsHonorID int) int {

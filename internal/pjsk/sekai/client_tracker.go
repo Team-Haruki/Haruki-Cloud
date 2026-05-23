@@ -3,6 +3,8 @@ package sekai
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"haruki-cloud/config"
@@ -102,6 +104,11 @@ func (c *TrackerClient) TraceRankingByRank(server string, eventID, rank int) (*T
 	return getAs[TraceRankingResponse](c, path)
 }
 
+func (c *TrackerClient) TraceRankingsByRanks(server string, eventID int, ranks []int) (*BatchTraceRankingResponse, error) {
+	path := fmt.Sprintf("/event/%s/%d/trace-ranking/ranks?%s", server, eventID, encodeRankQuery(ranks))
+	return getAs[BatchTraceRankingResponse](c, path)
+}
+
 // TraceRankingByUser fetches the historical score trend for a specific user
 // in a normal event.
 //
@@ -118,6 +125,11 @@ func (c *TrackerClient) TraceRankingByUser(server string, eventID int, userID in
 func (c *TrackerClient) TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*WorldBloomTraceRankingResponse, error) {
 	path := fmt.Sprintf("/event/%s/%d/trace-world-bloom-ranking/character/%d/rank/%d", server, eventID, characterID, rank)
 	return getAs[WorldBloomTraceRankingResponse](c, path)
+}
+
+func (c *TrackerClient) TraceWorldBloomRankingsByRanks(server string, eventID, characterID int, ranks []int) (*BatchWorldBloomTraceRankingResponse, error) {
+	path := fmt.Sprintf("/event/%s/%d/trace-world-bloom-ranking/character/%d/ranks?%s", server, eventID, characterID, encodeRankQuery(ranks))
+	return getAs[BatchWorldBloomTraceRankingResponse](c, path)
 }
 
 // TraceWorldBloomRankingByUser fetches the historical score trend for a specific user
@@ -178,6 +190,17 @@ func (c *TrackerClient) GetUserEventData(server string, eventID int, userID int6
 func (c *TrackerClient) GetEventStatus(server string, eventID int) (*EventStatusResponse, error) {
 	path := fmt.Sprintf("/event/%s/%d/status", server, eventID)
 	return getAs[EventStatusResponse](c, path)
+}
+
+func encodeRankQuery(ranks []int) string {
+	values := url.Values{}
+	for _, rank := range ranks {
+		if rank <= 0 {
+			continue
+		}
+		values.Add("rank", strconv.Itoa(rank))
+	}
+	return values.Encode()
 }
 
 // getAs executes a GET and unmarshals the JSON body into T.

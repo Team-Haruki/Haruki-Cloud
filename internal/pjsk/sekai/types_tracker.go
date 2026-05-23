@@ -47,6 +47,24 @@ type WorldBloomTraceRankingResponse struct {
 	UserData RankingUserData           `json:"userData"`
 }
 
+type BatchTraceRankingItem struct {
+	Rank     int             `json:"rank"`
+	RankData []RankDataPoint `json:"rankData"`
+}
+
+type BatchTraceRankingResponse struct {
+	Items []BatchTraceRankingItem `json:"items"`
+}
+
+type BatchWorldBloomTraceRankingItem struct {
+	Rank     int                       `json:"rank"`
+	RankData []WorldBloomRankDataPoint `json:"rankData"`
+}
+
+type BatchWorldBloomTraceRankingResponse struct {
+	Items []BatchWorldBloomTraceRankingItem `json:"items"`
+}
+
 // RankingLine is one border-score entry returned by GetRankingLines /
 // GetWorldBloomRankingLines.
 type RankingLine struct {

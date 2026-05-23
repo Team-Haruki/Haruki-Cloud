@@ -1,6 +1,7 @@
 package sk
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -11,6 +12,14 @@ import (
 )
 
 const skLineTrackerConcurrency = 6
+
+type trackerRankTraceBatchSource interface {
+	TraceRankingsByRanks(server string, eventID int, ranks []int) (*sekaiapi.BatchTraceRankingResponse, error)
+}
+
+type trackerWorldBloomRankTraceBatchSource interface {
+	TraceWorldBloomRankingsByRanks(server string, eventID, characterID int, ranks []int) (*sekaiapi.BatchWorldBloomTraceRankingResponse, error)
+}
 
 type lineRankResult struct {
 	info drawing.RankInfo
@@ -29,6 +38,10 @@ func (c *Controller) buildLineRanksOrUserFromTracker(server string, eventID int,
 }
 
 func (c *Controller) buildLineRanksFromTracker(server string, eventID int, ranks []int, wlCharacterID *int, skipMissing bool) ([]drawing.RankInfo, error) {
+	if out, ok, err := c.buildLineRanksFromTrackerBatch(server, eventID, ranks, wlCharacterID, skipMissing); ok {
+		return out, err
+	}
+
 	results := make([]lineRankResult, len(ranks))
 
 	var group errgroup.Group
@@ -68,6 +81,130 @@ func (c *Controller) buildLineRanksFromTracker(server string, eventID int, ranks
 		return out[i].Rank < out[j].Rank
 	})
 	return out, nil
+}
+
+func (c *Controller) buildLineRanksFromTrackerBatch(server string, eventID int, ranks []int, wlCharacterID *int, skipMissing bool) ([]drawing.RankInfo, bool, error) {
+	if c == nil || c.tracker == nil || len(ranks) == 0 {
+		return nil, false, nil
+	}
+
+	if wlCharacterID != nil && *wlCharacterID > 0 {
+		batch, ok := c.tracker.(trackerWorldBloomRankTraceBatchSource)
+		if !ok {
+			return nil, false, nil
+		}
+		resp, err := batch.TraceWorldBloomRankingsByRanks(server, eventID, *wlCharacterID, ranks)
+		if err != nil {
+			if errors.Is(err, sekaiapi.ErrRankingNotFound) {
+				return nil, false, nil
+			}
+			return nil, true, err
+		}
+		out, err := buildWorldBloomLineRanksFromBatchTrace(ranks, resp, skipMissing)
+		return out, true, err
+	}
+
+	batch, ok := c.tracker.(trackerRankTraceBatchSource)
+	if !ok {
+		return nil, false, nil
+	}
+	resp, err := batch.TraceRankingsByRanks(server, eventID, ranks)
+	if err != nil {
+		if errors.Is(err, sekaiapi.ErrRankingNotFound) {
+			return nil, false, nil
+		}
+		return nil, true, err
+	}
+	out, err := buildLineRanksFromBatchTrace(ranks, resp, skipMissing)
+	return out, true, err
+}
+
+func buildLineRanksFromBatchTrace(ranks []int, resp *sekaiapi.BatchTraceRankingResponse, skipMissing bool) ([]drawing.RankInfo, error) {
+	pointsByRank := make(map[int][]sekaiapi.RankDataPoint)
+	if resp != nil {
+		for _, item := range resp.Items {
+			if len(item.RankData) > 0 {
+				pointsByRank[item.Rank] = item.RankData
+			}
+		}
+	}
+
+	out := make([]drawing.RankInfo, 0, len(ranks))
+	for _, rank := range ranks {
+		points := pointsByRank[rank]
+		if len(points) == 0 {
+			if skipMissing {
+				continue
+			}
+			return nil, fmt.Errorf("tracker rank %d query failed: %w", rank, sekaiapi.ErrRankingNotFound)
+		}
+		out = append(out, rankInfoFromTracePoints(rank, points))
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Rank < out[j].Rank
+	})
+	return out, nil
+}
+
+func buildWorldBloomLineRanksFromBatchTrace(ranks []int, resp *sekaiapi.BatchWorldBloomTraceRankingResponse, skipMissing bool) ([]drawing.RankInfo, error) {
+	pointsByRank := make(map[int][]sekaiapi.WorldBloomRankDataPoint)
+	if resp != nil {
+		for _, item := range resp.Items {
+			if len(item.RankData) > 0 {
+				pointsByRank[item.Rank] = item.RankData
+			}
+		}
+	}
+
+	out := make([]drawing.RankInfo, 0, len(ranks))
+	for _, rank := range ranks {
+		points := pointsByRank[rank]
+		if len(points) == 0 {
+			if skipMissing {
+				continue
+			}
+			return nil, fmt.Errorf("tracker rank %d query failed: %w", rank, sekaiapi.ErrRankingNotFound)
+		}
+		out = append(out, rankInfoFromWorldBloomTracePoints(rank, points))
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Rank < out[j].Rank
+	})
+	return out, nil
+}
+
+func rankInfoFromTracePoints(rank int, points []sekaiapi.RankDataPoint) drawing.RankInfo {
+	last := points[len(points)-1]
+	rankValue := rank
+	if last.Rank > 0 {
+		rankValue = last.Rank
+	}
+	info := drawing.RankInfo{
+		Rank:  rankValue,
+		Name:  "",
+		Score: drawing.IntPtr(last.Score),
+		Time:  formatTrackerTimestamp(last.Timestamp),
+	}
+	applyRankInfoMetrics(&info, rankTraceSamples(points))
+	return info
+}
+
+func rankInfoFromWorldBloomTracePoints(rank int, points []sekaiapi.WorldBloomRankDataPoint) drawing.RankInfo {
+	last := points[len(points)-1]
+	rankValue := rank
+	if last.Rank > 0 {
+		rankValue = last.Rank
+	}
+	info := drawing.RankInfo{
+		Rank:  rankValue,
+		Name:  "",
+		Score: drawing.IntPtr(last.Score),
+		Time:  formatTrackerTimestamp(last.Timestamp),
+	}
+	applyRankInfoMetrics(&info, worldBloomTraceSamples(points))
+	return info
 }
 
 func (c *Controller) buildSingleRankLineFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, error) {

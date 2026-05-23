@@ -450,6 +450,43 @@ func (s *lineMetricsOnlyTrackerSource) TraceWorldBloomRankingByUser(server strin
 	}, nil
 }
 
+type batchLineMetricsTrackerSource struct {
+	lineMetricsOnlyTrackerSource
+	batchTraceRankCalls      atomic.Int32
+	batchWorldTraceRankCalls atomic.Int32
+}
+
+func (s *batchLineMetricsTrackerSource) TraceRankingsByRanks(server string, eventID int, ranks []int) (*sekaiapi.BatchTraceRankingResponse, error) {
+	s.batchTraceRankCalls.Add(1)
+	items := make([]sekaiapi.BatchTraceRankingItem, 0, len(ranks))
+	for _, rank := range ranks {
+		items = append(items, sekaiapi.BatchTraceRankingItem{
+			Rank: rank,
+			RankData: []sekaiapi.RankDataPoint{
+				{Score: 900000 + rank, Rank: rank, Timestamp: 1704060000},
+				{Score: 1000000 + rank, Rank: rank, Timestamp: 1704067200},
+			},
+		})
+	}
+	return &sekaiapi.BatchTraceRankingResponse{Items: items}, nil
+}
+
+func (s *batchLineMetricsTrackerSource) TraceWorldBloomRankingsByRanks(server string, eventID, characterID int, ranks []int) (*sekaiapi.BatchWorldBloomTraceRankingResponse, error) {
+	s.batchWorldTraceRankCalls.Add(1)
+	charID := characterID
+	items := make([]sekaiapi.BatchWorldBloomTraceRankingItem, 0, len(ranks))
+	for _, rank := range ranks {
+		items = append(items, sekaiapi.BatchWorldBloomTraceRankingItem{
+			Rank: rank,
+			RankData: []sekaiapi.WorldBloomRankDataPoint{
+				{RankDataPoint: sekaiapi.RankDataPoint{Score: 2900000 + rank + characterID, Rank: rank, Timestamp: 1704060000}, CharacterID: &charID},
+				{RankDataPoint: sekaiapi.RankDataPoint{Score: 3000000 + rank + characterID, Rank: rank, Timestamp: 1704067200}, CharacterID: &charID},
+			},
+		})
+	}
+	return &sekaiapi.BatchWorldBloomTraceRankingResponse{Items: items}, nil
+}
+
 type rankNameFallbackTrackerSource struct {
 	testTrackerSource
 }
@@ -1355,6 +1392,43 @@ func TestBuildLineRequestFromTrackerSkipsUserNameLookupRequests(t *testing.T) {
 	}
 }
 
+func TestBuildLineRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	tracker := &batchLineMetricsTrackerSource{}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100, 1},
+	})
+	if err != nil {
+		t.Fatalf("build line request: %v", err)
+	}
+	if tracker.batchTraceRankCalls.Load() != 1 {
+		t.Fatalf("expected 1 batch trace rank call, got %d", tracker.batchTraceRankCalls.Load())
+	}
+	if tracker.latestRankCalls.Load() != 0 || tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("expected no single rank calls, latest=%d trace=%d", tracker.latestRankCalls.Load(), tracker.traceRankCalls.Load())
+	}
+	if len(payload.Ranks) != 2 || payload.Ranks[0].Rank != 1 || payload.Ranks[1].Rank != 100 {
+		t.Fatalf("unexpected sorted ranks: %+v", payload.Ranks)
+	}
+	if payload.Ranks[0].Score == nil || *payload.Ranks[0].Score != 1_000_001 {
+		t.Fatalf("unexpected rank 1 payload: %+v", payload.Ranks[0])
+	}
+}
+
 func TestBuildWorldBloomLineRequestFromTrackerSkipsUserNameLookupRequests(t *testing.T) {
 	now := time.Now().UnixMilli()
 	eventInfo := &masterdata.Event{
@@ -1399,6 +1473,47 @@ func TestBuildWorldBloomLineRequestFromTrackerSkipsUserNameLookupRequests(t *tes
 	}
 	if tracker.traceWorldRankCalls.Load() != 2 {
 		t.Fatalf("expected 2 trace world bloom rank calls, got %d", tracker.traceWorldRankCalls.Load())
+	}
+}
+
+func TestBuildWorldBloomLineRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
+	now := time.Now().UnixMilli()
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		EventType:   "world_bloom",
+		Name:        "World Bloom Event",
+		StartAt:     now - int64(time.Hour/time.Millisecond),
+		AggregateAt: now + int64(time.Hour/time.Millisecond),
+	}
+	tracker := &batchLineMetricsTrackerSource{}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	charaID := 21
+	payload, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		EventID:       eventInfo.ID,
+		Region:        "jp",
+		Ranks:         []int{100, 1},
+		WlCharacterID: &charaID,
+	})
+	if err != nil {
+		t.Fatalf("build wl line request: %v", err)
+	}
+	if tracker.batchWorldTraceRankCalls.Load() != 1 {
+		t.Fatalf("expected 1 batch world bloom trace rank call, got %d", tracker.batchWorldTraceRankCalls.Load())
+	}
+	if tracker.latestWorldRankCalls.Load() != 0 || tracker.traceWorldRankCalls.Load() != 0 {
+		t.Fatalf("expected no single world bloom rank calls, latest=%d trace=%d", tracker.latestWorldRankCalls.Load(), tracker.traceWorldRankCalls.Load())
+	}
+	if len(payload.Ranks) != 2 || payload.Ranks[0].Rank != 1 || payload.Ranks[1].Rank != 100 {
+		t.Fatalf("unexpected sorted wl ranks: %+v", payload.Ranks)
+	}
+	if payload.Ranks[0].Score == nil || *payload.Ranks[0].Score != 3_000_022 {
+		t.Fatalf("unexpected wl rank 1 payload: %+v", payload.Ranks[0])
 	}
 }
 

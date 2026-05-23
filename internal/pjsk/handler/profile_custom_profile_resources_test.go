@@ -106,7 +106,7 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	if got := cardAsset["afterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member/res010_no034/card_after_training.png" {
 		t.Fatalf("unexpected card after-training path: %s", got)
 	}
-	if got := cardAsset["deckAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_cutout/res010_no034/after_training.png" {
+	if got := cardAsset["deckAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_cutout_trm/res010_no034/after_training.png" {
 		t.Fatalf("unexpected deck after-training path: %s", got)
 	}
 	if got := cardAsset["smallAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_small/res010_no034/card_after_training.png" {

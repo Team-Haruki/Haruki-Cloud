@@ -481,6 +481,10 @@ func resolveCustomProfileDeckCardImagePath(app *renderapp.App, region renderregi
 		thumbnailSuffix = "after_training"
 	}
 	return assets.ResolveRegionAssetPath(helper, region.String(),
+		filepath.Join("character", "member_cutout_trm", bundle, cutoutFile),
+		filepath.Join("character", "member_cutout_trm", bundle, cutoutTrimFile),
+		filepath.Join("character", "member_cutout_trm", bundle+"_rip", cutoutFile),
+		filepath.Join("character", "member_cutout_trm", bundle+"_rip", cutoutTrimFile),
 		filepath.Join("character", "member_cutout", bundle, cutoutFile),
 		filepath.Join("character", "member_cutout", bundle, cutoutTrimFile),
 		filepath.Join("character", "member_cutout", bundle+"_rip", cutoutFile),

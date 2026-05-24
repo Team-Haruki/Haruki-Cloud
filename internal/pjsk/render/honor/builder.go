@@ -33,7 +33,7 @@ func (b *Builder) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) 
 			return nil, err
 		}
 	} else if isBonds {
-		if err := b.buildBondsHonorRequest(req, bondsHonor, query.HonorLevel, query.BondsHonorViewType, query.BondsHonorWordID, query.Region); err != nil {
+		if err := b.buildBondsHonorRequest(req, bondsHonor, query.HonorLevel, query.BondsHonorViewType, query.BondsHonorWordID, query.UseUnitVirtualSinger, query.Region); err != nil {
 			return nil, err
 		}
 	}

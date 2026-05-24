@@ -12,7 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
-func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *masterdata.BondsHonor, honorLevel int, bondsHonorViewType string, bondsHonorWordID int, region renderregion.Value) error {
+func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *masterdata.BondsHonor, honorLevel int, bondsHonorViewType string, bondsHonorWordID int, useUnitVirtualSinger bool, region renderregion.Value) error {
 	req.HonorType = new("bonds")
 	req.HonorRarity = &honorInfo.HonorRarity
 	req.HonorLevel = &honorLevel
@@ -49,6 +49,9 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 		{unitID: cuid1, characterID: cid1},
 		{unitID: cuid2, characterID: cid2},
 	}
+	if honorInfo.ConfigurableUnitVirtualSinger && bondsHonorUsesUnitVirtualSinger(bondsHonorViewType, useUnitVirtualSinger) {
+		applyUnitVirtualSingerDisplaySlots(b.source, displaySlots)
+	}
 	if bondsHonorViewTypeIsReverse(bondsHonorViewType) {
 		displaySlots[0], displaySlots[1] = displaySlots[1], displaySlots[0]
 	}
@@ -82,6 +85,37 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 	return nil
 }
 
+func applyUnitVirtualSingerDisplaySlots(source DataSource, displaySlots []struct {
+	unitID      int
+	characterID int
+}) {
+	if source == nil || len(displaySlots) < 2 {
+		return
+	}
+	leftUnitID := displaySlots[0].unitID
+	rightUnitID := displaySlots[1].unitID
+	displaySlots[0].unitID = resolveUnitVirtualSingerUnitID(source, leftUnitID, rightUnitID)
+	displaySlots[1].unitID = resolveUnitVirtualSingerUnitID(source, rightUnitID, leftUnitID)
+}
+
+func resolveUnitVirtualSingerUnitID(source DataSource, candidateUnitID, pairedUnitID int) int {
+	candidate, ok := source.GetGameCharacterUnitByID(candidateUnitID)
+	if !ok || candidate == nil || candidate.GameCharacterID < 21 {
+		return candidateUnitID
+	}
+	paired, ok := source.GetGameCharacterUnitByID(pairedUnitID)
+	if !ok || paired == nil || strings.TrimSpace(paired.Unit) == "" || paired.Unit == "piapro" {
+		return candidateUnitID
+	}
+	for unitID := 27; unitID <= 56; unitID++ {
+		unit, ok := source.GetGameCharacterUnitByID(unitID)
+		if ok && unit != nil && unit.GameCharacterID == candidate.GameCharacterID && unit.Unit == paired.Unit {
+			return unit.ID
+		}
+	}
+	return candidateUnitID
+}
+
 func applyBondsHonorDisplaySlots(req *drawing.HonorRequest, resolveGameAsset func(...string) string, displaySlots []struct {
 	unitID      int
 	characterID int
@@ -102,4 +136,8 @@ func applyBondsHonorDisplaySlots(req *drawing.HonorRequest, resolveGameAsset fun
 
 func bondsHonorViewTypeIsReverse(viewType string) bool {
 	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(viewType)), "reverse")
+}
+
+func bondsHonorUsesUnitVirtualSinger(viewType string, explicit bool) bool {
+	return explicit || strings.Contains(strings.ToLower(strings.TrimSpace(viewType)), "unit_virtual_singer")
 }

@@ -36,6 +36,9 @@ func buildCustomProfileResources(ctx context.Context, app *renderapp.App, region
 	if err := collectCustomProfileCardResources(ctx, app, regionValue, collector, resources); err != nil {
 		return nil, err
 	}
+	if err := collectCustomProfileStoryFavoriteResources(app, regionValue, collector, resources); err != nil {
+		return nil, err
+	}
 	if err := collectCustomProfileHonorResources(ctx, app, regionValue, collector, resources); err != nil {
 		return nil, err
 	}
@@ -50,7 +53,7 @@ func customProfileCharaRankIconPathMap(app *renderapp.App) map[string]string {
 	}
 	result := make(map[string]string, len(assets.CharacterIDToNickname))
 	for id, nickname := range assets.CharacterIDToNickname {
-		result[strconv.Itoa(id)] = assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("chara_rank_icon", nickname+".png"))
+		result[strconv.Itoa(id)] = assets.ResolveAssetPath(helper, assets.StaticImagesDir, filepath.Join("chara_icon", nickname+".png"))
 	}
 	return result
 }
@@ -70,6 +73,7 @@ type customProfileResourceCollector struct {
 	honorQueries      map[string]renderhonor.Query
 	profileHonors     map[string]renderhonor.Query
 	bondsHonorQueries map[string]renderhonor.Query
+	storyFavorites    []sekaiapi.UserStoryFavorite
 }
 
 func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp *sekaiapi.GetAnotherProfileResponse) customProfileResourceCollector {
@@ -165,15 +169,19 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 	for _, item := range data.BondsHonors {
 		level := customProfileUserBondsHonorLevel(resp, item.ID)
 		query := renderhonor.Query{
-			HonorID:            item.ID,
-			HonorLevel:         level,
-			IsMain:             item.FullSize,
-			BondsHonorViewType: customProfileBondsViewType(item.Inverse),
-			BondsHonorWordID:   item.WordID,
+			HonorID:              item.ID,
+			HonorLevel:           level,
+			IsMain:               item.FullSize,
+			BondsHonorViewType:   customProfileBondsViewType(item.Inverse),
+			BondsHonorWordID:     item.WordID,
+			UseUnitVirtualSinger: item.UseUnitVirtualSinger,
 		}
 		if query.HonorID > 0 {
-			c.bondsHonorQueries[customProfileBondsHonorRequestKey(item.ID, level, item.FullSize, item.WordID, item.Inverse)] = query
+			c.bondsHonorQueries[customProfileBondsHonorRequestKey(item.ID, level, item.FullSize, item.WordID, item.Inverse, item.UseUnitVirtualSinger)] = query
 		}
+	}
+	if _, ok := c.playerInfoIDs[14]; ok && resp != nil {
+		c.storyFavorites = append(c.storyFavorites, resp.UserStoryFavorites...)
 	}
 
 	return c
@@ -272,6 +280,65 @@ func collectCustomProfileCardResources(ctx context.Context, app *renderapp.App, 
 	}
 	resources["cards"] = cards
 	resources["cardAssets"] = cardAssets
+	return nil
+}
+
+func collectCustomProfileStoryFavoriteResources(app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) error {
+	if len(c.storyFavorites) == 0 {
+		return nil
+	}
+	eventStoryIDs := make(map[int]struct{})
+	for _, story := range c.storyFavorites {
+		if story.StoryID > 0 && strings.EqualFold(strings.TrimSpace(story.StoryType), "event_story") {
+			eventStoryIDs[story.StoryID] = struct{}{}
+		}
+	}
+	if len(eventStoryIDs) == 0 {
+		return nil
+	}
+	eventStories, err := loadCustomProfileMasterTable(app, region, "eventStories.json", eventStoryIDs)
+	if err != nil {
+		return err
+	}
+	eventIDs := make(map[int]struct{})
+	for _, row := range eventStories {
+		if eventID, ok := mapInt(row, "eventId"); ok {
+			eventIDs[eventID] = struct{}{}
+		}
+	}
+	events := map[int]map[string]any{}
+	if len(eventIDs) > 0 {
+		if loaded, err := loadCustomProfileMasterTable(app, region, "events.json", eventIDs); err == nil {
+			events = loaded
+		}
+	}
+
+	items := make(map[string]any, len(eventStories))
+	for _, story := range c.storyFavorites {
+		key := customProfileStoryFavoriteKey(story.StoryType, story.StoryID)
+		item := map[string]any{
+			"storyType": story.StoryType,
+			"storyId":   story.StoryID,
+		}
+		row := eventStories[story.StoryID]
+		if row != nil {
+			assetBundleName := strings.TrimSpace(mapString(row, "assetbundleName"))
+			item["assetbundleName"] = assetBundleName
+			if imagePath := resolveCustomProfileEventStoryBannerPath(app, region, assetBundleName); imagePath != "" {
+				item["imagePath"] = imagePath
+			}
+			if eventID, ok := mapInt(row, "eventId"); ok {
+				item["eventId"] = eventID
+				if eventRow := events[eventID]; eventRow != nil {
+					if title := strings.TrimSpace(mapString(eventRow, "name")); title != "" {
+						item["title"] = title
+					}
+				}
+			}
+		}
+		items[key] = item
+	}
+	resources["storyFavoriteResources"] = items
 	return nil
 }
 
@@ -459,6 +526,8 @@ func customProfileCardAssetMap(app *renderapp.App, region renderregion.Value, ca
 	item["afterTrainingPath"] = common.ResolveCardMemberImagePath(helper, region, card.AssetBundleName, "card_after_training.png")
 	item["deckNormalPath"] = resolveCustomProfileDeckCardImagePath(app, region, card.AssetBundleName, false)
 	item["deckAfterTrainingPath"] = resolveCustomProfileDeckCardImagePath(app, region, card.AssetBundleName, true)
+	item["clipNormalPath"] = resolveCustomProfileClipCardImagePath(app, region, card.AssetBundleName, false)
+	item["clipAfterTrainingPath"] = resolveCustomProfileClipCardImagePath(app, region, card.AssetBundleName, true)
 	item["smallNormalPath"] = resolveCustomProfileSmallCardImagePath(app, region, card.AssetBundleName, false)
 	item["smallAfterTrainingPath"] = resolveCustomProfileSmallCardImagePath(app, region, card.AssetBundleName, true)
 	return item
@@ -480,11 +549,9 @@ func resolveCustomProfileSmallCardImagePath(app *renderapp.App, region renderreg
 }
 
 func resolveCustomProfileDeckCardImagePath(app *renderapp.App, region renderregion.Value, bundle string, afterTraining bool) string {
-	fullFile := "card_normal.png"
 	cutoutFile := "normal.png"
 	cutoutTrimFile := "card_normal_trim.png"
 	if afterTraining {
-		fullFile = "card_after_training.png"
 		cutoutFile = "after_training.png"
 		cutoutTrimFile = "card_after_training_trim.png"
 	}
@@ -492,24 +559,32 @@ func resolveCustomProfileDeckCardImagePath(app *renderapp.App, region renderregi
 	if app != nil {
 		helper = app.Assets
 	}
-	thumbnailSuffix := "normal"
-	if afterTraining {
-		thumbnailSuffix = "after_training"
-	}
 	return assets.ResolveRegionAssetPath(helper, region.String(),
-		filepath.Join("character", "member_cutout_trm", bundle, cutoutFile),
-		filepath.Join("character", "member_cutout_trm", bundle, cutoutTrimFile),
-		filepath.Join("character", "member_cutout_trm", bundle+"_rip", cutoutFile),
-		filepath.Join("character", "member_cutout_trm", bundle+"_rip", cutoutTrimFile),
 		filepath.Join("character", "member_cutout", bundle, cutoutFile),
 		filepath.Join("character", "member_cutout", bundle, cutoutTrimFile),
 		filepath.Join("character", "member_cutout", bundle+"_rip", cutoutFile),
 		filepath.Join("character", "member_cutout", bundle+"_rip", cutoutTrimFile),
 		filepath.Join("character", "member_cutout", bundle, "deck.png"),
 		filepath.Join("character", "member_cutout", bundle+"_rip", "deck.png"),
-		filepath.Join("character", "member", bundle, fullFile),
-		filepath.Join("character", "member", bundle+"_rip", fullFile),
-		filepath.Join("thumbnail", "chara", fmt.Sprintf("%s_%s.png", bundle, thumbnailSuffix)),
+	)
+}
+
+func resolveCustomProfileClipCardImagePath(app *renderapp.App, region renderregion.Value, bundle string, afterTraining bool) string {
+	cutoutFile := "normal.png"
+	cutoutTrimFile := "card_normal_trim.png"
+	if afterTraining {
+		cutoutFile = "after_training.png"
+		cutoutTrimFile = "card_after_training_trim.png"
+	}
+	helper := (*assets.AssetHelper)(nil)
+	if app != nil {
+		helper = app.Assets
+	}
+	return assets.ResolveRegionAssetPath(helper, region.String(),
+		filepath.Join("character", "member_cutout_trm", bundle, cutoutFile),
+		filepath.Join("character", "member_cutout_trm", bundle, cutoutTrimFile),
+		filepath.Join("character", "member_cutout_trm", bundle+"_rip", cutoutFile),
+		filepath.Join("character", "member_cutout_trm", bundle+"_rip", cutoutTrimFile),
 	)
 }
 
@@ -519,6 +594,20 @@ func resolveCustomProfileStampImagePath(app *renderapp.App, region renderregion.
 		helper = app.Assets
 	}
 	return assets.ResolveRegionAssetPath(helper, region.String(), filepath.Join("stamp", stamp.AssetBundleName, stamp.AssetBundleName+".png"))
+}
+
+func resolveCustomProfileEventStoryBannerPath(app *renderapp.App, region renderregion.Value, assetBundleName string) string {
+	assetBundleName = strings.TrimSpace(assetBundleName)
+	if assetBundleName == "" {
+		return ""
+	}
+	helper := (*assets.AssetHelper)(nil)
+	if app != nil {
+		helper = app.Assets
+	}
+	return assets.ResolveRegionAssetPath(helper, region.String(),
+		filepath.Join("event_story", assetBundleName, "screen_image", "banner_event_story.png"),
+	)
 }
 
 func resolveCustomProfileResourceImagePath(app *renderapp.App, region renderregion.Value, resource map[string]any, fallbackDir string) string {
@@ -622,7 +711,7 @@ func customProfileHonorRequestKey(honorID, level int, fullSize bool) string {
 	return fmt.Sprintf("%d:%d:%s", honorID, level, mode)
 }
 
-func customProfileBondsHonorRequestKey(honorID, level int, fullSize bool, wordID int, inverse bool) string {
+func customProfileBondsHonorRequestKey(honorID, level int, fullSize bool, wordID int, inverse bool, useUnitVirtualSinger bool) string {
 	view := "normal"
 	if inverse {
 		view = "reverse"
@@ -631,7 +720,15 @@ func customProfileBondsHonorRequestKey(honorID, level int, fullSize bool, wordID
 	if fullSize {
 		mode = "main"
 	}
-	return fmt.Sprintf("%d:%d:%s:%d:%s", honorID, level, mode, wordID, view)
+	suffix := ""
+	if useUnitVirtualSinger {
+		suffix = ":unit_vs"
+	}
+	return fmt.Sprintf("%d:%d:%s:%d:%s%s", honorID, level, mode, wordID, view, suffix)
+}
+
+func customProfileStoryFavoriteKey(storyType string, storyID int) string {
+	return fmt.Sprintf("%s:%d", strings.TrimSpace(storyType), storyID)
 }
 
 func customProfileBondsViewType(inverse bool) string {

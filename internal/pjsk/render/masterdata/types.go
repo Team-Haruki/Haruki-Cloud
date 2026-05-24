@@ -302,13 +302,14 @@ type HonorGroup struct {
 }
 
 type BondsHonor struct {
-	ID                   int
-	GameCharacterUnitID1 int
-	GameCharacterUnitID2 int
-	HonorRarity          string
-	Name                 string
-	Description          string
-	BondsGroupID         int
+	ID                            int
+	GameCharacterUnitID1          int
+	GameCharacterUnitID2          int
+	HonorRarity                   string
+	Name                          string
+	Description                   string
+	BondsGroupID                  int
+	ConfigurableUnitVirtualSinger bool
 }
 
 type BondsHonorWord struct {

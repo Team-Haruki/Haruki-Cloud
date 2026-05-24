@@ -171,13 +171,14 @@ func (p *dbHonorProvider) GetBondsHonorByID(ctx context.Context, id int) (*maste
 		return nil, fmt.Errorf("query bonds honor %d: %w", id, err)
 	}
 	model := &masterdata.BondsHonor{
-		ID:                   int(entity.GameID),
-		GameCharacterUnitID1: int(entity.GameCharacterUnitId1),
-		GameCharacterUnitID2: int(entity.GameCharacterUnitId2),
-		HonorRarity:          entity.HonorRarity,
-		Name:                 entity.Name,
-		Description:          entity.Description,
-		BondsGroupID:         int(entity.BondsGroupID),
+		ID:                            int(entity.GameID),
+		GameCharacterUnitID1:          int(entity.GameCharacterUnitId1),
+		GameCharacterUnitID2:          int(entity.GameCharacterUnitId2),
+		HonorRarity:                   entity.HonorRarity,
+		Name:                          entity.Name,
+		Description:                   entity.Description,
+		BondsGroupID:                  int(entity.BondsGroupID),
+		ConfigurableUnitVirtualSinger: entity.ConfigurableUnitVirtualSinger,
 	}
 
 	p.bondsMu.Lock()

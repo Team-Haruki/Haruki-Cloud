@@ -28,6 +28,9 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfileTextFonts.json"), []map[string]any{
 		{"id": 11, "fontName": "FOT-RodinNTLGPro-DB"},
 	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfilePlayerInfoResources.json"), []map[string]any{
+		{"id": 14, "fileName": "StoryFavorite"},
+	})
 	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfileShapeResources.json"), []map[string]any{
 		{"id": 12, "resourceLoadVal": "custom_profile/shape", "fileName": "circle"},
 	})
@@ -52,6 +55,12 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	writeCustomProfileJSONFile(t, filepath.Join(master, "gameCharacterUnits.json"), []map[string]any{
 		{"id": 11, "gameCharacterID": 2},
 		{"id": 22, "gameCharacterID": 5},
+	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "eventStories.json"), []map[string]any{
+		{"id": 19, "eventId": 190, "assetbundleName": "event_story_test"},
+	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "events.json"), []map[string]any{
+		{"id": 190, "name": "Test Event Story", "assetbundleName": "event_story_test"},
 	})
 
 	src := provider.NewLocalProvider(master, renderregion.CN)
@@ -81,12 +90,14 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 			CardMembers: []sekaiapi.CardData{{ID: 915}},
 			Honors:      []sekaiapi.HonorData{{ID: 7001, FullSize: true}},
 			BondsHonors: []sekaiapi.BondsHonorData{{ID: 1020501, FullSize: true, WordID: 10205002, Inverse: true}},
+			Generals:    []sekaiapi.GeneralData{{PlayerInfoResourceID: 14}},
 		},
 	}
 	resp := &sekaiapi.GetAnotherProfileResponse{
-		UserCards:       []sekaiapi.AnotherUserCard{{CardID: 915, SpecialTrainingStatus: "done", DefaultImage: "special_training"}},
-		UserHonors:      []sekaiapi.UserHonor{{HonorID: 7001, Level: 1}},
-		UserBondsHonors: []sekaiapi.UserBondsHonor{{BondsHonorID: 1020501, Level: 3}},
+		UserCards:          []sekaiapi.AnotherUserCard{{CardID: 915, SpecialTrainingStatus: "done", DefaultImage: "special_training"}},
+		UserHonors:         []sekaiapi.UserHonor{{HonorID: 7001, Level: 1}},
+		UserBondsHonors:    []sekaiapi.UserBondsHonor{{BondsHonorID: 1020501, Level: 3}},
+		UserStoryFavorites: []sekaiapi.UserStoryFavorite{{StoryType: "event_story", StoryID: 19}},
 	}
 
 	resources, err := buildCustomProfileResources(context.Background(), app, "cn", card, resp)
@@ -103,15 +114,26 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 		t.Fatalf("unexpected stamp image path: %s", got)
 	}
 	charaIcons := resources["charaRankIconPathMap"].(map[string]string)
-	if got := charaIcons["21"]; got != "static_images/chara_rank_icon/miku.png" {
+	if got := charaIcons["21"]; got != "static_images/chara_icon/miku.png" {
 		t.Fatalf("unexpected chara rank icon path: %s", got)
+	}
+	storyFavorites := resources["storyFavoriteResources"].(map[string]any)
+	story := storyFavorites["event_story:19"].(map[string]any)
+	if got := story["title"].(string); got != "Test Event Story" {
+		t.Fatalf("unexpected story favorite title: %s", got)
+	}
+	if got := story["imagePath"].(string); got != "asset/cn-assets/ondemand/event_story/event_story_test/screen_image/banner_event_story.png" {
+		t.Fatalf("unexpected story favorite image path: %s", got)
 	}
 	cardAsset := resources["cardAssets"].(map[int]map[string]any)[915]
 	if got := cardAsset["afterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member/res010_no034/card_after_training.png" {
 		t.Fatalf("unexpected card after-training path: %s", got)
 	}
-	if got := cardAsset["deckAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_cutout_trm/res010_no034/after_training.png" {
+	if got := cardAsset["deckAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_cutout/res010_no034/after_training.png" {
 		t.Fatalf("unexpected deck after-training path: %s", got)
+	}
+	if got := cardAsset["clipAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_cutout_trm/res010_no034/after_training.png" {
+		t.Fatalf("unexpected clip after-training path: %s", got)
 	}
 	if got := cardAsset["smallAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_small/res010_no034/card_after_training.png" {
 		t.Fatalf("unexpected small after-training path: %s", got)

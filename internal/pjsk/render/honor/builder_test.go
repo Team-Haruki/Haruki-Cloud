@@ -202,6 +202,69 @@ func TestBuildHonorRequestBondsReverseViewUsesReverseDisplayOrder(t *testing.T) 
 	}
 }
 
+func TestBuildHonorRequestBondsUseUnitVirtualSingerUsesPairedUnit(t *testing.T) {
+	source := newTestHonorSource(renderregion.JP)
+	source.bonds[1012101] = &masterdata.BondsHonor{
+		ID:                            1012101,
+		GameCharacterUnitID1:          1,
+		GameCharacterUnitID2:          21,
+		HonorRarity:                   "middle",
+		ConfigurableUnitVirtualSinger: true,
+	}
+	source.gcuByID[1] = &masterdata.GameCharacterUnit{ID: 1, GameCharacterID: 1, Unit: "light_sound"}
+	source.gcuByID[21] = &masterdata.GameCharacterUnit{ID: 21, GameCharacterID: 21, Unit: "piapro"}
+	source.gcuByID[27] = &masterdata.GameCharacterUnit{ID: 27, GameCharacterID: 21, Unit: "light_sound"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:               renderregion.JP,
+		HonorID:              1012101,
+		HonorLevel:           1,
+		IsMain:               true,
+		UseUnitVirtualSinger: true,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+
+	if req.CharaID == nil || *req.CharaID != "1" || req.CharaID2 == nil || *req.CharaID2 != "27" {
+		t.Fatalf("unexpected unit virtual singer display order: %#v %#v", req.CharaID, req.CharaID2)
+	}
+	if req.CharaIconPath2 == nil || *req.CharaIconPath2 != "asset/jp-assets/startapp/bonds_honor/character/chr_sd_27_01.png" {
+		t.Fatalf("unexpected unit virtual singer icon path: %#v", req.CharaIconPath2)
+	}
+}
+
+func TestBuildHonorRequestBondsViewTypeCanSelectUnitVirtualSinger(t *testing.T) {
+	source := newTestHonorSource(renderregion.JP)
+	source.bonds[1012101] = &masterdata.BondsHonor{
+		ID:                            1012101,
+		GameCharacterUnitID1:          1,
+		GameCharacterUnitID2:          21,
+		HonorRarity:                   "middle",
+		ConfigurableUnitVirtualSinger: true,
+	}
+	source.gcuByID[1] = &masterdata.GameCharacterUnit{ID: 1, GameCharacterID: 1, Unit: "light_sound"}
+	source.gcuByID[21] = &masterdata.GameCharacterUnit{ID: 21, GameCharacterID: 21, Unit: "piapro"}
+	source.gcuByID[27] = &masterdata.GameCharacterUnit{ID: 27, GameCharacterID: 21, Unit: "light_sound"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:             renderregion.JP,
+		HonorID:            1012101,
+		HonorLevel:         1,
+		IsMain:             true,
+		BondsHonorViewType: "normal_unit_virtual_singer",
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+
+	if req.CharaID == nil || *req.CharaID != "1" || req.CharaID2 == nil || *req.CharaID2 != "27" {
+		t.Fatalf("unexpected view-type unit virtual singer display order: %#v %#v", req.CharaID, req.CharaID2)
+	}
+}
+
 func TestBuildHonorRequestBirthdayUsesDerivedBirthdayType(t *testing.T) {
 	dir := t.TempDir()
 	mustWriteHonorAsset(t, dir, filepath.Join("asset", "jp-assets", "startapp", "honor", "honor_bg_birthday_01_06", "degree_sub.png"))
@@ -504,6 +567,40 @@ func TestBuildHonorRequestEventUsesResolvedAbsoluteRankPath(t *testing.T) {
 		t.Fatalf("BuildHonorRequest failed: %v", err)
 	}
 	expectedRankPath := "asset/cn-assets/startapp/honor/honor_top_000100_event_demo/rank_sub.png"
+	if req.RankImgPath == nil || *req.RankImgPath != expectedRankPath {
+		t.Fatalf("unexpected rank image path: %#v", req.RankImgPath)
+	}
+}
+
+func TestBuildHonorRequestSekaiEchoUsesRankOverlayPath(t *testing.T) {
+	dir := t.TempDir()
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_bg_event_demo", "degree_sub.png"))
+	mustWriteHonorAsset(t, dir, filepath.Join("asset", "cn-assets", "startapp", "honor", "honor_shining", "rank_sub.png"))
+
+	source := newTestHonorSource(renderregion.CN)
+	source.honors[6201] = &masterdata.Honor{
+		ID:              6201,
+		GroupID:         601,
+		HonorRarity:     "high",
+		AssetBundleName: "honor_shining",
+	}
+	source.groups[601] = &masterdata.HonorGroup{
+		ID:                        601,
+		HonorType:                 "sekai_echo",
+		BackgroundAssetBundleName: new("honor_bg_event_demo"),
+	}
+
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+	req, err := builder.BuildHonorRequest(Query{
+		Region:     renderregion.CN,
+		HonorID:    6201,
+		HonorLevel: 1,
+		IsMain:     false,
+	})
+	if err != nil {
+		t.Fatalf("BuildHonorRequest failed: %v", err)
+	}
+	expectedRankPath := "asset/cn-assets/startapp/honor/honor_shining/rank_sub.png"
 	if req.RankImgPath == nil || *req.RankImgPath != expectedRankPath {
 		t.Fatalf("unexpected rank image path: %#v", req.RankImgPath)
 	}

@@ -86,10 +86,15 @@ func (b *Builder) buildNormalHonorRequest(req *drawing.HonorRequest, honorID, ho
 	}
 	req.HonorImgPath = &honorImgPath
 
-	if assetName != "" && (groupType == "event" || groupType == "wl_event" || groupType == "rank_match") {
+	if assetName != "" && (groupType == "event" || groupType == "wl_event" || groupType == "rank_match" || groupType == "sekai_echo") {
 		switch groupType {
 		case "rank_match":
 			req.RankImgPath = new(resolveGameAsset(fmt.Sprintf("rank_live/honor/%s/%s.png", assetName, mode)))
+		case "sekai_echo":
+			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
+			if b.assetExists(rankCandidate) {
+				req.RankImgPath = &rankCandidate
+			}
 		case "event":
 			rankCandidate := resolveGameAsset(fmt.Sprintf("honor/%s/rank_%s.png", assetName, mode))
 			if rankCandidate != honorImgPath {

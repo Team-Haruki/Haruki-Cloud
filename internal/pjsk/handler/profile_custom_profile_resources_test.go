@@ -31,6 +31,12 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfilePlayerInfoResources.json"), []map[string]any{
 		{"id": 14, "fileName": "StoryFavorite"},
 	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfileCollectionResources.json"), []map[string]any{
+		{"id": 1000, "customProfileResourceCollectionType": "omikuji", "resourceLoadVal": "lottery_game/new_year_2026", "fileName": "Prefabs/Omikuji"},
+	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "omikujis.json"), []map[string]any{
+		{"id": 183, "unit": "idol", "fortuneType": "grate_fortune", "summary": "Test summary"},
+	})
 	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfileShapeResources.json"), []map[string]any{
 		{"id": 12, "resourceLoadVal": "custom_profile/shape", "fileName": "circle"},
 	})
@@ -88,6 +94,10 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 			Shapes:      []sekaiapi.ShapeData{{ID: 12, ColorID: 10}},
 			Stamps:      []sekaiapi.ImageData{{ID: 146}},
 			CardMembers: []sekaiapi.CardData{{ID: 915}},
+			Collections: []sekaiapi.CollectionData{{
+				ID:       1000,
+				TargetID: 183,
+			}},
 			Honors:      []sekaiapi.HonorData{{ID: 7001, FullSize: true}},
 			BondsHonors: []sekaiapi.BondsHonorData{{ID: 1020501, FullSize: true, WordID: 10205002, Inverse: true}},
 			Generals:    []sekaiapi.GeneralData{{PlayerInfoResourceID: 14}},
@@ -116,6 +126,10 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	charaIcons := resources["charaRankIconPathMap"].(map[string]string)
 	if got := charaIcons["21"]; got != "static_images/chara_icon/miku.png" {
 		t.Fatalf("unexpected chara rank icon path: %s", got)
+	}
+	omikujis := resources["omikujis"].(map[int]map[string]any)
+	if got := omikujis[183]["fortuneType"].(string); got != "grate_fortune" {
+		t.Fatalf("unexpected omikuji fortune type: %s", got)
 	}
 	storyFavorites := resources["storyFavoriteResources"].(map[string]any)
 	story := storyFavorites["event_story:19"].(map[string]any)

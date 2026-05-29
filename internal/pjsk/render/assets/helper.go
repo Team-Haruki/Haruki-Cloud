@@ -197,6 +197,7 @@ var onDemandPreferredTopLevel = map[string]struct{}{
 	"event":        {},
 	"event_story":  {},
 	"gacha":        {},
+	"lottery_game": {},
 	"mysekai":      {},
 	"virtual_live": {},
 }

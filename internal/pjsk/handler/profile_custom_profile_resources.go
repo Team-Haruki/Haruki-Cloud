@@ -67,6 +67,7 @@ type customProfileResourceCollector struct {
 	storyBgIDs        map[int]struct{}
 	standMemberIDs    map[int]struct{}
 	collectionIDs     map[int]struct{}
+	collectionTargets map[int]map[int]struct{}
 	otherIDs          map[int]struct{}
 	stampIDs          map[int]struct{}
 	cardIDs           map[int]struct{}
@@ -86,6 +87,7 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 		storyBgIDs:        make(map[int]struct{}),
 		standMemberIDs:    make(map[int]struct{}),
 		collectionIDs:     make(map[int]struct{}),
+		collectionTargets: make(map[int]map[int]struct{}),
 		otherIDs:          make(map[int]struct{}),
 		stampIDs:          make(map[int]struct{}),
 		cardIDs:           make(map[int]struct{}),
@@ -110,6 +112,7 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 	}
 	for _, item := range data.Collections {
 		addID(c.collectionIDs, item.ID)
+		addNestedID(c.collectionTargets, item.ID, item.TargetID)
 	}
 	for _, item := range data.Others {
 		addID(c.otherIDs, item.ID)
@@ -222,7 +225,33 @@ func collectCustomProfileMasterResources(app *renderapp.App, region renderregion
 			}
 		}
 		resources[table.key] = items
+		if table.key == "customProfileCollectionResources" {
+			if err := collectCustomProfileOmikujiResources(app, region, c, items, resources); err != nil {
+				return err
+			}
+		}
 	}
+	return nil
+}
+
+func collectCustomProfileOmikujiResources(app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, collectionResources map[int]map[string]any, resources drawing.CustomProfileResources) error {
+	ids := make(map[int]struct{})
+	for resourceID, resource := range collectionResources {
+		if !strings.EqualFold(strings.TrimSpace(mapString(resource, "customProfileResourceCollectionType")), "omikuji") {
+			continue
+		}
+		for targetID := range c.collectionTargets[resourceID] {
+			addID(ids, targetID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	omikujis, err := loadCustomProfileMasterTable(app, region, "omikujis.json", ids)
+	if err != nil {
+		return err
+	}
+	resources["omikujis"] = omikujis
 	return nil
 }
 
@@ -742,6 +771,16 @@ func addID(set map[int]struct{}, id int) {
 	if id > 0 {
 		set[id] = struct{}{}
 	}
+}
+
+func addNestedID(set map[int]map[int]struct{}, id int, nestedID int) {
+	if id <= 0 || nestedID <= 0 {
+		return
+	}
+	if set[id] == nil {
+		set[id] = make(map[int]struct{})
+	}
+	set[id][nestedID] = struct{}{}
 }
 
 func mapInt(row map[string]any, key string) (int, bool) {

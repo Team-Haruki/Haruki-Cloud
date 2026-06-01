@@ -61,6 +61,29 @@ func (botBindingJPValidator) GetUserProfile(server, userID string) (*sekaiapi.Ge
 	return nil, sekaiapi.ErrUserNotFound
 }
 
+type botBindingJPENValidator struct{}
+
+func (botBindingJPENValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {
+	switch {
+	case strings.EqualFold(server, "jp") && userID == "13200000000982":
+		return &sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 13200000000982,
+				Name:   "JPBoundUser",
+			},
+		}, nil
+	case strings.EqualFold(server, "en") && userID == "39400000000123":
+		return &sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 39400000000123,
+				Name:   "ENBoundUser",
+			},
+		}, nil
+	default:
+		return nil, sekaiapi.ErrUserNotFound
+	}
+}
+
 type botBindingCNValidator struct{}
 
 func (botBindingCNValidator) GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error) {
@@ -587,6 +610,156 @@ func TestBotEndpointBindListFiltersTransportRegionAfterClientStripsPrefix(t *tes
 	}
 
 	assertSingleTextMessage(t, body, "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 748********663 (全局默认 / CN服默认)")
+}
+
+func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T) {
+	ctx := context.Background()
+	bindings := testBindingServiceWithValidator(t, botBindingJPENValidator{})
+	if _, err := bindings.Bind(ctx, "qq", "12345", "13200000000982"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := bindings.Bind(ctx, "qq", "12345", "39400000000123"); err != nil {
+		t.Fatalf("bind en: %v", err)
+	}
+	if _, err := bindings.SetBindingVisible(ctx, "qq", "12345", "jp", true); err != nil {
+		t.Fatalf("show jp id: %v", err)
+	}
+	if _, err := bindings.SetBindingVisible(ctx, "qq", "12345", "en", true); err != nil {
+		t.Fatalf("show en id: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/visibility/hide"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/en隐藏ID",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/隐藏ID"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessage(t, body, "已隐藏 [EN] 394********123 的ID信息")
+
+	items, err := bindings.List(ctx, "qq", "12345")
+	if err != nil {
+		t.Fatalf("list bindings: %v", err)
+	}
+	for _, item := range items {
+		switch item.Server {
+		case "jp":
+			if !item.Visible {
+				t.Fatalf("jp visibility was changed by /en隐藏ID: %+v", item)
+			}
+		case "en":
+			if item.Visible {
+				t.Fatalf("en visibility was not hidden: %+v", item)
+			}
+		}
+	}
+}
+
+func TestBotEndpointTransportRegionShowSuiteSyncsProfileSettingsParams(t *testing.T) {
+	ctx := context.Background()
+	bindings := testBindingServiceWithValidator(t, botBindingJPENValidator{})
+	if _, err := bindings.Bind(ctx, "qq", "12345", "13200000000982"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := bindings.Bind(ctx, "qq", "12345", "39400000000123"); err != nil {
+		t.Fatalf("bind en: %v", err)
+	}
+	if _, err := bindings.SetBindingSuiteVisible(ctx, "qq", "12345", "jp", false); err != nil {
+		t.Fatalf("hide jp suite: %v", err)
+	}
+	if _, err := bindings.SetBindingSuiteVisible(ctx, "qq", "12345", "en", false); err != nil {
+		t.Fatalf("hide en suite: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/suite/show"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "en", MatchedCommand: "/展示抓包",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/展示抓包"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessage(t, body, "已展示 [EN] 394********123 的抓包信息")
+
+	items, err := bindings.List(ctx, "qq", "12345")
+	if err != nil {
+		t.Fatalf("list bindings: %v", err)
+	}
+	for _, item := range items {
+		switch item.Server {
+		case "jp":
+			if item.SuiteVisible {
+				t.Fatalf("jp suite visibility was changed by EN request: %+v", item)
+			}
+		case "en":
+			if !item.SuiteVisible {
+				t.Fatalf("en suite visibility was not shown: %+v", item)
+			}
+		}
+	}
+}
+
+func TestBotEndpointRegionPrefixedHideSuiteSyncsProfileSettingsParams(t *testing.T) {
+	ctx := context.Background()
+	bindings := testBindingServiceWithValidator(t, botBindingJPENValidator{})
+	if _, err := bindings.Bind(ctx, "qq", "12345", "13200000000982"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := bindings.Bind(ctx, "qq", "12345", "39400000000123"); err != nil {
+		t.Fatalf("bind en: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/suite/hide"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/en隐藏抓包",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/隐藏抓包"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessage(t, body, "已隐藏 [EN] 394********123 的抓包信息")
+
+	items, err := bindings.List(ctx, "qq", "12345")
+	if err != nil {
+		t.Fatalf("list bindings: %v", err)
+	}
+	for _, item := range items {
+		switch item.Server {
+		case "jp":
+			if !item.SuiteVisible {
+				t.Fatalf("jp suite visibility was changed by /en隐藏抓包: %+v", item)
+			}
+		case "en":
+			if item.SuiteVisible {
+				t.Fatalf("en suite visibility was not hidden: %+v", item)
+			}
+		}
+	}
 }
 
 func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {

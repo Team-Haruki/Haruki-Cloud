@@ -179,7 +179,7 @@ func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBCl
 		if region, ok := explicitRegionFromBotRequest(req); ok {
 			resolved.Region = region
 			resolved.RegionExplicit = true
-			syncExplicitRegionToProfileBindingParams(resolved, region)
+			syncExplicitRegionToProfileParams(resolved, region)
 		} else if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
 			if normalized := renderregion.Normalize(server); !normalized.IsZero() {
 				// Treat the transport-level server as authoritative so the final
@@ -187,7 +187,7 @@ func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBCl
 				// default binding.
 				resolved.Region = normalized.String()
 				resolved.RegionExplicit = true
-				syncExplicitRegionToProfileBindingParams(resolved, normalized.String())
+				syncExplicitRegionToProfileParams(resolved, normalized.String())
 			} else {
 				resolved.Region = server
 			}
@@ -209,7 +209,7 @@ func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBCl
 	}
 }
 
-func syncExplicitRegionToProfileBindingParams(resolved *commandhandler.CommandRequest, region string) {
+func syncExplicitRegionToProfileParams(resolved *commandhandler.CommandRequest, region string) {
 	if resolved == nil {
 		return
 	}
@@ -223,10 +223,25 @@ func syncExplicitRegionToProfileBindingParams(resolved *commandhandler.CommandRe
 		accountdata.ProfileModeUnbind,
 		accountdata.ProfileModeDefaultSet,
 		accountdata.ProfileModeDefaultClear:
+		syncExplicitRegionToProfileBindingParams(resolved, normalized)
+	case accountdata.ProfileModeHideID,
+		accountdata.ProfileModeShowID,
+		accountdata.ProfileModeHideSuite,
+		accountdata.ProfileModeShowSuite,
+		accountdata.ProfileModeHideMySekai,
+		accountdata.ProfileModeShowMySekai,
+		accountdata.ProfileModeVerify,
+		accountdata.ProfileModeVerifyList,
+		accountdata.ProfileModeBGUpload,
+		accountdata.ProfileModeBGClear,
+		accountdata.ProfileModeBGAdjust:
+		syncExplicitRegionToProfileSettingsParams(resolved, normalized)
 	default:
 		return
 	}
+}
 
+func syncExplicitRegionToProfileBindingParams(resolved *commandhandler.CommandRequest, normalized renderregion.Value) {
 	params, err := accountdata.DecodeProfileBindingParams(resolved.Params)
 	if err != nil {
 		return
@@ -236,6 +251,18 @@ func syncExplicitRegionToProfileBindingParams(resolved *commandhandler.CommandRe
 	case accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		params.Scope = normalized.String()
 	}
+	if data, err := sonic.Marshal(params); err == nil {
+		resolved.Params = data
+	}
+}
+
+func syncExplicitRegionToProfileSettingsParams(resolved *commandhandler.CommandRequest, normalized renderregion.Value) {
+	params, err := accountdata.DecodeProfileSettingsParams(resolved.Params)
+	if err != nil {
+		return
+	}
+	params.Server = normalized.String()
+	params.RegionExplicit = true
 	if data, err := sonic.Marshal(params); err == nil {
 		resolved.Params = data
 	}

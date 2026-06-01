@@ -3982,6 +3982,9 @@ func TestExecuteProfileCustomProfileCard(t *testing.T) {
 		if req.Kind != drawing.CustomProfileCardRequestKind || req.SchemaVersion != 1 {
 			t.Fatalf("unexpected drawing request header: %+v", req)
 		}
+		if req.RenderVersion != drawing.CustomProfileCardRenderVersion {
+			t.Fatalf("unexpected custom profile render version: %d", req.RenderVersion)
+		}
 		if req.Region != "jp" {
 			t.Fatalf("unexpected drawing region: %q", req.Region)
 		}

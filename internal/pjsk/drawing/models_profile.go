@@ -98,6 +98,8 @@ type ProfileRequest struct {
 
 const CustomProfileCardRequestKind = "pjsk_custom_profile_card"
 
+const CustomProfileCardRenderVersion = 2
+
 type CustomProfileContext struct {
 	User                          sekaiapi.AnotherUser                            `json:"user"`
 	UserProfile                   sekaiapi.UserProfile                            `json:"userProfile"`
@@ -120,6 +122,7 @@ type CustomProfileContext struct {
 
 type CustomProfileCardRenderRequest struct {
 	SchemaVersion  int                            `json:"schema_version"`
+	RenderVersion  int                            `json:"render_version,omitempty"`
 	Kind           string                         `json:"kind"`
 	Region         string                         `json:"region"`
 	Card           sekaiapi.UserCustomProfileCard `json:"card"`
@@ -135,6 +138,7 @@ func NewCustomProfileCardRenderRequest(region string, card sekaiapi.UserCustomPr
 	}
 	return &CustomProfileCardRenderRequest{
 		SchemaVersion:  1,
+		RenderVersion:  CustomProfileCardRenderVersion,
 		Kind:           CustomProfileCardRequestKind,
 		Region:         region,
 		Card:           card,

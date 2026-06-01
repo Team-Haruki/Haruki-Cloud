@@ -2,8 +2,8 @@ package requestbuilder
 
 import (
 	"encoding/csv"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"sort"
 	"strconv"
 	"strings"

@@ -39,11 +39,11 @@ import (
 
 func main() {
 	var (
-		configPath  = flag.String("config", "haruki-cloud.yaml", "path to haruki-cloud.yaml")
-		qq          = flag.Int64("qq", 0, "QQ号 (required)")
-		explicitID  = flag.Int("bot-id", 0, "explicit 8-digit bot_id to assign (random if omitted)")
-		force       = flag.Bool("force", false, "reset credential if user already exists")
-		rebind      = flag.Bool("rebind", false, "change bot_id of existing owner (requires --bot-id); cascades to related records")
+		configPath = flag.String("config", "haruki-cloud.yaml", "path to haruki-cloud.yaml")
+		qq         = flag.Int64("qq", 0, "QQ号 (required)")
+		explicitID = flag.Int("bot-id", 0, "explicit 8-digit bot_id to assign (random if omitted)")
+		force      = flag.Bool("force", false, "reset credential if user already exists")
+		rebind     = flag.Bool("rebind", false, "change bot_id of existing owner (requires --bot-id); cascades to related records")
 	)
 	flag.Parse()
 

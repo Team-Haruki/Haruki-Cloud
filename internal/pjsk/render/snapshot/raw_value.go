@@ -2,8 +2,8 @@ package snapshot
 
 import (
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"fmt"
+	sonic "github.com/bytedance/sonic"
 	"slices"
 	"strings"
 )

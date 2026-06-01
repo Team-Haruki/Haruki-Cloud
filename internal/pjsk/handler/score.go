@@ -1,8 +1,8 @@
 package handler
 
 import (
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"

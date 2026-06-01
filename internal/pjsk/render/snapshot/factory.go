@@ -3,8 +3,8 @@ package snapshot
 import (
 	"bytes"
 	"context"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"slices"
 	"strconv"
 	"strings"

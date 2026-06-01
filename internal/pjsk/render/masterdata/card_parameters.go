@@ -3,8 +3,8 @@ package masterdata
 import (
 	"bytes"
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"fmt"
+	sonic "github.com/bytedance/sonic"
 	"sort"
 	"strconv"
 	"strings"

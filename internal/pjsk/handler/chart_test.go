@@ -6,7 +6,7 @@ import (
 )
 
 func TestChartHandleSkillPreviewSetsSkillFlag(t *testing.T) {
-	handler :=(&sekaiHandlers{}).ChartHandle()
+	handler := (&sekaiHandlers{}).ChartHandle()
 	result, err := handler.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/技能预览",

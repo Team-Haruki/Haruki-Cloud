@@ -57,4 +57,3 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 	}
 	return deleted, nil
 }
-

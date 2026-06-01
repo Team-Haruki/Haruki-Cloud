@@ -3,8 +3,8 @@ package music
 import (
 	"bytes"
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"fmt"
+	sonic "github.com/bytedance/sonic"
 	"strconv"
 	"strings"
 

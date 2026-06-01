@@ -16,10 +16,10 @@ package main
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"errors"
 	"flag"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"log"
 	"os"
 	"os/signal"
@@ -292,7 +292,10 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 	if err != nil {
 		return fmt.Errorf("query existing defaults: %w", err)
 	}
-	type scopeKey struct{ userID int; server string }
+	type scopeKey struct {
+		userID int
+		server string
+	}
 	alreadySet := make(map[scopeKey]bool, len(existingDefaults))
 	for _, d := range existingDefaults {
 		alreadySet[scopeKey{d.HarukiUserID, d.Server}] = true

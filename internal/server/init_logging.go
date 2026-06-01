@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
-	"haruki-cloud/version"
 	harukiLogger "haruki-cloud/utils/logger"
+	"haruki-cloud/version"
 )
 
 const defaultConfigPath = "haruki-cloud.yaml"

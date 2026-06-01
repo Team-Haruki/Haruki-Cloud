@@ -1,8 +1,8 @@
 package music
 
 import (
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"math"
 	"strings"
 	"time"

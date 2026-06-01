@@ -148,6 +148,7 @@ pjsk_render:
     allow_fallback: true      # set false in production (DB failure is fatal); true for dev/test
     allow_leaks: false        # when true, unopened event/worldbloom deck queries may fall back to local masterdata
     dir: "/data/HarukiServices/alpha/deckrec/masterdata"
+    refresh_interval: "5m"    # re-check mounted masterdata files and reset local render caches
 
   deck_recommend:
     enabled: true
@@ -160,6 +161,7 @@ pjsk_render:
     #     base_url: "http://127.0.0.1:3001"
     #     concurrency: 8
     masterdata_dir: "/data/HarukiServices/alpha/Data/master/haruki-sekai-master" # root dir; Cloud will resolve the region subdir
+    masterdata_refresh_interval: "5m" # re-check mounted masterdata files and ask deck-service to reload
     timeout: "10s"
     max_retries: 3            # HTTP-level retry count for transient failures
     retry_wait_time: "1s"     # wait between retries

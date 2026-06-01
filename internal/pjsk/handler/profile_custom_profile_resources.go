@@ -317,15 +317,26 @@ func collectCustomProfileStoryFavoriteResources(app *renderapp.App, region rende
 		return nil
 	}
 	eventStoryIDs := make(map[int]struct{})
+	unitStoryIDs := make(map[int]struct{})
 	for _, story := range c.storyFavorites {
-		if story.StoryID > 0 && strings.EqualFold(strings.TrimSpace(story.StoryType), "event_story") {
+		if story.StoryID <= 0 {
+			continue
+		}
+		switch strings.ToLower(strings.TrimSpace(story.StoryType)) {
+		case "event_story":
 			eventStoryIDs[story.StoryID] = struct{}{}
+		case "unit_story":
+			unitStoryIDs[story.StoryID] = struct{}{}
 		}
 	}
-	if len(eventStoryIDs) == 0 {
+	if len(eventStoryIDs) == 0 && len(unitStoryIDs) == 0 {
 		return nil
 	}
 	eventStories, err := loadCustomProfileMasterTable(app, region, "eventStories.json", eventStoryIDs)
+	if err != nil {
+		return err
+	}
+	unitStories, err := loadCustomProfileMasterTable(app, region, "unitStoryEpisodeGroups.json", unitStoryIDs)
 	if err != nil {
 		return err
 	}
@@ -342,26 +353,47 @@ func collectCustomProfileStoryFavoriteResources(app *renderapp.App, region rende
 		}
 	}
 
-	items := make(map[string]any, len(eventStories))
+	items := make(map[string]any, len(eventStories)+len(unitStories))
 	for _, story := range c.storyFavorites {
 		key := customProfileStoryFavoriteKey(story.StoryType, story.StoryID)
 		item := map[string]any{
 			"storyType": story.StoryType,
 			"storyId":   story.StoryID,
 		}
-		row := eventStories[story.StoryID]
-		if row != nil {
-			assetBundleName := strings.TrimSpace(mapString(row, "assetbundleName"))
-			item["assetbundleName"] = assetBundleName
-			if imagePath := resolveCustomProfileEventStoryBannerPath(app, region, assetBundleName); imagePath != "" {
-				item["imagePath"] = imagePath
-			}
-			if eventID, ok := mapInt(row, "eventId"); ok {
-				item["eventId"] = eventID
-				if eventRow := events[eventID]; eventRow != nil {
-					if title := strings.TrimSpace(mapString(eventRow, "name")); title != "" {
-						item["title"] = title
+		switch strings.ToLower(strings.TrimSpace(story.StoryType)) {
+		case "event_story":
+			row := eventStories[story.StoryID]
+			if row != nil {
+				assetBundleName := strings.TrimSpace(mapString(row, "assetbundleName"))
+				item["assetbundleName"] = assetBundleName
+				if imagePath := resolveCustomProfileEventStoryBannerPath(app, region, assetBundleName); imagePath != "" {
+					item["imagePath"] = imagePath
+				}
+				if eventID, ok := mapInt(row, "eventId"); ok {
+					item["eventId"] = eventID
+					if eventRow := events[eventID]; eventRow != nil {
+						if title := strings.TrimSpace(mapString(eventRow, "name")); title != "" {
+							item["title"] = title
+						}
 					}
+				}
+			}
+		case "unit_story":
+			row := unitStories[story.StoryID]
+			if row != nil {
+				assetBundleName := strings.TrimSpace(mapString(row, "assetbundleName"))
+				item["assetbundleName"] = assetBundleName
+				if unit := strings.TrimSpace(mapString(row, "unit")); unit != "" {
+					item["unit"] = unit
+				}
+				if category := strings.TrimSpace(mapString(row, "unitEpisodeCategory")); category != "" {
+					item["unitEpisodeCategory"] = category
+				}
+				if title := customProfileUnitStoryTitle(row); title != "" {
+					item["title"] = title
+				}
+				if imagePath := resolveCustomProfileUnitStoryBannerPath(app, region, assetBundleName); imagePath != "" {
+					item["imagePath"] = imagePath
 				}
 			}
 		}
@@ -637,6 +669,33 @@ func resolveCustomProfileEventStoryBannerPath(app *renderapp.App, region renderr
 	return assets.ResolveRegionAssetPath(helper, region.String(),
 		filepath.Join("event_story", assetBundleName, "screen_image", "banner_event_story.png"),
 	)
+}
+
+func resolveCustomProfileUnitStoryBannerPath(app *renderapp.App, region renderregion.Value, assetBundleName string) string {
+	assetBundleName = strings.TrimSpace(assetBundleName)
+	if assetBundleName == "" {
+		return ""
+	}
+	helper := (*assets.AssetHelper)(nil)
+	if app != nil {
+		helper = app.Assets
+	}
+	return assets.ResolveRegionAssetPath(helper, region.String(),
+		filepath.Join("unit_story", assetBundleName, "screen_image", "banner_unit_story.png"),
+	)
+}
+
+func customProfileUnitStoryTitle(row map[string]any) string {
+	if title := strings.TrimSpace(mapString(row, "title")); title != "" {
+		return title
+	}
+	if outline := strings.TrimSpace(mapString(row, "outline")); outline != "" {
+		if idx := strings.IndexAny(outline, "\r\n"); idx > 0 {
+			return strings.TrimSpace(outline[:idx])
+		}
+		return outline
+	}
+	return ""
 }
 
 func resolveCustomProfileResourceImagePath(app *renderapp.App, region renderregion.Value, resource map[string]any, fallbackDir string) string {

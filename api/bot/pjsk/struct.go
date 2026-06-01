@@ -53,6 +53,10 @@ type ManifestEntry struct {
 	// CommandAdditionalParams is an optional list of extra query parameter names
 	// the endpoint accepts beyond the standard command payload protocol.
 	CommandAdditionalParams []string `json:"command_additional_params,omitempty" msgpack:"command_additional_params,omitempty"`
+
+	// ClientPolicyScope is an optional client-side policy key for feature-level
+	// blacklists/whitelists. Commands still belong to CommandModule for routing.
+	ClientPolicyScope string `json:"client_policy_scope,omitempty" msgpack:"client_policy_scope,omitempty"`
 }
 
 // ManifestResponse is returned by GET /api/v2/bot/:botId/command/manifests.

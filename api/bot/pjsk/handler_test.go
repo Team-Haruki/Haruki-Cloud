@@ -2454,6 +2454,52 @@ func TestBotManifestEndpoint(t *testing.T) {
 	}
 }
 
+func TestBotManifestEndpointIncludesClientPolicyScopes(t *testing.T) {
+	botClient := newBotCommandTestClient(t, "manifest_client_policy")
+	t.Cleanup(func() { _ = botClient.Close() })
+	app := testBotAppWithDependencies(t, "", nil, botClient)
+
+	req, _ := http.NewRequest(http.MethodGet, "/api/v2/bot/"+testBotID+"/command/manifests", nil)
+	req.Host = "localhost"
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, respBody)
+	}
+
+	var envelope struct {
+		Data ManifestResponse `json:"data"`
+	}
+	if err := json.Unmarshal(respBody, &envelope); err != nil {
+		t.Fatalf("decode manifest: %v raw=%s", err, respBody)
+	}
+	want := map[string]string{
+		"profile/custom-profile-card": "custom_profile",
+		"mysekai/birthday-monitor":    "birthday_monitor",
+	}
+	for _, entry := range envelope.Data.Entries {
+		scope, ok := want[entry.CommandPath]
+		if !ok {
+			continue
+		}
+		if entry.CommandModule != "pjsk" {
+			t.Fatalf("%s module = %q", entry.CommandPath, entry.CommandModule)
+		}
+		if entry.ClientPolicyScope != scope {
+			t.Fatalf("%s client policy scope = %q", entry.CommandPath, entry.ClientPolicyScope)
+		}
+		delete(want, entry.CommandPath)
+	}
+	if len(want) > 0 {
+		t.Fatalf("manifest entries missing policy scopes: %#v", want)
+	}
+}
+
 func TestBotNilRenderAppSkipsRegistration(t *testing.T) {
 	app := fiber.New()
 	RegisterPJSKBotRoutes(app, nil, nil, nil, nil)

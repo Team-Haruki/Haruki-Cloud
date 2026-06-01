@@ -6,6 +6,8 @@ import (
 	sonic "github.com/bytedance/sonic"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -135,6 +137,73 @@ func TestNormalizeRecommendAlgorithmAliases(t *testing.T) {
 	}
 	if got := normalizeRecommendAlgorithmForService("sa"); got != "ga" {
 		t.Fatalf("normalizeRecommendAlgorithmForService(sa) = %q", got)
+	}
+}
+
+func TestDeckMasterdataDirSignatureChangesWhenFileChanges(t *testing.T) {
+	root := t.TempDir()
+	regionDir := filepath.Join(root, "jp")
+	if err := os.MkdirAll(regionDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(regionDir, "areaItemLevels.json"), []byte(`[{"id":1}]`), 0o644); err != nil {
+		t.Fatalf("write marker: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(regionDir, "cards.json"), []byte(`[{"id":1}]`), 0o644); err != nil {
+		t.Fatalf("write cards: %v", err)
+	}
+
+	first, err := deckMasterdataDirSignature(root, "jp")
+	if err != nil {
+		t.Fatalf("first signature: %v", err)
+	}
+	if first.Files != 2 {
+		t.Fatalf("expected 2 files, got %+v", first)
+	}
+
+	if err := os.WriteFile(filepath.Join(regionDir, "cards.json"), []byte(`[{"id":1},{"id":2}]`), 0o644); err != nil {
+		t.Fatalf("rewrite cards: %v", err)
+	}
+	second, err := deckMasterdataDirSignature(root, "jp")
+	if err != nil {
+		t.Fatalf("second signature: %v", err)
+	}
+	if first.Hash == second.Hash {
+		t.Fatalf("signature did not change after file update: %s", first.Hash)
+	}
+}
+
+func TestRemoteMasterdataRefreshInvalidatesReadyTargets(t *testing.T) {
+	root := t.TempDir()
+	regionDir := filepath.Join(root, "jp")
+	if err := os.MkdirAll(regionDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(regionDir, "areaItemLevels.json"), []byte(`[{"id":1}]`), 0o644); err != nil {
+		t.Fatalf("write marker: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(regionDir, "cards.json"), []byte(`[{"id":1}]`), 0o644); err != nil {
+		t.Fatalf("write cards: %v", err)
+	}
+
+	recommender := newStandaloneTestRemoteDeckRecommender("http://127.0.0.1:1", http.DefaultClient)
+	recommender.masterdataDir = root
+	recommender.region = "jp"
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "ERROR", nil)
+	state := testRemoteTargetState(t, recommender)
+	state.masterdataReady = true
+	recommender.captureMasterdataSignature()
+
+	if err := os.WriteFile(filepath.Join(regionDir, "cards.json"), []byte(`[{"id":1},{"id":2}]`), 0o644); err != nil {
+		t.Fatalf("rewrite cards: %v", err)
+	}
+	recommender.refreshMasterdataSignature()
+
+	state.mu.Lock()
+	ready := state.masterdataReady
+	state.mu.Unlock()
+	if ready {
+		t.Fatalf("expected target masterdata to be invalidated")
 	}
 }
 

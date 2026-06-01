@@ -81,15 +81,16 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	})
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
-		Enabled:         cfg.DeckRecommend.Enabled,
-		ServiceBaseURL:  cfg.DeckRecommend.ServiceBaseURL,
-		Targets:         slices.Clone(cfg.DeckRecommend.Targets),
-		SharedResources: cfg.SharedUpstreamResources,
-		MasterdataDir:   cfg.DeckRecommend.MasterdataDir,
-		Timeout:         cfg.DeckRecommend.Timeout,
-		MaxRetries:      cfg.DeckRecommend.MaxRetries,
-		RetryWaitTime:   cfg.DeckRecommend.RetryWaitTime,
-		DefaultAlgs:     slices.Clone(cfg.DeckRecommend.DefaultAlgs),
+		Enabled:                   cfg.DeckRecommend.Enabled,
+		ServiceBaseURL:            cfg.DeckRecommend.ServiceBaseURL,
+		Targets:                   slices.Clone(cfg.DeckRecommend.Targets),
+		SharedResources:           cfg.SharedUpstreamResources,
+		MasterdataDir:             cfg.DeckRecommend.MasterdataDir,
+		MasterdataRefreshInterval: cfg.DeckRecommend.MasterdataRefreshInterval,
+		Timeout:                   cfg.DeckRecommend.Timeout,
+		MaxRetries:                cfg.DeckRecommend.MaxRetries,
+		RetryWaitTime:             cfg.DeckRecommend.RetryWaitTime,
+		DefaultAlgs:               slices.Clone(cfg.DeckRecommend.DefaultAlgs),
 	}, cfg.MetaLoader)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
@@ -104,6 +105,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var stampController *stamp.Controller
 	var vliveController *vlive.Controller
 	var masterProvider provider.MasterDataProvider
+	renderMasterdataDir := resolveRenderProviderMasterdataDir(cfg)
 	providersByRegion := make(map[renderregion.Value]provider.MasterDataProvider)
 	registerProvider := func(src provider.MasterDataProvider) {
 		if src == nil {
@@ -116,7 +118,6 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		}
 	}
 	if sekaiClient != nil {
-		renderMasterdataDir := resolveRenderProviderMasterdataDir(cfg)
 		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
 		masterDBProvider.SetLocalMasterdataDir(renderMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
 		registerProvider(masterDBProvider)
@@ -135,15 +136,16 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		// Initialize controllers with provider adapters.
 		skController.SetTrackerIntegration(cfg.Tracker, eventAdapter, assetHelper)
 		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
-			Enabled:         cfg.DeckRecommend.Enabled,
-			ServiceBaseURL:  cfg.DeckRecommend.ServiceBaseURL,
-			Targets:         slices.Clone(cfg.DeckRecommend.Targets),
-			SharedResources: cfg.SharedUpstreamResources,
-			MasterdataDir:   cfg.DeckRecommend.MasterdataDir,
-			Timeout:         cfg.DeckRecommend.Timeout,
-			MaxRetries:      cfg.DeckRecommend.MaxRetries,
-			RetryWaitTime:   cfg.DeckRecommend.RetryWaitTime,
-			DefaultAlgs:     slices.Clone(cfg.DeckRecommend.DefaultAlgs),
+			Enabled:                   cfg.DeckRecommend.Enabled,
+			ServiceBaseURL:            cfg.DeckRecommend.ServiceBaseURL,
+			Targets:                   slices.Clone(cfg.DeckRecommend.Targets),
+			SharedResources:           cfg.SharedUpstreamResources,
+			MasterdataDir:             cfg.DeckRecommend.MasterdataDir,
+			MasterdataRefreshInterval: cfg.DeckRecommend.MasterdataRefreshInterval,
+			Timeout:                   cfg.DeckRecommend.Timeout,
+			MaxRetries:                cfg.DeckRecommend.MaxRetries,
+			RetryWaitTime:             cfg.DeckRecommend.RetryWaitTime,
+			DefaultAlgs:               slices.Clone(cfg.DeckRecommend.DefaultAlgs),
 		}, cfg.MetaLoader)
 		deckController.RegisterMusicSource(musicAdapter)
 		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
@@ -229,7 +231,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 
 	skController.StartDefaultPredictWarmup()
 
-	return &App{
+	runtime := &App{
 		Sekai:      sekaiClient,
 		PJSK:       pjskClient,
 		Drawing:    drawingClient,
@@ -260,6 +262,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Tracker:    cfg.Tracker,
 		Config:     cfg,
 	}
+	runtime.startLocalMasterdataRefresh(initCtx, renderMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
+	return runtime
 }
 
 func shouldEnableLocalSnapshotFallback(cfg Config) bool {

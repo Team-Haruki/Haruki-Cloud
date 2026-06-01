@@ -526,6 +526,7 @@ func buildManifestHandler(botDBClient *botDB.Client) fiber.Handler {
 			return api.JSONResponse(c, fiber.StatusInternalServerError, "加载指令清单失败", nil)
 		}
 
+		clientPolicyScopes := commandManifestClientPolicyScopes()
 		entries := make([]ManifestEntry, 0, len(rows))
 		for _, r := range rows {
 			entries = append(entries, ManifestEntry{
@@ -535,6 +536,7 @@ func buildManifestHandler(botDBClient *botDB.Client) fiber.Handler {
 				CommandModule:           r.CommandModule,
 				CommandPath:             r.CommandPath,
 				CommandAdditionalParams: r.CommandAdditionalParams,
+				ClientPolicyScope:       clientPolicyScopes[manifestKey(r.CommandModule, r.CommandPath)],
 			})
 		}
 		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, ManifestResponse{

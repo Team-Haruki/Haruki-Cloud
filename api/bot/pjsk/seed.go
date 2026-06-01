@@ -61,16 +61,31 @@ func SeedCommandManifests(ctx context.Context, client *botDB.Client) error {
 
 func commandManifestRoutes() []commandhandler.BotRoute {
 	routes := commandhandler.ListBotRoutes()
-	return appendSpecialCommandManifestRoute(routes, birthdayMonitorManifestRoute())
+	routes = appendSpecialCommandManifestRoute(routes, birthdayMonitorManifestRoute())
+	return appendSpecialCommandManifestRoute(routes, customProfileClientPolicyManifestRoute())
 }
+
+const birthdayMonitorClientPolicyScope = "birthday_monitor"
 
 func birthdayMonitorManifestRoute() commandhandler.BotRoute {
 	return commandhandler.BotRoute{
-		Path:             birthdayMonitorCommandPath,
-		Module:           pjskhandler.BotModulePJSK,
-		Commands:         slices.Clone(birthdayMonitorManifestCommandPrefixes),
-		CommandMode:      commandhandler.DefaultBotCommandMode,
-		AdditionalParams: slices.Clone(commandhandler.DefaultBotAdditionalParams),
+		Path:              birthdayMonitorCommandPath,
+		Module:            pjskhandler.BotModulePJSK,
+		Commands:          slices.Clone(birthdayMonitorManifestCommandPrefixes),
+		CommandMode:       commandhandler.DefaultBotCommandMode,
+		AdditionalParams:  slices.Clone(commandhandler.DefaultBotAdditionalParams),
+		ClientPolicyScope: birthdayMonitorClientPolicyScope,
+	}
+}
+
+const customProfileCommandPath = "profile/custom-profile-card"
+const customProfileClientPolicyScope = "custom_profile"
+
+func customProfileClientPolicyManifestRoute() commandhandler.BotRoute {
+	return commandhandler.BotRoute{
+		Path:              customProfileCommandPath,
+		Module:            pjskhandler.BotModulePJSK,
+		ClientPolicyScope: customProfileClientPolicyScope,
 	}
 }
 
@@ -87,9 +102,24 @@ func appendSpecialCommandManifestRoute(routes []commandhandler.BotRoute, special
 		if len(routes[index].AdditionalParams) == 0 {
 			routes[index].AdditionalParams = slices.Clone(special.AdditionalParams)
 		}
+		if routes[index].ClientPolicyScope == "" {
+			routes[index].ClientPolicyScope = special.ClientPolicyScope
+		}
 		return routes
 	}
 	return append(routes, special)
+}
+
+func commandManifestClientPolicyScopes() map[string]string {
+	routes := commandManifestRoutes()
+	scopes := make(map[string]string)
+	for _, route := range routes {
+		if route.ClientPolicyScope == "" {
+			continue
+		}
+		scopes[manifestKey(route.Module, route.Path)] = route.ClientPolicyScope
+	}
+	return scopes
 }
 
 func mergeCommandPrefixes(left, right []string) []string {

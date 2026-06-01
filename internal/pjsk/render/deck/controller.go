@@ -2,8 +2,8 @@ package deck
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
 	"fmt"
+	json "github.com/bytedance/sonic"
 	"slices"
 	"strconv"
 	"strings"
@@ -35,15 +35,16 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 		snapshot:      snapshot,
 		defaultRegion: resolvedDefaultRegion,
 		recommendCfg: RecommendConfig{
-			Enabled:         cfg.Enabled,
-			ServiceBaseURL:  strings.TrimSpace(cfg.ServiceBaseURL),
-			Targets:         slices.Clone(cfg.Targets),
-			SharedResources: cfg.SharedResources,
-			MasterdataDir:   cfg.MasterdataDir,
-			Timeout:         cfg.Timeout,
-			MaxRetries:      cfg.MaxRetries,
-			RetryWaitTime:   cfg.RetryWaitTime,
-			DefaultAlgs:     slices.Clone(cfg.DefaultAlgs),
+			Enabled:                   cfg.Enabled,
+			ServiceBaseURL:            strings.TrimSpace(cfg.ServiceBaseURL),
+			Targets:                   slices.Clone(cfg.Targets),
+			SharedResources:           cfg.SharedResources,
+			MasterdataDir:             cfg.MasterdataDir,
+			MasterdataRefreshInterval: cfg.MasterdataRefreshInterval,
+			Timeout:                   cfg.Timeout,
+			MaxRetries:                cfg.MaxRetries,
+			RetryWaitTime:             cfg.RetryWaitTime,
+			DefaultAlgs:               slices.Clone(cfg.DefaultAlgs),
 		},
 		metaLoader: metaLoader,
 	}

@@ -10,11 +10,12 @@ const DefaultBotCommandMode = "POST"
 var DefaultBotAdditionalParams []string
 
 type BotRoute struct {
-	Path             string
-	Module           string
-	Commands         []string
-	CommandMode      string
-	AdditionalParams []string
+	Path              string
+	Module            string
+	Commands          []string
+	CommandMode       string
+	AdditionalParams  []string
+	ClientPolicyScope string
 }
 
 type botRouteEntry struct {

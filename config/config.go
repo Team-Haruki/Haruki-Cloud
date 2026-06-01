@@ -191,6 +191,8 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", &cfg.PJSKRender.SKForecast.CachePath)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", &cfg.PJSKRender.DeckRecommend.MasterdataDir)
+	envDuration("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.DeckRecommend.MasterdataRefreshInterval)
+	envDuration("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.LocalMasterdata.RefreshInterval)
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", &cfg.PJSKRender.LocalMasterdata.AllowLeaks)
 }
 
@@ -242,10 +244,11 @@ type AssetDirsConfig struct {
 }
 
 type LocalMasterdataConfig struct {
-	Enabled       bool   `yaml:"enabled"`
-	AllowFallback bool   `yaml:"allow_fallback"` // when false, DB failure is fatal (production); when true, fallback to local files (dev/test)
-	AllowLeaks    bool   `yaml:"allow_leaks"`    // when true, unopened event/worldbloom deck queries may fall back to local masterdata
-	Dir           string `yaml:"dir"`
+	Enabled         bool          `yaml:"enabled"`
+	AllowFallback   bool          `yaml:"allow_fallback"` // when false, DB failure is fatal (production); when true, fallback to local files (dev/test)
+	AllowLeaks      bool          `yaml:"allow_leaks"`    // when true, unopened event/worldbloom deck queries may fall back to local masterdata
+	Dir             string        `yaml:"dir"`
+	RefreshInterval time.Duration `yaml:"refresh_interval"`
 }
 
 type UserSnapshotConfig struct {
@@ -257,14 +260,15 @@ type UserSnapshotConfig struct {
 }
 
 type DeckRecommendConfig struct {
-	Enabled        bool                    `yaml:"enabled"`
-	ServiceBaseURL string                  `yaml:"service_base_url"`
-	Targets        []upstream.TargetConfig `yaml:"targets"`
-	MasterdataDir  string                  `yaml:"masterdata_dir"`
-	Timeout        time.Duration           `yaml:"timeout"`
-	MaxRetries     int                     `yaml:"max_retries"`
-	RetryWaitTime  time.Duration           `yaml:"retry_wait_time"`
-	DefaultAlgs    []string                `yaml:"default_algs"`
+	Enabled                   bool                    `yaml:"enabled"`
+	ServiceBaseURL            string                  `yaml:"service_base_url"`
+	Targets                   []upstream.TargetConfig `yaml:"targets"`
+	MasterdataDir             string                  `yaml:"masterdata_dir"`
+	MasterdataRefreshInterval time.Duration           `yaml:"masterdata_refresh_interval"`
+	Timeout                   time.Duration           `yaml:"timeout"`
+	MaxRetries                int                     `yaml:"max_retries"`
+	RetryWaitTime             time.Duration           `yaml:"retry_wait_time"`
+	DefaultAlgs               []string                `yaml:"default_algs"`
 }
 
 type RenderCacheConfig struct {

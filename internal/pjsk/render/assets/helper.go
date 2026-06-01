@@ -199,6 +199,7 @@ var onDemandPreferredTopLevel = map[string]struct{}{
 	"gacha":        {},
 	"lottery_game": {},
 	"mysekai":      {},
+	"unit_story":   {},
 	"virtual_live": {},
 }
 

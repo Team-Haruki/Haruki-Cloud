@@ -71,6 +71,37 @@ func resolveDeckRemoteMasterdataDir(configured string) string {
 	return root
 }
 
+func resolveDeckMasterdataContentDir(configured, region string) (string, bool) {
+	configured = strings.TrimSpace(configured)
+	if configured == "" {
+		return "", false
+	}
+	root := filepath.Clean(configured)
+	region = strings.ToLower(strings.TrimSpace(region))
+	if region == "" {
+		region = "jp"
+	}
+
+	candidates := []string{
+		filepath.Join(root, region),
+		filepath.Join(root, region, "master"),
+		root,
+		filepath.Join(root, "master"),
+	}
+	if repoDir := deckMasterdataRepoDirs[region]; repoDir != "" {
+		candidates = append(candidates,
+			filepath.Join(root, repoDir),
+			filepath.Join(root, repoDir, "master"),
+		)
+	}
+	for _, candidate := range candidates {
+		if fileExists(filepath.Join(candidate, "areaItemLevels.json")) {
+			return candidate, true
+		}
+	}
+	return "", false
+}
+
 func deckMasterdataContainsEvent(configured, region string, eventID int) (bool, bool) {
 	if eventID <= 0 {
 		return false, false

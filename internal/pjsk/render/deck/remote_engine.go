@@ -16,14 +16,21 @@ func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 	if timeout <= 0 {
 		timeout = 75 * time.Second
 	}
-	targets := upstream.ResolveTargets(cfg.ServiceBaseURL, cfg.Targets, "deck-service")
-	return &remoteEngineProvider{
-		cfg:          cfg,
-		client:       &http.Client{Timeout: timeout},
-		pool:         upstream.NewPoolWithResources(targets, cfg.SharedResources),
-		targets:      targets,
-		recommenders: make(map[string]PjskDeckRecommender),
+	refreshInterval := cfg.MasterdataRefreshInterval
+	if refreshInterval == 0 {
+		refreshInterval = defaultMasterdataRefresh
 	}
+	targets := upstream.ResolveTargets(cfg.ServiceBaseURL, cfg.Targets, "deck-service")
+	provider := &remoteEngineProvider{
+		cfg:                       cfg,
+		client:                    &http.Client{Timeout: timeout},
+		pool:                      upstream.NewPoolWithResources(targets, cfg.SharedResources),
+		targets:                   targets,
+		masterdataRefreshInterval: refreshInterval,
+		recommenders:              make(map[string]PjskDeckRecommender),
+	}
+	provider.startMasterdataRefreshLoop()
+	return provider
 }
 
 func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
@@ -81,6 +88,7 @@ func (p *remoteEngineProvider) Get(region string) (PjskDeckRecommender, error) {
 			masterdataReady: true,
 		}
 	}
+	recommender.captureMasterdataSignature()
 	p.recommenders[region] = recommender
 	return recommender, nil
 }

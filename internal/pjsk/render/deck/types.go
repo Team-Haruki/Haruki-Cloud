@@ -84,15 +84,16 @@ type Controller struct {
 // ── Recommender ─────────────────────────────────────────────────────────────
 
 type RecommendConfig struct {
-	Enabled         bool
-	ServiceBaseURL  string
-	Targets         []upstream.TargetConfig
-	SharedResources *upstream.SharedResources
-	MasterdataDir   string
-	Timeout         time.Duration
-	MaxRetries      int
-	RetryWaitTime   time.Duration
-	DefaultAlgs     []string
+	Enabled                   bool
+	ServiceBaseURL            string
+	Targets                   []upstream.TargetConfig
+	SharedResources           *upstream.SharedResources
+	MasterdataDir             string
+	MasterdataRefreshInterval time.Duration
+	Timeout                   time.Duration
+	MaxRetries                int
+	RetryWaitTime             time.Duration
+	DefaultAlgs               []string
 }
 
 type MusicMetaSource interface {
@@ -156,19 +157,21 @@ type RecommendCard struct {
 // ── Remote engine ───────────────────────────────────────────────────────────
 
 const (
-	defaultMaxRetries            = 3
-	defaultRetryWaitTime         = time.Second
-	maxConsecutiveFailures int64 = 5
-	circuitBreakerCooldown       = time.Minute
+	defaultMaxRetries              = 3
+	defaultRetryWaitTime           = time.Second
+	defaultMasterdataRefresh       = 5 * time.Minute
+	maxConsecutiveFailures   int64 = 5
+	circuitBreakerCooldown         = time.Minute
 )
 
 type remoteEngineProvider struct {
-	cfg          RecommendConfig
-	client       *http.Client
-	pool         *upstream.Pool
-	targets      []upstream.TargetConfig
-	mu           sync.Mutex
-	recommenders map[string]PjskDeckRecommender
+	cfg                       RecommendConfig
+	client                    *http.Client
+	pool                      *upstream.Pool
+	targets                   []upstream.TargetConfig
+	masterdataRefreshInterval time.Duration
+	mu                        sync.Mutex
+	recommenders              map[string]PjskDeckRecommender
 }
 
 type RemoteDeckRecommender struct {
@@ -177,6 +180,8 @@ type RemoteDeckRecommender struct {
 	targetStates  map[string]*remoteTargetState
 	defaultAlgs   []string
 	masterdataDir string
+	masterdataMu  sync.Mutex
+	masterdataSig string
 	region        string
 	maxRetries    int
 	retryWaitTime time.Duration

@@ -48,3 +48,18 @@ func TestSeedCommandManifestsIncludesBirthdayMonitor(t *testing.T) {
 		}
 	}
 }
+
+func TestCommandManifestRoutesMarksFeaturePolicyScopes(t *testing.T) {
+	pjskhandler.EnsureCommandHandlersRegistered()
+
+	scopes := commandManifestClientPolicyScopes()
+	want := map[string]string{
+		manifestKey(pjskhandler.BotModulePJSK, customProfileCommandPath):   customProfileClientPolicyScope,
+		manifestKey(pjskhandler.BotModulePJSK, birthdayMonitorCommandPath): birthdayMonitorClientPolicyScope,
+	}
+	for key, scope := range want {
+		if scopes[key] != scope {
+			t.Fatalf("%s client policy scope = %q", key, scopes[key])
+		}
+	}
+}

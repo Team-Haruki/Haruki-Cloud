@@ -68,6 +68,9 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	writeCustomProfileJSONFile(t, filepath.Join(master, "events.json"), []map[string]any{
 		{"id": 190, "name": "Test Event Story", "assetbundleName": "event_story_test"},
 	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "unitStoryEpisodeGroups.json"), []map[string]any{
+		{"id": 5, "unit": "piapro", "unitEpisodeCategory": "school_refusal", "outline": "Test Unit Story\nSecond line", "assetbundleName": "main_schoolrefusal_piapro"},
+	})
 
 	src := provider.NewLocalProvider(master, renderregion.CN)
 	app := &renderapp.App{
@@ -104,10 +107,13 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 		},
 	}
 	resp := &sekaiapi.GetAnotherProfileResponse{
-		UserCards:          []sekaiapi.AnotherUserCard{{CardID: 915, SpecialTrainingStatus: "done", DefaultImage: "special_training"}},
-		UserHonors:         []sekaiapi.UserHonor{{HonorID: 7001, Level: 1}},
-		UserBondsHonors:    []sekaiapi.UserBondsHonor{{BondsHonorID: 1020501, Level: 3}},
-		UserStoryFavorites: []sekaiapi.UserStoryFavorite{{StoryType: "event_story", StoryID: 19}},
+		UserCards:       []sekaiapi.AnotherUserCard{{CardID: 915, SpecialTrainingStatus: "done", DefaultImage: "special_training"}},
+		UserHonors:      []sekaiapi.UserHonor{{HonorID: 7001, Level: 1}},
+		UserBondsHonors: []sekaiapi.UserBondsHonor{{BondsHonorID: 1020501, Level: 3}},
+		UserStoryFavorites: []sekaiapi.UserStoryFavorite{
+			{StoryType: "event_story", StoryID: 19},
+			{StoryType: "unit_story", StoryID: 5},
+		},
 	}
 
 	resources, err := buildCustomProfileResources(context.Background(), app, "cn", card, resp)
@@ -138,6 +144,13 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	}
 	if got := story["imagePath"].(string); got != "asset/cn-assets/ondemand/event_story/event_story_test/screen_image/banner_event_story.png" {
 		t.Fatalf("unexpected story favorite image path: %s", got)
+	}
+	unitStory := storyFavorites["unit_story:5"].(map[string]any)
+	if got := unitStory["title"].(string); got != "Test Unit Story" {
+		t.Fatalf("unexpected unit story title: %s", got)
+	}
+	if got := unitStory["imagePath"].(string); got != "asset/cn-assets/ondemand/unit_story/main_schoolrefusal_piapro/screen_image/banner_unit_story.png" {
+		t.Fatalf("unexpected unit story image path: %s", got)
 	}
 	cardAsset := resources["cardAssets"].(map[int]map[string]any)[915]
 	if got := cardAsset["afterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member/res010_no034/card_after_training.png" {

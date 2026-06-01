@@ -72,10 +72,11 @@ type Config struct {
 const defaultMusicMetaRefreshInterval = 30 * time.Minute
 
 type LocalMasterdataConfig struct {
-	Enabled       bool
-	AllowFallback bool // when false, DB failure is fatal; when true, fallback to local files
-	AllowLeaks    bool // when true, unopened event/worldbloom deck queries may fall back to local masterdata
-	Dir           string
+	Enabled         bool
+	AllowFallback   bool // when false, DB failure is fatal; when true, fallback to local files
+	AllowLeaks      bool // when true, unopened event/worldbloom deck queries may fall back to local masterdata
+	Dir             string
+	RefreshInterval time.Duration
 }
 
 type UserSnapshotConfig struct {
@@ -87,15 +88,16 @@ type UserSnapshotConfig struct {
 }
 
 type DeckRecommendConfig struct {
-	Enabled         bool
-	ServiceBaseURL  string
-	Targets         []upstream.TargetConfig
-	SharedResources *upstream.SharedResources
-	MasterdataDir   string
-	Timeout         time.Duration
-	MaxRetries      int
-	RetryWaitTime   time.Duration
-	DefaultAlgs     []string
+	Enabled                   bool
+	ServiceBaseURL            string
+	Targets                   []upstream.TargetConfig
+	SharedResources           *upstream.SharedResources
+	MasterdataDir             string
+	MasterdataRefreshInterval time.Duration
+	Timeout                   time.Duration
+	MaxRetries                int
+	RetryWaitTime             time.Duration
+	DefaultAlgs               []string
 }
 
 type SKForecastConfig = sk.ForecastConfig

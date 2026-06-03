@@ -75,6 +75,10 @@ func (s *detailEventSource) GetCharacterByID(id int) (*masterdata.Character, err
 	return nil, fmt.Errorf("character %d not found", id)
 }
 
+func (s *detailEventSource) GetCharacterColorCode(id int) (string, bool) {
+	return "", false
+}
+
 var _ eventrender.DataSource = (*detailEventSource)(nil)
 
 func TestBuildCardDetailRequestUsesLunabotStaticPathsForEventIcons(t *testing.T) {

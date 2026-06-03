@@ -55,7 +55,17 @@ func (p *localCharacterProvider) ensureUnits() error {
 		}
 		for i := range items {
 			data.byID[items[i].ID] = &items[i]
-			data.colorID[items[i].ID] = strings.TrimSpace(items[i].ColorCode)
+			colorCode := strings.TrimSpace(items[i].ColorCode)
+			if colorCode == "" {
+				continue
+			}
+			characterID := items[i].GameCharacterID
+			if characterID == 0 {
+				characterID = items[i].ID
+			}
+			if _, exists := data.colorID[characterID]; !exists {
+				data.colorID[characterID] = colorCode
+			}
 		}
 		return data, nil
 	})

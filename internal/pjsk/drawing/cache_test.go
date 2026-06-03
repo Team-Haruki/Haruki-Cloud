@@ -36,10 +36,10 @@ func TestResolveRenderCacheRuleUsesHalfDayTTLForSelectedEndpoints(t *testing.T) 
 	}
 }
 
-func TestResolveRenderCacheRuleUsesOneHourTTLForEventDetail(t *testing.T) {
+func TestResolveRenderCacheRuleDisablesEventDetail(t *testing.T) {
 	rule := resolveRenderCacheRule("/api/pjsk/event/detail")
-	if rule.TTL != renderCacheTTLOneHour {
-		t.Fatalf("event detail ttl = %s, want %s", rule.TTL, renderCacheTTLOneHour)
+	if rule.Enabled {
+		t.Fatal("event detail render cache should be disabled")
 	}
 }
 
@@ -261,21 +261,18 @@ func TestBuildRenderCachePolicyVLiveUsesDynamicWindowTTL(t *testing.T) {
 	}
 }
 
-func TestBuildRenderCachePolicyEventDetailUsesOneHourTTL(t *testing.T) {
+func TestBuildRenderCachePolicyEventDetailIsDisabled(t *testing.T) {
 	now := int64(1774118400000)
 	endAt := now - int64((time.Hour)/time.Millisecond)
-	policy, err := buildRenderCachePolicy("/api/pjsk/event/detail", map[string]any{
+	_, err := buildRenderCachePolicy("/api/pjsk/event/detail", map[string]any{
 		"dt": now,
 		"event_info": map[string]any{
 			"id":     101,
 			"end_at": endAt,
 		},
 	})
-	if err != nil {
-		t.Fatalf("buildRenderCachePolicy: %v", err)
-	}
-	if policy.TTL != renderCacheTTLOneHour {
-		t.Fatalf("event detail ttl = %v, want %v", policy.TTL, renderCacheTTLOneHour)
+	if err == nil || !strings.Contains(err.Error(), "render cache disabled") {
+		t.Fatalf("expected disabled render cache error, got %v", err)
 	}
 }
 

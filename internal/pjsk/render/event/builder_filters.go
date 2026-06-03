@@ -332,15 +332,39 @@ func (b *Builder) buildWorldBloomTimeline(eventID int) []map[string]any {
 
 	timeline := make([]map[string]any, 0, len(chapters))
 	for _, chapter := range chapters {
+		if chapter == nil {
+			continue
+		}
+		chapterEndAt := resolveWorldBloomChapterEndAt(chapter)
 		item := map[string]any{
-			"start_at":     chapter.ChapterStartAt,
-			"aggregate_at": chapter.AggregateAt,
+			"start_at":             chapter.ChapterStartAt,
+			"aggregate_at":         chapter.AggregateAt,
+			"end_at":               chapterEndAt,
+			"chapter_start_at":     chapter.ChapterStartAt,
+			"chapter_aggregate_at": chapter.AggregateAt,
+			"chapter_end_at":       chapterEndAt,
 		}
 		if chapter.ChapterNo != 0 {
 			item["chapter_id"] = chapter.ChapterNo
+			item["chapter_no"] = chapter.ChapterNo
 		}
 		if chapter.GameCharacterID != nil && *chapter.GameCharacterID != 0 {
-			item["game_character_id"] = *chapter.GameCharacterID
+			characterID := *chapter.GameCharacterID
+			item["game_character_id"] = characterID
+			item["character_icon_path"] = b.characterIconPath(characterID, b.source.DefaultRegion())
+			if characterName := b.characterDisplayName(characterID); characterName != "" {
+				item["character_name"] = characterName
+			}
+			if colorCode, ok := b.source.GetCharacterColorCode(characterID); ok {
+				item["color_code"] = colorCode
+				item["character_color_code"] = colorCode
+			}
+		}
+		if chapter.ChapterType != "" {
+			item["chapter_type"] = chapter.ChapterType
+		}
+		if chapter.IsSupplemental {
+			item["is_supplemental"] = true
 		}
 		timeline = append(timeline, item)
 	}
@@ -348,4 +372,17 @@ func (b *Builder) buildWorldBloomTimeline(eventID int) []map[string]any {
 		return timeline[i]["start_at"].(int64) < timeline[j]["start_at"].(int64)
 	})
 	return timeline
+}
+
+func resolveWorldBloomChapterEndAt(chapter *masterdata.WorldBloom) int64 {
+	if chapter == nil {
+		return 0
+	}
+	if chapter.ChapterEndAt > 0 {
+		return chapter.ChapterEndAt
+	}
+	if chapter.AggregateAt > 0 {
+		return chapter.AggregateAt + 1000
+	}
+	return 0
 }

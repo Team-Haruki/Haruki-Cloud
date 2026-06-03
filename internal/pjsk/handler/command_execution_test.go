@@ -4319,6 +4319,9 @@ func (s *bridgeCardEventSource) GetWorldBloomChapters(eventID int) []*masterdata
 func (s *bridgeCardEventSource) GetCharacterByID(id int) (*masterdata.Character, error) {
 	return nil, os.ErrNotExist
 }
+func (s *bridgeCardEventSource) GetCharacterColorCode(id int) (string, bool) {
+	return "", false
+}
 
 func assertCardSummaryMessage(t *testing.T, message onebot11.Message, fragments ...string) {
 	t.Helper()

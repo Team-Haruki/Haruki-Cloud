@@ -131,6 +131,14 @@ func (b *Builder) characterIconPath(charID int, _ renderregion.Value) string {
 	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", charID)))
 }
 
+func (b *Builder) characterDisplayName(charID int) string {
+	character, err := b.source.GetCharacterByID(charID)
+	if err != nil || character == nil {
+		return ""
+	}
+	return strings.TrimSpace(character.FirstName + character.GivenName)
+}
+
 func (b *Builder) unitIconPathByCharacter(charID int, region renderregion.Value) string {
 	character, err := b.source.GetCharacterByID(charID)
 	if err != nil || character == nil {

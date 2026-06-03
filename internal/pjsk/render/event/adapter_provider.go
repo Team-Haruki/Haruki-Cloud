@@ -61,3 +61,7 @@ func (a *ProviderAdapter) GetWorldBloomChapters(eventID int) []*masterdata.World
 func (a *ProviderAdapter) GetCharacterByID(id int) (*masterdata.Character, error) {
 	return a.P.Characters().GetByID(a.Context(), id)
 }
+
+func (a *ProviderAdapter) GetCharacterColorCode(id int) (string, bool) {
+	return a.P.Characters().GetColorCode(a.Context(), id)
+}

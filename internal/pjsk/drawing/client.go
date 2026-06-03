@@ -254,7 +254,7 @@ func (c *HarukiDrawingClient) GenerateCharacterMissionAll(req *CharacterMissionA
 // =========================== Event API ===========================
 
 func (c *HarukiDrawingClient) GenerateEventDetail(req *EventDetailRequest) ([]byte, error) {
-	return c.cachedPost("/api/pjsk/event/detail", req)
+	return c.post("/api/pjsk/event/detail", req)
 }
 
 func (c *HarukiDrawingClient) GenerateEventRecord(req *EventRecordRequest) ([]byte, error) {

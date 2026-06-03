@@ -23,6 +23,7 @@ type DataSource interface {
 	GetBanEvents(charID int) []*masterdata.Event
 	GetWorldBloomChapters(eventID int) []*masterdata.WorldBloom
 	GetCharacterByID(id int) (*masterdata.Character, error)
+	GetCharacterColorCode(id int) (string, bool)
 }
 
 type contextualDataSource interface {

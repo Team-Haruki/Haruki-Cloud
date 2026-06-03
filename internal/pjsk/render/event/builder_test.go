@@ -20,6 +20,7 @@ type testEventSource struct {
 	gcuByID         map[int]*masterdata.GameCharacterUnit
 	worldByEvent    map[int][]*masterdata.WorldBloom
 	characterByID   map[int]*masterdata.Character
+	colorByCharID   map[int]string
 	banEventsByChar map[int][]*masterdata.Event
 }
 
@@ -34,6 +35,7 @@ func newTestEventSource(region renderregion.Value) *testEventSource {
 		gcuByID:         make(map[int]*masterdata.GameCharacterUnit),
 		worldByEvent:    make(map[int][]*masterdata.WorldBloom),
 		characterByID:   make(map[int]*masterdata.Character),
+		colorByCharID:   make(map[int]string),
 		banEventsByChar: make(map[int][]*masterdata.Event),
 	}
 }
@@ -117,6 +119,11 @@ func (s *testEventSource) GetCharacterByID(id int) (*masterdata.Character, error
 		return new(*item), nil
 	}
 	return nil, fmt.Errorf("character not found: %d", id)
+}
+
+func (s *testEventSource) GetCharacterColorCode(id int) (string, bool) {
+	value, ok := s.colorByCharID[id]
+	return value, ok && value != ""
 }
 
 func TestBuildEventListRequestWorldBloomNoCharacterAvatar(t *testing.T) {
@@ -469,6 +476,76 @@ func TestBuildEventListRequestWorldBloomTurnMatchesEachUnitRound(t *testing.T) {
 				t.Fatalf("unexpected %s events: got %v, want %v", tc.name, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestBuildEventDetailRequestWorldBloomTimelineIncludesChapterColorsAndTimes(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	eventInfo := &masterdata.Event{
+		ID:              701,
+		EventType:       "world_bloom",
+		Name:            "WL Detail",
+		AssetBundleName: "wl_701",
+		StartAt:         1000,
+		AggregateAt:     9000,
+	}
+	source.eventsByID[eventInfo.ID] = eventInfo
+	charA := 21
+	charB := 22
+	source.worldByEvent[eventInfo.ID] = []*masterdata.WorldBloom{
+		{
+			ID:              2,
+			EventID:         eventInfo.ID,
+			ChapterNo:       2,
+			GameCharacterID: &charB,
+			ChapterStartAt:  5000,
+			AggregateAt:     7000,
+			ChapterEndAt:    8000,
+			ChapterType:     "chapter",
+		},
+		{
+			ID:              1,
+			EventID:         eventInfo.ID,
+			ChapterNo:       1,
+			GameCharacterID: &charA,
+			ChapterStartAt:  1000,
+			AggregateAt:     3000,
+			ChapterEndAt:    4000,
+			ChapterType:     "chapter",
+		},
+	}
+	source.colorByCharID[charA] = "#33AAFF"
+	source.colorByCharID[charB] = "#FFAA33"
+	source.characterByID[charA] = &masterdata.Character{ID: charA, FirstName: "初音", GivenName: "未来"}
+	source.characterByID[charB] = &masterdata.Character{ID: charB, FirstName: "镜音", GivenName: "铃"}
+
+	builder := NewBuilder(source, assets.NewAssetHelper("", nil))
+	req, err := builder.BuildEventDetailRequest(DetailQuery{Region: renderregion.JP, EventID: eventInfo.ID})
+	if err != nil {
+		t.Fatalf("BuildEventDetailRequest failed: %v", err)
+	}
+	if len(req.EventInfo.WlTimeList) != 2 {
+		t.Fatalf("expected 2 WL chapter timeline entries, got %+v", req.EventInfo.WlTimeList)
+	}
+	first := req.EventInfo.WlTimeList[0]
+	if first["chapter_id"] != 1 || first["chapter_no"] != 1 {
+		t.Fatalf("unexpected first chapter metadata: %+v", first)
+	}
+	if first["game_character_id"] != charA || first["color_code"] != "#33AAFF" || first["character_color_code"] != "#33AAFF" {
+		t.Fatalf("unexpected first chapter character color: %+v", first)
+	}
+	if first["character_name"] != "初音未来" || first["character_icon_path"] != "static_images/chara_icon/miku.png" {
+		t.Fatalf("unexpected first chapter character identity: %+v", first)
+	}
+	if first["start_at"] != int64(1000) || first["aggregate_at"] != int64(3000) || first["end_at"] != int64(4000) {
+		t.Fatalf("unexpected legacy chapter times: %+v", first)
+	}
+	if first["chapter_start_at"] != int64(1000) || first["chapter_aggregate_at"] != int64(3000) || first["chapter_end_at"] != int64(4000) {
+		t.Fatalf("unexpected explicit chapter times: %+v", first)
+	}
+	second := req.EventInfo.WlTimeList[1]
+	if second["chapter_id"] != 2 || second["game_character_id"] != charB || second["color_code"] != "#FFAA33" {
+		t.Fatalf("unexpected second chapter timeline entry: %+v", second)
 	}
 }
 

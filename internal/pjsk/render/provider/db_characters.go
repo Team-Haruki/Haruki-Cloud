@@ -81,8 +81,9 @@ func (p *dbCharacterProvider) GetColorCode(ctx context.Context, id int) (string,
 	p.colorMu.RUnlock()
 
 	entity, err := p.client.Gamecharacterunit.Query().
-		Where(gamecharacterunit.ServerRegionEQ(p.region.String()), gamecharacterunit.GameIDEQ(int64(id))).
-		Only(ctx)
+		Where(gamecharacterunit.ServerRegionEQ(p.region.String()), gamecharacterunit.GameCharacterIDEQ(int64(id))).
+		Order(gamecharacterunit.ByGameID()).
+		First(ctx)
 	if err != nil {
 		return "", false
 	}

@@ -18,7 +18,6 @@ type renderCacheRule struct {
 }
 
 var (
-	renderCacheTTLOneHour  = time.Hour
 	renderCacheTTLHalfDay  = 12 * time.Hour
 	renderCacheTTLOneDay   = 24 * time.Hour
 	renderCacheTTLTwoHour  = 2 * time.Hour
@@ -32,6 +31,10 @@ var (
 		Enabled:          true,
 		TTL:              renderCacheTTLOneDay,
 		IgnoreFieldNames: renderCacheStringSet("dt"),
+	}
+
+	renderCacheDisabledEndpoints = map[string]struct{}{
+		"/api/pjsk/event/detail": {},
 	}
 
 	skRenderCacheBucketJPAndCN = 10 * time.Second
@@ -59,10 +62,6 @@ var (
 		"/api/pjsk/profile/custom-profile-card": {
 			Enabled: true,
 			TTL:     renderCacheTTLSevenDay,
-		},
-		"/api/pjsk/event/detail": {
-			Enabled: true,
-			TTL:     renderCacheTTLOneHour,
 		},
 		"/api/pjsk/event/list": {
 			Enabled: true,
@@ -187,6 +186,9 @@ var (
 )
 
 func resolveRenderCacheRule(endpointPath string) renderCacheRule {
+	if _, disabled := renderCacheDisabledEndpoints[strings.TrimSpace(endpointPath)]; disabled {
+		return renderCacheRule{Enabled: false}
+	}
 	rule := cloneRenderCacheRule(defaultRenderCacheRule)
 	if specific, ok := renderCacheRules[strings.TrimSpace(endpointPath)]; ok {
 		rule = mergeRenderCacheRule(rule, specific)

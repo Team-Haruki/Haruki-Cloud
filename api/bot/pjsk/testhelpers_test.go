@@ -109,6 +109,9 @@ func (s *botEventSource) GetWorldBloomChapters(_ int) []*masterdata.WorldBloom {
 func (s *botEventSource) GetCharacterByID(_ int) (*masterdata.Character, error) {
 	return nil, fmt.Errorf("not found")
 }
+func (s *botEventSource) GetCharacterColorCode(_ int) (string, bool) {
+	return "", false
+}
 
 // ── testRenderApp creates a minimal render app for bot tests ─────────────────
 

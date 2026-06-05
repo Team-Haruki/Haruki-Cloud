@@ -15,6 +15,7 @@ type LocalProvider struct {
 	events       *localEventProvider
 	musics       *localMusicProvider
 	gachas       *localGachaProvider
+	costumes     *localCostumeProvider
 	honors       *localHonorProvider
 	stamps       *localStampProvider
 	vlives       *localVLiveProvider
@@ -40,6 +41,7 @@ func NewLocalProvider(dir string, region renderregion.Value) *LocalProvider {
 	p.events = &localEventProvider{store: store, cards: p.cards}
 	p.musics = &localMusicProvider{store: store, events: p.events}
 	p.gachas = &localGachaProvider{store: store}
+	p.costumes = &localCostumeProvider{store: store}
 	p.honors = &localHonorProvider{store: store}
 	p.stamps = &localStampProvider{store: store}
 	p.vlives = &localVLiveProvider{store: store}
@@ -56,6 +58,7 @@ func (p *LocalProvider) Skills() SkillProvider             { return p.skills }
 func (p *LocalProvider) Events() EventProvider             { return p.events }
 func (p *LocalProvider) Musics() MusicProvider             { return p.musics }
 func (p *LocalProvider) Gachas() GachaProvider             { return p.gachas }
+func (p *LocalProvider) Costumes() CostumeProvider         { return p.costumes }
 func (p *LocalProvider) Honors() HonorProvider             { return p.honors }
 func (p *LocalProvider) Stamps() StampProvider             { return p.stamps }
 func (p *LocalProvider) VLives() VLiveProvider             { return p.vlives }

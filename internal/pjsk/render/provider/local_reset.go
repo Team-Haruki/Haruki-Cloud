@@ -22,6 +22,7 @@ func (p *LocalProvider) ResetLocalMasterdataCache() {
 	p.events.reset()
 	p.musics.reset()
 	p.gachas.reset()
+	p.costumes.reset()
 	p.honors.reset()
 	p.stamps.reset()
 	p.vlives.reset()
@@ -99,6 +100,13 @@ func (p *localGachaProvider) reset() {
 	p.gachas.reset()
 	p.cards.reset()
 	p.ceils.reset()
+}
+
+func (p *localCostumeProvider) reset() {
+	if p == nil {
+		return
+	}
+	p.costumes.reset()
 }
 
 func (p *localHonorProvider) reset() {

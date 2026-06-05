@@ -128,6 +128,7 @@ const (
 	ModuleStamp
 	ModuleMisc
 	ModuleVLive
+	ModuleCostume
 	ModuleArrest
 	ModuleRegTime
 	ModuleCheckData

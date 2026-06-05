@@ -15,6 +15,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/internal/pjsk/render/costume"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/education"
 	"haruki-cloud/internal/pjsk/render/event"
@@ -98,6 +99,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	skController.SetTrackerIntegration(cfg.Tracker, nil, assetHelper)
 
 	var cardController *card.Controller
+	var costumeController *costume.Controller
 	var eventController *event.Controller
 	var gachaController *gacha.Controller
 	var honorController *honor.Controller
@@ -124,6 +126,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 
 		// Create module adapters from the unified provider
 		cardAdapter := card.NewProviderAdapter(masterProvider)
+		costumeAdapter := costume.NewProviderAdapter(masterProvider)
 		eventAdapter := event.NewProviderAdapter(masterProvider)
 		musicAdapter := music.NewProviderAdapter(masterProvider)
 		gachaAdapter := gacha.NewProviderAdapter(masterProvider)
@@ -149,6 +152,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		}, cfg.MetaLoader)
 		deckController.RegisterMusicSource(musicAdapter)
 		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
+		costumeController = costume.NewController(costumeAdapter, drawingClient, assetHelper)
 		educationController.RegisterSource(educationAdapter)
 		eventController = event.NewController(eventAdapter, drawingClient, assetHelper)
 		gachaController = gacha.NewController(gachaAdapter, drawingClient, assetHelper)
@@ -173,6 +177,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			regionProvider.SetLocalMasterdataDir(renderMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
 			registerProvider(regionProvider)
 			regionCardAdapter := card.NewProviderAdapter(regionProvider)
+			regionCostumeAdapter := costume.NewProviderAdapter(regionProvider)
 			regionEventAdapter := event.NewProviderAdapter(regionProvider)
 			regionMusicAdapter := music.NewProviderAdapter(regionProvider)
 			regionGachaAdapter := gacha.NewProviderAdapter(regionProvider)
@@ -184,6 +189,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 
 			cardController.RegisterSource(regionCardAdapter)
 			cardController.RegisterEventSource(regionEventAdapter)
+			costumeController.RegisterSource(regionCostumeAdapter)
 			deckController.RegisterCardSource(regionCardAdapter)
 			deckController.RegisterEventSource(regionEventAdapter)
 			deckController.RegisterMusicSource(regionMusicAdapter)
@@ -240,6 +246,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Provider:   masterProvider,
 		Providers:  providersByRegion,
 		Cards:      cardController,
+		Costumes:   costumeController,
 		Decks:      deckController,
 		Edu:        educationController,
 		Events:     eventController,

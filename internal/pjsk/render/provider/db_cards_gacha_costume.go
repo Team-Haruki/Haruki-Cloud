@@ -101,14 +101,9 @@ func (p *dbCardProvider) GetCostume3dsByCardID(ctx context.Context, cardID int) 
 		if err != nil {
 			continue
 		}
-		costumes = append(costumes, &masterdata.Costume3d{
-			ID:              int(entity.GameID),
-			CharacterID:     int(entity.CharacterID),
-			AssetBundleName: entity.AssetbundleName,
-			PartType:        entity.PartType,
-			ColorID:         int(entity.ColorID),
-			Description:     entity.Name,
-		})
+		if costumeInfo := common.ConvertCostumeEntity(entity); costumeInfo != nil {
+			costumes = append(costumes, costumeInfo)
+		}
 	}
 	if len(costumes) == 0 {
 		return nil, nil

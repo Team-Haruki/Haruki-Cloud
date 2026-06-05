@@ -3483,6 +3483,9 @@ func (p bridgeDeckTestMasterProvider) Musics() renderprovider.MusicProvider {
 func (p bridgeDeckTestMasterProvider) Gachas() renderprovider.GachaProvider {
 	return nil
 }
+func (p bridgeDeckTestMasterProvider) Costumes() renderprovider.CostumeProvider {
+	return nil
+}
 func (p bridgeDeckTestMasterProvider) Honors() renderprovider.HonorProvider {
 	return nil
 }

@@ -215,6 +215,16 @@ func (c *HarukiDrawingClient) GenerateCardBox(req *CardBoxRequest) ([]byte, erro
 	return c.cachedPost("/api/pjsk/card/box", req)
 }
 
+// =========================== Costume API ===========================
+
+func (c *HarukiDrawingClient) GenerateCostumeList(req *CostumeListRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/costume/list", req)
+}
+
+func (c *HarukiDrawingClient) GenerateCostumeDetail(req *CostumeDetailRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/costume/detail", req)
+}
+
 // =========================== Deck API ===========================
 
 func (c *HarukiDrawingClient) GenerateDeckRecommendation(req *DeckRequest) ([]byte, error) {

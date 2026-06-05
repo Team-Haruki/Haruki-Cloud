@@ -74,6 +74,7 @@ type Character struct {
 	FirstName string
 	GivenName string
 	Unit      string
+	Gender    string
 }
 
 type Event struct {
@@ -260,12 +261,23 @@ type PlayerFrameGroup struct {
 }
 
 type Costume3d struct {
-	ID              int    `json:"id"`
-	CharacterID     int    `json:"characterId"`
-	AssetBundleName string `json:"assetbundleName"`
-	PartType        string `json:"partType"`
-	ColorID         int    `json:"colorId"`
-	Description     string `json:"description"`
+	ID                 int    `json:"id"`
+	Seq                int    `json:"seq"`
+	GroupID            int    `json:"costume3dGroupId"`
+	Costume3DType      string `json:"costume3dType"`
+	Name               string `json:"name"`
+	CharacterID        int    `json:"characterId"`
+	AssetBundleName    string `json:"assetbundleName"`
+	PartType           string `json:"partType"`
+	ColorID            int    `json:"colorId"`
+	ColorName          string `json:"colorName"`
+	Rarity             string `json:"costume3dRarity"`
+	HowToObtain        string `json:"howToObtain"`
+	Designer           string `json:"designer"`
+	ArchiveDisplayType string `json:"archiveDisplayType"`
+	ArchivePublishedAt int64  `json:"archivePublishedAt"`
+	PublishedAt        int64  `json:"publishedAt"`
+	Description        string `json:"description"`
 }
 
 type Stamp struct {

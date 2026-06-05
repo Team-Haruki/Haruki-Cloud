@@ -142,6 +142,32 @@ func ConvertGachaEntity(entity *sekaiDB.Gacha) (*masterdata.Gacha, error) {
 	}, nil
 }
 
+// ConvertCostumeEntity converts a database Costume3D entity to the masterdata Costume3d model.
+func ConvertCostumeEntity(entity *sekaiDB.Costume3D) *masterdata.Costume3d {
+	if entity == nil {
+		return nil
+	}
+	return &masterdata.Costume3d{
+		ID:                 int(entity.GameID),
+		Seq:                int(entity.Seq),
+		GroupID:            int(entity.Costume3DGroupID),
+		Costume3DType:      entity.Costume3DType,
+		Name:               entity.Name,
+		CharacterID:        int(entity.CharacterID),
+		AssetBundleName:    entity.AssetbundleName,
+		PartType:           entity.PartType,
+		ColorID:            int(entity.ColorID),
+		ColorName:          entity.ColorName,
+		Rarity:             entity.Costume3DRarity,
+		HowToObtain:        entity.HowToObtain,
+		Designer:           entity.Designer,
+		ArchiveDisplayType: entity.ArchiveDisplayType,
+		ArchivePublishedAt: entity.ArchivePublishedAt,
+		PublishedAt:        entity.PublishedAt,
+		Description:        entity.Name,
+	}
+}
+
 // ConvertSkillEntity converts a database Skill entity to the masterdata Skill model.
 func ConvertSkillEntity(entity *sekaiDB.Skill) (*masterdata.Skill, error) {
 	if entity == nil {

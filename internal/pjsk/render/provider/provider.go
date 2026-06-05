@@ -20,6 +20,7 @@ type MasterDataProvider interface {
 	Events() EventProvider
 	Musics() MusicProvider
 	Gachas() GachaProvider
+	Costumes() CostumeProvider
 	Honors() HonorProvider
 	Stamps() StampProvider
 	VLives() VLiveProvider

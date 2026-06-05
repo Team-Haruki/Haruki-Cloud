@@ -1,0 +1,54 @@
+package costume
+
+import (
+	"context"
+
+	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+)
+
+const (
+	DefaultPageSize = 240
+	MaxPageSize     = 480
+)
+
+type DataSource interface {
+	DefaultRegion() renderregion.Value
+	GetCostumeByID(id int) (*masterdata.Costume3d, error)
+	FilterCostumes(filter Filter) ([]*masterdata.Costume3d, error)
+	GetCostumeVariants(groupID int, partType string, characterID int) ([]*masterdata.Costume3d, error)
+	GetCostumeSourceCardIDs(costumeIDs []int) (map[int][]int, error)
+	GetCharacterByID(id int) (*masterdata.Character, error)
+}
+
+type contextualDataSource interface {
+	WithContext(ctx context.Context) DataSource
+}
+
+type Query struct {
+	Query  string `json:"query,omitempty"`
+	ID     int    `json:"id,omitempty"`
+	Region string `json:"region,omitempty"`
+}
+
+type ListQuery struct {
+	Query     string `json:"query,omitempty"`
+	Region    string `json:"region,omitempty"`
+	PartType  string `json:"part_type,omitempty"`
+	Gender    string `json:"gender,omitempty"`
+	Character string `json:"character,omitempty"`
+	Keyword   string `json:"keyword,omitempty"`
+	Page      int    `json:"page,omitempty"`
+	PageSize  int    `json:"page_size,omitempty"`
+}
+
+type Filter struct {
+	PartType     string
+	CostumeType  string
+	CharacterID  int
+	CharacterIDs []int
+	Keyword      string
+	ColorID      int
+	Limit        int
+	Offset       int
+}

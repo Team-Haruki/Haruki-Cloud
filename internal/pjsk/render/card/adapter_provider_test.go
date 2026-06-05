@@ -115,6 +115,8 @@ func (p *adapterTestMasterDataProvider) Musics() provider.MusicProvider { return
 
 func (p *adapterTestMasterDataProvider) Gachas() provider.GachaProvider { return nil }
 
+func (p *adapterTestMasterDataProvider) Costumes() provider.CostumeProvider { return nil }
+
 func (p *adapterTestMasterDataProvider) Honors() provider.HonorProvider { return nil }
 
 func (p *adapterTestMasterDataProvider) Stamps() provider.StampProvider { return nil }

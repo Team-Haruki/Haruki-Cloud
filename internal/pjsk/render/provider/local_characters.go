@@ -37,6 +37,7 @@ func (p *localCharacterProvider) ensureCharacters() error {
 				FirstName: item.FirstName,
 				GivenName: item.GivenName,
 				Unit:      item.Unit,
+				Gender:    item.Gender,
 			}
 		}
 		return byID, nil

@@ -176,3 +176,11 @@ func CloneCostumes(items []*masterdata.Costume3d) []*masterdata.Costume3d {
 	}
 	return result
 }
+
+// CloneCostume returns a shallow copy of a Costume3d.
+func CloneCostume(src *masterdata.Costume3d) *masterdata.Costume3d {
+	if src == nil {
+		return nil
+	}
+	return new(*src)
+}

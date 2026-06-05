@@ -234,12 +234,22 @@ type localVirtualLiveJSON struct {
 
 type localCostume3dJSON struct {
 	ID                    int    `json:"id"`
+	Seq                   int    `json:"seq"`
+	GroupID               int    `json:"costume3dGroupId"`
+	Costume3DType         string `json:"costume3dType"`
 	CharacterID           int    `json:"characterId"`
 	Name                  string `json:"name"`
 	PartType              string `json:"partType"`
 	ColorID               int    `json:"colorId"`
+	ColorName             string `json:"colorName"`
+	Rarity                string `json:"costume3dRarity"`
+	HowToObtain           string `json:"howToObtain"`
 	AssetBundleName       string `json:"assetbundleName"`
 	LegacyAssetBundleName string `json:"_assetbundleName"`
+	Designer              string `json:"designer"`
+	ArchiveDisplayType    string `json:"archiveDisplayType"`
+	ArchivePublishedAt    int64  `json:"archivePublishedAt"`
+	PublishedAt           int64  `json:"publishedAt"`
 }
 
 func (j *localCostume3dJSON) toModel() *masterdata.Costume3d {
@@ -248,12 +258,23 @@ func (j *localCostume3dJSON) toModel() *masterdata.Costume3d {
 		assetBundleName = strings.TrimSpace(j.LegacyAssetBundleName)
 	}
 	return &masterdata.Costume3d{
-		ID:              j.ID,
-		CharacterID:     j.CharacterID,
-		AssetBundleName: assetBundleName,
-		PartType:        j.PartType,
-		ColorID:         j.ColorID,
-		Description:     j.Name,
+		ID:                 j.ID,
+		Seq:                j.Seq,
+		GroupID:            j.GroupID,
+		Costume3DType:      j.Costume3DType,
+		Name:               j.Name,
+		CharacterID:        j.CharacterID,
+		AssetBundleName:    assetBundleName,
+		PartType:           j.PartType,
+		ColorID:            j.ColorID,
+		ColorName:          j.ColorName,
+		Rarity:             j.Rarity,
+		HowToObtain:        j.HowToObtain,
+		Designer:           j.Designer,
+		ArchiveDisplayType: j.ArchiveDisplayType,
+		ArchivePublishedAt: j.ArchivePublishedAt,
+		PublishedAt:        j.PublishedAt,
+		Description:        j.Name,
 	}
 }
 
@@ -347,6 +368,7 @@ type localGameCharacterJSON struct {
 	FirstNameEnglish string `json:"firstNameEnglish"`
 	GivenNameEnglish string `json:"givenNameEnglish"`
 	Unit             string `json:"unit"`
+	Gender           string `json:"gender"`
 }
 
 type localShopItemJSON struct {

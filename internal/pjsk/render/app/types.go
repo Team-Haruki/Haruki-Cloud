@@ -14,6 +14,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/card"
+	"haruki-cloud/internal/pjsk/render/costume"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/education"
 	"haruki-cloud/internal/pjsk/render/event"
@@ -113,6 +114,7 @@ type App struct {
 	Provider        provider.MasterDataProvider
 	Providers       map[renderregion.Value]provider.MasterDataProvider
 	Cards           *card.Controller
+	Costumes        *costume.Controller
 	Decks           *deck.Controller
 	Edu             *education.Controller
 	Events          *event.Controller

@@ -60,6 +60,7 @@ func (p *dbCharacterProvider) GetByID(ctx context.Context, id int) (*masterdata.
 		FirstName: entity.FirstName,
 		GivenName: entity.GivenName,
 		Unit:      entity.Unit,
+		Gender:    entity.Gender,
 	}
 	p.charMu.Lock()
 	p.charCache[id] = model

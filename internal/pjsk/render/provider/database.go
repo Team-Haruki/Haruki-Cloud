@@ -20,6 +20,7 @@ type DatabaseProvider struct {
 	events       *dbEventProvider
 	musics       *dbMusicProvider
 	gachas       *dbGachaProvider
+	costumes     *dbCostumeProvider
 	honors       *dbHonorProvider
 	stamps       *dbStampProvider
 	vlives       *dbVLiveProvider
@@ -46,6 +47,7 @@ func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value) *Dat
 	p.events = &dbEventProvider{client: client, region: region}
 	p.musics = &dbMusicProvider{client: client, region: region, events: p.events}
 	p.gachas = &dbGachaProvider{client: client, region: region}
+	p.costumes = &dbCostumeProvider{client: client, region: region}
 	p.honors = &dbHonorProvider{client: client, region: region}
 	p.stamps = &dbStampProvider{client: client, region: region}
 	p.vlives = &dbVLiveProvider{client: client, region: region}
@@ -141,6 +143,7 @@ func (p *DatabaseProvider) Skills() SkillProvider             { return p.skills 
 func (p *DatabaseProvider) Events() EventProvider             { return p.events }
 func (p *DatabaseProvider) Musics() MusicProvider             { return p.musics }
 func (p *DatabaseProvider) Gachas() GachaProvider             { return p.gachas }
+func (p *DatabaseProvider) Costumes() CostumeProvider         { return p.costumes }
 func (p *DatabaseProvider) Honors() HonorProvider             { return p.honors }
 func (p *DatabaseProvider) Stamps() StampProvider             { return p.stamps }
 func (p *DatabaseProvider) VLives() VLiveProvider             { return p.vlives }

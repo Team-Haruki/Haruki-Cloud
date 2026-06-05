@@ -26,10 +26,14 @@ type ImageModerator interface {
 	ImageModerationURL(ctx context.Context, imageURL string) (IMSSuggestion, error)
 }
 
+type TextModerator interface {
+	TextCensor(text string) (map[string]any, error)
+}
+
 type Service struct {
 	Client         *ent.Client
-	TextCensorAPI  *BaiduTextCensorClient // text censor (Baidu)
-	ImageCensorAPI ImageModerator         // image censor (Tencent IMS); nil = disabled
+	TextCensorAPI  TextModerator  // text censor (Baidu)
+	ImageCensorAPI ImageModerator // image censor (Tencent IMS); nil = disabled
 	Logger         *logger.Logger
 }
 
@@ -51,7 +55,7 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 
 	data, err := s.TextCensorAPI.TextCensor(name)
 	if err != nil {
-		s.Logger.Errorf("审核名字失败1: %v", err)
+		s.Logger.Errorf("审核名字请求失败，不写入审核缓存: %v", err)
 		return false
 	}
 
@@ -118,7 +122,7 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 
 	data, err := s.TextCensorAPI.TextCensor(content)
 	if err != nil {
-		s.Logger.Errorf("审核短句失败1: %v", err)
+		s.Logger.Errorf("审核短句请求失败，不写入审核缓存: %v", err)
 		return false
 	}
 

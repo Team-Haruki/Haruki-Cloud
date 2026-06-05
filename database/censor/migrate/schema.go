@@ -74,7 +74,7 @@ var (
 	ShortBioColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "user_id", Type: field.TypeString, Nullable: true, Size: 30},
-		{Name: "content", Type: field.TypeString, Nullable: true, Size: 60},
+		{Name: "content", Type: field.TypeString, Nullable: true, Size: 500},
 		{Name: "haruki_user_id", Type: field.TypeInt, Nullable: true},
 		{Name: "result", Type: field.TypeString, Nullable: true, Size: 10},
 	}

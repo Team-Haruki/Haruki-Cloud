@@ -144,7 +144,7 @@ Bot 客户端启动时下载的指令路由表，每行对应一个 API 端点�
 |------|------|------|------|
 | `id` | int | PK, immutable | 主键 |
 | `user_id` | string(30) | optional | 平台用户 ID |
-| `content` | string(60) | optional | 短简介内容 |
+| `content` | string(500) | optional | 短简介内容 |
 | `haruki_user_id` | int | optional | Haruki 用户 ID（index） |
 | `result` | string(10) | optional | 审核结果码 |
 

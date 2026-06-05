@@ -20,6 +20,15 @@ type fakeImageModerator struct {
 	err        error
 }
 
+type fakeTextModerator struct {
+	result map[string]any
+	err    error
+}
+
+func (f fakeTextModerator) TextCensor(string) (map[string]any, error) {
+	return f.result, f.err
+}
+
 func (f fakeImageModerator) ImageModerationURL(context.Context, string) (IMSSuggestion, error) {
 	return f.suggestion, f.err
 }
@@ -79,5 +88,23 @@ func TestCensorImageBlockIsCachedAndRejected(t *testing.T) {
 	}
 	if cached.HarukiUserID == nil || *cached.HarukiUserID != 456 {
 		t.Fatalf("cached haruki_user_id = %v, want 456", cached.HarukiUserID)
+	}
+}
+
+func TestCensorShortBioRequestFailureRejectsWithoutCache(t *testing.T) {
+	ctx := context.Background()
+	service := newCensorTestService(t, nil)
+	service.TextCensorAPI = fakeTextModerator{err: errors.New("baidu text censor API error: code=17 msg=Open api daily request limit reached")}
+
+	if ok := service.CensorShortBio(ctx, 789, "592703738580070400", "私は中国から来た学生ですよ！そして、奏も瑞希も大好きです！", "jp"); ok {
+		t.Fatal("CensorShortBio() = true, want false when moderation request fails")
+	}
+
+	count, err := service.Client.ShortBio.Query().Count(ctx)
+	if err != nil {
+		t.Fatalf("count short_bio: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("short_bio count = %d, want 0", count)
 	}
 }

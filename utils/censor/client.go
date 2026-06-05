@@ -82,11 +82,25 @@ func (b *BaiduTextCensorClient) TextCensor(text string) (map[string]any, error) 
 	if err != nil {
 		return nil, err
 	}
+	if resp.IsError() {
+		return nil, fmt.Errorf("baidu text censor HTTP %d: %s", resp.StatusCode(), resp.String())
+	}
 
 	var result map[string]any
 	if err := sonic.Unmarshal(resp.Body(), &result); err != nil {
 		return nil, err
 	}
+	if err := baiduTextCensorResultError(result); err != nil {
+		return nil, err
+	}
 
 	return result, nil
+}
+
+func baiduTextCensorResultError(result map[string]any) error {
+	code, ok := result["error_code"]
+	if !ok {
+		return nil
+	}
+	return fmt.Errorf("baidu text censor API error: code=%v msg=%v", code, result["error_msg"])
 }

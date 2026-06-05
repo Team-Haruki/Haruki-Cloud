@@ -28,7 +28,7 @@ func (ShortBio) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 		field.String("content").
-			MaxLen(60).
+			MaxLen(500).
 			Optional().
 			Nillable(),
 		field.Int("haruki_user_id").

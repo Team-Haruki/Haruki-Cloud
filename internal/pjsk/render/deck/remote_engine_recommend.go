@@ -13,7 +13,7 @@ func (r *RemoteDeckRecommender) Recommend(req RecommendRequest) (*RecommendResul
 	if err != nil {
 		return nil, err
 	}
-	return aggregateRemoteRecommendResults(req.BatchOption, results)
+	return aggregateRemoteRecommendResults(req.RecommendType, req.BatchOption, results)
 }
 
 func (r *RemoteDeckRecommender) RecommendBatch(req RecommendRequest) ([]remoteBatchRecommendResult, error) {

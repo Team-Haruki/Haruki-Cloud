@@ -113,6 +113,7 @@ type engineProvider interface {
 
 type RecommendRequest struct {
 	Region            string
+	RecommendType     string
 	UserData          []byte
 	UserDataFilePath  string
 	MusicMeta         []byte

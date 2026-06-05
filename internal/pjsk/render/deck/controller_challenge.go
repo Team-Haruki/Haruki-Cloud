@@ -115,7 +115,7 @@ func (c *Controller) recommendChallengeAllBatch(recommender PjskDeckRecommender,
 	offset := 0
 	for _, character := range characters {
 		nextOffset := offset + len(character.options)
-		result, err := aggregateRemoteRecommendResults(character.options, results[offset:nextOffset])
+		result, err := aggregateRemoteRecommendResults("challenge", character.options, results[offset:nextOffset])
 		if err != nil {
 			return nil, err
 		}

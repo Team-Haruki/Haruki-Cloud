@@ -86,7 +86,7 @@ func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([
 	return []remoteBatchRecommendResult{item}, nil
 }
 
-func aggregateRemoteRecommendResults(options []map[string]any, results []remoteBatchRecommendResult) (*RecommendResult, error) {
+func aggregateRemoteRecommendResults(recType string, options []map[string]any, results []remoteBatchRecommendResult) (*RecommendResult, error) {
 	agg := &RecommendResult{
 		CostTimes: make(map[string]float64),
 		WaitTimes: make(map[string]float64),
@@ -158,12 +158,12 @@ func aggregateRemoteRecommendResults(options []map[string]any, results []remoteB
 		pairs = append(pairs, pair{Deck: *deck, Alg: strings.Join(algs, "+")})
 	}
 
-	liveType, _ := options[0]["live_type"].(string)
+	recType = strings.ToLower(strings.TrimSpace(recType))
 	target, _ := options[0]["target"].(string)
 	sort.SliceStable(pairs, func(i, j int) bool {
 		d1 := pairs[i].Deck
 		d2 := pairs[j].Deck
-		return compareRecommendDecks(liveType, target, d1, d2)
+		return compareRecommendDecks(recType, target, d1, d2)
 	})
 
 	limitFloat, _ := options[0]["limit"].(float64)

@@ -98,7 +98,7 @@ func TestAggregateRemoteRecommendResultsMergesAlgorithmsForSameDeck(t *testing.T
 		},
 	}
 
-	agg, err := aggregateRemoteRecommendResults(options, results)
+	agg, err := aggregateRemoteRecommendResults("event", options, results)
 	if err != nil {
 		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
 	}
@@ -110,6 +110,44 @@ func TestAggregateRemoteRecommendResultsMergesAlgorithmsForSameDeck(t *testing.T
 	}
 	if agg.CostTimes["DFS"] != 1.2 || agg.CostTimes["GA"] != 2.3 {
 		t.Fatalf("unexpected cost times: %+v", agg.CostTimes)
+	}
+}
+
+func TestAggregateRemoteRecommendResultsSortsNoEventByLiveScore(t *testing.T) {
+	options := []map[string]any{
+		{"algorithm": "rl", "target": "score", "live_type": "multi", "limit": 2},
+	}
+	results := []remoteBatchRecommendResult{
+		{
+			Alg: "rl",
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{
+				{
+					Score:            2000,
+					LiveScore:        1800,
+					TotalPower:       300000,
+					MultiLiveScoreUp: 100,
+					Cards:            []remoteRecommendCard{{CardID: 1001}},
+				},
+				{
+					Score:            1900,
+					LiveScore:        2200,
+					TotalPower:       290000,
+					MultiLiveScoreUp: 90,
+					Cards:            []remoteRecommendCard{{CardID: 1002}},
+				},
+			}},
+		},
+	}
+
+	agg, err := aggregateRemoteRecommendResults("no_event", options, results)
+	if err != nil {
+		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
+	}
+	if len(agg.Decks) != 2 {
+		t.Fatalf("expected 2 no-event decks, got %+v", agg.Decks)
+	}
+	if agg.Decks[0].LiveScore != 2200 {
+		t.Fatalf("expected higher live_score deck first, got %+v", agg.Decks)
 	}
 }
 
@@ -379,7 +417,7 @@ func TestAggregateRemoteRecommendResultsUsesDisplayAlgorithmNames(t *testing.T) 
 		},
 	}
 
-	agg, err := aggregateRemoteRecommendResults(options, results)
+	agg, err := aggregateRemoteRecommendResults("event", options, results)
 	if err != nil {
 		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
 	}
@@ -422,7 +460,7 @@ func TestAggregateRemoteRecommendResultsSortsBonusByHigherRateFirst(t *testing.T
 		},
 	}
 
-	agg, err := aggregateRemoteRecommendResults(options, results)
+	agg, err := aggregateRemoteRecommendResults("bonus", options, results)
 	if err != nil {
 		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
 	}
@@ -460,7 +498,7 @@ func TestAggregateRemoteRecommendResultsPrefersMysekaiInternalPointOnTie(t *test
 		},
 	}
 
-	agg, err := aggregateRemoteRecommendResults(options, results)
+	agg, err := aggregateRemoteRecommendResults("mysekai", options, results)
 	if err != nil {
 		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
 	}

@@ -56,6 +56,7 @@ func (c *Controller) buildAutoRecommendWithEngine(query AutoQuery) (*drawing.Dec
 
 	recommendRequest := RecommendRequest{
 		Region:            region.String(),
+		RecommendType:     recType,
 		UserData:          userBytes,
 		UserDataFilePath:  c.resolveUserDataFilePath(),
 		MusicMeta:         musicMeta,

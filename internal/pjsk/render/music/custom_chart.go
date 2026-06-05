@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -44,20 +45,121 @@ type customChartStats struct {
 type customChartNote struct {
 	ID                   int
 	Ticks                int
+	LaneStart            int
+	LaneEnd              int
+	Category             int
+	NoteBaseType         int
 	PreviousConnectionID int
 	NextConnectionID     int
+	Direction            int
+	Critical             bool
 	IsSkip               bool
 	hasTicks             bool
 	hasPrevious          bool
 	hasNext              bool
 }
 
+type customChartConvertedNote struct {
+	ID       int
+	ParentID int
+	Type     customChartNoteType
+	Tick     int
+	Lane     int
+	Width    int
+	Critical bool
+	Friction bool
+	Flick    customChartFlickType
+}
+
+type customChartHoldStep struct {
+	ID   int
+	Type customChartHoldStepType
+}
+
+type customChartHold struct {
+	Start     customChartHoldStep
+	Steps     []customChartHoldStep
+	End       int
+	StartType customChartHoldNoteType
+	EndType   customChartHoldNoteType
+}
+
+func (h customChartHold) isGuide() bool {
+	return h.StartType == customChartHoldNoteGuide || h.EndType == customChartHoldNoteGuide
+}
+
+type customChartScore struct {
+	notes     map[int]customChartConvertedNote
+	holdNotes map[int]customChartHold
+	nextID    int
+}
+
+func newCustomChartScore() customChartScore {
+	return customChartScore{
+		notes:     make(map[int]customChartConvertedNote),
+		holdNotes: make(map[int]customChartHold),
+		nextID:    1,
+	}
+}
+
+func (s *customChartScore) allocateID() int {
+	id := s.nextID
+	s.nextID++
+	return id
+}
+
+type customChartNoteType int
+
+const (
+	customChartNoteTap customChartNoteType = iota
+	customChartNoteHold
+	customChartNoteHoldMid
+	customChartNoteHoldEnd
+)
+
+type customChartFlickType int
+
+const (
+	customChartFlickNone customChartFlickType = iota
+	customChartFlickDefault
+	customChartFlickLeft
+	customChartFlickRight
+)
+
+type customChartHoldStepType int
+
+const (
+	customChartHoldStepNormal customChartHoldStepType = iota
+	customChartHoldStepHidden
+	customChartHoldStepSkip
+)
+
+type customChartHoldNoteType int
+
+const (
+	customChartHoldNoteNormal customChartHoldNoteType = iota
+	customChartHoldNoteHidden
+	customChartHoldNoteGuide
+)
+
+type customChartSlideKind int
+
+const (
+	customChartSlideStart customChartSlideKind = iota
+	customChartSlideEnd
+	customChartSlideRelay
+	customChartSlideInvisible
+)
+
 type customMusicScoreTagResolver interface {
 	GetCustomMusicScoreTagNames(tagIDs []int) []string
 }
 
-// Long-note combo ticks advance every 240 custom-score ticks.
-const customChartComboTickInterval = 240
+const (
+	// Long-note combo ticks advance every 240 custom-score ticks.
+	customChartComboTickInterval = 240
+	customChartMaxLane           = 11
+)
 
 var customChartPrefixes = map[string]struct{}{
 	"custom":      {},
@@ -365,32 +467,35 @@ func parseCustomMusicScoreStats(chartJSON string) customChartStats {
 }
 
 func (n *customChartNote) UnmarshalJSON(data []byte) error {
-	var raw struct {
-		ID                   int   `json:"id"`
-		Ticks                *int  `json:"ticks"`
-		PreviousConnectionID *int  `json:"previousConnectionId"`
-		NextConnectionID     *int  `json:"nextConnectionId"`
-		IsSkip               *bool `json:"isSkip"`
-	}
+	var raw map[string]stdjson.RawMessage
 	if err := stdjson.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	n.ID = raw.ID
-	if raw.Ticks != nil {
-		n.Ticks = *raw.Ticks
+
+	n.ID, _ = customChartRawInt(raw, "id", 0)
+	if ticks, ok := customChartRawInt(raw, "ticks", 0); ok {
+		n.Ticks = ticks
 		n.hasTicks = true
 	}
-	if raw.PreviousConnectionID != nil {
-		n.PreviousConnectionID = *raw.PreviousConnectionID
+	n.LaneStart, _ = customChartRawInt(raw, "laneStart", 0)
+	n.LaneEnd, _ = customChartRawInt(raw, "laneEnd", 0)
+	n.Category, _ = customChartRawInt(raw, "category", 0)
+	n.NoteBaseType, _ = customChartRawInt(raw, "noteBaseType", 0)
+	if previous, ok := customChartRawInt(raw, "previousConnectionId", -1); ok {
+		n.PreviousConnectionID = previous
 		n.hasPrevious = true
+	} else {
+		n.PreviousConnectionID = -1
 	}
-	if raw.NextConnectionID != nil {
-		n.NextConnectionID = *raw.NextConnectionID
+	if next, ok := customChartRawInt(raw, "nextConnectionId", -1); ok {
+		n.NextConnectionID = next
 		n.hasNext = true
+	} else {
+		n.NextConnectionID = -1
 	}
-	if raw.IsSkip != nil {
-		n.IsSkip = *raw.IsSkip
-	}
+	n.Direction, _ = customChartRawInt(raw, "direction", 0)
+	n.Critical, _ = customChartRawBool(raw, "type", false)
+	n.IsSkip, _ = customChartRawBool(raw, "isSkip", false)
 	return nil
 }
 
@@ -403,71 +508,487 @@ func calculateCustomChartComboCount(notes []customChartNote) int {
 		return 0
 	}
 
-	byID := make(map[int]customChartNote, len(notes))
+	sorted := make([]customChartNote, 0, len(notes))
 	for _, note := range notes {
 		if note.validForCombo() {
-			byID[note.ID] = note
+			sorted = append(sorted, note)
 		}
 	}
-	if len(byID) == 0 {
+	if len(sorted) == 0 {
 		return 0
 	}
+	sort.SliceStable(sorted, func(i, j int) bool {
+		if sorted[i].Ticks != sorted[j].Ticks {
+			return sorted[i].Ticks < sorted[j].Ticks
+		}
+		if sorted[i].LaneStart != sorted[j].LaneStart {
+			return sorted[i].LaneStart < sorted[j].LaneStart
+		}
+		return sorted[i].ID < sorted[j].ID
+	})
 
-	total := 0
-	for _, note := range notes {
-		if !note.validForCombo() {
+	byID := make(map[int]*customChartNote, len(sorted))
+	for i := range sorted {
+		byID[sorted[i].ID] = &sorted[i]
+	}
+
+	score := newCustomChartScore()
+	connectedIDs := make(map[int]struct{}, len(sorted))
+	chains := buildCustomChartChains(sorted, byID, connectedIDs)
+	for _, chain := range chains {
+		addCustomChartChain(&score, chain)
+	}
+	for i := range sorted {
+		note := &sorted[i]
+		if _, ok := connectedIDs[note.ID]; ok {
 			continue
 		}
-		switch {
-		case note.PreviousConnectionID == -1 && note.NextConnectionID == -1:
-			if !note.IsSkip {
-				total++
+		addCustomChartTap(&score, *note, false)
+	}
+
+	return calculateCustomChartScoreComboCount(score)
+}
+
+func buildCustomChartChains(notes []customChartNote, byID map[int]*customChartNote, connectedIDs map[int]struct{}) [][]*customChartNote {
+	chains := make([][]*customChartNote, 0)
+	for i := range notes {
+		note := &notes[i]
+		if _, ok := connectedIDs[note.ID]; ok {
+			continue
+		}
+		if note.NextConnectionID == -1 && note.PreviousConnectionID == -1 {
+			continue
+		}
+		if note.PreviousConnectionID != -1 {
+			continue
+		}
+
+		chain := make([]*customChartNote, 0)
+		current := note
+		for current != nil {
+			if _, ok := connectedIDs[current.ID]; ok {
+				break
 			}
-		case note.PreviousConnectionID == -1 && note.NextConnectionID != -1:
-			total += calculateCustomChartChainComboCount(note, byID)
+			chain = append(chain, current)
+			connectedIDs[current.ID] = struct{}{}
+			if current.NextConnectionID == -1 {
+				current = nil
+				continue
+			}
+			current = byID[current.NextConnectionID]
+		}
+		if len(chain) > 0 {
+			chains = append(chains, chain)
+		}
+	}
+
+	for i := range notes {
+		note := &notes[i]
+		if _, ok := connectedIDs[note.ID]; ok {
+			continue
+		}
+		if note.NextConnectionID != -1 || note.PreviousConnectionID != -1 {
+			chains = append(chains, []*customChartNote{note})
+			connectedIDs[note.ID] = struct{}{}
+		}
+	}
+	return chains
+}
+
+func addCustomChartChain(score *customChartScore, rawChain []*customChartNote) {
+	chain := removeAdjacentCustomChartVisibleRelayDuplicates(rawChain)
+	if len(chain) < 2 || chain[0] == nil || chain[len(chain)-1] == nil {
+		return
+	}
+
+	decoration := customChartChainHasDecoration(chain)
+	startID := score.allocateID()
+	hold := customChartHold{}
+	for index, raw := range chain {
+		if raw == nil {
+			continue
+		}
+		isFirst := index == 0
+		isLast := index+1 == len(chain)
+		kind := customChartSlideKindFor(*raw, isLast)
+
+		noteID := startID
+		if !isFirst {
+			noteID = score.allocateID()
+		}
+		note := customChartConvertedNote{
+			ID:       noteID,
+			ParentID: startID,
+			Tick:     raw.Ticks,
+			Lane:     customChartLane(*raw),
+			Width:    customChartWidth(*raw),
+			Critical: raw.Critical,
+			Friction: customChartIsTraceNote(*raw),
+			Flick:    customChartFlickTypeFor(*raw),
+		}
+		if isFirst {
+			note.ParentID = -1
+			note.Type = customChartNoteHold
+			hold.Start = customChartHoldStep{ID: note.ID, Type: customChartHoldStepNormal}
+			hold.StartType = customChartEndpointTypeFor(*raw, decoration)
+		} else if isLast {
+			note.Type = customChartNoteHoldEnd
+			hold.End = note.ID
+			hold.EndType = customChartEndpointTypeFor(*raw, decoration)
+		} else {
+			note.Type = customChartNoteHoldMid
+			hold.Steps = append(hold.Steps, customChartHoldStep{
+				ID:   note.ID,
+				Type: customChartStepTypeFor(*raw, kind),
+			})
+		}
+		score.notes[note.ID] = note
+	}
+
+	if hold.Start.ID == 0 || hold.End == 0 {
+		return
+	}
+	sort.SliceStable(hold.Steps, func(i, j int) bool {
+		left := score.notes[hold.Steps[i].ID]
+		right := score.notes[hold.Steps[j].ID]
+		if left.Tick != right.Tick {
+			return left.Tick < right.Tick
+		}
+		return left.Lane < right.Lane
+	})
+	score.holdNotes[startID] = hold
+}
+
+func addCustomChartTap(score *customChartScore, raw customChartNote, forceCritical bool) {
+	if customChartIsCancelNote(raw) {
+		return
+	}
+	id := score.allocateID()
+	score.notes[id] = customChartConvertedNote{
+		ID:       id,
+		ParentID: -1,
+		Type:     customChartNoteTap,
+		Tick:     raw.Ticks,
+		Lane:     customChartLane(raw),
+		Width:    customChartWidth(raw),
+		Critical: forceCritical || raw.Critical,
+		Friction: customChartIsTraceNote(raw),
+		Flick:    customChartFlickTypeFor(raw),
+	}
+}
+
+func calculateCustomChartScoreComboCount(score customChartScore) int {
+	holdStepTypesByID := make(map[int]customChartHoldStepType, len(score.notes))
+	for _, hold := range score.holdNotes {
+		for _, step := range hold.Steps {
+			holdStepTypesByID[step.ID] = step.Type
+		}
+	}
+
+	seen := make(map[string]struct{}, len(score.notes)*2)
+	total := 0
+	for _, note := range score.notes {
+		hold, hasHold := customChartHoldForNote(score, note)
+		if customChartNoteRequiresHold(note.Type) && !hasHold {
+			continue
+		}
+		if hasHold && hold.isGuide() {
+			continue
+		}
+		if note.Type == customChartNoteHold && hasHold && hold.StartType != customChartHoldNoteNormal {
+			continue
+		}
+		if note.Type == customChartNoteHoldEnd && hasHold && hold.EndType != customChartHoldNoteNormal {
+			continue
+		}
+		if note.Type == customChartNoteHoldMid {
+			if stepType, ok := holdStepTypesByID[note.ID]; ok && stepType == customChartHoldStepHidden {
+				continue
+			}
+		}
+		key := customChartComboDedupKey(note)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		total++
+	}
+
+	for holdID, hold := range score.holdNotes {
+		if hold.isGuide() {
+			continue
+		}
+		start, ok := score.notes[holdID]
+		if !ok {
+			continue
+		}
+		end, ok := score.notes[hold.End]
+		if !ok {
+			continue
+		}
+		startTick := start.Tick
+		endTick := end.Tick
+		halfBeatTick := startTick + customChartComboTickInterval
+		if remainder := halfBeatTick % customChartComboTickInterval; remainder != 0 {
+			halfBeatTick -= remainder
+		}
+		if halfBeatTick == startTick || halfBeatTick == endTick {
+			continue
+		}
+		if remainder := endTick % customChartComboTickInterval; remainder != 0 {
+			endTick += customChartComboTickInterval - remainder
+		}
+		for tick := halfBeatTick; tick < endTick; tick += customChartComboTickInterval {
+			key := customChartHoldHalfBeatDedupKey(holdID, hold, score, tick)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			total++
 		}
 	}
 	return total
 }
 
-func calculateCustomChartChainComboCount(start customChartNote, byID map[int]customChartNote) int {
-	chain := []customChartNote{start}
-	seen := map[int]struct{}{start.ID: {}}
-	current := start
-	for current.NextConnectionID != -1 {
-		next, ok := byID[current.NextConnectionID]
-		if !ok {
-			break
-		}
-		if _, exists := seen[next.ID]; exists {
-			break
-		}
-		chain = append(chain, next)
-		seen[next.ID] = struct{}{}
-		current = next
+func customChartRawInt(raw map[string]stdjson.RawMessage, key string, fallback int) (int, bool) {
+	value, ok := raw[key]
+	if !ok || len(value) == 0 || bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+		return fallback, false
 	}
-	if len(chain) == 0 {
-		return 0
+	var decoded any
+	if err := stdjson.Unmarshal(value, &decoded); err != nil {
+		return fallback, false
 	}
-
-	duration := chain[len(chain)-1].Ticks - chain[0].Ticks
-	if duration < 0 {
-		duration = 0
+	if parsed, ok := customChartIntValue(decoded); ok {
+		return parsed, true
 	}
-	combo := ceilPositiveDiv(duration, customChartComboTickInterval) + 1
-	for _, note := range chain {
-		if note.IsSkip {
-			combo++
-		}
-	}
-	return combo
+	return fallback, false
 }
 
-func ceilPositiveDiv(value int, divisor int) int {
-	if value <= 0 || divisor <= 0 {
-		return 0
+func customChartRawBool(raw map[string]stdjson.RawMessage, key string, fallback bool) (bool, bool) {
+	value, ok := raw[key]
+	if !ok || len(value) == 0 || bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+		return fallback, false
 	}
-	return (value + divisor - 1) / divisor
+	var decoded any
+	if err := stdjson.Unmarshal(value, &decoded); err != nil {
+		return fallback, false
+	}
+	switch v := decoded.(type) {
+	case bool:
+		return v, true
+	case float64:
+		return v != 0, true
+	case string:
+		switch strings.ToLower(strings.TrimSpace(v)) {
+		case "true", "1":
+			return true, true
+		case "false", "0":
+			return false, true
+		}
+	}
+	return fallback, false
+}
+
+func customChartLane(note customChartNote) int {
+	return clampCustomChartInt(note.LaneStart, 0, customChartMaxLane)
+}
+
+func customChartWidth(note customChartNote) int {
+	return clampCustomChartInt(note.LaneEnd-note.LaneStart+1, 1, customChartMaxLane+1)
+}
+
+func clampCustomChartInt(value int, min int, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
+
+func removeAdjacentCustomChartVisibleRelayDuplicates(chain []*customChartNote) []*customChartNote {
+	filtered := make([]*customChartNote, 0, len(chain))
+	for index, note := range chain {
+		var next *customChartNote
+		if index+1 < len(chain) {
+			next = chain[index+1]
+		}
+		if note != nil && next != nil &&
+			customChartIsVisibleRelaySlideNote(*note) &&
+			customChartIsVisibleRelaySlideNote(*next) &&
+			absCustomChartInt(next.Ticks-note.Ticks) <= 1 {
+			continue
+		}
+		filtered = append(filtered, note)
+	}
+	return filtered
+}
+
+func absCustomChartInt(value int) int {
+	if value < 0 {
+		return -value
+	}
+	return value
+}
+
+func customChartChainHasDecoration(chain []*customChartNote) bool {
+	for _, note := range chain {
+		if note != nil && customChartIsDecorationSlideNote(*note) {
+			return true
+		}
+	}
+	return false
+}
+
+func customChartIsVisibleRelaySlideNote(note customChartNote) bool {
+	return note.NoteBaseType == 5 || note.Category == 2
+}
+
+func customChartIsVisibleRelayAttachment(note customChartNote) bool {
+	return customChartIsVisibleRelaySlideNote(note) && note.IsSkip
+}
+
+func customChartIsDecorationSlideNote(note customChartNote) bool {
+	return note.Category == 9 || note.NoteBaseType == 10 || note.NoteBaseType == 13
+}
+
+func customChartSlideKindFor(note customChartNote, isLast bool) customChartSlideKind {
+	if isLast {
+		return customChartSlideEnd
+	}
+	base := note.NoteBaseType
+	switch {
+	case base == 2 || base == 8 || base == 9 || base == 10 || note.Category == 6:
+		return customChartSlideStart
+	case base == 1 || base == 3 || base == 11 || base == 12 || base == 13:
+		return customChartSlideEnd
+	case base == 6 || base == 14 || note.Category == 11:
+		return customChartSlideInvisible
+	default:
+		return customChartSlideRelay
+	}
+}
+
+func customChartIsCancelNote(note customChartNote) bool {
+	base := note.NoteBaseType
+	return base == 9 || base == 12 || base == 10 || base == 13
+}
+
+func customChartIsTraceNote(note customChartNote) bool {
+	base := note.NoteBaseType
+	return base == 4 || base == 8 || base == 11 || note.Category == 4 || note.Category == 6 || note.Category == 8
+}
+
+func customChartIsTraceFlickNote(note customChartNote) bool {
+	return note.NoteBaseType == 4 || note.Category == 8
+}
+
+func customChartIsFlickNote(note customChartNote) bool {
+	return note.NoteBaseType == 3 || note.Category == 3
+}
+
+func customChartFlickTypeFor(note customChartNote) customChartFlickType {
+	if !customChartIsFlickNote(note) && !customChartIsTraceFlickNote(note) && note.Direction != 1 && note.Direction != 2 {
+		return customChartFlickNone
+	}
+	switch note.Direction {
+	case 1:
+		return customChartFlickLeft
+	case 2:
+		return customChartFlickRight
+	default:
+		return customChartFlickDefault
+	}
+}
+
+func customChartStepTypeFor(note customChartNote, kind customChartSlideKind) customChartHoldStepType {
+	if kind == customChartSlideInvisible {
+		return customChartHoldStepHidden
+	}
+	if customChartIsVisibleRelayAttachment(note) {
+		return customChartHoldStepSkip
+	}
+	return customChartHoldStepNormal
+}
+
+func customChartEndpointTypeFor(note customChartNote, decoration bool) customChartHoldNoteType {
+	if decoration {
+		return customChartHoldNoteGuide
+	}
+	if customChartIsCancelNote(note) {
+		return customChartHoldNoteHidden
+	}
+	return customChartHoldNoteNormal
+}
+
+func customChartNoteRequiresHold(noteType customChartNoteType) bool {
+	return noteType == customChartNoteHold || noteType == customChartNoteHoldMid || noteType == customChartNoteHoldEnd
+}
+
+func customChartHoldForNote(score customChartScore, note customChartConvertedNote) (customChartHold, bool) {
+	switch note.Type {
+	case customChartNoteHold:
+		hold, ok := score.holdNotes[note.ID]
+		return hold, ok
+	case customChartNoteHoldMid, customChartNoteHoldEnd:
+		hold, ok := score.holdNotes[note.ParentID]
+		return hold, ok
+	default:
+		return customChartHold{}, false
+	}
+}
+
+func customChartComboDedupKey(note customChartConvertedNote) string {
+	return fmt.Sprintf("%d|%d|%d|%d|%d|%d|%d",
+		note.Type,
+		note.Tick,
+		note.Lane,
+		note.Width,
+		customChartBoolInt(note.Critical),
+		customChartBoolInt(note.Friction),
+		note.Flick,
+	)
+}
+
+func customChartHoldHalfBeatDedupKey(holdID int, hold customChartHold, score customChartScore, tick int) string {
+	holdStart := score.notes[holdID]
+	holdEnd := score.notes[hold.End]
+	var builder strings.Builder
+	builder.WriteString(strconv.Itoa(tick))
+	for _, value := range []int{
+		holdStart.Tick,
+		holdStart.Lane,
+		holdStart.Width,
+		holdEnd.Tick,
+		holdEnd.Lane,
+		holdEnd.Width,
+		customChartBoolInt(holdStart.Critical),
+		customChartBoolInt(holdStart.Friction),
+	} {
+		builder.WriteByte('|')
+		builder.WriteString(strconv.Itoa(value))
+	}
+	for _, step := range hold.Steps {
+		stepNote := score.notes[step.ID]
+		builder.WriteByte('|')
+		builder.WriteString(strconv.Itoa(stepNote.Tick))
+		builder.WriteByte(':')
+		builder.WriteString(strconv.Itoa(stepNote.Lane))
+		builder.WriteByte(':')
+		builder.WriteString(strconv.Itoa(stepNote.Width))
+		builder.WriteByte(':')
+		builder.WriteString(strconv.Itoa(int(step.Type)))
+	}
+	return builder.String()
+}
+
+func customChartBoolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func formatCustomChartBPMs(events []struct {
@@ -538,13 +1059,13 @@ func customChartIntValue(value any) (int, bool) {
 	case int64:
 		return int(v), true
 	case float64:
-		return int(v), true
+		return int(math.Round(v)), true
 	case stdjson.Number:
 		if parsed, err := v.Int64(); err == nil {
 			return int(parsed), true
 		}
 		parsed, err := v.Float64()
-		return int(parsed), err == nil
+		return int(math.Round(parsed)), err == nil
 	case string:
 		parsed, err := strconv.Atoi(strings.TrimSpace(v))
 		return parsed, err == nil

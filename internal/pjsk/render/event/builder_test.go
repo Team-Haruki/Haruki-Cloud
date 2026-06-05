@@ -3,6 +3,7 @@ package event
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -510,7 +511,7 @@ func TestBuildEventDetailRequestWorldBloomTimelineIncludesChapterColorsAndTimes(
 			GameCharacterID: &charA,
 			ChapterStartAt:  1000,
 			AggregateAt:     3000,
-			ChapterEndAt:    4000,
+			ChapterEndAt:    3000 + 9*time.Minute.Milliseconds(),
 			ChapterType:     "chapter",
 		},
 	}

@@ -378,11 +378,11 @@ func resolveWorldBloomChapterEndAt(chapter *masterdata.WorldBloom) int64 {
 	if chapter == nil {
 		return 0
 	}
-	if chapter.ChapterEndAt > 0 {
-		return chapter.ChapterEndAt
-	}
 	if chapter.AggregateAt > 0 {
 		return chapter.AggregateAt + 1000
+	}
+	if chapter.ChapterEndAt > 0 {
+		return chapter.ChapterEndAt
 	}
 	return 0
 }

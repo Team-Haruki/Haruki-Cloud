@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"slices"
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -18,8 +19,11 @@ func TestBuildSKTrackerParamsDefaults(t *testing.T) {
 	}
 
 	ranks, _ := params["ranks"].([]int)
-	if len(ranks) != len(defaultSKRanks) {
-		t.Fatalf("expected default ranks len=%d got=%d", len(defaultSKRanks), len(ranks))
+	if !slices.Equal(ranks, defaultSKRanksNormal) {
+		t.Fatalf("unexpected normal default ranks: %#v", ranks)
+	}
+	if !slices.Contains(ranks, 1500) {
+		t.Fatalf("expected normal default ranks to include T1500: %#v", ranks)
 	}
 	if got, ok := params["default_ranks"].(bool); !ok || !got {
 		t.Fatalf("expected default_ranks=true, got %#v", params["default_ranks"])
@@ -39,8 +43,11 @@ func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
 	}
 
 	ranks, _ := params["ranks"].([]int)
-	if len(ranks) != len(defaultSKRanksWorldLink) {
-		t.Fatalf("expected world link default ranks len=%d got=%d", len(defaultSKRanksWorldLink), len(ranks))
+	if !slices.Equal(ranks, defaultSKRanksWorldLink) {
+		t.Fatalf("unexpected world link default ranks: %#v", ranks)
+	}
+	if slices.Contains(ranks, 1500) {
+		t.Fatalf("expected world link default ranks to omit T1500: %#v", ranks)
 	}
 	if got, ok := params["default_ranks"].(bool); !ok || !got {
 		t.Fatalf("expected default_ranks=true, got %#v", params["default_ranks"])

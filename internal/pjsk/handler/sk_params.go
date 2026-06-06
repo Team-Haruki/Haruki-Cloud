@@ -115,6 +115,7 @@ func buildSKSpeedTrackerParams(ctx HarrukiSekaiHandlerContext, unit string, defa
 	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
 		wlCharacterQuery = "wl"
 	}
+	wlMode := ctx.PrefixArg() == "wl" || wlCharacterID > 0 || strings.TrimSpace(wlCharacterQuery) != ""
 
 	unit = strings.ToLower(strings.TrimSpace(unit))
 	if unit == "" {
@@ -137,7 +138,7 @@ func buildSKSpeedTrackerParams(ctx HarrukiSekaiHandlerContext, unit string, defa
 	params := map[string]any{
 		"region":               strings.ToLower(strings.TrimSpace(ctx.Region().String())),
 		"region_explicit":      ctx.HasExplicitRegion(),
-		"ranks":                slices.Clone(defaultSKSpeedRanks),
+		"ranks":                defaultSKRanksByMode(wlMode),
 		"default_ranks":        true,
 		"speed_unit":           unit,
 		"speed_period_seconds": periodValue * periodScaleSeconds,

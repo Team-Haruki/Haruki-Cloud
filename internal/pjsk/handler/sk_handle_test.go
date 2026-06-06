@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "github.com/bytedance/sonic"
+	"slices"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/parser"
@@ -39,7 +40,7 @@ func TestSKDailySpeedHandleBuildsCommandRequest(t *testing.T) {
 	if params.SpeedPeriodSecs != 24*60*60 {
 		t.Fatalf("unexpected speed period: %+v", params)
 	}
-	if len(params.Ranks) != len(defaultSKSpeedRanks) {
+	if !slices.Equal(params.Ranks, defaultSKRanksNormal) {
 		t.Fatalf("unexpected default speed ranks len: %+v", params)
 	}
 	if !params.DefaultRanks {
@@ -77,7 +78,7 @@ func TestSKSpeedHandleBuildsCommandRequestWithHourDefaults(t *testing.T) {
 	if params.SpeedPeriodSecs != 60*60 {
 		t.Fatalf("unexpected speed period: %+v", params)
 	}
-	if len(params.Ranks) != len(defaultSKSpeedRanks) {
+	if !slices.Equal(params.Ranks, defaultSKRanksNormal) {
 		t.Fatalf("unexpected default speed ranks len: %+v", params)
 	}
 }
@@ -101,7 +102,7 @@ func TestSKSpeedHandleTreatsArgumentAsMinutePeriod(t *testing.T) {
 	if params.SpeedUnit != "h" || params.SpeedPeriodSecs != 30*60 {
 		t.Fatalf("unexpected speed params: %+v", params)
 	}
-	if len(params.Ranks) != len(defaultSKSpeedRanks) || params.Ranks[0] != 10 || params.Ranks[len(params.Ranks)-1] != 500000 {
+	if !slices.Equal(params.Ranks, defaultSKRanksNormal) {
 		t.Fatalf("unexpected speed ranks: %+v", params.Ranks)
 	}
 }
@@ -125,7 +126,7 @@ func TestSKDailySpeedHandleTreatsArgumentAsDayPeriod(t *testing.T) {
 	if params.SpeedUnit != "d" || params.SpeedPeriodSecs != 2*24*60*60 {
 		t.Fatalf("unexpected speed params: %+v", params)
 	}
-	if len(params.Ranks) != len(defaultSKSpeedRanks) || params.Ranks[0] != 10 || params.Ranks[len(params.Ranks)-1] != 500000 {
+	if !slices.Equal(params.Ranks, defaultSKRanksNormal) {
 		t.Fatalf("unexpected speed ranks: %+v", params.Ranks)
 	}
 }

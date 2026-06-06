@@ -300,8 +300,8 @@ func TestBuildSKSpeedTrackerParamsUsesFixedRanksAndMinutePeriod(t *testing.T) {
 		t.Fatalf("unexpected event_id: %#v", params["event_id"])
 	}
 	ranks, _ := params["ranks"].([]int)
-	if len(ranks) != len(defaultSKSpeedRanks) {
-		t.Fatalf("unexpected speed ranks len=%d", len(ranks))
+	if !slices.Equal(ranks, defaultSKRanksNormal) {
+		t.Fatalf("unexpected speed ranks: %#v", ranks)
 	}
 	if got, ok := params["speed_period_seconds"].(int64); !ok || got != 30*60 {
 		t.Fatalf("unexpected speed period: %#v", params["speed_period_seconds"])
@@ -327,8 +327,8 @@ func TestBuildSKSpeedTrackerParamsPreservesWorldLinkSelector(t *testing.T) {
 		t.Fatalf("unexpected speed period: %#v", params["speed_period_seconds"])
 	}
 	ranks, _ := params["ranks"].([]int)
-	if len(ranks) != len(defaultSKSpeedRanks) {
-		t.Fatalf("unexpected speed ranks len=%d", len(ranks))
+	if !slices.Equal(ranks, defaultSKRanksWorldLink) {
+		t.Fatalf("unexpected world link speed ranks: %#v", ranks)
 	}
 }
 

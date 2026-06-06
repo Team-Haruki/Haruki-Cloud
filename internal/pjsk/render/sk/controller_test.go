@@ -2785,7 +2785,7 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	payload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
 		EventID: 101,
 		Region:  "jp",
-		Ranks:   []int{100, 50},
+		Ranks:   []int{1500, 100, 50},
 	})
 	if err != nil {
 		t.Fatalf("build predict line request: %v", err)
@@ -2804,6 +2804,11 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	}
 	if payload.Ranks[1].Rank != 100 || payload.Ranks[1].Score == nil || *payload.Ranks[1].Score != 1_000_100 {
 		t.Fatalf("unexpected second current rank payload: %+v", payload.Ranks[1])
+	}
+	for _, rank := range payload.Ranks {
+		if rank.Rank == 1500 {
+			t.Fatalf("forecast payload should omit ranks no source provided: %+v", payload.Ranks)
+		}
 	}
 	if len(payload.ForecastColumns) != 3 {
 		t.Fatalf("unexpected forecast column len: %d", len(payload.ForecastColumns))

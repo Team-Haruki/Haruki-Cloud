@@ -83,6 +83,11 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	}
 
 	sourceOrder := forecastSourceDisplayOrder(normalized.Region, bySource)
+	forecastRanks := forecastProvidedRanks(bySource)
+	if len(forecastRanks) == 0 {
+		c.forecastCache.StartRefreshQuery(forecastQuery)
+		return nil, fmt.Errorf("预测缓存暂无这些档位的数据")
+	}
 	sourceNames := map[string]string{
 		"33kit":    "33Kit预测",
 		"moesekai": "Moesekai预测",
@@ -97,9 +102,9 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		if !ok || len(sourceData.Scores) == 0 {
 			continue
 		}
-		rankInfos := make([]drawing.RankInfo, 0, len(normalized.Ranks))
+		rankInfos := make([]drawing.RankInfo, 0, len(forecastRanks))
 		forecastAt := int64(0)
-		for _, rank := range normalized.Ranks {
+		for _, rank := range forecastRanks {
 			item, ok := sourceData.Scores[rank]
 			if !ok || item.Score <= 0 {
 				continue
@@ -148,7 +153,7 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	currentRanks, currentErr := c.buildRanksFromTracker(
 		normalized.Region,
 		normalized.EventID,
-		normalized.Ranks,
+		forecastRanks,
 		normalized.WlCharacterID,
 		shouldSkipMissingTrackerRanks(normalized),
 	)
@@ -219,6 +224,27 @@ func buildForecastQuery(req TrackerRankQuery) ForecastQuery {
 		query.WlCharacterID = req.WlCharacterID
 	}
 	return query
+}
+
+func forecastProvidedRanks(bySource map[string]ForecastSourceData) []int {
+	if len(bySource) == 0 {
+		return nil
+	}
+	seen := make(map[int]struct{})
+	for _, sourceData := range bySource {
+		for rank, score := range sourceData.Scores {
+			if rank <= 0 || score.Score <= 0 {
+				continue
+			}
+			seen[rank] = struct{}{}
+		}
+	}
+	ranks := make([]int, 0, len(seen))
+	for rank := range seen {
+		ranks = append(ranks, rank)
+	}
+	sort.Ints(ranks)
+	return ranks
 }
 
 func ensureSKPredictionAllowed(meta eventMeta) error {

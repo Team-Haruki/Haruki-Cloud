@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -166,6 +167,33 @@ func TestBuildCustomMusicChartRequestMapsCustomScoreNotFound(t *testing.T) {
 		Region: "jp",
 	})
 	if err == nil || err.Error() != "未找到对应自定义谱面" {
+		t.Fatalf("BuildMusicChartRequest() error = %v", err)
+	}
+}
+
+func TestCustomChartPrefixesAreIgnoredByNormalLookups(t *testing.T) {
+	source := &customChartDirectSource{vocalBuilderTestSource: &vocalBuilderTestSource{
+		music: &masterdata.Music{
+			ID:              47,
+			Title:           "メルト",
+			AssetBundleName: "jacket_s_047",
+		},
+	}}
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), nil, nil)
+
+	_, err := controller.BuildMusicDetailRequest(Query{
+		Query:  "自定义谱面 _g5yakrvqobnfq6hafdob7ed8jwm",
+		Region: "jp",
+	})
+	if err == nil || !strings.Contains(err.Error(), "failed to search music") {
+		t.Fatalf("BuildMusicDetailRequest() error = %v", err)
+	}
+
+	_, err = controller.BuildMusicChartRequest(ChartQuery{
+		Query:  "customchart _g5yakrvqobnfq6hafdob7ed8jwm",
+		Region: "jp",
+	})
+	if err == nil || !strings.Contains(err.Error(), "failed to search music chart") {
 		t.Fatalf("BuildMusicChartRequest() error = %v", err)
 	}
 }

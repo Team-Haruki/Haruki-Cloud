@@ -60,7 +60,7 @@ func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailR
 	if err != nil {
 		return nil, err
 	}
-	if IsCustomChartQuery(query.Query) || IsCustomChartIDQuery(query.Query) {
+	if IsCustomChartIDQuery(query.Query) {
 		return c.buildCustomMusicDetailRequest(query, source, builder, region)
 	}
 	allowUnreleased := c.shouldAllowLookupLeaks(query.Region, query.AllowUnreleased)

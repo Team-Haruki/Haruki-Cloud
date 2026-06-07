@@ -207,6 +207,14 @@ func TestProfileHandleParsesVerticalArg(t *testing.T) {
 func TestProfileCustomProfileCardHandleParsesSeq(t *testing.T) {
 	h := sekaiHandlers{}.ProfileCustomProfileCardHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
+	if !containsString(h.GetCommands(), "/cp") {
+		t.Fatalf("expected custom profile commands to include /cp, got %v", h.GetCommands())
+	}
+	for _, removed := range []string{"/自定义档案", "/pjsk custom profile", "/custom-profile"} {
+		if containsString(h.GetCommands(), removed) {
+			t.Fatalf("expected custom profile commands to omit %s, got %v", removed, h.GetCommands())
+		}
+	}
 
 	result, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),

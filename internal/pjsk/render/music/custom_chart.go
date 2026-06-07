@@ -161,38 +161,9 @@ const (
 	customChartMaxLane           = 11
 )
 
-var customChartPrefixes = map[string]struct{}{
-	"custom":      {},
-	"customscore": {},
-	"customchart": {},
-	"自制谱":         {},
-	"自制谱面":        {},
-	"自定义谱":        {},
-	"自定义谱面":       {},
-	"自定谱":         {},
-	"自定谱面":        {},
-}
-
-func IsCustomChartQuery(query string) bool {
-	_, ok := stripCustomChartPrefix(query)
-	return ok
-}
-
 func IsCustomChartIDQuery(query string) bool {
 	_, ok := customChartIDFromQuery(query)
 	return ok
-}
-
-func stripCustomChartPrefix(query string) (string, bool) {
-	fields := strings.Fields(strings.TrimSpace(query))
-	if len(fields) == 0 {
-		return "", false
-	}
-	prefix := strings.ToLower(strings.TrimSpace(fields[0]))
-	if _, ok := customChartPrefixes[prefix]; !ok {
-		return strings.TrimSpace(query), false
-	}
-	return strings.TrimSpace(strings.Join(fields[1:], " ")), true
 }
 
 func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataSource, builder *Builder, region renderregion.Value) (*drawing.GenerateMusicChartRequest, error) {
@@ -207,9 +178,6 @@ func (c *Controller) buildCustomMusicChartRequest(query ChartQuery, source DataS
 	}
 
 	keyword := strings.TrimSpace(query.Query)
-	if stripped, ok := stripCustomChartPrefix(keyword); ok {
-		keyword = stripped
-	}
 	scoreID, ok := customChartIDFromCleanKeyword(keyword)
 	if !ok {
 		return nil, fmt.Errorf("请提供28位自定义谱面ID")
@@ -1225,9 +1193,6 @@ func customChartCacheID(entry customChartEntry) string {
 
 func customChartIDFromQuery(query string) (string, bool) {
 	query = strings.TrimSpace(query)
-	if stripped, ok := stripCustomChartPrefix(query); ok {
-		query = stripped
-	}
 	if scoreID, ok := customChartIDFromCleanKeyword(query); ok {
 		return scoreID, true
 	}

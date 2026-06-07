@@ -120,6 +120,11 @@ func TestBPMHandleBuildsCommandRequest(t *testing.T) {
 func TestB30HandleReturnsUnavailableMessage(t *testing.T) {
 	h := sekaiHandlers{}.B30Handle()
 	h.Regions = []renderregion.Value{renderregion.JP}
+	for _, command := range []string{"/b30", "/pjskb30", "/b39", "/pjskb39"} {
+		if !containsString(h.GetCommands(), command) {
+			t.Fatalf("expected B30 commands to include %s, got %v", command, h.GetCommands())
+		}
+	}
 
 	resolved, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
@@ -147,6 +152,15 @@ func TestB30HandleReturnsUnavailableMessage(t *testing.T) {
 	if !ok || data.Text != ratingUnavailableMessage {
 		t.Fatalf("unexpected text data: %+v", message[0].Data)
 	}
+}
+
+func containsString(items []string, target string) bool {
+	for _, item := range items {
+		if item == target {
+			return true
+		}
+	}
+	return false
 }
 
 func TestMusicCoverHandleBuildsCommandRequest(t *testing.T) {

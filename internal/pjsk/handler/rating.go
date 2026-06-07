@@ -12,7 +12,8 @@ func (sekaiHandlers) B30Handle() HarukiSekaiCommandHandler {
 		CommandHandlerBase: CommandHandlerBase{
 			Path: "music/b30",
 			Commands: []string{
-				"/b30",
+				"/b30", "/pjskb30",
+				"/b39", "/pjskb39",
 			},
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {

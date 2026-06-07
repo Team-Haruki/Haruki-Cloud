@@ -190,7 +190,6 @@ type ChartQuery struct {
 	Difficulty string `json:"difficulty,omitempty"`
 	Skill      bool   `json:"skill,omitempty"`
 	Style      string `json:"style,omitempty"`
-	Custom     bool   `json:"custom,omitempty"`
 }
 
 type BriefListQuery struct {

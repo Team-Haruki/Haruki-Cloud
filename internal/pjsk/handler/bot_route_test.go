@@ -76,8 +76,10 @@ func TestListBotRoutes(t *testing.T) {
 	if !ok {
 		t.Fatal("expected music/b30 route to exist")
 	}
-	if !contains(b30Route.Commands, "/b30") {
-		t.Fatalf("expected music/b30 commands to include /b30, got %v", b30Route.Commands)
+	for _, command := range []string{"/b30", "/pjskb30", "/b39", "/pjskb39"} {
+		if !contains(b30Route.Commands, command) {
+			t.Fatalf("expected music/b30 commands to include %s, got %v", command, b30Route.Commands)
+		}
 	}
 
 	musicAliasRoute, ok := byPath["alias/music"]
@@ -94,6 +96,14 @@ func TestListBotRoutes(t *testing.T) {
 	}
 	if !contains(characterAliasRoute.Commands, "/角色别名") {
 		t.Fatalf("expected alias/character commands to include /角色别名, got %v", characterAliasRoute.Commands)
+	}
+
+	customProfileRoute, ok := byPath["profile/custom-profile-card"]
+	if !ok {
+		t.Fatal("expected profile/custom-profile-card route to exist")
+	}
+	if !contains(customProfileRoute.Commands, "/cp") {
+		t.Fatalf("expected profile/custom-profile-card commands to include /cp, got %v", customProfileRoute.Commands)
 	}
 
 	mysekaiTalkListRoute, ok := byPath["mysekai/talk-list"]

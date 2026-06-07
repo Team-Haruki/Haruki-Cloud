@@ -26,7 +26,7 @@ func (sekaiHandlers) ProfileCustomProfileCardHandle() HarukiSekaiCommandHandler 
 		CommandHandlerBase: CommandHandlerBase{
 			Path: "profile/custom-profile-card",
 			Commands: []string{
-				"/自定义个人信息", "/自定义档案", "/pjsk custom profile", "/custom-profile",
+				"/自定义个人信息", "/cp",
 			},
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {

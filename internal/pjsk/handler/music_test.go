@@ -5,6 +5,7 @@ import (
 	json "github.com/bytedance/sonic"
 	"testing"
 
+	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -113,6 +114,38 @@ func TestBPMHandleBuildsCommandRequest(t *testing.T) {
 	}
 	if params.Difficulty != "expert" {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestB30HandleReturnsUnavailableMessage(t *testing.T) {
+	h := sekaiHandlers{}.B30Handle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	resolved, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/b30",
+		ArgText:    "anything",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMusic || resolved.Mode != "rating-unavailable" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	message, err := executeRatingUnavailable(nil)
+	if err != nil {
+		t.Fatalf("executeRatingUnavailable() error = %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	data, ok := message[0].Data.(onebot11.TextData)
+	if !ok || data.Text != ratingUnavailableMessage {
+		t.Fatalf("unexpected text data: %+v", message[0].Data)
 	}
 }
 

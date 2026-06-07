@@ -484,16 +484,6 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		if len(matches) == 1 {
-			return renderSingleMusicLookupChartMessage(
-				rc,
-				musicCtrl,
-				rc.Cmd.Region,
-				matches[0].Music.ID,
-				matches[0].Difficulty,
-				resolveRequesterHarukiUserChartStyle(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
-			)
-		}
 		return renderNoteCountLookupListMessages(rc, musicCtrl, q, matches)
 	case "music-cover":
 		q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}

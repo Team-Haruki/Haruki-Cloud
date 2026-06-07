@@ -72,6 +72,14 @@ func TestListBotRoutes(t *testing.T) {
 		t.Fatalf("expected score/music-meta commands to include /曲目meta, got %v", scoreRoute.Commands)
 	}
 
+	b30Route, ok := byPath["music/b30"]
+	if !ok {
+		t.Fatal("expected music/b30 route to exist")
+	}
+	if !contains(b30Route.Commands, "/b30") {
+		t.Fatalf("expected music/b30 commands to include /b30, got %v", b30Route.Commands)
+	}
+
 	musicAliasRoute, ok := byPath["alias/music"]
 	if !ok {
 		t.Fatal("expected alias/music route to exist")

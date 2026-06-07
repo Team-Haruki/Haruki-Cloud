@@ -172,6 +172,45 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	}
 }
 
+func TestExecuteCheckDataMySekaiRejectsCNWhenNotAllowed(t *testing.T) {
+	original := config.Cfg.PJSK.AllowCNMySekai
+	config.Cfg.PJSK.AllowCNMySekai = nil
+	t.Cleanup(func() {
+		config.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	params, err := json.Marshal(userQueryParams{
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeCheckData(NewRequestContext(context.Background(), &CommandRequest{
+		Module:            parser.ModuleCheckData,
+		Mode:              "mysekai",
+		Region:            "cn",
+		RegionExplicit:    true,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+		RequesterGroupID:  "123456",
+		RequesterBotID:    "11451419",
+		Params:            params,
+	}, &renderapp.App{}))
+	if err != nil {
+		t.Fatalf("executeCheckData() error = %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	data, ok := message[0].Data.(onebot11.TextData)
+	if !ok || data.Text != "MySekai 功能在此区服暂未开放" {
+		t.Fatalf("unexpected text data: %+v", message[0].Data)
+	}
+}
+
 func TestTrackerRankQueryFromParamsUsesResolvedRegionWhenImplicit(t *testing.T) {
 	raw, err := json.Marshal(rendersk.TrackerRankQuery{
 		Region:         "jp",
@@ -531,20 +570,20 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 		t.Fatalf("write jacket: %v", err)
 	}
 
-	chartCalls := 0
+	listCalls := 0
 	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/api/pjsk/chart":
-			chartCalls++
-			var req drawing.GenerateMusicChartRequest
+		case "/api/pjsk/music/list":
+			listCalls++
+			var req drawing.MusicListRequest
 			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
-				t.Fatalf("decode chart request: %v", err)
+				t.Fatalf("decode music-list request: %v", err)
 			}
-			if req.Difficulty != "expert" {
-				t.Fatalf("unexpected chart difficulty: %+v", req)
+			if req.Title == nil || *req.Title != "物量 777 匹配结果" {
+				t.Fatalf("unexpected list title: %+v", req.Title)
 			}
-			if musicID, ok := req.MusicID.(float64); !ok || int(musicID) != 1 {
-				t.Fatalf("unexpected chart music id: %+v", req.MusicID)
+			if len(req.MusicList) != 1 {
+				t.Fatalf("expected 1 list item, got %d", len(req.MusicList))
 			}
 			_, _ = w.Write([]byte("png"))
 		default:
@@ -597,8 +636,8 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 	if len(message) != 1 || message[0].Type != "image" {
 		t.Fatalf("unexpected note-count message: %+v", message)
 	}
-	if chartCalls != 1 {
-		t.Fatalf("expected 1 chart render call, got %d", chartCalls)
+	if listCalls != 1 {
+		t.Fatalf("expected 1 music-list render call, got %d", listCalls)
 	}
 }
 

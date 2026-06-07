@@ -914,6 +914,83 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 	}
 }
 
+func TestExecuteMusicBPMUsesListImageForSingleMatch(t *testing.T) {
+	root := t.TempDir()
+	chartPath := filepath.Join(root, "music", "music_score", "0001_01", "expert.txt")
+	if err := os.MkdirAll(filepath.Dir(chartPath), 0o755); err != nil {
+		t.Fatalf("mkdir chart: %v", err)
+	}
+	if err := os.WriteFile(chartPath, []byte(strings.Join([]string{
+		"#BPM01:200",
+		"#00008:0100",
+	}, "\n")), 0o644); err != nil {
+		t.Fatalf("write chart: %v", err)
+	}
+
+	briefListCalls := 0
+	titles := make([]string, 0, 1)
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/pjsk/music/brief-list":
+			briefListCalls++
+			var req drawing.MusicBriefListRequest
+			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode music-brief-list request: %v", err)
+			}
+			if req.Title == nil {
+				t.Fatalf("expected list title, got nil")
+			}
+			titles = append(titles, *req.Title)
+			if len(req.MusicList) != 1 || req.MusicList[0].ID != 1 {
+				t.Fatalf("unexpected bpm song list: %+v", req.MusicList)
+			}
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]any{"bpm": 200})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMusic,
+		Mode:   "music-bpm",
+		Region: "jp",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic bpm: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected bpm message: %+v", message)
+	}
+	if briefListCalls != 1 {
+		t.Fatalf("expected 1 music-brief-list render call, got %d", briefListCalls)
+	}
+	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+		t.Fatalf("unexpected title list: %+v", titles)
+	}
+}
+
 func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 	briefListCalls := 0
 	titles := make([]string, 0, 1)

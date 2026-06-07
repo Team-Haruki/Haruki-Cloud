@@ -153,11 +153,12 @@ func (sekaiHandlers) BPMHandle() HarukiSekaiCommandHandler {
 			Commands: []string{
 				"/pjsk bpm", "/查bpm", "/查BPM",
 			},
+			Helper: bpmLookupHelp,
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query := strings.TrimSpace(ctx.GetArgs())
-			if query == "" {
-				return nil, onebot11.NewReplayError("请输入要查询的 BPM 数值")
+			if ctx.Flags()["is_help"] || query == "" {
+				return nil, onebot11.NewReplayError("%s", bpmLookupHelp)
 			}
 			params := map[string]any{}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
@@ -175,6 +176,12 @@ func (sekaiHandlers) BPMHandle() HarukiSekaiCommandHandler {
 		},
 	}, executeMusic)
 }
+
+const bpmLookupHelp = `请输入要查询的 BPM 数值，例如:
+/查BPM 200
+/查BPM 200 expert
+
+返回匹配歌曲列表；即使只有一个匹配结果也不会直接返回谱面。`
 
 func (sekaiHandlers) MusicCoverHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
@@ -509,16 +516,6 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		matches, resolveErr := musicCtrl.FindMusicChartsByBPM(q)
 		if resolveErr != nil {
 			return nil, resolveErr
-		}
-		if len(matches) == 1 {
-			return renderSingleMusicLookupChartMessage(
-				rc,
-				musicCtrl,
-				rc.Cmd.Region,
-				matches[0].Music.ID,
-				matches[0].Difficulty,
-				resolveRequesterHarukiUserChartStyle(rc.Ctx, rc.App, rc.Platform, rc.PlatformUserID),
-			)
 		}
 		return renderBPMLookupListMessages(rc, musicCtrl, q, matches)
 	default:

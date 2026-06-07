@@ -483,12 +483,12 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 
 	switch rc.Cmd.Mode {
 	case "mysekai":
-		if p.Mode != "self" {
-			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
-		}
-		
 		if !isMySekaiRegionAllowed(rc.Cmd, regionWithDefault(rc.Cmd.Region)) {
 			return mySekaiRegionUnavailableMessage(), nil
+		}
+		
+		if p.Mode != "self" {
+			return nil, fmt.Errorf("MySekai抓包相关内容仅支持查询自己的数据")
 		}
 		
 		binding, hid, err := resolveBinding(false, true)

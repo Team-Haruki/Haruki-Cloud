@@ -39,15 +39,6 @@ func renderMusicChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controll
 	return staticCachedImageMessage(rc.Ctx, data, rc.App, chartStaticBaseURL(rc.App), publicRelativePath, storageRelativePath)
 }
 
-func renderSingleMusicLookupChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, musicID int, difficulty string, style string) (onebot11.Message, error) {
-	return renderMusicChartMessage(rc, musicCtrl, rendermusic.ChartQuery{
-		Query:      fmt.Sprintf("music%d", musicID),
-		Region:     region,
-		Difficulty: difficulty,
-		Style:      style,
-	})
-}
-
 func musicChartCachePaths(query rendermusic.ChartQuery, payload *drawing.GenerateMusicChartRequest) (string, string) {
 	style := chartstyle.Normalize(query.Style)
 	if style == "" {

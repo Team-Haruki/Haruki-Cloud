@@ -17,20 +17,22 @@ import (
 )
 
 const (
-	ProfileModeHideID        = "profile-hide-id"
-	ProfileModeShowID        = "profile-show-id"
-	ProfileModeHideSuite     = "profile-hide-suite"
-	ProfileModeShowSuite     = "profile-show-suite"
-	ProfileModeHideMySekai   = "profile-hide-mysekai"
-	ProfileModeShowMySekai   = "profile-show-mysekai"
-	ProfileModeVerify        = "profile-verify"
-	ProfileModeVerifyList    = "profile-verify-list"
-	ProfileModeSetTimeZone   = "profile-set-timezone"
-	ProfileModeSetArrestDiff = "profile-set-arrest-difficulty"
-	ProfileModeSetChartStyle = "profile-set-chart-style"
-	ProfileModeBGUpload      = "profile-bg-upload"
-	ProfileModeBGClear       = "profile-bg-clear"
-	ProfileModeBGAdjust      = "profile-bg-adjust"
+	ProfileModeHideID         = "profile-hide-id"
+	ProfileModeShowID         = "profile-show-id"
+	ProfileModeHideSuite      = "profile-hide-suite"
+	ProfileModeShowSuite      = "profile-show-suite"
+	ProfileModeHideMySekai    = "profile-hide-mysekai"
+	ProfileModeShowMySekai    = "profile-show-mysekai"
+	ProfileModeVerify         = "profile-verify"
+	ProfileModeVerifyList     = "profile-verify-list"
+	ProfileModeSetTimeZone    = "profile-set-timezone"
+	ProfileModeSetArrestDiff  = "profile-set-arrest-difficulty"
+	ProfileModeSetChartStyle  = "profile-set-chart-style"
+	ProfileModeEnableModular  = "profile-enable-modular"
+	ProfileModeDisableModular = "profile-disable-modular"
+	ProfileModeBGUpload       = "profile-bg-upload"
+	ProfileModeBGClear        = "profile-bg-clear"
+	ProfileModeBGAdjust       = "profile-bg-adjust"
 )
 
 type ProfileDifficultyToggle struct {
@@ -299,6 +301,30 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 			return nil, fmt.Errorf("保存谱面样式失败: %w", err)
 		}
 		return []byte(fmt.Sprintf("已设置谱面样式为 %s", resolvedChartStyle)), nil
+	case ProfileModeEnableModular, ProfileModeDisableModular:
+		enabled := mode == ProfileModeEnableModular
+		harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
+		if err != nil {
+			return nil, err
+		}
+		settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
+		if err != nil {
+			if !errors.Is(err, ErrUserSettingsNotFound) {
+				return nil, fmt.Errorf("读取用户设置失败: %w", err)
+			}
+			settings = newDefaultUserSettings()
+		}
+		if settings == nil {
+			settings = newDefaultUserSettings()
+		}
+		settings.ModularProfileEnabled = enabled
+		if err := UpsertUserSettings(ctx, service.pjskDB, harukiUserID, settings); err != nil {
+			return nil, fmt.Errorf("保存模块个人信息设置失败: %w", err)
+		}
+		if enabled {
+			return []byte("已开启模块个人信息，之后 /个人信息 将使用模块布局"), nil
+		}
+		return []byte("已关闭模块个人信息，之后 /个人信息 将使用经典布局"), nil
 	case ProfileModeBGUpload:
 		binding, err := resolveBinding()
 		if err != nil {

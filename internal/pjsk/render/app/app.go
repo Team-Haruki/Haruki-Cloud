@@ -75,10 +75,15 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	miscController := misc.NewController(drawingClient)
+	localMasterdataFallback := shouldEnableLocalMasterdataFallback(cfg)
+	localMasterdataDir := ""
+	if localMasterdataFallback {
+		localMasterdataDir = resolveRenderProviderMasterdataDir(cfg)
+	}
 	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.DefaultRegion, assetHelper, mysekai.MasterdataOptions{
 		SekaiDSN:      cfg.SekaiDSN,
-		LocalDir:      cfg.LocalMasterdata.Dir,
-		AllowFallback: cfg.LocalMasterdata.AllowFallback,
+		LocalDir:      localMasterdataDir,
+		AllowFallback: localMasterdataFallback && cfg.LocalMasterdata.AllowFallback,
 	})
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
@@ -107,7 +112,6 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	var stampController *stamp.Controller
 	var vliveController *vlive.Controller
 	var masterProvider provider.MasterDataProvider
-	renderMasterdataDir := resolveRenderProviderMasterdataDir(cfg)
 	providersByRegion := make(map[renderregion.Value]provider.MasterDataProvider)
 	registerProvider := func(src provider.MasterDataProvider) {
 		if src == nil {
@@ -121,7 +125,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 	if sekaiClient != nil {
 		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
-		masterDBProvider.SetLocalMasterdataDir(renderMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
+		if localMasterdataFallback {
+			masterDBProvider.SetLocalMasterdataDir(localMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
+		}
 		registerProvider(masterDBProvider)
 
 		// Create module adapters from the unified provider
@@ -174,7 +180,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 				continue
 			}
 			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
-			regionProvider.SetLocalMasterdataDir(renderMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
+			if localMasterdataFallback {
+				regionProvider.SetLocalMasterdataDir(localMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
+			}
 			registerProvider(regionProvider)
 			regionCardAdapter := card.NewProviderAdapter(regionProvider)
 			regionCostumeAdapter := costume.NewProviderAdapter(regionProvider)
@@ -269,8 +277,20 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Tracker:    cfg.Tracker,
 		Config:     cfg,
 	}
-	runtime.startLocalMasterdataRefresh(initCtx, renderMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
+	if localMasterdataFallback {
+		runtime.startLocalMasterdataRefresh(initCtx, localMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
+	}
 	return runtime
+}
+
+func shouldEnableLocalMasterdataFallback(cfg Config) bool {
+	if !cfg.LocalMasterdata.Enabled {
+		return false
+	}
+	if !cfg.LocalMasterdata.AllowFallback && !cfg.LocalMasterdata.AllowLeaks {
+		return false
+	}
+	return strings.TrimSpace(cfg.LocalMasterdata.Dir) != ""
 }
 
 func shouldEnableLocalSnapshotFallback(cfg Config) bool {

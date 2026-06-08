@@ -197,6 +197,10 @@ func (c *HarukiDrawingClient) GenerateProfile(req *ProfileRequest) ([]byte, erro
 	return c.cachedPost("/api/pjsk/profile", req)
 }
 
+func (c *HarukiDrawingClient) GenerateModularProfile(req *ModularProfileRenderRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/profile/modular", req)
+}
+
 func (c *HarukiDrawingClient) GenerateCustomProfileCard(req *CustomProfileCardRenderRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/profile/custom-profile-card", req)
 }
@@ -311,6 +315,10 @@ func (c *HarukiDrawingClient) GenerateAliasList(req *AliasListRequest) ([]byte, 
 	// Alias-list watermarks include request DT, so we intentionally bypass the
 	// render cache here to avoid serving stale timestamps.
 	return c.post("/api/pjsk/misc/alias-list", req)
+}
+
+func (c *HarukiDrawingClient) GenerateCommandHelp(req *CommandHelpRenderRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/help/render", req)
 }
 
 // =========================== MySekai API ===========================

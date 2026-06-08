@@ -119,10 +119,9 @@ func (r *masterdataResolver) build(region renderregion.Value) masterdataSource {
 }
 
 // NewController creates a mysekai Controller. If SekaiDSN is non-empty the
-// controller queries the sekai database for masterdata. When AllowFallback is
-// true and the DB is unavailable, it falls back to reading JSON files from
-// LocalDir. In production (AllowFallback=false) a DB failure leaves masterdata
-// nil so callers get a clear error.
+// controller queries the sekai database for masterdata. AllowFallback is a
+// legacy/dev escape hatch for reading JSON files from LocalDir; production
+// should keep it disabled so DB gaps are visible instead of hidden by files.
 func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot.Snapshot, defaultRegion renderregion.Value, assetHelper *assets.AssetHelper, mdOpts MasterdataOptions) *Controller {
 	region := renderregion.WithDefault(defaultRegion)
 	resolver := newMasterdataResolver(mdOpts)

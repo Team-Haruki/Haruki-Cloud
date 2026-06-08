@@ -21,6 +21,9 @@ type CommandRequest struct {
 	IsHelp            bool
 	IsVerbose         bool
 	IsPreview         bool
+	CommandPath       string
+	TriggerCommand    string
+	HelpText          string
 	RequesterPlatform string
 	RequesterUserID   string
 	RequesterGroupID  string

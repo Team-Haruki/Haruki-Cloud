@@ -122,6 +122,30 @@ func (sekaiHandlers) MysekaiMapHandle() HarukiSekaiCommandHandler {
 	}, executeMysekai)
 }
 
+func (sekaiHandlers) MysekaiPreviewHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Path: "mysekai/preview",
+			Commands: []string{
+				"/pjsk mysekai preview", "/mysekai-preview", "/mysekai预览", "/烤森预览", "/mspv",
+			},
+		},
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			args := strings.TrimSpace(ctx.GetArgs())
+			params := map[string]any{
+				"check_time": !hasMysekaiForceFlag(args),
+			}
+			if siteIDs := parseMysekaiPreviewSiteIDs(args); len(siteIDs) > 0 {
+				params["site_ids"] = siteIDs
+			}
+			if err := embedSelfQuery(params, ctx); err != nil {
+				return nil, err
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-scene-preview", params), nil
+		},
+	}, executeMysekai)
+}
+
 func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
@@ -412,7 +436,7 @@ func hasMysekaiForceFlag(args string) bool {
 
 func shouldEnforceMysekaiExpiry(mode string) bool {
 	switch mode {
-	case "mysekai-resource", "mysekai-resource-map", "mysekai-map":
+	case "mysekai-resource", "mysekai-resource-map", "mysekai-map", "mysekai-scene-preview":
 		return true
 	default:
 		return false
@@ -421,7 +445,7 @@ func shouldEnforceMysekaiExpiry(mode string) bool {
 
 func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions {
 	switch mode {
-	case "mysekai-map", "mysekai-photo":
+	case "mysekai-map", "mysekai-photo", "mysekai-scene-preview":
 		return mySekaiRenderContextOptions{
 			NeedProfile:          false,
 			PreferMySekaiPayload: true,
@@ -622,6 +646,10 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 
 		replayMessage = append(replayMessage, onebot11.At(rc.PlatformUserID))
 		return replayMessage, nil
+	case "mysekai-scene-preview":
+		q := rendermysekai.ScenePreviewQuery{Region: renderCtx.Region}
+		mergeParams(rc.Cmd.Params, &q)
+		data, err = renderCtx.Controller.RenderScenePreview(rc.Ctx, q)
 	case "mysekai-fixture-list":
 		q := rendermysekai.FixtureListQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)

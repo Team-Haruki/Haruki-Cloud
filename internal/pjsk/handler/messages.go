@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -14,8 +15,9 @@ import (
 const (
 	ErrMsgBindingNotFound = "未找到绑定的游戏账号，请先使用 \"/绑定<id>\" 绑定后再使用此命令\n" +
 		"如果已经绑定，请确保已设置默认账号或绑定的账号在当前服务器可见"
-	ErrMsgToolboxURL            = "工具箱地址：https://haruki.seiunx.com/"
-	ErrMsgPrivateDataSetupGuide = "请前往工具箱先注册账号、绑定自己QQ账号、再绑定游戏账号后上传自己的数据，才能使用此功能"
+	ErrMsgTempBindingUnavailable = "目前运行的HarukiBot服务为临时环境，数据库没有绑定信息，如需使用请重新绑定"
+	ErrMsgToolboxURL             = "工具箱地址：https://haruki.seiunx.com/"
+	ErrMsgPrivateDataSetupGuide  = "请前往工具箱先注册账号、绑定自己QQ账号、再绑定游戏账号后上传自己的数据，才能使用此功能"
 
 	// Data availability errors
 	ErrMsgSuiteDataUnavailable     = "没有找到有效的 suite 数据，" + ErrMsgPrivateDataSetupGuide + "\n" + ErrMsgToolboxURL
@@ -54,8 +56,26 @@ func normalizeBindingLookupError(err error, fallback string) error {
 	}
 }
 
+func useTempBindingNotice() bool {
+	return harukiConfig.Cfg.Profile.IsTemp()
+}
+
+func bindingNotFoundMessage() string {
+	if useTempBindingNotice() {
+		return ErrMsgTempBindingUnavailable
+	}
+	return ErrMsgBindingNotFound
+}
+
+func bindingServiceUnavailableMessage() string {
+	if useTempBindingNotice() {
+		return ErrMsgTempBindingUnavailable
+	}
+	return "绑定服务未就绪，请稍后再试"
+}
+
 func newBindingRequiredReplayError() error {
-	return onebot11.NewReplayError(ErrMsgBindingNotFound)
+	return onebot11.NewReplayError("%s", bindingNotFoundMessage())
 }
 
 func newSuiteDataNotFoundReplayError() error {
@@ -113,6 +133,9 @@ func normalizeToolboxDataFetchError(err error, dataLabel string, binding *accoun
 	dataLabel = normalizeToolboxDataLabel(dataLabel)
 	switch {
 	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound):
+		if useTempBindingNotice() {
+			return newBindingRequiredReplayError()
+		}
 		return onebot11.NewReplayError(
 			"你还没有在工具箱绑定游戏账号，无法获取%s数据，请前往工具箱绑定游戏账号并上传数据后重试\n%s",
 			dataLabel,
@@ -124,6 +147,9 @@ func normalizeToolboxDataFetchError(err error, dataLabel string, binding *accoun
 		}
 		return newSuiteDataNotFoundReplayErrorForBinding(binding)
 	case errors.Is(err, sekaiapi.ErrInvalidPlatformUser):
+		if useTempBindingNotice() {
+			return newBindingRequiredReplayError()
+		}
 		return onebot11.NewReplayError(
 			"当前QQ号未在工具箱完成绑定，或无权访问该%s数据，请前往工具箱绑定当前QQ号后重试\n%s",
 			dataLabel,
@@ -233,10 +259,14 @@ func WrapDomainError(err error) error {
 	case errors.Is(err, accountdata.ErrNoBinding):
 		return newBindingRequiredReplayError()
 	case errors.Is(err, accountdata.ErrBindingServiceUnavailable):
-		return onebot11.NewReplayError("绑定服务未就绪，请稍后再试")
+		return onebot11.NewReplayError("%s", bindingServiceUnavailableMessage())
 	case errors.Is(err, sekaiapi.ErrAccountBindingNotFound),
-		errors.Is(err, sekaiapi.ErrGameDataNotFound),
-		errors.Is(err, sekaiapi.ErrInvalidPlatformUser),
+		errors.Is(err, sekaiapi.ErrInvalidPlatformUser):
+		if useTempBindingNotice() {
+			return newBindingRequiredReplayError()
+		}
+		return normalizeToolboxDataFetchError(err, "suite", nil)
+	case errors.Is(err, sekaiapi.ErrGameDataNotFound),
 		errors.Is(err, sekaiapi.ErrAccountOwnerBanned):
 		return normalizeToolboxDataFetchError(err, "suite", nil)
 	case strings.Contains(message, "当前账号没有可用的 Suite 抓包数据"),

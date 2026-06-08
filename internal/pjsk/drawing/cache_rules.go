@@ -76,6 +76,11 @@ var (
 			Enabled:  true,
 			Infinite: true,
 		},
+		"/api/pjsk/help/render": {
+			Enabled:          true,
+			Infinite:         true,
+			IgnoreFieldNames: renderCacheStringSet("dt", "timezone"),
+		},
 		"/api/pjsk/event/record": {
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("user_info.update_time"),

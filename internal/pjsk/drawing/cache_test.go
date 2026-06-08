@@ -202,6 +202,7 @@ func TestResolveRenderCacheRuleUsesInfiniteTTLForStaticEndpoints(t *testing.T) {
 	for _, endpoint := range []string{
 		"/api/pjsk/card/detail",
 		"/api/pjsk/card/list",
+		"/api/pjsk/help/render",
 		"/api/pjsk/mysekai/fixture-list",
 		"/api/pjsk/mysekai/fixture-detail",
 	} {

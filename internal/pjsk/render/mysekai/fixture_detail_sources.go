@@ -86,7 +86,7 @@ func (c *Controller) loadLocalAssetObject(region renderregion.Value, relPath str
 }
 
 func (c *Controller) localMasterdataDirs(region renderregion.Value) []string {
-	if c == nil || c.resolver == nil {
+	if c == nil || c.resolver == nil || !c.resolver.allowFallback {
 		return nil
 	}
 	base := strings.TrimSpace(c.resolver.localDir)

@@ -236,6 +236,8 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		accountdata.ProfileModeSetTimeZone,
 		accountdata.ProfileModeSetArrestDiff,
 		accountdata.ProfileModeSetChartStyle,
+		accountdata.ProfileModeEnableModular,
+		accountdata.ProfileModeDisableModular,
 		accountdata.ProfileModeBGUpload, accountdata.ProfileModeBGClear:
 		if rc.App.Bindings == nil {
 			return nil, accountdata.ErrBindingServiceUnavailable
@@ -333,7 +335,12 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 		VerticalOverride: p.ProfileVertical,
 	}
 	renderStart := time.Now()
-	data, err := profileCtrl.RenderProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
+	var data []byte
+	if isRequesterModularProfileEnabled(rc, p) {
+		data, err = profileCtrl.RenderModularProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
+	} else {
+		data, err = profileCtrl.RenderProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
+	}
 	if err != nil {
 		return zeroTarget, nil, err
 	}
@@ -356,4 +363,23 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 		"duration_ms", time.Since(messageStart).Milliseconds(),
 	)
 	return target, message, nil
+}
+
+func isRequesterModularProfileEnabled(rc *RequestContext, p userQueryParams) bool {
+	if rc == nil || rc.App == nil || rc.App.Bindings == nil {
+		return false
+	}
+	platform := strings.TrimSpace(p.Platform)
+	platformUserID := strings.TrimSpace(p.PlatformUserID)
+	if platform == "" {
+		platform = rc.Platform
+	}
+	if platformUserID == "" {
+		platformUserID = rc.PlatformUserID
+	}
+	if platform == "" || platformUserID == "" {
+		return false
+	}
+	settings, _, err := rc.App.Bindings.GetUserSettings(rc.Ctx, platform, platformUserID)
+	return err == nil && settings != nil && settings.ModularProfileEnabled
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "github.com/bytedance/sonic"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/onebot11"
@@ -114,6 +115,22 @@ func TestBPMHandleBuildsCommandRequest(t *testing.T) {
 	}
 	if params.Difficulty != "expert" {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestBPMHandleReturnsUpdatedHelp(t *testing.T) {
+	h := sekaiHandlers{}.BPMHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+	if h.GetHelper() != bpmLookupHelp {
+		t.Fatalf("unexpected helper: %q", h.GetHelper())
+	}
+
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/查BPM",
+	})
+	if err == nil || !strings.Contains(err.Error(), "即使只有一个匹配结果也不会直接返回谱面") {
+		t.Fatalf("expected updated BPM help, got %v", err)
 	}
 }
 

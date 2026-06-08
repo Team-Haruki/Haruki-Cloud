@@ -20,7 +20,7 @@ func TestResolveDeckRecommendMasterdataDirPrefersDeckRecommend(t *testing.T) {
 	}
 }
 
-func TestResolveDeckRecommendMasterdataDirFallsBackToLocalMasterdata(t *testing.T) {
+func TestResolveDeckRecommendMasterdataDirDoesNotFallbackToLocalMasterdata(t *testing.T) {
 	original := harukiConfig.Cfg
 	t.Cleanup(func() {
 		harukiConfig.Cfg = original
@@ -29,7 +29,7 @@ func TestResolveDeckRecommendMasterdataDirFallsBackToLocalMasterdata(t *testing.
 	harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir = "/masterdata/jp"
 	harukiConfig.Cfg.PJSKRender.DeckRecommend.MasterdataDir = "   "
 
-	if got := resolveDeckRecommendMasterdataDir(); got != "/masterdata/jp" {
-		t.Fatalf("expected local masterdata fallback, got %q", got)
+	if got := resolveDeckRecommendMasterdataDir(); got != "" {
+		t.Fatalf("expected empty deck masterdata dir without explicit config, got %q", got)
 	}
 }

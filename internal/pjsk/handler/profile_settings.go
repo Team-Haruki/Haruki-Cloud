@@ -340,6 +340,42 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 	}, executeProfile)
 }
 
+func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Commands: []string{
+				"/开启模块个人信息", "/开启模块化个人信息", "/pjsk modular profile on",
+			},
+			Path: "profile/modular/enable",
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeEnableModular, newProfileSettingsParams(ctx)), nil
+		},
+	}, executeProfile)
+}
+
+func (sekaiHandlers) ProfileDisableModularHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Commands: []string{
+				"/关闭模块个人信息", "/关闭模块化个人信息", "/pjsk modular profile off",
+			},
+			Path: "profile/modular/disable",
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDisableModular, newProfileSettingsParams(ctx)), nil
+		},
+	}, executeProfile)
+}
+
 func (sekaiHandlers) ProfileArrestDifficultyHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{

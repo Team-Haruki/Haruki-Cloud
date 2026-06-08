@@ -9,6 +9,9 @@ import (
 )
 
 func resolveRenderProviderMasterdataDir(cfg Config) string {
+	if !shouldEnableLocalMasterdataFallback(cfg) {
+		return ""
+	}
 	if dir := resolveRenderProviderMasterdataDirFromWD(cfg, currentWorkingDir()); dir != "" {
 		return dir
 	}
@@ -48,21 +51,6 @@ func resolveRenderProviderMasterdataDirFromWD(cfg Config, wd string) string {
 		if parent, ok := regionParentDir(dir); ok {
 			addCandidate(parent)
 		}
-	}
-
-	if dir := strings.TrimSpace(cfg.DeckRecommend.MasterdataDir); dir != "" {
-		addCandidate(dir)
-		if parent, ok := regionParentDir(dir); ok {
-			addCandidate(parent)
-		}
-	}
-
-	wd = strings.TrimSpace(wd)
-	if wd != "" {
-		addCandidate(filepath.Join(wd, "deckrec", "masterdata"))
-		addCandidate(filepath.Join(wd, "data", "masterdata"))
-		addCandidate(filepath.Join(wd, "Data", "master", "haruki-sekai-master"))
-		addCandidate(filepath.Join(wd, "Data", "master", "haruki-sekai-master", "master"))
 	}
 
 	if len(rootCandidates) > 0 {

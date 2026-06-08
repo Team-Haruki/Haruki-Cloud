@@ -135,7 +135,7 @@ Haruki-Cloud/
 配置通过 `haruki-cloud.yaml` 加载，顶级结构如下：
 
 ```yaml
-profile: "dev"             # 部署环境: production / beta / dev
+profile: "dev"             # 部署环境: production / beta / temp / dev
                            # 影响 log_level / api_cache_ttl 默认值、recover stack trace 可见性
                            # production 强制关闭 allow_insecure_internal_api
                            # 可通过 HARUKI_PROFILE 环境变量覆盖
@@ -157,10 +157,11 @@ pjsk_render:               # 渲染引擎配置
     base_url: ""           # Drawing API 地址
     timeout: 30
   asset_dirs: {}           # 素材目录
-  local_masterdata: {}     # 本地 Masterdata 路径
+  local_masterdata: {}     # legacy/dev 本地 Masterdata fallback；生产默认关闭
 
 sekai:                     # Sekai Masterdata 数据库
   db_url: "..."
+  remote_sync: {}          # 可选：从远程维护的 PostgreSQL masterdata DB 定期同步到本地库
 
 chunithm:                  # CHUNITHM（两个独立数据库）
   music_db_url: "..."

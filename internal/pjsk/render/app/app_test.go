@@ -16,7 +16,7 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 			}
 		}
 		cfg := Config{
-			LocalMasterdata: LocalMasterdataConfig{Dir: " " + masterdataRoot + " "},
+			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: " " + masterdataRoot + " "},
 			DeckRecommend:   DeckRecommendConfig{MasterdataDir: "/srv/deck-masterdata"},
 		}
 
@@ -25,7 +25,7 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 		}
 	})
 
-	t.Run("falls back to deck masterdata", func(t *testing.T) {
+	t.Run("does not fall back to deck masterdata", func(t *testing.T) {
 		root := t.TempDir()
 		masterdataRoot := filepath.Join(root, "deck-masterdata")
 		for _, region := range []string{"jp", "cn"} {
@@ -34,16 +34,16 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 			}
 		}
 		cfg := Config{
-			LocalMasterdata: LocalMasterdataConfig{Dir: "   "},
+			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: "   "},
 			DeckRecommend:   DeckRecommendConfig{MasterdataDir: " " + masterdataRoot + " "},
 		}
 
-		if got := resolveRenderProviderMasterdataDir(cfg); got != masterdataRoot {
-			t.Fatalf("expected deck masterdata dir fallback, got %q", got)
+		if got := resolveRenderProviderMasterdataDir(cfg); got != "" {
+			t.Fatalf("expected no deck masterdata fallback, got %q", got)
 		}
 	})
 
-	t.Run("prefers region root over broken jp-only config", func(t *testing.T) {
+	t.Run("does not scan working directory for fallback roots", func(t *testing.T) {
 		wd := t.TempDir()
 		deckRoot := filepath.Join(wd, "deckrec", "masterdata")
 		for _, region := range []string{"jp", "cn", "tw", "kr", "en"} {
@@ -53,11 +53,11 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 		}
 
 		cfg := Config{
-			LocalMasterdata: LocalMasterdataConfig{Dir: "/masterdata/jp"},
+			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: "/masterdata/jp"},
 		}
 
-		if got := resolveRenderProviderMasterdataDirFromWD(cfg, wd); got != deckRoot {
-			t.Fatalf("expected deckrec region root fallback, got %q", got)
+		if got := resolveRenderProviderMasterdataDirFromWD(cfg, wd); got != "" {
+			t.Fatalf("expected no working-directory fallback, got %q", got)
 		}
 	})
 
@@ -81,7 +81,7 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 		}
 
 		cfg := Config{
-			LocalMasterdata: LocalMasterdataConfig{Dir: filepath.Join(repoRoot, "jp")},
+			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: filepath.Join(repoRoot, "jp")},
 		}
 
 		if got := resolveRenderProviderMasterdataDirFromWD(cfg, root); got != repoRoot {
@@ -92,6 +92,23 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 	t.Run("returns empty when both are unset", func(t *testing.T) {
 		if got := resolveRenderProviderMasterdataDirFromWD(Config{}, t.TempDir()); got != "" {
 			t.Fatalf("expected empty masterdata dir, got %q", got)
+		}
+	})
+
+	t.Run("returns empty when local fallback is disabled", func(t *testing.T) {
+		root := t.TempDir()
+		masterdataRoot := filepath.Join(root, "render-masterdata")
+		for _, region := range []string{"jp", "cn"} {
+			if err := os.MkdirAll(filepath.Join(masterdataRoot, region), 0o755); err != nil {
+				t.Fatalf("mkdir region dir: %v", err)
+			}
+		}
+		cfg := Config{
+			LocalMasterdata: LocalMasterdataConfig{Dir: masterdataRoot},
+		}
+
+		if got := resolveRenderProviderMasterdataDir(cfg); got != "" {
+			t.Fatalf("expected disabled local masterdata fallback, got %q", got)
 		}
 	})
 }

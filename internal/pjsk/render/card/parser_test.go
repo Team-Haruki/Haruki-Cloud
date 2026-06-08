@@ -189,6 +189,12 @@ func TestParserSupportsLunabotCharacterAliases(t *testing.T) {
 		{query: "青柳冬弥-1", characterID: 12},
 		{query: "凤笑梦-1", characterID: 14},
 		{query: "草薙宁宁-1", characterID: 15},
+		{query: "葱-1", characterID: 21},
+		{query: "橘-1", characterID: 22},
+		{query: "蕉-1", characterID: 23},
+		{query: "鱼-1", characterID: 24},
+		{query: "酒-1", characterID: 25},
+		{query: "冰-1", characterID: 26},
 	}
 
 	for _, tt := range tests {

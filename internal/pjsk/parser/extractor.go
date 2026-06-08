@@ -197,7 +197,7 @@ func (e *Extractor) ExtractPreview(text string) ExtractResult[bool] {
 	return ExtractResult[bool]{Value: false, Remaining: text, Found: false}
 }
 
-var reHelp = regexp.MustCompile(`(?i)(^|\s+)(-h|--help|帮助)(\s+|$)`)
+var reHelp = regexp.MustCompile(`(?i)(^|\s+)(-h|--help|help|帮助)(\s+|$)`)
 
 func (e *Extractor) ExtractHelp(text string) ExtractResult[bool] {
 	if matches := reHelp.FindStringSubmatch(text); len(matches) > 0 {

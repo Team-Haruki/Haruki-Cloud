@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -90,6 +91,35 @@ func TestNormalizeToolboxDataFetchError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			err := normalizeToolboxDataFetchError(tc.input, tc.dataLabel, binding)
 			assertReplayErrorText(t, err, tc.wantErr)
+		})
+	}
+}
+
+func TestTempProfileUsesTemporaryBindingNotice(t *testing.T) {
+	prev := harukiConfig.Cfg
+	harukiConfig.Cfg = harukiConfig.Config{Profile: harukiConfig.ProfileTemp}
+	t.Cleanup(func() { harukiConfig.Cfg = prev })
+
+	testCases := []struct {
+		name string
+		err  error
+	}{
+		{name: "local binding missing", err: WrapDomainError(accountdata.ErrNoBinding)},
+		{name: "binding service unavailable", err: WrapDomainError(accountdata.ErrBindingServiceUnavailable)},
+		{name: "toolbox account binding missing", err: normalizeToolboxDataFetchError(sekaiapi.ErrAccountBindingNotFound, "suite", nil)},
+		{
+			name: "toolbox invalid platform detail",
+			err: normalizeToolboxDataFetchError(
+				&sekaiapi.ToolboxAPIError{StatusCode: 403, Message: "forbidden: invalid platform or platform_user_id for this user"},
+				"mysekai",
+				nil,
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertReplayErrorText(t, tc.err, ErrMsgTempBindingUnavailable)
 		})
 	}
 }

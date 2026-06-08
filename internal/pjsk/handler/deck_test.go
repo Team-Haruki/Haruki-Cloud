@@ -152,6 +152,34 @@ func TestEventDeckHandleParsesMixedFixedCharactersAndCards(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesVirtualSingerSingleRuneAliases(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/组卡",
+		ArgText:    "180 冰 #葱 #橘 #蕉 #鱼 #酒",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.ForcedLeaderCharacterID == nil || *params.ForcedLeaderCharacterID != 26 {
+		t.Fatalf("unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+	}
+	if !reflect.DeepEqual(params.FixedCharacters, []int{21, 22, 23, 24, 25}) {
+		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
+	}
+	if len(params.FixedCharacterQueries) != 0 {
+		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+	}
+}
+
 func TestEventDeckHandleParsesFinalChapterForcedLeader(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&PjskHandlerContext{

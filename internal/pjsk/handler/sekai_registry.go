@@ -154,14 +154,29 @@ func (skh *HarukiSekaiCommandHandler) Handle(ctx Context) (*CommandRequest, erro
 		uidArg:             uidArg,
 		flags:              flags,
 	}
+	if flags["is_help"] {
+		resolved := makeCommandRequest(skCtx, parser.ModuleHelp, "help")
+		skh.attachCommandMetadata(resolved, originalTriggerCmd)
+		return resolved, nil
+	}
 	resolved, err := skh.handleFunc(skCtx)
 	if err != nil || resolved == nil {
 		return resolved, err
 	}
+	skh.attachCommandMetadata(resolved, originalTriggerCmd)
 	if resolved.executor == nil {
 		resolved.executor = skh.executor
 	}
 	return resolved, nil
+}
+
+func (skh *HarukiSekaiCommandHandler) attachCommandMetadata(resolved *CommandRequest, trigger string) {
+	if resolved == nil {
+		return
+	}
+	resolved.CommandPath = strings.TrimSpace(skh.Path)
+	resolved.TriggerCommand = strings.TrimSpace(trigger)
+	resolved.HelpText = strings.TrimSpace(skh.Helper)
 }
 
 func (skh *HarukiSekaiCommandHandler) shouldParseUIDArg() bool {

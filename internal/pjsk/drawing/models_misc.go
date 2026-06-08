@@ -61,6 +61,12 @@ type AliasListRequest struct {
 	Aliases                 []string `json:"aliases"`
 }
 
+type CommandHelpRenderRequest struct {
+	Path     string `json:"path"`
+	Title    string `json:"title"`
+	Markdown string `json:"markdown"`
+}
+
 // =========================== Stamp Models ===========================
 
 type StampData struct {

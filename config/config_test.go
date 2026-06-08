@@ -19,6 +19,8 @@ func TestParseProfile(t *testing.T) {
 		{"beta", ProfileBeta, false},
 		{"test", ProfileBeta, false},
 		{"staging", ProfileBeta, false},
+		{"temp", ProfileTemp, false},
+		{"temporary", ProfileTemp, false},
 		{"dev", ProfileDev, false},
 		{"development", ProfileDev, false},
 		{"", ProfileDev, false},
@@ -76,6 +78,18 @@ func TestApplyProfileDefaultsBeta(t *testing.T) {
 	}
 }
 
+func TestApplyProfileDefaultsTemp(t *testing.T) {
+	cfg := &Config{Profile: ProfileTemp}
+	ApplyProfileDefaults(cfg)
+
+	if cfg.Backend.LogLevel != "INFO" {
+		t.Errorf("temp log_level = %q, want INFO", cfg.Backend.LogLevel)
+	}
+	if cfg.Backend.APICacheTTL != 60*time.Second {
+		t.Errorf("temp api_cache_ttl = %v, want 60s", cfg.Backend.APICacheTTL)
+	}
+}
+
 func TestApplyProfileDefaultsDoesNotOverrideExplicit(t *testing.T) {
 	cfg := &Config{
 		Profile: ProfileProduction,
@@ -123,6 +137,8 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", "/data/haruki/cache/sk_forecast_cache.json")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", "http://127.0.0.1:48080")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_REFRESH_INTERVAL", "5m")
+	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ENABLED", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_FALLBACK", "true")
 	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_REFRESH_INTERVAL", "6m")
 	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", "true")
 
@@ -141,6 +157,12 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	if cfg.PJSKRender.LocalMasterdata.RefreshInterval != 6*time.Minute {
 		t.Fatalf("unexpected local masterdata refresh interval: %v", cfg.PJSKRender.LocalMasterdata.RefreshInterval)
 	}
+	if !cfg.PJSKRender.LocalMasterdata.Enabled {
+		t.Fatalf("expected local masterdata enabled override to be true")
+	}
+	if !cfg.PJSKRender.LocalMasterdata.AllowFallback {
+		t.Fatalf("expected local masterdata allow_fallback override to be true")
+	}
 	if cfg.PJSKRender.MusicMeta.RefreshInterval != 45*time.Minute {
 		t.Fatalf("unexpected music meta refresh interval: %v", cfg.PJSKRender.MusicMeta.RefreshInterval)
 	}
@@ -155,6 +177,50 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	}
 	if !cfg.PJSKRender.LocalMasterdata.AllowLeaks {
 		t.Fatalf("expected local masterdata allow_leaks override to be true")
+	}
+}
+
+func TestApplyEnvOverridesSekaiRemoteSync(t *testing.T) {
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_ENABLED", "true")
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_TYPE", "postgres")
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_URL", "host=remote port=5432 user=sekai dbname=haruki_sekai sslmode=disable")
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_INTERVAL", "15m")
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_TIMEOUT", "2m")
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_INITIAL", "true")
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_FAIL_STARTUP", "true")
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_PG_DUMP_PATH", "/usr/bin/pg_dump")
+	t.Setenv("HARUKI_SEKAI_DB_SYNC_PG_RESTORE_PATH", "/usr/bin/pg_restore")
+
+	cfg := &Config{}
+	ApplyEnvOverrides(cfg)
+
+	sync := cfg.Sekai.RemoteSync
+	if !sync.Enabled {
+		t.Fatalf("expected sekai remote sync to be enabled")
+	}
+	if sync.SourceDBType != "postgres" {
+		t.Fatalf("unexpected source db type: %q", sync.SourceDBType)
+	}
+	if sync.SourceDBURL == "" {
+		t.Fatalf("expected source db url override")
+	}
+	if sync.Interval != 15*time.Minute {
+		t.Fatalf("unexpected sync interval: %v", sync.Interval)
+	}
+	if sync.Timeout != 2*time.Minute {
+		t.Fatalf("unexpected sync timeout: %v", sync.Timeout)
+	}
+	if !sync.Initial {
+		t.Fatalf("expected initial sync override to be true")
+	}
+	if !sync.FailStartup {
+		t.Fatalf("expected fail_startup override to be true")
+	}
+	if sync.PgDumpPath != "/usr/bin/pg_dump" {
+		t.Fatalf("unexpected pg_dump path: %q", sync.PgDumpPath)
+	}
+	if sync.PgRestorePath != "/usr/bin/pg_restore" {
+		t.Fatalf("unexpected pg_restore path: %q", sync.PgRestorePath)
 	}
 }
 

@@ -84,6 +84,49 @@ func parseMysekaiMapIDs(args string) ([]int, error) {
 	return result, nil
 }
 
+func parseMysekaiPreviewSiteIDs(args string) []int {
+	lower := strings.ToLower(strings.TrimSpace(args))
+	if lower == "" {
+		return nil
+	}
+	normalized := strings.NewReplacer(
+		"１", "1",
+		"２", "2",
+		"３", "3",
+		"ｆ", "f",
+		"Ｆ", "f",
+	).Replace(lower)
+	if strings.Contains(normalized, "all") || strings.Contains(normalized, "全部") {
+		return []int{2, 3, 4}
+	}
+
+	type previewSiteToken struct {
+		siteID int
+		keys   []string
+	}
+	rules := []previewSiteToken{
+		{siteID: 1, keys: []string{"outdoor", "outside", "庭院", "户外", "室外"}},
+		{siteID: 2, keys: []string{"1f", "1楼", "一楼"}},
+		{siteID: 3, keys: []string{"2f", "2楼", "二楼"}},
+		{siteID: 4, keys: []string{"3f", "3楼", "三楼"}},
+	}
+	seen := make(map[int]struct{}, len(rules))
+	var out []int
+	for _, rule := range rules {
+		for _, key := range rule.keys {
+			if !strings.Contains(normalized, key) {
+				continue
+			}
+			if _, ok := seen[rule.siteID]; !ok {
+				seen[rule.siteID] = struct{}{}
+				out = append(out, rule.siteID)
+			}
+			break
+		}
+	}
+	return out
+}
+
 func isASCIIInt(s string) bool {
 	if s == "" {
 		return false

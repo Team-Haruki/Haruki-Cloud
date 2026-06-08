@@ -30,6 +30,7 @@ func Run(ctx context.Context) {
 	usersClient := initUsers(ctx, mainLogger)
 	chunithmMainClient, chunithmMusicClient := initChunithmIfEnabled(ctx, mainLogger, app, redisClient)
 	pjskClient := initPJSKIfEnabled(ctx, mainLogger, app, redisClient)
+	startSekaiDBRemoteSync(ctx, mainLogger)
 	sekaiClient := initSekaiIfEnabled(ctx, mainLogger)
 	renderRuntime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)

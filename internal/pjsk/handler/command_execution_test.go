@@ -914,6 +914,83 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 	}
 }
 
+func TestExecuteMusicBPMUsesListImageForSingleMatch(t *testing.T) {
+	root := t.TempDir()
+	chartPath := filepath.Join(root, "music", "music_score", "0001_01", "expert.txt")
+	if err := os.MkdirAll(filepath.Dir(chartPath), 0o755); err != nil {
+		t.Fatalf("mkdir chart: %v", err)
+	}
+	if err := os.WriteFile(chartPath, []byte(strings.Join([]string{
+		"#BPM01:200",
+		"#00008:0100",
+	}, "\n")), 0o644); err != nil {
+		t.Fatalf("write chart: %v", err)
+	}
+
+	briefListCalls := 0
+	titles := make([]string, 0, 1)
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/pjsk/music/brief-list":
+			briefListCalls++
+			var req drawing.MusicBriefListRequest
+			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode music-brief-list request: %v", err)
+			}
+			if req.Title == nil {
+				t.Fatalf("expected list title, got nil")
+			}
+			titles = append(titles, *req.Title)
+			if len(req.MusicList) != 1 || req.MusicList[0].ID != 1 {
+				t.Fatalf("unexpected bpm song list: %+v", req.MusicList)
+			}
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music:      music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper(root, nil), nil, nil),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	params, err := json.Marshal(map[string]any{"bpm": 200})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMusic,
+		Mode:   "music-bpm",
+		Region: "jp",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic bpm: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected bpm message: %+v", message)
+	}
+	if briefListCalls != 1 {
+		t.Fatalf("expected 1 music-brief-list render call, got %d", briefListCalls)
+	}
+	if len(titles) != 1 || titles[0] != "BPM 200 匹配结果" {
+		t.Fatalf("unexpected title list: %+v", titles)
+	}
+}
+
 func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 	briefListCalls := 0
 	titles := make([]string, 0, 1)
@@ -1662,6 +1739,157 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 	if captured.Profile.Nickname != "API User" {
 		t.Fatalf("expected rendered profile to use API data, got %+v", captured.Profile)
 	}
+}
+
+func TestExecuteProfileUsesModularRendererWhenEnabled(t *testing.T) {
+	ctx := context.Background()
+	const cnUID = "7488328100774779663"
+	service := newHandlerTestBindingServiceWithValidator(t, handlerMultiRegionBindingValidator{
+		profiles: map[string]map[string]string{
+			"cn": {cnUID: "CN Tester"},
+		},
+	})
+	if _, err := service.Bind(ctx, "qq", "42", cnUID); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	if _, err := accountdata.ExecuteProfileSettingsCommand(ctx, service, accountdata.ProfileModeEnableModular, accountdata.ProfileSettingsCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Server:         "cn",
+	}); err != nil {
+		t.Fatalf("enable modular profile: %v", err)
+	}
+
+	apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/cn/"+cnUID+"/profile" {
+			http.NotFound(w, r)
+			return
+		}
+		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			User: sekaiapi.AnotherUser{
+				UserID: 7488328100774779663,
+				Name:   "CN Tester",
+				Rank:   321,
+			},
+			UserProfile: sekaiapi.UserProfile{
+				Word:      "modular profile",
+				TwitterID: "tester",
+			},
+			UserDeck: sekaiapi.UserDeck{
+				DeckID:  1,
+				Leader:  1001,
+				Member1: 1001,
+				Member2: 1002,
+				Member3: 1003,
+				Member4: 1004,
+				Member5: 1005,
+			},
+			UserCards: []sekaiapi.AnotherUserCard{
+				{CardID: 1001, Level: 60, MasterRank: 5, DefaultImage: "special_training", SpecialTrainingStatus: "done"},
+				{CardID: 1002, Level: 60, MasterRank: 4, DefaultImage: "normal"},
+				{CardID: 1003, Level: 60, MasterRank: 3, DefaultImage: "normal"},
+				{CardID: 1004, Level: 60, MasterRank: 2, DefaultImage: "normal"},
+				{CardID: 1005, Level: 60, MasterRank: 1, DefaultImage: "normal"},
+			},
+			UserCharacters: []sekaiapi.AnotherUserCharacter{
+				{CharacterID: 1, CharacterRank: 72},
+				{CharacterID: 2, CharacterRank: 65},
+			},
+			UserMusicDifficultyClearCount: []sekaiapi.AnotherUserMusicDifficultyClearCount{
+				{MusicDifficultyType: sekaiapi.MusicDifficultyExpert, LiveClear: 300, FullCombo: 250, AllPerfect: 120},
+				{MusicDifficultyType: sekaiapi.MusicDifficultyMaster, LiveClear: 260, FullCombo: 180, AllPerfect: 80},
+			},
+			TotalPower: sekaiapi.AnotherTotalPower{TotalPower: 345678},
+		})
+	}))
+	defer apiServer.Close()
+
+	oldBaseURL := config.Cfg.SekaiAPI.BaseURL
+	oldToken := config.Cfg.SekaiAPI.Token
+	config.Cfg.SekaiAPI.BaseURL = apiServer.URL
+	config.Cfg.SekaiAPI.Token = "test-token"
+	defer func() {
+		config.Cfg.SekaiAPI.BaseURL = oldBaseURL
+		config.Cfg.SekaiAPI.Token = oldToken
+	}()
+
+	var captured drawing.ModularProfileRenderRequest
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/profile/modular" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		defer r.Body.Close()
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+			t.Fatalf("decode modular profile request: %v", err)
+		}
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write([]byte("png"))
+	}))
+	defer drawingServer.Close()
+
+	cards := map[int]*masterdata.Card{}
+	for id := 1001; id <= 1005; id++ {
+		cards[id] = &masterdata.Card{
+			ID:              id,
+			CharacterID:     id - 1000,
+			CardRarityType:  "rarity_4",
+			Attr:            "cute",
+			AssetBundleName: fmt.Sprintf("card_%d", id),
+		}
+	}
+	profileController := renderprofile.NewController(runtimeProfileDataSourceStub{
+		region: renderregion.CN,
+		cards:  cards,
+	}, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil)
+
+	params, err := json.Marshal(UserQueryParams{
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+	message, err := executeProfile(NewRequestContext(ctx, &CommandRequest{
+		Module:            parser.ModuleProfile,
+		Mode:              accountdata.ProfileModeRender,
+		Region:            "cn",
+		Params:            params,
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Bindings:   service,
+		Profiles:   profileController,
+		SekaiAPI:   sekaiapi.NewSekaiAPIClient(&config.Cfg.SekaiAPI),
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}))
+	if err != nil {
+		t.Fatalf("executeProfile modular: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != "image" {
+		t.Fatalf("unexpected message: %+v", message)
+	}
+	if captured.Kind != drawing.ModularProfileRequestKind || captured.RenderVersion != drawing.ModularProfileRenderVersion {
+		t.Fatalf("unexpected modular request header: %+v", captured)
+	}
+	if captured.Profile.ID != cnUID || captured.Profile.Nickname != "CN Tester" || captured.Region != "cn" {
+		t.Fatalf("unexpected profile metadata: %+v", captured)
+	}
+	if captured.Preset.Grid.Columns != 4 || len(captured.Preset.Widgets) < 6 {
+		t.Fatalf("unexpected preset: %+v", captured.Preset)
+	}
+	if !hasModularWidget(captured.Preset.Widgets, "deck_cards") || !hasModularWidget(captured.Preset.Widgets, "fc_ap_clear") {
+		t.Fatalf("expected deck and clear widgets, got %+v", captured.Preset.Widgets)
+	}
+}
+
+func hasModularWidget(widgets []drawing.ModularProfileWidget, widgetType string) bool {
+	for _, widget := range widgets {
+		if widget.Type == widgetType {
+			return true
+		}
+	}
+	return false
 }
 
 func TestExecuteMusicProgressRequiresSuiteData(t *testing.T) {

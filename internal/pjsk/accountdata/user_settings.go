@@ -95,3 +95,29 @@ func IncrNoncompliantBGCount(ctx context.Context, db *pjskdb.Client, harukiUserI
 	}
 	return newCount, nil
 }
+
+func (s *BindingService) GetUserSettings(ctx context.Context, platform, platformUserID string) (*pjskschema.UserSettings, int, error) {
+	if s == nil || s.pjskDB == nil || s.identity == nil {
+		return nil, 0, ErrBindingServiceUnavailable
+	}
+	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
+	if err != nil {
+		return nil, 0, err
+	}
+	settings, err := GetUserSettings(ctx, s.pjskDB, harukiUserID)
+	if err != nil {
+		return nil, harukiUserID, err
+	}
+	return settings, harukiUserID, nil
+}
+
+func (s *BindingService) UpsertUserSettings(ctx context.Context, platform, platformUserID string, settings *pjskschema.UserSettings) (int, error) {
+	if s == nil || s.pjskDB == nil || s.identity == nil {
+		return 0, ErrBindingServiceUnavailable
+	}
+	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
+	if err != nil {
+		return 0, err
+	}
+	return harukiUserID, UpsertUserSettings(ctx, s.pjskDB, harukiUserID, settings)
+}

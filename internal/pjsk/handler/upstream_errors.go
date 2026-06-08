@@ -169,10 +169,16 @@ func translateToolboxAPIDetail(dataLabel string, message string) (string, bool) 
 	case lower == "":
 		return "", false
 	case strings.Contains(lower, "invalid platform or platform_user_id"):
+		if useTempBindingNotice() {
+			return ErrMsgTempBindingUnavailable, true
+		}
 		return fmt.Sprintf("当前QQ号未在工具箱完成绑定，或无权访问该%s数据，请前往工具箱绑定当前QQ号后重试\n%s", dataLabel, ErrMsgToolboxURL), true
 	case strings.Contains(lower, "account owner is banned"):
 		return fmt.Sprintf("工具箱账号已被封禁，无法获取%s数据", dataLabel), true
 	case strings.Contains(lower, "account binding not found"):
+		if useTempBindingNotice() {
+			return ErrMsgTempBindingUnavailable, true
+		}
 		return fmt.Sprintf("你还没有在工具箱绑定游戏账号，无法获取%s数据，请前往工具箱绑定游戏账号并上传数据后重试\n%s", dataLabel, ErrMsgToolboxURL), true
 	case strings.Contains(lower, "game data not found"):
 		return fmt.Sprintf("工具箱未找到当前%s数据，请确认已上传对应数据后重试", dataLabel), true

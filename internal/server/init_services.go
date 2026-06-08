@@ -160,11 +160,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 }
 
 func resolveDeckRecommendMasterdataDir() string {
-	dir := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DeckRecommend.MasterdataDir)
-	if dir != "" {
-		return dir
-	}
-	return strings.TrimSpace(harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir)
+	return strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DeckRecommend.MasterdataDir)
 }
 
 func resolveSKForecastCachePath() string {

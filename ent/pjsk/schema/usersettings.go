@@ -27,6 +27,10 @@ type UserSettings struct {
 	// ChartStyle is the user's preferred chart preview style name.
 	// Supported values: "black", "white". Empty = black.
 	ChartStyle string `json:"chart_style,omitempty"`
+
+	// ModularProfileEnabled switches /profile rendering to the widget-grid
+	// profile layout. Empty / false keeps the legacy profile renderer.
+	ModularProfileEnabled bool `json:"modular_profile_enabled,omitempty"`
 }
 
 type UserPreference struct {

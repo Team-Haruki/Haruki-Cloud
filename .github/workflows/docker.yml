@@ -65,6 +65,16 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=sha-
 
+      - name: Resolve build version
+        id: build-version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and optionally push image
         uses: docker/build-push-action@v7
         with:
@@ -73,5 +83,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.build-version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

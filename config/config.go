@@ -19,6 +19,7 @@ type Profile string
 const (
 	ProfileProduction Profile = "production"
 	ProfileBeta       Profile = "beta"
+	ProfileTemp       Profile = "temp"
 	ProfileDev        Profile = "dev"
 )
 
@@ -38,15 +39,18 @@ func ParseProfile(raw string) (Profile, error) {
 		return ProfileProduction, nil
 	case "beta", "test", "staging":
 		return ProfileBeta, nil
+	case "temp", "temporary":
+		return ProfileTemp, nil
 	case "dev", "development", "":
 		return ProfileDev, nil
 	default:
-		return "", fmt.Errorf("unknown profile %q (must be production, beta, or dev)", raw)
+		return "", fmt.Errorf("unknown profile %q (must be production, beta, temp, or dev)", raw)
 	}
 }
 
 func (p Profile) IsProduction() bool { return p == ProfileProduction }
 func (p Profile) IsBeta() bool       { return p == ProfileBeta }
+func (p Profile) IsTemp() bool       { return p == ProfileTemp }
 func (p Profile) IsDev() bool        { return p == ProfileDev }
 
 // envStr overrides dst with the value of the named env var if set and non-empty.
@@ -119,6 +123,15 @@ func ApplyEnvOverrides(cfg *Config) {
 	envBool("HARUKI_SEKAI_ENABLED", &cfg.Sekai.Enabled)
 	envStr("HARUKI_SEKAI_DB_TYPE", &cfg.Sekai.DBType)
 	envStr("HARUKI_SEKAI_DB_URL", &cfg.Sekai.DBURL)
+	envBool("HARUKI_SEKAI_DB_SYNC_ENABLED", &cfg.Sekai.RemoteSync.Enabled)
+	envStr("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_TYPE", &cfg.Sekai.RemoteSync.SourceDBType)
+	envStr("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_URL", &cfg.Sekai.RemoteSync.SourceDBURL)
+	envDuration("HARUKI_SEKAI_DB_SYNC_INTERVAL", &cfg.Sekai.RemoteSync.Interval)
+	envDuration("HARUKI_SEKAI_DB_SYNC_TIMEOUT", &cfg.Sekai.RemoteSync.Timeout)
+	envBool("HARUKI_SEKAI_DB_SYNC_INITIAL", &cfg.Sekai.RemoteSync.Initial)
+	envBool("HARUKI_SEKAI_DB_SYNC_FAIL_STARTUP", &cfg.Sekai.RemoteSync.FailStartup)
+	envStr("HARUKI_SEKAI_DB_SYNC_PG_DUMP_PATH", &cfg.Sekai.RemoteSync.PgDumpPath)
+	envStr("HARUKI_SEKAI_DB_SYNC_PG_RESTORE_PATH", &cfg.Sekai.RemoteSync.PgRestorePath)
 
 	// Chunithm
 	envBool("HARUKI_CHUNITHM_ENABLED", &cfg.Chunithm.Enabled)
@@ -192,6 +205,8 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", &cfg.PJSKRender.DeckRecommend.MasterdataDir)
 	envDuration("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.DeckRecommend.MasterdataRefreshInterval)
+	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ENABLED", &cfg.PJSKRender.LocalMasterdata.Enabled)
+	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_FALLBACK", &cfg.PJSKRender.LocalMasterdata.AllowFallback)
 	envDuration("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.LocalMasterdata.RefreshInterval)
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", &cfg.PJSKRender.LocalMasterdata.AllowLeaks)
 }
@@ -232,9 +247,22 @@ type PJSKConfig struct {
 }
 
 type SekaiConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	DBType  string `yaml:"db_type"`
-	DBURL   string `yaml:"db_url"`
+	Enabled    bool                  `yaml:"enabled"`
+	DBType     string                `yaml:"db_type"`
+	DBURL      string                `yaml:"db_url"`
+	RemoteSync SekaiRemoteSyncConfig `yaml:"remote_sync"`
+}
+
+type SekaiRemoteSyncConfig struct {
+	Enabled       bool          `yaml:"enabled"`
+	SourceDBType  string        `yaml:"source_db_type"`
+	SourceDBURL   string        `yaml:"source_db_url"`
+	Interval      time.Duration `yaml:"interval"`
+	Timeout       time.Duration `yaml:"timeout"`
+	Initial       bool          `yaml:"initial"`
+	FailStartup   bool          `yaml:"fail_startup"`
+	PgDumpPath    string        `yaml:"pg_dump_path"`
+	PgRestorePath string        `yaml:"pg_restore_path"`
 }
 
 type AssetDirsConfig struct {
@@ -245,8 +273,8 @@ type AssetDirsConfig struct {
 
 type LocalMasterdataConfig struct {
 	Enabled         bool          `yaml:"enabled"`
-	AllowFallback   bool          `yaml:"allow_fallback"` // when false, DB failure is fatal (production); when true, fallback to local files (dev/test)
-	AllowLeaks      bool          `yaml:"allow_leaks"`    // when true, unopened event/worldbloom deck queries may fall back to local masterdata
+	AllowFallback   bool          `yaml:"allow_fallback"` // legacy/dev only; when true, DB gaps may fall back to local files
+	AllowLeaks      bool          `yaml:"allow_leaks"`    // legacy/dev only; when true, unopened event/worldbloom deck queries may fall back to local masterdata
 	Dir             string        `yaml:"dir"`
 	RefreshInterval time.Duration `yaml:"refresh_interval"`
 }
@@ -411,7 +439,7 @@ func ApplyProfileDefaults(cfg *Config) {
 		switch {
 		case p.IsProduction():
 			cfg.Backend.LogLevel = LogLevelWarn
-		case p.IsBeta():
+		case p.IsBeta(), p.IsTemp():
 			cfg.Backend.LogLevel = LogLevelInfo
 		default:
 			cfg.Backend.LogLevel = LogLevelDebug
@@ -423,7 +451,7 @@ func ApplyProfileDefaults(cfg *Config) {
 		switch {
 		case p.IsProduction():
 			cfg.Backend.APICacheTTL = 120 * time.Second
-		case p.IsBeta():
+		case p.IsBeta(), p.IsTemp():
 			cfg.Backend.APICacheTTL = 60 * time.Second
 		default:
 			cfg.Backend.APICacheTTL = 10 * time.Second

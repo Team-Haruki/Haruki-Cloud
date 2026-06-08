@@ -232,6 +232,8 @@ func syncExplicitRegionToProfileParams(resolved *commandhandler.CommandRequest, 
 		accountdata.ProfileModeShowMySekai,
 		accountdata.ProfileModeVerify,
 		accountdata.ProfileModeVerifyList,
+		accountdata.ProfileModeEnableModular,
+		accountdata.ProfileModeDisableModular,
 		accountdata.ProfileModeBGUpload,
 		accountdata.ProfileModeBGClear,
 		accountdata.ProfileModeBGAdjust:

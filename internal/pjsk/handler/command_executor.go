@@ -24,6 +24,13 @@ func bindRequestExecutor(handler HarukiSekaiCommandHandler, fn func(*RequestCont
 }
 
 func ExecuteCommandRequest(ctx context.Context, resolved *CommandRequest, app *renderapp.App) (message onebot11.Message, err error) {
+	if resolved == nil {
+		return nil, fmt.Errorf("bridge: nil resolved command")
+	}
+	if resolved.IsHelp {
+		return commandHelpMessage(ctx, resolved, app)
+	}
+
 	tPrepare := time.Now()
 	runtime, shortCircuit, err := PrepareExecutionRuntime(ctx, resolved, app)
 	recordCommandStage(ctx, "runtime_prepare", time.Since(tPrepare))

@@ -127,6 +127,14 @@ func TestListBotRoutes(t *testing.T) {
 	if !contains(mysekaiOverviewRoute.Commands, "/msam") {
 		t.Fatalf("expected mysekai/overview commands to include /msam, got %v", mysekaiOverviewRoute.Commands)
 	}
+
+	mysekaiPreviewRoute, ok := byPath["mysekai/preview"]
+	if !ok {
+		t.Fatal("expected mysekai/preview route to exist")
+	}
+	if !contains(mysekaiPreviewRoute.Commands, "/烤森预览") {
+		t.Fatalf("expected mysekai/preview commands to include /烤森预览, got %v", mysekaiPreviewRoute.Commands)
+	}
 }
 
 func contains(items []string, target string) bool {

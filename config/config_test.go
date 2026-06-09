@@ -135,6 +135,8 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", "/srv/masterdata")
 	t.Setenv("HARUKI_PJSK_RENDER_SK_FORECAST_LOCAL_BASE_URL", "http://100.109.13.111:18746")
 	t.Setenv("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", "/data/haruki/cache/sk_forecast_cache.json")
+	t.Setenv("HARUKI_PJSK_RENDER_MYSEKAI_HOUSING_COMPETITION_CACHE_PATH", "/data/haruki/cache/housing_stats.json")
+	t.Setenv("HARUKI_PJSK_RENDER_MYSEKAI_HOUSING_COMPETITION_REFRESH_INTERVAL", "10s")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", "http://127.0.0.1:48080")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_REFRESH_INTERVAL", "5m")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_DISABLE", "true")
@@ -182,6 +184,12 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	}
 	if cfg.PJSKRender.SKForecast.CachePath != "/data/haruki/cache/sk_forecast_cache.json" {
 		t.Fatalf("unexpected sk forecast cache path override: %q", cfg.PJSKRender.SKForecast.CachePath)
+	}
+	if cfg.PJSKRender.MySekaiHousingCompetition.CachePath != "/data/haruki/cache/housing_stats.json" {
+		t.Fatalf("unexpected mysekai housing competition cache path override: %q", cfg.PJSKRender.MySekaiHousingCompetition.CachePath)
+	}
+	if cfg.PJSKRender.MySekaiHousingCompetition.RefreshInterval != 10*time.Second {
+		t.Fatalf("unexpected mysekai housing competition refresh interval: %v", cfg.PJSKRender.MySekaiHousingCompetition.RefreshInterval)
 	}
 	if !cfg.PJSKRender.LocalMasterdata.AllowLeaks {
 		t.Fatalf("expected local masterdata allow_leaks override to be true")

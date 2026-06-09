@@ -147,6 +147,9 @@ pjsk_render:
   sk_forecast:
     local_base_url: "http://100.109.13.111:18746"
     cache_path: "/data/haruki/cache/drawing/sk_forecast_cache.json"
+  mysekai_housing_competition:
+    cache_path: "/data/haruki/cache/drawing/mysekai_housing_competition_stats.json"
+    refresh_interval: "10s"
   user_snapshot:
     provider: "local_file"    # future: "internal_cloud"
     allow_fallback: true      # set false in production (Toolbox is sole source); true for dev/test

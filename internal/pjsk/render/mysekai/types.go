@@ -13,14 +13,15 @@ import (
 // ── Controller ──────────────────────────────────────────────────────────────
 
 type Controller struct {
-	drawing        *drawing.HarukiDrawingClient
-	snapshot       snapshot.Snapshot
-	rawMySekaiJSON []byte
-	masterdata     masterdataSource
-	resolver       *masterdataResolver
-	defaultRegion  renderregion.Value
-	nicknames      map[string]int
-	assets         *assets.AssetHelper
+	drawing                 *drawing.HarukiDrawingClient
+	snapshot                snapshot.Snapshot
+	rawMySekaiJSON          []byte
+	masterdata              masterdataSource
+	resolver                *masterdataResolver
+	defaultRegion           renderregion.Value
+	nicknames               map[string]int
+	assets                  *assets.AssetHelper
+	housingCompetitionStats *housingCompetitionStatsCache
 }
 
 type masterdataResolver struct {
@@ -44,9 +45,11 @@ type mysekaiMapSiteConfig struct {
 }
 
 type MasterdataOptions struct {
-	SekaiDSN      string
-	LocalDir      string
-	AllowFallback bool
+	SekaiDSN                          string
+	LocalDir                          string
+	AllowFallback                     bool
+	HousingCompetitionStatsCachePath  string
+	HousingCompetitionRefreshInterval time.Duration
 }
 
 type SnapshotStatus struct {

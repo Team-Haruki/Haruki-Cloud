@@ -127,6 +127,11 @@ type botTrackerMissingUserSource struct {
 	botTrackerSource
 }
 
+type botTrackerStaleSelfSource struct {
+	botTrackerSource
+	healthy bool
+}
+
 func (botTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
 	score := 3000000 + rank
 	return &sekaiapi.LatestRankingResponse{
@@ -156,6 +161,43 @@ func (botTrackerSource) GetLatestRankingByUser(server string, eventID int, userI
 			UserID: "10002",
 			Name:   "BotTrackerUIDUser",
 		},
+	}, nil
+}
+
+func (s botTrackerStaleSelfSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	resp, err := s.botTrackerSource.GetLatestRankingByUser(server, eventID, userID)
+	if err != nil {
+		return nil, err
+	}
+	resp.RankData.Rank = 100
+	resp.RankData.Timestamp = time.Now().UTC().Add(-6 * time.Minute).Unix()
+	return resp, nil
+}
+
+func (s botTrackerStaleSelfSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
+	resp, err := s.botTrackerSource.TraceRankingByUser(server, eventID, userID)
+	if err != nil {
+		return nil, err
+	}
+	for i := range resp.RankData {
+		resp.RankData[i].Rank = 100
+		resp.RankData[i].Timestamp = time.Now().UTC().Add(time.Duration(i-7) * time.Minute).Unix()
+	}
+	return resp, nil
+}
+
+func (s botTrackerStaleSelfSource) GetEventStatus(server string, eventID int) (*sekaiapi.EventStatusResponse, error) {
+	if !s.healthy {
+		return &sekaiapi.EventStatusResponse{
+			Status:     2,
+			StatusDesc: "sekai api timeout",
+			TimeAgo:    0,
+		}, nil
+	}
+	return &sekaiapi.EventStatusResponse{
+		Status:     1,
+		StatusDesc: "正常",
+		TimeAgo:    0,
 	}, nil
 }
 
@@ -483,6 +525,29 @@ func assertSingleImageMessage(t *testing.T, body []byte) {
 		t.Fatalf("unexpected image segment data: %#v", message[0].Data)
 	}
 	file, _ := data["file"].(string)
+	if !strings.HasPrefix(file, "https://image-cache.test/pjsk/") {
+		t.Fatalf("unexpected image url: %q", file)
+	}
+}
+
+func assertTextAndImageMessage(t *testing.T, body []byte, wantText string) {
+	t.Helper()
+	message := decodeSuccessMessage(t, body)
+	if len(message) != 2 || message[0].Type != "text" || message[1].Type != "image" {
+		t.Fatalf("expected text + image message, got %+v", message)
+	}
+	textData, ok := message[0].Data.(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected text segment data: %#v", message[0].Data)
+	}
+	if text, _ := textData["text"].(string); text != wantText {
+		t.Fatalf("expected text %q, got %q", wantText, text)
+	}
+	imageData, ok := message[1].Data.(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected image segment data: %#v", message[1].Data)
+	}
+	file, _ := imageData["file"].(string)
 	if !strings.HasPrefix(file, "https://image-cache.test/pjsk/") {
 		t.Fatalf("unexpected image url: %q", file)
 	}
@@ -1798,6 +1863,84 @@ func TestBotEndpointSKQueryDefaultsToSelfBinding(t *testing.T) {
 	assertSingleImageMessage(t, body)
 }
 
+func TestBotEndpointSKQueryWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/query" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKSTALEPNG"))
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sk event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertTextAndImageMessage(t, body, rendersk.StaleSelfRecordWarning)
+}
+
+func TestBotEndpointSKQueryDoesNotWarnWhenTrackerStatusIsUnhealthy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/query" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKSTALEPNG"))
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerStaleSelfSource{healthy: false}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/sk",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/sk event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleImageMessage(t, body)
+}
+
 func TestBotEndpointSKQueryReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatalf("drawing endpoint should not be called when self ranking is missing")
@@ -1901,6 +2044,52 @@ func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testi
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+}
+
+func TestBotEndpointSKCSBWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/csb" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.CSBRequest
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if len(req.Ranks) == 0 || req.Ranks[0].Rank != 100 {
+			t.Fatalf("expected stale self csb payload, got %+v", req.Ranks)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKCSBSTALEPNG"))
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/csb"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/csb",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/csb event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertTextAndImageMessage(t, body, rendersk.StaleSelfRecordWarning)
 }
 
 func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
@@ -2290,6 +2479,52 @@ func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleImageMessage(t, body)
+}
+
+func TestBotEndpointSKCheckRoomWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/check-room" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.CFRequest
+		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		if len(req.Ranks) != 1 || req.Ranks[0].Rank != 100 {
+			t.Fatalf("expected stale self check-room payload, got %+v", req.Ranks)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKCHECKSTALEPNG"))
+	}))
+	defer srv.Close()
+
+	bindingService := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindingService.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	runtime.SK.SetTrackerIntegration(botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	runtime.Bindings = bindingService
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/cf",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/cf event101"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertTextAndImageMessage(t, body, rendersk.StaleSelfRecordWarning)
 }
 
 func TestBotEndpointSKCheckRoomLiteUsesFixedRanks(t *testing.T) {

@@ -1,6 +1,7 @@
 package sekai
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -154,5 +155,119 @@ func TestSekaiAPIClientGetsCustomMusicScorePublishedByID(t *testing.T) {
 	}
 	if len(item.CustomMusicScoreTags) != 3 || item.CustomMusicScoreTags[0] != 9 || item.CustomMusicScoreTags[2] != 4 {
 		t.Fatalf("unexpected custom score tags: %#v", item.CustomMusicScoreTags)
+	}
+}
+
+func TestSekaiAPIClientGetsMySekaiHousingCompetitionList(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Fatalf("unexpected method: %s", r.Method)
+		}
+		if r.URL.Path != "/api/jp/user/mysekai/housing-competition/123/list" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if got := r.URL.Query().Get("isLottery"); got != "True" {
+			t.Fatalf("unexpected isLottery query: %q", got)
+		}
+		if token := r.Header.Get(tokenHeader); token != "legacy-secret" {
+			t.Fatalf("unexpected token header: %q", token)
+		}
+		_, _ = w.Write([]byte(`{"entries":[]}`))
+	}))
+	defer server.Close()
+
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{
+		BaseURL: server.URL,
+		Token:   "legacy-secret",
+	})
+
+	body, err := client.GetMySekaiHousingCompetitionList("jp", 123, true)
+	if err != nil {
+		t.Fatalf("GetMySekaiHousingCompetitionList() error = %v", err)
+	}
+	if string(body) != `{"entries":[]}` {
+		t.Fatalf("unexpected body: %s", body)
+	}
+}
+
+func TestSekaiAPIClientEntersMySekaiHousingCompetitionEntry(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Fatalf("unexpected method: %s", r.Method)
+		}
+		if r.URL.Path != "/api/jp/user/mysekai/housing-competition/123/mysekai-owner/456/entry" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if got := r.URL.Query().Get("mysekaiOwnerUserSubmittedAt"); got != "1710000000000" {
+			t.Fatalf("unexpected submittedAt query: %q", got)
+		}
+		if got := r.URL.Query().Get("isBackNumber"); got != "true" {
+			t.Fatalf("unexpected isBackNumber query: %q", got)
+		}
+		if token := r.Header.Get(tokenHeader); token != "legacy-secret" {
+			t.Fatalf("unexpected token header: %q", token)
+		}
+		body, _ := io.ReadAll(r.Body)
+		if len(body) != 0 {
+			t.Fatalf("expected empty POST body, got %q", string(body))
+		}
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer server.Close()
+
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{
+		BaseURL: server.URL,
+		Token:   "legacy-secret",
+	})
+
+	body, err := client.EnterMySekaiHousingCompetitionEntry("jp", 123, 456, 1710000000000, true)
+	if err != nil {
+		t.Fatalf("EnterMySekaiHousingCompetitionEntry() error = %v", err)
+	}
+	if string(body) != `{"ok":true}` {
+		t.Fatalf("unexpected body: %s", body)
+	}
+}
+
+func TestSekaiAPIClientGetsMySekaiHousingBackNumbersAndThumbnail(t *testing.T) {
+	seen := map[string]bool{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen[r.URL.Path] = true
+		switch r.URL.Path {
+		case "/api/jp/mysekai/housing-competition/back-number-top-list":
+			_, _ = w.Write([]byte(`{"top":[]}`))
+		case "/api/jp/mysekai/housing-competition/987/back-number-list":
+			_, _ = w.Write([]byte(`{"items":[]}`))
+		case "/image/jp/mysekai-housing/hash/uuid":
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{BaseURL: server.URL})
+
+	if _, err := client.GetMySekaiHousingCompetitionBackNumberTopList("jp"); err != nil {
+		t.Fatalf("GetMySekaiHousingCompetitionBackNumberTopList() error = %v", err)
+	}
+	if _, err := client.GetMySekaiHousingCompetitionBackNumberList("jp", 987); err != nil {
+		t.Fatalf("GetMySekaiHousingCompetitionBackNumberList() error = %v", err)
+	}
+	body, err := client.GetMySekaiHousingThumbnail("jp", "/hash/uuid")
+	if err != nil {
+		t.Fatalf("GetMySekaiHousingThumbnail() error = %v", err)
+	}
+	if string(body) != "png" {
+		t.Fatalf("unexpected thumbnail body: %s", body)
+	}
+	for _, path := range []string{
+		"/api/jp/mysekai/housing-competition/back-number-top-list",
+		"/api/jp/mysekai/housing-competition/987/back-number-list",
+		"/image/jp/mysekai-housing/hash/uuid",
+	} {
+		if !seen[path] {
+			t.Fatalf("expected path %s to be requested", path)
+		}
 	}
 }

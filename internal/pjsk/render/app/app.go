@@ -81,9 +81,11 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		localMasterdataDir = resolveRenderProviderMasterdataDir(cfg)
 	}
 	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.DefaultRegion, assetHelper, mysekai.MasterdataOptions{
-		SekaiDSN:      cfg.SekaiDSN,
-		LocalDir:      localMasterdataDir,
-		AllowFallback: localMasterdataFallback && cfg.LocalMasterdata.AllowFallback,
+		SekaiDSN:                          cfg.SekaiDSN,
+		LocalDir:                          localMasterdataDir,
+		AllowFallback:                     localMasterdataFallback && cfg.LocalMasterdata.AllowFallback,
+		HousingCompetitionStatsCachePath:  cfg.MySekaiHousingCompetitionCachePath,
+		HousingCompetitionRefreshInterval: cfg.MySekaiHousingCompetitionRefreshInterval,
 	})
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
@@ -284,6 +286,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	if localMasterdataFallback {
 		runtime.startLocalMasterdataRefresh(initCtx, localMasterdataDir, cfg.LocalMasterdata.RefreshInterval)
 	}
+	mysekaiController.StartHousingCompetitionStatsRefresh(initCtx, cfg.SekaiAPI, cfg.DefaultRegion.String())
 	return runtime
 }
 

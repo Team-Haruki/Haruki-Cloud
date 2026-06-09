@@ -57,6 +57,10 @@ type TrackerSource interface {
 	TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error)
 }
 
+type trackerEventStatusSource interface {
+	GetEventStatus(server string, eventID int) (*sekaiapi.EventStatusResponse, error)
+}
+
 type contextualTrackerSource interface {
 	WithContext(ctx context.Context) *sekaiapi.TrackerClient
 }

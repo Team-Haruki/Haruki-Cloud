@@ -134,6 +134,10 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 		defaultRegion: region,
 		nicknames:     cloneNicknames(defaultNicknames),
 		assets:        assetHelper,
+		housingCompetitionStats: newHousingCompetitionStatsCache(
+			mdOpts.HousingCompetitionStatsCachePath,
+			mdOpts.HousingCompetitionRefreshInterval,
+		),
 	}
 }
 

@@ -38,30 +38,32 @@ import (
 // ── Config types ────────────────────────────────────────────────────────────
 
 type Config struct {
-	InitContext              context.Context
-	DefaultRegion            renderregion.Value
-	DrawingBaseURL           string
-	DrawingTargets           []upstream.TargetConfig
-	DrawingTimeout           time.Duration
-	DrawingRetryCount        int
-	DrawingCache             drawing.RenderCacheConfig
-	ImageCacheURI            string
-	ChartsBaseURL            string
-	ImageCacheDir            string
-	ImageCachePGURL          string // PostgreSQL DSN for image cache deduplication (optional)
-	CensorService            *censor.Service
-	AssetPrimaryDir          string
-	AssetLegacyDirs          []string
-	AssetsBaseURL            string // CDN base URL for direct asset serving; skips imagecache for region assets
-	LocalMasterdata          LocalMasterdataConfig
-	SekaiDSN                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
-	UserSnapshot             UserSnapshotConfig
-	MusicMetaRefreshInterval time.Duration
-	MusicMetaOutputDir       string
-	MetaLoader               *meta.Loader
-	SharedUpstreamResources  *upstream.SharedResources
-	SKForecast               sk.ForecastConfig
-	DeckRecommend            DeckRecommendConfig
+	InitContext                              context.Context
+	DefaultRegion                            renderregion.Value
+	DrawingBaseURL                           string
+	DrawingTargets                           []upstream.TargetConfig
+	DrawingTimeout                           time.Duration
+	DrawingRetryCount                        int
+	DrawingCache                             drawing.RenderCacheConfig
+	ImageCacheURI                            string
+	ChartsBaseURL                            string
+	ImageCacheDir                            string
+	ImageCachePGURL                          string // PostgreSQL DSN for image cache deduplication (optional)
+	CensorService                            *censor.Service
+	AssetPrimaryDir                          string
+	AssetLegacyDirs                          []string
+	AssetsBaseURL                            string // CDN base URL for direct asset serving; skips imagecache for region assets
+	LocalMasterdata                          LocalMasterdataConfig
+	SekaiDSN                                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
+	UserSnapshot                             UserSnapshotConfig
+	MusicMetaRefreshInterval                 time.Duration
+	MusicMetaOutputDir                       string
+	MetaLoader                               *meta.Loader
+	SharedUpstreamResources                  *upstream.SharedResources
+	SKForecast                               sk.ForecastConfig
+	MySekaiHousingCompetitionCachePath       string
+	MySekaiHousingCompetitionRefreshInterval time.Duration
+	DeckRecommend                            DeckRecommendConfig
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not
 	// depend on package-level singletons.

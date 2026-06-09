@@ -2,6 +2,34 @@ package drawing
 
 // =========================== MySekai Models ===========================
 
+type MysekaiHousingCompetitionEntry struct {
+	Rank                 int     `json:"rank"`
+	ReviewCount          int     `json:"review_count"`
+	OwnerUserName        string  `json:"owner_user_name,omitempty"`
+	Name                 string  `json:"name,omitempty"`
+	Word                 string  `json:"word,omitempty"`
+	ThumbnailPath        *string `json:"thumbnail_path,omitempty"`
+	ThumbnailImageBase64 *string `json:"thumbnail_image_base64,omitempty"`
+	PreviousReviewCount  *int    `json:"previous_review_count,omitempty"`
+	PreviousDelta        *int    `json:"previous_delta,omitempty"`
+	NextReviewCount      *int    `json:"next_review_count,omitempty"`
+	NextDelta            *int    `json:"next_delta,omitempty"`
+	SubmittedAt          int64   `json:"submitted_at,omitempty"`
+}
+
+type MysekaiHousingCompetitionRequest struct {
+	CompetitionID     int                              `json:"competition_id"`
+	Region            string                           `json:"region"`
+	Name              string                           `json:"name"`
+	Description       *string                          `json:"description,omitempty"`
+	BannerImagePath   *string                          `json:"banner_image_path,omitempty"`
+	BannerImageBase64 *string                          `json:"banner_image_base64,omitempty"`
+	SampleCount       int                              `json:"sample_count"`
+	UniqueCount       int                              `json:"unique_count"`
+	SampledAt         int64                            `json:"sampled_at,omitempty"`
+	Entries           []MysekaiHousingCompetitionEntry `json:"entries"`
+}
+
 type MysekaiPhenomRequest struct {
 	RefreshReason  string `json:"refresh_reason"`
 	ImagePath      string `json:"image_path"`

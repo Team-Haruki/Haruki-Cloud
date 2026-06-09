@@ -2,6 +2,7 @@ package sekai
 
 import (
 	"context"
+	json "encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -22,9 +23,10 @@ const (
 )
 
 type HarukiSekaiAPIClient struct {
-	http   *resty.Client
-	config *config.SekaiAPIConfig
-	pool   *upstream.Pool
+	http       *resty.Client
+	config     *config.SekaiAPIConfig
+	pool       *upstream.Pool
+	requestCtx context.Context
 }
 
 // NewSekaiAPIClient constructs a HarukiSekaiAPIClient bound to the supplied config.
@@ -42,12 +44,31 @@ func NewSekaiAPIClient(cfg *config.SekaiAPIConfig) *HarukiSekaiAPIClient {
 	}
 }
 
+func (c *HarukiSekaiAPIClient) WithContext(ctx context.Context) *HarukiSekaiAPIClient {
+	if c == nil {
+		return nil
+	}
+	clone := *c
+	clone.requestCtx = ctx
+	return &clone
+}
+
+func (c *HarukiSekaiAPIClient) requestContext() context.Context {
+	if c != nil && c.requestCtx != nil {
+		return c.requestCtx
+	}
+	return context.TODO()
+}
+
 // authReq returns a pre-configured request with the token header set.
 func (c *HarukiSekaiAPIClient) authReq() *resty.Request {
 	if c == nil {
 		return newRestyClient().R()
 	}
 	request := c.http.R()
+	if c.requestCtx != nil {
+		request.SetContext(c.requestCtx)
+	}
 	if c.config != nil && c.config.Token != "" {
 		request.SetHeader(tokenHeader, c.config.Token)
 	}
@@ -127,6 +148,100 @@ func (c *HarukiSekaiAPIClient) GetMySekaiImage(server, imagePath string) ([]byte
 	return c.get(url)
 }
 
+// GetMySekaiHousingCompetitionList fetches the MySekai housing competition
+// submission list.
+//
+//	GET /api/{server}/user/mysekai/housing-competition/{housingID}/list
+func (c *HarukiSekaiAPIClient) GetMySekaiHousingCompetitionList(server string, housingID int, isLottery bool) (json.RawMessage, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
+	query := url.Values{}
+	if isLottery {
+		query.Set("isLottery", "True")
+	} else {
+		query.Set("isLottery", "False")
+	}
+	path := fmt.Sprintf("/api/%s/user/mysekai/housing-competition/%d/list?%s", server, housingID, query.Encode())
+	body, err := c.get(path)
+	if err != nil {
+		return nil, err
+	}
+	return append(json.RawMessage(nil), body...), nil
+}
+
+// EnterMySekaiHousingCompetitionEntry enters / fetches detail for a single
+// MySekai housing competition submission.
+//
+//	POST /api/{server}/user/mysekai/housing-competition/{housingID}/mysekai-owner/{ownerUserID}/entry
+func (c *HarukiSekaiAPIClient) EnterMySekaiHousingCompetitionEntry(server string, housingID int, ownerUserID, submittedAt int64, isBackNumber bool) (json.RawMessage, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
+	query := url.Values{}
+	query.Set("mysekaiOwnerUserSubmittedAt", fmt.Sprintf("%d", submittedAt))
+	if isBackNumber {
+		query.Set("isBackNumber", "true")
+	} else {
+		query.Set("isBackNumber", "false")
+	}
+	path := fmt.Sprintf(
+		"/api/%s/user/mysekai/housing-competition/%d/mysekai-owner/%d/entry?%s",
+		server,
+		housingID,
+		ownerUserID,
+		query.Encode(),
+	)
+	body, err := c.post(path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return append(json.RawMessage(nil), body...), nil
+}
+
+// GetMySekaiHousingCompetitionBackNumberTopList fetches the historical MySekai
+// housing competition overview.
+//
+//	GET /api/{server}/mysekai/housing-competition/back-number-top-list
+func (c *HarukiSekaiAPIClient) GetMySekaiHousingCompetitionBackNumberTopList(server string) (json.RawMessage, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
+	path := fmt.Sprintf("/api/%s/mysekai/housing-competition/back-number-top-list", server)
+	body, err := c.get(path)
+	if err != nil {
+		return nil, err
+	}
+	return append(json.RawMessage(nil), body...), nil
+}
+
+// GetMySekaiHousingCompetitionBackNumberList fetches a historical MySekai
+// housing competition list.
+//
+//	GET /api/{server}/mysekai/housing-competition/{competitionID}/back-number-list
+func (c *HarukiSekaiAPIClient) GetMySekaiHousingCompetitionBackNumberList(server string, competitionID int) (json.RawMessage, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
+	path := fmt.Sprintf("/api/%s/mysekai/housing-competition/%d/back-number-list", server, competitionID)
+	body, err := c.get(path)
+	if err != nil {
+		return nil, err
+	}
+	return append(json.RawMessage(nil), body...), nil
+}
+
+// GetMySekaiHousingThumbnail downloads a MySekai housing competition thumbnail.
+//
+//	GET /image/{server}/mysekai-housing/{imagePath}
+func (c *HarukiSekaiAPIClient) GetMySekaiHousingThumbnail(server, imagePath string) ([]byte, error) {
+	if c == nil {
+		return nil, ErrClientNotConfigured
+	}
+	path := fmt.Sprintf("/image/%s/mysekai-housing/%s", server, strings.TrimLeft(imagePath, "/"))
+	return c.get(path)
+}
+
 // GetCustomProfileCardThumbnail downloads a custom profile card thumbnail image.
 //
 //	GET /image/{server}/custom-profile-card/thumbnail/{imagePath}
@@ -201,6 +316,30 @@ func (c *HarukiSekaiAPIClient) get(path string) ([]byte, error) {
 		return nil, fmt.Errorf("sekai api: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
+	return handleSekaiAPIResponse(resp)
+}
+
+func (c *HarukiSekaiAPIClient) post(path string, body any) ([]byte, error) {
+	baseURL, lease, err := c.acquireTarget()
+	if err != nil {
+		return nil, err
+	}
+	if lease != nil {
+		defer lease.Release()
+	}
+
+	request := c.authReq()
+	if body != nil {
+		request.SetBody(body)
+	}
+	resp, err := request.Post(baseURL + path)
+	if err != nil {
+		return nil, fmt.Errorf("sekai api: request failed after retries: %w", sanitizeNetworkError(err))
+	}
+	return handleSekaiAPIResponse(resp)
+}
+
+func handleSekaiAPIResponse(resp *resty.Response) ([]byte, error) {
 	switch resp.StatusCode() {
 	case 200:
 		return resp.Body(), nil
@@ -219,7 +358,7 @@ func (c *HarukiSekaiAPIClient) acquireTarget() (string, *upstream.Lease, error) 
 		return "", nil, ErrClientNotConfigured
 	}
 	if c.pool != nil && c.pool.Enabled() {
-		lease, err := c.pool.Acquire(context.Background())
+		lease, err := c.pool.Acquire(c.requestContext())
 		if err != nil {
 			return "", nil, fmt.Errorf("sekai api: upstream unavailable: %w", err)
 		}

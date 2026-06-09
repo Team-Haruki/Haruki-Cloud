@@ -202,6 +202,8 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_LOCAL_BASE_URL", &cfg.PJSKRender.SKForecast.LocalBaseURL)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", &cfg.PJSKRender.SKForecast.CachePath)
+	envStr("HARUKI_PJSK_RENDER_MYSEKAI_HOUSING_COMPETITION_CACHE_PATH", &cfg.PJSKRender.MySekaiHousingCompetition.CachePath)
+	envDuration("HARUKI_PJSK_RENDER_MYSEKAI_HOUSING_COMPETITION_REFRESH_INTERVAL", &cfg.PJSKRender.MySekaiHousingCompetition.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", &cfg.PJSKRender.DeckRecommend.MasterdataDir)
 	envDuration("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.DeckRecommend.MasterdataRefreshInterval)
@@ -328,6 +330,11 @@ type SKForecastConfig struct {
 	CachePath    string `yaml:"cache_path"`
 }
 
+type MySekaiHousingCompetitionConfig struct {
+	CachePath       string        `yaml:"cache_path"`
+	RefreshInterval time.Duration `yaml:"refresh_interval"`
+}
+
 // MySekaiCNWhitelistEntry defines a platform+group pair allowed to use
 // MySekai features on the CN region.
 type MySekaiCNWhitelistEntry struct {
@@ -337,19 +344,20 @@ type MySekaiCNWhitelistEntry struct {
 }
 
 type PJSKRenderConfig struct {
-	Enabled           bool                    `yaml:"enabled"`
-	DrawingBaseURL    string                  `yaml:"drawing_base_url"`
-	DrawingTargets    []upstream.TargetConfig `yaml:"drawing_targets"`
-	DrawingTimeout    time.Duration           `yaml:"drawing_timeout"`
-	DrawingRetryCount int                     `yaml:"drawing_retry_count"`
-	DrawingCache      RenderCacheConfig       `yaml:"drawing_cache"`
-	ImageCache        ImageCacheConfig        `yaml:"image_cache"`
-	AssetDirs         AssetDirsConfig         `yaml:"asset_dirs"`
-	LocalMasterdata   LocalMasterdataConfig   `yaml:"local_masterdata"`
-	UserSnapshot      UserSnapshotConfig      `yaml:"user_snapshot"`
-	MusicMeta         MusicMetaConfig         `yaml:"music_meta"`
-	SKForecast        SKForecastConfig        `yaml:"sk_forecast"`
-	DeckRecommend     DeckRecommendConfig     `yaml:"deck_recommend"`
+	Enabled                   bool                            `yaml:"enabled"`
+	DrawingBaseURL            string                          `yaml:"drawing_base_url"`
+	DrawingTargets            []upstream.TargetConfig         `yaml:"drawing_targets"`
+	DrawingTimeout            time.Duration                   `yaml:"drawing_timeout"`
+	DrawingRetryCount         int                             `yaml:"drawing_retry_count"`
+	DrawingCache              RenderCacheConfig               `yaml:"drawing_cache"`
+	ImageCache                ImageCacheConfig                `yaml:"image_cache"`
+	AssetDirs                 AssetDirsConfig                 `yaml:"asset_dirs"`
+	LocalMasterdata           LocalMasterdataConfig           `yaml:"local_masterdata"`
+	UserSnapshot              UserSnapshotConfig              `yaml:"user_snapshot"`
+	MusicMeta                 MusicMetaConfig                 `yaml:"music_meta"`
+	SKForecast                SKForecastConfig                `yaml:"sk_forecast"`
+	MySekaiHousingCompetition MySekaiHousingCompetitionConfig `yaml:"mysekai_housing_competition"`
+	DeckRecommend             DeckRecommendConfig             `yaml:"deck_recommend"`
 }
 
 type CensorConfig struct {

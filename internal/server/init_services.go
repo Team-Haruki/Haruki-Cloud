@@ -139,6 +139,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			LocalBaseURL: harukiConfig.Cfg.PJSKRender.SKForecast.LocalBaseURL,
 			CachePath:    resolveSKForecastCachePath(),
 		},
+		MySekaiHousingCompetitionCachePath:       resolveMySekaiHousingCompetitionCachePath(),
+		MySekaiHousingCompetitionRefreshInterval: harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.RefreshInterval,
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
 			Disable:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Disable,
@@ -171,6 +173,16 @@ func resolveSKForecastCachePath() string {
 	}
 	if dir := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir); dir != "" {
 		return filepath.Join(dir, "sk_forecast_cache.json")
+	}
+	return ""
+}
+
+func resolveMySekaiHousingCompetitionCachePath() string {
+	if path := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.CachePath); path != "" {
+		return path
+	}
+	if dir := strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir); dir != "" {
+		return filepath.Join(dir, "mysekai_housing_competition_stats.json")
 	}
 	return ""
 }

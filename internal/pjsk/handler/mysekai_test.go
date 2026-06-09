@@ -10,6 +10,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 )
 
 func TestMysekaiAliasRemap(t *testing.T) {
@@ -54,6 +55,11 @@ func TestMysekaiAliasRemap(t *testing.T) {
 	}
 	if !slices.Contains(previewHandle.Commands, "/mspv") {
 		t.Fatalf("preview aliases should contain /mspv")
+	}
+
+	housingSK := sekaiHandlers{}.MysekaiHousingSKHandle()
+	if !slices.Contains(housingSK.Commands, "/百景sk") {
+		t.Fatalf("housing sk aliases should contain /百景sk")
 	}
 }
 
@@ -170,6 +176,52 @@ func TestMysekaiPreviewHandleBuildsCommandRequest(t *testing.T) {
 	}
 	if params.CheckTime {
 		t.Fatalf("params.CheckTime = %v", params.CheckTime)
+	}
+}
+
+func TestMysekaiHousingSKHandleBuildsCommandRequest(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiHousingSKHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+	if h.GetPath() != "mysekai/housing-sk" {
+		t.Fatalf("handler path = %q", h.GetPath())
+	}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/百景sk",
+		ArgText:    "id=25 1-5 sample=2 interval=-1",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if result == nil || result.Module != parser.ModuleMysekai || result.Mode != "mysekai-housing-sk" {
+		t.Fatalf("unexpected command request: %+v", result)
+	}
+
+	var params rendermysekai.HousingCompetitionLineQuery
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.HousingID != 25 {
+		t.Fatalf("params.HousingID = %d", params.HousingID)
+	}
+	if !reflect.DeepEqual(params.Ranks, []int{1, 2, 3, 4, 5}) {
+		t.Fatalf("params.Ranks = %+v", params.Ranks)
+	}
+	if params.SampleCount != 2 || params.SampleIntervalMillis != -1 {
+		t.Fatalf("unexpected sampling params: %+v", params)
+	}
+}
+
+func TestMysekaiHousingSKHandleRejectsTooManyRanks(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiHousingSKHandle()
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/百景sk",
+		ArgText:    "1-6",
+	})
+	if err == nil {
+		t.Fatal("expected too many ranks error")
 	}
 }
 

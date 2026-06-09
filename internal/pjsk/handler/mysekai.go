@@ -31,6 +31,14 @@ func mysekaiTalkListUsageError(trigger string) error {
 	)
 }
 
+func mysekaiHousingSKUsageError(trigger string) error {
+	return onebot11.NewReplayError(
+		"使用方式:\n%s\n%s 1-5\n一次最多查询5个排名",
+		trigger,
+		trigger,
+	)
+}
+
 func applyMysekaiStaticFixtureListParams(params map[string]any, onlyCraftable bool) {
 	params["show_id"] = true
 	params["only_craftable"] = onlyCraftable
@@ -365,6 +373,25 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 	}, executeMysekai)
 }
 
+func (sekaiHandlers) MysekaiHousingSKHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Path: "mysekai/housing-sk",
+			Commands: []string{
+				"/百景sk", "/百景SK", "/烤森百景sk", "/烤森百景SK",
+				"/mysekai-housing-sk", "/mshsk",
+			},
+		},
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			query, err := parseMysekaiHousingSKArgs(strings.TrimSpace(ctx.GetArgs()))
+			if err != nil {
+				return nil, onebot11.NewReplayError("%v\n\n%s", err, mysekaiHousingSKUsageError(ctx.originalTriggerCmd))
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-housing-sk", query), nil
+		},
+	}, executeMysekai)
+}
+
 func (sekaiHandlers) MysekaiPhotoHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
@@ -432,6 +459,145 @@ func hasMysekaiForceFlag(args string) bool {
 		}
 	}
 	return false
+}
+
+func parseMysekaiHousingSKArgs(args string) (rendermysekai.HousingCompetitionLineQuery, error) {
+	query := rendermysekai.HousingCompetitionLineQuery{}
+	fields := strings.Fields(strings.TrimSpace(args))
+	rankTokens := make([]string, 0, len(fields))
+	for _, field := range fields {
+		clean := strings.Trim(strings.TrimSpace(field), ",，")
+		if clean == "" {
+			continue
+		}
+		lower := strings.ToLower(clean)
+		switch {
+		case strings.HasPrefix(lower, "id="), strings.HasPrefix(lower, "housing_id="):
+			value := clean[strings.Index(clean, "=")+1:]
+			id, err := strconv.Atoi(strings.TrimSpace(value))
+			if err != nil || id <= 0 {
+				return query, fmt.Errorf("请输入正确的百景 housing_id")
+			}
+			query.HousingID = id
+		case strings.HasPrefix(lower, "sample="), strings.HasPrefix(lower, "samples="), strings.HasPrefix(lower, "count="):
+			value := clean[strings.Index(clean, "=")+1:]
+			count, err := strconv.Atoi(strings.TrimSpace(value))
+			if err != nil || count <= 0 {
+				return query, fmt.Errorf("请输入正确的刷新次数")
+			}
+			query.SampleCount = count
+		case strings.HasPrefix(lower, "interval="), strings.HasPrefix(lower, "interval_ms="):
+			value := clean[strings.Index(clean, "=")+1:]
+			interval, err := strconv.Atoi(strings.TrimSpace(value))
+			if err != nil {
+				return query, fmt.Errorf("请输入正确的刷新间隔")
+			}
+			query.SampleIntervalMillis = interval
+		default:
+			rankTokens = append(rankTokens, clean)
+		}
+	}
+	if len(rankTokens) > 1 && query.HousingID == 0 && isPositiveIntegerToken(rankTokens[0]) && isMysekaiHousingRankRangeToken(rankTokens[1]) {
+		id, _ := strconv.Atoi(rankTokens[0])
+		query.HousingID = id
+		rankTokens = rankTokens[1:]
+	}
+	if len(rankTokens) > 0 {
+		ranks, err := parseMysekaiHousingRankTokens(rankTokens)
+		if err != nil {
+			return query, err
+		}
+		query.Ranks = ranks
+	}
+	ranks, err := rendermysekai.NormalizeHousingCompetitionRanks(query.Ranks)
+	if err != nil {
+		return query, err
+	}
+	query.Ranks = ranks
+	return query, nil
+}
+
+func parseMysekaiHousingRankTokens(tokens []string) ([]int, error) {
+	var ranks []int
+	for _, token := range tokens {
+		for _, part := range splitMysekaiHousingRankToken(token) {
+			parsed, err := parseMysekaiHousingRankPart(part)
+			if err != nil {
+				return nil, err
+			}
+			ranks = append(ranks, parsed...)
+			if len(ranks) > rendermysekai.MaxHousingCompetitionRankCount {
+				return nil, fmt.Errorf("一次最多查询%d个百景排名", rendermysekai.MaxHousingCompetitionRankCount)
+			}
+		}
+	}
+	return ranks, nil
+}
+
+func splitMysekaiHousingRankToken(token string) []string {
+	return strings.FieldsFunc(token, func(r rune) bool {
+		return r == ',' || r == '，' || r == '、'
+	})
+}
+
+func parseMysekaiHousingRankPart(part string) ([]int, error) {
+	part = strings.TrimSpace(part)
+	if part == "" {
+		return nil, nil
+	}
+	normalized := strings.NewReplacer(
+		"～", "-",
+		"~", "-",
+		"－", "-",
+		"—", "-",
+		"–", "-",
+		"..", "-",
+		"到", "-",
+		"至", "-",
+	).Replace(part)
+	if strings.Count(normalized, "-") == 1 && !strings.HasPrefix(normalized, "-") && !strings.HasSuffix(normalized, "-") {
+		parts := strings.Split(normalized, "-")
+		start, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+		if err != nil || start <= 0 {
+			return nil, fmt.Errorf("请输入正确的百景排名")
+		}
+		end, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+		if err != nil || end <= 0 {
+			return nil, fmt.Errorf("请输入正确的百景排名")
+		}
+		if end < start {
+			start, end = end, start
+		}
+		if end-start+1 > rendermysekai.MaxHousingCompetitionRankCount {
+			return nil, fmt.Errorf("一次最多查询%d个百景排名", rendermysekai.MaxHousingCompetitionRankCount)
+		}
+		out := make([]int, 0, end-start+1)
+		for rank := start; rank <= end; rank++ {
+			out = append(out, rank)
+		}
+		return out, nil
+	}
+	rank, err := strconv.Atoi(normalized)
+	if err != nil || rank <= 0 {
+		return nil, fmt.Errorf("请输入正确的百景排名")
+	}
+	return []int{rank}, nil
+}
+
+func isPositiveIntegerToken(token string) bool {
+	if token == "" {
+		return false
+	}
+	for _, r := range token {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func isMysekaiHousingRankRangeToken(token string) bool {
+	return strings.ContainsAny(token, "-~～－—–") || strings.Contains(token, "到") || strings.Contains(token, "至") || strings.Contains(token, "..")
 }
 
 func shouldEnforceMysekaiExpiry(mode string) bool {
@@ -533,6 +699,11 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return mySekaiRegionUnavailableMessage(), nil
 	}
 
+	regionStr := rc.RegionStr
+	if rc.Cmd.Mode == "mysekai-housing-sk" {
+		return executeMysekaiHousingSK(rc, regionWithDefault(regionStr))
+	}
+
 	var p userQueryParams
 	mergeParams(rc.Cmd.Params, &p)
 	if p.Mode == "" {
@@ -541,7 +712,6 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		p.PlatformUserID = rc.PlatformUserID
 	}
 
-	regionStr := rc.RegionStr
 	staticFixtureListQuery := rendermysekai.FixtureListQuery{Region: regionStr}
 	if rc.Cmd.Mode == "mysekai-fixture-list" {
 		mergeParams(rc.Cmd.Params, &staticFixtureListQuery)

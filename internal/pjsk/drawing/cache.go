@@ -20,9 +20,10 @@ import (
 var cacheLogger = logger.NewLoggerFromGlobal("DrawingCache")
 
 const (
-	renderCacheFileExt    = "png"
-	renderCachePublic     = "public"
-	renderCacheKeyVersion = 3
+	renderCacheFileExt             = "png"
+	renderCachePublic              = "public"
+	renderCacheKeyVersion          = 3
+	renderCacheEventListKeyVersion = 4
 )
 
 func newLocalRenderCache(ttl time.Duration) *localRenderCache {

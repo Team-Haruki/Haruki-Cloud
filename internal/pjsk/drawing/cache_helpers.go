@@ -46,8 +46,12 @@ func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, er
 }
 
 func buildRenderCacheKey(policy renderCachePolicy) (string, error) {
+	version := renderCacheKeyVersion
+	if strings.TrimSpace(policy.APIPath) == "api/pjsk/event/list" {
+		version = renderCacheEventListKeyVersion
+	}
 	hashValue, err := hashstructure.Hash(renderCacheKeyMaterial{
-		Version:  renderCacheKeyVersion,
+		Version:  version,
 		Endpoint: policy.Endpoint,
 		APIPath:  policy.APIPath,
 		UserID:   policy.UserID,

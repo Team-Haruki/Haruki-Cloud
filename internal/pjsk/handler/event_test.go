@@ -6,6 +6,7 @@ import (
 	json "github.com/bytedance/sonic"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -471,6 +472,78 @@ func TestEventPlannerDefaultDragonUsesLostAndFound(t *testing.T) {
 	songs := eventPlannerSongsForRequest(params, buildEventPlannerBaseDeckQuery(renderregion.CN, params.Deck))
 	if len(songs) != 2 || songs[1].Query != "龙" || songs[1].MusicID != eventPlannerLostAndFoundMusicID {
 		t.Fatalf("unexpected default songs: %+v", songs)
+	}
+}
+
+func TestEventPlannerDefaultsToRLAlgorithm(t *testing.T) {
+	params, err := parseEventPlannerParams("pt1200w", "/cn活动规划")
+	if err != nil {
+		t.Fatalf("parseEventPlannerParams() error = %v", err)
+	}
+	query := buildEventPlannerBaseDeckQuery(renderregion.CN, params.Deck)
+	if query.Algorithm != "rl" {
+		t.Fatalf("unexpected default algorithm: %q", query.Algorithm)
+	}
+}
+
+func TestEventPlannerKeepsExplicitAlgorithm(t *testing.T) {
+	params, err := parseEventPlannerParams("pt1200w dfs", "/cn活动规划")
+	if err != nil {
+		t.Fatalf("parseEventPlannerParams() error = %v", err)
+	}
+	query := buildEventPlannerBaseDeckQuery(renderregion.CN, params.Deck)
+	if query.Algorithm != "dfs" {
+		t.Fatalf("unexpected explicit algorithm: %q", query.Algorithm)
+	}
+}
+
+func TestEventPlannerBoostMultiplierMatchesDeckBoostDisplay(t *testing.T) {
+	tests := []struct {
+		boost int
+		want  int64
+	}{
+		{boost: 0, want: 1},
+		{boost: 1, want: 5},
+		{boost: 2, want: 10},
+		{boost: 3, want: 15},
+		{boost: 4, want: 20},
+		{boost: 5, want: 25},
+		{boost: 6, want: 27},
+		{boost: 7, want: 29},
+		{boost: 8, want: 31},
+		{boost: 9, want: 33},
+		{boost: 10, want: 35},
+	}
+	for _, tc := range tests {
+		if got := eventPlannerBoostMultiplier(tc.boost); got != tc.want {
+			t.Fatalf("eventPlannerBoostMultiplier(%d) = %d, want %d", tc.boost, got, tc.want)
+		}
+	}
+}
+
+func TestEventPlannerDailyPointUsesRemainingEventTimeWhenCurrentPointKnown(t *testing.T) {
+	dayMillis := int64(24 * time.Hour / time.Millisecond)
+	startAt := int64(1_000_000)
+	aggregateAt := startAt + 10*dayMillis
+	now := startAt + 4*dayMillis
+
+	got := eventPlannerDailyPoint(10_000_000, 1_000_000, startAt, aggregateAt, now, true)
+	want := int64(1_500_000)
+	if got != want {
+		t.Fatalf("eventPlannerDailyPoint() = %d, want %d", got, want)
+	}
+}
+
+func TestEventPlannerDailyPointUsesFullEventTimeWhenCurrentPointUnknown(t *testing.T) {
+	dayMillis := int64(24 * time.Hour / time.Millisecond)
+	startAt := int64(1_000_000)
+	aggregateAt := startAt + 10*dayMillis
+	now := startAt + 4*dayMillis
+
+	got := eventPlannerDailyPoint(10_000_000, 1_000_000, startAt, aggregateAt, now, false)
+	want := int64(1_000_000)
+	if got != want {
+		t.Fatalf("eventPlannerDailyPoint() = %d, want %d", got, want)
 	}
 }
 

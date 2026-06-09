@@ -216,7 +216,7 @@ func TestResolveRenderCacheRuleUsesInfiniteTTLForStaticEndpoints(t *testing.T) {
 	}
 }
 
-func TestBuildRenderCachePolicyEventListUsesDynamicWindowTTL(t *testing.T) {
+func TestBuildRenderCachePolicyEventListUsesNextPhaseBoundaryTTL(t *testing.T) {
 	now := int64(1774118400000)
 	endAt := now + int64((2*time.Hour)/time.Millisecond)
 	policy, err := buildRenderCachePolicy("/api/pjsk/event/list", map[string]any{
@@ -232,12 +232,40 @@ func TestBuildRenderCachePolicyEventListUsesDynamicWindowTTL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildRenderCachePolicy: %v", err)
 	}
-	want := 2*time.Hour + renderCacheWindowTTLBuffer
+	want := 2 * time.Hour
 	if policy.TTL != want {
 		t.Fatalf("event list ttl = %v, want %v", policy.TTL, want)
 	}
 	if policy.Infinite {
 		t.Fatal("event list should no longer use infinite ttl")
+	}
+}
+
+func TestBuildRenderCachePolicyEventListExpiresAtNextEventStart(t *testing.T) {
+	now := int64(1774118400000)
+	nextStartAt := now + int64((45*time.Minute)/time.Millisecond)
+	nextEndAt := nextStartAt + int64((7*24*time.Hour)/time.Millisecond)
+	policy, err := buildRenderCachePolicy("/api/pjsk/event/list", map[string]any{
+		"dt": now,
+		"event_info": []any{
+			map[string]any{
+				"id":       101,
+				"start_at": now - int64((7*24*time.Hour)/time.Millisecond),
+				"end_at":   now - int64((time.Hour)/time.Millisecond),
+			},
+			map[string]any{
+				"id":       102,
+				"start_at": nextStartAt,
+				"end_at":   nextEndAt,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy: %v", err)
+	}
+	want := 45 * time.Minute
+	if policy.TTL != want {
+		t.Fatalf("event list ttl = %v, want %v", policy.TTL, want)
 	}
 }
 

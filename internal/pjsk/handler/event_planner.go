@@ -67,9 +67,9 @@ var eventPlannerBoostMultipliers = map[int]int64{
 	1:  5,
 	2:  10,
 	3:  15,
-	4:  19,
-	5:  23,
-	6:  26,
+	4:  20,
+	5:  25,
+	6:  27,
 	7:  29,
 	8:  31,
 	9:  33,
@@ -206,10 +206,10 @@ func executeEventPlanner(rc *RequestContext) (onebot11.Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	currentPoint, currentWarning := resolveEventPlannerCurrentPoint(snap, eventInfo.ID, params)
+	currentPoint, currentPointKnown, currentWarning := resolveEventPlannerCurrentPoint(snap, eventInfo.ID, params)
 
 	songs := eventPlannerSongsForRequest(params, baseQuery)
-	req, err := buildEventPlannerDrawingRequest(rc, region, eventInfo, snap, baseQuery, params, songs, targetPoint, targetSource, currentPoint)
+	req, err := buildEventPlannerDrawingRequest(rc, region, eventInfo, snap, baseQuery, params, songs, targetPoint, targetSource, currentPoint, currentPointKnown)
 	if err != nil {
 		return nil, err
 	}
@@ -238,6 +238,7 @@ func buildEventPlannerDrawingRequest(
 	targetPoint int64,
 	targetSource string,
 	currentPoint int64,
+	currentPointKnown bool,
 ) (*drawing.EventPlannerRequest, error) {
 	if eventInfo == nil {
 		return nil, fmt.Errorf("活动数据为空")
@@ -256,7 +257,7 @@ func buildEventPlannerDrawingRequest(
 		TargetPoint:     targetPoint,
 		CurrentPoint:    currentPoint,
 		RemainingPoint:  remaining,
-		DailyPoint:      eventPlannerDailyPoint(targetPoint, eventInfo.StartAt, eventInfo.AggregateAt),
+		DailyPoint:      eventPlannerDailyPoint(targetPoint, currentPoint, eventInfo.StartAt, eventInfo.AggregateAt, time.Now().UnixMilli(), currentPointKnown),
 		TargetSource:    targetSource,
 	}
 
@@ -406,7 +407,7 @@ func buildEventPlannerBaseDeckQuery(region renderregion.Value, params deckAutoQu
 		KeepAfterTrainingState:       params.KeepAfterTrainingState,
 	}
 	if query.Algorithm == "" {
-		query.Algorithm = "dfs_ga"
+		query.Algorithm = "rl"
 	}
 	if query.LiveType == "" {
 		query.LiveType = "multi"
@@ -456,15 +457,24 @@ func eventPlannerEventBannerPath(app *renderapp.App, region renderregion.Value, 
 	return renderassets.ResolveEventBannerPath(app.Assets, region.String(), eventInfo.AssetBundleName)
 }
 
-func eventPlannerDailyPoint(targetPoint, startAt, aggregateAt int64) int64 {
+func eventPlannerDailyPoint(targetPoint, currentPoint, startAt, aggregateAt, now int64, currentPointKnown bool) int64 {
 	if targetPoint <= 0 || aggregateAt <= startAt {
 		return 0
 	}
-	durationDays := float64(aggregateAt-startAt) / float64(24*time.Hour/time.Millisecond)
+	point := targetPoint
+	periodStart := startAt
+	if currentPointKnown && startAt < now && now < aggregateAt {
+		point = targetPoint - currentPoint
+		if point < 0 {
+			point = 0
+		}
+		periodStart = now
+	}
+	durationDays := float64(aggregateAt-periodStart) / float64(24*time.Hour/time.Millisecond)
 	if durationDays <= 0 {
 		return 0
 	}
-	return int64(math.Ceil(float64(targetPoint) / durationDays))
+	return int64(math.Ceil(float64(point) / durationDays))
 }
 
 func resolveEventPlannerEvent(ctx context.Context, app *renderapp.App, region renderregion.Value, eventID int) (*masterdata.Event, string, error) {
@@ -574,19 +584,19 @@ func resolveEventPlannerTargetPoint(rc *RequestContext, region renderregion.Valu
 	return int64(latest.RankData.Score), fmt.Sprintf("Tracker实时榜线:t%d", params.TargetRank), nil
 }
 
-func resolveEventPlannerCurrentPoint(snap rendersnapshot.Snapshot, eventID int, params eventPlannerCommandParams) (int64, string) {
+func resolveEventPlannerCurrentPoint(snap rendersnapshot.Snapshot, eventID int, params eventPlannerCommandParams) (int64, bool, string) {
 	if params.CurrentPointSet {
-		return params.CurrentPoint, ""
+		return params.CurrentPoint, true, ""
 	}
 	raw := snap.RawData()
 	if raw != nil {
 		for _, item := range raw.UserEvents {
 			if item.EventID == eventID && item.EventPoint > 0 {
-				return int64(item.EventPoint), ""
+				return int64(item.EventPoint), true, ""
 			}
 		}
 	}
-	return 0, "未指定当前pt且 suite 中未找到该活动 pt，当前按 0 计算"
+	return 0, false, "未指定当前pt且 suite 中未找到该活动 pt，当前按 0 计算"
 }
 
 func parseEventPlannerRank(args string) int {

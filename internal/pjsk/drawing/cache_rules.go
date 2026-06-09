@@ -27,6 +27,9 @@ var (
 	renderCacheWindowTTLMin    = 10 * time.Minute
 	renderCacheWindowTTLMax    = 14 * 24 * time.Hour
 
+	renderCacheEventListPhaseTTLMin = time.Minute
+	renderCacheEventListPhaseTTLMax = renderCacheTTLHalfDay
+
 	defaultRenderCacheRule = renderCacheRule{
 		Enabled:          true,
 		TTL:              renderCacheTTLOneDay,
@@ -335,19 +338,7 @@ func resolveRenderCacheWindowTTL(endpointPath string, payload any) (time.Duratio
 		if root == nil {
 			return 0, false
 		}
-		nowMs := renderCacheNowMillis(root)
-		if nowMs <= 0 {
-			return 0, false
-		}
-		maxEnd := int64(0)
-		for _, item := range sliceAt(root, "event_info") {
-			if endMs, ok := renderCacheMillis(valueAt(item, "end_at")); ok && endMs > maxEnd {
-				maxEnd = endMs
-			}
-		}
-		if maxEnd > 0 {
-			return clampRenderCacheWindowTTL(maxEnd - nowMs), true
-		}
+		return resolveEventListPhaseCacheTTL(root)
 	case "/api/pjsk/vlive/list":
 		root := mapAt(payload)
 		if root == nil {
@@ -368,6 +359,29 @@ func resolveRenderCacheWindowTTL(endpointPath string, payload any) (time.Duratio
 		}
 	}
 	return 0, false
+}
+
+func resolveEventListPhaseCacheTTL(root map[string]any) (time.Duration, bool) {
+	nowMs := renderCacheNowMillis(root)
+	if nowMs <= 0 {
+		return 0, false
+	}
+	nextBoundaryMs := int64(0)
+	for _, item := range sliceAt(root, "event_info") {
+		for _, field := range []string{"start_at", "end_at"} {
+			boundaryMs, ok := renderCacheMillis(valueAt(item, field))
+			if !ok || boundaryMs <= nowMs {
+				continue
+			}
+			if nextBoundaryMs == 0 || boundaryMs < nextBoundaryMs {
+				nextBoundaryMs = boundaryMs
+			}
+		}
+	}
+	if nextBoundaryMs <= 0 {
+		return 0, false
+	}
+	return clampEventListPhaseCacheTTL(nextBoundaryMs - nowMs), true
 }
 
 func renderCacheNowMillis(root map[string]any) int64 {
@@ -423,6 +437,17 @@ func clampRenderCacheWindowTTL(remainingMs int64) time.Duration {
 	}
 	if ttl > renderCacheWindowTTLMax {
 		return renderCacheWindowTTLMax
+	}
+	return ttl
+}
+
+func clampEventListPhaseCacheTTL(remainingMs int64) time.Duration {
+	ttl := time.Duration(remainingMs) * time.Millisecond
+	if ttl < renderCacheEventListPhaseTTLMin {
+		return renderCacheEventListPhaseTTLMin
+	}
+	if ttl > renderCacheEventListPhaseTTLMax {
+		return renderCacheEventListPhaseTTLMax
 	}
 	return ttl
 }

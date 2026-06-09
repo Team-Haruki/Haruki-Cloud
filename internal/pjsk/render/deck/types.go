@@ -85,6 +85,8 @@ type Controller struct {
 
 type RecommendConfig struct {
 	Enabled                   bool
+	Disable                   bool
+	DisableReason             string
 	ServiceBaseURL            string
 	Targets                   []upstream.TargetConfig
 	SharedResources           *upstream.SharedResources

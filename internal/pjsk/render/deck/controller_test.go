@@ -543,6 +543,22 @@ func TestBuildAutoRecommendRequestRequiresRemoteServiceWhenEngineEnabled(t *test
 	}
 }
 
+func TestBuildRecommendOptionEventForcesRLAlgorithm(t *testing.T) {
+	controller := newTestDeckController(t, RecommendConfig{})
+
+	option, err := controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
+		Region:        "jp",
+		RecommendType: "event",
+		Algorithm:     "ga",
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+	if option["algorithm"] != "rl" {
+		t.Fatalf("expected event deck algorithm to be rl, got %+v", option["algorithm"])
+	}
+}
+
 func TestBuildRecommendOptionBonusTargets(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
 
@@ -703,7 +719,7 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
 	}
 
-	if option["algorithm"] != "dfs_ga" {
+	if option["algorithm"] != "rl" {
 		t.Fatalf("unexpected algorithm: %+v", option["algorithm"])
 	}
 	if option["live_type"] != "multi" {
@@ -3279,7 +3295,7 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
 			}
 			first, ok := options[0].(map[string]any)
-			if !ok || first["algorithm"] != "ga" {
+			if !ok || first["algorithm"] != "rl" {
 				t.Fatalf("unexpected algorithm batch: %+v", payload["batch_options"])
 			}
 			if payload["userdata_hash"] != "test-userdata-hash" {
@@ -3287,7 +3303,7 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 			}
 			_, _ = w.Write([]byte(`[
 				{
-					"alg": "ga",
+					"alg": "rl",
 					"cost_time": 0.5,
 					"wait_time": 0.0,
 					"result": {
@@ -3432,32 +3448,19 @@ func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T
 				t.Fatalf("decode recommend json: %v", err)
 			}
 			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 2 {
+			if !ok || len(options) != 1 {
 				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+			}
+			first, ok := options[0].(map[string]any)
+			if !ok || first["algorithm"] != "rl" {
+				t.Fatalf("unexpected algorithm batch: %+v", payload["batch_options"])
 			}
 			if payload["userdata_hash"] != "test-userdata-hash" {
 				t.Fatalf("unexpected userdata_hash: %+v", payload["userdata_hash"])
 			}
 			_, _ = w.Write([]byte(`[
 				{
-					"alg": "dfs",
-					"cost_time": 1.0,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 25,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4, "skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": false, "default_image": "normal", "has_canvas_bonus": false}]
-						}]
-					}
-				},
-				{
-					"alg": "ga",
+					"alg": "rl",
 					"cost_time": 2.0,
 					"wait_time": 0.0,
 					"result": {
@@ -3507,7 +3510,7 @@ func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T
 	if recommendCalls.Load() != 1 {
 		t.Fatalf("expected one batched recommend call, got %d", recommendCalls.Load())
 	}
-	if len(request.ModelName) != 1 || request.ModelName[0] != "DFS+GA" {
+	if len(request.ModelName) != 1 || request.ModelName[0] != "RL" {
 		t.Fatalf("unexpected model names: %+v", request.ModelName)
 	}
 }
@@ -3529,7 +3532,7 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyProtocol(t *test
 			if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode recommend request: %v", err)
 			}
-			if payload["algorithm"] != "ga" {
+			if payload["algorithm"] != "rl" {
 				t.Fatalf("unexpected legacy algorithm: %+v", payload["algorithm"])
 			}
 			if strings.TrimSpace(payload["user_data_str"].(string)) == "" {
@@ -3605,7 +3608,7 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyWhenUserdataHash
 			if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode legacy recommend request: %v", err)
 			}
-			if payload["algorithm"] != "ga" {
+			if payload["algorithm"] != "rl" {
 				t.Fatalf("unexpected legacy algorithm: %+v", payload["algorithm"])
 			}
 			if strings.TrimSpace(payload["user_data_str"].(string)) == "" {

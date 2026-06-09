@@ -169,6 +169,8 @@ pjsk_render:
 
   deck_recommend:
     enabled: true
+    disable: true
+    disable_reason: ""
     service_base_url: "http://127.0.0.1:3000"    # required for deck recommend auto; runtime is HTTP-service-only
     # targets:
     #   - name: "vm100"        # same name as drawing target => share one machine queue

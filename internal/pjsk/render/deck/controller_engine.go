@@ -180,5 +180,6 @@ func (c *Controller) buildRecommendOption(region renderregion.Value, recType str
 	applyRecommendOptionOverrides(option, recType, query)
 	normalizeRecommendLiveOptions(option)
 	applyRecommendStrategyDefaults(option, recType)
+	applyEventRecommendRLDowngrade(option, recType)
 	return option, nil
 }

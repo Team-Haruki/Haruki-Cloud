@@ -141,6 +141,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		},
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
+			Disable:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Disable,
+			DisableReason:             harukiConfig.Cfg.PJSKRender.DeckRecommend.DisableReason,
 			ServiceBaseURL:            harukiConfig.Cfg.PJSKRender.DeckRecommend.ServiceBaseURL,
 			Targets:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Targets,
 			MasterdataDir:             resolveDeckRecommendMasterdataDir(),

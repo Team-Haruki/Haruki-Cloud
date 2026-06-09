@@ -88,6 +88,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 		Enabled:                   cfg.DeckRecommend.Enabled,
+		Disable:                   cfg.DeckRecommend.Disable,
+		DisableReason:             cfg.DeckRecommend.DisableReason,
 		ServiceBaseURL:            cfg.DeckRecommend.ServiceBaseURL,
 		Targets:                   slices.Clone(cfg.DeckRecommend.Targets),
 		SharedResources:           cfg.SharedUpstreamResources,
@@ -146,6 +148,8 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		skController.SetTrackerIntegration(cfg.Tracker, eventAdapter, assetHelper)
 		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
 			Enabled:                   cfg.DeckRecommend.Enabled,
+			Disable:                   cfg.DeckRecommend.Disable,
+			DisableReason:             cfg.DeckRecommend.DisableReason,
 			ServiceBaseURL:            cfg.DeckRecommend.ServiceBaseURL,
 			Targets:                   slices.Clone(cfg.DeckRecommend.Targets),
 			SharedResources:           cfg.SharedUpstreamResources,

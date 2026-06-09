@@ -90,6 +90,8 @@ type UserSnapshotConfig struct {
 
 type DeckRecommendConfig struct {
 	Enabled                   bool
+	Disable                   bool
+	DisableReason             string
 	ServiceBaseURL            string
 	Targets                   []upstream.TargetConfig
 	SharedResources           *upstream.SharedResources

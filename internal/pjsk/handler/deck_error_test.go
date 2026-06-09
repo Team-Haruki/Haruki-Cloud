@@ -64,6 +64,39 @@ func TestNormalizeDeckUserFacingError(t *testing.T) {
 	}
 }
 
+func TestExecuteDeckReturnsDisabledMessage(t *testing.T) {
+	msg, err := executeDeck(&RequestContext{
+		Ctx: context.Background(),
+		Cmd: &CommandRequest{
+			Module: parser.ModuleDeck,
+			Mode:   "deck-event",
+			Region: "jp",
+		},
+		App: &renderapp.App{
+			Config: renderapp.Config{
+				DeckRecommend: renderapp.DeckRecommendConfig{
+					Disable:       true,
+					DisableReason: "maintenance",
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("executeDeck returned error: %v", err)
+	}
+	if len(msg) != 1 || msg[0].Type != onebot11.TypeText {
+		t.Fatalf("unexpected message: %+v", msg)
+	}
+	data, ok := msg[0].Data.(onebot11.TextData)
+	if !ok {
+		t.Fatalf("unexpected text data: %+v", msg[0].Data)
+	}
+	want := "组卡功能已被禁用\n原因: maintenance\n如有组卡功能需求，请临时前往Haruki工具箱使用组卡推荐"
+	if data.Text != want {
+		t.Fatalf("unexpected disabled message:\n%s", data.Text)
+	}
+}
+
 func TestNormalizeDeckUserFacingErrorForEventMusicNotFound(t *testing.T) {
 	err := normalizeDeckUserFacingErrorForCommand(errString("failed to search music by title or alias: music not found: 虾ex"), "jp", "deck-event")
 	assertReplayErrorText(t, err, "当前区服没有该歌曲")

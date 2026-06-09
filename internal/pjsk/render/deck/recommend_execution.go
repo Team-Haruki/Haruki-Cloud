@@ -9,6 +9,7 @@ func expandRecommendBatchOptions(recommender PjskDeckRecommender, recType string
 	if recommender == nil || option == nil {
 		return nil
 	}
+	option = normalizeEventRecommendRLOption(recType, option)
 	option = normalizeBonusExactSolverOption(recType, option)
 	if shouldTuneMysekaiRLGaOptions(recommender, recType, option) {
 		option = applyMysekaiRLTunedGaOptions(option)
@@ -45,6 +46,24 @@ func expandRecommendBatchOptions(recommender PjskDeckRecommender, recType string
 		appendOption(fallback)
 	}
 	return result
+}
+
+func applyEventRecommendRLDowngrade(option map[string]any, recType string) {
+	if option == nil || recType != "event" {
+		return
+	}
+	option["algorithm"] = "rl"
+	delete(option, recommendAlgorithmSubsetKey)
+	delete(option, "ga_options")
+}
+
+func normalizeEventRecommendRLOption(recType string, option map[string]any) map[string]any {
+	if option == nil || recType != "event" {
+		return option
+	}
+	copied := cloneRecommendOption(option)
+	applyEventRecommendRLDowngrade(copied, recType)
+	return copied
 }
 
 func normalizeBonusExactSolverOption(recType string, option map[string]any) map[string]any {

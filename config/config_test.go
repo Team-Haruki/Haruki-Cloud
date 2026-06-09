@@ -137,6 +137,8 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", "/data/haruki/cache/sk_forecast_cache.json")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", "http://127.0.0.1:48080")
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_REFRESH_INTERVAL", "5m")
+	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_DISABLE", "true")
+	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_DISABLE_REASON", "maintenance")
 	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ENABLED", "true")
 	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_FALLBACK", "true")
 	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_REFRESH_INTERVAL", "6m")
@@ -153,6 +155,12 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	}
 	if cfg.PJSKRender.DeckRecommend.MasterdataRefreshInterval != 5*time.Minute {
 		t.Fatalf("unexpected deck masterdata refresh interval: %v", cfg.PJSKRender.DeckRecommend.MasterdataRefreshInterval)
+	}
+	if !cfg.PJSKRender.DeckRecommend.Disable {
+		t.Fatalf("expected deck recommend disable override to be true")
+	}
+	if cfg.PJSKRender.DeckRecommend.DisableReason != "maintenance" {
+		t.Fatalf("unexpected deck recommend disable reason: %q", cfg.PJSKRender.DeckRecommend.DisableReason)
 	}
 	if cfg.PJSKRender.LocalMasterdata.RefreshInterval != 6*time.Minute {
 		t.Fatalf("unexpected local masterdata refresh interval: %v", cfg.PJSKRender.LocalMasterdata.RefreshInterval)

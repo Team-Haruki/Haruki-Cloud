@@ -187,10 +187,18 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		err = normalizeDeckUserFacingErrorForCommand(err, region, mode)
 	}()
 
+	if msg, disabled := deckRecommendDisabledMessage(rc); disabled {
+		return onebot11.Message{onebot11.Text(msg)}, nil
+	}
+
 	var data []byte
 	recommendType := ""
 	buildDoneText := func(q deck.AutoQuery) string {
-		return fmt.Sprintf("已处理%s。", formatDeckQuerySummary(q))
+		text := fmt.Sprintf("已处理%s。", formatDeckQuerySummary(q))
+		if q.RecommendType == "event" {
+			text += "\n如需更加精确、更快、更多可自定义参数的组卡功能，请前往Haruki工具箱使用组卡推荐功能"
+		}
+		return text
 	}
 	switch rc.Cmd.Mode {
 	case "deck-event":
@@ -352,6 +360,26 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, imageErr
 	}
 	return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
+}
+
+func deckRecommendDisabledMessage(rc *RequestContext) (string, bool) {
+	if rc == nil || rc.Cmd == nil || rc.App == nil || !isDeckRecommendMode(rc.Cmd.Mode) {
+		return "", false
+	}
+	if !rc.App.Config.DeckRecommend.Disable {
+		return "", false
+	}
+	reason := strings.TrimSpace(rc.App.Config.DeckRecommend.DisableReason)
+	return fmt.Sprintf("组卡功能已被禁用\n原因: %s\n如有组卡功能需求，请临时前往Haruki工具箱使用组卡推荐", reason), true
+}
+
+func isDeckRecommendMode(mode string) bool {
+	switch mode {
+	case "deck-event", "deck-challenge", "deck-no-event", "deck-bonus", "deck-mysekai":
+		return true
+	default:
+		return false
+	}
 }
 
 func preserveImplicitMysekaiWorldBloomMetadata(q *deck.AutoQuery) {

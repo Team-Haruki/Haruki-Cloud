@@ -205,6 +205,8 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", &cfg.PJSKRender.DeckRecommend.MasterdataDir)
 	envDuration("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.DeckRecommend.MasterdataRefreshInterval)
+	envBool("HARUKI_PJSK_RENDER_DECK_RECOMMEND_DISABLE", &cfg.PJSKRender.DeckRecommend.Disable)
+	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_DISABLE_REASON", &cfg.PJSKRender.DeckRecommend.DisableReason)
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ENABLED", &cfg.PJSKRender.LocalMasterdata.Enabled)
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_FALLBACK", &cfg.PJSKRender.LocalMasterdata.AllowFallback)
 	envDuration("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.LocalMasterdata.RefreshInterval)
@@ -289,6 +291,8 @@ type UserSnapshotConfig struct {
 
 type DeckRecommendConfig struct {
 	Enabled                   bool                    `yaml:"enabled"`
+	Disable                   bool                    `yaml:"disable"`
+	DisableReason             string                  `yaml:"disable_reason"`
 	ServiceBaseURL            string                  `yaml:"service_base_url"`
 	Targets                   []upstream.TargetConfig `yaml:"targets"`
 	MasterdataDir             string                  `yaml:"masterdata_dir"`

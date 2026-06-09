@@ -65,6 +65,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaigatecharacterlotterie"
 	"haruki-cloud/database/sekai/mysekaigatelevel"
 	"haruki-cloud/database/sekai/mysekaigatematerialgroup"
+	"haruki-cloud/database/sekai/mysekaihousingcompetition"
 	"haruki-cloud/database/sekai/mysekaiitem"
 	"haruki-cloud/database/sekai/mysekaimaterial"
 	"haruki-cloud/database/sekai/mysekaimaterialgamecharacterrelation"
@@ -210,6 +211,7 @@ func checkColumn(t, c string) error {
 			mysekaigatecharacterlotterie.Table:          mysekaigatecharacterlotterie.ValidColumn,
 			mysekaigatelevel.Table:                      mysekaigatelevel.ValidColumn,
 			mysekaigatematerialgroup.Table:              mysekaigatematerialgroup.ValidColumn,
+			mysekaihousingcompetition.Table:             mysekaihousingcompetition.ValidColumn,
 			mysekaiitem.Table:                           mysekaiitem.ValidColumn,
 			mysekaimaterial.Table:                       mysekaimaterial.ValidColumn,
 			mysekaimaterialgamecharacterrelation.Table:  mysekaimaterialgamecharacterrelation.ValidColumn,

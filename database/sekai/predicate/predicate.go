@@ -183,6 +183,9 @@ type Mysekaigatelevel func(*sql.Selector)
 // Mysekaigatematerialgroup is the predicate function for mysekaigatematerialgroup builders.
 type Mysekaigatematerialgroup func(*sql.Selector)
 
+// Mysekaihousingcompetition is the predicate function for mysekaihousingcompetition builders.
+type Mysekaihousingcompetition func(*sql.Selector)
+
 // Mysekaiitem is the predicate function for mysekaiitem builders.
 type Mysekaiitem func(*sql.Selector)
 

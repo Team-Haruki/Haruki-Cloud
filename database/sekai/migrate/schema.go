@@ -1529,6 +1529,33 @@ var (
 			},
 		},
 	}
+	// MysekaihousingcompetitionsColumns holds the columns for the "mysekaihousingcompetitions" table.
+	MysekaihousingcompetitionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "submit_start_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "review_start_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "submit_end_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "aggregate_at", Type: field.TypeInt64, Nullable: true},
+		{Name: "background_image_assetbundle_file_name", Type: field.TypeString, Nullable: true},
+		{Name: "back_number_accent_color_code", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaihousingcompetitionsTable holds the schema information for the "mysekaihousingcompetitions" table.
+	MysekaihousingcompetitionsTable = &schema.Table{
+		Name:       "mysekaihousingcompetitions",
+		Columns:    MysekaihousingcompetitionsColumns,
+		PrimaryKey: []*schema.Column{MysekaihousingcompetitionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaihousingcompetition_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaihousingcompetitionsColumns[1], MysekaihousingcompetitionsColumns[10]},
+			},
+		},
+	}
 	// MysekaiitemsColumns holds the columns for the "mysekaiitems" table.
 	MysekaiitemsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2078,6 +2105,7 @@ var (
 		MysekaigatecharacterlotteriesTable,
 		MysekaigatelevelsTable,
 		MysekaigatematerialgroupsTable,
+		MysekaihousingcompetitionsTable,
 		MysekaiitemsTable,
 		MysekaimaterialsTable,
 		MysekaimaterialgamecharacterrelationsTable,
@@ -2278,6 +2306,9 @@ func init() {
 	}
 	MysekaigatematerialgroupsTable.Annotation = &entsql.Annotation{
 		Table: "mysekaigatematerialgroups",
+	}
+	MysekaihousingcompetitionsTable.Annotation = &entsql.Annotation{
+		Table: "mysekaihousingcompetitions",
 	}
 	MysekaiitemsTable.Annotation = &entsql.Annotation{
 		Table: "mysekaiitems",

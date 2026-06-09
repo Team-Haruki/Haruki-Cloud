@@ -130,6 +130,8 @@ type Tx struct {
 	Mysekaigatelevel *MysekaigatelevelClient
 	// Mysekaigatematerialgroup is the client for interacting with the Mysekaigatematerialgroup builders.
 	Mysekaigatematerialgroup *MysekaigatematerialgroupClient
+	// Mysekaihousingcompetition is the client for interacting with the Mysekaihousingcompetition builders.
+	Mysekaihousingcompetition *MysekaihousingcompetitionClient
 	// Mysekaiitem is the client for interacting with the Mysekaiitem builders.
 	Mysekaiitem *MysekaiitemClient
 	// Mysekaimaterial is the client for interacting with the Mysekaimaterial builders.
@@ -360,6 +362,7 @@ func (tx *Tx) init() {
 	tx.Mysekaigatecharacterlotterie = NewMysekaigatecharacterlotterieClient(tx.config)
 	tx.Mysekaigatelevel = NewMysekaigatelevelClient(tx.config)
 	tx.Mysekaigatematerialgroup = NewMysekaigatematerialgroupClient(tx.config)
+	tx.Mysekaihousingcompetition = NewMysekaihousingcompetitionClient(tx.config)
 	tx.Mysekaiitem = NewMysekaiitemClient(tx.config)
 	tx.Mysekaimaterial = NewMysekaimaterialClient(tx.config)
 	tx.Mysekaimaterialgamecharacterrelation = NewMysekaimaterialgamecharacterrelationClient(tx.config)

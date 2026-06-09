@@ -70,6 +70,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaigatecharacterlotterie"
 	"haruki-cloud/database/sekai/mysekaigatelevel"
 	"haruki-cloud/database/sekai/mysekaigatematerialgroup"
+	"haruki-cloud/database/sekai/mysekaihousingcompetition"
 	"haruki-cloud/database/sekai/mysekaiitem"
 	"haruki-cloud/database/sekai/mysekaimaterial"
 	"haruki-cloud/database/sekai/mysekaimaterialgamecharacterrelation"
@@ -219,6 +220,8 @@ type Client struct {
 	Mysekaigatelevel *MysekaigatelevelClient
 	// Mysekaigatematerialgroup is the client for interacting with the Mysekaigatematerialgroup builders.
 	Mysekaigatematerialgroup *MysekaigatematerialgroupClient
+	// Mysekaihousingcompetition is the client for interacting with the Mysekaihousingcompetition builders.
+	Mysekaihousingcompetition *MysekaihousingcompetitionClient
 	// Mysekaiitem is the client for interacting with the Mysekaiitem builders.
 	Mysekaiitem *MysekaiitemClient
 	// Mysekaimaterial is the client for interacting with the Mysekaimaterial builders.
@@ -329,6 +332,7 @@ func (c *Client) init() {
 	c.Mysekaigatecharacterlotterie = NewMysekaigatecharacterlotterieClient(c.config)
 	c.Mysekaigatelevel = NewMysekaigatelevelClient(c.config)
 	c.Mysekaigatematerialgroup = NewMysekaigatematerialgroupClient(c.config)
+	c.Mysekaihousingcompetition = NewMysekaihousingcompetitionClient(c.config)
 	c.Mysekaiitem = NewMysekaiitemClient(c.config)
 	c.Mysekaimaterial = NewMysekaimaterialClient(c.config)
 	c.Mysekaimaterialgamecharacterrelation = NewMysekaimaterialgamecharacterrelationClient(c.config)
@@ -500,6 +504,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Mysekaigatecharacterlotterie:          NewMysekaigatecharacterlotterieClient(cfg),
 		Mysekaigatelevel:                      NewMysekaigatelevelClient(cfg),
 		Mysekaigatematerialgroup:              NewMysekaigatematerialgroupClient(cfg),
+		Mysekaihousingcompetition:             NewMysekaihousingcompetitionClient(cfg),
 		Mysekaiitem:                           NewMysekaiitemClient(cfg),
 		Mysekaimaterial:                       NewMysekaimaterialClient(cfg),
 		Mysekaimaterialgamecharacterrelation:  NewMysekaimaterialgamecharacterrelationClient(cfg),
@@ -598,6 +603,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Mysekaigatecharacterlotterie:          NewMysekaigatecharacterlotterieClient(cfg),
 		Mysekaigatelevel:                      NewMysekaigatelevelClient(cfg),
 		Mysekaigatematerialgroup:              NewMysekaigatematerialgroupClient(cfg),
+		Mysekaihousingcompetition:             NewMysekaihousingcompetitionClient(cfg),
 		Mysekaiitem:                           NewMysekaiitemClient(cfg),
 		Mysekaimaterial:                       NewMysekaimaterialClient(cfg),
 		Mysekaimaterialgamecharacterrelation:  NewMysekaimaterialgamecharacterrelationClient(cfg),
@@ -663,12 +669,13 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Mysekaifixturemaingenre, c.Mysekaifixtureonlydisassemblematerial,
 		c.Mysekaifixturesubgenre, c.Mysekaifixturetag, c.Mysekaigamecharacterunitgroup,
 		c.Mysekaigate, c.Mysekaigatecharacterlotterie, c.Mysekaigatelevel,
-		c.Mysekaigatematerialgroup, c.Mysekaiitem, c.Mysekaimaterial,
-		c.Mysekaimaterialgamecharacterrelation, c.Mysekaimusicrecord,
-		c.Mysekaimusicrecordcategorie, c.Mysekaiphenomenabackgroundcolor,
-		c.Mysekaiphenomenon, c.Mysekaisiteharvestfixture, c.Ngword, c.Outsidecharacter,
-		c.Playerframe, c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill,
-		c.Stamp, c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
+		c.Mysekaigatematerialgroup, c.Mysekaihousingcompetition, c.Mysekaiitem,
+		c.Mysekaimaterial, c.Mysekaimaterialgamecharacterrelation,
+		c.Mysekaimusicrecord, c.Mysekaimusicrecordcategorie,
+		c.Mysekaiphenomenabackgroundcolor, c.Mysekaiphenomenon,
+		c.Mysekaisiteharvestfixture, c.Ngword, c.Outsidecharacter, c.Playerframe,
+		c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill, c.Stamp,
+		c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
 		c.Worldbloomsupportdeckbonuse,
 	} {
 		n.Use(hooks...)
@@ -695,12 +702,13 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Mysekaifixturemaingenre, c.Mysekaifixtureonlydisassemblematerial,
 		c.Mysekaifixturesubgenre, c.Mysekaifixturetag, c.Mysekaigamecharacterunitgroup,
 		c.Mysekaigate, c.Mysekaigatecharacterlotterie, c.Mysekaigatelevel,
-		c.Mysekaigatematerialgroup, c.Mysekaiitem, c.Mysekaimaterial,
-		c.Mysekaimaterialgamecharacterrelation, c.Mysekaimusicrecord,
-		c.Mysekaimusicrecordcategorie, c.Mysekaiphenomenabackgroundcolor,
-		c.Mysekaiphenomenon, c.Mysekaisiteharvestfixture, c.Ngword, c.Outsidecharacter,
-		c.Playerframe, c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill,
-		c.Stamp, c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
+		c.Mysekaigatematerialgroup, c.Mysekaihousingcompetition, c.Mysekaiitem,
+		c.Mysekaimaterial, c.Mysekaimaterialgamecharacterrelation,
+		c.Mysekaimusicrecord, c.Mysekaimusicrecordcategorie,
+		c.Mysekaiphenomenabackgroundcolor, c.Mysekaiphenomenon,
+		c.Mysekaisiteharvestfixture, c.Ngword, c.Outsidecharacter, c.Playerframe,
+		c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill, c.Stamp,
+		c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
 		c.Worldbloomsupportdeckbonuse,
 	} {
 		n.Intercept(interceptors...)
@@ -828,6 +836,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Mysekaigatelevel.mutate(ctx, m)
 	case *MysekaigatematerialgroupMutation:
 		return c.Mysekaigatematerialgroup.mutate(ctx, m)
+	case *MysekaihousingcompetitionMutation:
+		return c.Mysekaihousingcompetition.mutate(ctx, m)
 	case *MysekaiitemMutation:
 		return c.Mysekaiitem.mutate(ctx, m)
 	case *MysekaimaterialMutation:
@@ -8720,6 +8730,139 @@ func (c *MysekaigatematerialgroupClient) mutate(ctx context.Context, m *Mysekaig
 	}
 }
 
+// MysekaihousingcompetitionClient is a client for the Mysekaihousingcompetition schema.
+type MysekaihousingcompetitionClient struct {
+	config
+}
+
+// NewMysekaihousingcompetitionClient returns a client for the Mysekaihousingcompetition from the given config.
+func NewMysekaihousingcompetitionClient(c config) *MysekaihousingcompetitionClient {
+	return &MysekaihousingcompetitionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaihousingcompetition.Hooks(f(g(h())))`.
+func (c *MysekaihousingcompetitionClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaihousingcompetition = append(c.hooks.Mysekaihousingcompetition, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaihousingcompetition.Intercept(f(g(h())))`.
+func (c *MysekaihousingcompetitionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaihousingcompetition = append(c.inters.Mysekaihousingcompetition, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaihousingcompetition entity.
+func (c *MysekaihousingcompetitionClient) Create() *MysekaihousingcompetitionCreate {
+	mutation := newMysekaihousingcompetitionMutation(c.config, OpCreate)
+	return &MysekaihousingcompetitionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaihousingcompetition entities.
+func (c *MysekaihousingcompetitionClient) CreateBulk(builders ...*MysekaihousingcompetitionCreate) *MysekaihousingcompetitionCreateBulk {
+	return &MysekaihousingcompetitionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaihousingcompetitionClient) MapCreateBulk(slice any, setFunc func(*MysekaihousingcompetitionCreate, int)) *MysekaihousingcompetitionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaihousingcompetitionCreateBulk{err: fmt.Errorf("calling to MysekaihousingcompetitionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaihousingcompetitionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaihousingcompetitionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaihousingcompetition.
+func (c *MysekaihousingcompetitionClient) Update() *MysekaihousingcompetitionUpdate {
+	mutation := newMysekaihousingcompetitionMutation(c.config, OpUpdate)
+	return &MysekaihousingcompetitionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaihousingcompetitionClient) UpdateOne(_m *Mysekaihousingcompetition) *MysekaihousingcompetitionUpdateOne {
+	mutation := newMysekaihousingcompetitionMutation(c.config, OpUpdateOne, withMysekaihousingcompetition(_m))
+	return &MysekaihousingcompetitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaihousingcompetitionClient) UpdateOneID(id int) *MysekaihousingcompetitionUpdateOne {
+	mutation := newMysekaihousingcompetitionMutation(c.config, OpUpdateOne, withMysekaihousingcompetitionID(id))
+	return &MysekaihousingcompetitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaihousingcompetition.
+func (c *MysekaihousingcompetitionClient) Delete() *MysekaihousingcompetitionDelete {
+	mutation := newMysekaihousingcompetitionMutation(c.config, OpDelete)
+	return &MysekaihousingcompetitionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaihousingcompetitionClient) DeleteOne(_m *Mysekaihousingcompetition) *MysekaihousingcompetitionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaihousingcompetitionClient) DeleteOneID(id int) *MysekaihousingcompetitionDeleteOne {
+	builder := c.Delete().Where(mysekaihousingcompetition.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaihousingcompetitionDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaihousingcompetition.
+func (c *MysekaihousingcompetitionClient) Query() *MysekaihousingcompetitionQuery {
+	return &MysekaihousingcompetitionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaihousingcompetition},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaihousingcompetition entity by its id.
+func (c *MysekaihousingcompetitionClient) Get(ctx context.Context, id int) (*Mysekaihousingcompetition, error) {
+	return c.Query().Where(mysekaihousingcompetition.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaihousingcompetitionClient) GetX(ctx context.Context, id int) *Mysekaihousingcompetition {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaihousingcompetitionClient) Hooks() []Hook {
+	return c.hooks.Mysekaihousingcompetition
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaihousingcompetitionClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaihousingcompetition
+}
+
+func (c *MysekaihousingcompetitionClient) mutate(ctx context.Context, m *MysekaihousingcompetitionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaihousingcompetitionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaihousingcompetitionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaihousingcompetitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaihousingcompetitionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaihousingcompetition mutation op: %q", m.Op())
+	}
+}
+
 // MysekaiitemClient is a client for the Mysekaiitem schema.
 type MysekaiitemClient struct {
 	config
@@ -11398,12 +11541,13 @@ type (
 		Mysekaifixtureonlydisassemblematerial, Mysekaifixturesubgenre,
 		Mysekaifixturetag, Mysekaigamecharacterunitgroup, Mysekaigate,
 		Mysekaigatecharacterlotterie, Mysekaigatelevel, Mysekaigatematerialgroup,
-		Mysekaiitem, Mysekaimaterial, Mysekaimaterialgamecharacterrelation,
-		Mysekaimusicrecord, Mysekaimusicrecordcategorie,
-		Mysekaiphenomenabackgroundcolor, Mysekaiphenomenon, Mysekaisiteharvestfixture,
-		Ngword, Outsidecharacter, Playerframe, Playerframegroup, Resourceboxe,
-		Shopitem, Skill, Stamp, Virtuallive, Worldbloom,
-		Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse []ent.Hook
+		Mysekaihousingcompetition, Mysekaiitem, Mysekaimaterial,
+		Mysekaimaterialgamecharacterrelation, Mysekaimusicrecord,
+		Mysekaimusicrecordcategorie, Mysekaiphenomenabackgroundcolor,
+		Mysekaiphenomenon, Mysekaisiteharvestfixture, Ngword, Outsidecharacter,
+		Playerframe, Playerframegroup, Resourceboxe, Shopitem, Skill, Stamp,
+		Virtuallive, Worldbloom, Worldbloomdifferentattributebonuse,
+		Worldbloomsupportdeckbonuse []ent.Hook
 	}
 	inters struct {
 		Area, Areaitem, Areaitemlevel, Bond, Bondshonor, Boostitem, Card, Cardcostume3D,
@@ -11421,12 +11565,12 @@ type (
 		Mysekaifixtureonlydisassemblematerial, Mysekaifixturesubgenre,
 		Mysekaifixturetag, Mysekaigamecharacterunitgroup, Mysekaigate,
 		Mysekaigatecharacterlotterie, Mysekaigatelevel, Mysekaigatematerialgroup,
-		Mysekaiitem, Mysekaimaterial, Mysekaimaterialgamecharacterrelation,
-		Mysekaimusicrecord, Mysekaimusicrecordcategorie,
-		Mysekaiphenomenabackgroundcolor, Mysekaiphenomenon, Mysekaisiteharvestfixture,
-		Ngword, Outsidecharacter, Playerframe, Playerframegroup, Resourceboxe,
-		Shopitem, Skill, Stamp, Virtuallive, Worldbloom,
-		Worldbloomdifferentattributebonuse,
+		Mysekaihousingcompetition, Mysekaiitem, Mysekaimaterial,
+		Mysekaimaterialgamecharacterrelation, Mysekaimusicrecord,
+		Mysekaimusicrecordcategorie, Mysekaiphenomenabackgroundcolor,
+		Mysekaiphenomenon, Mysekaisiteharvestfixture, Ngword, Outsidecharacter,
+		Playerframe, Playerframegroup, Resourceboxe, Shopitem, Skill, Stamp,
+		Virtuallive, Worldbloom, Worldbloomdifferentattributebonuse,
 		Worldbloomsupportdeckbonuse []ent.Interceptor
 	}
 )

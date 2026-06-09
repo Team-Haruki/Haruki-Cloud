@@ -66,6 +66,7 @@ import (
 	"haruki-cloud/database/sekai/mysekaigatecharacterlotterie"
 	"haruki-cloud/database/sekai/mysekaigatelevel"
 	"haruki-cloud/database/sekai/mysekaigatematerialgroup"
+	"haruki-cloud/database/sekai/mysekaihousingcompetition"
 	"haruki-cloud/database/sekai/mysekaiitem"
 	"haruki-cloud/database/sekai/mysekaimaterial"
 	"haruki-cloud/database/sekai/mysekaimaterialgamecharacterrelation"
@@ -161,6 +162,7 @@ const (
 	TypeMysekaigatecharacterlotterie          = "Mysekaigatecharacterlotterie"
 	TypeMysekaigatelevel                      = "Mysekaigatelevel"
 	TypeMysekaigatematerialgroup              = "Mysekaigatematerialgroup"
+	TypeMysekaihousingcompetition             = "Mysekaihousingcompetition"
 	TypeMysekaiitem                           = "Mysekaiitem"
 	TypeMysekaimaterial                       = "Mysekaimaterial"
 	TypeMysekaimaterialgamecharacterrelation  = "Mysekaimaterialgamecharacterrelation"
@@ -62587,6 +62589,1165 @@ func (m *MysekaigatematerialgroupMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *MysekaigatematerialgroupMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Mysekaigatematerialgroup edge %s", name)
+}
+
+// MysekaihousingcompetitionMutation represents an operation that mutates the Mysekaihousingcompetition nodes in the graph.
+type MysekaihousingcompetitionMutation struct {
+	config
+	op                                     Op
+	typ                                    string
+	id                                     *int
+	game_id                                *int64
+	addgame_id                             *int64
+	name                                   *string
+	description                            *string
+	submit_start_at                        *int64
+	addsubmit_start_at                     *int64
+	review_start_at                        *int64
+	addreview_start_at                     *int64
+	submit_end_at                          *int64
+	addsubmit_end_at                       *int64
+	aggregate_at                           *int64
+	addaggregate_at                        *int64
+	background_image_assetbundle_file_name *string
+	back_number_accent_color_code          *string
+	server_region                          *string
+	clearedFields                          map[string]struct{}
+	done                                   bool
+	oldValue                               func(context.Context) (*Mysekaihousingcompetition, error)
+	predicates                             []predicate.Mysekaihousingcompetition
+}
+
+var _ ent.Mutation = (*MysekaihousingcompetitionMutation)(nil)
+
+// mysekaihousingcompetitionOption allows management of the mutation configuration using functional options.
+type mysekaihousingcompetitionOption func(*MysekaihousingcompetitionMutation)
+
+// newMysekaihousingcompetitionMutation creates new mutation for the Mysekaihousingcompetition entity.
+func newMysekaihousingcompetitionMutation(c config, op Op, opts ...mysekaihousingcompetitionOption) *MysekaihousingcompetitionMutation {
+	m := &MysekaihousingcompetitionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMysekaihousingcompetition,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMysekaihousingcompetitionID sets the ID field of the mutation.
+func withMysekaihousingcompetitionID(id int) mysekaihousingcompetitionOption {
+	return func(m *MysekaihousingcompetitionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Mysekaihousingcompetition
+		)
+		m.oldValue = func(ctx context.Context) (*Mysekaihousingcompetition, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Mysekaihousingcompetition.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMysekaihousingcompetition sets the old Mysekaihousingcompetition of the mutation.
+func withMysekaihousingcompetition(node *Mysekaihousingcompetition) mysekaihousingcompetitionOption {
+	return func(m *MysekaihousingcompetitionMutation) {
+		m.oldValue = func(context.Context) (*Mysekaihousingcompetition, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MysekaihousingcompetitionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MysekaihousingcompetitionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("sekai: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MysekaihousingcompetitionMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MysekaihousingcompetitionMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Mysekaihousingcompetition.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetGameID sets the "game_id" field.
+func (m *MysekaihousingcompetitionMutation) SetGameID(i int64) {
+	m.game_id = &i
+	m.addgame_id = nil
+}
+
+// GameID returns the value of the "game_id" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) GameID() (r int64, exists bool) {
+	v := m.game_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGameID returns the old "game_id" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldGameID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGameID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGameID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGameID: %w", err)
+	}
+	return oldValue.GameID, nil
+}
+
+// AddGameID adds i to the "game_id" field.
+func (m *MysekaihousingcompetitionMutation) AddGameID(i int64) {
+	if m.addgame_id != nil {
+		*m.addgame_id += i
+	} else {
+		m.addgame_id = &i
+	}
+}
+
+// AddedGameID returns the value that was added to the "game_id" field in this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedGameID() (r int64, exists bool) {
+	v := m.addgame_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearGameID clears the value of the "game_id" field.
+func (m *MysekaihousingcompetitionMutation) ClearGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	m.clearedFields[mysekaihousingcompetition.FieldGameID] = struct{}{}
+}
+
+// GameIDCleared returns if the "game_id" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) GameIDCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldGameID]
+	return ok
+}
+
+// ResetGameID resets all changes to the "game_id" field.
+func (m *MysekaihousingcompetitionMutation) ResetGameID() {
+	m.game_id = nil
+	m.addgame_id = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldGameID)
+}
+
+// SetName sets the "name" field.
+func (m *MysekaihousingcompetitionMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *MysekaihousingcompetitionMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[mysekaihousingcompetition.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) NameCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *MysekaihousingcompetitionMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldName)
+}
+
+// SetDescription sets the "description" field.
+func (m *MysekaihousingcompetitionMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *MysekaihousingcompetitionMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[mysekaihousingcompetition.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *MysekaihousingcompetitionMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldDescription)
+}
+
+// SetSubmitStartAt sets the "submit_start_at" field.
+func (m *MysekaihousingcompetitionMutation) SetSubmitStartAt(i int64) {
+	m.submit_start_at = &i
+	m.addsubmit_start_at = nil
+}
+
+// SubmitStartAt returns the value of the "submit_start_at" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) SubmitStartAt() (r int64, exists bool) {
+	v := m.submit_start_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubmitStartAt returns the old "submit_start_at" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldSubmitStartAt(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubmitStartAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubmitStartAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubmitStartAt: %w", err)
+	}
+	return oldValue.SubmitStartAt, nil
+}
+
+// AddSubmitStartAt adds i to the "submit_start_at" field.
+func (m *MysekaihousingcompetitionMutation) AddSubmitStartAt(i int64) {
+	if m.addsubmit_start_at != nil {
+		*m.addsubmit_start_at += i
+	} else {
+		m.addsubmit_start_at = &i
+	}
+}
+
+// AddedSubmitStartAt returns the value that was added to the "submit_start_at" field in this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedSubmitStartAt() (r int64, exists bool) {
+	v := m.addsubmit_start_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSubmitStartAt clears the value of the "submit_start_at" field.
+func (m *MysekaihousingcompetitionMutation) ClearSubmitStartAt() {
+	m.submit_start_at = nil
+	m.addsubmit_start_at = nil
+	m.clearedFields[mysekaihousingcompetition.FieldSubmitStartAt] = struct{}{}
+}
+
+// SubmitStartAtCleared returns if the "submit_start_at" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) SubmitStartAtCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldSubmitStartAt]
+	return ok
+}
+
+// ResetSubmitStartAt resets all changes to the "submit_start_at" field.
+func (m *MysekaihousingcompetitionMutation) ResetSubmitStartAt() {
+	m.submit_start_at = nil
+	m.addsubmit_start_at = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldSubmitStartAt)
+}
+
+// SetReviewStartAt sets the "review_start_at" field.
+func (m *MysekaihousingcompetitionMutation) SetReviewStartAt(i int64) {
+	m.review_start_at = &i
+	m.addreview_start_at = nil
+}
+
+// ReviewStartAt returns the value of the "review_start_at" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) ReviewStartAt() (r int64, exists bool) {
+	v := m.review_start_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReviewStartAt returns the old "review_start_at" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldReviewStartAt(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReviewStartAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReviewStartAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReviewStartAt: %w", err)
+	}
+	return oldValue.ReviewStartAt, nil
+}
+
+// AddReviewStartAt adds i to the "review_start_at" field.
+func (m *MysekaihousingcompetitionMutation) AddReviewStartAt(i int64) {
+	if m.addreview_start_at != nil {
+		*m.addreview_start_at += i
+	} else {
+		m.addreview_start_at = &i
+	}
+}
+
+// AddedReviewStartAt returns the value that was added to the "review_start_at" field in this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedReviewStartAt() (r int64, exists bool) {
+	v := m.addreview_start_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearReviewStartAt clears the value of the "review_start_at" field.
+func (m *MysekaihousingcompetitionMutation) ClearReviewStartAt() {
+	m.review_start_at = nil
+	m.addreview_start_at = nil
+	m.clearedFields[mysekaihousingcompetition.FieldReviewStartAt] = struct{}{}
+}
+
+// ReviewStartAtCleared returns if the "review_start_at" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) ReviewStartAtCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldReviewStartAt]
+	return ok
+}
+
+// ResetReviewStartAt resets all changes to the "review_start_at" field.
+func (m *MysekaihousingcompetitionMutation) ResetReviewStartAt() {
+	m.review_start_at = nil
+	m.addreview_start_at = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldReviewStartAt)
+}
+
+// SetSubmitEndAt sets the "submit_end_at" field.
+func (m *MysekaihousingcompetitionMutation) SetSubmitEndAt(i int64) {
+	m.submit_end_at = &i
+	m.addsubmit_end_at = nil
+}
+
+// SubmitEndAt returns the value of the "submit_end_at" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) SubmitEndAt() (r int64, exists bool) {
+	v := m.submit_end_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubmitEndAt returns the old "submit_end_at" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldSubmitEndAt(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubmitEndAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubmitEndAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubmitEndAt: %w", err)
+	}
+	return oldValue.SubmitEndAt, nil
+}
+
+// AddSubmitEndAt adds i to the "submit_end_at" field.
+func (m *MysekaihousingcompetitionMutation) AddSubmitEndAt(i int64) {
+	if m.addsubmit_end_at != nil {
+		*m.addsubmit_end_at += i
+	} else {
+		m.addsubmit_end_at = &i
+	}
+}
+
+// AddedSubmitEndAt returns the value that was added to the "submit_end_at" field in this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedSubmitEndAt() (r int64, exists bool) {
+	v := m.addsubmit_end_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSubmitEndAt clears the value of the "submit_end_at" field.
+func (m *MysekaihousingcompetitionMutation) ClearSubmitEndAt() {
+	m.submit_end_at = nil
+	m.addsubmit_end_at = nil
+	m.clearedFields[mysekaihousingcompetition.FieldSubmitEndAt] = struct{}{}
+}
+
+// SubmitEndAtCleared returns if the "submit_end_at" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) SubmitEndAtCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldSubmitEndAt]
+	return ok
+}
+
+// ResetSubmitEndAt resets all changes to the "submit_end_at" field.
+func (m *MysekaihousingcompetitionMutation) ResetSubmitEndAt() {
+	m.submit_end_at = nil
+	m.addsubmit_end_at = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldSubmitEndAt)
+}
+
+// SetAggregateAt sets the "aggregate_at" field.
+func (m *MysekaihousingcompetitionMutation) SetAggregateAt(i int64) {
+	m.aggregate_at = &i
+	m.addaggregate_at = nil
+}
+
+// AggregateAt returns the value of the "aggregate_at" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) AggregateAt() (r int64, exists bool) {
+	v := m.aggregate_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAggregateAt returns the old "aggregate_at" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldAggregateAt(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAggregateAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAggregateAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAggregateAt: %w", err)
+	}
+	return oldValue.AggregateAt, nil
+}
+
+// AddAggregateAt adds i to the "aggregate_at" field.
+func (m *MysekaihousingcompetitionMutation) AddAggregateAt(i int64) {
+	if m.addaggregate_at != nil {
+		*m.addaggregate_at += i
+	} else {
+		m.addaggregate_at = &i
+	}
+}
+
+// AddedAggregateAt returns the value that was added to the "aggregate_at" field in this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedAggregateAt() (r int64, exists bool) {
+	v := m.addaggregate_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearAggregateAt clears the value of the "aggregate_at" field.
+func (m *MysekaihousingcompetitionMutation) ClearAggregateAt() {
+	m.aggregate_at = nil
+	m.addaggregate_at = nil
+	m.clearedFields[mysekaihousingcompetition.FieldAggregateAt] = struct{}{}
+}
+
+// AggregateAtCleared returns if the "aggregate_at" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) AggregateAtCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldAggregateAt]
+	return ok
+}
+
+// ResetAggregateAt resets all changes to the "aggregate_at" field.
+func (m *MysekaihousingcompetitionMutation) ResetAggregateAt() {
+	m.aggregate_at = nil
+	m.addaggregate_at = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldAggregateAt)
+}
+
+// SetBackgroundImageAssetbundleFileName sets the "background_image_assetbundle_file_name" field.
+func (m *MysekaihousingcompetitionMutation) SetBackgroundImageAssetbundleFileName(s string) {
+	m.background_image_assetbundle_file_name = &s
+}
+
+// BackgroundImageAssetbundleFileName returns the value of the "background_image_assetbundle_file_name" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) BackgroundImageAssetbundleFileName() (r string, exists bool) {
+	v := m.background_image_assetbundle_file_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBackgroundImageAssetbundleFileName returns the old "background_image_assetbundle_file_name" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldBackgroundImageAssetbundleFileName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBackgroundImageAssetbundleFileName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBackgroundImageAssetbundleFileName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBackgroundImageAssetbundleFileName: %w", err)
+	}
+	return oldValue.BackgroundImageAssetbundleFileName, nil
+}
+
+// ClearBackgroundImageAssetbundleFileName clears the value of the "background_image_assetbundle_file_name" field.
+func (m *MysekaihousingcompetitionMutation) ClearBackgroundImageAssetbundleFileName() {
+	m.background_image_assetbundle_file_name = nil
+	m.clearedFields[mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName] = struct{}{}
+}
+
+// BackgroundImageAssetbundleFileNameCleared returns if the "background_image_assetbundle_file_name" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) BackgroundImageAssetbundleFileNameCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName]
+	return ok
+}
+
+// ResetBackgroundImageAssetbundleFileName resets all changes to the "background_image_assetbundle_file_name" field.
+func (m *MysekaihousingcompetitionMutation) ResetBackgroundImageAssetbundleFileName() {
+	m.background_image_assetbundle_file_name = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName)
+}
+
+// SetBackNumberAccentColorCode sets the "back_number_accent_color_code" field.
+func (m *MysekaihousingcompetitionMutation) SetBackNumberAccentColorCode(s string) {
+	m.back_number_accent_color_code = &s
+}
+
+// BackNumberAccentColorCode returns the value of the "back_number_accent_color_code" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) BackNumberAccentColorCode() (r string, exists bool) {
+	v := m.back_number_accent_color_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBackNumberAccentColorCode returns the old "back_number_accent_color_code" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldBackNumberAccentColorCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBackNumberAccentColorCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBackNumberAccentColorCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBackNumberAccentColorCode: %w", err)
+	}
+	return oldValue.BackNumberAccentColorCode, nil
+}
+
+// ClearBackNumberAccentColorCode clears the value of the "back_number_accent_color_code" field.
+func (m *MysekaihousingcompetitionMutation) ClearBackNumberAccentColorCode() {
+	m.back_number_accent_color_code = nil
+	m.clearedFields[mysekaihousingcompetition.FieldBackNumberAccentColorCode] = struct{}{}
+}
+
+// BackNumberAccentColorCodeCleared returns if the "back_number_accent_color_code" field was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) BackNumberAccentColorCodeCleared() bool {
+	_, ok := m.clearedFields[mysekaihousingcompetition.FieldBackNumberAccentColorCode]
+	return ok
+}
+
+// ResetBackNumberAccentColorCode resets all changes to the "back_number_accent_color_code" field.
+func (m *MysekaihousingcompetitionMutation) ResetBackNumberAccentColorCode() {
+	m.back_number_accent_color_code = nil
+	delete(m.clearedFields, mysekaihousingcompetition.FieldBackNumberAccentColorCode)
+}
+
+// SetServerRegion sets the "server_region" field.
+func (m *MysekaihousingcompetitionMutation) SetServerRegion(s string) {
+	m.server_region = &s
+}
+
+// ServerRegion returns the value of the "server_region" field in the mutation.
+func (m *MysekaihousingcompetitionMutation) ServerRegion() (r string, exists bool) {
+	v := m.server_region
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServerRegion returns the old "server_region" field's value of the Mysekaihousingcompetition entity.
+// If the Mysekaihousingcompetition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MysekaihousingcompetitionMutation) OldServerRegion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServerRegion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServerRegion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServerRegion: %w", err)
+	}
+	return oldValue.ServerRegion, nil
+}
+
+// ResetServerRegion resets all changes to the "server_region" field.
+func (m *MysekaihousingcompetitionMutation) ResetServerRegion() {
+	m.server_region = nil
+}
+
+// Where appends a list predicates to the MysekaihousingcompetitionMutation builder.
+func (m *MysekaihousingcompetitionMutation) Where(ps ...predicate.Mysekaihousingcompetition) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MysekaihousingcompetitionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MysekaihousingcompetitionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Mysekaihousingcompetition, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MysekaihousingcompetitionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MysekaihousingcompetitionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Mysekaihousingcompetition).
+func (m *MysekaihousingcompetitionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MysekaihousingcompetitionMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.game_id != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldGameID)
+	}
+	if m.name != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldDescription)
+	}
+	if m.submit_start_at != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldSubmitStartAt)
+	}
+	if m.review_start_at != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldReviewStartAt)
+	}
+	if m.submit_end_at != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldSubmitEndAt)
+	}
+	if m.aggregate_at != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldAggregateAt)
+	}
+	if m.background_image_assetbundle_file_name != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName)
+	}
+	if m.back_number_accent_color_code != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldBackNumberAccentColorCode)
+	}
+	if m.server_region != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldServerRegion)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MysekaihousingcompetitionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case mysekaihousingcompetition.FieldGameID:
+		return m.GameID()
+	case mysekaihousingcompetition.FieldName:
+		return m.Name()
+	case mysekaihousingcompetition.FieldDescription:
+		return m.Description()
+	case mysekaihousingcompetition.FieldSubmitStartAt:
+		return m.SubmitStartAt()
+	case mysekaihousingcompetition.FieldReviewStartAt:
+		return m.ReviewStartAt()
+	case mysekaihousingcompetition.FieldSubmitEndAt:
+		return m.SubmitEndAt()
+	case mysekaihousingcompetition.FieldAggregateAt:
+		return m.AggregateAt()
+	case mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName:
+		return m.BackgroundImageAssetbundleFileName()
+	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
+		return m.BackNumberAccentColorCode()
+	case mysekaihousingcompetition.FieldServerRegion:
+		return m.ServerRegion()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MysekaihousingcompetitionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case mysekaihousingcompetition.FieldGameID:
+		return m.OldGameID(ctx)
+	case mysekaihousingcompetition.FieldName:
+		return m.OldName(ctx)
+	case mysekaihousingcompetition.FieldDescription:
+		return m.OldDescription(ctx)
+	case mysekaihousingcompetition.FieldSubmitStartAt:
+		return m.OldSubmitStartAt(ctx)
+	case mysekaihousingcompetition.FieldReviewStartAt:
+		return m.OldReviewStartAt(ctx)
+	case mysekaihousingcompetition.FieldSubmitEndAt:
+		return m.OldSubmitEndAt(ctx)
+	case mysekaihousingcompetition.FieldAggregateAt:
+		return m.OldAggregateAt(ctx)
+	case mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName:
+		return m.OldBackgroundImageAssetbundleFileName(ctx)
+	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
+		return m.OldBackNumberAccentColorCode(ctx)
+	case mysekaihousingcompetition.FieldServerRegion:
+		return m.OldServerRegion(ctx)
+	}
+	return nil, fmt.Errorf("unknown Mysekaihousingcompetition field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MysekaihousingcompetitionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case mysekaihousingcompetition.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGameID(v)
+		return nil
+	case mysekaihousingcompetition.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case mysekaihousingcompetition.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case mysekaihousingcompetition.FieldSubmitStartAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubmitStartAt(v)
+		return nil
+	case mysekaihousingcompetition.FieldReviewStartAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReviewStartAt(v)
+		return nil
+	case mysekaihousingcompetition.FieldSubmitEndAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubmitEndAt(v)
+		return nil
+	case mysekaihousingcompetition.FieldAggregateAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAggregateAt(v)
+		return nil
+	case mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBackgroundImageAssetbundleFileName(v)
+		return nil
+	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBackNumberAccentColorCode(v)
+		return nil
+	case mysekaihousingcompetition.FieldServerRegion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServerRegion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Mysekaihousingcompetition field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedFields() []string {
+	var fields []string
+	if m.addgame_id != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldGameID)
+	}
+	if m.addsubmit_start_at != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldSubmitStartAt)
+	}
+	if m.addreview_start_at != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldReviewStartAt)
+	}
+	if m.addsubmit_end_at != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldSubmitEndAt)
+	}
+	if m.addaggregate_at != nil {
+		fields = append(fields, mysekaihousingcompetition.FieldAggregateAt)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MysekaihousingcompetitionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case mysekaihousingcompetition.FieldGameID:
+		return m.AddedGameID()
+	case mysekaihousingcompetition.FieldSubmitStartAt:
+		return m.AddedSubmitStartAt()
+	case mysekaihousingcompetition.FieldReviewStartAt:
+		return m.AddedReviewStartAt()
+	case mysekaihousingcompetition.FieldSubmitEndAt:
+		return m.AddedSubmitEndAt()
+	case mysekaihousingcompetition.FieldAggregateAt:
+		return m.AddedAggregateAt()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MysekaihousingcompetitionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case mysekaihousingcompetition.FieldGameID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGameID(v)
+		return nil
+	case mysekaihousingcompetition.FieldSubmitStartAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSubmitStartAt(v)
+		return nil
+	case mysekaihousingcompetition.FieldReviewStartAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReviewStartAt(v)
+		return nil
+	case mysekaihousingcompetition.FieldSubmitEndAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSubmitEndAt(v)
+		return nil
+	case mysekaihousingcompetition.FieldAggregateAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAggregateAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Mysekaihousingcompetition numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MysekaihousingcompetitionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(mysekaihousingcompetition.FieldGameID) {
+		fields = append(fields, mysekaihousingcompetition.FieldGameID)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldName) {
+		fields = append(fields, mysekaihousingcompetition.FieldName)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldDescription) {
+		fields = append(fields, mysekaihousingcompetition.FieldDescription)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldSubmitStartAt) {
+		fields = append(fields, mysekaihousingcompetition.FieldSubmitStartAt)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldReviewStartAt) {
+		fields = append(fields, mysekaihousingcompetition.FieldReviewStartAt)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldSubmitEndAt) {
+		fields = append(fields, mysekaihousingcompetition.FieldSubmitEndAt)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldAggregateAt) {
+		fields = append(fields, mysekaihousingcompetition.FieldAggregateAt)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName) {
+		fields = append(fields, mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName)
+	}
+	if m.FieldCleared(mysekaihousingcompetition.FieldBackNumberAccentColorCode) {
+		fields = append(fields, mysekaihousingcompetition.FieldBackNumberAccentColorCode)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MysekaihousingcompetitionMutation) ClearField(name string) error {
+	switch name {
+	case mysekaihousingcompetition.FieldGameID:
+		m.ClearGameID()
+		return nil
+	case mysekaihousingcompetition.FieldName:
+		m.ClearName()
+		return nil
+	case mysekaihousingcompetition.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case mysekaihousingcompetition.FieldSubmitStartAt:
+		m.ClearSubmitStartAt()
+		return nil
+	case mysekaihousingcompetition.FieldReviewStartAt:
+		m.ClearReviewStartAt()
+		return nil
+	case mysekaihousingcompetition.FieldSubmitEndAt:
+		m.ClearSubmitEndAt()
+		return nil
+	case mysekaihousingcompetition.FieldAggregateAt:
+		m.ClearAggregateAt()
+		return nil
+	case mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName:
+		m.ClearBackgroundImageAssetbundleFileName()
+		return nil
+	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
+		m.ClearBackNumberAccentColorCode()
+		return nil
+	}
+	return fmt.Errorf("unknown Mysekaihousingcompetition nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MysekaihousingcompetitionMutation) ResetField(name string) error {
+	switch name {
+	case mysekaihousingcompetition.FieldGameID:
+		m.ResetGameID()
+		return nil
+	case mysekaihousingcompetition.FieldName:
+		m.ResetName()
+		return nil
+	case mysekaihousingcompetition.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case mysekaihousingcompetition.FieldSubmitStartAt:
+		m.ResetSubmitStartAt()
+		return nil
+	case mysekaihousingcompetition.FieldReviewStartAt:
+		m.ResetReviewStartAt()
+		return nil
+	case mysekaihousingcompetition.FieldSubmitEndAt:
+		m.ResetSubmitEndAt()
+		return nil
+	case mysekaihousingcompetition.FieldAggregateAt:
+		m.ResetAggregateAt()
+		return nil
+	case mysekaihousingcompetition.FieldBackgroundImageAssetbundleFileName:
+		m.ResetBackgroundImageAssetbundleFileName()
+		return nil
+	case mysekaihousingcompetition.FieldBackNumberAccentColorCode:
+		m.ResetBackNumberAccentColorCode()
+		return nil
+	case mysekaihousingcompetition.FieldServerRegion:
+		m.ResetServerRegion()
+		return nil
+	}
+	return fmt.Errorf("unknown Mysekaihousingcompetition field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MysekaihousingcompetitionMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MysekaihousingcompetitionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MysekaihousingcompetitionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MysekaihousingcompetitionMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MysekaihousingcompetitionMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Mysekaihousingcompetition unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MysekaihousingcompetitionMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Mysekaihousingcompetition edge %s", name)
 }
 
 // MysekaiitemMutation represents an operation that mutates the Mysekaiitem nodes in the graph.

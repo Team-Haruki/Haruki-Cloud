@@ -96,6 +96,9 @@ func TestDBMasterdataFileMapIncludesMysekaiPhenomena(t *testing.T) {
 	if got := fileToTable["mysekaiPhenomenaBackgroundColors.json"]; got != "mysekaiphenomenabackgroundcolors" {
 		t.Fatalf("unexpected db table mapping for mysekaiPhenomenaBackgroundColors.json: %q", got)
 	}
+	if got := fileToTable["mysekaiHousingCompetitions.json"]; got != "mysekaihousingcompetitions" {
+		t.Fatalf("unexpected db table mapping for mysekaiHousingCompetitions.json: %q", got)
+	}
 }
 
 func TestLocalMasterdataStoreLoadObjectPreservesLargeIntegerPrecision(t *testing.T) {

@@ -716,6 +716,18 @@ func (f MysekaigatematerialgroupFunc) Mutate(ctx context.Context, m sekai.Mutati
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MysekaigatematerialgroupMutation", m)
 }
 
+// The MysekaihousingcompetitionFunc type is an adapter to allow the use of ordinary
+// function as Mysekaihousingcompetition mutator.
+type MysekaihousingcompetitionFunc func(context.Context, *sekai.MysekaihousingcompetitionMutation) (sekai.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MysekaihousingcompetitionFunc) Mutate(ctx context.Context, m sekai.Mutation) (sekai.Value, error) {
+	if mv, ok := m.(*sekai.MysekaihousingcompetitionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *sekai.MysekaihousingcompetitionMutation", m)
+}
+
 // The MysekaiitemFunc type is an adapter to allow the use of ordinary
 // function as Mysekaiitem mutator.
 type MysekaiitemFunc func(context.Context, *sekai.MysekaiitemMutation) (sekai.Value, error)

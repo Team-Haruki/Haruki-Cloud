@@ -80,3 +80,39 @@ func TestIsMySekaiDeckRegionAllowedAlwaysAllowsCNDeckMode(t *testing.T) {
 		t.Fatal("expected deck-mysekai to bypass CN mysekai whitelist")
 	}
 }
+
+func TestIsMySekaiRegionAllowedForModeAllowsCNHousingSK(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil
+	t.Cleanup(func() {
+		harukiConfig.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	allowed := isMySekaiRegionAllowedForMode(&CommandRequest{
+		Mode:              "mysekai-housing-sk",
+		RequesterPlatform: "qq",
+		RequesterGroupID:  "123456",
+		RequesterBotID:    "1919810",
+	}, "cn")
+	if !allowed {
+		t.Fatal("expected mysekai-housing-sk to bypass CN mysekai whitelist")
+	}
+}
+
+func TestIsMySekaiRegionAllowedForModeStillRejectsOtherCNMySekai(t *testing.T) {
+	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
+	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil
+	t.Cleanup(func() {
+		harukiConfig.Cfg.PJSK.AllowCNMySekai = original
+	})
+
+	allowed := isMySekaiRegionAllowedForMode(&CommandRequest{
+		Mode:              "mysekai-resource",
+		RequesterPlatform: "qq",
+		RequesterGroupID:  "123456",
+		RequesterBotID:    "1919810",
+	}, "cn")
+	if allowed {
+		t.Fatal("expected other CN mysekai modes to keep using the whitelist")
+	}
+}

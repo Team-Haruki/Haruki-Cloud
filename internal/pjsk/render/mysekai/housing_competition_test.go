@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	stdjson "encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,6 +15,7 @@ import (
 	"time"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 )
 
 type fakeHousingCompetitionListClient struct {
@@ -51,6 +55,16 @@ func (f *fakeHousingCompetitionListClient) GetMySekaiHousingThumbnail(server, im
 func TestBuildHousingCompetitionLineSamplesAndRanksByReviewCount(t *testing.T) {
 	root := t.TempDir()
 	writeHousingCompetitionMasterdata(t, root)
+	assetRoot := t.TempDir()
+	bannerPath := filepath.Join(assetRoot, "asset", "jp-assets", "ondemand", "mysekai", "effect", "ui_anim", "mysekai_housing_competition", "lottery_result", "bg_competition_contest_1.png")
+	if err := os.MkdirAll(filepath.Dir(bannerPath), 0o755); err != nil {
+		t.Fatalf("mkdir banner asset: %v", err)
+	}
+	bannerBytes := []byte("banner-image")
+	if err := os.WriteFile(bannerPath, bannerBytes, 0o644); err != nil {
+		t.Fatalf("write banner asset: %v", err)
+	}
+	statsCachePath := filepath.Join(t.TempDir(), "housing_stats.json")
 
 	api := &fakeHousingCompetitionListClient{
 		responses: []stdjson.RawMessage{
@@ -65,7 +79,11 @@ func TestBuildHousingCompetitionLineSamplesAndRanksByReviewCount(t *testing.T) {
 		},
 	}
 
-	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: root, AllowFallback: true})
+	controller := NewController(nil, nil, renderregion.JP, assets.NewAssetHelper(assetRoot, nil), MasterdataOptions{
+		LocalDir:                         root,
+		AllowFallback:                    true,
+		HousingCompetitionStatsCachePath: statsCachePath,
+	})
 	result, err := controller.BuildHousingCompetitionLine(context.Background(), api, HousingCompetitionLineQuery{
 		Region:               "jp",
 		Ranks:                []int{1, 2, 3},
@@ -104,6 +122,17 @@ func TestBuildHousingCompetitionLineSamplesAndRanksByReviewCount(t *testing.T) {
 	if result.Request.BannerImagePath == nil || *result.Request.BannerImagePath != "asset/jp-assets/ondemand/mysekai/effect/ui_anim/mysekai_housing_competition/lottery_result/bg_competition_contest_1.png" {
 		t.Fatalf("unexpected banner path: %v", result.Request.BannerImagePath)
 	}
+	if result.Request.BannerImageBase64 == nil || *result.Request.BannerImageBase64 != base64.StdEncoding.EncodeToString(bannerBytes) {
+		t.Fatalf("unexpected banner base64: %v", result.Request.BannerImageBase64)
+	}
+	cachedBannerPath := filepath.Join(filepath.Dir(statsCachePath), housingCompetitionBannerCacheDirName, "asset", "jp-assets", "ondemand", "mysekai", "effect", "ui_anim", "mysekai_housing_competition", "lottery_result", "bg_competition_contest_1.png")
+	cachedBanner, err := os.ReadFile(cachedBannerPath)
+	if err != nil {
+		t.Fatalf("read cached banner: %v", err)
+	}
+	if !reflect.DeepEqual(cachedBanner, bannerBytes) {
+		t.Fatalf("unexpected cached banner bytes: %q", string(cachedBanner))
+	}
 	requestPayload, err := stdjson.Marshal(result.Request)
 	if err != nil {
 		t.Fatalf("marshal drawing request: %v", err)
@@ -122,6 +151,105 @@ func TestBuildHousingCompetitionLineSamplesAndRanksByReviewCount(t *testing.T) {
 	}
 	if len(api.thumbnailCalls) != 3 {
 		t.Fatalf("thumbnail calls = %+v", api.thumbnailCalls)
+	}
+}
+
+func TestResolveHousingCompetitionRefreshTargetUsesReviewWindow(t *testing.T) {
+	root := t.TempDir()
+	writeHousingCompetitionMasterdataWithWindow(t, root, 1000, 2000, 3000)
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: root, AllowFallback: true})
+
+	beforeReview, err := controller.resolveHousingCompetitionRefreshTarget(HousingCompetitionLineQuery{
+		Region: "jp",
+		Now:    time.UnixMilli(1500),
+	})
+	if err != nil {
+		t.Fatalf("resolve before review: %v", err)
+	}
+	if beforeReview.Active || beforeReview.NextStartAt != 2000 {
+		t.Fatalf("unexpected before-review target: %+v", beforeReview)
+	}
+	if _, err := controller.resolveHousingCompetition(HousingCompetitionLineQuery{
+		Region: "jp",
+		Now:    time.UnixMilli(1500),
+	}); err == nil || err.Error() != "当前没有正在进行的烤森百景活动" {
+		t.Fatalf("resolveHousingCompetition should not select a competition before reviewStartAt")
+	}
+
+	active, err := controller.resolveHousingCompetitionRefreshTarget(HousingCompetitionLineQuery{
+		Region: "jp",
+		Now:    time.UnixMilli(2500),
+	})
+	if err != nil {
+		t.Fatalf("resolve active: %v", err)
+	}
+	if !active.Active || active.Competition.ID != 25 {
+		t.Fatalf("unexpected active target: %+v", active)
+	}
+
+	afterAggregate, err := controller.resolveHousingCompetitionRefreshTarget(HousingCompetitionLineQuery{
+		Region: "jp",
+		Now:    time.UnixMilli(3500),
+	})
+	if err != nil {
+		t.Fatalf("resolve after aggregate: %v", err)
+	}
+	if afterAggregate.Active || afterAggregate.NextStartAt != 0 {
+		t.Fatalf("unexpected after-aggregate target: %+v", afterAggregate)
+	}
+}
+
+func TestHousingCompetitionBannerCacheFallsBackToAssetsBaseURL(t *testing.T) {
+	root := t.TempDir()
+	writeHousingCompetitionMasterdata(t, root)
+	cachePath := filepath.Join(t.TempDir(), "housing_stats.json")
+	bannerBytes := []byte("remote-banner")
+
+	var requestedPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		if r.URL.Path != "/jp-assets/ondemand/mysekai/effect/ui_anim/mysekai_housing_competition/lottery_result/bg_competition_contest_1.png" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write(bannerBytes)
+	}))
+	defer server.Close()
+
+	api := &fakeHousingCompetitionListClient{
+		responses: []stdjson.RawMessage{
+			stdjson.RawMessage(`{"lotteryAt":2000,"results":[
+				{"mysekaiHousingCompetitionId":25,"isDisplayable":true,"mysekaiOwnerUserId":101,"mysekaiOwnerUserName":"owner-a","userMysekaiHousingCompetitionName":"entry-a","thumbnailPath":"hash/a","submittedAt":1100,"reviewCount":10}
+			]}`),
+		},
+	}
+	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{
+		LocalDir:                         root,
+		AllowFallback:                    true,
+		AssetsBaseURL:                    server.URL,
+		HousingCompetitionStatsCachePath: cachePath,
+	})
+	result, err := controller.BuildHousingCompetitionLine(context.Background(), api, HousingCompetitionLineQuery{
+		Region: "jp",
+		Ranks:  []int{1},
+		Now:    time.UnixMilli(1500),
+	})
+	if err != nil {
+		t.Fatalf("BuildHousingCompetitionLine() error = %v", err)
+	}
+	if result.Request.BannerImageBase64 == nil || *result.Request.BannerImageBase64 != base64.StdEncoding.EncodeToString(bannerBytes) {
+		t.Fatalf("unexpected remote banner base64: %v", result.Request.BannerImageBase64)
+	}
+	if requestedPath == "" {
+		t.Fatalf("expected banner fetch from assets base url")
+	}
+	cachedBannerPath := filepath.Join(filepath.Dir(cachePath), housingCompetitionBannerCacheDirName, "asset", "jp-assets", "ondemand", "mysekai", "effect", "ui_anim", "mysekai_housing_competition", "lottery_result", "bg_competition_contest_1.png")
+	cachedBanner, err := os.ReadFile(cachedBannerPath)
+	if err != nil {
+		t.Fatalf("read cached remote banner: %v", err)
+	}
+	if !reflect.DeepEqual(cachedBanner, bannerBytes) {
+		t.Fatalf("unexpected cached remote banner bytes: %q", string(cachedBanner))
 	}
 }
 
@@ -184,21 +312,26 @@ func TestHousingCompetitionStatsCachePersistsWithoutOwnerUserID(t *testing.T) {
 
 func writeHousingCompetitionMasterdata(t *testing.T, root string) {
 	t.Helper()
+	writeHousingCompetitionMasterdataWithWindow(t, root, 1000, 1000, 3000)
+}
+
+func writeHousingCompetitionMasterdataWithWindow(t *testing.T, root string, submitStartAt, reviewStartAt, aggregateAt int64) {
+	t.Helper()
 	if err := os.MkdirAll(filepath.Join(root, "jp"), 0o755); err != nil {
 		t.Fatalf("mkdir masterdata: %v", err)
 	}
-	masterdata := `[
+	masterdata := fmt.Sprintf(`[
 		{
 			"id":25,
 			"name":"ブロックアート",
 			"description":"test",
-			"submitStartAt":1000,
-			"reviewStartAt":1000,
+			"submitStartAt":%d,
+			"reviewStartAt":%d,
 			"submitEndAt":2500,
-			"aggregateAt":3000,
+			"aggregateAt":%d,
 			"backgroundImageAssetbundleFileName":"bg_competition_contest_1"
 		}
-	]`
+	]`, submitStartAt, reviewStartAt, aggregateAt)
 	if err := os.WriteFile(filepath.Join(root, "jp", "mysekaiHousingCompetitions.json"), []byte(masterdata), 0o644); err != nil {
 		t.Fatalf("write masterdata: %v", err)
 	}

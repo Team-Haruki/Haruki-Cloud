@@ -61,6 +61,9 @@ func TestMysekaiAliasRemap(t *testing.T) {
 	if !slices.Contains(housingSK.Commands, "/百景sk") {
 		t.Fatalf("housing sk aliases should contain /百景sk")
 	}
+	if !slices.Contains(housingSK.Commands, "/bjsk") {
+		t.Fatalf("housing sk aliases should contain /bjsk")
+	}
 }
 
 func TestMysekaiOverviewHandleBuildsCommandRequest(t *testing.T) {

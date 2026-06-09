@@ -135,6 +135,16 @@ func TestListBotRoutes(t *testing.T) {
 	if !contains(mysekaiPreviewRoute.Commands, "/烤森预览") {
 		t.Fatalf("expected mysekai/preview commands to include /烤森预览, got %v", mysekaiPreviewRoute.Commands)
 	}
+
+	mysekaiHousingSKRoute, ok := byPath["mysekai/housing-sk"]
+	if !ok {
+		t.Fatal("expected mysekai/housing-sk route to exist")
+	}
+	for _, command := range []string{"/bjsk", "/cnbjsk"} {
+		if !contains(mysekaiHousingSKRoute.Commands, command) {
+			t.Fatalf("expected mysekai/housing-sk commands to include %s, got %v", command, mysekaiHousingSKRoute.Commands)
+		}
+	}
 }
 
 func contains(items []string, target string) bool {

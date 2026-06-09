@@ -379,7 +379,7 @@ func (sekaiHandlers) MysekaiHousingSKHandle() HarukiSekaiCommandHandler {
 			Path: "mysekai/housing-sk",
 			Commands: []string{
 				"/百景sk", "/百景SK", "/烤森百景sk", "/烤森百景SK",
-				"/mysekai-housing-sk", "/mshsk",
+				"/mysekai-housing-sk", "/mshsk", "/bjsk",
 			},
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -695,7 +695,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, fmt.Errorf("mysekai service unavailable: mysekai controller is not configured")
 	}
 
-	if !isMySekaiRegionAllowed(rc.Cmd, regionWithDefault(rc.Cmd.Region)) {
+	if !isMySekaiRegionAllowedForMode(rc.Cmd, regionWithDefault(rc.Cmd.Region)) {
 		return mySekaiRegionUnavailableMessage(), nil
 	}
 

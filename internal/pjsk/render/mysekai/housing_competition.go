@@ -19,6 +19,7 @@ const (
 	DefaultHousingCompetitionRefreshInterval = 10 * time.Second
 	MaxHousingCompetitionRankCount           = 5
 	HousingCompetitionNotice                 = "基于统计得出结果并不一定精确，仅供参考"
+	housingCompetitionIdleCheckInterval      = time.Hour
 )
 
 type HousingCompetitionListClient interface {
@@ -78,6 +79,12 @@ type HousingCompetitionLineResult struct {
 	SampledAt   time.Time
 }
 
+type housingCompetitionRefreshTarget struct {
+	Competition HousingCompetitionInfo
+	Active      bool
+	NextStartAt int64
+}
+
 func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api HousingCompetitionListClient, query HousingCompetitionLineQuery) (*HousingCompetitionLineResult, error) {
 	if c == nil {
 		return nil, fmt.Errorf("mysekai controller is not initialized")
@@ -94,6 +101,7 @@ func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api Housin
 	if err := controller.ensureMasterdata(); err != nil {
 		return nil, err
 	}
+	controller.syncHousingCompetitionBannersFromMasterdata()
 
 	competition, err := controller.resolveHousingCompetition(query)
 	if err != nil {
@@ -129,15 +137,16 @@ func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api Housin
 	}
 
 	request := drawing.MysekaiHousingCompetitionRequest{
-		CompetitionID:   competition.ID,
-		Region:          region.String(),
-		Name:            strings.TrimSpace("烤森百景 " + competition.Name),
-		Description:     drawing.StringPtr(HousingCompetitionNotice),
-		BannerImagePath: stringPtrIfNotEmpty(competition.BannerImgPath),
-		SampleCount:     refreshedCount,
-		UniqueCount:     len(allEntries),
-		SampledAt:       sampledAt.UnixMilli(),
-		Entries:         requestEntries,
+		CompetitionID:     competition.ID,
+		Region:            region.String(),
+		Name:              strings.TrimSpace("烤森百景 " + competition.Name),
+		Description:       drawing.StringPtr(HousingCompetitionNotice),
+		BannerImagePath:   stringPtrIfNotEmpty(competition.BannerImgPath),
+		BannerImageBase64: controller.housingCompetitionBannerBase64(competition),
+		SampleCount:       refreshedCount,
+		UniqueCount:       len(allEntries),
+		SampledAt:         sampledAt.UnixMilli(),
+		Entries:           requestEntries,
 	}
 
 	return &HousingCompetitionLineResult{
@@ -171,6 +180,7 @@ func (c *Controller) RefreshHousingCompetitionStats(ctx context.Context, api Hou
 	if err := controller.ensureMasterdata(); err != nil {
 		return err
 	}
+	controller.syncHousingCompetitionBannersFromMasterdata()
 	competition, err := controller.resolveHousingCompetition(query)
 	if err != nil {
 		return err
@@ -184,20 +194,54 @@ func (c *Controller) StartHousingCompetitionStatsRefresh(ctx context.Context, ap
 		return
 	}
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = context.TODO()
 	}
 	interval := c.housingCompetitionStats.RefreshInterval()
+	if interval <= 0 {
+		interval = DefaultHousingCompetitionRefreshInterval
+	}
+	region = renderregion.WithDefault(renderregion.Normalize(region)).String()
 	go func() {
-		query := HousingCompetitionLineQuery{Region: region}
-		_ = c.RefreshHousingCompetitionStats(ctx, api, query)
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
 		for {
-			select {
-			case <-ctx.Done():
+			if err := ctx.Err(); err != nil {
 				return
-			case <-ticker.C:
-				_ = c.RefreshHousingCompetitionStats(ctx, api, query)
+			}
+
+			query := HousingCompetitionLineQuery{Region: region, Now: time.Now()}
+			controller := c.withRegion(region)
+			if err := controller.ensureMasterdata(); err != nil {
+				if waitHousingCompetitionSampleInterval(ctx, housingCompetitionIdleCheckInterval) != nil {
+					return
+				}
+				continue
+			}
+			controller.syncHousingCompetitionBannersFromMasterdata()
+
+			target, err := controller.resolveHousingCompetitionRefreshTarget(query)
+			if err != nil {
+				if waitHousingCompetitionSampleInterval(ctx, housingCompetitionIdleCheckInterval) != nil {
+					return
+				}
+				continue
+			}
+			if !target.Active {
+				wait := target.waitDuration(time.Now(), housingCompetitionIdleCheckInterval)
+				if wait <= 0 {
+					continue
+				}
+				if waitHousingCompetitionSampleInterval(ctx, wait) != nil {
+					return
+				}
+				continue
+			}
+
+			_, _, _, _ = controller.housingCompetitionStats.Refresh(ctx, api, region, target.Competition.ID, 1)
+			wait := target.activeRefreshWait(time.Now(), interval)
+			if wait <= 0 {
+				continue
+			}
+			if waitHousingCompetitionSampleInterval(ctx, wait) != nil {
+				return
 			}
 		}
 	}()
@@ -280,34 +324,90 @@ func (c *Controller) resolveHousingCompetition(query HousingCompetitionLineQuery
 		return HousingCompetitionInfo{}, fmt.Errorf("没有找到百景 housing_id=%d", query.HousingID)
 	}
 
+	target, err := c.resolveHousingCompetitionRefreshTarget(query)
+	if err != nil {
+		return HousingCompetitionInfo{}, err
+	}
+	if !target.Active {
+		return HousingCompetitionInfo{}, fmt.Errorf("当前没有正在进行的烤森百景活动")
+	}
+	return target.Competition, nil
+}
+
+func (c *Controller) resolveHousingCompetitionRefreshTarget(query HousingCompetitionLineQuery) (housingCompetitionRefreshTarget, error) {
+	items := c.masterdata.loadList("mysekaiHousingCompetitions.json")
+	if len(items) == 0 {
+		return housingCompetitionRefreshTarget{}, fmt.Errorf("mysekaiHousingCompetitions masterdata is not available")
+	}
+
 	now := query.Now
 	if now.IsZero() {
 		now = time.Now()
 	}
 	nowMs := now.UnixMilli()
-	var active HousingCompetitionInfo
+	var target housingCompetitionRefreshTarget
 	for _, item := range items {
 		info := c.housingCompetitionInfoFromMasterdata(item)
 		if info.ID == 0 {
 			continue
 		}
-		startAt := info.SubmitStartAt
-		if startAt == 0 || (info.ReviewStartAt > 0 && info.ReviewStartAt < startAt) {
-			startAt = info.ReviewStartAt
-		}
+		startAt := housingCompetitionListStartAt(info)
 		if startAt <= 0 || info.AggregateAt <= 0 {
 			continue
 		}
 		if nowMs >= startAt && nowMs < info.AggregateAt {
-			if active.ID == 0 || info.SubmitStartAt > active.SubmitStartAt || (info.SubmitStartAt == active.SubmitStartAt && info.ID > active.ID) {
-				active = info
+			if target.Competition.ID == 0 || startAt > housingCompetitionListStartAt(target.Competition) || (startAt == housingCompetitionListStartAt(target.Competition) && info.ID > target.Competition.ID) {
+				target.Competition = info
+				target.Active = true
 			}
+			continue
+		}
+		if startAt > nowMs && (target.NextStartAt == 0 || startAt < target.NextStartAt) {
+			target.NextStartAt = startAt
 		}
 	}
-	if active.ID == 0 {
-		return HousingCompetitionInfo{}, fmt.Errorf("当前没有进行中的烤森百景")
+	return target, nil
+}
+
+func housingCompetitionListStartAt(info HousingCompetitionInfo) int64 {
+	if info.ReviewStartAt > 0 {
+		return info.ReviewStartAt
 	}
-	return active, nil
+	return info.SubmitStartAt
+}
+
+func (t housingCompetitionRefreshTarget) waitDuration(now time.Time, fallback time.Duration) time.Duration {
+	if fallback <= 0 {
+		fallback = housingCompetitionIdleCheckInterval
+	}
+	if t.NextStartAt <= 0 {
+		return fallback
+	}
+	wait := time.UnixMilli(t.NextStartAt).Sub(now)
+	if wait <= 0 {
+		return 0
+	}
+	if wait > fallback {
+		return fallback
+	}
+	return wait
+}
+
+func (t housingCompetitionRefreshTarget) activeRefreshWait(now time.Time, interval time.Duration) time.Duration {
+	if interval <= 0 {
+		interval = DefaultHousingCompetitionRefreshInterval
+	}
+	if t.Competition.AggregateAt <= 0 {
+		return interval
+	}
+	untilEnd := time.UnixMilli(t.Competition.AggregateAt).Sub(now)
+	if untilEnd <= 0 {
+		return 0
+	}
+	if untilEnd < interval {
+		return untilEnd
+	}
+	return interval
 }
 
 func (c *Controller) housingCompetitionInfoFromMasterdata(item map[string]any) HousingCompetitionInfo {

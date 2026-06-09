@@ -84,6 +84,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		SekaiDSN:                          cfg.SekaiDSN,
 		LocalDir:                          localMasterdataDir,
 		AllowFallback:                     localMasterdataFallback && cfg.LocalMasterdata.AllowFallback,
+		AssetsBaseURL:                     cfg.AssetsBaseURL,
 		HousingCompetitionStatsCachePath:  cfg.MySekaiHousingCompetitionCachePath,
 		HousingCompetitionRefreshInterval: cfg.MySekaiHousingCompetitionRefreshInterval,
 	})

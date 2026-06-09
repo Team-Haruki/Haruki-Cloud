@@ -138,6 +138,11 @@ func NewController(drawingClient *drawing.HarukiDrawingClient, snapshot snapshot
 			mdOpts.HousingCompetitionStatsCachePath,
 			mdOpts.HousingCompetitionRefreshInterval,
 		),
+		housingCompetitionBanners: newHousingCompetitionBannerCache(
+			defaultHousingCompetitionBannerCacheDir(mdOpts.HousingCompetitionStatsCachePath),
+			assetHelper,
+			mdOpts.AssetsBaseURL,
+		),
 	}
 }
 

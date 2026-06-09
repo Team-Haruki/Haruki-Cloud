@@ -71,12 +71,14 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	for _, e := range eventEntities {
 		id := int(e.GameID)
 		eventMaster[id] = eventMasterEntry{
-			"id":              id,
-			"eventType":       e.EventType,
-			"assetbundleName": e.AssetbundleName,
-			"name":            e.Name,
-			"startAt":         float64(e.StartAt),
-			"closedAt":        float64(e.ClosedAt),
+			"id":                id,
+			"eventType":         e.EventType,
+			"assetbundleName":   e.AssetbundleName,
+			"name":              e.Name,
+			"startAt":           float64(e.StartAt),
+			"aggregateAt":       float64(e.AggregateAt),
+			"rankingAnnounceAt": float64(e.RankingAnnounceAt),
+			"closedAt":          float64(e.ClosedAt),
 		}
 		if boundaries := eventRecordRankBoundaries(e.EventRankingRewardRanges); len(boundaries) > 0 {
 			eventRankBoundaries[id] = boundaries
@@ -549,7 +551,7 @@ func buildEventRecordHonorRankDisplays(rawData *rendersnapshot.RawUserData, even
 
 	out := make(map[int]eventRecordHonorRankDisplay)
 	for eventID, tiers := range eventHonorTiers {
-		if !eventRecordClosed(eventMaster[eventID], now) {
+		if !eventRecordRankingSettled(eventMaster[eventID], now) {
 			continue
 		}
 		bestTier := 0
@@ -593,9 +595,15 @@ func collectEventRecordUserHonorIDs(rawData *rendersnapshot.RawUserData) map[int
 	return ids
 }
 
-func eventRecordClosed(master map[string]any, now int64) bool {
-	closedAt := int64Val(master, "closedAt")
-	return closedAt > 0 && now >= closedAt
+func eventRecordRankingSettled(master map[string]any, now int64) bool {
+	settledAt := int64Val(master, "rankingAnnounceAt")
+	if settledAt <= 0 {
+		settledAt = int64Val(master, "aggregateAt")
+	}
+	if settledAt <= 0 {
+		settledAt = int64Val(master, "closedAt")
+	}
+	return settledAt > 0 && now >= settledAt
 }
 
 func eventRecordRankNote(region renderregion.Value) *string {

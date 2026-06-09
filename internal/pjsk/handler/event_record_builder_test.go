@@ -935,7 +935,7 @@ func TestBuildEventRecordFromSnapshotOverlaysWorldBloomChapterSuiteRankAfterHono
 	}
 }
 
-func TestBuildEventRecordFromSnapshotDoesNotBackfillHonorRankBeforeClosed(t *testing.T) {
+func TestBuildEventRecordFromSnapshotDoesNotBackfillHonorRankBeforeRankingAnnounce(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_honor_open?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = sekaiClient.Close() })
@@ -957,8 +957,9 @@ func TestBuildEventRecordFromSnapshotDoesNotBackfillHonorRankBeforeClosed(t *tes
 		SetEventType("marathon").
 		SetName("Open Event").
 		SetAssetbundleName("honor_open").
-		SetStartAt(now.Add(-time.Hour).UnixMilli()).
-		SetAggregateAt(now.Add(time.Hour).UnixMilli()).
+		SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
+		SetAggregateAt(now.Add(-time.Hour).UnixMilli()).
+		SetRankingAnnounceAt(now.Add(time.Hour).UnixMilli()).
 		SetClosedAt(now.Add(2 * time.Hour).UnixMilli()).
 		SetEventRankingRewardRanges(rewardRanges).
 		Save(ctx); err != nil {
@@ -1003,7 +1004,158 @@ func TestBuildEventRecordFromSnapshotDoesNotBackfillHonorRankBeforeClosed(t *tes
 		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
 	}
 	if req.EventInfo[0].RankDisplay != nil || req.EventInfo[0].RankTier != nil {
-		t.Fatalf("expected open event to avoid honor rank fallback, got %+v", req.EventInfo[0])
+		t.Fatalf("expected event before ranking announce to avoid honor rank fallback, got %+v", req.EventInfo[0])
+	}
+}
+
+func TestBuildEventRecordFromSnapshotBackfillsHonorRankAfterRankingAnnounceBeforeClosed(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_honor_announced?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	now := time.Now()
+	rewardRanges, err := json.Marshal([]map[string]any{{
+		"fromRank": 4001,
+		"toRank":   5000,
+		"eventRankingRewardDetails": []map[string]any{
+			{"resourceType": "honor", "resourceId": 5005},
+		},
+	}})
+	if err != nil {
+		t.Fatalf("marshal reward ranges: %v", err)
+	}
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("cn").
+		SetGameID(9204).
+		SetEventType("marathon").
+		SetName("Announced Event").
+		SetAssetbundleName("honor_announced").
+		SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
+		SetAggregateAt(now.Add(-48 * time.Hour).UnixMilli()).
+		SetRankingAnnounceAt(now.Add(-47 * time.Hour).UnixMilli()).
+		SetClosedAt(now.Add(time.Hour).UnixMilli()).
+		SetEventRankingRewardRanges(rewardRanges).
+		Save(ctx); err != nil {
+		t.Fatalf("create event: %v", err)
+	}
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "cn",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "CN",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &rendersnapshot.RawUserData{
+				Now: now.UnixMilli(),
+				UserEvents: []rendersnapshot.RawUserEvent{
+					{EventID: 9204, EventPoint: 777777},
+				},
+				UserHonors: []rendersnapshot.RawUserHonor{
+					{HonorID: 5005, HonorLevel: 1},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].RankDisplay == nil || *req.EventInfo[0].RankDisplay != "T5000" {
+		t.Fatalf("expected announced event to backfill T5000, got %+v", req.EventInfo[0])
+	}
+	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
+		t.Fatalf("expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
+	}
+}
+
+func TestBuildEventRecordFromSnapshotBackfillsHonorRankAfterAggregateWhenRankingAnnounceMissing(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_event_record_honor_aggregate_fallback?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	now := time.Now()
+	rewardRanges, err := json.Marshal([]map[string]any{{
+		"fromRank": 4001,
+		"toRank":   5000,
+		"eventRankingRewardDetails": []map[string]any{
+			{"resourceType": "honor", "resourceId": 5005},
+		},
+	}})
+	if err != nil {
+		t.Fatalf("marshal reward ranges: %v", err)
+	}
+	if _, err := sekaiClient.Event.Create().
+		SetServerRegion("cn").
+		SetGameID(9205).
+		SetEventType("marathon").
+		SetName("Aggregate Fallback Event").
+		SetAssetbundleName("honor_aggregate_fallback").
+		SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
+		SetAggregateAt(now.Add(-time.Hour).UnixMilli()).
+		SetClosedAt(now.Add(time.Hour).UnixMilli()).
+		SetEventRankingRewardRanges(rewardRanges).
+		Save(ctx); err != nil {
+		t.Fatalf("create event: %v", err)
+	}
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Module: parser.ModuleEvent,
+		Mode:   "event-record",
+		Region: "cn",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Sekai:  sekaiClient,
+		Events: renderevent.NewController(nil, nil, nil),
+		Assets: assets.NewAssetHelper("", nil),
+		Snapshots: rendersnapshot.NewStaticSnapshotProvider(&eventRecordSnapshotStub{
+			detail: &drawing.DetailedProfileCardRequest{
+				ID:              "123456789",
+				Region:          "CN",
+				Nickname:        "Tester",
+				LeaderImagePath: "static_images/chara_icon/miku.png",
+			},
+			rawData: &rendersnapshot.RawUserData{
+				Now: now.UnixMilli(),
+				UserEvents: []rendersnapshot.RawUserEvent{
+					{EventID: 9205, EventPoint: 777777},
+				},
+				UserHonors: []rendersnapshot.RawUserHonor{
+					{HonorID: 5005, HonorLevel: 1},
+				},
+			},
+		}),
+	})
+
+	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
+	if err != nil {
+		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	}
+	if len(req.EventInfo) != 1 {
+		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	}
+	if req.EventInfo[0].RankDisplay == nil || *req.EventInfo[0].RankDisplay != "T5000" {
+		t.Fatalf("expected aggregate fallback event to backfill T5000, got %+v", req.EventInfo[0])
+	}
+	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
+		t.Fatalf("expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
 	}
 }
 

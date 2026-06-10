@@ -39,7 +39,7 @@ WL活动默认按章节单榜规划；加 总榜 时按活动总榜规划。
 不写歌曲时默认算虾 EXPERT、龙 HARD 和 野车；不写火数时默认算 5火 和 10火；不写卡组时默认使用最优卡组。`
 
 const eventPlannerLostAndFoundMusicID = 226
-const eventPlannerOmakaseMusicID = 10000
+const eventPlannerOmakaseMusicID = deckOmakaseMusicID
 
 type eventPlannerCommandParams struct {
 	EventID         int                         `json:"event_id,omitempty"`

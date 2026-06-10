@@ -484,6 +484,38 @@ func TestEventPlannerDefaultDragonUsesLostAndFound(t *testing.T) {
 	}
 }
 
+func TestEventPlannerOmakaseSongDoesNotRequireMusicController(t *testing.T) {
+	deckCtrl := newHandlerTestDeckController(t)
+	baseQuery := buildEventPlannerBaseDeckQuery(renderregion.JP, deckAutoQueryParams{MaxProfile: true})
+	req, err := buildEventPlannerSongDeckRequest(
+		deckCtrl,
+		&renderapp.App{},
+		renderregion.JP,
+		7,
+		baseQuery,
+		eventPlannerSongSelection{
+			Query:      "野车",
+			Difficulty: "master",
+			MusicID:    eventPlannerOmakaseMusicID,
+		},
+	)
+	if err != nil {
+		t.Fatalf("buildEventPlannerSongDeckRequest() error = %v", err)
+	}
+	if req.MusicID == nil || *req.MusicID != eventPlannerOmakaseMusicID {
+		t.Fatalf("unexpected music id: %+v", req.MusicID)
+	}
+	if req.MusicTitle == nil || !strings.Contains(*req.MusicTitle, "おまかせ") {
+		t.Fatalf("unexpected music title: %+v", req.MusicTitle)
+	}
+	if req.MusicCoverPath == nil || *req.MusicCoverPath != "static_images/omakase.png" {
+		t.Fatalf("unexpected music cover path: %+v", req.MusicCoverPath)
+	}
+	if len(req.DeckData) != 1 {
+		t.Fatalf("unexpected deck data: %+v", req.DeckData)
+	}
+}
+
 func TestEventPlannerDefaultsToRLAlgorithm(t *testing.T) {
 	params, err := parseEventPlannerParams("pt1200w", "/cn活动规划")
 	if err != nil {

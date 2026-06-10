@@ -11,8 +11,13 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
+const deckOmakaseMusicID = 10000
+
 func resolveDeckMusicSelection(q *deck.AutoQuery, app *renderapp.App) error {
 	if q == nil {
+		return nil
+	}
+	if q.MusicID != nil && *q.MusicID == deckOmakaseMusicID {
 		return nil
 	}
 	if app == nil || app.Music == nil {

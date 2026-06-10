@@ -160,11 +160,13 @@ type RecommendCard struct {
 // ── Remote engine ───────────────────────────────────────────────────────────
 
 const (
-	defaultMaxRetries              = 3
-	defaultRetryWaitTime           = time.Second
-	defaultMasterdataRefresh       = 5 * time.Minute
-	maxConsecutiveFailures   int64 = 5
-	circuitBreakerCooldown         = time.Minute
+	defaultMaxRetries                  = 3
+	defaultRetryWaitTime               = time.Second
+	defaultMasterdataRefresh           = 5 * time.Minute
+	maxConsecutiveFailures       int64 = 5
+	targetAssignmentSkipFailures       = 1
+	targetHealthProbeInterval          = 10 * time.Second
+	circuitBreakerCooldown             = time.Minute
 )
 
 type remoteEngineProvider struct {
@@ -201,8 +203,9 @@ type remoteTargetState struct {
 	musicMetaHash   string
 	readyGroup      singleflight.Group
 
-	consecutiveFailures atomic.Int64
-	lastFailureAtNanos  atomic.Int64
+	consecutiveFailures    atomic.Int64
+	lastFailureAtNanos     atomic.Int64
+	lastHealthProbeAtNanos atomic.Int64
 }
 
 type remoteExecution struct {

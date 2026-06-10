@@ -29,11 +29,17 @@ func (r *RemoteDeckRecommender) RecommendBatch(req RecommendRequest) ([]remoteBa
 	// Circuit breaker: reject early when service is consistently failing.
 	if failures := exec.state.consecutiveFailures.Load(); failures >= maxConsecutiveFailures {
 		if r.tryResetCircuitBreakerAfterCooldown(exec.state, failures) {
-			r.logger.Infof("circuit breaker auto-reset after cooldown; allowing request to proceed")
+			if r.logger != nil {
+				r.logger.Infof("circuit breaker auto-reset after cooldown; allowing request to proceed")
+			}
 		} else if r.tryResetCircuitBreakerOnHealthyService(exec.state, failures) {
-			r.logger.Infof("circuit breaker reset after successful health probe; allowing request to proceed")
+			if r.logger != nil {
+				r.logger.Infof("circuit breaker reset after successful health probe; allowing request to proceed")
+			}
 		} else {
-			r.logger.Warnf("circuit breaker open: %d consecutive failures, rejecting request", failures)
+			if r.logger != nil {
+				r.logger.Warnf("circuit breaker open: %d consecutive failures, rejecting request", failures)
+			}
 			return nil, fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures)
 		}
 	}
@@ -127,17 +133,23 @@ func firstRemoteBatchError(results []remoteBatchRecommendResult) error {
 func (r *RemoteDeckRecommender) recordSuccess(state *remoteTargetState) {
 	state.consecutiveFailures.Store(0)
 	state.lastFailureAtNanos.Store(0)
+	state.lastHealthProbeAtNanos.Store(0)
 }
 
 func (r *RemoteDeckRecommender) recordFailure(state *remoteTargetState) {
+	now := r.timeNow().UnixNano()
 	state.consecutiveFailures.Add(1)
-	state.lastFailureAtNanos.Store(r.timeNow().UnixNano())
+	state.lastFailureAtNanos.Store(now)
+	state.lastHealthProbeAtNanos.Store(now)
 }
 
 func (r *RemoteDeckRecommender) resetCircuitBreaker(state *remoteTargetState) {
 	state.consecutiveFailures.Store(0)
 	state.lastFailureAtNanos.Store(0)
-	r.logger.Infof("circuit breaker reset")
+	state.lastHealthProbeAtNanos.Store(0)
+	if r.logger != nil {
+		r.logger.Infof("circuit breaker reset")
+	}
 }
 
 func (r *RemoteDeckRecommender) tryResetCircuitBreakerAfterCooldown(state *remoteTargetState, failures int64) bool {
@@ -149,7 +161,9 @@ func (r *RemoteDeckRecommender) tryResetCircuitBreakerAfterCooldown(state *remot
 	if elapsed < circuitBreakerCooldown {
 		return false
 	}
-	r.logger.Infof("circuit breaker cooldown elapsed after %v; resetting from %d consecutive failures", elapsed, failures)
+	if r.logger != nil {
+		r.logger.Infof("circuit breaker cooldown elapsed after %v; resetting from %d consecutive failures", elapsed, failures)
+	}
 	r.resetCircuitBreaker(state)
 	return true
 }
@@ -158,7 +172,9 @@ func (r *RemoteDeckRecommender) tryResetCircuitBreakerOnHealthyService(state *re
 	if !r.healthCheck(state.target.BaseURL) {
 		return false
 	}
-	r.logger.Infof("circuit breaker health probe succeeded; resetting from %d consecutive failures", failures)
+	if r.logger != nil {
+		r.logger.Infof("circuit breaker health probe succeeded; resetting from %d consecutive failures", failures)
+	}
 	r.resetCircuitBreaker(state)
 	return true
 }

@@ -66,6 +66,39 @@ func TestPoolAcquirePrefersLowerPendingTarget(t *testing.T) {
 	}
 }
 
+func TestPoolAcquireFuncSkipsRejectedTargets(t *testing.T) {
+	pool := NewPool([]TargetConfig{
+		{Name: "a", BaseURL: "https://a.example.com", Concurrency: 1},
+		{Name: "b", BaseURL: "https://b.example.com", Concurrency: 1},
+	})
+
+	lease, err := pool.AcquireFunc(context.Background(), func(target TargetConfig) bool {
+		return target.Name != "a"
+	})
+	if err != nil {
+		t.Fatalf("AcquireFunc() error = %v", err)
+	}
+	defer lease.Release()
+
+	if lease.Target.Name != "b" {
+		t.Fatalf("expected target b, got %+v", lease.Target)
+	}
+}
+
+func TestPoolAcquireFuncReturnsNoAvailableTargetsWhenAllRejected(t *testing.T) {
+	pool := NewPool([]TargetConfig{
+		{Name: "a", BaseURL: "https://a.example.com", Concurrency: 1},
+		{Name: "b", BaseURL: "https://b.example.com", Concurrency: 1},
+	})
+
+	_, err := pool.AcquireFunc(context.Background(), func(TargetConfig) bool {
+		return false
+	})
+	if !errors.Is(err, ErrNoAvailableTargets) {
+		t.Fatalf("expected ErrNoAvailableTargets, got %v", err)
+	}
+}
+
 func TestPoolAcquireHonorsContextWhenTargetQueueIsFull(t *testing.T) {
 	pool := NewPool([]TargetConfig{
 		{Name: "only", BaseURL: "https://only.example.com", Concurrency: 1},

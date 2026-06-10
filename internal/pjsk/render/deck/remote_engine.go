@@ -162,7 +162,9 @@ func (r *RemoteDeckRecommender) acquireExecution() (*remoteExecution, error) {
 		return nil, fmt.Errorf("deck recommend service is not configured")
 	}
 
-	lease, err := r.pool.Acquire(context.TODO())
+	lease, err := r.pool.AcquireFunc(context.TODO(), func(target upstream.TargetConfig) bool {
+		return r.targetAcceptsAssignment(target)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("deck-service upstream is unavailable: %w", err)
 	}
@@ -175,6 +177,57 @@ func (r *RemoteDeckRecommender) acquireExecution() (*remoteExecution, error) {
 		lease: lease,
 		state: state,
 	}, nil
+}
+
+func (r *RemoteDeckRecommender) targetAcceptsAssignment(target upstream.TargetConfig) bool {
+	state := r.targetStates[remoteTargetKey(target)]
+	if state == nil {
+		return true
+	}
+	failures := state.consecutiveFailures.Load()
+	if failures < targetAssignmentSkipFailures {
+		return true
+	}
+	if r.tryResetCircuitBreakerAfterCooldown(state, failures) {
+		return true
+	}
+	if r.shouldProbeTargetHealth(state) {
+		if r.tryResetCircuitBreakerOnHealthyService(state, failures) {
+			return true
+		}
+		if r.logger != nil {
+			r.logger.Warnf(
+				"deck-service target %s health probe failed after %d consecutive failures; skipping assignment",
+				state.target.Name,
+				failures,
+			)
+		}
+		return false
+	}
+	if r.logger != nil {
+		r.logger.Debugf(
+			"deck-service target %s has %d consecutive failures; skipping assignment",
+			state.target.Name,
+			failures,
+		)
+	}
+	return false
+}
+
+func (r *RemoteDeckRecommender) shouldProbeTargetHealth(state *remoteTargetState) bool {
+	if state == nil {
+		return false
+	}
+	nowNanos := r.timeNow().UnixNano()
+	for {
+		lastNanos := state.lastHealthProbeAtNanos.Load()
+		if lastNanos > 0 && time.Duration(nowNanos-lastNanos) < targetHealthProbeInterval {
+			return false
+		}
+		if state.lastHealthProbeAtNanos.CompareAndSwap(lastNanos, nowNanos) {
+			return true
+		}
+	}
 }
 
 func sanitizeLocalRecommendOption(option map[string]any) map[string]any {

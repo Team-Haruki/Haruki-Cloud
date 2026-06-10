@@ -8,7 +8,10 @@ import (
 	"sync/atomic"
 )
 
-var ErrNoTargetsConfigured = errors.New("upstream: no targets configured")
+var (
+	ErrNoTargetsConfigured = errors.New("upstream: no targets configured")
+	ErrNoAvailableTargets  = errors.New("upstream: no available targets")
+)
 
 type TargetConfig struct {
 	Name        string `yaml:"name"`
@@ -39,6 +42,8 @@ type Pool struct {
 	targets []*targetSlot
 	next    atomic.Uint64
 }
+
+type TargetPredicate func(TargetConfig) bool
 
 type resourceSlot struct {
 	sem     chan struct{}
@@ -122,6 +127,10 @@ func (p *Pool) Enabled() bool {
 }
 
 func (p *Pool) Acquire(ctx context.Context) (*Lease, error) {
+	return p.AcquireFunc(ctx, nil)
+}
+
+func (p *Pool) AcquireFunc(ctx context.Context, accept TargetPredicate) (*Lease, error) {
 	if p == nil || len(p.targets) == 0 {
 		return nil, ErrNoTargetsConfigured
 	}
@@ -129,7 +138,10 @@ func (p *Pool) Acquire(ctx context.Context) (*Lease, error) {
 		ctx = context.Background()
 	}
 
-	slot := p.pickSlot()
+	slot := p.pickSlotFunc(accept)
+	if slot == nil {
+		return nil, ErrNoAvailableTargets
+	}
 	slot.resource.pending.Add(1)
 	if slot.resource.sem == nil {
 		return &Lease{
@@ -154,16 +166,20 @@ func (p *Pool) Acquire(ctx context.Context) (*Lease, error) {
 	}
 }
 
-func (p *Pool) pickSlot() *targetSlot {
-	if len(p.targets) == 1 {
-		return p.targets[0]
+func (p *Pool) pickSlotFunc(accept TargetPredicate) *targetSlot {
+	if len(p.targets) == 0 {
+		return nil
 	}
 	start := int(p.next.Add(1)-1) % len(p.targets)
-	best := p.targets[start]
-	bestPending := best.resource.pending.Load()
-	for offset := 1; offset < len(p.targets); offset++ {
+	var best *targetSlot
+	var bestPending int64
+	for offset := 0; offset < len(p.targets); offset++ {
 		slot := p.targets[(start+offset)%len(p.targets)]
-		if pending := slot.resource.pending.Load(); pending < bestPending {
+		if accept != nil && !accept(slot.target) {
+			continue
+		}
+		pending := slot.resource.pending.Load()
+		if best == nil || pending < bestPending {
 			best = slot
 			bestPending = pending
 		}

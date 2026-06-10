@@ -20,6 +20,10 @@ import (
 
 func newStandaloneTestRemoteDeckRecommender(baseURL string, client *http.Client) *RemoteDeckRecommender {
 	targets := upstream.ResolveTargets(baseURL, nil, "deck-service")
+	return newTestRemoteDeckRecommenderWithTargets(targets, client)
+}
+
+func newTestRemoteDeckRecommenderWithTargets(targets []upstream.TargetConfig, client *http.Client) *RemoteDeckRecommender {
 	targetStates := make(map[string]*remoteTargetState, len(targets))
 	for _, target := range targets {
 		targetStates[remoteTargetKey(target)] = &remoteTargetState{
@@ -1276,6 +1280,93 @@ func TestRemoteRecommendAutoResetsCircuitBreakerAfterCooldown(t *testing.T) {
 	}
 	if failures := state.consecutiveFailures.Load(); failures != 0 {
 		t.Fatalf("expected circuit breaker to reset after successful request, got %d failures", failures)
+	}
+}
+
+func TestRemoteRecommendSkipsUnhealthyTargetDuringAcquire(t *testing.T) {
+	var unhealthyCalls atomic.Int32
+	unhealthyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		unhealthyCalls.Add(1)
+		defer r.Body.Close()
+		http.Error(w, "unhealthy", http.StatusServiceUnavailable)
+	}))
+	defer unhealthyServer.Close()
+
+	var cacheCalls atomic.Int32
+	var recommendCalls atomic.Int32
+	healthyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata", "/update/musicmetas/string":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			cacheCalls.Add(1)
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			recommendCalls.Add(1)
+			_, _ = w.Write([]byte(`[{
+				"alg": "ga",
+				"cost_time": 0.1,
+				"wait_time": 0.0,
+				"result": {
+					"decks": [{
+						"score": 100,
+						"live_score": 100,
+						"total_power": 200,
+						"multi_live_score_up": 110,
+						"cards": []
+					}]
+				}
+			}]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer healthyServer.Close()
+
+	targets := upstream.ResolveTargets("", []upstream.TargetConfig{
+		{Name: "unhealthy", BaseURL: unhealthyServer.URL},
+		{Name: "healthy", BaseURL: healthyServer.URL},
+	}, "deck-service")
+	now := time.Now()
+	recommender := newTestRemoteDeckRecommenderWithTargets(targets, http.DefaultClient)
+	recommender.defaultAlgs = []string{"ga"}
+	recommender.masterdataDir = "/masterdata"
+	recommender.region = "jp"
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
+	recommender.now = func() time.Time {
+		return now
+	}
+
+	unhealthyState := recommender.targetStates[remoteTargetKey(targets[0])]
+	unhealthyState.consecutiveFailures.Store(targetAssignmentSkipFailures)
+	unhealthyState.lastFailureAtNanos.Store(now.UnixNano())
+	unhealthyState.lastHealthProbeAtNanos.Store(now.UnixNano())
+
+	result, err := recommender.Recommend(RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: []byte(`[{"music_id":10000,"difficulty":"master"}]`),
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recommend() error = %v", err)
+	}
+	if result == nil || len(result.Decks) != 1 {
+		t.Fatalf("unexpected recommend result: %+v", result)
+	}
+	if got := unhealthyCalls.Load(); got != 0 {
+		t.Fatalf("expected unhealthy target not to be called, got %d calls", got)
+	}
+	if got := cacheCalls.Load(); got != 1 {
+		t.Fatalf("expected healthy cache_userdata to run once, got %d", got)
+	}
+	if got := recommendCalls.Load(); got != 1 {
+		t.Fatalf("expected healthy recommend to run once, got %d", got)
 	}
 }
 

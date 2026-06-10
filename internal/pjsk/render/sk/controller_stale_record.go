@@ -13,7 +13,11 @@ const StaleSelfRecordWarning = "你已不在可记录范围内，仅展示最后
 const staleSelfRecordThreshold = 5 * time.Minute
 
 func (c *Controller) StaleSelfRecordWarning(req TrackerRankQuery, ranks []drawing.RankInfo) string {
-	if !c.shouldWarnStaleSelfRecord(req, ranks, time.Now().UTC()) {
+	normalized, err := c.validateTrackerQuery(req)
+	if err != nil {
+		return ""
+	}
+	if !c.shouldWarnStaleSelfRecord(normalized, ranks, time.Now().UTC()) {
 		return ""
 	}
 	return StaleSelfRecordWarning

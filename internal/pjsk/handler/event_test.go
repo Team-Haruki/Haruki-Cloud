@@ -3,17 +3,25 @@ package handler
 import (
 	"context"
 	"errors"
-	json "github.com/bytedance/sonic"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	json "github.com/bytedance/sonic"
+
+	"haruki-cloud/config"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	renderevent "haruki-cloud/internal/pjsk/render/event"
+	"haruki-cloud/internal/pjsk/render/masterdata"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func TestEventDetailHandleUsesCurrentEventWhenArgsEmpty(t *testing.T) {
@@ -470,7 +478,8 @@ func TestEventPlannerDefaultDragonUsesLostAndFound(t *testing.T) {
 		t.Fatalf("parseEventPlannerParams() error = %v", err)
 	}
 	songs := eventPlannerSongsForRequest(params, buildEventPlannerBaseDeckQuery(renderregion.CN, params.Deck))
-	if len(songs) != 2 || songs[1].Query != "龙" || songs[1].MusicID != eventPlannerLostAndFoundMusicID {
+	if len(songs) != 3 || songs[1].Query != "龙" || songs[1].MusicID != eventPlannerLostAndFoundMusicID ||
+		songs[2].Query != "野车" || songs[2].MusicID != eventPlannerOmakaseMusicID {
 		t.Fatalf("unexpected default songs: %+v", songs)
 	}
 }
@@ -583,6 +592,165 @@ func TestEventPlannerParsesDeckLikeOptions(t *testing.T) {
 	songs := eventPlannerSongsForRequest(params, buildEventPlannerBaseDeckQuery(renderregion.JP, params.Deck))
 	if len(songs) != 1 || songs[0].MusicID != eventPlannerOmakaseMusicID {
 		t.Fatalf("unexpected resolved songs: %+v", songs)
+	}
+}
+
+func TestEventPlannerParsesTotalRankingOption(t *testing.T) {
+	params, err := parseEventPlannerParams("t100 总榜 wl3 mzk", "/jp活动规划")
+	if err != nil {
+		t.Fatalf("parseEventPlannerParams() error = %v", err)
+	}
+	if params.TargetRank != 100 || !params.TotalRanking {
+		t.Fatalf("unexpected total ranking params: %+v", params)
+	}
+	if params.Deck.WorldBloomEventTurn == nil || *params.Deck.WorldBloomEventTurn != 3 || params.Deck.WorldBloomCharacterID == nil || *params.Deck.WorldBloomCharacterID <= 0 {
+		t.Fatalf("unexpected wl params: %+v", params.Deck)
+	}
+}
+
+func TestEventPlannerCurrentPointUsesWorldBloomTracker(t *testing.T) {
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"rankData":{"userId":"12345678901234","score":765432,"rank":42,"timestamp":1},"userData":{"userId":"12345678901234","name":"tester"}}`))
+	}))
+	defer server.Close()
+
+	point, known, warning := resolveEventPlannerCurrentPoint(
+		eventPlannerTrackerTestContext(server.URL),
+		&accountdata.ResolvedBinding{PJSKUserID: "12345678901234"},
+		renderregion.JP,
+		&masterdata.Event{ID: 170, EventType: "world_bloom"},
+		renderdeck.AutoQuery{WorldBloomCharacterID: drawing.IntPtr(17)},
+		eventPlannerCommandParams{},
+	)
+	if gotPath != "/event/jp/170/latest-world-bloom-ranking/character/17/user/12345678901234" {
+		t.Fatalf("unexpected tracker path: %s", gotPath)
+	}
+	if point != 765432 || !known || warning != "" {
+		t.Fatalf("unexpected current point result: point=%d known=%v warning=%q", point, known, warning)
+	}
+}
+
+func TestEventPlannerCurrentPointTotalRankingUsesNormalTracker(t *testing.T) {
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"rankData":{"userId":"12345678901234","score":654321,"rank":88,"timestamp":1},"userData":{"userId":"12345678901234","name":"tester"}}`))
+	}))
+	defer server.Close()
+
+	point, known, warning := resolveEventPlannerCurrentPoint(
+		eventPlannerTrackerTestContext(server.URL),
+		&accountdata.ResolvedBinding{PJSKUserID: "12345678901234"},
+		renderregion.JP,
+		&masterdata.Event{ID: 170, EventType: "world_bloom"},
+		renderdeck.AutoQuery{WorldBloomCharacterID: drawing.IntPtr(17)},
+		eventPlannerCommandParams{TotalRanking: true},
+	)
+	if gotPath != "/event/jp/170/latest-ranking/user/12345678901234" {
+		t.Fatalf("unexpected tracker path: %s", gotPath)
+	}
+	if point != 654321 || !known || warning != "" {
+		t.Fatalf("unexpected current point result: point=%d known=%v warning=%q", point, known, warning)
+	}
+}
+
+func TestEventPlannerCurrentPointFallsBackToZeroWhenTrackerMisses(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+
+	point, known, warning := resolveEventPlannerCurrentPoint(
+		eventPlannerTrackerTestContext(server.URL),
+		&accountdata.ResolvedBinding{PJSKUserID: "12345678901234"},
+		renderregion.JP,
+		&masterdata.Event{ID: 170},
+		renderdeck.AutoQuery{},
+		eventPlannerCommandParams{},
+	)
+	if point != 0 || !known || !strings.Contains(warning, "前100") {
+		t.Fatalf("unexpected current point fallback: point=%d known=%v warning=%q", point, known, warning)
+	}
+}
+
+func TestEventPlannerTargetRankUsesWorldBloomRankingByDefault(t *testing.T) {
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"rank":100,"score":456789,"timestamp":1}]`))
+	}))
+	defer server.Close()
+
+	point, source, err := resolveEventPlannerTargetPoint(
+		eventPlannerTrackerTestContext(server.URL),
+		renderregion.JP,
+		&masterdata.Event{ID: 170, EventType: "world_bloom"},
+		renderdeck.AutoQuery{WorldBloomCharacterID: drawing.IntPtr(17)},
+		eventPlannerCommandParams{TargetRank: 100},
+	)
+	if err != nil {
+		t.Fatalf("resolveEventPlannerTargetPoint() error = %v", err)
+	}
+	if gotPath != "/event/jp/170/world-bloom-ranking-lines/character/17" {
+		t.Fatalf("unexpected tracker path: %s", gotPath)
+	}
+	if point != 456789 || !strings.Contains(source, "WL章节") {
+		t.Fatalf("unexpected target result: point=%d source=%q", point, source)
+	}
+}
+
+func TestEventPlannerTargetRankTotalRankingUsesNormalRanking(t *testing.T) {
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"rank":100,"score":987654,"timestamp":1}]`))
+	}))
+	defer server.Close()
+
+	point, source, err := resolveEventPlannerTargetPoint(
+		eventPlannerTrackerTestContext(server.URL),
+		renderregion.JP,
+		&masterdata.Event{ID: 170, EventType: "world_bloom"},
+		renderdeck.AutoQuery{WorldBloomCharacterID: drawing.IntPtr(17)},
+		eventPlannerCommandParams{TargetRank: 100, TotalRanking: true},
+	)
+	if err != nil {
+		t.Fatalf("resolveEventPlannerTargetPoint() error = %v", err)
+	}
+	if gotPath != "/event/jp/170/ranking-lines" {
+		t.Fatalf("unexpected tracker path: %s", gotPath)
+	}
+	if point != 987654 || strings.Contains(source, "WL章节") {
+		t.Fatalf("unexpected target result: point=%d source=%q", point, source)
+	}
+}
+
+func TestEventPlannerExplicitCurrentPointSkipsTracker(t *testing.T) {
+	point, known, warning := resolveEventPlannerCurrentPoint(
+		nil,
+		nil,
+		renderregion.JP,
+		&masterdata.Event{ID: 170, EventType: "world_bloom"},
+		renderdeck.AutoQuery{WorldBloomCharacterID: drawing.IntPtr(17)},
+		eventPlannerCommandParams{CurrentPoint: 123456, CurrentPointSet: true},
+	)
+	if point != 123456 || !known || warning != "" {
+		t.Fatalf("unexpected explicit current point: point=%d known=%v warning=%q", point, known, warning)
+	}
+}
+
+func eventPlannerTrackerTestContext(baseURL string) *RequestContext {
+	return &RequestContext{
+		Ctx: context.Background(),
+		App: &renderapp.App{
+			Tracker: sekaiapi.NewTrackerClient(&config.TrackerConfig{BaseURL: baseURL}),
+		},
 	}
 }
 

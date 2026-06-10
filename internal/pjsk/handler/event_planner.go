@@ -23,6 +23,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 const eventPlannerHelp = `活动规划用法:
@@ -30,10 +31,12 @@ const eventPlannerHelp = `活动规划用法:
 /活动规划 pt1000w 当前pt120w 歌 虾ex 龙hd
 /jp活动规划 t100 event202 knd 歌 野车 10火
 /cn活动规划 pt1200w wl3 mzk #123 456 789 101 112 队友综合25w 队友实效200
+/jp活动规划 t100 event202 wl3 mzk 总榜
 
 不写区服时使用默认绑定区服，也可以加 jp/cn/en/tw/kr 前缀指定。
-参数: pt/目标, t排名, 当前pt, 1-10火, 歌曲/难度, 野车, event活动ID, wl章节角色, #固定卡/角色, 当前/顶配/画布/已读/队友综合/队友实效等活动组卡参数。
-不写歌曲时默认算虾 EXPERT 和 龙 HARD；不写火数时默认算 5火 和 10火；不写卡组时默认使用最优卡组。`
+参数: pt/目标, t排名, 当前pt, 总榜, 1-10火, 歌曲/难度, 野车, event活动ID, wl章节角色, #固定卡/角色, 当前/顶配/画布/已读/队友综合/队友实效等活动组卡参数。
+WL活动默认按章节单榜规划；加 总榜 时按活动总榜规划。
+不写歌曲时默认算虾 EXPERT、龙 HARD 和 野车；不写火数时默认算 5火 和 10火；不写卡组时默认使用最优卡组。`
 
 const eventPlannerLostAndFoundMusicID = 226
 const eventPlannerOmakaseMusicID = 10000
@@ -44,6 +47,7 @@ type eventPlannerCommandParams struct {
 	TargetRank      int                         `json:"target_rank,omitempty"`
 	CurrentPoint    int64                       `json:"current_point,omitempty"`
 	CurrentPointSet bool                        `json:"current_point_set,omitempty"`
+	TotalRanking    bool                        `json:"total_ranking,omitempty"`
 	Deck            deckAutoQueryParams         `json:"deck,omitempty"`
 	Songs           []eventPlannerSongSelection `json:"songs,omitempty"`
 	Boosts          []int                       `json:"boosts,omitempty"`
@@ -60,6 +64,7 @@ var (
 	eventPlannerTargetPointRE  = regexp.MustCompile(`(?i)(?:目标pt|目标|pt|打到)\s*([0-9][0-9,._]*(?:万|億|亿|w|k)?)`)
 	eventPlannerCurrentPointRE = regexp.MustCompile(`(?i)(?:当前pt|已有pt|已打|现在pt)\s*([0-9][0-9,._]*(?:万|億|亿|w|k)?)`)
 	eventPlannerBoostRE        = regexp.MustCompile(`([0-9]{1,2})\s*火`)
+	eventPlannerTotalRankingRE = regexp.MustCompile(`(?i)(?:总榜|總榜|total|overall)`)
 )
 
 var eventPlannerBoostMultipliers = map[int]int64{
@@ -107,6 +112,10 @@ func parseEventPlannerParams(args string, trigger string) (eventPlannerCommandPa
 
 	params := eventPlannerCommandParams{
 		Boosts: []int{5, 10},
+	}
+	if eventPlannerTotalRankingRE.MatchString(args) {
+		params.TotalRanking = true
+		args = normalizeDeckSpaces(eventPlannerTotalRankingRE.ReplaceAllString(args, " "))
 	}
 	params.TargetRank = parseEventPlannerRank(args)
 	if value, ok := parseEventPlannerPointWithRE(eventPlannerCurrentPointRE, args); ok {
@@ -202,11 +211,11 @@ func executeEventPlanner(rc *RequestContext) (onebot11.Message, error) {
 			baseQuery.EventID = drawing.IntPtr(eventInfo.ID)
 		}
 	}
-	targetPoint, targetSource, err := resolveEventPlannerTargetPoint(rc, region, eventInfo.ID, params)
+	targetPoint, targetSource, err := resolveEventPlannerTargetPoint(rc, region, eventInfo, baseQuery, params)
 	if err != nil {
 		return nil, err
 	}
-	currentPoint, currentPointKnown, currentWarning := resolveEventPlannerCurrentPoint(snap, eventInfo.ID, params)
+	currentPoint, currentPointKnown, currentWarning := resolveEventPlannerCurrentPoint(rc, binding, region, eventInfo, baseQuery, params)
 
 	songs := eventPlannerSongsForRequest(params, baseQuery)
 	req, err := buildEventPlannerDrawingRequest(rc, region, eventInfo, snap, baseQuery, params, songs, targetPoint, targetSource, currentPoint, currentPointKnown)
@@ -447,6 +456,7 @@ func eventPlannerSongsForRequest(params eventPlannerCommandParams, query renderd
 	return []eventPlannerSongSelection{
 		{Query: "虾", Difficulty: "expert"},
 		{Query: "龙", Difficulty: "hard", MusicID: eventPlannerLostAndFoundMusicID},
+		{Query: "野车", Difficulty: "master", MusicID: eventPlannerOmakaseMusicID},
 	}
 }
 
@@ -556,17 +566,48 @@ func eventPlannerProvider(app *renderapp.App, region renderregion.Value) renderp
 	return app.Provider
 }
 
-func resolveEventPlannerTargetPoint(rc *RequestContext, region renderregion.Value, eventID int, params eventPlannerCommandParams) (int64, string, error) {
+func resolveEventPlannerTargetPoint(
+	rc *RequestContext,
+	region renderregion.Value,
+	eventInfo *masterdata.Event,
+	query renderdeck.AutoQuery,
+	params eventPlannerCommandParams,
+) (int64, string, error) {
 	if params.TargetPoint > 0 {
 		return params.TargetPoint, "直接输入", nil
 	}
 	if params.TargetRank <= 0 {
 		return 0, "", fmt.Errorf("缺少目标 pt")
 	}
-	if rc.App == nil || rc.App.Tracker == nil {
+	if eventInfo == nil || eventInfo.ID <= 0 {
+		return 0, "", fmt.Errorf("模拟活动不能按 t%d 读取榜线，请直接指定目标 pt", params.TargetRank)
+	}
+	if rc == nil || rc.App == nil || rc.App.Tracker == nil {
 		return 0, "", fmt.Errorf("未配置 Tracker，不能按 t%d 读取榜线", params.TargetRank)
 	}
+	eventID := eventInfo.ID
 	tracker := rc.App.Tracker.WithContext(rc.Ctx)
+	if eventPlannerUseWorldBloomRanking(eventInfo, params) {
+		charID, ok := eventPlannerWorldBloomCharacterID(query)
+		if !ok {
+			return 0, "", fmt.Errorf("WL章节单榜需要指定章节角色；如需活动总榜请加 总榜")
+		}
+		if lines, err := tracker.GetWorldBloomRankingLines(region.String(), eventInfo.ID, charID); err == nil {
+			for _, line := range lines {
+				if line.Rank == params.TargetRank && line.Score > 0 {
+					return int64(line.Score), fmt.Sprintf("Tracker实时WL章节榜线:t%d", params.TargetRank), nil
+				}
+			}
+		}
+		latest, err := tracker.GetLatestWorldBloomRankingByRank(region.String(), eventInfo.ID, charID, params.TargetRank)
+		if err != nil {
+			return 0, "", err
+		}
+		if latest == nil || latest.RankData.Score <= 0 {
+			return 0, "", fmt.Errorf("tracker 未返回 WL 章节 t%d 的有效榜线", params.TargetRank)
+		}
+		return int64(latest.RankData.Score), fmt.Sprintf("Tracker实时WL章节榜线:t%d", params.TargetRank), nil
+	}
 	if lines, err := tracker.GetRankingLines(region.String(), eventID); err == nil {
 		for _, line := range lines {
 			if line.Rank == params.TargetRank && line.Score > 0 {
@@ -584,19 +625,84 @@ func resolveEventPlannerTargetPoint(rc *RequestContext, region renderregion.Valu
 	return int64(latest.RankData.Score), fmt.Sprintf("Tracker实时榜线:t%d", params.TargetRank), nil
 }
 
-func resolveEventPlannerCurrentPoint(snap rendersnapshot.Snapshot, eventID int, params eventPlannerCommandParams) (int64, bool, string) {
+func eventPlannerUseWorldBloomRanking(eventInfo *masterdata.Event, params eventPlannerCommandParams) bool {
+	return eventInfo != nil &&
+		strings.EqualFold(eventInfo.EventType, "world_bloom") &&
+		!params.TotalRanking
+}
+
+func resolveEventPlannerCurrentPoint(
+	rc *RequestContext,
+	binding *accountdata.ResolvedBinding,
+	region renderregion.Value,
+	eventInfo *masterdata.Event,
+	query renderdeck.AutoQuery,
+	params eventPlannerCommandParams,
+) (int64, bool, string) {
 	if params.CurrentPointSet {
 		return params.CurrentPoint, true, ""
 	}
-	raw := snap.RawData()
-	if raw != nil {
-		for _, item := range raw.UserEvents {
-			if item.EventID == eventID && item.EventPoint > 0 {
-				return int64(item.EventPoint), true, ""
-			}
-		}
+	if rc == nil || rc.App == nil || rc.App.Tracker == nil {
+		return 0, true, "未指定当前pt且未配置 Tracker，当前按 0 计算"
 	}
-	return 0, false, "未指定当前pt且 suite 中未找到该活动 pt，当前按 0 计算"
+	if eventInfo == nil || eventInfo.ID <= 0 {
+		return 0, true, "未指定当前pt且 Tracker 无法读取模拟活动当前分，当前按 0 计算"
+	}
+	uid, ok := eventPlannerBindingUID(binding)
+	if !ok {
+		return 0, true, "未指定当前pt且绑定 UID 无效，当前按 0 计算"
+	}
+
+	tracker := rc.App.Tracker.WithContext(rc.Ctx)
+	if eventPlannerUseWorldBloomRanking(eventInfo, params) {
+		charID, ok := eventPlannerWorldBloomCharacterID(query)
+		if !ok {
+			return 0, true, "未指定当前pt且 Tracker 无法确定 WL 章节，当前按 0 计算"
+		}
+		latest, err := tracker.GetLatestWorldBloomRankingByUser(region.String(), eventInfo.ID, charID, uid)
+		if err == nil && latest != nil {
+			return int64(latest.RankData.Score), true, ""
+		}
+		return 0, true, eventPlannerCurrentPointTrackerWarning(err, true)
+	}
+
+	latest, err := tracker.GetLatestRankingByUser(region.String(), eventInfo.ID, uid)
+	if err == nil && latest != nil {
+		return int64(latest.RankData.Score), true, ""
+	}
+	return 0, true, eventPlannerCurrentPointTrackerWarning(err, false)
+}
+
+func eventPlannerBindingUID(binding *accountdata.ResolvedBinding) (int64, bool) {
+	if binding == nil {
+		return 0, false
+	}
+	uid, err := strconv.ParseInt(strings.TrimSpace(binding.PJSKUserID), 10, 64)
+	if err != nil || uid <= 0 {
+		return 0, false
+	}
+	return uid, true
+}
+
+func eventPlannerWorldBloomCharacterID(query renderdeck.AutoQuery) (int, bool) {
+	if query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0 {
+		return *query.WorldBloomCharacterID, true
+	}
+	if query.MetadataWorldBloomCharacterID != nil && *query.MetadataWorldBloomCharacterID > 0 {
+		return *query.MetadataWorldBloomCharacterID, true
+	}
+	return 0, false
+}
+
+func eventPlannerCurrentPointTrackerWarning(err error, worldBloom bool) string {
+	target := "当前活动"
+	if worldBloom {
+		target = "该 WL 章节"
+	}
+	if errors.Is(err, sekaiapi.ErrRankingNotFound) {
+		return fmt.Sprintf("未指定当前pt且 Tracker 未找到%s前100记录，当前按 0 计算", target)
+	}
+	return fmt.Sprintf("未指定当前pt且 Tracker 未能读取%s当前分，当前按 0 计算", target)
 }
 
 func parseEventPlannerRank(args string) int {

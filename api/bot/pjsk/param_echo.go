@@ -1,6 +1,10 @@
 package pjsk
 
-import "strings"
+import (
+	"strings"
+
+	"haruki-cloud/utils/usererror"
+)
 
 const genericClientErrorText = "请求处理失败，请稍后再试"
 
@@ -58,6 +62,8 @@ var paramEchoRedactions = []paramEchoRedaction{
 	{prefix: "deck-service unavailable", replacement: "组卡服务未就绪，请稍后再试"},
 	{prefix: "deck-service upstream is unavailable", replacement: "组卡服务未就绪，请稍后再试"},
 	{prefix: "fixed_characters and fixed_cards cannot be used together", replacement: "组卡服务版本过旧，暂不支持同时固定角色和卡牌，请更新组卡服务后重试"},
+	{prefix: "获取自制谱面 JSON 失败", replacement: "获取自制谱面数据失败，请稍后再试"},
+	{prefix: "获取自定义谱面信息失败", replacement: "获取自制谱面数据失败，请稍后再试"},
 	{prefix: "music not found", replacement: "找不到特定的歌"},
 	{prefix: "card not found (filter)", replacement: "找不到特定的卡牌"},
 	{prefix: "no cards found for filter", replacement: "找不到特定的卡牌"},
@@ -104,7 +110,11 @@ var paramEchoSeparatorMarkers = []string{
 
 func clientErrorText(message string, enableParamEcho bool) string {
 	_ = enableParamEcho
-	return redactParamEcho(message)
+	redacted := redactParamEcho(message)
+	if usererror.MessageContainsSensitiveURL(redacted) {
+		return genericClientErrorText
+	}
+	return redacted
 }
 
 func redactParamEcho(message string) string {

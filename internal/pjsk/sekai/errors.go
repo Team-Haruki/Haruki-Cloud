@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/utils/usererror"
+
 	"github.com/bytedance/sonic"
 )
 
@@ -46,6 +48,9 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
+	if shouldHideAPIErrorMessage(e.Message) {
+		return fmt.Sprintf("sekai api error: status %d", e.StatusCode)
+	}
 	return fmt.Sprintf("sekai api error: status %d, message: %q", e.StatusCode, e.Message)
 }
 
@@ -63,6 +68,9 @@ type TrackerAPIError struct {
 }
 
 func (e *TrackerAPIError) Error() string {
+	if shouldHideAPIErrorMessage(e.Message) {
+		return fmt.Sprintf("tracker api error: status %d", e.StatusCode)
+	}
 	return fmt.Sprintf("tracker api error: status %d, message: %q", e.StatusCode, e.Message)
 }
 
@@ -95,5 +103,16 @@ type ToolboxAPIError struct {
 }
 
 func (e *ToolboxAPIError) Error() string {
+	if shouldHideAPIErrorMessage(e.Message) {
+		return fmt.Sprintf("toolbox api error: status %d", e.StatusCode)
+	}
 	return fmt.Sprintf("toolbox api error: status %d, message: %q", e.StatusCode, e.Message)
+}
+
+func shouldHideAPIErrorMessage(message string) bool {
+	message = strings.TrimSpace(message)
+	if message == "" {
+		return true
+	}
+	return usererror.MessageContainsSensitiveURL(message)
 }

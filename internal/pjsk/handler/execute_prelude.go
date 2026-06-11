@@ -9,7 +9,10 @@ import (
 	"haruki-cloud/internal/pjsk/displaytime"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/utils/usererror"
 )
+
+const genericUserFacingErrorText = "请求处理失败，请稍后再试"
 
 // ExecutionRuntime captures the request-scoped runtime prepared before a PJSK
 // command enters its domain-specific executor.
@@ -38,7 +41,7 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 	if platform := strings.TrimSpace(resolved.RequesterPlatform); platform != "" {
 		if userID := strings.TrimSpace(resolved.RequesterUserID); userID != "" {
 			if err := app.BanChecker.CheckBan(ctx, platform, userID, resolved.Module); err != nil {
-				return nil, onebot11.Message{onebot11.Text(err.Error())}, nil
+				return nil, onebot11.Message{onebot11.Text(sanitizeUserFacingText(err.Error()))}, nil
 			}
 		}
 	}
@@ -56,4 +59,12 @@ func PrepareExecutionRuntime(ctx context.Context, resolved *CommandRequest, app 
 		App:      app,
 		Request:  NewRequestContext(ctx, resolved, app),
 	}, nil, nil
+}
+
+func sanitizeUserFacingText(message string) string {
+	message = strings.TrimSpace(message)
+	if message == "" || usererror.MessageContainsSensitiveURL(message) {
+		return genericUserFacingErrorText
+	}
+	return message
 }

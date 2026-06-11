@@ -4,19 +4,15 @@ import (
 	"errors"
 	"net"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 	"unicode"
 
 	"haruki-cloud/utils/logger"
+	"haruki-cloud/utils/usererror"
 
 	"github.com/go-resty/resty/v2"
 )
-
-// quotedURL matches any quoted http/https URL in an error string, e.g.
-// the fragment produced by Go's net/http: Get "https://host/path": ...
-var quotedURL = regexp.MustCompile(`"https?://[^"]+"`)
 
 var restyLogger = logger.NewLoggerFromGlobal("SekaiRESTY")
 
@@ -30,8 +26,10 @@ func sanitizeNetworkError(err error) error {
 	if err == nil {
 		return nil
 	}
-	cleaned := quotedURL.ReplaceAllString(err.Error(), `"<url>"`)
-	return errors.New(cleaned)
+	if usererror.MessageContainsSensitiveURL(err.Error()) {
+		return errors.New("network request failed")
+	}
+	return errors.New(err.Error())
 }
 
 // newRestyClient returns a resty.Client pre-configured with common retry

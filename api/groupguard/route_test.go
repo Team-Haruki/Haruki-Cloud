@@ -135,8 +135,26 @@ func TestCheckBindingReturnsServiceUnavailableWhenToolboxMissing(t *testing.T) {
 	if resp.Status != fiber.StatusServiceUnavailable {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
-	if !strings.Contains(resp.Message, sekaiapi.ErrClientNotConfigured.Error()) {
+	if resp.Message != "绑定查询服务未就绪，请稍后再试" {
 		t.Fatalf("unexpected message: %s", resp.Message)
+	}
+}
+
+func TestCheckBindingDoesNotExposeToolboxErrorDetails(t *testing.T) {
+	app := newTestApp(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"message":"upstream failed: https://production-game-api.sekai.colorfulpalette.org/api/jp/user/123/profile?token=secret"}`))
+	}))
+
+	resp := sendGroupGuardRequest(t, app, "/api/internal/group-guard/binding/check", `{"platform":"qq","platform_user_id":"123"}`)
+	if resp.Status != fiber.StatusBadGateway {
+		t.Fatalf("unexpected response: %+v", resp)
+	}
+	if resp.Message != "查询绑定状态失败，请稍后再试" {
+		t.Fatalf("unexpected message: %s", resp.Message)
+	}
+	if strings.Contains(resp.Message, "http://") || strings.Contains(resp.Message, "https://") || strings.Contains(resp.Message, "token") {
+		t.Fatalf("message leaked upstream detail: %s", resp.Message)
 	}
 }
 

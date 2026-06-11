@@ -64,6 +64,21 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 			want: "SekaiAPI 拉取失败，请稍后再试",
 		},
 		{
+			name: "custom chart upstream url",
+			in:   `获取自制谱面 JSON 失败: sekai api error: status 502, message: "Fetch failed from https://production-game-api.sekai.colorfulpalette.org/image/blob/custom-music-score/full/a/b"`,
+			want: "获取自制谱面数据失败，请稍后再试",
+		},
+		{
+			name: "unknown private url",
+			in:   "upstream failed: https://production-game-api.sekai.colorfulpalette.org/api/jp/user/123/profile",
+			want: "请求处理失败，请稍后再试",
+		},
+		{
+			name: "public toolbox url",
+			in:   "工具箱地址：https://haruki.seiunx.com/",
+			want: "工具箱地址：https://haruki.seiunx.com/",
+		},
+		{
 			name: "unknown english error",
 			in:   "handler returned nil\nsuper-secret",
 			want: "请求处理失败，请稍后再试",

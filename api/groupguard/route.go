@@ -153,14 +153,16 @@ func respondBindingLookupError(c fiber.Ctx, err error) error {
 		return api.InternalError(c)
 	}
 	status := fiber.StatusBadGateway
+	message := "查询绑定状态失败，请稍后再试"
 	switch {
 	case errors.Is(err, sekaiapi.ErrClientNotConfigured):
 		status = fiber.StatusServiceUnavailable
+		message = "绑定查询服务未就绪，请稍后再试"
 	default:
 		var toolboxErr *sekaiapi.ToolboxAPIError
 		if errors.As(err, &toolboxErr) && toolboxErr.StatusCode == fiber.StatusServiceUnavailable {
 			status = fiber.StatusServiceUnavailable
 		}
 	}
-	return api.JSONResponse(c, status, err.Error())
+	return api.JSONResponse(c, status, message)
 }

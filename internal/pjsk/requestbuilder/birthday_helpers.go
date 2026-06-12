@@ -180,7 +180,7 @@ func nextBirthdayTime(region renderregion.Value, month, day int, now time.Time) 
 	location := birthdayRegionLocation(region)
 	regionNow := now.In(location)
 	next := time.Date(regionNow.Year(), time.Month(month), day, 0, 0, 0, 0, location)
-	if next.Before(regionNow) {
+	if !regionNow.Before(next.AddDate(0, 0, 1)) {
 		next = time.Date(regionNow.Year()+1, time.Month(month), day, 0, 0, 0, 0, location)
 	}
 	return next.In(birthdayDisplayLocation)

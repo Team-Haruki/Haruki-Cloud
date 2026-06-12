@@ -11,6 +11,7 @@ import (
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	"haruki-cloud/internal/pjsk/alias"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
 
@@ -127,6 +128,36 @@ func TestBuildMiscBirthdayRequestFromCharacterID(t *testing.T) {
 	}
 }
 
+func TestBuildBirthdayInfosSelectsJune24AfterJune12(t *testing.T) {
+	now := time.Date(2026, time.June, 12, 21, 8, 22, 0, birthdayDisplayLocation)
+	infos := buildBirthdayInfos(renderregion.JP, now)
+
+	selected, err := selectBirthdayInfo(infos, miscBirthdaySelection{UpcomingIndex: 1})
+	if err != nil {
+		t.Fatalf("selectBirthdayInfo() error = %v", err)
+	}
+	if selected.Cid != 16 || selected.Month != 6 || selected.Day != 24 {
+		t.Fatalf("expected next birthday to be Rui 6/24, got %+v", selected)
+	}
+}
+
+func TestBuildBirthdayInfosKeepsCurrentBirthdayOnSameServerDate(t *testing.T) {
+	now := time.Date(2026, time.June, 24, 21, 8, 22, 0, birthdayDisplayLocation)
+	infos := buildBirthdayInfos(renderregion.JP, now)
+
+	selected, err := selectBirthdayInfo(infos, miscBirthdaySelection{UpcomingIndex: 1})
+	if err != nil {
+		t.Fatalf("selectBirthdayInfo() error = %v", err)
+	}
+	if selected.Cid != 16 || selected.Month != 6 || selected.Day != 24 {
+		t.Fatalf("expected birthday day to keep Rui 6/24, got %+v", selected)
+	}
+
+	if got := birthdayDaysUntil(now, selected.Next); got != 0 {
+		t.Fatalf("expected birthday-day countdown to stay 0, got %d", got)
+	}
+}
+
 func TestBuildMiscBirthdayRequestFromRawQuery(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:misc_birthday_query_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
@@ -224,6 +255,49 @@ func TestBuildMiscBirthdayRequestUsesApprovedCharacterAlias(t *testing.T) {
 		t.Fatalf("BuildMiscBirthdayRequest() error = %v", err)
 	}
 	if req.Cid != 11 {
+		t.Fatalf("unexpected birthday target cid: %d", req.Cid)
+	}
+}
+
+func TestBuildMiscBirthdayRequestUsesDefaultNicknameBeforeAliasLookup(t *testing.T) {
+	ctx := context.Background()
+	suffix := time.Now().UnixNano()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:misc_birthday_default_alias_sekai_%d?mode=memory&cache=shared&_fk=1", suffix))
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	pjskClient := pjskenttest.Open(t, "sqlite3", fmt.Sprintf("file:misc_birthday_default_alias_pjsk_%d?mode=memory&cache=shared&_fk=1", suffix))
+	t.Cleanup(func() { _ = pjskClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacterunit.Create().
+		SetServerRegion("jp").
+		SetGameCharacterID(20).
+		SetColorCode("#DDAACC").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacterunit: %v", err)
+	}
+
+	if _, err := sekaiClient.Card.Create().
+		SetServerRegion("jp").
+		SetGameID(91201).
+		SetCharacterID(20).
+		SetCardRarityType("rarity_birthday").
+		SetAssetbundleName("birthday_card_test_mizuki").
+		SetReleaseAt(1).
+		Save(ctx); err != nil {
+		t.Fatalf("create birthday card: %v", err)
+	}
+
+	req, err := BuildMiscBirthdayRequest(context.Background(), &CommandInput{
+		Region: "jp",
+		Query:  "mzk",
+	}, &renderapp.App{
+		Sekai:   sekaiClient,
+		Assets:  assets.NewAssetHelper(t.TempDir(), nil),
+		Aliases: alias.NewService(sekaiClient, pjskClient, nil),
+	})
+	if err != nil {
+		t.Fatalf("BuildMiscBirthdayRequest() error = %v", err)
+	}
+	if req.Cid != 20 {
 		t.Fatalf("unexpected birthday target cid: %d", req.Cid)
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
-	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/requestbuilder"
 	"strconv"
@@ -74,16 +73,11 @@ func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "misc-birthday":
-		req := drawing.CharaBirthdayRequest{}
-		mergeParams(rc.Cmd.Params, &req)
-		if req.Cid <= 0 || req.Month <= 0 || req.Day <= 0 || len(req.Cards) == 0 {
-			reqPtr, resolveErr := requestbuilder.BuildMiscBirthdayRequest(rc.Ctx, toRequestBuilderCommandInput(rc.Cmd), rc.App)
-			if resolveErr != nil {
-				return nil, resolveErr
-			}
-			req = *reqPtr
+		req, resolveErr := requestbuilder.BuildMiscBirthdayRequest(rc.Ctx, toRequestBuilderCommandInput(rc.Cmd), rc.App)
+		if resolveErr != nil {
+			return nil, resolveErr
 		}
-		data, err = miscCtrl.RenderCharaBirthday(req)
+		data, err = miscCtrl.RenderCharaBirthday(*req)
 	default:
 		return nil, unsupportedModeError("misc", rc.Cmd.Mode)
 	}

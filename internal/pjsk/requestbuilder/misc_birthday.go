@@ -265,14 +265,6 @@ func resolveBirthdayCharacterID(ctx context.Context, app *renderapp.App, region 
 		return 0, fmt.Errorf("请输入角色名")
 	}
 
-	if app != nil && app.Aliases != nil {
-		if charID, ok, err := app.Aliases.TryResolveCharacterID(ctx, query); err != nil {
-			return 0, err
-		} else if ok && charID > 0 {
-			return charID, nil
-		}
-	}
-
 	if charID, ok := rendercard.ResolveDefaultCharacterNickname(query); ok && charID > 0 {
 		return charID, nil
 	}
@@ -280,6 +272,14 @@ func resolveBirthdayCharacterID(ctx context.Context, app *renderapp.App, region 
 	extractor := parser.NewExtractor(miscBirthdayDefaultNicknames)
 	if result := extractor.ExtractCharacter(query); result.Found && strings.TrimSpace(result.Remaining) == "" {
 		return result.Value, nil
+	}
+
+	if app != nil && app.Aliases != nil {
+		if charID, ok, err := app.Aliases.TryResolveCharacterID(ctx, query); err != nil {
+			return 0, err
+		} else if ok && charID > 0 {
+			return charID, nil
+		}
 	}
 
 	ids, err := lookupBirthdayCharacterIDs(ctx, app, region, query)

@@ -117,6 +117,50 @@ func TestAggregateRemoteRecommendResultsMergesAlgorithmsForSameDeck(t *testing.T
 	}
 }
 
+func TestAggregateRemoteRecommendResultsKeepsDifferentCardsWithSameScoreAndLeader(t *testing.T) {
+	options := []map[string]any{
+		{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 2},
+	}
+	results := []remoteBatchRecommendResult{
+		{
+			Alg: "ga",
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{
+				{
+					Score:            100,
+					LiveScore:        100,
+					TotalPower:       200,
+					MultiLiveScoreUp: 120,
+					Cards: []remoteRecommendCard{
+						{CardID: 1001},
+						{CardID: 1002},
+					},
+				},
+				{
+					Score:            100,
+					LiveScore:        100,
+					TotalPower:       200,
+					MultiLiveScoreUp: 120,
+					Cards: []remoteRecommendCard{
+						{CardID: 1001},
+						{CardID: 1003},
+					},
+				},
+			}},
+		},
+	}
+
+	agg, err := aggregateRemoteRecommendResults("event", options, results)
+	if err != nil {
+		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
+	}
+	if len(agg.Decks) != 2 {
+		t.Fatalf("expected different card sets to stay separate, got %+v", agg.Decks)
+	}
+	if agg.Decks[0].Cards[1].CardID == agg.Decks[1].Cards[1].CardID {
+		t.Fatalf("expected distinct second cards, got %+v", agg.Decks)
+	}
+}
+
 func TestAggregateRemoteRecommendResultsSortsNoEventByLiveScore(t *testing.T) {
 	options := []map[string]any{
 		{"algorithm": "rl", "target": "score", "live_type": "multi", "limit": 2},

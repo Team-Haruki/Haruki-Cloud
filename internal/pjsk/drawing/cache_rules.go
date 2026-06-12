@@ -37,7 +37,8 @@ var (
 	}
 
 	renderCacheDisabledEndpoints = map[string]struct{}{
-		"/api/pjsk/event/detail": {},
+		"/api/pjsk/event/detail":        {},
+		"/api/pjsk/misc/chara-birthday": {},
 	}
 
 	skRenderCacheBucketJPAndCN = 10 * time.Second

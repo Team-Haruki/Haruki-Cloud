@@ -43,6 +43,13 @@ func TestResolveRenderCacheRuleDisablesEventDetail(t *testing.T) {
 	}
 }
 
+func TestResolveRenderCacheRuleDisablesCharacterBirthday(t *testing.T) {
+	rule := resolveRenderCacheRule("/api/pjsk/misc/chara-birthday")
+	if rule.Enabled {
+		t.Fatal("character birthday render cache should be disabled")
+	}
+}
+
 func TestResolveRenderCacheRuleUsesSevenDayTTLForCustomProfileCard(t *testing.T) {
 	rule := resolveRenderCacheRule("/api/pjsk/profile/custom-profile-card")
 	if rule.TTL != renderCacheTTLSevenDay {

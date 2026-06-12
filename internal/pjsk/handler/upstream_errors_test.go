@@ -30,6 +30,11 @@ func TestNormalizeDrawingUserFacingErrorTranslatesContentSize(t *testing.T) {
 	assertReplayErrorText(t, err, "渲染内容过大，请减少查询内容后重试")
 }
 
+func TestWrapDomainErrorTranslatesDrawingTimeout(t *testing.T) {
+	err := WrapDomainError(errString(`Post "http://haruki-drawing:8000/api/pjsk/misc/chara-birthday": context deadline exceeded (Client.Timeout exceeded while awaiting headers)`))
+	assertReplayErrorText(t, err, "连接渲染服务超时或网络异常，请稍后再试")
+}
+
 func TestNormalizeDeckServiceUserFacingErrorTranslatesFixedConflict(t *testing.T) {
 	err := normalizeDeckServiceUserFacingError(errString("fixed_characters and fixed_cards cannot be used together"))
 	assertReplayErrorText(t, err, "组卡服务版本过旧，暂不支持同时固定角色和卡牌，请更新组卡服务后重试")

@@ -91,6 +91,14 @@ func normalizeDrawingUserFacingError(err error) error {
 		return onebot11.NewReplayError("图片服务未就绪，请稍后再试")
 	case strings.Contains(lower, "asset path is empty"):
 		return onebot11.NewReplayError("图片资源不可用")
+	case strings.Contains(lower, "context deadline exceeded"),
+		strings.Contains(lower, "client.timeout exceeded"),
+		strings.Contains(lower, "i/o timeout"):
+		return onebot11.NewReplayError("连接渲染服务超时或网络异常，请稍后再试")
+	case strings.Contains(lower, "connection refused"),
+		strings.Contains(lower, "no such host"),
+		strings.Contains(lower, "eof"):
+		return onebot11.NewReplayError("渲染服务暂时不可用，请稍后再试")
 	case strings.HasPrefix(lower, "api request failed with status:"):
 		status, detail, ok := extractStatusAndPayload(message, "api request failed with status:")
 		if ok {

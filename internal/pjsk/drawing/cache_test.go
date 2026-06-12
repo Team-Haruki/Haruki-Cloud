@@ -43,10 +43,13 @@ func TestResolveRenderCacheRuleDisablesEventDetail(t *testing.T) {
 	}
 }
 
-func TestResolveRenderCacheRuleDisablesCharacterBirthday(t *testing.T) {
+func TestResolveRenderCacheRuleEnablesCharacterBirthday(t *testing.T) {
 	rule := resolveRenderCacheRule("/api/pjsk/misc/chara-birthday")
-	if rule.Enabled {
-		t.Fatal("character birthday render cache should be disabled")
+	if !rule.Enabled {
+		t.Fatal("character birthday render cache should be enabled")
+	}
+	if rule.TTL != renderCacheTTLOneDay {
+		t.Fatalf("character birthday ttl = %s, want %s", rule.TTL, renderCacheTTLOneDay)
 	}
 }
 
@@ -202,6 +205,162 @@ func TestBuildRenderCachePolicyAliasListIsInfiniteAndIgnoresDT(t *testing.T) {
 	}
 	if policyA.TTL != 0 {
 		t.Fatalf("expected infinite alias-list cache ttl to be 0, got %v", policyA.TTL)
+	}
+}
+
+func TestBuildRenderCachePolicyCharacterBirthdayIgnoresDT(t *testing.T) {
+	reqA := map[string]any{
+		"cid":                 6,
+		"month":               6,
+		"day":                 12,
+		"region_name":         "JP",
+		"days_until_birthday": 0,
+		"color_code":          "#33AAEE",
+		"sd_image_path":       "sd/6.png",
+		"title_image_path":    "title/6.png",
+		"card_image_path":     "card/6.png",
+		"cards": []any{
+			map[string]any{"id": 1001, "thumbnail_path": "thumb/1001.png"},
+		},
+		"all_characters": []any{
+			map[string]any{"cid": 6, "month": 6, "day": 12, "icon_path": "icon/6.png"},
+		},
+		"dt": int64(1781251200000),
+	}
+	reqB := map[string]any{
+		"cid":                 6,
+		"month":               6,
+		"day":                 12,
+		"region_name":         "JP",
+		"days_until_birthday": 0,
+		"color_code":          "#33AAEE",
+		"sd_image_path":       "sd/6.png",
+		"title_image_path":    "title/6.png",
+		"card_image_path":     "card/6.png",
+		"cards": []any{
+			map[string]any{"id": 1001, "thumbnail_path": "thumb/1001.png"},
+		},
+		"all_characters": []any{
+			map[string]any{"cid": 6, "month": 6, "day": 12, "icon_path": "icon/6.png"},
+		},
+		"dt": int64(1781254800000),
+	}
+
+	policyA, err := buildRenderCachePolicy("/api/pjsk/misc/chara-birthday", reqA)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqA: %v", err)
+	}
+	policyB, err := buildRenderCachePolicy("/api/pjsk/misc/chara-birthday", reqB)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy reqB: %v", err)
+	}
+
+	keyA, err := buildRenderCacheKey(policyA)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqA: %v", err)
+	}
+	keyB, err := buildRenderCacheKey(policyB)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey reqB: %v", err)
+	}
+
+	if keyA != keyB {
+		t.Fatalf("birthday key should ignore dt when request content is unchanged: %s != %s", keyA, keyB)
+	}
+}
+
+func TestBuildRenderCachePolicyCharacterBirthdayExpiresAtNextDayBoundary(t *testing.T) {
+	now := time.Date(2026, time.June, 12, 22, 30, 0, 0, time.FixedZone("CST", 8*3600))
+	policy, err := buildRenderCachePolicy("/api/pjsk/misc/chara-birthday", map[string]any{
+		"cid":                 6,
+		"month":               6,
+		"day":                 12,
+		"region_name":         "JP",
+		"days_until_birthday": 0,
+		"color_code":          "#33AAEE",
+		"sd_image_path":       "sd/6.png",
+		"title_image_path":    "title/6.png",
+		"card_image_path":     "card/6.png",
+		"cards": []any{
+			map[string]any{"id": 1001, "thumbnail_path": "thumb/1001.png"},
+		},
+		"all_characters": []any{
+			map[string]any{"cid": 6, "month": 6, "day": 12, "icon_path": "icon/6.png"},
+		},
+		"timezone": "Asia/Shanghai",
+		"dt":       now.UnixMilli(),
+	})
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy: %v", err)
+	}
+
+	if policy.TTL != 90*time.Minute {
+		t.Fatalf("birthday ttl = %s, want %s", policy.TTL, 90*time.Minute)
+	}
+}
+
+func TestBuildRenderCachePolicyCharacterBirthdayVariesByCharacterAndDay(t *testing.T) {
+	base := map[string]any{
+		"cid":                 6,
+		"month":               6,
+		"day":                 12,
+		"region_name":         "JP",
+		"days_until_birthday": 0,
+		"color_code":          "#33AAEE",
+		"sd_image_path":       "sd/6.png",
+		"title_image_path":    "title/6.png",
+		"card_image_path":     "card/6.png",
+		"cards": []any{
+			map[string]any{"id": 1001, "thumbnail_path": "thumb/1001.png"},
+		},
+		"all_characters": []any{
+			map[string]any{"cid": 6, "month": 6, "day": 12, "icon_path": "icon/6.png"},
+		},
+	}
+	dayChanged := map[string]any{
+		"cid":                 6,
+		"month":               6,
+		"day":                 12,
+		"region_name":         "JP",
+		"days_until_birthday": 1,
+		"color_code":          "#33AAEE",
+		"sd_image_path":       "sd/6.png",
+		"title_image_path":    "title/6.png",
+		"card_image_path":     "card/6.png",
+		"cards": []any{
+			map[string]any{"id": 1001, "thumbnail_path": "thumb/1001.png"},
+		},
+		"all_characters": []any{
+			map[string]any{"cid": 6, "month": 6, "day": 12, "icon_path": "icon/6.png"},
+		},
+	}
+	characterChanged := map[string]any{
+		"cid":                 7,
+		"month":               6,
+		"day":                 24,
+		"region_name":         "JP",
+		"days_until_birthday": 0,
+		"color_code":          "#EE8833",
+		"sd_image_path":       "sd/7.png",
+		"title_image_path":    "title/7.png",
+		"card_image_path":     "card/7.png",
+		"cards": []any{
+			map[string]any{"id": 1002, "thumbnail_path": "thumb/1002.png"},
+		},
+		"all_characters": []any{
+			map[string]any{"cid": 7, "month": 6, "day": 24, "icon_path": "icon/7.png"},
+		},
+	}
+
+	baseKey := mustBuildRenderCacheKey(t, "/api/pjsk/misc/chara-birthday", base)
+	dayChangedKey := mustBuildRenderCacheKey(t, "/api/pjsk/misc/chara-birthday", dayChanged)
+	characterChangedKey := mustBuildRenderCacheKey(t, "/api/pjsk/misc/chara-birthday", characterChanged)
+
+	if baseKey == dayChangedKey {
+		t.Fatal("birthday key should change when days_until_birthday changes")
+	}
+	if baseKey == characterChangedKey {
+		t.Fatal("birthday key should change when character changes")
 	}
 }
 
@@ -727,4 +886,17 @@ func TestBuildRenderCachePolicyIgnoresRootDT(t *testing.T) {
 	if keyA != keyB {
 		t.Fatalf("expected dt to be ignored by cache key: %s != %s", keyA, keyB)
 	}
+}
+
+func mustBuildRenderCacheKey(t *testing.T, endpoint string, request any) string {
+	t.Helper()
+	policy, err := buildRenderCachePolicy(endpoint, request)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy: %v", err)
+	}
+	key, err := buildRenderCacheKey(policy)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey: %v", err)
+	}
+	return key
 }

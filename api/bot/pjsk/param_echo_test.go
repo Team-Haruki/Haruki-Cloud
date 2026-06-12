@@ -59,6 +59,11 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 			want: "渲染请求失败，请稍后再试",
 		},
 		{
+			name: "drawing timeout",
+			in:   `Post "http://haruki-drawing:8000/api/pjsk/misc/chara-birthday": context deadline exceeded (Client.Timeout exceeded while awaiting headers)`,
+			want: "连接渲染服务超时或网络异常，请稍后再试",
+		},
+		{
 			name: "sekai api error",
 			in:   "sekai api error: status 401, message: \"Invalid token\"",
 			want: "SekaiAPI 拉取失败，请稍后再试",

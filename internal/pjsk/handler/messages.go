@@ -298,7 +298,11 @@ func WrapDomainError(err error) error {
 		message == "image storage is not configured",
 		strings.Contains(strings.ToLower(message), "drawing "),
 		strings.HasPrefix(strings.ToLower(message), "api request failed with status:"),
-		strings.Contains(strings.ToLower(message), "asset path is empty"):
+		strings.Contains(strings.ToLower(message), "asset path is empty"),
+		strings.Contains(strings.ToLower(message), "haruki-drawing"),
+		strings.Contains(strings.ToLower(message), "connection refused"),
+		strings.Contains(strings.ToLower(message), "no such host"),
+		strings.Contains(strings.ToLower(message), "client.timeout exceeded"):
 		if normalized := normalizeDrawingUserFacingError(err); normalized != err {
 			return normalized
 		}

@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"haruki-cloud/internal/pjsk/displaytime"
 )
 
 type renderCacheRule struct {
@@ -27,6 +29,8 @@ var (
 	renderCacheWindowTTLMin    = 10 * time.Minute
 	renderCacheWindowTTLMax    = 14 * 24 * time.Hour
 
+	renderCacheBirthdayTTLMin = 10 * time.Minute
+
 	renderCacheEventListPhaseTTLMin = time.Minute
 	renderCacheEventListPhaseTTLMax = renderCacheTTLHalfDay
 
@@ -37,8 +41,7 @@ var (
 	}
 
 	renderCacheDisabledEndpoints = map[string]struct{}{
-		"/api/pjsk/event/detail":        {},
-		"/api/pjsk/misc/chara-birthday": {},
+		"/api/pjsk/event/detail": {},
 	}
 
 	skRenderCacheBucketJPAndCN = 10 * time.Second
@@ -340,6 +343,12 @@ func resolveRenderCacheWindowTTL(endpointPath string, payload any) (time.Duratio
 			return 0, false
 		}
 		return resolveEventListPhaseCacheTTL(root)
+	case "/api/pjsk/misc/chara-birthday":
+		root := mapAt(payload)
+		if root == nil {
+			return 0, false
+		}
+		return resolveBirthdayDayBoundaryCacheTTL(root)
 	case "/api/pjsk/vlive/list":
 		root := mapAt(payload)
 		if root == nil {
@@ -383,6 +392,17 @@ func resolveEventListPhaseCacheTTL(root map[string]any) (time.Duration, bool) {
 		return 0, false
 	}
 	return clampEventListPhaseCacheTTL(nextBoundaryMs - nowMs), true
+}
+
+func resolveBirthdayDayBoundaryCacheTTL(root map[string]any) (time.Duration, bool) {
+	nowMs := renderCacheNowMillis(root)
+	if nowMs <= 0 {
+		return 0, false
+	}
+	loc, _ := displaytime.LoadLocation(scalarString(root["timezone"]))
+	now := time.UnixMilli(nowMs).In(loc)
+	nextDay := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, loc)
+	return clampBirthdayDayBoundaryCacheTTL(nextDay.Sub(now)), true
 }
 
 func renderCacheNowMillis(root map[string]any) int64 {
@@ -449,6 +469,16 @@ func clampEventListPhaseCacheTTL(remainingMs int64) time.Duration {
 	}
 	if ttl > renderCacheEventListPhaseTTLMax {
 		return renderCacheEventListPhaseTTLMax
+	}
+	return ttl
+}
+
+func clampBirthdayDayBoundaryCacheTTL(ttl time.Duration) time.Duration {
+	if ttl < renderCacheBirthdayTTLMin {
+		return renderCacheBirthdayTTLMin
+	}
+	if ttl > renderCacheTTLOneDay {
+		return renderCacheTTLOneDay
 	}
 	return ttl
 }

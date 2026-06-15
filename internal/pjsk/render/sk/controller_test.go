@@ -1706,6 +1706,43 @@ func TestBuildQueryRequestFromTrackerResolvesNameFromTraceUserID(t *testing.T) {
 	}
 }
 
+func TestBuildQueryRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	tracker := &batchLineMetricsTrackerSource{}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{100, 1},
+	})
+	if err != nil {
+		t.Fatalf("build query request: %v", err)
+	}
+	if tracker.batchTraceRankCalls.Load() != 1 {
+		t.Fatalf("expected 1 batch trace rank call, got %d", tracker.batchTraceRankCalls.Load())
+	}
+	if tracker.latestRankCalls.Load() != 2 {
+		t.Fatalf("expected 2 latest rank calls, got %d", tracker.latestRankCalls.Load())
+	}
+	if tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("expected no single rank trace calls, got %d", tracker.traceRankCalls.Load())
+	}
+	if len(payload.Ranks) != 2 || payload.Ranks[0].Rank != 1 || payload.Ranks[1].Rank != 100 {
+		t.Fatalf("unexpected query ranks: %+v", payload.Ranks)
+	}
+}
+
 func TestBuildPlayerTraceFromTrackerResolvesNameFromTraceUserID(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
@@ -1941,6 +1978,43 @@ func TestBuildCheckRoomRequestFromTrackerKeepsPlayerNameAndUsesWindowMetrics(t *
 	}
 	if got.Min20Time3Speed == nil || *got.Min20Time3Speed != 2442000 {
 		t.Fatalf("unexpected 20minx3 speed: %+v", got.Min20Time3Speed)
+	}
+}
+
+func TestBuildCheckRoomRequestFromTrackerUsesLatestOnlyForAdjacentRanks(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	tracker := &lineMetricsOnlyTrackerSource{}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildCheckRoomRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1},
+	})
+	if err != nil {
+		t.Fatalf("build check-room request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	if tracker.latestRankCalls.Load() != 2 {
+		t.Fatalf("expected current and next rank latest calls, got %d", tracker.latestRankCalls.Load())
+	}
+	if tracker.traceUserCalls.Load() != 1 {
+		t.Fatalf("expected only current rank user trace call, got %d", tracker.traceUserCalls.Load())
+	}
+	if tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("expected no adjacent rank trace calls, got %d", tracker.traceRankCalls.Load())
 	}
 }
 
@@ -2749,8 +2823,9 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 		StartAt:     now - int64(time.Hour/time.Millisecond),
 		AggregateAt: now + int64(2*time.Hour/time.Millisecond),
 	}
+	tracker := &batchLineMetricsTrackerSource{}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+	controller.SetTrackerIntegration(tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2798,6 +2873,15 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	}
 	if len(payload.Ranks) != 2 {
 		t.Fatalf("unexpected current ranks len: %d", len(payload.Ranks))
+	}
+	if tracker.batchTraceRankCalls.Load() != 1 {
+		t.Fatalf("expected 1 batch trace rank call, got %d", tracker.batchTraceRankCalls.Load())
+	}
+	if tracker.latestRankCalls.Load() != 2 {
+		t.Fatalf("expected 2 latest rank calls, got %d", tracker.latestRankCalls.Load())
+	}
+	if tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("expected no single rank trace calls, got %d", tracker.traceRankCalls.Load())
 	}
 	if payload.Ranks[0].Rank != 50 || payload.Ranks[0].Score == nil || *payload.Ranks[0].Score != 1_000_050 {
 		t.Fatalf("unexpected first current rank payload: %+v", payload.Ranks[0])

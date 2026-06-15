@@ -66,12 +66,12 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 		targetRank := rankInfos[0].Rank
 		prevRank, nextRank, hasPrev, hasNext := queryAdjacentSKLineRanks(targetRank, normalized.WlCharacterID != nil)
 		if hasPrev {
-			if prev, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, prevRank, normalized.WlCharacterID); err == nil {
+			if prev, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, prevRank, normalized.WlCharacterID); err == nil {
 				payload.PrevRanks = &prev
 			}
 		}
 		if hasNext {
-			if next, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, nextRank, normalized.WlCharacterID); err == nil {
+			if next, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, nextRank, normalized.WlCharacterID); err == nil {
 				payload.NextRanks = &next
 			}
 		}
@@ -181,11 +181,11 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 
 	if targetRank > 0 {
 		if targetRank > 1 {
-			if prev, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, targetRank-1, normalized.WlCharacterID); err == nil {
+			if prev, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, targetRank-1, normalized.WlCharacterID); err == nil {
 				payload.PrevRank = &prev
 			}
 		}
-		if next, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, targetRank+1, normalized.WlCharacterID); err == nil {
+		if next, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, targetRank+1, normalized.WlCharacterID); err == nil {
 			payload.NextRank = &next
 		}
 	}

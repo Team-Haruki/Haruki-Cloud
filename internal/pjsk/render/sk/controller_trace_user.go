@@ -12,7 +12,7 @@ import (
 func (c *Controller) buildUserTraceFromTracker(server string, eventID int, userID int64, wlCharacterID *int) ([]drawing.RankInfo, error) {
 	result := make([]drawing.RankInfo, 0)
 	latestName := ""
-	if latest, err := c.buildSingleUserFromTracker(server, eventID, userID, wlCharacterID); err == nil {
+	if latest, err := c.buildSingleUserLatestFromTracker(server, eventID, userID, wlCharacterID); err == nil {
 		latestName = strings.TrimSpace(latest.Name)
 	}
 
@@ -88,7 +88,7 @@ func (c *Controller) buildUserTraceFromTracker(server string, eventID int, userI
 		return result[i].Time < result[j].Time
 	})
 	if len(result) == 0 {
-		latest, err := c.buildSingleUserFromTracker(server, eventID, userID, wlCharacterID)
+		latest, err := c.buildSingleUserLatestFromTracker(server, eventID, userID, wlCharacterID)
 		if err != nil {
 			return nil, fmt.Errorf("tracker trace fallback user query failed: %w", err)
 		}

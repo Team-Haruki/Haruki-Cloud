@@ -11,7 +11,7 @@ import (
 func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int, wlCharacterID *int) ([]drawing.RankInfo, error) {
 	result := make([]drawing.RankInfo, 0)
 	latestName := ""
-	if latest, err := c.buildSingleRankFromTracker(server, eventID, rank, wlCharacterID); err == nil {
+	if latest, err := c.buildSingleRankLatestFromTracker(server, eventID, rank, wlCharacterID); err == nil {
 		latestName = strings.TrimSpace(latest.Name)
 	}
 	if wlCharacterID != nil && *wlCharacterID > 0 {
@@ -95,7 +95,7 @@ func (c *Controller) buildRankTraceFromTracker(server string, eventID, rank int,
 		return result[i].Time < result[j].Time
 	})
 	if len(result) == 0 {
-		latest, err := c.buildSingleRankFromTracker(server, eventID, rank, wlCharacterID)
+		latest, err := c.buildSingleRankLatestFromTracker(server, eventID, rank, wlCharacterID)
 		if err != nil {
 			return nil, fmt.Errorf("tracker trace fallback rank %d query failed: %w", rank, err)
 		}

@@ -12,12 +12,14 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/sync/singleflight"
 )
 
 type TrackerClient struct {
 	http       *resty.Client
 	config     *config.TrackerConfig
 	requestCtx context.Context
+	flight     *singleflight.Group
 }
 
 // NewTrackerClient constructs a TrackerClient bound to the supplied config.
@@ -31,6 +33,7 @@ func NewTrackerClient(cfg *config.TrackerConfig) *TrackerClient {
 	return &TrackerClient{
 		http:   newRestyClient().SetTimeout(timeout),
 		config: cfg,
+		flight: &singleflight.Group{},
 	}
 }
 
@@ -40,6 +43,7 @@ func (c *TrackerClient) WithContext(ctx context.Context) *TrackerClient {
 	}
 	clone := *c
 	clone.requestCtx = ctx
+	clone.flight = c.flight
 	return &clone
 }
 
@@ -239,26 +243,37 @@ func (c *TrackerClient) getRaw(path string) ([]byte, error) {
 	if baseURL == "" {
 		return nil, fmt.Errorf("tracker: base_url is empty")
 	}
-	url := baseURL + path
-	resp, err := c.http.R().
-		SetContext(c.requestContext()).
-		SetHeader("User-Agent", c.userAgent()).
-		Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("tracker: request failed after retries: %w", sanitizeNetworkError(err))
+	if c.flight == nil {
+		c.flight = &singleflight.Group{}
 	}
+	key := baseURL + path
+	value, err, _ := c.flight.Do(key, func() (any, error) {
+		url := baseURL + path
+		resp, err := c.http.R().
+			SetContext(c.requestContext()).
+			SetHeader("User-Agent", c.userAgent()).
+			Get(url)
+		if err != nil {
+			return nil, fmt.Errorf("tracker: request failed after retries: %w", sanitizeNetworkError(err))
+		}
 
-	switch resp.StatusCode() {
-	case 200:
-		return resp.Body(), nil
-	case 404:
-		return nil, ErrRankingNotFound
-	case 429:
-		return nil, &TrackerAPIError{StatusCode: 429, Message: "rate limited by tracker"}
-	case 503:
-		return nil, ErrServerMaintenance
-	default:
-		msg := parseMessage(resp.Body())
-		return nil, &TrackerAPIError{StatusCode: resp.StatusCode(), Message: msg}
+		switch resp.StatusCode() {
+		case 200:
+			return append([]byte(nil), resp.Body()...), nil
+		case 404:
+			return nil, ErrRankingNotFound
+		case 429:
+			return nil, &TrackerAPIError{StatusCode: 429, Message: "rate limited by tracker"}
+		case 503:
+			return nil, ErrServerMaintenance
+		default:
+			msg := parseMessage(resp.Body())
+			return nil, &TrackerAPIError{StatusCode: resp.StatusCode(), Message: msg}
+		}
+	})
+	if err != nil {
+		return nil, err
 	}
+	body, _ := value.([]byte)
+	return append([]byte(nil), body...), nil
 }

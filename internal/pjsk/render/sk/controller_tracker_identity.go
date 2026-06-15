@@ -10,10 +10,27 @@ import (
 )
 
 func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, error) {
+	info, uid, ok, err := c.buildSingleRankBaseFromTracker(server, eventID, rank, wlCharacterID)
+	if err != nil {
+		return drawing.RankInfo{}, err
+	}
+	c.enrichRankInfoPreferUser(server, eventID, info.Rank, uid, ok, wlCharacterID, &info)
+	if c.isTrackerEventTitleName(server, eventID, info.Name) {
+		info.Name = fmt.Sprintf("Rank %d", info.Rank)
+	}
+	return info, nil
+}
+
+func (c *Controller) buildSingleRankLatestFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, error) {
+	info, _, _, err := c.buildSingleRankBaseFromTracker(server, eventID, rank, wlCharacterID)
+	return info, err
+}
+
+func (c *Controller) buildSingleRankBaseFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, int64, bool, error) {
 	if wlCharacterID != nil && *wlCharacterID > 0 {
 		latest, err := c.tracker.GetLatestWorldBloomRankingByRank(server, eventID, *wlCharacterID, rank)
 		if err != nil {
-			return drawing.RankInfo{}, err
+			return drawing.RankInfo{}, 0, false, err
 		}
 		rankValue := rank
 		if latest.RankData.Rank > 0 {
@@ -37,15 +54,12 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 			Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 		}
 		uid, ok := parseTrackerUserID(latest.RankData.UserID, latest.UserData.UserID)
-		c.enrichRankInfoPreferUser(server, eventID, rankValue, uid, ok, wlCharacterID, &info)
-		if c.isTrackerEventTitleName(server, eventID, info.Name) {
-			info.Name = fmt.Sprintf("Rank %d", info.Rank)
-		}
-		return info, nil
+		return info, uid, ok, nil
 	}
+
 	latest, err := c.tracker.GetLatestRankingByRank(server, eventID, rank)
 	if err != nil {
-		return drawing.RankInfo{}, err
+		return drawing.RankInfo{}, 0, false, err
 	}
 	rankValue := rank
 	if latest.RankData.Rank > 0 {
@@ -69,11 +83,7 @@ func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int
 		Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 	}
 	uid, ok := parseTrackerUserID(latest.RankData.UserID, latest.UserData.UserID)
-	c.enrichRankInfoPreferUser(server, eventID, rankValue, uid, ok, wlCharacterID, &info)
-	if c.isTrackerEventTitleName(server, eventID, info.Name) {
-		info.Name = fmt.Sprintf("Rank %d", info.Rank)
-	}
-	return info, nil
+	return info, uid, ok, nil
 }
 
 func (c *Controller) resolveTrackerNameByUserID(server string, eventID int, userID string, wlCharacterID *int) string {
@@ -101,6 +111,19 @@ func (c *Controller) resolveTrackerNameByUserID(server string, eventID int, user
 }
 
 func (c *Controller) buildSingleUserFromTracker(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {
+	info, err := c.buildSingleUserBaseFromTracker(server, eventID, userID, wlCharacterID)
+	if err != nil {
+		return drawing.RankInfo{}, err
+	}
+	c.enrichRankInfoByUser(server, eventID, userID, wlCharacterID, &info)
+	return info, nil
+}
+
+func (c *Controller) buildSingleUserLatestFromTracker(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {
+	return c.buildSingleUserBaseFromTracker(server, eventID, userID, wlCharacterID)
+}
+
+func (c *Controller) buildSingleUserBaseFromTracker(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {
 	if wlCharacterID != nil && *wlCharacterID > 0 {
 		latest, err := c.tracker.GetLatestWorldBloomRankingByUser(server, eventID, *wlCharacterID, userID)
 		if err != nil {
@@ -127,9 +150,12 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 			Score: drawing.IntPtr(score),
 			Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 		}
-		c.enrichRankInfoByUser(server, eventID, userID, wlCharacterID, &info)
+		if c.isTrackerEventTitleName(server, eventID, info.Name) {
+			info.Name = fmt.Sprintf("Rank %d", info.Rank)
+		}
 		return info, nil
 	}
+
 	latest, err := c.tracker.GetLatestRankingByUser(server, eventID, userID)
 	if err != nil {
 		return drawing.RankInfo{}, err
@@ -155,7 +181,9 @@ func (c *Controller) buildSingleUserFromTracker(server string, eventID int, user
 		Score: drawing.IntPtr(score),
 		Time:  formatTrackerTimestamp(latest.RankData.Timestamp),
 	}
-	c.enrichRankInfoByUser(server, eventID, userID, wlCharacterID, &info)
+	if c.isTrackerEventTitleName(server, eventID, info.Name) {
+		info.Name = fmt.Sprintf("Rank %d", info.Rank)
+	}
 	return info, nil
 }
 

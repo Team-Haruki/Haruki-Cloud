@@ -104,6 +104,34 @@ func TestSekaiHandlerCanDisableUIDArgParsing(t *testing.T) {
 	}
 }
 
+func TestDispatchKeepsCustomChartIDWithEmbeddedUSelector(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	const scoreID = "7ao-at6p85d-g9jvnqu5f-pvekg3"
+	resolved, err := dispatchForTest(context.Background(), Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]any{"text": "/jp谱面预览 " + scoreID}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-chart" {
+		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	}
+	if resolved.Region != "jp" {
+		t.Fatalf("unexpected region: %s", resolved.Region)
+	}
+	if resolved.Query != scoreID {
+		t.Fatalf("query = %q, want %q", resolved.Query, scoreID)
+	}
+}
+
 func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 

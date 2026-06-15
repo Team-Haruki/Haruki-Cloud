@@ -82,6 +82,8 @@ func TestExtractUid(t *testing.T) {
 	}{
 		{"Index Selector", "u12 目标", "u12", "目标", true},
 		{"Index Selector Ignores mu Prefix", "mu12 目标", "", "mu12 目标", false},
+		{"Index Selector Ignores Embedded Custom Chart ID", "7ao-at6p85d-g9jvnqu5f-pvekg3", "", "7ao-at6p85d-g9jvnqu5f-pvekg3", false},
+		{"Index Selector Allows Unicode Space Boundary", "u2　目标", "u2", "目标", true},
 		{"Game UID", "12345678901234 查档", "12345678901234", "查档", true},
 		{"QQ Mention", "@123456789 查询", "@123456789", "查询", true},
 		{"Sequential Override", "u2 12345678901234 @123456789", "@123456789", "", true},

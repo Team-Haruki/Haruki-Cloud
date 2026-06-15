@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"haruki-cloud/internal/pjsk/filteralias"
 )
@@ -226,7 +228,7 @@ var (
 // ExtractUid extracts account selector arguments from text.
 //
 // Supported forms:
-// - u[i]  -> u1, u2 ... (while avoiding matches like "mu1")
+// - u[i]  -> u1, u2 ... (when provided as a standalone token)
 // - uid   -> 14-20 digit game uid
 // - @qq   -> @123456789
 //
@@ -267,13 +269,7 @@ func extractUIDIndexArg(text string) (string, string, bool) {
 			continue
 		}
 		start, end := idx[0], idx[1]
-		if start > 0 {
-			prev := text[start-1]
-			if prev == 'm' || prev == 'M' {
-				continue
-			}
-		}
-		if end < len(text) && text[end] >= '0' && text[end] <= '9' {
+		if !isUIDIndexTokenBoundary(text, start) || !isUIDIndexTokenBoundary(text, end) {
 			continue
 		}
 
@@ -283,6 +279,15 @@ func extractUIDIndexArg(text string) (string, string, bool) {
 		return value, remaining, true
 	}
 	return "", text, false
+}
+
+func isUIDIndexTokenBoundary(text string, index int) bool {
+	if index <= 0 || index >= len(text) {
+		return true
+	}
+	before, _ := utf8.DecodeLastRuneInString(text[:index])
+	after, _ := utf8.DecodeRuneInString(text[index:])
+	return unicode.IsSpace(before) || unicode.IsSpace(after)
 }
 
 func extractFirstMatch(text string, re *regexp.Regexp, prefix string) (string, string, bool) {

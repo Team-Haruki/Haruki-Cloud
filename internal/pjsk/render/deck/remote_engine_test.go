@@ -117,6 +117,86 @@ func TestAggregateRemoteRecommendResultsMergesAlgorithmsForSameDeck(t *testing.T
 	}
 }
 
+func TestAggregateRemoteRecommendResultsMergesSameCardsInDifferentPositions(t *testing.T) {
+	options := []map[string]any{
+		{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 6},
+		{"algorithm": "dfs_ga", "target": "score", "live_type": "multi", "limit": 6},
+		{"algorithm": "rl", "target": "score", "live_type": "multi", "limit": 6},
+	}
+	results := []remoteBatchRecommendResult{
+		{
+			Alg: "ga",
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{{
+				Score:            2904855,
+				LiveScore:        2904855,
+				TotalPower:       357857,
+				EventBonusRate:   273,
+				MultiLiveScoreUp: 200,
+				Cards: []remoteRecommendCard{
+					{CardID: 1252},
+					{CardID: 1057},
+					{CardID: 243},
+					{CardID: 841},
+					{CardID: 424},
+				},
+			}}},
+		},
+		{
+			Alg: "dfs_ga",
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{{
+				Score:            2904855,
+				LiveScore:        2904855,
+				TotalPower:       357857,
+				EventBonusRate:   273,
+				MultiLiveScoreUp: 200,
+				Cards: []remoteRecommendCard{
+					{CardID: 1252},
+					{CardID: 1057},
+					{CardID: 424},
+					{CardID: 841},
+					{CardID: 243},
+				},
+			}}},
+		},
+		{
+			Alg: "rl",
+			Result: &remoteRecommendResult{Decks: []remoteRecommendDeck{{
+				Score:            2904855,
+				LiveScore:        2904855,
+				TotalPower:       357857,
+				EventBonusRate:   273,
+				MultiLiveScoreUp: 200,
+				Cards: []remoteRecommendCard{
+					{CardID: 1252},
+					{CardID: 1057},
+					{CardID: 841},
+					{CardID: 243},
+					{CardID: 424},
+				},
+			}}},
+		},
+	}
+
+	agg, err := aggregateRemoteRecommendResults("no_event", options, results)
+	if err != nil {
+		t.Fatalf("aggregateRemoteRecommendResults() error = %v", err)
+	}
+	if len(agg.Decks) != 1 {
+		t.Fatalf("expected same card set to merge across positions, got %+v", agg.Decks)
+	}
+	if len(agg.DeckAlgs) != 1 || agg.DeckAlgs[0] != "DGA+GA+RL" {
+		t.Fatalf("unexpected deck algs: %+v", agg.DeckAlgs)
+	}
+	gotOrder := make([]int, 0, len(agg.Decks[0].Cards))
+	for _, card := range agg.Decks[0].Cards {
+		gotOrder = append(gotOrder, card.CardID)
+	}
+	wantOrder := []int{1252, 1057, 243, 841, 424}
+	if fmt.Sprint(gotOrder) != fmt.Sprint(wantOrder) {
+		t.Fatalf("merged deck should keep first returned order, got %+v", gotOrder)
+	}
+}
+
 func TestAggregateRemoteRecommendResultsKeepsDifferentCardsWithSameScoreAndLeader(t *testing.T) {
 	options := []map[string]any{
 		{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 2},

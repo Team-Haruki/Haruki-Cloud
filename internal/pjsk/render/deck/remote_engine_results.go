@@ -125,6 +125,12 @@ func aggregateRemoteRecommendResults(recType string, options []map[string]any, r
 				if alg != "" {
 					existing.Algs = append(existing.Algs, alg)
 				}
+				target, _ := options[0]["target"].(string)
+				if compareRecommendDecks(recType, target, deck, *existing) {
+					algs := existing.Algs
+					*existing = deck
+					existing.Algs = algs
+				}
 				continue
 			}
 			deckCopy := deck

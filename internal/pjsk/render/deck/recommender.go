@@ -2,21 +2,27 @@ package deck
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
 func deckHash(deck RecommendDeck) string {
-	cardIDs := make([]string, 0, len(deck.Cards))
+	cardKeys := make([]string, 0, len(deck.Cards))
 	for _, card := range deck.Cards {
-		cardIDs = append(cardIDs, fmt.Sprintf("%d", card.CardID))
+		cardKeys = append(cardKeys, fmt.Sprintf("%d:%d:%d:%s:%d:%g:%g:%t:%t:%t:%t",
+			card.CardID,
+			card.Level,
+			card.MasterRank,
+			card.DefaultImage,
+			card.SkillLevel,
+			card.SkillRate,
+			card.EventBonusRate,
+			card.IsBeforeStory,
+			card.IsAfterStory,
+			card.IsAfterTraining,
+			card.HasCanvasBonus,
+		))
 	}
-	return fmt.Sprintf("%d_%d_%d_%g_%g_%g_%s",
-		deck.Score,
-		deck.LiveScore,
-		deck.TotalPower,
-		deck.EventBonusRate,
-		deck.SupportDeckBonusRate,
-		deck.MultiLiveScoreUp,
-		strings.Join(cardIDs, ","),
-	)
+	sort.Strings(cardKeys)
+	return strings.Join(cardKeys, ",")
 }

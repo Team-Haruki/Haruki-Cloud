@@ -324,7 +324,7 @@ func (c *Controller) enrichRankInfoFromCloudV2Trace(server string, eventID int, 
 }
 
 func (c *Controller) applyCloudV2TraceMetrics(source trackerCloudV2Source, server string, eventID int, wlCharacterID *int, subjectType string, subject string, info *drawing.RankInfo) bool {
-	resp, err := source.GetCloudSKTrace(server, eventID, wlCharacterID, subjectType, subject, 5000)
+	resp, err := source.GetCloudSKTrace(server, eventID, wlCharacterID, subjectType, subject, 0)
 	if err != nil || resp == nil || len(resp.RankData) == 0 {
 		return false
 	}

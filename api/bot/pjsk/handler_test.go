@@ -176,7 +176,7 @@ func (s botCloudV2TrackerSource) GetCloudSKCheckRoom(server string, eventID int,
 	if len(resp.Ranks) == 0 {
 		return nil, sekaiapi.ErrRankingNotFound
 	}
-	return &sekaiapi.CloudCheckRoomResponse{Rank: resp.Ranks[0]}, nil
+	return &sekaiapi.CloudCheckRoomResponse{Rank: resp.Ranks[0], Ranks: resp.Ranks}, nil
 }
 
 func (s botCloudV2TrackerSource) GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudLineResponse, error) {

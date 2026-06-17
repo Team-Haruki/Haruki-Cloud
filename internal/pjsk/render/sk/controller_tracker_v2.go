@@ -224,7 +224,7 @@ func (c *Controller) buildSubjectTraceFromTrackerV2(server string, eventID int, 
 	if !ok {
 		return nil, false, nil
 	}
-	resp, err := source.GetCloudSKTrace(server, eventID, wlCharacterID, subjectType, subject, 5000)
+	resp, err := source.GetCloudSKTrace(server, eventID, wlCharacterID, subjectType, subject, 0)
 	if err != nil {
 		return nil, true, err
 	}

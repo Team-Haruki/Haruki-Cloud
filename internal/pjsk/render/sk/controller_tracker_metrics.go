@@ -8,6 +8,7 @@ import (
 )
 
 const trackerRealtimeTailMaxLagSeconds = int64(30 * 24 * time.Hour / time.Second)
+const trackerRecoveryIdleSeconds = int64(5 * time.Minute / time.Second)
 
 func (c *Controller) enrichRankInfoByRank(server string, eventID, rank int, wlCharacterID *int, info *drawing.RankInfo) {
 }
@@ -39,9 +40,11 @@ func applyRankInfoMetricsAt(info *drawing.RankInfo, samples []trackerScoreSample
 		return normalizeTrackerUnixSeconds(normalized[i].timestamp) < normalizeTrackerUnixSeconds(normalized[j].timestamp)
 	})
 
-	info.RecordStartAt = drawing.Int64Ptr(formatTrackerTimestamp(normalized[0].timestamp))
 	if len(normalized) < 2 {
 		return
+	}
+	if recordStartAt := recoveryRecordStartAt(normalized); recordStartAt != nil {
+		info.RecordStartAt = recordStartAt
 	}
 
 	deltas := make([]int, 0, len(normalized)-1)
@@ -146,6 +149,35 @@ func appendIdleTrackerRankTraceAt(ranks []drawing.RankInfo, now time.Time) []dra
 	idle := last
 	idle.Time = time.Unix(endSec, 0).UTC().UnixMilli()
 	return append(ranks, idle)
+}
+
+func recoveryRecordStartAt(samples []trackerScoreSample) *int64 {
+	if len(samples) == 0 {
+		return nil
+	}
+	recovery := normalizeTrackerUnixSeconds(samples[0].timestamp)
+	flatStart := recovery
+	inFlat := false
+	for i := 1; i < len(samples); i++ {
+		prev := samples[i-1]
+		curr := samples[i]
+		currSec := normalizeTrackerUnixSeconds(curr.timestamp)
+		switch {
+		case curr.score == prev.score:
+			inFlat = true
+		case curr.score > prev.score:
+			if inFlat && currSec-flatStart >= trackerRecoveryIdleSeconds {
+				recovery = currSec
+			}
+			flatStart = currSec
+			inFlat = false
+		case curr.score < prev.score:
+			flatStart = currSec
+			inFlat = false
+		}
+	}
+	value := formatTrackerTimestamp(recovery)
+	return &value
 }
 
 func findWindowBaselineIndex(samples []trackerScoreSample, windowStart int64) int {

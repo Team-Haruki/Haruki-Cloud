@@ -288,7 +288,7 @@ GET /api/v2/cloud/events/{server}/{event_id}/leaderboards/{scope}/sk/trace
 |------|------|------|------|
 | `subjectType` | string | 是 | `user` 或 `rank` |
 | `subject` | string | 是 | 用户 ID（`subjectType=user`）或排名（`subjectType=rank`） |
-| `limit` | int | 否 | 返回点数量上限，Cloud 默认传 5000 |
+| `limit` | int | 否 | 返回点数量上限；Cloud 默认不传，表示请求完整 trace |
 
 响应类型 `CloudTraceResponse`：
 
@@ -489,7 +489,7 @@ Tracker 心跳与 leaderboard scope 无关。`/sk/status` endpoint 的路径固�
 4. 若 user trace fallback 也未补齐指标，以 `subjectType=rank` 调 `/sk/trace` 再尝试。
 5. 本地 metrics 计算逻辑（`applyRankInfoMetrics`）：
    - 取 trace 样本，按 timestamp 升序排列。
-   - `recordStartAt` = 最早样本时间。
+   - `recordStartAt` = 当前玩家最后一次有效停车后恢复周回的时间；若没有识别到停车恢复，则使用可见 trace 的首个点。
    - `latestPt` = 最后一个正向增量。
    - `averageRound` / `averagePt` = 最近 10 个正向增量的局数和平均值。
    - `speed` = 近 1 小时窗口内归一到每小时的分数增长。
@@ -498,7 +498,7 @@ Tracker 心跳与 leaderboard scope 无关。`/sk/status` endpoint 的路径固�
 
 ### fallback 的限制
 
-- `/sk/trace` 的 `limit` 参数 Cloud 默认传 5000。高频玩家超过 5000 条 trace 时，最旧样本被截断，可能影响 `recordStartAt` 精度，但不影响近 1 小时和近 20 分钟窗口（只要这些窗口在 5000 条内）。
+- `/sk/trace` 的 `limit` 参数 Cloud 默认不传。CSB/player trace 场景需要完整轨迹，不能默认截断为 5000 条；只有调用方明确需要分页或采样时才传 `limit`。
 - fallback 只在 Tracker 未返回周回指标时触发。Tracker 返回了完整指标组（即使部分为 0）时 Cloud 不再 fallback。
 
 长期目标是 Tracker 的 v2 cloud API 直接返回正确的语义结果，Cloud 的 fallback 仅作为保护层。

@@ -72,6 +72,22 @@ func (c *Controller) BuildPlayerTraceFromTracker(req TrackerRankQuery) (*drawing
 	default:
 		return nil, fmt.Errorf("player-trace requires user_id or rank")
 	}
+	if normalized.CompareRank > 0 {
+		trace, err := c.buildRankTraceFromTracker(normalized.Region, normalized.EventID, normalized.CompareRank, normalized.WlCharacterID)
+		if err != nil {
+			return nil, err
+		}
+		latest, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, normalized.CompareRank, normalized.WlCharacterID)
+		if err != nil {
+			return nil, err
+		}
+		payload.CompareRank = normalized.CompareRank
+		payload.CompareRankTrace = trace
+		payload.CompareRankLatest = &latest
+		if latest.Score != nil {
+			payload.CompareRankLineScore = latest.Score
+		}
+	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
 			payload.WlCharaIconPath = &icon

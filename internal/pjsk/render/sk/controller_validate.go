@@ -25,6 +25,9 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 	if normalized.UserID != nil && *normalized.UserID <= 0 {
 		normalized.UserID = nil
 	}
+	if normalized.CompareRank < 0 {
+		normalized.CompareRank = 0
+	}
 	if len(normalized.Ranks) == 0 && normalized.UserID == nil {
 		return TrackerRankQuery{}, fmt.Errorf("tracker ranks/user_id are empty")
 	}

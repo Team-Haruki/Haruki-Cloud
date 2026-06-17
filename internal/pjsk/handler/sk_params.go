@@ -156,8 +156,12 @@ func buildSKSpeedTrackerParams(ctx HarrukiSekaiHandlerContext, unit string, defa
 }
 
 func buildSKPlayerTraceParams(ctx HarrukiSekaiHandlerContext) (map[string]any, error) {
+	args, compareRank, err := extractSKCompareRankArg(strings.TrimSpace(ctx.GetArgs()))
+	if err != nil {
+		return nil, err
+	}
 	eventID, wlCharacterID, wlCharacterQuery, _, rankArgs := extractSKMetaArgs(
-		strings.TrimSpace(ctx.GetArgs()),
+		args,
 		false,
 		ctx.PrefixArg() == "wl",
 	)
@@ -177,6 +181,9 @@ func buildSKPlayerTraceParams(ctx HarrukiSekaiHandlerContext) (map[string]any, e
 	}
 	if strings.TrimSpace(wlCharacterQuery) != "" {
 		params["wl_character_query"] = strings.TrimSpace(wlCharacterQuery)
+	}
+	if compareRank > 0 {
+		params["compare_rank"] = compareRank
 	}
 
 	targetUserID := ""
@@ -221,4 +228,33 @@ func buildSKPlayerTraceParams(ctx HarrukiSekaiHandlerContext) (map[string]any, e
 	}
 
 	return params, nil
+}
+
+func extractSKCompareRankArg(args string) (string, int, error) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) == 0 {
+		return "", 0, nil
+	}
+	remaining := make([]string, 0, len(fields))
+	compareRank := 0
+	for _, raw := range fields {
+		token := strings.TrimSpace(raw)
+		if !strings.HasPrefix(token, "#") {
+			remaining = append(remaining, raw)
+			continue
+		}
+		value := strings.TrimSpace(strings.TrimPrefix(token, "#"))
+		if value == "" || !isDigits(value) {
+			return "", 0, fmt.Errorf("分数线参数格式应为 #排名，例如: /ptr #100")
+		}
+		rank, err := strconv.Atoi(value)
+		if err != nil || rank <= 0 {
+			return "", 0, fmt.Errorf("分数线排名必须大于 0")
+		}
+		if compareRank > 0 {
+			return "", 0, fmt.Errorf("ptr 只能指定一个分数线参数")
+		}
+		compareRank = rank
+	}
+	return strings.TrimSpace(strings.Join(remaining, " ")), compareRank, nil
 }

@@ -32,6 +32,7 @@ type TrackerRankQuery struct {
 	TargetPlatform   string  `json:"target_platform,omitempty"`
 	TargetUserID     string  `json:"target_user_id,omitempty"`
 	TargetSelector   string  `json:"target_selector,omitempty"`
+	CompareRank      int     `json:"compare_rank,omitempty"`
 	WlCharacterID    *int    `json:"wl_character_id,omitempty"`
 	WlCharacterQuery string  `json:"wl_character_query,omitempty"`
 	Full             bool    `json:"full,omitempty"`

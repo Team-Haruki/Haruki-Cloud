@@ -533,6 +533,7 @@ func trackerRankQueryFromParams(r *CommandRequest) (sk.TrackerRankQuery, bool) {
 		req.EventID == 0 &&
 		req.WlCharacterID == nil &&
 		strings.TrimSpace(req.WlCharacterQuery) == "" &&
+		req.CompareRank == 0 &&
 		req.UserID == nil &&
 		strings.TrimSpace(req.TargetUserID) == "" {
 		return sk.TrackerRankQuery{}, false

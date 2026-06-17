@@ -104,11 +104,15 @@ type SpeedRequest struct {
 }
 
 type PlayerTraceRequest struct {
-	EventID         int        `json:"event_id"`
-	Region          string     `json:"region"`
-	WlCharaIconPath *string    `json:"wl_chara_icon_path,omitempty"`
-	Ranks           []RankInfo `json:"ranks"`
-	Ranks2          []RankInfo `json:"ranks2,omitempty"`
+	EventID              int        `json:"event_id"`
+	Region               string     `json:"region"`
+	WlCharaIconPath      *string    `json:"wl_chara_icon_path,omitempty"`
+	Ranks                []RankInfo `json:"ranks"`
+	Ranks2               []RankInfo `json:"ranks2,omitempty"`
+	CompareRank          int        `json:"compare_rank,omitempty"`
+	CompareRankTrace     []RankInfo `json:"compare_rank_trace,omitempty"`
+	CompareRankLatest    *RankInfo  `json:"compare_rank_latest,omitempty"`
+	CompareRankLineScore *int       `json:"compare_rank_line_score,omitempty"`
 }
 
 type RankTraceRequest struct {

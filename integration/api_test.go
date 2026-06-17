@@ -978,7 +978,7 @@ func TestExternalAPIs(t *testing.T) {
 
 	// Tracker API — event ranking
 	t.Run("tracker/event-ranking", func(t *testing.T) {
-		url := fmt.Sprintf("%s/event/%s/199/latest-ranking/rank/1", trackerBase, cfg.Region)
+		url := fmt.Sprintf("%s/api/v2/cloud/events/%s/199/leaderboards/total/sk/query?rank=1", trackerBase, cfg.Region)
 		resp, err := http.Get(url)
 		if err != nil {
 			t.Fatalf("tracker: %v", err)

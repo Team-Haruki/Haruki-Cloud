@@ -2,8 +2,6 @@ package sk
 
 import (
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
@@ -12,123 +10,9 @@ import (
 const trackerRealtimeTailMaxLagSeconds = int64(30 * 24 * time.Hour / time.Second)
 
 func (c *Controller) enrichRankInfoByRank(server string, eventID, rank int, wlCharacterID *int, info *drawing.RankInfo) {
-	if c == nil || c.tracker == nil || info == nil || rank <= 0 {
-		return
-	}
-	if wlCharacterID != nil && *wlCharacterID > 0 {
-		trace, err := c.tracker.TraceWorldBloomRankingByRank(server, eventID, *wlCharacterID, rank)
-		if err != nil || trace == nil {
-			return
-		}
-		name := strings.TrimSpace(c.censorTrackerName(trace.UserData.Name, server))
-		if c.shouldResolveTrackerNameByUser(server, eventID, name) {
-			ids := make([]string, 0, len(trace.RankData)+1)
-			ids = append(ids, trace.UserData.UserID)
-			for _, point := range trace.RankData {
-				ids = append(ids, point.UserID)
-			}
-			resolved := c.resolveTrackerNameByUserIDs(server, eventID, wlCharacterID, ids...)
-			name = strings.TrimSpace(c.censorTrackerName(resolved, server))
-		}
-		if c.shouldReplaceTrackerName(server, eventID, info.Name, name) {
-			info.Name = name
-		}
-		samples := make([]trackerScoreSample, 0, len(trace.RankData))
-		for _, point := range trace.RankData {
-			samples = append(samples, trackerScoreSample{
-				score:     point.Score,
-				timestamp: point.Timestamp,
-			})
-		}
-		applyRankInfoMetrics(info, samples)
-		return
-	}
-
-	trace, err := c.tracker.TraceRankingByRank(server, eventID, rank)
-	if err != nil || trace == nil {
-		return
-	}
-	name := strings.TrimSpace(c.censorTrackerName(trace.UserData.Name, server))
-	if c.shouldResolveTrackerNameByUser(server, eventID, name) {
-		ids := make([]string, 0, len(trace.RankData)+1)
-		ids = append(ids, trace.UserData.UserID)
-		for _, point := range trace.RankData {
-			ids = append(ids, point.UserID)
-		}
-		resolved := c.resolveTrackerNameByUserIDs(server, eventID, wlCharacterID, ids...)
-		name = strings.TrimSpace(c.censorTrackerName(resolved, server))
-	}
-	if c.shouldReplaceTrackerName(server, eventID, info.Name, name) {
-		info.Name = name
-	}
-	samples := make([]trackerScoreSample, 0, len(trace.RankData))
-	for _, point := range trace.RankData {
-		samples = append(samples, trackerScoreSample{
-			score:     point.Score,
-			timestamp: point.Timestamp,
-		})
-	}
-	applyRankInfoMetrics(info, samples)
 }
 
 func (c *Controller) enrichRankInfoByUser(server string, eventID int, userID int64, wlCharacterID *int, info *drawing.RankInfo) {
-	if c == nil || c.tracker == nil || info == nil || userID <= 0 {
-		return
-	}
-	if wlCharacterID != nil && *wlCharacterID > 0 {
-		trace, err := c.tracker.TraceWorldBloomRankingByUser(server, eventID, *wlCharacterID, userID)
-		if err != nil || trace == nil {
-			return
-		}
-		name := strings.TrimSpace(c.censorTrackerName(trace.UserData.Name, server))
-		if c.shouldResolveTrackerNameByUser(server, eventID, name) {
-			ids := make([]string, 0, len(trace.RankData)+2)
-			ids = append(ids, strconv.FormatInt(userID, 10), trace.UserData.UserID)
-			for _, point := range trace.RankData {
-				ids = append(ids, point.UserID)
-			}
-			resolved := c.resolveTrackerNameByUserIDs(server, eventID, wlCharacterID, ids...)
-			name = strings.TrimSpace(c.censorTrackerName(resolved, server))
-		}
-		if c.shouldReplaceTrackerName(server, eventID, info.Name, name) {
-			info.Name = name
-		}
-		samples := make([]trackerScoreSample, 0, len(trace.RankData))
-		for _, point := range trace.RankData {
-			samples = append(samples, trackerScoreSample{
-				score:     point.Score,
-				timestamp: point.Timestamp,
-			})
-		}
-		applyRankInfoMetrics(info, samples)
-		return
-	}
-
-	trace, err := c.tracker.TraceRankingByUser(server, eventID, userID)
-	if err != nil || trace == nil {
-		return
-	}
-	name := strings.TrimSpace(c.censorTrackerName(trace.UserData.Name, server))
-	if c.shouldResolveTrackerNameByUser(server, eventID, name) {
-		ids := make([]string, 0, len(trace.RankData)+2)
-		ids = append(ids, strconv.FormatInt(userID, 10), trace.UserData.UserID)
-		for _, point := range trace.RankData {
-			ids = append(ids, point.UserID)
-		}
-		resolved := c.resolveTrackerNameByUserIDs(server, eventID, wlCharacterID, ids...)
-		name = strings.TrimSpace(c.censorTrackerName(resolved, server))
-	}
-	if c.shouldReplaceTrackerName(server, eventID, info.Name, name) {
-		info.Name = name
-	}
-	samples := make([]trackerScoreSample, 0, len(trace.RankData))
-	for _, point := range trace.RankData {
-		samples = append(samples, trackerScoreSample{
-			score:     point.Score,
-			timestamp: point.Timestamp,
-		})
-	}
-	applyRankInfoMetrics(info, samples)
 }
 
 func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) {

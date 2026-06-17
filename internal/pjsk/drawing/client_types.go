@@ -9,7 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-type ClientOption func(*resty.Client)
+type ClientOption func(*resty.Client, *HarukiDrawingClient)
 
 type HarukiDrawingClient struct {
 	client     *resty.Client
@@ -17,6 +17,7 @@ type HarukiDrawingClient struct {
 	pool       *upstream.Pool
 	cache      *RenderCacheClient
 	localCache *localRenderCache
+	limiter    *drawingLimiter
 	logger     *logger.Logger
 	requestCtx context.Context
 }

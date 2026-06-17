@@ -15,13 +15,13 @@ import (
 )
 
 func WithTimeout(timeout time.Duration) ClientOption {
-	return func(client *resty.Client) {
+	return func(client *resty.Client, _ *HarukiDrawingClient) {
 		client.SetTimeout(timeout)
 	}
 }
 
 func WithRetryCount(retryCount int) ClientOption {
-	return func(client *resty.Client) {
+	return func(client *resty.Client, _ *HarukiDrawingClient) {
 		client.SetRetryCount(retryCount)
 	}
 }
@@ -44,25 +44,26 @@ func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstrea
 		return nil
 	}
 
-	client := resty.New()
-	for _, option := range options {
-		if option != nil {
-			option(client)
-		}
-	}
-
 	newLogger := logger.NewLoggerFromGlobal("haruki.client")
 	baseURL := ""
 	if len(resolvedTargets) > 0 {
 		baseURL = resolvedTargets[0].BaseURL
 	}
-	return &HarukiDrawingClient{
+	client := resty.New()
+	drawingClient := &HarukiDrawingClient{
 		client:     client,
 		baseURL:    baseURL,
 		pool:       upstream.NewPoolWithResources(resolvedTargets, shared),
+		limiter:    newDrawingLimiter(LimiterConfig{}),
 		logger:     newLogger,
 		localCache: newLocalRenderCache(0),
 	}
+	for _, option := range options {
+		if option != nil {
+			option(client, drawingClient)
+		}
+	}
+	return drawingClient
 }
 
 func (c *HarukiDrawingClient) SetRenderCache(cache *RenderCacheClient) {
@@ -92,14 +93,23 @@ func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, rend
 	}
 	if c.cache != nil {
 		return c.cache.Render(endpoint, prepared, func() ([]byte, error) {
-			return render(prepared)
+			return c.renderWithPermit(endpoint, prepared, render)
 		})
 	}
 	if c.localCache != nil {
 		return c.localCache.Render(endpoint, prepared, func() ([]byte, error) {
-			return render(prepared)
+			return c.renderWithPermit(endpoint, prepared, render)
 		})
 	}
+	return c.renderWithPermit(endpoint, prepared, render)
+}
+
+func (c *HarukiDrawingClient) renderWithPermit(endpoint string, prepared any, render func(any) ([]byte, error)) ([]byte, error) {
+	permit, err := c.acquireRenderPermit(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	defer permit.release()
 	return render(prepared)
 }
 

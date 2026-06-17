@@ -98,14 +98,17 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	trackerClient := sekaiAPI.NewTrackerClient(&harukiConfig.Cfg.Tracker)
 
 	runtime := renderapp.New(sekaiClient, pjskClient, renderapp.Config{
-		InitContext:       ctx,
-		SekaiAPI:          sekaiAPIClient,
-		Toolbox:           toolboxClient,
-		Tracker:           trackerClient,
-		DrawingBaseURL:    harukiConfig.Cfg.PJSKRender.DrawingBaseURL,
-		DrawingTargets:    harukiConfig.Cfg.PJSKRender.DrawingTargets,
-		DrawingTimeout:    harukiConfig.Cfg.PJSKRender.DrawingTimeout,
-		DrawingRetryCount: harukiConfig.Cfg.PJSKRender.DrawingRetryCount,
+		InitContext:             ctx,
+		SekaiAPI:                sekaiAPIClient,
+		Toolbox:                 toolboxClient,
+		Tracker:                 trackerClient,
+		DrawingBaseURL:          harukiConfig.Cfg.PJSKRender.DrawingBaseURL,
+		DrawingTargets:          harukiConfig.Cfg.PJSKRender.DrawingTargets,
+		DrawingTimeout:          harukiConfig.Cfg.PJSKRender.DrawingTimeout,
+		DrawingRetryCount:       harukiConfig.Cfg.PJSKRender.DrawingRetryCount,
+		DrawingSKMaxConcurrency: harukiConfig.Cfg.PJSKRender.DrawingSKMaxConcurrency,
+		DrawingSKAcquireTimeout: harukiConfig.Cfg.PJSKRender.DrawingSKAcquireTimeout,
+		DrawingMaxConcurrency:   harukiConfig.Cfg.PJSKRender.DrawingMaxConcurrency,
 		DrawingCache: drawing.RenderCacheConfig{
 			BaseURL:    harukiConfig.Cfg.PJSKRender.DrawingCache.BaseURL,
 			StorageDir: harukiConfig.Cfg.PJSKRender.DrawingCache.StorageDir,

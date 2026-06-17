@@ -3,7 +3,6 @@ package sk
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -92,19 +91,6 @@ func (c *Controller) SetForecastProvider(provider ForecastProvider) {
 	} else {
 		c.forecastCache.SetProvider(provider)
 	}
-}
-
-// censorTrackerName runs the name through CensorService for logging only and
-// always returns the original tracker name so ranking outputs keep in-game names.
-func (c *Controller) censorTrackerName(name, server string) string {
-	clean := strings.TrimSpace(name)
-	if clean == "" {
-		return ""
-	}
-	if c.censor != nil {
-		_ = c.censor.CensorName(c.contextOrBackground(), 0, "", clean, server)
-	}
-	return clean
 }
 
 func (c *Controller) BuildLineRequest(req LineRequest) (*LineRequest, error) {

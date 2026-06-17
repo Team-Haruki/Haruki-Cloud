@@ -129,6 +129,49 @@ func TestEnvOverrideProfile(t *testing.T) {
 	}
 }
 
+func TestApplyEnvOverridesTrackerHotProtection(t *testing.T) {
+	t.Setenv("HARUKI_TRACKER_TRACE_BATCH_WINDOW", "150ms")
+	t.Setenv("HARUKI_TRACKER_TRACE_BATCH_MAX_WAIT", "250ms")
+	t.Setenv("HARUKI_TRACKER_TRACE_BATCH_FLUSH_RANKS", "8")
+	t.Setenv("HARUKI_TRACKER_TRACE_LEADERBOARD_MAX_CONCURRENCY", "4")
+	t.Setenv("HARUKI_TRACKER_LATEST_LEADERBOARD_MAX_CONCURRENCY", "8")
+	t.Setenv("HARUKI_TRACKER_ACQUIRE_TIMEOUT", "300ms")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_SK_MAX_CONCURRENCY", "6")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_SK_ACQUIRE_TIMEOUT", "400ms")
+	t.Setenv("HARUKI_PJSK_RENDER_DRAWING_MAX_CONCURRENCY", "12")
+
+	cfg := &Config{}
+	ApplyEnvOverrides(cfg)
+
+	if cfg.Tracker.TraceBatchWindow != 150*time.Millisecond {
+		t.Fatalf("unexpected trace batch window: %v", cfg.Tracker.TraceBatchWindow)
+	}
+	if cfg.Tracker.TraceBatchMaxWait != 250*time.Millisecond {
+		t.Fatalf("unexpected trace batch max wait: %v", cfg.Tracker.TraceBatchMaxWait)
+	}
+	if cfg.Tracker.TraceBatchFlushRanks != 8 {
+		t.Fatalf("unexpected trace batch flush ranks: %d", cfg.Tracker.TraceBatchFlushRanks)
+	}
+	if cfg.Tracker.TraceLeaderboardMaxConcurrency != 4 {
+		t.Fatalf("unexpected trace leaderboard concurrency: %d", cfg.Tracker.TraceLeaderboardMaxConcurrency)
+	}
+	if cfg.Tracker.LatestLeaderboardMaxConcurrency != 8 {
+		t.Fatalf("unexpected latest leaderboard concurrency: %d", cfg.Tracker.LatestLeaderboardMaxConcurrency)
+	}
+	if cfg.Tracker.AcquireTimeout != 300*time.Millisecond {
+		t.Fatalf("unexpected tracker acquire timeout: %v", cfg.Tracker.AcquireTimeout)
+	}
+	if cfg.PJSKRender.DrawingSKMaxConcurrency != 6 {
+		t.Fatalf("unexpected drawing SK concurrency: %d", cfg.PJSKRender.DrawingSKMaxConcurrency)
+	}
+	if cfg.PJSKRender.DrawingSKAcquireTimeout != 400*time.Millisecond {
+		t.Fatalf("unexpected drawing SK acquire timeout: %v", cfg.PJSKRender.DrawingSKAcquireTimeout)
+	}
+	if cfg.PJSKRender.DrawingMaxConcurrency != 12 {
+		t.Fatalf("unexpected drawing max concurrency: %d", cfg.PJSKRender.DrawingMaxConcurrency)
+	}
+}
+
 func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", "/srv/masterdata")
 	t.Setenv("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", "45m")

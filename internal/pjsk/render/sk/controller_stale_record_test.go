@@ -37,7 +37,7 @@ func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
 	req := TrackerRankQuery{EventID: 101, Region: "jp", UserID: &userID}
 
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(staleRecordStatusTrackerSource{
+	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
 		status: &sekaiapi.EventStatusResponse{Status: 1, StatusDesc: "正常"},
 	}, nil, nil)
 
@@ -45,7 +45,7 @@ func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
 		t.Fatalf("expected stale warning, got %q", got)
 	}
 
-	controller.SetTrackerIntegration(staleRecordStatusTrackerSource{
+	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
 		status: &sekaiapi.EventStatusResponse{Status: 0},
 	}, nil, nil)
 
@@ -53,7 +53,7 @@ func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
 		t.Fatalf("expected stale warning for numeric healthy status, got %q", got)
 	}
 
-	controller.SetTrackerIntegration(staleRecordStatusTrackerSource{
+	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
 		status: &sekaiapi.EventStatusResponse{Status: 2, StatusDesc: "sekai api timeout"},
 	}, nil, nil)
 
@@ -68,7 +68,7 @@ func TestStaleSelfRecordWarningIgnoresFreshRecordsAndStatusErrors(t *testing.T) 
 	req := TrackerRankQuery{EventID: 101, Region: "jp", UserID: &userID}
 
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(staleRecordStatusTrackerSource{
+	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
 		status: &sekaiapi.EventStatusResponse{Status: 1, StatusDesc: "healthy"},
 	}, nil, nil)
 
@@ -77,7 +77,7 @@ func TestStaleSelfRecordWarningIgnoresFreshRecordsAndStatusErrors(t *testing.T) 
 		t.Fatalf("expected no warning for fresh record, got %q", got)
 	}
 
-	controller.SetTrackerIntegration(staleRecordStatusTrackerSource{
+	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
 		err: fmt.Errorf("status unavailable"),
 	}, nil, nil)
 
@@ -94,7 +94,7 @@ func TestStaleSelfRecordWarningInfersCurrentEvent(t *testing.T) {
 		{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()},
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(staleRecordStatusTrackerSource{
+	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
 		status:      &sekaiapi.EventStatusResponse{Status: 1, StatusDesc: "正常"},
 		wantEventID: 202,
 	}, &testEventSource{

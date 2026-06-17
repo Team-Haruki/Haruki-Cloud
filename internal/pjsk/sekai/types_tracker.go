@@ -21,27 +21,23 @@ type RankingUserData struct {
 	CheerfulTeamID *int   `json:"cheerfulTeamId,omitempty"`
 }
 
-// LatestRankingResponse is returned by GetLatestRankingByRank / GetLatestRankingByUser.
+// Legacy raw tracker shapes kept for older SK controller test fixtures.
+// Production tracker access uses the Cloud SK semantic response types below.
 type LatestRankingResponse struct {
 	RankData RankDataPoint   `json:"rankData"`
 	UserData RankingUserData `json:"userData"`
 }
 
-// WorldBloomLatestRankingResponse is returned by GetLatestWorldBloomRankingByRank /
-// GetLatestWorldBloomRankingByUser.
 type WorldBloomLatestRankingResponse struct {
 	RankData WorldBloomRankDataPoint `json:"rankData"`
 	UserData RankingUserData         `json:"userData"`
 }
 
-// TraceRankingResponse is returned by TraceRankingByRank / TraceRankingByUser.
 type TraceRankingResponse struct {
 	RankData []RankDataPoint `json:"rankData"`
 	UserData RankingUserData `json:"userData"`
 }
 
-// WorldBloomTraceRankingResponse is returned by TraceWorldBloomRankingByRank /
-// TraceWorldBloomRankingByUser.
 type WorldBloomTraceRankingResponse struct {
 	RankData []WorldBloomRankDataPoint `json:"rankData"`
 	UserData RankingUserData           `json:"userData"`
@@ -65,16 +61,6 @@ type BatchWorldBloomTraceRankingResponse struct {
 	Items []BatchWorldBloomTraceRankingItem `json:"items"`
 }
 
-// RankingLine is one border-score entry returned by GetRankingLines /
-// GetWorldBloomRankingLines.
-type RankingLine struct {
-	Rank      int   `json:"rank"`
-	Score     int   `json:"score"`
-	Timestamp int64 `json:"timestamp"`
-}
-
-// ScoreGrowthPoint is one data point returned by GetRankingScoreGrowth /
-// GetWorldBloomRankingScoreGrowth.
 type ScoreGrowthPoint struct {
 	Rank             int    `json:"rank"`
 	ScoreLatest      int    `json:"scoreLatest"`
@@ -85,8 +71,6 @@ type ScoreGrowthPoint struct {
 	Growth           *int   `json:"growth,omitempty"`
 }
 
-// UserEventData contains a user's name record for a specific event,
-// as returned by GetUserEventData.
 type UserEventData struct {
 	UserID         string `json:"userId"`
 	Name           string `json:"name"`
@@ -100,4 +84,63 @@ type EventStatusResponse struct {
 	Status     int8   `json:"status"`
 	StatusDesc string `json:"statusDesc"`
 	TimeAgo    int64  `json:"timeAgo"`
+}
+
+type LeaderboardMeta struct {
+	Server      string `json:"server"`
+	EventID     int    `json:"eventId"`
+	Scope       string `json:"scope"`
+	CharacterID *int   `json:"characterId,omitempty"`
+	FetchedAt   int64  `json:"fetchedAt"`
+}
+
+type SubjectTraceMeta struct {
+	SubjectType    string  `json:"subjectType"`
+	Subject        string  `json:"subject"`
+	ResolvedUserID *string `json:"resolvedUserId,omitempty"`
+	ResolvedRank   *int    `json:"resolvedRank,omitempty"`
+}
+
+type CloudRankInfo struct {
+	Rank        int     `json:"rank"`
+	UserID      *string `json:"userId,omitempty"`
+	Name        string  `json:"name"`
+	Score       int     `json:"score"`
+	Timestamp   int64   `json:"timestamp"`
+	Speed       *int    `json:"speed,omitempty"`
+	SpeedWindow *int64  `json:"speedWindow,omitempty"`
+	CharacterID *int    `json:"characterId,omitempty"`
+}
+
+type CloudRankQueryResponse struct {
+	Meta     LeaderboardMeta `json:"meta"`
+	Ranks    []CloudRankInfo `json:"ranks,omitempty"`
+	Previous *CloudRankInfo  `json:"previous,omitempty"`
+	Next     *CloudRankInfo  `json:"next,omitempty"`
+}
+
+type CloudCheckRoomResponse struct {
+	Meta     LeaderboardMeta `json:"meta"`
+	Rank     CloudRankInfo   `json:"rank"`
+	Ranks    []CloudRankInfo `json:"ranks,omitempty"`
+	Previous *CloudRankInfo  `json:"previous,omitempty"`
+	Next     *CloudRankInfo  `json:"next,omitempty"`
+}
+
+type CloudLineResponse struct {
+	Meta  LeaderboardMeta `json:"meta"`
+	Ranks []CloudRankInfo `json:"ranks,omitempty"`
+}
+
+type CloudSpeedResponse struct {
+	Meta            LeaderboardMeta `json:"meta"`
+	Speeds          []CloudRankInfo `json:"speeds,omitempty"`
+	IntervalSeconds int64           `json:"intervalSeconds"`
+	UnitSeconds     int64           `json:"unitSeconds"`
+}
+
+type CloudTraceResponse struct {
+	Meta     LeaderboardMeta  `json:"meta"`
+	Subject  SubjectTraceMeta `json:"subject"`
+	RankData []CloudRankInfo  `json:"rankData,omitempty"`
 }

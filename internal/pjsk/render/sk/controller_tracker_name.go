@@ -1,34 +1,12 @@
 package sk
 
 import (
-	"strconv"
 	"strings"
 	"unicode"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
-
-func (c *Controller) resolveTrackerNameByUserIDs(server string, eventID int, wlCharacterID *int, userIDs ...string) string {
-	if c == nil {
-		return ""
-	}
-	seen := map[string]struct{}{}
-	for _, raw := range userIDs {
-		uid := strings.TrimSpace(raw)
-		if uid == "" {
-			continue
-		}
-		if _, ok := seen[uid]; ok {
-			continue
-		}
-		seen[uid] = struct{}{}
-		if name := strings.TrimSpace(c.resolveTrackerNameByUserID(server, eventID, uid, wlCharacterID)); name != "" {
-			return name
-		}
-	}
-	return ""
-}
 
 func hasRankInfoMetrics(info *drawing.RankInfo) bool {
 	if info == nil {
@@ -54,45 +32,6 @@ func (c *Controller) enrichRankInfoPreferUser(server string, eventID, rank int, 
 	c.enrichRankInfoByRank(server, eventID, rank, wlCharacterID, info)
 }
 
-func (c *Controller) shouldReplaceTrackerName(server string, eventID int, current, candidate string) bool {
-	next := strings.TrimSpace(candidate)
-	if next == "" {
-		return false
-	}
-	if c.shouldResolveTrackerNameByUser(server, eventID, next) {
-		return false
-	}
-	prev := strings.TrimSpace(current)
-	if prev == "" {
-		return true
-	}
-	if c.shouldResolveTrackerNameByUser(server, eventID, prev) {
-		return true
-	}
-	return isTrackerPlaceholderName(prev) && !isTrackerPlaceholderName(next)
-}
-
-func isTrackerPlaceholderName(name string) bool {
-	trimmed := strings.TrimSpace(name)
-	if trimmed == "" {
-		return true
-	}
-	lower := strings.ToLower(trimmed)
-	if !strings.HasPrefix(lower, "rank ") {
-		return false
-	}
-	_, err := strconv.Atoi(strings.TrimSpace(trimmed[len("rank "):]))
-	return err == nil
-}
-
-func (c *Controller) shouldResolveTrackerNameByUser(server string, eventID int, name string) bool {
-	clean := strings.TrimSpace(name)
-	if clean == "" || isTrackerPlaceholderName(clean) {
-		return true
-	}
-	return c.isTrackerEventTitleName(server, eventID, clean)
-}
-
 func (c *Controller) eventTitleForNameCheck(server string, eventID int) string {
 	if c == nil || eventID <= 0 {
 		return ""
@@ -110,20 +49,6 @@ func (c *Controller) eventTitleForNameCheck(server string, eventID int) string {
 		return ""
 	}
 	return strings.TrimSpace(eventInfo.Name)
-}
-
-func (c *Controller) pickTrackerResolvedName(server string, eventID int, candidates ...string) string {
-	for _, raw := range candidates {
-		name := strings.TrimSpace(raw)
-		if name == "" {
-			continue
-		}
-		if c.shouldResolveTrackerNameByUser(server, eventID, name) {
-			continue
-		}
-		return name
-	}
-	return ""
 }
 
 func (c *Controller) isTrackerEventTitleName(server string, eventID int, name string) bool {

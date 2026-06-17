@@ -44,17 +44,15 @@ type TrackerRankQuery struct {
 // ── Data sources ────────────────────────────────────────────────────────────
 
 type TrackerSource interface {
-	GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error)
-	GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error)
-	GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error)
-	GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error)
-	GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error)
-	GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
-	GetWorldBloomRankingScoreGrowth(server string, eventID, characterID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
-	TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error)
-	TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error)
-	TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomTraceRankingResponse, error)
-	TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error)
+	trackerCloudV2Source
+}
+
+type trackerCloudV2Source interface {
+	GetCloudSKQuery(server string, eventID int, characterID *int, ranks []int, userID *int64, includeAdjacent, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudRankQueryResponse, error)
+	GetCloudSKCheckRoom(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudCheckRoomResponse, error)
+	GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudLineResponse, error)
+	GetCloudSKSpeed(server string, eventID int, characterID *int, ranks []int, intervalSeconds, unitSeconds int64, skipMissing bool) (*sekaiapi.CloudSpeedResponse, error)
+	GetCloudSKTrace(server string, eventID int, characterID *int, subjectType string, subject string, limit int) (*sekaiapi.CloudTraceResponse, error)
 }
 
 type trackerEventStatusSource interface {
@@ -159,12 +157,6 @@ type eventMeta struct {
 }
 
 type trackerScoreSample struct {
-	score     int
-	timestamp int64
-}
-
-type trackerRankScoreSample struct {
-	rank      int
 	score     int
 	timestamp int64
 }

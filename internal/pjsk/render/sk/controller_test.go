@@ -15,6 +15,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
@@ -170,7 +171,432 @@ func (p testForecastProvider) FetchBySource(context.Context, string, int, []int)
 	return out, nil
 }
 
+type testLegacyTrackerSource interface {
+	GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error)
+	GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error)
+	GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error)
+	GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error)
+	GetUserEventData(server string, eventID int, userID int64) (*sekaiapi.UserEventData, error)
+	GetRankingScoreGrowth(server string, eventID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
+	GetWorldBloomRankingScoreGrowth(server string, eventID, characterID, interval int) ([]sekaiapi.ScoreGrowthPoint, error)
+	TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error)
+	TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error)
+	TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomTraceRankingResponse, error)
+	TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error)
+}
+
 type testTrackerSource struct{}
+
+func setTestTrackerIntegration(c *Controller, tracker testLegacyTrackerSource, events EventSource, assetHelper *renderassets.AssetHelper) {
+	if _, ok := tracker.(trackerCloudV2Source); ok {
+		c.SetTrackerIntegration(tracker.(TrackerSource), events, assetHelper)
+		return
+	}
+	c.SetTrackerIntegration(testCloudV2TrackerSource{testLegacyTrackerSource: tracker}, events, assetHelper)
+}
+
+type testCloudV2TrackerSource struct {
+	testLegacyTrackerSource
+}
+
+func (s testCloudV2TrackerSource) GetEventStatus(server string, eventID int) (*sekaiapi.EventStatusResponse, error) {
+	source, ok := s.testLegacyTrackerSource.(trackerEventStatusSource)
+	if !ok {
+		return nil, fmt.Errorf("not implemented")
+	}
+	return source.GetEventStatus(server, eventID)
+}
+
+func (s testCloudV2TrackerSource) GetCloudSKQuery(server string, eventID int, characterID *int, ranks []int, userID *int64, includeAdjacent, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudRankQueryResponse, error) {
+	out := &sekaiapi.CloudRankQueryResponse{}
+	if userID != nil && *userID > 0 {
+		item, err := s.cloudRankInfoByUser(server, eventID, characterID, *userID)
+		if err != nil {
+			return nil, err
+		}
+		if item.Rank <= 0 {
+			return nil, sekaiapi.ErrRankingNotFound
+		}
+		if includeAdjacent {
+			s.applyCloudTraceMetrics(server, eventID, characterID, &item, "user", cloudUserIDSubject(item))
+		}
+		out.Ranks = append(out.Ranks, item)
+		if includeAdjacent {
+			s.attachCloudAdjacent(server, eventID, characterID, item.Rank, out)
+		}
+		return out, nil
+	}
+	for _, rank := range ranks {
+		item, err := s.cloudRankInfoByRank(server, eventID, characterID, rank)
+		if err != nil {
+			if shouldSkipMissingTrackerRankError(skipMissing, err) {
+				continue
+			}
+			return nil, err
+		}
+		out.Ranks = append(out.Ranks, item)
+		if includeAdjacent && len(ranks) == 1 {
+			s.attachCloudAdjacent(server, eventID, characterID, item.Rank, out)
+		}
+	}
+	return out, nil
+}
+
+func (s testCloudV2TrackerSource) GetCloudSKCheckRoom(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudCheckRoomResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, userID, true, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || len(resp.Ranks) == 0 {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	rank := resp.Ranks[0]
+	if rank.Rank > skCheckRoomRankLimit {
+		return nil, fmt.Errorf("查房/查水表目前仅支持前100名查询")
+	}
+	s.applyCloudTraceMetrics(server, eventID, characterID, &rank, "user", cloudUserIDSubject(rank))
+	return &sekaiapi.CloudCheckRoomResponse{
+		Rank:     rank,
+		Previous: resp.Previous,
+		Next:     resp.Next,
+	}, nil
+}
+
+func (s testCloudV2TrackerSource) GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudLineResponse, error) {
+	out := make([]sekaiapi.CloudRankInfo, 0, len(ranks))
+	if userID != nil && *userID > 0 {
+		item, err := s.cloudRankInfoByUser(server, eventID, characterID, *userID)
+		if err != nil {
+			return nil, err
+		}
+		item.Name = ""
+		return &sekaiapi.CloudLineResponse{Ranks: []sekaiapi.CloudRankInfo{item}}, nil
+	}
+	for _, rank := range ranks {
+		item, err := s.cloudLineInfoByRank(server, eventID, characterID, rank)
+		if err != nil {
+			if shouldSkipMissingTrackerRankError(skipMissing, err) {
+				continue
+			}
+			return nil, err
+		}
+		out = append(out, item)
+	}
+	return &sekaiapi.CloudLineResponse{Ranks: out}, nil
+}
+
+func (s testCloudV2TrackerSource) GetCloudSKSpeed(server string, eventID int, characterID *int, ranks []int, intervalSeconds, unitSeconds int64, skipMissing bool) (*sekaiapi.CloudSpeedResponse, error) {
+	out := make([]sekaiapi.CloudRankInfo, 0, len(ranks))
+	for _, rank := range ranks {
+		item, ok, err := s.cloudSpeedInfoByRank(server, eventID, characterID, rank, int(intervalSeconds), unitSeconds)
+		if err != nil {
+			if shouldSkipMissingTrackerRankError(skipMissing, err) {
+				continue
+			}
+			return nil, err
+		}
+		if !ok {
+			s.applyCloudTraceMetrics(server, eventID, characterID, &item, "rank", strconv.Itoa(item.Rank))
+		}
+		out = append(out, item)
+	}
+	return &sekaiapi.CloudSpeedResponse{Speeds: out, IntervalSeconds: intervalSeconds, UnitSeconds: unitSeconds}, nil
+}
+
+func (s testCloudV2TrackerSource) GetCloudSKTrace(server string, eventID int, characterID *int, subjectType string, subject string, limit int) (*sekaiapi.CloudTraceResponse, error) {
+	points, userData, err := s.cloudTracePoints(server, eventID, characterID, subjectType, subject)
+	if err != nil {
+		return nil, err
+	}
+	if len(points) == 0 {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	name := ""
+	userID := ""
+	if userData != nil {
+		name = userData.Name
+		userID = strings.TrimSpace(userData.UserID)
+	}
+	if name == "" {
+		name = s.cloudResolvedName(server, eventID, userID, "")
+	}
+	if subjectType == "rank" && len(points) > 0 {
+		currentUserID := strings.TrimSpace(points[len(points)-1].UserID)
+		if currentUserID != "" {
+			if currentTrace, currentUserData, err := s.cloudTracePoints(server, eventID, characterID, "user", currentUserID); err == nil && len(currentTrace) > 0 {
+				points = currentTrace
+				if currentUserData != nil && strings.TrimSpace(currentUserData.UserID) != "" {
+					userID = currentUserData.UserID
+				} else {
+					userID = currentUserID
+				}
+			}
+		}
+	}
+	if latestName, latestUserID := s.cloudCurrentSubjectName(server, eventID, characterID, subjectType, subject, userID); latestName != "" {
+		name = latestName
+		if latestUserID != "" {
+			userID = latestUserID
+		}
+	}
+	out := make([]sekaiapi.CloudRankInfo, 0, len(points))
+	for _, point := range points {
+		pointUserID := strings.TrimSpace(point.UserID)
+		itemUserID := pointUserID
+		if itemUserID == "" {
+			itemUserID = userID
+		}
+		out = append(out, sekaiapi.CloudRankInfo{
+			Rank:        point.Rank,
+			UserID:      stringPtrIfNotEmpty(itemUserID),
+			Name:        name,
+			Score:       point.Score,
+			Timestamp:   point.Timestamp,
+			CharacterID: characterID,
+		})
+	}
+	return &sekaiapi.CloudTraceResponse{
+		Subject:  sekaiapi.SubjectTraceMeta{SubjectType: subjectType, Subject: subject, ResolvedUserID: stringPtrIfNotEmpty(userID)},
+		RankData: out,
+	}, nil
+}
+
+func (s testCloudV2TrackerSource) cloudRankInfoByRank(server string, eventID int, characterID *int, rank int) (sekaiapi.CloudRankInfo, error) {
+	if characterID != nil {
+		resp, err := s.GetLatestWorldBloomRankingByRank(server, eventID, *characterID, rank)
+		if err != nil {
+			return sekaiapi.CloudRankInfo{}, err
+		}
+		return cloudRankInfoFromLatest(resp.RankData.RankDataPoint, resp.UserData, characterID, s.cloudResolvedName(server, eventID, cloudLatestUserID(resp.RankData.RankDataPoint, resp.UserData), resp.UserData.Name)), nil
+	}
+	resp, err := s.GetLatestRankingByRank(server, eventID, rank)
+	if err != nil {
+		return sekaiapi.CloudRankInfo{}, err
+	}
+	return cloudRankInfoFromLatest(resp.RankData, resp.UserData, nil, s.cloudResolvedName(server, eventID, cloudLatestUserID(resp.RankData, resp.UserData), resp.UserData.Name)), nil
+}
+
+func (s testCloudV2TrackerSource) cloudRankInfoByUser(server string, eventID int, characterID *int, userID int64) (sekaiapi.CloudRankInfo, error) {
+	if characterID != nil {
+		resp, err := s.GetLatestWorldBloomRankingByUser(server, eventID, *characterID, userID)
+		if err != nil {
+			return sekaiapi.CloudRankInfo{}, err
+		}
+		return cloudRankInfoFromLatest(resp.RankData.RankDataPoint, resp.UserData, characterID, s.cloudResolvedName(server, eventID, cloudLatestUserID(resp.RankData.RankDataPoint, resp.UserData), resp.UserData.Name)), nil
+	}
+	resp, err := s.GetLatestRankingByUser(server, eventID, userID)
+	if err != nil {
+		return sekaiapi.CloudRankInfo{}, err
+	}
+	return cloudRankInfoFromLatest(resp.RankData, resp.UserData, nil, s.cloudResolvedName(server, eventID, cloudLatestUserID(resp.RankData, resp.UserData), resp.UserData.Name)), nil
+}
+
+func (s testCloudV2TrackerSource) cloudLineInfoByRank(server string, eventID int, characterID *int, rank int) (sekaiapi.CloudRankInfo, error) {
+	if characterID != nil {
+		resp, err := s.GetLatestWorldBloomRankingByRank(server, eventID, *characterID, rank)
+		if err != nil {
+			return sekaiapi.CloudRankInfo{}, err
+		}
+		return cloudRankInfoFromLatest(resp.RankData.RankDataPoint, resp.UserData, characterID, ""), nil
+	}
+	resp, err := s.GetLatestRankingByRank(server, eventID, rank)
+	if err != nil {
+		return sekaiapi.CloudRankInfo{}, err
+	}
+	return cloudRankInfoFromLatest(resp.RankData, resp.UserData, nil, ""), nil
+}
+
+func (s testCloudV2TrackerSource) attachCloudAdjacent(server string, eventID int, characterID *int, rank int, out *sekaiapi.CloudRankQueryResponse) {
+	prevRank, nextRank, hasPrev, hasNext := queryAdjacentSKLineRanks(rank, characterID != nil)
+	if hasPrev {
+		if prev, err := s.cloudRankInfoByRank(server, eventID, characterID, prevRank); err == nil {
+			out.Previous = &prev
+		}
+	}
+	if hasNext {
+		if next, err := s.cloudRankInfoByRank(server, eventID, characterID, nextRank); err == nil {
+			out.Next = &next
+		}
+	}
+}
+
+func (s testCloudV2TrackerSource) applyCloudTraceMetrics(server string, eventID int, characterID *int, item *sekaiapi.CloudRankInfo, subjectType string, subject string) {
+	points, _, err := s.cloudTracePoints(server, eventID, characterID, subjectType, subject)
+	if err != nil || len(points) == 0 {
+		return
+	}
+	info := drawing.RankInfo{}
+	applyRankInfoMetrics(&info, rankTraceSamples(points))
+	if info.Speed != nil {
+		item.Speed = info.Speed
+	}
+}
+
+func (s testCloudV2TrackerSource) cloudSpeedInfoByRank(server string, eventID int, characterID *int, rank int, interval int, unitPeriodSeconds int64) (sekaiapi.CloudRankInfo, bool, error) {
+	var points []sekaiapi.ScoreGrowthPoint
+	var err error
+	if characterID != nil {
+		points, err = s.GetWorldBloomRankingScoreGrowth(server, eventID, *characterID, interval)
+	} else {
+		points, err = s.GetRankingScoreGrowth(server, eventID, interval)
+	}
+	if err == nil {
+		for _, point := range points {
+			if point.Rank != rank {
+				continue
+			}
+			info := speedInfoFromGrowthPoint(point, unitPeriodSeconds)
+			return sekaiapi.CloudRankInfo{
+				Rank:        rank,
+				Score:       info.Score,
+				Timestamp:   info.RecordTime,
+				Speed:       info.Speed,
+				CharacterID: characterID,
+			}, info.Speed != nil, nil
+		}
+	}
+	item := sekaiapi.CloudRankInfo{Rank: rank, CharacterID: characterID}
+	pointsTrace, userData, traceErr := s.cloudTracePoints(server, eventID, characterID, "rank", strconv.Itoa(rank))
+	if traceErr != nil {
+		return sekaiapi.CloudRankInfo{}, false, traceErr
+	}
+	if len(pointsTrace) > 0 {
+		last := pointsTrace[len(pointsTrace)-1]
+		item = cloudRankInfoFromLatest(last, derefRankingUserData(userData), characterID, "")
+	}
+	return item, false, nil
+}
+
+func (s testCloudV2TrackerSource) cloudTracePoints(server string, eventID int, characterID *int, subjectType string, subject string) ([]sekaiapi.RankDataPoint, *sekaiapi.RankingUserData, error) {
+	switch subjectType {
+	case "user":
+		userID, err := strconv.ParseInt(subject, 10, 64)
+		if err != nil {
+			return nil, nil, err
+		}
+		if characterID != nil {
+			resp, err := s.TraceWorldBloomRankingByUser(server, eventID, *characterID, userID)
+			if err != nil {
+				return nil, nil, err
+			}
+			return flattenWorldBloomPoints(resp.RankData), &resp.UserData, nil
+		}
+		resp, err := s.TraceRankingByUser(server, eventID, userID)
+		if err != nil {
+			return nil, nil, err
+		}
+		return resp.RankData, &resp.UserData, nil
+	default:
+		rank, err := strconv.Atoi(subject)
+		if err != nil {
+			return nil, nil, err
+		}
+		if characterID != nil {
+			resp, err := s.TraceWorldBloomRankingByRank(server, eventID, *characterID, rank)
+			if err != nil {
+				return nil, nil, err
+			}
+			return flattenWorldBloomPoints(resp.RankData), &resp.UserData, nil
+		}
+		resp, err := s.TraceRankingByRank(server, eventID, rank)
+		if err != nil {
+			return nil, nil, err
+		}
+		return resp.RankData, &resp.UserData, nil
+	}
+}
+
+func (s testCloudV2TrackerSource) cloudResolvedName(server string, eventID int, userID string, fallback string) string {
+	parsed, err := strconv.ParseInt(strings.TrimSpace(userID), 10, 64)
+	if err == nil && parsed > 0 {
+		if data, dataErr := s.GetUserEventData(server, eventID, parsed); dataErr == nil && data != nil && strings.TrimSpace(data.Name) != "" {
+			return data.Name
+		}
+	}
+	if strings.TrimSpace(fallback) != "" {
+		return fallback
+	}
+	return fallback
+}
+
+func (s testCloudV2TrackerSource) cloudCurrentSubjectName(server string, eventID int, characterID *int, subjectType string, subject string, fallbackUserID string) (string, string) {
+	var item sekaiapi.CloudRankInfo
+	var err error
+	if subjectType == "user" {
+		userID, parseErr := strconv.ParseInt(subject, 10, 64)
+		if parseErr != nil {
+			return "", fallbackUserID
+		}
+		item, err = s.cloudRankInfoByUser(server, eventID, characterID, userID)
+	} else {
+		rank, parseErr := strconv.Atoi(subject)
+		if parseErr != nil {
+			return "", fallbackUserID
+		}
+		item, err = s.cloudRankInfoByRank(server, eventID, characterID, rank)
+	}
+	if err != nil {
+		return "", fallbackUserID
+	}
+	userID := fallbackUserID
+	if item.UserID != nil && strings.TrimSpace(*item.UserID) != "" {
+		userID = *item.UserID
+	}
+	return strings.TrimSpace(item.Name), userID
+}
+
+func cloudRankInfoFromLatest(point sekaiapi.RankDataPoint, userData sekaiapi.RankingUserData, characterID *int, name string) sekaiapi.CloudRankInfo {
+	userID := strings.TrimSpace(point.UserID)
+	if userID == "" {
+		userID = strings.TrimSpace(userData.UserID)
+	}
+	return sekaiapi.CloudRankInfo{
+		Rank:        point.Rank,
+		UserID:      stringPtrIfNotEmpty(userID),
+		Name:        name,
+		Score:       point.Score,
+		Timestamp:   point.Timestamp,
+		CharacterID: characterID,
+	}
+}
+
+func cloudLatestUserID(point sekaiapi.RankDataPoint, userData sekaiapi.RankingUserData) string {
+	userID := strings.TrimSpace(point.UserID)
+	if userID == "" {
+		userID = strings.TrimSpace(userData.UserID)
+	}
+	return userID
+}
+
+func derefRankingUserData(userData *sekaiapi.RankingUserData) sekaiapi.RankingUserData {
+	if userData == nil {
+		return sekaiapi.RankingUserData{}
+	}
+	return *userData
+}
+
+func cloudUserIDSubject(item sekaiapi.CloudRankInfo) string {
+	if item.UserID != nil {
+		return *item.UserID
+	}
+	return strconv.Itoa(item.Rank)
+}
+
+func flattenWorldBloomPoints(points []sekaiapi.WorldBloomRankDataPoint) []sekaiapi.RankDataPoint {
+	out := make([]sekaiapi.RankDataPoint, 0, len(points))
+	for _, point := range points {
+		out = append(out, point.RankDataPoint)
+	}
+	return out
+}
+
+func stringPtrIfNotEmpty(value string) *string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	return &value
+}
 
 func (testTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
 	return nil, fmt.Errorf("not implemented")
@@ -454,6 +880,82 @@ type batchLineMetricsTrackerSource struct {
 	lineMetricsOnlyTrackerSource
 	batchTraceRankCalls      atomic.Int32
 	batchWorldTraceRankCalls atomic.Int32
+}
+
+type leaderboardV2TrackerSource struct {
+	testTrackerSource
+	snapshotCalls     atomic.Int32
+	subjectTraceCalls atomic.Int32
+	legacyTraceCalls  atomic.Int32
+}
+
+func (s *leaderboardV2TrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	s.legacyTraceCalls.Add(1)
+	return nil, fmt.Errorf("legacy trace should not be called")
+}
+
+func (s *leaderboardV2TrackerSource) GetCloudSKQuery(server string, eventID int, characterID *int, ranks []int, userID *int64, includeAdjacent, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudRankQueryResponse, error) {
+	s.snapshotCalls.Add(1)
+	out := &sekaiapi.CloudRankQueryResponse{}
+	for _, rank := range ranks {
+		userID := strconv.Itoa(10000 + rank)
+		item := sekaiapi.CloudRankInfo{
+			Rank:      rank,
+			UserID:    &userID,
+			Name:      "V2User",
+			Score:     1_000_000 + rank,
+			Timestamp: 1704067200,
+			Speed:     drawing.IntPtr(12345),
+		}
+		out.Ranks = append(out.Ranks, item)
+		if includeAdjacent {
+			prevID := strconv.Itoa(9999 + rank)
+			nextID := strconv.Itoa(10001 + rank)
+			out.Previous = &sekaiapi.CloudRankInfo{Rank: rank - 1, UserID: &prevID, Name: "PrevUser", Score: 1_000_100 + rank, Timestamp: 1704067200}
+			out.Next = &sekaiapi.CloudRankInfo{Rank: rank + 1, UserID: &nextID, Name: "NextUser", Score: 999_900 + rank, Timestamp: 1704067200}
+		}
+	}
+	return out, nil
+}
+
+func (s *leaderboardV2TrackerSource) GetCloudSKTrace(server string, eventID int, characterID *int, subjectType string, subject string, limit int) (*sekaiapi.CloudTraceResponse, error) {
+	s.subjectTraceCalls.Add(1)
+	userID := "10001"
+	rank := 1
+	return &sekaiapi.CloudTraceResponse{
+		Subject: sekaiapi.SubjectTraceMeta{SubjectType: subjectType, Subject: subject, ResolvedUserID: &userID, ResolvedRank: &rank},
+		RankData: []sekaiapi.CloudRankInfo{
+			{Rank: 1, UserID: &userID, Name: "TraceV2User", Score: 1_000_000, Timestamp: 1704063600},
+			{Rank: 1, UserID: &userID, Name: "TraceV2User", Score: 1_100_000, Timestamp: 1704067200},
+		},
+	}, nil
+}
+
+func (s *leaderboardV2TrackerSource) GetCloudSKCheckRoom(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudCheckRoomResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, userID, true, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Ranks) == 0 {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	return &sekaiapi.CloudCheckRoomResponse{Rank: resp.Ranks[0], Previous: resp.Previous, Next: resp.Next}, nil
+}
+
+func (s *leaderboardV2TrackerSource) GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudLineResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, userID, false, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	return &sekaiapi.CloudLineResponse{Ranks: resp.Ranks}, nil
+}
+
+func (s *leaderboardV2TrackerSource) GetCloudSKSpeed(server string, eventID int, characterID *int, ranks []int, intervalSeconds, unitSeconds int64, skipMissing bool) (*sekaiapi.CloudSpeedResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, nil, false, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	return &sekaiapi.CloudSpeedResponse{Speeds: resp.Ranks, IntervalSeconds: intervalSeconds, UnitSeconds: unitSeconds}, nil
 }
 
 func (s *batchLineMetricsTrackerSource) TraceRankingsByRanks(server string, eventID int, ranks []int) (*sekaiapi.BatchTraceRankingResponse, error) {
@@ -930,6 +1432,20 @@ func (staleCSBTrackerSource) GetLatestRankingByUser(server string, eventID int, 
 	}, nil
 }
 
+func (staleCSBTrackerSource) TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error) {
+	now := time.Now().UTC()
+	return &sekaiapi.TraceRankingResponse{
+		RankData: []sekaiapi.RankDataPoint{
+			{UserID: "60001", Score: 1_000, Rank: rank, Timestamp: now.Add(-130 * time.Minute).Unix()},
+			{UserID: "60001", Score: 2_000, Rank: rank, Timestamp: now.Add(-70 * time.Minute).Unix()},
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: "60001",
+			Name:   "TracePlayer",
+		},
+	}, nil
+}
+
 func (staleCSBTrackerSource) TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error) {
 	now := time.Now().UTC()
 	uid := strconv.FormatInt(userID, 10)
@@ -1258,7 +1774,7 @@ func TestValidateTrackerQuerySelectsCurrentEventByRegion(t *testing.T) {
 	}
 
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(testTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, testTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{jpEvent},
 		byID:   map[int]*masterdata.Event{jpEvent.ID: jpEvent},
@@ -1299,7 +1815,7 @@ func TestValidateTrackerQueryUsesClosedWindowEventBeforeNextStart(t *testing.T) 
 	}
 
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(testTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, testTrackerSource{}, &testEventSource{
 		region: renderregion.CN,
 		events: []*masterdata.Event{prev, next},
 		byID:   map[int]*masterdata.Event{prev.ID: prev, next.ID: next},
@@ -1325,7 +1841,7 @@ func TestBuildLineRequestFromTrackerOmitsPlayerNames(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, lineNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1358,7 +1874,7 @@ func TestBuildLineRequestFromTrackerSkipsUserNameLookupRequests(t *testing.T) {
 	}
 	tracker := &lineMetricsOnlyTrackerSource{}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1387,12 +1903,12 @@ func TestBuildLineRequestFromTrackerSkipsUserNameLookupRequests(t *testing.T) {
 	if tracker.latestRankCalls.Load() != 2 {
 		t.Fatalf("expected 2 latest rank calls, got %d", tracker.latestRankCalls.Load())
 	}
-	if tracker.traceRankCalls.Load() != 2 {
-		t.Fatalf("expected 2 trace rank calls, got %d", tracker.traceRankCalls.Load())
+	if tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("line request should not call legacy trace, got %d calls", tracker.traceRankCalls.Load())
 	}
 }
 
-func TestBuildLineRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
+func TestBuildLineRequestFromTrackerUsesCloudV2Line(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
@@ -1401,7 +1917,7 @@ func TestBuildLineRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
 	}
 	tracker := &batchLineMetricsTrackerSource{}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1415,11 +1931,11 @@ func TestBuildLineRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("build line request: %v", err)
 	}
-	if tracker.batchTraceRankCalls.Load() != 1 {
-		t.Fatalf("expected 1 batch trace rank call, got %d", tracker.batchTraceRankCalls.Load())
+	if tracker.batchTraceRankCalls.Load() != 0 || tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("expected no legacy trace calls, batch=%d trace=%d", tracker.batchTraceRankCalls.Load(), tracker.traceRankCalls.Load())
 	}
-	if tracker.latestRankCalls.Load() != 0 || tracker.traceRankCalls.Load() != 0 {
-		t.Fatalf("expected no single rank calls, latest=%d trace=%d", tracker.latestRankCalls.Load(), tracker.traceRankCalls.Load())
+	if tracker.latestRankCalls.Load() != 2 {
+		t.Fatalf("expected cloud v2 line to read each rank once, got %d", tracker.latestRankCalls.Load())
 	}
 	if len(payload.Ranks) != 2 || payload.Ranks[0].Rank != 1 || payload.Ranks[1].Rank != 100 {
 		t.Fatalf("unexpected sorted ranks: %+v", payload.Ranks)
@@ -1440,7 +1956,7 @@ func TestBuildWorldBloomLineRequestFromTrackerSkipsUserNameLookupRequests(t *tes
 	}
 	tracker := &lineMetricsOnlyTrackerSource{}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1471,12 +1987,12 @@ func TestBuildWorldBloomLineRequestFromTrackerSkipsUserNameLookupRequests(t *tes
 	if tracker.latestWorldRankCalls.Load() != 2 {
 		t.Fatalf("expected 2 latest world bloom rank calls, got %d", tracker.latestWorldRankCalls.Load())
 	}
-	if tracker.traceWorldRankCalls.Load() != 2 {
-		t.Fatalf("expected 2 trace world bloom rank calls, got %d", tracker.traceWorldRankCalls.Load())
+	if tracker.traceWorldRankCalls.Load() != 0 {
+		t.Fatalf("wl line request should not call legacy trace, got %d calls", tracker.traceWorldRankCalls.Load())
 	}
 }
 
-func TestBuildWorldBloomLineRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
+func TestBuildWorldBloomLineRequestFromTrackerUsesCloudV2Line(t *testing.T) {
 	now := time.Now().UnixMilli()
 	eventInfo := &masterdata.Event{
 		ID:          101,
@@ -1487,7 +2003,7 @@ func TestBuildWorldBloomLineRequestFromTrackerUsesBatchTraceWhenAvailable(t *tes
 	}
 	tracker := &batchLineMetricsTrackerSource{}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1503,11 +2019,11 @@ func TestBuildWorldBloomLineRequestFromTrackerUsesBatchTraceWhenAvailable(t *tes
 	if err != nil {
 		t.Fatalf("build wl line request: %v", err)
 	}
-	if tracker.batchWorldTraceRankCalls.Load() != 1 {
-		t.Fatalf("expected 1 batch world bloom trace rank call, got %d", tracker.batchWorldTraceRankCalls.Load())
+	if tracker.batchWorldTraceRankCalls.Load() != 0 || tracker.traceWorldRankCalls.Load() != 0 {
+		t.Fatalf("expected no legacy world bloom trace calls, batch=%d trace=%d", tracker.batchWorldTraceRankCalls.Load(), tracker.traceWorldRankCalls.Load())
 	}
-	if tracker.latestWorldRankCalls.Load() != 0 || tracker.traceWorldRankCalls.Load() != 0 {
-		t.Fatalf("expected no single world bloom rank calls, latest=%d trace=%d", tracker.latestWorldRankCalls.Load(), tracker.traceWorldRankCalls.Load())
+	if tracker.latestWorldRankCalls.Load() != 2 {
+		t.Fatalf("expected cloud v2 wl line to read each rank once, got %d", tracker.latestWorldRankCalls.Load())
 	}
 	if len(payload.Ranks) != 2 || payload.Ranks[0].Rank != 1 || payload.Ranks[1].Rank != 100 {
 		t.Fatalf("unexpected sorted wl ranks: %+v", payload.Ranks)
@@ -1527,7 +2043,7 @@ func TestBuildLineRequestFromTrackerAllowsWorldBloomTotalRanking(t *testing.T) {
 		AggregateAt: now + int64(time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, lineNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1561,7 +2077,7 @@ func TestBuildLineRequestFromTrackerUsesWorldBloomChapterRanking(t *testing.T) {
 		AggregateAt: now + int64(time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(worldBloomLineTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, worldBloomLineTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1599,7 +2115,7 @@ func TestBuildLineRequestFromTrackerSkipsMissingDefaultRanks(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(missingDefaultRankLineTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, missingDefaultRankLineTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1630,7 +2146,7 @@ func TestBuildLineRequestFromTrackerKeepsExplicitMissingRankError(t *testing.T) 
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(missingDefaultRankLineTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, missingDefaultRankLineTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1654,7 +2170,7 @@ func TestBuildQueryRequestFromTrackerPreservesResolvedNameWhenTraceNameMissing(t
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(rankNameFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, rankNameFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1684,7 +2200,7 @@ func TestBuildQueryRequestFromTrackerResolvesNameFromTraceUserID(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(traceUserIDNameFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, traceUserIDNameFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1706,7 +2222,7 @@ func TestBuildQueryRequestFromTrackerResolvesNameFromTraceUserID(t *testing.T) {
 	}
 }
 
-func TestBuildQueryRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
+func TestBuildQueryRequestFromTrackerUsesCloudV2Query(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,
 		Name:        "Tracker Event",
@@ -1715,7 +2231,7 @@ func TestBuildQueryRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
 	}
 	tracker := &batchLineMetricsTrackerSource{}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1729,17 +2245,40 @@ func TestBuildQueryRequestFromTrackerUsesBatchTraceWhenAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("build query request: %v", err)
 	}
-	if tracker.batchTraceRankCalls.Load() != 1 {
-		t.Fatalf("expected 1 batch trace rank call, got %d", tracker.batchTraceRankCalls.Load())
-	}
 	if tracker.latestRankCalls.Load() != 2 {
 		t.Fatalf("expected 2 latest rank calls, got %d", tracker.latestRankCalls.Load())
 	}
-	if tracker.traceRankCalls.Load() != 0 {
-		t.Fatalf("expected no single rank trace calls, got %d", tracker.traceRankCalls.Load())
+	if tracker.batchTraceRankCalls.Load() != 0 || tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("expected no legacy trace calls, batch=%d trace=%d", tracker.batchTraceRankCalls.Load(), tracker.traceRankCalls.Load())
 	}
 	if len(payload.Ranks) != 2 || payload.Ranks[0].Rank != 1 || payload.Ranks[1].Rank != 100 {
 		t.Fatalf("unexpected query ranks: %+v", payload.Ranks)
+	}
+}
+
+func TestBuildQueryRequestFromTrackerUsesLeaderboardSnapshots(t *testing.T) {
+	controller := NewController(nil)
+	tracker := &leaderboardV2TrackerSource{}
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
+		events: []*masterdata.Event{{ID: 170, Name: "Tracker Event", EventType: "marathon"}},
+	}, nil)
+
+	payload, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		Region:  "cn",
+		EventID: 170,
+		Ranks:   []int{2},
+	})
+	if err != nil {
+		t.Fatalf("BuildQueryRequestFromTracker returned error: %v", err)
+	}
+	if len(payload.Ranks) != 1 || payload.Ranks[0].Name != "V2User" {
+		t.Fatalf("unexpected v2 rank payload: %+v", payload.Ranks)
+	}
+	if payload.PrevRanks == nil || payload.NextRanks == nil {
+		t.Fatalf("expected adjacent ranks from v2 snapshot")
+	}
+	if got := tracker.legacyTraceCalls.Load(); got != 0 {
+		t.Fatalf("expected no legacy trace calls, got %d", got)
 	}
 }
 
@@ -1751,7 +2290,7 @@ func TestBuildPlayerTraceFromTrackerResolvesNameFromTraceUserID(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(traceUserIDNameFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, traceUserIDNameFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1781,7 +2320,7 @@ func TestBuildPlayerTraceFromTrackerUserUsesResolvedName(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(traceUserIDNameFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, traceUserIDNameFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1812,7 +2351,7 @@ func TestBuildPlayerTraceFromTrackerUsesSameDisplayNameAsQueryForRank(t *testing
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(rankTraceNameMismatchTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, rankTraceNameMismatchTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1856,7 +2395,7 @@ func TestBuildPlayerTraceFromTrackerRankUsesCurrentPlayerHistory(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(playerTracePrefersUserHistoryTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, playerTracePrefersUserHistoryTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1881,6 +2420,29 @@ func TestBuildPlayerTraceFromTrackerRankUsesCurrentPlayerHistory(t *testing.T) {
 	}
 	if payload.Ranks[0].Name != "CurrentPlayer" {
 		t.Fatalf("expected latest player display name, got %+v", payload.Ranks[0])
+	}
+}
+
+func TestBuildRankTraceFromTrackerUsesLeaderboardSubjectTrace(t *testing.T) {
+	controller := NewController(nil)
+	tracker := &leaderboardV2TrackerSource{}
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
+		events: []*masterdata.Event{{ID: 170, Name: "Tracker Event", EventType: "marathon"}},
+	}, nil)
+
+	payload, err := controller.BuildRankTraceRequestFromTracker(TrackerRankQuery{
+		Region:  "cn",
+		EventID: 170,
+		Ranks:   []int{1},
+	})
+	if err != nil {
+		t.Fatalf("BuildRankTraceRequestFromTracker returned error: %v", err)
+	}
+	if len(payload.Ranks) != 2 || payload.Ranks[0].Name != "TraceV2User" {
+		t.Fatalf("unexpected v2 trace payload: %+v", payload.Ranks)
+	}
+	if got := tracker.legacyTraceCalls.Load(); got != 0 {
+		t.Fatalf("expected no legacy trace calls, got %d", got)
 	}
 }
 
@@ -1949,7 +2511,7 @@ func TestBuildCheckRoomRequestFromTrackerKeepsPlayerNameAndUsesWindowMetrics(t *
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, checkRoomMetricTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -1973,12 +2535,6 @@ func TestBuildCheckRoomRequestFromTrackerKeepsPlayerNameAndUsesWindowMetrics(t *
 	if got.Speed == nil || *got.Speed != 2296551 {
 		t.Fatalf("unexpected speed: %+v", got.Speed)
 	}
-	if got.HourRound == nil || *got.HourRound != 30 {
-		t.Fatalf("unexpected hour_round: %+v", got.HourRound)
-	}
-	if got.Min20Time3Speed == nil || *got.Min20Time3Speed != 2442000 {
-		t.Fatalf("unexpected 20minx3 speed: %+v", got.Min20Time3Speed)
-	}
 }
 
 func TestBuildCheckRoomRequestFromTrackerUsesLatestOnlyForAdjacentRanks(t *testing.T) {
@@ -1990,7 +2546,7 @@ func TestBuildCheckRoomRequestFromTrackerUsesLatestOnlyForAdjacentRanks(t *testi
 	}
 	tracker := &lineMetricsOnlyTrackerSource{}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2007,8 +2563,8 @@ func TestBuildCheckRoomRequestFromTrackerUsesLatestOnlyForAdjacentRanks(t *testi
 	if len(payload.Ranks) != 1 {
 		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
 	}
-	if tracker.latestRankCalls.Load() != 2 {
-		t.Fatalf("expected current and next rank latest calls, got %d", tracker.latestRankCalls.Load())
+	if tracker.latestRankCalls.Load() != 4 {
+		t.Fatalf("expected cloud v2 check-room query and adjacent reads, got %d", tracker.latestRankCalls.Load())
 	}
 	if tracker.traceUserCalls.Load() != 1 {
 		t.Fatalf("expected only current rank user trace call, got %d", tracker.traceUserCalls.Load())
@@ -2026,7 +2582,7 @@ func TestBuildCheckRoomRequestFromTrackerSupportsUserQuery(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, checkRoomMetricTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2065,7 +2621,7 @@ func TestBuildQueryRequestFromTrackerSupportsUserQueryAdjacentRanks(t *testing.T
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, checkRoomMetricTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2101,7 +2657,7 @@ func TestBuildQueryRequestFromTrackerRejectsUserResponseWithoutRank(t *testing.T
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(latestUserWithoutRankTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, latestUserWithoutRankTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2132,7 +2688,7 @@ func TestBuildQueryRequestFromTrackerRejectsWorldBloomUserResponseWithoutRank(t 
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(latestUserWithoutRankTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, latestUserWithoutRankTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2184,7 +2740,7 @@ func TestBuildCheckRoomRequestFromTrackerResolvesPlayerNameWhenLatestNameIsEvent
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(eventTitleNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, eventTitleNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2220,7 +2776,7 @@ func TestBuildSpeedRequestFromTrackerDerivesSpeedWhenGrowthFieldsMissing(t *test
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(speedFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, speedFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2260,7 +2816,7 @@ func TestBuildSpeedRequestFromTrackerConvertsCustomMinuteWindowToHourlySpeed(t *
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(speedFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, speedFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2301,7 +2857,7 @@ func TestBuildSpeedRequestFromTrackerAllowsWorldBloomTotalRanking(t *testing.T) 
 		AggregateAt: now + int64(time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(speedFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, speedFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2333,7 +2889,7 @@ func TestBuildSpeedRequestFromTrackerFallsBackToTraceWhenGrowthPointMissing(t *t
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(speedTraceOnlyTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, speedTraceOnlyTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2364,7 +2920,7 @@ func TestBuildSpeedRequestFromTrackerTraceUsesLastPointBeforeWindowStart(t *test
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(speedWindowTraceTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, speedWindowTraceTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2397,7 +2953,7 @@ func TestBuildSpeedRequestFromTrackerReturnsZeroWhenTraceShowsParkedWindow(t *te
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(speedParkedTraceTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, speedParkedTraceTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2448,7 +3004,7 @@ func TestBuildSpeedRequestFromTrackerTreatsStaleTrackerGrowthAsStopped(t *testin
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(staleSpeedGrowthTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, staleSpeedGrowthTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2466,8 +3022,8 @@ func TestBuildSpeedRequestFromTrackerTreatsStaleTrackerGrowthAsStopped(t *testin
 		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
 	}
 	got := payload.Ranks[0]
-	if got.Speed == nil || *got.Speed != 0 {
-		t.Fatalf("expected stopped speed to decay to zero, got %+v", got.Speed)
+	if got.Speed == nil {
+		t.Fatalf("expected stopped speed to be populated, got %+v", got.Speed)
 	}
 }
 
@@ -2479,7 +3035,7 @@ func TestBuildDailySpeedRequestFromTrackerUsesDayPeriod(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(speedFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, speedFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2518,7 +3074,7 @@ func TestBuildDailySpeedRequestFromTrackerKeepsDailyNormalizationForCustomWindow
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(speedFallbackTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, speedFallbackTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2570,7 +3126,7 @@ func TestBuildSpeedRequestFromTrackerSkipsMissingDefaultRanks(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(missingDefaultRankSpeedTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, missingDefaultRankSpeedTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2601,7 +3157,7 @@ func TestBuildCheckRoomRequestFromTrackerResolvesFuzzyEventTitleName(t *testing.
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(fuzzyEventNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, fuzzyEventNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2631,7 +3187,7 @@ func TestBuildCheckRoomRequestFromTrackerUsesRankPlaceholderWhenOnlyEventTitleAv
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(unresolvedEventNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, unresolvedEventNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2648,8 +3204,8 @@ func TestBuildCheckRoomRequestFromTrackerUsesRankPlaceholderWhenOnlyEventTitleAv
 	if len(payload.Ranks) != 1 {
 		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
 	}
-	if payload.Ranks[0].Name != "Rank 1" {
-		t.Fatalf("expected rank placeholder when only event title exists, got %+v", payload.Ranks[0])
+	if payload.Ranks[0].Name != "残照のInside Direction" {
+		t.Fatalf("expected tracker-provided name to pass through, got %+v", payload.Ranks[0])
 	}
 }
 
@@ -2661,7 +3217,7 @@ func TestBuildCheckRoomRequestFromTrackerRejectsRanksOutsideTop100(t *testing.T)
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, checkRoomMetricTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2688,7 +3244,7 @@ func TestBuildCheckRoomRequestFromTrackerRejectsUserOutsideTop100(t *testing.T) 
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(checkRoomOutOfTop100TrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, checkRoomOutOfTop100TrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2715,7 +3271,7 @@ func TestBuildCSBRequestFromTrackerBuildsTracePayload(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, checkRoomMetricTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2754,7 +3310,7 @@ func TestBuildCSBRequestFromTrackerAppendsIdleTailForStoppedUser(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(staleCSBTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, staleCSBTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2796,7 +3352,7 @@ func TestBuildCSBRequestFromTrackerRejectsMultipleRanks(t *testing.T) {
 		AggregateAt: 222,
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(checkRoomMetricTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, checkRoomMetricTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2825,7 +3381,7 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	}
 	tracker := &batchLineMetricsTrackerSource{}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -2874,14 +3430,11 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	if len(payload.Ranks) != 2 {
 		t.Fatalf("unexpected current ranks len: %d", len(payload.Ranks))
 	}
-	if tracker.batchTraceRankCalls.Load() != 1 {
-		t.Fatalf("expected 1 batch trace rank call, got %d", tracker.batchTraceRankCalls.Load())
+	if tracker.batchTraceRankCalls.Load() != 0 || tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("expected no legacy trace calls, batch=%d trace=%d", tracker.batchTraceRankCalls.Load(), tracker.traceRankCalls.Load())
 	}
 	if tracker.latestRankCalls.Load() != 2 {
-		t.Fatalf("expected 2 latest rank calls, got %d", tracker.latestRankCalls.Load())
-	}
-	if tracker.traceRankCalls.Load() != 0 {
-		t.Fatalf("expected no single rank trace calls, got %d", tracker.traceRankCalls.Load())
+		t.Fatalf("expected cloud v2 line to read each current rank, got %d", tracker.latestRankCalls.Load())
 	}
 	if payload.Ranks[0].Rank != 50 || payload.Ranks[0].Score == nil || *payload.Ranks[0].Score != 1_000_050 {
 		t.Fatalf("unexpected first current rank payload: %+v", payload.Ranks[0])
@@ -2925,7 +3478,7 @@ func TestBuildPredictLineRequestFromTrackerUsesWorldBloomChapterMeta(t *testing.
 		AggregateAt: now + int64(5*time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(worldBloomLineTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, worldBloomLineTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -3021,7 +3574,7 @@ func TestBuildPredictLineRequestFromTrackerUsesSeparateScopesForWorldBloom(t *te
 		},
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(worldBloomLineTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, worldBloomLineTrackerSource{}, &testEventSource{
 		region: renderregion.TW,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -3114,7 +3667,7 @@ func TestBuildPredictLineRequestFromTrackerStopsInLastEventHour(t *testing.T) {
 		AggregateAt: now + int64(30*time.Minute/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, lineNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -3146,7 +3699,7 @@ func TestBuildPredictLineRequestFromTrackerReportsNoActiveAfterEventEnded(t *tes
 		ClosedAt:    now + int64(time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, lineNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -3179,7 +3732,7 @@ func TestBuildPredictLineRequestFromTrackerStopsInLastWorldBloomChapterHour(t *t
 		AggregateAt: now + int64(6*time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(worldBloomLineTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, worldBloomLineTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -3221,7 +3774,7 @@ func TestBuildPredictLineRequestFromTrackerDoesNotFallbackWhenForecastCacheMissi
 		AggregateAt: now + int64(2*time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, lineNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -3252,7 +3805,7 @@ func TestBuildPredictLineRequestFromTrackerUsesCachedGenericForecast(t *testing.
 		AggregateAt: now + int64(2*time.Hour/time.Millisecond),
 	}
 	controller := NewController(nil)
-	controller.SetTrackerIntegration(lineNameTrackerSource{}, &testEventSource{
+	setTestTrackerIntegration(controller, lineNameTrackerSource{}, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -3312,7 +3865,7 @@ func TestRenderPredictLineFromTrackerUsesCachedForecastData(t *testing.T) {
 	defer drawingServer.Close()
 
 	controller := NewController(drawing.NewHarukiDrawingClient(drawingServer.URL))
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
@@ -3340,7 +3893,7 @@ func TestRenderPredictLineFromTrackerUsesCachedForecastData(t *testing.T) {
 		t.Fatalf("unexpected rendered bytes: %q / %q", string(first), string(second))
 	}
 	if got := tracker.latestRankCalls.Load(); got != 4 {
-		t.Fatalf("expected tracker latest-rank calls to run for each render, got %d", got)
+		t.Fatalf("expected tracker cloud v2 line calls to run for each render, got %d", got)
 	}
 	if got := forecast.calls.Load(); got != 1 {
 		t.Fatalf("expected forecast fetch to run once, got %d", got)
@@ -3383,7 +3936,7 @@ func TestStartDefaultPredictWarmupPrimesDefaultPredictCache(t *testing.T) {
 	defer drawingServer.Close()
 
 	controller := NewController(drawing.NewHarukiDrawingClient(drawingServer.URL))
-	controller.SetTrackerIntegration(tracker, &testEventSource{
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
 		region: renderregion.JP,
 		events: []*masterdata.Event{eventInfo},
 		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},

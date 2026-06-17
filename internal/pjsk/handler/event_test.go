@@ -645,7 +645,7 @@ func TestEventPlannerCurrentPointUsesWorldBloomTracker(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"rankData":{"userId":"12345678901234","score":765432,"rank":42,"timestamp":1},"userData":{"userId":"12345678901234","name":"tester"}}`))
+		_, _ = w.Write([]byte(`{"meta":{"server":"jp","eventId":170,"scope":"world_bloom","characterId":17,"fetchedAt":1},"ranks":[{"rank":42,"userId":"12345678901234","name":"tester","score":765432,"timestamp":1}]}`))
 	}))
 	defer server.Close()
 
@@ -657,7 +657,7 @@ func TestEventPlannerCurrentPointUsesWorldBloomTracker(t *testing.T) {
 		renderdeck.AutoQuery{WorldBloomCharacterID: drawing.IntPtr(17)},
 		eventPlannerCommandParams{},
 	)
-	if gotPath != "/event/jp/170/latest-world-bloom-ranking/character/17/user/12345678901234" {
+	if gotPath != "/api/v2/cloud/events/jp/170/leaderboards/world-bloom/17/sk/query" {
 		t.Fatalf("unexpected tracker path: %s", gotPath)
 	}
 	if point != 765432 || !known || warning != "" {
@@ -670,7 +670,7 @@ func TestEventPlannerCurrentPointTotalRankingUsesNormalTracker(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"rankData":{"userId":"12345678901234","score":654321,"rank":88,"timestamp":1},"userData":{"userId":"12345678901234","name":"tester"}}`))
+		_, _ = w.Write([]byte(`{"meta":{"server":"jp","eventId":170,"scope":"total","fetchedAt":1},"ranks":[{"rank":88,"userId":"12345678901234","name":"tester","score":654321,"timestamp":1}]}`))
 	}))
 	defer server.Close()
 
@@ -682,7 +682,7 @@ func TestEventPlannerCurrentPointTotalRankingUsesNormalTracker(t *testing.T) {
 		renderdeck.AutoQuery{WorldBloomCharacterID: drawing.IntPtr(17)},
 		eventPlannerCommandParams{TotalRanking: true},
 	)
-	if gotPath != "/event/jp/170/latest-ranking/user/12345678901234" {
+	if gotPath != "/api/v2/cloud/events/jp/170/leaderboards/total/sk/query" {
 		t.Fatalf("unexpected tracker path: %s", gotPath)
 	}
 	if point != 654321 || !known || warning != "" {
@@ -714,7 +714,7 @@ func TestEventPlannerTargetRankUsesWorldBloomRankingByDefault(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`[{"rank":100,"score":456789,"timestamp":1}]`))
+		_, _ = w.Write([]byte(`{"meta":{"server":"jp","eventId":170,"scope":"world_bloom","characterId":17,"fetchedAt":1},"ranks":[{"rank":100,"score":456789,"timestamp":1}]}`))
 	}))
 	defer server.Close()
 
@@ -728,7 +728,7 @@ func TestEventPlannerTargetRankUsesWorldBloomRankingByDefault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveEventPlannerTargetPoint() error = %v", err)
 	}
-	if gotPath != "/event/jp/170/world-bloom-ranking-lines/character/17" {
+	if gotPath != "/api/v2/cloud/events/jp/170/leaderboards/world-bloom/17/sk/line" {
 		t.Fatalf("unexpected tracker path: %s", gotPath)
 	}
 	if point != 456789 || !strings.Contains(source, "WL章节") {
@@ -741,7 +741,7 @@ func TestEventPlannerTargetRankTotalRankingUsesNormalRanking(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`[{"rank":100,"score":987654,"timestamp":1}]`))
+		_, _ = w.Write([]byte(`{"meta":{"server":"jp","eventId":170,"scope":"total","fetchedAt":1},"ranks":[{"rank":100,"score":987654,"timestamp":1}]}`))
 	}))
 	defer server.Close()
 
@@ -755,7 +755,7 @@ func TestEventPlannerTargetRankTotalRankingUsesNormalRanking(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveEventPlannerTargetPoint() error = %v", err)
 	}
-	if gotPath != "/event/jp/170/ranking-lines" {
+	if gotPath != "/api/v2/cloud/events/jp/170/leaderboards/total/sk/line" {
 		t.Fatalf("unexpected tracker path: %s", gotPath)
 	}
 	if point != 987654 || strings.Contains(source, "WL章节") {

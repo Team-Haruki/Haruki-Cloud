@@ -198,11 +198,3 @@ func formatTrackerTimestamp(ts int64) int64 {
 	}
 	return time.Unix(ts, 0).UTC().UnixMilli()
 }
-
-func pickTrackerDisplayName(name string, rank int) string {
-	clean := strings.TrimSpace(name)
-	if clean != "" {
-		return clean
-	}
-	return fmt.Sprintf("Rank %d", rank)
-}

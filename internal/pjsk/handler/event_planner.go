@@ -592,37 +592,23 @@ func resolveEventPlannerTargetPoint(
 		if !ok {
 			return 0, "", fmt.Errorf("WL章节单榜需要指定章节角色；如需活动总榜请加 总榜")
 		}
-		if lines, err := tracker.GetWorldBloomRankingLines(region.String(), eventInfo.ID, charID); err == nil {
-			for _, line := range lines {
-				if line.Rank == params.TargetRank && line.Score > 0 {
-					return int64(line.Score), fmt.Sprintf("Tracker实时WL章节榜线:t%d", params.TargetRank), nil
-				}
-			}
-		}
-		latest, err := tracker.GetLatestWorldBloomRankingByRank(region.String(), eventInfo.ID, charID, params.TargetRank)
+		lines, err := tracker.GetCloudSKLine(region.String(), eventInfo.ID, &charID, []int{params.TargetRank}, nil, false, 3600)
 		if err != nil {
 			return 0, "", err
 		}
-		if latest == nil || latest.RankData.Score <= 0 {
+		if lines == nil || len(lines.Ranks) == 0 || lines.Ranks[0].Score <= 0 {
 			return 0, "", fmt.Errorf("tracker 未返回 WL 章节 t%d 的有效榜线", params.TargetRank)
 		}
-		return int64(latest.RankData.Score), fmt.Sprintf("Tracker实时WL章节榜线:t%d", params.TargetRank), nil
+		return int64(lines.Ranks[0].Score), fmt.Sprintf("Tracker实时WL章节榜线:t%d", params.TargetRank), nil
 	}
-	if lines, err := tracker.GetRankingLines(region.String(), eventID); err == nil {
-		for _, line := range lines {
-			if line.Rank == params.TargetRank && line.Score > 0 {
-				return int64(line.Score), fmt.Sprintf("Tracker实时榜线:t%d", params.TargetRank), nil
-			}
-		}
-	}
-	latest, err := tracker.GetLatestRankingByRank(region.String(), eventID, params.TargetRank)
+	lines, err := tracker.GetCloudSKLine(region.String(), eventID, nil, []int{params.TargetRank}, nil, false, 3600)
 	if err != nil {
 		return 0, "", err
 	}
-	if latest == nil || latest.RankData.Score <= 0 {
+	if lines == nil || len(lines.Ranks) == 0 || lines.Ranks[0].Score <= 0 {
 		return 0, "", fmt.Errorf("tracker 未返回 t%d 的有效榜线", params.TargetRank)
 	}
-	return int64(latest.RankData.Score), fmt.Sprintf("Tracker实时榜线:t%d", params.TargetRank), nil
+	return int64(lines.Ranks[0].Score), fmt.Sprintf("Tracker实时榜线:t%d", params.TargetRank), nil
 }
 
 func eventPlannerUseWorldBloomRanking(eventInfo *masterdata.Event, params eventPlannerCommandParams) bool {
@@ -659,16 +645,16 @@ func resolveEventPlannerCurrentPoint(
 		if !ok {
 			return 0, true, "未指定当前pt且 Tracker 无法确定 WL 章节，当前按 0 计算"
 		}
-		latest, err := tracker.GetLatestWorldBloomRankingByUser(region.String(), eventInfo.ID, charID, uid)
-		if err == nil && latest != nil {
-			return int64(latest.RankData.Score), true, ""
+		resp, err := tracker.GetCloudSKQuery(region.String(), eventInfo.ID, &charID, nil, &uid, false, false, 3600)
+		if err == nil && resp != nil && len(resp.Ranks) > 0 {
+			return int64(resp.Ranks[0].Score), true, ""
 		}
 		return 0, true, eventPlannerCurrentPointTrackerWarning(err, true)
 	}
 
-	latest, err := tracker.GetLatestRankingByUser(region.String(), eventInfo.ID, uid)
-	if err == nil && latest != nil {
-		return int64(latest.RankData.Score), true, ""
+	resp, err := tracker.GetCloudSKQuery(region.String(), eventInfo.ID, nil, nil, &uid, false, false, 3600)
+	if err == nil && resp != nil && len(resp.Ranks) > 0 {
+		return int64(resp.Ranks[0].Score), true, ""
 	}
 	return 0, true, eventPlannerCurrentPointTrackerWarning(err, false)
 }

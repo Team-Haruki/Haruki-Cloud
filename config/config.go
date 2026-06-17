@@ -173,6 +173,12 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_TRACKER_BASE_URL", &cfg.Tracker.BaseURL)
 	envStr("HARUKI_TRACKER_USER_AGENT", &cfg.Tracker.UserAgent)
 	envDuration("HARUKI_TRACKER_TIMEOUT", &cfg.Tracker.Timeout)
+	envDuration("HARUKI_TRACKER_TRACE_BATCH_WINDOW", &cfg.Tracker.TraceBatchWindow)
+	envDuration("HARUKI_TRACKER_TRACE_BATCH_MAX_WAIT", &cfg.Tracker.TraceBatchMaxWait)
+	envInt("HARUKI_TRACKER_TRACE_BATCH_FLUSH_RANKS", &cfg.Tracker.TraceBatchFlushRanks)
+	envInt("HARUKI_TRACKER_TRACE_LEADERBOARD_MAX_CONCURRENCY", &cfg.Tracker.TraceLeaderboardMaxConcurrency)
+	envInt("HARUKI_TRACKER_LATEST_LEADERBOARD_MAX_CONCURRENCY", &cfg.Tracker.LatestLeaderboardMaxConcurrency)
+	envDuration("HARUKI_TRACKER_ACQUIRE_TIMEOUT", &cfg.Tracker.AcquireTimeout)
 
 	// Censor
 	envStr("HARUKI_CENSOR_BAIDU_API_KEY", &cfg.Censor.BaiduAPIKey)
@@ -195,6 +201,9 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", &cfg.PJSKRender.DrawingCache.TTL)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
+	envInt("HARUKI_PJSK_RENDER_DRAWING_SK_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingSKMaxConcurrency)
+	envDuration("HARUKI_PJSK_RENDER_DRAWING_SK_ACQUIRE_TIMEOUT", &cfg.PJSKRender.DrawingSKAcquireTimeout)
+	envInt("HARUKI_PJSK_RENDER_DRAWING_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingMaxConcurrency)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_CHARTS_URI", &cfg.PJSKRender.ImageCache.ChartsURI)
 	envStr("HARUKI_PJSK_RENDER_IMAGE_CACHE_PG_URL", &cfg.PJSKRender.ImageCache.PGURL)
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
@@ -350,6 +359,9 @@ type PJSKRenderConfig struct {
 	DrawingTimeout            time.Duration                   `yaml:"drawing_timeout"`
 	DrawingRetryCount         int                             `yaml:"drawing_retry_count"`
 	DrawingCache              RenderCacheConfig               `yaml:"drawing_cache"`
+	DrawingSKMaxConcurrency   int                             `yaml:"drawing_sk_max_concurrency"`
+	DrawingSKAcquireTimeout   time.Duration                   `yaml:"drawing_sk_acquire_timeout"`
+	DrawingMaxConcurrency     int                             `yaml:"drawing_max_concurrency"`
 	ImageCache                ImageCacheConfig                `yaml:"image_cache"`
 	AssetDirs                 AssetDirsConfig                 `yaml:"asset_dirs"`
 	LocalMasterdata           LocalMasterdataConfig           `yaml:"local_masterdata"`
@@ -403,9 +415,15 @@ type SekaiAPIConfig struct {
 }
 
 type TrackerConfig struct {
-	BaseURL   string        `yaml:"base_url"`
-	UserAgent string        `yaml:"user_agent"`
-	Timeout   time.Duration `yaml:"timeout"`
+	BaseURL                         string        `yaml:"base_url"`
+	UserAgent                       string        `yaml:"user_agent"`
+	Timeout                         time.Duration `yaml:"timeout"`
+	TraceBatchWindow                time.Duration `yaml:"trace_batch_window"`
+	TraceBatchMaxWait               time.Duration `yaml:"trace_batch_max_wait"`
+	TraceBatchFlushRanks            int           `yaml:"trace_batch_flush_ranks"`
+	TraceLeaderboardMaxConcurrency  int           `yaml:"trace_leaderboard_max_concurrency"`
+	LatestLeaderboardMaxConcurrency int           `yaml:"latest_leaderboard_max_concurrency"`
+	AcquireTimeout                  time.Duration `yaml:"acquire_timeout"`
 }
 
 type ToolboxConfig struct {

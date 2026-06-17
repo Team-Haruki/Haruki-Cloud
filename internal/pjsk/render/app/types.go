@@ -45,6 +45,9 @@ type Config struct {
 	DrawingTimeout                           time.Duration
 	DrawingRetryCount                        int
 	DrawingCache                             drawing.RenderCacheConfig
+	DrawingSKMaxConcurrency                  int
+	DrawingSKAcquireTimeout                  time.Duration
+	DrawingMaxConcurrency                    int
 	ImageCacheURI                            string
 	ChartsBaseURL                            string
 	ImageCacheDir                            string

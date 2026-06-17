@@ -123,6 +123,193 @@ func (botBindingMultiRegionValidator) GetUserProfile(server, userID string) (*se
 
 type botTrackerSource struct{}
 
+type botLegacyTrackerSource interface {
+	GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error)
+	GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error)
+	GetLatestWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomLatestRankingResponse, error)
+	GetLatestWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomLatestRankingResponse, error)
+	TraceRankingByRank(server string, eventID, rank int) (*sekaiapi.TraceRankingResponse, error)
+	TraceRankingByUser(server string, eventID int, userID int64) (*sekaiapi.TraceRankingResponse, error)
+	TraceWorldBloomRankingByRank(server string, eventID, characterID, rank int) (*sekaiapi.WorldBloomTraceRankingResponse, error)
+	TraceWorldBloomRankingByUser(server string, eventID, characterID int, userID int64) (*sekaiapi.WorldBloomTraceRankingResponse, error)
+}
+
+func setBotTrackerIntegration(controller *rendersk.Controller, tracker botLegacyTrackerSource, events rendersk.EventSource, assetHelper *assets.AssetHelper) {
+	controller.SetTrackerIntegration(botCloudV2TrackerSource{botLegacyTrackerSource: tracker}, events, assetHelper)
+}
+
+type botCloudV2TrackerSource struct {
+	botLegacyTrackerSource
+}
+
+func (s botCloudV2TrackerSource) GetCloudSKQuery(server string, eventID int, characterID *int, ranks []int, userID *int64, includeAdjacent, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudRankQueryResponse, error) {
+	out := &sekaiapi.CloudRankQueryResponse{}
+	if userID != nil && *userID > 0 {
+		item, err := s.cloudRankInfoByUser(server, eventID, characterID, *userID)
+		if err != nil {
+			return nil, err
+		}
+		if item.Rank <= 0 {
+			return nil, sekaiapi.ErrRankingNotFound
+		}
+		out.Ranks = append(out.Ranks, item)
+		return out, nil
+	}
+	for _, rank := range ranks {
+		item, err := s.cloudRankInfoByRank(server, eventID, characterID, rank)
+		if err != nil {
+			if skipMissing && errors.Is(err, sekaiapi.ErrRankingNotFound) {
+				continue
+			}
+			return nil, err
+		}
+		out.Ranks = append(out.Ranks, item)
+	}
+	return out, nil
+}
+
+func (s botCloudV2TrackerSource) GetCloudSKCheckRoom(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudCheckRoomResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, userID, true, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Ranks) == 0 {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	return &sekaiapi.CloudCheckRoomResponse{Rank: resp.Ranks[0]}, nil
+}
+
+func (s botCloudV2TrackerSource) GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudLineResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, userID, false, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	for i := range resp.Ranks {
+		resp.Ranks[i].Name = ""
+	}
+	return &sekaiapi.CloudLineResponse{Ranks: resp.Ranks}, nil
+}
+
+func (s botCloudV2TrackerSource) GetCloudSKSpeed(server string, eventID int, characterID *int, ranks []int, intervalSeconds, unitSeconds int64, skipMissing bool) (*sekaiapi.CloudSpeedResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, nil, false, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	for i := range resp.Ranks {
+		speed := 1000
+		resp.Ranks[i].Speed = &speed
+	}
+	return &sekaiapi.CloudSpeedResponse{Speeds: resp.Ranks, IntervalSeconds: intervalSeconds, UnitSeconds: unitSeconds}, nil
+}
+
+func (s botCloudV2TrackerSource) GetCloudSKTrace(server string, eventID int, characterID *int, subjectType string, subject string, limit int) (*sekaiapi.CloudTraceResponse, error) {
+	points, userData, err := s.cloudTracePoints(server, eventID, characterID, subjectType, subject)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]sekaiapi.CloudRankInfo, 0, len(points))
+	name := userData.Name
+	for _, point := range points {
+		userID := point.UserID
+		out = append(out, sekaiapi.CloudRankInfo{Rank: point.Rank, UserID: stringPtr(userID), Name: name, Score: point.Score, Timestamp: point.Timestamp, CharacterID: characterID})
+	}
+	return &sekaiapi.CloudTraceResponse{Subject: sekaiapi.SubjectTraceMeta{SubjectType: subjectType, Subject: subject}, RankData: out}, nil
+}
+
+func (s botCloudV2TrackerSource) GetEventStatus(server string, eventID int) (*sekaiapi.EventStatusResponse, error) {
+	source, ok := s.botLegacyTrackerSource.(interface {
+		GetEventStatus(string, int) (*sekaiapi.EventStatusResponse, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("not implemented")
+	}
+	return source.GetEventStatus(server, eventID)
+}
+
+func (s botCloudV2TrackerSource) cloudRankInfoByRank(server string, eventID int, characterID *int, rank int) (sekaiapi.CloudRankInfo, error) {
+	if characterID != nil {
+		resp, err := s.GetLatestWorldBloomRankingByRank(server, eventID, *characterID, rank)
+		if err != nil {
+			return sekaiapi.CloudRankInfo{}, err
+		}
+		return cloudRankInfoFromPoint(resp.RankData.RankDataPoint, resp.UserData, characterID), nil
+	}
+	resp, err := s.GetLatestRankingByRank(server, eventID, rank)
+	if err != nil {
+		return sekaiapi.CloudRankInfo{}, err
+	}
+	return cloudRankInfoFromPoint(resp.RankData, resp.UserData, nil), nil
+}
+
+func (s botCloudV2TrackerSource) cloudRankInfoByUser(server string, eventID int, characterID *int, userID int64) (sekaiapi.CloudRankInfo, error) {
+	if characterID != nil {
+		resp, err := s.GetLatestWorldBloomRankingByUser(server, eventID, *characterID, userID)
+		if err != nil {
+			return sekaiapi.CloudRankInfo{}, err
+		}
+		return cloudRankInfoFromPoint(resp.RankData.RankDataPoint, resp.UserData, characterID), nil
+	}
+	resp, err := s.GetLatestRankingByUser(server, eventID, userID)
+	if err != nil {
+		return sekaiapi.CloudRankInfo{}, err
+	}
+	return cloudRankInfoFromPoint(resp.RankData, resp.UserData, nil), nil
+}
+
+func (s botCloudV2TrackerSource) cloudTracePoints(server string, eventID int, characterID *int, subjectType string, subject string) ([]sekaiapi.RankDataPoint, sekaiapi.RankingUserData, error) {
+	userID, _ := strconv.ParseInt(subject, 10, 64)
+	rank, _ := strconv.Atoi(subject)
+	if subjectType == "user" {
+		if characterID != nil {
+			resp, err := s.TraceWorldBloomRankingByUser(server, eventID, *characterID, userID)
+			if err != nil {
+				return nil, sekaiapi.RankingUserData{}, err
+			}
+			return flattenBotWorldBloom(resp.RankData), resp.UserData, nil
+		}
+		resp, err := s.TraceRankingByUser(server, eventID, userID)
+		if err != nil {
+			return nil, sekaiapi.RankingUserData{}, err
+		}
+		return resp.RankData, resp.UserData, nil
+	}
+	if characterID != nil {
+		resp, err := s.TraceWorldBloomRankingByRank(server, eventID, *characterID, rank)
+		if err != nil {
+			return nil, sekaiapi.RankingUserData{}, err
+		}
+		return flattenBotWorldBloom(resp.RankData), resp.UserData, nil
+	}
+	resp, err := s.TraceRankingByRank(server, eventID, rank)
+	if err != nil {
+		return nil, sekaiapi.RankingUserData{}, err
+	}
+	return resp.RankData, resp.UserData, nil
+}
+
+func cloudRankInfoFromPoint(point sekaiapi.RankDataPoint, userData sekaiapi.RankingUserData, characterID *int) sekaiapi.CloudRankInfo {
+	userID := point.UserID
+	if userID == "" {
+		userID = userData.UserID
+	}
+	return sekaiapi.CloudRankInfo{Rank: point.Rank, UserID: stringPtr(userID), Name: userData.Name, Score: point.Score, Timestamp: point.Timestamp, CharacterID: characterID}
+}
+
+func flattenBotWorldBloom(points []sekaiapi.WorldBloomRankDataPoint) []sekaiapi.RankDataPoint {
+	out := make([]sekaiapi.RankDataPoint, 0, len(points))
+	for _, point := range points {
+		out = append(out, point.RankDataPoint)
+	}
+	return out
+}
+
+func stringPtr(value string) *string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return &value
+}
+
 type botTrackerMissingUserSource struct {
 	botTrackerSource
 }
@@ -1206,7 +1393,7 @@ func TestBotEndpointSKQueryUsesTrackerPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
@@ -1252,7 +1439,7 @@ func TestBotEndpointSKQuerySupportsRegionPrefixedCommand(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
@@ -1292,7 +1479,7 @@ func TestBotEndpointSKQueryAcceptsBaseMatchedCommandForRegionPrefixedInput(t *te
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
@@ -1407,7 +1594,7 @@ func TestBotEndpointSKQueryTreatsRequestServerAsExplicitRegion(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.Bindings = bindings
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
@@ -1453,7 +1640,7 @@ func TestBotEndpointSKLineUsesTrackerPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/line"), BotCommandRequest{
@@ -1499,7 +1686,7 @@ func TestBotEndpointSKQueryUsesTrackerUIDPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
@@ -1545,7 +1732,7 @@ func TestBotEndpointSKQueryRankOneShowsPlayerName(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/query"), BotCommandRequest{
@@ -1594,7 +1781,7 @@ func TestBotEndpointSKLineUsesTrackerUIDPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/line"), BotCommandRequest{
@@ -1642,7 +1829,7 @@ func TestBotEndpointSKLineDefaultsToExpandedRanksAndOmitsNames(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/line"), BotCommandRequest{
@@ -1693,7 +1880,7 @@ func TestBotEndpointSKQueryUsesTrackerAtBindingPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -1748,7 +1935,7 @@ func TestBotEndpointSKQueryHandlesInlineCQAtInTextSegment(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -1787,7 +1974,7 @@ func TestBotEndpointSKQueryReturnsTextWhenTrackerQueryFails(t *testing.T) {
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
 	// Intentionally keep events=nil so /sk without event id triggers tracker-side validation error.
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -1842,7 +2029,7 @@ func TestBotEndpointSKQueryDefaultsToSelfBinding(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -1881,7 +2068,7 @@ func TestBotEndpointSKQueryWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *test
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -1920,7 +2107,7 @@ func TestBotEndpointSKQueryDoesNotWarnWhenTrackerStatusIsUnhealthy(t *testing.T)
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerStaleSelfSource{healthy: false}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: false}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -1955,7 +2142,7 @@ func TestBotEndpointSKQueryReturnsFriendlyMessageWhenSelfRankingIsMissing(t *tes
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -1990,7 +2177,7 @@ func TestBotEndpointSKCheckRoomReturnsFriendlyMessageWhenSelfRankingIsMissing(t 
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2025,7 +2212,7 @@ func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testi
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2071,7 +2258,7 @@ func TestBotEndpointSKCSBWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *testin
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2106,7 +2293,7 @@ func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenSelfRankingIsMissing(
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2141,7 +2328,7 @@ func TestBotEndpointSKQueryRegionPrefixedCommandDoesNotFallbackToTransportServer
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2179,7 +2366,7 @@ func TestBotEndpointSKCSBRegionPrefixedCommandDoesNotFallbackToTransportServer(t
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerMissingUserSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2220,7 +2407,7 @@ func TestBotEndpointSKQueryReturnsTextWhenTargetUserIsHidden(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2275,7 +2462,7 @@ func TestBotEndpointSKQueryAllowsHiddenSelfBinding(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2335,7 +2522,7 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/speed"), BotCommandRequest{
@@ -2406,7 +2593,7 @@ func TestBotEndpointSKCheckRoomUsesTrackerPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
@@ -2460,7 +2647,7 @@ func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botCSBTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botCSBTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2506,7 +2693,7 @@ func TestBotEndpointSKCheckRoomWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2553,7 +2740,7 @@ func TestBotEndpointSKCheckRoomLiteUsesFixedRanks(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
@@ -2599,7 +2786,7 @@ func TestBotEndpointSKCheckRoomLegacyCSBCompat(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botCSBTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botCSBTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/check-room"), BotCommandRequest{
@@ -2645,7 +2832,7 @@ func TestBotEndpointSKRankTraceUsesTrackerPayload(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/rank-trace"), BotCommandRequest{
@@ -2691,7 +2878,7 @@ func TestBotEndpointSKPlayerTraceSupportsTwoRanks(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	runtime.SK.SetTrackerIntegration(botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
 	req := newBotPOSTRequest(botPJSKPath("sk/player-trace"), BotCommandRequest{

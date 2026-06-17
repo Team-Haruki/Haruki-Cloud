@@ -68,6 +68,13 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	if cfg.DrawingRetryCount > 0 {
 		options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
 	}
+	if cfg.DrawingSKMaxConcurrency > 0 || cfg.DrawingSKAcquireTimeout > 0 || cfg.DrawingMaxConcurrency > 0 {
+		options = append(options, drawing.WithLimiter(drawing.LimiterConfig{
+			SKMaxConcurrency: cfg.DrawingSKMaxConcurrency,
+			SKAcquireTimeout: cfg.DrawingSKAcquireTimeout,
+			MaxConcurrency:   cfg.DrawingMaxConcurrency,
+		}))
+	}
 
 	drawingClient := drawing.NewHarukiDrawingClientWithTargetsAndResources(cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, options...)
 	if drawingClient != nil {

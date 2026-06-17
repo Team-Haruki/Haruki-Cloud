@@ -48,18 +48,46 @@ func (c *Controller) buildRanksFromTrackerV2(server string, eventID int, ranks [
 }
 
 func (c *Controller) buildUserFromTrackerCloudV2(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, bool, error) {
-	source, ok := c.trackerCloudV2()
-	if !ok || userID <= 0 {
-		return drawing.RankInfo{}, false, nil
+	infos, _, _, ok, err := c.buildUserQueryFromTrackerV2(server, eventID, userID, wlCharacterID, false)
+	if !ok || err != nil {
+		return drawing.RankInfo{}, ok, err
 	}
-	resp, err := source.GetCloudSKQuery(server, eventID, wlCharacterID, nil, &userID, false, false, 3600)
-	if err != nil {
-		return drawing.RankInfo{}, true, err
-	}
-	if resp == nil || len(resp.Ranks) == 0 {
+	if len(infos) == 0 {
 		return drawing.RankInfo{}, true, sekaiapi.ErrRankingNotFound
 	}
-	return rankInfoFromCloudV2(resp.Ranks[0]), true, nil
+	return infos[0], true, nil
+}
+
+func (c *Controller) buildUserQueryFromTrackerV2(server string, eventID int, userID int64, wlCharacterID *int, includeAdjacent bool) ([]drawing.RankInfo, *drawing.RankInfo, *drawing.RankInfo, bool, error) {
+	source, ok := c.trackerCloudV2()
+	if !ok || userID <= 0 {
+		return nil, nil, nil, false, nil
+	}
+	resp, err := source.GetCloudSKQuery(server, eventID, wlCharacterID, nil, &userID, includeAdjacent, false, 3600)
+	if err != nil {
+		return nil, nil, nil, true, err
+	}
+	if resp == nil || len(resp.Ranks) == 0 {
+		return nil, nil, nil, true, sekaiapi.ErrRankingNotFound
+	}
+	out := make([]drawing.RankInfo, 0, len(resp.Ranks))
+	for _, item := range resp.Ranks {
+		out = append(out, rankInfoFromCloudV2(item))
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Rank < out[j].Rank
+	})
+	var previous *drawing.RankInfo
+	if resp.Previous != nil {
+		info := rankInfoFromCloudV2(*resp.Previous)
+		previous = &info
+	}
+	var next *drawing.RankInfo
+	if resp.Next != nil {
+		info := rankInfoFromCloudV2(*resp.Next)
+		next = &info
+	}
+	return out, previous, next, true, nil
 }
 
 func (c *Controller) buildCheckRoomFromTrackerCloudV2(server string, eventID int, ranks []int, userID *int64, wlCharacterID *int, skipMissing bool) (drawing.RankInfo, *drawing.RankInfo, *drawing.RankInfo, bool, error) {
@@ -98,21 +126,18 @@ func (c *Controller) buildCheckRoomRanksFromTrackerCloudV2(server string, eventI
 	if !ok || len(ranks) == 0 {
 		return nil, nil, nil, false, nil
 	}
-	out := make([]drawing.RankInfo, 0, len(ranks))
+	resp, err := source.GetCloudSKCheckRoom(server, eventID, wlCharacterID, ranks, nil, skipMissing, 3600)
+	if err != nil {
+		return nil, nil, nil, true, err
+	}
+	items := resp.Ranks
+	if len(items) == 0 && resp.Rank.Rank > 0 {
+		items = []sekaiapi.CloudRankInfo{resp.Rank}
+	}
+	out := make([]drawing.RankInfo, 0, len(items))
 	var previous *drawing.RankInfo
 	var next *drawing.RankInfo
-	for _, rank := range ranks {
-		resp, err := source.GetCloudSKCheckRoom(server, eventID, wlCharacterID, []int{rank}, nil, skipMissing, 3600)
-		if err != nil {
-			if shouldSkipMissingTrackerRankError(skipMissing, err) {
-				continue
-			}
-			return nil, nil, nil, true, err
-		}
-		current := resp.Rank
-		if current.Rank <= 0 && len(resp.Ranks) > 0 {
-			current = resp.Ranks[0]
-		}
+	for _, current := range items {
 		if current.Rank <= 0 {
 			if skipMissing {
 				continue
@@ -122,16 +147,14 @@ func (c *Controller) buildCheckRoomRanksFromTrackerCloudV2(server string, eventI
 		info := rankInfoFromCloudV2(current)
 		c.enrichRankInfoFromCloudV2Trace(server, eventID, wlCharacterID, current, &info)
 		out = append(out, info)
-		if len(out) == 1 {
-			if resp.Previous != nil {
-				info := rankInfoFromCloudV2(*resp.Previous)
-				previous = &info
-			}
-			if resp.Next != nil {
-				info := rankInfoFromCloudV2(*resp.Next)
-				next = &info
-			}
-		}
+	}
+	if resp.Previous != nil {
+		info := rankInfoFromCloudV2(*resp.Previous)
+		previous = &info
+	}
+	if resp.Next != nil {
+		info := rankInfoFromCloudV2(*resp.Next)
+		next = &info
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].Rank < out[j].Rank
@@ -320,10 +343,11 @@ func hasRankInfoRoundMetrics(info *drawing.RankInfo) bool {
 	if info == nil {
 		return false
 	}
-	return info.AverageRound != nil ||
-		info.AveragePt != nil ||
-		info.LatestPt != nil ||
-		info.HourRound != nil ||
-		info.Min20Time3Speed != nil ||
+	return info.AverageRound != nil &&
+		info.AveragePt != nil &&
+		info.LatestPt != nil &&
+		info.HourRound != nil &&
+		info.Min20Time3Speed != nil &&
+		info.Speed != nil &&
 		info.RecordStartAt != nil
 }

@@ -52,13 +52,23 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 	var rankInfos []drawing.RankInfo
 	var previous *drawing.RankInfo
 	var next *drawing.RankInfo
-	if normalized.UserID == nil && len(normalized.Ranks) == 1 {
-		if infos, prev, nextInfo, ok, snapErr := c.buildRanksFromTrackerV2(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, true, skipMissing); ok && snapErr == nil && len(infos) > 0 {
+	if normalized.UserID != nil && *normalized.UserID > 0 {
+		if infos, prev, nextInfo, ok, snapErr := c.buildUserQueryFromTrackerV2(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID, true); ok {
+			if snapErr != nil {
+				return nil, snapErr
+			}
 			rankInfos = infos
 			previous = prev
 			next = nextInfo
-		} else if ok && snapErr != nil {
-			return nil, snapErr
+		}
+	} else {
+		if infos, prev, nextInfo, ok, snapErr := c.buildRanksFromTrackerV2(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, true, skipMissing); ok {
+			if snapErr != nil {
+				return nil, snapErr
+			}
+			rankInfos = infos
+			previous = prev
+			next = nextInfo
 		}
 	}
 	if len(rankInfos) == 0 {

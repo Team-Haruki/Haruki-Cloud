@@ -254,9 +254,23 @@ func (s testCloudV2TrackerSource) GetCloudSKCheckRoom(server string, eventID int
 	if rank.Rank > skCheckRoomRankLimit {
 		return nil, fmt.Errorf("查房/查水表目前仅支持前100名查询")
 	}
-	s.applyCloudTraceMetrics(server, eventID, characterID, &rank, "user", cloudUserIDSubject(rank))
+	ranksOut := make([]sekaiapi.CloudRankInfo, 0, len(resp.Ranks))
+	for _, item := range resp.Ranks {
+		if item.Rank > skCheckRoomRankLimit {
+			if skipMissing {
+				continue
+			}
+			return nil, fmt.Errorf("查房/查水表目前仅支持前100名查询")
+		}
+		s.applyCloudTraceMetrics(server, eventID, characterID, &item, "user", cloudUserIDSubject(item))
+		ranksOut = append(ranksOut, item)
+	}
+	if len(ranksOut) == 0 {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
 	return &sekaiapi.CloudCheckRoomResponse{
-		Rank:     rank,
+		Rank:     ranksOut[0],
+		Ranks:    ranksOut,
 		Previous: resp.Previous,
 		Next:     resp.Next,
 	}, nil
@@ -963,7 +977,7 @@ func (s *leaderboardV2TrackerSource) GetCloudSKCheckRoom(server string, eventID 
 	if len(resp.Ranks) == 0 {
 		return nil, sekaiapi.ErrRankingNotFound
 	}
-	return &sekaiapi.CloudCheckRoomResponse{Rank: resp.Ranks[0], Previous: resp.Previous, Next: resp.Next}, nil
+	return &sekaiapi.CloudCheckRoomResponse{Rank: resp.Ranks[0], Ranks: resp.Ranks, Previous: resp.Previous, Next: resp.Next}, nil
 }
 
 func (s *leaderboardV2TrackerSource) GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudLineResponse, error) {
@@ -2863,7 +2877,7 @@ func TestBuildQueryRequestFromTrackerRejectsUserResponseWithoutRank(t *testing.T
 	if err == nil {
 		t.Fatal("expected user query without rank to fail")
 	}
-	if err.Error() != "tracker user query failed: tracker: ranking record not found" {
+	if err.Error() != "tracker: ranking record not found" {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !errors.Is(err, sekaiapi.ErrRankingNotFound) {
@@ -2896,7 +2910,7 @@ func TestBuildQueryRequestFromTrackerRejectsWorldBloomUserResponseWithoutRank(t 
 	if err == nil {
 		t.Fatal("expected world bloom user query without rank to fail")
 	}
-	if err.Error() != "tracker user query failed: tracker: ranking record not found" {
+	if err.Error() != "tracker: ranking record not found" {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !errors.Is(err, sekaiapi.ErrRankingNotFound) {

@@ -2,7 +2,6 @@ package sk
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
@@ -309,21 +308,22 @@ func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.
 	if len(normalized.Ranks) == 0 {
 		return nil, fmt.Errorf("查水表目前仅支持单人查询")
 	}
-	info, err := c.buildSingleRankFromTracker(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
+	info, userID, hasUserID, err := c.buildSingleRankBaseFromTracker(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
 	if err != nil {
 		return nil, err
 	}
+	c.enrichRankInfoPreferUser(normalized.Region, normalized.EventID, info.Rank, userID, hasUserID, normalized.WlCharacterID, &info)
 	if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
 		return nil, err
 	}
-	trace, ok, err := c.buildSubjectTraceFromTrackerV2(normalized.Region, normalized.EventID, "rank", strconv.Itoa(normalized.Ranks[0]), normalized.WlCharacterID)
-	if !ok {
-		userID, resolveErr := c.resolveTrackerUserIDByRank(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
+	if !hasUserID {
+		var resolveErr error
+		userID, resolveErr = c.resolveTrackerUserIDByRank(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		trace, err = c.buildUserTraceFromTracker(normalized.Region, normalized.EventID, userID, normalized.WlCharacterID)
 	}
+	trace, err := c.buildUserTraceFromTracker(normalized.Region, normalized.EventID, userID, normalized.WlCharacterID)
 	if err != nil {
 		return nil, err
 	}

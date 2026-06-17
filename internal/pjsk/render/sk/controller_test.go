@@ -1439,6 +1439,75 @@ func (staleSpeedGrowthTrackerSource) TraceRankingByRank(server string, eventID, 
 	}, nil
 }
 
+type csbRankOwnerTrackerSource struct {
+	mu        sync.Mutex
+	traceType []string
+}
+
+func (s *csbRankOwnerTrackerSource) GetCloudSKQuery(server string, eventID int, characterID *int, ranks []int, userID *int64, includeAdjacent, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudRankQueryResponse, error) {
+	if len(ranks) != 1 || ranks[0] != 51 {
+		return nil, fmt.Errorf("unexpected query ranks: %v", ranks)
+	}
+	return &sekaiapi.CloudRankQueryResponse{
+		Ranks: []sekaiapi.CloudRankInfo{
+			{
+				Rank:      51,
+				UserID:    stringPtrIfNotEmpty("20051"),
+				Name:      "CurrentOwner",
+				Score:     7654321,
+				Timestamp: 1800000000,
+			},
+		},
+	}, nil
+}
+
+func (s *csbRankOwnerTrackerSource) GetCloudSKCheckRoom(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudCheckRoomResponse, error) {
+	return nil, fmt.Errorf("unexpected check-room call")
+}
+
+func (s *csbRankOwnerTrackerSource) GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudLineResponse, error) {
+	return nil, fmt.Errorf("unexpected line call")
+}
+
+func (s *csbRankOwnerTrackerSource) GetCloudSKSpeed(server string, eventID int, characterID *int, ranks []int, intervalSeconds, unitSeconds int64, skipMissing bool) (*sekaiapi.CloudSpeedResponse, error) {
+	return nil, fmt.Errorf("unexpected speed call")
+}
+
+func (s *csbRankOwnerTrackerSource) GetCloudSKTrace(server string, eventID int, characterID *int, subjectType string, subject string, limit int) (*sekaiapi.CloudTraceResponse, error) {
+	s.mu.Lock()
+	s.traceType = append(s.traceType, subjectType+":"+subject)
+	s.mu.Unlock()
+	switch subjectType {
+	case "user":
+		if subject != "20051" {
+			return nil, fmt.Errorf("unexpected user trace subject: %s", subject)
+		}
+		return &sekaiapi.CloudTraceResponse{
+			Subject: sekaiapi.SubjectTraceMeta{SubjectType: "user", Subject: subject, ResolvedUserID: stringPtrIfNotEmpty(subject)},
+			RankData: []sekaiapi.CloudRankInfo{
+				{Rank: 53, UserID: stringPtrIfNotEmpty("20051"), Name: "CurrentOwner", Score: 7000000, Timestamp: 1700000000},
+				{Rank: 51, UserID: stringPtrIfNotEmpty("20051"), Name: "CurrentOwner", Score: 7654321, Timestamp: 1800000000},
+			},
+		}, nil
+	case "rank":
+		return &sekaiapi.CloudTraceResponse{
+			Subject: sekaiapi.SubjectTraceMeta{SubjectType: "rank", Subject: subject},
+			RankData: []sekaiapi.CloudRankInfo{
+				{Rank: 51, UserID: stringPtrIfNotEmpty("10001"), Name: "PreviousOwner", Score: 6500000, Timestamp: 1600000000},
+				{Rank: 51, UserID: stringPtrIfNotEmpty("20051"), Name: "CurrentOwner", Score: 7654321, Timestamp: 1800000000},
+			},
+		}, nil
+	default:
+		return nil, fmt.Errorf("unexpected subject type: %s", subjectType)
+	}
+}
+
+func (s *csbRankOwnerTrackerSource) traceCalls() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]string(nil), s.traceType...)
+}
+
 type staleCSBTrackerSource struct {
 	testTrackerSource
 }
@@ -3422,6 +3491,42 @@ func TestBuildCSBRequestFromTrackerBuildsTracePayload(t *testing.T) {
 	}
 	if payload.UpdateAt <= 0 {
 		t.Fatalf("expected update time to be set, got %d", payload.UpdateAt)
+	}
+}
+
+func TestBuildCSBRequestFromTrackerUsesCurrentRankOwnerTrace(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          170,
+		Name:        "World Bloom",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	tracker := &csbRankOwnerTrackerSource{}
+	controller := NewController(nil)
+	controller.SetTrackerIntegration(tracker, &testEventSource{
+		region: renderregion.CN,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildCSBRequestFromTracker(TrackerRankQuery{
+		EventID: 170,
+		Region:  "cn",
+		Ranks:   []int{51},
+	})
+	if err != nil {
+		t.Fatalf("build csb request: %v", err)
+	}
+	if calls := tracker.traceCalls(); len(calls) != 1 || calls[0] != "user:20051" {
+		t.Fatalf("expected current owner user trace only, got %v", calls)
+	}
+	if len(payload.Ranks) != 2 {
+		t.Fatalf("unexpected trace point count: %d", len(payload.Ranks))
+	}
+	for _, point := range payload.Ranks {
+		if point.Name != "CurrentOwner" {
+			t.Fatalf("expected current owner trace point, got %+v", point)
+		}
 	}
 }
 

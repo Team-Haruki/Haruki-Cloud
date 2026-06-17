@@ -102,14 +102,20 @@ type SubjectTraceMeta struct {
 }
 
 type CloudRankInfo struct {
-	Rank        int     `json:"rank"`
-	UserID      *string `json:"userId,omitempty"`
-	Name        string  `json:"name"`
-	Score       int     `json:"score"`
-	Timestamp   int64   `json:"timestamp"`
-	Speed       *int    `json:"speed,omitempty"`
-	SpeedWindow *int64  `json:"speedWindow,omitempty"`
-	CharacterID *int    `json:"characterId,omitempty"`
+	Rank            int     `json:"rank"`
+	UserID          *string `json:"userId,omitempty"`
+	Name            string  `json:"name"`
+	Score           int     `json:"score"`
+	Timestamp       int64   `json:"timestamp"`
+	AverageRound    *int    `json:"averageRound,omitempty"`
+	AveragePt       *int    `json:"averagePt,omitempty"`
+	LatestPt        *int    `json:"latestPt,omitempty"`
+	Speed           *int    `json:"speed,omitempty"`
+	Min20Time3Speed *int    `json:"min20Times3Speed,omitempty"`
+	HourRound       *int    `json:"hourRound,omitempty"`
+	RecordStartAt   *int64  `json:"recordStartAt,omitempty"`
+	SpeedWindow     *int64  `json:"speedWindow,omitempty"`
+	CharacterID     *int    `json:"characterId,omitempty"`
 }
 
 type CloudRankQueryResponse struct {

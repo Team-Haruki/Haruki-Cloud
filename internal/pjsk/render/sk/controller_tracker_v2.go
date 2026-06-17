@@ -78,8 +78,8 @@ func (c *Controller) buildCheckRoomFromTrackerCloudV2(server string, eventID int
 	if current.Rank <= 0 {
 		return drawing.RankInfo{}, nil, nil, true, sekaiapi.ErrRankingNotFound
 	}
-	_ = current
 	currentInfo := rankInfoFromCloudV2(current)
+	c.enrichRankInfoFromCloudV2Trace(server, eventID, wlCharacterID, current, &currentInfo)
 	var previous *drawing.RankInfo
 	if resp.Previous != nil {
 		info := rankInfoFromCloudV2(*resp.Previous)
@@ -119,7 +119,9 @@ func (c *Controller) buildCheckRoomRanksFromTrackerCloudV2(server string, eventI
 			}
 			return nil, nil, nil, true, sekaiapi.ErrRankingNotFound
 		}
-		out = append(out, rankInfoFromCloudV2(current))
+		info := rankInfoFromCloudV2(current)
+		c.enrichRankInfoFromCloudV2Trace(server, eventID, wlCharacterID, current, &info)
+		out = append(out, info)
 		if len(out) == 1 {
 			if resp.Previous != nil {
 				info := rankInfoFromCloudV2(*resp.Previous)
@@ -246,9 +248,82 @@ func rankInfoFromCloudV2(item sekaiapi.CloudRankInfo) drawing.RankInfo {
 		Score: drawing.IntPtr(item.Score),
 		Time:  formatTrackerTimestamp(item.Timestamp),
 	}
+	if item.AverageRound != nil {
+		value := *item.AverageRound
+		info.AverageRound = &value
+	}
+	if item.AveragePt != nil {
+		value := *item.AveragePt
+		info.AveragePt = &value
+	}
+	if item.LatestPt != nil {
+		value := *item.LatestPt
+		info.LatestPt = &value
+	}
 	if item.Speed != nil {
 		speed := *item.Speed
 		info.Speed = &speed
 	}
+	if item.Min20Time3Speed != nil {
+		value := *item.Min20Time3Speed
+		info.Min20Time3Speed = &value
+	}
+	if item.HourRound != nil {
+		value := *item.HourRound
+		info.HourRound = &value
+	}
+	if item.RecordStartAt != nil {
+		value := formatTrackerTimestamp(*item.RecordStartAt)
+		info.RecordStartAt = &value
+	}
 	return info
+}
+
+func (c *Controller) enrichRankInfoFromCloudV2Trace(server string, eventID int, wlCharacterID *int, item sekaiapi.CloudRankInfo, info *drawing.RankInfo) {
+	if c == nil || info == nil || hasRankInfoRoundMetrics(info) {
+		return
+	}
+	source, ok := c.trackerCloudV2()
+	if !ok {
+		return
+	}
+	if item.UserID != nil {
+		userID := strings.TrimSpace(*item.UserID)
+		if userID != "" {
+			if c.applyCloudV2TraceMetrics(source, server, eventID, wlCharacterID, "user", userID, info) {
+				return
+			}
+		}
+	}
+	if item.Rank > 0 {
+		c.applyCloudV2TraceMetrics(source, server, eventID, wlCharacterID, "rank", strconv.Itoa(item.Rank), info)
+	}
+}
+
+func (c *Controller) applyCloudV2TraceMetrics(source trackerCloudV2Source, server string, eventID int, wlCharacterID *int, subjectType string, subject string, info *drawing.RankInfo) bool {
+	resp, err := source.GetCloudSKTrace(server, eventID, wlCharacterID, subjectType, subject, 5000)
+	if err != nil || resp == nil || len(resp.RankData) == 0 {
+		return false
+	}
+	samples := make([]trackerScoreSample, 0, len(resp.RankData))
+	for _, point := range resp.RankData {
+		samples = append(samples, trackerScoreSample{
+			score:     point.Score,
+			timestamp: point.Timestamp,
+		})
+	}
+	applyRankInfoMetrics(info, samples)
+	return hasRankInfoRoundMetrics(info)
+}
+
+func hasRankInfoRoundMetrics(info *drawing.RankInfo) bool {
+	if info == nil {
+		return false
+	}
+	return info.AverageRound != nil ||
+		info.AveragePt != nil ||
+		info.LatestPt != nil ||
+		info.HourRound != nil ||
+		info.Min20Time3Speed != nil ||
+		info.RecordStartAt != nil
 }

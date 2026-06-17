@@ -427,8 +427,32 @@ func (s testCloudV2TrackerSource) applyCloudTraceMetrics(server string, eventID 
 	}
 	info := drawing.RankInfo{}
 	applyRankInfoMetrics(&info, rankTraceSamples(points))
+	if info.AverageRound != nil {
+		value := *info.AverageRound
+		item.AverageRound = &value
+	}
+	if info.AveragePt != nil {
+		value := *info.AveragePt
+		item.AveragePt = &value
+	}
+	if info.LatestPt != nil {
+		value := *info.LatestPt
+		item.LatestPt = &value
+	}
 	if info.Speed != nil {
 		item.Speed = info.Speed
+	}
+	if info.Min20Time3Speed != nil {
+		value := *info.Min20Time3Speed
+		item.Min20Time3Speed = &value
+	}
+	if info.HourRound != nil {
+		value := *info.HourRound
+		item.HourRound = &value
+	}
+	if info.RecordStartAt != nil {
+		value := *info.RecordStartAt
+		item.RecordStartAt = &value
 	}
 }
 
@@ -956,6 +980,25 @@ func (s *leaderboardV2TrackerSource) GetCloudSKSpeed(server string, eventID int,
 		return nil, err
 	}
 	return &sekaiapi.CloudSpeedResponse{Speeds: resp.Ranks, IntervalSeconds: intervalSeconds, UnitSeconds: unitSeconds}, nil
+}
+
+type cloudV2SparseCheckRoomTrackerSource struct {
+	leaderboardV2TrackerSource
+}
+
+func (s *cloudV2SparseCheckRoomTrackerSource) GetCloudSKCheckRoom(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudCheckRoomResponse, error) {
+	resp, err := s.leaderboardV2TrackerSource.GetCloudSKCheckRoom(server, eventID, characterID, ranks, userID, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	// Production EventTracker 2.5.14 only returns latest rank, score and speed.
+	resp.Rank.AverageRound = nil
+	resp.Rank.AveragePt = nil
+	resp.Rank.LatestPt = nil
+	resp.Rank.HourRound = nil
+	resp.Rank.Min20Time3Speed = nil
+	resp.Rank.RecordStartAt = nil
+	return resp, nil
 }
 
 func (s *batchLineMetricsTrackerSource) TraceRankingsByRanks(server string, eventID int, ranks []int) (*sekaiapi.BatchTraceRankingResponse, error) {
@@ -2613,6 +2656,44 @@ func TestBuildCheckRoomRequestFromTrackerUsesCheckRoomMetricsForMultipleRanks(t 
 	}
 	if payload.PrevRank == nil || payload.PrevRank.Rank != 1 || payload.NextRank == nil || payload.NextRank.Rank != 3 {
 		t.Fatalf("unexpected adjacent ranks: prev=%+v next=%+v", payload.PrevRank, payload.NextRank)
+	}
+}
+
+func TestBuildCheckRoomRequestFromCloudV2BackfillsMissingRoundMetrics(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	tracker := &cloudV2SparseCheckRoomTrackerSource{}
+	controller := NewController(nil)
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildCheckRoomRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{1},
+	})
+	if err != nil {
+		t.Fatalf("build check-room request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	got := payload.Ranks[0]
+	if got.AverageRound == nil || got.AveragePt == nil || got.LatestPt == nil || got.HourRound == nil || got.RecordStartAt == nil {
+		t.Fatalf("expected v2 trace backfill metrics, got %+v", got)
+	}
+	if tracker.subjectTraceCalls.Load() != 1 {
+		t.Fatalf("expected one v2 subject trace call, got %d", tracker.subjectTraceCalls.Load())
+	}
+	if tracker.legacyTraceCalls.Load() != 0 {
+		t.Fatalf("legacy trace should not be called, got %d", tracker.legacyTraceCalls.Load())
 	}
 }
 

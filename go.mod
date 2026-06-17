@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/bytedance/sonic v1.15.1
+	github.com/bytedance/sonic v1.15.2
 	github.com/chromedp/cdproto v0.0.0-20260321001828-e3e3800016bc
 	github.com/chromedp/chromedp v0.15.1
 	github.com/flynn/noise v1.1.0

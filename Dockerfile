@@ -17,7 +17,7 @@ RUN CGO_ENABLED=1 GOOS=linux \
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM alpine:latest
 
-RUN apk add --no-cache ca-certificates chromium postgresql-client tzdata
+RUN apk add --no-cache ca-certificates postgresql-client tzdata
 
 WORKDIR /app
 COPY --from=builder /build/haruki-server ./

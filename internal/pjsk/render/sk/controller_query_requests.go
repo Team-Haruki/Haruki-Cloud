@@ -208,7 +208,7 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 		}
 	} else {
 		skipMissing := shouldSkipMissingTrackerRanks(normalized)
-		rankInfos, prev, nextInfo, ok, err := c.buildRanksFromTrackerV2(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, true, skipMissing)
+		rankInfos, prev, nextInfo, ok, err := c.buildCheckRoomRanksFromTrackerCloudV2(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, skipMissing)
 		if !ok {
 			rankInfos, err = c.buildRanksFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, skipMissing)
 		}

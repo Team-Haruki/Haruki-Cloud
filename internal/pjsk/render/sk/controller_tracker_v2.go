@@ -93,6 +93,53 @@ func (c *Controller) buildCheckRoomFromTrackerCloudV2(server string, eventID int
 	return currentInfo, previous, next, true, nil
 }
 
+func (c *Controller) buildCheckRoomRanksFromTrackerCloudV2(server string, eventID int, ranks []int, wlCharacterID *int, skipMissing bool) ([]drawing.RankInfo, *drawing.RankInfo, *drawing.RankInfo, bool, error) {
+	source, ok := c.trackerCloudV2()
+	if !ok || len(ranks) == 0 {
+		return nil, nil, nil, false, nil
+	}
+	out := make([]drawing.RankInfo, 0, len(ranks))
+	var previous *drawing.RankInfo
+	var next *drawing.RankInfo
+	for _, rank := range ranks {
+		resp, err := source.GetCloudSKCheckRoom(server, eventID, wlCharacterID, []int{rank}, nil, skipMissing, 3600)
+		if err != nil {
+			if shouldSkipMissingTrackerRankError(skipMissing, err) {
+				continue
+			}
+			return nil, nil, nil, true, err
+		}
+		current := resp.Rank
+		if current.Rank <= 0 && len(resp.Ranks) > 0 {
+			current = resp.Ranks[0]
+		}
+		if current.Rank <= 0 {
+			if skipMissing {
+				continue
+			}
+			return nil, nil, nil, true, sekaiapi.ErrRankingNotFound
+		}
+		out = append(out, rankInfoFromCloudV2(current))
+		if len(out) == 1 {
+			if resp.Previous != nil {
+				info := rankInfoFromCloudV2(*resp.Previous)
+				previous = &info
+			}
+			if resp.Next != nil {
+				info := rankInfoFromCloudV2(*resp.Next)
+				next = &info
+			}
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Rank < out[j].Rank
+	})
+	if len(out) == 0 {
+		return nil, nil, nil, true, sekaiapi.ErrRankingNotFound
+	}
+	return out, previous, next, true, nil
+}
+
 func (c *Controller) buildLineRanksFromTrackerV2(server string, eventID int, ranks []int, wlCharacterID *int, skipMissing bool) ([]drawing.RankInfo, bool, error) {
 	source, ok := c.trackerCloudV2()
 	if !ok || len(ranks) == 0 {

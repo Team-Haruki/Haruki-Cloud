@@ -22,6 +22,9 @@ func renderMusicChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controll
 
 	payload, err := musicCtrl.BuildMusicChartRequest(query)
 	if err != nil {
+		if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 1 {
+			return renderAmbiguousMusicIDsMessages(rc, musicCtrl, query.Region, err, ids)
+		}
 		return nil, err
 	}
 

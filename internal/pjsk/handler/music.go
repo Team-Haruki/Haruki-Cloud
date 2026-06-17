@@ -433,11 +433,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		data, err = musicCtrl.RenderMusicDetail(q)
 		if err != nil {
 			if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 1 {
-				items := make([]rendermusic.BriefListItemQuery, 0, len(ids))
-				for _, musicID := range ids {
-					items = append(items, rendermusic.BriefListItemQuery{MusicID: musicID})
-				}
-				return renderAmbiguousMusicDetailListMessages(rc, musicCtrl, q.Region, err, items)
+				return renderAmbiguousMusicIDsMessages(rc, musicCtrl, q.Region, err, ids)
 			}
 			return nil, err
 		}
@@ -608,6 +604,14 @@ func renderAmbiguousMusicDetailListMessages(rc *RequestContext, musicCtrl *rende
 		return nil, err
 	}
 	return rc.ImageMessage(data)
+}
+
+func renderAmbiguousMusicIDsMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, sourceErr error, ids []int) (onebot11.Message, error) {
+	items := make([]rendermusic.BriefListItemQuery, 0, len(ids))
+	for _, musicID := range ids {
+		items = append(items, rendermusic.BriefListItemQuery{MusicID: musicID})
+	}
+	return renderAmbiguousMusicDetailListMessages(rc, musicCtrl, region, sourceErr, items)
 }
 
 func buildAmbiguousMusicDetailListTitle(sourceErr error) string {

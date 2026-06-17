@@ -2574,6 +2574,48 @@ func TestBuildCheckRoomRequestFromTrackerUsesLatestOnlyForAdjacentRanks(t *testi
 	}
 }
 
+func TestBuildCheckRoomRequestFromTrackerUsesCheckRoomMetricsForMultipleRanks(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	tracker := &lineMetricsOnlyTrackerSource{}
+	controller := NewController(nil)
+	setTestTrackerIntegration(controller, tracker, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	payload, err := controller.BuildCheckRoomRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		Ranks:   []int{2, 3},
+	})
+	if err != nil {
+		t.Fatalf("build check-room request: %v", err)
+	}
+	if len(payload.Ranks) != 2 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	for _, got := range payload.Ranks {
+		if got.Speed == nil {
+			t.Fatalf("expected check-room speed for rank %d, got %+v", got.Rank, got)
+		}
+	}
+	if tracker.traceUserCalls.Load() != 2 {
+		t.Fatalf("expected one user trace call per requested rank, got %d", tracker.traceUserCalls.Load())
+	}
+	if tracker.traceRankCalls.Load() != 0 {
+		t.Fatalf("expected no rank trace calls for check-room metrics, got %d", tracker.traceRankCalls.Load())
+	}
+	if payload.PrevRank == nil || payload.PrevRank.Rank != 1 || payload.NextRank == nil || payload.NextRank.Rank != 3 {
+		t.Fatalf("unexpected adjacent ranks: prev=%+v next=%+v", payload.PrevRank, payload.NextRank)
+	}
+}
+
 func TestBuildCheckRoomRequestFromTrackerSupportsUserQuery(t *testing.T) {
 	eventInfo := &masterdata.Event{
 		ID:          101,

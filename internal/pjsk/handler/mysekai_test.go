@@ -49,14 +49,6 @@ func TestMysekaiAliasRemap(t *testing.T) {
 		t.Fatalf("map aliases should contain /msmap")
 	}
 
-	previewHandle := sekaiHandlers{}.MysekaiPreviewHandle()
-	if !slices.Contains(previewHandle.Commands, "/烤森预览") {
-		t.Fatalf("preview aliases should contain /烤森预览")
-	}
-	if !slices.Contains(previewHandle.Commands, "/mspv") {
-		t.Fatalf("preview aliases should contain /mspv")
-	}
-
 	housingSK := sekaiHandlers{}.MysekaiHousingSKHandle()
 	if !slices.Contains(housingSK.Commands, "/百景sk") {
 		t.Fatalf("housing sk aliases should contain /百景sk")
@@ -144,40 +136,6 @@ func TestMysekaiMapHandleBuildsCommandRequest(t *testing.T) {
 		t.Fatalf("params.ShowHarvested = %v", params.ShowHarvested)
 	}
 	if !params.CheckTime {
-		t.Fatalf("params.CheckTime = %v", params.CheckTime)
-	}
-}
-
-func TestMysekaiPreviewHandleBuildsCommandRequest(t *testing.T) {
-	h := sekaiHandlers{}.MysekaiPreviewHandle()
-	h.Regions = []renderregion.Value{renderregion.JP}
-	if h.GetPath() != "mysekai/preview" {
-		t.Fatalf("handler path = %q", h.GetPath())
-	}
-
-	result, err := h.Handle(&PjskHandlerContext{
-		Context:    context.Background(),
-		TriggerCmd: "/烤森预览",
-		ArgText:    "1f2f3f force",
-	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
-	if result == nil || result.Module != parser.ModuleMysekai || result.Mode != "mysekai-scene-preview" {
-		t.Fatalf("unexpected command request: %+v", result)
-	}
-
-	var params struct {
-		SiteIDs   []int `json:"site_ids"`
-		CheckTime bool  `json:"check_time"`
-	}
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
-	}
-	if !reflect.DeepEqual(params.SiteIDs, []int{2, 3, 4}) {
-		t.Fatalf("params.SiteIDs = %+v", params.SiteIDs)
-	}
-	if params.CheckTime {
 		t.Fatalf("params.CheckTime = %v", params.CheckTime)
 	}
 }

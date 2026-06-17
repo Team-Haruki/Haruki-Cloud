@@ -15,8 +15,6 @@ func canonicalMySekaiTrigger(mode string) string {
 		return "/msf"
 	case "mysekai-map":
 		return "/烤森地图"
-	case "mysekai-scene-preview":
-		return "/烤森预览"
 	case "mysekai-door-upgrade":
 		return "/msg"
 	default:

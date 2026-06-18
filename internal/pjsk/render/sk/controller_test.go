@@ -1015,6 +1015,60 @@ func (s *cloudV2SparseCheckRoomTrackerSource) GetCloudSKCheckRoom(server string,
 	return resp, nil
 }
 
+type mismatchedCloudV2UserTrackerSource struct {
+	leaderboardV2TrackerSource
+}
+
+func (s *mismatchedCloudV2UserTrackerSource) GetCloudSKQuery(server string, eventID int, characterID *int, ranks []int, userID *int64, includeAdjacent, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudRankQueryResponse, error) {
+	if userID != nil && *userID > 0 {
+		wrongUserID := "9988776655"
+		return &sekaiapi.CloudRankQueryResponse{
+			Ranks: []sekaiapi.CloudRankInfo{
+				{
+					Rank:      42,
+					UserID:    &wrongUserID,
+					Name:      "CurrentRankLinePlayer",
+					Score:     4_200_000,
+					Timestamp: 1704067200,
+				},
+			},
+		}, nil
+	}
+	return s.leaderboardV2TrackerSource.GetCloudSKQuery(server, eventID, characterID, ranks, userID, includeAdjacent, skipMissing, intervalSeconds)
+}
+
+func (s *mismatchedCloudV2UserTrackerSource) GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudLineResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, userID, false, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	return &sekaiapi.CloudLineResponse{Ranks: resp.Ranks}, nil
+}
+
+func (s *mismatchedCloudV2UserTrackerSource) GetCloudSKCheckRoom(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*sekaiapi.CloudCheckRoomResponse, error) {
+	resp, err := s.GetCloudSKQuery(server, eventID, characterID, ranks, userID, true, skipMissing, intervalSeconds)
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Ranks) == 0 {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	return &sekaiapi.CloudCheckRoomResponse{Rank: resp.Ranks[0], Ranks: resp.Ranks}, nil
+}
+
+func (s *mismatchedCloudV2UserTrackerSource) GetCloudSKTrace(server string, eventID int, characterID *int, subjectType string, subject string, limit int) (*sekaiapi.CloudTraceResponse, error) {
+	if subjectType != "user" {
+		return s.leaderboardV2TrackerSource.GetCloudSKTrace(server, eventID, characterID, subjectType, subject, limit)
+	}
+	return &sekaiapi.CloudTraceResponse{
+		Subject: sekaiapi.SubjectTraceMeta{SubjectType: subjectType, Subject: subject, ResolvedUserID: &subject},
+		RankData: []sekaiapi.CloudRankInfo{
+			{Rank: 150, UserID: &subject, Name: "RequestedUser", Score: 1_500_000, Timestamp: 1704060000},
+			{Rank: 120, UserID: &subject, Name: "RequestedUser", Score: 2_000_000, Timestamp: 1704067200},
+		},
+	}, nil
+}
+
 func (s *batchLineMetricsTrackerSource) TraceRankingsByRanks(server string, eventID int, ranks []int) (*sekaiapi.BatchTraceRankingResponse, error) {
 	s.batchTraceRankCalls.Add(1)
 	items := make([]sekaiapi.BatchTraceRankingItem, 0, len(ranks))
@@ -2071,6 +2125,41 @@ func TestBuildLineRequestFromTrackerUsesCloudV2Line(t *testing.T) {
 	}
 }
 
+func TestBuildLineRequestFromTrackerFallsBackWhenUserQueryReturnsAnotherUser(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	setTestTrackerIntegration(controller, &mismatchedCloudV2UserTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	userID := int64(1234567890)
+	payload, err := controller.BuildLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		UserID:  &userID,
+	})
+	if err != nil {
+		t.Fatalf("build line request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected line ranks len: %d", len(payload.Ranks))
+	}
+	got := payload.Ranks[0]
+	if got.Rank != 120 || got.Score == nil || *got.Score != 2_000_000 {
+		t.Fatalf("expected requested user's trace latest point, got %+v", got)
+	}
+	if got.Name != "" {
+		t.Fatalf("line payload should omit names, got %q", got.Name)
+	}
+}
+
 func TestBuildWorldBloomLineRequestFromTrackerSkipsUserNameLookupRequests(t *testing.T) {
 	now := time.Now().UnixMilli()
 	eventInfo := &masterdata.Event{
@@ -2852,6 +2941,38 @@ func TestBuildQueryRequestFromTrackerSupportsUserQueryAdjacentRanks(t *testing.T
 	}
 	if payload.NextRanks == nil || payload.NextRanks.Rank != 30 || payload.NextRanks.Name != "Player-30" {
 		t.Fatalf("unexpected next ranks: %+v", payload.NextRanks)
+	}
+}
+
+func TestBuildQueryRequestFromTrackerFallsBackWhenUserQueryReturnsAnotherUser(t *testing.T) {
+	eventInfo := &masterdata.Event{
+		ID:          101,
+		Name:        "Tracker Event",
+		StartAt:     111,
+		AggregateAt: 222,
+	}
+	controller := NewController(nil)
+	setTestTrackerIntegration(controller, &mismatchedCloudV2UserTrackerSource{}, &testEventSource{
+		region: renderregion.JP,
+		events: []*masterdata.Event{eventInfo},
+		byID:   map[int]*masterdata.Event{eventInfo.ID: eventInfo},
+	}, nil)
+
+	userID := int64(1234567890)
+	payload, err := controller.BuildQueryRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "jp",
+		UserID:  &userID,
+	})
+	if err != nil {
+		t.Fatalf("build query request: %v", err)
+	}
+	if len(payload.Ranks) != 1 {
+		t.Fatalf("unexpected ranks len: %d", len(payload.Ranks))
+	}
+	got := payload.Ranks[0]
+	if got.Rank != 120 || got.Name != "RequestedUser" || got.Score == nil || *got.Score != 2_000_000 {
+		t.Fatalf("expected requested user's trace latest point, got %+v", got)
 	}
 }
 

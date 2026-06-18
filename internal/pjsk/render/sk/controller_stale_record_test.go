@@ -32,7 +32,7 @@ func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
 	now := time.Now().UTC()
 	userID := int64(1234567890)
 	ranks := []drawing.RankInfo{
-		{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()},
+		{Rank: 101, Time: now.Add(-6 * time.Minute).UnixMilli()},
 	}
 	req := TrackerRankQuery{EventID: 101, Region: "jp", UserID: &userID}
 
@@ -77,11 +77,16 @@ func TestStaleSelfRecordWarningIgnoresFreshRecordsAndStatusErrors(t *testing.T) 
 		t.Fatalf("expected no warning for fresh record, got %q", got)
 	}
 
+	inTop100 := []drawing.RankInfo{{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()}}
+	if got := controller.StaleSelfRecordWarning(req, inTop100); got != "" {
+		t.Fatalf("expected no warning for top-100 stale record, got %q", got)
+	}
+
 	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
 		err: fmt.Errorf("status unavailable"),
 	}, nil, nil)
 
-	stale := []drawing.RankInfo{{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()}}
+	stale := []drawing.RankInfo{{Rank: 101, Time: now.Add(-6 * time.Minute).UnixMilli()}}
 	if got := controller.StaleSelfRecordWarning(req, stale); got != "" {
 		t.Fatalf("expected no warning when status query fails, got %q", got)
 	}
@@ -91,7 +96,7 @@ func TestStaleSelfRecordWarningInfersCurrentEvent(t *testing.T) {
 	now := time.Now().UTC()
 	userID := int64(1234567890)
 	ranks := []drawing.RankInfo{
-		{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()},
+		{Rank: 101, Time: now.Add(-6 * time.Minute).UnixMilli()},
 	}
 	controller := NewController(nil)
 	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{

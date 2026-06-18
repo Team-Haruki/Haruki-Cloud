@@ -53,6 +53,9 @@ func (c *Controller) shouldWarnStaleSelfRecord(req TrackerRankQuery, ranks []dra
 	if req.EventID <= 0 || normalizeTrackerServer(req.Region) == "" {
 		return false
 	}
+	if ranks[0].Rank <= 100 {
+		return false
+	}
 	if !isTrackerRankInfoStale(ranks[0], now, staleSelfRecordThreshold) {
 		return false
 	}

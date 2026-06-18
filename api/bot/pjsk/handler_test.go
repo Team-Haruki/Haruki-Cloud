@@ -317,6 +317,7 @@ type botTrackerMissingUserSource struct {
 type botTrackerStaleSelfSource struct {
 	botTrackerSource
 	healthy bool
+	rank    int
 }
 
 func (botTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
@@ -356,7 +357,11 @@ func (s botTrackerStaleSelfSource) GetLatestRankingByUser(server string, eventID
 	if err != nil {
 		return nil, err
 	}
-	resp.RankData.Rank = 100
+	rank := s.rank
+	if rank <= 0 {
+		rank = 100
+	}
+	resp.RankData.Rank = rank
 	resp.RankData.Timestamp = time.Now().UTC().Add(-6 * time.Minute).Unix()
 	return resp, nil
 }
@@ -366,8 +371,12 @@ func (s botTrackerStaleSelfSource) TraceRankingByUser(server string, eventID int
 	if err != nil {
 		return nil, err
 	}
+	rank := s.rank
+	if rank <= 0 {
+		rank = 100
+	}
 	for i := range resp.RankData {
-		resp.RankData[i].Rank = 100
+		resp.RankData[i].Rank = rank
 		resp.RankData[i].Timestamp = time.Now().UTC().Add(time.Duration(i-7) * time.Minute).Unix()
 	}
 	return resp, nil
@@ -2068,7 +2077,7 @@ func TestBotEndpointSKQueryWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *test
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true, rank: 101}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2107,7 +2116,7 @@ func TestBotEndpointSKQueryDoesNotWarnWhenTrackerStatusIsUnhealthy(t *testing.T)
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: false}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: false, rank: 101}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2233,7 +2242,7 @@ func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testi
 	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
 }
 
-func TestBotEndpointSKCSBWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *testing.T) {
+func TestBotEndpointSKCSBDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/csb" {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
@@ -2276,7 +2285,7 @@ func TestBotEndpointSKCSBWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *testin
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertTextAndImageMessage(t, body, rendersk.StaleSelfRecordWarning)
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testing.T) {
@@ -2312,6 +2321,39 @@ func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenSelfRankingIsMissing(
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
+}
+
+func TestBotEndpointSKPlayerTraceReturnsFriendlyMessageWhenDrawingDataIsInsufficient(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/player-trace" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"detail":"single positional indexer is out-of-bounds"}`))
+	}))
+	defer srv.Close()
+
+	app := fiber.New()
+	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
+	runtime.SK = rendersk.NewController(runtime.Drawing)
+	setBotTrackerIntegration(runtime.SK, botTrackerSource{}, nil, assets.NewAssetHelper("", nil))
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
+
+	req := newBotPOSTRequest(botPJSKPath("sk/player-trace"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/ptr",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/ptr event101 1"}}},
+	})
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessageContains(t, body, "玩家轨迹数据不足，暂时无法渲染")
 }
 
 func TestBotEndpointSKQueryRegionPrefixedCommandDoesNotFallbackToTransportServer(t *testing.T) {
@@ -2668,7 +2710,7 @@ func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
 	assertSingleImageMessage(t, body)
 }
 
-func TestBotEndpointSKCheckRoomWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *testing.T) {
+func TestBotEndpointSKCheckRoomDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/check-room" {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
@@ -2711,7 +2753,7 @@ func TestBotEndpointSKCheckRoomWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertTextAndImageMessage(t, body, rendersk.StaleSelfRecordWarning)
+	assertSingleImageMessage(t, body)
 }
 
 func TestBotEndpointSKCheckRoomLiteUsesFixedRanks(t *testing.T) {

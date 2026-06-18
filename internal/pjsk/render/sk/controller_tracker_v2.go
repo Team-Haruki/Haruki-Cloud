@@ -70,6 +70,13 @@ func (c *Controller) buildUserQueryFromTrackerV2(server string, eventID int, use
 	if resp == nil || len(resp.Ranks) == 0 {
 		return nil, nil, nil, true, sekaiapi.ErrRankingNotFound
 	}
+	if !cloudRankInfoMatchesUser(userID, resp.Ranks[0]) {
+		info, err := latestUserTraceFromTrackerV2(source, server, eventID, userID, wlCharacterID)
+		if err != nil {
+			return nil, nil, nil, true, err
+		}
+		return []drawing.RankInfo{info}, nil, nil, true, nil
+	}
 	out := make([]drawing.RankInfo, 0, len(resp.Ranks))
 	for _, item := range resp.Ranks {
 		out = append(out, rankInfoFromCloudV2(item))
@@ -105,6 +112,13 @@ func (c *Controller) buildCheckRoomFromTrackerCloudV2(server string, eventID int
 	}
 	if current.Rank <= 0 {
 		return drawing.RankInfo{}, nil, nil, true, sekaiapi.ErrRankingNotFound
+	}
+	if userID != nil && *userID > 0 && !cloudRankInfoMatchesUser(*userID, current) {
+		currentInfo, err := latestUserTraceFromTrackerV2(source, server, eventID, *userID, wlCharacterID)
+		if err != nil {
+			return drawing.RankInfo{}, nil, nil, true, err
+		}
+		return currentInfo, nil, nil, true, nil
 	}
 	currentInfo := rankInfoFromCloudV2(current)
 	c.enrichRankInfoFromCloudV2Trace(server, eventID, wlCharacterID, current, &currentInfo)
@@ -241,6 +255,44 @@ func (c *Controller) buildSubjectTraceFromTrackerV2(server string, eventID int, 
 	return out, true, nil
 }
 
+func latestUserTraceFromTrackerV2(source trackerCloudV2Source, server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {
+	if source == nil || userID <= 0 {
+		return drawing.RankInfo{}, sekaiapi.ErrRankingNotFound
+	}
+	resp, err := source.GetCloudSKTrace(server, eventID, wlCharacterID, "user", v2SubjectUserID(userID), 0)
+	if err != nil {
+		return drawing.RankInfo{}, err
+	}
+	if resp == nil || len(resp.RankData) == 0 {
+		return drawing.RankInfo{}, sekaiapi.ErrRankingNotFound
+	}
+
+	points := make([]sekaiapi.CloudRankInfo, 0, len(resp.RankData))
+	for _, point := range resp.RankData {
+		if point.Rank <= 0 || !cloudRankInfoMatchesUser(userID, point) {
+			continue
+		}
+		points = append(points, point)
+	}
+	if len(points) == 0 {
+		return drawing.RankInfo{}, sekaiapi.ErrRankingNotFound
+	}
+	sort.Slice(points, func(i, j int) bool {
+		return normalizeTrackerUnixSeconds(points[i].Timestamp) < normalizeTrackerUnixSeconds(points[j].Timestamp)
+	})
+
+	info := rankInfoFromCloudV2(points[len(points)-1])
+	samples := make([]trackerScoreSample, 0, len(points))
+	for _, point := range points {
+		samples = append(samples, trackerScoreSample{
+			score:     point.Score,
+			timestamp: point.Timestamp,
+		})
+	}
+	applyRankInfoMetrics(&info, samples)
+	return info, nil
+}
+
 func (c *Controller) resolveTrackerUserIDByRankFromCloudV2(server string, eventID, rank int, wlCharacterID *int) (int64, bool, error) {
 	source, ok := c.trackerCloudV2()
 	if !ok {
@@ -262,6 +314,17 @@ func (c *Controller) resolveTrackerUserIDByRankFromCloudV2(server string, eventI
 
 func v2SubjectUserID(userID int64) string {
 	return strconv.FormatInt(userID, 10)
+}
+
+func cloudRankInfoMatchesUser(userID int64, item sekaiapi.CloudRankInfo) bool {
+	if userID <= 0 {
+		return false
+	}
+	if item.UserID == nil || strings.TrimSpace(*item.UserID) == "" {
+		return true
+	}
+	uid, err := strconv.ParseInt(strings.TrimSpace(*item.UserID), 10, 64)
+	return err == nil && uid == userID
 }
 
 func rankInfoFromCloudV2(item sekaiapi.CloudRankInfo) drawing.RankInfo {

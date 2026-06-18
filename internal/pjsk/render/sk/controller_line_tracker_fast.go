@@ -101,6 +101,14 @@ func (c *Controller) buildSingleUserLineFromTracker(server string, eventID int, 
 	if resp == nil || len(resp.Ranks) == 0 {
 		return drawing.RankInfo{}, sekaiapi.ErrRankingNotFound
 	}
+	if !cloudRankInfoMatchesUser(userID, resp.Ranks[0]) {
+		info, err := latestUserTraceFromTrackerV2(source, server, eventID, userID, wlCharacterID)
+		if err != nil {
+			return drawing.RankInfo{}, err
+		}
+		info.Name = ""
+		return info, nil
+	}
 	info := rankInfoFromCloudV2(resp.Ranks[0])
 	info.Name = ""
 	return info, nil

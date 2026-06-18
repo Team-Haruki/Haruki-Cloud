@@ -442,11 +442,19 @@ func executeSKPlayerTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, er
 		if err != nil {
 			return nil, normalizeSKSelfRankingNotFoundError(selfQuery, trackerReq.Region, err)
 		}
-		return skCtrl.RenderPlayerTrace(*payload)
+		data, err := skCtrl.RenderPlayerTrace(*payload)
+		if err != nil {
+			return nil, normalizeSKPlayerTraceDrawingError(err)
+		}
+		return data, nil
 	}
 	req := drawing.PlayerTraceRequest{}
 	mergeParams(rc.Cmd.Params, &req)
-	return skCtrl.RenderPlayerTrace(req)
+	data, err := skCtrl.RenderPlayerTrace(req)
+	if err != nil {
+		return nil, normalizeSKPlayerTraceDrawingError(err)
+	}
+	return data, nil
 }
 
 func executeSKRankTrace(rc *RequestContext, skCtrl *sk.Controller) ([]byte, error) {

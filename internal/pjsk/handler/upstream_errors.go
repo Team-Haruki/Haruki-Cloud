@@ -123,6 +123,46 @@ func normalizeDrawingUserFacingError(err error) error {
 	return err
 }
 
+func normalizeSKPlayerTraceDrawingError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := errors.AsType[onebot11.ReplayError](err); ok {
+		return err
+	}
+	if isDrawingDataInsufficientError(err) {
+		return onebot11.NewReplayError("玩家轨迹数据不足，暂时无法渲染")
+	}
+	return err
+}
+
+func isDrawingDataInsufficientError(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.TrimSpace(err.Error())
+	if message == "" {
+		return false
+	}
+	for _, candidate := range []string{message, parseEmbeddedErrorText(message)} {
+		lower := strings.ToLower(strings.TrimSpace(candidate))
+		switch {
+		case lower == "":
+			continue
+		case strings.Contains(lower, "data insufficient"),
+			strings.Contains(lower, "insufficient data"),
+			strings.Contains(lower, "not enough data"),
+			strings.Contains(lower, "数据不足"),
+			strings.Contains(lower, "single positional indexer is out-of-bounds"),
+			strings.Contains(lower, "out-of-bounds"),
+			strings.Contains(lower, "out of bounds"),
+			strings.Contains(lower, "index out of range"):
+			return true
+		}
+	}
+	return false
+}
+
 func normalizeDeckServiceUserFacingError(err error) error {
 	if err == nil {
 		return nil

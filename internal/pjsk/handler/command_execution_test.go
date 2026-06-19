@@ -3634,6 +3634,45 @@ func TestResolveDeckCharacterSelectionsClearsWorldBloomTurnAfterResolvingCharact
 	}
 }
 
+func TestResolveDeckCharacterSelectionsUsesLeadingMusicCompareQueryAsWorldBloomChapter(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_music_compare_wl_chapter?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+	hour := int64(time.Hour / time.Millisecond)
+	halfHour := int64((30 * time.Minute) / time.Millisecond)
+
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "cn", 170, now-4*hour, now+4*hour, []handlerTestWorldBloomChapter{
+		{chapterNo: 1, startAt: now - 3*hour, aggregateAt: now - 2*hour, characterID: 17},
+		{chapterNo: 2, startAt: now - 2*hour, aggregateAt: now - hour, characterID: 19},
+		{chapterNo: 3, startAt: now - hour, aggregateAt: now - halfHour, characterID: 20},
+		{chapterNo: 4, startAt: now - halfHour, aggregateAt: now + hour, characterID: 18},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:              "cn",
+		RecommendType:       "event",
+		MusicCompare:        true,
+		MusicCompareQueries: []string{"mzk", "盘古mas", "虾"},
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 170 {
+		t.Fatalf("unexpected resolved event id: %+v", query.EventID)
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 20 {
+		t.Fatalf("unexpected world bloom character id: %+v", query.WorldBloomCharacterID)
+	}
+	if query.EventUnit != "school_refusal" {
+		t.Fatalf("unexpected event unit: %q", query.EventUnit)
+	}
+	if len(query.MusicCompareQueries) != 2 || query.MusicCompareQueries[0] != "盘古mas" || query.MusicCompareQueries[1] != "虾" {
+		t.Fatalf("unexpected music compare queries: %+v", query.MusicCompareQueries)
+	}
+}
+
 func TestPickCurrentOrNextDeckEventAllowsJPFutureLeakAfterCardRelease(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_future_leak_after_release?mode=memory&cache=shared&_fk=1")

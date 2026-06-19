@@ -177,6 +177,12 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 	}
 
 	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
+		if err := tryResolveDeckMusicCompareQueryAsWorldBloomCharacter(ctx, q, app, region, chapters); err != nil {
+			return err
+		}
+	}
+
+	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
 		if err := tryResolveDeckMusicQueryPrefixAsWorldBloomCharacter(ctx, q, app, region, chapters); err != nil {
 			return err
 		}
@@ -451,6 +457,66 @@ func tryResolveDeckMusicQueryPrefixAsWorldBloomCharacter(
 	}
 
 	return nil
+}
+
+func tryResolveDeckMusicCompareQueryAsWorldBloomCharacter(
+	ctx context.Context,
+	q *deck.AutoQuery,
+	app *renderapp.App,
+	region renderregion.Value,
+	chapters []*sekaidb.Worldbloom,
+) error {
+	if q == nil || !q.MusicCompare || len(q.MusicCompareQueries) == 0 {
+		return nil
+	}
+
+	queries := make([]string, 0, len(q.MusicCompareQueries))
+	for _, raw := range q.MusicCompareQueries {
+		if query := strings.TrimSpace(raw); query != "" {
+			queries = append(queries, query)
+		}
+	}
+	if len(queries) == 0 {
+		return nil
+	}
+
+	for split := len(queries); split >= 1; split-- {
+		charQuery := strings.TrimSpace(strings.Join(queries[:split], " "))
+		charID, err := resolveDeckWorldBloomCharacterCandidateID(ctx, app, region, charQuery)
+		if err != nil {
+			return err
+		}
+		if charID <= 0 || !trackerWorldBloomHasCharacter(chapters, charID) {
+			continue
+		}
+
+		q.WorldBloomCharacterID = drawing.IntPtr(charID)
+		q.MusicCompareQueries = append([]string(nil), queries[split:]...)
+		if strings.TrimSpace(q.EventUnit) == "" {
+			q.EventUnit = resolveDeckCharacterUnit(charID)
+		}
+		return nil
+	}
+
+	return nil
+}
+
+func resolveDeckWorldBloomCharacterCandidateID(ctx context.Context, app *renderapp.App, region renderregion.Value, raw string) (int, error) {
+	if charID, _ := resolveDeckCharacterToken(raw); charID > 0 {
+		return charID, nil
+	}
+	if app == nil || app.Sekai == nil {
+		return 0, nil
+	}
+
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, raw, "deck")
+	if err != nil {
+		if isCharacterNotFoundError(err) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return charID, nil
 }
 
 func shouldResolveDeckEventByRecommendType(recommendType string) bool {

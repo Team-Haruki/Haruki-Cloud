@@ -57,6 +57,7 @@ type Config struct {
 	AssetLegacyDirs                          []string
 	AssetsBaseURL                            string // CDN base URL for direct asset serving; skips imagecache for region assets
 	LocalMasterdata                          LocalMasterdataConfig
+	SekaiDBType                              string
 	SekaiDSN                                 string // sekai DB DSN — when set, mysekai reads masterdata from DB instead of local files
 	UserSnapshot                             UserSnapshotConfig
 	MusicMetaRefreshInterval                 time.Duration
@@ -66,6 +67,7 @@ type Config struct {
 	SKForecast                               sk.ForecastConfig
 	MySekaiHousingCompetitionCachePath       string
 	MySekaiHousingCompetitionRefreshInterval time.Duration
+	ReadOnly                                 bool
 	DeckRecommend                            DeckRecommendConfig
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not

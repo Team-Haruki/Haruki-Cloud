@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/api"
 	"haruki-cloud/config"
 	"haruki-cloud/database/bot/user"
+	"haruki-cloud/internal/cluster"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
@@ -138,16 +139,18 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	// 记录客户端自报的登录 IP 和位置
-	loginUpdate := h.svc.dbClient.User.UpdateOneID(u.ID).
-		SetLastLoginAt(time.Now())
-	if payload.ClientIP != "" {
-		loginUpdate = loginUpdate.SetLastLoginIP(payload.ClientIP)
+	if !cluster.IsReadOnly() {
+		// 记录客户端自报的登录 IP 和位置
+		loginUpdate := h.svc.dbClient.User.UpdateOneID(u.ID).
+			SetLastLoginAt(time.Now())
+		if payload.ClientIP != "" {
+			loginUpdate = loginUpdate.SetLastLoginIP(payload.ClientIP)
+		}
+		if payload.ClientLocation != "" {
+			loginUpdate = loginUpdate.SetLastLoginLocation(payload.ClientLocation)
+		}
+		_ = loginUpdate.Exec(ctx) // 非关键操作，失败不阻塞登录
 	}
-	if payload.ClientLocation != "" {
-		loginUpdate = loginUpdate.SetLastLoginLocation(payload.ClientLocation)
-	}
-	_ = loginUpdate.Exec(ctx) // 非关键操作，失败不阻塞登录
 
 	// 构造加密响应: MsgPack → AES-256-GCM
 	resp := HarukiAuthResponse{

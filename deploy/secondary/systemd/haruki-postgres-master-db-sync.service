@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync Haruki masterdata Postgres dumps from primary cloud
+After=docker.service network-online.target
+Wants=docker.service network-online.target
+
+[Service]
+Type=oneshot
+Environment=HARUKI_SYNC_POSTGRES_DBS=haruki_sekai
+Environment=HARUKI_MASTERDATA_DB_DUMP_RETENTION=6
+ExecStart=/data/HarukiServices/scripts/sync-postgres-master-db-from-primary.sh

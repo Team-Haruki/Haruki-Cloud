@@ -97,6 +97,11 @@ func ApplyEnvOverrides(cfg *Config) {
 		}
 	}
 
+	// Node
+	envStr("HARUKI_NODE_NAME", &cfg.Node.Name)
+	envStr("HARUKI_NODE_ROLE", &cfg.Node.Role)
+	envBool("HARUKI_NODE_READ_ONLY", &cfg.Node.ReadOnly)
+
 	// Backend
 	envStr("HARUKI_BACKEND_HOST", &cfg.Backend.Host)
 	envInt("HARUKI_BACKEND_PORT", &cfg.Backend.Port)
@@ -242,6 +247,12 @@ type BackendConfig struct {
 	TrustProxies              []string      `yaml:"trusted_proxies"`
 	ProxyHeader               string        `yaml:"proxy_header"`
 	LatestHarukiClientVersion string        `yaml:"latest_haruki_client_version"`
+}
+
+type NodeConfig struct {
+	Name     string `yaml:"name"`
+	Role     string `yaml:"role"`
+	ReadOnly bool   `yaml:"read_only"`
 }
 
 type ChunithmConfig struct {
@@ -441,6 +452,7 @@ type HMESConfig struct {
 
 type Config struct {
 	Profile     Profile           `yaml:"profile"`
+	Node        NodeConfig        `yaml:"node"`
 	Backend     BackendConfig     `yaml:"backend"`
 	Chunithm    ChunithmConfig    `yaml:"chunithm"`
 	PJSK        PJSKConfig        `yaml:"pjsk"`

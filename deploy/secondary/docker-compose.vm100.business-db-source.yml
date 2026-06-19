@@ -1,0 +1,14 @@
+# vm100 business database source overlay.
+#
+# Normal cluster mode should point these three databases at the active writer.
+# Configure the full DSNs with HARUKI_BUSINESS_{BOT,PJSK,USERS}_DB_URL so the
+# overlay does not need to know or split secret passwords.
+#
+# During manual failover, change those three variables to the restored
+# backup/local writer and recreate haruki-cloud.
+services:
+  haruki-cloud:
+    environment:
+      HARUKI_BOT_DB_URL: ${HARUKI_BUSINESS_BOT_DB_URL:-${HARUKI_BOT_DB_URL}}
+      HARUKI_PJSK_DB_URL: ${HARUKI_BUSINESS_PJSK_DB_URL:-${HARUKI_PJSK_DB_URL}}
+      HARUKI_USERS_DB_URL: ${HARUKI_BUSINESS_USERS_DB_URL:-${HARUKI_USERS_DB_URL}}

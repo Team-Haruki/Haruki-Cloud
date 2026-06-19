@@ -14,6 +14,9 @@ func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserI
 	if !s.IsReady() {
 		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
 	}
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	aliasType, err := normalizeAliasType(aliasType)
 	if err != nil {
 		return nil, err
@@ -183,6 +186,9 @@ func (s *Service) ListApprovedCharacterAliasMap(ctx context.Context) (map[string
 func (s *Service) Delete(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToDelete []string) ([]ApprovedAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, fmt.Errorf("别名服务未就绪，请稍后再试")
+	}
+	if err := s.requireWritable(); err != nil {
+		return nil, err
 	}
 	aliasType, err := normalizeAliasType(aliasType)
 	if err != nil {

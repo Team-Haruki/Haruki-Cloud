@@ -11,17 +11,26 @@ import (
 
 	usersdb "haruki-cloud/database/users"
 	"haruki-cloud/database/users/user"
+	"haruki-cloud/internal/cluster"
 )
 
 // Resolver resolves an IM identity to a haruki_user_id.
 // It is safe for concurrent use and can be shared across modules.
 type Resolver struct {
-	db *usersdb.Client
+	db       *usersdb.Client
+	readOnly bool
 }
 
 // NewResolver creates a new Resolver backed by the given users DB client.
 func NewResolver(db *usersdb.Client) *Resolver {
 	return &Resolver{db: db}
+}
+
+func (r *Resolver) SetReadOnly(readOnly bool) {
+	if r == nil {
+		return
+	}
+	r.readOnly = readOnly
 }
 
 // ResolveOrCreate returns the haruki_user_id for (platform, userID).
@@ -35,6 +44,9 @@ func (r *Resolver) ResolveOrCreate(ctx context.Context, platform, userID string)
 		return u.ID, nil
 	}
 	if !usersdb.IsNotFound(err) {
+		return 0, err
+	}
+	if err := cluster.EnsureWritable(r.readOnly); err != nil {
 		return 0, err
 	}
 

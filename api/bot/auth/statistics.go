@@ -6,6 +6,7 @@ import (
 	"haruki-cloud/api"
 	"haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/requestsranking"
+	"haruki-cloud/internal/cluster"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -24,6 +25,9 @@ func (h *StatisticsHandler) RecordStatistics(c fiber.Ctx) error {
 
 func (h *StatisticsHandler) updateRequestsRanking(ctx context.Context, botID int) error {
 	if h == nil || h.svc == nil {
+		return nil
+	}
+	if cluster.IsReadOnly() {
 		return nil
 	}
 	return incrementStatisticCounter(

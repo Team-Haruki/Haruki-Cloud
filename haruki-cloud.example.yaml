@@ -1,5 +1,10 @@
 profile: "dev" # production / beta / temp / dev
 
+node:
+  name: ""       # optional node name, e.g. primary-cloud / vm100
+  role: ""       # optional operational role, e.g. primary-cloud / secondary-cloud-standby
+  read_only: false # set true on standby/recovering nodes to reject user/business DB writes
+
 backend:
   host: "0.0.0.0"
   port: 6666

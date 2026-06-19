@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 	"time"
@@ -136,7 +137,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		}
 	}
 	if sekaiClient != nil {
-		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion)
+		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN))
 		if localMasterdataFallback {
 			masterDBProvider.SetLocalMasterdataDir(localMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
 		}
@@ -193,7 +194,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			if renderregion.WithDefault(region) == renderregion.WithDefault(cfg.DefaultRegion) {
 				continue
 			}
-			regionProvider := provider.NewDatabaseProvider(sekaiClient, region)
+			regionProvider := provider.NewDatabaseProvider(sekaiClient, region, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN))
 			if localMasterdataFallback {
 				regionProvider.SetLocalMasterdataDir(localMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
 			}
@@ -228,6 +229,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 
 	aliasService := pjskalias.NewService(sekaiClient, pjskClient, nil)
+	if aliasService != nil {
+		aliasService.SetReadOnly(cfg.ReadOnly)
+	}
 	if musicController != nil {
 		musicController.SetAliasResolver(aliasService)
 	}
@@ -353,8 +357,27 @@ func (a *App) AssetRoots() []string {
 }
 
 func (a *App) Close() error {
-	if a == nil || a.ImageCache == nil {
+	if a == nil {
 		return nil
 	}
-	return a.ImageCache.Close()
+	var err error
+	if a.ImageCache != nil {
+		err = errors.Join(err, a.ImageCache.Close())
+	}
+	if a.MySekai != nil {
+		a.MySekai.Close()
+	}
+	closeProvider := func(p provider.MasterDataProvider) {
+		if closer, ok := p.(interface{ Close() error }); ok {
+			err = errors.Join(err, closer.Close())
+		}
+	}
+	if len(a.Providers) > 0 {
+		for _, p := range a.Providers {
+			closeProvider(p)
+		}
+	} else {
+		closeProvider(a.Provider)
+	}
+	return err
 }

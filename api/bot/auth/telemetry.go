@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/database/bot/dailyrequests"
 	"haruki-cloud/database/bot/hourlyrequests"
 	"haruki-cloud/database/bot/requestsranking"
+	"haruki-cloud/internal/cluster"
 )
 
 type CommandLogEntry struct {
@@ -28,6 +29,9 @@ var (
 )
 
 func RecordRequestStatistics(ctx context.Context, client *bot.Client, botID int, now time.Time) error {
+	if cluster.IsReadOnly() {
+		return nil
+	}
 	if client == nil || botID <= 0 {
 		return nil
 	}
@@ -105,6 +109,9 @@ func RecordRequestStatistics(ctx context.Context, client *bot.Client, botID int,
 }
 
 func RecordCommandLog(ctx context.Context, client *bot.Client, entry CommandLogEntry, now time.Time) error {
+	if cluster.IsReadOnly() {
+		return nil
+	}
 	if client == nil {
 		return nil
 	}

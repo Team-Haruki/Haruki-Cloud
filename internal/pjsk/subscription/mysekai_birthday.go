@@ -17,6 +17,7 @@ import (
 	pjskdb "haruki-cloud/database/pjsk"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
+	"haruki-cloud/internal/cluster"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -145,6 +146,7 @@ type Service struct {
 	db       *pjskdb.Client
 	bindings *accountdata.BindingService
 	toolbox  *sekaiapi.HarukiToolboxClient
+	readOnly bool
 }
 
 func NewService(db *pjskdb.Client, bindings *accountdata.BindingService) *Service {
@@ -153,6 +155,13 @@ func NewService(db *pjskdb.Client, bindings *accountdata.BindingService) *Servic
 
 func NewServiceWithToolbox(db *pjskdb.Client, bindings *accountdata.BindingService, toolbox *sekaiapi.HarukiToolboxClient) *Service {
 	return &Service{db: db, bindings: bindings, toolbox: toolbox}
+}
+
+func (s *Service) SetReadOnly(readOnly bool) {
+	if s == nil {
+		return
+	}
+	s.readOnly = readOnly
 }
 
 func (s *Service) Ready() bool {
@@ -172,6 +181,9 @@ func (s *Service) CreateOrUpdate(
 	notifyEmpty bool,
 ) (*BirthdayMonitorResult, error) {
 	if err := s.requireReady(); err != nil {
+		return nil, err
+	}
+	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(platformGroupID) == "" {
@@ -308,6 +320,9 @@ func (s *Service) Cancel(
 	message string,
 ) (*pjskdb.MysekaiBirthdaySubscription, error) {
 	if err := s.requireReady(); err != nil {
+		return nil, err
+	}
+	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(platformGroupID) == "" {
@@ -459,6 +474,9 @@ func (s *Service) closeBirthdayMonitorConnection(ctx context.Context, subscripti
 
 func (s *Service) StoreEvent(ctx context.Context, payload BirthdayEventPayload) (*StoredBirthdayEvent, error) {
 	if err := s.requireDB(); err != nil {
+		return nil, err
+	}
+	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
 	subscriptionID, err := strconv.Atoi(strings.TrimSpace(payload.SubscriptionID))
@@ -623,6 +641,9 @@ func (s *Service) EventForClient(ctx context.Context, eventID string, subscripti
 }
 
 func (s *Service) AckEvent(ctx context.Context, eventID string, subscriptionID string, subscriptionVersion string, token string, cloudBotID string, platformGroupID string, platformUserID string, selfID string) error {
+	if err := s.requireWritable(); err != nil {
+		return err
+	}
 	event, err := s.EventForClient(ctx, eventID, subscriptionID, subscriptionVersion, token, cloudBotID, platformGroupID, platformUserID, selfID)
 	if err != nil {
 		return err
@@ -735,6 +756,13 @@ func (s *Service) requireDB() error {
 		return fmt.Errorf("生日材料监听数据库未就绪")
 	}
 	return nil
+}
+
+func (s *Service) requireWritable() error {
+	if s == nil {
+		return fmt.Errorf("生日材料监听服务未就绪")
+	}
+	return cluster.EnsureWritable(s.readOnly)
 }
 
 func ParseBirthdayMonitorCommand(message string) (BirthdayMonitorCommand, error) {

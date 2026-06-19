@@ -25,10 +25,12 @@ import (
 	"haruki-cloud/database/sekai/cardsupplie"
 	"haruki-cloud/database/sekai/challengelivehighscorereward"
 	"haruki-cloud/database/sekai/character2d"
+	"haruki-cloud/database/sekai/characterarchivemysekaicharactertalkgroup"
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/characterrank"
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
 	"haruki-cloud/database/sekai/costume3d"
+	"haruki-cloud/database/sekai/custommusicscoretag"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -59,8 +61,11 @@ import (
 	"haruki-cloud/database/sekai/mysekaicharactertalkcondition"
 	"haruki-cloud/database/sekai/mysekaicharactertalkconditiongroup"
 	"haruki-cloud/database/sekai/mysekaicharactertalkfixturecommon"
+	"haruki-cloud/database/sekai/mysekaicharactertalkfixturecommonmysekaifixturegroup"
+	"haruki-cloud/database/sekai/mysekaicustomfixture"
 	"haruki-cloud/database/sekai/mysekaifixture"
 	"haruki-cloud/database/sekai/mysekaifixturegamecharactergroup"
+	"haruki-cloud/database/sekai/mysekaifixturegamecharactergroupperformancebonuse"
 	"haruki-cloud/database/sekai/mysekaifixturemaingenre"
 	"haruki-cloud/database/sekai/mysekaifixtureonlydisassemblematerial"
 	"haruki-cloud/database/sekai/mysekaifixturesubgenre"
@@ -68,8 +73,11 @@ import (
 	"haruki-cloud/database/sekai/mysekaigamecharacterunitgroup"
 	"haruki-cloud/database/sekai/mysekaigate"
 	"haruki-cloud/database/sekai/mysekaigatecharacterlotterie"
+	"haruki-cloud/database/sekai/mysekaigatecommonskin"
 	"haruki-cloud/database/sekai/mysekaigatelevel"
 	"haruki-cloud/database/sekai/mysekaigatematerialgroup"
+	"haruki-cloud/database/sekai/mysekaigateskin"
+	"haruki-cloud/database/sekai/mysekaigateunitskin"
 	"haruki-cloud/database/sekai/mysekaihousingcompetition"
 	"haruki-cloud/database/sekai/mysekaiitem"
 	"haruki-cloud/database/sekai/mysekaimaterial"
@@ -78,7 +86,10 @@ import (
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
 	"haruki-cloud/database/sekai/mysekaiphenomenabackgroundcolor"
 	"haruki-cloud/database/sekai/mysekaiphenomenon"
+	"haruki-cloud/database/sekai/mysekairankrelease"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
+	"haruki-cloud/database/sekai/mysekaisitelayout"
+	"haruki-cloud/database/sekai/mysekaisitelevel"
 	"haruki-cloud/database/sekai/ngword"
 	"haruki-cloud/database/sekai/outsidecharacter"
 	"haruki-cloud/database/sekai/playerframe"
@@ -91,6 +102,7 @@ import (
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomdifferentattributebonuse"
 	"haruki-cloud/database/sekai/worldbloomsupportdeckbonuse"
+	"haruki-cloud/database/sekai/worldbloomsupportdeckuniteventlimitedbonuse"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -130,6 +142,8 @@ type Client struct {
 	Challengelivehighscorereward *ChallengelivehighscorerewardClient
 	// Character2D is the client for interacting with the Character2D builders.
 	Character2D *Character2DClient
+	// Characterarchivemysekaicharactertalkgroup is the client for interacting with the Characterarchivemysekaicharactertalkgroup builders.
+	Characterarchivemysekaicharactertalkgroup *CharacterarchivemysekaicharactertalkgroupClient
 	// Charactermissionv2Parametergroup is the client for interacting with the Charactermissionv2Parametergroup builders.
 	Charactermissionv2Parametergroup *Charactermissionv2ParametergroupClient
 	// Characterrank is the client for interacting with the Characterrank builders.
@@ -138,6 +152,8 @@ type Client struct {
 	Cheerfulcarnivalteam *CheerfulcarnivalteamClient
 	// Costume3D is the client for interacting with the Costume3D builders.
 	Costume3D *Costume3DClient
+	// Custommusicscoretag is the client for interacting with the Custommusicscoretag builders.
+	Custommusicscoretag *CustommusicscoretagClient
 	// Event is the client for interacting with the Event builders.
 	Event *EventClient
 	// Eventcard is the client for interacting with the Eventcard builders.
@@ -198,10 +214,16 @@ type Client struct {
 	Mysekaicharactertalkconditiongroup *MysekaicharactertalkconditiongroupClient
 	// Mysekaicharactertalkfixturecommon is the client for interacting with the Mysekaicharactertalkfixturecommon builders.
 	Mysekaicharactertalkfixturecommon *MysekaicharactertalkfixturecommonClient
+	// Mysekaicharactertalkfixturecommonmysekaifixturegroup is the client for interacting with the Mysekaicharactertalkfixturecommonmysekaifixturegroup builders.
+	Mysekaicharactertalkfixturecommonmysekaifixturegroup *MysekaicharactertalkfixturecommonmysekaifixturegroupClient
+	// Mysekaicustomfixture is the client for interacting with the Mysekaicustomfixture builders.
+	Mysekaicustomfixture *MysekaicustomfixtureClient
 	// Mysekaifixture is the client for interacting with the Mysekaifixture builders.
 	Mysekaifixture *MysekaifixtureClient
 	// Mysekaifixturegamecharactergroup is the client for interacting with the Mysekaifixturegamecharactergroup builders.
 	Mysekaifixturegamecharactergroup *MysekaifixturegamecharactergroupClient
+	// Mysekaifixturegamecharactergroupperformancebonuse is the client for interacting with the Mysekaifixturegamecharactergroupperformancebonuse builders.
+	Mysekaifixturegamecharactergroupperformancebonuse *MysekaifixturegamecharactergroupperformancebonuseClient
 	// Mysekaifixturemaingenre is the client for interacting with the Mysekaifixturemaingenre builders.
 	Mysekaifixturemaingenre *MysekaifixturemaingenreClient
 	// Mysekaifixtureonlydisassemblematerial is the client for interacting with the Mysekaifixtureonlydisassemblematerial builders.
@@ -216,10 +238,16 @@ type Client struct {
 	Mysekaigate *MysekaigateClient
 	// Mysekaigatecharacterlotterie is the client for interacting with the Mysekaigatecharacterlotterie builders.
 	Mysekaigatecharacterlotterie *MysekaigatecharacterlotterieClient
+	// Mysekaigatecommonskin is the client for interacting with the Mysekaigatecommonskin builders.
+	Mysekaigatecommonskin *MysekaigatecommonskinClient
 	// Mysekaigatelevel is the client for interacting with the Mysekaigatelevel builders.
 	Mysekaigatelevel *MysekaigatelevelClient
 	// Mysekaigatematerialgroup is the client for interacting with the Mysekaigatematerialgroup builders.
 	Mysekaigatematerialgroup *MysekaigatematerialgroupClient
+	// Mysekaigateskin is the client for interacting with the Mysekaigateskin builders.
+	Mysekaigateskin *MysekaigateskinClient
+	// Mysekaigateunitskin is the client for interacting with the Mysekaigateunitskin builders.
+	Mysekaigateunitskin *MysekaigateunitskinClient
 	// Mysekaihousingcompetition is the client for interacting with the Mysekaihousingcompetition builders.
 	Mysekaihousingcompetition *MysekaihousingcompetitionClient
 	// Mysekaiitem is the client for interacting with the Mysekaiitem builders.
@@ -236,8 +264,14 @@ type Client struct {
 	Mysekaiphenomenabackgroundcolor *MysekaiphenomenabackgroundcolorClient
 	// Mysekaiphenomenon is the client for interacting with the Mysekaiphenomenon builders.
 	Mysekaiphenomenon *MysekaiphenomenonClient
+	// Mysekairankrelease is the client for interacting with the Mysekairankrelease builders.
+	Mysekairankrelease *MysekairankreleaseClient
 	// Mysekaisiteharvestfixture is the client for interacting with the Mysekaisiteharvestfixture builders.
 	Mysekaisiteharvestfixture *MysekaisiteharvestfixtureClient
+	// Mysekaisitelayout is the client for interacting with the Mysekaisitelayout builders.
+	Mysekaisitelayout *MysekaisitelayoutClient
+	// Mysekaisitelevel is the client for interacting with the Mysekaisitelevel builders.
+	Mysekaisitelevel *MysekaisitelevelClient
 	// Ngword is the client for interacting with the Ngword builders.
 	Ngword *NgwordClient
 	// Outsidecharacter is the client for interacting with the Outsidecharacter builders.
@@ -262,6 +296,8 @@ type Client struct {
 	Worldbloomdifferentattributebonuse *WorldbloomdifferentattributebonuseClient
 	// Worldbloomsupportdeckbonuse is the client for interacting with the Worldbloomsupportdeckbonuse builders.
 	Worldbloomsupportdeckbonuse *WorldbloomsupportdeckbonuseClient
+	// Worldbloomsupportdeckuniteventlimitedbonuse is the client for interacting with the Worldbloomsupportdeckuniteventlimitedbonuse builders.
+	Worldbloomsupportdeckuniteventlimitedbonuse *WorldbloomsupportdeckuniteventlimitedbonuseClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -287,10 +323,12 @@ func (c *Client) init() {
 	c.Cardsupplie = NewCardsupplieClient(c.config)
 	c.Challengelivehighscorereward = NewChallengelivehighscorerewardClient(c.config)
 	c.Character2D = NewCharacter2DClient(c.config)
+	c.Characterarchivemysekaicharactertalkgroup = NewCharacterarchivemysekaicharactertalkgroupClient(c.config)
 	c.Charactermissionv2Parametergroup = NewCharactermissionv2ParametergroupClient(c.config)
 	c.Characterrank = NewCharacterrankClient(c.config)
 	c.Cheerfulcarnivalteam = NewCheerfulcarnivalteamClient(c.config)
 	c.Costume3D = NewCostume3DClient(c.config)
+	c.Custommusicscoretag = NewCustommusicscoretagClient(c.config)
 	c.Event = NewEventClient(c.config)
 	c.Eventcard = NewEventcardClient(c.config)
 	c.Eventdeckbonuse = NewEventdeckbonuseClient(c.config)
@@ -321,8 +359,11 @@ func (c *Client) init() {
 	c.Mysekaicharactertalkcondition = NewMysekaicharactertalkconditionClient(c.config)
 	c.Mysekaicharactertalkconditiongroup = NewMysekaicharactertalkconditiongroupClient(c.config)
 	c.Mysekaicharactertalkfixturecommon = NewMysekaicharactertalkfixturecommonClient(c.config)
+	c.Mysekaicharactertalkfixturecommonmysekaifixturegroup = NewMysekaicharactertalkfixturecommonmysekaifixturegroupClient(c.config)
+	c.Mysekaicustomfixture = NewMysekaicustomfixtureClient(c.config)
 	c.Mysekaifixture = NewMysekaifixtureClient(c.config)
 	c.Mysekaifixturegamecharactergroup = NewMysekaifixturegamecharactergroupClient(c.config)
+	c.Mysekaifixturegamecharactergroupperformancebonuse = NewMysekaifixturegamecharactergroupperformancebonuseClient(c.config)
 	c.Mysekaifixturemaingenre = NewMysekaifixturemaingenreClient(c.config)
 	c.Mysekaifixtureonlydisassemblematerial = NewMysekaifixtureonlydisassemblematerialClient(c.config)
 	c.Mysekaifixturesubgenre = NewMysekaifixturesubgenreClient(c.config)
@@ -330,8 +371,11 @@ func (c *Client) init() {
 	c.Mysekaigamecharacterunitgroup = NewMysekaigamecharacterunitgroupClient(c.config)
 	c.Mysekaigate = NewMysekaigateClient(c.config)
 	c.Mysekaigatecharacterlotterie = NewMysekaigatecharacterlotterieClient(c.config)
+	c.Mysekaigatecommonskin = NewMysekaigatecommonskinClient(c.config)
 	c.Mysekaigatelevel = NewMysekaigatelevelClient(c.config)
 	c.Mysekaigatematerialgroup = NewMysekaigatematerialgroupClient(c.config)
+	c.Mysekaigateskin = NewMysekaigateskinClient(c.config)
+	c.Mysekaigateunitskin = NewMysekaigateunitskinClient(c.config)
 	c.Mysekaihousingcompetition = NewMysekaihousingcompetitionClient(c.config)
 	c.Mysekaiitem = NewMysekaiitemClient(c.config)
 	c.Mysekaimaterial = NewMysekaimaterialClient(c.config)
@@ -340,7 +384,10 @@ func (c *Client) init() {
 	c.Mysekaimusicrecordcategorie = NewMysekaimusicrecordcategorieClient(c.config)
 	c.Mysekaiphenomenabackgroundcolor = NewMysekaiphenomenabackgroundcolorClient(c.config)
 	c.Mysekaiphenomenon = NewMysekaiphenomenonClient(c.config)
+	c.Mysekairankrelease = NewMysekairankreleaseClient(c.config)
 	c.Mysekaisiteharvestfixture = NewMysekaisiteharvestfixtureClient(c.config)
+	c.Mysekaisitelayout = NewMysekaisitelayoutClient(c.config)
+	c.Mysekaisitelevel = NewMysekaisitelevelClient(c.config)
 	c.Ngword = NewNgwordClient(c.config)
 	c.Outsidecharacter = NewOutsidecharacterClient(c.config)
 	c.Playerframe = NewPlayerframeClient(c.config)
@@ -353,6 +400,7 @@ func (c *Client) init() {
 	c.Worldbloom = NewWorldbloomClient(c.config)
 	c.Worldbloomdifferentattributebonuse = NewWorldbloomdifferentattributebonuseClient(c.config)
 	c.Worldbloomsupportdeckbonuse = NewWorldbloomsupportdeckbonuseClient(c.config)
+	c.Worldbloomsupportdeckuniteventlimitedbonuse = NewWorldbloomsupportdeckuniteventlimitedbonuseClient(c.config)
 }
 
 type (
@@ -443,88 +491,100 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                                   ctx,
-		config:                                cfg,
-		Area:                                  NewAreaClient(cfg),
-		Areaitem:                              NewAreaitemClient(cfg),
-		Areaitemlevel:                         NewAreaitemlevelClient(cfg),
-		Bond:                                  NewBondClient(cfg),
-		Bondshonor:                            NewBondshonorClient(cfg),
-		Boostitem:                             NewBoostitemClient(cfg),
-		Card:                                  NewCardClient(cfg),
-		Cardcostume3D:                         NewCardcostume3DClient(cfg),
-		Cardepisode:                           NewCardepisodeClient(cfg),
-		Cardmysekaicanvasbonuse:               NewCardmysekaicanvasbonuseClient(cfg),
-		Cardraritie:                           NewCardraritieClient(cfg),
-		Cardsupplie:                           NewCardsupplieClient(cfg),
-		Challengelivehighscorereward:          NewChallengelivehighscorerewardClient(cfg),
-		Character2D:                           NewCharacter2DClient(cfg),
-		Charactermissionv2Parametergroup:      NewCharactermissionv2ParametergroupClient(cfg),
-		Characterrank:                         NewCharacterrankClient(cfg),
-		Cheerfulcarnivalteam:                  NewCheerfulcarnivalteamClient(cfg),
-		Costume3D:                             NewCostume3DClient(cfg),
-		Event:                                 NewEventClient(cfg),
-		Eventcard:                             NewEventcardClient(cfg),
-		Eventdeckbonuse:                       NewEventdeckbonuseClient(cfg),
-		Eventexchangesummarie:                 NewEventexchangesummarieClient(cfg),
-		Eventitem:                             NewEventitemClient(cfg),
-		Eventmusic:                            NewEventmusicClient(cfg),
-		Eventraritybonusrate:                  NewEventraritybonusrateClient(cfg),
-		Eventstorie:                           NewEventstorieClient(cfg),
-		Eventstoryunit:                        NewEventstoryunitClient(cfg),
-		Gacha:                                 NewGachaClient(cfg),
-		Gachaceilitem:                         NewGachaceilitemClient(cfg),
-		Gachaticket:                           NewGachaticketClient(cfg),
-		Gamecharacter:                         NewGamecharacterClient(cfg),
-		Gamecharacterunit:                     NewGamecharacterunitClient(cfg),
-		Honor:                                 NewHonorClient(cfg),
-		Honorgroup:                            NewHonorgroupClient(cfg),
-		Level:                                 NewLevelClient(cfg),
-		Limitedtimemusic:                      NewLimitedtimemusicClient(cfg),
-		Masterlesson:                          NewMasterlessonClient(cfg),
-		Music:                                 NewMusicClient(cfg),
-		MusicArtist:                           NewMusicArtistClient(cfg),
-		Musicdifficultie:                      NewMusicdifficultieClient(cfg),
-		Musictag:                              NewMusictagClient(cfg),
-		Musicvocal:                            NewMusicvocalClient(cfg),
-		Mysekaiblueprint:                      NewMysekaiblueprintClient(cfg),
-		Mysekaiblueprintmysekaimaterialcost:   NewMysekaiblueprintmysekaimaterialcostClient(cfg),
-		Mysekaicharactertalk:                  NewMysekaicharactertalkClient(cfg),
-		Mysekaicharactertalkcondition:         NewMysekaicharactertalkconditionClient(cfg),
-		Mysekaicharactertalkconditiongroup:    NewMysekaicharactertalkconditiongroupClient(cfg),
-		Mysekaicharactertalkfixturecommon:     NewMysekaicharactertalkfixturecommonClient(cfg),
-		Mysekaifixture:                        NewMysekaifixtureClient(cfg),
-		Mysekaifixturegamecharactergroup:      NewMysekaifixturegamecharactergroupClient(cfg),
-		Mysekaifixturemaingenre:               NewMysekaifixturemaingenreClient(cfg),
-		Mysekaifixtureonlydisassemblematerial: NewMysekaifixtureonlydisassemblematerialClient(cfg),
-		Mysekaifixturesubgenre:                NewMysekaifixturesubgenreClient(cfg),
-		Mysekaifixturetag:                     NewMysekaifixturetagClient(cfg),
-		Mysekaigamecharacterunitgroup:         NewMysekaigamecharacterunitgroupClient(cfg),
-		Mysekaigate:                           NewMysekaigateClient(cfg),
-		Mysekaigatecharacterlotterie:          NewMysekaigatecharacterlotterieClient(cfg),
-		Mysekaigatelevel:                      NewMysekaigatelevelClient(cfg),
-		Mysekaigatematerialgroup:              NewMysekaigatematerialgroupClient(cfg),
-		Mysekaihousingcompetition:             NewMysekaihousingcompetitionClient(cfg),
-		Mysekaiitem:                           NewMysekaiitemClient(cfg),
-		Mysekaimaterial:                       NewMysekaimaterialClient(cfg),
-		Mysekaimaterialgamecharacterrelation:  NewMysekaimaterialgamecharacterrelationClient(cfg),
-		Mysekaimusicrecord:                    NewMysekaimusicrecordClient(cfg),
-		Mysekaimusicrecordcategorie:           NewMysekaimusicrecordcategorieClient(cfg),
-		Mysekaiphenomenabackgroundcolor:       NewMysekaiphenomenabackgroundcolorClient(cfg),
-		Mysekaiphenomenon:                     NewMysekaiphenomenonClient(cfg),
-		Mysekaisiteharvestfixture:             NewMysekaisiteharvestfixtureClient(cfg),
-		Ngword:                                NewNgwordClient(cfg),
-		Outsidecharacter:                      NewOutsidecharacterClient(cfg),
-		Playerframe:                           NewPlayerframeClient(cfg),
-		Playerframegroup:                      NewPlayerframegroupClient(cfg),
-		Resourceboxe:                          NewResourceboxeClient(cfg),
-		Shopitem:                              NewShopitemClient(cfg),
-		Skill:                                 NewSkillClient(cfg),
-		Stamp:                                 NewStampClient(cfg),
-		Virtuallive:                           NewVirtualliveClient(cfg),
-		Worldbloom:                            NewWorldbloomClient(cfg),
-		Worldbloomdifferentattributebonuse:    NewWorldbloomdifferentattributebonuseClient(cfg),
-		Worldbloomsupportdeckbonuse:           NewWorldbloomsupportdeckbonuseClient(cfg),
+		ctx:                          ctx,
+		config:                       cfg,
+		Area:                         NewAreaClient(cfg),
+		Areaitem:                     NewAreaitemClient(cfg),
+		Areaitemlevel:                NewAreaitemlevelClient(cfg),
+		Bond:                         NewBondClient(cfg),
+		Bondshonor:                   NewBondshonorClient(cfg),
+		Boostitem:                    NewBoostitemClient(cfg),
+		Card:                         NewCardClient(cfg),
+		Cardcostume3D:                NewCardcostume3DClient(cfg),
+		Cardepisode:                  NewCardepisodeClient(cfg),
+		Cardmysekaicanvasbonuse:      NewCardmysekaicanvasbonuseClient(cfg),
+		Cardraritie:                  NewCardraritieClient(cfg),
+		Cardsupplie:                  NewCardsupplieClient(cfg),
+		Challengelivehighscorereward: NewChallengelivehighscorerewardClient(cfg),
+		Character2D:                  NewCharacter2DClient(cfg),
+		Characterarchivemysekaicharactertalkgroup: NewCharacterarchivemysekaicharactertalkgroupClient(cfg),
+		Charactermissionv2Parametergroup:          NewCharactermissionv2ParametergroupClient(cfg),
+		Characterrank:                             NewCharacterrankClient(cfg),
+		Cheerfulcarnivalteam:                      NewCheerfulcarnivalteamClient(cfg),
+		Costume3D:                                 NewCostume3DClient(cfg),
+		Custommusicscoretag:                       NewCustommusicscoretagClient(cfg),
+		Event:                                     NewEventClient(cfg),
+		Eventcard:                                 NewEventcardClient(cfg),
+		Eventdeckbonuse:                           NewEventdeckbonuseClient(cfg),
+		Eventexchangesummarie:                     NewEventexchangesummarieClient(cfg),
+		Eventitem:                                 NewEventitemClient(cfg),
+		Eventmusic:                                NewEventmusicClient(cfg),
+		Eventraritybonusrate:                      NewEventraritybonusrateClient(cfg),
+		Eventstorie:                               NewEventstorieClient(cfg),
+		Eventstoryunit:                            NewEventstoryunitClient(cfg),
+		Gacha:                                     NewGachaClient(cfg),
+		Gachaceilitem:                             NewGachaceilitemClient(cfg),
+		Gachaticket:                               NewGachaticketClient(cfg),
+		Gamecharacter:                             NewGamecharacterClient(cfg),
+		Gamecharacterunit:                         NewGamecharacterunitClient(cfg),
+		Honor:                                     NewHonorClient(cfg),
+		Honorgroup:                                NewHonorgroupClient(cfg),
+		Level:                                     NewLevelClient(cfg),
+		Limitedtimemusic:                          NewLimitedtimemusicClient(cfg),
+		Masterlesson:                              NewMasterlessonClient(cfg),
+		Music:                                     NewMusicClient(cfg),
+		MusicArtist:                               NewMusicArtistClient(cfg),
+		Musicdifficultie:                          NewMusicdifficultieClient(cfg),
+		Musictag:                                  NewMusictagClient(cfg),
+		Musicvocal:                                NewMusicvocalClient(cfg),
+		Mysekaiblueprint:                          NewMysekaiblueprintClient(cfg),
+		Mysekaiblueprintmysekaimaterialcost:       NewMysekaiblueprintmysekaimaterialcostClient(cfg),
+		Mysekaicharactertalk:                      NewMysekaicharactertalkClient(cfg),
+		Mysekaicharactertalkcondition:             NewMysekaicharactertalkconditionClient(cfg),
+		Mysekaicharactertalkconditiongroup:        NewMysekaicharactertalkconditiongroupClient(cfg),
+		Mysekaicharactertalkfixturecommon:         NewMysekaicharactertalkfixturecommonClient(cfg),
+		Mysekaicharactertalkfixturecommonmysekaifixturegroup: NewMysekaicharactertalkfixturecommonmysekaifixturegroupClient(cfg),
+		Mysekaicustomfixture:                              NewMysekaicustomfixtureClient(cfg),
+		Mysekaifixture:                                    NewMysekaifixtureClient(cfg),
+		Mysekaifixturegamecharactergroup:                  NewMysekaifixturegamecharactergroupClient(cfg),
+		Mysekaifixturegamecharactergroupperformancebonuse: NewMysekaifixturegamecharactergroupperformancebonuseClient(cfg),
+		Mysekaifixturemaingenre:                           NewMysekaifixturemaingenreClient(cfg),
+		Mysekaifixtureonlydisassemblematerial:             NewMysekaifixtureonlydisassemblematerialClient(cfg),
+		Mysekaifixturesubgenre:                            NewMysekaifixturesubgenreClient(cfg),
+		Mysekaifixturetag:                                 NewMysekaifixturetagClient(cfg),
+		Mysekaigamecharacterunitgroup:                     NewMysekaigamecharacterunitgroupClient(cfg),
+		Mysekaigate:                                       NewMysekaigateClient(cfg),
+		Mysekaigatecharacterlotterie:                      NewMysekaigatecharacterlotterieClient(cfg),
+		Mysekaigatecommonskin:                             NewMysekaigatecommonskinClient(cfg),
+		Mysekaigatelevel:                                  NewMysekaigatelevelClient(cfg),
+		Mysekaigatematerialgroup:                          NewMysekaigatematerialgroupClient(cfg),
+		Mysekaigateskin:                                   NewMysekaigateskinClient(cfg),
+		Mysekaigateunitskin:                               NewMysekaigateunitskinClient(cfg),
+		Mysekaihousingcompetition:                         NewMysekaihousingcompetitionClient(cfg),
+		Mysekaiitem:                                       NewMysekaiitemClient(cfg),
+		Mysekaimaterial:                                   NewMysekaimaterialClient(cfg),
+		Mysekaimaterialgamecharacterrelation:              NewMysekaimaterialgamecharacterrelationClient(cfg),
+		Mysekaimusicrecord:                                NewMysekaimusicrecordClient(cfg),
+		Mysekaimusicrecordcategorie:                       NewMysekaimusicrecordcategorieClient(cfg),
+		Mysekaiphenomenabackgroundcolor:                   NewMysekaiphenomenabackgroundcolorClient(cfg),
+		Mysekaiphenomenon:                                 NewMysekaiphenomenonClient(cfg),
+		Mysekairankrelease:                                NewMysekairankreleaseClient(cfg),
+		Mysekaisiteharvestfixture:                         NewMysekaisiteharvestfixtureClient(cfg),
+		Mysekaisitelayout:                                 NewMysekaisitelayoutClient(cfg),
+		Mysekaisitelevel:                                  NewMysekaisitelevelClient(cfg),
+		Ngword:                                            NewNgwordClient(cfg),
+		Outsidecharacter:                                  NewOutsidecharacterClient(cfg),
+		Playerframe:                                       NewPlayerframeClient(cfg),
+		Playerframegroup:                                  NewPlayerframegroupClient(cfg),
+		Resourceboxe:                                      NewResourceboxeClient(cfg),
+		Shopitem:                                          NewShopitemClient(cfg),
+		Skill:                                             NewSkillClient(cfg),
+		Stamp:                                             NewStampClient(cfg),
+		Virtuallive:                                       NewVirtualliveClient(cfg),
+		Worldbloom:                                        NewWorldbloomClient(cfg),
+		Worldbloomdifferentattributebonuse:                NewWorldbloomdifferentattributebonuseClient(cfg),
+		Worldbloomsupportdeckbonuse:                       NewWorldbloomsupportdeckbonuseClient(cfg),
+		Worldbloomsupportdeckuniteventlimitedbonuse:       NewWorldbloomsupportdeckuniteventlimitedbonuseClient(cfg),
 	}, nil
 }
 
@@ -542,88 +602,100 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                                   ctx,
-		config:                                cfg,
-		Area:                                  NewAreaClient(cfg),
-		Areaitem:                              NewAreaitemClient(cfg),
-		Areaitemlevel:                         NewAreaitemlevelClient(cfg),
-		Bond:                                  NewBondClient(cfg),
-		Bondshonor:                            NewBondshonorClient(cfg),
-		Boostitem:                             NewBoostitemClient(cfg),
-		Card:                                  NewCardClient(cfg),
-		Cardcostume3D:                         NewCardcostume3DClient(cfg),
-		Cardepisode:                           NewCardepisodeClient(cfg),
-		Cardmysekaicanvasbonuse:               NewCardmysekaicanvasbonuseClient(cfg),
-		Cardraritie:                           NewCardraritieClient(cfg),
-		Cardsupplie:                           NewCardsupplieClient(cfg),
-		Challengelivehighscorereward:          NewChallengelivehighscorerewardClient(cfg),
-		Character2D:                           NewCharacter2DClient(cfg),
-		Charactermissionv2Parametergroup:      NewCharactermissionv2ParametergroupClient(cfg),
-		Characterrank:                         NewCharacterrankClient(cfg),
-		Cheerfulcarnivalteam:                  NewCheerfulcarnivalteamClient(cfg),
-		Costume3D:                             NewCostume3DClient(cfg),
-		Event:                                 NewEventClient(cfg),
-		Eventcard:                             NewEventcardClient(cfg),
-		Eventdeckbonuse:                       NewEventdeckbonuseClient(cfg),
-		Eventexchangesummarie:                 NewEventexchangesummarieClient(cfg),
-		Eventitem:                             NewEventitemClient(cfg),
-		Eventmusic:                            NewEventmusicClient(cfg),
-		Eventraritybonusrate:                  NewEventraritybonusrateClient(cfg),
-		Eventstorie:                           NewEventstorieClient(cfg),
-		Eventstoryunit:                        NewEventstoryunitClient(cfg),
-		Gacha:                                 NewGachaClient(cfg),
-		Gachaceilitem:                         NewGachaceilitemClient(cfg),
-		Gachaticket:                           NewGachaticketClient(cfg),
-		Gamecharacter:                         NewGamecharacterClient(cfg),
-		Gamecharacterunit:                     NewGamecharacterunitClient(cfg),
-		Honor:                                 NewHonorClient(cfg),
-		Honorgroup:                            NewHonorgroupClient(cfg),
-		Level:                                 NewLevelClient(cfg),
-		Limitedtimemusic:                      NewLimitedtimemusicClient(cfg),
-		Masterlesson:                          NewMasterlessonClient(cfg),
-		Music:                                 NewMusicClient(cfg),
-		MusicArtist:                           NewMusicArtistClient(cfg),
-		Musicdifficultie:                      NewMusicdifficultieClient(cfg),
-		Musictag:                              NewMusictagClient(cfg),
-		Musicvocal:                            NewMusicvocalClient(cfg),
-		Mysekaiblueprint:                      NewMysekaiblueprintClient(cfg),
-		Mysekaiblueprintmysekaimaterialcost:   NewMysekaiblueprintmysekaimaterialcostClient(cfg),
-		Mysekaicharactertalk:                  NewMysekaicharactertalkClient(cfg),
-		Mysekaicharactertalkcondition:         NewMysekaicharactertalkconditionClient(cfg),
-		Mysekaicharactertalkconditiongroup:    NewMysekaicharactertalkconditiongroupClient(cfg),
-		Mysekaicharactertalkfixturecommon:     NewMysekaicharactertalkfixturecommonClient(cfg),
-		Mysekaifixture:                        NewMysekaifixtureClient(cfg),
-		Mysekaifixturegamecharactergroup:      NewMysekaifixturegamecharactergroupClient(cfg),
-		Mysekaifixturemaingenre:               NewMysekaifixturemaingenreClient(cfg),
-		Mysekaifixtureonlydisassemblematerial: NewMysekaifixtureonlydisassemblematerialClient(cfg),
-		Mysekaifixturesubgenre:                NewMysekaifixturesubgenreClient(cfg),
-		Mysekaifixturetag:                     NewMysekaifixturetagClient(cfg),
-		Mysekaigamecharacterunitgroup:         NewMysekaigamecharacterunitgroupClient(cfg),
-		Mysekaigate:                           NewMysekaigateClient(cfg),
-		Mysekaigatecharacterlotterie:          NewMysekaigatecharacterlotterieClient(cfg),
-		Mysekaigatelevel:                      NewMysekaigatelevelClient(cfg),
-		Mysekaigatematerialgroup:              NewMysekaigatematerialgroupClient(cfg),
-		Mysekaihousingcompetition:             NewMysekaihousingcompetitionClient(cfg),
-		Mysekaiitem:                           NewMysekaiitemClient(cfg),
-		Mysekaimaterial:                       NewMysekaimaterialClient(cfg),
-		Mysekaimaterialgamecharacterrelation:  NewMysekaimaterialgamecharacterrelationClient(cfg),
-		Mysekaimusicrecord:                    NewMysekaimusicrecordClient(cfg),
-		Mysekaimusicrecordcategorie:           NewMysekaimusicrecordcategorieClient(cfg),
-		Mysekaiphenomenabackgroundcolor:       NewMysekaiphenomenabackgroundcolorClient(cfg),
-		Mysekaiphenomenon:                     NewMysekaiphenomenonClient(cfg),
-		Mysekaisiteharvestfixture:             NewMysekaisiteharvestfixtureClient(cfg),
-		Ngword:                                NewNgwordClient(cfg),
-		Outsidecharacter:                      NewOutsidecharacterClient(cfg),
-		Playerframe:                           NewPlayerframeClient(cfg),
-		Playerframegroup:                      NewPlayerframegroupClient(cfg),
-		Resourceboxe:                          NewResourceboxeClient(cfg),
-		Shopitem:                              NewShopitemClient(cfg),
-		Skill:                                 NewSkillClient(cfg),
-		Stamp:                                 NewStampClient(cfg),
-		Virtuallive:                           NewVirtualliveClient(cfg),
-		Worldbloom:                            NewWorldbloomClient(cfg),
-		Worldbloomdifferentattributebonuse:    NewWorldbloomdifferentattributebonuseClient(cfg),
-		Worldbloomsupportdeckbonuse:           NewWorldbloomsupportdeckbonuseClient(cfg),
+		ctx:                          ctx,
+		config:                       cfg,
+		Area:                         NewAreaClient(cfg),
+		Areaitem:                     NewAreaitemClient(cfg),
+		Areaitemlevel:                NewAreaitemlevelClient(cfg),
+		Bond:                         NewBondClient(cfg),
+		Bondshonor:                   NewBondshonorClient(cfg),
+		Boostitem:                    NewBoostitemClient(cfg),
+		Card:                         NewCardClient(cfg),
+		Cardcostume3D:                NewCardcostume3DClient(cfg),
+		Cardepisode:                  NewCardepisodeClient(cfg),
+		Cardmysekaicanvasbonuse:      NewCardmysekaicanvasbonuseClient(cfg),
+		Cardraritie:                  NewCardraritieClient(cfg),
+		Cardsupplie:                  NewCardsupplieClient(cfg),
+		Challengelivehighscorereward: NewChallengelivehighscorerewardClient(cfg),
+		Character2D:                  NewCharacter2DClient(cfg),
+		Characterarchivemysekaicharactertalkgroup: NewCharacterarchivemysekaicharactertalkgroupClient(cfg),
+		Charactermissionv2Parametergroup:          NewCharactermissionv2ParametergroupClient(cfg),
+		Characterrank:                             NewCharacterrankClient(cfg),
+		Cheerfulcarnivalteam:                      NewCheerfulcarnivalteamClient(cfg),
+		Costume3D:                                 NewCostume3DClient(cfg),
+		Custommusicscoretag:                       NewCustommusicscoretagClient(cfg),
+		Event:                                     NewEventClient(cfg),
+		Eventcard:                                 NewEventcardClient(cfg),
+		Eventdeckbonuse:                           NewEventdeckbonuseClient(cfg),
+		Eventexchangesummarie:                     NewEventexchangesummarieClient(cfg),
+		Eventitem:                                 NewEventitemClient(cfg),
+		Eventmusic:                                NewEventmusicClient(cfg),
+		Eventraritybonusrate:                      NewEventraritybonusrateClient(cfg),
+		Eventstorie:                               NewEventstorieClient(cfg),
+		Eventstoryunit:                            NewEventstoryunitClient(cfg),
+		Gacha:                                     NewGachaClient(cfg),
+		Gachaceilitem:                             NewGachaceilitemClient(cfg),
+		Gachaticket:                               NewGachaticketClient(cfg),
+		Gamecharacter:                             NewGamecharacterClient(cfg),
+		Gamecharacterunit:                         NewGamecharacterunitClient(cfg),
+		Honor:                                     NewHonorClient(cfg),
+		Honorgroup:                                NewHonorgroupClient(cfg),
+		Level:                                     NewLevelClient(cfg),
+		Limitedtimemusic:                          NewLimitedtimemusicClient(cfg),
+		Masterlesson:                              NewMasterlessonClient(cfg),
+		Music:                                     NewMusicClient(cfg),
+		MusicArtist:                               NewMusicArtistClient(cfg),
+		Musicdifficultie:                          NewMusicdifficultieClient(cfg),
+		Musictag:                                  NewMusictagClient(cfg),
+		Musicvocal:                                NewMusicvocalClient(cfg),
+		Mysekaiblueprint:                          NewMysekaiblueprintClient(cfg),
+		Mysekaiblueprintmysekaimaterialcost:       NewMysekaiblueprintmysekaimaterialcostClient(cfg),
+		Mysekaicharactertalk:                      NewMysekaicharactertalkClient(cfg),
+		Mysekaicharactertalkcondition:             NewMysekaicharactertalkconditionClient(cfg),
+		Mysekaicharactertalkconditiongroup:        NewMysekaicharactertalkconditiongroupClient(cfg),
+		Mysekaicharactertalkfixturecommon:         NewMysekaicharactertalkfixturecommonClient(cfg),
+		Mysekaicharactertalkfixturecommonmysekaifixturegroup: NewMysekaicharactertalkfixturecommonmysekaifixturegroupClient(cfg),
+		Mysekaicustomfixture:                              NewMysekaicustomfixtureClient(cfg),
+		Mysekaifixture:                                    NewMysekaifixtureClient(cfg),
+		Mysekaifixturegamecharactergroup:                  NewMysekaifixturegamecharactergroupClient(cfg),
+		Mysekaifixturegamecharactergroupperformancebonuse: NewMysekaifixturegamecharactergroupperformancebonuseClient(cfg),
+		Mysekaifixturemaingenre:                           NewMysekaifixturemaingenreClient(cfg),
+		Mysekaifixtureonlydisassemblematerial:             NewMysekaifixtureonlydisassemblematerialClient(cfg),
+		Mysekaifixturesubgenre:                            NewMysekaifixturesubgenreClient(cfg),
+		Mysekaifixturetag:                                 NewMysekaifixturetagClient(cfg),
+		Mysekaigamecharacterunitgroup:                     NewMysekaigamecharacterunitgroupClient(cfg),
+		Mysekaigate:                                       NewMysekaigateClient(cfg),
+		Mysekaigatecharacterlotterie:                      NewMysekaigatecharacterlotterieClient(cfg),
+		Mysekaigatecommonskin:                             NewMysekaigatecommonskinClient(cfg),
+		Mysekaigatelevel:                                  NewMysekaigatelevelClient(cfg),
+		Mysekaigatematerialgroup:                          NewMysekaigatematerialgroupClient(cfg),
+		Mysekaigateskin:                                   NewMysekaigateskinClient(cfg),
+		Mysekaigateunitskin:                               NewMysekaigateunitskinClient(cfg),
+		Mysekaihousingcompetition:                         NewMysekaihousingcompetitionClient(cfg),
+		Mysekaiitem:                                       NewMysekaiitemClient(cfg),
+		Mysekaimaterial:                                   NewMysekaimaterialClient(cfg),
+		Mysekaimaterialgamecharacterrelation:              NewMysekaimaterialgamecharacterrelationClient(cfg),
+		Mysekaimusicrecord:                                NewMysekaimusicrecordClient(cfg),
+		Mysekaimusicrecordcategorie:                       NewMysekaimusicrecordcategorieClient(cfg),
+		Mysekaiphenomenabackgroundcolor:                   NewMysekaiphenomenabackgroundcolorClient(cfg),
+		Mysekaiphenomenon:                                 NewMysekaiphenomenonClient(cfg),
+		Mysekairankrelease:                                NewMysekairankreleaseClient(cfg),
+		Mysekaisiteharvestfixture:                         NewMysekaisiteharvestfixtureClient(cfg),
+		Mysekaisitelayout:                                 NewMysekaisitelayoutClient(cfg),
+		Mysekaisitelevel:                                  NewMysekaisitelevelClient(cfg),
+		Ngword:                                            NewNgwordClient(cfg),
+		Outsidecharacter:                                  NewOutsidecharacterClient(cfg),
+		Playerframe:                                       NewPlayerframeClient(cfg),
+		Playerframegroup:                                  NewPlayerframegroupClient(cfg),
+		Resourceboxe:                                      NewResourceboxeClient(cfg),
+		Shopitem:                                          NewShopitemClient(cfg),
+		Skill:                                             NewSkillClient(cfg),
+		Stamp:                                             NewStampClient(cfg),
+		Virtuallive:                                       NewVirtualliveClient(cfg),
+		Worldbloom:                                        NewWorldbloomClient(cfg),
+		Worldbloomdifferentattributebonuse:                NewWorldbloomdifferentattributebonuseClient(cfg),
+		Worldbloomsupportdeckbonuse:                       NewWorldbloomsupportdeckbonuseClient(cfg),
+		Worldbloomsupportdeckuniteventlimitedbonuse:       NewWorldbloomsupportdeckuniteventlimitedbonuseClient(cfg),
 	}, nil
 }
 
@@ -656,27 +728,32 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Area, c.Areaitem, c.Areaitemlevel, c.Bond, c.Bondshonor, c.Boostitem, c.Card,
 		c.Cardcostume3D, c.Cardepisode, c.Cardmysekaicanvasbonuse, c.Cardraritie,
 		c.Cardsupplie, c.Challengelivehighscorereward, c.Character2D,
+		c.Characterarchivemysekaicharactertalkgroup,
 		c.Charactermissionv2Parametergroup, c.Characterrank, c.Cheerfulcarnivalteam,
-		c.Costume3D, c.Event, c.Eventcard, c.Eventdeckbonuse, c.Eventexchangesummarie,
-		c.Eventitem, c.Eventmusic, c.Eventraritybonusrate, c.Eventstorie,
-		c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket, c.Gamecharacter,
-		c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level, c.Limitedtimemusic,
-		c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie, c.Musictag,
-		c.Musicvocal, c.Mysekaiblueprint, c.Mysekaiblueprintmysekaimaterialcost,
-		c.Mysekaicharactertalk, c.Mysekaicharactertalkcondition,
-		c.Mysekaicharactertalkconditiongroup, c.Mysekaicharactertalkfixturecommon,
+		c.Costume3D, c.Custommusicscoretag, c.Event, c.Eventcard, c.Eventdeckbonuse,
+		c.Eventexchangesummarie, c.Eventitem, c.Eventmusic, c.Eventraritybonusrate,
+		c.Eventstorie, c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket,
+		c.Gamecharacter, c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level,
+		c.Limitedtimemusic, c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie,
+		c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
+		c.Mysekaiblueprintmysekaimaterialcost, c.Mysekaicharactertalk,
+		c.Mysekaicharactertalkcondition, c.Mysekaicharactertalkconditiongroup,
+		c.Mysekaicharactertalkfixturecommon,
+		c.Mysekaicharactertalkfixturecommonmysekaifixturegroup, c.Mysekaicustomfixture,
 		c.Mysekaifixture, c.Mysekaifixturegamecharactergroup,
-		c.Mysekaifixturemaingenre, c.Mysekaifixtureonlydisassemblematerial,
-		c.Mysekaifixturesubgenre, c.Mysekaifixturetag, c.Mysekaigamecharacterunitgroup,
-		c.Mysekaigate, c.Mysekaigatecharacterlotterie, c.Mysekaigatelevel,
-		c.Mysekaigatematerialgroup, c.Mysekaihousingcompetition, c.Mysekaiitem,
-		c.Mysekaimaterial, c.Mysekaimaterialgamecharacterrelation,
-		c.Mysekaimusicrecord, c.Mysekaimusicrecordcategorie,
-		c.Mysekaiphenomenabackgroundcolor, c.Mysekaiphenomenon,
-		c.Mysekaisiteharvestfixture, c.Ngword, c.Outsidecharacter, c.Playerframe,
-		c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill, c.Stamp,
-		c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
-		c.Worldbloomsupportdeckbonuse,
+		c.Mysekaifixturegamecharactergroupperformancebonuse, c.Mysekaifixturemaingenre,
+		c.Mysekaifixtureonlydisassemblematerial, c.Mysekaifixturesubgenre,
+		c.Mysekaifixturetag, c.Mysekaigamecharacterunitgroup, c.Mysekaigate,
+		c.Mysekaigatecharacterlotterie, c.Mysekaigatecommonskin, c.Mysekaigatelevel,
+		c.Mysekaigatematerialgroup, c.Mysekaigateskin, c.Mysekaigateunitskin,
+		c.Mysekaihousingcompetition, c.Mysekaiitem, c.Mysekaimaterial,
+		c.Mysekaimaterialgamecharacterrelation, c.Mysekaimusicrecord,
+		c.Mysekaimusicrecordcategorie, c.Mysekaiphenomenabackgroundcolor,
+		c.Mysekaiphenomenon, c.Mysekairankrelease, c.Mysekaisiteharvestfixture,
+		c.Mysekaisitelayout, c.Mysekaisitelevel, c.Ngword, c.Outsidecharacter,
+		c.Playerframe, c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill,
+		c.Stamp, c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
+		c.Worldbloomsupportdeckbonuse, c.Worldbloomsupportdeckuniteventlimitedbonuse,
 	} {
 		n.Use(hooks...)
 	}
@@ -689,27 +766,32 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Area, c.Areaitem, c.Areaitemlevel, c.Bond, c.Bondshonor, c.Boostitem, c.Card,
 		c.Cardcostume3D, c.Cardepisode, c.Cardmysekaicanvasbonuse, c.Cardraritie,
 		c.Cardsupplie, c.Challengelivehighscorereward, c.Character2D,
+		c.Characterarchivemysekaicharactertalkgroup,
 		c.Charactermissionv2Parametergroup, c.Characterrank, c.Cheerfulcarnivalteam,
-		c.Costume3D, c.Event, c.Eventcard, c.Eventdeckbonuse, c.Eventexchangesummarie,
-		c.Eventitem, c.Eventmusic, c.Eventraritybonusrate, c.Eventstorie,
-		c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket, c.Gamecharacter,
-		c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level, c.Limitedtimemusic,
-		c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie, c.Musictag,
-		c.Musicvocal, c.Mysekaiblueprint, c.Mysekaiblueprintmysekaimaterialcost,
-		c.Mysekaicharactertalk, c.Mysekaicharactertalkcondition,
-		c.Mysekaicharactertalkconditiongroup, c.Mysekaicharactertalkfixturecommon,
+		c.Costume3D, c.Custommusicscoretag, c.Event, c.Eventcard, c.Eventdeckbonuse,
+		c.Eventexchangesummarie, c.Eventitem, c.Eventmusic, c.Eventraritybonusrate,
+		c.Eventstorie, c.Eventstoryunit, c.Gacha, c.Gachaceilitem, c.Gachaticket,
+		c.Gamecharacter, c.Gamecharacterunit, c.Honor, c.Honorgroup, c.Level,
+		c.Limitedtimemusic, c.Masterlesson, c.Music, c.MusicArtist, c.Musicdifficultie,
+		c.Musictag, c.Musicvocal, c.Mysekaiblueprint,
+		c.Mysekaiblueprintmysekaimaterialcost, c.Mysekaicharactertalk,
+		c.Mysekaicharactertalkcondition, c.Mysekaicharactertalkconditiongroup,
+		c.Mysekaicharactertalkfixturecommon,
+		c.Mysekaicharactertalkfixturecommonmysekaifixturegroup, c.Mysekaicustomfixture,
 		c.Mysekaifixture, c.Mysekaifixturegamecharactergroup,
-		c.Mysekaifixturemaingenre, c.Mysekaifixtureonlydisassemblematerial,
-		c.Mysekaifixturesubgenre, c.Mysekaifixturetag, c.Mysekaigamecharacterunitgroup,
-		c.Mysekaigate, c.Mysekaigatecharacterlotterie, c.Mysekaigatelevel,
-		c.Mysekaigatematerialgroup, c.Mysekaihousingcompetition, c.Mysekaiitem,
-		c.Mysekaimaterial, c.Mysekaimaterialgamecharacterrelation,
-		c.Mysekaimusicrecord, c.Mysekaimusicrecordcategorie,
-		c.Mysekaiphenomenabackgroundcolor, c.Mysekaiphenomenon,
-		c.Mysekaisiteharvestfixture, c.Ngword, c.Outsidecharacter, c.Playerframe,
-		c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill, c.Stamp,
-		c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
-		c.Worldbloomsupportdeckbonuse,
+		c.Mysekaifixturegamecharactergroupperformancebonuse, c.Mysekaifixturemaingenre,
+		c.Mysekaifixtureonlydisassemblematerial, c.Mysekaifixturesubgenre,
+		c.Mysekaifixturetag, c.Mysekaigamecharacterunitgroup, c.Mysekaigate,
+		c.Mysekaigatecharacterlotterie, c.Mysekaigatecommonskin, c.Mysekaigatelevel,
+		c.Mysekaigatematerialgroup, c.Mysekaigateskin, c.Mysekaigateunitskin,
+		c.Mysekaihousingcompetition, c.Mysekaiitem, c.Mysekaimaterial,
+		c.Mysekaimaterialgamecharacterrelation, c.Mysekaimusicrecord,
+		c.Mysekaimusicrecordcategorie, c.Mysekaiphenomenabackgroundcolor,
+		c.Mysekaiphenomenon, c.Mysekairankrelease, c.Mysekaisiteharvestfixture,
+		c.Mysekaisitelayout, c.Mysekaisitelevel, c.Ngword, c.Outsidecharacter,
+		c.Playerframe, c.Playerframegroup, c.Resourceboxe, c.Shopitem, c.Skill,
+		c.Stamp, c.Virtuallive, c.Worldbloom, c.Worldbloomdifferentattributebonuse,
+		c.Worldbloomsupportdeckbonuse, c.Worldbloomsupportdeckuniteventlimitedbonuse,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -746,6 +828,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Challengelivehighscorereward.mutate(ctx, m)
 	case *Character2DMutation:
 		return c.Character2D.mutate(ctx, m)
+	case *CharacterarchivemysekaicharactertalkgroupMutation:
+		return c.Characterarchivemysekaicharactertalkgroup.mutate(ctx, m)
 	case *Charactermissionv2ParametergroupMutation:
 		return c.Charactermissionv2Parametergroup.mutate(ctx, m)
 	case *CharacterrankMutation:
@@ -754,6 +838,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Cheerfulcarnivalteam.mutate(ctx, m)
 	case *Costume3DMutation:
 		return c.Costume3D.mutate(ctx, m)
+	case *CustommusicscoretagMutation:
+		return c.Custommusicscoretag.mutate(ctx, m)
 	case *EventMutation:
 		return c.Event.mutate(ctx, m)
 	case *EventcardMutation:
@@ -814,10 +900,16 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Mysekaicharactertalkconditiongroup.mutate(ctx, m)
 	case *MysekaicharactertalkfixturecommonMutation:
 		return c.Mysekaicharactertalkfixturecommon.mutate(ctx, m)
+	case *MysekaicharactertalkfixturecommonmysekaifixturegroupMutation:
+		return c.Mysekaicharactertalkfixturecommonmysekaifixturegroup.mutate(ctx, m)
+	case *MysekaicustomfixtureMutation:
+		return c.Mysekaicustomfixture.mutate(ctx, m)
 	case *MysekaifixtureMutation:
 		return c.Mysekaifixture.mutate(ctx, m)
 	case *MysekaifixturegamecharactergroupMutation:
 		return c.Mysekaifixturegamecharactergroup.mutate(ctx, m)
+	case *MysekaifixturegamecharactergroupperformancebonuseMutation:
+		return c.Mysekaifixturegamecharactergroupperformancebonuse.mutate(ctx, m)
 	case *MysekaifixturemaingenreMutation:
 		return c.Mysekaifixturemaingenre.mutate(ctx, m)
 	case *MysekaifixtureonlydisassemblematerialMutation:
@@ -832,10 +924,16 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Mysekaigate.mutate(ctx, m)
 	case *MysekaigatecharacterlotterieMutation:
 		return c.Mysekaigatecharacterlotterie.mutate(ctx, m)
+	case *MysekaigatecommonskinMutation:
+		return c.Mysekaigatecommonskin.mutate(ctx, m)
 	case *MysekaigatelevelMutation:
 		return c.Mysekaigatelevel.mutate(ctx, m)
 	case *MysekaigatematerialgroupMutation:
 		return c.Mysekaigatematerialgroup.mutate(ctx, m)
+	case *MysekaigateskinMutation:
+		return c.Mysekaigateskin.mutate(ctx, m)
+	case *MysekaigateunitskinMutation:
+		return c.Mysekaigateunitskin.mutate(ctx, m)
 	case *MysekaihousingcompetitionMutation:
 		return c.Mysekaihousingcompetition.mutate(ctx, m)
 	case *MysekaiitemMutation:
@@ -852,8 +950,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Mysekaiphenomenabackgroundcolor.mutate(ctx, m)
 	case *MysekaiphenomenonMutation:
 		return c.Mysekaiphenomenon.mutate(ctx, m)
+	case *MysekairankreleaseMutation:
+		return c.Mysekairankrelease.mutate(ctx, m)
 	case *MysekaisiteharvestfixtureMutation:
 		return c.Mysekaisiteharvestfixture.mutate(ctx, m)
+	case *MysekaisitelayoutMutation:
+		return c.Mysekaisitelayout.mutate(ctx, m)
+	case *MysekaisitelevelMutation:
+		return c.Mysekaisitelevel.mutate(ctx, m)
 	case *NgwordMutation:
 		return c.Ngword.mutate(ctx, m)
 	case *OutsidecharacterMutation:
@@ -878,6 +982,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Worldbloomdifferentattributebonuse.mutate(ctx, m)
 	case *WorldbloomsupportdeckbonuseMutation:
 		return c.Worldbloomsupportdeckbonuse.mutate(ctx, m)
+	case *WorldbloomsupportdeckuniteventlimitedbonuseMutation:
+		return c.Worldbloomsupportdeckuniteventlimitedbonuse.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("sekai: unknown mutation type %T", m)
 	}
@@ -2745,6 +2851,139 @@ func (c *Character2DClient) mutate(ctx context.Context, m *Character2DMutation) 
 	}
 }
 
+// CharacterarchivemysekaicharactertalkgroupClient is a client for the Characterarchivemysekaicharactertalkgroup schema.
+type CharacterarchivemysekaicharactertalkgroupClient struct {
+	config
+}
+
+// NewCharacterarchivemysekaicharactertalkgroupClient returns a client for the Characterarchivemysekaicharactertalkgroup from the given config.
+func NewCharacterarchivemysekaicharactertalkgroupClient(c config) *CharacterarchivemysekaicharactertalkgroupClient {
+	return &CharacterarchivemysekaicharactertalkgroupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `characterarchivemysekaicharactertalkgroup.Hooks(f(g(h())))`.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Use(hooks ...Hook) {
+	c.hooks.Characterarchivemysekaicharactertalkgroup = append(c.hooks.Characterarchivemysekaicharactertalkgroup, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `characterarchivemysekaicharactertalkgroup.Intercept(f(g(h())))`.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Characterarchivemysekaicharactertalkgroup = append(c.inters.Characterarchivemysekaicharactertalkgroup, interceptors...)
+}
+
+// Create returns a builder for creating a Characterarchivemysekaicharactertalkgroup entity.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Create() *CharacterarchivemysekaicharactertalkgroupCreate {
+	mutation := newCharacterarchivemysekaicharactertalkgroupMutation(c.config, OpCreate)
+	return &CharacterarchivemysekaicharactertalkgroupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Characterarchivemysekaicharactertalkgroup entities.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) CreateBulk(builders ...*CharacterarchivemysekaicharactertalkgroupCreate) *CharacterarchivemysekaicharactertalkgroupCreateBulk {
+	return &CharacterarchivemysekaicharactertalkgroupCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) MapCreateBulk(slice any, setFunc func(*CharacterarchivemysekaicharactertalkgroupCreate, int)) *CharacterarchivemysekaicharactertalkgroupCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CharacterarchivemysekaicharactertalkgroupCreateBulk{err: fmt.Errorf("calling to CharacterarchivemysekaicharactertalkgroupClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CharacterarchivemysekaicharactertalkgroupCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CharacterarchivemysekaicharactertalkgroupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Characterarchivemysekaicharactertalkgroup.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Update() *CharacterarchivemysekaicharactertalkgroupUpdate {
+	mutation := newCharacterarchivemysekaicharactertalkgroupMutation(c.config, OpUpdate)
+	return &CharacterarchivemysekaicharactertalkgroupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) UpdateOne(_m *Characterarchivemysekaicharactertalkgroup) *CharacterarchivemysekaicharactertalkgroupUpdateOne {
+	mutation := newCharacterarchivemysekaicharactertalkgroupMutation(c.config, OpUpdateOne, withCharacterarchivemysekaicharactertalkgroup(_m))
+	return &CharacterarchivemysekaicharactertalkgroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) UpdateOneID(id int) *CharacterarchivemysekaicharactertalkgroupUpdateOne {
+	mutation := newCharacterarchivemysekaicharactertalkgroupMutation(c.config, OpUpdateOne, withCharacterarchivemysekaicharactertalkgroupID(id))
+	return &CharacterarchivemysekaicharactertalkgroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Characterarchivemysekaicharactertalkgroup.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Delete() *CharacterarchivemysekaicharactertalkgroupDelete {
+	mutation := newCharacterarchivemysekaicharactertalkgroupMutation(c.config, OpDelete)
+	return &CharacterarchivemysekaicharactertalkgroupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) DeleteOne(_m *Characterarchivemysekaicharactertalkgroup) *CharacterarchivemysekaicharactertalkgroupDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) DeleteOneID(id int) *CharacterarchivemysekaicharactertalkgroupDeleteOne {
+	builder := c.Delete().Where(characterarchivemysekaicharactertalkgroup.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CharacterarchivemysekaicharactertalkgroupDeleteOne{builder}
+}
+
+// Query returns a query builder for Characterarchivemysekaicharactertalkgroup.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Query() *CharacterarchivemysekaicharactertalkgroupQuery {
+	return &CharacterarchivemysekaicharactertalkgroupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCharacterarchivemysekaicharactertalkgroup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Characterarchivemysekaicharactertalkgroup entity by its id.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Get(ctx context.Context, id int) (*Characterarchivemysekaicharactertalkgroup, error) {
+	return c.Query().Where(characterarchivemysekaicharactertalkgroup.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) GetX(ctx context.Context, id int) *Characterarchivemysekaicharactertalkgroup {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Hooks() []Hook {
+	return c.hooks.Characterarchivemysekaicharactertalkgroup
+}
+
+// Interceptors returns the client interceptors.
+func (c *CharacterarchivemysekaicharactertalkgroupClient) Interceptors() []Interceptor {
+	return c.inters.Characterarchivemysekaicharactertalkgroup
+}
+
+func (c *CharacterarchivemysekaicharactertalkgroupClient) mutate(ctx context.Context, m *CharacterarchivemysekaicharactertalkgroupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CharacterarchivemysekaicharactertalkgroupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CharacterarchivemysekaicharactertalkgroupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CharacterarchivemysekaicharactertalkgroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CharacterarchivemysekaicharactertalkgroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Characterarchivemysekaicharactertalkgroup mutation op: %q", m.Op())
+	}
+}
+
 // Charactermissionv2ParametergroupClient is a client for the Charactermissionv2Parametergroup schema.
 type Charactermissionv2ParametergroupClient struct {
 	config
@@ -3274,6 +3513,139 @@ func (c *Costume3DClient) mutate(ctx context.Context, m *Costume3DMutation) (Val
 		return (&Costume3DDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Costume3D mutation op: %q", m.Op())
+	}
+}
+
+// CustommusicscoretagClient is a client for the Custommusicscoretag schema.
+type CustommusicscoretagClient struct {
+	config
+}
+
+// NewCustommusicscoretagClient returns a client for the Custommusicscoretag from the given config.
+func NewCustommusicscoretagClient(c config) *CustommusicscoretagClient {
+	return &CustommusicscoretagClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `custommusicscoretag.Hooks(f(g(h())))`.
+func (c *CustommusicscoretagClient) Use(hooks ...Hook) {
+	c.hooks.Custommusicscoretag = append(c.hooks.Custommusicscoretag, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `custommusicscoretag.Intercept(f(g(h())))`.
+func (c *CustommusicscoretagClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Custommusicscoretag = append(c.inters.Custommusicscoretag, interceptors...)
+}
+
+// Create returns a builder for creating a Custommusicscoretag entity.
+func (c *CustommusicscoretagClient) Create() *CustommusicscoretagCreate {
+	mutation := newCustommusicscoretagMutation(c.config, OpCreate)
+	return &CustommusicscoretagCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Custommusicscoretag entities.
+func (c *CustommusicscoretagClient) CreateBulk(builders ...*CustommusicscoretagCreate) *CustommusicscoretagCreateBulk {
+	return &CustommusicscoretagCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustommusicscoretagClient) MapCreateBulk(slice any, setFunc func(*CustommusicscoretagCreate, int)) *CustommusicscoretagCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustommusicscoretagCreateBulk{err: fmt.Errorf("calling to CustommusicscoretagClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustommusicscoretagCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustommusicscoretagCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Custommusicscoretag.
+func (c *CustommusicscoretagClient) Update() *CustommusicscoretagUpdate {
+	mutation := newCustommusicscoretagMutation(c.config, OpUpdate)
+	return &CustommusicscoretagUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustommusicscoretagClient) UpdateOne(_m *Custommusicscoretag) *CustommusicscoretagUpdateOne {
+	mutation := newCustommusicscoretagMutation(c.config, OpUpdateOne, withCustommusicscoretag(_m))
+	return &CustommusicscoretagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustommusicscoretagClient) UpdateOneID(id int) *CustommusicscoretagUpdateOne {
+	mutation := newCustommusicscoretagMutation(c.config, OpUpdateOne, withCustommusicscoretagID(id))
+	return &CustommusicscoretagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Custommusicscoretag.
+func (c *CustommusicscoretagClient) Delete() *CustommusicscoretagDelete {
+	mutation := newCustommusicscoretagMutation(c.config, OpDelete)
+	return &CustommusicscoretagDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustommusicscoretagClient) DeleteOne(_m *Custommusicscoretag) *CustommusicscoretagDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustommusicscoretagClient) DeleteOneID(id int) *CustommusicscoretagDeleteOne {
+	builder := c.Delete().Where(custommusicscoretag.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustommusicscoretagDeleteOne{builder}
+}
+
+// Query returns a query builder for Custommusicscoretag.
+func (c *CustommusicscoretagClient) Query() *CustommusicscoretagQuery {
+	return &CustommusicscoretagQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustommusicscoretag},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Custommusicscoretag entity by its id.
+func (c *CustommusicscoretagClient) Get(ctx context.Context, id int) (*Custommusicscoretag, error) {
+	return c.Query().Where(custommusicscoretag.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustommusicscoretagClient) GetX(ctx context.Context, id int) *Custommusicscoretag {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CustommusicscoretagClient) Hooks() []Hook {
+	return c.hooks.Custommusicscoretag
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustommusicscoretagClient) Interceptors() []Interceptor {
+	return c.inters.Custommusicscoretag
+}
+
+func (c *CustommusicscoretagClient) mutate(ctx context.Context, m *CustommusicscoretagMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustommusicscoretagCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustommusicscoretagUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustommusicscoretagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustommusicscoretagDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Custommusicscoretag mutation op: %q", m.Op())
 	}
 }
 
@@ -7267,6 +7639,272 @@ func (c *MysekaicharactertalkfixturecommonClient) mutate(ctx context.Context, m 
 	}
 }
 
+// MysekaicharactertalkfixturecommonmysekaifixturegroupClient is a client for the Mysekaicharactertalkfixturecommonmysekaifixturegroup schema.
+type MysekaicharactertalkfixturecommonmysekaifixturegroupClient struct {
+	config
+}
+
+// NewMysekaicharactertalkfixturecommonmysekaifixturegroupClient returns a client for the Mysekaicharactertalkfixturecommonmysekaifixturegroup from the given config.
+func NewMysekaicharactertalkfixturecommonmysekaifixturegroupClient(c config) *MysekaicharactertalkfixturecommonmysekaifixturegroupClient {
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaicharactertalkfixturecommonmysekaifixturegroup.Hooks(f(g(h())))`.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaicharactertalkfixturecommonmysekaifixturegroup = append(c.hooks.Mysekaicharactertalkfixturecommonmysekaifixturegroup, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaicharactertalkfixturecommonmysekaifixturegroup.Intercept(f(g(h())))`.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaicharactertalkfixturecommonmysekaifixturegroup = append(c.inters.Mysekaicharactertalkfixturecommonmysekaifixturegroup, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaicharactertalkfixturecommonmysekaifixturegroup entity.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Create() *MysekaicharactertalkfixturecommonmysekaifixturegroupCreate {
+	mutation := newMysekaicharactertalkfixturecommonmysekaifixturegroupMutation(c.config, OpCreate)
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaicharactertalkfixturecommonmysekaifixturegroup entities.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) CreateBulk(builders ...*MysekaicharactertalkfixturecommonmysekaifixturegroupCreate) *MysekaicharactertalkfixturecommonmysekaifixturegroupCreateBulk {
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) MapCreateBulk(slice any, setFunc func(*MysekaicharactertalkfixturecommonmysekaifixturegroupCreate, int)) *MysekaicharactertalkfixturecommonmysekaifixturegroupCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaicharactertalkfixturecommonmysekaifixturegroupCreateBulk{err: fmt.Errorf("calling to MysekaicharactertalkfixturecommonmysekaifixturegroupClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaicharactertalkfixturecommonmysekaifixturegroupCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaicharactertalkfixturecommonmysekaifixturegroup.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Update() *MysekaicharactertalkfixturecommonmysekaifixturegroupUpdate {
+	mutation := newMysekaicharactertalkfixturecommonmysekaifixturegroupMutation(c.config, OpUpdate)
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) UpdateOne(_m *Mysekaicharactertalkfixturecommonmysekaifixturegroup) *MysekaicharactertalkfixturecommonmysekaifixturegroupUpdateOne {
+	mutation := newMysekaicharactertalkfixturecommonmysekaifixturegroupMutation(c.config, OpUpdateOne, withMysekaicharactertalkfixturecommonmysekaifixturegroup(_m))
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) UpdateOneID(id int) *MysekaicharactertalkfixturecommonmysekaifixturegroupUpdateOne {
+	mutation := newMysekaicharactertalkfixturecommonmysekaifixturegroupMutation(c.config, OpUpdateOne, withMysekaicharactertalkfixturecommonmysekaifixturegroupID(id))
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaicharactertalkfixturecommonmysekaifixturegroup.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Delete() *MysekaicharactertalkfixturecommonmysekaifixturegroupDelete {
+	mutation := newMysekaicharactertalkfixturecommonmysekaifixturegroupMutation(c.config, OpDelete)
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) DeleteOne(_m *Mysekaicharactertalkfixturecommonmysekaifixturegroup) *MysekaicharactertalkfixturecommonmysekaifixturegroupDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) DeleteOneID(id int) *MysekaicharactertalkfixturecommonmysekaifixturegroupDeleteOne {
+	builder := c.Delete().Where(mysekaicharactertalkfixturecommonmysekaifixturegroup.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaicharactertalkfixturecommonmysekaifixturegroup.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Query() *MysekaicharactertalkfixturecommonmysekaifixturegroupQuery {
+	return &MysekaicharactertalkfixturecommonmysekaifixturegroupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaicharactertalkfixturecommonmysekaifixturegroup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaicharactertalkfixturecommonmysekaifixturegroup entity by its id.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Get(ctx context.Context, id int) (*Mysekaicharactertalkfixturecommonmysekaifixturegroup, error) {
+	return c.Query().Where(mysekaicharactertalkfixturecommonmysekaifixturegroup.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) GetX(ctx context.Context, id int) *Mysekaicharactertalkfixturecommonmysekaifixturegroup {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Hooks() []Hook {
+	return c.hooks.Mysekaicharactertalkfixturecommonmysekaifixturegroup
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaicharactertalkfixturecommonmysekaifixturegroup
+}
+
+func (c *MysekaicharactertalkfixturecommonmysekaifixturegroupClient) mutate(ctx context.Context, m *MysekaicharactertalkfixturecommonmysekaifixturegroupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaicharactertalkfixturecommonmysekaifixturegroupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaicharactertalkfixturecommonmysekaifixturegroupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaicharactertalkfixturecommonmysekaifixturegroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaicharactertalkfixturecommonmysekaifixturegroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaicharactertalkfixturecommonmysekaifixturegroup mutation op: %q", m.Op())
+	}
+}
+
+// MysekaicustomfixtureClient is a client for the Mysekaicustomfixture schema.
+type MysekaicustomfixtureClient struct {
+	config
+}
+
+// NewMysekaicustomfixtureClient returns a client for the Mysekaicustomfixture from the given config.
+func NewMysekaicustomfixtureClient(c config) *MysekaicustomfixtureClient {
+	return &MysekaicustomfixtureClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaicustomfixture.Hooks(f(g(h())))`.
+func (c *MysekaicustomfixtureClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaicustomfixture = append(c.hooks.Mysekaicustomfixture, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaicustomfixture.Intercept(f(g(h())))`.
+func (c *MysekaicustomfixtureClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaicustomfixture = append(c.inters.Mysekaicustomfixture, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaicustomfixture entity.
+func (c *MysekaicustomfixtureClient) Create() *MysekaicustomfixtureCreate {
+	mutation := newMysekaicustomfixtureMutation(c.config, OpCreate)
+	return &MysekaicustomfixtureCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaicustomfixture entities.
+func (c *MysekaicustomfixtureClient) CreateBulk(builders ...*MysekaicustomfixtureCreate) *MysekaicustomfixtureCreateBulk {
+	return &MysekaicustomfixtureCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaicustomfixtureClient) MapCreateBulk(slice any, setFunc func(*MysekaicustomfixtureCreate, int)) *MysekaicustomfixtureCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaicustomfixtureCreateBulk{err: fmt.Errorf("calling to MysekaicustomfixtureClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaicustomfixtureCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaicustomfixtureCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaicustomfixture.
+func (c *MysekaicustomfixtureClient) Update() *MysekaicustomfixtureUpdate {
+	mutation := newMysekaicustomfixtureMutation(c.config, OpUpdate)
+	return &MysekaicustomfixtureUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaicustomfixtureClient) UpdateOne(_m *Mysekaicustomfixture) *MysekaicustomfixtureUpdateOne {
+	mutation := newMysekaicustomfixtureMutation(c.config, OpUpdateOne, withMysekaicustomfixture(_m))
+	return &MysekaicustomfixtureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaicustomfixtureClient) UpdateOneID(id int) *MysekaicustomfixtureUpdateOne {
+	mutation := newMysekaicustomfixtureMutation(c.config, OpUpdateOne, withMysekaicustomfixtureID(id))
+	return &MysekaicustomfixtureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaicustomfixture.
+func (c *MysekaicustomfixtureClient) Delete() *MysekaicustomfixtureDelete {
+	mutation := newMysekaicustomfixtureMutation(c.config, OpDelete)
+	return &MysekaicustomfixtureDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaicustomfixtureClient) DeleteOne(_m *Mysekaicustomfixture) *MysekaicustomfixtureDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaicustomfixtureClient) DeleteOneID(id int) *MysekaicustomfixtureDeleteOne {
+	builder := c.Delete().Where(mysekaicustomfixture.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaicustomfixtureDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaicustomfixture.
+func (c *MysekaicustomfixtureClient) Query() *MysekaicustomfixtureQuery {
+	return &MysekaicustomfixtureQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaicustomfixture},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaicustomfixture entity by its id.
+func (c *MysekaicustomfixtureClient) Get(ctx context.Context, id int) (*Mysekaicustomfixture, error) {
+	return c.Query().Where(mysekaicustomfixture.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaicustomfixtureClient) GetX(ctx context.Context, id int) *Mysekaicustomfixture {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaicustomfixtureClient) Hooks() []Hook {
+	return c.hooks.Mysekaicustomfixture
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaicustomfixtureClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaicustomfixture
+}
+
+func (c *MysekaicustomfixtureClient) mutate(ctx context.Context, m *MysekaicustomfixtureMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaicustomfixtureCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaicustomfixtureUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaicustomfixtureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaicustomfixtureDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaicustomfixture mutation op: %q", m.Op())
+	}
+}
+
 // MysekaifixtureClient is a client for the Mysekaifixture schema.
 type MysekaifixtureClient struct {
 	config
@@ -7530,6 +8168,139 @@ func (c *MysekaifixturegamecharactergroupClient) mutate(ctx context.Context, m *
 		return (&MysekaifixturegamecharactergroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Mysekaifixturegamecharactergroup mutation op: %q", m.Op())
+	}
+}
+
+// MysekaifixturegamecharactergroupperformancebonuseClient is a client for the Mysekaifixturegamecharactergroupperformancebonuse schema.
+type MysekaifixturegamecharactergroupperformancebonuseClient struct {
+	config
+}
+
+// NewMysekaifixturegamecharactergroupperformancebonuseClient returns a client for the Mysekaifixturegamecharactergroupperformancebonuse from the given config.
+func NewMysekaifixturegamecharactergroupperformancebonuseClient(c config) *MysekaifixturegamecharactergroupperformancebonuseClient {
+	return &MysekaifixturegamecharactergroupperformancebonuseClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaifixturegamecharactergroupperformancebonuse.Hooks(f(g(h())))`.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaifixturegamecharactergroupperformancebonuse = append(c.hooks.Mysekaifixturegamecharactergroupperformancebonuse, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaifixturegamecharactergroupperformancebonuse.Intercept(f(g(h())))`.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaifixturegamecharactergroupperformancebonuse = append(c.inters.Mysekaifixturegamecharactergroupperformancebonuse, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaifixturegamecharactergroupperformancebonuse entity.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Create() *MysekaifixturegamecharactergroupperformancebonuseCreate {
+	mutation := newMysekaifixturegamecharactergroupperformancebonuseMutation(c.config, OpCreate)
+	return &MysekaifixturegamecharactergroupperformancebonuseCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaifixturegamecharactergroupperformancebonuse entities.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) CreateBulk(builders ...*MysekaifixturegamecharactergroupperformancebonuseCreate) *MysekaifixturegamecharactergroupperformancebonuseCreateBulk {
+	return &MysekaifixturegamecharactergroupperformancebonuseCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) MapCreateBulk(slice any, setFunc func(*MysekaifixturegamecharactergroupperformancebonuseCreate, int)) *MysekaifixturegamecharactergroupperformancebonuseCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaifixturegamecharactergroupperformancebonuseCreateBulk{err: fmt.Errorf("calling to MysekaifixturegamecharactergroupperformancebonuseClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaifixturegamecharactergroupperformancebonuseCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaifixturegamecharactergroupperformancebonuseCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaifixturegamecharactergroupperformancebonuse.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Update() *MysekaifixturegamecharactergroupperformancebonuseUpdate {
+	mutation := newMysekaifixturegamecharactergroupperformancebonuseMutation(c.config, OpUpdate)
+	return &MysekaifixturegamecharactergroupperformancebonuseUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) UpdateOne(_m *Mysekaifixturegamecharactergroupperformancebonuse) *MysekaifixturegamecharactergroupperformancebonuseUpdateOne {
+	mutation := newMysekaifixturegamecharactergroupperformancebonuseMutation(c.config, OpUpdateOne, withMysekaifixturegamecharactergroupperformancebonuse(_m))
+	return &MysekaifixturegamecharactergroupperformancebonuseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) UpdateOneID(id int) *MysekaifixturegamecharactergroupperformancebonuseUpdateOne {
+	mutation := newMysekaifixturegamecharactergroupperformancebonuseMutation(c.config, OpUpdateOne, withMysekaifixturegamecharactergroupperformancebonuseID(id))
+	return &MysekaifixturegamecharactergroupperformancebonuseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaifixturegamecharactergroupperformancebonuse.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Delete() *MysekaifixturegamecharactergroupperformancebonuseDelete {
+	mutation := newMysekaifixturegamecharactergroupperformancebonuseMutation(c.config, OpDelete)
+	return &MysekaifixturegamecharactergroupperformancebonuseDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) DeleteOne(_m *Mysekaifixturegamecharactergroupperformancebonuse) *MysekaifixturegamecharactergroupperformancebonuseDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) DeleteOneID(id int) *MysekaifixturegamecharactergroupperformancebonuseDeleteOne {
+	builder := c.Delete().Where(mysekaifixturegamecharactergroupperformancebonuse.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaifixturegamecharactergroupperformancebonuseDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaifixturegamecharactergroupperformancebonuse.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Query() *MysekaifixturegamecharactergroupperformancebonuseQuery {
+	return &MysekaifixturegamecharactergroupperformancebonuseQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaifixturegamecharactergroupperformancebonuse},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaifixturegamecharactergroupperformancebonuse entity by its id.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Get(ctx context.Context, id int) (*Mysekaifixturegamecharactergroupperformancebonuse, error) {
+	return c.Query().Where(mysekaifixturegamecharactergroupperformancebonuse.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) GetX(ctx context.Context, id int) *Mysekaifixturegamecharactergroupperformancebonuse {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Hooks() []Hook {
+	return c.hooks.Mysekaifixturegamecharactergroupperformancebonuse
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaifixturegamecharactergroupperformancebonuse
+}
+
+func (c *MysekaifixturegamecharactergroupperformancebonuseClient) mutate(ctx context.Context, m *MysekaifixturegamecharactergroupperformancebonuseMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaifixturegamecharactergroupperformancebonuseCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaifixturegamecharactergroupperformancebonuseUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaifixturegamecharactergroupperformancebonuseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaifixturegamecharactergroupperformancebonuseDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaifixturegamecharactergroupperformancebonuse mutation op: %q", m.Op())
 	}
 }
 
@@ -8464,6 +9235,139 @@ func (c *MysekaigatecharacterlotterieClient) mutate(ctx context.Context, m *Myse
 	}
 }
 
+// MysekaigatecommonskinClient is a client for the Mysekaigatecommonskin schema.
+type MysekaigatecommonskinClient struct {
+	config
+}
+
+// NewMysekaigatecommonskinClient returns a client for the Mysekaigatecommonskin from the given config.
+func NewMysekaigatecommonskinClient(c config) *MysekaigatecommonskinClient {
+	return &MysekaigatecommonskinClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaigatecommonskin.Hooks(f(g(h())))`.
+func (c *MysekaigatecommonskinClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaigatecommonskin = append(c.hooks.Mysekaigatecommonskin, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaigatecommonskin.Intercept(f(g(h())))`.
+func (c *MysekaigatecommonskinClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaigatecommonskin = append(c.inters.Mysekaigatecommonskin, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaigatecommonskin entity.
+func (c *MysekaigatecommonskinClient) Create() *MysekaigatecommonskinCreate {
+	mutation := newMysekaigatecommonskinMutation(c.config, OpCreate)
+	return &MysekaigatecommonskinCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaigatecommonskin entities.
+func (c *MysekaigatecommonskinClient) CreateBulk(builders ...*MysekaigatecommonskinCreate) *MysekaigatecommonskinCreateBulk {
+	return &MysekaigatecommonskinCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaigatecommonskinClient) MapCreateBulk(slice any, setFunc func(*MysekaigatecommonskinCreate, int)) *MysekaigatecommonskinCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaigatecommonskinCreateBulk{err: fmt.Errorf("calling to MysekaigatecommonskinClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaigatecommonskinCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaigatecommonskinCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaigatecommonskin.
+func (c *MysekaigatecommonskinClient) Update() *MysekaigatecommonskinUpdate {
+	mutation := newMysekaigatecommonskinMutation(c.config, OpUpdate)
+	return &MysekaigatecommonskinUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaigatecommonskinClient) UpdateOne(_m *Mysekaigatecommonskin) *MysekaigatecommonskinUpdateOne {
+	mutation := newMysekaigatecommonskinMutation(c.config, OpUpdateOne, withMysekaigatecommonskin(_m))
+	return &MysekaigatecommonskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaigatecommonskinClient) UpdateOneID(id int) *MysekaigatecommonskinUpdateOne {
+	mutation := newMysekaigatecommonskinMutation(c.config, OpUpdateOne, withMysekaigatecommonskinID(id))
+	return &MysekaigatecommonskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaigatecommonskin.
+func (c *MysekaigatecommonskinClient) Delete() *MysekaigatecommonskinDelete {
+	mutation := newMysekaigatecommonskinMutation(c.config, OpDelete)
+	return &MysekaigatecommonskinDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaigatecommonskinClient) DeleteOne(_m *Mysekaigatecommonskin) *MysekaigatecommonskinDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaigatecommonskinClient) DeleteOneID(id int) *MysekaigatecommonskinDeleteOne {
+	builder := c.Delete().Where(mysekaigatecommonskin.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaigatecommonskinDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaigatecommonskin.
+func (c *MysekaigatecommonskinClient) Query() *MysekaigatecommonskinQuery {
+	return &MysekaigatecommonskinQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaigatecommonskin},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaigatecommonskin entity by its id.
+func (c *MysekaigatecommonskinClient) Get(ctx context.Context, id int) (*Mysekaigatecommonskin, error) {
+	return c.Query().Where(mysekaigatecommonskin.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaigatecommonskinClient) GetX(ctx context.Context, id int) *Mysekaigatecommonskin {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaigatecommonskinClient) Hooks() []Hook {
+	return c.hooks.Mysekaigatecommonskin
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaigatecommonskinClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaigatecommonskin
+}
+
+func (c *MysekaigatecommonskinClient) mutate(ctx context.Context, m *MysekaigatecommonskinMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaigatecommonskinCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaigatecommonskinUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaigatecommonskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaigatecommonskinDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaigatecommonskin mutation op: %q", m.Op())
+	}
+}
+
 // MysekaigatelevelClient is a client for the Mysekaigatelevel schema.
 type MysekaigatelevelClient struct {
 	config
@@ -8727,6 +9631,272 @@ func (c *MysekaigatematerialgroupClient) mutate(ctx context.Context, m *Mysekaig
 		return (&MysekaigatematerialgroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Mysekaigatematerialgroup mutation op: %q", m.Op())
+	}
+}
+
+// MysekaigateskinClient is a client for the Mysekaigateskin schema.
+type MysekaigateskinClient struct {
+	config
+}
+
+// NewMysekaigateskinClient returns a client for the Mysekaigateskin from the given config.
+func NewMysekaigateskinClient(c config) *MysekaigateskinClient {
+	return &MysekaigateskinClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaigateskin.Hooks(f(g(h())))`.
+func (c *MysekaigateskinClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaigateskin = append(c.hooks.Mysekaigateskin, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaigateskin.Intercept(f(g(h())))`.
+func (c *MysekaigateskinClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaigateskin = append(c.inters.Mysekaigateskin, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaigateskin entity.
+func (c *MysekaigateskinClient) Create() *MysekaigateskinCreate {
+	mutation := newMysekaigateskinMutation(c.config, OpCreate)
+	return &MysekaigateskinCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaigateskin entities.
+func (c *MysekaigateskinClient) CreateBulk(builders ...*MysekaigateskinCreate) *MysekaigateskinCreateBulk {
+	return &MysekaigateskinCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaigateskinClient) MapCreateBulk(slice any, setFunc func(*MysekaigateskinCreate, int)) *MysekaigateskinCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaigateskinCreateBulk{err: fmt.Errorf("calling to MysekaigateskinClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaigateskinCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaigateskinCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaigateskin.
+func (c *MysekaigateskinClient) Update() *MysekaigateskinUpdate {
+	mutation := newMysekaigateskinMutation(c.config, OpUpdate)
+	return &MysekaigateskinUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaigateskinClient) UpdateOne(_m *Mysekaigateskin) *MysekaigateskinUpdateOne {
+	mutation := newMysekaigateskinMutation(c.config, OpUpdateOne, withMysekaigateskin(_m))
+	return &MysekaigateskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaigateskinClient) UpdateOneID(id int) *MysekaigateskinUpdateOne {
+	mutation := newMysekaigateskinMutation(c.config, OpUpdateOne, withMysekaigateskinID(id))
+	return &MysekaigateskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaigateskin.
+func (c *MysekaigateskinClient) Delete() *MysekaigateskinDelete {
+	mutation := newMysekaigateskinMutation(c.config, OpDelete)
+	return &MysekaigateskinDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaigateskinClient) DeleteOne(_m *Mysekaigateskin) *MysekaigateskinDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaigateskinClient) DeleteOneID(id int) *MysekaigateskinDeleteOne {
+	builder := c.Delete().Where(mysekaigateskin.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaigateskinDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaigateskin.
+func (c *MysekaigateskinClient) Query() *MysekaigateskinQuery {
+	return &MysekaigateskinQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaigateskin},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaigateskin entity by its id.
+func (c *MysekaigateskinClient) Get(ctx context.Context, id int) (*Mysekaigateskin, error) {
+	return c.Query().Where(mysekaigateskin.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaigateskinClient) GetX(ctx context.Context, id int) *Mysekaigateskin {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaigateskinClient) Hooks() []Hook {
+	return c.hooks.Mysekaigateskin
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaigateskinClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaigateskin
+}
+
+func (c *MysekaigateskinClient) mutate(ctx context.Context, m *MysekaigateskinMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaigateskinCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaigateskinUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaigateskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaigateskinDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaigateskin mutation op: %q", m.Op())
+	}
+}
+
+// MysekaigateunitskinClient is a client for the Mysekaigateunitskin schema.
+type MysekaigateunitskinClient struct {
+	config
+}
+
+// NewMysekaigateunitskinClient returns a client for the Mysekaigateunitskin from the given config.
+func NewMysekaigateunitskinClient(c config) *MysekaigateunitskinClient {
+	return &MysekaigateunitskinClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaigateunitskin.Hooks(f(g(h())))`.
+func (c *MysekaigateunitskinClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaigateunitskin = append(c.hooks.Mysekaigateunitskin, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaigateunitskin.Intercept(f(g(h())))`.
+func (c *MysekaigateunitskinClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaigateunitskin = append(c.inters.Mysekaigateunitskin, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaigateunitskin entity.
+func (c *MysekaigateunitskinClient) Create() *MysekaigateunitskinCreate {
+	mutation := newMysekaigateunitskinMutation(c.config, OpCreate)
+	return &MysekaigateunitskinCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaigateunitskin entities.
+func (c *MysekaigateunitskinClient) CreateBulk(builders ...*MysekaigateunitskinCreate) *MysekaigateunitskinCreateBulk {
+	return &MysekaigateunitskinCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaigateunitskinClient) MapCreateBulk(slice any, setFunc func(*MysekaigateunitskinCreate, int)) *MysekaigateunitskinCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaigateunitskinCreateBulk{err: fmt.Errorf("calling to MysekaigateunitskinClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaigateunitskinCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaigateunitskinCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaigateunitskin.
+func (c *MysekaigateunitskinClient) Update() *MysekaigateunitskinUpdate {
+	mutation := newMysekaigateunitskinMutation(c.config, OpUpdate)
+	return &MysekaigateunitskinUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaigateunitskinClient) UpdateOne(_m *Mysekaigateunitskin) *MysekaigateunitskinUpdateOne {
+	mutation := newMysekaigateunitskinMutation(c.config, OpUpdateOne, withMysekaigateunitskin(_m))
+	return &MysekaigateunitskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaigateunitskinClient) UpdateOneID(id int) *MysekaigateunitskinUpdateOne {
+	mutation := newMysekaigateunitskinMutation(c.config, OpUpdateOne, withMysekaigateunitskinID(id))
+	return &MysekaigateunitskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaigateunitskin.
+func (c *MysekaigateunitskinClient) Delete() *MysekaigateunitskinDelete {
+	mutation := newMysekaigateunitskinMutation(c.config, OpDelete)
+	return &MysekaigateunitskinDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaigateunitskinClient) DeleteOne(_m *Mysekaigateunitskin) *MysekaigateunitskinDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaigateunitskinClient) DeleteOneID(id int) *MysekaigateunitskinDeleteOne {
+	builder := c.Delete().Where(mysekaigateunitskin.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaigateunitskinDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaigateunitskin.
+func (c *MysekaigateunitskinClient) Query() *MysekaigateunitskinQuery {
+	return &MysekaigateunitskinQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaigateunitskin},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaigateunitskin entity by its id.
+func (c *MysekaigateunitskinClient) Get(ctx context.Context, id int) (*Mysekaigateunitskin, error) {
+	return c.Query().Where(mysekaigateunitskin.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaigateunitskinClient) GetX(ctx context.Context, id int) *Mysekaigateunitskin {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaigateunitskinClient) Hooks() []Hook {
+	return c.hooks.Mysekaigateunitskin
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaigateunitskinClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaigateunitskin
+}
+
+func (c *MysekaigateunitskinClient) mutate(ctx context.Context, m *MysekaigateunitskinMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaigateunitskinCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaigateunitskinUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaigateunitskinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaigateunitskinDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaigateunitskin mutation op: %q", m.Op())
 	}
 }
 
@@ -9794,6 +10964,139 @@ func (c *MysekaiphenomenonClient) mutate(ctx context.Context, m *Mysekaiphenomen
 	}
 }
 
+// MysekairankreleaseClient is a client for the Mysekairankrelease schema.
+type MysekairankreleaseClient struct {
+	config
+}
+
+// NewMysekairankreleaseClient returns a client for the Mysekairankrelease from the given config.
+func NewMysekairankreleaseClient(c config) *MysekairankreleaseClient {
+	return &MysekairankreleaseClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekairankrelease.Hooks(f(g(h())))`.
+func (c *MysekairankreleaseClient) Use(hooks ...Hook) {
+	c.hooks.Mysekairankrelease = append(c.hooks.Mysekairankrelease, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekairankrelease.Intercept(f(g(h())))`.
+func (c *MysekairankreleaseClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekairankrelease = append(c.inters.Mysekairankrelease, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekairankrelease entity.
+func (c *MysekairankreleaseClient) Create() *MysekairankreleaseCreate {
+	mutation := newMysekairankreleaseMutation(c.config, OpCreate)
+	return &MysekairankreleaseCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekairankrelease entities.
+func (c *MysekairankreleaseClient) CreateBulk(builders ...*MysekairankreleaseCreate) *MysekairankreleaseCreateBulk {
+	return &MysekairankreleaseCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekairankreleaseClient) MapCreateBulk(slice any, setFunc func(*MysekairankreleaseCreate, int)) *MysekairankreleaseCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekairankreleaseCreateBulk{err: fmt.Errorf("calling to MysekairankreleaseClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekairankreleaseCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekairankreleaseCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekairankrelease.
+func (c *MysekairankreleaseClient) Update() *MysekairankreleaseUpdate {
+	mutation := newMysekairankreleaseMutation(c.config, OpUpdate)
+	return &MysekairankreleaseUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekairankreleaseClient) UpdateOne(_m *Mysekairankrelease) *MysekairankreleaseUpdateOne {
+	mutation := newMysekairankreleaseMutation(c.config, OpUpdateOne, withMysekairankrelease(_m))
+	return &MysekairankreleaseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekairankreleaseClient) UpdateOneID(id int) *MysekairankreleaseUpdateOne {
+	mutation := newMysekairankreleaseMutation(c.config, OpUpdateOne, withMysekairankreleaseID(id))
+	return &MysekairankreleaseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekairankrelease.
+func (c *MysekairankreleaseClient) Delete() *MysekairankreleaseDelete {
+	mutation := newMysekairankreleaseMutation(c.config, OpDelete)
+	return &MysekairankreleaseDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekairankreleaseClient) DeleteOne(_m *Mysekairankrelease) *MysekairankreleaseDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekairankreleaseClient) DeleteOneID(id int) *MysekairankreleaseDeleteOne {
+	builder := c.Delete().Where(mysekairankrelease.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekairankreleaseDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekairankrelease.
+func (c *MysekairankreleaseClient) Query() *MysekairankreleaseQuery {
+	return &MysekairankreleaseQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekairankrelease},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekairankrelease entity by its id.
+func (c *MysekairankreleaseClient) Get(ctx context.Context, id int) (*Mysekairankrelease, error) {
+	return c.Query().Where(mysekairankrelease.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekairankreleaseClient) GetX(ctx context.Context, id int) *Mysekairankrelease {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekairankreleaseClient) Hooks() []Hook {
+	return c.hooks.Mysekairankrelease
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekairankreleaseClient) Interceptors() []Interceptor {
+	return c.inters.Mysekairankrelease
+}
+
+func (c *MysekairankreleaseClient) mutate(ctx context.Context, m *MysekairankreleaseMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekairankreleaseCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekairankreleaseUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekairankreleaseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekairankreleaseDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekairankrelease mutation op: %q", m.Op())
+	}
+}
+
 // MysekaisiteharvestfixtureClient is a client for the Mysekaisiteharvestfixture schema.
 type MysekaisiteharvestfixtureClient struct {
 	config
@@ -9924,6 +11227,272 @@ func (c *MysekaisiteharvestfixtureClient) mutate(ctx context.Context, m *Mysekai
 		return (&MysekaisiteharvestfixtureDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("sekai: unknown Mysekaisiteharvestfixture mutation op: %q", m.Op())
+	}
+}
+
+// MysekaisitelayoutClient is a client for the Mysekaisitelayout schema.
+type MysekaisitelayoutClient struct {
+	config
+}
+
+// NewMysekaisitelayoutClient returns a client for the Mysekaisitelayout from the given config.
+func NewMysekaisitelayoutClient(c config) *MysekaisitelayoutClient {
+	return &MysekaisitelayoutClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaisitelayout.Hooks(f(g(h())))`.
+func (c *MysekaisitelayoutClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaisitelayout = append(c.hooks.Mysekaisitelayout, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaisitelayout.Intercept(f(g(h())))`.
+func (c *MysekaisitelayoutClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaisitelayout = append(c.inters.Mysekaisitelayout, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaisitelayout entity.
+func (c *MysekaisitelayoutClient) Create() *MysekaisitelayoutCreate {
+	mutation := newMysekaisitelayoutMutation(c.config, OpCreate)
+	return &MysekaisitelayoutCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaisitelayout entities.
+func (c *MysekaisitelayoutClient) CreateBulk(builders ...*MysekaisitelayoutCreate) *MysekaisitelayoutCreateBulk {
+	return &MysekaisitelayoutCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaisitelayoutClient) MapCreateBulk(slice any, setFunc func(*MysekaisitelayoutCreate, int)) *MysekaisitelayoutCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaisitelayoutCreateBulk{err: fmt.Errorf("calling to MysekaisitelayoutClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaisitelayoutCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaisitelayoutCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaisitelayout.
+func (c *MysekaisitelayoutClient) Update() *MysekaisitelayoutUpdate {
+	mutation := newMysekaisitelayoutMutation(c.config, OpUpdate)
+	return &MysekaisitelayoutUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaisitelayoutClient) UpdateOne(_m *Mysekaisitelayout) *MysekaisitelayoutUpdateOne {
+	mutation := newMysekaisitelayoutMutation(c.config, OpUpdateOne, withMysekaisitelayout(_m))
+	return &MysekaisitelayoutUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaisitelayoutClient) UpdateOneID(id int) *MysekaisitelayoutUpdateOne {
+	mutation := newMysekaisitelayoutMutation(c.config, OpUpdateOne, withMysekaisitelayoutID(id))
+	return &MysekaisitelayoutUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaisitelayout.
+func (c *MysekaisitelayoutClient) Delete() *MysekaisitelayoutDelete {
+	mutation := newMysekaisitelayoutMutation(c.config, OpDelete)
+	return &MysekaisitelayoutDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaisitelayoutClient) DeleteOne(_m *Mysekaisitelayout) *MysekaisitelayoutDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaisitelayoutClient) DeleteOneID(id int) *MysekaisitelayoutDeleteOne {
+	builder := c.Delete().Where(mysekaisitelayout.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaisitelayoutDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaisitelayout.
+func (c *MysekaisitelayoutClient) Query() *MysekaisitelayoutQuery {
+	return &MysekaisitelayoutQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaisitelayout},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaisitelayout entity by its id.
+func (c *MysekaisitelayoutClient) Get(ctx context.Context, id int) (*Mysekaisitelayout, error) {
+	return c.Query().Where(mysekaisitelayout.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaisitelayoutClient) GetX(ctx context.Context, id int) *Mysekaisitelayout {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaisitelayoutClient) Hooks() []Hook {
+	return c.hooks.Mysekaisitelayout
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaisitelayoutClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaisitelayout
+}
+
+func (c *MysekaisitelayoutClient) mutate(ctx context.Context, m *MysekaisitelayoutMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaisitelayoutCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaisitelayoutUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaisitelayoutUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaisitelayoutDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaisitelayout mutation op: %q", m.Op())
+	}
+}
+
+// MysekaisitelevelClient is a client for the Mysekaisitelevel schema.
+type MysekaisitelevelClient struct {
+	config
+}
+
+// NewMysekaisitelevelClient returns a client for the Mysekaisitelevel from the given config.
+func NewMysekaisitelevelClient(c config) *MysekaisitelevelClient {
+	return &MysekaisitelevelClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mysekaisitelevel.Hooks(f(g(h())))`.
+func (c *MysekaisitelevelClient) Use(hooks ...Hook) {
+	c.hooks.Mysekaisitelevel = append(c.hooks.Mysekaisitelevel, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mysekaisitelevel.Intercept(f(g(h())))`.
+func (c *MysekaisitelevelClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Mysekaisitelevel = append(c.inters.Mysekaisitelevel, interceptors...)
+}
+
+// Create returns a builder for creating a Mysekaisitelevel entity.
+func (c *MysekaisitelevelClient) Create() *MysekaisitelevelCreate {
+	mutation := newMysekaisitelevelMutation(c.config, OpCreate)
+	return &MysekaisitelevelCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Mysekaisitelevel entities.
+func (c *MysekaisitelevelClient) CreateBulk(builders ...*MysekaisitelevelCreate) *MysekaisitelevelCreateBulk {
+	return &MysekaisitelevelCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MysekaisitelevelClient) MapCreateBulk(slice any, setFunc func(*MysekaisitelevelCreate, int)) *MysekaisitelevelCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MysekaisitelevelCreateBulk{err: fmt.Errorf("calling to MysekaisitelevelClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MysekaisitelevelCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MysekaisitelevelCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Mysekaisitelevel.
+func (c *MysekaisitelevelClient) Update() *MysekaisitelevelUpdate {
+	mutation := newMysekaisitelevelMutation(c.config, OpUpdate)
+	return &MysekaisitelevelUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MysekaisitelevelClient) UpdateOne(_m *Mysekaisitelevel) *MysekaisitelevelUpdateOne {
+	mutation := newMysekaisitelevelMutation(c.config, OpUpdateOne, withMysekaisitelevel(_m))
+	return &MysekaisitelevelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MysekaisitelevelClient) UpdateOneID(id int) *MysekaisitelevelUpdateOne {
+	mutation := newMysekaisitelevelMutation(c.config, OpUpdateOne, withMysekaisitelevelID(id))
+	return &MysekaisitelevelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Mysekaisitelevel.
+func (c *MysekaisitelevelClient) Delete() *MysekaisitelevelDelete {
+	mutation := newMysekaisitelevelMutation(c.config, OpDelete)
+	return &MysekaisitelevelDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MysekaisitelevelClient) DeleteOne(_m *Mysekaisitelevel) *MysekaisitelevelDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MysekaisitelevelClient) DeleteOneID(id int) *MysekaisitelevelDeleteOne {
+	builder := c.Delete().Where(mysekaisitelevel.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MysekaisitelevelDeleteOne{builder}
+}
+
+// Query returns a query builder for Mysekaisitelevel.
+func (c *MysekaisitelevelClient) Query() *MysekaisitelevelQuery {
+	return &MysekaisitelevelQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMysekaisitelevel},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Mysekaisitelevel entity by its id.
+func (c *MysekaisitelevelClient) Get(ctx context.Context, id int) (*Mysekaisitelevel, error) {
+	return c.Query().Where(mysekaisitelevel.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MysekaisitelevelClient) GetX(ctx context.Context, id int) *Mysekaisitelevel {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MysekaisitelevelClient) Hooks() []Hook {
+	return c.hooks.Mysekaisitelevel
+}
+
+// Interceptors returns the client interceptors.
+func (c *MysekaisitelevelClient) Interceptors() []Interceptor {
+	return c.inters.Mysekaisitelevel
+}
+
+func (c *MysekaisitelevelClient) mutate(ctx context.Context, m *MysekaisitelevelMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MysekaisitelevelCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MysekaisitelevelUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MysekaisitelevelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MysekaisitelevelDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Mysekaisitelevel mutation op: %q", m.Op())
 	}
 }
 
@@ -11523,54 +13092,197 @@ func (c *WorldbloomsupportdeckbonuseClient) mutate(ctx context.Context, m *World
 	}
 }
 
+// WorldbloomsupportdeckuniteventlimitedbonuseClient is a client for the Worldbloomsupportdeckuniteventlimitedbonuse schema.
+type WorldbloomsupportdeckuniteventlimitedbonuseClient struct {
+	config
+}
+
+// NewWorldbloomsupportdeckuniteventlimitedbonuseClient returns a client for the Worldbloomsupportdeckuniteventlimitedbonuse from the given config.
+func NewWorldbloomsupportdeckuniteventlimitedbonuseClient(c config) *WorldbloomsupportdeckuniteventlimitedbonuseClient {
+	return &WorldbloomsupportdeckuniteventlimitedbonuseClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `worldbloomsupportdeckuniteventlimitedbonuse.Hooks(f(g(h())))`.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Use(hooks ...Hook) {
+	c.hooks.Worldbloomsupportdeckuniteventlimitedbonuse = append(c.hooks.Worldbloomsupportdeckuniteventlimitedbonuse, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `worldbloomsupportdeckuniteventlimitedbonuse.Intercept(f(g(h())))`.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Worldbloomsupportdeckuniteventlimitedbonuse = append(c.inters.Worldbloomsupportdeckuniteventlimitedbonuse, interceptors...)
+}
+
+// Create returns a builder for creating a Worldbloomsupportdeckuniteventlimitedbonuse entity.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Create() *WorldbloomsupportdeckuniteventlimitedbonuseCreate {
+	mutation := newWorldbloomsupportdeckuniteventlimitedbonuseMutation(c.config, OpCreate)
+	return &WorldbloomsupportdeckuniteventlimitedbonuseCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Worldbloomsupportdeckuniteventlimitedbonuse entities.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) CreateBulk(builders ...*WorldbloomsupportdeckuniteventlimitedbonuseCreate) *WorldbloomsupportdeckuniteventlimitedbonuseCreateBulk {
+	return &WorldbloomsupportdeckuniteventlimitedbonuseCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) MapCreateBulk(slice any, setFunc func(*WorldbloomsupportdeckuniteventlimitedbonuseCreate, int)) *WorldbloomsupportdeckuniteventlimitedbonuseCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorldbloomsupportdeckuniteventlimitedbonuseCreateBulk{err: fmt.Errorf("calling to WorldbloomsupportdeckuniteventlimitedbonuseClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorldbloomsupportdeckuniteventlimitedbonuseCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorldbloomsupportdeckuniteventlimitedbonuseCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Worldbloomsupportdeckuniteventlimitedbonuse.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Update() *WorldbloomsupportdeckuniteventlimitedbonuseUpdate {
+	mutation := newWorldbloomsupportdeckuniteventlimitedbonuseMutation(c.config, OpUpdate)
+	return &WorldbloomsupportdeckuniteventlimitedbonuseUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) UpdateOne(_m *Worldbloomsupportdeckuniteventlimitedbonuse) *WorldbloomsupportdeckuniteventlimitedbonuseUpdateOne {
+	mutation := newWorldbloomsupportdeckuniteventlimitedbonuseMutation(c.config, OpUpdateOne, withWorldbloomsupportdeckuniteventlimitedbonuse(_m))
+	return &WorldbloomsupportdeckuniteventlimitedbonuseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) UpdateOneID(id int) *WorldbloomsupportdeckuniteventlimitedbonuseUpdateOne {
+	mutation := newWorldbloomsupportdeckuniteventlimitedbonuseMutation(c.config, OpUpdateOne, withWorldbloomsupportdeckuniteventlimitedbonuseID(id))
+	return &WorldbloomsupportdeckuniteventlimitedbonuseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Worldbloomsupportdeckuniteventlimitedbonuse.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Delete() *WorldbloomsupportdeckuniteventlimitedbonuseDelete {
+	mutation := newWorldbloomsupportdeckuniteventlimitedbonuseMutation(c.config, OpDelete)
+	return &WorldbloomsupportdeckuniteventlimitedbonuseDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) DeleteOne(_m *Worldbloomsupportdeckuniteventlimitedbonuse) *WorldbloomsupportdeckuniteventlimitedbonuseDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) DeleteOneID(id int) *WorldbloomsupportdeckuniteventlimitedbonuseDeleteOne {
+	builder := c.Delete().Where(worldbloomsupportdeckuniteventlimitedbonuse.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorldbloomsupportdeckuniteventlimitedbonuseDeleteOne{builder}
+}
+
+// Query returns a query builder for Worldbloomsupportdeckuniteventlimitedbonuse.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Query() *WorldbloomsupportdeckuniteventlimitedbonuseQuery {
+	return &WorldbloomsupportdeckuniteventlimitedbonuseQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorldbloomsupportdeckuniteventlimitedbonuse},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Worldbloomsupportdeckuniteventlimitedbonuse entity by its id.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Get(ctx context.Context, id int) (*Worldbloomsupportdeckuniteventlimitedbonuse, error) {
+	return c.Query().Where(worldbloomsupportdeckuniteventlimitedbonuse.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) GetX(ctx context.Context, id int) *Worldbloomsupportdeckuniteventlimitedbonuse {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Hooks() []Hook {
+	return c.hooks.Worldbloomsupportdeckuniteventlimitedbonuse
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) Interceptors() []Interceptor {
+	return c.inters.Worldbloomsupportdeckuniteventlimitedbonuse
+}
+
+func (c *WorldbloomsupportdeckuniteventlimitedbonuseClient) mutate(ctx context.Context, m *WorldbloomsupportdeckuniteventlimitedbonuseMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorldbloomsupportdeckuniteventlimitedbonuseCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorldbloomsupportdeckuniteventlimitedbonuseUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorldbloomsupportdeckuniteventlimitedbonuseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorldbloomsupportdeckuniteventlimitedbonuseDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("sekai: unknown Worldbloomsupportdeckuniteventlimitedbonuse mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
 		Area, Areaitem, Areaitemlevel, Bond, Bondshonor, Boostitem, Card, Cardcostume3D,
 		Cardepisode, Cardmysekaicanvasbonuse, Cardraritie, Cardsupplie,
-		Challengelivehighscorereward, Character2D, Charactermissionv2Parametergroup,
-		Characterrank, Cheerfulcarnivalteam, Costume3D, Event, Eventcard,
-		Eventdeckbonuse, Eventexchangesummarie, Eventitem, Eventmusic,
+		Challengelivehighscorereward, Character2D,
+		Characterarchivemysekaicharactertalkgroup, Charactermissionv2Parametergroup,
+		Characterrank, Cheerfulcarnivalteam, Costume3D, Custommusicscoretag, Event,
+		Eventcard, Eventdeckbonuse, Eventexchangesummarie, Eventitem, Eventmusic,
 		Eventraritybonusrate, Eventstorie, Eventstoryunit, Gacha, Gachaceilitem,
 		Gachaticket, Gamecharacter, Gamecharacterunit, Honor, Honorgroup, Level,
 		Limitedtimemusic, Masterlesson, Music, MusicArtist, Musicdifficultie, Musictag,
 		Musicvocal, Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost,
 		Mysekaicharactertalk, Mysekaicharactertalkcondition,
 		Mysekaicharactertalkconditiongroup, Mysekaicharactertalkfixturecommon,
-		Mysekaifixture, Mysekaifixturegamecharactergroup, Mysekaifixturemaingenre,
+		Mysekaicharactertalkfixturecommonmysekaifixturegroup, Mysekaicustomfixture,
+		Mysekaifixture, Mysekaifixturegamecharactergroup,
+		Mysekaifixturegamecharactergroupperformancebonuse, Mysekaifixturemaingenre,
 		Mysekaifixtureonlydisassemblematerial, Mysekaifixturesubgenre,
 		Mysekaifixturetag, Mysekaigamecharacterunitgroup, Mysekaigate,
-		Mysekaigatecharacterlotterie, Mysekaigatelevel, Mysekaigatematerialgroup,
+		Mysekaigatecharacterlotterie, Mysekaigatecommonskin, Mysekaigatelevel,
+		Mysekaigatematerialgroup, Mysekaigateskin, Mysekaigateunitskin,
 		Mysekaihousingcompetition, Mysekaiitem, Mysekaimaterial,
 		Mysekaimaterialgamecharacterrelation, Mysekaimusicrecord,
 		Mysekaimusicrecordcategorie, Mysekaiphenomenabackgroundcolor,
-		Mysekaiphenomenon, Mysekaisiteharvestfixture, Ngword, Outsidecharacter,
-		Playerframe, Playerframegroup, Resourceboxe, Shopitem, Skill, Stamp,
-		Virtuallive, Worldbloom, Worldbloomdifferentattributebonuse,
-		Worldbloomsupportdeckbonuse []ent.Hook
+		Mysekaiphenomenon, Mysekairankrelease, Mysekaisiteharvestfixture,
+		Mysekaisitelayout, Mysekaisitelevel, Ngword, Outsidecharacter, Playerframe,
+		Playerframegroup, Resourceboxe, Shopitem, Skill, Stamp, Virtuallive,
+		Worldbloom, Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse,
+		Worldbloomsupportdeckuniteventlimitedbonuse []ent.Hook
 	}
 	inters struct {
 		Area, Areaitem, Areaitemlevel, Bond, Bondshonor, Boostitem, Card, Cardcostume3D,
 		Cardepisode, Cardmysekaicanvasbonuse, Cardraritie, Cardsupplie,
-		Challengelivehighscorereward, Character2D, Charactermissionv2Parametergroup,
-		Characterrank, Cheerfulcarnivalteam, Costume3D, Event, Eventcard,
-		Eventdeckbonuse, Eventexchangesummarie, Eventitem, Eventmusic,
+		Challengelivehighscorereward, Character2D,
+		Characterarchivemysekaicharactertalkgroup, Charactermissionv2Parametergroup,
+		Characterrank, Cheerfulcarnivalteam, Costume3D, Custommusicscoretag, Event,
+		Eventcard, Eventdeckbonuse, Eventexchangesummarie, Eventitem, Eventmusic,
 		Eventraritybonusrate, Eventstorie, Eventstoryunit, Gacha, Gachaceilitem,
 		Gachaticket, Gamecharacter, Gamecharacterunit, Honor, Honorgroup, Level,
 		Limitedtimemusic, Masterlesson, Music, MusicArtist, Musicdifficultie, Musictag,
 		Musicvocal, Mysekaiblueprint, Mysekaiblueprintmysekaimaterialcost,
 		Mysekaicharactertalk, Mysekaicharactertalkcondition,
 		Mysekaicharactertalkconditiongroup, Mysekaicharactertalkfixturecommon,
-		Mysekaifixture, Mysekaifixturegamecharactergroup, Mysekaifixturemaingenre,
+		Mysekaicharactertalkfixturecommonmysekaifixturegroup, Mysekaicustomfixture,
+		Mysekaifixture, Mysekaifixturegamecharactergroup,
+		Mysekaifixturegamecharactergroupperformancebonuse, Mysekaifixturemaingenre,
 		Mysekaifixtureonlydisassemblematerial, Mysekaifixturesubgenre,
 		Mysekaifixturetag, Mysekaigamecharacterunitgroup, Mysekaigate,
-		Mysekaigatecharacterlotterie, Mysekaigatelevel, Mysekaigatematerialgroup,
+		Mysekaigatecharacterlotterie, Mysekaigatecommonskin, Mysekaigatelevel,
+		Mysekaigatematerialgroup, Mysekaigateskin, Mysekaigateunitskin,
 		Mysekaihousingcompetition, Mysekaiitem, Mysekaimaterial,
 		Mysekaimaterialgamecharacterrelation, Mysekaimusicrecord,
 		Mysekaimusicrecordcategorie, Mysekaiphenomenabackgroundcolor,
-		Mysekaiphenomenon, Mysekaisiteharvestfixture, Ngword, Outsidecharacter,
-		Playerframe, Playerframegroup, Resourceboxe, Shopitem, Skill, Stamp,
-		Virtuallive, Worldbloom, Worldbloomdifferentattributebonuse,
-		Worldbloomsupportdeckbonuse []ent.Interceptor
+		Mysekaiphenomenon, Mysekairankrelease, Mysekaisiteharvestfixture,
+		Mysekaisitelayout, Mysekaisitelevel, Ngword, Outsidecharacter, Playerframe,
+		Playerframegroup, Resourceboxe, Shopitem, Skill, Stamp, Virtuallive,
+		Worldbloom, Worldbloomdifferentattributebonuse, Worldbloomsupportdeckbonuse,
+		Worldbloomsupportdeckuniteventlimitedbonuse []ent.Interceptor
 	}
 )

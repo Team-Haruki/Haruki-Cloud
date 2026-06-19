@@ -1,0 +1,11 @@
+[Unit]
+Description=Bootstrap Haruki secondary assets with asset-updater, then sync static extras
+After=docker.service network-online.target
+Wants=docker.service network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/data/HarukiServices/scripts/bootstrap-assets-and-extras.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

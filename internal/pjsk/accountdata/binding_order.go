@@ -106,6 +106,9 @@ func (s *BindingService) Swap(ctx context.Context, platform, platformUserID, lef
 	if err := s.requireReady(platform, platformUserID); err != nil {
 		return nil, err
 	}
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	leftSelector = normalizeUID(leftSelector)
 	rightSelector = normalizeUID(rightSelector)
 	if leftSelector == "" || rightSelector == "" {

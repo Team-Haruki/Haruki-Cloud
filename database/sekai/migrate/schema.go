@@ -382,6 +382,27 @@ var (
 			},
 		},
 	}
+	// CharacterarchivemysekaicharactertalkgroupsColumns holds the columns for the "characterarchivemysekaicharactertalkgroups" table.
+	CharacterarchivemysekaicharactertalkgroupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "archive_display_type", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CharacterarchivemysekaicharactertalkgroupsTable holds the schema information for the "characterarchivemysekaicharactertalkgroups" table.
+	CharacterarchivemysekaicharactertalkgroupsTable = &schema.Table{
+		Name:       "characterarchivemysekaicharactertalkgroups",
+		Columns:    CharacterarchivemysekaicharactertalkgroupsColumns,
+		PrimaryKey: []*schema.Column{CharacterarchivemysekaicharactertalkgroupsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "characterarchivemysekaicharactertalkgroup_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CharacterarchivemysekaicharactertalkgroupsColumns[1], CharacterarchivemysekaicharactertalkgroupsColumns[4]},
+			},
+		},
+	}
 	// Charactermissionv2parametergroupsColumns holds the columns for the "charactermissionv2parametergroups" table.
 	Charactermissionv2parametergroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -485,6 +506,28 @@ var (
 				Name:    "costume3d_game_id_server_region",
 				Unique:  true,
 				Columns: []*schema.Column{Costume3dsColumns[1], Costume3dsColumns[17]},
+			},
+		},
+	}
+	// CustommusicscoretagsColumns holds the columns for the "custommusicscoretags" table.
+	CustommusicscoretagsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "seq", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "is_official_creator_only", Type: field.TypeBool, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// CustommusicscoretagsTable holds the schema information for the "custommusicscoretags" table.
+	CustommusicscoretagsTable = &schema.Table{
+		Name:       "custommusicscoretags",
+		Columns:    CustommusicscoretagsColumns,
+		PrimaryKey: []*schema.Column{CustommusicscoretagsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "custommusicscoretag_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{CustommusicscoretagsColumns[1], CustommusicscoretagsColumns[5]},
 			},
 		},
 	}
@@ -1259,6 +1302,55 @@ var (
 			},
 		},
 	}
+	// MysekaicharactertalkfixturecommonmysekaifixturegroupsColumns holds the columns for the "mysekaicharactertalkfixturecommonmysekaifixturegroups" table.
+	MysekaicharactertalkfixturecommonmysekaifixturegroupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_fixture_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaicharactertalkfixturecommonmysekaifixturegroupsTable holds the schema information for the "mysekaicharactertalkfixturecommonmysekaifixturegroups" table.
+	MysekaicharactertalkfixturecommonmysekaifixturegroupsTable = &schema.Table{
+		Name:       "mysekaicharactertalkfixturecommonmysekaifixturegroups",
+		Columns:    MysekaicharactertalkfixturecommonmysekaifixturegroupsColumns,
+		PrimaryKey: []*schema.Column{MysekaicharactertalkfixturecommonmysekaifixturegroupsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaicharactertalkfixturecommonmysekaifixturegroup_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaicharactertalkfixturecommonmysekaifixturegroupsColumns[1], MysekaicharactertalkfixturecommonmysekaifixturegroupsColumns[4]},
+			},
+		},
+	}
+	// MysekaicustomfixturesColumns holds the columns for the "mysekaicustomfixtures" table.
+	MysekaicustomfixturesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_fixture_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_custom_fixture_type", Type: field.TypeString, Nullable: true},
+		{Name: "mysekai_custom_fixture_ornament_type", Type: field.TypeString, Nullable: true},
+		{Name: "custom_profile_resource_collection_type", Type: field.TypeString, Nullable: true},
+		{Name: "width", Type: field.TypeInt64, Nullable: true},
+		{Name: "height", Type: field.TypeInt64, Nullable: true},
+		{Name: "depth", Type: field.TypeInt64, Nullable: true},
+		{Name: "base_asset_bundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "ornament_asset_bundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaicustomfixturesTable holds the schema information for the "mysekaicustomfixtures" table.
+	MysekaicustomfixturesTable = &schema.Table{
+		Name:       "mysekaicustomfixtures",
+		Columns:    MysekaicustomfixturesColumns,
+		PrimaryKey: []*schema.Column{MysekaicustomfixturesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaicustomfixture_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaicustomfixturesColumns[1], MysekaicustomfixturesColumns[11]},
+			},
+		},
+	}
 	// MysekaifixturesColumns holds the columns for the "mysekaifixtures" table.
 	MysekaifixturesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1321,6 +1413,27 @@ var (
 				Name:    "mysekaifixturegamecharactergroup_game_id_server_region",
 				Unique:  true,
 				Columns: []*schema.Column{MysekaifixturegamecharactergroupsColumns[1], MysekaifixturegamecharactergroupsColumns[4]},
+			},
+		},
+	}
+	// MysekaifixturegamecharactergroupperformancebonusesColumns holds the columns for the "mysekaifixturegamecharactergroupperformancebonuses" table.
+	MysekaifixturegamecharactergroupperformancebonusesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_fixture_game_character_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "bonus_rate", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaifixturegamecharactergroupperformancebonusesTable holds the schema information for the "mysekaifixturegamecharactergroupperformancebonuses" table.
+	MysekaifixturegamecharactergroupperformancebonusesTable = &schema.Table{
+		Name:       "mysekaifixturegamecharactergroupperformancebonuses",
+		Columns:    MysekaifixturegamecharactergroupperformancebonusesColumns,
+		PrimaryKey: []*schema.Column{MysekaifixturegamecharactergroupperformancebonusesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaifixturegamecharactergroupperformancebonuse_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaifixturegamecharactergroupperformancebonusesColumns[1], MysekaifixturegamecharactergroupperformancebonusesColumns[4]},
 			},
 		},
 	}
@@ -1483,6 +1596,27 @@ var (
 			},
 		},
 	}
+	// MysekaigatecommonskinsColumns holds the columns for the "mysekaigatecommonskins" table.
+	MysekaigatecommonskinsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaigatecommonskinsTable holds the schema information for the "mysekaigatecommonskins" table.
+	MysekaigatecommonskinsTable = &schema.Table{
+		Name:       "mysekaigatecommonskins",
+		Columns:    MysekaigatecommonskinsColumns,
+		PrimaryKey: []*schema.Column{MysekaigatecommonskinsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaigatecommonskin_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaigatecommonskinsColumns[1], MysekaigatecommonskinsColumns[4]},
+			},
+		},
+	}
 	// MysekaigatelevelsColumns holds the columns for the "mysekaigatelevels" table.
 	MysekaigatelevelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1526,6 +1660,50 @@ var (
 				Name:    "mysekaigatematerialgroup_game_id_server_region",
 				Unique:  true,
 				Columns: []*schema.Column{MysekaigatematerialgroupsColumns[1], MysekaigatematerialgroupsColumns[5]},
+			},
+		},
+	}
+	// MysekaigateskinsColumns holds the columns for the "mysekaigateskins" table.
+	MysekaigateskinsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_gate_skin_type", Type: field.TypeString, Nullable: true},
+		{Name: "mysekai_gate_skin_type_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_gate_material_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaigateskinsTable holds the schema information for the "mysekaigateskins" table.
+	MysekaigateskinsTable = &schema.Table{
+		Name:       "mysekaigateskins",
+		Columns:    MysekaigateskinsColumns,
+		PrimaryKey: []*schema.Column{MysekaigateskinsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaigateskin_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaigateskinsColumns[1], MysekaigateskinsColumns[5]},
+			},
+		},
+	}
+	// MysekaigateunitskinsColumns holds the columns for the "mysekaigateunitskins" table.
+	MysekaigateunitskinsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "unit", Type: field.TypeString, Nullable: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "assetbundle_name", Type: field.TypeString, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaigateunitskinsTable holds the schema information for the "mysekaigateunitskins" table.
+	MysekaigateunitskinsTable = &schema.Table{
+		Name:       "mysekaigateunitskins",
+		Columns:    MysekaigateunitskinsColumns,
+		PrimaryKey: []*schema.Column{MysekaigateunitskinsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaigateunitskin_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaigateunitskinsColumns[1], MysekaigateunitskinsColumns[5]},
 			},
 		},
 	}
@@ -1728,6 +1906,28 @@ var (
 			},
 		},
 	}
+	// MysekairankreleasesColumns holds the columns for the "mysekairankreleases" table.
+	MysekairankreleasesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_rank", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_rank_relase_type", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekairankreleasesTable holds the schema information for the "mysekairankreleases" table.
+	MysekairankreleasesTable = &schema.Table{
+		Name:       "mysekairankreleases",
+		Columns:    MysekairankreleasesColumns,
+		PrimaryKey: []*schema.Column{MysekairankreleasesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekairankrelease_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekairankreleasesColumns[1], MysekairankreleasesColumns[5]},
+			},
+		},
+	}
 	// MysekaisiteharvestfixturesColumns holds the columns for the "mysekaisiteharvestfixtures" table.
 	MysekaisiteharvestfixturesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1749,6 +1949,52 @@ var (
 				Name:    "mysekaisiteharvestfixture_game_id_server_region",
 				Unique:  true,
 				Columns: []*schema.Column{MysekaisiteharvestfixturesColumns[1], MysekaisiteharvestfixturesColumns[7]},
+			},
+		},
+	}
+	// MysekaisitelayoutsColumns holds the columns for the "mysekaisitelayouts" table.
+	MysekaisitelayoutsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_site_level_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_layout_type", Type: field.TypeString, Nullable: true},
+		{Name: "width", Type: field.TypeInt64, Nullable: true},
+		{Name: "height", Type: field.TypeInt64, Nullable: true},
+		{Name: "depth", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaisitelayoutsTable holds the schema information for the "mysekaisitelayouts" table.
+	MysekaisitelayoutsTable = &schema.Table{
+		Name:       "mysekaisitelayouts",
+		Columns:    MysekaisitelayoutsColumns,
+		PrimaryKey: []*schema.Column{MysekaisitelayoutsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaisitelayout_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaisitelayoutsColumns[1], MysekaisitelayoutsColumns[7]},
+			},
+		},
+	}
+	// MysekaisitelevelsColumns holds the columns for the "mysekaisitelevels" table.
+	MysekaisitelevelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "mysekai_site_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "level", Type: field.TypeInt64, Nullable: true},
+		{Name: "character_entry_max_num", Type: field.TypeInt64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// MysekaisitelevelsTable holds the schema information for the "mysekaisitelevels" table.
+	MysekaisitelevelsTable = &schema.Table{
+		Name:       "mysekaisitelevels",
+		Columns:    MysekaisitelevelsColumns,
+		PrimaryKey: []*schema.Column{MysekaisitelevelsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mysekaisitelevel_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{MysekaisitelevelsColumns[1], MysekaisitelevelsColumns[5]},
 			},
 		},
 	}
@@ -2044,6 +2290,29 @@ var (
 			},
 		},
 	}
+	// WorldbloomsupportdeckuniteventlimitedbonusesColumns holds the columns for the "worldbloomsupportdeckuniteventlimitedbonuses" table.
+	WorldbloomsupportdeckuniteventlimitedbonusesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "game_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "event_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "game_character_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "card_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "bonus_rate", Type: field.TypeFloat64, Nullable: true},
+		{Name: "server_region", Type: field.TypeString},
+	}
+	// WorldbloomsupportdeckuniteventlimitedbonusesTable holds the schema information for the "worldbloomsupportdeckuniteventlimitedbonuses" table.
+	WorldbloomsupportdeckuniteventlimitedbonusesTable = &schema.Table{
+		Name:       "worldbloomsupportdeckuniteventlimitedbonuses",
+		Columns:    WorldbloomsupportdeckuniteventlimitedbonusesColumns,
+		PrimaryKey: []*schema.Column{WorldbloomsupportdeckuniteventlimitedbonusesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "worldbloomsupportdeckuniteventlimitedbonuse_game_id_server_region",
+				Unique:  true,
+				Columns: []*schema.Column{WorldbloomsupportdeckuniteventlimitedbonusesColumns[1], WorldbloomsupportdeckuniteventlimitedbonusesColumns[6]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AreasTable,
@@ -2060,10 +2329,12 @@ var (
 		CardsuppliesTable,
 		ChallengelivehighscorerewardsTable,
 		Character2dsTable,
+		CharacterarchivemysekaicharactertalkgroupsTable,
 		Charactermissionv2parametergroupsTable,
 		CharacterranksTable,
 		CheerfulcarnivalteamsTable,
 		Costume3dsTable,
+		CustommusicscoretagsTable,
 		EventsTable,
 		EventcardsTable,
 		EventdeckbonusesTable,
@@ -2094,8 +2365,11 @@ var (
 		MysekaicharactertalkconditionsTable,
 		MysekaicharactertalkconditiongroupsTable,
 		MysekaicharactertalkfixturecommonsTable,
+		MysekaicharactertalkfixturecommonmysekaifixturegroupsTable,
+		MysekaicustomfixturesTable,
 		MysekaifixturesTable,
 		MysekaifixturegamecharactergroupsTable,
+		MysekaifixturegamecharactergroupperformancebonusesTable,
 		MysekaifixturemaingenresTable,
 		MysekaifixtureonlydisassemblematerialsTable,
 		MysekaifixturesubgenresTable,
@@ -2103,8 +2377,11 @@ var (
 		MysekaigamecharacterunitgroupsTable,
 		MysekaigatesTable,
 		MysekaigatecharacterlotteriesTable,
+		MysekaigatecommonskinsTable,
 		MysekaigatelevelsTable,
 		MysekaigatematerialgroupsTable,
+		MysekaigateskinsTable,
+		MysekaigateunitskinsTable,
 		MysekaihousingcompetitionsTable,
 		MysekaiitemsTable,
 		MysekaimaterialsTable,
@@ -2113,7 +2390,10 @@ var (
 		MysekaimusicrecordcategoriesTable,
 		MysekaiphenomenabackgroundcolorsTable,
 		MysekaiphenomenasTable,
+		MysekairankreleasesTable,
 		MysekaisiteharvestfixturesTable,
+		MysekaisitelayoutsTable,
+		MysekaisitelevelsTable,
 		NgwordsTable,
 		OutsidecharactersTable,
 		PlayerframesTable,
@@ -2126,6 +2406,7 @@ var (
 		WorldbloomsTable,
 		WorldbloomdifferentattributebonusesTable,
 		WorldbloomsupportdeckbonusesTable,
+		WorldbloomsupportdeckuniteventlimitedbonusesTable,
 	}
 )
 
@@ -2172,6 +2453,9 @@ func init() {
 	Character2dsTable.Annotation = &entsql.Annotation{
 		Table: "character2ds",
 	}
+	CharacterarchivemysekaicharactertalkgroupsTable.Annotation = &entsql.Annotation{
+		Table: "characterarchivemysekaicharactertalkgroups",
+	}
 	Charactermissionv2parametergroupsTable.Annotation = &entsql.Annotation{
 		Table: "charactermissionv2parametergroups",
 	}
@@ -2183,6 +2467,9 @@ func init() {
 	}
 	Costume3dsTable.Annotation = &entsql.Annotation{
 		Table: "costume3ds",
+	}
+	CustommusicscoretagsTable.Annotation = &entsql.Annotation{
+		Table: "custommusicscoretags",
 	}
 	EventsTable.Annotation = &entsql.Annotation{
 		Table: "events",
@@ -2274,11 +2561,20 @@ func init() {
 	MysekaicharactertalkfixturecommonsTable.Annotation = &entsql.Annotation{
 		Table: "mysekaicharactertalkfixturecommons",
 	}
+	MysekaicharactertalkfixturecommonmysekaifixturegroupsTable.Annotation = &entsql.Annotation{
+		Table: "mysekaicharactertalkfixturecommonmysekaifixturegroups",
+	}
+	MysekaicustomfixturesTable.Annotation = &entsql.Annotation{
+		Table: "mysekaicustomfixtures",
+	}
 	MysekaifixturesTable.Annotation = &entsql.Annotation{
 		Table: "mysekaifixtures",
 	}
 	MysekaifixturegamecharactergroupsTable.Annotation = &entsql.Annotation{
 		Table: "mysekaifixturegamecharactergroups",
+	}
+	MysekaifixturegamecharactergroupperformancebonusesTable.Annotation = &entsql.Annotation{
+		Table: "mysekaifixturegamecharactergroupperformancebonuses",
 	}
 	MysekaifixturemaingenresTable.Annotation = &entsql.Annotation{
 		Table: "mysekaifixturemaingenres",
@@ -2301,11 +2597,20 @@ func init() {
 	MysekaigatecharacterlotteriesTable.Annotation = &entsql.Annotation{
 		Table: "mysekaigatecharacterlotteries",
 	}
+	MysekaigatecommonskinsTable.Annotation = &entsql.Annotation{
+		Table: "mysekaigatecommonskins",
+	}
 	MysekaigatelevelsTable.Annotation = &entsql.Annotation{
 		Table: "mysekaigatelevels",
 	}
 	MysekaigatematerialgroupsTable.Annotation = &entsql.Annotation{
 		Table: "mysekaigatematerialgroups",
+	}
+	MysekaigateskinsTable.Annotation = &entsql.Annotation{
+		Table: "mysekaigateskins",
+	}
+	MysekaigateunitskinsTable.Annotation = &entsql.Annotation{
+		Table: "mysekaigateunitskins",
 	}
 	MysekaihousingcompetitionsTable.Annotation = &entsql.Annotation{
 		Table: "mysekaihousingcompetitions",
@@ -2331,8 +2636,17 @@ func init() {
 	MysekaiphenomenasTable.Annotation = &entsql.Annotation{
 		Table: "mysekaiphenomenas",
 	}
+	MysekairankreleasesTable.Annotation = &entsql.Annotation{
+		Table: "mysekairankreleases",
+	}
 	MysekaisiteharvestfixturesTable.Annotation = &entsql.Annotation{
 		Table: "mysekaisiteharvestfixtures",
+	}
+	MysekaisitelayoutsTable.Annotation = &entsql.Annotation{
+		Table: "mysekaisitelayouts",
+	}
+	MysekaisitelevelsTable.Annotation = &entsql.Annotation{
+		Table: "mysekaisitelevels",
 	}
 	NgwordsTable.Annotation = &entsql.Annotation{
 		Table: "ngwords",
@@ -2369,5 +2683,8 @@ func init() {
 	}
 	WorldbloomsupportdeckbonusesTable.Annotation = &entsql.Annotation{
 		Table: "worldbloomsupportdeckbonuses",
+	}
+	WorldbloomsupportdeckuniteventlimitedbonusesTable.Annotation = &entsql.Annotation{
+		Table: "worldbloomsupportdeckuniteventlimitedbonuses",
 	}
 }

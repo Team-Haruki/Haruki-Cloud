@@ -33,6 +33,9 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 	if !s.IsReady() {
 		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
 	}
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	if _, _, err := s.requireAdmin(ctx, platform, platformUserID); err != nil {
 		return nil, err
 	}
@@ -122,6 +125,9 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 func (s *Service) Reject(ctx context.Context, platform, platformUserID string, reviewID int64, reason string) (*PjskAliasRecord, error) {
 	if !s.IsReady() {
 		return nil, onebot11.NewReplayError("别名服务未就绪，请稍后再试")
+	}
+	if err := s.requireWritable(); err != nil {
+		return nil, err
 	}
 	admin, reviewer, err := s.requireAdmin(ctx, platform, platformUserID)
 	if err != nil {

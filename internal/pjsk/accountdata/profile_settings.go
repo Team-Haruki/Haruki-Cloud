@@ -87,6 +87,11 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 	if service == nil || !service.IsReady() {
 		return nil, ErrBindingServiceUnavailable
 	}
+	if profileSettingsModeMutates(mode, params) {
+		if err := service.requireWritable(); err != nil {
+			return nil, err
+		}
+	}
 
 	// When a u[i] selector is provided, resolve it to a specific binding entity
 	// instead of using server-based lookup. This supports users with multiple
@@ -368,6 +373,29 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		return []byte(fmt.Sprintf("已更新%s服个人信息背景设置", strings.ToUpper(item.Server))), nil
 	default:
 		return nil, fmt.Errorf("bridge: unsupported profile settings mode %q", mode)
+	}
+}
+
+func profileSettingsModeMutates(mode string, params ProfileSettingsCommandParams) bool {
+	switch mode {
+	case ProfileModeHideID,
+		ProfileModeShowID,
+		ProfileModeHideSuite,
+		ProfileModeShowSuite,
+		ProfileModeHideMySekai,
+		ProfileModeShowMySekai,
+		ProfileModeSetTimeZone,
+		ProfileModeSetArrestDiff,
+		ProfileModeSetChartStyle,
+		ProfileModeEnableModular,
+		ProfileModeDisableModular,
+		ProfileModeBGUpload,
+		ProfileModeBGClear:
+		return true
+	case ProfileModeBGAdjust:
+		return params.Blur != nil || params.Alpha != nil || params.Vertical != nil
+	default:
+		return false
 	}
 }
 

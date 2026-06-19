@@ -1,0 +1,10 @@
+[Unit]
+Description=Backup Haruki active business Postgres databases
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=HARUKI_BUSINESS_DB_DBS=haruki_bot,haruki_pjsk,haruki_users
+Environment=HARUKI_BUSINESS_DB_DUMP_RETENTION=36
+ExecStart=/data/HarukiServices/scripts/failover/dump-business-dbs-from-active.sh

@@ -13,6 +13,7 @@ import (
 	harukiConfig "haruki-cloud/config"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
+	"haruki-cloud/internal/cluster"
 	"haruki-cloud/internal/core/crypto"
 	commandregistry "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/middleware/secure"
@@ -79,7 +80,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 
 	commandhandler.EnsureCommandHandlersRegistered()
 
-	if botDBClient != nil {
+	if botDBClient != nil && !cluster.IsReadOnly() {
 		if err := SeedCommandManifests(initCtx, botDBClient); err != nil {
 			// Non-fatal: manifest table seed failure should not block startup.
 			logger.Warnf("bot manifest seed failed: %v", err)

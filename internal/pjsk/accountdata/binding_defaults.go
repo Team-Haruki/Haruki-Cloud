@@ -13,11 +13,17 @@ import (
 
 // SetDefault sets the default binding for the given scope (global or server-specific).
 func (s *BindingService) SetDefault(ctx context.Context, platform, platformUserID, selector, selectorServer, serverScope string) (*DefaultBindingResult, error) {
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	return s.updateDefault(ctx, platform, platformUserID, selector, selectorServer, serverScope, false)
 }
 
 // ClearDefault clears the default binding. If selector is empty, clears by scope alone.
 func (s *BindingService) ClearDefault(ctx context.Context, platform, platformUserID, selector, selectorServer, serverScope string) (*DefaultBindingResult, error) {
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	if selector == "" {
 		return s.clearDefaultByScope(ctx, platform, platformUserID, serverScope)
 	}
@@ -28,6 +34,9 @@ func (s *BindingService) ClearDefault(ctx context.Context, platform, platformUse
 // a specific binding selector. Used when user calls /清除默认绑定 with no arguments.
 func (s *BindingService) clearDefaultByScope(ctx context.Context, platform, platformUserID, serverScope string) (*DefaultBindingResult, error) {
 	if err := s.requireReady(platform, platformUserID); err != nil {
+		return nil, err
+	}
+	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
 	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
@@ -75,6 +84,9 @@ func (s *BindingService) clearDefaultByScope(ctx context.Context, platform, plat
 // updateDefault handles both setting and clearing default bindings.
 func (s *BindingService) updateDefault(ctx context.Context, platform, platformUserID, selector, selectorServer, serverScope string, clear bool) (*DefaultBindingResult, error) {
 	if err := s.requireReady(platform, platformUserID); err != nil {
+		return nil, err
+	}
+	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
 	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)

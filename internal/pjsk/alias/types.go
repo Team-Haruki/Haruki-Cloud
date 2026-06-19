@@ -76,6 +76,7 @@ type Service struct {
 	sekai    *sekaiDB.Client
 	pjsk     *pjskdb.Client
 	identity IdentityResolver
+	readOnly bool
 }
 
 type EntityRef struct {

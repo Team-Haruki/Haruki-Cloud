@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	botDB "haruki-cloud/database/bot"
 	commandhandler "haruki-cloud/internal/handler"
@@ -62,7 +63,8 @@ func SeedCommandManifests(ctx context.Context, client *botDB.Client) error {
 func commandManifestRoutes() []commandhandler.BotRoute {
 	routes := commandhandler.ListBotRoutes()
 	routes = appendSpecialCommandManifestRoute(routes, birthdayMonitorManifestRoute())
-	return appendSpecialCommandManifestRoute(routes, customProfileClientPolicyManifestRoute())
+	routes = appendSpecialCommandManifestRoute(routes, customProfileClientPolicyManifestRoute())
+	return withDefaultClientPolicyScopes(routes)
 }
 
 const birthdayMonitorClientPolicyScope = "birthday_monitor"
@@ -108,6 +110,29 @@ func appendSpecialCommandManifestRoute(routes []commandhandler.BotRoute, special
 		return routes
 	}
 	return append(routes, special)
+}
+
+func withDefaultClientPolicyScopes(routes []commandhandler.BotRoute) []commandhandler.BotRoute {
+	for index := range routes {
+		if routes[index].ClientPolicyScope != "" {
+			continue
+		}
+		routes[index].ClientPolicyScope = defaultClientPolicyScope(routes[index])
+	}
+	return routes
+}
+
+func defaultClientPolicyScope(route commandhandler.BotRoute) string {
+	module := strings.TrimSpace(route.Module)
+	if module != pjskhandler.BotModulePJSK {
+		return module
+	}
+	path := strings.Trim(strings.TrimSpace(route.Path), "/")
+	if path == "" {
+		return module
+	}
+	scope, _, _ := strings.Cut(path, "/")
+	return scope
 }
 
 func commandManifestClientPolicyScopes() map[string]string {

@@ -8,6 +8,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	harukiLogger "haruki-cloud/utils/logger"
+	"haruki-cloud/version"
 
 	botDB "haruki-cloud/database/bot"
 	chunithmMainDB "haruki-cloud/database/chunithm/maindb"
@@ -56,7 +57,26 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 		}
 		app.Use(logger.New(loggerConfig))
 	}
+	registerReadinessRoute(app)
 	return app
+}
+
+func registerReadinessRoute(app *fiber.App) {
+	app.Get("/readyz", func(c fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "ok",
+			"data": fiber.Map{
+				"profile": string(harukiConfig.Cfg.Profile),
+				"version": version.Get(),
+				"node": fiber.Map{
+					"name":      harukiConfig.Cfg.Node.Name,
+					"role":      harukiConfig.Cfg.Node.Role,
+					"read_only": harukiConfig.Cfg.Node.ReadOnly,
+				},
+			},
+		})
+	})
 }
 
 func closeAccessLogFile(mainLogger *harukiLogger.Logger) {

@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh Haruki secondary standby Docker images
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/data/HarukiServices/scripts/refresh-standby-images.sh

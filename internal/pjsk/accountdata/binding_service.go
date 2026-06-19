@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
+	"haruki-cloud/internal/cluster"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/censor"
 )
@@ -22,6 +23,7 @@ type BindingService struct {
 	fastVerifier FastVerificationProvider
 	bgStorage    ProfileBGStorage
 	censor       *censor.Service
+	readOnly     bool
 }
 
 func NewBindingService(pjskClient *pjskdb.Client, identityResolver IdentityResolver, validator ProfileValidator) *BindingService {
@@ -53,12 +55,22 @@ func (s *BindingService) SetCensorService(svc *censor.Service) {
 	s.censor = svc
 }
 
+func (s *BindingService) SetReadOnly(readOnly bool) {
+	if s == nil {
+		return
+	}
+	s.readOnly = readOnly
+}
+
 func (s *BindingService) IsReady() bool {
 	return s != nil && s.pjskDB != nil && s.identity != nil && s.validator != nil
 }
 
 func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, rawUID string) (*BindResult, error) {
 	if err := s.requireReady(platform, platformUserID); err != nil {
+		return nil, err
+	}
+	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
 	uid := normalizeUID(rawUID)
@@ -178,6 +190,9 @@ func (s *BindingService) Unbind(ctx context.Context, platform, platformUserID, s
 	if err := s.requireReady(platform, platformUserID); err != nil {
 		return nil, err
 	}
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
 	if err != nil {
 		return nil, err
@@ -280,6 +295,13 @@ func (s *BindingService) requireReady(platform, platformUserID string) error {
 		return fmt.Errorf("platform and platform_user_id are required for binding commands")
 	}
 	return nil
+}
+
+func (s *BindingService) requireWritable() error {
+	if s == nil {
+		return ErrBindingServiceUnavailable
+	}
+	return cluster.EnsureWritable(s.readOnly)
 }
 
 func (s *BindingService) probeUID(ctx context.Context, uid string) ([]profileProbe, error) {

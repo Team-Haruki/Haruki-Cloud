@@ -90,6 +90,9 @@ services:
     environment:
       # ── Profile ──────────────────────────────────────────────────────────
       HARUKI_PROFILE: ${HARUKI_PROFILE:-production}
+      HARUKI_NODE_NAME: ${HARUKI_NODE_NAME:-}
+      HARUKI_NODE_ROLE: ${HARUKI_NODE_ROLE:-}
+      HARUKI_NODE_READ_ONLY: ${HARUKI_NODE_READ_ONLY:-false}
 
       # ── Backend ──────────────────────────────────────────────────────────
       HARUKI_BACKEND_HOST: ${HARUKI_BACKEND_HOST:-0.0.0.0}

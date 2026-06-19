@@ -35,11 +35,13 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 	var resolver *identity.Resolver
 	if usersClient != nil {
 		resolver = identity.NewResolver(usersClient)
+		resolver.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
 		renderRuntime.Bindings = accountdata.NewBindingService(
 			pjskClient,
 			resolver,
 			renderRuntime.SekaiAPI,
 		)
+		renderRuntime.Bindings.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
 		renderRuntime.Bindings.SetFastVerificationProvider(renderRuntime.Toolbox)
 		renderRuntime.Snapshots = rendersnapshot.NewFallbackSnapshotProvider(
 			harukiConfig.Cfg.PJSKRender.UserSnapshot.AllowFallback,
@@ -68,6 +70,9 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 	}
 
 	renderRuntime.Aliases = pjskalias.NewService(renderRuntime.Sekai, pjskClient, resolver)
+	if renderRuntime.Aliases != nil {
+		renderRuntime.Aliases.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
+	}
 	mainLogger.Infof("Sekai runtime services configured")
 }
 
@@ -128,7 +133,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			Dir:             harukiConfig.Cfg.PJSKRender.LocalMasterdata.Dir,
 			RefreshInterval: harukiConfig.Cfg.PJSKRender.LocalMasterdata.RefreshInterval,
 		},
-		SekaiDSN: harukiConfig.Cfg.Sekai.DBURL,
+		SekaiDBType: harukiConfig.Cfg.Sekai.DBType,
+		SekaiDSN:    harukiConfig.Cfg.Sekai.DBURL,
 		UserSnapshot: renderapp.UserSnapshotConfig{
 			Provider:      harukiConfig.Cfg.PJSKRender.UserSnapshot.Provider,
 			AllowFallback: harukiConfig.Cfg.PJSKRender.UserSnapshot.AllowFallback,
@@ -144,6 +150,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		},
 		MySekaiHousingCompetitionCachePath:       resolveMySekaiHousingCompetitionCachePath(),
 		MySekaiHousingCompetitionRefreshInterval: harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.RefreshInterval,
+		ReadOnly:                                 harukiConfig.Cfg.Node.ReadOnly,
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
 			Disable:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Disable,

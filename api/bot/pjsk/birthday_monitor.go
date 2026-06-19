@@ -98,6 +98,24 @@ func registerBirthdayMonitorRoutes(pjsk fiber.Router, app *fiber.App, renderApp 
 	internal.Post("/subscription-events/mysekai-birthday", makeBirthdayMonitorEventWriteHandler(renderApp))
 }
 
+func newBirthdayMonitorService(renderApp *renderapp.App) *subscription.Service {
+	if renderApp == nil {
+		return nil
+	}
+	service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+	service.SetReadOnly(renderApp.Config.ReadOnly)
+	return service
+}
+
+func newBirthdayMonitorDBService(renderApp *renderapp.App) *subscription.Service {
+	if renderApp == nil {
+		return nil
+	}
+	service := subscription.NewService(renderApp.PJSK, renderApp.Bindings)
+	service.SetReadOnly(renderApp.Config.ReadOnly)
+	return service
+}
+
 func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGuard) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req, err := parseBotRequest(c)
@@ -111,7 +129,7 @@ func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGu
 
 		req.SelfID = strings.TrimSpace(req.SelfID)
 		botID := strings.TrimSpace(c.Params("botId"))
-		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+		service := newBirthdayMonitorService(renderApp)
 		text := birthdayMonitorCommandText(req)
 		regionExplicit := strings.TrimSpace(req.Server) != ""
 
@@ -142,7 +160,7 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
 		botID := strings.TrimSpace(c.Params("botId"))
-		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+		service := newBirthdayMonitorService(renderApp)
 		event, err := service.EventForClient(c.Context(), req.EventID, req.SubscriptionID, req.SubscriptionVersion, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID)
 		if err != nil {
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
@@ -181,7 +199,7 @@ func makeBirthdayMonitorAckHandler(renderApp *renderapp.App) fiber.Handler {
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
 		botID := strings.TrimSpace(c.Params("botId"))
-		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+		service := newBirthdayMonitorService(renderApp)
 		if err := service.AckEvent(c.Context(), req.EventID, req.SubscriptionID, req.SubscriptionVersion, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID); err != nil {
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 		}
@@ -191,7 +209,7 @@ func makeBirthdayMonitorAckHandler(renderApp *renderapp.App) fiber.Handler {
 
 func makeBirthdayMonitorActiveHandler(renderApp *renderapp.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+		service := newBirthdayMonitorService(renderApp)
 		result, err := service.ActiveForUpload(c.Context(), c.Query("region"), c.Query("uid"))
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusInternalServerError, "查询生日监听状态失败，请稍后再试")
@@ -208,7 +226,7 @@ func makeBirthdayMonitorActiveHandler(renderApp *renderapp.App) fiber.Handler {
 
 func makeBirthdayMonitorTokenValidateHandler(renderApp *renderapp.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		service := subscription.NewServiceWithToolbox(renderApp.PJSK, renderApp.Bindings, renderApp.Toolbox)
+		service := newBirthdayMonitorService(renderApp)
 		result, err := service.ValidateToken(c.Context(), c.Query("subscription_id"), c.Query("subscription_version"), c.Query("token"))
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusInternalServerError, "校验生日监听令牌失败，请稍后再试")
@@ -234,7 +252,7 @@ func makeBirthdayMonitorEventWriteHandler(renderApp *renderapp.App) fiber.Handle
 		if err != nil {
 			return api.JSONResponse(c, fiber.StatusBadRequest, "invalid filtered_payload")
 		}
-		service := subscription.NewService(renderApp.PJSK, renderApp.Bindings)
+		service := newBirthdayMonitorDBService(renderApp)
 		stored, err := service.StoreEvent(c.Context(), subscription.BirthdayEventPayload{
 			SubscriptionID:     req.SubscriptionID,
 			Region:             req.Region,

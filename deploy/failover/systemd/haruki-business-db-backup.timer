@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Haruki business DB backup every five minutes
+
+[Timer]
+OnBootSec=5min
+OnCalendar=*:0/5
+AccuracySec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

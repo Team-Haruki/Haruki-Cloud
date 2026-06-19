@@ -252,3 +252,24 @@ func (c *Controller) withRegion(region string) *Controller {
 	}
 	return &clone
 }
+
+func (c *Controller) Close() {
+	if c == nil || c.resolver == nil {
+		return
+	}
+	c.resolver.Close()
+}
+
+func (r *masterdataResolver) Close() {
+	if r == nil {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, source := range r.cache {
+		if closer, ok := source.(interface{ Close() }); ok {
+			closer.Close()
+		}
+	}
+	r.cache = make(map[string]masterdataSource)
+}

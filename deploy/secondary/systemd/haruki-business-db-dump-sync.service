@@ -1,0 +1,13 @@
+[Unit]
+Description=Sync Haruki business Postgres dumps from primary cloud
+After=docker.service network-online.target
+Wants=docker.service network-online.target
+
+[Service]
+Type=oneshot
+Environment=HARUKI_BUSINESS_DB_DBS=haruki_bot,haruki_pjsk,haruki_users
+Environment=HARUKI_BUSINESS_DB_DUMP_RETENTION=72
+ExecStart=/data/HarukiServices/scripts/sync-business-db-dumps-from-primary.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

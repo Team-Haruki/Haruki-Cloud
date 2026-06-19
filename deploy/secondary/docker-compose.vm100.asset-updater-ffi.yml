@@ -1,0 +1,11 @@
+services:
+  haruki-sekai-asset-updater:
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: "true"
+      HARUKI_MEDIA_BACKEND: ffi
+      HARUKI_ASSET_STUDIO_FFI_LIBRARY_PATH: /app/assetstudio/HarukiAssetStudioFFI.so
+      HARUKI_ASSET_STUDIO_FFI_WORKER_PATH: /app/assetstudio_ffi_worker
+      HARUKI_ASSET_STUDIO_FFI_PROCESS_CONCURRENCY: "0"
+      HARUKI_ASSET_STUDIO_FFI_WORKER_MAX_CALLS: "256"
+      HARUKI_ASSET_STUDIO_FFI_READ_BATCH_SIZE: "32"

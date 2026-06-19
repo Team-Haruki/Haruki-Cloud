@@ -115,6 +115,9 @@ func (s *BindingService) UpsertUserSettings(ctx context.Context, platform, platf
 	if s == nil || s.pjskDB == nil || s.identity == nil {
 		return 0, ErrBindingServiceUnavailable
 	}
+	if err := s.requireWritable(); err != nil {
+		return 0, err
+	}
 	harukiUserID, err := s.identity.ResolveOrCreate(ctx, platform, platformUserID)
 	if err != nil {
 		return 0, err

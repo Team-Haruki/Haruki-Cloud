@@ -20,10 +20,12 @@ import (
 	"haruki-cloud/database/sekai/cardsupplie"
 	"haruki-cloud/database/sekai/challengelivehighscorereward"
 	"haruki-cloud/database/sekai/character2d"
+	"haruki-cloud/database/sekai/characterarchivemysekaicharactertalkgroup"
 	"haruki-cloud/database/sekai/charactermissionv2parametergroup"
 	"haruki-cloud/database/sekai/characterrank"
 	"haruki-cloud/database/sekai/cheerfulcarnivalteam"
 	"haruki-cloud/database/sekai/costume3d"
+	"haruki-cloud/database/sekai/custommusicscoretag"
 	"haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/eventdeckbonuse"
@@ -54,8 +56,11 @@ import (
 	"haruki-cloud/database/sekai/mysekaicharactertalkcondition"
 	"haruki-cloud/database/sekai/mysekaicharactertalkconditiongroup"
 	"haruki-cloud/database/sekai/mysekaicharactertalkfixturecommon"
+	"haruki-cloud/database/sekai/mysekaicharactertalkfixturecommonmysekaifixturegroup"
+	"haruki-cloud/database/sekai/mysekaicustomfixture"
 	"haruki-cloud/database/sekai/mysekaifixture"
 	"haruki-cloud/database/sekai/mysekaifixturegamecharactergroup"
+	"haruki-cloud/database/sekai/mysekaifixturegamecharactergroupperformancebonuse"
 	"haruki-cloud/database/sekai/mysekaifixturemaingenre"
 	"haruki-cloud/database/sekai/mysekaifixtureonlydisassemblematerial"
 	"haruki-cloud/database/sekai/mysekaifixturesubgenre"
@@ -63,8 +68,11 @@ import (
 	"haruki-cloud/database/sekai/mysekaigamecharacterunitgroup"
 	"haruki-cloud/database/sekai/mysekaigate"
 	"haruki-cloud/database/sekai/mysekaigatecharacterlotterie"
+	"haruki-cloud/database/sekai/mysekaigatecommonskin"
 	"haruki-cloud/database/sekai/mysekaigatelevel"
 	"haruki-cloud/database/sekai/mysekaigatematerialgroup"
+	"haruki-cloud/database/sekai/mysekaigateskin"
+	"haruki-cloud/database/sekai/mysekaigateunitskin"
 	"haruki-cloud/database/sekai/mysekaihousingcompetition"
 	"haruki-cloud/database/sekai/mysekaiitem"
 	"haruki-cloud/database/sekai/mysekaimaterial"
@@ -73,7 +81,10 @@ import (
 	"haruki-cloud/database/sekai/mysekaimusicrecordcategorie"
 	"haruki-cloud/database/sekai/mysekaiphenomenabackgroundcolor"
 	"haruki-cloud/database/sekai/mysekaiphenomenon"
+	"haruki-cloud/database/sekai/mysekairankrelease"
 	"haruki-cloud/database/sekai/mysekaisiteharvestfixture"
+	"haruki-cloud/database/sekai/mysekaisitelayout"
+	"haruki-cloud/database/sekai/mysekaisitelevel"
 	"haruki-cloud/database/sekai/ngword"
 	"haruki-cloud/database/sekai/outsidecharacter"
 	"haruki-cloud/database/sekai/playerframe"
@@ -86,6 +97,7 @@ import (
 	"haruki-cloud/database/sekai/worldbloom"
 	"haruki-cloud/database/sekai/worldbloomdifferentattributebonuse"
 	"haruki-cloud/database/sekai/worldbloomsupportdeckbonuse"
+	"haruki-cloud/database/sekai/worldbloomsupportdeckuniteventlimitedbonuse"
 	"reflect"
 	"sync"
 
@@ -152,86 +164,98 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			area.Table:                                  area.ValidColumn,
-			areaitem.Table:                              areaitem.ValidColumn,
-			areaitemlevel.Table:                         areaitemlevel.ValidColumn,
-			bond.Table:                                  bond.ValidColumn,
-			bondshonor.Table:                            bondshonor.ValidColumn,
-			boostitem.Table:                             boostitem.ValidColumn,
-			card.Table:                                  card.ValidColumn,
-			cardcostume3d.Table:                         cardcostume3d.ValidColumn,
-			cardepisode.Table:                           cardepisode.ValidColumn,
-			cardmysekaicanvasbonuse.Table:               cardmysekaicanvasbonuse.ValidColumn,
-			cardraritie.Table:                           cardraritie.ValidColumn,
-			cardsupplie.Table:                           cardsupplie.ValidColumn,
-			challengelivehighscorereward.Table:          challengelivehighscorereward.ValidColumn,
-			character2d.Table:                           character2d.ValidColumn,
-			charactermissionv2parametergroup.Table:      charactermissionv2parametergroup.ValidColumn,
-			characterrank.Table:                         characterrank.ValidColumn,
-			cheerfulcarnivalteam.Table:                  cheerfulcarnivalteam.ValidColumn,
-			costume3d.Table:                             costume3d.ValidColumn,
-			event.Table:                                 event.ValidColumn,
-			eventcard.Table:                             eventcard.ValidColumn,
-			eventdeckbonuse.Table:                       eventdeckbonuse.ValidColumn,
-			eventexchangesummarie.Table:                 eventexchangesummarie.ValidColumn,
-			eventitem.Table:                             eventitem.ValidColumn,
-			eventmusic.Table:                            eventmusic.ValidColumn,
-			eventraritybonusrate.Table:                  eventraritybonusrate.ValidColumn,
-			eventstorie.Table:                           eventstorie.ValidColumn,
-			eventstoryunit.Table:                        eventstoryunit.ValidColumn,
-			gacha.Table:                                 gacha.ValidColumn,
-			gachaceilitem.Table:                         gachaceilitem.ValidColumn,
-			gachaticket.Table:                           gachaticket.ValidColumn,
-			gamecharacter.Table:                         gamecharacter.ValidColumn,
-			gamecharacterunit.Table:                     gamecharacterunit.ValidColumn,
-			honor.Table:                                 honor.ValidColumn,
-			honorgroup.Table:                            honorgroup.ValidColumn,
-			level.Table:                                 level.ValidColumn,
-			limitedtimemusic.Table:                      limitedtimemusic.ValidColumn,
-			masterlesson.Table:                          masterlesson.ValidColumn,
-			music.Table:                                 music.ValidColumn,
-			musicartist.Table:                           musicartist.ValidColumn,
-			musicdifficultie.Table:                      musicdifficultie.ValidColumn,
-			musictag.Table:                              musictag.ValidColumn,
-			musicvocal.Table:                            musicvocal.ValidColumn,
-			mysekaiblueprint.Table:                      mysekaiblueprint.ValidColumn,
-			mysekaiblueprintmysekaimaterialcost.Table:   mysekaiblueprintmysekaimaterialcost.ValidColumn,
-			mysekaicharactertalk.Table:                  mysekaicharactertalk.ValidColumn,
-			mysekaicharactertalkcondition.Table:         mysekaicharactertalkcondition.ValidColumn,
-			mysekaicharactertalkconditiongroup.Table:    mysekaicharactertalkconditiongroup.ValidColumn,
-			mysekaicharactertalkfixturecommon.Table:     mysekaicharactertalkfixturecommon.ValidColumn,
-			mysekaifixture.Table:                        mysekaifixture.ValidColumn,
-			mysekaifixturegamecharactergroup.Table:      mysekaifixturegamecharactergroup.ValidColumn,
-			mysekaifixturemaingenre.Table:               mysekaifixturemaingenre.ValidColumn,
-			mysekaifixtureonlydisassemblematerial.Table: mysekaifixtureonlydisassemblematerial.ValidColumn,
-			mysekaifixturesubgenre.Table:                mysekaifixturesubgenre.ValidColumn,
-			mysekaifixturetag.Table:                     mysekaifixturetag.ValidColumn,
-			mysekaigamecharacterunitgroup.Table:         mysekaigamecharacterunitgroup.ValidColumn,
-			mysekaigate.Table:                           mysekaigate.ValidColumn,
-			mysekaigatecharacterlotterie.Table:          mysekaigatecharacterlotterie.ValidColumn,
-			mysekaigatelevel.Table:                      mysekaigatelevel.ValidColumn,
-			mysekaigatematerialgroup.Table:              mysekaigatematerialgroup.ValidColumn,
-			mysekaihousingcompetition.Table:             mysekaihousingcompetition.ValidColumn,
-			mysekaiitem.Table:                           mysekaiitem.ValidColumn,
-			mysekaimaterial.Table:                       mysekaimaterial.ValidColumn,
-			mysekaimaterialgamecharacterrelation.Table:  mysekaimaterialgamecharacterrelation.ValidColumn,
-			mysekaimusicrecord.Table:                    mysekaimusicrecord.ValidColumn,
-			mysekaimusicrecordcategorie.Table:           mysekaimusicrecordcategorie.ValidColumn,
-			mysekaiphenomenabackgroundcolor.Table:       mysekaiphenomenabackgroundcolor.ValidColumn,
-			mysekaiphenomenon.Table:                     mysekaiphenomenon.ValidColumn,
-			mysekaisiteharvestfixture.Table:             mysekaisiteharvestfixture.ValidColumn,
-			ngword.Table:                                ngword.ValidColumn,
-			outsidecharacter.Table:                      outsidecharacter.ValidColumn,
-			playerframe.Table:                           playerframe.ValidColumn,
-			playerframegroup.Table:                      playerframegroup.ValidColumn,
-			resourceboxe.Table:                          resourceboxe.ValidColumn,
-			shopitem.Table:                              shopitem.ValidColumn,
-			skill.Table:                                 skill.ValidColumn,
-			stamp.Table:                                 stamp.ValidColumn,
-			virtuallive.Table:                           virtuallive.ValidColumn,
-			worldbloom.Table:                            worldbloom.ValidColumn,
-			worldbloomdifferentattributebonuse.Table:    worldbloomdifferentattributebonuse.ValidColumn,
-			worldbloomsupportdeckbonuse.Table:           worldbloomsupportdeckbonuse.ValidColumn,
+			area.Table:                         area.ValidColumn,
+			areaitem.Table:                     areaitem.ValidColumn,
+			areaitemlevel.Table:                areaitemlevel.ValidColumn,
+			bond.Table:                         bond.ValidColumn,
+			bondshonor.Table:                   bondshonor.ValidColumn,
+			boostitem.Table:                    boostitem.ValidColumn,
+			card.Table:                         card.ValidColumn,
+			cardcostume3d.Table:                cardcostume3d.ValidColumn,
+			cardepisode.Table:                  cardepisode.ValidColumn,
+			cardmysekaicanvasbonuse.Table:      cardmysekaicanvasbonuse.ValidColumn,
+			cardraritie.Table:                  cardraritie.ValidColumn,
+			cardsupplie.Table:                  cardsupplie.ValidColumn,
+			challengelivehighscorereward.Table: challengelivehighscorereward.ValidColumn,
+			character2d.Table:                  character2d.ValidColumn,
+			characterarchivemysekaicharactertalkgroup.Table: characterarchivemysekaicharactertalkgroup.ValidColumn,
+			charactermissionv2parametergroup.Table:          charactermissionv2parametergroup.ValidColumn,
+			characterrank.Table:                             characterrank.ValidColumn,
+			cheerfulcarnivalteam.Table:                      cheerfulcarnivalteam.ValidColumn,
+			costume3d.Table:                                 costume3d.ValidColumn,
+			custommusicscoretag.Table:                       custommusicscoretag.ValidColumn,
+			event.Table:                                     event.ValidColumn,
+			eventcard.Table:                                 eventcard.ValidColumn,
+			eventdeckbonuse.Table:                           eventdeckbonuse.ValidColumn,
+			eventexchangesummarie.Table:                     eventexchangesummarie.ValidColumn,
+			eventitem.Table:                                 eventitem.ValidColumn,
+			eventmusic.Table:                                eventmusic.ValidColumn,
+			eventraritybonusrate.Table:                      eventraritybonusrate.ValidColumn,
+			eventstorie.Table:                               eventstorie.ValidColumn,
+			eventstoryunit.Table:                            eventstoryunit.ValidColumn,
+			gacha.Table:                                     gacha.ValidColumn,
+			gachaceilitem.Table:                             gachaceilitem.ValidColumn,
+			gachaticket.Table:                               gachaticket.ValidColumn,
+			gamecharacter.Table:                             gamecharacter.ValidColumn,
+			gamecharacterunit.Table:                         gamecharacterunit.ValidColumn,
+			honor.Table:                                     honor.ValidColumn,
+			honorgroup.Table:                                honorgroup.ValidColumn,
+			level.Table:                                     level.ValidColumn,
+			limitedtimemusic.Table:                          limitedtimemusic.ValidColumn,
+			masterlesson.Table:                              masterlesson.ValidColumn,
+			music.Table:                                     music.ValidColumn,
+			musicartist.Table:                               musicartist.ValidColumn,
+			musicdifficultie.Table:                          musicdifficultie.ValidColumn,
+			musictag.Table:                                  musictag.ValidColumn,
+			musicvocal.Table:                                musicvocal.ValidColumn,
+			mysekaiblueprint.Table:                          mysekaiblueprint.ValidColumn,
+			mysekaiblueprintmysekaimaterialcost.Table:       mysekaiblueprintmysekaimaterialcost.ValidColumn,
+			mysekaicharactertalk.Table:                      mysekaicharactertalk.ValidColumn,
+			mysekaicharactertalkcondition.Table:             mysekaicharactertalkcondition.ValidColumn,
+			mysekaicharactertalkconditiongroup.Table:        mysekaicharactertalkconditiongroup.ValidColumn,
+			mysekaicharactertalkfixturecommon.Table:         mysekaicharactertalkfixturecommon.ValidColumn,
+			mysekaicharactertalkfixturecommonmysekaifixturegroup.Table: mysekaicharactertalkfixturecommonmysekaifixturegroup.ValidColumn,
+			mysekaicustomfixture.Table:                                 mysekaicustomfixture.ValidColumn,
+			mysekaifixture.Table:                                       mysekaifixture.ValidColumn,
+			mysekaifixturegamecharactergroup.Table:                     mysekaifixturegamecharactergroup.ValidColumn,
+			mysekaifixturegamecharactergroupperformancebonuse.Table:    mysekaifixturegamecharactergroupperformancebonuse.ValidColumn,
+			mysekaifixturemaingenre.Table:                              mysekaifixturemaingenre.ValidColumn,
+			mysekaifixtureonlydisassemblematerial.Table:                mysekaifixtureonlydisassemblematerial.ValidColumn,
+			mysekaifixturesubgenre.Table:                               mysekaifixturesubgenre.ValidColumn,
+			mysekaifixturetag.Table:                                    mysekaifixturetag.ValidColumn,
+			mysekaigamecharacterunitgroup.Table:                        mysekaigamecharacterunitgroup.ValidColumn,
+			mysekaigate.Table:                                          mysekaigate.ValidColumn,
+			mysekaigatecharacterlotterie.Table:                         mysekaigatecharacterlotterie.ValidColumn,
+			mysekaigatecommonskin.Table:                                mysekaigatecommonskin.ValidColumn,
+			mysekaigatelevel.Table:                                     mysekaigatelevel.ValidColumn,
+			mysekaigatematerialgroup.Table:                             mysekaigatematerialgroup.ValidColumn,
+			mysekaigateskin.Table:                                      mysekaigateskin.ValidColumn,
+			mysekaigateunitskin.Table:                                  mysekaigateunitskin.ValidColumn,
+			mysekaihousingcompetition.Table:                            mysekaihousingcompetition.ValidColumn,
+			mysekaiitem.Table:                                          mysekaiitem.ValidColumn,
+			mysekaimaterial.Table:                                      mysekaimaterial.ValidColumn,
+			mysekaimaterialgamecharacterrelation.Table:                 mysekaimaterialgamecharacterrelation.ValidColumn,
+			mysekaimusicrecord.Table:                                   mysekaimusicrecord.ValidColumn,
+			mysekaimusicrecordcategorie.Table:                          mysekaimusicrecordcategorie.ValidColumn,
+			mysekaiphenomenabackgroundcolor.Table:                      mysekaiphenomenabackgroundcolor.ValidColumn,
+			mysekaiphenomenon.Table:                                    mysekaiphenomenon.ValidColumn,
+			mysekairankrelease.Table:                                   mysekairankrelease.ValidColumn,
+			mysekaisiteharvestfixture.Table:                            mysekaisiteharvestfixture.ValidColumn,
+			mysekaisitelayout.Table:                                    mysekaisitelayout.ValidColumn,
+			mysekaisitelevel.Table:                                     mysekaisitelevel.ValidColumn,
+			ngword.Table:                                               ngword.ValidColumn,
+			outsidecharacter.Table:                                     outsidecharacter.ValidColumn,
+			playerframe.Table:                                          playerframe.ValidColumn,
+			playerframegroup.Table:                                     playerframegroup.ValidColumn,
+			resourceboxe.Table:                                         resourceboxe.ValidColumn,
+			shopitem.Table:                                             shopitem.ValidColumn,
+			skill.Table:                                                skill.ValidColumn,
+			stamp.Table:                                                stamp.ValidColumn,
+			virtuallive.Table:                                          virtuallive.ValidColumn,
+			worldbloom.Table:                                           worldbloom.ValidColumn,
+			worldbloomdifferentattributebonuse.Table:                   worldbloomdifferentattributebonuse.ValidColumn,
+			worldbloomsupportdeckbonuse.Table:                          worldbloomsupportdeckbonuse.ValidColumn,
+			worldbloomsupportdeckuniteventlimitedbonuse.Table:          worldbloomsupportdeckuniteventlimitedbonuse.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

@@ -48,6 +48,9 @@ type Challengelivehighscorereward func(*sql.Selector)
 // Character2D is the predicate function for character2d builders.
 type Character2D func(*sql.Selector)
 
+// Characterarchivemysekaicharactertalkgroup is the predicate function for characterarchivemysekaicharactertalkgroup builders.
+type Characterarchivemysekaicharactertalkgroup func(*sql.Selector)
+
 // Charactermissionv2Parametergroup is the predicate function for charactermissionv2parametergroup builders.
 type Charactermissionv2Parametergroup func(*sql.Selector)
 
@@ -59,6 +62,9 @@ type Cheerfulcarnivalteam func(*sql.Selector)
 
 // Costume3D is the predicate function for costume3d builders.
 type Costume3D func(*sql.Selector)
+
+// Custommusicscoretag is the predicate function for custommusicscoretag builders.
+type Custommusicscoretag func(*sql.Selector)
 
 // Event is the predicate function for event builders.
 type Event func(*sql.Selector)
@@ -150,11 +156,20 @@ type Mysekaicharactertalkconditiongroup func(*sql.Selector)
 // Mysekaicharactertalkfixturecommon is the predicate function for mysekaicharactertalkfixturecommon builders.
 type Mysekaicharactertalkfixturecommon func(*sql.Selector)
 
+// Mysekaicharactertalkfixturecommonmysekaifixturegroup is the predicate function for mysekaicharactertalkfixturecommonmysekaifixturegroup builders.
+type Mysekaicharactertalkfixturecommonmysekaifixturegroup func(*sql.Selector)
+
+// Mysekaicustomfixture is the predicate function for mysekaicustomfixture builders.
+type Mysekaicustomfixture func(*sql.Selector)
+
 // Mysekaifixture is the predicate function for mysekaifixture builders.
 type Mysekaifixture func(*sql.Selector)
 
 // Mysekaifixturegamecharactergroup is the predicate function for mysekaifixturegamecharactergroup builders.
 type Mysekaifixturegamecharactergroup func(*sql.Selector)
+
+// Mysekaifixturegamecharactergroupperformancebonuse is the predicate function for mysekaifixturegamecharactergroupperformancebonuse builders.
+type Mysekaifixturegamecharactergroupperformancebonuse func(*sql.Selector)
 
 // Mysekaifixturemaingenre is the predicate function for mysekaifixturemaingenre builders.
 type Mysekaifixturemaingenre func(*sql.Selector)
@@ -177,11 +192,20 @@ type Mysekaigate func(*sql.Selector)
 // Mysekaigatecharacterlotterie is the predicate function for mysekaigatecharacterlotterie builders.
 type Mysekaigatecharacterlotterie func(*sql.Selector)
 
+// Mysekaigatecommonskin is the predicate function for mysekaigatecommonskin builders.
+type Mysekaigatecommonskin func(*sql.Selector)
+
 // Mysekaigatelevel is the predicate function for mysekaigatelevel builders.
 type Mysekaigatelevel func(*sql.Selector)
 
 // Mysekaigatematerialgroup is the predicate function for mysekaigatematerialgroup builders.
 type Mysekaigatematerialgroup func(*sql.Selector)
+
+// Mysekaigateskin is the predicate function for mysekaigateskin builders.
+type Mysekaigateskin func(*sql.Selector)
+
+// Mysekaigateunitskin is the predicate function for mysekaigateunitskin builders.
+type Mysekaigateunitskin func(*sql.Selector)
 
 // Mysekaihousingcompetition is the predicate function for mysekaihousingcompetition builders.
 type Mysekaihousingcompetition func(*sql.Selector)
@@ -207,8 +231,17 @@ type Mysekaiphenomenabackgroundcolor func(*sql.Selector)
 // Mysekaiphenomenon is the predicate function for mysekaiphenomenon builders.
 type Mysekaiphenomenon func(*sql.Selector)
 
+// Mysekairankrelease is the predicate function for mysekairankrelease builders.
+type Mysekairankrelease func(*sql.Selector)
+
 // Mysekaisiteharvestfixture is the predicate function for mysekaisiteharvestfixture builders.
 type Mysekaisiteharvestfixture func(*sql.Selector)
+
+// Mysekaisitelayout is the predicate function for mysekaisitelayout builders.
+type Mysekaisitelayout func(*sql.Selector)
+
+// Mysekaisitelevel is the predicate function for mysekaisitelevel builders.
+type Mysekaisitelevel func(*sql.Selector)
 
 // Ngword is the predicate function for ngword builders.
 type Ngword func(*sql.Selector)
@@ -245,3 +278,6 @@ type Worldbloomdifferentattributebonuse func(*sql.Selector)
 
 // Worldbloomsupportdeckbonuse is the predicate function for worldbloomsupportdeckbonuse builders.
 type Worldbloomsupportdeckbonuse func(*sql.Selector)
+
+// Worldbloomsupportdeckuniteventlimitedbonuse is the predicate function for worldbloomsupportdeckuniteventlimitedbonuse builders.
+type Worldbloomsupportdeckuniteventlimitedbonuse func(*sql.Selector)

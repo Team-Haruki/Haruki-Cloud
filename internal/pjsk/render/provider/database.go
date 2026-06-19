@@ -8,6 +8,23 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
+type DatabaseProviderOption func(*databaseProviderConfig)
+
+type databaseProviderConfig struct {
+	sekaiDBType string
+	sekaiDSN    string
+}
+
+func WithSekaiDatabase(driverName, dataSourceName string) DatabaseProviderOption {
+	return func(cfg *databaseProviderConfig) {
+		if cfg == nil {
+			return
+		}
+		cfg.sekaiDBType = strings.TrimSpace(driverName)
+		cfg.sekaiDSN = strings.TrimSpace(dataSourceName)
+	}
+}
+
 // DatabaseProvider implements MasterDataProvider using a Sekai database client.
 // It wraps the ent-generated query layer and caches results in memory.
 type DatabaseProvider struct {
@@ -32,11 +49,17 @@ type DatabaseProvider struct {
 // NewDatabaseProvider creates a MasterDataProvider backed by the Sekai
 // PostgreSQL database. The region determines which server_region rows are
 // queried. Pass the default region (typically JP).
-func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value) *DatabaseProvider {
+func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value, opts ...DatabaseProviderOption) *DatabaseProvider {
 	if client == nil {
 		return nil
 	}
 	region = renderregion.WithDefault(region)
+	var cfg databaseProviderConfig
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&cfg)
+		}
+	}
 	p := &DatabaseProvider{
 		client: client,
 		region: region,
@@ -53,7 +76,7 @@ func NewDatabaseProvider(client *sekaiDB.Client, region renderregion.Value) *Dat
 	p.vlives = &dbVLiveProvider{client: client, region: region}
 	p.education = &dbEducationProvider{client: client, region: region}
 	p.playerFrames = &dbPlayerFrameProvider{client: client, region: region}
-	p.mysekai = &dbMySekaiProvider{client: client, region: region}
+	p.mysekai = newDBMySekaiProvider(client, region, cfg)
 	return p
 }
 
@@ -150,6 +173,13 @@ func (p *DatabaseProvider) VLives() VLiveProvider             { return p.vlives 
 func (p *DatabaseProvider) Education() EducationProvider      { return p.education }
 func (p *DatabaseProvider) PlayerFrames() PlayerFrameProvider { return p.playerFrames }
 func (p *DatabaseProvider) MySekai() MySekaiProvider          { return p.mysekai }
+
+func (p *DatabaseProvider) Close() error {
+	if p == nil || p.mysekai == nil {
+		return nil
+	}
+	return p.mysekai.Close()
+}
 
 var localMasterdataRepoDirs = map[renderregion.Value]string{
 	renderregion.JP: "haruki-sekai-master",

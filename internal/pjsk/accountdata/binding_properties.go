@@ -23,6 +23,9 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 	if s == nil || s.bgStorage == nil {
 		return nil, fmt.Errorf("pjsk: profile background storage is not configured")
 	}
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	if binding == nil {
 		return nil, fmt.Errorf("未找到要设置背景的绑定账号")
 	}
@@ -81,6 +84,9 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 }
 
 func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding) (*BindingListItem, error) {
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	if binding == nil {
 		return nil, fmt.Errorf("未找到要清除背景的绑定账号")
 	}
@@ -110,6 +116,9 @@ func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, pl
 }
 
 func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding, blur, alpha *int, vertical *bool) (*BindingListItem, error) {
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	if binding == nil {
 		return nil, fmt.Errorf("未找到要调整背景的绑定账号")
 	}
@@ -144,6 +153,9 @@ func (s *BindingService) adjustBindingProfileBG(ctx context.Context, platform, p
 
 // SetBindingVisible sets the visibility flag for the current binding.
 func (s *BindingService) SetBindingVisible(ctx context.Context, platform, platformUserID, server string, visible bool) (*BindingListItem, error) {
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
 	if err != nil {
 		return nil, err
@@ -158,6 +170,9 @@ func (s *BindingService) SetBindingVisible(ctx context.Context, platform, platfo
 
 // SetBindingSuiteVisible sets the suite visibility flag for the current binding.
 func (s *BindingService) SetBindingSuiteVisible(ctx context.Context, platform, platformUserID, server string, suiteVisible bool) (*BindingListItem, error) {
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
 	if err != nil {
 		return nil, err
@@ -172,6 +187,9 @@ func (s *BindingService) SetBindingSuiteVisible(ctx context.Context, platform, p
 
 // SetBindingMySekaiVisible sets the MySekai visibility flag for the current binding.
 func (s *BindingService) SetBindingMySekaiVisible(ctx context.Context, platform, platformUserID, server string, mySekaiVisible bool) (*BindingListItem, error) {
+	if err := s.requireWritable(); err != nil {
+		return nil, err
+	}
 	binding, err := s.currentBindingEntity(ctx, platform, platformUserID, server)
 	if err != nil {
 		return nil, err
@@ -190,6 +208,9 @@ func (s *BindingService) verifyBindingEntity(ctx context.Context, platform, plat
 	if binding.Verified {
 		item, itemErr := s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
 		return item, true, itemErr
+	}
+	if err := s.requireWritable(); err != nil {
+		return nil, false, err
 	}
 	records, err := s.fastVerifier.GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID)
 	if err != nil {

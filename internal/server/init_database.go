@@ -121,12 +121,20 @@ func initSekaiIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger) *s
 	}
 	ctx = ensureContext(ctx)
 
-	return initDBClient(ctx, mainLogger, "Sekai",
-		func() (*sekaiDB.Client, error) {
-			return sekaiDB.Open(harukiConfig.Cfg.Sekai.DBType, harukiConfig.Cfg.Sekai.DBURL)
-		},
-		func(c *sekaiDB.Client, ctx context.Context) error { return c.Schema.Create(ctx) },
-	)
+	client, err := sekaiDB.Open(harukiConfig.Cfg.Sekai.DBType, harukiConfig.Cfg.Sekai.DBURL)
+	if err != nil {
+		mainLogger.Errorf("Failed to connect to Sekai DB: %v", err)
+		os.Exit(1)
+	}
+	if harukiConfig.Cfg.Sekai.AutoMigrate {
+		if err := client.Schema.Create(ctx); err != nil {
+			mainLogger.Errorf("Failed to create schema for Sekai DB: %v", err)
+			os.Exit(1)
+		}
+	} else {
+		mainLogger.Infof("Sekai DB auto-migrate disabled; using existing schema")
+	}
+	return client
 }
 
 func initBot(ctx context.Context, mainLogger *harukiLogger.Logger, app *fiber.App, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) *botDB.Client {

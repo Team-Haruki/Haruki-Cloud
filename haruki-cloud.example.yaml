@@ -54,6 +54,7 @@ sekai:
   enabled: true
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_sekai sslmode=disable"
+  auto_migrate: false # SekaiAPI owns masterdata DB schema; enable only for local/dev bootstrap
   remote_sync:
     enabled: false
     source_db_type: "postgres"

@@ -128,6 +128,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envBool("HARUKI_SEKAI_ENABLED", &cfg.Sekai.Enabled)
 	envStr("HARUKI_SEKAI_DB_TYPE", &cfg.Sekai.DBType)
 	envStr("HARUKI_SEKAI_DB_URL", &cfg.Sekai.DBURL)
+	envBool("HARUKI_SEKAI_AUTO_MIGRATE", &cfg.Sekai.AutoMigrate)
 	envBool("HARUKI_SEKAI_DB_SYNC_ENABLED", &cfg.Sekai.RemoteSync.Enabled)
 	envStr("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_TYPE", &cfg.Sekai.RemoteSync.SourceDBType)
 	envStr("HARUKI_SEKAI_DB_SYNC_SOURCE_DB_URL", &cfg.Sekai.RemoteSync.SourceDBURL)
@@ -271,10 +272,11 @@ type PJSKConfig struct {
 }
 
 type SekaiConfig struct {
-	Enabled    bool                  `yaml:"enabled"`
-	DBType     string                `yaml:"db_type"`
-	DBURL      string                `yaml:"db_url"`
-	RemoteSync SekaiRemoteSyncConfig `yaml:"remote_sync"`
+	Enabled     bool                  `yaml:"enabled"`
+	DBType      string                `yaml:"db_type"`
+	DBURL       string                `yaml:"db_url"`
+	AutoMigrate bool                  `yaml:"auto_migrate"`
+	RemoteSync  SekaiRemoteSyncConfig `yaml:"remote_sync"`
 }
 
 type SekaiRemoteSyncConfig struct {

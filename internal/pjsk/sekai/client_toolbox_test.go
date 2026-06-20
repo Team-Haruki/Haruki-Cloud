@@ -1,6 +1,7 @@
 package sekai
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -49,5 +50,31 @@ func TestToolboxPrivateDataValuesAcceptsAndDecodesZstd(t *testing.T) {
 	}
 	if got := string(data); got != `{"upload_time":1774339266,"version":"1"}` {
 		t.Fatalf("unexpected decoded body: %s", got)
+	}
+}
+
+func TestToolboxPrivateDataPreservesServiceUnavailableMessage(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte(`{"message":"user store unavailable"}`))
+	}))
+	defer server.Close()
+
+	client := NewToolboxClient(&config.ToolboxConfig{
+		BaseURL:  server.URL,
+		APIToken: "toolbox-secret",
+	})
+
+	_, err := client.GetPrivateData("jp", ToolboxDataTypeSuite, 123456789, "qq", "10001")
+	var toolboxErr *ToolboxAPIError
+	if !errors.As(err, &toolboxErr) {
+		t.Fatalf("expected ToolboxAPIError, got %T (%v)", err, err)
+	}
+	if toolboxErr.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("unexpected status: %d", toolboxErr.StatusCode)
+	}
+	if toolboxErr.Message != "user store unavailable" {
+		t.Fatalf("unexpected message: %q", toolboxErr.Message)
 	}
 }

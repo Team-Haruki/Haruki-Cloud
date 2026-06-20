@@ -209,7 +209,7 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		}
 
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessage(resp, "toolbox service unavailable")}
 
 	default:
 		msg := parseMessage(toolboxResponseBody(resp))
@@ -280,7 +280,7 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 			return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 		}
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessage(resp, "toolbox service unavailable")}
 	default:
 		msg := parseMessage(toolboxResponseBody(resp))
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
@@ -377,7 +377,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 		return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: "toolbox service unavailable"}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessage(resp, "toolbox service unavailable")}
 
 	default:
 		msg := parseMessage(toolboxResponseBody(resp))
@@ -391,6 +391,14 @@ func toolboxResponseBody(resp *resty.Response) []byte {
 		return resp.Body()
 	}
 	return body
+}
+
+func parseToolboxErrorMessage(resp *resty.Response, fallback string) string {
+	msg := strings.TrimSpace(parseMessage(toolboxResponseBody(resp)))
+	if msg == "" {
+		return fallback
+	}
+	return msg
 }
 
 // decompress handles transparent zstd decompression when the server indicates it.

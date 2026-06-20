@@ -1,6 +1,6 @@
 # Haruki Toolbox API 客户端文档
 
-> 最后更新：2026-03-25
+> 最后更新：2026-06-21
 >
 > 本文档描述 `utils/sekai.HarukiToolboxClient` 的全部能力、API 路由约定、参数语义、
 > 返回类型与错误处理规范。Toolbox 是 Haruki-Cloud 访问私有用户游戏数据的唯一外部入口。
@@ -16,7 +16,9 @@
 2. 对访问者进行平台身份鉴权（`platform + platform_user_id`）
 3. 维护游戏账号绑定关系（供快速验证路径使用）
 
-客户端实例通过 `GetToolboxClient()` 获取（单例，线程安全）。
+客户端实例通过 `renderapp.App.Toolbox` 注入；构造函数为
+`sekaiapi.NewToolboxClient(*config.ToolboxConfig)`。nil 或未配置客户端会返回
+`ErrClientNotConfigured`，不会 panic。
 
 ---
 
@@ -159,12 +161,23 @@ func (c *HarukiToolboxClient) GetMySekaiData(
 
 | HTTP 状态码 | 响应体 message 关键词 | 返回的 Go 错误 |
 |------------|----------------------|---------------|
+| `400` | `"both platform and platform_user_id are required"` | `&ToolboxAPIError{StatusCode: 400, Message: ...}` |
+| `400` | `"invalid server"` / `"invalid data_type"` / `"invalid user_id"` | `&ToolboxAPIError{StatusCode: 400, Message: ...}` |
 | `403` | `"invalid platform or platform_user_id"` | `ErrInvalidPlatformUser` |
 | `403` | `"account owner is banned"` | `ErrAccountOwnerBanned` |
 | `404` | `"account binding not found"` | `ErrAccountBindingNotFound` |
 | `404` | `"game data not found"` | `ErrGameDataNotFound` |
-| `503` | 任意 | `&ToolboxAPIError{StatusCode: 503}` |
+| `500` | `"failed to query game account"` / `"failed to verify authorization"` / `"failed to query game account owner"` / `"failed to query user data"` | `&ToolboxAPIError{StatusCode: 500, Message: ...}` |
+| `503` | `"private api is not configured"` / `"session store unavailable"` / `"identity provider unavailable"` / `"user store unavailable"` 或其他 | `&ToolboxAPIError{StatusCode: 503, Message: ...}` |
 | 其他 | 任意 | `&ToolboxAPIError{StatusCode: N, Message: ...}` |
+
+说明：
+
+- Toolbox 后端错误响应统一为 `{"status": N, "message": "...", "data": null}`。
+- Cloud 客户端只把已知权限/绑定/数据状态映射为哨兵错误；其他 message 会保留在
+  `ToolboxAPIError.Message` 中，供日志和诊断使用。
+- 面向用户或第三方的 Cloud HTTP 响应仍应使用安全文案，不直接回显上游 message，
+  避免泄露内部 URL、token、平台 ID 等细节。
 
 ---
 
@@ -250,14 +263,17 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 
 | HTTP 状态码 | 响应体 message 关键词 | 返回的 Go 错误 |
 |------------|----------------------|---------------|
+| `400` | `"both platform and platform_user_id are required"` | `&ToolboxAPIError{StatusCode: 400, Message: ...}` |
 | `403` | `"invalid platform or platform_user_id"` | `ErrInvalidPlatformUser` |
 | `403` | `"account owner is banned"` | `ErrAccountOwnerBanned` |
 | `404` | `"account binding not found"` | `ErrAccountBindingNotFound` |
-| `503` | 任意 | `&ToolboxAPIError{StatusCode: 503}` |
+| `500` | `"failed to query social platforms"` | `&ToolboxAPIError{StatusCode: 500, Message: ...}` |
+| `503` | `"private api is not configured"` / `"session store unavailable"` / `"identity provider unavailable"` / `"user store unavailable"` 或其他 | `&ToolboxAPIError{StatusCode: 503, Message: ...}` |
 | 其他 | 任意 | `&ToolboxAPIError{StatusCode: N, Message: ...}` |
 
 > `200 + []`（空数组）表示该平台用户存在但无关联绑定，是正常结果，不属于错误情形。
 > `403 ErrAccountOwnerBanned` 表示账号被封禁，与空列表是不同语义，调用方应区分处理。
+> 当前 Toolbox 后端不会在此端点用 404 表示“没有绑定”；该行仅用于兼容旧实现或异常代理响应。
 
 ---
 

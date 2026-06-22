@@ -17,6 +17,13 @@ type BotCommandRequest struct {
 	// EnableParamEcho allows clients to opt in to receiving the concrete
 	// parameter text in parse-error responses. The default is false.
 	EnableParamEcho bool `json:"enableParamEcho,omitempty" msgpack:"enableParamEcho,omitempty"`
+	// Timestamp (unix seconds) and Nonce provide replay protection for the
+	// Noise-encrypted channel: the server validates the timestamp window and
+	// rejects a reused Nonce. Optional during rollout — when absent the server
+	// only rejects if require_request_nonce is enabled. Nonce should be a fresh
+	// random value (>=16 bytes, hex/base64) per request.
+	Timestamp int64  `json:"timestamp,omitempty" msgpack:"timestamp,omitempty"`
+	Nonce     string `json:"nonce,omitempty" msgpack:"nonce,omitempty"`
 }
 
 // BotCommandErrorResponse is returned when a bot endpoint cannot process the request.

@@ -26,7 +26,30 @@ const (
 
 	jitterMin = 100 * time.Millisecond
 	jitterMax = 1 * time.Second
+
+	// defaultReplayWindow is the accepted timestamp skew and single-use nonce TTL
+	// when no window is configured.
+	defaultReplayWindow = 5 * time.Minute
 )
+
+// nonceStore stores single-use request nonces. storeNonce reports whether the
+// nonce was newly stored (true) or was already present (false = replay).
+type nonceStore interface {
+	storeNonce(ctx context.Context, key string, ttl time.Duration) (stored bool, err error)
+}
+
+type redisNonceStore struct{ rc *redis.Client }
+
+func (s redisNonceStore) storeNonce(ctx context.Context, key string, ttl time.Duration) (bool, error) {
+	res, err := s.rc.SetArgs(ctx, key, "1", redis.SetArgs{TTL: ttl, Mode: "NX"}).Result()
+	if errors.Is(err, redis.Nil) {
+		return false, nil // key already present -> replay
+	}
+	if err != nil {
+		return false, err
+	}
+	return res == "OK", nil
+}
 
 // RequestGuard provides per-event deduplication and per-user rate limiting
 // backed by Redis. A nil Guard is safe to use — all checks are skipped.
@@ -39,9 +62,12 @@ const (
 //  4. Process the request normally.
 //  5. Call MarkComplete to arm the per-user rate limit for the next 3 s.
 type RequestGuard struct {
-	redis *redis.Client
-	mu    sync.Mutex
-	rng   *rand.Rand
+	redis        *redis.Client
+	nonces       nonceStore
+	replayWindow time.Duration
+	requireNonce bool
+	mu           sync.Mutex
+	rng          *rand.Rand
 }
 
 type commandRequestGuard interface {
@@ -55,9 +81,55 @@ func NewRequestGuard(rc *redis.Client) *RequestGuard {
 		return nil
 	}
 	return &RequestGuard{
-		redis: rc,
-		rng:   rand.New(rand.NewSource(time.Now().UnixNano())),
+		redis:        rc,
+		nonces:       redisNonceStore{rc: rc},
+		replayWindow: defaultReplayWindow,
+		rng:          rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
+}
+
+// SetReplayProtection configures the request replay guard. window <= 0 keeps the
+// default (5m). When requireNonce is true, requests lacking a valid
+// timestamp+nonce are rejected; otherwise nonces are validated only when present
+// (lenient rollout). Safe on a nil guard.
+func (g *RequestGuard) SetReplayProtection(window time.Duration, requireNonce bool) {
+	if g == nil {
+		return
+	}
+	if window > 0 {
+		g.replayWindow = window
+	}
+	g.requireNonce = requireNonce
+}
+
+// checkReplay enforces request freshness: a timestamp within replayWindow and a
+// single-use nonce. Returns false when the request must be rejected (stale,
+// replayed, or — in strict mode — missing the nonce). Fails open on a store
+// error, consistent with the rest of the guard.
+func (g *RequestGuard) checkReplay(ctx context.Context, req BotCommandRequest) bool {
+	if g == nil || g.nonces == nil || g.replayWindow <= 0 {
+		return true
+	}
+
+	hasNonce := strings.TrimSpace(req.Nonce) != "" && req.Timestamp != 0
+	if !hasNonce {
+		// Lenient rollout: only reject missing nonces once enforcement is enabled.
+		return !g.requireNonce
+	}
+
+	now := time.Now().Unix()
+	windowSecs := int64(g.replayWindow.Seconds())
+	if req.Timestamp < now-windowSecs || req.Timestamp > now+windowSecs {
+		return false // stale or implausibly future
+	}
+
+	sum := sha256.Sum256([]byte(req.Nonce))
+	key := "haruki:bot:nonce:" + hex.EncodeToString(sum[:])
+	stored, err := g.nonces.storeNonce(ctx, key, g.replayWindow)
+	if err != nil {
+		return true // fail open on store error
+	}
+	return stored // false => nonce already used => replay
 }
 
 // Acquire performs jitter, rate-limit check, and dedup lock acquisition.
@@ -68,6 +140,11 @@ func NewRequestGuard(rc *redis.Client) *RequestGuard {
 func (g *RequestGuard) Acquire(ctx context.Context, req BotCommandRequest) bool {
 	if g == nil {
 		return true
+	}
+
+	// 0. Replay protection: reject stale/replayed requests before any work.
+	if !g.checkReplay(ctx, req) {
+		return false
 	}
 
 	// 1. Random jitter delay.

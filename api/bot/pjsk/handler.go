@@ -98,6 +98,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	bot.Get("/command/manifests", buildManifestHandler(botDBClient))
 
 	guard := NewRequestGuard(redisClient)
+	guard.SetReplayProtection(harukiConfig.Cfg.HarukiBotDB.RequestNonceWindow, harukiConfig.Cfg.HarukiBotDB.RequireRequestNonce)
 
 	pjsk := bot.Group("/pjsk")
 	if noiseKeyPair != nil {

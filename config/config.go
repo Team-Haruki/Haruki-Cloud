@@ -157,6 +157,8 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_BOT_SESSION_SIGN_TOKEN", &cfg.HarukiBotDB.SessionSignToken)
 	envStr("HARUKI_BOT_INTERNAL_API_TOKEN", &cfg.HarukiBotDB.InternalAPIToken)
 	envInt("HARUKI_BOT_SESSION_TTL_DAYS", &cfg.HarukiBotDB.SessionTTLDays)
+	envBool("HARUKI_BOT_REQUIRE_REQUEST_NONCE", &cfg.HarukiBotDB.RequireRequestNonce)
+	envDuration("HARUKI_BOT_REQUEST_NONCE_WINDOW", &cfg.HarukiBotDB.RequestNonceWindow)
 	envStr("HARUKI_BOT_NOISE_PRIVATE_KEY", &cfg.HarukiBotDB.NoisePrivateKey)
 	envStr("HARUKI_BOT_AUTH_ENCRYPTION_KEY", &cfg.HarukiBotDB.AuthEncryptionKey)
 
@@ -408,6 +410,14 @@ type HarukiBotDBConfig struct {
 	SessionTTLDays      int    `yaml:"session_ttl_days"`
 	NoisePrivateKey     string `yaml:"noise_private_key"`
 	AuthEncryptionKey   string `yaml:"auth_encryption_key"`
+	// RequireRequestNonce, when true, rejects bot command requests that do not
+	// carry a valid timestamp+nonce (full replay protection). Default false
+	// (lenient): nonces are validated only when present, so old clients that do
+	// not send them keep working. Flip to true once all clients send nonces.
+	RequireRequestNonce bool `yaml:"require_request_nonce"`
+	// RequestNonceWindow is the accepted clock skew for the request timestamp and
+	// the single-use TTL of the nonce. 0 = default (5m).
+	RequestNonceWindow time.Duration `yaml:"request_nonce_window"`
 }
 
 type UsersDBConfig struct {

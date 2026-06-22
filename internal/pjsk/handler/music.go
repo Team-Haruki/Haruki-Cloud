@@ -620,10 +620,6 @@ func formatMusicBPMSequence(events []rendermusic.BPMEvent) string {
 		}
 		values = append(values, current)
 		previous = current
-		if len(values) >= 12 {
-			values = append(values, "...")
-			break
-		}
 	}
 	return strings.Join(values, " / ")
 }

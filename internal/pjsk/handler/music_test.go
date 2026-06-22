@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 )
 
 func TestNoteNumHandleBuildsCommandRequest(t *testing.T) {
@@ -163,6 +164,34 @@ func TestBPMHandleReturnsUpdatedHelp(t *testing.T) {
 	})
 	if err == nil || !strings.Contains(err.Error(), "请输入要查询 BPM 的歌曲名") {
 		t.Fatalf("expected updated BPM help, got %v", err)
+	}
+}
+
+func TestFormatMusicBPMSequenceDoesNotTruncate(t *testing.T) {
+	events := []rendermusic.BPMEvent{
+		{BPM: 264},
+		{BPM: 200},
+		{BPM: 190},
+		{BPM: 180},
+		{BPM: 175},
+		{BPM: 174},
+		{BPM: 232},
+		{BPM: 222},
+		{BPM: 212},
+		{BPM: 202},
+		{BPM: 182},
+		{BPM: 273},
+		{BPM: 260},
+		{BPM: 250},
+	}
+
+	got := formatMusicBPMSequence(events)
+	want := "264 / 200 / 190 / 180 / 175 / 174 / 232 / 222 / 212 / 202 / 182 / 273 / 260 / 250"
+	if got != want {
+		t.Fatalf("formatMusicBPMSequence() = %q, want %q", got, want)
+	}
+	if strings.Contains(got, "...") {
+		t.Fatalf("formatMusicBPMSequence() should not truncate, got %q", got)
 	}
 }
 

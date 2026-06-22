@@ -86,6 +86,41 @@ func TestBPMHandleBuildsCommandRequest(t *testing.T) {
 	result, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/查BPM",
+		ArgText:    "Help me, ERINNNNNN!! ex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleMusic || resolved.Mode != "music-bpm-detail" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+	if resolved.Query != "Help me, ERINNNNNN!!" {
+		t.Fatalf("resolved.Query = %q", resolved.Query)
+	}
+
+	var params struct {
+		Difficulty string `json:"difficulty"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Difficulty != "expert" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestBPMSearchHandleBuildsCommandRequest(t *testing.T) {
+	h := sekaiHandlers{}.BPMSearchHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/bpms",
 		ArgText:    "200 ex",
 	})
 	if err != nil {
@@ -110,18 +145,15 @@ func TestBPMHandleBuildsCommandRequest(t *testing.T) {
 	if err := json.Unmarshal(resolved.Params, &params); err != nil {
 		t.Fatalf("unmarshal params: %v", err)
 	}
-	if params.BPM != 200 {
-		t.Fatalf("unexpected bpm params: %+v", params)
-	}
-	if params.Difficulty != "expert" {
-		t.Fatalf("unexpected params: %+v", params)
+	if params.BPM != 200 || params.Difficulty != "expert" {
+		t.Fatalf("unexpected bpm search params: %+v", params)
 	}
 }
 
 func TestBPMHandleReturnsUpdatedHelp(t *testing.T) {
 	h := sekaiHandlers{}.BPMHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
-	if h.GetHelper() != bpmLookupHelp {
+	if h.GetHelper() != bpmDetailHelp {
 		t.Fatalf("unexpected helper: %q", h.GetHelper())
 	}
 
@@ -129,7 +161,7 @@ func TestBPMHandleReturnsUpdatedHelp(t *testing.T) {
 		Context:    context.Background(),
 		TriggerCmd: "/查BPM",
 	})
-	if err == nil || !strings.Contains(err.Error(), "即使只有一个匹配结果也不会直接返回谱面") {
+	if err == nil || !strings.Contains(err.Error(), "请输入要查询 BPM 的歌曲名") {
 		t.Fatalf("expected updated BPM help, got %v", err)
 	}
 }

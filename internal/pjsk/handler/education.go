@@ -135,8 +135,7 @@ func (sekaiHandlers) LeaderCountHandle() HarukiSekaiCommandHandler {
 
 func educationCharacterMissionUsageError(triggerCmd string) error {
 	return onebot11.NewReplayError(
-		"使用方式:\n%s 角色名\n%s 角色名 all 任务名",
-		triggerCmd,
+		"参数格式不正确。查看完整用法和任务名列表请发送：%s -help",
 		triggerCmd,
 	)
 }
@@ -154,11 +153,6 @@ func (sekaiHandlers) CharacterMissionHandle() HarukiSekaiCommandHandler {
 			if args == "" {
 				return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
 			}
-			lower := strings.ToLower(args)
-			if lower == "help" || args == "帮助" {
-				return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
-			}
-
 			params, err := newSelfQueryParamsMap(ctx)
 			if err != nil {
 				return nil, err
@@ -234,12 +228,12 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 }
 
 func educationAreaUsageError(triggerCmd string) error {
-	return onebot11.NewReplayError("请指定要查询的区域道具分类，例如：%s mmj、%s miku、%s 花树。查看完整用法请发送：%s help",
+	return onebot11.NewReplayError("请指定要查询的区域道具分类，例如：%s mmj、%s miku、%s 花树。查看完整用法请发送：%s -help",
 		triggerCmd, triggerCmd, triggerCmd, triggerCmd)
 }
 
 func educationAreaFullUsageError(triggerCmd string) error {
-	return onebot11.NewReplayError("full 需要和区域道具分类一起使用，例如：%s mmj full、%s 花树 full。查看完整用法请发送：%s help",
+	return onebot11.NewReplayError("full 需要和区域道具分类一起使用，例如：%s mmj full、%s 花树 full。查看完整用法请发送：%s -help",
 		triggerCmd, triggerCmd, triggerCmd)
 }
 

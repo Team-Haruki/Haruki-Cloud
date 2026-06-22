@@ -21,4 +21,5 @@
 - `/区域道具 花树`
 - `/区域道具 25h full`
 - `/羁绊 miku rin`
+- `/cr任务 miku`
 - `/cr任务 miku all 花树`

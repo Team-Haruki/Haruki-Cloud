@@ -142,7 +142,7 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 }
 
 func eventSearchUsageError(trigger string) error {
-	return onebot11.NewReplayError("活动查询参数格式不正确。查看完整用法请发送：%s help", trigger)
+	return onebot11.NewReplayError("活动查询参数格式不正确。查看完整用法请发送：%s -help", trigger)
 }
 
 func resolveAmbiguousEventListFilter(args string) (map[string]any, bool) {

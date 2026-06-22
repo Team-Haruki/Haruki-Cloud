@@ -958,7 +958,7 @@ func TestBotEndpointProfileUIDRejectsAtUser(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
-	assertSingleTextMessage(t, body, "此命令仅支持查询自己的绑定账号 UID\n查看完整用法请发送：/查uid help")
+	assertSingleTextMessage(t, body, "此命令仅支持查询自己的绑定账号 UID\n查看完整用法请发送：/查uid -help")
 }
 
 func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T) {
@@ -1134,7 +1134,7 @@ func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	want := "活动查询参数格式不正确。查看完整用法请发送：/查活动 help"
+	want := "活动查询参数格式不正确。查看完整用法请发送：/查活动 -help"
 	if text != want {
 		t.Fatalf("expected compact parse error with help text, got %q", text)
 	}
@@ -1164,7 +1164,7 @@ func TestBotEndpointStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	want := "活动查询参数格式不正确。查看完整用法请发送：/查活动 help"
+	want := "活动查询参数格式不正确。查看完整用法请发送：/查活动 -help"
 	if text != want {
 		t.Fatalf("expected compact parse error with help text, got %q", text)
 	}

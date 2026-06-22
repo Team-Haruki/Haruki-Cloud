@@ -18,17 +18,17 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 			name:        "quoted event args with command help fallback",
 			in:          "活动查询参数错误: \"super-secret\"\n【查单个活动格式】",
 			helpTrigger: "/查活动",
-			want:        "活动查询参数错误\n查看完整用法请发送：/查活动 help",
+			want:        "活动查询参数错误\n查看完整用法请发送：/查活动 -help",
 		},
 		{
 			name: "replay error args",
 			in:   "无效的参数：\"super-secret\"\n使用方式：/cmd",
-			want: "无效的参数\n查看完整用法请发送：/cmd help",
+			want: "无效的参数\n查看完整用法请发送：/cmd -help",
 		},
 		{
 			name: "standalone usage help",
 			in:   "使用方式:\n/区域道具 团名\n/区域道具 角色名\n/区域道具 full",
-			want: "参数格式不正确\n查看完整用法请发送：/区域道具 help",
+			want: "参数格式不正确\n查看完整用法请发送：/区域道具 -help",
 		},
 		{
 			name: "english token",
@@ -119,7 +119,7 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 
 func TestClientErrorTextStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	in := "活动查询参数错误: \"super-secret\"\n【查单个活动格式】"
-	want := "活动查询参数错误\n查看完整用法请发送：/查活动 help"
+	want := "活动查询参数错误\n查看完整用法请发送：/查活动 -help"
 	if got := clientErrorTextForCommand(in, true, "/查活动"); got != want {
 		t.Fatalf("clientErrorText() = %q, want %q", got, want)
 	}

@@ -181,7 +181,7 @@ func TestGachaHandleReturnsCompactHelpOnInvalidQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	want := "卡池查询参数格式不正确。查看完整用法请发送：/卡池 help"
+	want := "卡池查询参数格式不正确。查看完整用法请发送：/卡池 -help"
 	if err.Error() != want {
 		t.Fatalf("unexpected error: %v", err)
 	}

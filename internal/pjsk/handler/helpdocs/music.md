@@ -7,10 +7,11 @@
 - `/打歌奖励` `/歌曲奖励`：查询曲目奖励。
 - `/打歌进度` `/pjsk进度`：查询自己的打歌进度。
 - `/查物量` `/物量`：查询指定物量的歌曲。
-- `/查BPM` `/pjsk bpm`：查询指定 BPM 的歌曲。
+- `/查BPM` `/pjsk bpm`：查询指定歌曲的 BPM。
+- `/bpms` `/bpm搜索`：按 BPM 数值反查歌曲。
 - `/查曲绘` `/曲绘`：输出曲绘。
 
 ## 参数
 - 难度可写 `easy` `normal` `hard` `expert` `master` `append` 或缩写。
 - 自定义谱面目前建议显式使用日服前缀，例如 `/jp谱面预览 <28位ID>`。
-- 例：`/查曲 虾ex`、`/查BPM 193 expert`、`/歌曲列表 28 master fc`。
+- 例：`/查曲 虾ex`、`/查BPM Help me, ERINNNNNN!!`、`/bpms 193 expert`、`/歌曲列表 28 master fc`。

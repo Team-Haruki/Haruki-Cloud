@@ -1063,6 +1063,130 @@ func TestExecuteMusicBPMUsesListImageForSingleMatch(t *testing.T) {
 	}
 }
 
+func TestExecuteMusicBPMDetailReturnsSongBPMText(t *testing.T) {
+	root := t.TempDir()
+	chartPath := filepath.Join(root, "music", "music_score", "0001_01", "expert.txt")
+	if err := os.MkdirAll(filepath.Dir(chartPath), 0o755); err != nil {
+		t.Fatalf("mkdir chart: %v", err)
+	}
+	if err := os.WriteFile(chartPath, []byte(strings.Join([]string{
+		"#BPM01:120",
+		"#BPM02:180",
+		"#00008:0100",
+		"#00108:0200",
+	}, "\n")), 0o644); err != nil {
+		t.Fatalf("write chart: %v", err)
+	}
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {
+				{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27},
+			},
+		},
+	}
+	app := &renderapp.App{
+		Music: music.NewController(source, nil, assets.NewAssetHelper(root, nil), nil, nil),
+	}
+
+	params, err := json.Marshal(map[string]any{"difficulty": "expert"})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	message, err := executeMusic(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMusic,
+		Mode:   "music-bpm-detail",
+		Query:  "Song A",
+		Region: "jp",
+		Params: params,
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic bpm detail: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+		t.Fatalf("unexpected bpm detail message: %+v", message)
+	}
+	textData, ok := message[0].Data.(onebot11.TextData)
+	if !ok {
+		t.Fatalf("unexpected text data: %#v", message[0].Data)
+	}
+	if !strings.Contains(textData.Text, "【1】Song A") ||
+		!strings.Contains(textData.Text, "难度：EXPERT") ||
+		!strings.Contains(textData.Text, "主 BPM：120") ||
+		!strings.Contains(textData.Text, "BPM 变化：120 / 180") {
+		t.Fatalf("unexpected bpm detail text: %q", textData.Text)
+	}
+}
+
+func TestExecuteMusicBPMDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
+	briefListCalls := 0
+	titles := make([]string, 0, 1)
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/pjsk/music/brief-list":
+			briefListCalls++
+			var req drawing.MusicBriefListRequest
+			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode music-brief-list request: %v", err)
+			}
+			if req.Title == nil {
+				t.Fatalf("expected list title, got nil")
+			}
+			titles = append(titles, *req.Title)
+			if len(req.MusicList) != 2 {
+				t.Fatalf("expected 2 list items, got %d", len(req.MusicList))
+			}
+			if req.MusicList[0].ID != 1 || req.MusicList[1].ID != 2 {
+				t.Fatalf("unexpected ambiguous bpm ids: %+v", req.MusicList)
+			}
+			_, _ = w.Write([]byte("png"))
+		default:
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+	}))
+	defer drawingServer.Close()
+
+	source := &bridgeMusicSource{
+		musics: map[int]*masterdata.Music{
+			1: {ID: 1, Title: "Song A", AssetBundleName: "jacket_a"},
+			2: {ID: 2, Title: "Song B", AssetBundleName: "jacket_b"},
+		},
+		difficulties: map[int][]*masterdata.MusicDifficulty{
+			1: {{MusicID: 1, MusicDifficulty: "master", PlayLevel: 31}},
+			2: {{MusicID: 2, MusicDifficulty: "master", PlayLevel: 32}},
+		},
+	}
+	ctrl := music.NewController(source, drawing.NewHarukiDrawingClient(drawingServer.URL), assets.NewAssetHelper("", nil), nil, nil)
+	ctrl.SetAliasResolver(&bridgeAmbiguousMusicAliasResolver{})
+	app := &renderapp.App{
+		Music:      ctrl,
+		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
+	}
+
+	message, err := executeMusic(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMusic,
+		Mode:   "music-bpm-detail",
+		Query:  "Shared Alias",
+		Region: "jp",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMusic bpm detail: %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeImage {
+		t.Fatalf("unexpected bpm detail message: %+v", message)
+	}
+	if briefListCalls != 1 {
+		t.Fatalf("expected 1 brief-list render call, got %d", briefListCalls)
+	}
+	if len(titles) != 1 || titles[0] != "匹配到多个歌曲，请使用 /查BPM <id> 查询：" {
+		t.Fatalf("unexpected title list: %+v", titles)
+	}
+}
+
 func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 	briefListCalls := 0
 	titles := make([]string, 0, 1)

@@ -122,7 +122,7 @@ func (sekaiHandlers) ProfileUIDHandle() HarukiSekaiCommandHandler {
 			}
 			selector := strings.TrimSpace(ctx.UIDArg())
 			if strings.HasPrefix(selector, "@") {
-				return nil, onebot11.NewReplayError("此命令仅支持查询自己的绑定账号 UID\n查看完整用法请发送：%s help", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError("此命令仅支持查询自己的绑定账号 UID\n查看完整用法请发送：%s -help", ctx.originalTriggerCmd)
 			}
 			if selector != "" && !isBindingSelector(selector) {
 				return nil, profileUIDUsageError(ctx.originalTriggerCmd)
@@ -138,7 +138,7 @@ func (sekaiHandlers) ProfileUIDHandle() HarukiSekaiCommandHandler {
 }
 
 func profileUIDUsageError(trigger string) error {
-	return onebot11.NewReplayError("参数格式不正确\n查看完整用法请发送：%s help", trigger)
+	return onebot11.NewReplayError("参数格式不正确\n查看完整用法请发送：%s -help", trigger)
 }
 
 func (sekaiHandlers) ProfileBindSwapHandle() HarukiSekaiCommandHandler {

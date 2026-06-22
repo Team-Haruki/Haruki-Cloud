@@ -367,6 +367,40 @@ func TestDispatchSupportsMysekaiOverviewAlias(t *testing.T) {
 	}
 }
 
+func TestDispatchDistinguishesBPMDetailAndSearch(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	tests := []struct {
+		message  string
+		wantMode string
+		query    string
+	}{
+		{message: "/pjsk bpm Help me, ERINNNNNN!!", wantMode: "music-bpm-detail", query: "Help me, ERINNNNNN!!"},
+		{message: "/pjsk bpm search 200", wantMode: "music-bpm", query: "200"},
+		{message: "/bpms 200", wantMode: "music-bpm", query: "200"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.message, func(t *testing.T) {
+			resolved, err := dispatchForTest(context.Background(), Event{
+				Platform: "qq",
+				Message: onebot11.Message{
+					{Type: "text", Data: map[string]any{"text": tt.message}},
+				},
+				UserId: "12345",
+			})
+			if err != nil {
+				t.Fatalf("dispatch: %v", err)
+			}
+			if resolved == nil {
+				t.Fatal("expected command request, got nil")
+			}
+			if resolved.Module != parser.ModuleMusic || resolved.Mode != tt.wantMode || resolved.Query != tt.query {
+				t.Fatalf("unexpected bpm command: %+v", resolved)
+			}
+		})
+	}
+}
+
 func TestDispatchSupportsMysekaiResourceAliasWithoutMapMode(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 

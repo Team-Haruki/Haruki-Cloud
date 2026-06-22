@@ -370,7 +370,7 @@ func TestEventHandleReturnsCompactHelpOnInvalidQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	want := "活动查询参数格式不正确。查看完整用法请发送：/活动 help"
+	want := "活动查询参数格式不正确。查看完整用法请发送：/活动 -help"
 	if err.Error() != want {
 		t.Fatalf("unexpected error: %v", err)
 	}

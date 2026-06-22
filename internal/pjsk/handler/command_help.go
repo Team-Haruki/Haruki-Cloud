@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
 	"strings"
 
+	corehandler "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -61,18 +63,18 @@ func commandHelpMarkdown(resolved *CommandRequest) (string, error) {
 			return "", err
 		}
 		if ok {
-			return md, nil
+			return withCommandHelpAliasSection(md, path), nil
 		}
 	}
 	if md := strings.TrimSpace(helper); md != "" {
-		return fallbackCommandHelpMarkdown(trigger, path, md), nil
+		return withCommandHelpAliasSection(fallbackCommandHelpMarkdown(trigger, path, md), path), nil
 	}
 	md, ok, err := readCommandHelpMarkdown("generic")
 	if err != nil {
 		return "", err
 	}
 	if ok {
-		return md, nil
+		return withCommandHelpAliasSection(md, path), nil
 	}
 	return "", fmt.Errorf("command help markdown not found: path=%s", path)
 }
@@ -81,7 +83,40 @@ func commandHelpRequestPath(resolved *CommandRequest) string {
 	if resolved == nil {
 		return ""
 	}
-	return strings.Trim(strings.TrimSpace(resolved.CommandPath), "/")
+	path := strings.Trim(strings.TrimSpace(resolved.CommandPath), "/")
+	trigger := normalizeCommandHelpTrigger(resolved.TriggerCommand)
+	if path == "deck/event" && isGenericDeckHelpTrigger(trigger) {
+		return "deck"
+	}
+	return path
+}
+
+func normalizeCommandHelpTrigger(trigger string) string {
+	trigger = strings.TrimSpace(trigger)
+	if trigger == "" {
+		return ""
+	}
+	lower := strings.ToLower(trigger)
+	for _, region := range []string{"jp", "en", "cn", "tw", "kr"} {
+		prefix := "/" + region
+		if !strings.HasPrefix(lower, prefix) {
+			continue
+		}
+		if len(trigger) == len(prefix) {
+			continue
+		}
+		return "/" + strings.TrimPrefix(trigger[len(prefix):], "/")
+	}
+	return trigger
+}
+
+func isGenericDeckHelpTrigger(trigger string) bool {
+	switch trigger {
+	case "/组卡", "/组队", "/配队":
+		return true
+	default:
+		return false
+	}
 }
 
 func commandHelpLookupKeys(path string) []string {
@@ -167,4 +202,88 @@ func fallbackCommandHelpMarkdown(trigger, path, helper string) string {
 		title = "指令帮助"
 	}
 	return fmt.Sprintf("# %s\n\n%s", title, helper)
+}
+
+func withCommandHelpAliasSection(markdown string, path string) string {
+	markdown = strings.TrimSpace(markdown)
+	aliases := missingCommandHelpAliases(markdown, path)
+	if len(aliases) == 0 {
+		return markdown
+	}
+	lines := make([]string, 0, (len(aliases)+3)/4)
+	for len(aliases) > 0 {
+		n := min(len(aliases), 4)
+		items := make([]string, 0, n)
+		for _, alias := range aliases[:n] {
+			items = append(items, "`"+alias+"`")
+		}
+		lines = append(lines, "- "+strings.Join(items, " "))
+		aliases = aliases[n:]
+	}
+	return strings.TrimSpace(markdown + "\n\n## 指令别名\n" + strings.Join(lines, "\n"))
+}
+
+func missingCommandHelpAliases(markdown string, path string) []string {
+	aliases := commandHelpAliases(path)
+	if len(aliases) == 0 {
+		return nil
+	}
+	missing := make([]string, 0, len(aliases))
+	for _, alias := range aliases {
+		if strings.Contains(markdown, alias) {
+			continue
+		}
+		missing = append(missing, alias)
+	}
+	return missing
+}
+
+func commandHelpAliases(path string) []string {
+	path = strings.Trim(strings.TrimSpace(path), "/")
+	if path == "" {
+		return nil
+	}
+	seen := map[string]struct{}{}
+	for _, route := range corehandler.ListBotRoutes() {
+		if strings.Trim(strings.TrimSpace(route.Path), "/") != path {
+			continue
+		}
+		for _, command := range route.Commands {
+			command = normalizeCommandHelpAlias(command)
+			if command == "" {
+				continue
+			}
+			seen[command] = struct{}{}
+		}
+	}
+	if len(seen) == 0 {
+		return nil
+	}
+	aliases := make([]string, 0, len(seen))
+	for alias := range seen {
+		aliases = append(aliases, alias)
+	}
+	slices.SortFunc(aliases, func(a, b string) int {
+		if len([]rune(a)) == len([]rune(b)) {
+			return strings.Compare(a, b)
+		}
+		return len([]rune(a)) - len([]rune(b))
+	})
+	return aliases
+}
+
+func normalizeCommandHelpAlias(command string) string {
+	command = strings.TrimSpace(command)
+	if command == "" {
+		return ""
+	}
+	lower := strings.ToLower(command)
+	for _, region := range []string{"jp", "en", "cn", "tw", "kr"} {
+		prefix := "/" + region
+		if !strings.HasPrefix(lower, prefix) || len(command) == len(prefix) {
+			continue
+		}
+		return "/" + strings.TrimPrefix(command[len(prefix):], "/")
+	}
+	return command
 }

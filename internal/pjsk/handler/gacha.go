@@ -70,7 +70,7 @@ func resolveGachaDetailOrList(ctx HarrukiSekaiHandlerContext) (*CommandRequest, 
 }
 
 func gachaSearchUsageError(trigger string) error {
-	return onebot11.NewReplayError("卡池查询参数格式不正确。查看完整用法请发送：%s help", trigger)
+	return onebot11.NewReplayError("卡池查询参数格式不正确。查看完整用法请发送：%s -help", trigger)
 }
 
 func parseSingleGachaQuery(args string) (map[string]any, bool, error) {

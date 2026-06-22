@@ -191,7 +191,7 @@ func compactUsageHelpLines(lines []string, fallbackTrigger string) (string, bool
 	}
 	trigger := ""
 	if trigger = extractInlineUsageHelpTrigger(first); trigger != "" && len(lines) == 1 {
-		return "参数格式不正确\n查看完整用法请发送：" + trigger + " help", true
+		return "参数格式不正确\n查看完整用法请发送：" + trigger + " -help", true
 	}
 	hasUsageHelp := isUsageHelpMarker(first)
 	for _, line := range lines[1:] {
@@ -216,7 +216,7 @@ func compactUsageHelpLines(lines []string, fallbackTrigger string) (string, bool
 	if isUsageHelpMarker(first) {
 		first = "参数格式不正确"
 	}
-	return first + "\n查看完整用法请发送：" + trigger + " help", true
+	return first + "\n查看完整用法请发送：" + trigger + " -help", true
 }
 
 func isUsageHelpMarker(line string) bool {

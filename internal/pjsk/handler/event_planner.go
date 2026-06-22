@@ -106,8 +106,8 @@ func (sekaiHandlers) EventPlannerHandle() HarukiSekaiCommandHandler {
 
 func parseEventPlannerParams(args string, trigger string) (eventPlannerCommandParams, error) {
 	args = strings.TrimSpace(args)
-	if args == "" || eventPlannerContainsAny(args, "help", "帮助", "用法", "?") {
-		return eventPlannerCommandParams{}, onebot11.NewReplayError("需要提供目标 pt 或目标排名，例如：%s pt1000w\n查看完整用法：%s help", trigger, trigger)
+	if args == "" {
+		return eventPlannerCommandParams{}, onebot11.NewReplayError("需要提供目标 pt 或目标排名，例如：%s pt1000w\n查看完整用法：%s -help", trigger, trigger)
 	}
 
 	params := eventPlannerCommandParams{

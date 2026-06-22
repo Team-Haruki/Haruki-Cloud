@@ -38,6 +38,7 @@ func Run(ctx context.Context) {
 	if renderRuntime != nil {
 		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)
 	}
+	validateBotAuthSecrets(mainLogger)
 	noiseKeyPair := initNoiseKeyPair(mainLogger)
 	authEncryptionKey := initAuthEncryptionKey(mainLogger)
 	var noiseServerPubKeyHex string

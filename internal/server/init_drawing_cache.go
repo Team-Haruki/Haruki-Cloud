@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"haruki-cloud/api"
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/cache/drawingcache"
 	harukiLogger "haruki-cloud/utils/logger"
@@ -26,6 +27,13 @@ func initDrawingCacheIfConfigured(ctx context.Context, mainLogger *harukiLogger.
 	if err != nil {
 		mainLogger.Errorf("Failed to initialize drawing cache service: %v", err)
 		os.Exit(1)
+	}
+	// Optionally gate the /cache control plane behind internal API auth. Off by
+	// default; enable only once remote consumers (cache-proxy / secondary nodes)
+	// send the internal token, else they get 401.
+	if cfg.RequireAuth {
+		app.Use("/cache", api.VerifyAPIAuthorization())
+		mainLogger.Infof("Drawing cache /cache routes require internal API authorization")
 	}
 	service.RegisterRoutes(app)
 

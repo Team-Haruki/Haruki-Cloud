@@ -197,6 +197,21 @@ func resolveMySekaiHousingCompetitionCachePath() string {
 	return ""
 }
 
+// validateBotAuthSecrets fails fast when a bot JWT signing secret is empty.
+// An empty HMAC key signs/verifies tokens with a zero-length key, which is
+// forgeable — the AES + Noise keys are already validated the same way, and bot
+// auth routes are always registered, so these must be configured too.
+func validateBotAuthSecrets(mainLogger *harukiLogger.Logger) {
+	if strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.SessionSignToken) == "" {
+		mainLogger.Errorf("bot session_sign_token is required but not configured")
+		os.Exit(1)
+	}
+	if strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.CredentialSignToken) == "" {
+		mainLogger.Errorf("bot credential_sign_token is required but not configured")
+		os.Exit(1)
+	}
+}
+
 func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {
 	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.AuthEncryptionKey)
 	if keyHex == "" {

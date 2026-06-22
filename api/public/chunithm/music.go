@@ -15,6 +15,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// maxQueryBatchMusicIDs caps the unauthenticated /music/query-batch input so a
+// single request cannot amplify DB/memory load with an unbounded music_ids list.
+const maxQueryBatchMusicIDs = 200
+
 func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
 	now := time.Now()
 	return api.WithCache(c, h.svc.redisClient, CacheNSMusic, func(_ string) (any, error) {
@@ -177,6 +181,11 @@ func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {
 	}
 	if err := c.Bind().Body(&req); err != nil {
 		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
+	}
+	// Bound the unauthenticated batch so a huge music_ids list cannot amplify
+	// DB load / memory (IN() lists + per-id map allocations).
+	if len(req.MusicIDs) > maxQueryBatchMusicIDs {
+		return api.JSONResponse(c, fiber.StatusBadRequest, "music_ids too large")
 	}
 	musicRows, _ := h.svc.client.ChunithmMusic.
 		Query().

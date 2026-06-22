@@ -8,7 +8,6 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	harukiLogger "haruki-cloud/utils/logger"
-	"haruki-cloud/version"
 
 	botDB "haruki-cloud/database/bot"
 	chunithmMainDB "haruki-cloud/database/chunithm/maindb"
@@ -63,18 +62,13 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 
 func registerReadinessRoute(app *fiber.App) {
 	app.Get("/readyz", func(c fiber.Ctx) error {
+		// Minimal readiness signal only. Deployment profile, build version and
+		// node name/role are intentionally NOT exposed here — this endpoint is
+		// public/unauthenticated, and that metadata aids targeting/recon. Expose
+		// it via an authenticated endpoint if monitoring needs it.
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":  fiber.StatusOK,
 			"message": "ok",
-			"data": fiber.Map{
-				"profile": string(harukiConfig.Cfg.Profile),
-				"version": version.Get(),
-				"node": fiber.Map{
-					"name":      harukiConfig.Cfg.Node.Name,
-					"role":      harukiConfig.Cfg.Node.Role,
-					"read_only": harukiConfig.Cfg.Node.ReadOnly,
-				},
-			},
 		})
 	})
 }

@@ -207,6 +207,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envStr("HARUKI_PJSK_RENDER_DRAWING_CACHE_DB_PATH", &cfg.PJSKRender.DrawingCache.DBPath)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_TTL", &cfg.PJSKRender.DrawingCache.TTL)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_CACHE_GC_INTERVAL", &cfg.PJSKRender.DrawingCache.GCInterval)
+	envBool("HARUKI_PJSK_RENDER_DRAWING_CACHE_REQUIRE_AUTH", &cfg.PJSKRender.DrawingCache.RequireAuth)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_SK_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingSKMaxConcurrency)
 	envDuration("HARUKI_PJSK_RENDER_DRAWING_SK_ACQUIRE_TIMEOUT", &cfg.PJSKRender.DrawingSKAcquireTimeout)
 	envInt("HARUKI_PJSK_RENDER_DRAWING_MAX_CONCURRENCY", &cfg.PJSKRender.DrawingMaxConcurrency)
@@ -333,6 +334,12 @@ type RenderCacheConfig struct {
 	TTL        time.Duration `yaml:"ttl"`
 	DBPath     string        `yaml:"db_path"`
 	GCInterval time.Duration `yaml:"gc_interval"`
+	// RequireAuth, when true, gates the /cache and /cache/stats routes behind the
+	// internal API authorization (VerifyAPIAuthorization). Defaults to false to
+	// preserve current behavior; enable ONLY after remote consumers (e.g. the
+	// cache-proxy / secondary nodes) are updated to send the internal token,
+	// otherwise they will get 401.
+	RequireAuth bool `yaml:"require_auth"`
 }
 
 type ImageCacheConfig struct {

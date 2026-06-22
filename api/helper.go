@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/md5"
+	"crypto/subtle"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -101,7 +102,7 @@ func VerifyAPIAuthorization() fiber.Handler {
 		authHeader := strings.TrimSpace(c.Get("Authorization"))
 		userAgent := c.Get("User-Agent")
 
-		if expectedAuth != "" && authHeader != expectedAuth {
+		if expectedAuth != "" && subtle.ConstantTimeCompare([]byte(authHeader), []byte(expectedAuth)) != 1 {
 			return JSONResponse(c, fiber.StatusUnauthorized, "Invalid Authorization header")
 		}
 

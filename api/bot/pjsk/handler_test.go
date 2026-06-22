@@ -316,8 +316,9 @@ type botTrackerMissingUserSource struct {
 
 type botTrackerStaleSelfSource struct {
 	botTrackerSource
-	healthy bool
-	rank    int
+	healthy        bool
+	rank           int
+	currentMatches bool
 }
 
 func (botTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
@@ -363,6 +364,12 @@ func (s botTrackerStaleSelfSource) GetLatestRankingByUser(server string, eventID
 	}
 	resp.RankData.Rank = rank
 	resp.RankData.Timestamp = time.Now().UTC().Add(-6 * time.Minute).Unix()
+	if s.currentMatches {
+		userIDText := strconv.FormatInt(userID, 10)
+		resp.RankData.UserID = userIDText
+		resp.UserData.UserID = userIDText
+		resp.UserData.Name = "BotTrackerCurrentUser"
+	}
 	return resp, nil
 }
 
@@ -873,6 +880,87 @@ func TestBotEndpointBindListFiltersTransportRegionAfterClientStripsPrefix(t *tes
 	assertSingleTextMessage(t, body, "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 748********663 (全局默认 / CN服默认)")
 }
 
+func TestBotEndpointProfileUIDReturnsFullUIDWhenHidden(t *testing.T) {
+	bindings := testBindingServiceWithValidator(t, botBindingJPENValidator{})
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "13200000000982"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/uid"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查uid",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查uid"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessage(t, body, "13200000000982")
+}
+
+func TestBotEndpointProfileUIDAliasSupportsSelector(t *testing.T) {
+	bindings := testBindingServiceWithValidator(t, botBindingJPENValidator{})
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "13200000000982"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "39400000000123"); err != nil {
+		t.Fatalf("bind en: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/uid"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", MatchedCommand: "/uid",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/uid u2"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessage(t, body, "39400000000123")
+}
+
+func TestBotEndpointProfileUIDRejectsAtUser(t *testing.T) {
+	bindings := testBindingServiceWithValidator(t, botBindingJPValidator{})
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "1234567890"); err != nil {
+		t.Fatalf("bind requester account: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/uid"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", MatchedCommand: "/查uid",
+		Message: onebot11.Message{
+			onebot11.Text("/查uid "),
+			onebot11.At("67890"),
+		},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+	assertSingleTextMessage(t, body, "此命令仅支持查询自己的绑定账号 UID\n查看完整用法请发送：/查uid help")
+}
+
 func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T) {
 	ctx := context.Background()
 	bindings := testBindingServiceWithValidator(t, botBindingJPENValidator{})
@@ -1046,8 +1134,9 @@ func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	if !strings.Contains(text, "活动查询参数错误") || !strings.Contains(text, "【查单个活动格式】") {
-		t.Fatalf("expected redacted parse error with help text, got %q", text)
+	want := "活动查询参数格式不正确。查看完整用法请发送：/查活动 help"
+	if text != want {
+		t.Fatalf("expected compact parse error with help text, got %q", text)
 	}
 }
 
@@ -1075,8 +1164,9 @@ func TestBotEndpointStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	if !strings.Contains(text, "活动查询参数错误") || !strings.Contains(text, "【查单个活动格式】") {
-		t.Fatalf("expected redacted parse error with help text, got %q", text)
+	want := "活动查询参数格式不正确。查看完整用法请发送：/查活动 help"
+	if text != want {
+		t.Fatalf("expected compact parse error with help text, got %q", text)
 	}
 }
 
@@ -2077,7 +2167,7 @@ func TestBotEndpointSKQueryWarnsWhenSelfRecordIsStaleAndTrackerIsHealthy(t *test
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true, rank: 101}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true, rank: 100}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2116,7 +2206,7 @@ func TestBotEndpointSKQueryDoesNotWarnWhenTrackerStatusIsUnhealthy(t *testing.T)
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: false, rank: 101}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: false, rank: 100}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2242,7 +2332,7 @@ func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testi
 	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
 }
 
-func TestBotEndpointSKCSBDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
+func TestBotEndpointSKCSBDoesNotWarnWhenCurrentSelfRecordIsStillTop100(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/csb" {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
@@ -2267,7 +2357,7 @@ func TestBotEndpointSKCSBDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true, currentMatches: true}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2710,7 +2800,7 @@ func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
 	assertSingleImageMessage(t, body)
 }
 
-func TestBotEndpointSKCheckRoomDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
+func TestBotEndpointSKCheckRoomDoesNotWarnWhenCurrentSelfRecordIsStillTop100(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/check-room" {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
@@ -2735,7 +2825,7 @@ func TestBotEndpointSKCheckRoomDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true, currentMatches: true}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 

@@ -445,6 +445,100 @@ func TestProfileBindListHandleKeepsServerWhenRegionExplicit(t *testing.T) {
 	}
 }
 
+func TestProfileUIDHandleParsesSelectorAndOmitsImplicitServer(t *testing.T) {
+	h := sekaiHandlers{}.ProfileUIDHandle()
+	h.Regions = []renderregion.Value{renderregion.JP, renderregion.CN}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/查uid",
+		ArgText:    "u1",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if result.Mode != accountdata.ProfileModeQueryUID {
+		t.Fatalf("resolved.Mode = %q", result.Mode)
+	}
+
+	var params accountdata.ProfileBindingCommandParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Selector != "u1" {
+		t.Fatalf("unexpected selector: %q", params.Selector)
+	}
+	if params.Server != "" {
+		t.Fatalf("unexpected implicit server: %q", params.Server)
+	}
+}
+
+func TestProfileUIDHandleKeepsExplicitRegion(t *testing.T) {
+	h := sekaiHandlers{}.ProfileUIDHandle()
+	h.Regions = []renderregion.Value{renderregion.JP, renderregion.CN}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/cn查uid",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params accountdata.ProfileBindingCommandParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Server != "cn" {
+		t.Fatalf("unexpected explicit server: %q", params.Server)
+	}
+}
+
+func TestProfileUIDHandleRejectsAtUser(t *testing.T) {
+	h := sekaiHandlers{}.ProfileUIDHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/查uid",
+		AtIds:      []string{"987654321"},
+	})
+	if err == nil {
+		t.Fatal("expected at-user query to be rejected")
+	}
+	if !strings.Contains(err.Error(), "仅支持查询自己的绑定账号 UID") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestProfileUIDHandleRejectsRawUID(t *testing.T) {
+	h := sekaiHandlers{}.ProfileUIDHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/查uid",
+		ArgText:    "12345678901234",
+	})
+	if err == nil {
+		t.Fatal("expected raw uid to be rejected")
+	}
+	if !strings.Contains(err.Error(), "参数格式不正确") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestProfileBindSwapHandleParsesArgs(t *testing.T) {
 	h := sekaiHandlers{}.ProfileBindSwapHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}

@@ -112,15 +112,23 @@ var paramEchoSeparatorMarkers = []string{
 }
 
 func clientErrorText(message string, enableParamEcho bool) string {
+	return clientErrorTextWithHelpTrigger(message, enableParamEcho, "")
+}
+
+func clientErrorTextForCommand(message string, enableParamEcho bool, helpTrigger string) string {
+	return clientErrorTextWithHelpTrigger(message, enableParamEcho, helpTrigger)
+}
+
+func clientErrorTextWithHelpTrigger(message string, enableParamEcho bool, helpTrigger string) string {
 	_ = enableParamEcho
-	redacted := redactParamEcho(message)
+	redacted := redactParamEcho(message, helpTrigger)
 	if usererror.MessageContainsSensitiveURL(redacted) {
 		return genericClientErrorText
 	}
 	return redacted
 }
 
-func redactParamEcho(message string) string {
+func redactParamEcho(message string, helpTrigger string) string {
 	message = strings.TrimSpace(message)
 	if message == "" {
 		return message
@@ -132,6 +140,9 @@ func redactParamEcho(message string) string {
 			return replacement
 		}
 		lines[0] = replacement
+	}
+	if compacted, ok := compactUsageHelpLines(lines, helpTrigger); ok {
+		return compacted
 	}
 	return strings.Join(lines, "\n")
 }
@@ -168,6 +179,98 @@ func redactParamEchoLine(line string) (string, bool) {
 		return genericClientErrorText, true
 	}
 	return line, false
+}
+
+func compactUsageHelpLines(lines []string, fallbackTrigger string) (string, bool) {
+	if len(lines) == 0 {
+		return "", false
+	}
+	first := strings.TrimSpace(lines[0])
+	if first == "" {
+		return "", false
+	}
+	trigger := ""
+	if trigger = extractInlineUsageHelpTrigger(first); trigger != "" && len(lines) == 1 {
+		return "参数格式不正确\n查看完整用法请发送：" + trigger + " help", true
+	}
+	hasUsageHelp := isUsageHelpMarker(first)
+	for _, line := range lines[1:] {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		if trigger == "" {
+			trigger = extractUsageHelpTrigger(trimmed)
+		}
+		if isUsageHelpMarker(trimmed) {
+			hasUsageHelp = true
+			continue
+		}
+	}
+	if trigger == "" {
+		trigger = normalizeUsageHelpTrigger(fallbackTrigger)
+	}
+	if trigger == "" || !hasUsageHelp {
+		return "", false
+	}
+	if isUsageHelpMarker(first) {
+		first = "参数格式不正确"
+	}
+	return first + "\n查看完整用法请发送：" + trigger + " help", true
+}
+
+func isUsageHelpMarker(line string) bool {
+	line = strings.TrimSpace(line)
+	return line == "使用方式" || line == "使用方式:" || line == "使用方式：" ||
+		strings.HasPrefix(line, "使用方式:") || strings.HasPrefix(line, "使用方式：") ||
+		strings.HasPrefix(line, "查看完整用法:") || strings.HasPrefix(line, "查看完整用法：") ||
+		strings.HasPrefix(line, "查看完整用法请发送:") || strings.HasPrefix(line, "查看完整用法请发送：") ||
+		strings.HasPrefix(line, "【") && strings.Contains(line, "格式】")
+}
+
+func extractUsageHelpTrigger(line string) string {
+	if trigger := extractInlineUsageHelpTrigger(line); trigger != "" {
+		return trigger
+	}
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return ""
+	}
+	if strings.HasPrefix(line, "或 ") {
+		line = strings.TrimSpace(strings.TrimPrefix(line, "或 "))
+	}
+	if strings.HasPrefix(line, "/") {
+		return normalizeUsageHelpTrigger(line)
+	}
+	return ""
+}
+
+func extractInlineUsageHelpTrigger(line string) string {
+	line = strings.TrimSpace(line)
+	for _, prefix := range []string{
+		"使用方式:", "使用方式：",
+		"查看完整用法:", "查看完整用法：",
+		"查看完整用法请发送:", "查看完整用法请发送：",
+	} {
+		if !strings.HasPrefix(line, prefix) {
+			continue
+		}
+		rest := strings.TrimSpace(strings.TrimPrefix(line, prefix))
+		return normalizeUsageHelpTrigger(rest)
+	}
+	return ""
+}
+
+func normalizeUsageHelpTrigger(trigger string) string {
+	trigger = strings.TrimSpace(trigger)
+	if trigger == "" || !strings.HasPrefix(trigger, "/") {
+		return ""
+	}
+	fields := strings.Fields(trigger)
+	if len(fields) > 0 {
+		return fields[0]
+	}
+	return trigger
 }
 
 func lineHasParamEchoPrefix(line, prefix string) bool {

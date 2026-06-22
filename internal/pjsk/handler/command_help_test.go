@@ -73,6 +73,27 @@ func TestCommandHelpMarkdownAvailableForRegisteredRoutes(t *testing.T) {
 	}
 }
 
+func TestCommandHelpMarkdownHasExactDocsForRegisteredRoutes(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	routes := corehandler.ListBotRoutes()
+	if len(routes) == 0 {
+		t.Fatal("expected registered bot routes")
+	}
+
+	for _, route := range routes {
+		t.Run(strings.ReplaceAll(route.Path, "/", "_"), func(t *testing.T) {
+			key := commandHelpDocKey(route.Path)
+			md, ok, err := readCommandHelpMarkdown(key)
+			if err != nil {
+				t.Fatalf("readCommandHelpMarkdown(%q) error = %v", key, err)
+			}
+			if !ok || strings.TrimSpace(md) == "" {
+				t.Fatalf("missing exact command help markdown for %q (helpdocs/%s.md)", route.Path, key)
+			}
+		})
+	}
+}
+
 func TestCommandHelpLookupKeysPreferExactThenFamily(t *testing.T) {
 	keys := commandHelpLookupKeys("music/bpm")
 	want := []string{"music_bpm", "music"}
@@ -82,7 +103,7 @@ func TestCommandHelpLookupKeysPreferExactThenFamily(t *testing.T) {
 }
 
 func TestCommandHelpMarkdownUsesModuleFileFallback(t *testing.T) {
-	md, err := commandHelpMarkdown(&CommandRequest{CommandPath: "music/bpm"})
+	md, err := commandHelpMarkdown(&CommandRequest{CommandPath: "music/unknown-helper"})
 	if err != nil {
 		t.Fatalf("commandHelpMarkdown() error = %v", err)
 	}

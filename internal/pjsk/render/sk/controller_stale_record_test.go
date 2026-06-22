@@ -13,9 +13,13 @@ import (
 
 type staleRecordStatusTrackerSource struct {
 	testTrackerSource
-	status      *sekaiapi.EventStatusResponse
-	err         error
-	wantEventID int
+	status         *sekaiapi.EventStatusResponse
+	err            error
+	wantEventID    int
+	currentUserID  int64
+	currentRank    int
+	currentErr     error
+	currentMissing bool
 }
 
 func (s staleRecordStatusTrackerSource) GetEventStatus(server string, eventID int) (*sekaiapi.EventStatusResponse, error) {
@@ -28,11 +32,41 @@ func (s staleRecordStatusTrackerSource) GetEventStatus(server string, eventID in
 	return s.status, nil
 }
 
+func (s staleRecordStatusTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	if s.currentErr != nil {
+		return nil, s.currentErr
+	}
+	if s.currentMissing {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	currentUserID := s.currentUserID
+	if currentUserID <= 0 {
+		currentUserID = userID + 1
+	}
+	rank := s.currentRank
+	if rank <= 0 {
+		rank = 100
+	}
+	currentUserIDText := fmt.Sprintf("%d", currentUserID)
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    currentUserIDText,
+			Score:     12345678,
+			Rank:      rank,
+			Timestamp: time.Now().UTC().Unix(),
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: currentUserIDText,
+			Name:   "CurrentTrackerUser",
+		},
+	}, nil
+}
+
 func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
 	now := time.Now().UTC()
 	userID := int64(1234567890)
 	ranks := []drawing.RankInfo{
-		{Rank: 101, Time: now.Add(-6 * time.Minute).UnixMilli()},
+		{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()},
 	}
 	req := TrackerRankQuery{EventID: 101, Region: "jp", UserID: &userID}
 
@@ -46,11 +80,12 @@ func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
 	}
 
 	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
-		status: &sekaiapi.EventStatusResponse{Status: 0},
+		status:         &sekaiapi.EventStatusResponse{Status: 0},
+		currentMissing: true,
 	}, nil, nil)
 
 	if got := controller.StaleSelfRecordWarning(req, ranks); got != StaleSelfRecordWarning {
-		t.Fatalf("expected stale warning for numeric healthy status, got %q", got)
+		t.Fatalf("expected stale warning for missing current self record, got %q", got)
 	}
 
 	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
@@ -77,16 +112,23 @@ func TestStaleSelfRecordWarningIgnoresFreshRecordsAndStatusErrors(t *testing.T) 
 		t.Fatalf("expected no warning for fresh record, got %q", got)
 	}
 
-	inTop100 := []drawing.RankInfo{{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()}}
-	if got := controller.StaleSelfRecordWarning(req, inTop100); got != "" {
-		t.Fatalf("expected no warning for top-100 stale record, got %q", got)
+	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
+		status:        &sekaiapi.EventStatusResponse{Status: 1, StatusDesc: "healthy"},
+		currentUserID: userID,
+		currentRank:   100,
+	}, nil, nil)
+
+	staleStillInRange := []drawing.RankInfo{{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()}}
+	if got := controller.StaleSelfRecordWarning(req, staleStillInRange); got != "" {
+		t.Fatalf("expected no warning when current self record is still in range, got %q", got)
 	}
 
 	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
-		err: fmt.Errorf("status unavailable"),
+		err:            fmt.Errorf("status unavailable"),
+		currentMissing: true,
 	}, nil, nil)
 
-	stale := []drawing.RankInfo{{Rank: 101, Time: now.Add(-6 * time.Minute).UnixMilli()}}
+	stale := []drawing.RankInfo{{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()}}
 	if got := controller.StaleSelfRecordWarning(req, stale); got != "" {
 		t.Fatalf("expected no warning when status query fails, got %q", got)
 	}
@@ -96,7 +138,7 @@ func TestStaleSelfRecordWarningInfersCurrentEvent(t *testing.T) {
 	now := time.Now().UTC()
 	userID := int64(1234567890)
 	ranks := []drawing.RankInfo{
-		{Rank: 101, Time: now.Add(-6 * time.Minute).UnixMilli()},
+		{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()},
 	}
 	controller := NewController(nil)
 	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{

@@ -1181,8 +1181,35 @@ func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T
 	if params.ChallengeLiveCharacterQuery != "" {
 		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
 	}
-	if params.MusicQuery != "" {
+	if params.MusicQuery != defaultChallengeDeckMusicQuery {
 		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != defaultChallengeDeckMusicDiff {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
+	}
+}
+
+func TestChallengeDeckHandleDefersDefaultMusicForPendingCharacterQuery(t *testing.T) {
+	h := sekaiHandlers{}.ChallengeDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/挑战组卡",
+		ArgText:    "neo",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.ChallengeLiveCharacterQuery != "neo" {
+		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	}
+	if params.MusicQuery != "" || params.MusicDiff != "" {
+		t.Fatalf("unexpected default music before character resolution: %+v", params)
 	}
 }
 
@@ -1238,8 +1265,11 @@ func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
 	if params.ChallengeLiveCharacterID != nil {
 		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if params.MusicQuery != "" {
+	if params.MusicQuery != defaultChallengeDeckMusicQuery {
 		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != defaultChallengeDeckMusicDiff {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
 	}
 }
 
@@ -1265,8 +1295,11 @@ func TestChallengeDeckHandleParsesCharacterAndCurrentKeyword(t *testing.T) {
 	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
 		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if params.MusicQuery != "" {
+	if params.MusicQuery != defaultChallengeDeckMusicQuery {
 		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	}
+	if params.MusicDiff != defaultChallengeDeckMusicDiff {
+		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
 	}
 }
 

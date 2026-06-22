@@ -236,6 +236,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 				return nil, err
 			}
+			applyDefaultChallengeDeckAutoQueryMusic(&q)
 			if !explicitMysekaiEventSelection {
 				preserveImplicitMysekaiWorldBloomMetadata(&q)
 			}
@@ -285,6 +286,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 			return nil, err
 		}
+		applyDefaultChallengeDeckAutoQueryMusic(&q)
 		if !explicitMysekaiEventSelection {
 			preserveImplicitMysekaiWorldBloomMetadata(&q)
 		}
@@ -342,6 +344,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
 		return nil, err
 	}
+	applyDefaultChallengeDeckAutoQueryMusic(&q)
 	if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
 		return nil, err
 	}

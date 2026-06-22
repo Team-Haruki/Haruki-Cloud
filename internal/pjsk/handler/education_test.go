@@ -39,6 +39,16 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			},
 		},
 		{
+			name: "plant alias selects tree and flower",
+			args: "花树",
+			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
+				t.Helper()
+				if query.ShowFull || query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || !query.Tree || !query.Flower {
+					t.Fatalf("unexpected query: %+v", query)
+				}
+			},
+		},
+		{
 			name: "full can be combined with filter",
 			args: "25h full",
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {

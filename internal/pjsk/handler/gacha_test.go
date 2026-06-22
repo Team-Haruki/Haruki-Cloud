@@ -2,9 +2,9 @@ package handler
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
-	"strings"
 	"testing"
+
+	json "github.com/bytedance/sonic"
 
 	"haruki-cloud/internal/pjsk/parser"
 )
@@ -170,7 +170,7 @@ func TestGachaHandleParsesListFilters(t *testing.T) {
 	}
 }
 
-func TestGachaHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
+func TestGachaHandleReturnsCompactHelpOnInvalidQuery(t *testing.T) {
 	h := sekaiHandlers{}.GachaHandle()
 
 	_, err := h.Handle(&PjskHandlerContext{
@@ -181,7 +181,8 @@ func TestGachaHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !strings.Contains(err.Error(), "【查单个卡池格式】") || !strings.Contains(err.Error(), "【查多个卡池格式】") {
+	want := "卡池查询参数格式不正确。查看完整用法请发送：/卡池 help"
+	if err.Error() != want {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

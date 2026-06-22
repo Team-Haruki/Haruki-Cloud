@@ -57,16 +57,20 @@ func resolveGachaDetailOrList(ctx HarrukiSekaiHandlerContext) (*CommandRequest, 
 	}
 
 	if params, ok, err := parseSingleGachaQuery(args); err != nil {
-		return nil, fmt.Errorf("查卡池参数错误: %q\n%s\n%s", args, querySingleGachaHelp, queryMultiGachaHelp)
+		return nil, gachaSearchUsageError(ctx.originalTriggerCmd)
 	} else if ok {
 		return makeCommandRequestWithParams(ctx, parser.ModuleGacha, "gacha-detail", params), nil
 	}
 
 	params, remaining := parseMultiGachaQuery(args)
 	if remaining != "" {
-		return nil, fmt.Errorf("查卡池参数错误: %q\n%s\n%s", remaining, querySingleGachaHelp, queryMultiGachaHelp)
+		return nil, gachaSearchUsageError(ctx.originalTriggerCmd)
 	}
 	return makeCommandRequestWithParams(ctx, parser.ModuleGacha, "gacha-list", params), nil
+}
+
+func gachaSearchUsageError(trigger string) error {
+	return onebot11.NewReplayError("卡池查询参数格式不正确。查看完整用法请发送：%s help", trigger)
 }
 
 func parseSingleGachaQuery(args string) (map[string]any, bool, error) {

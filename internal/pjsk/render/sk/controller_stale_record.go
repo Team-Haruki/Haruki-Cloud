@@ -1,6 +1,7 @@
 package sk
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -53,10 +54,10 @@ func (c *Controller) shouldWarnStaleSelfRecord(req TrackerRankQuery, ranks []dra
 	if req.EventID <= 0 || normalizeTrackerServer(req.Region) == "" {
 		return false
 	}
-	if ranks[0].Rank <= 100 {
+	if !isTrackerRankInfoStale(ranks[0], now, staleSelfRecordThreshold) {
 		return false
 	}
-	if !isTrackerRankInfoStale(ranks[0], now, staleSelfRecordThreshold) {
+	if !c.isCurrentSelfRecordOutsideRecordRange(req) {
 		return false
 	}
 
@@ -69,6 +70,38 @@ func (c *Controller) shouldWarnStaleSelfRecord(req TrackerRankQuery, ranks []dra
 		return false
 	}
 	return trackerEventStatusIsHealthy(status)
+}
+
+func (c *Controller) isCurrentSelfRecordOutsideRecordRange(req TrackerRankQuery) bool {
+	if c == nil || req.UserID == nil || *req.UserID <= 0 {
+		return false
+	}
+	source, ok := c.trackerCloudV2()
+	if !ok || source == nil {
+		return false
+	}
+	resp, err := source.GetCloudSKQuery(
+		normalizeTrackerServer(req.Region),
+		req.EventID,
+		req.WlCharacterID,
+		nil,
+		req.UserID,
+		false,
+		false,
+		3600,
+	)
+	if err != nil {
+		return errors.Is(err, sekaiapi.ErrRankingNotFound)
+	}
+	if resp == nil || len(resp.Ranks) == 0 {
+		return true
+	}
+	for _, item := range resp.Ranks {
+		if item.Rank > 0 && cloudRankInfoMatchesUser(*req.UserID, item) {
+			return false
+		}
+	}
+	return true
 }
 
 func isTrackerRankInfoStale(info drawing.RankInfo, now time.Time, threshold time.Duration) bool {

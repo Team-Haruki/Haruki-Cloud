@@ -77,7 +77,7 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 
 	info, err := parser.NewEventParser(rendercard.DefaultCharacterNicknames()).Parse(args)
 	if err != nil {
-		return nil, fmt.Errorf("活动查询参数错误: %q\n%s\n%s", args, querySingleEventHelp, queryMultiEventHelp)
+		return nil, eventSearchUsageError(ctx.originalTriggerCmd)
 	}
 
 	if info.Type == parser.QueryTypeEventFilter {
@@ -136,9 +136,13 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 			params["index"] = info.Index
 		}
 	default:
-		return nil, fmt.Errorf("活动查询参数错误: %q\n%s\n%s", args, querySingleEventHelp, queryMultiEventHelp)
+		return nil, eventSearchUsageError(ctx.originalTriggerCmd)
 	}
 	return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-detail", params), nil
+}
+
+func eventSearchUsageError(trigger string) error {
+	return onebot11.NewReplayError("活动查询参数格式不正确。查看完整用法请发送：%s help", trigger)
 }
 
 func resolveAmbiguousEventListFilter(args string) (map[string]any, bool) {

@@ -107,6 +107,40 @@ func (sekaiHandlers) ProfileBindListHandle() HarukiSekaiCommandHandler {
 	}, executeProfile)
 }
 
+func (sekaiHandlers) ProfileUIDHandle() HarukiSekaiCommandHandler {
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Commands: []string{
+				"/查uid", "/uid",
+			},
+			Path: "profile/uid",
+		},
+		ParseUIDArg: common.BoolPtr(true),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			if strings.TrimSpace(ctx.GetArgs()) != "" {
+				return nil, profileUIDUsageError(ctx.originalTriggerCmd)
+			}
+			selector := strings.TrimSpace(ctx.UIDArg())
+			if strings.HasPrefix(selector, "@") {
+				return nil, onebot11.NewReplayError("此命令仅支持查询自己的绑定账号 UID\n查看完整用法请发送：%s help", ctx.originalTriggerCmd)
+			}
+			if selector != "" && !isBindingSelector(selector) {
+				return nil, profileUIDUsageError(ctx.originalTriggerCmd)
+			}
+
+			params := newProfileBindingParams(ctx, selector, "")
+			if !ctx.HasExplicitRegion() {
+				params.Server = ""
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeQueryUID, params), nil
+		},
+	}, executeProfile)
+}
+
+func profileUIDUsageError(trigger string) error {
+	return onebot11.NewReplayError("参数格式不正确\n查看完整用法请发送：%s help", trigger)
+}
+
 func (sekaiHandlers) ProfileBindSwapHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
@@ -216,7 +250,7 @@ func executeProfile(rc *RequestContext) (onebot11.Message, error) {
 		return message, err
 	case profileModeCustomProfileCard:
 		return executeProfileCustomProfileCard(rc)
-	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeBindSwap, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
+	case accountdata.ProfileModeBind, accountdata.ProfileModeBindList, accountdata.ProfileModeBindSwap, accountdata.ProfileModeUnbind, accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear, accountdata.ProfileModeQueryUID:
 		if rc.App.Bindings == nil {
 			return nil, accountdata.ErrBindingServiceUnavailable
 		}

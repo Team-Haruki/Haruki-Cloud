@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+const (
+	defaultChallengeDeckMusicQuery = "虚無さん"
+	defaultChallengeDeckMusicDiff  = "master"
+)
+
 func buildDeckQueryParams(ctx HarrukiSekaiHandlerContext, mode string) (deckAutoQueryParams, error) {
 	args := strings.TrimSpace(strings.ToLower(ctx.GetArgs()))
 	params := deckAutoQueryParams{}
@@ -124,7 +129,12 @@ func buildChallengeDeckParams(args string, params *deckAutoQueryParams) (string,
 		applyDeckMusicCompareParams(params, remaining, compareSuffix)
 		return "", nil
 	}
-	return extractDeckMusicQuery(args, params)
+	args, err = extractDeckMusicQuery(args, params)
+	if err != nil {
+		return "", err
+	}
+	applyDefaultChallengeDeckMusic(params)
+	return args, nil
 }
 
 func buildNoEventDeckParams(args string, params *deckAutoQueryParams, trigger string) (string, error) {
@@ -214,4 +224,18 @@ func applyDeckMusicCompareParams(params *deckAutoQueryParams, segments ...string
 		return
 	}
 	params.MusicCompareQueries = strings.Fields(strings.Join(combined, " "))
+}
+
+func applyDefaultChallengeDeckMusic(params *deckAutoQueryParams) {
+	if params == nil ||
+		params.MusicCompare ||
+		params.MusicID != nil ||
+		strings.TrimSpace(params.MusicQuery) != "" ||
+		strings.TrimSpace(params.ChallengeLiveCharacterQuery) != "" {
+		return
+	}
+	params.MusicQuery = defaultChallengeDeckMusicQuery
+	if strings.TrimSpace(params.MusicDiff) == "" {
+		params.MusicDiff = defaultChallengeDeckMusicDiff
+	}
 }

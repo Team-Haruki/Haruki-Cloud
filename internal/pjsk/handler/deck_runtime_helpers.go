@@ -62,6 +62,20 @@ func formatDeckQuerySummary(q deck.AutoQuery) string {
 	return strings.Join(parts, " / ")
 }
 
+func applyDefaultChallengeDeckAutoQueryMusic(q *deck.AutoQuery) {
+	if q == nil ||
+		!strings.EqualFold(strings.TrimSpace(q.RecommendType), "challenge") ||
+		q.MusicCompare ||
+		q.MusicID != nil ||
+		strings.TrimSpace(q.MusicQuery) != "" {
+		return
+	}
+	q.MusicQuery = defaultChallengeDeckMusicQuery
+	if strings.TrimSpace(q.MusicDiff) == "" {
+		q.MusicDiff = defaultChallengeDeckMusicDiff
+	}
+}
+
 func resolveDeckRenderProfileAndSnapshot(rc *RequestContext, selector string) (*drawing.DetailedProfileCardRequest, rendersnapshot.Snapshot, string, error) {
 	detail, snapshot, region, _, err := resolveDeckRenderProfileSnapshotAndPublic(rc, selector)
 	return detail, snapshot, region, err

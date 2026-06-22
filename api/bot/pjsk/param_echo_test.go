@@ -4,9 +4,10 @@ import "testing"
 
 func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 	tests := []struct {
-		name string
-		in   string
-		want string
+		name        string
+		in          string
+		helpTrigger string
+		want        string
 	}{
 		{
 			name: "quoted event args",
@@ -14,9 +15,20 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 			want: "活动查询参数错误\n【查单个活动格式】",
 		},
 		{
+			name:        "quoted event args with command help fallback",
+			in:          "活动查询参数错误: \"super-secret\"\n【查单个活动格式】",
+			helpTrigger: "/查活动",
+			want:        "活动查询参数错误\n查看完整用法请发送：/查活动 help",
+		},
+		{
 			name: "replay error args",
 			in:   "无效的参数：\"super-secret\"\n使用方式：/cmd",
-			want: "无效的参数\n使用方式：/cmd",
+			want: "无效的参数\n查看完整用法请发送：/cmd help",
+		},
+		{
+			name: "standalone usage help",
+			in:   "使用方式:\n/区域道具 团名\n/区域道具 角色名\n/区域道具 full",
+			want: "参数格式不正确\n查看完整用法请发送：/区域道具 help",
 		},
 		{
 			name: "english token",
@@ -97,7 +109,8 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := clientErrorText(tt.in, false); got != tt.want {
+			got := clientErrorTextForCommand(tt.in, false, tt.helpTrigger)
+			if got != tt.want {
 				t.Fatalf("clientErrorText() = %q, want %q", got, tt.want)
 			}
 		})
@@ -106,8 +119,8 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 
 func TestClientErrorTextStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	in := "活动查询参数错误: \"super-secret\"\n【查单个活动格式】"
-	want := "活动查询参数错误\n【查单个活动格式】"
-	if got := clientErrorText(in, true); got != want {
+	want := "活动查询参数错误\n查看完整用法请发送：/查活动 help"
+	if got := clientErrorTextForCommand(in, true, "/查活动"); got != want {
 		t.Fatalf("clientErrorText() = %q, want %q", got, want)
 	}
 }

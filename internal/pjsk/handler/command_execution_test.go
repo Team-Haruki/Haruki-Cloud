@@ -1673,7 +1673,10 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 	}
 
 	bgRoot := t.TempDir()
-	service.SetProfileBGStorage(accountdata.NewLocalProfileBGStore(bgRoot))
+	// The production constructor uses an SSRF-safe client that blocks loopback;
+	// this test serves the bg image from a loopback httptest server, so inject a
+	// plain client. (The SSRF block itself is covered by accountdata unit tests.)
+	service.SetProfileBGStorage(accountdata.NewLocalProfileBGStoreWithClient(bgRoot, &http.Client{}))
 
 	bgBytes := mustEncodeTestPNG(t, 6, 12)
 	bgServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -12,6 +12,7 @@ import (
 	_ "image/gif"
 	"image/jpeg"
 	_ "image/png"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,6 +28,13 @@ const (
 	defaultProfileBGBlur        = 1
 	defaultProfileBGAlpha       = 50
 	maxProfileBGSizeBytes       = 1 * 1024 * 1024 // 1 MB
+	// maxProfileBGDownloadBytes caps the raw source download before decode, so a
+	// hostile server cannot stream an unbounded body into memory.
+	maxProfileBGDownloadBytes = 16 * 1024 * 1024 // 16 MB
+	// maxProfileBGPixels rejects pixel bombs (small compressed file declaring huge
+	// dimensions) before image.Decode allocates the pixel buffer. ~24 MP allows
+	// real phone photos while blocking e.g. a 30000x30000 (=900 MP) bomb.
+	maxProfileBGPixels int64 = 24_000_000
 )
 
 // randomHex8 returns 8 random lowercase hex characters for use in filenames.
@@ -64,6 +72,30 @@ func encodeJPEGCompressed(img image.Image) ([]byte, error) {
 	return nil, fmt.Errorf("无法压缩图片至 1MB 以下")
 }
 
+// decodeBoundedImage decodes raw image bytes, rejecting "pixel bombs": it first
+// reads only the header via image.DecodeConfig and refuses to allocate the pixel
+// buffer when width*height exceeds maxPixels. maxPixels <= 0 disables the check.
+func decodeBoundedImage(raw []byte, maxPixels int64) (image.Image, error) {
+	if len(raw) == 0 {
+		return nil, fmt.Errorf("背景图片数据为空")
+	}
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("解析背景图片失败: %w", err)
+	}
+	if cfg.Width <= 0 || cfg.Height <= 0 {
+		return nil, fmt.Errorf("解析背景图片失败: 无效的图片尺寸")
+	}
+	if maxPixels > 0 && int64(cfg.Width)*int64(cfg.Height) > maxPixels {
+		return nil, fmt.Errorf("背景图片尺寸过大（上限 %d 像素）", maxPixels)
+	}
+	img, _, err := image.Decode(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("解析背景图片失败: %w", err)
+	}
+	return img, nil
+}
+
 type LocalProfileBGStore struct {
 	rootDir     string
 	relativeDir string
@@ -78,10 +110,23 @@ func NewLocalProfileBGStore(rootDir string) *LocalProfileBGStore {
 	return &LocalProfileBGStore{
 		rootDir:     rootDir,
 		relativeDir: DefaultProfileBGRelativeDir,
-		client: &http.Client{
-			Timeout: config.ProfileBGStoreTimeout,
-		},
+		// SSRF-safe client: refuses to connect to non-public addresses (incl. on
+		// redirects) so an attacker-supplied image_url cannot reach loopback /
+		// internal / cloud-metadata hosts.
+		client: newSSRFSafeClient(config.ProfileBGStoreTimeout),
 	}
+}
+
+// NewLocalProfileBGStoreWithClient is like NewLocalProfileBGStore but uses the
+// supplied HTTP client. It exists for tests that must fetch from a loopback
+// server (which the production SSRF-safe client deliberately blocks). Production
+// code MUST use NewLocalProfileBGStore.
+func NewLocalProfileBGStoreWithClient(rootDir string, client *http.Client) *LocalProfileBGStore {
+	s := NewLocalProfileBGStore(rootDir)
+	if s != nil && client != nil {
+		s.client = client
+	}
+	return s
 }
 
 func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server string, userID string, imageURL string) (*drawing.ProfileBgSettings, error) {
@@ -92,8 +137,12 @@ func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server 
 	if imageURL == "" {
 		return nil, fmt.Errorf("请提供个人信息背景图片")
 	}
-	if _, err := url.ParseRequestURI(imageURL); err != nil {
+	parsedURL, err := url.ParseRequestURI(imageURL)
+	if err != nil {
 		return nil, fmt.Errorf("无效的背景图片地址: %w", err)
+	}
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return nil, fmt.Errorf("背景图片地址协议不被允许: %s", parsedURL.Scheme)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, imageURL, nil)
@@ -109,9 +158,18 @@ func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server 
 		return nil, fmt.Errorf("下载背景图片失败: HTTP %d", resp.StatusCode)
 	}
 
-	img, _, err := image.Decode(resp.Body)
+	// Cap the raw download, then reject pixel bombs via a header-only dimension
+	// check before image.Decode allocates the full pixel buffer.
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxProfileBGDownloadBytes+1))
 	if err != nil {
-		return nil, fmt.Errorf("解析背景图片失败: %w", err)
+		return nil, fmt.Errorf("下载背景图片失败: %w", err)
+	}
+	if len(raw) > maxProfileBGDownloadBytes {
+		return nil, fmt.Errorf("背景图片过大（上限 %d MB）", maxProfileBGDownloadBytes/(1024*1024))
+	}
+	img, err := decodeBoundedImage(raw, maxProfileBGPixels)
+	if err != nil {
+		return nil, err
 	}
 
 	data, err := encodeJPEGCompressed(img)

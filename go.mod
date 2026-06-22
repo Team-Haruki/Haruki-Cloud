@@ -14,7 +14,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/mattn/go-sqlite3 v1.14.45
 	github.com/mitchellh/hashstructure/v2 v2.0.2
-	github.com/redis/go-redis/v9 v9.20.0
+	github.com/redis/go-redis/v9 v9.20.1
 	github.com/shamaton/msgpack/v3 v3.1.2
 	golang.org/x/crypto v0.53.0
 	golang.org/x/sync v0.21.0

@@ -371,10 +371,10 @@ func TestProfileModularToggleHandlesParseSettingsMode(t *testing.T) {
 	}
 }
 
-func TestResolveCustomProfileCardUsesArrayPositionWhenSeqHasGap(t *testing.T) {
+func TestResolveCustomProfileCardUsesSortedPositionWhenSeqHasGap(t *testing.T) {
 	card, err := resolveCustomProfileCard([]sekaiapi.UserCustomProfileCard{
-		{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
 		{CustomProfileID: 2, CustomProfileCardID: 3, Seq: 3},
+		{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
 	}, profileCustomProfileCardParams{Seq: 2})
 	if err != nil {
 		t.Fatalf("resolve custom profile card: %v", err)

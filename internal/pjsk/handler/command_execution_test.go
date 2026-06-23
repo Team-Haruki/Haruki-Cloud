@@ -4432,8 +4432,8 @@ func TestExecuteProfileCustomProfileCardSelectsSeq(t *testing.T) {
 				Name:   "Tester",
 			},
 			UserCustomProfileCards: []sekaiapi.UserCustomProfileCard{
-				{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
 				{CustomProfileID: 3, CustomProfileCardID: 4, Seq: 3},
+				{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
 			},
 		})
 	}))

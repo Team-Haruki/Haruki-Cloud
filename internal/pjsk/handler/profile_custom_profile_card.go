@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -154,7 +155,11 @@ func resolveCustomProfileCard(cards []sekaiapi.UserCustomProfileCard, params pro
 		if page > len(cards) {
 			return nil, onebot11.NewReplayError("未找到第%d页自定义档案，当前共有%d页", page, len(cards))
 		}
-		target = &cards[page-1]
+		ordered := slices.Clone(cards)
+		slices.SortStableFunc(ordered, func(a, b sekaiapi.UserCustomProfileCard) int {
+			return a.Seq - b.Seq
+		})
+		target = &ordered[page-1]
 	}
 	return target, nil
 }

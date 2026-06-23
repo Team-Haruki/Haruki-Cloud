@@ -18,6 +18,7 @@ const (
 	ProfileModeUnbind       = "profile-unbind"
 	ProfileModeDefaultSet   = "profile-default-set"
 	ProfileModeDefaultClear = "profile-default-clear"
+	ProfileModeQueryUID     = "profile-query-uid"
 )
 
 type ProfileBindingCommandParams struct {
@@ -104,6 +105,12 @@ func ExecuteProfileBindingCommand(ctx context.Context, service *BindingService, 
 			return nil, err
 		}
 		return []byte(formatDefaultBindingResultText("已取消", result)), nil
+	case ProfileModeQueryUID:
+		result, err := service.ResolveOwnBindingForUIDQuery(ctx, params.Platform, params.PlatformUserID, params.Selector, params.Server)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(result.UserID), nil
 	default:
 		return nil, fmt.Errorf("bridge: unsupported profile binding mode %q", mode)
 	}

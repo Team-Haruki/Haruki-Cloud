@@ -106,6 +106,16 @@ func TestListBotRoutes(t *testing.T) {
 		t.Fatalf("expected profile/custom-profile-card commands to include /cp, got %v", customProfileRoute.Commands)
 	}
 
+	profileUIDRoute, ok := byPath["profile/uid"]
+	if !ok {
+		t.Fatal("expected profile/uid route to exist")
+	}
+	for _, command := range []string{"/查uid", "/uid"} {
+		if !contains(profileUIDRoute.Commands, command) {
+			t.Fatalf("expected profile/uid commands to include %s, got %v", command, profileUIDRoute.Commands)
+		}
+	}
+
 	mysekaiTalkListRoute, ok := byPath["mysekai/talk-list"]
 	if !ok {
 		t.Fatal("expected mysekai/talk-list route to exist")

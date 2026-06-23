@@ -135,6 +135,47 @@ func filterBindingsByServer(items []BindingListItem, server string) []BindingLis
 	return filtered
 }
 
+// ResolveOwnBindingForUIDQuery resolves one of the caller's own bindings for
+// /查uid. It uses the private binding list so hidden UID settings do not mask
+// the caller's own account.
+func (s *BindingService) ResolveOwnBindingForUIDQuery(ctx context.Context, platform, platformUserID, selector, server string) (BindingListItem, error) {
+	if err := s.requireReady(platform, platformUserID); err != nil {
+		return BindingListItem{}, err
+	}
+	items, err := s.List(ctx, platform, platformUserID)
+	if err != nil {
+		return BindingListItem{}, err
+	}
+	selector = strings.TrimSpace(selector)
+	server = normalizeSelectorServer(server)
+	if selector != "" {
+		return selectBinding(items, selector, server)
+	}
+
+	if server != "" {
+		scoped := filterBindingsByServer(items, server)
+		if len(scoped) == 0 {
+			return BindingListItem{}, fmt.Errorf("你还没有绑定任何%s服账号", strings.ToUpper(server))
+		}
+		for _, item := range scoped {
+			if item.IsServerDefault {
+				return item, nil
+			}
+		}
+		return scoped[0], nil
+	}
+
+	if len(items) == 0 {
+		return BindingListItem{}, fmt.Errorf("你还没有绑定任何PJSK账号")
+	}
+	for _, item := range items {
+		if item.IsGlobalDefault {
+			return item, nil
+		}
+	}
+	return items[0], nil
+}
+
 func normalizeSelectorServer(server string) string {
 	server = strings.TrimSpace(strings.ToLower(server))
 	if server == "" || server == GlobalDefaultBindingScope {

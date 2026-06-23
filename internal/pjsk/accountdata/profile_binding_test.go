@@ -179,6 +179,66 @@ func TestExecuteProfileBindingCommandBindListMasksUIDByDefault(t *testing.T) {
 	}
 }
 
+func TestExecuteProfileBindingCommandQueryUIDIgnoresHiddenID(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"12345678901234": "JP User"},
+	})
+
+	ctx := context.Background()
+
+	if _, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "12345678901234",
+	}); err != nil {
+		t.Fatalf("execute bind: %v", err)
+	}
+
+	uidText, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeQueryUID, accountdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+	})
+	if err != nil {
+		t.Fatalf("execute query uid: %v", err)
+	}
+
+	if string(uidText) != "12345678901234" {
+		t.Fatalf("unexpected uid text: %q", string(uidText))
+	}
+}
+
+func TestExecuteProfileBindingCommandQueryUIDUsesSelector(t *testing.T) {
+	service := newProfileBindingTestService(t, map[string]map[string]string{
+		"jp": {"11111111111111": "JP User"},
+		"en": {"22222222222222": "EN User"},
+	})
+
+	ctx := context.Background()
+
+	for _, uid := range []string{"11111111111111", "22222222222222"} {
+		if _, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeBind, accountdata.ProfileBindingCommandParams{
+			Platform:       "qq",
+			PlatformUserID: "42",
+			Selector:       uid,
+		}); err != nil {
+			t.Fatalf("execute bind %s: %v", uid, err)
+		}
+	}
+
+	uidText, err := accountdata.ExecuteProfileBindingCommand(ctx, service, accountdata.ProfileModeQueryUID, accountdata.ProfileBindingCommandParams{
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Selector:       "u2",
+	})
+	if err != nil {
+		t.Fatalf("execute query uid: %v", err)
+	}
+
+	if string(uidText) != "22222222222222" {
+		t.Fatalf("unexpected uid text: %q", string(uidText))
+	}
+}
+
 func TestExecuteProfileBindingCommandSwap(t *testing.T) {
 	service := newProfileBindingTestService(t, map[string]map[string]string{
 		"jp": {"2000": "JP User"},

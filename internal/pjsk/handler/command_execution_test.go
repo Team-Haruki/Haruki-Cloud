@@ -4433,7 +4433,7 @@ func TestExecuteProfileCustomProfileCardSelectsSeq(t *testing.T) {
 			},
 			UserCustomProfileCards: []sekaiapi.UserCustomProfileCard{
 				{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
-				{CustomProfileID: 3, CustomProfileCardID: 4, Seq: 2},
+				{CustomProfileID: 3, CustomProfileCardID: 4, Seq: 3},
 			},
 		})
 	}))
@@ -4453,7 +4453,7 @@ func TestExecuteProfileCustomProfileCardSelectsSeq(t *testing.T) {
 		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
-		if req.Card.CustomProfileID != 3 || req.Card.CustomProfileCardID != 4 || req.Card.Seq != 2 {
+		if req.Card.CustomProfileID != 3 || req.Card.CustomProfileCardID != 4 || req.Card.Seq != 3 {
 			t.Fatalf("unexpected selected card: %+v", req.Card)
 		}
 		_, _ = w.Write([]byte("image-bytes"))

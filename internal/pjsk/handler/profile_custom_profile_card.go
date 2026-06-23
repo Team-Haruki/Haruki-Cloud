@@ -147,20 +147,14 @@ func resolveCustomProfileCard(cards []sekaiapi.UserCustomProfileCard, params pro
 			return nil, onebot11.NewReplayError("未找到第%d组第%d张自定义档案", params.CustomProfileID, params.CustomProfileCardID)
 		}
 	} else {
-		targetSeq := params.Seq
-		if targetSeq <= 0 {
-			targetSeq = 1
+		page := params.Seq
+		if page <= 0 {
+			page = 1
 		}
-		for i := range cards {
-			card := &cards[i]
-			if card.Seq == targetSeq {
-				target = card
-				break
-			}
+		if page > len(cards) {
+			return nil, onebot11.NewReplayError("未找到第%d页自定义档案，当前共有%d页", page, len(cards))
 		}
-		if target == nil {
-			return nil, onebot11.NewReplayError("未找到序号为%d的自定义档案", targetSeq)
-		}
+		target = &cards[page-1]
 	}
 	return target, nil
 }

@@ -371,14 +371,27 @@ func TestProfileModularToggleHandlesParseSettingsMode(t *testing.T) {
 	}
 }
 
-func TestResolveCustomProfileCardReturnsErrorForMissingSeq(t *testing.T) {
+func TestResolveCustomProfileCardUsesArrayPositionWhenSeqHasGap(t *testing.T) {
+	card, err := resolveCustomProfileCard([]sekaiapi.UserCustomProfileCard{
+		{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
+		{CustomProfileID: 2, CustomProfileCardID: 3, Seq: 3},
+	}, profileCustomProfileCardParams{Seq: 2})
+	if err != nil {
+		t.Fatalf("resolve custom profile card: %v", err)
+	}
+	if card.CustomProfileID != 2 || card.CustomProfileCardID != 3 || card.Seq != 3 {
+		t.Fatalf("unexpected card: %+v", card)
+	}
+}
+
+func TestResolveCustomProfileCardReturnsErrorForMissingPage(t *testing.T) {
 	_, err := resolveCustomProfileCard([]sekaiapi.UserCustomProfileCard{
 		{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
 	}, profileCustomProfileCardParams{Seq: 99})
 	if err == nil {
-		t.Fatal("expected missing seq error")
+		t.Fatal("expected missing page error")
 	}
-	if !strings.Contains(err.Error(), "未找到序号为99的自定义档案") {
+	if !strings.Contains(err.Error(), "未找到第99页自定义档案，当前共有1页") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

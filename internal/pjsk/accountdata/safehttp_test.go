@@ -13,21 +13,21 @@ func TestIsBlockedIP(t *testing.T) {
 		ip      string
 		blocked bool
 	}{
-		{"127.0.0.1", true},          // loopback
-		{"::1", true},                // loopback v6
-		{"10.0.0.5", true},           // private
-		{"172.16.3.4", true},         // private
-		{"192.168.1.1", true},        // private
-		{"169.254.169.254", true},    // link-local / cloud metadata
-		{"100.64.0.1", true},         // CGNAT
-		{"0.0.0.0", true},            // unspecified
-		{"224.0.0.1", true},          // multicast
-		{"fc00::1", true},            // ULA (private v6)
-		{"fe80::1", true},            // link-local v6
-		{"8.8.8.8", false},           // public
-		{"1.1.1.1", false},           // public
-		{"100.63.255.255", false},    // just below CGNAT
-		{"100.128.0.1", false},       // just above CGNAT
+		{"127.0.0.1", true},             // loopback
+		{"::1", true},                   // loopback v6
+		{"10.0.0.5", true},              // private
+		{"172.16.3.4", true},            // private
+		{"192.168.1.1", true},           // private
+		{"169.254.169.254", true},       // link-local / cloud metadata
+		{"100.64.0.1", true},            // CGNAT
+		{"0.0.0.0", true},               // unspecified
+		{"224.0.0.1", true},             // multicast
+		{"fc00::1", true},               // ULA (private v6)
+		{"fe80::1", true},               // link-local v6
+		{"8.8.8.8", false},              // public
+		{"1.1.1.1", false},              // public
+		{"100.63.255.255", false},       // just below CGNAT
+		{"100.128.0.1", false},          // just above CGNAT
 		{"2606:4700:4700::1111", false}, // public v6
 	}
 	for _, c := range cases {

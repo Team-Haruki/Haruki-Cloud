@@ -20,6 +20,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/gacha"
 	"haruki-cloud/internal/pjsk/render/honor"
+	"haruki-cloud/internal/pjsk/render/inventory"
 	"haruki-cloud/internal/pjsk/render/misc"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/mysekai"
@@ -129,6 +130,7 @@ type App struct {
 	Events          *event.Controller
 	Gachas          *gacha.Controller
 	Honors          *honor.Controller
+	Inventory       *inventory.Controller
 	Misc            *misc.Controller
 	MySekai         *mysekai.Controller
 	Music           *music.Controller

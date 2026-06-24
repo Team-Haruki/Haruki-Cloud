@@ -130,6 +130,11 @@ var (
 			Enabled:     true,
 			IgnorePaths: renderCacheStringSet("profile.update_time", "profile.data_sources.*.update_time"),
 		},
+		"/api/pjsk/inventory/list": {
+			Enabled:     true,
+			TTL:         renderCacheTTLHalfDay,
+			IgnorePaths: renderCacheStringSet("profile.update_time", "profile.data_sources.*.update_time"),
+		},
 		"/api/pjsk/mysekai/resource": {
 			Enabled:     true,
 			TTL:         renderCacheTTLHalfDay,

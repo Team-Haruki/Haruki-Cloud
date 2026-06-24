@@ -22,6 +22,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/gacha"
 	"haruki-cloud/internal/pjsk/render/honor"
+	"haruki-cloud/internal/pjsk/render/inventory"
 	"haruki-cloud/internal/pjsk/render/misc"
 	"haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/mysekai"
@@ -88,6 +89,10 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	if localMasterdataFallback {
 		localMasterdataDir = resolveRenderProviderMasterdataDir(cfg)
 	}
+	inventoryMasterdataDir := localMasterdataDir
+	if inventoryMasterdataDir == "" && strings.TrimSpace(cfg.LocalMasterdata.Dir) != "" {
+		inventoryMasterdataDir = resolveRenderProviderMasterdataDirFromWD(cfg, currentWorkingDir())
+	}
 	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.DefaultRegion, assetHelper, mysekai.MasterdataOptions{
 		SekaiDSN:                          cfg.SekaiDSN,
 		LocalDir:                          localMasterdataDir,
@@ -95,6 +100,9 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		AssetsBaseURL:                     cfg.AssetsBaseURL,
 		HousingCompetitionStatsCachePath:  cfg.MySekaiHousingCompetitionCachePath,
 		HousingCompetitionRefreshInterval: cfg.MySekaiHousingCompetitionRefreshInterval,
+	})
+	inventoryController := inventory.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, inventory.MasterdataOptions{
+		LocalDir: inventoryMasterdataDir,
 	})
 	musicController := (*music.Controller)(nil)
 	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
@@ -278,6 +286,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		Events:     eventController,
 		Gachas:     gachaController,
 		Honors:     honorController,
+		Inventory:  inventoryController,
 		Misc:       miscController,
 		MySekai:    mysekaiController,
 		Music:      musicController,

@@ -80,7 +80,19 @@ func classifyRenderMasterdataDir(dir string) renderMasterdataDirKind {
 }
 
 func hasRenderMasterdataFiles(dir string) bool {
-	for _, name := range []string{"resourceBoxes.json", "resourceBoxDetails.json", "cards.json"} {
+	for _, name := range []string{
+		"resourceBoxes.json",
+		"resourceBoxDetails.json",
+		"cards.json",
+		"materials.json",
+		"boostItems.json",
+		"eventItems.json",
+		"gachaTickets.json",
+		"practiceTickets.json",
+		"skillPracticeTickets.json",
+		"gachaCeilItems.json",
+		"mysekaiMaterials.json",
+	} {
 		info, err := os.Stat(filepath.Join(dir, name))
 		if err == nil && !info.IsDir() {
 			return true

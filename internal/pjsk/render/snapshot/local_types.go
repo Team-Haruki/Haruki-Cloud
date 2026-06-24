@@ -5,6 +5,7 @@ import "encoding/json"
 type RawUserData struct {
 	Now                                               int64                             `json:"now"`
 	UserGamedata                                      RawUserGamedata                   `json:"userGamedata"`
+	UserChargedCurrency                               RawUserChargedCurrency            `json:"userChargedCurrency"`
 	UserProfile                                       RawUserProfile                    `json:"userProfile"`
 	UserDecks                                         []RawUserDeck                     `json:"userDecks,omitempty"`
 	UserCards                                         []RawUserCard                     `json:"userCards,omitempty"`
@@ -24,6 +25,13 @@ type RawUserData struct {
 	CompactUserCharacterMissionV2Statuses             json.RawMessage                   `json:"compactUserCharacterMissionV2Statuses,omitempty"`
 	UserAreas                                         []RawUserArea                     `json:"userAreas,omitempty"`
 	UserMaterials                                     []RawUserMaterial                 `json:"userMaterials,omitempty"`
+	UserBoostItems                                    []RawUserBoostItem                `json:"userBoostItems,omitempty"`
+	UserEventItems                                    []RawUserEventItem                `json:"userEventItems,omitempty"`
+	UserGachaTickets                                  []RawUserGachaTicket              `json:"userGachaTickets,omitempty"`
+	UserPracticeTickets                               []RawUserPracticeTicket           `json:"userPracticeTickets,omitempty"`
+	UserSkillPracticeTickets                          []RawUserSkillPracticeTicket      `json:"userSkillPracticeTickets,omitempty"`
+	UserGachaCeilItems                                []RawUserGachaCeilItem            `json:"userGachaCeilItems,omitempty"`
+	UserMysekaiMaterials                              []RawUserMysekaiMaterial          `json:"userMysekaiMaterials,omitempty"`
 	UserMysekaiCanvases                               []RawUserMysekaiCanvas            `json:"userMysekaiCanvases,omitempty"`
 	UserMysekaiGates                                  []RawUserMysekaiGate              `json:"userMysekaiGates,omitempty"`
 	UserMysekaiFixtureGameCharacterPerformanceBonuses []RawUserFixtureBonus             `json:"userMysekaiFixtureGameCharacterPerformanceBonuses,omitempty"`
@@ -37,11 +45,17 @@ type RawUserData struct {
 }
 
 type RawUserGamedata struct {
-	UserID int64  `json:"userId"`
-	Name   string `json:"name"`
-	Deck   int    `json:"deck"`
-	Rank   int    `json:"rank"`
-	Coin   int    `json:"coin"`
+	UserID      int64  `json:"userId"`
+	Name        string `json:"name"`
+	Deck        int    `json:"deck"`
+	Rank        int    `json:"rank"`
+	Coin        int    `json:"coin"`
+	VirtualCoin int    `json:"virtualCoin"`
+}
+
+type RawUserChargedCurrency struct {
+	Paid int `json:"paid"`
+	Free int `json:"free"`
 }
 
 type RawUserProfile struct {
@@ -171,6 +185,42 @@ type RawUserAreaItem struct {
 type RawUserMaterial struct {
 	MaterialID int `json:"materialId"`
 	Quantity   int `json:"quantity"`
+}
+
+type RawUserBoostItem struct {
+	UserID      int64 `json:"userId,omitempty"`
+	BoostItemID int   `json:"boostItemId"`
+	Quantity    int   `json:"quantity"`
+}
+
+type RawUserEventItem struct {
+	EventItemID int `json:"eventItemId"`
+	Quantity    int `json:"quantity"`
+}
+
+type RawUserGachaTicket struct {
+	GachaTicketID int `json:"gachaTicketId"`
+	Quantity      int `json:"quantity"`
+}
+
+type RawUserPracticeTicket struct {
+	PracticeTicketID int `json:"practiceTicketId"`
+	Quantity         int `json:"quantity"`
+}
+
+type RawUserSkillPracticeTicket struct {
+	SkillPracticeTicketID int `json:"skillPracticeTicketId"`
+	Quantity              int `json:"quantity"`
+}
+
+type RawUserGachaCeilItem struct {
+	GachaCeilItemID int `json:"gachaCeilItemId"`
+	Quantity        int `json:"quantity"`
+}
+
+type RawUserMysekaiMaterial struct {
+	MysekaiMaterialID int `json:"mysekaiMaterialId"`
+	Quantity          int `json:"quantity"`
 }
 
 type RawUserMysekaiCanvas struct {

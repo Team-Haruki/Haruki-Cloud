@@ -89,6 +89,25 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 		}
 	})
 
+	t.Run("accepts inventory-only masterdata files", func(t *testing.T) {
+		root := t.TempDir()
+		masterdataRoot := filepath.Join(root, "inventory-masterdata")
+		if err := os.MkdirAll(masterdataRoot, 0o755); err != nil {
+			t.Fatalf("mkdir inventory masterdata root: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(masterdataRoot, "materials.json"), []byte(`[]`), 0o644); err != nil {
+			t.Fatalf("write materials.json: %v", err)
+		}
+
+		cfg := Config{
+			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: masterdataRoot},
+		}
+
+		if got := resolveRenderProviderMasterdataDir(cfg); got != masterdataRoot {
+			t.Fatalf("expected inventory masterdata dir, got %q", got)
+		}
+	})
+
 	t.Run("returns empty when both are unset", func(t *testing.T) {
 		if got := resolveRenderProviderMasterdataDirFromWD(Config{}, t.TempDir()); got != "" {
 			t.Fatalf("expected empty masterdata dir, got %q", got)

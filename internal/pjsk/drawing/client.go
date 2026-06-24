@@ -275,6 +275,12 @@ func (c *HarukiDrawingClient) GenerateCharacterMissionAll(req *CharacterMissionA
 	return c.cachedPost("/api/pjsk/education/character-mission-all", req)
 }
 
+// =========================== Inventory API ===========================
+
+func (c *HarukiDrawingClient) GenerateInventoryList(req *InventoryListRequest) ([]byte, error) {
+	return c.cachedPost("/api/pjsk/inventory/list", req)
+}
+
 // =========================== Event API ===========================
 
 func (c *HarukiDrawingClient) GenerateEventDetail(req *EventDetailRequest) ([]byte, error) {

@@ -144,7 +144,7 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 	}, nil
 }
 
-func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderregion.Value, detailedProfile *drawing.DetailedProfileCardRequest, showID, showBox, useAfterTraining bool) (*drawing.CardBoxRequest, error) {
+func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderregion.Value, detailedProfile *drawing.DetailedProfileCardRequest, showID, showBox, unownedOnly, useAfterTraining bool, groupBy string) (*drawing.CardBoxRequest, error) {
 	if len(cards) == 0 {
 		return nil, fmt.Errorf("cards are required")
 	}
@@ -185,6 +185,9 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		Region:              region.String(),
 		ShowID:              showID,
 		ShowBox:             showBox,
+		UnownedOnly:         unownedOnly,
+		GroupBy:             normalizeCardBoxGroupBy(groupBy),
+		Distribution:        b.buildCardBoxDistribution(items, characterIconPaths, characterColorCodes, hasOwnedCardData(detailedProfile), region),
 		CharacterIconPaths:  characterIconPaths,
 		CharacterColorCodes: characterColorCodes,
 		TermLimitedIconPath: new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "term_limited.png"))),

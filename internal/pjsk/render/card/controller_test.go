@@ -159,7 +159,7 @@ func TestBuildCardBoxRequestMarksOwnedCardsFromDetailedProfile(t *testing.T) {
 	req, err := builder.BuildCardBoxRequest([]*masterdata.Card{
 		{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"},
 		{ID: 1002, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cool", Prefix: "Card B", AssetBundleName: "card_b"},
-	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []any{map[string]any{"cardId": 1002}}}, false, false, true)
+	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []any{map[string]any{"cardId": 1002}}}, false, false, false, true, "")
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)
 	}
@@ -171,6 +171,62 @@ func TestBuildCardBoxRequestMarksOwnedCardsFromDetailedProfile(t *testing.T) {
 	}
 	if req.Cards[1].Card.CardID != 1002 || !req.Cards[1].HasCard {
 		t.Fatalf("unexpected second card state: %+v", req.Cards[1])
+	}
+}
+
+func TestBuildCardBoxRequestIncludesDistributionStats(t *testing.T) {
+	source := &lookupTestSource{}
+	builder := NewBuilder(source, nil, nil, nil)
+	req, err := builder.BuildCardBoxRequest([]*masterdata.Card{
+		{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"},
+		{ID: 1002, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cool", Prefix: "Card B", AssetBundleName: "card_b"},
+		{ID: 1003, CharacterID: 6, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card C", AssetBundleName: "card_c"},
+	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []any{
+		map[string]any{"cardId": 1001},
+		map[string]any{"cardId": 1003},
+	}}, false, false, false, true, CardBoxGroupByAttr)
+	if err != nil {
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if req.GroupBy != CardBoxGroupByAttr {
+		t.Fatalf("unexpected group_by: %q", req.GroupBy)
+	}
+	if req.Distribution == nil {
+		t.Fatal("expected card box distribution")
+	}
+	if !req.Distribution.OwnedData || req.Distribution.TotalCount != 3 || req.Distribution.OwnedCount != 2 {
+		t.Fatalf("unexpected distribution totals: %+v", req.Distribution)
+	}
+	if req.Distribution.MaxCharacterBarCount != 1 || req.Distribution.MaxAttributeBarCount != 2 {
+		t.Fatalf("unexpected distribution max counts: %+v", req.Distribution)
+	}
+
+	var character5 drawing.CardDistributionCharacterStat
+	for _, stat := range req.Distribution.CharacterStats {
+		if stat.CharacterID == 5 {
+			character5 = stat
+			break
+		}
+	}
+	if character5.Count != 2 || character5.OwnedCount != 1 || character5.BarCount != 1 {
+		t.Fatalf("unexpected character 5 stat: %+v", character5)
+	}
+
+	var cuteStat drawing.CardDistributionAttributeStat
+	var coolStat drawing.CardDistributionAttributeStat
+	for _, stat := range req.Distribution.AttributeStats {
+		switch stat.Attr {
+		case "cute":
+			cuteStat = stat
+		case "cool":
+			coolStat = stat
+		}
+	}
+	if cuteStat.Count != 2 || cuteStat.OwnedCount != 2 || cuteStat.BarCount != 2 || len(cuteStat.CharacterStats) != 2 {
+		t.Fatalf("unexpected cute stat: %+v", cuteStat)
+	}
+	if coolStat.Count != 1 || coolStat.OwnedCount != 0 || coolStat.BarCount != 0 {
+		t.Fatalf("unexpected cool stat: %+v", coolStat)
 	}
 }
 
@@ -217,6 +273,24 @@ func TestBuildCardBoxRequestRejectsShowBoxWithoutOwnedCardData(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "box") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestBuildCardBoxRequestPassesUnownedOnlyWithOwnedCardData(t *testing.T) {
+	source := &lookupTestSource{cards: []*masterdata.Card{{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", Prefix: "Card A", AssetBundleName: "card_a"}}}
+	controller := NewController(source, nil, nil, nil)
+	profile := &drawing.DetailedProfileCardRequest{UserCards: []any{map[string]any{"cardId": 1001}}}
+	req, err := controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", UnownedOnly: true, UseAfterTraining: new(true), DetailedProfile: profile}})
+	if err != nil {
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if !req.UnownedOnly {
+		t.Fatalf("expected unowned_only flag, got %+v", req)
+	}
+
+	_, err = controller.BuildCardBoxRequest([]Query{{Query: "1001", Region: "jp", UnownedOnly: true, UseAfterTraining: new(true)}})
+	if err == nil {
+		t.Fatal("expected unowned_only without owned-card data to fail")
 	}
 }
 
@@ -303,7 +377,7 @@ func TestBuildCardBoxRequestUsesOwnedCardVisualStateFromDetailedProfile(t *testi
 	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []any{
 		map[string]any{"cardId": 190, "level": 60, "masterRank": 5, "specialTrainingStatus": "done", "defaultImage": "normal"},
 		map[string]any{"cardId": 191, "level": 50, "masterRank": 2, "specialTrainingStatus": "done", "defaultImage": "special_training"},
-	}}, false, false, true)
+	}}, false, false, false, true, "")
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)
 	}

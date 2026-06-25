@@ -39,7 +39,10 @@ type contextualEventSource interface {
 
 // ── Controller & builder ────────────────────────────────────────────────────
 
-const cardListAutoBoxThreshold = 90
+const (
+	cardListAutoBoxThreshold = 90
+	CardBoxGroupByAttr       = "attr"
+)
 
 type Controller struct {
 	sources   *regionsource.Registry[DataSource]
@@ -149,6 +152,8 @@ type Query struct {
 	AllowUnreleased  bool                                `json:"allow_unreleased,omitempty"`
 	ShowID           bool                                `json:"show_id,omitempty"`
 	ShowBox          bool                                `json:"show_box,omitempty"`
+	UnownedOnly      bool                                `json:"unowned_only,omitempty"`
+	GroupBy          string                              `json:"group_by,omitempty"`
 	StrictFilterOnly bool                                `json:"strict_filter_only,omitempty"`
 	UseAfterTraining *bool                               `json:"use_after_training,omitempty"`
 	Title            *string                             `json:"-"`

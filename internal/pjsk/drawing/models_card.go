@@ -77,6 +77,40 @@ type UserCard struct {
 	HasCard bool      `json:"has_card"`
 }
 
+type CardDistributionCharacterStat struct {
+	CharacterID int     `json:"character_id"`
+	Count       int     `json:"count"`
+	OwnedCount  int     `json:"owned_count"`
+	BarCount    int     `json:"bar_count"`
+	BarRatio    float64 `json:"bar_ratio"`
+	Share       float64 `json:"share"`
+	ColorCode   string  `json:"color_code,omitempty"`
+	IconPath    string  `json:"icon_path,omitempty"`
+}
+
+type CardDistributionAttributeStat struct {
+	Attr           string                          `json:"attr"`
+	Label          string                          `json:"label"`
+	Count          int                             `json:"count"`
+	OwnedCount     int                             `json:"owned_count"`
+	BarCount       int                             `json:"bar_count"`
+	BarRatio       float64                         `json:"bar_ratio"`
+	Share          float64                         `json:"share"`
+	ColorCode      string                          `json:"color_code,omitempty"`
+	AttrIconPath   string                          `json:"attr_icon_path,omitempty"`
+	CharacterStats []CardDistributionCharacterStat `json:"character_stats,omitempty"`
+}
+
+type CardBoxDistribution struct {
+	TotalCount           int                             `json:"total_count"`
+	OwnedCount           int                             `json:"owned_count"`
+	OwnedData            bool                            `json:"owned_data"`
+	MaxCharacterBarCount int                             `json:"max_character_bar_count"`
+	MaxAttributeBarCount int                             `json:"max_attribute_bar_count"`
+	CharacterStats       []CardDistributionCharacterStat `json:"character_stats,omitempty"`
+	AttributeStats       []CardDistributionAttributeStat `json:"attribute_stats,omitempty"`
+}
+
 // CardDetailRequest represents request for /card/detail
 type CardDetailRequest struct {
 	CardInfo            CardBasic      `json:"card_info"`
@@ -112,6 +146,9 @@ type CardBoxRequest struct {
 	Title               *string                     `json:"title,omitempty"`
 	ShowID              bool                        `json:"show_id"`
 	ShowBox             bool                        `json:"show_box"`
+	UnownedOnly         bool                        `json:"unowned_only,omitempty"`
+	GroupBy             string                      `json:"group_by,omitempty"`
+	Distribution        *CardBoxDistribution        `json:"distribution,omitempty"`
 	BackgroundImgPath   *string                     `json:"background_img_path,omitempty"`
 	CharacterIconPaths  map[int]string              `json:"character_icon_paths"`
 	CharacterColorCodes map[int]string              `json:"character_color_codes,omitempty"`

@@ -79,19 +79,20 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 		},
 		{
 			name:     "card box query",
-			args:     "mnr 4星 id box before",
+			args:     "mnr 4星 id box before 未持有",
 			wantMode: "card-box",
 			checkParam: func(t *testing.T, raw []byte) {
 				t.Helper()
 				var params struct {
 					ShowID           bool `json:"show_id"`
 					ShowBox          bool `json:"show_box"`
+					UnownedOnly      bool `json:"unowned_only"`
 					UseAfterTraining bool `json:"use_after_training"`
 				}
 				if err := json.Unmarshal(raw, &params); err != nil {
 					t.Fatalf("unmarshal params: %v", err)
 				}
-				if !params.ShowID || !params.ShowBox || params.UseAfterTraining {
+				if !params.ShowID || !params.ShowBox || !params.UnownedOnly || params.UseAfterTraining {
 					t.Fatalf("unexpected params: %+v", params)
 				}
 			},
@@ -273,6 +274,43 @@ func TestCardBoxHandleTreats25AsStrictFilterQuery(t *testing.T) {
 	}
 	if !params.StrictFilterOnly {
 		t.Fatalf("expected strict filter mode for /卡牌一览 25, got %+v", params)
+	}
+}
+
+func TestCardBoxHandleParsesAttributeGrouping(t *testing.T) {
+	h := sekaiHandlers{}.CardBoxHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/卡牌一览",
+		ArgText:    "mnr 4 属性 未持有",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-box" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+	if resolved.Query != "mnr 4" {
+		t.Fatalf("unexpected cleaned query: %q", resolved.Query)
+	}
+
+	var params struct {
+		GroupBy          string `json:"group_by"`
+		UnownedOnly      bool   `json:"unowned_only"`
+		StrictFilterOnly bool   `json:"strict_filter_only"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.GroupBy != card.CardBoxGroupByAttr || !params.UnownedOnly || !params.StrictFilterOnly {
+		t.Fatalf("unexpected card box grouping params: %+v", params)
 	}
 }
 

@@ -4815,6 +4815,7 @@ func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
 		"show_id":            true,
 		"show_box":           false,
 		"use_after_training": false,
+		"group_by":           rendercard.CardBoxGroupByAttr,
 	})
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
@@ -4835,6 +4836,12 @@ func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
 	}
 	if !captured.ShowID || captured.ShowBox {
 		t.Fatalf("unexpected box flags: %+v", captured)
+	}
+	if captured.GroupBy != rendercard.CardBoxGroupByAttr {
+		t.Fatalf("unexpected group_by: %q", captured.GroupBy)
+	}
+	if captured.Distribution == nil || captured.Distribution.TotalCount != 1 || captured.Distribution.MaxCharacterBarCount != 1 {
+		t.Fatalf("unexpected distribution: %+v", captured.Distribution)
 	}
 	if len(captured.Cards) != 1 || captured.Cards[0].Card.IsAfterTraining == nil || *captured.Cards[0].Card.IsAfterTraining {
 		t.Fatalf("unexpected card payload: %+v", captured.Cards)

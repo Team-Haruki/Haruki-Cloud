@@ -162,7 +162,7 @@ func (c *Controller) buildCardListRenderRequest(query ListRequest) (any, bool, e
 		return nil, false, err
 	}
 	if len(cards) >= cardListAutoBoxThreshold {
-		req, buildErr := builder.BuildCardBoxRequest(cards, region, nil, false, false, true)
+		req, buildErr := builder.BuildCardBoxRequest(cards, region, nil, false, false, false, true, "")
 		if buildErr != nil {
 			return nil, false, buildErr
 		}
@@ -182,7 +182,7 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("no card query provided")
 	}
-	if queries[0].ShowBox && !hasOwnedCardData(queries[0].DetailedProfile) {
+	if (queries[0].ShowBox || queries[0].UnownedOnly) && !hasOwnedCardData(queries[0].DetailedProfile) {
 		return nil, fmt.Errorf("box 模式需要用户卡牌持有数据，请先提供 Suite 抓包或本地快照")
 	}
 
@@ -228,12 +228,13 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	if queries[0].UseAfterTraining != nil {
 		useAfterTraining = *queries[0].UseAfterTraining
 	}
-	req, err := builder.BuildCardBoxRequest(cards, region, queries[0].DetailedProfile, queries[0].ShowID, queries[0].ShowBox, useAfterTraining)
+	req, err := builder.BuildCardBoxRequest(cards, region, queries[0].DetailedProfile, queries[0].ShowID, queries[0].ShowBox, queries[0].UnownedOnly, useAfterTraining, queries[0].GroupBy)
 	if err != nil {
 		return nil, err
 	}
 	req.ShowID = queries[0].ShowID
 	req.ShowBox = queries[0].ShowBox
+	req.UnownedOnly = queries[0].UnownedOnly
 	userCardStates := extractOwnedCards(queries[0].DetailedProfile)
 	for i := range req.Cards {
 		state, ok := userCardStates[req.Cards[i].Card.CardID]

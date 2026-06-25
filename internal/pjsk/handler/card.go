@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -114,21 +115,24 @@ func (sekaiHandlers) CardBoxHandle() HarukiSekaiCommandHandler {
 
 func isCardBoxQuery(args string) bool {
 	lower := strings.ToLower(strings.TrimSpace(args))
-	return strings.Contains(lower, " box") ||
-		strings.HasSuffix(lower, "box") ||
-		strings.Contains(lower, " id") ||
-		strings.HasSuffix(lower, "id") ||
-		strings.Contains(lower, " before") ||
-		strings.HasSuffix(lower, "before")
+	return hasCardBoxControlToken(lower, "box") ||
+		hasCardBoxControlToken(lower, "id") ||
+		hasCardBoxControlToken(lower, "before") ||
+		hasCardBoxUnownedToken(lower)
 }
 
 func cardBoxParams(args string) map[string]any {
 	lower := strings.ToLower(strings.TrimSpace(args))
-	return map[string]any{
-		"show_id":            strings.Contains(lower, "id"),
-		"show_box":           strings.Contains(lower, "box"),
-		"use_after_training": !strings.Contains(lower, "before"),
+	params := map[string]any{
+		"show_id":            hasCardBoxControlToken(lower, "id"),
+		"show_box":           hasCardBoxControlToken(lower, "box"),
+		"unowned_only":       hasCardBoxUnownedToken(lower),
+		"use_after_training": !hasCardBoxControlToken(lower, "before"),
 	}
+	if groupBy := cardBoxGroupBy(args); groupBy != "" {
+		params["group_by"] = groupBy
+	}
+	return params
 }
 
 func newCardListParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterOnly bool) (map[string]any, error) {
@@ -159,8 +163,51 @@ func newCardBoxParams(ctx HarrukiSekaiHandlerContext, args string, strictFilterO
 }
 
 func cleanCardBoxArgs(args string) string {
-	replacer := strings.NewReplacer("id", "", "box", "", "before", "")
-	return strings.TrimSpace(replacer.Replace(strings.ToLower(args)))
+	lower := strings.ToLower(strings.ReplaceAll(args, "属性", " "))
+	tokens := strings.FieldsFunc(lower, isCardBoxTokenSeparator)
+	kept := make([]string, 0, len(tokens))
+	for _, token := range tokens {
+		switch token {
+		case "id", "box", "before", "attr", "attrs", "attribute", "attributes", "未持有", "未拥有", "unowned", "missing", "miss":
+			continue
+		default:
+			kept = append(kept, token)
+		}
+	}
+	return strings.TrimSpace(strings.Join(kept, " "))
+}
+
+func cardBoxGroupBy(args string) string {
+	lower := strings.ToLower(strings.TrimSpace(args))
+	if strings.Contains(args, "属性") ||
+		hasCardBoxControlToken(lower, "attr") ||
+		hasCardBoxControlToken(lower, "attrs") ||
+		hasCardBoxControlToken(lower, "attribute") ||
+		hasCardBoxControlToken(lower, "attributes") {
+		return card.CardBoxGroupByAttr
+	}
+	return ""
+}
+
+func hasCardBoxUnownedToken(text string) bool {
+	return hasCardBoxControlToken(text, "未持有") ||
+		hasCardBoxControlToken(text, "未拥有") ||
+		hasCardBoxControlToken(text, "unowned") ||
+		hasCardBoxControlToken(text, "missing") ||
+		hasCardBoxControlToken(text, "miss")
+}
+
+func hasCardBoxControlToken(text string, token string) bool {
+	for _, item := range strings.FieldsFunc(text, isCardBoxTokenSeparator) {
+		if item == token {
+			return true
+		}
+	}
+	return false
+}
+
+func isCardBoxTokenSeparator(ch rune) bool {
+	return unicode.IsSpace(ch) || strings.ContainsRune(",，/\\+-_|｜", ch)
 }
 
 func (sekaiHandlers) CardImgHandle() HarukiSekaiCommandHandler {
@@ -237,7 +284,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
-		if (q.ShowBox || strings.TrimSpace(q.Query) == "") && !hasCardCatalogOwnedData(q.DetailedProfile) {
+		if (q.ShowBox || q.UnownedOnly || strings.TrimSpace(q.Query) == "") && !hasCardCatalogOwnedData(q.DetailedProfile) {
 			detail, detailErr := requireCardCatalogDetailedProfile(rc)
 			if detailErr != nil {
 				return nil, detailErr

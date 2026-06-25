@@ -295,6 +295,27 @@ func TestBuildGachaDetailRequestComputesRatesAndPickupCards(t *testing.T) {
 	}
 }
 
+func TestBuildCeilItemIconPathFallsBackToMaterialDirectory(t *testing.T) {
+	dir := t.TempDir()
+	iconPath := filepath.Join(dir, "asset", "jp-assets", "startapp", "thumbnail", "material", "ceil_item_fallback.png")
+	if err := os.MkdirAll(filepath.Dir(iconPath), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(iconPath, []byte("png"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	source := newTestGachaSource(renderregion.JP)
+	source.ceilByID[88] = "ceil_item_fallback"
+	builder := NewBuilder(source, assets.NewAssetHelper(dir, nil))
+
+	got := builder.buildCeilItemIconPath(88, renderregion.JP)
+	want := filepath.ToSlash(filepath.Join("asset", "jp-assets", "startapp", "thumbnail", "material", "ceil_item_fallback.png"))
+	if got != want {
+		t.Fatalf("ceil item icon path = %q, want %q", got, want)
+	}
+}
+
 func TestBuildGachaListRequestUsesOnDemandLogoFallback(t *testing.T) {
 	dir := t.TempDir()
 	logoPath := filepath.Join(dir, "asset", "jp-assets", "ondemand", "gacha", "ab_gacha_392", "logo", "logo.png")

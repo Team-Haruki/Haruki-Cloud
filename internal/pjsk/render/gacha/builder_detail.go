@@ -254,6 +254,8 @@ func (b *Builder) buildCeilItemIconPath(ceilItemID int, region renderregion.Valu
 		b.assets,
 		region.String(),
 		filepath.Join("thumbnail", "gacha_item", assetbundleName+".png"),
+		filepath.Join("thumbnail", "material", assetbundleName+".png"),
+		filepath.Join("thumbnail", "common_material", assetbundleName+".png"),
 	)
 }
 

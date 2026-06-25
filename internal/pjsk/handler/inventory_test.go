@@ -21,7 +21,7 @@ func TestInventoryListHandleParsesFilterAndSelector(t *testing.T) {
 		Context:    context.Background(),
 		Platform:   "qq",
 		UserId:     "12345",
-		TriggerCmd: "/查背包",
+		TriggerCmd: "/持有物",
 		ArgText:    "u2 火罐",
 	})
 	if err != nil {

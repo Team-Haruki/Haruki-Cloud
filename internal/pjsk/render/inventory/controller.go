@@ -159,30 +159,6 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 		})
 	}
 
-	for _, eventItem := range raw.UserEventItems {
-		if eventItem.EventItemID <= 0 || eventItem.Quantity <= 0 {
-			continue
-		}
-		meta := md.eventItems[eventItem.EventItemID]
-		if isEventBadge(meta) {
-			continue
-		}
-		name := strings.TrimSpace(meta.Name)
-		if name == "" {
-			name = fmt.Sprintf("活动道具 %d", eventItem.EventItemID)
-		}
-		items = append(items, drawing.InventoryItem{
-			ID:           eventItem.EventItemID,
-			Name:         name,
-			Description:  cleanInventoryDescription(meta.FlavorText),
-			Category:     "event",
-			ResourceType: "event_item",
-			IconPath:     c.inventoryIconByAssetName(region, "event_item", meta.AssetbundleName),
-			Quantity:     eventItem.Quantity,
-			Seq:          fallbackSeq(meta.EventID, eventItem.EventItemID),
-		})
-	}
-
 	for _, ticket := range raw.UserGachaTickets {
 		if ticket.GachaTicketID <= 0 || ticket.Quantity <= 0 {
 			continue
@@ -389,8 +365,14 @@ func (c *Controller) inventoryIconByAssetName(region renderregion.Value, resourc
 		return c.resolveInventoryAssetPath(region,
 			filepath.Join("thumbnail", "material", assetName+".png"),
 			filepath.Join("event", "item", assetName+".png"))
-	case "gacha_ticket", "gacha_ceil_item":
+	case "gacha_ticket":
 		return c.resolveInventoryAssetPath(region,
+			filepath.Join("thumbnail", "gacha_ticket", assetName+".png"),
+			filepath.Join("thumbnail", "material", assetName+".png"),
+			filepath.Join("thumbnail", "common_material", assetName+".png"))
+	case "gacha_ceil_item":
+		return c.resolveInventoryAssetPath(region,
+			filepath.Join("thumbnail", "gacha_item", assetName+".png"),
 			filepath.Join("thumbnail", "material", assetName+".png"),
 			filepath.Join("thumbnail", "common_material", assetName+".png"))
 	case "mysekai_material":
@@ -539,12 +521,6 @@ func fallbackSeq(seq int, id int) int {
 		return seq
 	}
 	return id
-}
-
-func isEventBadge(meta eventItemMeta) bool {
-	name := strings.TrimSpace(meta.Name)
-	assetName := strings.ToLower(strings.TrimSpace(meta.AssetbundleName))
-	return strings.Contains(name, "徽章") || strings.HasPrefix(assetName, "badge_")
 }
 
 func isMysekaiMemory(meta mysekaiMaterialMeta) bool {

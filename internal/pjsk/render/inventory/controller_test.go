@@ -8,6 +8,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
@@ -185,6 +186,105 @@ func TestBuildListRequestFromSnapshotUsesDefaultRegion(t *testing.T) {
 
 	if got := findInventoryItem(t, req.Sections, "music", 5); got.Name != "国服音乐卡" {
 		t.Fatalf("material name = %q, want 国服音乐卡", got.Name)
+	}
+}
+
+func TestBuildListRequestFromSnapshotSkipsEventItemsForAllRegions(t *testing.T) {
+	dir := t.TempDir()
+	masterDir := filepath.Join(dir, "haruki-sekai-master", "master")
+	if err := os.MkdirAll(masterDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(masterDir, "eventItems.json"), []byte(`[
+		{"id":7,"eventId":70,"name":"Event Token","assetbundleName":"event_token","flavorText":"Event exchange item."}
+	]`), 0o644); err != nil {
+		t.Fatalf("WriteFile(eventItems) error = %v", err)
+	}
+
+	profile := &drawing.DetailedProfileCardRequest{
+		ID:              "123456789",
+		Region:          "jp",
+		Nickname:        "tester",
+		Source:          "suite",
+		UpdateTime:      1700000000000,
+		LeaderImagePath: "asset/jp-assets/startapp/thumbnail/chara/chr_ts_01.png",
+	}
+	raw := &snapshot.RawUserData{
+		UserGamedata:   snapshot.RawUserGamedata{Coin: 10},
+		UserEventItems: []snapshot.RawUserEventItem{{EventItemID: 7, Quantity: 9}},
+	}
+	ctrl := NewController(nil, nil, nil, renderregion.JP, MasterdataOptions{LocalDir: dir})
+
+	req, err := ctrl.BuildListRequestFromSnapshot(Query{
+		Region:   renderregion.JP,
+		Profile:  profile,
+		Snapshot: &inventorySnapshotStub{raw: raw, profile: profile},
+	})
+	if err != nil {
+		t.Fatalf("BuildListRequestFromSnapshot() error = %v", err)
+	}
+	if req.TotalItems != 1 {
+		t.Fatalf("TotalItems = %d, want only coin", req.TotalItems)
+	}
+	assertInventoryItemMissing(t, req.Sections, "event", 7)
+}
+
+func TestBuildListRequestFromSnapshotUsesDedicatedTicketAssetDirectories(t *testing.T) {
+	dir := t.TempDir()
+	masterDir := filepath.Join(dir, "haruki-sekai-master", "master")
+	if err := os.MkdirAll(masterDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll(master) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(masterDir, "gachaTickets.json"), []byte(`[
+		{"id":8,"seq":8,"name":"Mission Gacha Ticket","assetbundleName":"mission_ticket"}
+	]`), 0o644); err != nil {
+		t.Fatalf("WriteFile(gachaTickets) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(masterDir, "gachaCeilItems.json"), []byte(`[
+		{"id":9,"seq":9,"name":"Limited Gacha Sticker","assetbundleName":"ceil_item_limited"}
+	]`), 0o644); err != nil {
+		t.Fatalf("WriteFile(gachaCeilItems) error = %v", err)
+	}
+	for _, rel := range []string{
+		filepath.Join("asset", "jp-assets", "startapp", "thumbnail", "gacha_ticket", "mission_ticket.png"),
+		filepath.Join("asset", "jp-assets", "startapp", "thumbnail", "gacha_item", "ceil_item_limited.png"),
+	} {
+		path := filepath.Join(dir, rel)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatalf("MkdirAll(asset) error = %v", err)
+		}
+		if err := os.WriteFile(path, []byte("png"), 0o644); err != nil {
+			t.Fatalf("WriteFile(asset) error = %v", err)
+		}
+	}
+
+	profile := &drawing.DetailedProfileCardRequest{
+		ID:              "123456789",
+		Region:          "jp",
+		Nickname:        "tester",
+		Source:          "suite",
+		UpdateTime:      1700000000000,
+		LeaderImagePath: "asset/jp-assets/startapp/thumbnail/chara/chr_ts_01.png",
+	}
+	raw := &snapshot.RawUserData{
+		UserGachaTickets:   []snapshot.RawUserGachaTicket{{GachaTicketID: 8, Quantity: 1}},
+		UserGachaCeilItems: []snapshot.RawUserGachaCeilItem{{GachaCeilItemID: 9, Quantity: 2}},
+	}
+	ctrl := NewController(nil, assets.NewAssetHelper(dir, nil), nil, renderregion.JP, MasterdataOptions{LocalDir: dir})
+
+	req, err := ctrl.BuildListRequestFromSnapshot(Query{
+		Region:   renderregion.JP,
+		Profile:  profile,
+		Snapshot: &inventorySnapshotStub{raw: raw, profile: profile},
+	})
+	if err != nil {
+		t.Fatalf("BuildListRequestFromSnapshot() error = %v", err)
+	}
+	if got := findInventoryItem(t, req.Sections, "tickets", 8); got.IconPath != "asset/jp-assets/startapp/thumbnail/gacha_ticket/mission_ticket.png" {
+		t.Fatalf("gacha ticket icon path = %q", got.IconPath)
+	}
+	if got := findInventoryItem(t, req.Sections, "tickets", 9); got.IconPath != "asset/jp-assets/startapp/thumbnail/gacha_item/ceil_item_limited.png" {
+		t.Fatalf("gacha ceil item icon path = %q", got.IconPath)
 	}
 }
 

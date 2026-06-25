@@ -28,7 +28,7 @@ func (sekaiHandlers) InventoryListHandle() HarukiSekaiCommandHandler {
 		CommandHandlerBase: CommandHandlerBase{
 			Path: "inventory/list",
 			Commands: []string{
-				"/背包一览", "/查背包",
+				"/背包一览", "/查背包", "/持有物", "/查持有物",
 				"/pjsk inventory", "/inventory",
 			},
 			Helper: inventoryListHelp,

@@ -17,9 +17,10 @@ import (
 )
 
 type Controller struct {
-	sources *regionsource.Registry[DataSource]
-	drawing *drawing.HarukiDrawingClient
-	assets  *assets.AssetHelper
+	sources   *regionsource.Registry[DataSource]
+	drawing   *drawing.HarukiDrawingClient
+	assets    *assets.AssetHelper
+	preview3D *Preview3DService
 }
 
 var costumePartOrder = []string{"body", "head", "hair"}
@@ -44,12 +45,20 @@ func (c *Controller) RegisterSource(source DataSource) {
 	c.sources.RegisterSource(source)
 }
 
+func (c *Controller) Set3DPreviewConfig(cfg Preview3DConfig) {
+	if c == nil {
+		return
+	}
+	c.preview3D = NewPreview3DService(cfg)
+}
+
 func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c == nil {
 		return nil
 	}
 	clone := *c
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.preview3D = c.preview3D
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {
@@ -256,6 +265,9 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 		return nil, err
 	}
 	costumeBasic := c.buildCostumeBasic(region, source, costumeInfo, variants, sourceCards)
+	if previewPath, err := c.resolve3DPreviewPath(region, costumeInfo); err == nil && previewPath != "" {
+		costumeBasic.PreviewImagePath = &previewPath
+	}
 	character, _ := source.GetCharacterByID(costumeInfo.CharacterID)
 	return &drawing.CostumeDetailRequest{
 		Region:            region.String(),
@@ -263,6 +275,13 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 		CharacterIconPath: c.buildCharacterIconPath(costumeInfo.CharacterID, characterUnit(character)),
 		UnitLogoPath:      c.buildUnitLogoPath(characterUnit(character)),
 	}, nil
+}
+
+func (c *Controller) resolve3DPreviewPath(region renderregion.Value, costumeInfo *masterdata.Costume3d) (string, error) {
+	if c == nil || c.preview3D == nil || costumeInfo == nil {
+		return "", nil
+	}
+	return c.preview3D.ResolvePreviewPath(context.Background(), region.String(), costumeInfo.ID)
 }
 
 func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {

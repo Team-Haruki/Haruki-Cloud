@@ -70,6 +70,7 @@ type Config struct {
 	MySekaiHousingCompetitionRefreshInterval time.Duration
 	ReadOnly                                 bool
 	DeckRecommend                            DeckRecommendConfig
+	Preview3D                                costume.Preview3DConfig
 	// Upstream HTTP clients. Caller constructs these from its own config
 	// (see cmd/server) and passes them here so the render runtime does not
 	// depend on package-level singletons.

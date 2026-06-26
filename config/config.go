@@ -69,6 +69,15 @@ func envInt(name string, dst *int) {
 	}
 }
 
+// envFloat overrides dst with the float value of the named env var if set and valid.
+func envFloat(name string, dst *float64) {
+	if v := os.Getenv(name); v != "" {
+		if n, err := strconv.ParseFloat(v, 64); err == nil {
+			*dst = n
+		}
+	}
+}
+
 // envBool overrides dst with the bool value of the named env var if set and valid ("true"/"1"/"false"/"0").
 func envBool(name string, dst *bool) {
 	if v := os.Getenv(name); v != "" {
@@ -229,6 +238,14 @@ func ApplyEnvOverrides(cfg *Config) {
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_FALLBACK", &cfg.PJSKRender.LocalMasterdata.AllowFallback)
 	envDuration("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.LocalMasterdata.RefreshInterval)
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", &cfg.PJSKRender.LocalMasterdata.AllowLeaks)
+	envBool("HARUKI_PJSK_RENDER_3D_PREVIEW_ENABLED", &cfg.PJSKRender.Preview3D.Enabled)
+	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URL", &cfg.PJSKRender.Preview3D.EngineBaseURL)
+	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_STATIC_RELATIVE_DIR", &cfg.PJSKRender.Preview3D.StaticRelativeDir)
+	envInt("HARUKI_PJSK_RENDER_3D_PREVIEW_WIDTH", &cfg.PJSKRender.Preview3D.Width)
+	envInt("HARUKI_PJSK_RENDER_3D_PREVIEW_HEIGHT", &cfg.PJSKRender.Preview3D.Height)
+	envFloat("HARUKI_PJSK_RENDER_3D_PREVIEW_SCALE", &cfg.PJSKRender.Preview3D.Scale)
+	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_TIMEOUT", &cfg.PJSKRender.Preview3D.Timeout)
+	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_REGISTRY_CACHE_TTL", &cfg.PJSKRender.Preview3D.RegistryCacheTTL)
 }
 
 type BackendConfig struct {
@@ -364,6 +381,17 @@ type MySekaiHousingCompetitionConfig struct {
 	RefreshInterval time.Duration `yaml:"refresh_interval"`
 }
 
+type Preview3DConfig struct {
+	Enabled           bool          `yaml:"enabled"`
+	EngineBaseURL     string        `yaml:"engine_base_url"`
+	StaticRelativeDir string        `yaml:"static_relative_dir"`
+	Width             int           `yaml:"width"`
+	Height            int           `yaml:"height"`
+	Scale             float64       `yaml:"scale"`
+	Timeout           time.Duration `yaml:"timeout"`
+	RegistryCacheTTL  time.Duration `yaml:"registry_cache_ttl"`
+}
+
 // MySekaiCNWhitelistEntry defines a platform+group pair allowed to use
 // MySekai features on the CN region.
 type MySekaiCNWhitelistEntry struct {
@@ -389,6 +417,7 @@ type PJSKRenderConfig struct {
 	MusicMeta                 MusicMetaConfig                 `yaml:"music_meta"`
 	SKForecast                SKForecastConfig                `yaml:"sk_forecast"`
 	MySekaiHousingCompetition MySekaiHousingCompetitionConfig `yaml:"mysekai_housing_competition"`
+	Preview3D                 Preview3DConfig                 `yaml:"preview_3d"`
 	DeckRecommend             DeckRecommendConfig             `yaml:"deck_recommend"`
 }
 

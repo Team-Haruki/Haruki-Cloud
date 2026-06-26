@@ -25,6 +25,7 @@ import (
 	usersDB "haruki-cloud/database/users"
 
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	rendercostume "haruki-cloud/internal/pjsk/render/costume"
 )
 
 func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App, pjskClient *pjskDB.Client, usersClient *usersDB.Client, censorService *censor.Service) {
@@ -151,6 +152,16 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		MySekaiHousingCompetitionCachePath:       resolveMySekaiHousingCompetitionCachePath(),
 		MySekaiHousingCompetitionRefreshInterval: harukiConfig.Cfg.PJSKRender.MySekaiHousingCompetition.RefreshInterval,
 		ReadOnly:                                 harukiConfig.Cfg.Node.ReadOnly,
+		Preview3D: rendercostume.Preview3DConfig{
+			Enabled:           harukiConfig.Cfg.PJSKRender.Preview3D.Enabled,
+			EngineBaseURL:     harukiConfig.Cfg.PJSKRender.Preview3D.EngineBaseURL,
+			StaticRelativeDir: harukiConfig.Cfg.PJSKRender.Preview3D.StaticRelativeDir,
+			Width:             harukiConfig.Cfg.PJSKRender.Preview3D.Width,
+			Height:            harukiConfig.Cfg.PJSKRender.Preview3D.Height,
+			Scale:             harukiConfig.Cfg.PJSKRender.Preview3D.Scale,
+			Timeout:           harukiConfig.Cfg.PJSKRender.Preview3D.Timeout,
+			RegistryCacheTTL:  harukiConfig.Cfg.PJSKRender.Preview3D.RegistryCacheTTL,
+		},
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,
 			Disable:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Disable,

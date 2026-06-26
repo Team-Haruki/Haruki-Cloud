@@ -156,6 +156,15 @@ pjsk_render:
   mysekai_housing_competition:
     cache_path: "/data/haruki/cache/drawing/mysekai_housing_competition_stats.json"
     refresh_interval: "10s"
+  preview_3d:
+    enabled: false
+    engine_base_url: "http://haruki-3d-engine:38080"
+    static_relative_dir: "static_images/pjsk_3d_preview"
+    width: 700
+    height: 500
+    scale: 2
+    timeout: "20s"
+    registry_cache_ttl: "5m"
   user_snapshot:
     provider: "local_file"    # future: "internal_cloud"
     allow_fallback: true      # set false in production (Toolbox is sole source); true for dev/test

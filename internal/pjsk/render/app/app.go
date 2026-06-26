@@ -182,6 +182,7 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		deckController.RegisterMusicSource(musicAdapter)
 		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
 		costumeController = costume.NewController(costumeAdapter, drawingClient, assetHelper)
+		costumeController.Set3DPreviewConfig(cfg.Preview3D)
 		educationController.RegisterSource(educationAdapter)
 		eventController = event.NewController(eventAdapter, drawingClient, assetHelper)
 		gachaController = gacha.NewController(gachaAdapter, drawingClient, assetHelper)

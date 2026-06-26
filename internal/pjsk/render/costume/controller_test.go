@@ -2,6 +2,8 @@ package costume
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -250,6 +252,84 @@ func TestBuildCostumeDetailRequestIncludesAllColorVariants(t *testing.T) {
 		if variant.ColorID != i+1 {
 			t.Fatalf("expected variant color %d, got %d", i+1, variant.ColorID)
 		}
+	}
+}
+
+func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.T) {
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
+			http.NotFound(w, r)
+			return
+		}
+		switch r.URL.Path {
+		case "/runtime/character3d-index.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"ok"}]}`)
+		case "/runtime/parts/part-registry.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"entries":[
+				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
+				{"costume3dId":33002,"partType":"body","characterId":20,"unit":"school_refusal","colorId":2,"costume3dGroupId":330},
+				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
+				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330}
+			]}`)
+		case "/runtime/parts/head-hair-compatibility.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
+		case "/capture":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"ok":true,"imageId":"pjsk3d_jp_c20_school_refusal_i33002_b33002_h33011_r33021_o0","url":"/captures/pjsk3d_jp_c20_school_refusal_i33002_b33002_h33011_r33021_o0.png"}`)
+		default:
+			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer engine.Close()
+
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostumeWithColor(33001, "body", 20, 1),
+		makeDenseListTestCostumeWithColor(33002, "body", 20, 2),
+		makeDenseListTestCostumeWithColor(33011, "head", 20, 1),
+		makeDenseListTestCostumeWithColor(33021, "hair", 20, 1),
+	}}, nil, nil)
+	controller.Set3DPreviewConfig(Preview3DConfig{
+		Enabled:           true,
+		EngineBaseURL:     engine.URL,
+		StaticRelativeDir: "static_images/pjsk_3d_preview",
+		Width:             700,
+		Height:            500,
+		Scale:             2,
+	})
+
+	request, err := controller.BuildCostumeDetailRequest(Query{ID: 33002})
+	if err != nil {
+		t.Fatalf("BuildCostumeDetailRequest failed: %v", err)
+	}
+	if request.Costume.PreviewImagePath == nil {
+		t.Fatalf("expected preview image path")
+	}
+	want := "static_images/pjsk_3d_preview/pjsk3d_jp_c20_school_refusal_i33002_b33002_h33011_r33021_o0.png"
+	if got := *request.Costume.PreviewImagePath; got != want {
+		t.Fatalf("expected preview path %q, got %q", want, got)
+	}
+}
+
+func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
+	called := false
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		http.Error(w, "unexpected", http.StatusInternalServerError)
+	}))
+	defer engine.Close()
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostumeWithColor(33001, "body", 20, 1),
+	}}, nil, nil)
+	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL})
+
+	if _, err := controller.BuildCostumeListRequest(ListQuery{Query: "mzk"}); err != nil {
+		t.Fatalf("BuildCostumeListRequest failed: %v", err)
+	}
+	if called {
+		t.Fatalf("list request should not call 3D preview engine")
 	}
 }
 

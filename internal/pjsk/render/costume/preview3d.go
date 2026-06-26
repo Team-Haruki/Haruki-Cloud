@@ -350,7 +350,7 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 
 func (r *preview3DRegistry) partByID(costume3DID int) (preview3DPartEntry, bool) {
 	for _, part := range r.parts {
-		if part.Costume3DID == costume3DID {
+		if part.Costume3DID == costume3DID && preview3DStatusUsable(part.Status) {
 			return part, true
 		}
 	}
@@ -360,6 +360,9 @@ func (r *preview3DRegistry) partByID(costume3DID int) (preview3DPartEntry, bool)
 func (r *preview3DRegistry) defaultRoleForPart(part preview3DPartEntry) preview3DCharacterEntry {
 	var candidates []preview3DCharacterEntry
 	for _, role := range r.characters {
+		if !preview3DStatusUsable(role.Status) {
+			continue
+		}
 		if role.CharacterID != part.CharacterID {
 			continue
 		}
@@ -380,6 +383,9 @@ func (r *preview3DRegistry) defaultRoleForPart(part preview3DPartEntry) preview3
 func (r *preview3DRegistry) groupPart(selected preview3DPartEntry, unit string, partType string) (preview3DPartEntry, bool) {
 	var candidates []preview3DPartEntry
 	for _, part := range r.parts {
+		if !preview3DStatusUsable(part.Status) {
+			continue
+		}
 		if part.CharacterID != selected.CharacterID || part.Costume3DGroupID != selected.Costume3DGroupID {
 			continue
 		}
@@ -403,6 +409,10 @@ func (r *preview3DRegistry) groupPart(selected preview3DPartEntry, unit string, 
 		return leftRank < rightRank
 	})
 	return candidates[0], true
+}
+
+func preview3DStatusUsable(status string) bool {
+	return !strings.EqualFold(strings.TrimSpace(status), "missing")
 }
 
 func (r *preview3DRegistry) isHeadHairBlocked(unit string, headID int, hairID int) bool {

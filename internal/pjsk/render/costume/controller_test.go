@@ -1,10 +1,12 @@
 package costume
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -361,6 +363,33 @@ func TestBuildCostumeDetailRequestSkipsMissing3DPreviewParts(t *testing.T) {
 	}
 	if captureCalled {
 		t.Fatalf("missing runtime part should not call capture")
+	}
+}
+
+func TestBuildCostumeDetailRequestUsesRequestContextFor3DPreview(t *testing.T) {
+	var called atomic.Bool
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called.Store(true)
+		http.Error(w, "request context should have been canceled before preview fetch", http.StatusInternalServerError)
+	}))
+	defer engine.Close()
+
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostumeWithColor(33002, "body", 20, 2),
+	}}, nil, nil)
+	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL})
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	request, err := controller.WithContext(ctx).BuildCostumeDetailRequest(Query{ID: 33002})
+	if err != nil {
+		t.Fatalf("BuildCostumeDetailRequest failed: %v", err)
+	}
+	if request.Costume.PreviewImagePath != nil {
+		t.Fatalf("canceled preview context should not produce preview path, got %q", *request.Costume.PreviewImagePath)
+	}
+	if called.Load() {
+		t.Fatalf("canceled request context should not call 3d preview engine")
 	}
 }
 

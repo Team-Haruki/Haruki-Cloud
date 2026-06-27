@@ -21,6 +21,7 @@ type Controller struct {
 	drawing   *drawing.HarukiDrawingClient
 	assets    *assets.AssetHelper
 	preview3D *Preview3DService
+	ctx       context.Context
 }
 
 var costumePartOrder = []string{"body", "head", "hair"}
@@ -33,6 +34,7 @@ func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawin
 		sources: regionsource.NewRegistry[DataSource](renderregion.JP),
 		drawing: drawingClient,
 		assets:  assetHelper,
+		ctx:     context.Background(),
 	}
 	controller.RegisterSource(defaultSource)
 	return controller
@@ -59,6 +61,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	clone := *c
 	clone.drawing = c.drawing.WithContext(ctx)
 	clone.preview3D = c.preview3D
+	clone.ctx = ctx
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {
@@ -281,7 +284,11 @@ func (c *Controller) resolve3DPreviewPath(region renderregion.Value, costumeInfo
 	if c == nil || c.preview3D == nil || costumeInfo == nil {
 		return "", nil
 	}
-	return c.preview3D.ResolvePreviewPath(context.Background(), region.String(), costumeInfo.ID)
+	ctx := c.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return c.preview3D.ResolvePreviewPath(ctx, region.String(), costumeInfo.ID)
 }
 
 func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {

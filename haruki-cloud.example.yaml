@@ -158,12 +158,12 @@ pjsk_render:
     refresh_interval: "10s"
   preview_3d:
     enabled: false
-    engine_base_url: "http://haruki-3d-engine:38080"
+    engine_base_url: "http://haruki-3d-engine:8080"
     static_relative_dir: "static_images/pjsk_3d_preview"
-    width: 700
-    height: 500
+    width: 1400
+    height: 1000
     scale: 2
-    timeout: "20s"
+    timeout: "45s"
     registry_cache_ttl: "5m"
   user_snapshot:
     provider: "local_file"    # future: "internal_cloud"

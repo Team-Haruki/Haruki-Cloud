@@ -14,6 +14,7 @@ import (
 	rendercard "haruki-cloud/internal/pjsk/render/card"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	"haruki-cloud/utils/logger"
 )
 
 type Controller struct {
@@ -25,6 +26,7 @@ type Controller struct {
 }
 
 var costumePartOrder = []string{"body", "head", "hair"}
+var costumePreview3DLogger = logger.NewLoggerFromGlobal("Costume3DPreview")
 
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
 	if assetHelper == nil {
@@ -268,7 +270,9 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 		return nil, err
 	}
 	costumeBasic := c.buildCostumeBasic(region, source, costumeInfo, variants, sourceCards)
-	if previewPath, err := c.resolve3DPreviewPath(region, costumeInfo); err == nil && previewPath != "" {
+	if previewPath, err := c.resolve3DPreviewPath(region, costumeInfo); err != nil {
+		costumePreview3DLogger.Warnf("3d preview skipped: region=%s costume_id=%d err=%v", region.String(), costumeInfo.ID, err)
+	} else if previewPath != "" {
 		costumeBasic.PreviewImagePath = &previewPath
 	}
 	character, _ := source.GetCharacterByID(costumeInfo.CharacterID)

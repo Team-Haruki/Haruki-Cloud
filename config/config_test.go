@@ -191,10 +191,10 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENABLED", "true")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URL", "http://127.0.0.1:38080")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_STATIC_RELATIVE_DIR", "static_images/pjsk_3d_preview")
-	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_WIDTH", "700")
-	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_HEIGHT", "500")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_WIDTH", "1400")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_HEIGHT", "1000")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_SCALE", "2")
-	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_TIMEOUT", "20s")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_TIMEOUT", "45s")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_REGISTRY_CACHE_TTL", "2m")
 
 	cfg := &Config{}
@@ -254,13 +254,13 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	if cfg.PJSKRender.Preview3D.StaticRelativeDir != "static_images/pjsk_3d_preview" {
 		t.Fatalf("unexpected 3d preview static dir: %q", cfg.PJSKRender.Preview3D.StaticRelativeDir)
 	}
-	if cfg.PJSKRender.Preview3D.Width != 700 || cfg.PJSKRender.Preview3D.Height != 500 {
+	if cfg.PJSKRender.Preview3D.Width != 1400 || cfg.PJSKRender.Preview3D.Height != 1000 {
 		t.Fatalf("unexpected 3d preview size: %dx%d", cfg.PJSKRender.Preview3D.Width, cfg.PJSKRender.Preview3D.Height)
 	}
 	if cfg.PJSKRender.Preview3D.Scale != 2 {
 		t.Fatalf("unexpected 3d preview scale: %v", cfg.PJSKRender.Preview3D.Scale)
 	}
-	if cfg.PJSKRender.Preview3D.Timeout != 20*time.Second {
+	if cfg.PJSKRender.Preview3D.Timeout != 45*time.Second {
 		t.Fatalf("unexpected 3d preview timeout: %v", cfg.PJSKRender.Preview3D.Timeout)
 	}
 	if cfg.PJSKRender.Preview3D.RegistryCacheTTL != 2*time.Minute {

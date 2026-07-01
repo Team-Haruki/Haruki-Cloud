@@ -255,6 +255,9 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 			return nil, err
 		}
 	}
+	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
+		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
+	}
 	variants, err := source.GetCostumeVariants(costumeInfo.GroupID, costumeInfo.PartType, costumeInfo.CharacterID)
 	if err != nil || len(variants) == 0 {
 		variants = []*masterdata.Costume3d{costumeInfo}
@@ -304,6 +307,21 @@ func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
 		return nil, err
 	}
 	return c.drawing.GenerateCostumeDetail(payload)
+}
+
+func (c *Controller) RenderCostumeCombo(query ComboQuery) ([]byte, error) {
+	if c == nil || c.preview3D == nil {
+		return nil, fmt.Errorf("3d preview service is not configured")
+	}
+	parsed, err := parseComboQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	ctx := c.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return c.preview3D.CaptureTemporaryCombo(ctx, parsed.Region, parsed)
 }
 
 func (c *Controller) resolveSource(regionText string) (renderregion.Value, DataSource, error) {
@@ -478,6 +496,151 @@ func ParseExplicitCostumeID(query string) (int, bool) {
 		return 0, false
 	}
 	return value, true
+}
+
+func parseComboQuery(query ComboQuery) (ComboQuery, error) {
+	parsed := query
+	pending := ""
+	ordered := make([]int, 0)
+	for _, token := range strings.Fields(query.Query) {
+		lower := strings.ToLower(strings.TrimSpace(token))
+		if lower == "" {
+			continue
+		}
+		if unit, ok := parseComboUnitToken(lower); ok {
+			parsed.Unit = unit
+			continue
+		}
+		if label, id, ok := parseComboLabeledID(lower); ok {
+			if err := assignComboID(&parsed, label, id); err != nil {
+				return ComboQuery{}, err
+			}
+			pending = ""
+			continue
+		}
+		if label, ok := normalizeComboLabel(lower); ok {
+			pending = label
+			continue
+		}
+		if id, ok := ParseExplicitCostumeID(lower); ok {
+			if pending != "" {
+				if err := assignComboID(&parsed, pending, id); err != nil {
+					return ComboQuery{}, err
+				}
+				pending = ""
+				continue
+			}
+			ordered = append(ordered, id)
+			continue
+		}
+		return ComboQuery{}, fmt.Errorf("无法识别组合参数：%s", token)
+	}
+	if pending != "" {
+		return ComboQuery{}, fmt.Errorf("组合参数 %s 缺少 ID", pending)
+	}
+	for index, id := range ordered {
+		switch index {
+		case 0:
+			if parsed.BodyCostume3DID != 0 {
+				return ComboQuery{}, fmt.Errorf("组合里重复指定服装")
+			}
+			parsed.BodyCostume3DID = id
+		case 1:
+			if parsed.HairCostume3DID != 0 {
+				return ComboQuery{}, fmt.Errorf("组合里重复指定发型")
+			}
+			parsed.HairCostume3DID = id
+		default:
+			parsed.AccessoryCostumeIDs = append(parsed.AccessoryCostumeIDs, id)
+		}
+	}
+	if parsed.BodyCostume3DID <= 0 && parsed.HairCostume3DID <= 0 && len(parsed.AccessoryCostumeIDs) == 0 {
+		return ComboQuery{}, fmt.Errorf("组合至少需要一个 3D 部件 ID")
+	}
+	parsed.Unit, _ = parseComboUnitToken(strings.TrimSpace(parsed.Unit))
+	return parsed, nil
+}
+
+func parseComboLabeledID(token string) (string, int, bool) {
+	labels := []string{
+		"head_optional", "headoptional", "追加饰品", "可选饰品",
+		"accessory", "accessories", "饰品", "头饰", "配饰",
+		"hairstyle", "hair", "发型", "头发",
+		"costume", "body", "衣装", "服装", "衣服",
+	}
+	for _, prefix := range labels {
+		if !strings.HasPrefix(token, prefix) {
+			continue
+		}
+		id, ok := ParseExplicitCostumeID(strings.TrimSpace(strings.TrimPrefix(token, prefix)))
+		if !ok {
+			continue
+		}
+		label, _ := normalizeComboLabel(prefix)
+		return label, id, true
+	}
+	return "", 0, false
+}
+
+func normalizeComboLabel(token string) (string, bool) {
+	switch strings.TrimSpace(strings.ToLower(token)) {
+	case "body", "costume", "服装", "衣装", "衣服":
+		return "body", true
+	case "hair", "hairstyle", "发型", "头发":
+		return "hair", true
+	case "head", "accessory", "accessories", "饰品", "头饰", "配饰":
+		return "accessory", true
+	case "head_optional", "headoptional", "追加饰品", "可选饰品":
+		return "accessory", true
+	default:
+		return "", false
+	}
+}
+
+func assignComboID(query *ComboQuery, label string, id int) error {
+	if id <= 0 {
+		return fmt.Errorf("组合部件 ID 无效")
+	}
+	switch label {
+	case "body":
+		if query.BodyCostume3DID != 0 {
+			return fmt.Errorf("组合里重复指定服装")
+		}
+		query.BodyCostume3DID = id
+	case "hair":
+		if query.HairCostume3DID != 0 {
+			return fmt.Errorf("组合里重复指定发型")
+		}
+		query.HairCostume3DID = id
+	case "accessory":
+		query.AccessoryCostumeIDs = append(query.AccessoryCostumeIDs, id)
+	default:
+		return fmt.Errorf("无法识别组合部件类型：%s", label)
+	}
+	return nil
+}
+
+func parseComboUnitToken(token string) (string, bool) {
+	token = strings.TrimSpace(strings.ToLower(token))
+	token = strings.TrimPrefix(token, "unit=")
+	token = strings.TrimPrefix(token, "unit:")
+	token = strings.TrimPrefix(token, "组合=")
+	switch token {
+	case "light_sound", "ln", "leo_need", "leoneed":
+		return "light_sound", true
+	case "idol", "mmj", "more_more_jump":
+		return "idol", true
+	case "street", "vbs", "vivid_bad_squad":
+		return "street", true
+	case "theme_park", "wxs", "wonderlands_showtime":
+		return "theme_park", true
+	case "school_refusal", "n25", "25", "25ji", "nightcord":
+		return "school_refusal", true
+	case "piapro", "vs", "virtual_singer":
+		return "piapro", true
+	default:
+		return "", false
+	}
 }
 
 func normalizeListQuery(query ListQuery) ListQuery {

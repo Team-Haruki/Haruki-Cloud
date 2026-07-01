@@ -151,6 +151,35 @@ func TestListBotRoutes(t *testing.T) {
 			t.Fatalf("expected mysekai/housing-sk commands to include %s, got %v", command, mysekaiHousingSKRoute.Commands)
 		}
 	}
+
+	costumeListRoute, ok := byPath["costume/list"]
+	if !ok {
+		t.Fatal("expected costume/list route to exist")
+	}
+	for _, command := range []string{"/服装列表", "/饰品列表", "/发型列表"} {
+		if !contains(costumeListRoute.Commands, command) {
+			t.Fatalf("expected costume/list commands to include %s, got %v", command, costumeListRoute.Commands)
+		}
+	}
+	if _, ok := byPath["costume/body"]; ok {
+		t.Fatal("did not expect costume/body route")
+	}
+	if _, ok := byPath["costume/accessory"]; ok {
+		t.Fatal("did not expect costume/accessory route")
+	}
+	if _, ok := byPath["costume/hair"]; ok {
+		t.Fatal("did not expect costume/hair route")
+	}
+
+	costumeComboRoute, ok := byPath["costume/combo"]
+	if !ok {
+		t.Fatal("expected costume/combo route to exist")
+	}
+	for _, command := range []string{"/组合", "/试穿", "/3d试穿"} {
+		if !contains(costumeComboRoute.Commands, command) {
+			t.Fatalf("expected costume/combo commands to include %s, got %v", command, costumeComboRoute.Commands)
+		}
+	}
 }
 
 func contains(items []string, target string) bool {

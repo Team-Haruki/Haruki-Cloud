@@ -26,9 +26,10 @@ type contextualDataSource interface {
 }
 
 type Query struct {
-	Query  string `json:"query,omitempty"`
-	ID     int    `json:"id,omitempty"`
-	Region string `json:"region,omitempty"`
+	Query            string `json:"query,omitempty"`
+	ID               int    `json:"id,omitempty"`
+	Region           string `json:"region,omitempty"`
+	ExpectedPartType string `json:"expected_part_type,omitempty"`
 }
 
 type ListQuery struct {
@@ -51,4 +52,13 @@ type Filter struct {
 	ColorID      int
 	Limit        int
 	Offset       int
+}
+
+type ComboQuery struct {
+	Query               string `json:"query,omitempty"`
+	Region              string `json:"region,omitempty"`
+	Unit                string `json:"unit,omitempty"`
+	BodyCostume3DID     int    `json:"body_costume_3d_id,omitempty"`
+	HairCostume3DID     int    `json:"hair_costume_3d_id,omitempty"`
+	AccessoryCostumeIDs []int  `json:"accessory_costume_ids,omitempty"`
 }

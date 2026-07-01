@@ -166,6 +166,25 @@ func TestBuildCostumeListRequestSupportsDirectGenderPartTokens(t *testing.T) {
 	}
 }
 
+func TestBuildCostumeListRequestSupportsExplicitPartTypeFromShortcut(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostume(33001, "body", 20),
+		makeDenseListTestCostume(33002, "head", 20),
+		makeDenseListTestCostume(33003, "hair", 20),
+	}}, nil, nil)
+
+	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "mzk p1", PartType: "head"})
+	if err != nil {
+		t.Fatalf("BuildCostumeListRequest failed: %v", err)
+	}
+	if len(request.Costumes) != 1 {
+		t.Fatalf("expected one accessory, got %d", len(request.Costumes))
+	}
+	if got := request.Costumes[0]; got.PartType != "head" {
+		t.Fatalf("expected accessory part, got %s", got.PartType)
+	}
+}
+
 func TestBuildCostumeListRequestSupportsCharacterSourceQuery(t *testing.T) {
 	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
 		makeDenseListTestCostume(33001, "body", 20),
@@ -255,6 +274,17 @@ func TestBuildCostumeDetailRequestIncludesAllColorVariants(t *testing.T) {
 		if variant.ColorID != i+1 {
 			t.Fatalf("expected variant color %d, got %d", i+1, variant.ColorID)
 		}
+	}
+}
+
+func TestBuildCostumeDetailRequestRejectsWrongExpectedPartType(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostumeWithColor(33001, "body", 20, 1),
+	}}, nil, nil)
+
+	_, err := controller.BuildCostumeDetailRequest(Query{ID: 33001, ExpectedPartType: "hair"})
+	if err == nil || !strings.Contains(err.Error(), "not") {
+		t.Fatalf("expected part type mismatch, got %v", err)
 	}
 }
 
@@ -428,6 +458,87 @@ func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
 	}
 	if called {
 		t.Fatalf("list request should not call 3D preview engine")
+	}
+}
+
+func TestParseComboQuerySupportsLabelsAndOrderedIDs(t *testing.T) {
+	labeled, err := parseComboQuery(ComboQuery{Query: "服装33001 发型33021 饰品30129 饰品53129 n25", Region: "jp"})
+	if err != nil {
+		t.Fatalf("parse labeled combo failed: %v", err)
+	}
+	if labeled.BodyCostume3DID != 33001 || labeled.HairCostume3DID != 33021 || labeled.Unit != "school_refusal" {
+		t.Fatalf("unexpected labeled combo: %+v", labeled)
+	}
+	if got := labeled.AccessoryCostumeIDs; len(got) != 2 || got[0] != 30129 || got[1] != 53129 {
+		t.Fatalf("unexpected accessories: %+v", got)
+	}
+
+	ordered, err := parseComboQuery(ComboQuery{Query: "33001 33021 30129"})
+	if err != nil {
+		t.Fatalf("parse ordered combo failed: %v", err)
+	}
+	if ordered.BodyCostume3DID != 33001 || ordered.HairCostume3DID != 33021 {
+		t.Fatalf("unexpected ordered combo: %+v", ordered)
+	}
+	if got := ordered.AccessoryCostumeIDs; len(got) != 1 || got[0] != 30129 {
+		t.Fatalf("unexpected ordered accessories: %+v", got)
+	}
+}
+
+func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
+	const png = "fake-png"
+	var capturePayload map[string]any
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/captures/tmp_pjsk3d_") {
+			w.Header().Set("content-type", "image/png")
+			fmt.Fprint(w, png)
+			return
+		}
+		switch r.URL.Path {
+		case "/runtime/character3d-index.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`)
+		case "/runtime/parts/part-registry.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"entries":[
+				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
+				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
+				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
+				{"costume3dId":53129,"partType":"head_optional","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"}
+			]}`)
+		case "/runtime/parts/head-hair-compatibility.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
+		case "/capture":
+			if err := json.NewDecoder(r.Body).Decode(&capturePayload); err != nil {
+				t.Fatalf("decode capture payload: %v", err)
+			}
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"ok":true}`)
+		default:
+			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer engine.Close()
+
+	controller := NewController(denseListTestSource{}, nil, nil)
+	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL, CaptureCacheVersion: "test"})
+
+	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "服装33001 发型33021 饰品53129", Region: "jp"})
+	if err != nil {
+		t.Fatalf("RenderCostumeCombo failed: %v", err)
+	}
+	if string(data) != png {
+		t.Fatalf("unexpected png data: %q", string(data))
+	}
+	if capturePayload["cacheMode"] != "temporary" {
+		t.Fatalf("expected temporary cache mode, got %v", capturePayload["cacheMode"])
+	}
+	if capturePayload["headOptionalCostume3dId"] != float64(53129) {
+		t.Fatalf("expected optional accessory 53129, got %v", capturePayload["headOptionalCostume3dId"])
+	}
+	if imageID, _ := capturePayload["imageId"].(string); !strings.HasPrefix(imageID, "tmp_pjsk3d_") {
+		t.Fatalf("expected tmp image id, got %v", capturePayload["imageId"])
 	}
 }
 

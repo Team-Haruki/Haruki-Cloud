@@ -626,6 +626,21 @@ func buildMysekaiExpiredReplayError(rc *RequestContext, harukiUserID int, status
 	)
 }
 
+func mysekaiNoRemainingMaterialMessage(region string) onebot11.Message {
+	label := strings.ToUpper(strings.TrimSpace(regionWithDefault(region)))
+	return onebot11.Message{onebot11.Text(fmt.Sprintf("当前%s服账号已无剩余可获取材料", label))}
+}
+
+func mysekaiMapHasRemainingMaterials(renderCtx mySekaiRenderContext, params []byte) (bool, error) {
+	q := rendermysekai.MapQuery{Region: renderCtx.Region}
+	mergeParams(params, &q)
+	showHarvested := q.ShowHarvested != nil && *q.ShowHarvested
+	if showHarvested {
+		return true, nil
+	}
+	return renderCtx.Controller.HasRemainingHarvestResources(q)
+}
+
 func executeConcurrentMessages(ctx context.Context, jobs ...concurrentMessageJob) (onebot11.Message, error) {
 	if len(jobs) == 0 {
 		return nil, nil
@@ -750,11 +765,25 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "mysekai-resource":
+		hasRemaining, remainingErr := mysekaiMapHasRemainingMaterials(renderCtx, rc.Cmd.Params)
+		if remainingErr != nil {
+			return nil, remainingErr
+		}
+		if !hasRemaining {
+			return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
+		}
 		q := rendermysekai.ResourceQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderResource(q)
 	case "mysekai-resource-map":
+		hasRemaining, remainingErr := mysekaiMapHasRemainingMaterials(renderCtx, rc.Cmd.Params)
+		if remainingErr != nil {
+			return nil, remainingErr
+		}
+		if !hasRemaining {
+			return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
+		}
 		resourceQuery := rendermysekai.ResourceQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &resourceQuery)
 		resourceQuery.Profile = renderCtx.Profile
@@ -784,6 +813,16 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	case "mysekai-map":
 		q := rendermysekai.MapQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
+		showHarvested := q.ShowHarvested != nil && *q.ShowHarvested
+		if !showHarvested {
+			hasRemaining, remainingErr := renderCtx.Controller.HasRemainingHarvestResources(q)
+			if remainingErr != nil {
+				return nil, remainingErr
+			}
+			if !hasRemaining {
+				return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
+			}
+		}
 		data, err = renderCtx.Controller.RenderMap(q)
 		replayMessage, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 		if err != nil {

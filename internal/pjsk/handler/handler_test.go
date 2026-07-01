@@ -6,6 +6,7 @@ import (
 	json "github.com/bytedance/sonic"
 	corehandler "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
 	"log"
 	"strings"
@@ -385,5 +386,34 @@ func TestDispatchSupportsMysekaiResourceAliasWithoutMapMode(t *testing.T) {
 	}
 	if resolved.Module != parser.ModuleMysekai || resolved.Mode != "mysekai-resource" {
 		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	}
+}
+
+func TestDispatchSupportsRegionPrefixedProfileUID(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	resolved, err := dispatchForTest(context.Background(), Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]any{"text": "/jp查uid"}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleProfile || resolved.Mode != accountdata.ProfileModeQueryUID {
+		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	}
+
+	var params accountdata.ProfileBindingCommandParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Server != "jp" {
+		t.Fatalf("unexpected server: %q", params.Server)
 	}
 }

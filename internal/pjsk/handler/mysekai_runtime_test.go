@@ -610,7 +610,10 @@ func TestExecuteMySekaiMapRejectsExpiredSnapshotUnlessForced(t *testing.T) {
 	})
 
 	t.Run("force", func(t *testing.T) {
-		params, marshalErr := json.Marshal(map[string]any{"check_time": false})
+		params, marshalErr := json.Marshal(map[string]any{
+			"check_time":     false,
+			"show_harvested": true,
+		})
 		if marshalErr != nil {
 			t.Fatalf("marshal params: %v", marshalErr)
 		}
@@ -725,6 +728,7 @@ func TestExecuteMySekaiMapUsesPayloadProviderWithoutSnapshot(t *testing.T) {
 		Module:            parser.ModuleMysekai,
 		Mode:              "mysekai-map",
 		Region:            "jp",
+		Params:            []byte(`{"show_harvested":true}`),
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, app))
@@ -957,6 +961,7 @@ func TestExecuteMySekaiResourceUsesPayloadProviderWithoutSnapshot(t *testing.T) 
 		Module:            parser.ModuleMysekai,
 		Mode:              "mysekai-resource",
 		Region:            "jp",
+		Params:            []byte(`{"show_harvested":true}`),
 		RequesterPlatform: "qq",
 		RequesterUserID:   "42",
 	}, app))
@@ -972,6 +977,77 @@ func TestExecuteMySekaiResourceUsesPayloadProviderWithoutSnapshot(t *testing.T) 
 	if len(message) != 1 || message[0].Type != onebot11.TypeImage {
 		t.Fatalf("unexpected resource reply segments: %+v", message)
 	}
+}
+
+func TestExecuteMySekaiMaterialViewsReturnTextWhenNoRemainingMaterials(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+	masterdataDir := t.TempDir()
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("drawing service should not be called for empty material views: %s", r.URL.Path)
+	}))
+	defer drawingServer.Close()
+
+	payload, err := json.Marshal(map[string]any{
+		"upload_time": time.Now().UnixMilli(),
+		"source":      "toolbox_live",
+		"updatedResources": map[string]any{
+			"userMysekaiGamedata": map[string]any{"mysekaiRank": 9},
+			"userMysekaiHarvestMaps": []map[string]any{
+				{
+					"mysekaiSiteId":                          5,
+					"userMysekaiSiteHarvestFixtures":         []map[string]any{},
+					"userMysekaiSiteHarvestResourceDrops":    []map[string]any{},
+					"userMysekaiSiteHarvestResourceDropLogs": []map[string]any{},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	app := &renderapp.App{
+		Bindings:        service,
+		MySekai:         rendermysekai.NewController(drawing.NewHarukiDrawingClient(drawingServer.URL), nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true}),
+		MySekaiPayloads: fixedMySekaiPayloadProvider{payload: payload},
+	}
+
+	for _, mode := range []string{"mysekai-resource", "mysekai-resource-map", "mysekai-map"} {
+		t.Run(mode, func(t *testing.T) {
+			message, err := executeMysekai(NewRequestContext(ctx, &CommandRequest{
+				Module:            parser.ModuleMysekai,
+				Mode:              mode,
+				Region:            "jp",
+				RequesterPlatform: "qq",
+				RequesterUserID:   "42",
+			}, app))
+			if err != nil {
+				t.Fatalf("executeMysekai() error = %v", err)
+			}
+			if got := singleTextSegment(t, message); got != "当前JP服账号已无剩余可获取材料" {
+				t.Fatalf("unexpected message: %q", got)
+			}
+		})
+	}
+}
+
+func singleTextSegment(t *testing.T, message onebot11.Message) string {
+	t.Helper()
+	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+		t.Fatalf("expected one text segment, got %+v", message)
+	}
+	if data, ok := message[0].Data.(onebot11.TextData); ok {
+		return data.Text
+	}
+	if data, ok := message[0].Data.(map[string]any); ok {
+		return fmt.Sprint(data[onebot11.KeyText])
+	}
+	t.Fatalf("unexpected text data: %+v", message[0].Data)
+	return ""
 }
 
 func TestExecuteMySekaiFixtureListStaticSkipsBindingAndSnapshot(t *testing.T) {

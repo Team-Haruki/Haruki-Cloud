@@ -211,6 +211,23 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 	}, nil
 }
 
+// HasRemainingHarvestResources reports whether the current map request contains
+// visible resource drops before asking the drawing service to render it.
+func (c *Controller) HasRemainingHarvestResources(query MapQuery) (bool, error) {
+	payload, err := c.BuildMapRequest(query)
+	if err != nil {
+		return false, err
+	}
+	for _, site := range payload.Maps {
+		for _, drop := range site.ResourceDrops {
+			if !drop.Hide {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
 // RenderMap renders the MySekai map view.
 func (c *Controller) RenderMap(query MapQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {

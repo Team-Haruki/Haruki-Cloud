@@ -3,6 +3,8 @@ package costume
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,14 +22,16 @@ const defaultPreview3DStaticRelativeDir = "static_images/pjsk_3d_preview"
 var preview3DImageIDUnsafe = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 type Preview3DConfig struct {
-	Enabled           bool
-	EngineBaseURL     string
-	StaticRelativeDir string
-	Width             int
-	Height            int
-	Scale             float64
-	Timeout           time.Duration
-	RegistryCacheTTL  time.Duration
+	Enabled             bool
+	EngineBaseURL       string
+	StaticRelativeDir   string
+	Width               int
+	Height              int
+	Scale               float64
+	Timeout             time.Duration
+	RegistryCacheTTL    time.Duration
+	CaptureCacheVersion string
+	CameraPreset        string
 }
 
 type Preview3DService struct {
@@ -93,6 +97,10 @@ type preview3DSelection struct {
 	HeadCostume3DID         int
 	HairCostume3DID         int
 	HeadOptionalCostume3DID *int
+	CharacterID             int
+	Unit                    string
+	Costume3DGroupID        int
+	ColorID                 int
 }
 
 func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
@@ -108,6 +116,7 @@ func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
 	if cfg.RegistryCacheTTL == 0 {
 		cfg.RegistryCacheTTL = 5 * time.Minute
 	}
+	cfg.CameraPreset = normalizePreview3DCameraPreset(cfg.CameraPreset)
 	service := &Preview3DService{
 		cfg: cfg,
 		client: &http.Client{
@@ -126,7 +135,7 @@ func (s *Preview3DService) ResolvePreviewPath(ctx context.Context, region string
 	if err != nil {
 		return "", err
 	}
-	selection, err := registry.resolve(region, costume3DID)
+	selection, err := registry.resolve(region, costume3DID, s.captureCacheSignature())
 	if err != nil {
 		return "", err
 	}
@@ -243,6 +252,8 @@ func (s *Preview3DService) capture(ctx context.Context, selection preview3DSelec
 		"hairCostume3dId":         selection.HairCostume3DID,
 		"timeoutMs":               int(s.cfg.Timeout / time.Millisecond),
 		"headOptionalCostume3dId": nil,
+		"cacheMode":               "persistent",
+		"cameraPreset":            s.cfg.CameraPreset,
 	}
 	if selection.HeadOptionalCostume3DID != nil {
 		body["headOptionalCostume3dId"] = *selection.HeadOptionalCostume3DID
@@ -282,7 +293,35 @@ func (s *Preview3DService) url(requestPath string) string {
 	return base + "/" + strings.TrimLeft(requestPath, "/")
 }
 
-func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSelection, error) {
+func (s *Preview3DService) captureCacheSignature() string {
+	return preview3DCacheSignature(
+		s.cfg.CaptureCacheVersion,
+		s.cfg.Width,
+		s.cfg.Height,
+		s.cfg.Scale,
+		s.cfg.CameraPreset,
+	)
+}
+
+func preview3DCacheSignature(version string, width int, height int, scale float64, cameraPreset string) string {
+	version = strings.TrimSpace(version)
+	if version == "" {
+		version = "v1"
+	}
+	cameraPreset = normalizePreview3DCameraPreset(cameraPreset)
+	material := fmt.Sprintf("%s|%d|%d|%.4f|%s", version, width, height, scale, cameraPreset)
+	sum := sha256.Sum256([]byte(material))
+	return "v" + hex.EncodeToString(sum[:])[:10]
+}
+
+func normalizePreview3DCameraPreset(value string) string {
+	if strings.EqualFold(strings.TrimSpace(value), "default") {
+		return "default"
+	}
+	return "capture"
+}
+
+func (r *preview3DRegistry) resolve(region string, costume3DID int, cacheSignature string) (preview3DSelection, error) {
 	selected, ok := r.partByID(costume3DID)
 	if !ok {
 		return preview3DSelection{}, fmt.Errorf("3d preview part not found: %d", costume3DID)
@@ -336,8 +375,12 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 		optionalID = *headOptionalID
 	}
 	unit := sanitizePreview3DImagePart(role.Unit)
-	imageID := fmt.Sprintf("pjsk3d_%s_c%d_%s_i%d_b%d_h%d_r%d_o%d",
-		sanitizePreview3DImagePart(region), role.CharacterID, unit, costume3DID, bodyID, headID, hairID, optionalID)
+	if cacheSignature == "" {
+		cacheSignature = preview3DCacheSignature("", 0, 0, 0, "")
+	}
+	imageID := fmt.Sprintf("pjsk3d_%s_%s_c%d_%s_g%d_cl%d_b%d_h%d_r%d_o%d",
+		cacheSignature, sanitizePreview3DImagePart(region), role.CharacterID, unit,
+		selected.Costume3DGroupID, selected.ColorID, bodyID, headID, hairID, optionalID)
 	return preview3DSelection{
 		ImageID:                 imageID,
 		RoleID:                  fmt.Sprintf("%d:%s", role.CharacterID, role.Unit),
@@ -345,6 +388,10 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 		HeadCostume3DID:         headID,
 		HairCostume3DID:         hairID,
 		HeadOptionalCostume3DID: headOptionalID,
+		CharacterID:             role.CharacterID,
+		Unit:                    role.Unit,
+		Costume3DGroupID:        selected.Costume3DGroupID,
+		ColorID:                 selected.ColorID,
 	}, nil
 }
 

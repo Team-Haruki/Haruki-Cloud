@@ -165,6 +165,8 @@ pjsk_render:
     scale: 2
     timeout: "45s"
     registry_cache_ttl: "5m"
+    capture_cache_version: "v1"  # bump to invalidate all persistent 3D preview PNGs
+    camera_preset: "capture"
   user_snapshot:
     provider: "local_file"    # future: "internal_cloud"
     allow_fallback: true      # set false in production (Toolbox is sole source); true for dev/test

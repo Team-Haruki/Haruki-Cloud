@@ -246,6 +246,8 @@ func ApplyEnvOverrides(cfg *Config) {
 	envFloat("HARUKI_PJSK_RENDER_3D_PREVIEW_SCALE", &cfg.PJSKRender.Preview3D.Scale)
 	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_TIMEOUT", &cfg.PJSKRender.Preview3D.Timeout)
 	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_REGISTRY_CACHE_TTL", &cfg.PJSKRender.Preview3D.RegistryCacheTTL)
+	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_CACHE_VERSION", &cfg.PJSKRender.Preview3D.CaptureCacheVersion)
+	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", &cfg.PJSKRender.Preview3D.CameraPreset)
 }
 
 type BackendConfig struct {
@@ -382,14 +384,16 @@ type MySekaiHousingCompetitionConfig struct {
 }
 
 type Preview3DConfig struct {
-	Enabled           bool          `yaml:"enabled"`
-	EngineBaseURL     string        `yaml:"engine_base_url"`
-	StaticRelativeDir string        `yaml:"static_relative_dir"`
-	Width             int           `yaml:"width"`
-	Height            int           `yaml:"height"`
-	Scale             float64       `yaml:"scale"`
-	Timeout           time.Duration `yaml:"timeout"`
-	RegistryCacheTTL  time.Duration `yaml:"registry_cache_ttl"`
+	Enabled             bool          `yaml:"enabled"`
+	EngineBaseURL       string        `yaml:"engine_base_url"`
+	StaticRelativeDir   string        `yaml:"static_relative_dir"`
+	Width               int           `yaml:"width"`
+	Height              int           `yaml:"height"`
+	Scale               float64       `yaml:"scale"`
+	Timeout             time.Duration `yaml:"timeout"`
+	RegistryCacheTTL    time.Duration `yaml:"registry_cache_ttl"`
+	CaptureCacheVersion string        `yaml:"capture_cache_version"`
+	CameraPreset        string        `yaml:"camera_preset"`
 }
 
 // MySekaiCNWhitelistEntry defines a platform+group pair allowed to use

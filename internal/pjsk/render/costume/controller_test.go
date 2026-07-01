@@ -2,6 +2,7 @@ package costume
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -258,6 +259,7 @@ func TestBuildCostumeDetailRequestIncludesAllColorVariants(t *testing.T) {
 }
 
 func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.T) {
+	var capturePayload map[string]any
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
 			http.NotFound(w, r)
@@ -279,8 +281,11 @@ func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.
 			w.Header().Set("content-type", "application/json")
 			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
 		case "/capture":
+			if err := json.NewDecoder(r.Body).Decode(&capturePayload); err != nil {
+				t.Fatalf("decode capture payload: %v", err)
+			}
 			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"ok":true,"imageId":"pjsk3d_jp_c20_school_refusal_i33002_b33002_h33011_r33021_o0","url":"/captures/pjsk3d_jp_c20_school_refusal_i33002_b33002_h33011_r33021_o0.png"}`)
+			fmt.Fprint(w, `{"ok":true}`)
 		default:
 			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
 		}
@@ -294,12 +299,14 @@ func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.
 		makeDenseListTestCostumeWithColor(33021, "hair", 20, 1),
 	}}, nil, nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{
-		Enabled:           true,
-		EngineBaseURL:     engine.URL,
-		StaticRelativeDir: "static_images/pjsk_3d_preview",
-		Width:             700,
-		Height:            500,
-		Scale:             2,
+		Enabled:             true,
+		EngineBaseURL:       engine.URL,
+		StaticRelativeDir:   "static_images/pjsk_3d_preview",
+		Width:               700,
+		Height:              500,
+		Scale:               2,
+		CaptureCacheVersion: "test",
+		CameraPreset:        "capture",
 	})
 
 	request, err := controller.BuildCostumeDetailRequest(Query{ID: 33002})
@@ -309,9 +316,20 @@ func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.
 	if request.Costume.PreviewImagePath == nil {
 		t.Fatalf("expected preview image path")
 	}
-	want := "static_images/pjsk_3d_preview/pjsk3d_jp_c20_school_refusal_i33002_b33002_h33011_r33021_o0.png"
+	signature := preview3DCacheSignature("test", 700, 500, 2, "capture")
+	wantImageID := "pjsk3d_" + signature + "_jp_c20_school_refusal_g330_cl2_b33002_h33011_r33021_o0"
+	want := "static_images/pjsk_3d_preview/" + wantImageID + ".png"
 	if got := *request.Costume.PreviewImagePath; got != want {
 		t.Fatalf("expected preview path %q, got %q", want, got)
+	}
+	if capturePayload["imageId"] != wantImageID {
+		t.Fatalf("unexpected capture image id: %v", capturePayload["imageId"])
+	}
+	if capturePayload["cacheMode"] != "persistent" {
+		t.Fatalf("unexpected capture cache mode: %v", capturePayload["cacheMode"])
+	}
+	if capturePayload["cameraPreset"] != "capture" {
+		t.Fatalf("unexpected capture camera preset: %v", capturePayload["cameraPreset"])
 	}
 }
 

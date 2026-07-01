@@ -223,7 +223,8 @@ func syncExplicitRegionToProfileParams(resolved *commandhandler.CommandRequest, 
 		accountdata.ProfileModeBindSwap,
 		accountdata.ProfileModeUnbind,
 		accountdata.ProfileModeDefaultSet,
-		accountdata.ProfileModeDefaultClear:
+		accountdata.ProfileModeDefaultClear,
+		accountdata.ProfileModeQueryUID:
 		syncExplicitRegionToProfileBindingParams(resolved, normalized)
 	case accountdata.ProfileModeHideID,
 		accountdata.ProfileModeShowID,

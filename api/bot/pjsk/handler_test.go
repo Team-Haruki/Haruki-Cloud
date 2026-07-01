@@ -873,6 +873,64 @@ func TestBotEndpointBindListFiltersTransportRegionAfterClientStripsPrefix(t *tes
 	assertSingleTextMessage(t, body, "已绑定CN服账号列表（u序号按该区服编号）:\nu1 [CN] 748********663 (全局默认 / CN服默认)")
 }
 
+func TestBotEndpointRegionPrefixedQueryUIDUsesRegionBinding(t *testing.T) {
+	bindings := testBindingServiceWithValidator(t, botBindingMultiRegionValidator{})
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "74800000000663"); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "13200000000982"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/uid"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查uid",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/jp查uid"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+
+	assertSingleTextMessage(t, body, "13200000000982")
+}
+
+func TestBotEndpointQueryUIDUsesTransportRegionAfterClientStripsPrefix(t *testing.T) {
+	bindings := testBindingServiceWithValidator(t, botBindingMultiRegionValidator{})
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "74800000000663"); err != nil {
+		t.Fatalf("bind cn: %v", err)
+	}
+	if _, err := bindings.Bind(context.Background(), "qq", "12345", "13200000000982"); err != nil {
+		t.Fatalf("bind jp: %v", err)
+	}
+	app := testBotAppWithBindings(t, "", bindings)
+
+	req := newBotPOSTRequest(botPJSKPath("profile/uid"), BotCommandRequest{
+		Platform: "qq", PlatformUserID: "12345", Server: "jp", MatchedCommand: "/查uid",
+		Message: onebot11.Message{{Type: "text", Data: onebot11.TextData{Text: "/查uid"}}},
+	})
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
+	}
+
+	assertSingleTextMessage(t, body, "13200000000982")
+}
+
 func TestBotEndpointRegionPrefixedHideIDSyncsProfileSettingsParams(t *testing.T) {
 	ctx := context.Background()
 	bindings := testBindingServiceWithValidator(t, botBindingJPENValidator{})

@@ -161,6 +161,83 @@ func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
 	}
 }
 
+func TestRenderCacheClientStoresRenderedImageUnderRequestKeyDir(t *testing.T) {
+	storageDir := t.TempDir()
+	var registeredPath string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/cache":
+			http.Error(w, `{"error":"miss"}`, http.StatusNotFound)
+		case r.Method == http.MethodPost && r.URL.Path == "/cache":
+			registeredPath = r.FormValue("file_path")
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"ok":true}`))
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client := NewRenderCacheClient(RenderCacheConfig{
+		BaseURL:    server.URL,
+		StorageDir: storageDir,
+		TTL:        time.Minute,
+	})
+	if client == nil {
+		t.Fatal("expected render cache client")
+	}
+
+	image := []byte{0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43, 0x00}
+	data, err := client.Render("/api/pjsk/profile", map[string]any{"id": "123"}, func() ([]byte, error) {
+		return image, nil
+	})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	if string(data) != string(image) {
+		t.Fatalf("unexpected image bytes")
+	}
+	if !strings.HasPrefix(registeredPath, filepath.Join(storageDir, "api", "pjsk", "profile", "public")+string(os.PathSeparator)) {
+		t.Fatalf("registered path %q should keep request-scoped directory", registeredPath)
+	}
+	if filepath.Ext(registeredPath) != ".jpg" {
+		t.Fatalf("registered path ext = %q, want .jpg", filepath.Ext(registeredPath))
+	}
+	if _, err := os.Stat(registeredPath); err != nil {
+		t.Fatalf("expected shared image file to exist: %v", err)
+	}
+}
+
+func TestRenderCacheClientKeepsExistingContentFileWhenRegisterFails(t *testing.T) {
+	storageDir := t.TempDir()
+	image := []byte{0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43, 0x00}
+
+	client := NewRenderCacheClient(RenderCacheConfig{
+		BaseURL:    "http://127.0.0.1:1",
+		StorageDir: storageDir,
+		TTL:        time.Minute,
+	})
+	if client == nil {
+		t.Fatal("expected render cache client")
+	}
+	_, targetPath := client.contentFilePath("api/pjsk/profile", "public", strings.Repeat("c", 64), image)
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(targetPath, image, 0o644); err != nil {
+		t.Fatalf("write existing content file: %v", err)
+	}
+
+	err := client.store(strings.Repeat("c", 64), "api/pjsk/profile", "public", image, time.Minute, false)
+	if err == nil {
+		t.Fatal("expected register failure")
+	}
+	if _, statErr := os.Stat(targetPath); statErr != nil {
+		t.Fatalf("existing content file should remain after register failure: %v", statErr)
+	}
+}
+
 func TestBuildRenderCachePolicyAliasListIsInfiniteAndIgnoresDT(t *testing.T) {
 	reqA := map[string]any{
 		"title":        "角色别名",

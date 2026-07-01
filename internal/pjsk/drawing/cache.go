@@ -1,7 +1,10 @@
 package drawing
 
 import (
+	"context"
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"net/http"
@@ -20,7 +23,6 @@ import (
 var cacheLogger = logger.NewLoggerFromGlobal("DrawingCache")
 
 const (
-	renderCacheFileExt             = "png"
 	renderCachePublic              = "public"
 	renderCacheKeyVersion          = 3
 	renderCacheEventListKeyVersion = 4
@@ -117,9 +119,11 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 		http: resty.New().
 			SetTimeout(config.HTTPClientTimeout).
 			SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
-		baseURL:    baseURL,
-		storageDir: storageDir,
-		ttl:        cfg.TTL,
+		baseURL:       baseURL,
+		storageDir:    storageDir,
+		ttl:           cfg.TTL,
+		imageCacheDir: strings.TrimSpace(cfg.ImageCacheDir),
+		imageStore:    cfg.ImageStore,
 	}
 }
 
@@ -226,12 +230,19 @@ func (c *RenderCacheClient) store(key string, apiPath string, userID string, ima
 	if ttl <= 0 && !infinite {
 		ttl = c.ttl
 	}
-	targetPath := c.defaultFilePath(apiPath, userID, key)
+	contentHash, targetPath := c.contentFilePath(apiPath, userID, key, image)
+	_, statErr := os.Stat(targetPath)
+	fileAlreadyExisted := statErr == nil
+	if statErr != nil && !os.IsNotExist(statErr) {
+		return statErr
+	}
 	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(targetPath, image, 0o644); err != nil {
-		return err
+	if !fileAlreadyExisted {
+		if err := os.WriteFile(targetPath, image, 0o644); err != nil {
+			return err
+		}
 	}
 
 	var apiErr renderCacheAPIError
@@ -246,21 +257,74 @@ func (c *RenderCacheClient) store(key string, apiPath string, userID string, ima
 			"ttl":       ttlSeconds,
 			"api_path":  apiPath,
 			"user_id":   userID,
-			"ext":       renderCacheFileExt,
+			"ext":       strings.TrimPrefix(filepath.Ext(targetPath), "."),
 			"file_path": targetPath,
 		}).
 		SetError(&apiErr).
 		Post(c.baseURL + "/cache")
 	if err != nil || resp.StatusCode() != http.StatusOK {
-		_ = os.Remove(targetPath)
+		if !fileAlreadyExisted {
+			_ = os.Remove(targetPath)
+		}
 		if err != nil {
 			return err
 		}
 		return fmt.Errorf("cache register failed with status: %d", resp.StatusCode())
 	}
+	c.registerImageCachePath(contentHash, targetPath, image)
 	return nil
 }
 
 func (c *RenderCacheClient) defaultFilePath(apiPath string, userID string, key string) string {
-	return filepath.Join(c.storageDir, filepath.FromSlash(apiPath), userID, key+"."+renderCacheFileExt)
+	return filepath.Join(c.storageDir, filepath.FromSlash(apiPath), userID, key+".png")
+}
+
+func (c *RenderCacheClient) contentFilePath(apiPath string, userID string, key string, image []byte) (string, string) {
+	digest := sha256.Sum256(image)
+	contentHash := hex.EncodeToString(digest[:])
+	dir := strings.TrimSuffix(c.defaultFilePath(apiPath, userID, key), ".png")
+	return contentHash, filepath.Join(dir, contentHash+renderCacheFileExtFromData(image))
+}
+
+func (c *RenderCacheClient) registerImageCachePath(contentHash string, targetPath string, image []byte) {
+	if c == nil || c.imageStore == nil {
+		return
+	}
+	rel, ok := c.imageCacheRelativePath(targetPath)
+	if !ok {
+		return
+	}
+	c.imageStore.Insert(context.Background(), contentHash, "pjsk", rel, targetPath, int64(len(image)))
+}
+
+func (c *RenderCacheClient) imageCacheRelativePath(targetPath string) (string, bool) {
+	if c == nil {
+		return "", false
+	}
+	imageCacheDir := strings.TrimSpace(c.imageCacheDir)
+	if imageCacheDir == "" {
+		return "", false
+	}
+	rel, err := filepath.Rel(imageCacheDir, targetPath)
+	if err != nil || rel == "." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) || rel == ".." || filepath.IsAbs(rel) {
+		return "", false
+	}
+	return filepath.ToSlash(rel), true
+}
+
+func renderCacheFileExtFromData(data []byte) string {
+	sniff := data
+	if len(sniff) > 512 {
+		sniff = sniff[:512]
+	}
+	switch http.DetectContentType(sniff) {
+	case "image/jpeg":
+		return ".jpg"
+	case "image/gif":
+		return ".gif"
+	case "image/webp":
+		return ".webp"
+	default:
+		return ".png"
+	}
 }

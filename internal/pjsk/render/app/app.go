@@ -78,9 +78,23 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 		}))
 	}
 
+	var imgStore *imagecache.PGStore
+	if cfg.ImageCachePGURL != "" {
+		if store, err := imagecache.NewPGStore(cfg.ImageCachePGURL); err == nil {
+			if err := store.Init(initCtx); err == nil {
+				imgStore = store
+			} else {
+				_ = store.Close()
+			}
+		}
+	}
+
+	drawingCacheCfg := cfg.DrawingCache
+	drawingCacheCfg.ImageCacheDir = cfg.ImageCacheDir
+	drawingCacheCfg.ImageStore = imgStore
 	drawingClient := drawing.NewHarukiDrawingClientWithTargetsAndResources(cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, options...)
 	if drawingClient != nil {
-		drawingClient.SetRenderCache(drawing.NewRenderCacheClient(cfg.DrawingCache))
+		drawingClient.SetRenderCache(drawing.NewRenderCacheClient(drawingCacheCfg))
 	}
 
 	miscController := misc.NewController(drawingClient)
@@ -249,17 +263,6 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 			logger.Warnf("load approved character aliases for card controller failed: %v", err)
 		} else {
 			cardController.MergeNicknames(nicknames)
-		}
-	}
-
-	var imgStore *imagecache.PGStore
-	if cfg.ImageCachePGURL != "" {
-		if store, err := imagecache.NewPGStore(cfg.ImageCachePGURL); err == nil {
-			if err := store.Init(initCtx); err == nil {
-				imgStore = store
-			} else {
-				_ = store.Close()
-			}
 		}
 	}
 

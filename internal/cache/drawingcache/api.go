@@ -76,8 +76,14 @@ func (a *API) handleGetCache(c fiber.Ctx) error {
 
 	now := a.now().UTC()
 	if !isInfiniteTTL(record.TTLSeconds) && now.After(record.ExpiresAt.UTC()) {
-		if err := removeFileAndPruneEmptyDirsSafe(record.FilePath, a.storageDir); err != nil {
-			log.Printf("[drawing-cache-api] lazy delete file failed key=%s path=%s: %v", key, record.FilePath, err)
+		shared, err := fileReferencedByLiveRecord(a.dao.db, record.FilePath, record.Sha256Key)
+		if err != nil {
+			return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "query shared file references failed"})
+		}
+		if !shared {
+			if err := removeFileAndPruneEmptyDirsSafe(record.FilePath, a.storageDir); err != nil {
+				log.Printf("[drawing-cache-api] lazy delete file failed key=%s path=%s: %v", key, record.FilePath, err)
+			}
 		}
 		if err := a.dao.DeleteRecord(key); err != nil {
 			return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "delete expired record failed"})

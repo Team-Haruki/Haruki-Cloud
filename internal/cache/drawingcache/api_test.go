@@ -248,6 +248,117 @@ func TestCleanupExpiredBatchIgnoresInfiniteTTLRecords(t *testing.T) {
 	}
 }
 
+func TestCleanupExpiredBatchKeepsFileReferencedByLiveRecord(t *testing.T) {
+	db := openTestDB(t)
+	dao := NewDAO(db)
+	storageDir := t.TempDir()
+	now := time.Now().UTC()
+
+	sharedPath := filepath.Join(storageDir, "pjsk", "shared.png")
+	writeTestCacheFile(t, sharedPath, []byte("shared"))
+
+	expiredKey := strings.Repeat("a", 64)
+	if err := dao.SaveRecord(&CacheRecord{
+		Sha256Key:  expiredKey,
+		APIPath:    "api/pjsk/profile",
+		UserID:     "public",
+		FilePath:   sharedPath,
+		CreatedAt:  now.Add(-2 * time.Hour),
+		LastUsedAt: now.Add(-2 * time.Hour),
+		TTLSeconds: 60,
+		ExpiresAt:  now.Add(-time.Hour),
+	}); err != nil {
+		t.Fatalf("save expired record: %v", err)
+	}
+
+	liveKey := strings.Repeat("b", 64)
+	if err := dao.SaveRecord(&CacheRecord{
+		Sha256Key:  liveKey,
+		APIPath:    "api/pjsk/deck/recommend",
+		UserID:     "public",
+		FilePath:   sharedPath,
+		CreatedAt:  now,
+		LastUsedAt: now,
+		TTLSeconds: 3600,
+		ExpiresAt:  now.Add(time.Hour),
+	}); err != nil {
+		t.Fatalf("save live record: %v", err)
+	}
+
+	cleaned, err := cleanupExpiredBatch(db, storageDir, 10)
+	if err != nil {
+		t.Fatalf("cleanupExpiredBatch: %v", err)
+	}
+	if cleaned != 1 {
+		t.Fatalf("expected 1 cleaned record, got %d", cleaned)
+	}
+	if _, err := dao.GetRecord(expiredKey); !errors.Is(err, ErrRecordNotFound) {
+		t.Fatalf("expected expired record to be removed, got %v", err)
+	}
+	if _, err := dao.GetRecord(liveKey); err != nil {
+		t.Fatalf("expected live record to remain, got %v", err)
+	}
+	if _, err := os.Stat(sharedPath); err != nil {
+		t.Fatalf("expected shared file to remain: %v", err)
+	}
+}
+
+func TestGetExpiredCacheKeepsFileReferencedByLiveRecord(t *testing.T) {
+	db := openTestDB(t)
+	dao := NewDAO(db)
+	storageDir := t.TempDir()
+	api := NewAPI(dao, storageDir)
+	now := time.Now().UTC()
+	api.now = func() time.Time { return now }
+	app := fiber.New()
+	api.RegisterRoutes(app)
+
+	sharedPath := filepath.Join(storageDir, "pjsk", "shared.png")
+	writeTestCacheFile(t, sharedPath, []byte("shared"))
+
+	expiredKey := strings.Repeat("c", 64)
+	if err := dao.SaveRecord(&CacheRecord{
+		Sha256Key:  expiredKey,
+		APIPath:    "api/pjsk/profile",
+		UserID:     "public",
+		FilePath:   sharedPath,
+		CreatedAt:  now.Add(-2 * time.Hour),
+		LastUsedAt: now.Add(-2 * time.Hour),
+		TTLSeconds: 60,
+		ExpiresAt:  now.Add(-time.Hour),
+	}); err != nil {
+		t.Fatalf("save expired record: %v", err)
+	}
+
+	liveKey := strings.Repeat("d", 64)
+	if err := dao.SaveRecord(&CacheRecord{
+		Sha256Key:  liveKey,
+		APIPath:    "api/pjsk/deck/recommend",
+		UserID:     "public",
+		FilePath:   sharedPath,
+		CreatedAt:  now,
+		LastUsedAt: now,
+		TTLSeconds: 3600,
+		ExpiresAt:  now.Add(time.Hour),
+	}); err != nil {
+		t.Fatalf("save live record: %v", err)
+	}
+
+	resp := doCacheRequest(t, app, http.MethodGet, "/cache?key="+expiredKey, nil)
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("GET /cache status=%d body=%s", resp.StatusCode, string(resp.Body))
+	}
+	if _, err := dao.GetRecord(expiredKey); !errors.Is(err, ErrRecordNotFound) {
+		t.Fatalf("expected expired record to be removed, got %v", err)
+	}
+	if _, err := dao.GetRecord(liveKey); err != nil {
+		t.Fatalf("expected live record to remain, got %v", err)
+	}
+	if _, err := os.Stat(sharedPath); err != nil {
+		t.Fatalf("expected shared file to remain: %v", err)
+	}
+}
+
 func TestStartGCWorkerRunsInitialCleanup(t *testing.T) {
 	db := openTestDB(t)
 	dao := NewDAO(db)

@@ -101,10 +101,16 @@ LIMIT ?
 
 	deletableKeys := make([]string, 0, len(keys))
 	for i := range keys {
-		err := removeFileAndPruneEmptyDirsSafe(paths[i], storageDir)
+		shared, err := fileReferencedByLiveRecord(db, paths[i], keys[i])
 		if err != nil {
-			log.Printf("[drawing-cache-gc] remove file failed key=%s path=%s: %v", keys[i], paths[i], err)
-			continue
+			return 0, err
+		}
+		if !shared {
+			err := removeFileAndPruneEmptyDirsSafe(paths[i], storageDir)
+			if err != nil {
+				log.Printf("[drawing-cache-gc] remove file failed key=%s path=%s: %v", keys[i], paths[i], err)
+				continue
+			}
 		}
 		deletableKeys = append(deletableKeys, keys[i])
 	}
@@ -123,4 +129,24 @@ LIMIT ?
 		return 0, fmt.Errorf("delete expired records failed: %w", err)
 	}
 	return len(deletableKeys), nil
+}
+
+func fileReferencedByLiveRecord(db *sql.DB, filePath string, excludingKey string) (bool, error) {
+	if db == nil {
+		return false, nil
+	}
+
+	nowText := time.Now().UTC().Format(sqliteTimeLayout)
+	var count int
+	err := db.QueryRow(`
+SELECT COUNT(1)
+FROM image_cache_index
+WHERE file_path = ?
+  AND sha256_key <> ?
+  AND (ttl_seconds <= 0 OR expires_at >= ?)
+`, filePath, excludingKey, nowText).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("query shared cache file refs failed: %w", err)
+	}
+	return count > 0, nil
 }

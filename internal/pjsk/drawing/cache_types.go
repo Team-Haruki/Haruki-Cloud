@@ -1,6 +1,7 @@
 package drawing
 
 import (
+	"haruki-cloud/utils/imagecache"
 	neturl "net/url"
 	"sync"
 	"time"
@@ -26,17 +27,21 @@ type localRenderEntry struct {
 }
 
 type RenderCacheConfig struct {
-	BaseURL    string
-	StorageDir string
-	TTL        time.Duration
+	BaseURL       string
+	StorageDir    string
+	TTL           time.Duration
+	ImageCacheDir string
+	ImageStore    *imagecache.PGStore
 }
 
 type RenderCacheClient struct {
-	http       *resty.Client
-	baseURL    string
-	storageDir string
-	ttl        time.Duration
-	flight     singleflight.Group
+	http          *resty.Client
+	baseURL       string
+	storageDir    string
+	ttl           time.Duration
+	imageCacheDir string
+	imageStore    *imagecache.PGStore
+	flight        singleflight.Group
 }
 
 type renderCacheRecord struct {

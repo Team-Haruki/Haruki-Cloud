@@ -168,7 +168,7 @@ pjsk_render:
     capture_exists_ttl: "30s"
     capture_max_concurrency: 1
     capture_acquire_timeout: "10s"
-    temporary_capture_ttl: "720h"
+    temporary_capture_ttl: "360h"
     capture_cache_version: "v1"  # bump to invalidate all persistent 3D preview PNGs
     camera_preset: "capture"
   user_snapshot:

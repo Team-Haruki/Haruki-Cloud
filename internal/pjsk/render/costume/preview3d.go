@@ -136,7 +136,7 @@ func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
 		cfg.CaptureAcquireTimeout = 10 * time.Second
 	}
 	if cfg.TemporaryCaptureTTL == 0 {
-		cfg.TemporaryCaptureTTL = 30 * 24 * time.Hour
+		cfg.TemporaryCaptureTTL = 15 * 24 * time.Hour
 	}
 	cfg.CameraPreset = normalizePreview3DCameraPreset(cfg.CameraPreset)
 	service := &Preview3DService{

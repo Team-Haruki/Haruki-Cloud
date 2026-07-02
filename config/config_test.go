@@ -201,7 +201,7 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_ACQUIRE_TIMEOUT", "3s")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_TEMPORARY_CAPTURE_TTL", "24h")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_CACHE_VERSION", "preview-v2")
-	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", "default")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", "capture")
 
 	cfg := &Config{}
 	ApplyEnvOverrides(cfg)
@@ -287,7 +287,7 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	if cfg.PJSKRender.Preview3D.CaptureCacheVersion != "preview-v2" {
 		t.Fatalf("unexpected 3d preview capture cache version: %q", cfg.PJSKRender.Preview3D.CaptureCacheVersion)
 	}
-	if cfg.PJSKRender.Preview3D.CameraPreset != "default" {
+	if cfg.PJSKRender.Preview3D.CameraPreset != "capture" {
 		t.Fatalf("unexpected 3d preview camera preset: %q", cfg.PJSKRender.Preview3D.CameraPreset)
 	}
 }

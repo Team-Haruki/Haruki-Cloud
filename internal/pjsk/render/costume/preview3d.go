@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 const defaultPreview3DStaticRelativeDir = "static_images/pjsk_3d_preview"
@@ -22,27 +24,35 @@ const defaultPreview3DStaticRelativeDir = "static_images/pjsk_3d_preview"
 var preview3DImageIDUnsafe = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 type Preview3DConfig struct {
-	Enabled             bool
-	EngineBaseURL       string
-	StaticRelativeDir   string
-	Width               int
-	Height              int
-	Scale               float64
-	Timeout             time.Duration
-	RegistryCacheTTL    time.Duration
-	CaptureCacheVersion string
-	CameraPreset        string
+	Enabled               bool
+	EngineBaseURL         string
+	StaticRelativeDir     string
+	Width                 int
+	Height                int
+	Scale                 float64
+	Timeout               time.Duration
+	RegistryCacheTTL      time.Duration
+	CaptureExistsTTL      time.Duration
+	CaptureMaxConcurrency int
+	CaptureAcquireTimeout time.Duration
+	TemporaryCaptureTTL   time.Duration
+	CaptureCacheVersion   string
+	CameraPreset          string
 }
 
 type Preview3DService struct {
 	cfg    Preview3DConfig
 	client *http.Client
 
+	captureFlight singleflight.Group
+	captureSem    chan struct{}
+
 	mu        sync.Mutex
 	cached    *preview3DRegistry
 	cachedAt  time.Time
 	fetching  bool
 	fetchCond *sync.Cond
+	captures  map[string]time.Time
 }
 
 type preview3DRegistry struct {
@@ -116,9 +126,23 @@ func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
 	if cfg.RegistryCacheTTL == 0 {
 		cfg.RegistryCacheTTL = 5 * time.Minute
 	}
+	if cfg.CaptureExistsTTL == 0 {
+		cfg.CaptureExistsTTL = 30 * time.Second
+	}
+	if cfg.CaptureMaxConcurrency <= 0 {
+		cfg.CaptureMaxConcurrency = 1
+	}
+	if cfg.CaptureAcquireTimeout <= 0 {
+		cfg.CaptureAcquireTimeout = 10 * time.Second
+	}
+	if cfg.TemporaryCaptureTTL == 0 {
+		cfg.TemporaryCaptureTTL = 30 * 24 * time.Hour
+	}
 	cfg.CameraPreset = normalizePreview3DCameraPreset(cfg.CameraPreset)
 	service := &Preview3DService{
-		cfg: cfg,
+		cfg:        cfg,
+		captureSem: make(chan struct{}, cfg.CaptureMaxConcurrency),
+		captures:   make(map[string]time.Time),
 		client: &http.Client{
 			Timeout: cfg.Timeout,
 		},
@@ -139,14 +163,22 @@ func (s *Preview3DService) ResolvePreviewPath(ctx context.Context, region string
 	if err != nil {
 		return "", err
 	}
-	previewPath := path.Join(strings.Trim(s.cfg.StaticRelativeDir, "/"), selection.ImageID+".png")
-	if s.captureExists(ctx, selection.ImageID) {
-		return previewPath, nil
+	return path.Join(strings.Trim(s.cfg.StaticRelativeDir, "/"), selection.ImageID+".png"), nil
+}
+
+func (s *Preview3DService) EnsurePreviewCapture(ctx context.Context, region string, costume3DID int) error {
+	if s == nil || costume3DID <= 0 {
+		return nil
 	}
-	if err := s.capture(ctx, selection); err != nil {
-		return "", err
+	registry, err := s.registry(ctx)
+	if err != nil {
+		return err
 	}
-	return previewPath, nil
+	selection, err := registry.resolve(region, costume3DID, s.captureCacheSignature())
+	if err != nil {
+		return err
+	}
+	return s.ensureCapture(ctx, selection, "persistent")
 }
 
 func (s *Preview3DService) CaptureTemporaryCombo(ctx context.Context, region string, query ComboQuery) ([]byte, error) {
@@ -161,7 +193,7 @@ func (s *Preview3DService) CaptureTemporaryCombo(ctx context.Context, region str
 	if err != nil {
 		return nil, err
 	}
-	if err := s.captureSelection(ctx, selection, "temporary"); err != nil {
+	if err := s.ensureCapture(ctx, selection, "temporary"); err != nil {
 		return nil, err
 	}
 	return s.getCapture(ctx, selection.ImageID)
@@ -249,6 +281,9 @@ func (s *Preview3DService) getJSON(ctx context.Context, requestPath string, out 
 }
 
 func (s *Preview3DService) captureExists(ctx context.Context, imageID string) bool {
+	if s.cachedCaptureExists(imageID) {
+		return true
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, s.url("/captures/"+imageID+".png"), nil)
 	if err != nil {
 		return false
@@ -258,11 +293,81 @@ func (s *Preview3DService) captureExists(ctx context.Context, imageID string) bo
 		return false
 	}
 	defer resp.Body.Close()
-	return resp.StatusCode >= 200 && resp.StatusCode < 300
+	ok := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if ok {
+		s.markCaptureExists(imageID)
+	}
+	return ok
 }
 
-func (s *Preview3DService) capture(ctx context.Context, selection preview3DSelection) error {
-	return s.captureSelection(ctx, selection, "persistent")
+func (s *Preview3DService) cachedCaptureExists(imageID string) bool {
+	if s == nil || s.cfg.CaptureExistsTTL < 0 {
+		return false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	expiresAt, ok := s.captures[imageID]
+	if !ok {
+		return false
+	}
+	if time.Now().Before(expiresAt) {
+		return true
+	}
+	delete(s.captures, imageID)
+	return false
+}
+
+func (s *Preview3DService) markCaptureExists(imageID string) {
+	if s == nil || s.cfg.CaptureExistsTTL < 0 {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.captures[imageID] = time.Now().Add(s.cfg.CaptureExistsTTL)
+}
+
+func (s *Preview3DService) ensureCapture(ctx context.Context, selection preview3DSelection, cacheMode string) error {
+	if s.captureExists(ctx, selection.ImageID) {
+		return nil
+	}
+	_, err, _ := s.captureFlight.Do(selection.ImageID, func() (any, error) {
+		if s.captureExists(ctx, selection.ImageID) {
+			return nil, nil
+		}
+		release, err := s.acquireCapturePermit(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer release()
+		if s.captureExists(ctx, selection.ImageID) {
+			return nil, nil
+		}
+		if err := s.captureSelection(ctx, selection, cacheMode); err != nil {
+			return nil, err
+		}
+		s.markCaptureExists(selection.ImageID)
+		return nil, nil
+	})
+	return err
+}
+
+func (s *Preview3DService) acquireCapturePermit(ctx context.Context) (func(), error) {
+	if s == nil || s.captureSem == nil {
+		return func() {}, nil
+	}
+	waitCtx := ctx
+	cancel := func() {}
+	if s.cfg.CaptureAcquireTimeout > 0 {
+		waitCtx, cancel = context.WithTimeout(ctx, s.cfg.CaptureAcquireTimeout)
+	}
+	select {
+	case s.captureSem <- struct{}{}:
+		cancel()
+		return func() { <-s.captureSem }, nil
+	case <-waitCtx.Done():
+		cancel()
+		return nil, fmt.Errorf("3d preview capture is busy")
+	}
 }
 
 func (s *Preview3DService) captureSelection(ctx context.Context, selection preview3DSelection, cacheMode string) error {
@@ -279,6 +384,9 @@ func (s *Preview3DService) captureSelection(ctx context.Context, selection previ
 		"headOptionalCostume3dId": nil,
 		"cacheMode":               cacheMode,
 		"cameraPreset":            s.cfg.CameraPreset,
+	}
+	if cacheMode == "temporary" && s.cfg.TemporaryCaptureTTL > 0 {
+		body["ttlSeconds"] = int((s.cfg.TemporaryCaptureTTL + time.Second - 1) / time.Second)
 	}
 	if selection.HeadOptionalCostume3DID != nil {
 		body["headOptionalCostume3dId"] = *selection.HeadOptionalCostume3DID
@@ -343,6 +451,13 @@ func (s *Preview3DService) captureCacheSignature() string {
 		s.cfg.Scale,
 		s.cfg.CameraPreset,
 	)
+}
+
+func (s *Preview3DService) CacheSignature() string {
+	if s == nil {
+		return ""
+	}
+	return s.captureCacheSignature()
 }
 
 func preview3DCacheSignature(version string, width int, height int, scale float64, cameraPreset string) string {
@@ -420,8 +535,8 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int, cacheSignatu
 	if cacheSignature == "" {
 		cacheSignature = preview3DCacheSignature("", 0, 0, 0, "")
 	}
-	imageID := fmt.Sprintf("pjsk3d_%s_%s_c%d_%s_g%d_cl%d_b%d_h%d_r%d_o%d",
-		cacheSignature, sanitizePreview3DImagePart(region), role.CharacterID, unit,
+	imageID := fmt.Sprintf("pjsk3d_%s_c%d_%s_g%d_cl%d_b%d_h%d_r%d_o%d",
+		cacheSignature, role.CharacterID, unit,
 		selected.Costume3DGroupID, selected.ColorID, bodyID, headID, hairID, optionalID)
 	return preview3DSelection{
 		ImageID:                 imageID,
@@ -524,8 +639,8 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		cacheSignature = preview3DCacheSignature("", 0, 0, 0, "")
 	}
 	unit := sanitizePreview3DImagePart(role.Unit)
-	imageID := fmt.Sprintf("tmp_pjsk3d_%s_%s_combo_c%d_%s_b%d_h%d_r%d_o%d",
-		cacheSignature, sanitizePreview3DImagePart(region), role.CharacterID, unit, bodyID, headID, hairID, optionalID)
+	imageID := fmt.Sprintf("tmp_pjsk3d_%s_combo_c%d_%s_b%d_h%d_r%d_o%d",
+		cacheSignature, role.CharacterID, unit, bodyID, headID, hairID, optionalID)
 	return preview3DSelection{
 		ImageID:                 imageID,
 		RoleID:                  fmt.Sprintf("%d:%s", role.CharacterID, role.Unit),
@@ -574,6 +689,7 @@ func (r *preview3DRegistry) defaultRoleForPart(part preview3DPartEntry) preview3
 
 func (r *preview3DRegistry) comboRoleCandidates(query ComboQuery) []preview3DCharacterEntry {
 	var candidates []preview3DCharacterEntry
+	seen := make(map[string]struct{})
 	unit := strings.TrimSpace(query.Unit)
 	for _, role := range r.characters {
 		if !preview3DStatusUsable(role.Status) {
@@ -585,6 +701,11 @@ func (r *preview3DRegistry) comboRoleCandidates(query ComboQuery) []preview3DCha
 		if !r.comboRoleMatches(query, role) {
 			continue
 		}
+		key := fmt.Sprintf("%d:%s", role.CharacterID, role.Unit)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
 		candidates = append(candidates, role)
 	}
 	sort.Slice(candidates, func(i, j int) bool {

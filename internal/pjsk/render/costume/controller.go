@@ -239,21 +239,9 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 	if err != nil {
 		return nil, err
 	}
-	costumeID := query.ID
-	if costumeID <= 0 {
-		costumeID, _ = ParseExplicitCostumeID(query.Query)
-	}
-	var costumeInfo *masterdata.Costume3d
-	if costumeID > 0 {
-		costumeInfo, err = source.GetCostumeByID(costumeID)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		costumeInfo, err = c.resolveSingleCostumeByQuery(source, query.Query)
-		if err != nil {
-			return nil, err
-		}
+	costumeInfo, err := c.resolveCostumeInfo(source, query)
+	if err != nil {
+		return nil, err
 	}
 	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
 		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
@@ -273,11 +261,6 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 		return nil, err
 	}
 	costumeBasic := c.buildCostumeBasic(region, source, costumeInfo, variants, sourceCards)
-	if previewPath, err := c.resolve3DPreviewPath(region, costumeInfo); err != nil {
-		costumePreview3DLogger.Warnf("3d preview skipped: region=%s costume_id=%d err=%v", region.String(), costumeInfo.ID, err)
-	} else if previewPath != "" {
-		costumeBasic.PreviewImagePath = &previewPath
-	}
 	character, _ := source.GetCharacterByID(costumeInfo.CharacterID)
 	return &drawing.CostumeDetailRequest{
 		Region:            region.String(),
@@ -298,15 +281,49 @@ func (c *Controller) resolve3DPreviewPath(region renderregion.Value, costumeInfo
 	return c.preview3D.ResolvePreviewPath(ctx, region.String(), costumeInfo.ID)
 }
 
+func (c *Controller) ensure3DPreviewCapture(region renderregion.Value, costumeInfo *masterdata.Costume3d) error {
+	if c == nil || c.preview3D == nil || costumeInfo == nil {
+		return nil
+	}
+	ctx := c.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return c.preview3D.EnsurePreviewCapture(ctx, region.String(), costumeInfo.ID)
+}
+
 func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	region, source, err := c.resolveSource(query.Region)
+	if err != nil {
+		return nil, err
+	}
+	costumeInfo, err := c.resolveCostumeInfo(source, query)
+	if err != nil {
+		return nil, err
+	}
+	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
+		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
 	}
 	payload, err := c.BuildCostumeDetailRequest(query)
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateCostumeDetail(payload)
+	cachePayload := c.costumeDetailCacheRequest(payload)
+	return c.drawing.GenerateCostumeDetailWithPrepare(cachePayload, payload, func(prepared any) error {
+		previewPath, err := c.resolve3DPreviewPath(region, costumeInfo)
+		if err != nil {
+			costumePreview3DLogger.Warnf("3d preview skipped: region=%s costume_id=%d err=%v", region.String(), costumeInfo.ID, err)
+			return nil
+		}
+		if previewPath == "" {
+			return nil
+		}
+		setCostumeDetailPreviewPath(prepared, previewPath)
+		return c.ensure3DPreviewCapture(region, costumeInfo)
+	})
 }
 
 func (c *Controller) RenderCostumeCombo(query ComboQuery) ([]byte, error) {
@@ -334,6 +351,50 @@ func (c *Controller) resolveSource(regionText string) (renderregion.Value, DataS
 		return region, nil, fmt.Errorf("costume source is not configured for region %s", region)
 	}
 	return region, source, nil
+}
+
+func (c *Controller) resolveCostumeInfo(source DataSource, query Query) (*masterdata.Costume3d, error) {
+	costumeID := query.ID
+	if costumeID <= 0 {
+		costumeID, _ = ParseExplicitCostumeID(query.Query)
+	}
+	if costumeID > 0 {
+		return source.GetCostumeByID(costumeID)
+	}
+	return c.resolveSingleCostumeByQuery(source, query.Query)
+}
+
+func setCostumeDetailPreviewPath(prepared any, previewPath string) {
+	root, ok := prepared.(map[string]any)
+	if !ok {
+		return
+	}
+	costume, ok := root["costume"].(map[string]any)
+	if !ok {
+		return
+	}
+	costume["preview_image_path"] = previewPath
+}
+
+type costumeDetailCacheRequest struct {
+	Region                  string               `json:"region"`
+	Costume                 drawing.CostumeBasic `json:"costume"`
+	CharacterIconPath       string               `json:"character_icon_path,omitempty"`
+	UnitLogoPath            string               `json:"unit_logo_path,omitempty"`
+	Preview3DCacheSignature string               `json:"preview_3d_cache_signature,omitempty"`
+}
+
+func (c *Controller) costumeDetailCacheRequest(req *drawing.CostumeDetailRequest) any {
+	if req == nil {
+		return req
+	}
+	return costumeDetailCacheRequest{
+		Region:                  req.Region,
+		Costume:                 req.Costume,
+		CharacterIconPath:       req.CharacterIconPath,
+		UnitLogoPath:            req.UnitLogoPath,
+		Preview3DCacheSignature: c.preview3D.CacheSignature(),
+	}
 }
 
 func (c *Controller) resolveSingleCostumeByQuery(source DataSource, raw string) (*masterdata.Costume3d, error) {

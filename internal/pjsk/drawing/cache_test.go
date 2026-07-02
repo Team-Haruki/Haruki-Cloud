@@ -60,6 +60,17 @@ func TestResolveRenderCacheRuleUsesSevenDayTTLForCustomProfileCard(t *testing.T)
 	}
 }
 
+func TestResolveRenderCacheRuleUsesCostumeTTLs(t *testing.T) {
+	detail := resolveRenderCacheRule("/api/pjsk/costume/detail")
+	if detail.TTL != renderCacheTTLSevenDay {
+		t.Fatalf("costume detail ttl = %s, want %s", detail.TTL, renderCacheTTLSevenDay)
+	}
+	list := resolveRenderCacheRule("/api/pjsk/costume/list")
+	if list.TTL != renderCacheTTLOneDay {
+		t.Fatalf("costume list ttl = %s, want %s", list.TTL, renderCacheTTLOneDay)
+	}
+}
+
 func TestRenderCacheClientAllowsInternalSelfSignedHTTPS(t *testing.T) {
 	storageDir := t.TempDir()
 	cacheKey := strings.Repeat("a", 64)

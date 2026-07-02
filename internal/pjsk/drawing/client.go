@@ -83,25 +83,44 @@ func (c *HarukiDrawingClient) WithContext(ctx context.Context) *HarukiDrawingCli
 }
 
 func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, render func(any) ([]byte, error)) ([]byte, error) {
+	return c.RenderWithCacheAndPrepare(endpoint, request, nil, render)
+}
+
+func (c *HarukiDrawingClient) RenderWithCacheAndPrepare(endpoint string, request any, prepare func(any) error, render func(any) ([]byte, error)) ([]byte, error) {
+	return c.RenderWithCacheRequestAndPrepare(endpoint, request, request, prepare, render)
+}
+
+func (c *HarukiDrawingClient) RenderWithCacheRequestAndPrepare(endpoint string, cacheRequest any, renderRequest any, prepare func(any) error, render func(any) ([]byte, error)) ([]byte, error) {
 	var requestCtx context.Context
 	if c != nil {
 		requestCtx = c.requestCtx
 	}
-	prepared := prepareDrawingRequestBody(endpoint, request, time.Now(), requestCtx)
+	now := time.Now()
+	preparedCache := prepareDrawingRequestBody(endpoint, cacheRequest, now, requestCtx)
+	preparedRender := prepareDrawingRequestBody(endpoint, renderRequest, now, requestCtx)
 	if c == nil {
-		return render(prepared)
+		if prepare != nil {
+			if err := prepare(preparedRender); err != nil {
+				return nil, err
+			}
+		}
+		return render(preparedRender)
+	}
+	renderPrepared := func() ([]byte, error) {
+		if prepare != nil {
+			if err := prepare(preparedRender); err != nil {
+				return nil, err
+			}
+		}
+		return c.renderWithPermit(endpoint, preparedRender, render)
 	}
 	if c.cache != nil {
-		return c.cache.Render(endpoint, prepared, func() ([]byte, error) {
-			return c.renderWithPermit(endpoint, prepared, render)
-		})
+		return c.cache.Render(endpoint, preparedCache, renderPrepared)
 	}
 	if c.localCache != nil {
-		return c.localCache.Render(endpoint, prepared, func() ([]byte, error) {
-			return c.renderWithPermit(endpoint, prepared, render)
-		})
+		return c.localCache.Render(endpoint, preparedCache, renderPrepared)
 	}
-	return c.renderWithPermit(endpoint, prepared, render)
+	return renderPrepared()
 }
 
 func (c *HarukiDrawingClient) renderWithPermit(endpoint string, prepared any, render func(any) ([]byte, error)) ([]byte, error) {
@@ -237,6 +256,17 @@ func (c *HarukiDrawingClient) GenerateCostumeList(req *CostumeListRequest) ([]by
 
 func (c *HarukiDrawingClient) GenerateCostumeDetail(req *CostumeDetailRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/costume/detail", req)
+}
+
+func (c *HarukiDrawingClient) GenerateCostumeDetailWithPrepare(cacheReq any, req *CostumeDetailRequest, prepare func(any) error) ([]byte, error) {
+	return c.RenderWithCacheRequestAndPrepare("/api/pjsk/costume/detail", cacheReq, req, func(prepared any) error {
+		if prepare == nil {
+			return nil
+		}
+		return prepare(prepared)
+	}, func(prepared any) ([]byte, error) {
+		return c.postPrepared("/api/pjsk/costume/detail", prepared)
+	})
 }
 
 // =========================== Deck API ===========================

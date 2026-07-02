@@ -1,7 +1,6 @@
 package costume
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -288,9 +288,34 @@ func TestBuildCostumeDetailRequestRejectsWrongExpectedPartType(t *testing.T) {
 	}
 }
 
-func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.T) {
-	var capturePayload map[string]any
+func TestBuildCostumeDetailRequestLeaves3DPreviewForRenderMiss(t *testing.T) {
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("build should not call 3d preview engine: %s %s", r.Method, r.URL.Path)
+	}))
+	defer engine.Close()
+
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostumeWithColor(33001, "body", 20, 1),
+		makeDenseListTestCostumeWithColor(33002, "body", 20, 2),
+		makeDenseListTestCostumeWithColor(33011, "head", 20, 1),
+		makeDenseListTestCostumeWithColor(33021, "hair", 20, 1),
+	}}, nil, nil)
+	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL})
+
+	request, err := controller.BuildCostumeDetailRequest(Query{ID: 33002})
+	if err != nil {
+		t.Fatalf("BuildCostumeDetailRequest failed: %v", err)
+	}
+	if request.Costume.PreviewImagePath != nil {
+		t.Fatalf("build should leave preview path for render miss, got %q", *request.Costume.PreviewImagePath)
+	}
+}
+
+func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
+	var capturePayload map[string]any
+	var engineRequests atomic.Int32
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		engineRequests.Add(1)
 		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
 			http.NotFound(w, r)
 			return
@@ -322,12 +347,31 @@ func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.
 	}))
 	defer engine.Close()
 
+	var drawingRequests atomic.Int32
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		drawingRequests.Add(1)
+		if r.URL.Path != "/api/pjsk/costume/detail" {
+			t.Fatalf("unexpected drawing request: %s %s", r.Method, r.URL.Path)
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode drawing payload: %v", err)
+		}
+		costumeBody, _ := body["costume"].(map[string]any)
+		if _, ok := costumeBody["preview_image_path"].(string); !ok {
+			t.Fatalf("drawing payload should include preview_image_path: %+v", costumeBody)
+		}
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "detail-png")
+	}))
+	defer drawingServer.Close()
+
 	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
 		makeDenseListTestCostumeWithColor(33001, "body", 20, 1),
 		makeDenseListTestCostumeWithColor(33002, "body", 20, 2),
 		makeDenseListTestCostumeWithColor(33011, "head", 20, 1),
 		makeDenseListTestCostumeWithColor(33021, "hair", 20, 1),
-	}}, nil, nil)
+	}}, drawing.NewHarukiDrawingClient(drawingServer.URL), nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{
 		Enabled:             true,
 		EngineBaseURL:       engine.URL,
@@ -339,19 +383,15 @@ func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.
 		CameraPreset:        "capture",
 	})
 
-	request, err := controller.BuildCostumeDetailRequest(Query{ID: 33002})
+	data, err := controller.RenderCostumeDetail(Query{ID: 33002})
 	if err != nil {
-		t.Fatalf("BuildCostumeDetailRequest failed: %v", err)
+		t.Fatalf("RenderCostumeDetail failed: %v", err)
 	}
-	if request.Costume.PreviewImagePath == nil {
-		t.Fatalf("expected preview image path")
+	if string(data) != "detail-png" {
+		t.Fatalf("unexpected detail data: %q", string(data))
 	}
 	signature := preview3DCacheSignature("test", 700, 500, 2, "capture")
-	wantImageID := "pjsk3d_" + signature + "_jp_c20_school_refusal_g330_cl2_b33002_h33011_r33021_o0"
-	want := "static_images/pjsk_3d_preview/" + wantImageID + ".png"
-	if got := *request.Costume.PreviewImagePath; got != want {
-		t.Fatalf("expected preview path %q, got %q", want, got)
-	}
+	wantImageID := "pjsk3d_" + signature + "_c20_school_refusal_g330_cl2_b33002_h33011_r33021_o0"
 	if capturePayload["imageId"] != wantImageID {
 		t.Fatalf("unexpected capture image id: %v", capturePayload["imageId"])
 	}
@@ -360,6 +400,21 @@ func TestBuildCostumeDetailRequestFills3DPreviewByDefaultWhenEnabled(t *testing.
 	}
 	if capturePayload["cameraPreset"] != "capture" {
 		t.Fatalf("unexpected capture camera preset: %v", capturePayload["cameraPreset"])
+	}
+	engineRequestsAfterFirst := engineRequests.Load()
+	drawingRequestsAfterFirst := drawingRequests.Load()
+	data, err = controller.RenderCostumeDetail(Query{ID: 33002})
+	if err != nil {
+		t.Fatalf("second RenderCostumeDetail failed: %v", err)
+	}
+	if string(data) != "detail-png" {
+		t.Fatalf("unexpected second detail data: %q", string(data))
+	}
+	if engineRequests.Load() != engineRequestsAfterFirst {
+		t.Fatalf("drawing cache hit should not call 3d engine again")
+	}
+	if drawingRequests.Load() != drawingRequestsAfterFirst {
+		t.Fatalf("drawing cache hit should not call drawing api again")
 	}
 }
 
@@ -414,11 +469,11 @@ func TestBuildCostumeDetailRequestSkipsMissing3DPreviewParts(t *testing.T) {
 	}
 }
 
-func TestBuildCostumeDetailRequestUsesRequestContextFor3DPreview(t *testing.T) {
+func TestBuildCostumeDetailRequestDoesNotCall3DPreview(t *testing.T) {
 	var called atomic.Bool
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called.Store(true)
-		http.Error(w, "request context should have been canceled before preview fetch", http.StatusInternalServerError)
+		http.Error(w, "build should not call 3d preview engine", http.StatusInternalServerError)
 	}))
 	defer engine.Close()
 
@@ -426,18 +481,16 @@ func TestBuildCostumeDetailRequestUsesRequestContextFor3DPreview(t *testing.T) {
 		makeDenseListTestCostumeWithColor(33002, "body", 20, 2),
 	}}, nil, nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL})
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
 
-	request, err := controller.WithContext(ctx).BuildCostumeDetailRequest(Query{ID: 33002})
+	request, err := controller.BuildCostumeDetailRequest(Query{ID: 33002})
 	if err != nil {
 		t.Fatalf("BuildCostumeDetailRequest failed: %v", err)
 	}
 	if request.Costume.PreviewImagePath != nil {
-		t.Fatalf("canceled preview context should not produce preview path, got %q", *request.Costume.PreviewImagePath)
+		t.Fatalf("build should not produce preview path, got %q", *request.Costume.PreviewImagePath)
 	}
 	if called.Load() {
-		t.Fatalf("canceled request context should not call 3d preview engine")
+		t.Fatalf("build should not call 3d preview engine")
 	}
 }
 
@@ -489,6 +542,10 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 	const png = "fake-png"
 	var capturePayload map[string]any
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/tmp_pjsk3d_") {
+			http.NotFound(w, r)
+			return
+		}
 		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/captures/tmp_pjsk3d_") {
 			w.Header().Set("content-type", "image/png")
 			fmt.Fprint(w, png)
@@ -539,6 +596,9 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 	}
 	if imageID, _ := capturePayload["imageId"].(string); !strings.HasPrefix(imageID, "tmp_pjsk3d_") {
 		t.Fatalf("expected tmp image id, got %v", capturePayload["imageId"])
+	}
+	if capturePayload["ttlSeconds"] == nil {
+		t.Fatalf("expected temporary capture ttlSeconds")
 	}
 }
 

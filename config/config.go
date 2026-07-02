@@ -246,6 +246,10 @@ func ApplyEnvOverrides(cfg *Config) {
 	envFloat("HARUKI_PJSK_RENDER_3D_PREVIEW_SCALE", &cfg.PJSKRender.Preview3D.Scale)
 	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_TIMEOUT", &cfg.PJSKRender.Preview3D.Timeout)
 	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_REGISTRY_CACHE_TTL", &cfg.PJSKRender.Preview3D.RegistryCacheTTL)
+	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_EXISTS_TTL", &cfg.PJSKRender.Preview3D.CaptureExistsTTL)
+	envInt("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_MAX_CONCURRENCY", &cfg.PJSKRender.Preview3D.CaptureMaxConcurrency)
+	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_ACQUIRE_TIMEOUT", &cfg.PJSKRender.Preview3D.CaptureAcquireTimeout)
+	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_TEMPORARY_CAPTURE_TTL", &cfg.PJSKRender.Preview3D.TemporaryCaptureTTL)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_CACHE_VERSION", &cfg.PJSKRender.Preview3D.CaptureCacheVersion)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", &cfg.PJSKRender.Preview3D.CameraPreset)
 }
@@ -384,16 +388,20 @@ type MySekaiHousingCompetitionConfig struct {
 }
 
 type Preview3DConfig struct {
-	Enabled             bool          `yaml:"enabled"`
-	EngineBaseURL       string        `yaml:"engine_base_url"`
-	StaticRelativeDir   string        `yaml:"static_relative_dir"`
-	Width               int           `yaml:"width"`
-	Height              int           `yaml:"height"`
-	Scale               float64       `yaml:"scale"`
-	Timeout             time.Duration `yaml:"timeout"`
-	RegistryCacheTTL    time.Duration `yaml:"registry_cache_ttl"`
-	CaptureCacheVersion string        `yaml:"capture_cache_version"`
-	CameraPreset        string        `yaml:"camera_preset"`
+	Enabled               bool          `yaml:"enabled"`
+	EngineBaseURL         string        `yaml:"engine_base_url"`
+	StaticRelativeDir     string        `yaml:"static_relative_dir"`
+	Width                 int           `yaml:"width"`
+	Height                int           `yaml:"height"`
+	Scale                 float64       `yaml:"scale"`
+	Timeout               time.Duration `yaml:"timeout"`
+	RegistryCacheTTL      time.Duration `yaml:"registry_cache_ttl"`
+	CaptureExistsTTL      time.Duration `yaml:"capture_exists_ttl"`
+	CaptureMaxConcurrency int           `yaml:"capture_max_concurrency"`
+	CaptureAcquireTimeout time.Duration `yaml:"capture_acquire_timeout"`
+	TemporaryCaptureTTL   time.Duration `yaml:"temporary_capture_ttl"`
+	CaptureCacheVersion   string        `yaml:"capture_cache_version"`
+	CameraPreset          string        `yaml:"camera_preset"`
 }
 
 // MySekaiCNWhitelistEntry defines a platform+group pair allowed to use

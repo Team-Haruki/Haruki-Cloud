@@ -70,6 +70,14 @@ var (
 			Enabled: true,
 			TTL:     renderCacheTTLSevenDay,
 		},
+		"/api/pjsk/costume/detail": {
+			Enabled: true,
+			TTL:     renderCacheTTLSevenDay,
+		},
+		"/api/pjsk/costume/list": {
+			Enabled: true,
+			TTL:     renderCacheTTLOneDay,
+		},
 		"/api/pjsk/event/list": {
 			Enabled: true,
 			TTL:     renderCacheTTLHalfDay,

@@ -196,6 +196,10 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_SCALE", "2")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_TIMEOUT", "45s")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_REGISTRY_CACHE_TTL", "2m")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_EXISTS_TTL", "45s")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_MAX_CONCURRENCY", "2")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_ACQUIRE_TIMEOUT", "3s")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_TEMPORARY_CAPTURE_TTL", "24h")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_CACHE_VERSION", "preview-v2")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", "default")
 
@@ -267,6 +271,18 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	}
 	if cfg.PJSKRender.Preview3D.RegistryCacheTTL != 2*time.Minute {
 		t.Fatalf("unexpected 3d preview registry cache ttl: %v", cfg.PJSKRender.Preview3D.RegistryCacheTTL)
+	}
+	if cfg.PJSKRender.Preview3D.CaptureExistsTTL != 45*time.Second {
+		t.Fatalf("unexpected 3d preview capture exists ttl: %v", cfg.PJSKRender.Preview3D.CaptureExistsTTL)
+	}
+	if cfg.PJSKRender.Preview3D.CaptureMaxConcurrency != 2 {
+		t.Fatalf("unexpected 3d preview capture max concurrency: %d", cfg.PJSKRender.Preview3D.CaptureMaxConcurrency)
+	}
+	if cfg.PJSKRender.Preview3D.CaptureAcquireTimeout != 3*time.Second {
+		t.Fatalf("unexpected 3d preview capture acquire timeout: %v", cfg.PJSKRender.Preview3D.CaptureAcquireTimeout)
+	}
+	if cfg.PJSKRender.Preview3D.TemporaryCaptureTTL != 24*time.Hour {
+		t.Fatalf("unexpected 3d preview temporary capture ttl: %v", cfg.PJSKRender.Preview3D.TemporaryCaptureTTL)
 	}
 	if cfg.PJSKRender.Preview3D.CaptureCacheVersion != "preview-v2" {
 		t.Fatalf("unexpected 3d preview capture cache version: %q", cfg.PJSKRender.Preview3D.CaptureCacheVersion)

@@ -221,6 +221,36 @@ func TestPreview3DRegistryResolveComboSlotsAccessoryAfterUnit(t *testing.T) {
 	}
 }
 
+func TestPreview3DRegistryResolveComboKeepsEmptyHeadOptionalSlot(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 5, CharacterID: 20, Unit: "school_refusal", BodyCostume3DID: 33001, HeadCostume3DID: 33011, HairCostume3DID: 33021, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 33001, PartType: "body", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 33011, PartType: "head", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 33021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 53129, PartType: "head_optional", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "empty"},
+		},
+	}
+
+	selection, err := registry.resolveCombo("jp", ComboQuery{
+		Unit:                "school_refusal",
+		BodyCostume3DID:     33001,
+		HairCostume3DID:     33021,
+		AccessoryCostumeIDs: []int{53129},
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolve combo failed: %v", err)
+	}
+	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 53129 {
+		t.Fatalf("expected empty head_optional slot to stay selected, got %+v", selection.HeadOptionalCostume3DID)
+	}
+	if !strings.HasSuffix(selection.ImageID, "_o53129") {
+		t.Fatalf("expected empty head_optional id in image key, got %q", selection.ImageID)
+	}
+}
+
 func TestPreview3DRegistryResolveComboRequiresUnitWhenAmbiguous(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{

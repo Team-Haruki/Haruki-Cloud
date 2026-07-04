@@ -156,6 +156,48 @@ func TestPreview3DRegistryResolveImageIDIgnoresRegion(t *testing.T) {
 	}
 }
 
+func TestPreview3DRegistryResolveRejectsBlockedHeadHairPair(t *testing.T) {
+	registry := preview3DCompatibilityTestRegistry([]preview3DCompatibilityRule{
+		{Unit: "school_refusal", HeadCostume3DID: 33011, HairCostume3DID: 33021, State: "not_available"},
+	})
+
+	_, err := registry.resolve("jp", 53129, "sig")
+	if err == nil {
+		t.Fatalf("expected blocked head/hair pair to be rejected")
+	}
+	if !strings.Contains(err.Error(), "blocked") {
+		t.Fatalf("expected blocked error, got %v", err)
+	}
+}
+
+func TestPreview3DRegistryResolveRejectsUnlistedHairWhenHeadHasAvailablePatterns(t *testing.T) {
+	registry := preview3DCompatibilityTestRegistry([]preview3DCompatibilityRule{
+		{Unit: "school_refusal", HeadCostume3DID: 33011, HairCostume3DID: 99921, State: "available"},
+	})
+
+	_, err := registry.resolve("jp", 53129, "sig")
+	if err == nil {
+		t.Fatalf("expected unlisted hair for available-pattern head to be rejected")
+	}
+	if !strings.Contains(err.Error(), "not in available patterns") {
+		t.Fatalf("expected available-pattern error, got %v", err)
+	}
+}
+
+func TestPreview3DRegistryResolveAllowsOfficialPresetOutsideAvailablePatterns(t *testing.T) {
+	registry := preview3DCompatibilityTestRegistry([]preview3DCompatibilityRule{
+		{Unit: "school_refusal", HeadCostume3DID: 33011, HairCostume3DID: 99921, State: "available"},
+	})
+
+	selection, err := registry.resolve("jp", 33001, "sig")
+	if err != nil {
+		t.Fatalf("official preset should not be rejected by custom compatibility patterns: %v", err)
+	}
+	if selection.HeadCostume3DID != 33011 || selection.HairCostume3DID != 33021 {
+		t.Fatalf("unexpected official tuple: %+v", selection)
+	}
+}
+
 func TestPreview3DCacheSignatureChangesWithVersionAndCamera(t *testing.T) {
 	base := preview3DCacheSignature("v1", 1400, 1000, 2, "capture")
 	if base == preview3DCacheSignature("v2", 1400, 1000, 2, "capture") {
@@ -163,6 +205,27 @@ func TestPreview3DCacheSignatureChangesWithVersionAndCamera(t *testing.T) {
 	}
 	if base == preview3DCacheSignature("v1", 1400, 1000, 2, "default") {
 		t.Fatalf("camera preset should change signature")
+	}
+}
+
+func preview3DCompatibilityTestRegistry(rules []preview3DCompatibilityRule) *preview3DRegistry {
+	return &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{
+			Character3DID:   5,
+			CharacterID:     20,
+			Unit:            "school_refusal",
+			BodyCostume3DID: 33001,
+			HeadCostume3DID: 33011,
+			HairCostume3DID: 33021,
+			Status:          "available",
+		}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 33001, PartType: "body", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 33011, PartType: "head", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 33021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 53129, PartType: "head_optional", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+		},
+		rules: rules,
 	}
 }
 

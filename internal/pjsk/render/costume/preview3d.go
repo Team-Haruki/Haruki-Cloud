@@ -523,8 +523,10 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int, cacheSignatu
 	if bodyID <= 0 || headID <= 0 || hairID <= 0 {
 		return preview3DSelection{}, fmt.Errorf("3d preview tuple incomplete for costume %d", costume3DID)
 	}
-	if r.isHeadHairBlocked(role.Unit, headID, hairID) {
-		return preview3DSelection{}, fmt.Errorf("3d preview head/hair combination is blocked: unit=%s head=%d hair=%d", role.Unit, headID, hairID)
+	if !r.isOfficialPresetTuple(role, bodyID, headID, hairID, headOptionalID) {
+		if err := r.validateHeadHairCompatibility(role.Unit, headID, hairID, "3d preview"); err != nil {
+			return preview3DSelection{}, err
+		}
 	}
 
 	optionalID := 0
@@ -627,8 +629,10 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	if bodyID <= 0 || headID <= 0 || hairID <= 0 {
 		return preview3DSelection{}, fmt.Errorf("3d combo tuple incomplete")
 	}
-	if r.isHeadHairBlocked(role.Unit, headID, hairID) {
-		return preview3DSelection{}, fmt.Errorf("3d combo head/hair combination is blocked: unit=%s head=%d hair=%d", role.Unit, headID, hairID)
+	if !r.isOfficialPresetTuple(role, bodyID, headID, hairID, headOptionalID) {
+		if err := r.validateHeadHairCompatibility(role.Unit, headID, hairID, "3d combo"); err != nil {
+			return preview3DSelection{}, err
+		}
 	}
 
 	optionalID := 0
@@ -809,17 +813,51 @@ func preview3DStatusUsable(status string) bool {
 	return !strings.EqualFold(strings.TrimSpace(status), "missing")
 }
 
-func (r *preview3DRegistry) isHeadHairBlocked(unit string, headID int, hairID int) bool {
+func (r *preview3DRegistry) isOfficialPresetTuple(role preview3DCharacterEntry, bodyID int, headID int, hairID int, headOptionalID *int) bool {
+	if headOptionalID != nil {
+		return false
+	}
+	for _, candidate := range r.characters {
+		if !preview3DStatusUsable(candidate.Status) {
+			continue
+		}
+		if candidate.CharacterID != role.CharacterID || candidate.Unit != role.Unit {
+			continue
+		}
+		if candidate.BodyCostume3DID == bodyID &&
+			candidate.HeadCostume3DID == headID &&
+			candidate.HairCostume3DID == hairID {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *preview3DRegistry) validateHeadHairCompatibility(unit string, headID int, hairID int, label string) error {
+	hasAvailableHead := false
+	hasAvailablePair := false
 	for _, rule := range r.rules {
-		if rule.HeadCostume3DID != headID || rule.HairCostume3DID != hairID {
+		if rule.HeadCostume3DID != headID {
 			continue
 		}
 		if unit != "" && rule.Unit != "" && rule.Unit != unit {
 			continue
 		}
-		return strings.EqualFold(rule.State, "not_available")
+		if strings.EqualFold(rule.State, "available") {
+			hasAvailableHead = true
+			if rule.HairCostume3DID == hairID {
+				hasAvailablePair = true
+			}
+			continue
+		}
+		if rule.HairCostume3DID == hairID && strings.EqualFold(rule.State, "not_available") {
+			return fmt.Errorf("%s head/hair combination is blocked: unit=%s head=%d hair=%d", label, unit, headID, hairID)
+		}
 	}
-	return false
+	if hasAvailableHead && !hasAvailablePair {
+		return fmt.Errorf("%s head/hair combination is not in available patterns: unit=%s head=%d hair=%d", label, unit, headID, hairID)
+	}
+	return nil
 }
 
 func preview3DColorRank(colorID int, selectedColorID int) int {

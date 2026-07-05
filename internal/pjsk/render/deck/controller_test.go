@@ -768,12 +768,16 @@ func TestBuildRecommendOptionForwardsFinalChapterForcedLeader(t *testing.T) {
 		RecommendType:           "event",
 		EventID:                 new(180),
 		ForcedLeaderCharacterID: new(21),
+		WorldBloomCharacterID:   new(20),
 	})
 	if err != nil {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
 	}
 	if option["forced_leader_character_id"] != 21 {
 		t.Fatalf("unexpected forced leader: %+v", option["forced_leader_character_id"])
+	}
+	if option["world_bloom_character_id"] != 20 {
+		t.Fatalf("unexpected world bloom character: %+v", option["world_bloom_character_id"])
 	}
 
 	option, err = controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{

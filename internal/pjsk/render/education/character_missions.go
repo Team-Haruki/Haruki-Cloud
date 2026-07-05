@@ -55,7 +55,7 @@ var characterMissionTypeAliases = map[string][]string{
 	"collect_another_vocal":                      {"another vocal", "anvo"},
 	"area_item_level_up_character":               {"单人家具升级次数", "单人家具", "单人道具"},
 	"area_item_level_up_unit":                    {"团家具升级次数", "团家具"},
-	"area_item_level_up_reality_world":           {"属性道具（树&花）升级次数", "树花", "属性家具", "属性道具", "植物"},
+	"area_item_level_up_reality_world":           {"属性道具（树&花）升级次数", "花树", "树花", "属性家具", "属性道具", "植物"},
 	"collect_member":                             {"卡面", "图鉴", "成员"},
 	"skill_level_up_rare":                        {"技能等级升级次数（★4&生日卡）", "4星技能", "四星技能", "四星slv", "4星slv"},
 	"skill_level_up_standard":                    {"技能等级升级次数（★1~★3）", "低星技能", "低星slv"},

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "github.com/bytedance/sonic"
+	"strings"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/parser"
@@ -34,6 +35,16 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
 				if query.ShowFull || query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
+					t.Fatalf("unexpected query: %+v", query)
+				}
+			},
+		},
+		{
+			name: "plant alias selects tree and flower",
+			args: "花树",
+			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
+				t.Helper()
+				if query.ShowFull || query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || !query.Tree || !query.Flower {
 					t.Fatalf("unexpected query: %+v", query)
 				}
 			},
@@ -112,6 +123,21 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			}
 			tt.checkFunc(t, query)
 		})
+	}
+}
+
+func TestAreaItemHandleReportsSpecificFullUsageError(t *testing.T) {
+	h := sekaiHandlers{}.AreaItemHandle()
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/区域道具",
+		ArgText:    "full",
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if got := err.Error(); !strings.Contains(got, "full 需要和区域道具分类一起使用") || strings.Contains(got, "使用方式") {
+		t.Fatalf("unexpected error: %q", got)
 	}
 }
 
@@ -371,5 +397,39 @@ func TestCharacterMissionHandleBuildsAllRequest(t *testing.T) {
 	}
 	if params.CharacterQuery != "miku" || !params.ShowAll || params.MissionType != "play_live" {
 		t.Fatalf("unexpected character mission all params: %+v", params)
+	}
+}
+
+func TestCharacterMissionHandleParsesFlowerTreeAlias(t *testing.T) {
+	h := sekaiHandlers{}.CharacterMissionHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/cr任务",
+		ArgText:    "u2 miku all 花树",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+	if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-character-mission" {
+		t.Fatalf("unexpected command request: %+v", resolved)
+	}
+
+	var params struct {
+		CharacterQuery string `json:"character_query"`
+		ShowAll        bool   `json:"show_all"`
+		MissionType    string `json:"mission_type"`
+	}
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.CharacterQuery != "miku" || !params.ShowAll || params.MissionType != "area_item_level_up_reality_world" {
+		t.Fatalf("unexpected character mission params: %+v", params)
 	}
 }

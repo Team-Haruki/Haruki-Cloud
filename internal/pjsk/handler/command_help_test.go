@@ -18,7 +18,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
 
-func TestCommandHelpPlainHelpShortCircuitsValidation(t *testing.T) {
+func TestCommandHelpFlagShortCircuitsValidation(t *testing.T) {
 	server, calls := newCommandHelpDrawingServer(t, "music")
 	defer server.Close()
 
@@ -28,7 +28,7 @@ func TestCommandHelpPlainHelpShortCircuitsValidation(t *testing.T) {
 	resolved, err := h.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/查曲",
-		ArgText:    "help",
+		ArgText:    "-help",
 	})
 	if err != nil {
 		t.Fatalf("Handle() help error = %v", err)
@@ -50,6 +50,50 @@ func TestCommandHelpPlainHelpShortCircuitsValidation(t *testing.T) {
 	}
 	if got := calls.Load(); got != 1 {
 		t.Fatalf("drawing API calls = %d, want 1", got)
+	}
+}
+
+func TestCommandHelpPlainHelpIsQueryText(t *testing.T) {
+	for _, arg := range []string{"help", "帮助", "--help"} {
+		t.Run(arg, func(t *testing.T) {
+			h := sekaiHandlers{}.SongHandle()
+			h.Regions = []renderregion.Value{renderregion.JP}
+
+			resolved, err := h.Handle(&PjskHandlerContext{
+				Context:    context.Background(),
+				TriggerCmd: "/查曲",
+				ArgText:    arg,
+			})
+			if err != nil {
+				t.Fatalf("Handle() error = %v", err)
+			}
+			if resolved == nil || resolved.IsHelp {
+				t.Fatalf("expected normal command request, got %+v", resolved)
+			}
+			if resolved.Query != arg {
+				t.Fatalf("query = %q, want %q", resolved.Query, arg)
+			}
+		})
+	}
+}
+
+func TestCommandHelpDeckOverviewForGenericDeckTrigger(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	resolved, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/组卡",
+		ArgText:    "-help",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if resolved == nil || !resolved.IsHelp {
+		t.Fatalf("expected help command request, got %+v", resolved)
+	}
+	if path := commandHelpRequestPath(resolved); path != "deck" {
+		t.Fatalf("commandHelpRequestPath() = %q, want deck", path)
 	}
 }
 

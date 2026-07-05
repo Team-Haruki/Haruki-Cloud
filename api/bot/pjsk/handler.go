@@ -324,11 +324,11 @@ func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedComm
 	}
 	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return botResponse(c, fiber.StatusOK, api.ResponseOK,
-			[]onebot11.Segment{onebot11.Text(clientErrorText(string(replyErr), enableParamEcho))},
+			[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(string(replyErr), enableParamEcho, matchedCommand))},
 		)
 	}
 	return botResponse(c, fiber.StatusOK, api.ResponseOK,
-		[]onebot11.Segment{onebot11.Text(clientErrorText(err.Error(), enableParamEcho))},
+		[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(err.Error(), enableParamEcho, matchedCommand))},
 	)
 }
 

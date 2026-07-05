@@ -199,12 +199,10 @@ func (e *Extractor) ExtractPreview(text string) ExtractResult[bool] {
 	return ExtractResult[bool]{Value: false, Remaining: text, Found: false}
 }
 
-var reHelp = regexp.MustCompile(`(?i)(^|\s+)(-h|--help|help|帮助)(\s+|$)`)
-
 func (e *Extractor) ExtractHelp(text string) ExtractResult[bool] {
-	if matches := reHelp.FindStringSubmatch(text); len(matches) > 0 {
-		remaining := reHelp.ReplaceAllString(text, " ")
-		return ExtractResult[bool]{Value: true, Remaining: strings.TrimSpace(remaining), Found: true}
+	switch strings.ToLower(strings.TrimSpace(text)) {
+	case "-h", "-help":
+		return ExtractResult[bool]{Value: true, Remaining: "", Found: true}
 	}
 	return ExtractResult[bool]{Value: false, Remaining: text, Found: false}
 }

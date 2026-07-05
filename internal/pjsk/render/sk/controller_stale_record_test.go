@@ -13,9 +13,10 @@ import (
 
 type staleRecordStatusTrackerSource struct {
 	testTrackerSource
-	status      *sekaiapi.EventStatusResponse
-	err         error
-	wantEventID int
+	status         *sekaiapi.EventStatusResponse
+	err            error
+	wantEventID    int
+	currentInRange bool
 }
 
 func (s staleRecordStatusTrackerSource) GetEventStatus(server string, eventID int) (*sekaiapi.EventStatusResponse, error) {
@@ -26,6 +27,25 @@ func (s staleRecordStatusTrackerSource) GetEventStatus(server string, eventID in
 		return nil, fmt.Errorf("unexpected event id: got %d want %d", eventID, s.wantEventID)
 	}
 	return s.status, nil
+}
+
+func (s staleRecordStatusTrackerSource) GetLatestRankingByUser(server string, eventID int, userID int64) (*sekaiapi.LatestRankingResponse, error) {
+	if !s.currentInRange {
+		return nil, sekaiapi.ErrRankingNotFound
+	}
+	userIDText := fmt.Sprintf("%d", userID)
+	return &sekaiapi.LatestRankingResponse{
+		RankData: sekaiapi.RankDataPoint{
+			UserID:    userIDText,
+			Rank:      100,
+			Score:     1000000,
+			Timestamp: time.Now().UTC().Unix(),
+		},
+		UserData: sekaiapi.RankingUserData{
+			UserID: userIDText,
+			Name:   "CurrentSelf",
+		},
+	}, nil
 }
 
 func TestStaleSelfRecordWarningRequiresHealthyTrackerStatus(t *testing.T) {
@@ -77,9 +97,14 @@ func TestStaleSelfRecordWarningIgnoresFreshRecordsAndStatusErrors(t *testing.T) 
 		t.Fatalf("expected no warning for fresh record, got %q", got)
 	}
 
-	inTop100 := []drawing.RankInfo{{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()}}
-	if got := controller.StaleSelfRecordWarning(req, inTop100); got != "" {
-		t.Fatalf("expected no warning for top-100 stale record, got %q", got)
+	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{
+		status:         &sekaiapi.EventStatusResponse{Status: 1, StatusDesc: "healthy"},
+		currentInRange: true,
+	}, nil, nil)
+
+	stillInRange := []drawing.RankInfo{{Rank: 100, Time: now.Add(-6 * time.Minute).UnixMilli()}}
+	if got := controller.StaleSelfRecordWarning(req, stillInRange); got != "" {
+		t.Fatalf("expected no warning when current self record is still in range, got %q", got)
 	}
 
 	setTestTrackerIntegration(controller, staleRecordStatusTrackerSource{

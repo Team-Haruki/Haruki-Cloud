@@ -316,8 +316,9 @@ type botTrackerMissingUserSource struct {
 
 type botTrackerStaleSelfSource struct {
 	botTrackerSource
-	healthy bool
-	rank    int
+	healthy        bool
+	rank           int
+	currentInRange bool
 }
 
 func (botTrackerSource) GetLatestRankingByRank(server string, eventID, rank int) (*sekaiapi.LatestRankingResponse, error) {
@@ -363,6 +364,10 @@ func (s botTrackerStaleSelfSource) GetLatestRankingByUser(server string, eventID
 	}
 	resp.RankData.Rank = rank
 	resp.RankData.Timestamp = time.Now().UTC().Add(-6 * time.Minute).Unix()
+	if s.currentInRange {
+		resp.RankData.UserID = strconv.FormatInt(userID, 10)
+		resp.UserData.UserID = strconv.FormatInt(userID, 10)
+	}
 	return resp, nil
 }
 
@@ -1104,7 +1109,7 @@ func TestBotEndpointSuppressesParamEchoByDefault(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	if !strings.Contains(text, "活动查询参数错误") || !strings.Contains(text, "【查单个活动格式】") {
+	if text != "活动查询参数格式不正确。查看完整用法请发送：/查活动 -help" {
 		t.Fatalf("expected redacted parse error with help text, got %q", text)
 	}
 }
@@ -1133,7 +1138,7 @@ func TestBotEndpointStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	if strings.Contains(text, secretParam) {
 		t.Fatalf("expected response to redact param %q, got %q", secretParam, text)
 	}
-	if !strings.Contains(text, "活动查询参数错误") || !strings.Contains(text, "【查单个活动格式】") {
+	if text != "活动查询参数格式不正确。查看完整用法请发送：/查活动 -help" {
 		t.Fatalf("expected redacted parse error with help text, got %q", text)
 	}
 }
@@ -2300,7 +2305,7 @@ func TestBotEndpointSKCSBReturnsFriendlyMessageWhenSelfRankingIsMissing(t *testi
 	assertSingleTextMessageContains(t, body, "当前JP服活动没有找到你的排行榜数据")
 }
 
-func TestBotEndpointSKCSBDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
+func TestBotEndpointSKCSBDoesNotWarnWhenCurrentSelfRecordStillInRange(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/csb" {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
@@ -2325,7 +2330,7 @@ func TestBotEndpointSKCSBDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true, currentInRange: true}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 
@@ -2768,7 +2773,7 @@ func TestBotEndpointSKCheckRoomDefaultsToSelfBinding(t *testing.T) {
 	assertSingleImageMessage(t, body)
 }
 
-func TestBotEndpointSKCheckRoomDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
+func TestBotEndpointSKCheckRoomDoesNotWarnWhenCurrentSelfRecordStillInRange(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/pjsk/sk/check-room" {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
@@ -2793,7 +2798,7 @@ func TestBotEndpointSKCheckRoomDoesNotWarnWhenSelfRecordIsTop100(t *testing.T) {
 	app := fiber.New()
 	runtime := testRenderApp(t, drawing.NewHarukiDrawingClient(srv.URL))
 	runtime.SK = rendersk.NewController(runtime.Drawing)
-	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true}, nil, assets.NewAssetHelper("", nil))
+	setBotTrackerIntegration(runtime.SK, botTrackerStaleSelfSource{healthy: true, currentInRange: true}, nil, assets.NewAssetHelper("", nil))
 	runtime.Bindings = bindingService
 	RegisterPJSKBotRoutes(app, runtime, nil, nil, nil)
 

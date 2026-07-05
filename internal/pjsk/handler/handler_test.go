@@ -133,6 +133,45 @@ func TestDispatchKeepsCustomChartIDWithEmbeddedUSelector(t *testing.T) {
 	}
 }
 
+func TestDispatchDistinguishesBPMDetailAndSearch(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	tests := []struct {
+		name      string
+		text      string
+		wantMode  string
+		wantQuery string
+	}{
+		{name: "detail", text: "/pjsk bpm Help me, ERINNNNNN!!", wantMode: "music-bpm-detail", wantQuery: "Help me, ERINNNNNN!!"},
+		{name: "search long command", text: "/pjsk bpm search 200", wantMode: "music-bpm", wantQuery: "200"},
+		{name: "search alias", text: "/bpms 200", wantMode: "music-bpm", wantQuery: "200"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resolved, err := dispatchForTest(context.Background(), Event{
+				Platform: "qq",
+				Message: onebot11.Message{
+					{Type: "text", Data: map[string]any{"text": tt.text}},
+				},
+				UserId: "12345",
+			})
+			if err != nil {
+				t.Fatalf("dispatch: %v", err)
+			}
+			if resolved == nil {
+				t.Fatal("expected command request, got nil")
+			}
+			if resolved.Module != parser.ModuleMusic || resolved.Mode != tt.wantMode {
+				t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+			}
+			if resolved.Query != tt.wantQuery {
+				t.Fatalf("query = %q, want %q", resolved.Query, tt.wantQuery)
+			}
+		})
+	}
+}
+
 func TestDispatchSupportsRegionPrefixedSKCommandWithMapSegments(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 

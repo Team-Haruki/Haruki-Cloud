@@ -2763,6 +2763,7 @@ func TestResolveDeckCharacterSelectionsFallsBackChallengeQueryToMusic(t *testing
 	if err := resolveDeckCharacterSelections(context.Background(), &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
 		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
 	}
+	applyDefaultChallengeDeckAutoQueryMusic(&query)
 	if query.ChallengeLiveCharacterID != nil {
 		t.Fatalf("unexpected challenge character id: %+v", query.ChallengeLiveCharacterID)
 	}
@@ -2771,6 +2772,43 @@ func TestResolveDeckCharacterSelectionsFallsBackChallengeQueryToMusic(t *testing
 	}
 	if query.ChallengeLiveCharacterQuery != "" {
 		t.Fatalf("expected challenge query to be cleared: %q", query.ChallengeLiveCharacterQuery)
+	}
+}
+
+func TestDefaultChallengeDeckMusicAppliesAfterCharacterResolution(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_challenge_default_music?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+
+	if _, err := sekaiClient.Gamecharacter.Create().
+		SetServerRegion("jp").
+		SetGameID(21).
+		SetFirstName("初音").
+		SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").
+		SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create gamecharacter: %v", err)
+	}
+
+	query := renderdeck.AutoQuery{
+		Region:                      "jp",
+		RecommendType:               "challenge",
+		ChallengeLiveCharacterQuery: "Hatsune Miku",
+	}
+
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	applyDefaultChallengeDeckAutoQueryMusic(&query)
+	if query.ChallengeLiveCharacterID == nil || *query.ChallengeLiveCharacterID != 21 {
+		t.Fatalf("unexpected challenge character id: %+v", query.ChallengeLiveCharacterID)
+	}
+	if query.MusicQuery != defaultChallengeDeckMusicQuery {
+		t.Fatalf("unexpected default music query: %q", query.MusicQuery)
+	}
+	if query.MusicDiff != defaultChallengeDeckMusicDiff {
+		t.Fatalf("unexpected default music diff: %q", query.MusicDiff)
 	}
 }
 

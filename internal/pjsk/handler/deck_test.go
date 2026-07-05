@@ -1181,8 +1181,8 @@ func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T
 	if params.ChallengeLiveCharacterQuery != "" {
 		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
 	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	if params.MusicQuery != defaultChallengeDeckMusicQuery || params.MusicDiff != defaultChallengeDeckMusicDiff {
+		t.Fatalf("unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
 	}
 }
 
@@ -1238,8 +1238,8 @@ func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
 	if params.ChallengeLiveCharacterID != nil {
 		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	if params.MusicQuery != defaultChallengeDeckMusicQuery || params.MusicDiff != defaultChallengeDeckMusicDiff {
+		t.Fatalf("unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
 	}
 }
 
@@ -1265,8 +1265,8 @@ func TestChallengeDeckHandleParsesCharacterAndCurrentKeyword(t *testing.T) {
 	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
 		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	if params.MusicQuery != defaultChallengeDeckMusicQuery || params.MusicDiff != defaultChallengeDeckMusicDiff {
+		t.Fatalf("unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
 	}
 }
 

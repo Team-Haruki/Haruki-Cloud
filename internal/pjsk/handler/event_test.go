@@ -359,7 +359,7 @@ func TestEventDetailHandleKeepsBareWorldBloomFilter(t *testing.T) {
 	}
 }
 
-func TestEventHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
+func TestEventHandleReturnsHelpHintOnInvalidQuery(t *testing.T) {
 	h := sekaiHandlers{}.EventDetailHandle()
 
 	_, err := h.Handle(&PjskHandlerContext{
@@ -370,7 +370,7 @@ func TestEventHandleReturnsCombinedHelpOnInvalidQuery(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !strings.Contains(err.Error(), "【查单个活动格式】") || !strings.Contains(err.Error(), "【查多个活动格式】") {
+	if got, want := err.Error(), "活动查询参数格式不正确。查看完整用法请发送：/活动 -help"; got != want {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

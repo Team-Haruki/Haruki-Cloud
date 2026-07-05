@@ -135,8 +135,7 @@ func (sekaiHandlers) LeaderCountHandle() HarukiSekaiCommandHandler {
 
 func educationCharacterMissionUsageError(triggerCmd string) error {
 	return onebot11.NewReplayError(
-		"使用方式:\n%s 角色名\n%s 角色名 all 任务名",
-		triggerCmd,
+		"参数格式不正确。查看完整用法和任务名列表请发送：%s -help",
 		triggerCmd,
 	)
 }
@@ -152,10 +151,6 @@ func (sekaiHandlers) CharacterMissionHandle() HarukiSekaiCommandHandler {
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if args == "" {
-				return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
-			}
-			lower := strings.ToLower(args)
-			if lower == "help" || args == "帮助" {
 				return nil, educationCharacterMissionUsageError(ctx.originalTriggerCmd)
 			}
 
@@ -205,12 +200,13 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 	args = strings.TrimSpace(args)
 	full, args := extractEducationAreaFullFlag(args)
 	if args == "" {
-		return education.AreaItemQuery{}, onebot11.NewReplayError(
-			"使用方式:\n%s 团名\n%s 角色名\n%s 属性\n%s 树\n%s 花\n%s full",
-			triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd,
-		)
+		if full {
+			return education.AreaItemQuery{}, educationAreaFullUsageError(triggerCmd)
+		}
+		return education.AreaItemQuery{}, educationAreaUsageError(triggerCmd)
 	}
 
+	plant, args := extractEducationAreaFlag(args, "花树", "树花", "植物")
 	tree, args := extractEducationAreaFlag(args, "树", "tree")
 	flower, args := extractEducationAreaFlag(args, "花", "flower")
 	unit, args := extractEducationAreaUnit(args)
@@ -218,10 +214,7 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 	cid, characterQuery, args := extractEducationAreaCharacter(args)
 
 	if args != "" {
-		return education.AreaItemQuery{}, onebot11.NewReplayError(
-			"使用方式:\n%s 团名\n%s 角色名\n%s 属性\n%s 树\n%s 花\n%s full",
-			triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd, triggerCmd,
-		)
+		return education.AreaItemQuery{}, educationAreaUsageError(triggerCmd)
 	}
 
 	return education.AreaItemQuery{
@@ -230,9 +223,19 @@ func buildEducationAreaQuery(args string, triggerCmd string) (education.AreaItem
 		Cid:            cid,
 		CharacterQuery: characterQuery,
 		Attr:           attr,
-		Tree:           tree,
-		Flower:         flower,
+		Tree:           tree || plant,
+		Flower:         flower || plant,
 	}, nil
+}
+
+func educationAreaUsageError(triggerCmd string) error {
+	return onebot11.NewReplayError("请指定要查询的区域道具分类，例如：%s mmj、%s miku、%s 花树。查看完整用法请发送：%s -help",
+		triggerCmd, triggerCmd, triggerCmd, triggerCmd)
+}
+
+func educationAreaFullUsageError(triggerCmd string) error {
+	return onebot11.NewReplayError("full 需要和区域道具分类一起使用，例如：%s mmj full、%s 花树 full。查看完整用法请发送：%s -help",
+		triggerCmd, triggerCmd, triggerCmd)
 }
 
 func extractEducationAreaFullFlag(args string) (bool, string) {

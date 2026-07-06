@@ -170,17 +170,17 @@ func TestPreview3DRegistryResolveRejectsBlockedHeadHairPair(t *testing.T) {
 	}
 }
 
-func TestPreview3DRegistryResolveRejectsUnlistedHairWhenHeadHasAvailablePatterns(t *testing.T) {
+func TestPreview3DRegistryResolveAllowsUnlistedHairWhenOnlyAvailablePatternsExist(t *testing.T) {
 	registry := preview3DCompatibilityTestRegistry([]preview3DCompatibilityRule{
 		{Unit: "school_refusal", HeadCostume3DID: 33011, HairCostume3DID: 99921, State: "available"},
 	})
 
-	_, err := registry.resolve("jp", 53129, "sig")
-	if err == nil {
-		t.Fatalf("expected unlisted hair for available-pattern head to be rejected")
+	selection, err := registry.resolve("jp", 53129, "sig")
+	if err != nil {
+		t.Fatalf("available patterns should not reject unlisted head/hair pairs: %v", err)
 	}
-	if !strings.Contains(err.Error(), "not in available patterns") {
-		t.Fatalf("expected available-pattern error, got %v", err)
+	if selection.HeadCostume3DID != 33011 || selection.HairCostume3DID != 33021 {
+		t.Fatalf("unexpected resolved tuple: %+v", selection)
 	}
 }
 

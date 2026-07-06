@@ -834,8 +834,6 @@ func (r *preview3DRegistry) isOfficialPresetTuple(role preview3DCharacterEntry, 
 }
 
 func (r *preview3DRegistry) validateHeadHairCompatibility(unit string, headID int, hairID int, label string) error {
-	hasAvailableHead := false
-	hasAvailablePair := false
 	for _, rule := range r.rules {
 		if rule.HeadCostume3DID != headID {
 			continue
@@ -843,19 +841,9 @@ func (r *preview3DRegistry) validateHeadHairCompatibility(unit string, headID in
 		if unit != "" && rule.Unit != "" && rule.Unit != unit {
 			continue
 		}
-		if strings.EqualFold(rule.State, "available") {
-			hasAvailableHead = true
-			if rule.HairCostume3DID == hairID {
-				hasAvailablePair = true
-			}
-			continue
-		}
 		if rule.HairCostume3DID == hairID && strings.EqualFold(rule.State, "not_available") {
 			return fmt.Errorf("%s head/hair combination is blocked: unit=%s head=%d hair=%d", label, unit, headID, hairID)
 		}
-	}
-	if hasAvailableHead && !hasAvailablePair {
-		return fmt.Errorf("%s head/hair combination is not in available patterns: unit=%s head=%d hair=%d", label, unit, headID, hairID)
 	}
 	return nil
 }

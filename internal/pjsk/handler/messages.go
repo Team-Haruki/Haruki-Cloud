@@ -112,6 +112,38 @@ func buildPrivateDataNotFoundMessage(dataLabel string, binding *accountdata.Reso
 	return fmt.Sprintf("当前%s服%s没有找到有效的 %s 数据，%s\n%s", server, uid, dataLabel, ErrMsgPrivateDataSetupGuide, ErrMsgToolboxURL)
 }
 
+func buildToolboxAccessDeniedMessage(dataLabel string, binding *accountdata.ResolvedBinding) string {
+	account := formatUserFacingBindingAccount(binding)
+	if account == "" {
+		return fmt.Sprintf("当前QQ号未在工具箱完成绑定，或无权访问该%s数据，请前往工具箱绑定当前QQ号后重试\n%s", dataLabel, ErrMsgToolboxURL)
+	}
+	return fmt.Sprintf(
+		"当前QQ号未在工具箱完成绑定，或无权访问本次查询的%s数据（查询账号：%s），请前往工具箱绑定当前QQ号后重试\n"+
+			"如果该账号不是你想要查询的账号，请根据HarukiBot使用帮助更改主账号或者解绑该账号\n%s",
+		dataLabel,
+		account,
+		ErrMsgToolboxURL,
+	)
+}
+
+func formatUserFacingBindingAccount(binding *accountdata.ResolvedBinding) string {
+	if binding == nil {
+		return ""
+	}
+	server := strings.ToUpper(strings.TrimSpace(binding.Server))
+	uid := maskUserFacingGameID(binding.PJSKUserID, binding.Visible)
+	switch {
+	case server != "" && uid != "":
+		return fmt.Sprintf("%s服%s", server, uid)
+	case uid != "":
+		return uid
+	case server != "":
+		return fmt.Sprintf("%s服", server)
+	default:
+		return ""
+	}
+}
+
 func normalizeToolboxDataLabel(dataLabel string) string {
 	dataLabel = strings.TrimSpace(strings.ToLower(dataLabel))
 	switch dataLabel {
@@ -150,11 +182,7 @@ func normalizeToolboxDataFetchError(err error, dataLabel string, binding *accoun
 		if useTempBindingNotice() {
 			return newBindingRequiredReplayError()
 		}
-		return onebot11.NewReplayError(
-			"当前QQ号未在工具箱完成绑定，或无权访问该%s数据，请前往工具箱绑定当前QQ号后重试\n%s",
-			dataLabel,
-			ErrMsgToolboxURL,
-		)
+		return onebot11.NewReplayError("%s", buildToolboxAccessDeniedMessage(dataLabel, binding))
 	case errors.Is(err, sekaiapi.ErrAccountOwnerBanned):
 		return onebot11.NewReplayError("工具箱账号已被封禁，无法获取%s数据", dataLabel)
 	}
@@ -173,7 +201,7 @@ func normalizeToolboxDataFetchError(err error, dataLabel string, binding *accoun
 
 	var apiErr *sekaiapi.ToolboxAPIError
 	if errors.As(err, &apiErr) {
-		if translated, ok := translateToolboxAPIDetail(dataLabel, apiErr.Message); ok {
+		if translated, ok := translateToolboxAPIDetail(dataLabel, apiErr.Message, binding); ok {
 			return onebot11.NewReplayError("%s", translated)
 		}
 		switch apiErr.StatusCode {

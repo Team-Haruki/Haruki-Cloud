@@ -47,7 +47,7 @@ func TestNormalizeToolboxDataFetchError(t *testing.T) {
 			name:      "invalid platform user",
 			input:     sekaiapi.ErrInvalidPlatformUser,
 			dataLabel: "mysekai",
-			wantErr:   "当前QQ号未在工具箱完成绑定，或无权访问该mysekai数据，请前往工具箱绑定当前QQ号后重试\n" + ErrMsgToolboxURL,
+			wantErr:   buildToolboxAccessDeniedMessage("mysekai", binding),
 		},
 		{
 			name:      "account owner banned",
@@ -161,7 +161,11 @@ func TestRequireVisibleSuiteSnapshotPropagatesToolboxTypedError(t *testing.T) {
 	if !errors.As(err, &replyErr) {
 		t.Fatalf("expected ReplayError, got %T (%v)", err, err)
 	}
-	if string(replyErr) != "当前QQ号未在工具箱完成绑定，或无权访问该suite数据，请前往工具箱绑定当前QQ号后重试\n"+ErrMsgToolboxURL {
+	if string(replyErr) != buildToolboxAccessDeniedMessage("suite", &accountdata.ResolvedBinding{
+		Server:     "jp",
+		PJSKUserID: "12345678901234",
+		Visible:    false,
+	}) {
 		t.Fatalf("unexpected replay error: %q", replyErr)
 	}
 }

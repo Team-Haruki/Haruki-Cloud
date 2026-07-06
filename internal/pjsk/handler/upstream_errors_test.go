@@ -3,6 +3,7 @@ package handler
 import (
 	"testing"
 
+	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -12,12 +13,13 @@ func TestNormalizeSekaiAPIFetchErrorTranslatesAuthError(t *testing.T) {
 }
 
 func TestNormalizeToolboxDataFetchErrorTranslatesPermissionDetail(t *testing.T) {
+	binding := &accountdata.ResolvedBinding{Server: "jp", PJSKUserID: "12345678901234", Visible: false}
 	err := normalizeToolboxDataFetchError(
 		&sekaiapi.ToolboxAPIError{StatusCode: 403, Message: "forbidden: invalid platform or platform_user_id for this user"},
 		"mysekai",
-		nil,
+		binding,
 	)
-	assertReplayErrorText(t, err, "当前QQ号未在工具箱完成绑定，或无权访问该mysekai数据，请前往工具箱绑定当前QQ号后重试\n"+ErrMsgToolboxURL)
+	assertReplayErrorText(t, err, buildToolboxAccessDeniedMessage("mysekai", binding))
 }
 
 func TestNormalizeSKUserFacingErrorTranslatesTrackerRateLimit(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -211,7 +212,7 @@ func normalizeDeckServiceUserFacingError(err error) error {
 	return err
 }
 
-func translateToolboxAPIDetail(dataLabel string, message string) (string, bool) {
+func translateToolboxAPIDetail(dataLabel string, message string, binding *accountdata.ResolvedBinding) (string, bool) {
 	lower := strings.ToLower(strings.TrimSpace(message))
 	switch {
 	case lower == "":
@@ -220,7 +221,7 @@ func translateToolboxAPIDetail(dataLabel string, message string) (string, bool) 
 		if useTempBindingNotice() {
 			return ErrMsgTempBindingUnavailable, true
 		}
-		return fmt.Sprintf("当前QQ号未在工具箱完成绑定，或无权访问该%s数据，请前往工具箱绑定当前QQ号后重试\n%s", dataLabel, ErrMsgToolboxURL), true
+		return buildToolboxAccessDeniedMessage(dataLabel, binding), true
 	case strings.Contains(lower, "account owner is banned"):
 		return fmt.Sprintf("工具箱账号已被封禁，无法获取%s数据", dataLabel), true
 	case strings.Contains(lower, "account binding not found"):

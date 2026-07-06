@@ -80,18 +80,18 @@ type preview3DPartRegistry struct {
 }
 
 type preview3DPartEntry struct {
-	Costume3DID                   int    `json:"costume3dId"`
-	PartType                      string `json:"partType"`
-	CharacterID                   int    `json:"characterId"`
-	Unit                          string `json:"unit"`
-	ColorID                       int    `json:"colorId"`
-	Costume3DGroupID              int    `json:"costume3dGroupId"`
-	BundlePath                    string `json:"bundlePath"`
-	ColorVariationBundlePath      string `json:"colorVariationBundlePath"`
-	HeadCostume3DAssetbundleType string `json:"headCostume3dAssetbundleType"`
-	PackagePath                   string `json:"packagePath"`
-	Status                        string `json:"status"`
-	Warnings                      []string `json:"warnings"`
+	Costume3DID                  int      `json:"costume3dId"`
+	PartType                     string   `json:"partType"`
+	CharacterID                  int      `json:"characterId"`
+	Unit                         string   `json:"unit"`
+	ColorID                      int      `json:"colorId"`
+	Costume3DGroupID             int      `json:"costume3dGroupId"`
+	BundlePath                   string   `json:"bundlePath"`
+	ColorVariationBundlePath     string   `json:"colorVariationBundlePath"`
+	HeadCostume3DAssetbundleType string   `json:"headCostume3dAssetbundleType"`
+	PackagePath                  string   `json:"packagePath"`
+	Status                       string   `json:"status"`
+	Warnings                     []string `json:"warnings"`
 }
 
 type preview3DCompatibilityRegistry struct {
@@ -898,7 +898,7 @@ func (r *preview3DRegistry) applyHeadHairFallback(
 		return hairID, headOptionalID, nil
 	}
 
-	if fallbackMode == "head" || fallbackMode == "auto" {
+	if preview3DHeadSideFallbackMode(fallbackMode) || fallbackMode == "auto" {
 		if defaultHairID, ok := r.defaultHairForHead(role.Unit, effectiveHeadID); ok {
 			if _, usable := r.partForRole(defaultHairID, role, "hair"); usable {
 				if !r.headHairBlocked(role.Unit, effectiveHeadID, defaultHairID) {
@@ -920,6 +920,10 @@ func (r *preview3DRegistry) applyHeadHairFallback(
 	}
 
 	return hairID, headOptionalID, fmt.Errorf("%s head/hair combination is blocked: unit=%s head=%d hair=%d", label, role.Unit, effectiveHeadID, hairID)
+}
+
+func preview3DHeadSideFallbackMode(mode string) bool {
+	return mode == "head" || mode == "head_optional" || mode == "accessory"
 }
 
 func (r *preview3DRegistry) headHairBlocked(unit string, headID int, hairID int) bool {

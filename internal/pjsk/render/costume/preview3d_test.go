@@ -45,13 +45,13 @@ func TestPreview3DRegistryResolveReportsMissingRuntimePackageDetails(t *testing.
 	registry := &preview3DRegistry{
 		parts: []preview3DPartEntry{{
 			Costume3DID: 33002,
-			PartType: "body",
+			PartType:    "body",
 			CharacterID: 20,
-			Unit: "school_refusal",
-			Status: "missing",
+			Unit:        "school_refusal",
+			Status:      "missing",
 			PackagePath: "parts/body/33002/school_refusal",
-			BundlePath: "live_pv/model/characterv2/body/0033/0002.bundle",
-			Warnings: []string{"body bundle not found"},
+			BundlePath:  "live_pv/model/characterv2/body/0033/0002.bundle",
+			Warnings:    []string{"body bundle not found"},
 		}},
 	}
 
@@ -188,7 +188,7 @@ func TestPreview3DRegistryResolveImageIDIgnoresRegion(t *testing.T) {
 
 func TestPreview3DRegistryResolveRejectsBlockedHeadHairPair(t *testing.T) {
 	registry := preview3DCompatibilityTestRegistry([]preview3DCompatibilityRule{
-		{Unit: "school_refusal", HeadCostume3DID: 33011, HairCostume3DID: 33021, State: "not_available"},
+		{Unit: "school_refusal", HeadCostume3DID: 53129, HairCostume3DID: 33021, State: "not_available"},
 	})
 
 	_, err := registry.resolve("jp", 53129, "sig")

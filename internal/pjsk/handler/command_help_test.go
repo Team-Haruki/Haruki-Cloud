@@ -77,7 +77,7 @@ func TestCommandHelpPlainHelpIsQueryText(t *testing.T) {
 	}
 }
 
-func TestCommandHelpDeckOverviewForGenericDeckTrigger(t *testing.T) {
+func TestCommandHelpDeckGenericTriggerUsesEventDeckDoc(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
 
@@ -92,8 +92,35 @@ func TestCommandHelpDeckOverviewForGenericDeckTrigger(t *testing.T) {
 	if resolved == nil || !resolved.IsHelp {
 		t.Fatalf("expected help command request, got %+v", resolved)
 	}
-	if path := commandHelpRequestPath(resolved); path != "deck" {
-		t.Fatalf("commandHelpRequestPath() = %q, want deck", path)
+	if path := commandHelpRequestPath(resolved); path != "deck/event" {
+		t.Fatalf("commandHelpRequestPath() = %q, want deck/event", path)
+	}
+	md, err := commandHelpMarkdown(resolved)
+	if err != nil {
+		t.Fatalf("commandHelpMarkdown() error = %v", err)
+	}
+	if !strings.Contains(md, "# 活动组卡") {
+		t.Fatalf("expected event deck markdown, got %q", md)
+	}
+}
+
+func TestCommandHelpMysekaiBlueprintTriggerUsesBlueprintDoc(t *testing.T) {
+	h := sekaiHandlers{}.MysekaiBlueprintHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	resolved, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/msb",
+		ArgText:    "-help",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if resolved == nil || !resolved.IsHelp {
+		t.Fatalf("expected help command request, got %+v", resolved)
+	}
+	if path := commandHelpRequestPath(resolved); path != "mysekai/blueprint" {
+		t.Fatalf("commandHelpRequestPath() = %q, want mysekai/blueprint", path)
 	}
 }
 
@@ -159,6 +186,48 @@ func TestCommandHelpMarkdownAvailableForRegisteredRoutes(t *testing.T) {
 	}
 }
 
+func TestCommandHelpExactMarkdownAvailableForRegisteredRoutes(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+	routes := corehandler.ListBotRoutes()
+	if len(routes) == 0 {
+		t.Fatal("expected registered bot routes")
+	}
+
+	seen := map[string]struct{}{}
+	for _, route := range routes {
+		key := commandHelpDocKey(route.Path)
+		if key == "" {
+			continue
+		}
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		t.Run(key, func(t *testing.T) {
+			md, ok, err := readCommandHelpMarkdown(key)
+			if err != nil {
+				t.Fatalf("readCommandHelpMarkdown(%q) error = %v", key, err)
+			}
+			if !ok {
+				t.Fatalf("missing exact help markdown for route path %q", route.Path)
+			}
+			if strings.TrimSpace(md) == "" {
+				t.Fatalf("exact help markdown for route path %q is empty", route.Path)
+			}
+		})
+	}
+
+	t.Run("mysekai_blueprint", func(t *testing.T) {
+		md, ok, err := readCommandHelpMarkdown("mysekai/blueprint")
+		if err != nil {
+			t.Fatalf("readCommandHelpMarkdown(mysekai/blueprint) error = %v", err)
+		}
+		if !ok || strings.TrimSpace(md) == "" {
+			t.Fatal("missing exact help markdown for /msb blueprint trigger")
+		}
+	})
+}
+
 func TestCommandHelpLookupKeysPreferExactThenFamily(t *testing.T) {
 	keys := commandHelpLookupKeys("music/bpm")
 	want := []string{"music_bpm", "music"}
@@ -167,13 +236,13 @@ func TestCommandHelpLookupKeysPreferExactThenFamily(t *testing.T) {
 	}
 }
 
-func TestCommandHelpMarkdownUsesModuleFileFallback(t *testing.T) {
+func TestCommandHelpMarkdownPrefersExactFile(t *testing.T) {
 	md, err := commandHelpMarkdown(&CommandRequest{CommandPath: "music/bpm"})
 	if err != nil {
 		t.Fatalf("commandHelpMarkdown() error = %v", err)
 	}
-	if !strings.Contains(md, "# 音乐与乐曲") {
-		t.Fatalf("expected music module markdown, got %q", md)
+	if !strings.Contains(md, "# 查 BPM") {
+		t.Fatalf("expected exact BPM markdown, got %q", md)
 	}
 }
 

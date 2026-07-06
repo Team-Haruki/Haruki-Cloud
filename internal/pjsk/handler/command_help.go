@@ -89,8 +89,8 @@ func commandHelpRequestPath(resolved *CommandRequest) string {
 	}
 	path := strings.Trim(strings.TrimSpace(resolved.CommandPath), "/")
 	trigger := normalizeCommandHelpTrigger(resolved.TriggerCommand)
-	if path == "deck/event" && isGenericDeckHelpTrigger(trigger) {
-		return "deck"
+	if path == "mysekai/talk-list" && isMysekaiBlueprintHelpTrigger(trigger) {
+		return "mysekai/blueprint"
 	}
 	return path
 }
@@ -114,9 +114,9 @@ func normalizeCommandHelpTrigger(trigger string) string {
 	return trigger
 }
 
-func isGenericDeckHelpTrigger(trigger string) bool {
+func isMysekaiBlueprintHelpTrigger(trigger string) bool {
 	switch trigger {
-	case "/组卡", "/组队", "/配队":
+	case "/msb", "/mysekai blueprint", "/mysekai 蓝图", "/pjsk mysekai blueprint":
 		return true
 	default:
 		return false

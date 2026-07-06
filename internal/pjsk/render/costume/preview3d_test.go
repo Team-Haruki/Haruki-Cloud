@@ -41,6 +41,36 @@ func TestPreview3DRegistryResolveSkipsMissingGroupParts(t *testing.T) {
 	}
 }
 
+func TestPreview3DRegistryResolveReportsMissingRuntimePackageDetails(t *testing.T) {
+	registry := &preview3DRegistry{
+		parts: []preview3DPartEntry{{
+			Costume3DID: 33002,
+			PartType: "body",
+			CharacterID: 20,
+			Unit: "school_refusal",
+			Status: "missing",
+			PackagePath: "parts/body/33002/school_refusal",
+			BundlePath: "live_pv/model/characterv2/body/0033/0002.bundle",
+			Warnings: []string{"body bundle not found"},
+		}},
+	}
+
+	_, err := registry.resolve("jp", 33002, "sig")
+	if err == nil {
+		t.Fatalf("expected missing runtime package error")
+	}
+	for _, want := range []string{
+		"missing runtime package",
+		"packagePath=parts/body/33002/school_refusal",
+		"bundlePath=live_pv/model/characterv2/body/0033/0002.bundle",
+		"warning=body bundle not found",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("missing %q in error: %v", want, err)
+		}
+	}
+}
+
 func TestPreview3DRegistryResolveSkipsMissingDefaultRoles(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{
@@ -195,6 +225,63 @@ func TestPreview3DRegistryResolveAllowsOfficialPresetOutsideAvailablePatterns(t 
 	}
 	if selection.HeadCostume3DID != 33011 || selection.HairCostume3DID != 33021 {
 		t.Fatalf("unexpected official tuple: %+v", selection)
+	}
+}
+
+func TestPreview3DRegistryResolveAccessoryConflictUsesDefaultHair(t *testing.T) {
+	registry := preview3DCompatibilityTestRegistry([]preview3DCompatibilityRule{
+		{Unit: "school_refusal", HeadCostume3DID: 53129, HairCostume3DID: 33021, State: "not_available"},
+		{Unit: "school_refusal", HeadCostume3DID: 53129, HairCostume3DID: 99021, State: "default_hint"},
+	})
+	registry.parts = append(registry.parts,
+		preview3DPartEntry{Costume3DID: 99021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 990, Status: "available"},
+	)
+
+	selection, err := registry.resolve("jp", 53129, "sig")
+	if err != nil {
+		t.Fatalf("resolve accessory with default hair failed: %v", err)
+	}
+	if selection.HairCostume3DID != 99021 {
+		t.Fatalf("expected default hair 99021, got %+v", selection)
+	}
+	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 53129 {
+		t.Fatalf("expected selected accessory to stay active, got %+v", selection.HeadOptionalCostume3DID)
+	}
+}
+
+func TestPreview3DRegistryResolveHairConflictUsesDefaultAccessory(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{
+			Character3DID:   5,
+			CharacterID:     20,
+			Unit:            "school_refusal",
+			BodyCostume3DID: 33001,
+			HeadCostume3DID: 33011,
+			HairCostume3DID: 33021,
+			Status:          "available",
+		}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 33001, PartType: "body", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 33011, PartType: "head", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 30129, PartType: "head_optional", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 990, Status: "available"},
+			{Costume3DID: 53129, PartType: "head_optional", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 531, Status: "empty"},
+			{Costume3DID: 33021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 99021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 990, Status: "available"},
+		},
+		rules: []preview3DCompatibilityRule{
+			{Unit: "school_refusal", HeadCostume3DID: 30129, HairCostume3DID: 99021, State: "not_available"},
+		},
+	}
+
+	selection, err := registry.resolve("jp", 99021, "sig")
+	if err != nil {
+		t.Fatalf("resolve hair with default accessory failed: %v", err)
+	}
+	if selection.HairCostume3DID != 99021 {
+		t.Fatalf("expected selected hair to stay active, got %+v", selection)
+	}
+	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 53129 {
+		t.Fatalf("expected default empty accessory 53129, got %+v", selection.HeadOptionalCostume3DID)
 	}
 }
 

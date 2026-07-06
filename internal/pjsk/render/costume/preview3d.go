@@ -80,13 +80,14 @@ type preview3DPartRegistry struct {
 }
 
 type preview3DPartEntry struct {
-	Costume3DID      int    `json:"costume3dId"`
-	PartType         string `json:"partType"`
-	CharacterID      int    `json:"characterId"`
-	Unit             string `json:"unit"`
-	ColorID          int    `json:"colorId"`
-	Costume3DGroupID int    `json:"costume3dGroupId"`
-	Status           string `json:"status"`
+	Costume3DID                   int    `json:"costume3dId"`
+	PartType                      string `json:"partType"`
+	CharacterID                   int    `json:"characterId"`
+	Unit                          string `json:"unit"`
+	ColorID                       int    `json:"colorId"`
+	Costume3DGroupID              int    `json:"costume3dGroupId"`
+	HeadCostume3DAssetbundleType string `json:"headCostume3dAssetbundleType"`
+	Status                        string `json:"status"`
 }
 
 type preview3DCompatibilityRegistry struct {
@@ -509,7 +510,7 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int, cacheSignatu
 			headOptionalID = &id
 		}
 	}
-	switch normalizePreview3DPartType(selected.PartType) {
+	switch preview3DPartSlot(selected) {
 	case "body":
 		bodyID = selected.Costume3DID
 	case "head":
@@ -605,12 +606,12 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	}
 	explicitHead := false
 	explicitOptional := false
-	for _, accessoryID := range query.AccessoryCostumeIDs {
-		part, ok := r.partForRole(accessoryID, role, "head", "head_optional")
+	for _, headAccessoryID := range query.AccessoryCostumeIDs {
+		part, ok := r.partForRole(headAccessoryID, role, "head", "head_optional")
 		if !ok {
-			return preview3DSelection{}, fmt.Errorf("3d combo accessory part not usable for unit=%s: %d", role.Unit, accessoryID)
+			return preview3DSelection{}, fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", role.Unit, headAccessoryID)
 		}
-		switch normalizePreview3DPartType(part.PartType) {
+		switch preview3DPartSlot(part) {
 		case "head":
 			if explicitHead {
 				return preview3DSelection{}, fmt.Errorf("组合里多个饰品落到主饰品槽位")
@@ -732,8 +733,8 @@ func (r *preview3DRegistry) comboRoleMatches(query ComboQuery, role preview3DCha
 			return false
 		}
 	}
-	for _, accessoryID := range query.AccessoryCostumeIDs {
-		if _, ok := r.partForRole(accessoryID, role, "head", "head_optional"); !ok {
+	for _, headAccessoryID := range query.AccessoryCostumeIDs {
+		if _, ok := r.partForRole(headAccessoryID, role, "head", "head_optional"); !ok {
 			return false
 		}
 	}
@@ -747,8 +748,8 @@ func (r *preview3DRegistry) comboAnchorPart(query ComboQuery, role preview3DChar
 	if query.HairCostume3DID > 0 {
 		return r.partForRole(query.HairCostume3DID, role, "hair")
 	}
-	for _, accessoryID := range query.AccessoryCostumeIDs {
-		if part, ok := r.partForRole(accessoryID, role, "head", "head_optional"); ok {
+	for _, headAccessoryID := range query.AccessoryCostumeIDs {
+		if part, ok := r.partForRole(headAccessoryID, role, "head", "head_optional"); ok {
 			return part, true
 		}
 	}
@@ -770,7 +771,7 @@ func (r *preview3DRegistry) partForRole(costume3DID int, role preview3DCharacter
 		if part.Unit != "" && part.Unit != role.Unit {
 			continue
 		}
-		if _, ok := allowed[normalizePreview3DPartType(part.PartType)]; !ok {
+		if _, ok := allowed[preview3DPartSlot(part)]; !ok {
 			continue
 		}
 		return part, true
@@ -790,7 +791,7 @@ func (r *preview3DRegistry) groupPart(selected preview3DPartEntry, unit string, 
 		if unit != "" && part.Unit != "" && part.Unit != unit {
 			continue
 		}
-		if normalizePreview3DPartType(part.PartType) != partType {
+		if preview3DPartSlot(part) != partType {
 			continue
 		}
 		candidates = append(candidates, part)
@@ -867,6 +868,17 @@ func normalizePreview3DPartType(partType string) string {
 	default:
 		return partType
 	}
+}
+
+func preview3DPartSlot(part preview3DPartEntry) string {
+	slot := normalizePreview3DPartType(part.PartType)
+	if slot == "head" || slot == "head_optional" {
+		switch strings.TrimSpace(strings.ToLower(part.HeadCostume3DAssetbundleType)) {
+		case "head_and_hair", "head_all", "head_front", "head_back":
+			return "head"
+		}
+	}
+	return slot
 }
 
 func sanitizePreview3DImagePart(value string) string {

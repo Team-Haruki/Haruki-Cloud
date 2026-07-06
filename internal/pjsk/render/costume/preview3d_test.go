@@ -198,6 +198,36 @@ func TestPreview3DRegistryResolveAllowsOfficialPresetOutsideAvailablePatterns(t 
 	}
 }
 
+func TestPreview3DRegistryResolveTreatsCompleteHeadTypesAsHeadSlot(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{
+			Character3DID:   5,
+			CharacterID:     20,
+			Unit:            "school_refusal",
+			BodyCostume3DID: 33001,
+			HeadCostume3DID: 33011,
+			HairCostume3DID: 33021,
+			Status:          "available",
+		}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 33001, PartType: "body", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 450, Status: "available"},
+			{Costume3DID: 33021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 450, Status: "available"},
+			{Costume3DID: 45033, PartType: "head_optional", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 450, HeadCostume3DAssetbundleType: "head_and_hair", Status: "available"},
+		},
+	}
+
+	selection, err := registry.resolve("jp", 45033, "sig")
+	if err != nil {
+		t.Fatalf("resolve complete head failed: %v", err)
+	}
+	if selection.HeadCostume3DID != 45033 {
+		t.Fatalf("expected complete head to use the main head slot, got %+v", selection)
+	}
+	if selection.HeadOptionalCostume3DID != nil {
+		t.Fatalf("complete head types must not also fill the head_optional slot: %+v", selection.HeadOptionalCostume3DID)
+	}
+}
+
 func TestPreview3DCacheSignatureChangesWithVersionAndCamera(t *testing.T) {
 	base := preview3DCacheSignature("v1", 1400, 1000, 2, "capture")
 	if base == preview3DCacheSignature("v2", 1400, 1000, 2, "capture") {

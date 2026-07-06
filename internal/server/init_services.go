@@ -156,6 +156,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			Enabled:               harukiConfig.Cfg.PJSKRender.Preview3D.Enabled,
 			EngineBaseURL:         harukiConfig.Cfg.PJSKRender.Preview3D.EngineBaseURL,
 			StaticRelativeDir:     harukiConfig.Cfg.PJSKRender.Preview3D.StaticRelativeDir,
+			StaticOutputDir:       harukiConfig.Cfg.PJSKRender.Preview3D.StaticOutputDir,
 			Width:                 harukiConfig.Cfg.PJSKRender.Preview3D.Width,
 			Height:                harukiConfig.Cfg.PJSKRender.Preview3D.Height,
 			Scale:                 harukiConfig.Cfg.PJSKRender.Preview3D.Scale,

@@ -241,6 +241,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envBool("HARUKI_PJSK_RENDER_3D_PREVIEW_ENABLED", &cfg.PJSKRender.Preview3D.Enabled)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URL", &cfg.PJSKRender.Preview3D.EngineBaseURL)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_STATIC_RELATIVE_DIR", &cfg.PJSKRender.Preview3D.StaticRelativeDir)
+	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_STATIC_OUTPUT_DIR", &cfg.PJSKRender.Preview3D.StaticOutputDir)
 	envInt("HARUKI_PJSK_RENDER_3D_PREVIEW_WIDTH", &cfg.PJSKRender.Preview3D.Width)
 	envInt("HARUKI_PJSK_RENDER_3D_PREVIEW_HEIGHT", &cfg.PJSKRender.Preview3D.Height)
 	envFloat("HARUKI_PJSK_RENDER_3D_PREVIEW_SCALE", &cfg.PJSKRender.Preview3D.Scale)
@@ -391,6 +392,7 @@ type Preview3DConfig struct {
 	Enabled               bool          `yaml:"enabled"`
 	EngineBaseURL         string        `yaml:"engine_base_url"`
 	StaticRelativeDir     string        `yaml:"static_relative_dir"`
+	StaticOutputDir       string        `yaml:"static_output_dir"`
 	Width                 int           `yaml:"width"`
 	Height                int           `yaml:"height"`
 	Scale                 float64       `yaml:"scale"`

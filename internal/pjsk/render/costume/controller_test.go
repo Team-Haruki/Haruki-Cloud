@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	renderassets "haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
@@ -314,10 +317,16 @@ func TestBuildCostumeDetailRequestLeaves3DPreviewForRenderMiss(t *testing.T) {
 func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	var capturePayload map[string]any
 	var engineRequests atomic.Int32
+	const capturePNG = "preview-png"
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		engineRequests.Add(1)
 		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
 			http.NotFound(w, r)
+			return
+		}
+		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/captures/") {
+			w.Header().Set("content-type", "image/png")
+			fmt.Fprint(w, capturePNG)
 			return
 		}
 		switch r.URL.Path {
@@ -366,12 +375,13 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	}))
 	defer drawingServer.Close()
 
+	assetRoot := t.TempDir()
 	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
 		makeDenseListTestCostumeWithColor(33001, "body", 20, 1),
 		makeDenseListTestCostumeWithColor(33002, "body", 20, 2),
 		makeDenseListTestCostumeWithColor(33011, "head", 20, 1),
 		makeDenseListTestCostumeWithColor(33021, "hair", 20, 1),
-	}}, drawing.NewHarukiDrawingClient(drawingServer.URL), nil)
+	}}, drawing.NewHarukiDrawingClient(drawingServer.URL), renderassets.NewAssetHelper(assetRoot, nil))
 	controller.Set3DPreviewConfig(Preview3DConfig{
 		Enabled:             true,
 		EngineBaseURL:       engine.URL,
@@ -400,6 +410,10 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	}
 	if capturePayload["cameraPreset"] != "capture" {
 		t.Fatalf("unexpected capture camera preset: %v", capturePayload["cameraPreset"])
+	}
+	staticPreviewPath := filepath.Join(assetRoot, "static_images", "pjsk_3d_preview", wantImageID+".png")
+	if data, err := os.ReadFile(staticPreviewPath); err != nil || string(data) != capturePNG {
+		t.Fatalf("expected synced static preview at %s, data=%q err=%v", staticPreviewPath, string(data), err)
 	}
 	engineRequestsAfterFirst := engineRequests.Load()
 	drawingRequestsAfterFirst := drawingRequests.Load()

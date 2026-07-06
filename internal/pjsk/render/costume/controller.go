@@ -53,7 +53,28 @@ func (c *Controller) Set3DPreviewConfig(cfg Preview3DConfig) {
 	if c == nil {
 		return
 	}
+	if strings.TrimSpace(cfg.StaticOutputDir) == "" {
+		cfg.StaticOutputDir = c.default3DPreviewStaticOutputDir(cfg.StaticRelativeDir)
+	}
 	c.preview3D = NewPreview3DService(cfg)
+}
+
+func (c *Controller) default3DPreviewStaticOutputDir(staticRelativeDir string) string {
+	if c == nil || c.assets == nil {
+		return ""
+	}
+	root := strings.TrimSpace(c.assets.Primary())
+	if root == "" || strings.HasPrefix(strings.ToLower(root), "http://") || strings.HasPrefix(strings.ToLower(root), "https://") {
+		return ""
+	}
+	if filepath.Clean(root) == "." {
+		return ""
+	}
+	rel := strings.Trim(strings.TrimSpace(staticRelativeDir), "/")
+	if rel == "" {
+		rel = defaultPreview3DStaticRelativeDir
+	}
+	return filepath.Join(root, filepath.FromSlash(rel))
 }
 
 func (c *Controller) WithContext(ctx context.Context) *Controller {

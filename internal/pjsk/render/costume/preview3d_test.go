@@ -431,6 +431,54 @@ func TestPreview3DRegistryResolveComboKeepsEmptyHeadOptionalSlot(t *testing.T) {
 	}
 }
 
+func TestPreview3DRegistryResolveComboKeepsOfficialDefaultHeadWhenGroupHasVirtualHead(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 17, CharacterID: 17, Unit: "school_refusal", BodyCostume3DID: 34, HeadCostume3DID: 33, HairCostume3DID: 217, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 33, PartType: "head_optional", CharacterID: 17, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 17, HeadCostume3DAssetbundleType: "head_only", Status: "empty"},
+			{Costume3DID: 34, PartType: "body", CharacterID: 17, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 17, Status: "planned"},
+			{Costume3DID: 217, PartType: "hair", CharacterID: 17, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 217, HeadCostume3DAssetbundleType: "head_and_hair", Status: "planned"},
+			{Costume3DID: 10000002, PartType: "head", CharacterID: 17, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 17, HeadCostume3DAssetbundleType: "head_and_hair", Status: "planned"},
+		},
+		rules: []preview3DCompatibilityRule{
+			{Unit: "school_refusal", HeadCostume3DID: 10000002, HairCostume3DID: 217, State: "not_available"},
+		},
+	}
+
+	selection, err := registry.resolveCombo("jp", ComboQuery{
+		Unit:            "school_refusal",
+		BodyCostume3DID: 34,
+		HairCostume3DID: 217,
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolve combo failed: %v", err)
+	}
+	if selection.HeadCostume3DID != 33 {
+		t.Fatalf("expected official default head 33, got %d", selection.HeadCostume3DID)
+	}
+	if selection.HeadOptionalCostume3DID != nil {
+		t.Fatalf("did not expect implicit empty optional in default tuple, got %+v", selection.HeadOptionalCostume3DID)
+	}
+
+	selection, err = registry.resolveCombo("jp", ComboQuery{
+		Unit:                "school_refusal",
+		BodyCostume3DID:     34,
+		HairCostume3DID:     217,
+		AccessoryCostumeIDs: []int{33},
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolve combo with empty optional failed: %v", err)
+	}
+	if selection.HeadCostume3DID != 33 {
+		t.Fatalf("expected explicit empty optional to keep official default head 33, got %d", selection.HeadCostume3DID)
+	}
+	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 33 {
+		t.Fatalf("expected explicit empty optional 33 to stay selected, got %+v", selection.HeadOptionalCostume3DID)
+	}
+}
+
 func TestPreview3DRegistryResolveComboRequiresUnitWhenAmbiguous(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{

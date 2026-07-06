@@ -160,6 +160,7 @@ pjsk_render:
     enabled: false
     engine_base_url: "http://haruki-3d-engine:8080"
     static_relative_dir: "static_images/pjsk_3d_preview"
+    static_output_dir: ""
     width: 1400
     height: 1000
     scale: 2

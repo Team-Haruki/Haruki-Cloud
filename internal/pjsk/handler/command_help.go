@@ -25,7 +25,7 @@ func commandHelpMessage(ctx context.Context, resolved *CommandRequest, app *rend
 		return nil, err
 	}
 	if app == nil || app.Drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return commandHelpTextMessage(markdown), nil
 	}
 	path := commandHelpRequestPath(resolved)
 	image, err := app.Drawing.WithContext(ctx).GenerateCommandHelp(&drawing.CommandHelpRenderRequest{
@@ -34,18 +34,22 @@ func commandHelpMessage(ctx context.Context, resolved *CommandRequest, app *rend
 		Markdown: markdown,
 	})
 	if err != nil {
-		return nil, err
+		return commandHelpTextMessage(markdown), nil
 	}
 	if app.ImageCache != nil {
 		url, err := app.ImageCache.StoreAndGetURL(ctx, image, BotModulePJSK)
 		if err != nil {
-			return nil, err
+			return commandHelpTextMessage(markdown), nil
 		}
 		return onebot11.Message{onebot11.Image(url, "")}, nil
 	}
 	return onebot11.Message{
 		onebot11.Image("base64://"+base64.StdEncoding.EncodeToString(image), ""),
 	}, nil
+}
+
+func commandHelpTextMessage(markdown string) onebot11.Message {
+	return onebot11.Message{onebot11.Text(strings.TrimSpace(markdown))}
 }
 
 func commandHelpMarkdown(resolved *CommandRequest) (string, error) {

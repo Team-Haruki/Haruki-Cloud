@@ -97,6 +97,48 @@ func TestCommandHelpDeckOverviewForGenericDeckTrigger(t *testing.T) {
 	}
 }
 
+func TestCommandHelpFallsBackToTextWhenDrawingUnavailable(t *testing.T) {
+	resolved := &CommandRequest{
+		IsHelp:         true,
+		CommandPath:    "profile/unbind",
+		TriggerCommand: "/解绑",
+	}
+
+	message, err := ExecuteCommandRequest(context.Background(), resolved, &renderapp.App{})
+	if err != nil {
+		t.Fatalf("ExecuteCommandRequest() error = %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+		t.Fatalf("expected single text help message, got %+v", message)
+	}
+	text, ok := message[0].Data.(onebot11.TextData)
+	if !ok || !strings.Contains(text.Text, "/解绑") {
+		t.Fatalf("expected unbind help text, got %+v", message[0].Data)
+	}
+}
+
+func TestCommandHelpFallsBackToTextWhenDrawingFails(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "missing help renderer", http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	resolved := &CommandRequest{
+		IsHelp:         true,
+		CommandPath:    "music",
+		TriggerCommand: "/查曲",
+	}
+
+	app := &renderapp.App{Drawing: drawing.NewHarukiDrawingClient(server.URL)}
+	message, err := ExecuteCommandRequest(context.Background(), resolved, app)
+	if err != nil {
+		t.Fatalf("ExecuteCommandRequest() error = %v", err)
+	}
+	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+		t.Fatalf("expected single text help message, got %+v", message)
+	}
+}
+
 func TestCommandHelpMarkdownAvailableForRegisteredRoutes(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 	routes := corehandler.ListBotRoutes()

@@ -18,6 +18,9 @@ func (GameAccount) Fields() []ent.Field {
 		field.Int("id"),
 		field.String("user_id").MaxLen(30).Comment("PJSK game user ID"),
 		field.String("server").MaxLen(2).Comment("PJSK server region"),
+		field.Bool("is_banned").
+			Default(false).
+			Comment("Whether this PJSK game account is blocked from new bindings"),
 		field.JSON("bg", &drawing.ProfileBgSettings{}).
 			Optional().
 			Comment("Profile card background settings stored as JSONB"),

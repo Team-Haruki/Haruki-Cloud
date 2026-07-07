@@ -29,6 +29,8 @@ type User struct {
 	PjskBanState bool `json:"pjsk_ban_state,omitempty"`
 	// Reason for PJSK ban
 	PjskBanReason string `json:"pjsk_ban_reason,omitempty"`
+	// Attempts to bind PJSK game accounts blocked by blacklist
+	PjskBannedGameAccountBindAttempts int `json:"pjsk_banned_game_account_bind_attempts,omitempty"`
 	// Whether user is banned from Chunithm features
 	ChunithmBanState bool `json:"chunithm_ban_state,omitempty"`
 	// Reason for Chunithm ban
@@ -67,7 +69,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldBanState, user.FieldPjskBanState, user.FieldChunithmBanState, user.FieldPjskMainBanState, user.FieldPjskRankingBanState, user.FieldPjskAliasBanState, user.FieldPjskMysekaiBanState, user.FieldChunithmMainBanState, user.FieldChunithmAliasBanState:
 			values[i] = new(sql.NullBool)
-		case user.FieldID:
+		case user.FieldID, user.FieldPjskBannedGameAccountBindAttempts:
 			values[i] = new(sql.NullInt64)
 		case user.FieldPlatform, user.FieldUserID, user.FieldBanReason, user.FieldPjskBanReason, user.FieldChunithmBanReason, user.FieldPjskMainBanReason, user.FieldPjskRankingBanReason, user.FieldPjskAliasBanReason, user.FieldPjskMysekaiBanReason, user.FieldChunithmMainBanReason, user.FieldChunithmAliasBanReason:
 			values[i] = new(sql.NullString)
@@ -127,6 +129,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field pjsk_ban_reason", values[i])
 			} else if value.Valid {
 				_m.PjskBanReason = value.String
+			}
+		case user.FieldPjskBannedGameAccountBindAttempts:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field pjsk_banned_game_account_bind_attempts", values[i])
+			} else if value.Valid {
+				_m.PjskBannedGameAccountBindAttempts = int(value.Int64)
 			}
 		case user.FieldChunithmBanState:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -265,6 +273,9 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("pjsk_ban_reason=")
 	builder.WriteString(_m.PjskBanReason)
+	builder.WriteString(", ")
+	builder.WriteString("pjsk_banned_game_account_bind_attempts=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PjskBannedGameAccountBindAttempts))
 	builder.WriteString(", ")
 	builder.WriteString("chunithm_ban_state=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ChunithmBanState))

@@ -23,6 +23,8 @@ const (
 	FieldPjskBanState = "pjsk_ban_state"
 	// FieldPjskBanReason holds the string denoting the pjsk_ban_reason field in the database.
 	FieldPjskBanReason = "pjsk_ban_reason"
+	// FieldPjskBannedGameAccountBindAttempts holds the string denoting the pjsk_banned_game_account_bind_attempts field in the database.
+	FieldPjskBannedGameAccountBindAttempts = "pjsk_banned_game_account_bind_attempts"
 	// FieldChunithmBanState holds the string denoting the chunithm_ban_state field in the database.
 	FieldChunithmBanState = "chunithm_ban_state"
 	// FieldChunithmBanReason holds the string denoting the chunithm_ban_reason field in the database.
@@ -64,6 +66,7 @@ var Columns = []string{
 	FieldBanReason,
 	FieldPjskBanState,
 	FieldPjskBanReason,
+	FieldPjskBannedGameAccountBindAttempts,
 	FieldChunithmBanState,
 	FieldChunithmBanReason,
 	FieldPjskMainBanState,
@@ -103,6 +106,8 @@ var (
 	DefaultPjskBanState bool
 	// PjskBanReasonValidator is a validator for the "pjsk_ban_reason" field. It is called by the builders before save.
 	PjskBanReasonValidator func(string) error
+	// DefaultPjskBannedGameAccountBindAttempts holds the default value on creation for the "pjsk_banned_game_account_bind_attempts" field.
+	DefaultPjskBannedGameAccountBindAttempts int
 	// DefaultChunithmBanState holds the default value on creation for the "chunithm_ban_state" field.
 	DefaultChunithmBanState bool
 	// ChunithmBanReasonValidator is a validator for the "chunithm_ban_reason" field. It is called by the builders before save.
@@ -169,6 +174,11 @@ func ByPjskBanState(opts ...sql.OrderTermOption) OrderOption {
 // ByPjskBanReason orders the results by the pjsk_ban_reason field.
 func ByPjskBanReason(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPjskBanReason, opts...).ToFunc()
+}
+
+// ByPjskBannedGameAccountBindAttempts orders the results by the pjsk_banned_game_account_bind_attempts field.
+func ByPjskBannedGameAccountBindAttempts(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPjskBannedGameAccountBindAttempts, opts...).ToFunc()
 }
 
 // ByChunithmBanState orders the results by the chunithm_ban_state field.

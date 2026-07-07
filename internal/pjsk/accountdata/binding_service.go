@@ -10,14 +10,22 @@ import (
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/userbinding"
 	"haruki-cloud/database/pjsk/userdefaultbinding"
+	usersdb "haruki-cloud/database/users"
 	"haruki-cloud/internal/cluster"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/censor"
 )
 
+const (
+	bannedGameAccountBindWarning   = "你正在尝试绑定已被封禁用户，请不要再次尝试"
+	bannedGameAccountBindThreshold = 3
+	bannedGameAccountBindBanReason = "多次尝试绑定被封禁游戏账号"
+)
+
 // BindingService manages user game account bindings.
 type BindingService struct {
 	pjskDB       *pjskdb.Client
+	usersDB      *usersdb.Client
 	identity     IdentityResolver
 	validator    ProfileValidator
 	fastVerifier FastVerificationProvider
@@ -32,6 +40,13 @@ func NewBindingService(pjskClient *pjskdb.Client, identityResolver IdentityResol
 		identity:  identityResolver,
 		validator: validator,
 	}
+}
+
+func (s *BindingService) SetUsersDB(db *usersdb.Client) {
+	if s == nil {
+		return
+	}
+	s.usersDB = db
 }
 
 func (s *BindingService) SetFastVerificationProvider(provider FastVerificationProvider) {
@@ -120,6 +135,16 @@ func (s *BindingService) Bind(ctx context.Context, platform, platformUserID, raw
 	case err == nil:
 		alreadyBound = true
 	case pjskdb.IsNotFound(err):
+		if account.IsBanned {
+			banned, err := s.recordBannedGameAccountBindAttempt(ctx, harukiUserID)
+			if err != nil {
+				return nil, err
+			}
+			if banned {
+				return nil, banError("PJSK 功能", bannedGameAccountBindBanReason)
+			}
+			return nil, errors.New(bannedGameAccountBindWarning)
+		}
 		displayOrder, orderErr := nextBindingDisplayOrderTx(ctx, tx, harukiUserID)
 		if orderErr != nil {
 			return nil, orderErr
@@ -302,6 +327,30 @@ func (s *BindingService) requireWritable() error {
 		return ErrBindingServiceUnavailable
 	}
 	return cluster.EnsureWritable(s.readOnly)
+}
+
+func (s *BindingService) recordBannedGameAccountBindAttempt(ctx context.Context, harukiUserID int) (bool, error) {
+	if s == nil || s.usersDB == nil {
+		return false, nil
+	}
+
+	u, err := s.usersDB.User.Get(ctx, harukiUserID)
+	if err != nil {
+		if usersdb.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	nextAttempts := u.PjskBannedGameAccountBindAttempts + 1
+	update := s.usersDB.User.UpdateOneID(harukiUserID).
+		SetPjskBannedGameAccountBindAttempts(nextAttempts)
+	banned := nextAttempts >= bannedGameAccountBindThreshold
+	if banned {
+		update.SetPjskBanState(true).
+			SetPjskBanReason(bannedGameAccountBindBanReason)
+	}
+	return banned, update.Exec(ctx)
 }
 
 func (s *BindingService) probeUID(ctx context.Context, uid string) ([]profileProbe, error) {

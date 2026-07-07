@@ -42,6 +42,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 			resolver,
 			renderRuntime.SekaiAPI,
 		)
+		renderRuntime.Bindings.SetUsersDB(usersClient)
 		renderRuntime.Bindings.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
 		renderRuntime.Bindings.SetFastVerificationProvider(renderRuntime.Toolbox)
 		renderRuntime.Snapshots = rendersnapshot.NewFallbackSnapshotProvider(

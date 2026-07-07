@@ -16,6 +16,8 @@ const (
 	FieldUserID = "user_id"
 	// FieldServer holds the string denoting the server field in the database.
 	FieldServer = "server"
+	// FieldIsBanned holds the string denoting the is_banned field in the database.
+	FieldIsBanned = "is_banned"
 	// FieldBg holds the string denoting the bg field in the database.
 	FieldBg = "bg"
 	// EdgeBindings holds the string denoting the bindings edge name in mutations.
@@ -36,6 +38,7 @@ var Columns = []string{
 	FieldID,
 	FieldUserID,
 	FieldServer,
+	FieldIsBanned,
 	FieldBg,
 }
 
@@ -54,6 +57,8 @@ var (
 	UserIDValidator func(string) error
 	// ServerValidator is a validator for the "server" field. It is called by the builders before save.
 	ServerValidator func(string) error
+	// DefaultIsBanned holds the default value on creation for the "is_banned" field.
+	DefaultIsBanned bool
 )
 
 // OrderOption defines the ordering options for the GameAccount queries.
@@ -72,6 +77,11 @@ func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 // ByServer orders the results by the server field.
 func ByServer(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServer, opts...).ToFunc()
+}
+
+// ByIsBanned orders the results by the is_banned field.
+func ByIsBanned(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsBanned, opts...).ToFunc()
 }
 
 // ByBindingsCount orders the results by bindings count.

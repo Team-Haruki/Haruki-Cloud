@@ -64,6 +64,11 @@ func Server(v string) predicate.GameAccount {
 	return predicate.GameAccount(sql.FieldEQ(FieldServer, v))
 }
 
+// IsBanned applies equality check predicate on the "is_banned" field. It's identical to IsBannedEQ.
+func IsBanned(v bool) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldEQ(FieldIsBanned, v))
+}
+
 // UserIDEQ applies the EQ predicate on the "user_id" field.
 func UserIDEQ(v string) predicate.GameAccount {
 	return predicate.GameAccount(sql.FieldEQ(FieldUserID, v))
@@ -192,6 +197,16 @@ func ServerEqualFold(v string) predicate.GameAccount {
 // ServerContainsFold applies the ContainsFold predicate on the "server" field.
 func ServerContainsFold(v string) predicate.GameAccount {
 	return predicate.GameAccount(sql.FieldContainsFold(FieldServer, v))
+}
+
+// IsBannedEQ applies the EQ predicate on the "is_banned" field.
+func IsBannedEQ(v bool) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldEQ(FieldIsBanned, v))
+}
+
+// IsBannedNEQ applies the NEQ predicate on the "is_banned" field.
+func IsBannedNEQ(v bool) predicate.GameAccount {
+	return predicate.GameAccount(sql.FieldNEQ(FieldIsBanned, v))
 }
 
 // BgIsNil applies the IsNil predicate on the "bg" field.

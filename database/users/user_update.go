@@ -123,6 +123,27 @@ func (_u *UserUpdate) ClearPjskBanReason() *UserUpdate {
 	return _u
 }
 
+// SetPjskBannedGameAccountBindAttempts sets the "pjsk_banned_game_account_bind_attempts" field.
+func (_u *UserUpdate) SetPjskBannedGameAccountBindAttempts(v int) *UserUpdate {
+	_u.mutation.ResetPjskBannedGameAccountBindAttempts()
+	_u.mutation.SetPjskBannedGameAccountBindAttempts(v)
+	return _u
+}
+
+// SetNillablePjskBannedGameAccountBindAttempts sets the "pjsk_banned_game_account_bind_attempts" field if the given value is not nil.
+func (_u *UserUpdate) SetNillablePjskBannedGameAccountBindAttempts(v *int) *UserUpdate {
+	if v != nil {
+		_u.SetPjskBannedGameAccountBindAttempts(*v)
+	}
+	return _u
+}
+
+// AddPjskBannedGameAccountBindAttempts adds value to the "pjsk_banned_game_account_bind_attempts" field.
+func (_u *UserUpdate) AddPjskBannedGameAccountBindAttempts(v int) *UserUpdate {
+	_u.mutation.AddPjskBannedGameAccountBindAttempts(v)
+	return _u
+}
+
 // SetChunithmBanState sets the "chunithm_ban_state" field.
 func (_u *UserUpdate) SetChunithmBanState(v bool) *UserUpdate {
 	_u.mutation.SetChunithmBanState(v)
@@ -489,6 +510,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.PjskBanReasonCleared() {
 		_spec.ClearField(user.FieldPjskBanReason, field.TypeString)
 	}
+	if value, ok := _u.mutation.PjskBannedGameAccountBindAttempts(); ok {
+		_spec.SetField(user.FieldPjskBannedGameAccountBindAttempts, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPjskBannedGameAccountBindAttempts(); ok {
+		_spec.AddField(user.FieldPjskBannedGameAccountBindAttempts, field.TypeInt, value)
+	}
 	if value, ok := _u.mutation.ChunithmBanState(); ok {
 		_spec.SetField(user.FieldChunithmBanState, field.TypeBool, value)
 	}
@@ -665,6 +692,27 @@ func (_u *UserUpdateOne) SetNillablePjskBanReason(v *string) *UserUpdateOne {
 // ClearPjskBanReason clears the value of the "pjsk_ban_reason" field.
 func (_u *UserUpdateOne) ClearPjskBanReason() *UserUpdateOne {
 	_u.mutation.ClearPjskBanReason()
+	return _u
+}
+
+// SetPjskBannedGameAccountBindAttempts sets the "pjsk_banned_game_account_bind_attempts" field.
+func (_u *UserUpdateOne) SetPjskBannedGameAccountBindAttempts(v int) *UserUpdateOne {
+	_u.mutation.ResetPjskBannedGameAccountBindAttempts()
+	_u.mutation.SetPjskBannedGameAccountBindAttempts(v)
+	return _u
+}
+
+// SetNillablePjskBannedGameAccountBindAttempts sets the "pjsk_banned_game_account_bind_attempts" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillablePjskBannedGameAccountBindAttempts(v *int) *UserUpdateOne {
+	if v != nil {
+		_u.SetPjskBannedGameAccountBindAttempts(*v)
+	}
+	return _u
+}
+
+// AddPjskBannedGameAccountBindAttempts adds value to the "pjsk_banned_game_account_bind_attempts" field.
+func (_u *UserUpdateOne) AddPjskBannedGameAccountBindAttempts(v int) *UserUpdateOne {
+	_u.mutation.AddPjskBannedGameAccountBindAttempts(v)
 	return _u
 }
 
@@ -1063,6 +1111,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.PjskBanReasonCleared() {
 		_spec.ClearField(user.FieldPjskBanReason, field.TypeString)
+	}
+	if value, ok := _u.mutation.PjskBannedGameAccountBindAttempts(); ok {
+		_spec.SetField(user.FieldPjskBannedGameAccountBindAttempts, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPjskBannedGameAccountBindAttempts(); ok {
+		_spec.AddField(user.FieldPjskBannedGameAccountBindAttempts, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.ChunithmBanState(); ok {
 		_spec.SetField(user.FieldChunithmBanState, field.TypeBool, value)

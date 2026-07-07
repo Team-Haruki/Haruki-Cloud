@@ -949,6 +949,7 @@ type GameAccountMutation struct {
 	id              *int
 	user_id         *string
 	server          *string
+	is_banned       *bool
 	bg              **drawing.ProfileBgSettings
 	clearedFields   map[string]struct{}
 	bindings        map[int]struct{}
@@ -1135,6 +1136,42 @@ func (m *GameAccountMutation) ResetServer() {
 	m.server = nil
 }
 
+// SetIsBanned sets the "is_banned" field.
+func (m *GameAccountMutation) SetIsBanned(b bool) {
+	m.is_banned = &b
+}
+
+// IsBanned returns the value of the "is_banned" field in the mutation.
+func (m *GameAccountMutation) IsBanned() (r bool, exists bool) {
+	v := m.is_banned
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsBanned returns the old "is_banned" field's value of the GameAccount entity.
+// If the GameAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GameAccountMutation) OldIsBanned(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsBanned is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsBanned requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsBanned: %w", err)
+	}
+	return oldValue.IsBanned, nil
+}
+
+// ResetIsBanned resets all changes to the "is_banned" field.
+func (m *GameAccountMutation) ResetIsBanned() {
+	m.is_banned = nil
+}
+
 // SetBg sets the "bg" field.
 func (m *GameAccountMutation) SetBg(dbs *drawing.ProfileBgSettings) {
 	m.bg = &dbs
@@ -1272,12 +1309,15 @@ func (m *GameAccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GameAccountMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.user_id != nil {
 		fields = append(fields, gameaccount.FieldUserID)
 	}
 	if m.server != nil {
 		fields = append(fields, gameaccount.FieldServer)
+	}
+	if m.is_banned != nil {
+		fields = append(fields, gameaccount.FieldIsBanned)
 	}
 	if m.bg != nil {
 		fields = append(fields, gameaccount.FieldBg)
@@ -1294,6 +1334,8 @@ func (m *GameAccountMutation) Field(name string) (ent.Value, bool) {
 		return m.UserID()
 	case gameaccount.FieldServer:
 		return m.Server()
+	case gameaccount.FieldIsBanned:
+		return m.IsBanned()
 	case gameaccount.FieldBg:
 		return m.Bg()
 	}
@@ -1309,6 +1351,8 @@ func (m *GameAccountMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldUserID(ctx)
 	case gameaccount.FieldServer:
 		return m.OldServer(ctx)
+	case gameaccount.FieldIsBanned:
+		return m.OldIsBanned(ctx)
 	case gameaccount.FieldBg:
 		return m.OldBg(ctx)
 	}
@@ -1333,6 +1377,13 @@ func (m *GameAccountMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetServer(v)
+		return nil
+	case gameaccount.FieldIsBanned:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsBanned(v)
 		return nil
 	case gameaccount.FieldBg:
 		v, ok := value.(*drawing.ProfileBgSettings)
@@ -1404,6 +1455,9 @@ func (m *GameAccountMutation) ResetField(name string) error {
 		return nil
 	case gameaccount.FieldServer:
 		m.ResetServer()
+		return nil
+	case gameaccount.FieldIsBanned:
+		m.ResetIsBanned()
 		return nil
 	case gameaccount.FieldBg:
 		m.ResetBg()

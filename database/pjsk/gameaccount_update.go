@@ -57,6 +57,20 @@ func (_u *GameAccountUpdate) SetNillableServer(v *string) *GameAccountUpdate {
 	return _u
 }
 
+// SetIsBanned sets the "is_banned" field.
+func (_u *GameAccountUpdate) SetIsBanned(v bool) *GameAccountUpdate {
+	_u.mutation.SetIsBanned(v)
+	return _u
+}
+
+// SetNillableIsBanned sets the "is_banned" field if the given value is not nil.
+func (_u *GameAccountUpdate) SetNillableIsBanned(v *bool) *GameAccountUpdate {
+	if v != nil {
+		_u.SetIsBanned(*v)
+	}
+	return _u
+}
+
 // SetBg sets the "bg" field.
 func (_u *GameAccountUpdate) SetBg(v *drawing.ProfileBgSettings) *GameAccountUpdate {
 	_u.mutation.SetBg(v)
@@ -170,6 +184,9 @@ func (_u *GameAccountUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.Server(); ok {
 		_spec.SetField(gameaccount.FieldServer, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.IsBanned(); ok {
+		_spec.SetField(gameaccount.FieldIsBanned, field.TypeBool, value)
+	}
 	if value, ok := _u.mutation.Bg(); ok {
 		_spec.SetField(gameaccount.FieldBg, field.TypeJSON, value)
 	}
@@ -265,6 +282,20 @@ func (_u *GameAccountUpdateOne) SetServer(v string) *GameAccountUpdateOne {
 func (_u *GameAccountUpdateOne) SetNillableServer(v *string) *GameAccountUpdateOne {
 	if v != nil {
 		_u.SetServer(*v)
+	}
+	return _u
+}
+
+// SetIsBanned sets the "is_banned" field.
+func (_u *GameAccountUpdateOne) SetIsBanned(v bool) *GameAccountUpdateOne {
+	_u.mutation.SetIsBanned(v)
+	return _u
+}
+
+// SetNillableIsBanned sets the "is_banned" field if the given value is not nil.
+func (_u *GameAccountUpdateOne) SetNillableIsBanned(v *bool) *GameAccountUpdateOne {
+	if v != nil {
+		_u.SetIsBanned(*v)
 	}
 	return _u
 }
@@ -411,6 +442,9 @@ func (_u *GameAccountUpdateOne) sqlSave(ctx context.Context) (_node *GameAccount
 	}
 	if value, ok := _u.mutation.Server(); ok {
 		_spec.SetField(gameaccount.FieldServer, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.IsBanned(); ok {
+		_spec.SetField(gameaccount.FieldIsBanned, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Bg(); ok {
 		_spec.SetField(gameaccount.FieldBg, field.TypeJSON, value)

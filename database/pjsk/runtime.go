@@ -48,6 +48,10 @@ func init() {
 	gameaccountDescServer := gameaccountFields[2].Descriptor()
 	// gameaccount.ServerValidator is a validator for the "server" field. It is called by the builders before save.
 	gameaccount.ServerValidator = gameaccountDescServer.Validators[0].(func(string) error)
+	// gameaccountDescIsBanned is the schema descriptor for is_banned field.
+	gameaccountDescIsBanned := gameaccountFields[3].Descriptor()
+	// gameaccount.DefaultIsBanned holds the default value on creation for the is_banned field.
+	gameaccount.DefaultIsBanned = gameaccountDescIsBanned.Default.(bool)
 	groupaliasFields := schema.GroupAlias{}.Fields()
 	_ = groupaliasFields
 	// groupaliasDescPlatform is the schema descriptor for platform field.

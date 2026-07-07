@@ -22,6 +22,8 @@ type GameAccount struct {
 	UserID string `json:"user_id,omitempty"`
 	// PJSK server region
 	Server string `json:"server,omitempty"`
+	// Whether this PJSK game account is blocked from new bindings
+	IsBanned bool `json:"is_banned,omitempty"`
 	// Profile card background settings stored as JSONB
 	Bg *drawing.ProfileBgSettings `json:"bg,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -55,6 +57,8 @@ func (*GameAccount) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case gameaccount.FieldBg:
 			values[i] = new([]byte)
+		case gameaccount.FieldIsBanned:
+			values[i] = new(sql.NullBool)
 		case gameaccount.FieldID:
 			values[i] = new(sql.NullInt64)
 		case gameaccount.FieldUserID, gameaccount.FieldServer:
@@ -91,6 +95,12 @@ func (_m *GameAccount) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field server", values[i])
 			} else if value.Valid {
 				_m.Server = value.String
+			}
+		case gameaccount.FieldIsBanned:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_banned", values[i])
+			} else if value.Valid {
+				_m.IsBanned = value.Bool
 			}
 		case gameaccount.FieldBg:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -146,6 +156,9 @@ func (_m *GameAccount) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("server=")
 	builder.WriteString(_m.Server)
+	builder.WriteString(", ")
+	builder.WriteString("is_banned=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsBanned))
 	builder.WriteString(", ")
 	builder.WriteString("bg=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Bg))

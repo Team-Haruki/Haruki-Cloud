@@ -87,6 +87,20 @@ func (_c *UserCreate) SetNillablePjskBanReason(v *string) *UserCreate {
 	return _c
 }
 
+// SetPjskBannedGameAccountBindAttempts sets the "pjsk_banned_game_account_bind_attempts" field.
+func (_c *UserCreate) SetPjskBannedGameAccountBindAttempts(v int) *UserCreate {
+	_c.mutation.SetPjskBannedGameAccountBindAttempts(v)
+	return _c
+}
+
+// SetNillablePjskBannedGameAccountBindAttempts sets the "pjsk_banned_game_account_bind_attempts" field if the given value is not nil.
+func (_c *UserCreate) SetNillablePjskBannedGameAccountBindAttempts(v *int) *UserCreate {
+	if v != nil {
+		_c.SetPjskBannedGameAccountBindAttempts(*v)
+	}
+	return _c
+}
+
 // SetChunithmBanState sets the "chunithm_ban_state" field.
 func (_c *UserCreate) SetChunithmBanState(v bool) *UserCreate {
 	_c.mutation.SetChunithmBanState(v)
@@ -332,6 +346,10 @@ func (_c *UserCreate) defaults() {
 		v := user.DefaultPjskBanState
 		_c.mutation.SetPjskBanState(v)
 	}
+	if _, ok := _c.mutation.PjskBannedGameAccountBindAttempts(); !ok {
+		v := user.DefaultPjskBannedGameAccountBindAttempts
+		_c.mutation.SetPjskBannedGameAccountBindAttempts(v)
+	}
 	if _, ok := _c.mutation.ChunithmBanState(); !ok {
 		v := user.DefaultChunithmBanState
 		_c.mutation.SetChunithmBanState(v)
@@ -395,6 +413,9 @@ func (_c *UserCreate) check() error {
 		if err := user.PjskBanReasonValidator(v); err != nil {
 			return &ValidationError{Name: "pjsk_ban_reason", err: fmt.Errorf(`users: validator failed for field "User.pjsk_ban_reason": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.PjskBannedGameAccountBindAttempts(); !ok {
+		return &ValidationError{Name: "pjsk_banned_game_account_bind_attempts", err: errors.New(`users: missing required field "User.pjsk_banned_game_account_bind_attempts"`)}
 	}
 	if _, ok := _c.mutation.ChunithmBanState(); !ok {
 		return &ValidationError{Name: "chunithm_ban_state", err: errors.New(`users: missing required field "User.chunithm_ban_state"`)}
@@ -507,6 +528,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.PjskBanReason(); ok {
 		_spec.SetField(user.FieldPjskBanReason, field.TypeString, value)
 		_node.PjskBanReason = value
+	}
+	if value, ok := _c.mutation.PjskBannedGameAccountBindAttempts(); ok {
+		_spec.SetField(user.FieldPjskBannedGameAccountBindAttempts, field.TypeInt, value)
+		_node.PjskBannedGameAccountBindAttempts = value
 	}
 	if value, ok := _c.mutation.ChunithmBanState(); ok {
 		_spec.SetField(user.FieldChunithmBanState, field.TypeBool, value)

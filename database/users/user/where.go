@@ -83,6 +83,11 @@ func PjskBanReason(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPjskBanReason, v))
 }
 
+// PjskBannedGameAccountBindAttempts applies equality check predicate on the "pjsk_banned_game_account_bind_attempts" field. It's identical to PjskBannedGameAccountBindAttemptsEQ.
+func PjskBannedGameAccountBindAttempts(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPjskBannedGameAccountBindAttempts, v))
+}
+
 // ChunithmBanState applies equality check predicate on the "chunithm_ban_state" field. It's identical to ChunithmBanStateEQ.
 func ChunithmBanState(v bool) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldChunithmBanState, v))
@@ -451,6 +456,46 @@ func PjskBanReasonEqualFold(v string) predicate.User {
 // PjskBanReasonContainsFold applies the ContainsFold predicate on the "pjsk_ban_reason" field.
 func PjskBanReasonContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldPjskBanReason, v))
+}
+
+// PjskBannedGameAccountBindAttemptsEQ applies the EQ predicate on the "pjsk_banned_game_account_bind_attempts" field.
+func PjskBannedGameAccountBindAttemptsEQ(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPjskBannedGameAccountBindAttempts, v))
+}
+
+// PjskBannedGameAccountBindAttemptsNEQ applies the NEQ predicate on the "pjsk_banned_game_account_bind_attempts" field.
+func PjskBannedGameAccountBindAttemptsNEQ(v int) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldPjskBannedGameAccountBindAttempts, v))
+}
+
+// PjskBannedGameAccountBindAttemptsIn applies the In predicate on the "pjsk_banned_game_account_bind_attempts" field.
+func PjskBannedGameAccountBindAttemptsIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldIn(FieldPjskBannedGameAccountBindAttempts, vs...))
+}
+
+// PjskBannedGameAccountBindAttemptsNotIn applies the NotIn predicate on the "pjsk_banned_game_account_bind_attempts" field.
+func PjskBannedGameAccountBindAttemptsNotIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldPjskBannedGameAccountBindAttempts, vs...))
+}
+
+// PjskBannedGameAccountBindAttemptsGT applies the GT predicate on the "pjsk_banned_game_account_bind_attempts" field.
+func PjskBannedGameAccountBindAttemptsGT(v int) predicate.User {
+	return predicate.User(sql.FieldGT(FieldPjskBannedGameAccountBindAttempts, v))
+}
+
+// PjskBannedGameAccountBindAttemptsGTE applies the GTE predicate on the "pjsk_banned_game_account_bind_attempts" field.
+func PjskBannedGameAccountBindAttemptsGTE(v int) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldPjskBannedGameAccountBindAttempts, v))
+}
+
+// PjskBannedGameAccountBindAttemptsLT applies the LT predicate on the "pjsk_banned_game_account_bind_attempts" field.
+func PjskBannedGameAccountBindAttemptsLT(v int) predicate.User {
+	return predicate.User(sql.FieldLT(FieldPjskBannedGameAccountBindAttempts, v))
+}
+
+// PjskBannedGameAccountBindAttemptsLTE applies the LTE predicate on the "pjsk_banned_game_account_bind_attempts" field.
+func PjskBannedGameAccountBindAttemptsLTE(v int) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldPjskBannedGameAccountBindAttempts, v))
 }
 
 // ChunithmBanStateEQ applies the EQ predicate on the "chunithm_ban_state" field.

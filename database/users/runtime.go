@@ -37,60 +37,64 @@ func init() {
 	userDescPjskBanReason := userFields[6].Descriptor()
 	// user.PjskBanReasonValidator is a validator for the "pjsk_ban_reason" field. It is called by the builders before save.
 	user.PjskBanReasonValidator = userDescPjskBanReason.Validators[0].(func(string) error)
+	// userDescPjskBannedGameAccountBindAttempts is the schema descriptor for pjsk_banned_game_account_bind_attempts field.
+	userDescPjskBannedGameAccountBindAttempts := userFields[7].Descriptor()
+	// user.DefaultPjskBannedGameAccountBindAttempts holds the default value on creation for the pjsk_banned_game_account_bind_attempts field.
+	user.DefaultPjskBannedGameAccountBindAttempts = userDescPjskBannedGameAccountBindAttempts.Default.(int)
 	// userDescChunithmBanState is the schema descriptor for chunithm_ban_state field.
-	userDescChunithmBanState := userFields[7].Descriptor()
+	userDescChunithmBanState := userFields[8].Descriptor()
 	// user.DefaultChunithmBanState holds the default value on creation for the chunithm_ban_state field.
 	user.DefaultChunithmBanState = userDescChunithmBanState.Default.(bool)
 	// userDescChunithmBanReason is the schema descriptor for chunithm_ban_reason field.
-	userDescChunithmBanReason := userFields[8].Descriptor()
+	userDescChunithmBanReason := userFields[9].Descriptor()
 	// user.ChunithmBanReasonValidator is a validator for the "chunithm_ban_reason" field. It is called by the builders before save.
 	user.ChunithmBanReasonValidator = userDescChunithmBanReason.Validators[0].(func(string) error)
 	// userDescPjskMainBanState is the schema descriptor for pjsk_main_ban_state field.
-	userDescPjskMainBanState := userFields[9].Descriptor()
+	userDescPjskMainBanState := userFields[10].Descriptor()
 	// user.DefaultPjskMainBanState holds the default value on creation for the pjsk_main_ban_state field.
 	user.DefaultPjskMainBanState = userDescPjskMainBanState.Default.(bool)
 	// userDescPjskMainBanReason is the schema descriptor for pjsk_main_ban_reason field.
-	userDescPjskMainBanReason := userFields[10].Descriptor()
+	userDescPjskMainBanReason := userFields[11].Descriptor()
 	// user.PjskMainBanReasonValidator is a validator for the "pjsk_main_ban_reason" field. It is called by the builders before save.
 	user.PjskMainBanReasonValidator = userDescPjskMainBanReason.Validators[0].(func(string) error)
 	// userDescPjskRankingBanState is the schema descriptor for pjsk_ranking_ban_state field.
-	userDescPjskRankingBanState := userFields[11].Descriptor()
+	userDescPjskRankingBanState := userFields[12].Descriptor()
 	// user.DefaultPjskRankingBanState holds the default value on creation for the pjsk_ranking_ban_state field.
 	user.DefaultPjskRankingBanState = userDescPjskRankingBanState.Default.(bool)
 	// userDescPjskRankingBanReason is the schema descriptor for pjsk_ranking_ban_reason field.
-	userDescPjskRankingBanReason := userFields[12].Descriptor()
+	userDescPjskRankingBanReason := userFields[13].Descriptor()
 	// user.PjskRankingBanReasonValidator is a validator for the "pjsk_ranking_ban_reason" field. It is called by the builders before save.
 	user.PjskRankingBanReasonValidator = userDescPjskRankingBanReason.Validators[0].(func(string) error)
 	// userDescPjskAliasBanState is the schema descriptor for pjsk_alias_ban_state field.
-	userDescPjskAliasBanState := userFields[13].Descriptor()
+	userDescPjskAliasBanState := userFields[14].Descriptor()
 	// user.DefaultPjskAliasBanState holds the default value on creation for the pjsk_alias_ban_state field.
 	user.DefaultPjskAliasBanState = userDescPjskAliasBanState.Default.(bool)
 	// userDescPjskAliasBanReason is the schema descriptor for pjsk_alias_ban_reason field.
-	userDescPjskAliasBanReason := userFields[14].Descriptor()
+	userDescPjskAliasBanReason := userFields[15].Descriptor()
 	// user.PjskAliasBanReasonValidator is a validator for the "pjsk_alias_ban_reason" field. It is called by the builders before save.
 	user.PjskAliasBanReasonValidator = userDescPjskAliasBanReason.Validators[0].(func(string) error)
 	// userDescPjskMysekaiBanState is the schema descriptor for pjsk_mysekai_ban_state field.
-	userDescPjskMysekaiBanState := userFields[15].Descriptor()
+	userDescPjskMysekaiBanState := userFields[16].Descriptor()
 	// user.DefaultPjskMysekaiBanState holds the default value on creation for the pjsk_mysekai_ban_state field.
 	user.DefaultPjskMysekaiBanState = userDescPjskMysekaiBanState.Default.(bool)
 	// userDescPjskMysekaiBanReason is the schema descriptor for pjsk_mysekai_ban_reason field.
-	userDescPjskMysekaiBanReason := userFields[16].Descriptor()
+	userDescPjskMysekaiBanReason := userFields[17].Descriptor()
 	// user.PjskMysekaiBanReasonValidator is a validator for the "pjsk_mysekai_ban_reason" field. It is called by the builders before save.
 	user.PjskMysekaiBanReasonValidator = userDescPjskMysekaiBanReason.Validators[0].(func(string) error)
 	// userDescChunithmMainBanState is the schema descriptor for chunithm_main_ban_state field.
-	userDescChunithmMainBanState := userFields[17].Descriptor()
+	userDescChunithmMainBanState := userFields[18].Descriptor()
 	// user.DefaultChunithmMainBanState holds the default value on creation for the chunithm_main_ban_state field.
 	user.DefaultChunithmMainBanState = userDescChunithmMainBanState.Default.(bool)
 	// userDescChunithmMainBanReason is the schema descriptor for chunithm_main_ban_reason field.
-	userDescChunithmMainBanReason := userFields[18].Descriptor()
+	userDescChunithmMainBanReason := userFields[19].Descriptor()
 	// user.ChunithmMainBanReasonValidator is a validator for the "chunithm_main_ban_reason" field. It is called by the builders before save.
 	user.ChunithmMainBanReasonValidator = userDescChunithmMainBanReason.Validators[0].(func(string) error)
 	// userDescChunithmAliasBanState is the schema descriptor for chunithm_alias_ban_state field.
-	userDescChunithmAliasBanState := userFields[19].Descriptor()
+	userDescChunithmAliasBanState := userFields[20].Descriptor()
 	// user.DefaultChunithmAliasBanState holds the default value on creation for the chunithm_alias_ban_state field.
 	user.DefaultChunithmAliasBanState = userDescChunithmAliasBanState.Default.(bool)
 	// userDescChunithmAliasBanReason is the schema descriptor for chunithm_alias_ban_reason field.
-	userDescChunithmAliasBanReason := userFields[20].Descriptor()
+	userDescChunithmAliasBanReason := userFields[21].Descriptor()
 	// user.ChunithmAliasBanReasonValidator is a validator for the "chunithm_alias_ban_reason" field. It is called by the builders before save.
 	user.ChunithmAliasBanReasonValidator = userDescChunithmAliasBanReason.Validators[0].(func(string) error)
 }

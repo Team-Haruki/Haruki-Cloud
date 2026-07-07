@@ -2,6 +2,7 @@ package accountdata_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
@@ -32,6 +33,158 @@ func (f *fakeProfileValidator) GetUserProfile(server, userID string) (*sekaiapi.
 			Name:   name,
 		},
 	}, nil
+}
+
+func TestBindingServiceBannedGameAccountAttemptsBanAfterThirdWarning(t *testing.T) {
+	pjskClient := pjskenttest.Open(t, "sqlite3", "file:pjsk_banned_account_bind_test?mode=memory&cache=shared&_fk=1")
+	defer pjskClient.Close()
+	usersClient := usersenttest.Open(t, "sqlite3", "file:users_banned_account_bind_test?mode=memory&cache=shared&_fk=1")
+	defer usersClient.Close()
+
+	service := accountdata.NewBindingService(
+		pjskClient,
+		identity.NewResolver(usersClient),
+		&fakeProfileValidator{
+			profiles: map[string]map[string]string{
+				"jp": {"9000": "Banned User"},
+			},
+		},
+	)
+	service.SetUsersDB(usersClient)
+
+	ctx := context.Background()
+	if _, err := pjskClient.GameAccount.Create().
+		SetServer("jp").
+		SetUserID("9000").
+		SetIsBanned(true).
+		Save(ctx); err != nil {
+		t.Fatalf("create banned game account: %v", err)
+	}
+
+	const warning = "你正在尝试绑定已被封禁用户，请不要再次尝试"
+	for attempt := 1; attempt <= 3; attempt++ {
+		_, err := service.Bind(ctx, "qq", "42", "9000")
+		if err == nil {
+			t.Fatalf("attempt %d unexpectedly succeeded", attempt)
+		}
+		switch {
+		case attempt < 3 && err.Error() != warning:
+			t.Fatalf("attempt %d expected warning, got %q", attempt, err.Error())
+		case attempt == 3 && !strings.Contains(err.Error(), "您已被禁止使用PJSK 功能，原因：多次尝试绑定被封禁游戏账号"):
+			t.Fatalf("attempt %d expected ban message, got %q", attempt, err.Error())
+		}
+	}
+
+	u, err := usersClient.User.Query().Only(ctx)
+	if err != nil {
+		t.Fatalf("query user: %v", err)
+	}
+	if u.PjskBannedGameAccountBindAttempts != 3 {
+		t.Fatalf("expected 3 attempts, got %d", u.PjskBannedGameAccountBindAttempts)
+	}
+	if !u.PjskBanState || u.PjskBanReason != "多次尝试绑定被封禁游戏账号" {
+		t.Fatalf("expected pjsk ban state and reason, got state=%v reason=%q", u.PjskBanState, u.PjskBanReason)
+	}
+
+	count, err := pjskClient.UserBinding.Query().Count(ctx)
+	if err != nil {
+		t.Fatalf("count bindings: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("expected no binding to be created, got %d", count)
+	}
+}
+
+func TestBindingServiceBannedGameAccountIgnoresExistingBinding(t *testing.T) {
+	pjskClient := pjskenttest.Open(t, "sqlite3", "file:pjsk_existing_banned_account_bind_test?mode=memory&cache=shared&_fk=1")
+	defer pjskClient.Close()
+	usersClient := usersenttest.Open(t, "sqlite3", "file:users_existing_banned_account_bind_test?mode=memory&cache=shared&_fk=1")
+	defer usersClient.Close()
+
+	service := accountdata.NewBindingService(
+		pjskClient,
+		identity.NewResolver(usersClient),
+		&fakeProfileValidator{
+			profiles: map[string]map[string]string{
+				"jp": {"9001": "Existing User"},
+			},
+		},
+	)
+	service.SetUsersDB(usersClient)
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "9001"); err != nil {
+		t.Fatalf("initial bind: %v", err)
+	}
+	if _, err := pjskClient.GameAccount.Update().
+		SetIsBanned(true).
+		Save(ctx); err != nil {
+		t.Fatalf("mark account banned: %v", err)
+	}
+
+	result, err := service.Bind(ctx, "qq", "42", "9001")
+	if err != nil {
+		t.Fatalf("rebind existing banned account: %v", err)
+	}
+	if !result.AlreadyBound {
+		t.Fatalf("expected existing binding result, got %+v", result)
+	}
+
+	u, err := usersClient.User.Query().Only(ctx)
+	if err != nil {
+		t.Fatalf("query user: %v", err)
+	}
+	if u.PjskBannedGameAccountBindAttempts != 0 || u.PjskBanState {
+		t.Fatalf("expected existing binding to be ignored, got attempts=%d banned=%v", u.PjskBannedGameAccountBindAttempts, u.PjskBanState)
+	}
+}
+
+func TestBindingServiceBannedGameAccountCountsAfterUnbind(t *testing.T) {
+	pjskClient := pjskenttest.Open(t, "sqlite3", "file:pjsk_unbound_banned_account_bind_test?mode=memory&cache=shared&_fk=1")
+	defer pjskClient.Close()
+	usersClient := usersenttest.Open(t, "sqlite3", "file:users_unbound_banned_account_bind_test?mode=memory&cache=shared&_fk=1")
+	defer usersClient.Close()
+
+	service := accountdata.NewBindingService(
+		pjskClient,
+		identity.NewResolver(usersClient),
+		&fakeProfileValidator{
+			profiles: map[string]map[string]string{
+				"jp": {"9002": "Unbound User"},
+			},
+		},
+	)
+	service.SetUsersDB(usersClient)
+
+	ctx := context.Background()
+	if _, err := service.Bind(ctx, "qq", "42", "9002"); err != nil {
+		t.Fatalf("initial bind: %v", err)
+	}
+	if _, err := service.Unbind(ctx, "qq", "42", "9002", ""); err != nil {
+		t.Fatalf("unbind: %v", err)
+	}
+	if _, err := pjskClient.GameAccount.Update().
+		SetIsBanned(true).
+		Save(ctx); err != nil {
+		t.Fatalf("mark account banned: %v", err)
+	}
+
+	_, err := service.Bind(ctx, "qq", "42", "9002")
+	if err == nil {
+		t.Fatalf("rebind unbound banned account unexpectedly succeeded")
+	}
+	const warning = "你正在尝试绑定已被封禁用户，请不要再次尝试"
+	if err.Error() != warning {
+		t.Fatalf("expected warning, got %q", err.Error())
+	}
+
+	u, err := usersClient.User.Query().Only(ctx)
+	if err != nil {
+		t.Fatalf("query user: %v", err)
+	}
+	if u.PjskBannedGameAccountBindAttempts != 1 || u.PjskBanState {
+		t.Fatalf("expected one warning attempt without ban, got attempts=%d banned=%v", u.PjskBannedGameAccountBindAttempts, u.PjskBanState)
+	}
 }
 
 func TestBindingServiceBindListAndDefaultSwitch(t *testing.T) {

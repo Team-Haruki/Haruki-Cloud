@@ -35,6 +35,9 @@ func (User) Fields() []ent.Field {
 			MaxLen(255).
 			Optional().
 			Comment("Reason for PJSK ban"),
+		field.Int("pjsk_banned_game_account_bind_attempts").
+			Default(0).
+			Comment("Attempts to bind PJSK game accounts blocked by blacklist"),
 		field.Bool("chunithm_ban_state").
 			Default(false).
 			Comment("Whether user is banned from Chunithm features"),

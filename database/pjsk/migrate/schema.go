@@ -46,6 +46,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "user_id", Type: field.TypeString, Size: 30},
 		{Name: "server", Type: field.TypeString, Size: 2},
+		{Name: "is_banned", Type: field.TypeBool, Default: false},
 		{Name: "bg", Type: field.TypeJSON, Nullable: true},
 	}
 	// GameAccountsTable holds the schema information for the "game_accounts" table.

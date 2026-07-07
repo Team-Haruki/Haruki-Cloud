@@ -33,6 +33,20 @@ func (_c *GameAccountCreate) SetServer(v string) *GameAccountCreate {
 	return _c
 }
 
+// SetIsBanned sets the "is_banned" field.
+func (_c *GameAccountCreate) SetIsBanned(v bool) *GameAccountCreate {
+	_c.mutation.SetIsBanned(v)
+	return _c
+}
+
+// SetNillableIsBanned sets the "is_banned" field if the given value is not nil.
+func (_c *GameAccountCreate) SetNillableIsBanned(v *bool) *GameAccountCreate {
+	if v != nil {
+		_c.SetIsBanned(*v)
+	}
+	return _c
+}
+
 // SetBg sets the "bg" field.
 func (_c *GameAccountCreate) SetBg(v *drawing.ProfileBgSettings) *GameAccountCreate {
 	_c.mutation.SetBg(v)
@@ -67,6 +81,7 @@ func (_c *GameAccountCreate) Mutation() *GameAccountMutation {
 
 // Save creates the GameAccount in the database.
 func (_c *GameAccountCreate) Save(ctx context.Context) (*GameAccount, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -92,6 +107,14 @@ func (_c *GameAccountCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *GameAccountCreate) defaults() {
+	if _, ok := _c.mutation.IsBanned(); !ok {
+		v := gameaccount.DefaultIsBanned
+		_c.mutation.SetIsBanned(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *GameAccountCreate) check() error {
 	if _, ok := _c.mutation.UserID(); !ok {
@@ -109,6 +132,9 @@ func (_c *GameAccountCreate) check() error {
 		if err := gameaccount.ServerValidator(v); err != nil {
 			return &ValidationError{Name: "server", err: fmt.Errorf(`pjsk: validator failed for field "GameAccount.server": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.IsBanned(); !ok {
+		return &ValidationError{Name: "is_banned", err: errors.New(`pjsk: missing required field "GameAccount.is_banned"`)}
 	}
 	return nil
 }
@@ -149,6 +175,10 @@ func (_c *GameAccountCreate) createSpec() (*GameAccount, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Server(); ok {
 		_spec.SetField(gameaccount.FieldServer, field.TypeString, value)
 		_node.Server = value
+	}
+	if value, ok := _c.mutation.IsBanned(); ok {
+		_spec.SetField(gameaccount.FieldIsBanned, field.TypeBool, value)
+		_node.IsBanned = value
 	}
 	if value, ok := _c.mutation.Bg(); ok {
 		_spec.SetField(gameaccount.FieldBg, field.TypeJSON, value)
@@ -191,6 +221,7 @@ func (_c *GameAccountCreateBulk) Save(ctx context.Context) ([]*GameAccount, erro
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*GameAccountMutation)
 				if !ok {

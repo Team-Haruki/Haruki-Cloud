@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -96,9 +97,40 @@ func envDuration(name string, dst *time.Duration) {
 	}
 }
 
+func envStringMap(name string, dst *map[string]string) error {
+	v := strings.TrimSpace(os.Getenv(name))
+	if v == "" {
+		return nil
+	}
+	var parsed map[string]string
+	if strings.HasPrefix(v, "{") {
+		if err := json.Unmarshal([]byte(v), &parsed); err != nil {
+			return fmt.Errorf("invalid %s: %w", name, err)
+		}
+	} else {
+		parsed = make(map[string]string)
+		for _, item := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' || r == '\n' }) {
+			key, value, ok := strings.Cut(strings.TrimSpace(item), "=")
+			key = strings.TrimSpace(key)
+			value = strings.TrimSpace(value)
+			if !ok || key == "" || value == "" {
+				return fmt.Errorf("invalid %s entry %q: expected region=base_url", name, item)
+			}
+			parsed[key] = value
+		}
+	}
+	for key, value := range parsed {
+		if strings.TrimSpace(key) == "" || strings.TrimSpace(value) == "" {
+			return fmt.Errorf("invalid %s entry %q: region and base URL must not be empty", name, key)
+		}
+	}
+	*dst = parsed
+	return nil
+}
+
 // ApplyEnvOverrides replaces key config fields with environment variables when set.
 // Env var names follow the pattern HARUKI_<SECTION>_<FIELD> (all upper-snake).
-func ApplyEnvOverrides(cfg *Config) {
+func ApplyEnvOverrides(cfg *Config) error {
 	// Profile (env override parsed into typed field)
 	if v := os.Getenv("HARUKI_PROFILE"); v != "" {
 		if p, err := ParseProfile(v); err == nil {
@@ -240,6 +272,9 @@ func ApplyEnvOverrides(cfg *Config) {
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", &cfg.PJSKRender.LocalMasterdata.AllowLeaks)
 	envBool("HARUKI_PJSK_RENDER_3D_PREVIEW_ENABLED", &cfg.PJSKRender.Preview3D.Enabled)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URL", &cfg.PJSKRender.Preview3D.EngineBaseURL)
+	if err := envStringMap("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URLS", &cfg.PJSKRender.Preview3D.EngineBaseURLs); err != nil {
+		return err
+	}
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_STATIC_RELATIVE_DIR", &cfg.PJSKRender.Preview3D.StaticRelativeDir)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_STATIC_OUTPUT_DIR", &cfg.PJSKRender.Preview3D.StaticOutputDir)
 	envInt("HARUKI_PJSK_RENDER_3D_PREVIEW_WIDTH", &cfg.PJSKRender.Preview3D.Width)
@@ -253,6 +288,7 @@ func ApplyEnvOverrides(cfg *Config) {
 	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_TEMPORARY_CAPTURE_TTL", &cfg.PJSKRender.Preview3D.TemporaryCaptureTTL)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_CACHE_VERSION", &cfg.PJSKRender.Preview3D.CaptureCacheVersion)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", &cfg.PJSKRender.Preview3D.CameraPreset)
+	return nil
 }
 
 type BackendConfig struct {
@@ -389,21 +425,22 @@ type MySekaiHousingCompetitionConfig struct {
 }
 
 type Preview3DConfig struct {
-	Enabled               bool          `yaml:"enabled"`
-	EngineBaseURL         string        `yaml:"engine_base_url"`
-	StaticRelativeDir     string        `yaml:"static_relative_dir"`
-	StaticOutputDir       string        `yaml:"static_output_dir"`
-	Width                 int           `yaml:"width"`
-	Height                int           `yaml:"height"`
-	Scale                 float64       `yaml:"scale"`
-	Timeout               time.Duration `yaml:"timeout"`
-	RegistryCacheTTL      time.Duration `yaml:"registry_cache_ttl"`
-	CaptureExistsTTL      time.Duration `yaml:"capture_exists_ttl"`
-	CaptureMaxConcurrency int           `yaml:"capture_max_concurrency"`
-	CaptureAcquireTimeout time.Duration `yaml:"capture_acquire_timeout"`
-	TemporaryCaptureTTL   time.Duration `yaml:"temporary_capture_ttl"`
-	CaptureCacheVersion   string        `yaml:"capture_cache_version"`
-	CameraPreset          string        `yaml:"camera_preset"`
+	Enabled               bool              `yaml:"enabled"`
+	EngineBaseURL         string            `yaml:"engine_base_url"`
+	EngineBaseURLs        map[string]string `yaml:"engine_base_urls"`
+	StaticRelativeDir     string            `yaml:"static_relative_dir"`
+	StaticOutputDir       string            `yaml:"static_output_dir"`
+	Width                 int               `yaml:"width"`
+	Height                int               `yaml:"height"`
+	Scale                 float64           `yaml:"scale"`
+	Timeout               time.Duration     `yaml:"timeout"`
+	RegistryCacheTTL      time.Duration     `yaml:"registry_cache_ttl"`
+	CaptureExistsTTL      time.Duration     `yaml:"capture_exists_ttl"`
+	CaptureMaxConcurrency int               `yaml:"capture_max_concurrency"`
+	CaptureAcquireTimeout time.Duration     `yaml:"capture_acquire_timeout"`
+	TemporaryCaptureTTL   time.Duration     `yaml:"temporary_capture_ttl"`
+	CaptureCacheVersion   string            `yaml:"capture_cache_version"`
+	CameraPreset          string            `yaml:"camera_preset"`
 }
 
 // MySekaiCNWhitelistEntry defines a platform+group pair allowed to use
@@ -578,7 +615,9 @@ func ReadConfig(path string) (Config, error) {
 	cfg.Profile = p
 
 	ApplyProfileDefaults(&cfg)
-	ApplyEnvOverrides(&cfg)
+	if err := ApplyEnvOverrides(&cfg); err != nil {
+		return Config{}, fmt.Errorf("invalid environment override: %w", err)
+	}
 	return cfg, nil
 }
 

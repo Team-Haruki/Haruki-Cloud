@@ -159,6 +159,7 @@ pjsk_render:
   preview_3d:
     enabled: false
     engine_base_url: "http://haruki-3d-engine:8080"
+    engine_base_urls: {}  # when non-empty, every requested region must have an engine URL
     static_relative_dir: "static_images/pjsk_3d_preview"
     static_output_dir: ""
     width: 1400

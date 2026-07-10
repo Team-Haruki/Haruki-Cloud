@@ -2,6 +2,7 @@ package costume
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -32,7 +33,7 @@ func TestPreview3DRegistryResolveSkipsMissingGroupParts(t *testing.T) {
 		},
 	}
 
-	selection, err := registry.resolve("jp", 33002, preview3DCacheSignature("test", 700, 500, 2, "capture"))
+	selection, err := registry.resolve("jp", 33002)
 	if err != nil {
 		t.Fatalf("resolve failed: %v", err)
 	}
@@ -55,7 +56,7 @@ func TestPreview3DRegistryResolveReportsMissingRuntimePackageDetails(t *testing.
 		}},
 	}
 
-	_, err := registry.resolve("jp", 33002, "sig")
+	_, err := registry.resolve("jp", 33002)
 	if err == nil {
 		t.Fatalf("expected missing runtime package error")
 	}
@@ -101,7 +102,7 @@ func TestPreview3DRegistryResolveSkipsMissingDefaultRoles(t *testing.T) {
 		},
 	}
 
-	selection, err := registry.resolve("jp", 33002, preview3DCacheSignature("test", 700, 500, 2, "capture"))
+	selection, err := registry.resolve("jp", 33002)
 	if err != nil {
 		t.Fatalf("resolve failed: %v", err)
 	}
@@ -110,7 +111,7 @@ func TestPreview3DRegistryResolveSkipsMissingDefaultRoles(t *testing.T) {
 	}
 }
 
-func TestPreview3DRegistryResolveUsesGroupColorRoleCacheKey(t *testing.T) {
+func TestPreview3DRegistryResolveUsesInputCostumeID(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{{
 			Character3DID:   5,
@@ -129,33 +130,34 @@ func TestPreview3DRegistryResolveUsesGroupColorRoleCacheKey(t *testing.T) {
 			{Costume3DID: 33021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
 		},
 	}
-	signature := preview3DCacheSignature("test", 700, 500, 2, "capture")
-
-	body, err := registry.resolve("jp", 33001, signature)
+	body, err := registry.resolve("jp", 33001)
 	if err != nil {
 		t.Fatalf("resolve body failed: %v", err)
 	}
-	head, err := registry.resolve("jp", 33011, signature)
+	head, err := registry.resolve("jp", 33011)
 	if err != nil {
 		t.Fatalf("resolve head failed: %v", err)
 	}
-	color2, err := registry.resolve("jp", 33002, signature)
+	color2, err := registry.resolve("jp", 33002)
 	if err != nil {
 		t.Fatalf("resolve color2 failed: %v", err)
 	}
 
-	if body.ImageID != head.ImageID {
-		t.Fatalf("same group/color/role should share image id: body=%q head=%q", body.ImageID, head.ImageID)
+	if body.ImageID == head.ImageID {
+		t.Fatalf("different input costume ids should not share image id: body=%q head=%q", body.ImageID, head.ImageID)
 	}
 	if body.ImageID == color2.ImageID {
-		t.Fatalf("different color should not share image id: %q", body.ImageID)
+		t.Fatalf("different input costume ids should not share image id: %q", body.ImageID)
 	}
-	if want := "pjsk3d_" + signature + "_c20_school_refusal_g330_cl1_b33001_h33011_r33021_o0"; body.ImageID != want {
+	if want := "pjsk3d_jp_c20_school_refusal_i33001_b33001_h33011_r33021_o0"; body.ImageID != want {
 		t.Fatalf("unexpected body image id: got %q want %q", body.ImageID, want)
+	}
+	if want := "pjsk3d_jp_c20_school_refusal_i33011_b33001_h33011_r33021_o0"; head.ImageID != want {
+		t.Fatalf("unexpected head image id: got %q want %q", head.ImageID, want)
 	}
 }
 
-func TestPreview3DRegistryResolveImageIDIgnoresRegion(t *testing.T) {
+func TestPreview3DRegistryResolveImageIDIncludesRegion(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{{
 			Character3DID:   5,
@@ -173,16 +175,22 @@ func TestPreview3DRegistryResolveImageIDIgnoresRegion(t *testing.T) {
 		},
 	}
 
-	jp, err := registry.resolve("jp", 33001, "sig")
+	jp, err := registry.resolve("jp", 33001)
 	if err != nil {
 		t.Fatalf("resolve jp failed: %v", err)
 	}
-	cn, err := registry.resolve("cn", 33001, "sig")
+	cn, err := registry.resolve("cn", 33001)
 	if err != nil {
 		t.Fatalf("resolve cn failed: %v", err)
 	}
-	if jp.ImageID != cn.ImageID {
-		t.Fatalf("same tuple should share image id across regions: jp=%q cn=%q", jp.ImageID, cn.ImageID)
+	if jp.ImageID == cn.ImageID {
+		t.Fatalf("same tuple should not share image id across regions: jp=%q cn=%q", jp.ImageID, cn.ImageID)
+	}
+	if !strings.HasPrefix(jp.ImageID, "pjsk3d_jp_") {
+		t.Fatalf("jp image id should include region: %q", jp.ImageID)
+	}
+	if !strings.HasPrefix(cn.ImageID, "pjsk3d_cn_") {
+		t.Fatalf("cn image id should include region: %q", cn.ImageID)
 	}
 }
 
@@ -191,7 +199,7 @@ func TestPreview3DRegistryResolveRejectsBlockedHeadHairPair(t *testing.T) {
 		{Unit: "school_refusal", HeadCostume3DID: 53129, HairCostume3DID: 33021, State: "not_available"},
 	})
 
-	_, err := registry.resolve("jp", 53129, "sig")
+	_, err := registry.resolve("jp", 53129)
 	if err == nil {
 		t.Fatalf("expected blocked head/hair pair to be rejected")
 	}
@@ -205,7 +213,7 @@ func TestPreview3DRegistryResolveAllowsUnlistedHairWhenOnlyAvailablePatternsExis
 		{Unit: "school_refusal", HeadCostume3DID: 33011, HairCostume3DID: 99921, State: "available"},
 	})
 
-	selection, err := registry.resolve("jp", 53129, "sig")
+	selection, err := registry.resolve("jp", 53129)
 	if err != nil {
 		t.Fatalf("available patterns should not reject unlisted head/hair pairs: %v", err)
 	}
@@ -219,7 +227,7 @@ func TestPreview3DRegistryResolveAllowsOfficialPresetOutsideAvailablePatterns(t 
 		{Unit: "school_refusal", HeadCostume3DID: 33011, HairCostume3DID: 99921, State: "available"},
 	})
 
-	selection, err := registry.resolve("jp", 33001, "sig")
+	selection, err := registry.resolve("jp", 33001)
 	if err != nil {
 		t.Fatalf("official preset should not be rejected by custom compatibility patterns: %v", err)
 	}
@@ -237,7 +245,7 @@ func TestPreview3DRegistryResolveAccessoryConflictUsesDefaultHair(t *testing.T) 
 		preview3DPartEntry{Costume3DID: 99021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 990, Status: "available"},
 	)
 
-	selection, err := registry.resolve("jp", 53129, "sig")
+	selection, err := registry.resolve("jp", 53129)
 	if err != nil {
 		t.Fatalf("resolve accessory with default hair failed: %v", err)
 	}
@@ -273,7 +281,7 @@ func TestPreview3DRegistryResolveHairConflictUsesDefaultAccessory(t *testing.T) 
 		},
 	}
 
-	selection, err := registry.resolve("jp", 99021, "sig")
+	selection, err := registry.resolve("jp", 99021)
 	if err != nil {
 		t.Fatalf("resolve hair with default accessory failed: %v", err)
 	}
@@ -303,7 +311,7 @@ func TestPreview3DRegistryResolveTreatsCompleteHeadTypesAsHeadSlot(t *testing.T)
 		},
 	}
 
-	selection, err := registry.resolve("jp", 45033, "sig")
+	selection, err := registry.resolve("jp", 45033)
 	if err != nil {
 		t.Fatalf("resolve complete head failed: %v", err)
 	}
@@ -577,6 +585,110 @@ func TestPreview3DCaptureTemporaryComboUsesExistingCapture(t *testing.T) {
 	}
 }
 
+func TestPreview3DServiceUsesRegionEngineBaseURL(t *testing.T) {
+	var cnCapturePayload map[string]any
+	jpRequests := atomic.Int32{}
+	jpEngine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jpRequests.Add(1)
+		switch r.URL.Path {
+		case "/runtime/character3d-index.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`)
+		case "/runtime/parts/part-registry.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"entries":[
+				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
+				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
+				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"}
+			]}`)
+		case "/runtime/parts/head-hair-compatibility.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
+		default:
+			t.Fatalf("unexpected jp engine request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer jpEngine.Close()
+
+	cnEngine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
+			http.NotFound(w, r)
+			return
+		}
+		switch r.URL.Path {
+		case "/runtime/character3d-index.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"entries":[{"character3dId":6,"characterId":21,"unit":"idol","bodyCostume3dId":44001,"headCostume3dId":44011,"hairCostume3dId":44021,"status":"available"}]}`)
+		case "/runtime/parts/part-registry.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"entries":[
+				{"costume3dId":44001,"partType":"body","characterId":21,"unit":"idol","colorId":1,"costume3dGroupId":440,"status":"available"},
+				{"costume3dId":44011,"partType":"head","characterId":21,"unit":"idol","colorId":1,"costume3dGroupId":440,"status":"available"},
+				{"costume3dId":44021,"partType":"hair","characterId":21,"unit":"idol","colorId":1,"costume3dGroupId":440,"status":"available"}
+			]}`)
+		case "/runtime/parts/head-hair-compatibility.json":
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"rules":[{"unit":"idol","headCostume3dId":44011,"hairCostume3dId":44021,"state":"available"}]}`)
+		case "/capture":
+			if err := json.NewDecoder(r.Body).Decode(&cnCapturePayload); err != nil {
+				t.Fatalf("decode cn capture payload: %v", err)
+			}
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"ok":true}`)
+		default:
+			t.Fatalf("unexpected cn engine request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer cnEngine.Close()
+
+	service := NewPreview3DService(Preview3DConfig{
+		Enabled:             true,
+		EngineBaseURL:       jpEngine.URL,
+		EngineBaseURLs:      map[string]string{"cn": cnEngine.URL},
+		CaptureCacheVersion: "test",
+		CaptureExistsTTL:    -1,
+	})
+	if err := service.EnsurePreviewCapture(context.Background(), "cn", 44001); err != nil {
+		t.Fatalf("EnsurePreviewCapture failed: %v", err)
+	}
+	imageID, _ := cnCapturePayload["imageId"].(string)
+	if !strings.HasPrefix(imageID, "pjsk3d_cn_") {
+		t.Fatalf("expected cn image id, got %q", imageID)
+	}
+	if jpRequests.Load() != 0 {
+		t.Fatalf("cn preview should not call jp engine, requests=%d", jpRequests.Load())
+	}
+}
+
+func TestPreview3DServiceRejectsMissingRegionEngineWhenMapConfigured(t *testing.T) {
+	service := NewPreview3DService(Preview3DConfig{
+		Enabled:        true,
+		EngineBaseURL:  "http://legacy-jp-engine",
+		EngineBaseURLs: map[string]string{"cn": "http://cn-engine"},
+	})
+
+	_, err := service.endpointForRegion("en")
+	if err == nil {
+		t.Fatal("expected missing en engine to be rejected")
+	}
+	if !strings.Contains(err.Error(), "region en") {
+		t.Fatalf("expected region in error, got %v", err)
+	}
+}
+
+func TestPreview3DServiceDoesNotFallbackWhenRegionMapContainsEmptyURL(t *testing.T) {
+	service := NewPreview3DService(Preview3DConfig{
+		Enabled:        true,
+		EngineBaseURL:  "http://legacy-jp-engine",
+		EngineBaseURLs: map[string]string{"cn": " "},
+	})
+
+	_, err := service.endpointForRegion("jp")
+	if err == nil {
+		t.Fatal("expected empty region map entry to disable legacy fallback")
+	}
+}
+
 func TestPreview3DEnsureCaptureSerializesMisses(t *testing.T) {
 	var active atomic.Int32
 	var maxActive atomic.Int32
@@ -606,24 +718,34 @@ func TestPreview3DEnsureCaptureSerializesMisses(t *testing.T) {
 	service := NewPreview3DService(Preview3DConfig{
 		Enabled:               true,
 		EngineBaseURL:         engine.URL,
+		EngineBaseURLs:        map[string]string{"jp": engine.URL, "cn": engine.URL},
 		CaptureMaxConcurrency: 1,
 		CaptureAcquireTimeout: time.Second,
 		CaptureExistsTTL:      -1,
 		TemporaryCaptureTTL:   time.Hour,
 	})
+	jpEndpoint, err := service.endpointForRegion("jp")
+	if err != nil {
+		t.Fatalf("jp endpoint: %v", err)
+	}
+	cnEndpoint, err := service.endpointForRegion("cn")
+	if err != nil {
+		t.Fatalf("cn endpoint: %v", err)
+	}
 
 	selections := []preview3DSelection{
 		{ImageID: "pjsk3d_a", RoleID: "1:unit", BodyCostume3DID: 1, HeadCostume3DID: 2, HairCostume3DID: 3},
 		{ImageID: "pjsk3d_b", RoleID: "1:unit", BodyCostume3DID: 1, HeadCostume3DID: 2, HairCostume3DID: 4},
 	}
+	endpoints := []preview3DEndpoint{jpEndpoint, cnEndpoint}
 	var wg sync.WaitGroup
 	errs := make(chan error, len(selections))
-	for _, selection := range selections {
+	for index, selection := range selections {
 		wg.Add(1)
-		go func(selection preview3DSelection) {
+		go func(endpoint preview3DEndpoint, selection preview3DSelection) {
 			defer wg.Done()
-			errs <- service.ensureCapture(context.Background(), selection, "persistent")
-		}(selection)
+			errs <- service.ensureCapture(context.Background(), endpoint, selection, "persistent")
+		}(endpoints[index], selection)
 	}
 	wg.Wait()
 	close(errs)

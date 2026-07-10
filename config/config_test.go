@@ -1,6 +1,9 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -190,6 +193,7 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	t.Setenv("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ALLOW_LEAKS", "true")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENABLED", "true")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URL", "http://127.0.0.1:38080")
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URLS", `{"jp":"http://jp-engine:8080","cn":"http://cn-engine:8080"}`)
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_STATIC_RELATIVE_DIR", "static_images/pjsk_3d_preview")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_STATIC_OUTPUT_DIR", "/data/haruki/drawing/static_images/pjsk_3d_preview")
 	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_WIDTH", "1400")
@@ -258,6 +262,9 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	if cfg.PJSKRender.Preview3D.EngineBaseURL != "http://127.0.0.1:38080" {
 		t.Fatalf("unexpected 3d preview engine url: %q", cfg.PJSKRender.Preview3D.EngineBaseURL)
 	}
+	if got := cfg.PJSKRender.Preview3D.EngineBaseURLs["cn"]; got != "http://cn-engine:8080" {
+		t.Fatalf("unexpected cn 3d preview engine url: %q", got)
+	}
 	if cfg.PJSKRender.Preview3D.StaticRelativeDir != "static_images/pjsk_3d_preview" {
 		t.Fatalf("unexpected 3d preview static dir: %q", cfg.PJSKRender.Preview3D.StaticRelativeDir)
 	}
@@ -293,6 +300,22 @@ func TestApplyEnvOverridesPJSKRenderDeckRecommendMasterdataDir(t *testing.T) {
 	}
 	if cfg.PJSKRender.Preview3D.CameraPreset != "capture" {
 		t.Fatalf("unexpected 3d preview camera preset: %q", cfg.PJSKRender.Preview3D.CameraPreset)
+	}
+}
+
+func TestReadConfigRejectsMalformedPreview3DEngineBaseURLs(t *testing.T) {
+	t.Setenv("HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URLS", `{"jp":`)
+	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
+	if err := os.WriteFile(configPath, []byte("{}\n"), 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	_, err := ReadConfig(configPath)
+	if err == nil {
+		t.Fatal("expected malformed 3d preview engine map to be rejected")
+	}
+	if got := err.Error(); !strings.Contains(got, "HARUKI_PJSK_RENDER_3D_PREVIEW_ENGINE_BASE_URLS") {
+		t.Fatalf("expected environment variable name in error, got %q", got)
 	}
 }
 

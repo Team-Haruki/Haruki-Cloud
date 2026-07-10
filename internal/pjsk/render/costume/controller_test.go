@@ -400,8 +400,7 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	if string(data) != "detail-png" {
 		t.Fatalf("unexpected detail data: %q", string(data))
 	}
-	signature := preview3DCacheSignature("test", 700, 500, 2, "capture")
-	wantImageID := "pjsk3d_" + signature + "_c20_school_refusal_g330_cl2_b33002_h33011_r33021_o0"
+	wantImageID := "pjsk3d_jp_c20_school_refusal_i33002_b33002_h33011_r33021_o0"
 	if capturePayload["imageId"] != wantImageID {
 		t.Fatalf("unexpected capture image id: %v", capturePayload["imageId"])
 	}

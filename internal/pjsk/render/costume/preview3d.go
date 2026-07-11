@@ -674,7 +674,7 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	if len(roles) == 0 {
 		return preview3DSelection{}, fmt.Errorf("3d combo role not found; specify a matching unit or different part ids")
 	}
-	if len(roles) > 1 {
+	if len(roles) > 1 && strings.TrimSpace(query.Unit) != "" {
 		return preview3DSelection{}, fmt.Errorf("3d combo matches multiple units; specify unit")
 	}
 	role := roles[0]
@@ -687,23 +687,6 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	headID := role.HeadCostume3DID
 	hairID := role.HairCostume3DID
 	var headOptionalID *int
-	for _, partType := range []string{"body", "head", "hair", "head_optional"} {
-		candidate, ok := r.groupPart(anchor, role.Unit, partType)
-		if !ok {
-			continue
-		}
-		switch partType {
-		case "body":
-			bodyID = candidate.Costume3DID
-		case "head":
-			headID = candidate.Costume3DID
-		case "hair":
-			hairID = candidate.Costume3DID
-		case "head_optional":
-			id := candidate.Costume3DID
-			headOptionalID = &id
-		}
-	}
 	if query.BodyCostume3DID > 0 {
 		part, ok := r.partForRole(query.BodyCostume3DID, role, "body")
 		if !ok {
@@ -742,10 +725,18 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 			headOptionalID = &id
 		}
 	}
+	implicitEmptyHead := false
+	if len(query.AccessoryCostumeIDs) == 0 {
+		if emptyHeadID, ok := r.defaultHeadOptionalForRole(role); ok {
+			headID = emptyHeadID
+			headOptionalID = nil
+			implicitEmptyHead = true
+		}
+	}
 	if bodyID <= 0 || headID <= 0 || hairID <= 0 {
 		return preview3DSelection{}, fmt.Errorf("3d combo tuple incomplete")
 	}
-	if !explicitHead {
+	if !explicitHead && !implicitEmptyHead {
 		if officialHeadID, ok := r.officialHeadForRoleTuple(role, bodyID, hairID); ok {
 			headID = officialHeadID
 			if !explicitOptional {
@@ -857,10 +848,13 @@ func (r *preview3DRegistry) comboRoleCandidates(query ComboQuery) []preview3DCha
 		candidates = append(candidates, role)
 	}
 	sort.Slice(candidates, func(i, j int) bool {
-		if candidates[i].CharacterID == candidates[j].CharacterID {
-			return candidates[i].Unit < candidates[j].Unit
+		if candidates[i].Character3DID != candidates[j].Character3DID {
+			return candidates[i].Character3DID < candidates[j].Character3DID
 		}
-		return candidates[i].CharacterID < candidates[j].CharacterID
+		if candidates[i].CharacterID != candidates[j].CharacterID {
+			return candidates[i].CharacterID < candidates[j].CharacterID
+		}
+		return candidates[i].Unit < candidates[j].Unit
 	})
 	return candidates
 }

@@ -487,7 +487,7 @@ func TestPreview3DRegistryResolveComboKeepsOfficialDefaultHeadWhenGroupHasVirtua
 	}
 }
 
-func TestPreview3DRegistryResolveComboRequiresUnitWhenAmbiguous(t *testing.T) {
+func TestPreview3DRegistryResolveComboUsesDefaultRoleWhenUnitIsOmitted(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{
 			{Character3DID: 5, CharacterID: 20, Unit: "school_refusal", BodyCostume3DID: 33001, HeadCostume3DID: 33011, HairCostume3DID: 33021, Status: "available"},
@@ -499,9 +499,37 @@ func TestPreview3DRegistryResolveComboRequiresUnitWhenAmbiguous(t *testing.T) {
 		},
 	}
 
-	_, err := registry.resolveCombo("jp", ComboQuery{BodyCostume3DID: 33001}, "sig")
-	if err == nil {
-		t.Fatalf("expected ambiguous combo to require unit")
+	selection, err := registry.resolveCombo("jp", ComboQuery{BodyCostume3DID: 33001}, "sig")
+	if err != nil {
+		t.Fatalf("resolve combo without unit failed: %v", err)
+	}
+	if selection.RoleID != "20:school_refusal" {
+		t.Fatalf("expected lowest character3dId role, got %s", selection.RoleID)
+	}
+}
+
+func TestPreview3DRegistryResolveComboDefaultsMissingPartsAndUsesEmptyHead(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 5, CharacterID: 5, Unit: "idol", BodyCostume3DID: 10, HeadCostume3DID: 105, HairCostume3DID: 205, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 9, PartType: "head_optional", CharacterID: 5, Unit: "idol", Status: "empty"},
+			{Costume3DID: 10, PartType: "body", CharacterID: 5, Unit: "idol", Status: "planned"},
+			{Costume3DID: 105, PartType: "head", CharacterID: 5, Unit: "idol", Status: "planned"},
+			{Costume3DID: 205, PartType: "hair", CharacterID: 5, Unit: "idol", Status: "planned"},
+		},
+	}
+
+	selection, err := registry.resolveCombo("en", ComboQuery{HairCostume3DID: 205}, "sig")
+	if err != nil {
+		t.Fatalf("resolve sparse combo failed: %v", err)
+	}
+	if selection.RoleID != "5:idol" || selection.BodyCostume3DID != 10 || selection.HairCostume3DID != 205 {
+		t.Fatalf("expected role defaults, got %+v", selection)
+	}
+	if selection.HeadCostume3DID != 9 || selection.HeadOptionalCostume3DID != nil {
+		t.Fatalf("expected empty head 9 without optional accessory, got head=%d optional=%+v", selection.HeadCostume3DID, selection.HeadOptionalCostume3DID)
 	}
 }
 

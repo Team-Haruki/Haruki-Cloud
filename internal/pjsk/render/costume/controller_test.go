@@ -507,6 +507,34 @@ func TestBuildCostumeDetailRequestDoesNotCall3DPreview(t *testing.T) {
 	}
 }
 
+func TestRenderCostumeDetailWorksWhen3DPreviewDisabled(t *testing.T) {
+	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode drawing payload: %v", err)
+		}
+		costumeBody, _ := body["costume"].(map[string]any)
+		if _, ok := costumeBody["preview_image_path"]; ok {
+			t.Fatalf("disabled 3D preview must not publish preview_image_path: %+v", costumeBody)
+		}
+		_, _ = fmt.Fprint(w, "detail-without-3d")
+	}))
+	defer drawingServer.Close()
+
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostumeWithColor(33002, "body", 20, 2),
+	}}, drawing.NewHarukiDrawingClient(drawingServer.URL), nil)
+	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: false})
+
+	data, err := controller.RenderCostumeDetail(Query{ID: 33002})
+	if err != nil {
+		t.Fatalf("RenderCostumeDetail failed with 3D disabled: %v", err)
+	}
+	if string(data) != "detail-without-3d" {
+		t.Fatalf("unexpected detail response: %q", data)
+	}
+}
+
 func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
 	called := false
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

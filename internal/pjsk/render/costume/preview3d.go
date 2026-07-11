@@ -307,7 +307,7 @@ func (s *Preview3DService) getJSON(ctx context.Context, endpoint preview3DEndpoi
 	}
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("3d preview registry request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -448,7 +448,7 @@ func (s *Preview3DService) captureSelection(ctx context.Context, endpoint previe
 	req.Header.Set("content-type", "application/json")
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("3d preview capture request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -465,7 +465,7 @@ func (s *Preview3DService) getCapture(ctx context.Context, endpoint preview3DEnd
 	}
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("3d preview capture fetch request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

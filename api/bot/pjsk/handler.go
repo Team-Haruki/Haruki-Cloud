@@ -95,7 +95,8 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	}
 	bot := app.Group(botRouteBase+"/:botId", sessionMiddleware)
 
-	bot.Get("/command/manifests", buildManifestHandler(botDBClient))
+	preview3DEnabled := renderApp.Config.Preview3D.Enabled
+	bot.Get("/command/manifests", buildManifestHandler(botDBClient, preview3DEnabled))
 
 	guard := NewRequestGuard(redisClient)
 
@@ -107,6 +108,9 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	routes := commandregistry.ListBotRoutes()
 	hasMysekaiBlueprintRoute := false
 	for _, route := range routes {
+		if !botRouteEnabled(route.Path, preview3DEnabled) {
+			continue
+		}
 		h := makeBotHandler(renderApp, guard, botDBClient, route.Path, route.Commands)
 		path := "/" + route.Path
 		pjsk.Post(path, h)
@@ -119,6 +123,10 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 		// /msb until they refresh to the canonical mysekai/talk-list path.
 		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, guard, botDBClient, "mysekai/blueprint", nil))
 	}
+}
+
+func botRouteEnabled(path string, preview3DEnabled bool) bool {
+	return path != "costume/combo" || preview3DEnabled
 }
 
 // makeBotHandler returns a POST-only fiber.Handler that validates the matched
@@ -543,7 +551,7 @@ func shouldPreferMoreSpecificMessageMatch(message string, matched commandregistr
 // When botDBClient is non-nil it queries the command_manifests table and returns
 // the full manifest ordered by priority descending.
 // When botDBClient is nil it returns a 501 Not Implemented response (test / no-DB mode).
-func buildManifestHandler(botDBClient *botDB.Client) fiber.Handler {
+func buildManifestHandler(botDBClient *botDB.Client, preview3DEnabled bool) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		if botDBClient == nil {
 			return api.JSONResponse(c, fiber.StatusNotImplemented,
@@ -560,6 +568,9 @@ func buildManifestHandler(botDBClient *botDB.Client) fiber.Handler {
 		clientPolicyScopes := commandManifestClientPolicyScopes()
 		entries := make([]ManifestEntry, 0, len(rows))
 		for _, r := range rows {
+			if !botRouteEnabled(r.CommandPath, preview3DEnabled) {
+				continue
+			}
 			entries = append(entries, ManifestEntry{
 				CommandPrefixes:         r.CommandPrefixes,
 				CommandPriority:         r.CommandPriority,

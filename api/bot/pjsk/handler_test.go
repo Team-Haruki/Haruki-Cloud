@@ -1253,6 +1253,18 @@ func TestResolveBotCommandFallsBackToMessageMatchForCompactTimeZoneCommand(t *te
 	}
 }
 
+func TestBotRouteEnabledDisables3DCombo(t *testing.T) {
+	if botRouteEnabled("costume/combo", false) {
+		t.Fatal("3D disabled instance must not expose costume/combo")
+	}
+	if !botRouteEnabled("costume/combo", true) {
+		t.Fatal("3D enabled instance must expose costume/combo")
+	}
+	if !botRouteEnabled("costume/list", false) {
+		t.Fatal("non-3D costume routes must remain enabled")
+	}
+}
+
 func TestResolveBotCommandCorrectsShortMatchedCommandToArrestDifficulty(t *testing.T) {
 	commandhandler.EnsureCommandHandlersRegistered()
 

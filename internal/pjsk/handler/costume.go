@@ -132,7 +132,7 @@ func executeCostume(rc *RequestContext) (onebot11.Message, error) {
 		q.Region = rc.Cmd.Region
 		data, err := costumeCtrl.RenderCostumeCombo(q)
 		if err != nil {
-			return nil, err
+			return nil, normalizeCostume3DError(err)
 		}
 		return rc.ImageMessage(data)
 	default:

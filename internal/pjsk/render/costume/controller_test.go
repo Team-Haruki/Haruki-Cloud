@@ -528,15 +528,15 @@ func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
 }
 
 func TestParseComboQuerySupportsLabelsAndOrderedIDs(t *testing.T) {
-	labeled, err := parseComboQuery(ComboQuery{Query: "服装33001 发型33021 饰品30129 饰品53129 n25", Region: "jp"})
+	labeled, err := parseComboQuery(ComboQuery{Query: "服装33001 发型33021 饰品30129 n25", Region: "jp"})
 	if err != nil {
 		t.Fatalf("parse labeled combo failed: %v", err)
 	}
 	if labeled.BodyCostume3DID != 33001 || labeled.HairCostume3DID != 33021 || labeled.Unit != "school_refusal" {
 		t.Fatalf("unexpected labeled combo: %+v", labeled)
 	}
-	if got := labeled.AccessoryCostumeIDs; len(got) != 2 || got[0] != 30129 || got[1] != 53129 {
-		t.Fatalf("unexpected accessories: %+v", got)
+	if labeled.AccessoryCostume3DID != 30129 {
+		t.Fatalf("unexpected accessory: %d", labeled.AccessoryCostume3DID)
 	}
 
 	ordered, err := parseComboQuery(ComboQuery{Query: "33001 33021 30129"})
@@ -546,8 +546,12 @@ func TestParseComboQuerySupportsLabelsAndOrderedIDs(t *testing.T) {
 	if ordered.BodyCostume3DID != 33001 || ordered.HairCostume3DID != 33021 {
 		t.Fatalf("unexpected ordered combo: %+v", ordered)
 	}
-	if got := ordered.AccessoryCostumeIDs; len(got) != 1 || got[0] != 30129 {
-		t.Fatalf("unexpected ordered accessories: %+v", got)
+	if ordered.AccessoryCostume3DID != 30129 {
+		t.Fatalf("unexpected ordered accessory: %d", ordered.AccessoryCostume3DID)
+	}
+
+	if _, err := parseComboQuery(ComboQuery{Query: "饰品30129 饰品53129"}); err == nil {
+		t.Fatal("expected duplicate accessories to be rejected")
 	}
 }
 
@@ -604,8 +608,8 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 	if capturePayload["cacheMode"] != "temporary" {
 		t.Fatalf("expected temporary cache mode, got %v", capturePayload["cacheMode"])
 	}
-	if capturePayload["headOptionalCostume3dId"] != float64(53129) {
-		t.Fatalf("expected optional accessory 53129, got %v", capturePayload["headOptionalCostume3dId"])
+	if capturePayload["headCostume3dId"] != float64(53129) || capturePayload["headOptionalCostume3dId"] != nil {
+		t.Fatalf("expected business head 53129 without a second accessory slot, got head=%v optional=%v", capturePayload["headCostume3dId"], capturePayload["headOptionalCostume3dId"])
 	}
 	if imageID, _ := capturePayload["imageId"].(string); !strings.HasPrefix(imageID, "tmp_pjsk3d_") {
 		t.Fatalf("expected tmp image id, got %v", capturePayload["imageId"])

@@ -613,8 +613,8 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 		case "hair":
 			hairID = candidate.Costume3DID
 		case "head_optional":
-			id := candidate.Costume3DID
-			headOptionalID = &id
+			headID = candidate.Costume3DID
+			headOptionalID = nil
 		}
 	}
 	switch preview3DPartSlot(selected) {
@@ -625,13 +625,13 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 	case "hair":
 		hairID = selected.Costume3DID
 	case "head_optional":
-		id := selected.Costume3DID
-		headOptionalID = &id
+		headID = selected.Costume3DID
+		headOptionalID = nil
 	}
 	if bodyID <= 0 || headID <= 0 || hairID <= 0 {
 		return preview3DSelection{}, fmt.Errorf("3d preview tuple incomplete for costume %d", costume3DID)
 	}
-	if preview3DPartSlot(selected) != "head" {
+	if slot := preview3DPartSlot(selected); slot != "head" && slot != "head_optional" {
 		if officialHeadID, ok := r.officialHeadForRoleTuple(role, bodyID, hairID); ok {
 			headID = officialHeadID
 			if preview3DPartSlot(selected) != "head_optional" {
@@ -641,7 +641,7 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 	}
 	if !r.isOfficialPresetTuple(role, bodyID, headID, hairID, headOptionalID) {
 		var err error
-		hairID, headOptionalID, err = r.applyHeadHairFallback(role, preview3DPartSlot(selected), headID, hairID, headOptionalID, "3d preview")
+		headID, hairID, err = r.applyHeadHairFallback(role, preview3DPartSlot(selected), headID, hairID, "3d preview")
 		if err != nil {
 			return preview3DSelection{}, err
 		}
@@ -674,8 +674,8 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	if len(roles) == 0 {
 		return preview3DSelection{}, fmt.Errorf("3d combo role not found; specify a matching unit or different part ids")
 	}
-	if len(roles) > 1 && strings.TrimSpace(query.Unit) != "" {
-		return preview3DSelection{}, fmt.Errorf("3d combo matches multiple units; specify unit")
+	if len(roles) > 1 {
+		return preview3DSelection{}, fmt.Errorf("3d combo matches multiple roles; specify unit or another part id")
 	}
 	role := roles[0]
 	anchor, ok := r.comboAnchorPart(query, role)
@@ -702,31 +702,18 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		hairID = part.Costume3DID
 	}
 	explicitHead := false
-	explicitOptional := false
 	explicitHair := query.HairCostume3DID > 0
-	for _, headAccessoryID := range query.AccessoryCostumeIDs {
-		part, ok := r.partForRole(headAccessoryID, role, "head", "head_optional")
+	if query.AccessoryCostume3DID > 0 {
+		part, ok := r.partForRole(query.AccessoryCostume3DID, role, "head", "head_optional")
 		if !ok {
-			return preview3DSelection{}, fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", role.Unit, headAccessoryID)
+			return preview3DSelection{}, fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", role.Unit, query.AccessoryCostume3DID)
 		}
-		switch preview3DPartSlot(part) {
-		case "head":
-			if explicitHead {
-				return preview3DSelection{}, fmt.Errorf("组合里多个饰品落到主饰品槽位")
-			}
-			explicitHead = true
-			headID = part.Costume3DID
-		case "head_optional":
-			if explicitOptional {
-				return preview3DSelection{}, fmt.Errorf("组合里多个饰品落到追加饰品槽位")
-			}
-			explicitOptional = true
-			id := part.Costume3DID
-			headOptionalID = &id
-		}
+		explicitHead = true
+		headID = part.Costume3DID
+		headOptionalID = nil
 	}
 	implicitEmptyHead := false
-	if len(query.AccessoryCostumeIDs) == 0 {
+	if query.AccessoryCostume3DID <= 0 {
 		if emptyHeadID, ok := r.defaultHeadOptionalForRole(role); ok {
 			headID = emptyHeadID
 			headOptionalID = nil
@@ -739,22 +726,20 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	if !explicitHead && !implicitEmptyHead {
 		if officialHeadID, ok := r.officialHeadForRoleTuple(role, bodyID, hairID); ok {
 			headID = officialHeadID
-			if !explicitOptional {
-				headOptionalID = nil
-			}
+			headOptionalID = nil
 		}
 	}
 	if !r.isOfficialPresetTuple(role, bodyID, headID, hairID, headOptionalID) {
 		fallbackMode := "auto"
-		if explicitHair && (explicitHead || explicitOptional) {
+		if explicitHair && explicitHead {
 			fallbackMode = "none"
 		} else if explicitHair {
 			fallbackMode = "hair"
-		} else if explicitHead || explicitOptional {
+		} else if explicitHead {
 			fallbackMode = "head"
 		}
 		var err error
-		hairID, headOptionalID, err = r.applyHeadHairFallback(role, fallbackMode, headID, hairID, headOptionalID, "3d combo")
+		headID, hairID, err = r.applyHeadHairFallback(role, fallbackMode, headID, hairID, "3d combo")
 		if err != nil {
 			return preview3DSelection{}, err
 		}
@@ -870,8 +855,8 @@ func (r *preview3DRegistry) comboRoleMatches(query ComboQuery, role preview3DCha
 			return false
 		}
 	}
-	for _, headAccessoryID := range query.AccessoryCostumeIDs {
-		if _, ok := r.partForRole(headAccessoryID, role, "head", "head_optional"); !ok {
+	if query.AccessoryCostume3DID > 0 {
+		if _, ok := r.partForRole(query.AccessoryCostume3DID, role, "head", "head_optional"); !ok {
 			return false
 		}
 	}
@@ -885,8 +870,8 @@ func (r *preview3DRegistry) comboAnchorPart(query ComboQuery, role preview3DChar
 	if query.HairCostume3DID > 0 {
 		return r.partForRole(query.HairCostume3DID, role, "hair")
 	}
-	for _, headAccessoryID := range query.AccessoryCostumeIDs {
-		if part, ok := r.partForRole(headAccessoryID, role, "head", "head_optional"); ok {
+	if query.AccessoryCostume3DID > 0 {
+		if part, ok := r.partForRole(query.AccessoryCostume3DID, role, "head", "head_optional"); ok {
 			return part, true
 		}
 	}
@@ -1013,37 +998,30 @@ func (r *preview3DRegistry) applyHeadHairFallback(
 	fallbackMode string,
 	headID int,
 	hairID int,
-	headOptionalID *int,
 	label string,
-) (int, *int, error) {
-	effectiveHeadID := r.effectiveHeadAccessoryID(role, headID, headOptionalID)
-	if !r.headHairBlocked(role.Unit, effectiveHeadID, hairID) {
-		return hairID, headOptionalID, nil
+) (int, int, error) {
+	if !r.headHairBlocked(role.Unit, headID, hairID) {
+		return headID, hairID, nil
 	}
 
 	if preview3DHeadSideFallbackMode(fallbackMode) || fallbackMode == "auto" {
-		if defaultHairID, ok := r.defaultHairForHead(role.Unit, effectiveHeadID); ok {
+		if defaultHairID, ok := r.defaultHairForHead(role.Unit, headID); ok {
 			if _, usable := r.partForRole(defaultHairID, role, "hair"); usable {
-				if !r.headHairBlocked(role.Unit, effectiveHeadID, defaultHairID) {
-					return defaultHairID, headOptionalID, nil
+				if !r.headHairBlocked(role.Unit, headID, defaultHairID) {
+					return headID, defaultHairID, nil
 				}
 			}
 		}
 	}
 
 	if fallbackMode == "hair" || fallbackMode == "auto" {
-		if defaultOptionalID, ok := r.defaultHeadOptionalForRole(role); ok {
-			fallbackHeadID := r.effectiveHeadAccessoryID(role, headID, &defaultOptionalID)
-			if !r.headHairBlocked(role.Unit, fallbackHeadID, hairID) {
-				return hairID, &defaultOptionalID, nil
-			}
-		}
-		if !r.headHairBlocked(role.Unit, headID, hairID) {
-			return hairID, nil, nil
+		if emptyHeadID, ok := r.defaultHeadOptionalForRole(role); ok &&
+			!r.headHairBlocked(role.Unit, emptyHeadID, hairID) {
+			return emptyHeadID, hairID, nil
 		}
 	}
 
-	return hairID, headOptionalID, fmt.Errorf("%s head/hair combination is blocked: unit=%s head=%d hair=%d", label, role.Unit, effectiveHeadID, hairID)
+	return headID, hairID, fmt.Errorf("%s head/hair combination is blocked: unit=%s head=%d hair=%d", label, role.Unit, headID, hairID)
 }
 
 func preview3DHeadSideFallbackMode(mode string) bool {
@@ -1129,32 +1107,6 @@ func (r *preview3DRegistry) defaultHeadOptionalForRole(role preview3DCharacterEn
 	return candidates[0].Costume3DID, true
 }
 
-func (r *preview3DRegistry) effectiveHeadAccessoryID(role preview3DCharacterEntry, headID int, headOptionalID *int) int {
-	if headOptionalID != nil && *headOptionalID > 0 {
-		if r.isEmptyHeadOptionalForRole(role, *headOptionalID) {
-			return headID
-		}
-		return *headOptionalID
-	}
-	return headID
-}
-
-func (r *preview3DRegistry) isEmptyHeadOptionalForRole(role preview3DCharacterEntry, costume3DID int) bool {
-	for _, part := range r.parts {
-		if part.Costume3DID != costume3DID {
-			continue
-		}
-		if part.CharacterID != role.CharacterID {
-			continue
-		}
-		if part.Unit != "" && part.Unit != role.Unit {
-			continue
-		}
-		return preview3DPartSlot(part) == "head_optional" && strings.EqualFold(strings.TrimSpace(part.Status), "empty")
-	}
-	return false
-}
-
 func preview3DColorRank(colorID int, selectedColorID int) int {
 	switch colorID {
 	case selectedColorID:
@@ -1180,8 +1132,10 @@ func preview3DPartSlot(part preview3DPartEntry) string {
 	slot := normalizePreview3DPartType(part.PartType)
 	if slot == "head" || slot == "head_optional" {
 		switch strings.TrimSpace(strings.ToLower(part.HeadCostume3DAssetbundleType)) {
-		case "head_and_hair", "head_all", "head_front", "head_back":
+		case "head_and_hair":
 			return "head"
+		case "head_only", "head_all", "head_front", "head_back":
+			return "head_optional"
 		}
 	}
 	return slot

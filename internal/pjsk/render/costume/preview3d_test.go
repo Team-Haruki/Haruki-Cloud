@@ -217,7 +217,7 @@ func TestPreview3DRegistryResolveAllowsUnlistedHairWhenOnlyAvailablePatternsExis
 	if err != nil {
 		t.Fatalf("available patterns should not reject unlisted head/hair pairs: %v", err)
 	}
-	if selection.HeadCostume3DID != 33011 || selection.HairCostume3DID != 33021 {
+	if selection.HeadCostume3DID != 53129 || selection.HairCostume3DID != 33021 {
 		t.Fatalf("unexpected resolved tuple: %+v", selection)
 	}
 }
@@ -252,8 +252,8 @@ func TestPreview3DRegistryResolveAccessoryConflictUsesDefaultHair(t *testing.T) 
 	if selection.HairCostume3DID != 99021 {
 		t.Fatalf("expected default hair 99021, got %+v", selection)
 	}
-	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 53129 {
-		t.Fatalf("expected selected accessory to stay active, got %+v", selection.HeadOptionalCostume3DID)
+	if selection.HeadCostume3DID != 53129 || selection.HeadOptionalCostume3DID != nil {
+		t.Fatalf("expected selected accessory to stay as the business head, got %+v", selection)
 	}
 }
 
@@ -288,12 +288,12 @@ func TestPreview3DRegistryResolveHairConflictUsesDefaultAccessory(t *testing.T) 
 	if selection.HairCostume3DID != 99021 {
 		t.Fatalf("expected selected hair to stay active, got %+v", selection)
 	}
-	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 53129 {
-		t.Fatalf("expected default empty accessory 53129, got %+v", selection.HeadOptionalCostume3DID)
+	if selection.HeadCostume3DID != 53129 || selection.HeadOptionalCostume3DID != nil {
+		t.Fatalf("expected default empty accessory 53129 as the business head, got %+v", selection)
 	}
 }
 
-func TestPreview3DRegistryResolveTreatsCompleteHeadTypesAsHeadSlot(t *testing.T) {
+func TestPreview3DRegistryResolveTreatsOnlyHeadAndHairAsHeadSlot(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{{
 			Character3DID:   5,
@@ -320,6 +320,9 @@ func TestPreview3DRegistryResolveTreatsCompleteHeadTypesAsHeadSlot(t *testing.T)
 	}
 	if selection.HeadOptionalCostume3DID != nil {
 		t.Fatalf("complete head types must not also fill the head_optional slot: %+v", selection.HeadOptionalCostume3DID)
+	}
+	if slot := preview3DPartSlot(preview3DPartEntry{PartType: "head", HeadCostume3DAssetbundleType: "head_all"}); slot != "head_optional" {
+		t.Fatalf("expected head_all to remain an optional accessory contribution, got %s", slot)
 	}
 }
 
@@ -377,26 +380,23 @@ func TestPreview3DRegistryResolveComboSlotsAccessoryAfterUnit(t *testing.T) {
 	}
 
 	selection, err := registry.resolveCombo("jp", ComboQuery{
-		Unit:                "school_refusal",
-		BodyCostume3DID:     33001,
-		HairCostume3DID:     33021,
-		AccessoryCostumeIDs: []int{30129},
+		Unit:                 "school_refusal",
+		BodyCostume3DID:      33001,
+		HairCostume3DID:      33021,
+		AccessoryCostume3DID: 30129,
 	}, "sig")
 	if err != nil {
 		t.Fatalf("resolve combo failed: %v", err)
 	}
-	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 30129 {
-		t.Fatalf("expected accessory to resolve to head_optional, got %+v", selection.HeadOptionalCostume3DID)
-	}
-	if selection.HeadCostume3DID != 33011 {
-		t.Fatalf("expected default head to stay 33011, got %d", selection.HeadCostume3DID)
+	if selection.HeadCostume3DID != 30129 || selection.HeadOptionalCostume3DID != nil {
+		t.Fatalf("expected the selected accessory id to remain the business head id, got %+v", selection)
 	}
 
 	selection, err = registry.resolveCombo("jp", ComboQuery{
-		Unit:                "idol",
-		BodyCostume3DID:     33001,
-		HairCostume3DID:     33021,
-		AccessoryCostumeIDs: []int{30129},
+		Unit:                 "idol",
+		BodyCostume3DID:      33001,
+		HairCostume3DID:      33021,
+		AccessoryCostume3DID: 30129,
 	}, "sig")
 	if err != nil {
 		t.Fatalf("resolve idol combo failed: %v", err)
@@ -409,7 +409,7 @@ func TestPreview3DRegistryResolveComboSlotsAccessoryAfterUnit(t *testing.T) {
 	}
 }
 
-func TestPreview3DRegistryResolveComboKeepsEmptyHeadOptionalSlot(t *testing.T) {
+func TestPreview3DRegistryResolveComboKeepsEmptyHeadAsBusinessSelection(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{
 			{Character3DID: 5, CharacterID: 20, Unit: "school_refusal", BodyCostume3DID: 33001, HeadCostume3DID: 33011, HairCostume3DID: 33021, Status: "available"},
@@ -423,19 +423,19 @@ func TestPreview3DRegistryResolveComboKeepsEmptyHeadOptionalSlot(t *testing.T) {
 	}
 
 	selection, err := registry.resolveCombo("jp", ComboQuery{
-		Unit:                "school_refusal",
-		BodyCostume3DID:     33001,
-		HairCostume3DID:     33021,
-		AccessoryCostumeIDs: []int{53129},
+		Unit:                 "school_refusal",
+		BodyCostume3DID:      33001,
+		HairCostume3DID:      33021,
+		AccessoryCostume3DID: 53129,
 	}, "sig")
 	if err != nil {
 		t.Fatalf("resolve combo failed: %v", err)
 	}
-	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 53129 {
-		t.Fatalf("expected empty head_optional slot to stay selected, got %+v", selection.HeadOptionalCostume3DID)
+	if selection.HeadCostume3DID != 53129 || selection.HeadOptionalCostume3DID != nil {
+		t.Fatalf("expected empty accessory id to remain the business head selection, got %+v", selection)
 	}
-	if !strings.HasSuffix(selection.ImageID, "_o53129") {
-		t.Fatalf("expected empty head_optional id in image key, got %q", selection.ImageID)
+	if !strings.Contains(selection.ImageID, "_h53129_") || !strings.HasSuffix(selection.ImageID, "_o0") {
+		t.Fatalf("expected empty accessory id in the head position, got %q", selection.ImageID)
 	}
 }
 
@@ -471,10 +471,10 @@ func TestPreview3DRegistryResolveComboKeepsOfficialDefaultHeadWhenGroupHasVirtua
 	}
 
 	selection, err = registry.resolveCombo("jp", ComboQuery{
-		Unit:                "school_refusal",
-		BodyCostume3DID:     34,
-		HairCostume3DID:     217,
-		AccessoryCostumeIDs: []int{33},
+		Unit:                 "school_refusal",
+		BodyCostume3DID:      34,
+		HairCostume3DID:      217,
+		AccessoryCostume3DID: 33,
 	}, "sig")
 	if err != nil {
 		t.Fatalf("resolve combo with empty optional failed: %v", err)
@@ -482,12 +482,12 @@ func TestPreview3DRegistryResolveComboKeepsOfficialDefaultHeadWhenGroupHasVirtua
 	if selection.HeadCostume3DID != 33 {
 		t.Fatalf("expected explicit empty optional to keep official default head 33, got %d", selection.HeadCostume3DID)
 	}
-	if selection.HeadOptionalCostume3DID == nil || *selection.HeadOptionalCostume3DID != 33 {
-		t.Fatalf("expected explicit empty optional 33 to stay selected, got %+v", selection.HeadOptionalCostume3DID)
+	if selection.HeadOptionalCostume3DID != nil {
+		t.Fatalf("did not expect a second accessory slot, got %+v", selection.HeadOptionalCostume3DID)
 	}
 }
 
-func TestPreview3DRegistryResolveComboUsesDefaultRoleWhenUnitIsOmitted(t *testing.T) {
+func TestPreview3DRegistryResolveComboRejectsAmbiguousRoleWhenUnitIsOmitted(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{
 			{Character3DID: 5, CharacterID: 20, Unit: "school_refusal", BodyCostume3DID: 33001, HeadCostume3DID: 33011, HairCostume3DID: 33021, Status: "available"},
@@ -499,12 +499,8 @@ func TestPreview3DRegistryResolveComboUsesDefaultRoleWhenUnitIsOmitted(t *testin
 		},
 	}
 
-	selection, err := registry.resolveCombo("jp", ComboQuery{BodyCostume3DID: 33001}, "sig")
-	if err != nil {
-		t.Fatalf("resolve combo without unit failed: %v", err)
-	}
-	if selection.RoleID != "20:school_refusal" {
-		t.Fatalf("expected lowest character3dId role, got %s", selection.RoleID)
+	if _, err := registry.resolveCombo("jp", ComboQuery{BodyCostume3DID: 33001}, "sig"); err == nil {
+		t.Fatal("expected ambiguous role to require more input")
 	}
 }
 
@@ -547,10 +543,10 @@ func TestPreview3DRegistryResolveComboDeduplicatesSameRolePresets(t *testing.T) 
 	}
 
 	selection, err := registry.resolveCombo("jp", ComboQuery{
-		Unit:                "idol",
-		BodyCostume3DID:     10,
-		HairCostume3DID:     205,
-		AccessoryCostumeIDs: []int{105},
+		Unit:                 "idol",
+		BodyCostume3DID:      10,
+		HairCostume3DID:      205,
+		AccessoryCostume3DID: 105,
 	}, "sig")
 	if err != nil {
 		t.Fatalf("resolve combo failed: %v", err)

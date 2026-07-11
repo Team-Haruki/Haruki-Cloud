@@ -633,10 +633,13 @@ func parseComboQuery(query ComboQuery) (ComboQuery, error) {
 			}
 			parsed.HairCostume3DID = id
 		default:
-			parsed.AccessoryCostumeIDs = append(parsed.AccessoryCostumeIDs, id)
+			if parsed.AccessoryCostume3DID != 0 {
+				return ComboQuery{}, fmt.Errorf("组合里重复指定饰品")
+			}
+			parsed.AccessoryCostume3DID = id
 		}
 	}
-	if parsed.BodyCostume3DID <= 0 && parsed.HairCostume3DID <= 0 && len(parsed.AccessoryCostumeIDs) == 0 {
+	if parsed.BodyCostume3DID <= 0 && parsed.HairCostume3DID <= 0 && parsed.AccessoryCostume3DID <= 0 {
 		return ComboQuery{}, fmt.Errorf("组合至少需要一个 3D 部件 ID")
 	}
 	parsed.Unit, _ = parseComboUnitToken(strings.TrimSpace(parsed.Unit))
@@ -695,7 +698,10 @@ func assignComboID(query *ComboQuery, label string, id int) error {
 		}
 		query.HairCostume3DID = id
 	case "accessory":
-		query.AccessoryCostumeIDs = append(query.AccessoryCostumeIDs, id)
+		if query.AccessoryCostume3DID != 0 {
+			return fmt.Errorf("组合里重复指定饰品")
+		}
+		query.AccessoryCostume3DID = id
 	default:
 		return fmt.Errorf("无法识别组合部件类型：%s", label)
 	}

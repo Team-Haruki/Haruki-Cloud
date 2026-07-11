@@ -55,10 +55,10 @@ type Filter struct {
 }
 
 type ComboQuery struct {
-	Query               string `json:"query,omitempty"`
-	Region              string `json:"region,omitempty"`
-	Unit                string `json:"unit,omitempty"`
-	BodyCostume3DID     int    `json:"body_costume_3d_id,omitempty"`
-	HairCostume3DID     int    `json:"hair_costume_3d_id,omitempty"`
-	AccessoryCostumeIDs []int  `json:"accessory_costume_ids,omitempty"`
+	Query                string `json:"query,omitempty"`
+	Region               string `json:"region,omitempty"`
+	Unit                 string `json:"unit,omitempty"`
+	BodyCostume3DID      int    `json:"body_costume_3d_id,omitempty"`
+	HairCostume3DID      int    `json:"hair_costume_3d_id,omitempty"`
+	AccessoryCostume3DID int    `json:"accessory_costume_3d_id,omitempty"`
 }

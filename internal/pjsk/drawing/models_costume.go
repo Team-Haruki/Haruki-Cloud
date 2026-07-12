@@ -13,6 +13,10 @@ type CostumeColorVariant struct {
 type CostumeBasic struct {
 	CostumeID          int                   `json:"costume_id"`
 	CostumeGroupID     int                   `json:"costume_group_id"`
+	OutfitID           int                   `json:"outfit_id,omitempty"`
+	AccessoryID        int                   `json:"accessory_id,omitempty"`
+	Character3DID      int                   `json:"character_3d_id,omitempty"`
+	Character3DIDs     []int                 `json:"character_3d_ids,omitempty"`
 	Name               string                `json:"name"`
 	PartType           string                `json:"part_type"`
 	PartName           string                `json:"part_name"`

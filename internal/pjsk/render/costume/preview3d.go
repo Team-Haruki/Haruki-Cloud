@@ -95,6 +95,8 @@ type preview3DPartEntry struct {
 	Unit                         string   `json:"unit"`
 	ColorID                      int      `json:"colorId"`
 	Costume3DGroupID             int      `json:"costume3dGroupId"`
+	OutfitID                     int      `json:"outfitId"`
+	AccessoryID                  int      `json:"accessoryId"`
 	BundlePath                   string   `json:"bundlePath"`
 	ColorVariationBundlePath     string   `json:"colorVariationBundlePath"`
 	HeadCostume3DAssetbundleType string   `json:"headCostume3dAssetbundleType"`
@@ -170,6 +172,10 @@ func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
 }
 
 func (s *Preview3DService) ResolvePreviewPath(ctx context.Context, region string, costume3DID int) (string, error) {
+	return s.ResolveQueryPreviewPath(ctx, region, costume3DID, Query{})
+}
+
+func (s *Preview3DService) ResolveQueryPreviewPath(ctx context.Context, region string, costume3DID int, query Query) (string, error) {
 	if s == nil || costume3DID <= 0 {
 		return "", nil
 	}
@@ -181,7 +187,7 @@ func (s *Preview3DService) ResolvePreviewPath(ctx context.Context, region string
 	if err != nil {
 		return "", err
 	}
-	selection, err := registry.resolve(region, costume3DID)
+	selection, err := registry.resolveQuery(region, costume3DID, query, s.captureCacheSignature())
 	if err != nil {
 		return "", err
 	}
@@ -189,6 +195,10 @@ func (s *Preview3DService) ResolvePreviewPath(ctx context.Context, region string
 }
 
 func (s *Preview3DService) EnsurePreviewCapture(ctx context.Context, region string, costume3DID int) error {
+	return s.EnsureQueryPreviewCapture(ctx, region, costume3DID, Query{})
+}
+
+func (s *Preview3DService) EnsureQueryPreviewCapture(ctx context.Context, region string, costume3DID int, query Query) error {
 	if s == nil || costume3DID <= 0 {
 		return nil
 	}
@@ -200,7 +210,7 @@ func (s *Preview3DService) EnsurePreviewCapture(ctx context.Context, region stri
 	if err != nil {
 		return err
 	}
-	selection, err := registry.resolve(region, costume3DID)
+	selection, err := registry.resolveQuery(region, costume3DID, query, s.captureCacheSignature())
 	if err != nil {
 		return err
 	}
@@ -669,17 +679,37 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 	}, nil
 }
 
+func (r *preview3DRegistry) resolveQuery(region string, costume3DID int, query Query, cacheSignature string) (preview3DSelection, error) {
+	if query.Character3DID > 0 && (query.OutfitID > 0 || query.AccessoryID > 0) {
+		return r.resolveCombo(region, ComboQuery{
+			Region:           region,
+			OutfitID:         query.OutfitID,
+			OutfitColorID:    query.ColorID,
+			AccessoryID:      query.AccessoryID,
+			AccessoryColorID: query.ColorID,
+			Character3DID:    query.Character3DID,
+		}, cacheSignature)
+	}
+	return r.resolve(region, costume3DID)
+}
+
 func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheSignature string) (preview3DSelection, error) {
 	roles := r.comboRoleCandidates(query)
 	if len(roles) == 0 {
-		return preview3DSelection{}, fmt.Errorf("3d combo role not found; specify a matching unit or different part ids")
+		return preview3DSelection{}, fmt.Errorf("3d combo role not found: character3d=%d", query.Character3DID)
 	}
 	if len(roles) > 1 {
-		return preview3DSelection{}, fmt.Errorf("3d combo matches multiple roles; specify unit or another part id")
+		return preview3DSelection{}, fmt.Errorf("3d combo character3d id is duplicated: %d", query.Character3DID)
 	}
 	role := roles[0]
 	anchor, ok := r.comboAnchorPart(query, role)
 	if !ok {
+		if query.OutfitID > 0 {
+			return preview3DSelection{}, fmt.Errorf("3d combo outfit not usable: outfit=%d character3d=%d color=%d", query.OutfitID, query.Character3DID, query.OutfitColorID)
+		}
+		if query.AccessoryID > 0 {
+			return preview3DSelection{}, fmt.Errorf("3d combo accessory not usable: accessory=%d character3d=%d color=%d", query.AccessoryID, query.Character3DID, query.AccessoryColorID)
+		}
 		return preview3DSelection{}, fmt.Errorf("3d combo anchor part not found")
 	}
 
@@ -687,6 +717,13 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	headID := role.HeadCostume3DID
 	hairID := role.HairCostume3DID
 	var headOptionalID *int
+	if query.OutfitID > 0 {
+		part, ok := r.outfitPartForRole(query.OutfitID, query.OutfitColorID, role)
+		if !ok {
+			return preview3DSelection{}, fmt.Errorf("3d combo outfit not usable: outfit=%d character3d=%d color=%d", query.OutfitID, query.Character3DID, query.OutfitColorID)
+		}
+		bodyID = part.Costume3DID
+	}
 	if query.BodyCostume3DID > 0 {
 		part, ok := r.partForRole(query.BodyCostume3DID, role, "body")
 		if !ok {
@@ -703,7 +740,15 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	}
 	explicitHead := false
 	explicitHair := query.HairCostume3DID > 0
-	if query.AccessoryCostume3DID > 0 {
+	if query.AccessoryID > 0 {
+		part, ok := r.accessoryPartForRole(query.AccessoryID, query.AccessoryColorID, role)
+		if !ok {
+			return preview3DSelection{}, fmt.Errorf("3d combo accessory not usable: accessory=%d character3d=%d color=%d", query.AccessoryID, query.Character3DID, query.AccessoryColorID)
+		}
+		explicitHead = true
+		headID = part.Costume3DID
+		headOptionalID = nil
+	} else if query.AccessoryCostume3DID > 0 {
 		part, ok := r.partForRole(query.AccessoryCostume3DID, role, "head", "head_optional")
 		if !ok {
 			return preview3DSelection{}, fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", role.Unit, query.AccessoryCostume3DID)
@@ -713,7 +758,7 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		headOptionalID = nil
 	}
 	implicitEmptyHead := false
-	if query.AccessoryCostume3DID <= 0 {
+	if query.AccessoryID <= 0 && query.AccessoryCostume3DID <= 0 {
 		if emptyHeadID, ok := r.defaultHeadOptionalForRole(role); ok {
 			headID = emptyHeadID
 			headOptionalID = nil
@@ -814,15 +859,11 @@ func (r *preview3DRegistry) defaultRoleForPart(part preview3DPartEntry) preview3
 func (r *preview3DRegistry) comboRoleCandidates(query ComboQuery) []preview3DCharacterEntry {
 	var candidates []preview3DCharacterEntry
 	seen := make(map[string]struct{})
-	unit := strings.TrimSpace(query.Unit)
 	for _, role := range r.characters {
 		if !preview3DStatusUsable(role.Status) {
 			continue
 		}
-		if unit != "" && role.Unit != unit {
-			continue
-		}
-		if !r.comboRoleMatches(query, role) {
+		if role.Character3DID != query.Character3DID {
 			continue
 		}
 		key := fmt.Sprintf("%d:%s", role.CharacterID, role.Unit)
@@ -844,34 +885,66 @@ func (r *preview3DRegistry) comboRoleCandidates(query ComboQuery) []preview3DCha
 	return candidates
 }
 
-func (r *preview3DRegistry) comboRoleMatches(query ComboQuery, role preview3DCharacterEntry) bool {
-	if query.BodyCostume3DID > 0 {
-		if _, ok := r.partForRole(query.BodyCostume3DID, role, "body"); !ok {
-			return false
-		}
-	}
-	if query.HairCostume3DID > 0 {
-		if _, ok := r.partForRole(query.HairCostume3DID, role, "hair"); !ok {
-			return false
-		}
-	}
-	if query.AccessoryCostume3DID > 0 {
-		if _, ok := r.partForRole(query.AccessoryCostume3DID, role, "head", "head_optional"); !ok {
-			return false
-		}
-	}
-	return true
-}
-
 func (r *preview3DRegistry) comboAnchorPart(query ComboQuery, role preview3DCharacterEntry) (preview3DPartEntry, bool) {
+	if query.OutfitID > 0 {
+		return r.outfitPartForRole(query.OutfitID, query.OutfitColorID, role)
+	}
 	if query.BodyCostume3DID > 0 {
 		return r.partForRole(query.BodyCostume3DID, role, "body")
 	}
 	if query.HairCostume3DID > 0 {
 		return r.partForRole(query.HairCostume3DID, role, "hair")
 	}
+	if query.AccessoryID > 0 {
+		return r.accessoryPartForRole(query.AccessoryID, query.AccessoryColorID, role)
+	}
 	if query.AccessoryCostume3DID > 0 {
 		if part, ok := r.partForRole(query.AccessoryCostume3DID, role, "head", "head_optional"); ok {
+			return part, true
+		}
+	}
+	return r.partForRole(role.BodyCostume3DID, role, "body")
+}
+
+func (r *preview3DRegistry) accessoryPartForRole(accessoryID int, colorID int, role preview3DCharacterEntry) (preview3DPartEntry, bool) {
+	for _, part := range r.parts {
+		slot := preview3DPartSlot(part)
+		if !preview3DStatusUsable(part.Status) || (slot != "head" && slot != "head_optional") {
+			continue
+		}
+		if part.CharacterID != role.CharacterID || part.ColorID != colorID {
+			continue
+		}
+		if part.Unit != "" && part.Unit != role.Unit {
+			continue
+		}
+		partAccessoryID := part.AccessoryID
+		if partAccessoryID == 0 && part.Costume3DGroupID >= 1000 {
+			partAccessoryID = part.Costume3DGroupID / 1000
+		}
+		if partAccessoryID == accessoryID {
+			return part, true
+		}
+	}
+	return preview3DPartEntry{}, false
+}
+
+func (r *preview3DRegistry) outfitPartForRole(outfitID int, colorID int, role preview3DCharacterEntry) (preview3DPartEntry, bool) {
+	for _, part := range r.parts {
+		if !preview3DStatusUsable(part.Status) || preview3DPartSlot(part) != "body" {
+			continue
+		}
+		if part.CharacterID != role.CharacterID || part.ColorID != colorID {
+			continue
+		}
+		if part.Unit != "" && part.Unit != role.Unit {
+			continue
+		}
+		partOutfitID := part.OutfitID
+		if partOutfitID == 0 && part.Costume3DGroupID >= 1000 {
+			partOutfitID = part.Costume3DGroupID / 1000
+		}
+		if partOutfitID == outfitID {
 			return part, true
 		}
 	}

@@ -282,6 +282,10 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 		return nil, err
 	}
 	costumeBasic := c.buildCostumeBasic(region, source, costumeInfo, variants, sourceCards)
+	if query.Character3DID > 0 {
+		costumeBasic.Character3DID = query.Character3DID
+		costumeBasic.Character3DIDs = []int{query.Character3DID}
+	}
 	character, _ := source.GetCharacterByID(costumeInfo.CharacterID)
 	return &drawing.CostumeDetailRequest{
 		Region:            region.String(),
@@ -291,7 +295,7 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 	}, nil
 }
 
-func (c *Controller) resolve3DPreviewPath(region renderregion.Value, costumeInfo *masterdata.Costume3d) (string, error) {
+func (c *Controller) resolve3DPreviewPath(region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query) (string, error) {
 	if c == nil || c.preview3D == nil || costumeInfo == nil {
 		return "", nil
 	}
@@ -299,10 +303,10 @@ func (c *Controller) resolve3DPreviewPath(region renderregion.Value, costumeInfo
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return c.preview3D.ResolvePreviewPath(ctx, region.String(), costumeInfo.ID)
+	return c.preview3D.ResolveQueryPreviewPath(ctx, region.String(), costumeInfo.ID, query)
 }
 
-func (c *Controller) ensure3DPreviewCapture(region renderregion.Value, costumeInfo *masterdata.Costume3d) error {
+func (c *Controller) ensure3DPreviewCapture(region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query) error {
 	if c == nil || c.preview3D == nil || costumeInfo == nil {
 		return nil
 	}
@@ -310,7 +314,7 @@ func (c *Controller) ensure3DPreviewCapture(region renderregion.Value, costumeIn
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return c.preview3D.EnsurePreviewCapture(ctx, region.String(), costumeInfo.ID)
+	return c.preview3D.EnsureQueryPreviewCapture(ctx, region.String(), costumeInfo.ID, query)
 }
 
 func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
@@ -334,7 +338,7 @@ func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
 	}
 	cachePayload := c.costumeDetailCacheRequest(payload)
 	return c.drawing.GenerateCostumeDetailWithPrepare(cachePayload, payload, func(prepared any) error {
-		previewPath, err := c.resolve3DPreviewPath(region, costumeInfo)
+		previewPath, err := c.resolve3DPreviewPath(region, costumeInfo, query)
 		if err != nil {
 			costumePreview3DLogger.Warnf("3d preview skipped: region=%s costume_id=%d err=%v", region.String(), costumeInfo.ID, err)
 			return nil
@@ -343,7 +347,7 @@ func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
 			return nil
 		}
 		setCostumeDetailPreviewPath(prepared, previewPath)
-		return c.ensure3DPreviewCapture(region, costumeInfo)
+		return c.ensure3DPreviewCapture(region, costumeInfo, query)
 	})
 }
 
@@ -375,6 +379,9 @@ func (c *Controller) resolveSource(regionText string) (renderregion.Value, DataS
 }
 
 func (c *Controller) resolveCostumeInfo(source DataSource, query Query) (*masterdata.Costume3d, error) {
+	if query.OutfitID > 0 || query.AccessoryID > 0 {
+		return c.resolveNormalizedCostume(source, query)
+	}
 	costumeID := query.ID
 	if costumeID <= 0 {
 		costumeID, _ = ParseExplicitCostumeID(query.Query)
@@ -383,6 +390,39 @@ func (c *Controller) resolveCostumeInfo(source DataSource, query Query) (*master
 		return source.GetCostumeByID(costumeID)
 	}
 	return c.resolveSingleCostumeByQuery(source, query.Query)
+}
+
+func (c *Controller) resolveNormalizedCostume(source DataSource, query Query) (*masterdata.Costume3d, error) {
+	partType := "body"
+	shortID := query.OutfitID
+	label := "服装"
+	if query.AccessoryID > 0 {
+		partType = "head"
+		shortID = query.AccessoryID
+		label = "饰品"
+	}
+	characterID, ok := characterIDFor3DRole(query.Character3DID)
+	if !ok {
+		return nil, fmt.Errorf("角色ID必须在1到31之间")
+	}
+	colorID := query.ColorID
+	if colorID == 0 {
+		colorID = 1
+	}
+	items, err := source.FilterCostumes(Filter{
+		PartType:    partType,
+		CharacterID: characterID,
+		ColorID:     colorID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range items {
+		if normalizedCostumeID(item) == shortID {
+			return item, nil
+		}
+	}
+	return nil, fmt.Errorf("找不到%sID %d、角色ID %d、颜色ID %d 的组合", label, shortID, query.Character3DID, colorID)
 }
 
 func setCostumeDetailPreviewPath(prepared any, previewPath string) {
@@ -475,6 +515,7 @@ func (c *Controller) buildCostumeBasic(region renderregion.Value, source DataSou
 	basic := drawing.CostumeBasic{
 		CostumeID:          costumeInfo.ID,
 		CostumeGroupID:     costumeInfo.GroupID,
+		Character3DIDs:     character3DIDsForCharacter(costumeInfo.CharacterID),
 		Name:               costumeDisplayName(costumeInfo),
 		PartType:           costumeInfo.PartType,
 		PartName:           partTypeName(costumeInfo.PartType),
@@ -492,6 +533,13 @@ func (c *Controller) buildCostumeBasic(region renderregion.Value, source DataSou
 		ArchivePublishedAt: costumeInfo.ArchivePublishedAt,
 		ThumbnailPath:      c.buildThumbnailPath(region, costumeInfo),
 		SourceCardIDs:      sourceCards[costumeInfo.ID],
+	}
+	shortID := normalizedCostumeID(costumeInfo)
+	switch costumeInfo.PartType {
+	case "body":
+		basic.OutfitID = shortID
+	case "head":
+		basic.AccessoryID = shortID
 	}
 	if len(variants) > 0 {
 		basic.SourceCardIDs = uniqueCostumeSourceCardIDs(variants, sourceCards)
@@ -580,21 +628,139 @@ func ParseExplicitCostumeID(query string) (int, bool) {
 	return value, true
 }
 
+func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
+	partType, ok := normalizePartType(partType)
+	if !ok || (partType != "body" && partType != "head") {
+		return Query{}, false, fmt.Errorf("查询类型必须是服装或饰品")
+	}
+	fields := strings.Fields(strings.TrimSpace(raw))
+	if len(fields) == 0 {
+		return Query{}, false, nil
+	}
+	query := Query{Query: raw, ExpectedPartType: partType, ColorID: 1}
+	recognized := false
+	colorSet := false
+	for _, token := range fields {
+		lower := strings.ToLower(strings.TrimSpace(token))
+		if label, id, labeled := parseComboLabeledID(lower); labeled {
+			recognized = true
+			switch label {
+			case "outfit":
+				if partType != "body" || query.OutfitID != 0 {
+					return Query{}, true, fmt.Errorf("服装查询参数重复或类型不匹配")
+				}
+				query.OutfitID = id
+			case "accessory":
+				if partType != "head" || query.AccessoryID != 0 {
+					return Query{}, true, fmt.Errorf("饰品查询参数重复或类型不匹配")
+				}
+				query.AccessoryID = id
+			case "role":
+				if query.Character3DID != 0 {
+					return Query{}, true, fmt.Errorf("角色ID重复")
+				}
+				query.Character3DID = id
+			case "color", "outfit_color", "accessory_color":
+				if colorSet {
+					return Query{}, true, fmt.Errorf("颜色ID重复")
+				}
+				query.ColorID = id
+				colorSet = true
+			default:
+				return Query{}, true, fmt.Errorf("查服装和查饰品不接受%s参数", token)
+			}
+			continue
+		}
+		id, numeric := ParseExplicitCostumeID(lower)
+		if !numeric {
+			if !recognized {
+				return Query{}, false, nil
+			}
+			return Query{}, true, fmt.Errorf("无法识别查询参数：%s", token)
+		}
+		recognized = true
+		shortID := query.OutfitID
+		if partType == "head" {
+			shortID = query.AccessoryID
+		}
+		switch {
+		case shortID == 0:
+			if partType == "body" {
+				query.OutfitID = id
+			} else {
+				query.AccessoryID = id
+			}
+		case query.Character3DID == 0:
+			query.Character3DID = id
+		case !colorSet:
+			query.ColorID = id
+			colorSet = true
+		default:
+			return Query{}, true, fmt.Errorf("查询参数过多")
+		}
+	}
+	shortID := query.OutfitID
+	label := "服装"
+	if partType == "head" {
+		shortID = query.AccessoryID
+		label = "饰品"
+	}
+	if shortID <= 0 {
+		return Query{}, true, fmt.Errorf("请填写%sID", label)
+	}
+	if query.Character3DID < 1 || query.Character3DID > 31 {
+		return Query{}, true, fmt.Errorf("请填写1到31之间的角色ID")
+	}
+	if query.ColorID < 1 || query.ColorID > 4 {
+		return Query{}, true, fmt.Errorf("颜色ID必须在1到4之间，颜色1为原版")
+	}
+	return query, true, nil
+}
+
+func normalizedCostumeID(costumeInfo *masterdata.Costume3d) int {
+	if costumeInfo == nil || costumeInfo.GroupID < 1000 {
+		return 0
+	}
+	return costumeInfo.GroupID / 1000
+}
+
+func characterIDFor3DRole(character3DID int) (int, bool) {
+	switch {
+	case character3DID >= 1 && character3DID <= 20:
+		return character3DID, true
+	case character3DID >= 21 && character3DID <= 26:
+		return 21, true
+	case character3DID >= 27 && character3DID <= 31:
+		return character3DID - 5, true
+	default:
+		return 0, false
+	}
+}
+
+func character3DIDsForCharacter(characterID int) []int {
+	switch {
+	case characterID >= 1 && characterID <= 20:
+		return []int{characterID}
+	case characterID == 21:
+		return []int{21, 22, 23, 24, 25, 26}
+	case characterID >= 22 && characterID <= 26:
+		return []int{characterID + 5}
+	default:
+		return nil
+	}
+}
+
 func parseComboQuery(query ComboQuery) (ComboQuery, error) {
 	parsed := query
 	pending := ""
-	ordered := make([]int, 0)
+	lastColorTarget := ""
 	for _, token := range strings.Fields(query.Query) {
 		lower := strings.ToLower(strings.TrimSpace(token))
 		if lower == "" {
 			continue
 		}
-		if unit, ok := parseComboUnitToken(lower); ok {
-			parsed.Unit = unit
-			continue
-		}
 		if label, id, ok := parseComboLabeledID(lower); ok {
-			if err := assignComboID(&parsed, label, id); err != nil {
+			if err := assignComboValue(&parsed, label, id, &lastColorTarget); err != nil {
 				return ComboQuery{}, err
 			}
 			pending = ""
@@ -606,48 +772,44 @@ func parseComboQuery(query ComboQuery) (ComboQuery, error) {
 		}
 		if id, ok := ParseExplicitCostumeID(lower); ok {
 			if pending != "" {
-				if err := assignComboID(&parsed, pending, id); err != nil {
+				if err := assignComboValue(&parsed, pending, id, &lastColorTarget); err != nil {
 					return ComboQuery{}, err
 				}
 				pending = ""
 				continue
 			}
-			ordered = append(ordered, id)
-			continue
+			if lastColorTarget != "" {
+				if err := assignComboColor(&parsed, lastColorTarget, id); err != nil {
+					return ComboQuery{}, err
+				}
+				lastColorTarget = ""
+				continue
+			}
+			return ComboQuery{}, fmt.Errorf("组合参数 %s 缺少服装、饰品、发型或角色标签", token)
 		}
 		return ComboQuery{}, fmt.Errorf("无法识别组合参数：%s", token)
 	}
 	if pending != "" {
 		return ComboQuery{}, fmt.Errorf("组合参数 %s 缺少 ID", pending)
 	}
-	for index, id := range ordered {
-		switch index {
-		case 0:
-			if parsed.BodyCostume3DID != 0 {
-				return ComboQuery{}, fmt.Errorf("组合里重复指定服装")
-			}
-			parsed.BodyCostume3DID = id
-		case 1:
-			if parsed.HairCostume3DID != 0 {
-				return ComboQuery{}, fmt.Errorf("组合里重复指定发型")
-			}
-			parsed.HairCostume3DID = id
-		default:
-			if parsed.AccessoryCostume3DID != 0 {
-				return ComboQuery{}, fmt.Errorf("组合里重复指定饰品")
-			}
-			parsed.AccessoryCostume3DID = id
-		}
+	if parsed.Character3DID <= 0 {
+		return ComboQuery{}, fmt.Errorf("组合必须显式填写角色ID（1到31）")
 	}
-	if parsed.BodyCostume3DID <= 0 && parsed.HairCostume3DID <= 0 && parsed.AccessoryCostume3DID <= 0 {
-		return ComboQuery{}, fmt.Errorf("组合至少需要一个 3D 部件 ID")
+	if parsed.OutfitColorID == 0 {
+		parsed.OutfitColorID = 1
 	}
-	parsed.Unit, _ = parseComboUnitToken(strings.TrimSpace(parsed.Unit))
+	if parsed.AccessoryColorID == 0 {
+		parsed.AccessoryColorID = 1
+	}
 	return parsed, nil
 }
 
 func parseComboLabeledID(token string) (string, int, bool) {
 	labels := []string{
+		"outfit_color", "costume_color", "服装颜色", "衣装颜色",
+		"accessory_color", "饰品颜色", "头饰颜色", "配饰颜色",
+		"character3d", "character", "角色模型", "角色", "角色id",
+		"color", "颜色", "颜色id",
 		"head_optional", "headoptional", "追加饰品", "可选饰品",
 		"accessory", "accessories", "饰品", "头饰", "配饰",
 		"hairstyle", "hair", "发型", "头发",
@@ -669,8 +831,16 @@ func parseComboLabeledID(token string) (string, int, bool) {
 
 func normalizeComboLabel(token string) (string, bool) {
 	switch strings.TrimSpace(strings.ToLower(token)) {
+	case "character3d", "character", "角色模型", "角色", "角色id":
+		return "role", true
+	case "outfit_color", "costume_color", "服装颜色", "衣装颜色":
+		return "outfit_color", true
+	case "accessory_color", "饰品颜色", "头饰颜色", "配饰颜色":
+		return "accessory_color", true
+	case "color", "颜色", "颜色id":
+		return "color", true
 	case "body", "costume", "服装", "衣装", "衣服":
-		return "body", true
+		return "outfit", true
 	case "hair", "hairstyle", "发型", "头发":
 		return "hair", true
 	case "head", "accessory", "accessories", "饰品", "头饰", "配饰":
@@ -682,53 +852,75 @@ func normalizeComboLabel(token string) (string, bool) {
 	}
 }
 
-func assignComboID(query *ComboQuery, label string, id int) error {
+func assignComboValue(query *ComboQuery, label string, id int, lastColorTarget *string) error {
 	if id <= 0 {
 		return fmt.Errorf("组合部件 ID 无效")
 	}
 	switch label {
-	case "body":
-		if query.BodyCostume3DID != 0 {
+	case "outfit":
+		if query.OutfitID != 0 {
 			return fmt.Errorf("组合里重复指定服装")
 		}
-		query.BodyCostume3DID = id
+		query.OutfitID = id
+		*lastColorTarget = "outfit"
+	case "role":
+		if id > 31 {
+			return fmt.Errorf("角色ID必须在1到31之间")
+		}
+		if query.Character3DID != 0 {
+			return fmt.Errorf("组合里重复指定角色")
+		}
+		query.Character3DID = id
+		*lastColorTarget = ""
+	case "color":
+		if *lastColorTarget == "" {
+			return fmt.Errorf("颜色ID必须紧跟在服装或饰品后面")
+		}
+		if err := assignComboColor(query, *lastColorTarget, id); err != nil {
+			return err
+		}
+		*lastColorTarget = ""
+	case "outfit_color":
+		return assignComboColor(query, "outfit", id)
+	case "accessory_color":
+		return assignComboColor(query, "accessory", id)
 	case "hair":
 		if query.HairCostume3DID != 0 {
 			return fmt.Errorf("组合里重复指定发型")
 		}
 		query.HairCostume3DID = id
+		*lastColorTarget = ""
 	case "accessory":
-		if query.AccessoryCostume3DID != 0 {
+		if query.AccessoryID != 0 {
 			return fmt.Errorf("组合里重复指定饰品")
 		}
-		query.AccessoryCostume3DID = id
+		query.AccessoryID = id
+		*lastColorTarget = "accessory"
 	default:
 		return fmt.Errorf("无法识别组合部件类型：%s", label)
 	}
 	return nil
 }
 
-func parseComboUnitToken(token string) (string, bool) {
-	token = strings.TrimSpace(strings.ToLower(token))
-	token = strings.TrimPrefix(token, "unit=")
-	token = strings.TrimPrefix(token, "unit:")
-	token = strings.TrimPrefix(token, "组合=")
-	switch token {
-	case "light_sound", "ln", "leo_need", "leoneed":
-		return "light_sound", true
-	case "idol", "mmj", "more_more_jump":
-		return "idol", true
-	case "street", "vbs", "vivid_bad_squad":
-		return "street", true
-	case "theme_park", "wxs", "wonderlands_showtime":
-		return "theme_park", true
-	case "school_refusal", "n25", "25", "25ji", "nightcord":
-		return "school_refusal", true
-	case "piapro", "vs", "virtual_singer":
-		return "piapro", true
-	default:
-		return "", false
+func assignComboColor(query *ComboQuery, target string, id int) error {
+	if id < 1 || id > 4 {
+		return fmt.Errorf("颜色ID必须在1到4之间，颜色1为原版")
 	}
+	switch target {
+	case "outfit":
+		if query.OutfitColorID != 0 {
+			return fmt.Errorf("组合里重复指定服装颜色")
+		}
+		query.OutfitColorID = id
+	case "accessory":
+		if query.AccessoryColorID != 0 {
+			return fmt.Errorf("组合里重复指定饰品颜色")
+		}
+		query.AccessoryColorID = id
+	default:
+		return fmt.Errorf("颜色ID必须紧跟在服装或饰品后面")
+	}
+	return nil
 }
 
 func normalizeListQuery(query ListQuery) ListQuery {
@@ -1069,7 +1261,7 @@ func BuildListPrompt(payload *drawing.CostumeListRequest) string {
 	}
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%s：第 %d/%d 页，本页 %d 项，共 %d 项", title, page, totalPages, len(payload.Costumes), payload.Total)
-	sb.WriteString("\n详情：/查服装 ID")
+	sb.WriteString("\n详情：/查服装 服装ID 角色ID [颜色ID]；/查饰品 饰品ID 角色ID [颜色ID]")
 	if totalPages > 1 {
 		nextPage := page + 1
 		if nextPage > totalPages {

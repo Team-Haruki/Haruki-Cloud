@@ -555,31 +555,38 @@ func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
 	}
 }
 
-func TestParseComboQuerySupportsLabelsAndOrderedIDs(t *testing.T) {
-	labeled, err := parseComboQuery(ComboQuery{Query: "服装33001 发型33021 饰品30129 n25", Region: "jp"})
+func TestParseComboQuerySupportsComponentLocalColors(t *testing.T) {
+	labeled, err := parseComboQuery(ComboQuery{Query: "角色23 服装330 颜色2 发型33021 饰品301 颜色3", Region: "jp"})
 	if err != nil {
 		t.Fatalf("parse labeled combo failed: %v", err)
 	}
-	if labeled.BodyCostume3DID != 33001 || labeled.HairCostume3DID != 33021 || labeled.Unit != "school_refusal" {
+	if labeled.Character3DID != 23 || labeled.OutfitID != 330 || labeled.OutfitColorID != 2 || labeled.HairCostume3DID != 33021 || labeled.AccessoryID != 301 || labeled.AccessoryColorID != 3 {
 		t.Fatalf("unexpected labeled combo: %+v", labeled)
 	}
-	if labeled.AccessoryCostume3DID != 30129 {
-		t.Fatalf("unexpected accessory: %d", labeled.AccessoryCostume3DID)
-	}
-
-	ordered, err := parseComboQuery(ComboQuery{Query: "33001 33021 30129"})
+	defaults, err := parseComboQuery(ComboQuery{Query: "角色23 服装330 饰品301"})
 	if err != nil {
-		t.Fatalf("parse ordered combo failed: %v", err)
+		t.Fatalf("parse default colors failed: %v", err)
 	}
-	if ordered.BodyCostume3DID != 33001 || ordered.HairCostume3DID != 33021 {
-		t.Fatalf("unexpected ordered combo: %+v", ordered)
+	if defaults.OutfitColorID != 1 || defaults.AccessoryColorID != 1 {
+		t.Fatalf("expected omitted colors to default to 1, got %+v", defaults)
 	}
-	if ordered.AccessoryCostume3DID != 30129 {
-		t.Fatalf("unexpected ordered accessory: %d", ordered.AccessoryCostume3DID)
+	numericColors, err := parseComboQuery(ComboQuery{Query: "角色23 服装330 2 饰品301 3"})
+	if err != nil {
+		t.Fatalf("parse adjacent numeric colors failed: %v", err)
+	}
+	if numericColors.OutfitColorID != 2 || numericColors.AccessoryColorID != 3 {
+		t.Fatalf("expected adjacent numeric colors, got %+v", numericColors)
+	}
+	roleDefaults, err := parseComboQuery(ComboQuery{Query: "角色23"})
+	if err != nil || roleDefaults.OutfitColorID != 1 || roleDefaults.AccessoryColorID != 1 {
+		t.Fatalf("expected role-only default selection with original colors, got %+v err=%v", roleDefaults, err)
 	}
 
-	if _, err := parseComboQuery(ComboQuery{Query: "饰品30129 饰品53129"}); err == nil {
+	if _, err := parseComboQuery(ComboQuery{Query: "角色23 饰品301 饰品531"}); err == nil {
 		t.Fatal("expected duplicate accessories to be rejected")
+	}
+	if _, err := parseComboQuery(ComboQuery{Query: "角色23 颜色2"}); err == nil || !strings.Contains(err.Error(), "紧跟") {
+		t.Fatalf("expected detached color to be rejected, got %v", err)
 	}
 }
 
@@ -603,10 +610,10 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 		case "/runtime/parts/part-registry.json":
 			w.Header().Set("content-type", "application/json")
 			fmt.Fprint(w, `{"entries":[
-				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
+				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"outfitId":33,"status":"available"},
 				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
-				{"costume3dId":53129,"partType":"head_optional","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"}
+				{"costume3dId":53129,"partType":"head_optional","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":531000,"accessoryId":531,"status":"available"}
 			]}`)
 		case "/runtime/parts/head-hair-compatibility.json":
 			w.Header().Set("content-type", "application/json")
@@ -626,7 +633,7 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 	controller := NewController(denseListTestSource{}, nil, nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL, CaptureCacheVersion: "test"})
 
-	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "服装33001 发型33021 饰品53129", Region: "jp"})
+	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "角色5 服装33 颜色1 发型33021 饰品531 颜色1", Region: "jp"})
 	if err != nil {
 		t.Fatalf("RenderCostumeCombo failed: %v", err)
 	}
@@ -655,9 +662,76 @@ func TestBuildListPromptIncludesPagingAndDetailHint(t *testing.T) {
 		t.Fatalf("BuildCostumeListRequest failed: %v", err)
 	}
 	prompt := BuildListPrompt(request)
-	for _, want := range []string{"第 1/3 页", "本页 240 项", "共 500 项", "/查服装 ID", "p2"} {
+	for _, want := range []string{"第 1/3 页", "本页 240 项", "共 500 项", "/查服装 服装ID 角色ID", "/查饰品 饰品ID 角色ID", "p2"} {
 		if !strings.Contains(prompt, want) {
 			t.Fatalf("expected prompt to contain %q, got %q", want, prompt)
+		}
+	}
+}
+
+func TestParseLookupQueryUsesShortIDRoleAndOptionalColor(t *testing.T) {
+	tests := []struct {
+		name      string
+		raw       string
+		partType  string
+		outfit    int
+		accessory int
+		role      int
+		color     int
+	}{
+		{name: "outfit labels", raw: "1 角色23 颜色2", partType: "body", outfit: 1, role: 23, color: 2},
+		{name: "outfit mixed", raw: "1 角色23 2", partType: "body", outfit: 1, role: 23, color: 2},
+		{name: "outfit positional", raw: "1 23", partType: "body", outfit: 1, role: 23, color: 1},
+		{name: "accessory labels", raw: "20 角色27 颜色3", partType: "head", accessory: 20, role: 27, color: 3},
+		{name: "accessory positional", raw: "20 27 4", partType: "head", accessory: 20, role: 27, color: 4},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			query, ok, err := ParseLookupQuery(tt.raw, tt.partType)
+			if err != nil || !ok {
+				t.Fatalf("ParseLookupQuery(%q) = ok=%v err=%v", tt.raw, ok, err)
+			}
+			if query.OutfitID != tt.outfit || query.AccessoryID != tt.accessory || query.Character3DID != tt.role || query.ColorID != tt.color {
+				t.Fatalf("unexpected query: %+v", query)
+			}
+		})
+	}
+}
+
+func TestParseLookupQueryRequiresRoleAndValidColor(t *testing.T) {
+	for _, raw := range []string{"1", "1 角色32", "1 角色23 颜色5"} {
+		if _, ok, err := ParseLookupQuery(raw, "body"); !ok || err == nil {
+			t.Fatalf("ParseLookupQuery(%q) should return a recognized error, ok=%v err=%v", raw, ok, err)
+		}
+	}
+	if _, ok, err := ParseLookupQuery("瑞希", "body"); ok || err != nil {
+		t.Fatalf("name query should remain a list search, ok=%v err=%v", ok, err)
+	}
+}
+
+func TestBuildCostumeDetailRequestResolvesShortIDBy3DRole(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		{ID: 21002, GroupID: 1021, PartType: "body", CharacterID: 21, ColorID: 2, Name: "测试服装"},
+		{ID: 22002, GroupID: 1022, PartType: "body", CharacterID: 22, ColorID: 2, Name: "另一个角色"},
+	}}, nil, nil)
+
+	request, err := controller.BuildCostumeDetailRequest(Query{OutfitID: 1, Character3DID: 23, ColorID: 2, ExpectedPartType: "body"})
+	if err != nil {
+		t.Fatalf("BuildCostumeDetailRequest failed: %v", err)
+	}
+	if request.Costume.CostumeID != 21002 || request.Costume.OutfitID != 1 {
+		t.Fatalf("unexpected resolved costume: %+v", request.Costume)
+	}
+	if request.Costume.Character3DID != 23 || len(request.Costume.Character3DIDs) != 1 || request.Costume.Character3DIDs[0] != 23 {
+		t.Fatalf("expected selected role 23, got id=%d ids=%v", request.Costume.Character3DID, request.Costume.Character3DIDs)
+	}
+}
+
+func TestCharacterIDFor3DRoleMapsVirtualSingers(t *testing.T) {
+	for role, want := range map[int]int{21: 21, 22: 21, 26: 21, 27: 22, 31: 26} {
+		got, ok := characterIDFor3DRole(role)
+		if !ok || got != want {
+			t.Fatalf("characterIDFor3DRole(%d) = %d, %v; want %d", role, got, ok, want)
 		}
 	}
 }

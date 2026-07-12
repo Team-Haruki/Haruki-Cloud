@@ -20,8 +20,12 @@ func normalizeCostume3DError(err error) error {
 		return onebot11.NewReplayError("%s服暂未配置3D渲染服务", region)
 	case strings.HasPrefix(message, "3d combo role not found"):
 		return onebot11.NewReplayError("这些3D部件不属于同一个角色，请检查区服、角色组合和部件ID")
-	case strings.HasPrefix(message, "3d combo matches multiple roles"):
-		return onebot11.NewReplayError("这些部件可匹配多个角色版本，请补充角色组合（例如 ln、mmj、vbs、ws、n25）")
+	case strings.HasPrefix(message, "3d combo outfit not usable"):
+		return onebot11.NewReplayError("该服装没有对应的角色模型或颜色版本，请检查服装ID、角色ID和颜色ID")
+	case strings.HasPrefix(message, "3d combo accessory not usable"):
+		return onebot11.NewReplayError("该饰品不属于或不适用于这个角色模型及颜色，请检查饰品ID、角色ID和颜色ID")
+	case strings.HasPrefix(message, "3d combo character3d id is duplicated"):
+		return onebot11.NewReplayError("3D角色数据存在重复，请稍后再试")
 	case strings.HasPrefix(message, "3d combo anchor part not found"):
 		return onebot11.NewReplayError("找不到可用于确定角色的3D部件，请检查部件ID")
 	case strings.HasPrefix(message, "3d combo body part not usable"):

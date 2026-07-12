@@ -380,7 +380,7 @@ func TestPreview3DRegistryResolveComboSlotsAccessoryAfterUnit(t *testing.T) {
 	}
 
 	selection, err := registry.resolveCombo("jp", ComboQuery{
-		Unit:                 "school_refusal",
+		Character3DID:        5,
 		BodyCostume3DID:      33001,
 		HairCostume3DID:      33021,
 		AccessoryCostume3DID: 30129,
@@ -393,7 +393,7 @@ func TestPreview3DRegistryResolveComboSlotsAccessoryAfterUnit(t *testing.T) {
 	}
 
 	selection, err = registry.resolveCombo("jp", ComboQuery{
-		Unit:                 "idol",
+		Character3DID:        6,
 		BodyCostume3DID:      33001,
 		HairCostume3DID:      33021,
 		AccessoryCostume3DID: 30129,
@@ -423,7 +423,7 @@ func TestPreview3DRegistryResolveComboKeepsEmptyHeadAsBusinessSelection(t *testi
 	}
 
 	selection, err := registry.resolveCombo("jp", ComboQuery{
-		Unit:                 "school_refusal",
+		Character3DID:        5,
 		BodyCostume3DID:      33001,
 		HairCostume3DID:      33021,
 		AccessoryCostume3DID: 53129,
@@ -456,7 +456,7 @@ func TestPreview3DRegistryResolveComboKeepsOfficialDefaultHeadWhenGroupHasVirtua
 	}
 
 	selection, err := registry.resolveCombo("jp", ComboQuery{
-		Unit:            "school_refusal",
+		Character3DID:   17,
 		BodyCostume3DID: 34,
 		HairCostume3DID: 217,
 	}, "sig")
@@ -471,7 +471,7 @@ func TestPreview3DRegistryResolveComboKeepsOfficialDefaultHeadWhenGroupHasVirtua
 	}
 
 	selection, err = registry.resolveCombo("jp", ComboQuery{
-		Unit:                 "school_refusal",
+		Character3DID:        17,
 		BodyCostume3DID:      34,
 		HairCostume3DID:      217,
 		AccessoryCostume3DID: 33,
@@ -504,6 +504,38 @@ func TestPreview3DRegistryResolveComboRejectsAmbiguousRoleWhenUnitIsOmitted(t *t
 	}
 }
 
+func TestPreview3DRegistryResolveComboUsesOutfitCharacterAndColor(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 1, CharacterID: 1, Unit: "light_sound", BodyCostume3DID: 2, HeadCostume3DID: 1, HairCostume3DID: 201, Status: "available"},
+			{Character3DID: 2, CharacterID: 2, Unit: "light_sound", BodyCostume3DID: 4, HeadCostume3DID: 3, HairCostume3DID: 202, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 934002, PartType: "body", CharacterID: 1, Unit: "light_sound", ColorID: 1, Costume3DGroupID: 934001, OutfitID: 934, Status: "planned"},
+			{Costume3DID: 934004, PartType: "body", CharacterID: 1, Unit: "light_sound", ColorID: 2, Costume3DGroupID: 934001, OutfitID: 934, Status: "planned"},
+			{Costume3DID: 934022, PartType: "body", CharacterID: 2, Unit: "light_sound", ColorID: 1, Costume3DGroupID: 934002, OutfitID: 934, Status: "planned"},
+			{Costume3DID: 934024, PartType: "body", CharacterID: 2, Unit: "light_sound", ColorID: 2, Costume3DGroupID: 934002, OutfitID: 934, Status: "planned"},
+			{Costume3DID: 1, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, Status: "empty"},
+			{Costume3DID: 11001, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, Costume3DGroupID: 11001, AccessoryID: 11, Status: "planned"},
+			{Costume3DID: 201, PartType: "hair", CharacterID: 1, Unit: "light_sound", ColorID: 1, Status: "planned"},
+		},
+	}
+
+	selection, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 1, OutfitID: 934, OutfitColorID: 2, AccessoryID: 11, AccessoryColorID: 1}, "sig")
+	if err != nil {
+		t.Fatalf("resolve normalized outfit failed: %v", err)
+	}
+	if selection.RoleID != "1:light_sound" || selection.BodyCostume3DID != 934004 {
+		t.Fatalf("expected character 1 color 2 body, got %+v", selection)
+	}
+	if selection.HeadCostume3DID != 11001 {
+		t.Fatalf("expected normalized accessory 11, got %+v", selection)
+	}
+	if _, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 11, AccessoryColorID: 1}, "sig"); err == nil || !strings.Contains(err.Error(), "accessory not usable") {
+		t.Fatalf("expected character-exclusive accessory to be rejected, got %v", err)
+	}
+}
+
 func TestPreview3DRegistryResolveComboDefaultsMissingPartsAndUsesEmptyHead(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{
@@ -517,7 +549,7 @@ func TestPreview3DRegistryResolveComboDefaultsMissingPartsAndUsesEmptyHead(t *te
 		},
 	}
 
-	selection, err := registry.resolveCombo("en", ComboQuery{HairCostume3DID: 205}, "sig")
+	selection, err := registry.resolveCombo("en", ComboQuery{Character3DID: 5, HairCostume3DID: 205}, "sig")
 	if err != nil {
 		t.Fatalf("resolve sparse combo failed: %v", err)
 	}
@@ -543,7 +575,7 @@ func TestPreview3DRegistryResolveComboDeduplicatesSameRolePresets(t *testing.T) 
 	}
 
 	selection, err := registry.resolveCombo("jp", ComboQuery{
-		Unit:                 "idol",
+		Character3DID:        5,
 		BodyCostume3DID:      10,
 		HairCostume3DID:      205,
 		AccessoryCostume3DID: 105,
@@ -594,7 +626,7 @@ func TestPreview3DCaptureTemporaryComboUsesExistingCapture(t *testing.T) {
 
 	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL, CaptureCacheVersion: "test"})
 	data, err := service.CaptureTemporaryCombo(context.Background(), "jp", ComboQuery{
-		Unit:            "school_refusal",
+		Character3DID:   5,
 		BodyCostume3DID: 33001,
 		HairCostume3DID: 33021,
 	})
@@ -697,6 +729,49 @@ func TestPreview3DServiceRejectsMissingRegionEngineWhenMapConfigured(t *testing.
 	}
 	if !strings.Contains(err.Error(), "region en") {
 		t.Fatalf("expected region in error, got %v", err)
+	}
+}
+
+func TestResolveQueryPreviewPathUsesRequested3DRole(t *testing.T) {
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.URL.Path {
+		case "/runtime/character3d-index.json":
+			fmt.Fprint(w, `{"entries":[
+				{"character3dId":22,"characterId":21,"unit":"idol","bodyCostume3dId":9001,"headCostume3dId":9002,"hairCostume3dId":9003,"status":"available"},
+				{"character3dId":23,"characterId":21,"unit":"light_sound","bodyCostume3dId":9101,"headCostume3dId":9102,"hairCostume3dId":9103,"status":"available"}
+			]}`)
+		case "/runtime/parts/part-registry.json":
+			fmt.Fprint(w, `{"entries":[
+				{"costume3dId":9001,"partType":"body","characterId":21,"unit":"idol","colorId":1,"outfitId":1,"status":"available"},
+				{"costume3dId":9002,"partType":"head","characterId":21,"unit":"idol","colorId":1,"status":"available"},
+				{"costume3dId":9003,"partType":"hair","characterId":21,"unit":"idol","colorId":1,"status":"available"},
+				{"costume3dId":9101,"partType":"body","characterId":21,"unit":"light_sound","colorId":1,"outfitId":1,"status":"available"},
+				{"costume3dId":9102,"partType":"head","characterId":21,"unit":"light_sound","colorId":1,"status":"available"},
+				{"costume3dId":9103,"partType":"hair","characterId":21,"unit":"light_sound","colorId":1,"status":"available"}
+			]}`)
+		case "/runtime/parts/head-hair-compatibility.json":
+			fmt.Fprint(w, `{"rules":[
+				{"unit":"idol","headCostume3dId":9002,"hairCostume3dId":9003,"state":"available"},
+				{"unit":"light_sound","headCostume3dId":9102,"hairCostume3dId":9103,"state":"available"}
+			]}`)
+		default:
+			t.Fatalf("unexpected engine request: %s", r.URL.Path)
+		}
+	}))
+	defer engine.Close()
+
+	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL})
+	previewPath, err := service.ResolveQueryPreviewPath(context.Background(), "jp", 9101, Query{
+		OutfitID:      1,
+		Character3DID: 23,
+		ColorID:       1,
+	})
+	if err != nil {
+		t.Fatalf("ResolveQueryPreviewPath failed: %v", err)
+	}
+	if !strings.Contains(previewPath, "c21_light_sound_b9101") {
+		t.Fatalf("expected role 23 light_sound preview, got %q", previewPath)
 	}
 }
 

@@ -30,6 +30,10 @@ type Query struct {
 	ID               int    `json:"id,omitempty"`
 	Region           string `json:"region,omitempty"`
 	ExpectedPartType string `json:"expected_part_type,omitempty"`
+	OutfitID         int    `json:"outfit_id,omitempty"`
+	AccessoryID      int    `json:"accessory_id,omitempty"`
+	Character3DID    int    `json:"character_3d_id,omitempty"`
+	ColorID          int    `json:"color_id,omitempty"`
 }
 
 type ListQuery struct {
@@ -57,7 +61,11 @@ type Filter struct {
 type ComboQuery struct {
 	Query                string `json:"query,omitempty"`
 	Region               string `json:"region,omitempty"`
-	Unit                 string `json:"unit,omitempty"`
+	OutfitID             int    `json:"outfit_id,omitempty"`
+	OutfitColorID        int    `json:"outfit_color_id,omitempty"`
+	AccessoryID          int    `json:"accessory_id,omitempty"`
+	AccessoryColorID     int    `json:"accessory_color_id,omitempty"`
+	Character3DID        int    `json:"character_3d_id,omitempty"`
 	BodyCostume3DID      int    `json:"body_costume_3d_id,omitempty"`
 	HairCostume3DID      int    `json:"hair_costume_3d_id,omitempty"`
 	AccessoryCostume3DID int    `json:"accessory_costume_3d_id,omitempty"`

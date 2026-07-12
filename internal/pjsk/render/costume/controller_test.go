@@ -555,12 +555,57 @@ func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
 	}
 }
 
+func TestBuildHairListUsesRoleLocalIDs(t *testing.T) {
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("content-type", "application/json")
+		switch r.URL.Path {
+		case "/runtime/character3d-index.json":
+			fmt.Fprint(w, `{"entries":[{"character3dId":23,"characterId":21,"unit":"light_sound","hairCostume3dId":392161,"status":"available"}]}`)
+		case "/runtime/parts/part-registry.json":
+			fmt.Fprint(w, `{"entries":[
+				{"costume3dId":392161,"partType":"hair","characterId":21,"unit":"light_sound","status":"available"},
+				{"costume3dId":221,"partType":"hair","characterId":21,"unit":"light_sound","status":"available"},
+				{"costume3dId":999,"partType":"hair","characterId":21,"unit":"idol","status":"available"},
+				{"costume3dId":888,"partType":"hair","characterId":21,"unit":"light_sound","status":"missing"}
+			]}`)
+		case "/runtime/parts/head-hair-compatibility.json":
+			fmt.Fprint(w, `{"rules":[]}`)
+		default:
+			t.Fatalf("unexpected engine request: %s", r.URL.Path)
+		}
+	}))
+	defer engine.Close()
+
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostumeWithColor(392161, "hair", 21, 1),
+		makeDenseListTestCostumeWithColor(221, "hair", 21, 1),
+		makeDenseListTestCostumeWithColor(999, "hair", 21, 1),
+	}}, nil, nil)
+	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL})
+
+	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "角色23", PartType: "hair"})
+	if err != nil {
+		t.Fatalf("BuildCostumeListRequest failed: %v", err)
+	}
+	if request.Total != 2 || len(request.Costumes) != 2 {
+		t.Fatalf("expected two role-usable hairs, got total=%d items=%d", request.Total, len(request.Costumes))
+	}
+	for index, item := range request.Costumes {
+		if item.HairID != index+1 || item.Character3DID != 23 {
+			t.Fatalf("unexpected normalized hair at %d: %+v", index, item)
+		}
+	}
+	if request.Costumes[0].CostumeID != 392161 || request.Costumes[1].CostumeID != 221 {
+		t.Fatalf("expected default hair first and remaining raw IDs sorted, got %d and %d", request.Costumes[0].CostumeID, request.Costumes[1].CostumeID)
+	}
+}
+
 func TestParseComboQuerySupportsComponentLocalColors(t *testing.T) {
-	labeled, err := parseComboQuery(ComboQuery{Query: "角色23 服装330 颜色2 发型33021 饰品301 颜色3", Region: "jp"})
+	labeled, err := parseComboQuery(ComboQuery{Query: "角色23 服装330 颜色2 发型2 饰品301 颜色3", Region: "jp"})
 	if err != nil {
 		t.Fatalf("parse labeled combo failed: %v", err)
 	}
-	if labeled.Character3DID != 23 || labeled.OutfitID != 330 || labeled.OutfitColorID != 2 || labeled.HairCostume3DID != 33021 || labeled.AccessoryID != 301 || labeled.AccessoryColorID != 3 {
+	if labeled.Character3DID != 23 || labeled.OutfitID != 330 || labeled.OutfitColorID != 2 || labeled.HairID != 2 || labeled.AccessoryID != 301 || labeled.AccessoryColorID != 3 {
 		t.Fatalf("unexpected labeled combo: %+v", labeled)
 	}
 	defaults, err := parseComboQuery(ComboQuery{Query: "角色23 服装330 饰品301"})
@@ -633,7 +678,7 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 	controller := NewController(denseListTestSource{}, nil, nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL, CaptureCacheVersion: "test"})
 
-	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "角色5 服装33 颜色1 发型33021 饰品531 颜色1", Region: "jp"})
+	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "角色5 服装33 颜色1 发型1 饰品531 颜色1", Region: "jp"})
 	if err != nil {
 		t.Fatalf("RenderCostumeCombo failed: %v", err)
 	}

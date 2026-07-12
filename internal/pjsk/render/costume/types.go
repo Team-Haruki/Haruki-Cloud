@@ -37,14 +37,15 @@ type Query struct {
 }
 
 type ListQuery struct {
-	Query     string `json:"query,omitempty"`
-	Region    string `json:"region,omitempty"`
-	PartType  string `json:"part_type,omitempty"`
-	Gender    string `json:"gender,omitempty"`
-	Character string `json:"character,omitempty"`
-	Keyword   string `json:"keyword,omitempty"`
-	Page      int    `json:"page,omitempty"`
-	PageSize  int    `json:"page_size,omitempty"`
+	Query         string `json:"query,omitempty"`
+	Region        string `json:"region,omitempty"`
+	PartType      string `json:"part_type,omitempty"`
+	Gender        string `json:"gender,omitempty"`
+	Character     string `json:"character,omitempty"`
+	Character3DID int    `json:"character_3d_id,omitempty"`
+	Keyword       string `json:"keyword,omitempty"`
+	Page          int    `json:"page,omitempty"`
+	PageSize      int    `json:"page_size,omitempty"`
 }
 
 type Filter struct {
@@ -66,6 +67,7 @@ type ComboQuery struct {
 	AccessoryID          int    `json:"accessory_id,omitempty"`
 	AccessoryColorID     int    `json:"accessory_color_id,omitempty"`
 	Character3DID        int    `json:"character_3d_id,omitempty"`
+	HairID               int    `json:"hair_id,omitempty"`
 	BodyCostume3DID      int    `json:"body_costume_3d_id,omitempty"`
 	HairCostume3DID      int    `json:"hair_costume_3d_id,omitempty"`
 	AccessoryCostume3DID int    `json:"accessory_costume_3d_id,omitempty"`

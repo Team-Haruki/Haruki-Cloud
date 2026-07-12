@@ -112,7 +112,26 @@ func (c *Controller) BuildCostumeListRequest(query ListQuery) (*drawing.CostumeL
 	if err != nil {
 		return nil, err
 	}
-	sortCostumesForDisplay(items)
+	var hairIDs map[int]int
+	if parsed.PartType == "hair" && parsed.Character3DID > 0 {
+		if c.preview3D == nil {
+			return nil, fmt.Errorf("3d preview service is not configured")
+		}
+		hairIDs, err = c.preview3D.HairIDsForRole(c.ctx, region.String(), parsed.Character3DID)
+		if err != nil {
+			return nil, err
+		}
+		filtered := items[:0]
+		for _, item := range items {
+			if item != nil && hairIDs[item.ID] > 0 {
+				filtered = append(filtered, item)
+			}
+		}
+		items = filtered
+		sort.Slice(items, func(i, j int) bool { return hairIDs[items[i].ID] < hairIDs[items[j].ID] })
+	} else {
+		sortCostumesForDisplay(items)
+	}
 
 	pageSize := parsed.PageSize
 	if pageSize <= 0 {
@@ -138,6 +157,11 @@ func (c *Controller) BuildCostumeListRequest(query ListQuery) (*drawing.CostumeL
 	costumes := make([]drawing.CostumeBasic, 0, len(pageItems))
 	for _, item := range pageItems {
 		basic := c.buildCostumeBasic(region, source, item, nil, sourceCards)
+		if hairIDs[item.ID] > 0 {
+			basic.HairID = hairIDs[item.ID]
+			basic.Character3DID = parsed.Character3DID
+			basic.Character3DIDs = []int{parsed.Character3DID}
+		}
 		costumes = append(costumes, basic)
 	}
 
@@ -484,7 +508,13 @@ func (c *Controller) buildFilter(query ListQuery) (Filter, error) {
 		PartType: query.PartType,
 		Keyword:  strings.TrimSpace(query.Keyword),
 	}
-	if characterID, ok := resolveCharacterID(query.Character); ok {
+	if query.Character3DID > 0 {
+		characterID, ok := characterIDFor3DRole(query.Character3DID)
+		if !ok {
+			return Filter{}, fmt.Errorf("角色ID必须在1到31之间")
+		}
+		filter.CharacterID = characterID
+	} else if characterID, ok := resolveCharacterID(query.Character); ok {
 		filter.CharacterID = characterID
 	}
 	if filter.CharacterID == 0 && strings.TrimSpace(query.Character) != "" {
@@ -885,10 +915,10 @@ func assignComboValue(query *ComboQuery, label string, id int, lastColorTarget *
 	case "accessory_color":
 		return assignComboColor(query, "accessory", id)
 	case "hair":
-		if query.HairCostume3DID != 0 {
+		if query.HairID != 0 || query.HairCostume3DID != 0 {
 			return fmt.Errorf("组合里重复指定发型")
 		}
-		query.HairCostume3DID = id
+		query.HairID = id
 		*lastColorTarget = ""
 	case "accessory":
 		if query.AccessoryID != 0 {
@@ -955,6 +985,10 @@ func normalizeListQuery(query ListQuery) ListQuery {
 		}
 		if gender, ok := normalizeGender(lower); ok {
 			parsed.Gender = gender
+			continue
+		}
+		if label, id, ok := parseComboLabeledID(lower); ok && label == "role" {
+			parsed.Character3DID = id
 			continue
 		}
 		if _, ok := resolveCharacterID(lower); ok {
@@ -1262,6 +1296,9 @@ func BuildListPrompt(payload *drawing.CostumeListRequest) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%s：第 %d/%d 页，本页 %d 项，共 %d 项", title, page, totalPages, len(payload.Costumes), payload.Total)
 	sb.WriteString("\n详情：/查服装 服装ID 角色ID [颜色ID]；/查饰品 饰品ID 角色ID [颜色ID]")
+	if len(payload.Costumes) > 0 && payload.Costumes[0].HairID > 0 {
+		sb.WriteString("\n试穿：/组合 角色ID 发型ID")
+	}
 	if totalPages > 1 {
 		nextPage := page + 1
 		if nextPage > totalPages {
@@ -1289,6 +1326,9 @@ func buildFilterLabel(query ListQuery) string {
 	}
 	if query.Character != "" {
 		parts = append(parts, query.Character)
+	}
+	if query.Character3DID > 0 {
+		parts = append(parts, fmt.Sprintf("角色%d", query.Character3DID))
 	}
 	if query.Keyword != "" {
 		parts = append(parts, query.Keyword)

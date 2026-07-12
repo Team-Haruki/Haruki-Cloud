@@ -24,6 +24,8 @@ func normalizeCostume3DError(err error) error {
 		return onebot11.NewReplayError("该服装没有对应的角色模型或颜色版本，请检查服装ID、角色ID和颜色ID")
 	case strings.HasPrefix(message, "3d combo accessory not usable"):
 		return onebot11.NewReplayError("该饰品不属于或不适用于这个角色模型及颜色，请检查饰品ID、角色ID和颜色ID")
+	case strings.HasPrefix(message, "3d combo hair not usable"):
+		return onebot11.NewReplayError("该角色没有这个发型ID，请先用 /发型列表 角色ID 查询")
 	case strings.HasPrefix(message, "3d combo character3d id is duplicated"):
 		return onebot11.NewReplayError("3D角色数据存在重复，请稍后再试")
 	case strings.HasPrefix(message, "3d combo anchor part not found"):

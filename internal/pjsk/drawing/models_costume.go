@@ -15,6 +15,7 @@ type CostumeBasic struct {
 	CostumeGroupID     int                   `json:"costume_group_id"`
 	OutfitID           int                   `json:"outfit_id,omitempty"`
 	AccessoryID        int                   `json:"accessory_id,omitempty"`
+	HairID             int                   `json:"hair_id,omitempty"`
 	Character3DID      int                   `json:"character_3d_id,omitempty"`
 	Character3DIDs     []int                 `json:"character_3d_ids,omitempty"`
 	Name               string                `json:"name"`

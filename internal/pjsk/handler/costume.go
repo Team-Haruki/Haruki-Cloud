@@ -10,13 +10,13 @@ import (
 )
 
 const costumeSearchHelp = `服装查询:
-1. /查服装 1 角色23 颜色2 查询服装详情；颜色省略时为原色1
-2. /查饰品 20 角色23 颜色3 查询饰品详情
+1. /查服装 1 mnr 颜色2 查询服装详情；颜色省略时为原色1
+2. /查饰品 20 miku ln 颜色3 查询饰品详情
 3. /服装列表 服装/饰品/发型 查询分类
-4. /饰品列表 或 /发型列表 角色23 是快捷入口；发型ID按角色从1开始
+4. /饰品列表 或 /发型列表 miku ln 是快捷入口；发型ID按角色从1开始
 5. 可组合筛选: 男装 女装 男饰品 女饰品 男发型 女发型 角色昵称 关键词 p2 每页480 全部
-6. /组合 角色23 服装1 颜色2 饰品20 颜色3 发型1 临时 3D 试穿
-7. 角色ID为1到31；颜色必须紧跟服装或饰品，省略时默认为原色1`
+6. /组合 mnr 服装1 颜色2 饰品20 颜色3 发型1 临时 3D 试穿
+7. 角色可写1到31或精确昵称；Miku须加团队（vs/mmj/ln/vbs/wxs/n25）`
 
 func (sekaiHandlers) CostumeDetailHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{

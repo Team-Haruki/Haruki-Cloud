@@ -583,7 +583,7 @@ func TestBuildHairListUsesRoleLocalIDs(t *testing.T) {
 	}}, nil, nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL})
 
-	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "角色23", PartType: "hair"})
+	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "miku ln", PartType: "hair"})
 	if err != nil {
 		t.Fatalf("BuildCostumeListRequest failed: %v", err)
 	}
@@ -632,6 +632,67 @@ func TestParseComboQuerySupportsComponentLocalColors(t *testing.T) {
 	}
 	if _, err := parseComboQuery(ComboQuery{Query: "角色23 颜色2"}); err == nil || !strings.Contains(err.Error(), "紧跟") {
 		t.Fatalf("expected detached color to be rejected, got %v", err)
+	}
+}
+
+func TestParseComboQueryAcceptsLegacyUnitSuffix(t *testing.T) {
+	for _, raw := range []string{"角色23 发型1 ln", "角色23 饰品1 ln"} {
+		query, err := parseComboQuery(ComboQuery{Query: raw, Region: "jp"})
+		if err != nil {
+			t.Fatalf("parse combo %q with legacy unit suffix failed: %v", raw, err)
+		}
+		if query.Character3DID != 23 {
+			t.Fatalf("unexpected combo query for %q: %+v", raw, query)
+		}
+	}
+}
+
+func TestParseComboQuerySupportsExactCharacterAliases(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		role int
+	}{
+		{name: "short alias", raw: "mnr 发型1", role: 5},
+		{name: "full name", raw: "角色花里实乃里 发型1", role: 5},
+		{name: "separated role label", raw: "角色 mnr 发型1", role: 5},
+		{name: "non Miku virtual singer", raw: "rin 发型1", role: 27},
+		{name: "Miku virtual singer", raw: "miku vs 发型1", role: 21},
+		{name: "Miku more more jump", raw: "初音未来 mmj 发型1", role: 22},
+		{name: "Miku leo need", raw: "miku ln 发型1", role: 23},
+		{name: "Miku vivid bad squad", raw: "miku vbs 发型1", role: 24},
+		{name: "Miku wonderlands showtime", raw: "miku wxs 发型1", role: 25},
+		{name: "Miku nightcord", raw: "miku n25 发型1", role: 26},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			query, err := parseComboQuery(ComboQuery{Query: tt.raw, Region: "jp"})
+			if err != nil {
+				t.Fatalf("parseComboQuery(%q) failed: %v", tt.raw, err)
+			}
+			if query.Character3DID != tt.role || query.HairID != 1 {
+				t.Fatalf("unexpected combo query: %+v", query)
+			}
+		})
+	}
+	for raw, role := range map[string]int{"服装1 mnr": 5, "miku 服装1 ln": 23} {
+		query, err := parseComboQuery(ComboQuery{Query: raw, Region: "jp"})
+		if err != nil || query.Character3DID != role || query.OutfitID != 1 {
+			t.Fatalf("unexpected combo query for %q: %+v err=%v", raw, query, err)
+		}
+	}
+
+	if _, err := parseComboQuery(ComboQuery{Query: "miku 发型1"}); err == nil || !strings.Contains(err.Error(), "团队") {
+		t.Fatalf("expected Miku without a team to be rejected, got %v", err)
+	}
+	if _, err := parseComboQuery(ComboQuery{Query: "miku ln mmj 发型1"}); err == nil || !strings.Contains(err.Error(), "一个团队") {
+		t.Fatalf("expected conflicting Miku teams to be rejected, got %v", err)
+	}
+	if _, err := parseComboQuery(ComboQuery{Query: "miku mm 发型1"}); err == nil {
+		t.Fatal("expected incomplete MMJ alias mm to be rejected")
+	}
+	if _, err := parseComboQuery(ComboQuery{Query: "mnrx 发型1"}); err == nil {
+		t.Fatal("expected a partial nickname match to be rejected")
 	}
 }
 
@@ -727,8 +788,13 @@ func TestParseLookupQueryUsesShortIDRoleAndOptionalColor(t *testing.T) {
 		{name: "outfit labels", raw: "1 角色23 颜色2", partType: "body", outfit: 1, role: 23, color: 2},
 		{name: "outfit mixed", raw: "1 角色23 2", partType: "body", outfit: 1, role: 23, color: 2},
 		{name: "outfit positional", raw: "1 23", partType: "body", outfit: 1, role: 23, color: 1},
+		{name: "outfit short alias", raw: "1 mnr 2", partType: "body", outfit: 1, role: 5, color: 2},
+		{name: "outfit full name", raw: "1 角色花里实乃里 颜色2", partType: "body", outfit: 1, role: 5, color: 2},
+		{name: "outfit separated role alias", raw: "1 角色 mnr 颜色2", partType: "body", outfit: 1, role: 5, color: 2},
 		{name: "accessory labels", raw: "20 角色27 颜色3", partType: "head", accessory: 20, role: 27, color: 3},
 		{name: "accessory positional", raw: "20 27 4", partType: "head", accessory: 20, role: 27, color: 4},
+		{name: "accessory Miku leo need", raw: "20 miku ln 3", partType: "head", accessory: 20, role: 23, color: 3},
+		{name: "accessory Miku more more jump", raw: "20 初音未来 mmj 4", partType: "head", accessory: 20, role: 22, color: 4},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -751,6 +817,27 @@ func TestParseLookupQueryRequiresRoleAndValidColor(t *testing.T) {
 	}
 	if _, ok, err := ParseLookupQuery("瑞希", "body"); ok || err != nil {
 		t.Fatalf("name query should remain a list search, ok=%v err=%v", ok, err)
+	}
+	if _, ok, err := ParseLookupQuery("1 miku", "body"); !ok || err == nil || !strings.Contains(err.Error(), "团队") {
+		t.Fatalf("Miku detail query without a team should fail clearly, ok=%v err=%v", ok, err)
+	}
+}
+
+func TestNormalizeListQuerySupportsCharacterAliases(t *testing.T) {
+	ordinary, err := normalizeListQuery(ListQuery{Query: "发型 花里实乃里"})
+	if err != nil || ordinary.Character3DID != 5 || ordinary.PartType != "hair" {
+		t.Fatalf("unexpected ordinary character list query: %+v err=%v", ordinary, err)
+	}
+	miku, err := normalizeListQuery(ListQuery{Query: "发型 miku mmj"})
+	if err != nil || miku.Character3DID != 22 || miku.PartType != "hair" {
+		t.Fatalf("unexpected Miku list query: %+v err=%v", miku, err)
+	}
+	if _, err := normalizeListQuery(ListQuery{Query: "发型 miku"}); err == nil || !strings.Contains(err.Error(), "团队") {
+		t.Fatalf("expected Miku list query without a team to fail, got %v", err)
+	}
+	keyword, err := normalizeListQuery(ListQuery{Query: "foo idol bar"})
+	if err != nil || keyword.Keyword != "foo idol bar" {
+		t.Fatalf("unit-like keyword order changed: %+v err=%v", keyword, err)
 	}
 }
 

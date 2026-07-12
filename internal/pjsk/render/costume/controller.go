@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/filteralias"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	rendercard "haruki-cloud/internal/pjsk/render/card"
@@ -27,6 +28,16 @@ type Controller struct {
 
 var costumePartOrder = []string{"body", "head", "hair"}
 var costumePreview3DLogger = logger.NewLoggerFromGlobal("Costume3DPreview")
+var costumeUnitAliases = buildCostumeUnitAliases()
+
+var mikuCharacter3DIDsByUnit = map[string]int{
+	"piapro":         21,
+	"idol":           22,
+	"light_sound":    23,
+	"street":         24,
+	"theme_park":     25,
+	"school_refusal": 26,
+}
 
 func NewController(defaultSource DataSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper) *Controller {
 	if assetHelper == nil {
@@ -101,7 +112,10 @@ func (c *Controller) BuildCostumeListRequest(query ListQuery) (*drawing.CostumeL
 	if err != nil {
 		return nil, err
 	}
-	parsed := normalizeListQuery(query)
+	parsed, err := normalizeListQuery(query)
+	if err != nil {
+		return nil, err
+	}
 	filter, err := c.buildFilter(parsed)
 	if err != nil {
 		return nil, err
@@ -483,7 +497,10 @@ func (c *Controller) costumeDetailCacheRequest(req *drawing.CostumeDetailRequest
 }
 
 func (c *Controller) resolveSingleCostumeByQuery(source DataSource, raw string) (*masterdata.Costume3d, error) {
-	parsed := normalizeListQuery(ListQuery{Query: raw})
+	parsed, err := normalizeListQuery(ListQuery{Query: raw})
+	if err != nil {
+		return nil, err
+	}
 	filter, err := c.buildFilter(parsed)
 	if err != nil {
 		return nil, err
@@ -670,8 +687,28 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 	query := Query{Query: raw, ExpectedPartType: partType, ColorID: 1}
 	recognized := false
 	colorSet := false
+	pendingRole := false
+	var roleAlias character3DAliasSelection
 	for _, token := range fields {
 		lower := strings.ToLower(strings.TrimSpace(token))
+		if pendingRole {
+			if characterID, ok := parseCharacter3DAliasToken(lower); ok {
+				if err := roleAlias.setCharacter(characterID); err != nil {
+					return Query{}, true, err
+				}
+				pendingRole = false
+				continue
+			}
+			if id, ok := ParseExplicitCostumeID(lower); ok {
+				if query.Character3DID != 0 {
+					return Query{}, true, fmt.Errorf("角色ID重复")
+				}
+				query.Character3DID = id
+				pendingRole = false
+				continue
+			}
+			return Query{}, true, fmt.Errorf("角色后必须填写1到31之间的ID或精确角色名称")
+		}
 		if label, id, labeled := parseComboLabeledID(lower); labeled {
 			recognized = true
 			switch label {
@@ -701,33 +738,52 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 			}
 			continue
 		}
+		if label, labeled := normalizeComboLabel(lower); labeled && label == "role" {
+			recognized = true
+			pendingRole = true
+			continue
+		}
+		if characterID, ok := parseCharacter3DAliasToken(lower); ok {
+			if err := roleAlias.setCharacter(characterID); err != nil {
+				return Query{}, true, err
+			}
+			continue
+		}
 		id, numeric := ParseExplicitCostumeID(lower)
-		if !numeric {
-			if !recognized {
-				return Query{}, false, nil
+		if numeric {
+			recognized = true
+			shortID := query.OutfitID
+			if partType == "head" {
+				shortID = query.AccessoryID
 			}
-			return Query{}, true, fmt.Errorf("无法识别查询参数：%s", token)
-		}
-		recognized = true
-		shortID := query.OutfitID
-		if partType == "head" {
-			shortID = query.AccessoryID
-		}
-		switch {
-		case shortID == 0:
-			if partType == "body" {
-				query.OutfitID = id
-			} else {
-				query.AccessoryID = id
+			switch {
+			case shortID == 0:
+				if partType == "body" {
+					query.OutfitID = id
+				} else {
+					query.AccessoryID = id
+				}
+			case query.Character3DID == 0 && roleAlias.characterID == 0:
+				query.Character3DID = id
+			case !colorSet:
+				query.ColorID = id
+				colorSet = true
+			default:
+				return Query{}, true, fmt.Errorf("查询参数过多")
 			}
-		case query.Character3DID == 0:
-			query.Character3DID = id
-		case !colorSet:
-			query.ColorID = id
-			colorSet = true
-		default:
-			return Query{}, true, fmt.Errorf("查询参数过多")
+			continue
 		}
+		if unit, ok := parseCostumeUnitAlias(lower); ok {
+			roleAlias.setUnit(unit)
+			continue
+		}
+		if !recognized {
+			return Query{}, false, nil
+		}
+		return Query{}, true, fmt.Errorf("无法识别查询参数：%s", token)
+	}
+	if pendingRole {
+		return Query{}, true, fmt.Errorf("角色后必须填写1到31之间的ID或精确角色名称")
 	}
 	shortID := query.OutfitID
 	label := "服装"
@@ -736,10 +792,16 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 		label = "饰品"
 	}
 	if shortID <= 0 {
+		if !recognized {
+			return Query{}, false, nil
+		}
 		return Query{}, true, fmt.Errorf("请填写%sID", label)
 	}
+	if err := roleAlias.apply(&query.Character3DID); err != nil {
+		return Query{}, true, err
+	}
 	if query.Character3DID < 1 || query.Character3DID > 31 {
-		return Query{}, true, fmt.Errorf("请填写1到31之间的角色ID")
+		return Query{}, true, fmt.Errorf("请填写1到31之间的角色ID或精确角色名称")
 	}
 	if query.ColorID < 1 || query.ColorID > 4 {
 		return Query{}, true, fmt.Errorf("颜色ID必须在1到4之间，颜色1为原版")
@@ -780,14 +842,136 @@ func character3DIDsForCharacter(characterID int) []int {
 	}
 }
 
+type character3DAliasSelection struct {
+	characterID     int
+	unit            string
+	conflictingUnit bool
+}
+
+func (selection *character3DAliasSelection) setCharacter(characterID int) error {
+	if selection.characterID != 0 {
+		return fmt.Errorf("重复指定角色")
+	}
+	selection.characterID = characterID
+	return nil
+}
+
+func (selection *character3DAliasSelection) setUnit(unit string) {
+	if selection.unit != "" && selection.unit != unit {
+		selection.conflictingUnit = true
+		return
+	}
+	selection.unit = unit
+}
+
+func (selection character3DAliasSelection) apply(character3DID *int) error {
+	resolved, ok, err := selection.resolve()
+	if err != nil || !ok {
+		return err
+	}
+	if *character3DID != 0 {
+		return fmt.Errorf("重复指定角色")
+	}
+	*character3DID = resolved
+	return nil
+}
+
+func (selection character3DAliasSelection) resolve() (int, bool, error) {
+	switch {
+	case selection.characterID == 0:
+		return 0, false, nil
+	case selection.characterID >= 1 && selection.characterID <= 20:
+		return selection.characterID, true, nil
+	case selection.characterID == 21:
+		if selection.conflictingUnit {
+			return 0, true, fmt.Errorf("使用 Miku 时只能指定一个团队")
+		}
+		character3DID, ok := mikuCharacter3DIDsByUnit[selection.unit]
+		if !ok {
+			return 0, true, fmt.Errorf("使用 Miku 时请同时填写团队：vs、mmj、ln、vbs、wxs或n25")
+		}
+		return character3DID, true, nil
+	case selection.characterID >= 22 && selection.characterID <= 26:
+		return selection.characterID + 5, true, nil
+	default:
+		return 0, true, fmt.Errorf("无法把角色名称映射到3D角色")
+	}
+}
+
+func buildCostumeUnitAliases() map[string]string {
+	aliases := filteralias.UnitMap()
+	aliases["n25"] = "school_refusal"
+	aliases["leo_need"] = "light_sound"
+	aliases["wonderlands_showtime"] = "theme_park"
+	aliases["virtual_singer"] = "piapro"
+	return aliases
+}
+
+func parseCostumeUnitAlias(token string) (string, bool) {
+	token = strings.TrimSpace(strings.ToLower(token))
+	for _, prefix := range []string{"unit=", "unit:", "team=", "team:", "团队=", "团队:", "组合="} {
+		if strings.HasPrefix(token, prefix) {
+			token = strings.TrimSpace(strings.TrimPrefix(token, prefix))
+			break
+		}
+	}
+	unit, ok := costumeUnitAliases[token]
+	return unit, ok
+}
+
+func parseCharacter3DAliasToken(token string) (int, bool) {
+	token = strings.TrimSpace(strings.ToLower(token))
+	if characterID, ok := rendercard.ResolveDefaultCharacterNickname(token); ok {
+		return characterID, true
+	}
+	for _, prefix := range []string{"character3d", "character", "角色模型", "角色id", "角色"} {
+		if !strings.HasPrefix(token, prefix) {
+			continue
+		}
+		alias := strings.TrimSpace(strings.TrimPrefix(token, prefix))
+		if alias == "" {
+			return 0, false
+		}
+		return rendercard.ResolveDefaultCharacterNickname(alias)
+	}
+	return 0, false
+}
+
 func parseComboQuery(query ComboQuery) (ComboQuery, error) {
 	parsed := query
 	pending := ""
 	lastColorTarget := ""
+	var roleAlias character3DAliasSelection
 	for _, token := range strings.Fields(query.Query) {
 		lower := strings.ToLower(strings.TrimSpace(token))
 		if lower == "" {
 			continue
+		}
+		if pending == "role" {
+			if characterID, ok := parseCharacter3DAliasToken(lower); ok {
+				if err := roleAlias.setCharacter(characterID); err != nil {
+					return ComboQuery{}, err
+				}
+				pending = ""
+				lastColorTarget = ""
+				continue
+			}
+		}
+		if pending == "" {
+			if characterID, ok := parseCharacter3DAliasToken(lower); ok {
+				if err := roleAlias.setCharacter(characterID); err != nil {
+					return ComboQuery{}, err
+				}
+				lastColorTarget = ""
+				continue
+			}
+			if unit, ok := parseCostumeUnitAlias(lower); ok {
+				if _, numeric := ParseExplicitCostumeID(lower); !numeric || lastColorTarget == "" {
+					roleAlias.setUnit(unit)
+					lastColorTarget = ""
+					continue
+				}
+			}
 		}
 		if label, id, ok := parseComboLabeledID(lower); ok {
 			if err := assignComboValue(&parsed, label, id, &lastColorTarget); err != nil {
@@ -820,10 +1004,16 @@ func parseComboQuery(query ComboQuery) (ComboQuery, error) {
 		return ComboQuery{}, fmt.Errorf("无法识别组合参数：%s", token)
 	}
 	if pending != "" {
+		if pending == "role" {
+			return ComboQuery{}, fmt.Errorf("组合参数角色缺少ID或精确角色名称")
+		}
 		return ComboQuery{}, fmt.Errorf("组合参数 %s 缺少 ID", pending)
 	}
-	if parsed.Character3DID <= 0 {
-		return ComboQuery{}, fmt.Errorf("组合必须显式填写角色ID（1到31）")
+	if err := roleAlias.apply(&parsed.Character3DID); err != nil {
+		return ComboQuery{}, err
+	}
+	if parsed.Character3DID < 1 || parsed.Character3DID > 31 {
+		return ComboQuery{}, fmt.Errorf("组合必须填写1到31之间的角色ID或精确角色名称")
 	}
 	if parsed.OutfitColorID == 0 {
 		parsed.OutfitColorID = 1
@@ -953,14 +1143,42 @@ func assignComboColor(query *ComboQuery, target string, id int) error {
 	return nil
 }
 
-func normalizeListQuery(query ListQuery) ListQuery {
+func normalizeListQuery(query ListQuery) (ListQuery, error) {
 	parsed := query
 	keywords := make([]string, 0)
 	partLocked := false
-	for _, token := range strings.Fields(query.Query) {
+	pendingRole := false
+	var roleAlias character3DAliasSelection
+	fields := strings.Fields(query.Query)
+	hasMikuAlias := false
+	for _, token := range fields {
+		if characterID, ok := parseCharacter3DAliasToken(token); ok && characterID == 21 {
+			hasMikuAlias = true
+			break
+		}
+	}
+	for _, token := range fields {
 		lower := strings.ToLower(strings.TrimSpace(token))
 		if lower == "" {
 			continue
+		}
+		if pendingRole {
+			if characterID, ok := parseCharacter3DAliasToken(lower); ok {
+				if err := roleAlias.setCharacter(characterID); err != nil {
+					return ListQuery{}, err
+				}
+				pendingRole = false
+				continue
+			}
+			if id, ok := ParseExplicitCostumeID(lower); ok {
+				if parsed.Character3DID != 0 {
+					return ListQuery{}, fmt.Errorf("角色ID重复")
+				}
+				parsed.Character3DID = id
+				pendingRole = false
+				continue
+			}
+			return ListQuery{}, fmt.Errorf("角色后必须填写1到31之间的ID或精确角色名称")
 		}
 		if gender, partType, ok := normalizeGenderPart(lower); ok {
 			parsed.Gender = gender
@@ -988,14 +1206,39 @@ func normalizeListQuery(query ListQuery) ListQuery {
 			continue
 		}
 		if label, id, ok := parseComboLabeledID(lower); ok && label == "role" {
+			if parsed.Character3DID != 0 {
+				return ListQuery{}, fmt.Errorf("角色ID重复")
+			}
 			parsed.Character3DID = id
 			continue
 		}
-		if _, ok := resolveCharacterID(lower); ok {
+		if label, ok := normalizeComboLabel(lower); ok && label == "role" {
+			pendingRole = true
+			continue
+		}
+		if characterID, ok := parseCharacter3DAliasToken(lower); ok {
+			if err := roleAlias.setCharacter(characterID); err != nil {
+				return ListQuery{}, err
+			}
+			continue
+		}
+		if value, err := strconv.Atoi(lower); err == nil && value > 0 && value <= 31 {
 			parsed.Character = lower
 			continue
 		}
+		if unit, ok := parseCostumeUnitAlias(lower); ok && hasMikuAlias {
+			roleAlias.setUnit(unit)
+			continue
+		}
 		keywords = append(keywords, token)
+	}
+	if pendingRole {
+		return ListQuery{}, fmt.Errorf("角色后必须填写1到31之间的ID或精确角色名称")
+	}
+	if roleAlias.characterID != 0 {
+		if err := roleAlias.apply(&parsed.Character3DID); err != nil {
+			return ListQuery{}, err
+		}
 	}
 	if explicitPart, ok := normalizePartType(query.PartType); ok {
 		parsed.PartType = explicitPart
@@ -1012,7 +1255,7 @@ func normalizeListQuery(query ListQuery) ListQuery {
 		keywords = append(keywords, query.Keyword)
 	}
 	parsed.Keyword = strings.TrimSpace(strings.Join(keywords, " "))
-	return parsed
+	return parsed, nil
 }
 
 func parsePageToken(token string) (int, bool) {
@@ -1295,9 +1538,9 @@ func BuildListPrompt(payload *drawing.CostumeListRequest) string {
 	}
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%s：第 %d/%d 页，本页 %d 项，共 %d 项", title, page, totalPages, len(payload.Costumes), payload.Total)
-	sb.WriteString("\n详情：/查服装 服装ID 角色ID [颜色ID]；/查饰品 饰品ID 角色ID [颜色ID]")
+	sb.WriteString("\n详情：/查服装 服装ID 角色ID/昵称 [颜色ID]；/查饰品 饰品ID 角色ID/昵称 [颜色ID]")
 	if len(payload.Costumes) > 0 && payload.Costumes[0].HairID > 0 {
-		sb.WriteString("\n试穿：/组合 角色ID 发型ID")
+		sb.WriteString("\n试穿：/组合 角色ID/昵称 发型ID")
 	}
 	if totalPages > 1 {
 		nextPage := page + 1

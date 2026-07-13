@@ -126,7 +126,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 }
 
 func botRouteEnabled(path string, preview3DEnabled bool) bool {
-	return path != "costume/combo" || preview3DEnabled
+	return preview3DEnabled || !strings.HasPrefix(path, "costume/")
 }
 
 // makeBotHandler returns a POST-only fiber.Handler that validates the matched

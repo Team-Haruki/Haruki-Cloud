@@ -1253,15 +1253,17 @@ func TestResolveBotCommandFallsBackToMessageMatchForCompactTimeZoneCommand(t *te
 	}
 }
 
-func TestBotRouteEnabledDisables3DCombo(t *testing.T) {
-	if botRouteEnabled("costume/combo", false) {
-		t.Fatal("3D disabled instance must not expose costume/combo")
+func TestBotRouteEnabledDisablesCostumeRoutes(t *testing.T) {
+	for _, path := range []string{"costume/detail", "costume/list", "costume/combo"} {
+		if botRouteEnabled(path, false) {
+			t.Fatalf("3D disabled instance must not expose %s", path)
+		}
+		if !botRouteEnabled(path, true) {
+			t.Fatalf("3D enabled instance must expose %s", path)
+		}
 	}
-	if !botRouteEnabled("costume/combo", true) {
-		t.Fatal("3D enabled instance must expose costume/combo")
-	}
-	if !botRouteEnabled("costume/list", false) {
-		t.Fatal("non-3D costume routes must remain enabled")
+	if !botRouteEnabled("event/detail", false) {
+		t.Fatal("3D disabled instance must retain unrelated routes")
 	}
 }
 

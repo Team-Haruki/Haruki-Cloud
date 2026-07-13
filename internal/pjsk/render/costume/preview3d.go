@@ -982,6 +982,10 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		}
 		return preview3DSelection{}, fmt.Errorf("3d combo anchor part not found")
 	}
+	explicitBody := query.OutfitID > 0 || query.BodyCostume3DID > 0
+	explicitHair := query.HairID > 0 || query.HairCostume3DID > 0
+	explicitHead := query.AccessoryID > 0 || query.AccessoryCostume3DID > 0
+	useAnchorGroup := (explicitBody || explicitHair || explicitHead) && anchor.Costume3DGroupID > 0
 
 	bodyID := role.BodyCostume3DID
 	headID := role.HeadCostume3DID
@@ -1007,6 +1011,16 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		}
 		bodyID = part.Costume3DID
 	}
+	if !explicitBody && useAnchorGroup {
+		if part, ok := r.groupPart(anchor, role.Unit, "body"); ok {
+			bodyID = part.Costume3DID
+		}
+	}
+	if !explicitHair && useAnchorGroup {
+		if part, ok := r.groupPart(anchor, role.Unit, "hair"); ok {
+			hairID = part.Costume3DID
+		}
+	}
 	if query.HairID > 0 {
 		part, ok := r.hairPartForRole(query.HairID, role)
 		if !ok {
@@ -1020,14 +1034,11 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		}
 		hairID = part.Costume3DID
 	}
-	explicitHead := false
-	explicitHair := query.HairID > 0 || query.HairCostume3DID > 0
 	if query.AccessoryID > 0 {
 		part, ok := r.accessoryPartForRole(query.AccessoryID, query.AccessoryColorID, role)
 		if !ok {
 			return preview3DSelection{}, r.accessoryNotUsableError(query.AccessoryID, query.AccessoryColorID, query.Character3DID, role)
 		}
-		explicitHead = true
 		headID = part.Costume3DID
 		headPackagePath = part.PackagePath
 		if strings.TrimSpace(headPackagePath) == "" {
@@ -1049,7 +1060,6 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		if !ok {
 			return preview3DSelection{}, fmt.Errorf("3d combo head/accessory part not usable for unit=%s: %d", role.Unit, query.AccessoryCostume3DID)
 		}
-		explicitHead = true
 		headID = part.Costume3DID
 		headPackagePath = part.PackagePath
 		if resolvedAccessoryID > 0 && strings.TrimSpace(headPackagePath) == "" {
@@ -1058,8 +1068,26 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		headOptionalID = nil
 	}
 	implicitHead := false
-	if query.AccessoryID <= 0 && query.AccessoryCostume3DID <= 0 {
+	if !explicitHead {
+		groupHeadAnchor := anchor
 		if explicitHair {
+			if part, ok := r.partForRole(hairID, role, "hair"); ok {
+				groupHeadAnchor = part
+			}
+		}
+		if groupHeadAnchor.Costume3DGroupID > 0 {
+			groupHead, ok, err := r.strictGroupHeadPart(groupHeadAnchor, role)
+			if err != nil {
+				return preview3DSelection{}, err
+			}
+			if ok {
+				headID = groupHead.Costume3DID
+				headPackagePath = groupHead.PackagePath
+				headOptionalID = nil
+				implicitHead = true
+			}
+		}
+		if !implicitHead && explicitHair {
 			defaultHead, ok, err := r.defaultHeadForHair(role, hairID)
 			if err != nil {
 				return preview3DSelection{}, err

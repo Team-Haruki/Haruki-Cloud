@@ -662,6 +662,83 @@ func TestPreview3DRegistryResolveComboDefaultsMissingPartsAndUsesEmptyHead(t *te
 	}
 }
 
+func TestPreview3DRegistryResolveComboDefaultsMissingPartsFromOutfitGroup(t *testing.T) {
+	const groupHeadPackagePath = "parts/head/0797/0035/idol"
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 5, CharacterID: 5, Unit: "idol", BodyCostume3DID: 10, HeadCostume3DID: 105, HairCostume3DID: 205, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 9, PartType: "head_optional", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "empty"},
+			{Costume3DID: 10, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 105, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 205, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 797033, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 797005, BaseSourceKey: "outfit-797-head", Status: "planned"},
+			{Costume3DID: 797035, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 2, Costume3DGroupID: 797005, BaseSourceKey: "outfit-797-head", PackagePath: groupHeadPackagePath, Status: "planned"},
+			{Costume3DID: 797036, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 2, Costume3DGroupID: 797005, OutfitID: 797, Status: "planned"},
+			{Costume3DID: 797061, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 797005, Status: "planned"},
+		},
+	}
+
+	selection, err := registry.resolveCombo("jp", ComboQuery{
+		Character3DID: 5,
+		OutfitID:      797,
+		OutfitColorID: 2,
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolve combo failed: %v", err)
+	}
+	if selection.BodyCostume3DID != 797036 || selection.HeadCostume3DID != 797035 || selection.HairCostume3DID != 797061 {
+		t.Fatalf("expected outfit group defaults, got %+v", selection)
+	}
+	if selection.HeadPackagePath != groupHeadPackagePath {
+		t.Fatalf("expected same-color group head package, got %+v", selection)
+	}
+}
+
+func TestPreview3DRegistryResolveComboDefaultsMissingPartsFromAnyAnchorGroup(t *testing.T) {
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 5, CharacterID: 5, Unit: "idol", BodyCostume3DID: 10, HeadCostume3DID: 105, HairCostume3DID: 205, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 9, PartType: "head_optional", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "empty"},
+			{Costume3DID: 10, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 105, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 205, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 142033, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 142005, PackagePath: "parts/head/0142/0033/idol", Status: "planned"},
+			{Costume3DID: 142034, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 142005, Status: "planned"},
+			{Costume3DID: 142161, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 142005, Status: "planned"},
+			{Costume3DID: 900001, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 900005, AccessoryID: 900005, PackagePath: "parts/head/0900/0001/idol", Status: "planned"},
+			{Costume3DID: 900004, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 900005, Status: "planned"},
+			{Costume3DID: 900061, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 900005, Status: "planned"},
+		},
+	}
+
+	tests := []struct {
+		name  string
+		query ComboQuery
+		body  int
+		head  int
+		hair  int
+	}{
+		{name: "hair", query: ComboQuery{Character3DID: 5, HairCostume3DID: 142161}, body: 142034, head: 142033, hair: 142161},
+		{name: "accessory", query: ComboQuery{Character3DID: 5, AccessoryID: 900005, AccessoryColorID: 1}, body: 900004, head: 900001, hair: 900061},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			selection, err := registry.resolveCombo("jp", tt.query, "sig")
+			if err != nil {
+				t.Fatalf("resolve combo failed: %v", err)
+			}
+			if selection.BodyCostume3DID != tt.body || selection.HeadCostume3DID != tt.head || selection.HairCostume3DID != tt.hair {
+				t.Fatalf("expected anchor group defaults body=%d head=%d hair=%d, got %+v", tt.body, tt.head, tt.hair, selection)
+			}
+		})
+	}
+}
+
 func TestPreview3DRegistryResolveComboUsesExplicitHairDefaultHead(t *testing.T) {
 	const defaultHeadPackagePath = "parts/head/0142/0033/idol"
 	registry := &preview3DRegistry{
@@ -673,7 +750,9 @@ func TestPreview3DRegistryResolveComboUsesExplicitHairDefaultHead(t *testing.T) 
 			{Costume3DID: 10, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
 			{Costume3DID: 105, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
 			{Costume3DID: 205, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 797035, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 2, Costume3DGroupID: 797005, BaseSourceKey: "outfit-797-head", PackagePath: "parts/head/0797/0035/idol", Status: "planned"},
 			{Costume3DID: 797036, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 2, Costume3DGroupID: 797005, OutfitID: 797, Status: "planned"},
+			{Costume3DID: 797061, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 797005, Status: "planned"},
 			{Costume3DID: 142033, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 142005, BaseSourceKey: "hair-142-head", PackagePath: defaultHeadPackagePath, Status: "planned"},
 			{Costume3DID: 142035, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 2, Costume3DGroupID: 142005, BaseSourceKey: "hair-142-head", PackagePath: "parts/head/0142/0035/idol", Status: "planned"},
 			{Costume3DID: 142161, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 142005, Status: "planned"},

@@ -26,6 +26,7 @@ func (sekaiHandlers) CostumeDetailHandle() HarukiSekaiCommandHandler {
 			Path: "costume/detail",
 			Commands: []string{
 				"/查服装", "/查衣装", "/costume", "/pjsk costume", "/查饰品", "/查头饰", "/accessory",
+				"/查发型",
 			},
 			Helper: costumeSearchHelp,
 		},
@@ -58,7 +59,7 @@ func (sekaiHandlers) CostumeListHandle() HarukiSekaiCommandHandler {
 			Commands: []string{
 				"/服装列表", "/衣装列表", "/costumes", "/pjsk costumes",
 				"/饰品列表", "/查饰品列表", "/accessories",
-				"/发型列表", "/查发型", "/查发型列表", "/hairstyles",
+				"/发型列表", "/查发型列表", "/hairstyles",
 			},
 			Helper: costumeSearchHelp,
 		},
@@ -109,8 +110,8 @@ func isCostumeNameSearchTrigger(trigger string) bool {
 }
 
 func costumeDetailPartTypeForTrigger(trigger string) string {
-	if costumeListPartTypeForTrigger(trigger) == "head" {
-		return "head"
+	if partType := costumeListPartTypeForTrigger(trigger); partType != "" {
+		return partType
 	}
 	return "body"
 }

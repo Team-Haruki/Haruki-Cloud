@@ -740,7 +740,7 @@ func (c *Controller) resolveSource(regionText string) (renderregion.Value, DataS
 }
 
 func (c *Controller) resolveCostumeInfo(region renderregion.Value, source DataSource, query Query) (*masterdata.Costume3d, error) {
-	if query.OutfitID > 0 || query.AccessoryID > 0 {
+	if query.OutfitID > 0 || query.AccessoryID > 0 || query.HairID > 0 {
 		return c.resolveNormalizedCostume(region, source, query)
 	}
 	costumeID := query.ID
@@ -761,6 +761,16 @@ func (c *Controller) resolveNormalizedCostume(region renderregion.Value, source 
 	colorID := query.ColorID
 	if colorID == 0 {
 		colorID = 1
+	}
+	if query.HairID > 0 {
+		if c.preview3D == nil {
+			return nil, fmt.Errorf("3d preview service is not configured")
+		}
+		rawID, err := c.preview3D.HairCostume3DIDForRole(c.ctx, region.String(), query.HairID, query.Character3DID)
+		if err != nil {
+			return nil, err
+		}
+		return source.GetCostumeByID(rawID)
 	}
 	if query.AccessoryID > 0 {
 		if c.preview3D == nil {
@@ -1202,8 +1212,8 @@ func ParseExplicitCostumeID(query string) (int, bool) {
 
 func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 	partType, ok := normalizePartType(partType)
-	if !ok || (partType != "body" && partType != "head") {
-		return Query{}, false, fmt.Errorf("查询类型必须是服装或饰品")
+	if !ok {
+		return Query{}, false, fmt.Errorf("查询类型必须是服装、饰品或发型")
 	}
 	fields := strings.Fields(strings.TrimSpace(raw))
 	if len(fields) == 0 {
@@ -1250,6 +1260,11 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 					return Query{}, true, fmt.Errorf("饰品查询参数重复或类型不匹配")
 				}
 				query.AccessoryID = id
+			case "hair":
+				if partType != "hair" || query.HairID != 0 {
+					return Query{}, true, fmt.Errorf("发型查询参数重复或类型不匹配")
+				}
+				query.HairID = id
 			case "role":
 				if query.Character3DID != 0 {
 					return Query{}, true, fmt.Errorf("角色ID重复")
@@ -1262,7 +1277,7 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 				query.ColorID = id
 				colorSet = true
 			default:
-				return Query{}, true, fmt.Errorf("查服装和查饰品不接受%s参数", token)
+				return Query{}, true, fmt.Errorf("组件查询不接受%s参数", token)
 			}
 			continue
 		}
@@ -1281,15 +1296,21 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 		if numeric {
 			recognized = true
 			shortID := query.OutfitID
-			if partType == "head" {
+			switch partType {
+			case "head":
 				shortID = query.AccessoryID
+			case "hair":
+				shortID = query.HairID
 			}
 			switch {
 			case shortID == 0:
-				if partType == "body" {
+				switch partType {
+				case "body":
 					query.OutfitID = id
-				} else {
+				case "head":
 					query.AccessoryID = id
+				case "hair":
+					query.HairID = id
 				}
 			case query.Character3DID == 0 && roleAlias.characterID == 0:
 				query.Character3DID = id
@@ -1315,9 +1336,13 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 	}
 	shortID := query.OutfitID
 	label := "服装"
-	if partType == "head" {
+	switch partType {
+	case "head":
 		shortID = query.AccessoryID
 		label = "饰品"
+	case "hair":
+		shortID = query.HairID
+		label = "发型"
 	}
 	if shortID <= 0 {
 		if !recognized {

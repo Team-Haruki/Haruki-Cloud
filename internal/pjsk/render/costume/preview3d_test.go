@@ -739,6 +739,35 @@ func TestPreview3DRegistryResolveComboDefaultsMissingPartsFromAnyAnchorGroup(t *
 	}
 }
 
+func TestPreview3DRegistryResolveComboDefaultsBodyFromAccessoryOutfitFamily(t *testing.T) {
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 22, CharacterID: 21, Unit: "idol", BodyCostume3DID: 46, HeadCostume3DID: 123, HairCostume3DID: 221, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 46, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 123, PartType: "head", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 221, PartType: "hair", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 2003134, Costume3DGroupID: 2003017, OutfitID: 2003, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 3, Status: "planned"},
+			{Costume3DID: 2003163, Costume3DGroupID: 2003021, AccessoryID: 2003001, PartType: "head_optional", CharacterID: 21, Unit: "idol", ColorID: 3, PackagePath: "parts/_sources/head_optional/sustain-summer-3", Status: "planned"},
+			{Costume3DID: 2003165, Costume3DGroupID: 2003021, PartType: "hair", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
+		},
+	}
+
+	selection, err := registry.resolveCombo("jp", ComboQuery{
+		Character3DID:    22,
+		AccessoryID:      2003001,
+		AccessoryColorID: 3,
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolve combo failed: %v", err)
+	}
+	if selection.BodyCostume3DID != 2003134 || selection.HeadCostume3DID != 2003163 || selection.HairCostume3DID != 2003165 {
+		t.Fatalf("expected accessory outfit-family defaults, got %+v", selection)
+	}
+}
+
 func TestPreview3DRegistryResolveComboUsesExplicitHairDefaultHead(t *testing.T) {
 	const defaultHeadPackagePath = "parts/head/0142/0033/idol"
 	registry := &preview3DRegistry{

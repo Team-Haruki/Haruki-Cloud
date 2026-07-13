@@ -137,6 +137,32 @@ func TestCostumeHeadLookupKeepsAccessoryIDQuery(t *testing.T) {
 	}
 }
 
+func TestCostumeHairLookupUsesRoleLocalHairID(t *testing.T) {
+	EnsureCommandHandlersRegistered()
+
+	resolved, err := dispatchForTest(context.Background(), Event{
+		Platform: "qq",
+		Message: onebot11.Message{
+			{Type: "text", Data: map[string]any{"text": "/jp查发型 1 mnr"}},
+		},
+		UserId: "12345",
+	})
+	if err != nil {
+		t.Fatalf("dispatch: %v", err)
+	}
+	if resolved == nil || resolved.Module != parser.ModuleCostume || resolved.Mode != "costume-detail" {
+		t.Fatalf("unexpected resolved target: %+v", resolved)
+	}
+
+	var query rendercostume.Query
+	if err := json.Unmarshal(resolved.Params, &query); err != nil {
+		t.Fatalf("unmarshal costume detail params: %v", err)
+	}
+	if query.HairID != 1 || query.Character3DID != 5 || query.ExpectedPartType != "hair" {
+		t.Fatalf("unexpected normalized hair query: %+v", query)
+	}
+}
+
 func TestCostumeListCommandKeepsFilterSyntax(t *testing.T) {
 	EnsureCommandHandlersRegistered()
 

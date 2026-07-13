@@ -824,6 +824,39 @@ func TestBuildHairListUsesRoleLocalIDs(t *testing.T) {
 	}
 }
 
+func TestBuildHairDetailUsesRoleLocalID(t *testing.T) {
+	const (
+		defaultHairID  = 205
+		selectedHairID = 392161
+	)
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostumeWithColor(defaultHairID, "hair", 5, 1),
+		makeDenseListTestCostumeWithColor(selectedHairID, "hair", 5, 1),
+	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 5, CharacterID: 5, Unit: "idol", BodyCostume3DID: 10, HeadCostume3DID: 105, HairCostume3DID: defaultHairID, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: defaultHairID, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "available"},
+			{Costume3DID: selectedHairID, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "available"},
+		},
+	})
+
+	request, err := controller.BuildCostumeDetailRequest(Query{
+		HairID:           2,
+		Character3DID:    5,
+		ExpectedPartType: "hair",
+		ColorID:          1,
+	})
+	if err != nil {
+		t.Fatalf("BuildCostumeDetailRequest failed: %v", err)
+	}
+	if request.Costume.CostumeID != selectedHairID || request.Costume.HairID != 2 || request.Costume.Character3DID != 5 {
+		t.Fatalf("unexpected normalized hair detail: %+v", request.Costume)
+	}
+}
+
 func TestParseComboQuerySupportsComponentLocalColors(t *testing.T) {
 	labeled, err := parseComboQuery(ComboQuery{Query: "角色23 服装330 颜色2 发型2 饰品301 颜色3", Region: "jp"})
 	if err != nil {

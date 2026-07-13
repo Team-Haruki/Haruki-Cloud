@@ -920,13 +920,14 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 }
 
 func (r *preview3DRegistry) resolveQuery(region string, costume3DID int, query Query, cacheSignature string) (preview3DSelection, error) {
-	if query.Character3DID > 0 && (query.OutfitID > 0 || query.AccessoryID > 0) {
+	if query.Character3DID > 0 && (query.OutfitID > 0 || query.AccessoryID > 0 || query.HairID > 0) {
 		return r.resolveCombo(region, ComboQuery{
 			Region:           region,
 			OutfitID:         query.OutfitID,
 			OutfitColorID:    query.ColorID,
 			AccessoryID:      query.AccessoryID,
 			AccessoryColorID: query.ColorID,
+			HairID:           query.HairID,
 			Character3DID:    query.Character3DID,
 		}, cacheSignature)
 	}
@@ -1014,6 +1015,10 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	if !explicitBody && useAnchorGroup {
 		if part, ok := r.groupPart(anchor, role.Unit, "body"); ok {
 			bodyID = part.Costume3DID
+		} else if anchor.Costume3DGroupID >= 1000 {
+			if part, ok := r.outfitPartForRole(anchor.Costume3DGroupID/1000, anchor.ColorID, role); ok {
+				bodyID = part.Costume3DID
+			}
 		}
 	}
 	if !explicitHair && useAnchorGroup {

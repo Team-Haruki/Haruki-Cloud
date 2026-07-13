@@ -13,7 +13,8 @@ A Haruki-owned identifier for one logical outfit across compatible characters an
 _Avoid_: body costume ID, costume3dId, costume3dGroupId
 
 **Accessory ID**:
-A Haruki-owned identifier for one logical accessory across its allowed 3D roles and color variants. Character-exclusive availability remains part of the accessory definition.
+A region-local public identifier derived from that region's original game component source for one logical accessory across its allowed 3D roles and color variants. Character-exclusive availability remains part of the accessory definition.
+Within each region, accessories are grouped by the resolved base component source, then inherit the smallest original-color `costume3dGroupId` in that source group. Different sources never share an Accessory ID, even when their former short family IDs collide; IDs are not promised to match across regions whose masterdata assigns different original IDs.
 _Avoid_: head ID, head_optional ID, costume3dId
 
 **Component Color ID**:

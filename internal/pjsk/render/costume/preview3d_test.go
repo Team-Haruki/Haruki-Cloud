@@ -3,15 +3,24 @@ package costume
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 )
+
+type preview3DRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn preview3DRoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
 
 func TestPreview3DRegistryResolveSkipsMissingGroupParts(t *testing.T) {
 	registry := &preview3DRegistry{
@@ -39,6 +48,55 @@ func TestPreview3DRegistryResolveSkipsMissingGroupParts(t *testing.T) {
 	}
 	if selection.HeadCostume3DID != 33011 {
 		t.Fatalf("expected resolver to skip missing same-color head 33012 and use 33011, got %d", selection.HeadCostume3DID)
+	}
+}
+
+func TestPreview3DRegistryResolveKeepsOfficialHeadOptionalPackagePath(t *testing.T) {
+	const headPackagePath = "parts/_sources/head_optional/0033/a02"
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 1, CharacterID: 1, Unit: "light_sound", BodyCostume3DID: 2, HeadCostume3DID: 1, HairCostume3DID: 201, Status: "available"},
+			{Character3DID: 43, CharacterID: 1, Unit: "light_sound", BodyCostume3DID: 35002, HeadCostume3DID: 35001, HairCostume3DID: 201, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 35002, Costume3DGroupID: 35002, PartType: "body", CharacterID: 1, Unit: "light_sound", ColorID: 1, PackagePath: "parts/body/0035/0002", Status: "available"},
+			{Costume3DID: 35001, Costume3DGroupID: 35001, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, HeadCostume3DAssetbundleType: "head_only", PackagePath: headPackagePath, Status: "available"},
+			{Costume3DID: 201, PartType: "hair", CharacterID: 1, Unit: "light_sound", ColorID: 1, PackagePath: "parts/hair/0002/0001", Status: "available"},
+		},
+	}
+
+	selection, err := registry.resolve("jp", 35002)
+	if err != nil {
+		t.Fatalf("resolve failed: %v", err)
+	}
+	if selection.HeadCostume3DID != 35001 || selection.HeadPackagePath != headPackagePath {
+		t.Fatalf("official head-only source was lost: %+v", selection)
+	}
+}
+
+func TestPreview3DRegistryResolveRejectsIndependentGroupHeadSources(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{
+			Character3DID:   5,
+			CharacterID:     20,
+			Unit:            "school_refusal",
+			BodyCostume3DID: 33001,
+			HeadCostume3DID: 33011,
+			HairCostume3DID: 33021,
+			Status:          "available",
+		}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 33002, Costume3DGroupID: 330, PartType: "body", CharacterID: 20, Unit: "school_refusal", ColorID: 2, Status: "available"},
+			{Costume3DID: 33011, Costume3DGroupID: 330, PartType: "head", CharacterID: 20, Unit: "school_refusal", ColorID: 1, PackagePath: "parts/head/default", Status: "available"},
+			{Costume3DID: 33012, Costume3DGroupID: 330, PartType: "head", CharacterID: 20, Unit: "school_refusal", ColorID: 2, PackagePath: "parts/head/color-2", Status: "available"},
+			{Costume3DID: 33013, Costume3DGroupID: 330, PartType: "head_optional", CharacterID: 20, Unit: "school_refusal", ColorID: 2, PackagePath: "parts/head_optional/color-2", Status: "available"},
+			{Costume3DID: 33021, Costume3DGroupID: 330, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Status: "available"},
+		},
+	}
+
+	_, err := registry.resolve("jp", 33002)
+	if err == nil || !strings.Contains(err.Error(), "group head source is ambiguous") {
+		t.Fatalf("group head resolution must reject independent head slots, got %v", err)
 	}
 }
 
@@ -516,12 +574,12 @@ func TestPreview3DRegistryResolveComboUsesOutfitCharacterAndColor(t *testing.T) 
 			{Costume3DID: 934022, PartType: "body", CharacterID: 2, Unit: "light_sound", ColorID: 1, Costume3DGroupID: 934002, OutfitID: 934, Status: "planned"},
 			{Costume3DID: 934024, PartType: "body", CharacterID: 2, Unit: "light_sound", ColorID: 2, Costume3DGroupID: 934002, OutfitID: 934, Status: "planned"},
 			{Costume3DID: 1, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, Status: "empty"},
-			{Costume3DID: 11001, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, Costume3DGroupID: 11001, AccessoryID: 11, Status: "planned"},
+			{Costume3DID: 11001, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, Costume3DGroupID: 11001, AccessoryID: 11001, BaseSourceKey: "accessory-11", PackagePath: "parts/_sources/head_optional/accessory-11", Status: "planned"},
 			{Costume3DID: 201, PartType: "hair", CharacterID: 1, Unit: "light_sound", ColorID: 1, Status: "planned"},
 		},
 	}
 
-	selection, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 1, OutfitID: 934, OutfitColorID: 2, AccessoryID: 11, AccessoryColorID: 1}, "sig")
+	selection, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 1, OutfitID: 934, OutfitColorID: 2, AccessoryID: 11001, AccessoryColorID: 1}, "sig")
 	if err != nil {
 		t.Fatalf("resolve normalized outfit failed: %v", err)
 	}
@@ -529,9 +587,9 @@ func TestPreview3DRegistryResolveComboUsesOutfitCharacterAndColor(t *testing.T) 
 		t.Fatalf("expected character 1 color 2 body, got %+v", selection)
 	}
 	if selection.HeadCostume3DID != 11001 {
-		t.Fatalf("expected normalized accessory 11, got %+v", selection)
+		t.Fatalf("expected accessory 11001, got %+v", selection)
 	}
-	if _, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 11, AccessoryColorID: 1}, "sig"); err == nil || !strings.Contains(err.Error(), "accessory not usable") {
+	if _, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 11001, AccessoryColorID: 1}, "sig"); err == nil || !strings.Contains(err.Error(), "accessory not usable") {
 		t.Fatalf("expected character-exclusive accessory to be rejected, got %v", err)
 	}
 }
@@ -775,6 +833,407 @@ func TestResolveQueryPreviewPathUsesRequested3DRole(t *testing.T) {
 	}
 }
 
+func TestPreview3DRegistryResolveNamedHairUsesRequested3DRole(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 22, CharacterID: 21, Unit: "idol", BodyCostume3DID: 9001, HeadCostume3DID: 9002, HairCostume3DID: 9003, Status: "available"},
+			{Character3DID: 23, CharacterID: 21, Unit: "light_sound", BodyCostume3DID: 9101, HeadCostume3DID: 9102, HairCostume3DID: 9103, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 9001, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "available"},
+			{Costume3DID: 9002, PartType: "head", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "available"},
+			{Costume3DID: 9003, PartType: "hair", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "available"},
+			{Costume3DID: 9101, PartType: "body", CharacterID: 21, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 9102, PartType: "head", CharacterID: 21, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 9103, PartType: "hair", CharacterID: 21, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 9203, PartType: "hair", CharacterID: 21, ColorID: 1, Status: "available"},
+		},
+	}
+
+	selection, err := registry.resolveQuery("jp", 9203, Query{
+		Query:            "Shared Hair",
+		ExpectedPartType: "hair",
+		Character3DID:    23,
+		ColorID:          1,
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolveQuery failed: %v", err)
+	}
+	if selection.Unit != "light_sound" || selection.HairCostume3DID != 9203 {
+		t.Fatalf("unexpected named hair selection: %+v", selection)
+	}
+}
+
+func TestPreview3DRegistrySeparatesExclusiveAndSharedAccessoryIDs(t *testing.T) {
+	role := preview3DCharacterEntry{
+		Character3DID: 2,
+		CharacterID:   2,
+		Unit:          "light_sound",
+	}
+	registry := &preview3DRegistry{parts: []preview3DPartEntry{
+		{
+			Costume3DID:      797001,
+			Costume3DGroupID: 797001,
+			PartType:         "head_optional",
+			CharacterID:      1,
+			Unit:             "light_sound",
+			ColorID:          1,
+			BaseSourceKey:    "shared",
+			AccessoryID:      797,
+			Status:           "available",
+		},
+		{
+			Costume3DID:                  797009,
+			Costume3DGroupID:             797002,
+			PartType:                     "head",
+			CharacterID:                  2,
+			Unit:                         "light_sound",
+			ColorID:                      1,
+			BaseSourceKey:                "exclusive",
+			HeadCostume3DAssetbundleType: "head_and_hair",
+			AccessoryID:                  797,
+			Status:                       "available",
+		},
+		{
+			Costume3DID:                  797161,
+			Costume3DGroupID:             797021,
+			PartType:                     "head_optional",
+			CharacterID:                  2,
+			Unit:                         "light_sound",
+			ColorID:                      1,
+			BaseSourceKey:                "shared",
+			HeadCostume3DAssetbundleType: "head_only",
+			AccessoryID:                  797,
+			Status:                       "available",
+		},
+		{
+			Costume3DID:                  797162,
+			Costume3DGroupID:             797021,
+			PartType:                     "head_optional",
+			CharacterID:                  2,
+			Unit:                         "light_sound",
+			ColorID:                      2,
+			BaseSourceKey:                "shared-color-2",
+			HeadCostume3DAssetbundleType: "head_only",
+			AccessoryID:                  797,
+			Status:                       "available",
+		},
+		{
+			Costume3DID:                  797165,
+			Costume3DGroupID:             797021,
+			PartType:                     "head_optional",
+			CharacterID:                  2,
+			Unit:                         "piapro",
+			ColorID:                      2,
+			BaseSourceKey:                "shared-color-piapro",
+			HeadCostume3DAssetbundleType: "head_only",
+			Status:                       "available",
+		},
+	}}
+
+	shared, ok := registry.accessoryPartForRole(797001, 1, role)
+	if !ok || shared.Costume3DID != 797161 {
+		t.Fatalf("shared accessory resolved to wrong raw part: %+v ok=%v", shared, ok)
+	}
+	exclusive, ok := registry.accessoryPartForRole(797002, 1, role)
+	if !ok || exclusive.Costume3DID != 797009 {
+		t.Fatalf("exclusive accessory resolved to wrong raw part: %+v ok=%v", exclusive, ok)
+	}
+	sharedColor, ok := registry.accessoryPartForRole(797001, 2, role)
+	if !ok || sharedColor.Costume3DID != 797162 {
+		t.Fatalf("shared accessory color did not inherit its original source id: %+v ok=%v", sharedColor, ok)
+	}
+	if collapsed, ok := registry.accessoryPartForRole(797, 1, role); ok {
+		t.Fatalf("legacy collapsed id must not select either component: %+v", collapsed)
+	}
+	ids := registry.accessoryIDsForRole(role)
+	if !slices.Equal(ids[797009], []int{797002}) || !slices.Equal(ids[797161], []int{797001}) || !slices.Equal(ids[797162], []int{797001}) {
+		t.Fatalf("unexpected raw-to-public accessory ids: %+v", ids)
+	}
+	piaproIDs := registry.accessoryIDsForRole(preview3DCharacterEntry{Character3DID: 21, CharacterID: 2, Unit: "piapro"})
+	if !slices.Equal(piaproIDs[797165], []int{797001}) {
+		t.Fatalf("v1 color-only cross-unit alias did not inherit the unique original group source: %+v", piaproIDs)
+	}
+}
+
+func TestPreview3DRegistryResolvesSameRawAccessoryByRoleUnit(t *testing.T) {
+	registry := &preview3DRegistry{parts: []preview3DPartEntry{
+		{Costume3DID: 2003001, Costume3DGroupID: 2003001, PartType: "head_optional", CharacterID: 21, Unit: "piapro", ColorID: 1, BaseSourceKey: "shared", Status: "available"},
+		{Costume3DID: 2003129, Costume3DGroupID: 2003017, PartType: "head", CharacterID: 21, Unit: "idol", ColorID: 1, BaseSourceKey: "exclusive", Status: "available"},
+		{Costume3DID: 2003129, Costume3DGroupID: 2003017, PartType: "head_optional", CharacterID: 21, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", Status: "available"},
+	}}
+
+	idolIDs := registry.accessoryIDsForRole(preview3DCharacterEntry{Character3DID: 22, CharacterID: 21, Unit: "idol"})
+	lightSoundIDs := registry.accessoryIDsForRole(preview3DCharacterEntry{Character3DID: 23, CharacterID: 21, Unit: "light_sound"})
+	if !slices.Equal(idolIDs[2003129], []int{2003017}) {
+		t.Fatalf("idol role should resolve the raw id as the exclusive accessory: %+v", idolIDs)
+	}
+	if !slices.Equal(lightSoundIDs[2003129], []int{2003001}) {
+		t.Fatalf("light_sound role should resolve the same raw id as the shared accessory: %+v", lightSoundIDs)
+	}
+}
+
+func TestPreview3DRegistryKeepsIndependentSourcesSeparate(t *testing.T) {
+	role := preview3DCharacterEntry{
+		Character3DID:   2,
+		CharacterID:     2,
+		Unit:            "light_sound",
+		BodyCostume3DID: 100,
+		HeadCostume3DID: 101,
+		HairCostume3DID: 102,
+		Status:          "available",
+	}
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		characters:          []preview3DCharacterEntry{role},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 100, PartType: "body", CharacterID: 2, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 101, PartType: "head", CharacterID: 2, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 102, PartType: "hair", CharacterID: 2, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 797009, Costume3DGroupID: 797001, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", PackagePath: "parts/_sources/head_optional/shared", AccessoryID: 797001, Status: "available"},
+			{Costume3DID: 797009, Costume3DGroupID: 797002, PartType: "head", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "exclusive", PackagePath: "parts/_sources/head/exclusive", AccessoryID: 797002, Status: "available"},
+		},
+	}
+
+	ids := registry.accessoryIDsForRole(role)
+	if !slices.Equal(ids[797009], []int{797001, 797002}) {
+		t.Fatalf("same raw id must retain both independent accessory identities: %+v", ids)
+	}
+	catalog := registry.accessoryCatalog([]preview3DCharacterEntry{role})
+	if len(catalog) != 2 || catalog[0].AccessoryID != 797001 || catalog[1].AccessoryID != 797002 {
+		t.Fatalf("catalog collapsed generic and role-specific sources: %+v", catalog)
+	}
+	shared, sharedOK := registry.accessoryPartForRole(797001, 1, role)
+	exclusive, exclusiveOK := registry.accessoryPartForRole(797002, 1, role)
+	if !sharedOK || !exclusiveOK || shared.BaseSourceKey == exclusive.BaseSourceKey {
+		t.Fatalf("public ids did not resolve their own sources: shared=%+v exclusive=%+v", shared, exclusive)
+	}
+	sharedSelection, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 797001, AccessoryColorID: 1}, "same")
+	if err != nil {
+		t.Fatalf("resolve shared accessory: %v", err)
+	}
+	exclusiveSelection, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 797002, AccessoryColorID: 1}, "same")
+	if err != nil {
+		t.Fatalf("resolve exclusive accessory: %v", err)
+	}
+	if sharedSelection.HeadCostume3DID != exclusiveSelection.HeadCostume3DID {
+		t.Fatalf("fixture must exercise the same raw id: shared=%+v exclusive=%+v", sharedSelection, exclusiveSelection)
+	}
+	if sharedSelection.HeadPackagePath != shared.PackagePath || exclusiveSelection.HeadPackagePath != exclusive.PackagePath {
+		t.Fatalf("independent sources were not carried into capture selections: shared=%+v exclusive=%+v", sharedSelection, exclusiveSelection)
+	}
+	if sharedSelection.ImageID == exclusiveSelection.ImageID {
+		t.Fatalf("independent source images collapsed into one cache key: %q", sharedSelection.ImageID)
+	}
+	if _, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryCostume3DID: 797009}, ""); err == nil || !strings.Contains(err.Error(), "raw id is ambiguous") {
+		t.Fatalf("raw combo must not choose one independent source, got %v", err)
+	}
+	if candidates := registry.legacyAccessoryIDsForRole(797, role); !slices.Equal(candidates, []int{797001, 797002}) {
+		t.Fatalf("legacy accessory family must expose both independent ids: %+v", candidates)
+	}
+	if candidates := registry.legacyAccessoryIDsForRole(797001, role); len(candidates) != 0 {
+		t.Fatalf("canonical accessory id must not be treated as legacy: %+v", candidates)
+	}
+	_, err = registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryID: 797, AccessoryColorID: 1}, "")
+	var legacyErr *LegacyAccessoryIDError
+	if !errors.As(err, &legacyErr) || !slices.Equal(legacyErr.AccessoryIDs, []int{797001, 797002}) || !strings.Contains(err.Error(), "ids=[797001 797002]") {
+		t.Fatalf("legacy combo id must list every independent candidate without choosing one, got %v", err)
+	}
+}
+
+func TestPreview3DRegistryLegacyAccessoryIDsUseOriginalGroupFamilies(t *testing.T) {
+	role := preview3DCharacterEntry{Character3DID: 2, CharacterID: 2, Unit: "light_sound"}
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		parts: []preview3DPartEntry{
+			{Costume3DID: 11001, Costume3DGroupID: 11001, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "cross-family", AccessoryID: 11001, Status: "available"},
+			{Costume3DID: 12001, Costume3DGroupID: 12001, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "cross-family", AccessoryID: 11001, Status: "available"},
+		},
+	}
+	if err := registry.validateAccessoryIdentity(); err != nil {
+		t.Fatalf("cross-family source fixture is invalid: %v", err)
+	}
+	if candidates := registry.legacyAccessoryIDsForRole(12, role); !slices.Equal(candidates, []int{11001}) {
+		t.Fatalf("legacy id must follow each row's original group family: %+v", candidates)
+	}
+	if candidates := registry.legacyAccessoryIDsForRole(11001, role); len(candidates) != 0 {
+		t.Fatalf("canonical accessory id must remain an exact id: %+v", candidates)
+	}
+}
+
+func TestPreview3DRegistryRejectsSamePackagePathAcrossRawHeadSlots(t *testing.T) {
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		characters: []preview3DCharacterEntry{{
+			Character3DID:   2,
+			CharacterID:     2,
+			Unit:            "light_sound",
+			BodyCostume3DID: 100,
+			HeadCostume3DID: 101,
+			HairCostume3DID: 102,
+			Status:          "available",
+		}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 100, PartType: "body", CharacterID: 2, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 101, PartType: "head", CharacterID: 2, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 102, PartType: "hair", CharacterID: 2, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 700, PartType: "head", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "same", PackagePath: "parts/_sources/head/same", Status: "available"},
+			{Costume3DID: 700, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "same", PackagePath: "parts/_sources/head/same", Status: "available"},
+		},
+	}
+
+	_, err := registry.resolveCombo("jp", ComboQuery{Character3DID: 2, AccessoryCostume3DID: 700}, "")
+	if err == nil || !strings.Contains(err.Error(), "head raw id is ambiguous") {
+		t.Fatalf("raw head selection must keep head slots distinct even when package paths match, got %v", err)
+	}
+}
+
+func TestPreview3DRegistryRejectsConflictingCanonicalAndRawAccessorySelectors(t *testing.T) {
+	registry := &preview3DRegistry{}
+	_, err := registry.resolveCombo("jp", ComboQuery{
+		Character3DID:        2,
+		AccessoryID:          797001,
+		AccessoryCostume3DID: 797009,
+	}, "same")
+	if err == nil || !strings.Contains(err.Error(), "cannot be used together") {
+		t.Fatalf("conflicting accessory identities must be rejected, got %v", err)
+	}
+}
+
+func TestPreview3DCaptureCarriesExactHeadPackagePath(t *testing.T) {
+	var payload map[string]any
+	transport := preview3DRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Path != "/capture" {
+			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode capture payload: %v", err)
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{"ok":true}`)),
+			Request:    r,
+		}, nil
+	})
+
+	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: "http://engine.test"})
+	service.client = &http.Client{Transport: transport}
+	endpoint, err := service.endpointForRegion("jp")
+	if err != nil {
+		t.Fatalf("resolve endpoint: %v", err)
+	}
+	selection := preview3DSelection{
+		ImageID:         "pjsk3d_exact_source",
+		RoleID:          "2:light_sound",
+		BodyCostume3DID: 100,
+		HeadCostume3DID: 797009,
+		HeadPackagePath: "parts/_sources/head_optional/shared",
+		HairCostume3DID: 102,
+		AccessoryID:     797001,
+	}
+	if err := service.captureSelection(context.Background(), endpoint, selection, "persistent"); err != nil {
+		t.Fatalf("capture selection: %v", err)
+	}
+	if got := payload["headPackagePath"]; got != selection.HeadPackagePath {
+		t.Fatalf("headPackagePath was not carried to Engine: got %#v want %q", got, selection.HeadPackagePath)
+	}
+}
+
+func TestPreview3DRegistryVersion2UsesAndValidatesExportedAccessoryIDs(t *testing.T) {
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		parts: []preview3DPartEntry{
+			{Costume3DID: 30301, Costume3DGroupID: 303, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "not-an-accessory", Status: "available"},
+			{Costume3DID: 797001, Costume3DGroupID: 797001, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 797001, Status: "available"},
+			{Costume3DID: 797161, Costume3DGroupID: 797021, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 797001, Status: "available"},
+			{Costume3DID: 797162, Costume3DGroupID: 797021, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 2, BaseSourceKey: "shared-color-2", AccessoryID: 797001, Status: "available"},
+			{Costume3DID: 797164, Costume3DGroupID: 797021, PartType: "head_optional", CharacterID: 2, Unit: "piapro", ColorID: 4, BaseSourceKey: "shared", AccessoryID: 797001, Status: "available"},
+			{Costume3DID: 797165, Costume3DGroupID: 797021, PartType: "head_optional", CharacterID: 2, Unit: "piapro", ColorID: 2, BaseSourceKey: "shared-color-piapro", AccessoryID: 797001, Status: "available"},
+		},
+	}
+	if err := registry.validateAccessoryIdentity(); err != nil {
+		t.Fatalf("valid v2 accessory registry rejected: %v", err)
+	}
+	ids := registry.accessoryIDsForRole(preview3DCharacterEntry{Character3DID: 2, CharacterID: 2, Unit: "light_sound"})
+	if !slices.Equal(ids[797161], []int{797001}) || !slices.Equal(ids[797162], []int{797001}) {
+		t.Fatalf("v2 registry accessory ids were not consumed: %+v", ids)
+	}
+	if len(ids[30301]) != 0 {
+		t.Fatalf("group ids below the exporter threshold must remain unexposed: %+v", ids)
+	}
+	piaproIDs := registry.accessoryIDsForRole(preview3DCharacterEntry{Character3DID: 21, CharacterID: 2, Unit: "piapro"})
+	if !slices.Equal(piaproIDs[797164], []int{797001}) || !slices.Equal(piaproIDs[797165], []int{797001}) {
+		t.Fatalf("color-only aliases did not inherit direct or unique-group original sources: %+v", piaproIDs)
+	}
+}
+
+func TestPreview3DRegistryVersion2RejectsConflictingDirectAndFamilySources(t *testing.T) {
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		parts: []preview3DPartEntry{
+			{Costume3DID: 1001, Costume3DGroupID: 1001, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 1001, Status: "available"},
+			{Costume3DID: 1002, Costume3DGroupID: 1002, PartType: "head_optional", CharacterID: 1, Unit: "idol", ColorID: 1, BaseSourceKey: "exclusive", AccessoryID: 1002, Status: "available"},
+			{Costume3DID: 1003, Costume3DGroupID: 1002, PartType: "head_optional", CharacterID: 1, Unit: "idol", ColorID: 2, BaseSourceKey: "shared", AccessoryID: 1002, Status: "available"},
+		},
+	}
+	if err := registry.validateAccessoryIdentity(); err == nil || !strings.Contains(err.Error(), "multiple original-color sources") {
+		t.Fatalf("expected conflicting direct/family lineage to be rejected, got %v", err)
+	}
+}
+
+func TestPreview3DRegistryVersion2RejectsRowsExporterCannotProduce(t *testing.T) {
+	tests := []struct {
+		name  string
+		parts []preview3DPartEntry
+		want  string
+	}{
+		{
+			name: "positive id without base source",
+			parts: []preview3DPartEntry{
+				{Costume3DID: 1001, Costume3DGroupID: 1001, PartType: "head_optional", CharacterID: 1, Unit: "idol", ColorID: 1, BaseSourceKey: "source", AccessoryID: 1001, Status: "available"},
+				{Costume3DID: 1002, Costume3DGroupID: 1001, PartType: "head_optional", CharacterID: 1, Unit: "idol", ColorID: 2, AccessoryID: 1001, Status: "available"},
+			},
+			want: "no base source",
+		},
+		{
+			name: "source backed missing row without id",
+			parts: []preview3DPartEntry{
+				{Costume3DID: 1001, Costume3DGroupID: 1001, PartType: "head_optional", CharacterID: 1, Unit: "idol", ColorID: 1, BaseSourceKey: "source", Status: "missing"},
+			},
+			want: "has no accessoryId",
+		},
+		{
+			name: "id on body",
+			parts: []preview3DPartEntry{
+				{Costume3DID: 1001, Costume3DGroupID: 1001, PartType: "body", CharacterID: 1, Unit: "idol", ColorID: 1, BaseSourceKey: "source", AccessoryID: 1001, Status: "available"},
+			},
+			want: "non-accessory",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			registry := &preview3DRegistry{partRegistryVersion: 2, parts: tt.parts}
+			if err := registry.validateAccessoryIdentity(); err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("expected %q validation failure, got %v", tt.want, err)
+			}
+		})
+	}
+}
+
+func TestPreview3DRegistryVersion2RejectsAccessoryIDCollision(t *testing.T) {
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		parts: []preview3DPartEntry{
+			{Costume3DID: 1001, Costume3DGroupID: 1001, PartType: "head", CharacterID: 1, Unit: "light_sound", ColorID: 1, BaseSourceKey: "source-a", AccessoryID: 1001, Status: "available"},
+			{Costume3DID: 1002, Costume3DGroupID: 1001, PartType: "head", CharacterID: 2, Unit: "idol", ColorID: 1, BaseSourceKey: "source-b", AccessoryID: 1001, Status: "available"},
+		},
+	}
+	if err := registry.validateAccessoryIdentity(); err == nil || !strings.Contains(err.Error(), "maps to sources") {
+		t.Fatalf("expected cross-source accessory id collision to be rejected, got %v", err)
+	}
+}
+
 func TestPreview3DServiceDoesNotFallbackWhenRegionMapContainsEmptyURL(t *testing.T) {
 	service := NewPreview3DService(Preview3DConfig{
 		Enabled:        true,
@@ -785,6 +1244,19 @@ func TestPreview3DServiceDoesNotFallbackWhenRegionMapContainsEmptyURL(t *testing
 	_, err := service.endpointForRegion("jp")
 	if err == nil {
 		t.Fatal("expected empty region map entry to disable legacy fallback")
+	}
+}
+
+func TestPreview3DRegistryDecodeErrorKeepsRegistryPrefix(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("not-json"))
+	}))
+	defer server.Close()
+	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: server.URL})
+	var output map[string]any
+	err := service.getJSON(context.Background(), preview3DEndpoint{baseURL: server.URL}, "/runtime/parts/part-registry.json", &output)
+	if err == nil || !strings.HasPrefix(err.Error(), "3d preview registry ") {
+		t.Fatalf("decode failure must keep the registry error class, got %v", err)
 	}
 }
 

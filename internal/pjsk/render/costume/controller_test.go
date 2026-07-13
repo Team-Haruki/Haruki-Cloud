@@ -7,9 +7,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -19,6 +22,18 @@ import (
 
 type denseListTestSource struct {
 	costumes []*masterdata.Costume3d
+}
+
+func setCachedPreview3DRegistry(t *testing.T, controller *Controller, registry *preview3DRegistry) {
+	t.Helper()
+	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: "http://engine.test"})
+	endpoint, err := service.endpointForRegion("jp")
+	if err != nil {
+		t.Fatalf("resolve preview endpoint: %v", err)
+	}
+	service.cached[endpoint.key()] = registry
+	service.cachedAt[endpoint.key()] = time.Now()
+	controller.preview3D = service
 }
 
 func (s denseListTestSource) DefaultRegion() renderregion.Value {
@@ -44,6 +59,9 @@ func (s denseListTestSource) FilterCostumes(filter Filter) ([]*masterdata.Costum
 			continue
 		}
 		if filter.CharacterID > 0 && item.CharacterID != filter.CharacterID {
+			continue
+		}
+		if keyword := strings.TrimSpace(filter.Keyword); keyword != "" && !strings.Contains(strings.ToLower(item.Name), strings.ToLower(keyword)) {
 			continue
 		}
 		if len(filter.CharacterIDs) > 0 && !containsInt(filter.CharacterIDs, item.CharacterID) {
@@ -87,6 +105,124 @@ func TestBuildCostumeListRequestUsesDenseDefaultPageSize(t *testing.T) {
 	}
 	if request.TotalPages != 3 {
 		t.Fatalf("expected 3 total pages, got %d", request.TotalPages)
+	}
+}
+
+func TestBuildCostumeListRequestSeparatesAccessoriesByResolvedSource(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		{ID: 797009, GroupID: 797002, PartType: "head", CharacterID: 2, ColorID: 1, Name: "Starry Vigor"},
+		{ID: 797169, GroupID: 797022, PartType: "head", CharacterID: 2, ColorID: 1, Name: "Starry Vigor alias"},
+		{ID: 797161, GroupID: 797021, PartType: "head", CharacterID: 2, ColorID: 1, Name: "Starry Vigor"},
+	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{Character3DID: 2, CharacterID: 2, Unit: "light_sound", Status: "available"}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 797001, Costume3DGroupID: 797001, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", Status: "available"},
+			{Costume3DID: 797009, Costume3DGroupID: 797002, PartType: "head", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "exclusive", Status: "available"},
+			{Costume3DID: 797169, Costume3DGroupID: 797022, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", Status: "available"},
+			{Costume3DID: 797161, Costume3DGroupID: 797021, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", Status: "available"},
+		},
+	})
+
+	request, err := controller.BuildCostumeListRequest(ListQuery{PartType: "head", Character3DID: 2})
+	if err != nil {
+		t.Fatalf("BuildCostumeListRequest failed: %v", err)
+	}
+	if request.Total != 2 || len(request.Costumes) != 2 {
+		t.Fatalf("expected two physical accessories after source deduplication, total=%d items=%+v", request.Total, request.Costumes)
+	}
+	if request.Costumes[0].AccessoryID != 797001 || request.Costumes[1].AccessoryID != 797002 {
+		t.Fatalf("unexpected public accessory ids: %d, %d", request.Costumes[0].AccessoryID, request.Costumes[1].AccessoryID)
+	}
+	if request.Costumes[0].CostumeID != 797161 {
+		t.Fatalf("list representative must be stable regardless of provider order: %+v", request.Costumes[0])
+	}
+
+	globalRequest, err := controller.BuildCostumeListRequest(ListQuery{PartType: "head"})
+	if err != nil {
+		t.Fatalf("BuildCostumeListRequest without role failed: %v", err)
+	}
+	if globalRequest.Total != 2 || globalRequest.Costumes[0].AccessoryID != 797001 || globalRequest.Costumes[1].AccessoryID != 797002 {
+		t.Fatalf("role-free accessory list must still expose both canonical ids: %+v", globalRequest.Costumes)
+	}
+
+	filteredRequest, err := controller.BuildCostumeListRequest(ListQuery{
+		PartType:      "head",
+		Character3DID: 2,
+		AccessoryIDs:  []int{797002},
+	})
+	if err != nil {
+		t.Fatalf("BuildCostumeListRequest with accessory ids failed: %v", err)
+	}
+	if filteredRequest.Total != 1 || len(filteredRequest.Costumes) != 1 || filteredRequest.Costumes[0].AccessoryID != 797002 {
+		t.Fatalf("redirected accessory list must contain only requested canonical ids: %+v", filteredRequest.Costumes)
+	}
+}
+
+func TestBuildCostumeMixedListKeepsSameRawAccessoriesAsIndependentRows(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		makeDenseListTestCostume(100, "body", 2),
+		{ID: 797009, Seq: 797009, GroupID: 797002, PartType: "head", CharacterID: 2, ColorID: 1, Name: "Starry Vigor", AssetBundleName: "797009"},
+		makeDenseListTestCostume(102, "hair", 2),
+	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		partRegistryVersion: 2,
+		characters: []preview3DCharacterEntry{{
+			Character3DID:   2,
+			CharacterID:     2,
+			Unit:            "light_sound",
+			BodyCostume3DID: 100,
+			HeadCostume3DID: 101,
+			HairCostume3DID: 102,
+			Status:          "available",
+		}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 102, PartType: "hair", CharacterID: 2, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 797009, Costume3DGroupID: 797001, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", PackagePath: "parts/_sources/head_optional/shared", AccessoryID: 797001, Status: "available"},
+			{Costume3DID: 797009, Costume3DGroupID: 797002, PartType: "head", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "exclusive", PackagePath: "parts/_sources/head/exclusive", AccessoryID: 797002, Status: "available"},
+		},
+	})
+
+	var all []drawing.CostumeBasic
+	for page := 1; page <= 2; page++ {
+		request, err := controller.BuildCostumeListRequest(ListQuery{Character3DID: 2, Page: page, PageSize: 2})
+		if err != nil {
+			t.Fatalf("BuildCostumeListRequest page %d failed: %v", page, err)
+		}
+		if request.Total != 4 || request.TotalPages != 2 || len(request.Costumes) != 2 {
+			t.Fatalf("unexpected logical pagination on page %d: total=%d pages=%d items=%+v", page, request.Total, request.TotalPages, request.Costumes)
+		}
+		all = append(all, request.Costumes...)
+	}
+
+	var accessoryRows []drawing.CostumeBasic
+	seen := make(map[string]struct{}, len(all))
+	for _, item := range all {
+		key := fmt.Sprintf("%s:%d:%d", item.PartType, item.CostumeID, item.AccessoryID)
+		if _, duplicate := seen[key]; duplicate {
+			t.Fatalf("logical row repeated across pages: %s", key)
+		}
+		seen[key] = struct{}{}
+		if item.PartType == "head" {
+			accessoryRows = append(accessoryRows, item)
+		}
+	}
+	if len(accessoryRows) != 2 || accessoryRows[0].CostumeID != 797009 || accessoryRows[1].CostumeID != 797009 {
+		t.Fatalf("same raw accessory did not expand into two rows: %+v", accessoryRows)
+	}
+	ids := []int{accessoryRows[0].AccessoryID, accessoryRows[1].AccessoryID}
+	sort.Ints(ids)
+	if !slices.Equal(ids, []int{797001, 797002}) {
+		t.Fatalf("mixed list collapsed original accessory ids: %+v", accessoryRows)
+	}
+	for _, accessoryID := range ids {
+		detail, err := controller.BuildCostumeDetailRequest(Query{AccessoryID: accessoryID, Character3DID: 2, ColorID: 1, ExpectedPartType: "head"})
+		if err != nil {
+			t.Fatalf("mixed-list accessory %d did not round-trip to detail: %v", accessoryID, err)
+		}
+		if detail.Costume.AccessoryID != accessoryID {
+			t.Fatalf("detail changed accessory identity: got %d want %d", detail.Costume.AccessoryID, accessoryID)
+		}
 	}
 }
 
@@ -145,6 +281,16 @@ func TestBuildCostumeListRequestSupportsDirectGenderPartTokens(t *testing.T) {
 		makeDenseListTestCostume(33005, "hair", 11),
 		makeDenseListTestCostume(33006, "head", 11),
 	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 1, CharacterID: 1, Unit: "light_sound", Status: "available"},
+			{Character3DID: 11, CharacterID: 11, Unit: "street", Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 33003, Costume3DGroupID: 33003, PartType: "head", CharacterID: 1, Unit: "light_sound", ColorID: 1, BaseSourceKey: "female-head", Status: "available"},
+			{Costume3DID: 33006, Costume3DGroupID: 33006, PartType: "head", CharacterID: 11, Unit: "street", ColorID: 1, BaseSourceKey: "male-head", Status: "available"},
+		},
+	})
 
 	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "女饰品"})
 	if err != nil {
@@ -155,6 +301,9 @@ func TestBuildCostumeListRequestSupportsDirectGenderPartTokens(t *testing.T) {
 	}
 	if got := request.Costumes[0]; got.PartType != "head" || got.CharacterID != 1 {
 		t.Fatalf("expected female accessory, got part=%s character=%d", got.PartType, got.CharacterID)
+	}
+	if request.Costumes[0].AccessoryID != 33003 {
+		t.Fatalf("expected canonical accessory id, got %+v", request.Costumes[0])
 	}
 
 	request, err = controller.BuildCostumeListRequest(ListQuery{Query: "男发型"})
@@ -175,6 +324,10 @@ func TestBuildCostumeListRequestSupportsExplicitPartTypeFromShortcut(t *testing.
 		makeDenseListTestCostume(33002, "head", 20),
 		makeDenseListTestCostume(33003, "hair", 20),
 	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{Character3DID: 20, CharacterID: 20, Unit: "school_refusal", Status: "available"}},
+		parts:      []preview3DPartEntry{{Costume3DID: 33002, Costume3DGroupID: 33002, PartType: "head", CharacterID: 20, Unit: "school_refusal", ColorID: 1, BaseSourceKey: "mzk-head", Status: "available"}},
+	})
 
 	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "mzk p1", PartType: "head"})
 	if err != nil {
@@ -211,9 +364,9 @@ func TestBuildCostumeListRequestSupportsCharacterSourceQuery(t *testing.T) {
 }
 
 func TestBuildCostumeListRequestBalancesCharacterSourceCategories(t *testing.T) {
-	costumes := make([]*masterdata.Costume3d, 0, 305)
+	costumes := make([]*masterdata.Costume3d, 0, 303)
 	for i := range 300 {
-		costumes = append(costumes, makeDenseListTestCostume(33001+i, "body", 20))
+		costumes = append(costumes, makeDenseListTestCostume(50000+i, "body", 20))
 	}
 	costumes = append(costumes,
 		makeDenseListTestCostume(34001, "head", 20),
@@ -222,7 +375,7 @@ func TestBuildCostumeListRequestBalancesCharacterSourceCategories(t *testing.T) 
 	)
 	controller := NewController(denseListTestSource{costumes: costumes}, nil, nil)
 
-	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "mzk"})
+	request, err := controller.BuildCostumeListRequest(ListQuery{Query: "mzk", PageSize: 3})
 	if err != nil {
 		t.Fatalf("BuildCostumeListRequest failed: %v", err)
 	}
@@ -231,8 +384,8 @@ func TestBuildCostumeListRequestBalancesCharacterSourceCategories(t *testing.T) 
 		counts[item.PartType]++
 	}
 	for _, partType := range []string{"body", "head", "hair"} {
-		if counts[partType] == 0 {
-			t.Fatalf("expected first page to include %s entries, got counts %+v", partType, counts)
+		if counts[partType] != 1 {
+			t.Fatalf("expected small first page to include one %s entry, got counts %+v", partType, counts)
 		}
 	}
 }
@@ -288,6 +441,77 @@ func TestBuildCostumeDetailRequestRejectsWrongExpectedPartType(t *testing.T) {
 	_, err := controller.BuildCostumeDetailRequest(Query{ID: 33001, ExpectedPartType: "hair"})
 	if err == nil || !strings.Contains(err.Error(), "not") {
 		t.Fatalf("expected part type mismatch, got %v", err)
+	}
+}
+
+func TestBuildCostumeDetailRequestResolvesNameByPartAnd3DRole(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		{ID: 246002, GroupID: 246021, PartType: "body", CharacterID: 21, ColorID: 1, Name: "MIKU MIKU POP!"},
+		{ID: 246001, GroupID: 246001, PartType: "head", CharacterID: 21, ColorID: 1, Name: "MIKU MIKU POP!"},
+		{ID: 246004, GroupID: 246041, PartType: "body", CharacterID: 20, ColorID: 1, Name: "MIKU MIKU POP!"},
+		{ID: 246006, GroupID: 246021, PartType: "body", CharacterID: 21, ColorID: 2, Name: "MIKU MIKU POP!"},
+	}}, nil, nil)
+
+	request, err := controller.BuildCostumeDetailRequest(Query{
+		Query:            "MIKU MIKU POP!",
+		ExpectedPartType: "body",
+		Character3DID:    23,
+		ColorID:          1,
+	})
+	if err != nil {
+		t.Fatalf("BuildCostumeDetailRequest failed: %v", err)
+	}
+	if request.Costume.CostumeID != 246002 || request.Costume.Character3DID != 23 {
+		t.Fatalf("unexpected named detail costume: %+v", request.Costume)
+	}
+}
+
+func TestBuildCostumeDetailRequestFiltersNamedMikuOutfitByUnit(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		{ID: 246002, GroupID: 246001, PartType: "body", CharacterID: 21, ColorID: 1, Name: "Shared Miku Name"},
+		{ID: 247002, GroupID: 247001, PartType: "body", CharacterID: 21, ColorID: 1, Name: "Shared Miku Name"},
+	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 23, CharacterID: 21, Unit: "light_sound", Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 246002, Costume3DGroupID: 246001, OutfitID: 246, PartType: "body", CharacterID: 21, Unit: "light_sound", ColorID: 1, Status: "available"},
+			{Costume3DID: 247002, Costume3DGroupID: 247001, OutfitID: 247, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "available"},
+		},
+	})
+
+	detail, err := controller.BuildCostumeDetailRequest(Query{Query: "Shared Miku Name", ExpectedPartType: "body", Character3DID: 23, ColorID: 1})
+	if err != nil || detail.Costume.CostumeID != 246002 || detail.Costume.OutfitID != 246 {
+		t.Fatalf("named Miku outfit did not respect the role unit: detail=%+v err=%v", detail, err)
+	}
+	if _, err := controller.BuildCostumeDetailRequest(Query{ID: 247002, ExpectedPartType: "body", Character3DID: 23}); err == nil || !strings.Contains(err.Error(), "不适用于角色ID") {
+		t.Fatalf("raw outfit from another Miku unit must be rejected, got %v", err)
+	}
+}
+
+func TestBuildCostumeDetailRequestKeepsDistinctNamedAccessoriesAmbiguous(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		{ID: 275009, GroupID: 275002, PartType: "head", CharacterID: 1, ColorID: 1, Name: "D.C.Get close"},
+		{ID: 275161, GroupID: 275021, PartType: "head", CharacterID: 1, ColorID: 1, Name: "D.C.Get close"},
+	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{Character3DID: 1, CharacterID: 1, Unit: "light_sound", Status: "available"}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 275001, Costume3DGroupID: 275001, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", Status: "available"},
+			{Costume3DID: 275009, Costume3DGroupID: 275002, PartType: "head", CharacterID: 1, Unit: "light_sound", ColorID: 1, BaseSourceKey: "exclusive", Status: "available"},
+			{Costume3DID: 275161, Costume3DGroupID: 275021, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", Status: "available"},
+		},
+	})
+
+	_, err := controller.BuildCostumeDetailRequest(Query{
+		Query:            "D.C.Get close",
+		ExpectedPartType: "head",
+		Character3DID:    1,
+		ColorID:          1,
+	})
+	if err == nil || !strings.Contains(err.Error(), "275001、275002") {
+		t.Fatalf("expected both distinct accessory ids in ambiguity error, got %v", err)
 	}
 }
 
@@ -547,7 +771,7 @@ func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
 	}}, nil, nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL})
 
-	if _, err := controller.BuildCostumeListRequest(ListQuery{Query: "mzk"}); err != nil {
+	if _, err := controller.BuildCostumeListRequest(ListQuery{PartType: "body"}); err != nil {
 		t.Fatalf("BuildCostumeListRequest failed: %v", err)
 	}
 	if called {
@@ -719,7 +943,7 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"outfitId":33,"status":"available"},
 				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
-				{"costume3dId":53129,"partType":"head_optional","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":531000,"accessoryId":531,"status":"available"}
+				{"costume3dId":53129,"partType":"head_optional","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":531000,"accessoryId":531000,"baseSourceKey":"accessory-531","packagePath":"parts/_sources/head_optional/accessory-531","status":"available"}
 			]}`)
 		case "/runtime/parts/head-hair-compatibility.json":
 			w.Header().Set("content-type", "application/json")
@@ -739,7 +963,7 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 	controller := NewController(denseListTestSource{}, nil, nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL, CaptureCacheVersion: "test"})
 
-	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "角色5 服装33 颜色1 发型1 饰品531 颜色1", Region: "jp"})
+	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "角色5 服装33 颜色1 发型1 饰品531000 颜色1", Region: "jp"})
 	if err != nil {
 		t.Fatalf("RenderCostumeCombo failed: %v", err)
 	}
@@ -829,6 +1053,38 @@ func TestParseLookupQueryRequiresRoleAndValidColor(t *testing.T) {
 	}
 }
 
+func TestParseNamedLookupQueryRequiresNameAndRole(t *testing.T) {
+	tests := []struct {
+		raw      string
+		partType string
+		name     string
+		role     int
+	}{
+		{raw: "MIKU MIKU POP! 角色23", partType: "body", name: "MIKU MIKU POP!", role: 23},
+		{raw: "快樂小雞洋裝 角色 5", partType: "head", name: "快樂小雞洋裝", role: 5},
+		{raw: "Candy Wheel 角色ID5", partType: "hair", name: "Candy Wheel", role: 5},
+	}
+	for _, tt := range tests {
+		query, ok, err := ParseNamedLookupQuery(tt.raw, tt.partType)
+		if err != nil || !ok {
+			t.Fatalf("ParseNamedLookupQuery(%q) = ok=%v err=%v", tt.raw, ok, err)
+		}
+		if query.Query != tt.name || query.ExpectedPartType != tt.partType || query.Character3DID != tt.role || query.ColorID != 1 {
+			t.Fatalf("unexpected named lookup query: %+v", query)
+		}
+	}
+
+	if _, ok, err := ParseNamedLookupQuery("MIKU MIKU POP!", "body"); err != nil || ok {
+		t.Fatalf("name without role should remain a list query, ok=%v err=%v", ok, err)
+	}
+	if _, ok, err := ParseNamedLookupQuery("Candy Wheel 23", "hair"); err != nil || ok {
+		t.Fatalf("bare trailing number should remain part of the list keyword, ok=%v err=%v", ok, err)
+	}
+	if _, ok, err := ParseNamedLookupQuery("MIKU MIKU POP! 角色32", "body"); !ok || err == nil {
+		t.Fatalf("invalid explicit role should return a recognized error, ok=%v err=%v", ok, err)
+	}
+}
+
 func TestNormalizeListQuerySupportsCharacterAliases(t *testing.T) {
 	ordinary, err := normalizeListQuery(ListQuery{Query: "发型 花里实乃里"})
 	if err != nil || ordinary.Character3DID != 5 || ordinary.PartType != "hair" {
@@ -862,6 +1118,141 @@ func TestBuildCostumeDetailRequestResolvesShortIDBy3DRole(t *testing.T) {
 	}
 	if request.Costume.Character3DID != 23 || len(request.Costume.Character3DIDs) != 1 || request.Costume.Character3DIDs[0] != 23 {
 		t.Fatalf("expected selected role 23, got id=%d ids=%v", request.Costume.Character3DID, request.Costume.Character3DIDs)
+	}
+}
+
+func TestBuildCostumeDetailRequestSeparatesExclusiveAndSharedAccessoryIDs(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		{ID: 797009, GroupID: 797002, PartType: "head", CharacterID: 2, ColorID: 1, Name: "Starry Vigor"},
+		{ID: 797169, GroupID: 797022, PartType: "head", CharacterID: 2, ColorID: 1, Name: "Starry Vigor alias"},
+		{ID: 797161, GroupID: 797021, PartType: "head", CharacterID: 2, ColorID: 1, Name: "Starry Vigor"},
+		{ID: 797162, GroupID: 797021, PartType: "head", CharacterID: 2, ColorID: 2, Name: "Starry Vigor"},
+	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{Character3DID: 2, CharacterID: 2, Unit: "light_sound", Status: "available"}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 797001, Costume3DGroupID: 797001, PartType: "head_optional", CharacterID: 1, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 797, Status: "available"},
+			{Costume3DID: 797009, Costume3DGroupID: 797002, PartType: "head", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "exclusive", AccessoryID: 797, Status: "available"},
+			{Costume3DID: 797169, Costume3DGroupID: 797022, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 797, Status: "available"},
+			{Costume3DID: 797161, Costume3DGroupID: 797021, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 797, Status: "available"},
+			{Costume3DID: 797162, Costume3DGroupID: 797021, PartType: "head_optional", CharacterID: 2, Unit: "light_sound", ColorID: 2, BaseSourceKey: "shared-color-2", AccessoryID: 797, Status: "available"},
+		},
+	})
+
+	shared, err := controller.BuildCostumeDetailRequest(Query{
+		AccessoryID:      797001,
+		Character3DID:    2,
+		ColorID:          1,
+		ExpectedPartType: "head",
+	})
+	if err != nil {
+		t.Fatalf("resolve shared accessory: %v", err)
+	}
+	if shared.Costume.CostumeID != 797161 || shared.Costume.AccessoryID != 797001 {
+		t.Fatalf("shared accessory resolved to wrong raw component: %+v", shared.Costume)
+	}
+	sharedColor, err := controller.BuildCostumeDetailRequest(Query{
+		AccessoryID:      797001,
+		Character3DID:    2,
+		ColorID:          2,
+		ExpectedPartType: "head",
+	})
+	if err != nil {
+		t.Fatalf("resolve shared accessory color: %v", err)
+	}
+	if sharedColor.Costume.CostumeID != 797162 || sharedColor.Costume.AccessoryID != 797001 {
+		t.Fatalf("shared accessory color resolved to wrong component: %+v", sharedColor.Costume)
+	}
+
+	exclusive, err := controller.BuildCostumeDetailRequest(Query{
+		AccessoryID:      797002,
+		Character3DID:    2,
+		ColorID:          1,
+		ExpectedPartType: "head",
+	})
+	if err != nil {
+		t.Fatalf("resolve exclusive accessory: %v", err)
+	}
+	if exclusive.Costume.CostumeID != 797009 || exclusive.Costume.AccessoryID != 797002 {
+		t.Fatalf("exclusive accessory resolved to wrong raw component: %+v", exclusive.Costume)
+	}
+
+	if _, err := controller.BuildCostumeDetailRequest(Query{
+		AccessoryID:      797,
+		Character3DID:    2,
+		ColorID:          1,
+		ExpectedPartType: "head",
+	}); err == nil || !strings.Contains(err.Error(), "legacy id") || !strings.Contains(err.Error(), "ids=[797001 797002]") {
+		t.Fatalf("legacy collapsed accessory id must list both independent ids without selecting either: %v", err)
+	}
+}
+
+func TestAccessoryListAndDetailUseCrossCharacterRegistryAlias(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		{ID: 263161, GroupID: 263021, PartType: "head", CharacterID: 14, ColorID: 1, Name: "Cross-role Accessory"},
+		{ID: 263162, GroupID: 263021, PartType: "head", CharacterID: 14, ColorID: 2, Name: "Cross-role Accessory"},
+	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		partRegistryVersion: 2,
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 30, CharacterID: 25, Unit: "piapro", Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 263001, Costume3DGroupID: 263001, PartType: "head_optional", CharacterID: 14, Unit: "theme_park", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 263001, Status: "available"},
+			{Costume3DID: 263161, Costume3DGroupID: 263021, PartType: "head_optional", CharacterID: 25, Unit: "piapro", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 263001, Status: "available"},
+			{Costume3DID: 263162, Costume3DGroupID: 263021, PartType: "head_optional", CharacterID: 25, Unit: "piapro", ColorID: 2, BaseSourceKey: "shared-color-2", AccessoryID: 263001, Status: "available"},
+		},
+	})
+
+	list, err := controller.BuildCostumeListRequest(ListQuery{PartType: "head", Character3DID: 30})
+	if err != nil {
+		t.Fatalf("cross-character accessory list failed: %v", err)
+	}
+	if list.Total != 1 || list.Costumes[0].CostumeID != 263161 || list.Costumes[0].AccessoryID != 263001 || list.Costumes[0].CharacterID != 25 {
+		t.Fatalf("registry alias was not joined back to master metadata: %+v", list.Costumes)
+	}
+
+	detail, err := controller.BuildCostumeDetailRequest(Query{AccessoryID: 263001, Character3DID: 30, ColorID: 2, ExpectedPartType: "head"})
+	if err != nil {
+		t.Fatalf("cross-character accessory detail failed: %v", err)
+	}
+	if detail.Costume.CostumeID != 263162 || detail.Costume.AccessoryID != 263001 || detail.Costume.CharacterID != 25 {
+		t.Fatalf("cross-character color detail resolved incorrectly: %+v", detail.Costume)
+	}
+
+	named, err := controller.BuildCostumeDetailRequest(Query{Query: "Cross-role Accessory", Character3DID: 30, ColorID: 1, ExpectedPartType: "head"})
+	if err != nil {
+		t.Fatalf("cross-character named detail failed: %v", err)
+	}
+	if named.Costume.CostumeID != 263161 || named.Costume.AccessoryID != 263001 {
+		t.Fatalf("cross-character named detail resolved incorrectly: %+v", named.Costume)
+	}
+}
+
+func TestAccessoryRawDetailRejectsIndependentSourcesWithSameRawID(t *testing.T) {
+	controller := NewController(denseListTestSource{costumes: []*masterdata.Costume3d{
+		{ID: 797009, GroupID: 797002, PartType: "head", CharacterID: 2, ColorID: 1, Name: "Starry Vigor"},
+	}}, nil, nil)
+	setCachedPreview3DRegistry(t, controller, &preview3DRegistry{
+		partRegistryVersion: 2,
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 2, CharacterID: 2, Unit: "light_sound", Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 797009, Costume3DGroupID: 797001, PartType: "head_optional", CharacterID: 2, Unit: "", ColorID: 1, BaseSourceKey: "shared", AccessoryID: 797001, Status: "available"},
+			{Costume3DID: 797009, Costume3DGroupID: 797002, PartType: "head", CharacterID: 2, Unit: "light_sound", ColorID: 1, BaseSourceKey: "exclusive", AccessoryID: 797002, Status: "available"},
+		},
+	})
+
+	_, err := controller.BuildCostumeDetailRequest(Query{ID: 797009, Character3DID: 2, ExpectedPartType: "head"})
+	if err == nil || !strings.Contains(err.Error(), "797001、797002") {
+		t.Fatalf("raw detail must expose both independent public ids, got %v", err)
+	}
+	for _, accessoryID := range []int{797001, 797002} {
+		detail, resolveErr := controller.BuildCostumeDetailRequest(Query{AccessoryID: accessoryID, Character3DID: 2, ColorID: 1, ExpectedPartType: "head"})
+		if resolveErr != nil || detail.Costume.AccessoryID != accessoryID {
+			t.Fatalf("canonical accessory %d did not resolve independently: detail=%+v err=%v", accessoryID, detail, resolveErr)
+		}
 	}
 }
 

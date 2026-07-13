@@ -2,6 +2,7 @@ package costume
 
 import (
 	"context"
+	"fmt"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -36,6 +37,16 @@ type Query struct {
 	ColorID          int    `json:"color_id,omitempty"`
 }
 
+type LegacyAccessoryIDError struct {
+	LegacyID      int
+	Character3DID int
+	AccessoryIDs  []int
+}
+
+func (e *LegacyAccessoryIDError) Error() string {
+	return fmt.Sprintf("3d combo accessory legacy id: accessory=%d character3d=%d ids=%v", e.LegacyID, e.Character3DID, e.AccessoryIDs)
+}
+
 type ListQuery struct {
 	Query         string `json:"query,omitempty"`
 	Region        string `json:"region,omitempty"`
@@ -46,6 +57,7 @@ type ListQuery struct {
 	Keyword       string `json:"keyword,omitempty"`
 	Page          int    `json:"page,omitempty"`
 	PageSize      int    `json:"page_size,omitempty"`
+	AccessoryIDs  []int  `json:"accessory_ids,omitempty"`
 }
 
 type Filter struct {

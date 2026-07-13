@@ -24,6 +24,14 @@ func normalizeCostume3DError(err error) error {
 		return onebot11.NewReplayError("该服装没有对应的角色模型或颜色版本，请检查服装ID、角色ID和颜色ID")
 	case strings.HasPrefix(message, "3d combo accessory not usable"):
 		return onebot11.NewReplayError("该饰品不属于或不适用于这个角色模型及颜色，请检查饰品ID、角色ID和颜色ID")
+	case strings.HasPrefix(message, "3d combo accessory legacy id"):
+		ids := bracketedCostumeIDs(message)
+		if ids == "" {
+			return onebot11.NewReplayError("这是旧版饰品短ID，请用 /饰品列表 角色ID 查询并填写完整饰品ID")
+		}
+		return onebot11.NewReplayError("旧版饰品短ID已拆分为独立饰品（ID：%s），请填写完整饰品ID；也可用 /饰品列表 角色ID 查询", ids)
+	case strings.HasPrefix(message, "3d combo accessory raw id is ambiguous"):
+		return onebot11.NewReplayError("这个原始饰品同时对应多个独立饰品，请改用完整饰品ID")
 	case strings.HasPrefix(message, "3d combo hair not usable"):
 		return onebot11.NewReplayError("该角色没有这个发型ID，请先用 /发型列表 角色ID 查询")
 	case strings.HasPrefix(message, "3d combo character3d id is duplicated"):
@@ -44,6 +52,8 @@ func normalizeCostume3DError(err error) error {
 		return onebot11.NewReplayError("找不到这个3D部件ID，请检查区服和ID")
 	case strings.HasPrefix(message, "3d preview default role not found"):
 		return onebot11.NewReplayError("找不到该角色的默认3D模型")
+	case strings.HasPrefix(message, "3d preview accessory raw id is ambiguous"):
+		return onebot11.NewReplayError("这个原始饰品同时对应多个独立饰品，请改用完整饰品ID")
 	case strings.Contains(message, "tuple incomplete"):
 		return onebot11.NewReplayError("该角色缺少完整的服装、发型或饰品数据，暂时无法渲染")
 	case strings.HasPrefix(message, "3d preview capture is busy"):
@@ -65,4 +75,13 @@ func trailingCostume3DID(message string) int {
 	value := strings.TrimSpace(message[strings.LastIndex(message, ":")+1:])
 	id, _ := strconv.Atoi(value)
 	return id
+}
+
+func bracketedCostumeIDs(message string) string {
+	_, values, ok := strings.Cut(message, "ids=[")
+	if !ok {
+		return ""
+	}
+	values, _, _ = strings.Cut(values, "]")
+	return strings.Join(strings.Fields(values), "、")
 }

@@ -785,12 +785,15 @@ func TestParseLookupQueryUsesShortIDRoleAndOptionalColor(t *testing.T) {
 		role      int
 		color     int
 	}{
+		{name: "outfit component label", raw: "服装1 角色23 颜色2", partType: "body", outfit: 1, role: 23, color: 2},
 		{name: "outfit labels", raw: "1 角色23 颜色2", partType: "body", outfit: 1, role: 23, color: 2},
 		{name: "outfit mixed", raw: "1 角色23 2", partType: "body", outfit: 1, role: 23, color: 2},
 		{name: "outfit positional", raw: "1 23", partType: "body", outfit: 1, role: 23, color: 1},
 		{name: "outfit short alias", raw: "1 mnr 2", partType: "body", outfit: 1, role: 5, color: 2},
+		{name: "outfit role first", raw: "mnr 1 2", partType: "body", outfit: 1, role: 5, color: 2},
 		{name: "outfit full name", raw: "1 角色花里实乃里 颜色2", partType: "body", outfit: 1, role: 5, color: 2},
 		{name: "outfit separated role alias", raw: "1 角色 mnr 颜色2", partType: "body", outfit: 1, role: 5, color: 2},
+		{name: "accessory component label", raw: "头饰20 角色27 颜色3", partType: "head", accessory: 20, role: 27, color: 3},
 		{name: "accessory labels", raw: "20 角色27 颜色3", partType: "head", accessory: 20, role: 27, color: 3},
 		{name: "accessory positional", raw: "20 27 4", partType: "head", accessory: 20, role: 27, color: 4},
 		{name: "accessory Miku leo need", raw: "20 miku ln 3", partType: "head", accessory: 20, role: 23, color: 3},
@@ -817,6 +820,9 @@ func TestParseLookupQueryRequiresRoleAndValidColor(t *testing.T) {
 	}
 	if _, ok, err := ParseLookupQuery("瑞希", "body"); ok || err != nil {
 		t.Fatalf("name query should remain a list search, ok=%v err=%v", ok, err)
+	}
+	if _, ok, err := ParseLookupQuery("MIKU MIKU POP!", "body"); ok || err != nil {
+		t.Fatalf("masterdata name must remain a list search, ok=%v err=%v", ok, err)
 	}
 	if _, ok, err := ParseLookupQuery("1 miku", "body"); !ok || err == nil || !strings.Contains(err.Error(), "团队") {
 		t.Fatalf("Miku detail query without a team should fail clearly, ok=%v err=%v", ok, err)

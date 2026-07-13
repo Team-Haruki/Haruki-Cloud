@@ -684,6 +684,9 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 	if len(fields) == 0 {
 		return Query{}, false, nil
 	}
+	if !lookupQueryContainsComponentID(fields) {
+		return Query{}, false, nil
+	}
 	query := Query{Query: raw, ExpectedPartType: partType, ColorID: 1}
 	recognized := false
 	colorSet := false
@@ -807,6 +810,20 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 		return Query{}, true, fmt.Errorf("颜色ID必须在1到4之间，颜色1为原版")
 	}
 	return query, true, nil
+}
+
+func lookupQueryContainsComponentID(fields []string) bool {
+	for _, token := range fields {
+		token = strings.ToLower(strings.TrimSpace(token))
+		if _, ok := ParseExplicitCostumeID(token); ok {
+			return true
+		}
+		label, _, ok := parseComboLabeledID(token)
+		if ok && (label == "outfit" || label == "accessory" || label == "hair") {
+			return true
+		}
+	}
+	return false
 }
 
 func normalizedCostumeID(costumeInfo *masterdata.Costume3d) int {

@@ -51,6 +51,49 @@ func TestPreview3DRegistryResolveSkipsMissingGroupParts(t *testing.T) {
 	}
 }
 
+func TestPreview3DRegistryResolveFillsMissingPartsFromSelectedGroup(t *testing.T) {
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{{
+			Character3DID:   5,
+			CharacterID:     20,
+			Unit:            "school_refusal",
+			BodyCostume3DID: 99001,
+			HeadCostume3DID: 99011,
+			HairCostume3DID: 99021,
+			Status:          "available",
+		}},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 33001, PartType: "body", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 33002, PartType: "body", CharacterID: 20, Unit: "school_refusal", ColorID: 2, Costume3DGroupID: 330, Status: "available"},
+			{Costume3DID: 33011, PartType: "head", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, BaseSourceKey: "group-330-head", Status: "available"},
+			{Costume3DID: 33012, PartType: "head", CharacterID: 20, Unit: "school_refusal", ColorID: 2, Costume3DGroupID: 330, BaseSourceKey: "group-330-head", Status: "available"},
+			{Costume3DID: 33021, PartType: "hair", CharacterID: 20, Unit: "school_refusal", ColorID: 1, Costume3DGroupID: 330, Status: "available"},
+		},
+	}
+
+	for _, test := range []struct {
+		name   string
+		input  int
+		bodyID int
+		headID int
+		hairID int
+	}{
+		{name: "body color 2", input: 33002, bodyID: 33002, headID: 33012, hairID: 33021},
+		{name: "head color 2", input: 33012, bodyID: 33002, headID: 33012, hairID: 33021},
+		{name: "hair color 1", input: 33021, bodyID: 33001, headID: 33011, hairID: 33021},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			selection, err := registry.resolve("jp", test.input)
+			if err != nil {
+				t.Fatalf("resolve failed: %v", err)
+			}
+			if selection.BodyCostume3DID != test.bodyID || selection.HeadCostume3DID != test.headID || selection.HairCostume3DID != test.hairID {
+				t.Fatalf("expected same-group tuple body=%d head=%d hair=%d, got %+v", test.bodyID, test.headID, test.hairID, selection)
+			}
+		})
+	}
+}
+
 func TestPreview3DRegistryResolveKeepsOfficialHeadOptionalPackagePath(t *testing.T) {
 	const headPackagePath = "parts/_sources/head_optional/0033/a02"
 	registry := &preview3DRegistry{
@@ -616,6 +659,61 @@ func TestPreview3DRegistryResolveComboDefaultsMissingPartsAndUsesEmptyHead(t *te
 	}
 	if selection.HeadCostume3DID != 9 || selection.HeadOptionalCostume3DID != nil {
 		t.Fatalf("expected empty head 9 without optional accessory, got head=%d optional=%+v", selection.HeadCostume3DID, selection.HeadOptionalCostume3DID)
+	}
+}
+
+func TestPreview3DRegistryResolveComboUsesExplicitHairDefaultHead(t *testing.T) {
+	const defaultHeadPackagePath = "parts/head/0142/0033/idol"
+	registry := &preview3DRegistry{
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 5, CharacterID: 5, Unit: "idol", BodyCostume3DID: 10, HeadCostume3DID: 105, HairCostume3DID: 205, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 9, PartType: "head_optional", CharacterID: 5, Unit: "idol", ColorID: 1, PackagePath: "parts/head_optional/9/idol", Status: "empty"},
+			{Costume3DID: 10, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 105, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 205, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 797036, PartType: "body", CharacterID: 5, Unit: "idol", ColorID: 2, Costume3DGroupID: 797005, OutfitID: 797, Status: "planned"},
+			{Costume3DID: 142033, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 142005, BaseSourceKey: "hair-142-head", PackagePath: defaultHeadPackagePath, Status: "planned"},
+			{Costume3DID: 142035, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 2, Costume3DGroupID: 142005, BaseSourceKey: "hair-142-head", PackagePath: "parts/head/0142/0035/idol", Status: "planned"},
+			{Costume3DID: 142161, PartType: "hair", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 142005, Status: "planned"},
+			{Costume3DID: 900001, PartType: "head", CharacterID: 5, Unit: "idol", ColorID: 1, Costume3DGroupID: 900005, PackagePath: "parts/head/explicit/idol", Status: "planned"},
+		},
+		rules: []preview3DCompatibilityRule{
+			{Unit: "idol", HeadCostume3DID: 142033, HairCostume3DID: 142161, State: "available", IsDefault: true},
+			{Unit: "idol", HeadCostume3DID: 142035, HairCostume3DID: 142161, State: "available", IsDefault: true},
+			{Unit: "idol", HeadCostume3DID: 9, HairCostume3DID: 142161, State: "available"},
+		},
+	}
+
+	selection, err := registry.resolveCombo("jp", ComboQuery{
+		Character3DID: 5,
+		OutfitID:      797,
+		OutfitColorID: 2,
+		HairID:        2,
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolve combo failed: %v", err)
+	}
+	if selection.BodyCostume3DID != 797036 || selection.HairCostume3DID != 142161 {
+		t.Fatalf("expected requested outfit and hair, got %+v", selection)
+	}
+	if selection.HeadCostume3DID != 142033 || selection.HeadPackagePath != defaultHeadPackagePath {
+		t.Fatalf("expected explicit hair's color-1 default head, got %+v", selection)
+	}
+
+	selection, err = registry.resolveCombo("jp", ComboQuery{
+		Character3DID:        5,
+		OutfitID:             797,
+		OutfitColorID:        2,
+		HairID:               2,
+		AccessoryCostume3DID: 900001,
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolve combo with explicit accessory failed: %v", err)
+	}
+	if selection.HeadCostume3DID != 900001 {
+		t.Fatalf("expected explicit accessory to override the hair default, got %+v", selection)
 	}
 }
 

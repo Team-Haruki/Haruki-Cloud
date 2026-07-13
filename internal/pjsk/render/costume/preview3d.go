@@ -117,6 +117,7 @@ type preview3DCompatibilityRule struct {
 	HeadCostume3DID int    `json:"headCostume3dId"`
 	HairCostume3DID int    `json:"hairCostume3dId"`
 	State           string `json:"state"`
+	IsDefault       bool   `json:"isDefault"`
 }
 
 type preview3DSelection struct {
@@ -1056,19 +1057,34 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		}
 		headOptionalID = nil
 	}
-	implicitEmptyHead := false
+	implicitHead := false
 	if query.AccessoryID <= 0 && query.AccessoryCostume3DID <= 0 {
-		if emptyHead, ok := r.defaultHeadOptionalPartForRole(role); ok {
-			headID = emptyHead.Costume3DID
-			headPackagePath = emptyHead.PackagePath
-			headOptionalID = nil
-			implicitEmptyHead = true
+		if explicitHair {
+			defaultHead, ok, err := r.defaultHeadForHair(role, hairID)
+			if err != nil {
+				return preview3DSelection{}, err
+			}
+			if ok {
+				headID = defaultHead.Costume3DID
+				headPackagePath = defaultHead.PackagePath
+				headOptionalID = nil
+				implicitHead = true
+			}
+		}
+		if !implicitHead {
+			emptyHead, ok := r.defaultHeadOptionalPartForRole(role)
+			if ok {
+				headID = emptyHead.Costume3DID
+				headPackagePath = emptyHead.PackagePath
+				headOptionalID = nil
+				implicitHead = true
+			}
 		}
 	}
 	if bodyID <= 0 || headID <= 0 || hairID <= 0 {
 		return preview3DSelection{}, fmt.Errorf("3d combo tuple incomplete")
 	}
-	if !explicitHead && !implicitEmptyHead {
+	if !explicitHead && !implicitHead {
 		if officialHeadID, ok := r.officialHeadForRoleTuple(role, bodyID, hairID); ok {
 			headID = officialHeadID
 			headPackagePath = ""
@@ -2084,7 +2100,7 @@ func (r *preview3DRegistry) defaultHairForHead(unit string, headID int) (int, bo
 		if unit != "" && rule.Unit != "" && rule.Unit != unit {
 			continue
 		}
-		if !strings.EqualFold(rule.State, "default_hint") {
+		if !preview3DCompatibilityRuleIsDefault(rule) {
 			continue
 		}
 		candidates = append(candidates, rule)
@@ -2105,6 +2121,47 @@ func (r *preview3DRegistry) defaultHairForHead(unit string, headID int) (int, bo
 		return 0, false
 	}
 	return candidates[0].HairCostume3DID, true
+}
+
+func (r *preview3DRegistry) defaultHeadForHair(role preview3DCharacterEntry, hairID int) (preview3DPartEntry, bool, error) {
+	var candidates []preview3DPartEntry
+	for _, rule := range r.rules {
+		if rule.HairCostume3DID != hairID || !preview3DCompatibilityRuleIsDefault(rule) {
+			continue
+		}
+		if role.Unit != "" && rule.Unit != "" && rule.Unit != role.Unit {
+			continue
+		}
+		part, ok, err := r.strictHeadPartForRole(rule.HeadCostume3DID, role)
+		if err != nil {
+			return preview3DPartEntry{}, false, err
+		}
+		if ok {
+			candidates = append(candidates, part)
+		}
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		leftExact := candidates[i].Unit == role.Unit
+		rightExact := candidates[j].Unit == role.Unit
+		if leftExact != rightExact {
+			return leftExact
+		}
+		leftOriginal := candidates[i].ColorID == 1
+		rightOriginal := candidates[j].ColorID == 1
+		if leftOriginal != rightOriginal {
+			return leftOriginal
+		}
+		return candidates[i].Costume3DID < candidates[j].Costume3DID
+	})
+	if len(candidates) == 0 {
+		return preview3DPartEntry{}, false, nil
+	}
+	return candidates[0], true, nil
+}
+
+func preview3DCompatibilityRuleIsDefault(rule preview3DCompatibilityRule) bool {
+	return !strings.EqualFold(rule.State, "not_available") &&
+		(rule.IsDefault || strings.EqualFold(rule.State, "default_hint"))
 }
 
 func (r *preview3DRegistry) defaultHeadOptionalPartForRole(role preview3DCharacterEntry) (preview3DPartEntry, bool) {

@@ -1,6 +1,7 @@
 package costume
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,12 +15,32 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/andybalholm/brotli"
+	"github.com/shamaton/msgpack/v3"
 )
 
 type preview3DRoundTripFunc func(*http.Request) (*http.Response, error)
 
 func (fn preview3DRoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return fn(req)
+}
+
+func compactRegistryBytes(t *testing.T, payload any) []byte {
+	t.Helper()
+	packed, err := msgpack.MarshalAsArray(payload)
+	if err != nil {
+		t.Fatalf("marshal compact registry: %v", err)
+	}
+	var compressed bytes.Buffer
+	writer := brotli.NewWriter(&compressed)
+	if _, err := writer.Write(packed); err != nil {
+		t.Fatalf("compress compact registry: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close compact registry writer: %v", err)
+	}
+	return compressed.Bytes()
 }
 
 func TestPreview3DRegistryResolveSkipsMissingGroupParts(t *testing.T) {
@@ -1408,6 +1429,74 @@ func TestPreview3DRegistryVersion2RejectsAccessoryIDCollision(t *testing.T) {
 	}
 	if err := registry.validateAccessoryIdentity(); err == nil || !strings.Contains(err.Error(), "maps to sources") {
 		t.Fatalf("expected cross-source accessory id collision to be rejected, got %v", err)
+	}
+}
+
+func TestPreview3DPartRegistryPrefersCompactMessagePack(t *testing.T) {
+	payload := preview3DCompactPartRegistry{
+		SchemaVersion:   compactRegistrySchemaVersion,
+		RegistryVersion: 2,
+		Entries: []preview3DPartEntry{{
+			Costume3DID:      33001,
+			PartType:         "body",
+			CharacterID:      20,
+			Unit:             "school_refusal",
+			ColorID:          1,
+			Costume3DGroupID: 330,
+			OutfitID:         33,
+			PackagePath:      "parts/body/33001",
+			Status:           "available",
+		}},
+	}
+	compressed := compactRegistryBytes(t, payload)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept"), compactPartRegistryContentType) {
+			t.Fatalf("compact registry accept header missing: %q", r.Header.Get("Accept"))
+		}
+		w.Header().Set("content-type", compactPartRegistryContentType)
+		_, _ = w.Write(compressed)
+	}))
+	defer server.Close()
+
+	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: server.URL})
+	registry, err := service.getPartRegistry(context.Background(), preview3DEndpoint{baseURL: server.URL})
+	if err != nil {
+		t.Fatalf("decode compact registry: %v", err)
+	}
+	if registry.Version != 2 || len(registry.Entries) != 1 || registry.Entries[0].OutfitID != 33 {
+		t.Fatalf("unexpected compact registry: %+v", registry)
+	}
+}
+
+func TestPreview3DCompatibilityPrefersCompactMessagePack(t *testing.T) {
+	payload := preview3DCompactCompatibilityRegistry{
+		SchemaVersion: compactRegistrySchemaVersion,
+		Rules: []preview3DCompatibilityRule{{
+			Unit:            "school_refusal",
+			HeadCostume3DID: 33011,
+			HairCostume3DID: 33021,
+			State:           "available",
+			IsDefault:       true,
+		}},
+	}
+	compressed := compactRegistryBytes(t, payload)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept"), compactCompatibilityContentType) {
+			t.Fatalf("compact compatibility accept header missing: %q", r.Header.Get("Accept"))
+		}
+		w.Header().Set("content-type", compactCompatibilityContentType)
+		_, _ = w.Write(compressed)
+	}))
+	defer server.Close()
+
+	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: server.URL})
+	registry, err := service.getCompatibilityRegistry(context.Background(), preview3DEndpoint{baseURL: server.URL})
+	if err != nil {
+		t.Fatalf("decode compact compatibility: %v", err)
+	}
+	if len(registry.Rules) != 1 || !registry.Rules[0].IsDefault || registry.Rules[0].HeadCostume3DID != 33011 {
+		t.Fatalf("unexpected compact compatibility: %+v", registry)
 	}
 }
 

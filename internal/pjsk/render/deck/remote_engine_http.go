@@ -25,6 +25,12 @@ const (
 	maxDeckErrorBodyBytes    = 16 << 10
 )
 
+// deckZstdEncoder is reused across all payload builds. zstd.Encoder.EncodeAll
+// is safe for concurrent use, so a single shared encoder avoids allocating a
+// fresh writer (and its buffers) on every deck request. Constructed with a nil
+// destination writer, which never returns an error.
+var deckZstdEncoder, _ = zstd.NewWriter(nil)
+
 // isRetryableError returns true for transient errors that warrant a retry.
 func isRetryableError(err error, statusCode int) bool {
 	if err != nil {
@@ -332,17 +338,5 @@ func buildMultipartPayload(ctx context.Context, segments ...[]byte) []byte {
 		}
 	}
 
-	var compressed bytes.Buffer
-	writer, err := zstd.NewWriter(&compressed)
-	if err != nil {
-		return nil
-	}
-	if _, err := writer.Write(raw.Bytes()); err != nil {
-		_ = writer.Close()
-		return nil
-	}
-	if err := writer.Close(); err != nil {
-		return nil
-	}
-	return compressed.Bytes()
+	return deckZstdEncoder.EncodeAll(raw.Bytes(), nil)
 }

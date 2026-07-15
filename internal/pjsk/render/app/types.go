@@ -117,40 +117,42 @@ type SKForecastConfig = sk.ForecastConfig
 // ── App composite root ──────────────────────────────────────────────────────
 
 type App struct {
-	Sekai           *sekaiDB.Client
-	PJSK            *pjskDB.Client
-	Drawing         *drawing.HarukiDrawingClient
-	Assets          *assets.AssetHelper
-	MetaLoader      *meta.Loader
-	Provider        provider.MasterDataProvider
-	Providers       map[renderregion.Value]provider.MasterDataProvider
-	Cards           *card.Controller
-	Costumes        *costume.Controller
-	Decks           *deck.Controller
-	Edu             *education.Controller
-	Events          *event.Controller
-	Gachas          *gacha.Controller
-	Honors          *honor.Controller
-	Inventory       *inventory.Controller
-	Misc            *misc.Controller
-	MySekai         *mysekai.Controller
-	Music           *music.Controller
-	Aliases         *pjskalias.Service
-	Profiles        *profile.Controller
-	Score           *score.Controller
-	SK              *sk.Controller
-	Stamps          *stamp.Controller
-	VLive           *vlive.Controller
-	Bindings        *accountdata.BindingService
-	BanChecker      *accountdata.BanService
-	Snapshots       snapshot.HarukiSnapshotProvider
-	MySekaiPayloads snapshot.MySekaiPayloadProvider
-	ImageCache      *imagecache.Client
-	Censor          *censor.Service
-	SekaiAPI        *sekaiapi.HarukiSekaiAPIClient
-	Toolbox         *sekaiapi.HarukiToolboxClient
-	Tracker         *sekaiapi.TrackerClient
-	Config          Config
+	Sekai              *sekaiDB.Client
+	PJSK               *pjskDB.Client
+	Drawing            *drawing.HarukiDrawingClient
+	Assets             *assets.AssetHelper
+	MetaLoader         *meta.Loader
+	Provider           provider.MasterDataProvider
+	Providers          map[renderregion.Value]provider.MasterDataProvider
+	Cards              *card.Controller
+	Costumes           *costume.Controller
+	Decks              *deck.Controller
+	Edu                *education.Controller
+	Events             *event.Controller
+	Gachas             *gacha.Controller
+	Honors             *honor.Controller
+	Inventory          *inventory.Controller
+	Misc               *misc.Controller
+	MySekai            *mysekai.Controller
+	Music              *music.Controller
+	Aliases            *pjskalias.Service
+	Profiles           *profile.Controller
+	Score              *score.Controller
+	SK                 *sk.Controller
+	Stamps             *stamp.Controller
+	VLive              *vlive.Controller
+	Bindings           *accountdata.BindingService
+	BanChecker         *accountdata.BanService
+	Snapshots          snapshot.HarukiSnapshotProvider
+	MySekaiPayloads    snapshot.MySekaiPayloadProvider
+	PrivateDataCache   *snapshot.PrivateDataCache
+	BuiltSnapshotCache *snapshot.BuiltSnapshotCache
+	ImageCache         *imagecache.Client
+	Censor             *censor.Service
+	SekaiAPI           *sekaiapi.HarukiSekaiAPIClient
+	Toolbox            *sekaiapi.HarukiToolboxClient
+	Tracker            *sekaiapi.TrackerClient
+	Config             Config
 }
 
 // ── Masterdata types ────────────────────────────────────────────────────────

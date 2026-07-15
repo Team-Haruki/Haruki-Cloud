@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -48,13 +49,16 @@ func (f *fakeBindingLookup) List(_ context.Context, _, _ string) ([]accountdata.
 }
 
 type fakePrivateDataClient struct {
-	suiteCalls   []string
-	mysekaiCalls []string
-	suiteCtx     context.Context
-	mysekaiCtx   context.Context
-	suiteJSON    []byte
-	mysekaiJSON  []byte
-	uploadTime   string
+	suiteCalls             []string
+	mysekaiCalls           []string
+	suiteCtx               context.Context
+	mysekaiCtx             context.Context
+	suiteJSON              []byte
+	mysekaiJSON            []byte
+	uploadTime             string
+	suiteUploadTimeCalls   int
+	mysekaiUploadTimeCalls int
+	uploadTimeErr          error
 }
 
 func (f *fakePrivateDataClient) GetSuiteDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error) {
@@ -69,8 +73,25 @@ func (f *fakePrivateDataClient) GetMySekaiDataContext(ctx context.Context, serve
 	return append([]byte(nil), f.mysekaiJSON...), nil
 }
 
-func (f *fakePrivateDataClient) GetUploadTime(server string, dataType sekaiapi.ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
-	return []byte(f.uploadTime), nil
+func (f *fakePrivateDataClient) parseUploadTime() (int64, error) {
+	if f.uploadTimeErr != nil {
+		return 0, f.uploadTimeErr
+	}
+	trimmed := strings.TrimSpace(f.uploadTime)
+	if trimmed == "" {
+		return 0, nil
+	}
+	return strconv.ParseInt(trimmed, 10, 64)
+}
+
+func (f *fakePrivateDataClient) GetSuiteUploadTimeContext(_ context.Context, _ string, _ int64, _, _ string) (int64, error) {
+	f.suiteUploadTimeCalls++
+	return f.parseUploadTime()
+}
+
+func (f *fakePrivateDataClient) GetMySekaiUploadTimeContext(_ context.Context, _ string, _ int64, _, _ string) (int64, error) {
+	f.mysekaiUploadTimeCalls++
+	return f.parseUploadTime()
 }
 
 func TestToolboxSnapshotProviderFallsBackToRegionBinding(t *testing.T) {
@@ -353,6 +374,7 @@ func TestToolboxSnapshotProviderBuildsSnapshotUsingBindingServerRegion(t *testin
 
 const minimalSuiteJSON = `{
   "now": 1710000000,
+  "upload_time": 1710000000,
   "userGamedata": {"userId": 123456789, "name": "SnapshotUser", "deck": 1, "rank": 100, "coin": 0},
   "userProfile": {"profileImageType": "default", "profileImageId": 0, "word": "", "twitterId": ""},
   "userDecks": [{"deckId": 1, "leader": 1001, "subLeader": 0, "member1": 1001, "member2": 0, "member3": 0, "member4": 0, "member5": 0}],

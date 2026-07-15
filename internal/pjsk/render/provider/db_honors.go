@@ -21,14 +21,16 @@ type dbHonorProvider struct {
 	store  *localStore
 	once   sync.Once
 
-	honorMu    sync.RWMutex
-	honorCache map[int]*masterdata.Honor
+	honorMu      sync.RWMutex
+	honorCache   map[int]*masterdata.Honor
+	honorMissing map[int]struct{}
 
 	groupMu    sync.RWMutex
 	groupCache map[int]*masterdata.HonorGroup
 
-	bondsMu    sync.RWMutex
-	bondsCache map[int]*masterdata.BondsHonor
+	bondsMu      sync.RWMutex
+	bondsCache   map[int]*masterdata.BondsHonor
+	bondsMissing map[int]struct{}
 
 	bondsWordMu     sync.RWMutex
 	bondsWordCache  map[int]*masterdata.BondsHonorWord
@@ -55,8 +57,10 @@ type honorBirthdayAssets struct {
 func (p *dbHonorProvider) init() {
 	p.once.Do(func() {
 		p.honorCache = make(map[int]*masterdata.Honor)
+		p.honorMissing = make(map[int]struct{})
 		p.groupCache = make(map[int]*masterdata.HonorGroup)
 		p.bondsCache = make(map[int]*masterdata.BondsHonor)
+		p.bondsMissing = make(map[int]struct{})
 		p.bondsWordCache = make(map[int]*masterdata.BondsHonorWord)
 		p.gcuCache = make(map[int]*masterdata.GameCharacterUnit)
 		p.birthdayByGroup = make(map[int]honorBirthdayAssets)
@@ -75,12 +79,24 @@ func (p *dbHonorProvider) GetByID(ctx context.Context, id int) (*masterdata.Hono
 		p.honorMu.RUnlock()
 		return common.CloneHonor(cached), nil
 	}
+	if _, missing := p.honorMissing[id]; missing {
+		p.honorMu.RUnlock()
+		return nil, fmt.Errorf("honor %d not found", id)
+	}
 	p.honorMu.RUnlock()
 
 	entity, err := p.client.Honor.Query().
 		Where(sekaiHonor.ServerRegionEQ(p.region.String()), sekaiHonor.GameIDEQ(int64(id))).
 		Only(ctx)
 	if err != nil {
+		// Tombstone genuine "no such row" results so BuildHonorRequest's
+		// dual-table probe stops re-querying this id on every render. Never
+		// cache transient DB errors, which should keep retrying.
+		if sekaiDB.IsNotFound(err) {
+			p.honorMu.Lock()
+			p.honorMissing[id] = struct{}{}
+			p.honorMu.Unlock()
+		}
 		return nil, fmt.Errorf("query honor %d: %w", id, err)
 	}
 	model, err := convertCloudHonor(entity)
@@ -154,12 +170,24 @@ func (p *dbHonorProvider) GetBondsHonorByID(ctx context.Context, id int) (*maste
 		p.bondsMu.RUnlock()
 		return common.CloneBondsHonor(cached), nil
 	}
+	if _, missing := p.bondsMissing[id]; missing {
+		p.bondsMu.RUnlock()
+		return nil, fmt.Errorf("bonds honor %d not found", id)
+	}
 	p.bondsMu.RUnlock()
 
 	entity, err := p.client.Bondshonor.Query().
 		Where(bondshonor.ServerRegionEQ(p.region.String()), bondshonor.GameIDEQ(int64(id))).
 		Only(ctx)
 	if err != nil {
+		// Tombstone genuine "no such row" results so BuildHonorRequest's
+		// dual-table probe stops re-querying this id on every render. Never
+		// cache transient DB errors, which should keep retrying.
+		if sekaiDB.IsNotFound(err) {
+			p.bondsMu.Lock()
+			p.bondsMissing[id] = struct{}{}
+			p.bondsMu.Unlock()
+		}
 		return nil, fmt.Errorf("query bonds honor %d: %w", id, err)
 	}
 	model := &masterdata.BondsHonor{

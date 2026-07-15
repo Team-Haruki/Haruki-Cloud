@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/utils/logger"
@@ -289,6 +290,7 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 
 	return &RenderCacheClient{
 		http: resty.New().
+			SetTransport(upstream.NewTunedTransport(upstream.TunedTransportConfig{})).
 			SetResponseBodyLimit(renderCacheAPIResponseMaxBytes).
 			SetTimeout(config.HTTPClientTimeout).
 			SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),

@@ -24,7 +24,7 @@ func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 	targets := upstream.ResolveTargets(cfg.ServiceBaseURL, cfg.Targets, "deck-service")
 	provider := &remoteEngineProvider{
 		cfg:                       cfg,
-		client:                    &http.Client{Timeout: timeout},
+		client:                    &http.Client{Timeout: timeout, Transport: upstream.NewTunedTransport(upstream.TunedTransportConfig{})},
 		pool:                      upstream.NewPoolWithResources(targets, cfg.SharedResources),
 		targets:                   targets,
 		masterdataRefreshInterval: refreshInterval,

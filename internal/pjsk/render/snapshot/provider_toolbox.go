@@ -41,6 +41,7 @@ type ToolboxSnapshotProvider struct {
 	factory      HarukiSnapshotFactory
 	metas        musicMetaSource
 	privateCache *PrivateDataCache
+	builtCache   *BuiltSnapshotCache
 	logger       *logger.Logger
 }
 
@@ -69,6 +70,17 @@ func (p *ToolboxSnapshotProvider) WithPrivateDataCache(cache *PrivateDataCache) 
 		return nil
 	}
 	p.privateCache = cache
+	return p
+}
+
+// WithBuiltSnapshotCache attaches a process-wide memo of fully built snapshots,
+// keyed by region + account + source upload_times, so warm renders of unchanged
+// data skip factory.Build. A nil cache leaves every resolve rebuilding.
+func (p *ToolboxSnapshotProvider) WithBuiltSnapshotCache(cache *BuiltSnapshotCache) *ToolboxSnapshotProvider {
+	if p == nil {
+		return nil
+	}
+	p.builtCache = cache
 	return p
 }
 
@@ -213,6 +225,38 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		musicMetaJSON = p.metas.Get(metaRegion.String())
 	}
 
+	// Memoize the fully built snapshot across commands. The build is fully
+	// determined by the region, account, and each source payload's upload_time
+	// (parsed from the payloads already fetched above), so an unchanged account
+	// reuses the parsed model — skipping the suite unmarshal, the leader-image
+	// DB lookup, and the transforms inside factory.Build. Only memoize when music
+	// meta is not folded in (the normal case) and every contributing upload_time
+	// is known, so the key fully determines the built result.
+	suiteUploadTime, _ := parseTopLevelUploadTime(suiteJSON)
+	var mysekaiUploadTime int64
+	if opts.NeedMySekai {
+		mysekaiUploadTime, _ = parseTopLevelUploadTime(mysekaiJSON)
+	}
+	memoizable := !opts.NeedMusicMeta && suiteUploadTime > 0 && (!opts.NeedMySekai || mysekaiUploadTime > 0)
+	memoKey := builtSnapshotKey{
+		Region:            snapshotRegion.String(),
+		UID:               uid,
+		SuiteUploadTime:   suiteUploadTime,
+		NeedMySekai:       opts.NeedMySekai,
+		MySekaiUploadTime: mysekaiUploadTime,
+	}
+	if memoizable {
+		if cached := p.builtCache.Get(memoKey); cached != nil {
+			p.logger.DebugContext(ctx, "toolbox snapshot resolved",
+				"upstream", "toolbox",
+				"region", snapshotRegion.String(),
+				"built_cache_hit", true,
+				"duration_ms", commandtrace.Milliseconds(time.Since(tResolve)),
+			)
+			return cached, nil
+		}
+	}
+
 	snapshot, err := p.factory.Build(ctx, BuildInput{
 		Region:        snapshotRegion,
 		Source:        "toolbox_live",
@@ -230,9 +274,13 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		)
 		return nil, err
 	}
+	if memoizable {
+		p.builtCache.Put(memoKey, snapshot)
+	}
 	p.logger.DebugContext(ctx, "toolbox snapshot resolved",
 		"upstream", "toolbox",
 		"region", snapshotRegion.String(),
+		"built_cache_hit", false,
 		"duration_ms", commandtrace.Milliseconds(time.Since(tResolve)),
 	)
 	return snapshot, nil

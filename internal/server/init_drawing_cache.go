@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"os"
+	"fmt"
 	"strings"
 
 	"haruki-cloud/api"
@@ -25,23 +25,29 @@ func initDrawingCacheIfConfigured(ctx context.Context, mainLogger *harukiLogger.
 		GCInterval: cfg.GCInterval,
 	})
 	if err != nil {
-		mainLogger.Errorf("Failed to initialize drawing cache service: %v", err)
-		os.Exit(1)
+		fatalStartup(mainLogger, "drawing cache initialization failed", "error_type", fmt.Sprintf("%T", err))
 	}
 	// Optionally gate the /cache control plane behind internal API auth. Off by
 	// default; enable only once remote consumers (cache-proxy / secondary nodes)
 	// send the internal token, else they get 401.
 	if cfg.RequireAuth {
 		app.Use("/cache", api.VerifyAPIAuthorization())
-		mainLogger.Infof("Drawing cache /cache routes require internal API authorization")
+		mainLogger.Info("drawing cache authorization enabled")
 	}
 	service.RegisterRoutes(app)
 
 	resolved := service.Config()
 	if resolved.GCInterval > 0 {
-		mainLogger.Infof("Drawing cache API enabled at /cache (storage=%s db=%s gc=%s)", resolved.StorageDir, resolved.DBPath, resolved.GCInterval)
+		mainLogger.Info("drawing cache API enabled",
+			"route", "/cache",
+			"gc_enabled", true,
+			"gc_interval", resolved.GCInterval,
+		)
 	} else {
-		mainLogger.Infof("Drawing cache API enabled at /cache (storage=%s db=%s gc=disabled)", resolved.StorageDir, resolved.DBPath)
+		mainLogger.Info("drawing cache API enabled",
+			"route", "/cache",
+			"gc_enabled", false,
+		)
 	}
 	return service
 }

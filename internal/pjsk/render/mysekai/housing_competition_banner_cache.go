@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/render/assets"
 )
 
@@ -62,7 +63,7 @@ func (c *Controller) syncHousingCompetitionBannersFromMasterdata() {
 		if info.BackgroundImageAssetbundleFileName == "" {
 			continue
 		}
-		_ = c.housingCompetitionBanners.Sync(info.BannerImgPath)
+		_ = c.housingCompetitionBanners.SyncContext(c.requestCtx, info.BannerImgPath)
 	}
 }
 
@@ -70,27 +71,44 @@ func (c *Controller) housingCompetitionBannerBase64(info HousingCompetitionInfo)
 	if c == nil || c.housingCompetitionBanners == nil {
 		return nil
 	}
-	return c.housingCompetitionBanners.Base64(info.BannerImgPath)
+	return c.housingCompetitionBanners.Base64Context(c.requestCtx, info.BannerImgPath)
 }
 
 func (c *housingCompetitionBannerCache) Base64(imagePath string) *string {
-	raw, err := c.Bytes(imagePath)
+	return c.Base64Context(context.Background(), imagePath)
+}
+
+func (c *housingCompetitionBannerCache) Base64Context(ctx context.Context, imagePath string) *string {
+	raw, err := c.BytesContext(ctx, imagePath)
 	if err != nil || len(raw) == 0 {
 		return nil
 	}
+	finishEncode := commandtrace.MeasureOperation(ctx, "housing_banner.encode")
 	encoded := base64.StdEncoding.EncodeToString(raw)
+	finishEncode()
 	return &encoded
 }
 
 func (c *housingCompetitionBannerCache) Sync(imagePath string) error {
+	return c.SyncContext(context.Background(), imagePath)
+}
+
+func (c *housingCompetitionBannerCache) SyncContext(ctx context.Context, imagePath string) error {
 	if c.isSynced(imagePath) {
 		return nil
 	}
-	_, err := c.Bytes(imagePath)
+	_, err := c.BytesContext(ctx, imagePath)
 	return err
 }
 
 func (c *housingCompetitionBannerCache) Bytes(imagePath string) ([]byte, error) {
+	return c.BytesContext(context.Background(), imagePath)
+}
+
+func (c *housingCompetitionBannerCache) BytesContext(ctx context.Context, imagePath string) ([]byte, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	imagePath = strings.TrimSpace(imagePath)
 	if imagePath == "" {
 		return nil, fmt.Errorf("empty housing competition banner path")
@@ -101,36 +119,44 @@ func (c *housingCompetitionBannerCache) Bytes(imagePath string) ([]byte, error) 
 
 	cachePath := c.cachePath(imagePath)
 	if cachePath != "" {
+		finishLookup := commandtrace.MeasureOperation(ctx, "housing_banner.cache_lookup")
 		if raw, err := os.ReadFile(cachePath); err == nil && len(raw) > 0 {
+			finishLookup()
 			c.markSynced(imagePath)
 			return raw, nil
 		}
+		finishLookup()
 	}
 
-	raw, err := c.readSource(imagePath)
+	raw, err := c.readSource(ctx, imagePath)
 	if err != nil || len(raw) == 0 {
 		return raw, err
 	}
 	if cachePath != "" {
+		finishStore := commandtrace.MeasureOperation(ctx, "housing_banner.store")
 		_ = c.write(cachePath, raw)
+		finishStore()
 	}
 	c.markSynced(imagePath)
 	return raw, nil
 }
 
-func (c *housingCompetitionBannerCache) readSource(imagePath string) ([]byte, error) {
+func (c *housingCompetitionBannerCache) readSource(ctx context.Context, imagePath string) ([]byte, error) {
 	if c == nil {
 		return nil, fmt.Errorf("housing competition banner cache is not configured")
 	}
 	if c.assets != nil {
-		if resolved := c.assets.FirstExisting(imagePath); resolved != "" {
-			return os.ReadFile(resolved)
+		if resolved := c.assets.WithContext(ctx).FirstExisting(imagePath); resolved != "" {
+			finishRead := commandtrace.MeasureOperation(ctx, "housing_banner.asset_read")
+			raw, err := os.ReadFile(resolved)
+			finishRead()
+			return raw, err
 		}
 	}
-	return c.downloadSource(imagePath)
+	return c.downloadSource(ctx, imagePath)
 }
 
-func (c *housingCompetitionBannerCache) downloadSource(imagePath string) ([]byte, error) {
+func (c *housingCompetitionBannerCache) downloadSource(ctx context.Context, imagePath string) ([]byte, error) {
 	if c == nil || c.assetsBaseURL == "" {
 		return nil, fmt.Errorf("housing competition banner not found: %s", imagePath)
 	}
@@ -138,27 +164,36 @@ func (c *housingCompetitionBannerCache) downloadSource(imagePath string) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.TODO(), housingCompetitionBannerHTTPTimeout)
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(ctx, housingCompetitionBannerHTTPTimeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sourceURL, nil)
 	if err != nil {
 		return nil, err
 	}
+	finishHTTP := commandtrace.MeasureOperation(ctx, "housing_banner.http")
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		finishHTTP()
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
+		finishHTTP()
 		return nil, fmt.Errorf("download housing competition banner failed: HTTP %d", resp.StatusCode)
 	}
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, housingCompetitionBannerMaxBytes+1))
 	if err != nil {
+		finishHTTP()
 		return nil, err
 	}
 	if len(raw) > housingCompetitionBannerMaxBytes {
+		finishHTTP()
 		return nil, fmt.Errorf("housing competition banner is too large")
 	}
+	finishHTTP()
 	return raw, nil
 }
 

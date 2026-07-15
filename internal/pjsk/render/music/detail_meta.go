@@ -70,7 +70,7 @@ func (c *Controller) resolveMusicDetailBPM(region renderregion.Value, musicID in
 		if chartPath == "" {
 			continue
 		}
-		parsed, err := parseChartBPM(chartPath)
+		parsed, err := parseChartBPM(c.contextOrBackground(), chartPath)
 		if err != nil || parsed == nil || parsed.MainBPM <= 0 {
 			continue
 		}

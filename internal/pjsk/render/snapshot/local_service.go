@@ -10,6 +10,7 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/meta"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/common"
@@ -191,6 +192,16 @@ func (s *Service) MusicMetaBytes() []byte {
 		return nil
 	}
 	return slices.Clone(s.musicMetaBytes)
+}
+
+// MusicMetaView exposes the immutable index to in-process consumers. It is an
+// optional capability rather than part of Snapshot so external/test snapshot
+// implementations remain source-compatible.
+func (s *Service) MusicMetaView() *meta.View {
+	if s == nil {
+		return nil
+	}
+	return s.musicMetaView
 }
 
 func (s *Service) MusicMetaPath() string {

@@ -3,14 +3,15 @@ package handler
 import (
 	"context"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	"strings"
+	"testing"
+
 	corehandler "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
-	"log"
-	"strings"
-	"testing"
+
+	json "github.com/bytedance/sonic"
 )
 
 func dispatchForTest(ctx context.Context, event Event) (*CommandRequest, error) {
@@ -39,18 +40,22 @@ func TestRegisterCommandHandler(t *testing.T) {
 	RegisterSekaiCommandHandler()
 
 	corehandler.PrintTree()
-	v, e := dispatchForTest(context.Background(), Event{
+	v, err := dispatchForTest(context.Background(), Event{
 		Message: onebot11.Message{
 			{Type: "text", Data: map[string]string{"text": "/cn查谱面 虾"}},
 		},
 	})
-	log.Println(v, e)
-	v, e = dispatchForTest(context.Background(), Event{
+	if err != nil || v == nil {
+		t.Fatalf("chart command dispatch failed: request_nil=%t error_type=%T", v == nil, err)
+	}
+	v, err = dispatchForTest(context.Background(), Event{
 		Message: onebot11.Message{
 			{Type: "text", Data: map[string]string{"text": "/card 1"}},
 		},
 	})
-	log.Println(v, e)
+	if err != nil || v == nil {
+		t.Fatalf("card command dispatch failed: request_nil=%t error_type=%T", v == nil, err)
+	}
 }
 
 func TestSekaiHandlerParsesUIDArgFromArgsAndAt(t *testing.T) {

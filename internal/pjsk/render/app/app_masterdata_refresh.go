@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -40,7 +41,7 @@ func (a *App) startLocalMasterdataRefresh(ctx context.Context, root string, inte
 	}
 	state.captureInitial()
 
-	logger.Infof("local masterdata refresh loop started (refresh=%s root=%q)", interval, root)
+	logger.Info("local masterdata refresh loop started", "refresh_interval", interval)
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -84,7 +85,11 @@ func (s *localMasterdataRefreshState) captureInitial() {
 	for region := range s.providers {
 		signature, err := provider.LocalMasterdataDirSignature(s.root, region)
 		if err != nil {
-			logger.Warnf("local masterdata: failed to capture initial signature for %s: %v", region, err)
+			logger.Warn("local masterdata signature failed",
+				"operation", "capture_initial",
+				"region", region,
+				"error_type", fmt.Sprintf("%T", err),
+			)
 			continue
 		}
 		s.signatures[region] = signature.Hash
@@ -98,14 +103,22 @@ func (s *localMasterdataRefreshState) refresh() {
 	for region, resetter := range s.providers {
 		signature, err := provider.LocalMasterdataDirSignature(s.root, region)
 		if err != nil {
-			logger.Warnf("local masterdata: failed to check update for %s: %v", region, err)
+			logger.Warn("local masterdata signature failed",
+				"operation", "refresh",
+				"region", region,
+				"error_type", fmt.Sprintf("%T", err),
+			)
 			continue
 		}
 		previous := s.signatures[region]
 		if previous == "" {
 			s.signatures[region] = signature.Hash
 			resetter.ResetLocalMasterdataCache()
-			logger.Infof("local masterdata appeared; reset render caches (region=%s dir=%s files=%d)", region, signature.Dir, signature.Files)
+			logger.Info("local masterdata cache reset",
+				"reason", "source_appeared",
+				"region", region,
+				"files", signature.Files,
+			)
 			continue
 		}
 		if previous == signature.Hash {
@@ -113,6 +126,10 @@ func (s *localMasterdataRefreshState) refresh() {
 		}
 		s.signatures[region] = signature.Hash
 		resetter.ResetLocalMasterdataCache()
-		logger.Infof("local masterdata changed; reset render caches (region=%s dir=%s files=%d)", region, signature.Dir, signature.Files)
+		logger.Info("local masterdata cache reset",
+			"reason", "source_changed",
+			"region", region,
+			"files", signature.Files,
+		)
 	}
 }

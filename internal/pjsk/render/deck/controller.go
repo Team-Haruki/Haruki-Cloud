@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -102,9 +103,49 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c == nil {
 		return nil
 	}
+	ctx = normalizeRecommendContext(ctx)
 	clone := *c
+	clone.ctx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
+	if c.cardSources != nil {
+		clone.cardSources = regionsource.NewRegistry[CardSource](c.cardSources.ResolveRegion(renderregion.Unknown))
+		for _, source := range c.cardSources.OrderedSources() {
+			if contextual, ok := any(source).(contextualCardSource); ok {
+				clone.cardSources.RegisterSource(contextual.WithContext(ctx))
+				continue
+			}
+			clone.cardSources.RegisterSource(source)
+		}
+	}
+	if c.eventSources != nil {
+		clone.eventSources = regionsource.NewRegistry[EventSource](c.eventSources.ResolveRegion(renderregion.Unknown))
+		for _, source := range c.eventSources.OrderedSources() {
+			if contextual, ok := any(source).(contextualEventSource); ok {
+				clone.eventSources.RegisterSource(contextual.WithContext(ctx))
+				continue
+			}
+			clone.eventSources.RegisterSource(source)
+		}
+	}
+	if c.musicSources != nil {
+		clone.musicSources = regionsource.NewRegistry[MusicSource](c.musicSources.ResolveRegion(renderregion.Unknown))
+		for _, source := range c.musicSources.OrderedSources() {
+			if contextual, ok := any(source).(contextualMusicSource); ok {
+				clone.musicSources.RegisterSource(contextual.WithContext(ctx))
+				continue
+			}
+			clone.musicSources.RegisterSource(source)
+		}
+	}
 	return &clone
+}
+
+func (c *Controller) contextOrBackground() context.Context {
+	if c == nil {
+		return context.Background()
+	}
+	return normalizeRecommendContext(c.ctx)
 }
 
 func (c *Controller) BuildRecommendRequest(req drawing.DeckRequest) (*drawing.DeckRequest, error) {
@@ -121,7 +162,9 @@ func (c *Controller) RenderRecommend(req drawing.DeckRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildRecommendRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -138,16 +181,22 @@ func (c *Controller) BuildAutoRecommendRequest(query AutoQuery) (*drawing.DeckRe
 	if c.engine == nil {
 		return nil, fmt.Errorf("deck recommend service is not configured")
 	}
+	ctx := c.contextOrBackground()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	active := c
+	finishSnapshot := commandtrace.MeasureOperation(ctx, "deck.snapshot_resolve")
 	snapshot, err := c.resolveAutoRecommendSnapshot(query)
+	finishSnapshot()
 	if err != nil {
 		return nil, err
 	}
 	if snapshot != c.snapshot {
 		active = c.WithSnapshot(snapshot)
 	}
-	return active.buildAutoRecommendWithEngine(query)
+	return active.buildAutoRecommendWithEngine(ctx, query)
 }
 
 func (c *Controller) RenderAutoRecommend(query AutoQuery) ([]byte, error) {

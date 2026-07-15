@@ -20,7 +20,7 @@ var mergeParams = requestbuilder.MergeParams
 func imageMessage(ctx context.Context, img []byte, app *renderapp.App, group string) (onebot11.Message, error) {
 	tStore := time.Now()
 	url, err := app.ImageCache.StoreAndGetURL(ctx, img, group)
-	recordCommandStage(ctx, "image_store", time.Since(tStore))
+	recordCommandStage(ctx, "image.store", time.Since(tStore))
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,9 @@ func assetImageMessage(ctx context.Context, path string, app *renderapp.App, gro
 	if app == nil {
 		return nil, fmt.Errorf("image storage is not configured")
 	}
+	startedAt := time.Now()
 	data, err := os.ReadFile(path)
+	recordCommandStage(ctx, "asset.read", time.Since(startedAt))
 	if err != nil {
 		return nil, err
 	}

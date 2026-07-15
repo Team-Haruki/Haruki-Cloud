@@ -1,19 +1,40 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/chartstyle"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	"haruki-cloud/utils/logger"
+
+	"golang.org/x/sync/singleflight"
 )
+
+var staticImageCacheWrites singleflight.Group
+
+const staticImageSharedTimeout = 30 * time.Second
+
+type staticImageFlightToken byte
+
+type staticImageFlightResult struct {
+	err        error
+	operations []commandtrace.Stats
+	leader     *staticImageFlightToken
+}
+
+type staticImageWriter func(context.Context, string, []byte) error
 
 func renderMusicChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controller, query rendermusic.ChartQuery) (onebot11.Message, error) {
 	if rc == nil || musicCtrl == nil {
@@ -29,7 +50,7 @@ func renderMusicChartMessage(rc *RequestContext, musicCtrl *rendermusic.Controll
 	}
 
 	storageRelativePath, publicRelativePath := musicChartCachePaths(query, payload)
-	if cached, hit, err := cachedStaticImageMessage(rc.App, chartStaticBaseURL(rc.App), publicRelativePath, storageRelativePath); err != nil {
+	if cached, hit, err := cachedStaticImageMessage(rc.Ctx, rc.App, chartStaticBaseURL(rc.App), publicRelativePath, storageRelativePath); err != nil {
 		return nil, err
 	} else if hit {
 		return cached, nil
@@ -69,7 +90,15 @@ func musicChartCachePaths(query rendermusic.ChartQuery, payload *drawing.Generat
 	return storageRelativePath, publicRelativePath
 }
 
-func cachedStaticImageMessage(app *renderapp.App, baseURL string, publicRelativePath string, storageRelativePath string) (onebot11.Message, bool, error) {
+func cachedStaticImageMessage(ctx context.Context, app *renderapp.App, baseURL string, publicRelativePath string, storageRelativePath string) (onebot11.Message, bool, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, false, err
+	}
+	finishLookup := commandtrace.MeasureOperation(ctx, "image.static_cache_lookup")
+	defer finishLookup()
 	url, targetPath, err := resolveStaticImageLocation(app, baseURL, publicRelativePath, storageRelativePath)
 	if err != nil {
 		return nil, false, nil
@@ -84,6 +113,18 @@ func cachedStaticImageMessage(app *renderapp.App, baseURL string, publicRelative
 }
 
 func staticCachedImageMessage(ctx context.Context, data []byte, app *renderapp.App, baseURL string, publicRelativePath string, storageRelativePath string) (onebot11.Message, error) {
+	return staticCachedImageMessageWithWriter(ctx, data, app, baseURL, publicRelativePath, storageRelativePath, writeStaticImageAtomically)
+}
+
+func staticCachedImageMessageWithWriter(ctx context.Context, data []byte, app *renderapp.App, baseURL string, publicRelativePath string, storageRelativePath string, write staticImageWriter) (onebot11.Message, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	finishStore := commandtrace.MeasureOperation(ctx, "image.static_cache_store")
+	defer finishStore()
 	url, targetPath, err := resolveStaticImageLocation(app, baseURL, publicRelativePath, storageRelativePath)
 	if err != nil {
 		if app == nil || app.ImageCache == nil {
@@ -92,13 +133,109 @@ func staticCachedImageMessage(ctx context.Context, data []byte, app *renderapp.A
 		return imageMessage(ctx, data, app, BotModulePJSK)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
+	finishCopy := commandtrace.MeasureOperation(ctx, "image.static_cache_copy")
+	ownedData := bytes.Clone(data)
+	finishCopy()
+	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	if writeErr := os.WriteFile(targetPath, data, 0o644); writeErr != nil {
-		return nil, writeErr
+	if write == nil {
+		write = writeStaticImageAtomically
+	}
+	callerToken := new(staticImageFlightToken)
+	resultCh := staticImageCacheWrites.DoChan(targetPath, func() (any, error) {
+		sharedBase, cancel := staticImageSharedContext()
+		defer cancel()
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+		complete := func(err error) staticImageFlightResult {
+			return staticImageFlightResult{
+				err:        err,
+				operations: trace.Snapshot().Operations,
+				leader:     callerToken,
+			}
+		}
+
+		finishStat := commandtrace.MeasureOperation(sharedCtx, "image.static_cache_stat")
+		if _, statErr := os.Stat(targetPath); statErr == nil {
+			finishStat()
+			return complete(nil), nil
+		} else if !errors.Is(statErr, os.ErrNotExist) {
+			finishStat()
+			return complete(statErr), nil
+		}
+		finishStat()
+
+		finishMkdir := commandtrace.MeasureOperation(sharedCtx, "image.static_cache_mkdir")
+		if mkdirErr := os.MkdirAll(filepath.Dir(targetPath), 0o755); mkdirErr != nil {
+			finishMkdir()
+			return complete(mkdirErr), nil
+		}
+		finishMkdir()
+		return complete(write(sharedCtx, targetPath, ownedData)), nil
+	})
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case result := <-resultCh:
+		if result.Err != nil {
+			return nil, result.Err
+		}
+		resolved, ok := result.Val.(staticImageFlightResult)
+		if !ok {
+			return nil, fmt.Errorf("static image cache returned unexpected shared result %T", result.Val)
+		}
+		commandtrace.MergeOperations(ctx, resolved.operations)
+		if resolved.leader != callerToken {
+			commandtrace.RecordOperation(ctx, "image.static_cache_shared", 0)
+		}
+		if resolved.err != nil {
+			return nil, resolved.err
+		}
 	}
 	return onebot11.Message{onebot11.Image(url, "")}, nil
+}
+
+func staticImageSharedContext() (context.Context, context.CancelFunc) {
+	shared := logger.WithContextAttrs(context.Background(), slog.Bool("shared_work", true))
+	return context.WithTimeout(shared, staticImageSharedTimeout)
+}
+
+func writeStaticImageAtomically(ctx context.Context, targetPath string, data []byte) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	finishWrite := commandtrace.MeasureOperation(ctx, "image.static_cache_write")
+	tmp, err := os.CreateTemp(filepath.Dir(targetPath), "."+filepath.Base(targetPath)+".tmp-*")
+	if err != nil {
+		finishWrite()
+		return err
+	}
+	tmpName := tmp.Name()
+	defer func() {
+		_ = os.Remove(tmpName)
+	}()
+	if _, err := tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		finishWrite()
+		return err
+	}
+	if err := tmp.Chmod(0o644); err != nil {
+		_ = tmp.Close()
+		finishWrite()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		finishWrite()
+		return err
+	}
+	finishWrite()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	finishRename := commandtrace.MeasureOperation(ctx, "image.static_cache_rename")
+	err = os.Rename(tmpName, targetPath)
+	finishRename()
+	return err
 }
 
 func chartStaticBaseURL(app *renderapp.App) string {

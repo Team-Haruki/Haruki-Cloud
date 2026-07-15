@@ -1,13 +1,14 @@
 package sekai
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net"
-	"net/url"
 	"strings"
 	"time"
-	"unicode"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 	"haruki-cloud/utils/usererror"
 
@@ -16,7 +17,10 @@ import (
 
 var restyLogger = logger.NewLoggerFromGlobal("SekaiRESTY")
 
-const slowHTTPLogThreshold = 2 * time.Second
+const (
+	maxUpstreamResponseBytes = 64 << 20
+	slowHTTPLogThreshold     = 2 * time.Second
+)
 
 // sanitizeNetworkError strips embedded URLs from HTTP client errors so that
 // internal service hostnames are never exposed in user-facing messages.
@@ -38,6 +42,7 @@ func sanitizeNetworkError(err error) error {
 func newRestyClient() *resty.Client {
 	return resty.New().
 		SetLogger(restyLogger).
+		SetResponseBodyLimit(maxUpstreamResponseBytes).
 		SetRetryCount(maxRetries).
 		SetRetryWaitTime(retryWaitTime).
 		AddRetryHook(logRestyRetry).
@@ -48,16 +53,30 @@ func newRestyClient() *resty.Client {
 
 func logRestyRetry(resp *resty.Response, err error) {
 	if resp == nil || resp.Request == nil {
-		restyLogger.Warnf("resty retry: err=%v", sanitizeNetworkError(err))
+		restyLogger.WarnContext(context.Background(), "resty request retry",
+			"error_type", fmt.Sprintf("%T", err),
+		)
 		return
 	}
-	method, requestURL, attempt := restyRequestDebug(resp.Request)
+	ctx := resp.Request.Context()
+	method, attempt := restyRequestDebug(resp.Request)
 	if err != nil {
-		restyLogger.Warnf("resty retry: method=%s url=%s attempt=%d err=%v", method, requestURL, attempt, sanitizeNetworkError(err))
+		restyLogger.WarnContext(ctx, "resty request retry",
+			"http_method", method,
+			"upstream", "pjsk_external",
+			"attempt", attempt,
+			"error_type", fmt.Sprintf("%T", err),
+		)
 		return
 	}
-	restyLogger.Warnf("resty retry: method=%s url=%s status=%d elapsed=%dms attempt=%d bytes=%d",
-		method, requestURL, resp.StatusCode(), resp.Time().Milliseconds(), attempt, resp.Size())
+	restyLogger.WarnContext(ctx, "resty response retry",
+		"http_method", method,
+		"upstream", "pjsk_external",
+		"status_code", resp.StatusCode(),
+		"duration_ms", commandtrace.Milliseconds(resp.Time()),
+		"attempt", attempt,
+		"response_bytes", resp.Size(),
+	)
 }
 
 func logRestyResponse(_ *resty.Client, resp *resty.Response) error {
@@ -69,99 +88,54 @@ func logRestyResponse(_ *resty.Client, resp *resty.Response) error {
 	if status < 500 && elapsed < slowHTTPLogThreshold {
 		return nil
 	}
-	method, requestURL, attempt := restyRequestDebug(resp.Request)
+	method, attempt := restyRequestDebug(resp.Request)
 	if status >= 500 {
-		restyLogger.Warnf("resty response: method=%s url=%s status=%d elapsed=%dms attempt=%d bytes=%d",
-			method, requestURL, status, elapsed.Milliseconds(), attempt, resp.Size())
+		restyLogger.WarnContext(resp.Request.Context(), "resty upstream response failed",
+			"http_method", method,
+			"upstream", "pjsk_external",
+			"status_code", status,
+			"duration_ms", commandtrace.Milliseconds(elapsed),
+			"attempt", attempt,
+			"response_bytes", resp.Size(),
+		)
 		return nil
 	}
-	restyLogger.Infof("resty slow response: method=%s url=%s status=%d elapsed=%dms attempt=%d bytes=%d",
-		method, requestURL, status, elapsed.Milliseconds(), attempt, resp.Size())
+	restyLogger.InfoContext(resp.Request.Context(), "resty upstream response slow",
+		"http_method", method,
+		"upstream", "pjsk_external",
+		"status_code", status,
+		"duration_ms", commandtrace.Milliseconds(elapsed),
+		"attempt", attempt,
+		"response_bytes", resp.Size(),
+	)
 	return nil
 }
 
 func logRestyError(req *resty.Request, err error) {
-	method, requestURL, attempt := restyRequestDebug(req)
-	restyLogger.Errorf("resty request failed: method=%s url=%s attempt=%d err=%v",
-		method, requestURL, attempt, sanitizeNetworkError(err))
+	method, attempt := restyRequestDebug(req)
+	ctx := context.Background()
+	if req != nil {
+		ctx = req.Context()
+	}
+	restyLogger.ErrorContext(ctx, "resty request failed",
+		"http_method", method,
+		"upstream", "pjsk_external",
+		"attempt", attempt,
+		"error_type", fmt.Sprintf("%T", err),
+	)
 }
 
-func restyRequestDebug(req *resty.Request) (string, string, int) {
+func restyRequestDebug(req *resty.Request) (string, int) {
 	if req == nil {
-		return "", "", 0
+		return "", 0
 	}
 	method := strings.TrimSpace(req.Method)
-	requestURL := strings.TrimSpace(req.URL)
 	if req.RawRequest != nil {
 		if method == "" {
 			method = req.RawRequest.Method
 		}
-		if req.RawRequest.URL != nil {
-			requestURL = req.RawRequest.URL.String()
-		}
 	}
-	return method, sanitizeDebugURL(requestURL), req.Attempt
-}
-
-func sanitizeDebugURL(raw string) string {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return ""
-	}
-	parsed, err := url.Parse(raw)
-	if err != nil {
-		return maskLongNumericPath(strings.Split(raw, "?")[0])
-	}
-	parsed.User = nil
-	parsed.Path = maskLongNumericPath(parsed.Path)
-	parsed.RawPath = ""
-	query := parsed.Query()
-	for key, values := range query {
-		if shouldMaskQueryValue(key) {
-			for i, value := range values {
-				values[i] = maskDebugValue(value)
-			}
-			query[key] = values
-		}
-	}
-	parsed.RawQuery = query.Encode()
-	return parsed.String()
-}
-
-func shouldMaskQueryValue(key string) bool {
-	key = strings.ToLower(strings.TrimSpace(key))
-	return strings.Contains(key, "user") ||
-		strings.Contains(key, "uid") ||
-		strings.Contains(key, "token") ||
-		strings.Contains(key, "authorization")
-}
-
-func maskLongNumericPath(path string) string {
-	parts := strings.Split(path, "/")
-	for i, part := range parts {
-		if len(part) >= 7 && isNumericString(part) {
-			parts[i] = maskDebugValue(part)
-		}
-	}
-	return strings.Join(parts, "/")
-}
-
-func isNumericString(value string) bool {
-	for _, r := range value {
-		if !unicode.IsDigit(r) {
-			return false
-		}
-	}
-	return value != ""
-}
-
-func maskDebugValue(value string) string {
-	value = strings.TrimSpace(value)
-	runes := []rune(value)
-	if len(runes) <= 6 {
-		return "***"
-	}
-	return string(runes[:3]) + "***" + string(runes[len(runes)-3:])
+	return method, req.Attempt
 }
 
 // isRetryable returns true for transient errors that warrant an automatic

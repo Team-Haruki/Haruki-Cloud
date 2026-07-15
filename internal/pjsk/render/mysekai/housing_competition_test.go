@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	stdjson "encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,9 +12,12 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 )
@@ -308,6 +312,274 @@ func TestHousingCompetitionStatsCachePersistsWithoutOwnerUserID(t *testing.T) {
 	if result.Entries[0].OwnerUserID != 0 {
 		t.Fatalf("cached entry should not retain owner user id: %+v", result.Entries[0])
 	}
+}
+
+type concurrentHousingCompetitionClient struct {
+	calls     atomic.Int32
+	started   chan struct{}
+	startOnce sync.Once
+	release   <-chan struct{}
+	lotteryAt int64
+}
+
+func (c *concurrentHousingCompetitionClient) GetMySekaiHousingCompetitionList(_ string, housingID int, _ bool) (stdjson.RawMessage, error) {
+	c.calls.Add(1)
+	if c.started != nil {
+		c.startOnce.Do(func() { close(c.started) })
+	}
+	if c.release != nil {
+		<-c.release
+	}
+	return stdjson.RawMessage(fmt.Sprintf(`{"lotteryAt":%d,"results":[{"mysekaiHousingCompetitionId":%d,"mysekaiOwnerUserId":%d,"userMysekaiHousingCompetitionName":"entry-%d","thumbnailPath":"hash/%d","submittedAt":%d,"reviewCount":%d}]}`,
+		c.lotteryAt, housingID, housingID, housingID, housingID, housingID, housingID)), nil
+}
+
+func TestHousingCompetitionStatsCacheSharesRefreshAndTrace(t *testing.T) {
+	cachePath := filepath.Join(t.TempDir(), "housing_stats.json")
+	cache := newHousingCompetitionStatsCache(cachePath, time.Millisecond)
+	release := make(chan struct{})
+	client := &concurrentHousingCompetitionClient{
+		started:   make(chan struct{}),
+		release:   release,
+		lotteryAt: time.Now().UTC().UnixMilli(),
+	}
+
+	const callers = 12
+	start := make(chan struct{})
+	var launched atomic.Int32
+	var wg sync.WaitGroup
+	errs := make(chan error, callers)
+	traces := make([]*commandtrace.Trace, callers)
+	for i := 0; i < callers; i++ {
+		ctx, trace := commandtrace.WithTrace(context.Background())
+		traces[i] = trace
+		wg.Add(1)
+		go func(ctx context.Context) {
+			defer wg.Done()
+			<-start
+			launched.Add(1)
+			_, _, _, err := cache.Refresh(ctx, client, "jp", 25, 1)
+			errs <- err
+		}(ctx)
+	}
+	close(start)
+	<-client.started
+	deadline := time.Now().Add(time.Second)
+	for launched.Load() != callers && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	time.Sleep(25 * time.Millisecond)
+	if calls := client.calls.Load(); calls != 1 {
+		close(release)
+		wg.Wait()
+		t.Fatalf("shared refresh made %d upstream calls, want 1", calls)
+	}
+	close(release)
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("Refresh() error = %v", err)
+		}
+	}
+
+	shared := 0
+	for index, trace := range traces {
+		for _, name := range []string{
+			"housing_cache.fetch",
+			"housing_cache.merge",
+			"housing_cache.encode",
+			"housing_cache.persist",
+		} {
+			if count := housingCacheTraceOperationCount(trace, name); count != 1 {
+				t.Fatalf("trace[%d] %s count = %d, operations=%+v", index, name, count, trace.Snapshot().Operations)
+			}
+		}
+		if count := housingCacheTraceOperationCount(trace, "housing_cache.snapshot"); count < 1 {
+			t.Fatalf("trace[%d] housing_cache.snapshot count = %d, operations=%+v", index, count, trace.Snapshot().Operations)
+		}
+		shared += housingCacheTraceOperationCount(trace, "housing_cache.shared")
+	}
+	if shared != callers-1 {
+		t.Fatalf("shared trace count = %d, want %d", shared, callers-1)
+	}
+	cache.mu.Lock()
+	generation := cache.generation
+	cache.mu.Unlock()
+	if generation != 1 {
+		t.Fatalf("cache generation = %d, want one merged refresh", generation)
+	}
+}
+
+func TestHousingCompetitionStatsCacheLeaderCancellationDoesNotCancelSharedRefresh(t *testing.T) {
+	cache := newHousingCompetitionStatsCache(filepath.Join(t.TempDir(), "housing_stats.json"), time.Millisecond)
+	release := make(chan struct{})
+	client := &concurrentHousingCompetitionClient{
+		started:   make(chan struct{}),
+		release:   release,
+		lotteryAt: time.Now().UTC().UnixMilli(),
+	}
+
+	leaderBase, cancelLeader := context.WithCancel(context.Background())
+	leaderCtx, _ := commandtrace.WithTrace(leaderBase)
+	leaderResult := make(chan error, 1)
+	go func() {
+		_, _, _, err := cache.Refresh(leaderCtx, client, "jp", 25, 1)
+		leaderResult <- err
+	}()
+	<-client.started
+
+	followerCtx, followerTrace := commandtrace.WithTrace(context.Background())
+	followerStarted := make(chan struct{})
+	followerResult := make(chan error, 1)
+	go func() {
+		close(followerStarted)
+		_, _, _, err := cache.Refresh(followerCtx, client, "jp", 25, 1)
+		followerResult <- err
+	}()
+	<-followerStarted
+	time.Sleep(25 * time.Millisecond)
+	cancelLeader()
+	if err := <-leaderResult; !errors.Is(err, context.Canceled) {
+		close(release)
+		t.Fatalf("leader Refresh() error = %v, want context.Canceled", err)
+	}
+	close(release)
+	if err := <-followerResult; err != nil {
+		t.Fatalf("follower Refresh() error = %v", err)
+	}
+	if calls := client.calls.Load(); calls != 1 {
+		t.Fatalf("provider calls = %d, want one shared fetch", calls)
+	}
+	if count := housingCacheTraceOperationCount(followerTrace, "housing_cache.fetch"); count != 1 {
+		t.Fatalf("follower fetch trace count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
+	}
+	if count := housingCacheTraceOperationCount(followerTrace, "housing_cache.shared"); count != 1 {
+		t.Fatalf("follower shared trace count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
+	}
+}
+
+func TestHousingCompetitionStatsCacheRetentionBounds(t *testing.T) {
+	cache := newHousingCompetitionStatsCache("", time.Second)
+	cache.entryTTL = time.Hour
+	cache.maxEntries = 3
+	cache.maxBucketEntries = 2
+	cache.maxBuckets = 2
+	now := time.Now().UTC()
+	makeBucket := func(refreshedAt time.Time, keys ...string) *housingCompetitionStatsBucket {
+		entries := make(map[string]HousingCompetitionEntry, len(keys))
+		for index, key := range keys {
+			entries[key] = HousingCompetitionEntry{CacheKey: key, LastSeenAt: refreshedAt.Add(time.Duration(index) * time.Second).UnixMilli()}
+		}
+		return &housingCompetitionStatsBucket{
+			entries:       entries,
+			refreshedAt:   refreshedAt,
+			sampledAt:     refreshedAt,
+			snapshotDirty: true,
+		}
+	}
+	cache.buckets[housingCompetitionStatsCacheKey{Region: "jp", HousingID: 1}] = makeBucket(now.Add(-2*time.Hour), "stale")
+	cache.buckets[housingCompetitionStatsCacheKey{Region: "jp", HousingID: 2}] = makeBucket(now.Add(-3*time.Minute), "a", "b")
+	rankedBucket := makeBucket(now.Add(-2*time.Minute), "c", "d", "e")
+	entry := rankedBucket.entries["c"]
+	entry.ReviewCount = 100
+	rankedBucket.entries["c"] = entry
+	entry = rankedBucket.entries["d"]
+	entry.ReviewCount = 10
+	rankedBucket.entries["d"] = entry
+	entry = rankedBucket.entries["e"]
+	entry.ReviewCount = 1
+	rankedBucket.entries["e"] = entry
+	cache.buckets[housingCompetitionStatsCacheKey{Region: "jp", HousingID: 3}] = rankedBucket
+	cache.buckets[housingCompetitionStatsCacheKey{Region: "jp", HousingID: 4}] = makeBucket(now.Add(-time.Minute), "f")
+
+	cache.mu.Lock()
+	cache.pruneLocked(now)
+	if len(cache.buckets) != 2 {
+		cache.mu.Unlock()
+		t.Fatalf("bucket count = %d, want 2", len(cache.buckets))
+	}
+	if cache.buckets[housingCompetitionStatsCacheKey{Region: "jp", HousingID: 1}] != nil {
+		cache.mu.Unlock()
+		t.Fatal("expired bucket was retained")
+	}
+	if cache.buckets[housingCompetitionStatsCacheKey{Region: "jp", HousingID: 2}] != nil {
+		cache.mu.Unlock()
+		t.Fatal("oldest bucket above the hard cap was retained")
+	}
+	if rankedBucket.entries["c"].ReviewCount != 100 || rankedBucket.entries["e"].CacheKey != "" {
+		cache.mu.Unlock()
+		t.Fatal("per-bucket cap did not preserve the highest review-count entries")
+	}
+	total := 0
+	for _, bucket := range cache.buckets {
+		total += len(bucket.entries)
+		if len(bucket.entries) > cache.maxBucketEntries {
+			cache.mu.Unlock()
+			t.Fatalf("bucket entry count = %d, want <= %d", len(bucket.entries), cache.maxBucketEntries)
+		}
+	}
+	cache.mu.Unlock()
+	if total != 3 {
+		t.Fatalf("total entries = %d, want 3", total)
+	}
+}
+
+func TestHousingCompetitionStatsCacheConcurrentPersistenceIsComplete(t *testing.T) {
+	dir := t.TempDir()
+	cachePath := filepath.Join(dir, "housing_stats.json")
+	cache := newHousingCompetitionStatsCache(cachePath, time.Second)
+	client := &concurrentHousingCompetitionClient{lotteryAt: time.Now().UTC().UnixMilli()}
+
+	const refreshes = 24
+	var wg sync.WaitGroup
+	errs := make(chan error, refreshes)
+	for housingID := 1; housingID <= refreshes; housingID++ {
+		wg.Add(1)
+		go func(housingID int) {
+			defer wg.Done()
+			_, _, _, err := cache.Refresh(context.Background(), client, "jp", housingID, 1)
+			errs <- err
+		}(housingID)
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("Refresh() error = %v", err)
+		}
+	}
+
+	payload, err := os.ReadFile(cachePath)
+	if err != nil {
+		t.Fatalf("read cache file: %v", err)
+	}
+	var persisted persistedHousingCompetitionStatsCache
+	if err := stdjson.Unmarshal(payload, &persisted); err != nil {
+		t.Fatalf("decode cache file: %v", err)
+	}
+	if len(persisted.Buckets) != refreshes {
+		t.Fatalf("persisted buckets = %d, want %d", len(persisted.Buckets), refreshes)
+	}
+	temps, err := filepath.Glob(filepath.Join(dir, ".housing_stats.json.tmp-*"))
+	if err != nil {
+		t.Fatalf("glob temp files: %v", err)
+	}
+	if len(temps) != 0 {
+		t.Fatalf("orphaned temp files: %v", temps)
+	}
+}
+
+func housingCacheTraceOperationCount(trace *commandtrace.Trace, name string) int {
+	if trace == nil {
+		return 0
+	}
+	for _, operation := range trace.Snapshot().Operations {
+		if operation.Name == name {
+			return operation.Count
+		}
+	}
+	return 0
 }
 
 func writeHousingCompetitionMasterdata(t *testing.T, root string) {

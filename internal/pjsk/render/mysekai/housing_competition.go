@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -95,6 +96,8 @@ func (c *Controller) BuildHousingCompetitionLine(ctx context.Context, api Housin
 	if ctx == nil {
 		ctx = context.TODO()
 	}
+	finishBuild := commandtrace.MeasureOperation(ctx, "payload.build")
+	defer finishBuild()
 
 	region := renderregion.WithDefault(renderregion.Normalize(query.Region))
 	controller := c.withRegion(region.String())

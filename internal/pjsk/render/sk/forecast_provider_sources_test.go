@@ -53,6 +53,13 @@ func TestRemoteForecastProviderFetchesLocalForecast(t *testing.T) {
 	}
 }
 
+func TestRemoteForecastProviderBoundsResponses(t *testing.T) {
+	provider := NewRemoteForecastProvider()
+	if got := provider.http.ResponseBodyLimit; got != forecastMaxResponseBytes {
+		t.Fatalf("response body limit = %d, want %d", got, forecastMaxResponseBytes)
+	}
+}
+
 func TestRemoteForecastProviderFetchesLocalForecastChapterByCharacter(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/prediction/tw/chapter" && r.URL.Path != "/prediction/tw" {

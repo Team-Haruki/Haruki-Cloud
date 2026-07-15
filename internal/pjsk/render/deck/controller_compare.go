@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"context"
 	"fmt"
 	json "github.com/bytedance/sonic"
 	"os"
@@ -181,7 +182,7 @@ func compareMusicCandidateValue(item map[string]any, liveType string, useEventRa
 	return value
 }
 
-func (c *Controller) recommendMusicCompare(recommender PjskDeckRecommender, req RecommendRequest, option map[string]any, selections []MusicCompareSelection, showNum int, recType string) (*RecommendResult, []MusicCompareSelection, error) {
+func (c *Controller) recommendMusicCompare(ctx context.Context, recommender PjskDeckRecommender, req RecommendRequest, option map[string]any, selections []MusicCompareSelection, showNum int, recType string) (*RecommendResult, []MusicCompareSelection, error) {
 	if recommender == nil {
 		return nil, nil, fmt.Errorf("deck recommender is not configured")
 	}
@@ -195,12 +196,15 @@ func (c *Controller) recommendMusicCompare(recommender PjskDeckRecommender, req 
 	challengeCharID := optionInt(option, "challenge_live_character_id")
 
 	for _, selection := range selections {
+		if err := ctx.Err(); err != nil {
+			return nil, nil, err
+		}
 		compareOption := cloneRecommendOption(option)
 		compareOption["limit"] = 1
 		compareOption["music_id"] = selection.MusicID
 		compareOption["music_diff"] = normalizeMusicCompareDifficulty(selection.MusicDiff)
 
-		result, err := recommender.Recommend(RecommendRequest{
+		result, err := recommendWithContext(ctx, recommender, RecommendRequest{
 			Region:            req.Region,
 			UserData:          req.UserData,
 			UserDataFilePath:  req.UserDataFilePath,

@@ -1,42 +1,38 @@
 package music
 
 import (
-	json "github.com/bytedance/sonic"
 	"sort"
 
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/meta"
 )
 
 func (c *Controller) loadMusicBoardMetaMap(region string) map[int][]drawing.MusicMetaInfo {
-	payload := c.musicBoardMetaPayload(region)
-	if len(payload) == 0 {
-		return nil
-	}
-
-	var items []map[string]any
-	if err := json.Unmarshal(payload, &items); err != nil {
+	view := c.resolveMusicMetaView(region)
+	if view == nil {
 		return nil
 	}
 
 	result := make(map[int][]drawing.MusicMetaInfo)
-	for _, item := range items {
-		musicID := musicMetaID(item)
+	view.Range(func(entry meta.Entry) bool {
+		musicID := entry.MusicID()
 		if musicID <= 0 {
-			continue
+			return true
 		}
 		result[musicID] = append(result[musicID], drawing.MusicMetaInfo{
-			Difficulty:      normalizedDifficultyValue(item["difficulty"]),
-			MusicTime:       floatValue(item["music_time"]),
-			TapCount:        intValue(item["tap_count"]),
-			EventRate:       floatValue(item["event_rate"]),
-			BaseScore:       floatValue(item["base_score"]),
-			BaseScoreAuto:   floatValue(item["base_score_auto"]),
-			SkillScoreSolo:  floatSliceValue(item["skill_score_solo"]),
-			SkillScoreAuto:  floatSliceValue(item["skill_score_auto"]),
-			SkillScoreMulti: floatSliceValue(item["skill_score_multi"]),
-			FeverScore:      floatValue(item["fever_score"]),
+			Difficulty:      normalizedDifficultyValue(entry.Difficulty()),
+			MusicTime:       entry.Float("music_time"),
+			TapCount:        entry.Int("tap_count"),
+			EventRate:       entry.Float("event_rate"),
+			BaseScore:       entry.Float("base_score"),
+			BaseScoreAuto:   entry.Float("base_score_auto"),
+			SkillScoreSolo:  entry.FloatSlice("skill_score_solo"),
+			SkillScoreAuto:  entry.FloatSlice("skill_score_auto"),
+			SkillScoreMulti: entry.FloatSlice("skill_score_multi"),
+			FeverScore:      entry.Float("fever_score"),
 		})
-	}
+		return true
+	})
 
 	for musicID := range result {
 		sort.SliceStable(result[musicID], func(i, j int) bool {
@@ -44,18 +40,4 @@ func (c *Controller) loadMusicBoardMetaMap(region string) map[int][]drawing.Musi
 		})
 	}
 	return result
-}
-
-func (c *Controller) musicBoardMetaPayload(region string) []byte {
-	if c != nil && c.metaLoader != nil {
-		if payload := c.metaLoader.Get(region); len(payload) > 0 {
-			return payload
-		}
-	}
-	if snapshot := c.currentSnapshot(); snapshot != nil {
-		if payload := snapshot.MusicMetaBytes(); len(payload) > 0 {
-			return payload
-		}
-	}
-	return nil
 }

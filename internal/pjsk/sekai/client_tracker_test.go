@@ -1,6 +1,7 @@
 package sekai
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,15 @@ import (
 	"time"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
 )
+
+func TestTrackerClientWithNilConfigIsNotConfigured(t *testing.T) {
+	client := NewTrackerClient(nil)
+	if _, err := client.GetEventStatus("jp", 1); !errors.Is(err, ErrClientNotConfigured) {
+		t.Fatalf("GetEventStatus() error = %v, want ErrClientNotConfigured", err)
+	}
+}
 
 func TestTrackerClientDeduplicatesConcurrentCloudV2GETByPath(t *testing.T) {
 	var hits atomic.Int32
@@ -39,11 +48,16 @@ func TestTrackerClientDeduplicatesConcurrentCloudV2GETByPath(t *testing.T) {
 	const callers = 16
 	var wg sync.WaitGroup
 	errs := make(chan error, callers)
+	contexts := make([]context.Context, callers)
+	traces := make([]*commandtrace.Trace, callers)
+	for i := range callers {
+		contexts[i], traces[i] = commandtrace.WithTrace(context.Background())
+	}
 	wg.Add(callers)
-	for range callers {
-		go func() {
+	for index := range callers {
+		go func(index int) {
 			defer wg.Done()
-			resp, err := client.GetCloudSKQuery("jp", 101, nil, []int{100}, nil, false, false, 3600)
+			resp, err := client.WithContext(contexts[index]).GetCloudSKQuery("jp", 101, nil, []int{100}, nil, false, false, 3600)
 			if err != nil {
 				errs <- err
 				return
@@ -51,7 +65,7 @@ func TestTrackerClientDeduplicatesConcurrentCloudV2GETByPath(t *testing.T) {
 			if len(resp.Ranks) != 1 || resp.Ranks[0].Rank != 100 || resp.Ranks[0].Name != "Tester" {
 				t.Errorf("unexpected response: %+v", resp)
 			}
-		}()
+		}(index)
 	}
 
 	select {
@@ -70,6 +84,30 @@ func TestTrackerClientDeduplicatesConcurrentCloudV2GETByPath(t *testing.T) {
 	if got := hits.Load(); got != 1 {
 		t.Fatalf("expected one upstream GET, got %d", got)
 	}
+	sharedCount := 0
+	for index, trace := range traces {
+		for _, operation := range []string{"tracker.wait", "tracker.http", "tracker.decode"} {
+			if count := trackerTraceOperationCount(trace, operation); count == 0 {
+				t.Fatalf("trace[%d] missing %s: %+v", index, operation, trace.Snapshot().Operations)
+			}
+		}
+		sharedCount += trackerTraceOperationCount(trace, "tracker.shared")
+	}
+	if sharedCount != callers-1 {
+		t.Fatalf("tracker.shared count = %d, want %d", sharedCount, callers-1)
+	}
+}
+
+func trackerTraceOperationCount(trace *commandtrace.Trace, name string) int {
+	if trace == nil {
+		return 0
+	}
+	for _, operation := range trace.Snapshot().Operations {
+		if operation.Name == name {
+			return operation.Count
+		}
+	}
+	return 0
 }
 
 func TestTrackerClientCloudV2Paths(t *testing.T) {

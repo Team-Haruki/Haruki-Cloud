@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 func unverifiedBindingProfileBGError(binding *pjskdb.UserBinding, action string) error {
@@ -212,7 +213,13 @@ func (s *BindingService) verifyBindingEntity(ctx context.Context, platform, plat
 	if err := s.requireWritable(); err != nil {
 		return nil, false, err
 	}
-	records, err := s.fastVerifier.GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID)
+	var records []sekaiapi.UserGameBinding
+	var err error
+	if contextual, ok := s.fastVerifier.(contextFastVerificationProvider); ok {
+		records, err = contextual.GetToolboxUserFastVerificationGameAccountBindingsContext(ctx, platform, platformUserID)
+	} else {
+		records, err = s.fastVerifier.GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID)
+	}
 	if err != nil {
 		return nil, false, err
 	}

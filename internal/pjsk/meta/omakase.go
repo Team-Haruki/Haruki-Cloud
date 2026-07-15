@@ -1,23 +1,28 @@
 package meta
 
-import json "github.com/bytedance/sonic"
-
 // InjectOmakase ensures music_metas JSON contains a synthetic "omakase" entry
 // (music_id 10000) for each difficulty in [master, expert, hard].
 // Values are averaged across all qualifying real tracks.
 // If the entry already exists, or the JSON is malformed, the original data is returned unchanged.
 func InjectOmakase(data []byte) []byte {
-	var metas []map[string]any
-	if err := json.Unmarshal(data, &metas); err != nil {
+	processed, _, err := Prepare(data)
+	if err != nil {
 		return data
+	}
+	return processed
+}
+
+func injectOmakaseRows(metas *[]map[string]any) bool {
+	if metas == nil {
+		return false
 	}
 
 	const omakaseMusicID = 10000
 	difficulties := []string{"master", "expert", "hard"}
 
-	for _, item := range metas {
+	for _, item := range *metas {
 		if musicID, ok := item["music_id"].(float64); ok && int(musicID) == omakaseMusicID {
-			return data
+			return false
 		}
 	}
 
@@ -35,7 +40,7 @@ func InjectOmakase(data []byte) []byte {
 	}
 	count := 0.0
 
-	for _, item := range metas {
+	for _, item := range *metas {
 		diff, _ := item["difficulty"].(string)
 		if diff != "master" && diff != "expert" && diff != "hard" {
 			continue
@@ -54,7 +59,7 @@ func InjectOmakase(data []byte) []byte {
 	}
 
 	if count == 0 {
-		return data
+		return false
 	}
 
 	aggregate["music_time"] = aggregate["music_time"].(float64) / count
@@ -73,7 +78,7 @@ func InjectOmakase(data []byte) []byte {
 	}
 
 	for _, difficulty := range difficulties {
-		metas = append(metas, map[string]any{
+		*metas = append(*metas, map[string]any{
 			"music_id":          float64(omakaseMusicID),
 			"difficulty":        difficulty,
 			"music_time":        aggregate["music_time"],
@@ -89,11 +94,7 @@ func InjectOmakase(data []byte) []byte {
 		})
 	}
 
-	encoded, err := json.Marshal(metas)
-	if err != nil {
-		return data
-	}
-	return encoded
+	return true
 }
 
 func accumulateFloat(target, source map[string]any, key string) {

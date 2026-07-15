@@ -6,11 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type Controller struct {
-	drawing *drawing.HarukiDrawingClient
+	drawing    *drawing.HarukiDrawingClient
+	requestCtx context.Context
 }
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
@@ -22,6 +24,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
 	return &clone
 }
@@ -38,7 +41,9 @@ func (c *Controller) RenderScoreControl(req drawing.ScoreControlRequest) ([]byte
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildScoreControlRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +69,9 @@ func (c *Controller) RenderCustomRoomScore(req drawing.CustomRoomScoreRequest) (
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildCustomRoomScoreRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +92,9 @@ func (c *Controller) RenderMusicMeta(req []drawing.MusicMetaRequest) ([]byte, er
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMusicMetaRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +115,9 @@ func (c *Controller) RenderMusicBoard(req drawing.MusicBoardRequest) ([]byte, er
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMusicBoardRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

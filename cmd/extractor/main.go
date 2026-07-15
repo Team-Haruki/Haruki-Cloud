@@ -1,10 +1,13 @@
 package main
 
 import (
-	json "github.com/bytedance/sonic"
+	"fmt"
 	"os"
 
 	"haruki-cloud/database/sekai/migrate"
+	"haruki-cloud/utils/logger"
+
+	json "github.com/bytedance/sonic"
 )
 
 type TableInfo struct {
@@ -14,6 +17,10 @@ type TableInfo struct {
 }
 
 func main() {
+	logger.SetGlobalFileWriter(os.Stdout)
+	logger.InstallStandardHandlers()
+	log := logger.NewLoggerFromGlobal("Extractor")
+
 	var tables []TableInfo
 	for _, table := range migrate.Tables {
 		var cols []string
@@ -41,12 +48,19 @@ func main() {
 
 	bytes, err := json.MarshalIndent(tables, "", "  ")
 	if err != nil {
-		_, _ = os.Stderr.WriteString("failed to marshal schema info: " + err.Error() + "\n")
+		log.Error("schema extraction failed",
+			"operation", "marshal",
+			"error_type", fmt.Sprintf("%T", err),
+		)
 		os.Exit(1)
 	}
 
 	if err := os.WriteFile("schema_info.json", bytes, 0644); err != nil {
-		_, _ = os.Stderr.WriteString("failed to write schema_info.json: " + err.Error() + "\n")
+		log.Error("schema extraction failed",
+			"operation", "write",
+			"error_type", fmt.Sprintf("%T", err),
+		)
 		os.Exit(1)
 	}
+	log.Info("schema extraction completed", "tables", len(tables), "output_bytes", len(bytes))
 }

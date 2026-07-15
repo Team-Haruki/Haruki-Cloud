@@ -13,7 +13,8 @@ backend:
   ssl_key: ""
   log_level: "INFO"
   main_log_file: "main.log"
-  access_log: "[${time}] ${status} - ${latency} ${method} ${path}\n"
+  # Any non-empty value enables the canonical structured HTTP access log.
+  access_log: "structured"
   access_log_path: "access.log"
   accept_authorization: null
   accept_user_agent: null

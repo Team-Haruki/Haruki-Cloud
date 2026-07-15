@@ -4,12 +4,24 @@ import (
 	"context"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 )
+
+const mysekaiMasterdataResolveTimeout = 10 * time.Second
+
+type masterdataResolveFlightToken byte
+
+type masterdataResolveFlightResult struct {
+	source     masterdataSource
+	operations []commandtrace.Stats
+	leader     *masterdataResolveFlightToken
+}
 
 var (
 	mysekaiMapSiteOrder   = []int{5, 6, 7, 8}
@@ -75,32 +87,95 @@ func cleanMasterdataDir(dir string) string {
 }
 
 func (r *masterdataResolver) Resolve(region renderregion.Value) masterdataSource {
+	return r.ResolveContext(context.Background(), region)
+}
+
+func (r *masterdataResolver) ResolveContext(ctx context.Context, region renderregion.Value) masterdataSource {
 	if r == nil {
 		return nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	resolved := renderregion.WithDefault(region)
 	key := resolved.String()
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
+	r.mu.RLock()
 	if cached, ok := r.cache[key]; ok {
-		return cached
+		r.mu.RUnlock()
+		return bindMasterdataContext(cached, ctx)
 	}
+	r.mu.RUnlock()
 
-	store := r.build(resolved)
-	r.cache[key] = store
-	return store
+	callerToken := new(masterdataResolveFlightToken)
+	resultCh := r.loads.DoChan(key, func() (any, error) {
+		sharedBase, cancel := context.WithTimeout(context.Background(), mysekaiMasterdataResolveTimeout)
+		defer cancel()
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+		complete := func(source masterdataSource) masterdataResolveFlightResult {
+			return masterdataResolveFlightResult{
+				source:     source,
+				operations: trace.Snapshot().Operations,
+				leader:     callerToken,
+			}
+		}
+
+		r.mu.RLock()
+		cached, ok := r.cache[key]
+		r.mu.RUnlock()
+		if ok {
+			return complete(cached), nil
+		}
+
+		store := r.build(sharedCtx, resolved)
+		if store == nil {
+			return complete(nil), nil
+		}
+		// The resolver is process-scoped; never retain a request context in its
+		// regional cache. Request clones below still carry the active command ctx.
+		cached = bindMasterdataContext(store, context.Background())
+		r.mu.Lock()
+		if existing, exists := r.cache[key]; exists {
+			cached = existing
+		} else {
+			r.cache[key] = cached
+		}
+		r.mu.Unlock()
+		return complete(cached), nil
+	})
+
+	finishWait := commandtrace.MeasureOperation(ctx, "mysekai.masterdata_resolve_wait")
+	var result masterdataResolveFlightResult
+	select {
+	case <-ctx.Done():
+		finishWait()
+		return nil
+	case outcome := <-resultCh:
+		finishWait()
+		if outcome.Err != nil {
+			return nil
+		}
+		var ok bool
+		result, ok = outcome.Val.(masterdataResolveFlightResult)
+		if !ok {
+			return nil
+		}
+	}
+	commandtrace.MergeOperations(ctx, result.operations)
+	if result.leader != callerToken {
+		commandtrace.RecordOperation(ctx, "mysekai.masterdata_resolve_shared", 0)
+	}
+	return bindMasterdataContext(result.source, ctx)
 }
 
-func (r *masterdataResolver) build(region renderregion.Value) masterdataSource {
+func (r *masterdataResolver) build(ctx context.Context, region renderregion.Value) masterdataSource {
 	if r == nil {
 		return nil
 	}
 
 	if r.dsn != "" {
-		if store := newDBMasterdataStore(r.dsn, region.String()); store != nil && store.Configured() {
+		if store := newDBMasterdataStore(ctx, r.dsn, region.String()); store != nil && store.Configured() {
 			return store
 		}
 	}
@@ -150,9 +225,22 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c == nil {
 		return nil
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	clone := *c
+	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
+	clone.masterdata = bindMasterdataContext(c.masterdata, ctx)
 	return &clone
+}
+
+func bindMasterdataContext(source masterdataSource, ctx context.Context) masterdataSource {
+	if contextual, ok := source.(contextualMasterdataSource); ok {
+		return contextual.WithContext(ctx)
+	}
+	return source
 }
 
 // regionPath resolves a region-specific asset path through the AssetHelper.
@@ -248,7 +336,7 @@ func (c *Controller) withRegion(region string) *Controller {
 	resolved := c.resolveRegion(region)
 	clone.defaultRegion = resolved
 	if c.resolver != nil {
-		clone.masterdata = c.resolver.Resolve(resolved)
+		clone.masterdata = c.resolver.ResolveContext(c.requestCtx, resolved)
 	}
 	return &clone
 }

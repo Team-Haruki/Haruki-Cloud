@@ -73,7 +73,9 @@ func executeMisc(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "misc-birthday":
+		finishBuild := measurePayloadBuild(rc.Ctx)
 		req, resolveErr := requestbuilder.BuildMiscBirthdayRequest(rc.Ctx, toRequestBuilderCommandInput(rc.Cmd), rc.App)
+		finishBuild()
 		if resolveErr != nil {
 			return nil, resolveErr
 		}

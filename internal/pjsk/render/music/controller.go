@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
+	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
 var hiddenMusicIDs = map[int]struct{}{
@@ -26,6 +27,10 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	clone := *c
 	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
+	if customScores, ok := c.customScores.(*sekaiapi.HarukiSekaiAPIClient); ok {
+		clone.customScores = customScores.WithContext(ctx)
+	}
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {

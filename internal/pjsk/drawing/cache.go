@@ -1,11 +1,14 @@
 package drawing
 
 import (
+	"container/list"
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	"os"
@@ -15,6 +18,8 @@ import (
 	"time"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
@@ -26,86 +31,253 @@ const (
 	renderCachePublic              = "public"
 	renderCacheKeyVersion          = 3
 	renderCacheEventListKeyVersion = 4
+	localRenderCacheMaxEntries     = 512
+	localRenderCacheMaxBytes       = 256 << 20
+	renderCacheAPIResponseMaxBytes = 1 << 20
 )
 
+type renderFlightResult struct {
+	data       []byte
+	err        error
+	operations []commandtrace.Stats
+	leader     *renderFlightToken
+}
+
+type renderFlightToken byte
+
+func runSharedRenderFlight(parent context.Context, work func(context.Context) ([]byte, error)) renderFlightResult {
+	if parent == nil {
+		parent = context.Background()
+	}
+	timeout := config.Cfg.PJSKRender.DrawingTimeout
+	if timeout <= 0 {
+		timeout = config.HTTPClientTimeout
+	}
+	detached := displaytime.WithRequestTimeZone(
+		context.Background(),
+		displaytime.RequestTimeZoneFromContext(parent),
+	)
+	detached = logger.WithContextAttrs(detached, slog.Bool("shared_work", true))
+	sharedBase, cancel := context.WithTimeout(detached, timeout)
+	defer cancel()
+	sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+	data, err := work(sharedCtx)
+	return renderFlightResult{
+		data:       data,
+		err:        err,
+		operations: trace.Snapshot().Operations,
+	}
+}
+
 func newLocalRenderCache(ttl time.Duration) *localRenderCache {
+	return newLocalRenderCacheWithLimits(ttl, localRenderCacheMaxEntries, localRenderCacheMaxBytes)
+}
+
+func newLocalRenderCacheWithLimits(ttl time.Duration, maxEntries int, maxBytes int64) *localRenderCache {
 	if ttl <= 0 {
 		ttl = config.LocalRenderCacheTTL
 	}
 	return &localRenderCache{
-		entries: make(map[string]*localRenderEntry),
-		ttl:     ttl,
+		entries:    make(map[string]*localRenderEntry),
+		lru:        list.New(),
+		maxEntries: maxEntries,
+		maxBytes:   maxBytes,
+		ttl:        ttl,
 	}
 }
 
 func (lc *localRenderCache) get(key string) ([]byte, bool) {
-	lc.mu.RLock()
-	entry, ok := lc.entries[key]
-	lc.mu.RUnlock()
-	if !ok {
+	if lc == nil {
 		return nil, false
 	}
-	if entry.permanent {
-		return entry.data, true
-	}
-	if time.Now().After(entry.expiresAt) {
-		lc.mu.Lock()
-		delete(lc.entries, key)
+	now := time.Now()
+	lc.mu.Lock()
+	entry, ok := lc.entries[key]
+	if !ok {
 		lc.mu.Unlock()
 		return nil, false
 	}
-	return entry.data, true
+	if !entry.permanent && !entry.expiresAt.IsZero() && !now.Before(entry.expiresAt) {
+		lc.removeEntryLocked(key, entry)
+		lc.mu.Unlock()
+		return nil, false
+	}
+	if entry.element != nil {
+		lc.lru.MoveToFront(entry.element)
+	}
+	data := entry.data
+	lc.mu.Unlock()
+	return cloneRenderBytes(data), true
 }
 
 func (lc *localRenderCache) set(key string, data []byte, ttl time.Duration, permanent bool) {
+	if lc == nil {
+		return
+	}
 	if !permanent && ttl <= 0 {
 		ttl = lc.ttl
 	}
+	now := time.Now()
+	size := int64(len(data))
+	var owned []byte
+	if lc.maxEntries > 0 && lc.maxBytes > 0 && size <= lc.maxBytes {
+		owned = cloneRenderBytes(data)
+	}
+
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+	lc.ensureInitializedLocked()
+	lc.sweepExpiredLocked(now)
+	if existing := lc.entries[key]; existing != nil {
+		lc.removeEntryLocked(key, existing)
+	}
+	if lc.maxEntries <= 0 || lc.maxBytes <= 0 || size > lc.maxBytes {
+		return
+	}
+
 	entry := &localRenderEntry{
-		data:      data,
+		data:      owned,
 		permanent: permanent,
+		size:      size,
 	}
 	if !permanent {
-		entry.expiresAt = time.Now().Add(ttl)
+		entry.expiresAt = now.Add(ttl)
 	}
-	lc.mu.Lock()
+	entry.element = lc.lru.PushFront(key)
 	lc.entries[key] = entry
-	lc.mu.Unlock()
+	lc.totalBytes += size
+	lc.evictLocked()
+}
+
+func (lc *localRenderCache) ensureInitializedLocked() {
+	if lc.entries == nil {
+		lc.entries = make(map[string]*localRenderEntry)
+	}
+	if lc.lru == nil {
+		lc.lru = list.New()
+	}
+}
+
+func (lc *localRenderCache) sweepExpiredLocked(now time.Time) {
+	lc.ensureInitializedLocked()
+	for key, entry := range lc.entries {
+		if entry == nil || (!entry.permanent && !entry.expiresAt.IsZero() && !now.Before(entry.expiresAt)) {
+			lc.removeEntryLocked(key, entry)
+		}
+	}
+}
+
+func (lc *localRenderCache) evictLocked() {
+	for len(lc.entries) > lc.maxEntries || lc.totalBytes > lc.maxBytes {
+		oldest := lc.lru.Back()
+		if oldest == nil {
+			break
+		}
+		key, _ := oldest.Value.(string)
+		lc.removeEntryLocked(key, lc.entries[key])
+	}
+}
+
+func (lc *localRenderCache) removeEntryLocked(key string, entry *localRenderEntry) {
+	if entry == nil {
+		delete(lc.entries, key)
+		return
+	}
+	if current := lc.entries[key]; current != entry {
+		return
+	}
+	delete(lc.entries, key)
+	if entry.element != nil && lc.lru != nil {
+		lc.lru.Remove(entry.element)
+	}
+	lc.totalBytes -= entry.size
+	if lc.totalBytes < 0 {
+		lc.totalBytes = 0
+	}
+}
+
+func cloneRenderBytes(data []byte) []byte {
+	if data == nil {
+		return nil
+	}
+	return append([]byte(nil), data...)
 }
 
 // Render returns cached bytes for identical requests; otherwise calls render() and stores the result.
 // Concurrent calls with the same key are deduplicated via singleflight.
 func (lc *localRenderCache) Render(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
+	return lc.RenderContext(context.Background(), endpoint, request, render)
+}
+
+func (lc *localRenderCache) RenderContext(ctx context.Context, endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
+	return lc.RenderSharedContext(ctx, endpoint, request, func(context.Context) ([]byte, error) {
+		return render()
+	})
+}
+
+func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint string, request any, render func(context.Context) ([]byte, error)) ([]byte, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	finishKey := commandtrace.MeasureOperation(ctx, "drawing.cache_key")
 	policy, err := buildRenderCachePolicy(endpoint, request)
 	if err != nil {
-		return render()
+		finishKey()
+		return render(ctx)
 	}
 	key, err := buildRenderCacheKey(policy)
+	finishKey()
 	if err != nil {
-		return render()
+		return render(ctx)
 	}
 	ttl := policy.TTL
 	if cached, ok := lc.get(key); ok {
-		cacheLogger.Debugf("local cache hit: endpoint=%s", endpoint)
+		commandtrace.RecordOperation(ctx, "drawing.cache_hit", 0)
+		cacheLogger.DebugContext(ctx, "drawing local cache hit", "upstream_path", endpoint)
 		return cached, nil
 	}
-	tRender := time.Now()
-	v, err, _ := lc.flight.Do(key, func() (any, error) {
-		if cached, ok := lc.get(key); ok {
-			return cached, nil
-		}
-		data, err := render()
-		if err != nil {
-			return nil, err
-		}
-		lc.set(key, data, ttl, policy.Infinite)
-		return data, nil
+	commandtrace.RecordOperation(ctx, "drawing.cache_miss", 0)
+	finishWait := commandtrace.MeasureOperation(ctx, "drawing.cache_wait")
+	callerToken := new(renderFlightToken)
+	result := lc.flight.DoChan(key, func() (any, error) {
+		flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
+			if cached, ok := lc.get(key); ok {
+				commandtrace.RecordOperation(sharedCtx, "drawing.cache_hit", 0)
+				return cached, nil
+			}
+			data, err := render(sharedCtx)
+			if err != nil {
+				return nil, err
+			}
+			lc.set(key, data, ttl, policy.Infinite)
+			return data, nil
+		})
+		flightResult.leader = callerToken
+		return flightResult, nil
 	})
-	if err != nil {
-		return nil, err
+	select {
+	case completed := <-result:
+		finishWait()
+		if completed.Err != nil {
+			return nil, completed.Err
+		}
+		flightResult, ok := completed.Val.(renderFlightResult)
+		if !ok {
+			return nil, fmt.Errorf("local render cache returned unexpected type %T", completed.Val)
+		}
+		commandtrace.MergeOperations(ctx, flightResult.operations)
+		if flightResult.leader != callerToken {
+			commandtrace.RecordOperation(ctx, "drawing.cache_shared", 0)
+		}
+		if flightResult.err != nil {
+			return nil, flightResult.err
+		}
+		cacheLogger.DebugContext(ctx, "drawing local cache miss rendered", "upstream_path", endpoint)
+		return cloneRenderBytes(flightResult.data), nil
+	case <-ctx.Done():
+		finishWait()
+		return nil, ctx.Err()
 	}
-	cacheLogger.Infof("local cache miss → rendered: endpoint=%s elapsed=%dms", endpoint, time.Since(tRender).Milliseconds())
-	return v.([]byte), nil
 }
 
 func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
@@ -117,6 +289,7 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 
 	return &RenderCacheClient{
 		http: resty.New().
+			SetResponseBodyLimit(renderCacheAPIResponseMaxBytes).
 			SetTimeout(config.HTTPClientTimeout).
 			SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
 		baseURL:       baseURL,
@@ -128,68 +301,105 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 }
 
 func (c *RenderCacheClient) Render(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
-	if c == nil {
+	return c.RenderContext(context.Background(), endpoint, request, render)
+}
+
+func (c *RenderCacheClient) RenderContext(ctx context.Context, endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
+	return c.RenderSharedContext(ctx, endpoint, request, func(context.Context) ([]byte, error) {
 		return render()
+	})
+}
+
+func (c *RenderCacheClient) RenderSharedContext(ctx context.Context, endpoint string, request any, render func(context.Context) ([]byte, error)) ([]byte, error) {
+	if c == nil {
+		return render(ctx)
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
+	finishKey := commandtrace.MeasureOperation(ctx, "drawing.cache_key")
 	policy, policyErr := buildRenderCachePolicy(endpoint, request)
 	if policyErr == nil {
 		key, keyErr := buildRenderCacheKey(policy)
+		finishKey()
 		if keyErr == nil {
-			v, err, _ := c.flight.Do(key, func() (any, error) {
-				tLookup := time.Now()
-				if cached, hit := c.lookup(key, policy.APIPath); hit {
-					cacheLogger.Debugf(
-						"remote cache hit: endpoint=%s api_path=%s user_id=%s key=%s lookup=%dms",
-						endpoint,
-						policy.APIPath,
-						policy.UserID,
-						shortRenderCacheKey(key),
-						time.Since(tLookup).Milliseconds(),
+			finishWait := commandtrace.MeasureOperation(ctx, "drawing.cache_wait")
+			callerToken := new(renderFlightToken)
+			result := c.flight.DoChan(key, func() (any, error) {
+				flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
+					tLookup := time.Now()
+					finishLookup := commandtrace.MeasureOperation(sharedCtx, "drawing.cache_lookup")
+					cached, hit := c.lookupContext(sharedCtx, key, policy.APIPath)
+					finishLookup()
+					if hit {
+						commandtrace.RecordOperation(sharedCtx, "drawing.cache_hit", 0)
+						cacheLogger.DebugContext(sharedCtx, "drawing remote cache hit",
+							"upstream_path", endpoint,
+							"cache_key", shortRenderCacheKey(key),
+							"duration_ms", commandtrace.Milliseconds(time.Since(tLookup)),
+						)
+						return cached, nil
+					}
+					commandtrace.RecordOperation(sharedCtx, "drawing.cache_miss", 0)
+					cacheLogger.DebugContext(sharedCtx, "drawing remote cache miss",
+						"upstream_path", endpoint,
+						"cache_key", shortRenderCacheKey(key),
+						"duration_ms", commandtrace.Milliseconds(time.Since(tLookup)),
 					)
-					return cached, nil
-				}
-				cacheLogger.Debugf(
-					"remote cache miss: endpoint=%s api_path=%s user_id=%s key=%s lookup=%dms",
-					endpoint,
-					policy.APIPath,
-					policy.UserID,
-					shortRenderCacheKey(key),
-					time.Since(tLookup).Milliseconds(),
-				)
 
-				tRender := time.Now()
-				image, err := render()
-				if err != nil {
-					return nil, err
-				}
-				cacheLogger.Infof(
-					"remote cache miss → rendered: endpoint=%s api_path=%s user_id=%s key=%s render=%dms",
-					endpoint,
-					policy.APIPath,
-					policy.UserID,
-					shortRenderCacheKey(key),
-					time.Since(tRender).Milliseconds(),
-				)
+					image, err := render(sharedCtx)
+					if err != nil {
+						return nil, err
+					}
 
-				ttl := policy.TTL
-				if ttl <= 0 && !policy.Infinite {
-					ttl = c.ttl
-				}
-				_ = c.store(key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
-				return image, nil
+					ttl := policy.TTL
+					if ttl <= 0 && !policy.Infinite {
+						ttl = c.ttl
+					}
+					finishStore := commandtrace.MeasureOperation(sharedCtx, "drawing.cache_store")
+					storeErr := c.storeContext(sharedCtx, key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
+					finishStore()
+					if storeErr != nil {
+						cacheLogger.WarnContext(sharedCtx, "drawing remote cache store failed",
+							"upstream_path", endpoint,
+							"cache_key", shortRenderCacheKey(key),
+							"error_type", fmt.Sprintf("%T", storeErr),
+						)
+					}
+					return image, nil
+				})
+				flightResult.leader = callerToken
+				return flightResult, nil
 			})
-			if err != nil {
-				return nil, err
+			select {
+			case completed := <-result:
+				finishWait()
+				if completed.Err != nil {
+					return nil, completed.Err
+				}
+				flightResult, ok := completed.Val.(renderFlightResult)
+				if !ok {
+					return nil, fmt.Errorf("remote render cache returned unexpected type %T", completed.Val)
+				}
+				commandtrace.MergeOperations(ctx, flightResult.operations)
+				if flightResult.leader != callerToken {
+					commandtrace.RecordOperation(ctx, "drawing.cache_shared", 0)
+				}
+				if flightResult.err != nil {
+					return nil, flightResult.err
+				}
+				return cloneRenderBytes(flightResult.data), nil
+			case <-ctx.Done():
+				finishWait()
+				return nil, ctx.Err()
 			}
-			if data, ok := v.([]byte); ok {
-				return data, nil
-			}
-			return nil, fmt.Errorf("remote render cache returned unexpected type %T", v)
 		}
+	} else {
+		finishKey()
 	}
 
-	return render()
+	return render(ctx)
 }
 
 func shortRenderCacheKey(key string) string {
@@ -201,17 +411,24 @@ func shortRenderCacheKey(key string) string {
 }
 
 func (c *RenderCacheClient) lookup(key string, apiPath string) ([]byte, bool) {
+	return c.lookupContext(context.Background(), key, apiPath)
+}
+
+func (c *RenderCacheClient) lookupContext(ctx context.Context, key string, apiPath string) ([]byte, bool) {
 	var record renderCacheRecord
 	var apiErr renderCacheAPIError
 
 	request := c.http.R().
+		SetContext(ctx).
 		SetQueryParam("key", key).
 		SetResult(&record).
 		SetError(&apiErr)
 	if strings.TrimSpace(apiPath) != "" {
 		request.SetQueryParam("api_path", apiPath)
 	}
+	finishHTTP := commandtrace.MeasureOperation(ctx, "drawing.cache_lookup_http")
 	resp, err := request.Get(c.baseURL + "/cache")
+	finishHTTP()
 	if err != nil {
 		return nil, false
 	}
@@ -219,7 +436,9 @@ func (c *RenderCacheClient) lookup(key string, apiPath string) ([]byte, bool) {
 		return nil, false
 	}
 
-	body, err := os.ReadFile(record.FilePath)
+	finishRead := commandtrace.MeasureOperation(ctx, "drawing.cache_read")
+	body, err := c.readCacheFile(record.FilePath)
+	finishRead()
 	if err != nil {
 		return nil, false
 	}
@@ -227,23 +446,42 @@ func (c *RenderCacheClient) lookup(key string, apiPath string) ([]byte, bool) {
 }
 
 func (c *RenderCacheClient) store(key string, apiPath string, userID string, image []byte, ttl time.Duration, infinite bool) error {
+	return c.storeContext(context.Background(), key, apiPath, userID, image, ttl, infinite)
+}
+
+func (c *RenderCacheClient) storeContext(ctx context.Context, key string, apiPath string, userID string, image []byte, ttl time.Duration, infinite bool) error {
+	if len(image) > drawingMaxResponseBytes {
+		return fmt.Errorf("render cache image exceeds %d bytes", drawingMaxResponseBytes)
+	}
 	if ttl <= 0 && !infinite {
 		ttl = c.ttl
 	}
+	finishHash := commandtrace.MeasureOperation(ctx, "drawing.cache_hash")
 	contentHash, targetPath := c.contentFilePath(apiPath, userID, key, image)
-	_, statErr := os.Stat(targetPath)
-	fileAlreadyExisted := statErr == nil
-	if statErr != nil && !os.IsNotExist(statErr) {
-		return statErr
-	}
-	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
+	finishHash()
+	finishWrite := commandtrace.MeasureOperation(ctx, "drawing.cache_write")
+	targetPath, err := c.prepareCacheTarget(targetPath)
+	if err != nil {
+		finishWrite()
 		return err
 	}
+	existingInfo, statErr := os.Stat(targetPath)
+	fileAlreadyExisted := statErr == nil
+	if statErr != nil && !os.IsNotExist(statErr) {
+		finishWrite()
+		return statErr
+	}
+	if fileAlreadyExisted && (!existingInfo.Mode().IsRegular() || existingInfo.Size() < 0 || existingInfo.Size() > drawingMaxResponseBytes) {
+		finishWrite()
+		return fmt.Errorf("existing render cache file is invalid")
+	}
 	if !fileAlreadyExisted {
-		if err := os.WriteFile(targetPath, image, 0o644); err != nil {
+		if err := writeRenderCacheFileAtomic(targetPath, image); err != nil {
+			finishWrite()
 			return err
 		}
 	}
+	finishWrite()
 
 	var apiErr renderCacheAPIError
 	ttlSeconds := "0"
@@ -251,7 +489,9 @@ func (c *RenderCacheClient) store(key string, apiPath string, userID string, ima
 		ttlSeconds = strconv.Itoa(int(math.Ceil(ttl.Seconds())))
 	}
 
+	finishHTTP := commandtrace.MeasureOperation(ctx, "drawing.cache_store_http")
 	resp, err := c.http.R().
+		SetContext(ctx).
 		SetFormData(map[string]string{
 			"key":       key,
 			"ttl":       ttlSeconds,
@@ -262,6 +502,7 @@ func (c *RenderCacheClient) store(key string, apiPath string, userID string, ima
 		}).
 		SetError(&apiErr).
 		Post(c.baseURL + "/cache")
+	finishHTTP()
 	if err != nil || resp.StatusCode() != http.StatusOK {
 		if !fileAlreadyExisted {
 			_ = os.Remove(targetPath)
@@ -271,12 +512,180 @@ func (c *RenderCacheClient) store(key string, apiPath string, userID string, ima
 		}
 		return fmt.Errorf("cache register failed with status: %d", resp.StatusCode())
 	}
-	c.registerImageCachePath(contentHash, targetPath, image)
+	c.registerImageCachePath(ctx, contentHash, targetPath, image)
 	return nil
 }
 
 func (c *RenderCacheClient) defaultFilePath(apiPath string, userID string, key string) string {
-	return filepath.Join(c.storageDir, filepath.FromSlash(apiPath), userID, key+".png")
+	return filepath.Join(
+		c.storageDir,
+		filepath.FromSlash(normalizeRenderCacheAPIPath(apiPath)),
+		normalizeRenderCacheUserID(userID),
+		key+".png",
+	)
+}
+
+func (c *RenderCacheClient) readCacheFile(candidate string) ([]byte, error) {
+	resolved, err := resolveContainedCacheFile(c.storageDir, candidate)
+	if err != nil {
+		return nil, err
+	}
+	info, err := os.Stat(resolved)
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("render cache path is not a regular file")
+	}
+	if info.Size() < 0 || info.Size() > drawingMaxResponseBytes {
+		return nil, fmt.Errorf("render cache file exceeds %d bytes", drawingMaxResponseBytes)
+	}
+	file, err := os.Open(resolved)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	body, err := io.ReadAll(io.LimitReader(file, drawingMaxResponseBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(body) > drawingMaxResponseBytes {
+		return nil, fmt.Errorf("render cache file exceeds %d bytes", drawingMaxResponseBytes)
+	}
+	return body, nil
+}
+
+func (c *RenderCacheClient) prepareCacheTarget(candidate string) (string, error) {
+	root, target, err := absoluteContainedCachePath(c.storageDir, candidate)
+	if err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return "", err
+	}
+	targetDir := filepath.Dir(target)
+	if err := ensureRenderCacheDirectory(root, targetDir); err != nil {
+		return "", err
+	}
+	realRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", err
+	}
+	realDir, err := filepath.EvalSymlinks(targetDir)
+	if err != nil {
+		return "", err
+	}
+	if !renderCachePathWithin(realRoot, realDir) {
+		return "", fmt.Errorf("render cache target escapes storage directory")
+	}
+	if info, err := os.Lstat(target); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
+			return "", fmt.Errorf("render cache target is not a regular file")
+		}
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+	return target, nil
+}
+
+func ensureRenderCacheDirectory(root, targetDir string) error {
+	relative, err := filepath.Rel(root, targetDir)
+	if err != nil || relative == ".." || filepath.IsAbs(relative) || strings.HasPrefix(relative, ".."+string(os.PathSeparator)) {
+		return fmt.Errorf("render cache directory escapes storage directory")
+	}
+	current := root
+	if relative == "." {
+		return nil
+	}
+	for _, segment := range strings.Split(relative, string(os.PathSeparator)) {
+		if segment == "" || segment == "." {
+			continue
+		}
+		current = filepath.Join(current, segment)
+		info, statErr := os.Lstat(current)
+		switch {
+		case statErr == nil:
+			if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+				return fmt.Errorf("render cache directory contains a non-directory component")
+			}
+		case os.IsNotExist(statErr):
+			if err := os.Mkdir(current, 0o755); err != nil && !os.IsExist(err) {
+				return err
+			}
+		case statErr != nil:
+			return statErr
+		}
+	}
+	return nil
+}
+
+func resolveContainedCacheFile(storageDir, candidate string) (string, error) {
+	root, target, err := absoluteContainedCachePath(storageDir, candidate)
+	if err != nil {
+		return "", err
+	}
+	realRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", err
+	}
+	realTarget, err := filepath.EvalSymlinks(target)
+	if err != nil {
+		return "", err
+	}
+	if !renderCachePathWithin(realRoot, realTarget) {
+		return "", fmt.Errorf("render cache file escapes storage directory")
+	}
+	return realTarget, nil
+}
+
+func absoluteContainedCachePath(storageDir, candidate string) (string, string, error) {
+	root, err := filepath.Abs(filepath.Clean(storageDir))
+	if err != nil {
+		return "", "", err
+	}
+	target, err := filepath.Abs(filepath.Clean(candidate))
+	if err != nil {
+		return "", "", err
+	}
+	if !renderCachePathWithin(root, target) {
+		return "", "", fmt.Errorf("render cache path escapes storage directory")
+	}
+	return root, target, nil
+}
+
+func renderCachePathWithin(root, target string) bool {
+	relative, err := filepath.Rel(root, target)
+	if err != nil || relative == ".." || filepath.IsAbs(relative) {
+		return false
+	}
+	return !strings.HasPrefix(relative, ".."+string(os.PathSeparator))
+}
+
+func writeRenderCacheFileAtomic(target string, data []byte) (err error) {
+	temporary, err := os.CreateTemp(filepath.Dir(target), ".render-cache-*")
+	if err != nil {
+		return err
+	}
+	temporaryPath := temporary.Name()
+	defer func() {
+		_ = temporary.Close()
+		if err != nil {
+			_ = os.Remove(temporaryPath)
+		}
+	}()
+	if err = temporary.Chmod(0o644); err != nil {
+		return err
+	}
+	if _, err = temporary.Write(data); err != nil {
+		return err
+	}
+	if err = temporary.Close(); err != nil {
+		return err
+	}
+	if err = os.Rename(temporaryPath, target); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *RenderCacheClient) contentFilePath(apiPath string, userID string, key string, image []byte) (string, string) {
@@ -286,7 +695,7 @@ func (c *RenderCacheClient) contentFilePath(apiPath string, userID string, key s
 	return contentHash, filepath.Join(dir, contentHash+renderCacheFileExtFromData(image))
 }
 
-func (c *RenderCacheClient) registerImageCachePath(contentHash string, targetPath string, image []byte) {
+func (c *RenderCacheClient) registerImageCachePath(ctx context.Context, contentHash string, targetPath string, image []byte) {
 	if c == nil || c.imageStore == nil {
 		return
 	}
@@ -294,7 +703,9 @@ func (c *RenderCacheClient) registerImageCachePath(contentHash string, targetPat
 	if !ok {
 		return
 	}
-	c.imageStore.Insert(context.Background(), contentHash, "pjsk", rel, targetPath, int64(len(image)))
+	finishIndex := commandtrace.MeasureOperation(ctx, "drawing.cache_index")
+	c.imageStore.Insert(ctx, contentHash, "pjsk", rel, targetPath, int64(len(image)))
+	finishIndex()
 }
 
 func (c *RenderCacheClient) imageCacheRelativePath(targetPath string) (string, bool) {

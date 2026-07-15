@@ -1,10 +1,14 @@
 package sk
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
+
+	"haruki-cloud/internal/observability/commandtrace"
 )
 
 const forecastCachePersistenceVersion = 1
@@ -52,6 +56,7 @@ func (c *forecastDataCache) loadPersisted() {
 		}
 		c.entries[key] = entry
 	}
+	c.pruneLocked(time.Now().UTC())
 }
 
 func (c *forecastDataCache) snapshotForPersistenceLocked() persistedForecastDataCache {
@@ -73,26 +78,79 @@ func (c *forecastDataCache) snapshotForPersistenceLocked() persistedForecastData
 			RefreshedAt: refreshedAt,
 		})
 	}
+	sort.Slice(out.Entries, func(i, j int) bool {
+		left := out.Entries[i].Key
+		right := out.Entries[j].Key
+		if left.Region != right.Region {
+			return left.Region < right.Region
+		}
+		if left.EventID != right.EventID {
+			return left.EventID < right.EventID
+		}
+		if left.Scope != right.Scope {
+			return left.Scope < right.Scope
+		}
+		return left.WlCharacterID < right.WlCharacterID
+	})
 	return out
 }
 
-func writeForecastCacheFile(path string, cache persistedForecastDataCache) error {
-	if path == "" {
-		return nil
+func (c *forecastDataCache) persistLatest(ctx context.Context, requestedGeneration uint64) {
+	if c == nil || c.persistencePath == "" {
+		return
 	}
-	payload, err := json.Marshal(cache)
+	finishWait := commandtrace.MeasureOperation(ctx, "forecast_cache.persist_wait")
+	c.persistMu.Lock()
+	finishWait()
+	defer c.persistMu.Unlock()
+	if c.persistedGeneration >= requestedGeneration {
+		return
+	}
+
+	finishSnapshot := commandtrace.MeasureOperation(ctx, "forecast_cache.snapshot")
+	c.mu.Lock()
+	c.pruneLocked(time.Now().UTC())
+	persisted := c.snapshotForPersistenceLocked()
+	generation := c.generation
+	c.mu.Unlock()
+	finishSnapshot()
+
+	finishEncode := commandtrace.MeasureOperation(ctx, "forecast_cache.encode")
+	payload, err := json.Marshal(persisted)
+	finishEncode()
 	if err != nil {
-		return err
+		return
 	}
+	finishPersist := commandtrace.MeasureOperation(ctx, "forecast_cache.persist")
+	err = writeForecastCachePayload(c.persistencePath, payload)
+	finishPersist()
+	if err == nil {
+		c.persistedGeneration = generation
+	}
+}
+
+func writeForecastCachePayload(path string, payload []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, payload, 0o644); err != nil {
+	tmp, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".tmp-*")
+	if err != nil {
 		return err
 	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	if err := tmp.Chmod(0o644); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if _, err := tmp.Write(payload); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
 		return err
 	}
 	return nil

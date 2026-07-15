@@ -582,9 +582,11 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 			return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(region.String()), req.EventID, *req.WlCharacterID)
 		}
 		applyTrackerWorldBloomChapterTiming(req, chapter)
-		skTrackerDebugLogger.Debugf(
-			"resolved wl tracker selection: region=%s event=%d char=%d query=%q source=explicit",
-			region.String(), req.EventID, *req.WlCharacterID, query,
+		skTrackerDebugLogger.DebugContext(ctx, "world link tracker selection resolved",
+			"region", region.String(),
+			"event_id", req.EventID,
+			"character_id", *req.WlCharacterID,
+			"source", "explicit",
 		)
 		req.WlCharacterQuery = ""
 		return nil
@@ -602,9 +604,12 @@ func resolveTrackerCharacterSelection(ctx context.Context, app *renderapp.App, r
 	req.WlCharacterID = drawing.IntPtr(charID)
 	req.WlCharacterQuery = ""
 	applyTrackerWorldBloomChapterTiming(req, chapter)
-	skTrackerDebugLogger.Debugf(
-		"resolved wl tracker selection: region=%s event=%d chapter=%d char=%d query=%q",
-		region.String(), req.EventID, chapter.ChapterNo, charID, query,
+	skTrackerDebugLogger.DebugContext(ctx, "world link tracker selection resolved",
+		"region", region.String(),
+		"event_id", req.EventID,
+		"chapter", chapter.ChapterNo,
+		"character_id", charID,
+		"source", "query",
 	)
 	return nil
 }

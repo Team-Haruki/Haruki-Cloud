@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -182,7 +183,9 @@ func (c *Controller) RenderDoorUpgrade(query DoorUpgradeQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildDoorUpgradeRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

@@ -2,13 +2,11 @@ package pjsk
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"math/rand"
 	"strings"
-	"sync"
 	"time"
 
 	"haruki-cloud/internal/onebot11"
@@ -17,36 +15,60 @@ import (
 )
 
 const (
-	// dedupTTL is how long the dedup lock is held. Any duplicate event arriving
-	// within this window is silently dropped (empty segment list returned).
-	dedupTTL = 3 * time.Second
-
+	// dedupInFlightTTL is a crash-safety lease, not a post-command cooldown.
+	// MarkComplete removes the event lock as soon as processing ends. The lease
+	// must exceed the slowest supported command so retries cannot start a second
+	// render while the first request is still running.
+	dedupInFlightTTL = 5 * time.Minute
 	// rateLimitTTL is the per-user cooldown after any response is sent.
 	rateLimitTTL = 3 * time.Second
-
-	jitterMin = 100 * time.Millisecond
-	jitterMax = 1 * time.Second
 )
+
+var acquireRequestGuardScript = redis.NewScript(`
+if redis.call("EXISTS", KEYS[1]) ~= 0 then
+    return 0
+end
+if redis.call("SET", KEYS[2], ARGV[2], "PX", ARGV[1], "NX") then
+    return 1
+end
+return 0
+`)
+
+var completeRequestGuardScript = redis.NewScript(`
+if redis.call("GET", KEYS[1]) == ARGV[2] then
+    redis.call("DEL", KEYS[1])
+    redis.call("SET", KEYS[2], "1", "PX", ARGV[1])
+    return 1
+end
+return 0
+`)
 
 // RequestGuard provides per-event deduplication and per-user rate limiting
 // backed by Redis. A nil Guard is safe to use — all checks are skipped.
 //
 // Flow for each incoming request:
-//  1. Sleep a random 100–1000 ms jitter to spread concurrent instances.
-//  2. Check per-user rate limit key — drop silently if set.
-//  3. Try SET NX on the dedup lock keyed by (platform, group, user, command) —
+//  1. Atomically check the per-user rate limit. A limited request must not
+//     refresh the event lock.
+//  2. Try SET NX on the dedup lock keyed by (platform, group, user, command) —
 //     drop silently if another instance already holds the lock.
-//  4. Process the request normally.
-//  5. Call MarkComplete to arm the per-user rate limit for the next 3 s.
+//  3. Process the request normally.
+//  4. Call MarkComplete to release the event lock and arm the per-user rate
+//     limit for the next 3 s.
 type RequestGuard struct {
-	redis *redis.Client
-	mu    sync.Mutex
-	rng   *rand.Rand
+	redis   *redis.Client
+	cleanup *requestGuardCleanupDispatcher
+}
+
+type requestGuardLease struct {
+	proceed bool
+	token   string
+	lockKey string
+	rateKey string
 }
 
 type commandRequestGuard interface {
-	Acquire(ctx context.Context, req BotCommandRequest) bool
-	MarkComplete(ctx context.Context, req BotCommandRequest)
+	Acquire(ctx context.Context, req BotCommandRequest) requestGuardLease
+	MarkComplete(ctx context.Context, req BotCommandRequest, lease requestGuardLease)
 }
 
 // NewRequestGuard returns a new RequestGuard. Returns nil if rc is nil.
@@ -54,76 +76,142 @@ func NewRequestGuard(rc *redis.Client) *RequestGuard {
 	if rc == nil {
 		return nil
 	}
-	return &RequestGuard{
-		redis: rc,
-		rng:   rand.New(rand.NewSource(time.Now().UnixNano())),
-	}
+	guard := &RequestGuard{redis: rc}
+	guard.cleanup = newRequestGuardCleanupDispatcher(
+		requestGuardCleanupQueueCapacity,
+		requestGuardCleanupWorkerCount,
+		guard.complete,
+	)
+	return guard
 }
 
-// Acquire performs jitter, rate-limit check, and dedup lock acquisition.
+// Acquire performs the rate-limit check and dedup lock acquisition.
 // Returns true when the caller should proceed with processing.
 // Returns false when the request should be silently dropped — respond with
 // an empty segment list and do NOT call MarkComplete.
 // On Redis errors the guard fails open (returns true) to avoid blocking traffic.
-func (g *RequestGuard) Acquire(ctx context.Context, req BotCommandRequest) bool {
+func (g *RequestGuard) Acquire(ctx context.Context, req BotCommandRequest) requestGuardLease {
 	if g == nil {
-		return true
+		return requestGuardLease{proceed: true}
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if ctx.Err() != nil {
+		return requestGuardLease{}
+	}
+	token, err := newRequestGuardToken()
+	if err != nil {
+		return requestGuardLease{proceed: true}
 	}
 
-	// 1. Random jitter delay.
-	jitter := jitterMin + g.randomJitterOffset()
-	select {
-	case <-time.After(jitter):
-	case <-ctx.Done():
-		return false
-	}
-
-	// 2. Per-user rate limit: drop if the user already received a response recently.
 	rlKey := rateLimitKey(req)
-	if limited, err := g.redis.Exists(ctx, rlKey).Result(); err == nil && limited > 0 {
-		return false
-	}
-
-	// 3. Dedup lock: only the first instance to SET NX for this exact event proceeds.
 	lockKey := dedupKey(req)
-	res, err := g.redis.SetArgs(ctx, lockKey, "1", redis.SetArgs{TTL: dedupTTL, Mode: "NX"}).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return true // fail open on real Redis error
+	result, err := acquireRequestGuardScript.Run(
+		ctx,
+		g.redis,
+		[]string{rlKey, lockKey},
+		dedupInFlightTTL.Milliseconds(),
+		token,
+	).Int64()
+	if err != nil {
+		if ctx.Err() != nil {
+			return requestGuardLease{}
+		}
+		// Fail open without an owner token. Completion must not release a lock
+		// that may have been acquired by another request while Redis recovered.
+		return requestGuardLease{proceed: true}
 	}
-	return res == "OK"
+	if result != 1 {
+		return requestGuardLease{}
+	}
+	return requestGuardLease{
+		proceed: true,
+		token:   token,
+		lockKey: lockKey,
+		rateKey: rlKey,
+	}
 }
 
 // MarkComplete arms the per-user rate limit key. Call this after any request
 // where a response (success or user-visible error) was sent to the user.
 // Do NOT call it when Acquire returned false.
-func (g *RequestGuard) MarkComplete(ctx context.Context, req BotCommandRequest) {
-	if g == nil {
+func (g *RequestGuard) MarkComplete(_ context.Context, _ BotCommandRequest, lease requestGuardLease) {
+	if g == nil || lease.token == "" || lease.lockKey == "" || lease.rateKey == "" {
 		return
 	}
-	_ = g.redis.Set(ctx, rateLimitKey(req), "1", rateLimitTTL).Err()
+	job := requestGuardCleanupJob{
+		lockKey: strings.Clone(lease.lockKey),
+		rateKey: strings.Clone(lease.rateKey),
+		owner:   strings.Clone(lease.token),
+	}
+	if g.cleanup != nil && g.cleanup.Enqueue(job) {
+		return
+	}
+
+	// Saturation must not leave an otherwise healthy Redis owner lock behind for
+	// the full crash-safety TTL. Use one short owner-safe fallback attempt. This
+	// only adds bounded latency when the background queue is unavailable.
+	var complete requestGuardCleanupFunc
+	if g.cleanup != nil && g.cleanup.complete != nil {
+		complete = g.cleanup.complete
+	} else if g.redis != nil {
+		complete = g.complete
+	}
+	if complete == nil {
+		requestGuardFailureLogger.Warn("request guard cleanup unavailable",
+			"event", "request_guard_cleanup_enqueue",
+			"outcome", "unavailable",
+		)
+		return
+	}
+	fallbackCtx, cancel := context.WithTimeout(context.Background(), requestGuardCleanupFallbackTimeout)
+	ownerMatched, err := complete(fallbackCtx, job)
+	cancel()
+	attrs := []any{
+		"event", "request_guard_cleanup_enqueue",
+		"outcome", "fallback",
+		"owner_matched", ownerMatched,
+	}
+	if err != nil {
+		attrs = append(attrs, "error_type", fmt.Sprintf("%T", err))
+		requestGuardFailureLogger.Warn("request guard cleanup fallback failed", attrs...)
+		return
+	}
+	requestGuardLogger.Info("request guard cleanup queue saturated", attrs...)
 }
 
-func acquireRequestGuard(ctx context.Context, guard commandRequestGuard, req BotCommandRequest) bool {
+func (g *RequestGuard) complete(ctx context.Context, job requestGuardCleanupJob) (bool, error) {
+	result, err := completeRequestGuardScript.Run(
+		ctx,
+		g.redis,
+		[]string{job.lockKey, job.rateKey},
+		rateLimitTTL.Milliseconds(),
+		job.owner,
+	).Int64()
+	return result == 1, err
+}
+
+func acquireRequestGuard(ctx context.Context, guard commandRequestGuard, req BotCommandRequest) requestGuardLease {
 	if guard == nil {
-		return true
+		return requestGuardLease{proceed: true}
 	}
 	return guard.Acquire(ctx, req)
 }
 
-func markRequestGuardComplete(ctx context.Context, guard commandRequestGuard, req BotCommandRequest) {
-	if guard == nil {
+func markRequestGuardComplete(ctx context.Context, guard commandRequestGuard, req BotCommandRequest, lease requestGuardLease) {
+	if guard == nil || !lease.proceed {
 		return
 	}
-	guard.MarkComplete(ctx, req)
+	guard.MarkComplete(ctx, req, lease)
 }
 
-func (g *RequestGuard) randomJitterOffset() time.Duration {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	if g.rng == nil {
-		g.rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+func newRequestGuardToken() (string, error) {
+	var raw [16]byte
+	if _, err := rand.Read(raw[:]); err != nil {
+		return "", err
 	}
-	return time.Duration(g.rng.Int63n(int64(jitterMax - jitterMin)))
+	return hex.EncodeToString(raw[:]), nil
 }
 
 // dedupKey returns the Redis key that uniquely identifies a command event.

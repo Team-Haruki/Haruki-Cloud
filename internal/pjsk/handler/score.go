@@ -158,6 +158,8 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	switch rc.Cmd.Mode {
 	case "score-control":
+		finishBuild := measurePayloadBuild(rc.Ctx)
+		defer finishBuild()
 		req := drawing.ScoreControlRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		if req.MusicID <= 0 || req.TargetPoint <= 0 || len(req.ValidScores) == 0 {
@@ -167,8 +169,11 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			req = *reqPtr
 		}
+		finishBuild()
 		data, err = scoreCtrl.RenderScoreControl(req)
 	case "score-custom-room":
+		finishBuild := measurePayloadBuild(rc.Ctx)
+		defer finishBuild()
 		req := drawing.CustomRoomScoreRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		if req.TargetPoint <= 0 || len(req.CandidatePairs) == 0 {
@@ -178,8 +183,11 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			req = *reqPtr
 		}
+		finishBuild()
 		data, err = scoreCtrl.RenderCustomRoomScore(req)
 	case "score-music-meta":
+		finishBuild := measurePayloadBuild(rc.Ctx)
+		defer finishBuild()
 		var params struct {
 			Queries []string `json:"queries"`
 		}
@@ -195,8 +203,11 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
+		finishBuild()
 		data, err = scoreCtrl.RenderMusicMeta(req)
 	case "score-music-board":
+		finishBuild := measurePayloadBuild(rc.Ctx)
+		defer finishBuild()
 		req := drawing.MusicBoardRequest{}
 		mergeParams(rc.Cmd.Params, &req)
 		if len(req.Items) == 0 {
@@ -214,6 +225,7 @@ func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
 			}
 			req = *reqPtr
 		}
+		finishBuild()
 		data, err = scoreCtrl.RenderMusicBoard(req)
 	default:
 		return nil, unsupportedModeError("score", rc.Cmd.Mode)

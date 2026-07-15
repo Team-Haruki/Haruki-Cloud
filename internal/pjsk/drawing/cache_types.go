@@ -1,6 +1,7 @@
 package drawing
 
 import (
+	"container/list"
 	"haruki-cloud/utils/imagecache"
 	neturl "net/url"
 	"sync"
@@ -14,16 +15,22 @@ import (
 // It is keyed by a stable hash of (endpoint, sanitized request payload) and
 // avoids repeated Drawing API calls when the request has not changed.
 type localRenderCache struct {
-	mu      sync.RWMutex
-	entries map[string]*localRenderEntry
-	ttl     time.Duration
-	flight  singleflight.Group
+	mu         sync.Mutex
+	entries    map[string]*localRenderEntry
+	lru        *list.List
+	totalBytes int64
+	maxEntries int
+	maxBytes   int64
+	ttl        time.Duration
+	flight     singleflight.Group
 }
 
 type localRenderEntry struct {
 	data      []byte
 	expiresAt time.Time
 	permanent bool
+	size      int64
+	element   *list.Element
 }
 
 type RenderCacheConfig struct {

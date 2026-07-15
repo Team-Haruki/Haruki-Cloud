@@ -3,11 +3,14 @@ package sekai
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/utils/logger"
 	"haruki-cloud/version"
 
 	"github.com/bytedance/sonic"
@@ -21,6 +24,15 @@ type TrackerClient struct {
 	requestCtx context.Context
 	flight     *singleflight.Group
 }
+
+type trackerRawResult struct {
+	body       []byte
+	err        error
+	operations []commandtrace.Stats
+	leader     *trackerFlightToken
+}
+
+type trackerFlightToken byte
 
 // NewTrackerClient constructs a TrackerClient bound to the supplied config.
 // Callers own the returned client; pass it via dependency injection rather than
@@ -64,7 +76,7 @@ func (c *TrackerClient) userAgent() string {
 }
 
 func (c *TrackerClient) baseURL() (string, error) {
-	if c == nil {
+	if c == nil || c.config == nil {
 		return "", ErrClientNotConfigured
 	}
 	baseURL := strings.TrimRight(strings.TrimSpace(c.config.BaseURL), "/")
@@ -150,10 +162,13 @@ func getAs[T any](c *TrackerClient, path string) (*T, error) {
 	if err != nil {
 		return nil, err
 	}
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "tracker.decode")
 	var result T
 	if err := sonic.Unmarshal(body, &result); err != nil {
+		finishDecode()
 		return nil, fmt.Errorf("tracker: failed to unmarshal response: %w", err)
 	}
+	finishDecode()
 	return &result, nil
 }
 
@@ -167,37 +182,79 @@ func (c *TrackerClient) getRaw(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.flight == nil {
-		c.flight = &singleflight.Group{}
+	flight := c.flight
+	if flight == nil {
+		// Constructor-created clients share a group across request-scoped clones.
+		// Keep zero-value/literal clients race-safe without mutating shared state.
+		flight = &singleflight.Group{}
 	}
 	key := baseURL + path
-	value, err, _ := c.flight.Do(key, func() (any, error) {
+	requestCtx := c.requestContext()
+	callerToken := new(trackerFlightToken)
+	resultCh := flight.DoChan(key, func() (any, error) {
+		timeout := config.TrackerHTTPClientTimeout
+		if c.config != nil && c.config.Timeout > 0 {
+			timeout = c.config.Timeout
+		}
+		detached := context.Background()
+		detached = logger.WithContextAttrs(detached, slog.Bool("shared_work", true))
+		sharedBase, cancel := context.WithTimeout(detached, timeout)
+		defer cancel()
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+		complete := func(result trackerRawResult) trackerRawResult {
+			result.operations = trace.Snapshot().Operations
+			return result
+		}
 		url := baseURL + path
+		finishHTTP := commandtrace.MeasureOperation(sharedCtx, "tracker.http")
 		resp, err := c.http.R().
-			SetContext(c.requestContext()).
+			SetContext(sharedCtx).
 			SetHeader("User-Agent", c.userAgent()).
 			Get(url)
+		finishHTTP()
+		result := trackerRawResult{leader: callerToken}
 		if err != nil {
-			return nil, fmt.Errorf("tracker: request failed after retries: %w", sanitizeNetworkError(err))
+			result.err = fmt.Errorf("tracker: request failed after retries: %w", sanitizeNetworkError(err))
+			return complete(result), nil
 		}
 
 		switch resp.StatusCode() {
 		case 200:
-			return append([]byte(nil), resp.Body()...), nil
+			result.body = append([]byte(nil), resp.Body()...)
 		case 404:
-			return nil, ErrRankingNotFound
+			result.err = ErrRankingNotFound
 		case 429:
-			return nil, &TrackerAPIError{StatusCode: 429, Message: "rate limited by tracker"}
+			result.err = &TrackerAPIError{StatusCode: 429, Message: "rate limited by tracker"}
 		case 503:
-			return nil, ErrServerMaintenance
+			result.err = ErrServerMaintenance
 		default:
 			msg := parseMessage(resp.Body())
-			return nil, &TrackerAPIError{StatusCode: resp.StatusCode(), Message: msg}
+			result.err = &TrackerAPIError{StatusCode: resp.StatusCode(), Message: msg}
 		}
+		return complete(result), nil
 	})
-	if err != nil {
-		return nil, err
+	finishWait := commandtrace.MeasureOperation(requestCtx, "tracker.wait")
+	var flightResult singleflight.Result
+	select {
+	case <-requestCtx.Done():
+		finishWait()
+		return nil, requestCtx.Err()
+	case flightResult = <-resultCh:
+		finishWait()
 	}
-	body, _ := value.([]byte)
-	return append([]byte(nil), body...), nil
+	if flightResult.Err != nil {
+		return nil, flightResult.Err
+	}
+	result, ok := flightResult.Val.(trackerRawResult)
+	if !ok {
+		return nil, fmt.Errorf("tracker: unexpected shared response type %T", flightResult.Val)
+	}
+	commandtrace.MergeOperations(requestCtx, result.operations)
+	if result.leader != callerToken {
+		commandtrace.RecordOperation(requestCtx, "tracker.shared", 0)
+	}
+	if result.err != nil {
+		return nil, result.err
+	}
+	return append([]byte(nil), result.body...), nil
 }

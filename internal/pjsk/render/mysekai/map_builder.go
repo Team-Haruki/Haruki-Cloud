@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -214,18 +215,40 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 // HasRemainingHarvestResources reports whether the current map request contains
 // visible resource drops before asking the drawing service to render it.
 func (c *Controller) HasRemainingHarvestResources(query MapQuery) (bool, error) {
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMapRequest(query)
+	finishBuild()
 	if err != nil {
 		return false, err
+	}
+	return MapRequestHasRemainingHarvestResources(payload), nil
+}
+
+// MapRequestHasRemainingHarvestResources reports whether an already-built map
+// request contains a visible resource drop.
+func MapRequestHasRemainingHarvestResources(payload *drawing.MysekaiMsrMapRequest) bool {
+	if payload == nil {
+		return false
 	}
 	for _, site := range payload.Maps {
 		for _, drop := range site.ResourceDrops {
 			if !drop.Hide {
-				return true, nil
+				return true
 			}
 		}
 	}
-	return false, nil
+	return false
+}
+
+// RenderMapRequest renders a map request that has already been built.
+func (c *Controller) RenderMapRequest(payload *drawing.MysekaiMsrMapRequest) ([]byte, error) {
+	if c == nil || c.drawing == nil {
+		return nil, fmt.Errorf("drawing client is not configured")
+	}
+	if payload == nil {
+		return nil, fmt.Errorf("mysekai map request is nil")
+	}
+	return c.drawing.GenerateMysekaiMap(payload)
 }
 
 // RenderMap renders the MySekai map view.
@@ -233,9 +256,11 @@ func (c *Controller) RenderMap(query MapQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMapRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateMysekaiMap(payload)
+	return c.RenderMapRequest(payload)
 }

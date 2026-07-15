@@ -159,6 +159,8 @@ const (
 	// Long-note combo ticks advance every 240 custom-score ticks.
 	customChartComboTickInterval = 240
 	customChartMaxLane           = 11
+	customChartMaxDecodedBytes   = 8 << 20
+	customChartMaxEncodedBytes   = 12 << 20
 )
 
 func IsCustomChartIDQuery(query string) bool {
@@ -1077,6 +1079,9 @@ func decodeCustomMusicScoreJSONBytes(raw []byte) ([]byte, error) {
 	if len(raw) == 0 {
 		return nil, fmt.Errorf("自制谱面 JSON 为空")
 	}
+	if len(raw) > customChartMaxEncodedBytes {
+		return nil, fmt.Errorf("自制谱面数据超过 %d 字节限制", customChartMaxEncodedBytes)
+	}
 
 	if jsonFromEnvelope, ok, err := decodeCustomMusicScoreEnvelope(raw); ok || err != nil {
 		return jsonFromEnvelope, err
@@ -1144,9 +1149,12 @@ func gunzipMaybe(raw []byte) ([]byte, bool, error) {
 		return nil, true, fmt.Errorf("解压自制谱面 JSON 失败: %w", err)
 	}
 	defer reader.Close()
-	decoded, err := io.ReadAll(reader)
+	decoded, err := io.ReadAll(io.LimitReader(reader, customChartMaxDecodedBytes+1))
 	if err != nil {
 		return nil, true, fmt.Errorf("读取自制谱面 JSON 失败: %w", err)
+	}
+	if len(decoded) > customChartMaxDecodedBytes {
+		return nil, true, fmt.Errorf("自制谱面解压后超过 %d 字节限制", customChartMaxDecodedBytes)
 	}
 	return decoded, true, nil
 }
@@ -1173,6 +1181,9 @@ func base64DecodeMaybe(value string) ([]byte, bool, error) {
 
 func ensureJSONBytes(raw []byte) ([]byte, error) {
 	raw = bytes.TrimSpace(raw)
+	if len(raw) > customChartMaxDecodedBytes {
+		return nil, fmt.Errorf("自制谱面 JSON 超过 %d 字节限制", customChartMaxDecodedBytes)
+	}
 	if looksLikeJSON(raw) && stdjson.Valid(raw) {
 		return raw, nil
 	}

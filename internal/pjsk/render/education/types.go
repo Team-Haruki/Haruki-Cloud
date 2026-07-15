@@ -153,10 +153,11 @@ type ShopItemCost struct {
 // ── Controller ──────────────────────────────────────────────────────────────
 
 type Controller struct {
-	drawing  *drawing.HarukiDrawingClient
-	assets   *assets.AssetHelper
-	sources  *rendersource.Registry[DataSource]
-	snapshot snapshot.Snapshot
+	drawing    *drawing.HarukiDrawingClient
+	assets     *assets.AssetHelper
+	sources    *rendersource.Registry[DataSource]
+	snapshot   snapshot.Snapshot
+	requestCtx context.Context
 }
 
 // ProviderAdapter bridges provider.MasterDataProvider to education.DataSource.

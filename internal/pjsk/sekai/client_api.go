@@ -10,6 +10,7 @@ import (
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/observability/commandtrace"
 
 	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
@@ -90,10 +91,18 @@ func (c *HarukiSekaiAPIClient) GetUserProfile(server, userID string) (*GetAnothe
 		return nil, err
 	}
 	var result GetAnotherProfileResponse
-	if err := sonic.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("sekai api: failed to unmarshal profile response: %w", err)
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
+	decodeErr := sonic.Unmarshal(body, &result)
+	finishDecode()
+	if decodeErr != nil {
+		return nil, fmt.Errorf("sekai api: failed to unmarshal profile response: %w", decodeErr)
 	}
 	return &result, nil
+}
+
+// GetUserProfileContext is GetUserProfile with request cancellation and tracing.
+func (c *HarukiSekaiAPIClient) GetUserProfileContext(ctx context.Context, server, userID string) (*GetAnotherProfileResponse, error) {
+	return c.WithContext(ctx).GetUserProfile(server, userID)
 }
 
 // GetSystem fetches the current game system status.
@@ -109,8 +118,11 @@ func (c *HarukiSekaiAPIClient) GetSystem(server string) (*GetSystemResponse, err
 		return nil, err
 	}
 	var result GetSystemResponse
-	if err := sonic.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("sekai api: failed to unmarshal system response: %w", err)
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
+	decodeErr := sonic.Unmarshal(body, &result)
+	finishDecode()
+	if decodeErr != nil {
+		return nil, fmt.Errorf("sekai api: failed to unmarshal system response: %w", decodeErr)
 	}
 	return &result, nil
 }
@@ -128,8 +140,11 @@ func (c *HarukiSekaiAPIClient) GetInformation(server string) (*GetInformationRes
 		return nil, err
 	}
 	var result GetInformationResponse
-	if err := sonic.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("sekai api: failed to unmarshal information response: %w", err)
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
+	decodeErr := sonic.Unmarshal(body, &result)
+	finishDecode()
+	if decodeErr != nil {
+		return nil, fmt.Errorf("sekai api: failed to unmarshal information response: %w", decodeErr)
 	}
 	return &result, nil
 }
@@ -278,8 +293,11 @@ func (c *HarukiSekaiAPIClient) GetCustomMusicScorePublished(server, scoreID stri
 		return nil, err
 	}
 	var result CustomMusicScorePublishedSearchResponse
-	if err := sonic.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("sekai api: failed to unmarshal custom music score response: %w", err)
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
+	decodeErr := sonic.Unmarshal(body, &result)
+	finishDecode()
+	if decodeErr != nil {
+		return nil, fmt.Errorf("sekai api: failed to unmarshal custom music score response: %w", decodeErr)
 	}
 	if result.UserCustomMusicScoreInfoJSON == nil {
 		return nil, ErrUserNotFound
@@ -311,8 +329,13 @@ func (c *HarukiSekaiAPIClient) get(path string) ([]byte, error) {
 		defer lease.Release()
 	}
 
+	finishHTTP := commandtrace.MeasureOperation(c.requestContext(), "sekai.http")
 	resp, err := c.authReq().Get(baseURL + path)
+	finishHTTP()
 	if err != nil {
+		if ctxErr := c.requestContext().Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		return nil, fmt.Errorf("sekai api: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
@@ -332,8 +355,13 @@ func (c *HarukiSekaiAPIClient) post(path string, body any) ([]byte, error) {
 	if body != nil {
 		request.SetBody(body)
 	}
+	finishHTTP := commandtrace.MeasureOperation(c.requestContext(), "sekai.http")
 	resp, err := request.Post(baseURL + path)
+	finishHTTP()
 	if err != nil {
+		if ctxErr := c.requestContext().Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		return nil, fmt.Errorf("sekai api: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 	return handleSekaiAPIResponse(resp)
@@ -358,7 +386,9 @@ func (c *HarukiSekaiAPIClient) acquireTarget() (string, *upstream.Lease, error) 
 		return "", nil, ErrClientNotConfigured
 	}
 	if c.pool != nil && c.pool.Enabled() {
+		finishQueue := commandtrace.MeasureOperation(c.requestContext(), "sekai.queue")
 		lease, err := c.pool.Acquire(c.requestContext())
+		finishQueue()
 		if err != nil {
 			return "", nil, fmt.Errorf("sekai api: upstream unavailable: %w", err)
 		}

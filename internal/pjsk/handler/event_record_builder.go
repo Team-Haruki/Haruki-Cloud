@@ -23,8 +23,12 @@ type eventMasterEntry = map[string]any
 // Toolbox suite data, cross-referencing with master data for event metadata.
 // Regular events come from userEvents; world bloom events come from userWorldBlooms.
 func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value) (*drawing.EventRecordRequest, error) {
+	if rc == nil || rc.App == nil {
+		return nil, fmt.Errorf("event record runtime is unavailable")
+	}
+	assetHelper := rc.App.Assets.WithContext(rc.Ctx)
 	var snapshot rendersnapshot.Snapshot
-	if rc != nil && rc.App != nil && rc.App.Bindings != nil && strings.TrimSpace(rc.Platform) != "" && strings.TrimSpace(rc.PlatformUserID) != "" {
+	if rc.App.Bindings != nil && strings.TrimSpace(rc.Platform) != "" && strings.TrimSpace(rc.PlatformUserID) != "" {
 		binding, resolvedSnapshot, err := rc.requireVisibleSuiteSnapshot()
 		if err != nil {
 			return nil, err
@@ -106,7 +110,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	eventInfo := make([]drawing.EventHistory, 0)
 	eventInfoByID := make(map[int]int)
 	for _, ue := range rawData.UserEvents {
-		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, intPtr(ue.EventPoint), rc.App.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[ue.EventID], ue.EventID, intPtr(ue.EventPoint), assetHelper, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -129,7 +133,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		if _, exists := eventInfoByID[eventID]; exists {
 			continue
 		}
-		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, nil, rc.App.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, nil, assetHelper, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -150,7 +154,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		if _, exists := eventInfoByID[eventID]; exists {
 			continue
 		}
-		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, nil, rc.App.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[eventID], eventID, nil, assetHelper, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -166,7 +170,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 	wlEventInfo := make([]drawing.EventHistory, 0, len(rawData.UserWorldBlooms))
 	wlEventInfoByKey := make(map[eventRecordWorldBloomChapterKey]int)
 	for _, wb := range rawData.UserWorldBlooms {
-		hist := buildEventHistoryFromMaster(eventMaster[wb.EventID], wb.EventID, intPtr(wb.WorldBloomChapterPoint), rc.App.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[wb.EventID], wb.EventID, intPtr(wb.WorldBloomChapterPoint), assetHelper, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -186,7 +190,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		}
 		if wb.GameCharacterID > 0 {
 			hist.WlCharaIconPath = stringPtr(assets.ResolveRegionAssetPath(
-				rc.App.Assets,
+				assetHelper,
 				regionStr,
 				fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", wb.GameCharacterID),
 			))
@@ -198,7 +202,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		if _, exists := wlEventInfoByKey[key]; exists {
 			continue
 		}
-		hist := buildEventHistoryFromMaster(eventMaster[key.eventID], key.eventID, nil, rc.App.Assets, regionStr)
+		hist := buildEventHistoryFromMaster(eventMaster[key.eventID], key.eventID, nil, assetHelper, regionStr)
 		if hist == nil {
 			continue
 		}
@@ -207,7 +211,7 @@ func buildEventRecordFromSnapshot(rc *RequestContext, region renderregion.Value)
 		hist.RankTier = intPtr(display.tier)
 		if key.gameCharacterID > 0 {
 			hist.WlCharaIconPath = stringPtr(assets.ResolveRegionAssetPath(
-				rc.App.Assets,
+				assetHelper,
 				regionStr,
 				fmt.Sprintf("character/character_sd_l/chr_sp_%d.png", key.gameCharacterID),
 			))

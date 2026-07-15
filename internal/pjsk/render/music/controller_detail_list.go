@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -94,7 +95,9 @@ func (c *Controller) RenderMusicDetail(query Query) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildMusicDetailRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +131,9 @@ func (c *Controller) RenderMusicBriefList(query BriefListQuery) ([]byte, error) 
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildMusicBriefListRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -332,8 +337,10 @@ func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildMusicListRequest(query)
 	if err != nil {
+		finishBuild()
 		return nil, err
 	}
 	includeLeaks := query.IncludeLeaks
@@ -343,6 +350,7 @@ func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
 		(query.Full || strings.TrimSpace(query.ResultFilter) == "") {
 		includeLeaks = true
 	}
+	finishBuild()
 	return c.drawing.GenerateMusicList(payload, query.ShowID, includeLeaks)
 }
 

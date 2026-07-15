@@ -244,7 +244,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 				return nil, err
 			}
 
-			data, err = rc.App.Decks.RenderAutoRecommend(q)
+			data, err = rc.App.Decks.WithContext(rc.Ctx).RenderAutoRecommend(q)
 			if err != nil {
 				return nil, err
 			}
@@ -298,7 +298,10 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			q.PublicProfileResp = resp
 			if rc.App.Profiles != nil {
 				pq := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
-				if detail, buildErr := rc.App.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(pq, resp, targetSnapshot); buildErr == nil {
+				finishBuild := measurePayloadBuild(rc.Ctx)
+				detail, buildErr := rc.App.Profiles.WithContext(rc.Ctx).BuildDetailedProfileCardFromAPIWithSnapshot(pq, resp, targetSnapshot)
+				finishBuild()
+				if buildErr == nil {
 					q.Profile = detail
 				}
 			}

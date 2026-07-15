@@ -9,6 +9,10 @@ import (
 )
 
 func TestToolboxMySekaiPayloadProviderAllowsMySekaiOnlyBinding(t *testing.T) {
+	client := &fakePrivateDataClient{
+		mysekaiJSON: []byte(`{"updatedResources":{"userMysekaiPhotos":[]}}`),
+		uploadTime:  "1710000000",
+	}
 	provider := NewToolboxMySekaiPayloadProvider(
 		&fakeBindingLookup{
 			bindings: map[string]*accountdata.ResolvedBinding{
@@ -20,13 +24,12 @@ func TestToolboxMySekaiPayloadProviderAllowsMySekaiOnlyBinding(t *testing.T) {
 				},
 			},
 		},
-		&fakePrivateDataClient{
-			mysekaiJSON: []byte(`{"updatedResources":{"userMysekaiPhotos":[]}}`),
-			uploadTime:  "1710000000",
-		},
+		client,
 	)
 
-	payload, err := provider.Resolve(context.Background(), Selector{
+	type contextKey struct{}
+	ctx := context.WithValue(context.Background(), contextKey{}, "request")
+	payload, err := provider.Resolve(ctx, Selector{
 		IMPlatform: "qq",
 		IMUserID:   "10001",
 		Region:     renderregion.JP,
@@ -36,5 +39,8 @@ func TestToolboxMySekaiPayloadProviderAllowsMySekaiOnlyBinding(t *testing.T) {
 	}
 	if string(payload) != `{"updatedResources":{"userMysekaiPhotos":[]}}` {
 		t.Fatalf("unexpected payload: %s", string(payload))
+	}
+	if client.mysekaiCtx != ctx {
+		t.Fatal("mysekai payload request did not receive the caller context")
 	}
 }

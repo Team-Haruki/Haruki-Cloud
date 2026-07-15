@@ -2,6 +2,7 @@ package music
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"math"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
@@ -48,6 +50,12 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 	if c == nil {
 		return nil, fmt.Errorf("music controller is not configured")
 	}
+	ctx := c.contextOrBackground()
+	finishLookup := commandtrace.MeasureOperation(ctx, "music.bpm_lookup")
+	defer finishLookup()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if query.BPM <= 0 {
 		return nil, fmt.Errorf("BPM 必须大于 0")
 	}
@@ -59,29 +67,49 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 
 	now := currentMusicVisibilityTime()
 	matches := make([]BPMMatch, 0)
-	for _, musicInfo := range source.GetMusics() {
-		if !isMusicVisibleAt(musicInfo, now) {
-			continue
-		}
-
-		for _, difficulty := range c.collectBPMSearchDifficulties(source, musicInfo.ID, query.Difficulty) {
-			chartPath := c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
-			if chartPath == "" {
+	finishScan := commandtrace.MeasureOperation(ctx, "music.chart_scan")
+	scanErr := func() error {
+		defer finishScan()
+		for _, musicInfo := range source.GetMusics() {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if !isMusicVisibleAt(musicInfo, now) {
 				continue
 			}
 
-			parsed, err := parseChartBPM(chartPath)
-			if err != nil || !chartContainsBPM(parsed, query.BPM) {
-				continue
-			}
+			for _, difficulty := range c.collectBPMSearchDifficulties(source, musicInfo.ID, query.Difficulty) {
+				if err := ctx.Err(); err != nil {
+					return err
+				}
+				chartPath := c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
+				if chartPath == "" {
+					continue
+				}
 
-			matches = append(matches, BPMMatch{
-				Music:      buildLookupMusic(musicInfo, builder, region),
-				Difficulty: difficulty,
-				MainBPM:    parsed.MainBPM,
-				Events:     parsed.Events,
-			})
+				parsed, err := parseChartBPM(ctx, chartPath)
+				if err != nil {
+					if ctx.Err() != nil {
+						return ctx.Err()
+					}
+					continue
+				}
+				if !chartContainsBPM(parsed, query.BPM) {
+					continue
+				}
+
+				matches = append(matches, BPMMatch{
+					Music:      buildLookupMusic(musicInfo, builder, region),
+					Difficulty: difficulty,
+					MainBPM:    parsed.MainBPM,
+					Events:     parsed.Events,
+				})
+			}
 		}
+		return nil
+	}()
+	if scanErr != nil {
+		return nil, scanErr
 	}
 
 	if len(matches) == 0 {
@@ -100,6 +128,12 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 	if c == nil {
 		return nil, fmt.Errorf("music controller is not configured")
+	}
+	ctx := c.contextOrBackground()
+	finishLookup := commandtrace.MeasureOperation(ctx, "music.bpm_lookup")
+	defer finishLookup()
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	parser := NewParser(c.banCharacterNicknames)
 	if preferred, cleaned := parser.extractDiff(query.Query); preferred != "" && strings.TrimSpace(query.Difficulty) == "" {
@@ -123,7 +157,12 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 		chartPath string
 		diffUsed  string
 	)
+	finishScan := commandtrace.MeasureOperation(ctx, "music.chart_scan")
 	for _, difficulty := range difficulties {
+		if err := ctx.Err(); err != nil {
+			finishScan()
+			return nil, err
+		}
 		chartPath = c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
 		if chartPath == "" {
 			continue
@@ -132,10 +171,12 @@ func (c *Controller) ResolveMusicBPM(query Query) (*BPMResult, error) {
 		break
 	}
 	if chartPath == "" {
+		finishScan()
 		return nil, fmt.Errorf("当前环境没有可读取的本地谱面文件，无法查询 BPM")
 	}
 
-	parsed, err := parseChartBPM(chartPath)
+	parsed, err := parseChartBPM(ctx, chartPath)
+	finishScan()
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +307,15 @@ type parsedChartBPM struct {
 	Duration float64
 }
 
-func parseChartBPM(path string) (*parsedChartBPM, error) {
+func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	finishRead := commandtrace.MeasureOperation(ctx, "music.chart_read")
+	defer finishRead()
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open chart file: %w", err)
@@ -279,6 +328,9 @@ func parseChartBPM(path string) (*parsedChartBPM, error) {
 	barCount := 0
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		match := susLinePattern.FindStringSubmatch(strings.TrimSpace(scanner.Text()))
 		if len(match) != 4 {
 			continue
@@ -293,6 +345,13 @@ func parseChartBPM(path string) (*parsedChartBPM, error) {
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("failed to read chart file: %w", err)
+	}
+	finishRead()
+
+	finishParse := commandtrace.MeasureOperation(ctx, "music.chart_parse")
+	defer finishParse()
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
 	bpmPalette := make(map[string]float64)
@@ -313,6 +372,9 @@ func parseChartBPM(path string) (*parsedChartBPM, error) {
 	}
 	rawEvents := make([]rawEvent, 0)
 	for token, value := range score {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		if token[1] != "08" {
 			continue
 		}

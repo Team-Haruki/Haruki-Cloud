@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 )
@@ -28,12 +28,18 @@ func ExecuteCommandRequest(ctx context.Context, resolved *CommandRequest, app *r
 		return nil, fmt.Errorf("bridge: nil resolved command")
 	}
 	if resolved.IsHelp {
+		finish := commandtrace.MeasurePhase(ctx, "command_execute")
+		defer finish()
 		return commandHelpMessage(ctx, resolved, app)
 	}
 
-	tPrepare := time.Now()
-	runtime, shortCircuit, err := PrepareExecutionRuntime(ctx, resolved, app)
-	recordCommandStage(ctx, "runtime_prepare", time.Since(tPrepare))
+	var runtime *ExecutionRuntime
+	var shortCircuit onebot11.Message
+	func() {
+		finishPrepare := commandtrace.MeasurePhase(ctx, "runtime_prepare")
+		defer finishPrepare()
+		runtime, shortCircuit, err = PrepareExecutionRuntime(ctx, resolved, app)
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +51,11 @@ func ExecuteCommandRequest(ctx context.Context, resolved *CommandRequest, app *r
 		return nil, fmt.Errorf("command executor is not bound: module=%v mode=%s", resolved.Module, resolved.Mode)
 	}
 
-	tExecute := time.Now()
-	message, err = resolved.executor(runtime)
-	recordCommandStage(runtime.Context, "executor", time.Since(tExecute))
+	func() {
+		finishExecute := commandtrace.MeasurePhase(runtime.Context, "command_execute")
+		defer finishExecute()
+		message, err = resolved.executor(runtime)
+	}()
 	if err != nil {
 		return nil, WrapDomainError(err)
 	}

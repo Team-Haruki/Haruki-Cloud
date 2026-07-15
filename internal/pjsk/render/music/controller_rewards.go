@@ -3,6 +3,7 @@ package music
 import (
 	"fmt"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
@@ -23,7 +24,9 @@ func (c *Controller) RenderMusicRewardsDetail(query RewardsDetailQuery) ([]byte,
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildMusicRewardsDetailRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +37,9 @@ func (c *Controller) RenderMusicRewardsDetailFromAchievements(query RewardsDetai
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildMusicRewardsDetailRequestFromAchievements(query, achievementsJSON)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +50,9 @@ func (c *Controller) RenderMusicRewardsDetailFromSnapshot(query RewardsDetailQue
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildMusicRewardsDetailRequestFromSnapshot(query, snapshot)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +83,9 @@ func (c *Controller) RenderMusicRewardsBasic(query RewardsBasicQuery) ([]byte, e
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildMusicRewardsBasicRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +96,9 @@ func (c *Controller) RenderMusicRewardsBasicEstimate(query RewardsBasicQuery, cl
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildMusicRewardsBasicEstimateRequest(query, clearCounts, reason)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

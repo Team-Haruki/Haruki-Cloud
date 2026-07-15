@@ -1,16 +1,50 @@
 package sekai
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/klauspost/compress/zstd"
 )
+
+func TestToolboxClientLimitsCompressedResponseBody(t *testing.T) {
+	client := NewToolboxClient(&config.ToolboxConfig{BaseURL: "http://toolbox.invalid"})
+	if client.http.ResponseBodyLimit != toolboxMaxResponseBytes {
+		t.Fatalf("response body limit = %d, want %d", client.http.ResponseBodyLimit, toolboxMaxResponseBytes)
+	}
+}
+
+func TestToolboxDecompressionRejectsOversizedPayload(t *testing.T) {
+	encoder, err := zstd.NewWriter(nil)
+	if err != nil {
+		t.Fatalf("zstd.NewWriter() error = %v", err)
+	}
+	defer encoder.Close()
+	compressed := encoder.EncodeAll([]byte("payload larger than test limit"), nil)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Encoding", "zstd")
+		_, _ = w.Write(compressed)
+	}))
+	defer server.Close()
+	resp, err := resty.New().R().Get(server.URL)
+	if err != nil {
+		t.Fatalf("GET compressed response: %v", err)
+	}
+
+	if _, err := decompressContextLimit(context.Background(), resp, 8); err == nil || !strings.Contains(err.Error(), "exceeds") {
+		t.Fatalf("oversized decompression error = %v", err)
+	}
+}
 
 func TestToolboxPrivateDataValuesAcceptsAndDecodesZstd(t *testing.T) {
 	encoder, err := zstd.NewWriter(nil)
@@ -76,5 +110,75 @@ func TestToolboxPrivateDataPreservesServiceUnavailableMessage(t *testing.T) {
 	}
 	if toolboxErr.Message != "user store unavailable" {
 		t.Fatalf("unexpected message: %q", toolboxErr.Message)
+	}
+}
+
+func TestToolboxPrivateDataContextSupportsCancellation(t *testing.T) {
+	started := make(chan struct{}, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		select {
+		case started <- struct{}{}:
+		default:
+		}
+		<-r.Context().Done()
+	}))
+	defer server.Close()
+
+	client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		_, err := client.GetSuiteDataContext(ctx, "jp", 123456789, "qq", "10001")
+		done <- err
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("toolbox request did not start")
+	}
+	cancel()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("GetSuiteDataContext() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("toolbox request did not stop after context cancellation")
+	}
+}
+
+func TestToolboxPrivateDataContextRecordsHTTPAndDecompression(t *testing.T) {
+	encoder, err := zstd.NewWriter(nil)
+	if err != nil {
+		t.Fatalf("zstd.NewWriter() error = %v", err)
+	}
+	defer encoder.Close()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Encoding", "zstd")
+		_, _ = w.Write(encoder.EncodeAll([]byte(`{"ok":true}`), nil))
+	}))
+	defer server.Close()
+
+	client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL})
+	ctx, trace := commandtrace.WithTrace(context.Background())
+	if _, err := client.GetSuiteDataContext(ctx, "jp", 123456789, "qq", "10001"); err != nil {
+		t.Fatalf("GetSuiteDataContext() error = %v", err)
+	}
+
+	operations := trace.Snapshot().Operations
+	for _, name := range []string{"toolbox.http", "toolbox.decompress"} {
+		found := false
+		for _, operation := range operations {
+			if operation.Name == name && operation.Count == 1 {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("expected one %s operation, got %+v", name, operations)
+		}
 	}
 }

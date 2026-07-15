@@ -1,6 +1,8 @@
 package drawing
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +13,273 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"haruki-cloud/internal/observability/commandtrace"
 )
+
+func TestLocalRenderCacheCanceledLeaderDoesNotAbortFollower(t *testing.T) {
+	cache := newLocalRenderCache(time.Minute)
+	request := map[string]any{"id": "shared-user"}
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var calls atomic.Int32
+	render := func(context.Context) ([]byte, error) {
+		if calls.Add(1) == 1 {
+			close(started)
+		}
+		<-release
+		return []byte("shared-image"), nil
+	}
+
+	leaderCtx, cancelLeader := context.WithCancel(context.Background())
+	leaderDone := make(chan error, 1)
+	go func() {
+		_, err := cache.RenderSharedContext(leaderCtx, "/api/pjsk/profile", request, render)
+		leaderDone <- err
+	}()
+	<-started
+
+	type result struct {
+		data []byte
+		err  error
+	}
+	followerDone := make(chan result, 1)
+	go func() {
+		data, err := cache.RenderSharedContext(context.Background(), "/api/pjsk/profile", request, render)
+		followerDone <- result{data: data, err: err}
+	}()
+
+	// Keep the shared render blocked long enough for the follower to join the
+	// in-flight request before the original caller leaves.
+	time.Sleep(20 * time.Millisecond)
+	cancelLeader()
+	if err := <-leaderDone; !errors.Is(err, context.Canceled) {
+		t.Fatalf("leader error = %v, want context.Canceled", err)
+	}
+	close(release)
+
+	got := <-followerDone
+	if got.err != nil {
+		t.Fatalf("follower error: %v", got.err)
+	}
+	if string(got.data) != "shared-image" {
+		t.Fatalf("follower data = %q", got.data)
+	}
+	if calls.Load() != 1 {
+		t.Fatalf("render calls = %d, want 1", calls.Load())
+	}
+}
+
+func TestLocalRenderCacheSharedFlightMergesOperationsIntoEveryWaiter(t *testing.T) {
+	cache := newLocalRenderCache(time.Minute)
+	request := map[string]any{"id": "trace-shared-user"}
+	started := make(chan struct{})
+	release := make(chan struct{})
+	render := func(ctx context.Context) ([]byte, error) {
+		commandtrace.RecordOperation(ctx, "drawing.render", 5*time.Millisecond)
+		close(started)
+		<-release
+		return []byte("shared-image"), nil
+	}
+
+	leaderCtx, leaderTrace := commandtrace.WithTrace(context.Background())
+	followerCtx, followerTrace := commandtrace.WithTrace(context.Background())
+	type result struct {
+		data []byte
+		err  error
+	}
+	leaderDone := make(chan result, 1)
+	followerDone := make(chan result, 1)
+	go func() {
+		data, err := cache.RenderSharedContext(leaderCtx, "/api/pjsk/profile", request, render)
+		leaderDone <- result{data: data, err: err}
+	}()
+	<-started
+	go func() {
+		data, err := cache.RenderSharedContext(followerCtx, "/api/pjsk/profile", request, render)
+		followerDone <- result{data: data, err: err}
+	}()
+	time.Sleep(20 * time.Millisecond)
+	close(release)
+
+	leaderResult := <-leaderDone
+	followerResult := <-followerDone
+	for name, got := range map[string]result{
+		"leader":   leaderResult,
+		"follower": followerResult,
+	} {
+		if got.err != nil || string(got.data) != "shared-image" {
+			t.Fatalf("%s result = %q, %v", name, got.data, got.err)
+		}
+	}
+	leaderResult.data[0] = 'X'
+	if string(followerResult.data) != "shared-image" {
+		t.Fatalf("leader mutation leaked to follower: %q", followerResult.data)
+	}
+	policy, err := buildRenderCachePolicy("/api/pjsk/profile", request)
+	if err != nil {
+		t.Fatalf("build cache policy: %v", err)
+	}
+	key, err := buildRenderCacheKey(policy)
+	if err != nil {
+		t.Fatalf("build cache key: %v", err)
+	}
+	if cached, ok := cache.get(key); !ok || string(cached) != "shared-image" {
+		t.Fatalf("leader mutation leaked to cache: %q, %t", cached, ok)
+	}
+	for name, trace := range map[string]*commandtrace.Trace{
+		"leader":   leaderTrace,
+		"follower": followerTrace,
+	} {
+		if count := drawingTraceOperationCount(trace, "drawing.render"); count != 1 {
+			t.Fatalf("%s drawing.render count = %d, operations=%+v", name, count, trace.Snapshot().Operations)
+		}
+	}
+	if count := drawingTraceOperationCount(followerTrace, "drawing.cache_shared"); count != 1 {
+		t.Fatalf("follower drawing.cache_shared count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
+	}
+}
+
+func TestLocalRenderCacheEnforcesLRUEntryAndByteLimits(t *testing.T) {
+	t.Run("entry limit", func(t *testing.T) {
+		cache := newLocalRenderCacheWithLimits(time.Minute, 2, 1024)
+		cache.set("oldest", []byte("aaa"), time.Minute, true)
+		cache.set("recent", []byte("bbb"), time.Minute, false)
+		if _, ok := cache.get("oldest"); !ok {
+			t.Fatal("oldest entry unexpectedly missing before LRU refresh")
+		}
+		cache.set("new", []byte("ccc"), time.Minute, false)
+
+		if _, ok := cache.get("recent"); ok {
+			t.Fatal("least-recently-used entry was not evicted")
+		}
+		for _, key := range []string{"oldest", "new"} {
+			if _, ok := cache.get(key); !ok {
+				t.Fatalf("retained entry %q was evicted", key)
+			}
+		}
+		entries, bytes, lruEntries := localRenderCacheUsage(cache)
+		if entries != 2 || bytes != 6 || lruEntries != entries {
+			t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
+		}
+	})
+
+	t.Run("byte limit", func(t *testing.T) {
+		cache := newLocalRenderCacheWithLimits(time.Minute, 10, 5)
+		cache.set("old", []byte("aaa"), time.Minute, false)
+		cache.set("new", []byte("bbb"), time.Minute, false)
+		if _, ok := cache.get("old"); ok {
+			t.Fatal("byte limit did not evict the least-recently-used entry")
+		}
+		if got, ok := cache.get("new"); !ok || string(got) != "bbb" {
+			t.Fatalf("new entry = %q, %t", got, ok)
+		}
+		entries, bytes, lruEntries := localRenderCacheUsage(cache)
+		if entries != 1 || bytes != 3 || lruEntries != entries {
+			t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
+		}
+	})
+
+	t.Run("oversized value", func(t *testing.T) {
+		cache := newLocalRenderCacheWithLimits(time.Minute, 10, 4)
+		cache.set("key", []byte("old"), time.Minute, false)
+		cache.set("key", []byte("too-large"), time.Minute, false)
+		if _, ok := cache.get("key"); ok {
+			t.Fatal("oversized replacement left a stale or oversized entry cached")
+		}
+		entries, bytes, lruEntries := localRenderCacheUsage(cache)
+		if entries != 0 || bytes != 0 || lruEntries != 0 {
+			t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
+		}
+	})
+}
+
+func TestLocalRenderCacheSweepsUnvisitedExpiredEntries(t *testing.T) {
+	cache := newLocalRenderCacheWithLimits(time.Minute, 10, 1024)
+	cache.set("expired", []byte("old"), time.Minute, false)
+	cache.set("live", []byte("live"), time.Minute, false)
+
+	cache.mu.Lock()
+	cache.entries["expired"].expiresAt = time.Now().Add(-time.Second)
+	cache.mu.Unlock()
+	cache.set("new", []byte("new"), time.Minute, false)
+
+	if _, ok := cache.get("expired"); ok {
+		t.Fatal("unvisited expired entry was not swept")
+	}
+	entries, bytes, lruEntries := localRenderCacheUsage(cache)
+	if entries != 2 || bytes != int64(len("live")+len("new")) || lruEntries != entries {
+		t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
+	}
+}
+
+func TestLocalRenderCacheClonesByteOwnership(t *testing.T) {
+	cache := newLocalRenderCacheWithLimits(time.Minute, 10, 1024)
+	original := []byte("image")
+	cache.set("key", original, time.Minute, false)
+	original[0] = 'X'
+
+	first, ok := cache.get("key")
+	if !ok || string(first) != "image" {
+		t.Fatalf("first cached value = %q, %t", first, ok)
+	}
+	first[0] = 'Y'
+	second, ok := cache.get("key")
+	if !ok || string(second) != "image" {
+		t.Fatalf("second cached value = %q, %t", second, ok)
+	}
+
+	var renders atomic.Int32
+	firstRender, err := cache.RenderSharedContext(context.Background(), "/api/pjsk/profile", map[string]any{"id": "ownership"}, func(context.Context) ([]byte, error) {
+		renders.Add(1)
+		return []byte("rendered"), nil
+	})
+	if err != nil {
+		t.Fatalf("first render: %v", err)
+	}
+	firstRender[0] = 'Z'
+	secondRender, err := cache.RenderSharedContext(context.Background(), "/api/pjsk/profile", map[string]any{"id": "ownership"}, func(context.Context) ([]byte, error) {
+		renders.Add(1)
+		return []byte("unexpected"), nil
+	})
+	if err != nil {
+		t.Fatalf("second render: %v", err)
+	}
+	if string(secondRender) != "rendered" || renders.Load() != 1 {
+		t.Fatalf("second render = %q, render calls = %d", secondRender, renders.Load())
+	}
+}
+
+func TestLocalRenderCacheConcurrentUsageStaysBounded(t *testing.T) {
+	cache := newLocalRenderCacheWithLimits(time.Minute, 16, 512)
+	const workers = 32
+	const iterations = 100
+	var wg sync.WaitGroup
+	for worker := range workers {
+		wg.Add(1)
+		go func(worker int) {
+			defer wg.Done()
+			for iteration := range iterations {
+				key := fmt.Sprintf("%d:%d", worker, iteration)
+				cache.set(key, []byte(strings.Repeat("x", 32)), time.Minute, false)
+				_, _ = cache.get(key)
+			}
+		}(worker)
+	}
+	wg.Wait()
+
+	entries, bytes, lruEntries := localRenderCacheUsage(cache)
+	if entries > 16 || bytes > 512 || lruEntries != entries {
+		t.Fatalf("usage exceeded bounds: entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
+	}
+}
+
+func localRenderCacheUsage(cache *localRenderCache) (entries int, bytes int64, lruEntries int) {
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	cache.sweepExpiredLocked(time.Now())
+	return len(cache.entries), cache.totalBytes, cache.lru.Len()
+}
 
 func TestResolveRenderCacheRuleUsesOneDayTTLByDefault(t *testing.T) {
 	rule := resolveRenderCacheRule("/api/pjsk/profile")
@@ -109,6 +377,115 @@ func TestRenderCacheClientAllowsInternalSelfSignedHTTPS(t *testing.T) {
 	}
 }
 
+func TestRenderCacheClientLimitsCacheAPIResponses(t *testing.T) {
+	client := NewRenderCacheClient(RenderCacheConfig{
+		BaseURL:    "http://127.0.0.1:1",
+		StorageDir: t.TempDir(),
+		TTL:        time.Minute,
+	})
+	if client == nil {
+		t.Fatal("expected render cache client")
+	}
+	if got := client.http.ResponseBodyLimit; got != renderCacheAPIResponseMaxBytes {
+		t.Fatalf("response body limit = %d, want %d", got, renderCacheAPIResponseMaxBytes)
+	}
+}
+
+func TestRenderCacheClientRejectsCacheFilesOutsideStorage(t *testing.T) {
+	storageDir := t.TempDir()
+	outsideDir := t.TempDir()
+	outsidePath := filepath.Join(outsideDir, "outside.png")
+	if err := os.WriteFile(outsidePath, []byte("outside"), 0o644); err != nil {
+		t.Fatalf("write outside file: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintf(w, `{"file_path":%q}`, outsidePath)
+	}))
+	defer server.Close()
+
+	client := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: storageDir, TTL: time.Minute})
+	if _, ok := client.lookup("outside", "api/pjsk/profile"); ok {
+		t.Fatal("cache lookup accepted a file outside its storage directory")
+	}
+}
+
+func TestRenderCacheClientRejectsCacheFileSymlinkEscape(t *testing.T) {
+	storageDir := t.TempDir()
+	outsidePath := filepath.Join(t.TempDir(), "outside.png")
+	if err := os.WriteFile(outsidePath, []byte("outside"), 0o644); err != nil {
+		t.Fatalf("write outside file: %v", err)
+	}
+	linkPath := filepath.Join(storageDir, "linked.png")
+	if err := os.Symlink(outsidePath, linkPath); err != nil {
+		t.Fatalf("create symlink: %v", err)
+	}
+
+	client := NewRenderCacheClient(RenderCacheConfig{
+		BaseURL:    "http://127.0.0.1:1",
+		StorageDir: storageDir,
+		TTL:        time.Minute,
+	})
+	if _, err := client.readCacheFile(linkPath); err == nil {
+		t.Fatal("cache read accepted a symlink escaping its storage directory")
+	}
+}
+
+func TestRenderCacheClientRejectsOversizedCacheFile(t *testing.T) {
+	storageDir := t.TempDir()
+	cachePath := filepath.Join(storageDir, "oversized.png")
+	file, err := os.Create(cachePath)
+	if err != nil {
+		t.Fatalf("create cache file: %v", err)
+	}
+	if err := file.Truncate(drawingMaxResponseBytes + 1); err != nil {
+		_ = file.Close()
+		t.Fatalf("truncate cache file: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("close cache file: %v", err)
+	}
+
+	client := NewRenderCacheClient(RenderCacheConfig{
+		BaseURL:    "http://127.0.0.1:1",
+		StorageDir: storageDir,
+		TTL:        time.Minute,
+	})
+	if _, err := client.readCacheFile(cachePath); err == nil {
+		t.Fatal("cache read accepted an oversized file")
+	}
+}
+
+func TestRenderCacheClientRejectsSymlinkedStoreDirectory(t *testing.T) {
+	storageDir := t.TempDir()
+	outsideDir := t.TempDir()
+	if err := os.Symlink(outsideDir, filepath.Join(storageDir, "api")); err != nil {
+		t.Fatalf("create directory symlink: %v", err)
+	}
+
+	client := NewRenderCacheClient(RenderCacheConfig{
+		BaseURL:    "http://127.0.0.1:1",
+		StorageDir: storageDir,
+		TTL:        time.Minute,
+	})
+	target := client.defaultFilePath("api/pjsk/profile", "public", "key")
+	if _, err := client.prepareCacheTarget(target); err == nil {
+		t.Fatal("cache store accepted a symlinked directory component")
+	}
+}
+
+func TestRenderCachePathComponentsAreNormalized(t *testing.T) {
+	if got := normalizeRenderCacheAPIPath("api/pjsk/../profile"); got != "" {
+		t.Fatalf("unsafe API path normalized to %q", got)
+	}
+	unsafeUserID := "../../outside"
+	got := normalizeRenderCacheUserID(unsafeUserID)
+	if got == unsafeUserID || !strings.HasPrefix(got, "user-") || strings.ContainsAny(got, `/\\`) {
+		t.Fatalf("unsafe user ID normalized to %q", got)
+	}
+}
+
 func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
 	storageDir := t.TempDir()
 	var renderCalls int32
@@ -170,6 +547,100 @@ func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
 			t.Fatalf("call %d returned %q, want %q", i, string(results[i]), "rendered-image")
 		}
 	}
+	results[0][0] = 'X'
+	if string(results[1]) != "rendered-image" {
+		t.Fatalf("one waiter mutation leaked to another: %q", results[1])
+	}
+}
+
+func TestRenderCacheClientSharedFlightMergesOperationsIntoEveryWaiter(t *testing.T) {
+	storageDir := t.TempDir()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/cache":
+			http.NotFound(w, r)
+		case r.Method == http.MethodPost && r.URL.Path == "/cache":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"ok":true}`))
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: storageDir, TTL: time.Minute})
+	request := map[string]any{"region": "jp", "ranks": []any{1, 2, 3}}
+	started := make(chan struct{})
+	release := make(chan struct{})
+	render := func(ctx context.Context) ([]byte, error) {
+		commandtrace.RecordOperation(ctx, "drawing.render", 5*time.Millisecond)
+		close(started)
+		<-release
+		return []byte("rendered-image"), nil
+	}
+
+	leaderCtx, leaderTrace := commandtrace.WithTrace(context.Background())
+	followerCtx, followerTrace := commandtrace.WithTrace(context.Background())
+	type result struct {
+		data []byte
+		err  error
+	}
+	leaderDone := make(chan result, 1)
+	followerDone := make(chan result, 1)
+	go func() {
+		data, err := client.RenderSharedContext(leaderCtx, "/api/pjsk/sk/query", request, render)
+		leaderDone <- result{data: data, err: err}
+	}()
+	<-started
+	go func() {
+		data, err := client.RenderSharedContext(followerCtx, "/api/pjsk/sk/query", request, render)
+		followerDone <- result{data: data, err: err}
+	}()
+	time.Sleep(20 * time.Millisecond)
+	close(release)
+
+	for name, completed := range map[string]<-chan result{
+		"leader":   leaderDone,
+		"follower": followerDone,
+	} {
+		got := <-completed
+		if got.err != nil || string(got.data) != "rendered-image" {
+			t.Fatalf("%s result = %q, %v", name, got.data, got.err)
+		}
+	}
+	for name, trace := range map[string]*commandtrace.Trace{
+		"leader":   leaderTrace,
+		"follower": followerTrace,
+	} {
+		for _, operation := range []string{
+			"drawing.cache_lookup",
+			"drawing.cache_lookup_http",
+			"drawing.render",
+			"drawing.cache_store",
+			"drawing.cache_hash",
+			"drawing.cache_write",
+			"drawing.cache_store_http",
+		} {
+			if count := drawingTraceOperationCount(trace, operation); count != 1 {
+				t.Fatalf("%s %s count = %d, operations=%+v", name, operation, count, trace.Snapshot().Operations)
+			}
+		}
+	}
+	if count := drawingTraceOperationCount(followerTrace, "drawing.cache_shared"); count != 1 {
+		t.Fatalf("follower drawing.cache_shared count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
+	}
+}
+
+func drawingTraceOperationCount(trace *commandtrace.Trace, name string) int {
+	if trace == nil {
+		return 0
+	}
+	for _, operation := range trace.Snapshot().Operations {
+		if operation.Name == name {
+			return operation.Count
+		}
+	}
+	return 0
 }
 
 func TestRenderCacheClientStoresRenderedImageUnderRequestKeyDir(t *testing.T) {
@@ -973,6 +1444,48 @@ func TestBuildRenderCachePolicyIgnoresRootDT(t *testing.T) {
 
 	if keyA != keyB {
 		t.Fatalf("expected dt to be ignored by cache key: %s != %s", keyA, keyB)
+	}
+}
+
+func TestBuildRenderCachePolicyDoesNotMutatePreparedRenderPayload(t *testing.T) {
+	payload := map[string]any{
+		"dt":         float64(1774118400000),
+		"model_name": "challenge-v1",
+		"cost_times": []any{float64(5), float64(10)},
+		"profile": map[string]any{
+			"update_time": float64(1774118400000),
+		},
+	}
+
+	policy, err := buildRenderCachePolicy(
+		"/api/pjsk/deck/recommend",
+		preparedRenderCachePayload{payload: payload},
+	)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy: %v", err)
+	}
+
+	if _, ok := payload["dt"]; !ok {
+		t.Fatal("prepared render payload lost dt")
+	}
+	if got := payload["model_name"]; got != "challenge-v1" {
+		t.Fatalf("prepared render payload model_name = %v", got)
+	}
+	if got := len(payload["cost_times"].([]any)); got != 2 {
+		t.Fatalf("prepared render payload cost_times length = %d", got)
+	}
+	if _, ok := payload["profile"].(map[string]any)["update_time"]; !ok {
+		t.Fatal("prepared render payload lost profile.update_time")
+	}
+
+	cachePayload := policy.Params.(map[string]any)
+	for _, key := range []string{"dt", "model_name", "cost_times"} {
+		if _, ok := cachePayload[key]; ok {
+			t.Fatalf("cache payload retained ignored field %s", key)
+		}
+	}
+	if _, ok := cachePayload["profile"].(map[string]any)["update_time"]; ok {
+		t.Fatal("cache payload retained ignored profile.update_time")
 	}
 }
 

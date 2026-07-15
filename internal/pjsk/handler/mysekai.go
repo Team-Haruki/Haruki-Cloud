@@ -777,29 +777,32 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderResource(q)
 	case "mysekai-resource-map":
-		hasRemaining, remainingErr := mysekaiMapHasRemainingMaterials(renderCtx, rc.Cmd.Params)
-		if remainingErr != nil {
-			return nil, remainingErr
-		}
-		if !hasRemaining {
-			return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
-		}
 		resourceQuery := rendermysekai.ResourceQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &resourceQuery)
 		resourceQuery.Profile = renderCtx.Profile
 		mapQuery := rendermysekai.MapQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &mapQuery)
+		finishBuild := measurePayloadBuild(rc.Ctx)
+		mapPayload, mapBuildErr := renderCtx.Controller.BuildMapRequest(mapQuery)
+		finishBuild()
+		if mapBuildErr != nil {
+			return nil, mapBuildErr
+		}
+		showHarvested := mapQuery.ShowHarvested != nil && *mapQuery.ShowHarvested
+		if !showHarvested && !rendermysekai.MapRequestHasRemainingHarvestResources(mapPayload) {
+			return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
+		}
 		message, runErr := executeConcurrentMessages(
 			rc.Ctx,
 			func(ctx context.Context) (onebot11.Message, error) {
-				resourceData, resourceErr := renderCtx.Controller.RenderResource(resourceQuery)
+				resourceData, resourceErr := renderCtx.Controller.WithContext(ctx).RenderResource(resourceQuery)
 				if resourceErr != nil {
 					return nil, resourceErr
 				}
 				return imageMessage(ctx, resourceData, rc.App, BotModulePJSK)
 			},
 			func(ctx context.Context) (onebot11.Message, error) {
-				mapData, mapErr := renderCtx.Controller.RenderMap(mapQuery)
+				mapData, mapErr := renderCtx.Controller.WithContext(ctx).RenderMapRequest(mapPayload)
 				if mapErr != nil {
 					return nil, mapErr
 				}
@@ -813,17 +816,20 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	case "mysekai-map":
 		q := rendermysekai.MapQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
-		showHarvested := q.ShowHarvested != nil && *q.ShowHarvested
-		if !showHarvested {
-			hasRemaining, remainingErr := renderCtx.Controller.HasRemainingHarvestResources(q)
-			if remainingErr != nil {
-				return nil, remainingErr
-			}
-			if !hasRemaining {
-				return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
-			}
+		finishBuild := measurePayloadBuild(rc.Ctx)
+		mapPayload, mapBuildErr := renderCtx.Controller.BuildMapRequest(q)
+		finishBuild()
+		if mapBuildErr != nil {
+			return nil, mapBuildErr
 		}
-		data, err = renderCtx.Controller.RenderMap(q)
+		showHarvested := q.ShowHarvested != nil && *q.ShowHarvested
+		if !showHarvested && !rendermysekai.MapRequestHasRemainingHarvestResources(mapPayload) {
+			return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
+		}
+		data, err = renderCtx.Controller.RenderMapRequest(mapPayload)
+		if err != nil {
+			return nil, err
+		}
 		replayMessage, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 		if err != nil {
 			return nil, err
@@ -853,7 +859,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		if resolveErr != nil {
 			return nil, resolveErr
 		}
-		data, err = rc.App.SekaiAPI.GetMySekaiImage(result.Region, result.ImagePath)
+		data, err = rc.App.SekaiAPI.WithContext(rc.Ctx).GetMySekaiImage(result.Region, result.ImagePath)
 		if err != nil {
 			return nil, fmt.Errorf("获取 MySekai 照片失败：%w", err)
 		}

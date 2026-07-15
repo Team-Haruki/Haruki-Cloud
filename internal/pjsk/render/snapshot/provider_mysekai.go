@@ -49,7 +49,7 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 		return nil, fmt.Errorf("snapshot: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
 	}
 
-	payload, err := p.client.GetMySekaiData(binding.Server, uid, platform, imUserID)
+	payload, err := p.client.GetMySekaiDataContext(ctx, binding.Server, uid, platform, imUserID)
 	if err != nil {
 		return nil, err
 	}

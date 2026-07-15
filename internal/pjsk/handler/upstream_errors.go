@@ -10,6 +10,7 @@ import (
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
+	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -140,6 +141,9 @@ func normalizeSKPlayerTraceDrawingError(err error) error {
 func isDrawingDataInsufficientError(err error) bool {
 	if err == nil {
 		return false
+	}
+	if errors.Is(err, drawing.ErrDrawingDataInsufficient) {
+		return true
 	}
 	message := strings.TrimSpace(err.Error())
 	if message == "" {

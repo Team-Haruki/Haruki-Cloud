@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -242,11 +243,12 @@ func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherPro
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequestFromAPI(query, resp, framesJSON)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
-	logProfilePayloadDebug("sekai_api_public", payload)
 	return c.drawing.GenerateProfile(payload)
 }
 
@@ -254,10 +256,11 @@ func (c *Controller) RenderProfileFromAPIWithSnapshot(query Query, resp *sekai.G
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequestFromAPIWithSnapshot(query, resp, snapshot)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
-	logProfilePayloadDebug("sekai_api_public", payload)
 	return c.drawing.GenerateProfile(payload)
 }

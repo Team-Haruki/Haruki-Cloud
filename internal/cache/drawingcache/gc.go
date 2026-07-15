@@ -4,20 +4,30 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 	"time"
+
+	"haruki-cloud/utils/logger"
 )
 
 const defaultGCBatchSize = 1000
 
+var drawingCacheLogger = logger.NewLoggerFromGlobal("DrawingCache")
+
+func drawingCacheErrorType(err error) string {
+	if err == nil {
+		return ""
+	}
+	return fmt.Sprintf("%T", err)
+}
+
 func StartGCWorker(ctx context.Context, db *sql.DB, storageDir string, interval time.Duration) {
 	if db == nil {
-		log.Printf("[drawing-cache-gc] db is nil, worker not started")
+		drawingCacheLogger.Warn("cache GC worker not started", "reason", "db_unavailable")
 		return
 	}
 	if interval <= 0 {
-		log.Printf("[drawing-cache-gc] worker disabled")
+		drawingCacheLogger.Info("cache GC worker disabled")
 		return
 	}
 	if ctx == nil {
@@ -34,7 +44,10 @@ func StartGCWorker(ctx context.Context, db *sql.DB, storageDir string, interval 
 			}
 			cleaned, err := cleanupExpiredBatch(db, storageDir, defaultGCBatchSize)
 			if err != nil {
-				log.Printf("[drawing-cache-gc] cleanup failed: %v", err)
+				drawingCacheLogger.WarnContext(ctx, "cache GC cleanup failed",
+					"operation", "cleanup_expired_batch",
+					"error_type", drawingCacheErrorType(err),
+				)
 				return
 			}
 			totalCleaned += cleaned
@@ -43,7 +56,7 @@ func StartGCWorker(ctx context.Context, db *sql.DB, storageDir string, interval 
 			}
 		}
 		if totalCleaned > 0 {
-			log.Printf("[drawing-cache-gc] cleaned %d expired cache records", totalCleaned)
+			drawingCacheLogger.InfoContext(ctx, "cache GC cleanup completed", "records", totalCleaned)
 		}
 	}
 
@@ -108,7 +121,10 @@ LIMIT ?
 		if !shared {
 			err := removeFileAndPruneEmptyDirsSafe(paths[i], storageDir)
 			if err != nil {
-				log.Printf("[drawing-cache-gc] remove file failed key=%s path=%s: %v", keys[i], paths[i], err)
+				drawingCacheLogger.Warn("cache GC file removal failed",
+					"operation", "remove_file",
+					"error_type", drawingCacheErrorType(err),
+				)
 				continue
 			}
 		}

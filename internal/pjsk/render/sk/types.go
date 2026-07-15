@@ -6,6 +6,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
+	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -68,6 +69,10 @@ type EventSource interface {
 	DefaultRegion() renderregion.Value
 	GetEventByID(id int) (*masterdata.Event, error)
 	GetEvents() []*masterdata.Event
+}
+
+type contextualEventSource interface {
+	WithContext(ctx context.Context) renderevent.DataSource
 }
 
 type WorldBloomChapterSource interface {

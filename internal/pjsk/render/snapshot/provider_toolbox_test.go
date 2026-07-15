@@ -17,12 +17,14 @@ import (
 
 type fakeMusicMetaSource struct {
 	payloads map[string][]byte
+	calls    int
 }
 
 func (f *fakeMusicMetaSource) Get(region string) []byte {
 	if f == nil {
 		return nil
 	}
+	f.calls++
 	return append([]byte(nil), f.payloads[region]...)
 }
 
@@ -48,17 +50,21 @@ func (f *fakeBindingLookup) List(_ context.Context, _, _ string) ([]accountdata.
 type fakePrivateDataClient struct {
 	suiteCalls   []string
 	mysekaiCalls []string
+	suiteCtx     context.Context
+	mysekaiCtx   context.Context
 	suiteJSON    []byte
 	mysekaiJSON  []byte
 	uploadTime   string
 }
 
-func (f *fakePrivateDataClient) GetSuiteData(server string, userID int64, platform, platformUserID string) ([]byte, error) {
+func (f *fakePrivateDataClient) GetSuiteDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error) {
+	f.suiteCtx = ctx
 	f.suiteCalls = append(f.suiteCalls, server+":"+platform+":"+platformUserID)
 	return append([]byte(nil), f.suiteJSON...), nil
 }
 
-func (f *fakePrivateDataClient) GetMySekaiData(server string, userID int64, platform, platformUserID string) ([]byte, error) {
+func (f *fakePrivateDataClient) GetMySekaiDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error) {
+	f.mysekaiCtx = ctx
 	f.mysekaiCalls = append(f.mysekaiCalls, server+":"+platform+":"+platformUserID)
 	return append([]byte(nil), f.mysekaiJSON...), nil
 }
@@ -150,6 +156,44 @@ func TestToolboxSnapshotProviderReusesRequestCachedSuiteData(t *testing.T) {
 	}
 }
 
+func TestToolboxSnapshotProviderPassesRequestContextToPrivateDataClient(t *testing.T) {
+	client := &fakePrivateDataClient{
+		suiteJSON:   []byte(minimalSuiteJSON),
+		mysekaiJSON: []byte(`{"updatedResources":{}}`),
+	}
+	provider := NewToolboxSnapshotProvider(
+		&fakeBindingLookup{
+			bindings: map[string]*accountdata.ResolvedBinding{
+				"jp": {
+					PJSKUserID:     "123456789",
+					Server:         "jp",
+					SuiteVisible:   true,
+					MySekaiVisible: true,
+				},
+			},
+		},
+		client,
+		nil,
+		nil,
+	)
+
+	type contextKey struct{}
+	ctx := context.WithValue(context.Background(), contextKey{}, "request")
+	if _, err := provider.Resolve(ctx, Selector{
+		IMPlatform: "qq",
+		IMUserID:   "10001",
+		Region:     renderregion.JP,
+	}, ResolveOptions{NeedMySekai: true}); err != nil {
+		t.Fatalf("Resolve() error = %v", err)
+	}
+	if client.suiteCtx != ctx {
+		t.Fatal("suite request did not receive the caller context")
+	}
+	if client.mysekaiCtx != ctx {
+		t.Fatal("mysekai request did not receive the caller context")
+	}
+}
+
 func TestToolboxSnapshotProviderSupportsExplicitBoundAccount(t *testing.T) {
 	client := &fakePrivateDataClient{
 		suiteJSON: []byte(minimalSuiteJSON),
@@ -215,12 +259,40 @@ func TestToolboxSnapshotProviderInjectsMusicMetaPayload(t *testing.T) {
 		IMPlatform: "qq",
 		IMUserID:   "10001",
 		Region:     renderregion.JP,
-	}, ResolveOptions{})
+	}, ResolveOptions{NeedMusicMeta: true})
 	if err != nil {
 		t.Fatalf("Resolve() error = %v", err)
 	}
 	if len(snapshot.MusicMetaBytes()) == 0 {
 		t.Fatalf("expected music meta bytes on toolbox snapshot")
+	}
+}
+
+func TestToolboxSnapshotProviderSkipsMusicMetaUnlessRequested(t *testing.T) {
+	metas := &fakeMusicMetaSource{payloads: map[string][]byte{"jp": []byte(`[]`)}}
+	provider := NewToolboxSnapshotProvider(
+		&fakeBindingLookup{bindings: map[string]*accountdata.ResolvedBinding{
+			"jp": {
+				PJSKUserID:   "123456789",
+				Server:       "jp",
+				SuiteVisible: true,
+			},
+		}},
+		&fakePrivateDataClient{suiteJSON: []byte(minimalSuiteJSON)},
+		nil,
+		nil,
+	).WithMusicMetaSource(metas)
+
+	_, err := provider.Resolve(context.Background(), Selector{
+		IMPlatform: "qq",
+		IMUserID:   "10001",
+		Region:     renderregion.JP,
+	}, ResolveOptions{})
+	if err != nil {
+		t.Fatalf("Resolve() error = %v", err)
+	}
+	if metas.calls != 0 {
+		t.Fatalf("metadata Get calls = %d, want 0", metas.calls)
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"haruki-cloud/database/censor/namelog"
 	"haruki-cloud/database/censor/result"
 	"haruki-cloud/database/censor/shortbio"
+	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/utils/logger"
 )
@@ -30,6 +31,10 @@ type TextModerator interface {
 	TextCensor(text string) (map[string]any, error)
 }
 
+type contextTextModerator interface {
+	TextCensorContext(ctx context.Context, text string) (map[string]any, error)
+}
+
 type Service struct {
 	Client         *ent.Client
 	TextCensorAPI  TextModerator  // text censor (Baidu)
@@ -38,14 +43,17 @@ type Service struct {
 }
 
 func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool {
+	ctx = censorContext(ctx)
 	if name == "" || strings.EqualFold(strings.TrimSpace(server), string(renderregion.CN)) {
 		return true
 	}
 
+	finishCache := commandtrace.MeasureOperation(ctx, "censor.cache")
 	existing, err := s.Client.Result.
 		Query().
 		Where(result.NameEQ(name)).
 		Only(ctx)
+	finishCache()
 	if err == nil && existing != nil {
 		if existing.Result != nil {
 			return *existing.Result == 1
@@ -53,9 +61,9 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 		return false
 	}
 
-	data, err := s.TextCensorAPI.TextCensor(name)
+	data, err := textCensor(ctx, s.TextCensorAPI, name)
 	if err != nil {
-		s.Logger.Errorf("审核名字请求失败，不写入审核缓存: %v", err)
+		s.Logger.ErrorContext(ctx, "name moderation request failed", "error_type", fmt.Sprintf("%T", err))
 		return false
 	}
 
@@ -63,18 +71,21 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 	if conclusion, ok := data["conclusion"].(string); ok && conclusion == string(ResultCompliant) {
 		censorResult = 1
 	} else {
-		s.Logger.Debugf("名字审核不通过: harukiUserID: %d", harukiUserID)
+		s.Logger.DebugContext(ctx, "name moderation rejected")
 	}
 
+	finishStore := commandtrace.MeasureOperation(ctx, "censor.store")
 	_, err = s.Client.Result.
 		Create().
 		SetName(name).
 		SetResult(censorResult).
 		Save(ctx)
+	finishStore()
 	if err != nil {
-		s.Logger.Errorf("插入 censor_result 失败: %v", err)
+		s.Logger.ErrorContext(ctx, "name moderation cache store failed", "error_type", fmt.Sprintf("%T", err))
 	}
 
+	finishCache = commandtrace.MeasureOperation(ctx, "censor.cache")
 	exists, _ := s.Client.NameLog.
 		Query().
 		Where(
@@ -83,11 +94,13 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 			namelog.HarukiUserIDEQ(harukiUserID),
 		).
 		Exist(ctx)
+	finishCache()
 	if !exists {
 		text := string(ResultCompliant)
 		if censorResult == 0 {
 			text = string(ResultNonCompliant)
 		}
+		finishStore = commandtrace.MeasureOperation(ctx, "censor.store")
 		_, err := s.Client.NameLog.
 			Create().
 			SetUserID(fmt.Sprint(userID)).
@@ -96,8 +109,9 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 			SetResult(text).
 			SetTime(time.Now()).
 			Save(ctx)
+		finishStore()
 		if err != nil {
-			s.Logger.Errorf("插入 name_log 失败: %v", err)
+			s.Logger.ErrorContext(ctx, "name moderation audit store failed", "error_type", fmt.Sprintf("%T", err))
 		}
 	}
 
@@ -105,14 +119,17 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 }
 
 func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID string, content string, server string) bool {
+	ctx = censorContext(ctx)
 	if content == "" || strings.EqualFold(strings.TrimSpace(server), string(renderregion.CN)) {
 		return true
 	}
 
+	finishCache := commandtrace.MeasureOperation(ctx, "censor.cache")
 	existing, err := s.Client.ShortBio.
 		Query().
 		Where(shortbio.ContentEQ(content)).
 		Only(ctx)
+	finishCache()
 	if err == nil && existing != nil {
 		if existing.Result != nil {
 			return *existing.Result == string(ResultCompliant)
@@ -120,9 +137,9 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 		return false
 	}
 
-	data, err := s.TextCensorAPI.TextCensor(content)
+	data, err := textCensor(ctx, s.TextCensorAPI, content)
 	if err != nil {
-		s.Logger.Errorf("审核短句请求失败，不写入审核缓存: %v", err)
+		s.Logger.ErrorContext(ctx, "short bio moderation request failed", "error_type", fmt.Sprintf("%T", err))
 		return false
 	}
 
@@ -131,6 +148,7 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 		censorResult = ResultCompliant
 	}
 
+	finishStore := commandtrace.MeasureOperation(ctx, "censor.store")
 	_, err = s.Client.ShortBio.
 		Create().
 		SetUserID(fmt.Sprint(userID)).
@@ -138,8 +156,9 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 		SetHarukiUserID(harukiUserID).
 		SetResult(string(censorResult)).
 		Save(ctx)
+	finishStore()
 	if err != nil {
-		s.Logger.Errorf("插入 short_bio 失败: %v", err)
+		s.Logger.ErrorContext(ctx, "short bio moderation cache store failed", "error_type", fmt.Sprintf("%T", err))
 	}
 
 	return censorResult == ResultCompliant
@@ -149,25 +168,28 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 // Results are cached in the ent image_mod_cache table to avoid redundant API calls.
 // Returns true if the image passes, the image censor is not configured, or the request fails.
 func (s *Service) CensorImage(ctx context.Context, harukiUserID int, imageURL string) bool {
+	ctx = censorContext(ctx)
 	if s.ImageCensorAPI == nil {
 		return true
 	}
 	// Check ent cache first
+	finishCache := commandtrace.MeasureOperation(ctx, "censor.cache")
 	existing, err := s.Client.ImageModCache.
 		Query().
 		Where(imagemodcache.URLEQ(imageURL)).
 		Only(ctx)
+	finishCache()
 	if err == nil && existing != nil {
 		return existing.Result == string(IMSSuggestionPass)
 	}
 
 	suggestion, err := s.ImageCensorAPI.ImageModerationURL(ctx, imageURL)
 	if err != nil {
-		s.Logger.Errorf("图片审核请求失败，跳过审核并按通过处理: %v", err)
+		s.Logger.ErrorContext(ctx, "image moderation request failed", "error_type", fmt.Sprintf("%T", err))
 		return true
 	}
 	if suggestion != IMSSuggestionPass {
-		s.Logger.Debugf("图片审核不通过 (suggestion=%s): %s", suggestion, imageURL)
+		s.Logger.Debug("image moderation rejected", "suggestion", suggestion)
 	}
 
 	// Insert into cache
@@ -178,11 +200,28 @@ func (s *Service) CensorImage(ctx context.Context, harukiUserID int, imageURL st
 	if harukiUserID > 0 {
 		create = create.SetHarukiUserID(harukiUserID)
 	}
-	if _, err := create.Save(ctx); err != nil {
-		s.Logger.Errorf("插入 image_mod_cache 失败: %v", err)
+	finishStore := commandtrace.MeasureOperation(ctx, "censor.store")
+	_, err = create.Save(ctx)
+	finishStore()
+	if err != nil {
+		s.Logger.ErrorContext(ctx, "image moderation cache store failed", "error_type", fmt.Sprintf("%T", err))
 	}
 
 	return suggestion == IMSSuggestionPass
+}
+
+func censorContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		return context.Background()
+	}
+	return ctx
+}
+
+func textCensor(ctx context.Context, moderator TextModerator, text string) (map[string]any, error) {
+	if contextual, ok := moderator.(contextTextModerator); ok {
+		return contextual.TextCensorContext(ctx, text)
+	}
+	return moderator.TextCensor(text)
 }
 
 // NewService creates a censor Service with both text (Baidu) and image (Tencent IMS) censors.

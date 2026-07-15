@@ -3,6 +3,7 @@ package sk
 import (
 	"fmt"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -18,7 +19,9 @@ func (c *Controller) RenderPlayerTrace(req drawing.PlayerTraceRequest) ([]byte, 
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildPlayerTraceRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -28,6 +31,8 @@ func (c *Controller) RenderPlayerTrace(req drawing.PlayerTraceRequest) ([]byte, 
 // BuildPlayerTraceFromTracker builds a player-trace request by fetching trace
 // data from the tracker API for a specific user or ranking line.
 func (c *Controller) BuildPlayerTraceFromTracker(req TrackerRankQuery) (*drawing.PlayerTraceRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
 		return nil, err
@@ -104,6 +109,8 @@ func (c *Controller) BuildRankTraceRequest(req drawing.RankTraceRequest) (*drawi
 }
 
 func (c *Controller) BuildRankTraceRequestFromTracker(req TrackerRankQuery) (*drawing.RankTraceRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
 		return nil, err
@@ -134,7 +141,9 @@ func (c *Controller) RenderRankTrace(req drawing.RankTraceRequest) ([]byte, erro
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildRankTraceRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

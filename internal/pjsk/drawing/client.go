@@ -58,7 +58,9 @@ func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstrea
 	if len(resolvedTargets) > 0 {
 		baseURL = resolvedTargets[0].BaseURL
 	}
-	client := resty.New().SetResponseBodyLimit(drawingMaxResponseBytes)
+	client := resty.New().
+		SetResponseBodyLimit(drawingMaxResponseBytes).
+		SetTransport(upstream.NewTunedTransport(upstream.TunedTransportConfig{}))
 	drawingClient := &HarukiDrawingClient{
 		client:     client,
 		baseURL:    baseURL,

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/core/upstream"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 	"haruki-cloud/utils/usererror"
@@ -41,6 +42,7 @@ func sanitizeNetworkError(err error) error {
 // timeout, headers, etc. on the returned instance.
 func newRestyClient() *resty.Client {
 	return resty.New().
+		SetTransport(upstream.NewTunedTransport(upstream.TunedTransportConfig{})).
 		SetLogger(restyLogger).
 		SetResponseBodyLimit(maxUpstreamResponseBytes).
 		SetRetryCount(maxRetries).

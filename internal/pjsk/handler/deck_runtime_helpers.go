@@ -94,14 +94,13 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 
 	selector = strings.TrimSpace(selector)
 	if selector == "" {
-		// Resolve the binding and self target first, single-threaded. The two
-		// warmers below reach identity ResolveOrCreate through different paths
-		// (ResolveSnapshot->GetBinding vs GetPublicProfileResponse->GetSelfTarget),
-		// so running them concurrently before the identity exists races on
-		// first-time identity creation for an unbound user. Pre-resolving means
-		// both warmers only read the already-created identity.
+		// Resolve the binding first, single-threaded. GetBinding is the only path
+		// that creates the user identity on first contact, and both warmers below
+		// funnel through it (ResolveSnapshot->GetBinding and
+		// GetPublicProfileResponse->GetSelfTarget->GetBinding). Pre-resolving it
+		// here means the concurrent warmers only read the already-created identity
+		// instead of racing first-time creation for an unbound user.
 		rc.GetBinding()
-		rc.GetSelfTarget()
 		// The suite snapshot (Toolbox) and the public profile (SekaiAPI) are
 		// both required here and are independent once the binding is known, so
 		// warm them concurrently. Both accessors memoize via sync.Once, so the

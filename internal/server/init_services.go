@@ -60,7 +60,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 			rendersnapshot.NewToolboxMySekaiPayloadProvider(
 				renderRuntime.Bindings,
 				renderRuntime.Toolbox,
-			),
+			).WithPrivateDataCache(renderRuntime.PrivateDataCache),
 		)
 		if renderRuntime.Assets != nil {
 			bgStore := accountdata.NewLocalProfileBGStore(renderRuntime.Assets.Primary())

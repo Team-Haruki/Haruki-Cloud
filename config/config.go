@@ -200,6 +200,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envInt("HARUKI_BOT_SESSION_TTL_DAYS", &cfg.HarukiBotDB.SessionTTLDays)
 	envStr("HARUKI_BOT_NOISE_PRIVATE_KEY", &cfg.HarukiBotDB.NoisePrivateKey)
 	envStr("HARUKI_BOT_AUTH_ENCRYPTION_KEY", &cfg.HarukiBotDB.AuthEncryptionKey)
+	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
 
 	// Sekai API
 	envStr("HARUKI_SEKAI_API_BASE_URL", &cfg.SekaiAPI.BaseURL)
@@ -487,14 +488,15 @@ type CensorConfig struct {
 }
 
 type HarukiBotDBConfig struct {
-	DBType              string `yaml:"db_type"`
-	DBURL               string `yaml:"db_url"`
-	CredentialSignToken string `yaml:"credential_sign_token"`
-	SessionSignToken    string `yaml:"session_sign_token"`
-	InternalAPIToken    string `yaml:"internal_api_token"`
-	SessionTTLDays      int    `yaml:"session_ttl_days"`
-	NoisePrivateKey     string `yaml:"noise_private_key"`
-	AuthEncryptionKey   string `yaml:"auth_encryption_key"`
+	DBType                 string        `yaml:"db_type"`
+	DBURL                  string        `yaml:"db_url"`
+	CredentialSignToken    string        `yaml:"credential_sign_token"`
+	SessionSignToken       string        `yaml:"session_sign_token"`
+	InternalAPIToken       string        `yaml:"internal_api_token"`
+	SessionTTLDays         int           `yaml:"session_ttl_days"`
+	NoisePrivateKey        string        `yaml:"noise_private_key"`
+	AuthEncryptionKey      string        `yaml:"auth_encryption_key"`
+	ResponseElectionWindow time.Duration `yaml:"response_election_window"`
 }
 
 type UsersDBConfig struct {

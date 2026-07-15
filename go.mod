@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	entgo.io/ent v0.14.6
+	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/bytedance/sonic v1.15.2
 	github.com/flynn/noise v1.1.0
 	github.com/go-resty/resty/v2 v2.17.2
@@ -53,6 +54,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.72.0 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/zclconf/go-cty v1.18.1 // indirect
 	github.com/zclconf/go-cty-yaml v1.2.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

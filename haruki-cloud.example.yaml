@@ -110,6 +110,9 @@ haruki_bot:
   internal_api_token: "your-internal-api-token"
   session_ttl_days: 7
   noise_private_key: ""  # hex-encoded 32-byte X25519 private key for Noise IK transport encryption (leave empty to disable)
+  # Candidate collection window for choosing which Bot returns a shared command result.
+  # Zero uses the runtime default (200ms); a negative duration disables response election.
+  response_election_window: "200ms"
 
 users_db:
   db_type: "postgres"

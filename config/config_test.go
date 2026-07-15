@@ -132,6 +132,54 @@ func TestEnvOverrideProfile(t *testing.T) {
 	}
 }
 
+func TestApplyEnvOverridesResponseElectionWindow(t *testing.T) {
+	t.Setenv("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", "275ms")
+	cfg := &Config{}
+
+	if err := ApplyEnvOverrides(cfg); err != nil {
+		t.Fatalf("ApplyEnvOverrides() error = %v", err)
+	}
+	if got := cfg.HarukiBotDB.ResponseElectionWindow; got != 275*time.Millisecond {
+		t.Fatalf("response election window = %v, want 275ms", got)
+	}
+}
+
+func TestApplyEnvOverridesResponseElectionWindowPreservesNegativeDisable(t *testing.T) {
+	t.Setenv("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", "-1ms")
+	cfg := &Config{}
+
+	if err := ApplyEnvOverrides(cfg); err != nil {
+		t.Fatalf("ApplyEnvOverrides() error = %v", err)
+	}
+	if got := cfg.HarukiBotDB.ResponseElectionWindow; got != -time.Millisecond {
+		t.Fatalf("response election window = %v, want -1ms", got)
+	}
+}
+
+func TestReadConfigResponseElectionWindow(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
+	data := []byte("profile: dev\nharuki_bot:\n  response_election_window: 350ms\n")
+	if err := os.WriteFile(configPath, data, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := ReadConfig(configPath)
+	if err != nil {
+		t.Fatalf("ReadConfig() error = %v", err)
+	}
+	if got := cfg.HarukiBotDB.ResponseElectionWindow; got != 350*time.Millisecond {
+		t.Fatalf("response election window = %v, want 350ms", got)
+	}
+}
+
+func TestResponseElectionWindowZeroRemainsRuntimeDefaultSentinel(t *testing.T) {
+	cfg := &Config{Profile: ProfileDev}
+	ApplyProfileDefaults(cfg)
+	if got := cfg.HarukiBotDB.ResponseElectionWindow; got != 0 {
+		t.Fatalf("response election window = %v, want zero runtime-default sentinel", got)
+	}
+}
+
 func TestApplyEnvOverridesTrackerHotProtection(t *testing.T) {
 	t.Setenv("HARUKI_TRACKER_TRACE_BATCH_WINDOW", "150ms")
 	t.Setenv("HARUKI_TRACKER_TRACE_BATCH_MAX_WAIT", "250ms")

@@ -259,15 +259,21 @@ func (rc *RequestContext) resolveProfiles() {
 		if rc.detailedProfile == nil && rc.profileCard == nil {
 			rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc)
 		}
-		if snap := rc.ResolveSnapshot(false); snap != nil {
-			if rc.detailedProfile == nil {
-				if detail := snap.DetailedProfile(rc.Region); detail != nil {
-					rc.detailedProfile = cloneDetailedProfileForCurrentTarget(rc, detail)
+		// Only fall back to the full suite snapshot when the cheaper public
+		// profile path left a gap. When both cards are already built, resolving
+		// the snapshot here re-runs binding + factory.Build (a full suite parse)
+		// whose result would just be discarded by the nil-guards below.
+		if rc.detailedProfile == nil || rc.profileCard == nil {
+			if snap := rc.ResolveSnapshot(false); snap != nil {
+				if rc.detailedProfile == nil {
+					if detail := snap.DetailedProfile(rc.Region); detail != nil {
+						rc.detailedProfile = cloneDetailedProfileForCurrentTarget(rc, detail)
+					}
 				}
-			}
-			if rc.profileCard == nil {
-				if card := snap.ProfileCard(rc.Region); card != nil {
-					rc.profileCard = cloneProfileCardForCurrentTarget(rc, card)
+				if rc.profileCard == nil {
+					if card := snap.ProfileCard(rc.Region); card != nil {
+						rc.profileCard = cloneProfileCardForCurrentTarget(rc, card)
+					}
 				}
 			}
 		}

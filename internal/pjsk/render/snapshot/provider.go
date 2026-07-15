@@ -46,6 +46,10 @@ type Selector struct {
 type ResolveOptions struct {
 	PreferGlobalDefault bool
 	NeedMySekai         bool
+	// NeedMusicMeta is reserved for consumers that cannot access the shared
+	// metadata loader directly. Normal suite/profile commands leave it false so
+	// a large, process-wide payload is not copied into every live snapshot.
+	NeedMusicMeta bool
 }
 
 // HarukiSnapshotProvider resolves request-scoped snapshots.

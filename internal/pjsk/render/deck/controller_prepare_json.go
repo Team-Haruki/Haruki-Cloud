@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	sonic "github.com/bytedance/sonic"
-	"sort"
 )
 
 func structToJSONObject(value any) (map[string]any, error) {
@@ -87,48 +86,4 @@ func jsonNumberToInt(value any) (int, bool) {
 	default:
 		return 0, false
 	}
-}
-
-func firstObjectFromArray(payload map[string]any, key string) map[string]any {
-	value, ok := payload[key]
-	if !ok {
-		return nil
-	}
-	items, ok := value.([]any)
-	if !ok || len(items) == 0 {
-		return nil
-	}
-	first, _ := items[0].(map[string]any)
-	return first
-}
-
-func firstAreaItemObject(payload map[string]any) map[string]any {
-	area := firstObjectFromArray(payload, "userAreas")
-	if area == nil {
-		return nil
-	}
-	value, ok := area["areaItems"]
-	if !ok {
-		return nil
-	}
-	items, ok := value.([]any)
-	if !ok || len(items) == 0 {
-		return nil
-	}
-	first, _ := items[0].(map[string]any)
-	return first
-}
-
-func removedNestedKeys(original, prepared map[string]any) []string {
-	if len(original) == 0 {
-		return nil
-	}
-	removed := make([]string, 0)
-	for key := range original {
-		if _, ok := prepared[key]; !ok {
-			removed = append(removed, key)
-		}
-	}
-	sort.Strings(removed)
-	return removed
 }

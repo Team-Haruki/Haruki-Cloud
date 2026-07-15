@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -235,7 +236,9 @@ func (c *Controller) RenderFixtureList(query FixtureListQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildFixtureListRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +325,9 @@ func (c *Controller) RenderFixtureDetail(query FixtureDetailQuery) ([]byte, erro
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	requests, err := c.BuildFixtureDetailRequests(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

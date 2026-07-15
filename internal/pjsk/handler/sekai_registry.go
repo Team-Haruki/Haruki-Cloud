@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log/slog"
 	"reflect"
 	"slices"
 	"strings"
@@ -11,7 +10,10 @@ import (
 	registryhandler "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/utils/logger"
 )
+
+var sekaiRegistryLogger = logger.NewLoggerFromGlobal("PJSKCommandRegistry")
 
 type HarrukiSekaiHandlerContext struct {
 	PjskHandlerContext
@@ -213,7 +215,7 @@ func registerSekaiCommandHandlers() {
 		if methodTyp.NumIn() == 0 &&
 			methodTyp.NumOut() == 1 &&
 			methodTyp.Out(0) == configTyp {
-			slog.Info("注册指令解析器", "handler", methodName)
+			sekaiRegistryLogger.Info("command parser registered", "handler", methodName)
 			results := methodVal.Call(nil)
 			skHandler := results[0].Interface().(HarukiSekaiCommandHandler)
 
@@ -229,7 +231,7 @@ func registerSekaiCommandHandlers() {
 					for _, cmd := range skHandler.Commands {
 						regionStr := string(region)
 						if strings.HasPrefix(cmd, fmt.Sprintf("/%s%s", regionStr, prefix)) {
-							slog.Warn("指令本身包含了区服前缀", "cmd", cmd)
+							sekaiRegistryLogger.Warn("command already contains region prefix", "command", cmd)
 						}
 						allRegionCommands[cmd] = true
 						allRegionCommands[strings.Replace(cmd, "/", fmt.Sprintf("/%s", prefix), 1)] = true

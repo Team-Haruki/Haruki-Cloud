@@ -45,6 +45,7 @@ const (
 )
 
 type Controller struct {
+	ctx       context.Context
 	sources   *regionsource.Registry[DataSource]
 	events    *regionsource.Registry[event.DataSource]
 	drawing   *drawing.HarukiDrawingClient

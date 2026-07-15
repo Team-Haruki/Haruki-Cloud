@@ -174,7 +174,9 @@ func buildDeckDetailedProfileForTargetWithResponse(rc *RequestContext, target Re
 		Visible:    target.Visible,
 		BgSettings: target.BgSettings,
 	}
-	detail, err := rc.App.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(q, resp, snapshot)
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	detail, err := rc.App.Profiles.WithContext(rc.Ctx).BuildDetailedProfileCardFromAPIWithSnapshot(q, resp, snapshot)
+	finishBuild()
 	if err != nil {
 		return nil
 	}

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/meta"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -48,6 +49,8 @@ func (f *DefaultSnapshotFactory) Build(ctx context.Context, input BuildInput) (S
 	if ctx == nil {
 		ctx = context.TODO()
 	}
+	finishBuild := commandtrace.MeasureOperation(ctx, "snapshot.build")
+	defer finishBuild()
 	if len(bytes.TrimSpace(input.SuiteJSON)) == 0 {
 		return nil, fmt.Errorf("snapshot: suite snapshot is empty")
 	}
@@ -56,17 +59,21 @@ func (f *DefaultSnapshotFactory) Build(ctx context.Context, input BuildInput) (S
 		data []byte
 		err  error
 	)
+	finishNormalize := commandtrace.MeasureOperation(ctx, "snapshot.normalize")
 	if len(bytes.TrimSpace(input.MySekaiJSON)) > 0 {
 		data, err = mergeMySekaiData(input.SuiteJSON, input.MySekaiJSON)
 		if err != nil {
+			finishNormalize()
 			return nil, err
 		}
 	} else {
 		data, err = normalizeSnapshotJSON(input.SuiteJSON)
 		if err != nil {
+			finishNormalize()
 			return nil, err
 		}
 	}
+	finishNormalize()
 
 	return f.buildService(ctx, input, data)
 }
@@ -78,13 +85,17 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 	}
 
 	var raw RawUserData
-	if err := json.Unmarshal(data, &raw); err != nil {
+	finishDecode := commandtrace.MeasureOperation(ctx, "snapshot.decode")
+	err := json.Unmarshal(data, &raw)
+	finishDecode()
+	if err != nil {
 		return nil, fmt.Errorf("snapshot: decode suite JSON: %w", err)
 	}
 	if raw.UserGamedata.UserID == 0 {
 		return nil, fmt.Errorf("snapshot: suite JSON is missing userId")
 	}
 
+	finishModel := commandtrace.MeasureOperation(ctx, "snapshot.model")
 	region := renderregion.WithDefault(input.Region)
 	activeDeck := FindActiveDeck(raw.UserDecks, raw.UserGamedata.Deck)
 	leaderCardID := activeDeck.Leader
@@ -120,21 +131,33 @@ func (f *DefaultSnapshotFactory) buildService(ctx context.Context, input BuildIn
 	service.rawData = &raw
 	service.rawJSON = slices.Clone(data)
 
+	if len(input.MusicMetaJSON) > 0 {
+		processed, view, prepareErr := meta.Prepare(input.MusicMetaJSON)
+		if prepareErr != nil {
+			// Preserve the historical best-effort behavior for optional metadata:
+			// the user snapshot remains usable even if this side payload is bad.
+			service.musicMetaBytes = slices.Clone(input.MusicMetaJSON)
+		} else {
+			service.musicMetaBytes = processed
+			service.musicMetaView = view
+		}
+		service.musicMetaPath = strings.TrimSpace(input.MusicMetaPath)
+	}
+	finishModel()
+
 	if input.PersistRawFile {
+		finishPersist := commandtrace.MeasureOperation(ctx, "snapshot.persist")
 		pattern := strings.TrimSpace(input.RawFilePattern)
 		if pattern == "" {
 			pattern = "haruki-pjsk-user-*.json"
 		}
 		rawFilePath, err := writeNormalizedSnapshotFile(pattern, data)
 		if err != nil {
+			finishPersist()
 			return nil, err
 		}
 		service.rawFilePath = rawFilePath
-	}
-
-	if len(input.MusicMetaJSON) > 0 {
-		service.musicMetaBytes = meta.InjectOmakase(input.MusicMetaJSON)
-		service.musicMetaPath = strings.TrimSpace(input.MusicMetaPath)
+		finishPersist()
 	}
 
 	return service, nil

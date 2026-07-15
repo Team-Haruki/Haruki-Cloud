@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"encoding/hex"
-	"os"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -75,7 +75,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 	if renderRuntime.Aliases != nil {
 		renderRuntime.Aliases.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
 	}
-	mainLogger.Infof("Sekai runtime services configured")
+	mainLogger.Info("Sekai runtime services configured")
 }
 
 func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client) *renderapp.App {
@@ -83,8 +83,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		return nil
 	}
 	if sekaiClient == nil {
-		mainLogger.Errorf("PJSK render runtime requires sekai.enabled=true")
-		os.Exit(1)
+		fatalStartup(mainLogger, "PJSK render runtime requires Sekai database")
 	}
 	ctx = ensureContext(ctx)
 
@@ -95,10 +94,10 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	metaOutputDir := harukiConfig.Cfg.PJSKRender.MusicMeta.OutputDir
 	metaLoader := meta.NewLoader(harukiLogger.NewLoggerFromGlobal("MusicMeta"), meta.WithOutputDir(metaOutputDir))
 	if err := metaLoader.LoadAll(ctx); err != nil {
-		mainLogger.Warnf("music meta initial load partially failed: %v", err)
+		mainLogger.Warn("music meta initial load partially failed", "error_type", fmt.Sprintf("%T", err))
 	}
 	metaLoader.StartBackgroundRefresh(ctx, metaRefreshInterval)
-	mainLogger.Infof("Music meta loader started (refresh=%s output_dir=%q)", metaRefreshInterval, metaOutputDir)
+	mainLogger.Info("music meta loader started", "refresh_interval", metaRefreshInterval, "has_output_dir", strings.TrimSpace(metaOutputDir) != "")
 
 	sekaiAPIClient := sekaiAPI.NewSekaiAPIClient(&harukiConfig.Cfg.SekaiAPI)
 	toolboxClient := sekaiAPI.NewToolboxClient(&harukiConfig.Cfg.Toolbox)
@@ -187,9 +186,9 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 	})
 
 	if runtime.Drawing == nil {
-		mainLogger.Warnf("PJSK render runtime initialized without drawing_base_url; build-only mode")
+		mainLogger.Warn("PJSK render runtime initialized without drawing service", "build_only", true)
 	}
-	mainLogger.Infof("PJSK render asset roots: %v", runtime.AssetRoots())
+	mainLogger.Info("PJSK render runtime initialized", "asset_root_count", len(runtime.AssetRoots()))
 	return runtime
 }
 
@@ -223,55 +222,46 @@ func resolveMySekaiHousingCompetitionCachePath() string {
 // auth routes are always registered, so these must be configured too.
 func validateBotAuthSecrets(mainLogger *harukiLogger.Logger) {
 	if strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.SessionSignToken) == "" {
-		mainLogger.Errorf("bot session_sign_token is required but not configured")
-		os.Exit(1)
+		fatalStartup(mainLogger, "bot session signing token is not configured")
 	}
 	if strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.CredentialSignToken) == "" {
-		mainLogger.Errorf("bot credential_sign_token is required but not configured")
-		os.Exit(1)
+		fatalStartup(mainLogger, "bot credential signing token is not configured")
 	}
 }
 
 func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {
 	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.AuthEncryptionKey)
 	if keyHex == "" {
-		mainLogger.Errorf("auth_encryption_key is required but not configured")
-		os.Exit(1)
+		fatalStartup(mainLogger, "auth encryption key is not configured")
 	}
 	keyBytes, err := hex.DecodeString(keyHex)
 	if err != nil {
-		mainLogger.Errorf("Invalid auth_encryption_key hex: %v", err)
-		os.Exit(1)
+		fatalStartup(mainLogger, "invalid auth_encryption_key hex", "error_type", fmt.Sprintf("%T", err))
 	}
 	if len(keyBytes) != 32 {
-		mainLogger.Errorf("auth_encryption_key must be 32 bytes (got %d)", len(keyBytes))
-		os.Exit(1)
+		fatalStartup(mainLogger, "auth encryption key has invalid length", "key_bytes", len(keyBytes))
 	}
-	mainLogger.Infof("Auth encryption key loaded (AES-256-GCM)")
+	mainLogger.Info("auth encryption key loaded", "algorithm", "AES-256-GCM")
 	return keyBytes
 }
 
 func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
 	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey)
 	if keyHex == "" {
-		mainLogger.Errorf("noise_private_key is required but not configured")
-		os.Exit(1)
+		fatalStartup(mainLogger, "Noise private key is not configured")
 	}
 	privBytes, err := hex.DecodeString(keyHex)
 	if err != nil {
-		mainLogger.Errorf("Invalid noise_private_key hex: %v", err)
-		os.Exit(1)
+		fatalStartup(mainLogger, "invalid noise_private_key hex", "error_type", fmt.Sprintf("%T", err))
 	}
 	if len(privBytes) != 32 {
-		mainLogger.Errorf("noise_private_key must be 32 bytes (got %d)", len(privBytes))
-		os.Exit(1)
+		fatalStartup(mainLogger, "Noise private key has invalid length", "key_bytes", len(privBytes))
 	}
 	kp, err := crypto.KeyPairFromPrivate(privBytes)
 	if err != nil {
-		mainLogger.Errorf("Failed to derive Noise key pair: %v", err)
-		os.Exit(1)
+		fatalStartup(mainLogger, "failed to derive Noise key pair", "error_type", fmt.Sprintf("%T", err))
 	}
-	mainLogger.Infof("Noise IK transport encryption enabled (pubkey=%x)", kp.Public)
+	mainLogger.Info("Noise IK transport encryption enabled", "public_key", hex.EncodeToString(kp.Public))
 	return kp
 }
 
@@ -284,14 +274,15 @@ func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, r
 
 	censorClient, err := censorDB.Open(cfg.CensorDBType, cfg.CensorDBURL)
 	if err != nil {
-		mainLogger.Errorf("Failed to connect to Censor DB: %v", err)
+		mainLogger.Error("failed to connect to Censor DB", "error_type", fmt.Sprintf("%T", err))
 		return nil
 	}
 	if err := censorClient.Schema.Create(ctx); err != nil {
-		mainLogger.Errorf("Failed to create schema for Censor DB: %v", err)
+		mainLogger.Error("failed to create schema for Censor DB", "error_type", fmt.Sprintf("%T", err))
 		_ = censorClient.Close()
 		return nil
 	}
+	installEntTracing(censorClient)
 
 	svc := censor.NewService(
 		cfg.BaiduAPIKey, cfg.BaiduSecret,
@@ -306,6 +297,6 @@ func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, r
 		}
 	}
 
-	mainLogger.Infof("Censor service initialized")
+	mainLogger.Info("censor service initialized")
 	return svc
 }

@@ -99,6 +99,8 @@ func executeProfileCustomProfileCard(rc *RequestContext) (onebot11.Message, erro
 		}
 	}
 
+	finishBuild := measureCommandOperation(rc.Ctx, "custom_profile.build")
+	defer finishBuild()
 	card, err := resolveCustomProfileCard(resp.UserCustomProfileCards, params)
 	if err != nil {
 		return nil, err
@@ -108,6 +110,7 @@ func executeProfileCustomProfileCard(rc *RequestContext) (onebot11.Message, erro
 		return nil, fmt.Errorf("解析自定义档案资源失败：%w", err)
 	}
 	req := drawing.NewCustomProfileCardRenderRequest(region, *card, resp, resources)
+	finishBuild()
 	data, err := rc.App.Drawing.WithContext(rc.Ctx).GenerateCustomProfileCard(req)
 	if err != nil {
 		return nil, fmt.Errorf("渲染自定义档案失败：%w", err)

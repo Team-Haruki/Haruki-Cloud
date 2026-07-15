@@ -174,6 +174,32 @@ func TestBuildCardBoxRequestMarksOwnedCardsFromDetailedProfile(t *testing.T) {
 	}
 }
 
+func TestBuildCardBoxRequestSkipsUnusedSkillsAndDeduplicatesCharacterMetadata(t *testing.T) {
+	source := &lookupTestSource{}
+	builder := NewBuilder(source, nil, nil, nil)
+	req, err := builder.BuildCardBoxRequest([]*masterdata.Card{
+		{ID: 1001, CharacterID: 5, SkillID: 101, CardRarityType: "rarity_4", Attr: "cute", AssetBundleName: "card_a"},
+		{ID: 1002, CharacterID: 5, SkillID: 102, CardRarityType: "rarity_4", Attr: "cool", AssetBundleName: "card_b"},
+	}, "jp", nil, false, false, false, true, "")
+	if err != nil {
+		t.Fatalf("BuildCardBoxRequest() error = %v", err)
+	}
+	if source.skillLookups != 0 {
+		t.Fatalf("card box performed %d unused skill lookups", source.skillLookups)
+	}
+	if source.colorLookups != 1 {
+		t.Fatalf("character color lookups = %d, want 1", source.colorLookups)
+	}
+	for _, item := range req.Cards {
+		if item.Card.Skill != nil || item.Card.SpecialSkillInfo != nil {
+			t.Fatalf("card box unexpectedly includes unused skill payload: %+v", item.Card)
+		}
+		if len(item.Card.ThumbnailInfo) != 1 {
+			t.Fatalf("card box should build exactly one final thumbnail: %+v", item.Card.ThumbnailInfo)
+		}
+	}
+}
+
 func TestBuildCardBoxRequestIncludesDistributionStats(t *testing.T) {
 	source := &lookupTestSource{}
 	builder := NewBuilder(source, nil, nil, nil)
@@ -256,8 +282,11 @@ func TestBuildCardBoxRequestUsesOwnedCardDefaultImageEvenWhenBeforeIsSet(t *test
 	if err != nil {
 		t.Fatalf("BuildCardBoxRequest() error = %v", err)
 	}
-	if req.UserInfo != profile {
-		t.Fatalf("expected explicit card box request to keep user info, got %+v", req.UserInfo)
+	if req.UserInfo == nil || req.UserInfo == profile || req.UserInfo.ID != profile.ID {
+		t.Fatalf("expected explicit card box request to keep cloned display info, got %+v", req.UserInfo)
+	}
+	if len(req.UserInfo.UserCards) != 0 {
+		t.Fatalf("card box user info must omit duplicated owned cards, got %d", len(req.UserInfo.UserCards))
 	}
 	if len(req.Cards) != 1 || req.Cards[0].Card.IsAfterTraining == nil || !*req.Cards[0].Card.IsAfterTraining {
 		t.Fatalf("expected owned card to keep special_training default image: %+v", req.Cards)

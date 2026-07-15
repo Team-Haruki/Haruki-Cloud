@@ -9,15 +9,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-resty/resty/v2"
-
+	"haruki-cloud/config"
 	"haruki-cloud/utils/logger"
+
+	"github.com/go-resty/resty/v2"
 )
+
+const musicMetaMaxResponseBytes = 64 << 20
 
 // regionEntry holds a fetched music_metas payload together with the
 // HTTP caching headers used for conditional re-fetches.
 type regionEntry struct {
 	data         []byte // processed JSON (omakase entry injected)
+	view         *View
 	etag         string
 	lastModified string
 }
@@ -29,6 +33,8 @@ type Loader struct {
 	http      *resty.Client
 	mu        sync.RWMutex
 	cache     map[string]*regionEntry
+	loadMu    sync.Mutex
+	loadLocks map[string]*sync.Mutex
 	logger    *logger.Logger
 	outputDir string
 }
@@ -46,9 +52,12 @@ func WithOutputDir(dir string) LoaderOption {
 // Pass nil for log to silence all output.
 func NewLoader(log *logger.Logger, options ...LoaderOption) *Loader {
 	l := &Loader{
-		http:   resty.New(),
-		cache:  make(map[string]*regionEntry),
-		logger: log,
+		http: resty.New().
+			SetTimeout(config.HTTPClientTimeout).
+			SetResponseBodyLimit(musicMetaMaxResponseBytes),
+		cache:     make(map[string]*regionEntry),
+		loadLocks: make(map[string]*sync.Mutex),
+		logger:    log,
 	}
 	for _, option := range options {
 		if option != nil {
@@ -77,7 +86,10 @@ func (l *Loader) LoadAll(ctx context.Context) error {
 	for range Regions() {
 		if res := <-results; res.err != nil {
 			if l.logger != nil {
-				l.logger.Warnf("meta: failed to load region %s: %v", res.region, res.err)
+				l.logger.WarnContext(ctx, "music metadata load failed",
+					"region", res.region,
+					"error_type", fmt.Sprintf("%T", res.err),
+				)
 			}
 			if firstErr == nil {
 				firstErr = res.err
@@ -95,6 +107,15 @@ func (l *Loader) load(ctx context.Context, region string) error {
 	if !ok {
 		return fmt.Errorf("meta: unknown region %q", region)
 	}
+	l.loadMu.Lock()
+	loadLock := l.loadLocks[region]
+	if loadLock == nil {
+		loadLock = &sync.Mutex{}
+		l.loadLocks[region] = loadLock
+	}
+	l.loadMu.Unlock()
+	loadLock.Lock()
+	defer loadLock.Unlock()
 
 	l.mu.RLock()
 	existing := l.cache[region]
@@ -118,14 +139,18 @@ func (l *Loader) load(ctx context.Context, region string) error {
 	switch resp.StatusCode() {
 	case 304:
 		if l.logger != nil {
-			l.logger.Debugf("meta: %s not modified (304)", region)
+			l.logger.DebugContext(ctx, "music metadata unchanged", "region", region, "status_code", 304)
 		}
 		return nil
 
 	case 200:
-		processed := InjectOmakase(resp.Body())
+		processed, view, err := Prepare(resp.Body())
+		if err != nil {
+			return fmt.Errorf("meta: parse %s: %w", region, err)
+		}
 		entry := &regionEntry{
 			data:         processed,
+			view:         view,
 			etag:         resp.Header().Get("ETag"),
 			lastModified: resp.Header().Get("Last-Modified"),
 		}
@@ -136,7 +161,7 @@ func (l *Loader) load(ctx context.Context, region string) error {
 			return fmt.Errorf("meta: persist %s: %w", region, err)
 		}
 		if l.logger != nil {
-			l.logger.Infof("meta: %s updated (%d bytes)", region, len(processed))
+			l.logger.InfoContext(ctx, "music metadata updated", "region", region, "response_bytes", len(processed))
 		}
 		return nil
 
@@ -183,6 +208,9 @@ func (l *Loader) persist(region string, data []byte) error {
 // Get returns a copy of the cached music_metas JSON for region.
 // Returns nil if the region has not been loaded yet.
 func (l *Loader) Get(region string) []byte {
+	if l == nil {
+		return nil
+	}
 	l.mu.RLock()
 	entry := l.cache[region]
 	l.mu.RUnlock()
@@ -192,6 +220,21 @@ func (l *Loader) Get(region string) []byte {
 	out := make([]byte, len(entry.data))
 	copy(out, entry.data)
 	return out
+}
+
+// View returns the current immutable parsed generation for region. Refreshes
+// replace the pointer atomically; the returned View remains valid forever.
+func (l *Loader) View(region string) *View {
+	if l == nil {
+		return nil
+	}
+	l.mu.RLock()
+	entry := l.cache[region]
+	l.mu.RUnlock()
+	if entry == nil {
+		return nil
+	}
+	return entry.view
 }
 
 // StartBackgroundRefresh spawns a goroutine that calls LoadAll on every interval.
@@ -206,7 +249,9 @@ func (l *Loader) StartBackgroundRefresh(ctx context.Context, interval time.Durat
 				return
 			case <-ticker.C:
 				if err := l.LoadAll(ctx); err != nil && l.logger != nil {
-					l.logger.Warnf("meta: background refresh failed: %v", err)
+					l.logger.WarnContext(ctx, "music metadata background refresh failed",
+						"error_type", fmt.Sprintf("%T", err),
+					)
 				}
 			}
 		}

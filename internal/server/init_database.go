@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"os"
+	"fmt"
 	"strings"
 
 	harukiConfig "haruki-cloud/config"
@@ -19,7 +19,9 @@ import (
 	pjskDB "haruki-cloud/database/pjsk"
 	sekaiDB "haruki-cloud/database/sekai"
 	usersDB "haruki-cloud/database/users"
+	"haruki-cloud/internal/observability/commandtrace"
 
+	"entgo.io/ent"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 )
@@ -33,28 +35,39 @@ func ensureContext(ctx context.Context) context.Context {
 }
 
 // initDBClient opens a database connection and creates its schema.
-// On failure it logs the error and calls os.Exit(1).
+// On failure it emits a synchronous fatal record and terminates after a
+// bounded best-effort log flush.
 func initDBClient[T interface {
 	Close() error
 }](ctx context.Context, logger *harukiLogger.Logger, name string, openFn func() (T, error), schemaFn func(T, context.Context) error) T {
 	client, err := openFn()
 	if err != nil {
-		logger.Errorf("Failed to connect to %s DB: %v", name, err)
-		os.Exit(1)
+		fatalStartup(logger, "failed to connect to database", "database", name, "error_type", fmt.Sprintf("%T", err))
 	}
 	if err := schemaFn(client, ctx); err != nil {
-		logger.Errorf("Failed to create schema for %s DB: %v", name, err)
-		os.Exit(1)
+		fatalStartup(logger, "failed to create database schema", "database", name, "error_type", fmt.Sprintf("%T", err))
 	}
+	installEntTracing(client)
 	return client
+}
+
+type traceableEntClient interface {
+	Intercept(...ent.Interceptor)
+	Use(...ent.Hook)
+}
+
+func installEntTracing(client any) {
+	if traced, ok := client.(traceableEntClient); ok {
+		traced.Intercept(commandtrace.EntQueryInterceptor())
+		traced.Use(commandtrace.EntMutationHook())
+	}
 }
 
 func initRedis(ctx context.Context, mainLogger *harukiLogger.Logger) *redis.Client {
 	ctx = ensureContext(ctx)
 	redisClient := harukiRedis.NewRedisClient(harukiConfig.Cfg.Redis)
 	if err := redisClient.Ping(ctx).Err(); err != nil {
-		mainLogger.Errorf("Failed to connect Redis: %v", err)
-		os.Exit(1)
+		fatalStartup(mainLogger, "failed to connect Redis", "error_type", fmt.Sprintf("%T", err))
 	}
 	return redisClient
 }
@@ -85,7 +98,7 @@ func initChunithmIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger,
 
 func initUsers(ctx context.Context, mainLogger *harukiLogger.Logger) *usersDB.Client {
 	if strings.TrimSpace(harukiConfig.Cfg.UsersDB.DBType) == "" || strings.TrimSpace(harukiConfig.Cfg.UsersDB.DBURL) == "" {
-		mainLogger.Warnf("Users DB is not configured; profile binding commands will be unavailable")
+		mainLogger.Warn("users database is not configured", "profile_binding_available", false)
 		return nil
 	}
 	ctx = ensureContext(ctx)
@@ -123,17 +136,16 @@ func initSekaiIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger) *s
 
 	client, err := sekaiDB.Open(harukiConfig.Cfg.Sekai.DBType, harukiConfig.Cfg.Sekai.DBURL)
 	if err != nil {
-		mainLogger.Errorf("Failed to connect to Sekai DB: %v", err)
-		os.Exit(1)
+		fatalStartup(mainLogger, "failed to connect to Sekai DB", "error_type", fmt.Sprintf("%T", err))
 	}
 	if harukiConfig.Cfg.Sekai.AutoMigrate {
 		if err := client.Schema.Create(ctx); err != nil {
-			mainLogger.Errorf("Failed to create schema for Sekai DB: %v", err)
-			os.Exit(1)
+			fatalStartup(mainLogger, "failed to create Sekai DB schema", "error_type", fmt.Sprintf("%T", err))
 		}
 	} else {
-		mainLogger.Infof("Sekai DB auto-migrate disabled; using existing schema")
+		mainLogger.Info("Sekai DB auto-migrate disabled")
 	}
+	installEntTracing(client)
 	return client
 }
 

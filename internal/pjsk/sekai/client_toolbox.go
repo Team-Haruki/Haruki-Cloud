@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/version"
 
 	"github.com/bytedance/sonic"
@@ -20,6 +21,11 @@ type HarukiToolboxClient struct {
 	http   *resty.Client
 	config *config.ToolboxConfig
 }
+
+const (
+	toolboxMaxResponseBytes             = 64 << 20
+	toolboxMaxDecompressedResponseBytes = 256 << 20
+)
 
 type MysekaiBirthdayMonitorUpsertRequest struct {
 	SubscriptionID      string   `json:"subscription_id"`
@@ -57,7 +63,9 @@ type MysekaiBirthdayEvent struct {
 // reaching for a package-level singleton.
 func NewToolboxClient(cfg *config.ToolboxConfig) *HarukiToolboxClient {
 	return &HarukiToolboxClient{
-		http:   newRestyClient().SetTimeout(apiTimeout),
+		http: newRestyClient().
+			SetTimeout(apiTimeout).
+			SetResponseBodyLimit(toolboxMaxResponseBytes),
 		config: cfg,
 	}
 }
@@ -75,6 +83,9 @@ func (c *HarukiToolboxClient) internalRequest(ctx context.Context) (*resty.Reque
 	if c == nil || c.config == nil || strings.TrimSpace(c.config.BaseURL) == "" {
 		return nil, ErrClientNotConfigured
 	}
+	if ctx == nil {
+		ctx = context.TODO()
+	}
 	req := c.http.R().
 		SetContext(ctx).
 		SetHeader("Authorization", c.config.APIToken).
@@ -88,8 +99,13 @@ func (c *HarukiToolboxClient) UpsertMysekaiBirthdayMonitor(ctx context.Context, 
 		return err
 	}
 	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-monitors/%s", strings.TrimRight(c.config.BaseURL, "/"), req.SubscriptionID)
+	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
 	resp, err := r.SetBody(req).Put(endpoint)
+	finishHTTP()
 	if err != nil {
+		if ctx != nil && ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return fmt.Errorf("toolbox: birthday monitor upsert failed: %w", sanitizeNetworkError(err))
 	}
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
@@ -104,8 +120,13 @@ func (c *HarukiToolboxClient) DeleteMysekaiBirthdayMonitor(ctx context.Context, 
 		return err
 	}
 	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-monitors/%s", strings.TrimRight(c.config.BaseURL, "/"), subscriptionID)
+	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
 	resp, err := r.SetQueryParam("subscription_version", subscriptionVersion).Delete(endpoint)
+	finishHTTP()
 	if err != nil {
+		if ctx != nil && ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return fmt.Errorf("toolbox: birthday monitor delete failed: %w", sanitizeNetworkError(err))
 	}
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
@@ -120,19 +141,27 @@ func (c *HarukiToolboxClient) GetMysekaiBirthdayEvent(ctx context.Context, req M
 		return nil, err
 	}
 	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-events/%s", strings.TrimRight(c.config.BaseURL, "/"), req.EventID)
+	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
 	resp, err := r.SetQueryParams(map[string]string{
 		"subscription_id":      req.SubscriptionID,
 		"subscription_version": req.SubscriptionVersion,
 	}).Get(endpoint)
+	finishHTTP()
 	if err != nil {
+		if ctx != nil && ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		return nil, fmt.Errorf("toolbox: birthday event fetch failed: %w", sanitizeNetworkError(err))
 	}
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(resp.Body())}
 	}
 	var event MysekaiBirthdayEvent
-	if err := sonic.Unmarshal(resp.Body(), &event); err != nil {
-		return nil, fmt.Errorf("toolbox: failed to parse birthday event response: %w", err)
+	finishDecode := commandtrace.MeasureOperation(ctx, "toolbox.decode")
+	decodeErr := sonic.Unmarshal(resp.Body(), &event)
+	finishDecode()
+	if decodeErr != nil {
+		return nil, fmt.Errorf("toolbox: failed to parse birthday event response: %w", decodeErr)
 	}
 	return &event, nil
 }
@@ -143,8 +172,13 @@ func (c *HarukiToolboxClient) AckMysekaiBirthdayEvent(ctx context.Context, req M
 		return err
 	}
 	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-events/%s/ack", strings.TrimRight(c.config.BaseURL, "/"), req.EventID)
+	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
 	resp, err := r.SetBody(req).Post(endpoint)
+	finishHTTP()
 	if err != nil {
+		if ctx != nil && ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return fmt.Errorf("toolbox: birthday event ack failed: %w", sanitizeNetworkError(err))
 	}
 	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
@@ -164,30 +198,39 @@ func (c *HarukiToolboxClient) AckMysekaiBirthdayEvent(ctx context.Context, req M
 //   - ErrAccountOwnerBanned     — game account owner is banned
 //   - *ToolboxAPIError          — any other unexpected non-2xx status
 func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
-	if c == nil {
-		return nil, ErrClientNotConfigured
+	return c.GetPrivateDataContext(context.TODO(), server, dataType, userID, platform, platformUserID)
+}
+
+// GetPrivateDataContext is GetPrivateData with request cancellation and tracing.
+func (c *HarukiToolboxClient) GetPrivateDataContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
+	r, err := c.internalRequest(ctx)
+	if err != nil {
+		return nil, err
 	}
 	url := fmt.Sprintf("%s/api/private/game-data/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
 
-	resp, err := c.http.R().
-		SetHeader("Authorization", c.config.APIToken).
-		SetHeader("User-Agent", c.userAgent()).
+	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	resp, err := r.
 		SetHeader("Accept-Encoding", "zstd").
 		SetQueryParams(map[string]string{
 			"platform":         platform,
 			"platform_user_id": platformUserID,
 		}).
 		Get(url)
+	finishHTTP()
 	if err != nil {
+		if ctx != nil && ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		return decompress(resp)
+		return decompressContext(ctx, resp)
 
 	case http.StatusForbidden:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
 			return nil, ErrInvalidPlatformUser
@@ -198,7 +241,7 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		}
 
 	case http.StatusNotFound:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "account binding not found"):
 			return nil, ErrAccountBindingNotFound
@@ -209,10 +252,10 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 		}
 
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessage(resp, "toolbox service unavailable")}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
 
 	default:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
 }
@@ -223,10 +266,20 @@ func (c *HarukiToolboxClient) GetSuiteData(server string, userID int64, platform
 	return c.GetPrivateData(server, ToolboxDataTypeSuite, userID, platform, platformUserID)
 }
 
+// GetSuiteDataContext is GetSuiteData with request cancellation and tracing.
+func (c *HarukiToolboxClient) GetSuiteDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error) {
+	return c.GetPrivateDataContext(ctx, server, ToolboxDataTypeSuite, userID, platform, platformUserID)
+}
+
 // GetMySekaiData fetches the MySekai world snapshot from the Toolbox.
 // The returned JSON is the raw payload equivalent to mysekai.json, fed into the mysekai render controller.
 func (c *HarukiToolboxClient) GetMySekaiData(server string, userID int64, platform, platformUserID string) ([]byte, error) {
 	return c.GetPrivateData(server, ToolboxDataTypeMySekai, userID, platform, platformUserID)
+}
+
+// GetMySekaiDataContext is GetMySekaiData with request cancellation and tracing.
+func (c *HarukiToolboxClient) GetMySekaiDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error) {
+	return c.GetPrivateDataContext(ctx, server, ToolboxDataTypeMySekai, userID, platform, platformUserID)
 }
 
 // GetPrivateDataValue queries a single top-level key from a private data snapshot.
@@ -237,14 +290,19 @@ func (c *HarukiToolboxClient) GetMySekaiData(server string, userID int64, platfo
 //
 //	GET /api/private/{server}/{dataType}/{userID}?platform=...&platform_user_id=...&key={key}
 func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType ToolboxDataType, userID int64, platform, platformUserID, key string) ([]byte, error) {
-	if c == nil {
-		return nil, ErrClientNotConfigured
+	return c.GetPrivateDataValueContext(context.TODO(), server, dataType, userID, platform, platformUserID, key)
+}
+
+// GetPrivateDataValueContext is GetPrivateDataValue with request cancellation and tracing.
+func (c *HarukiToolboxClient) GetPrivateDataValueContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID, key string) ([]byte, error) {
+	r, err := c.internalRequest(ctx)
+	if err != nil {
+		return nil, err
 	}
 	url := fmt.Sprintf("%s/api/private/game-data/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
 
-	resp, err := c.http.R().
-		SetHeader("Authorization", c.config.APIToken).
-		SetHeader("User-Agent", c.userAgent()).
+	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	resp, err := r.
 		SetHeader("Accept-Encoding", "zstd").
 		SetQueryParams(map[string]string{
 			"platform":         platform,
@@ -252,15 +310,19 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 			"key":              key,
 		}).
 		Get(url)
+	finishHTTP()
 	if err != nil {
+		if ctx != nil && ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		return decompress(resp)
+		return decompressContext(ctx, resp)
 	case http.StatusForbidden:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
 			return nil, ErrInvalidPlatformUser
@@ -270,7 +332,7 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 			return nil, &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
 		}
 	case http.StatusNotFound:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "account binding not found"):
 			return nil, ErrAccountBindingNotFound
@@ -280,9 +342,9 @@ func (c *HarukiToolboxClient) GetPrivateDataValue(server string, dataType Toolbo
 			return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 		}
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessage(resp, "toolbox service unavailable")}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
 	default:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
 }
@@ -295,10 +357,20 @@ func (c *HarukiToolboxClient) GetPrivateDataValues(server string, dataType Toolb
 	return c.GetPrivateDataValue(server, dataType, userID, platform, platformUserID, strings.Join(keys, ","))
 }
 
+// GetPrivateDataValuesContext is GetPrivateDataValues with request cancellation and tracing.
+func (c *HarukiToolboxClient) GetPrivateDataValuesContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, keys ...string) ([]byte, error) {
+	return c.GetPrivateDataValueContext(ctx, server, dataType, userID, platform, platformUserID, strings.Join(keys, ","))
+}
+
 // GetUploadTime fetches the upload_time timestamp (seconds) for a given data type snapshot.
 // Returns the raw bytes of the integer value, e.g. []byte("1774339266").
 func (c *HarukiToolboxClient) GetUploadTime(server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
 	return c.GetPrivateDataValue(server, dataType, userID, platform, platformUserID, "upload_time")
+}
+
+// GetUploadTimeContext is GetUploadTime with request cancellation and tracing.
+func (c *HarukiToolboxClient) GetUploadTimeContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
+	return c.GetPrivateDataValueContext(ctx, server, dataType, userID, platform, platformUserID, "upload_time")
 }
 
 // UserGameBinding represents a single game account binding returned by the toolbox
@@ -328,38 +400,51 @@ type UserGameBinding struct {
 //
 //     GET /api/private/game-binding?platform=...&platform_user_id=...
 func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID string) ([]UserGameBinding, error) {
-	if c == nil {
-		return nil, ErrClientNotConfigured
+	return c.GetToolboxUserFastVerificationGameAccountBindingsContext(context.TODO(), platform, platformUserID)
+}
+
+// GetToolboxUserFastVerificationGameAccountBindingsContext is the cancellable,
+// traced form of GetToolboxUserFastVerificationGameAccountBindings.
+func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsContext(ctx context.Context, platform, platformUserID string) ([]UserGameBinding, error) {
+	request, err := c.internalRequest(ctx)
+	if err != nil {
+		return nil, err
 	}
 	url := fmt.Sprintf("%s/api/private/game-binding", c.config.BaseURL)
 
-	resp, err := c.http.R().
-		SetHeader("Authorization", c.config.APIToken).
-		SetHeader("User-Agent", c.userAgent()).
+	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	resp, err := request.
 		SetHeader("Accept-Encoding", "zstd").
 		SetQueryParams(map[string]string{
 			"platform":         platform,
 			"platform_user_id": platformUserID,
 		}).
 		Get(url)
+	finishHTTP()
 	if err != nil {
+		if ctx != nil && ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
 		var bindings []UserGameBinding
-		body, err := decompress(resp)
+		body, err := decompressContext(ctx, resp)
 		if err != nil {
 			return nil, err
 		}
+		finishDecode := commandtrace.MeasureOperation(ctx, "toolbox.decode")
 		if err := sonic.Unmarshal(body, &bindings); err != nil {
+			finishDecode()
 			return nil, fmt.Errorf("toolbox: failed to parse game bindings response: %w", err)
 		}
+		finishDecode()
 		return bindings, nil
 
 	case http.StatusForbidden:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
 			return nil, ErrInvalidPlatformUser
@@ -370,43 +455,55 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindings(
 		}
 
 	case http.StatusNotFound:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		if strings.Contains(msg, "account binding not found") {
 			return nil, ErrAccountBindingNotFound
 		}
 		return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessage(resp, "toolbox service unavailable")}
+		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
 
 	default:
-		msg := parseMessage(toolboxResponseBody(resp))
+		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
 }
 
-func toolboxResponseBody(resp *resty.Response) []byte {
-	body, err := decompress(resp)
+func toolboxResponseBodyContext(ctx context.Context, resp *resty.Response) []byte {
+	body, err := decompressContext(ctx, resp)
 	if err != nil {
 		return resp.Body()
 	}
 	return body
 }
 
-func parseToolboxErrorMessage(resp *resty.Response, fallback string) string {
-	msg := strings.TrimSpace(parseMessage(toolboxResponseBody(resp)))
+func parseToolboxErrorMessageContext(ctx context.Context, resp *resty.Response, fallback string) string {
+	msg := strings.TrimSpace(parseMessage(toolboxResponseBodyContext(ctx, resp)))
 	if msg == "" {
 		return fallback
 	}
 	return msg
 }
 
-// decompress handles transparent zstd decompression when the server indicates it.
-func decompress(resp *resty.Response) ([]byte, error) {
+// decompressContext handles transparent zstd decompression when the server indicates it.
+func decompressContext(ctx context.Context, resp *resty.Response) ([]byte, error) {
+	return decompressContextLimit(ctx, resp, toolboxMaxDecompressedResponseBytes)
+}
+
+func decompressContextLimit(ctx context.Context, resp *resty.Response, limit int64) ([]byte, error) {
+	if resp == nil {
+		return nil, fmt.Errorf("toolbox: response is nil")
+	}
 	body := resp.Body()
 	if resp.Header().Get("Content-Encoding") != "zstd" {
+		if limit > 0 && int64(len(body)) > limit {
+			return nil, fmt.Errorf("toolbox: response exceeds %d-byte limit", limit)
+		}
 		return body, nil
 	}
+	finishDecompress := commandtrace.MeasureOperation(ctx, "toolbox.decompress")
+	defer finishDecompress()
 
 	decoder, err := zstd.NewReader(bytes.NewReader(body))
 	if err != nil {
@@ -414,9 +511,16 @@ func decompress(resp *resty.Response) ([]byte, error) {
 	}
 	defer decoder.Close()
 
-	out, err := io.ReadAll(decoder)
+	reader := io.Reader(decoder)
+	if limit > 0 {
+		reader = io.LimitReader(decoder, limit+1)
+	}
+	out, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("toolbox: zstd decompression failed: %w", err)
+	}
+	if limit > 0 && int64(len(out)) > limit {
+		return nil, fmt.Errorf("toolbox: decompressed response exceeds %d-byte limit", limit)
 	}
 	return out, nil
 }

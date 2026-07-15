@@ -3,13 +3,13 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/utils/logger"
 
 	"gopkg.in/yaml.v3"
 )
@@ -624,7 +624,10 @@ func ReadConfig(path string) (Config, error) {
 func LoadConfig(path string) {
 	cfg, err := ReadConfig(path)
 	if err != nil {
-		log.Fatalf("%v", err)
+		logger.NewLoggerFromGlobal("Config").Error("configuration load failed",
+			"error_type", fmt.Sprintf("%T", err),
+		)
+		os.Exit(1)
 	}
 	Cfg = cfg
 }

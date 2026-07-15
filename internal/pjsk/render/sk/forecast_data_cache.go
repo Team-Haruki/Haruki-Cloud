@@ -4,11 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
+)
+
+const (
+	forecastDataEntryTTL        = 7 * 24 * time.Hour
+	forecastDataFailureEntryTTL = 15 * time.Minute
+	forecastDataMaxEntries      = 512
+	forecastDataMaxErrorBytes   = 512
 )
 
 type forecastDataCache struct {
@@ -18,6 +28,13 @@ type forecastDataCache struct {
 	inFlight map[forecastDataCacheKey]struct{}
 
 	persistencePath string
+	entryTTL        time.Duration
+	failureTTL      time.Duration
+	maxEntries      int
+	generation      uint64
+
+	persistMu           sync.Mutex
+	persistedGeneration uint64
 }
 
 type forecastDataCacheKey struct {
@@ -44,9 +61,12 @@ var errForecastRefreshInProgress = errors.New("forecast refresh already in progr
 
 func newForecastDataCache(provider ForecastProvider) *forecastDataCache {
 	return &forecastDataCache{
-		provider: provider,
-		entries:  make(map[forecastDataCacheKey]*forecastDataCacheEntry),
-		inFlight: make(map[forecastDataCacheKey]struct{}),
+		provider:   provider,
+		entries:    make(map[forecastDataCacheKey]*forecastDataCacheEntry),
+		inFlight:   make(map[forecastDataCacheKey]struct{}),
+		entryTTL:   forecastDataEntryTTL,
+		failureTTL: forecastDataFailureEntryTTL,
+		maxEntries: forecastDataMaxEntries,
 	}
 }
 
@@ -66,6 +86,7 @@ func (c *forecastDataCache) SetProvider(provider ForecastProvider) {
 	c.provider = provider
 	c.entries = make(map[forecastDataCacheKey]*forecastDataCacheEntry)
 	c.inFlight = make(map[forecastDataCacheKey]struct{})
+	c.generation++
 }
 
 func (c *forecastDataCache) CachedBySource(region string, eventID int, ranks []int) (map[string]ForecastSourceData, error) {
@@ -87,7 +108,9 @@ func (c *forecastDataCache) CachedBySourceQuery(query ForecastQuery) (map[string
 		return nil, errors.New("invalid forecast cache params")
 	}
 
+	now := time.Now().UTC()
 	c.mu.Lock()
+	c.pruneLocked(now)
 	entry := c.entries[key]
 	if entry == nil || lenNonEmptyForecastData(entry.data) == 0 {
 		lastErr := ""
@@ -101,7 +124,7 @@ func (c *forecastDataCache) CachedBySourceQuery(query ForecastQuery) (map[string
 		return nil, errors.New("forecast cache is not ready")
 	}
 	var refreshProvider ForecastProvider
-	if shouldRefreshForecastEntry(entry, time.Now().UTC()) {
+	if shouldRefreshForecastEntry(entry, now) {
 		if provider, err := c.beginRefreshLocked(key); err == nil {
 			refreshProvider = provider
 		}
@@ -162,18 +185,20 @@ func (c *forecastDataCache) RefreshNowQuery(ctx context.Context, query ForecastQ
 }
 
 func (c *forecastDataCache) refreshNowWithProvider(ctx context.Context, provider ForecastProvider, key forecastDataCacheKey, normalizedQuery ForecastQuery) error {
+	finishFetch := commandtrace.MeasureOperation(ctx, "forecast_cache.fetch")
 	data, refreshErr := fetchForecastDataWithRetry(ctx, provider, normalizedQuery)
+	finishFetch()
 	now := time.Now().UTC()
 	if refreshErr != nil {
-		c.finishFailure(key, now, refreshErr)
+		c.finishFailure(ctx, key, now, refreshErr)
 		return refreshErr
 	}
 	if lenNonEmptyForecastData(data) == 0 {
 		refreshErr = errors.New("forecast source returned empty data")
-		c.finishFailure(key, now, refreshErr)
+		c.finishFailure(ctx, key, now, refreshErr)
 		return refreshErr
 	}
-	c.finishSuccess(key, now, data)
+	c.finishSuccess(ctx, key, now, data)
 	return nil
 }
 
@@ -202,7 +227,8 @@ func (c *forecastDataCache) startRefreshWithProvider(provider ForecastProvider, 
 	}()
 }
 
-func (c *forecastDataCache) finishSuccess(key forecastDataCacheKey, now time.Time, data map[string]ForecastSourceData) {
+func (c *forecastDataCache) finishSuccess(ctx context.Context, key forecastDataCacheKey, now time.Time, data map[string]ForecastSourceData) {
+	finishMerge := commandtrace.MeasureOperation(ctx, "forecast_cache.merge")
 	c.mu.Lock()
 
 	entry := c.entries[key]
@@ -215,17 +241,18 @@ func (c *forecastDataCache) finishSuccess(key forecastDataCacheKey, now time.Tim
 	entry.lastAttemptAt = now
 	entry.lastError = ""
 	delete(c.inFlight, key)
-
-	persistPath := c.persistencePath
-	persisted := c.snapshotForPersistenceLocked()
+	c.pruneLocked(now)
+	c.generation++
+	generation := c.generation
 	c.mu.Unlock()
+	finishMerge()
 
-	if persistPath != "" {
-		_ = writeForecastCacheFile(persistPath, persisted)
-	}
+	c.persistLatest(ctx, generation)
 }
 
-func (c *forecastDataCache) finishFailure(key forecastDataCacheKey, now time.Time, err error) {
+func (c *forecastDataCache) finishFailure(ctx context.Context, key forecastDataCacheKey, now time.Time, err error) {
+	finishMerge := commandtrace.MeasureOperation(ctx, "forecast_cache.merge")
+	defer finishMerge()
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -236,9 +263,10 @@ func (c *forecastDataCache) finishFailure(key forecastDataCacheKey, now time.Tim
 	}
 	entry.lastAttemptAt = now
 	if err != nil {
-		entry.lastError = err.Error()
+		entry.lastError = truncateForecastCacheError(err.Error())
 	}
 	delete(c.inFlight, key)
+	c.pruneLocked(now)
 }
 
 func shouldRefreshForecastEntry(entry *forecastDataCacheEntry, now time.Time) bool {
@@ -249,6 +277,107 @@ func shouldRefreshForecastEntry(entry *forecastDataCacheEntry, now time.Time) bo
 		return false
 	}
 	return entry.lastAttemptAt.IsZero() || now.Sub(entry.lastAttemptAt) >= forecastDataRefreshRetryInterval
+}
+
+func (c *forecastDataCache) pruneLocked(now time.Time) {
+	if c == nil || len(c.entries) == 0 {
+		return
+	}
+	if now.IsZero() {
+		now = time.Now().UTC()
+	}
+	entryTTL := c.entryTTL
+	if entryTTL <= 0 {
+		entryTTL = forecastDataEntryTTL
+	}
+	failureTTL := c.failureTTL
+	if failureTTL <= 0 {
+		failureTTL = forecastDataFailureEntryTTL
+	}
+	maxEntries := c.maxEntries
+	if maxEntries <= 0 {
+		maxEntries = forecastDataMaxEntries
+	}
+
+	for key, entry := range c.entries {
+		if _, refreshing := c.inFlight[key]; refreshing {
+			continue
+		}
+		if entry == nil {
+			delete(c.entries, key)
+			continue
+		}
+		hasData := lenNonEmptyForecastData(entry.data) > 0
+		activityAt := entry.lastAttemptAt
+		ttl := failureTTL
+		if hasData {
+			activityAt = entry.refreshedAt
+			ttl = entryTTL
+		}
+		if activityAt.IsZero() || now.Sub(activityAt) >= ttl {
+			delete(c.entries, key)
+		}
+	}
+	if len(c.entries) <= maxEntries {
+		return
+	}
+	type entryAge struct {
+		key      forecastDataCacheKey
+		activity time.Time
+		hasData  bool
+	}
+	ages := make([]entryAge, 0, len(c.entries))
+	for key, entry := range c.entries {
+		if _, refreshing := c.inFlight[key]; refreshing {
+			continue
+		}
+		hasData := entry != nil && lenNonEmptyForecastData(entry.data) > 0
+		activityAt := time.Time{}
+		if entry != nil {
+			activityAt = entry.lastAttemptAt
+			if hasData {
+				activityAt = entry.refreshedAt
+			}
+		}
+		ages = append(ages, entryAge{key: key, activity: activityAt, hasData: hasData})
+	}
+	sort.Slice(ages, func(i, j int) bool {
+		if ages[i].hasData != ages[j].hasData {
+			return !ages[i].hasData
+		}
+		if !ages[i].activity.Equal(ages[j].activity) {
+			return ages[i].activity.Before(ages[j].activity)
+		}
+		if ages[i].key.Region != ages[j].key.Region {
+			return ages[i].key.Region < ages[j].key.Region
+		}
+		if ages[i].key.EventID != ages[j].key.EventID {
+			return ages[i].key.EventID < ages[j].key.EventID
+		}
+		if ages[i].key.Scope != ages[j].key.Scope {
+			return ages[i].key.Scope < ages[j].key.Scope
+		}
+		return ages[i].key.WlCharacterID < ages[j].key.WlCharacterID
+	})
+	removeCount := len(c.entries) - maxEntries
+	if removeCount > len(ages) {
+		removeCount = len(ages)
+	}
+	for _, item := range ages[:removeCount] {
+		delete(c.entries, item.key)
+	}
+}
+
+func truncateForecastCacheError(value string) string {
+	value = strings.ToValidUTF8(value, "")
+	if len(value) <= forecastDataMaxErrorBytes {
+		return value
+	}
+	cut := forecastDataMaxErrorBytes
+	for cut > 0 && cut < len(value) && !utf8.RuneStart(value[cut]) {
+		cut--
+	}
+	return value[:cut]
 }
 
 func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, query ForecastQuery) (map[string]ForecastSourceData, error) {

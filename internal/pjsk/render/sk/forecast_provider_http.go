@@ -3,13 +3,15 @@ package sk
 import (
 	"context"
 	"fmt"
-	json "github.com/bytedance/sonic"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/version"
+
+	json "github.com/bytedance/sonic"
 )
 
 func parseSekaRunRow(row string) []string {
@@ -88,27 +90,34 @@ func parseSekaRunScore(values []string) (int, bool) {
 }
 
 func (p *RemoteForecastProvider) getJSON(ctx context.Context, url string, out any) error {
+	finishHTTP := commandtrace.MeasureOperation(ctx, "forecast.http")
 	resp, err := p.http.R().
 		SetContext(ctx).
 		SetHeader("User-Agent", version.UserAgent()).
 		Get(url)
+	finishHTTP()
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode() != 200 {
 		return fmt.Errorf("http %d", resp.StatusCode())
 	}
-	if err := json.Unmarshal(resp.Body(), out); err != nil {
+	finishDecode := commandtrace.MeasureOperation(ctx, "forecast.decode")
+	err = json.Unmarshal(resp.Body(), out)
+	finishDecode()
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
 func (p *RemoteForecastProvider) getText(ctx context.Context, url string) (string, error) {
+	finishHTTP := commandtrace.MeasureOperation(ctx, "forecast.http")
 	resp, err := p.http.R().
 		SetContext(ctx).
 		SetHeader("User-Agent", version.UserAgent()).
 		Get(url)
+	finishHTTP()
 	if err != nil {
 		return "", err
 	}

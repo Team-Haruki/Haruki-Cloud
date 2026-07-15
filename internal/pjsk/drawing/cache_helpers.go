@@ -5,14 +5,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
 	"math"
 	neturl "net/url"
+	"path/filepath"
 	"strconv"
 	"strings"
 
+	sonic "github.com/bytedance/sonic"
 	"github.com/mitchellh/hashstructure/v2"
 )
+
+type preparedRenderCachePayload struct {
+	payload any
+}
 
 func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, error) {
 	parsedEndpoint, err := parseRenderCacheEndpoint(endpoint)
@@ -20,9 +25,17 @@ func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, er
 		return renderCachePolicy{}, err
 	}
 
-	payload, err := normalizeRenderCachePayload(request)
-	if err != nil {
-		return renderCachePolicy{}, err
+	var payload any
+	if prepared, ok := request.(preparedRenderCachePayload); ok {
+		// Cache-key sanitization removes and buckets fields in place. Keep the
+		// prepared render body immutable because the same map is sent upstream on
+		// a cache miss.
+		payload = cloneRenderCachePayload(prepared.payload)
+	} else {
+		payload, err = normalizeRenderCachePayload(request)
+		if err != nil {
+			return renderCachePolicy{}, err
+		}
 	}
 	rule := sanitizeRenderCachePayload(parsedEndpoint.Path, payload)
 	if !rule.Enabled {
@@ -43,6 +56,25 @@ func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, er
 		TTL:      rule.TTL,
 		Infinite: rule.Infinite,
 	}, nil
+}
+
+func cloneRenderCachePayload(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		cloned := make(map[string]any, len(typed))
+		for key, child := range typed {
+			cloned[key] = cloneRenderCachePayload(child)
+		}
+		return cloned
+	case []any:
+		cloned := make([]any, len(typed))
+		for index, child := range typed {
+			cloned[index] = cloneRenderCachePayload(child)
+		}
+		return cloned
+	default:
+		return value
+	}
 }
 
 func buildRenderCacheKey(policy renderCachePolicy) (string, error) {
@@ -201,7 +233,17 @@ func isPlaceholderProfile(value map[string]any) bool {
 }
 
 func normalizeRenderCacheAPIPath(value string) string {
-	return strings.Trim(strings.TrimSpace(value), "/")
+	value = strings.Trim(strings.TrimSpace(filepath.ToSlash(value)), "/")
+	if value == "" {
+		return ""
+	}
+	parts := strings.Split(value, "/")
+	for _, part := range parts {
+		if !safeRenderCachePathSegment(part) {
+			return ""
+		}
+	}
+	return strings.Join(parts, "/")
 }
 
 func normalizeRenderCacheUserID(userID string) string {
@@ -209,7 +251,28 @@ func normalizeRenderCacheUserID(userID string) string {
 	if trimmed == "" {
 		return renderCachePublic
 	}
-	return trimmed
+	if safeRenderCachePathSegment(trimmed) {
+		return trimmed
+	}
+	digest := sha256.Sum256([]byte(trimmed))
+	return "user-" + hex.EncodeToString(digest[:8])
+}
+
+func safeRenderCachePathSegment(value string) bool {
+	if value == "" || value == "." || value == ".." {
+		return false
+	}
+	for _, char := range value {
+		switch {
+		case char >= 'a' && char <= 'z':
+		case char >= 'A' && char <= 'Z':
+		case char >= '0' && char <= '9':
+		case char == '-', char == '_', char == '.':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func valueAt(root any, path ...string) any {

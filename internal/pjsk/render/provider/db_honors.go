@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sync"
 
 	sekaiDB "haruki-cloud/database/sekai"
@@ -135,13 +134,6 @@ func (p *dbHonorProvider) GetGroupByID(ctx context.Context, id int) (*masterdata
 			if model.FrameName == nil && derived.frame != "" {
 				model.FrameName = new(derived.frame)
 			}
-			slog.Info(
-				"honor birthday derive trace",
-				"group_id", entity.GameID,
-				"group_name", model.Name,
-				"derived_background_assetbundle_name", derived.background,
-				"derived_frame_name", derived.frame,
-			)
 		}
 	}
 

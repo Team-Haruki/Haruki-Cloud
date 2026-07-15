@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -54,14 +55,27 @@ func flattenToRGB(src image.Image) image.Image {
 	return dst
 }
 
-// encodeJPEGCompressed encodes img as JPEG, starting at quality 92 and
+// encodeJPEGCompressedContext encodes img as JPEG, starting at quality 92 and
 // reducing in steps (80 → 70 → 60) until the output is ≤ maxProfileBGSizeBytes.
 // Transparency is flattened onto white before encoding.
-func encodeJPEGCompressed(img image.Image) ([]byte, error) {
+func encodeJPEGCompressedContext(ctx context.Context, img image.Image) ([]byte, error) {
+	ctx = profileBGContext(ctx)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	img = flattenToRGB(img)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	for _, q := range []int{92, 80, 70, 60} {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		var buf bytes.Buffer
 		if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: q}); err != nil {
+			return nil, err
+		}
+		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
 		data := buf.Bytes()
@@ -76,6 +90,14 @@ func encodeJPEGCompressed(img image.Image) ([]byte, error) {
 // reads only the header via image.DecodeConfig and refuses to allocate the pixel
 // buffer when width*height exceeds maxPixels. maxPixels <= 0 disables the check.
 func decodeBoundedImage(raw []byte, maxPixels int64) (image.Image, error) {
+	return decodeBoundedImageContext(context.Background(), raw, maxPixels)
+}
+
+func decodeBoundedImageContext(ctx context.Context, raw []byte, maxPixels int64) (image.Image, error) {
+	ctx = profileBGContext(ctx)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if len(raw) == 0 {
 		return nil, fmt.Errorf("背景图片数据为空")
 	}
@@ -89,11 +111,24 @@ func decodeBoundedImage(raw []byte, maxPixels int64) (image.Image, error) {
 	if maxPixels > 0 && int64(cfg.Width)*int64(cfg.Height) > maxPixels {
 		return nil, fmt.Errorf("背景图片尺寸过大（上限 %d 像素）", maxPixels)
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	img, _, err := image.Decode(bytes.NewReader(raw))
 	if err != nil {
 		return nil, fmt.Errorf("解析背景图片失败: %w", err)
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	return img, nil
+}
+
+func profileBGContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		return context.Background()
+	}
+	return ctx
 }
 
 type LocalProfileBGStore struct {
@@ -133,6 +168,10 @@ func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server 
 	if s == nil {
 		return nil, fmt.Errorf("pjsk: profile background storage is not configured")
 	}
+	ctx = profileBGContext(ctx)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	imageURL = strings.TrimSpace(imageURL)
 	if imageURL == "" {
 		return nil, fmt.Errorf("请提供个人信息背景图片")
@@ -149,7 +188,9 @@ func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server 
 	if err != nil {
 		return nil, err
 	}
+	finishDownload := commandtrace.MeasureOperation(ctx, "profile_bg.download")
 	resp, err := s.client.Do(req)
+	finishDownload()
 	if err != nil {
 		return nil, fmt.Errorf("下载背景图片失败: %w", err)
 	}
@@ -160,19 +201,25 @@ func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server 
 
 	// Cap the raw download, then reject pixel bombs via a header-only dimension
 	// check before image.Decode allocates the full pixel buffer.
+	finishRead := commandtrace.MeasureOperation(ctx, "profile_bg.read")
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxProfileBGDownloadBytes+1))
+	finishRead()
 	if err != nil {
 		return nil, fmt.Errorf("下载背景图片失败: %w", err)
 	}
 	if len(raw) > maxProfileBGDownloadBytes {
 		return nil, fmt.Errorf("背景图片过大（上限 %d MB）", maxProfileBGDownloadBytes/(1024*1024))
 	}
-	img, err := decodeBoundedImage(raw, maxProfileBGPixels)
+	finishDecode := commandtrace.MeasureOperation(ctx, "profile_bg.decode")
+	img, err := decodeBoundedImageContext(ctx, raw, maxProfileBGPixels)
+	finishDecode()
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := encodeJPEGCompressed(img)
+	finishEncode := commandtrace.MeasureOperation(ctx, "profile_bg.encode")
+	data, err := encodeJPEGCompressedContext(ctx, img)
+	finishEncode()
 	if err != nil {
 		return nil, fmt.Errorf("编码背景图片失败: %w", err)
 	}
@@ -181,16 +228,29 @@ func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server 
 	userID = strings.TrimSpace(userID)
 	filename := fmt.Sprintf("uid_%s_%s.jpg", userID, randomHex8())
 	relativePath := filepath.ToSlash(filepath.Join(s.relativeDir, server, filename))
+	finishStore := commandtrace.MeasureOperation(ctx, "profile_bg.store")
 	absolutePath, err := s.absolutePath(relativePath)
 	if err != nil {
+		finishStore()
+		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
+		finishStore()
 		return nil, err
 	}
 	if err := os.MkdirAll(filepath.Dir(absolutePath), 0o755); err != nil {
+		finishStore()
 		return nil, fmt.Errorf("创建背景目录失败: %w", err)
 	}
+	if err := ctx.Err(); err != nil {
+		finishStore()
+		return nil, err
+	}
 	if err := os.WriteFile(absolutePath, data, 0o644); err != nil {
+		finishStore()
 		return nil, fmt.Errorf("写入背景图片失败: %w", err)
 	}
+	finishStore()
 
 	return &drawing.ProfileBgSettings{
 		ImgPath:  &relativePath,
@@ -201,7 +261,8 @@ func (s *LocalProfileBGStore) SaveProfileBackground(ctx context.Context, server 
 }
 
 func (s *LocalProfileBGStore) DeleteProfileBackground(ctx context.Context, settings *drawing.ProfileBgSettings) error {
-	if ctx != nil && ctx.Err() != nil {
+	ctx = profileBGContext(ctx)
+	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 	if s == nil || settings == nil || settings.ImgPath == nil {
@@ -211,7 +272,10 @@ func (s *LocalProfileBGStore) DeleteProfileBackground(ctx context.Context, setti
 	if err != nil {
 		return err
 	}
-	if err := os.Remove(absolutePath); err != nil && !os.IsNotExist(err) {
+	finishStore := commandtrace.MeasureOperation(ctx, "profile_bg.store")
+	err = os.Remove(absolutePath)
+	finishStore()
+	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("删除背景图片失败: %w", err)
 	}
 	return nil

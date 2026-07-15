@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -38,7 +39,9 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {
@@ -59,6 +62,8 @@ func (c *Controller) BuildStampListRequest(query ListQuery) (*drawing.StampListR
 }
 
 func (c *Controller) BuildStampListRequests(query ListQuery) ([]*drawing.StampListRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	defer finishBuild()
 	items, prompt, err := c.collectStampItems(query)
 	if err != nil {
 		return nil, err

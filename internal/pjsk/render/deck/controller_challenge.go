@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"context"
 	"fmt"
 	"slices"
 
@@ -53,18 +54,18 @@ type rawBatchChallengeRecommender interface {
 	RecommendBatch(req RecommendRequest) ([]remoteBatchRecommendResult, error)
 }
 
-func (c *Controller) recommendChallengeAll(recommender PjskDeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
+func (c *Controller) recommendChallengeAll(ctx context.Context, recommender PjskDeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
 	if recommender == nil {
 		return nil, fmt.Errorf("deck recommender is not configured")
 	}
 
 	if batchRecommender, ok := recommender.(rawBatchChallengeRecommender); ok {
-		return c.recommendChallengeAllBatch(recommender, batchRecommender, req, option)
+		return c.recommendChallengeAllBatch(ctx, recommender, batchRecommender, req, option)
 	}
-	return c.recommendChallengeAllSequential(recommender, req, option)
+	return c.recommendChallengeAllSequential(ctx, recommender, req, option)
 }
 
-func (c *Controller) recommendChallengeAllBatch(recommender PjskDeckRecommender, batchRecommender rawBatchChallengeRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
+func (c *Controller) recommendChallengeAllBatch(ctx context.Context, recommender PjskDeckRecommender, batchRecommender rawBatchChallengeRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
 	agg := &RecommendResult{
 		CostTimes: make(map[string]float64),
 		WaitTimes: make(map[string]float64),
@@ -81,6 +82,9 @@ func (c *Controller) recommendChallengeAllBatch(recommender PjskDeckRecommender,
 	characters := make([]characterBatch, 0, challengeCharacterCount)
 	batchOptions := make([]map[string]any, 0, challengeCharacterCount)
 	for charID := 1; charID <= challengeCharacterCount; charID++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		challengeOption := cloneRecommendOption(option)
 		challengeOption["challenge_live_character_id"] = charID
 		challengeOption["limit"] = 1
@@ -97,7 +101,7 @@ func (c *Controller) recommendChallengeAllBatch(recommender PjskDeckRecommender,
 		batchOptions = append(batchOptions, expanded...)
 	}
 
-	results, err := batchRecommender.RecommendBatch(RecommendRequest{
+	results, err := recommendBatchWithContext(ctx, batchRecommender, RecommendRequest{
 		Region:            req.Region,
 		UserData:          req.UserData,
 		UserDataFilePath:  req.UserDataFilePath,
@@ -114,6 +118,9 @@ func (c *Controller) recommendChallengeAllBatch(recommender PjskDeckRecommender,
 
 	offset := 0
 	for _, character := range characters {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		nextOffset := offset + len(character.options)
 		result, err := aggregateRemoteRecommendResults("challenge", character.options, results[offset:nextOffset])
 		if err != nil {
@@ -152,7 +159,7 @@ func (c *Controller) recommendChallengeAllBatch(recommender PjskDeckRecommender,
 	return agg, nil
 }
 
-func (c *Controller) recommendChallengeAllSequential(recommender PjskDeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
+func (c *Controller) recommendChallengeAllSequential(ctx context.Context, recommender PjskDeckRecommender, req RecommendRequest, option map[string]any) (*RecommendResult, error) {
 	agg := &RecommendResult{
 		CostTimes: make(map[string]float64),
 		WaitTimes: make(map[string]float64),
@@ -162,11 +169,14 @@ func (c *Controller) recommendChallengeAllSequential(recommender PjskDeckRecomme
 	raw := c.snapshot.RawData()
 
 	for charID := 1; charID <= challengeCharacterCount; charID++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		challengeOption := cloneRecommendOption(option)
 		challengeOption["challenge_live_character_id"] = charID
 		challengeOption["limit"] = 1
 
-		result, err := recommender.Recommend(RecommendRequest{
+		result, err := recommendWithContext(ctx, recommender, RecommendRequest{
 			Region:            req.Region,
 			UserData:          req.UserData,
 			UserDataFilePath:  req.UserDataFilePath,

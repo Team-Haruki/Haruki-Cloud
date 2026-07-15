@@ -3,10 +3,12 @@ package education
 import (
 	"bytes"
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"sort"
 	"strings"
 
+	sonic "github.com/bytedance/sonic"
+
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/utils/logger"
@@ -15,6 +17,8 @@ import (
 var leaderCountDebugLogger = logger.NewLoggerFromGlobal("LeaderCount")
 
 func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery) (*drawing.LeaderCountRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.traceContext(), "payload.build")
+	defer finishBuild()
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
 	if err != nil {
 		return nil, err
@@ -106,24 +110,22 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 	}
 
 	rawBytes, rawBytesErr := ctx.snapshot.RawBytes()
-	leaderCountDebugLogger.Debugf(
-		"leader-count snapshot summary: region=%s user_id=%d mission_v2s=%d play_live=%d play_live_ex=%d mission_v2_statuses=%d status_101=%d live_usage=%d requirements_101=%d max_play_limit=%d has_key_userCharacterMissionV2s=%t has_key_userCharacterMissionV2Statuses=%t has_key_compactUserCharacterMissionV2Statuses=%t has_key_userCharacterMissionStatuses=%t has_key_userCharacterMissionStatus=%t raw_bytes_err=%v",
-		ctx.region.String(),
-		ctx.raw.UserGamedata.UserID,
-		len(ctx.raw.UserCharacterMissionV2s),
-		playLiveMissionCount,
-		playLiveExMissionCount,
-		len(missionStatuses),
-		status101Count,
-		len(ctx.raw.UserCharacterLiveUsageCounts),
-		len(missionRequirements),
-		maxPlayLimit,
-		bytes.Contains(rawBytes, []byte(`"userCharacterMissionV2s"`)),
-		bytes.Contains(rawBytes, []byte(`"userCharacterMissionV2Statuses"`)),
-		bytes.Contains(rawBytes, []byte(`"compactUserCharacterMissionV2Statuses"`)),
-		bytes.Contains(rawBytes, []byte(`"userCharacterMissionStatuses"`)),
-		bytes.Contains(rawBytes, []byte(`"userCharacterMissionStatus"`)),
-		rawBytesErr,
+	leaderCountDebugLogger.DebugContext(c.traceContext(), "leader count snapshot summarized",
+		"region", ctx.region.String(),
+		"mission_v2_count", len(ctx.raw.UserCharacterMissionV2s),
+		"play_live_count", playLiveMissionCount,
+		"play_live_ex_count", playLiveExMissionCount,
+		"mission_v2_status_count", len(missionStatuses),
+		"status_101_count", status101Count,
+		"live_usage_count", len(ctx.raw.UserCharacterLiveUsageCounts),
+		"requirements_101_count", len(missionRequirements),
+		"max_play_limit", maxPlayLimit,
+		"has_mission_v2", bytes.Contains(rawBytes, []byte(`"userCharacterMissionV2s"`)),
+		"has_mission_v2_statuses", bytes.Contains(rawBytes, []byte(`"userCharacterMissionV2Statuses"`)),
+		"has_compact_mission_v2_statuses", bytes.Contains(rawBytes, []byte(`"compactUserCharacterMissionV2Statuses"`)),
+		"has_mission_statuses", bytes.Contains(rawBytes, []byte(`"userCharacterMissionStatuses"`)),
+		"has_mission_status", bytes.Contains(rawBytes, []byte(`"userCharacterMissionStatus"`)),
+		"raw_bytes_ok", rawBytesErr == nil,
 	)
 
 	return c.BuildLeaderCountRequest(drawing.LeaderCountRequest{

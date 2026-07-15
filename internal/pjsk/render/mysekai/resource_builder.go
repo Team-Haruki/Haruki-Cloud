@@ -3,6 +3,7 @@ package mysekai
 import (
 	"fmt"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -84,7 +85,9 @@ func (c *Controller) RenderResource(query ResourceQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildResourceRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

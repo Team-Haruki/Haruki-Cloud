@@ -1,11 +1,15 @@
 package mysekai
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
+
+	"haruki-cloud/internal/observability/commandtrace"
 )
 
 var fileToTable = map[string]string{
@@ -56,7 +60,11 @@ var fileToTable = map[string]string{
 type dbMasterdataStore struct {
 	db     *sql.DB
 	region string
+	ctx    context.Context
+	cache  *dbMasterdataCache
+}
 
+type dbMasterdataCache struct {
 	mu       sync.Mutex
 	lists    map[string][]map[string]any
 	mapsByID map[string]map[int]map[string]any
@@ -65,25 +73,34 @@ type dbMasterdataStore struct {
 // newDBMasterdataStore opens a read-only connection to the sekai database
 // and returns a store scoped to the given server region.
 // Returns nil if the DSN is empty or the connection fails.
-func newDBMasterdataStore(dsn, region string) *dbMasterdataStore {
+func newDBMasterdataStore(ctx context.Context, dsn, region string) *dbMasterdataStore {
 	dsn = strings.TrimSpace(dsn)
 	if dsn == "" {
 		return nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil
 	}
-	if err := db.Ping(); err != nil {
+	finishPing := commandtrace.MeasureOperation(ctx, "mysekai.masterdata_ping")
+	err = db.PingContext(ctx)
+	finishPing()
+	if err != nil {
 		db.Close()
 		return nil
 	}
 	db.SetMaxOpenConns(3)
 	return &dbMasterdataStore{
-		db:       db,
-		region:   region,
-		lists:    make(map[string][]map[string]any),
-		mapsByID: make(map[string]map[int]map[string]any),
+		db:     db,
+		region: region,
+		ctx:    ctx,
+		cache: &dbMasterdataCache{
+			lists:    make(map[string][]map[string]any),
+			mapsByID: make(map[string]map[int]map[string]any),
+		},
 	}
 }
 
@@ -97,31 +114,57 @@ func (s *dbMasterdataStore) Close() {
 	}
 }
 
+func (s *dbMasterdataStore) WithContext(ctx context.Context) masterdataSource {
+	if s == nil {
+		return nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	clone := *s
+	clone.ctx = ctx
+	return &clone
+}
+
+func (s *dbMasterdataStore) contextOrBackground() context.Context {
+	if s != nil && s.ctx != nil {
+		return s.ctx
+	}
+	return context.Background()
+}
+
 func (s *dbMasterdataStore) loadList(filename string) []map[string]any {
 	if s == nil || s.db == nil {
 		return nil
 	}
 
-	s.mu.Lock()
-	if cached, ok := s.lists[filename]; ok {
-		s.mu.Unlock()
+	if s.cache == nil {
+		return nil
+	}
+	s.cache.mu.Lock()
+	if cached, ok := s.cache.lists[filename]; ok {
+		s.cache.mu.Unlock()
 		return cached
 	}
-	s.mu.Unlock()
+	s.cache.mu.Unlock()
 
 	tableName, ok := fileToTable[filename]
 	if !ok {
 		return nil
 	}
 
-	items, err := s.queryTable(tableName)
+	items, err := s.queryTable(s.contextOrBackground(), tableName)
 	if err != nil {
 		return nil
 	}
 
-	s.mu.Lock()
-	s.lists[filename] = items
-	s.mu.Unlock()
+	s.cache.mu.Lock()
+	if cached, ok := s.cache.lists[filename]; ok {
+		s.cache.mu.Unlock()
+		return cached
+	}
+	s.cache.lists[filename] = items
+	s.cache.mu.Unlock()
 	return items
 }
 
@@ -130,12 +173,15 @@ func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]any 
 		return map[int]map[string]any{}
 	}
 
-	s.mu.Lock()
-	if cached, ok := s.mapsByID[filename]; ok {
-		s.mu.Unlock()
+	if s.cache == nil {
+		return map[int]map[string]any{}
+	}
+	s.cache.mu.Lock()
+	if cached, ok := s.cache.mapsByID[filename]; ok {
+		s.cache.mu.Unlock()
 		return cached
 	}
-	s.mu.Unlock()
+	s.cache.mu.Unlock()
 
 	items := s.loadList(filename)
 	result := make(map[int]map[string]any, len(items))
@@ -147,9 +193,13 @@ func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]any 
 		result[id] = item
 	}
 
-	s.mu.Lock()
-	s.mapsByID[filename] = result
-	s.mu.Unlock()
+	s.cache.mu.Lock()
+	if cached, ok := s.cache.mapsByID[filename]; ok {
+		s.cache.mu.Unlock()
+		return cached
+	}
+	s.cache.mapsByID[filename] = result
+	s.cache.mu.Unlock()
 	return result
 }
 
@@ -162,10 +212,16 @@ func (s *dbMasterdataStore) loadObject(_ string, _ any) bool {
 // queryTable runs SELECT * on the given table filtered by server_region and
 // converts each row into a map with camelCase keys matching the original
 // game masterdata JSON format.
-func (s *dbMasterdataStore) queryTable(table string) ([]map[string]any, error) {
+func (s *dbMasterdataStore) queryTable(ctx context.Context, table string) ([]map[string]any, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	finishQuery := commandtrace.MeasureOperation(ctx, "mysekai.masterdata_query")
+	defer finishQuery()
+
 	// Use double-quoting for safety; table names are from our own constant map.
 	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE server_region = $1`, table)
-	rows, err := s.db.Query(query, s.region)
+	rows, err := s.db.QueryContext(ctx, query, s.region)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +234,14 @@ func (s *dbMasterdataStore) queryTable(table string) ([]map[string]any, error) {
 	colTypes, _ := rows.ColumnTypes()
 
 	var results []map[string]any
+	var decodeElapsed time.Duration
+	defer func() {
+		commandtrace.RecordOperation(ctx, "mysekai.masterdata_decode", decodeElapsed)
+	}()
 	for rows.Next() {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		values := make([]any, len(cols))
 		ptrs := make([]any, len(cols))
 		for i := range values {
@@ -188,6 +251,7 @@ func (s *dbMasterdataStore) queryTable(table string) ([]map[string]any, error) {
 			continue
 		}
 
+		decodeStarted := time.Now()
 		m := make(map[string]any, len(cols))
 		for i, col := range cols {
 			key := mapColumnName(col)
@@ -201,6 +265,7 @@ func (s *dbMasterdataStore) queryTable(table string) ([]map[string]any, error) {
 			m[key] = normalizeValue(val, colTypes, i)
 		}
 		results = append(results, m)
+		decodeElapsed += time.Since(decodeStarted)
 	}
 	return results, rows.Err()
 }

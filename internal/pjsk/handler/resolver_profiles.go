@@ -18,7 +18,7 @@ func resolveCardBoxDetailedProfile(rc *RequestContext) *drawing.DetailedProfileC
 	if rc == nil || rc.App == nil {
 		return nil
 	}
-	if snap := resolveLiveSnapshot(rc, false); snap != nil {
+	if snap := rc.ResolveSnapshot(false); snap != nil {
 		if detail := snap.DetailedProfile(rc.Region); detail != nil && len(detail.UserCards) > 0 {
 			return cloneDetailedProfileForCurrentTarget(rc, detail)
 		}
@@ -221,11 +221,16 @@ func buildPublicMusicProfilesFromResolvedTarget(
 		Visible:    target.Visible,
 		BgSettings: target.BgSettings,
 	}
-	detail, err := app.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
+	profileCtrl := app.Profiles.WithContext(ctx)
+	finishBuild := measurePayloadBuild(ctx)
+	detail, err := profileCtrl.BuildDetailedProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
+	finishBuild()
 	if err != nil {
 		return nil, nil
 	}
-	card, err := app.Profiles.BuildProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
+	finishBuild = measurePayloadBuild(ctx)
+	card, err := profileCtrl.BuildProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
+	finishBuild()
 	if err != nil {
 		return detail, nil
 	}
@@ -254,11 +259,14 @@ func buildPublicProfileCardForTarget(ctx context.Context, target ResolvedGameTar
 		card     *drawing.ProfileCardRequest
 		buildErr error
 	)
+	profileCtrl := app.Profiles.WithContext(ctx)
+	finishBuild := measurePayloadBuild(ctx)
 	if profileSnapshot != nil {
-		card, buildErr = app.Profiles.BuildProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
+		card, buildErr = profileCtrl.BuildProfileCardFromAPIWithSnapshot(q, resp, profileSnapshot)
 	} else {
-		card, buildErr = app.Profiles.BuildProfileCardFromAPI(q, resp, nil)
+		card, buildErr = profileCtrl.BuildProfileCardFromAPI(q, resp, nil)
 	}
+	finishBuild()
 	if buildErr != nil {
 		return nil, fmt.Errorf("sekaiapi profile build failed: %w", buildErr)
 	}

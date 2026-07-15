@@ -2,8 +2,10 @@ package deck
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	sonic "github.com/bytedance/sonic"
 	"io"
@@ -15,6 +17,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -111,6 +114,64 @@ type testMusicSource struct {
 
 type testMusicMetaSource struct {
 	data []byte
+}
+
+func TestControllerWithContextCancelsRemoteRecommend(t *testing.T) {
+	started := make(chan struct{}, 1)
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case started <- struct{}{}:
+		default:
+		}
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	var releaseOnce sync.Once
+	releaseServer := func() { releaseOnce.Do(func() { close(release) }) }
+	defer func() {
+		releaseServer()
+		server.Close()
+	}()
+
+	controller := newTestDeckControllerWithMeta(t, RecommendConfig{
+		Enabled:        true,
+		ServiceBaseURL: server.URL,
+		MasterdataDir:  t.TempDir(),
+		DefaultAlgs:    []string{"ga"},
+	}, &testMusicMetaSource{
+		data: []byte(`[{"music_id":10000,"difficulty":"master"}]`),
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	result := make(chan error, 1)
+	go func() {
+		_, err := controller.WithContext(ctx).BuildAutoRecommendRequest(AutoQuery{
+			Region:        "jp",
+			RecommendType: "no_event",
+			Algorithm:     "ga",
+			Limit:         1,
+		})
+		result <- err
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("remote deck request did not start")
+	}
+	cancel()
+
+	select {
+	case err := <-result:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("BuildAutoRecommendRequest() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("BuildAutoRecommendRequest did not stop after context cancellation")
+	}
+	releaseServer()
 }
 
 func (s *testMusicMetaSource) Get(string) []byte {

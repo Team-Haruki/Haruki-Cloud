@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -36,7 +37,9 @@ func (c *Controller) RenderQuery(req drawing.SKRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildQueryRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +47,8 @@ func (c *Controller) RenderQuery(req drawing.SKRequest) ([]byte, error) {
 }
 
 func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawing.SKRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
 		return nil, err
@@ -163,6 +168,8 @@ func (c *Controller) BuildCheckRoomRequest(req drawing.CFRequest) (*drawing.CFRe
 }
 
 func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*drawing.CFRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
 		return nil, err
@@ -257,7 +264,9 @@ func (c *Controller) RenderCheckRoom(req drawing.CFRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildCheckRoomRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -275,6 +284,8 @@ func (c *Controller) BuildCSBRequest(req drawing.CSBRequest) (*drawing.CSBReques
 }
 
 func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.CSBRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
 		return nil, err
@@ -345,7 +356,9 @@ func (c *Controller) RenderCSB(req drawing.CSBRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildCSBRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

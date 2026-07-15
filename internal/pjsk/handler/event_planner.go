@@ -185,6 +185,9 @@ func executeEventPlanner(rc *RequestContext) (onebot11.Message, error) {
 	if rc.App.Music == nil {
 		return nil, fmt.Errorf("music service unavailable: music controller not configured")
 	}
+	if rc.App.Drawing == nil {
+		return nil, fmt.Errorf("drawing service unavailable: drawing client not configured")
+	}
 
 	binding, snap, err := rc.requireVisibleSuiteSnapshot()
 	if err != nil {
@@ -197,6 +200,8 @@ func executeEventPlanner(rc *RequestContext) (onebot11.Message, error) {
 		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 
+	finishBuild := measureCommandOperation(rc.Ctx, "event_planner.build")
+	defer finishBuild()
 	region := renderregion.WithDefault(renderregion.Normalize(rc.Cmd.Region))
 	baseQuery := buildEventPlannerBaseDeckQuery(region, params.Deck)
 	if err := resolveDeckCharacterSelections(rc.Ctx, &baseQuery, rc.App); err != nil {
@@ -229,7 +234,8 @@ func executeEventPlanner(rc *RequestContext) (onebot11.Message, error) {
 		req.Warnings = append(req.Warnings, currentWarning)
 	}
 
-	data, err := rc.App.Drawing.GenerateEventPlanner(req)
+	finishBuild()
+	data, err := rc.App.Drawing.WithContext(rc.Ctx).GenerateEventPlanner(req)
 	if err != nil {
 		return nil, err
 	}

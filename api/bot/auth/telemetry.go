@@ -39,8 +39,8 @@ func RecordRequestStatistics(ctx context.Context, client *bot.Client, botID int,
 		ctx = context.Background()
 	}
 
-	for _, update := range []func(context.Context) error{
-		func(ctx context.Context) error {
+	for _, update := range []func() error{
+		func() error {
 			return incrementStatisticCounter(
 				func() error {
 					_, err := client.RequestsRanking.
@@ -59,7 +59,7 @@ func RecordRequestStatistics(ctx context.Context, client *bot.Client, botID int,
 				},
 			)
 		},
-		func(ctx context.Context) error {
+		func() error {
 			hourKey := now.Truncate(time.Hour)
 			return incrementStatisticCounter(
 				func() error {
@@ -79,7 +79,7 @@ func RecordRequestStatistics(ctx context.Context, client *bot.Client, botID int,
 				},
 			)
 		},
-		func(ctx context.Context) error {
+		func() error {
 			loc := now.Location()
 			dateKey := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 			return incrementStatisticCounter(
@@ -101,7 +101,7 @@ func RecordRequestStatistics(ctx context.Context, client *bot.Client, botID int,
 			)
 		},
 	} {
-		if err := update(ctx); err != nil {
+		if err := update(); err != nil {
 			return err
 		}
 	}

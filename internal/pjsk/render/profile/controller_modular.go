@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -89,7 +90,9 @@ func (c *Controller) RenderModularProfileFromAPIWithSnapshot(query Query, resp *
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildModularProfileRequestFromAPIWithSnapshot(query, resp, snap)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

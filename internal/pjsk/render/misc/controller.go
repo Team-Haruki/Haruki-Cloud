@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
 type Controller struct {
-	drawing *drawing.HarukiDrawingClient
+	drawing    *drawing.HarukiDrawingClient
+	requestCtx context.Context
 }
 
 func NewController(drawingClient *drawing.HarukiDrawingClient) *Controller {
@@ -21,6 +23,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
 	return &clone
 }
@@ -39,7 +42,9 @@ func (c *Controller) RenderCharaBirthday(req drawing.CharaBirthdayRequest) ([]by
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	validated, err := c.BuildCharaBirthdayRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +74,9 @@ func (c *Controller) RenderAliasList(req drawing.AliasListRequest) ([]byte, erro
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	validated, err := c.BuildAliasListRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"context"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -10,7 +11,10 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
+	rendercard "haruki-cloud/internal/pjsk/render/card"
+	renderevent "haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	rendermusic "haruki-cloud/internal/pjsk/render/music"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 	"haruki-cloud/internal/pjsk/sekai"
@@ -35,6 +39,18 @@ type EventSource interface {
 type MusicSource interface {
 	DefaultRegion() renderregion.Value
 	GetMusicByID(id int) (*masterdata.Music, error)
+}
+
+type contextualCardSource interface {
+	WithContext(ctx context.Context) rendercard.DataSource
+}
+
+type contextualEventSource interface {
+	WithContext(ctx context.Context) renderevent.DataSource
+}
+
+type contextualMusicSource interface {
+	WithContext(ctx context.Context) rendermusic.DataSource
 }
 
 type allCardSource interface {
@@ -69,6 +85,7 @@ type eventRankingHonorSource interface {
 // ── Controller ──────────────────────────────────────────────────────────────
 
 type Controller struct {
+	ctx           context.Context
 	cardSources   *regionsource.Registry[CardSource]
 	eventSources  *regionsource.Registry[EventSource]
 	musicSources  *regionsource.Registry[MusicSource]

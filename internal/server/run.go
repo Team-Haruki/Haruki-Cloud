@@ -46,14 +46,17 @@ func Run(ctx context.Context) {
 		noiseServerPubKeyHex = hex.EncodeToString(noiseKeyPair.Public)
 	}
 	botDBClient := initBot(ctx, mainLogger, app, redisClient, authEncryptionKey, noiseServerPubKeyHex)
-	botPJSK.RegisterPJSKBotRoutesWithContext(ctx, app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
+	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithContext(ctx, app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
 
 	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {
 		app.Get("/ic/*", static.New(dir))
-		mainLogger.Infof("Image cache static serving enabled at /ic -> %s", dir)
+		mainLogger.Info("image cache static serving enabled", "http_route", "/ic/*")
 	}
 
 	defer closeClients(redisClient, censorService, usersClient, chunithmMainClient, chunithmMusicClient, pjskClient, sekaiClient, botDBClient)
+	if botRouteDispatchers != nil {
+		defer botRouteDispatchers.Close()
+	}
 	if drawingCacheService != nil {
 		defer func() { _ = drawingCacheService.Close() }()
 	}
@@ -62,7 +65,7 @@ func Run(ctx context.Context) {
 	}
 
 	if renderRuntime != nil {
-		mainLogger.Infof("PJSK render runtime initialized")
+		mainLogger.Info("PJSK render runtime ready")
 	}
 
 	startServer(ctx, mainLogger, app)

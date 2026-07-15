@@ -2,13 +2,17 @@ package handler
 
 import (
 	"encoding/json"
-	"log/slog"
+	"fmt"
 	"strings"
 	"sync"
 	"unicode"
 
+	"haruki-cloud/utils/logger"
+
 	sonic "github.com/bytedance/sonic"
 )
+
+var commandRegistryLogger = logger.NewLoggerFromGlobal("CommandRegistry")
 
 var commandHandlerTree handlerTreeNode
 var commandLookupRegistry = map[string]*lookupEntry{}
@@ -181,11 +185,16 @@ func (t *handlerTreeNode) add(depth, index int, command []rune, handler CommandH
 	if nextR == 0 {
 		handlerPriority := handler.GetPriority()
 		if t.handler != nil && !t.handler.IsDisabled() {
-			slog.Warn("指令已被注册", "command", string(command), "existing", t.command, "existing_priority", t.priority, "new_priority", handlerPriority)
+			commandRegistryLogger.Warn("command handler already registered",
+				"command", string(command),
+				"existing_command", t.command,
+				"existing_priority", t.priority,
+				"new_priority", handlerPriority,
+			)
 			if !shouldReplaceRegisteredHandler(t.handler, handler) {
 				return
 			}
-			slog.Info("待注册的指令处理器优先级更高，替换已有的处理器", "command", string(command))
+			commandRegistryLogger.Info("command handler replaced", "command", string(command))
 		}
 		t.priority = handlerPriority
 		t.command = string(command)
@@ -357,12 +366,15 @@ func (t *handlerTreeNode) Json() []byte {
 	}
 	result, err := sonic.Marshal(jsonMap)
 	if err != nil {
-		slog.Error("failed to marshal handler tree", "error", err)
+		commandRegistryLogger.Error("command handler tree marshal failed", "error_type", fmt.Sprintf("%T", err))
 	}
 	return result
 }
 
 func PrintTree() {
 	message := commandHandlerTree.Json()
-	slog.Debug("handler tree", "tree", string(message))
+	commandRegistryLogger.Debug("command handler tree built",
+		"tree_bytes", len(message),
+		"max_depth", maxDepth,
+	)
 }

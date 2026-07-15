@@ -2,17 +2,26 @@ package drawing
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	json "github.com/bytedance/sonic"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 
+	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
 )
+
+const drawingMaxResponseBytes = 64 << 20
+
+const drawingErrorClassificationBytes = 8 << 10
+
+var ErrDrawingDataInsufficient = errors.New("drawing response data is insufficient")
 
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(client *resty.Client, _ *HarukiDrawingClient) {
@@ -49,7 +58,7 @@ func newHarukiDrawingClient(strict bool, legacyBaseURL string, targets []upstrea
 	if len(resolvedTargets) > 0 {
 		baseURL = resolvedTargets[0].BaseURL
 	}
-	client := resty.New()
+	client := resty.New().SetResponseBodyLimit(drawingMaxResponseBytes)
 	drawingClient := &HarukiDrawingClient{
 		client:     client,
 		baseURL:    baseURL,
@@ -83,48 +92,93 @@ func (c *HarukiDrawingClient) WithContext(ctx context.Context) *HarukiDrawingCli
 }
 
 func (c *HarukiDrawingClient) RenderWithCache(endpoint string, request any, render func(any) ([]byte, error)) ([]byte, error) {
-	return c.RenderWithCacheAndPrepare(endpoint, request, nil, render)
+	return c.renderWithCacheRequestAndPrepare(endpoint, request, request, nil, func(_ context.Context, prepared any) ([]byte, error) {
+		return render(prepared)
+	}, true)
 }
 
 func (c *HarukiDrawingClient) RenderWithCacheAndPrepare(endpoint string, request any, prepare func(any) error, render func(any) ([]byte, error)) ([]byte, error) {
-	return c.RenderWithCacheRequestAndPrepare(endpoint, request, request, prepare, render)
+	return c.renderWithCacheRequestAndPrepare(endpoint, request, request, func(_ context.Context, prepared any) error {
+		if prepare == nil {
+			return nil
+		}
+		return prepare(prepared)
+	}, func(_ context.Context, prepared any) ([]byte, error) {
+		return render(prepared)
+	}, true)
 }
 
 func (c *HarukiDrawingClient) RenderWithCacheRequestAndPrepare(endpoint string, cacheRequest any, renderRequest any, prepare func(any) error, render func(any) ([]byte, error)) ([]byte, error) {
+	return c.renderWithCacheRequestAndPrepare(endpoint, cacheRequest, renderRequest, func(_ context.Context, prepared any) error {
+		if prepare == nil {
+			return nil
+		}
+		return prepare(prepared)
+	}, func(_ context.Context, prepared any) ([]byte, error) {
+		return render(prepared)
+	}, false)
+}
+
+func (c *HarukiDrawingClient) renderWithCacheRequestAndPrepare(endpoint string, cacheRequest any, renderRequest any, prepare func(context.Context, any) error, render func(context.Context, any) ([]byte, error), sameRequest bool) ([]byte, error) {
 	var requestCtx context.Context
 	if c != nil {
 		requestCtx = c.requestCtx
 	}
 	now := time.Now()
+	finishCachePrepare := commandtrace.MeasureOperation(requestCtx, "drawing.prepare_cache")
 	preparedCache := prepareDrawingRequestBody(endpoint, cacheRequest, now, requestCtx)
-	preparedRender := prepareDrawingRequestBody(endpoint, renderRequest, now, requestCtx)
-	if c == nil {
-		if prepare != nil {
-			if err := prepare(preparedRender); err != nil {
-				return nil, err
+	finishCachePrepare()
+	var prepareRenderOnce sync.Once
+	var preparedRender any
+	prepareRender := func(renderCtx context.Context) any {
+		prepareRenderOnce.Do(func() {
+			if sameRequest {
+				preparedRender = preparedCache
+				return
 			}
-		}
-		return render(preparedRender)
+			finishRenderPrepare := commandtrace.MeasureOperation(renderCtx, "drawing.prepare_render")
+			preparedRender = prepareDrawingRequestBody(endpoint, renderRequest, now, renderCtx)
+			finishRenderPrepare()
+		})
+		return preparedRender
 	}
-	renderPrepared := func() ([]byte, error) {
+	if c == nil {
+		body := prepareRender(requestCtx)
 		if prepare != nil {
-			if err := prepare(preparedRender); err != nil {
+			if err := prepare(requestCtx, body); err != nil {
 				return nil, err
 			}
 		}
-		return c.renderWithPermit(endpoint, preparedRender, render)
+		return render(requestCtx, body)
+	}
+	renderPrepared := func(renderCtx context.Context) ([]byte, error) {
+		body := prepareRender(renderCtx)
+		if prepare != nil {
+			finishPrepareHook := commandtrace.MeasureOperation(renderCtx, "drawing.prepare_hook")
+			err := prepare(renderCtx, body)
+			finishPrepareHook()
+			if err != nil {
+				return nil, err
+			}
+		}
+		active := c.WithContext(renderCtx)
+		return active.renderWithPermit(endpoint, body, func(prepared any) ([]byte, error) {
+			return render(renderCtx, prepared)
+		})
 	}
 	if c.cache != nil {
-		return c.cache.Render(endpoint, preparedCache, renderPrepared)
+		return c.cache.RenderSharedContext(requestCtx, endpoint, preparedRenderCachePayload{payload: preparedCache}, renderPrepared)
 	}
 	if c.localCache != nil {
-		return c.localCache.Render(endpoint, preparedCache, renderPrepared)
+		return c.localCache.RenderSharedContext(requestCtx, endpoint, preparedRenderCachePayload{payload: preparedCache}, renderPrepared)
 	}
-	return renderPrepared()
+	return renderPrepared(requestCtx)
 }
 
 func (c *HarukiDrawingClient) renderWithPermit(endpoint string, prepared any, render func(any) ([]byte, error)) ([]byte, error) {
+	finishQueue := commandtrace.MeasureOperation(c.requestCtx, "drawing.queue")
 	permit, err := c.acquireRenderPermit(endpoint)
+	finishQueue()
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +196,9 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	var lease *upstream.Lease
 	var err error
 	if c.pool != nil && c.pool.Enabled() {
+		finishUpstreamQueue := commandtrace.MeasureOperation(requestCtx, "drawing.upstream_queue")
 		lease, err = c.pool.Acquire(requestCtx)
+		finishUpstreamQueue()
 		if err != nil {
 			return nil, fmt.Errorf("drawing upstream is unavailable: %w", err)
 		}
@@ -153,28 +209,78 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		return nil, fmt.Errorf("drawing client base_url is empty")
 	}
 
+	finishEncode := commandtrace.MeasureOperation(requestCtx, "drawing.encode")
+	encodedBody, err := sonic.Marshal(requestBody)
+	finishEncode()
+	if err != nil {
+		return nil, fmt.Errorf("drawing request encode failed: %w", err)
+	}
+
 	request := c.client.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(requestBody)
+		SetBody(encodedBody)
 	if requestCtx != nil {
 		request.SetContext(requestCtx)
 	}
 
 	tPost := time.Now()
+	finishHTTP := commandtrace.MeasureOperation(requestCtx, "drawing.http")
 	resp, err := request.Post(targetBaseURL + endpoint)
+	finishHTTP()
 	elapsed := time.Since(tPost)
-	data, _ := json.Marshal(requestBody)
-	c.logger.Debugf("POST %s: %s", targetBaseURL+endpoint, string(data))
 	if err != nil {
+		c.logger.WarnContext(requestCtx, "drawing request failed",
+			"upstream", "drawing",
+			"upstream_path", endpoint,
+			"duration_ms", commandtrace.Milliseconds(elapsed),
+			"error_type", fmt.Sprintf("%T", err),
+		)
 		return nil, err
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("api request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+		c.logger.WarnContext(requestCtx, "drawing request returned non-success status",
+			"upstream", "drawing",
+			"upstream_path", endpoint,
+			"status_code", resp.StatusCode(),
+			"duration_ms", commandtrace.Milliseconds(elapsed),
+			"response_bytes", len(resp.Body()),
+		)
+		if drawingResponseIndicatesInsufficientData(resp.Body()) {
+			return nil, fmt.Errorf("drawing request failed with status %d: %w", resp.StatusCode(), ErrDrawingDataInsufficient)
+		}
+		return nil, fmt.Errorf("drawing request failed with status %d", resp.StatusCode())
 	}
-	c.logger.Infof("drawing POST %s: status=%d elapsed=%dms len=%s",
-		targetBaseURL+endpoint, resp.StatusCode(), elapsed.Milliseconds(), resp.Header().Get("content-length"))
+	c.logger.DebugContext(requestCtx, "drawing request completed",
+		"upstream", "drawing",
+		"upstream_path", endpoint,
+		"status_code", resp.StatusCode(),
+		"duration_ms", commandtrace.Milliseconds(elapsed),
+		"response_bytes", len(resp.Body()),
+	)
 	return resp.Body(), nil
+}
+
+func drawingResponseIndicatesInsufficientData(body []byte) bool {
+	if len(body) > drawingErrorClassificationBytes {
+		body = body[:drawingErrorClassificationBytes]
+	}
+	lower := strings.ToLower(string(body))
+	for _, marker := range []string{
+		"data insufficient",
+		"insufficient data",
+		"not enough data",
+		"数据不足",
+		"single positional indexer is out-of-bounds",
+		"out-of-bounds",
+		"out of bounds",
+		"index out of range",
+	} {
+		if strings.Contains(lower, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
@@ -182,14 +288,16 @@ func (c *HarukiDrawingClient) post(endpoint string, body any) ([]byte, error) {
 	if c != nil {
 		requestCtx = c.requestCtx
 	}
+	finishPrepare := commandtrace.MeasureOperation(requestCtx, "drawing.prepare_render")
 	requestBody := prepareDrawingRequestBody(endpoint, body, time.Now(), requestCtx)
+	finishPrepare()
 	return c.postPrepared(endpoint, requestBody)
 }
 
 func (c *HarukiDrawingClient) cachedPost(endpoint string, body any) ([]byte, error) {
-	return c.RenderWithCache(endpoint, body, func(prepared any) ([]byte, error) {
-		return c.postPrepared(endpoint, prepared)
-	})
+	return c.renderWithCacheRequestAndPrepare(endpoint, body, body, nil, func(renderCtx context.Context, prepared any) ([]byte, error) {
+		return c.WithContext(renderCtx).postPrepared(endpoint, prepared)
+	}, true)
 }
 
 // =========================== Music API ===========================
@@ -259,14 +367,18 @@ func (c *HarukiDrawingClient) GenerateCostumeDetail(req *CostumeDetailRequest) (
 }
 
 func (c *HarukiDrawingClient) GenerateCostumeDetailWithPrepare(cacheReq any, req *CostumeDetailRequest, prepare func(any) error) ([]byte, error) {
-	return c.RenderWithCacheRequestAndPrepare("/api/pjsk/costume/detail", cacheReq, req, func(prepared any) error {
+	return c.GenerateCostumeDetailWithContextPrepare(cacheReq, req, func(_ context.Context, prepared any) error {
 		if prepare == nil {
 			return nil
 		}
 		return prepare(prepared)
-	}, func(prepared any) ([]byte, error) {
-		return c.postPrepared("/api/pjsk/costume/detail", prepared)
 	})
+}
+
+func (c *HarukiDrawingClient) GenerateCostumeDetailWithContextPrepare(cacheReq any, req *CostumeDetailRequest, prepare func(context.Context, any) error) ([]byte, error) {
+	return c.renderWithCacheRequestAndPrepare("/api/pjsk/costume/detail", cacheReq, req, prepare, func(renderCtx context.Context, prepared any) ([]byte, error) {
+		return c.WithContext(renderCtx).postPrepared("/api/pjsk/costume/detail", prepared)
+	}, false)
 }
 
 // =========================== Deck API ===========================

@@ -662,7 +662,10 @@ func testBotAppWithDependencies(t *testing.T, drawingURL string, bindingService 
 	app := fiber.New()
 	runtime := testRenderApp(t, client)
 	runtime.Bindings = bindingService
-	RegisterPJSKBotRoutes(app, runtime, nil, botDBClient, nil)
+	dispatcher := RegisterPJSKBotRoutes(app, runtime, nil, botDBClient, nil)
+	if dispatcher != nil {
+		t.Cleanup(dispatcher.Close)
+	}
 	return app
 }
 
@@ -1147,7 +1150,11 @@ func TestBotEndpointRecordsDistributedStatisticsAndCommandLog(t *testing.T) {
 	ctx := context.Background()
 	botClient := newBotCommandTestClient(t, "telemetry")
 	t.Cleanup(func() { _ = botClient.Close() })
-	app := testBotAppWithDependencies(t, "", testBindingService(t), botClient)
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	runtime.Bindings = testBindingService(t)
+	dispatcher := RegisterPJSKBotRoutes(app, runtime, nil, botClient, nil)
+	t.Cleanup(dispatcher.Close)
 
 	req := newBotPOSTRequest(botPJSKPath("profile/bind/list"), BotCommandRequest{
 		Platform: "qq", PlatformUserID: "12345", PlatformGroupID: "67890",
@@ -1165,6 +1172,7 @@ func TestBotEndpointRecordsDistributedStatisticsAndCommandLog(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
+	dispatcher.Close()
 
 	rankingRow, err := botClient.RequestsRanking.Query().Where(botrequestsranking.BotIDEQ(11451419)).Only(ctx)
 	if err != nil {

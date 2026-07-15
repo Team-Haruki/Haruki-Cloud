@@ -6,21 +6,43 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/singleflight"
+
+	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/utils/logger"
 )
 
-const housingCompetitionStatsCacheVersion = 1
+const (
+	housingCompetitionStatsCacheVersion         = 1
+	housingCompetitionStatsEntryTTL             = 90 * 24 * time.Hour
+	housingCompetitionStatsMaxEntries           = 50_000
+	housingCompetitionStatsMaxEntriesPerBucket  = 20_000
+	housingCompetitionStatsMaxBuckets           = 64
+	housingCompetitionStatsSharedRefreshTimeout = 2 * time.Minute
+)
 
 type housingCompetitionStatsCache struct {
-	mu              sync.Mutex
-	path            string
-	refreshInterval time.Duration
-	buckets         map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket
+	mu               sync.Mutex
+	path             string
+	refreshInterval  time.Duration
+	buckets          map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket
+	entryTTL         time.Duration
+	maxEntries       int
+	maxBucketEntries int
+	maxBuckets       int
+	generation       uint64
+
+	refreshes           singleflight.Group
+	persistMu           sync.Mutex
+	persistedGeneration uint64
 }
 
 type housingCompetitionStatsCacheKey struct {
@@ -29,10 +51,23 @@ type housingCompetitionStatsCacheKey struct {
 }
 
 type housingCompetitionStatsBucket struct {
-	entries     map[string]HousingCompetitionEntry
-	refreshedAt time.Time
-	sampledAt   time.Time
+	entries         map[string]HousingCompetitionEntry
+	refreshedAt     time.Time
+	sampledAt       time.Time
+	snapshotEntries []HousingCompetitionEntry
+	snapshotDirty   bool
 }
+
+type housingCompetitionRefreshResult struct {
+	entries        []HousingCompetitionEntry
+	sampledAt      time.Time
+	refreshedCount int
+	err            error
+	operations     []commandtrace.Stats
+	leader         *housingCompetitionRefreshToken
+}
+
+type housingCompetitionRefreshToken byte
 
 type persistedHousingCompetitionStatsCache struct {
 	Version int                                      `json:"version"`
@@ -64,9 +99,13 @@ func newHousingCompetitionStatsCache(cachePath string, refreshInterval time.Dura
 		refreshInterval = DefaultHousingCompetitionRefreshInterval
 	}
 	cache := &housingCompetitionStatsCache{
-		path:            strings.TrimSpace(cachePath),
-		refreshInterval: refreshInterval,
-		buckets:         make(map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket),
+		path:             strings.TrimSpace(cachePath),
+		refreshInterval:  refreshInterval,
+		buckets:          make(map[housingCompetitionStatsCacheKey]*housingCompetitionStatsBucket),
+		entryTTL:         housingCompetitionStatsEntryTTL,
+		maxEntries:       housingCompetitionStatsMaxEntries,
+		maxBucketEntries: housingCompetitionStatsMaxEntriesPerBucket,
+		maxBuckets:       housingCompetitionStatsMaxBuckets,
 	}
 	cache.loadPersisted()
 	return cache
@@ -90,18 +129,28 @@ func (c *housingCompetitionStatsCache) GetOrRefresh(ctx context.Context, api Hou
 	now := time.Now().UTC()
 
 	c.mu.Lock()
+	c.pruneLocked(now)
 	if bucket := c.buckets[key]; bucket != nil && len(bucket.entries) > 0 && !shouldRefreshHousingCompetitionStats(bucket, now, c.RefreshInterval()) {
+		finishSnapshot := commandtrace.MeasureOperation(ctx, "housing_cache.snapshot")
 		entries, sampledAt := bucket.snapshot()
+		finishSnapshot()
 		c.mu.Unlock()
 		return entries, sampledAt, 0, nil
 	}
-	staleEntries, staleSampledAt := c.snapshotLocked(key)
+	staleAvailable := c.buckets[key] != nil && len(c.buckets[key].entries) > 0
 	c.mu.Unlock()
 
 	entries, sampledAt, refreshedCount, err := c.Refresh(ctx, api, region, housingID, sampleCount)
 	if err != nil {
-		if len(staleEntries) > 0 {
-			return staleEntries, staleSampledAt, 0, nil
+		if staleAvailable {
+			finishSnapshot := commandtrace.MeasureOperation(ctx, "housing_cache.snapshot")
+			c.mu.Lock()
+			staleEntries, staleSampledAt := c.snapshotLocked(key)
+			c.mu.Unlock()
+			finishSnapshot()
+			if len(staleEntries) > 0 {
+				return staleEntries, staleSampledAt, 0, nil
+			}
 		}
 		return nil, time.Time{}, 0, err
 	}
@@ -116,35 +165,93 @@ func (c *housingCompetitionStatsCache) Refresh(ctx context.Context, api HousingC
 	if !ok {
 		return nil, time.Time{}, 0, fmt.Errorf("invalid housing competition cache key")
 	}
-
-	entries, sampledAt, refreshedCount, err := fetchHousingCompetitionSamples(ctx, api, region, housingID, sampleCount, 0)
-	if err != nil {
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	if err := ctx.Err(); err != nil {
 		return nil, time.Time{}, 0, err
 	}
-	now := time.Now().UTC()
+	if api == nil {
+		return nil, time.Time{}, 0, fmt.Errorf("sekai api client is not configured")
+	}
+	sampleCount = normalizeHousingCompetitionSampleCount(sampleCount)
+	flightKey := fmt.Sprintf("%s:%d:%d", key.Region, key.HousingID, sampleCount)
+	callerToken := new(housingCompetitionRefreshToken)
+	finishWait := commandtrace.MeasureOperation(ctx, "housing_cache.refresh_wait")
+	resultCh := c.refreshes.DoChan(flightKey, func() (any, error) {
+		background := logger.WithContextAttrs(context.Background(), slog.Bool("shared_work", true))
+		sharedBase, cancel := context.WithTimeout(background, housingCompetitionStatsSharedRefreshTimeout)
+		defer cancel()
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
 
-	c.mu.Lock()
-	bucket := c.buckets[key]
-	if bucket == nil {
-		bucket = &housingCompetitionStatsBucket{entries: make(map[string]HousingCompetitionEntry)}
-		c.buckets[key] = bucket
-	}
-	mergeHousingCompetitionEntries(bucket.entries, entries)
-	bucket.refreshedAt = now
-	if !sampledAt.IsZero() {
-		bucket.sampledAt = sampledAt.UTC()
-	} else {
-		bucket.sampledAt = now
-	}
-	merged, mergedSampledAt := bucket.snapshot()
-	persistPath := c.path
-	persisted := c.snapshotForPersistenceLocked()
-	c.mu.Unlock()
+		finishFetch := commandtrace.MeasureOperation(sharedCtx, "housing_cache.fetch")
+		entries, sampledAt, refreshedCount, err := fetchHousingCompetitionSamples(sharedCtx, api, region, housingID, sampleCount, 0)
+		finishFetch()
+		if err != nil {
+			return housingCompetitionRefreshResult{
+				err:        err,
+				operations: trace.Snapshot().Operations,
+				leader:     callerToken,
+			}, nil
+		}
+		now := time.Now().UTC()
 
-	if persistPath != "" {
-		_ = writeHousingCompetitionStatsCacheFile(persistPath, persisted)
+		finishMerge := commandtrace.MeasureOperation(sharedCtx, "housing_cache.merge")
+		c.mu.Lock()
+		bucket := c.buckets[key]
+		if bucket == nil {
+			bucket = &housingCompetitionStatsBucket{
+				entries:       make(map[string]HousingCompetitionEntry),
+				snapshotDirty: true,
+			}
+			c.buckets[key] = bucket
+		}
+		mergeHousingCompetitionEntries(bucket.entries, entries)
+		bucket.snapshotDirty = true
+		bucket.refreshedAt = now
+		if !sampledAt.IsZero() {
+			bucket.sampledAt = sampledAt.UTC()
+		} else {
+			bucket.sampledAt = now
+		}
+		c.pruneLocked(now)
+		finishMerge()
+		finishSnapshot := commandtrace.MeasureOperation(sharedCtx, "housing_cache.snapshot")
+		merged, mergedSampledAt := bucket.snapshot()
+		finishSnapshot()
+		c.generation++
+		generation := c.generation
+		c.mu.Unlock()
+
+		c.persistLatest(sharedCtx, generation)
+		return housingCompetitionRefreshResult{
+			entries:        merged,
+			sampledAt:      mergedSampledAt,
+			refreshedCount: refreshedCount,
+			operations:     trace.Snapshot().Operations,
+			leader:         callerToken,
+		}, nil
+	})
+
+	select {
+	case <-ctx.Done():
+		finishWait()
+		return nil, time.Time{}, 0, ctx.Err()
+	case completed := <-resultCh:
+		finishWait()
+		result, ok := completed.Val.(housingCompetitionRefreshResult)
+		if !ok {
+			return nil, time.Time{}, 0, fmt.Errorf("unexpected housing competition refresh result")
+		}
+		commandtrace.MergeOperations(ctx, result.operations)
+		if result.leader != callerToken {
+			commandtrace.RecordOperation(ctx, "housing_cache.shared", 0)
+		}
+		if result.err != nil {
+			return nil, time.Time{}, 0, result.err
+		}
+		return append([]HousingCompetitionEntry(nil), result.entries...), result.sampledAt, result.refreshedCount, nil
 	}
-	return merged, mergedSampledAt, refreshedCount, nil
 }
 
 func fetchHousingCompetitionSamples(ctx context.Context, api HousingCompetitionListClient, region string, housingID, sampleCount, sampleIntervalMillis int) ([]HousingCompetitionEntry, time.Time, int, error) {
@@ -231,7 +338,19 @@ func (b *housingCompetitionStatsBucket) snapshot() ([]HousingCompetitionEntry, t
 	if b == nil {
 		return nil, time.Time{}
 	}
-	return housingCompetitionEntriesFromMap(b.entries), b.sampledAt
+	entries := b.snapshotView()
+	return append([]HousingCompetitionEntry(nil), entries...), b.sampledAt
+}
+
+func (b *housingCompetitionStatsBucket) snapshotView() []HousingCompetitionEntry {
+	if b == nil {
+		return nil
+	}
+	if b.snapshotDirty || b.snapshotEntries == nil {
+		b.snapshotEntries = housingCompetitionEntriesFromMap(b.entries)
+		b.snapshotDirty = false
+	}
+	return b.snapshotEntries
 }
 
 func (c *housingCompetitionStatsCache) snapshotLocked(key housingCompetitionStatsCacheKey) ([]HousingCompetitionEntry, time.Time) {
@@ -261,6 +380,172 @@ func mergeHousingCompetitionEntries(dst map[string]HousingCompetitionEntry, entr
 			continue
 		}
 		dst[key] = mergeHousingCompetitionEntry(current, entry)
+	}
+}
+
+func (c *housingCompetitionStatsCache) pruneLocked(now time.Time) {
+	if c == nil || len(c.buckets) == 0 {
+		return
+	}
+	if now.IsZero() {
+		now = time.Now().UTC()
+	}
+	entryTTL := c.entryTTL
+	if entryTTL <= 0 {
+		entryTTL = housingCompetitionStatsEntryTTL
+	}
+	maxEntries := c.maxEntries
+	if maxEntries <= 0 {
+		maxEntries = housingCompetitionStatsMaxEntries
+	}
+	maxBucketEntries := c.maxBucketEntries
+	if maxBucketEntries <= 0 {
+		maxBucketEntries = housingCompetitionStatsMaxEntriesPerBucket
+	}
+	maxBuckets := c.maxBuckets
+	if maxBuckets <= 0 {
+		maxBuckets = housingCompetitionStatsMaxBuckets
+	}
+
+	cutoffMillis := now.Add(-entryTTL).UnixMilli()
+	for key, bucket := range c.buckets {
+		if bucket == nil {
+			delete(c.buckets, key)
+			continue
+		}
+		bucketActivity := unixMilliOrZero(bucket.refreshedAt)
+		if bucketActivity <= 0 {
+			bucketActivity = unixMilliOrZero(bucket.sampledAt)
+		}
+		if bucketActivity > 0 && bucketActivity < cutoffMillis {
+			delete(c.buckets, key)
+			continue
+		}
+		changed := false
+		if len(bucket.entries) > maxBucketEntries {
+			removeLowestRankedHousingCompetitionEntries(bucket, len(bucket.entries)-maxBucketEntries)
+			changed = true
+		}
+		if changed {
+			bucket.snapshotDirty = true
+		}
+	}
+
+	if len(c.buckets) > maxBuckets {
+		type bucketAge struct {
+			key housingCompetitionStatsCacheKey
+			at  time.Time
+		}
+		ages := make([]bucketAge, 0, len(c.buckets))
+		for key, bucket := range c.buckets {
+			at := bucket.refreshedAt
+			if at.IsZero() {
+				at = bucket.sampledAt
+			}
+			ages = append(ages, bucketAge{key: key, at: at})
+		}
+		sort.Slice(ages, func(i, j int) bool {
+			if !ages[i].at.Equal(ages[j].at) {
+				return ages[i].at.Before(ages[j].at)
+			}
+			if ages[i].key.Region != ages[j].key.Region {
+				return ages[i].key.Region < ages[j].key.Region
+			}
+			return ages[i].key.HousingID < ages[j].key.HousingID
+		})
+		for _, item := range ages[:len(ages)-maxBuckets] {
+			delete(c.buckets, item.key)
+		}
+	}
+
+	total := 0
+	for _, bucket := range c.buckets {
+		total += len(bucket.entries)
+	}
+	if total <= maxEntries {
+		return
+	}
+	type globalEntryAge struct {
+		bucketKey      housingCompetitionStatsCacheKey
+		entryKey       string
+		bucketActivity int64
+		reviewCount    int
+		lastSeen       int64
+	}
+	ages := make([]globalEntryAge, 0, total)
+	for bucketKey, bucket := range c.buckets {
+		bucketActivity := unixMilliOrZero(bucket.refreshedAt)
+		if bucketActivity <= 0 {
+			bucketActivity = unixMilliOrZero(bucket.sampledAt)
+		}
+		for entryKey, entry := range bucket.entries {
+			ages = append(ages, globalEntryAge{
+				bucketKey:      bucketKey,
+				entryKey:       entryKey,
+				bucketActivity: bucketActivity,
+				reviewCount:    entry.ReviewCount,
+				lastSeen:       entry.LastSeenAt,
+			})
+		}
+	}
+	sort.Slice(ages, func(i, j int) bool {
+		if ages[i].bucketActivity != ages[j].bucketActivity {
+			return ages[i].bucketActivity < ages[j].bucketActivity
+		}
+		if ages[i].reviewCount != ages[j].reviewCount {
+			return ages[i].reviewCount < ages[j].reviewCount
+		}
+		if ages[i].lastSeen != ages[j].lastSeen {
+			return ages[i].lastSeen < ages[j].lastSeen
+		}
+		if ages[i].bucketKey.Region != ages[j].bucketKey.Region {
+			return ages[i].bucketKey.Region < ages[j].bucketKey.Region
+		}
+		if ages[i].bucketKey.HousingID != ages[j].bucketKey.HousingID {
+			return ages[i].bucketKey.HousingID < ages[j].bucketKey.HousingID
+		}
+		return ages[i].entryKey < ages[j].entryKey
+	})
+	for _, item := range ages[:total-maxEntries] {
+		bucket := c.buckets[item.bucketKey]
+		if bucket == nil {
+			continue
+		}
+		delete(bucket.entries, item.entryKey)
+		bucket.snapshotDirty = true
+		if len(bucket.entries) == 0 {
+			delete(c.buckets, item.bucketKey)
+		}
+	}
+}
+
+func removeLowestRankedHousingCompetitionEntries(bucket *housingCompetitionStatsBucket, count int) {
+	if bucket == nil || count <= 0 {
+		return
+	}
+	type entryAge struct {
+		key         string
+		reviewCount int
+		lastSeen    int64
+	}
+	ages := make([]entryAge, 0, len(bucket.entries))
+	for key, entry := range bucket.entries {
+		ages = append(ages, entryAge{key: key, reviewCount: entry.ReviewCount, lastSeen: entry.LastSeenAt})
+	}
+	sort.Slice(ages, func(i, j int) bool {
+		if ages[i].reviewCount != ages[j].reviewCount {
+			return ages[i].reviewCount < ages[j].reviewCount
+		}
+		if ages[i].lastSeen != ages[j].lastSeen {
+			return ages[i].lastSeen < ages[j].lastSeen
+		}
+		return ages[i].key < ages[j].key
+	})
+	if count > len(ages) {
+		count = len(ages)
+	}
+	for _, item := range ages[:count] {
+		delete(bucket.entries, item.key)
 	}
 }
 
@@ -366,9 +651,10 @@ func (c *housingCompetitionStatsCache) loadPersisted() {
 			continue
 		}
 		bucket := &housingCompetitionStatsBucket{
-			entries:     make(map[string]HousingCompetitionEntry, len(item.Entries)),
-			refreshedAt: timeFromUnixMilli(item.RefreshedAt),
-			sampledAt:   timeFromUnixMilli(item.SampledAt),
+			entries:       make(map[string]HousingCompetitionEntry, len(item.Entries)),
+			refreshedAt:   timeFromUnixMilli(item.RefreshedAt),
+			sampledAt:     timeFromUnixMilli(item.SampledAt),
+			snapshotDirty: true,
 		}
 		for _, persistedEntry := range item.Entries {
 			entry := persistedEntry.toEntry()
@@ -382,6 +668,7 @@ func (c *housingCompetitionStatsCache) loadPersisted() {
 		}
 		c.buckets[key] = bucket
 	}
+	c.pruneLocked(time.Now().UTC())
 }
 
 func (c *housingCompetitionStatsCache) snapshotForPersistenceLocked() persistedHousingCompetitionStatsCache {
@@ -399,7 +686,7 @@ func (c *housingCompetitionStatsCache) snapshotForPersistenceLocked() persistedH
 			SampledAt:   unixMilliOrZero(bucket.sampledAt),
 			Entries:     make([]persistedHousingCompetitionEntry, 0, len(bucket.entries)),
 		}
-		entries := housingCompetitionEntriesFromMap(bucket.entries)
+		entries := bucket.snapshotView()
 		for _, entry := range entries {
 			persistedBucket.Entries = append(persistedBucket.Entries, persistedHousingCompetitionEntry{
 				CacheKey:      entry.uniqueKey(),
@@ -440,23 +727,62 @@ func (p persistedHousingCompetitionEntry) toEntry() HousingCompetitionEntry {
 	}
 }
 
-func writeHousingCompetitionStatsCacheFile(path string, cache persistedHousingCompetitionStatsCache) error {
-	if path == "" {
-		return nil
+func (c *housingCompetitionStatsCache) persistLatest(ctx context.Context, requestedGeneration uint64) {
+	if c == nil || c.path == "" {
+		return
 	}
-	payload, err := json.Marshal(cache)
+	finishWait := commandtrace.MeasureOperation(ctx, "housing_cache.persist_wait")
+	c.persistMu.Lock()
+	finishWait()
+	defer c.persistMu.Unlock()
+	if c.persistedGeneration >= requestedGeneration {
+		return
+	}
+
+	finishSnapshot := commandtrace.MeasureOperation(ctx, "housing_cache.snapshot")
+	c.mu.Lock()
+	c.pruneLocked(time.Now().UTC())
+	persisted := c.snapshotForPersistenceLocked()
+	generation := c.generation
+	c.mu.Unlock()
+	finishSnapshot()
+
+	finishEncode := commandtrace.MeasureOperation(ctx, "housing_cache.encode")
+	payload, err := json.Marshal(persisted)
+	finishEncode()
 	if err != nil {
-		return err
+		return
 	}
+	finishPersist := commandtrace.MeasureOperation(ctx, "housing_cache.persist")
+	err = writeHousingCompetitionStatsCachePayload(c.path, payload)
+	finishPersist()
+	if err == nil {
+		c.persistedGeneration = generation
+	}
+}
+
+func writeHousingCompetitionStatsCachePayload(path string, payload []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, payload, 0o644); err != nil {
+	tmp, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".tmp-*")
+	if err != nil {
 		return err
 	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	if err := tmp.Chmod(0o644); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if _, err := tmp.Write(payload); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
 		return err
 	}
 	return nil

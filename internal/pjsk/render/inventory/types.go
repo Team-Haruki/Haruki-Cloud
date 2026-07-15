@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"context"
 	"sync"
 
 	"haruki-cloud/internal/pjsk/drawing"
@@ -36,6 +37,7 @@ type Controller struct {
 	snapshot      snapshot.Snapshot
 	defaultRegion renderregion.Value
 	masterdata    *masterdataStore
+	requestCtx    context.Context
 }
 
 type materialMeta struct {

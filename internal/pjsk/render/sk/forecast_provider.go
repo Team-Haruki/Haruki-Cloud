@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	forecast33KitURL       = "https://sekai-data.3-3.dev/predict.json"
-	forecastMoesekaiURL    = "https://rk.exmeaning.com/public/event/%d/latest?region=%s"
-	forecastSnowyLegacyURL = "https://sekaibangdan.exmeaning.com/api/public/v1/%sdata/%d"
-	forecastSekaURL        = "https://jiiku831.github.io/%sdata/sekarun.js"
-	forecastLocalBaseURL   = "http://100.109.13.111:18746"
+	forecast33KitURL         = "https://sekai-data.3-3.dev/predict.json"
+	forecastMoesekaiURL      = "https://rk.exmeaning.com/public/event/%d/latest?region=%s"
+	forecastSnowyLegacyURL   = "https://sekaibangdan.exmeaning.com/api/public/v1/%sdata/%d"
+	forecastSekaURL          = "https://jiiku831.github.io/%sdata/sekarun.js"
+	forecastLocalBaseURL     = "http://100.109.13.111:18746"
+	forecastMaxResponseBytes = 16 << 20
 )
 
 // NewRemoteForecastProvider creates a forecast provider with sane HTTP defaults.
@@ -33,6 +34,7 @@ func NewRemoteForecastProviderWithConfig(cfg ForecastConfig) *RemoteForecastProv
 	return &RemoteForecastProvider{
 		http: resty.New().
 			SetTimeout(config.SKForecastHTTPClientTimeout).
+			SetResponseBodyLimit(forecastMaxResponseBytes).
 			SetRetryCount(2),
 		localForecastURL: localBaseURL,
 	}

@@ -54,7 +54,11 @@ func (r *RemoteDeckRecommender) captureMasterdataSignature() {
 	signature, err := deckMasterdataDirSignature(r.masterdataDir, r.region)
 	if err != nil {
 		if r.logger != nil {
-			r.logger.Warnf("failed to capture masterdata signature: %v", err)
+			r.logger.Warn("deck masterdata signature failed",
+				"operation", "capture_initial",
+				"region", r.region,
+				"error_type", fmt.Sprintf("%T", err),
+			)
 		}
 		return
 	}
@@ -70,7 +74,11 @@ func (r *RemoteDeckRecommender) refreshMasterdataSignature() {
 	signature, err := deckMasterdataDirSignature(r.masterdataDir, r.region)
 	if err != nil {
 		if r.logger != nil {
-			r.logger.Warnf("failed to check masterdata update: %v", err)
+			r.logger.Warn("deck masterdata signature failed",
+				"operation", "refresh",
+				"region", r.region,
+				"error_type", fmt.Sprintf("%T", err),
+			)
 		}
 		return
 	}
@@ -93,7 +101,11 @@ func (r *RemoteDeckRecommender) refreshMasterdataSignature() {
 		r.invalidate(state, remoteRewarmMasterdata)
 	}
 	if r.logger != nil {
-		r.logger.Infof("masterdata changed; will refresh deck-service on next request (region=%s dir=%s files=%d)", r.region, signature.Dir, signature.Files)
+		r.logger.Info("deck masterdata changed",
+			"region", r.region,
+			"files", signature.Files,
+			"action", "refresh_on_next_request",
+		)
 	}
 }
 

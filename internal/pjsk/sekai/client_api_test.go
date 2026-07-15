@@ -1,14 +1,18 @@
 package sekai
 
 import (
+	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/observability/commandtrace"
 )
 
 func TestSekaiAPIClientDistributesRequestsAcrossTargets(t *testing.T) {
@@ -269,5 +273,65 @@ func TestSekaiAPIClientGetsMySekaiHousingBackNumbersAndThumbnail(t *testing.T) {
 		if !seen[path] {
 			t.Fatalf("expected path %s to be requested", path)
 		}
+	}
+}
+
+func TestSekaiAPIClientContextSupportsCancellation(t *testing.T) {
+	started := make(chan struct{}, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		select {
+		case started <- struct{}{}:
+		default:
+		}
+		<-r.Context().Done()
+	}))
+	defer server.Close()
+
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{BaseURL: server.URL})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		_, err := client.WithContext(ctx).GetSystem("jp")
+		done <- err
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("sekai request did not start")
+	}
+	cancel()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("GetSystem() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("sekai request did not stop after context cancellation")
+	}
+}
+
+func TestSekaiAPIClientContextRecordsHTTP(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	client := NewSekaiAPIClient(&config.SekaiAPIConfig{BaseURL: server.URL})
+	ctx, trace := commandtrace.WithTrace(context.Background())
+	if _, err := client.WithContext(ctx).GetSystem("jp"); err != nil {
+		t.Fatalf("GetSystem() error = %v", err)
+	}
+
+	operations := trace.Snapshot().Operations
+	var httpCount int
+	for _, operation := range operations {
+		if operation.Name == "sekai.http" {
+			httpCount = operation.Count
+		}
+	}
+	if httpCount != 1 {
+		t.Fatalf("unexpected operations: %+v", operations)
 	}
 }

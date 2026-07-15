@@ -1,16 +1,101 @@
 package assets
 
 import (
+	"container/list"
+	"context"
+	"io/fs"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync"
+	"time"
+	"unicode"
+
+	"golang.org/x/sync/singleflight"
+
+	"haruki-cloud/internal/observability/commandtrace"
 )
 
 // AssetHelper resolves assets against a primary directory with legacy fallbacks.
 type AssetHelper struct {
-	roots []string
+	roots           []string
+	ctx             context.Context
+	fs              assetFileSystem
+	directoryCache  *assetDirectoryCache
+	resolutionCache *assetResolutionCache
+}
+
+type assetFileSystem interface {
+	Stat(name string) (fs.FileInfo, error)
+	ReadDir(name string) ([]fs.DirEntry, error)
+}
+
+type osAssetFileSystem struct{}
+
+func (osAssetFileSystem) Stat(name string) (fs.FileInfo, error) {
+	return os.Stat(name)
+}
+
+func (osAssetFileSystem) ReadDir(name string) ([]fs.DirEntry, error) {
+	return os.ReadDir(name)
+}
+
+type assetDirectoryCache struct {
+	mu         sync.Mutex
+	entries    map[string]*assetDirectoryCacheEntry
+	recent     list.List
+	indexed    int
+	maxEntries int
+	maxNames   int
+	loads      singleflight.Group
+}
+
+type assetDirectoryCacheEntry struct {
+	index   *assetDirectoryIndex
+	element *list.Element
+}
+
+type assetDirectoryIndex struct {
+	modTime time.Time
+	exact   map[string]string
+	folded  map[string]string
+}
+
+const (
+	assetDirectoryMaxEntries  = 4_096
+	assetDirectoryMaxNames    = 262_144
+	assetResolutionTTL        = 30 * time.Second
+	assetResolutionMaxEntries = 65_536
+)
+
+type assetResolutionCache struct {
+	mu         sync.Mutex
+	entries    map[string]*assetResolutionEntry
+	recent     list.List
+	loads      singleflight.Group
+	ttl        time.Duration
+	maxEntries int
+	generation uint64
+}
+
+type assetResolutionEntry struct {
+	path      string
+	expiresAt time.Time
+	element   *list.Element
+}
+
+type assetResolutionFlightResult struct {
+	path       string
+	operations []commandtrace.Stats
+}
+
+type assetDirectoryFlightResult struct {
+	index      *assetDirectoryIndex
+	err        error
+	operations []commandtrace.Stats
 }
 
 func NewAssetHelper(primary string, legacy []string) *AssetHelper {
@@ -41,7 +126,31 @@ func NewAssetHelper(primary string, legacy []string) *AssetHelper {
 		roots = []string{"."}
 	}
 
-	return &AssetHelper{roots: roots}
+	return &AssetHelper{
+		roots: roots,
+		fs:    osAssetFileSystem{},
+		directoryCache: &assetDirectoryCache{
+			entries:    make(map[string]*assetDirectoryCacheEntry),
+			maxEntries: assetDirectoryMaxEntries,
+			maxNames:   assetDirectoryMaxNames,
+		},
+		resolutionCache: &assetResolutionCache{
+			entries:    make(map[string]*assetResolutionEntry),
+			ttl:        assetResolutionTTL,
+			maxEntries: assetResolutionMaxEntries,
+		},
+	}
+}
+
+// WithContext returns a shallow copy that records filesystem operations in the
+// command trace carried by ctx. The directory cache remains shared by all copies.
+func (h *AssetHelper) WithContext(ctx context.Context) *AssetHelper {
+	if h == nil {
+		return nil
+	}
+	clone := *h
+	clone.ctx = ctx
+	return &clone
 }
 
 func (h *AssetHelper) Roots() []string {
@@ -64,35 +173,98 @@ func (h *AssetHelper) Join(parts ...string) string {
 	return joinAssetPath(h.Primary(), parts...)
 }
 
+// FirstExisting returns the first candidate path that exists on disk. For each
+// relative candidate it checks exact paths in every root before trying the
+// case-insensitive fallback. Consequently, an exact match in a legacy root takes
+// precedence over a differently-cased match in an earlier root.
 func (h *AssetHelper) FirstExisting(relPaths ...string) string {
+	key := assetResolutionKey(relPaths)
+	if key == "" {
+		return ""
+	}
+	cache := h.resolutions()
+	if resolved, ok := cache.lookup(key, time.Now()); ok {
+		commandtrace.RecordOperation(h.ctx, "asset.resolve_cache_hit", 0)
+		return resolved
+	}
+	commandtrace.RecordOperation(h.ctx, "asset.resolve_cache_miss", 0)
+	finishWait := commandtrace.MeasureOperation(h.ctx, "asset.resolve_wait")
+	detachedHelper := h.WithContext(context.Background())
+	generation := cache.currentGeneration()
+	flightKey := key + "\x00generation=" + strconv.FormatUint(generation, 10)
+	value, _, shared := cache.loads.Do(flightKey, func() (any, error) {
+		sharedCtx, trace := commandtrace.WithNewTrace(context.Background())
+		sharedHelper := detachedHelper.WithContext(sharedCtx)
+		if resolved, ok := cache.lookup(key, time.Now()); ok {
+			return assetResolutionFlightResult{path: resolved, operations: trace.Snapshot().Operations}, nil
+		}
+		resolved := sharedHelper.firstExistingUncached(relPaths...)
+		cache.storeForGeneration(key, resolved, time.Now(), generation)
+		return assetResolutionFlightResult{path: resolved, operations: trace.Snapshot().Operations}, nil
+	})
+	finishWait()
+	if shared {
+		commandtrace.RecordOperation(h.ctx, "asset.resolve_shared", 0)
+	}
+	result, _ := value.(assetResolutionFlightResult)
+	commandtrace.MergeOperations(h.ctx, result.operations)
+	return result.path
+}
+
+func (h *AssetHelper) firstExistingUncached(relPaths ...string) string {
 	for _, rel := range relPaths {
 		if strings.TrimSpace(rel) == "" {
 			continue
 		}
 		for _, candidateRel := range assetPathCandidates(rel) {
-			if filepath.IsAbs(candidateRel) {
-				if resolved, ok := resolveCaseInsensitivePath(candidateRel); ok {
-					return filepath.ToSlash(resolved)
-				}
-				if _, err := os.Stat(candidateRel); err == nil {
-					return filepath.ToSlash(candidateRel)
+			candidates := h.localCandidatePaths(candidateRel)
+			for _, candidate := range candidates {
+				if _, err := h.stat(candidate); err == nil {
+					return filepath.ToSlash(candidate)
 				}
 			}
-			for _, root := range h.roots {
-				if isAssetURL(root) {
-					continue
-				}
-				candidate := filepath.Join(root, candidateRel)
-				if resolved, ok := resolveCaseInsensitivePath(candidate); ok {
+			for _, candidate := range candidates {
+				if resolved, ok := h.resolveCaseInsensitivePath(candidate); ok {
 					return filepath.ToSlash(resolved)
-				}
-				if _, err := os.Stat(candidate); err == nil {
-					return filepath.ToSlash(candidate)
 				}
 			}
 		}
 	}
 	return ""
+}
+
+func assetResolutionKey(relPaths []string) string {
+	parts := make([]string, 0, len(relPaths))
+	for _, rel := range relPaths {
+		if clean := filepath.ToSlash(strings.TrimSpace(rel)); clean != "" {
+			parts = append(parts, clean)
+		}
+	}
+	return strings.Join(parts, "\x00")
+}
+
+// ClearResolutionCache makes external asset updates visible immediately.
+// Without an explicit clear, positive and negative results refresh after the
+// short resolution TTL.
+func (h *AssetHelper) ClearResolutionCache() {
+	if h == nil || h.resolutionCache == nil {
+		return
+	}
+	h.resolutionCache.clear()
+}
+
+func (h *AssetHelper) localCandidatePaths(candidateRel string) []string {
+	if filepath.IsAbs(candidateRel) {
+		return []string{candidateRel}
+	}
+	candidates := make([]string, 0, len(h.roots))
+	for _, root := range h.roots {
+		if isAssetURL(root) {
+			continue
+		}
+		candidates = append(candidates, filepath.Join(root, candidateRel))
+	}
+	return candidates
 }
 
 func assetPathCandidates(rel string) []string {
@@ -110,8 +282,15 @@ func assetPathCandidates(rel string) []string {
 	return candidates
 }
 
-func resolveCaseInsensitivePath(path string) (string, bool) {
-	clean := filepath.Clean(path)
+func (h *AssetHelper) resolveCaseInsensitivePath(candidatePath string) (string, bool) {
+	if commandtrace.FromContext(h.ctx) != nil {
+		startedAt := time.Now()
+		defer func() {
+			commandtrace.RecordOperation(h.ctx, "asset.case_walk", time.Since(startedAt))
+		}()
+	}
+
+	clean := filepath.Clean(candidatePath)
 	if clean == "" {
 		return "", false
 	}
@@ -138,35 +317,364 @@ func resolveCaseInsensitivePath(path string) (string, bool) {
 			continue
 		}
 
-		matched, ok := matchPathComponent(current, segment)
+		exact := filepath.Join(current, segment)
+		if _, err := h.stat(exact); err == nil {
+			current = exact
+			continue
+		}
+
+		matched, ok := h.matchPathComponent(current, segment)
 		if !ok {
 			return "", false
 		}
 		current = filepath.Join(current, matched)
 	}
 
-	if _, err := os.Stat(current); err != nil {
+	if _, err := h.stat(current); err != nil {
 		return "", false
 	}
 	return current, true
 }
 
-func matchPathComponent(parent, segment string) (string, bool) {
-	entries, err := os.ReadDir(parent)
-	if err != nil {
+func (h *AssetHelper) matchPathComponent(parent, segment string) (string, bool) {
+	index, ok := h.directoryIndex(parent)
+	if !ok {
 		return "", false
 	}
-	for _, entry := range entries {
-		if entry.Name() == segment {
-			return segment, true
-		}
+	if matched, exists := index.exact[segment]; exists {
+		return matched, true
 	}
-	for _, entry := range entries {
-		if strings.EqualFold(entry.Name(), segment) {
-			return entry.Name(), true
-		}
+	if matched, exists := index.folded[foldAssetName(segment)]; exists {
+		return matched, true
 	}
 	return "", false
+}
+
+func (h *AssetHelper) directoryIndex(parent string) (*assetDirectoryIndex, bool) {
+	parent = filepath.Clean(parent)
+	info, err := h.stat(parent)
+	if err != nil || !info.IsDir() {
+		return nil, false
+	}
+	cache := h.cache()
+	if cached, ok := cache.lookup(parent, info.ModTime()); ok {
+		return cached, true
+	}
+
+	finishWait := commandtrace.MeasureOperation(h.ctx, "asset.directory_wait")
+	detachedHelper := h.WithContext(context.Background())
+	value, _, shared := cache.loads.Do(parent, func() (any, error) {
+		sharedCtx, trace := commandtrace.WithNewTrace(context.Background())
+		sharedHelper := detachedHelper.WithContext(sharedCtx)
+		complete := func(index *assetDirectoryIndex, err error) assetDirectoryFlightResult {
+			return assetDirectoryFlightResult{
+				index:      index,
+				err:        err,
+				operations: trace.Snapshot().Operations,
+			}
+		}
+
+		currentInfo, statErr := sharedHelper.stat(parent)
+		if statErr != nil {
+			return complete(nil, statErr), nil
+		}
+		if cached, ok := cache.lookup(parent, currentInfo.ModTime()); ok {
+			return complete(cached, nil), nil
+		}
+
+		entries, readErr := sharedHelper.readDir(parent)
+		if readErr != nil {
+			return complete(nil, readErr), nil
+		}
+		afterRead, statErr := sharedHelper.stat(parent)
+		if statErr != nil {
+			return complete(nil, statErr), nil
+		}
+		if !currentInfo.ModTime().Equal(afterRead.ModTime()) {
+			entries, readErr = sharedHelper.readDir(parent)
+			if readErr != nil {
+				return complete(nil, readErr), nil
+			}
+			afterRead, statErr = sharedHelper.stat(parent)
+			if statErr != nil {
+				return complete(nil, statErr), nil
+			}
+		}
+
+		index := newAssetDirectoryIndex(afterRead.ModTime(), entries)
+		cache.store(parent, index)
+		return complete(index, nil), nil
+	})
+	finishWait()
+	if shared {
+		commandtrace.RecordOperation(h.ctx, "asset.directory_shared", 0)
+	}
+	result, ok := value.(assetDirectoryFlightResult)
+	if !ok {
+		return nil, false
+	}
+	commandtrace.MergeOperations(h.ctx, result.operations)
+	return result.index, result.err == nil && result.index != nil
+}
+
+func newAssetDirectoryIndex(modTime time.Time, entries []fs.DirEntry) *assetDirectoryIndex {
+	index := &assetDirectoryIndex{
+		modTime: modTime,
+		exact:   make(map[string]string, len(entries)),
+		folded:  make(map[string]string, len(entries)),
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		index.exact[name] = name
+		folded := foldAssetName(name)
+		if _, exists := index.folded[folded]; !exists {
+			index.folded[folded] = name
+		}
+	}
+	return index
+}
+
+// foldAssetName returns a stable representative for every rune's Unicode
+// simple-fold cycle, matching the equivalence classes used by strings.EqualFold.
+func foldAssetName(name string) string {
+	var folded strings.Builder
+	folded.Grow(len(name))
+	for _, current := range name {
+		canonical := current
+		for candidate := unicode.SimpleFold(current); candidate != current; candidate = unicode.SimpleFold(candidate) {
+			if candidate < canonical {
+				canonical = candidate
+			}
+		}
+		folded.WriteRune(canonical)
+	}
+	return folded.String()
+}
+
+func (h *AssetHelper) stat(name string) (fs.FileInfo, error) {
+	if commandtrace.FromContext(h.ctx) == nil {
+		return h.fileSystem().Stat(name)
+	}
+	startedAt := time.Now()
+	info, err := h.fileSystem().Stat(name)
+	commandtrace.RecordOperation(h.ctx, "asset.stat", time.Since(startedAt))
+	return info, err
+}
+
+func (h *AssetHelper) readDir(name string) ([]fs.DirEntry, error) {
+	if commandtrace.FromContext(h.ctx) == nil {
+		return h.fileSystem().ReadDir(name)
+	}
+	startedAt := time.Now()
+	entries, err := h.fileSystem().ReadDir(name)
+	commandtrace.RecordOperation(h.ctx, "asset.readdir", time.Since(startedAt))
+	return entries, err
+}
+
+func (h *AssetHelper) fileSystem() assetFileSystem {
+	if h.fs == nil {
+		return osAssetFileSystem{}
+	}
+	return h.fs
+}
+
+func (h *AssetHelper) cache() *assetDirectoryCache {
+	if h.directoryCache == nil {
+		// AssetHelpers are constructed by NewAssetHelper. Keep a nil-safe fallback
+		// for zero-value helpers without adding synchronization to the hot path.
+		return &assetDirectoryCache{
+			entries:    make(map[string]*assetDirectoryCacheEntry),
+			maxEntries: assetDirectoryMaxEntries,
+			maxNames:   assetDirectoryMaxNames,
+		}
+	}
+	return h.directoryCache
+}
+
+func (h *AssetHelper) resolutions() *assetResolutionCache {
+	if h == nil || h.resolutionCache == nil {
+		return &assetResolutionCache{
+			entries:    make(map[string]*assetResolutionEntry),
+			ttl:        assetResolutionTTL,
+			maxEntries: assetResolutionMaxEntries,
+		}
+	}
+	return h.resolutionCache
+}
+
+func (c *assetResolutionCache) lookup(key string, now time.Time) (string, bool) {
+	if c == nil || c.ttl <= 0 {
+		return "", false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	entry, ok := c.entries[key]
+	if !ok {
+		return "", false
+	}
+	if now.Before(entry.expiresAt) {
+		c.recent.MoveToFront(entry.element)
+		return entry.path, true
+	}
+	c.removeLocked(key, entry)
+	return "", false
+}
+
+func (c *assetResolutionCache) store(key, resolved string, now time.Time) {
+	if c == nil || c.ttl <= 0 {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.storeLocked(key, resolved, now)
+}
+
+func (c *assetResolutionCache) storeForGeneration(key, resolved string, now time.Time, generation uint64) bool {
+	if c == nil || c.ttl <= 0 {
+		return false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.generation != generation {
+		return false
+	}
+	c.storeLocked(key, resolved, now)
+	return true
+}
+
+func (c *assetResolutionCache) storeLocked(key, resolved string, now time.Time) {
+	if c.entries == nil {
+		c.entries = make(map[string]*assetResolutionEntry)
+	}
+	if entry, ok := c.entries[key]; ok {
+		entry.path = resolved
+		entry.expiresAt = now.Add(c.ttl)
+		c.recent.MoveToFront(entry.element)
+		return
+	}
+	entry := &assetResolutionEntry{path: resolved, expiresAt: now.Add(c.ttl)}
+	entry.element = c.recent.PushFront(key)
+	c.entries[key] = entry
+	for len(c.entries) > c.entryLimit() {
+		oldest := c.recent.Back()
+		if oldest == nil {
+			break
+		}
+		oldestKey, _ := oldest.Value.(string)
+		c.removeLocked(oldestKey, c.entries[oldestKey])
+	}
+}
+
+func (c *assetResolutionCache) clear() {
+	c.mu.Lock()
+	clear(c.entries)
+	c.recent.Init()
+	c.generation++
+	c.mu.Unlock()
+}
+
+func (c *assetResolutionCache) currentGeneration() uint64 {
+	if c == nil {
+		return 0
+	}
+	c.mu.Lock()
+	generation := c.generation
+	c.mu.Unlock()
+	return generation
+}
+
+func (c *assetResolutionCache) entryLimit() int {
+	if c.maxEntries > 0 {
+		return c.maxEntries
+	}
+	return assetResolutionMaxEntries
+}
+
+func (c *assetResolutionCache) removeLocked(key string, entry *assetResolutionEntry) {
+	delete(c.entries, key)
+	if entry != nil && entry.element != nil {
+		c.recent.Remove(entry.element)
+		entry.element = nil
+	}
+}
+
+func (c *assetDirectoryCache) lookup(parent string, modTime time.Time) (*assetDirectoryIndex, bool) {
+	if c == nil {
+		return nil, false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	entry, ok := c.entries[parent]
+	if !ok {
+		return nil, false
+	}
+	if entry.index == nil || !entry.index.modTime.Equal(modTime) {
+		c.removeLocked(parent, entry)
+		return nil, false
+	}
+	c.recent.MoveToFront(entry.element)
+	return entry.index, true
+}
+
+func (c *assetDirectoryCache) store(parent string, index *assetDirectoryIndex) {
+	if c == nil || index == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.entries == nil {
+		c.entries = make(map[string]*assetDirectoryCacheEntry)
+	}
+	if current, ok := c.entries[parent]; ok {
+		c.removeLocked(parent, current)
+	}
+	names := len(index.exact)
+	if names > c.nameLimit() {
+		return
+	}
+	entry := &assetDirectoryCacheEntry{index: index}
+	entry.element = c.recent.PushFront(parent)
+	c.entries[parent] = entry
+	c.indexed += names
+	for len(c.entries) > c.entryLimit() || c.indexed > c.nameLimit() {
+		oldest := c.recent.Back()
+		if oldest == nil {
+			break
+		}
+		oldestParent, _ := oldest.Value.(string)
+		c.removeLocked(oldestParent, c.entries[oldestParent])
+	}
+}
+
+func (c *assetDirectoryCache) entryLimit() int {
+	if c.maxEntries > 0 {
+		return c.maxEntries
+	}
+	return assetDirectoryMaxEntries
+}
+
+func (c *assetDirectoryCache) nameLimit() int {
+	if c.maxNames > 0 {
+		return c.maxNames
+	}
+	return assetDirectoryMaxNames
+}
+
+func (c *assetDirectoryCache) removeLocked(parent string, entry *assetDirectoryCacheEntry) {
+	delete(c.entries, parent)
+	if entry == nil {
+		return
+	}
+	if entry.index != nil {
+		c.indexed -= len(entry.index.exact)
+		if c.indexed < 0 {
+			c.indexed = 0
+		}
+	}
+	if entry.element != nil {
+		c.recent.Remove(entry.element)
+		entry.element = nil
+	}
 }
 
 func ResolveAssetPath(helper *AssetHelper, assetDir string, relPaths ...string) string {

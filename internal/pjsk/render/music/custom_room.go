@@ -2,10 +2,11 @@ package music
 
 import (
 	"fmt"
-	json "github.com/bytedance/sonic"
 	"math"
 	"strings"
 	"time"
+
+	"haruki-cloud/internal/pjsk/meta"
 )
 
 func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int, limit int) (map[int][]map[string]any, error) {
@@ -21,14 +22,9 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 		return nil, err
 	}
 
-	payload := c.resolveMusicMetaPayload(resolvedRegion.String())
-	if len(payload) == 0 {
+	view := c.resolveMusicMetaView(resolvedRegion.String())
+	if view == nil {
 		return nil, fmt.Errorf("music meta data is unavailable")
-	}
-
-	var items []map[string]any
-	if err := json.Unmarshal(payload, &items); err != nil {
-		return nil, fmt.Errorf("decode music meta data: %w", err)
 	}
 
 	wantedRates := make(map[int]struct{}, len(eventRates))
@@ -62,29 +58,29 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 
 	result := make(map[int][]map[string]any, len(wantedRates))
 	seenByRate := make(map[int]map[int]struct{}, len(wantedRates))
-	for _, item := range items {
-		if !strings.EqualFold(strings.TrimSpace(stringValue(item["difficulty"])), "master") {
-			continue
+	view.Range(func(entry meta.Entry) bool {
+		if !strings.EqualFold(strings.TrimSpace(entry.Difficulty()), "master") {
+			return true
 		}
 
-		rate := int(math.Round(floatValue(item["event_rate"])))
+		rate := int(math.Round(entry.Float("event_rate")))
 		if _, ok := wantedRates[rate]; !ok {
-			continue
+			return true
 		}
 		if limit > 0 && len(result[rate]) >= limit {
-			continue
+			return true
 		}
 
-		musicID := musicMetaID(item)
+		musicID := entry.MusicID()
 		candidate, ok := musicByID[musicID]
 		if !ok {
-			continue
+			return true
 		}
 		if _, ok := seenByRate[rate]; !ok {
 			seenByRate[rate] = make(map[int]struct{})
 		}
 		if _, exists := seenByRate[rate][musicID]; exists {
-			continue
+			return true
 		}
 		seenByRate[rate][musicID] = struct{}{}
 
@@ -93,25 +89,10 @@ func (c *Controller) ResolveCustomRoomMusicList(region string, eventRates []int,
 			"music_title": candidate.title,
 			"music_cover": candidate.coverPath,
 		})
-	}
+		return true
+	})
 
 	return result, nil
-}
-
-func (c *Controller) resolveMusicMetaPayload(region string) []byte {
-	if c != nil && c.metaLoader != nil {
-		if payload := c.metaLoader.Get(region); len(payload) > 0 {
-			return payload
-		}
-	}
-
-	if snapshot := c.currentSnapshot(); snapshot != nil {
-		if payload := snapshot.MusicMetaBytes(); len(payload) > 0 {
-			return payload
-		}
-	}
-
-	return nil
 }
 
 type musicCandidate struct {

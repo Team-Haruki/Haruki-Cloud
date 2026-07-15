@@ -3,6 +3,9 @@ package snapshot
 import (
 	"context"
 	"sync"
+	"time"
+
+	"haruki-cloud/internal/observability/commandtrace"
 )
 
 type requestCacheContextKey struct{}
@@ -52,7 +55,9 @@ func cacheFromContext(ctx context.Context) *requestCache {
 func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func() ([]byte, error)) ([]byte, error, bool) {
 	cache := cacheFromContext(ctx)
 	if cache == nil {
+		finishFetch := commandtrace.MeasureOperation(ctx, "snapshot.private_data")
 		data, err := fetch()
+		finishFetch()
 		return data, err, false
 	}
 
@@ -64,14 +69,25 @@ func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func(
 	}
 	cache.mu.Unlock()
 
+	didFetch := false
+	waitStartedAt := time.Now()
 	entry.once.Do(func() {
+		didFetch = true
+		finishFetch := commandtrace.MeasureOperation(ctx, "snapshot.private_data")
 		entry.data, entry.err = fetch()
 		if entry.data != nil {
 			entry.data = append([]byte(nil), entry.data...)
 		}
+		finishFetch()
 	})
+	if !didFetch {
+		commandtrace.RecordOperation(ctx, "snapshot.cache_wait", time.Since(waitStartedAt))
+	}
 	if entry.data == nil {
 		return nil, entry.err, hit
 	}
-	return append([]byte(nil), entry.data...), entry.err, hit
+	finishCopy := commandtrace.MeasureOperation(ctx, "snapshot.cache_copy")
+	data := append([]byte(nil), entry.data...)
+	finishCopy()
+	return data, entry.err, hit
 }

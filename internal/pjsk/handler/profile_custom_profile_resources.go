@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
-	json "github.com/bytedance/sonic"
-
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -22,12 +22,17 @@ import (
 )
 
 func buildCustomProfileResources(ctx context.Context, app *renderapp.App, region string, card sekaiapi.UserCustomProfileCard, resp *sekaiapi.GetAnotherProfileResponse) (drawing.CustomProfileResources, error) {
+	if app != nil {
+		contextualApp := *app
+		contextualApp.Assets = app.Assets.WithContext(ctx)
+		app = &contextualApp
+	}
 	resources := drawing.CustomProfileResources{}
 	regionValue := renderregion.WithDefault(renderregion.Normalize(region))
 	resources["charaRankIconPathMap"] = customProfileCharaRankIconPathMap(app)
 	collector := newCustomProfileResourceCollector(card, resp)
 
-	if err := collectCustomProfileMasterResources(app, regionValue, collector, resources); err != nil {
+	if err := collectCustomProfileMasterResources(ctx, app, regionValue, collector, resources); err != nil {
 		return nil, err
 	}
 	if err := collectCustomProfileStampResources(ctx, app, regionValue, collector, resources); err != nil {
@@ -36,7 +41,7 @@ func buildCustomProfileResources(ctx context.Context, app *renderapp.App, region
 	if err := collectCustomProfileCardResources(ctx, app, regionValue, collector, resources); err != nil {
 		return nil, err
 	}
-	if err := collectCustomProfileStoryFavoriteResources(app, regionValue, collector, resources); err != nil {
+	if err := collectCustomProfileStoryFavoriteResources(ctx, app, regionValue, collector, resources); err != nil {
 		return nil, err
 	}
 	if err := collectCustomProfileHonorResources(ctx, app, regionValue, collector, resources); err != nil {
@@ -190,7 +195,7 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 	return c
 }
 
-func collectCustomProfileMasterResources(app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) error {
+func collectCustomProfileMasterResources(ctx context.Context, app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) error {
 	tables := []struct {
 		key         string
 		filename    string
@@ -213,7 +218,7 @@ func collectCustomProfileMasterResources(app *renderapp.App, region renderregion
 		if len(table.ids) == 0 {
 			continue
 		}
-		items, err := loadCustomProfileMasterTable(app, region, table.filename, table.ids)
+		items, err := loadCustomProfileMasterTable(ctx, app, region, table.filename, table.ids)
 		if err != nil {
 			return err
 		}
@@ -226,7 +231,7 @@ func collectCustomProfileMasterResources(app *renderapp.App, region renderregion
 		}
 		resources[table.key] = items
 		if table.key == "customProfileCollectionResources" {
-			if err := collectCustomProfileOmikujiResources(app, region, c, items, resources); err != nil {
+			if err := collectCustomProfileOmikujiResources(ctx, app, region, c, items, resources); err != nil {
 				return err
 			}
 		}
@@ -234,7 +239,7 @@ func collectCustomProfileMasterResources(app *renderapp.App, region renderregion
 	return nil
 }
 
-func collectCustomProfileOmikujiResources(app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, collectionResources map[int]map[string]any, resources drawing.CustomProfileResources) error {
+func collectCustomProfileOmikujiResources(ctx context.Context, app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, collectionResources map[int]map[string]any, resources drawing.CustomProfileResources) error {
 	ids := make(map[int]struct{})
 	for resourceID, resource := range collectionResources {
 		if !strings.EqualFold(strings.TrimSpace(mapString(resource, "customProfileResourceCollectionType")), "omikuji") {
@@ -247,7 +252,7 @@ func collectCustomProfileOmikujiResources(app *renderapp.App, region renderregio
 	if len(ids) == 0 {
 		return nil
 	}
-	omikujis, err := loadCustomProfileMasterTable(app, region, "omikujis.json", ids)
+	omikujis, err := loadCustomProfileMasterTable(ctx, app, region, "omikujis.json", ids)
 	if err != nil {
 		return err
 	}
@@ -312,7 +317,7 @@ func collectCustomProfileCardResources(ctx context.Context, app *renderapp.App, 
 	return nil
 }
 
-func collectCustomProfileStoryFavoriteResources(app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) error {
+func collectCustomProfileStoryFavoriteResources(ctx context.Context, app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) error {
 	if len(c.storyFavorites) == 0 {
 		return nil
 	}
@@ -332,11 +337,11 @@ func collectCustomProfileStoryFavoriteResources(app *renderapp.App, region rende
 	if len(eventStoryIDs) == 0 && len(unitStoryIDs) == 0 {
 		return nil
 	}
-	eventStories, err := loadCustomProfileMasterTable(app, region, "eventStories.json", eventStoryIDs)
+	eventStories, err := loadCustomProfileMasterTable(ctx, app, region, "eventStories.json", eventStoryIDs)
 	if err != nil {
 		return err
 	}
-	unitStories, err := loadCustomProfileMasterTable(app, region, "unitStoryEpisodeGroups.json", unitStoryIDs)
+	unitStories, err := loadCustomProfileMasterTable(ctx, app, region, "unitStoryEpisodeGroups.json", unitStoryIDs)
 	if err != nil {
 		return err
 	}
@@ -348,7 +353,7 @@ func collectCustomProfileStoryFavoriteResources(app *renderapp.App, region rende
 	}
 	events := map[int]map[string]any{}
 	if len(eventIDs) > 0 {
-		if loaded, err := loadCustomProfileMasterTable(app, region, "events.json", eventIDs); err == nil {
+		if loaded, err := loadCustomProfileMasterTable(ctx, app, region, "events.json", eventIDs); err == nil {
 			events = loaded
 		}
 	}
@@ -447,43 +452,43 @@ func collectCustomProfileHonorResources(ctx context.Context, app *renderapp.App,
 	return nil
 }
 
-func loadCustomProfileMasterTable(app *renderapp.App, region renderregion.Value, filename string, ids map[int]struct{}) (map[int]map[string]any, error) {
+func loadCustomProfileMasterTable(ctx context.Context, app *renderapp.App, region renderregion.Value, filename string, ids map[int]struct{}) (map[int]map[string]any, error) {
 	if len(ids) == 0 {
 		return map[int]map[string]any{}, nil
 	}
-	var data []byte
+	startedAt := time.Now()
 	var readErr error
 	for _, dir := range customProfileMasterdataDirs(app, region) {
-		var err error
-		data, err = os.ReadFile(filepath.Join(dir, filename))
-		if err == nil {
-			break
-		}
-		if readErr == nil {
-			readErr = err
-		}
-	}
-	if len(data) == 0 {
-		if readErr == nil {
-			readErr = os.ErrNotExist
-		}
-		return nil, fmt.Errorf("read custom profile masterdata %s: %w", filename, readErr)
-	}
-	var rows []map[string]any
-	if err := json.Unmarshal(data, &rows); err != nil {
-		return nil, fmt.Errorf("unmarshal custom profile masterdata %s: %w", filename, err)
-	}
-	result := make(map[int]map[string]any, len(ids))
-	for _, row := range rows {
-		id, ok := mapInt(row, "id")
-		if !ok {
+		path := filepath.Join(dir, filename)
+		info, err := os.Stat(path)
+		if err != nil {
+			if readErr == nil {
+				readErr = err
+			}
 			continue
 		}
-		if _, wanted := ids[id]; wanted {
-			result[id] = row
+		index, cacheHit, err := customProfileMasterCache.load(path, info)
+		operation := "custom_profile.master.load"
+		if cacheHit {
+			operation = "custom_profile.master.cache"
 		}
+		commandtrace.RecordOperation(ctx, operation, time.Since(startedAt))
+		if err != nil {
+			return nil, fmt.Errorf("load custom profile masterdata %s: %w", filename, err)
+		}
+		result := make(map[int]map[string]any, len(ids))
+		for id := range ids {
+			if row := index[id]; row != nil {
+				result[id] = cloneCustomProfileMasterRow(row)
+			}
+		}
+		return result, nil
 	}
-	return result, nil
+	if readErr == nil {
+		readErr = os.ErrNotExist
+	}
+	commandtrace.RecordOperation(ctx, "custom_profile.master.load", time.Since(startedAt))
+	return nil, fmt.Errorf("read custom profile masterdata %s: %w", filename, readErr)
 }
 
 func customProfileMasterdataDirs(app *renderapp.App, region renderregion.Value) []string {

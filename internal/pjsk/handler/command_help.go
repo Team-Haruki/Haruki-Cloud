@@ -20,6 +20,8 @@ import (
 var commandHelpDocs embed.FS
 
 func commandHelpMessage(ctx context.Context, resolved *CommandRequest, app *renderapp.App) (onebot11.Message, error) {
+	finishBuild := measurePayloadBuild(ctx)
+	defer finishBuild()
 	markdown, err := commandHelpMarkdown(resolved)
 	if err != nil {
 		return nil, err
@@ -28,16 +30,20 @@ func commandHelpMessage(ctx context.Context, resolved *CommandRequest, app *rend
 		return commandHelpTextMessage(markdown), nil
 	}
 	path := commandHelpRequestPath(resolved)
-	image, err := app.Drawing.WithContext(ctx).GenerateCommandHelp(&drawing.CommandHelpRenderRequest{
+	request := &drawing.CommandHelpRenderRequest{
 		Path:     path,
 		Title:    commandHelpTitle(resolved, markdown),
 		Markdown: markdown,
-	})
+	}
+	finishBuild()
+	image, err := app.Drawing.WithContext(ctx).GenerateCommandHelp(request)
 	if err != nil {
 		return commandHelpTextMessage(markdown), nil
 	}
 	if app.ImageCache != nil {
+		finishStore := measureCommandOperation(ctx, "image.store")
 		url, err := app.ImageCache.StoreAndGetURL(ctx, image, BotModulePJSK)
+		finishStore()
 		if err != nil {
 			return commandHelpTextMessage(markdown), nil
 		}

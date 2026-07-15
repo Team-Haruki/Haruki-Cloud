@@ -12,6 +12,7 @@ import (
 	"haruki-cloud/database/sekai/cardepisode"
 	"haruki-cloud/database/sekai/eventcard"
 	"haruki-cloud/database/sekai/predicate"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -23,7 +24,9 @@ func (p *dbCardProvider) GetByID(ctx context.Context, id int) (*masterdata.Card,
 	p.init()
 
 	p.cardMu.RLock()
-	if cached, ok := p.cardCache[id]; ok {
+	cached, ok := p.cardCache[id]
+	cachedAt := p.cardCachedAt[id]
+	if ok && dbBulkIndexFresh(true, cachedAt) {
 		p.cardMu.RUnlock()
 		return common.CloneCard(cached), nil
 	}
@@ -42,6 +45,7 @@ func (p *dbCardProvider) GetByID(ctx context.Context, id int) (*masterdata.Card,
 	}
 	p.cardMu.Lock()
 	p.cardCache[id] = model
+	p.cardCachedAt[id] = time.Now()
 	p.cardMu.Unlock()
 	return common.CloneCard(model), nil
 }
@@ -83,6 +87,7 @@ func (p *dbCardProvider) GetByCharacterAndSeq(ctx context.Context, characterID, 
 	}
 	p.cardMu.Lock()
 	p.cardCache[model.ID] = model
+	p.cardCachedAt[model.ID] = time.Now()
 	p.cardMu.Unlock()
 	return common.CloneCard(model), nil
 }
@@ -117,6 +122,23 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		query = query.Where(card.ReleaseAtGTE(start), card.ReleaseAtLT(end))
 	}
 
+	var matchingSkillIDs map[int]struct{}
+	if filter.SkillType != "" {
+		if p.skills == nil {
+			return nil, nil
+		}
+		finishSkillFilter := commandtrace.MeasureOperation(ctx, "cards.skill_filter")
+		var err error
+		matchingSkillIDs, err = p.skills.matchingTypeIDs(ctx, filter.SkillType)
+		finishSkillFilter()
+		if err != nil {
+			return nil, fmt.Errorf("load card skill filter: %w", err)
+		}
+		if len(matchingSkillIDs) == 0 {
+			return nil, nil
+		}
+	}
+
 	entities, err := query.Order(card.ByReleaseAt()).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("filter cards: %w", err)
@@ -128,6 +150,14 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		if err != nil {
 			return nil, fmt.Errorf("decode card %d for region %s: %w", entity.GameID, p.region, err)
 		}
+		// The filtered entities are the same canonical card records used by
+		// GetByID. Populate the shared cache before applying in-memory filters so
+		// follow-up lookups (for example GetUnitByCardID while building CardBox)
+		// do not turn one list query into hundreds of SELECTs.
+		p.cardMu.Lock()
+		p.cardCache[model.ID] = model
+		p.cardCachedAt[model.ID] = time.Now()
+		p.cardMu.Unlock()
 		if !p.matchesUnitFilter(ctx, filter, model) {
 			continue
 		}
@@ -135,12 +165,7 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 			continue
 		}
 		if filter.SkillType != "" {
-			if p.skills != nil {
-				skillInfo, sErr := p.skills.GetByID(ctx, model.SkillID)
-				if sErr != nil || skillInfo == nil || !cardSkillTypesMatch(filter.SkillType, skillInfo.DescriptionSpriteName) {
-					continue
-				}
-			} else {
+			if _, ok := matchingSkillIDs[model.SkillID]; !ok {
 				continue
 			}
 		}
@@ -179,28 +204,90 @@ func (p *dbCardProvider) GetEpisodesByCardID(ctx context.Context, cardID int) ([
 	if cardID == 0 {
 		return nil, nil
 	}
-
-	entities, err := p.client.Cardepisode.Query().
-		Where(cardepisode.ServerRegionEQ(p.region.String()), cardepisode.CardIDEQ(int64(cardID))).
-		Order(cardepisode.BySeq(), cardepisode.ByID()).
-		All(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("query card episodes for card %d: %w", cardID, err)
-	}
-	if len(entities) == 0 {
-		return nil, nil
+	if err := p.ensureAllEpisodesLoaded(ctx); err != nil {
+		return nil, err
 	}
 
-	result := make([]*masterdata.CardEpisode, 0, len(entities))
-	for _, entity := range entities {
-		result = append(result, &masterdata.CardEpisode{
-			ID:                  int(entity.GameID),
-			Seq:                 int(entity.Seq),
-			CardID:              int(entity.CardID),
-			CardEpisodePartType: entity.CardEpisodePartType,
+	p.episodeMu.RLock()
+	episodes := cloneCardEpisodes(p.episodesByCard[cardID])
+	p.episodeMu.RUnlock()
+	return episodes, nil
+}
+
+func (p *dbCardProvider) ensureAllEpisodesLoaded(ctx context.Context) error {
+	p.init()
+	p.episodeMu.RLock()
+	loaded := dbBulkIndexFresh(p.episodesLoaded, p.episodesLoadedAt)
+	p.episodeMu.RUnlock()
+	if loaded {
+		return nil
+	}
+
+	callerToken := new(dbBulkIndexFlightToken)
+	result := p.episodeLoads.DoChan("all", func() (any, error) {
+		completed := runDBBulkIndexFlight(callerToken, func(loadCtx context.Context) error {
+			finishIndex := commandtrace.MeasureOperation(loadCtx, "cards.episode_index")
+			defer finishIndex()
+			p.episodeMu.RLock()
+			alreadyLoaded := dbBulkIndexFresh(p.episodesLoaded, p.episodesLoadedAt)
+			p.episodeMu.RUnlock()
+			if alreadyLoaded {
+				return nil
+			}
+			entities, err := p.client.Cardepisode.Query().
+				Where(cardepisode.ServerRegionEQ(p.region.String())).
+				Select(
+					cardepisode.FieldGameID,
+					cardepisode.FieldSeq,
+					cardepisode.FieldCardID,
+					cardepisode.FieldCardEpisodePartType,
+				).
+				Order(cardepisode.ByCardID(), cardepisode.BySeq(), cardepisode.ByID()).
+				All(loadCtx)
+			if err != nil {
+				return fmt.Errorf("query card episodes for region %s: %w", p.region, err)
+			}
+
+			byCard := make(map[int][]*masterdata.CardEpisode)
+			for _, entity := range entities {
+				cardID := int(entity.CardID)
+				byCard[cardID] = append(byCard[cardID], &masterdata.CardEpisode{
+					ID:                  int(entity.GameID),
+					Seq:                 int(entity.Seq),
+					CardID:              cardID,
+					CardEpisodePartType: entity.CardEpisodePartType,
+				})
+			}
+
+			p.episodeMu.Lock()
+			p.episodesByCard = byCard
+			p.episodesLoaded = true
+			p.episodesLoadedAt = time.Now()
+			p.episodeMu.Unlock()
+			return nil
 		})
+		return completed, nil
+	})
+
+	return waitDBBulkIndexFlight(ctx, result, callerToken, "cards.episode_index_wait", "cards.episode_index_shared")
+}
+
+func cloneCardEpisodes(episodes []*masterdata.CardEpisode) []*masterdata.CardEpisode {
+	if len(episodes) == 0 {
+		return nil
 	}
-	return result, nil
+	result := make([]*masterdata.CardEpisode, 0, len(episodes))
+	for _, episode := range episodes {
+		if episode == nil {
+			continue
+		}
+		clone := *episode
+		result = append(result, &clone)
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
 }
 
 func (p *dbCardProvider) resolveFilterEventCardIDs(ctx context.Context, filter *CardFilter) ([]int64, error) {

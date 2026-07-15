@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"haruki-cloud/config"
@@ -371,6 +372,39 @@ func (c *HarukiToolboxClient) GetUploadTime(server string, dataType ToolboxDataT
 // GetUploadTimeContext is GetUploadTime with request cancellation and tracing.
 func (c *HarukiToolboxClient) GetUploadTimeContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
 	return c.GetPrivateDataValueContext(ctx, server, dataType, userID, platform, platformUserID, "upload_time")
+}
+
+// parseUploadTimeBytes parses the raw upload_time value (a bare integer in
+// seconds, e.g. []byte("1774339266")) returned by the key=upload_time query.
+func parseUploadTimeBytes(raw []byte) (int64, error) {
+	ts, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("toolbox: invalid upload_time value: %w", err)
+	}
+	return ts, nil
+}
+
+// GetSuiteUploadTimeContext returns the parsed suite upload_time (seconds).
+// This is authorized identically to GetSuiteDataContext (same platform /
+// platform_user_id gate), so a successful result confirms the caller is
+// authorized for this account's suite data — it is a cheap freshness/authorization
+// probe that avoids transferring the full snapshot.
+func (c *HarukiToolboxClient) GetSuiteUploadTimeContext(ctx context.Context, server string, userID int64, platform, platformUserID string) (int64, error) {
+	raw, err := c.GetUploadTimeContext(ctx, server, ToolboxDataTypeSuite, userID, platform, platformUserID)
+	if err != nil {
+		return 0, err
+	}
+	return parseUploadTimeBytes(raw)
+}
+
+// GetMySekaiUploadTimeContext returns the parsed mysekai upload_time (seconds).
+// Authorized identically to GetMySekaiDataContext.
+func (c *HarukiToolboxClient) GetMySekaiUploadTimeContext(ctx context.Context, server string, userID int64, platform, platformUserID string) (int64, error) {
+	raw, err := c.GetUploadTimeContext(ctx, server, ToolboxDataTypeMySekai, userID, platform, platformUserID)
+	if err != nil {
+		return 0, err
+	}
+	return parseUploadTimeBytes(raw)
 }
 
 // UserGameBinding represents a single game account binding returned by the toolbox

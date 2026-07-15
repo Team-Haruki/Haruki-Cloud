@@ -45,6 +45,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		renderRuntime.Bindings.SetUsersDB(usersClient)
 		renderRuntime.Bindings.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
 		renderRuntime.Bindings.SetFastVerificationProvider(renderRuntime.Toolbox)
+		renderRuntime.PrivateDataCache = rendersnapshot.NewPrivateDataCache()
 		renderRuntime.Snapshots = rendersnapshot.NewFallbackSnapshotProvider(
 			harukiConfig.Cfg.PJSKRender.UserSnapshot.AllowFallback,
 			rendersnapshot.NewToolboxSnapshotProvider(
@@ -52,7 +53,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 				renderRuntime.Toolbox,
 				renderRuntime.Sekai,
 				renderRuntime.Assets,
-			),
+			).WithPrivateDataCache(renderRuntime.PrivateDataCache),
 			renderRuntime.Snapshots,
 		)
 		renderRuntime.MySekaiPayloads = rendersnapshot.NewFallbackMySekaiPayloadProvider(

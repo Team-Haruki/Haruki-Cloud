@@ -23,6 +23,8 @@ type bindingLookup interface {
 type privateDataClient interface {
 	GetSuiteDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error)
 	GetMySekaiDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error)
+	GetSuiteUploadTimeContext(ctx context.Context, server string, userID int64, platform, platformUserID string) (int64, error)
+	GetMySekaiUploadTimeContext(ctx context.Context, server string, userID int64, platform, platformUserID string) (int64, error)
 }
 
 type musicMetaSource interface {
@@ -34,11 +36,12 @@ type musicMetaSource interface {
 // contract, so future DB-backed snapshot stores can replace it without forcing
 // controller and bridge layers to change again.
 type ToolboxSnapshotProvider struct {
-	bindings bindingLookup
-	client   privateDataClient
-	factory  HarukiSnapshotFactory
-	metas    musicMetaSource
-	logger   *logger.Logger
+	bindings     bindingLookup
+	client       privateDataClient
+	factory      HarukiSnapshotFactory
+	metas        musicMetaSource
+	privateCache *PrivateDataCache
+	logger       *logger.Logger
 }
 
 func NewToolboxSnapshotProvider(bindings bindingLookup, client privateDataClient, sekai *sekaiDB.Client, assetHelper *assets.AssetHelper) *ToolboxSnapshotProvider {
@@ -55,6 +58,17 @@ func (p *ToolboxSnapshotProvider) WithMusicMetaSource(source musicMetaSource) *T
 		return nil
 	}
 	p.metas = source
+	return p
+}
+
+// WithPrivateDataCache attaches a process-wide, upload_time-validated cache of
+// Toolbox private-data payloads shared across bot commands. A nil cache leaves
+// the provider fetching every payload directly (the pre-cache behavior).
+func (p *ToolboxSnapshotProvider) WithPrivateDataCache(cache *PrivateDataCache) *ToolboxSnapshotProvider {
+	if p == nil {
+		return nil
+	}
+	p.privateCache = cache
 	return p
 }
 
@@ -95,7 +109,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	}
 
 	tSuite := time.Now()
-	var suiteCacheHit bool
+	var suiteCacheHit, suiteCrossHit bool
 	suiteJSON, err, suiteCacheHit := cachedPrivateData(ctx, privateDataCacheKey{
 		Server:         binding.Server,
 		DataType:       "suite",
@@ -103,7 +117,17 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		Platform:       platform,
 		PlatformUserID: imUserID,
 	}, func() ([]byte, error) {
-		return p.client.GetSuiteDataContext(ctx, binding.Server, uid, platform, imUserID)
+		data, cross, ferr := p.privateCache.Fetch(
+			PrivateDataKey{Server: binding.Server, DataType: "suite", UID: uid},
+			func() (int64, error) {
+				return p.client.GetSuiteUploadTimeContext(ctx, binding.Server, uid, platform, imUserID)
+			},
+			func() ([]byte, error) {
+				return p.client.GetSuiteDataContext(ctx, binding.Server, uid, platform, imUserID)
+			},
+		)
+		suiteCrossHit = cross
+		return data, ferr
 	})
 	suiteElapsed := time.Since(tSuite)
 	if err != nil {
@@ -129,6 +153,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		"data_type", "suite",
 		"region", binding.Server,
 		"cache_hit", suiteCacheHit,
+		"cross_request_cache_hit", suiteCrossHit,
 		"duration_ms", commandtrace.Milliseconds(suiteElapsed),
 		"response_bytes", len(suiteJSON),
 	)
@@ -136,7 +161,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	var mysekaiJSON []byte
 	if opts.NeedMySekai {
 		tMysekai := time.Now()
-		var mysekaiCacheHit bool
+		var mysekaiCacheHit, mysekaiCrossHit bool
 		mysekaiJSON, err, mysekaiCacheHit = cachedPrivateData(ctx, privateDataCacheKey{
 			Server:         binding.Server,
 			DataType:       "mysekai",
@@ -144,7 +169,17 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 			Platform:       platform,
 			PlatformUserID: imUserID,
 		}, func() ([]byte, error) {
-			return p.client.GetMySekaiDataContext(ctx, binding.Server, uid, platform, imUserID)
+			data, cross, ferr := p.privateCache.Fetch(
+				PrivateDataKey{Server: binding.Server, DataType: "mysekai", UID: uid},
+				func() (int64, error) {
+					return p.client.GetMySekaiUploadTimeContext(ctx, binding.Server, uid, platform, imUserID)
+				},
+				func() ([]byte, error) {
+					return p.client.GetMySekaiDataContext(ctx, binding.Server, uid, platform, imUserID)
+				},
+			)
+			mysekaiCrossHit = cross
+			return data, ferr
 		})
 		mysekaiElapsed := time.Since(tMysekai)
 		if err != nil {
@@ -162,6 +197,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 			"data_type", "mysekai",
 			"region", binding.Server,
 			"cache_hit", mysekaiCacheHit,
+			"cross_request_cache_hit", mysekaiCrossHit,
 			"duration_ms", commandtrace.Milliseconds(mysekaiElapsed),
 			"response_bytes", len(mysekaiJSON),
 		)

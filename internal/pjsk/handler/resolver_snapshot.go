@@ -98,6 +98,7 @@ func liveSnapshotProvider(app *renderapp.App) snapshot.HarukiSnapshotProvider {
 		return nil
 	}
 	provider := snapshot.NewToolboxSnapshotProvider(app.Bindings, app.Toolbox, app.Sekai, app.Assets)
+	provider = provider.WithPrivateDataCache(app.PrivateDataCache)
 	if app.MetaLoader != nil {
 		provider = provider.WithMusicMetaSource(app.MetaLoader)
 	}

@@ -113,6 +113,11 @@ haruki_bot:
   # Candidate collection window for choosing which Bot returns a shared command result.
   # Zero uses the runtime default (200ms); a negative duration disables response election.
   response_election_window: "200ms"
+  # Learn which bots serve each group and skip the window entirely when only one
+  # bot is expected (~90% of elections). Fail-safe: an over-counted roster falls
+  # back to the full window; an under-counted one still yields exactly one
+  # response. Members absent from 3 consecutive elections are demoted.
+  response_election_roster: false
 
 users_db:
   db_type: "postgres"

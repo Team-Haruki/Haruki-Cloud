@@ -35,6 +35,7 @@ const (
 	localRenderCacheMaxEntries     = 512
 	localRenderCacheMaxBytes       = 256 << 20
 	renderCacheAPIResponseMaxBytes = 1 << 20
+	renderCacheStoreConcurrency    = 8
 )
 
 type renderFlightResult struct {
@@ -299,6 +300,7 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 		ttl:           cfg.TTL,
 		imageCacheDir: strings.TrimSpace(cfg.ImageCacheDir),
 		imageStore:    cfg.ImageStore,
+		storeSlots:    make(chan struct{}, renderCacheStoreConcurrency),
 	}
 }
 
@@ -359,16 +361,11 @@ func (c *RenderCacheClient) RenderSharedContext(ctx context.Context, endpoint st
 					if ttl <= 0 && !policy.Infinite {
 						ttl = c.ttl
 					}
-					finishStore := commandtrace.MeasureOperation(sharedCtx, "drawing.cache_store")
-					storeErr := c.storeContext(sharedCtx, key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
-					finishStore()
-					if storeErr != nil {
-						cacheLogger.WarnContext(sharedCtx, "drawing remote cache store failed",
-							"upstream_path", endpoint,
-							"cache_key", shortRenderCacheKey(key),
-							"error_type", fmt.Sprintf("%T", storeErr),
-						)
-					}
+					// Store write-behind: failures were already warn-only, so no
+					// waiter depends on the store having completed. Returning the
+					// rendered bytes first keeps ~3.6ms of store+index work off
+					// every rendered command's critical path.
+					c.storeAsync(sharedCtx, endpoint, key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
 					return image, nil
 				})
 				flightResult.leader = callerToken
@@ -449,6 +446,65 @@ func (c *RenderCacheClient) lookupContext(ctx context.Context, key string, apiPa
 
 func (c *RenderCacheClient) store(key string, apiPath string, userID string, image []byte, ttl time.Duration, infinite bool) error {
 	return c.storeContext(context.Background(), key, apiPath, userID, image, ttl, infinite)
+}
+
+// storeAsync persists a rendered image to the remote cache in the background
+// so flight waiters receive the bytes immediately. context.WithoutCancel keeps
+// the request's log/trace attrs while detaching from its cancellation.
+// The slot is acquired BEFORE spawning: when every slot is busy (e.g. the
+// remote cache API is stalling on its 10s timeout) the store is dropped with a
+// warn instead of queueing — store failures were already warn-only, so a
+// dependency stall must degrade to cache misses, never to an unbounded goroutine
+// backlog each pinning a full image clone.
+func (c *RenderCacheClient) storeAsync(ctx context.Context, endpoint string, key string, apiPath string, userID string, image []byte, ttl time.Duration, infinite bool) {
+	storeCtx := context.WithoutCancel(ctx)
+	if c.storeSlots != nil {
+		select {
+		case c.storeSlots <- struct{}{}:
+		default:
+			cacheLogger.WarnContext(storeCtx, "drawing remote cache store dropped",
+				"upstream_path", endpoint,
+				"cache_key", shortRenderCacheKey(key),
+				"reason", "store slots saturated",
+			)
+			return
+		}
+	}
+	// The flight result retains the original slice and hands clones to
+	// waiters; clone here too (after slot acquisition, so dropped stores never
+	// copy) so the background store never races a future owner mutation.
+	owned := cloneRenderBytes(image)
+	c.storeWG.Add(1)
+	go func() {
+		defer c.storeWG.Done()
+		defer func() {
+			if c.storeSlots != nil {
+				<-c.storeSlots
+			}
+		}()
+		startedAt := time.Now()
+		storeErr := c.storeContext(storeCtx, key, apiPath, userID, owned, ttl, infinite)
+		if storeErr != nil {
+			cacheLogger.WarnContext(storeCtx, "drawing remote cache store failed",
+				"upstream_path", endpoint,
+				"cache_key", shortRenderCacheKey(key),
+				"duration_ms", commandtrace.Milliseconds(time.Since(startedAt)),
+				"error_type", fmt.Sprintf("%T", storeErr),
+			)
+			return
+		}
+		cacheLogger.DebugContext(storeCtx, "drawing remote cache stored",
+			"upstream_path", endpoint,
+			"cache_key", shortRenderCacheKey(key),
+			"duration_ms", commandtrace.Milliseconds(time.Since(startedAt)),
+		)
+	}()
+}
+
+// waitForPendingStores blocks until all write-behind stores have drained.
+// Test-only today; wire into a shutdown hook if graceful drain is ever needed.
+func (c *RenderCacheClient) waitForPendingStores() {
+	c.storeWG.Wait()
 }
 
 func (c *RenderCacheClient) storeContext(ctx context.Context, key string, apiPath string, userID string, image []byte, ttl time.Duration, infinite bool) error {

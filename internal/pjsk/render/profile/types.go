@@ -9,7 +9,6 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
-	"haruki-cloud/utils/censor"
 )
 
 // ── Data source ─────────────────────────────────────────────────────────────
@@ -28,12 +27,20 @@ type contextualDataSource interface {
 
 // ── Controller ──────────────────────────────────────────────────────────────
 
+// censorService is the subset of censor.Service used by the profile
+// controller. Kept as an interface so tests can observe the concurrent
+// name/bio moderation calls.
+type censorService interface {
+	CensorName(ctx context.Context, harukiUserID int, userID string, name string, server string) bool
+	CensorShortBio(ctx context.Context, harukiUserID int, userID string, content string, server string) bool
+}
+
 type Controller struct {
 	sources    *regionsource.Registry[DataSource]
 	drawing    *drawing.HarukiDrawingClient
 	assets     *assets.AssetHelper
 	snapshot   snapshot.Snapshot
-	censor     *censor.Service
+	censor     censorService
 	requestCtx context.Context
 }
 

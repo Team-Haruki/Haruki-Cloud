@@ -9,9 +9,42 @@ import (
 	"strings"
 )
 
+// extendedJSONMarkers are substrings that must appear verbatim whenever the
+// payload contains a Mongo extended-JSON wrapper key ($numberLong, $numberInt,
+// $numberDouble, $numberDecimal, $oid, $date). "$number" covers the four
+// numeric wrappers at once.
+var extendedJSONMarkers = [][]byte{
+	[]byte("$number"),
+	[]byte("$oid"),
+	[]byte("$date"),
+}
+
+// needsSnapshotNormalization reports whether the payload may require the
+// extended-JSON rewrite: either a top-level array document that needs
+// unwrapping, or one of the wrapper-key markers somewhere in the bytes.
+// False positives only cost the slow path; false negatives are impossible
+// because any wrapper key contains a marker substring verbatim.
+func needsSnapshotNormalization(trimmed []byte) bool {
+	if len(trimmed) > 0 && trimmed[0] == '[' {
+		return true
+	}
+	for _, marker := range extendedJSONMarkers {
+		if bytes.Contains(trimmed, marker) {
+			return true
+		}
+	}
+	return false
+}
+
 func normalizeSnapshotJSON(data []byte) ([]byte, error) {
 	trimmed := bytes.TrimSpace(data)
 	if len(trimmed) == 0 {
+		return data, nil
+	}
+	if !needsSnapshotNormalization(trimmed) {
+		// Hot path: plain JSON object with no extended-JSON wrappers. The
+		// decode+rewrite+encode round trip would be a no-op, so skip it;
+		// malformed JSON still fails at the typed snapshot decode.
 		return data, nil
 	}
 
@@ -32,6 +65,40 @@ func normalizeSnapshotJSON(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("encode normalized snapshot JSON: %w", err)
 	}
 	return encoded, nil
+}
+
+// normalizeSnapshotDocument decodes a snapshot payload into its top-level
+// document map, applying the extended-JSON rewrite only when markers are
+// present. Callers that need the decoded map (e.g. the mysekai merge) use
+// this instead of normalizeSnapshotJSON + Unmarshal, which would pay an
+// extra encode/decode round trip. Numbers stay json.Number, so values that
+// exceed float64 precision (large user IDs) survive re-encoding exactly.
+func normalizeSnapshotDocument(data []byte) (map[string]any, error) {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 {
+		return nil, fmt.Errorf("snapshot document is empty")
+	}
+
+	var raw any
+	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(trimmed))
+	decoder.UseNumber()
+	if err := decoder.Decode(&raw); err != nil {
+		return nil, fmt.Errorf("decode snapshot JSON: %w", err)
+	}
+
+	if needsSnapshotNormalization(trimmed) {
+		normalized, err := normalizeExtendedJSONValue(raw, true)
+		if err != nil {
+			return nil, err
+		}
+		raw = normalized
+	}
+
+	document, ok := raw.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("snapshot document must be a JSON object, got %T", raw)
+	}
+	return document, nil
 }
 
 func normalizeExtendedJSONValue(value any, topLevel bool) (any, error) {

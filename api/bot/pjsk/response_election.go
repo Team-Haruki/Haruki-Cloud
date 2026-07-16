@@ -53,7 +53,14 @@ if redis.call("EXISTS", KEYS[1]) == 0 then
         return {0, 0}
     end
 
-    local deadline_ms = now_ms + tonumber(ARGV[3])
+    -- ARGV[5] is the roster-informed expected candidate count (0 = unknown).
+    -- A single expected candidate needs no window: the creator is the only
+    -- bot that will ever observe this event, so it can respond immediately.
+    local window_ms = tonumber(ARGV[3])
+    if tonumber(ARGV[5] or "0") == 1 then
+        window_ms = 0
+    end
+    local deadline_ms = now_ms + window_ms
     redis.call("HSET", KEYS[1],
         "owner", ARGV[1],
         "executor_bot", ARGV[2],
@@ -65,7 +72,7 @@ if redis.call("EXISTS", KEYS[1]) == 0 then
     redis.call("HSET", KEYS[2], ARGV[2], ARGV[1])
     redis.call("PEXPIRE", KEYS[1], ARGV[4])
     redis.call("PEXPIRE", KEYS[2], ARGV[4])
-    return {1, tonumber(ARGV[3])}
+    return {1, window_ms}
 end
 
 local deadline_ms = tonumber(redis.call("HGET", KEYS[1], "deadline_ms") or "0")
@@ -218,7 +225,14 @@ redis.call("SET", KEYS[3], "1", "PX", ARGV[3])
 release_legacy_lock()
 redis.call("PEXPIRE", KEYS[1], ARGV[4])
 redis.call("PEXPIRE", KEYS[2], ARGV[4])
-return {1, result, redis.call("HGET", KEYS[1], "result_serialize_nanos") or "0"}
+-- Snapshot the joined candidate set atomically at consumption time so the
+-- winner can reconcile the group roster without racing follower cleanup.
+local joined = {}
+local candidate_fields = redis.call("HGETALL", KEYS[2])
+for index = 1, #candidate_fields, 2 do
+    joined[#joined + 1] = candidate_fields[index]
+end
+return {1, result, redis.call("HGET", KEYS[1], "result_serialize_nanos") or "0", table.concat(joined, ",")}
 `)
 
 var leaveResponseElectionScript = redis.NewScript(`
@@ -251,6 +265,11 @@ type responseElectionLease struct {
 	token         string
 	botID         string
 	deadline      time.Time
+	// expectedCandidates is the roster-informed candidate count passed to the
+	// join script (0 = roster unknown); windowSkipped reports whether the
+	// single-candidate fast path zeroed the window for this election.
+	expectedCandidates int
+	windowSkipped      bool
 }
 
 type sharedCommandMetadata struct {
@@ -282,6 +301,14 @@ type responseElectionDecision struct {
 	visible bool
 	result  sharedCommandResult
 	reason  string
+	// expectedCandidates / windowSkipped surface the roster fast path in the
+	// election completion log; both stay zero when the roster is disabled.
+	expectedCandidates int
+	windowSkipped      bool
+	// joinedBots is the candidate set snapshot taken atomically inside the
+	// decide script at consumption time; only the selected participant
+	// receives it, for roster reconciliation.
+	joinedBots []string
 }
 
 type responseElectionRequest struct {
@@ -330,6 +357,7 @@ func (*requestGuardResponseElection) Close() {}
 type ResponseElectionCoordinator struct {
 	redis        *redis.Client
 	window       time.Duration
+	roster       *responseElectionRoster
 	worker       context.Context
 	cancel       context.CancelFunc
 	workers      sync.WaitGroup
@@ -366,6 +394,16 @@ func NewResponseElectionCoordinator(parent context.Context, client *redis.Client
 		after:        time.After,
 		pollInterval: responseElectionPollInterval,
 	}
+}
+
+// WithRoster enables the learned per-group roster fast path. Nil-safe on both
+// sides so the roster remains an optional, config-gated dependency.
+func (c *ResponseElectionCoordinator) WithRoster(roster *responseElectionRoster) *ResponseElectionCoordinator {
+	if c == nil {
+		return nil
+	}
+	c.roster = roster
+	return c
 }
 
 func coordinateCommandResponse(
@@ -441,7 +479,27 @@ func (c *ResponseElectionCoordinator) Coordinate(
 	if lease.role == responseElectionExecutor {
 		executorResult = c.startExecutor(ctx, lease, execute)
 	}
-	return c.await(ctx, lease, executorResult)
+	decision := c.await(ctx, lease, executorResult)
+	decision.expectedCandidates = lease.expectedCandidates
+	decision.windowSkipped = lease.windowSkipped
+	if decision.reason == "selected" && !lease.windowSkipped && len(decision.joinedBots) > 0 {
+		// Only full-window elections carry demotion evidence: an absent roster
+		// member had the whole window to join and did not. The joined set was
+		// snapshotted atomically at consumption, so follower cleanup cannot
+		// race it. Zero-window elections skip reconciliation entirely, and so
+		// do consumed-replay decides (retry after a committed-but-lost reply):
+		// those return no snapshot, and a genuine fresh consume always
+		// includes at least the winner itself, so an empty joined set proves
+		// a replay whose reconciliation evidence is unreliable.
+		c.roster.reconcile(
+			c.worker,
+			request.Request.Platform,
+			request.Request.PlatformGroupID,
+			decision.joinedBots,
+			lease.botID,
+		)
+	}
+	return decision
 }
 
 type responseElectionExecutorResult struct {
@@ -595,6 +653,7 @@ func (c *ResponseElectionCoordinator) join(ctx context.Context, request response
 	candidatesKey := responseElectionCandidatesKey(identity)
 	rateKey := rateLimitKey(request.Request)
 	legacyLockKey := dedupKey(request.Request)
+	expected := c.roster.expectedCandidates(c.worker, request.Request.Platform, request.Request.PlatformGroupID, botID)
 
 	operationCtx, cancel := context.WithTimeout(ctx, responseElectionRedisTimeout)
 	finishJoin := commandtrace.MeasureOperation(ctx, "response_election.redis_join")
@@ -606,12 +665,17 @@ func (c *ResponseElectionCoordinator) join(ctx context.Context, request response
 		botID,
 		c.window.Milliseconds(),
 		c.inFlightTTL().Milliseconds(),
+		expected,
 	).Slice()
 	finishJoin()
 	cancel()
 	if err != nil {
 		return responseElectionLease{}, err
 	}
+	// Every observed delivery proves this bot serves the group, including
+	// late joins the election rejected — recording those is how a newly added
+	// bot becomes part of the expected candidate set.
+	c.roster.recordJoin(c.worker, request.Request.Platform, request.Request.PlatformGroupID, botID)
 	if len(result) < 2 {
 		return responseElectionLease{}, fmt.Errorf("unexpected response election join result")
 	}
@@ -624,13 +688,19 @@ func (c *ResponseElectionCoordinator) join(ctx context.Context, request response
 		return responseElectionLease{}, err
 	}
 	lease := responseElectionLease{
-		stateKey:      stateKey,
-		candidatesKey: candidatesKey,
-		rateKey:       rateKey,
-		legacyLockKey: legacyLockKey,
-		token:         token,
-		botID:         botID,
-		deadline:      c.now().Add(time.Duration(remainingMS) * time.Millisecond),
+		stateKey:           stateKey,
+		candidatesKey:      candidatesKey,
+		rateKey:            rateKey,
+		legacyLockKey:      legacyLockKey,
+		token:              token,
+		botID:              botID,
+		deadline:           c.now().Add(time.Duration(remainingMS) * time.Millisecond),
+		expectedCandidates: expected,
+		// windowSkipped must reflect the election's ACTUAL window, not this
+		// joiner's local expectation: only the creator applies ARGV[5], so a
+		// stale-roster follower joining a full-window election must not carry
+		// the flag (it gates reconciliation and the rollout metric).
+		windowSkipped: status == 1 && expected == 1 && remainingMS == 0,
 	}
 	switch status {
 	case 1:
@@ -873,7 +943,13 @@ func (c *ResponseElectionCoordinator) decide(ctx context.Context, lease response
 				MaxNanos:   serializeNanos,
 			})
 		}
-		return responseElectionDecision{visible: true, result: shared, reason: "selected"}, false, nil
+		var joinedBots []string
+		if len(result) >= 4 {
+			if joined, err := responseElectionBytes(result[3]); err == nil && len(joined) > 0 {
+				joinedBots = strings.Split(string(joined), ",")
+			}
+		}
+		return responseElectionDecision{visible: true, result: shared, reason: "selected", joinedBots: joinedBots}, false, nil
 	case 0, -1:
 		return responseElectionDecision{reason: "not_selected"}, false, nil
 	default:
@@ -984,6 +1060,12 @@ func logResponseElectionDecision(ctx context.Context, request responseElectionRe
 	}
 	if decision.result.Metadata.ExecutorBotID != "" {
 		attrs = append(attrs, slog.String("executor_bot_id", decision.result.Metadata.ExecutorBotID))
+	}
+	if decision.expectedCandidates > 0 {
+		attrs = append(attrs,
+			slog.Int("expected_candidates", decision.expectedCandidates),
+			slog.Bool("window_skipped", decision.windowSkipped),
+		)
 	}
 	responseElectionLogger.InfoContext(ctx, "response election completed", attrs...)
 }

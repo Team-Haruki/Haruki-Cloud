@@ -201,6 +201,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BOT_NOISE_PRIVATE_KEY", &cfg.HarukiBotDB.NoisePrivateKey)
 	envStr("HARUKI_BOT_AUTH_ENCRYPTION_KEY", &cfg.HarukiBotDB.AuthEncryptionKey)
 	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
+	envBool("HARUKI_BOT_RESPONSE_ELECTION_ROSTER", &cfg.HarukiBotDB.ResponseElectionRoster)
 
 	// Sekai API
 	envStr("HARUKI_SEKAI_API_BASE_URL", &cfg.SekaiAPI.BaseURL)
@@ -497,6 +498,10 @@ type HarukiBotDBConfig struct {
 	NoisePrivateKey        string        `yaml:"noise_private_key"`
 	AuthEncryptionKey      string        `yaml:"auth_encryption_key"`
 	ResponseElectionWindow time.Duration `yaml:"response_election_window"`
+	// ResponseElectionRoster enables the learned per-group bot roster: groups
+	// with a single known bot skip the election window entirely, and members
+	// that stop joining are demoted after repeated absences.
+	ResponseElectionRoster bool `yaml:"response_election_roster"`
 }
 
 type UsersDBConfig struct {

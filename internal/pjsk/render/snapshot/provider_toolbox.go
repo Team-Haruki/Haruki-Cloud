@@ -275,7 +275,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		return nil, err
 	}
 	if memoizable {
-		p.builtCache.Put(memoKey, snapshot)
+		p.builtCache.Put(memoKey, snapshot, int64(len(suiteJSON)+len(mysekaiJSON)))
 	}
 	p.logger.DebugContext(ctx, "toolbox snapshot resolved",
 		"upstream", "toolbox",

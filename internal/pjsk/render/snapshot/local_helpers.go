@@ -15,22 +15,16 @@ import (
 )
 
 func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
-	userData, err := normalizeSnapshotJSON(userData)
+	// Decode straight to the document maps instead of normalize-encode-decode:
+	// the merge needs maps anyway, and reusing the normalization decode saves
+	// two full-tree passes over multi-MB payloads per merge.
+	baseMap, err := normalizeSnapshotDocument(userData)
 	if err != nil {
-		return nil, err
-	}
-	mySekaiData, err = normalizeSnapshotJSON(mySekaiData)
-	if err != nil {
-		return nil, err
-	}
-
-	var baseMap map[string]any
-	if err := json.Unmarshal(userData, &baseMap); err != nil {
 		return nil, fmt.Errorf("decode user snapshot for mysekai merge: %w", err)
 	}
 
-	var mySekaiMap map[string]any
-	if err := json.Unmarshal(mySekaiData, &mySekaiMap); err != nil {
+	mySekaiMap, err := normalizeSnapshotDocument(mySekaiData)
+	if err != nil {
 		return nil, fmt.Errorf("decode mysekai snapshot: %w", err)
 	}
 

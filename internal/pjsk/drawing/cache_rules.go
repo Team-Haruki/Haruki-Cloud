@@ -59,8 +59,13 @@ var (
 			Infinite: true,
 		},
 		"/api/pjsk/card/list": {
-			Enabled:  true,
-			Infinite: true,
+			Enabled:     true,
+			Infinite:    true,
+			IgnorePaths: renderCacheStringSet("user_info.update_time"),
+		},
+		"/api/pjsk/card/box": {
+			Enabled:     true,
+			IgnorePaths: renderCacheStringSet("user_info.update_time"),
 		},
 		"/api/pjsk/profile": {
 			Enabled:     true,

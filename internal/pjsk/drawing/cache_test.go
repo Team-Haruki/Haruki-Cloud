@@ -535,6 +535,7 @@ func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
+	client.waitForPendingStores()
 
 	if got := atomic.LoadInt32(&renderCalls); got != 1 {
 		t.Fatalf("render called %d times, want 1", got)
@@ -608,6 +609,7 @@ func TestRenderCacheClientSharedFlightMergesOperationsIntoEveryWaiter(t *testing
 			t.Fatalf("%s result = %q, %v", name, got.data, got.err)
 		}
 	}
+	client.waitForPendingStores()
 	for name, trace := range map[string]*commandtrace.Trace{
 		"leader":   leaderTrace,
 		"follower": followerTrace,
@@ -616,13 +618,21 @@ func TestRenderCacheClientSharedFlightMergesOperationsIntoEveryWaiter(t *testing
 			"drawing.cache_lookup",
 			"drawing.cache_lookup_http",
 			"drawing.render",
+		} {
+			if count := drawingTraceOperationCount(trace, operation); count != 1 {
+				t.Fatalf("%s %s count = %d, operations=%+v", name, operation, count, trace.Snapshot().Operations)
+			}
+		}
+		// The store runs write-behind after the flight returns, so store-side
+		// operations must no longer appear on any waiter's critical path.
+		for _, operation := range []string{
 			"drawing.cache_store",
 			"drawing.cache_hash",
 			"drawing.cache_write",
 			"drawing.cache_store_http",
 		} {
-			if count := drawingTraceOperationCount(trace, operation); count != 1 {
-				t.Fatalf("%s %s count = %d, operations=%+v", name, operation, count, trace.Snapshot().Operations)
+			if count := drawingTraceOperationCount(trace, operation); count != 0 {
+				t.Fatalf("%s %s count = %d, want 0 (write-behind), operations=%+v", name, operation, count, trace.Snapshot().Operations)
 			}
 		}
 	}
@@ -680,6 +690,7 @@ func TestRenderCacheClientStoresRenderedImageUnderRequestKeyDir(t *testing.T) {
 	if string(data) != string(image) {
 		t.Fatalf("unexpected image bytes")
 	}
+	client.waitForPendingStores()
 	if !strings.HasPrefix(registeredPath, filepath.Join(storageDir, "api", "pjsk", "profile", "public")+string(os.PathSeparator)) {
 		t.Fatalf("registered path %q should keep request-scoped directory", registeredPath)
 	}
@@ -1498,6 +1509,73 @@ func mustBuildRenderCacheKey(t *testing.T, endpoint string, request any) string 
 	key, err := buildRenderCacheKey(policy)
 	if err != nil {
 		t.Fatalf("buildRenderCacheKey: %v", err)
+	}
+	return key
+}
+
+func TestBuildRenderCachePolicyCardBoxIgnoresUserInfoUpdateTime(t *testing.T) {
+	buildRequest := func(updateTime int64) map[string]any {
+		return map[string]any{
+			"cards": []any{
+				map[string]any{"id": 1001, "thumbnail_path": "thumb/1001.png", "level": 50},
+			},
+			"show_box": true,
+			"user_info": map[string]any{
+				"id":          "123456",
+				"source":      "snapshot",
+				"nickname":    "player",
+				"update_time": updateTime,
+			},
+		}
+	}
+
+	keyA := mustBuildRenderCacheKeyForTest(t, "/api/pjsk/card/box", buildRequest(1781251200000))
+	keyB := mustBuildRenderCacheKeyForTest(t, "/api/pjsk/card/box", buildRequest(1781254800000))
+	if keyA != keyB {
+		t.Fatalf("card box key should ignore user_info.update_time: %s != %s", keyA, keyB)
+	}
+
+	changed := buildRequest(1781251200000)
+	changed["cards"] = []any{
+		map[string]any{"id": 2002, "thumbnail_path": "thumb/2002.png", "level": 1},
+	}
+	keyC := mustBuildRenderCacheKeyForTest(t, "/api/pjsk/card/box", changed)
+	if keyA == keyC {
+		t.Fatalf("card box key must still vary with box contents")
+	}
+}
+
+func TestBuildRenderCachePolicyCardListIgnoresUserInfoUpdateTime(t *testing.T) {
+	buildRequest := func(updateTime int64) map[string]any {
+		return map[string]any{
+			"cards": []any{
+				map[string]any{"id": 1001, "thumbnail_path": "thumb/1001.png"},
+			},
+			"user_info": map[string]any{
+				"id":          "123456",
+				"source":      "snapshot",
+				"nickname":    "player",
+				"update_time": updateTime,
+			},
+		}
+	}
+
+	keyA := mustBuildRenderCacheKeyForTest(t, "/api/pjsk/card/list", buildRequest(1781251200000))
+	keyB := mustBuildRenderCacheKeyForTest(t, "/api/pjsk/card/list", buildRequest(1781254800000))
+	if keyA != keyB {
+		t.Fatalf("card list key should ignore user_info.update_time: %s != %s", keyA, keyB)
+	}
+}
+
+func mustBuildRenderCacheKeyForTest(t *testing.T, endpoint string, payload map[string]any) string {
+	t.Helper()
+	policy, err := buildRenderCachePolicy(endpoint, payload)
+	if err != nil {
+		t.Fatalf("buildRenderCachePolicy %s: %v", endpoint, err)
+	}
+	key, err := buildRenderCacheKey(policy)
+	if err != nil {
+		t.Fatalf("buildRenderCacheKey %s: %v", endpoint, err)
 	}
 	return key
 }

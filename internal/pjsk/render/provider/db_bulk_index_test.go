@@ -539,3 +539,70 @@ func assertOperationCount(t *testing.T, snapshot commandtrace.Snapshot, name str
 	}
 	t.Fatalf("operation %s was not recorded: %+v", name, snapshot.Operations)
 }
+
+func TestDBMusicLimitedTimeMusicsLoadsOneRegionIndex(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_limited_bulk_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	for _, item := range []struct {
+		id      int64
+		musicID int64
+		region  renderregion.Value
+		startAt int64
+	}{
+		{id: 1, musicID: 100, region: renderregion.JP, startAt: 100},
+		{id: 2, musicID: 100, region: renderregion.JP, startAt: 200},
+		{id: 3, musicID: 200, region: renderregion.JP, startAt: 300},
+		{id: 4, musicID: 100, region: renderregion.TW, startAt: 400},
+	} {
+		if _, err := client.Limitedtimemusic.Create().
+			SetGameID(item.id).
+			SetMusicID(item.musicID).
+			SetStartAt(item.startAt).
+			SetEndAt(item.startAt + 1000).
+			SetServerRegion(item.region.String()).
+			Save(ctx); err != nil {
+			t.Fatalf("create limitedtimemusic %d: %v", item.id, err)
+		}
+	}
+
+	var limitedQueries atomic.Int32
+	client.Limitedtimemusic.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
+		return ent.QuerierFunc(func(ctx context.Context, query ent.Query) (ent.Value, error) {
+			limitedQueries.Add(1)
+			return next.Query(ctx, query)
+		})
+	}))
+
+	masterdataProvider := NewDatabaseProvider(client, renderregion.JP)
+	traceCtx, trace := commandtrace.WithTrace(ctx)
+
+	// Whole-catalog sweep: one query per music before the bulk index.
+	for musicID, wantWindows := range map[int]int{100: 2, 200: 1, 300: 0} {
+		got := masterdataProvider.musics.GetLimitedTimeMusics(traceCtx, musicID)
+		if len(got) != wantWindows {
+			t.Fatalf("GetLimitedTimeMusics(%d) returned %d windows, want %d", musicID, len(got), wantWindows)
+		}
+	}
+	if limitedQueries.Load() != 1 {
+		t.Fatalf("expected one bulk limitedtimemusic query, got %d", limitedQueries.Load())
+	}
+	assertOperationCount(t, trace.Snapshot(), "musics.limited_time_index", 1)
+	// Only the first call consults the flight; later calls short-circuit on
+	// the freshness check without recording a wait.
+	assertOperationCount(t, trace.Snapshot(), "musics.limited_time_index_wait", 1)
+
+	// TW rows must not leak into the JP index.
+	jpWindows := masterdataProvider.musics.GetLimitedTimeMusics(traceCtx, 100)
+	for _, window := range jpWindows {
+		if window.StartAt == 400 {
+			t.Fatalf("TW window leaked into JP index: %+v", window)
+		}
+	}
+
+	// Returned slices are defensive copies: mutating one must not corrupt the index.
+	jpWindows[0].StartAt = -1
+	fresh := masterdataProvider.musics.GetLimitedTimeMusics(traceCtx, 100)
+	if fresh[0].StartAt == -1 {
+		t.Fatal("caller mutation leaked into the shared limitedtimemusic index")
+	}
+}

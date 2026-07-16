@@ -126,6 +126,9 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 		redisClient,
 		harukiConfig.Cfg.HarukiBotDB.ResponseElectionWindow,
 	)
+	if harukiConfig.Cfg.HarukiBotDB.ResponseElectionRoster {
+		election = election.WithRoster(newResponseElectionRoster(redisClient))
+	}
 	var commandElection commandResponseElection
 	if election != nil {
 		commandElection = election

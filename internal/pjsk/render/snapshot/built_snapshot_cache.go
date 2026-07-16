@@ -27,6 +27,8 @@ type BuiltSnapshotCache struct {
 	ll         *list.List
 	items      map[builtSnapshotKey]*list.Element
 	maxEntries int
+	maxBytes   int64
+	curBytes   int64
 	ttl        time.Duration
 }
 
@@ -41,9 +43,10 @@ type builtSnapshotKey struct {
 }
 
 type builtSnapshotEntry struct {
-	key      builtSnapshotKey
-	snapshot Snapshot
-	storedAt time.Time
+	key         builtSnapshotKey
+	snapshot    Snapshot
+	storedAt    time.Time
+	approxBytes int64
 }
 
 const (
@@ -52,16 +55,38 @@ const (
 	// and rely on the raw-bytes cache + factory.Build for the long tail.
 	defaultBuiltSnapshotCacheMaxEntries = 2048
 	defaultBuiltSnapshotCacheTTL        = 30 * time.Minute
+	// defaultBuiltSnapshotCacheMaxBytes bounds the estimated retained memory.
+	// Keys embed upload_time, so once an account uploads new data the old
+	// entry is never queried again and Get's lazy TTL check never fires for
+	// it — without a byte bound and the Put-time tail sweep, 2048 multi-MB
+	// churned entries could pin >20GiB.
+	defaultBuiltSnapshotCacheMaxBytes = 1 << 30 // 1GiB estimated
+	// builtSnapshotSizeFactor scales source payload size to an estimate of a
+	// built entry's footprint: the raw JSON clone, the parsed model, and the
+	// derived structures each retain roughly one payload's worth of data.
+	builtSnapshotSizeFactor = 3
 )
 
 // NewBuiltSnapshotCache builds a cache with default bounds. Bounds govern only
 // memory retention; correctness never depends on retention.
 func NewBuiltSnapshotCache() *BuiltSnapshotCache {
+	return NewBuiltSnapshotCacheWithLimits(
+		defaultBuiltSnapshotCacheMaxEntries,
+		defaultBuiltSnapshotCacheMaxBytes,
+		defaultBuiltSnapshotCacheTTL,
+	)
+}
+
+// NewBuiltSnapshotCacheWithLimits builds a cache with explicit bounds. A
+// non-positive maxEntries or maxBytes disables that bound; a non-positive ttl
+// disables expiry.
+func NewBuiltSnapshotCacheWithLimits(maxEntries int, maxBytes int64, ttl time.Duration) *BuiltSnapshotCache {
 	return &BuiltSnapshotCache{
 		ll:         list.New(),
 		items:      make(map[builtSnapshotKey]*list.Element),
-		maxEntries: defaultBuiltSnapshotCacheMaxEntries,
-		ttl:        defaultBuiltSnapshotCacheTTL,
+		maxEntries: maxEntries,
+		maxBytes:   maxBytes,
+		ttl:        ttl,
 	}
 }
 
@@ -79,34 +104,74 @@ func (c *BuiltSnapshotCache) Get(key builtSnapshotKey) Snapshot {
 	}
 	entry := el.Value.(*builtSnapshotEntry)
 	if c.ttl > 0 && time.Since(entry.storedAt) > c.ttl {
-		c.ll.Remove(el)
-		delete(c.items, entry.key)
+		c.removeElementLocked(el)
 		return nil
 	}
 	c.ll.MoveToFront(el)
 	return entry.snapshot
 }
 
-// Put stores a built snapshot under key. A nil receiver or snapshot is a no-op.
-func (c *BuiltSnapshotCache) Put(key builtSnapshotKey, snapshot Snapshot) {
+// Put stores a built snapshot under key. payloadBytes is the total size of the
+// source payloads the snapshot was built from (suite + mysekai JSON); the
+// retained footprint is estimated as payloadBytes×builtSnapshotSizeFactor.
+// A nil receiver or snapshot is a no-op.
+func (c *BuiltSnapshotCache) Put(key builtSnapshotKey, snapshot Snapshot, payloadBytes int64) {
 	if c == nil || snapshot == nil {
 		return
 	}
+	approx := payloadBytes * builtSnapshotSizeFactor
+	if approx < 0 {
+		approx = 0
+	}
+	now := time.Now()
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.sweepExpiredTailLocked(now)
 	if el, ok := c.items[key]; ok {
-		el.Value = &builtSnapshotEntry{key: key, snapshot: snapshot, storedAt: time.Now()}
+		c.curBytes += approx - el.Value.(*builtSnapshotEntry).approxBytes
+		el.Value = &builtSnapshotEntry{key: key, snapshot: snapshot, storedAt: now, approxBytes: approx}
 		c.ll.MoveToFront(el)
-		return
+	} else {
+		el = c.ll.PushFront(&builtSnapshotEntry{key: key, snapshot: snapshot, storedAt: now, approxBytes: approx})
+		c.items[key] = el
+		c.curBytes += approx
 	}
-	el := c.ll.PushFront(&builtSnapshotEntry{key: key, snapshot: snapshot, storedAt: time.Now()})
-	c.items[key] = el
-	for c.maxEntries > 0 && c.ll.Len() > c.maxEntries {
+	for (c.maxEntries > 0 && c.ll.Len() > c.maxEntries) || (c.maxBytes > 0 && c.curBytes > c.maxBytes) {
 		back := c.ll.Back()
 		if back == nil {
 			break
 		}
-		c.ll.Remove(back)
-		delete(c.items, back.Value.(*builtSnapshotEntry).key)
+		c.removeElementLocked(back)
+	}
+}
+
+// sweepExpiredTailLocked drops expired entries from the LRU tail. Entries
+// whose key was churned by a new upload are never Get-ed again, so Get's lazy
+// expiry cannot reclaim them; they sink to the tail as live entries stay hot,
+// which makes a stop-at-first-fresh tail walk an amortized-O(1) reclaim.
+func (c *BuiltSnapshotCache) sweepExpiredTailLocked(now time.Time) {
+	if c.ttl <= 0 {
+		return
+	}
+	for {
+		back := c.ll.Back()
+		if back == nil {
+			return
+		}
+		entry := back.Value.(*builtSnapshotEntry)
+		if now.Sub(entry.storedAt) <= c.ttl {
+			return
+		}
+		c.removeElementLocked(back)
+	}
+}
+
+func (c *BuiltSnapshotCache) removeElementLocked(el *list.Element) {
+	entry := el.Value.(*builtSnapshotEntry)
+	c.ll.Remove(el)
+	delete(c.items, entry.key)
+	c.curBytes -= entry.approxBytes
+	if c.curBytes < 0 {
+		c.curBytes = 0
 	}
 }

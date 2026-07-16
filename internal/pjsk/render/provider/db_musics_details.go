@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
 	"strconv"
 	"strings"
+	"time"
+
+	sonic "github.com/bytedance/sonic"
 
 	dbevent "haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventmusic"
@@ -15,6 +17,7 @@ import (
 	"haruki-cloud/database/sekai/musictag"
 	"haruki-cloud/database/sekai/musicvocal"
 	"haruki-cloud/database/sekai/outsidecharacter"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
@@ -213,27 +216,79 @@ func (p *dbMusicProvider) GetLimitedTimeMusics(ctx context.Context, musicID int)
 			return result
 		}
 	}
-	items, err := p.client.Limitedtimemusic.Query().
-		Where(
-			limitedtimemusic.ServerRegionEQ(p.region.String()),
-			limitedtimemusic.MusicIDEQ(int64(musicID)),
-		).
-		Order(limitedtimemusic.ByStartAt()).
-		All(ctx)
-	if err != nil || len(items) == 0 {
+	if err := p.ensureLimitedTimeMusicsLoaded(ctx); err != nil {
+		return nil
+	}
+	p.limitedMu.RLock()
+	items := p.limitedByMusic[musicID]
+	p.limitedMu.RUnlock()
+	return cloneLimitedTimeMusics(items)
+}
+
+func (p *dbMusicProvider) ensureLimitedTimeMusicsLoaded(ctx context.Context) error {
+	p.limitedMu.RLock()
+	loaded := dbBulkIndexFresh(p.limitedLoaded, p.limitedLoadedAt)
+	p.limitedMu.RUnlock()
+	if loaded {
 		return nil
 	}
 
-	result := make([]*masterdata.LimitedTimeMusic, 0, len(items))
-	for _, item := range items {
-		result = append(result, &masterdata.LimitedTimeMusic{
-			ID:      int(item.GameID),
-			MusicID: int(item.MusicID),
-			StartAt: item.StartAt,
-			EndAt:   item.EndAt,
+	callerToken := new(dbBulkIndexFlightToken)
+	result := p.limitedLoads.DoChan("all", func() (any, error) {
+		completed := runDBBulkIndexFlight(callerToken, func(loadCtx context.Context) error {
+			finishIndex := commandtrace.MeasureOperation(loadCtx, "musics.limited_time_index")
+			defer finishIndex()
+			p.limitedMu.RLock()
+			alreadyLoaded := dbBulkIndexFresh(p.limitedLoaded, p.limitedLoadedAt)
+			p.limitedMu.RUnlock()
+			if alreadyLoaded {
+				return nil
+			}
+			items, err := p.client.Limitedtimemusic.Query().
+				Where(limitedtimemusic.ServerRegionEQ(p.region.String())).
+				Order(limitedtimemusic.ByMusicID(), limitedtimemusic.ByStartAt()).
+				All(loadCtx)
+			if err != nil {
+				return fmt.Errorf("query limited time musics for region %s: %w", p.region, err)
+			}
+
+			byMusic := make(map[int][]*masterdata.LimitedTimeMusic)
+			for _, item := range items {
+				musicID := int(item.MusicID)
+				byMusic[musicID] = append(byMusic[musicID], &masterdata.LimitedTimeMusic{
+					ID:      int(item.GameID),
+					MusicID: musicID,
+					StartAt: item.StartAt,
+					EndAt:   item.EndAt,
+				})
+			}
+
+			p.limitedMu.Lock()
+			p.limitedByMusic = byMusic
+			p.limitedLoaded = true
+			p.limitedLoadedAt = time.Now()
+			p.limitedMu.Unlock()
+			return nil
 		})
+		return completed, nil
+	})
+
+	return waitDBBulkIndexFlight(ctx, result, callerToken, "musics.limited_time_index_wait", "musics.limited_time_index_shared")
+}
+
+func cloneLimitedTimeMusics(items []*masterdata.LimitedTimeMusic) []*masterdata.LimitedTimeMusic {
+	if len(items) == 0 {
+		return nil
 	}
-	return result
+	cloned := make([]*masterdata.LimitedTimeMusic, 0, len(items))
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		copied := *item
+		cloned = append(cloned, &copied)
+	}
+	return cloned
 }
 
 func parseMusicVocalCharactersFromRaw(raw json.RawMessage, vocalID int, musicID int) []masterdata.MusicVocalCharacter {

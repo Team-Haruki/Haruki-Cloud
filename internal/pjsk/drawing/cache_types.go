@@ -49,6 +49,10 @@ type RenderCacheClient struct {
 	imageCacheDir string
 	imageStore    *imagecache.PGStore
 	flight        singleflight.Group
+	// storeSlots bounds concurrent write-behind cache stores; storeWG lets
+	// tests (and future shutdown hooks) wait for pending stores to drain.
+	storeSlots chan struct{}
+	storeWG    sync.WaitGroup
 }
 
 type renderCacheRecord struct {

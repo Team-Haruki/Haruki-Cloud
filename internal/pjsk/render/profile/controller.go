@@ -58,6 +58,12 @@ func (c *Controller) SetCensor(svc *censor.Service) {
 	if c == nil {
 		return
 	}
+	// Guard the typed-nil interface trap: a nil *censor.Service stored in the
+	// interface field would make `c.censor != nil` checks pass.
+	if svc == nil {
+		c.censor = nil
+		return
+	}
 	c.censor = svc
 }
 

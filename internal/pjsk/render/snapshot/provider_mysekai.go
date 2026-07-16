@@ -64,11 +64,8 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 
 	payload, _, err := p.privateCache.Fetch(
 		PrivateDataKey{Server: binding.Server, DataType: "mysekai", UID: uid},
-		func() (int64, error) {
-			return p.client.GetMySekaiUploadTimeContext(ctx, binding.Server, uid, platform, imUserID)
-		},
-		func() ([]byte, error) {
-			return p.client.GetMySekaiDataContext(ctx, binding.Server, uid, platform, imUserID)
+		func(knownUploadTime int64) ([]byte, bool, error) {
+			return p.client.GetMySekaiDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
 		},
 	)
 	if err != nil {

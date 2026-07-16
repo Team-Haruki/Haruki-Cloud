@@ -211,6 +211,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_TOOLBOX_BASE_URL", &cfg.Toolbox.BaseURL)
 	envStr("HARUKI_TOOLBOX_API_TOKEN", &cfg.Toolbox.APIToken)
 	envStr("HARUKI_TOOLBOX_USER_AGENT", &cfg.Toolbox.UserAgent)
+	envBool("HARUKI_TOOLBOX_CONDITIONAL_FETCH", &cfg.Toolbox.ConditionalFetch)
 
 	// HMES
 	envStr("HARUKI_HMES_PUBLIC_BASE_URL", &cfg.HMES.PublicBaseURL)
@@ -537,6 +538,11 @@ type ToolboxConfig struct {
 	BaseURL   string `yaml:"base_url"`
 	APIToken  string `yaml:"api_token"`
 	UserAgent string `yaml:"user_agent"`
+	// ConditionalFetch sends known_upload_time on private game-data reads so an
+	// unchanged snapshot answers 304 without a payload. Requires a Toolbox
+	// deployment with conditional read support; when false the same semantics
+	// are emulated with the legacy upload_time probe.
+	ConditionalFetch bool `yaml:"conditional_fetch"`
 }
 
 type HMESConfig struct {

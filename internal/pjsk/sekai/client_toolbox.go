@@ -204,60 +204,139 @@ func (c *HarukiToolboxClient) GetPrivateData(server string, dataType ToolboxData
 
 // GetPrivateDataContext is GetPrivateData with request cancellation and tracing.
 func (c *HarukiToolboxClient) GetPrivateDataContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
+	data, _, err := c.getPrivateData(ctx, server, dataType, userID, platform, platformUserID, 0)
+	return data, err
+}
+
+// GetPrivateDataConditionalContext fetches a private-data snapshot unless the
+// caller's known upload_time still matches upstream, in which case it returns
+// (nil, true, nil) without transferring the payload.
+//
+// When toolbox.conditional_fetch is enabled the check rides the data request
+// itself via ?known_upload_time (the Toolbox answers 304 Not Modified after
+// running its full authorization). When disabled — for Toolbox deployments
+// without conditional read support — the same contract is emulated with the
+// legacy two-hop flow: an authorized key=upload_time probe followed by a full
+// fetch when the value differs. The two modes are equivalent except for the
+// upstream same-second guard, which only conditional mode inherits: a snapshot
+// replaced within the same second as its upload_time is re-sent (200) there,
+// while the emulation — like the legacy flow it preserves — sees an equal
+// timestamp and reports notModified. A knownUploadTime of 0 always performs a
+// plain full fetch.
+func (c *HarukiToolboxClient) GetPrivateDataConditionalContext(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	if knownUploadTime > 0 && c != nil && c.config != nil && c.config.ConditionalFetch {
+		data, notModified, err := c.getPrivateData(ctx, server, dataType, userID, platform, platformUserID, knownUploadTime)
+		if err == nil {
+			if notModified {
+				commandtrace.RecordOperation(ctx, "toolbox.conditional_not_modified", 0)
+			} else {
+				commandtrace.RecordOperation(ctx, "toolbox.conditional_changed", 0)
+			}
+		}
+		return data, notModified, err
+	}
+	if knownUploadTime > 0 {
+		raw, err := c.GetUploadTimeContext(ctx, server, dataType, userID, platform, platformUserID)
+		if err != nil {
+			return nil, false, err
+		}
+		current, err := parseUploadTimeBytes(raw)
+		if err != nil {
+			return nil, false, err
+		}
+		if current == knownUploadTime {
+			return nil, true, nil
+		}
+	}
+	data, _, err := c.getPrivateData(ctx, server, dataType, userID, platform, platformUserID, 0)
+	return data, false, err
+}
+
+// GetSuiteDataConditionalContext is the conditional form of GetSuiteDataContext.
+func (c *HarukiToolboxClient) GetSuiteDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	return c.GetPrivateDataConditionalContext(ctx, server, ToolboxDataTypeSuite, userID, platform, platformUserID, knownUploadTime)
+}
+
+// GetMySekaiDataConditionalContext is the conditional form of GetMySekaiDataContext.
+func (c *HarukiToolboxClient) GetMySekaiDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	return c.GetPrivateDataConditionalContext(ctx, server, ToolboxDataTypeMySekai, userID, platform, platformUserID, knownUploadTime)
+}
+
+// getPrivateData performs one private game-data read. A positive
+// knownUploadTime is forwarded as the known_upload_time query parameter, in
+// which case a 304 response reports notModified=true with no payload.
+func (c *HarukiToolboxClient) getPrivateData(ctx context.Context, server string, dataType ToolboxDataType, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
 	r, err := c.internalRequest(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	url := fmt.Sprintf("%s/api/private/game-data/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
+	params := map[string]string{
+		"platform":         platform,
+		"platform_user_id": platformUserID,
+	}
+	if knownUploadTime > 0 {
+		params["known_upload_time"] = strconv.FormatInt(knownUploadTime, 10)
+	}
 
 	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
 	resp, err := r.
 		SetHeader("Accept-Encoding", "zstd").
-		SetQueryParams(map[string]string{
-			"platform":         platform,
-			"platform_user_id": platformUserID,
-		}).
+		SetQueryParams(params).
 		Get(url)
 	finishHTTP()
 	if err != nil {
 		if ctx != nil && ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, false, ctx.Err()
 		}
-		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
+		return nil, false, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		return decompressContext(ctx, resp)
+		data, err := decompressContext(ctx, resp)
+		return data, false, err
+	case http.StatusNotModified:
+		if knownUploadTime <= 0 {
+			return nil, false, &ToolboxAPIError{StatusCode: http.StatusNotModified, Message: "unexpected 304 without known_upload_time"}
+		}
+		return nil, true, nil
+	default:
+		return nil, false, mapPrivateDataStatusError(ctx, resp)
+	}
+}
 
+// mapPrivateDataStatusError converts a non-2xx private game-data response into
+// the package's typed errors, mirroring the Toolbox API's error vocabulary.
+func mapPrivateDataStatusError(ctx context.Context, resp *resty.Response) error {
+	switch resp.StatusCode() {
 	case http.StatusForbidden:
 		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "invalid platform or platform_user_id"):
-			return nil, ErrInvalidPlatformUser
+			return ErrInvalidPlatformUser
 		case strings.Contains(msg, "account owner is banned"):
-			return nil, ErrAccountOwnerBanned
+			return ErrAccountOwnerBanned
 		default:
-			return nil, &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
+			return &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
 		}
 
 	case http.StatusNotFound:
 		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
 		switch {
 		case strings.Contains(msg, "account binding not found"):
-			return nil, ErrAccountBindingNotFound
+			return ErrAccountBindingNotFound
 		case strings.Contains(msg, "game data not found"):
-			return nil, ErrGameDataNotFound
+			return ErrGameDataNotFound
 		default:
-			return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
+			return &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
 		}
 
 	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
+		return &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
 
 	default:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
-		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
+		return &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: parseMessage(toolboxResponseBodyContext(ctx, resp))}
 	}
 }
 
@@ -319,35 +398,10 @@ func (c *HarukiToolboxClient) GetPrivateDataValueContext(ctx context.Context, se
 		return nil, fmt.Errorf("toolbox: request failed after retries: %w", sanitizeNetworkError(err))
 	}
 
-	switch resp.StatusCode() {
-	case http.StatusOK:
+	if resp.StatusCode() == http.StatusOK {
 		return decompressContext(ctx, resp)
-	case http.StatusForbidden:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
-		switch {
-		case strings.Contains(msg, "invalid platform or platform_user_id"):
-			return nil, ErrInvalidPlatformUser
-		case strings.Contains(msg, "account owner is banned"):
-			return nil, ErrAccountOwnerBanned
-		default:
-			return nil, &ToolboxAPIError{StatusCode: http.StatusForbidden, Message: msg}
-		}
-	case http.StatusNotFound:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
-		switch {
-		case strings.Contains(msg, "account binding not found"):
-			return nil, ErrAccountBindingNotFound
-		case strings.Contains(msg, "game data not found"):
-			return nil, ErrGameDataNotFound
-		default:
-			return nil, &ToolboxAPIError{StatusCode: http.StatusNotFound, Message: msg}
-		}
-	case http.StatusServiceUnavailable:
-		return nil, &ToolboxAPIError{StatusCode: http.StatusServiceUnavailable, Message: parseToolboxErrorMessageContext(ctx, resp, "toolbox service unavailable")}
-	default:
-		msg := parseMessage(toolboxResponseBodyContext(ctx, resp))
-		return nil, &ToolboxAPIError{StatusCode: resp.StatusCode(), Message: msg}
 	}
+	return nil, mapPrivateDataStatusError(ctx, resp)
 }
 
 // GetPrivateDataValues queries multiple top-level keys from a private data snapshot.

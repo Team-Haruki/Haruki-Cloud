@@ -61,25 +61,25 @@ func TestToolboxMySekaiPayloadProviderSharesPayloadAcrossRequests(t *testing.T) 
 
 	selector := Selector{IMPlatform: "qq", IMUserID: "10001", Region: renderregion.JP}
 
-	// Cold request: one full mysekai fetch, no upload_time probe.
+	// Cold request: one full mysekai fetch carrying no known upload_time.
 	if _, err := provider.Resolve(context.Background(), selector, false); err != nil {
 		t.Fatalf("first Resolve() error = %v", err)
 	}
 	if got := len(client.mysekaiCalls); got != 1 {
 		t.Fatalf("cold request: mysekai fetches = %d, want 1", got)
 	}
-	if client.mysekaiUploadTimeCalls != 0 {
-		t.Fatalf("cold request must not probe upload_time, got %d", client.mysekaiUploadTimeCalls)
+	if got := client.mysekaiKnownTimes; len(got) != 1 || got[0] != 0 {
+		t.Fatalf("cold request must not carry a known upload_time, got %v", got)
 	}
 
-	// Second, independent request: probe hits the shared cache, no new full fetch.
+	// Second, independent request is answered not-modified: no new full fetch.
 	if _, err := provider.Resolve(context.Background(), selector, false); err != nil {
 		t.Fatalf("second Resolve() error = %v", err)
 	}
 	if got := len(client.mysekaiCalls); got != 1 {
 		t.Fatalf("warm request: mysekai fetches = %d, want 1 (served from cross-request cache)", got)
 	}
-	if client.mysekaiUploadTimeCalls != 1 {
-		t.Fatalf("warm request: upload_time probes = %d, want 1", client.mysekaiUploadTimeCalls)
+	if client.mysekaiNotModified != 1 {
+		t.Fatalf("warm request: not-modified answers = %d, want 1", client.mysekaiNotModified)
 	}
 }

@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"container/list"
+	"fmt"
 	"sync"
 	"time"
 
@@ -13,11 +14,12 @@ import (
 // (server, data type, uid) rather than by requester identity.
 //
 // Freshness and authorization are both enforced per request by the caller's
-// own upload_time probe (see Fetch): a cached payload is only served after the
-// caller independently obtains a matching, authorized upload_time. Because the
-// probe carries the same platform / platform_user_id authorization as a full
-// fetch, an unauthorized caller fails the probe and never reaches cached data,
-// so sharing by game account does not leak private payloads.
+// own upstream read (see Fetch): a cached payload is only served after the
+// caller's authorized request confirms the stored upload_time is still
+// current. Because that read carries the same platform / platform_user_id
+// authorization as a full fetch, an unauthorized caller fails it and never
+// reaches cached data, so sharing by game account does not leak private
+// payloads.
 //
 // Entries are immutable once stored: their data slice and uploadTime are never
 // mutated in place, so a reader may copy an entry's data after releasing the
@@ -67,53 +69,54 @@ func NewPrivateDataCache() *PrivateDataCache {
 	}
 }
 
-// Fetch returns the private-data payload for key, using the cache when a stored
-// payload's upload_time still matches the account's current upload_time.
+// Fetch returns the private-data payload for key, serving the cached copy when
+// upstream confirms the stored payload's upload_time is still current.
 //
-// getUploadTime is a cheap, authorized probe of the account's current
-// upload_time. fullFetch retrieves the complete payload (also authorized).
-// Both are supplied by the caller so each request performs its own upstream
-// authorization — the cache never substitutes one caller's authorization for
-// another's. The returned bool reports whether the payload was served from the
-// cross-request cache.
+// fetch performs one authorized upstream read. It receives the cached entry's
+// upload_time (0 when nothing usable is cached) and reports either the full
+// payload or notModified=true when upstream validated that timestamp without
+// resending the body. Authorization stays per request: the closure carries the
+// caller's own platform identity, and a cached payload is only served after
+// that caller's authorized request confirms the timestamp — the cache never
+// substitutes one caller's authorization for another's. The returned bool
+// reports whether the payload was served from the cross-request cache.
 //
 // Semantics:
-//   - cold (no entry): fullFetch only; parse and store the payload's upload_time.
-//   - warm, unchanged: one getUploadTime probe, serve the cached payload.
-//   - warm, changed:   getUploadTime probe then fullFetch; refresh the entry.
-//   - any probe error (auth / not-found / transient) is returned as-is and the
-//     cached payload is never served.
+//   - cold (no entry): fetch(0); parse and store the payload's upload_time.
+//   - warm, unchanged: fetch(ts) reports notModified; serve the cached payload.
+//   - warm, changed:   fetch(ts) returns the new payload; refresh the entry.
+//   - any fetch error is returned as-is and the cached payload is never
+//     served: the error may be an authorization revocation, not just a blip.
 //
-// A nil receiver bypasses caching entirely and just calls fullFetch, so the
+// A nil receiver bypasses caching entirely and always calls fetch(0), so the
 // cache is an optional dependency.
 func (c *PrivateDataCache) Fetch(
 	key PrivateDataKey,
-	getUploadTime func() (int64, error),
-	fullFetch func() ([]byte, error),
+	fetch func(knownUploadTime int64) (data []byte, notModified bool, err error),
 ) ([]byte, bool, error) {
-	if c == nil {
-		data, err := fullFetch()
-		return data, false, err
-	}
-
-	if entry := c.load(key); entry != nil {
-		uploadTime, err := getUploadTime()
-		if err != nil {
-			// Never serve cached private data when the authorized probe fails:
-			// the error may be an authorization revocation, not just a blip.
-			return nil, false, err
-		}
-		if uploadTime == entry.uploadTime {
-			return append([]byte(nil), entry.data...), true, nil
+	var cached *privateDataStoreEntry
+	known := int64(0)
+	if c != nil {
+		if cached = c.load(key); cached != nil {
+			known = cached.uploadTime
 		}
 	}
 
-	data, err := fullFetch()
+	data, notModified, err := fetch(known)
 	if err != nil {
 		return nil, false, err
 	}
-	if uploadTime, perr := parseTopLevelUploadTime(data); perr == nil && uploadTime > 0 {
-		c.store(key, data, uploadTime)
+	if notModified {
+		if cached == nil {
+			// Upstream cannot validate a timestamp this request never sent.
+			return nil, false, fmt.Errorf("snapshot: upstream reported not-modified without a cached payload")
+		}
+		return append([]byte(nil), cached.data...), true, nil
+	}
+	if c != nil {
+		if uploadTime, perr := parseTopLevelUploadTime(data); perr == nil && uploadTime > 0 {
+			c.store(key, data, uploadTime)
+		}
 	}
 	return data, false, nil
 }

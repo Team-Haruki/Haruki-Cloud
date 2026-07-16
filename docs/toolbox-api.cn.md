@@ -82,6 +82,7 @@ GET /api/private/game-data/{server}/{data_type}/{user_id}
     ?platform={platform}
     &platform_user_id={platform_user_id}
     [&key={key}]
+    [&known_upload_time={unix_seconds}]
 ```
 
 #### 路径参数
@@ -99,11 +100,25 @@ GET /api/private/game-data/{server}/{data_type}/{user_id}
 | `platform` | string | ✅ | 调用方 IM 平台标识 |
 | `platform_user_id` | string | ✅ | 调用方 IM 用户 ID |
 | `key` | string | ❌ | 若指定，只返回该顶级字段的值（不含完整 JSON） |
+| `known_upload_time` | int64 | ❌ | 条件拉取：调用方已持有快照的 `upload_time`（unix 秒）。与存储文档一致时返回 `304`，不传输快照体 |
 
 #### 响应
 
 - `200 OK`：原始 JSON 体（完整快照）；若服务端支持，响应头可能带 `Content-Encoding: zstd`，客户端自动解压。
 - `200 OK`（指定 `key`）：该 key 的原始值（如整数 `1774339266`），不是 JSON 对象；若指定多个 key，则返回 JSON 对象。响应同样支持 `Content-Encoding: zstd` 自动解压。
+- `304 Not Modified`（携带 `known_upload_time` 且一致）：空响应体 + `X-Upload-Time` 头。条件判断在完整鉴权之后运行；参数非法按未携带处理；同秒内的时间戳不给 304（覆盖窗口守卫）。完整响应（200）的时间戳一律以响应体 `upload_time` 字段为准。
+
+#### 条件拉取（Cloud 侧行为）
+
+- 由 `toolbox.conditional_fetch`（env `HARUKI_TOOLBOX_CONDITIONAL_FETCH`）控制，默认关闭。
+  要求 Toolbox 部署支持条件读取（Haruki-Toolbox-Backend PR #58 及之后）。
+- 开启时：`PrivateDataCache` 持有的 payload 直接把自身 `upload_time` 作为
+  `known_upload_time` 附在数据请求上——未变化单跳 304（复用缓存 payload），
+  变化单跳 200（旧流程为 probe + 全量两跳）。
+- 关闭时：`GetPrivateDataConditionalContext` 用旧的 `key=upload_time` 探测 + 全量
+  拉取模拟同一契约，语义与开启时逐字节一致，调用方无感。
+- 命中率遥测：`toolbox.conditional_not_modified` / `toolbox.conditional_changed`
+  operation（仅真条件路径记录）。
 
 #### Go 封装函数
 

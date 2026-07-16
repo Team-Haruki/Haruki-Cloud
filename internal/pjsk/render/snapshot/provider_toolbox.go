@@ -20,11 +20,14 @@ type bindingLookup interface {
 	List(ctx context.Context, platform, platformUserID string) ([]accountdata.BindingListItem, error)
 }
 
+// privateDataClient reads private game-data snapshots with the conditional
+// contract: a positive knownUploadTime lets upstream answer notModified=true
+// instead of resending an unchanged payload (see
+// sekai.GetPrivateDataConditionalContext, which also emulates the contract for
+// Toolbox deployments without conditional read support).
 type privateDataClient interface {
-	GetSuiteDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error)
-	GetMySekaiDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error)
-	GetSuiteUploadTimeContext(ctx context.Context, server string, userID int64, platform, platformUserID string) (int64, error)
-	GetMySekaiUploadTimeContext(ctx context.Context, server string, userID int64, platform, platformUserID string) (int64, error)
+	GetSuiteDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error)
+	GetMySekaiDataConditionalContext(ctx context.Context, server string, userID int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error)
 }
 
 type musicMetaSource interface {
@@ -131,11 +134,8 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	}, func() ([]byte, error) {
 		data, cross, ferr := p.privateCache.Fetch(
 			PrivateDataKey{Server: binding.Server, DataType: "suite", UID: uid},
-			func() (int64, error) {
-				return p.client.GetSuiteUploadTimeContext(ctx, binding.Server, uid, platform, imUserID)
-			},
-			func() ([]byte, error) {
-				return p.client.GetSuiteDataContext(ctx, binding.Server, uid, platform, imUserID)
+			func(knownUploadTime int64) ([]byte, bool, error) {
+				return p.client.GetSuiteDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
 			},
 		)
 		suiteCrossHit = cross
@@ -183,11 +183,8 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		}, func() ([]byte, error) {
 			data, cross, ferr := p.privateCache.Fetch(
 				PrivateDataKey{Server: binding.Server, DataType: "mysekai", UID: uid},
-				func() (int64, error) {
-					return p.client.GetMySekaiUploadTimeContext(ctx, binding.Server, uid, platform, imUserID)
-				},
-				func() ([]byte, error) {
-					return p.client.GetMySekaiDataContext(ctx, binding.Server, uid, platform, imUserID)
+				func(knownUploadTime int64) ([]byte, bool, error) {
+					return p.client.GetMySekaiDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
 				},
 			)
 			mysekaiCrossHit = cross

@@ -48,29 +48,22 @@ func (f *fakeBindingLookup) List(_ context.Context, _, _ string) ([]accountdata.
 	return append([]accountdata.BindingListItem(nil), f.listItems...), nil
 }
 
+// fakePrivateDataClient emulates the conditional read contract: a positive
+// knownUploadTime matching the configured upstream uploadTime is answered
+// notModified without a payload; anything else serves the full JSON.
 type fakePrivateDataClient struct {
-	suiteCalls             []string
-	mysekaiCalls           []string
-	suiteCtx               context.Context
-	mysekaiCtx             context.Context
-	suiteJSON              []byte
-	mysekaiJSON            []byte
-	uploadTime             string
-	suiteUploadTimeCalls   int
-	mysekaiUploadTimeCalls int
-	uploadTimeErr          error
-}
-
-func (f *fakePrivateDataClient) GetSuiteDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error) {
-	f.suiteCtx = ctx
-	f.suiteCalls = append(f.suiteCalls, server+":"+platform+":"+platformUserID)
-	return append([]byte(nil), f.suiteJSON...), nil
-}
-
-func (f *fakePrivateDataClient) GetMySekaiDataContext(ctx context.Context, server string, userID int64, platform, platformUserID string) ([]byte, error) {
-	f.mysekaiCtx = ctx
-	f.mysekaiCalls = append(f.mysekaiCalls, server+":"+platform+":"+platformUserID)
-	return append([]byte(nil), f.mysekaiJSON...), nil
+	suiteCalls         []string
+	mysekaiCalls       []string
+	suiteCtx           context.Context
+	mysekaiCtx         context.Context
+	suiteJSON          []byte
+	mysekaiJSON        []byte
+	uploadTime         string
+	suiteKnownTimes    []int64
+	mysekaiKnownTimes  []int64
+	suiteNotModified   int
+	mysekaiNotModified int
+	uploadTimeErr      error
 }
 
 func (f *fakePrivateDataClient) parseUploadTime() (int64, error) {
@@ -84,14 +77,47 @@ func (f *fakePrivateDataClient) parseUploadTime() (int64, error) {
 	return strconv.ParseInt(trimmed, 10, 64)
 }
 
-func (f *fakePrivateDataClient) GetSuiteUploadTimeContext(_ context.Context, _ string, _ int64, _, _ string) (int64, error) {
-	f.suiteUploadTimeCalls++
-	return f.parseUploadTime()
+// checkNotModified reports whether a positive knownUploadTime still matches
+// the upstream upload_time, propagating validation errors first.
+func (f *fakePrivateDataClient) checkNotModified(knownUploadTime int64) (bool, error) {
+	if knownUploadTime <= 0 {
+		return false, nil
+	}
+	current, err := f.parseUploadTime()
+	if err != nil {
+		return false, err
+	}
+	return current == knownUploadTime, nil
 }
 
-func (f *fakePrivateDataClient) GetMySekaiUploadTimeContext(_ context.Context, _ string, _ int64, _, _ string) (int64, error) {
-	f.mysekaiUploadTimeCalls++
-	return f.parseUploadTime()
+func (f *fakePrivateDataClient) GetSuiteDataConditionalContext(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	f.suiteCtx = ctx
+	f.suiteKnownTimes = append(f.suiteKnownTimes, knownUploadTime)
+	notModified, err := f.checkNotModified(knownUploadTime)
+	if err != nil {
+		return nil, false, err
+	}
+	if notModified {
+		f.suiteNotModified++
+		return nil, true, nil
+	}
+	f.suiteCalls = append(f.suiteCalls, server+":"+platform+":"+platformUserID)
+	return append([]byte(nil), f.suiteJSON...), false, nil
+}
+
+func (f *fakePrivateDataClient) GetMySekaiDataConditionalContext(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	f.mysekaiCtx = ctx
+	f.mysekaiKnownTimes = append(f.mysekaiKnownTimes, knownUploadTime)
+	notModified, err := f.checkNotModified(knownUploadTime)
+	if err != nil {
+		return nil, false, err
+	}
+	if notModified {
+		f.mysekaiNotModified++
+		return nil, true, nil
+	}
+	f.mysekaiCalls = append(f.mysekaiCalls, server+":"+platform+":"+platformUserID)
+	return append([]byte(nil), f.mysekaiJSON...), false, nil
 }
 
 func TestToolboxSnapshotProviderFallsBackToRegionBinding(t *testing.T) {

@@ -419,7 +419,7 @@ func TestExecuteDeckMySekaiRequiresVisibleSuiteSnapshot(t *testing.T) {
 		Decks:    newHandlerTestDeckController(t),
 		Music:    newHandlerTestMusicController(t),
 	}))
-	if err == nil || err.Error() != buildPrivateDataNotFoundMessage("suite", &accountdata.ResolvedBinding{
+	if err == nil || err.Error() != buildPrivateDataHiddenMessage("suite", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
 		Visible:    false,

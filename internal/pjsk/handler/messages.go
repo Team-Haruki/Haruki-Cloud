@@ -83,6 +83,9 @@ func newSuiteDataNotFoundReplayError() error {
 }
 
 func newSuiteDataNotFoundReplayErrorForBinding(binding *accountdata.ResolvedBinding) error {
+	if binding != nil && !binding.SuiteVisible {
+		return onebot11.NewReplayError("%s", buildPrivateDataHiddenMessage("suite", binding))
+	}
 	return onebot11.NewReplayError("%s", buildPrivateDataNotFoundMessage("suite", binding))
 }
 
@@ -91,7 +94,26 @@ func newMySekaiDataNotFoundReplayError() error {
 }
 
 func newMySekaiDataNotFoundReplayErrorForBinding(binding *accountdata.ResolvedBinding) error {
+	if binding != nil && !binding.MySekaiVisible {
+		return onebot11.NewReplayError("%s", buildPrivateDataHiddenMessage("mysekai", binding))
+	}
 	return onebot11.NewReplayError("%s", buildPrivateDataNotFoundMessage("mysekai", binding))
+}
+
+func buildPrivateDataHiddenMessage(dataLabel string, binding *accountdata.ResolvedBinding) string {
+	dataLabel = strings.TrimSpace(strings.ToLower(dataLabel))
+	account := formatUserFacingBindingAccount(binding)
+	if account == "" {
+		account = "当前绑定账号"
+	}
+
+	showCommand := "/展示抓包"
+	if dataLabel == "mysekai" {
+		showCommand = "/展示烤森抓包"
+	} else {
+		dataLabel = "suite"
+	}
+	return fmt.Sprintf("你已自行隐藏 %s 的 %s 抓包信息，请先发送“%s”恢复展示后再重试", account, dataLabel, showCommand)
 }
 
 func buildPrivateDataNotFoundMessage(dataLabel string, binding *accountdata.ResolvedBinding) string {

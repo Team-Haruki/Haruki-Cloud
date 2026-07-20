@@ -91,11 +91,16 @@ func TestStoreAndGetURLSingleflightSurvivesLeaderCancellation(t *testing.T) {
 	<-writeStarted
 
 	followerDone := make(chan error, 1)
-	followerCtx, followerTrace := commandtrace.WithTrace(context.Background())
+	followerBaseCtx, followerTrace := commandtrace.WithTrace(context.Background())
+	followerCtx := &doneObservedContext{
+		Context:  followerBaseCtx,
+		observed: make(chan struct{}),
+	}
 	go func() {
 		_, err := client.StoreAndGetURL(followerCtx, data, "pjsk/shared")
 		followerDone <- err
 	}()
+	<-followerCtx.observed
 	cancelLeader()
 	if err := <-leaderDone; err != context.Canceled {
 		t.Fatalf("leader error = %v, want context.Canceled", err)
@@ -109,6 +114,17 @@ func TestStoreAndGetURLSingleflightSurvivesLeaderCancellation(t *testing.T) {
 	}
 	assertTraceOperation(t, followerTrace, "image.write")
 	assertTraceOperation(t, followerTrace, "image.shared")
+}
+
+type doneObservedContext struct {
+	context.Context
+	observed chan struct{}
+	once     sync.Once
+}
+
+func (c *doneObservedContext) Done() <-chan struct{} {
+	c.once.Do(func() { close(c.observed) })
+	return c.Context.Done()
 }
 
 func TestStoreAndGetURLConcurrentColdWritePublishesOnce(t *testing.T) {

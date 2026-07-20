@@ -33,12 +33,13 @@ const (
 )
 
 const (
-	preview3DRegistryMaxResponseBytes = 32 << 20
-	preview3DCaptureMaxResponseBytes  = 64 << 20
-	preview3DCaptureAckMaxBytes       = 64 << 10
-	preview3DErrorResponseMaxBytes    = 4 << 10
-	preview3DCaptureCacheMaxEntries   = 8_192
-	preview3DCaptureCacheSweepEvery   = 30 * time.Second
+	preview3DRegistryMaxCompressedBytes = 32 << 20
+	preview3DRegistryMaxDecodedBytes    = 128 << 20
+	preview3DCaptureMaxResponseBytes    = 64 << 20
+	preview3DCaptureAckMaxBytes         = 64 << 10
+	preview3DErrorResponseMaxBytes      = 4 << 10
+	preview3DCaptureCacheMaxEntries     = 8_192
+	preview3DCaptureCacheSweepEvery     = 30 * time.Second
 )
 
 var preview3DImageIDUnsafe = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
@@ -655,12 +656,12 @@ func (s *Preview3DService) getMessagePackRegistry(
 	}
 	defer resp.Body.Close()
 	finishDecode := commandtrace.MeasureOperation(ctx, "preview3d.registry_decode")
-	if resp.ContentLength > preview3DRegistryMaxResponseBytes {
+	if resp.ContentLength > preview3DRegistryMaxCompressedBytes {
 		finishDecode()
-		return fmt.Errorf("3d preview registry response exceeds %d bytes", preview3DRegistryMaxResponseBytes)
+		return fmt.Errorf("3d preview registry response exceeds %d bytes", preview3DRegistryMaxCompressedBytes)
 	}
 	resp.Body = io.NopCloser(brotli.NewReader(resp.Body))
-	packed, err := readPreview3DResponse(resp, preview3DRegistryMaxResponseBytes, "3d preview registry")
+	packed, err := readPreview3DResponse(resp, preview3DRegistryMaxDecodedBytes, "3d preview registry")
 	if err == nil {
 		var decodeErr error
 		if asArray {

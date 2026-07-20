@@ -1539,6 +1539,28 @@ func TestPreview3DPartRegistryPrefersCompactMessagePack(t *testing.T) {
 	}
 }
 
+func TestPreview3DPartRegistryAllowsDecodedPayloadAboveLegacyLimit(t *testing.T) {
+	payload := preview3DCompactPartRegistry{
+		SchemaVersion:   compactRegistrySchemaVersion,
+		RegistryVersion: 2,
+		Entries: []preview3DPartEntry{{
+			Costume3DID: 1,
+			PartType:    "body",
+			PackagePath: strings.Repeat("p", 40<<20),
+		}},
+	}
+	compressed := compactRegistryBytes(t, payload)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(compressed)
+	}))
+	defer server.Close()
+
+	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: server.URL})
+	if _, err := service.getPartRegistry(context.Background(), preview3DEndpoint{baseURL: server.URL}); err != nil {
+		t.Fatalf("decode current-size compact registry: %v", err)
+	}
+}
+
 func TestPreview3DCompatibilityPrefersCompactMessagePack(t *testing.T) {
 	payload := preview3DCompactCompatibilityRegistry{
 		SchemaVersion: compactRegistrySchemaVersion,
@@ -1847,7 +1869,7 @@ func TestPreview3DResponsesHaveExplicitSizeLimits(t *testing.T) {
 		var size int64
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/runtime/test.msgpack.br":
-			size = preview3DRegistryMaxResponseBytes + 1
+			size = preview3DRegistryMaxCompressedBytes + 1
 		case r.Method == http.MethodGet && r.URL.Path == "/captures/oversized.png":
 			size = preview3DCaptureMaxResponseBytes + 1
 		case r.Method == http.MethodPost && r.URL.Path == "/capture":

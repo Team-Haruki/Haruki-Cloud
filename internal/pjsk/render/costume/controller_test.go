@@ -554,20 +554,17 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"ok"}]}`)
-		case "/runtime/parts/part-registry.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[
+		case "/runtime/character3d-index.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"ok"}]}`))
+		case "/runtime/parts/part-registry-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
 				{"costume3dId":33002,"partType":"body","characterId":20,"unit":"school_refusal","colorId":2,"costume3dGroupId":330},
 				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
 				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330}
-			]}`)
-		case "/runtime/parts/head-hair-compatibility.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
+			]}`))
+		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`))
 		case "/capture":
 			if err := json.NewDecoder(r.Body).Decode(&capturePayload); err != nil {
 				t.Fatalf("decode capture payload: %v", err)
@@ -663,20 +660,17 @@ func TestBuildCostumeDetailRequestSkipsMissing3DPreviewParts(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`)
-		case "/runtime/parts/part-registry.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[
+		case "/runtime/character3d-index.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
+		case "/runtime/parts/part-registry-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33002,"partType":"body","characterId":20,"unit":"school_refusal","colorId":2,"costume3dGroupId":330,"status":"missing"},
 				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"}
-			]}`)
-		case "/runtime/parts/head-hair-compatibility.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
+			]}`))
+		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`))
 		case "/capture":
 			captureCalled = true
 			http.Error(w, "missing runtime part should not be captured", http.StatusInternalServerError)
@@ -781,19 +775,18 @@ func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
 
 func TestBuildHairListUsesRoleLocalIDs(t *testing.T) {
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("content-type", "application/json")
 		switch r.URL.Path {
-		case "/runtime/character3d-index.json":
-			fmt.Fprint(w, `{"entries":[{"character3dId":23,"characterId":21,"unit":"light_sound","hairCostume3dId":392161,"status":"available"}]}`)
-		case "/runtime/parts/part-registry.json":
-			fmt.Fprint(w, `{"entries":[
+		case "/runtime/character3d-index.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":23,"characterId":21,"unit":"light_sound","hairCostume3dId":392161,"status":"available"}]}`))
+		case "/runtime/parts/part-registry-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":392161,"partType":"hair","characterId":21,"unit":"light_sound","status":"available"},
 				{"costume3dId":221,"partType":"hair","characterId":21,"unit":"light_sound","status":"available"},
 				{"costume3dId":999,"partType":"hair","characterId":21,"unit":"idol","status":"available"},
 				{"costume3dId":888,"partType":"hair","characterId":21,"unit":"light_sound","status":"missing"}
-			]}`)
-		case "/runtime/parts/head-hair-compatibility.json":
-			fmt.Fprint(w, `{"rules":[]}`)
+			]}`))
+		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[]}`))
 		default:
 			t.Fatalf("unexpected engine request: %s", r.URL.Path)
 		}
@@ -934,20 +927,17 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`)
-		case "/runtime/parts/part-registry.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[
+		case "/runtime/character3d-index.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
+		case "/runtime/parts/part-registry-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"outfitId":33,"status":"available"},
 				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":53129,"partType":"head_optional","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":531000,"accessoryId":531000,"baseSourceKey":"accessory-531","packagePath":"parts/_sources/head_optional/accessory-531","status":"available"}
-			]}`)
-		case "/runtime/parts/head-hair-compatibility.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
+			]}`))
+		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`))
 		case "/capture":
 			if err := json.NewDecoder(r.Body).Decode(&capturePayload); err != nil {
 				t.Fatalf("decode capture payload: %v", err)
@@ -1063,6 +1053,8 @@ func TestParseNamedLookupQueryRequiresNameAndRole(t *testing.T) {
 		{raw: "MIKU MIKU POP! 角色23", partType: "body", name: "MIKU MIKU POP!", role: 23},
 		{raw: "快樂小雞洋裝 角色 5", partType: "head", name: "快樂小雞洋裝", role: 5},
 		{raw: "Candy Wheel 角色ID5", partType: "hair", name: "Candy Wheel", role: 5},
+		{raw: "Alice Good Night mnr", partType: "body", name: "Alice Good Night", role: 5},
+		{raw: "MIKU MIKU POP! miku mmj", partType: "body", name: "MIKU MIKU POP!", role: 22},
 	}
 	for _, tt := range tests {
 		query, ok, err := ParseNamedLookupQuery(tt.raw, tt.partType)
@@ -1082,6 +1074,9 @@ func TestParseNamedLookupQueryRequiresNameAndRole(t *testing.T) {
 	}
 	if _, ok, err := ParseNamedLookupQuery("MIKU MIKU POP! 角色32", "body"); !ok || err == nil {
 		t.Fatalf("invalid explicit role should return a recognized error, ok=%v err=%v", ok, err)
+	}
+	if _, ok, err := ParseNamedLookupQuery("MIKU MIKU POP! miku", "body"); !ok || err == nil || !strings.Contains(err.Error(), "团队") {
+		t.Fatalf("Miku named lookup without a team should fail clearly, ok=%v err=%v", ok, err)
 	}
 }
 

@@ -32,15 +32,63 @@ func compactRegistryBytes(t *testing.T, payload any) []byte {
 	if err != nil {
 		t.Fatalf("marshal compact registry: %v", err)
 	}
+	return compressedRegistryBytes(t, packed)
+}
+
+func registryBytes(t *testing.T, payload any) []byte {
+	t.Helper()
+	packed, err := msgpack.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal registry: %v", err)
+	}
+	return compressedRegistryBytes(t, packed)
+}
+
+func compressedRegistryBytes(t *testing.T, packed []byte) []byte {
+	t.Helper()
 	var compressed bytes.Buffer
 	writer := brotli.NewWriter(&compressed)
 	if _, err := writer.Write(packed); err != nil {
-		t.Fatalf("compress compact registry: %v", err)
+		t.Fatalf("compress registry: %v", err)
 	}
 	if err := writer.Close(); err != nil {
-		t.Fatalf("close compact registry writer: %v", err)
+		t.Fatalf("close registry writer: %v", err)
 	}
 	return compressed.Bytes()
+}
+
+func registryFixtureBytes(t *testing.T, requestPath, rawJSON string) []byte {
+	t.Helper()
+	switch requestPath {
+	case "/runtime/character3d-index.msgpack.br":
+		var payload preview3DCharacterIndex
+		if err := json.Unmarshal([]byte(rawJSON), &payload); err != nil {
+			t.Fatalf("decode character fixture: %v", err)
+		}
+		return registryBytes(t, payload)
+	case "/runtime/parts/part-registry-compact.msgpack.br":
+		var payload preview3DPartRegistry
+		if err := json.Unmarshal([]byte(rawJSON), &payload); err != nil {
+			t.Fatalf("decode part fixture: %v", err)
+		}
+		return compactRegistryBytes(t, preview3DCompactPartRegistry{
+			SchemaVersion:   compactRegistrySchemaVersion,
+			RegistryVersion: payload.Version,
+			Entries:         payload.Entries,
+		})
+	case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+		var payload preview3DCompatibilityRegistry
+		if err := json.Unmarshal([]byte(rawJSON), &payload); err != nil {
+			t.Fatalf("decode compatibility fixture: %v", err)
+		}
+		return compactRegistryBytes(t, preview3DCompactCompatibilityRegistry{
+			SchemaVersion: compactRegistrySchemaVersion,
+			Rules:         payload.Rules,
+		})
+	default:
+		t.Fatalf("unsupported registry fixture path: %s", requestPath)
+		return nil
+	}
 }
 
 func TestPreview3DRegistryResolveSkipsMissingGroupParts(t *testing.T) {
@@ -760,6 +808,33 @@ func TestPreview3DRegistryResolveComboDefaultsMissingPartsFromAnyAnchorGroup(t *
 	}
 }
 
+func TestPreview3DRegistryResolveComboDefaultsBodyFromAccessoryOutfit(t *testing.T) {
+	registry := &preview3DRegistry{
+		partRegistryVersion: 2,
+		characters: []preview3DCharacterEntry{
+			{Character3DID: 27, CharacterID: 21, Unit: "idol", BodyCostume3DID: 46, HeadCostume3DID: 103, HairCostume3DID: 203, Status: "available"},
+		},
+		parts: []preview3DPartEntry{
+			{Costume3DID: 46, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 2003134, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 3, Costume3DGroupID: 2003017, OutfitID: 2003, Status: "planned"},
+			{Costume3DID: 2003163, PartType: "head_optional", CharacterID: 21, Unit: "idol", ColorID: 3, Costume3DGroupID: 2003021, AccessoryID: 2003001, PackagePath: "parts/head_optional/sustain-summer", Status: "planned"},
+			{Costume3DID: 2003165, PartType: "hair", CharacterID: 21, Unit: "idol", ColorID: 3, Costume3DGroupID: 2003021, Status: "planned"},
+		},
+	}
+
+	selection, err := registry.resolveCombo("jp", ComboQuery{
+		Character3DID:    27,
+		AccessoryID:      2003001,
+		AccessoryColorID: 3,
+	}, "sig")
+	if err != nil {
+		t.Fatalf("resolve accessory combo failed: %v", err)
+	}
+	if selection.BodyCostume3DID != 2003134 || selection.HeadCostume3DID != 2003163 || selection.HairCostume3DID != 2003165 {
+		t.Fatalf("expected accessory outfit body and accessory group head/hair, got %+v", selection)
+	}
+}
+
 func TestPreview3DRegistryResolveComboUsesExplicitHairDefaultHead(t *testing.T) {
 	const defaultHeadPackagePath = "parts/head/0142/0033/idol"
 	registry := &preview3DRegistry{
@@ -858,19 +933,16 @@ func TestPreview3DCaptureTemporaryComboUsesExistingCapture(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`)
-		case "/runtime/parts/part-registry.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[
+		case "/runtime/character3d-index.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
+		case "/runtime/parts/part-registry-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"}
-			]}`)
-		case "/runtime/parts/head-hair-compatibility.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
+			]}`))
+		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`))
 		case "/capture":
 			captureCalled = true
 			http.Error(w, "cached combo should not capture", http.StatusInternalServerError)
@@ -903,19 +975,16 @@ func TestPreview3DServiceUsesRegionEngineBaseURL(t *testing.T) {
 	jpEngine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		jpRequests.Add(1)
 		switch r.URL.Path {
-		case "/runtime/character3d-index.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`)
-		case "/runtime/parts/part-registry.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[
+		case "/runtime/character3d-index.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
+		case "/runtime/parts/part-registry-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
 				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"}
-			]}`)
-		case "/runtime/parts/head-hair-compatibility.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`)
+			]}`))
+		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`))
 		default:
 			t.Fatalf("unexpected jp engine request: %s %s", r.Method, r.URL.Path)
 		}
@@ -928,19 +997,16 @@ func TestPreview3DServiceUsesRegionEngineBaseURL(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[{"character3dId":6,"characterId":21,"unit":"idol","bodyCostume3dId":44001,"headCostume3dId":44011,"hairCostume3dId":44021,"status":"available"}]}`)
-		case "/runtime/parts/part-registry.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"entries":[
+		case "/runtime/character3d-index.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":6,"characterId":21,"unit":"idol","bodyCostume3dId":44001,"headCostume3dId":44011,"hairCostume3dId":44021,"status":"available"}]}`))
+		case "/runtime/parts/part-registry-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":44001,"partType":"body","characterId":21,"unit":"idol","colorId":1,"costume3dGroupId":440,"status":"available"},
 				{"costume3dId":44011,"partType":"head","characterId":21,"unit":"idol","colorId":1,"costume3dGroupId":440,"status":"available"},
 				{"costume3dId":44021,"partType":"hair","characterId":21,"unit":"idol","colorId":1,"costume3dGroupId":440,"status":"available"}
-			]}`)
-		case "/runtime/parts/head-hair-compatibility.json":
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"rules":[{"unit":"idol","headCostume3dId":44011,"hairCostume3dId":44021,"state":"available"}]}`)
+			]}`))
+		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[{"unit":"idol","headCostume3dId":44011,"hairCostume3dId":44021,"state":"available"}]}`))
 		case "/capture":
 			if err := json.NewDecoder(r.Body).Decode(&cnCapturePayload); err != nil {
 				t.Fatalf("decode cn capture payload: %v", err)
@@ -990,27 +1056,26 @@ func TestPreview3DServiceRejectsMissingRegionEngineWhenMapConfigured(t *testing.
 
 func TestResolveQueryPreviewPathUsesRequested3DRole(t *testing.T) {
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("content-type", "application/json")
 		switch r.URL.Path {
-		case "/runtime/character3d-index.json":
-			fmt.Fprint(w, `{"entries":[
+		case "/runtime/character3d-index.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"character3dId":22,"characterId":21,"unit":"idol","bodyCostume3dId":9001,"headCostume3dId":9002,"hairCostume3dId":9003,"status":"available"},
 				{"character3dId":23,"characterId":21,"unit":"light_sound","bodyCostume3dId":9101,"headCostume3dId":9102,"hairCostume3dId":9103,"status":"available"}
-			]}`)
-		case "/runtime/parts/part-registry.json":
-			fmt.Fprint(w, `{"entries":[
+			]}`))
+		case "/runtime/parts/part-registry-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":9001,"partType":"body","characterId":21,"unit":"idol","colorId":1,"outfitId":1,"status":"available"},
 				{"costume3dId":9002,"partType":"head","characterId":21,"unit":"idol","colorId":1,"status":"available"},
 				{"costume3dId":9003,"partType":"hair","characterId":21,"unit":"idol","colorId":1,"status":"available"},
 				{"costume3dId":9101,"partType":"body","characterId":21,"unit":"light_sound","colorId":1,"outfitId":1,"status":"available"},
 				{"costume3dId":9102,"partType":"head","characterId":21,"unit":"light_sound","colorId":1,"status":"available"},
 				{"costume3dId":9103,"partType":"hair","characterId":21,"unit":"light_sound","colorId":1,"status":"available"}
-			]}`)
-		case "/runtime/parts/head-hair-compatibility.json":
-			fmt.Fprint(w, `{"rules":[
+			]}`))
+		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[
 				{"unit":"idol","headCostume3dId":9002,"hairCostume3dId":9003,"state":"available"},
 				{"unit":"light_sound","headCostume3dId":9102,"hairCostume3dId":9103,"state":"available"}
-			]}`)
+			]}`))
 		default:
 			t.Fatalf("unexpected engine request: %s", r.URL.Path)
 		}
@@ -1451,10 +1516,9 @@ func TestPreview3DPartRegistryPrefersCompactMessagePack(t *testing.T) {
 	compressed := compactRegistryBytes(t, payload)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.Header.Get("Accept"), compactPartRegistryContentType) {
-			t.Fatalf("compact registry accept header missing: %q", r.Header.Get("Accept"))
+		if r.URL.Path != "/runtime/parts/part-registry-compact.msgpack.br" {
+			t.Fatalf("unexpected compact registry path: %s", r.URL.Path)
 		}
-		w.Header().Set("content-type", compactPartRegistryContentType)
 		_, _ = w.Write(compressed)
 	}))
 	defer server.Close()
@@ -1482,10 +1546,9 @@ func TestPreview3DCompatibilityPrefersCompactMessagePack(t *testing.T) {
 	}
 	compressed := compactRegistryBytes(t, payload)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.Header.Get("Accept"), compactCompatibilityContentType) {
-			t.Fatalf("compact compatibility accept header missing: %q", r.Header.Get("Accept"))
+		if r.URL.Path != "/runtime/parts/head-hair-compatibility-compact.msgpack.br" {
+			t.Fatalf("unexpected compact compatibility path: %s", r.URL.Path)
 		}
-		w.Header().Set("content-type", compactCompatibilityContentType)
 		_, _ = w.Write(compressed)
 	}))
 	defer server.Close()
@@ -1515,12 +1578,12 @@ func TestPreview3DServiceDoesNotFallbackWhenRegionMapContainsEmptyURL(t *testing
 
 func TestPreview3DRegistryDecodeErrorKeepsRegistryPrefix(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte("not-json"))
+		_, _ = w.Write([]byte("not-messagepack"))
 	}))
 	defer server.Close()
 	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: server.URL})
 	var output map[string]any
-	err := service.getJSON(context.Background(), preview3DEndpoint{baseURL: server.URL}, "/runtime/parts/part-registry.json", &output)
+	err := service.getMessagePackRegistry(context.Background(), preview3DEndpoint{baseURL: server.URL}, "/runtime/character3d-index.msgpack.br", &output, false)
 	if err == nil || !strings.HasPrefix(err.Error(), "3d preview registry ") {
 		t.Fatalf("decode failure must keep the registry error class, got %v", err)
 	}

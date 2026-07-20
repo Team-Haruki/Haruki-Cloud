@@ -984,6 +984,7 @@ func ParseNamedLookupQuery(raw string, partType string) (Query, bool, error) {
 	nameFields := make([]string, 0, len(fields))
 	roleID := 0
 	roleSet := false
+	var roleAlias character3DAliasSelection
 	setRole := func(id int) error {
 		if roleSet {
 			return fmt.Errorf("角色ID重复")
@@ -1005,17 +1006,47 @@ func ParseNamedLookupQuery(raw string, partType string) (Query, bool, error) {
 			if index+1 >= len(fields) {
 				return Query{}, true, fmt.Errorf("角色后必须填写1到31之间的ID")
 			}
-			id, ok := ParseExplicitCostumeID(fields[index+1])
-			if !ok {
-				return Query{}, true, fmt.Errorf("角色后必须填写1到31之间的ID")
-			}
-			if err := setRole(id); err != nil {
-				return Query{}, true, err
+			next := fields[index+1]
+			if id, ok := ParseExplicitCostumeID(next); ok {
+				if err := setRole(id); err != nil {
+					return Query{}, true, err
+				}
+			} else if characterID, ok := parseCharacter3DAliasToken(next); ok {
+				if err := roleAlias.setCharacter(characterID); err != nil {
+					return Query{}, true, err
+				}
+			} else {
+				return Query{}, true, fmt.Errorf("角色后必须填写1到31之间的ID或精确角色名称")
 			}
 			index++
 			continue
 		}
 		nameFields = append(nameFields, token)
+	}
+	if roleAlias.characterID == 21 && len(nameFields) > 0 {
+		if unit, ok := parseCostumeUnitAlias(nameFields[len(nameFields)-1]); ok {
+			roleAlias.setUnit(unit)
+			nameFields = nameFields[:len(nameFields)-1]
+		}
+	}
+	if !roleSet && roleAlias.characterID == 0 && len(nameFields) > 0 {
+		last := len(nameFields) - 1
+		if characterID, ok := parseCharacter3DAliasToken(nameFields[last]); ok {
+			_ = roleAlias.setCharacter(characterID)
+			nameFields = nameFields[:last]
+		} else if unit, ok := parseCostumeUnitAlias(nameFields[last]); ok && last > 0 {
+			if characterID, ok := parseCharacter3DAliasToken(nameFields[last-1]); ok && characterID == 21 {
+				_ = roleAlias.setCharacter(characterID)
+				roleAlias.setUnit(unit)
+				nameFields = nameFields[:last-1]
+			}
+		}
+	}
+	if roleAlias.characterID != 0 {
+		if err := roleAlias.apply(&roleID); err != nil {
+			return Query{}, true, err
+		}
+		roleSet = true
 	}
 	if !roleSet {
 		return Query{}, false, nil

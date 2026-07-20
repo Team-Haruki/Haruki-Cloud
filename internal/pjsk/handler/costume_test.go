@@ -76,6 +76,7 @@ func TestCostumeNameLookupWithRoleUsesDetail(t *testing.T) {
 		{command: "/en查服装 角色1 Christmas Style 2021 (F)", region: "en", name: "Christmas Style 2021 (F)", partType: "body", role: 1},
 		{command: "/tw查头饰 快樂小雞洋裝 角色5", region: "tw", name: "快樂小雞洋裝", partType: "head", role: 5},
 		{command: "/en查发型 Candy Wheel 角色5", region: "en", name: "Candy Wheel", partType: "hair", role: 5},
+		{command: "/jp查服装 Alice Good Night mnr", region: "jp", name: "Alice Good Night", partType: "body", role: 5},
 	}
 
 	for _, tt := range tests {

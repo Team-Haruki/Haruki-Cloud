@@ -25,8 +25,6 @@ import (
 
 const (
 	defaultPreview3DStaticRelativeDir = "static_images/pjsk_3d_preview"
-	compactPartRegistryContentType    = "application/vnd.haruki.part-registry-compact+msgpack-br"
-	compactCompatibilityContentType   = "application/vnd.haruki.head-hair-compatibility-compact+msgpack-br"
 	compactRegistrySchemaVersion      = 1
 )
 
@@ -79,17 +77,17 @@ type preview3DRegistry struct {
 }
 
 type preview3DCharacterIndex struct {
-	Entries []preview3DCharacterEntry `json:"entries"`
+	Entries []preview3DCharacterEntry `json:"entries" msgpack:"entries"`
 }
 
 type preview3DCharacterEntry struct {
-	Character3DID   int    `json:"character3dId"`
-	CharacterID     int    `json:"characterId"`
-	Unit            string `json:"unit"`
-	BodyCostume3DID int    `json:"bodyCostume3dId"`
-	HeadCostume3DID int    `json:"headCostume3dId"`
-	HairCostume3DID int    `json:"hairCostume3dId"`
-	Status          string `json:"status"`
+	Character3DID   int    `json:"character3dId" msgpack:"character3dId"`
+	CharacterID     int    `json:"characterId" msgpack:"characterId"`
+	Unit            string `json:"unit" msgpack:"unit"`
+	BodyCostume3DID int    `json:"bodyCostume3dId" msgpack:"bodyCostume3dId"`
+	HeadCostume3DID int    `json:"headCostume3dId" msgpack:"headCostume3dId"`
+	HairCostume3DID int    `json:"hairCostume3dId" msgpack:"hairCostume3dId"`
+	Status          string `json:"status" msgpack:"status"`
 }
 
 type preview3DPartRegistry struct {
@@ -483,7 +481,7 @@ func (s *Preview3DService) validCachedRegistryLocked(endpoint preview3DEndpoint,
 
 func (s *Preview3DService) fetchRegistry(ctx context.Context, endpoint preview3DEndpoint) (*preview3DRegistry, error) {
 	var characterIndex preview3DCharacterIndex
-	if err := s.getJSON(ctx, endpoint, "/runtime/character3d-index.json", &characterIndex); err != nil {
+	if err := s.getMessagePackRegistry(ctx, endpoint, "/runtime/character3d-index.msgpack.br", &characterIndex, false); err != nil {
 		return nil, err
 	}
 	partRegistry, err := s.getPartRegistry(ctx, endpoint)
@@ -507,64 +505,38 @@ func (s *Preview3DService) fetchRegistry(ctx context.Context, endpoint preview3D
 }
 
 func (s *Preview3DService) getPartRegistry(ctx context.Context, endpoint preview3DEndpoint) (preview3DPartRegistry, error) {
-	const requestPath = "/runtime/parts/part-registry.json"
-	resp, err := s.getRegistryResponse(ctx, endpoint, requestPath, compactPartRegistryContentType)
-	if err != nil {
+	const requestPath = "/runtime/parts/part-registry-compact.msgpack.br"
+	var compact preview3DCompactPartRegistry
+	if err := s.getMessagePackRegistry(ctx, endpoint, requestPath, &compact, true); err != nil {
 		return preview3DPartRegistry{}, err
 	}
-	defer resp.Body.Close()
-	if strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), compactPartRegistryContentType) {
-		var compact preview3DCompactPartRegistry
-		if err := msgpack.UnmarshalReadAsArray(brotli.NewReader(resp.Body), &compact); err != nil {
-			return preview3DPartRegistry{}, fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, err)
-		}
-		if compact.SchemaVersion != compactRegistrySchemaVersion {
-			return preview3DPartRegistry{}, fmt.Errorf("3d preview registry %s has unsupported compact schema %d", requestPath, compact.SchemaVersion)
-		}
-		return preview3DPartRegistry{Version: compact.RegistryVersion, Entries: compact.Entries}, nil
+	if compact.SchemaVersion != compactRegistrySchemaVersion {
+		return preview3DPartRegistry{}, fmt.Errorf("3d preview registry %s has unsupported compact schema %d", requestPath, compact.SchemaVersion)
 	}
-	var registry preview3DPartRegistry
-	if err := json.NewDecoder(resp.Body).Decode(&registry); err != nil {
-		return preview3DPartRegistry{}, fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, err)
-	}
-	return registry, nil
+	return preview3DPartRegistry{Version: compact.RegistryVersion, Entries: compact.Entries}, nil
 }
 
 func (s *Preview3DService) getCompatibilityRegistry(ctx context.Context, endpoint preview3DEndpoint) (preview3DCompatibilityRegistry, error) {
-	const requestPath = "/runtime/parts/head-hair-compatibility.json"
-	resp, err := s.getRegistryResponse(ctx, endpoint, requestPath, compactCompatibilityContentType)
-	if err != nil {
+	const requestPath = "/runtime/parts/head-hair-compatibility-compact.msgpack.br"
+	var compact preview3DCompactCompatibilityRegistry
+	if err := s.getMessagePackRegistry(ctx, endpoint, requestPath, &compact, true); err != nil {
 		return preview3DCompatibilityRegistry{}, err
 	}
-	defer resp.Body.Close()
-	if strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), compactCompatibilityContentType) {
-		var compact preview3DCompactCompatibilityRegistry
-		if err := msgpack.UnmarshalReadAsArray(brotli.NewReader(resp.Body), &compact); err != nil {
-			return preview3DCompatibilityRegistry{}, fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, err)
-		}
-		if compact.SchemaVersion != compactRegistrySchemaVersion {
-			return preview3DCompatibilityRegistry{}, fmt.Errorf("3d preview registry %s has unsupported compact schema %d", requestPath, compact.SchemaVersion)
-		}
-		return preview3DCompatibilityRegistry{Rules: compact.Rules}, nil
+	if compact.SchemaVersion != compactRegistrySchemaVersion {
+		return preview3DCompatibilityRegistry{}, fmt.Errorf("3d preview registry %s has unsupported compact schema %d", requestPath, compact.SchemaVersion)
 	}
-	var registry preview3DCompatibilityRegistry
-	if err := json.NewDecoder(resp.Body).Decode(&registry); err != nil {
-		return preview3DCompatibilityRegistry{}, fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, err)
-	}
-	return registry, nil
+	return preview3DCompatibilityRegistry{Rules: compact.Rules}, nil
 }
 
 func (s *Preview3DService) getRegistryResponse(
 	ctx context.Context,
 	endpoint preview3DEndpoint,
 	requestPath string,
-	compactContentType string,
 ) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.url(endpoint, requestPath), nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Accept", compactContentType+", application/json")
 	resp, err := s.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("3d preview registry request failed: %w", err)
@@ -576,20 +548,28 @@ func (s *Preview3DService) getRegistryResponse(
 	return resp, nil
 }
 
-func (s *Preview3DService) getJSON(ctx context.Context, endpoint preview3DEndpoint, requestPath string, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.url(endpoint, requestPath), nil)
+func (s *Preview3DService) getMessagePackRegistry(
+	ctx context.Context,
+	endpoint preview3DEndpoint,
+	requestPath string,
+	out any,
+	asArray bool,
+) error {
+	resp, err := s.getRegistryResponse(ctx, endpoint, requestPath)
 	if err != nil {
 		return err
 	}
-	resp, err := s.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("3d preview registry request failed: %w", err)
-	}
 	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("3d preview registry %s returned HTTP %d", requestPath, resp.StatusCode)
+	packed, err := io.ReadAll(brotli.NewReader(resp.Body))
+	if err != nil {
+		return fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, err)
 	}
-	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+	if asArray {
+		err = msgpack.UnmarshalAsArray(packed, out)
+	} else {
+		err = msgpack.Unmarshal(packed, out)
+	}
+	if err != nil {
 		return fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, err)
 	}
 	return nil
@@ -1102,6 +1082,10 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	if !explicitBody && useAnchorGroup {
 		if part, ok := r.groupPart(anchor, role.Unit, "body"); ok {
 			bodyID = part.Costume3DID
+		} else if resolvedAccessoryID >= 1000 {
+			if part, ok := r.outfitPartForRole(resolvedAccessoryID/1000, anchor.ColorID, role); ok {
+				bodyID = part.Costume3DID
+			}
 		}
 	}
 	if !explicitHair && useAnchorGroup {

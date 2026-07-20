@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
@@ -18,6 +19,8 @@ const (
 )
 
 func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
 		return nil, err
@@ -58,6 +61,8 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 // BuildPredictLineRequestFromTracker builds an SK line payload using external
 // forecast sources (33kit / Moesekai / SekaRun / local) for final score prediction.
 func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*LineRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
 		return nil, err

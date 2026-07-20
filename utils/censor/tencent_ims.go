@@ -6,8 +6,8 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
-	json "github.com/bytedance/sonic"
 	"io"
 	"net/http"
 	"strconv"
@@ -15,6 +15,9 @@ import (
 	"time"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
+
+	json "github.com/bytedance/sonic"
 )
 
 const (
@@ -24,6 +27,14 @@ const (
 	imsAction           = "ImageModeration"
 	imsCanonicalHeaders = "content-type:application/json; charset=utf-8\nhost:" + imsHost + "\n"
 	imsSignedHeaders    = "content-type;host"
+	imsMaxResponseBytes = 1 << 20
+)
+
+var (
+	errTencentIMSRequestFailed    = errors.New("tencent IMS request failed")
+	errTencentIMSResponseTooLarge = errors.New("tencent IMS response is too large")
+	errTencentIMSInvalidResponse  = errors.New("tencent IMS returned an invalid response")
+	errTencentIMSAPIRejected      = errors.New("tencent IMS API rejected the request")
 )
 
 // IMSSuggestion is the content moderation verdict returned by Tencent IMS.
@@ -72,6 +83,7 @@ func (t *TencentIMSClient) ImageModerationBase64(ctx context.Context, b64 string
 }
 
 func (t *TencentIMSClient) imageModeration(ctx context.Context, fileURL, fileContent string) (IMSSuggestion, error) {
+	ctx = censorContext(ctx)
 	type reqBody struct {
 		BizType     string `json:"BizType,omitempty"`
 		FileURL     string `json:"FileUrl,omitempty"`
@@ -90,7 +102,7 @@ func (t *TencentIMSClient) imageModeration(ctx context.Context, fileURL, fileCon
 
 	suggestion, _ := respData["Suggestion"].(string)
 	if suggestion == "" {
-		return "", fmt.Errorf("tencent IMS: missing Suggestion in response: %v", respData)
+		return "", errTencentIMSInvalidResponse
 	}
 	return IMSSuggestion(suggestion), nil
 }
@@ -137,29 +149,48 @@ func (t *TencentIMSClient) doSignedRequest(ctx context.Context, payload []byte) 
 	req.Header.Set("X-TC-Timestamp", timestamp)
 	req.Header.Set("X-TC-Region", t.region)
 
+	finishHTTP := commandtrace.MeasureOperation(ctx, "censor.http")
 	resp, err := t.httpClient.Do(req)
+	finishHTTP()
 	if err != nil {
-		return nil, fmt.Errorf("tencent IMS: http: %w", err)
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+		return nil, errTencentIMSRequestFailed
 	}
 	defer resp.Body.Close()
 
-	b, err := io.ReadAll(resp.Body)
+	finishDecode := commandtrace.MeasureOperation(ctx, "censor.decode")
+	b, err := io.ReadAll(io.LimitReader(resp.Body, imsMaxResponseBytes+1))
 	if err != nil {
-		return nil, fmt.Errorf("tencent IMS: read body: %w", err)
+		finishDecode()
+		return nil, errTencentIMSInvalidResponse
+	}
+	if len(b) > imsMaxResponseBytes {
+		finishDecode()
+		return nil, errTencentIMSResponseTooLarge
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		finishDecode()
+		return nil, fmt.Errorf("tencent IMS returned HTTP %d", resp.StatusCode)
 	}
 
 	var outer struct {
 		Response map[string]any `json:"Response"`
 	}
 	if err := json.Unmarshal(b, &outer); err != nil {
-		return nil, fmt.Errorf("tencent IMS: unmarshal: %w", err)
+		finishDecode()
+		return nil, errTencentIMSInvalidResponse
 	}
 	if outer.Response == nil {
-		return nil, fmt.Errorf("tencent IMS: empty Response wrapper")
+		finishDecode()
+		return nil, errTencentIMSInvalidResponse
 	}
-	if apiErr, ok := outer.Response["Error"]; ok {
-		return nil, fmt.Errorf("tencent IMS API error: %v", apiErr)
+	if _, ok := outer.Response["Error"]; ok {
+		finishDecode()
+		return nil, errTencentIMSAPIRejected
 	}
+	finishDecode()
 	return outer.Response, nil
 }
 

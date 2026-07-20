@@ -15,7 +15,6 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/common"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
-	"haruki-cloud/utils/logger"
 )
 
 // UserQueryParams holds the resolved identity context for commands that query
@@ -100,7 +99,6 @@ func (sekaiHandlers) ArrestHandle() HarukiSekaiCommandHandler {
 			Path: "arrest",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			logger.Debugf("uidArg: %s, event: %+v", ctx.UIDArg(), ctx.GetEvent().Message)
 			p, err := resolveUserQueryParams(ctx)
 			if err != nil {
 				return nil, err

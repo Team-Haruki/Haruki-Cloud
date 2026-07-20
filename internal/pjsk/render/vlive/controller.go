@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/displaytime"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -55,7 +56,9 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
 	clone.sources = regionsource.NewRegistry[DataSource](c.resolveRegion(""))
 	if c.sources != nil {
 		for _, source := range c.sources.OrderedSources() {
@@ -201,7 +204,9 @@ func (c *Controller) RenderList(query ListQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildListRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

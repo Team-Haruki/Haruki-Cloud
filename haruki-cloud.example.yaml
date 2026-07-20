@@ -13,7 +13,8 @@ backend:
   ssl_key: ""
   log_level: "INFO"
   main_log_file: "main.log"
-  access_log: "[${time}] ${status} - ${latency} ${method} ${path}\n"
+  # Any non-empty value enables the canonical structured HTTP access log.
+  access_log: "structured"
   access_log_path: "access.log"
   accept_authorization: null
   accept_user_agent: null
@@ -109,6 +110,14 @@ haruki_bot:
   internal_api_token: "your-internal-api-token"
   session_ttl_days: 7
   noise_private_key: ""  # hex-encoded 32-byte X25519 private key for Noise IK transport encryption (leave empty to disable)
+  # Candidate collection window for choosing which Bot returns a shared command result.
+  # Zero uses the runtime default (200ms); a negative duration disables response election.
+  response_election_window: "200ms"
+  # Learn which bots serve each group and skip the window entirely when only one
+  # bot is expected (~90% of elections). Fail-safe: an over-counted roster falls
+  # back to the full window; an under-counted one still yields exactly one
+  # response. Members absent from 3 consecutive elections are demoted.
+  response_election_roster: false
 
 users_db:
   db_type: "postgres"
@@ -124,6 +133,16 @@ sekai_api:
   #     base_url: "https://api-b.sekai.haruki.example.com"
   #     concurrency: 8
   token: "your-haruki-sekai-api-token"
+
+toolbox:
+  base_url: "https://toolbox.haruki.example.com"
+  api_token: "your-haruki-toolbox-api-token"
+  # user_agent: "HarukiCloud/1.0"
+  # 私有 game-data 读取的条件拉取：请求携带 known_upload_time，数据未变化时
+  # Toolbox 直接返回 304（不传输快照体）。要求 Toolbox 部署支持条件读取
+  # （Haruki-Toolbox-Backend PR #58 及之后）；关闭时用 upload_time 探测模拟
+  # 相同语义（旧的两跳流程）。
+  conditional_fetch: false
 
 tracker:
   base_url: "https://tracker.haruki.example.com"

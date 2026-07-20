@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	json "github.com/bytedance/sonic"
-	"log/slog"
 	"strings"
 	"sync"
 
@@ -177,11 +176,6 @@ func (p *localHonorProvider) GetGroupByID(_ context.Context, id int) (*masterdat
 			if model.FrameName == nil && derived.frame != "" {
 				model.FrameName = new(derived.frame)
 			}
-			slog.Info("honor birthday derive trace",
-				"group_id", id,
-				"group_name", model.Name,
-				"derived_background_assetbundle_name", derived.background,
-				"derived_frame_name", derived.frame)
 		}
 	}
 	return model, nil

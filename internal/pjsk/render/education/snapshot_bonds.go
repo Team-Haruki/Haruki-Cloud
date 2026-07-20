@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"sort"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
 func (c *Controller) BuildBondsRequestFromSnapshot(query BondsQuery) (*drawing.BondsRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.traceContext(), "payload.build")
+	defer finishBuild()
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
 	if err != nil {
 		return nil, err

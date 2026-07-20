@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/snapshot"
@@ -63,8 +64,7 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 		now = time.Now().UnixMilli()
 	}
 
-	episodeSource, _ := source.(cardEpisodeSource)
-	result := make([]snapshot.RawUserCard, 0, len(allCards))
+	eligibleCards := make([]*masterdata.Card, 0, len(allCards))
 	for _, card := range allCards {
 		if card == nil || card.ID <= 0 {
 			continue
@@ -72,10 +72,29 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 		if card.ReleaseAt > 0 && card.ReleaseAt > now {
 			continue
 		}
-		episodes, err := maxProfileCardEpisodes(episodeSource, card.ID)
-		if err != nil {
-			return nil, err
+		eligibleCards = append(eligibleCards, card)
+	}
+
+	episodeSource, _ := source.(cardEpisodeSource)
+	episodesByCard, err := func() (map[int][]snapshot.RawUserCardEpisode, error) {
+		finish := commandtrace.MeasureOperation(c.contextOrBackground(), "deck.max_profile.episodes")
+		defer finish()
+		result := make(map[int][]snapshot.RawUserCardEpisode, len(eligibleCards))
+		for _, card := range eligibleCards {
+			episodes, err := maxProfileCardEpisodes(episodeSource, card.ID)
+			if err != nil {
+				return nil, err
+			}
+			result[card.ID] = episodes
 		}
+		return result, nil
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]snapshot.RawUserCard, 0, len(eligibleCards))
+	for _, card := range eligibleCards {
 		result = append(result, snapshot.RawUserCard{
 			CardID:                card.ID,
 			Level:                 maxProfileCardLevel(card.CardRarityType),
@@ -83,7 +102,7 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 			MasterRank:            5,
 			SpecialTrainingStatus: maxProfileTrainingStatus(card),
 			DefaultImage:          maxProfileDefaultImage(card),
-			Episodes:              episodes,
+			Episodes:              episodesByCard[card.ID],
 		})
 	}
 

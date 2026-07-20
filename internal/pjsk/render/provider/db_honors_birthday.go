@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strings"
 
 	sekaiDB "haruki-cloud/database/sekai"
@@ -49,18 +48,6 @@ func (p *dbHonorProvider) deriveBirthdayAssetsForGroup(ctx context.Context, grou
 			frame:      "honor_frame_birthday_" + suffix,
 		}
 		p.birthdayByGroup[groupID] = derived
-		slog.Info(
-			"honor birthday match trace",
-			"group_id", groupID,
-			"group_name", groupName,
-			"character_id", row.GameID,
-			"first_name", row.FirstName,
-			"given_name", row.GivenName,
-			"first_name_english", row.FirstNameEnglish,
-			"given_name_english", row.GivenNameEnglish,
-			"background_assetbundle_name", derived.background,
-			"frame_name", derived.frame,
-		)
 		return derived, true
 	}
 	return honorBirthdayAssets{}, false

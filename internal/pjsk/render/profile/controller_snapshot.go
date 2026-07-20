@@ -3,7 +3,9 @@ package profile
 import (
 	"fmt"
 	"strconv"
+	"sync"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -43,16 +45,34 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 	musicCounts := buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats)
 
 	nickname := detail.Nickname
-	if c.censor != nil && nickname != "" {
-		if !c.censor.CensorName(c.contextOrBackground(), 0, detail.ID, nickname, query.Region) {
-			nickname = ""
-		}
-	}
 	word := cleanWord(raw.UserProfile.Word)
-	if c.censor != nil && word != "" {
-		if !c.censor.CensorShortBio(c.contextOrBackground(), 0, strconv.FormatInt(raw.UserGamedata.UserID, 10), word, query.Region) {
-			word = ""
+	if c.censor != nil && (nickname != "" || word != "") {
+		// Name and bio moderation are independent (distinct verdict caches,
+		// separate upstream calls on miss); overlapping them halves the
+		// double-miss penalty on the render critical path. Each goroutine
+		// writes a distinct variable and wg.Wait orders those writes before
+		// the reads below.
+		censorCtx := c.contextOrBackground()
+		var wg sync.WaitGroup
+		if nickname != "" {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if !c.censor.CensorName(censorCtx, 0, detail.ID, nickname, query.Region) {
+					nickname = ""
+				}
+			}()
 		}
+		if word != "" {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if !c.censor.CensorShortBio(censorCtx, 0, strconv.FormatInt(raw.UserGamedata.UserID, 10), word, query.Region) {
+					word = ""
+				}
+			}()
+		}
+		wg.Wait()
 	}
 
 	return &drawing.ProfileRequest{
@@ -90,11 +110,12 @@ func (c *Controller) RenderProfile(query Query) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
-	logProfilePayloadDebug("snapshot", payload)
 	return c.drawing.GenerateProfile(payload)
 }
 

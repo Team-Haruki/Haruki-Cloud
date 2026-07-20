@@ -2,9 +2,11 @@ package requestbuilder
 
 import (
 	"encoding/json"
-	sonic "github.com/bytedance/sonic"
+	"fmt"
 
 	"haruki-cloud/utils/logger"
+
+	sonic "github.com/bytedance/sonic"
 )
 
 // MergeParams unmarshals the JSON params into target. Absent or invalid
@@ -15,6 +17,10 @@ func MergeParams(params json.RawMessage, target any) {
 		return
 	}
 	if err := sonic.Unmarshal(params, target); err != nil {
-		logger.Warnf("pjsk: failed to parse command params into %T: %v (raw_len=%d)", target, err, len(params))
+		logger.Warn("command parameters decode failed",
+			"target_type", fmt.Sprintf("%T", target),
+			"raw_bytes", len(params),
+			"error_type", fmt.Sprintf("%T", err),
+		)
 	}
 }

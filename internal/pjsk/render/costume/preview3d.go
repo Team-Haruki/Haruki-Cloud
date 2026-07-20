@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path"
@@ -18,6 +19,9 @@ import (
 	"sync"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/utils/logger"
+
 	"github.com/andybalholm/brotli"
 	"github.com/shamaton/msgpack/v3"
 	"golang.org/x/sync/singleflight"
@@ -26,6 +30,15 @@ import (
 const (
 	defaultPreview3DStaticRelativeDir = "static_images/pjsk_3d_preview"
 	compactRegistrySchemaVersion      = 1
+)
+
+const (
+	preview3DRegistryMaxResponseBytes = 32 << 20
+	preview3DCaptureMaxResponseBytes  = 64 << 20
+	preview3DCaptureAckMaxBytes       = 64 << 10
+	preview3DErrorResponseMaxBytes    = 4 << 10
+	preview3DCaptureCacheMaxEntries   = 8_192
+	preview3DCaptureCacheSweepEvery   = 30 * time.Second
 )
 
 var preview3DImageIDUnsafe = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
@@ -53,15 +66,41 @@ type Preview3DService struct {
 	cfg    Preview3DConfig
 	client *http.Client
 
-	captureFlight singleflight.Group
-	captureSem    chan struct{}
+	registryFlight singleflight.Group
+	captureFlight  singleflight.Group
+	staticFlight   singleflight.Group
+	captureSem     chan struct{}
 
-	mu        sync.Mutex
-	cached    map[string]*preview3DRegistry
-	cachedAt  map[string]time.Time
-	fetching  map[string]bool
-	fetchCond *sync.Cond
-	captures  map[string]time.Time
+	mu               sync.Mutex
+	cached           map[string]*preview3DRegistry
+	cachedAt         map[string]time.Time
+	captures         map[string]time.Time
+	captureNextSweep time.Time
+}
+
+type preview3DRegistryFlightToken byte
+
+type preview3DRegistryFlightResult struct {
+	registry   *preview3DRegistry
+	err        error
+	operations []commandtrace.Stats
+	leader     *preview3DRegistryFlightToken
+}
+
+type preview3DFlightToken byte
+
+type preview3DFlightResult struct {
+	err        error
+	operations []commandtrace.Stats
+	leader     *preview3DFlightToken
+}
+
+type preview3DStaticFlightToken byte
+
+type preview3DStaticFlightResult struct {
+	err        error
+	operations []commandtrace.Stats
+	leader     *preview3DStaticFlightToken
 }
 
 type preview3DEndpoint struct {
@@ -190,13 +229,11 @@ func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
 		captureSem: make(chan struct{}, cfg.CaptureMaxConcurrency),
 		cached:     make(map[string]*preview3DRegistry),
 		cachedAt:   make(map[string]time.Time),
-		fetching:   make(map[string]bool),
 		captures:   make(map[string]time.Time),
 		client: &http.Client{
 			Timeout: cfg.Timeout,
 		},
 	}
-	service.fetchCond = sync.NewCond(&service.mu)
 	return service
 }
 
@@ -216,7 +253,9 @@ func (s *Preview3DService) ResolveQueryPreviewPath(ctx context.Context, region s
 	if err != nil {
 		return "", err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
 	selection, err := registry.resolveQuery(region, costume3DID, query, s.captureCacheSignature())
+	finishPrepare()
 	if err != nil {
 		return "", err
 	}
@@ -239,7 +278,9 @@ func (s *Preview3DService) EnsureQueryPreviewCapture(ctx context.Context, region
 	if err != nil {
 		return err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
 	selection, err := registry.resolveQuery(region, costume3DID, query, s.captureCacheSignature())
+	finishPrepare()
 	if err != nil {
 		return err
 	}
@@ -261,7 +302,9 @@ func (s *Preview3DService) CaptureTemporaryCombo(ctx context.Context, region str
 	if err != nil {
 		return nil, err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
 	selection, err := registry.resolveCombo(region, query, s.captureCacheSignature())
+	finishPrepare()
 	if err != nil {
 		return nil, err
 	}
@@ -283,6 +326,8 @@ func (s *Preview3DService) HairIDsForRole(ctx context.Context, region string, ch
 	if err != nil {
 		return nil, err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
 		return nil, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
@@ -307,6 +352,8 @@ func (s *Preview3DService) AccessoryIDsForRole(ctx context.Context, region strin
 	if err != nil {
 		return nil, err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
 		return nil, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
@@ -326,6 +373,8 @@ func (s *Preview3DService) AccessoryCostume3DIDForRole(ctx context.Context, regi
 	if err != nil {
 		return 0, err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
 		return 0, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
@@ -349,6 +398,8 @@ func (s *Preview3DService) OutfitIDsForRole(ctx context.Context, region string, 
 	if err != nil {
 		return nil, err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
 		return nil, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
@@ -368,6 +419,8 @@ func (s *Preview3DService) OutfitCostume3DIDForRole(ctx context.Context, region 
 	if err != nil {
 		return 0, err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
 		return 0, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
@@ -391,6 +444,8 @@ func (s *Preview3DService) HairCostume3DIDForRole(ctx context.Context, region st
 	if err != nil {
 		return 0, err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
 		return 0, fmt.Errorf("3d combo role not found: character3d=%d", character3DID)
@@ -414,6 +469,8 @@ func (s *Preview3DService) AccessoryCatalog(ctx context.Context, region string, 
 	if err != nil {
 		return nil, err
 	}
+	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	defer finishPrepare()
 	var roles []preview3DCharacterEntry
 	if character3DID > 0 {
 		roles = registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
@@ -432,39 +489,74 @@ func (s *Preview3DService) AccessoryCatalog(ctx context.Context, region string, 
 }
 
 func (s *Preview3DService) registry(ctx context.Context, endpoint preview3DEndpoint) (*preview3DRegistry, error) {
-	if cached := s.validCachedRegistry(endpoint); cached != nil {
-		return cached, nil
+	if ctx == nil {
+		ctx = context.Background()
 	}
-
-	s.mu.Lock()
 	key := endpoint.key()
-	for s.fetching[key] {
-		s.fetchCond.Wait()
-	}
-	if cached := s.validCachedRegistryLocked(endpoint, time.Now()); cached != nil {
-		s.mu.Unlock()
+	finishLookup := commandtrace.MeasureOperation(ctx, "preview3d.registry_lookup")
+	s.mu.Lock()
+	cached := s.validCachedRegistryLocked(endpoint, time.Now())
+	s.mu.Unlock()
+	finishLookup()
+	if cached != nil {
 		return cached, nil
 	}
-	s.fetching[key] = true
-	s.mu.Unlock()
 
-	registry, err := s.fetchRegistry(ctx, endpoint)
+	callerToken := new(preview3DRegistryFlightToken)
+	resultCh := s.registryFlight.DoChan(key, func() (any, error) {
+		timeout := 3 * s.cfg.Timeout
+		if timeout <= 0 {
+			timeout = 45 * time.Second
+		}
+		detached := logger.WithContextAttrs(context.Background(), slog.Bool("shared_work", true))
+		sharedBase, cancel := context.WithTimeout(detached, timeout)
+		defer cancel()
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+		complete := func(result preview3DRegistryFlightResult) preview3DRegistryFlightResult {
+			result.operations = trace.Snapshot().Operations
+			return result
+		}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.fetching[key] = false
-	if err == nil {
-		s.cached[key] = registry
-		s.cachedAt[key] = time.Now()
+		finishLookup := commandtrace.MeasureOperation(sharedCtx, "preview3d.registry_lookup")
+		s.mu.Lock()
+		cached := s.validCachedRegistryLocked(endpoint, time.Now())
+		s.mu.Unlock()
+		finishLookup()
+		if cached != nil {
+			return complete(preview3DRegistryFlightResult{registry: cached, leader: callerToken}), nil
+		}
+
+		registry, err := s.fetchRegistry(sharedCtx, endpoint)
+
+		if err == nil {
+			s.mu.Lock()
+			s.cached[key] = registry
+			s.cachedAt[key] = time.Now()
+			s.mu.Unlock()
+		}
+		return complete(preview3DRegistryFlightResult{registry: registry, err: err, leader: callerToken}), nil
+	})
+
+	finishWait := commandtrace.MeasureOperation(ctx, "preview3d.registry_wait")
+	select {
+	case <-ctx.Done():
+		finishWait()
+		return nil, ctx.Err()
+	case completed := <-resultCh:
+		finishWait()
+		if completed.Err != nil {
+			return nil, completed.Err
+		}
+		result, ok := completed.Val.(preview3DRegistryFlightResult)
+		if !ok {
+			return nil, fmt.Errorf("3d preview registry returned unexpected shared result %T", completed.Val)
+		}
+		commandtrace.MergeOperations(ctx, result.operations)
+		if result.leader != callerToken {
+			commandtrace.RecordOperation(ctx, "preview3d.registry_shared", 0)
+		}
+		return result.registry, result.err
 	}
-	s.fetchCond.Broadcast()
-	return registry, err
-}
-
-func (s *Preview3DService) validCachedRegistry(endpoint preview3DEndpoint) *preview3DRegistry {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.validCachedRegistryLocked(endpoint, time.Now())
 }
 
 func (s *Preview3DService) validCachedRegistryLocked(endpoint preview3DEndpoint, now time.Time) *preview3DRegistry {
@@ -537,7 +629,9 @@ func (s *Preview3DService) getRegistryResponse(
 	if err != nil {
 		return nil, err
 	}
+	finishHTTP := commandtrace.MeasureOperation(ctx, "preview3d.registry_http")
 	resp, err := s.client.Do(req)
+	finishHTTP()
 	if err != nil {
 		return nil, fmt.Errorf("3d preview registry request failed: %w", err)
 	}
@@ -560,30 +654,42 @@ func (s *Preview3DService) getMessagePackRegistry(
 		return err
 	}
 	defer resp.Body.Close()
-	packed, err := io.ReadAll(brotli.NewReader(resp.Body))
-	if err != nil {
-		return fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, err)
+	finishDecode := commandtrace.MeasureOperation(ctx, "preview3d.registry_decode")
+	if resp.ContentLength > preview3DRegistryMaxResponseBytes {
+		finishDecode()
+		return fmt.Errorf("3d preview registry response exceeds %d bytes", preview3DRegistryMaxResponseBytes)
 	}
-	if asArray {
-		err = msgpack.UnmarshalAsArray(packed, out)
-	} else {
-		err = msgpack.Unmarshal(packed, out)
+	resp.Body = io.NopCloser(brotli.NewReader(resp.Body))
+	packed, err := readPreview3DResponse(resp, preview3DRegistryMaxResponseBytes, "3d preview registry")
+	if err == nil {
+		var decodeErr error
+		if asArray {
+			decodeErr = msgpack.UnmarshalAsArray(packed, out)
+		} else {
+			decodeErr = msgpack.Unmarshal(packed, out)
+		}
+		if decodeErr != nil {
+			err = fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, decodeErr)
+		}
 	}
-	if err != nil {
-		return fmt.Errorf("3d preview registry %s decode failed: %w", requestPath, err)
-	}
-	return nil
+	finishDecode()
+	return err
 }
 
 func (s *Preview3DService) captureExists(ctx context.Context, endpoint preview3DEndpoint, imageID string) bool {
+	finishLookup := commandtrace.MeasureOperation(ctx, "preview3d.capture_lookup")
 	if s.cachedCaptureExists(endpoint, imageID) {
+		finishLookup()
 		return true
 	}
+	finishLookup()
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, s.url(endpoint, "/captures/"+imageID+".png"), nil)
 	if err != nil {
 		return false
 	}
+	finishHTTP := commandtrace.MeasureOperation(ctx, "preview3d.capture_head")
 	resp, err := s.client.Do(req)
+	finishHTTP()
 	if err != nil {
 		return false
 	}
@@ -602,11 +708,13 @@ func (s *Preview3DService) cachedCaptureExists(endpoint preview3DEndpoint, image
 	key := endpoint.captureKey(imageID)
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	now := time.Now()
+	s.sweepCaptureCacheLocked(now)
 	expiresAt, ok := s.captures[key]
 	if !ok {
 		return false
 	}
-	if time.Now().Before(expiresAt) {
+	if now.Before(expiresAt) {
 		return true
 	}
 	delete(s.captures, key)
@@ -619,32 +727,98 @@ func (s *Preview3DService) markCaptureExists(endpoint preview3DEndpoint, imageID
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.captures[endpoint.captureKey(imageID)] = time.Now().Add(s.cfg.CaptureExistsTTL)
+	now := time.Now()
+	s.sweepCaptureCacheLocked(now)
+	s.captures[endpoint.captureKey(imageID)] = now.Add(s.cfg.CaptureExistsTTL)
+}
+
+func (s *Preview3DService) sweepCaptureCacheLocked(now time.Time) {
+	if s.captures == nil {
+		s.captures = make(map[string]time.Time)
+	}
+	if now.Before(s.captureNextSweep) && len(s.captures) < preview3DCaptureCacheMaxEntries {
+		return
+	}
+	for key, expiresAt := range s.captures {
+		if !now.Before(expiresAt) {
+			delete(s.captures, key)
+		}
+	}
+	s.captureNextSweep = now.Add(preview3DCaptureCacheSweepEvery)
+
+	if len(s.captures) < preview3DCaptureCacheMaxEntries {
+		return
+	}
+	// The existence cache is only an optimization. Evict a batch instead of
+	// paying an O(n) oldest-entry search on every insertion at capacity.
+	target := preview3DCaptureCacheMaxEntries * 3 / 4
+	for key := range s.captures {
+		delete(s.captures, key)
+		if len(s.captures) <= target {
+			break
+		}
+	}
 }
 
 func (s *Preview3DService) ensureCapture(ctx context.Context, endpoint preview3DEndpoint, selection preview3DSelection, cacheMode string) error {
 	if s.captureExists(ctx, endpoint, selection.ImageID) {
 		return nil
 	}
-	_, err, _ := s.captureFlight.Do(endpoint.captureKey(selection.ImageID), func() (any, error) {
-		if s.captureExists(ctx, endpoint, selection.ImageID) {
-			return nil, nil
+	callerToken := new(preview3DFlightToken)
+	resultCh := s.captureFlight.DoChan(endpoint.captureKey(selection.ImageID), func() (any, error) {
+		timeout := s.cfg.CaptureAcquireTimeout + 3*s.cfg.Timeout
+		if timeout <= 0 {
+			timeout = 30 * time.Second
 		}
-		release, err := s.acquireCapturePermit(ctx)
+		detached := logger.WithContextAttrs(context.Background(), slog.Bool("shared_work", true))
+		sharedBase, cancel := context.WithTimeout(detached, timeout)
+		defer cancel()
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+		result := preview3DFlightResult{leader: callerToken}
+		if s.captureExists(sharedCtx, endpoint, selection.ImageID) {
+			result.operations = trace.Snapshot().Operations
+			return result, nil
+		}
+		release, err := s.acquireCapturePermit(sharedCtx)
 		if err != nil {
-			return nil, err
+			result.err = err
+			result.operations = trace.Snapshot().Operations
+			return result, nil
 		}
 		defer release()
-		if s.captureExists(ctx, endpoint, selection.ImageID) {
-			return nil, nil
+		if s.captureExists(sharedCtx, endpoint, selection.ImageID) {
+			result.operations = trace.Snapshot().Operations
+			return result, nil
 		}
-		if err := s.captureSelection(ctx, endpoint, selection, cacheMode); err != nil {
-			return nil, err
+		if err := s.captureSelection(sharedCtx, endpoint, selection, cacheMode); err != nil {
+			result.err = err
+			result.operations = trace.Snapshot().Operations
+			return result, nil
 		}
 		s.markCaptureExists(endpoint, selection.ImageID)
-		return nil, nil
+		result.operations = trace.Snapshot().Operations
+		return result, nil
 	})
-	return err
+	finishWait := commandtrace.MeasureOperation(ctx, "preview3d.capture_wait")
+	select {
+	case <-ctx.Done():
+		finishWait()
+		return ctx.Err()
+	case completed := <-resultCh:
+		finishWait()
+		if completed.Err != nil {
+			return completed.Err
+		}
+		result, ok := completed.Val.(preview3DFlightResult)
+		if !ok {
+			return fmt.Errorf("3d preview capture returned unexpected shared result %T", completed.Val)
+		}
+		commandtrace.MergeOperations(ctx, result.operations)
+		if result.leader != callerToken {
+			commandtrace.RecordOperation(ctx, "preview3d.capture_shared", 0)
+		}
+		return result.err
+	}
 }
 
 func (s *Preview3DService) acquireCapturePermit(ctx context.Context) (func(), error) {
@@ -656,11 +830,14 @@ func (s *Preview3DService) acquireCapturePermit(ctx context.Context) (func(), er
 	if s.cfg.CaptureAcquireTimeout > 0 {
 		waitCtx, cancel = context.WithTimeout(ctx, s.cfg.CaptureAcquireTimeout)
 	}
+	finishQueue := commandtrace.MeasureOperation(ctx, "preview3d.capture_queue")
 	select {
 	case s.captureSem <- struct{}{}:
+		finishQueue()
 		cancel()
 		return func() { <-s.captureSem }, nil
 	case <-waitCtx.Done():
+		finishQueue()
 		cancel()
 		return nil, fmt.Errorf("3d preview capture is busy")
 	}
@@ -699,7 +876,9 @@ func (s *Preview3DService) captureSelection(ctx context.Context, endpoint previe
 	if s.cfg.Scale > 0 {
 		body["scale"] = s.cfg.Scale
 	}
+	finishEncode := commandtrace.MeasureOperation(ctx, "preview3d.capture_encode")
 	payload, err := json.Marshal(body)
+	finishEncode()
 	if err != nil {
 		return err
 	}
@@ -708,14 +887,22 @@ func (s *Preview3DService) captureSelection(ctx context.Context, endpoint previe
 		return err
 	}
 	req.Header.Set("content-type", "application/json")
+	finishHTTP := commandtrace.MeasureOperation(ctx, "preview3d.capture_http")
 	resp, err := s.client.Do(req)
 	if err != nil {
+		finishHTTP()
 		return fmt.Errorf("3d preview capture request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		message, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		message, _ := io.ReadAll(io.LimitReader(resp.Body, preview3DErrorResponseMaxBytes))
+		finishHTTP()
 		return fmt.Errorf("3d preview capture returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(message)))
+	}
+	_, err = readPreview3DResponse(resp, preview3DCaptureAckMaxBytes, "3d preview capture")
+	finishHTTP()
+	if err != nil {
+		return fmt.Errorf("3d preview capture response failed: %w", err)
 	}
 	return nil
 }
@@ -725,35 +912,176 @@ func (s *Preview3DService) getCapture(ctx context.Context, endpoint preview3DEnd
 	if err != nil {
 		return nil, err
 	}
+	finishHTTP := commandtrace.MeasureOperation(ctx, "preview3d.fetch_http")
 	resp, err := s.client.Do(req)
 	if err != nil {
+		finishHTTP()
 		return nil, fmt.Errorf("3d preview capture fetch request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		message, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		message, _ := io.ReadAll(io.LimitReader(resp.Body, preview3DErrorResponseMaxBytes))
+		finishHTTP()
 		return nil, fmt.Errorf("3d preview capture fetch returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(message)))
 	}
-	return io.ReadAll(resp.Body)
+	data, err := readPreview3DResponse(resp, preview3DCaptureMaxResponseBytes, "3d preview capture fetch")
+	finishHTTP()
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func readPreview3DResponse(resp *http.Response, maxBytes int64, label string) ([]byte, error) {
+	if resp == nil || resp.Body == nil {
+		return nil, fmt.Errorf("%s response body is unavailable", label)
+	}
+	if resp.ContentLength > maxBytes {
+		return nil, fmt.Errorf("%s response exceeds %d bytes", label, maxBytes)
+	}
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("%s response read failed: %w", label, err)
+	}
+	if int64(len(data)) > maxBytes {
+		return nil, fmt.Errorf("%s response exceeds %d bytes", label, maxBytes)
+	}
+	return data, nil
 }
 
 func (s *Preview3DService) ensureStaticCaptureFile(ctx context.Context, endpoint preview3DEndpoint, imageID string) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	staticOutputDir := strings.TrimSpace(s.cfg.StaticOutputDir)
 	if staticOutputDir == "" || strings.TrimSpace(imageID) == "" {
 		return nil
 	}
 	target := filepath.Join(staticOutputDir, imageID+".png")
+	finishLookup := commandtrace.MeasureOperation(ctx, "preview3d.static_lookup")
 	if _, err := os.Stat(target); err == nil {
+		finishLookup()
 		return nil
+	} else if !os.IsNotExist(err) {
+		finishLookup()
+		return err
 	}
-	data, err := s.getCapture(ctx, endpoint, imageID)
+	finishLookup()
+
+	callerToken := new(preview3DStaticFlightToken)
+	resultCh := s.staticFlight.DoChan(target, func() (any, error) {
+		sharedBase, cancel := s.staticCaptureSharedContext()
+		defer cancel()
+		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+		complete := func(err error) preview3DStaticFlightResult {
+			return preview3DStaticFlightResult{
+				err:        err,
+				operations: trace.Snapshot().Operations,
+				leader:     callerToken,
+			}
+		}
+
+		// Another process or an earlier waiter may have published the target
+		// between the caller-side fast path and this shared worker.
+		finishStat := commandtrace.MeasureOperation(sharedCtx, "preview3d.static_stat")
+		if _, err := os.Stat(target); err == nil {
+			finishStat()
+			return complete(nil), nil
+		} else if !os.IsNotExist(err) {
+			finishStat()
+			return complete(err), nil
+		}
+		finishStat()
+
+		// readPreview3DResponse allocates this slice for the shared worker; it
+		// never aliases caller-owned memory or escapes to another waiter.
+		data, err := s.getCapture(sharedCtx, endpoint, imageID)
+		if err != nil {
+			return complete(err), nil
+		}
+		finishMkdir := commandtrace.MeasureOperation(sharedCtx, "preview3d.static_mkdir")
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			finishMkdir()
+			return complete(err), nil
+		}
+		finishMkdir()
+
+		finishStore := commandtrace.MeasureOperation(sharedCtx, "preview3d.store")
+		err = writePreview3DCaptureAtomically(sharedCtx, target, data)
+		finishStore()
+		return complete(err), nil
+	})
+
+	finishWait := commandtrace.MeasureOperation(ctx, "preview3d.static_wait")
+	select {
+	case <-ctx.Done():
+		finishWait()
+		return ctx.Err()
+	case completed := <-resultCh:
+		finishWait()
+		if completed.Err != nil {
+			return completed.Err
+		}
+		result, ok := completed.Val.(preview3DStaticFlightResult)
+		if !ok {
+			return fmt.Errorf("3d preview static capture returned unexpected shared result %T", completed.Val)
+		}
+		commandtrace.MergeOperations(ctx, result.operations)
+		if result.leader != callerToken {
+			commandtrace.RecordOperation(ctx, "preview3d.static_shared", 0)
+		}
+		return result.err
+	}
+}
+
+func (s *Preview3DService) staticCaptureSharedContext() (context.Context, context.CancelFunc) {
+	timeout := s.cfg.Timeout + 30*time.Second
+	if timeout <= 0 {
+		timeout = 45 * time.Second
+	}
+	shared := logger.WithContextAttrs(context.Background(), slog.Bool("shared_work", true))
+	return context.WithTimeout(shared, timeout)
+}
+
+func writePreview3DCaptureAtomically(ctx context.Context, targetPath string, data []byte) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	finishWrite := commandtrace.MeasureOperation(ctx, "preview3d.static_write")
+	tmp, err := os.CreateTemp(filepath.Dir(targetPath), "."+filepath.Base(targetPath)+".tmp-*")
 	if err != nil {
+		finishWrite()
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+	tmpName := tmp.Name()
+	defer func() {
+		_ = os.Remove(tmpName)
+	}()
+	if _, err := tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		finishWrite()
 		return err
 	}
-	return os.WriteFile(target, data, 0o644)
+	if err := tmp.Chmod(0o644); err != nil {
+		_ = tmp.Close()
+		finishWrite()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		finishWrite()
+		return err
+	}
+	finishWrite()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	finishRename := commandtrace.MeasureOperation(ctx, "preview3d.static_rename")
+	err = os.Rename(tmpName, targetPath)
+	finishRename()
+	return err
 }
 
 func (s *Preview3DService) url(endpoint preview3DEndpoint, requestPath string) string {
@@ -988,13 +1316,14 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 }
 
 func (r *preview3DRegistry) resolveQuery(region string, costume3DID int, query Query, cacheSignature string) (preview3DSelection, error) {
-	if query.Character3DID > 0 && (query.OutfitID > 0 || query.AccessoryID > 0) {
+	if query.Character3DID > 0 && (query.OutfitID > 0 || query.AccessoryID > 0 || query.HairID > 0) {
 		return r.resolveCombo(region, ComboQuery{
 			Region:           region,
 			OutfitID:         query.OutfitID,
 			OutfitColorID:    query.ColorID,
 			AccessoryID:      query.AccessoryID,
 			AccessoryColorID: query.ColorID,
+			HairID:           query.HairID,
 			Character3DID:    query.Character3DID,
 		}, cacheSignature)
 	}
@@ -1082,8 +1411,8 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	if !explicitBody && useAnchorGroup {
 		if part, ok := r.groupPart(anchor, role.Unit, "body"); ok {
 			bodyID = part.Costume3DID
-		} else if resolvedAccessoryID >= 1000 {
-			if part, ok := r.outfitPartForRole(resolvedAccessoryID/1000, anchor.ColorID, role); ok {
+		} else if anchor.Costume3DGroupID >= 1000 {
+			if part, ok := r.outfitPartForRole(anchor.Costume3DGroupID/1000, anchor.ColorID, role); ok {
 				bodyID = part.Costume3DID
 			}
 		}

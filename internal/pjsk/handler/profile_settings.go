@@ -576,7 +576,7 @@ func executeCheckData(rc *RequestContext) (onebot11.Message, error) {
 		bindingServer = region
 	}
 
-	raw, err := rc.App.Toolbox.GetUploadTime(bindingServer, dataType, uid, platform, platformUserID)
+	raw, err := rc.App.Toolbox.GetUploadTimeContext(rc.Ctx, bindingServer, dataType, uid, platform, platformUserID)
 	if err != nil {
 		if normalized := normalizeToolboxDataFetchError(err, label, currentBinding); normalized != nil {
 			return nil, normalized

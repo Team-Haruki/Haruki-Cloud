@@ -14,9 +14,11 @@ import (
 
 func TestNormalizeToolboxDataFetchError(t *testing.T) {
 	binding := &accountdata.ResolvedBinding{
-		Server:     "jp",
-		PJSKUserID: "12345678901234",
-		Visible:    false,
+		Server:         "jp",
+		PJSKUserID:     "12345678901234",
+		Visible:        false,
+		SuiteVisible:   true,
+		MySekaiVisible: true,
 	}
 
 	testCases := []struct {
@@ -93,6 +95,27 @@ func TestNormalizeToolboxDataFetchError(t *testing.T) {
 			assertReplayErrorText(t, err, tc.wantErr)
 		})
 	}
+}
+
+func TestPrivateDataNotFoundErrorsExplainHiddenBindings(t *testing.T) {
+	binding := &accountdata.ResolvedBinding{
+		Server:         "cn",
+		PJSKUserID:     "7558747506658564903",
+		Visible:        true,
+		SuiteVisible:   false,
+		MySekaiVisible: false,
+	}
+
+	assertReplayErrorText(
+		t,
+		newSuiteDataNotFoundReplayErrorForBinding(binding),
+		"你已自行隐藏 CN服7558747506658564903 的 suite 抓包信息，请先发送“/展示抓包”恢复展示后再重试",
+	)
+	assertReplayErrorText(
+		t,
+		newMySekaiDataNotFoundReplayErrorForBinding(binding),
+		"你已自行隐藏 CN服7558747506658564903 的 mysekai 抓包信息，请先发送“/展示烤森抓包”恢复展示后再重试",
+	)
 }
 
 func TestTempProfileUsesTemporaryBindingNotice(t *testing.T) {

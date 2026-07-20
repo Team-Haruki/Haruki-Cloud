@@ -210,7 +210,9 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = eventCtrl.RenderEventList(q)
 	case "event-record":
+		finishBuild := measurePayloadBuild(rc.Ctx)
 		req, buildErr := buildEventRecordFromSnapshot(rc, region)
+		finishBuild()
 		if buildErr != nil {
 			return nil, buildErr
 		}

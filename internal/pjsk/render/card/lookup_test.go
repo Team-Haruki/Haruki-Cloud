@@ -23,6 +23,8 @@ type lookupTestSource struct {
 	supplyByCard     map[int]string
 	filterFunc       func(*PjskCardQueryInfo) ([]*masterdata.Card, error)
 	allowEmptyFilter bool
+	skillLookups     int
+	colorLookups     int
 }
 
 func (s *lookupTestSource) DefaultRegion() renderregion.Value {
@@ -120,6 +122,7 @@ func (s *lookupTestSource) GetCharacterByID(id int) (*masterdata.Character, erro
 }
 
 func (s *lookupTestSource) GetCharacterColorCode(id int) (string, bool) {
+	s.colorLookups++
 	return "", false
 }
 
@@ -142,6 +145,7 @@ func (s *lookupTestSource) GetCardSupplyType(card *masterdata.Card) string {
 }
 
 func (s *lookupTestSource) GetSkillByID(id int) (*masterdata.Skill, error) {
+	s.skillLookups++
 	return nil, fmt.Errorf("skill %d not found", id)
 }
 

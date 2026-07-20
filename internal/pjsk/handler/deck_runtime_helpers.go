@@ -12,6 +12,8 @@ import (
 	"haruki-cloud/internal/pjsk/render/profile"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+
+	"golang.org/x/sync/errgroup"
 )
 
 func formatDeckQuerySummary(q deck.AutoQuery) string {
@@ -92,6 +94,22 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 
 	selector = strings.TrimSpace(selector)
 	if selector == "" {
+		// Resolve the binding first, single-threaded. GetBinding is the only path
+		// that creates the user identity on first contact, and both warmers below
+		// funnel through it (ResolveSnapshot->GetBinding and
+		// GetPublicProfileResponse->GetSelfTarget->GetBinding). Pre-resolving it
+		// here means the concurrent warmers only read the already-created identity
+		// instead of racing first-time creation for an unbound user.
+		rc.GetBinding()
+		// The suite snapshot (Toolbox) and the public profile (SekaiAPI) are
+		// both required here and are independent once the binding is known, so
+		// warm them concurrently. Both accessors memoize via sync.Once, so the
+		// serial logic below consumes the already-resolved results.
+		var warm errgroup.Group
+		warm.Go(func() error { rc.ResolveSnapshot(false); return nil })
+		warm.Go(func() error { rc.GetPublicProfileResponse(); return nil })
+		_ = warm.Wait()
+
 		binding, snapshot, err := rc.requireVisibleSuiteSnapshot()
 		if err != nil {
 			return nil, nil, "", nil, err
@@ -121,11 +139,26 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 	}
 	region := resolvedTargetRegion(rc.RegionStr, target)
 
-	snapshot := resolveTargetSnapshot(rc.Ctx, rc.App, region, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
+	// The target snapshot (Toolbox) and public profile (SekaiAPI) both depend
+	// only on the resolved target, so fetch them concurrently.
+	var (
+		snapshot rendersnapshot.Snapshot
+		resp     *sekaiapi.GetAnotherProfileResponse
+	)
+	var group errgroup.Group
+	group.Go(func() error {
+		snapshot = resolveTargetSnapshot(rc.Ctx, rc.App, region, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
+		return nil
+	})
+	group.Go(func() error {
+		resp = resolveDeckPublicProfileForTarget(rc, target, region)
+		return nil
+	})
+	_ = group.Wait()
+
 	if target.Binding != nil && snapshot == nil {
 		return nil, nil, region, nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)
 	}
-	resp := resolveDeckPublicProfileForTarget(rc, target, region)
 	detail := buildDeckDetailedProfileForTargetWithResponse(rc, target, region, snapshot, resp)
 	if detail == nil && snapshot != nil {
 		detail = snapshot.DetailedProfile(renderregion.Normalize(region))
@@ -174,7 +207,9 @@ func buildDeckDetailedProfileForTargetWithResponse(rc *RequestContext, target Re
 		Visible:    target.Visible,
 		BgSettings: target.BgSettings,
 	}
-	detail, err := rc.App.Profiles.BuildDetailedProfileCardFromAPIWithSnapshot(q, resp, snapshot)
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	detail, err := rc.App.Profiles.WithContext(rc.Ctx).BuildDetailedProfileCardFromAPIWithSnapshot(q, resp, snapshot)
+	finishBuild()
 	if err != nil {
 		return nil
 	}

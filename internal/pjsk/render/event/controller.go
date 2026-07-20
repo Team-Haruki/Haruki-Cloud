@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/eventutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -37,7 +38,9 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {
@@ -61,7 +64,9 @@ func (c *Controller) RenderEventDetail(query DetailQuery) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildEventDetailRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +86,9 @@ func (c *Controller) RenderEventList(query ListQuery) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	req, err := c.BuildEventListRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +115,9 @@ func (c *Controller) RenderEventRecord(req drawing.EventRecordRequest) ([]byte, 
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildEventRecordRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

@@ -390,12 +390,11 @@ func tryRenderAliasQueryAsImage(rc *RequestContext) (onebot11.Message, bool, err
 	}
 	payload, renderErr := rc.App.Misc.WithContext(rc.Ctx).RenderAliasList(req)
 	if renderErr != nil {
-		slog.Warn("alias image fallback render failed",
+		slog.WarnContext(rc.Ctx, "alias image fallback render failed",
 			"alias_type", params.AliasType,
-			"target", params.Target,
 			"entity_id", result.Entity.ID,
 			"alias_count", len(result.Aliases),
-			"error", renderErr,
+			"error_type", fmt.Sprintf("%T", renderErr),
 		)
 		return nil, false, nil
 	}

@@ -126,12 +126,12 @@ type birthdayMonitorTestGuard struct {
 	request   BotCommandRequest
 }
 
-func (g *birthdayMonitorTestGuard) Acquire(_ context.Context, req BotCommandRequest) bool {
+func (g *birthdayMonitorTestGuard) Acquire(_ context.Context, req BotCommandRequest) requestGuardLease {
 	g.acquired++
 	g.request = req
-	return g.allow
+	return requestGuardLease{proceed: g.allow, token: "test-owner"}
 }
 
-func (g *birthdayMonitorTestGuard) MarkComplete(_ context.Context, _ BotCommandRequest) {
+func (g *birthdayMonitorTestGuard) MarkComplete(_ context.Context, _ BotCommandRequest, _ requestGuardLease) {
 	g.completed++
 }

@@ -358,7 +358,13 @@ func (s *BindingService) probeUID(ctx context.Context, uid string) ([]profilePro
 	failures := make([]string, 0, len(AllBindingServers))
 
 	for _, server := range AllBindingServers {
-		resp, err := s.validator.GetUserProfile(server.String(), uid)
+		var resp *sekaiapi.GetAnotherProfileResponse
+		var err error
+		if validator, ok := s.validator.(contextProfileValidator); ok {
+			resp, err = validator.GetUserProfileContext(ctx, server.String(), uid)
+		} else {
+			resp, err = s.validator.GetUserProfile(server.String(), uid)
+		}
 		if err == nil {
 			name := strings.TrimSpace(resp.User.Name)
 			if name == "" {

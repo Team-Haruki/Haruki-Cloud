@@ -1,7 +1,9 @@
 package deck
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	sonic "github.com/bytedance/sonic"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 )
 
@@ -49,11 +52,183 @@ func testRemoteTargetState(t *testing.T, recommender *RemoteDeckRecommender) *re
 
 func testRemoteExecution(t *testing.T, recommender *RemoteDeckRecommender) *remoteExecution {
 	t.Helper()
-	exec, err := recommender.acquireExecution()
+	exec, err := recommender.acquireExecution(context.Background())
 	if err != nil {
 		t.Fatalf("acquireExecution() error = %v", err)
 	}
 	return exec
+}
+
+func testRemoteRecommendRequest() RecommendRequest {
+	return RecommendRequest{
+		Region:    "jp",
+		UserData:  []byte(`{"user":"ok"}`),
+		MusicMeta: []byte(`[{"music_id":10000,"difficulty":"master"}]`),
+		BatchOption: []map[string]any{
+			{"algorithm": "ga", "target": "score", "live_type": "multi", "limit": 1},
+		},
+	}
+}
+
+func traceOperation(snapshot commandtrace.Snapshot, name string) (commandtrace.Stats, bool) {
+	for _, operation := range snapshot.Operations {
+		if operation.Name == name {
+			return operation, true
+		}
+	}
+	return commandtrace.Stats{}, false
+}
+
+func TestRemoteRecommendContextCancelsPoolWait(t *testing.T) {
+	targets := []upstream.TargetConfig{{
+		Name:        "deck-service",
+		BaseURL:     "http://127.0.0.1:1",
+		Concurrency: 1,
+	}}
+	recommender := newTestRemoteDeckRecommenderWithTargets(targets, &http.Client{Timeout: time.Second})
+	held, err := recommender.pool.Acquire(context.Background())
+	if err != nil {
+		t.Fatalf("hold pool lease: %v", err)
+	}
+	defer held.Release()
+
+	traceCtx, trace := commandtrace.WithTrace(context.Background())
+	ctx, cancel := context.WithTimeout(traceCtx, 50*time.Millisecond)
+	defer cancel()
+	startedAt := time.Now()
+	_, err = recommender.RecommendContext(ctx, testRemoteRecommendRequest())
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("RecommendContext() error = %v, want context.DeadlineExceeded", err)
+	}
+	if elapsed := time.Since(startedAt); elapsed > time.Second {
+		t.Fatalf("pool cancellation took %v", elapsed)
+	}
+	queue, ok := traceOperation(trace.Snapshot(), "deck.queue")
+	if !ok || queue.Count != 1 {
+		t.Fatalf("deck.queue operation = %+v, found=%t", queue, ok)
+	}
+}
+
+func TestRemoteRecommendContextCancelsRetryWaitAndRecordsOperations(t *testing.T) {
+	var calls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		http.Error(w, "retry", http.StatusServiceUnavailable)
+	}))
+	defer server.Close()
+
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.maxRetries = 3
+	recommender.retryWaitTime = 5 * time.Second
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
+	request := testRemoteRecommendRequest()
+	state := testRemoteTargetState(t, recommender)
+	state.musicMetaHash = hashPayload(request.MusicMeta)
+
+	traceCtx, trace := commandtrace.WithTrace(context.Background())
+	ctx, cancel := context.WithTimeout(traceCtx, 100*time.Millisecond)
+	defer cancel()
+	startedAt := time.Now()
+	_, err := recommender.RecommendContext(ctx, request)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("RecommendContext() error = %v, want context.DeadlineExceeded", err)
+	}
+	if elapsed := time.Since(startedAt); elapsed > time.Second {
+		t.Fatalf("retry cancellation took %v", elapsed)
+	}
+	if got := calls.Load(); got != 1 {
+		t.Fatalf("HTTP calls = %d, want 1", got)
+	}
+	snapshot := trace.Snapshot()
+	if operation, ok := traceOperation(snapshot, "deck.queue"); !ok || operation.Count != 1 {
+		t.Fatalf("deck.queue operation = %+v, found=%t", operation, ok)
+	}
+	if operation, ok := traceOperation(snapshot, "deck.http"); !ok || operation.Count != 1 {
+		t.Fatalf("deck.http operation = %+v, found=%t", operation, ok)
+	}
+	if operation, ok := traceOperation(snapshot, "deck.retry_wait"); !ok || operation.Count != 1 {
+		t.Fatalf("deck.retry_wait operation = %+v, found=%t", operation, ok)
+	}
+}
+
+func TestRemoteRecommendContextCancelsLegacyFanout(t *testing.T) {
+	legacyStarted := make(chan struct{}, 1)
+	release := make(chan struct{})
+	var activeLegacy atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/cache_userdata":
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			if r.Header.Get("Content-Type") == "application/octet-stream" {
+				http.NotFound(w, r)
+				return
+			}
+			activeLegacy.Add(1)
+			defer activeLegacy.Add(-1)
+			select {
+			case legacyStarted <- struct{}{}:
+			default:
+			}
+			select {
+			case <-r.Context().Done():
+			case <-release:
+			}
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	var releaseOnce sync.Once
+	releaseServer := func() { releaseOnce.Do(func() { close(release) }) }
+	defer func() {
+		releaseServer()
+		server.Close()
+	}()
+
+	recommender := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	recommender.maxRetries = 0
+	recommender.logger = logger.NewLogger("DeckRemoteTest", "DEBUG", nil)
+	request := testRemoteRecommendRequest()
+	request.BatchOption = make([]map[string]any, 32)
+	for index := range request.BatchOption {
+		request.BatchOption[index] = map[string]any{
+			"algorithm": "ga",
+			"target":    "score",
+			"live_type": "multi",
+			"limit":     1,
+		}
+	}
+	state := testRemoteTargetState(t, recommender)
+	state.musicMetaHash = hashPayload(request.MusicMeta)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	result := make(chan error, 1)
+	go func() {
+		_, err := recommender.RecommendBatchContext(ctx, request)
+		result <- err
+	}()
+	select {
+	case <-legacyStarted:
+	case <-time.After(time.Second):
+		t.Fatal("legacy fallback did not start")
+	}
+	cancel()
+	select {
+	case err := <-result:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("RecommendBatchContext() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("legacy fallback did not stop after cancellation")
+	}
+	releaseServer()
+	deadline := time.Now().Add(time.Second)
+	for activeLegacy.Load() != 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	if active := activeLegacy.Load(); active != 0 {
+		t.Fatalf("%d legacy requests remained active after cancellation", active)
+	}
 }
 
 func TestParseRemoteRecommendBatchSupportsLegacySingleResponse(t *testing.T) {
@@ -1046,7 +1221,7 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 			<-start
 			exec := testRemoteExecution(t, remote)
 			defer exec.Release()
-			errs <- remote.ensureReady(exec, "jp", firstMeta, "")
+			errs <- remote.ensureReady(context.Background(), exec, "jp", firstMeta, "")
 		}()
 	}
 	close(start)
@@ -1067,7 +1242,7 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 	}
 
 	exec := testRemoteExecution(t, remote)
-	if err := remote.ensureReady(exec, "jp", firstMeta, ""); err != nil {
+	if err := remote.ensureReady(context.Background(), exec, "jp", firstMeta, ""); err != nil {
 		t.Fatalf("ensureReady() repeat error = %v", err)
 	}
 	exec.Release()
@@ -1077,7 +1252,7 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 
 	secondMeta := []byte(`[{"music_id":10001,"difficulty":"expert"}]`)
 	exec = testRemoteExecution(t, remote)
-	if err := remote.ensureReady(exec, "jp", secondMeta, ""); err != nil {
+	if err := remote.ensureReady(context.Background(), exec, "jp", secondMeta, ""); err != nil {
 		t.Fatalf("ensureReady() new meta error = %v", err)
 	}
 	exec.Release()
@@ -1086,6 +1261,82 @@ func TestEnsureReadyDeduplicatesConcurrentWarmups(t *testing.T) {
 	}
 	if musicMetaCalls.Load() != 2 {
 		t.Fatalf("new meta should refresh music metas once, got %d", musicMetaCalls.Load())
+	}
+}
+
+func TestEnsureReadySharedWarmupSurvivesLeaderCancellationAndMergesTrace(t *testing.T) {
+	requestStarted := make(chan struct{})
+	releaseRequest := make(chan struct{})
+	var startedOnce sync.Once
+	var calls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.TrimSuffix(r.URL.Path, "/") != "/update/musicmetas/string" {
+			http.NotFound(w, r)
+			return
+		}
+		calls.Add(1)
+		startedOnce.Do(func() { close(requestStarted) })
+		<-releaseRequest
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	}))
+	defer server.Close()
+
+	remote := newStandaloneTestRemoteDeckRecommender(server.URL, server.Client())
+	meta := []byte(`[{"music_id":10000,"difficulty":"master"}]`)
+	leaderBase, _ := commandtrace.WithTrace(context.Background())
+	leaderCtx, cancelLeader := context.WithCancel(leaderBase)
+	leaderDone := make(chan error, 1)
+	go func() {
+		exec := testRemoteExecution(t, remote)
+		defer exec.Release()
+		leaderDone <- remote.ensureReady(leaderCtx, exec, "jp", meta, "")
+	}()
+
+	select {
+	case <-requestStarted:
+	case <-time.After(time.Second):
+		t.Fatal("shared ready request did not start")
+	}
+
+	followerCtx, followerTrace := commandtrace.WithTrace(context.Background())
+	followerStarted := make(chan struct{})
+	followerDone := make(chan error, 1)
+	go func() {
+		exec := testRemoteExecution(t, remote)
+		defer exec.Release()
+		close(followerStarted)
+		followerDone <- remote.ensureReady(followerCtx, exec, "jp", meta, "")
+	}()
+	<-followerStarted
+	time.Sleep(20 * time.Millisecond)
+	cancelLeader()
+
+	select {
+	case err := <-leaderDone:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("leader error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("canceled leader waited for detached ready work")
+	}
+
+	close(releaseRequest)
+	select {
+	case err := <-followerDone:
+		if err != nil {
+			t.Fatalf("follower ensureReady() error = %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("follower did not receive detached ready result")
+	}
+	if calls.Load() != 1 {
+		t.Fatalf("ready HTTP calls = %d, want 1", calls.Load())
+	}
+	for _, name := range []string{"deck.ready_wait", "deck.ready_shared", "deck.http"} {
+		operation, ok := traceOperation(followerTrace.Snapshot(), name)
+		if !ok || operation.Count != 1 {
+			t.Fatalf("follower %s operation = %+v, found=%t", name, operation, ok)
+		}
 	}
 }
 

@@ -4,25 +4,28 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	sekaienttest "haruki-cloud/database/sekai/enttest"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
-	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type fakeMusicMetaSource struct {
 	payloads map[string][]byte
+	calls    int
 }
 
 func (f *fakeMusicMetaSource) Get(region string) []byte {
 	if f == nil {
 		return nil
 	}
+	f.calls++
 	return append([]byte(nil), f.payloads[region]...)
 }
 
@@ -45,26 +48,76 @@ func (f *fakeBindingLookup) List(_ context.Context, _, _ string) ([]accountdata.
 	return append([]accountdata.BindingListItem(nil), f.listItems...), nil
 }
 
+// fakePrivateDataClient emulates the conditional read contract: a positive
+// knownUploadTime matching the configured upstream uploadTime is answered
+// notModified without a payload; anything else serves the full JSON.
 type fakePrivateDataClient struct {
-	suiteCalls   []string
-	mysekaiCalls []string
-	suiteJSON    []byte
-	mysekaiJSON  []byte
-	uploadTime   string
+	suiteCalls         []string
+	mysekaiCalls       []string
+	suiteCtx           context.Context
+	mysekaiCtx         context.Context
+	suiteJSON          []byte
+	mysekaiJSON        []byte
+	uploadTime         string
+	suiteKnownTimes    []int64
+	mysekaiKnownTimes  []int64
+	suiteNotModified   int
+	mysekaiNotModified int
+	uploadTimeErr      error
 }
 
-func (f *fakePrivateDataClient) GetSuiteData(server string, userID int64, platform, platformUserID string) ([]byte, error) {
+func (f *fakePrivateDataClient) parseUploadTime() (int64, error) {
+	if f.uploadTimeErr != nil {
+		return 0, f.uploadTimeErr
+	}
+	trimmed := strings.TrimSpace(f.uploadTime)
+	if trimmed == "" {
+		return 0, nil
+	}
+	return strconv.ParseInt(trimmed, 10, 64)
+}
+
+// checkNotModified reports whether a positive knownUploadTime still matches
+// the upstream upload_time, propagating validation errors first.
+func (f *fakePrivateDataClient) checkNotModified(knownUploadTime int64) (bool, error) {
+	if knownUploadTime <= 0 {
+		return false, nil
+	}
+	current, err := f.parseUploadTime()
+	if err != nil {
+		return false, err
+	}
+	return current == knownUploadTime, nil
+}
+
+func (f *fakePrivateDataClient) GetSuiteDataConditionalContext(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	f.suiteCtx = ctx
+	f.suiteKnownTimes = append(f.suiteKnownTimes, knownUploadTime)
+	notModified, err := f.checkNotModified(knownUploadTime)
+	if err != nil {
+		return nil, false, err
+	}
+	if notModified {
+		f.suiteNotModified++
+		return nil, true, nil
+	}
 	f.suiteCalls = append(f.suiteCalls, server+":"+platform+":"+platformUserID)
-	return append([]byte(nil), f.suiteJSON...), nil
+	return append([]byte(nil), f.suiteJSON...), false, nil
 }
 
-func (f *fakePrivateDataClient) GetMySekaiData(server string, userID int64, platform, platformUserID string) ([]byte, error) {
+func (f *fakePrivateDataClient) GetMySekaiDataConditionalContext(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
+	f.mysekaiCtx = ctx
+	f.mysekaiKnownTimes = append(f.mysekaiKnownTimes, knownUploadTime)
+	notModified, err := f.checkNotModified(knownUploadTime)
+	if err != nil {
+		return nil, false, err
+	}
+	if notModified {
+		f.mysekaiNotModified++
+		return nil, true, nil
+	}
 	f.mysekaiCalls = append(f.mysekaiCalls, server+":"+platform+":"+platformUserID)
-	return append([]byte(nil), f.mysekaiJSON...), nil
-}
-
-func (f *fakePrivateDataClient) GetUploadTime(server string, dataType sekaiapi.ToolboxDataType, userID int64, platform, platformUserID string) ([]byte, error) {
-	return []byte(f.uploadTime), nil
+	return append([]byte(nil), f.mysekaiJSON...), false, nil
 }
 
 func TestToolboxSnapshotProviderFallsBackToRegionBinding(t *testing.T) {
@@ -150,6 +203,44 @@ func TestToolboxSnapshotProviderReusesRequestCachedSuiteData(t *testing.T) {
 	}
 }
 
+func TestToolboxSnapshotProviderPassesRequestContextToPrivateDataClient(t *testing.T) {
+	client := &fakePrivateDataClient{
+		suiteJSON:   []byte(minimalSuiteJSON),
+		mysekaiJSON: []byte(`{"updatedResources":{}}`),
+	}
+	provider := NewToolboxSnapshotProvider(
+		&fakeBindingLookup{
+			bindings: map[string]*accountdata.ResolvedBinding{
+				"jp": {
+					PJSKUserID:     "123456789",
+					Server:         "jp",
+					SuiteVisible:   true,
+					MySekaiVisible: true,
+				},
+			},
+		},
+		client,
+		nil,
+		nil,
+	)
+
+	type contextKey struct{}
+	ctx := context.WithValue(context.Background(), contextKey{}, "request")
+	if _, err := provider.Resolve(ctx, Selector{
+		IMPlatform: "qq",
+		IMUserID:   "10001",
+		Region:     renderregion.JP,
+	}, ResolveOptions{NeedMySekai: true}); err != nil {
+		t.Fatalf("Resolve() error = %v", err)
+	}
+	if client.suiteCtx != ctx {
+		t.Fatal("suite request did not receive the caller context")
+	}
+	if client.mysekaiCtx != ctx {
+		t.Fatal("mysekai request did not receive the caller context")
+	}
+}
+
 func TestToolboxSnapshotProviderSupportsExplicitBoundAccount(t *testing.T) {
 	client := &fakePrivateDataClient{
 		suiteJSON: []byte(minimalSuiteJSON),
@@ -215,12 +306,40 @@ func TestToolboxSnapshotProviderInjectsMusicMetaPayload(t *testing.T) {
 		IMPlatform: "qq",
 		IMUserID:   "10001",
 		Region:     renderregion.JP,
-	}, ResolveOptions{})
+	}, ResolveOptions{NeedMusicMeta: true})
 	if err != nil {
 		t.Fatalf("Resolve() error = %v", err)
 	}
 	if len(snapshot.MusicMetaBytes()) == 0 {
 		t.Fatalf("expected music meta bytes on toolbox snapshot")
+	}
+}
+
+func TestToolboxSnapshotProviderSkipsMusicMetaUnlessRequested(t *testing.T) {
+	metas := &fakeMusicMetaSource{payloads: map[string][]byte{"jp": []byte(`[]`)}}
+	provider := NewToolboxSnapshotProvider(
+		&fakeBindingLookup{bindings: map[string]*accountdata.ResolvedBinding{
+			"jp": {
+				PJSKUserID:   "123456789",
+				Server:       "jp",
+				SuiteVisible: true,
+			},
+		}},
+		&fakePrivateDataClient{suiteJSON: []byte(minimalSuiteJSON)},
+		nil,
+		nil,
+	).WithMusicMetaSource(metas)
+
+	_, err := provider.Resolve(context.Background(), Selector{
+		IMPlatform: "qq",
+		IMUserID:   "10001",
+		Region:     renderregion.JP,
+	}, ResolveOptions{})
+	if err != nil {
+		t.Fatalf("Resolve() error = %v", err)
+	}
+	if metas.calls != 0 {
+		t.Fatalf("metadata Get calls = %d, want 0", metas.calls)
 	}
 }
 
@@ -281,6 +400,7 @@ func TestToolboxSnapshotProviderBuildsSnapshotUsingBindingServerRegion(t *testin
 
 const minimalSuiteJSON = `{
   "now": 1710000000,
+  "upload_time": 1710000000,
   "userGamedata": {"userId": 123456789, "name": "SnapshotUser", "deck": 1, "rank": 100, "coin": 0},
   "userProfile": {"profileImageType": "default", "profileImageId": 0, "word": "", "twitterId": ""},
   "userDecks": [{"deckId": 1, "leader": 1001, "subLeader": 0, "member1": 1001, "member2": 0, "member3": 0, "member4": 0, "member5": 0}],

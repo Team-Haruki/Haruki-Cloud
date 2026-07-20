@@ -34,9 +34,17 @@ type ProfileValidator interface {
 	GetUserProfile(server, userID string) (*sekaiapi.GetAnotherProfileResponse, error)
 }
 
+type contextProfileValidator interface {
+	GetUserProfileContext(ctx context.Context, server, userID string) (*sekaiapi.GetAnotherProfileResponse, error)
+}
+
 // FastVerificationProvider provides fast verification of game account bindings.
 type FastVerificationProvider interface {
 	GetToolboxUserFastVerificationGameAccountBindings(platform, platformUserID string) ([]sekaiapi.UserGameBinding, error)
+}
+
+type contextFastVerificationProvider interface {
+	GetToolboxUserFastVerificationGameAccountBindingsContext(ctx context.Context, platform, platformUserID string) ([]sekaiapi.UserGameBinding, error)
 }
 
 // ProfileBGStorage handles storage of custom profile background images.

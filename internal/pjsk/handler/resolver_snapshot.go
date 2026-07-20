@@ -17,37 +17,45 @@ import (
 
 var snapshotDebugLogger = logger.NewLoggerFromGlobal("PJSKSnapshot")
 
-// resolveLiveSnapshot resolves the requester's bound snapshot provider. In
-// production this is expected to be the Toolbox/internal-cloud provider only.
-// When allow_fallback=true (dev/test), a configured static snapshot provider
-// may also be included in the provider chain.
-func resolveLiveSnapshot(rc *RequestContext, needMySekai bool) snapshot.Snapshot {
-	selector, opts := rc.snapshotSelector(needMySekai)
-	return resolveSnapshotBySelector(rc.Ctx, rc.App, selector, opts)
-}
-
 func resolveSnapshotBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, opts snapshot.ResolveOptions) snapshot.Snapshot {
 	snap, _ := resolveSnapshotBySelectorWithError(ctx, app, selector, opts)
 	return snap
 }
 
 func resolveSnapshotBySelectorWithError(ctx context.Context, app *renderapp.App, selector snapshot.Selector, opts snapshot.ResolveOptions) (snapshot.Snapshot, error) {
-	provider := snapshotProviderFactory(app)
+	providerApp := app
+	if app != nil {
+		contextualApp := *app
+		contextualApp.Assets = app.Assets.WithContext(ctx)
+		providerApp = &contextualApp
+	}
+	provider := snapshotProviderFactory(providerApp)
 	if provider == nil {
-		snapshotDebugLogger.Debugf("snapshot resolve skipped: provider is unavailable platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t",
-			strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault)
+		snapshotDebugLogger.DebugContext(ctx, "snapshot resolve skipped",
+			"reason", "provider_unavailable",
+			"region", selector.Region.String(),
+			"need_mysekai", opts.NeedMySekai,
+			"prefer_global_default", opts.PreferGlobalDefault,
+		)
 		return nil, nil
 	}
 	tProvider := time.Now()
 	snap, err := provider.Resolve(ctx, selector, opts)
-	recordCommandStage(ctx, "snapshot_provider", time.Since(tProvider))
+	recordCommandStage(ctx, "snapshot.provider", time.Since(tProvider))
 	if err != nil {
-		snapshotDebugLogger.Warnf("snapshot resolve failed: platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t err=%v",
-			strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault, err)
+		snapshotDebugLogger.WarnContext(ctx, "snapshot resolve failed",
+			"region", selector.Region.String(),
+			"need_mysekai", opts.NeedMySekai,
+			"prefer_global_default", opts.PreferGlobalDefault,
+			"error_type", fmt.Sprintf("%T", err),
+		)
 		return nil, err
 	}
-	snapshotDebugLogger.Debugf("snapshot resolve succeeded: platform=%s user=%s region=%s pjsk_user=%s need_mysekai=%t prefer_global_default=%t raw_path=%q",
-		strings.TrimSpace(selector.IMPlatform), maskDebugID(selector.IMUserID), selector.Region.String(), maskDebugID(selector.PJSKUserID), opts.NeedMySekai, opts.PreferGlobalDefault, snap.RawFilePath())
+	snapshotDebugLogger.DebugContext(ctx, "snapshot resolve succeeded",
+		"region", selector.Region.String(),
+		"need_mysekai", opts.NeedMySekai,
+		"prefer_global_default", opts.PreferGlobalDefault,
+	)
 	return snap, nil
 }
 
@@ -90,6 +98,7 @@ func liveSnapshotProvider(app *renderapp.App) snapshot.HarukiSnapshotProvider {
 		return nil
 	}
 	provider := snapshot.NewToolboxSnapshotProvider(app.Bindings, app.Toolbox, app.Sekai, app.Assets)
+	provider = provider.WithPrivateDataCache(app.PrivateDataCache).WithBuiltSnapshotCache(app.BuiltSnapshotCache)
 	if app.MetaLoader != nil {
 		provider = provider.WithMusicMetaSource(app.MetaLoader)
 	}
@@ -166,8 +175,13 @@ func resolveBindingWithFallback(
 		return 0, nil, nil
 	}
 
-	snapshotDebugLogger.Debugf("binding resolve start: platform=%s user=%s region=%s region_explicit=%t selector=%q require_suite=%t require_mysekai=%t",
-		strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), opts.RequireSuite, opts.RequireMySekai)
+	snapshotDebugLogger.DebugContext(ctx, "binding resolve started",
+		"region", strings.TrimSpace(regionStr),
+		"region_explicit", regionExplicit,
+		"has_selector", strings.TrimSpace(opts.Selector) != "",
+		"require_suite", opts.RequireSuite,
+		"require_mysekai", opts.RequireMySekai,
+	)
 
 	var hid int
 	var binding *accountdata.ResolvedBinding
@@ -213,78 +227,58 @@ func resolveBindingWithFallback(
 
 	if opts.Selector != "" {
 		hid, binding, err = bindings.ResolveUserBindingBySelector(ctx, platform, platformUserID, selectorBindingServer(regionStr, regionExplicit), opts.Selector)
-		snapshotDebugLogger.Debugf("binding resolve selector result: platform=%s user=%s region=%s selector=%q hid=%d binding=%s err=%v",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), strings.TrimSpace(opts.Selector), hid, formatBindingDebug(binding), err)
 		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
-			snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
-				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), resolvedHID, formatBindingDebug(resolvedBinding))
 			return resolvedHID, resolvedBinding, resolvedErr
 		}
 	} else if !regionExplicit {
 		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-		snapshotDebugLogger.Debugf("binding resolve global-default result: platform=%s user=%s hid=%d binding=%s err=%v",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), hid, formatBindingDebug(binding), err)
 		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
-			snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
-				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), resolvedHID, formatBindingDebug(resolvedBinding))
 			return resolvedHID, resolvedBinding, resolvedErr
 		}
 		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		snapshotDebugLogger.Debugf("binding resolve region fallback result: platform=%s user=%s region=%s hid=%d binding=%s err=%v",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), hid, formatBindingDebug(binding), err)
 		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
-			snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
-				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), resolvedHID, formatBindingDebug(resolvedBinding))
 			return resolvedHID, resolvedBinding, resolvedErr
 		}
 	} else {
 		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		snapshotDebugLogger.Debugf("binding resolve explicit-region result: platform=%s user=%s region=%s hid=%d binding=%s err=%v",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), hid, formatBindingDebug(binding), err)
 		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
-			snapshotDebugLogger.Debugf("binding resolve succeeded: platform=%s user=%s region=%s hid=%d binding=%s",
-				strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), resolvedHID, formatBindingDebug(resolvedBinding))
 			return resolvedHID, resolvedBinding, resolvedErr
 		}
 	}
 
 	switch {
 	case unexpectedErr != nil:
-		snapshotDebugLogger.Warnf("binding resolve failed: platform=%s user=%s region=%s region_explicit=%t selector=%q hid=%d binding=%s err=%v",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), hid, formatBindingDebug(binding), unexpectedErr)
+		snapshotDebugLogger.WarnContext(ctx, "binding resolve failed",
+			"region", strings.TrimSpace(regionStr),
+			"region_explicit", regionExplicit,
+			"has_selector", strings.TrimSpace(opts.Selector) != "",
+			"error_type", fmt.Sprintf("%T", unexpectedErr),
+		)
 		return 0, nil, unexpectedErr
 	case invalidBinding != nil:
-		snapshotDebugLogger.Warnf("binding resolve returned binding without required private data: platform=%s user=%s region=%s region_explicit=%t selector=%q hid=%d binding=%s",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), invalidHID, formatBindingDebug(invalidBinding))
+		snapshotDebugLogger.DebugContext(ctx, "binding resolve missing required private data",
+			"region", strings.TrimSpace(regionStr),
+			"region_explicit", regionExplicit,
+			"has_selector", strings.TrimSpace(opts.Selector) != "",
+		)
 		return invalidHID, invalidBinding, nil
 	case sawNoBinding:
-		snapshotDebugLogger.Warnf("binding resolve failed: platform=%s user=%s region=%s region_explicit=%t selector=%q err=%v",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), accountdata.ErrNoBinding)
+		snapshotDebugLogger.DebugContext(ctx, "binding resolve completed",
+			"outcome", "not_found",
+			"region", strings.TrimSpace(regionStr),
+			"region_explicit", regionExplicit,
+			"has_selector", strings.TrimSpace(opts.Selector) != "",
+		)
 		return 0, nil, accountdata.ErrNoBinding
 	default:
-		snapshotDebugLogger.Warnf("binding resolve failed: platform=%s user=%s region=%s region_explicit=%t selector=%q err=%v",
-			strings.TrimSpace(platform), maskDebugID(platformUserID), strings.TrimSpace(regionStr), regionExplicit, strings.TrimSpace(opts.Selector), fmt.Errorf("binding invalid for requested private data flags"))
+		snapshotDebugLogger.DebugContext(ctx, "binding resolve completed",
+			"outcome", "invalid_private_data",
+			"region", strings.TrimSpace(regionStr),
+			"region_explicit", regionExplicit,
+			"has_selector", strings.TrimSpace(opts.Selector) != "",
+		)
 		return 0, nil, nil
 	}
-}
-
-func formatBindingDebug(binding *accountdata.ResolvedBinding) string {
-	if binding == nil {
-		return "<nil>"
-	}
-	return fmt.Sprintf("{binding_id=%d server=%s pjsk_user=%s visible=%t suite_visible=%t mysekai_visible=%t verified=%t}",
-		binding.BindingID, strings.TrimSpace(binding.Server), maskDebugID(binding.PJSKUserID), binding.Visible, binding.SuiteVisible, binding.MySekaiVisible, binding.Verified)
-}
-
-func maskDebugID(value string) string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return ""
-	}
-	if len(value) <= 6 {
-		return value
-	}
-	return value[:3] + "***" + value[len(value)-3:]
 }
 
 // platformCredentials returns the (platform, platformUserID) pair for toolbox

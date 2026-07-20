@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -32,7 +33,9 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {
@@ -45,6 +48,8 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 }
 
 func (c *Controller) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	defer finishBuild()
 	query.Region = c.sources.ResolveRegion(query.Region)
 	src, ok := c.sources.SourceForRegion(query.Region)
 	if !ok {

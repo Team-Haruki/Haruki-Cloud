@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
-	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/event"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
@@ -63,7 +63,9 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.ctx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {
@@ -100,7 +102,9 @@ func (c *Controller) RenderCardDetail(query Query) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
 	req, err := c.BuildCardDetailRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +150,9 @@ func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
 	req, autoBox, err := c.buildCardListRenderRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -235,13 +241,10 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	req.ShowID = queries[0].ShowID
 	req.ShowBox = queries[0].ShowBox
 	req.UnownedOnly = queries[0].UnownedOnly
-	userCardStates := extractOwnedCards(queries[0].DetailedProfile)
-	for i := range req.Cards {
-		state, ok := userCardStates[req.Cards[i].Card.CardID]
-		req.Cards[i].Card.IsAfterTraining = common.BoolPtr(resolveCardBoxAfterTraining(req.Cards[i].Card, state, useAfterTraining, ok))
-	}
 	if queries[0].DetailedProfile != nil {
-		req.UserInfo = queries[0].DetailedProfile
+		profile := *queries[0].DetailedProfile
+		profile.UserCards = nil
+		req.UserInfo = &profile
 	}
 	if queries[0].Title != nil {
 		req.Title = queries[0].Title
@@ -253,7 +256,9 @@ func (c *Controller) RenderCardBox(queries []Query) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
 	req, err := c.BuildCardBoxRequest(queries)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

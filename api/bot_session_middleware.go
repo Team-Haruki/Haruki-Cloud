@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
@@ -29,7 +30,10 @@ const (
 // Use VerifyBotSessionTestBypass for testing without Redis.
 func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 	return func(c fiber.Ctx) error {
+		finish := commandtrace.MeasurePhase(c.Context(), "session_auth")
+		defer finish()
 		if redisClient == nil {
+			finish()
 			return JSONResponse(c, fiber.StatusServiceUnavailable, "会话存储不可用")
 		}
 
@@ -37,6 +41,7 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 		sessionToken := c.Get(HeaderBotSessionToken)
 
 		if headerBotID == "" || sessionToken == "" {
+			finish()
 			return JSONResponse(c, fiber.StatusUnauthorized,
 				"缺少 "+HeaderBotID+" 或 "+HeaderBotSessionToken+" 请求头")
 		}
@@ -44,6 +49,7 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 		// The URL parameter name is "botId" as registered by the route group.
 		urlBotID := c.Params("botId")
 		if urlBotID != headerBotID {
+			finish()
 			return JSONResponse(c, fiber.StatusForbidden,
 				"请求头中的 bot_id 与 URL 参数不一致")
 		}
@@ -56,16 +62,19 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 			return []byte(config.Cfg.HarukiBotDB.SessionSignToken), nil
 		})
 		if err != nil || !decoded.Valid {
+			finish()
 			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌无效或已过期")
 		}
 
 		claims, ok := decoded.Claims.(jwt.MapClaims)
 		if !ok {
+			finish()
 			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌声明无效")
 		}
 
 		claimBotID, _ := claims["bot_id"].(string)
 		if claimBotID != headerBotID {
+			finish()
 			return JSONResponse(c, fiber.StatusForbidden,
 				"会话令牌中的 bot_id 与请求 bot_id 不一致")
 		}
@@ -74,15 +83,19 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 		key := fmt.Sprintf(RedisKeyBotSession, headerBotID)
 		stored, err := redisClient.Get(c.Context(), key).Result()
 		if errors.Is(err, redis.Nil) {
+			finish()
 			return JSONResponse(c, fiber.StatusUnauthorized, "会话已过期或不存在")
 		}
 		if err != nil {
+			finish()
 			return InternalError(c)
 		}
 		if stored != sessionToken {
+			finish()
 			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌不匹配")
 		}
 
+		finish()
 		return c.Next()
 	}
 }
@@ -91,6 +104,8 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 // validation. Use ONLY in test code where no Redis connection is available.
 func VerifyBotSessionTestBypass() fiber.Handler {
 	return func(c fiber.Ctx) error {
+		finish := commandtrace.MeasurePhase(c.Context(), "session_auth")
+		finish()
 		return c.Next()
 	}
 }

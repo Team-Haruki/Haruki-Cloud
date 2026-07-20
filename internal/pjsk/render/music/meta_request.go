@@ -88,21 +88,5 @@ func (c *Controller) resolveAllMusicMetas(region string, musicID int) []drawing.
 		return nil
 	}
 
-	if c != nil && c.metaLoader != nil {
-		if payload := c.metaLoader.Get(region); len(payload) > 0 {
-			if items := musicMetaInfosFromPayload(payload, musicID); len(items) > 0 {
-				return items
-			}
-		}
-	}
-
-	if snapshot := c.currentSnapshot(); snapshot != nil {
-		if payload := snapshot.MusicMetaBytes(); len(payload) > 0 {
-			if items := musicMetaInfosFromPayload(payload, musicID); len(items) > 0 {
-				return items
-			}
-		}
-	}
-
-	return nil
+	return musicMetaInfosFromView(c.resolveMusicMetaView(region), musicID)
 }

@@ -3,6 +3,8 @@ package education
 import (
 	"context"
 	"fmt"
+
+	"haruki-cloud/internal/observability/commandtrace"
 	"path/filepath"
 	"strings"
 
@@ -34,7 +36,9 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		return nil
 	}
 	clone := *c
+	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
 	clone.sources = rendersource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {
@@ -44,6 +48,13 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 		clone.sources.RegisterSource(source)
 	}
 	return &clone
+}
+
+func (c *Controller) traceContext() context.Context {
+	if c == nil {
+		return nil
+	}
+	return c.requestCtx
 }
 
 func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) (*drawing.ChallengeLiveDetailsRequest, error) {
@@ -136,7 +147,9 @@ func (c *Controller) RenderChallengeLiveDetails(query ChallengeLiveQuery) ([]byt
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildChallengeLiveDetailsRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +167,9 @@ func (c *Controller) RenderPowerBonusDetail(req drawing.PowerBonusDetailRequest)
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildPowerBonusDetailRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +187,9 @@ func (c *Controller) RenderAreaItemUpgradeMaterials(req drawing.AreaItemUpgradeM
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildAreaItemUpgradeMaterialsRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +207,9 @@ func (c *Controller) RenderBonds(req drawing.BondsRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildBondsRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +227,9 @@ func (c *Controller) RenderLeaderCount(req drawing.LeaderCountRequest) ([]byte, 
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildLeaderCountRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

@@ -19,8 +19,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	json "github.com/bytedance/sonic"
-	"log"
 	"os"
 	"os/signal"
 	"regexp"
@@ -32,14 +30,18 @@ import (
 	usersDB "haruki-cloud/database/users"
 	"haruki-cloud/database/users/user"
 	"haruki-cloud/internal/identity"
+	"haruki-cloud/utils/logger"
 
 	"haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/userbinding"
 
+	json "github.com/bytedance/sonic"
 	_ "github.com/lib/pq"
 )
+
+var importerLogger = logger.NewLoggerFromGlobal("Importer")
 
 // ──────────────────────────────────────────────
 // JSON record types
@@ -111,6 +113,32 @@ func serverFromFilename(filename string) string {
 	return strings.TrimSuffix(filename, "_bind.json")
 }
 
+func importErrorType(err error) string {
+	if err == nil {
+		return ""
+	}
+	return fmt.Sprintf("%T", err)
+}
+
+func logRecordFailure(ctx context.Context, target, region, operation string, recordID int, err error) {
+	importerLogger.WarnContext(ctx, "import record skipped",
+		"target", target,
+		"region", region,
+		"operation", operation,
+		"record_id", recordID,
+		"error_type", importErrorType(err),
+	)
+}
+
+func exitImportFailure(target, operation string, err error) {
+	importerLogger.Error("importer stopped",
+		"target", target,
+		"operation", operation,
+		"error_type", importErrorType(err),
+	)
+	os.Exit(1)
+}
+
 // ──────────────────────────────────────────────
 // Import functions
 // ──────────────────────────────────────────────
@@ -124,7 +152,11 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 	for _, filename := range files {
 		path := exportsDir + "/" + filename
 		if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-			log.Printf("[bindings] skipping %s: file not found", filename)
+			importerLogger.Info("import source skipped",
+				"target", "bindings",
+				"file", filename,
+				"reason", "file_not_found",
+			)
 			continue
 		}
 
@@ -134,7 +166,12 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 		}
 
 		server := serverFromFilename(filename)
-		log.Printf("[bindings] %s → server=%s, %d records", filename, server, len(records))
+		importerLogger.Info("import source loaded",
+			"target", "bindings",
+			"file", filename,
+			"region", server,
+			"records", len(records),
+		)
 
 		for i, rec := range records {
 			total++
@@ -147,7 +184,13 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 
 			if dryRun {
 				if (i+1)%5000 == 0 {
-					log.Printf("[bindings/%s] dry-run progress: %d/%d", server, i+1, len(records))
+					importerLogger.InfoContext(ctx, "import progress",
+						"target", "bindings",
+						"region", server,
+						"dry_run", true,
+						"processed", i+1,
+						"total", len(records),
+					)
 				}
 				inserted++
 				continue
@@ -156,7 +199,7 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 			// 1. Resolve or create haruki user
 			harukiUserID, err := resolver.ResolveOrCreate(ctx, platform, platformUserID)
 			if err != nil {
-				log.Printf("[bindings/%s] WARN record %d: resolve user (%s/%s): %v", server, rec.ID, platform, platformUserID, err)
+				logRecordFailure(ctx, "bindings", server, "resolve_user", rec.ID, err)
 				failed++
 				continue
 			}
@@ -167,7 +210,7 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 				Only(ctx)
 			if err != nil {
 				if !pjskDB.IsNotFound(err) {
-					log.Printf("[bindings/%s] WARN record %d: query game account: %v", server, rec.ID, err)
+					logRecordFailure(ctx, "bindings", server, "query_game_account", rec.ID, err)
 					failed++
 					continue
 				}
@@ -183,7 +226,7 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 							Only(ctx)
 					}
 					if err != nil {
-						log.Printf("[bindings/%s] WARN record %d: create game account: %v", server, rec.ID, err)
+						logRecordFailure(ctx, "bindings", server, "create_game_account", rec.ID, err)
 						failed++
 						continue
 					}
@@ -195,7 +238,7 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 				Where(userbinding.HarukiUserID(harukiUserID), userbinding.GameAccountIDEQ(gameAcc.ID)).
 				Exist(ctx)
 			if err != nil {
-				log.Printf("[bindings/%s] WARN record %d: query binding: %v", server, rec.ID, err)
+				logRecordFailure(ctx, "bindings", server, "query_binding", rec.ID, err)
 				failed++
 				continue
 			}
@@ -206,7 +249,7 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 
 			displayOrder, err := nextDisplayOrder(ctx, pjsk, harukiUserID)
 			if err != nil {
-				log.Printf("[bindings/%s] WARN record %d: display order: %v", server, rec.ID, err)
+				logRecordFailure(ctx, "bindings", server, "display_order", rec.ID, err)
 				failed++
 				continue
 			}
@@ -222,17 +265,23 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 					skipped++
 					continue
 				}
-				log.Printf("[bindings/%s] WARN record %d: create binding: %v", server, rec.ID, err)
+				logRecordFailure(ctx, "bindings", server, "create_binding", rec.ID, err)
 				failed++
 				continue
 			}
 			inserted++
 		}
 
-		log.Printf("[bindings/%s] done", server)
+		importerLogger.InfoContext(ctx, "import source completed", "target", "bindings", "region", server)
 	}
 
-	log.Printf("[bindings] total=%d inserted=%d skipped=%d failed=%d", total, inserted, skipped, failed)
+	importerLogger.InfoContext(ctx, "import target completed",
+		"target", "bindings",
+		"total", total,
+		"inserted", inserted,
+		"skipped", skipped,
+		"failed", failed,
+	)
 	return nil
 }
 
@@ -258,7 +307,10 @@ var globalServerPriority = []string{"jp", "cn", "tw", "en", "kr"}
 // Existing defaults are skipped (idempotent).
 func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) error {
 	if dryRun {
-		log.Printf("[defaults] dry-run — skipping")
+		importerLogger.InfoContext(ctx, "import target skipped",
+			"target", "defaults",
+			"dry_run", true,
+		)
 		return nil
 	}
 	// Load all bindings with their game accounts.
@@ -285,7 +337,10 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 		})
 	}
 
-	log.Printf("[defaults] %d users to process", len(byUser))
+	importerLogger.InfoContext(ctx, "import target loaded",
+		"target", "defaults",
+		"users", len(byUser),
+	)
 
 	// Load existing defaults to avoid redundant writes.
 	existingDefaults, err := pjsk.UserDefaultBinding.Query().All(ctx)
@@ -319,7 +374,12 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 				skipped++
 				return
 			}
-			log.Printf("[defaults] WARN user %d scope %s: %v", harukiUserID, scope, err)
+			importerLogger.WarnContext(ctx, "default binding skipped",
+				"target", "defaults",
+				"scope", scope,
+				"operation", "create_default",
+				"error_type", importErrorType(err),
+			)
 			failed++
 			return
 		}
@@ -361,7 +421,12 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 		}
 	}
 
-	log.Printf("[defaults] inserted=%d skipped=%d failed=%d", inserted, skipped, failed)
+	importerLogger.InfoContext(ctx, "import target completed",
+		"target", "defaults",
+		"inserted", inserted,
+		"skipped", skipped,
+		"failed", failed,
+	)
 	return nil
 }
 
@@ -370,7 +435,7 @@ func importCharacterAliases(ctx context.Context, exportsDir string, pjsk *pjskDB
 	if err != nil {
 		return err
 	}
-	log.Printf("[character-aliases] %d records", len(records))
+	importerLogger.InfoContext(ctx, "import target loaded", "target", "character-aliases", "records", len(records))
 
 	inserted, skipped, failed := 0, 0, 0
 	for _, rec := range records {
@@ -388,7 +453,7 @@ func importCharacterAliases(ctx context.Context, exportsDir string, pjsk *pjskDB
 				alias.AliasEQ(rec.Alias),
 			).Exist(ctx)
 		if err != nil {
-			log.Printf("[character-aliases] WARN record %d: query: %v", rec.ID, err)
+			logRecordFailure(ctx, "character-aliases", "", "query", rec.ID, err)
 			failed++
 			continue
 		}
@@ -406,13 +471,18 @@ func importCharacterAliases(ctx context.Context, exportsDir string, pjsk *pjskDB
 				skipped++
 				continue
 			}
-			log.Printf("[character-aliases] WARN record %d: insert: %v", rec.ID, err)
+			logRecordFailure(ctx, "character-aliases", "", "insert", rec.ID, err)
 			failed++
 			continue
 		}
 		inserted++
 	}
-	log.Printf("[character-aliases] inserted=%d skipped=%d failed=%d", inserted, skipped, failed)
+	importerLogger.InfoContext(ctx, "import target completed",
+		"target", "character-aliases",
+		"inserted", inserted,
+		"skipped", skipped,
+		"failed", failed,
+	)
 	return nil
 }
 
@@ -421,7 +491,7 @@ func importMusicAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 	if err != nil {
 		return err
 	}
-	log.Printf("[music-aliases] %d records", len(records))
+	importerLogger.InfoContext(ctx, "import target loaded", "target", "music-aliases", "records", len(records))
 
 	inserted, skipped, failed := 0, 0, 0
 	for _, rec := range records {
@@ -439,7 +509,7 @@ func importMusicAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 				alias.AliasEQ(rec.Alias),
 			).Exist(ctx)
 		if err != nil {
-			log.Printf("[music-aliases] WARN record %d: query: %v", rec.ID, err)
+			logRecordFailure(ctx, "music-aliases", "", "query", rec.ID, err)
 			failed++
 			continue
 		}
@@ -457,13 +527,18 @@ func importMusicAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 				skipped++
 				continue
 			}
-			log.Printf("[music-aliases] WARN record %d: insert: %v", rec.ID, err)
+			logRecordFailure(ctx, "music-aliases", "", "insert", rec.ID, err)
 			failed++
 			continue
 		}
 		inserted++
 	}
-	log.Printf("[music-aliases] inserted=%d skipped=%d failed=%d", inserted, skipped, failed)
+	importerLogger.InfoContext(ctx, "import target completed",
+		"target", "music-aliases",
+		"inserted", inserted,
+		"skipped", skipped,
+		"failed", failed,
+	)
 	return nil
 }
 
@@ -472,7 +547,7 @@ func importGroupAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 	if err != nil {
 		return err
 	}
-	log.Printf("[group-aliases] %d records", len(records))
+	importerLogger.InfoContext(ctx, "import target loaded", "target", "group-aliases", "records", len(records))
 
 	inserted, skipped, failed := 0, 0, 0
 	for _, rec := range records {
@@ -492,7 +567,7 @@ func importGroupAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 				groupalias.AliasEQ(rec.Alias),
 			).Exist(ctx)
 		if err != nil {
-			log.Printf("[group-aliases] WARN record %d: query: %v", rec.ID, err)
+			logRecordFailure(ctx, "group-aliases", "", "query", rec.ID, err)
 			failed++
 			continue
 		}
@@ -512,13 +587,18 @@ func importGroupAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 				skipped++
 				continue
 			}
-			log.Printf("[group-aliases] WARN record %d: insert: %v", rec.ID, err)
+			logRecordFailure(ctx, "group-aliases", "", "insert", rec.ID, err)
 			failed++
 			continue
 		}
 		inserted++
 	}
-	log.Printf("[group-aliases] inserted=%d skipped=%d failed=%d", inserted, skipped, failed)
+	importerLogger.InfoContext(ctx, "import target completed",
+		"target", "group-aliases",
+		"inserted", inserted,
+		"skipped", skipped,
+		"failed", failed,
+	)
 	return nil
 }
 
@@ -549,6 +629,10 @@ func resolveDBConfig(envURL, envType, cfgURL, cfgType, defaultType string) (dbTy
 // ──────────────────────────────────────────────
 
 func main() {
+	logger.SetGlobalFileWriter(os.Stdout)
+	logger.SetGlobalLogLevel(harukiConfig.LogLevelInfo)
+	logger.InstallStandardHandlers()
+
 	exportsDir := flag.String("exports-dir", "./exports", "directory containing the JSON export files")
 	targetFlag := flag.String("target", "all", "comma-separated targets: all, bindings, character-aliases, music-aliases, group-aliases, defaults")
 	dryRun := flag.Bool("dry-run", false, "parse and count records without writing to DB")
@@ -571,7 +655,7 @@ func main() {
 	runDefaults := runAll || targets["defaults"]
 
 	if *dryRun {
-		log.Println("[importer] DRY RUN mode — no writes will be performed")
+		importerLogger.Info("importer started", "dry_run", true)
 	}
 
 	// Load config if available
@@ -579,7 +663,7 @@ func main() {
 	if _, err := os.Stat(*configPath); err == nil {
 		loaded, err := harukiConfig.ReadConfig(*configPath)
 		if err != nil {
-			log.Fatalf("failed to read config: %v", err)
+			exitImportFailure("config", "read", err)
 		}
 		cfg = &loaded
 	}
@@ -594,15 +678,15 @@ func main() {
 		}
 		pjskType, pjskDSN, err := resolveDBConfig("HARUKI_PJSK_DB_URL", "HARUKI_PJSK_DB_TYPE", cfgPJSKURL, cfgPJSKType, "postgres")
 		if err != nil {
-			log.Fatalf("PJSK DB: %v", err)
+			exitImportFailure("pjsk_db", "resolve_config", err)
 		}
 		pjsk, err = pjskDB.Open(pjskType, pjskDSN)
 		if err != nil {
-			log.Fatalf("open PJSK DB: %v", err)
+			exitImportFailure("pjsk_db", "open", err)
 		}
 		defer pjsk.Close()
 		if err := pjsk.Schema.Create(ctx); err != nil {
-			log.Fatalf("migrate PJSK schema: %v", err)
+			exitImportFailure("pjsk_db", "migrate", err)
 		}
 	}
 
@@ -616,20 +700,20 @@ func main() {
 		}
 		usersType, usersDSN, err := resolveDBConfig("HARUKI_USERS_DB_URL", "HARUKI_USERS_DB_TYPE", cfgUsersURL, cfgUsersType, "postgres")
 		if err != nil {
-			log.Fatalf("Users DB: %v", err)
+			exitImportFailure("users_db", "resolve_config", err)
 		}
 		users, err = usersDB.Open(usersType, usersDSN)
 		if err != nil {
-			log.Fatalf("open Users DB: %v", err)
+			exitImportFailure("users_db", "open", err)
 		}
 		defer users.Close()
 		if err := users.Schema.Create(ctx); err != nil {
-			log.Fatalf("migrate Users schema: %v", err)
+			exitImportFailure("users_db", "migrate", err)
 		}
 
 		// Warm up: confirm users table is accessible
 		if _, err := users.User.Query().Where(user.Platform("__probe__")).Exist(ctx); err != nil {
-			log.Fatalf("users DB probe: %v", err)
+			exitImportFailure("users_db", "probe", err)
 		}
 	}
 
@@ -637,30 +721,30 @@ func main() {
 
 	if runBindings {
 		if err := importBindings(ctx, *exportsDir, pjsk, users, *dryRun); err != nil {
-			log.Fatalf("[bindings] fatal: %v", err)
+			exitImportFailure("bindings", "run", err)
 		}
 	}
 	if runCharAliases {
 		if err := importCharacterAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			log.Fatalf("[character-aliases] fatal: %v", err)
+			exitImportFailure("character-aliases", "run", err)
 		}
 	}
 	if runMusicAliases {
 		if err := importMusicAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			log.Fatalf("[music-aliases] fatal: %v", err)
+			exitImportFailure("music-aliases", "run", err)
 		}
 	}
 	if runGroupAliases {
 		if err := importGroupAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			log.Fatalf("[group-aliases] fatal: %v", err)
+			exitImportFailure("group-aliases", "run", err)
 		}
 	}
 	// defaults must run after bindings are in place.
 	if runDefaults {
 		if err := setDefaultBindings(ctx, pjsk, *dryRun); err != nil {
-			log.Fatalf("[defaults] fatal: %v", err)
+			exitImportFailure("defaults", "run", err)
 		}
 	}
 
-	log.Println("[importer] done")
+	importerLogger.Info("importer completed", "dry_run", *dryRun)
 }

@@ -3,13 +3,13 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/utils/logger"
 
 	"gopkg.in/yaml.v3"
 )
@@ -200,6 +200,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envInt("HARUKI_BOT_SESSION_TTL_DAYS", &cfg.HarukiBotDB.SessionTTLDays)
 	envStr("HARUKI_BOT_NOISE_PRIVATE_KEY", &cfg.HarukiBotDB.NoisePrivateKey)
 	envStr("HARUKI_BOT_AUTH_ENCRYPTION_KEY", &cfg.HarukiBotDB.AuthEncryptionKey)
+	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
+	envBool("HARUKI_BOT_RESPONSE_ELECTION_ROSTER", &cfg.HarukiBotDB.ResponseElectionRoster)
 
 	// Sekai API
 	envStr("HARUKI_SEKAI_API_BASE_URL", &cfg.SekaiAPI.BaseURL)
@@ -209,6 +211,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_TOOLBOX_BASE_URL", &cfg.Toolbox.BaseURL)
 	envStr("HARUKI_TOOLBOX_API_TOKEN", &cfg.Toolbox.APIToken)
 	envStr("HARUKI_TOOLBOX_USER_AGENT", &cfg.Toolbox.UserAgent)
+	envBool("HARUKI_TOOLBOX_CONDITIONAL_FETCH", &cfg.Toolbox.ConditionalFetch)
 
 	// HMES
 	envStr("HARUKI_HMES_PUBLIC_BASE_URL", &cfg.HMES.PublicBaseURL)
@@ -487,14 +490,19 @@ type CensorConfig struct {
 }
 
 type HarukiBotDBConfig struct {
-	DBType              string `yaml:"db_type"`
-	DBURL               string `yaml:"db_url"`
-	CredentialSignToken string `yaml:"credential_sign_token"`
-	SessionSignToken    string `yaml:"session_sign_token"`
-	InternalAPIToken    string `yaml:"internal_api_token"`
-	SessionTTLDays      int    `yaml:"session_ttl_days"`
-	NoisePrivateKey     string `yaml:"noise_private_key"`
-	AuthEncryptionKey   string `yaml:"auth_encryption_key"`
+	DBType                 string        `yaml:"db_type"`
+	DBURL                  string        `yaml:"db_url"`
+	CredentialSignToken    string        `yaml:"credential_sign_token"`
+	SessionSignToken       string        `yaml:"session_sign_token"`
+	InternalAPIToken       string        `yaml:"internal_api_token"`
+	SessionTTLDays         int           `yaml:"session_ttl_days"`
+	NoisePrivateKey        string        `yaml:"noise_private_key"`
+	AuthEncryptionKey      string        `yaml:"auth_encryption_key"`
+	ResponseElectionWindow time.Duration `yaml:"response_election_window"`
+	// ResponseElectionRoster enables the learned per-group bot roster: groups
+	// with a single known bot skip the election window entirely, and members
+	// that stop joining are demoted after repeated absences.
+	ResponseElectionRoster bool `yaml:"response_election_roster"`
 }
 
 type UsersDBConfig struct {
@@ -530,6 +538,11 @@ type ToolboxConfig struct {
 	BaseURL   string `yaml:"base_url"`
 	APIToken  string `yaml:"api_token"`
 	UserAgent string `yaml:"user_agent"`
+	// ConditionalFetch sends known_upload_time on private game-data reads so an
+	// unchanged snapshot answers 304 without a payload. Requires a Toolbox
+	// deployment with conditional read support; when false the same semantics
+	// are emulated with the legacy upload_time probe.
+	ConditionalFetch bool `yaml:"conditional_fetch"`
 }
 
 type HMESConfig struct {
@@ -624,7 +637,10 @@ func ReadConfig(path string) (Config, error) {
 func LoadConfig(path string) {
 	cfg, err := ReadConfig(path)
 	if err != nil {
-		log.Fatalf("%v", err)
+		logger.NewLoggerFromGlobal("Config").Error("configuration load failed",
+			"error_type", fmt.Sprintf("%T", err),
+		)
+		os.Exit(1)
 	}
 	Cfg = cfg
 }

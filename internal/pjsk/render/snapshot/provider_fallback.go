@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"context"
+	"fmt"
 
 	"haruki-cloud/utils/logger"
 )
@@ -43,7 +44,7 @@ func (p *FallbackSnapshotProvider) Resolve(ctx context.Context, selector Selecto
 		snapshot, err := provider.Resolve(ctx, selector, opts)
 		if err == nil && snapshot != nil {
 			if i > 0 {
-				p.logger.Warnf("primary provider failed, resolved via fallback provider %d", i)
+				p.logger.WarnContext(ctx, "snapshot resolved through fallback provider", "provider_index", i)
 			}
 			return snapshot, nil
 		}
@@ -51,7 +52,10 @@ func (p *FallbackSnapshotProvider) Resolve(ctx context.Context, selector Selecto
 			if i == 0 && !p.allowFallback {
 				return nil, err
 			}
-			p.logger.Warnf("provider %d failed: %v", i, err)
+			p.logger.WarnContext(ctx, "snapshot provider failed",
+				"provider_index", i,
+				"error_type", fmt.Sprintf("%T", err),
+			)
 			lastErr = err
 		}
 	}

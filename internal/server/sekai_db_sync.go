@@ -35,20 +35,24 @@ func startSekaiDBRemoteSync(ctx context.Context, mainLogger *harukiLogger.Logger
 
 	settings, err := buildSekaiDBSyncSettings()
 	if err != nil {
-		mainLogger.Errorf("Sekai DB remote sync config is invalid: %v", err)
-		os.Exit(1)
+		fatalStartup(mainLogger, "Sekai DB remote sync configuration invalid", "error_type", fmt.Sprintf("%T", err))
 	}
 
 	if cfg.Initial {
-		mainLogger.Infof("Sekai DB remote sync initial run started")
+		mainLogger.Info("Sekai DB remote sync started", "mode", "initial")
 		if err := runSekaiDBRemoteSync(ctx, settings); err != nil {
 			if cfg.FailStartup {
-				mainLogger.Errorf("Sekai DB remote sync initial run failed: %v", err)
-				os.Exit(1)
+				fatalStartup(mainLogger, "Sekai DB remote sync failed",
+					"mode", "initial",
+					"error_type", fmt.Sprintf("%T", err),
+				)
 			}
-			mainLogger.Warnf("Sekai DB remote sync initial run failed: %v", err)
+			mainLogger.Warn("Sekai DB remote sync failed",
+				"mode", "initial",
+				"error_type", fmt.Sprintf("%T", err),
+			)
 		} else {
-			mainLogger.Infof("Sekai DB remote sync initial run finished")
+			mainLogger.Info("Sekai DB remote sync completed", "mode", "initial")
 		}
 	}
 
@@ -57,11 +61,11 @@ func startSekaiDBRemoteSync(ctx context.Context, mainLogger *harukiLogger.Logger
 		interval = defaultSekaiDBSyncInterval
 	}
 	if interval < 0 {
-		mainLogger.Infof("Sekai DB remote sync background loop disabled")
+		mainLogger.Info("Sekai DB remote sync disabled", "mode", "background")
 		return
 	}
 
-	mainLogger.Infof("Sekai DB remote sync background loop started (interval=%s)", interval)
+	mainLogger.Info("Sekai DB remote sync loop started", "mode", "background", "interval", interval)
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -71,10 +75,13 @@ func startSekaiDBRemoteSync(ctx context.Context, mainLogger *harukiLogger.Logger
 				return
 			case <-ticker.C:
 				if err := runSekaiDBRemoteSync(ctx, settings); err != nil {
-					mainLogger.Warnf("Sekai DB remote sync failed: %v", err)
+					mainLogger.WarnContext(ctx, "Sekai DB remote sync failed",
+						"mode", "background",
+						"error_type", fmt.Sprintf("%T", err),
+					)
 					continue
 				}
-				mainLogger.Infof("Sekai DB remote sync finished")
+				mainLogger.InfoContext(ctx, "Sekai DB remote sync completed", "mode", "background")
 			}
 		}
 	}()

@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"log/slog"
 	"os"
 	"path/filepath"
+
+	"haruki-cloud/utils/logger"
 )
+
+var profileBGCleanupLogger = logger.NewLoggerFromGlobal("ProfileBGCleanup")
 
 // CleanupOrphanedFiles walks the profile background directory and removes any
 // files whose relative paths are not present in activePaths.
@@ -27,7 +30,10 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 	var deleted int
 	err := filepath.WalkDir(bgRootAbs, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
-			slog.WarnContext(ctx, "profile bg cleanup: walk error", "path", path, "err", walkErr)
+			profileBGCleanupLogger.WarnContext(ctx, "profile background cleanup entry skipped",
+				"operation", "walk",
+				"error_type", fmt.Sprintf("%T", walkErr),
+			)
 			return nil
 		}
 		if d.IsDir() {
@@ -36,6 +42,10 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 
 		relPath, err := filepath.Rel(s.rootDir, path)
 		if err != nil {
+			profileBGCleanupLogger.WarnContext(ctx, "profile background cleanup entry skipped",
+				"operation", "relative_path",
+				"error_type", fmt.Sprintf("%T", err),
+			)
 			return nil
 		}
 		relPath = filepath.ToSlash(relPath)
@@ -45,15 +55,20 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 		}
 
 		if rmErr := os.Remove(path); rmErr != nil && !os.IsNotExist(rmErr) {
-			slog.WarnContext(ctx, "profile bg cleanup: remove failed", "path", relPath, "err", rmErr)
+			profileBGCleanupLogger.WarnContext(ctx, "profile background cleanup entry skipped",
+				"operation", "remove",
+				"error_type", fmt.Sprintf("%T", rmErr),
+			)
 			return nil
 		}
 		deleted++
-		slog.InfoContext(ctx, "profile bg cleanup: removed orphaned file", "path", relPath)
 		return nil
 	})
 	if err != nil {
 		return deleted, fmt.Errorf("profile bg cleanup: walk dir: %w", err)
+	}
+	if deleted > 0 {
+		profileBGCleanupLogger.InfoContext(ctx, "profile background cleanup completed", "deleted", deleted)
 	}
 	return deleted, nil
 }

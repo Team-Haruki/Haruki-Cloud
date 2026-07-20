@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -27,6 +28,8 @@ type areaItemBuildOptions struct {
 }
 
 func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFull(query AreaItemQuery) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.traceContext(), "payload.build")
+	defer finishBuild()
 	if c == nil || c.sources == nil {
 		return nil, fmt.Errorf("education controller is not initialized")
 	}
@@ -53,6 +56,8 @@ func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFull(query AreaItemQuer
 }
 
 func (c *Controller) BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query AreaItemQuery) (*drawing.AreaItemUpgradeMaterialsRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.traceContext(), "payload.build")
+	defer finishBuild()
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
 	if err != nil {
 		return nil, err

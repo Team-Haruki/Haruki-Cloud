@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderassets "haruki-cloud/internal/pjsk/render/assets"
@@ -59,8 +60,12 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c == nil {
 		return nil
 	}
+	if ctx == nil {
+		ctx = context.TODO()
+	}
 	clone := *c
 	clone.requestCtx = ctx
+	clone.assets = c.assets.WithContext(ctx)
 	if c.drawingBase != nil {
 		clone.drawing = c.drawingBase.WithContext(ctx)
 	} else if c.drawing != nil {
@@ -69,6 +74,16 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c.tracker != nil {
 		if contextual, ok := c.tracker.(contextualTrackerSource); ok {
 			clone.tracker = contextual.WithContext(ctx)
+		}
+	}
+	if c.events != nil {
+		clone.events = regionsource.NewRegistry[EventSource](c.events.ResolveRegion(renderregion.Unknown))
+		for _, source := range c.events.OrderedSources() {
+			if contextual, ok := any(source).(contextualEventSource); ok {
+				clone.events.RegisterSource(contextual.WithContext(ctx))
+				continue
+			}
+			clone.events.RegisterSource(source)
 		}
 	}
 	return &clone
@@ -104,7 +119,9 @@ func (c *Controller) RenderLine(req LineRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildLineRequest(req)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

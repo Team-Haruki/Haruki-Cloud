@@ -31,9 +31,10 @@ type contextualDataSource interface {
 }
 
 type Controller struct {
-	sources *regionsource.Registry[DataSource]
-	drawing *drawing.HarukiDrawingClient
-	assets  *assets.AssetHelper
+	sources    *regionsource.Registry[DataSource]
+	drawing    *drawing.HarukiDrawingClient
+	assets     *assets.AssetHelper
+	requestCtx context.Context
 }
 
 type Builder struct {

@@ -9,12 +9,16 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"haruki-cloud/internal/observability/commandtrace"
 
 	"github.com/andybalholm/brotli"
 	"github.com/shamaton/msgpack/v3"
@@ -808,30 +812,32 @@ func TestPreview3DRegistryResolveComboDefaultsMissingPartsFromAnyAnchorGroup(t *
 	}
 }
 
-func TestPreview3DRegistryResolveComboDefaultsBodyFromAccessoryOutfit(t *testing.T) {
+func TestPreview3DRegistryResolveComboDefaultsBodyFromAccessoryOutfitFamily(t *testing.T) {
 	registry := &preview3DRegistry{
 		partRegistryVersion: 2,
 		characters: []preview3DCharacterEntry{
-			{Character3DID: 27, CharacterID: 21, Unit: "idol", BodyCostume3DID: 46, HeadCostume3DID: 103, HairCostume3DID: 203, Status: "available"},
+			{Character3DID: 22, CharacterID: 21, Unit: "idol", BodyCostume3DID: 46, HeadCostume3DID: 123, HairCostume3DID: 221, Status: "available"},
 		},
 		parts: []preview3DPartEntry{
 			{Costume3DID: 46, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
-			{Costume3DID: 2003134, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 3, Costume3DGroupID: 2003017, OutfitID: 2003, Status: "planned"},
-			{Costume3DID: 2003163, PartType: "head_optional", CharacterID: 21, Unit: "idol", ColorID: 3, Costume3DGroupID: 2003021, AccessoryID: 2003001, PackagePath: "parts/head_optional/sustain-summer", Status: "planned"},
-			{Costume3DID: 2003165, PartType: "hair", CharacterID: 21, Unit: "idol", ColorID: 3, Costume3DGroupID: 2003021, Status: "planned"},
+			{Costume3DID: 123, PartType: "head", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 221, PartType: "hair", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
+			{Costume3DID: 2003134, Costume3DGroupID: 2003017, OutfitID: 2003, PartType: "body", CharacterID: 21, Unit: "idol", ColorID: 3, Status: "planned"},
+			{Costume3DID: 2003163, Costume3DGroupID: 2003021, AccessoryID: 2003001, PartType: "head_optional", CharacterID: 21, Unit: "idol", ColorID: 3, PackagePath: "parts/_sources/head_optional/sustain-summer-3", Status: "planned"},
+			{Costume3DID: 2003165, Costume3DGroupID: 2003021, PartType: "hair", CharacterID: 21, Unit: "idol", ColorID: 1, Status: "planned"},
 		},
 	}
 
 	selection, err := registry.resolveCombo("jp", ComboQuery{
-		Character3DID:    27,
+		Character3DID:    22,
 		AccessoryID:      2003001,
 		AccessoryColorID: 3,
 	}, "sig")
 	if err != nil {
-		t.Fatalf("resolve accessory combo failed: %v", err)
+		t.Fatalf("resolve combo failed: %v", err)
 	}
 	if selection.BodyCostume3DID != 2003134 || selection.HeadCostume3DID != 2003163 || selection.HairCostume3DID != 2003165 {
-		t.Fatalf("expected accessory outfit body and accessory group head/hair, got %+v", selection)
+		t.Fatalf("expected accessory outfit-family defaults, got %+v", selection)
 	}
 }
 
@@ -1656,5 +1662,375 @@ func TestPreview3DEnsureCaptureSerializesMisses(t *testing.T) {
 	}
 	if maxActive.Load() != 1 {
 		t.Fatalf("expected serialized captures, max active=%d", maxActive.Load())
+	}
+}
+
+func TestPreview3DRegistrySharedFlightMergesOperationsIntoEveryWaiter(t *testing.T) {
+	started := make(chan struct{}, 1)
+	release := make(chan struct{})
+	var requests atomic.Int32
+	characterPath := "/runtime/character3d-index.msgpack.br"
+	partPath := "/runtime/parts/part-registry-compact.msgpack.br"
+	compatibilityPath := "/runtime/parts/head-hair-compatibility-compact.msgpack.br"
+	characterFixture := registryFixtureBytes(t, characterPath, `{"entries":[]}`)
+	partFixture := registryFixtureBytes(t, partPath, `{"entries":[]}`)
+	compatibilityFixture := registryFixtureBytes(t, compatibilityPath, `{"rules":[]}`)
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		switch r.URL.Path {
+		case characterPath:
+			select {
+			case started <- struct{}{}:
+			default:
+			}
+			<-release
+			_, _ = w.Write(characterFixture)
+		case partPath:
+			_, _ = w.Write(partFixture)
+		case compatibilityPath:
+			_, _ = w.Write(compatibilityFixture)
+		default:
+			t.Fatalf("unexpected registry request: %s", r.URL.Path)
+		}
+	}))
+	defer engine.Close()
+
+	service := NewPreview3DService(Preview3DConfig{
+		Enabled:          true,
+		EngineBaseURL:    engine.URL,
+		RegistryCacheTTL: time.Minute,
+		Timeout:          time.Second,
+	})
+	endpoint, err := service.endpointForRegion("jp")
+	if err != nil {
+		t.Fatalf("endpoint: %v", err)
+	}
+	contexts := make([]context.Context, 2)
+	traces := make([]*commandtrace.Trace, 2)
+	for i := range contexts {
+		contexts[i], traces[i] = commandtrace.WithTrace(context.Background())
+	}
+	type result struct {
+		registry *preview3DRegistry
+		err      error
+	}
+	results := make(chan result, 2)
+	go func() {
+		registry, err := service.registry(contexts[0], endpoint)
+		results <- result{registry: registry, err: err}
+	}()
+	<-started
+	go func() {
+		registry, err := service.registry(contexts[1], endpoint)
+		results <- result{registry: registry, err: err}
+	}()
+	time.Sleep(20 * time.Millisecond)
+	close(release)
+
+	for range 2 {
+		result := <-results
+		if result.err != nil || result.registry == nil {
+			t.Fatalf("registry result = %#v, %v", result.registry, result.err)
+		}
+	}
+	if got := requests.Load(); got != 3 {
+		t.Fatalf("registry requests = %d, want 3", got)
+	}
+	sharedCount := 0
+	for index, trace := range traces {
+		for _, operation := range []string{"preview3d.registry_wait", "preview3d.registry_http", "preview3d.registry_decode"} {
+			if count := preview3DTraceOperationCount(trace, operation); count == 0 {
+				t.Fatalf("trace[%d] missing %s, operations=%+v", index, operation, trace.Snapshot().Operations)
+			}
+		}
+		sharedCount += preview3DTraceOperationCount(trace, "preview3d.registry_shared")
+	}
+	if sharedCount != 1 {
+		t.Fatalf("registry shared marker count = %d, want 1", sharedCount)
+	}
+}
+
+func TestPreview3DCaptureSharedFlightMergesOperationsIntoEveryWaiter(t *testing.T) {
+	started := make(chan struct{}, 1)
+	release := make(chan struct{})
+	var captures atomic.Int32
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/"):
+			http.NotFound(w, r)
+		case r.Method == http.MethodPost && r.URL.Path == "/capture":
+			captures.Add(1)
+			select {
+			case started <- struct{}{}:
+			default:
+			}
+			<-release
+			w.Header().Set("content-type", "application/json")
+			_, _ = w.Write([]byte(`{"ok":true}`))
+		default:
+			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer engine.Close()
+
+	service := NewPreview3DService(Preview3DConfig{
+		Enabled:               true,
+		EngineBaseURL:         engine.URL,
+		CaptureMaxConcurrency: 1,
+		CaptureAcquireTimeout: time.Second,
+		CaptureExistsTTL:      time.Minute,
+		Timeout:               time.Second,
+	})
+	endpoint, err := service.endpointForRegion("jp")
+	if err != nil {
+		t.Fatalf("endpoint: %v", err)
+	}
+	selection := preview3DSelection{
+		ImageID:          "pjsk3d_shared_trace",
+		RoleID:           "1:unit",
+		BodyCostume3DID:  1,
+		HeadCostume3DID:  2,
+		HairCostume3DID:  3,
+		CharacterID:      1,
+		Unit:             "unit",
+		Costume3DGroupID: 1,
+		ColorID:          1,
+	}
+	contexts := make([]context.Context, 2)
+	traces := make([]*commandtrace.Trace, 2)
+	for i := range contexts {
+		contexts[i], traces[i] = commandtrace.WithTrace(context.Background())
+	}
+	errs := make(chan error, 2)
+	go func() { errs <- service.ensureCapture(contexts[0], endpoint, selection, "persistent") }()
+	<-started
+	go func() { errs <- service.ensureCapture(contexts[1], endpoint, selection, "persistent") }()
+	time.Sleep(20 * time.Millisecond)
+	close(release)
+
+	for range 2 {
+		if err := <-errs; err != nil {
+			t.Fatalf("ensureCapture failed: %v", err)
+		}
+	}
+	if got := captures.Load(); got != 1 {
+		t.Fatalf("capture requests = %d, want 1", got)
+	}
+	sharedCount := 0
+	for index, trace := range traces {
+		for _, operation := range []string{"preview3d.capture_queue", "preview3d.capture_encode", "preview3d.capture_http"} {
+			if count := preview3DTraceOperationCount(trace, operation); count != 1 {
+				t.Fatalf("trace[%d] %s count = %d, operations=%+v", index, operation, count, trace.Snapshot().Operations)
+			}
+		}
+		sharedCount += preview3DTraceOperationCount(trace, "preview3d.capture_shared")
+	}
+	if sharedCount != 1 {
+		t.Fatalf("shared marker count = %d, want 1", sharedCount)
+	}
+}
+
+func preview3DTraceOperationCount(trace *commandtrace.Trace, name string) int {
+	if trace == nil {
+		return 0
+	}
+	for _, operation := range trace.Snapshot().Operations {
+		if operation.Name == name {
+			return operation.Count
+		}
+	}
+	return 0
+}
+
+func TestPreview3DResponsesHaveExplicitSizeLimits(t *testing.T) {
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var size int64
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/runtime/test.msgpack.br":
+			size = preview3DRegistryMaxResponseBytes + 1
+		case r.Method == http.MethodGet && r.URL.Path == "/captures/oversized.png":
+			size = preview3DCaptureMaxResponseBytes + 1
+		case r.Method == http.MethodPost && r.URL.Path == "/capture":
+			size = preview3DCaptureAckMaxBytes + 1
+		default:
+			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+		}
+		w.Header().Set("Content-Length", fmt.Sprint(size))
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer engine.Close()
+
+	service := NewPreview3DService(Preview3DConfig{
+		Enabled:       true,
+		EngineBaseURL: engine.URL,
+		Timeout:       time.Second,
+	})
+	endpoint, err := service.endpointForRegion("jp")
+	if err != nil {
+		t.Fatalf("endpoint: %v", err)
+	}
+
+	var registry preview3DCharacterIndex
+	if err := service.getMessagePackRegistry(context.Background(), endpoint, "/runtime/test.msgpack.br", &registry, false); err == nil || !strings.Contains(err.Error(), "registry response exceeds") {
+		t.Fatalf("getMessagePackRegistry oversized response error = %v", err)
+	}
+	if _, err := service.getCapture(context.Background(), endpoint, "oversized"); err == nil || !strings.Contains(err.Error(), "capture fetch response exceeds") {
+		t.Fatalf("getCapture oversized response error = %v", err)
+	}
+	selection := preview3DSelection{ImageID: "oversized", RoleID: "1:unit"}
+	if err := service.captureSelection(context.Background(), endpoint, selection, "persistent"); err == nil || !strings.Contains(err.Error(), "capture response exceeds") {
+		t.Fatalf("captureSelection oversized response error = %v", err)
+	}
+}
+
+func TestReadPreview3DResponseLimitsUnknownLengthBody(t *testing.T) {
+	resp := &http.Response{
+		Body:          io.NopCloser(strings.NewReader("12345")),
+		ContentLength: -1,
+	}
+	_, err := readPreview3DResponse(resp, 4, "3d preview test")
+	if err == nil || !strings.Contains(err.Error(), "response exceeds 4 bytes") {
+		t.Fatalf("readPreview3DResponse() error = %v", err)
+	}
+}
+
+func TestEnsureStaticCaptureFileSharesDownloadAndSurvivesLeaderCancellation(t *testing.T) {
+	const imageID = "pjsk3d_static_shared"
+	const png = "shared-png-response"
+	requestStarted := make(chan struct{})
+	releaseResponse := make(chan struct{})
+	var startedOnce sync.Once
+	var requests atomic.Int32
+	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/captures/"+imageID+".png" {
+			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+		}
+		requests.Add(1)
+		startedOnce.Do(func() { close(requestStarted) })
+		<-releaseResponse
+		w.Header().Set("content-type", "image/png")
+		_, _ = w.Write([]byte(png))
+	}))
+	defer engine.Close()
+
+	outputDir := t.TempDir()
+	service := NewPreview3DService(Preview3DConfig{
+		Enabled:         true,
+		EngineBaseURL:   engine.URL,
+		StaticOutputDir: outputDir,
+		Timeout:         time.Second,
+	})
+	endpoint, err := service.endpointForRegion("jp")
+	if err != nil {
+		t.Fatalf("endpoint: %v", err)
+	}
+
+	leaderCtx, cancelLeader := context.WithCancel(context.Background())
+	leaderDone := make(chan error, 1)
+	go func() {
+		leaderDone <- service.ensureStaticCaptureFile(leaderCtx, endpoint, imageID)
+	}()
+	<-requestStarted
+	cancelLeader()
+	if err := <-leaderDone; err != context.Canceled {
+		t.Fatalf("leader error = %v, want context.Canceled", err)
+	}
+
+	contexts := make([]context.Context, 2)
+	traces := make([]*commandtrace.Trace, 2)
+	followers := make(chan error, 2)
+	for index := range contexts {
+		contexts[index], traces[index] = commandtrace.WithTrace(context.Background())
+		go func(ctx context.Context) {
+			followers <- service.ensureStaticCaptureFile(ctx, endpoint, imageID)
+		}(contexts[index])
+	}
+	// Both followers now join the still-running target-key flight. The HTTP
+	// response stays blocked long enough that neither can observe a published
+	// file through the outer stat fast path.
+	time.Sleep(20 * time.Millisecond)
+	close(releaseResponse)
+	for range 2 {
+		if err := <-followers; err != nil {
+			t.Fatalf("follower error = %v", err)
+		}
+	}
+
+	if got := requests.Load(); got != 1 {
+		t.Fatalf("capture downloads = %d, want 1", got)
+	}
+	target := filepath.Join(outputDir, imageID+".png")
+	stored, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatalf("ReadFile() error = %v", err)
+	}
+	if got := string(stored); got != png {
+		t.Fatalf("stored capture = %q, want %q", got, png)
+	}
+	for index, trace := range traces {
+		for _, operation := range []string{
+			"preview3d.static_stat",
+			"preview3d.fetch_http",
+			"preview3d.static_mkdir",
+			"preview3d.static_write",
+			"preview3d.static_rename",
+			"preview3d.store",
+		} {
+			if count := preview3DTraceOperationCount(trace, operation); count != 1 {
+				t.Fatalf("trace[%d] %s count = %d, operations=%+v", index, operation, count, trace.Snapshot().Operations)
+			}
+		}
+		if count := preview3DTraceOperationCount(trace, "preview3d.static_shared"); count != 1 {
+			t.Fatalf("trace[%d] shared count = %d, operations=%+v", index, count, trace.Snapshot().Operations)
+		}
+	}
+	if matches, err := filepath.Glob(filepath.Join(outputDir, "."+imageID+".png.tmp-*")); err != nil {
+		t.Fatalf("Glob() error = %v", err)
+	} else if len(matches) != 0 {
+		t.Fatalf("temporary files were not cleaned up: %v", matches)
+	}
+}
+
+func TestPreview3DCaptureCachePeriodicallySweepsExpiredEntries(t *testing.T) {
+	now := time.Now()
+	endpoint := preview3DEndpoint{region: "jp", baseURL: "http://preview.invalid"}
+	service := &Preview3DService{
+		cfg:      Preview3DConfig{CaptureExistsTTL: time.Minute},
+		captures: make(map[string]time.Time),
+	}
+	service.captures[endpoint.captureKey("expired-other-key")] = now.Add(-time.Second)
+	service.captures[endpoint.captureKey("live")] = now.Add(time.Minute)
+	service.captureNextSweep = now.Add(-time.Second)
+
+	if !service.cachedCaptureExists(endpoint, "live") {
+		t.Fatal("live capture should remain cached")
+	}
+	if _, ok := service.captures[endpoint.captureKey("expired-other-key")]; ok {
+		t.Fatal("periodic sweep did not remove an expired entry for another key")
+	}
+}
+
+func TestPreview3DCaptureCacheEnforcesCapacity(t *testing.T) {
+	now := time.Now()
+	endpoint := preview3DEndpoint{region: "jp", baseURL: "http://preview.invalid"}
+	service := &Preview3DService{
+		cfg:      Preview3DConfig{CaptureExistsTTL: time.Minute},
+		captures: make(map[string]time.Time, preview3DCaptureCacheMaxEntries),
+	}
+	for i := 0; i < preview3DCaptureCacheMaxEntries; i++ {
+		service.captures[endpoint.captureKey(fmt.Sprintf("capture-%d", i))] = now.Add(time.Minute)
+	}
+	service.captureNextSweep = now.Add(time.Minute)
+
+	service.markCaptureExists(endpoint, "new-capture")
+
+	if got := len(service.captures); got > preview3DCaptureCacheMaxEntries {
+		t.Fatalf("capture cache size = %d, max %d", got, preview3DCaptureCacheMaxEntries)
+	}
+	if _, ok := service.captures[endpoint.captureKey("new-capture")]; !ok {
+		t.Fatal("new capture was not cached after capacity eviction")
+	}
+	if got := len(service.captures); got >= preview3DCaptureCacheMaxEntries {
+		t.Fatalf("capacity sweep should evict a batch, cache size = %d", got)
 	}
 }

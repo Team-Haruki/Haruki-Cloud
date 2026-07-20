@@ -56,10 +56,17 @@ type RequestContext struct {
 // Region is already resolved (resolveRegionFromDefaultBinding was called in Execute).
 func NewRequestContext(ctx context.Context, r *CommandRequest, app *renderapp.App) *RequestContext {
 	regionStr := regionWithDefault(r.Region)
+	requestApp := app
+	if app != nil {
+		requestScoped := *app
+		requestScoped.Assets = app.Assets.WithContext(ctx)
+		requestScoped.Music = app.Music.WithContext(ctx)
+		requestApp = &requestScoped
+	}
 	return &RequestContext{
 		Ctx:            ctx,
 		Cmd:            r,
-		App:            app,
+		App:            requestApp,
 		RegionStr:      regionStr,
 		Region:         renderregion.Normalize(regionStr),
 		Platform:       strings.TrimSpace(r.RequesterPlatform),
@@ -126,7 +133,7 @@ func (rc *RequestContext) GetBinding() (*accountdata.ResolvedBinding, int) {
 	rc.bindingOnce.Do(func() {
 		tBinding := time.Now()
 		defer func() {
-			recordCommandStage(rc.Ctx, "binding_resolve", time.Since(tBinding))
+			recordCommandStage(rc.Ctx, "binding.resolve", time.Since(tBinding))
 		}()
 		if rc.App == nil || rc.App.Bindings == nil {
 			return
@@ -158,7 +165,7 @@ func (rc *RequestContext) ResolveSnapshot(needMySekai bool) snapshot.Snapshot {
 		rc.fullSnapshotOnce.Do(func() {
 			tSnapshot := time.Now()
 			defer func() {
-				recordCommandStage(rc.Ctx, "snapshot_resolve_full", time.Since(tSnapshot))
+				recordCommandStage(rc.Ctx, "snapshot.resolve_full", time.Since(tSnapshot))
 			}()
 			selector, opts := rc.snapshotSelector(true)
 			rc.fullSnapshot, rc.fullSnapshotErr = resolveSnapshotBySelectorWithError(rc.Ctx, rc.App, selector, opts)
@@ -168,7 +175,7 @@ func (rc *RequestContext) ResolveSnapshot(needMySekai bool) snapshot.Snapshot {
 	rc.basicSnapshotOnce.Do(func() {
 		tSnapshot := time.Now()
 		defer func() {
-			recordCommandStage(rc.Ctx, "snapshot_resolve_basic", time.Since(tSnapshot))
+			recordCommandStage(rc.Ctx, "snapshot.resolve_basic", time.Since(tSnapshot))
 		}()
 		selector, opts := rc.snapshotSelector(false)
 		rc.basicSnapshot, rc.basicSnapshotErr = resolveSnapshotBySelectorWithError(rc.Ctx, rc.App, selector, opts)
@@ -189,18 +196,30 @@ func (rc *RequestContext) SnapshotError(needMySekai bool) error {
 
 func (rc *RequestContext) GetSelfTarget() *ResolvedGameTarget {
 	rc.selfTargetOnce.Do(func() {
+		startedAt := time.Now()
+		defer func() {
+			recordCommandStage(rc.Ctx, "target.resolve", time.Since(startedAt))
+		}()
 		if rc.App == nil || rc.App.Bindings == nil {
 			return
 		}
-		query := rc.requestScopedSelfQuery()
-		if query.Platform == "" || query.PlatformUserID == "" {
+		// The self target resolves the same self-mode binding as GetBinding:
+		// identical platform/user/selector/region inputs and the same
+		// global-default → regional fallback order pick the same binding. Reuse
+		// the memoized binding instead of issuing a second identity + binding
+		// lookup, and keep identity ResolveOrCreate funneled through the single
+		// GetBinding path so concurrent warmers cannot race first-time creation.
+		binding, harukiUserID := rc.GetBinding()
+		if binding == nil {
 			return
 		}
-		target, err := resolveGameTarget(rc.Ctx, query, rc.RegionStr, rc.Cmd.RegionExplicit, rc.App)
-		if err != nil {
-			return
+		rc.selfTarget = &ResolvedGameTarget{
+			HarukiUserID: harukiUserID,
+			PJSKUserID:   binding.PJSKUserID,
+			Visible:      binding.Visible,
+			BgSettings:   binding.Bg,
+			Binding:      binding,
 		}
-		rc.selfTarget = &target
 	})
 	return rc.selfTarget
 }
@@ -209,7 +228,7 @@ func (rc *RequestContext) GetPublicProfileResponse() *sekaiapi.GetAnotherProfile
 	rc.publicProfileOnce.Do(func() {
 		tProfile := time.Now()
 		defer func() {
-			recordCommandStage(rc.Ctx, "sekai_profile", time.Since(tProfile))
+			recordCommandStage(rc.Ctx, "sekai.profile", time.Since(tProfile))
 		}()
 		target := rc.GetSelfTarget()
 		if target == nil || rc.App == nil || rc.App.SekaiAPI == nil {
@@ -227,6 +246,10 @@ func (rc *RequestContext) GetPublicProfileResponse() *sekaiapi.GetAnotherProfile
 
 func (rc *RequestContext) resolveProfiles() {
 	rc.profileOnce.Do(func() {
+		startedAt := time.Now()
+		defer func() {
+			recordCommandStage(rc.Ctx, "profile.resolve", time.Since(startedAt))
+		}()
 		if target := rc.GetSelfTarget(); target != nil {
 			if resp := rc.GetPublicProfileResponse(); resp != nil {
 				region := resolvedTargetRegion(rc.RegionStr, *target)
@@ -244,15 +267,21 @@ func (rc *RequestContext) resolveProfiles() {
 		if rc.detailedProfile == nil && rc.profileCard == nil {
 			rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc)
 		}
-		if snap := rc.ResolveSnapshot(false); snap != nil {
-			if rc.detailedProfile == nil {
-				if detail := snap.DetailedProfile(rc.Region); detail != nil {
-					rc.detailedProfile = cloneDetailedProfileForCurrentTarget(rc, detail)
+		// Only fall back to the full suite snapshot when the cheaper public
+		// profile path left a gap. When both cards are already built, resolving
+		// the snapshot here re-runs binding + factory.Build (a full suite parse)
+		// whose result would just be discarded by the nil-guards below.
+		if rc.detailedProfile == nil || rc.profileCard == nil {
+			if snap := rc.ResolveSnapshot(false); snap != nil {
+				if rc.detailedProfile == nil {
+					if detail := snap.DetailedProfile(rc.Region); detail != nil {
+						rc.detailedProfile = cloneDetailedProfileForCurrentTarget(rc, detail)
+					}
 				}
-			}
-			if rc.profileCard == nil {
-				if card := snap.ProfileCard(rc.Region); card != nil {
-					rc.profileCard = cloneProfileCardForCurrentTarget(rc, card)
+				if rc.profileCard == nil {
+					if card := snap.ProfileCard(rc.Region); card != nil {
+						rc.profileCard = cloneProfileCardForCurrentTarget(rc, card)
+					}
 				}
 			}
 		}
@@ -309,7 +338,9 @@ func (rc *RequestContext) requireVisibleSuiteSnapshot() (*accountdata.ResolvedBi
 
 // ImageMessage is a convenience method to store image bytes and return an image message.
 func (rc *RequestContext) ImageMessage(data []byte) (onebot11.Message, error) {
+	startedAt := time.Now()
 	url, err := rc.App.ImageCache.StoreAndGetURL(rc.Ctx, data, BotModulePJSK)
+	recordCommandStage(rc.Ctx, "image.store", time.Since(startedAt))
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -864,5 +866,79 @@ func TestControllerWithContextClonesProfileSource(t *testing.T) {
 	}
 	if payload.Profile.LeaderImagePath == "" {
 		t.Fatalf("expected leader image path to be resolved")
+	}
+}
+
+type overlapCensorStub struct {
+	inflight   atomic.Int32
+	overlapped atomic.Bool
+	rejectBio  bool
+	nameCalls  atomic.Int32
+	bioCalls   atomic.Int32
+}
+
+func (o *overlapCensorStub) observe() {
+	if o.inflight.Add(1) > 1 {
+		o.overlapped.Store(true)
+	}
+	time.Sleep(100 * time.Millisecond)
+	if o.inflight.Load() > 1 {
+		o.overlapped.Store(true)
+	}
+	o.inflight.Add(-1)
+}
+
+func (o *overlapCensorStub) CensorName(context.Context, int, string, string, string) bool {
+	o.nameCalls.Add(1)
+	o.observe()
+	return true
+}
+
+func (o *overlapCensorStub) CensorShortBio(context.Context, int, string, string, string) bool {
+	o.bioCalls.Add(1)
+	o.observe()
+	return !o.rejectBio
+}
+
+func TestBuildProfileRequestRunsCensorChecksConcurrently(t *testing.T) {
+	source := &testProfileSource{
+		region:      renderregion.JP,
+		cards:       map[int]*masterdata.Card{},
+		honors:      map[int]*masterdata.Honor{},
+		honorGroups: map[int]*masterdata.HonorGroup{},
+	}
+	stub := &overlapCensorStub{rejectBio: true}
+	snap := &profileSnapshotStub{
+		rawData: &snapshot.RawUserData{
+			UserGamedata: snapshot.RawUserGamedata{UserID: 42, Name: "player", Rank: 10},
+			UserProfile:  snapshot.RawUserProfile{Word: "hello world"},
+		},
+		detail: &drawing.DetailedProfileCardRequest{
+			ID:       "42",
+			Region:   "JP",
+			Nickname: "player",
+		},
+	}
+	controller := NewController(source, nil, assets.NewAssetHelper("", nil), snap)
+	controller.censor = stub
+
+	payload, err := controller.BuildProfileRequest(Query{Region: "jp", Visible: true})
+	if err != nil {
+		t.Fatalf("BuildProfileRequest: %v", err)
+	}
+	if got := stub.nameCalls.Load(); got != 1 {
+		t.Fatalf("CensorName calls = %d, want 1", got)
+	}
+	if got := stub.bioCalls.Load(); got != 1 {
+		t.Fatalf("CensorShortBio calls = %d, want 1", got)
+	}
+	if !stub.overlapped.Load() {
+		t.Fatal("censor name/bio checks should run concurrently")
+	}
+	if payload.Profile.Nickname != "player" {
+		t.Fatalf("nickname = %q, want kept", payload.Profile.Nickname)
+	}
+	if payload.Word != "" {
+		t.Fatalf("word = %q, want blanked by rejected bio", payload.Word)
 	}
 }

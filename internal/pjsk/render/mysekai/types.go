@@ -1,6 +1,7 @@
 package mysekai
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -8,6 +9,8 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // ── Controller ──────────────────────────────────────────────────────────────
@@ -23,6 +26,7 @@ type Controller struct {
 	assets                    *assets.AssetHelper
 	housingCompetitionStats   *housingCompetitionStatsCache
 	housingCompetitionBanners *housingCompetitionBannerCache
+	requestCtx                context.Context
 }
 
 type masterdataResolver struct {
@@ -30,8 +34,9 @@ type masterdataResolver struct {
 	localDir      string
 	allowFallback bool
 
-	mu    sync.Mutex
+	mu    sync.RWMutex
 	cache map[string]masterdataSource
+	loads singleflight.Group
 }
 
 type mysekaiMapSiteConfig struct {
@@ -70,6 +75,10 @@ type masterdataSource interface {
 	loadList(filename string) []map[string]any
 	loadMapByID(filename string) map[int]map[string]any
 	loadObject(filename string, target any) bool
+}
+
+type contextualMasterdataSource interface {
+	WithContext(ctx context.Context) masterdataSource
 }
 
 // ── Query types ─────────────────────────────────────────────────────────────

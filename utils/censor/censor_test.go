@@ -1,15 +1,18 @@
 package censor
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
 	censorenttest "haruki-cloud/database/censor/enttest"
 	"haruki-cloud/database/censor/imagemodcache"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -31,6 +34,30 @@ func (f fakeTextModerator) TextCensor(string) (map[string]any, error) {
 
 func (f fakeImageModerator) ImageModerationURL(context.Context, string) (IMSSuggestion, error) {
 	return f.suggestion, f.err
+}
+
+type contextRecordingTextModerator struct {
+	key      any
+	value    any
+	observed bool
+}
+
+func (f *contextRecordingTextModerator) TextCensor(string) (map[string]any, error) {
+	return nil, errors.New("legacy TextCensor called")
+}
+
+func (f *contextRecordingTextModerator) TextCensorContext(ctx context.Context, _ string) (map[string]any, error) {
+	f.observed = ctx.Value(f.key) == f.value
+	return map[string]any{"conclusion": string(ResultCompliant)}, nil
+}
+
+func operationCount(snapshot commandtrace.Snapshot, name string) int {
+	for _, operation := range snapshot.Operations {
+		if operation.Name == name {
+			return operation.Count
+		}
+	}
+	return 0
 }
 
 func newCensorTestService(t *testing.T, moderator ImageModerator) *Service {
@@ -68,7 +95,7 @@ func TestCensorImageRequestFailurePassesWithoutCache(t *testing.T) {
 }
 
 func TestCensorImageBlockIsCachedAndRejected(t *testing.T) {
-	ctx := context.Background()
+	ctx, trace := commandtrace.WithTrace(context.Background())
 	imageURL := "https://example.test/blocked.png"
 	service := newCensorTestService(t, fakeImageModerator{suggestion: IMSSuggestionBlock})
 
@@ -89,6 +116,13 @@ func TestCensorImageBlockIsCachedAndRejected(t *testing.T) {
 	if cached.HarukiUserID == nil || *cached.HarukiUserID != 456 {
 		t.Fatalf("cached haruki_user_id = %v, want 456", cached.HarukiUserID)
 	}
+	snapshot := trace.Snapshot()
+	if got := operationCount(snapshot, "censor.cache"); got != 1 {
+		t.Fatalf("censor.cache count = %d, want 1", got)
+	}
+	if got := operationCount(snapshot, "censor.store"); got != 1 {
+		t.Fatalf("censor.store count = %d, want 1", got)
+	}
 }
 
 func TestCensorShortBioRequestFailureRejectsWithoutCache(t *testing.T) {
@@ -106,5 +140,45 @@ func TestCensorShortBioRequestFailureRejectsWithoutCache(t *testing.T) {
 	}
 	if count != 0 {
 		t.Fatalf("short_bio count = %d, want 0", count)
+	}
+}
+
+func TestCensorBusinessErrorLogOnlyIncludesErrorType(t *testing.T) {
+	ctx := context.Background()
+	service := newCensorTestService(t, nil)
+	const secret = "client_secret=do-not-log&access_token=do-not-log"
+	service.TextCensorAPI = fakeTextModerator{err: errors.New(secret)}
+	var output bytes.Buffer
+	service.Logger = logger.NewLogger("CensorSecurityTest", "ERROR", &output)
+
+	if ok := service.CensorShortBio(ctx, 789, "592703738580070400", "private short bio", "jp"); ok {
+		t.Fatal("CensorShortBio() = true, want false when moderation request fails")
+	}
+	logLine := output.String()
+	if !strings.Contains(logLine, "error_type=") {
+		t.Fatalf("log does not contain error_type: %q", logLine)
+	}
+	for _, forbidden := range []string{secret, "do-not-log", "592703738580070400", "private short bio"} {
+		if strings.Contains(logLine, forbidden) {
+			t.Fatalf("log leaked %q: %q", forbidden, logLine)
+		}
+	}
+}
+
+func TestCensorShortBioForwardsRequestContext(t *testing.T) {
+	type contextKey string
+	const key contextKey = "request"
+	const value = "profile-settings"
+
+	ctx := context.WithValue(context.Background(), key, value)
+	moderator := &contextRecordingTextModerator{key: key, value: value}
+	service := newCensorTestService(t, nil)
+	service.TextCensorAPI = moderator
+
+	if ok := service.CensorShortBio(ctx, 789, "123456", "hello", "jp"); !ok {
+		t.Fatal("CensorShortBio() = false, want true")
+	}
+	if !moderator.observed {
+		t.Fatal("context-aware moderator did not observe the request context")
 	}
 }

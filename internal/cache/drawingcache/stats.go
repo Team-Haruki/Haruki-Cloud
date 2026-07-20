@@ -1,16 +1,54 @@
 package drawingcache
 
 import (
+	"container/list"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
+
+const (
+	cacheStatsMaxTrackedPaths = 64
+	cacheStatsPathUnknown     = "unknown"
+	cacheStatsPathOther       = "other"
+)
+
+var cacheStatsAllowedDomains = map[string]struct{}{
+	"card":      {},
+	"chart":     {},
+	"costume":   {},
+	"deck":      {},
+	"education": {},
+	"event":     {},
+	"gacha":     {},
+	"help":      {},
+	"honor":     {},
+	"inventory": {},
+	"misc":      {},
+	"music":     {},
+	"mysekai":   {},
+	"profile":   {},
+	"score":     {},
+	"sk":        {},
+	"stamp":     {},
+	"vlive":     {},
+}
 
 type cacheStatsTracker struct {
 	mu        sync.RWMutex
 	startedAt time.Time
 	totals    cacheStatsCounter
-	byPath    map[string]*cacheStatsCounter
+	byPath    map[string]*cacheStatsPathEntry
+	lru       *list.List
+	unknown   cacheStatsCounter
+	other     cacheStatsCounter
+	maxPaths  int
+}
+
+type cacheStatsPathEntry struct {
+	counter cacheStatsCounter
+	element *list.Element
 }
 
 type cacheStatsCounter struct {
@@ -56,7 +94,9 @@ func newCacheStatsTracker(now func() time.Time) *cacheStatsTracker {
 	}
 	return &cacheStatsTracker{
 		startedAt: now().UTC(),
-		byPath:    make(map[string]*cacheStatsCounter),
+		byPath:    make(map[string]*cacheStatsPathEntry),
+		lru:       list.New(),
+		maxPaths:  cacheStatsMaxTrackedPaths,
 	}
 }
 
@@ -92,19 +132,64 @@ func (s *cacheStatsTracker) record(apiPath string, apply func(counter *cacheStat
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	apply(&s.totals)
-	counter := s.byPath[apiPath]
-	if counter == nil {
-		counter = &cacheStatsCounter{}
-		s.byPath[apiPath] = counter
+	s.ensureInitializedLocked()
+	s.recordPathLocked(apiPath, apply)
+}
+
+func (s *cacheStatsTracker) ensureInitializedLocked() {
+	if s.byPath == nil {
+		s.byPath = make(map[string]*cacheStatsPathEntry)
 	}
-	apply(counter)
+	if s.lru == nil {
+		s.lru = list.New()
+	}
+	if s.maxPaths <= 0 {
+		s.maxPaths = cacheStatsMaxTrackedPaths
+	}
+}
+
+func (s *cacheStatsTracker) recordPathLocked(apiPath string, apply func(counter *cacheStatsCounter)) {
+	switch apiPath {
+	case cacheStatsPathUnknown:
+		apply(&s.unknown)
+		return
+	case cacheStatsPathOther:
+		apply(&s.other)
+		return
+	}
+
+	if entry := s.byPath[apiPath]; entry != nil {
+		apply(&entry.counter)
+		s.lru.MoveToFront(entry.element)
+		return
+	}
+
+	for len(s.byPath) >= s.maxPaths {
+		oldest := s.lru.Back()
+		if oldest == nil {
+			break
+		}
+		oldPath, _ := oldest.Value.(string)
+		oldEntry := s.byPath[oldPath]
+		delete(s.byPath, oldPath)
+		s.lru.Remove(oldest)
+		if oldEntry != nil {
+			mergeCacheStatsCounter(&s.other, oldEntry.counter)
+		}
+	}
+
+	entry := &cacheStatsPathEntry{}
+	entry.element = s.lru.PushFront(apiPath)
+	apply(&entry.counter)
+	s.byPath[apiPath] = entry
 }
 
 func (s *cacheStatsTracker) snapshot(filterPath string) cacheStatsSnapshot {
-	filterPath = normalizeCacheStatsPath(filterPath)
 	if s == nil {
 		return cacheStatsSnapshot{}
 	}
+	filterAll := strings.TrimSpace(filterPath) == "" || strings.EqualFold(strings.TrimSpace(filterPath), "all")
+	filterPath = normalizeCacheStatsPath(filterPath)
 
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -114,23 +199,26 @@ func (s *cacheStatsTracker) snapshot(filterPath string) cacheStatsSnapshot {
 		Totals:    buildCacheStatsCounterSnapshot(s.totals),
 	}
 
-	if filterPath != "" && filterPath != "all" && filterPath != "unknown" {
-		if counter := s.byPath[filterPath]; counter != nil {
+	if !filterAll {
+		counter, ok := s.counterForPathLocked(filterPath)
+		if ok {
 			snapshot.Paths = []cachePathStatsSnapshot{{
 				APIPath:                   filterPath,
-				cacheStatsCounterSnapshot: buildCacheStatsCounterSnapshot(*counter),
+				cacheStatsCounterSnapshot: buildCacheStatsCounterSnapshot(counter),
 			}}
 		}
 		return snapshot
 	}
 
-	snapshot.Paths = make([]cachePathStatsSnapshot, 0, len(s.byPath))
-	for apiPath, counter := range s.byPath {
+	snapshot.Paths = make([]cachePathStatsSnapshot, 0, len(s.byPath)+2)
+	for apiPath, entry := range s.byPath {
 		snapshot.Paths = append(snapshot.Paths, cachePathStatsSnapshot{
 			APIPath:                   apiPath,
-			cacheStatsCounterSnapshot: buildCacheStatsCounterSnapshot(*counter),
+			cacheStatsCounterSnapshot: buildCacheStatsCounterSnapshot(entry.counter),
 		})
 	}
+	appendReservedCacheStatsPath(&snapshot.Paths, cacheStatsPathUnknown, s.unknown)
+	appendReservedCacheStatsPath(&snapshot.Paths, cacheStatsPathOther, s.other)
 	sort.Slice(snapshot.Paths, func(i, j int) bool {
 		if snapshot.Paths[i].Lookups != snapshot.Paths[j].Lookups {
 			return snapshot.Paths[i].Lookups > snapshot.Paths[j].Lookups
@@ -138,6 +226,46 @@ func (s *cacheStatsTracker) snapshot(filterPath string) cacheStatsSnapshot {
 		return snapshot.Paths[i].APIPath < snapshot.Paths[j].APIPath
 	})
 	return snapshot
+}
+
+func (s *cacheStatsTracker) counterForPathLocked(apiPath string) (cacheStatsCounter, bool) {
+	switch apiPath {
+	case cacheStatsPathUnknown:
+		return s.unknown, !cacheStatsCounterEmpty(s.unknown)
+	case cacheStatsPathOther:
+		return s.other, !cacheStatsCounterEmpty(s.other)
+	default:
+		entry := s.byPath[apiPath]
+		if entry == nil {
+			return cacheStatsCounter{}, false
+		}
+		return entry.counter, true
+	}
+}
+
+func appendReservedCacheStatsPath(paths *[]cachePathStatsSnapshot, apiPath string, counter cacheStatsCounter) {
+	if cacheStatsCounterEmpty(counter) {
+		return
+	}
+	*paths = append(*paths, cachePathStatsSnapshot{
+		APIPath:                   apiPath,
+		cacheStatsCounterSnapshot: buildCacheStatsCounterSnapshot(counter),
+	})
+}
+
+func cacheStatsCounterEmpty(counter cacheStatsCounter) bool {
+	return counter == (cacheStatsCounter{})
+}
+
+func mergeCacheStatsCounter(dst *cacheStatsCounter, src cacheStatsCounter) {
+	if dst == nil {
+		return
+	}
+	dst.Hits += src.Hits
+	dst.Misses += src.Misses
+	dst.Expired += src.Expired
+	dst.MissingFiles += src.MissingFiles
+	dst.Stores += src.Stores
 }
 
 func buildCacheStatsCounterSnapshot(counter cacheStatsCounter) cacheStatsCounterSnapshot {
@@ -158,9 +286,29 @@ func buildCacheStatsCounterSnapshot(counter cacheStatsCounter) cacheStatsCounter
 }
 
 func normalizeCacheStatsPath(apiPath string) string {
+	raw := strings.TrimSpace(apiPath)
+	if raw == "" {
+		return cacheStatsPathUnknown
+	}
+	if len(raw) > maxCacheAPIPathBytes {
+		return cacheStatsPathOther
+	}
+	if strings.EqualFold(raw, cacheStatsPathUnknown) {
+		return cacheStatsPathUnknown
+	}
+	if strings.EqualFold(raw, cacheStatsPathOther) {
+		return cacheStatsPathOther
+	}
 	apiPath = normalizeAPIPath(apiPath)
 	if apiPath == "" {
-		return "unknown"
+		return cacheStatsPathOther
+	}
+	parts := strings.Split(apiPath, "/")
+	if len(parts) < 3 || parts[0] != "api" || parts[1] != "pjsk" {
+		return cacheStatsPathOther
+	}
+	if _, allowed := cacheStatsAllowedDomains[parts[2]]; !allowed {
+		return cacheStatsPathOther
 	}
 	return apiPath
 }

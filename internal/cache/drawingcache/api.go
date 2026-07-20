@@ -3,7 +3,6 @@ package drawingcache
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,6 +16,12 @@ import (
 var (
 	safePathPattern = regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
 	safeExtPattern  = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+)
+
+const (
+	maxCacheAPIPathBytes    = 256
+	maxCacheAPIPathSegments = 8
+	maxCacheAPISegmentBytes = 64
 )
 
 type API struct {
@@ -59,7 +64,7 @@ func (a *API) RegisterRoutes(router fiber.Router) {
 }
 
 func (a *API) handleGetCache(c fiber.Ctx) error {
-	apiPathHint := normalizeAPIPath(c.Query("api_path"))
+	apiPathHint := c.Query("api_path")
 	key := strings.TrimSpace(c.Query("key"))
 	if err := ValidateSHA256Key(key); err != nil {
 		return jsonStatus(c, fiber.StatusBadRequest, fiber.Map{"error": err.Error()})
@@ -82,7 +87,10 @@ func (a *API) handleGetCache(c fiber.Ctx) error {
 		}
 		if !shared {
 			if err := removeFileAndPruneEmptyDirsSafe(record.FilePath, a.storageDir); err != nil {
-				log.Printf("[drawing-cache-api] lazy delete file failed key=%s path=%s: %v", key, record.FilePath, err)
+				drawingCacheLogger.WarnContext(c.Context(), "cache file cleanup failed",
+					"operation", "lazy_delete_expired_file",
+					"error_type", drawingCacheErrorType(err),
+				)
 			}
 		}
 		if err := a.dao.DeleteRecord(key); err != nil {
@@ -102,7 +110,10 @@ func (a *API) handleGetCache(c fiber.Ctx) error {
 			return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "delete missing-file record failed"})
 		}
 		if err := pruneEmptyDirsSafe(filepath.Dir(record.FilePath), a.storageDir); err != nil {
-			log.Printf("[drawing-cache-api] prune empty dirs failed key=%s path=%s: %v", key, record.FilePath, err)
+			drawingCacheLogger.WarnContext(c.Context(), "cache directory cleanup failed",
+				"operation", "prune_empty_directories",
+				"error_type", drawingCacheErrorType(err),
+			)
 		}
 		a.stats.recordMiss(record.APIPath, cacheMissReasonMissingFile)
 		return jsonStatus(c, fiber.StatusNotFound, fiber.Map{"error": "file not found"})
@@ -205,8 +216,7 @@ func (a *API) handlePostCache(c fiber.Ctx) error {
 }
 
 func (a *API) handleGetCacheStats(c fiber.Ctx) error {
-	filterPath := normalizeAPIPath(c.Query("api_path"))
-	return jsonStatus(c, fiber.StatusOK, a.stats.snapshot(filterPath))
+	return jsonStatus(c, fiber.StatusOK, a.stats.snapshot(c.Query("api_path")))
 }
 
 func normalizeFileExt(ext string) string {
@@ -233,10 +243,11 @@ func sanitizePathToken(raw string) string {
 }
 
 func normalizeAPIPath(raw string) string {
-	v := strings.TrimSpace(strings.ToLower(raw))
-	if v == "" {
+	v := strings.TrimSpace(raw)
+	if v == "" || len(v) > maxCacheAPIPathBytes {
 		return ""
 	}
+	v = strings.ToLower(v)
 
 	v = strings.ReplaceAll(v, "\\", "/")
 	parts := strings.Split(v, "/")
@@ -246,6 +257,9 @@ func normalizeAPIPath(raw string) string {
 		part = strings.Trim(part, "._-")
 		if part == "" {
 			continue
+		}
+		if len(part) > maxCacheAPISegmentBytes || len(cleaned) >= maxCacheAPIPathSegments {
+			return ""
 		}
 		cleaned = append(cleaned, part)
 	}

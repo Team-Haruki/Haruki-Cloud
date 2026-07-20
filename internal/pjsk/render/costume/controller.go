@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/filteralias"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -95,6 +96,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	}
 	clone := *c
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
 	clone.preview3D = c.preview3D
 	clone.ctx = ctx
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
@@ -549,7 +551,9 @@ func (c *Controller) RenderCostumeListWithRequest(query ListQuery) ([]byte, *dra
 	if c == nil || c.drawing == nil {
 		return nil, nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
 	payload, err := c.BuildCostumeListRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -569,6 +573,10 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 	if err != nil {
 		return nil, err
 	}
+	return c.buildResolvedCostumeDetailRequest(region, source, costumeInfo, query)
+}
+
+func (c *Controller) buildResolvedCostumeDetailRequest(region renderregion.Value, source DataSource, costumeInfo *masterdata.Costume3d, query Query) (*drawing.CostumeDetailRequest, error) {
 	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
 		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
 	}
@@ -656,24 +664,28 @@ func (c *Controller) BuildCostumeDetailRequest(query Query) (*drawing.CostumeDet
 	}, nil
 }
 
-func (c *Controller) resolve3DPreviewPath(region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query) (string, error) {
+func (c *Controller) resolve3DPreviewPath(ctx context.Context, region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query) (string, error) {
 	if c == nil || c.preview3D == nil || costumeInfo == nil {
 		return "", nil
 	}
-	ctx := c.ctx
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = c.ctx
+		if ctx == nil {
+			ctx = context.Background()
+		}
 	}
 	return c.preview3D.ResolveQueryPreviewPath(ctx, region.String(), costumeInfo.ID, query)
 }
 
-func (c *Controller) ensure3DPreviewCapture(region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query) error {
+func (c *Controller) ensure3DPreviewCapture(ctx context.Context, region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query) error {
 	if c == nil || c.preview3D == nil || costumeInfo == nil {
 		return nil
 	}
-	ctx := c.ctx
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = c.ctx
+		if ctx == nil {
+			ctx = context.Background()
+		}
 	}
 	return c.preview3D.EnsureQueryPreviewCapture(ctx, region.String(), costumeInfo.ID, query)
 }
@@ -682,33 +694,43 @@ func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
 	region, source, err := c.resolveSource(query.Region)
 	if err != nil {
+		finishBuild()
 		return nil, err
 	}
 	costumeInfo, err := c.resolveCostumeInfo(region, source, query)
 	if err != nil {
+		finishBuild()
 		return nil, err
 	}
 	if expectedPart, ok := normalizePartType(query.ExpectedPartType); ok && costumeInfo.PartType != expectedPart {
+		finishBuild()
 		return nil, fmt.Errorf("costume %d is %s, not %s", costumeInfo.ID, partTypeName(costumeInfo.PartType), partTypeName(expectedPart))
 	}
-	payload, err := c.BuildCostumeDetailRequest(query)
+	payload, err := c.buildResolvedCostumeDetailRequest(region, source, costumeInfo, query)
 	if err != nil {
+		finishBuild()
 		return nil, err
 	}
 	cachePayload := c.costumeDetailCacheRequest(payload)
-	return c.drawing.GenerateCostumeDetailWithPrepare(cachePayload, payload, func(prepared any) error {
-		previewPath, err := c.resolve3DPreviewPath(region, costumeInfo, query)
+	finishBuild()
+	return c.drawing.GenerateCostumeDetailWithContextPrepare(cachePayload, payload, func(renderCtx context.Context, prepared any) error {
+		previewPath, err := c.resolve3DPreviewPath(renderCtx, region, costumeInfo, query)
 		if err != nil {
-			costumePreview3DLogger.Warnf("3d preview skipped: region=%s costume_id=%d err=%v", region.String(), costumeInfo.ID, err)
+			costumePreview3DLogger.WarnContext(renderCtx, "3d preview skipped",
+				"region", region.String(),
+				"costume_id", costumeInfo.ID,
+				"error_type", fmt.Sprintf("%T", err),
+			)
 			return nil
 		}
 		if previewPath == "" {
 			return nil
 		}
 		setCostumeDetailPreviewPath(prepared, previewPath)
-		return c.ensure3DPreviewCapture(region, costumeInfo, query)
+		return c.ensure3DPreviewCapture(renderCtx, region, costumeInfo, query)
 	})
 }
 
@@ -716,7 +738,9 @@ func (c *Controller) RenderCostumeCombo(query ComboQuery) ([]byte, error) {
 	if c == nil || c.preview3D == nil {
 		return nil, fmt.Errorf("3d preview service is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
 	parsed, err := parseComboQuery(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -740,7 +764,7 @@ func (c *Controller) resolveSource(regionText string) (renderregion.Value, DataS
 }
 
 func (c *Controller) resolveCostumeInfo(region renderregion.Value, source DataSource, query Query) (*masterdata.Costume3d, error) {
-	if query.OutfitID > 0 || query.AccessoryID > 0 {
+	if query.OutfitID > 0 || query.AccessoryID > 0 || query.HairID > 0 {
 		return c.resolveNormalizedCostume(region, source, query)
 	}
 	costumeID := query.ID
@@ -761,6 +785,16 @@ func (c *Controller) resolveNormalizedCostume(region renderregion.Value, source 
 	colorID := query.ColorID
 	if colorID == 0 {
 		colorID = 1
+	}
+	if query.HairID > 0 {
+		if c.preview3D == nil {
+			return nil, fmt.Errorf("3d preview service is not configured")
+		}
+		rawID, err := c.preview3D.HairCostume3DIDForRole(c.ctx, region.String(), query.HairID, query.Character3DID)
+		if err != nil {
+			return nil, err
+		}
+		return source.GetCostumeByID(rawID)
 	}
 	if query.AccessoryID > 0 {
 		if c.preview3D == nil {
@@ -1233,8 +1267,8 @@ func ParseExplicitCostumeID(query string) (int, bool) {
 
 func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 	partType, ok := normalizePartType(partType)
-	if !ok || (partType != "body" && partType != "head") {
-		return Query{}, false, fmt.Errorf("查询类型必须是服装或饰品")
+	if !ok {
+		return Query{}, false, fmt.Errorf("查询类型必须是服装、饰品或发型")
 	}
 	fields := strings.Fields(strings.TrimSpace(raw))
 	if len(fields) == 0 {
@@ -1281,6 +1315,11 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 					return Query{}, true, fmt.Errorf("饰品查询参数重复或类型不匹配")
 				}
 				query.AccessoryID = id
+			case "hair":
+				if partType != "hair" || query.HairID != 0 {
+					return Query{}, true, fmt.Errorf("发型查询参数重复或类型不匹配")
+				}
+				query.HairID = id
 			case "role":
 				if query.Character3DID != 0 {
 					return Query{}, true, fmt.Errorf("角色ID重复")
@@ -1293,7 +1332,7 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 				query.ColorID = id
 				colorSet = true
 			default:
-				return Query{}, true, fmt.Errorf("查服装和查饰品不接受%s参数", token)
+				return Query{}, true, fmt.Errorf("组件查询不接受%s参数", token)
 			}
 			continue
 		}
@@ -1312,15 +1351,21 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 		if numeric {
 			recognized = true
 			shortID := query.OutfitID
-			if partType == "head" {
+			switch partType {
+			case "head":
 				shortID = query.AccessoryID
+			case "hair":
+				shortID = query.HairID
 			}
 			switch {
 			case shortID == 0:
-				if partType == "body" {
+				switch partType {
+				case "body":
 					query.OutfitID = id
-				} else {
+				case "head":
 					query.AccessoryID = id
+				case "hair":
+					query.HairID = id
 				}
 			case query.Character3DID == 0 && roleAlias.characterID == 0:
 				query.Character3DID = id
@@ -1346,9 +1391,13 @@ func ParseLookupQuery(raw string, partType string) (Query, bool, error) {
 	}
 	shortID := query.OutfitID
 	label := "服装"
-	if partType == "head" {
+	switch partType {
+	case "head":
 		shortID = query.AccessoryID
 		label = "饰品"
+	case "hair":
+		shortID = query.HairID
+		label = "发型"
 	}
 	if shortID <= 0 {
 		if !recognized {

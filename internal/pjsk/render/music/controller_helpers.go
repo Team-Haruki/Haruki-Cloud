@@ -244,24 +244,7 @@ func (c *Controller) resolveMusicChartMeta(region renderregion.Value, musicID in
 	if diff == "" || musicID <= 0 {
 		return nil
 	}
-
-	if c != nil && c.metaLoader != nil {
-		if payload := c.metaLoader.Get(region.String()); len(payload) > 0 {
-			if item := findMusicMeta(payload, musicID, diff); item != nil {
-				return item
-			}
-		}
-	}
-
-	if snap := c.currentSnapshot(); snap != nil {
-		if payload := snap.MusicMetaBytes(); len(payload) > 0 {
-			if item := findMusicMeta(payload, musicID, diff); item != nil {
-				return item
-			}
-		}
-	}
-
-	return nil
+	return findMusicMetaInView(c.resolveMusicMetaView(region.String()), musicID, diff)
 }
 
 func matchesMusicKeyword(source DataSource, musicInfo *masterdata.Music, keyword string) bool {

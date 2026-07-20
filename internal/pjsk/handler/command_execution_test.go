@@ -163,7 +163,7 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if err.Error() != buildPrivateDataNotFoundMessage("mysekai", &accountdata.ResolvedBinding{
+	if err.Error() != buildPrivateDataHiddenMessage("mysekai", &accountdata.ResolvedBinding{
 		Server:     "jp",
 		PJSKUserID: "12345678901234",
 		Visible:    false,

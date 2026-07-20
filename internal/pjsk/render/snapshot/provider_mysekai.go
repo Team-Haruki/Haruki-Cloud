@@ -16,8 +16,9 @@ type MySekaiPayloadProvider interface {
 }
 
 type ToolboxMySekaiPayloadProvider struct {
-	bindings bindingLookup
-	client   privateDataClient
+	bindings     bindingLookup
+	client       privateDataClient
+	privateCache *PrivateDataCache
 }
 
 func NewToolboxMySekaiPayloadProvider(bindings bindingLookup, client privateDataClient) *ToolboxMySekaiPayloadProvider {
@@ -25,6 +26,18 @@ func NewToolboxMySekaiPayloadProvider(bindings bindingLookup, client privateData
 		bindings: bindings,
 		client:   client,
 	}
+}
+
+// WithPrivateDataCache attaches the shared, upload_time-validated private-data
+// cache. Because mysekai payloads are keyed identically here and in the snapshot
+// provider (server, "mysekai", uid), the two paths share cached payloads. A nil
+// cache leaves the direct-fetch behavior unchanged.
+func (p *ToolboxMySekaiPayloadProvider) WithPrivateDataCache(cache *PrivateDataCache) *ToolboxMySekaiPayloadProvider {
+	if p == nil {
+		return nil
+	}
+	p.privateCache = cache
+	return p
 }
 
 func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Selector, preferGlobalDefault bool) ([]byte, error) {
@@ -49,7 +62,12 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 		return nil, fmt.Errorf("snapshot: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
 	}
 
-	payload, err := p.client.GetMySekaiData(binding.Server, uid, platform, imUserID)
+	payload, _, err := p.privateCache.Fetch(
+		PrivateDataKey{Server: binding.Server, DataType: "mysekai", UID: uid},
+		func(knownUploadTime int64) ([]byte, bool, error) {
+			return p.client.GetMySekaiDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

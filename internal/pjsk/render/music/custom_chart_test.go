@@ -286,6 +286,13 @@ func TestParseCustomMusicScoreStatsDoesNotFallbackToNoteListLength(t *testing.T)
 	}
 }
 
+func TestDecodeCustomMusicScoreRejectsOversizedDecompressedPayload(t *testing.T) {
+	compressed := gzipBytes(t, bytes.Repeat([]byte("x"), customChartMaxDecodedBytes+1))
+	if _, err := decodeCustomMusicScoreJSONBytes(compressed); err == nil || !strings.Contains(err.Error(), "解压后") {
+		t.Fatalf("oversized gzip error = %v", err)
+	}
+}
+
 func gzipBytes(t *testing.T, raw []byte) []byte {
 	t.Helper()
 	var buf bytes.Buffer

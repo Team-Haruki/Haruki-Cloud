@@ -13,6 +13,18 @@ import (
 )
 
 func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Value) drawing.CardBasic {
+	return b.buildCardBasic(card, region, cardBasicBuildOptions{
+		includeGenericThumbnails: true,
+		includeSkills:            true,
+	})
+}
+
+type cardBasicBuildOptions struct {
+	includeGenericThumbnails bool
+	includeSkills            bool
+}
+
+func (b *Builder) buildCardBasic(card *masterdata.Card, region renderregion.Value, options cardBasicBuildOptions) drawing.CardBasic {
 	info := drawing.CardBasic{
 		CardID:          card.ID,
 		CharacterID:     new(card.CharacterID),
@@ -22,8 +34,10 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 		AssetBundleName: new(card.AssetBundleName),
 		ReleaseAt:       new(card.ReleaseAt),
 		IsAfterTraining: common.BoolPtr(false),
-		ThumbnailInfo:   b.buildThumbnailInfo(card, region),
 		Power:           b.calculatePower(card),
+	}
+	if options.includeGenericThumbnails {
+		info.ThumbnailInfo = b.buildThumbnailInfo(card, region)
 	}
 
 	if character, err := b.source.GetCharacterByID(card.CharacterID); err == nil && character != nil {
@@ -39,6 +53,10 @@ func (b *Builder) BuildCardBasic(card *masterdata.Card, region renderregion.Valu
 	supplyType := formatSupplyTypeForList(b.source.GetCardSupplyType(card))
 	if strings.TrimSpace(supplyType) != "" {
 		info.SupplyType = &supplyType
+	}
+
+	if !options.includeSkills {
+		return info
 	}
 
 	if skill, err := b.source.GetSkillByID(card.SkillID); err == nil && skill != nil {

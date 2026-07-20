@@ -7,12 +7,16 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/skill"
+	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/common"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+
+	"golang.org/x/sync/singleflight"
 )
 
 var skillPlaceholder = regexp.MustCompile(`{{(.*?)}}`)
@@ -23,13 +27,19 @@ type dbSkillProvider struct {
 	characters *dbCharacterProvider
 	once       sync.Once
 
-	mu    sync.RWMutex
-	cache map[int]*masterdata.Skill
+	mu            sync.RWMutex
+	cache         map[int]*masterdata.Skill
+	cacheLoadedAt map[int]time.Time
+
+	allLoaded   bool
+	allLoadedAt time.Time
+	allLoads    singleflight.Group
 }
 
 func (p *dbSkillProvider) init() {
 	p.once.Do(func() {
 		p.cache = make(map[int]*masterdata.Skill)
+		p.cacheLoadedAt = make(map[int]time.Time)
 	})
 }
 
@@ -40,11 +50,17 @@ func (p *dbSkillProvider) GetByID(ctx context.Context, id int) (*masterdata.Skil
 	p.init()
 
 	p.mu.RLock()
-	if cached, ok := p.cache[id]; ok {
+	cached, ok := p.cache[id]
+	cachedAt := p.cacheLoadedAt[id]
+	allLoaded := dbBulkIndexFresh(p.allLoaded, p.allLoadedAt)
+	if ok && dbBulkIndexFresh(true, cachedAt) {
 		p.mu.RUnlock()
 		return common.CloneSkill(cached), nil
 	}
 	p.mu.RUnlock()
+	if allLoaded {
+		return nil, fmt.Errorf("skill %d not found", id)
+	}
 
 	entity, err := p.client.Skill.Query().
 		Where(skill.ServerRegionEQ(p.region.String()), skill.GameIDEQ(int64(id))).
@@ -58,8 +74,82 @@ func (p *dbSkillProvider) GetByID(ctx context.Context, id int) (*masterdata.Skil
 	}
 	p.mu.Lock()
 	p.cache[id] = model
+	p.cacheLoadedAt[id] = time.Now()
 	p.mu.Unlock()
 	return common.CloneSkill(model), nil
+}
+
+func (p *dbSkillProvider) matchingTypeIDs(ctx context.Context, skillType string) (map[int]struct{}, error) {
+	if p == nil || p.client == nil {
+		return nil, fmt.Errorf("skill provider is not configured")
+	}
+	if err := p.ensureAllLoaded(ctx); err != nil {
+		return nil, err
+	}
+
+	result := make(map[int]struct{})
+	p.mu.RLock()
+	for id, skillInfo := range p.cache {
+		if skillInfo != nil && cardSkillTypesMatch(skillType, skillInfo.DescriptionSpriteName) {
+			result[id] = struct{}{}
+		}
+	}
+	p.mu.RUnlock()
+	return result, nil
+}
+
+func (p *dbSkillProvider) ensureAllLoaded(ctx context.Context) error {
+	p.init()
+	p.mu.RLock()
+	loaded := dbBulkIndexFresh(p.allLoaded, p.allLoadedAt)
+	p.mu.RUnlock()
+	if loaded {
+		return nil
+	}
+
+	callerToken := new(dbBulkIndexFlightToken)
+	result := p.allLoads.DoChan("all", func() (any, error) {
+		completed := runDBBulkIndexFlight(callerToken, func(loadCtx context.Context) error {
+			finishIndex := commandtrace.MeasureOperation(loadCtx, "skills.index")
+			defer finishIndex()
+			p.mu.RLock()
+			alreadyLoaded := dbBulkIndexFresh(p.allLoaded, p.allLoadedAt)
+			p.mu.RUnlock()
+			if alreadyLoaded {
+				return nil
+			}
+			entities, err := p.client.Skill.Query().
+				Where(skill.ServerRegionEQ(p.region.String())).
+				All(loadCtx)
+			if err != nil {
+				return fmt.Errorf("query skills for region %s: %w", p.region, err)
+			}
+
+			loadedSkills := make(map[int]*masterdata.Skill, len(entities))
+			for _, entity := range entities {
+				model, err := common.ConvertSkillEntity(entity)
+				if err != nil {
+					return fmt.Errorf("decode skill %d for region %s: %w", entity.GameID, p.region, err)
+				}
+				loadedSkills[model.ID] = model
+			}
+
+			p.mu.Lock()
+			p.cache = loadedSkills
+			loadedAt := time.Now()
+			p.cacheLoadedAt = make(map[int]time.Time, len(loadedSkills))
+			for id := range loadedSkills {
+				p.cacheLoadedAt[id] = loadedAt
+			}
+			p.allLoaded = true
+			p.allLoadedAt = loadedAt
+			p.mu.Unlock()
+			return nil
+		})
+		return completed, nil
+	})
+
+	return waitDBBulkIndexFlight(ctx, result, callerToken, "skills.index_wait", "skills.index_shared")
 }
 
 func (p *dbSkillProvider) FormatDescription(ctx context.Context, skillInfo *masterdata.Skill, cardCharacterID int) string {

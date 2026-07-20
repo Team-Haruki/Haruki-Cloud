@@ -38,7 +38,5 @@ func (b *Builder) BuildHonorRequest(query Query) (*drawing.HonorRequest, error) 
 		}
 	}
 
-	logHonorRequestTrace(query, req)
-
 	return req, nil
 }

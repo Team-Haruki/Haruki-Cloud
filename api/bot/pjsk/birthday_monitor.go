@@ -6,6 +6,7 @@ import (
 
 	"haruki-cloud/api"
 	harukiConfig "haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
@@ -118,73 +119,131 @@ func newBirthdayMonitorDBService(renderApp *renderapp.App) *subscription.Service
 
 func makeBirthdayMonitorHandler(renderApp *renderapp.App, guard commandRequestGuard) fiber.Handler {
 	return func(c fiber.Ctx) error {
+		setCommandTraceMetadata(c, "", birthdayMonitorCommandPath)
 		req, err := parseBotRequest(c)
 		if err != nil {
+			setCommandTraceOutcome(c, "rejected", err)
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
-		if !acquireRequestGuard(c.Context(), guard, req) {
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
-		}
-		defer markRequestGuardComplete(c.Context(), guard, req)
-
+		requestCtx := c.Context()
+		traceCommand := allowedCommandTraceLabel(req.MatchedCommand, birthdayMonitorManifestCommandPrefixes)
+		setCommandTraceMetadata(c, traceCommand, birthdayMonitorCommandPath)
+		finishValidation := commandtrace.MeasurePhase(requestCtx, "request_validate")
 		req.SelfID = strings.TrimSpace(req.SelfID)
-		botID := strings.TrimSpace(c.Params("botId"))
-		service := newBirthdayMonitorService(renderApp)
 		text := birthdayMonitorCommandText(req)
 		regionExplicit := strings.TrimSpace(req.Server) != ""
+		finishValidation()
+		setResolvedCommandTraceMetadata(c, "pjsk", "birthday_monitor", req.Server)
+
+		finishGuard := commandtrace.MeasurePhase(requestCtx, "request_guard")
+		guardLease := acquireRequestGuard(requestCtx, guard, req)
+		finishGuard()
+		if !guardLease.proceed {
+			setCommandTraceOutcome(c, "deduplicated", nil)
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
+		}
+		defer func() {
+			finishGuardComplete := commandtrace.MeasurePhase(requestCtx, "guard_complete")
+			markRequestGuardComplete(requestCtx, guard, req, guardLease)
+			finishGuardComplete()
+		}()
+
+		botID := strings.TrimSpace(c.Params("botId"))
+		service := newBirthdayMonitorService(renderApp)
+		finishExecute := commandtrace.MeasurePhase(requestCtx, "command_execute")
+		defer finishPhaseOnPanic(finishExecute)
 
 		if isCancelBirthdayMonitorText(text) {
-			if _, err := service.Cancel(c.Context(), req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text); err != nil {
-				logger.Warnf("birthday monitor cancel failed: bot_id=%s user=%s err=%v", botID, req.PlatformUserID, err)
+			_, err := service.Cancel(requestCtx, req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text)
+			finishExecute()
+			if err != nil {
+				setCommandTraceOutcome(c, "error", err)
+				logger.WarnContext(requestCtx, "birthday monitor cancel failed",
+					"command_path", birthdayMonitorCommandPath,
+					"command", traceCommand,
+					"error_type", fmt.Sprintf("%T", err),
+				)
 				return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 			}
+			setCommandTraceOutcome(c, "ok", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森生日材料监听已取消。")})
 		}
 
-		result, err := service.CreateOrUpdate(c.Context(), req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text, req.NotifyEmpty)
+		result, err := service.CreateOrUpdate(requestCtx, req.Platform, req.PlatformUserID, req.PlatformGroupID, botID, req.SelfID, req.Server, regionExplicit, text, req.NotifyEmpty)
+		finishExecute()
 		if err != nil {
-			logger.Warnf("birthday monitor upsert failed: bot_id=%s user=%s err=%v", botID, req.PlatformUserID, err)
+			setCommandTraceOutcome(c, "error", err)
+			logger.WarnContext(requestCtx, "birthday monitor upsert failed",
+				"command_path", birthdayMonitorCommandPath,
+				"command", traceCommand,
+				"error_type", fmt.Sprintf("%T", err),
+			)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 		}
 
 		visible := onebot11.Message{onebot11.Text(fmt.Sprintf("烤森生日材料监听已更新，有效期 %d 分钟。", int(result.Duration.Minutes())))}
 		actions := birthdayMonitorActions(result)
+		setCommandTraceOutcome(c, "ok", nil)
 		return botResponseWithActions(c, fiber.StatusOK, api.ResponseOK, visible, actions)
 	}
 }
 
 func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
+		const commandPath = birthdayMonitorCommandPath + "/render"
+		setCommandTraceMetadata(c, "birthday-monitor/render", commandPath)
+		setResolvedCommandTraceMetadata(c, "pjsk", "birthday_monitor_render", "")
 		var req birthdayRenderRequest
 		if err := parseRequestBody(c, &req); err != nil {
+			setCommandTraceOutcome(c, "rejected", err)
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
+		finishValidation := commandtrace.MeasurePhase(c.Context(), "request_validate")
 		botID := strings.TrimSpace(c.Params("botId"))
+		finishValidation()
 		service := newBirthdayMonitorService(renderApp)
+		finishExecute := commandtrace.MeasurePhase(c.Context(), "command_execute")
+		defer finishPhaseOnPanic(finishExecute)
 		event, err := service.EventForClient(c.Context(), req.EventID, req.SubscriptionID, req.SubscriptionVersion, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID)
 		if err != nil {
+			finishExecute()
+			setCommandTraceOutcome(c, "error", err)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 		}
+		setResolvedCommandTraceMetadata(c, "pjsk", "birthday_monitor_render", event.Region)
 		if event.EmptyResult {
+			finishExecute()
+			setCommandTraceOutcome(c, "ok", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{
 				onebot11.At(event.PlatformUserID),
 				onebot11.Text(subscription.EmptyBirthdayMonitorMessage),
 			})
 		}
 		if len(event.FilteredPayload) == 0 {
+			finishExecute()
+			setCommandTraceOutcome(c, "rejected", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("订阅事件缺少可绘制数据")})
 		}
 		if renderApp.MySekai == nil || renderApp.ImageCache == nil {
+			finishExecute()
+			setCommandTraceOutcome(c, "error", nil)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text("烤森服务未就绪，请稍后再试")})
 		}
 		data, err := renderApp.MySekai.WithContext(c.Context()).WithMySekaiData(event.FilteredPayload).RenderMap(rendermysekai.MapQuery{Region: event.Region})
 		if err != nil {
+			finishExecute()
+			setCommandTraceOutcome(c, "error", err)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 		}
+		finishStore := commandtrace.MeasureOperation(c.Context(), "image.store")
 		url, err := renderApp.ImageCache.StoreAndGetURL(c.Context(), data, "pjsk")
+		finishStore()
+		finishExecute()
 		if err != nil {
+			setCommandTraceOutcome(c, "error", err)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 		}
+		setCommandTraceOutcome(c, "ok", nil)
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{
 			onebot11.At(event.PlatformUserID),
 			onebot11.Image(url, ""),
@@ -194,16 +253,35 @@ func makeBirthdayMonitorRenderHandler(renderApp *renderapp.App) fiber.Handler {
 
 func makeBirthdayMonitorAckHandler(renderApp *renderapp.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
+		const commandPath = birthdayMonitorCommandPath + "/ack"
+		setCommandTraceMetadata(c, "birthday-monitor/ack", commandPath)
+		setResolvedCommandTraceMetadata(c, "pjsk", "birthday_monitor_ack", "")
 		var req birthdayRenderRequest
 		if err := parseRequestBody(c, &req); err != nil {
+			setCommandTraceOutcome(c, "rejected", err)
 			return botResponse(c, fiber.StatusBadRequest, api.ErrInvalidRequest)
 		}
+		finishValidation := commandtrace.MeasurePhase(c.Context(), "request_validate")
 		botID := strings.TrimSpace(c.Params("botId"))
+		finishValidation()
 		service := newBirthdayMonitorService(renderApp)
+		finishExecute := commandtrace.MeasurePhase(c.Context(), "command_execute")
+		defer finishPhaseOnPanic(finishExecute)
 		if err := service.AckEvent(c.Context(), req.EventID, req.SubscriptionID, req.SubscriptionVersion, req.Token, botID, req.PlatformGroupID, req.PlatformUserID, req.SelfID); err != nil {
+			finishExecute()
+			setCommandTraceOutcome(c, "error", err)
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, onebot11.Message{onebot11.Text(clientErrorText(err.Error(), false))})
 		}
+		finishExecute()
+		setCommandTraceOutcome(c, "ok", nil)
 		return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
+	}
+}
+
+func finishPhaseOnPanic(finish func()) {
+	if recovered := recover(); recovered != nil {
+		finish()
+		panic(recovered)
 	}
 }
 
@@ -289,6 +367,8 @@ func birthdayMonitorActions(result *subscription.BirthdayMonitorResult) []birthd
 }
 
 func botResponseWithActions(c fiber.Ctx, status int, message string, data any, actions []birthdayMonitorClientAction) error {
+	finish := commandtrace.MeasurePhase(c.Context(), "response_encode")
+	defer finish()
 	resp := fiber.Map{
 		"status":         status,
 		"message":        message,
@@ -307,6 +387,8 @@ func botResponseWithActions(c fiber.Ctx, status int, message string, data any, a
 }
 
 func parseRequestBody(c fiber.Ctx, out any) error {
+	finish := commandtrace.MeasurePhase(c.Context(), "request_decode")
+	defer finish()
 	ct := string(c.Request().Header.ContentType())
 	if strings.Contains(ct, "msgpack") {
 		return msgpack.Unmarshal(c.Body(), out)

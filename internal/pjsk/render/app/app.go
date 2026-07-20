@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -260,7 +261,10 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 	if cardController != nil && aliasService != nil {
 		if nicknames, err := aliasService.ListApprovedCharacterAliasMap(initCtx); err != nil {
-			logger.Warnf("load approved character aliases for card controller failed: %v", err)
+			logger.WarnContext(initCtx, "approved character aliases load failed",
+				"consumer", "card_controller",
+				"error_type", fmt.Sprintf("%T", err),
+			)
 		} else {
 			cardController.MergeNicknames(nicknames)
 		}
@@ -356,7 +360,7 @@ func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refresh
 
 	loader := meta.NewLoader(logger.NewLoggerFromGlobal("PJSKMeta"), meta.WithOutputDir(outputDir))
 	if err := loader.LoadAll(initCtx); err != nil {
-		logger.Warnf("meta: initial load failed: %v", err)
+		logger.WarnContext(initCtx, "music metadata initial load failed", "error_type", fmt.Sprintf("%T", err))
 	}
 	loader.StartBackgroundRefresh(context.Background(), refreshInterval)
 	return loader

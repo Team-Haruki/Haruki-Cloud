@@ -42,6 +42,7 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	clone := *c
 	clone.requestCtx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
+	clone.assets = c.assets.WithContext(ctx)
 	clone.sources = regionsource.NewRegistry[DataSource](c.sources.ResolveRegion(renderregion.Unknown))
 	for _, source := range c.sources.OrderedSources() {
 		if contextual, ok := any(source).(contextualDataSource); ok {
@@ -55,6 +56,12 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 
 func (c *Controller) SetCensor(svc *censor.Service) {
 	if c == nil {
+		return
+	}
+	// Guard the typed-nil interface trap: a nil *censor.Service stored in the
+	// interface field would make `c.censor != nil` checks pass.
+	if svc == nil {
+		c.censor = nil
 		return
 	}
 	c.censor = svc

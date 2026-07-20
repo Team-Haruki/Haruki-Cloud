@@ -2,9 +2,7 @@ package handler
 
 import (
 	"fmt"
-	"log/slog"
 	"strings"
-	"time"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -368,7 +366,6 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 		BgSettings:       target.BgSettings,
 		VerticalOverride: p.ProfileVertical,
 	}
-	renderStart := time.Now()
 	var data []byte
 	if isRequesterModularProfileEnabled(rc, p) {
 		data, err = profileCtrl.RenderModularProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
@@ -378,24 +375,10 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 	if err != nil {
 		return zeroTarget, nil, err
 	}
-	slog.Info("profile render completed",
-		"region", region,
-		"target_user_id", target.PJSKUserID,
-		"image_bytes", len(data),
-		"duration_ms", time.Since(renderStart).Milliseconds(),
-	)
-
-	messageStart := time.Now()
 	message, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 	if err != nil {
 		return zeroTarget, nil, err
 	}
-	slog.Info("profile image message prepared",
-		"region", region,
-		"target_user_id", target.PJSKUserID,
-		"segments", len(message),
-		"duration_ms", time.Since(messageStart).Milliseconds(),
-	)
 	return target, message, nil
 }
 

@@ -18,6 +18,7 @@ import (
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscriptionevent"
 	"haruki-cloud/internal/cluster"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
@@ -461,7 +462,9 @@ func (s *Service) closeBirthdayMonitorConnection(ctx context.Context, subscripti
 	} else {
 		req.Header.Set("User-Agent", "Haruki-Cloud")
 	}
+	finishHTTP := commandtrace.MeasureOperation(ctx, "hmes.http")
 	resp, err := hmesCloseHTTPClient.Do(req)
+	finishHTTP()
 	if err != nil {
 		return err
 	}

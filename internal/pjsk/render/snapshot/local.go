@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/meta"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
@@ -21,6 +22,7 @@ type Service struct {
 	challenge      *ChallengeLiveData
 	rawData        *RawUserData
 	musicMetaBytes []byte
+	musicMetaView  *meta.View
 	rawFilePath    string
 	musicMetaPath  string
 	rawJSON        []byte

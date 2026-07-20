@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 )
 
@@ -179,7 +180,9 @@ func (c *Controller) RenderMusicRecord(query MusicRecordQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
 	payload, err := c.BuildMusicRecordRequest(query)
+	finishBuild()
 	if err != nil {
 		return nil, err
 	}

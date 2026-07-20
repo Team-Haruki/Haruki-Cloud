@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
 	"haruki-cloud/api"
 	botauth "haruki-cloud/api/bot/auth"
@@ -17,6 +16,7 @@ import (
 	"haruki-cloud/internal/core/crypto"
 	commandregistry "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/middleware/secure"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	commandhandler "haruki-cloud/internal/pjsk/handler"
@@ -34,7 +34,29 @@ import (
 
 const botRouteBase = "/api/v2/bot"
 
-const slowCommandTraceThreshold = 1500 * time.Millisecond
+// BotRouteDispatchers owns request-path background work registered with the
+// PJSK routes. Close is idempotent and flushes the Redis guard cleanup before
+// command analytics, so dedup leases are not left behind during shutdown.
+type BotRouteDispatchers struct {
+	guard     *RequestGuard
+	election  *ResponseElectionCoordinator
+	telemetry *botauth.CommandTelemetryDispatcher
+}
+
+func (d *BotRouteDispatchers) Close() {
+	if d == nil {
+		return
+	}
+	if d.election != nil {
+		d.election.Close()
+	}
+	if d.guard != nil {
+		d.guard.Close()
+	}
+	if d.telemetry != nil {
+		d.telemetry.Close()
+	}
+}
 
 // RegisterPJSKBotRoutes registers per-feature bot endpoints under
 //
@@ -66,13 +88,13 @@ const slowCommandTraceThreshold = 1500 * time.Millisecond
 // registered command manifest routes on startup and the manifest endpoint returns
 // live data from the database.
 // Pass nil to keep the placeholder response (e.g. in unit tests).
-func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) {
-	RegisterPJSKBotRoutesWithContext(context.Background(), app, renderApp, redisClient, botDBClient, noiseKeyPair)
+func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) *BotRouteDispatchers {
+	return RegisterPJSKBotRoutesWithContext(context.Background(), app, renderApp, redisClient, botDBClient, noiseKeyPair)
 }
 
-func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) {
+func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) *BotRouteDispatchers {
 	if renderApp == nil {
-		return
+		return nil
 	}
 	if initCtx == nil {
 		initCtx = context.Background()
@@ -83,7 +105,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if botDBClient != nil && !cluster.IsReadOnly() {
 		if err := SeedCommandManifests(initCtx, botDBClient); err != nil {
 			// Non-fatal: manifest table seed failure should not block startup.
-			logger.Warnf("bot manifest seed failed: %v", err)
+			logger.Warn("bot manifest seed failed", "error_type", fmt.Sprintf("%T", err))
 		}
 	}
 
@@ -93,12 +115,27 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	} else {
 		sessionMiddleware = api.VerifyBotSessionTestBypass()
 	}
-	bot := app.Group(botRouteBase+"/:botId", sessionMiddleware)
+	bot := app.Group(botRouteBase+"/:botId", commandTraceMiddleware, sessionMiddleware)
 
 	preview3DEnabled := renderApp.Config.Preview3D.Enabled
 	bot.Get("/command/manifests", buildManifestHandler(botDBClient, preview3DEnabled))
 
 	guard := NewRequestGuard(redisClient)
+	election := NewResponseElectionCoordinator(
+		logger.DetachedContext(initCtx),
+		redisClient,
+		harukiConfig.Cfg.HarukiBotDB.ResponseElectionWindow,
+	)
+	if harukiConfig.Cfg.HarukiBotDB.ResponseElectionRoster {
+		election = election.WithRoster(newResponseElectionRoster(redisClient))
+	}
+	var commandElection commandResponseElection
+	if election != nil {
+		commandElection = election
+	} else if guard != nil {
+		commandElection = &requestGuardResponseElection{guard: guard}
+	}
+	telemetry := botauth.NewCommandTelemetryDispatcher(botDBClient)
 
 	pjsk := bot.Group("/pjsk")
 	if noiseKeyPair != nil {
@@ -111,7 +148,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 		if !botRouteEnabled(route.Path, preview3DEnabled) {
 			continue
 		}
-		h := makeBotHandler(renderApp, guard, botDBClient, route.Path, route.Commands)
+		h := makeBotHandler(renderApp, commandElection, telemetry, route.Path, route.Commands)
 		path := "/" + route.Path
 		pjsk.Post(path, h)
 		if route.Path == "mysekai/blueprint" {
@@ -121,8 +158,9 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if !hasMysekaiBlueprintRoute {
 		// Keep the retired endpoint alive so older manifests can continue posting
 		// /msb until they refresh to the canonical mysekai/talk-list path.
-		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, guard, botDBClient, "mysekai/blueprint", nil))
+		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, commandElection, telemetry, "mysekai/blueprint", nil))
 	}
+	return &BotRouteDispatchers{guard: guard, election: election, telemetry: telemetry}
 }
 
 func botRouteEnabled(path string, preview3DEnabled bool) bool {
@@ -132,90 +170,228 @@ func botRouteEnabled(path string, preview3DEnabled bool) bool {
 // makeBotHandler returns a POST-only fiber.Handler that validates the matched
 // command field belongs to the current endpoint path, then lets the registered
 // handler parse the OneBot message segments and produce a resolved render command.
-func makeBotHandler(renderApp *renderapp.App, guard commandRequestGuard, botDBClient *botDB.Client, expectedPath string, commands []string) fiber.Handler {
+func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, telemetry *botauth.CommandTelemetryDispatcher, expectedPath string, commands []string) fiber.Handler {
 	return func(c fiber.Ctx) error {
+		setCommandTraceMetadata(c, "", expectedPath)
 		req, err := parseBotRequest(c)
 		if err != nil {
+			setCommandTraceOutcome(c, "rejected", err)
 			return botResponse(c, fiber.StatusBadRequest, "请求格式错误")
 		}
-		requestCtx, commandTrace := commandhandler.WithCommandTrace(c.Context())
+		requestCtx := c.Context()
+		traceCommand := allowedCommandTraceLabel(req.MatchedCommand, commands)
+		setCommandTraceMetadata(c, traceCommand, expectedPath)
+		finishValidation := commandtrace.MeasurePhase(requestCtx, "request_validate")
 		if len(req.Message) == 0 {
+			finishValidation()
+			setCommandTraceOutcome(c, "rejected", nil)
 			return botResponse(c, fiber.StatusBadRequest, "缺少 message")
 		}
 		if req.MatchedCommand == "" {
+			finishValidation()
+			setCommandTraceOutcome(c, "rejected", nil)
 			return botResponse(c, fiber.StatusBadRequest, "缺少 matched_command")
-		}
-
-		// Dedup + rate limit: acquire guard before doing any work.
-		if !acquireRequestGuard(requestCtx, guard, req) {
-			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
 		}
 		allowCompatReroute := allowBotCompatReroute(expectedPath)
 		if !slices.Contains(commands, req.MatchedCommand) && !allowCompatReroute {
+			finishValidation()
+			setCommandTraceOutcome(c, "rejected", nil)
 			return botResponse(c, fiber.StatusBadRequest, "当前接口不允许使用该 matched_command")
 		}
-		if botDBClient != nil {
-			botID := fiber.Params[int](c, "botId", 0)
+		finishValidation()
+		botID := strings.Clone(strings.TrimSpace(c.Params("botId")))
+		electionRequest := responseElectionRequest{Request: req, BotID: botID}
+		finishElection := commandtrace.MeasurePhase(requestCtx, "response_election")
+		decision := coordinateCommandResponse(requestCtx, election, electionRequest, func(executionCtx context.Context) sharedCommandResult {
+			return executeSharedBotCommand(executionCtx, renderApp, expectedPath, traceCommand, allowCompatReroute, req, botID)
+		})
+		finishElection()
+		logResponseElectionDecision(requestCtx, electionRequest, decision)
+		mergeSharedCommandOperations(requestCtx, decision.result.Operations)
+		if !decision.visible {
+			if decision.reason == "publish_unknown" {
+				setCommandTraceOutcome(c, "error", nil)
+				c.Locals(traceErrorTypeKey, "response_election_publish_unknown")
+				commandtrace.SetErrorType(requestCtx, "response_election_publish_unknown")
+			} else {
+				setCommandTraceOutcome(c, "deduplicated", nil)
+			}
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
+		}
+
+		metadata := decision.result.Metadata
+		setCommandTraceMetadata(c, metadata.Command, metadata.CommandPath)
+		setResolvedCommandTraceMetadata(c, metadata.Module, metadata.Mode, metadata.Region)
+		setCommandTraceOutcome(c, metadata.Outcome, nil)
+		if metadata.ErrorType != "" {
+			c.Locals(traceErrorTypeKey, metadata.ErrorType)
+			commandtrace.SetErrorType(requestCtx, metadata.ErrorType)
+		}
+
+		if telemetry != nil {
+			finishTelemetry := commandtrace.MeasurePhase(requestCtx, "telemetry_enqueue")
 			entry := botauth.CommandLogEntry{
 				Platform: req.Platform,
-				PID:      strings.TrimSpace(c.Params("botId")),
+				PID:      botID,
 				GID:      req.PlatformGroupID,
 				UID:      req.PlatformUserID,
-				Command:  req.MatchedCommand,
+				Command:  metadata.Command,
 			}
-			defer func() {
-				if err := botauth.RecordCommandTelemetry(requestCtx, botDBClient, botID, entry); err != nil {
-					logger.Warnf("bot command telemetry failed: bot_id=%d path=%s matched_command=%s err=%v", botID, expectedPath, req.MatchedCommand, err)
-				}
-			}()
-		}
-
-		tStart := time.Now()
-		botID := strings.TrimSpace(c.Params("botId"))
-		resolved, err := resolveBotCommand(requestCtx, req.Message, expectedPath, req, botID)
-		if err != nil && allowCompatReroute {
-			if validationErr, ok := errors.AsType[*botValidationError](err); ok && canRetryBotPathCompat(expectedPath, validationErr.actualPath) {
-				logger.Warnf("bot command compat reroute: matched_command=%s expected_path=%s actual_path=%s", req.MatchedCommand, expectedPath, validationErr.actualPath)
-				resolved, err = resolveBotCommand(requestCtx, req.Message, validationErr.actualPath, req, botID)
+			if !telemetry.Enqueue(requestCtx, fiber.Params[int](c, "botId", 0), entry) {
+				logger.WarnContext(requestCtx, "bot command telemetry queue unavailable",
+					"command_path", metadata.CommandPath,
+					"command", metadata.Command,
+				)
 			}
+			finishTelemetry()
 		}
-		tResolved := time.Now()
-		if err != nil {
-			logger.Warnf("bot command resolve failed: path=%s matched_command=%s parse=%dms err=%v", expectedPath, req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), err)
-			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand, req.EnableParamEcho)
-		}
-
-		if region, ok := explicitRegionFromBotRequest(req); ok {
-			resolved.Region = region
-			resolved.RegionExplicit = true
-			syncExplicitRegionToProfileParams(resolved, region)
-		} else if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
-			if normalized := renderregion.Normalize(server); !normalized.IsZero() {
-				// Treat the transport-level server as authoritative so the final
-				// command executor does not overwrite it with the user's global
-				// default binding.
-				resolved.Region = normalized.String()
-				resolved.RegionExplicit = true
-				syncExplicitRegionToProfileParams(resolved, normalized.String())
-			} else {
-				resolved.Region = server
-			}
-		}
-
-		responseData, err := commandhandler.ExecuteCommandRequest(requestCtx, resolved, renderApp)
-		tDone := time.Now()
-		logSlowCommandTrace(commandTrace, req.MatchedCommand, expectedPath, tStart, tDone)
-		if err != nil {
-			logger.Errorf("bot command render failed: matched_command=%s parse=%dms exec=%dms total=%dms err=%v",
-				req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds(), err)
-			markRequestGuardComplete(requestCtx, guard, req)
-			return errorResponse(c, fiber.StatusOK, err, expectedPath, req.MatchedCommand, req.EnableParamEcho)
-		}
-		logger.Infof("bot command completed: matched_command=%s parse=%dms exec=%dms total=%dms",
-			req.MatchedCommand, tResolved.Sub(tStart).Milliseconds(), tDone.Sub(tResolved).Milliseconds(), tDone.Sub(tStart).Milliseconds())
-		markRequestGuardComplete(requestCtx, guard, req)
-		return botResponse(c, fiber.StatusOK, api.ResponseOK, responseData)
+		return writeEncodedBotResponse(c, decision.result.Response)
 	}
+}
+
+func executeSharedBotCommand(
+	ctx context.Context,
+	renderApp *renderapp.App,
+	expectedPath string,
+	traceCommand string,
+	allowCompatReroute bool,
+	req BotCommandRequest,
+	executorBotID string,
+) sharedCommandResult {
+	metadata := sharedCommandMetadata{
+		Command:       traceCommand,
+		CommandPath:   expectedPath,
+		Outcome:       "error",
+		ExecutorBotID: executorBotID,
+	}
+	finishResolve := commandtrace.MeasurePhase(ctx, "command_resolve")
+	resolved, err := resolveBotCommand(ctx, req.Message, expectedPath, req, executorBotID)
+	if err != nil && allowCompatReroute {
+		if validationErr, ok := errors.AsType[*botValidationError](err); ok && canRetryBotPathCompat(expectedPath, validationErr.actualPath) {
+			logger.WarnContext(ctx, "bot command compatibility reroute",
+				"command", traceCommand,
+				"expected_command_path", expectedPath,
+				"actual_command_path", validationErr.actualPath,
+			)
+			resolved, err = resolveBotCommand(ctx, req.Message, validationErr.actualPath, req, executorBotID)
+		}
+	}
+	finishResolve()
+	if err != nil {
+		if isExpectedCommandError(err) {
+			metadata.Outcome = "rejected"
+		} else {
+			logger.ErrorContext(ctx, "bot command resolve failed",
+				"command_path", expectedPath,
+				"command", traceCommand,
+				"error_type", fmt.Sprintf("%T", err),
+			)
+		}
+		metadata.ErrorType = fmt.Sprintf("%T", err)
+		return encodeSharedCommandResult(ctx, commandErrorEnvelope(err, expectedPath, req.MatchedCommand, req.EnableParamEcho), metadata, false)
+	}
+
+	metadata.Command = resolved.TriggerCommand
+	metadata.CommandPath = resolved.CommandPath
+	metadata.Module = fmt.Sprint(resolved.Module)
+	metadata.Mode = resolved.Mode
+	metadata.Region = resolved.Region
+	if region, ok := explicitRegionFromBotRequest(req); ok {
+		resolved.Region = region
+		resolved.RegionExplicit = true
+		syncExplicitRegionToProfileParams(resolved, region)
+	} else if server := strings.TrimSpace(req.Server); server != "" && !resolved.RegionExplicit {
+		if normalized := renderregion.Normalize(server); !normalized.IsZero() {
+			resolved.Region = normalized.String()
+			resolved.RegionExplicit = true
+			syncExplicitRegionToProfileParams(resolved, normalized.String())
+		} else {
+			resolved.Region = server
+		}
+	}
+
+	responseData, err := commandhandler.ExecuteCommandRequest(ctx, resolved, renderApp)
+	metadata.Region = resolved.Region
+	forceExecutor := commandResponseDependsOnExecutor(resolved)
+	if err != nil {
+		if isExpectedCommandError(err) {
+			metadata.Outcome = "rejected"
+		} else {
+			logger.ErrorContext(ctx, "bot command execution failed",
+				"command_path", resolved.CommandPath,
+				"command", resolved.TriggerCommand,
+				"error_type", fmt.Sprintf("%T", err),
+			)
+		}
+		metadata.ErrorType = fmt.Sprintf("%T", err)
+		return encodeSharedCommandResult(ctx, commandErrorEnvelope(err, expectedPath, req.MatchedCommand, req.EnableParamEcho), metadata, forceExecutor)
+	}
+	metadata.Outcome = "ok"
+	return encodeSharedCommandResult(ctx, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData), metadata, forceExecutor)
+}
+
+func encodeSharedCommandResult(ctx context.Context, envelope botResponseEnvelope, metadata sharedCommandMetadata, forceExecutor bool) sharedCommandResult {
+	finishEncode := commandtrace.MeasureOperation(ctx, "response_payload_encode")
+	defer finishEncode()
+	encoded, err := encodeBotResponseEnvelope(envelope)
+	if err == nil {
+		return sharedCommandResult{Response: encoded, Metadata: metadata, ForceExecutor: forceExecutor}
+	}
+	logger.Error("bot response encoding failed", "error_type", fmt.Sprintf("%T", err))
+	fallback, fallbackErr := encodeBotResponseEnvelope(newBotResponseEnvelope(fiber.StatusInternalServerError, api.ErrInternalServer))
+	if fallbackErr != nil {
+		return sharedCommandResult{Metadata: sharedCommandMetadata{Outcome: "error", ErrorType: fmt.Sprintf("%T", fallbackErr)}}
+	}
+	metadata.Outcome = "error"
+	metadata.ErrorType = fmt.Sprintf("%T", err)
+	return sharedCommandResult{Response: fallback, Metadata: metadata, ForceExecutor: forceExecutor}
+}
+
+func commandErrorEnvelope(err error, expectedPath, matchedCommand string, enableParamEcho bool) botResponseEnvelope {
+	if _, ok := errors.AsType[*botValidationError](err); ok {
+		return newBotResponseEnvelope(fiber.StatusBadRequest, "指令与当前接口不匹配",
+			BotCommandErrorResponse{
+				Error:          err.Error(),
+				ExpectedPath:   expectedPath,
+				MatchedCommand: matchedCommand,
+			})
+	}
+	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
+		return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
+			[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(string(replyErr), enableParamEcho, matchedCommand))})
+	}
+	return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
+		[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(err.Error(), enableParamEcho, matchedCommand))})
+}
+
+func commandResponseDependsOnExecutor(resolved *commandhandler.CommandRequest) bool {
+	if resolved == nil || !strings.EqualFold(strings.TrimSpace(resolved.Region), "cn") {
+		return false
+	}
+	mode := strings.ToLower(strings.TrimSpace(resolved.Mode))
+	return mode == "mysekai" ||
+		strings.HasPrefix(mode, "mysekai-") && mode != "mysekai-housing-sk"
+}
+
+func allowedCommandTraceLabel(candidate string, allowed []string) string {
+	candidate = strings.TrimSpace(candidate)
+	for _, command := range allowed {
+		if candidate == command {
+			return command
+		}
+	}
+	return "<invalid>"
+}
+
+func isExpectedCommandError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if _, ok := errors.AsType[*botValidationError](err); ok {
+		return true
+	}
+	_, ok := errors.AsType[onebot11.ReplayError](err)
+	return ok
 }
 
 func syncExplicitRegionToProfileParams(resolved *commandhandler.CommandRequest, region string) {
@@ -280,23 +456,13 @@ func syncExplicitRegionToProfileSettingsParams(resolved *commandhandler.CommandR
 	}
 }
 
-func logSlowCommandTrace(trace *commandhandler.CommandTrace, matchedCommand, expectedPath string, startedAt, finishedAt time.Time) {
-	if trace == nil || finishedAt.Sub(startedAt) < slowCommandTraceThreshold {
-		return
-	}
-	summary := trace.Summary()
-	if summary == "" {
-		return
-	}
-	logger.Infof("bot command trace: matched_command=%s path=%s total=%dms %s",
-		matchedCommand, expectedPath, finishedAt.Sub(startedAt).Milliseconds(), summary)
-}
-
 // parseBotRequest binds BotCommandRequest from the POST body.
 // When the request arrived through the Noise IK middleware, the Content-Type is
 // application/msgpack and the body is decoded with MsgPack.
 // Otherwise the standard JSON binding is used.
 func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
+	finish := commandtrace.MeasurePhase(c.Context(), "request_decode")
+	defer finish()
 	var req BotCommandRequest
 	ct := string(c.Request().Header.ContentType())
 	if strings.Contains(ct, "msgpack") {
@@ -306,10 +472,36 @@ func parseBotRequest(c fiber.Ctx) (BotCommandRequest, error) {
 	} else if err := c.Bind().Body(&req); err != nil {
 		return BotCommandRequest{}, err
 	}
-	logger.Debugf("before parse: %+v", req.Message)
 	req.Message = onebot11.ParseMessage(req.Message)
-	logger.Debugf("after parse: %+v", req.Message)
-	return req, nil
+	return detachBotCommandRequest(req), nil
+}
+
+func detachBotCommandRequest(req BotCommandRequest) BotCommandRequest {
+	req.Platform = strings.Clone(req.Platform)
+	req.PlatformUserID = strings.Clone(req.PlatformUserID)
+	req.PlatformGroupID = strings.Clone(req.PlatformGroupID)
+	req.SelfID = strings.Clone(req.SelfID)
+	req.Server = strings.Clone(req.Server)
+	req.MatchedCommand = strings.Clone(req.MatchedCommand)
+	message := make(onebot11.Message, len(req.Message))
+	for index, segment := range req.Message {
+		message[index].Type = strings.Clone(segment.Type)
+		switch data := segment.Data.(type) {
+		case onebot11.TextData:
+			message[index].Data = onebot11.TextData{Text: strings.Clone(data.Text)}
+		case onebot11.ImageData:
+			message[index].Data = onebot11.ImageData{
+				File: strings.Clone(data.File),
+				Url:  strings.Clone(data.Url),
+			}
+		case onebot11.AtData:
+			message[index].Data = onebot11.AtData{QQ: strings.Clone(data.QQ)}
+		default:
+			message[index].Data = data
+		}
+	}
+	req.Message = message
+	return req
 }
 
 // botResponse sends a response using MsgPack when the request came through the
@@ -319,25 +511,6 @@ func botResponse(c fiber.Ctx, status int, message string, data ...any) error {
 		return api.MsgPackResponse(c, status, message, data...)
 	}
 	return api.JSONResponse(c, status, message, data...)
-}
-
-func errorResponse(c fiber.Ctx, status int, err error, expectedPath, matchedCommand string, enableParamEcho bool) error {
-	if _, ok := errors.AsType[*botValidationError](err); ok {
-		return botResponse(c, fiber.StatusBadRequest, "指令与当前接口不匹配",
-			BotCommandErrorResponse{
-				Error:          err.Error(),
-				ExpectedPath:   expectedPath,
-				MatchedCommand: matchedCommand,
-			})
-	}
-	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
-		return botResponse(c, fiber.StatusOK, api.ResponseOK,
-			[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(string(replyErr), enableParamEcho, matchedCommand))},
-		)
-	}
-	return botResponse(c, fiber.StatusOK, api.ResponseOK,
-		[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(err.Error(), enableParamEcho, matchedCommand))},
-	)
 }
 
 func explicitRegionFromBotRequest(req BotCommandRequest) (string, bool) {
@@ -459,7 +632,9 @@ func resolveBotCommand(requestCtx context.Context, message onebot11.Message, exp
 	actualMatched := commandregistry.MatchCommandHandler(ctx.GetArgs())
 	matched, ok := commandregistry.LookupCommandHandler(matchedCommand)
 	if shouldPreferMoreSpecificMessageMatch(ctx.GetArgs(), matched, ok, actualMatched) {
-		logger.Warnf("bot command corrected matched_command from %s to %s", matchedCommand, actualMatched.Command)
+		logger.WarnContext(requestCtx, "bot command matched route corrected",
+			"corrected_command", actualMatched.Command,
+		)
 		matched = actualMatched
 		ok = true
 		expectedPath = actualMatched.Handler.GetPath()

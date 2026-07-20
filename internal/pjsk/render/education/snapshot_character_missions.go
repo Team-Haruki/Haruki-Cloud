@@ -5,11 +5,14 @@ import (
 	"sort"
 	"strings"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func (c *Controller) BuildCharacterMissionOverviewRequestFromSnapshot(query CharacterMissionQuery) (*drawing.CharacterMissionOverviewRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.traceContext(), "payload.build")
+	defer finishBuild()
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
 	if err != nil {
 		return nil, err
@@ -26,6 +29,8 @@ func (c *Controller) BuildCharacterMissionOverviewRequestFromSnapshot(query Char
 }
 
 func (c *Controller) BuildCharacterMissionAllRequestFromSnapshot(query CharacterMissionQuery) (*drawing.CharacterMissionAllRequest, error) {
+	finishBuild := commandtrace.MeasureOperation(c.traceContext(), "payload.build")
+	defer finishBuild()
 	ctx, err := c.resolveSnapshotContext(query.Region, query.Profile, query.Snapshot)
 	if err != nil {
 		return nil, err

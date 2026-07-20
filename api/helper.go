@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"haruki-cloud/config"
+	"haruki-cloud/internal/observability/commandtrace"
 	harukiRedis "haruki-cloud/utils/redis"
 	"strconv"
 	"strings"
@@ -28,6 +29,8 @@ func BuildResponseMap(status int, message string, data any) fiber.Map {
 }
 
 func JSONResponse(c fiber.Ctx, status int, message string, data ...any) error {
+	finish := commandtrace.MeasurePhase(c.Context(), "response_encode")
+	defer finish()
 	var resp fiber.Map
 	if len(data) > 0 {
 		resp = BuildResponseMap(status, message, data[0])
@@ -40,6 +43,8 @@ func JSONResponse(c fiber.Ctx, status int, message string, data ...any) error {
 // MsgPackResponse writes a MsgPack-encoded response envelope.
 // Used when the request arrived through the Noise IK transport layer.
 func MsgPackResponse(c fiber.Ctx, status int, message string, data ...any) error {
+	finish := commandtrace.MeasurePhase(c.Context(), "response_encode")
+	defer finish()
 	var resp fiber.Map
 	if len(data) > 0 {
 		resp = BuildResponseMap(status, message, data[0])
@@ -72,6 +77,8 @@ func CachedJSONResponse(
 	message string,
 	data any,
 ) error {
+	finish := commandtrace.MeasurePhase(c.Context(), "response_encode")
+	defer finish()
 	resp := BuildResponseMap(status, message, data)
 	if redisClient != nil {
 		_ = harukiRedis.SetCache(ctx, redisClient, key, resp, ttl) // best-effort cache write

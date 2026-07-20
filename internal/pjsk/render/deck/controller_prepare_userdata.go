@@ -51,7 +51,6 @@ func (c *Controller) prepareRecommendUserData(region renderregion.Value, recType
 	if err != nil {
 		return nil, nil, err
 	}
-	logPreparedRecommendUserData(region, recType, query, raw, originalBytes, userBytes)
 	return raw, userBytes, nil
 }
 

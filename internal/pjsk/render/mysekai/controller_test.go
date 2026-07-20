@@ -1,21 +1,25 @@
 package mysekai
 
 import (
+	"context"
 	"fmt"
-	json "github.com/bytedance/sonic"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
+
+	json "github.com/bytedance/sonic"
 )
 
 func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {
@@ -735,6 +739,87 @@ func TestBuildFixtureDetailRequestsIncludesFixtureFriendcodes(t *testing.T) {
 	if reqs[0].FriendcodeSource != "sekai.8823.eu.org" {
 		t.Fatalf("unexpected fixture friendcode source: %q", reqs[0].FriendcodeSource)
 	}
+}
+
+func TestFixtureFriendcodeSharedFlightMergesOperationsIntoEveryWaiter(t *testing.T) {
+	started := make(chan struct{}, 1)
+	release := make(chan struct{})
+	var hits atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		select {
+		case started <- struct{}{}:
+		default:
+		}
+		<-release
+		_, _ = w.Write([]byte(`{"fixtures":[{"id":1139,"friendCodes":["A1","B2"]}]}`))
+	}))
+	defer server.Close()
+
+	prevURL := sekai8823FixtureFriendcodeURL
+	prevTTL := sekai8823FixtureFriendcodeTTL
+	prevClient := sekai8823FixtureHTTPClient
+	fixtureFriendcodeCacheMu.Lock()
+	fixtureFriendcodeCacheByID = nil
+	fixtureFriendcodeCacheFetchedAt = time.Time{}
+	fixtureFriendcodeCacheMu.Unlock()
+	sekai8823FixtureFriendcodeURL = server.URL
+	sekai8823FixtureFriendcodeTTL = time.Hour
+	sekai8823FixtureHTTPClient = server.Client()
+	t.Cleanup(func() {
+		sekai8823FixtureFriendcodeURL = prevURL
+		sekai8823FixtureFriendcodeTTL = prevTTL
+		sekai8823FixtureHTTPClient = prevClient
+		fixtureFriendcodeCacheMu.Lock()
+		fixtureFriendcodeCacheByID = nil
+		fixtureFriendcodeCacheFetchedAt = time.Time{}
+		fixtureFriendcodeCacheMu.Unlock()
+	})
+
+	contexts := make([]context.Context, 2)
+	traces := make([]*commandtrace.Trace, 2)
+	for i := range contexts {
+		contexts[i], traces[i] = commandtrace.WithTrace(context.Background())
+	}
+	results := make(chan []string, 2)
+	go func() { results <- loadSekai8823FixtureFriendcodes(contexts[0], 1139) }()
+	<-started
+	go func() { results <- loadSekai8823FixtureFriendcodes(contexts[1], 1139) }()
+	time.Sleep(20 * time.Millisecond)
+	close(release)
+
+	for range 2 {
+		if codes := <-results; !reflect.DeepEqual(codes, []string{"A1", "B2"}) {
+			t.Fatalf("friendcodes = %+v", codes)
+		}
+	}
+	if got := hits.Load(); got != 1 {
+		t.Fatalf("upstream requests = %d, want 1", got)
+	}
+	sharedCount := 0
+	for index, trace := range traces {
+		for _, operation := range []string{"fixture_friendcodes.http", "fixture_friendcodes.decode"} {
+			if count := mySekaiTraceOperationCount(trace, operation); count != 1 {
+				t.Fatalf("trace[%d] %s count = %d, operations=%+v", index, operation, count, trace.Snapshot().Operations)
+			}
+		}
+		sharedCount += mySekaiTraceOperationCount(trace, "fixture_friendcodes.shared")
+	}
+	if sharedCount != 1 {
+		t.Fatalf("shared marker count = %d, want 1", sharedCount)
+	}
+}
+
+func mySekaiTraceOperationCount(trace *commandtrace.Trace, name string) int {
+	if trace == nil {
+		return 0
+	}
+	for _, operation := range trace.Snapshot().Operations {
+		if operation.Name == name {
+			return operation.Count
+		}
+	}
+	return 0
 }
 
 func TestMysekaiProfileCardAppendsMySekaiDataSource(t *testing.T) {

@@ -157,24 +157,23 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		if card == nil {
 			continue
 		}
-		cardInfo := b.BuildCardBasic(card, region)
-		if userCard, ok := ownedCards[card.ID]; ok {
+		cardInfo := b.buildCardBasic(card, region, cardBasicBuildOptions{})
+		userCard, owned := ownedCards[card.ID]
+		if owned {
 			cardInfo.ThumbnailInfo = b.buildBoxThumbnailInfo(card, region, &userCard, useAfterTraining)
-			cardInfo.IsAfterTraining = common.BoolPtr(strings.EqualFold(userCard.DefaultImage, "special_training"))
 		} else {
 			cardInfo.ThumbnailInfo = b.buildBoxThumbnailInfo(card, region, nil, useAfterTraining)
-			cardInfo.IsAfterTraining = common.BoolPtr(useAfterTraining && hasAfterTrainingCard(card) && !onlyHasAfterTrainingCard(card))
-			if onlyHasAfterTrainingCard(card) {
-				cardInfo.IsAfterTraining = common.BoolPtr(true)
-			}
 		}
+		cardInfo.IsAfterTraining = common.BoolPtr(resolveCardBoxAfterTraining(cardInfo, userCard, useAfterTraining, owned))
 		items = append(items, drawing.UserCard{
 			Card:    cardInfo,
-			HasCard: ownedCards[card.ID].CardID != 0,
+			HasCard: owned,
 		})
-		characterIconPaths[card.CharacterID] = b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit), region)
-		if colorCode, ok := b.source.GetCharacterColorCode(card.CharacterID); ok {
-			characterColorCodes[card.CharacterID] = colorCode
+		if _, exists := characterIconPaths[card.CharacterID]; !exists {
+			characterIconPaths[card.CharacterID] = b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit), region)
+			if colorCode, ok := b.source.GetCharacterColorCode(card.CharacterID); ok {
+				characterColorCodes[card.CharacterID] = colorCode
+			}
 		}
 	}
 	if len(items) == 0 {
@@ -187,7 +186,7 @@ func (b *Builder) BuildCardBoxRequest(cards []*masterdata.Card, region renderreg
 		ShowBox:             showBox,
 		UnownedOnly:         unownedOnly,
 		GroupBy:             normalizeCardBoxGroupBy(groupBy),
-		Distribution:        b.buildCardBoxDistribution(items, characterIconPaths, characterColorCodes, hasOwnedCardData(detailedProfile), region),
+		Distribution:        b.buildCardBoxDistribution(items, characterIconPaths, characterColorCodes, len(ownedCards) > 0, region),
 		CharacterIconPaths:  characterIconPaths,
 		CharacterColorCodes: characterColorCodes,
 		TermLimitedIconPath: new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", "term_limited.png"))),

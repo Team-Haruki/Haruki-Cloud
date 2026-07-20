@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"haruki-cloud/internal/core/upstream"
+	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 )
 
@@ -23,7 +24,7 @@ func newRemoteEngineProvider(cfg RecommendConfig) engineProvider {
 	targets := upstream.ResolveTargets(cfg.ServiceBaseURL, cfg.Targets, "deck-service")
 	provider := &remoteEngineProvider{
 		cfg:                       cfg,
-		client:                    &http.Client{Timeout: timeout},
+		client:                    &http.Client{Timeout: timeout, Transport: upstream.NewTunedTransport(upstream.TunedTransportConfig{})},
 		pool:                      upstream.NewPoolWithResources(targets, cfg.SharedResources),
 		targets:                   targets,
 		masterdataRefreshInterval: refreshInterval,
@@ -157,15 +158,24 @@ func (r *RemoteDeckRecommender) defaultAlgorithmsForOption(option map[string]any
 	return filtered
 }
 
-func (r *RemoteDeckRecommender) acquireExecution() (*remoteExecution, error) {
+func (r *RemoteDeckRecommender) acquireExecution(ctx context.Context) (*remoteExecution, error) {
 	if r == nil || r.client == nil || r.pool == nil || !r.pool.Enabled() {
 		return nil, fmt.Errorf("deck recommend service is not configured")
 	}
+	ctx = normalizeRecommendContext(ctx)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
-	lease, err := r.pool.AcquireFunc(context.TODO(), func(target upstream.TargetConfig) bool {
-		return r.targetAcceptsAssignment(target)
+	finishQueue := commandtrace.MeasureOperation(ctx, "deck.queue")
+	lease, err := r.pool.AcquireFunc(ctx, func(target upstream.TargetConfig) bool {
+		return r.targetAcceptsAssignment(ctx, target)
 	})
+	finishQueue()
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		return nil, fmt.Errorf("deck-service upstream is unavailable: %w", err)
 	}
 	state := r.targetStates[remoteTargetKey(lease.Target)]
@@ -179,7 +189,10 @@ func (r *RemoteDeckRecommender) acquireExecution() (*remoteExecution, error) {
 	}, nil
 }
 
-func (r *RemoteDeckRecommender) targetAcceptsAssignment(target upstream.TargetConfig) bool {
+func (r *RemoteDeckRecommender) targetAcceptsAssignment(ctx context.Context, target upstream.TargetConfig) bool {
+	if err := normalizeRecommendContext(ctx).Err(); err != nil {
+		return false
+	}
 	state := r.targetStates[remoteTargetKey(target)]
 	if state == nil {
 		return true
@@ -192,23 +205,22 @@ func (r *RemoteDeckRecommender) targetAcceptsAssignment(target upstream.TargetCo
 		return true
 	}
 	if r.shouldProbeTargetHealth(state) {
-		if r.tryResetCircuitBreakerOnHealthyService(state, failures) {
+		if r.tryResetCircuitBreakerOnHealthyService(ctx, state, failures) {
 			return true
 		}
 		if r.logger != nil {
-			r.logger.Warnf(
-				"deck-service target %s health probe failed after %d consecutive failures; skipping assignment",
-				state.target.Name,
-				failures,
+			r.logger.WarnContext(ctx, "deck target health probe failed",
+				"target", state.target.Name,
+				"consecutive_failures", failures,
+				"assignment_skipped", true,
 			)
 		}
 		return false
 	}
 	if r.logger != nil {
-		r.logger.Debugf(
-			"deck-service target %s has %d consecutive failures; skipping assignment",
-			state.target.Name,
-			failures,
+		r.logger.DebugContext(ctx, "deck target assignment skipped",
+			"target", state.target.Name,
+			"consecutive_failures", failures,
 		)
 	}
 	return false

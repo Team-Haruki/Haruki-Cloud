@@ -64,11 +64,14 @@ func compressedRegistryBytes(t *testing.T, packed []byte) []byte {
 func registryFixtureBytes(t *testing.T, requestPath, rawJSON string) []byte {
 	t.Helper()
 	switch requestPath {
-	case "/runtime/character3d-index.msgpack.br":
-		var payload preview3DCharacterIndex
-		if err := json.Unmarshal([]byte(rawJSON), &payload); err != nil {
-			t.Fatalf("decode character fixture: %v", err)
+	case "/runtime/runtime-role-catalog.msgpack.br":
+		normalized := strings.ReplaceAll(rawJSON, `"character3dId"`, `"roleId"`)
+		normalized = strings.Replace(normalized, `{"entries":`, `{"version":2,"masterVersion":"test-master","roles":`, 1)
+		var payload preview3DRoleCatalog
+		if err := json.Unmarshal([]byte(normalized), &payload); err != nil {
+			t.Fatalf("decode role catalog fixture: %v", err)
 		}
+		payload.Roles = completeRoleCatalogFixture(payload.Roles)
 		return registryBytes(t, payload)
 	case "/runtime/parts/part-registry-compact.msgpack.br":
 		var payload preview3DPartRegistry
@@ -92,6 +95,84 @@ func registryFixtureBytes(t *testing.T, requestPath, rawJSON string) []byte {
 	default:
 		t.Fatalf("unsupported registry fixture path: %s", requestPath)
 		return nil
+	}
+}
+
+func completeRoleCatalogFixture(roles []preview3DCharacterEntry) []preview3DCharacterEntry {
+	seen := make(map[int]struct{}, len(roles))
+	for index, role := range roles {
+		if role.BodyCostume3DID <= 0 {
+			roles[index].BodyCostume3DID = 1_000_000 + role.Character3DID
+		}
+		if role.HeadCostume3DID <= 0 {
+			roles[index].HeadCostume3DID = 2_000_000 + role.Character3DID
+		}
+		if role.HairCostume3DID <= 0 {
+			roles[index].HairCostume3DID = 3_000_000 + role.Character3DID
+		}
+		if role.RoleRuntimePath == "" {
+			roles[index].RoleRuntimePath = fmt.Sprintf("roles/%d/%s/role-runtime.msgpack.br", role.CharacterID, role.Unit)
+		}
+		seen[role.Character3DID] = struct{}{}
+	}
+	for roleID := 1; roleID <= 31; roleID++ {
+		if _, ok := seen[roleID]; ok {
+			continue
+		}
+		characterID := roleID
+		unit := "light_sound"
+		switch {
+		case roleID <= 4:
+		case roleID <= 8:
+			unit = "idol"
+		case roleID <= 12:
+			unit = "street"
+		case roleID <= 16:
+			unit = "theme_park"
+		case roleID <= 20:
+			unit = "school_refusal"
+		case roleID <= 26:
+			characterID = 21
+			unit = []string{"piapro", "idol", "light_sound", "street", "theme_park", "school_refusal"}[roleID-21]
+		default:
+			characterID = roleID - 5
+			unit = "piapro"
+		}
+		roles = append(roles, preview3DCharacterEntry{
+			Character3DID:   roleID,
+			CharacterID:     characterID,
+			Unit:            unit,
+			BodyCostume3DID: 1_000_000 + roleID,
+			HeadCostume3DID: 2_000_000 + roleID,
+			HairCostume3DID: 3_000_000 + roleID,
+			RoleRuntimePath: fmt.Sprintf("roles/%d/%s/role-runtime.msgpack.br", characterID, unit),
+		})
+	}
+	return roles
+}
+
+func TestValidatePreview3DRoleCatalogRejectsDuplicatePublicRole(t *testing.T) {
+	roles := completeRoleCatalogFixture(nil)
+	roles[30] = roles[0]
+	err := validatePreview3DRoleCatalog(preview3DRoleCatalog{Version: 2, MasterVersion: "test-master", Roles: roles})
+	if err == nil || !strings.Contains(err.Error(), "duplicates role") {
+		t.Fatalf("expected duplicate role rejection, got %v", err)
+	}
+}
+
+func TestValidatePreview3DRoleCatalogRejectsWrongIdentityAndRuntimePath(t *testing.T) {
+	roles := completeRoleCatalogFixture(nil)
+	roles[22].CharacterID = 1
+	err := validatePreview3DRoleCatalog(preview3DRoleCatalog{Version: 2, MasterVersion: "test-master", Roles: roles})
+	if err == nil || !strings.Contains(err.Error(), "invalid role") {
+		t.Fatalf("expected role identity rejection, got %v", err)
+	}
+
+	roles = completeRoleCatalogFixture(nil)
+	roles[22].RoleRuntimePath = "roles/1/light_sound/role-runtime.msgpack.br"
+	err = validatePreview3DRoleCatalog(preview3DRoleCatalog{Version: 2, MasterVersion: "test-master", Roles: roles})
+	if err == nil || !strings.Contains(err.Error(), "invalid role") {
+		t.Fatalf("expected role runtime path rejection, got %v", err)
 	}
 }
 
@@ -167,12 +248,11 @@ func TestPreview3DRegistryResolveFillsMissingPartsFromSelectedGroup(t *testing.T
 	}
 }
 
-func TestPreview3DRegistryResolveKeepsOfficialHeadOptionalPackagePath(t *testing.T) {
+func TestPreview3DRegistryResolveDoesNotInferRemovedPresetHead(t *testing.T) {
 	const headPackagePath = "parts/_sources/head_optional/0033/a02"
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{
 			{Character3DID: 1, CharacterID: 1, Unit: "light_sound", BodyCostume3DID: 2, HeadCostume3DID: 1, HairCostume3DID: 201, Status: "available"},
-			{Character3DID: 43, CharacterID: 1, Unit: "light_sound", BodyCostume3DID: 35002, HeadCostume3DID: 35001, HairCostume3DID: 201, Status: "available"},
 		},
 		parts: []preview3DPartEntry{
 			{Costume3DID: 35002, Costume3DGroupID: 35002, PartType: "body", CharacterID: 1, Unit: "light_sound", ColorID: 1, PackagePath: "parts/body/0035/0002", Status: "available"},
@@ -185,8 +265,8 @@ func TestPreview3DRegistryResolveKeepsOfficialHeadOptionalPackagePath(t *testing
 	if err != nil {
 		t.Fatalf("resolve failed: %v", err)
 	}
-	if selection.HeadCostume3DID != 35001 || selection.HeadPackagePath != headPackagePath {
-		t.Fatalf("official head-only source was lost: %+v", selection)
+	if selection.HeadCostume3DID != 1 || selection.HeadPackagePath != "" {
+		t.Fatalf("unrelated removed preset head leaked into role defaults: %+v", selection)
 	}
 }
 
@@ -246,7 +326,7 @@ func TestPreview3DRegistryResolveReportsMissingRuntimePackageDetails(t *testing.
 	}
 }
 
-func TestPreview3DRegistryResolveSkipsMissingDefaultRoles(t *testing.T) {
+func TestPreview3DRegistryResolveIgnoresLegacyRoleStatus(t *testing.T) {
 	registry := &preview3DRegistry{
 		characters: []preview3DCharacterEntry{
 			{
@@ -280,8 +360,8 @@ func TestPreview3DRegistryResolveSkipsMissingDefaultRoles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolve failed: %v", err)
 	}
-	if selection.HairCostume3DID != 33021 {
-		t.Fatalf("expected resolver to skip missing default role and use hair 33021, got %d", selection.HairCostume3DID)
+	if selection.HairCostume3DID != 99921 {
+		t.Fatalf("runtime catalog roles must not be filtered by removed preset status, got %d", selection.HairCostume3DID)
 	}
 }
 
@@ -396,17 +476,17 @@ func TestPreview3DRegistryResolveAllowsUnlistedHairWhenOnlyAvailablePatternsExis
 	}
 }
 
-func TestPreview3DRegistryResolveAllowsOfficialPresetOutsideAvailablePatterns(t *testing.T) {
+func TestPreview3DRegistryResolveAllowsRoleDefaultOutsideAvailablePatterns(t *testing.T) {
 	registry := preview3DCompatibilityTestRegistry([]preview3DCompatibilityRule{
 		{Unit: "school_refusal", HeadCostume3DID: 33011, HairCostume3DID: 99921, State: "available"},
 	})
 
 	selection, err := registry.resolve("jp", 33001)
 	if err != nil {
-		t.Fatalf("official preset should not be rejected by custom compatibility patterns: %v", err)
+		t.Fatalf("role default should not be rejected by positive compatibility hints: %v", err)
 	}
 	if selection.HeadCostume3DID != 33011 || selection.HairCostume3DID != 33021 {
-		t.Fatalf("unexpected official tuple: %+v", selection)
+		t.Fatalf("unexpected role default tuple: %+v", selection)
 	}
 }
 
@@ -939,8 +1019,8 @@ func TestPreview3DCaptureTemporaryComboUsesExistingCapture(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
+		case "/runtime/runtime-role-catalog.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":20,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
 		case "/runtime/parts/part-registry-compact.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
@@ -960,7 +1040,7 @@ func TestPreview3DCaptureTemporaryComboUsesExistingCapture(t *testing.T) {
 
 	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL, CaptureCacheVersion: "test"})
 	data, err := service.CaptureTemporaryCombo(context.Background(), "jp", ComboQuery{
-		Character3DID:   5,
+		Character3DID:   20,
 		BodyCostume3DID: 33001,
 		HairCostume3DID: 33021,
 	})
@@ -981,8 +1061,8 @@ func TestPreview3DServiceUsesRegionEngineBaseURL(t *testing.T) {
 	jpEngine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		jpRequests.Add(1)
 		switch r.URL.Path {
-		case "/runtime/character3d-index.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
+		case "/runtime/runtime-role-catalog.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":20,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
 		case "/runtime/parts/part-registry-compact.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
@@ -1003,8 +1083,8 @@ func TestPreview3DServiceUsesRegionEngineBaseURL(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":6,"characterId":21,"unit":"idol","bodyCostume3dId":44001,"headCostume3dId":44011,"hairCostume3dId":44021,"status":"available"}]}`))
+		case "/runtime/runtime-role-catalog.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":22,"characterId":21,"unit":"idol","bodyCostume3dId":44001,"headCostume3dId":44011,"hairCostume3dId":44021,"status":"available"}]}`))
 		case "/runtime/parts/part-registry-compact.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":44001,"partType":"body","characterId":21,"unit":"idol","colorId":1,"costume3dGroupId":440,"status":"available"},
@@ -1063,7 +1143,7 @@ func TestPreview3DServiceRejectsMissingRegionEngineWhenMapConfigured(t *testing.
 func TestResolveQueryPreviewPathUsesRequested3DRole(t *testing.T) {
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/runtime/character3d-index.msgpack.br":
+		case "/runtime/runtime-role-catalog.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"character3dId":22,"characterId":21,"unit":"idol","bodyCostume3dId":9001,"headCostume3dId":9002,"hairCostume3dId":9003,"status":"available"},
 				{"character3dId":23,"characterId":21,"unit":"light_sound","bodyCostume3dId":9101,"headCostume3dId":9102,"hairCostume3dId":9103,"status":"available"}
@@ -1611,7 +1691,7 @@ func TestPreview3DRegistryDecodeErrorKeepsRegistryPrefix(t *testing.T) {
 	defer server.Close()
 	service := NewPreview3DService(Preview3DConfig{Enabled: true, EngineBaseURL: server.URL})
 	var output map[string]any
-	err := service.getMessagePackRegistry(context.Background(), preview3DEndpoint{baseURL: server.URL}, "/runtime/character3d-index.msgpack.br", &output, false)
+	err := service.getMessagePackRegistry(context.Background(), preview3DEndpoint{baseURL: server.URL}, "/runtime/runtime-role-catalog.msgpack.br", &output, false)
 	if err == nil || !strings.HasPrefix(err.Error(), "3d preview registry ") {
 		t.Fatalf("decode failure must keep the registry error class, got %v", err)
 	}
@@ -1691,7 +1771,7 @@ func TestPreview3DRegistrySharedFlightMergesOperationsIntoEveryWaiter(t *testing
 	started := make(chan struct{}, 1)
 	release := make(chan struct{})
 	var requests atomic.Int32
-	characterPath := "/runtime/character3d-index.msgpack.br"
+	characterPath := "/runtime/runtime-role-catalog.msgpack.br"
 	partPath := "/runtime/parts/part-registry-compact.msgpack.br"
 	compatibilityPath := "/runtime/parts/head-hair-compatibility-compact.msgpack.br"
 	characterFixture := registryFixtureBytes(t, characterPath, `{"entries":[]}`)
@@ -1892,7 +1972,7 @@ func TestPreview3DResponsesHaveExplicitSizeLimits(t *testing.T) {
 		t.Fatalf("endpoint: %v", err)
 	}
 
-	var registry preview3DCharacterIndex
+	var registry preview3DRoleCatalog
 	if err := service.getMessagePackRegistry(context.Background(), endpoint, "/runtime/test.msgpack.br", &registry, false); err == nil || !strings.Contains(err.Error(), "registry response exceeds") {
 		t.Fatalf("getMessagePackRegistry oversized response error = %v", err)
 	}

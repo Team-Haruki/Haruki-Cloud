@@ -116,18 +116,21 @@ type preview3DRegistry struct {
 	partRegistryVersion int
 }
 
-type preview3DCharacterIndex struct {
-	Entries []preview3DCharacterEntry `json:"entries" msgpack:"entries"`
+type preview3DRoleCatalog struct {
+	Version       int                       `json:"version" msgpack:"version"`
+	MasterVersion string                    `json:"masterVersion" msgpack:"masterVersion"`
+	Roles         []preview3DCharacterEntry `json:"roles" msgpack:"roles"`
 }
 
 type preview3DCharacterEntry struct {
-	Character3DID   int    `json:"character3dId" msgpack:"character3dId"`
+	Character3DID   int    `json:"roleId" msgpack:"roleId"`
 	CharacterID     int    `json:"characterId" msgpack:"characterId"`
 	Unit            string `json:"unit" msgpack:"unit"`
 	BodyCostume3DID int    `json:"bodyCostume3dId" msgpack:"bodyCostume3dId"`
 	HeadCostume3DID int    `json:"headCostume3dId" msgpack:"headCostume3dId"`
 	HairCostume3DID int    `json:"hairCostume3dId" msgpack:"hairCostume3dId"`
-	Status          string `json:"status" msgpack:"status"`
+	RoleRuntimePath string `json:"roleRuntimePath" msgpack:"roleRuntimePath"`
+	Status          string `json:"-" msgpack:"-"`
 }
 
 type preview3DPartRegistry struct {
@@ -573,8 +576,11 @@ func (s *Preview3DService) validCachedRegistryLocked(endpoint preview3DEndpoint,
 }
 
 func (s *Preview3DService) fetchRegistry(ctx context.Context, endpoint preview3DEndpoint) (*preview3DRegistry, error) {
-	var characterIndex preview3DCharacterIndex
-	if err := s.getMessagePackRegistry(ctx, endpoint, "/runtime/character3d-index.msgpack.br", &characterIndex, false); err != nil {
+	var roleCatalog preview3DRoleCatalog
+	if err := s.getMessagePackRegistry(ctx, endpoint, "/runtime/runtime-role-catalog.msgpack.br", &roleCatalog, false); err != nil {
+		return nil, err
+	}
+	if err := validatePreview3DRoleCatalog(roleCatalog); err != nil {
 		return nil, err
 	}
 	partRegistry, err := s.getPartRegistry(ctx, endpoint)
@@ -586,7 +592,7 @@ func (s *Preview3DService) fetchRegistry(ctx context.Context, endpoint preview3D
 		return nil, err
 	}
 	registry := &preview3DRegistry{
-		characters:          characterIndex.Entries,
+		characters:          roleCatalog.Roles,
 		parts:               partRegistry.Entries,
 		rules:               compatibility.Rules,
 		partRegistryVersion: partRegistry.Version,
@@ -595,6 +601,53 @@ func (s *Preview3DService) fetchRegistry(ctx context.Context, endpoint preview3D
 		return nil, err
 	}
 	return registry, nil
+}
+
+func validatePreview3DRoleCatalog(catalog preview3DRoleCatalog) error {
+	if catalog.Version != 2 || strings.TrimSpace(catalog.MasterVersion) == "" || len(catalog.Roles) != 31 {
+		return fmt.Errorf("3d preview role catalog is invalid: version=%d master=%q roles=%d", catalog.Version, catalog.MasterVersion, len(catalog.Roles))
+	}
+	seen := make(map[int]struct{}, len(catalog.Roles))
+	for _, role := range catalog.Roles {
+		expectedCharacterID, expectedUnit, ok := preview3DExpectedRoleIdentity(role.Character3DID)
+		expectedRuntimePath := fmt.Sprintf("roles/%d/%s/role-runtime.msgpack.br", expectedCharacterID, expectedUnit)
+		if role.Character3DID < 1 || role.Character3DID > 31 || role.CharacterID <= 0 ||
+			role.BodyCostume3DID <= 0 || role.HeadCostume3DID <= 0 || role.HairCostume3DID <= 0 ||
+			!ok || role.CharacterID != expectedCharacterID || role.Unit != expectedUnit ||
+			role.RoleRuntimePath != expectedRuntimePath {
+			return fmt.Errorf("3d preview role catalog contains an invalid role: %+v", role)
+		}
+		if _, ok := seen[role.Character3DID]; ok {
+			return fmt.Errorf("3d preview role catalog duplicates role %d", role.Character3DID)
+		}
+		seen[role.Character3DID] = struct{}{}
+	}
+	return nil
+}
+
+func preview3DExpectedRoleIdentity(roleID int) (int, string, bool) {
+	if roleID < 1 || roleID > 31 {
+		return 0, "", false
+	}
+	if roleID <= 20 {
+		switch {
+		case roleID <= 4:
+			return roleID, "light_sound", true
+		case roleID <= 8:
+			return roleID, "idol", true
+		case roleID <= 12:
+			return roleID, "street", true
+		case roleID <= 16:
+			return roleID, "theme_park", true
+		default:
+			return roleID, "school_refusal", true
+		}
+	}
+	if roleID <= 26 {
+		units := [...]string{"piapro", "idol", "light_sound", "street", "theme_park", "school_refusal"}
+		return 21, units[roleID-21], true
+	}
+	return roleID - 5, "piapro", true
 }
 
 func (s *Preview3DService) getPartRegistry(ctx context.Context, endpoint preview3DEndpoint) (preview3DPartRegistry, error) {
@@ -1225,17 +1278,7 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 	}
 	selectedSlot := preview3DPartSlot(selected)
 	if selectedSlot != "head" && selectedSlot != "head_optional" {
-		if officialHeadID, official := r.officialHeadForRoleTuple(role, bodyID, hairID); official {
-			candidate, ok, err := r.strictHeadPartForRole(officialHeadID, role)
-			if err != nil {
-				return preview3DSelection{}, err
-			}
-			if ok {
-				headID = candidate.Costume3DID
-				headPackagePath = candidate.PackagePath
-				headOptionalID = nil
-			}
-		} else if candidate, ok, err := r.strictGroupHeadPart(selected, role); err != nil {
+		if candidate, ok, err := r.strictGroupHeadPart(selected, role); err != nil {
 			return preview3DSelection{}, err
 		} else if ok {
 			headID = candidate.Costume3DID
@@ -1259,32 +1302,16 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 	if bodyID <= 0 || headID <= 0 || hairID <= 0 {
 		return preview3DSelection{}, fmt.Errorf("3d preview tuple incomplete for costume %d", costume3DID)
 	}
-	if slot := preview3DPartSlot(selected); slot != "head" && slot != "head_optional" {
-		if officialHeadID, ok := r.officialHeadForRoleTuple(role, bodyID, hairID); ok {
-			headID = officialHeadID
-			headPackagePath = ""
-			if candidate, found, err := r.strictHeadPartForRole(officialHeadID, role); err != nil {
-				return preview3DSelection{}, err
-			} else if found {
-				headPackagePath = candidate.PackagePath
-			}
-			if preview3DPartSlot(selected) != "head_optional" {
-				headOptionalID = nil
-			}
-		}
+	previousHeadID := headID
+	var err error
+	headID, hairID, err = r.applyHeadHairFallback(role, preview3DPartSlot(selected), headID, hairID, "3d preview")
+	if err != nil {
+		return preview3DSelection{}, err
 	}
-	if !r.isOfficialPresetTuple(role, bodyID, headID, hairID, headOptionalID) {
-		previousHeadID := headID
-		var err error
-		headID, hairID, err = r.applyHeadHairFallback(role, preview3DPartSlot(selected), headID, hairID, "3d preview")
-		if err != nil {
-			return preview3DSelection{}, err
-		}
-		if headID != previousHeadID {
-			headPackagePath = ""
-			if candidate, found := r.defaultHeadOptionalPartForRole(role); found && candidate.Costume3DID == headID {
-				headPackagePath = candidate.PackagePath
-			}
+	if headID != previousHeadID {
+		headPackagePath = ""
+		if candidate, found := r.defaultHeadOptionalPartForRole(role); found && candidate.Costume3DID == headID {
+			headPackagePath = candidate.PackagePath
 		}
 	}
 	if accessoryID > 0 && strings.TrimSpace(headPackagePath) == "" {
@@ -1514,38 +1541,23 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 	if bodyID <= 0 || headID <= 0 || hairID <= 0 {
 		return preview3DSelection{}, fmt.Errorf("3d combo tuple incomplete")
 	}
-	if !explicitHead && !implicitHead {
-		if officialHeadID, ok := r.officialHeadForRoleTuple(role, bodyID, hairID); ok {
-			headID = officialHeadID
-			headPackagePath = ""
-			if candidate, found, err := r.strictHeadPartForRole(officialHeadID, role); err != nil {
-				return preview3DSelection{}, err
-			} else if found {
-				headPackagePath = candidate.PackagePath
-			}
-			headOptionalID = nil
-		}
+	fallbackMode := "auto"
+	if explicitHair && explicitHead {
+		fallbackMode = "none"
+	} else if explicitHair {
+		fallbackMode = "hair"
+	} else if explicitHead {
+		fallbackMode = "head"
 	}
-	if !r.isOfficialPresetTuple(role, bodyID, headID, hairID, headOptionalID) {
-		fallbackMode := "auto"
-		if explicitHair && explicitHead {
-			fallbackMode = "none"
-		} else if explicitHair {
-			fallbackMode = "hair"
-		} else if explicitHead {
-			fallbackMode = "head"
-		}
-		var err error
-		previousHeadID := headID
-		headID, hairID, err = r.applyHeadHairFallback(role, fallbackMode, headID, hairID, "3d combo")
-		if err != nil {
-			return preview3DSelection{}, err
-		}
-		if headID != previousHeadID {
-			headPackagePath = ""
-			if candidate, found := r.defaultHeadOptionalPartForRole(role); found && candidate.Costume3DID == headID {
-				headPackagePath = candidate.PackagePath
-			}
+	previousHeadID := headID
+	headID, hairID, err = r.applyHeadHairFallback(role, fallbackMode, headID, hairID, "3d combo")
+	if err != nil {
+		return preview3DSelection{}, err
+	}
+	if headID != previousHeadID {
+		headPackagePath = ""
+		if candidate, found := r.defaultHeadOptionalPartForRole(role); found && candidate.Costume3DID == headID {
+			headPackagePath = candidate.PackagePath
 		}
 	}
 
@@ -1598,9 +1610,6 @@ func (r *preview3DRegistry) anyPartByID(costume3DID int) (preview3DPartEntry, bo
 func (r *preview3DRegistry) defaultRoleForPart(part preview3DPartEntry) preview3DCharacterEntry {
 	var candidates []preview3DCharacterEntry
 	for _, role := range r.characters {
-		if !preview3DStatusUsable(role.Status) {
-			continue
-		}
 		if role.CharacterID != part.CharacterID {
 			continue
 		}
@@ -1622,9 +1631,6 @@ func (r *preview3DRegistry) comboRoleCandidates(query ComboQuery) []preview3DCha
 	var candidates []preview3DCharacterEntry
 	seen := make(map[string]struct{})
 	for _, role := range r.characters {
-		if !preview3DStatusUsable(role.Status) {
-			continue
-		}
 		if role.Character3DID != query.Character3DID {
 			continue
 		}
@@ -2327,6 +2333,15 @@ func (r *preview3DRegistry) strictGroupHeadPart(selected preview3DPartEntry, rol
 		}
 	}
 	ambiguity := fmt.Sprintf("3d group head source is ambiguous: group=%d color=%d", selected.Costume3DGroupID, selected.ColorID)
+	var roleDefaults []preview3DPartEntry
+	for _, candidate := range candidates {
+		if candidate.Costume3DID == role.HeadCostume3DID {
+			roleDefaults = append(roleDefaults, candidate)
+		}
+	}
+	if len(roleDefaults) > 0 {
+		return strictPreview3DHeadPart(roleDefaults, role, ambiguity)
+	}
 	return strictPreview3DHeadPart(candidates, role, ambiguity)
 }
 
@@ -2434,41 +2449,6 @@ func preview3DPartDiagnostic(part preview3DPartEntry) string {
 		details = append(details, "warning="+part.Warnings[0])
 	}
 	return strings.Join(details, " ")
-}
-
-func (r *preview3DRegistry) isOfficialPresetTuple(role preview3DCharacterEntry, bodyID int, headID int, hairID int, headOptionalID *int) bool {
-	if headOptionalID != nil {
-		return false
-	}
-	for _, candidate := range r.characters {
-		if !preview3DStatusUsable(candidate.Status) {
-			continue
-		}
-		if candidate.CharacterID != role.CharacterID || candidate.Unit != role.Unit {
-			continue
-		}
-		if candidate.BodyCostume3DID == bodyID &&
-			candidate.HeadCostume3DID == headID &&
-			candidate.HairCostume3DID == hairID {
-			return true
-		}
-	}
-	return false
-}
-
-func (r *preview3DRegistry) officialHeadForRoleTuple(role preview3DCharacterEntry, bodyID int, hairID int) (int, bool) {
-	for _, candidate := range r.characters {
-		if !preview3DStatusUsable(candidate.Status) {
-			continue
-		}
-		if candidate.CharacterID != role.CharacterID || candidate.Unit != role.Unit {
-			continue
-		}
-		if candidate.BodyCostume3DID == bodyID && candidate.HairCostume3DID == hairID && candidate.HeadCostume3DID > 0 {
-			return candidate.HeadCostume3DID, true
-		}
-	}
-	return 0, false
 }
 
 func (r *preview3DRegistry) applyHeadHairFallback(

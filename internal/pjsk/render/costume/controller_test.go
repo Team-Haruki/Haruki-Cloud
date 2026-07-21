@@ -554,8 +554,8 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"ok"}]}`))
+		case "/runtime/runtime-role-catalog.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":20,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"ok"}]}`))
 		case "/runtime/parts/part-registry-compact.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
@@ -660,8 +660,8 @@ func TestBuildCostumeDetailRequestSkipsMissing3DPreviewParts(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
+		case "/runtime/runtime-role-catalog.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":20,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
 		case "/runtime/parts/part-registry-compact.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"status":"available"},
@@ -776,7 +776,7 @@ func TestBuildCostumeListRequestDoesNotCall3DPreview(t *testing.T) {
 func TestBuildHairListUsesRoleLocalIDs(t *testing.T) {
 	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/runtime/character3d-index.msgpack.br":
+		case "/runtime/runtime-role-catalog.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":23,"characterId":21,"unit":"light_sound","hairCostume3dId":392161,"status":"available"}]}`))
 		case "/runtime/parts/part-registry-compact.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
@@ -960,8 +960,8 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/runtime/character3d-index.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":5,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
+		case "/runtime/runtime-role-catalog.msgpack.br":
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":20,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"available"}]}`))
 		case "/runtime/parts/part-registry-compact.msgpack.br":
 			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
 				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330,"outfitId":33,"status":"available"},
@@ -986,7 +986,7 @@ func TestRenderCostumeComboUsesTemporaryCapture(t *testing.T) {
 	controller := NewController(denseListTestSource{}, nil, nil)
 	controller.Set3DPreviewConfig(Preview3DConfig{Enabled: true, EngineBaseURL: engine.URL, CaptureCacheVersion: "test"})
 
-	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "角色5 服装33 颜色1 发型1 饰品531000 颜色1", Region: "jp"})
+	data, err := controller.RenderCostumeCombo(ComboQuery{Query: "角色20 服装33 颜色1 发型1 饰品531000 颜色1", Region: "jp"})
 	if err != nil {
 		t.Fatalf("RenderCostumeCombo failed: %v", err)
 	}

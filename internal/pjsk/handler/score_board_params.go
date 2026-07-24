@@ -155,7 +155,7 @@ func looksLikeCompactMusicBoardSpecQuery(field string) bool {
 		return false
 	}
 
-	if diff, rest := rendermusic.ExtractMusicDifficulty(field); diff != "" && strings.TrimSpace(rest) != "" {
+	if diff, rest := extractCompactMusicDifficulty(field); diff != "" && strings.TrimSpace(rest) != "" {
 		return true
 	}
 	if strings.Contains(field, "*") {
@@ -191,6 +191,41 @@ func looksLikeCompactMusicBoardSpecQuery(field string) bool {
 		return false
 	}
 	return len(field) <= 8
+}
+
+func extractCompactMusicDifficulty(query string) (string, string) {
+	diff, cleaned := rendermusic.ExtractMusicDifficulty(query)
+	if diff != "" || strings.TrimSpace(cleaned) == "" {
+		return diff, cleaned
+	}
+
+	lower := strings.ToLower(strings.TrimSpace(query))
+	for _, suffix := range []struct {
+		alias     string
+		canonical string
+	}{
+		{alias: "append", canonical: "append"},
+		{alias: "expert", canonical: "expert"},
+		{alias: "master", canonical: "master"},
+		{alias: "normal", canonical: "normal"},
+		{alias: "easy", canonical: "easy"},
+		{alias: "hard", canonical: "hard"},
+		{alias: "apd", canonical: "append"},
+		{alias: "app", canonical: "append"},
+		{alias: "exp", canonical: "expert"},
+		{alias: "mas", canonical: "master"},
+		{alias: "nm", canonical: "normal"},
+		{alias: "ez", canonical: "easy"},
+		{alias: "hd", canonical: "hard"},
+		{alias: "ex", canonical: "expert"},
+		{alias: "ma", canonical: "master"},
+	} {
+		if !strings.HasSuffix(lower, suffix.alias) || len(lower) <= len(suffix.alias) {
+			continue
+		}
+		return suffix.canonical, strings.TrimSpace(query[:len(query)-len(suffix.alias)])
+	}
+	return "", cleaned
 }
 
 func extractMusicBoardMappedArg(args string, aliasMap map[string][]string, defaultValue string) (string, string) {

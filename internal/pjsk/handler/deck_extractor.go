@@ -440,7 +440,7 @@ func extractDeckMusicQuery(args string, params *deckAutoQueryParams) (string, er
 		return "", nil
 	}
 
-	if diff, cleaned := rendermusic.ExtractMusicDifficulty(args); diff != "" {
+	if diff, cleaned := extractCompactMusicDifficulty(args); diff != "" {
 		params.MusicDiff = diff
 		args = cleaned
 	}

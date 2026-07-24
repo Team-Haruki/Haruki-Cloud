@@ -186,6 +186,35 @@ func TestMusicBoardHandleSplitsSpecQueriesByWhitespaceLikeRefer(t *testing.T) {
 	}
 }
 
+func TestMusicBoardHandleTreatsCompactASCIIQueryDifficultyAsSongSuffix(t *testing.T) {
+	h := sekaiHandlers{}.MusicBoardHandle()
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		TriggerCmd: "/歌曲排行",
+		ArgText:    "segaex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	if resolved == nil {
+		t.Fatal("expected command request, got nil")
+	}
+
+	var params rendermusic.BoardQuery
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if len(params.SpecQueries) != 1 || params.SpecQueries[0] != "segaex" {
+		t.Fatalf("unexpected spec queries: %+v", params)
+	}
+	if diff, cleaned := extractCompactMusicDifficulty(params.SpecQueries[0]); diff != "expert" || cleaned != "sega" {
+		t.Fatalf("unexpected compact difficulty extraction: diff=%q cleaned=%q", diff, cleaned)
+	}
+}
+
 func TestMusicBoardHandleAllowsModeOnlyQueryWithoutSpecSongs(t *testing.T) {
 	h := sekaiHandlers{}.MusicBoardHandle()
 

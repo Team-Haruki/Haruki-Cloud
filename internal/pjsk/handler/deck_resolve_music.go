@@ -83,7 +83,7 @@ func resolveDeckMusicCompareSelections(region string, queries []string, app *ren
 			continue
 		}
 
-		diff, cleaned := music.ExtractMusicDifficulty(query)
+		diff, cleaned := extractCompactMusicDifficulty(query)
 		if diff == "" {
 			diff = "master"
 		}
@@ -126,7 +126,7 @@ func assignDeckFallbackMusicQuery(q *deck.AutoQuery, raw string) {
 		return
 	}
 	if strings.TrimSpace(q.MusicDiff) == "" {
-		if diff, cleaned := music.ExtractMusicDifficulty(query); diff != "" && strings.TrimSpace(cleaned) != "" {
+		if diff, cleaned := extractCompactMusicDifficulty(query); diff != "" && strings.TrimSpace(cleaned) != "" {
 			q.MusicDiff = diff
 			query = cleaned
 		}

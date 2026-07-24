@@ -274,6 +274,29 @@ func TestEventDeckHandleParsesLeadingSelectorArg(t *testing.T) {
 	}
 }
 
+func TestEventDeckHandleParsesCompactASCIIQueryDifficultySuffix(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/活动组卡",
+		ArgText:    "segaex",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	resolved := result
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(resolved.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.MusicQuery != "sega" || params.MusicDiff != "expert" {
+		t.Fatalf("unexpected compact music query: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
+	}
+}
+
 func TestEventDeckHandleParsesTrailingSelectorArg(t *testing.T) {
 	h := sekaiHandlers{}.EventDeckHandle()
 	result, err := h.Handle(&PjskHandlerContext{

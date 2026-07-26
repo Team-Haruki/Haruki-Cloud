@@ -604,7 +604,7 @@ func (s *Preview3DService) fetchRegistry(ctx context.Context, endpoint preview3D
 }
 
 func validatePreview3DRoleCatalog(catalog preview3DRoleCatalog) error {
-	if catalog.Version != 2 || strings.TrimSpace(catalog.MasterVersion) == "" || len(catalog.Roles) != 31 {
+	if strings.TrimSpace(catalog.MasterVersion) == "" || len(catalog.Roles) != 31 {
 		return fmt.Errorf("3d preview role catalog is invalid: version=%d master=%q roles=%d", catalog.Version, catalog.MasterVersion, len(catalog.Roles))
 	}
 	seen := make(map[int]struct{}, len(catalog.Roles))

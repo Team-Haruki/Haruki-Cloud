@@ -160,6 +160,28 @@ func TestValidatePreview3DRoleCatalogRejectsDuplicatePublicRole(t *testing.T) {
 	}
 }
 
+func TestValidatePreview3DRoleCatalogAcceptsV3(t *testing.T) {
+	err := validatePreview3DRoleCatalog(preview3DRoleCatalog{
+		Version:       3,
+		MasterVersion: "test-master",
+		Roles:         completeRoleCatalogFixture(nil),
+	})
+	if err != nil {
+		t.Fatalf("validate v3 role catalog: %v", err)
+	}
+}
+
+func TestValidatePreview3DRoleCatalogAcceptsV4(t *testing.T) {
+	err := validatePreview3DRoleCatalog(preview3DRoleCatalog{
+		Version:       4,
+		MasterVersion: "test-master",
+		Roles:         completeRoleCatalogFixture(nil),
+	})
+	if err != nil {
+		t.Fatalf("validate v4 role catalog: %v", err)
+	}
+}
+
 func TestValidatePreview3DRoleCatalogRejectsWrongIdentityAndRuntimePath(t *testing.T) {
 	roles := completeRoleCatalogFixture(nil)
 	roles[22].CharacterID = 1

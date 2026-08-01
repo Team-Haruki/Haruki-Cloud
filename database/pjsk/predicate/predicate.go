@@ -12,6 +12,9 @@ type Alias func(*sql.Selector)
 // AliasAdmin is the predicate function for aliasadmin builders.
 type AliasAdmin func(*sql.Selector)
 
+// AliasSubmissionBan is the predicate function for aliassubmissionban builders.
+type AliasSubmissionBan func(*sql.Selector)
+
 // GameAccount is the predicate function for gameaccount builders.
 type GameAccount func(*sql.Selector)
 

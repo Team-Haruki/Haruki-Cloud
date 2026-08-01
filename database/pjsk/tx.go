@@ -16,6 +16,8 @@ type Tx struct {
 	Alias *AliasClient
 	// AliasAdmin is the client for interacting with the AliasAdmin builders.
 	AliasAdmin *AliasAdminClient
+	// AliasSubmissionBan is the client for interacting with the AliasSubmissionBan builders.
+	AliasSubmissionBan *AliasSubmissionBanClient
 	// GameAccount is the client for interacting with the GameAccount builders.
 	GameAccount *GameAccountClient
 	// GroupAlias is the client for interacting with the GroupAlias builders.
@@ -167,6 +169,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Alias = NewAliasClient(tx.config)
 	tx.AliasAdmin = NewAliasAdminClient(tx.config)
+	tx.AliasSubmissionBan = NewAliasSubmissionBanClient(tx.config)
 	tx.GameAccount = NewGameAccountClient(tx.config)
 	tx.GroupAlias = NewGroupAliasClient(tx.config)
 	tx.MysekaiBirthdaySubscription = NewMysekaiBirthdaySubscriptionClient(tx.config)

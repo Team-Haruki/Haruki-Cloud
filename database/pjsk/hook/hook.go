@@ -32,6 +32,18 @@ func (f AliasAdminFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.AliasAdminMutation", m)
 }
 
+// The AliasSubmissionBanFunc type is an adapter to allow the use of ordinary
+// function as AliasSubmissionBan mutator.
+type AliasSubmissionBanFunc func(context.Context, *pjsk.AliasSubmissionBanMutation) (pjsk.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AliasSubmissionBanFunc) Mutate(ctx context.Context, m pjsk.Mutation) (pjsk.Value, error) {
+	if mv, ok := m.(*pjsk.AliasSubmissionBanMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *pjsk.AliasSubmissionBanMutation", m)
+}
+
 // The GameAccountFunc type is an adapter to allow the use of ordinary
 // function as GameAccount mutator.
 type GameAccountFunc func(context.Context, *pjsk.GameAccountMutation) (pjsk.Value, error)

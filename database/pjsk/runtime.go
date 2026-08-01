@@ -5,6 +5,7 @@ package pjsk
 import (
 	"haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
+	"haruki-cloud/database/pjsk/aliassubmissionban"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
@@ -38,6 +39,20 @@ func init() {
 	aliasadminDescName := aliasadminFields[1].Descriptor()
 	// aliasadmin.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	aliasadmin.NameValidator = aliasadminDescName.Validators[0].(func(string) error)
+	aliassubmissionbanFields := schema.AliasSubmissionBan{}.Fields()
+	_ = aliassubmissionbanFields
+	// aliassubmissionbanDescPlatform is the schema descriptor for platform field.
+	aliassubmissionbanDescPlatform := aliassubmissionbanFields[0].Descriptor()
+	// aliassubmissionban.PlatformValidator is a validator for the "platform" field. It is called by the builders before save.
+	aliassubmissionban.PlatformValidator = aliassubmissionbanDescPlatform.Validators[0].(func(string) error)
+	// aliassubmissionbanDescPlatformUserID is the schema descriptor for platform_user_id field.
+	aliassubmissionbanDescPlatformUserID := aliassubmissionbanFields[1].Descriptor()
+	// aliassubmissionban.PlatformUserIDValidator is a validator for the "platform_user_id" field. It is called by the builders before save.
+	aliassubmissionban.PlatformUserIDValidator = aliassubmissionbanDescPlatformUserID.Validators[0].(func(string) error)
+	// aliassubmissionbanDescBannedBy is the schema descriptor for banned_by field.
+	aliassubmissionbanDescBannedBy := aliassubmissionbanFields[2].Descriptor()
+	// aliassubmissionban.BannedByValidator is a validator for the "banned_by" field. It is called by the builders before save.
+	aliassubmissionban.BannedByValidator = aliassubmissionbanDescBannedBy.Validators[0].(func(string) error)
 	gameaccountFields := schema.GameAccount{}.Fields()
 	_ = gameaccountFields
 	// gameaccountDescUserID is the schema descriptor for user_id field.

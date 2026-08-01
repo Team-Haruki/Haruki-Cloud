@@ -75,6 +75,32 @@ func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json
 			lines = append(lines, formatAliasRecord(record))
 		}
 		return []byte(strings.Join(lines, "\n")), nil
+	case ModeSubmitter:
+		params, err := decodeSubmitterParams(raw)
+		if err != nil {
+			return nil, err
+		}
+		record, err := service.GetSubmitter(ctx, params.Platform, params.PlatformUserID, params.ReviewID)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("别名提交者：\n%s\n提交者: %s", formatAliasRecord(*record), record.SubmittedBy)), nil
+	case ModeBanSubmitter:
+		params, err := decodeBanSubmitterParams(raw)
+		if err != nil {
+			return nil, err
+		}
+		record, err := service.BanSubmitter(
+			ctx,
+			params.Platform,
+			params.PlatformUserID,
+			params.TargetPlatform,
+			params.TargetPlatformUserID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(fmt.Sprintf("已禁止用户 %s:%s 提交别名", record.Platform, record.PlatformUserID)), nil
 	case ModeApprove:
 		params, err := decodeApproveParams(raw)
 		if err != nil {
@@ -178,6 +204,46 @@ func decodeReviewListParams(raw json.RawMessage) (ReviewListCommandParams, error
 	params.PlatformUserID = strings.TrimSpace(params.PlatformUserID)
 	if params.Platform == "" || params.PlatformUserID == "" {
 		return params, fmt.Errorf("bridge: missing alias review identity context")
+	}
+	return params, nil
+}
+
+func decodeSubmitterParams(raw json.RawMessage) (SubmitterCommandParams, error) {
+	var params SubmitterCommandParams
+	if len(raw) == 0 {
+		return params, fmt.Errorf("bridge: missing alias submitter params")
+	}
+	if err := sonic.Unmarshal(raw, &params); err != nil {
+		return params, fmt.Errorf("bridge: unmarshal alias submitter params: %w", err)
+	}
+	params.Platform = strings.TrimSpace(params.Platform)
+	params.PlatformUserID = strings.TrimSpace(params.PlatformUserID)
+	if params.Platform == "" || params.PlatformUserID == "" {
+		return params, fmt.Errorf("bridge: missing alias submitter identity context")
+	}
+	if params.ReviewID <= 0 {
+		return params, fmt.Errorf("请输入正确的待审核ID")
+	}
+	return params, nil
+}
+
+func decodeBanSubmitterParams(raw json.RawMessage) (BanSubmitterCommandParams, error) {
+	var params BanSubmitterCommandParams
+	if len(raw) == 0 {
+		return params, fmt.Errorf("bridge: missing alias ban submitter params")
+	}
+	if err := sonic.Unmarshal(raw, &params); err != nil {
+		return params, fmt.Errorf("bridge: unmarshal alias ban submitter params: %w", err)
+	}
+	params.Platform = strings.TrimSpace(params.Platform)
+	params.PlatformUserID = strings.TrimSpace(params.PlatformUserID)
+	params.TargetPlatform = strings.TrimSpace(params.TargetPlatform)
+	params.TargetPlatformUserID = strings.TrimSpace(params.TargetPlatformUserID)
+	if params.Platform == "" || params.PlatformUserID == "" {
+		return params, fmt.Errorf("bridge: missing alias ban submitter identity context")
+	}
+	if params.TargetPlatform == "" || params.TargetPlatformUserID == "" {
+		return params, fmt.Errorf("请输入要禁用的用户ID")
 	}
 	return params, nil
 }

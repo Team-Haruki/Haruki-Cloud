@@ -148,6 +148,7 @@ func (skh *HarukiSekaiCommandHandler) Handle(ctx Context) (*CommandRequest, erro
 			UserId:      ctx.GetUserId(),
 			SenderName:  ctx.GetSenderName(),
 			GroupId:     ctx.GetGroupId(),
+			AtIds:       ctx.GetAtIds(),
 		},
 		region:             cmdRegion,
 		explicitRegion:     explicitRegion,

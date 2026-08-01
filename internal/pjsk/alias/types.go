@@ -10,12 +10,14 @@ import (
 // ── Mode constants ──────────────────────────────────────────────────────────
 
 const (
-	ModeDelete      = "alias-delete"
-	ModeAdd         = "alias-add"
-	ModeQuery       = "alias-query"
-	ModePendingList = "alias-pending-list"
-	ModeApprove     = "alias-approve"
-	ModeReject      = "alias-reject"
+	ModeDelete       = "alias-delete"
+	ModeAdd          = "alias-add"
+	ModeQuery        = "alias-query"
+	ModePendingList  = "alias-pending-list"
+	ModeSubmitter    = "alias-submitter"
+	ModeBanSubmitter = "alias-ban-submitter"
+	ModeApprove      = "alias-approve"
+	ModeReject       = "alias-reject"
 )
 
 const (
@@ -53,6 +55,19 @@ type ReviewListCommandParams struct {
 	PlatformUserID string `json:"platform_user_id"`
 }
 
+type SubmitterCommandParams struct {
+	Platform       string `json:"platform"`
+	PlatformUserID string `json:"platform_user_id"`
+	ReviewID       int64  `json:"review_id"`
+}
+
+type BanSubmitterCommandParams struct {
+	Platform             string `json:"platform"`
+	PlatformUserID       string `json:"platform_user_id"`
+	TargetPlatform       string `json:"target_platform"`
+	TargetPlatformUserID string `json:"target_platform_user_id"`
+}
+
 type ApproveCommandParams struct {
 	Platform       string  `json:"platform"`
 	PlatformUserID string  `json:"platform_user_id"`
@@ -86,9 +101,16 @@ type EntityRef struct {
 }
 
 type PjskAliasRecord struct {
-	ReviewID int64
-	Entity   EntityRef
-	Alias    string
+	ReviewID    int64
+	Entity      EntityRef
+	Alias       string
+	SubmittedBy string
+}
+
+type SubmissionBanRecord struct {
+	Platform       string
+	PlatformUserID string
+	BannedBy       string
 }
 
 type ApprovedAliasRecord struct {

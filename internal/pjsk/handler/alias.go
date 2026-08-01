@@ -100,6 +100,58 @@ func (sekaiHandlers) AliasPendingHandle() HarukiSekaiCommandHandler {
 	}, executeAlias)
 }
 
+func (sekaiHandlers) AliasSubmitterHandle() HarukiSekaiCommandHandler {
+	const usage = "使用方式:\n/查询别名提交者 待审核ID"
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Path:     "alias/submitter",
+			Commands: []string{"/查询别名提交者", "/别名提交者"},
+			Helper:   usage,
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			reviewID, err := parseAliasReviewID(strings.TrimSpace(ctx.GetArgs()), usage)
+			if err != nil {
+				return nil, err
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleAlias, aliases.ModeSubmitter, aliases.SubmitterCommandParams{
+				Platform:       ctx.GetPlatform(),
+				PlatformUserID: ctx.GetUserId(),
+				ReviewID:       reviewID,
+			}), nil
+		},
+	}, executeAlias)
+}
+
+func (sekaiHandlers) AliasBanSubmitterHandle() HarukiSekaiCommandHandler {
+	const usage = "使用方式:\n/禁用别名提交 用户ID\n/禁用别名提交 @用户"
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Path:     "alias/ban_submitter",
+			Commands: []string{"/禁用别名提交", "/禁止别名提交"},
+			Helper:   usage,
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			targetPlatform, targetUserID, err := parseAliasSubmissionTarget(
+				strings.TrimSpace(ctx.GetArgs()),
+				ctx.GetPlatform(),
+				ctx.GetAtIds(),
+				usage,
+			)
+			if err != nil {
+				return nil, err
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleAlias, aliases.ModeBanSubmitter, aliases.BanSubmitterCommandParams{
+				Platform:             ctx.GetPlatform(),
+				PlatformUserID:       ctx.GetUserId(),
+				TargetPlatform:       targetPlatform,
+				TargetPlatformUserID: targetUserID,
+			}), nil
+		},
+	}, executeAlias)
+}
+
 func (sekaiHandlers) AliasApproveHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
@@ -317,6 +369,42 @@ func parseAliasReviewIDs(args string) ([]int64, error) {
 		result = append(result, reviewID)
 	}
 	return result, nil
+}
+
+func parseAliasReviewID(args, usage string) (int64, error) {
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) != 1 {
+		return 0, onebot11.NewReplayError("%s", usage)
+	}
+	reviewID, err := strconv.ParseInt(fields[0], 10, 64)
+	if err != nil || reviewID <= 0 {
+		return 0, onebot11.NewReplayError("待审核ID必须为正整数")
+	}
+	return reviewID, nil
+}
+
+func parseAliasSubmissionTarget(args, currentPlatform string, atIDs []string, usage string) (string, string, error) {
+	currentPlatform = strings.TrimSpace(currentPlatform)
+	if len(atIDs) > 0 && strings.TrimSpace(atIDs[0]) != "" {
+		return currentPlatform, strings.TrimSpace(atIDs[0]), nil
+	}
+	fields := strings.Fields(strings.TrimSpace(args))
+	if len(fields) != 1 {
+		return "", "", onebot11.NewReplayError("%s", usage)
+	}
+	target := fields[0]
+	if platform, userID, ok := strings.Cut(target, ":"); ok {
+		platform = strings.TrimSpace(platform)
+		userID = strings.TrimSpace(userID)
+		if platform == "" || userID == "" {
+			return "", "", onebot11.NewReplayError("%s", usage)
+		}
+		return platform, userID, nil
+	}
+	if currentPlatform == "" {
+		return "", "", onebot11.NewReplayError("缺少平台信息")
+	}
+	return currentPlatform, target, nil
 }
 
 func parseAliasRejectArgs(args string) (int64, string, error) {

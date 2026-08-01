@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
+	"haruki-cloud/database/pjsk/aliassubmissionban"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
@@ -38,6 +39,7 @@ const (
 	// Node types.
 	TypeAlias                            = "Alias"
 	TypeAliasAdmin                       = "AliasAdmin"
+	TypeAliasSubmissionBan               = "AliasSubmissionBan"
 	TypeGameAccount                      = "GameAccount"
 	TypeGroupAlias                       = "GroupAlias"
 	TypeMysekaiBirthdaySubscription      = "MysekaiBirthdaySubscription"
@@ -939,6 +941,494 @@ func (m *AliasAdminMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *AliasAdminMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown AliasAdmin edge %s", name)
+}
+
+// AliasSubmissionBanMutation represents an operation that mutates the AliasSubmissionBan nodes in the graph.
+type AliasSubmissionBanMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	platform         *string
+	platform_user_id *string
+	banned_by        *string
+	banned_at        *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*AliasSubmissionBan, error)
+	predicates       []predicate.AliasSubmissionBan
+}
+
+var _ ent.Mutation = (*AliasSubmissionBanMutation)(nil)
+
+// aliassubmissionbanOption allows management of the mutation configuration using functional options.
+type aliassubmissionbanOption func(*AliasSubmissionBanMutation)
+
+// newAliasSubmissionBanMutation creates new mutation for the AliasSubmissionBan entity.
+func newAliasSubmissionBanMutation(c config, op Op, opts ...aliassubmissionbanOption) *AliasSubmissionBanMutation {
+	m := &AliasSubmissionBanMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAliasSubmissionBan,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAliasSubmissionBanID sets the ID field of the mutation.
+func withAliasSubmissionBanID(id int) aliassubmissionbanOption {
+	return func(m *AliasSubmissionBanMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AliasSubmissionBan
+		)
+		m.oldValue = func(ctx context.Context) (*AliasSubmissionBan, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AliasSubmissionBan.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAliasSubmissionBan sets the old AliasSubmissionBan of the mutation.
+func withAliasSubmissionBan(node *AliasSubmissionBan) aliassubmissionbanOption {
+	return func(m *AliasSubmissionBanMutation) {
+		m.oldValue = func(context.Context) (*AliasSubmissionBan, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AliasSubmissionBanMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AliasSubmissionBanMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("pjsk: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AliasSubmissionBanMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AliasSubmissionBanMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AliasSubmissionBan.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetPlatform sets the "platform" field.
+func (m *AliasSubmissionBanMutation) SetPlatform(s string) {
+	m.platform = &s
+}
+
+// Platform returns the value of the "platform" field in the mutation.
+func (m *AliasSubmissionBanMutation) Platform() (r string, exists bool) {
+	v := m.platform
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatform returns the old "platform" field's value of the AliasSubmissionBan entity.
+// If the AliasSubmissionBan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AliasSubmissionBanMutation) OldPlatform(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatform is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatform requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatform: %w", err)
+	}
+	return oldValue.Platform, nil
+}
+
+// ResetPlatform resets all changes to the "platform" field.
+func (m *AliasSubmissionBanMutation) ResetPlatform() {
+	m.platform = nil
+}
+
+// SetPlatformUserID sets the "platform_user_id" field.
+func (m *AliasSubmissionBanMutation) SetPlatformUserID(s string) {
+	m.platform_user_id = &s
+}
+
+// PlatformUserID returns the value of the "platform_user_id" field in the mutation.
+func (m *AliasSubmissionBanMutation) PlatformUserID() (r string, exists bool) {
+	v := m.platform_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatformUserID returns the old "platform_user_id" field's value of the AliasSubmissionBan entity.
+// If the AliasSubmissionBan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AliasSubmissionBanMutation) OldPlatformUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatformUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatformUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatformUserID: %w", err)
+	}
+	return oldValue.PlatformUserID, nil
+}
+
+// ResetPlatformUserID resets all changes to the "platform_user_id" field.
+func (m *AliasSubmissionBanMutation) ResetPlatformUserID() {
+	m.platform_user_id = nil
+}
+
+// SetBannedBy sets the "banned_by" field.
+func (m *AliasSubmissionBanMutation) SetBannedBy(s string) {
+	m.banned_by = &s
+}
+
+// BannedBy returns the value of the "banned_by" field in the mutation.
+func (m *AliasSubmissionBanMutation) BannedBy() (r string, exists bool) {
+	v := m.banned_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBannedBy returns the old "banned_by" field's value of the AliasSubmissionBan entity.
+// If the AliasSubmissionBan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AliasSubmissionBanMutation) OldBannedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBannedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBannedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBannedBy: %w", err)
+	}
+	return oldValue.BannedBy, nil
+}
+
+// ResetBannedBy resets all changes to the "banned_by" field.
+func (m *AliasSubmissionBanMutation) ResetBannedBy() {
+	m.banned_by = nil
+}
+
+// SetBannedAt sets the "banned_at" field.
+func (m *AliasSubmissionBanMutation) SetBannedAt(t time.Time) {
+	m.banned_at = &t
+}
+
+// BannedAt returns the value of the "banned_at" field in the mutation.
+func (m *AliasSubmissionBanMutation) BannedAt() (r time.Time, exists bool) {
+	v := m.banned_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBannedAt returns the old "banned_at" field's value of the AliasSubmissionBan entity.
+// If the AliasSubmissionBan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AliasSubmissionBanMutation) OldBannedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBannedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBannedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBannedAt: %w", err)
+	}
+	return oldValue.BannedAt, nil
+}
+
+// ResetBannedAt resets all changes to the "banned_at" field.
+func (m *AliasSubmissionBanMutation) ResetBannedAt() {
+	m.banned_at = nil
+}
+
+// Where appends a list predicates to the AliasSubmissionBanMutation builder.
+func (m *AliasSubmissionBanMutation) Where(ps ...predicate.AliasSubmissionBan) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AliasSubmissionBanMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AliasSubmissionBanMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AliasSubmissionBan, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AliasSubmissionBanMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AliasSubmissionBanMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AliasSubmissionBan).
+func (m *AliasSubmissionBanMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AliasSubmissionBanMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.platform != nil {
+		fields = append(fields, aliassubmissionban.FieldPlatform)
+	}
+	if m.platform_user_id != nil {
+		fields = append(fields, aliassubmissionban.FieldPlatformUserID)
+	}
+	if m.banned_by != nil {
+		fields = append(fields, aliassubmissionban.FieldBannedBy)
+	}
+	if m.banned_at != nil {
+		fields = append(fields, aliassubmissionban.FieldBannedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AliasSubmissionBanMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case aliassubmissionban.FieldPlatform:
+		return m.Platform()
+	case aliassubmissionban.FieldPlatformUserID:
+		return m.PlatformUserID()
+	case aliassubmissionban.FieldBannedBy:
+		return m.BannedBy()
+	case aliassubmissionban.FieldBannedAt:
+		return m.BannedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AliasSubmissionBanMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case aliassubmissionban.FieldPlatform:
+		return m.OldPlatform(ctx)
+	case aliassubmissionban.FieldPlatformUserID:
+		return m.OldPlatformUserID(ctx)
+	case aliassubmissionban.FieldBannedBy:
+		return m.OldBannedBy(ctx)
+	case aliassubmissionban.FieldBannedAt:
+		return m.OldBannedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown AliasSubmissionBan field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AliasSubmissionBanMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case aliassubmissionban.FieldPlatform:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatform(v)
+		return nil
+	case aliassubmissionban.FieldPlatformUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatformUserID(v)
+		return nil
+	case aliassubmissionban.FieldBannedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBannedBy(v)
+		return nil
+	case aliassubmissionban.FieldBannedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBannedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AliasSubmissionBan field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AliasSubmissionBanMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AliasSubmissionBanMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AliasSubmissionBanMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown AliasSubmissionBan numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AliasSubmissionBanMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AliasSubmissionBanMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AliasSubmissionBanMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown AliasSubmissionBan nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AliasSubmissionBanMutation) ResetField(name string) error {
+	switch name {
+	case aliassubmissionban.FieldPlatform:
+		m.ResetPlatform()
+		return nil
+	case aliassubmissionban.FieldPlatformUserID:
+		m.ResetPlatformUserID()
+		return nil
+	case aliassubmissionban.FieldBannedBy:
+		m.ResetBannedBy()
+		return nil
+	case aliassubmissionban.FieldBannedAt:
+		m.ResetBannedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown AliasSubmissionBan field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AliasSubmissionBanMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AliasSubmissionBanMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AliasSubmissionBanMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AliasSubmissionBanMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AliasSubmissionBanMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AliasSubmissionBanMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AliasSubmissionBanMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown AliasSubmissionBan unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AliasSubmissionBanMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown AliasSubmissionBan edge %s", name)
 }
 
 // GameAccountMutation represents an operation that mutates the GameAccount nodes in the graph.

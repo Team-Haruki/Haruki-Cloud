@@ -13,6 +13,7 @@ import (
 
 	"haruki-cloud/database/pjsk/alias"
 	"haruki-cloud/database/pjsk/aliasadmin"
+	"haruki-cloud/database/pjsk/aliassubmissionban"
 	"haruki-cloud/database/pjsk/gameaccount"
 	"haruki-cloud/database/pjsk/groupalias"
 	"haruki-cloud/database/pjsk/mysekaibirthdaysubscription"
@@ -38,6 +39,8 @@ type Client struct {
 	Alias *AliasClient
 	// AliasAdmin is the client for interacting with the AliasAdmin builders.
 	AliasAdmin *AliasAdminClient
+	// AliasSubmissionBan is the client for interacting with the AliasSubmissionBan builders.
+	AliasSubmissionBan *AliasSubmissionBanClient
 	// GameAccount is the client for interacting with the GameAccount builders.
 	GameAccount *GameAccountClient
 	// GroupAlias is the client for interacting with the GroupAlias builders.
@@ -69,6 +72,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Alias = NewAliasClient(c.config)
 	c.AliasAdmin = NewAliasAdminClient(c.config)
+	c.AliasSubmissionBan = NewAliasSubmissionBanClient(c.config)
 	c.GameAccount = NewGameAccountClient(c.config)
 	c.GroupAlias = NewGroupAliasClient(c.config)
 	c.MysekaiBirthdaySubscription = NewMysekaiBirthdaySubscriptionClient(c.config)
@@ -172,6 +176,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:                           cfg,
 		Alias:                            NewAliasClient(cfg),
 		AliasAdmin:                       NewAliasAdminClient(cfg),
+		AliasSubmissionBan:               NewAliasSubmissionBanClient(cfg),
 		GameAccount:                      NewGameAccountClient(cfg),
 		GroupAlias:                       NewGroupAliasClient(cfg),
 		MysekaiBirthdaySubscription:      NewMysekaiBirthdaySubscriptionClient(cfg),
@@ -202,6 +207,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:                           cfg,
 		Alias:                            NewAliasClient(cfg),
 		AliasAdmin:                       NewAliasAdminClient(cfg),
+		AliasSubmissionBan:               NewAliasSubmissionBanClient(cfg),
 		GameAccount:                      NewGameAccountClient(cfg),
 		GroupAlias:                       NewGroupAliasClient(cfg),
 		MysekaiBirthdaySubscription:      NewMysekaiBirthdaySubscriptionClient(cfg),
@@ -240,7 +246,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Alias, c.AliasAdmin, c.GameAccount, c.GroupAlias,
+		c.Alias, c.AliasAdmin, c.AliasSubmissionBan, c.GameAccount, c.GroupAlias,
 		c.MysekaiBirthdaySubscription, c.MysekaiBirthdaySubscriptionEvent,
 		c.PendingAlias, c.RejectedAlias, c.UserBinding, c.UserDefaultBinding,
 		c.UserPreference,
@@ -253,7 +259,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Alias, c.AliasAdmin, c.GameAccount, c.GroupAlias,
+		c.Alias, c.AliasAdmin, c.AliasSubmissionBan, c.GameAccount, c.GroupAlias,
 		c.MysekaiBirthdaySubscription, c.MysekaiBirthdaySubscriptionEvent,
 		c.PendingAlias, c.RejectedAlias, c.UserBinding, c.UserDefaultBinding,
 		c.UserPreference,
@@ -269,6 +275,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Alias.mutate(ctx, m)
 	case *AliasAdminMutation:
 		return c.AliasAdmin.mutate(ctx, m)
+	case *AliasSubmissionBanMutation:
+		return c.AliasSubmissionBan.mutate(ctx, m)
 	case *GameAccountMutation:
 		return c.GameAccount.mutate(ctx, m)
 	case *GroupAliasMutation:
@@ -555,6 +563,139 @@ func (c *AliasAdminClient) mutate(ctx context.Context, m *AliasAdminMutation) (V
 		return (&AliasAdminDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("pjsk: unknown AliasAdmin mutation op: %q", m.Op())
+	}
+}
+
+// AliasSubmissionBanClient is a client for the AliasSubmissionBan schema.
+type AliasSubmissionBanClient struct {
+	config
+}
+
+// NewAliasSubmissionBanClient returns a client for the AliasSubmissionBan from the given config.
+func NewAliasSubmissionBanClient(c config) *AliasSubmissionBanClient {
+	return &AliasSubmissionBanClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `aliassubmissionban.Hooks(f(g(h())))`.
+func (c *AliasSubmissionBanClient) Use(hooks ...Hook) {
+	c.hooks.AliasSubmissionBan = append(c.hooks.AliasSubmissionBan, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `aliassubmissionban.Intercept(f(g(h())))`.
+func (c *AliasSubmissionBanClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AliasSubmissionBan = append(c.inters.AliasSubmissionBan, interceptors...)
+}
+
+// Create returns a builder for creating a AliasSubmissionBan entity.
+func (c *AliasSubmissionBanClient) Create() *AliasSubmissionBanCreate {
+	mutation := newAliasSubmissionBanMutation(c.config, OpCreate)
+	return &AliasSubmissionBanCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AliasSubmissionBan entities.
+func (c *AliasSubmissionBanClient) CreateBulk(builders ...*AliasSubmissionBanCreate) *AliasSubmissionBanCreateBulk {
+	return &AliasSubmissionBanCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AliasSubmissionBanClient) MapCreateBulk(slice any, setFunc func(*AliasSubmissionBanCreate, int)) *AliasSubmissionBanCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AliasSubmissionBanCreateBulk{err: fmt.Errorf("calling to AliasSubmissionBanClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AliasSubmissionBanCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AliasSubmissionBanCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AliasSubmissionBan.
+func (c *AliasSubmissionBanClient) Update() *AliasSubmissionBanUpdate {
+	mutation := newAliasSubmissionBanMutation(c.config, OpUpdate)
+	return &AliasSubmissionBanUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AliasSubmissionBanClient) UpdateOne(_m *AliasSubmissionBan) *AliasSubmissionBanUpdateOne {
+	mutation := newAliasSubmissionBanMutation(c.config, OpUpdateOne, withAliasSubmissionBan(_m))
+	return &AliasSubmissionBanUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AliasSubmissionBanClient) UpdateOneID(id int) *AliasSubmissionBanUpdateOne {
+	mutation := newAliasSubmissionBanMutation(c.config, OpUpdateOne, withAliasSubmissionBanID(id))
+	return &AliasSubmissionBanUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AliasSubmissionBan.
+func (c *AliasSubmissionBanClient) Delete() *AliasSubmissionBanDelete {
+	mutation := newAliasSubmissionBanMutation(c.config, OpDelete)
+	return &AliasSubmissionBanDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AliasSubmissionBanClient) DeleteOne(_m *AliasSubmissionBan) *AliasSubmissionBanDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AliasSubmissionBanClient) DeleteOneID(id int) *AliasSubmissionBanDeleteOne {
+	builder := c.Delete().Where(aliassubmissionban.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AliasSubmissionBanDeleteOne{builder}
+}
+
+// Query returns a query builder for AliasSubmissionBan.
+func (c *AliasSubmissionBanClient) Query() *AliasSubmissionBanQuery {
+	return &AliasSubmissionBanQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAliasSubmissionBan},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AliasSubmissionBan entity by its id.
+func (c *AliasSubmissionBanClient) Get(ctx context.Context, id int) (*AliasSubmissionBan, error) {
+	return c.Query().Where(aliassubmissionban.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AliasSubmissionBanClient) GetX(ctx context.Context, id int) *AliasSubmissionBan {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AliasSubmissionBanClient) Hooks() []Hook {
+	return c.hooks.AliasSubmissionBan
+}
+
+// Interceptors returns the client interceptors.
+func (c *AliasSubmissionBanClient) Interceptors() []Interceptor {
+	return c.inters.AliasSubmissionBan
+}
+
+func (c *AliasSubmissionBanClient) mutate(ctx context.Context, m *AliasSubmissionBanMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AliasSubmissionBanCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AliasSubmissionBanUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AliasSubmissionBanUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AliasSubmissionBanDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("pjsk: unknown AliasSubmissionBan mutation op: %q", m.Op())
 	}
 }
 
@@ -1854,13 +1995,14 @@ func (c *UserPreferenceClient) mutate(ctx context.Context, m *UserPreferenceMuta
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Alias, AliasAdmin, GameAccount, GroupAlias, MysekaiBirthdaySubscription,
-		MysekaiBirthdaySubscriptionEvent, PendingAlias, RejectedAlias, UserBinding,
-		UserDefaultBinding, UserPreference []ent.Hook
+		Alias, AliasAdmin, AliasSubmissionBan, GameAccount, GroupAlias,
+		MysekaiBirthdaySubscription, MysekaiBirthdaySubscriptionEvent, PendingAlias,
+		RejectedAlias, UserBinding, UserDefaultBinding, UserPreference []ent.Hook
 	}
 	inters struct {
-		Alias, AliasAdmin, GameAccount, GroupAlias, MysekaiBirthdaySubscription,
-		MysekaiBirthdaySubscriptionEvent, PendingAlias, RejectedAlias, UserBinding,
-		UserDefaultBinding, UserPreference []ent.Interceptor
+		Alias, AliasAdmin, AliasSubmissionBan, GameAccount, GroupAlias,
+		MysekaiBirthdaySubscription, MysekaiBirthdaySubscriptionEvent, PendingAlias,
+		RejectedAlias, UserBinding, UserDefaultBinding,
+		UserPreference []ent.Interceptor
 	}
 )

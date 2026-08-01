@@ -8,6 +8,8 @@ import (
 
 	pjskdb "haruki-cloud/database/pjsk"
 	aliasdb "haruki-cloud/database/pjsk/alias"
+	"haruki-cloud/database/pjsk/aliassubmissionban"
+	"haruki-cloud/internal/onebot11"
 )
 
 func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserID, target string, aliasesToSubmit []string) ([]PjskAliasRecord, error) {
@@ -17,7 +19,24 @@ func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserI
 	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
-	aliasType, err := normalizeAliasType(aliasType)
+	platform = strings.TrimSpace(platform)
+	platformUserID = strings.TrimSpace(platformUserID)
+	if platform == "" || platformUserID == "" {
+		return nil, fmt.Errorf("缺少别名提交身份信息")
+	}
+	banned, err := s.pjsk.AliasSubmissionBan.Query().
+		Where(
+			aliassubmissionban.PlatformEQ(platform),
+			aliassubmissionban.PlatformUserIDEQ(platformUserID),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if banned {
+		return nil, onebot11.NewReplayError("你已被禁止提交别名")
+	}
+	aliasType, err = normalizeAliasType(aliasType)
 	if err != nil {
 		return nil, err
 	}

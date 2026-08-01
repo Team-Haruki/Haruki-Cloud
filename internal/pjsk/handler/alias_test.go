@@ -153,6 +153,70 @@ func TestAliasPendingHandleBuildsCommandRequest(t *testing.T) {
 	}
 }
 
+func TestAliasSubmitterHandleBuildsCommandRequest(t *testing.T) {
+	h := sekaiHandlers{}.AliasSubmitterHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "admin",
+		TriggerCmd: "/查询别名提交者",
+		ArgText:    "12",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if result == nil || result.Mode != aliases.ModeSubmitter {
+		t.Fatalf("unexpected command request: %+v", result)
+	}
+
+	var params aliases.SubmitterCommandParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Platform != "qq" || params.PlatformUserID != "admin" || params.ReviewID != 12 {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestAliasBanSubmitterHandleUsesMention(t *testing.T) {
+	h := sekaiHandlers{}.AliasBanSubmitterHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "admin",
+		TriggerCmd: "/禁用别名提交",
+		AtIds:      []string{"123456789"},
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if result == nil || result.Mode != aliases.ModeBanSubmitter {
+		t.Fatalf("unexpected command request: %+v", result)
+	}
+
+	var params aliases.BanSubmitterCommandParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.Platform != "qq" || params.PlatformUserID != "admin" || params.TargetPlatform != "qq" || params.TargetPlatformUserID != "123456789" {
+		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestParseAliasSubmissionTargetSupportsActorLabel(t *testing.T) {
+	platform, userID, err := parseAliasSubmissionTarget("discord:987654", "qq", nil, "usage")
+	if err != nil {
+		t.Fatalf("parseAliasSubmissionTarget() error = %v", err)
+	}
+	if platform != "discord" || userID != "987654" {
+		t.Fatalf("unexpected target: %s:%s", platform, userID)
+	}
+}
+
 func TestAliasApproveHandleParsesReviewIDs(t *testing.T) {
 	h := sekaiHandlers{}.AliasApproveHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}

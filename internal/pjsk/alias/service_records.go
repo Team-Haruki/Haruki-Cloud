@@ -15,9 +15,10 @@ func (s *Service) buildAliasRecordsFromPending(ctx context.Context, rows []*pjsk
 	for _, row := range rows {
 		ref := refs[entityMapKey(row.AliasType, row.AliasTypeID)]
 		records = append(records, PjskAliasRecord{
-			ReviewID: row.ID,
-			Entity:   ref,
-			Alias:    row.Alias,
+			ReviewID:    row.ID,
+			Entity:      ref,
+			Alias:       row.Alias,
+			SubmittedBy: row.SubmittedBy,
 		})
 	}
 	return records, nil

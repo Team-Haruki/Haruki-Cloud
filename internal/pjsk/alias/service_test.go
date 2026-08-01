@@ -250,6 +250,63 @@ func TestServiceListPendingIncludesMultipleAliasTypes(t *testing.T) {
 	}
 }
 
+func TestServiceGetSubmitterAndBanAliasSubmissions(t *testing.T) {
+	ctx := context.Background()
+	deps := newAliasTestDeps(t)
+
+	deps.addMusic(t, ctx, 5210, "提交者测试曲")
+	deps.addAdmin(t, ctx, "qq", "9010", "Moderation Admin")
+
+	records, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "12345", "5210", []string{"待查提交者"})
+	if err != nil {
+		t.Fatalf("Submit() error = %v", err)
+	}
+
+	record, err := deps.service.GetSubmitter(ctx, "qq", "9010", records[0].ReviewID)
+	if err != nil {
+		t.Fatalf("GetSubmitter() error = %v", err)
+	}
+	if record.SubmittedBy != "qq:12345" || record.Alias != "待查提交者" {
+		t.Fatalf("unexpected submitter record: %+v", record)
+	}
+
+	ban, err := deps.service.BanSubmitter(ctx, "qq", "9010", "qq", "12345")
+	if err != nil {
+		t.Fatalf("BanSubmitter() error = %v", err)
+	}
+	if ban.Platform != "qq" || ban.PlatformUserID != "12345" || ban.BannedBy != "Moderation Admin" {
+		t.Fatalf("unexpected submission ban: %+v", ban)
+	}
+
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "12345", "5210", []string{"再次提交"}); err == nil || !strings.Contains(err.Error(), "已被禁止提交别名") {
+		t.Fatalf("expected banned submission error, got %v", err)
+	}
+	if _, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "54321", "5210", []string{"其他用户提交"}); err != nil {
+		t.Fatalf("other user Submit() error = %v", err)
+	}
+	if _, err := deps.service.Query(ctx, PjskAliasTypeMusic, "5210"); err != nil {
+		t.Fatalf("banning submissions must not break alias queries: %v", err)
+	}
+}
+
+func TestServiceSubmitterModerationRequiresAdmin(t *testing.T) {
+	ctx := context.Background()
+	deps := newAliasTestDeps(t)
+
+	deps.addMusic(t, ctx, 5211, "管理员测试曲")
+	records, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "12346", "5211", []string{"管理员测试"})
+	if err != nil {
+		t.Fatalf("Submit() error = %v", err)
+	}
+
+	if _, err := deps.service.GetSubmitter(ctx, "qq", "not-admin", records[0].ReviewID); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+		t.Fatalf("expected non-admin submitter query error, got %v", err)
+	}
+	if _, err := deps.service.BanSubmitter(ctx, "qq", "not-admin", "qq", "12346"); err == nil || !strings.Contains(err.Error(), "你不是别名审核管理员") {
+		t.Fatalf("expected non-admin submission ban error, got %v", err)
+	}
+}
+
 func TestServiceRejectMovesAliasToRejectedTable(t *testing.T) {
 	ctx := context.Background()
 	deps := newAliasTestDeps(t)

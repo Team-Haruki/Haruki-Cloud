@@ -3,16 +3,50 @@ package accountdata
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
 	usersdb "haruki-cloud/database/users"
 	"haruki-cloud/database/users/user"
+	"haruki-cloud/internal/cluster"
+	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/parser"
 )
 
 // BanService checks per-user feature ban states stored in the users database.
 // It applies a three-level hierarchy: global ban → module ban → feature ban.
 type BanService struct {
-	db *usersdb.Client
+	db       *usersdb.Client
+	identity *identity.Resolver
+	readOnly bool
+	admins   map[string]struct{}
+}
+
+// SetAdminQQIDs replaces the explicit roster authorized to run global
+// moderation commands. Invalid or empty values are ignored.
+func (s *BanService) SetAdminQQIDs(qqIDs []string) {
+	if s == nil {
+		return
+	}
+	admins := make(map[string]struct{}, len(qqIDs))
+	for _, value := range qqIDs {
+		qqID, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+		if err == nil && qqID > 0 {
+			admins[strconv.FormatInt(qqID, 10)] = struct{}{}
+		}
+	}
+	s.admins = admins
+}
+
+// IsAdmin reports whether an identity is explicitly authorized for global
+// moderation. Only QQ identities are supported by /kill and /back.
+func (s *BanService) IsAdmin(platform, userID string) bool {
+	if s == nil || strings.TrimSpace(platform) != "qq" {
+		return false
+	}
+	_, ok := s.admins[strings.TrimSpace(userID)]
+	return ok
 }
 
 // NewBanService creates a new BanService backed by the given users DB client.
@@ -20,7 +54,116 @@ func NewBanService(db *usersdb.Client) *BanService {
 	if db == nil {
 		return nil
 	}
-	return &BanService{db: db}
+	return &BanService{db: db, identity: identity.NewResolver(db)}
+}
+
+// SetReadOnly disables moderation mutations while preserving ban checks.
+func (s *BanService) SetReadOnly(readOnly bool) {
+	if s == nil {
+		return
+	}
+	s.readOnly = readOnly
+	if s.identity != nil {
+		s.identity.SetReadOnly(readOnly)
+	}
+}
+
+// GlobalBanStatus is the effective global-ban state for an identity. An
+// expired timed ban is reported as inactive even if its historical database
+// fields have not yet been cleared.
+type GlobalBanStatus struct {
+	Active    bool
+	Reason    string
+	ExpiresAt *time.Time
+}
+
+// GlobalBanStatus returns the effective global ban for an identity.
+func (s *BanService) GlobalBanStatus(ctx context.Context, platform, userID string) (GlobalBanStatus, error) {
+	if s == nil || s.db == nil {
+		return GlobalBanStatus{}, nil
+	}
+	u, err := s.db.User.Query().
+		Where(user.Platform(platform), user.UserID(userID)).
+		Only(ctx)
+	if err != nil {
+		if usersdb.IsNotFound(err) {
+			return GlobalBanStatus{}, nil
+		}
+		return GlobalBanStatus{}, err
+	}
+	return globalBanStatusForUser(u), nil
+}
+
+// IsGloballyBanned is the compact checker used by Bot authentication paths.
+func (s *BanService) IsGloballyBanned(ctx context.Context, platform, userID string) (bool, error) {
+	status, err := s.GlobalBanStatus(ctx, platform, userID)
+	return status.Active, err
+}
+
+// Kill globally bans a QQ identity. A nil expiresAt creates a permanent ban.
+// The identity is created first when it has never used Haruki, so the ban also
+// applies to future first use.
+func (s *BanService) Kill(ctx context.Context, qqID, reason string, expiresAt *time.Time) (GlobalBanStatus, error) {
+	if s == nil || s.db == nil || s.identity == nil {
+		return GlobalBanStatus{}, fmt.Errorf("用户封禁服务未就绪，请稍后再试")
+	}
+	if err := cluster.EnsureWritable(s.readOnly); err != nil {
+		return GlobalBanStatus{}, err
+	}
+	qqID = strings.TrimSpace(qqID)
+	reason = strings.TrimSpace(reason)
+	if qqID == "" || reason == "" {
+		return GlobalBanStatus{}, fmt.Errorf("QQ号和封禁原因不能为空")
+	}
+	if len([]rune(reason)) > 255 {
+		return GlobalBanStatus{}, fmt.Errorf("封禁原因不能超过255个字符")
+	}
+	if expiresAt != nil && !expiresAt.After(time.Now()) {
+		return GlobalBanStatus{}, fmt.Errorf("封禁到期时间必须晚于当前时间")
+	}
+	if _, err := s.identity.ResolveOrCreate(ctx, "qq", qqID); err != nil {
+		return GlobalBanStatus{}, err
+	}
+	update := s.db.User.Update().
+		Where(user.PlatformEQ("qq"), user.UserIDEQ(qqID)).
+		SetBanState(true).
+		SetBanReason(reason)
+	if expiresAt == nil {
+		update = update.ClearBanExpiresAt()
+	} else {
+		update = update.SetBanExpiresAt(*expiresAt)
+	}
+	if _, err := update.Save(ctx); err != nil {
+		return GlobalBanStatus{}, err
+	}
+	return GlobalBanStatus{Active: true, Reason: reason, ExpiresAt: expiresAt}, nil
+}
+
+// Back removes a global ban and all of its metadata from a QQ identity.
+func (s *BanService) Back(ctx context.Context, qqID string) error {
+	if s == nil || s.db == nil {
+		return fmt.Errorf("用户封禁服务未就绪，请稍后再试")
+	}
+	if err := cluster.EnsureWritable(s.readOnly); err != nil {
+		return err
+	}
+	qqID = strings.TrimSpace(qqID)
+	if qqID == "" {
+		return fmt.Errorf("QQ号不能为空")
+	}
+	count, err := s.db.User.Update().
+		Where(user.PlatformEQ("qq"), user.UserIDEQ(qqID)).
+		SetBanState(false).
+		ClearBanReason().
+		ClearBanExpiresAt().
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return fmt.Errorf("未找到QQ用户 %s", qqID)
+	}
+	return nil
 }
 
 // CheckBan returns a non-nil error (containing the ban reason) if the user
@@ -35,14 +178,10 @@ func (s *BanService) CheckBan(ctx context.Context, platform, userID string, modu
 		Where(user.Platform(platform), user.UserID(userID)).
 		Only(ctx)
 	if err != nil {
-		if usersdb.IsNotFound(err) {
-			return nil
-		}
-		return nil // DB error: fail open (don't block users)
+		return nil // Missing record or DB error: fail open (don't block users).
 	}
-
-	if u.BanState {
-		return banError("所有功能", u.BanReason)
+	if status := globalBanStatusForUser(u); status.Active {
+		return globalBanError(status)
 	}
 
 	if isPJSKModule(module) {
@@ -70,6 +209,25 @@ func (s *BanService) CheckBan(ctx context.Context, platform, userID string, modu
 	}
 
 	return nil
+}
+
+func globalBanStatusForUser(u *usersdb.User) GlobalBanStatus {
+	if u == nil || !u.BanState || u.BanExpiresAt != nil && !u.BanExpiresAt.After(time.Now()) {
+		return GlobalBanStatus{}
+	}
+	return GlobalBanStatus{
+		Active:    true,
+		Reason:    strings.TrimSpace(u.BanReason),
+		ExpiresAt: u.BanExpiresAt,
+	}
+}
+
+func globalBanError(status GlobalBanStatus) error {
+	err := banError("所有功能", status.Reason)
+	if status.ExpiresAt == nil {
+		return err
+	}
+	return fmt.Errorf("%s，封禁至：%s", err.Error(), status.ExpiresAt.Format("2006-01-02 15:04:05 MST"))
 }
 
 type featureCategory int

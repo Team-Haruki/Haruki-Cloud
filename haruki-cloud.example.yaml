@@ -123,6 +123,10 @@ users_db:
   db_type: "postgres"
   db_url: "host=localhost port=5432 user=haruki password=changeme dbname=haruki_users sslmode=disable"
 
+moderation:
+  # QQ accounts allowed to run /kill and /back. Empty means nobody can use them.
+  admin_qq_ids: []
+
 sekai_api:
   base_url: "https://api.sekai.haruki.example.com"
   # targets:

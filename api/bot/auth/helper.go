@@ -95,6 +95,27 @@ func NewInternalServiceWithStore(dbClient *ent.Client, redisStore RedisKVStore) 
 	return &InternalService{dbClient: dbClient, redisStore: redisStore}
 }
 
+func (s *UserService) WithGlobalBanChecker(checker GlobalBanChecker) *UserService {
+	if s != nil {
+		s.globalBanChecker = checker
+	}
+	return s
+}
+
+func (s *InternalService) WithGlobalBanChecker(checker GlobalBanChecker) *InternalService {
+	if s != nil {
+		s.globalBanChecker = checker
+	}
+	return s
+}
+
+func ownerIsGloballyBanned(ctx context.Context, checker GlobalBanChecker, ownerUserID int64) (bool, error) {
+	if checker == nil {
+		return false, nil
+	}
+	return checker.IsGloballyBanned(ctx, "qq", fmt.Sprintf("%d", ownerUserID))
+}
+
 func NewStatisticsService(client *ent.Client) *StatisticsService {
 	return &StatisticsService{client: client}
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "github.com/bytedance/sonic"
+	"strings"
 	"testing"
 
 	aliases "haruki-cloud/internal/pjsk/alias"
@@ -278,6 +279,48 @@ func TestAliasRejectHandleParsesReason(t *testing.T) {
 	}
 	if params.ReviewID != 21 || params.Reason != "与现有别名冲突" {
 		t.Fatalf("unexpected params: %+v", params)
+	}
+}
+
+func TestAliasBatchRejectHandleTreatsEveryFieldAsReviewID(t *testing.T) {
+	h := sekaiHandlers{}.AliasBatchRejectHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "admin",
+		TriggerCmd: "/批量拒绝别名",
+		ArgText:    "21  22\n23",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+	if result == nil || result.Mode != aliases.ModeBatchReject {
+		t.Fatalf("unexpected command request: %+v", result)
+	}
+
+	var params aliases.BatchRejectCommandParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if len(params.ReviewIDs) != 3 || params.ReviewIDs[0] != 21 || params.ReviewIDs[2] != 23 {
+		t.Fatalf("unexpected review ids: %+v", params.ReviewIDs)
+	}
+}
+
+func TestAliasBatchRejectHandleRejectsNonNumericField(t *testing.T) {
+	h := sekaiHandlers{}.AliasBatchRejectHandle()
+	h.Regions = []renderregion.Value{renderregion.JP}
+	_, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "admin",
+		TriggerCmd: "/批量拒绝别名",
+		ArgText:    "21 原因",
+	})
+	if err == nil || !strings.Contains(err.Error(), "待审核ID必须为正整数") {
+		t.Fatalf("expected numeric review ID error, got %v", err)
 	}
 }
 

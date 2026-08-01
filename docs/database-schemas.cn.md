@@ -389,7 +389,8 @@ Edge：`← user_bindings`（多对一，CASCADE 删除）
 | `platform` | string(20) | — | 平台名称（如 qq、discord） |
 | `user_id` | string(50) | — | 平台上的用户 ID |
 | `ban_state` | bool | default false | 全局封禁 |
-| `ban_reason` | string(255) | optional | 全局封禁原因 |
+| `ban_reason` | string(1020) | optional | 全局封禁原因；指令层限制为 255 个 Unicode 字符 |
+| `ban_expires_at` | datetime | optional, nullable | 全局封禁到期时间；空值表示永久封禁 |
 | `pjsk_ban_state` | bool | default false | PJSK 功能封禁 |
 | `pjsk_ban_reason` | string(255) | optional | — |
 | `chunithm_ban_state` | bool | default false | CHUNITHM 功能封禁 |

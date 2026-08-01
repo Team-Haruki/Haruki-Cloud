@@ -8,7 +8,11 @@ import (
 )
 
 func RegisterBotRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) {
-	registerUserRoutes(app, dbClient, redisClient, authEncryptionKey, noiseServerPubKey)
-	registerInternalRoutes(app, dbClient, redisClient)
+	RegisterBotRoutesWithBanChecker(app, dbClient, redisClient, authEncryptionKey, noiseServerPubKey, nil)
+}
+
+func RegisterBotRoutesWithBanChecker(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string, checker GlobalBanChecker) {
+	registerUserRoutes(app, dbClient, redisClient, authEncryptionKey, noiseServerPubKey, checker)
+	registerInternalRoutes(app, dbClient, redisClient, checker)
 	registerStatisticsRoutes(app, dbClient)
 }

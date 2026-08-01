@@ -119,6 +119,13 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	if !verifyCredential(u.Credential, tokenCredential) {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
 	}
+	banned, err := ownerIsGloballyBanned(ctx, h.svc.globalBanChecker, u.OwnerUserID)
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+	if banned {
+		return c.Status(fiber.StatusForbidden).SendString(ErrOwnerBanned)
+	}
 
 	// 生成 session token
 	sessionTTL := getSessionTTL()

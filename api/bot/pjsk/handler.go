@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"haruki-cloud/api"
@@ -12,6 +13,7 @@ import (
 	harukiConfig "haruki-cloud/config"
 	botDB "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/commandmanifest"
+	botuser "haruki-cloud/database/bot/user"
 	"haruki-cloud/internal/cluster"
 	"haruki-cloud/internal/core/crypto"
 	commandregistry "haruki-cloud/internal/handler"
@@ -115,7 +117,11 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	} else {
 		sessionMiddleware = api.VerifyBotSessionTestBypass()
 	}
-	bot := app.Group(botRouteBase+"/:botId", commandTraceMiddleware, sessionMiddleware)
+	botMiddleware := []any{commandTraceMiddleware, sessionMiddleware}
+	if botDBClient != nil && renderApp.BanChecker != nil {
+		botMiddleware = append(botMiddleware, verifyBotOwnerNotBanned(botDBClient, renderApp.BanChecker))
+	}
+	bot := app.Group(botRouteBase+"/:botId", botMiddleware...)
 
 	preview3DEnabled := renderApp.Config.Preview3D.Enabled
 	bot.Get("/command/manifests", buildManifestHandler(botDBClient, preview3DEnabled))
@@ -161,6 +167,32 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, commandElection, telemetry, "mysekai/blueprint", nil))
 	}
 	return &BotRouteDispatchers{guard: guard, election: election, telemetry: telemetry}
+}
+
+func verifyBotOwnerNotBanned(botDBClient *botDB.Client, checker *accountdata.BanService) fiber.Handler {
+	return func(c fiber.Ctx) error {
+		botID, err := strconv.Atoi(strings.TrimSpace(c.Params("botId")))
+		if err != nil {
+			return api.JSONResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
+		}
+		owner, err := botDBClient.User.Query().
+			Where(botuser.BotIDEQ(botID)).
+			Only(c.Context())
+		if err != nil {
+			if botDB.IsNotFound(err) {
+				return api.JSONResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
+			}
+			return api.InternalError(c)
+		}
+		banned, err := checker.IsGloballyBanned(c.Context(), "qq", strconv.FormatInt(owner.OwnerUserID, 10))
+		if err != nil {
+			return api.InternalError(c)
+		}
+		if banned {
+			return api.JSONResponse(c, fiber.StatusForbidden, botauth.ErrOwnerBanned)
+		}
+		return c.Next()
+	}
 }
 
 func botRouteEnabled(path string, preview3DEnabled bool) bool {

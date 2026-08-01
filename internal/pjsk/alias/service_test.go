@@ -443,6 +443,48 @@ func TestServiceReviewRequiresAdmin(t *testing.T) {
 	}
 }
 
+func TestServiceRejectManyIsAtomic(t *testing.T) {
+	ctx := context.Background()
+	deps := newAliasTestDeps(t)
+	deps.addMusic(t, ctx, 5212, "批量审核测试曲")
+	deps.addAdmin(t, ctx, "qq", "9011", "Batch Reviewer")
+	records, err := deps.service.Submit(ctx, PjskAliasTypeMusic, "qq", "77", "5212", []string{"批量一", "批量二"})
+	if err != nil {
+		t.Fatalf("Submit() error = %v", err)
+	}
+
+	_, err = deps.service.RejectMany(ctx, "qq", "9011", []int64{records[0].ReviewID, records[1].ReviewID + 1000}, "批量拒绝")
+	if err == nil || !strings.Contains(err.Error(), "未找到待审核别名ID") {
+		t.Fatalf("expected missing ID error, got %v", err)
+	}
+	pendingCount, err := deps.pjsk.PendingAlias.Query().Count(ctx)
+	if err != nil {
+		t.Fatalf("count pending aliases: %v", err)
+	}
+	rejectedCount, err := deps.pjsk.RejectedAlias.Query().Count(ctx)
+	if err != nil {
+		t.Fatalf("count rejected aliases: %v", err)
+	}
+	if pendingCount != 2 || rejectedCount != 0 {
+		t.Fatalf("partial batch mutation detected: pending=%d rejected=%d", pendingCount, rejectedCount)
+	}
+
+	rejected, err := deps.service.RejectMany(ctx, "qq", "9011", []int64{records[1].ReviewID, records[0].ReviewID}, "批量拒绝")
+	if err != nil {
+		t.Fatalf("RejectMany() error = %v", err)
+	}
+	if len(rejected) != 2 || rejected[0].ReviewID != records[1].ReviewID || rejected[1].ReviewID != records[0].ReviewID {
+		t.Fatalf("unexpected rejected order: %+v", rejected)
+	}
+	rows, err := deps.pjsk.RejectedAlias.Query().Order(rejectedalias.ByID()).All(ctx)
+	if err != nil {
+		t.Fatalf("query rejected aliases: %v", err)
+	}
+	if len(rows) != 2 || rows[0].Reason != "批量拒绝" || rows[0].ReviewedBy != "Batch Reviewer" {
+		t.Fatalf("unexpected rejected rows: %+v", rows)
+	}
+}
+
 func TestServiceSubmitRejectsMusicConflicts(t *testing.T) {
 	ctx := context.Background()
 	deps := newAliasTestDeps(t)

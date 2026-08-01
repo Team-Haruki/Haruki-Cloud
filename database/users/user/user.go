@@ -19,6 +19,8 @@ const (
 	FieldBanState = "ban_state"
 	// FieldBanReason holds the string denoting the ban_reason field in the database.
 	FieldBanReason = "ban_reason"
+	// FieldBanExpiresAt holds the string denoting the ban_expires_at field in the database.
+	FieldBanExpiresAt = "ban_expires_at"
 	// FieldPjskBanState holds the string denoting the pjsk_ban_state field in the database.
 	FieldPjskBanState = "pjsk_ban_state"
 	// FieldPjskBanReason holds the string denoting the pjsk_ban_reason field in the database.
@@ -64,6 +66,7 @@ var Columns = []string{
 	FieldUserID,
 	FieldBanState,
 	FieldBanReason,
+	FieldBanExpiresAt,
 	FieldPjskBanState,
 	FieldPjskBanReason,
 	FieldPjskBannedGameAccountBindAttempts,
@@ -164,6 +167,11 @@ func ByBanState(opts ...sql.OrderTermOption) OrderOption {
 // ByBanReason orders the results by the ban_reason field.
 func ByBanReason(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBanReason, opts...).ToFunc()
+}
+
+// ByBanExpiresAt orders the results by the ban_expires_at field.
+func ByBanExpiresAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBanExpiresAt, opts...).ToFunc()
 }
 
 // ByPjskBanState orders the results by the pjsk_ban_state field.

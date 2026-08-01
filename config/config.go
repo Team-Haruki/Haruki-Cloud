@@ -128,6 +128,29 @@ func envStringMap(name string, dst *map[string]string) error {
 	return nil
 }
 
+func envStringSlice(name string, dst *[]string) error {
+	v := strings.TrimSpace(os.Getenv(name))
+	if v == "" {
+		return nil
+	}
+	var parsed []string
+	if strings.HasPrefix(v, "[") {
+		if err := json.Unmarshal([]byte(v), &parsed); err != nil {
+			return fmt.Errorf("invalid %s: %w", name, err)
+		}
+	} else {
+		parsed = strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' || r == '\n' })
+	}
+	result := make([]string, 0, len(parsed))
+	for _, item := range parsed {
+		if item = strings.TrimSpace(item); item != "" {
+			result = append(result, item)
+		}
+	}
+	*dst = result
+	return nil
+}
+
 // ApplyEnvOverrides replaces key config fields with environment variables when set.
 // Env var names follow the pattern HARUKI_<SECTION>_<FIELD> (all upper-snake).
 func ApplyEnvOverrides(cfg *Config) error {
@@ -190,6 +213,9 @@ func ApplyEnvOverrides(cfg *Config) error {
 	// Users DB
 	envStr("HARUKI_USERS_DB_TYPE", &cfg.UsersDB.DBType)
 	envStr("HARUKI_USERS_DB_URL", &cfg.UsersDB.DBURL)
+	if err := envStringSlice("HARUKI_MODERATION_ADMIN_QQ_IDS", &cfg.Moderation.AdminQQIDs); err != nil {
+		return err
+	}
 
 	// Haruki Bot
 	envStr("HARUKI_BOT_DB_TYPE", &cfg.HarukiBotDB.DBType)
@@ -510,6 +536,10 @@ type UsersDBConfig struct {
 	DBURL  string `yaml:"db_url"`
 }
 
+type ModerationConfig struct {
+	AdminQQIDs []string `yaml:"admin_qq_ids"`
+}
+
 type RedisConfig struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
@@ -563,6 +593,7 @@ type Config struct {
 	Censor      CensorConfig      `yaml:"censor"`
 	HarukiBotDB HarukiBotDBConfig `yaml:"haruki_bot"`
 	UsersDB     UsersDBConfig     `yaml:"users_db"`
+	Moderation  ModerationConfig  `yaml:"moderation"`
 	Redis       RedisConfig       `yaml:"redis"`
 	Toolbox     ToolboxConfig     `yaml:"toolbox"`
 	HMES        HMESConfig        `yaml:"hmes"`

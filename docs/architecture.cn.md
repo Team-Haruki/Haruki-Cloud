@@ -175,8 +175,11 @@ haruki_bot_db:             # Bot 管理数据库
   smtp_host: ""            # 验证码邮件
   turnstile_secret_key: "" # Turnstile 人机验证
 
-users_db:                  # 通用用户数据库（当前仅 DB 层保留，API 层未使用）
+users_db:                  # 通用用户数据库（身份、绑定与全局封禁）
   db_url: "..."
+
+moderation:                # 高权限全局管理命令
+  admin_qq_ids: []         # 可执行 /kill 与 /back 的 QQ 白名单；空列表默认拒绝全部
 
 toolbox:                   # Toolbox 外部服务
   base_url: ""

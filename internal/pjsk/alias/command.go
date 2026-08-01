@@ -126,6 +126,21 @@ func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json
 		}
 		lines := []string{"已拒绝别名审核：", formatRejectedAliasRecord(*record, params.Reason)}
 		return []byte(strings.Join(lines, "\n")), nil
+	case ModeBatchReject:
+		params, err := decodeBatchRejectParams(raw)
+		if err != nil {
+			return nil, err
+		}
+		const reason = "批量拒绝"
+		records, err := service.RejectMany(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs, reason)
+		if err != nil {
+			return nil, err
+		}
+		lines := []string{fmt.Sprintf("已批量拒绝 %d 条别名审核：", len(records))}
+		for _, record := range records {
+			lines = append(lines, formatRejectedAliasRecord(record, reason))
+		}
+		return []byte(strings.Join(lines, "\n")), nil
 	default:
 		return nil, fmt.Errorf("bridge: unsupported alias mode %q", mode)
 	}
@@ -277,6 +292,25 @@ func decodeRejectParams(raw json.RawMessage) (RejectCommandParams, error) {
 	params.Reason = strings.TrimSpace(params.Reason)
 	if params.Platform == "" || params.PlatformUserID == "" {
 		return params, fmt.Errorf("bridge: missing alias reject identity context")
+	}
+	return params, nil
+}
+
+func decodeBatchRejectParams(raw json.RawMessage) (BatchRejectCommandParams, error) {
+	var params BatchRejectCommandParams
+	if len(raw) == 0 {
+		return params, fmt.Errorf("bridge: missing alias batch reject params")
+	}
+	if err := sonic.Unmarshal(raw, &params); err != nil {
+		return params, fmt.Errorf("bridge: unmarshal alias batch reject params: %w", err)
+	}
+	params.Platform = strings.TrimSpace(params.Platform)
+	params.PlatformUserID = strings.TrimSpace(params.PlatformUserID)
+	if params.Platform == "" || params.PlatformUserID == "" {
+		return params, fmt.Errorf("bridge: missing alias batch reject identity context")
+	}
+	if len(params.ReviewIDs) == 0 {
+		return params, fmt.Errorf("请至少输入一个待审核ID")
 	}
 	return params, nil
 }

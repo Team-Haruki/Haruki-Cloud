@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"haruki-cloud/database/users/predicate"
 	"haruki-cloud/database/users/user"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -86,6 +87,26 @@ func (_u *UserUpdate) SetNillableBanReason(v *string) *UserUpdate {
 // ClearBanReason clears the value of the "ban_reason" field.
 func (_u *UserUpdate) ClearBanReason() *UserUpdate {
 	_u.mutation.ClearBanReason()
+	return _u
+}
+
+// SetBanExpiresAt sets the "ban_expires_at" field.
+func (_u *UserUpdate) SetBanExpiresAt(v time.Time) *UserUpdate {
+	_u.mutation.SetBanExpiresAt(v)
+	return _u
+}
+
+// SetNillableBanExpiresAt sets the "ban_expires_at" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableBanExpiresAt(v *time.Time) *UserUpdate {
+	if v != nil {
+		_u.SetBanExpiresAt(*v)
+	}
+	return _u
+}
+
+// ClearBanExpiresAt clears the value of the "ban_expires_at" field.
+func (_u *UserUpdate) ClearBanExpiresAt() *UserUpdate {
+	_u.mutation.ClearBanExpiresAt()
 	return _u
 }
 
@@ -501,6 +522,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.BanReasonCleared() {
 		_spec.ClearField(user.FieldBanReason, field.TypeString)
 	}
+	if value, ok := _u.mutation.BanExpiresAt(); ok {
+		_spec.SetField(user.FieldBanExpiresAt, field.TypeTime, value)
+	}
+	if _u.mutation.BanExpiresAtCleared() {
+		_spec.ClearField(user.FieldBanExpiresAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.PjskBanState(); ok {
 		_spec.SetField(user.FieldPjskBanState, field.TypeBool, value)
 	}
@@ -658,6 +685,26 @@ func (_u *UserUpdateOne) SetNillableBanReason(v *string) *UserUpdateOne {
 // ClearBanReason clears the value of the "ban_reason" field.
 func (_u *UserUpdateOne) ClearBanReason() *UserUpdateOne {
 	_u.mutation.ClearBanReason()
+	return _u
+}
+
+// SetBanExpiresAt sets the "ban_expires_at" field.
+func (_u *UserUpdateOne) SetBanExpiresAt(v time.Time) *UserUpdateOne {
+	_u.mutation.SetBanExpiresAt(v)
+	return _u
+}
+
+// SetNillableBanExpiresAt sets the "ban_expires_at" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableBanExpiresAt(v *time.Time) *UserUpdateOne {
+	if v != nil {
+		_u.SetBanExpiresAt(*v)
+	}
+	return _u
+}
+
+// ClearBanExpiresAt clears the value of the "ban_expires_at" field.
+func (_u *UserUpdateOne) ClearBanExpiresAt() *UserUpdateOne {
+	_u.mutation.ClearBanExpiresAt()
 	return _u
 }
 
@@ -1102,6 +1149,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.BanReasonCleared() {
 		_spec.ClearField(user.FieldBanReason, field.TypeString)
+	}
+	if value, ok := _u.mutation.BanExpiresAt(); ok {
+		_spec.SetField(user.FieldBanExpiresAt, field.TypeTime, value)
+	}
+	if _u.mutation.BanExpiresAtCleared() {
+		_spec.ClearField(user.FieldBanExpiresAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.PjskBanState(); ok {
 		_spec.SetField(user.FieldPjskBanState, field.TypeBool, value)

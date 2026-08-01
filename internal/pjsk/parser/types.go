@@ -133,6 +133,7 @@ const (
 	ModuleRegTime
 	ModuleCheckData
 	ModuleAlias
+	ModuleAdmin
 )
 
 // CommandParser 负责解析数据库相关指令

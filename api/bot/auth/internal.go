@@ -74,6 +74,13 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 	if err != nil {
 		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
 	}
+	banned, err := ownerIsGloballyBanned(ctx, h.svc.globalBanChecker, u.OwnerUserID)
+	if err != nil {
+		return api.InternalError(c)
+	}
+	if banned {
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
+	}
 
 	return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{
 		Valid:       true,
@@ -82,8 +89,8 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 	})
 }
 
-func registerInternalRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client) {
-	svc := NewInternalService(dbClient, redisClient)
+func registerInternalRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, checker GlobalBanChecker) {
+	svc := NewInternalService(dbClient, redisClient).WithGlobalBanChecker(checker)
 	h := NewInternalHandler(svc)
 
 	// 内部 API（使用统一的 API 鉴权）

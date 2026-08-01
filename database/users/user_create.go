@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"haruki-cloud/database/users/user"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -55,6 +56,20 @@ func (_c *UserCreate) SetBanReason(v string) *UserCreate {
 func (_c *UserCreate) SetNillableBanReason(v *string) *UserCreate {
 	if v != nil {
 		_c.SetBanReason(*v)
+	}
+	return _c
+}
+
+// SetBanExpiresAt sets the "ban_expires_at" field.
+func (_c *UserCreate) SetBanExpiresAt(v time.Time) *UserCreate {
+	_c.mutation.SetBanExpiresAt(v)
+	return _c
+}
+
+// SetNillableBanExpiresAt sets the "ban_expires_at" field if the given value is not nil.
+func (_c *UserCreate) SetNillableBanExpiresAt(v *time.Time) *UserCreate {
+	if v != nil {
+		_c.SetBanExpiresAt(*v)
 	}
 	return _c
 }
@@ -520,6 +535,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.BanReason(); ok {
 		_spec.SetField(user.FieldBanReason, field.TypeString, value)
 		_node.BanReason = value
+	}
+	if value, ok := _c.mutation.BanExpiresAt(); ok {
+		_spec.SetField(user.FieldBanExpiresAt, field.TypeTime, value)
+		_node.BanExpiresAt = &value
 	}
 	if value, ok := _c.mutation.PjskBanState(); ok {
 		_spec.SetField(user.FieldPjskBanState, field.TypeBool, value)

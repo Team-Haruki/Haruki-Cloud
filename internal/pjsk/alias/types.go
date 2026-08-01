@@ -18,6 +18,7 @@ const (
 	ModeBanSubmitter = "alias-ban-submitter"
 	ModeApprove      = "alias-approve"
 	ModeReject       = "alias-reject"
+	ModeBatchReject  = "alias-batch-reject"
 )
 
 const (
@@ -79,6 +80,12 @@ type RejectCommandParams struct {
 	PlatformUserID string `json:"platform_user_id"`
 	ReviewID       int64  `json:"review_id"`
 	Reason         string `json:"reason"`
+}
+
+type BatchRejectCommandParams struct {
+	Platform       string  `json:"platform"`
+	PlatformUserID string  `json:"platform_user_id"`
+	ReviewIDs      []int64 `json:"review_ids"`
 }
 
 // ── Service types ───────────────────────────────────────────────────────────

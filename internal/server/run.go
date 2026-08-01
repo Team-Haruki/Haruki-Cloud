@@ -9,6 +9,7 @@ import (
 
 	botPJSK "haruki-cloud/api/bot/pjsk"
 	groupGuardAPI "haruki-cloud/api/groupguard"
+	"haruki-cloud/internal/pjsk/accountdata"
 
 	"github.com/gofiber/fiber/v3/middleware/static"
 
@@ -28,13 +29,16 @@ func Run(ctx context.Context) {
 	app := createFiberApp(mainLogger)
 	drawingCacheService := initDrawingCacheIfConfigured(ctx, mainLogger, app)
 	usersClient := initUsers(ctx, mainLogger)
+	banChecker := accountdata.NewBanService(usersClient)
+	banChecker.SetReadOnly(harukiConfig.Cfg.Node.ReadOnly)
+	banChecker.SetAdminQQIDs(harukiConfig.Cfg.Moderation.AdminQQIDs)
 	chunithmMainClient, chunithmMusicClient := initChunithmIfEnabled(ctx, mainLogger, app, redisClient)
 	pjskClient := initPJSKIfEnabled(ctx, mainLogger, app, redisClient)
 	startSekaiDBRemoteSync(ctx, mainLogger)
 	sekaiClient := initSekaiIfEnabled(ctx, mainLogger)
 	renderRuntime := initPJSKRenderIfEnabled(ctx, mainLogger, sekaiClient, pjskClient)
 	censorService := initCensorIfEnabled(ctx, mainLogger, renderRuntime)
-	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, censorService)
+	configureSekaiRuntime(mainLogger, renderRuntime, pjskClient, usersClient, banChecker, censorService)
 	if renderRuntime != nil {
 		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)
 	}
@@ -45,7 +49,7 @@ func Run(ctx context.Context) {
 	if noiseKeyPair != nil {
 		noiseServerPubKeyHex = hex.EncodeToString(noiseKeyPair.Public)
 	}
-	botDBClient := initBot(ctx, mainLogger, app, redisClient, authEncryptionKey, noiseServerPubKeyHex)
+	botDBClient := initBot(ctx, mainLogger, app, redisClient, authEncryptionKey, noiseServerPubKeyHex, banChecker)
 	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithContext(ctx, app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
 
 	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {

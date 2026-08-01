@@ -72,6 +72,7 @@ const (
 	ErrSessionExpired       = "会话已过期或无效"
 	ErrRateLimitExceeded    = "请求过于频繁，请稍后再试"
 	ErrReplayDetected       = "检测到重复请求"
+	ErrOwnerBanned          = "Bot 所有者已被全局封禁"
 )
 
 // ================= Service Structs =================
@@ -84,16 +85,22 @@ type RedisKVStore interface {
 	Expire(ctx context.Context, key string, ttl time.Duration) error
 }
 
+type GlobalBanChecker interface {
+	IsGloballyBanned(ctx context.Context, platform, userID string) (bool, error)
+}
+
 type UserService struct {
 	dbClient          *ent.Client
 	redisStore        RedisKVStore
 	authEncryptionKey []byte // 32-byte AES-256 key for auth payload encryption
 	noiseServerPubKey string // hex-encoded server Noise NK public key
+	globalBanChecker  GlobalBanChecker
 }
 
 type InternalService struct {
-	dbClient   *ent.Client
-	redisStore RedisKVStore
+	dbClient         *ent.Client
+	redisStore       RedisKVStore
+	globalBanChecker GlobalBanChecker
 }
 
 type StatisticsService struct {

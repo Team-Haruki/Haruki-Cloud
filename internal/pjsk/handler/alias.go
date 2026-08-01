@@ -201,6 +201,29 @@ func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
 	}, executeAlias)
 }
 
+func (sekaiHandlers) AliasBatchRejectHandle() HarukiSekaiCommandHandler {
+	const usage = "使用方式:\n/批量拒绝别名 待审核ID1 待审核ID2 ..."
+	return bindRequestExecutor(HarukiSekaiCommandHandler{
+		CommandHandlerBase: CommandHandlerBase{
+			Path:     "alias/batch-reject",
+			Commands: []string{"/批量拒绝别名"},
+			Helper:   usage,
+		},
+		ParseUIDArg: common.BoolPtr(false),
+		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
+			reviewIDs, err := parseAliasReviewIDsWithUsage(strings.TrimSpace(ctx.GetArgs()), usage)
+			if err != nil {
+				return nil, err
+			}
+			return makeCommandRequestWithParams(ctx, parser.ModuleAlias, aliases.ModeBatchReject, aliases.BatchRejectCommandParams{
+				Platform:       ctx.GetPlatform(),
+				PlatformUserID: ctx.GetUserId(),
+				ReviewIDs:      reviewIDs,
+			}), nil
+		},
+	}, executeAlias)
+}
+
 func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		CommandHandlerBase: CommandHandlerBase{
@@ -356,9 +379,13 @@ func parseEntityAliasBulkArgs(args, usage string) (string, []string, error) {
 }
 
 func parseAliasReviewIDs(args string) ([]int64, error) {
+	return parseAliasReviewIDsWithUsage(args, "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...")
+}
+
+func parseAliasReviewIDsWithUsage(args, usage string) ([]int64, error) {
 	fields := strings.Fields(strings.TrimSpace(args))
 	if len(fields) == 0 {
-		return nil, onebot11.NewReplayError("使用方式:\n/同意别名 待审核ID1 待审核ID2 ...")
+		return nil, onebot11.NewReplayError("%s", usage)
 	}
 	result := make([]int64, 0, len(fields))
 	for _, field := range fields {

@@ -9,8 +9,8 @@ import (
 
 // ================= Route Registration =================
 
-func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) {
-	svc := NewUserService(dbClient, redisClient, authEncryptionKey, noiseServerPubKey)
+func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string, checker GlobalBanChecker) {
+	svc := NewUserService(dbClient, redisClient, authEncryptionKey, noiseServerPubKey).WithGlobalBanChecker(checker)
 	h := NewUserHandler(svc)
 
 	// 公开 API（无需鉴权，暴露到公网）

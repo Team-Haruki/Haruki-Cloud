@@ -4,6 +4,7 @@ package user
 
 import (
 	"haruki-cloud/database/users/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 )
@@ -71,6 +72,11 @@ func BanState(v bool) predicate.User {
 // BanReason applies equality check predicate on the "ban_reason" field. It's identical to BanReasonEQ.
 func BanReason(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldBanReason, v))
+}
+
+// BanExpiresAt applies equality check predicate on the "ban_expires_at" field. It's identical to BanExpiresAtEQ.
+func BanExpiresAt(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldBanExpiresAt, v))
 }
 
 // PjskBanState applies equality check predicate on the "pjsk_ban_state" field. It's identical to PjskBanStateEQ.
@@ -371,6 +377,56 @@ func BanReasonEqualFold(v string) predicate.User {
 // BanReasonContainsFold applies the ContainsFold predicate on the "ban_reason" field.
 func BanReasonContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldBanReason, v))
+}
+
+// BanExpiresAtEQ applies the EQ predicate on the "ban_expires_at" field.
+func BanExpiresAtEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldBanExpiresAt, v))
+}
+
+// BanExpiresAtNEQ applies the NEQ predicate on the "ban_expires_at" field.
+func BanExpiresAtNEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldBanExpiresAt, v))
+}
+
+// BanExpiresAtIn applies the In predicate on the "ban_expires_at" field.
+func BanExpiresAtIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldIn(FieldBanExpiresAt, vs...))
+}
+
+// BanExpiresAtNotIn applies the NotIn predicate on the "ban_expires_at" field.
+func BanExpiresAtNotIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldBanExpiresAt, vs...))
+}
+
+// BanExpiresAtGT applies the GT predicate on the "ban_expires_at" field.
+func BanExpiresAtGT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGT(FieldBanExpiresAt, v))
+}
+
+// BanExpiresAtGTE applies the GTE predicate on the "ban_expires_at" field.
+func BanExpiresAtGTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldBanExpiresAt, v))
+}
+
+// BanExpiresAtLT applies the LT predicate on the "ban_expires_at" field.
+func BanExpiresAtLT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLT(FieldBanExpiresAt, v))
+}
+
+// BanExpiresAtLTE applies the LTE predicate on the "ban_expires_at" field.
+func BanExpiresAtLTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldBanExpiresAt, v))
+}
+
+// BanExpiresAtIsNil applies the IsNil predicate on the "ban_expires_at" field.
+func BanExpiresAtIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldBanExpiresAt))
+}
+
+// BanExpiresAtNotNil applies the NotNil predicate on the "ban_expires_at" field.
+func BanExpiresAtNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldBanExpiresAt))
 }
 
 // PjskBanStateEQ applies the EQ predicate on the "pjsk_ban_state" field.

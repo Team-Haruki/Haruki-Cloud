@@ -25,9 +25,13 @@ func (User) Fields() []ent.Field {
 			Default(false).
 			Comment("Whether user is banned"),
 		field.String("ban_reason").
-			MaxLen(255).
+			MaxLen(1020).
 			Optional().
 			Comment("Reason for ban"),
+		field.Time("ban_expires_at").
+			Optional().
+			Nillable().
+			Comment("When the global ban expires; null means permanent"),
 		field.Bool("pjsk_ban_state").
 			Default(false).
 			Comment("Whether user is banned from PJSK features"),

@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/database/users/predicate"
 	"haruki-cloud/database/users/user"
 	"sync"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -36,6 +37,7 @@ type UserMutation struct {
 	user_id                                   *string
 	ban_state                                 *bool
 	ban_reason                                *string
+	ban_expires_at                            *time.Time
 	pjsk_ban_state                            *bool
 	pjsk_ban_reason                           *string
 	pjsk_banned_game_account_bind_attempts    *int
@@ -319,6 +321,55 @@ func (m *UserMutation) BanReasonCleared() bool {
 func (m *UserMutation) ResetBanReason() {
 	m.ban_reason = nil
 	delete(m.clearedFields, user.FieldBanReason)
+}
+
+// SetBanExpiresAt sets the "ban_expires_at" field.
+func (m *UserMutation) SetBanExpiresAt(t time.Time) {
+	m.ban_expires_at = &t
+}
+
+// BanExpiresAt returns the value of the "ban_expires_at" field in the mutation.
+func (m *UserMutation) BanExpiresAt() (r time.Time, exists bool) {
+	v := m.ban_expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBanExpiresAt returns the old "ban_expires_at" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldBanExpiresAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBanExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBanExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBanExpiresAt: %w", err)
+	}
+	return oldValue.BanExpiresAt, nil
+}
+
+// ClearBanExpiresAt clears the value of the "ban_expires_at" field.
+func (m *UserMutation) ClearBanExpiresAt() {
+	m.ban_expires_at = nil
+	m.clearedFields[user.FieldBanExpiresAt] = struct{}{}
+}
+
+// BanExpiresAtCleared returns if the "ban_expires_at" field was cleared in this mutation.
+func (m *UserMutation) BanExpiresAtCleared() bool {
+	_, ok := m.clearedFields[user.FieldBanExpiresAt]
+	return ok
+}
+
+// ResetBanExpiresAt resets all changes to the "ban_expires_at" field.
+func (m *UserMutation) ResetBanExpiresAt() {
+	m.ban_expires_at = nil
+	delete(m.clearedFields, user.FieldBanExpiresAt)
 }
 
 // SetPjskBanState sets the "pjsk_ban_state" field.
@@ -1091,7 +1142,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 21)
+	fields := make([]string, 0, 22)
 	if m.platform != nil {
 		fields = append(fields, user.FieldPlatform)
 	}
@@ -1103,6 +1154,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.ban_reason != nil {
 		fields = append(fields, user.FieldBanReason)
+	}
+	if m.ban_expires_at != nil {
+		fields = append(fields, user.FieldBanExpiresAt)
 	}
 	if m.pjsk_ban_state != nil {
 		fields = append(fields, user.FieldPjskBanState)
@@ -1171,6 +1225,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.BanState()
 	case user.FieldBanReason:
 		return m.BanReason()
+	case user.FieldBanExpiresAt:
+		return m.BanExpiresAt()
 	case user.FieldPjskBanState:
 		return m.PjskBanState()
 	case user.FieldPjskBanReason:
@@ -1222,6 +1278,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldBanState(ctx)
 	case user.FieldBanReason:
 		return m.OldBanReason(ctx)
+	case user.FieldBanExpiresAt:
+		return m.OldBanExpiresAt(ctx)
 	case user.FieldPjskBanState:
 		return m.OldPjskBanState(ctx)
 	case user.FieldPjskBanReason:
@@ -1292,6 +1350,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBanReason(v)
+		return nil
+	case user.FieldBanExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBanExpiresAt(v)
 		return nil
 	case user.FieldPjskBanState:
 		v, ok := value.(bool)
@@ -1460,6 +1525,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldBanReason) {
 		fields = append(fields, user.FieldBanReason)
 	}
+	if m.FieldCleared(user.FieldBanExpiresAt) {
+		fields = append(fields, user.FieldBanExpiresAt)
+	}
 	if m.FieldCleared(user.FieldPjskBanReason) {
 		fields = append(fields, user.FieldPjskBanReason)
 	}
@@ -1500,6 +1568,9 @@ func (m *UserMutation) ClearField(name string) error {
 	switch name {
 	case user.FieldBanReason:
 		m.ClearBanReason()
+		return nil
+	case user.FieldBanExpiresAt:
+		m.ClearBanExpiresAt()
 		return nil
 	case user.FieldPjskBanReason:
 		m.ClearPjskBanReason()
@@ -1544,6 +1615,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldBanReason:
 		m.ResetBanReason()
+		return nil
+	case user.FieldBanExpiresAt:
+		m.ResetBanExpiresAt()
 		return nil
 	case user.FieldPjskBanState:
 		m.ResetPjskBanState()

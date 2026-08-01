@@ -38,6 +38,15 @@ type memoryRedisStore struct {
 	value map[string]string
 }
 
+type stubGlobalBanChecker struct {
+	banned bool
+	err    error
+}
+
+func (s *stubGlobalBanChecker) IsGloballyBanned(context.Context, string, string) (bool, error) {
+	return s.banned, s.err
+}
+
 func newMemoryRedisStore() *memoryRedisStore {
 	return &memoryRedisStore{value: make(map[string]string)}
 }
@@ -132,8 +141,9 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 
 	store := newMemoryRedisStore()
 	testAuthKey := []byte("01234567890123456789012345678901") // 32 bytes
-	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, testAuthKey, "deadbeef"))
-	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store))
+	banChecker := &stubGlobalBanChecker{}
+	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, testAuthKey, "deadbeef").WithGlobalBanChecker(banChecker))
+	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store).WithGlobalBanChecker(banChecker))
 	statsHandler := NewStatisticsHandler(NewStatisticsService(client))
 
 	app := fiber.New()
@@ -218,6 +228,18 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 		t.Fatalf("unexpected verify response: %+v", verifyData)
 	}
 
+	banChecker.banned = true
+	verifyResp = sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
+		"Authorization": "Bearer internal-test",
+	})
+	if err := sonic.Unmarshal(verifyResp.Data, &verifyData); err != nil {
+		t.Fatalf("decode banned verify response: %v", err)
+	}
+	if verifyData.Valid {
+		t.Fatalf("globally banned Bot owner retained a valid session: %+v", verifyData)
+	}
+	banChecker.banned = false
+
 	statsResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+botIDStr, `{}`, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
@@ -253,6 +275,63 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 	}
 	if dailyRow.Count != 2 {
 		t.Fatalf("daily requests count mismatch: got=%d want=2", dailyRow.Count)
+	}
+}
+
+func TestBotAuthRejectsGloballyBannedOwner(t *testing.T) {
+	ctx := context.Background()
+	client := newBotTestClient(t, "banned_owner")
+	t.Cleanup(func() { _ = client.Close() })
+	if err := client.Schema.Create(ctx); err != nil {
+		t.Fatalf("create schema: %v", err)
+	}
+
+	prev := config.Cfg
+	config.Cfg.HarukiBotDB.CredentialSignToken = "credential-sign-token"
+	t.Cleanup(func() { config.Cfg = prev })
+
+	const botID = 10043043
+	const credential = "banned-owner-credential"
+	hashedCred, err := bcrypt.GenerateFromPassword([]byte(credential), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("hash credential: %v", err)
+	}
+	_, err = client.User.Create().
+		SetOwnerUserID(123456789).
+		SetBotID(botID).
+		SetCredential(string(hashedCred)).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+
+	store := newMemoryRedisStore()
+	key := []byte("01234567890123456789012345678901")
+	handler := NewUserHandler(
+		NewUserServiceWithDependencies(client, store, key, "").
+			WithGlobalBanChecker(&stubGlobalBanChecker{banned: true}),
+	)
+	app := fiber.New()
+	app.Post("/bot/:bot_id/auth", handler.Auth)
+
+	botIDStr := strconv.Itoa(botID)
+	payloadBytes, err := noiseMP.Marshal(HarukiAuthPayload{
+		BotID:      botIDStr,
+		Credential: signTestCredential(t, botIDStr, credential),
+		Timestamp:  time.Now().Unix(),
+	})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+	encryptedBody, err := EncryptRaw(payloadBytes, key)
+	if err != nil {
+		t.Fatalf("encrypt payload: %v", err)
+	}
+	resp := sendRawRequest(t, app, http.MethodPost, "/bot/"+botIDStr+"/auth", encryptedBody)
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != fiber.StatusForbidden || string(body) != ErrOwnerBanned {
+		t.Fatalf("unexpected banned auth response: status=%d body=%q", resp.StatusCode, body)
 	}
 }
 

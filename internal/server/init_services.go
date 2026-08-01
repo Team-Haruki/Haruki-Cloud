@@ -28,7 +28,7 @@ import (
 	rendercostume "haruki-cloud/internal/pjsk/render/costume"
 )
 
-func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App, pjskClient *pjskDB.Client, usersClient *usersDB.Client, censorService *censor.Service) {
+func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *renderapp.App, pjskClient *pjskDB.Client, usersClient *usersDB.Client, banChecker *accountdata.BanService, censorService *censor.Service) {
 	if renderRuntime == nil || pjskClient == nil {
 		return
 	}
@@ -71,7 +71,7 @@ func configureSekaiRuntime(mainLogger *harukiLogger.Logger, renderRuntime *rende
 		if censorService != nil {
 			renderRuntime.Bindings.SetCensorService(censorService)
 		}
-		renderRuntime.BanChecker = accountdata.NewBanService(usersClient)
+		renderRuntime.BanChecker = banChecker
 	}
 
 	renderRuntime.Aliases = pjskalias.NewService(renderRuntime.Sekai, pjskClient, resolver)

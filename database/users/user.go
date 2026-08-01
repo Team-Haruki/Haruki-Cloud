@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"haruki-cloud/database/users/user"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -25,6 +26,8 @@ type User struct {
 	BanState bool `json:"ban_state,omitempty"`
 	// Reason for ban
 	BanReason string `json:"ban_reason,omitempty"`
+	// When the global ban expires; null means permanent
+	BanExpiresAt *time.Time `json:"ban_expires_at,omitempty"`
 	// Whether user is banned from PJSK features
 	PjskBanState bool `json:"pjsk_ban_state,omitempty"`
 	// Reason for PJSK ban
@@ -73,6 +76,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case user.FieldPlatform, user.FieldUserID, user.FieldBanReason, user.FieldPjskBanReason, user.FieldChunithmBanReason, user.FieldPjskMainBanReason, user.FieldPjskRankingBanReason, user.FieldPjskAliasBanReason, user.FieldPjskMysekaiBanReason, user.FieldChunithmMainBanReason, user.FieldChunithmAliasBanReason:
 			values[i] = new(sql.NullString)
+		case user.FieldBanExpiresAt:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -117,6 +122,13 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field ban_reason", values[i])
 			} else if value.Valid {
 				_m.BanReason = value.String
+			}
+		case user.FieldBanExpiresAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field ban_expires_at", values[i])
+			} else if value.Valid {
+				_m.BanExpiresAt = new(time.Time)
+				*_m.BanExpiresAt = value.Time
 			}
 		case user.FieldPjskBanState:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -267,6 +279,11 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("ban_reason=")
 	builder.WriteString(_m.BanReason)
+	builder.WriteString(", ")
+	if v := _m.BanExpiresAt; v != nil {
+		builder.WriteString("ban_expires_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("pjsk_ban_state=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PjskBanState))

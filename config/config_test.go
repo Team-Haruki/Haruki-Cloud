@@ -132,6 +132,32 @@ func TestEnvOverrideProfile(t *testing.T) {
 	}
 }
 
+func TestApplyEnvOverridesModerationAdminQQIDs(t *testing.T) {
+	t.Setenv("HARUKI_MODERATION_ADMIN_QQ_IDS", "3164679932, 123456789")
+	cfg := &Config{}
+	if err := ApplyEnvOverrides(cfg); err != nil {
+		t.Fatalf("ApplyEnvOverrides() error = %v", err)
+	}
+	if len(cfg.Moderation.AdminQQIDs) != 2 || cfg.Moderation.AdminQQIDs[0] != "3164679932" || cfg.Moderation.AdminQQIDs[1] != "123456789" {
+		t.Fatalf("unexpected moderation admins: %#v", cfg.Moderation.AdminQQIDs)
+	}
+}
+
+func TestReadConfigModerationAdminQQIDs(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
+	data := []byte("profile: dev\nmoderation:\n  admin_qq_ids: [\"3164679932\"]\n")
+	if err := os.WriteFile(configPath, data, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	cfg, err := ReadConfig(configPath)
+	if err != nil {
+		t.Fatalf("ReadConfig() error = %v", err)
+	}
+	if len(cfg.Moderation.AdminQQIDs) != 1 || cfg.Moderation.AdminQQIDs[0] != "3164679932" {
+		t.Fatalf("unexpected moderation admins: %#v", cfg.Moderation.AdminQQIDs)
+	}
+}
+
 func TestApplyEnvOverridesResponseElectionWindow(t *testing.T) {
 	t.Setenv("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", "275ms")
 	cfg := &Config{}

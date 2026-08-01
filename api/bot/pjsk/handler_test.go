@@ -3315,3 +3315,45 @@ func TestBotNoiseIKRoundTrip(t *testing.T) {
 		t.Fatalf("unexpected message: %s (full envelope: %+v)", message, envelope)
 	}
 }
+
+func TestBotOwnerGlobalBanMiddlewareBlocksExistingRequests(t *testing.T) {
+	ctx := context.Background()
+	botClient := newBotCommandTestClient(t, "owner_ban")
+	t.Cleanup(func() { _ = botClient.Close() })
+	usersClient := usersenttest.Open(t, "sqlite3", fmt.Sprintf("file:bot_owner_ban_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = usersClient.Close() })
+
+	const ownerQQ int64 = 123456789
+	const botID = 10101010
+	if _, err := botClient.User.Create().
+		SetOwnerUserID(ownerQQ).
+		SetBotID(botID).
+		SetCredential("test").
+		Save(ctx); err != nil {
+		t.Fatalf("create bot owner: %v", err)
+	}
+	if _, err := usersClient.User.Create().
+		SetID(654321).
+		SetPlatform("qq").
+		SetUserID(strconv.FormatInt(ownerQQ, 10)).
+		SetBanState(true).
+		SetBanReason("全局封禁测试").
+		Save(ctx); err != nil {
+		t.Fatalf("create globally banned user: %v", err)
+	}
+
+	app := fiber.New()
+	app.Get("/bot/:botId", verifyBotOwnerNotBanned(botClient, accountdata.NewBanService(usersClient)), func(c fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/bot/%d", botID), nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != fiber.StatusForbidden {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("banned Bot request status=%d body=%s", resp.StatusCode, body)
+	}
+}

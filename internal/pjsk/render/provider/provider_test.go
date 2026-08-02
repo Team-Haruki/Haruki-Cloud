@@ -704,6 +704,32 @@ func TestLocalCardProviderGetSupplyTypeTreatsWorldLink3TermLimitedAsWL(t *testin
 	}
 }
 
+func TestLocalCardProviderGetSupplyTypeCorrectsKnownMislabelledCard(t *testing.T) {
+	provider := &localCardProvider{}
+	provider.supplies.init(func() (map[int]string, error) {
+		return map[int]string{1: "normal"}, nil
+	})
+
+	for _, cardID := range []int{1345, 1346, 1347} {
+		if got := provider.GetSupplyType(context.Background(), &masterdata.Card{ID: cardID, CardSupplyID: 1}); got != "term_limited" {
+			t.Fatalf("expected known mislabelled card %d to normalize as term_limited, got %q", cardID, got)
+		}
+	}
+	if got := provider.GetSupplyType(context.Background(), &masterdata.Card{ID: 1348, CardSupplyID: 1}); got != "normal" {
+		t.Fatalf("expected event reward card without an override to stay normal, got %q", got)
+	}
+}
+
+func TestDBCardProviderGetSupplyTypeCorrectsKnownMislabelledCard(t *testing.T) {
+	provider := &dbCardProvider{}
+
+	for _, cardID := range []int{1345, 1346, 1347} {
+		if got := provider.GetSupplyType(context.Background(), &masterdata.Card{ID: cardID, CardSupplyID: 1}); got != "term_limited" {
+			t.Fatalf("expected known mislabelled card %d to normalize as term_limited, got %q", cardID, got)
+		}
+	}
+}
+
 func TestCardContainsPickup(t *testing.T) {
 	g := &masterdata.Gacha{
 		GachaPickups: []masterdata.GachaPickup{

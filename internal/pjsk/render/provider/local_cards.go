@@ -328,6 +328,9 @@ func (p *localCardProvider) GetSupplyType(_ context.Context, cardInfo *masterdat
 	if cardInfo == nil {
 		return cardNormalizeSupplyType("")
 	}
+	if value, ok := cardSupplyTypeOverride(cardInfo.ID); ok {
+		return value
+	}
 	if cardInfo.CardRarityType == "rarity_birthday" {
 		return cardNormalizeSupplyType("birthday")
 	}

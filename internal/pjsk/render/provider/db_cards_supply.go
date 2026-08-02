@@ -17,6 +17,9 @@ func (p *dbCardProvider) GetSupplyType(ctx context.Context, cardInfo *masterdata
 	if cardInfo == nil {
 		return cardNormalizeSupplyType("")
 	}
+	if value, ok := cardSupplyTypeOverride(cardInfo.ID); ok {
+		return value
+	}
 	if cardInfo.CardRarityType == "rarity_birthday" {
 		return cardNormalizeSupplyType("birthday")
 	}
@@ -177,6 +180,15 @@ func cardNormalizeSupplyType(raw string) string {
 		return "birthday"
 	default:
 		return strings.TrimSpace(raw)
+	}
+}
+
+func cardSupplyTypeOverride(cardID int) (string, bool) {
+	switch cardID {
+	case 1345, 1346, 1347:
+		return "term_limited", true
+	default:
+		return "", false
 	}
 }
 

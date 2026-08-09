@@ -157,6 +157,9 @@ type ProfileCardData struct {
 	Others             []ImageData      `json:"others"`
 	Shapes             []ShapeData      `json:"shapes"`
 	Stamps             []ImageData      `json:"stamps"`
+	CharacterIcons     []ImageData      `json:"characterIcons"`
+	Materials          []ImageData      `json:"materials"`
+	UserInterfaceIcons []ImageData      `json:"userInterfaceIcons"`
 }
 
 // GeneralData is a general info element on a custom profile card.

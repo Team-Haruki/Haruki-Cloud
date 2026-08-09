@@ -40,6 +40,15 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfileShapeResources.json"), []map[string]any{
 		{"id": 12, "resourceLoadVal": "custom_profile/shape", "fileName": "circle"},
 	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfileCharacterIconResources.json"), []map[string]any{
+		{"id": 21, "customProfileResourceType": "character_icon", "resourceLoadVal": "custom_profile/character_icon", "fileName": "profile_chr_icon_miku"},
+	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfileMaterialResources.json"), []map[string]any{
+		{"id": 1, "customProfileResourceType": "material", "resourceLoadVal": "custom_profile/material", "fileName": "profile_icon_item_0001"},
+	})
+	writeCustomProfileJSONFile(t, filepath.Join(master, "customProfileUserInterfaceIconResources.json"), []map[string]any{
+		{"id": 42, "customProfileResourceType": "user_interface_icon", "resourceLoadVal": "custom_profile/user_interface_icon", "fileName": "profile_icon_0042"},
+	})
 	writeCustomProfileJSONFile(t, filepath.Join(master, "stamps.json"), []map[string]any{
 		{"id": 146, "assetbundleName": "stamp0230", "characterId": 1},
 	})
@@ -94,9 +103,12 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 				ColorID:        10,
 				OutlineColorID: 10,
 			}},
-			Shapes:      []sekaiapi.ShapeData{{ID: 12, ColorID: 10}},
-			Stamps:      []sekaiapi.ImageData{{ID: 146}},
-			CardMembers: []sekaiapi.CardData{{ID: 915}},
+			Shapes:             []sekaiapi.ShapeData{{ID: 12, ColorID: 10}},
+			Stamps:             []sekaiapi.ImageData{{ID: 146}},
+			CharacterIcons:     []sekaiapi.ImageData{{ID: 21}},
+			Materials:          []sekaiapi.ImageData{{ID: 1}},
+			UserInterfaceIcons: []sekaiapi.ImageData{{ID: 42}},
+			CardMembers:        []sekaiapi.CardData{{ID: 915}},
 			Collections: []sekaiapi.CollectionData{{
 				ID:       1000,
 				TargetID: 183,
@@ -124,6 +136,18 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	shape := resources["customProfileShapeResources"].(map[int]map[string]any)[12]
 	if got := shape["imagePath"].(string); got != "asset/cn-assets/startapp/custom_profile/shape/circle.png" {
 		t.Fatalf("unexpected shape image path: %s", got)
+	}
+	characterIcon := resources["customProfileCharacterIconResources"].(map[int]map[string]any)[21]
+	if got := characterIcon["imagePath"].(string); got != "asset/cn-assets/startapp/custom_profile/character_icon/profile_chr_icon_miku.png" {
+		t.Fatalf("unexpected character icon image path: %s", got)
+	}
+	material := resources["customProfileMaterialResources"].(map[int]map[string]any)[1]
+	if got := material["imagePath"].(string); got != "asset/cn-assets/startapp/custom_profile/material/profile_icon_item_0001.png" {
+		t.Fatalf("unexpected material image path: %s", got)
+	}
+	userInterfaceIcon := resources["customProfileUserInterfaceIconResources"].(map[int]map[string]any)[42]
+	if got := userInterfaceIcon["imagePath"].(string); got != "asset/cn-assets/startapp/custom_profile/user_interface_icon/profile_icon_0042.png" {
+		t.Fatalf("unexpected user interface icon image path: %s", got)
 	}
 	stamp := resources["stampAssets"].(map[int]map[string]any)[146]
 	if got := stamp["imagePath"].(string); got != "asset/cn-assets/startapp/stamp/stamp0230/stamp0230.png" {

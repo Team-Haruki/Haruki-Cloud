@@ -98,7 +98,7 @@ type ProfileRequest struct {
 
 const CustomProfileCardRequestKind = "pjsk_custom_profile_card"
 
-const CustomProfileCardRenderVersion = 2
+const CustomProfileCardRenderVersion = 3
 
 type CustomProfileContext struct {
 	User                          sekaiapi.AnotherUser                            `json:"user"`

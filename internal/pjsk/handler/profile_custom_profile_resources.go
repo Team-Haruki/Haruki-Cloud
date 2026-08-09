@@ -75,6 +75,9 @@ type customProfileResourceCollector struct {
 	collectionTargets map[int]map[int]struct{}
 	otherIDs          map[int]struct{}
 	stampIDs          map[int]struct{}
+	characterIconIDs  map[int]struct{}
+	materialIDs       map[int]struct{}
+	userInterfaceIDs  map[int]struct{}
 	cardIDs           map[int]struct{}
 	honorQueries      map[string]renderhonor.Query
 	profileHonors     map[string]renderhonor.Query
@@ -95,6 +98,9 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 		collectionTargets: make(map[int]map[int]struct{}),
 		otherIDs:          make(map[int]struct{}),
 		stampIDs:          make(map[int]struct{}),
+		characterIconIDs:  make(map[int]struct{}),
+		materialIDs:       make(map[int]struct{}),
+		userInterfaceIDs:  make(map[int]struct{}),
 		cardIDs:           make(map[int]struct{}),
 		honorQueries:      make(map[string]renderhonor.Query),
 		profileHonors:     make(map[string]renderhonor.Query),
@@ -134,6 +140,15 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 	}
 	for _, item := range data.Stamps {
 		addID(c.stampIDs, item.ID)
+	}
+	for _, item := range data.CharacterIcons {
+		addID(c.characterIconIDs, item.ID)
+	}
+	for _, item := range data.Materials {
+		addID(c.materialIDs, item.ID)
+	}
+	for _, item := range data.UserInterfaceIcons {
+		addID(c.userInterfaceIDs, item.ID)
 	}
 	for _, item := range data.CardMembers {
 		addID(c.cardIDs, item.ID)
@@ -212,6 +227,9 @@ func collectCustomProfileMasterResources(ctx context.Context, app *renderapp.App
 		{"customProfileMemberStandingPictureResources", "customProfileMemberStandingPictureResources.json", c.standMemberIDs, "", true},
 		{"customProfileCollectionResources", "customProfileCollectionResources.json", c.collectionIDs, "", true},
 		{"customProfileEtcResources", "customProfileEtcResources.json", c.otherIDs, "", true},
+		{"customProfileCharacterIconResources", "customProfileCharacterIconResources.json", c.characterIconIDs, "", true},
+		{"customProfileMaterialResources", "customProfileMaterialResources.json", c.materialIDs, "", true},
+		{"customProfileUserInterfaceIconResources", "customProfileUserInterfaceIconResources.json", c.userInterfaceIDs, "", true},
 	}
 
 	for _, table := range tables {

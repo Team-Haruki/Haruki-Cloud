@@ -2,6 +2,7 @@ package meta
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -120,7 +121,27 @@ func (l *Loader) load(ctx context.Context, region string) error {
 	l.mu.RLock()
 	existing := l.cache[region]
 	l.mu.RUnlock()
+	if err := l.loadRemote(ctx, region, url, existing); err != nil {
+		l.mu.RLock()
+		hasCached := l.cache[region] != nil
+		l.mu.RUnlock()
+		if hasCached {
+			return err
+		}
+		if fallbackErr := l.loadPersisted(region); fallbackErr != nil {
+			return errors.Join(err, fmt.Errorf("meta: load persisted %s: %w", region, fallbackErr))
+		}
+		if l.logger != nil {
+			l.logger.WarnContext(ctx, "music metadata remote load failed, using persisted fallback",
+				"region", region,
+				"error_type", fmt.Sprintf("%T", err),
+			)
+		}
+	}
+	return nil
+}
 
+func (l *Loader) loadRemote(ctx context.Context, region, url string, existing *regionEntry) error {
 	req := l.http.R().SetContext(ctx)
 	if existing != nil {
 		if existing.etag != "" {
@@ -168,6 +189,28 @@ func (l *Loader) load(ctx context.Context, region string) error {
 	default:
 		return fmt.Errorf("meta: fetch %s returned HTTP %d", region, resp.StatusCode())
 	}
+}
+
+func (l *Loader) loadPersisted(region string) error {
+	if l == nil || strings.TrimSpace(l.outputDir) == "" {
+		return fmt.Errorf("persisted metadata directory is not configured")
+	}
+	filename, ok := regionFilenames[region]
+	if !ok {
+		return fmt.Errorf("unknown region %q", region)
+	}
+	payload, err := os.ReadFile(filepath.Join(filepath.Clean(l.outputDir), filename))
+	if err != nil {
+		return err
+	}
+	processed, view, err := Prepare(payload)
+	if err != nil {
+		return err
+	}
+	l.mu.Lock()
+	l.cache[region] = &regionEntry{data: processed, view: view}
+	l.mu.Unlock()
+	return nil
 }
 
 func (l *Loader) persist(region string, data []byte) error {

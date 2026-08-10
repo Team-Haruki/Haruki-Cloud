@@ -4,15 +4,15 @@ go 1.26.1
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/andybalholm/brotli v1.2.2
 	github.com/alicebob/miniredis/v2 v2.38.0
+	github.com/andybalholm/brotli v1.2.2
 	github.com/bytedance/sonic v1.15.2
 	github.com/flynn/noise v1.1.0
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/gofiber/fiber/v3 v3.4.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/klauspost/compress v1.19.0
+	github.com/klauspost/compress v1.19.2
 	github.com/lib/pq v1.12.3
 	github.com/mattn/go-sqlite3 v1.14.47
 	github.com/mitchellh/hashstructure/v2 v2.0.2

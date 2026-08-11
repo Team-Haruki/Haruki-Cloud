@@ -356,7 +356,7 @@ func executeSharedBotCommand(
 			)
 		}
 		metadata.ErrorType = fmt.Sprintf("%T", err)
-		return encodeSharedCommandResult(ctx, commandErrorEnvelope(err, expectedPath, req.MatchedCommand, req.EnableParamEcho), metadata, forceExecutor)
+		return encodeSharedCommandResult(ctx, commandErrorEnvelope(err, resolved.CommandPath, resolved.TriggerCommand, req.EnableParamEcho), metadata, forceExecutor)
 	}
 	metadata.Outcome = "ok"
 	return encodeSharedCommandResult(ctx, newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK, responseData), metadata, forceExecutor)
@@ -390,10 +390,10 @@ func commandErrorEnvelope(err error, expectedPath, matchedCommand string, enable
 	}
 	if replyErr, ok := errors.AsType[onebot11.ReplayError](err); ok {
 		return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
-			[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(string(replyErr), enableParamEcho, matchedCommand))})
+			[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(string(replyErr), enableParamEcho, matchedCommand, expectedPath))})
 	}
 	return newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK,
-		[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(err.Error(), enableParamEcho, matchedCommand))})
+		[]onebot11.Segment{onebot11.Text(clientErrorTextForCommand(err.Error(), enableParamEcho, matchedCommand, expectedPath))})
 }
 
 func commandResponseDependsOnExecutor(resolved *commandhandler.CommandRequest) bool {

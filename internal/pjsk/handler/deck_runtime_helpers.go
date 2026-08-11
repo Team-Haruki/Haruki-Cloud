@@ -142,12 +142,13 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 	// The target snapshot (Toolbox) and public profile (SekaiAPI) both depend
 	// only on the resolved target, so fetch them concurrently.
 	var (
-		snapshot rendersnapshot.Snapshot
-		resp     *sekaiapi.GetAnotherProfileResponse
+		snapshot    rendersnapshot.Snapshot
+		snapshotErr error
+		resp        *sekaiapi.GetAnotherProfileResponse
 	)
 	var group errgroup.Group
 	group.Go(func() error {
-		snapshot = resolveTargetSnapshot(rc.Ctx, rc.App, region, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
+		snapshot, snapshotErr = resolveTargetSnapshotWithError(rc.Ctx, rc.App, region, rc.Platform, rc.PlatformUserID, target.PJSKUserID, false)
 		return nil
 	})
 	group.Go(func() error {
@@ -155,6 +156,9 @@ func resolveDeckRenderProfileSnapshotAndPublic(rc *RequestContext, selector stri
 		return nil
 	})
 	_ = group.Wait()
+	if snapshotErr != nil {
+		return nil, nil, region, nil, normalizeToolboxDataFetchError(snapshotErr, "suite", target.Binding)
+	}
 
 	if target.Binding != nil && snapshot == nil {
 		return nil, nil, region, nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)

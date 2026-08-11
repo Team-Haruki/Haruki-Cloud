@@ -350,6 +350,9 @@ func requireCardCatalogDetailedProfile(rc *RequestContext) (*drawing.DetailedPro
 	}
 	snap := rc.ResolveSnapshot(false)
 	if snap == nil {
+		if snapshotErr := rc.SnapshotError(false); snapshotErr != nil {
+			return nil, normalizeToolboxDataFetchError(snapshotErr, "suite", binding)
+		}
 		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
 	detail := snap.DetailedProfile(rc.Region)

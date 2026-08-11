@@ -122,7 +122,15 @@ func resolveMySekaiRenderContextWithOptions(
 		}
 	}
 
-	if snap := resolveTargetSnapshot(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, !opts.SuiteOnlySnapshot); snap != nil {
+	snap, snapshotErr := resolveTargetSnapshotWithError(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, !opts.SuiteOnlySnapshot)
+	if snapshotErr != nil {
+		dataLabel := "mysekai"
+		if opts.SuiteOnlySnapshot {
+			dataLabel = "suite"
+		}
+		return mySekaiRenderContext{}, normalizeToolboxDataFetchError(snapshotErr, dataLabel, target.Binding)
+	}
+	if snap != nil {
 		result.Controller = result.Controller.WithSnapshot(snap)
 		resolveProfile(snap)
 		if err != nil {

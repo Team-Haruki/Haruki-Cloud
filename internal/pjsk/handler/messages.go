@@ -33,8 +33,9 @@ const (
 	ErrMsgBindingServiceUnavailable = "绑定服务未就绪"
 
 	// Card catalog notice titles
-	CardCatalogTitleNoBinding = "未绑定账号，当前显示全服卡牌"
-	CardCatalogTitleNoSuite   = "未获取到 Suite 卡牌数据，当前显示全服卡牌"
+	CardCatalogTitleNoBinding        = "未绑定账号，当前显示全服卡牌"
+	CardCatalogTitleNoSuite          = "未获取到 Suite 卡牌数据，当前显示全服卡牌"
+	CardCatalogTitleSuiteUnavailable = "Suite 数据暂时不可用，当前显示全服卡牌"
 )
 
 // unsupportedModeError returns a standardized error for unhandled command modes.

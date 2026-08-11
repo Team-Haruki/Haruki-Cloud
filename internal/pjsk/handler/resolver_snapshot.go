@@ -17,11 +17,6 @@ import (
 
 var snapshotDebugLogger = logger.NewLoggerFromGlobal("PJSKSnapshot")
 
-func resolveSnapshotBySelector(ctx context.Context, app *renderapp.App, selector snapshot.Selector, opts snapshot.ResolveOptions) snapshot.Snapshot {
-	snap, _ := resolveSnapshotBySelectorWithError(ctx, app, selector, opts)
-	return snap
-}
-
 func resolveSnapshotBySelectorWithError(ctx context.Context, app *renderapp.App, selector snapshot.Selector, opts snapshot.ResolveOptions) (snapshot.Snapshot, error) {
 	providerApp := app
 	if app != nil {
@@ -114,7 +109,20 @@ func resolveTargetSnapshot(
 	pjskUserID string,
 	needMySekai bool,
 ) snapshot.Snapshot {
-	return resolveSnapshotBySelector(ctx, app, snapshot.Selector{
+	snap, _ := resolveTargetSnapshotWithError(ctx, app, regionStr, platform, platformUserID, pjskUserID, needMySekai)
+	return snap
+}
+
+func resolveTargetSnapshotWithError(
+	ctx context.Context,
+	app *renderapp.App,
+	regionStr string,
+	platform string,
+	platformUserID string,
+	pjskUserID string,
+	needMySekai bool,
+) (snapshot.Snapshot, error) {
+	return resolveSnapshotBySelectorWithError(ctx, app, snapshot.Selector{
 		IMPlatform: strings.TrimSpace(platform),
 		IMUserID:   strings.TrimSpace(platformUserID),
 		Region:     renderregion.Normalize(regionStr),

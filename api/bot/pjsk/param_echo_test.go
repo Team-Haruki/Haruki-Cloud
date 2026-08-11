@@ -1,34 +1,39 @@
 package pjsk
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 	tests := []struct {
 		name    string
 		in      string
 		trigger string
+		path    string
 		want    string
 	}{
 		{
 			name:    "quoted event args",
 			in:      "活动查询参数错误: \"super-secret\"\n【查单个活动格式】",
 			trigger: "/查活动",
-			want:    "活动查询参数错误\n查看完整用法请发送：/查活动 -help",
+			path:    "event",
+			want:    "参数解析失败：活动查询参数\n要求：使用活动 ID、event123、活动名称或帮助中列出的筛选条件\n查看完整用法请发送：/查活动 -help",
 		},
 		{
 			name: "replay error args",
 			in:   "无效的参数：\"super-secret\"\n使用方式：/cmd",
-			want: "无效的参数\n查看完整用法请发送：/cmd -help",
+			want: "参数解析失败：命令参数\n要求：检查参数数量、顺序和格式\n查看完整用法请发送：/cmd -help",
 		},
 		{
 			name: "english token",
 			in:   "invalid token \"super-secret\"",
-			want: "无效的参数",
+			want: "参数解析失败：命令参数\n要求：检查参数数量、顺序和格式",
 		},
 		{
 			name: "wrapped card query",
 			in:   "failed to search card: query card 662: sekai: card not found",
-			want: "找不到特定的卡牌",
+			want: "参数解析失败：卡牌\n要求：使用卡牌 ID、角色名或更明确的筛选条件",
 		},
 		{
 			name: "music not found",
@@ -38,7 +43,7 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 		{
 			name: "card not found",
 			in:   "找不到特定的卡牌: super-secret",
-			want: "找不到特定的卡牌",
+			want: "参数解析失败：卡牌\n要求：使用卡牌 ID、角色名或更明确的筛选条件",
 		},
 		{
 			name: "non echo error",
@@ -99,7 +104,7 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := clientErrorTextForCommand(tt.in, false, tt.trigger); got != tt.want {
+			if got := clientErrorTextForCommand(tt.in, false, tt.trigger, tt.path); got != tt.want {
 				t.Fatalf("clientErrorText() = %q, want %q", got, tt.want)
 			}
 		})
@@ -108,9 +113,81 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 
 func TestClientErrorTextStillRedactsParamEchoWhenEnabled(t *testing.T) {
 	in := "活动查询参数错误: \"super-secret\"\n【查单个活动格式】"
-	want := "活动查询参数错误\n查看完整用法请发送：/查活动 -help"
-	if got := clientErrorTextForCommand(in, true, "/查活动"); got != want {
+	want := "参数解析失败：活动查询参数\n要求：使用活动 ID、event123、活动名称或帮助中列出的筛选条件\n查看完整用法请发送：/查活动 -help"
+	if got := clientErrorTextForCommand(in, true, "/查活动", "event"); got != want {
 		t.Fatalf("clientErrorText() = %q, want %q", got, want)
+	}
+}
+
+func TestClientErrorTextUsesBranchSpecificParameterGuidance(t *testing.T) {
+	tests := []struct {
+		name    string
+		message string
+		path    string
+		trigger string
+		want    string
+	}{
+		{
+			name:    "event deck music",
+			message: `failed to resolve deck music selection "do-not-echo"`,
+			path:    "deck/event",
+			trigger: "/活动组卡",
+			want:    "参数解析失败：活动组卡参数 · 歌曲\n要求：使用歌曲 ID、歌曲名或可识别的别名，可追加支持的难度\n查看完整用法请发送：/活动组卡 -help",
+		},
+		{
+			name:    "no event deck usage",
+			message: "使用方式:\n/长草组卡 [歌曲/组卡参数...]",
+			path:    "deck/no-event",
+			trigger: "/长草组卡",
+			want:    "参数解析失败：长草组卡参数\n要求：检查歌曲、难度、目标、算法、固定卡/角色等参数\n查看完整用法请发送：/长草组卡 -help",
+		},
+		{
+			name:    "bonus deck generic",
+			message: `无效的参数："do-not-echo"`,
+			path:    "deck/bonus",
+			trigger: "/加成组卡",
+			want:    "参数解析失败：加成组卡参数\n要求：可先写 event123，再填写一个或多个正整数目标加成\n查看完整用法请发送：/加成组卡 -help",
+		},
+		{
+			name:    "challenge deck branch",
+			message: `无法识别的指令格式: "do-not-echo"`,
+			path:    "deck/challenge",
+			trigger: "/挑战组卡",
+			want:    "参数解析失败：挑战组卡参数\n要求：先提供挑战角色；歌曲、难度及组卡筛选项按帮助填写\n查看完整用法请发送：/挑战组卡 -help",
+		},
+		{
+			name:    "mysekai deck branch",
+			message: `无效的参数："do-not-echo"`,
+			path:    "deck/mysekai",
+			trigger: "/烤森组卡",
+			want:    "参数解析失败：烤森组卡参数\n要求：检查活动、WL角色、固定卡/角色和培养条件；不要填写普通歌曲、火数或队友参数\n查看完整用法请发送：/烤森组卡 -help",
+		},
+		{
+			name:    "score up deck branch",
+			message: "使用方式: /实效 队长技能 技能2 技能3 技能4 技能5",
+			path:    "deck/score-up",
+			trigger: "/实效",
+			want:    "参数解析失败：实效计算参数\n要求：必须依次提供 5 个非负技能数值：队长、技能2、技能3、技能4、技能5\n查看完整用法请发送：/实效 -help",
+		},
+		{
+			name:    "score board bonus",
+			message: `解析活动加成失败: "do-not-echo"`,
+			path:    "score/music-board",
+			trigger: "/歌曲榜",
+			want:    "参数解析失败：歌曲排行榜参数 · 活动加成\n要求：使用“加成数字”或“加成数字%”\n查看完整用法请发送：/歌曲榜 -help",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := clientErrorTextForCommand(tt.message, false, tt.trigger, tt.path)
+			if got != tt.want {
+				t.Fatalf("clientErrorTextForCommand() = %q, want %q", got, tt.want)
+			}
+			if strings.Contains(got, "do-not-echo") {
+				t.Fatalf("response echoed original parameter: %q", got)
+			}
+		})
 	}
 }
 

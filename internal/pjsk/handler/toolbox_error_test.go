@@ -9,6 +9,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 )
 
@@ -80,6 +81,12 @@ func TestNormalizeToolboxDataFetchError(t *testing.T) {
 			input:     &sekaiapi.ToolboxAPIError{StatusCode: 500, Message: "raw upstream detail"},
 			dataLabel: "suite",
 			wantErr:   "工具箱请求失败（状态 500）",
+		},
+		{
+			name:      "authentication failure",
+			input:     &sekaiapi.ToolboxAPIError{StatusCode: 401, Message: "unauthorized"},
+			dataLabel: "suite",
+			wantErr:   "工具箱请求失败（状态 401）",
 		},
 		{
 			name:      "network timeout",
@@ -190,5 +197,95 @@ func TestRequireVisibleSuiteSnapshotPropagatesToolboxTypedError(t *testing.T) {
 		Visible:    false,
 	}) {
 		t.Fatalf("unexpected replay error: %q", replyErr)
+	}
+}
+
+func TestResolveTargetSnapshotWithErrorPreservesToolboxFailure(t *testing.T) {
+	provider := &runtimeSnapshotProviderStub{
+		err: &sekaiapi.ToolboxAPIError{StatusCode: 503, Message: "toolbox service unavailable"},
+	}
+	originalFactory := snapshotProviderFactory
+	snapshotProviderFactory = func(*renderapp.App) rendersnapshot.HarukiSnapshotProvider {
+		return provider
+	}
+	t.Cleanup(func() { snapshotProviderFactory = originalFactory })
+
+	snap, err := resolveTargetSnapshotWithError(
+		context.Background(),
+		&renderapp.App{},
+		"jp",
+		"qq",
+		"42",
+		"12345678901234",
+		false,
+	)
+	if snap != nil {
+		t.Fatalf("expected nil snapshot, got %T", snap)
+	}
+	var apiErr *sekaiapi.ToolboxAPIError
+	if !errors.As(err, &apiErr) || apiErr.StatusCode != 503 {
+		t.Fatalf("expected preserved Toolbox 503 error, got %T (%v)", err, err)
+	}
+}
+
+func TestRequireCardCatalogDetailedProfilePropagatesToolboxFailure(t *testing.T) {
+	ctx := context.Background()
+	service := newHandlerTestBindingService(t)
+	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	rc := NewRequestContext(ctx, &CommandRequest{
+		Region:            "jp",
+		RequesterPlatform: "qq",
+		RequesterUserID:   "42",
+	}, &renderapp.App{
+		Config: renderapp.Config{
+			UserSnapshot: renderapp.UserSnapshotConfig{AllowFallback: true},
+		},
+		Bindings: service,
+		Snapshots: &runtimeSnapshotProviderStub{
+			err: errString("toolbox: request failed after retries: context deadline exceeded"),
+		},
+	})
+
+	_, err := requireCardCatalogDetailedProfile(rc)
+	assertReplayErrorText(t, err, "连接工具箱超时或网络异常，请稍后再试")
+}
+
+func TestCardCatalogSnapshotErrorTitleDistinguishesUpstreamFailure(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{
+			name: "missing suite",
+			err:  sekaiapi.ErrGameDataNotFound,
+			want: CardCatalogTitleNoSuite,
+		},
+		{
+			name: "authentication failure",
+			err:  &sekaiapi.ToolboxAPIError{StatusCode: 401, Message: "unauthorized"},
+			want: "工具箱请求失败（状态 401）；当前显示全服卡牌",
+		},
+		{
+			name: "network timeout",
+			err:  errString("toolbox: request failed after retries: context deadline exceeded"),
+			want: "连接工具箱超时或网络异常，请稍后再试；当前显示全服卡牌",
+		},
+		{
+			name: "unknown internal failure",
+			err:  errString("internal detail must not be exposed"),
+			want: CardCatalogTitleSuiteUnavailable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := cardCatalogSnapshotErrorTitle(tt.err, nil); got != tt.want {
+				t.Fatalf("cardCatalogSnapshotErrorTitle() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }

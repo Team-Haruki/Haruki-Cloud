@@ -112,39 +112,57 @@ var paramEchoSeparatorMarkers = []string{
 }
 
 func clientErrorText(message string, enableParamEcho bool) string {
-	return clientErrorTextWithHelpTrigger(message, enableParamEcho, "")
+	return clientErrorTextWithHelpTrigger(message, enableParamEcho, "", "")
 }
 
-func clientErrorTextForCommand(message string, enableParamEcho bool, helpTrigger string) string {
-	return clientErrorTextWithHelpTrigger(message, enableParamEcho, helpTrigger)
+func clientErrorTextForCommand(message string, enableParamEcho bool, helpTrigger, commandPath string) string {
+	return clientErrorTextWithHelpTrigger(message, enableParamEcho, helpTrigger, commandPath)
 }
 
-func clientErrorTextWithHelpTrigger(message string, enableParamEcho bool, helpTrigger string) string {
+func clientErrorTextWithHelpTrigger(message string, enableParamEcho bool, helpTrigger, commandPath string) string {
 	_ = enableParamEcho
-	redacted := redactParamEcho(message, helpTrigger)
+	redacted := redactParamEcho(message, helpTrigger, commandPath)
 	if usererror.MessageContainsSensitiveURL(redacted) {
 		return genericClientErrorText
 	}
 	return redacted
 }
 
-func redactParamEcho(message string, helpTrigger string) string {
+func redactParamEcho(message string, helpTrigger, commandPath string) string {
 	message = strings.TrimSpace(message)
 	if message == "" {
 		return message
 	}
 
 	lines := strings.Split(message, "\n")
+	if guidance, ok := parameterGuidanceForError(lines[0], commandPath); ok {
+		return formatParameterGuidance(guidance, parameterHelpTrigger(lines, helpTrigger))
+	}
 	if replacement, ok := redactParamEchoLine(lines[0]); ok {
 		if replacement == genericClientErrorText {
 			return replacement
 		}
+		if guidance, isParameterError := parameterGuidanceForError(replacement, commandPath); isParameterError {
+			return formatParameterGuidance(guidance, parameterHelpTrigger(lines, helpTrigger))
+		}
 		lines[0] = replacement
 	}
-	if compacted, ok := compactUsageHelpLines(lines, helpTrigger); ok {
+	if compacted, ok := compactUsageHelpLines(lines, helpTrigger, commandPath); ok {
 		return compacted
 	}
 	return strings.Join(lines, "\n")
+}
+
+func parameterHelpTrigger(lines []string, fallback string) string {
+	if trigger := normalizeUsageHelpTrigger(fallback); trigger != "" {
+		return trigger
+	}
+	for _, line := range lines {
+		if trigger := extractUsageHelpTrigger(strings.TrimSpace(line)); trigger != "" {
+			return trigger
+		}
+	}
+	return ""
 }
 
 func redactParamEchoLine(line string) (string, bool) {
@@ -181,7 +199,7 @@ func redactParamEchoLine(line string) (string, bool) {
 	return line, false
 }
 
-func compactUsageHelpLines(lines []string, fallbackTrigger string) (string, bool) {
+func compactUsageHelpLines(lines []string, fallbackTrigger, commandPath string) (string, bool) {
 	if len(lines) == 0 {
 		return "", false
 	}
@@ -191,6 +209,9 @@ func compactUsageHelpLines(lines []string, fallbackTrigger string) (string, bool
 	}
 	trigger := ""
 	if trigger = extractInlineUsageHelpTrigger(first); trigger != "" && len(lines) == 1 {
+		if guidance, exists := parameterGuidanceForPath(commandPath); exists {
+			return formatParameterGuidance(guidance, trigger), true
+		}
 		return "参数格式不正确\n查看完整用法请发送：" + trigger + " -help", true
 	}
 	hasUsageHelp := isUsageHelpMarker(first)
@@ -212,6 +233,9 @@ func compactUsageHelpLines(lines []string, fallbackTrigger string) (string, bool
 	}
 	if trigger == "" || !hasUsageHelp {
 		return "", false
+	}
+	if guidance, exists := parameterGuidanceForPath(commandPath); exists {
+		return formatParameterGuidance(guidance, trigger), true
 	}
 	if isUsageHelpMarker(first) {
 		first = "参数格式不正确"

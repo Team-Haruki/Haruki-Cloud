@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
@@ -47,6 +48,9 @@ func resolveCardCatalogTitle(rc *RequestContext) *string {
 
 	snap := rc.ResolveSnapshot(false)
 	if snap == nil {
+		if snapshotErr := rc.SnapshotError(false); snapshotErr != nil {
+			return stringPtr(cardCatalogSnapshotErrorTitle(snapshotErr, binding))
+		}
 		return stringPtr(CardCatalogTitleNoSuite)
 	}
 	detail := snap.DetailedProfile(rc.Region)
@@ -54,6 +58,22 @@ func resolveCardCatalogTitle(rc *RequestContext) *string {
 		return stringPtr(CardCatalogTitleNoSuite)
 	}
 	return nil
+}
+
+func cardCatalogSnapshotErrorTitle(err error, binding *accountdata.ResolvedBinding) string {
+	if errors.Is(err, sekaiapi.ErrGameDataNotFound) || errors.Is(err, sekaiapi.ErrAccountBindingNotFound) {
+		return CardCatalogTitleNoSuite
+	}
+	normalized := normalizeToolboxDataFetchError(err, "suite", binding)
+	var replyErr onebot11.ReplayError
+	if !errors.As(normalized, &replyErr) {
+		return CardCatalogTitleSuiteUnavailable
+	}
+	firstLine := strings.TrimSpace(strings.SplitN(string(replyErr), "\n", 2)[0])
+	if firstLine == "" {
+		return CardCatalogTitleSuiteUnavailable
+	}
+	return firstLine + "；当前显示全服卡牌"
 }
 
 func buildPublicMusicProfiles(rc *RequestContext) (*drawing.DetailedProfileCardRequest, *drawing.ProfileCardRequest) {

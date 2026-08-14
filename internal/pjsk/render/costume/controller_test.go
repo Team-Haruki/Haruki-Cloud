@@ -621,7 +621,7 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	if string(data) != "detail-png" {
 		t.Fatalf("unexpected detail data: %q", string(data))
 	}
-	wantImageID := "pjsk3d_jp_c20_school_refusal_i33002_b33002_h33011_r33021_o0"
+	wantImageID := "pjsk3d_jp_" + controller.preview3D.captureCacheSignature() + "_c20_school_refusal_i33002_b33002_h33011_r33021_o0"
 	if capturePayload["imageId"] != wantImageID {
 		t.Fatalf("unexpected capture image id: %v", capturePayload["imageId"])
 	}
@@ -630,6 +630,9 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	}
 	if capturePayload["cameraPreset"] != "capture" {
 		t.Fatalf("unexpected capture camera preset: %v", capturePayload["cameraPreset"])
+	}
+	if capturePayload["cameraProfile"] != "official-default" {
+		t.Fatalf("unexpected capture camera profile: %v", capturePayload["cameraProfile"])
 	}
 	staticPreviewPath := filepath.Join(assetRoot, "static_images", "pjsk_3d_preview", wantImageID+".png")
 	if data, err := os.ReadFile(staticPreviewPath); err != nil || string(data) != capturePNG {

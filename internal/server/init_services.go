@@ -172,6 +172,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			TemporaryCaptureTTL:   harukiConfig.Cfg.PJSKRender.Preview3D.TemporaryCaptureTTL,
 			CaptureCacheVersion:   harukiConfig.Cfg.PJSKRender.Preview3D.CaptureCacheVersion,
 			CameraPreset:          harukiConfig.Cfg.PJSKRender.Preview3D.CameraPreset,
+			CameraProfile:         harukiConfig.Cfg.PJSKRender.Preview3D.CameraProfile,
 		},
 		DeckRecommend: renderapp.DeckRecommendConfig{
 			Enabled:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Enabled,

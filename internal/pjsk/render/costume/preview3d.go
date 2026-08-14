@@ -61,6 +61,7 @@ type Preview3DConfig struct {
 	TemporaryCaptureTTL   time.Duration
 	CaptureCacheVersion   string
 	CameraPreset          string
+	CameraProfile         string
 }
 
 type Preview3DService struct {
@@ -228,6 +229,7 @@ func NewPreview3DService(cfg Preview3DConfig) *Preview3DService {
 		cfg.TemporaryCaptureTTL = 15 * 24 * time.Hour
 	}
 	cfg.CameraPreset = normalizePreview3DCameraPreset(cfg.CameraPreset)
+	cfg.CameraProfile = normalizePreview3DCameraProfile(cfg.CameraProfile)
 	service := &Preview3DService{
 		cfg:        cfg,
 		captureSem: make(chan struct{}, cfg.CaptureMaxConcurrency),
@@ -911,6 +913,7 @@ func (s *Preview3DService) captureSelection(ctx context.Context, endpoint previe
 		"headOptionalCostume3dId": nil,
 		"cacheMode":               cacheMode,
 		"cameraPreset":            s.cfg.CameraPreset,
+		"cameraProfile":           s.cfg.CameraProfile,
 	}
 	if selection.HeadPackagePath != "" {
 		body["headPackagePath"] = selection.HeadPackagePath
@@ -1199,6 +1202,7 @@ func (s *Preview3DService) captureCacheSignature() string {
 		s.cfg.Height,
 		s.cfg.Scale,
 		s.cfg.CameraPreset,
+		s.cfg.CameraProfile,
 	)
 }
 
@@ -1209,13 +1213,14 @@ func (s *Preview3DService) CacheSignature() string {
 	return s.captureCacheSignature()
 }
 
-func preview3DCacheSignature(version string, width int, height int, scale float64, cameraPreset string) string {
+func preview3DCacheSignature(version string, width int, height int, scale float64, cameraPreset string, cameraProfile string) string {
 	version = strings.TrimSpace(version)
 	if version == "" {
 		version = "v1"
 	}
 	cameraPreset = normalizePreview3DCameraPreset(cameraPreset)
-	material := fmt.Sprintf("%s|%d|%d|%.4f|%s", version, width, height, scale, cameraPreset)
+	cameraProfile = normalizePreview3DCameraProfile(cameraProfile)
+	material := fmt.Sprintf("%s|%d|%d|%.4f|%s|%s", version, width, height, scale, cameraPreset, cameraProfile)
 	sum := sha256.Sum256([]byte(material))
 	return "v" + hex.EncodeToString(sum[:])[:10]
 }
@@ -1227,7 +1232,18 @@ func normalizePreview3DCameraPreset(value string) string {
 	return "capture"
 }
 
+func normalizePreview3DCameraProfile(value string) string {
+	if strings.EqualFold(strings.TrimSpace(value), "full-body") {
+		return "full-body"
+	}
+	return "official-default"
+}
+
 func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSelection, error) {
+	return r.resolveWithCacheSignature(region, costume3DID, "")
+}
+
+func (r *preview3DRegistry) resolveWithCacheSignature(region string, costume3DID int, cacheSignature string) (preview3DSelection, error) {
 	accessoryIDs := r.accessoryIDsForRaw(costume3DID)
 	if len(accessoryIDs) > 1 {
 		return preview3DSelection{}, fmt.Errorf("3d preview accessory raw id is ambiguous: raw=%d ids=%v", costume3DID, accessoryIDs)
@@ -1326,6 +1342,10 @@ func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSe
 	region = normalizePreview3DRegion(region)
 	imageID := fmt.Sprintf("pjsk3d_%s_c%d_%s_i%d_b%d_h%d_r%d_o%d",
 		region, role.CharacterID, unit, costume3DID, bodyID, headID, hairID, optionalID)
+	if cacheSignature != "" {
+		imageID = fmt.Sprintf("pjsk3d_%s_%s_c%d_%s_i%d_b%d_h%d_r%d_o%d",
+			region, sanitizePreview3DImagePart(cacheSignature), role.CharacterID, unit, costume3DID, bodyID, headID, hairID, optionalID)
+	}
 	imageID = appendPreview3DHeadIdentity(imageID, accessoryID, headPackagePath)
 	return preview3DSelection{
 		ImageID:                 imageID,
@@ -1369,7 +1389,7 @@ func (r *preview3DRegistry) resolveQuery(region string, costume3DID int, query Q
 			return r.resolveCombo(region, combo, cacheSignature)
 		}
 	}
-	return r.resolve(region, costume3DID)
+	return r.resolveWithCacheSignature(region, costume3DID, cacheSignature)
 }
 
 func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheSignature string) (preview3DSelection, error) {
@@ -1566,7 +1586,7 @@ func (r *preview3DRegistry) resolveCombo(region string, query ComboQuery, cacheS
 		optionalID = *headOptionalID
 	}
 	if cacheSignature == "" {
-		cacheSignature = preview3DCacheSignature("", 0, 0, 0, "")
+		cacheSignature = preview3DCacheSignature("", 0, 0, 0, "", "")
 	}
 	unit := sanitizePreview3DImagePart(role.Unit)
 	region = normalizePreview3DRegion(region)

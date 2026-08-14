@@ -603,12 +603,15 @@ func TestPreview3DRegistryResolveTreatsOnlyHeadAndHairAsHeadSlot(t *testing.T) {
 }
 
 func TestPreview3DCacheSignatureChangesWithVersionAndCamera(t *testing.T) {
-	base := preview3DCacheSignature("v1", 1400, 1000, 2, "capture")
-	if base == preview3DCacheSignature("v2", 1400, 1000, 2, "capture") {
+	base := preview3DCacheSignature("v1", 1400, 1000, 2, "capture", "official-default")
+	if base == preview3DCacheSignature("v2", 1400, 1000, 2, "capture", "official-default") {
 		t.Fatalf("cache version should change signature")
 	}
-	if base == preview3DCacheSignature("v1", 1400, 1000, 2, "default") {
+	if base == preview3DCacheSignature("v1", 1400, 1000, 2, "default", "official-default") {
 		t.Fatalf("camera preset should change signature")
+	}
+	if base == preview3DCacheSignature("v1", 1400, 1000, 2, "capture", "full-body") {
+		t.Fatalf("camera profile should change signature")
 	}
 }
 

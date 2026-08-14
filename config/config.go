@@ -317,6 +317,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envDuration("HARUKI_PJSK_RENDER_3D_PREVIEW_TEMPORARY_CAPTURE_TTL", &cfg.PJSKRender.Preview3D.TemporaryCaptureTTL)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAPTURE_CACHE_VERSION", &cfg.PJSKRender.Preview3D.CaptureCacheVersion)
 	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PRESET", &cfg.PJSKRender.Preview3D.CameraPreset)
+	envStr("HARUKI_PJSK_RENDER_3D_PREVIEW_CAMERA_PROFILE", &cfg.PJSKRender.Preview3D.CameraProfile)
 	return nil
 }
 
@@ -470,6 +471,7 @@ type Preview3DConfig struct {
 	TemporaryCaptureTTL   time.Duration     `yaml:"temporary_capture_ttl"`
 	CaptureCacheVersion   string            `yaml:"capture_cache_version"`
 	CameraPreset          string            `yaml:"camera_preset"`
+	CameraProfile         string            `yaml:"camera_profile"`
 }
 
 // MySekaiCNWhitelistEntry defines a platform+group pair allowed to use

@@ -631,7 +631,7 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	if capturePayload["cameraPreset"] != "capture" {
 		t.Fatalf("unexpected capture camera preset: %v", capturePayload["cameraPreset"])
 	}
-	if capturePayload["cameraProfile"] != "official-default" {
+	if capturePayload["cameraProfile"] != "legacy-cloud" {
 		t.Fatalf("unexpected capture camera profile: %v", capturePayload["cameraProfile"])
 	}
 	staticPreviewPath := filepath.Join(assetRoot, "static_images", "pjsk_3d_preview", wantImageID+".png")

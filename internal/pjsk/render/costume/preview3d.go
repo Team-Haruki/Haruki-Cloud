@@ -1233,10 +1233,12 @@ func normalizePreview3DCameraPreset(value string) string {
 }
 
 func normalizePreview3DCameraProfile(value string) string {
-	if strings.EqualFold(strings.TrimSpace(value), "full-body") {
-		return "full-body"
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "official-default", "full-body", "legacy-cloud":
+		return strings.ToLower(strings.TrimSpace(value))
+	default:
+		return "legacy-cloud"
 	}
-	return "official-default"
 }
 
 func (r *preview3DRegistry) resolve(region string, costume3DID int) (preview3DSelection, error) {

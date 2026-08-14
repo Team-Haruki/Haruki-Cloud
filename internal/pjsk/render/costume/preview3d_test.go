@@ -613,6 +613,23 @@ func TestPreview3DCacheSignatureChangesWithVersionAndCamera(t *testing.T) {
 	if base == preview3DCacheSignature("v1", 1400, 1000, 2, "capture", "full-body") {
 		t.Fatalf("camera profile should change signature")
 	}
+	if base == preview3DCacheSignature("v1", 1400, 1000, 2, "capture", "legacy-cloud") {
+		t.Fatalf("legacy camera profile should change signature")
+	}
+}
+
+func TestNormalizePreview3DCameraProfile(t *testing.T) {
+	for input, want := range map[string]string{
+		"":                 "legacy-cloud",
+		"unknown":          "legacy-cloud",
+		"LEGACY-CLOUD":     "legacy-cloud",
+		"official-default": "official-default",
+		"full-body":        "full-body",
+	} {
+		if got := normalizePreview3DCameraProfile(input); got != want {
+			t.Fatalf("normalizePreview3DCameraProfile(%q) = %q, want %q", input, got, want)
+		}
+	}
 }
 
 func preview3DCompatibilityTestRegistry(rules []preview3DCompatibilityRule) *preview3DRegistry {

@@ -180,6 +180,32 @@ func TestBuildEventListRequestOrdersByStartAtAscending(t *testing.T) {
 	}
 }
 
+func TestBuildEventListRequestIncludesCardIDsForDrawing(t *testing.T) {
+	source := newTestEventSource(renderregion.JP)
+	eventInfo := &masterdata.Event{ID: 203, EventType: "marathon", Name: "Cards", AssetBundleName: "cards", StartAt: 100, AggregateAt: 200}
+	source.events = []*masterdata.Event{eventInfo}
+	source.eventsByID[eventInfo.ID] = eventInfo
+	source.cardsByEvent[eventInfo.ID] = []*masterdata.Card{
+		{ID: 1201, CharacterID: 1, Attr: "cool", CardRarityType: "rarity_4", AssetBundleName: "card_1201"},
+		{ID: 1202, CharacterID: 2, Attr: "pure", CardRarityType: "rarity_3", AssetBundleName: "card_1202"},
+	}
+
+	req, err := NewBuilder(source, assets.NewAssetHelper("", nil)).BuildEventListRequest(ListQuery{
+		Region:        renderregion.JP,
+		IncludePast:   true,
+		IncludeFuture: true,
+	})
+	if err != nil {
+		t.Fatalf("BuildEventListRequest failed: %v", err)
+	}
+	if len(req.EventInfo) != 1 || len(req.EventInfo[0].EventCards) != 2 {
+		t.Fatalf("unexpected event card payload: %+v", req.EventInfo)
+	}
+	if got := []int{req.EventInfo[0].EventCards[0].CardID, req.EventInfo[0].EventCards[1].CardID}; got[0] != 1201 || got[1] != 1202 {
+		t.Fatalf("event card ids = %v, want [1201 1202]", got)
+	}
+}
+
 func TestBuildEventListRequestBannerFilterOnlyKeepsBoxEvents(t *testing.T) {
 	source := newTestEventSource(renderregion.JP)
 	first := &masterdata.Event{ID: 101, EventType: "marathon", Name: "box-1", AssetBundleName: "e101", StartAt: 100, AggregateAt: 200}

@@ -82,6 +82,10 @@ func responseElectionCandidatesKey(identity string) string {
 	return responseElectionRedisKeyPrefix + "{" + identity + "}:candidates"
 }
 
+func responseElectionHistoryKey(identity string) string {
+	return responseElectionRedisKeyPrefix + "{" + identity + "}:history"
+}
+
 type responseElectionHashWriter interface {
 	Write([]byte) (int, error)
 }

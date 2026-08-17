@@ -227,6 +227,7 @@ func TestResponseElectionJoinIsIdempotentAfterAmbiguousRedisReply(t *testing.T) 
 		responseElectionCandidatesKey(identity),
 		rateLimitKey(request),
 		dedupKey(request),
+		responseElectionHistoryKey(identity),
 	}
 	const token = "same-admission-token"
 	const botID = "bot-owner"
@@ -241,6 +242,9 @@ func TestResponseElectionJoinIsIdempotentAfterAmbiguousRedisReply(t *testing.T) 
 			botID,
 			window.Milliseconds(),
 			dedupInFlightTTL.Milliseconds(),
+			0,
+			responseElectionReplayWindow.Milliseconds(),
+			(responseElectionReplayWindow + responseElectionRedisTimeout).Milliseconds(),
 		).Slice()
 		if err != nil {
 			t.Fatalf("join script: %v", err)
@@ -558,6 +562,151 @@ func TestResponseElectionReelectsWhenSelectedCandidateDisappears(t *testing.T) {
 	}
 	if got := string(decision.result.Response.JSONBody); got != "reelected-result" {
 		t.Fatalf("reelected result = %q, want reelected-result", got)
+	}
+}
+
+func TestResponseElectionCompletionRetainsDedupAndReplayHistory(t *testing.T) {
+	rig := newResponseElectionTestRig(t, 2, time.Second)
+	request := responseElectionTestRequest("completed-retention")
+	results := make(chan responseElectionTestOutcome, 2)
+	execute := func(context.Context) sharedCommandResult {
+		return responseElectionTestResult("retained-result", "", false)
+	}
+
+	rig.start(results, 0, request, "bot-a", execute)
+	rig.start(results, 1, request, "bot-b", execute)
+	rig.waitForCandidateCount(t, request, 2)
+	rig.waitForStateField(t, request, "ready", "1")
+	rig.advancePastWindow()
+	assertSingleVisibleResponseElectionOutcome(t, collectResponseElectionOutcomes(t, results, 2))
+
+	identity := responseElectionIdentity(request)
+	stateTTL, err := rig.clients[0].PTTL(context.Background(), responseElectionStateKey(identity)).Result()
+	if err != nil {
+		t.Fatalf("state PTTL: %v", err)
+	}
+	if stateTTL < responseElectionCompletedTTL-time.Second || stateTTL > responseElectionCompletedTTL {
+		t.Fatalf("completed state TTL = %s, want approximately %s", stateTTL, responseElectionCompletedTTL)
+	}
+	historyKey := responseElectionHistoryKey(identity)
+	if candidates, err := rig.clients[0].Get(context.Background(), historyKey).Result(); err != nil || candidates != "2" {
+		t.Fatalf("history candidates = %q (%v), want 2", candidates, err)
+	}
+	historyTTL, err := rig.clients[0].PTTL(context.Background(), historyKey).Result()
+	if err != nil {
+		t.Fatalf("history PTTL: %v", err)
+	}
+	if historyTTL < responseElectionHistoryTTL-time.Second || historyTTL > responseElectionHistoryTTL {
+		t.Fatalf("history TTL = %s, want approximately %s", historyTTL, responseElectionHistoryTTL)
+	}
+}
+
+func TestResponseElectionReplayHistoryRequiresTwoBots(t *testing.T) {
+	server := miniredis.RunT(t)
+	client := redis.NewClient(&redis.Options{Addr: server.Addr()})
+	t.Cleanup(func() { _ = client.Close() })
+	request := responseElectionTestRequest("replay-quorum")
+	identity := responseElectionIdentity(request)
+	keys := []string{
+		responseElectionStateKey(identity),
+		responseElectionCandidatesKey(identity),
+		rateLimitKey(request),
+		dedupKey(request),
+		responseElectionHistoryKey(identity),
+	}
+	if err := client.Set(context.Background(), keys[4], "2", responseElectionHistoryTTL).Err(); err != nil {
+		t.Fatalf("seed history: %v", err)
+	}
+
+	join := func(token, botID string) (int64, int64) {
+		t.Helper()
+		result, err := joinResponseElectionScript.Run(
+			context.Background(),
+			client,
+			keys,
+			token,
+			botID,
+			time.Second.Milliseconds(),
+			dedupInFlightTTL.Milliseconds(),
+			2,
+			responseElectionReplayWindow.Milliseconds(),
+			(responseElectionReplayWindow + responseElectionRedisTimeout).Milliseconds(),
+		).Slice()
+		if err != nil {
+			t.Fatalf("join %s: %v", botID, err)
+		}
+		status, err := responseElectionInt64(result[0])
+		if err != nil {
+			t.Fatalf("join %s status: %v", botID, err)
+		}
+		remaining, err := responseElectionInt64(result[1])
+		if err != nil {
+			t.Fatalf("join %s remaining: %v", botID, err)
+		}
+		return status, remaining
+	}
+
+	status, remaining := join("token-a", "bot-a")
+	if status != 3 || remaining != responseElectionReplayWindow.Milliseconds() {
+		t.Fatalf("first replay join = (%d, %d), want pending replay window", status, remaining)
+	}
+	if pending, err := client.HGet(context.Background(), keys[0], "replay_pending").Result(); err != nil || pending != "1" {
+		t.Fatalf("replay pending = %q (%v), want 1", pending, err)
+	}
+
+	status, remaining = join("token-b", "bot-b")
+	if status != int64(responseElectionExecutor) || remaining != time.Second.Milliseconds() {
+		t.Fatalf("second replay join = (%d, %d), want promoted executor", status, remaining)
+	}
+	if count, err := client.HLen(context.Background(), keys[1]).Result(); err != nil || count != 2 {
+		t.Fatalf("promoted candidate count = %d (%v), want 2", count, err)
+	}
+}
+
+func TestResponseElectionDeferredHandoffReelectsBeforeCommit(t *testing.T) {
+	rig := newResponseElectionTestRig(t, 2, time.Second)
+	request := responseElectionTestRequest("deferred-handoff")
+	results := make(chan responseElectionTestOutcome, 2)
+	execute := func(context.Context) sharedCommandResult {
+		return responseElectionTestResult("shared-result", "", false)
+	}
+	start := func(coordinator int, botID string) {
+		go func() {
+			ctx, trace := commandtrace.WithTrace(context.Background())
+			decision := rig.coordinators[coordinator].Coordinate(
+				ctx,
+				responseElectionRequest{Request: request, BotID: botID, DeferHandoff: true},
+				execute,
+			)
+			results <- responseElectionTestOutcome{botID: botID, decision: decision, trace: trace.Snapshot()}
+		}()
+	}
+
+	start(0, "bot-a")
+	start(1, "bot-b")
+	rig.waitForCandidateCount(t, request, 2)
+	rig.waitForStateField(t, request, "ready", "1")
+	rig.advancePastWindow()
+
+	first := collectResponseElectionOutcomes(t, results, 1)[0]
+	if !first.decision.visible || first.decision.handoff == nil {
+		t.Fatalf("first handoff decision = %+v, want pending visible handoff", first.decision)
+	}
+	first.decision.handoff.Abort()
+
+	second := collectResponseElectionOutcomes(t, results, 1)[0]
+	if !second.decision.visible || second.decision.handoff == nil || second.botID == first.botID {
+		t.Fatalf("reelected handoff decision = %+v bot=%s, first=%s", second.decision, second.botID, first.botID)
+	}
+	if err := second.decision.handoff.Complete(context.Background()); err != nil {
+		t.Fatalf("complete reelected handoff: %v", err)
+	}
+	identity := responseElectionIdentity(request)
+	if closed, err := rig.clients[0].HGet(context.Background(), responseElectionStateKey(identity), "closed").Result(); err != nil || closed != "1" {
+		t.Fatalf("completed handoff closed = %q (%v), want 1", closed, err)
+	}
+	if candidates, err := rig.clients[0].Get(context.Background(), responseElectionHistoryKey(identity)).Result(); err != nil || candidates != "2" {
+		t.Fatalf("handoff history candidates = %q (%v), want peak 2", candidates, err)
 	}
 }
 

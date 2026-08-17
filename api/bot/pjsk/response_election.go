@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,6 +28,9 @@ const (
 	responseElectionRedisTimeout  = 500 * time.Millisecond
 	responseElectionResultTTL     = 30 * time.Second
 	responseElectionStateTTL      = dedupInFlightTTL + responseElectionResultTTL
+	responseElectionCompletedTTL  = 15 * time.Minute
+	responseElectionHistoryTTL    = 6 * time.Hour
+	responseElectionReplayWindow  = 300 * time.Millisecond
 	responseElectionPublishBudget = 3 * time.Second
 	responseElectionMaxAttempts   = 3
 	responseElectionRetryDelay    = 25 * time.Millisecond
@@ -49,6 +53,30 @@ if redis.call("EXISTS", KEYS[1]) == 0 then
     if redis.call("EXISTS", KEYS[3]) ~= 0 then
         return {0, 0}
     end
+
+    local history_candidates = tonumber(redis.call("GET", KEYS[5]) or "0")
+    local expected_candidates = tonumber(ARGV[5] or "0")
+    if history_candidates > 1 and expected_candidates > 1 then
+        if not redis.call("SET", KEYS[4], ARGV[1], "PX", ARGV[7], "NX") then
+            return {0, 0}
+        end
+        local replay_deadline_ms = now_ms + tonumber(ARGV[6])
+		redis.call("HSET", KEYS[1],
+		    "owner", ARGV[1],
+		    "executor_bot", "",
+		    "seed", ARGV[1],
+		    "candidate_peak", "1",
+		    "deadline_ms", replay_deadline_ms,
+            "replay_pending", "1",
+            "ready", "0",
+            "closed", "0",
+            "consumed", "0")
+        redis.call("HSET", KEYS[2], ARGV[2], ARGV[1])
+        redis.call("PEXPIRE", KEYS[1], ARGV[7])
+        redis.call("PEXPIRE", KEYS[2], ARGV[7])
+        return {3, tonumber(ARGV[6])}
+    end
+
     if not redis.call("SET", KEYS[4], ARGV[1], "PX", ARGV[4], "NX") then
         return {0, 0}
     end
@@ -61,10 +89,11 @@ if redis.call("EXISTS", KEYS[1]) == 0 then
         window_ms = 0
     end
     local deadline_ms = now_ms + window_ms
-    redis.call("HSET", KEYS[1],
-        "owner", ARGV[1],
-        "executor_bot", ARGV[2],
-        "seed", ARGV[1],
+	redis.call("HSET", KEYS[1],
+	    "owner", ARGV[1],
+	    "executor_bot", ARGV[2],
+	    "seed", ARGV[1],
+	    "candidate_peak", "1",
         "deadline_ms", deadline_ms,
         "ready", "0",
         "closed", "0",
@@ -86,10 +115,41 @@ if existing_token then
     end
     return {2, math.max(0, deadline_ms - now_ms)}
 end
+
+if redis.call("HGET", KEYS[1], "replay_pending") == "1" then
+    if now_ms >= deadline_ms then
+        return {0, 0}
+    end
+	redis.call("HSET", KEYS[2], ARGV[2], ARGV[1])
+	local candidate_count = redis.call("HLEN", KEYS[2])
+	if candidate_count > tonumber(redis.call("HGET", KEYS[1], "candidate_peak") or "0") then
+	    redis.call("HSET", KEYS[1], "candidate_peak", candidate_count)
+	end
+	if candidate_count < 2 then
+        return {3, deadline_ms - now_ms}
+    end
+
+    local window_ms = tonumber(ARGV[3])
+    redis.call("SET", KEYS[4], ARGV[1], "PX", ARGV[4], "XX")
+    redis.call("HSET", KEYS[1],
+        "owner", ARGV[1],
+        "executor_bot", ARGV[2],
+        "seed", ARGV[1],
+        "deadline_ms", now_ms + window_ms,
+        "replay_pending", "0")
+    redis.call("PEXPIRE", KEYS[1], ARGV[4])
+    redis.call("PEXPIRE", KEYS[2], ARGV[4])
+    return {1, window_ms}
+end
+
 if redis.call("HGET", KEYS[1], "closed") == "1" or now_ms >= deadline_ms then
     return {0, 0}
 end
 redis.call("HSET", KEYS[2], ARGV[2], ARGV[1])
+local candidate_count = redis.call("HLEN", KEYS[2])
+if candidate_count > tonumber(redis.call("HGET", KEYS[1], "candidate_peak") or "0") then
+    redis.call("HSET", KEYS[1], "candidate_peak", candidate_count)
+end
 return {2, deadline_ms - now_ms}
 `)
 
@@ -216,23 +276,48 @@ local result = redis.call("HGET", KEYS[1], "result")
 if not result then
     return {2}
 end
-redis.call("HSET", KEYS[1],
-    "consumed", "1",
-    "consumed_bot", ARGV[2],
-    "consumed_token", ARGV[1],
-    "closed", "1")
-redis.call("SET", KEYS[3], "1", "PX", ARGV[3])
-release_legacy_lock()
-redis.call("PEXPIRE", KEYS[1], ARGV[4])
-redis.call("PEXPIRE", KEYS[2], ARGV[4])
--- Snapshot the joined candidate set atomically at consumption time so the
--- winner can reconcile the group roster without racing follower cleanup.
 local joined = {}
 local candidate_fields = redis.call("HGETALL", KEYS[2])
 for index = 1, #candidate_fields, 2 do
     joined[#joined + 1] = candidate_fields[index]
 end
 return {1, result, redis.call("HGET", KEYS[1], "result_serialize_nanos") or "0", table.concat(joined, ",")}
+`)
+
+var completeResponseElectionScript = redis.NewScript(`
+if redis.call("EXISTS", KEYS[1]) == 0 then
+    return 0
+end
+if redis.call("HGET", KEYS[1], "closed") == "1" then
+    if redis.call("HGET", KEYS[1], "consumed_token") == ARGV[1] and
+       redis.call("HGET", KEYS[1], "consumed_bot") == ARGV[2] then
+        return 1
+    end
+    return 0
+end
+if redis.call("HGET", KEYS[1], "winner_token") ~= ARGV[1] or
+   redis.call("HGET", KEYS[1], "winner_bot") ~= ARGV[2] then
+    return 0
+end
+
+redis.call("HSET", KEYS[1],
+    "consumed", "1",
+    "consumed_bot", ARGV[2],
+    "consumed_token", ARGV[1],
+    "closed", "1")
+redis.call("SET", KEYS[3], "1", "PX", ARGV[3])
+local owner = redis.call("HGET", KEYS[1], "owner")
+if owner and redis.call("GET", KEYS[4]) == owner then
+    redis.call("DEL", KEYS[4])
+end
+local candidate_count = tonumber(redis.call("HGET", KEYS[1], "candidate_peak") or "0")
+if candidate_count == 0 then
+    candidate_count = redis.call("HLEN", KEYS[2])
+end
+redis.call("SET", KEYS[5], tostring(candidate_count), "PX", ARGV[5])
+redis.call("PEXPIRE", KEYS[1], ARGV[4])
+redis.call("PEXPIRE", KEYS[2], ARGV[4])
+return 1
 `)
 
 var leaveResponseElectionScript = redis.NewScript(`
@@ -262,6 +347,7 @@ type responseElectionLease struct {
 	candidatesKey string
 	rateKey       string
 	legacyLockKey string
+	historyKey    string
 	token         string
 	botID         string
 	deadline      time.Time
@@ -306,14 +392,25 @@ type responseElectionDecision struct {
 	expectedCandidates int
 	windowSkipped      bool
 	// joinedBots is the candidate set snapshot taken atomically inside the
-	// decide script at consumption time; only the selected participant
+	// decide script when the winner is claimed; only the selected participant
 	// receives it, for roster reconciliation.
 	joinedBots []string
+	handoff    *responseElectionHandoff
 }
 
 type responseElectionRequest struct {
-	Request BotCommandRequest
-	BotID   string
+	Request      BotCommandRequest
+	BotID        string
+	DeferHandoff bool
+}
+
+type responseElectionHandoff struct {
+	coordinator *ResponseElectionCoordinator
+	lease       responseElectionLease
+	request     responseElectionRequest
+	joinedBots  []string
+	once        sync.Once
+	err         error
 }
 
 type commandResponseElection interface {
@@ -452,6 +549,14 @@ func (c *ResponseElectionCoordinator) Coordinate(
 		if ctx.Err() != nil || c.worker.Err() != nil {
 			return responseElectionDecision{reason: "canceled"}
 		}
+		if strings.TrimSpace(request.Request.PlatformGroupID) != "" {
+			responseElectionFailureLogger.Warn("response election admission failed closed",
+				"event", "response_election_join",
+				"outcome", "error",
+				"error_type", fmt.Sprintf("%T", err),
+			)
+			return responseElectionDecision{reason: "admission_fail_closed"}
+		}
 		responseElectionFailureLogger.Warn("response election admission failed open",
 			"event", "response_election_join",
 			"outcome", "error",
@@ -473,19 +578,33 @@ func (c *ResponseElectionCoordinator) Coordinate(
 			reason:  "direct",
 		}
 	}
-	defer c.leave(lease)
+	leaveLease := true
+	defer func() {
+		if leaveLease {
+			c.leave(lease)
+		}
+	}()
 
 	var executorResult <-chan responseElectionExecutorResult
 	if lease.role == responseElectionExecutor {
 		executorResult = c.startExecutor(ctx, lease, execute)
 	}
-	decision := c.await(ctx, lease, executorResult)
+	decision := c.await(ctx, lease, executorResult, request.DeferHandoff)
 	decision.expectedCandidates = lease.expectedCandidates
 	decision.windowSkipped = lease.windowSkipped
-	if decision.reason == "selected" && !lease.windowSkipped && len(decision.joinedBots) > 0 {
+	if decision.reason == "selected" && request.DeferHandoff {
+		leaveLease = false
+		decision.handoff = &responseElectionHandoff{
+			coordinator: c,
+			lease:       lease,
+			request:     request,
+			joinedBots:  slices.Clone(decision.joinedBots),
+		}
+	}
+	if decision.reason == "selected" && !request.DeferHandoff && c.roster != nil && !lease.windowSkipped && len(decision.joinedBots) > 0 {
 		// Only full-window elections carry demotion evidence: an absent roster
 		// member had the whole window to join and did not. The joined set was
-		// snapshotted atomically at consumption, so follower cleanup cannot
+		// snapshotted atomically at winner claim, so follower cleanup cannot
 		// race it. Zero-window elections skip reconciliation entirely, and so
 		// do consumed-replay decides (retry after a committed-but-lost reply):
 		// those return no snapshot, and a genuine fresh consume always
@@ -653,6 +772,7 @@ func (c *ResponseElectionCoordinator) join(ctx context.Context, request response
 	candidatesKey := responseElectionCandidatesKey(identity)
 	rateKey := rateLimitKey(request.Request)
 	legacyLockKey := dedupKey(request.Request)
+	historyKey := responseElectionHistoryKey(identity)
 	expected := c.roster.expectedCandidates(c.worker, request.Request.Platform, request.Request.PlatformGroupID, botID)
 
 	operationCtx, cancel := context.WithTimeout(ctx, responseElectionRedisTimeout)
@@ -660,12 +780,14 @@ func (c *ResponseElectionCoordinator) join(ctx context.Context, request response
 	result, err := joinResponseElectionScript.Run(
 		operationCtx,
 		c.redis,
-		[]string{stateKey, candidatesKey, rateKey, legacyLockKey},
+		[]string{stateKey, candidatesKey, rateKey, legacyLockKey, historyKey},
 		token,
 		botID,
 		c.window.Milliseconds(),
 		c.inFlightTTL().Milliseconds(),
 		expected,
+		responseElectionReplayWindow.Milliseconds(),
+		(responseElectionReplayWindow + responseElectionRedisTimeout).Milliseconds(),
 	).Slice()
 	finishJoin()
 	cancel()
@@ -692,6 +814,7 @@ func (c *ResponseElectionCoordinator) join(ctx context.Context, request response
 		candidatesKey:      candidatesKey,
 		rateKey:            rateKey,
 		legacyLockKey:      legacyLockKey,
+		historyKey:         historyKey,
 		token:              token,
 		botID:              botID,
 		deadline:           c.now().Add(time.Duration(remainingMS) * time.Millisecond),
@@ -705,7 +828,7 @@ func (c *ResponseElectionCoordinator) join(ctx context.Context, request response
 	switch status {
 	case 1:
 		lease.role = responseElectionExecutor
-	case 2:
+	case 2, 3:
 		lease.role = responseElectionFollower
 	default:
 		lease.role = responseElectionRejected
@@ -820,6 +943,7 @@ func (c *ResponseElectionCoordinator) await(
 	ctx context.Context,
 	lease responseElectionLease,
 	executorResult <-chan responseElectionExecutorResult,
+	deferHandoff bool,
 ) responseElectionDecision {
 	waitCtx, cancel := context.WithTimeout(ctx, c.inFlightTTL())
 	defer cancel()
@@ -854,7 +978,14 @@ func (c *ResponseElectionCoordinator) await(
 	ticker := time.NewTicker(c.pollInterval)
 	defer ticker.Stop()
 	for {
-		decision, waiting, err := c.decide(waitCtx, lease)
+		var decision responseElectionDecision
+		var waiting bool
+		var err error
+		if deferHandoff {
+			decision, waiting, err = c.claim(waitCtx, lease)
+		} else {
+			decision, waiting, err = c.decide(waitCtx, lease)
+		}
 		if err == nil && !waiting {
 			return decision
 		}
@@ -891,6 +1022,17 @@ func (c *ResponseElectionCoordinator) executorPublishFailureDecision(outcome res
 }
 
 func (c *ResponseElectionCoordinator) decide(ctx context.Context, lease responseElectionLease) (responseElectionDecision, bool, error) {
+	decision, waiting, err := c.claim(ctx, lease)
+	if err != nil || waiting || !decision.visible {
+		return decision, waiting, err
+	}
+	if err := c.complete(ctx, lease); err != nil {
+		return responseElectionDecision{reason: "completion_unknown"}, false, err
+	}
+	return decision, false, nil
+}
+
+func (c *ResponseElectionCoordinator) claim(ctx context.Context, lease responseElectionLease) (responseElectionDecision, bool, error) {
 	operationCtx, cancel := context.WithTimeout(ctx, responseElectionRedisTimeout)
 	finishDecide := commandtrace.MeasureOperation(ctx, "response_election.redis_decide")
 	result, err := decideResponseElectionScript.Run(
@@ -955,6 +1097,57 @@ func (c *ResponseElectionCoordinator) decide(ctx context.Context, lease response
 	default:
 		return responseElectionDecision{}, true, nil
 	}
+}
+
+func (c *ResponseElectionCoordinator) complete(ctx context.Context, lease responseElectionLease) error {
+	operationCtx, cancel := context.WithTimeout(ctx, responseElectionRedisTimeout)
+	defer cancel()
+	completed, err := completeResponseElectionScript.Run(
+		operationCtx,
+		c.redis,
+		[]string{lease.stateKey, lease.candidatesKey, lease.rateKey, lease.legacyLockKey, lease.historyKey},
+		lease.token,
+		lease.botID,
+		rateLimitTTL.Milliseconds(),
+		responseElectionCompletedTTL.Milliseconds(),
+		responseElectionHistoryTTL.Milliseconds(),
+	).Int64()
+	if err != nil {
+		return err
+	}
+	if completed != 1 {
+		return errors.New("response election handoff owner changed before completion")
+	}
+	return nil
+}
+
+func (h *responseElectionHandoff) Complete(ctx context.Context) error {
+	if h == nil || h.coordinator == nil {
+		return nil
+	}
+	h.once.Do(func() {
+		h.err = h.coordinator.complete(ctx, h.lease)
+		if h.err == nil && h.coordinator.roster != nil && !h.lease.windowSkipped && len(h.joinedBots) > 0 {
+			h.coordinator.roster.reconcile(
+				h.coordinator.worker,
+				h.request.Request.Platform,
+				h.request.Request.PlatformGroupID,
+				h.joinedBots,
+				h.lease.botID,
+			)
+		}
+		h.coordinator.leave(h.lease)
+	})
+	return h.err
+}
+
+func (h *responseElectionHandoff) Abort() {
+	if h == nil || h.coordinator == nil {
+		return
+	}
+	h.once.Do(func() {
+		h.coordinator.leave(h.lease)
+	})
 }
 
 func (c *ResponseElectionCoordinator) inFlightTTL() time.Duration {

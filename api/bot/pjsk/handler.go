@@ -36,6 +36,8 @@ import (
 
 const botRouteBase = "/api/v2/bot"
 
+const responseElectionHandoffLocalKey = "response_election_handoff"
+
 // BotRouteDispatchers owns request-path background work registered with the
 // PJSK routes. Close is idempotent and flushes the Redis guard cleanup before
 // command analytics, so dedup leases are not left behind during shutdown.
@@ -147,6 +149,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if noiseKeyPair != nil {
 		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
 	}
+	pjsk.Use(responseElectionHandoffMiddleware)
 	registerBirthdayMonitorRoutes(pjsk, app, renderApp, guard)
 	routes := commandregistry.ListBotRoutes()
 	hasMysekaiBlueprintRoute := false
@@ -232,7 +235,7 @@ func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, 
 		}
 		finishValidation()
 		botID := strings.Clone(strings.TrimSpace(c.Params("botId")))
-		electionRequest := responseElectionRequest{Request: req, BotID: botID}
+		electionRequest := responseElectionRequest{Request: req, BotID: botID, DeferHandoff: true}
 		finishElection := commandtrace.MeasurePhase(requestCtx, "response_election")
 		decision := coordinateCommandResponse(requestCtx, election, electionRequest, func(executionCtx context.Context) sharedCommandResult {
 			return executeSharedBotCommand(executionCtx, renderApp, expectedPath, traceCommand, allowCompatReroute, req, botID)
@@ -249,6 +252,9 @@ func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, 
 				setCommandTraceOutcome(c, "deduplicated", nil)
 			}
 			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
+		}
+		if decision.handoff != nil {
+			c.Locals(responseElectionHandoffLocalKey, decision.handoff)
 		}
 
 		metadata := decision.result.Metadata
@@ -279,6 +285,43 @@ func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, 
 		}
 		return writeEncodedBotResponse(c, decision.result.Response)
 	}
+}
+
+func responseElectionHandoffMiddleware(c fiber.Ctx) (err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			if handoff, ok := c.Locals(responseElectionHandoffLocalKey).(*responseElectionHandoff); ok {
+				handoff.Abort()
+			}
+			panic(recovered)
+		}
+	}()
+
+	err = c.Next()
+	handoff, ok := c.Locals(responseElectionHandoffLocalKey).(*responseElectionHandoff)
+	if !ok || handoff == nil {
+		return err
+	}
+	if err != nil {
+		handoff.Abort()
+		return err
+	}
+
+	completionCtx, cancel := context.WithTimeout(logger.DetachedContext(c.Context()), responseElectionRedisTimeout)
+	completionErr := handoff.Complete(completionCtx)
+	cancel()
+	if completionErr == nil {
+		return nil
+	}
+
+	responseElectionFailureLogger.WarnContext(c.Context(), "response election handoff failed closed",
+		"event", "response_election_handoff",
+		"outcome", "error",
+		"error_type", fmt.Sprintf("%T", completionErr),
+	)
+	setCommandTraceOutcome(c, "deduplicated", nil)
+	commandtrace.SetErrorType(c.Context(), "response_election_handoff")
+	return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
 }
 
 func executeSharedBotCommand(

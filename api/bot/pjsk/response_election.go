@@ -28,7 +28,11 @@ const (
 	responseElectionRedisTimeout  = 500 * time.Millisecond
 	responseElectionResultTTL     = 30 * time.Second
 	responseElectionStateTTL      = dedupInFlightTTL + responseElectionResultTTL
-	responseElectionCompletedTTL  = 15 * time.Minute
+	// Requests do not carry a platform event ID, so retaining a completed
+	// content identity for minutes also suppresses legitimate repeated
+	// commands. Keep only enough time to absorb immediate duplicate delivery;
+	// the longer replay history below still protects multi-bot retries.
+	responseElectionCompletedTTL  = 5 * time.Second
 	responseElectionHistoryTTL    = 6 * time.Hour
 	responseElectionReplayWindow  = 300 * time.Millisecond
 	responseElectionPublishBudget = 3 * time.Second

@@ -601,6 +601,53 @@ func TestResponseElectionCompletionRetainsDedupAndReplayHistory(t *testing.T) {
 	}
 }
 
+func TestResponseElectionAllowsRepeatedCommandAfterCompletedWindow(t *testing.T) {
+	server := miniredis.RunT(t)
+	baseTime := time.Date(2026, time.July, 15, 18, 0, 0, 0, time.UTC)
+	server.SetTime(baseTime)
+	client := redis.NewClient(&redis.Options{Addr: server.Addr()})
+	coordinator := NewResponseElectionCoordinator(context.Background(), client, time.Second)
+	t.Cleanup(func() {
+		coordinator.Close()
+		_ = client.Close()
+	})
+
+	request := responseElectionTestRequest("repeat-after-completion")
+	first, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-a"})
+	if err != nil || first.role != responseElectionExecutor {
+		t.Fatalf("first join = %+v, err=%v, want executor", first, err)
+	}
+	if err := coordinator.publish(
+		context.Background(),
+		first,
+		responseElectionTestResult("first-result", first.botID, false),
+	); err != nil {
+		t.Fatalf("publish first result: %v", err)
+	}
+	server.SetTime(baseTime.Add(coordinator.window + time.Millisecond))
+	decision, waiting, err := coordinator.decide(context.Background(), first)
+	if err != nil || waiting || !decision.visible {
+		t.Fatalf("first decision = %+v, waiting=%v, err=%v", decision, waiting, err)
+	}
+	if err := coordinator.complete(context.Background(), first); err != nil {
+		t.Fatalf("complete first election: %v", err)
+	}
+
+	immediate, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-b"})
+	if err != nil || immediate.role != responseElectionRejected {
+		t.Fatalf("immediate repeat = %+v, err=%v, want rejected", immediate, err)
+	}
+
+	server.FastForward(responseElectionCompletedTTL + time.Millisecond)
+	repeated, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-b"})
+	if err != nil || repeated.role != responseElectionExecutor {
+		t.Fatalf("repeat after completed window = %+v, err=%v, want executor", repeated, err)
+	}
+	if candidates, err := client.Get(context.Background(), repeated.historyKey).Result(); err != nil || candidates != "1" {
+		t.Fatalf("replay history = %q (%v), want retained single-candidate history", candidates, err)
+	}
+}
+
 func TestResponseElectionReplayHistoryRequiresTwoBots(t *testing.T) {
 	server := miniredis.RunT(t)
 	client := redis.NewClient(&redis.Options{Addr: server.Addr()})

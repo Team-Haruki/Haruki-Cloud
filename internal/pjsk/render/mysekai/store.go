@@ -10,9 +10,10 @@ import (
 type localMasterdataStore struct {
 	dirs []string
 
-	mu       sync.Mutex
-	lists    map[string][]map[string]any
-	mapsByID map[string]map[int]map[string]any
+	mu         sync.Mutex
+	lists      map[string][]map[string]any
+	mapsByID   map[string]map[int]map[string]any
+	generation uint64
 }
 
 func newLocalMasterdataStore(dirs ...string) *localMasterdataStore {
@@ -42,6 +43,17 @@ func (s *localMasterdataStore) Configured() bool {
 	return s != nil && len(s.dirs) > 0
 }
 
+func (s *localMasterdataStore) resetCache() {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	s.lists = make(map[string][]map[string]any)
+	s.mapsByID = make(map[string]map[int]map[string]any)
+	s.generation++
+	s.mu.Unlock()
+}
+
 func (s *localMasterdataStore) loadList(filename string) []map[string]any {
 	if s == nil || !s.Configured() {
 		return nil
@@ -52,6 +64,7 @@ func (s *localMasterdataStore) loadList(filename string) []map[string]any {
 		s.mu.Unlock()
 		return cached
 	}
+	generation := s.generation
 	s.mu.Unlock()
 
 	var data []byte
@@ -74,6 +87,14 @@ func (s *localMasterdataStore) loadList(filename string) []map[string]any {
 	}
 
 	s.mu.Lock()
+	if generation != s.generation {
+		s.mu.Unlock()
+		return s.loadList(filename)
+	}
+	if cached, ok := s.lists[filename]; ok {
+		s.mu.Unlock()
+		return cached
+	}
 	s.lists[filename] = items
 	s.mu.Unlock()
 	return items
@@ -89,6 +110,7 @@ func (s *localMasterdataStore) loadMapByID(filename string) map[int]map[string]a
 		s.mu.Unlock()
 		return cached
 	}
+	generation := s.generation
 	s.mu.Unlock()
 
 	items := s.loadList(filename)
@@ -102,6 +124,14 @@ func (s *localMasterdataStore) loadMapByID(filename string) map[int]map[string]a
 	}
 
 	s.mu.Lock()
+	if generation != s.generation {
+		s.mu.Unlock()
+		return s.loadMapByID(filename)
+	}
+	if cached, ok := s.mapsByID[filename]; ok {
+		s.mu.Unlock()
+		return cached
+	}
 	s.mapsByID[filename] = result
 	s.mu.Unlock()
 	return result

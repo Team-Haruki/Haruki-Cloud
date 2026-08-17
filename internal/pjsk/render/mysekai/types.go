@@ -81,6 +81,10 @@ type contextualMasterdataSource interface {
 	WithContext(ctx context.Context) masterdataSource
 }
 
+type resettableMasterdataSource interface {
+	resetCache()
+}
+
 // ── Query types ─────────────────────────────────────────────────────────────
 
 type ResourceQuery struct {

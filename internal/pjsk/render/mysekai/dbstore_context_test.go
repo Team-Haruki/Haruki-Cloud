@@ -111,3 +111,36 @@ func TestDBMasterdataStoreContextClonesShareCacheSafely(t *testing.T) {
 		}
 	}
 }
+
+func TestControllerResetMasterdataCacheReloadsAllDBViews(t *testing.T) {
+	store := newTestDBMasterdataStore(t)
+	resolver := &masterdataResolver{cache: map[string]masterdataSource{"jp": store}}
+	controller := &Controller{masterdata: store, resolver: resolver}
+
+	items := store.loadList("musics.json")
+	byID := store.loadMapByID("musics.json")
+	if got := stringValue(items[0]["title"]); got != "Test Song" {
+		t.Fatalf("initial list title = %q", got)
+	}
+	if got := stringValue(byID[1]["title"]); got != "Test Song" {
+		t.Fatalf("initial map title = %q", got)
+	}
+
+	if _, err := store.db.Exec(`UPDATE musics SET title = 'Updated Song' WHERE game_id = 1`); err != nil {
+		t.Fatalf("update music: %v", err)
+	}
+	if got := stringValue(store.loadList("musics.json")[0]["title"]); got != "Test Song" {
+		t.Fatalf("cache unexpectedly refreshed before reset: %q", got)
+	}
+
+	controller.ResetMasterdataCache()
+
+	items = store.loadList("musics.json")
+	byID = store.loadMapByID("musics.json")
+	if got := stringValue(items[0]["title"]); got != "Updated Song" {
+		t.Fatalf("reloaded list title = %q", got)
+	}
+	if got := stringValue(byID[1]["title"]); got != "Updated Song" {
+		t.Fatalf("reloaded map title = %q", got)
+	}
+}

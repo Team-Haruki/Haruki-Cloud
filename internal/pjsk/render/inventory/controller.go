@@ -30,6 +30,14 @@ func NewController(
 	}
 }
 
+// ResetMasterdataCache invalidates all region-specific inventory masterdata.
+func (c *Controller) ResetMasterdataCache() {
+	if c == nil || c.masterdata == nil {
+		return
+	}
+	c.masterdata.resetCache()
+}
+
 func (c *Controller) WithContext(ctx context.Context) *Controller {
 	if c == nil {
 		return nil

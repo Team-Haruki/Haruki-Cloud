@@ -1,6 +1,10 @@
 package provider
 
-import "haruki-cloud/internal/pjsk/render/masterdata"
+import (
+	"time"
+
+	"haruki-cloud/internal/pjsk/render/masterdata"
+)
 
 func (s *localStore) ResetCache() {
 	if s == nil {
@@ -11,7 +15,7 @@ func (s *localStore) ResetCache() {
 	s.mu.Unlock()
 }
 
-func (p *LocalProvider) ResetLocalMasterdataCache() {
+func (p *LocalProvider) ResetMasterdataCache() {
 	if p == nil {
 		return
 	}
@@ -30,15 +34,121 @@ func (p *LocalProvider) ResetLocalMasterdataCache() {
 	p.playerFrames.reset()
 }
 
-func (p *DatabaseProvider) ResetLocalMasterdataCache() {
+func (p *DatabaseProvider) ResetMasterdataCache() {
 	if p == nil {
 		return
 	}
+	p.cards.resetMasterdataCache()
+	p.characters.resetMasterdataCache()
+	p.skills.resetMasterdataCache()
+	p.gachas.resetMasterdataCache()
+	p.stamps.resetMasterdataCache()
+	p.playerFrames.resetMasterdataCache()
 	p.honors.resetLocalMasterdataCache()
 	p.education.resetLocalMasterdataCache()
 	p.musics.resetLocalMasterdataCache()
 	p.events.resetLocalMasterdataCache()
 	p.mysekai.resetLocalMasterdataCache()
+}
+
+func (p *dbCardProvider) resetMasterdataCache() {
+	if p == nil {
+		return
+	}
+	p.init()
+	p.cardMu.Lock()
+	p.cardCache = make(map[int]*masterdata.Card)
+	p.cardCachedAt = make(map[int]time.Time)
+	p.cardMu.Unlock()
+	p.episodeMu.Lock()
+	p.episodesByCard = make(map[int][]*masterdata.CardEpisode)
+	p.episodesLoaded = false
+	p.episodesLoadedAt = time.Time{}
+	p.episodeMu.Unlock()
+	p.supplyMu.Lock()
+	p.supplyByID = make(map[int]string)
+	p.supplyMu.Unlock()
+	p.worldLink3Mu.Lock()
+	p.worldLink3ByCard = make(map[int]bool)
+	p.worldLink3Loaded = false
+	p.worldLink3LoadedAt = time.Time{}
+	p.worldLink3Mu.Unlock()
+	p.gachaMu.Lock()
+	p.gachaByCard = make(map[int]*masterdata.Gacha)
+	p.gachaCache = make(map[int]*masterdata.Gacha)
+	p.gachaMu.Unlock()
+	p.costumeMu.Lock()
+	p.costumeByCard = make(map[int][]*masterdata.Costume3d)
+	p.costumeMu.Unlock()
+}
+
+func (p *dbCharacterProvider) resetMasterdataCache() {
+	if p == nil {
+		return
+	}
+	p.init()
+	p.charMu.Lock()
+	p.charCache = make(map[int]*masterdata.Character)
+	p.charMu.Unlock()
+	p.unitMu.Lock()
+	p.unitCache = make(map[int]*masterdata.GameCharacterUnit)
+	p.unitMu.Unlock()
+	p.colorMu.Lock()
+	p.colorCache = make(map[int]string)
+	p.colorMu.Unlock()
+}
+
+func (p *dbSkillProvider) resetMasterdataCache() {
+	if p == nil {
+		return
+	}
+	p.init()
+	p.mu.Lock()
+	p.cache = make(map[int]*masterdata.Skill)
+	p.cacheLoadedAt = make(map[int]time.Time)
+	p.allLoaded = false
+	p.allLoadedAt = time.Time{}
+	p.mu.Unlock()
+}
+
+func (p *dbGachaProvider) resetMasterdataCache() {
+	if p == nil {
+		return
+	}
+	p.init()
+	p.gachaMu.Lock()
+	p.gachaCache = make(map[int]*masterdata.Gacha)
+	p.gachas = nil
+	p.gachaMu.Unlock()
+	p.cardMu.Lock()
+	p.cardCache = make(map[int]*masterdata.Card)
+	p.cardMu.Unlock()
+	p.ceilMu.Lock()
+	p.ceilCache = make(map[int]string)
+	p.ceilMu.Unlock()
+}
+
+func (p *dbStampProvider) resetMasterdataCache() {
+	if p == nil {
+		return
+	}
+	p.mu.Lock()
+	p.loaded = false
+	p.stamps = nil
+	p.mu.Unlock()
+}
+
+func (p *dbPlayerFrameProvider) resetMasterdataCache() {
+	if p == nil {
+		return
+	}
+	p.init()
+	p.frameMu.Lock()
+	p.frameCache = make(map[int]*masterdata.PlayerFrame)
+	p.frameMu.Unlock()
+	p.groupMu.Lock()
+	p.groupCache = make(map[int]*masterdata.PlayerFrameGroup)
+	p.groupMu.Unlock()
 }
 
 func (p *localCharacterProvider) reset() {
@@ -175,6 +285,11 @@ func (p *dbMusicProvider) resetLocalMasterdataCache() {
 	p.localizedByID = make(map[int][]string)
 	p.difficultiesByID = make(map[int][]*masterdata.MusicDifficulty)
 	p.mu.Unlock()
+	p.limitedMu.Lock()
+	p.limitedByMusic = make(map[int][]*masterdata.LimitedTimeMusic)
+	p.limitedLoaded = false
+	p.limitedLoadedAt = time.Time{}
+	p.limitedMu.Unlock()
 }
 
 func (p *dbEventProvider) resetLocalMasterdataCache() {
@@ -272,11 +387,14 @@ func (p *dbHonorProvider) resetLocalMasterdataCache() {
 	if p == nil {
 		return
 	}
-	p.store.ResetCache()
+	if p.store != nil {
+		p.store.ResetCache()
+	}
 	p.init()
 
 	p.honorMu.Lock()
 	p.honorCache = make(map[int]*masterdata.Honor)
+	p.honorMissing = make(map[int]struct{})
 	p.honorMu.Unlock()
 
 	p.groupMu.Lock()
@@ -285,6 +403,7 @@ func (p *dbHonorProvider) resetLocalMasterdataCache() {
 
 	p.bondsMu.Lock()
 	p.bondsCache = make(map[int]*masterdata.BondsHonor)
+	p.bondsMissing = make(map[int]struct{})
 	p.bondsMu.Unlock()
 
 	p.bondsWordMu.Lock()
@@ -309,8 +428,15 @@ func (p *dbHonorProvider) resetLocalMasterdataCache() {
 }
 
 func (p *dbMySekaiProvider) resetLocalMasterdataCache() {
-	if p == nil || p.local == nil {
+	if p == nil {
 		return
 	}
-	p.local.store.ResetCache()
+	p.mu.Lock()
+	p.lists = make(map[string][]map[string]any)
+	p.mapsByID = make(map[string]map[int]map[string]any)
+	p.unavailable = make(map[string]struct{})
+	p.mu.Unlock()
+	if p.local != nil {
+		p.local.store.ResetCache()
+	}
 }

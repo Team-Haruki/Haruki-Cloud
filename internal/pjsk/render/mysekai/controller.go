@@ -348,6 +348,34 @@ func (c *Controller) Close() {
 	c.resolver.Close()
 }
 
+// ResetMasterdataCache invalidates every cached MySekai masterdata table for
+// every resolved region. Existing database connections remain open so active
+// requests are not interrupted; the next lookup reloads the full table.
+func (c *Controller) ResetMasterdataCache() {
+	if c == nil || c.resolver == nil {
+		return
+	}
+	c.resolver.ResetMasterdataCache()
+}
+
+func (r *masterdataResolver) ResetMasterdataCache() {
+	if r == nil {
+		return
+	}
+	r.mu.RLock()
+	sources := make([]masterdataSource, 0, len(r.cache))
+	for _, source := range r.cache {
+		sources = append(sources, source)
+	}
+	r.mu.RUnlock()
+
+	for _, source := range sources {
+		if resetter, ok := source.(resettableMasterdataSource); ok {
+			resetter.resetCache()
+		}
+	}
+}
+
 func (r *masterdataResolver) Close() {
 	if r == nil {
 		return

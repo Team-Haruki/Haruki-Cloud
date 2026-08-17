@@ -13,8 +13,8 @@ import (
 
 const defaultLocalMasterdataRefreshInterval = 5 * time.Minute
 
-type localMasterdataCacheResetter interface {
-	ResetLocalMasterdataCache()
+type masterdataCacheResetter interface {
+	ResetMasterdataCache()
 }
 
 func (a *App) startLocalMasterdataRefresh(ctx context.Context, root string, interval time.Duration) {
@@ -35,7 +35,14 @@ func (a *App) startLocalMasterdataRefresh(ctx context.Context, root string, inte
 		ctx = context.Background()
 	}
 
-	state := newLocalMasterdataRefreshState(root, a.Providers)
+	additionalResetters := make([]masterdataCacheResetter, 0, 2)
+	if a.MySekai != nil {
+		additionalResetters = append(additionalResetters, a.MySekai)
+	}
+	if a.Inventory != nil {
+		additionalResetters = append(additionalResetters, a.Inventory)
+	}
+	state := newLocalMasterdataRefreshState(root, a.Providers, additionalResetters...)
 	if len(state.providers) == 0 {
 		return
 	}
@@ -57,19 +64,21 @@ func (a *App) startLocalMasterdataRefresh(ctx context.Context, root string, inte
 }
 
 type localMasterdataRefreshState struct {
-	root       string
-	providers  map[renderregion.Value]localMasterdataCacheResetter
-	signatures map[renderregion.Value]string
+	root                string
+	providers           map[renderregion.Value]masterdataCacheResetter
+	additionalResetters []masterdataCacheResetter
+	signatures          map[renderregion.Value]string
 }
 
-func newLocalMasterdataRefreshState(root string, providers map[renderregion.Value]provider.MasterDataProvider) *localMasterdataRefreshState {
+func newLocalMasterdataRefreshState(root string, providers map[renderregion.Value]provider.MasterDataProvider, additionalResetters ...masterdataCacheResetter) *localMasterdataRefreshState {
 	state := &localMasterdataRefreshState{
-		root:       root,
-		providers:  make(map[renderregion.Value]localMasterdataCacheResetter, len(providers)),
-		signatures: make(map[renderregion.Value]string, len(providers)),
+		root:                root,
+		providers:           make(map[renderregion.Value]masterdataCacheResetter, len(providers)),
+		additionalResetters: additionalResetters,
+		signatures:          make(map[renderregion.Value]string, len(providers)),
 	}
 	for region, src := range providers {
-		resetter, ok := src.(localMasterdataCacheResetter)
+		resetter, ok := src.(masterdataCacheResetter)
 		if !ok || resetter == nil {
 			continue
 		}
@@ -100,6 +109,7 @@ func (s *localMasterdataRefreshState) refresh() {
 	if s == nil {
 		return
 	}
+	changed := false
 	for region, resetter := range s.providers {
 		signature, err := provider.LocalMasterdataDirSignature(s.root, region)
 		if err != nil {
@@ -113,8 +123,9 @@ func (s *localMasterdataRefreshState) refresh() {
 		previous := s.signatures[region]
 		if previous == "" {
 			s.signatures[region] = signature.Hash
-			resetter.ResetLocalMasterdataCache()
-			logger.Info("local masterdata cache reset",
+			resetter.ResetMasterdataCache()
+			changed = true
+			logger.Info("masterdata cache reset",
 				"reason", "source_appeared",
 				"region", region,
 				"files", signature.Files,
@@ -125,11 +136,20 @@ func (s *localMasterdataRefreshState) refresh() {
 			continue
 		}
 		s.signatures[region] = signature.Hash
-		resetter.ResetLocalMasterdataCache()
-		logger.Info("local masterdata cache reset",
+		resetter.ResetMasterdataCache()
+		changed = true
+		logger.Info("masterdata cache reset",
 			"reason", "source_changed",
 			"region", region,
 			"files", signature.Files,
 		)
+	}
+	if !changed {
+		return
+	}
+	for _, resetter := range s.additionalResetters {
+		if resetter != nil {
+			resetter.ResetMasterdataCache()
+		}
 	}
 }

@@ -65,9 +65,10 @@ type dbMasterdataStore struct {
 }
 
 type dbMasterdataCache struct {
-	mu       sync.Mutex
-	lists    map[string][]map[string]any
-	mapsByID map[string]map[int]map[string]any
+	mu         sync.Mutex
+	lists      map[string][]map[string]any
+	mapsByID   map[string]map[int]map[string]any
+	generation uint64
 }
 
 // newDBMasterdataStore opens a read-only connection to the sekai database
@@ -108,6 +109,17 @@ func (s *dbMasterdataStore) Configured() bool {
 	return s != nil && s.db != nil
 }
 
+func (s *dbMasterdataStore) resetCache() {
+	if s == nil || s.cache == nil {
+		return
+	}
+	s.cache.mu.Lock()
+	s.cache.lists = make(map[string][]map[string]any)
+	s.cache.mapsByID = make(map[string]map[int]map[string]any)
+	s.cache.generation++
+	s.cache.mu.Unlock()
+}
+
 func (s *dbMasterdataStore) Close() {
 	if s != nil && s.db != nil {
 		s.db.Close()
@@ -146,6 +158,7 @@ func (s *dbMasterdataStore) loadList(filename string) []map[string]any {
 		s.cache.mu.Unlock()
 		return cached
 	}
+	generation := s.cache.generation
 	s.cache.mu.Unlock()
 
 	tableName, ok := fileToTable[filename]
@@ -159,6 +172,10 @@ func (s *dbMasterdataStore) loadList(filename string) []map[string]any {
 	}
 
 	s.cache.mu.Lock()
+	if generation != s.cache.generation {
+		s.cache.mu.Unlock()
+		return s.loadList(filename)
+	}
 	if cached, ok := s.cache.lists[filename]; ok {
 		s.cache.mu.Unlock()
 		return cached
@@ -181,6 +198,7 @@ func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]any 
 		s.cache.mu.Unlock()
 		return cached
 	}
+	generation := s.cache.generation
 	s.cache.mu.Unlock()
 
 	items := s.loadList(filename)
@@ -194,6 +212,10 @@ func (s *dbMasterdataStore) loadMapByID(filename string) map[int]map[string]any 
 	}
 
 	s.cache.mu.Lock()
+	if generation != s.cache.generation {
+		s.cache.mu.Unlock()
+		return s.loadMapByID(filename)
+	}
 	if cached, ok := s.cache.mapsByID[filename]; ok {
 		s.cache.mu.Unlock()
 		return cached

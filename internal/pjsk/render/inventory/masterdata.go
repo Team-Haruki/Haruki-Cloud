@@ -44,6 +44,15 @@ func (s *masterdataStore) forRegion(region renderregion.Value) *regionMasterdata
 	return loaded
 }
 
+func (s *masterdataStore) resetCache() {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	s.cache = make(map[string]*regionMasterdata)
+	s.mu.Unlock()
+}
+
 func (s *masterdataStore) loadRegion(region renderregion.Value) *regionMasterdata {
 	md := emptyRegionMasterdata()
 	if strings.TrimSpace(s.localDir) == "" {

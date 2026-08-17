@@ -146,10 +146,12 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	telemetry := botauth.NewCommandTelemetryDispatcher(botDBClient)
 
 	pjsk := bot.Group("/pjsk")
+	// Keep the handoff outside Noise so an elected response is committed only
+	// after the encrypted response packet has been built successfully.
+	pjsk.Use(responseElectionHandoffMiddleware)
 	if noiseKeyPair != nil {
 		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
 	}
-	pjsk.Use(responseElectionHandoffMiddleware)
 	registerBirthdayMonitorRoutes(pjsk, app, renderApp, guard)
 	routes := commandregistry.ListBotRoutes()
 	hasMysekaiBlueprintRoute := false
@@ -305,6 +307,10 @@ func responseElectionHandoffMiddleware(c fiber.Ctx) (err error) {
 	if err != nil {
 		handoff.Abort()
 		return err
+	}
+	if c.Locals("secure_noise") != nil && c.Locals(secure.ResponseEncryptedLocalKey) == nil {
+		handoff.Abort()
+		return nil
 	}
 
 	completionCtx, cancel := context.WithTimeout(logger.DetachedContext(c.Context()), responseElectionRedisTimeout)

@@ -23,6 +23,7 @@ func TestResponseElectionIdentityIncludesRequestSemantics(t *testing.T) {
 		{name: "user", mutate: func(req *BotCommandRequest) { req.PlatformUserID = "user-2" }},
 		{name: "matched command", mutate: func(req *BotCommandRequest) { req.MatchedCommand = "/另一条指令" }},
 		{name: "server", mutate: func(req *BotCommandRequest) { req.Server = "cn" }},
+		{name: "notify empty", mutate: func(req *BotCommandRequest) { req.NotifyEmpty = !req.NotifyEmpty }},
 		{name: "parameter echo", mutate: func(req *BotCommandRequest) { req.EnableParamEcho = !req.EnableParamEcho }},
 		{name: "message type", mutate: func(req *BotCommandRequest) { req.Message[0].Type = onebot11.TypeImage }},
 		{name: "message data", mutate: func(req *BotCommandRequest) { req.Message[1] = onebot11.At("987654") }},
@@ -47,17 +48,6 @@ func TestResponseElectionIdentityExcludesBotSpecificSelfID(t *testing.T) {
 
 	if got, want := responseElectionIdentity(second), responseElectionIdentity(first); got != want {
 		t.Fatalf("SelfID changed event identity: got %s, want %s", got, want)
-	}
-}
-
-func TestResponseElectionIdentityExcludesNormalCommandNotifyPreference(t *testing.T) {
-	first := responseElectionIdentityTestRequest()
-	first.NotifyEmpty = false
-	second := responseElectionIdentityTestRequest()
-	second.NotifyEmpty = true
-
-	if got, want := responseElectionIdentity(second), responseElectionIdentity(first); got != want {
-		t.Fatalf("unused notify preference changed event identity: got %s, want %s", got, want)
 	}
 }
 

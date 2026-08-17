@@ -221,11 +221,8 @@ func TestJoinWindowSkippedOnlyForZeroWindowCreator(t *testing.T) {
 			responseElectionCandidatesKey(identity),
 			rateLimitKey(request),
 			dedupKey(request),
-			responseElectionHistoryKey(identity),
 		},
 		"token-a", "bot-a", time.Second.Milliseconds(), dedupInFlightTTL.Milliseconds(), 2,
-		responseElectionReplayWindow.Milliseconds(),
-		(responseElectionReplayWindow + responseElectionRedisTimeout).Milliseconds(),
 	).Slice(); err != nil {
 		t.Fatalf("create election: %v", err)
 	}
@@ -271,15 +268,12 @@ func TestJoinScriptZeroesWindowForSingleExpectedCandidate(t *testing.T) {
 				responseElectionCandidatesKey(identity),
 				rateLimitKey(request),
 				dedupKey(request),
-				responseElectionHistoryKey(identity),
 			},
 			"token-"+eventID,
 			"bot-a",
 			time.Second.Milliseconds(),
 			dedupInFlightTTL.Milliseconds(),
 			expected,
-			responseElectionReplayWindow.Milliseconds(),
-			(responseElectionReplayWindow + responseElectionRedisTimeout).Milliseconds(),
 		).Slice()
 		if err != nil {
 			t.Fatalf("join script: %v", err)

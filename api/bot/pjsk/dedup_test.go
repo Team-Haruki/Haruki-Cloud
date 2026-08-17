@@ -7,10 +7,29 @@ import (
 	"testing"
 	"time"
 
+	"haruki-cloud/internal/onebot11"
+
 	"github.com/redis/go-redis/v9"
 )
 
 var errTransientCleanup = errors.New("transient cleanup failure")
+
+func TestRequestGuardKeysUseFullLogicalRequestIdentity(t *testing.T) {
+	request := responseElectionIdentityTestRequest()
+	identity := responseElectionIdentity(request)
+	if got, want := dedupKey(request), "haruki:bot:dedup:"+identity; got != want {
+		t.Fatalf("dedup key = %q, want %q", got, want)
+	}
+	if got, want := rateLimitKey(request), "haruki:bot:ratelimit:"+identity; got != want {
+		t.Fatalf("rate key = %q, want %q", got, want)
+	}
+
+	changed := responseElectionIdentityTestRequest()
+	changed.Message[1] = onebot11.At("different-target")
+	if dedupKey(changed) == dedupKey(request) || rateLimitKey(changed) == rateLimitKey(request) {
+		t.Fatal("different non-text request parameters shared a guard key")
+	}
+}
 
 func TestRequestGuardRejectsCanceledContextWithoutFailingOpen(t *testing.T) {
 	client := redis.NewClient(&redis.Options{Addr: "127.0.0.1:1"})

@@ -10,6 +10,10 @@ import (
 )
 
 func normalizeCardUserFacingError(err error) error {
+	return normalizeCardUserFacingErrorForLookup(err, DefaultRegionStr, "")
+}
+
+func normalizeCardUserFacingErrorForLookup(err error, region string, fallbackQuery string) error {
 	if err == nil {
 		return nil
 	}
@@ -21,7 +25,14 @@ func normalizeCardUserFacingError(err error) error {
 		return onebot11.NewReplayError("该卡牌还未上线")
 	}
 	if query, ok := extractCardNotFoundQuery(err); ok {
-		return onebot11.NewReplayError("找不到特定的卡牌: %s", cardNotFoundQueryOrFallback(query))
+		if strings.TrimSpace(query) == "" || query == "未知" {
+			query = fallbackQuery
+		}
+		return onebot11.NewReplayError(
+			"%s服找不到特定的卡牌: %s\n如果需要查其他服务器卡牌请加区服前缀",
+			musicNotFoundRegionLabel(region),
+			cardNotFoundQueryOrFallback(query),
+		)
 	}
 	message := strings.TrimSpace(err.Error())
 	switch {
@@ -64,6 +75,9 @@ func extractCardNotFoundQuery(err error) (string, bool) {
 			raw := strings.TrimSpace(message[idx+len(prefix):])
 			return cardNotFoundQueryOrFallback(raw), true
 		}
+	}
+	if strings.Contains(message, "card not found") {
+		return "", true
 	}
 
 	switch {

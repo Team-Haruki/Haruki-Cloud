@@ -214,19 +214,10 @@ func newRequestGuardToken() (string, error) {
 	return hex.EncodeToString(raw[:]), nil
 }
 
-// dedupKey returns the Redis key that uniquely identifies a command event.
-// It hashes platform × group × user × matched_command × message_text so the
-// same event maps to the same key regardless of which bot instance receives it.
+// dedupKey uses the same transport-independent command identity as response
+// election so both layers agree on which requests are duplicates.
 func dedupKey(req BotCommandRequest) string {
-	h := sha256.New()
-	fmt.Fprintf(h, "%s|%s|%s|%s|%s",
-		req.Platform,
-		req.PlatformGroupID,
-		req.PlatformUserID,
-		req.MatchedCommand,
-		extractMessageText(req.Message),
-	)
-	return "haruki:bot:dedup:" + hex.EncodeToString(h.Sum(nil))
+	return "haruki:bot:dedup:" + responseElectionIdentity(req)
 }
 
 // rateLimitKey returns the Redis key for per-user rate limiting.
@@ -239,17 +230,21 @@ func rateLimitKey(req BotCommandRequest) string {
 // extractMessageText concatenates all text segments to form the command payload
 // component of the dedup key.
 func extractMessageText(msg onebot11.Message) string {
-	var sb strings.Builder
+	parts := make([]string, 0, len(msg))
 	for _, seg := range msg {
 		if seg.Type != onebot11.TypeText {
 			continue
 		}
 		switch d := seg.Data.(type) {
 		case onebot11.TextData:
-			sb.WriteString(d.Text)
+			parts = append(parts, d.Text)
+		case map[string]any:
+			parts = append(parts, fmt.Sprint(d[onebot11.KeyText]))
 		case map[string]string:
-			sb.WriteString(d[onebot11.KeyText])
+			parts = append(parts, d[onebot11.KeyText])
+		case map[any]any:
+			parts = append(parts, fmt.Sprint(d[onebot11.KeyText]))
 		}
 	}
-	return sb.String()
+	return strings.Join(parts, " ")
 }

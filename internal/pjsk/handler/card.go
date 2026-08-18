@@ -231,7 +231,15 @@ func (sekaiHandlers) CardImgHandle() HarukiSekaiCommandHandler {
 
 func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 	defer func() {
-		err = normalizeCardUserFacingError(err)
+		region := ""
+		query := ""
+		if rc != nil {
+			region = rc.RegionStr
+			if rc.Cmd != nil {
+				query = rc.Cmd.Query
+			}
+		}
+		err = normalizeCardUserFacingErrorForLookup(err, region, query)
 	}()
 
 	if rc.App.Cards == nil {

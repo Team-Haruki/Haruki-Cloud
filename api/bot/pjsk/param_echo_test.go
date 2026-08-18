@@ -42,8 +42,8 @@ func TestClientErrorTextRedactsParamEcho(t *testing.T) {
 		},
 		{
 			name: "card not found",
-			in:   "找不到特定的卡牌: super-secret",
-			want: "参数解析失败：卡牌\n要求：使用卡牌 ID、角色名或更明确的筛选条件",
+			in:   "CN服找不到特定的卡牌: super-secret\n如果需要查其他服务器卡牌请加区服前缀",
+			want: "CN服找不到特定的卡牌\n如果需要查其他服务器卡牌请加区服前缀",
 		},
 		{
 			name: "non echo error",

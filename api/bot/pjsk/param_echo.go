@@ -193,6 +193,12 @@ func redactParamEchoLine(line string) (string, bool) {
 	if idx := strings.Index(line, "找不到特定的歌："); idx >= 0 {
 		return strings.TrimSpace(line[:idx+len("找不到特定的歌")]), true
 	}
+	if idx := strings.Index(line, "找不到特定的卡牌:"); idx >= 0 {
+		return strings.TrimSpace(line[:idx+len("找不到特定的卡牌")]), true
+	}
+	if idx := strings.Index(line, "找不到特定的卡牌："); idx >= 0 {
+		return strings.TrimSpace(line[:idx+len("找不到特定的卡牌")]), true
+	}
 	if isEnglishLikeErrorLine(line) {
 		return genericClientErrorText, true
 	}

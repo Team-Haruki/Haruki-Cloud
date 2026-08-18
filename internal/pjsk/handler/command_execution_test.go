@@ -4637,6 +4637,14 @@ type bridgeCardSource struct {
 	allowEmptyFilter bool
 }
 
+type missingBridgeCardSource struct {
+	bridgeCardSource
+}
+
+func (s *missingBridgeCardSource) GetCardByID(id int) (*masterdata.Card, error) {
+	return nil, errors.New("sekai: card not found")
+}
+
 func (s *bridgeCardSource) DefaultRegion() renderregion.Value {
 	if s.region.IsZero() {
 		return renderregion.JP
@@ -4800,6 +4808,24 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 			t.Fatalf("unexpected segment: %+v", segment)
 		}
 	}
+}
+
+func TestExecuteCardImageReportsRegionSpecificMissingCard(t *testing.T) {
+	app := &renderapp.App{
+		Cards: rendercard.NewController(
+			&missingBridgeCardSource{bridgeCardSource: bridgeCardSource{region: renderregion.CN}},
+			&bridgeCardEventSource{},
+			nil,
+			nil,
+		),
+	}
+	_, err := executeCard(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleCard,
+		Mode:   "card-image",
+		Query:  "662",
+		Region: "cn",
+	}, app))
+	assertReplayErrorText(t, err, "CN服找不到特定的卡牌: 662\n如果需要查其他服务器卡牌请加区服前缀")
 }
 
 func TestExecuteCardDetailOmitsSummaryText(t *testing.T) {

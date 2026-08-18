@@ -17,12 +17,17 @@ func TestNormalizeCardUserFacingErrorReturnsUnreleasedReplayError(t *testing.T) 
 
 func TestNormalizeCardUserFacingErrorExtractsSekaiCardNotFound(t *testing.T) {
 	err := normalizeCardUserFacingError(errString("failed to search card: query card 662: sekai: card not found"))
-	assertReplayErrorText(t, err, "找不到特定的卡牌: 662")
+	assertReplayErrorText(t, err, "JP服找不到特定的卡牌: 662\n如果需要查其他服务器卡牌请加区服前缀")
 }
 
 func TestNormalizeCardUserFacingErrorExtractsFilterCardNotFound(t *testing.T) {
 	err := normalizeCardUserFacingError(errString("failed to search card list: no cards found for filter: miku secret"))
-	assertReplayErrorText(t, err, "找不到特定的卡牌: miku secret")
+	assertReplayErrorText(t, err, "JP服找不到特定的卡牌: miku secret\n如果需要查其他服务器卡牌请加区服前缀")
+}
+
+func TestNormalizeCardUserFacingErrorReturnsRegionSpecificNotFoundReplayError(t *testing.T) {
+	err := normalizeCardUserFacingErrorForLookup(errString("failed to search card: sekai: card not found"), "cn", "662")
+	assertReplayErrorText(t, err, "CN服找不到特定的卡牌: 662\n如果需要查其他服务器卡牌请加区服前缀")
 }
 
 func TestNormalizeCardUserFacingErrorTranslatesCardServiceErrors(t *testing.T) {

@@ -22,11 +22,7 @@ func TestResponseElectionIdentityIncludesRequestSemantics(t *testing.T) {
 		{name: "group", mutate: func(req *BotCommandRequest) { req.PlatformGroupID = "group-2" }},
 		{name: "user", mutate: func(req *BotCommandRequest) { req.PlatformUserID = "user-2" }},
 		{name: "matched command", mutate: func(req *BotCommandRequest) { req.MatchedCommand = "/另一条指令" }},
-		{name: "server", mutate: func(req *BotCommandRequest) { req.Server = "cn" }},
-		{name: "parameter echo", mutate: func(req *BotCommandRequest) { req.EnableParamEcho = !req.EnableParamEcho }},
-		{name: "message type", mutate: func(req *BotCommandRequest) { req.Message[0].Type = onebot11.TypeImage }},
-		{name: "message data", mutate: func(req *BotCommandRequest) { req.Message[1] = onebot11.At("987654") }},
-		{name: "message order", mutate: func(req *BotCommandRequest) { req.Message[0], req.Message[1] = req.Message[1], req.Message[0] }},
+		{name: "arguments", mutate: func(req *BotCommandRequest) { req.Message[0] = onebot11.Text("/查卡 1002") }},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -61,31 +57,44 @@ func TestResponseElectionIdentityExcludesNormalCommandNotifyPreference(t *testin
 	}
 }
 
-func TestResponseElectionIdentityNormalizesKnownServer(t *testing.T) {
+func TestResponseElectionIdentityExcludesClientConfiguration(t *testing.T) {
 	first := responseElectionIdentityTestRequest()
-	first.Server = "jp"
 	second := responseElectionIdentityTestRequest()
-	second.Server = " JP "
+	second.Server = "cn"
+	second.EnableParamEcho = !first.EnableParamEcho
 
 	if got, want := responseElectionIdentity(second), responseElectionIdentity(first); got != want {
-		t.Fatalf("equivalent server changed event identity: got %s, want %s", got, want)
+		t.Fatalf("client configuration changed event identity: got %s, want %s", got, want)
 	}
 }
 
-func TestResponseElectionIdentityCanonicalizesSelfMentions(t *testing.T) {
+func TestResponseElectionIdentityIgnoresNonTextAdapterSegments(t *testing.T) {
 	first := responseElectionIdentityTestRequest()
 	first.SelfID = "bot-self-a"
 	first.Message = onebot11.Message{onebot11.At(first.SelfID), onebot11.Text("/查卡 1001")}
 	second := responseElectionIdentityTestRequest()
 	second.SelfID = "bot-self-b"
-	second.Message = onebot11.Message{onebot11.At(second.SelfID), onebot11.Text("/查卡 1001")}
+	second.Message = onebot11.Message{onebot11.Image("adapter.png", ""), onebot11.Text("/查卡 1001"), onebot11.At("different-user")}
 
 	if got, want := responseElectionIdentity(second), responseElectionIdentity(first); got != want {
-		t.Fatalf("bot-specific self mention changed identity: got %s, want %s", got, want)
+		t.Fatalf("non-text adapter segments changed identity: got %s, want %s", got, want)
 	}
-	second.Message[0] = onebot11.At("different-user")
+	second.Message[1] = onebot11.Text("/查卡 1002")
 	if got, same := responseElectionIdentity(second), responseElectionIdentity(first); got == same {
-		t.Fatalf("non-self mention did not change identity: %s", got)
+		t.Fatalf("changed command arguments did not change identity: %s", got)
+	}
+}
+
+func TestResponseElectionIdentityNormalizesCommandWhitespaceAndCase(t *testing.T) {
+	first := responseElectionIdentityTestRequest()
+	first.MatchedCommand = "/CARD"
+	first.Message = onebot11.Message{onebot11.Text(" /CARD   +662 ")}
+	second := responseElectionIdentityTestRequest()
+	second.MatchedCommand = "/card"
+	second.Message = onebot11.Message{onebot11.Text("/card "), onebot11.Text("+662")}
+
+	if got, want := responseElectionIdentity(second), responseElectionIdentity(first); got != want {
+		t.Fatalf("equivalent command arguments changed identity: got %s, want %s", got, want)
 	}
 }
 
@@ -136,7 +145,8 @@ func TestResponseElectionIdentityUsesLengthPrefixes(t *testing.T) {
 }
 
 func TestResponseElectionIdentityAndRedisKeys(t *testing.T) {
-	identity := responseElectionIdentity(responseElectionIdentityTestRequest())
+	request := responseElectionIdentityTestRequest()
+	identity := responseElectionIdentity(request)
 	if len(identity) != sha256HexLength {
 		t.Fatalf("identity length = %d, want %d", len(identity), sha256HexLength)
 	}
@@ -155,6 +165,9 @@ func TestResponseElectionIdentityAndRedisKeys(t *testing.T) {
 	}
 	if want := "haruki:bot:response-election:" + wantSlot + ":candidates"; candidatesKey != want {
 		t.Fatalf("candidates key = %q, want %q", candidatesKey, want)
+	}
+	if want := "haruki:bot:dedup:" + identity; dedupKey(request) != want {
+		t.Fatalf("dedup key = %q, want %q", dedupKey(request), want)
 	}
 }
 

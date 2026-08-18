@@ -30,7 +30,6 @@ func responseElectionIdentity(req BotCommandRequest) string {
 	writeResponseElectionHashField(h, []byte(req.PlatformUserID))
 	writeResponseElectionHashField(h, []byte(req.MatchedCommand))
 	writeResponseElectionHashField(h, []byte(canonicalResponseElectionServer(req.Server)))
-	writeResponseElectionHashField(h, canonicalResponseElectionBool(req.NotifyEmpty))
 	writeResponseElectionHashField(h, canonicalResponseElectionBool(req.EnableParamEcho))
 
 	var message canonicalResponseElectionEncoder

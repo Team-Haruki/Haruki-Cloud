@@ -3,10 +3,13 @@ package pjsk
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
+
+	"haruki-cloud/internal/onebot11"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -17,7 +20,7 @@ const (
 	// must exceed the slowest supported command so retries cannot start a second
 	// render while the first request is still running.
 	dedupInFlightTTL = 5 * time.Minute
-	// rateLimitTTL is the exact-request cooldown after a response is sent.
+	// rateLimitTTL is the per-user cooldown after any response is sent.
 	rateLimitTTL = 3 * time.Second
 )
 
@@ -40,17 +43,17 @@ end
 return 0
 `)
 
-// RequestGuard provides exact-request deduplication backed by Redis. A nil
-// Guard is safe to use — all checks are skipped.
+// RequestGuard provides per-event deduplication and per-user rate limiting
+// backed by Redis. A nil Guard is safe to use — all checks are skipped.
 //
 // Flow for each incoming request:
-//  1. Atomically check the completed-request cooldown. A limited request must not
+//  1. Atomically check the per-user rate limit. A limited request must not
 //     refresh the event lock.
-//  2. Try SET NX on the full logical-request lock — drop silently if another
-//     instance already holds the lock.
+//  2. Try SET NX on the dedup lock keyed by (platform, group, user, command) —
+//     drop silently if another instance already holds the lock.
 //  3. Process the request normally.
-//  4. Call MarkComplete to release the event lock and arm the exact-request
-//     cooldown for the next 3 s.
+//  4. Call MarkComplete to release the event lock and arm the per-user rate
+//     limit for the next 3 s.
 type RequestGuard struct {
 	redis   *redis.Client
 	cleanup *requestGuardCleanupDispatcher
@@ -82,7 +85,7 @@ func NewRequestGuard(rc *redis.Client) *RequestGuard {
 	return guard
 }
 
-// Acquire performs the completed-request cooldown check and lock acquisition.
+// Acquire performs the rate-limit check and dedup lock acquisition.
 // Returns true when the caller should proceed with processing.
 // Returns false when the request should be silently dropped — respond with
 // an empty segment list and do NOT call MarkComplete.
@@ -130,7 +133,7 @@ func (g *RequestGuard) Acquire(ctx context.Context, req BotCommandRequest) reque
 	}
 }
 
-// MarkComplete arms the exact-request cooldown key. Call this after any request
+// MarkComplete arms the per-user rate limit key. Call this after any request
 // where a response (success or user-visible error) was sent to the user.
 // Do NOT call it when Acquire returned false.
 func (g *RequestGuard) MarkComplete(_ context.Context, _ BotCommandRequest, lease requestGuardLease) {
@@ -211,15 +214,42 @@ func newRequestGuardToken() (string, error) {
 	return hex.EncodeToString(raw[:]), nil
 }
 
-// dedupKey uses the same transport-independent logical request identity as the
-// response election. Compatibility locking must not collapse requests that
-// differ in region or non-text OneBot segments.
+// dedupKey returns the Redis key that uniquely identifies a command event.
+// It hashes platform × group × user × matched_command × message_text so the
+// same event maps to the same key regardless of which bot instance receives it.
 func dedupKey(req BotCommandRequest) string {
-	return "haruki:bot:dedup:" + responseElectionIdentity(req)
+	h := sha256.New()
+	fmt.Fprintf(h, "%s|%s|%s|%s|%s",
+		req.Platform,
+		req.PlatformGroupID,
+		req.PlatformUserID,
+		req.MatchedCommand,
+		extractMessageText(req.Message),
+	)
+	return "haruki:bot:dedup:" + hex.EncodeToString(h.Sum(nil))
 }
 
-// rateLimitKey is scoped to an exact logical request. Rate limiting unrelated
-// commands by user makes different commands silently suppress one another.
+// rateLimitKey returns the Redis key for per-user rate limiting.
 func rateLimitKey(req BotCommandRequest) string {
-	return "haruki:bot:ratelimit:" + responseElectionIdentity(req)
+	h := sha256.New()
+	fmt.Fprintf(h, "%s|%s", req.Platform, req.PlatformUserID)
+	return "haruki:bot:ratelimit:" + hex.EncodeToString(h.Sum(nil))
+}
+
+// extractMessageText concatenates all text segments to form the command payload
+// component of the dedup key.
+func extractMessageText(msg onebot11.Message) string {
+	var sb strings.Builder
+	for _, seg := range msg {
+		if seg.Type != onebot11.TypeText {
+			continue
+		}
+		switch d := seg.Data.(type) {
+		case onebot11.TextData:
+			sb.WriteString(d.Text)
+		case map[string]string:
+			sb.WriteString(d[onebot11.KeyText])
+		}
+	}
+	return sb.String()
 }

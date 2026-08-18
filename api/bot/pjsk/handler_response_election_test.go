@@ -123,7 +123,7 @@ func TestSynchronousResponseElectionPathsIsolateCommandPhases(t *testing.T) {
 		}, "guard_selected")
 	})
 
-	t.Run("Redis admission fail-open for direct messages", func(t *testing.T) {
+	t.Run("Redis admission fail-open", func(t *testing.T) {
 		server := miniredis.RunT(t)
 		client := redis.NewClient(&redis.Options{
 			Addr:         server.Addr(),
@@ -139,47 +139,15 @@ func TestSynchronousResponseElectionPathsIsolateCommandPhases(t *testing.T) {
 		})
 		server.Close()
 
-		request := responseElectionIdentityTestRequest()
-		request.PlatformGroupID = ""
 		assertSynchronousResponseElectionTraceIsolation(t, func(
 			ctx context.Context,
 			execute func(context.Context) sharedCommandResult,
 		) responseElectionDecision {
 			return coordinator.Coordinate(ctx, responseElectionRequest{
-				Request: request,
+				Request: responseElectionIdentityTestRequest(),
 				BotID:   "bot-a",
 			}, execute)
 		}, "admission_fail_open")
-	})
-
-	t.Run("Redis admission fails closed for group messages", func(t *testing.T) {
-		server := miniredis.RunT(t)
-		client := redis.NewClient(&redis.Options{
-			Addr:         server.Addr(),
-			DialTimeout:  10 * time.Millisecond,
-			ReadTimeout:  10 * time.Millisecond,
-			WriteTimeout: 10 * time.Millisecond,
-			MaxRetries:   -1,
-		})
-		coordinator := NewResponseElectionCoordinator(context.Background(), client, time.Second)
-		t.Cleanup(func() {
-			coordinator.Close()
-			_ = client.Close()
-		})
-		server.Close()
-
-		executed := false
-		decision := coordinator.Coordinate(
-			context.Background(),
-			responseElectionRequest{Request: responseElectionIdentityTestRequest(), BotID: "bot-a"},
-			func(context.Context) sharedCommandResult {
-				executed = true
-				return responseElectionTestResult("unexpected", "bot-a", false)
-			},
-		)
-		if decision.visible || decision.reason != "admission_fail_closed" || executed {
-			t.Fatalf("decision = %+v, executed=%v; want invisible fail-closed", decision, executed)
-		}
 	})
 }
 

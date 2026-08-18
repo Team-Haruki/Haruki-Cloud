@@ -172,7 +172,6 @@ func TestCommandTraceMiddlewareEncryptsSecureFailuresBeforeSummary(t *testing.T)
 			var output bytes.Buffer
 			logger.SetGlobalFileWriter(&output)
 			t.Cleanup(func() { logger.SetGlobalFileWriter(os.Stdout) })
-			responseEncrypted := false
 
 			serverKey, err := crypto.GenerateKeyPair()
 			if err != nil {
@@ -193,11 +192,6 @@ func TestCommandTraceMiddlewareEncryptsSecureFailuresBeforeSummary(t *testing.T)
 			app.Post(
 				"/api/v2/bot/:botId/pjsk/test",
 				commandTraceMiddleware,
-				func(c fiber.Ctx) error {
-					err := c.Next()
-					responseEncrypted = c.Locals(secure.ResponseEncryptedLocalKey) != nil
-					return err
-				},
 				secure.New(secure.Config{ServerPrivateKey: serverKey}),
 				test.handler,
 			)
@@ -220,9 +214,6 @@ func TestCommandTraceMiddlewareEncryptsSecureFailuresBeforeSummary(t *testing.T)
 			}
 			if string(plaintext) != test.wantBody {
 				t.Fatalf("response = %q, want %q", plaintext, test.wantBody)
-			}
-			if !responseEncrypted {
-				t.Fatal("outer middleware did not observe completed Noise response encryption")
 			}
 
 			line := output.String()

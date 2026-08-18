@@ -18,11 +18,6 @@ type Config struct {
 	ServerPrivateKey *crypto.KeyPair
 }
 
-// ResponseEncryptedLocalKey is set after the response has been successfully
-// converted into a Noise packet. Outer middleware can use it as a handoff
-// boundary without depending on the encrypted response body format.
-const ResponseEncryptedLocalKey = "secure_noise_response_encrypted"
-
 // New creates a new Secure middleware with Noise NK transport encryption.
 // Each HTTP request performs a full NK handshake:
 //
@@ -102,7 +97,6 @@ func New(config Config) fiber.Handler {
 
 		c.Response().SetBody(encrypted)
 		c.Response().Header.Set("Content-Type", "application/octet-stream")
-		c.Locals(ResponseEncryptedLocalKey, true)
 		finishEncrypt()
 
 		return nil

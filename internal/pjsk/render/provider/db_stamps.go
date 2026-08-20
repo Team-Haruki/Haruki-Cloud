@@ -45,6 +45,7 @@ func (p *dbStampProvider) GetAll(ctx context.Context) ([]masterdata.Stamp, error
 				ID:              int(item.GameID),
 				AssetBundleName: item.AssetbundleName,
 				CharacterID:     int(item.CharacterId1),
+				CharacterID2:    int(item.CharacterId2),
 			})
 		}
 		p.stamps = stamps

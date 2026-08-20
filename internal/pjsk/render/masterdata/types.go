@@ -284,6 +284,9 @@ type Stamp struct {
 	ID              int
 	AssetBundleName string
 	CharacterID     int
+	// CharacterID2 is set for bonds stamps featuring two characters; the
+	// stamp must appear in either character's stamp list.
+	CharacterID2 int
 }
 
 type Honor struct {

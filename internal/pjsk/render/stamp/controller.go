@@ -173,7 +173,11 @@ func (c *Controller) collectStampItems(query ListQuery) ([]drawing.StampData, st
 			}
 		}
 		if len(characterFilter) > 0 {
-			if _, ok := characterFilter[item.CharacterID]; !ok {
+			_, ok1 := characterFilter[item.CharacterID]
+			_, ok2 := characterFilter[item.CharacterID2]
+			// Bonds stamps carry two characters; match either slot so the
+			// stamp shows up in both characters' lists.
+			if !ok1 && !ok2 {
 				continue
 			}
 		}

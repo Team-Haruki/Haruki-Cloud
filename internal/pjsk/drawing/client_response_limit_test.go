@@ -58,3 +58,36 @@ func TestDrawingClientClassifiesInsufficientDataWithoutLeakingBody(t *testing.T)
 		t.Fatalf("error leaked upstream response detail: %v", err)
 	}
 }
+
+func TestDrawingClientIncludesBoundedClientErrorDetail(t *testing.T) {
+	const upstreamDetail = "card.customProfileCard.storyBackgrounds[0].objectData must be an object"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"detail":"` + upstreamDetail + `"}`))
+	}))
+	defer server.Close()
+
+	client := NewHarukiDrawingClient(server.URL)
+	_, err := client.postPrepared("/render", map[string]any{"value": 1})
+	if err == nil || !strings.Contains(err.Error(), upstreamDetail) {
+		t.Fatalf("error = %v, want bounded upstream detail", err)
+	}
+}
+
+func TestDrawingClientDoesNotIncludeServerErrorDetail(t *testing.T) {
+	const upstreamDetail = "internal path /secret/drawing-data"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"detail":"` + upstreamDetail + `"}`))
+	}))
+	defer server.Close()
+
+	client := NewHarukiDrawingClient(server.URL)
+	_, err := client.postPrepared("/render", map[string]any{"value": 1})
+	if err == nil {
+		t.Fatal("expected server error")
+	}
+	if strings.Contains(err.Error(), upstreamDetail) {
+		t.Fatalf("error leaked upstream server detail: %v", err)
+	}
+}

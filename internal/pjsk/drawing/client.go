@@ -21,6 +21,8 @@ const drawingMaxResponseBytes = 64 << 20
 
 const drawingErrorClassificationBytes = 8 << 10
 
+const drawingErrorDetailMaxBytes = 512
+
 var ErrDrawingDataInsufficient = errors.New("drawing response data is insufficient")
 
 func WithTimeout(timeout time.Duration) ClientOption {
@@ -241,15 +243,24 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	}
 
 	if resp.StatusCode() != http.StatusOK {
+		insufficientData := drawingResponseIndicatesInsufficientData(resp.Body())
+		detail := ""
+		if !insufficientData && resp.StatusCode() >= http.StatusBadRequest && resp.StatusCode() < http.StatusInternalServerError {
+			detail = drawingResponseErrorDetail(resp.Body())
+		}
 		c.logger.WarnContext(requestCtx, "drawing request returned non-success status",
 			"upstream", "drawing",
 			"upstream_path", endpoint,
 			"status_code", resp.StatusCode(),
 			"duration_ms", commandtrace.Milliseconds(elapsed),
 			"response_bytes", len(resp.Body()),
+			"upstream_detail", detail,
 		)
-		if drawingResponseIndicatesInsufficientData(resp.Body()) {
+		if insufficientData {
 			return nil, fmt.Errorf("drawing request failed with status %d: %w", resp.StatusCode(), ErrDrawingDataInsufficient)
+		}
+		if resp.StatusCode() >= http.StatusBadRequest && resp.StatusCode() < http.StatusInternalServerError && detail != "" {
+			return nil, fmt.Errorf("drawing request failed with status %d: %s", resp.StatusCode(), detail)
 		}
 		return nil, fmt.Errorf("drawing request failed with status %d", resp.StatusCode())
 	}
@@ -261,6 +272,32 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 		"response_bytes", len(resp.Body()),
 	)
 	return resp.Body(), nil
+}
+
+func drawingResponseErrorDetail(body []byte) string {
+	if len(body) > drawingErrorClassificationBytes {
+		body = body[:drawingErrorClassificationBytes]
+	}
+	var payload struct {
+		Detail string `json:"detail"`
+	}
+	if err := sonic.Unmarshal(body, &payload); err != nil {
+		return ""
+	}
+	detail := strings.TrimSpace(payload.Detail)
+	if detail == "" {
+		return ""
+	}
+	detail = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return ' '
+		}
+		return r
+	}, detail)
+	if len(detail) > drawingErrorDetailMaxBytes {
+		detail = strings.TrimSpace(detail[:drawingErrorDetailMaxBytes]) + "..."
+	}
+	return detail
 }
 
 func drawingResponseIndicatesInsufficientData(body []byte) bool {

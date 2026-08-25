@@ -30,6 +30,8 @@ type forecastDataCache struct {
 	persistencePath string
 	entryTTL        time.Duration
 	failureTTL      time.Duration
+	retryInterval   time.Duration
+	retryLimit      int
 	maxEntries      int
 	generation      uint64
 
@@ -51,7 +53,7 @@ type forecastDataCacheEntry struct {
 	lastError     string
 }
 
-var (
+const (
 	forecastDataRefreshInterval      = 5 * time.Minute
 	forecastDataRefreshRetryInterval = 5 * time.Second
 	forecastDataRefreshRetryLimit    = 3
@@ -61,12 +63,14 @@ var errForecastRefreshInProgress = errors.New("forecast refresh already in progr
 
 func newForecastDataCache(provider ForecastProvider) *forecastDataCache {
 	return &forecastDataCache{
-		provider:   provider,
-		entries:    make(map[forecastDataCacheKey]*forecastDataCacheEntry),
-		inFlight:   make(map[forecastDataCacheKey]struct{}),
-		entryTTL:   forecastDataEntryTTL,
-		failureTTL: forecastDataFailureEntryTTL,
-		maxEntries: forecastDataMaxEntries,
+		provider:      provider,
+		entries:       make(map[forecastDataCacheKey]*forecastDataCacheEntry),
+		inFlight:      make(map[forecastDataCacheKey]struct{}),
+		entryTTL:      forecastDataEntryTTL,
+		failureTTL:    forecastDataFailureEntryTTL,
+		retryInterval: forecastDataRefreshRetryInterval,
+		retryLimit:    forecastDataRefreshRetryLimit,
+		maxEntries:    forecastDataMaxEntries,
 	}
 }
 
@@ -124,7 +128,7 @@ func (c *forecastDataCache) CachedBySourceQuery(query ForecastQuery) (map[string
 		return nil, errors.New("forecast cache is not ready")
 	}
 	var refreshProvider ForecastProvider
-	if shouldRefreshForecastEntry(entry, now) {
+	if shouldRefreshForecastEntry(entry, now, c.retryInterval) {
 		if provider, err := c.beginRefreshLocked(key); err == nil {
 			refreshProvider = provider
 		}
@@ -186,7 +190,7 @@ func (c *forecastDataCache) RefreshNowQuery(ctx context.Context, query ForecastQ
 
 func (c *forecastDataCache) refreshNowWithProvider(ctx context.Context, provider ForecastProvider, key forecastDataCacheKey, normalizedQuery ForecastQuery) error {
 	finishFetch := commandtrace.MeasureOperation(ctx, "forecast_cache.fetch")
-	data, refreshErr := fetchForecastDataWithRetry(ctx, provider, normalizedQuery)
+	data, refreshErr := fetchForecastDataWithRetry(ctx, provider, normalizedQuery, c.retryLimit, c.retryInterval)
 	finishFetch()
 	now := time.Now().UTC()
 	if refreshErr != nil {
@@ -269,14 +273,14 @@ func (c *forecastDataCache) finishFailure(ctx context.Context, key forecastDataC
 	c.pruneLocked(now)
 }
 
-func shouldRefreshForecastEntry(entry *forecastDataCacheEntry, now time.Time) bool {
+func shouldRefreshForecastEntry(entry *forecastDataCacheEntry, now time.Time, retryInterval time.Duration) bool {
 	if entry == nil || lenNonEmptyForecastData(entry.data) == 0 {
 		return false
 	}
 	if !entry.refreshedAt.IsZero() && now.Sub(entry.refreshedAt) < forecastDataRefreshInterval {
 		return false
 	}
-	return entry.lastAttemptAt.IsZero() || now.Sub(entry.lastAttemptAt) >= forecastDataRefreshRetryInterval
+	return entry.lastAttemptAt.IsZero() || now.Sub(entry.lastAttemptAt) >= retryInterval
 }
 
 func (c *forecastDataCache) pruneLocked(now time.Time) {
@@ -380,12 +384,12 @@ func truncateForecastCacheError(value string) string {
 	return value[:cut]
 }
 
-func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, query ForecastQuery) (map[string]ForecastSourceData, error) {
+func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, query ForecastQuery, retryLimit int, retryInterval time.Duration) (map[string]ForecastSourceData, error) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
 	var lastErr error
-	for attempt := 1; attempt <= forecastDataRefreshRetryLimit; attempt++ {
+	for attempt := 1; attempt <= retryLimit; attempt++ {
 		data, err := fetchForecastData(ctx, provider, query)
 		if err == nil && lenNonEmptyForecastData(data) > 0 {
 			return data, nil
@@ -394,10 +398,10 @@ func fetchForecastDataWithRetry(ctx context.Context, provider ForecastProvider, 
 			err = errors.New("forecast source returned empty data")
 		}
 		lastErr = err
-		if attempt >= forecastDataRefreshRetryLimit {
+		if attempt >= retryLimit {
 			break
 		}
-		timer := time.NewTimer(forecastDataRefreshRetryInterval)
+		timer := time.NewTimer(retryInterval)
 		select {
 		case <-ctx.Done():
 			timer.Stop()

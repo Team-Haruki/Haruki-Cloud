@@ -39,15 +39,6 @@ func (p *sequencedForecastProvider) FetchBySource(context.Context, string, int, 
 }
 
 func TestForecastDataCacheKeepsPreviousDataWhenRefreshFails(t *testing.T) {
-	prevRetryLimit := forecastDataRefreshRetryLimit
-	prevRetryInterval := forecastDataRefreshRetryInterval
-	t.Cleanup(func() {
-		forecastDataRefreshRetryLimit = prevRetryLimit
-		forecastDataRefreshRetryInterval = prevRetryInterval
-	})
-	forecastDataRefreshRetryLimit = 1
-	forecastDataRefreshRetryInterval = time.Millisecond
-
 	provider := &sequencedForecastProvider{
 		data: []map[string]ForecastSourceData{
 			{
@@ -65,6 +56,8 @@ func TestForecastDataCacheKeepsPreviousDataWhenRefreshFails(t *testing.T) {
 		},
 	}
 	cache := newForecastDataCache(provider)
+	cache.retryLimit = 1
+	cache.retryInterval = time.Millisecond
 
 	if err := cache.RefreshNow(context.Background(), "jp", 101); err != nil {
 		t.Fatalf("initial refresh: %v", err)

@@ -182,12 +182,10 @@ func parseProfileDifficultyToggles(raw string) ([]accountdata.ProfileDifficultyT
 
 func (sekaiHandlers) ProfileHideSuiteHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk hide suite", "/pjsk隐藏抓包", "/隐藏抓包",
-			},
-			Path: "profile/suite/hide",
+		Commands: []string{
+			"/pjsk hide suite", "/pjsk隐藏抓包", "/隐藏抓包",
 		},
+		Path: "profile/suite/hide",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
@@ -200,12 +198,10 @@ func (sekaiHandlers) ProfileHideSuiteHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileShowSuiteHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk show suite", "/pjsk显示抓包", "/pjsk展示抓包", "/展示抓包",
-			},
-			Path: "profile/suite/show",
+		Commands: []string{
+			"/pjsk show suite", "/pjsk显示抓包", "/pjsk展示抓包", "/展示抓包",
 		},
+		Path: "profile/suite/show",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
@@ -218,12 +214,10 @@ func (sekaiHandlers) ProfileShowSuiteHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileHideMySekaiHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk hide mysekai", "/pjsk隐藏烤森抓包", "/隐藏烤森抓包",
-			},
-			Path: "profile/mysekai/hide",
+		Commands: []string{
+			"/pjsk hide mysekai", "/pjsk隐藏烤森抓包", "/隐藏烤森抓包",
 		},
+		Path: "profile/mysekai/hide",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
@@ -236,12 +230,10 @@ func (sekaiHandlers) ProfileHideMySekaiHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileShowMySekaiHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk show mysekai", "/pjsk显示烤森抓包", "/pjsk展示烤森抓包", "/展示烤森抓包",
-			},
-			Path: "profile/mysekai/show",
+		Commands: []string{
+			"/pjsk show mysekai", "/pjsk显示烤森抓包", "/pjsk展示烤森抓包", "/展示烤森抓包",
 		},
+		Path: "profile/mysekai/show",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
@@ -254,12 +246,10 @@ func (sekaiHandlers) ProfileShowMySekaiHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileHideIDHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID",
-			},
-			Path: "profile/visibility/hide",
+		Commands: []string{
+			"/pjsk hide id", "/pjsk隐藏id", "/pjsk隐藏ID", "/隐藏id", "/隐藏ID",
 		},
+		Path: "profile/visibility/hide",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
@@ -272,13 +262,11 @@ func (sekaiHandlers) ProfileHideIDHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileShowIDHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID",
-				"/展示id", "/展示ID", "/显示id", "/显示ID",
-			},
-			Path: "profile/visibility/show",
+		Commands: []string{
+			"/pjsk show id", "/pjsk显示id", "/pjsk显示ID", "/pjsk展示id", "/pjsk展示ID",
+			"/展示id", "/展示ID", "/显示id", "/显示ID",
 		},
+		Path: "profile/visibility/show",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
@@ -291,10 +279,8 @@ func (sekaiHandlers) ProfileShowIDHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: profileTimeZoneCommands(),
-			Path:     "profile/timezone",
-		},
+		Commands:    profileTimeZoneCommands(),
+		Path:        "profile/timezone",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := extractProfileTimeZoneArg(ctx)
@@ -317,13 +303,11 @@ func (sekaiHandlers) ProfileTimeZoneHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk chart style",
-				"/谱面样式", "/谱面底色", "/设置谱面样式", "/设置谱面底色",
-			},
-			Path: "profile/chart-style",
+		Commands: []string{
+			"/pjsk chart style",
+			"/谱面样式", "/谱面底色", "/设置谱面样式", "/设置谱面底色",
 		},
+		Path:        "profile/chart-style",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -342,12 +326,10 @@ func (sekaiHandlers) ProfileChartStyleHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/开启模块个人信息", "/开启模块化个人信息", "/pjsk modular profile on",
-			},
-			Path: "profile/modular/enable",
+		Commands: []string{
+			"/开启模块个人信息", "/开启模块化个人信息", "/pjsk modular profile on",
 		},
+		Path:        "profile/modular/enable",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
@@ -360,12 +342,10 @@ func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileDisableModularHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/关闭模块个人信息", "/关闭模块化个人信息", "/pjsk modular profile off",
-			},
-			Path: "profile/modular/disable",
+		Commands: []string{
+			"/关闭模块个人信息", "/关闭模块化个人信息", "/pjsk modular profile off",
 		},
+		Path:        "profile/modular/disable",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
@@ -378,12 +358,10 @@ func (sekaiHandlers) ProfileDisableModularHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileArrestDifficultyHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/逮捕难度", "/pjsk逮捕难度", "/pjsk arrest difficulty",
-			},
-			Path: "profile/arrest-difficulty",
+		Commands: []string{
+			"/逮捕难度", "/pjsk逮捕难度", "/pjsk arrest difficulty",
 		},
+		Path:        "profile/arrest-difficulty",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -411,13 +389,11 @@ func (sekaiHandlers) ProfileArrestDifficultyHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileCheckDataHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk check data", "/pjsk抓包", "/pjsk抓包状态", "/pjsk抓包数据", "/pjsk抓包查询",
-				"/抓包数据", "/抓包状态", "/抓包信息", "/sud",
-			},
-			Path: "profile/check-data",
+		Commands: []string{
+			"/pjsk check data", "/pjsk抓包", "/pjsk抓包状态", "/pjsk抓包数据", "/pjsk抓包查询",
+			"/抓包数据", "/抓包状态", "/抓包信息", "/sud",
 		},
+		Path: "profile/check-data",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
@@ -430,14 +406,12 @@ func (sekaiHandlers) ProfileCheckDataHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MsdHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/msd",
-				"/pjsk check mysekai data",
-				"/pjsk烤森抓包数据", "/pjsk烤森抓包", "/烤森抓包", "/烤森抓包数据",
-			},
-			Path: "profile/check-data-mysekai",
+		Commands: []string{
+			"/msd",
+			"/pjsk check mysekai data",
+			"/pjsk烤森抓包数据", "/pjsk烤森抓包", "/烤森抓包", "/烤森抓包数据",
 		},
+		Path: "profile/check-data-mysekai",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {
@@ -450,12 +424,10 @@ func (sekaiHandlers) MsdHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileVerifyHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk verify", "/pjsk验证",
-			},
-			Path: "profile/verify",
+		Commands: []string{
+			"/pjsk verify", "/pjsk验证",
 		},
+		Path: "profile/verify",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
 			if err != nil {
@@ -468,12 +440,10 @@ func (sekaiHandlers) ProfileVerifyHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileVerifyListHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk verify list", "/pjsk验证列表", "/pjsk验证状态",
-			},
-			Path: "profile/verify/list",
+		Commands: []string{
+			"/pjsk verify list", "/pjsk验证列表", "/pjsk验证状态",
 		},
+		Path:        "profile/verify/list",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {

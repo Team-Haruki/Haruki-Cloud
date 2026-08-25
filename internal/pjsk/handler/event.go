@@ -27,13 +27,11 @@ const eventSearchHelp = querySingleEventHelp + "\n\n" + queryMultiEventHelp
 
 func (sekaiHandlers) EventHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "event/list",
-			Commands: []string{
-				"/pjsk events", "/pjsk_events", "/events", "/活动列表", "/活动一览", "/event-list",
-			},
-			Helper: eventSearchHelp,
+		Path: "event/list",
+		Commands: []string{
+			"/pjsk events", "/pjsk_events", "/events", "/活动列表", "/活动一览", "/event-list",
 		},
+		Helper: eventSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveEventDetailOrList(ctx, true)
 		},
@@ -42,13 +40,11 @@ func (sekaiHandlers) EventHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) EventDetailHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "event",
-			Commands: []string{
-				"/pjsk event", "/pjsk_event", "/活动", "/查活动", "/event",
-			},
-			Helper: eventSearchHelp,
+		Path: "event",
+		Commands: []string{
+			"/pjsk event", "/pjsk_event", "/活动", "/查活动", "/event",
 		},
+		Helper: eventSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveEventDetailOrList(ctx, false)
 		},
@@ -160,12 +156,10 @@ func resolveAmbiguousEventListFilter(args string) (map[string]any, bool) {
 
 func (sekaiHandlers) EventRecordHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "event/record",
-			Commands: []string{
-				"/pjsk event record", "/pjsk_event_record",
-				"/活动记录", "/冲榜记录",
-			},
+		Path: "event/record",
+		Commands: []string{
+			"/pjsk event record", "/pjsk_event_record",
+			"/活动记录", "/冲榜记录",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			params, err := newSelfQueryParamsMap(ctx)

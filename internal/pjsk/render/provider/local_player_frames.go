@@ -19,7 +19,7 @@ type localPlayerFrameProvider struct {
 
 func (p *localPlayerFrameProvider) ensureFrames() error {
 	return p.frames.init(func() (map[int]*masterdata.PlayerFrame, error) {
-		items, err := loadJSON[masterdata.PlayerFrame](p.store, "playerFrames.json")
+		items, err := p.store.loadJSON[masterdata.PlayerFrame]("playerFrames.json")
 		if err != nil {
 			return nil, err
 		}
@@ -33,7 +33,7 @@ func (p *localPlayerFrameProvider) ensureFrames() error {
 
 func (p *localPlayerFrameProvider) ensureGroups() error {
 	return p.groups.init(func() (map[int]*masterdata.PlayerFrameGroup, error) {
-		items, err := loadJSON[masterdata.PlayerFrameGroup](p.store, "playerFrameGroups.json")
+		items, err := p.store.loadJSON[masterdata.PlayerFrameGroup]("playerFrameGroups.json")
 		if err != nil {
 			return nil, err
 		}

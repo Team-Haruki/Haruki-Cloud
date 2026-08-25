@@ -7,7 +7,7 @@ import (
 
 func (p *localEducationProvider) ensureRewards() error {
 	return p.rewards.init(func() (map[int][]*ChallengeReward, error) {
-		items, err := loadJSON[ChallengeReward](p.store, "challengeLiveHighScoreRewards.json")
+		items, err := p.store.loadJSON[ChallengeReward]("challengeLiveHighScoreRewards.json")
 		if err != nil {
 			return nil, err
 		}
@@ -21,7 +21,7 @@ func (p *localEducationProvider) ensureRewards() error {
 
 func (p *localEducationProvider) ensureResourceBoxes() error {
 	return p.boxes.init(func() (boxIndex, error) {
-		items, err := loadJSON[ResourceBox](p.store, "resourceBoxes.json")
+		items, err := p.store.loadJSON[ResourceBox]("resourceBoxes.json")
 		if err != nil {
 			return boxIndex{}, err
 		}

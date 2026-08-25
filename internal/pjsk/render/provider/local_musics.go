@@ -41,7 +41,7 @@ type localMusicProvider struct {
 
 func (p *localMusicProvider) ensureMusics() error {
 	return p.musics.init(func() (musicIndex, error) {
-		items, err := loadJSON[localMusicJSON](p.store, "musics.json")
+		items, err := p.store.loadJSON[localMusicJSON]("musics.json")
 		if err != nil {
 			return musicIndex{}, err
 		}
@@ -66,7 +66,7 @@ func (p *localMusicProvider) ensureMusics() error {
 
 func (p *localMusicProvider) ensureDifficulties() error {
 	return p.diffs.init(func() (map[int][]*masterdata.MusicDifficulty, error) {
-		items, err := loadJSON[masterdata.MusicDifficulty](p.store, "musicDifficulties.json")
+		items, err := p.store.loadJSON[masterdata.MusicDifficulty]("musicDifficulties.json")
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func (p *localMusicProvider) ensureDifficulties() error {
 
 func (p *localMusicProvider) ensureVocals() error {
 	return p.vocals.init(func() (map[int][]*masterdata.MusicVocal, error) {
-		items, err := loadJSON[localMusicVocalJSON](p.store, "musicVocals.json")
+		items, err := p.store.loadJSON[localMusicVocalJSON]("musicVocals.json")
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +95,7 @@ func (p *localMusicProvider) ensureVocals() error {
 
 func (p *localMusicProvider) ensureTags() error {
 	return p.tags.init(func() (map[int][]string, error) {
-		items, err := loadJSON[localMusicTagJSON](p.store, "musicTags.json")
+		items, err := p.store.loadJSON[localMusicTagJSON]("musicTags.json")
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +112,7 @@ func (p *localMusicProvider) ensureTags() error {
 
 func (p *localMusicProvider) ensureOutsideCharacters() error {
 	return p.outside.init(func() (map[int]string, error) {
-		items, err := loadJSON[localOutsideCharacterJSON](p.store, "outsideCharacters.json")
+		items, err := p.store.loadJSON[localOutsideCharacterJSON]("outsideCharacters.json")
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +126,7 @@ func (p *localMusicProvider) ensureOutsideCharacters() error {
 
 func (p *localMusicProvider) ensureEventMusics() error {
 	return p.eventMusics.init(func() (eventMusicIndex, error) {
-		items, err := loadJSON[localEventMusicJSON](p.store, "eventMusics.json")
+		items, err := p.store.loadJSON[localEventMusicJSON]("eventMusics.json")
 		if err != nil {
 			return eventMusicIndex{}, err
 		}
@@ -149,7 +149,7 @@ func (p *localMusicProvider) ensureEventMusics() error {
 
 func (p *localMusicProvider) ensureLimitedTimeMusics() error {
 	return p.limited.init(func() (map[int][]*masterdata.LimitedTimeMusic, error) {
-		items, err := loadJSON[masterdata.LimitedTimeMusic](p.store, "limitedTimeMusics.json")
+		items, err := p.store.loadJSON[masterdata.LimitedTimeMusic]("limitedTimeMusics.json")
 		if err != nil {
 			return nil, err
 		}

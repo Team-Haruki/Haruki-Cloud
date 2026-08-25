@@ -16,15 +16,13 @@ const MusicSearchHelp = `请输入要查询的曲目，支持以下查询方式:
 
 func (sekaiHandlers) ChartHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "music/chart",
-			Commands: []string{
-				"/pjsk chart",
-				"/谱面查询", "/铺面查询", "/谱面预览", "/铺面预览", "/谱面", "/铺面", "/查谱面", "/查铺面", "/查谱",
-				"/技能预览",
-			},
-			Helper: MusicSearchHelp,
+		Path: "music/chart",
+		Commands: []string{
+			"/pjsk chart",
+			"/谱面查询", "/铺面查询", "/谱面预览", "/铺面预览", "/谱面", "/铺面", "/查谱面", "/查铺面", "/查谱",
+			"/技能预览",
 		},
+		Helper: MusicSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) == "" {
 				return nil, errors.New(MusicSearchHelp)

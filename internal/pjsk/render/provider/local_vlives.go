@@ -20,7 +20,7 @@ type localVLiveProvider struct {
 
 func (p *localVLiveProvider) ensureLoaded() error {
 	return p.lives.init(func() ([]*VLive, error) {
-		items, err := loadJSON[localVirtualLiveJSON](p.store, "virtualLives.json")
+		items, err := p.store.loadJSON[localVirtualLiveJSON]("virtualLives.json")
 		if err != nil {
 			return nil, err
 		}

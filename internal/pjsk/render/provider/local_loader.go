@@ -90,8 +90,8 @@ func (s *localStore) readFile(filename string) ([]byte, error) {
 }
 
 // loadJSON reads a JSON file and unmarshals it into a slice of T.
-func loadJSON[T any](store *localStore, filename string) ([]T, error) {
-	data, err := store.readFile(filename)
+func (s *localStore) loadJSON[T any](filename string) ([]T, error) {
+	data, err := s.readFile(filename)
 	if err != nil {
 		return nil, err
 	}

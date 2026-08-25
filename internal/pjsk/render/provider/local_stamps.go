@@ -18,7 +18,7 @@ type localStampProvider struct {
 
 func (p *localStampProvider) GetAll(_ context.Context) ([]masterdata.Stamp, error) {
 	if err := p.stamps.init(func() ([]masterdata.Stamp, error) {
-		return loadJSON[masterdata.Stamp](p.store, "stamps.json")
+		return p.store.loadJSON[masterdata.Stamp]("stamps.json")
 	}); err != nil {
 		return nil, err
 	}

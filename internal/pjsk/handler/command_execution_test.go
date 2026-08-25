@@ -4432,12 +4432,10 @@ func TestExecuteProfileCustomProfileCard(t *testing.T) {
 	}
 
 	params, err := json.Marshal(profileCustomProfileCardParams{
-		UserQueryParams: UserQueryParams{
-			Mode:           "self",
-			Platform:       "qq",
-			PlatformUserID: "42",
-		},
-		Seq: 1,
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Seq:            1,
 	})
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
@@ -4510,12 +4508,10 @@ func TestExecuteProfileCustomProfileCardSelectsSeq(t *testing.T) {
 	}
 
 	params, err := json.Marshal(profileCustomProfileCardParams{
-		UserQueryParams: UserQueryParams{
-			Mode:           "self",
-			Platform:       "qq",
-			PlatformUserID: "42",
-		},
-		Seq: 2,
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Seq:            2,
 	})
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
@@ -4813,7 +4809,7 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 func TestExecuteCardImageReportsRegionSpecificMissingCard(t *testing.T) {
 	app := &renderapp.App{
 		Cards: rendercard.NewController(
-			&missingBridgeCardSource{bridgeCardSource: bridgeCardSource{region: renderregion.CN}},
+			&missingBridgeCardSource{region: renderregion.CN},
 			&bridgeCardEventSource{},
 			nil,
 			nil,

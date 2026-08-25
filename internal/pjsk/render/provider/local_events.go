@@ -42,7 +42,7 @@ type localEventProvider struct {
 
 func (p *localEventProvider) ensureEvents() error {
 	return p.events.init(func() (eventIndex, error) {
-		items, err := loadJSON[localEventJSON](p.store, "events.json")
+		items, err := p.store.loadJSON[localEventJSON]("events.json")
 		if err != nil {
 			return eventIndex{}, err
 		}
@@ -64,7 +64,7 @@ func (p *localEventProvider) ensureEvents() error {
 
 func (p *localEventProvider) ensureEventCards() error {
 	return p.eventCards.init(func() (eventCardIndex, error) {
-		items, err := loadJSON[localEventCardJSON](p.store, "eventCards.json")
+		items, err := p.store.loadJSON[localEventCardJSON]("eventCards.json")
 		if err != nil {
 			return eventCardIndex{}, err
 		}
@@ -84,7 +84,7 @@ func (p *localEventProvider) ensureEventCards() error {
 
 func (p *localEventProvider) ensureDeckBonuses() error {
 	return p.deckBonus.init(func() (map[int][]*masterdata.EventDeckBonus, error) {
-		items, err := loadJSON[masterdata.EventDeckBonus](p.store, "eventDeckBonuses.json")
+		items, err := p.store.loadJSON[masterdata.EventDeckBonus]("eventDeckBonuses.json")
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +98,7 @@ func (p *localEventProvider) ensureDeckBonuses() error {
 
 func (p *localEventProvider) ensureWorldBlooms() error {
 	return p.worldBloom.init(func() (map[int][]*masterdata.WorldBloom, error) {
-		items, err := loadJSON[localWorldBloomJSON](p.store, "worldBlooms.json")
+		items, err := p.store.loadJSON[localWorldBloomJSON]("worldBlooms.json")
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +118,7 @@ func (p *localEventProvider) ensureWorldBlooms() error {
 
 func (p *localEventProvider) ensureWorldBloomChapterRankingRewardRanges() error {
 	return p.worldBloomChapterRankingRewardRanges.init(func() (map[worldBloomChapterRankingRewardKey][]masterdata.WorldBloomChapterRankingRewardRange, error) {
-		items, err := loadJSON[localWorldBloomChapterRankingRewardRangeJSON](p.store, "worldBloomChapterRankingRewardRanges.json")
+		items, err := p.store.loadJSON[localWorldBloomChapterRankingRewardRangeJSON]("worldBloomChapterRankingRewardRanges.json")
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +202,7 @@ func (p *localEventProvider) GetCards(ctx context.Context, eventID int) ([]*mast
 }
 
 func (p *localEventProvider) GetRankingHonorRewards(_ context.Context, eventID int) ([]masterdata.EventRankingHonorReward, error) {
-	items, err := loadJSON[localEventJSON](p.store, "events.json")
+	items, err := p.store.loadJSON[localEventJSON]("events.json")
 	if err != nil {
 		return nil, err
 	}

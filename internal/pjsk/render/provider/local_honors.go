@@ -38,7 +38,7 @@ type localHonorProvider struct {
 
 func (p *localHonorProvider) ensureHonors() error {
 	return p.honors.init(func() (map[int]*masterdata.Honor, error) {
-		items, err := loadJSON[masterdata.Honor](p.store, "honors.json")
+		items, err := p.store.loadJSON[masterdata.Honor]("honors.json")
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,7 @@ func (p *localHonorProvider) ensureHonors() error {
 
 func (p *localHonorProvider) ensureGroups() error {
 	return p.groups.init(func() (map[int]*masterdata.HonorGroup, error) {
-		items, err := loadJSON[masterdata.HonorGroup](p.store, "honorGroups.json")
+		items, err := p.store.loadJSON[masterdata.HonorGroup]("honorGroups.json")
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +66,7 @@ func (p *localHonorProvider) ensureGroups() error {
 
 func (p *localHonorProvider) ensureBonds() error {
 	return p.bondsHonors.init(func() (map[int]*masterdata.BondsHonor, error) {
-		items, err := loadJSON[masterdata.BondsHonor](p.store, "bondsHonors.json")
+		items, err := p.store.loadJSON[masterdata.BondsHonor]("bondsHonors.json")
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func (p *localHonorProvider) ensureBonds() error {
 
 func (p *localHonorProvider) ensureBondsHonorWords() error {
 	return p.bondsHonorWords.init(func() (map[int]*masterdata.BondsHonorWord, error) {
-		items, err := loadJSON[masterdata.BondsHonorWord](p.store, "bondsHonorWords.json")
+		items, err := p.store.loadJSON[masterdata.BondsHonorWord]("bondsHonorWords.json")
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +94,7 @@ func (p *localHonorProvider) ensureBondsHonorWords() error {
 
 func (p *localHonorProvider) ensureGCU() error {
 	return p.gcu.init(func() (map[int]*masterdata.GameCharacterUnit, error) {
-		items, err := loadJSON[masterdata.GameCharacterUnit](p.store, "gameCharacterUnits.json")
+		items, err := p.store.loadJSON[masterdata.GameCharacterUnit]("gameCharacterUnits.json")
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +109,7 @@ func (p *localHonorProvider) ensureGCU() error {
 func (p *localHonorProvider) ensureBirthdayChars() {
 	_ = p.birthday.init(func() (honorBirthdayData, error) {
 		data := honorBirthdayData{byGroup: make(map[int]honorBirthdayAssets)}
-		chars, err := loadJSON[localGameCharacterJSON](p.store, "gameCharacters.json")
+		chars, err := p.store.loadJSON[localGameCharacterJSON]("gameCharacters.json")
 		if err == nil {
 			data.chars = chars
 		}
@@ -120,7 +120,7 @@ func (p *localHonorProvider) ensureBirthdayChars() {
 func (p *localHonorProvider) ensureEventHonors() {
 	_ = p.eventHonors.init(func() (map[int]int, error) {
 		byHonorID := make(map[int]int)
-		items, err := loadJSON[localEventJSON](p.store, "events.json")
+		items, err := p.store.loadJSON[localEventJSON]("events.json")
 		if err != nil {
 			return byHonorID, nil
 		}

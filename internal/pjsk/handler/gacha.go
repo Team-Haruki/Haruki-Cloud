@@ -35,13 +35,11 @@ var (
 
 func (sekaiHandlers) GachaHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "gacha",
-			Commands: []string{
-				"/pjsk gacha", "/卡池列表", "/卡池一览", "/卡池", "/查卡池",
-			},
-			Helper: gachaSearchHelp,
+		Path: "gacha",
+		Commands: []string{
+			"/pjsk gacha", "/卡池列表", "/卡池一览", "/卡池", "/查卡池",
 		},
+		Helper: gachaSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveGachaDetailOrList(ctx)
 		},

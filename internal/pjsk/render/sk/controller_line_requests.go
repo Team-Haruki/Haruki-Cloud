@@ -37,16 +37,14 @@ func (c *Controller) BuildLineRequestFromTracker(req TrackerRankQuery) (*LineReq
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
 	line := LineRequest{
-		SklRequest: drawing.SklRequest{
-			ID:            normalized.EventID,
-			Region:        normalized.Region,
-			StartAt:       meta.startAt,
-			AggregateAt:   meta.aggregateAt,
-			Name:          meta.name,
-			BannerImgPath: meta.bannerPath,
-			Ranks:         rankInfos,
-		},
-		Full: normalized.Full,
+		ID:            normalized.EventID,
+		Region:        normalized.Region,
+		StartAt:       meta.startAt,
+		AggregateAt:   meta.aggregateAt,
+		Name:          meta.name,
+		BannerImgPath: meta.bannerPath,
+		Ranks:         rankInfos,
+		Full:          normalized.Full,
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		wl := *normalized.WlCharacterID
@@ -178,19 +176,17 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 	}
 
 	line := LineRequest{
-		SklRequest: drawing.SklRequest{
-			ID:               normalized.EventID,
-			Region:           normalized.Region,
-			StartAt:          meta.startAt,
-			AggregateAt:      meta.aggregateAt,
-			Name:             strings.TrimSpace(meta.name + " 预测"),
-			BannerImgPath:    meta.bannerPath,
-			Ranks:            currentRanks,
-			CurrentRanks:     currentRanks,
-			ForecastColumns:  columns,
-			PredictionNotice: skPredictionNotice,
-		},
-		Full: normalized.Full,
+		ID:               normalized.EventID,
+		Region:           normalized.Region,
+		StartAt:          meta.startAt,
+		AggregateAt:      meta.aggregateAt,
+		Name:             strings.TrimSpace(meta.name + " 预测"),
+		BannerImgPath:    meta.bannerPath,
+		Ranks:            currentRanks,
+		CurrentRanks:     currentRanks,
+		ForecastColumns:  columns,
+		PredictionNotice: skPredictionNotice,
+		Full:             normalized.Full,
 	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
 		wl := *normalized.WlCharacterID

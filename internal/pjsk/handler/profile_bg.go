@@ -136,13 +136,11 @@ func resolveProfileBGSelector(ctx HarrukiSekaiHandlerContext) (string, error) {
 
 func (sekaiHandlers) ProfileUploadBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk upload profile bg", "/pjsk upload profile background",
-				"/上传个人信息背景", "/上传个人信息图片", "/上传个人背景", "/上传个人信息",
-			},
-			Path: "profile/bg/upload",
+		Commands: []string{
+			"/pjsk upload profile bg", "/pjsk upload profile background",
+			"/上传个人信息背景", "/上传个人信息图片", "/上传个人背景", "/上传个人信息",
 		},
+		Path:        "profile/bg/upload",
 		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			imageURL := extractFirstImageURL(ctx)
@@ -162,13 +160,11 @@ func (sekaiHandlers) ProfileUploadBGHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileClearBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk clear profile bg", "/pjsk clear profile background",
-				"/清空个人信息背景", "/清除个人信息背景", "/清空个人信息图片", "/清除个人信息图片",
-			},
-			Path: "profile/bg/clear",
+		Commands: []string{
+			"/pjsk clear profile bg", "/pjsk clear profile background",
+			"/清空个人信息背景", "/清除个人信息背景", "/清空个人信息图片", "/清除个人信息图片",
 		},
+		Path:        "profile/bg/clear",
 		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveSettingsSelector(ctx)
@@ -182,13 +178,11 @@ func (sekaiHandlers) ProfileClearBGHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileAdjustBGHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk adjust profile", "/pjsk adjust profile bg", "/pjsk adjust profile background",
-				"/调整个人信息背景", "/调整个人信息", "/设置个人信息", "/设置个人信息背景",
-			},
-			Path: "profile/bg/adjust",
+		Commands: []string{
+			"/pjsk adjust profile", "/pjsk adjust profile bg", "/pjsk adjust profile background",
+			"/调整个人信息背景", "/调整个人信息", "/设置个人信息", "/设置个人信息背景",
 		},
+		Path:        "profile/bg/adjust",
 		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selector, err := resolveProfileBGSelector(ctx)

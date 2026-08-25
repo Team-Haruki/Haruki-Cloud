@@ -40,7 +40,7 @@ type localCardProvider struct {
 
 func (p *localCardProvider) ensureCards() error {
 	return p.cards.init(func() (cardIndex, error) {
-		items, err := loadJSON[masterdata.Card](p.store, "cards.json")
+		items, err := p.store.loadJSON[masterdata.Card]("cards.json")
 		if err != nil {
 			return cardIndex{}, err
 		}
@@ -62,7 +62,7 @@ func (p *localCardProvider) ensureCards() error {
 
 func (p *localCardProvider) ensureSupplies() error {
 	return p.supplies.init(func() (map[int]string, error) {
-		items, err := loadJSON[localCardSupplyJSON](p.store, "cardSupplies.json")
+		items, err := p.store.loadJSON[localCardSupplyJSON]("cardSupplies.json")
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +76,7 @@ func (p *localCardProvider) ensureSupplies() error {
 
 func (p *localCardProvider) ensureEpisodes() error {
 	return p.episodes.init(func() (map[int][]*masterdata.CardEpisode, error) {
-		items, err := loadJSON[localCardEpisodeJSON](p.store, "cardEpisodes.json")
+		items, err := p.store.loadJSON[localCardEpisodeJSON]("cardEpisodes.json")
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func (p *localCardProvider) ensureEpisodes() error {
 
 func (p *localCardProvider) ensureGachas() error {
 	return p.gachas.init(func() ([]*masterdata.Gacha, error) {
-		items, err := loadJSON[masterdata.Gacha](p.store, "gachas.json")
+		items, err := p.store.loadJSON[masterdata.Gacha]("gachas.json")
 		if err != nil {
 			return nil, err
 		}
@@ -119,11 +119,11 @@ func (p *localCardProvider) ensureGachas() error {
 
 func (p *localCardProvider) ensureCostumes() error {
 	return p.costumes.init(func() (map[int][]*masterdata.Costume3d, error) {
-		links, err := loadJSON[localCardCostume3dJSON](p.store, "cardCostume3ds.json")
+		links, err := p.store.loadJSON[localCardCostume3dJSON]("cardCostume3ds.json")
 		if err != nil {
 			return nil, err
 		}
-		raw, err := loadJSON[localCostume3dJSON](p.store, "costume3ds.json")
+		raw, err := p.store.loadJSON[localCostume3dJSON]("costume3ds.json")
 		if err != nil {
 			return nil, err
 		}
@@ -143,7 +143,7 @@ func (p *localCardProvider) ensureCostumes() error {
 
 func (p *localCardProvider) ensureEventCards() error {
 	return p.eventCards.init(func() (cardEventIndex, error) {
-		items, err := loadJSON[localEventCardJSON](p.store, "eventCards.json")
+		items, err := p.store.loadJSON[localEventCardJSON]("eventCards.json")
 		if err != nil {
 			return cardEventIndex{}, err
 		}
@@ -152,7 +152,7 @@ func (p *localCardProvider) ensureEventCards() error {
 			eventByCard:      make(map[int]int),
 			worldLink3ByCard: make(map[int]bool),
 		}
-		events, err := loadJSON[localEventJSON](p.store, "events.json")
+		events, err := p.store.loadJSON[localEventJSON]("events.json")
 		if err != nil {
 			return cardEventIndex{}, err
 		}

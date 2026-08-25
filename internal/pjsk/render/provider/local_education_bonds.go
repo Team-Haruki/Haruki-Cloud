@@ -10,7 +10,7 @@ import (
 
 func (p *localEducationProvider) ensureBondMaster() error {
 	return p.bonds.init(func() (bondData, error) {
-		items, err := loadJSON[localBondJSON](p.store, "bonds.json")
+		items, err := p.store.loadJSON[localBondJSON]("bonds.json")
 		if err != nil {
 			return bondData{}, err
 		}
@@ -23,7 +23,7 @@ func (p *localEducationProvider) ensureBondMaster() error {
 			})
 		}
 
-		levels, err := loadJSON[localLevelJSON](p.store, "levels.json")
+		levels, err := p.store.loadJSON[localLevelJSON]("levels.json")
 		if err != nil {
 			return bondData{}, err
 		}
@@ -56,7 +56,7 @@ func (p *localEducationProvider) ensureBondMaster() error {
 
 func (p *localEducationProvider) ensureGameCharacterStyles() error {
 	return p.styles.init(func() (map[int]*GameCharacterStyle, error) {
-		items, err := loadJSON[masterdata.GameCharacterUnit](p.store, "gameCharacterUnits.json")
+		items, err := p.store.loadJSON[masterdata.GameCharacterUnit]("gameCharacterUnits.json")
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +78,7 @@ func (p *localEducationProvider) ensureLeaderMissionRequirements() error {
 			missions:   make(map[int][]*CharacterMission),
 			groupsByID: make(map[int][]*CharacterMissionParameterGroup),
 		}
-		missions, err := loadJSON[localCharacterMissionJSON](p.store, "characterMissionV2s.json")
+		missions, err := p.store.loadJSON[localCharacterMissionJSON]("characterMissionV2s.json")
 		if err == nil {
 			for _, item := range missions {
 				mission := &CharacterMission{
@@ -92,7 +92,7 @@ func (p *localEducationProvider) ensureLeaderMissionRequirements() error {
 			}
 		}
 
-		items, err := loadJSON[localLeaderMissionRequirementJSON](p.store, "characterMissionV2ParameterGroups.json")
+		items, err := p.store.loadJSON[localLeaderMissionRequirementJSON]("characterMissionV2ParameterGroups.json")
 		if err != nil {
 			return missionData{}, err
 		}

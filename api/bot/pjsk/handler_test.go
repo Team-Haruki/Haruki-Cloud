@@ -523,21 +523,17 @@ func (botTrackerSource) TraceWorldBloomRankingByRank(server string, eventID, cha
 	return &sekaiapi.WorldBloomTraceRankingResponse{
 		RankData: []sekaiapi.WorldBloomRankDataPoint{
 			{
-				RankDataPoint: sekaiapi.RankDataPoint{
-					UserID:    "20001",
-					Score:     4000000 + rank,
-					Rank:      rank,
-					Timestamp: 1704067200,
-				},
+				UserID:      "20001",
+				Score:       4000000 + rank,
+				Rank:        rank,
+				Timestamp:   1704067200,
 				CharacterID: &characterID,
 			},
 			{
-				RankDataPoint: sekaiapi.RankDataPoint{
-					UserID:    "20001",
-					Score:     4005000 + rank,
-					Rank:      rank,
-					Timestamp: 1704070800,
-				},
+				UserID:      "20001",
+				Score:       4005000 + rank,
+				Rank:        rank,
+				Timestamp:   1704070800,
 				CharacterID: &characterID,
 			},
 		},
@@ -575,21 +571,17 @@ func (botTrackerSource) TraceWorldBloomRankingByUser(server string, eventID, cha
 	return &sekaiapi.WorldBloomTraceRankingResponse{
 		RankData: []sekaiapi.WorldBloomRankDataPoint{
 			{
-				RankDataPoint: sekaiapi.RankDataPoint{
-					UserID:    strconv.FormatInt(userID, 10),
-					Score:     6000000 + int(userID%1000),
-					Rank:      888,
-					Timestamp: 1704067200,
-				},
+				UserID:      strconv.FormatInt(userID, 10),
+				Score:       6000000 + int(userID%1000),
+				Rank:        888,
+				Timestamp:   1704067200,
 				CharacterID: &characterID,
 			},
 			{
-				RankDataPoint: sekaiapi.RankDataPoint{
-					UserID:    strconv.FormatInt(userID, 10),
-					Score:     6005000 + int(userID%1000),
-					Rank:      888,
-					Timestamp: 1704070800,
-				},
+				UserID:      strconv.FormatInt(userID, 10),
+				Score:       6005000 + int(userID%1000),
+				Rank:        888,
+				Timestamp:   1704070800,
 				CharacterID: &characterID,
 			},
 		},

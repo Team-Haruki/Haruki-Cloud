@@ -88,7 +88,7 @@ func (c *TrackerClient) baseURL() (string, error) {
 
 func (c *TrackerClient) GetEventStatus(server string, eventID int) (*EventStatusResponse, error) {
 	path := fmt.Sprintf("/api/v2/cloud/events/%s/%d/leaderboards/total/sk/status", server, eventID)
-	return getAs[EventStatusResponse](c, path)
+	return c.getAs[EventStatusResponse](path)
 }
 
 func (c *TrackerClient) GetCloudSKQuery(server string, eventID int, characterID *int, ranks []int, userID *int64, includeAdjacent, skipMissing bool, intervalSeconds int64) (*CloudRankQueryResponse, error) {
@@ -96,7 +96,7 @@ func (c *TrackerClient) GetCloudSKQuery(server string, eventID int, characterID 
 	values.Set("includeAdjacent", strconv.FormatBool(includeAdjacent))
 	values.Set("skipMissing", strconv.FormatBool(skipMissing))
 	path := fmt.Sprintf("/api/v2/cloud/events/%s/%d/leaderboards/%s/sk/query?%s", server, eventID, trackerLeaderboardScope(characterID), values.Encode())
-	return getAs[CloudRankQueryResponse](c, path)
+	return c.getAs[CloudRankQueryResponse](path)
 }
 
 func (c *TrackerClient) GetCloudSKCheckRoom(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*CloudCheckRoomResponse, error) {
@@ -104,14 +104,14 @@ func (c *TrackerClient) GetCloudSKCheckRoom(server string, eventID int, characte
 	values.Set("includeAdjacent", "true")
 	values.Set("skipMissing", strconv.FormatBool(skipMissing))
 	path := fmt.Sprintf("/api/v2/cloud/events/%s/%d/leaderboards/%s/sk/check-room?%s", server, eventID, trackerLeaderboardScope(characterID), values.Encode())
-	return getAs[CloudCheckRoomResponse](c, path)
+	return c.getAs[CloudCheckRoomResponse](path)
 }
 
 func (c *TrackerClient) GetCloudSKLine(server string, eventID int, characterID *int, ranks []int, userID *int64, skipMissing bool, intervalSeconds int64) (*CloudLineResponse, error) {
 	values := cloudSKValues(ranks, userID, intervalSeconds)
 	values.Set("skipMissing", strconv.FormatBool(skipMissing))
 	path := fmt.Sprintf("/api/v2/cloud/events/%s/%d/leaderboards/%s/sk/line?%s", server, eventID, trackerLeaderboardScope(characterID), values.Encode())
-	return getAs[CloudLineResponse](c, path)
+	return c.getAs[CloudLineResponse](path)
 }
 
 func (c *TrackerClient) GetCloudSKSpeed(server string, eventID int, characterID *int, ranks []int, intervalSeconds, unitSeconds int64, skipMissing bool) (*CloudSpeedResponse, error) {
@@ -119,7 +119,7 @@ func (c *TrackerClient) GetCloudSKSpeed(server string, eventID int, characterID 
 	values.Set("unitSeconds", strconv.FormatInt(unitSeconds, 10))
 	values.Set("skipMissing", strconv.FormatBool(skipMissing))
 	path := fmt.Sprintf("/api/v2/cloud/events/%s/%d/leaderboards/%s/sk/speed?%s", server, eventID, trackerLeaderboardScope(characterID), values.Encode())
-	return getAs[CloudSpeedResponse](c, path)
+	return c.getAs[CloudSpeedResponse](path)
 }
 
 func (c *TrackerClient) GetCloudSKTrace(server string, eventID int, characterID *int, subjectType string, subject string, limit int) (*CloudTraceResponse, error) {
@@ -130,7 +130,7 @@ func (c *TrackerClient) GetCloudSKTrace(server string, eventID int, characterID 
 		values.Set("limit", strconv.Itoa(limit))
 	}
 	path := fmt.Sprintf("/api/v2/cloud/events/%s/%d/leaderboards/%s/sk/trace?%s", server, eventID, trackerLeaderboardScope(characterID), values.Encode())
-	return getAs[CloudTraceResponse](c, path)
+	return c.getAs[CloudTraceResponse](path)
 }
 
 func cloudSKValues(ranks []int, userID *int64, intervalSeconds int64) url.Values {
@@ -157,7 +157,7 @@ func trackerLeaderboardScope(characterID *int) string {
 }
 
 // getAs executes a GET and unmarshals the JSON body into T.
-func getAs[T any](c *TrackerClient, path string) (*T, error) {
+func (c *TrackerClient) getAs[T any](path string) (*T, error) {
 	body, err := c.getRaw(path)
 	if err != nil {
 		return nil, err

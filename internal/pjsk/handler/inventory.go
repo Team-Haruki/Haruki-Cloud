@@ -25,14 +25,12 @@ type inventoryListParams struct {
 
 func (sekaiHandlers) InventoryListHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "inventory/list",
-			Commands: []string{
-				"/背包一览", "/查背包", "/持有物", "/查持有物",
-				"/pjsk inventory", "/inventory",
-			},
-			Helper: inventoryListHelp,
+		Path: "inventory/list",
+		Commands: []string{
+			"/背包一览", "/查背包", "/持有物", "/查持有物",
+			"/pjsk inventory", "/inventory",
 		},
+		Helper: inventoryListHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			params, err := buildInventoryListParams(ctx)
 			if err != nil {
@@ -95,13 +93,11 @@ func buildInventoryListParams(ctx HarrukiSekaiHandlerContext) (inventoryListPara
 		return inventoryListParams{}, err
 	}
 	return inventoryListParams{
-		userQueryParams: userQueryParams{
-			Mode:           self.Mode,
-			Platform:       self.Platform,
-			PlatformUserID: self.PlatformUserID,
-			Selector:       self.Selector,
-		},
-		Filter: filter,
+		Mode:           self.Mode,
+		Platform:       self.Platform,
+		PlatformUserID: self.PlatformUserID,
+		Selector:       self.Selector,
+		Filter:         filter,
 	}, nil
 }
 

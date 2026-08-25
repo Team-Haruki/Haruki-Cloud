@@ -171,7 +171,7 @@ func (p *dbEducationProvider) ensureLeaderMissionsLoaded(ctx context.Context) bo
 	}
 
 	if p.store != nil && p.store.Configured() {
-		if missions, err := loadJSON[localCharacterMissionJSON](p.store, "characterMissionV2s.json"); err == nil {
+		if missions, err := p.store.loadJSON[localCharacterMissionJSON]("characterMissionV2s.json"); err == nil {
 			for _, item := range missions {
 				mission := &CharacterMission{
 					ID:                   item.ID,

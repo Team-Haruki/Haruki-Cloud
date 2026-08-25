@@ -31,13 +31,11 @@ const cardSearchHelp = searchSingleCardHelp + "\n\n" + searchMultiCardHelp
 
 func (sekaiHandlers) CardDetailHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "card/detail",
-			Commands: []string{
-				"/card-detail", "/查卡", "/查牌", "/查卡牌", "/pjsk card",
-			},
-			Helper: cardSearchHelp,
+		Path: "card/detail",
+		Commands: []string{
+			"/card-detail", "/查卡", "/查牌", "/查卡牌", "/pjsk card",
 		},
+		Helper: cardSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveCardDetailOrList(ctx, false)
 		},
@@ -46,13 +44,11 @@ func (sekaiHandlers) CardDetailHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) CardListHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "card/list",
-			Commands: []string{
-				"/卡牌列表", "/cards", "/pjsk cards", "/card-list",
-			},
-			Helper: cardSearchHelp,
+		Path: "card/list",
+		Commands: []string{
+			"/卡牌列表", "/cards", "/pjsk cards", "/card-list",
 		},
+		Helper: cardSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return resolveCardDetailOrList(ctx, true)
 		},
@@ -95,11 +91,9 @@ func looksLikeSingleCardQuery(args string, preferFilter bool) bool {
 
 func (sekaiHandlers) CardBoxHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "card/box",
-			Commands: []string{
-				"/查箱", "/卡牌一览", "/卡面一览", "/卡一览", "/box", "/card-box", "/pjsk box",
-			},
+		Path: "card/box",
+		Commands: []string{
+			"/查箱", "/卡牌一览", "/卡面一览", "/卡一览", "/box", "/card-box", "/pjsk box",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -212,12 +206,10 @@ func isCardBoxTokenSeparator(ch rune) bool {
 
 func (sekaiHandlers) CardImgHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "card/image",
-			Commands: []string{
-				"/pjsk card img",
-				"/查卡面", "/卡面原图", "/卡面", "/card", "/卡图",
-			},
+		Path: "card/image",
+		Commands: []string{
+			"/pjsk card img",
+			"/查卡面", "/卡面原图", "/卡面", "/card", "/卡图",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())

@@ -23,7 +23,7 @@ type localSkillProvider struct {
 
 func (p *localSkillProvider) ensureLoaded() error {
 	return p.skills.init(func() (map[int]*masterdata.Skill, error) {
-		items, err := loadJSON[masterdata.Skill](p.store, "skills.json")
+		items, err := p.store.loadJSON[masterdata.Skill]("skills.json")
 		if err != nil {
 			return nil, err
 		}

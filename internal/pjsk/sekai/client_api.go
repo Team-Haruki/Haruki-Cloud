@@ -2,7 +2,6 @@ package sekai
 
 import (
 	"context"
-	json "encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -10,9 +9,9 @@ import (
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/core/upstream"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 
-	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -92,7 +91,7 @@ func (c *HarukiSekaiAPIClient) GetUserProfile(server, userID string) (*GetAnothe
 	}
 	var result GetAnotherProfileResponse
 	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
-	decodeErr := sonic.Unmarshal(body, &result)
+	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
 		return nil, fmt.Errorf("sekai api: failed to unmarshal profile response: %w", decodeErr)
@@ -119,7 +118,7 @@ func (c *HarukiSekaiAPIClient) GetSystem(server string) (*GetSystemResponse, err
 	}
 	var result GetSystemResponse
 	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
-	decodeErr := sonic.Unmarshal(body, &result)
+	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
 		return nil, fmt.Errorf("sekai api: failed to unmarshal system response: %w", decodeErr)
@@ -141,7 +140,7 @@ func (c *HarukiSekaiAPIClient) GetInformation(server string) (*GetInformationRes
 	}
 	var result GetInformationResponse
 	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
-	decodeErr := sonic.Unmarshal(body, &result)
+	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
 		return nil, fmt.Errorf("sekai api: failed to unmarshal information response: %w", decodeErr)
@@ -294,7 +293,7 @@ func (c *HarukiSekaiAPIClient) GetCustomMusicScorePublished(server, scoreID stri
 	}
 	var result CustomMusicScorePublishedSearchResponse
 	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
-	decodeErr := sonic.Unmarshal(body, &result)
+	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
 		return nil, fmt.Errorf("sekai api: failed to unmarshal custom music score response: %w", decodeErr)

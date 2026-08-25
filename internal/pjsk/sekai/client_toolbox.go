@@ -13,9 +13,9 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/version"
 
-	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
 	"github.com/klauspost/compress/zstd"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type HarukiToolboxClient struct {
@@ -46,17 +46,17 @@ type MysekaiBirthdayEventLookupRequest struct {
 }
 
 type MysekaiBirthdayEvent struct {
-	EventID             string                 `json:"event_id"`
-	SubscriptionID      string                 `json:"subscription_id"`
-	SubscriptionVersion string                 `json:"subscription_version"`
-	PayloadRef          string                 `json:"payload_ref,omitempty"`
-	Region              string                 `json:"region"`
-	UID                 string                 `json:"uid"`
-	MatchedMaterialIDs  []int                  `json:"matched_material_ids"`
-	EmptyResult         bool                   `json:"empty_result"`
-	FilteredPayload     sonic.NoCopyRawMessage `json:"filtered_payload,omitempty"`
-	UploadTime          int64                  `json:"upload_time"`
-	CreatedAt           int64                  `json:"created_at"`
+	EventID             string          `json:"event_id"`
+	SubscriptionID      string          `json:"subscription_id"`
+	SubscriptionVersion string          `json:"subscription_version"`
+	PayloadRef          string          `json:"payload_ref,omitempty"`
+	Region              string          `json:"region"`
+	UID                 string          `json:"uid"`
+	MatchedMaterialIDs  []int           `json:"matched_material_ids"`
+	EmptyResult         bool            `json:"empty_result"`
+	FilteredPayload     json.RawMessage `json:"filtered_payload,omitempty"`
+	UploadTime          int64           `json:"upload_time"`
+	CreatedAt           int64           `json:"created_at"`
 }
 
 // NewToolboxClient constructs a HarukiToolboxClient bound to the supplied config.
@@ -159,7 +159,7 @@ func (c *HarukiToolboxClient) GetMysekaiBirthdayEvent(ctx context.Context, req M
 	}
 	var event MysekaiBirthdayEvent
 	finishDecode := commandtrace.MeasureOperation(ctx, "toolbox.decode")
-	decodeErr := sonic.Unmarshal(resp.Body(), &event)
+	decodeErr := json.Unmarshal(resp.Body(), &event)
 	finishDecode()
 	if decodeErr != nil {
 		return nil, fmt.Errorf("toolbox: failed to parse birthday event response: %w", decodeErr)
@@ -524,7 +524,7 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 			return nil, err
 		}
 		finishDecode := commandtrace.MeasureOperation(ctx, "toolbox.decode")
-		if err := sonic.Unmarshal(body, &bindings); err != nil {
+		if err := json.Unmarshal(body, &bindings); err != nil {
 			finishDecode()
 			return nil, fmt.Errorf("toolbox: failed to parse game bindings response: %w", err)
 		}

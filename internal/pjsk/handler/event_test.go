@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/config"
 	"haruki-cloud/internal/onebot11"

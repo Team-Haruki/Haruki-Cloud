@@ -897,8 +897,8 @@ func (s *lineMetricsOnlyTrackerSource) TraceWorldBloomRankingByRank(server strin
 	charID := characterID
 	return &sekaiapi.WorldBloomTraceRankingResponse{
 		RankData: []sekaiapi.WorldBloomRankDataPoint{
-			{RankDataPoint: sekaiapi.RankDataPoint{Score: 2900000 + rank, Timestamp: 1704060000}, CharacterID: &charID},
-			{RankDataPoint: sekaiapi.RankDataPoint{Score: 3000000 + rank, Timestamp: 1704067200}, CharacterID: &charID},
+			{Score: 2900000 + rank, Timestamp: 1704060000, CharacterID: &charID},
+			{Score: 3000000 + rank, Timestamp: 1704067200, CharacterID: &charID},
 		},
 	}, nil
 }
@@ -908,8 +908,8 @@ func (s *lineMetricsOnlyTrackerSource) TraceWorldBloomRankingByUser(server strin
 	charID := characterID
 	return &sekaiapi.WorldBloomTraceRankingResponse{
 		RankData: []sekaiapi.WorldBloomRankDataPoint{
-			{RankDataPoint: sekaiapi.RankDataPoint{Score: 3900000, Timestamp: 1704060000}, CharacterID: &charID},
-			{RankDataPoint: sekaiapi.RankDataPoint{Score: 4000000, Timestamp: 1704067200}, CharacterID: &charID},
+			{Score: 3900000, Timestamp: 1704060000, CharacterID: &charID},
+			{Score: 4000000, Timestamp: 1704067200, CharacterID: &charID},
 		},
 	}, nil
 }
@@ -1092,8 +1092,8 @@ func (s *batchLineMetricsTrackerSource) TraceWorldBloomRankingsByRanks(server st
 		items = append(items, sekaiapi.BatchWorldBloomTraceRankingItem{
 			Rank: rank,
 			RankData: []sekaiapi.WorldBloomRankDataPoint{
-				{RankDataPoint: sekaiapi.RankDataPoint{Score: 2900000 + rank + characterID, Rank: rank, Timestamp: 1704060000}, CharacterID: &charID},
-				{RankDataPoint: sekaiapi.RankDataPoint{Score: 3000000 + rank + characterID, Rank: rank, Timestamp: 1704067200}, CharacterID: &charID},
+				{Score: 2900000 + rank + characterID, Rank: rank, Timestamp: 1704060000, CharacterID: &charID},
+				{Score: 3000000 + rank + characterID, Rank: rank, Timestamp: 1704067200, CharacterID: &charID},
 			},
 		})
 	}

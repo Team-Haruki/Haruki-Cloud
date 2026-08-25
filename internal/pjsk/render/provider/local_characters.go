@@ -26,7 +26,7 @@ type localCharacterProvider struct {
 
 func (p *localCharacterProvider) ensureCharacters() error {
 	return p.chars.init(func() (map[int]*masterdata.Character, error) {
-		items, err := loadJSON[localGameCharacterJSON](p.store, "gameCharacters.json")
+		items, err := p.store.loadJSON[localGameCharacterJSON]("gameCharacters.json")
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +46,7 @@ func (p *localCharacterProvider) ensureCharacters() error {
 
 func (p *localCharacterProvider) ensureUnits() error {
 	return p.units.init(func() (charUnitData, error) {
-		items, err := loadJSON[masterdata.GameCharacterUnit](p.store, "gameCharacterUnits.json")
+		items, err := p.store.loadJSON[masterdata.GameCharacterUnit]("gameCharacterUnits.json")
 		if err != nil {
 			return charUnitData{}, err
 		}

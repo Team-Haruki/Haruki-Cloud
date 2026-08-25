@@ -14,13 +14,11 @@ import (
 
 func (sekaiHandlers) ProfileBindHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk bind", "/pjsk id",
-				"/绑定", "/pjsk 绑定",
-			},
-			Path: "profile/bind",
+		Commands: []string{
+			"/pjsk bind", "/pjsk id",
+			"/绑定", "/pjsk 绑定",
 		},
+		Path:        "profile/bind",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -85,12 +83,10 @@ func buildProfileBindDerivedTrigger(ctx HarrukiSekaiHandlerContext, mode string)
 
 func (sekaiHandlers) ProfileBindListHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/绑定列表", "/pjsk bind list", "/pjsk绑定列表",
-			},
-			Path: "profile/bind/list",
+		Commands: []string{
+			"/绑定列表", "/pjsk bind list", "/pjsk绑定列表",
 		},
+		Path:        "profile/bind/list",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
@@ -107,12 +103,10 @@ func (sekaiHandlers) ProfileBindListHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileUIDHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/查uid", "/uid",
-			},
-			Path: "profile/uid",
+		Commands: []string{
+			"/查uid", "/uid",
 		},
+		Path:        "profile/uid",
 		ParseUIDArg: common.BoolPtr(true),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
@@ -141,12 +135,10 @@ func profileUIDUsageError(trigger string) error {
 
 func (sekaiHandlers) ProfileBindSwapHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/绑定交换", "/pjsk bind swap", "/pjsk绑定交换",
-			},
-			Path: "profile/bind/swap",
+		Commands: []string{
+			"/绑定交换", "/pjsk bind swap", "/pjsk绑定交换",
 		},
+		Path:        "profile/bind/swap",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.Fields(strings.TrimSpace(ctx.GetArgs()))
@@ -166,12 +158,10 @@ func (sekaiHandlers) ProfileBindSwapHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileUnbindHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk unbind", "/pjsk解绑", "/解绑", "/取消绑定",
-			},
-			Path: "profile/unbind",
+		Commands: []string{
+			"/pjsk unbind", "/pjsk解绑", "/解绑", "/取消绑定",
 		},
+		Path:        "profile/unbind",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -191,13 +181,11 @@ func (sekaiHandlers) ProfileUnbindHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileSetMainHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/pjsk set main", "/pjsk主账号", "/设置主账号", "/主账号",
-				"/设置默认绑定", "/默认绑定",
-			},
-			Path: "profile/default",
+		Commands: []string{
+			"/pjsk set main", "/pjsk主账号", "/设置主账号", "/主账号",
+			"/设置默认绑定", "/默认绑定",
 		},
+		Path:        "profile/default",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -218,12 +206,10 @@ func (sekaiHandlers) ProfileSetMainHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) ProfileClearDefaultBindingHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/取消默认绑定", "/清除默认绑定", "/取消主账号", "/清除主账号",
-			},
-			Path: "profile/default/clear",
+		Commands: []string{
+			"/取消默认绑定", "/清除默认绑定", "/取消主账号", "/清除主账号",
 		},
+		Path:        "profile/default/clear",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())

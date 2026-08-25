@@ -92,12 +92,10 @@ func resolveSelfOnlyQueryParams(ctx HarrukiSekaiHandlerContext) (UserQueryParams
 func (sekaiHandlers) ArrestHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		ParseUIDArg: common.BoolPtr(true),
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/逮捕", "/pjsk逮捕", "/pjsk arrest",
-			},
-			Path: "arrest",
+		Commands: []string{
+			"/逮捕", "/pjsk逮捕", "/pjsk arrest",
 		},
+		Path: "arrest",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			p, err := resolveUserQueryParams(ctx)
 			if err != nil {
@@ -110,12 +108,10 @@ func (sekaiHandlers) ArrestHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) RegTimeHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Commands: []string{
-				"/注册时间", "/pjsk reg time", "/pjsk 注册时间", "/查时间",
-			},
-			Path: "profile/reg-time",
+		Commands: []string{
+			"/注册时间", "/pjsk reg time", "/pjsk 注册时间", "/查时间",
 		},
+		Path: "profile/reg-time",
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			p, err := resolveSelfOnlyQueryParams(ctx)
 			if err != nil {

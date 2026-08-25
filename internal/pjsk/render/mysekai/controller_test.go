@@ -19,7 +19,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func newPhotoTestController(t *testing.T, mysekaiJSON string) *Controller {

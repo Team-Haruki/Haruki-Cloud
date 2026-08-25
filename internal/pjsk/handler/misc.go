@@ -18,11 +18,9 @@ type miscBirthdayParams struct {
 
 func (sekaiHandlers) MiscBirthdayHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "misc/birthday",
-			Commands: []string{
-				"/pjsk chara birthday", "/角色生日", "/生日", "/查生日",
-			},
+		Path: "misc/birthday",
+		Commands: []string{
+			"/pjsk chara birthday", "/角色生日", "/生日", "/查生日",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			params, err := buildMiscBirthdayParams(ctx.GetArgs())
@@ -51,11 +49,9 @@ func buildMiscBirthdayParams(args string) (miscBirthdayParams, error) {
 
 func (sekaiHandlers) ProfileHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "profile",
-			Commands: []string{
-				"/个人中心", "/profile", "/个人信息",
-			},
+		Path: "profile",
+		Commands: []string{
+			"/个人中心", "/profile", "/个人信息",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			p, err := resolveUserQueryParams(ctx)

@@ -2,8 +2,7 @@ package snapshot
 
 import (
 	"bytes"
-	"encoding/json"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"strconv"
 	"strings"
 )
@@ -91,7 +90,7 @@ func buildMusicResultMapFromCompact(raw json.RawMessage) map[string]map[int]stri
 	}
 
 	var payload map[string]json.RawMessage
-	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(trimmed))
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
 	decoder.UseNumber()
 	if err := decoder.Decode(&payload); err != nil {
 		return nil
@@ -106,7 +105,7 @@ func buildMusicResultMapFromCompact(raw json.RawMessage) map[string]map[int]stri
 		}
 
 		var values []any
-		decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(fieldRaw))
+		decoder := json.NewDecoder(bytes.NewReader(fieldRaw))
 		decoder.UseNumber()
 		if err := decoder.Decode(&values); err != nil {
 			continue
@@ -160,7 +159,7 @@ func decodeCompactEnumValues(raw json.RawMessage) map[string][]string {
 	}
 
 	var values map[string][]string
-	if err := sonic.Unmarshal(trimmed, &values); err != nil {
+	if err := json.Unmarshal(trimmed, &values); err != nil {
 		return nil
 	}
 	return values

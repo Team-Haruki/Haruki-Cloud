@@ -15,11 +15,9 @@ import (
 
 func (sekaiHandlers) StampHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "stamp",
-			Commands: []string{
-				"/贴纸", "/查贴纸", "/pjsk贴纸", "/pjsk表情", "/pjsk stamp", "/pjsk bq", "/stamp",
-			},
+		Path: "stamp",
+		Commands: []string{
+			"/贴纸", "/查贴纸", "/pjsk贴纸", "/pjsk表情", "/pjsk stamp", "/pjsk bq", "/stamp",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())

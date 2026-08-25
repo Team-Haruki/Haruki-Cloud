@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
@@ -29,12 +29,10 @@ type musicMetaQueriesParams struct {
 
 func (sekaiHandlers) ScoreControlHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "score",
-			Commands: []string{
-				"/分数", "/查分数", "/pjsk score", "/score control",
-				"/控分",
-			},
+		Path: "score",
+		Commands: []string{
+			"/分数", "/查分数", "/pjsk score", "/score control",
+			"/控分",
 		},
 		Regions:    []renderregion.Value{renderregion.JP},
 		PrefixArgs: []string{"wl"},
@@ -72,13 +70,11 @@ func buildScoreControlParams(ctx HarrukiSekaiHandlerContext) (scoreControlParams
 
 func (sekaiHandlers) CustomRoomScoreControlHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "score/custom-room",
-			Commands: []string{
-				"/pjsk custom room score", "/custom room score",
-				"/自定义房间控分", "/自定义房控分", "/自定义控分",
-				"/自定义房间分数", "/自定义分数",
-			},
+		Path: "score/custom-room",
+		Commands: []string{
+			"/pjsk custom room score", "/custom room score",
+			"/自定义房间控分", "/自定义房控分", "/自定义控分",
+			"/自定义房间分数", "/自定义分数",
 		},
 		Regions: []renderregion.Value{renderregion.JP},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -96,14 +92,12 @@ func (sekaiHandlers) CustomRoomScoreControlHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MusicMetaHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "score/music-meta",
-			Commands: []string{
-				"/pjsk music meta", "/music meta",
-				"/歌曲meta", "/曲目meta",
-			},
-			Priority: 1,
+		Path: "score/music-meta",
+		Commands: []string{
+			"/pjsk music meta", "/music meta",
+			"/歌曲meta", "/曲目meta",
 		},
+		Priority: 1,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			clean := splitMusicMetaQueries(args)
@@ -124,15 +118,13 @@ func splitMusicMetaQueries(args string) []string {
 
 func (sekaiHandlers) MusicBoardHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "score/music-board",
-			Commands: []string{
-				"/pjsk music board", "/music board",
-				"/歌曲排行", "/歌曲比较", "/歌曲对比", "/歌曲排名", "/曲目榜",
-			},
-			Priority: 1,
+		Path: "score/music-board",
+		Commands: []string{
+			"/pjsk music board", "/music board",
+			"/歌曲排行", "/歌曲比较", "/歌曲对比", "/歌曲排名", "/曲目榜",
 		},
-		Regions: []renderregion.Value{renderregion.JP},
+		Priority: 1,
+		Regions:  []renderregion.Value{renderregion.JP},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			params, err := buildMusicBoardParams(ctx.GetArgs())
 			if err != nil {

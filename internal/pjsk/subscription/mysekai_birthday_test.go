@@ -17,8 +17,8 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
-	json "github.com/bytedance/sonic"
 	_ "github.com/mattn/go-sqlite3"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func TestParseBirthdayMonitorCommandDefaultsToDiamond(t *testing.T) {
@@ -127,7 +127,7 @@ func TestCreateOrUpdateUsesRegionPrefixedSelectorBinding(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

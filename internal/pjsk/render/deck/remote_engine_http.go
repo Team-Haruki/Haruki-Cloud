@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"io"
 	"net"
 	"net/http"

@@ -6,9 +6,9 @@ import (
 	"haruki-cloud/api"
 	"haruki-cloud/internal/observability/commandtrace"
 
-	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/shamaton/msgpack/v3"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 // botResponseEnvelope is the transport-neutral form of a Bot API response.
@@ -43,7 +43,7 @@ func newBotResponseEnvelope(status int, message string, data ...any) botResponse
 
 func encodeBotResponseEnvelope(envelope botResponseEnvelope) (encodedBotResponse, error) {
 	payload := api.BuildResponseMap(envelope.HTTPStatus, envelope.Message, envelope.Data)
-	jsonBody, err := sonic.Marshal(payload)
+	jsonBody, err := json.Marshal(payload)
 	if err != nil {
 		return encodedBotResponse{}, fmt.Errorf("encode bot response as JSON: %w", err)
 	}

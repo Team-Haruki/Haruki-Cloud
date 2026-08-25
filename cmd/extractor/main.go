@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/database/sekai/migrate"
 	"haruki-cloud/utils/logger"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type TableInfo struct {

@@ -2,8 +2,7 @@ package common
 
 import (
 	"bytes"
-	"encoding/json"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"strings"
 )
 
@@ -12,7 +11,7 @@ import (
 // float64. This is required when passing JSON through without losing
 // precision on large integers.
 func DecodeJSONUseNumber(data []byte, target any) error {
-	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(data))
+	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
 	return decoder.Decode(target)
 }
@@ -23,7 +22,7 @@ func JSONString(raw json.RawMessage) string {
 		return ""
 	}
 	var s string
-	if err := sonic.Unmarshal(raw, &s); err != nil {
+	if err := json.Unmarshal(raw, &s); err != nil {
 		return string(raw)
 	}
 	return s
@@ -35,7 +34,7 @@ func DecodeSlice[T any](raw json.RawMessage) ([]T, error) {
 		return nil, nil
 	}
 	var items []T
-	if err := sonic.Unmarshal(raw, &items); err != nil {
+	if err := json.Unmarshal(raw, &items); err != nil {
 		return nil, err
 	}
 	return items, nil
@@ -47,7 +46,7 @@ func DecodeMap[T any](raw json.RawMessage) (T, error) {
 	if len(raw) == 0 {
 		return result, nil
 	}
-	if err := sonic.Unmarshal(raw, &result); err != nil {
+	if err := json.Unmarshal(raw, &result); err != nil {
 		return result, err
 	}
 	return result, nil
@@ -59,7 +58,7 @@ func ToStringSliceFromRaw(raw json.RawMessage) []string {
 		return nil
 	}
 	var items []string
-	if err := sonic.Unmarshal(raw, &items); err != nil {
+	if err := json.Unmarshal(raw, &items); err != nil {
 		return nil
 	}
 	result := make([]string, 0, len(items))

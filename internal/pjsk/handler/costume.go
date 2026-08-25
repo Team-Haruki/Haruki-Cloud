@@ -22,14 +22,12 @@ const costumeSearchHelp = `服装查询:
 
 func (sekaiHandlers) CostumeDetailHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "costume/detail",
-			Commands: []string{
-				"/查服装", "/查衣装", "/costume", "/pjsk costume", "/查饰品", "/查头饰", "/accessory",
-				"/查发型",
-			},
-			Helper: costumeSearchHelp,
+		Path: "costume/detail",
+		Commands: []string{
+			"/查服装", "/查衣装", "/costume", "/pjsk costume", "/查饰品", "/查头饰", "/accessory",
+			"/查发型",
 		},
+		Helper: costumeSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
 			partType := costumeDetailPartTypeForTrigger(ctx.GetTriggerCmd())
@@ -54,15 +52,13 @@ func (sekaiHandlers) CostumeDetailHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) CostumeListHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "costume/list",
-			Commands: []string{
-				"/服装列表", "/衣装列表", "/costumes", "/pjsk costumes",
-				"/饰品列表", "/查饰品列表", "/accessories",
-				"/发型列表", "/查发型列表", "/hairstyles",
-			},
-			Helper: costumeSearchHelp,
+		Path: "costume/list",
+		Commands: []string{
+			"/服装列表", "/衣装列表", "/costumes", "/pjsk costumes",
+			"/饰品列表", "/查饰品列表", "/accessories",
+			"/发型列表", "/查发型列表", "/hairstyles",
 		},
+		Helper: costumeSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			partType := costumeListPartTypeForTrigger(ctx.GetTriggerCmd())
 			if isCostumeNameSearchTrigger(ctx.GetTriggerCmd()) {
@@ -118,13 +114,11 @@ func costumeDetailPartTypeForTrigger(trigger string) string {
 
 func (sekaiHandlers) CostumeComboHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "costume/combo",
-			Commands: []string{
-				"/组合", "/试穿", "/3d试穿", "/pjsk combo",
-			},
-			Helper: costumeSearchHelp,
+		Path: "costume/combo",
+		Commands: []string{
+			"/组合", "/试穿", "/3d试穿", "/pjsk combo",
 		},
+		Helper: costumeSearchHelp,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return makeCommandRequestWithParams(ctx, parser.ModuleCostume, "costume-combo", rendercostume.ComboQuery{
 				Query:  strings.TrimSpace(ctx.GetArgs()),

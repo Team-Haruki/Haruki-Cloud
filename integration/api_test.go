@@ -10,7 +10,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"io"
 	"net"
 	"net/http"

@@ -2,9 +2,7 @@ package chunithm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
 	"io"
 	"net/http"
 	"strings"
@@ -13,6 +11,7 @@ import (
 
 	chunithmMainDB "haruki-cloud/database/chunithm/maindb"
 	chunithmMusicDB "haruki-cloud/database/chunithm/music"
+	json "haruki-cloud/internal/jsonutil"
 
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/mattn/go-sqlite3"
@@ -57,7 +56,7 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 	var aliasData struct {
 		MatchIDs []int `json:"match_ids"`
 	}
-	if err := sonic.Unmarshal(aliasResp.Data, &aliasData); err != nil {
+	if err := json.Unmarshal(aliasResp.Data, &aliasData); err != nil {
 		t.Fatalf("decode alias response: %v", err)
 	}
 	if len(aliasData.MatchIDs) != 1 || aliasData.MatchIDs[0] != 1001 {
@@ -124,7 +123,7 @@ func requestAPI(t *testing.T, app *fiber.App, method, path, body string) apiEnve
 	}
 
 	var envelope apiEnvelope
-	if err := sonic.Unmarshal(payload, &envelope); err != nil {
+	if err := json.Unmarshal(payload, &envelope); err != nil {
 		t.Fatalf("decode response: %v raw=%s", err, string(payload))
 	}
 	return envelope

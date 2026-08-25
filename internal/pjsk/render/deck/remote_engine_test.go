@@ -2,10 +2,9 @@ package deck
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -998,7 +997,7 @@ func TestRemoteRecommendRewarmsOnLogicalMusicMetaError(t *testing.T) {
 		case "/update/musicmetas/string":
 			musicMetaCalls.Add(1)
 			var payload map[string]any
-			if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&payload); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode music meta update payload: %v", err)
 			}
 			if strings.TrimSpace(payload["data"].(string)) == "" {
@@ -1528,7 +1527,7 @@ func TestRemoteRecommendBatchFallsBackToLegacyAndPreservesOptionOrder(t *testing
 
 			legacyRecommendCalls.Add(1)
 			var payload map[string]any
-			if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&payload); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode legacy recommend payload: %v", err)
 			}
 			charID, _ := payload["challenge_live_character_id"].(float64)

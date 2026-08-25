@@ -9,12 +9,10 @@ const ratingUnavailableMessage = "官方并没有提供详细定数，故不提�
 
 func (sekaiHandlers) B30Handle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "music/b30",
-			Commands: []string{
-				"/b30", "/pjskb30",
-				"/b39", "/pjskb39",
-			},
+		Path: "music/b30",
+		Commands: []string{
+			"/b30", "/pjskb30",
+			"/b39", "/pjskb39",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return makeCommandRequest(ctx, parser.ModuleMusic, "rating-unavailable"), nil

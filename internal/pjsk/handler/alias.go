@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -79,14 +79,12 @@ func (sekaiHandlers) CharacterAliasDeleteHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) AliasPendingHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "alias/pending",
-			Commands: []string{
-				"/待审核别名", "/别名待审核",
-				"/歌曲别名待审核", "/角色别名待审核",
-			},
-			Helper: "使用方式:\n/待审核别名",
+		Path: "alias/pending",
+		Commands: []string{
+			"/待审核别名", "/别名待审核",
+			"/歌曲别名待审核", "/角色别名待审核",
 		},
+		Helper:      "使用方式:\n/待审核别名",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
@@ -103,11 +101,9 @@ func (sekaiHandlers) AliasPendingHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) AliasSubmitterHandle() HarukiSekaiCommandHandler {
 	const usage = "使用方式:\n/查询别名提交者 待审核ID"
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     "alias/submitter",
-			Commands: []string{"/查询别名提交者", "/别名提交者"},
-			Helper:   usage,
-		},
+		Path:        "alias/submitter",
+		Commands:    []string{"/查询别名提交者", "/别名提交者"},
+		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			reviewID, err := parseAliasReviewID(strings.TrimSpace(ctx.GetArgs()), usage)
@@ -126,11 +122,9 @@ func (sekaiHandlers) AliasSubmitterHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) AliasBanSubmitterHandle() HarukiSekaiCommandHandler {
 	const usage = "使用方式:\n/禁用别名提交 用户ID\n/禁用别名提交 @用户"
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     "alias/ban_submitter",
-			Commands: []string{"/禁用别名提交", "/禁止别名提交"},
-			Helper:   usage,
-		},
+		Path:        "alias/ban_submitter",
+		Commands:    []string{"/禁用别名提交", "/禁止别名提交"},
+		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			targetPlatform, targetUserID, err := parseAliasSubmissionTarget(
@@ -154,13 +148,11 @@ func (sekaiHandlers) AliasBanSubmitterHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) AliasApproveHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "alias/approve",
-			Commands: []string{
-				"/同意别名", "/通过别名",
-			},
-			Helper: "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...",
+		Path: "alias/approve",
+		Commands: []string{
+			"/同意别名", "/通过别名",
 		},
+		Helper:      "使用方式:\n/同意别名 待审核ID1 待审核ID2 ...",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			reviewIDs, err := parseAliasReviewIDs(strings.TrimSpace(ctx.GetArgs()))
@@ -178,13 +170,11 @@ func (sekaiHandlers) AliasApproveHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "alias/reject",
-			Commands: []string{
-				"/拒绝别名",
-			},
-			Helper: "使用方式:\n/拒绝别名 待审核ID 原因",
+		Path: "alias/reject",
+		Commands: []string{
+			"/拒绝别名",
 		},
+		Helper:      "使用方式:\n/拒绝别名 待审核ID 原因",
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			reviewID, reason, err := parseAliasRejectArgs(strings.TrimSpace(ctx.GetArgs()))
@@ -204,11 +194,9 @@ func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) AliasBatchRejectHandle() HarukiSekaiCommandHandler {
 	const usage = "使用方式:\n/批量拒绝别名 待审核ID1 待审核ID2 ..."
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     "alias/batch-reject",
-			Commands: []string{"/批量拒绝别名"},
-			Helper:   usage,
-		},
+		Path:        "alias/batch-reject",
+		Commands:    []string{"/批量拒绝别名"},
+		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			reviewIDs, err := parseAliasReviewIDsWithUsage(strings.TrimSpace(ctx.GetArgs()), usage)
@@ -226,11 +214,9 @@ func (sekaiHandlers) AliasBatchRejectHandle() HarukiSekaiCommandHandler {
 
 func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     path,
-			Commands: commands,
-			Helper:   aliasQueryHelp(aliasType, sampleCommand),
-		},
+		Path:        path,
+		Commands:    commands,
+		Helper:      aliasQueryHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			target := strings.TrimSpace(ctx.GetArgs())
@@ -247,11 +233,9 @@ func newEntityAliasQueryHandler(aliasType, path string, commands []string, sampl
 
 func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     path,
-			Commands: commands,
-			Helper:   aliasAddHelp(aliasType, sampleCommand),
-		},
+		Path:        path,
+		Commands:    commands,
+		Helper:      aliasAddHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasAddHelp(aliasType, sampleCommand))
@@ -271,11 +255,9 @@ func newEntityAliasAddHandler(aliasType, path string, commands []string, sampleC
 
 func newEntityAliasDeleteHandler(aliasType, path string, commands []string, sampleCommand string) HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     path,
-			Commands: commands,
-			Helper:   aliasDeleteHelp(aliasType, sampleCommand),
-		},
+		Path:        path,
+		Commands:    commands,
+		Helper:      aliasDeleteHelp(aliasType, sampleCommand),
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			target, aliasValues, err := parseEntityAliasBulkArgs(strings.TrimSpace(ctx.GetArgs()), aliasDeleteHelp(aliasType, sampleCommand))

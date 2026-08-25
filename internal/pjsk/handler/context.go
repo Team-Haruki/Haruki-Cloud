@@ -51,10 +51,9 @@ func BuildContext(ctx context.Context, event Event) (*PjskHandlerContext, error)
 		UserId:      event.UserId,
 		SenderName:  event.SenderName,
 		GroupId:     event.GroupId,
-	}
 
-	handleCtx.AtIds = extractAtIds(event.Message)
-	handleCtx.ArgText = extractText(event.Message)
+		AtIds:   extractAtIds(event.Message),
+		ArgText: extractText(event.Message)}
 	return &handleCtx, nil
 }
 

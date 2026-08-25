@@ -49,11 +49,9 @@ func applyMysekaiStaticFixtureListParams(params map[string]any, onlyCraftable bo
 
 func (sekaiHandlers) MysekaiResourceHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/resource",
-			Commands: []string{
-				"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msa",
-			},
+		Path: "mysekai/resource",
+		Commands: []string{
+			"/pjsk mysekai res", "/mysekai-resource", "/mysekai资源", "/烤森资源", "/msa",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -72,11 +70,9 @@ func (sekaiHandlers) MysekaiResourceHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiOverviewHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/overview",
-			Commands: []string{
-				"/pjsk mysekai overview", "/mysekai-overview", "/mysekai总览", "/烤森总览", "/msam",
-			},
+		Path: "mysekai/overview",
+		Commands: []string{
+			"/pjsk mysekai overview", "/mysekai-overview", "/mysekai总览", "/烤森总览", "/msam",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -102,11 +98,9 @@ func (sekaiHandlers) MysekaiOverviewHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiMapHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/map",
-			Commands: []string{
-				"/pjsk mysekai map", "/mysekai-map", "/mysekai地图", "/烤森地图", "/msm", "/msmap",
-			},
+		Path: "mysekai/map",
+		Commands: []string{
+			"/pjsk mysekai map", "/mysekai-map", "/mysekai地图", "/烤森地图", "/msm", "/msmap",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -132,11 +126,9 @@ func (sekaiHandlers) MysekaiMapHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/talk-list",
-			Commands: []string{
-				"/mysekai-talk-list", "/mysekai对话列表", "/烤森对话列表",
-			},
+		Path: "mysekai/talk-list",
+		Commands: []string{
+			"/mysekai-talk-list", "/mysekai对话列表", "/烤森对话列表",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selfParams := map[string]any{}
@@ -169,11 +161,9 @@ func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/fixture-list",
-			Commands: []string{
-				"/mysekai-fixture-list", "/mysekai家具列表", "/烤森家具列表",
-			},
+		Path: "mysekai/fixture-list",
+		Commands: []string{
+			"/mysekai-fixture-list", "/mysekai家具列表", "/烤森家具列表",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -207,12 +197,10 @@ func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/fixture-detail",
-			Commands: []string{
-				"/pjsk mysekai furniture", "/pjsk mysekai fixture",
-				"/msf", "/mysekai 家具", "/家具列表",
-			},
+		Path: "mysekai/fixture-detail",
+		Commands: []string{
+			"/pjsk mysekai furniture", "/pjsk mysekai fixture",
+			"/msf", "/mysekai 家具", "/家具列表",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -250,11 +238,9 @@ func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiDoorUpgradeHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/door-upgrade",
-			Commands: []string{
-				"/pjsk mysekai gate", "/mysekai-door-upgrade", "/mysekai大门升级", "/烤森大门升级", "/msg", "/msgate",
-			},
+		Path: "mysekai/door-upgrade",
+		Commands: []string{
+			"/pjsk mysekai gate", "/mysekai-door-upgrade", "/mysekai大门升级", "/烤森大门升级", "/msg", "/msgate",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -288,11 +274,9 @@ func (sekaiHandlers) MysekaiDoorUpgradeHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiMusicRecordHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/music-record",
-			Commands: []string{
-				"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/mss", "/msr", "/mssong",
-			},
+		Path: "mysekai/music-record",
+		Commands: []string{
+			"/pjsk mysekai musicrecord", "/mysekai-music-record", "/mysekai唱片", "/烤森唱片", "/mss", "/msr", "/mssong",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())
@@ -313,12 +297,10 @@ func (sekaiHandlers) MysekaiMusicRecordHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/talk-list",
-			Commands: []string{
-				"/pjsk mysekai blueprint", "/mysekai blueprint",
-				"/msb", "/mysekai 蓝图",
-			},
+		Path: "mysekai/talk-list",
+		Commands: []string{
+			"/pjsk mysekai blueprint", "/mysekai blueprint",
+			"/msb", "/mysekai 蓝图",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			selfParams := map[string]any{}
@@ -351,12 +333,10 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiHousingSKHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/housing-sk",
-			Commands: []string{
-				"/百景sk", "/百景SK", "/烤森百景sk", "/烤森百景SK",
-				"/mysekai-housing-sk", "/mshsk", "/bjsk",
-			},
+		Path: "mysekai/housing-sk",
+		Commands: []string{
+			"/百景sk", "/百景SK", "/烤森百景sk", "/烤森百景SK",
+			"/mysekai-housing-sk", "/mshsk", "/bjsk",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			query, err := parseMysekaiHousingSKArgs(strings.TrimSpace(ctx.GetArgs()))
@@ -370,12 +350,10 @@ func (sekaiHandlers) MysekaiHousingSKHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) MysekaiPhotoHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "mysekai/photo",
-			Commands: []string{
-				"/pjsk mysekai photo", "/pjsk mysekai picture",
-				"/msp", "/mysekai 照片",
-			},
+		Path: "mysekai/photo",
+		Commands: []string{
+			"/pjsk mysekai photo", "/pjsk mysekai picture",
+			"/msp", "/mysekai 照片",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			args := strings.TrimSpace(ctx.GetArgs())

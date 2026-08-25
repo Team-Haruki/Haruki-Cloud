@@ -2,12 +2,12 @@ package provider
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func (p *localEducationProvider) ensureGateLevels() error {
 	return p.gates.init(func() (map[int]map[int]*MysekaiGateLevel, error) {
-		items, err := loadJSON[localMysekaiGateLevelJSON](p.store, "mysekaiGateLevels.json")
+		items, err := p.store.loadJSON[localMysekaiGateLevelJSON]("mysekaiGateLevels.json")
 		if err != nil {
 			return nil, err
 		}
@@ -29,7 +29,7 @@ func (p *localEducationProvider) ensureGateLevels() error {
 
 func (p *localEducationProvider) ensureShopItems() error {
 	return p.shops.init(func() (shopIndex, error) {
-		items, err := loadJSON[localShopItemJSON](p.store, "shopItems.json")
+		items, err := p.store.loadJSON[localShopItemJSON]("shopItems.json")
 		if err != nil {
 			return shopIndex{}, err
 		}

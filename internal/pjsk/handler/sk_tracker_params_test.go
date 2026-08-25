@@ -9,8 +9,8 @@ import (
 
 func TestBuildSKTrackerParamsDefaults(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: ""},
-		region:             renderregion.JP,
+		ArgText: "",
+		region:  renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -32,9 +32,9 @@ func TestBuildSKTrackerParamsDefaults(t *testing.T) {
 
 func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "初音未来"},
-		region:             renderregion.JP,
-		prefixArg:          "wl",
+		ArgText:   "初音未来",
+		region:    renderregion.JP,
+		prefixArg: "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -56,8 +56,8 @@ func TestBuildSKTrackerParamsDefaultsWorldLink(t *testing.T) {
 
 func TestBuildSKTrackerParamsParsesEventAndRanks(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "event101 500 100"},
-		region:             renderregion.JP,
+		ArgText: "event101 500 100",
+		region:  renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -80,9 +80,9 @@ func TestBuildSKTrackerParamsParsesEventAndRanks(t *testing.T) {
 
 func TestBuildSKTrackerParamsWlDefaultsToCurrentChapterSelector(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "100 500"},
-		region:             renderregion.JP,
-		prefixArg:          "wl",
+		ArgText:   "100 500",
+		region:    renderregion.JP,
+		prefixArg: "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -101,8 +101,8 @@ func TestBuildSKTrackerParamsWlDefaultsToCurrentChapterSelector(t *testing.T) {
 
 func TestBuildSKTrackerParamsParsesUIDWhenAllowed(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "event101 1234567890"},
-		region:             renderregion.JP,
+		ArgText: "event101 1234567890",
+		region:  renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -120,8 +120,8 @@ func TestBuildSKTrackerParamsParsesUIDWhenAllowed(t *testing.T) {
 
 func TestBuildSKTrackerParamsRejectsUIDWhenDisallowed(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "1234567890"},
-		region:             renderregion.JP,
+		ArgText: "1234567890",
+		region:  renderregion.JP,
 	}
 
 	_, err := buildSKTrackerParams(ctx, false, false, false)
@@ -132,9 +132,9 @@ func TestBuildSKTrackerParamsRejectsUIDWhenDisallowed(t *testing.T) {
 
 func TestBuildSKTrackerParamsUsesUIDArgWhenArgsEmpty(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: ""},
-		region:             renderregion.JP,
-		uidArg:             "1234567890",
+		ArgText: "",
+		region:  renderregion.JP,
+		uidArg:  "1234567890",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -149,13 +149,11 @@ func TestBuildSKTrackerParamsUsesUIDArgWhenArgsEmpty(t *testing.T) {
 
 func TestBuildSKTrackerParamsAddsAtTargetMetadata(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{
-			ArgText:    "",
-			Platform:   "qq",
-			TriggerCmd: "/sk",
-		},
-		region: renderregion.JP,
-		uidArg: "@987654321",
+		ArgText:    "",
+		Platform:   "qq",
+		TriggerCmd: "/sk",
+		region:     renderregion.JP,
+		uidArg:     "@987654321",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -176,13 +174,11 @@ func TestBuildSKTrackerParamsAddsAtTargetMetadata(t *testing.T) {
 
 func TestBuildSKTrackerParamsDefaultsToSelfWhenEnabled(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{
-			ArgText:    "",
-			Platform:   "qq",
-			UserId:     "24680",
-			TriggerCmd: "/sk",
-		},
-		region: renderregion.JP,
+		ArgText:    "",
+		Platform:   "qq",
+		UserId:     "24680",
+		TriggerCmd: "/sk",
+		region:     renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, true)
@@ -200,14 +196,12 @@ func TestBuildSKTrackerParamsDefaultsToSelfWhenEnabled(t *testing.T) {
 
 func TestBuildSKTrackerParamsWorldLinkDefaultsToSelfWhenEnabled(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{
-			ArgText:    "",
-			Platform:   "qq",
-			UserId:     "24680",
-			TriggerCmd: "/wlsk",
-		},
-		region:    renderregion.JP,
-		prefixArg: "wl",
+		ArgText:    "",
+		Platform:   "qq",
+		UserId:     "24680",
+		TriggerCmd: "/wlsk",
+		region:     renderregion.JP,
+		prefixArg:  "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, true)
@@ -231,12 +225,10 @@ func TestBuildSKTrackerParamsWorldLinkDefaultsToSelfWhenEnabled(t *testing.T) {
 
 func TestBuildSKTrackerParamsAddsSelectorMetadata(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{
-			ArgText:    "",
-			Platform:   "qq",
-			UserId:     "24680",
-			TriggerCmd: "/sk",
-		},
+		ArgText:        "",
+		Platform:       "qq",
+		UserId:         "24680",
+		TriggerCmd:     "/sk",
 		region:         renderregion.TW,
 		uidArg:         "u2",
 		explicitRegion: true,
@@ -263,9 +255,9 @@ func TestBuildSKTrackerParamsAddsSelectorMetadata(t *testing.T) {
 
 func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "初音未来 100 500"},
-		region:             renderregion.JP,
-		prefixArg:          "wl",
+		ArgText:   "初音未来 100 500",
+		region:    renderregion.JP,
+		prefixArg: "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -287,8 +279,8 @@ func TestBuildSKTrackerParamsPreservesWlCharacterQuery(t *testing.T) {
 
 func TestBuildSKSpeedTrackerParamsUsesFixedRanksAndMinutePeriod(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "event101 30"},
-		region:             renderregion.JP,
+		ArgText: "event101 30",
+		region:  renderregion.JP,
 	}
 
 	params, err := buildSKSpeedTrackerParams(ctx, "h", 60, 60)
@@ -310,9 +302,9 @@ func TestBuildSKSpeedTrackerParamsUsesFixedRanksAndMinutePeriod(t *testing.T) {
 
 func TestBuildSKSpeedTrackerParamsPreservesWorldLinkSelector(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "初音未来 30"},
-		region:             renderregion.JP,
-		prefixArg:          "wl",
+		ArgText:   "初音未来 30",
+		region:    renderregion.JP,
+		prefixArg: "wl",
 	}
 
 	params, err := buildSKSpeedTrackerParams(ctx, "h", 60, 60)
@@ -334,9 +326,9 @@ func TestBuildSKSpeedTrackerParamsPreservesWorldLinkSelector(t *testing.T) {
 
 func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "wl初音未来 100"},
-		region:             renderregion.JP,
-		prefixArg:          "wl",
+		ArgText:   "wl初音未来 100",
+		region:    renderregion.JP,
+		prefixArg: "wl",
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)
@@ -355,8 +347,8 @@ func TestBuildSKTrackerParamsParsesPrefixedWlCharacterQuery(t *testing.T) {
 
 func TestBuildSKTrackerParamsParsesLeadingWlChapterSelector(t *testing.T) {
 	ctx := HarrukiSekaiHandlerContext{
-		PjskHandlerContext: PjskHandlerContext{ArgText: "wl2 100"},
-		region:             renderregion.JP,
+		ArgText: "wl2 100",
+		region:  renderregion.JP,
 	}
 
 	params, err := buildSKTrackerParams(ctx, false, true, false)

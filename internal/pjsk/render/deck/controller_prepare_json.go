@@ -2,18 +2,17 @@ package deck
 
 import (
 	"bytes"
-	"encoding/json"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func structToJSONObject(value any) (map[string]any, error) {
-	encoded, err := sonic.Marshal(value)
+	encoded, err := json.Marshal(value)
 	if err != nil {
 		return nil, err
 	}
 
 	var object map[string]any
-	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(encoded))
+	decoder := json.NewDecoder(bytes.NewReader(encoded))
 	decoder.UseNumber()
 	if err := decoder.Decode(&object); err != nil {
 		return nil, err

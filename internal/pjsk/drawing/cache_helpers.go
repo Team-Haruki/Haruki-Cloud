@@ -3,7 +3,6 @@ package drawing
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"math"
 	neturl "net/url"
@@ -11,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	sonic "github.com/bytedance/sonic"
 	"github.com/mitchellh/hashstructure/v2"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type preparedRenderCachePayload struct {
@@ -127,13 +126,13 @@ func normalizeRenderCachePayload(request any) (any, error) {
 		return nil, nil
 	}
 
-	body, err := sonic.Marshal(request)
+	body, err := json.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("marshal render cache payload: %w", err)
 	}
 
 	var payload any
-	if err := sonic.Unmarshal(body, &payload); err != nil {
+	if err := json.Unmarshal(body, &payload); err != nil {
 		return nil, fmt.Errorf("decode render cache payload: %w", err)
 	}
 	return payload, nil

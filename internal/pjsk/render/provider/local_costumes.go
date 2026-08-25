@@ -23,7 +23,7 @@ type localCostumeProvider struct {
 
 func (p *localCostumeProvider) ensureCostumes() error {
 	return p.costumes.init(func() (costumeIndex, error) {
-		raw, err := loadJSON[localCostume3dJSON](p.store, "costume3ds.json")
+		raw, err := p.store.loadJSON[localCostume3dJSON]("costume3ds.json")
 		if err != nil {
 			return costumeIndex{}, err
 		}
@@ -42,7 +42,7 @@ func (p *localCostumeProvider) ensureCostumes() error {
 		}
 		sortCostumesForList(idx.all)
 
-		links, err := loadJSON[localCardCostume3dJSON](p.store, "cardCostume3ds.json")
+		links, err := p.store.loadJSON[localCardCostume3dJSON]("cardCostume3ds.json")
 		if err == nil {
 			for _, link := range links {
 				if link.Costume3dID <= 0 || link.CardID <= 0 {

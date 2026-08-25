@@ -1,9 +1,8 @@
 package snapshot
 
 import (
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"slices"
 	"strings"
 )
@@ -19,7 +18,7 @@ func (s *Service) RawValue(key string) ([]byte, error) {
 	}
 
 	var payload map[string]json.RawMessage
-	if err := sonic.Unmarshal(s.rawJSON, &payload); err != nil {
+	if err := json.Unmarshal(s.rawJSON, &payload); err != nil {
 		return nil, fmt.Errorf("decode raw user snapshot: %w", err)
 	}
 

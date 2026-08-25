@@ -7,7 +7,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
 
-	"github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 // adaptAPICards converts GetAnotherProfileResponse card list to the raw type used by the
@@ -135,7 +135,7 @@ func parseFramesJSON(data []byte) []snapshot.RawUserFrame {
 		return nil
 	}
 	var frames []snapshot.RawUserFrame
-	if err := sonic.Unmarshal(data, &frames); err != nil {
+	if err := json.Unmarshal(data, &frames); err != nil {
 		return nil
 	}
 	return frames

@@ -3,7 +3,7 @@ package requestbuilder
 import (
 	"context"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"strings"
 	"testing"
 	"time"

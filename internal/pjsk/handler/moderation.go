@@ -10,7 +10,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/common"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 const (
@@ -35,11 +35,9 @@ type globalBackParams struct {
 func (sekaiHandlers) GlobalKillHandle() HarukiSekaiCommandHandler {
 	const usage = "使用方式:\n/kill QQ号 原因 [天数]"
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     "admin/kill",
-			Commands: []string{"/kill"},
-			Helper:   usage,
-		},
+		Path:        "admin/kill",
+		Commands:    []string{"/kill"},
+		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			qqID, reason, days, err := parseGlobalKillArgs(ctx.GetArgs(), usage)
@@ -63,11 +61,9 @@ func (sekaiHandlers) GlobalKillHandle() HarukiSekaiCommandHandler {
 func (sekaiHandlers) GlobalBackHandle() HarukiSekaiCommandHandler {
 	const usage = "使用方式:\n/back QQ号"
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     "admin/back",
-			Commands: []string{"/back"},
-			Helper:   usage,
-		},
+		Path:        "admin/back",
+		Commands:    []string{"/back"},
+		Helper:      usage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			qqID, err := parseQQIDArg(ctx.GetArgs(), usage)

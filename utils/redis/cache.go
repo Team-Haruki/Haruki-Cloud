@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/redis/go-redis/v9"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type CachePath struct {
@@ -47,7 +47,7 @@ func CanonicalizeQueryString(queryString string) string {
 }
 
 func SetCache(ctx context.Context, client *redis.Client, key string, value any, ttl time.Duration) error {
-	data, err := sonic.Marshal(value)
+	data, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func GetCache(ctx context.Context, client *redis.Client, key string, out any) (b
 	if err != nil {
 		return false, err
 	}
-	return true, sonic.Unmarshal([]byte(val), out)
+	return true, json.Unmarshal([]byte(val), out)
 }
 
 func DeleteCache(ctx context.Context, client *redis.Client, key string) error {

@@ -1,7 +1,7 @@
 package deck
 
 import (
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -198,13 +198,13 @@ func loadIntegrationSources(root, region string) (CardSource, EventSource, error
 	}
 
 	return &integrationCardSource{
-			region: renderregion.Normalize(region),
-			cards:  cardMap,
-		}, &integrationEventSource{
-			region:     renderregion.Normalize(region),
-			events:     eventMap,
-			eventSlice: eventSlice,
-		}, nil
+		region: renderregion.Normalize(region),
+		cards:  cardMap,
+	}, &integrationEventSource{
+		region:     renderregion.Normalize(region),
+		events:     eventMap,
+		eventSlice: eventSlice,
+	}, nil
 }
 
 func selectEligibleFixedCharacters(raw *snapshot.RawUserData, cards *integrationCardSource) []int {

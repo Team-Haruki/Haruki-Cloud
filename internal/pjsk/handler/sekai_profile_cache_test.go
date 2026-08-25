@@ -15,7 +15,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func TestFetchCachedSekaiUserProfileUsesCloudCache(t *testing.T) {

@@ -1,9 +1,8 @@
 package provider
 
 import (
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,13 +89,13 @@ func (s *localStore) readFile(filename string) ([]byte, error) {
 }
 
 // loadJSON reads a JSON file and unmarshals it into a slice of T.
-func loadJSON[T any](store *localStore, filename string) ([]T, error) {
-	data, err := store.readFile(filename)
+func (s *localStore) loadJSON[T any](filename string) ([]T, error) {
+	data, err := s.readFile(filename)
 	if err != nil {
 		return nil, err
 	}
 	var items []T
-	if err := sonic.Unmarshal(data, &items); err != nil {
+	if err := json.Unmarshal(data, &items); err != nil {
 		return nil, fmt.Errorf("unmarshal %s: %w", filename, err)
 	}
 	return items, nil

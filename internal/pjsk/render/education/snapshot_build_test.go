@@ -2,7 +2,7 @@ package education
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"math"
 	"strings"
 	"testing"

@@ -7,7 +7,7 @@ import (
 
 	"haruki-cloud/utils/usererror"
 
-	"github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 // errorBody is the shape of all non-2xx JSON responses from the APIs.
@@ -19,7 +19,7 @@ type errorBody struct {
 // Returns the raw body string if parsing fails.
 func parseMessage(body []byte) string {
 	var eb errorBody
-	if err := sonic.Unmarshal(body, &eb); err == nil && eb.Message != "" {
+	if err := json.Unmarshal(body, &eb); err == nil && eb.Message != "" {
 		return eb.Message
 	}
 	return strings.TrimSpace(string(body))

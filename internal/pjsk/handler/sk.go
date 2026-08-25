@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"strconv"
 	"strings"
 
@@ -29,11 +29,9 @@ type skExecutionResult struct {
 
 func (sekaiHandlers) SKLineHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/line",
-			Commands: []string{
-				"/sk-line", "/sk线", "/榜线", "/pjsk sk line", "/pjsk board line", "/skl",
-			},
+		Path: "sk/line",
+		Commands: []string{
+			"/sk-line", "/sk线", "/榜线", "/pjsk sk line", "/pjsk board line", "/skl",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -48,9 +46,9 @@ func (sekaiHandlers) SKLineHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKQueryHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{Path: "sk/query", Commands: []string{
+		Path: "sk/query",
+		Commands: []string{
 			"/sk-query", "/sk查询", "/sk查分", "/pjsk sk board", "/pjsk board",
-		},
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -65,12 +63,10 @@ func (sekaiHandlers) SKQueryHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKSpeedHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/speed",
-			Commands: []string{
-				"/pjsk sk speed", "/pjsk board speed", "/时速", "/sks", "/skv", "/sk时速",
-				"/sk-speed", "/sk时速", "/时速线", "/pjsk sk speed", "/pjsk board speed", "/sks", "/skv", "/sktime",
-			},
+		Path: "sk/speed",
+		Commands: []string{
+			"/pjsk sk speed", "/pjsk board speed", "/时速", "/sks", "/skv", "/sk时速",
+			"/sk-speed", "/sk时速", "/时速线", "/pjsk sk speed", "/pjsk board speed", "/sks", "/skv", "/sktime",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -85,11 +81,9 @@ func (sekaiHandlers) SKSpeedHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKCheckRoomHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/check-room",
-			Commands: []string{
-				"/sk-check-room", "/sk查房", "/查房", "/cf", "/pjsk查房",
-			},
+		Path: "sk/check-room",
+		Commands: []string{
+			"/sk-check-room", "/sk查房", "/查房", "/cf", "/pjsk查房",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -104,11 +98,9 @@ func (sekaiHandlers) SKCheckRoomHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKCheckRoomLiteHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/check-room",
-			Commands: []string{
-				"/cfl",
-			},
+		Path: "sk/check-room",
+		Commands: []string{
+			"/cfl",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -123,11 +115,9 @@ func (sekaiHandlers) SKCheckRoomLiteHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKPlayerTraceHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/player-trace",
-			Commands: []string{
-				"/sk-player-trace", "/sk玩家轨迹", "/玩家轨迹", "/ptr", "/pjsk玩家追踪", "/pjsk ptr",
-			},
+		Path: "sk/player-trace",
+		Commands: []string{
+			"/sk-player-trace", "/sk玩家轨迹", "/玩家轨迹", "/ptr", "/pjsk玩家追踪", "/pjsk ptr",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -145,11 +135,9 @@ func (sekaiHandlers) SKPlayerTraceHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKRankTraceHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/rank-trace",
-			Commands: []string{
-				"/sk-rank-trace", "/sk档线轨迹", "/档线轨迹", "/rtr", "/skt", "/sklt", "/sktl", "/pjsk追踪", "/pjsk sk追踪",
-			},
+		Path: "sk/rank-trace",
+		Commands: []string{
+			"/sk-rank-trace", "/sk档线轨迹", "/档线轨迹", "/rtr", "/skt", "/sklt", "/sktl", "/pjsk追踪", "/pjsk sk追踪",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -164,9 +152,10 @@ func (sekaiHandlers) SKRankTraceHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) WinratePredictHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{Path: "sk/winrate", Commands: []string{
+		Path: "sk/winrate",
+		Commands: []string{
 			"/pjsk winrate predict", "/胜率预测", "/5v5预测", "/胜率", "/5v5胜率", "/预测胜率", "/预测5v5",
-		}},
+		},
 		Regions: []renderregion.Value{renderregion.JP},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return makeCommandRequest(ctx, parser.ModuleSK, "sk-winrate"), nil
@@ -176,11 +165,9 @@ func (sekaiHandlers) WinratePredictHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKDailySpeedHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/daily-speed",
-			Commands: []string{
-				"/pjsk sk daily speed", "/pjsk board daily speed", "/日速", "/skds", "/skdv", "/sk日速",
-			},
+		Path: "sk/daily-speed",
+		Commands: []string{
+			"/pjsk sk daily speed", "/pjsk board daily speed", "/日速", "/skds", "/skdv", "/sk日速",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -195,11 +182,9 @@ func (sekaiHandlers) SKDailySpeedHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKPredictHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/predict",
-			Commands: []string{
-				"/pjsk sk predict", "/pjsk board predict", "/sk预测", "/榜线预测", "/skp",
-			},
+		Path: "sk/predict",
+		Commands: []string{
+			"/pjsk sk predict", "/pjsk board predict", "/sk预测", "/榜线预测", "/skp",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -214,11 +199,9 @@ func (sekaiHandlers) SKPredictHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) SKBoardHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/query",
-			Commands: []string{
-				"/pjsk sk board", "/pjsk board", "/sk",
-			},
+		Path: "sk/query",
+		Commands: []string{
+			"/pjsk sk board", "/pjsk board", "/sk",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
@@ -233,11 +216,9 @@ func (sekaiHandlers) SKBoardHandle() HarukiSekaiCommandHandler {
 
 func (sekaiHandlers) CSBHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "sk/csb",
-			Commands: []string{
-				"/csb", "/查水表", "/pjsk查水表", "/停车时间",
-			},
+		Path: "sk/csb",
+		Commands: []string{
+			"/csb", "/查水表", "/pjsk查水表", "/停车时间",
 		},
 		PrefixArgs: []string{"", "wl"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {

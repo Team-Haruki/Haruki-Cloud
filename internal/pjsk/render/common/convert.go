@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/internal/pjsk/render/masterdata"

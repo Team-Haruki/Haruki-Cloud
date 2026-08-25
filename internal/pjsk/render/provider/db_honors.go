@@ -242,7 +242,7 @@ func (p *dbHonorProvider) ensureBondsHonorWordsLoaded() bool {
 	if p.store == nil || !p.store.Configured() {
 		return false
 	}
-	items, err := loadJSON[masterdata.BondsHonorWord](p.store, "bondsHonorWords.json")
+	items, err := p.store.loadJSON[masterdata.BondsHonorWord]("bondsHonorWords.json")
 	if err != nil {
 		return false
 	}

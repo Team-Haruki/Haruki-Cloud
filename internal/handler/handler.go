@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -9,7 +8,7 @@ import (
 
 	"haruki-cloud/utils/logger"
 
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 var commandRegistryLogger = logger.NewLoggerFromGlobal("CommandRegistry")
@@ -364,7 +363,7 @@ func (t *handlerTreeNode) Json() []byte {
 		}
 		jsonMap["children"] = childrenMap
 	}
-	result, err := sonic.Marshal(jsonMap)
+	result, err := json.Marshal(jsonMap)
 	if err != nil {
 		commandRegistryLogger.Error("command handler tree marshal failed", "error_type", fmt.Sprintf("%T", err))
 	}

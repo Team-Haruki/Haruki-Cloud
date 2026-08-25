@@ -28,10 +28,10 @@ import (
 	"haruki-cloud/version"
 
 	"entgo.io/ent/dialect/sql"
-	sonic "github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 	"github.com/shamaton/msgpack/v3"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 const botRouteBase = "/api/v2/bot"
@@ -471,7 +471,7 @@ func syncExplicitRegionToProfileBindingParams(resolved *commandhandler.CommandRe
 	case accountdata.ProfileModeDefaultSet, accountdata.ProfileModeDefaultClear:
 		params.Scope = normalized.String()
 	}
-	if data, err := sonic.Marshal(params); err == nil {
+	if data, err := json.Marshal(params); err == nil {
 		resolved.Params = data
 	}
 }
@@ -483,7 +483,7 @@ func syncExplicitRegionToProfileSettingsParams(resolved *commandhandler.CommandR
 	}
 	params.Server = normalized.String()
 	params.RegionExplicit = true
-	if data, err := sonic.Marshal(params); err == nil {
+	if data, err := json.Marshal(params); err == nil {
 		resolved.Params = data
 	}
 }

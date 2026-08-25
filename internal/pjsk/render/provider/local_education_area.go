@@ -4,7 +4,7 @@ import "context"
 
 func (p *localEducationProvider) ensureAreaItems() error {
 	return p.areas.init(func() (areaIndex, error) {
-		items, err := loadJSON[AreaItem](p.store, "areaItems.json")
+		items, err := p.store.loadJSON[AreaItem]("areaItems.json")
 		if err != nil {
 			return areaIndex{}, err
 		}
@@ -17,7 +17,7 @@ func (p *localEducationProvider) ensureAreaItems() error {
 			idx.byID[items[i].ID] = &items[i]
 		}
 
-		levels, err := loadJSON[AreaItemLevel](p.store, "areaItemLevels.json")
+		levels, err := p.store.loadJSON[AreaItemLevel]("areaItemLevels.json")
 		if err != nil {
 			return areaIndex{}, err
 		}
@@ -35,7 +35,7 @@ func (p *localEducationProvider) ensureAreaItems() error {
 
 func (p *localEducationProvider) ensureCharacterRanks() error {
 	return p.ranks.init(func() (map[int]map[int]*CharacterRank, error) {
-		items, err := loadJSON[localCharacterRankJSON](p.store, "characterRanks.json")
+		items, err := p.store.loadJSON[localCharacterRankJSON]("characterRanks.json")
 		if err != nil {
 			return nil, err
 		}

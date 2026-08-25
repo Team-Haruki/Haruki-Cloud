@@ -2,9 +2,8 @@ package snapshot
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"strings"
 )
@@ -49,7 +48,7 @@ func normalizeSnapshotJSON(data []byte) ([]byte, error) {
 	}
 
 	var raw any
-	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(trimmed))
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
 	decoder.UseNumber()
 	if err := decoder.Decode(&raw); err != nil {
 		return nil, fmt.Errorf("decode snapshot JSON: %w", err)
@@ -60,7 +59,7 @@ func normalizeSnapshotJSON(data []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	encoded, err := sonic.Marshal(normalized)
+	encoded, err := json.Marshal(normalized)
 	if err != nil {
 		return nil, fmt.Errorf("encode normalized snapshot JSON: %w", err)
 	}
@@ -80,7 +79,7 @@ func normalizeSnapshotDocument(data []byte) (map[string]any, error) {
 	}
 
 	var raw any
-	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(trimmed))
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
 	decoder.UseNumber()
 	if err := decoder.Decode(&raw); err != nil {
 		return nil, fmt.Errorf("decode snapshot JSON: %w", err)

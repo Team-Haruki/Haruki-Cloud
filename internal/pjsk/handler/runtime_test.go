@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -481,14 +481,14 @@ func TestBuildPublicMusicProfilesUsesSelectorFromRequestParams(t *testing.T) {
 		requestedPath = r.URL.Path
 		switch r.URL.Path {
 		case "/api/cn/22222222222222/profile":
-			_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 				User: sekaiapi.AnotherUser{
 					UserID: 22222222222222,
 					Name:   "CN User",
 				},
 			})
 		case "/api/jp/11111111111111/profile":
-			_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+			_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 				User: sekaiapi.AnotherUser{
 					UserID: 11111111111111,
 					Name:   "JP User",
@@ -572,7 +572,7 @@ func testRequestContextPrefersAPIPublicProfile(t *testing.T, defaultImage string
 			http.NotFound(w, r)
 			return
 		}
-		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 12345678901234,
 				Name:   "API User",

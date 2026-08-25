@@ -13,8 +13,8 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 
-	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 const drawingMaxResponseBytes = 64 << 20
@@ -214,7 +214,7 @@ func (c *HarukiDrawingClient) postPrepared(endpoint string, requestBody any) ([]
 	}
 
 	finishEncode := commandtrace.MeasureOperation(requestCtx, "drawing.encode")
-	encodedBody, err := sonic.Marshal(requestBody)
+	encodedBody, err := json.Marshal(requestBody)
 	finishEncode()
 	if err != nil {
 		return nil, fmt.Errorf("drawing request encode failed: %w", err)
@@ -281,7 +281,7 @@ func drawingResponseErrorDetail(body []byte) string {
 	var payload struct {
 		Detail string `json:"detail"`
 	}
-	if err := sonic.Unmarshal(body, &payload); err != nil {
+	if err := json.Unmarshal(body, &payload); err != nil {
 		return ""
 	}
 	detail := strings.TrimSpace(payload.Detail)

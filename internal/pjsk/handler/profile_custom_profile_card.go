@@ -24,11 +24,9 @@ type profileCustomProfileCardParams struct {
 func (sekaiHandlers) ProfileCustomProfileCardHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
 		ParseUIDArg: commandBoolPtr(true),
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "profile/custom-profile-card",
-			Commands: []string{
-				"/自定义个人信息", "/cp",
-			},
+		Path:        "profile/custom-profile-card",
+		Commands: []string{
+			"/自定义个人信息", "/cp",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			params, err := buildProfileCustomProfileCardParams(ctx)

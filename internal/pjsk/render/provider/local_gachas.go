@@ -32,7 +32,7 @@ type localGachaCeilItemJSON struct {
 
 func (p *localGachaProvider) ensureGachas() error {
 	return p.gachas.init(func() (gachaIndex, error) {
-		items, err := loadJSON[masterdata.Gacha](p.store, "gachas.json")
+		items, err := p.store.loadJSON[masterdata.Gacha]("gachas.json")
 		if err != nil {
 			return gachaIndex{}, err
 		}
@@ -57,7 +57,7 @@ func (p *localGachaProvider) ensureGachas() error {
 
 func (p *localGachaProvider) ensureCards() error {
 	return p.cards.init(func() (map[int]*masterdata.Card, error) {
-		items, err := loadJSON[masterdata.Card](p.store, "cards.json")
+		items, err := p.store.loadJSON[masterdata.Card]("cards.json")
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func (p *localGachaProvider) ensureCards() error {
 
 func (p *localGachaProvider) ensureCeils() error {
 	return p.ceils.init(func() (map[int]string, error) {
-		items, err := loadJSON[localGachaCeilItemJSON](p.store, "gachaCeilItems.json")
+		items, err := p.store.loadJSON[localGachaCeilItemJSON]("gachaCeilItems.json")
 		if err != nil {
 			return nil, err
 		}

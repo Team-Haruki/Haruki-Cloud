@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -408,12 +408,12 @@ func parseEmbeddedErrorText(raw string) string {
 	}
 
 	var quoted string
-	if err := sonic.Unmarshal([]byte(raw), &quoted); err == nil && strings.TrimSpace(quoted) != "" {
+	if err := json.Unmarshal([]byte(raw), &quoted); err == nil && strings.TrimSpace(quoted) != "" {
 		return strings.TrimSpace(quoted)
 	}
 
 	var payload upstreamErrorPayload
-	if err := sonic.Unmarshal([]byte(raw), &payload); err == nil {
+	if err := json.Unmarshal([]byte(raw), &payload); err == nil {
 		for _, candidate := range []string{payload.Detail, payload.Error, payload.Message} {
 			if trimmed := strings.TrimSpace(candidate); trimmed != "" {
 				return trimmed

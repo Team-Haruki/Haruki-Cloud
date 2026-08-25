@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"image"
 	"image/color"
 	"image/png"
@@ -576,7 +576,7 @@ func TestExecuteMusicCoverAndNoteCount(t *testing.T) {
 		case "/api/pjsk/music/list":
 			listCalls++
 			var req drawing.MusicListRequest
-			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-list request: %v", err)
 			}
 			if req.Title == nil || *req.Title != "物量 777 匹配结果" {
@@ -817,7 +817,7 @@ func TestExecuteMusicChartUsesBriefListForAmbiguousAlias(t *testing.T) {
 		case "/api/pjsk/music/brief-list":
 			briefListCalls++
 			var req drawing.MusicBriefListRequest
-			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-brief-list request: %v", err)
 			}
 			if req.Title == nil {
@@ -912,7 +912,7 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 		case "/api/pjsk/music/brief-list":
 			briefListCalls++
 			var req drawing.MusicBriefListRequest
-			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-brief-list request: %v", err)
 			}
 			if req.Title == nil {
@@ -1006,7 +1006,7 @@ func TestExecuteMusicBPMUsesListImageForSingleMatch(t *testing.T) {
 		case "/api/pjsk/music/brief-list":
 			briefListCalls++
 			var req drawing.MusicBriefListRequest
-			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-brief-list request: %v", err)
 			}
 			if req.Title == nil {
@@ -1071,7 +1071,7 @@ func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 		case "/api/pjsk/music/brief-list":
 			briefListCalls++
 			var req drawing.MusicBriefListRequest
-			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-brief-list request: %v", err)
 			}
 			if req.Title == nil {
@@ -1136,7 +1136,7 @@ func TestExecuteMusicNoteCountUsesSingleMusicListImageWithoutSummaryText(t *test
 		case "/api/pjsk/music/list":
 			listCalls++
 			var req drawing.MusicListRequest
-			if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode music-list request: %v", err)
 			}
 			if req.Title == nil {
@@ -1206,7 +1206,7 @@ func TestExecuteMusicListUsesQueryKeywordAndAlias(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.MusicListRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if len(req.MusicList) != 1 {
@@ -1323,7 +1323,7 @@ func TestExecuteMusicListFullSkipsSuiteSnapshotAndProfile(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -1452,7 +1452,7 @@ func TestExecuteMusicListUsesSuiteSnapshotResults(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -1530,7 +1530,7 @@ func TestExecuteMusicListPrefersAPIProfileOverSuiteSnapshotProfile(t *testing.T)
 			http.NotFound(w, r)
 			return
 		}
-		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 12345678901234,
 				Name:   "API User",
@@ -1573,7 +1573,7 @@ func TestExecuteMusicListPrefersAPIProfileOverSuiteSnapshotProfile(t *testing.T)
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -1696,7 +1696,7 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 12345678901234,
 				Name:   "API User",
@@ -1732,7 +1732,7 @@ func TestExecuteProfileBGAdjustReturnsPreviewImage(t *testing.T) {
 			return
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode profile request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -1840,7 +1840,7 @@ func TestExecuteProfileUsesModularRendererWhenEnabled(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 7488328100774779663,
 				Name:   "CN Tester",
@@ -1894,7 +1894,7 @@ func TestExecuteProfileUsesModularRendererWhenEnabled(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode modular profile request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -2183,7 +2183,7 @@ func TestExecuteScoreMusicMetaBuildsRequestsFromQueries(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req []drawing.MusicMetaRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if len(req) != 1 {
@@ -2264,7 +2264,7 @@ func TestExecuteScoreControlBuildsRequestFromParams(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.ScoreControlRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if req.MusicID != 1 || req.MusicTitle != "Song A" || req.MusicBasicPoint != 100 {
@@ -2348,7 +2348,7 @@ func TestExecuteCustomRoomScoreBuildsRequestFromParams(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.CustomRoomScoreRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if req.TargetPoint != 22 {
@@ -2432,7 +2432,7 @@ func TestExecuteScoreMusicBoardBuildsRequestFromParams(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.MusicBoardRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if req.LiveType != "solo" || req.Target != "score" {
@@ -2524,7 +2524,7 @@ func TestExecuteScoreMusicBoardDoesNotTreatModeArgsAsSpecQueries(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		var req drawing.MusicBoardRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		if req.LiveType != "multi" || req.Target != "pt" {
@@ -4363,7 +4363,7 @@ func TestExecuteProfileCustomProfileCard(t *testing.T) {
 		if r.URL.Path != "/api/jp/77777777777777/profile" {
 			t.Fatalf("unexpected sekai path: %s", r.URL.Path)
 		}
-		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 77777777777777,
 				Name:   "Tester",
@@ -4398,7 +4398,7 @@ func TestExecuteProfileCustomProfileCard(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.CustomProfileCardRenderRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Kind != drawing.CustomProfileCardRequestKind || req.SchemaVersion != 1 {
@@ -4432,12 +4432,10 @@ func TestExecuteProfileCustomProfileCard(t *testing.T) {
 	}
 
 	params, err := json.Marshal(profileCustomProfileCardParams{
-		UserQueryParams: UserQueryParams{
-			Mode:           "self",
-			Platform:       "qq",
-			PlatformUserID: "42",
-		},
-		Seq: 1,
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Seq:            1,
 	})
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
@@ -4464,7 +4462,7 @@ func TestExecuteProfileCustomProfileCardSelectsSeq(t *testing.T) {
 		if r.URL.Path != "/api/jp/88888888888888/profile" {
 			t.Fatalf("unexpected sekai path: %s", r.URL.Path)
 		}
-		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 88888888888888,
 				Name:   "Tester",
@@ -4488,7 +4486,7 @@ func TestExecuteProfileCustomProfileCardSelectsSeq(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.CustomProfileCardRenderRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Card.CustomProfileID != 3 || req.Card.CustomProfileCardID != 4 || req.Card.Seq != 3 {
@@ -4510,12 +4508,10 @@ func TestExecuteProfileCustomProfileCardSelectsSeq(t *testing.T) {
 	}
 
 	params, err := json.Marshal(profileCustomProfileCardParams{
-		UserQueryParams: UserQueryParams{
-			Mode:           "self",
-			Platform:       "qq",
-			PlatformUserID: "42",
-		},
-		Seq: 2,
+		Mode:           "self",
+		Platform:       "qq",
+		PlatformUserID: "42",
+		Seq:            2,
 	})
 	if err != nil {
 		t.Fatalf("marshal params: %v", err)
@@ -4813,7 +4809,7 @@ func TestExecuteCardImageReturnsAllOriginalArts(t *testing.T) {
 func TestExecuteCardImageReportsRegionSpecificMissingCard(t *testing.T) {
 	app := &renderapp.App{
 		Cards: rendercard.NewController(
-			&missingBridgeCardSource{bridgeCardSource: bridgeCardSource{region: renderregion.CN}},
+			&missingBridgeCardSource{region: renderregion.CN},
 			&bridgeCardEventSource{},
 			nil,
 			nil,
@@ -4864,7 +4860,7 @@ func TestExecuteCardBoxPassesDisplayFlagsToDrawing(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/box" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -4919,7 +4915,7 @@ func TestExecuteCardBoxAllowsNoBindingFallbackWithQuery(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/box" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -4986,7 +4982,7 @@ func TestExecuteCardBoxAddsNoSuiteTitleToDrawing(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/box" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -5068,7 +5064,7 @@ func TestExecuteCardListAllowsNoBindingFallback(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/list" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -5116,7 +5112,7 @@ func TestExecuteCardListAutoFallbackToCardBoxOmitsUserInfo(t *testing.T) {
 		if r.URL.Path != "/api/pjsk/card/box" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))
@@ -5243,7 +5239,7 @@ func TestExecuteCardListKeepsResolvedRegionInsteadOfStaleParamRegion(t *testing.
 		if r.URL.Path != "/api/pjsk/card/list" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		_, _ = w.Write([]byte("png"))

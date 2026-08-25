@@ -83,13 +83,11 @@ var eventPlannerBoostMultipliers = map[int]int64{
 
 func (sekaiHandlers) EventPlannerHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path: "event/planner",
-			Commands: []string{
-				"/活动规划", "/pjsk event planner", "/event-planner",
-			},
-			Helper: eventPlannerHelp,
+		Path: "event/planner",
+		Commands: []string{
+			"/活动规划", "/pjsk event planner", "/event-planner",
 		},
+		Helper:  eventPlannerHelp,
 		Regions: AllRegions,
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if ctx.Flags()["is_help"] {

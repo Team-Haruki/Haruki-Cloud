@@ -1,14 +1,13 @@
 package api
 
 import (
-	"encoding/json"
-	sonic "github.com/bytedance/sonic"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 
 	"haruki-cloud/config"
+	json "haruki-cloud/internal/jsonutil"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -135,7 +134,7 @@ func sendHelperTestRequest(t *testing.T, app *fiber.App, headers map[string]stri
 	}
 
 	var envelope helperTestEnvelope
-	if err := sonic.Unmarshal(body, &envelope); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		t.Fatalf("decode response body: %v raw=%s", err, string(body))
 	}
 	return envelope

@@ -11,10 +11,8 @@ import (
 
 func (sekaiHandlers) LiveHandle() HarukiSekaiCommandHandler {
 	return bindRequestExecutor(HarukiSekaiCommandHandler{
-		CommandHandlerBase: CommandHandlerBase{
-			Path:     "vlive",
-			Commands: []string{"/pjsk live", "/虚拟live", "/pjsk vlive", "/vlive"},
-		},
+		Path:     "vlive",
+		Commands: []string{"/pjsk live", "/虚拟live", "/pjsk vlive", "/vlive"},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			return makeCommandRequest(ctx, parser.ModuleVLive, "vlive-list"), nil
 		},

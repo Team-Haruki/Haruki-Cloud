@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -528,7 +528,7 @@ func TestExecuteMySekaiMapRejectsExpiredSnapshotUnlessForced(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.MysekaiMsrMapRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if len(req.Maps) != 1 {
@@ -677,7 +677,7 @@ func TestExecuteMySekaiMapUsesPayloadProviderWithoutSnapshot(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.MysekaiMsrMapRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if len(req.Maps) != 1 {
@@ -875,7 +875,7 @@ func TestExecuteMySekaiResourceUsesPayloadProviderWithoutSnapshot(t *testing.T) 
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.MysekaiResourceRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Profile.MysekaiLevel == nil || *req.Profile.MysekaiLevel != 9 {
@@ -1094,7 +1094,7 @@ func TestExecuteMySekaiFixtureListStaticSkipsBindingAndSnapshot(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.MysekaiFixtureListRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Profile != nil {
@@ -1193,7 +1193,7 @@ func TestExecuteMySekaiFixtureDetailSkipsBindingAndSnapshot(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var reqs []drawing.MysekaiFixtureDetailRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&reqs); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&reqs); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if len(reqs) != 1 {
@@ -1260,7 +1260,7 @@ func TestExecuteMySekaiDoorUpgradeFullSkipsBindingAndSnapshot(t *testing.T) {
 			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
 		var req drawing.MysekaiDoorUpgradeRequest
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			t.Fatalf("decode drawing request: %v", err)
 		}
 		if req.Profile != nil {

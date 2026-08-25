@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func dispatchForTest(ctx context.Context, event Event) (*CommandRequest, error) {

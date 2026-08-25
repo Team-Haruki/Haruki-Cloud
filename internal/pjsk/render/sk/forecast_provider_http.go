@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/version"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func parseSekaRunRow(row string) []string {

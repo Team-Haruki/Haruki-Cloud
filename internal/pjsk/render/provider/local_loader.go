@@ -1,9 +1,8 @@
 package provider
 
 import (
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,7 +95,7 @@ func (s *localStore) loadJSON[T any](filename string) ([]T, error) {
 		return nil, err
 	}
 	var items []T
-	if err := sonic.Unmarshal(data, &items); err != nil {
+	if err := json.Unmarshal(data, &items); err != nil {
 		return nil, fmt.Errorf("unmarshal %s: %w", filename, err)
 	}
 	return items, nil

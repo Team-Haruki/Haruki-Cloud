@@ -2,9 +2,8 @@ package accountdata
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"strings"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -35,7 +34,7 @@ func DecodeProfileBindingParams(raw json.RawMessage) (ProfileBindingCommandParam
 	if len(raw) == 0 {
 		return params, fmt.Errorf("bridge: missing profile binding params")
 	}
-	if err := sonic.Unmarshal(raw, &params); err != nil {
+	if err := json.Unmarshal(raw, &params); err != nil {
 		return params, fmt.Errorf("bridge: unmarshal profile binding params: %w", err)
 	}
 	params.Platform = strings.TrimSpace(params.Platform)

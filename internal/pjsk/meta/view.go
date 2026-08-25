@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 // View is an immutable, parsed music metadata snapshot. A Loader replaces the

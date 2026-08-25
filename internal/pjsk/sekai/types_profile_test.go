@@ -3,7 +3,7 @@ package sekai
 import (
 	"testing"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func TestProfileCardDataDecodesV67ImageBuckets(t *testing.T) {

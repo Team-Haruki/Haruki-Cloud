@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"sort"
 	"strings"
 )
@@ -60,7 +59,7 @@ func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([
 
 	if trimmed[0] == '[' {
 		var items []remoteBatchRecommendResult
-		if err := sonic.Unmarshal(trimmed, &items); err != nil {
+		if err := json.Unmarshal(trimmed, &items); err != nil {
 			return nil, err
 		}
 		for i := range items {
@@ -74,7 +73,7 @@ func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([
 	}
 
 	var single remoteRecommendResult
-	if err := sonic.Unmarshal(trimmed, &single); err != nil {
+	if err := json.Unmarshal(trimmed, &single); err != nil {
 		return nil, err
 	}
 	item := remoteBatchRecommendResult{Result: &single}

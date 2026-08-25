@@ -13,9 +13,9 @@ import (
 	"haruki-cloud/utils/logger"
 	"haruki-cloud/version"
 
-	"github.com/bytedance/sonic"
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/sync/singleflight"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type TrackerClient struct {
@@ -164,7 +164,7 @@ func (c *TrackerClient) getAs[T any](path string) (*T, error) {
 	}
 	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "tracker.decode")
 	var result T
-	if err := sonic.Unmarshal(body, &result); err != nil {
+	if err := json.Unmarshal(body, &result); err != nil {
 		finishDecode()
 		return nil, fmt.Errorf("tracker: failed to unmarshal response: %w", err)
 	}

@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"sort"
 
 	sekaiDB "haruki-cloud/database/sekai"

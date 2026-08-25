@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func TestNormalizeSnapshotJSONFastPathReturnsInputUnchanged(t *testing.T) {
@@ -30,7 +30,7 @@ func TestNormalizeSnapshotJSONStillRewritesExtendedJSON(t *testing.T) {
 		} `json:"userGamedata"`
 		Created int64 `json:"created"`
 	}
-	if err := sonic.Unmarshal(got, &decoded); err != nil {
+	if err := json.Unmarshal(got, &decoded); err != nil {
 		t.Fatalf("decode normalized payload: %v", err)
 	}
 	if decoded.UserGamedata.UserID != 339871638031728641 {
@@ -48,7 +48,7 @@ func TestNormalizeSnapshotJSONStillUnwrapsTopLevelArray(t *testing.T) {
 		t.Fatalf("normalizeSnapshotJSON: %v", err)
 	}
 	var decoded map[string]any
-	if err := sonic.Unmarshal(got, &decoded); err != nil {
+	if err := json.Unmarshal(got, &decoded); err != nil {
 		t.Fatalf("decode unwrapped payload: %v", err)
 	}
 	if _, ok := decoded["userGamedata"]; !ok {
@@ -68,7 +68,7 @@ func TestNormalizeSnapshotDocumentDecodesAndNormalizes(t *testing.T) {
 	if got := document["name"]; got != "x" {
 		t.Fatalf("name = %v, want x", got)
 	}
-	number, err := sonic.Marshal(document["userId"])
+	number, err := json.Marshal(document["userId"])
 	if err != nil {
 		t.Fatalf("marshal userId: %v", err)
 	}

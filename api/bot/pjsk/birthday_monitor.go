@@ -13,9 +13,9 @@ import (
 	"haruki-cloud/internal/pjsk/subscription"
 	"haruki-cloud/utils/logger"
 
-	json "github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/shamaton/msgpack/v3"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type birthdayMonitorClientAction struct {

@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -205,7 +205,7 @@ func TestExecuteEducationAreaUsesResolvedRequestContextRegion(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -323,7 +323,7 @@ func TestExecuteEducationAreaFullSkipsBindingAndSnapshot(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -408,7 +408,7 @@ func TestExecuteEducationPowerFallsBackToSuiteSnapshotWhenMySekaiSnapshotUnavail
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")
@@ -477,7 +477,7 @@ func TestExecuteEducationAreaPrefersAPIProfileOverSuiteSnapshotProfile(t *testin
 			http.NotFound(w, r)
 			return
 		}
-		_ = json.ConfigDefault.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
+		_ = json.NewEncoder(w).Encode(sekaiapi.GetAnotherProfileResponse{
 			User: sekaiapi.AnotherUser{
 				UserID: 12345678901234,
 				Name:   "CN API User",
@@ -513,7 +513,7 @@ func TestExecuteEducationAreaPrefersAPIProfileOverSuiteSnapshotProfile(t *testin
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		defer r.Body.Close()
-		if err := json.ConfigDefault.NewDecoder(r.Body).Decode(&captured); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&captured); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
 		w.Header().Set("Content-Type", "image/png")

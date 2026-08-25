@@ -2,9 +2,8 @@ package music
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"strconv"
 	"strings"
 
@@ -18,11 +17,11 @@ func decodeUserMusicAchievements(raw []byte) ([]userMusicAchievement, error) {
 	}
 
 	var direct []userMusicAchievement
-	if err := sonic.Unmarshal(trimmed, &direct); err == nil {
+	if err := json.Unmarshal(trimmed, &direct); err == nil {
 		return direct, nil
 	}
 
-	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(trimmed))
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
 	decoder.UseNumber()
 
 	var payload any
@@ -61,7 +60,7 @@ func extractNestedAchievementsJSON(snapshot snapshot.Snapshot) ([]byte, error) {
 		return nil, err
 	}
 
-	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(raw))
+	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
 
 	var payload any
@@ -72,7 +71,7 @@ func extractNestedAchievementsJSON(snapshot snapshot.Snapshot) ([]byte, error) {
 	for _, key := range snapshotAchievementKeys {
 		want := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(key), "_", ""), "-", ""))
 		if value, ok := findNestedJSONValue(payload, want); ok {
-			data, err := sonic.Marshal(value)
+			data, err := json.Marshal(value)
 			if err != nil {
 				return nil, err
 			}

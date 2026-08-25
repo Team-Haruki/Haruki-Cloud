@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 )

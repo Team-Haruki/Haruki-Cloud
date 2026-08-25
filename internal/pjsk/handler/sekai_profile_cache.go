@@ -15,8 +15,8 @@ import (
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/utils/logger"
 
-	json "github.com/bytedance/sonic"
 	"golang.org/x/sync/singleflight"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type sekaiProfileCacheEntry struct {

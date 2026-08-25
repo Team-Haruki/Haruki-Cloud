@@ -2,8 +2,7 @@ package snapshot
 
 import (
 	"bytes"
-	"encoding/json"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"slices"
 	"strings"
 )
@@ -34,7 +33,7 @@ func decodeCompactCharacterMissionV2Statuses(raw json.RawMessage) []RawUserChara
 	}
 
 	var payload map[string]json.RawMessage
-	decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(trimmed))
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
 	decoder.UseNumber()
 	if err := decoder.Decode(&payload); err != nil {
 		return nil
@@ -49,7 +48,7 @@ func decodeCompactCharacterMissionV2Statuses(raw json.RawMessage) []RawUserChara
 		}
 
 		var values []any
-		decoder := sonic.ConfigDefault.NewDecoder(bytes.NewReader(fieldRaw))
+		decoder := json.NewDecoder(bytes.NewReader(fieldRaw))
 		decoder.UseNumber()
 		if err := decoder.Decode(&values); err != nil {
 			continue

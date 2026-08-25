@@ -3,9 +3,7 @@ package auth
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
 	"io"
 	"net/http"
 	"strconv"
@@ -18,6 +16,7 @@ import (
 	"haruki-cloud/config"
 	ent "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/requestsranking"
+	json "haruki-cloud/internal/jsonutil"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
@@ -221,7 +220,7 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 		t.Fatalf("verify-session failed: status=%d message=%s", verifyResp.Status, verifyResp.Message)
 	}
 	var verifyData InternalVerifyResponse
-	if err := sonic.Unmarshal(verifyResp.Data, &verifyData); err != nil {
+	if err := json.Unmarshal(verifyResp.Data, &verifyData); err != nil {
 		t.Fatalf("decode verify response: %v", err)
 	}
 	if !verifyData.Valid || verifyData.BotID != botID || verifyData.OwnerUserID != qqNumber {
@@ -232,7 +231,7 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 	verifyResp = sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
-	if err := sonic.Unmarshal(verifyResp.Data, &verifyData); err != nil {
+	if err := json.Unmarshal(verifyResp.Data, &verifyData); err != nil {
 		t.Fatalf("decode banned verify response: %v", err)
 	}
 	if verifyData.Valid {
@@ -374,7 +373,7 @@ func sendJSONRequest(t *testing.T, app *fiber.App, method, path, body string, he
 	}
 
 	var envelope testEnvelope
-	if err := sonic.Unmarshal(respBody, &envelope); err != nil {
+	if err := json.Unmarshal(respBody, &envelope); err != nil {
 		t.Fatalf("decode response body: %v\nraw=%s", err, string(respBody))
 	}
 	return envelope

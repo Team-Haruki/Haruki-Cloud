@@ -2,10 +2,9 @@ package accountdata
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"strings"
 
 	pjskdb "haruki-cloud/database/pjsk"
@@ -60,7 +59,7 @@ func DecodeProfileSettingsParams(raw json.RawMessage) (ProfileSettingsCommandPar
 	if len(raw) == 0 {
 		return params, fmt.Errorf("bridge: missing profile settings params")
 	}
-	if err := sonic.Unmarshal(raw, &params); err != nil {
+	if err := json.Unmarshal(raw, &params); err != nil {
 		return params, fmt.Errorf("bridge: unmarshal profile settings params: %w", err)
 	}
 	params.Platform = strings.TrimSpace(params.Platform)

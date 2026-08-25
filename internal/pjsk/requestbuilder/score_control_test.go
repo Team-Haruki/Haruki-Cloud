@@ -2,7 +2,7 @@ package requestbuilder
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"os"
 	"path/filepath"
 	"strings"

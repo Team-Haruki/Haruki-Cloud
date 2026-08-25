@@ -20,11 +20,11 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/censor"
 
-	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
 	"github.com/redis/go-redis/v9"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 var accessLogFileHandle *os.File
@@ -43,8 +43,8 @@ func createFiberApp(mainLogger *harukiLogger.Logger) *fiber.App {
 	accessLogAsyncWriter = nil
 	app := fiber.New(fiber.Config{
 		BodyLimit:   globalRequestBodyLimit,
-		JSONEncoder: sonic.Marshal,
-		JSONDecoder: sonic.Unmarshal,
+		JSONEncoder: json.Marshal,
+		JSONDecoder: json.Unmarshal,
 		ProxyHeader: harukiConfig.Cfg.Backend.ProxyHeader,
 		TrustProxy:  harukiConfig.Cfg.Backend.EnableTrustProxy,
 		TrustProxyConfig: fiber.TrustProxyConfig{

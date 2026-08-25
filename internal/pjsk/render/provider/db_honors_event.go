@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/database/sekai/event"
 )

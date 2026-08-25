@@ -2,13 +2,12 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 
 	dbevent "haruki-cloud/database/sekai/event"
 	"haruki-cloud/database/sekai/eventmusic"
@@ -296,7 +295,7 @@ func parseMusicVocalCharactersFromRaw(raw json.RawMessage, vocalID int, musicID 
 		return nil
 	}
 	var items []map[string]any
-	if err := sonic.Unmarshal(raw, &items); err != nil {
+	if err := json.Unmarshal(raw, &items); err != nil {
 		return nil
 	}
 

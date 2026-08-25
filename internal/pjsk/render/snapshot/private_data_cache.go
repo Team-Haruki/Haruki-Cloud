@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 // PrivateDataCache is a process-wide cache of Toolbox private-data payloads
@@ -180,9 +180,14 @@ func (c *PrivateDataCache) removeElementLocked(el *list.Element) {
 // returns. Returns an error when the field is absent or unparseable, in which
 // case the caller skips caching.
 func parseTopLevelUploadTime(payload []byte) (int64, error) {
-	node, err := sonic.Get(payload, "upload_time")
-	if err != nil {
+	var envelope struct {
+		UploadTime *int64 `json:"upload_time"`
+	}
+	if err := json.Unmarshal(payload, &envelope); err != nil {
 		return 0, err
 	}
-	return node.Int64()
+	if envelope.UploadTime == nil {
+		return 0, fmt.Errorf("upload_time is missing")
+	}
+	return *envelope.UploadTime, nil
 }

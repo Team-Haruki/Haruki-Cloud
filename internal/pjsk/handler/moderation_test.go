@@ -7,7 +7,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/parser"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 func TestGlobalKillHandleParsesPermanentBan(t *testing.T) {

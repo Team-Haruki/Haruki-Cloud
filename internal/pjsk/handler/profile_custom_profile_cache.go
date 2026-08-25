@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"sync"
 
-	json "github.com/bytedance/sonic"
 	"golang.org/x/sync/singleflight"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 const (

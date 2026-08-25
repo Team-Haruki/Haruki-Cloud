@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/parser"

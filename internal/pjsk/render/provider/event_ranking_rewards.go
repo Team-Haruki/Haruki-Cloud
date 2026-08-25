@@ -1,7 +1,7 @@
 package provider
 
 import (
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )

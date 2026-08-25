@@ -17,7 +17,7 @@ import (
 	"haruki-cloud/config"
 	"haruki-cloud/internal/observability/commandtrace"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 const (

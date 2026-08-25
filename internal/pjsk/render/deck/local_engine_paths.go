@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 var deckMasterdataRegions = map[string]struct{}{

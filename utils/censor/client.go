@@ -11,7 +11,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 
-	"github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/sync/singleflight"
@@ -81,7 +81,7 @@ func (b *BaiduTextCensorClient) fetchAccessToken(ctx context.Context) (string, e
 
 	finishDecode := commandtrace.MeasureOperation(ctx, "censor.decode")
 	var data map[string]any
-	err = sonic.Unmarshal(resp.Body(), &data)
+	err = json.Unmarshal(resp.Body(), &data)
 	finishDecode()
 	if err == nil {
 		if token, ok := data["access_token"].(string); ok {
@@ -135,7 +135,7 @@ func (b *BaiduTextCensorClient) TextCensorContext(ctx context.Context, text stri
 
 	finishDecode := commandtrace.MeasureOperation(ctx, "censor.decode")
 	var result map[string]any
-	err = sonic.Unmarshal(resp.Body(), &result)
+	err = json.Unmarshal(resp.Body(), &result)
 	if err == nil {
 		err = baiduTextCensorResultError(result)
 	}

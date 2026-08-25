@@ -3,7 +3,7 @@ package deck
 import (
 	"context"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"slices"
 	"strconv"
 	"strings"

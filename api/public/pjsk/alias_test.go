@@ -2,9 +2,8 @@ package pjsk
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	sonic "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"io"
 	"net/http"
 	"strings"
@@ -46,7 +45,7 @@ func TestPublicPJSKAliasEndpoints(t *testing.T) {
 	var toIDData struct {
 		MatchIDs []int `json:"match_ids"`
 	}
-	if err := sonic.Unmarshal(aliasToID.Data, &toIDData); err != nil {
+	if err := json.Unmarshal(aliasToID.Data, &toIDData); err != nil {
 		t.Fatalf("decode alias->id data: %v", err)
 	}
 	if len(toIDData.MatchIDs) != 1 || toIDData.MatchIDs[0] != 2001 {
@@ -60,7 +59,7 @@ func TestPublicPJSKAliasEndpoints(t *testing.T) {
 	var listData struct {
 		Aliases []string `json:"aliases"`
 	}
-	if err := sonic.Unmarshal(aliasList.Data, &listData); err != nil {
+	if err := json.Unmarshal(aliasList.Data, &listData); err != nil {
 		t.Fatalf("decode aliases data: %v", err)
 	}
 	if len(listData.Aliases) != 2 {
@@ -96,7 +95,7 @@ func requestPJSK(t *testing.T, app *fiber.App, method, path, body string) pjskEn
 	}
 
 	var envelope pjskEnvelope
-	if err := sonic.Unmarshal(payload, &envelope); err != nil {
+	if err := json.Unmarshal(payload, &envelope); err != nil {
 		t.Fatalf("decode response: %v raw=%s", err, string(payload))
 	}
 	return envelope

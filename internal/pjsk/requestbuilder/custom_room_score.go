@@ -3,7 +3,7 @@ package requestbuilder
 import (
 	"encoding/csv"
 	"fmt"
-	json "github.com/bytedance/sonic"
+	json "haruki-cloud/internal/jsonutil"
 	"sort"
 	"strconv"
 	"strings"

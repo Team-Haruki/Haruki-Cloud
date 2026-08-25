@@ -2,7 +2,6 @@ package deck
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -12,8 +11,8 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 
-	sonic "github.com/bytedance/sonic"
 	"golang.org/x/sync/errgroup"
+	json "haruki-cloud/internal/jsonutil"
 )
 
 type remoteReadyFlightToken byte
@@ -299,7 +298,7 @@ func (r *RemoteDeckRecommender) doRecommendBatch(ctx context.Context, exec *remo
 		"userdata_hash": cacheResp.UserdataHash,
 	}
 	finishEncode := commandtrace.MeasureOperation(ctx, "deck.encode")
-	recommendJSON, err := sonic.Marshal(recommendPayload)
+	recommendJSON, err := json.Marshal(recommendPayload)
 	finishEncode()
 	if err != nil {
 		return nil, err

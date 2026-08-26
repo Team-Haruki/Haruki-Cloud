@@ -38,12 +38,12 @@ const (
 	// deviate from server time before it is distrusted and treated as absent: a
 	// client with a broken clock source must not poison group dedup.
 	responseElectionEventTimeSkewMax = 10 * time.Minute
-	responseElectionStateTTL      = dedupInFlightTTL + responseElectionResultTTL
-	responseElectionPublishBudget = 3 * time.Second
-	responseElectionMaxAttempts   = 3
-	responseElectionRetryDelay    = 25 * time.Millisecond
-	responseElectionWinnerClaim   = time.Second
-	responseElectionCloseTimeout  = 5 * time.Second
+	responseElectionStateTTL         = dedupInFlightTTL + responseElectionResultTTL
+	responseElectionPublishBudget    = 3 * time.Second
+	responseElectionMaxAttempts      = 3
+	responseElectionRetryDelay       = 25 * time.Millisecond
+	responseElectionWinnerClaim      = time.Second
+	responseElectionCloseTimeout     = 5 * time.Second
 )
 
 var (

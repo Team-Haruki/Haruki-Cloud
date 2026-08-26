@@ -18,15 +18,15 @@ Haruki-Cloud is the core backend of the **HarukiBot** ecosystem. It serves:
 - Project SEKAI (PJSK) and CHUNITHM query/render data
 - bot registration / auth / session management
 
-| Component        | Tech                                      |
-|------------------|-------------------------------------------|
-| HTTP framework   | Fiber v3                                  |
-| ORM              | Ent (entgo.io)                            |
-| Databases        | PostgreSQL / MySQL / SQLite               |
-| Cache            | Redis                                     |
-| Auth             | JWT (golang-jwt/v5) + AES-256-GCM + Noise NK |
-| JSON             | bytedance/sonic                           |
-| Go               | 1.26.1                                    |
+| Component      | Tech                                         |
+|----------------|----------------------------------------------|
+| HTTP framework | Fiber v3                                     |
+| ORM            | Ent (entgo.io)                               |
+| Databases      | PostgreSQL / MySQL / SQLite                  |
+| Cache          | Redis                                        |
+| Auth           | JWT (golang-jwt/v5) + AES-256-GCM + Noise NK |
+| JSON           | `encoding/json/v2` via `internal/jsonutil`   |
+| Go             | 1.27                                         |
 
 There is **one** runtime entry point: `main.go` at the repo root, which only
 sets up signal handling and calls `server.Run(ctx)` from
@@ -57,10 +57,15 @@ Haruki-Cloud/
 │   └── groupguard/
 │
 ├── internal/
+│   ├── cache/drawingcache/ # drawing image cache (store, GC, stats, admin API)
+│   ├── cluster/            # node role / read-only mode helpers (config.Cfg.Node)
 │   ├── core/crypto/        # Noise protocol helpers
+│   ├── core/upstream/      # upstream connection pool / transport
 │   ├── handler/            # cross-domain command registry / bot routing
 │   ├── identity/           # platform user → haruki user resolution
+│   ├── jsonutil/           # JSON facade: encoding/json/v2 engine, v1-compatible semantics
 │   ├── middleware/secure/  # security middleware
+│   ├── observability/commandtrace/ # command execution tracing
 │   ├── onebot11/           # OneBot11 message helpers (was internal/pjsk/onebot11/)
 │   └── pjsk/               # PJSK subsystem (see §4)
 │
@@ -68,7 +73,7 @@ Haruki-Cloud/
 ├── database/               # ent-generated DB clients (bot/censor/chunithm/pjsk/sekai/users)
 ├── ent/                    # ent schema definitions (mirror of database/)
 ├── docs/                   # canonical human-facing documentation
-├── exports/                # legacy JSON snapshots for the importer
+├── exports/                # legacy JSON snapshots for the importer (local only, not in git)
 ├── scripts/                # ops helpers (e.g. provision_bot)
 ├── integration/            # integration tests (gated behind HARUKI_RUN_INTEGRATION)
 └── Dockerfile / docker-compose.yml
@@ -76,21 +81,23 @@ Haruki-Cloud/
 
 `internal/pjsk/` itself contains:
 
-| Sub-package           | Role                                                                 |
-|-----------------------|----------------------------------------------------------------------|
-| `accountdata/`        | User binding / profile settings (NOT to be confused with snapshots)  |
-| `alias/`              | Alias service (review queue, validation, records)                    |
-| `chartstyle/`         | Chart rendering style helpers                                        |
-| `displaytime/`        | Time/region display helpers                                          |
-| `drawing/`            | Image rendering helpers (`ProfileBgSettings`, etc.)                  |
-| `eventutil/`          | Event window / window-aligned helpers                                |
-| `handler/`            | Bot command parsing + execution dispatch (NOT the upstream client)   |
-| `meta/`               | Static meta tables                                                   |
-| `parser/`             | Free-text command parsers (card parser lives in `render/card`)       |
-| `region/`             | Region normalisation                                                 |
-| `render/`             | Render runtime (controllers, providers, snapshots)                   |
-| `requestbuilder/`     | Internal request builders for the render layer                       |
-| `sekai/`              | **Upstream Sekai HTTP client** — always import as alias `sekaiapi`    |
+| Sub-package       | Role                                                                |
+|-------------------|---------------------------------------------------------------------|
+| `accountdata/`    | User binding / profile settings (NOT to be confused with snapshots) |
+| `alias/`          | Alias service (review queue, validation, records)                   |
+| `chartstyle/`     | Chart rendering style helpers                                       |
+| `displaytime/`    | Time/region display helpers                                         |
+| `drawing/`        | Image rendering helpers (`ProfileBgSettings`, etc.)                 |
+| `eventutil/`      | Event window / window-aligned helpers                               |
+| `filteralias/`    | Attribute / filter keyword alias tables                             |
+| `handler/`        | Bot command parsing + execution dispatch (NOT the upstream client)  |
+| `meta/`           | Static meta tables                                                  |
+| `parser/`         | Free-text command parsers (card parser lives in `render/card`)      |
+| `region/`         | Region normalisation                                                |
+| `render/`         | Render runtime (controllers, providers, snapshots)                  |
+| `requestbuilder/` | Internal request builders for the render layer                      |
+| `sekai/`          | **Upstream Sekai HTTP client** — always import as alias `sekaiapi`  |
+| `subscription/`   | Subscription pushes (e.g. MySekai birthday)                         |
 
 `internal/pjsk/render/` is the bulk of the runtime:
 
@@ -100,11 +107,13 @@ render/
 ├── assets/      # asset providers
 ├── card/        # card lookup / parser / detail / list
 ├── common/      # shared render helpers
+├── costume/     # 3D costume / preview
 ├── deck/        # deck recommend (challenge / event / WL)
 ├── education/   # leader / bonds / area
 ├── event/       # event metadata, ranks
 ├── gacha/       # gacha details
 ├── honor/       # honor logic
+├── inventory/   # inventory categories / lookup
 ├── masterdata/  # master data adapters
 ├── misc/        # miscellaneous (e.g. birthday)
 ├── music/       # music detail / list / progress / rewards
@@ -138,9 +147,9 @@ Redis client, and runtime config.
 ### Sekai / Toolbox / Tracker clients
 
 - Constructors:
-  - `sekaiapi.NewSekaiAPIClient(*config.SekaiAPIConfig)`
-  - `sekaiapi.NewToolboxClient(*config.ToolboxConfig)`
-  - `sekaiapi.NewTrackerClient(*config.TrackerConfig)`
+    - `sekaiapi.NewSekaiAPIClient(*config.SekaiAPIConfig)`
+    - `sekaiapi.NewToolboxClient(*config.ToolboxConfig)`
+    - `sekaiapi.NewTrackerClient(*config.TrackerConfig)`
 - All methods are **nil-receiver safe**; nil clients return
   `ErrClientNotConfigured` (defined in `internal/pjsk/sekai/errors.go`).
 - When writing tests that exercise a real Sekai HTTP server
@@ -167,11 +176,11 @@ Redis client, and runtime config.
 
 ### Naming pitfalls
 
-| Looks similar but…                                              |
-|-----------------------------------------------------------------|
-| `internal/pjsk/handler/` (bot command parsing) ≠ `internal/pjsk/sekai/` (upstream HTTP client). The latter is **always** imported as `sekaiapi`. |
+| Looks similar but…                                                                                                                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `internal/pjsk/handler/` (bot command parsing) ≠ `internal/pjsk/sekai/` (upstream HTTP client). The latter is **always** imported as `sekaiapi`.      |
 | `internal/pjsk/accountdata/` (user binding / profile settings) ≠ `internal/pjsk/render/snapshot/` (game snapshot data; previously `render/userdata`). |
-| `internal/pjsk/parser/` no longer contains card parsers — card query parsing lives in `internal/pjsk/render/card/parser.go`. |
+| `internal/pjsk/parser/` no longer contains card parsers — card query parsing lives in `internal/pjsk/render/card/parser.go`.                          |
 
 ---
 
@@ -196,12 +205,12 @@ count. Aliases and other CJK-heavy fields need a comfortably large `MaxLen`
 
 ## 5. CLIs
 
-| CLI                | Purpose                                                       |
-|--------------------|---------------------------------------------------------------|
-| `go build .`       | Build the main server (`haruki-cloud`).                       |
-| `cmd/importer/`    | Migrate legacy `exports/*.json` into the new DB. Targets: `bindings`, `character-aliases`, `music-aliases`, `group-aliases`, `defaults`, or `all`. Idempotent. |
-| `cmd/extractor/`   | Schema extraction helper.                                     |
-| `scripts/provision_bot/` | Bot provisioning helper.                                |
+| CLI                      | Purpose                                                                                                                                                        |
+|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `go build .`             | Build the main server (`haruki-cloud`).                                                                                                                        |
+| `cmd/importer/`          | Migrate legacy `exports/*.json` into the new DB. Targets: `bindings`, `character-aliases`, `music-aliases`, `group-aliases`, `defaults`, or `all`. Idempotent. |
+| `cmd/extractor/`         | Schema extraction helper.                                                                                                                                      |
+| `scripts/provision_bot/` | Bot provisioning helper.                                                                                                                                       |
 
 `cmd/importer` reads DB connection from env (`HARUKI_PJSK_DB_URL`,
 `HARUKI_USERS_DB_URL`) or `haruki-cloud.yaml`. Dry-run mode (`--dry-run`)
@@ -236,8 +245,9 @@ staticcheck ./...
 - Comment only what genuinely needs clarification — do not annotate self-evident
   code.
 - **Avoid emoji** in generated code unless explicitly requested.
-- Prefer `bytedance/sonic` over `encoding/json` in hot paths (the codebase
-  already standardises on this).
+- JSON goes through `internal/jsonutil` (an `encoding/json/v2` engine with
+  v1-compatible semantics). Do not reintroduce `bytedance/sonic` — it was
+  removed in the Go 1.27 / json/v2 migration.
 - New code must thread `ctx` explicitly; no `context.Background()` in request
   paths.
 
@@ -254,13 +264,13 @@ staticcheck ./...
 
 When in doubt about current architecture, consult these in order:
 
-| Document                                       | Purpose                                                            |
-|------------------------------------------------|--------------------------------------------------------------------|
-| `docs/architecture.cn.md`                      | Top-level architecture / package responsibilities / parser layout  |
-| `docs/database-schemas.cn.md`                  | DB schema reference                                                |
-| `docs/pjsk-command-system.cn.md`               | PJSK command system design                                         |
-| `docs/toolbox-api.cn.md`                       | Upstream Toolbox API contract                                      |
-| `docs/deck_refer_help.md`                      | User-facing help text for the `deck` command family                |
+| Document                          | Purpose                                                            |
+|-----------------------------------|--------------------------------------------------------------------|
+| `docs/architecture.cn.md`         | Top-level architecture / package responsibilities / parser layout  |
+| `docs/database-schemas.cn.md`     | DB schema reference                                                |
+| `docs/pjsk-command-system.cn.md`  | PJSK command system design                                         |
+| `docs/toolbox-api.cn.md`          | Upstream Toolbox API contract                                      |
+| `docs/deck_refer_help.md`         | User-facing help text for the `deck` command family                |
 
 `docs/` only describes the current shape of the project. Historical progress
 and integration plans are no longer kept — when a doc and the code disagree,

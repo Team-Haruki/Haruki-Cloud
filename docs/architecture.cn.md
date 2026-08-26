@@ -1,6 +1,19 @@
 # Haruki-Cloud 项目架构文档
 
-> 最后更新：2026-04-23（v1.9）
+> 最后更新：2026-08-26（v2.0）
+>
+> 2026-08-26 补充：
+> 1. Go 升级至 1.27；`bytedance/sonic` 已移除，JSON 统一走 `internal/jsonutil`
+>    （`encoding/json/v2` 引擎 + v1 兼容语义）。
+> 2. Bot 自助注册链路（`/bot/send-mail`、`/bot/register`、SMTP、Turnstile）已
+>    移除；Bot 账号由运维通过 `scripts/provision_bot` 手动开通，公开端点仅剩
+>    登录/注销。统计上报移至 `/internal/bot/statistics/record/:botID`（内部鉴权）。
+> 3. `BotCommandRequest` 新增可选字段 `event_time`/`event_id`（事件时间去重）与
+>    `timestamp`/`nonce`（Noise 通道重放保护，`haruki_bot.require_request_nonce`
+>    开启后强制校验）。
+> 4. `internal/` 新增 `cache/drawingcache`（绘图缓存）、`cluster`（节点只读模式）、
+>    `jsonutil`、`observability/commandtrace`、`core/upstream`；`internal/pjsk/`
+>    新增 `filteralias`、`subscription`；render 新增 `costume`、`inventory` 模块。
 >
 > 2026-04-18 补充：
 > 1. `internal/pjsk/handler/sekai/` 子包已扁平化至 `internal/pjsk/handler/`；所有 `bridge_*.go` 分发文件已删除，执行逻辑合并进各命令文件。
@@ -33,8 +46,8 @@
 | 数据库 | PostgreSQL / MySQL / SQLite |
 | 缓存 | Redis |
 | 认证 | JWT (golang-jwt/v5) + AES-256-GCM + Noise NK |
-| JSON | bytedance/sonic（高性能替代 encoding/json） |
-| Go 版本 | 1.26.1 |
+| JSON | `encoding/json/v2`（经 `internal/jsonutil` 统一封装，保持 v1 兼容语义） |
+| Go 版本 | 1.27 |
 
 ---
 
@@ -61,10 +74,15 @@ Haruki-Cloud/
 │       └── pjsk/                 #     Bot 指令端点（由 handler registry 动态注册）→ /api/v2/bot/:botId/pjsk/*
 │
 ├── internal/                     # ── 内部业务逻辑（不对外暴露） ──
+│   ├── cache/drawingcache/       #   绘图图片缓存（存储、GC、统计、管理 API）
+│   ├── cluster/                  #   集群节点角色 / 只读模式（config.Cfg.Node）
 │   ├── core/crypto/              #   Noise NK 协议加密工具
+│   ├── core/upstream/            #   上游连接池 / Transport
 │   ├── handler/                  #   统一命令注册表（handler.go + bot_route.go）
 │   ├── identity/                 #   平台用户身份解析
+│   ├── jsonutil/                 #   JSON 门面（json/v2 引擎 + v1 兼容语义）
 │   ├── middleware/secure/        #   安全中间件
+│   ├── observability/commandtrace/ # 命令执行追踪
 │   ├── onebot11/                 #   OneBot11 协议工具（消息段、CQ 码、错误）
 │   └── pjsk/                     #   PJSK 核心子系统
 │       ├── accountdata/          #     账号绑定与 Profile 服务
@@ -73,16 +91,18 @@ Haruki-Cloud/
 │       ├── displaytime/          #     时间展示工具
 │       ├── drawing/              #     Drawing API 客户端 + 缓存
 │       ├── eventutil/            #     活动工具
+│       ├── filteralias/          #     属性/筛选关键词别名表
 │       ├── handler/              #     命令注册、端点归属、执行桥接
 │       ├── meta/                 #     元数据工具
 │       ├── parser/               #     指令解析与提取能力
 │       ├── region/               #     区服类型定义
 │       ├── requestbuilder/       #     请求构建器
 │       ├── sekai/                #     上游 Sekai/Toolbox HTTP 客户端
+│       ├── subscription/         #     订阅推送（MySekai 生日等）
 │       └── render/               #     渲染与执行子系统
 │
 ├── config/                       # ── 配置 ──
-│   └── config.go                 #   YAML 配置加载，10 个顶级配置块
+│   └── config.go                 #   YAML 配置加载，16 个顶级配置块
 │
 ├── database/                     # ── 数据库层（Ent 自动生成） ──
 │   ├── bot/                      #   Bot 用户、统计、Command Manifest
@@ -102,30 +122,21 @@ Haruki-Cloud/
 │
 ├── utils/                        # ── 工具库 ──
 │   ├── redis/                    #   Redis 缓存管理
-│   ├── query/                    #   统一查询门面（跨4个DB的 Client，含输入校验+哨兵错误）
+│   ├── imagecache/               #   图片缓存
 │   ├── logger/                   #   日志
-│   ├── smtp/                     #   邮件发送
-│   ├── turnstile/                #   Cloudflare Turnstile 验证
-│   ├── censor/                   #   百度内容审核客户端
-│   ├── crypto/                   #   通用加密工具
-│   ├── toolbox/                  #   Toolbox API 客户端
-│   ├── command/                  #   指令加密工具
-│   └── types/                    #   共享类型定义
+│   ├── censor/                   #   内容审核客户端
+│   └── usererror/                #   面向用户的错误类型
 │
-├── Data/                         # ── 静态数据（不入 Git） ──
-│   ├── master/                   #   5 区服的游戏 Masterdata（600+ JSON/区服）
-│   ├── accounts/                 #   游戏账号凭据
-│   └── structures/               #   结构定义
+├── data/                         # ── 静态数据（结构定义等） ──
+├── deploy/                       # ── 部署相关文件 ──
+├── scripts/                      # ── 运维脚本（provision_bot 等） ──
+├── version/                      # ── 版本信息 ──
 │
 ├── docs/                         # ── 文档 ──
 ├── integration/                  # ── 集成测试 ──
-├── exports/                      # ── 导出产物/临时数据 ──
 │
-├── cmd/extractor/                #   数据提取脚本入口
-├── cmd/importer/                 #   旧数据迁移 CLI
-├── schema_info.json              #   Sekai 表结构元数据
 ├── go.mod / go.sum               #   Go 模块定义
-└── haruki-cloud.example.yaml  #   配置文件模板
+└── haruki-cloud.example.yaml     #   配置文件模板
 ```
 
 ---
@@ -139,6 +150,11 @@ profile: "dev"             # 部署环境: production / beta / temp / dev
                            # 影响 log_level / api_cache_ttl 默认值、recover stack trace 可见性
                            # production 强制关闭 allow_insecure_internal_api
                            # 可通过 HARUKI_PROFILE 环境变量覆盖
+
+node:                      # 集群节点身份
+  name: ""
+  role: ""
+  read_only: false         # true 时拒绝修改用户数据（internal/cluster）
 
 backend:                   # 服务基础配置
   host: "0.0.0.0"
@@ -167,13 +183,18 @@ chunithm:                  # CHUNITHM（两个独立数据库）
   music_db_url: "..."
   binding_db_url: "..."
 
-haruki_bot_db:             # Bot 管理数据库
+haruki_bot:                # Bot 管理数据库 + Bot 通道配置
   db_url: "..."
-  credential_sign_token: ""  # JWT 签名密钥（注册凭据）
+  credential_sign_token: ""  # JWT 签名密钥（登录凭据）
   session_sign_token: ""     # JWT 签名密钥（会话令牌）
+  internal_api_token: ""     # 内部 API 回退令牌
   session_ttl_days: 7
-  smtp_host: ""            # 验证码邮件
-  turnstile_secret_key: "" # Turnstile 人机验证
+  noise_private_key: ""      # Noise NK 服务端私钥（未配置时退回 JSON 明文）
+  auth_encryption_key: ""    # 登录 AES-256-GCM 密钥
+  response_election_window: 0 # 多 bot 响应选举窗口
+  response_election_roster: false
+  require_request_nonce: false # true 时强制校验 timestamp/nonce（重放保护）
+  request_nonce_window: 0
 
 users_db:                  # 通用用户数据库（身份、绑定与全局封禁）
   db_url: "..."
@@ -181,7 +202,19 @@ users_db:                  # 通用用户数据库（身份、绑定与全局封
 moderation:                # 高权限全局管理命令
   admin_qq_ids: []         # 可执行 /kill 与 /back 的 QQ 白名单；空列表默认拒绝全部
 
+censor:                    # 内容审核（百度/腾讯凭据 + censor DB）
+  censor_db_url: "..."
+
 toolbox:                   # Toolbox 外部服务
+  base_url: ""
+
+hmes:                      # HMES 外部服务（public/internal base_url + token）
+  public_base_url: ""
+
+sekai_api:                 # 上游 Sekai API 客户端
+  base_url: ""
+
+tracker:                   # SK Tracker 客户端
   base_url: ""
 ```
 
@@ -225,7 +258,7 @@ toolbox:                   # Toolbox 外部服务
 
 ```
 适用路径：/api/v2/public/pjsk/alias/*,  /api/v2/public/chunithm/*,
-          /bot/send-mail, /bot/register, /bot/:bot_id/auth
+          /api/v2/bot/:bot_id/auth, /api/v2/bot/:bot_id/logout
 ```
 
 ---
@@ -236,9 +269,11 @@ toolbox:                   # Toolbox 外部服务
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/bot/send-mail` | 发送 QQ 邮箱验证码 |
-| POST | `/bot/register` | 注册 Bot 账号 |
-| POST | `/bot/:bot_id/auth` | 登录（AES 加密凭据 → 返回 session_token） |
+| POST | `/api/v2/bot/:bot_id/auth` | 登录（AES-256-GCM 加密凭据 → 返回 session_token） |
+| DELETE | `/api/v2/bot/:bot_id/logout` | 注销当前会话 |
+
+> Bot 自助注册链路（send-mail / register / SMTP 验证码 / Turnstile）已移除；
+> Bot 账号由运维通过 `scripts/provision_bot` 手动开通。
 
 ### 5.2 Bot 指令端点（VerifyBotSession 鉴权）
 
@@ -260,6 +295,13 @@ X-Haruki-Bot-Session-Token: <jwt>
 4. 当服务端配置了 `noise_private_key` 时，请求体为 `Noise NK + MsgPack(BotCommandRequest)`
 5. 当服务端未配置 `noise_private_key` 时，退回 `JSON(BotCommandRequest)` 明文模式
 6. `BotCommandRequest.enableParamEcho` 默认为 `false`；客户端只有显式传 `true` 时，参数解析错误才会回显具体参数
+7. `BotCommandRequest` 另有四个可选字段（更新版客户端发送）：
+   - `event_time` / `event_id`：平台事件时间戳（OneBot time）用于事件级去重——
+     同一条消息被多个 bot 观测到时时间一致，已消费的响应选举保留 120s，可区分
+     重复投递（同时间 → 拒绝）与用户重发（更新时间 → 新选举）；未带该字段的请求
+     沿用旧的 3s 宽限
+   - `timestamp` / `nonce`：Noise 通道的按次投递重放保护（窗口校验 + SET NX
+     单次 nonce）；默认宽松，`haruki_bot.require_request_nonce=true` 时强制
 
 代表性端点包括：
 
@@ -307,12 +349,14 @@ X-Haruki-Bot-Session-Token: <jwt>
 | GET | `/api/v2/public/chunithm/music/:music_id/chart-data` | 谱面数据 |
 | POST | `/api/v2/public/chunithm/music/query-batch` | 批量查询 |
 
-### 5.6 Bot 内部端点（VerifyAPIAuthorization 鉴权）
+### 5.6 内部端点（VerifyAPIAuthorization 鉴权）
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/internal/bot/verify-session` | 验证 bot_id + session_token |
-| POST | `/bot/statistics/record/:botID` | 统计数据上报 |
+| POST | `/internal/bot/statistics/record/:botID` | 统计数据上报 |
+| POST | `/api/internal/group-guard/binding/check` | 群成员绑定检查 |
+| POST | `/api/internal/group-guard/binding/check-batch` | 群成员绑定批量检查 |
 
 ---
 
@@ -367,13 +411,13 @@ Bot 客户端
 2. 渲染控制器仍然存在，但仅作为代码内部执行层
 3. 图片命令最终通过 Drawing API + ImageCache 返回 OneBot11 `image` segment
 
-### 6.3 Bot 注册/登录流程
+### 6.3 Bot 开通/登录流程
 
 ```
-1. POST /bot/send-mail  →  验证码 → QQ 邮箱
-2. POST /bot/register   →  验证码验证 → 创建用户 → 返回 JWT credential
-3. POST /bot/:bot_id/auth  →  AES 解密 → JWT credential 验证
-                            → 生成 session_token → 存 Redis → 返回
+1. 运维执行 scripts/provision_bot  →  创建 Bot 账号 → 下发 JWT credential
+2. POST /api/v2/bot/:bot_id/auth   →  AES-256-GCM 解密 → JWT credential 验证
+                                    → 生成 session_token → 存 Redis → 返回
+3. DELETE /api/v2/bot/:bot_id/logout →  删除 Redis 会话
 ```
 
 ---
@@ -461,6 +505,8 @@ internal/pjsk/render/
 │
 │   ── 功能模块（其中 vlive 为文本模块） ──
 ├── card/                 # 卡片（detail, list, box）
+├── costume/              # 3D 服装 / 预览
+├── inventory/            # 库存分类查询
 ├── music/                # 曲目（detail, list, chart, progress, rewards）
 ├── event/                # 活动（detail, list, record）
 ├── gacha/                # 卡池（detail, list）
@@ -497,7 +543,7 @@ internal/pjsk/chartstyle/
 
 | 问题 | 位置 | 说明 |
 |------|------|------|
-| `exports/` 混合导出与临时产物 | `exports/` | 当前包含 alias 导出与 DB dump，尚未形成清晰约束与归档规则 |
+| `exports/` 混合导出与临时产物 | `exports/`（本地目录，不入 Git） | 作为 `cmd/importer` 输入的 legacy JSON 快照，尚未形成清晰约束与归档规则 |
 
 ### ⚠ 技术债
 
@@ -566,23 +612,30 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 
 | 文件 | 职责 | 关联路由 |
 |------|------|----------|
-| `route.go` | Bot 注册/登录路由注册 | `/bot/send-mail`, `/bot/register`, `/bot/:bot_id/auth` |
-| `handler.go` | 注册/登录/邮件 Handler | — |
-| `struct.go` | 请求/响应结构体 | — |
-| `helper.go` | JWT/AES 工具 | — |
-| `statistics.go` | 统计上报 Handler | `/bot/statistics/record/:botID` |
-| `verify.go` | 内部 session 验证 | `/internal/bot/verify-session` |
-| `route_test.go` | Bot 认证流程集成测试 | — |
+| `route.go` | 路由注册入口（user / internal / statistics 三组） | — |
+| `user.go` | 登录/注销 Handler | `/api/v2/bot/:bot_id/auth`, `/api/v2/bot/:bot_id/logout` |
+| `credential.go` | JWT credential 生成与校验 | — |
+| `crypto.go` | AES-256-GCM 工具 | — |
+| `session.go` | 会话令牌管理（Redis） | — |
+| `internal.go` | 内部 session 验证 | `/internal/bot/verify-session` |
+| `statistics.go` | 统计上报 Handler | `/internal/bot/statistics/record/:botID` |
+| `telemetry.go` / `telemetry_dispatcher.go` | Bot 遥测采集与转发 | — |
+| `struct.go` / `helper.go` | 结构体与辅助函数 | — |
 
 ### api/bot/pjsk/（package pjsk）
 
 | 文件 | 职责 | 关联路由 |
 |------|------|----------|
 | `handler.go` | `makeBotHandler`、MsgPack/JSON 请求解码、handler registry 派生路由注册、manifest 端点 | `/api/v2/bot/:botId/pjsk/*`, `/api/v2/bot/:botId/command/manifests` |
+| `dedup.go` / `dedup_cleanup.go` | 事件级去重（event_time/event_id） | — |
+| `replay.go` | Noise 通道重放保护（timestamp/nonce 窗口 + SET NX） | — |
+| `response_election*.go` | 多 bot 响应选举（窗口、key、roster、生成） | — |
+| `bot_response_envelope.go` | 响应封装 | — |
+| `command_trace.go` | 命令执行追踪接入 | — |
+| `param_echo.go` / `param_guidance.go` | 参数回显与参数引导 | — |
+| `birthday_monitor.go` | MySekai 生日订阅推送 | — |
 | `seed.go` | 从 handler registry 同步 command manifest 到 bot DB | — |
 | `struct.go` | `BotCommandRequest`、`ManifestEntry`、`ManifestResponse` | — |
-| `handler_test.go` | 覆盖 OneBot 解码、POST/Noise 往返、端点匹配、文本/图片返回、manifest 行为 | — |
-| `testhelpers_test.go` | 测试辅助：`testRenderApp`、`renderEnvelope` | — |
 
 ---
 
@@ -598,5 +651,5 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 ---
 
 **维护者**：Haruki-Cloud Team  
-**文档版本**：v1.9  
+**文档版本**：v2.0  
 **创建日期**：2026-03-23

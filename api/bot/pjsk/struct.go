@@ -17,6 +17,25 @@ type BotCommandRequest struct {
 	// EnableParamEcho allows clients to opt in to receiving the concrete
 	// parameter text in parse-error responses. The default is false.
 	EnableParamEcho bool `json:"enableParamEcho,omitempty" msgpack:"enableParamEcho,omitempty"`
+	// EventTime is the platform-side event timestamp (OneBot `time`, unix
+	// seconds). Every bot observing the same group message reports the same
+	// value, while a user re-sending the same command produces a new one, so it
+	// discriminates duplicate delivery from a genuine repeat. Optional: 0 keeps
+	// the legacy short content-dedup window.
+	EventTime int64 `json:"event_time,omitempty" msgpack:"event_time,omitempty"`
+	// EventID optionally carries a platform-shared message identifier (e.g. the
+	// QQ group message_seq). Reserved for exact event identity; not yet used in
+	// dedup decisions.
+	EventID string `json:"event_id,omitempty" msgpack:"event_id,omitempty"`
+	// Timestamp (unix seconds) and Nonce provide replay protection for the
+	// Noise-encrypted channel: the server validates the timestamp window and
+	// rejects a reused Nonce. Optional during rollout — when absent the server
+	// only rejects if bot.require_request_nonce is enabled. Nonce must be a
+	// fresh random value (>=16 bytes, hex/base64) per delivery attempt: a
+	// client HTTP retry must regenerate it, the event-time dedup prevents
+	// double execution.
+	Timestamp int64  `json:"timestamp,omitempty" msgpack:"timestamp,omitempty"`
+	Nonce     string `json:"nonce,omitempty" msgpack:"nonce,omitempty"`
 }
 
 // BotCommandErrorResponse is returned when a bot endpoint cannot process the request.

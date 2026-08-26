@@ -118,6 +118,13 @@ haruki_bot:
   # back to the full window; an under-counted one still yields exactly one
   # response. Members absent from 3 consecutive elections are demoted.
   response_election_roster: false
+  # Replay protection for the Noise-encrypted bot channel. When false (default),
+  # a timestamp+nonce is validated only when the client sends one, so old
+  # clients keep working; flip to true to reject requests without a valid nonce
+  # once every client ships the fields.
+  require_request_nonce: false
+  # Accepted request timestamp skew and single-use nonce TTL. 0 = default (5m).
+  request_nonce_window: "5m"
 
 users_db:
   db_type: "postgres"

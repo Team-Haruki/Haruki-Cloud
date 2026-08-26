@@ -26,6 +26,18 @@ const (
 	responseElectionPollInterval  = 25 * time.Millisecond
 	responseElectionRedisTimeout  = 500 * time.Millisecond
 	responseElectionResultTTL     = 30 * time.Second
+	// responseElectionCompletedTTL is how long a consumed election that carries
+	// a platform event time is retained. Late deliveries of the same event are
+	// rejected by event-time generation compare for this whole window; a user
+	// re-send carries a newer event time and tears the state down immediately,
+	// so — unlike the legacy content-only dedup — a long window cannot swallow
+	// legitimate repeats. Elections without an event time keep the short
+	// rateLimitTTL retention instead.
+	responseElectionCompletedTTL = 120 * time.Second
+	// responseElectionEventTimeSkewMax bounds how far a reported event time may
+	// deviate from server time before it is distrusted and treated as absent: a
+	// client with a broken clock source must not poison group dedup.
+	responseElectionEventTimeSkewMax = 10 * time.Minute
 	responseElectionStateTTL      = dedupInFlightTTL + responseElectionResultTTL
 	responseElectionPublishBudget = 3 * time.Second
 	responseElectionMaxAttempts   = 3
@@ -44,8 +56,9 @@ var (
 var joinResponseElectionScript = redis.NewScript(`
 local time_parts = redis.call("TIME")
 local now_ms = (tonumber(time_parts[1]) * 1000) + math.floor(tonumber(time_parts[2]) / 1000)
+local my_et = tonumber(ARGV[6] or "0")
 
-if redis.call("EXISTS", KEYS[1]) == 0 then
+local function create_election()
     if redis.call("EXISTS", KEYS[3]) ~= 0 then
         return {0, 0}
     end
@@ -66,6 +79,7 @@ if redis.call("EXISTS", KEYS[1]) == 0 then
         "executor_bot", ARGV[2],
         "seed", ARGV[1],
         "deadline_ms", deadline_ms,
+        "event_time", my_et,
         "ready", "0",
         "closed", "0",
         "consumed", "0")
@@ -73,6 +87,35 @@ if redis.call("EXISTS", KEYS[1]) == 0 then
     redis.call("PEXPIRE", KEYS[1], ARGV[4])
     redis.call("PEXPIRE", KEYS[2], ARGV[4])
     return {1, window_ms}
+end
+
+if redis.call("EXISTS", KEYS[1]) == 0 then
+    return create_election()
+end
+
+-- A closed election from an OLDER event generation is history, not a
+-- duplicate: the platform event timestamp is identical across every bot
+-- observing one message, so a strictly newer timestamp proves the user sent
+-- the command again. Elections without an event time (legacy clients) fall
+-- back to a short post-close grace, matching the pre-generation behavior.
+if redis.call("HGET", KEYS[1], "closed") == "1" then
+    local stored_et = tonumber(redis.call("HGET", KEYS[1], "event_time") or "0")
+    local closed_at = tonumber(redis.call("HGET", KEYS[1], "closed_at_ms") or "0")
+    local grace_over = closed_at == 0 or (now_ms - closed_at) >= tonumber(ARGV[7] or "3000")
+    local new_generation
+    if my_et > 0 and stored_et > 0 then
+        new_generation = my_et > stored_et
+    else
+        new_generation = grace_over
+    end
+    if not new_generation then
+        return {0, 0}
+    end
+    if redis.call("EXISTS", KEYS[3]) ~= 0 then
+        return {0, 0}
+    end
+    redis.call("DEL", KEYS[1], KEYS[2])
+    return create_election()
 end
 
 local deadline_ms = tonumber(redis.call("HGET", KEYS[1], "deadline_ms") or "0")
@@ -86,8 +129,13 @@ if existing_token then
     end
     return {2, math.max(0, deadline_ms - now_ms)}
 end
-if redis.call("HGET", KEYS[1], "closed") == "1" or now_ms >= deadline_ms then
+if now_ms >= deadline_ms then
     return {0, 0}
+end
+-- A creator without an event time may be joined by an updated client that has
+-- one: adopt it so this election's completed state gains the long retention.
+if my_et > 0 and tonumber(redis.call("HGET", KEYS[1], "event_time") or "0") == 0 then
+    redis.call("HSET", KEYS[1], "event_time", my_et)
 end
 redis.call("HSET", KEYS[2], ARGV[2], ARGV[1])
 return {2, deadline_ms - now_ms}
@@ -123,7 +171,11 @@ if redis.call("HGET", KEYS[1], "ready") == "1" then
     return 2
 end
 if redis.call("HGET", KEYS[1], "closed") ~= "1" then
-    redis.call("HSET", KEYS[1], "closed", "1", "aborted", "1")
+    local time_parts = redis.call("TIME")
+    local now_ms = (tonumber(time_parts[1]) * 1000) + math.floor(tonumber(time_parts[2]) / 1000)
+    -- Aborted elections keep the short retention (ARGV[3]) on purpose: a late
+    -- duplicate re-executing is the recovery path for a lost publish.
+    redis.call("HSET", KEYS[1], "closed", "1", "aborted", "1", "closed_at_ms", now_ms)
     redis.call("HDEL", KEYS[1], "result")
     redis.call("SET", KEYS[3], "1", "PX", ARGV[2])
     if redis.call("GET", KEYS[4]) == ARGV[1] then
@@ -195,7 +247,9 @@ if not winner_token then
     end
 
     if not winner_token then
-        redis.call("HSET", KEYS[1], "closed", "1")
+        -- No candidate claimed the result: close with the SHORT retention so a
+        -- late duplicate can re-execute and the user still gets an answer.
+        redis.call("HSET", KEYS[1], "closed", "1", "closed_at_ms", now_ms)
         redis.call("SET", KEYS[3], "1", "PX", ARGV[3])
         release_legacy_lock()
         redis.call("PEXPIRE", KEYS[1], ARGV[4])
@@ -220,11 +274,21 @@ redis.call("HSET", KEYS[1],
     "consumed", "1",
     "consumed_bot", ARGV[2],
     "consumed_token", ARGV[1],
-    "closed", "1")
+    "closed", "1",
+    "closed_at_ms", now_ms)
 redis.call("SET", KEYS[3], "1", "PX", ARGV[3])
 release_legacy_lock()
-redis.call("PEXPIRE", KEYS[1], ARGV[4])
-redis.call("PEXPIRE", KEYS[2], ARGV[4])
+-- Elections carrying a platform event time keep their consumed state for the
+-- long retention window: any later delivery of the same event is rejected by
+-- generation compare, while a genuine re-send carries a newer event time and
+-- tears this state down. Legacy elections keep the short window so repeated
+-- commands from old clients are not swallowed.
+local keep_ms = ARGV[4]
+if tonumber(redis.call("HGET", KEYS[1], "event_time") or "0") > 0 then
+    keep_ms = ARGV[6]
+end
+redis.call("PEXPIRE", KEYS[1], keep_ms)
+redis.call("PEXPIRE", KEYS[2], keep_ms)
 -- Snapshot the joined candidate set atomically at consumption time so the
 -- winner can reconcile the group roster without racing follower cleanup.
 local joined = {}
@@ -666,6 +730,8 @@ func (c *ResponseElectionCoordinator) join(ctx context.Context, request response
 		c.window.Milliseconds(),
 		c.inFlightTTL().Milliseconds(),
 		expected,
+		sanitizeEventTime(request.Request.EventTime, c.now()),
+		rateLimitTTL.Milliseconds(),
 	).Slice()
 	finishJoin()
 	cancel()
@@ -902,6 +968,7 @@ func (c *ResponseElectionCoordinator) decide(ctx context.Context, lease response
 		rateLimitTTL.Milliseconds(),
 		rateLimitTTL.Milliseconds(),
 		responseElectionWinnerClaim.Milliseconds(),
+		responseElectionCompletedTTL.Milliseconds(),
 	).Slice()
 	finishDecide()
 	cancel()
@@ -1001,6 +1068,23 @@ func (c *ResponseElectionCoordinator) leave(lease responseElectionLease) {
 			"error_type", fmt.Sprintf("%T", err),
 		)
 	}
+}
+
+// sanitizeEventTime returns the platform event timestamp (unix seconds) when
+// it is plausible, or 0 — which selects the legacy short-dedup behavior — when
+// it is absent or deviates from server time by more than the allowed skew.
+func sanitizeEventTime(eventTime int64, now time.Time) int64 {
+	if eventTime <= 0 {
+		return 0
+	}
+	skew := now.Unix() - eventTime
+	if skew < 0 {
+		skew = -skew
+	}
+	if skew > int64(responseElectionEventTimeSkewMax.Seconds()) {
+		return 0
+	}
+	return eventTime
 }
 
 func responseElectionInt64(value any) (int64, error) {

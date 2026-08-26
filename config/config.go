@@ -228,6 +228,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BOT_AUTH_ENCRYPTION_KEY", &cfg.HarukiBotDB.AuthEncryptionKey)
 	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
 	envBool("HARUKI_BOT_RESPONSE_ELECTION_ROSTER", &cfg.HarukiBotDB.ResponseElectionRoster)
+	envBool("HARUKI_BOT_REQUIRE_REQUEST_NONCE", &cfg.HarukiBotDB.RequireRequestNonce)
+	envDuration("HARUKI_BOT_REQUEST_NONCE_WINDOW", &cfg.HarukiBotDB.RequestNonceWindow)
 
 	// Sekai API
 	envStr("HARUKI_SEKAI_API_BASE_URL", &cfg.SekaiAPI.BaseURL)
@@ -531,6 +533,14 @@ type HarukiBotDBConfig struct {
 	// with a single known bot skip the election window entirely, and members
 	// that stop joining are demoted after repeated absences.
 	ResponseElectionRoster bool `yaml:"response_election_roster"`
+	// RequireRequestNonce, when true, rejects bot command requests that do not
+	// carry a valid timestamp+nonce (full replay protection). Default false
+	// (lenient): nonces are validated only when present, so old clients that do
+	// not send them keep working. Flip to true once all clients send nonces.
+	RequireRequestNonce bool `yaml:"require_request_nonce"`
+	// RequestNonceWindow is the accepted clock skew for the request timestamp
+	// and the single-use TTL of the nonce. 0 = default (5m).
+	RequestNonceWindow time.Duration `yaml:"request_nonce_window"`
 }
 
 type UsersDBConfig struct {

@@ -127,6 +127,11 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	bot.Get("/command/manifests", buildManifestHandler(botDBClient, preview3DEnabled))
 
 	guard := NewRequestGuard(redisClient)
+	replay := newReplayGuard(
+		redisClient,
+		harukiConfig.Cfg.HarukiBotDB.RequestNonceWindow,
+		harukiConfig.Cfg.HarukiBotDB.RequireRequestNonce,
+	)
 	election := NewResponseElectionCoordinator(
 		logger.DetachedContext(initCtx),
 		redisClient,
@@ -154,7 +159,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 		if !botRouteEnabled(route.Path, preview3DEnabled) {
 			continue
 		}
-		h := makeBotHandler(renderApp, commandElection, telemetry, route.Path, route.Commands)
+		h := makeBotHandler(renderApp, commandElection, telemetry, replay, route.Path, route.Commands)
 		path := "/" + route.Path
 		pjsk.Post(path, h)
 		if route.Path == "mysekai/blueprint" {
@@ -164,7 +169,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	if !hasMysekaiBlueprintRoute {
 		// Keep the retired endpoint alive so older manifests can continue posting
 		// /msb until they refresh to the canonical mysekai/talk-list path.
-		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, commandElection, telemetry, "mysekai/blueprint", nil))
+		pjsk.Post("/mysekai/blueprint", makeBotHandler(renderApp, commandElection, telemetry, replay, "mysekai/blueprint", nil))
 	}
 	return &BotRouteDispatchers{guard: guard, election: election, telemetry: telemetry}
 }
@@ -202,7 +207,7 @@ func botRouteEnabled(path string, preview3DEnabled bool) bool {
 // makeBotHandler returns a POST-only fiber.Handler that validates the matched
 // command field belongs to the current endpoint path, then lets the registered
 // handler parse the OneBot message segments and produce a resolved render command.
-func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, telemetry *botauth.CommandTelemetryDispatcher, expectedPath string, commands []string) fiber.Handler {
+func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, telemetry *botauth.CommandTelemetryDispatcher, replay *replayGuard, expectedPath string, commands []string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		setCommandTraceMetadata(c, "", expectedPath)
 		req, err := parseBotRequest(c)
@@ -231,6 +236,12 @@ func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, 
 			return botResponse(c, fiber.StatusBadRequest, "当前接口不允许使用该 matched_command")
 		}
 		finishValidation()
+		if !replay.allow(requestCtx, req) {
+			// A stale or replayed request is dropped exactly like a dedup drop:
+			// empty OK, indistinguishable to the sender.
+			setCommandTraceOutcome(c, "replayed", nil)
+			return botResponse(c, fiber.StatusOK, api.ResponseOK, make(onebot11.Message, 0))
+		}
 		botID := strings.Clone(strings.TrimSpace(c.Params("botId")))
 		electionRequest := responseElectionRequest{Request: req, BotID: botID}
 		finishElection := commandtrace.MeasurePhase(requestCtx, "response_election")

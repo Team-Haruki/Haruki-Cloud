@@ -13,10 +13,10 @@ var errBlockedAddress = errors.New("blocked non-public address")
 
 // cgnatNet is the carrier-grade NAT range (100.64.0.0/10), which net.IP.IsPrivate
 // does not cover but which routinely fronts internal infrastructure (e.g. tailnet).
-var cgnatNet = func() *net.IPNet {
-	_, n, _ := net.ParseCIDR("100.64.0.0/10")
-	return n
-}()
+var cgnatNet = &net.IPNet{
+	IP:   net.IPv4(100, 64, 0, 0),
+	Mask: net.CIDRMask(10, 32),
+}
 
 // isBlockedIP reports whether ip must not be reachable via a user-supplied URL
 // (SSRF guard): loopback, private, link-local (incl. the cloud metadata address

@@ -10,12 +10,6 @@ import (
 const trackerRealtimeTailMaxLagSeconds = int64(30 * 24 * time.Hour / time.Second)
 const trackerRecoveryIdleSeconds = int64(5 * time.Minute / time.Second)
 
-func (c *Controller) enrichRankInfoByRank(server string, eventID, rank int, wlCharacterID *int, info *drawing.RankInfo) {
-}
-
-func (c *Controller) enrichRankInfoByUser(server string, eventID int, userID int64, wlCharacterID *int, info *drawing.RankInfo) {
-}
-
 func applyRankInfoMetrics(info *drawing.RankInfo, samples []trackerScoreSample) {
 	applyRankInfoMetricsAt(info, samples, time.Now().UTC())
 }

@@ -171,7 +171,12 @@ func (s *UserService) checkRateLimit(ctx context.Context, action string, identif
 
 	// 首次创建 key（count == 1）时设置 TTL
 	if count == 1 {
-		_ = s.redisStore.Expire(ctx, key, time.Duration(windowMinutes)*time.Minute)
+		if err := s.redisStore.Expire(ctx, key, time.Duration(windowMinutes)*time.Minute); err != nil {
+			// A counter without a TTL would permanently rate-limit this identifier.
+			// Best-effort cleanup makes the next request retry a fresh window.
+			_ = s.redisStore.Del(ctx, key)
+			return false, fmt.Errorf("set rate-limit expiry: %w", err)
+		}
 	}
 
 	return count <= int64(maxRequests), nil

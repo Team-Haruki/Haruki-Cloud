@@ -348,6 +348,42 @@ func signTestCredential(t *testing.T, botID, credential string) string {
 	return token
 }
 
+func TestParseCredentialJWTOnlyAcceptsHS256(t *testing.T) {
+	const signingToken = "credential-sign-token"
+	claims := jwt.MapClaims{
+		"bot_id":     "10042042",
+		"credential": "credential",
+	}
+
+	tests := []struct {
+		name    string
+		method  jwt.SigningMethod
+		wantErr bool
+	}{
+		{name: "HS256", method: jwt.SigningMethodHS256},
+		{name: "HS384", method: jwt.SigningMethodHS384, wantErr: true},
+		{name: "HS512", method: jwt.SigningMethodHS512, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rawToken, err := jwt.NewWithClaims(tt.method, claims).SignedString([]byte(signingToken))
+			if err != nil {
+				t.Fatalf("sign credential JWT: %v", err)
+			}
+			parsed, err := parseCredentialJWT(rawToken, signingToken)
+			if tt.wantErr {
+				if err == nil || parsed != nil && parsed.Valid {
+					t.Fatalf("parseCredentialJWT accepted %s", tt.method.Alg())
+				}
+				return
+			}
+			if err != nil || !parsed.Valid {
+				t.Fatalf("parseCredentialJWT rejected HS256: token=%v err=%v", parsed, err)
+			}
+		})
+	}
+}
+
 func sendJSONRequest(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) testEnvelope {
 	t.Helper()
 

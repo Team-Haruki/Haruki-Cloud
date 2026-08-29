@@ -60,6 +60,18 @@ func TestRemoteForecastProviderBoundsResponses(t *testing.T) {
 	}
 }
 
+func TestRemoteForecastProviderRequiresConfigForLocalSource(t *testing.T) {
+	provider := NewRemoteForecastProvider()
+	if provider.localForecastURL != "" {
+		t.Fatalf("default provider embedded deployment-specific local URL %q", provider.localForecastURL)
+	}
+
+	configured := NewRemoteForecastProviderWithConfig(ForecastConfig{LocalBaseURL: " https://forecast.internal/ "})
+	if configured.localForecastURL != "https://forecast.internal" {
+		t.Fatalf("configured local URL = %q", configured.localForecastURL)
+	}
+}
+
 func TestRemoteForecastProviderFetchesLocalForecastChapterByCharacter(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/prediction/tw/chapter" && r.URL.Path != "/prediction/tw" {

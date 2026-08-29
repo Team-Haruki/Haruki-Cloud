@@ -362,7 +362,7 @@ func resolveMetaLoader(initCtx context.Context, configured *meta.Loader, refresh
 	if err := loader.LoadAll(initCtx); err != nil {
 		logger.WarnContext(initCtx, "music metadata initial load failed", "error_type", fmt.Sprintf("%T", err))
 	}
-	loader.StartBackgroundRefresh(context.Background(), refreshInterval)
+	loader.StartBackgroundRefresh(initCtx, refreshInterval)
 	return loader
 }
 

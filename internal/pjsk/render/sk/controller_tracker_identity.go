@@ -8,11 +8,10 @@ import (
 )
 
 func (c *Controller) buildSingleRankFromTracker(server string, eventID, rank int, wlCharacterID *int) (drawing.RankInfo, error) {
-	info, uid, ok, err := c.buildSingleRankBaseFromTracker(server, eventID, rank, wlCharacterID)
+	info, _, _, err := c.buildSingleRankBaseFromTracker(server, eventID, rank, wlCharacterID)
 	if err != nil {
 		return drawing.RankInfo{}, err
 	}
-	c.enrichRankInfoPreferUser(server, eventID, info.Rank, uid, ok, wlCharacterID, &info)
 	if c.isTrackerEventTitleName(server, eventID, info.Name) {
 		info.Name = fmt.Sprintf("Rank %d", info.Rank)
 	}
@@ -44,12 +43,7 @@ func (c *Controller) buildSingleRankBaseFromTracker(server string, eventID, rank
 }
 
 func (c *Controller) buildSingleUserFromTracker(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {
-	info, err := c.buildSingleUserBaseFromTracker(server, eventID, userID, wlCharacterID)
-	if err != nil {
-		return drawing.RankInfo{}, err
-	}
-	c.enrichRankInfoByUser(server, eventID, userID, wlCharacterID, &info)
-	return info, nil
+	return c.buildSingleUserBaseFromTracker(server, eventID, userID, wlCharacterID)
 }
 
 func (c *Controller) buildSingleUserBaseFromTracker(server string, eventID int, userID int64, wlCharacterID *int) (drawing.RankInfo, error) {

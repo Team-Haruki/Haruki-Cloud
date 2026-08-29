@@ -68,6 +68,35 @@ func TestStoreAndGetURLSkipsExistingContentFile(t *testing.T) {
 	}
 }
 
+func TestNormalizeImageGroup(t *testing.T) {
+	tests := []struct {
+		name    string
+		group   string
+		want    string
+		wantErr bool
+	}{
+		{name: "nested", group: " pjsk/profile ", want: filepath.Join("pjsk", "profile")},
+		{name: "cleans segments", group: "pjsk/tmp/../card", want: filepath.Join("pjsk", "card")},
+		{name: "empty", group: " ", wantErr: true},
+		{name: "absolute", group: "/tmp/images", wantErr: true},
+		{name: "parent", group: "..", wantErr: true},
+		{name: "parent prefix", group: "../outside", wantErr: true},
+		{name: "nested escape", group: "pjsk/../../outside", wantErr: true},
+		{name: "windows escape", group: `..\outside`, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := normalizeImageGroup(test.group)
+			if (err != nil) != test.wantErr {
+				t.Fatalf("normalizeImageGroup(%q) error = %v, wantErr %v", test.group, err, test.wantErr)
+			}
+			if got != test.want {
+				t.Errorf("normalizeImageGroup(%q) = %q, want %q", test.group, got, test.want)
+			}
+		})
+	}
+}
+
 func TestStoreAndGetURLSingleflightSurvivesLeaderCancellation(t *testing.T) {
 	client := New("https://images.example.test", t.TempDir())
 	data := []byte("shared rendered image")

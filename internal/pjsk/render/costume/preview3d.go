@@ -879,10 +879,14 @@ func (s *Preview3DService) ensureCapture(ctx context.Context, endpoint preview3D
 
 func (s *Preview3DService) acquireCapturePermit(ctx context.Context) (func(), error) {
 	if s == nil || s.captureSem == nil {
-		return func() {}, nil
+		return func() {
+			// No semaphore was configured, so there is no permit to release.
+		}, nil
 	}
 	waitCtx := ctx
-	cancel := func() {}
+	cancel := func() {
+		// Replaced below when an acquire timeout creates a child context.
+	}
 	if s.cfg.CaptureAcquireTimeout > 0 {
 		waitCtx, cancel = context.WithTimeout(ctx, s.cfg.CaptureAcquireTimeout)
 	}

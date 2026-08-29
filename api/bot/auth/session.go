@@ -93,12 +93,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	}
 
 	// 解析并验证 JWT credential
-	decoded, err := jwt.Parse(payload.Credential, func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
-		return []byte(config.Cfg.HarukiBotDB.CredentialSignToken), nil
-	})
+	decoded, err := parseCredentialJWT(payload.Credential, config.Cfg.HarukiBotDB.CredentialSignToken)
 	if err != nil || !decoded.Valid {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidCredential)
 	}
@@ -176,6 +171,16 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/octet-stream")
 	return c.Send(encrypted)
+}
+
+func parseCredentialJWT(rawCredential string, signingToken string) (*jwt.Token, error) {
+	return jwt.Parse(
+		rawCredential,
+		func(_ *jwt.Token) (any, error) {
+			return []byte(signingToken), nil
+		},
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+	)
 }
 
 // Logout 注销 - 验证 session token 后删除 Redis session

@@ -1,13 +1,16 @@
 package groupguard
 
 import (
-	json "haruki-cloud/internal/jsonutil"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"haruki-cloud/config"
+	json "haruki-cloud/internal/jsonutil"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 
 	"github.com/gofiber/fiber/v3"
@@ -118,6 +121,58 @@ func TestCheckBindingBatchReturnsResults(t *testing.T) {
 	}
 	if item := data.Results["456"]; item.Bound || item.Banned || len(item.Bindings) != 0 {
 		t.Fatalf("unexpected unbound result: %+v", item)
+	}
+}
+
+func TestCheckBindingBatchAcceptsConfiguredLimit(t *testing.T) {
+	var calls atomic.Int32
+	app := newTestApp(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		_ = json.NewEncoder(w).Encode([]map[string]string{})
+	}))
+
+	ids := make([]string, maxBindingCheckBatchPlatformUserIDs)
+	for i := range ids {
+		ids[i] = strconv.Itoa(i + 1)
+	}
+	payload, err := json.Marshal(bindingCheckBatchRequest{Platform: "qq", PlatformUserIDs: ids})
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+	resp := sendGroupGuardRequest(t, app, "/api/internal/group-guard/binding/check-batch", string(payload))
+	if resp.Status != fiber.StatusOK {
+		t.Fatalf("unexpected response at limit: %+v", resp)
+	}
+	if got := calls.Load(); got != maxBindingCheckBatchPlatformUserIDs {
+		t.Fatalf("toolbox calls = %d, want %d", got, maxBindingCheckBatchPlatformUserIDs)
+	}
+}
+
+func TestCheckBindingBatchRejectsRequestsOverConfiguredLimit(t *testing.T) {
+	var calls atomic.Int32
+	app := newTestApp(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		_ = json.NewEncoder(w).Encode([]map[string]string{})
+	}))
+
+	ids := make([]string, maxBindingCheckBatchPlatformUserIDs+1)
+	for i := range ids {
+		ids[i] = strconv.Itoa(i + 1)
+	}
+	payload, err := json.Marshal(bindingCheckBatchRequest{Platform: "qq", PlatformUserIDs: ids})
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+	resp := sendGroupGuardRequest(t, app, "/api/internal/group-guard/binding/check-batch", string(payload))
+	if resp.Status != fiber.StatusBadRequest {
+		t.Fatalf("unexpected response over limit: %+v", resp)
+	}
+	wantMessage := fmt.Sprintf("platform_user_ids must contain at most %d items", maxBindingCheckBatchPlatformUserIDs)
+	if resp.Message != wantMessage {
+		t.Fatalf("message = %q, want %q", resp.Message, wantMessage)
+	}
+	if got := calls.Load(); got != 0 {
+		t.Fatalf("toolbox was called %d times for an oversized request", got)
 	}
 }
 

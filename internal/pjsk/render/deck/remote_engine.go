@@ -98,7 +98,9 @@ func (r *RemoteDeckRecommender) Enabled() bool {
 	return r != nil && r.client != nil && r.pool != nil && r.pool.Enabled() && len(r.targetStates) > 0
 }
 
-func (r *RemoteDeckRecommender) Close() {}
+func (r *RemoteDeckRecommender) Close() {
+	// HTTP clients and the shared upstream pool are owned by the composition root.
+}
 
 func (r *RemoteDeckRecommender) ExpandAlgorithms(option map[string]any) []map[string]any {
 	if option == nil {

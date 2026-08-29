@@ -62,22 +62,34 @@ func (s *BindingService) clearDefaultByScope(ctx context.Context, platform, plat
 		}
 		return nil, err
 	}
+	// Resolve the response before mutating the default. If this read fails, the
+	// caller gets an error without the clear operation having partially applied.
+	items, err := s.List(ctx, platform, platformUserID)
+	if err != nil {
+		return nil, err
+	}
+	var target *BindingListItem
+	for i := range items {
+		if items[i].BindingID == existing.BindingID {
+			target = &items[i]
+			break
+		}
+	}
+	if target == nil {
+		return nil, fmt.Errorf("默认绑定对应的账号不存在")
+	}
 	if err := s.pjskDB.UserDefaultBinding.DeleteOneID(existing.ID).Exec(ctx); err != nil {
 		return nil, err
 	}
-	// Build a BindingListItem for the cleared binding from the current list.
-	items, _ := s.List(ctx, platform, platformUserID)
-	var target BindingListItem
-	for _, item := range items {
-		if item.BindingID == existing.BindingID {
-			target = item
-			break
-		}
+	if scope == GlobalDefaultBindingScope {
+		target.IsGlobalDefault = false
+	} else {
+		target.IsServerDefault = false
 	}
 	return &DefaultBindingResult{
 		Scope:   defaultScopeType(scope),
 		Server:  scope,
-		Binding: target,
+		Binding: *target,
 	}, nil
 }
 

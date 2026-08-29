@@ -19,6 +19,8 @@ import (
 // single request cannot amplify DB/memory load with an unbounded music_ids list.
 const maxQueryBatchMusicIDs = 200
 
+const errInvalidMusicID = "invalid music_id"
+
 func (h *MusicHandler) GetAllMusic(c fiber.Ctx) error {
 	now := time.Now()
 	return api.WithCache(c, h.svc.redisClient, CacheNSMusic, func(_ string) (any, error) {
@@ -55,7 +57,7 @@ func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
 	ctx := c.Context()
 	musicID := fiber.Params[int](c, "music_id", -1)
 	if musicID <= 0 {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid music_id")
+		return api.JSONResponse(c, fiber.StatusBadRequest, errInvalidMusicID)
 	}
 	version := c.Query("version")
 	if version == "" {
@@ -68,11 +70,11 @@ func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
 	if hit {
 		return c.Status(fiber.StatusOK).JSON(cached)
 	}
-	record, _ := h.svc.client.ChunithmMusicDifficulty.
+	record, err := h.svc.client.ChunithmMusicDifficulty.
 		Query().
 		Where(chunithmmusicdifficulty.MusicIDEQ(musicID), chunithmmusicdifficulty.VersionEQ(version)).
 		First(ctx)
-	if record != nil {
+	if err == nil {
 		payload := MusicDifficultySchema{
 			MusicID: record.MusicID,
 			Version: record.Version,
@@ -84,12 +86,15 @@ func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
 		}
 		return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, api.ResponseOK, payload)
 	}
-	latest, _ := h.svc.client.ChunithmMusicDifficulty.
+	if !entchuniMusic.IsNotFound(err) {
+		return api.InternalError(c)
+	}
+	latest, err := h.svc.client.ChunithmMusicDifficulty.
 		Query().
 		Where(chunithmmusicdifficulty.MusicIDEQ(musicID)).
 		Order(entchuniMusic.Desc(chunithmmusicdifficulty.FieldVersion)).
 		First(ctx)
-	if latest != nil {
+	if err == nil {
 		payload := MusicDifficultySchema{
 			MusicID: latest.MusicID,
 			Version: latest.Version,
@@ -101,14 +106,17 @@ func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
 		}
 		return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, api.ResponseOK, payload)
 	}
-	return api.JSONResponse(c, fiber.StatusNotFound, "No difficulty data")
+	if entchuniMusic.IsNotFound(err) {
+		return api.JSONResponse(c, fiber.StatusNotFound, "No difficulty data")
+	}
+	return api.InternalError(c)
 }
 
 func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
 	ctx := c.Context()
 	musicID := fiber.Params[int](c, "music_id", -1)
 	if musicID <= 0 {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid music_id")
+		return api.JSONResponse(c, fiber.StatusBadRequest, errInvalidMusicID)
 	}
 	key, cached, hit, err := api.CacheQuery(ctx, c, h.svc.redisClient, CacheNSMusic)
 	if err != nil {
@@ -117,12 +125,15 @@ func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
 	if hit {
 		return c.Status(fiber.StatusOK).JSON(cached)
 	}
-	row, _ := h.svc.client.ChunithmMusic.
+	row, err := h.svc.client.ChunithmMusic.
 		Query().
 		Where(chunithmmusic.MusicIDEQ(musicID)).
 		First(ctx)
-	if row == nil {
+	if entchuniMusic.IsNotFound(err) {
 		return api.JSONResponse(c, fiber.StatusNotFound, "Music not found")
+	}
+	if err != nil {
+		return api.InternalError(c)
 	}
 	return api.CachedJSONResponse(ctx, c, h.svc.redisClient, config.Cfg.Backend.APICacheTTL, key, fiber.StatusOK, api.ResponseOK, MusicInfoSchema{
 		MusicID:        row.MusicID,
@@ -140,7 +151,7 @@ func (h *MusicHandler) GetChartData(c fiber.Ctx) error {
 	ctx := c.Context()
 	musicID := fiber.Params[int](c, "music_id", -1)
 	if musicID <= 0 {
-		return api.JSONResponse(c, fiber.StatusBadRequest, "invalid music_id")
+		return api.JSONResponse(c, fiber.StatusBadRequest, errInvalidMusicID)
 	}
 	key, cached, hit, err := api.CacheQuery(ctx, c, h.svc.redisClient, CacheNSMusic)
 	if err != nil {
@@ -149,10 +160,13 @@ func (h *MusicHandler) GetChartData(c fiber.Ctx) error {
 	if hit {
 		return c.Status(fiber.StatusOK).JSON(cached)
 	}
-	rows, _ := h.svc.client.ChunithmChartData.
+	rows, err := h.svc.client.ChunithmChartData.
 		Query().
 		Where(chunithmchartdata.MusicIDEQ(musicID)).
 		All(ctx)
+	if err != nil {
+		return api.InternalError(c)
+	}
 	if len(rows) == 0 {
 		return api.JSONResponse(c, fiber.StatusNotFound, "No chart data found")
 	}
@@ -187,18 +201,24 @@ func (h *MusicHandler) QueryBatch(c fiber.Ctx) error {
 	if len(req.MusicIDs) > maxQueryBatchMusicIDs {
 		return api.JSONResponse(c, fiber.StatusBadRequest, "music_ids too large")
 	}
-	musicRows, _ := h.svc.client.ChunithmMusic.
+	musicRows, err := h.svc.client.ChunithmMusic.
 		Query().
 		Where(chunithmmusic.MusicIDIn(req.MusicIDs...)).
 		All(ctx)
+	if err != nil {
+		return api.InternalError(c)
+	}
 	musicMap := make(map[int]*entchuniMusic.ChunithmMusic)
 	for _, m := range musicRows {
 		musicMap[m.MusicID] = m
 	}
-	diffRows, _ := h.svc.client.ChunithmMusicDifficulty.
+	diffRows, err := h.svc.client.ChunithmMusicDifficulty.
 		Query().
 		Where(chunithmmusicdifficulty.MusicIDIn(req.MusicIDs...)).
 		All(ctx)
+	if err != nil {
+		return api.InternalError(c)
+	}
 	sort.Slice(diffRows, func(i, j int) bool {
 		return diffRows[i].Version > diffRows[j].Version
 	})

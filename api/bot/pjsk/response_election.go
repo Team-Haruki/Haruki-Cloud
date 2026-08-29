@@ -416,7 +416,9 @@ func (e *requestGuardResponseElection) Coordinate(
 	}
 }
 
-func (*requestGuardResponseElection) Close() {}
+func (*requestGuardResponseElection) Close() {
+	// The legacy request guard owns no background workers or other resources.
+}
 
 type ResponseElectionCoordinator struct {
 	redis        *redis.Client

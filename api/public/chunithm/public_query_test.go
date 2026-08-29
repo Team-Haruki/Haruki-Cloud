@@ -88,6 +88,28 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 		t.Fatalf("music/chart-data failed: status=%d message=%s", chartResp.Status, chartResp.Message)
 	}
 
+	for _, path := range []string{
+		"/api/v2/public/chunithm/music/0/basic-info",
+		"/api/v2/public/chunithm/music/0/difficulty-info?version=v1",
+		"/api/v2/public/chunithm/music/0/chart-data",
+	} {
+		resp := requestAPI(t, app, http.MethodGet, path, "")
+		if resp.Status != fiber.StatusBadRequest || resp.Message != errInvalidMusicID {
+			t.Errorf("GET %s: status=%d message=%q, want 400/%q", path, resp.Status, resp.Message, errInvalidMusicID)
+		}
+	}
+
+	for _, path := range []string{
+		"/api/v2/public/chunithm/music/9999/basic-info",
+		"/api/v2/public/chunithm/music/9999/difficulty-info?version=v1",
+		"/api/v2/public/chunithm/music/9999/chart-data",
+	} {
+		resp := requestAPI(t, app, http.MethodGet, path, "")
+		if resp.Status != fiber.StatusNotFound {
+			t.Errorf("GET %s: status=%d message=%q, want 404", path, resp.Status, resp.Message)
+		}
+	}
+
 	batchBody := `{"music_ids":[1001,9999],"version":"v1"}`
 	batchCompatResp := requestAPI(t, app, http.MethodPost, "/api/v2/public/chunithm/query-batch", batchBody)
 	if batchCompatResp.Status != fiber.StatusOK {
@@ -97,6 +119,35 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 	batchMusicResp := requestAPI(t, app, http.MethodPost, "/api/v2/public/chunithm/music/query-batch", batchBody)
 	if batchMusicResp.Status != fiber.StatusOK {
 		t.Fatalf("/api/v2/public/chunithm/music/query-batch failed: status=%d message=%s", batchMusicResp.Status, batchMusicResp.Message)
+	}
+}
+
+func TestPublicChunithmMusicEndpointsReportDatabaseErrors(t *testing.T) {
+	mainClient := openChunithmMainTestClient(t)
+	musicClient := openChunithmMusicTestClient(t)
+	if err := musicClient.Close(); err != nil {
+		t.Fatalf("close music client: %v", err)
+	}
+	t.Cleanup(func() { _ = mainClient.Close() })
+
+	app := fiber.New()
+	RegisterChunithmRoutes(app, mainClient, musicClient, nil)
+
+	tests := []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{http.MethodGet, "/api/v2/public/chunithm/music/1001/basic-info", ""},
+		{http.MethodGet, "/api/v2/public/chunithm/music/1001/difficulty-info?version=v1", ""},
+		{http.MethodGet, "/api/v2/public/chunithm/music/1001/chart-data", ""},
+		{http.MethodPost, "/api/v2/public/chunithm/music/query-batch", `{"music_ids":[1001],"version":"v1"}`},
+	}
+	for _, test := range tests {
+		resp := requestAPI(t, app, test.method, test.path, test.body)
+		if resp.Status != fiber.StatusInternalServerError {
+			t.Errorf("%s %s: status=%d message=%q, want 500", test.method, test.path, resp.Status, resp.Message)
+		}
 	}
 }
 

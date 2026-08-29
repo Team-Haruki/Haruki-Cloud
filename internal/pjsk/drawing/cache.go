@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -56,7 +55,7 @@ func runSharedRenderFlight(parent context.Context, work func(context.Context) ([
 		timeout = config.HTTPClientTimeout
 	}
 	detached := displaytime.WithRequestTimeZone(
-		context.Background(),
+		logger.DetachedContext(parent),
 		displaytime.RequestTimeZoneFromContext(parent),
 	)
 	detached = logger.WithContextAttrs(detached, slog.Bool("shared_work", true))
@@ -293,8 +292,7 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 		http: resty.New().
 			SetTransport(upstream.NewTunedTransport(upstream.TunedTransportConfig{})).
 			SetResponseBodyLimit(renderCacheAPIResponseMaxBytes).
-			SetTimeout(config.HTTPClientTimeout).
-			SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
+			SetTimeout(config.HTTPClientTimeout),
 		baseURL:       baseURL,
 		storageDir:    storageDir,
 		ttl:           cfg.TTL,

@@ -2,9 +2,7 @@ package api
 
 import (
 	"context"
-	"crypto/md5"
 	"crypto/subtle"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"haruki-cloud/config"
@@ -212,8 +210,7 @@ func cacheKeyFromFiberCtx(c fiber.Ctx, namespace string) string {
 
 	queryHash := "none"
 	if canonicalQuery != "" {
-		hash := md5.Sum([]byte(canonicalQuery))
-		queryHash = hex.EncodeToString(hash[:])
+		queryHash = harukiRedis.CanonicalQueryHash(canonicalQuery)
 	}
 
 	return fmt.Sprintf("%s:%s:query=%s", namespace, fullPath, queryHash)

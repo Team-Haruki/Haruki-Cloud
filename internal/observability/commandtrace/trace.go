@@ -12,7 +12,9 @@ import (
 
 type contextKey struct{}
 
-var noopFinish = func() {}
+var noopFinish = func() {
+	// Callers can always defer the returned finish function, even without a trace.
+}
 
 type Trace struct {
 	mu         sync.Mutex

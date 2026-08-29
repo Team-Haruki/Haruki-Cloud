@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/assets"
@@ -157,5 +158,70 @@ func TestBuildScoreControlRequestPreservesControllerAliasResolver(t *testing.T) 
 	}
 	if len(req.ValidScores) == 0 {
 		t.Fatalf("expected non-empty valid scores: %+v", req)
+	}
+}
+
+func TestResolveScoreControlSelectionAndRangeBranches(t *testing.T) {
+	params, err := json.Marshal(scoreControlSelection{TargetPoint: 120, Query: " song ", WL: true})
+	if err != nil {
+		t.Fatalf("marshal selection: %v", err)
+	}
+	selection, err := resolveScoreControlSelection(&CommandInput{Params: params, Query: "ignored"})
+	if err != nil || selection.TargetPoint != 120 || selection.Query != " song " || !selection.WL {
+		t.Fatalf("parameter selection = %#v, %v", selection, err)
+	}
+	selection, err = resolveScoreControlSelection(&CommandInput{Query: " 200   blue song "})
+	if err != nil || selection.TargetPoint != 200 || selection.Query != "blue song" {
+		t.Fatalf("query selection = %#v, %v", selection, err)
+	}
+	for name, input := range map[string]*CommandInput{
+		"nil":          nil,
+		"empty":        {},
+		"negative":     {Query: "-1 song"},
+		"invalid":      {Query: "many song"},
+		"invalid json": {Params: []byte(`{`)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := resolveScoreControlSelection(input); err == nil {
+				t.Fatal("invalid selection unexpectedly succeeded")
+			}
+		})
+	}
+
+	if got := selectScoreControlBasicPoint(nil); got != 0 {
+		t.Fatalf("empty basic point = %d", got)
+	}
+	metas := []drawing.MusicMetaInfo{
+		{Difficulty: "hard", EventRate: 80},
+		{Difficulty: "expert", EventRate: 90},
+		{Difficulty: "master", EventRate: 100},
+		{Difficulty: "expert", EventRate: 200},
+	}
+	if got := selectScoreControlBasicPoint(metas); got != 100 {
+		t.Fatalf("selected basic point = %d", got)
+	}
+	if got := selectScoreControlBasicPoint(metas[:2]); got != 90 {
+		t.Fatalf("selected non-master basic point = %d", got)
+	}
+
+	limited := findValidScoreRanges(100, 100, false, 1)
+	if len(limited) != 1 {
+		t.Fatalf("limited score ranges = %#v", limited)
+	}
+	if got := findValidScoreRanges(1, 100, true, 0); len(got) != 0 {
+		t.Fatalf("impossible WL score ranges = %#v", got)
+	}
+}
+
+func TestBuildScoreControlRequestValidationBranches(t *testing.T) {
+	if _, err := BuildScoreControlRequest(context.Background(), &CommandInput{Query: "100"}, nil); err == nil {
+		t.Fatal("nil application unexpectedly succeeded")
+	}
+	app := &renderapp.App{Music: music.NewController(nil, nil, nil, nil, nil)}
+	if _, err := BuildScoreControlRequest(context.Background(), &CommandInput{Params: []byte(`{`)}, app); err == nil {
+		t.Fatal("malformed selection unexpectedly succeeded")
+	}
+	if _, err := BuildScoreControlRequest(context.Background(), &CommandInput{Query: "100"}, app); err == nil || !strings.Contains(err.Error(), "data source") {
+		t.Fatalf("unconfigured source error = %v", err)
 	}
 }

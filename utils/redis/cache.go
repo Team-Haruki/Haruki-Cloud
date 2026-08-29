@@ -2,6 +2,8 @@ package redis
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -44,6 +46,13 @@ func CanonicalizeQueryString(queryString string) string {
 		}
 	}
 	return strings.Join(parts, "&")
+}
+
+// CanonicalQueryHash returns a stable cache-key digest for an already
+// canonicalized query string.
+func CanonicalQueryHash(canonicalQuery string) string {
+	sum := sha256.Sum256([]byte(canonicalQuery))
+	return hex.EncodeToString(sum[:])
 }
 
 func SetCache(ctx context.Context, client *redis.Client, key string, value any, ttl time.Duration) error {

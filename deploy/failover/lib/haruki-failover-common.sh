@@ -54,6 +54,7 @@ load_compose_env() {
       case "$value" in
         \"*\") value="${value#\"}"; value="${value%\"}" ;;
         \'*\') value="${value#\'}"; value="${value%\'}" ;;
+        *) ;;
       esac
       export "${key}=${value}"
     done < "$env_file"

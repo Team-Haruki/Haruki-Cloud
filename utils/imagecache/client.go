@@ -16,6 +16,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -84,6 +85,10 @@ func (c *Client) StoreAndGetURL(ctx context.Context, data []byte, group string) 
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
+	group, err := normalizeImageGroup(group)
+	if err != nil {
+		return "", err
+	}
 
 	finishHash := commandtrace.MeasureOperation(ctx, "image.hash")
 	// Shared work may outlive this caller after it returns on cancellation. Own
@@ -98,8 +103,6 @@ func (c *Client) StoreAndGetURL(ctx context.Context, data []byte, group string) 
 		return "", err
 	}
 
-	// Sanitize group to a safe relative path.
-	group = filepath.FromSlash(strings.Trim(strings.TrimSpace(group), "/"))
 	targetPath := filepath.Join(c.dir, group, name)
 	urlPath := strings.ReplaceAll(filepath.ToSlash(filepath.Join(group, name)), "\\", "/")
 
@@ -143,6 +146,18 @@ func (c *Client) StoreAndGetURL(ctx context.Context, data []byte, group string) 
 		}
 		return resolved.url, resolved.err
 	}
+}
+
+func normalizeImageGroup(group string) (string, error) {
+	group = strings.ReplaceAll(strings.TrimSpace(group), "\\", "/")
+	if group == "" || path.IsAbs(group) {
+		return "", fmt.Errorf("imagecache: group must be a non-empty relative path")
+	}
+	cleaned := path.Clean(group)
+	if cleaned == "." || cleaned == ".." || strings.HasPrefix(cleaned, "../") {
+		return "", fmt.Errorf("imagecache: group escapes the cache directory")
+	}
+	return filepath.FromSlash(cleaned), nil
 }
 
 func (c *Client) storeHashed(ctx context.Context, data []byte, hashHex string, group string, urlPath string, targetPath string) (string, error) {

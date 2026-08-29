@@ -1,9 +1,11 @@
 package drawing
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,7 +17,36 @@ import (
 	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/pjsk/displaytime"
+	"haruki-cloud/utils/logger"
 )
+
+func TestRunSharedRenderFlightDetachesCancellationAndKeepsScopedValues(t *testing.T) {
+	parent := displaytime.WithRequestTimeZone(context.Background(), "Asia/Tokyo")
+	parent = logger.WithContextAttrs(parent, slog.String("request_id", "shared-1"))
+	parent, cancel := context.WithCancel(parent)
+	cancel()
+
+	var logs bytes.Buffer
+	result := runSharedRenderFlight(parent, func(ctx context.Context) ([]byte, error) {
+		if err := ctx.Err(); err != nil {
+			t.Fatalf("shared context inherited parent cancellation: %v", err)
+		}
+		if got := displaytime.RequestTimeZoneFromContext(ctx); got != "Asia/Tokyo" {
+			t.Fatalf("request timezone = %q, want Asia/Tokyo", got)
+		}
+		logger.NewLogger("shared-test", "INFO", &logs).InfoContext(ctx, "shared render")
+		return []byte("ok"), nil
+	})
+	if result.err != nil || string(result.data) != "ok" {
+		t.Fatalf("shared render result = %q, %v", result.data, result.err)
+	}
+	for _, want := range []string{"request_id=shared-1", "shared_work=true"} {
+		if !strings.Contains(logs.String(), want) {
+			t.Fatalf("shared log %q does not contain %q", logs.String(), want)
+		}
+	}
+}
 
 func TestLocalRenderCacheCanceledLeaderDoesNotAbortFollower(t *testing.T) {
 	cache := newLocalRenderCache(time.Minute)
@@ -339,7 +370,7 @@ func TestResolveRenderCacheRuleUsesCostumeTTLs(t *testing.T) {
 	}
 }
 
-func TestRenderCacheClientAllowsInternalSelfSignedHTTPS(t *testing.T) {
+func TestRenderCacheClientRejectsUntrustedSelfSignedHTTPS(t *testing.T) {
 	storageDir := t.TempDir()
 	cacheKey := strings.Repeat("a", 64)
 	cachePath := filepath.Join(storageDir, "cached.png")
@@ -368,12 +399,8 @@ func TestRenderCacheClientAllowsInternalSelfSignedHTTPS(t *testing.T) {
 		t.Fatal("expected render cache client")
 	}
 
-	data, ok := client.lookup(cacheKey, "api/pjsk/profile")
-	if !ok {
-		t.Fatal("expected self-signed HTTPS cache lookup to hit")
-	}
-	if string(data) != "cached-image" {
-		t.Fatalf("unexpected cache data: %q", string(data))
+	if _, ok := client.lookup(cacheKey, "api/pjsk/profile"); ok {
+		t.Fatal("cache lookup accepted an untrusted self-signed HTTPS certificate")
 	}
 }
 

@@ -301,3 +301,42 @@ func TestBuildMiscBirthdayRequestUsesDefaultNicknameBeforeAliasLookup(t *testing
 		t.Fatalf("unexpected birthday target cid: %d", req.Cid)
 	}
 }
+
+func TestLookupBirthdayCharactersRegionFallbackAndAmbiguity(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:misc_birthday_lookup_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
+	t.Cleanup(func() { _ = client.Close() })
+	for _, row := range []struct {
+		region string
+		id     int64
+		first  string
+		given  string
+	}{
+		{region: "jp", id: 2, first: "Local", given: "Hero"},
+		{region: "en", id: 3, first: "Remote", given: "Hero"},
+		{region: "en", id: 4, first: "Shared", given: "Name"},
+		{region: "tw", id: 5, first: "Shared", given: "Name"},
+	} {
+		if _, err := client.Gamecharacter.Create().
+			SetServerRegion(row.region).
+			SetGameID(row.id).
+			SetFirstName(row.first).
+			SetGivenName(row.given).
+			Save(ctx); err != nil {
+			t.Fatalf("create game character: %v", err)
+		}
+	}
+	app := &renderapp.App{Sekai: client}
+	if ids, err := lookupBirthdayCharacterIDs(context.Background(), app, renderregion.JP, "LocalHero"); err != nil || len(ids) != 1 || ids[0] != 2 {
+		t.Fatalf("regional lookup = %v, %v", ids, err)
+	}
+	if ids, err := lookupBirthdayCharacterIDs(ctx, app, renderregion.JP, "RemoteHero"); err != nil || len(ids) != 1 || ids[0] != 3 {
+		t.Fatalf("fallback lookup = %v, %v", ids, err)
+	}
+	if _, err := resolveBirthdayCharacterID(ctx, app, renderregion.JP, "SharedName"); err == nil || !strings.Contains(err.Error(), "歧义") {
+		t.Fatalf("ambiguous lookup error = %v", err)
+	}
+	if _, err := resolveBirthdayCharacterID(ctx, app, renderregion.JP, "NobodyHere"); err == nil || !strings.Contains(err.Error(), "未找到") {
+		t.Fatalf("missing lookup error = %v", err)
+	}
+}

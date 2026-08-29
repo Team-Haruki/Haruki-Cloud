@@ -28,12 +28,9 @@ func (h *InternalHandler) VerifySession(c fiber.Ctx) error {
 	}
 
 	// 验证 JWT session token
-	decoded, err := jwt.Parse(req.SessionToken, func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
+	decoded, err := jwt.Parse(req.SessionToken, func(_ *jwt.Token) (any, error) {
 		return []byte(config.Cfg.HarukiBotDB.SessionSignToken), nil
-	})
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil || !decoded.Valid {
 		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, InternalVerifyResponse{Valid: false})
 	}

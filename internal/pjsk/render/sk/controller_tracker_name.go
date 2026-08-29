@@ -4,33 +4,8 @@ import (
 	"strings"
 	"unicode"
 
-	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
-
-func hasRankInfoMetrics(info *drawing.RankInfo) bool {
-	if info == nil {
-		return false
-	}
-	return info.AveragePt != nil ||
-		info.LatestPt != nil ||
-		info.Speed != nil ||
-		info.HourRound != nil ||
-		info.Min20Time3Speed != nil
-}
-
-func (c *Controller) enrichRankInfoPreferUser(server string, eventID, rank int, userID int64, hasUserID bool, wlCharacterID *int, info *drawing.RankInfo) {
-	if c == nil || info == nil {
-		return
-	}
-	if hasUserID && userID > 0 {
-		c.enrichRankInfoByUser(server, eventID, userID, wlCharacterID, info)
-		if hasRankInfoMetrics(info) {
-			return
-		}
-	}
-	c.enrichRankInfoByRank(server, eventID, rank, wlCharacterID, info)
-}
 
 func (c *Controller) eventTitleForNameCheck(server string, eventID int) string {
 	if c == nil || eventID <= 0 {

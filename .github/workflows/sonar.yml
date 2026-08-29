@@ -21,9 +21,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Generate Go coverage
+        run: |
+          coverage_packages="$(go list ./... | grep -Ev '^haruki-cloud/(database(/|$)|ent/sekai/schema(/|$))' | paste -sd, -)"
+          go test -p 4 -count=1 -covermode=atomic -coverpkg="$coverage_packages" -coverprofile=coverage.out ./...
+
+      - name: Generate LCOV report
+        run: go tool gcov2lcov -infile=coverage.out -outfile=coverage.lcov
+
+      - name: Verify coverage threshold
+        run: |
+          coverage="$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/, "", $3); print $3}')"
+          awk -v coverage="$coverage" 'BEGIN {
+            if (coverage < 90) {
+              printf "coverage %.1f%% is below 90%%\n", coverage
+              exit 1
+            }
+            printf "coverage %.1f%% meets the 90%% threshold\n", coverage
+          }'
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: go-coverage
+          path: |
+            coverage.out
+            coverage.lcov
+          if-no-files-found: error
 
       - name: SonarQube scan
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0

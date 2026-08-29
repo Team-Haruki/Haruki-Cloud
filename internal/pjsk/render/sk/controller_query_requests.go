@@ -333,7 +333,6 @@ func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.
 	if err != nil {
 		return nil, err
 	}
-	c.enrichRankInfoPreferUser(normalized.Region, normalized.EventID, info.Rank, userID, hasUserID, normalized.WlCharacterID, &info)
 	if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
 		return nil, err
 	}

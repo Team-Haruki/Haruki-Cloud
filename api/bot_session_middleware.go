@@ -60,7 +60,7 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 				return nil, errors.New("unexpected signing method")
 			}
 			return []byte(config.Cfg.HarukiBotDB.SessionSignToken), nil
-		})
+		}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 		if err != nil || !decoded.Valid {
 			finish()
 			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌无效或已过期")

@@ -109,6 +109,53 @@ func TestVerifyAPIAuthorizationStillChecksUserAgent(t *testing.T) {
 	}
 }
 
+func TestCacheKeyFromFiberCtxUsesCanonicalSHA256QueryHash(t *testing.T) {
+	app := fiber.New()
+	var cacheKey string
+	app.Get("/cache", func(c fiber.Ctx) error {
+		cacheKey = cacheKeyFromFiberCtx(c, "test")
+		return c.SendStatus(fiber.StatusNoContent)
+	})
+
+	req, err := http.NewRequest(http.MethodGet, "/cache?b=2&a=3&a=1", nil)
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	const want = "test:/cache:query=4213fc4aacf338cd7ed11bb8456789925a6e37056cc2d1d8cd69662c87b9172c"
+	if cacheKey != want {
+		t.Fatalf("cache key = %q, want %q", cacheKey, want)
+	}
+}
+
+func TestCacheKeyFromFiberCtxUsesNoneWithoutQuery(t *testing.T) {
+	app := fiber.New()
+	var cacheKey string
+	app.Get("/cache", func(c fiber.Ctx) error {
+		cacheKey = cacheKeyFromFiberCtx(c, "test")
+		return c.SendStatus(fiber.StatusNoContent)
+	})
+
+	req, err := http.NewRequest(http.MethodGet, "/cache", nil)
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("execute request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if cacheKey != "test:/cache:query=none" {
+		t.Fatalf("unexpected cache key without query: %q", cacheKey)
+	}
+}
+
 func sendHelperTestRequest(t *testing.T, app *fiber.App, headers map[string]string) helperTestEnvelope {
 	t.Helper()
 

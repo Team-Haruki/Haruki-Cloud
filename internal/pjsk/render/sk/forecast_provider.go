@@ -17,7 +17,6 @@ const (
 	forecastMoesekaiURL      = "https://rk.exmeaning.com/public/event/%d/latest?region=%s"
 	forecastSnowyLegacyURL   = "https://sekaibangdan.exmeaning.com/api/public/v1/%sdata/%d"
 	forecastSekaURL          = "https://jiiku831.github.io/%sdata/sekarun.js"
-	forecastLocalBaseURL     = "http://100.109.13.111:18746"
 	forecastMaxResponseBytes = 16 << 20
 )
 
@@ -28,9 +27,6 @@ func NewRemoteForecastProvider() *RemoteForecastProvider {
 
 func NewRemoteForecastProviderWithConfig(cfg ForecastConfig) *RemoteForecastProvider {
 	localBaseURL := strings.TrimRight(strings.TrimSpace(cfg.LocalBaseURL), "/")
-	if localBaseURL == "" {
-		localBaseURL = forecastLocalBaseURL
-	}
 	return &RemoteForecastProvider{
 		http: resty.New().
 			SetTimeout(config.SKForecastHTTPClientTimeout).

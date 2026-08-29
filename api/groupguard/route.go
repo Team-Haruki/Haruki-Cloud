@@ -2,6 +2,7 @@ package groupguard
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"haruki-cloud/api"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 )
+
+const maxBindingCheckBatchPlatformUserIDs = 100
 
 type bindingCheckRequest struct {
 	Platform       string `json:"platform"`
@@ -72,6 +75,12 @@ func (h *Handler) CheckBindingBatch(c fiber.Ctx) error {
 	req.Platform = strings.TrimSpace(req.Platform)
 	if req.Platform == "" {
 		return api.JSONResponse(c, fiber.StatusBadRequest, api.ErrMissingPlatformInfo)
+	}
+	if len(req.PlatformUserIDs) > maxBindingCheckBatchPlatformUserIDs {
+		return api.JSONResponse(c, fiber.StatusBadRequest, fmt.Sprintf(
+			"platform_user_ids must contain at most %d items",
+			maxBindingCheckBatchPlatformUserIDs,
+		))
 	}
 
 	results := make(map[string]BindingCheckResult)

@@ -119,6 +119,8 @@ wait_region() {
         echo "$job" | jq .
         exit 1
         ;;
+      *)
+        ;;
     esac
 
     sleep "$POLL_INTERVAL"

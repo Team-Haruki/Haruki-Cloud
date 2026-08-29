@@ -44,8 +44,8 @@
 - `团名 属性`：模拟活动加成，例如 `/组卡 25h 可爱`、`/组卡 vs 蓝`。
 - `wl1 miku`：指定 World Link 章节角色；角色可用角色名或常用别名。
 - `event123 miku`：指定活动后补角色，World Link 活动中表示章节角色。
-- `终章 miku` 或 `event180 miku`：终章活动中指定队长角色。
-- 旧写法 `event123 wl2`、单独 `wl2` 不再支持，请改成 `wl1 miku` 或 `event123 miku`。
+- `wl2 终章 miku`、`wl3 终章 akt`：指定对应 WL 轮次的终章及队长角色；单写 `终章 miku` 兼容为 WL2 终章。对应终章尚未写入 masterdata 时，会按该轮 WL 规则模拟组卡。
+- `event123 wl2`、单独 `wl2` 仍不支持；WL 角色章节请写 `wl1 miku` 或 `event123 miku`，终章则使用上一条写法。
 
 ## 歌曲与比较
 - 歌曲可直接写在参数里：`虾ex`、`龙 hd`、`Tell Your World master`。

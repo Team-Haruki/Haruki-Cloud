@@ -841,6 +841,39 @@ func TestBuildRecommendOptionForwardsFinalChapterForcedLeader(t *testing.T) {
 	}
 
 	option, err = controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		EventID:                  new(999),
+		MetadataWorldBloomFinale: true,
+		ForcedLeaderCharacterID:  new(11),
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+	if option["forced_leader_character_id"] != 11 {
+		t.Fatalf("unexpected future finale forced leader: %+v", option["forced_leader_character_id"])
+	}
+
+	option, err = controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
+		Region:                   "jp",
+		RecommendType:            "event",
+		WorldBloomEventTurn:      new(3),
+		WorldBloomCharacterID:    new(11),
+		MetadataWorldBloomFinale: true,
+		ForcedLeaderCharacterID:  new(11),
+		FixedCharacters:          []int{11},
+	})
+	if err != nil {
+		t.Fatalf("buildRecommendOption returned error: %v", err)
+	}
+	if option["event_id"] != nil || option["world_bloom_event_turn"] != 3 {
+		t.Fatalf("unexpected simulated finale event options: %+v", option)
+	}
+	if option["forced_leader_character_id"] != 11 {
+		t.Fatalf("unexpected simulated finale forced leader: %+v", option["forced_leader_character_id"])
+	}
+
+	option, err = controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
 		Region:                  "jp",
 		RecommendType:           "event",
 		EventID:                 new(181),

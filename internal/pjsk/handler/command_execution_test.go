@@ -3235,6 +3235,84 @@ func TestResolveDeckCharacterSelectionsTreatsFinalChapterAsWorldBloomWithoutSele
 	}
 }
 
+func TestResolveDeckCharacterSelectionsResolvesWorldBloomFinaleTurn(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_finale_turn?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 180, now-int64(48*time.Hour/time.Millisecond), now-int64(24*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, chapterType: "finale", startAt: now - int64(48*time.Hour/time.Millisecond), aggregateAt: now - int64(24*time.Hour/time.Millisecond)},
+	})
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 999, now+int64(24*time.Hour/time.Millisecond), now+int64(48*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, chapterType: "finale", startAt: now + int64(24*time.Hour/time.Millisecond), aggregateAt: now + int64(48*time.Hour/time.Millisecond)},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:                  "jp",
+		RecommendType:           "event",
+		WorldBloomFinaleTurn:    drawing.IntPtr(3),
+		ForcedLeaderCharacterID: drawing.IntPtr(11),
+	}
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID == nil || *query.EventID != 999 {
+		t.Fatalf("unexpected finale event id: %+v", query.EventID)
+	}
+	if query.WorldBloomFinaleTurn != nil {
+		t.Fatalf("expected finale turn to be consumed: %+v", query.WorldBloomFinaleTurn)
+	}
+	if !query.MetadataWorldBloomFinale {
+		t.Fatal("expected finale metadata to be preserved")
+	}
+	if query.ForcedLeaderCharacterID == nil || *query.ForcedLeaderCharacterID != 11 {
+		t.Fatalf("unexpected forced leader character: %+v", query.ForcedLeaderCharacterID)
+	}
+}
+
+func TestResolveDeckCharacterSelectionsSimulatesWorldBloomFinaleWithoutMasterdata(t *testing.T) {
+	ctx := context.Background()
+	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_finale_simulation?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = sekaiClient.Close() })
+	now := time.Now().UnixMilli()
+
+	seedHandlerTestWorldBloomEvent(t, ctx, sekaiClient, "jp", 180, now-int64(48*time.Hour/time.Millisecond), now-int64(24*time.Hour/time.Millisecond), []handlerTestWorldBloomChapter{
+		{chapterNo: 1, chapterType: "finale", startAt: now - int64(48*time.Hour/time.Millisecond), aggregateAt: now - int64(24*time.Hour/time.Millisecond)},
+	})
+
+	query := renderdeck.AutoQuery{
+		Region:                  "jp",
+		RecommendType:           "event",
+		WorldBloomFinaleTurn:    drawing.IntPtr(3),
+		ForcedLeaderCharacterID: drawing.IntPtr(11),
+	}
+	if err := resolveDeckCharacterSelections(ctx, &query, &renderapp.App{Sekai: sekaiClient}); err != nil {
+		t.Fatalf("resolveDeckCharacterSelections() error = %v", err)
+	}
+	if query.EventID != nil {
+		t.Fatalf("simulated finale should not use an event id: %+v", query.EventID)
+	}
+	if query.WorldBloomFinaleTurn != nil {
+		t.Fatalf("expected finale turn to be consumed: %+v", query.WorldBloomFinaleTurn)
+	}
+	if query.WorldBloomEventTurn == nil || *query.WorldBloomEventTurn != 3 {
+		t.Fatalf("unexpected simulated world bloom turn: %+v", query.WorldBloomEventTurn)
+	}
+	if !query.MetadataWorldBloomFinale {
+		t.Fatal("expected simulated finale metadata")
+	}
+	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 11 {
+		t.Fatalf("unexpected simulated world bloom character: %+v", query.WorldBloomCharacterID)
+	}
+	if query.ForcedLeaderCharacterID == nil || *query.ForcedLeaderCharacterID != 11 {
+		t.Fatalf("unexpected forced leader character: %+v", query.ForcedLeaderCharacterID)
+	}
+	if len(query.FixedCharacters) != 1 || query.FixedCharacters[0] != 11 {
+		t.Fatalf("expected the simulated finale leader to be fixed first: %+v", query.FixedCharacters)
+	}
+}
+
 func TestResolveDeckCharacterSelectionsResolvesCurrentWorldBloomEventWhenEventIDMissing(t *testing.T) {
 	ctx := context.Background()
 	sekaiClient := sekaienttest.Open(t, "sqlite3", "file:handler_test_deck_world_bloom_default_current?mode=memory&cache=shared&_fk=1")
@@ -3980,6 +4058,7 @@ func (p *bridgeDeckTestEventProvider) GetRankingHonorRewards(_ context.Context, 
 
 type handlerTestWorldBloomChapter struct {
 	chapterNo   int64
+	chapterType string
 	startAt     int64
 	aggregateAt int64
 	characterID int64
@@ -4028,6 +4107,9 @@ func seedHandlerTestWorldBloomEvent(
 			SetChapterNo(chapter.chapterNo).
 			SetChapterStartAt(chapter.startAt).
 			SetAggregateAt(chapter.aggregateAt)
+		if chapter.chapterType != "" {
+			create.SetWorldBloomChapterType(chapter.chapterType)
+		}
 		if chapter.characterID > 0 {
 			create.SetGameCharacterID(chapter.characterID)
 		}

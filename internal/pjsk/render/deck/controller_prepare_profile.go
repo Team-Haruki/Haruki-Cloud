@@ -256,7 +256,7 @@ func (c *Controller) resolveCardUnit(source CardSource, card *masterdata.Card, u
 }
 
 func (c *Controller) applyMaxProfileEventHonors(region renderregion.Value, raw *snapshot.RawUserData, query AutoQuery) {
-	if raw == nil || query.EventID == nil || *query.EventID != 180 {
+	if raw == nil || query.EventID == nil || (!query.MetadataWorldBloomFinale && *query.EventID != 180) {
 		return
 	}
 

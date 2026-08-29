@@ -109,7 +109,7 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if worldBloomCharacterID > 0 {
 		option["world_bloom_character_id"] = worldBloomCharacterID
 	}
-	if explicitEventID && *query.EventID == 180 && query.ForcedLeaderCharacterID != nil && *query.ForcedLeaderCharacterID > 0 {
+	if ((explicitEventID && *query.EventID == 180) || query.MetadataWorldBloomFinale) && query.ForcedLeaderCharacterID != nil && *query.ForcedLeaderCharacterID > 0 {
 		option["forced_leader_character_id"] = *query.ForcedLeaderCharacterID
 	}
 	if fakeEvent {

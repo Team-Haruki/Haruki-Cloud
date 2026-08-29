@@ -26,6 +26,7 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 		MusicCompare:               true,
 		MusicCompareQueries:        []string{"龙hard", "虾expert", "sage"},
 		SpecificSkillOrder:         []int{0, 1, 2, 3, 4},
+		WorldBloomFinaleTurn:       intPtr(3),
 		ForcedLeaderCharacterID:    intPtr(21),
 		ForcedLeaderCharacterQuery: "miku",
 	}
@@ -63,6 +64,9 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 	}
 	if !reflect.DeepEqual(decoded.SpecificSkillOrder, []int{0, 1, 2, 3, 4}) {
 		t.Fatalf("unexpected specific skill order: %+v", decoded.SpecificSkillOrder)
+	}
+	if decoded.WorldBloomFinaleTurn == nil || *decoded.WorldBloomFinaleTurn != 3 {
+		t.Fatalf("unexpected world bloom finale turn: %+v", decoded.WorldBloomFinaleTurn)
 	}
 	if decoded.ForcedLeaderCharacterID == nil || *decoded.ForcedLeaderCharacterID != 21 {
 		t.Fatalf("unexpected forced leader id: %+v", decoded.ForcedLeaderCharacterID)
@@ -211,6 +215,37 @@ func TestEventDeckHandleParsesFinalChapterForcedLeader(t *testing.T) {
 	}
 	if !reflect.DeepEqual(params.FixedCards, []int{1237}) {
 		t.Fatalf("unexpected fixed cards: %+v", params.FixedCards)
+	}
+}
+
+func TestEventDeckHandleParsesWorldBloomFinaleTurnAndForcedLeader(t *testing.T) {
+	h := sekaiHandlers{}.EventDeckHandle()
+	result, err := h.Handle(&PjskHandlerContext{
+		Context:    context.Background(),
+		Platform:   "qq",
+		UserId:     "42",
+		TriggerCmd: "/组卡",
+		ArgText:    "wl3 终章 akt",
+	})
+	if err != nil {
+		t.Fatalf("Handle() error = %v", err)
+	}
+
+	var params deckAutoQueryParams
+	if err := json.Unmarshal(result.Params, &params); err != nil {
+		t.Fatalf("unmarshal params: %v", err)
+	}
+	if params.EventID != nil {
+		t.Fatalf("unexpected hard-coded event id: %+v", params.EventID)
+	}
+	if params.WorldBloomFinaleTurn == nil || *params.WorldBloomFinaleTurn != 3 {
+		t.Fatalf("unexpected world bloom finale turn: %+v", params.WorldBloomFinaleTurn)
+	}
+	if params.ForcedLeaderCharacterID == nil || *params.ForcedLeaderCharacterID != 11 {
+		t.Fatalf("unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+	}
+	if params.WorldBloomCharacterID != nil || params.WorldBloomCharacterQuery != "" {
+		t.Fatalf("unexpected world bloom selection: id=%+v query=%q", params.WorldBloomCharacterID, params.WorldBloomCharacterQuery)
 	}
 }
 

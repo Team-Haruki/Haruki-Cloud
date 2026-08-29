@@ -218,6 +218,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 				strings.TrimSpace(q.EventUnit) != "" ||
 				strings.TrimSpace(q.EventAttr) != "" ||
 				q.WorldBloomEventTurn != nil ||
+				q.WorldBloomFinaleTurn != nil ||
 				q.WorldBloomCharacterID != nil ||
 				strings.TrimSpace(q.WorldBloomCharacterQuery) != ""
 			if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
@@ -271,6 +272,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 			strings.TrimSpace(q.EventUnit) != "" ||
 			strings.TrimSpace(q.EventAttr) != "" ||
 			q.WorldBloomEventTurn != nil ||
+			q.WorldBloomFinaleTurn != nil ||
 			q.WorldBloomCharacterID != nil ||
 			strings.TrimSpace(q.WorldBloomCharacterQuery) != ""
 		if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
@@ -389,6 +391,8 @@ func preserveImplicitMysekaiWorldBloomMetadata(q *deck.AutoQuery) {
 	q.EventUnit = ""
 	q.EventAttr = ""
 	q.WorldBloomEventTurn = nil
+	q.WorldBloomFinaleTurn = nil
+	q.MetadataWorldBloomFinale = false
 	q.WorldBloomCharacterID = nil
 	q.WorldBloomCharacterQuery = ""
 }

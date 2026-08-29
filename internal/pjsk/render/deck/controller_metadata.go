@@ -136,7 +136,8 @@ func shouldUseFallbackEventMetadata(recType string, option map[string]any) bool 
 }
 
 func queryHasWorldBloomMetadata(query AutoQuery) bool {
-	return (query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0) ||
+	return query.MetadataWorldBloomFinale ||
+		(query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0) ||
 		(query.MetadataWorldBloomCharacterID != nil && *query.MetadataWorldBloomCharacterID > 0)
 }
 

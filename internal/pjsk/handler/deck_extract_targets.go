@@ -78,6 +78,14 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 }
 
 func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
+	if turn, remaining, ok := extractDeckWorldBloomFinaleTurn(args); ok {
+		if turn < 2 {
+			return "", onebot11.NewReplayError("终章从 wl2 开始，请使用 wl2 终章 或 wl3 终章")
+		}
+		params.WorldBloomFinaleTurn = intPtr(turn)
+		return extractDeckFinaleLeaderSelection(remaining, params)
+	}
+
 	if eventID, remaining := extractDeckExplicitEventID(args); eventID != nil {
 		return extractDeckExplicitEventSelection(remaining, eventID, params, trigger)
 	}
@@ -135,11 +143,10 @@ func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAu
 		params.WorldBloomCharacterQuery = selector
 		return remaining, nil
 	}
+	if eventID != nil && *eventID == 180 {
+		return extractDeckFinaleLeaderSelection(args, params)
+	}
 	if charID, charQuery, remaining := extractDeckCharacterCandidate(args, true); charID > 0 {
-		if eventID != nil && *eventID == 180 {
-			params.ForcedLeaderCharacterID = intPtr(charID)
-			return remaining, nil
-		}
 		params.WorldBloomCharacterID = intPtr(charID)
 		if params.EventUnit == "" {
 			params.EventUnit = deckCharacterUnit(charID)
@@ -149,14 +156,43 @@ func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAu
 		if remaining == "" && looksLikeInlineMusicQuery(charQuery) {
 			return args, nil
 		}
-		if eventID != nil && *eventID == 180 {
-			params.ForcedLeaderCharacterQuery = charQuery
-			return remaining, nil
-		}
 		params.WorldBloomCharacterQuery = charQuery
 		return remaining, nil
 	}
 	return normalizeDeckSpaces(args), nil
+}
+
+func extractDeckFinaleLeaderSelection(args string, params *deckAutoQueryParams) (string, error) {
+	charID, charQuery, remaining := extractDeckCharacterCandidate(args, true)
+	if charID > 0 {
+		params.ForcedLeaderCharacterID = intPtr(charID)
+		return remaining, nil
+	}
+	if charQuery != "" {
+		if remaining == "" && looksLikeInlineMusicQuery(charQuery) {
+			return normalizeDeckSpaces(args), nil
+		}
+		params.ForcedLeaderCharacterQuery = charQuery
+		return remaining, nil
+	}
+	return normalizeDeckSpaces(args), nil
+}
+
+func extractDeckWorldBloomFinaleTurn(args string) (int, string, bool) {
+	if !strings.Contains(args, "终章") {
+		return 0, normalizeDeckSpaces(args), false
+	}
+
+	remaining := normalizeDeckSpaces(strings.Replace(args, "终章", " ", 1))
+	matches := deckWlTurnRegex.FindStringSubmatch(remaining)
+	if len(matches) < 2 {
+		return 0, remaining, false
+	}
+	turn, err := strconv.Atoi(matches[1])
+	if err != nil || turn <= 0 {
+		return 0, remaining, false
+	}
+	return turn, normalizeDeckSpaces(deckWlTurnRegex.ReplaceAllString(remaining, " ")), true
 }
 
 func extractDeckCurrentWorldBloomSelection(args string, params *deckAutoQueryParams, trigger string) (string, bool, error) {

@@ -31,7 +31,7 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 		return err
 	}
 
-	if q.EventID == nil || *q.EventID != 180 {
+	if !isResolvedDeckWorldBloomFinale(q) {
 		q.ForcedLeaderCharacterID = nil
 		q.ForcedLeaderCharacterQuery = ""
 	}
@@ -42,6 +42,13 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 		}
 		q.ForcedLeaderCharacterID = drawing.IntPtr(charID)
 		q.ForcedLeaderCharacterQuery = ""
+	}
+	if isSimulatedDeckWorldBloomFinale(q) && q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
+		q.WorldBloomCharacterID = drawing.IntPtr(*q.ForcedLeaderCharacterID)
+		q.WorldBloomCharacterQuery = ""
+		if strings.TrimSpace(q.EventUnit) == "" {
+			q.EventUnit = resolveDeckCharacterUnit(*q.ForcedLeaderCharacterID)
+		}
 	}
 
 	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) != "" {
@@ -82,6 +89,9 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 		}
 		q.FixedCharacterQueries = nil
 	}
+	if isSimulatedDeckWorldBloomFinale(q) && q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
+		q.FixedCharacters = prependDeckUniqueCharacter(q.FixedCharacters, *q.ForcedLeaderCharacterID)
+	}
 
 	if err := validateDeckCharacterIDs(q.FixedCharacters); err != nil {
 		return err
@@ -89,20 +99,68 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 	return nil
 }
 
-func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
-	if q != nil && q.EventID != nil && *q.EventID == 180 {
-		if q.ForcedLeaderCharacterID == nil && q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
-			q.ForcedLeaderCharacterID = drawing.IntPtr(*q.WorldBloomCharacterID)
-		}
-		if strings.TrimSpace(q.ForcedLeaderCharacterQuery) == "" && q.WorldBloomCharacterQuery != "" && !isDeckWorldBloomSelectorQuery(q.WorldBloomCharacterQuery) {
-			q.ForcedLeaderCharacterQuery = q.WorldBloomCharacterQuery
-		}
-		q.WorldBloomCharacterID = nil
+func isSimulatedDeckWorldBloomFinale(q *deck.AutoQuery) bool {
+	return q != nil && q.MetadataWorldBloomFinale && q.EventID == nil && q.WorldBloomEventTurn != nil && *q.WorldBloomEventTurn > 0
+}
+
+func prepareDeckWorldBloomFinaleSimulation(q *deck.AutoQuery, turn int) error {
+	if q == nil {
+		return nil
+	}
+	if q.ForcedLeaderCharacterID == nil && strings.TrimSpace(q.ForcedLeaderCharacterQuery) == "" {
+		return fmt.Errorf("wl%d 终章需要指定队长角色，例如 wl%d 终章 miku", turn, turn)
+	}
+
+	q.EventID = nil
+	q.WorldBloomFinaleTurn = nil
+	q.WorldBloomEventTurn = drawing.IntPtr(turn)
+	q.MetadataWorldBloomFinale = true
+	if q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
+		q.WorldBloomCharacterID = drawing.IntPtr(*q.ForcedLeaderCharacterID)
 		q.WorldBloomCharacterQuery = ""
+		q.EventUnit = resolveDeckCharacterUnit(*q.ForcedLeaderCharacterID)
+	} else {
+		q.WorldBloomCharacterID = nil
+		q.WorldBloomCharacterQuery = q.ForcedLeaderCharacterQuery
+	}
+	return nil
+}
+
+func prependDeckUniqueCharacter(characters []int, characterID int) []int {
+	result := make([]int, 0, len(characters)+1)
+	result = append(result, characterID)
+	for _, existing := range characters {
+		if existing != characterID {
+			result = append(result, existing)
+		}
+	}
+	return result
+}
+
+func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
+	if q == nil {
+		return nil
+	}
+	if q.WorldBloomFinaleTurn != nil && *q.WorldBloomFinaleTurn > 0 {
+		turn := *q.WorldBloomFinaleTurn
+		eventInfo, err := resolveDeckWorldBloomFinaleEventByTurn(ctx, app, region, turn)
+		if err != nil {
+			var futureTurnErr *deckFutureWorldBloomFinaleTurnError
+			if errors.As(err, &futureTurnErr) && shouldKeepDeckWorldBloomSimulationSelection(q) {
+				return prepareDeckWorldBloomFinaleSimulation(q, turn)
+			}
+			return err
+		}
+		q.EventID = drawing.IntPtr(int(eventInfo.GameID))
+		q.WorldBloomFinaleTurn = nil
+		q.MetadataWorldBloomFinale = true
+	}
+	if isResolvedDeckWorldBloomFinale(q) {
+		normalizeDeckWorldBloomFinaleSelection(q)
 		return nil
 	}
 
-	if q == nil || app == nil {
+	if app == nil {
 		return nil
 	}
 
@@ -168,6 +226,11 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 	chapters, err := queryDeckWorldBloomChapters(ctx, app, region, eventID)
 	if err != nil {
 		return err
+	}
+	if deckWorldBloomHasFinaleChapter(chapters) {
+		q.MetadataWorldBloomFinale = true
+		normalizeDeckWorldBloomFinaleSelection(q)
+		return nil
 	}
 
 	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
@@ -238,6 +301,28 @@ func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQue
 	}
 	ensureDeckWorldBloomEventTurnMetadata(ctx, app, region, eventInfo, chapters, q)
 	return nil
+}
+
+func isResolvedDeckWorldBloomFinale(q *deck.AutoQuery) bool {
+	return q != nil && (q.MetadataWorldBloomFinale || (q.EventID != nil && *q.EventID == 180))
+}
+
+func normalizeDeckWorldBloomFinaleSelection(q *deck.AutoQuery) {
+	if q == nil {
+		return
+	}
+	q.MetadataWorldBloomFinale = true
+	if q.ForcedLeaderCharacterID == nil && q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
+		q.ForcedLeaderCharacterID = drawing.IntPtr(*q.WorldBloomCharacterID)
+	}
+	if strings.TrimSpace(q.ForcedLeaderCharacterQuery) == "" && q.WorldBloomCharacterQuery != "" && !isDeckWorldBloomSelectorQuery(q.WorldBloomCharacterQuery) {
+		q.ForcedLeaderCharacterQuery = q.WorldBloomCharacterQuery
+	}
+	q.WorldBloomCharacterID = nil
+	q.WorldBloomCharacterQuery = ""
+	q.WorldBloomEventTurn = nil
+	q.WorldBloomFinaleTurn = nil
+	q.EventUnit = ""
 }
 
 func ensureDeckWorldBloomEventTurnMetadata(ctx context.Context, app *renderapp.App, region renderregion.Value, eventInfo *sekaidb.Event, chapters []*sekaidb.Worldbloom, q *deck.AutoQuery) {
@@ -694,8 +779,67 @@ func clearDeckAutoEventSelection(q *deck.AutoQuery) {
 	q.EventUnit = ""
 	q.EventAttr = ""
 	q.WorldBloomEventTurn = nil
+	q.WorldBloomFinaleTurn = nil
+	q.MetadataWorldBloomFinale = false
 	q.WorldBloomCharacterID = nil
 	q.WorldBloomCharacterQuery = ""
+}
+
+func resolveDeckWorldBloomFinaleEventByTurn(ctx context.Context, app *renderapp.App, region renderregion.Value, turn int) (*sekaidb.Event, error) {
+	if turn < 2 {
+		return nil, fmt.Errorf("WL终章从 wl2 开始，无法解析 wl%d 终章", turn)
+	}
+	if turn == 2 {
+		return &sekaidb.Event{GameID: 180}, nil
+	}
+	if app == nil {
+		return nil, &deckFutureWorldBloomFinaleTurnError{Turn: turn, Available: 2}
+	}
+
+	worldBloomEvents, err := queryDeckWorldBloomEvents(ctx, app, region)
+	if err != nil {
+		return nil, err
+	}
+	finaleEvents := []*sekaidb.Event{{GameID: 180}}
+	for _, eventInfo := range worldBloomEvents {
+		if eventInfo == nil || eventInfo.GameID == 180 {
+			continue
+		}
+		chapters, err := queryDeckWorldBloomChapters(ctx, app, region, int(eventInfo.GameID))
+		if err != nil {
+			return nil, err
+		}
+		if deckWorldBloomHasFinaleChapter(chapters) {
+			finaleEvents = append(finaleEvents, eventInfo)
+		}
+	}
+
+	index := turn - 2
+	if index >= len(finaleEvents) {
+		return nil, &deckFutureWorldBloomFinaleTurnError{Turn: turn, Available: len(finaleEvents) + 1}
+	}
+	return finaleEvents[index], nil
+}
+
+type deckFutureWorldBloomFinaleTurnError struct {
+	Turn      int
+	Available int
+}
+
+func (e *deckFutureWorldBloomFinaleTurnError) Error() string {
+	if e == nil {
+		return "无法解析未来 WL 终章"
+	}
+	return fmt.Sprintf("当前 masterdata 仅包含到 wl%d 终章，无法解析 wl%d 终章", e.Available, e.Turn)
+}
+
+func deckWorldBloomHasFinaleChapter(chapters []*sekaidb.Worldbloom) bool {
+	for _, chapter := range chapters {
+		if chapter != nil && strings.EqualFold(strings.TrimSpace(chapter.WorldBloomChapterType), "finale") {
+			return true
+		}
+	}
+	return false
 }
 
 func missingDeckWorldBloomChapterError(q *deck.AutoQuery, eventID int) error {

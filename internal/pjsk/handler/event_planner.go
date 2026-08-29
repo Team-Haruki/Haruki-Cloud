@@ -399,6 +399,7 @@ func buildEventPlannerBaseDeckQuery(region renderregion.Value, params deckAutoQu
 		WorldBloomCharacterID:        params.WorldBloomCharacterID,
 		WorldBloomCharacterQuery:     params.WorldBloomCharacterQuery,
 		WorldBloomEventTurn:          params.WorldBloomEventTurn,
+		WorldBloomFinaleTurn:         params.WorldBloomFinaleTurn,
 		ForcedLeaderCharacterID:      params.ForcedLeaderCharacterID,
 		ForcedLeaderCharacterQuery:   params.ForcedLeaderCharacterQuery,
 		ChallengeLiveCharacterID:     params.ChallengeLiveCharacterID,

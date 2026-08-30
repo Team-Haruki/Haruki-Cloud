@@ -204,12 +204,7 @@ func (p *dbMySekaiProvider) loadDBMapByID(filename string) (map[int]map[string]a
 }
 
 func (p *dbMySekaiProvider) queryTable(table string) ([]map[string]any, error) {
-	placeholder := "?"
-	if strings.EqualFold(p.dbType, "postgres") {
-		placeholder = "$1"
-	}
-	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE server_region = %s`, table, placeholder)
-	rows, err := p.db.Query(query, renderregion.WithDefault(p.region).String())
+	rows, err := queryMySekaiTable(p.db, p.dbType, table, renderregion.WithDefault(p.region).String())
 	if err != nil {
 		return nil, err
 	}
@@ -243,6 +238,104 @@ func (p *dbMySekaiProvider) queryTable(table string) ([]map[string]any, error) {
 		result = append(result, item)
 	}
 	return result, rows.Err()
+}
+
+// Keep complete statements in these whitelists because SQL identifiers cannot
+// be passed as bind parameters.
+var mysekaiPostgresTableQueries = map[string]string{
+	"cards": `SELECT * FROM "cards" WHERE server_region = $1`,
+	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM "characterarchivemysekaicharactertalkgroups" WHERE server_region = $1`,
+	"custommusicscoretags":                               `SELECT * FROM "custommusicscoretags" WHERE server_region = $1`,
+	"gamecharacters":                                     `SELECT * FROM "gamecharacters" WHERE server_region = $1`,
+	"gamecharacterunits":                                 `SELECT * FROM "gamecharacterunits" WHERE server_region = $1`,
+	"limitedtimemusics":                                  `SELECT * FROM "limitedtimemusics" WHERE server_region = $1`,
+	"musics":                                             `SELECT * FROM "musics" WHERE server_region = $1`,
+	"musictags":                                          `SELECT * FROM "musictags" WHERE server_region = $1`,
+	"mysekaiblueprintmysekaimaterialcosts":               `SELECT * FROM "mysekaiblueprintmysekaimaterialcosts" WHERE server_region = $1`,
+	"mysekaiblueprints":                                  `SELECT * FROM "mysekaiblueprints" WHERE server_region = $1`,
+	"mysekaicharactertalkconditiongroups":                `SELECT * FROM "mysekaicharactertalkconditiongroups" WHERE server_region = $1`,
+	"mysekaicharactertalkconditions":                     `SELECT * FROM "mysekaicharactertalkconditions" WHERE server_region = $1`,
+	"mysekaicharactertalks":                              `SELECT * FROM "mysekaicharactertalks" WHERE server_region = $1`,
+	"mysekaicustomfixtures":                              `SELECT * FROM "mysekaicustomfixtures" WHERE server_region = $1`,
+	"mysekaifixturegamecharactergroupperformancebonuses": `SELECT * FROM "mysekaifixturegamecharactergroupperformancebonuses" WHERE server_region = $1`,
+	"mysekaifixturegamecharactergroups":                  `SELECT * FROM "mysekaifixturegamecharactergroups" WHERE server_region = $1`,
+	"mysekaifixturemaingenres":                           `SELECT * FROM "mysekaifixturemaingenres" WHERE server_region = $1`,
+	"mysekaifixtureonlydisassemblematerials":             `SELECT * FROM "mysekaifixtureonlydisassemblematerials" WHERE server_region = $1`,
+	"mysekaifixtures":                                    `SELECT * FROM "mysekaifixtures" WHERE server_region = $1`,
+	"mysekaifixturesubgenres":                            `SELECT * FROM "mysekaifixturesubgenres" WHERE server_region = $1`,
+	"mysekaifixturetags":                                 `SELECT * FROM "mysekaifixturetags" WHERE server_region = $1`,
+	"mysekaigamecharacterunitgroups":                     `SELECT * FROM "mysekaigamecharacterunitgroups" WHERE server_region = $1`,
+	"mysekaigatecharacterlotteries":                      `SELECT * FROM "mysekaigatecharacterlotteries" WHERE server_region = $1`,
+	"mysekaigatecommonskins":                             `SELECT * FROM "mysekaigatecommonskins" WHERE server_region = $1`,
+	"mysekaigatematerialgroups":                          `SELECT * FROM "mysekaigatematerialgroups" WHERE server_region = $1`,
+	"mysekaigates":                                       `SELECT * FROM "mysekaigates" WHERE server_region = $1`,
+	"mysekaigateskins":                                   `SELECT * FROM "mysekaigateskins" WHERE server_region = $1`,
+	"mysekaigateunitskins":                               `SELECT * FROM "mysekaigateunitskins" WHERE server_region = $1`,
+	"mysekaihousingcompetitions":                         `SELECT * FROM "mysekaihousingcompetitions" WHERE server_region = $1`,
+	"mysekaiitems":                                       `SELECT * FROM "mysekaiitems" WHERE server_region = $1`,
+	"mysekaimaterialgamecharacterrelations":              `SELECT * FROM "mysekaimaterialgamecharacterrelations" WHERE server_region = $1`,
+	"mysekaimaterials":                                   `SELECT * FROM "mysekaimaterials" WHERE server_region = $1`,
+	"mysekaimusicrecords":                                `SELECT * FROM "mysekaimusicrecords" WHERE server_region = $1`,
+	"mysekaiphenomenabackgroundcolors":                   `SELECT * FROM "mysekaiphenomenabackgroundcolors" WHERE server_region = $1`,
+	"mysekaiphenomenas":                                  `SELECT * FROM "mysekaiphenomenas" WHERE server_region = $1`,
+	"mysekairankreleases":                                `SELECT * FROM "mysekairankreleases" WHERE server_region = $1`,
+	"mysekaisiteharvestfixtures":                         `SELECT * FROM "mysekaisiteharvestfixtures" WHERE server_region = $1`,
+	"mysekaisitelayouts":                                 `SELECT * FROM "mysekaisitelayouts" WHERE server_region = $1`,
+	"mysekaisitelevels":                                  `SELECT * FROM "mysekaisitelevels" WHERE server_region = $1`,
+}
+
+var mysekaiQuestionMarkTableQueries = map[string]string{
+	"cards": `SELECT * FROM cards WHERE server_region = ?`,
+	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM characterarchivemysekaicharactertalkgroups WHERE server_region = ?`,
+	"custommusicscoretags":                               `SELECT * FROM custommusicscoretags WHERE server_region = ?`,
+	"gamecharacters":                                     `SELECT * FROM gamecharacters WHERE server_region = ?`,
+	"gamecharacterunits":                                 `SELECT * FROM gamecharacterunits WHERE server_region = ?`,
+	"limitedtimemusics":                                  `SELECT * FROM limitedtimemusics WHERE server_region = ?`,
+	"musics":                                             `SELECT * FROM musics WHERE server_region = ?`,
+	"musictags":                                          `SELECT * FROM musictags WHERE server_region = ?`,
+	"mysekaiblueprintmysekaimaterialcosts":               `SELECT * FROM mysekaiblueprintmysekaimaterialcosts WHERE server_region = ?`,
+	"mysekaiblueprints":                                  `SELECT * FROM mysekaiblueprints WHERE server_region = ?`,
+	"mysekaicharactertalkconditiongroups":                `SELECT * FROM mysekaicharactertalkconditiongroups WHERE server_region = ?`,
+	"mysekaicharactertalkconditions":                     `SELECT * FROM mysekaicharactertalkconditions WHERE server_region = ?`,
+	"mysekaicharactertalks":                              `SELECT * FROM mysekaicharactertalks WHERE server_region = ?`,
+	"mysekaicustomfixtures":                              `SELECT * FROM mysekaicustomfixtures WHERE server_region = ?`,
+	"mysekaifixturegamecharactergroupperformancebonuses": `SELECT * FROM mysekaifixturegamecharactergroupperformancebonuses WHERE server_region = ?`,
+	"mysekaifixturegamecharactergroups":                  `SELECT * FROM mysekaifixturegamecharactergroups WHERE server_region = ?`,
+	"mysekaifixturemaingenres":                           `SELECT * FROM mysekaifixturemaingenres WHERE server_region = ?`,
+	"mysekaifixtureonlydisassemblematerials":             `SELECT * FROM mysekaifixtureonlydisassemblematerials WHERE server_region = ?`,
+	"mysekaifixtures":                                    `SELECT * FROM mysekaifixtures WHERE server_region = ?`,
+	"mysekaifixturesubgenres":                            `SELECT * FROM mysekaifixturesubgenres WHERE server_region = ?`,
+	"mysekaifixturetags":                                 `SELECT * FROM mysekaifixturetags WHERE server_region = ?`,
+	"mysekaigamecharacterunitgroups":                     `SELECT * FROM mysekaigamecharacterunitgroups WHERE server_region = ?`,
+	"mysekaigatecharacterlotteries":                      `SELECT * FROM mysekaigatecharacterlotteries WHERE server_region = ?`,
+	"mysekaigatecommonskins":                             `SELECT * FROM mysekaigatecommonskins WHERE server_region = ?`,
+	"mysekaigatematerialgroups":                          `SELECT * FROM mysekaigatematerialgroups WHERE server_region = ?`,
+	"mysekaigates":                                       `SELECT * FROM mysekaigates WHERE server_region = ?`,
+	"mysekaigateskins":                                   `SELECT * FROM mysekaigateskins WHERE server_region = ?`,
+	"mysekaigateunitskins":                               `SELECT * FROM mysekaigateunitskins WHERE server_region = ?`,
+	"mysekaihousingcompetitions":                         `SELECT * FROM mysekaihousingcompetitions WHERE server_region = ?`,
+	"mysekaiitems":                                       `SELECT * FROM mysekaiitems WHERE server_region = ?`,
+	"mysekaimaterialgamecharacterrelations":              `SELECT * FROM mysekaimaterialgamecharacterrelations WHERE server_region = ?`,
+	"mysekaimaterials":                                   `SELECT * FROM mysekaimaterials WHERE server_region = ?`,
+	"mysekaimusicrecords":                                `SELECT * FROM mysekaimusicrecords WHERE server_region = ?`,
+	"mysekaiphenomenabackgroundcolors":                   `SELECT * FROM mysekaiphenomenabackgroundcolors WHERE server_region = ?`,
+	"mysekaiphenomenas":                                  `SELECT * FROM mysekaiphenomenas WHERE server_region = ?`,
+	"mysekairankreleases":                                `SELECT * FROM mysekairankreleases WHERE server_region = ?`,
+	"mysekaisiteharvestfixtures":                         `SELECT * FROM mysekaisiteharvestfixtures WHERE server_region = ?`,
+	"mysekaisitelayouts":                                 `SELECT * FROM mysekaisitelayouts WHERE server_region = ?`,
+	"mysekaisitelevels":                                  `SELECT * FROM mysekaisitelevels WHERE server_region = ?`,
+}
+
+func queryMySekaiTable(db *sql.DB, dbType, table, region string) (*sql.Rows, error) {
+	queries := mysekaiQuestionMarkTableQueries
+	if strings.EqualFold(dbType, "postgres") {
+		queries = mysekaiPostgresTableQueries
+	}
+	query, ok := queries[table]
+	if !ok {
+		return nil, fmt.Errorf("unsupported MySekai masterdata table %q", table)
+	}
+	return db.Query(query, region)
 }
 
 func mysekaiColumnKey(col string) string {

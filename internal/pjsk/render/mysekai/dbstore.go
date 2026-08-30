@@ -241,9 +241,7 @@ func (s *dbMasterdataStore) queryTable(ctx context.Context, table string) ([]map
 	finishQuery := commandtrace.MeasureOperation(ctx, "mysekai.masterdata_query")
 	defer finishQuery()
 
-	// Use double-quoting for safety; table names are from our own constant map.
-	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE server_region = $1`, table)
-	rows, err := s.db.QueryContext(ctx, query, s.region)
+	rows, err := queryMasterdataTable(ctx, s.db, table, s.region)
 	if err != nil {
 		return nil, err
 	}
@@ -292,8 +290,60 @@ func (s *dbMasterdataStore) queryTable(ctx context.Context, table string) ([]map
 	return results, rows.Err()
 }
 
+// Keep complete statements in this whitelist because SQL identifiers cannot be
+// passed as bind parameters.
+var masterdataTableQueries = map[string]string{
+	"cards": `SELECT * FROM "cards" WHERE server_region = $1`,
+	"characterarchivemysekaicharactertalkgroups":         `SELECT * FROM "characterarchivemysekaicharactertalkgroups" WHERE server_region = $1`,
+	"custommusicscoretags":                               `SELECT * FROM "custommusicscoretags" WHERE server_region = $1`,
+	"gamecharacters":                                     `SELECT * FROM "gamecharacters" WHERE server_region = $1`,
+	"gamecharacterunits":                                 `SELECT * FROM "gamecharacterunits" WHERE server_region = $1`,
+	"limitedtimemusics":                                  `SELECT * FROM "limitedtimemusics" WHERE server_region = $1`,
+	"musics":                                             `SELECT * FROM "musics" WHERE server_region = $1`,
+	"musictags":                                          `SELECT * FROM "musictags" WHERE server_region = $1`,
+	"mysekaiblueprintmysekaimaterialcosts":               `SELECT * FROM "mysekaiblueprintmysekaimaterialcosts" WHERE server_region = $1`,
+	"mysekaiblueprints":                                  `SELECT * FROM "mysekaiblueprints" WHERE server_region = $1`,
+	"mysekaicharactertalkconditiongroups":                `SELECT * FROM "mysekaicharactertalkconditiongroups" WHERE server_region = $1`,
+	"mysekaicharactertalkconditions":                     `SELECT * FROM "mysekaicharactertalkconditions" WHERE server_region = $1`,
+	"mysekaicharactertalks":                              `SELECT * FROM "mysekaicharactertalks" WHERE server_region = $1`,
+	"mysekaicustomfixtures":                              `SELECT * FROM "mysekaicustomfixtures" WHERE server_region = $1`,
+	"mysekaifixturegamecharactergroupperformancebonuses": `SELECT * FROM "mysekaifixturegamecharactergroupperformancebonuses" WHERE server_region = $1`,
+	"mysekaifixturegamecharactergroups":                  `SELECT * FROM "mysekaifixturegamecharactergroups" WHERE server_region = $1`,
+	"mysekaifixturemaingenres":                           `SELECT * FROM "mysekaifixturemaingenres" WHERE server_region = $1`,
+	"mysekaifixtureonlydisassemblematerials":             `SELECT * FROM "mysekaifixtureonlydisassemblematerials" WHERE server_region = $1`,
+	"mysekaifixtures":                                    `SELECT * FROM "mysekaifixtures" WHERE server_region = $1`,
+	"mysekaifixturesubgenres":                            `SELECT * FROM "mysekaifixturesubgenres" WHERE server_region = $1`,
+	"mysekaifixturetags":                                 `SELECT * FROM "mysekaifixturetags" WHERE server_region = $1`,
+	"mysekaigamecharacterunitgroups":                     `SELECT * FROM "mysekaigamecharacterunitgroups" WHERE server_region = $1`,
+	"mysekaigatecharacterlotteries":                      `SELECT * FROM "mysekaigatecharacterlotteries" WHERE server_region = $1`,
+	"mysekaigatecommonskins":                             `SELECT * FROM "mysekaigatecommonskins" WHERE server_region = $1`,
+	"mysekaigatematerialgroups":                          `SELECT * FROM "mysekaigatematerialgroups" WHERE server_region = $1`,
+	"mysekaigates":                                       `SELECT * FROM "mysekaigates" WHERE server_region = $1`,
+	"mysekaigateskins":                                   `SELECT * FROM "mysekaigateskins" WHERE server_region = $1`,
+	"mysekaigateunitskins":                               `SELECT * FROM "mysekaigateunitskins" WHERE server_region = $1`,
+	"mysekaihousingcompetitions":                         `SELECT * FROM "mysekaihousingcompetitions" WHERE server_region = $1`,
+	"mysekaiitems":                                       `SELECT * FROM "mysekaiitems" WHERE server_region = $1`,
+	"mysekaimaterialgamecharacterrelations":              `SELECT * FROM "mysekaimaterialgamecharacterrelations" WHERE server_region = $1`,
+	"mysekaimaterials":                                   `SELECT * FROM "mysekaimaterials" WHERE server_region = $1`,
+	"mysekaimusicrecords":                                `SELECT * FROM "mysekaimusicrecords" WHERE server_region = $1`,
+	"mysekaiphenomenabackgroundcolors":                   `SELECT * FROM "mysekaiphenomenabackgroundcolors" WHERE server_region = $1`,
+	"mysekaiphenomenas":                                  `SELECT * FROM "mysekaiphenomenas" WHERE server_region = $1`,
+	"mysekairankreleases":                                `SELECT * FROM "mysekairankreleases" WHERE server_region = $1`,
+	"mysekaisiteharvestfixtures":                         `SELECT * FROM "mysekaisiteharvestfixtures" WHERE server_region = $1`,
+	"mysekaisitelayouts":                                 `SELECT * FROM "mysekaisitelayouts" WHERE server_region = $1`,
+	"mysekaisitelevels":                                  `SELECT * FROM "mysekaisitelevels" WHERE server_region = $1`,
+}
+
+func queryMasterdataTable(ctx context.Context, db *sql.DB, table, region string) (*sql.Rows, error) {
+	query, ok := masterdataTableQueries[table]
+	if !ok {
+		return nil, fmt.Errorf("unsupported MySekai masterdata table %q", table)
+	}
+	return db.QueryContext(ctx, query, region)
+}
+
 // mapColumnName converts a DB column name to the camelCase key the controller
-// expects.  Returns "" for columns that should be excluded from the map.
+// expects. Returns "" for columns that should be excluded from the map.
 func mapColumnName(col string) string {
 	switch col {
 	case "id":

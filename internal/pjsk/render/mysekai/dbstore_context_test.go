@@ -42,6 +42,35 @@ func newTestDBMasterdataStore(t *testing.T) *dbMasterdataStore {
 	}
 }
 
+func TestMasterdataTableQueryWhitelistMatchesFileMapping(t *testing.T) {
+	if len(masterdataTableQueries) != len(fileToTable) {
+		t.Fatalf("query whitelist has %d entries for %d file mappings", len(masterdataTableQueries), len(fileToTable))
+	}
+
+	mappedTables := make(map[string]struct{}, len(fileToTable))
+	for filename, table := range fileToTable {
+		mappedTables[table] = struct{}{}
+		query, ok := masterdataTableQueries[table]
+		if !ok {
+			t.Errorf("file mapping %q references table %q without a fixed query", filename, table)
+			continue
+		}
+		want := `SELECT * FROM "` + table + `" WHERE server_region = $1`
+		if query != want {
+			t.Errorf("fixed query for table %q = %q, want %q", table, query, want)
+		}
+	}
+	for table := range masterdataTableQueries {
+		if _, ok := mappedTables[table]; !ok {
+			t.Errorf("fixed query for unmapped table %q", table)
+		}
+	}
+
+	if _, err := queryMasterdataTable(context.Background(), nil, `musics"; DROP TABLE musics; --`, "jp"); err == nil {
+		t.Fatal("unlisted table identifier should be rejected before reaching the database")
+	}
+}
+
 func TestDBMasterdataStoreWithContextTracesColdLoad(t *testing.T) {
 	store := newTestDBMasterdataStore(t)
 	ctx, trace := commandtrace.WithTrace(context.Background())

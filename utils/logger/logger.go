@@ -269,6 +269,23 @@ func WriteEmergency(writer io.Writer, component, msg string, args ...any) error 
 
 type contextAttrsKey struct{}
 
+// detachedContext carries only attributes explicitly registered for logging.
+// It intentionally has no cancellation tree or other request-scoped values,
+// so asynchronous log queues cannot retain an entire request context.
+type detachedContext struct {
+	attrs []slog.Attr
+}
+
+func (detachedContext) Deadline() (time.Time, bool) { return time.Time{}, false }
+func (detachedContext) Done() <-chan struct{}       { return nil }
+func (detachedContext) Err() error                  { return nil }
+func (ctx detachedContext) Value(key any) any {
+	if _, ok := key.(contextAttrsKey); ok && len(ctx.attrs) > 0 {
+		return ctx.attrs
+	}
+	return nil
+}
+
 // WithContextAttrs adds attributes that every project/slog record emitted with
 // the returned context will inherit.
 func WithContextAttrs(ctx context.Context, attrs ...slog.Attr) context.Context {
@@ -289,16 +306,15 @@ func WithContextAttrs(ctx context.Context, attrs ...slog.Attr) context.Context {
 // retain for queued background work without holding the request context, trace,
 // body, or cancellation tree alive.
 func DetachedContext(ctx context.Context) context.Context {
-	base := context.Background()
 	if ctx == nil {
-		return base
+		return detachedContext{}
 	}
 	attrs, _ := ctx.Value(contextAttrsKey{}).([]slog.Attr)
 	if len(attrs) == 0 {
-		return base
+		return detachedContext{}
 	}
 	cloned := append([]slog.Attr(nil), attrs...)
-	return context.WithValue(base, contextAttrsKey{}, cloned)
+	return detachedContext{attrs: cloned}
 }
 
 type contextHandler struct {

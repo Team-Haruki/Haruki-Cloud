@@ -18,6 +18,17 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type doneObservedContext struct {
+	context.Context
+	observed chan struct{}
+	once     sync.Once
+}
+
+func (c *doneObservedContext) Done() <-chan struct{} {
+	c.once.Do(func() { close(c.observed) })
+	return c.Context.Done()
+}
+
 func TestDBCardSkillFilterLoadsOneRegionIndex(t *testing.T) {
 	ctx := context.Background()
 	client := sekaienttest.Open(t, "sqlite3", fmt.Sprintf("file:provider_skill_bulk_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
@@ -393,14 +404,20 @@ func TestDBCardEpisodeBulkIndexSurvivesLeaderCancellation(t *testing.T) {
 	}
 
 	followerCtx, followerTrace := commandtrace.WithTrace(ctx)
+	followerWait := &doneObservedContext{Context: followerCtx, observed: make(chan struct{})}
 	followerResult := make(chan error, 1)
 	go func() {
-		episodes, err := provider.GetEpisodesByCardID(followerCtx, 1001)
+		episodes, err := provider.GetEpisodesByCardID(followerWait, 1001)
 		if err == nil && (len(episodes) != 1 || episodes[0].ID != 10001) {
 			err = fmt.Errorf("unexpected follower episodes: %+v", episodes)
 		}
 		followerResult <- err
 	}()
+	select {
+	case <-followerWait.observed:
+	case <-time.After(time.Second):
+		t.Fatal("follower did not start waiting for the shared episode index")
+	}
 	close(releaseQuery)
 	select {
 	case err := <-followerResult:
@@ -473,10 +490,16 @@ func TestDBCardWorldLinkIndexSurvivesLeaderCancellation(t *testing.T) {
 	}
 
 	followerCtx, followerTrace := commandtrace.WithTrace(ctx)
+	followerWait := &doneObservedContext{Context: followerCtx, observed: make(chan struct{})}
 	followerResult := make(chan bool, 1)
 	go func() {
-		followerResult <- provider.loadWorldLink3Cards(followerCtx)
+		followerResult <- provider.loadWorldLink3Cards(followerWait)
 	}()
+	select {
+	case <-followerWait.observed:
+	case <-time.After(time.Second):
+		t.Fatal("follower did not start waiting for the shared world link index")
+	}
 	close(releaseQuery)
 	select {
 	case loaded := <-followerResult:

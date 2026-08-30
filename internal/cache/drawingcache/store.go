@@ -77,25 +77,24 @@ CREATE TABLE IF NOT EXISTS image_cache_index (
 	expires_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_image_cache_expires_at ON image_cache_index(expires_at);
-CREATE INDEX IF NOT EXISTS idx_image_cache_scope ON image_cache_index(api_path, user_id);
 `
 	if _, err := db.Exec(ddl); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("create table image_cache_index failed: %w", err)
 	}
-	if err := ensureColumn(db, "image_cache_index", "api_path", "TEXT NOT NULL DEFAULT ''"); err != nil {
+	if err := ensureImageCacheColumn(db, "api_path"); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("ensure column api_path failed: %w", err)
 	}
-	if err := ensureColumn(db, "image_cache_index", "user_id", "TEXT NOT NULL DEFAULT ''"); err != nil {
+	if err := ensureImageCacheColumn(db, "user_id"); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("ensure column user_id failed: %w", err)
 	}
-	if err := ensureColumn(db, "image_cache_index", "last_used_at", "TEXT NOT NULL DEFAULT ''"); err != nil {
+	if err := ensureImageCacheColumn(db, "last_used_at"); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("ensure column last_used_at failed: %w", err)
 	}
-	if err := ensureColumn(db, "image_cache_index", "ttl_seconds", "INTEGER NOT NULL DEFAULT 0"); err != nil {
+	if err := ensureImageCacheColumn(db, "ttl_seconds"); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("ensure column ttl_seconds failed: %w", err)
 	}
@@ -107,8 +106,14 @@ CREATE INDEX IF NOT EXISTS idx_image_cache_scope ON image_cache_index(api_path, 
 	return db, nil
 }
 
-func ensureColumn(db *sql.DB, tableName, columnName, columnDDL string) error {
-	rows, err := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", tableName))
+func ensureImageCacheColumn(db *sql.DB, columnName string) error {
+	switch columnName {
+	case "api_path", "user_id", "last_used_at", "ttl_seconds":
+	default:
+		return fmt.Errorf("unsupported image cache column %q", columnName)
+	}
+
+	rows, err := db.Query(`PRAGMA table_info(image_cache_index)`)
 	if err != nil {
 		return err
 	}
@@ -134,7 +139,16 @@ func ensureColumn(db *sql.DB, tableName, columnName, columnDDL string) error {
 		return err
 	}
 
-	_, err = db.Exec(fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", tableName, columnName, columnDDL))
+	switch columnName {
+	case "api_path":
+		_, err = db.Exec(`ALTER TABLE image_cache_index ADD COLUMN api_path TEXT NOT NULL DEFAULT ''`)
+	case "user_id":
+		_, err = db.Exec(`ALTER TABLE image_cache_index ADD COLUMN user_id TEXT NOT NULL DEFAULT ''`)
+	case "last_used_at":
+		_, err = db.Exec(`ALTER TABLE image_cache_index ADD COLUMN last_used_at TEXT NOT NULL DEFAULT ''`)
+	case "ttl_seconds":
+		_, err = db.Exec(`ALTER TABLE image_cache_index ADD COLUMN ttl_seconds INTEGER NOT NULL DEFAULT 0`)
+	}
 	return err
 }
 

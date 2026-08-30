@@ -5,6 +5,14 @@ haruki-server
 
 # Config with real secrets (mount at runtime instead)
 haruki-cloud.yaml
+.env
+.env.*
+!.env.example
+
+# Local data and analysis output
+backups/
+coverage.out
+coverage.*
 
 # Git
 .git

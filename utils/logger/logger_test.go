@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 var errWriterFailed = errors.New("write failed")
@@ -105,6 +106,46 @@ func TestLoggerUsesCanonicalStructuredFormat(t *testing.T) {
 	}
 	if !strings.HasSuffix(line, "\n") {
 		t.Fatalf("log line must end in a newline: %q", line)
+	}
+}
+
+func TestDetachedContextRetainsOnlyLogAttributes(t *testing.T) {
+	type requestValueKey struct{}
+
+	parent, cancel := context.WithTimeout(context.WithValue(
+		context.Background(),
+		requestValueKey{},
+		"request body",
+	), time.Hour)
+	ctx := WithContextAttrs(parent, slog.String("request_id", "req-detached"))
+	detached := DetachedContext(ctx)
+	cancel()
+
+	if detached.Err() != nil {
+		t.Fatalf("detached context inherited cancellation: %v", detached.Err())
+	}
+	if detached.Done() != nil {
+		t.Fatal("detached context must not retain the parent cancellation channel")
+	}
+	if _, ok := detached.Deadline(); ok {
+		t.Fatal("detached context must not retain the parent deadline")
+	}
+	if got := detached.Value(requestValueKey{}); got != nil {
+		t.Fatalf("detached context retained a request value: %v", got)
+	}
+
+	var output bytes.Buffer
+	NewLogger("detached-test", "INFO", &output).InfoContext(detached, "queued log")
+	if got := output.String(); !strings.Contains(got, "request_id=req-detached") {
+		t.Fatalf("detached context lost log attributes: %q", got)
+	}
+}
+
+func TestDetachedContextAcceptsNil(t *testing.T) {
+	var nilContext context.Context
+	ctx := DetachedContext(nilContext)
+	if ctx == nil || ctx.Err() != nil || ctx.Done() != nil {
+		t.Fatalf("DetachedContext(nil) returned an invalid context: %#v", ctx)
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"haruki-cloud/utils/logger"
@@ -134,16 +133,32 @@ LIMIT ?
 		return 0, nil
 	}
 
-	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(deletableKeys)), ",")
-	args := make([]any, 0, len(deletableKeys))
-	for _, key := range deletableKeys {
-		args = append(args, key)
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("begin expired record deletion failed: %w", err)
 	}
+	deletionCommitted := false
+	defer func() {
+		if !deletionCommitted {
+			_ = tx.Rollback()
+		}
+	}()
 
-	delSQL := fmt.Sprintf("DELETE FROM image_cache_index WHERE sha256_key IN (%s)", placeholders)
-	if _, err := db.Exec(delSQL, args...); err != nil {
-		return 0, fmt.Errorf("delete expired records failed: %w", err)
+	deleteStmt, err := tx.Prepare(`DELETE FROM image_cache_index WHERE sha256_key = ?`)
+	if err != nil {
+		return 0, fmt.Errorf("prepare expired record deletion failed: %w", err)
 	}
+	defer func() { _ = deleteStmt.Close() }()
+
+	for _, key := range deletableKeys {
+		if _, err := deleteStmt.Exec(key); err != nil {
+			return 0, fmt.Errorf("delete expired record failed: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit expired record deletion failed: %w", err)
+	}
+	deletionCommitted = true
 	return len(deletableKeys), nil
 }
 

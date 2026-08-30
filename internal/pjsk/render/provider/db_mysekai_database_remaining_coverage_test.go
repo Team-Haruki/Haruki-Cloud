@@ -233,6 +233,51 @@ func TestDBMySekaiColumnAndDatabaseProviderHelpers(t *testing.T) {
 	}
 }
 
+func TestDBMySekaiQueryWhitelistsMatchFileMapping(t *testing.T) {
+	if len(mysekaiPostgresTableQueries) != len(mysekaiFileToTable) || len(mysekaiQuestionMarkTableQueries) != len(mysekaiFileToTable) {
+		t.Fatalf(
+			"query whitelist sizes: postgres=%d question=%d mappings=%d",
+			len(mysekaiPostgresTableQueries),
+			len(mysekaiQuestionMarkTableQueries),
+			len(mysekaiFileToTable),
+		)
+	}
+
+	mappedTables := make(map[string]struct{}, len(mysekaiFileToTable))
+	for filename, table := range mysekaiFileToTable {
+		mappedTables[table] = struct{}{}
+		postgresQuery, postgresOK := mysekaiPostgresTableQueries[table]
+		questionQuery, questionOK := mysekaiQuestionMarkTableQueries[table]
+		if !postgresOK || !questionOK {
+			t.Errorf("file mapping %q references table %q without both fixed queries", filename, table)
+			continue
+		}
+		wantPostgres := `SELECT * FROM "` + table + `" WHERE server_region = $1`
+		wantQuestion := `SELECT * FROM ` + table + ` WHERE server_region = ?`
+		if postgresQuery != wantPostgres || questionQuery != wantQuestion {
+			t.Errorf("fixed queries for table %q = (%q, %q), want (%q, %q)", table, postgresQuery, questionQuery, wantPostgres, wantQuestion)
+		}
+	}
+	for table := range mysekaiPostgresTableQueries {
+		if _, ok := mappedTables[table]; !ok {
+			t.Errorf("Postgres query for unmapped table %q", table)
+		}
+	}
+	for table := range mysekaiQuestionMarkTableQueries {
+		if _, ok := mappedTables[table]; !ok {
+			t.Errorf("question-mark query for unmapped table %q", table)
+		}
+	}
+
+	injectedTable := `musics"; DROP TABLE musics; --`
+	if _, err := queryMySekaiTable(nil, "postgres", injectedTable, "jp"); err == nil {
+		t.Fatal("Postgres query accepted an unlisted table identifier")
+	}
+	if _, err := queryMySekaiTable(nil, "sqlite3", injectedTable, "jp"); err == nil {
+		t.Fatal("question-mark query accepted an unlisted table identifier")
+	}
+}
+
 func TestProviderAdapterBaseRemainingBranches(t *testing.T) {
 	p := openProviderBehaviorDB(t, "remaining_adapter")
 	base := NewProviderAdapterBase(p)

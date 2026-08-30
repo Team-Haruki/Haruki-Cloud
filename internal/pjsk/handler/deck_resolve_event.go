@@ -30,73 +30,106 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 	if err := resolveDeckEventAndWorldBloomSelection(ctx, q, app, region); err != nil {
 		return err
 	}
-
-	if !isResolvedDeckWorldBloomFinale(q) {
-		q.ForcedLeaderCharacterID = nil
-		q.ForcedLeaderCharacterQuery = ""
+	if err := resolveDeckForcedLeaderSelection(ctx, q, app, region); err != nil {
+		return err
 	}
-	if q.ForcedLeaderCharacterID == nil && strings.TrimSpace(q.ForcedLeaderCharacterQuery) != "" {
-		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.ForcedLeaderCharacterQuery, "deck")
-		if err != nil {
-			return err
-		}
-		q.ForcedLeaderCharacterID = drawing.IntPtr(charID)
-		q.ForcedLeaderCharacterQuery = ""
+	applyDeckSimulatedFinaleLeader(q)
+	if err := resolveDeckWorldBloomCharacterQuery(ctx, q, app, region); err != nil {
+		return err
 	}
-	if isSimulatedDeckWorldBloomFinale(q) && q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
-		q.WorldBloomCharacterID = drawing.IntPtr(*q.ForcedLeaderCharacterID)
-		q.WorldBloomCharacterQuery = ""
-		if strings.TrimSpace(q.EventUnit) == "" {
-			q.EventUnit = resolveDeckCharacterUnit(*q.ForcedLeaderCharacterID)
-		}
+	if err := resolveDeckChallengeCharacterQuery(ctx, q, app, region); err != nil {
+		return err
 	}
-
-	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) != "" {
-		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.WorldBloomCharacterQuery, "deck")
-		if err != nil {
-			return err
-		} else {
-			q.WorldBloomCharacterID = drawing.IntPtr(charID)
-			q.WorldBloomCharacterQuery = ""
-			if strings.TrimSpace(q.EventUnit) == "" {
-				q.EventUnit = resolveDeckCharacterUnit(charID)
-			}
-		}
+	if err := resolveDeckFixedCharacterQueries(ctx, q, app, region); err != nil {
+		return err
 	}
-
-	if q.ChallengeLiveCharacterID == nil && strings.TrimSpace(q.ChallengeLiveCharacterQuery) != "" {
-		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.ChallengeLiveCharacterQuery, "deck")
-		if err != nil {
-			if strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
-				assignDeckFallbackMusicQuery(q, q.ChallengeLiveCharacterQuery)
-				q.ChallengeLiveCharacterQuery = ""
-			} else {
-				return err
-			}
-		} else {
-			q.ChallengeLiveCharacterID = drawing.IntPtr(charID)
-			q.ChallengeLiveCharacterQuery = ""
-		}
-	}
-
-	if len(q.FixedCharacterQueries) > 0 {
-		for _, raw := range q.FixedCharacterQueries {
-			charID, err := resolveGameCharacterIDByQuery(ctx, app, region, raw, "deck")
-			if err != nil {
-				return err
-			}
-			q.FixedCharacters = append(q.FixedCharacters, charID)
-		}
-		q.FixedCharacterQueries = nil
-	}
-	if isSimulatedDeckWorldBloomFinale(q) && q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
-		q.FixedCharacters = prependDeckUniqueCharacter(q.FixedCharacters, *q.ForcedLeaderCharacterID)
-	}
-
+	applyDeckSimulatedFinaleFixedLeader(q)
 	if err := validateDeckCharacterIDs(q.FixedCharacters); err != nil {
 		return err
 	}
 	return nil
+}
+
+func resolveDeckForcedLeaderSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
+	if !isResolvedDeckWorldBloomFinale(q) {
+		q.ForcedLeaderCharacterID = nil
+		q.ForcedLeaderCharacterQuery = ""
+		return nil
+	}
+	if q.ForcedLeaderCharacterID != nil || strings.TrimSpace(q.ForcedLeaderCharacterQuery) == "" {
+		return nil
+	}
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.ForcedLeaderCharacterQuery, "deck")
+	if err != nil {
+		return err
+	}
+	q.ForcedLeaderCharacterID = drawing.IntPtr(charID)
+	q.ForcedLeaderCharacterQuery = ""
+	return nil
+}
+
+func applyDeckSimulatedFinaleLeader(q *deck.AutoQuery) {
+	if !isSimulatedDeckWorldBloomFinale(q) || q.ForcedLeaderCharacterID == nil || *q.ForcedLeaderCharacterID <= 0 {
+		return
+	}
+	charID := *q.ForcedLeaderCharacterID
+	q.WorldBloomCharacterID = drawing.IntPtr(charID)
+	q.WorldBloomCharacterQuery = ""
+	if strings.TrimSpace(q.EventUnit) == "" {
+		q.EventUnit = resolveDeckCharacterUnit(charID)
+	}
+}
+
+func resolveDeckWorldBloomCharacterQuery(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
+	if q.WorldBloomCharacterID != nil || strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
+		return nil
+	}
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.WorldBloomCharacterQuery, "deck")
+	if err != nil {
+		return err
+	}
+	q.WorldBloomCharacterID = drawing.IntPtr(charID)
+	q.WorldBloomCharacterQuery = ""
+	if strings.TrimSpace(q.EventUnit) == "" {
+		q.EventUnit = resolveDeckCharacterUnit(charID)
+	}
+	return nil
+}
+
+func resolveDeckChallengeCharacterQuery(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
+	if q.ChallengeLiveCharacterID != nil || strings.TrimSpace(q.ChallengeLiveCharacterQuery) == "" {
+		return nil
+	}
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, q.ChallengeLiveCharacterQuery, "deck")
+	if err == nil {
+		q.ChallengeLiveCharacterID = drawing.IntPtr(charID)
+		q.ChallengeLiveCharacterQuery = ""
+		return nil
+	}
+	if strings.TrimSpace(q.MusicQuery) == "" && isCharacterNotFoundError(err) {
+		assignDeckFallbackMusicQuery(q, q.ChallengeLiveCharacterQuery)
+		q.ChallengeLiveCharacterQuery = ""
+		return nil
+	}
+	return err
+}
+
+func resolveDeckFixedCharacterQueries(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
+	for _, raw := range q.FixedCharacterQueries {
+		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, raw, "deck")
+		if err != nil {
+			return err
+		}
+		q.FixedCharacters = append(q.FixedCharacters, charID)
+	}
+	q.FixedCharacterQueries = nil
+	return nil
+}
+
+func applyDeckSimulatedFinaleFixedLeader(q *deck.AutoQuery) {
+	if isSimulatedDeckWorldBloomFinale(q) && q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
+		q.FixedCharacters = prependDeckUniqueCharacter(q.FixedCharacters, *q.ForcedLeaderCharacterID)
+	}
 }
 
 func isSimulatedDeckWorldBloomFinale(q *deck.AutoQuery) bool {
@@ -138,168 +171,237 @@ func prependDeckUniqueCharacter(characters []int, characterID int) []int {
 }
 
 func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
-	if q == nil {
+	resolver := deckEventSelectionResolver{ctx: ctx, query: q, app: app, region: region}
+	return resolver.resolve()
+}
+
+type deckEventSelectionResolver struct {
+	ctx       context.Context
+	query     *deck.AutoQuery
+	app       *renderapp.App
+	region    renderregion.Value
+	eventID   int
+	eventInfo *sekaidb.Event
+	chapters  []*sekaidb.Worldbloom
+}
+
+func (r *deckEventSelectionResolver) resolve() error {
+	if r.query == nil {
 		return nil
 	}
+	if stop, err := r.resolveFinaleSelection(); stop || err != nil {
+		return err
+	}
+	if r.app == nil {
+		return nil
+	}
+	if stop, err := r.resolveTurnSelection(); stop || err != nil {
+		return err
+	}
+	if r.hasStandaloneSimulationSelection() {
+		return nil
+	}
+	if stop, err := r.ensureEventSelection(); stop || err != nil {
+		return err
+	}
+	if stop, err := r.loadEvent(); stop || err != nil {
+		return err
+	}
+	if !strings.EqualFold(r.eventInfo.EventType, "world_bloom") {
+		return r.resolveNonWorldBloom()
+	}
+	return r.resolveWorldBloom()
+}
+
+func (r *deckEventSelectionResolver) resolveFinaleSelection() (bool, error) {
+	q := r.query
 	if q.WorldBloomFinaleTurn != nil && *q.WorldBloomFinaleTurn > 0 {
 		turn := *q.WorldBloomFinaleTurn
-		eventInfo, err := resolveDeckWorldBloomFinaleEventByTurn(ctx, app, region, turn)
+		eventInfo, err := resolveDeckWorldBloomFinaleEventByTurn(r.ctx, r.app, r.region, turn)
 		if err != nil {
 			var futureTurnErr *deckFutureWorldBloomFinaleTurnError
 			if errors.As(err, &futureTurnErr) && shouldKeepDeckWorldBloomSimulationSelection(q) {
-				return prepareDeckWorldBloomFinaleSimulation(q, turn)
+				return true, prepareDeckWorldBloomFinaleSimulation(q, turn)
 			}
-			return err
+			return true, err
 		}
 		q.EventID = drawing.IntPtr(int(eventInfo.GameID))
 		q.WorldBloomFinaleTurn = nil
 		q.MetadataWorldBloomFinale = true
 	}
-	if isResolvedDeckWorldBloomFinale(q) {
-		normalizeDeckWorldBloomFinaleSelection(q)
-		return nil
+	if !isResolvedDeckWorldBloomFinale(q) {
+		return false, nil
 	}
+	normalizeDeckWorldBloomFinaleSelection(q)
+	return true, nil
+}
 
-	if app == nil {
-		return nil
+func (r *deckEventSelectionResolver) resolveTurnSelection() (bool, error) {
+	q := r.query
+	if q.WorldBloomEventTurn == nil || *q.WorldBloomEventTurn <= 0 {
+		return false, nil
 	}
+	turn := *q.WorldBloomEventTurn
+	if err := resolveDeckWorldBloomTurnCharacterSelection(r.ctx, q, r.app, r.region); err != nil {
+		return true, err
+	}
+	eventInfo, err := resolveDeckWorldBloomEventByTurnSelection(r.ctx, r.app, r.region, q)
+	if err != nil {
+		var futureTurnErr *deckFutureWorldBloomTurnError
+		if errors.As(err, &futureTurnErr) && shouldKeepDeckWorldBloomSimulationSelection(q) {
+			return true, nil
+		}
+		return true, err
+	}
+	q.EventID = drawing.IntPtr(int(eventInfo.GameID))
+	q.MetadataWorldBloomEventTurn = drawing.IntPtr(turn)
+	q.WorldBloomEventTurn = nil
+	return false, nil
+}
 
-	if q.WorldBloomEventTurn != nil && *q.WorldBloomEventTurn > 0 {
-		turn := *q.WorldBloomEventTurn
-		if err := resolveDeckWorldBloomTurnCharacterSelection(ctx, q, app, region); err != nil {
-			return err
-		}
-		eventInfo, err := resolveDeckWorldBloomEventByTurnSelection(ctx, app, region, q)
-		if err != nil {
-			var futureTurnErr *deckFutureWorldBloomTurnError
-			if errors.As(err, &futureTurnErr) && shouldKeepDeckWorldBloomSimulationSelection(q) {
-				return nil
-			}
-			return err
-		}
+func (r *deckEventSelectionResolver) hasStandaloneSimulationSelection() bool {
+	q := r.query
+	return !hasPendingDeckWorldBloomSelection(q) && (strings.TrimSpace(q.EventUnit) != "" || strings.TrimSpace(q.EventAttr) != "")
+}
+
+func (r *deckEventSelectionResolver) ensureEventSelection() (bool, error) {
+	q := r.query
+	if q.EventID != nil && *q.EventID > 0 {
+		return false, nil
+	}
+	if !shouldResolveDeckEventByRecommendType(q.RecommendType) {
+		return true, nil
+	}
+	eventInfo, err := pickDeckAutoEvent(r.ctx, r.app, r.region, q.RecommendType)
+	if err == nil && eventInfo != nil {
 		q.EventID = drawing.IntPtr(int(eventInfo.GameID))
-		q.MetadataWorldBloomEventTurn = drawing.IntPtr(turn)
-		q.WorldBloomEventTurn = nil
+		return false, nil
 	}
-	if !hasPendingDeckWorldBloomSelection(q) && (strings.TrimSpace(q.EventUnit) != "" || strings.TrimSpace(q.EventAttr) != "") {
-		return nil
+	if shouldFallbackDeckEventRecommendToNoEvent(q) {
+		clearDeckAutoEventSelection(q)
+		q.RecommendType = "no_event"
 	}
+	return true, nil
+}
 
-	if q.EventID == nil || *q.EventID <= 0 {
-		if !shouldResolveDeckEventByRecommendType(q.RecommendType) {
-			return nil
-		}
-		eventInfo, err := pickDeckAutoEvent(ctx, app, region, q.RecommendType)
-		if err != nil || eventInfo == nil {
-			if shouldFallbackDeckEventRecommendToNoEvent(q) {
-				clearDeckAutoEventSelection(q)
-				q.RecommendType = "no_event"
-			}
-			return nil
-		}
-		q.EventID = drawing.IntPtr(int(eventInfo.GameID))
-	}
-
-	eventID := *q.EventID
-	eventInfo, err := queryDeckEventByID(ctx, app, region, eventID)
+func (r *deckEventSelectionResolver) loadEvent() (bool, error) {
+	r.eventID = *r.query.EventID
+	eventInfo, err := queryDeckEventByID(r.ctx, r.app, r.region, r.eventID)
 	if err != nil {
 		if sekaidb.IsNotFound(err) {
-			return nil
+			return true, nil
 		}
-		return fmt.Errorf("query deck event %d failed: %w", eventID, err)
+		return true, fmt.Errorf("query deck event %d failed: %w", r.eventID, err)
 	}
-	if err := ensureDeckEventUnlocked(ctx, app, region, eventInfo); err != nil {
-		return err
+	if err := ensureDeckEventUnlocked(r.ctx, r.app, r.region, eventInfo); err != nil {
+		return true, err
 	}
+	r.eventInfo = eventInfo
+	return false, nil
+}
 
-	if !strings.EqualFold(eventInfo.EventType, "world_bloom") {
-		if q.WorldBloomCharacterQuery != "" && isDeckWorldBloomSelectorQuery(q.WorldBloomCharacterQuery) {
-			return fmt.Errorf("活动 %s-%d 不是WL活动，无法指定章节", strings.ToUpper(region.String()), eventID)
-		}
-		q.WorldBloomCharacterID = nil
-		if q.WorldBloomCharacterQuery != "" && isDeckWorldBloomSelectorQuery(q.WorldBloomCharacterQuery) {
-			q.WorldBloomCharacterQuery = ""
-		}
-		return nil
+func (r *deckEventSelectionResolver) resolveNonWorldBloom() error {
+	q := r.query
+	if q.WorldBloomCharacterQuery != "" && isDeckWorldBloomSelectorQuery(q.WorldBloomCharacterQuery) {
+		return fmt.Errorf("活动 %s-%d 不是WL活动，无法指定章节", strings.ToUpper(r.region.String()), r.eventID)
 	}
+	q.WorldBloomCharacterID = nil
+	return nil
+}
 
-	chapters, err := queryDeckWorldBloomChapters(ctx, app, region, eventID)
+func (r *deckEventSelectionResolver) resolveWorldBloom() error {
+	chapters, err := queryDeckWorldBloomChapters(r.ctx, r.app, r.region, r.eventID)
 	if err != nil {
 		return err
 	}
+	r.chapters = chapters
 	if deckWorldBloomHasFinaleChapter(chapters) {
-		q.MetadataWorldBloomFinale = true
-		normalizeDeckWorldBloomFinaleSelection(q)
+		r.query.MetadataWorldBloomFinale = true
+		normalizeDeckWorldBloomFinaleSelection(r.query)
 		return nil
 	}
+	if err := r.tryMusicCharacterSelections(); err != nil {
+		return err
+	}
+	if r.query.WorldBloomCharacterID != nil && *r.query.WorldBloomCharacterID > 0 {
+		return r.resolveCharacterID()
+	}
+	if resolved, err := r.resolveCharacterQuery(); resolved || err != nil {
+		return err
+	}
+	return r.selectDefaultChapter()
+}
 
-	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
-		if err := tryResolveDeckMusicQueryAsWorldBloomCharacter(ctx, q, app, region, chapters); err != nil {
+func (r *deckEventSelectionResolver) tryMusicCharacterSelections() error {
+	q := r.query
+	if hasNoDeckWorldBloomCharacter(q) {
+		if err := tryResolveDeckMusicQueryAsWorldBloomCharacter(r.ctx, q, r.app, r.region, r.chapters); err != nil {
 			return err
 		}
 	}
-
-	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
-		if err := tryResolveDeckMusicCompareQueryAsWorldBloomCharacter(ctx, q, app, region, chapters); err != nil {
+	if hasNoDeckWorldBloomCharacter(q) {
+		if err := tryResolveDeckMusicCompareQueryAsWorldBloomCharacter(r.ctx, q, r.app, r.region, r.chapters); err != nil {
 			return err
 		}
 	}
-
-	if q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == "" {
-		if err := tryResolveDeckMusicQueryPrefixAsWorldBloomCharacter(ctx, q, app, region, chapters); err != nil {
-			return err
-		}
+	if hasNoDeckWorldBloomCharacter(q) {
+		return tryResolveDeckMusicQueryPrefixAsWorldBloomCharacter(r.ctx, q, r.app, r.region, r.chapters)
 	}
+	return nil
+}
 
-	if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
-		if !trackerWorldBloomHasCharacter(chapters, *q.WorldBloomCharacterID) {
-			return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(region.String()), eventID, *q.WorldBloomCharacterID)
-		}
-		ensureDeckWorldBloomEventTurnMetadata(ctx, app, region, eventInfo, chapters, q)
-		return nil
+func hasNoDeckWorldBloomCharacter(q *deck.AutoQuery) bool {
+	return q.WorldBloomCharacterID == nil && strings.TrimSpace(q.WorldBloomCharacterQuery) == ""
+}
+
+func (r *deckEventSelectionResolver) resolveCharacterID() error {
+	charID := *r.query.WorldBloomCharacterID
+	if !trackerWorldBloomHasCharacter(r.chapters, charID) {
+		return fmt.Errorf("活动 %s-%d 没有角色 %d 的 World Link 章节", strings.ToUpper(r.region.String()), r.eventID, charID)
 	}
+	ensureDeckWorldBloomEventTurnMetadata(r.ctx, r.app, r.region, r.eventInfo, r.chapters, r.query)
+	return nil
+}
 
+func (r *deckEventSelectionResolver) resolveCharacterQuery() (bool, error) {
+	q := r.query
 	query := strings.TrimSpace(q.WorldBloomCharacterQuery)
-	if query != "" {
-		chapter, err := resolveTrackerWorldBloomChapterSelection(ctx, app, region, eventInfo, chapters, query)
-		if err != nil {
-			if isCharacterNotFoundError(err) {
-				if strings.TrimSpace(q.MusicQuery) == "" {
-					assignDeckFallbackMusicQuery(q, query)
-				}
-				q.WorldBloomCharacterQuery = ""
-			} else {
-				return err
-			}
-		} else {
-			if chapter.GameCharacterID <= 0 {
-				return fmt.Errorf("活动 %s-%d 的 World Link 章节缺少角色信息", strings.ToUpper(region.String()), eventID)
-			}
-			charID := int(chapter.GameCharacterID)
-			q.WorldBloomCharacterID = drawing.IntPtr(charID)
-			q.WorldBloomCharacterQuery = ""
-			if strings.TrimSpace(q.EventUnit) == "" {
-				q.EventUnit = resolveDeckCharacterUnit(charID)
-			}
-			ensureDeckWorldBloomEventTurnMetadata(ctx, app, region, eventInfo, chapters, q)
-			return nil
+	if query == "" {
+		return false, nil
+	}
+	chapter, err := resolveTrackerWorldBloomChapterSelection(r.ctx, r.app, r.region, r.eventInfo, r.chapters, query)
+	if err != nil {
+		if !isCharacterNotFoundError(err) {
+			return true, err
 		}
+		if strings.TrimSpace(q.MusicQuery) == "" {
+			assignDeckFallbackMusicQuery(q, query)
+		}
+		q.WorldBloomCharacterQuery = ""
+		return false, nil
 	}
+	return true, r.applyChapterCharacter(chapter)
+}
 
-	chapter := pickDeckDefaultWorldBloomChapter(eventInfo, chapters)
+func (r *deckEventSelectionResolver) selectDefaultChapter() error {
+	chapter := pickDeckDefaultWorldBloomChapter(r.eventInfo, r.chapters)
 	if chapter == nil {
-		return missingDeckWorldBloomChapterError(q, eventID)
+		return missingDeckWorldBloomChapterError(r.query, r.eventID)
 	}
-	if chapter.GameCharacterID <= 0 {
-		return fmt.Errorf("活动 %s-%d 的 World Link 章节缺少角色信息", strings.ToUpper(region.String()), eventID)
-	}
+	return r.applyChapterCharacter(chapter)
+}
 
-	charID := int(chapter.GameCharacterID)
-	q.WorldBloomCharacterID = drawing.IntPtr(charID)
-	if strings.TrimSpace(q.EventUnit) == "" {
-		q.EventUnit = resolveDeckCharacterUnit(charID)
+func (r *deckEventSelectionResolver) applyChapterCharacter(chapter *sekaidb.Worldbloom) error {
+	if chapter.GameCharacterID <= 0 {
+		return fmt.Errorf("活动 %s-%d 的 World Link 章节缺少角色信息", strings.ToUpper(r.region.String()), r.eventID)
 	}
-	ensureDeckWorldBloomEventTurnMetadata(ctx, app, region, eventInfo, chapters, q)
+	charID := int(chapter.GameCharacterID)
+	r.query.WorldBloomCharacterID = drawing.IntPtr(charID)
+	r.query.WorldBloomCharacterQuery = ""
+	if strings.TrimSpace(r.query.EventUnit) == "" {
+		r.query.EventUnit = resolveDeckCharacterUnit(charID)
+	}
+	ensureDeckWorldBloomEventTurnMetadata(r.ctx, r.app, r.region, r.eventInfo, r.chapters, r.query)
 	return nil
 }
 
@@ -516,23 +618,13 @@ func tryResolveDeckMusicQueryPrefixAsWorldBloomCharacter(
 	}
 
 	for split := len(fields) - 1; split >= 1; split-- {
-		charQuery := strings.TrimSpace(strings.Join(fields[:split], " "))
-		musicQuery := strings.TrimSpace(strings.Join(fields[split:], " "))
-		if charQuery == "" || musicQuery == "" {
-			continue
-		}
-
-		charID, err := resolveGameCharacterIDByQuery(ctx, app, region, charQuery, "deck")
+		charID, musicQuery, matched, err := resolveDeckMusicPrefixCandidate(ctx, app, region, chapters, fields, split)
 		if err != nil {
-			if isCharacterNotFoundError(err) {
-				continue
-			}
 			return err
 		}
-		if !trackerWorldBloomHasCharacter(chapters, charID) {
+		if !matched {
 			continue
 		}
-
 		q.WorldBloomCharacterID = drawing.IntPtr(charID)
 		q.MusicQuery = musicQuery
 		if strings.TrimSpace(q.EventUnit) == "" {
@@ -542,6 +634,25 @@ func tryResolveDeckMusicQueryPrefixAsWorldBloomCharacter(
 	}
 
 	return nil
+}
+
+func resolveDeckMusicPrefixCandidate(ctx context.Context, app *renderapp.App, region renderregion.Value, chapters []*sekaidb.Worldbloom, fields []string, split int) (int, string, bool, error) {
+	charQuery := strings.TrimSpace(strings.Join(fields[:split], " "))
+	musicQuery := strings.TrimSpace(strings.Join(fields[split:], " "))
+	if charQuery == "" || musicQuery == "" {
+		return 0, "", false, nil
+	}
+	charID, err := resolveGameCharacterIDByQuery(ctx, app, region, charQuery, "deck")
+	if err != nil {
+		if isCharacterNotFoundError(err) {
+			return 0, "", false, nil
+		}
+		return 0, "", false, err
+	}
+	if !trackerWorldBloomHasCharacter(chapters, charID) {
+		return 0, "", false, nil
+	}
+	return charID, musicQuery, true, nil
 }
 
 func tryResolveDeckMusicCompareQueryAsWorldBloomCharacter(
@@ -637,54 +748,78 @@ func pickDeckAutoEvent(ctx context.Context, app *renderapp.App, region renderreg
 
 	now := time.Now().UnixMilli()
 	isJPEventFallback := region == renderregion.JP && strings.EqualFold(strings.TrimSpace(recommendType), "event")
-	var active *sekaidb.Event
-	var current *sekaidb.Event
-	var next *sekaidb.Event
-	var blockedNext *sekaidb.Event
+	candidates := deckAutoEventCandidates{ctx: ctx, app: app, region: region, dbEventIDs: dbEventIDs, now: now}
 	for _, eventInfo := range events {
-		if eventInfo == nil {
-			continue
-		}
-		if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
-			if active == nil || eventInfo.StartAt > active.StartAt {
-				active = eventInfo
-			}
-		}
-		if eventutil.IsRankingOpen(eventInfo.StartAt, eventInfo.AggregateAt, now) {
-			if current == nil || eventInfo.StartAt > current.StartAt {
-				current = eventInfo
-			}
-			continue
-		}
-		if eventInfo.StartAt > now {
-			if !isDeckFutureEventAvailable(ctx, app, region, eventInfo, dbEventIDs, now) {
-				if blockedNext == nil || eventInfo.StartAt < blockedNext.StartAt {
-					blockedNext = eventInfo
-				}
-				continue
-			}
-			if next == nil || eventInfo.StartAt < next.StartAt {
-				next = eventInfo
-			}
-		}
+		candidates.observe(eventInfo)
 	}
-	if current != nil {
-		return current, nil
+	return candidates.selectEvent(isJPEventFallback)
+}
+
+type deckAutoEventCandidates struct {
+	ctx         context.Context
+	app         *renderapp.App
+	region      renderregion.Value
+	dbEventIDs  map[int]struct{}
+	now         int64
+	active      *sekaidb.Event
+	current     *sekaidb.Event
+	next        *sekaidb.Event
+	blockedNext *sekaidb.Event
+}
+
+func (c *deckAutoEventCandidates) observe(eventInfo *sekaidb.Event) {
+	if eventInfo == nil {
+		return
 	}
-	if next != nil {
-		return next, nil
+	if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, c.now) {
+		c.active = laterDeckEvent(c.active, eventInfo)
+	}
+	if eventutil.IsRankingOpen(eventInfo.StartAt, eventInfo.AggregateAt, c.now) {
+		c.current = laterDeckEvent(c.current, eventInfo)
+		return
+	}
+	if eventInfo.StartAt > c.now {
+		c.observeFuture(eventInfo)
+	}
+}
+
+func (c *deckAutoEventCandidates) observeFuture(eventInfo *sekaidb.Event) {
+	if isDeckFutureEventAvailable(c.ctx, c.app, c.region, eventInfo, c.dbEventIDs, c.now) {
+		c.next = earlierDeckEvent(c.next, eventInfo)
+		return
+	}
+	c.blockedNext = earlierDeckEvent(c.blockedNext, eventInfo)
+}
+
+func laterDeckEvent(current *sekaidb.Event, candidate *sekaidb.Event) *sekaidb.Event {
+	if current == nil || candidate.StartAt > current.StartAt {
+		return candidate
+	}
+	return current
+}
+
+func earlierDeckEvent(current *sekaidb.Event, candidate *sekaidb.Event) *sekaidb.Event {
+	if current == nil || candidate.StartAt < current.StartAt {
+		return candidate
+	}
+	return current
+}
+
+func (c deckAutoEventCandidates) selectEvent(isJPEventFallback bool) (*sekaidb.Event, error) {
+	if c.current != nil {
+		return c.current, nil
+	}
+	if c.next != nil {
+		return c.next, nil
 	}
 	if isJPEventFallback {
 		return nil, nil
 	}
-	if active != nil {
-		if blockedNext != nil {
-			return nil, &deckEventLockedError{EventID: int(blockedNext.GameID)}
-		}
-		return active, nil
+	if c.blockedNext != nil {
+		return nil, &deckEventLockedError{EventID: int(c.blockedNext.GameID)}
 	}
-	if blockedNext != nil {
-		return nil, &deckEventLockedError{EventID: int(blockedNext.GameID)}
+	if c.active != nil {
+		return c.active, nil
 	}
 	return nil, fmt.Errorf("当前没有可用活动")
 }
@@ -714,30 +849,35 @@ func pickDeckDefaultWorldBloomChapter(eventInfo *sekaidb.Event, chapters []*seka
 
 	now := time.Now().UnixMilli()
 	if now > eventInfo.AggregateAt {
-		var last *sekaidb.Worldbloom
-		for _, chapter := range chapters {
-			if chapter == nil {
-				continue
-			}
-			if last == nil || chapter.ChapterStartAt > last.ChapterStartAt {
-				last = chapter
-			}
-		}
-		return last
+		return latestDeckWorldBloomChapter(chapters)
 	}
 	if now < eventInfo.StartAt {
-		var first *sekaidb.Worldbloom
-		for _, chapter := range chapters {
-			if chapter == nil {
-				continue
-			}
-			if first == nil || chapter.ChapterStartAt < first.ChapterStartAt {
-				first = chapter
-			}
-		}
-		return first
+		return earliestDeckWorldBloomChapter(chapters)
 	}
+	return activeDeckWorldBloomChapter(chapters, now)
+}
 
+func latestDeckWorldBloomChapter(chapters []*sekaidb.Worldbloom) *sekaidb.Worldbloom {
+	var latest *sekaidb.Worldbloom
+	for _, chapter := range chapters {
+		if chapter != nil && (latest == nil || chapter.ChapterStartAt > latest.ChapterStartAt) {
+			latest = chapter
+		}
+	}
+	return latest
+}
+
+func earliestDeckWorldBloomChapter(chapters []*sekaidb.Worldbloom) *sekaidb.Worldbloom {
+	var earliest *sekaidb.Worldbloom
+	for _, chapter := range chapters {
+		if chapter != nil && (earliest == nil || chapter.ChapterStartAt < earliest.ChapterStartAt) {
+			earliest = chapter
+		}
+	}
+	return earliest
+}
+
+func activeDeckWorldBloomChapter(chapters []*sekaidb.Worldbloom, now int64) *sekaidb.Worldbloom {
 	var selected *sekaidb.Worldbloom
 	for _, chapter := range chapters {
 		if chapter == nil {

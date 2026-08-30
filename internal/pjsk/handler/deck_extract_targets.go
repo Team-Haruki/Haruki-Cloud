@@ -22,101 +22,99 @@ func extractDeckFixedTargets(args string, params *deckAutoQueryParams) (string, 
 	if len(fields) == 0 {
 		return "", fmt.Errorf("固定卡牌或固定角色不能为空")
 	}
-
-	fixedCards := make([]int, 0, len(fields))
-	fixedCharacters := make([]int, 0, len(fields))
-	fixedCharacterQueries := make([]string, 0, len(fields))
+	targets := deckFixedTargets{
+		cards:            make([]int, 0, len(fields)),
+		characters:       make([]int, 0, len(fields)),
+		characterQueries: make([]string, 0, len(fields)),
+	}
 	for _, field := range fields {
-		token := strings.TrimLeft(strings.TrimSpace(field), "#")
-		if token == "" {
-			return "", fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
-		}
-		if value, err := strconv.Atoi(token); err == nil {
-			if value <= 0 {
-				return "", fmt.Errorf("固定卡牌ID必须为正整数")
-			}
-			fixedCards = append(fixedCards, value)
-			continue
-		}
-
-		charID, charQuery := resolveDeckCharacterToken(token)
-		if charID <= 0 {
-			if charQuery == "" {
-				return "", fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
-			}
-			fixedCharacterQueries = append(fixedCharacterQueries, charQuery)
-			continue
-		}
-		fixedCharacters = append(fixedCharacters, charID)
-	}
-	if len(fixedCards)+len(fixedCharacters)+len(fixedCharacterQueries) > 5 {
-		return "", fmt.Errorf("固定卡牌和固定角色总数不能超过5个")
-	}
-	if len(fixedCards) > 0 {
-		if err := validateDeckUniqueIDs(fixedCards, 5, "固定卡牌"); err != nil {
+		if err := targets.add(field); err != nil {
 			return "", err
 		}
 	}
-	if len(fixedCharacters) > 0 && len(fixedCharacterQueries) == 0 {
-		if err := validateDeckUniqueIDs(fixedCharacters, 5, "固定角色"); err != nil {
-			return "", err
-		}
+	if err := targets.validate(); err != nil {
+		return "", err
 	}
-	if len(fixedCards) == 0 && len(fixedCharacters) == 0 && len(fixedCharacterQueries) == 0 {
-		return "", fmt.Errorf("固定卡牌或固定角色不能为空")
-	}
-	if len(fixedCards) > 0 {
-		params.FixedCards = fixedCards
-	}
-	if len(fixedCharacters) > 0 {
-		params.FixedCharacters = fixedCharacters
-	}
-	if len(fixedCharacterQueries) > 0 {
-		params.FixedCharacterQueries = fixedCharacterQueries
-	}
+	targets.apply(params)
 	return strings.TrimSpace(prefix), nil
 }
 
-func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
-	if turn, remaining, ok := extractDeckWorldBloomFinaleTurn(args); ok {
-		if turn < 2 {
-			return "", onebot11.NewReplayError("终章从 wl2 开始，请使用 wl2 终章 或 wl3 终章")
-		}
-		params.WorldBloomFinaleTurn = intPtr(turn)
-		return extractDeckFinaleLeaderSelection(remaining, params)
-	}
+type deckFixedTargets struct {
+	cards            []int
+	characters       []int
+	characterQueries []string
+}
 
+func (t *deckFixedTargets) add(field string) error {
+	token := strings.TrimLeft(strings.TrimSpace(field), "#")
+	if token == "" {
+		return fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
+	}
+	if value, err := strconv.Atoi(token); err == nil {
+		if value <= 0 {
+			return fmt.Errorf("固定卡牌ID必须为正整数")
+		}
+		t.cards = append(t.cards, value)
+		return nil
+	}
+	charID, charQuery := resolveDeckCharacterToken(token)
+	if charID > 0 {
+		t.characters = append(t.characters, charID)
+		return nil
+	}
+	if charQuery == "" {
+		return fmt.Errorf("格式错误，#后面请填写卡牌ID或角色")
+	}
+	t.characterQueries = append(t.characterQueries, charQuery)
+	return nil
+}
+
+func (t deckFixedTargets) validate() error {
+	if len(t.cards)+len(t.characters)+len(t.characterQueries) > 5 {
+		return fmt.Errorf("固定卡牌和固定角色总数不能超过5个")
+	}
+	if len(t.cards) > 0 {
+		if err := validateDeckUniqueIDs(t.cards, 5, "固定卡牌"); err != nil {
+			return err
+		}
+	}
+	if len(t.characters) > 0 && len(t.characterQueries) == 0 {
+		return validateDeckUniqueIDs(t.characters, 5, "固定角色")
+	}
+	if len(t.cards)+len(t.characters)+len(t.characterQueries) == 0 {
+		return fmt.Errorf("固定卡牌或固定角色不能为空")
+	}
+	return nil
+}
+
+func (t deckFixedTargets) apply(params *deckAutoQueryParams) {
+	if len(t.cards) > 0 {
+		params.FixedCards = t.cards
+	}
+	if len(t.characters) > 0 {
+		params.FixedCharacters = t.characters
+	}
+	if len(t.characterQueries) > 0 {
+		params.FixedCharacterQueries = t.characterQueries
+	}
+}
+
+func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, error) {
+	if remaining, handled, err := applyDeckWorldBloomFinaleSelection(args, params); handled {
+		return remaining, err
+	}
 	if eventID, remaining := extractDeckExplicitEventID(args); eventID != nil {
 		return extractDeckExplicitEventSelection(remaining, eventID, params, trigger)
 	}
-
-	if attr, unit, remaining, partial := extractDeckSimulatedEvent(args); attr != "" && unit != "" {
-		params.EventAttr = attr
-		params.EventUnit = unit
-		return remaining, nil
-	} else if partial {
-		return "", onebot11.NewReplayError("使用方式:\n%s event123\n%s 团名 属性\n%s 角色名 wl1", trigger, trigger, trigger)
+	if remaining, handled, err := applyDeckSimulatedEventSelection(args, params, trigger); handled {
+		return remaining, err
 	}
-
 	if eventID, remaining := extractDeckEventID(args); eventID != nil {
 		return extractDeckExplicitEventSelection(remaining, eventID, params, trigger)
 	}
-
-	if turn, charID, charQuery, remaining, err := extractDeckSimulatedWorldBloom(args); err != nil {
-		return "", err
-	} else if turn > 0 && (charID > 0 || charQuery != "") {
-		params.WorldBloomEventTurn = intPtr(turn)
-		if charID > 0 {
-			params.WorldBloomCharacterID = intPtr(charID)
-			if params.EventUnit == "" {
-				params.EventUnit = deckCharacterUnit(charID)
-			}
-		} else {
-			params.WorldBloomCharacterQuery = charQuery
-		}
-		return remaining, nil
+	if remaining, handled, err := applyDeckSimulatedWorldBloomSelection(args, params); handled {
+		return remaining, err
 	}
-
 	if remaining, ok, err := extractDeckCurrentWorldBloomSelection(args, params, trigger); err != nil {
 		return "", err
 	} else if ok {
@@ -129,6 +127,56 @@ func extractDeckEventSelection(args string, params *deckAutoQueryParams, trigger
 	}
 
 	return normalizeDeckSpaces(args), nil
+}
+
+func applyDeckWorldBloomFinaleSelection(args string, params *deckAutoQueryParams) (string, bool, error) {
+	turn, remaining, ok := extractDeckWorldBloomFinaleTurn(args)
+	if !ok {
+		return "", false, nil
+	}
+	if turn < 2 {
+		return "", true, onebot11.NewReplayError("终章从 wl2 开始，请使用 wl2 终章 或 wl3 终章")
+	}
+	params.WorldBloomFinaleTurn = intPtr(turn)
+	remaining, err := extractDeckFinaleLeaderSelection(remaining, params)
+	return remaining, true, err
+}
+
+func applyDeckSimulatedEventSelection(args string, params *deckAutoQueryParams, trigger string) (string, bool, error) {
+	attr, unit, remaining, partial := extractDeckSimulatedEvent(args)
+	if attr != "" && unit != "" {
+		params.EventAttr = attr
+		params.EventUnit = unit
+		return remaining, true, nil
+	}
+	if partial {
+		return "", true, onebot11.NewReplayError("使用方式:\n%s event123\n%s 团名 属性\n%s 角色名 wl1", trigger, trigger, trigger)
+	}
+	return "", false, nil
+}
+
+func applyDeckSimulatedWorldBloomSelection(args string, params *deckAutoQueryParams) (string, bool, error) {
+	turn, charID, charQuery, remaining, err := extractDeckSimulatedWorldBloom(args)
+	if err != nil {
+		return "", true, err
+	}
+	if turn <= 0 || charID <= 0 && charQuery == "" {
+		return "", false, nil
+	}
+	params.WorldBloomEventTurn = intPtr(turn)
+	if charID > 0 {
+		applyDeckWorldBloomCharacterID(params, charID)
+	} else {
+		params.WorldBloomCharacterQuery = charQuery
+	}
+	return remaining, true, nil
+}
+
+func applyDeckWorldBloomCharacterID(params *deckAutoQueryParams, charID int) {
+	params.WorldBloomCharacterID = intPtr(charID)
+	if params.EventUnit == "" {
+		params.EventUnit = deckCharacterUnit(charID)
+	}
 }
 
 func extractDeckExplicitEventSelection(args string, eventID *int, params *deckAutoQueryParams, trigger string) (string, error) {
@@ -350,21 +398,32 @@ func extractDeckSimulatedEventUnit(args string) (string, string) {
 			return "", strings.TrimSpace(args)
 		}
 	case "school_refusal":
-		if idx := strings.Index(args, "25"); idx >= 0 {
-			left := ' '
-			right := ' '
-			if idx > 0 {
-				left = rune(args[idx-1])
-			}
-			if idx+2 < len(args) {
-				right = rune(args[idx+2])
-			}
-			if (left >= '0' && left <= '9') || (right >= '0' && right <= '9') || left == 't' || left == '活' {
-				return "", strings.TrimSpace(args)
-			}
+		if deckSchoolRefusalAliasIsAmbiguous(args) {
+			return "", strings.TrimSpace(args)
 		}
 	}
 	return unit, remaining
+}
+
+func deckSchoolRefusalAliasIsAmbiguous(args string) bool {
+	index := strings.Index(args, "25")
+	if index < 0 {
+		return false
+	}
+	left := deckByteRuneAt(args, index-1)
+	right := deckByteRuneAt(args, index+2)
+	return deckAliasAdjacentDigit(left) || deckAliasAdjacentDigit(right) || left == 't' || left == '活'
+}
+
+func deckByteRuneAt(value string, index int) rune {
+	if index < 0 || index >= len(value) {
+		return ' '
+	}
+	return rune(value[index])
+}
+
+func deckAliasAdjacentDigit(value rune) bool {
+	return value >= '0' && value <= '9'
 }
 
 func extractDeckAttribute(args string) (string, string) {

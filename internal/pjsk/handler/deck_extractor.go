@@ -55,36 +55,31 @@ func extractDeckAlgorithm(args string, params *deckAutoQueryParams) string {
 	fields := strings.Fields(args)
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
-		switch strings.ToLower(strings.TrimSpace(field)) {
-		case "dfs":
-			if params.Algorithm == "" {
-				params.Algorithm = "dfs"
-				continue
-			}
-		case "sa", "ga":
-			if params.Algorithm == "" {
-				params.Algorithm = "ga"
-				continue
-			}
-		case "dfs-ga", "dfs_ga", "dfsga", "ga_dfs", "gadfs":
-			if params.Algorithm == "" {
-				params.Algorithm = "dfs_ga"
-				continue
-			}
-		case "rl":
-			if params.Algorithm == "" {
-				params.Algorithm = "rl"
-				continue
-			}
-		case "all":
-			if params.Algorithm == "" {
-				params.Algorithm = "all"
-				continue
-			}
+		algorithm, ok := deckAlgorithmForField(field)
+		if ok && params.Algorithm == "" {
+			params.Algorithm = algorithm
+			continue
 		}
 		remaining = append(remaining, field)
 	}
 	return strings.TrimSpace(strings.Join(remaining, " "))
+}
+
+func deckAlgorithmForField(field string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(field)) {
+	case "dfs":
+		return "dfs", true
+	case "sa", "ga":
+		return "ga", true
+	case "dfs-ga", "dfs_ga", "dfsga", "ga_dfs", "gadfs":
+		return "dfs_ga", true
+	case "rl":
+		return "rl", true
+	case "all":
+		return "all", true
+	default:
+		return "", false
+	}
 }
 
 func extractDeckLiveType(args string, params *deckAutoQueryParams) string {
@@ -133,37 +128,71 @@ func extractDeckRandomStrategies(args string, params *deckAutoQueryParams) (stri
 func extractDeckMultiliveOptions(args string, params *deckAutoQueryParams) (string, error) {
 	fields := strings.Fields(args)
 	remaining := make([]string, 0, len(fields))
+	extractor := deckMultiliveOptionExtractor{fields: fields, params: params}
 	for idx := 0; idx < len(fields); idx++ {
-		if value, consumed, ok, err := extractDeckKeywordNumberFromFields(fields, idx, deckTeammatePowerKeywords, parseMusicBoardLargeNumber); ok {
-			if err != nil {
-				return "", fmt.Errorf("无法解析指定的队友综合力")
-			}
-			params.MultiLiveTeammatePower = intPtr(value)
-			idx += consumed - 1
-			continue
+		consumed, matched, err := extractor.apply(idx)
+		if err != nil {
+			return "", err
 		}
-		if value, consumed, ok, err := extractDeckKeywordNumberFromFields(fields, idx, deckTeammateScoreUpKeywords, parseDeckInt); ok {
-			if err != nil {
-				return "", fmt.Errorf("无法解析指定的队友实效")
-			}
-			params.MultiLiveTeammateScoreUp = intPtr(value)
-			idx += consumed - 1
-			continue
-		}
-		if value, consumed, ok, err := extractDeckSkillLowerBound(fields, idx); ok {
-			if err != nil {
-				return "", fmt.Errorf("无法解析指定的实效下限")
-			}
-			params.MultiLiveScoreUpLowerBound = floart64Ptr(float64(value))
-			// Match Lunabot semantics: lower-bound syntax does not change the
-			// ranking target, but it does override teammate score-up.
-			params.MultiLiveTeammateScoreUp = intPtr(value)
+		if matched {
 			idx += consumed - 1
 			continue
 		}
 		remaining = append(remaining, fields[idx])
 	}
 	return strings.TrimSpace(strings.Join(remaining, " ")), nil
+}
+
+type deckMultiliveOptionExtractor struct {
+	fields []string
+	params *deckAutoQueryParams
+}
+
+func (e deckMultiliveOptionExtractor) apply(index int) (int, bool, error) {
+	if consumed, matched, err := e.applyTeammatePower(index); matched {
+		return consumed, true, err
+	}
+	if consumed, matched, err := e.applyTeammateScoreUp(index); matched {
+		return consumed, true, err
+	}
+	return e.applySkillLowerBound(index)
+}
+
+func (e deckMultiliveOptionExtractor) applyTeammatePower(index int) (int, bool, error) {
+	value, consumed, matched, err := extractDeckKeywordNumberFromFields(e.fields, index, deckTeammatePowerKeywords, parseMusicBoardLargeNumber)
+	if !matched {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, true, fmt.Errorf("无法解析指定的队友综合力")
+	}
+	e.params.MultiLiveTeammatePower = intPtr(value)
+	return consumed, true, nil
+}
+
+func (e deckMultiliveOptionExtractor) applyTeammateScoreUp(index int) (int, bool, error) {
+	value, consumed, matched, err := extractDeckKeywordNumberFromFields(e.fields, index, deckTeammateScoreUpKeywords, parseDeckInt)
+	if !matched {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, true, fmt.Errorf("无法解析指定的队友实效")
+	}
+	e.params.MultiLiveTeammateScoreUp = intPtr(value)
+	return consumed, true, nil
+}
+
+func (e deckMultiliveOptionExtractor) applySkillLowerBound(index int) (int, bool, error) {
+	value, consumed, matched, err := extractDeckSkillLowerBound(e.fields, index)
+	if !matched {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, true, fmt.Errorf("无法解析指定的实效下限")
+	}
+	e.params.MultiLiveScoreUpLowerBound = floart64Ptr(float64(value))
+	e.params.MultiLiveTeammateScoreUp = intPtr(value)
+	return consumed, true, nil
 }
 
 func extractDeckSkillLowerBound(fields []string, index int) (int, int, bool, error) {
@@ -261,29 +290,42 @@ func parseDeckAreaItemFields(fields []string, index int) (int, int, bool) {
 	if level, ok := parseDeckAreaItemToken(field); ok {
 		return level, 1, true
 	}
-
 	for _, keyword := range deckAreaItemKeywords {
-		keywordLower := strings.ToLower(keyword)
-		switch {
-		case strings.Contains(field, keywordLower):
-			raw := strings.TrimSpace(strings.Replace(field, keywordLower, "", 1))
-			raw = strings.TrimSuffix(raw, "级")
-			if level, err := strconv.Atoi(strings.TrimSpace(raw)); err == nil && level > 0 {
-				return level, 1, true
-			}
-		case index+1 < len(fields) && strings.TrimSpace(fields[index]) == keyword:
-			raw := strings.TrimSuffix(strings.TrimSpace(fields[index+1]), "级")
-			if level, err := strconv.Atoi(strings.TrimSpace(raw)); err == nil && level > 0 {
-				return level, 2, true
-			}
-		case index+1 < len(fields) && strings.TrimSpace(fields[index+1]) == keyword:
-			raw := strings.TrimSuffix(strings.TrimSpace(fields[index]), "级")
-			if level, err := strconv.Atoi(strings.TrimSpace(raw)); err == nil && level > 0 {
-				return level, 2, true
-			}
+		if level, consumed, ok := parseDeckAreaItemKeyword(fields, index, field, keyword); ok {
+			return level, consumed, true
 		}
 	}
 	return 0, 0, false
+}
+
+func parseDeckAreaItemKeyword(fields []string, index int, field string, keyword string) (int, int, bool) {
+	keywordLower := strings.ToLower(keyword)
+	if strings.Contains(field, keywordLower) {
+		raw := strings.TrimSpace(strings.Replace(field, keywordLower, "", 1))
+		if level, ok := parsePositiveDeckLevel(raw); ok {
+			return level, 1, true
+		}
+	}
+	if index+1 >= len(fields) {
+		return 0, 0, false
+	}
+	if strings.TrimSpace(fields[index]) == keyword {
+		if level, ok := parsePositiveDeckLevel(fields[index+1]); ok {
+			return level, 2, true
+		}
+	}
+	if strings.TrimSpace(fields[index+1]) == keyword {
+		if level, ok := parsePositiveDeckLevel(fields[index]); ok {
+			return level, 2, true
+		}
+	}
+	return 0, 0, false
+}
+
+func parsePositiveDeckLevel(raw string) (int, bool) {
+	raw = strings.TrimSuffix(strings.TrimSpace(raw), "级")
+	level, err := strconv.Atoi(strings.TrimSpace(raw))
+	return level, err == nil && level > 0
 }
 
 func parseDeckAreaItemToken(field string) (int, bool) {
@@ -310,26 +352,22 @@ func extractDeckUnitFilter(args string, params *deckAutoQueryParams) string {
 
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
-		matched := false
-		for unit, keywords := range deckUnitFilterKeywords {
-			for _, keyword := range keywords {
-				if field != keyword {
-					continue
-				}
-				params.UnitFilter = unit
-				matched = true
-				break
-			}
-			if matched {
-				break
-			}
-		}
-		if matched {
+		if unit, matched := deckUnitForField(field); matched {
+			params.UnitFilter = unit
 			continue
 		}
 		remaining = append(remaining, field)
 	}
 	return normalizeDeckSpaces(strings.Join(remaining, " "))
+}
+
+func deckUnitForField(field string) (string, bool) {
+	for unit, keywords := range deckUnitFilterKeywords {
+		if slices.Contains(keywords, field) {
+			return unit, true
+		}
+	}
+	return "", false
 }
 
 func extractDeckAttrFilter(args string, params *deckAutoQueryParams) string {
@@ -340,31 +378,24 @@ func extractDeckAttrFilter(args string, params *deckAutoQueryParams) string {
 
 	remaining := make([]string, 0, len(fields))
 	for _, field := range fields {
-		matched := false
-		for attr, aliases := range deckAttrFilterAliases {
-			for _, alias := range aliases {
-				for _, prefix := range []string{"纯", "仅"} {
-					if field != prefix+alias {
-						continue
-					}
-					params.AttrFilter = attr
-					matched = true
-					break
-				}
-				if matched {
-					break
-				}
-			}
-			if matched {
-				break
-			}
-		}
-		if matched {
+		if attr, matched := deckAttrForField(field); matched {
+			params.AttrFilter = attr
 			continue
 		}
 		remaining = append(remaining, field)
 	}
 	return normalizeDeckSpaces(strings.Join(remaining, " "))
+}
+
+func deckAttrForField(field string) (string, bool) {
+	for attr, aliases := range deckAttrFilterAliases {
+		for _, alias := range aliases {
+			if field == "纯"+alias || field == "仅"+alias {
+				return attr, true
+			}
+		}
+	}
+	return "", false
 }
 
 func extractDeckProfileFlags(args string, params *deckAutoQueryParams) string {

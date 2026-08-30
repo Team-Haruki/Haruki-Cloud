@@ -13,41 +13,14 @@ import (
 // BuildFixtureListRequest builds the request for rendering MySekai fixture list view.
 func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.MysekaiFixtureListRequest, error) {
 	c = c.withRegion(query.Region)
-
-	showID := true
-	if query.ShowID != nil {
-		showID = *query.ShowID
-	}
-	onlyCraftable := query.OnlyCraftable != nil && *query.OnlyCraftable
-	showProfile := true
-	if query.ShowProfile != nil {
-		showProfile = *query.ShowProfile
-	}
-	showProgress := true
-	if query.ShowProgress != nil {
-		showProgress = *query.ShowProgress
-	}
-	showObtained := true
-	if query.ShowObtained != nil {
-		showObtained = *query.ShowObtained
-	}
 	if c == nil {
 		return nil, fmt.Errorf("mysekai controller is not initialized")
 	}
 
-	region := c.resolveRegion(query.Region)
-	merged := map[string]any{}
-	staticListOnly := !showObtained && !showProfile && !showProgress
-	if staticListOnly {
-		if c.masterdata == nil || !c.masterdata.Configured() {
-			return nil, fmt.Errorf("mysekai masterdata is not configured")
-		}
-	} else {
-		var err error
-		merged, region, err = c.prepareSnapshot(query.Region)
-		if err != nil {
-			return nil, err
-		}
+	options := fixtureListOptionsFromQuery(query)
+	merged, region, err := c.prepareFixtureListData(query.Region, options)
+	if err != nil {
+		return nil, err
 	}
 
 	fixturesData := c.masterdata.loadList("mysekaiFixtures.json")
@@ -60,164 +33,262 @@ func (c *Controller) BuildFixtureListRequest(query FixtureListQuery) (*drawing.M
 	blueprints := c.masterdata.loadMapByID("mysekaiBlueprints.json")
 	characters := c.masterdata.loadMapByID("gameCharacters.json")
 	obtainedFixtureIDs := map[int]struct{}{}
-	if showObtained {
+	if options.showObtained {
 		obtainedFixtureIDs = c.fixtureListObtainedIDs(query.ObtainedSource, merged, blueprints)
 	}
-	craftableFixtureIDs := c.craftableMysekaiFixtureIDs(blueprints)
-
-	type fixtureRow struct {
-		fixture drawing.MysekaiFixture
-	}
-
-	grouped := map[int]map[int][]fixtureRow{}
-	mainProgressAll := map[int]int{}
-	mainProgressObtained := map[int]int{}
-	subProgressAll := map[int]map[int]int{}
-	subProgressObtained := map[int]map[int]int{}
-	totalAll := 0
-	totalObtained := 0
-
+	collector := newFixtureListCollector(c, region, options, categoryFilter, c.craftableMysekaiFixtureIDs(blueprints), obtainedFixtureIDs, characters)
 	for _, item := range fixturesData {
-		fixtureID := intNumber(item["id"], 0)
-		if fixtureID == 0 || strings.EqualFold(stringValue(item["mysekaiFixtureType"]), "gate") {
-			continue
-		}
-		if onlyCraftable {
-			if _, ok := craftableFixtureIDs[fixtureID]; !ok {
-				continue
-			}
-		}
-
-		mainGenreID := intNumber(item["mysekaiFixtureMainGenreId"], -1)
-		subGenreID := intNumber(item["mysekaiFixtureSubGenreId"], -1)
-		if fixtureID == 4 {
-			subGenreID = 14
-		}
-		if _, ok := map[int]struct{}{4: {}, 5: {}, 7: {}, 8: {}, 9: {}, 10: {}, 11: {}, 12: {}, 13: {}}[mainGenreID]; ok {
-			subGenreID = -1
-		}
-		if !categoryFilter.allows(mainGenreID, subGenreID) {
-			continue
-		}
-
-		if _, ok := grouped[mainGenreID]; !ok {
-			grouped[mainGenreID] = map[int][]fixtureRow{}
-			subProgressAll[mainGenreID] = map[int]int{}
-			subProgressObtained[mainGenreID] = map[int]int{}
-		}
-
-		obtained := hasFixture(obtainedFixtureIDs, fixtureID)
-		if !showObtained {
-			obtained = true
-		}
-		var characterID *int
-		if charID := birthdayCharacterID(characters, stringValue(item["name"])); charID != 0 {
-			characterID = &charID
-		}
-
-		grouped[mainGenreID][subGenreID] = append(grouped[mainGenreID][subGenreID], fixtureRow{
-			fixture: drawing.MysekaiFixture{
-				ID:          fixtureID,
-				ImagePath:   fixtureThumbnailPath(func(p string) string { return c.regionPath(region, p) }, item),
-				CharacterID: characterID,
-				Obtained:    obtained,
-			},
-		})
-
-		if characterID == nil {
-			totalAll++
-			if obtained {
-				totalObtained++
-			}
-			mainProgressAll[mainGenreID]++
-			subProgressAll[mainGenreID][subGenreID]++
-			if obtained {
-				mainProgressObtained[mainGenreID]++
-				subProgressObtained[mainGenreID][subGenreID]++
-			}
-		}
-	}
-
-	mainGenreIDs := make([]int, 0, len(grouped))
-	for genreID := range grouped {
-		mainGenreIDs = append(mainGenreIDs, genreID)
-	}
-	sort.Ints(mainGenreIDs)
-
-	mainGenres := make([]drawing.MysekaiFixtureMainGenre, 0, len(mainGenreIDs))
-	for _, genreID := range mainGenreIDs {
-		subGenreIDs := make([]int, 0, len(grouped[genreID]))
-		for subID := range grouped[genreID] {
-			subGenreIDs = append(subGenreIDs, subID)
-		}
-		sort.Ints(subGenreIDs)
-
-		subGenres := make([]drawing.MysekaiFixtureSubGenre, 0, len(subGenreIDs))
-		for _, subID := range subGenreIDs {
-			rows := grouped[genreID][subID]
-			if len(rows) == 0 {
-				continue
-			}
-			sort.Slice(rows, func(i, j int) bool {
-				return rows[i].fixture.ID < rows[j].fixture.ID
-			})
-			fixtures := make([]drawing.MysekaiFixture, 0, len(rows))
-			for _, row := range rows {
-				fixtures = append(fixtures, row.fixture)
-			}
-			subGenre := drawing.MysekaiFixtureSubGenre{
-				Fixtures: fixtures,
-			}
-			if subID != -1 && len(grouped[genreID]) > 1 {
-				if info := subGenreMap[subID]; len(info) > 0 {
-					name := stringValue(info["name"])
-					imagePath := c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"])))
-					subGenre.Name = &name
-					subGenre.ImagePath = &imagePath
-					if showProgress {
-						if total := subProgressAll[genreID][subID]; total > 0 {
-							message := fmt.Sprintf("%d/%d (%.1f%%)", subProgressObtained[genreID][subID], total, percent(subProgressObtained[genreID][subID], total))
-							subGenre.ProgressMessage = &message
-						}
-					}
-				}
-			}
-			subGenres = append(subGenres, subGenre)
-		}
-		if len(subGenres) == 0 {
-			continue
-		}
-
-		mainInfo := mainGenreMap[genreID]
-		mainGenre := drawing.MysekaiFixtureMainGenre{
-			Name:      stringValue(mainInfo["name"]),
-			ImagePath: c.regionPath(region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(mainInfo["assetbundleName"]))),
-			SubGenres: subGenres,
-		}
-		if showProgress {
-			if total := mainProgressAll[genreID]; total > 0 {
-				message := fmt.Sprintf("%d/%d (%.1f%%)", mainProgressObtained[genreID], total, percent(mainProgressObtained[genreID], total))
-				mainGenre.ProgressMessage = &message
-			}
-		}
-		mainGenres = append(mainGenres, mainGenre)
+		collector.add(item)
 	}
 
 	var profile *drawing.ProfileCardRequest
-	if showProfile {
+	if options.showProfile {
 		profile = c.mysekaiProfileCard(region, merged, query.Profile, false)
 	}
 
 	request := &drawing.MysekaiFixtureListRequest{
 		Profile:    profile,
-		ShowID:     showID,
-		MainGenres: mainGenres,
+		ShowID:     options.showID,
+		MainGenres: collector.mainGenres(mainGenreMap, subGenreMap),
 	}
-	if showProgress && totalAll > 0 {
-		message := fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", totalObtained, totalAll, percent(totalObtained, totalAll))
+	if options.showProgress && collector.totalAll > 0 {
+		message := fmt.Sprintf("总收集进度（不含生日家具）: %d/%d (%.1f%%)", collector.totalObtained, collector.totalAll, percent(collector.totalObtained, collector.totalAll))
 		request.ProgressMessage = &message
 	}
 	return request, nil
+}
+
+type fixtureListOptions struct {
+	showID        bool
+	onlyCraftable bool
+	showProfile   bool
+	showProgress  bool
+	showObtained  bool
+}
+
+func fixtureListOptionsFromQuery(query FixtureListQuery) fixtureListOptions {
+	return fixtureListOptions{
+		showID:        boolOption(query.ShowID, true),
+		onlyCraftable: boolOption(query.OnlyCraftable, false),
+		showProfile:   boolOption(query.ShowProfile, true),
+		showProgress:  boolOption(query.ShowProgress, true),
+		showObtained:  boolOption(query.ShowObtained, true),
+	}
+}
+
+func boolOption(value *bool, fallback bool) bool {
+	if value == nil {
+		return fallback
+	}
+	return *value
+}
+
+func (c *Controller) prepareFixtureListData(regionQuery string, options fixtureListOptions) (map[string]any, renderregion.Value, error) {
+	region := c.resolveRegion(regionQuery)
+	if !options.showObtained && !options.showProfile && !options.showProgress {
+		if c.masterdata == nil || !c.masterdata.Configured() {
+			return nil, region, fmt.Errorf("mysekai masterdata is not configured")
+		}
+		return map[string]any{}, region, nil
+	}
+	return c.prepareSnapshot(regionQuery)
+}
+
+type fixtureListCollector struct {
+	controller     *Controller
+	region         renderregion.Value
+	options        fixtureListOptions
+	categoryFilter *fixtureCategoryFilter
+	craftableIDs   map[int]struct{}
+	obtainedIDs    map[int]struct{}
+	characters     map[int]map[string]any
+	grouped        map[int]map[int][]drawing.MysekaiFixture
+	mainAll        map[int]int
+	mainObtained   map[int]int
+	subAll         map[int]map[int]int
+	subObtained    map[int]map[int]int
+	totalAll       int
+	totalObtained  int
+}
+
+func newFixtureListCollector(
+	controller *Controller,
+	region renderregion.Value,
+	options fixtureListOptions,
+	categoryFilter *fixtureCategoryFilter,
+	craftableIDs map[int]struct{},
+	obtainedIDs map[int]struct{},
+	characters map[int]map[string]any,
+) *fixtureListCollector {
+	return &fixtureListCollector{
+		controller:     controller,
+		region:         region,
+		options:        options,
+		categoryFilter: categoryFilter,
+		craftableIDs:   craftableIDs,
+		obtainedIDs:    obtainedIDs,
+		characters:     characters,
+		grouped:        map[int]map[int][]drawing.MysekaiFixture{},
+		mainAll:        map[int]int{},
+		mainObtained:   map[int]int{},
+		subAll:         map[int]map[int]int{},
+		subObtained:    map[int]map[int]int{},
+	}
+}
+
+func (c *fixtureListCollector) add(item map[string]any) {
+	fixtureID := intNumber(item["id"], 0)
+	if !c.includesFixture(item, fixtureID) {
+		return
+	}
+	mainGenreID, subGenreID := fixtureListGenreIDs(item, fixtureID)
+	if !c.categoryFilter.allows(mainGenreID, subGenreID) {
+		return
+	}
+	c.ensureGenre(mainGenreID)
+	obtained := !c.options.showObtained || hasFixture(c.obtainedIDs, fixtureID)
+	characterID := fixtureBirthdayCharacterID(c.characters, item)
+	c.grouped[mainGenreID][subGenreID] = append(c.grouped[mainGenreID][subGenreID], drawing.MysekaiFixture{
+		ID:          fixtureID,
+		ImagePath:   fixtureThumbnailPath(func(path string) string { return c.controller.regionPath(c.region, path) }, item),
+		CharacterID: characterID,
+		Obtained:    obtained,
+	})
+	if characterID == nil {
+		c.addProgress(mainGenreID, subGenreID, obtained)
+	}
+}
+
+func (c *fixtureListCollector) includesFixture(item map[string]any, fixtureID int) bool {
+	if fixtureID == 0 || strings.EqualFold(stringValue(item["mysekaiFixtureType"]), "gate") {
+		return false
+	}
+	if !c.options.onlyCraftable {
+		return true
+	}
+	_, ok := c.craftableIDs[fixtureID]
+	return ok
+}
+
+func fixtureListGenreIDs(item map[string]any, fixtureID int) (int, int) {
+	mainGenreID := intNumber(item["mysekaiFixtureMainGenreId"], -1)
+	subGenreID := intNumber(item["mysekaiFixtureSubGenreId"], -1)
+	if fixtureID == 4 {
+		return mainGenreID, 14
+	}
+	if fixtureMainGenreHasNoSubgenre(mainGenreID) {
+		return mainGenreID, -1
+	}
+	return mainGenreID, subGenreID
+}
+
+func fixtureMainGenreHasNoSubgenre(genreID int) bool {
+	switch genreID {
+	case 4, 5, 7, 8, 9, 10, 11, 12, 13:
+		return true
+	default:
+		return false
+	}
+}
+
+func fixtureBirthdayCharacterID(characters map[int]map[string]any, item map[string]any) *int {
+	characterID := birthdayCharacterID(characters, stringValue(item["name"]))
+	if characterID == 0 {
+		return nil
+	}
+	return &characterID
+}
+
+func (c *fixtureListCollector) ensureGenre(mainGenreID int) {
+	if c.grouped[mainGenreID] != nil {
+		return
+	}
+	c.grouped[mainGenreID] = map[int][]drawing.MysekaiFixture{}
+	c.subAll[mainGenreID] = map[int]int{}
+	c.subObtained[mainGenreID] = map[int]int{}
+}
+
+func (c *fixtureListCollector) addProgress(mainGenreID, subGenreID int, obtained bool) {
+	c.totalAll++
+	c.mainAll[mainGenreID]++
+	c.subAll[mainGenreID][subGenreID]++
+	if !obtained {
+		return
+	}
+	c.totalObtained++
+	c.mainObtained[mainGenreID]++
+	c.subObtained[mainGenreID][subGenreID]++
+}
+
+func (c *fixtureListCollector) mainGenres(mainGenreMap, subGenreMap map[int]map[string]any) []drawing.MysekaiFixtureMainGenre {
+	genreIDs := sortedIntKeys(c.grouped)
+	genres := make([]drawing.MysekaiFixtureMainGenre, 0, len(genreIDs))
+	for _, genreID := range genreIDs {
+		if genre, ok := c.mainGenre(genreID, mainGenreMap[genreID], subGenreMap); ok {
+			genres = append(genres, genre)
+		}
+	}
+	return genres
+}
+
+func (c *fixtureListCollector) mainGenre(genreID int, info map[string]any, subGenreMap map[int]map[string]any) (drawing.MysekaiFixtureMainGenre, bool) {
+	subGenres := c.subGenres(genreID, subGenreMap)
+	if len(subGenres) == 0 {
+		return drawing.MysekaiFixtureMainGenre{}, false
+	}
+	genre := drawing.MysekaiFixtureMainGenre{
+		Name:      stringValue(info["name"]),
+		ImagePath: c.controller.regionPath(c.region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"]))),
+		SubGenres: subGenres,
+	}
+	genre.ProgressMessage = c.progressMessage(c.mainObtained[genreID], c.mainAll[genreID])
+	return genre, true
+}
+
+func (c *fixtureListCollector) subGenres(genreID int, subGenreMap map[int]map[string]any) []drawing.MysekaiFixtureSubGenre {
+	subGenreIDs := sortedIntKeys(c.grouped[genreID])
+	subGenres := make([]drawing.MysekaiFixtureSubGenre, 0, len(subGenreIDs))
+	for _, subGenreID := range subGenreIDs {
+		if subGenre, ok := c.subGenre(genreID, subGenreID, subGenreMap[subGenreID]); ok {
+			subGenres = append(subGenres, subGenre)
+		}
+	}
+	return subGenres
+}
+
+func (c *fixtureListCollector) subGenre(genreID, subGenreID int, info map[string]any) (drawing.MysekaiFixtureSubGenre, bool) {
+	fixtures := c.grouped[genreID][subGenreID]
+	if len(fixtures) == 0 {
+		return drawing.MysekaiFixtureSubGenre{}, false
+	}
+	sort.Slice(fixtures, func(i, j int) bool { return fixtures[i].ID < fixtures[j].ID })
+	subGenre := drawing.MysekaiFixtureSubGenre{Fixtures: fixtures}
+	if subGenreID == -1 || len(c.grouped[genreID]) <= 1 || len(info) == 0 {
+		return subGenre, true
+	}
+	name := stringValue(info["name"])
+	imagePath := c.controller.regionPath(c.region, fmt.Sprintf("mysekai/icon/category_icon/%s.png", stringValue(info["assetbundleName"])))
+	subGenre.Name = &name
+	subGenre.ImagePath = &imagePath
+	subGenre.ProgressMessage = c.progressMessage(c.subObtained[genreID][subGenreID], c.subAll[genreID][subGenreID])
+	return subGenre, true
+}
+
+func (c *fixtureListCollector) progressMessage(obtained, total int) *string {
+	if !c.options.showProgress || total <= 0 {
+		return nil
+	}
+	message := fmt.Sprintf("%d/%d (%.1f%%)", obtained, total, percent(obtained, total))
+	return &message
+}
+
+func sortedIntKeys[T any](values map[int]T) []int {
+	keys := make([]int, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Ints(keys)
+	return keys
 }
 
 func (c *Controller) fixtureListObtainedIDs(source string, merged map[string]any, blueprints map[int]map[string]any) map[int]struct{} {

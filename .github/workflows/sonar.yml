@@ -33,8 +33,8 @@ jobs:
 
       - name: Generate Go coverage
         run: |
-          coverage_packages="$(go list ./... | grep -Ev '^haruki-cloud/(database(/|$)|ent/sekai/schema(/|$))' | paste -sd, -)"
-          go test -p 4 -count=1 -covermode=atomic -coverpkg="$coverage_packages" -coverprofile=coverage.out ./...
+          coverage_packages="$(go list -mod=readonly ./... | grep -Ev '^haruki-cloud/(database|ent)(/|$)' | paste -sd, -)"
+          go test -mod=readonly -p 4 -count=1 -covermode=atomic -coverpkg="$coverage_packages" -coverprofile=coverage.out ./...
 
       - name: Verify coverage threshold
         run: |

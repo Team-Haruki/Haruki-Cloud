@@ -9,11 +9,11 @@ import (
 
 func buildMusicBoardTexts(query musicBoardResolvedQuery, totalPage int) (string, string) {
 	targetText := map[string]string{
-		"score":   "LIVE分数",
-		"pt":      "活动PT/体力",
-		"pt/time": "活动PT/时间",
-		"tps":     "每秒点击",
-		"time":    "歌曲时长",
+		"score":             "LIVE分数",
+		"pt":                "活动PT/体力",
+		pointsPerTimeMetric: "活动PT/时间",
+		"tps":               "每秒点击",
+		"time":              "歌曲时长",
 	}[query.Target]
 	orderText := "降序"
 	if query.Ascend {
@@ -36,7 +36,7 @@ func buildMusicBoardTexts(query musicBoardResolvedQuery, totalPage int) (string,
 	title = fmt.Sprintf("%s - %s %s - 第%d页/共%d页", title, targetText, orderText, query.Page, totalPage)
 
 	parts := make([]string, 0, 5)
-	if query.Target == "score" || query.Target == "pt" || query.Target == "pt/time" {
+	if query.Target == "score" || query.Target == "pt" || query.Target == pointsPerTimeMetric {
 		if query.LiveType == "multi" {
 			parts = append(parts, fmt.Sprintf("实效 %.0f%%", query.Skills[0]*100))
 		} else {
@@ -44,11 +44,11 @@ func buildMusicBoardTexts(query musicBoardResolvedQuery, totalPage int) (string,
 			parts = append(parts, "策略 "+strings.ToUpper(query.SkillStrategy))
 		}
 	}
-	if query.Target == "pt" || query.Target == "pt/time" {
+	if query.Target == "pt" || query.Target == pointsPerTimeMetric {
 		parts = append(parts, fmt.Sprintf("综合 %d", query.Power))
 		parts = append(parts, fmt.Sprintf("加成 %.0f%%", query.DeckBonus))
 	}
-	if query.Target == "pt/time" || query.Target == "time" {
+	if query.Target == pointsPerTimeMetric || query.Target == "time" {
 		parts = append(parts, fmt.Sprintf("间隔 %.1fs", query.PlayInterval))
 	}
 

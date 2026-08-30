@@ -42,12 +42,12 @@ func startSekaiDBRemoteSync(ctx context.Context, mainLogger *harukiLogger.Logger
 		mainLogger.Info("Sekai DB remote sync started", "mode", "initial")
 		if err := runSekaiDBRemoteSync(ctx, settings); err != nil {
 			if cfg.FailStartup {
-				fatalStartup(mainLogger, "Sekai DB remote sync failed",
+				fatalStartup(mainLogger, sekaiDBRemoteSyncFailed,
 					"mode", "initial",
 					"error_type", fmt.Sprintf("%T", err),
 				)
 			}
-			mainLogger.Warn("Sekai DB remote sync failed",
+			mainLogger.Warn(sekaiDBRemoteSyncFailed,
 				"mode", "initial",
 				"error_type", fmt.Sprintf("%T", err),
 			)
@@ -75,7 +75,7 @@ func startSekaiDBRemoteSync(ctx context.Context, mainLogger *harukiLogger.Logger
 				return
 			case <-ticker.C:
 				if err := runSekaiDBRemoteSync(ctx, settings); err != nil {
-					mainLogger.WarnContext(ctx, "Sekai DB remote sync failed",
+					mainLogger.WarnContext(ctx, sekaiDBRemoteSyncFailed,
 						"mode", "background",
 						"error_type", fmt.Sprintf("%T", err),
 					)

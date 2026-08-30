@@ -89,75 +89,75 @@ func buildJPVocalOrderKey(vocal *masterdata.MusicVocal) string {
 var vocalCaptionOverrides = map[string]string{
 	"セカイver.":                      "Sekai",
 	"セカイ ver.":                     "Sekai",
-	"バーチャル・シンガーver.":               "Virtual Singer",
-	"バーチャルシンガーver.":                "Virtual Singer",
-	"アナザーボーカルver.":                 "Another Vocal",
-	"原曲ver.":                       "Original Song",
-	"原曲 ver.":                      "Original Song",
-	"ストリーミングライブver.":               "Connect Live",
-	"ストリーミングライブ ver.":              "Connect Live",
-	"エイプリルフールver.":                 "April Fool",
-	"あんさんぶるスターズ！！コラボver.":          "Ensemble Stars!! Collab",
+	"バーチャル・シンガーver.":               virtualSingerLabel,
+	"バーチャルシンガーver.":                virtualSingerLabel,
+	"アナザーボーカルver.":                 anotherVocalLabel,
+	"原曲ver.":                       originalSongLabel,
+	"原曲 ver.":                      originalSongLabel,
+	"ストリーミングライブver.":               connectLiveLabel,
+	"ストリーミングライブ ver.":              connectLiveLabel,
+	"エイプリルフールver.":                 aprilFoolLabel,
+	"あんさんぶるスターズ！！コラボver.":          ensembleStarsCollabLabel,
 	"「劇場版プロジェクトセカイ」ver.":           "Movie",
 	"sekai ver.":                   "Sekai",
 	"sekai":                        "Sekai",
-	"virtual singer ver.":          "Virtual Singer",
-	"virtual singer":               "Virtual Singer",
-	"another vocal ver.":           "Another Vocal",
-	"another vocal":                "Another Vocal",
-	"original song ver.":           "Original Song",
-	"original song":                "Original Song",
-	"streaming live ver.":          "Connect Live",
-	"streaming live":               "Connect Live",
+	"virtual singer ver.":          virtualSingerLabel,
+	virtualSingerLowerLabel:        virtualSingerLabel,
+	"another vocal ver.":           anotherVocalLabel,
+	"another vocal":                anotherVocalLabel,
+	"original song ver.":           originalSongLabel,
+	"original song":                originalSongLabel,
+	"streaming live ver.":          connectLiveLabel,
+	"streaming live":               connectLiveLabel,
 	"instrumental ver.":            "Inst.",
 	"instrumental":                 "Inst.",
-	"april fool 2022 ver.":         "April Fool",
-	"april_fool_2022 ver.":         "April Fool",
-	"april_fool_2022":              "April Fool",
-	"april fool":                   "April Fool",
+	"april fool 2022 ver.":         aprilFoolLabel,
+	"april_fool_2022 ver.":         aprilFoolLabel,
+	"april_fool_2022":              aprilFoolLabel,
+	"april fool":                   aprilFoolLabel,
 	"sekai version":                "Sekai",
-	"virtual singer version":       "Virtual Singer",
-	"another vocal version":        "Another Vocal",
-	"original song version":        "Original Song",
-	"streaming live version":       "Connect Live",
+	"virtual singer version":       virtualSingerLabel,
+	"another vocal version":        anotherVocalLabel,
+	"original song version":        originalSongLabel,
+	"streaming live version":       connectLiveLabel,
 	"instrumental version":         "Inst.",
-	"april fool 2022 version":      "April Fool",
-	"ensemble stars!! collab":      "Ensemble Stars!! Collab",
-	"ensemble stars!! collab ver.": "Ensemble Stars!! Collab",
+	"april fool 2022 version":      aprilFoolLabel,
+	"ensemble stars!! collab":      ensembleStarsCollabLabel,
+	"ensemble stars!! collab ver.": ensembleStarsCollabLabel,
 	"movie ver.":                   "Movie",
 	"movie":                        "Movie",
 }
 
 var vocalTypeFallbacks = map[string]string{
 	"sekai":           "Sekai",
-	"virtual_singer":  "Virtual Singer",
-	"original_song":   "Original Song",
-	"another_vocal":   "Another Vocal",
-	"streaming_live":  "Connect Live",
+	"virtual_singer":  virtualSingerLabel,
+	"original_song":   originalSongLabel,
+	"another_vocal":   anotherVocalLabel,
+	"streaming_live":  connectLiveLabel,
 	"instrumental":    "Inst.",
-	"april_fool_2022": "April Fool",
+	"april_fool_2022": aprilFoolLabel,
 }
 
 var vocalLocalizationByRegion = map[renderregion.Value]map[string]string{
 	renderregion.EN: {
-		"sekai":          "Sekai",
-		"virtual singer": "Virtual Singer",
+		"sekai":                 "Sekai",
+		virtualSingerLowerLabel: virtualSingerLabel,
 	},
 	renderregion.JP: {
-		"sekai":          "Sekai",
-		"virtual singer": "Virtual Singer",
+		"sekai":                 "Sekai",
+		virtualSingerLowerLabel: virtualSingerLabel,
 	},
 	renderregion.CN: {
-		"sekai":          "「世界」",
-		"virtual singer": "虚拟歌手",
+		"sekai":                 "「世界」",
+		virtualSingerLowerLabel: "虚拟歌手",
 	},
 	renderregion.TW: {
-		"sekai":          "「世界」",
-		"virtual singer": "虚擬歌手",
+		"sekai":                 "「世界」",
+		virtualSingerLowerLabel: "虚擬歌手",
 	},
 	renderregion.KR: {
-		"sekai":          "세카이",
-		"virtual singer": "버추얼 싱어",
+		"sekai":                 "세카이",
+		virtualSingerLowerLabel: "버추얼 싱어",
 	},
 }
 
@@ -191,8 +191,8 @@ func normalizeVocalCaption(raw string, vocalType string, assetBundleName string,
 	if resolved, ok := vocalTypeFallbacks[strings.ToLower(strings.TrimSpace(vocalType))]; ok {
 		return localizeVocalCaption(resolved, region)
 	}
-	if strings.EqualFold(key, "virtual singer") {
-		return localizeVocalCaption("Virtual Singer", region)
+	if strings.EqualFold(key, virtualSingerLowerLabel) {
+		return localizeVocalCaption(virtualSingerLabel, region)
 	}
 	return trimmed
 }
@@ -203,9 +203,9 @@ func classifyVocalByAssetBundle(assetBundleName string, region renderregion.Valu
 	case strings.HasPrefix(name, "se_"):
 		return localizeVocalCaption("Sekai", region)
 	case strings.HasPrefix(name, "vs_"):
-		return localizeVocalCaption("Virtual Singer", region)
+		return localizeVocalCaption(virtualSingerLabel, region)
 	case strings.HasPrefix(name, "an_"):
-		return localizeVocalCaption("Another Vocal", region)
+		return localizeVocalCaption(anotherVocalLabel, region)
 	default:
 		return ""
 	}

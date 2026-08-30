@@ -259,7 +259,7 @@ func (s *Preview3DService) ResolveQueryPreviewPath(ctx context.Context, region s
 	if err != nil {
 		return "", err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	selection, err := registry.resolveQuery(region, costume3DID, query, s.captureCacheSignature())
 	finishPrepare()
 	if err != nil {
@@ -284,7 +284,7 @@ func (s *Preview3DService) EnsureQueryPreviewCapture(ctx context.Context, region
 	if err != nil {
 		return err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	selection, err := registry.resolveQuery(region, costume3DID, query, s.captureCacheSignature())
 	finishPrepare()
 	if err != nil {
@@ -308,7 +308,7 @@ func (s *Preview3DService) CaptureTemporaryCombo(ctx context.Context, region str
 	if err != nil {
 		return nil, err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	selection, err := registry.resolveCombo(region, query, s.captureCacheSignature())
 	finishPrepare()
 	if err != nil {
@@ -332,7 +332,7 @@ func (s *Preview3DService) HairIDsForRole(ctx context.Context, region string, ch
 	if err != nil {
 		return nil, err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
@@ -358,7 +358,7 @@ func (s *Preview3DService) AccessoryIDsForRole(ctx context.Context, region strin
 	if err != nil {
 		return nil, err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
@@ -379,7 +379,7 @@ func (s *Preview3DService) AccessoryCostume3DIDForRole(ctx context.Context, regi
 	if err != nil {
 		return 0, err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
@@ -404,7 +404,7 @@ func (s *Preview3DService) OutfitIDsForRole(ctx context.Context, region string, 
 	if err != nil {
 		return nil, err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
@@ -425,7 +425,7 @@ func (s *Preview3DService) OutfitCostume3DIDForRole(ctx context.Context, region 
 	if err != nil {
 		return 0, err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
@@ -450,7 +450,7 @@ func (s *Preview3DService) HairCostume3DIDForRole(ctx context.Context, region st
 	if err != nil {
 		return 0, err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	roles := registry.comboRoleCandidates(ComboQuery{Character3DID: character3DID})
 	if len(roles) != 1 {
@@ -475,7 +475,7 @@ func (s *Preview3DService) AccessoryCatalog(ctx context.Context, region string, 
 	if err != nil {
 		return nil, err
 	}
-	finishPrepare := commandtrace.MeasureOperation(ctx, "preview3d.prepare")
+	finishPrepare := commandtrace.MeasureOperation(ctx, previewPrepareStage)
 	defer finishPrepare()
 	var roles []preview3DCharacterEntry
 	if character3DID > 0 {

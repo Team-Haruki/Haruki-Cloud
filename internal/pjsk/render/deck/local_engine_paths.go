@@ -140,13 +140,13 @@ func resolveDeckMasterdataEventsFile(configured, region string) (string, bool) {
 	}
 
 	candidates := []string{
-		filepath.Join(root, region, "events.json"),
-		filepath.Join(root, "events.json"),
+		filepath.Join(root, region, eventsFileName),
+		filepath.Join(root, eventsFileName),
 	}
 	if repoDir := deckMasterdataRepoDirs[region]; repoDir != "" {
 		candidates = append(candidates,
-			filepath.Join(root, repoDir, "master", "events.json"),
-			filepath.Join(root, "master", "events.json"),
+			filepath.Join(root, repoDir, "master", eventsFileName),
+			filepath.Join(root, "master", eventsFileName),
 		)
 	}
 	for _, candidate := range candidates {

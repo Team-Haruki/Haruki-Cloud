@@ -175,7 +175,7 @@ func isTheoreticalDeckRequest(rc *RequestContext) bool {
 		return false
 	}
 	switch rc.Cmd.Mode {
-	case "deck-event", "deck-challenge", "deck-no-event", "deck-bonus":
+	case deckEventCommand, "deck-challenge", "deck-no-event", "deck-bonus":
 	default:
 		return false
 	}
@@ -240,7 +240,7 @@ func normalizeDeckUserFacingErrorForCommand(err error, region string, mode strin
 
 	message := strings.TrimSpace(err.Error())
 	if _, ok := extractMusicNotFoundQuery(err, ""); ok {
-		if mode == "deck-event" {
+		if mode == deckEventCommand {
 			return onebot11.NewReplayError("当前区服没有该歌曲")
 		}
 		musicQuery, _ := extractMusicNotFoundQuery(err, "")
@@ -249,7 +249,7 @@ func normalizeDeckUserFacingErrorForCommand(err error, region string, mode strin
 
 	switch {
 	case isDeckEventMasterdataMissingMessage(message):
-		if mode == "deck-event" {
+		if mode == deckEventCommand {
 			return onebot11.NewReplayError("组卡服务找不到该活动的数据，请使用/组卡模拟对应颜色和团的组卡")
 		}
 		return onebot11.NewReplayError("组卡服务找不到该活动的 masterdata，请更新 masterdata 后重试")

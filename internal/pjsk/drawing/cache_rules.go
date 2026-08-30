@@ -52,7 +52,7 @@ var (
 		"/api/pjsk/deck/recommend": {
 			Enabled:     true,
 			TTL:         renderCacheTTLHalfDay,
-			IgnorePaths: renderCacheStringSet("model_name", "cost_times", "wait_times", "profile.update_time"),
+			IgnorePaths: renderCacheStringSet("model_name", "cost_times", "wait_times", profileUpdateTimePath),
 		},
 		"/api/pjsk/card/detail": {
 			Enabled:  true,
@@ -61,11 +61,11 @@ var (
 		"/api/pjsk/card/list": {
 			Enabled:     true,
 			Infinite:    true,
-			IgnorePaths: renderCacheStringSet("user_info.update_time"),
+			IgnorePaths: renderCacheStringSet(userInfoUpdateTimePath),
 		},
 		"/api/pjsk/card/box": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("user_info.update_time"),
+			IgnorePaths: renderCacheStringSet(userInfoUpdateTimePath),
 		},
 		"/api/pjsk/profile": {
 			Enabled:     true,
@@ -103,55 +103,55 @@ var (
 		},
 		"/api/pjsk/event/record": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("user_info.update_time"),
+			IgnorePaths: renderCacheStringSet(userInfoUpdateTimePath),
 		},
 		"/api/pjsk/music/list": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.update_time"),
+			IgnorePaths: renderCacheStringSet(profileUpdateTimePath),
 		},
 		"/api/pjsk/music/progress": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/music/rewards/detail": {
 			Enabled:     true,
 			TTL:         renderCacheTTLHalfDay,
-			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/music/rewards/basic": {
 			Enabled:     true,
 			TTL:         renderCacheTTLHalfDay,
-			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/education/challenge-live": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.update_time", "profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileUpdateTimePath, profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/education/power-bonus": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.update_time", "profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileUpdateTimePath, profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/education/area-item": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.update_time", "profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileUpdateTimePath, profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/education/bonds": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.update_time", "profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileUpdateTimePath, profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/education/leader-count": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.update_time", "profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileUpdateTimePath, profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/inventory/list": {
 			Enabled:     true,
 			TTL:         renderCacheTTLHalfDay,
-			IgnorePaths: renderCacheStringSet("profile.update_time", "profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileUpdateTimePath, profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/mysekai/resource": {
 			Enabled:     true,
 			TTL:         renderCacheTTLHalfDay,
-			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/mysekai/map": {
 			Enabled: true,
@@ -160,7 +160,7 @@ var (
 		"/api/pjsk/mysekai/fixture-list": {
 			Enabled:     true,
 			Infinite:    true,
-			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/mysekai/fixture-detail": {
 			Enabled:  true,
@@ -168,16 +168,16 @@ var (
 		},
 		"/api/pjsk/mysekai/door-upgrade": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/mysekai/music-record": {
 			Enabled:     true,
-			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/mysekai/talk-list": {
 			Enabled:     true,
 			TTL:         renderCacheTTLHalfDay,
-			IgnorePaths: renderCacheStringSet("profile.data_sources.*.update_time"),
+			IgnorePaths: renderCacheStringSet(profileDataSourceUpdateTimePath),
 		},
 		"/api/pjsk/sk/line": {
 			Enabled: true,

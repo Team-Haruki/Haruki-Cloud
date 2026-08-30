@@ -551,7 +551,7 @@ func (c *Controller) RenderCostumeListWithRequest(query ListQuery) ([]byte, *dra
 	if c == nil || c.drawing == nil {
 		return nil, nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	payload, err := c.BuildCostumeListRequest(query)
 	finishBuild()
 	if err != nil {
@@ -694,7 +694,7 @@ func (c *Controller) RenderCostumeDetail(query Query) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	region, source, err := c.resolveSource(query.Region)
 	if err != nil {
 		finishBuild()
@@ -738,7 +738,7 @@ func (c *Controller) RenderCostumeCombo(query ComboQuery) ([]byte, error) {
 	if c == nil || c.preview3D == nil {
 		return nil, fmt.Errorf("3d preview service is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	parsed, err := parseComboQuery(query)
 	finishBuild()
 	if err != nil {

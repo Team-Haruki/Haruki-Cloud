@@ -61,11 +61,11 @@ func (r *RemoteDeckRecommender) RecommendBatchContext(ctx context.Context, req R
 	if failures := exec.state.consecutiveFailures.Load(); failures >= maxConsecutiveFailures {
 		if r.tryResetCircuitBreakerAfterCooldown(exec.state, failures) {
 			if r.logger != nil {
-				r.logger.InfoContext(ctx, "deck circuit breaker reset", "reason", "cooldown")
+				r.logger.InfoContext(ctx, deckCircuitBreakerResetLog, "reason", "cooldown")
 			}
 		} else if r.tryResetCircuitBreakerOnHealthyService(ctx, exec.state, failures) {
 			if r.logger != nil {
-				r.logger.InfoContext(ctx, "deck circuit breaker reset", "reason", "health_probe")
+				r.logger.InfoContext(ctx, deckCircuitBreakerResetLog, "reason", "health_probe")
 			}
 		} else {
 			if r.logger != nil {
@@ -200,7 +200,7 @@ func (r *RemoteDeckRecommender) resetCircuitBreaker(state *remoteTargetState) {
 	state.lastFailureAtNanos.Store(0)
 	state.lastHealthProbeAtNanos.Store(0)
 	if r.logger != nil {
-		r.logger.Info("deck circuit breaker reset")
+		r.logger.Info(deckCircuitBreakerResetLog)
 	}
 }
 

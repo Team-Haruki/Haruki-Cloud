@@ -31,7 +31,7 @@ func initDrawingCacheIfConfigured(ctx context.Context, mainLogger *harukiLogger.
 	// default; enable only once remote consumers (cache-proxy / secondary nodes)
 	// send the internal token, else they get 401.
 	if cfg.RequireAuth {
-		app.Use("/cache", api.VerifyAPIAuthorization())
+		app.Use(cacheRoutePrefix, api.VerifyAPIAuthorization())
 		mainLogger.Info("drawing cache authorization enabled")
 	}
 	service.RegisterRoutes(app)
@@ -39,13 +39,13 @@ func initDrawingCacheIfConfigured(ctx context.Context, mainLogger *harukiLogger.
 	resolved := service.Config()
 	if resolved.GCInterval > 0 {
 		mainLogger.Info("drawing cache API enabled",
-			"route", "/cache",
+			"route", cacheRoutePrefix,
 			"gc_enabled", true,
 			"gc_interval", resolved.GCInterval,
 		)
 	} else {
 		mainLogger.Info("drawing cache API enabled",
-			"route", "/cache",
+			"route", cacheRoutePrefix,
 			"gc_enabled", false,
 		)
 	}

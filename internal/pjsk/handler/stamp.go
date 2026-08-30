@@ -23,23 +23,23 @@ func (sekaiHandlers) StampHandle() HarukiSekaiCommandHandler {
 			args := strings.TrimSpace(ctx.GetArgs())
 			if page, remaining, ok := parseStampPageWithRemaining(args); ok {
 				ctx.SetArgs(remaining)
-				return makeCommandRequestWithParams(ctx, parser.ModuleStamp, "stamp-list", map[string]any{
+				return makeCommandRequestWithParams(ctx, parser.ModuleStamp, stampListCommand, map[string]any{
 					"page": page,
 				}), nil
 			}
 			if parseStampAll(args) {
 				ctx.SetArgs("")
-				return makeCommandRequestWithParams(ctx, parser.ModuleStamp, "stamp-list", map[string]any{
+				return makeCommandRequestWithParams(ctx, parser.ModuleStamp, stampListCommand, map[string]any{
 					"all": true,
 				}), nil
 			}
 			if params := parseStampIDs(args); len(params) > 0 {
 				ctx.SetArgs("")
-				return makeCommandRequestWithParams(ctx, parser.ModuleStamp, "stamp-list", map[string]any{
+				return makeCommandRequestWithParams(ctx, parser.ModuleStamp, stampListCommand, map[string]any{
 					"ids": params,
 				}), nil
 			}
-			return makeCommandRequest(ctx, parser.ModuleStamp, "stamp-list"), nil
+			return makeCommandRequest(ctx, parser.ModuleStamp, stampListCommand), nil
 		},
 	}, executeStamp)
 }
@@ -104,7 +104,7 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 	stampCtrl := rc.App.Stamps.WithContext(rc.Ctx)
 	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
-	case "stamp-list":
+	case stampListCommand:
 		q := stamp.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
 		resolveStampCharacterSelection(rc.Ctx, rc.App, &q, rc.Cmd.Query)

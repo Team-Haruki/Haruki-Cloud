@@ -131,7 +131,7 @@ func (c *housingCompetitionStatsCache) GetOrRefresh(ctx context.Context, api Hou
 	c.mu.Lock()
 	c.pruneLocked(now)
 	if bucket := c.buckets[key]; bucket != nil && len(bucket.entries) > 0 && !shouldRefreshHousingCompetitionStats(bucket, now, c.RefreshInterval()) {
-		finishSnapshot := commandtrace.MeasureOperation(ctx, "housing_cache.snapshot")
+		finishSnapshot := commandtrace.MeasureOperation(ctx, housingCacheSnapshotStage)
 		entries, sampledAt := bucket.snapshot()
 		finishSnapshot()
 		c.mu.Unlock()
@@ -143,7 +143,7 @@ func (c *housingCompetitionStatsCache) GetOrRefresh(ctx context.Context, api Hou
 	entries, sampledAt, refreshedCount, err := c.Refresh(ctx, api, region, housingID, sampleCount)
 	if err != nil {
 		if staleAvailable {
-			finishSnapshot := commandtrace.MeasureOperation(ctx, "housing_cache.snapshot")
+			finishSnapshot := commandtrace.MeasureOperation(ctx, housingCacheSnapshotStage)
 			c.mu.Lock()
 			staleEntries, staleSampledAt := c.snapshotLocked(key)
 			c.mu.Unlock()
@@ -216,7 +216,7 @@ func (c *housingCompetitionStatsCache) Refresh(ctx context.Context, api HousingC
 		}
 		c.pruneLocked(now)
 		finishMerge()
-		finishSnapshot := commandtrace.MeasureOperation(sharedCtx, "housing_cache.snapshot")
+		finishSnapshot := commandtrace.MeasureOperation(sharedCtx, housingCacheSnapshotStage)
 		merged, mergedSampledAt := bucket.snapshot()
 		finishSnapshot()
 		c.generation++
@@ -739,7 +739,7 @@ func (c *housingCompetitionStatsCache) persistLatest(ctx context.Context, reques
 		return
 	}
 
-	finishSnapshot := commandtrace.MeasureOperation(ctx, "housing_cache.snapshot")
+	finishSnapshot := commandtrace.MeasureOperation(ctx, housingCacheSnapshotStage)
 	c.mu.Lock()
 	c.pruneLocked(time.Now().UTC())
 	persisted := c.snapshotForPersistenceLocked()

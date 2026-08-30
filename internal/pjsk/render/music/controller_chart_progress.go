@@ -11,7 +11,7 @@ import (
 )
 
 func (c *Controller) BuildMusicChartRequest(query ChartQuery) (*drawing.GenerateMusicChartRequest, error) {
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	defer finishBuild()
 	region, source, builder, err := c.resolveBuilder(query.Region)
 	if err != nil {
@@ -88,7 +88,7 @@ func (c *Controller) RenderMusicProgress(query ProgressQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicProgressRequest(query)
 	finishBuild()
 	if err != nil {
@@ -121,7 +121,7 @@ func (c *Controller) RenderMusicProgressFromSnapshot(query ProgressQuery, snapsh
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicProgressRequestFromSnapshot(query, snapshot, fallbackProfile)
 	finishBuild()
 	if err != nil {

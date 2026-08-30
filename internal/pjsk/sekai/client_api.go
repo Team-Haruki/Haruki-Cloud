@@ -90,7 +90,7 @@ func (c *HarukiSekaiAPIClient) GetUserProfile(server, userID string) (*GetAnothe
 		return nil, err
 	}
 	var result GetAnotherProfileResponse
-	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), sekaiDecodeStage)
 	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
@@ -117,7 +117,7 @@ func (c *HarukiSekaiAPIClient) GetSystem(server string) (*GetSystemResponse, err
 		return nil, err
 	}
 	var result GetSystemResponse
-	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), sekaiDecodeStage)
 	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
@@ -139,7 +139,7 @@ func (c *HarukiSekaiAPIClient) GetInformation(server string) (*GetInformationRes
 		return nil, err
 	}
 	var result GetInformationResponse
-	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), sekaiDecodeStage)
 	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {
@@ -292,7 +292,7 @@ func (c *HarukiSekaiAPIClient) GetCustomMusicScorePublished(server, scoreID stri
 		return nil, err
 	}
 	var result CustomMusicScorePublishedSearchResponse
-	finishDecode := commandtrace.MeasureOperation(c.requestContext(), "sekai.decode")
+	finishDecode := commandtrace.MeasureOperation(c.requestContext(), sekaiDecodeStage)
 	decodeErr := json.Unmarshal(body, &result)
 	finishDecode()
 	if decodeErr != nil {

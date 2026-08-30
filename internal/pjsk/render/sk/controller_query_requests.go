@@ -37,7 +37,7 @@ func (c *Controller) RenderQuery(req drawing.SKRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildQueryRequest(req)
 	finishBuild()
 	if err != nil {
@@ -47,7 +47,7 @@ func (c *Controller) RenderQuery(req drawing.SKRequest) ([]byte, error) {
 }
 
 func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawing.SKRequest, error) {
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
@@ -168,7 +168,7 @@ func (c *Controller) BuildCheckRoomRequest(req drawing.CFRequest) (*drawing.CFRe
 }
 
 func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*drawing.CFRequest, error) {
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
@@ -264,7 +264,7 @@ func (c *Controller) RenderCheckRoom(req drawing.CFRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildCheckRoomRequest(req)
 	finishBuild()
 	if err != nil {
@@ -284,7 +284,7 @@ func (c *Controller) BuildCSBRequest(req drawing.CSBRequest) (*drawing.CSBReques
 }
 
 func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.CSBRequest, error) {
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
@@ -355,7 +355,7 @@ func (c *Controller) RenderCSB(req drawing.CSBRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildCSBRequest(req)
 	finishBuild()
 	if err != nil {

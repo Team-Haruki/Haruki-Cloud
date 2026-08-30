@@ -388,7 +388,7 @@ func (c *Controller) resolveMysekaiBirthdayRefreshIconPath(region renderregion.V
 			if !entry.IsDir() || !strings.HasPrefix(entry.Name(), prefix) {
 				continue
 			}
-			iconPath := filepath.Join(baseDir, entry.Name(), "icon_refresh.png")
+			iconPath := filepath.Join(baseDir, entry.Name(), refreshIconFileName)
 			finishStat := commandtrace.MeasureOperation(c.requestCtx, "asset.stat")
 			if _, err := os.Stat(iconPath); err != nil {
 				finishStat()
@@ -400,7 +400,7 @@ func (c *Controller) resolveMysekaiBirthdayRefreshIconPath(region renderregion.V
 				continue
 			}
 			if year == currentYear {
-				resolved := assets.ResolveRegionAssetPath(c.assets, region.String(), filepath.ToSlash(filepath.Join("mysekai", "birthday", entry.Name(), "icon_refresh.png")))
+				resolved := assets.ResolveRegionAssetPath(c.assets, region.String(), filepath.ToSlash(filepath.Join("mysekai", "birthday", entry.Name(), refreshIconFileName)))
 				storeMysekaiBirthdayRefreshIcon(cacheKey, resolved)
 				return resolved
 			}
@@ -427,7 +427,7 @@ func (c *Controller) resolveMysekaiBirthdayRefreshIconPath(region renderregion.V
 	if choose == "" {
 		return ""
 	}
-	resolved := assets.ResolveRegionAssetPath(c.assets, region.String(), filepath.ToSlash(filepath.Join("mysekai", "birthday", choose, "icon_refresh.png")))
+	resolved := assets.ResolveRegionAssetPath(c.assets, region.String(), filepath.ToSlash(filepath.Join("mysekai", "birthday", choose, refreshIconFileName)))
 	storeMysekaiBirthdayRefreshIcon(cacheKey, resolved)
 	return resolved
 }

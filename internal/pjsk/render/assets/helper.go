@@ -273,8 +273,8 @@ func assetPathCandidates(rel string) []string {
 		return nil
 	}
 	candidates := []string{clean}
-	if strings.HasPrefix(clean, "asset/") {
-		trimmed := strings.TrimPrefix(clean, "asset/")
+	if strings.HasPrefix(clean, assetPathPrefix) {
+		trimmed := strings.TrimPrefix(clean, assetPathPrefix)
 		if trimmed != "" && trimmed != clean {
 			candidates = append(candidates, trimmed)
 		}
@@ -726,7 +726,7 @@ func RegionAssetDirByMode(region, mode string) string {
 	if normalizedMode == "" {
 		normalizedMode = RegionAssetStartApp
 	}
-	return "asset/" + normalizedRegion + "-assets/" + normalizedMode
+	return assetPathPrefix + normalizedRegion + "-assets/" + normalizedMode
 }
 
 // 和Drawing不同，Cloud的asset_dirs没有挂载到asset/下

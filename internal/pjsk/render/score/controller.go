@@ -41,7 +41,7 @@ func (c *Controller) RenderScoreControl(req drawing.ScoreControlRequest) ([]byte
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildScoreControlRequest(req)
 	finishBuild()
 	if err != nil {
@@ -69,7 +69,7 @@ func (c *Controller) RenderCustomRoomScore(req drawing.CustomRoomScoreRequest) (
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildCustomRoomScoreRequest(req)
 	finishBuild()
 	if err != nil {
@@ -92,7 +92,7 @@ func (c *Controller) RenderMusicMeta(req []drawing.MusicMetaRequest) ([]byte, er
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildMusicMetaRequest(req)
 	finishBuild()
 	if err != nil {
@@ -115,7 +115,7 @@ func (c *Controller) RenderMusicBoard(req drawing.MusicBoardRequest) ([]byte, er
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildMusicBoardRequest(req)
 	finishBuild()
 	if err != nil {

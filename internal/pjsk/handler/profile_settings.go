@@ -333,7 +333,7 @@ func (sekaiHandlers) ProfileEnableModularHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeEnableModular, newProfileSettingsParams(ctx)), nil
 		},
@@ -349,7 +349,7 @@ func (sekaiHandlers) ProfileDisableModularHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeDisableModular, newProfileSettingsParams(ctx)), nil
 		},
@@ -447,7 +447,7 @@ func (sekaiHandlers) ProfileVerifyListHandle() HarukiSekaiCommandHandler {
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			if strings.TrimSpace(ctx.GetArgs()) != "" {
-				return nil, onebot11.NewReplayError("使用方式:\n%s", ctx.originalTriggerCmd)
+				return nil, onebot11.NewReplayError(formattedUsage, ctx.originalTriggerCmd)
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleProfile, accountdata.ProfileModeVerifyList, newProfileSettingsParams(ctx)), nil
 		},

@@ -118,7 +118,7 @@ func main() {
 			upd = upd.SetCredential(hashedCredential)
 			_, err = upd.Save(ctx)
 			if err != nil {
-				fatalf("update user: %v", err)
+				fatalf(updateUserErrorFormat, err)
 			}
 			// Cascade bot_id update to requests_ranking.
 			affected, err := client.RequestsRanking.Update().
@@ -139,7 +139,7 @@ func main() {
 		} else {
 			_, err = upd.Save(ctx)
 			if err != nil {
-				fatalf("update user: %v", err)
+				fatalf(updateUserErrorFormat, err)
 			}
 			affected, err := client.RequestsRanking.Update().
 				Where(requestsranking.BotIDEQ(oldBotID)).
@@ -175,7 +175,7 @@ func main() {
 			SetCredential(hashedCredential).
 			Save(ctx)
 		if err != nil {
-			fatalf("update user: %v", err)
+			fatalf(updateUserErrorFormat, err)
 		}
 		fmt.Printf("(existing user — credential reset)\n")
 	} else {

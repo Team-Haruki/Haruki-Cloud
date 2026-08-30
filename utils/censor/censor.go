@@ -48,7 +48,7 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 		return true
 	}
 
-	finishCache := commandtrace.MeasureOperation(ctx, "censor.cache")
+	finishCache := commandtrace.MeasureOperation(ctx, censorCacheStage)
 	existing, err := s.Client.Result.
 		Query().
 		Where(result.NameEQ(name)).
@@ -74,7 +74,7 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 		s.Logger.DebugContext(ctx, "name moderation rejected")
 	}
 
-	finishStore := commandtrace.MeasureOperation(ctx, "censor.store")
+	finishStore := commandtrace.MeasureOperation(ctx, censorStoreStage)
 	_, err = s.Client.Result.
 		Create().
 		SetName(name).
@@ -85,7 +85,7 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 		s.Logger.ErrorContext(ctx, "name moderation cache store failed", "error_type", fmt.Sprintf("%T", err))
 	}
 
-	finishCache = commandtrace.MeasureOperation(ctx, "censor.cache")
+	finishCache = commandtrace.MeasureOperation(ctx, censorCacheStage)
 	exists, _ := s.Client.NameLog.
 		Query().
 		Where(
@@ -100,7 +100,7 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 		if censorResult == 0 {
 			text = string(ResultNonCompliant)
 		}
-		finishStore = commandtrace.MeasureOperation(ctx, "censor.store")
+		finishStore = commandtrace.MeasureOperation(ctx, censorStoreStage)
 		_, err := s.Client.NameLog.
 			Create().
 			SetUserID(fmt.Sprint(userID)).
@@ -124,7 +124,7 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 		return true
 	}
 
-	finishCache := commandtrace.MeasureOperation(ctx, "censor.cache")
+	finishCache := commandtrace.MeasureOperation(ctx, censorCacheStage)
 	existing, err := s.Client.ShortBio.
 		Query().
 		Where(shortbio.ContentEQ(content)).
@@ -148,7 +148,7 @@ func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID s
 		censorResult = ResultCompliant
 	}
 
-	finishStore := commandtrace.MeasureOperation(ctx, "censor.store")
+	finishStore := commandtrace.MeasureOperation(ctx, censorStoreStage)
 	_, err = s.Client.ShortBio.
 		Create().
 		SetUserID(fmt.Sprint(userID)).
@@ -173,7 +173,7 @@ func (s *Service) CensorImage(ctx context.Context, harukiUserID int, imageURL st
 		return true
 	}
 	// Check ent cache first
-	finishCache := commandtrace.MeasureOperation(ctx, "censor.cache")
+	finishCache := commandtrace.MeasureOperation(ctx, censorCacheStage)
 	existing, err := s.Client.ImageModCache.
 		Query().
 		Where(imagemodcache.URLEQ(imageURL)).
@@ -200,7 +200,7 @@ func (s *Service) CensorImage(ctx context.Context, harukiUserID int, imageURL st
 	if harukiUserID > 0 {
 		create = create.SetHarukiUserID(harukiUserID)
 	}
-	finishStore := commandtrace.MeasureOperation(ctx, "censor.store")
+	finishStore := commandtrace.MeasureOperation(ctx, censorStoreStage)
 	_, err = create.Save(ctx)
 	finishStore()
 	if err != nil {

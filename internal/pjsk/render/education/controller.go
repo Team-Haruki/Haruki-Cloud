@@ -147,7 +147,7 @@ func (c *Controller) RenderChallengeLiveDetails(query ChallengeLiveQuery) ([]byt
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildChallengeLiveDetailsRequest(query)
 	finishBuild()
 	if err != nil {
@@ -167,7 +167,7 @@ func (c *Controller) RenderPowerBonusDetail(req drawing.PowerBonusDetailRequest)
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildPowerBonusDetailRequest(req)
 	finishBuild()
 	if err != nil {
@@ -187,7 +187,7 @@ func (c *Controller) RenderAreaItemUpgradeMaterials(req drawing.AreaItemUpgradeM
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildAreaItemUpgradeMaterialsRequest(req)
 	finishBuild()
 	if err != nil {
@@ -207,7 +207,7 @@ func (c *Controller) RenderBonds(req drawing.BondsRequest) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildBondsRequest(req)
 	finishBuild()
 	if err != nil {
@@ -227,7 +227,7 @@ func (c *Controller) RenderLeaderCount(req drawing.LeaderCountRequest) ([]byte, 
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildLeaderCountRequest(req)
 	finishBuild()
 	if err != nil {

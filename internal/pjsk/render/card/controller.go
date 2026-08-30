@@ -102,7 +102,7 @@ func (c *Controller) RenderCardDetail(query Query) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, err := c.BuildCardDetailRequest(query)
 	finishBuild()
 	if err != nil {
@@ -150,7 +150,7 @@ func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, autoBox, err := c.buildCardListRenderRequest(query)
 	finishBuild()
 	if err != nil {
@@ -256,7 +256,7 @@ func (c *Controller) RenderCardBox(queries []Query) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.ctx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, err := c.BuildCardBoxRequest(queries)
 	finishBuild()
 	if err != nil {

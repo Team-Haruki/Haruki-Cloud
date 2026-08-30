@@ -134,8 +134,8 @@ func musicBoardMetric(row musicBoardRow, target, liveType string) float64 {
 		return derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "score"))
 	case "pt":
 		return derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "pt"))
-	case "pt/time":
-		return derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "pt/time"))
+	case pointsPerTimeMetric:
+		return derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, pointsPerTimeMetric))
 	case "tps":
 		return row.Tps
 	case "time":
@@ -155,7 +155,7 @@ func selectMusicBoardLiveValue(row musicBoardRow, liveType, metric string) *floa
 			return row.SoloRealScore
 		case "pt":
 			return row.SoloPt
-		case "pt/time", "pt_per_hour":
+		case pointsPerTimeMetric, "pt_per_hour":
 			return row.SoloPtPerHour
 		case "skill_account":
 			return row.SoloSkillAccount
@@ -168,7 +168,7 @@ func selectMusicBoardLiveValue(row musicBoardRow, liveType, metric string) *floa
 			return row.AutoRealScore
 		case "pt":
 			return row.AutoPt
-		case "pt/time", "pt_per_hour":
+		case pointsPerTimeMetric, "pt_per_hour":
 			return row.AutoPtPerHour
 		case "skill_account":
 			return row.AutoSkillAccount
@@ -181,7 +181,7 @@ func selectMusicBoardLiveValue(row musicBoardRow, liveType, metric string) *floa
 			return row.MultiRealScore
 		case "pt":
 			return row.MultiPt
-		case "pt/time", "pt_per_hour":
+		case pointsPerTimeMetric, "pt_per_hour":
 			return row.MultiPtPerHour
 		case "skill_account":
 			return row.MultiSkillAccount

@@ -111,7 +111,7 @@ func resolveCustomRoomScoreSelection(r *CommandInput) (customRoomScoreSelection,
 }
 
 func findCustomRoomCandidatePairs(targetPoint int) ([][]int, error) {
-	raw := strings.TrimPrefix(datafiles.CustomRoomPTCSV(), "\ufeff")
+	raw := strings.TrimPrefix(datafiles.CustomRoomPTCSV(), byteOrderMark)
 	reader := csv.NewReader(strings.NewReader(raw))
 	records, err := reader.ReadAll()
 	if err != nil {
@@ -136,7 +136,7 @@ func findCustomRoomCandidatePairs(targetPoint int) ([][]int, error) {
 		if len(row) == 0 {
 			continue
 		}
-		eventRate, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(row[0], "\ufeff")))
+		eventRate, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(row[0], byteOrderMark)))
 		if err != nil || eventRate <= 0 {
 			continue
 		}
@@ -153,7 +153,7 @@ func findCustomRoomCandidatePairs(targetPoint int) ([][]int, error) {
 }
 
 func parseCustomRoomBonus(raw string) (int, bool) {
-	clean := strings.TrimSpace(strings.TrimPrefix(raw, "\ufeff"))
+	clean := strings.TrimSpace(strings.TrimPrefix(raw, byteOrderMark))
 	clean = strings.TrimSuffix(clean, "%")
 	if clean == "" {
 		return 0, false

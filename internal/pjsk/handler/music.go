@@ -101,11 +101,11 @@ func (sekaiHandlers) SongHandle() HarukiSekaiCommandHandler {
 			}
 			if diff, cleaned := extractMusicDifficulty(query); diff != "" {
 				ctx.SetArgs(cleaned)
-				return makeCommandRequestWithParams(ctx, parser.ModuleMusic, "music-detail", map[string]any{
+				return makeCommandRequestWithParams(ctx, parser.ModuleMusic, musicDetailCommand, map[string]any{
 					"difficulty": diff,
 				}), nil
 			}
-			return makeCommandRequest(ctx, parser.ModuleMusic, "music-detail"), nil
+			return makeCommandRequest(ctx, parser.ModuleMusic, musicDetailCommand), nil
 		},
 	}, executeMusic)
 }
@@ -446,7 +446,7 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 	var data []byte
 	switch rc.Cmd.Mode {
-	case "music-detail":
+	case musicDetailCommand:
 		q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = musicCtrl.RenderMusicDetail(q)

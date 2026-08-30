@@ -36,11 +36,11 @@ func (sekaiHandlers) EventDeckHandle() HarukiSekaiCommandHandler {
 			"/模拟组卡", "/模拟配队", "/模拟组队", "/模拟卡组",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			params, _, err := buildDeckParamsWithSelfQuery(ctx, "deck-event")
+			params, _, err := buildDeckParamsWithSelfQuery(ctx, deckEventCommand)
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, "deck-event", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, deckEventCommand, params), nil
 		},
 	}, executeDeck)
 }
@@ -53,11 +53,11 @@ func (sekaiHandlers) ChallengeDeckHandle() HarukiSekaiCommandHandler {
 			"/挑战组卡", "/挑战组队", "/挑战卡组", "/挑战配队",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			params, _, err := buildDeckParamsWithSelfQuery(ctx, "deck-challenge")
+			params, _, err := buildDeckParamsWithSelfQuery(ctx, deckChallengeCommand)
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, "deck-challenge", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, deckChallengeCommand, params), nil
 		},
 	}, executeDeck)
 }
@@ -71,11 +71,11 @@ func (sekaiHandlers) NoEventDeckHandle() HarukiSekaiCommandHandler {
 			"/最强卡组", "/最强组卡", "/最强组队", "/最强配队",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			params, _, err := buildDeckParamsWithSelfQuery(ctx, "deck-no-event")
+			params, _, err := buildDeckParamsWithSelfQuery(ctx, deckNoEventCommand)
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, "deck-no-event", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, deckNoEventCommand, params), nil
 		},
 	}, executeDeck)
 }
@@ -89,11 +89,11 @@ func (sekaiHandlers) BonusDeckHandle() HarukiSekaiCommandHandler {
 			"/控分组卡", "/控分组队", "/控分卡组", "/控分配队",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			params, _, err := buildDeckParamsWithSelfQuery(ctx, "deck-bonus")
+			params, _, err := buildDeckParamsWithSelfQuery(ctx, deckBonusCommand)
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, "deck-bonus", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, deckBonusCommand, params), nil
 		},
 	}, executeDeck)
 }
@@ -107,11 +107,11 @@ func (sekaiHandlers) MysekaiDeckHandle() HarukiSekaiCommandHandler {
 			"/ms组卡", "/ms组队", "/ms卡组", "/ms配队",
 		},
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
-			params, p, err := buildDeckParamsWithSelfQuery(ctx, "deck-mysekai")
+			params, p, err := buildDeckParamsWithSelfQuery(ctx, deckMySekaiCommand)
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, "deck-mysekai", mysekaiDeckCombinedParams{
+			return makeCommandRequestWithParams(ctx, parser.ModuleDeck, deckMySekaiCommand, mysekaiDeckCombinedParams{
 				Deck:  params,
 				Query: p,
 			}), nil
@@ -188,15 +188,15 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		return text
 	}
 	switch rc.Cmd.Mode {
-	case "deck-event":
+	case deckEventCommand:
 		recommendType = "event"
-	case "deck-challenge":
+	case deckChallengeCommand:
 		recommendType = "challenge"
-	case "deck-no-event":
+	case deckNoEventCommand:
 		recommendType = "no_event"
-	case "deck-bonus":
+	case deckBonusCommand:
 		recommendType = "bonus"
-	case "deck-mysekai":
+	case deckMySekaiCommand:
 		recommendType = "mysekai"
 
 		var combined struct {
@@ -373,7 +373,7 @@ func deckRecommendDisabledMessage(rc *RequestContext) (string, bool) {
 
 func isDeckRecommendMode(mode string) bool {
 	switch mode {
-	case "deck-event", "deck-challenge", "deck-no-event", "deck-bonus", "deck-mysekai":
+	case deckEventCommand, deckChallengeCommand, deckNoEventCommand, deckBonusCommand, deckMySekaiCommand:
 		return true
 	default:
 		return false

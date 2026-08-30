@@ -55,19 +55,19 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args == "" {
 		if preferList {
-			return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-list", map[string]any{
+			return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventListCommand, map[string]any{
 				"include_past":   true,
 				"include_future": true,
 			}), nil
 		}
-		return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-detail", map[string]any{
+		return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventDetailCommand, map[string]any{
 			"use_current": true,
 		}), nil
 	}
 
 	if preferList {
 		if params, ok := resolveAmbiguousEventListFilter(args); ok {
-			return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-list", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventListCommand, params), nil
 		}
 	}
 
@@ -111,7 +111,7 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 		if info.Filter.BannerCharID != 0 {
 			params["banner_char_id"] = info.Filter.BannerCharID
 		}
-		return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-list", params), nil
+		return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventListCommand, params), nil
 	}
 
 	params := map[string]any{}
@@ -134,7 +134,7 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 	default:
 		return nil, eventSearchUsageError(ctx.originalTriggerCmd)
 	}
-	return makeCommandRequestWithParams(ctx, parser.ModuleEvent, "event-detail", params), nil
+	return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventDetailCommand, params), nil
 }
 
 func eventSearchUsageError(trigger string) error {
@@ -194,12 +194,12 @@ func executeEvent(rc *RequestContext) (message onebot11.Message, err error) {
 	eventCtrl := rc.App.Events.WithContext(rc.Ctx)
 	var data []byte
 	switch rc.Cmd.Mode {
-	case "event-detail":
+	case eventDetailCommand:
 		q := event.DetailQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.AllowUnreleased = allowReadOnlyLeaks(region.String())
 		data, err = eventCtrl.RenderEventDetail(q)
-	case "event-list":
+	case eventListCommand:
 		q := event.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = eventCtrl.RenderEventList(q)

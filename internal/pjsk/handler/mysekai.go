@@ -63,7 +63,7 @@ func (sekaiHandlers) MysekaiResourceHandle() HarukiSekaiCommandHandler {
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-resource", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiResourceCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -91,7 +91,7 @@ func (sekaiHandlers) MysekaiOverviewHandle() HarukiSekaiCommandHandler {
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-resource-map", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiResourceMapCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -119,7 +119,7 @@ func (sekaiHandlers) MysekaiMapHandle() HarukiSekaiCommandHandler {
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-map", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiMapCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -145,14 +145,14 @@ func (sekaiHandlers) MysekaiTalkListHandle() HarukiSekaiCommandHandler {
 				selfParams["show_id"] = true
 				selfParams["only_craftable"] = true
 				selfParams["obtained_source"] = "blueprint"
-				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
+				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureListCommand, selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
 				return nil, mysekaiTalkListUsageError(ctx.originalTriggerCmd)
 			}
 			selfParams["show_id"] = true
 			selfParams["show_all_talks"] = showAllTalks
-			resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", selfParams)
+			resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiTalkListCommand, selfParams)
 			resolved.Query = buildMysekaiTalkQuery(unit, query)
 			return resolved, nil
 		},
@@ -190,7 +190,7 @@ func (sekaiHandlers) MysekaiFixtureListHandle() HarukiSekaiCommandHandler {
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureListCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -222,7 +222,7 @@ func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 				if cleaned != "" {
 					selfParams["category_query"] = cleaned
 				}
-				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
+				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureListCommand, selfParams), nil
 			}
 
 			cleaned = cleanMysekaiArgs(cleaned)
@@ -231,7 +231,7 @@ func (sekaiHandlers) MysekaiFurnitureHandle() HarukiSekaiCommandHandler {
 			if cleaned != "" {
 				selfParams["category_query"] = cleaned
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureListCommand, selfParams), nil
 		},
 	}, executeMysekai)
 }
@@ -260,14 +260,14 @@ func (sekaiHandlers) MysekaiDoorUpgradeHandle() HarukiSekaiCommandHandler {
 				params["show_all"] = true
 			}
 			if gateID, cleaned := extractMysekaiGateID(args); gateID != 0 {
-				resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-door-upgrade", params)
+				resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiDoorUpgradeCommand, params)
 				resolved.Query = strconv.Itoa(gateID)
 				if cleaned != "" {
 					resolved.Query = strings.TrimSpace(resolved.Query + " " + cleaned)
 				}
 				return resolved, nil
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-door-upgrade", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiDoorUpgradeCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -290,7 +290,7 @@ func (sekaiHandlers) MysekaiMusicRecordHandle() HarukiSekaiCommandHandler {
 				ctx.SetArgs(cleaned)
 				params["show_id"] = true
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-music-record", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiMusicRecordCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -317,14 +317,14 @@ func (sekaiHandlers) MysekaiBlueprintHandle() HarukiSekaiCommandHandler {
 				selfParams["show_id"] = true
 				selfParams["only_craftable"] = true
 				selfParams["obtained_source"] = "blueprint"
-				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-fixture-list", selfParams), nil
+				return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiFixtureListCommand, selfParams), nil
 			}
 			if _, ok := rendermysekai.ResolveNicknameCharacterID(query); !ok {
 				return nil, mysekaiBlueprintUsageError(ctx.originalTriggerCmd)
 			}
 			selfParams["show_id"] = true
 			selfParams["show_all_talks"] = showAllTalks
-			resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-talk-list", selfParams)
+			resolved := makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiTalkListCommand, selfParams)
 			resolved.Query = buildMysekaiTalkQuery(unit, query)
 			return resolved, nil
 		},
@@ -367,7 +367,7 @@ func (sekaiHandlers) MysekaiPhotoHandle() HarukiSekaiCommandHandler {
 			if err := embedSelfQuery(params, ctx); err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, "mysekai-photo", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleMysekai, mySekaiPhotoCommand, params), nil
 		},
 	}, executeMysekai)
 }
@@ -556,7 +556,7 @@ func isMysekaiHousingRankRangeToken(token string) bool {
 
 func shouldEnforceMysekaiExpiry(mode string) bool {
 	switch mode {
-	case "mysekai-resource", "mysekai-resource-map", "mysekai-map":
+	case mySekaiResourceCommand, mySekaiResourceMapCommand, mySekaiMapCommand:
 		return true
 	default:
 		return false
@@ -565,20 +565,20 @@ func shouldEnforceMysekaiExpiry(mode string) bool {
 
 func mysekaiRenderContextOptionsForMode(mode string) mySekaiRenderContextOptions {
 	switch mode {
-	case "mysekai-map", "mysekai-photo":
+	case mySekaiMapCommand, mySekaiPhotoCommand:
 		return mySekaiRenderContextOptions{
 			NeedProfile:          false,
 			PreferMySekaiPayload: true,
 			MySekaiPayloadOnly:   true,
 		}
-	case "mysekai-resource", "mysekai-resource-map", "mysekai-fixture-list",
-		"mysekai-music-record":
+	case mySekaiResourceCommand, mySekaiResourceMapCommand, mySekaiFixtureListCommand,
+		mySekaiMusicRecordCommand:
 		return mySekaiRenderContextOptions{
 			NeedProfile:          true,
 			PreferMySekaiPayload: true,
 			MySekaiPayloadOnly:   true,
 		}
-	case "mysekai-door-upgrade":
+	case mySekaiDoorUpgradeCommand:
 		return mySekaiRenderContextOptions{
 			NeedProfile:       true,
 			SuiteOnlySnapshot: true,
@@ -682,7 +682,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 
 	staticFixtureListQuery := rendermysekai.FixtureListQuery{Region: regionStr}
-	if rc.Cmd.Mode == "mysekai-fixture-list" {
+	if rc.Cmd.Mode == mySekaiFixtureListCommand {
 		mergeParams(rc.Cmd.Params, &staticFixtureListQuery)
 		if isStaticMySekaiFixtureListQuery(staticFixtureListQuery) {
 			if strings.TrimSpace(staticFixtureListQuery.Region) == "" {
@@ -708,7 +708,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
 	}
 	staticDoorUpgradeQuery := rendermysekai.DoorUpgradeQuery{Region: regionStr, Query: rc.Cmd.Query}
-	if rc.Cmd.Mode == "mysekai-door-upgrade" {
+	if rc.Cmd.Mode == mySekaiDoorUpgradeCommand {
 		mergeParams(rc.Cmd.Params, &staticDoorUpgradeQuery)
 		if isStaticMySekaiDoorUpgradeQuery(staticDoorUpgradeQuery) {
 			if strings.TrimSpace(staticDoorUpgradeQuery.Region) == "" {
@@ -742,7 +742,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 
 	var data []byte
 	switch rc.Cmd.Mode {
-	case "mysekai-resource":
+	case mySekaiResourceCommand:
 		hasRemaining, remainingErr := mysekaiMapHasRemainingMaterials(renderCtx, rc.Cmd.Params)
 		if remainingErr != nil {
 			return nil, remainingErr
@@ -754,7 +754,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderResource(q)
-	case "mysekai-resource-map":
+	case mySekaiResourceMapCommand:
 		resourceQuery := rendermysekai.ResourceQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &resourceQuery)
 		resourceQuery.Profile = renderCtx.Profile
@@ -791,7 +791,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, runErr
 		}
 		return message, nil
-	case "mysekai-map":
+	case mySekaiMapCommand:
 		q := rendermysekai.MapQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		finishBuild := measurePayloadBuild(rc.Ctx)
@@ -815,22 +815,22 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 
 		replayMessage = append(replayMessage, onebot11.At(rc.PlatformUserID))
 		return replayMessage, nil
-	case "mysekai-fixture-list":
+	case mySekaiFixtureListCommand:
 		q := rendermysekai.FixtureListQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderFixtureList(q)
-	case "mysekai-door-upgrade":
+	case mySekaiDoorUpgradeCommand:
 		q := rendermysekai.DoorUpgradeQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderDoorUpgrade(q)
-	case "mysekai-music-record":
+	case mySekaiMusicRecordCommand:
 		q := rendermysekai.MusicRecordQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile
 		data, err = renderCtx.Controller.RenderMusicRecord(q)
-	case "mysekai-photo":
+	case mySekaiPhotoCommand:
 		q := rendermysekai.PhotoQuery{Region: renderCtx.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		result, resolveErr := renderCtx.Controller.ResolvePhoto(q)
@@ -852,7 +852,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 			photoTime = displaytime.FormatTime(result.ObtainedAt.In(loc), "2006-01-02 15:04")
 		}
 		return append(image, onebot11.Text(fmt.Sprintf("拍摄时间: %s", photoTime))), nil
-	case "mysekai-talk-list":
+	case mySekaiTalkListCommand:
 		q := rendermysekai.TalkListQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Profile = renderCtx.Profile

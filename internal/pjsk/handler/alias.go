@@ -174,7 +174,7 @@ func (sekaiHandlers) AliasRejectHandle() HarukiSekaiCommandHandler {
 		Commands: []string{
 			"/拒绝别名",
 		},
-		Helper:      "使用方式:\n/拒绝别名 待审核ID 原因",
+		Helper:      rejectAliasUsage,
 		ParseUIDArg: common.BoolPtr(false),
 		handleFunc: func(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 			reviewID, reason, err := parseAliasRejectArgs(strings.TrimSpace(ctx.GetArgs()))
@@ -373,7 +373,7 @@ func parseAliasReviewIDsWithUsage(args, usage string) ([]int64, error) {
 	for _, field := range fields {
 		reviewID, err := strconv.ParseInt(field, 10, 64)
 		if err != nil || reviewID <= 0 {
-			return nil, onebot11.NewReplayError("待审核ID必须为正整数")
+			return nil, onebot11.NewReplayError(positivePendingAliasIDMessage)
 		}
 		result = append(result, reviewID)
 	}
@@ -387,7 +387,7 @@ func parseAliasReviewID(args, usage string) (int64, error) {
 	}
 	reviewID, err := strconv.ParseInt(fields[0], 10, 64)
 	if err != nil || reviewID <= 0 {
-		return 0, onebot11.NewReplayError("待审核ID必须为正整数")
+		return 0, onebot11.NewReplayError(positivePendingAliasIDMessage)
 	}
 	return reviewID, nil
 }
@@ -419,15 +419,15 @@ func parseAliasSubmissionTarget(args, currentPlatform string, atIDs []string, us
 func parseAliasRejectArgs(args string) (int64, string, error) {
 	args = strings.TrimSpace(args)
 	if args == "" {
-		return 0, "", onebot11.NewReplayError("使用方式:\n/拒绝别名 待审核ID 原因")
+		return 0, "", onebot11.NewReplayError(rejectAliasUsage)
 	}
 	parts := strings.Fields(args)
 	if len(parts) < 2 {
-		return 0, "", onebot11.NewReplayError("使用方式:\n/拒绝别名 待审核ID 原因")
+		return 0, "", onebot11.NewReplayError(rejectAliasUsage)
 	}
 	reviewID, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil || reviewID <= 0 {
-		return 0, "", onebot11.NewReplayError("待审核ID必须为正整数")
+		return 0, "", onebot11.NewReplayError(positivePendingAliasIDMessage)
 	}
 	reason := strings.TrimSpace(strings.TrimPrefix(args, parts[0]))
 	if reason == "" {

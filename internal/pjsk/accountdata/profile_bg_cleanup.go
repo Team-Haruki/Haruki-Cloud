@@ -30,7 +30,7 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 	var deleted int
 	err := filepath.WalkDir(bgRootAbs, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
-			profileBGCleanupLogger.WarnContext(ctx, "profile background cleanup entry skipped",
+			profileBGCleanupLogger.WarnContext(ctx, profileBackgroundCleanupSkipped,
 				"operation", "walk",
 				"error_type", fmt.Sprintf("%T", walkErr),
 			)
@@ -42,7 +42,7 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 
 		relPath, err := filepath.Rel(s.rootDir, path)
 		if err != nil {
-			profileBGCleanupLogger.WarnContext(ctx, "profile background cleanup entry skipped",
+			profileBGCleanupLogger.WarnContext(ctx, profileBackgroundCleanupSkipped,
 				"operation", "relative_path",
 				"error_type", fmt.Sprintf("%T", err),
 			)
@@ -55,7 +55,7 @@ func (s *LocalProfileBGStore) CleanupOrphanedFiles(ctx context.Context, activePa
 		}
 
 		if rmErr := os.Remove(path); rmErr != nil && !os.IsNotExist(rmErr) {
-			profileBGCleanupLogger.WarnContext(ctx, "profile background cleanup entry skipped",
+			profileBGCleanupLogger.WarnContext(ctx, profileBackgroundCleanupSkipped,
 				"operation", "remove",
 				"error_type", fmt.Sprintf("%T", rmErr),
 			)

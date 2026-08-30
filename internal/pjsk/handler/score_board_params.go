@@ -33,14 +33,14 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 
 	defaultTarget := "score"
 	if liveType == "multi" {
-		defaultTarget = "pt/time"
+		defaultTarget = pointsPerTimeMetric
 	}
 	target, remaining := extractMusicBoardMappedArg(args, map[string][]string{
-		"score":   {"live分数", "分数", "score"},
-		"pt/time": {"时间效率", "pt/h", "pt时间", "时速"},
-		"pt":      {"火效率", "pt/火", "pt"},
-		"tps":     {"每秒点击", "tps"},
-		"time":    {"时长", "时间"},
+		"score":             {"live分数", "分数", "score"},
+		pointsPerTimeMetric: {"时间效率", "pt/h", "pt时间", "时速"},
+		"pt":                {"火效率", "pt/火", "pt"},
+		"tps":               {"每秒点击", "tps"},
+		"time":              {"时长", "时间"},
 	}, defaultTarget)
 	params.Target = target
 	args = remaining
@@ -71,7 +71,7 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 	params.Skills = skills
 	args = remaining
 
-	if target == "pt" || target == "pt/time" {
+	if target == "pt" || target == pointsPerTimeMetric {
 		power, remaining, err := extractMusicBoardPower(args)
 		if err != nil {
 			return rendermusic.BoardQuery{}, err
@@ -91,7 +91,7 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 		args = remaining
 	}
 
-	if target == "pt/time" || target == "time" {
+	if target == pointsPerTimeMetric || target == "time" {
 		interval, remaining, err := extractMusicBoardInterval(args)
 		if err != nil {
 			return rendermusic.BoardQuery{}, err

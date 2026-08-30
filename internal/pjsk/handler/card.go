@@ -63,14 +63,14 @@ func resolveCardDetailOrList(ctx HarrukiSekaiHandlerContext, preferFilter bool) 
 		if err != nil {
 			return nil, err
 		}
-		return makeCommandRequestWithParams(ctx, parser.ModuleCard, "card-box", params), nil
+		return makeCommandRequestWithParams(ctx, parser.ModuleCard, cardBoxCommand, params), nil
 	}
 	if preferFilter {
 		params, err := newCardListParams(ctx, args, true)
 		if err != nil {
 			return nil, err
 		}
-		return makeCommandRequestWithParams(ctx, parser.ModuleCard, "card-list", params), nil
+		return makeCommandRequestWithParams(ctx, parser.ModuleCard, cardListCommand, params), nil
 	}
 	if looksLikeSingleCardQuery(args, preferFilter) {
 		return makeCommandRequestWithParams(ctx, parser.ModuleCard, "card-detail", card.Query{Query: args, Region: ctx.Region().String()}), nil
@@ -79,7 +79,7 @@ func resolveCardDetailOrList(ctx HarrukiSekaiHandlerContext, preferFilter bool) 
 	if err != nil {
 		return nil, err
 	}
-	return makeCommandRequestWithParams(ctx, parser.ModuleCard, "card-list", params), nil
+	return makeCommandRequestWithParams(ctx, parser.ModuleCard, cardListCommand, params), nil
 }
 
 func looksLikeSingleCardQuery(args string, preferFilter bool) bool {
@@ -102,7 +102,7 @@ func (sekaiHandlers) CardBoxHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleCard, "card-box", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleCard, cardBoxCommand, params), nil
 		},
 	}, executeCard)
 }
@@ -256,7 +256,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 			return nil, err
 		}
 		return rc.ImageMessage(data)
-	case "card-list":
+	case cardListCommand:
 		q := card.ListRequest{Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
 		q.Region = rc.Cmd.Region
@@ -274,7 +274,7 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 			return image, nil
 		}
 		return append(onebot11.Message{onebot11.Text(buildDoneText(cardCtrl.SummaryForList(q)))}, image...), nil
-	case "card-box":
+	case cardBoxCommand:
 		q := card.Query{
 			Query:            rc.Cmd.Query,
 			Region:           rc.Cmd.Region,

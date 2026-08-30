@@ -44,7 +44,7 @@ func normalizeCardUserFacingErrorForLookup(err error, region string, fallbackQue
 	case strings.Contains(message, "card service unavailable"),
 		strings.Contains(message, "card controller is not configured"),
 		strings.Contains(message, "no card data source for region"),
-		strings.Contains(message, "drawing client is not configured"):
+		strings.Contains(message, drawingClientNotConfigured):
 		return onebot11.NewReplayError("卡牌服务未就绪，请稍后再试")
 	case strings.Contains(message, "does not have original image assets"):
 		return onebot11.NewReplayError("该卡牌没有可用的卡面原图")
@@ -127,7 +127,7 @@ func normalizeMusicUserFacingErrorForLookup(err error, region string, fallbackQu
 		strings.Contains(message, "music data source is not configured"),
 		strings.Contains(message, "自制谱面数据源未配置"),
 		strings.Contains(message, "no music data source for region"),
-		strings.Contains(message, "drawing client is not configured"):
+		strings.Contains(message, drawingClientNotConfigured):
 		return onebot11.NewReplayError("歌曲服务未就绪，请稍后再试")
 	case strings.Contains(message, "music ids are required"),
 		strings.Contains(message, "music query is empty"),
@@ -249,7 +249,7 @@ func normalizeEventUserFacingErrorForRegion(err error, region string) error {
 		return onebot11.NewReplayError("找不到符合条件的活动")
 	case strings.Contains(message, "event service unavailable"),
 		strings.Contains(message, "no event data source for region"),
-		strings.Contains(message, "drawing client is not configured"):
+		strings.Contains(message, drawingClientNotConfigured):
 		return onebot11.NewReplayError("活动服务未就绪，请稍后再试")
 	case strings.Contains(message, "event record requires"):
 		return onebot11.NewReplayError("活动记录数据不足，无法渲染")
@@ -287,7 +287,7 @@ func normalizeGachaUserFacingError(err error) error {
 		return onebot11.NewReplayError("找不到特定的卡池")
 	case strings.Contains(message, "gacha service unavailable"),
 		strings.Contains(message, "no gacha data source for region"),
-		strings.Contains(message, "drawing client is not configured"):
+		strings.Contains(message, drawingClientNotConfigured):
 		return onebot11.NewReplayError("卡池服务未就绪，请稍后再试")
 	}
 	return err

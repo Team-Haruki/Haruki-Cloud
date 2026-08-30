@@ -80,7 +80,7 @@ func (sekaiHandlers) AreaItemHandle() HarukiSekaiCommandHandler {
 			if query.Flower {
 				params["flower"] = true
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleEducation, "education-area", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleEducation, educationAreaCommand, params), nil
 		},
 	}, executeEducation)
 }
@@ -313,7 +313,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 	region := rc.Region
 	regionStr := rc.RegionStr
 
-	if rc.Cmd.Mode == "education-area" {
+	if rc.Cmd.Mode == educationAreaCommand {
 		query := education.AreaItemQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &query)
 		if query.Region.IsZero() {
@@ -459,7 +459,7 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		}
 		data, err = eduCtrl.RenderPowerBonusDetail(req)
 
-	case "education-area":
+	case educationAreaCommand:
 		query := education.AreaItemQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &query)
 		if query.Region.IsZero() {

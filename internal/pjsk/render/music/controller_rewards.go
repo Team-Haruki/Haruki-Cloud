@@ -24,7 +24,7 @@ func (c *Controller) RenderMusicRewardsDetail(query RewardsDetailQuery) ([]byte,
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsDetailRequest(query)
 	finishBuild()
 	if err != nil {
@@ -37,7 +37,7 @@ func (c *Controller) RenderMusicRewardsDetailFromAchievements(query RewardsDetai
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsDetailRequestFromAchievements(query, achievementsJSON)
 	finishBuild()
 	if err != nil {
@@ -50,7 +50,7 @@ func (c *Controller) RenderMusicRewardsDetailFromSnapshot(query RewardsDetailQue
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsDetailRequestFromSnapshot(query, snapshot)
 	finishBuild()
 	if err != nil {
@@ -83,7 +83,7 @@ func (c *Controller) RenderMusicRewardsBasic(query RewardsBasicQuery) ([]byte, e
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsBasicRequest(query)
 	finishBuild()
 	if err != nil {
@@ -96,7 +96,7 @@ func (c *Controller) RenderMusicRewardsBasicEstimate(query RewardsBasicQuery, cl
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicRewardsBasicEstimateRequest(query, clearCounts, reason)
 	finishBuild()
 	if err != nil {

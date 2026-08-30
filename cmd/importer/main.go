@@ -275,7 +275,7 @@ func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client,
 		importerLogger.InfoContext(ctx, "import source completed", "target", "bindings", "region", server)
 	}
 
-	importerLogger.InfoContext(ctx, "import target completed",
+	importerLogger.InfoContext(ctx, importTargetCompleted,
 		"target", "bindings",
 		"total", total,
 		"inserted", inserted,
@@ -337,7 +337,7 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 		})
 	}
 
-	importerLogger.InfoContext(ctx, "import target loaded",
+	importerLogger.InfoContext(ctx, importTargetLoaded,
 		"target", "defaults",
 		"users", len(byUser),
 	)
@@ -421,7 +421,7 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 		}
 	}
 
-	importerLogger.InfoContext(ctx, "import target completed",
+	importerLogger.InfoContext(ctx, importTargetCompleted,
 		"target", "defaults",
 		"inserted", inserted,
 		"skipped", skipped,
@@ -435,7 +435,7 @@ func importCharacterAliases(ctx context.Context, exportsDir string, pjsk *pjskDB
 	if err != nil {
 		return err
 	}
-	importerLogger.InfoContext(ctx, "import target loaded", "target", "character-aliases", "records", len(records))
+	importerLogger.InfoContext(ctx, importTargetLoaded, "target", characterAliases, "records", len(records))
 
 	inserted, skipped, failed := 0, 0, 0
 	for _, rec := range records {
@@ -453,7 +453,7 @@ func importCharacterAliases(ctx context.Context, exportsDir string, pjsk *pjskDB
 				alias.AliasEQ(rec.Alias),
 			).Exist(ctx)
 		if err != nil {
-			logRecordFailure(ctx, "character-aliases", "", "query", rec.ID, err)
+			logRecordFailure(ctx, characterAliases, "", "query", rec.ID, err)
 			failed++
 			continue
 		}
@@ -471,14 +471,14 @@ func importCharacterAliases(ctx context.Context, exportsDir string, pjsk *pjskDB
 				skipped++
 				continue
 			}
-			logRecordFailure(ctx, "character-aliases", "", "insert", rec.ID, err)
+			logRecordFailure(ctx, characterAliases, "", "insert", rec.ID, err)
 			failed++
 			continue
 		}
 		inserted++
 	}
-	importerLogger.InfoContext(ctx, "import target completed",
-		"target", "character-aliases",
+	importerLogger.InfoContext(ctx, importTargetCompleted,
+		"target", characterAliases,
 		"inserted", inserted,
 		"skipped", skipped,
 		"failed", failed,
@@ -491,7 +491,7 @@ func importMusicAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 	if err != nil {
 		return err
 	}
-	importerLogger.InfoContext(ctx, "import target loaded", "target", "music-aliases", "records", len(records))
+	importerLogger.InfoContext(ctx, importTargetLoaded, "target", musicAliases, "records", len(records))
 
 	inserted, skipped, failed := 0, 0, 0
 	for _, rec := range records {
@@ -509,7 +509,7 @@ func importMusicAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 				alias.AliasEQ(rec.Alias),
 			).Exist(ctx)
 		if err != nil {
-			logRecordFailure(ctx, "music-aliases", "", "query", rec.ID, err)
+			logRecordFailure(ctx, musicAliases, "", "query", rec.ID, err)
 			failed++
 			continue
 		}
@@ -527,14 +527,14 @@ func importMusicAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 				skipped++
 				continue
 			}
-			logRecordFailure(ctx, "music-aliases", "", "insert", rec.ID, err)
+			logRecordFailure(ctx, musicAliases, "", "insert", rec.ID, err)
 			failed++
 			continue
 		}
 		inserted++
 	}
-	importerLogger.InfoContext(ctx, "import target completed",
-		"target", "music-aliases",
+	importerLogger.InfoContext(ctx, importTargetCompleted,
+		"target", musicAliases,
 		"inserted", inserted,
 		"skipped", skipped,
 		"failed", failed,
@@ -547,7 +547,7 @@ func importGroupAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 	if err != nil {
 		return err
 	}
-	importerLogger.InfoContext(ctx, "import target loaded", "target", "group-aliases", "records", len(records))
+	importerLogger.InfoContext(ctx, importTargetLoaded, "target", groupAliases, "records", len(records))
 
 	inserted, skipped, failed := 0, 0, 0
 	for _, rec := range records {
@@ -567,7 +567,7 @@ func importGroupAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 				groupalias.AliasEQ(rec.Alias),
 			).Exist(ctx)
 		if err != nil {
-			logRecordFailure(ctx, "group-aliases", "", "query", rec.ID, err)
+			logRecordFailure(ctx, groupAliases, "", "query", rec.ID, err)
 			failed++
 			continue
 		}
@@ -587,14 +587,14 @@ func importGroupAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Cli
 				skipped++
 				continue
 			}
-			logRecordFailure(ctx, "group-aliases", "", "insert", rec.ID, err)
+			logRecordFailure(ctx, groupAliases, "", "insert", rec.ID, err)
 			failed++
 			continue
 		}
 		inserted++
 	}
-	importerLogger.InfoContext(ctx, "import target completed",
-		"target", "group-aliases",
+	importerLogger.InfoContext(ctx, importTargetCompleted,
+		"target", groupAliases,
 		"inserted", inserted,
 		"skipped", skipped,
 		"failed", failed,
@@ -649,9 +649,9 @@ func main() {
 	}
 	runAll := targets["all"]
 	runBindings := runAll || targets["bindings"]
-	runCharAliases := runAll || targets["character-aliases"]
-	runMusicAliases := runAll || targets["music-aliases"]
-	runGroupAliases := runAll || targets["group-aliases"]
+	runCharAliases := runAll || targets[characterAliases]
+	runMusicAliases := runAll || targets[musicAliases]
+	runGroupAliases := runAll || targets[groupAliases]
 	runDefaults := runAll || targets["defaults"]
 
 	if *dryRun {
@@ -726,17 +726,17 @@ func main() {
 	}
 	if runCharAliases {
 		if err := importCharacterAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			exitImportFailure("character-aliases", "run", err)
+			exitImportFailure(characterAliases, "run", err)
 		}
 	}
 	if runMusicAliases {
 		if err := importMusicAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			exitImportFailure("music-aliases", "run", err)
+			exitImportFailure(musicAliases, "run", err)
 		}
 	}
 	if runGroupAliases {
 		if err := importGroupAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			exitImportFailure("group-aliases", "run", err)
+			exitImportFailure(groupAliases, "run", err)
 		}
 	}
 	// defaults must run after bindings are in place.

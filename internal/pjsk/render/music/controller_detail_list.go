@@ -95,7 +95,7 @@ func (c *Controller) RenderMusicDetail(query Query) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicDetailRequest(query)
 	finishBuild()
 	if err != nil {
@@ -131,7 +131,7 @@ func (c *Controller) RenderMusicBriefList(query BriefListQuery) ([]byte, error) 
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicBriefListRequest(query)
 	finishBuild()
 	if err != nil {
@@ -337,7 +337,7 @@ func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicListRequest(query)
 	if err != nil {
 		finishBuild()

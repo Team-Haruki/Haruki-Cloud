@@ -37,21 +37,21 @@ var paramEchoRedactions = []paramEchoRedaction{
 	{prefix: "未找到角色"},
 	{prefix: "匹配到多个角色"},
 	{prefix: "未找到家具类别", replacement: "未找到对应的家具类别"},
-	{prefix: "找不到特定的卡牌"},
+	{prefix: cardNotFoundMessage},
 	{prefix: "找不到特定的卡池"},
 	{prefix: "event_id is required", replacement: "当前没有可推断的活动，请指定活动ID"},
 	{prefix: "event id is required", replacement: "请提供活动ID"},
 	{prefix: "gacha id is required", replacement: "请提供要查询的卡池"},
-	{prefix: "unable to parse music query", replacement: "无法解析歌曲查询参数"},
+	{prefix: "unable to parse music query", replacement: musicQueryParseFailedMessage},
 	{prefix: "invalid token", replacement: "无效的参数"},
 	{prefix: "invalid event gacha query", replacement: "卡池查询参数错误"},
 	{prefix: "invalid gacha id", replacement: "卡池查询参数错误"},
-	{prefix: "failed to search card", replacement: "找不到特定的卡牌"},
-	{prefix: "failed to search card list", replacement: "找不到特定的卡牌"},
-	{prefix: "failed to search card box", replacement: "找不到特定的卡牌"},
-	{prefix: "failed to resolve deck music selection", replacement: "无法解析歌曲查询参数"},
+	{prefix: "failed to search card", replacement: cardNotFoundMessage},
+	{prefix: "failed to search card list", replacement: cardNotFoundMessage},
+	{prefix: "failed to search card box", replacement: cardNotFoundMessage},
+	{prefix: "failed to resolve deck music selection", replacement: musicQueryParseFailedMessage},
 	{prefix: "failed to resolve compare music selection", replacement: "无法解析要比较的歌曲"},
-	{prefix: "failed to resolve music meta query", replacement: "无法解析歌曲查询参数"},
+	{prefix: "failed to resolve music meta query", replacement: musicQueryParseFailedMessage},
 	{prefix: "toolbox api error", replacement: "工具箱请求失败，请稍后再试"},
 	{prefix: "toolbox: request failed after retries", replacement: "连接工具箱超时或网络异常，请稍后再试"},
 	{prefix: "sekai api error", replacement: "SekaiAPI 拉取失败，请稍后再试"},
@@ -59,20 +59,20 @@ var paramEchoRedactions = []paramEchoRedaction{
 	{prefix: "tracker api error", replacement: "查榜请求失败，请稍后再试"},
 	{prefix: "tracker: request failed after retries", replacement: "连接查榜服务超时或网络异常，请稍后再试"},
 	{prefix: "deck-service returned http", replacement: "组卡服务请求失败，请稍后再试"},
-	{prefix: "deck-service unavailable", replacement: "组卡服务未就绪，请稍后再试"},
-	{prefix: "deck-service upstream is unavailable", replacement: "组卡服务未就绪，请稍后再试"},
+	{prefix: "deck-service unavailable", replacement: deckServiceUnavailableMessage},
+	{prefix: "deck-service upstream is unavailable", replacement: deckServiceUnavailableMessage},
 	{prefix: "fixed_characters and fixed_cards cannot be used together", replacement: "组卡服务版本过旧，暂不支持同时固定角色和卡牌，请更新组卡服务后重试"},
 	{prefix: "获取自制谱面 JSON 失败", replacement: "获取自制谱面数据失败，请稍后再试"},
 	{prefix: "获取自定义谱面信息失败", replacement: "获取自制谱面数据失败，请稍后再试"},
-	{prefix: "music not found", replacement: "找不到特定的歌"},
-	{prefix: "card not found (filter)", replacement: "找不到特定的卡牌"},
-	{prefix: "no cards found for filter", replacement: "找不到特定的卡牌"},
+	{prefix: "music not found", replacement: musicNotFoundMessage},
+	{prefix: "card not found (filter)", replacement: cardNotFoundMessage},
+	{prefix: "no cards found for filter", replacement: cardNotFoundMessage},
 	{prefix: "gacha not found", replacement: "找不到特定的卡池"},
 	{prefix: "card service unavailable", replacement: "卡牌服务未就绪，请稍后再试"},
-	{prefix: "music controller is not configured", replacement: "歌曲服务未就绪，请稍后再试"},
-	{prefix: "music service unavailable", replacement: "歌曲服务未就绪，请稍后再试"},
-	{prefix: "music data source is not configured", replacement: "歌曲服务未就绪，请稍后再试"},
-	{prefix: "no music data source for region", replacement: "歌曲服务未就绪，请稍后再试"},
+	{prefix: "music controller is not configured", replacement: musicServiceUnavailableMessage},
+	{prefix: "music service unavailable", replacement: musicServiceUnavailableMessage},
+	{prefix: "music data source is not configured", replacement: musicServiceUnavailableMessage},
+	{prefix: "no music data source for region", replacement: musicServiceUnavailableMessage},
 	{prefix: "music board service unavailable", replacement: "歌曲排行服务未就绪，请稍后再试"},
 	{prefix: "music board request has no items", replacement: "歌曲排行参数错误"},
 	{prefix: "music meta request is empty", replacement: "请输入要查询的歌曲名或ID"},
@@ -90,7 +90,7 @@ var paramEchoRedactions = []paramEchoRedaction{
 	{prefix: "profile service unavailable", replacement: "个人信息服务未就绪，请稍后再试"},
 	{prefix: "mysekai service unavailable", replacement: "烤森服务未就绪，请稍后再试"},
 	{prefix: "sk service unavailable", replacement: "查榜服务未就绪，请稍后再试"},
-	{prefix: "deck music resolve requires music controller", replacement: "组卡服务未就绪，请稍后再试"},
+	{prefix: "deck music resolve requires music controller", replacement: deckServiceUnavailableMessage},
 	{prefix: "drawing client is not configured", replacement: "渲染服务未就绪，请稍后再试"},
 	{prefix: "Post \"http://haruki-drawing", replacement: "连接渲染服务超时或网络异常，请稍后再试"},
 	{prefix: "context deadline exceeded", replacement: "连接上游服务超时或网络异常，请稍后再试"},
@@ -188,16 +188,16 @@ func redactParamEchoLine(line string) (string, bool) {
 	}
 
 	if idx := strings.Index(line, "找不到特定的歌:"); idx >= 0 {
-		return strings.TrimSpace(line[:idx+len("找不到特定的歌")]), true
+		return strings.TrimSpace(line[:idx+len(musicNotFoundMessage)]), true
 	}
 	if idx := strings.Index(line, "找不到特定的歌："); idx >= 0 {
-		return strings.TrimSpace(line[:idx+len("找不到特定的歌")]), true
+		return strings.TrimSpace(line[:idx+len(musicNotFoundMessage)]), true
 	}
 	if idx := strings.Index(line, "找不到特定的卡牌:"); idx >= 0 {
-		return strings.TrimSpace(line[:idx+len("找不到特定的卡牌")]), true
+		return strings.TrimSpace(line[:idx+len(cardNotFoundMessage)]), true
 	}
 	if idx := strings.Index(line, "找不到特定的卡牌："); idx >= 0 {
-		return strings.TrimSpace(line[:idx+len("找不到特定的卡牌")]), true
+		return strings.TrimSpace(line[:idx+len(cardNotFoundMessage)]), true
 	}
 	if isEnglishLikeErrorLine(line) {
 		return genericClientErrorText, true

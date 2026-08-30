@@ -69,7 +69,7 @@ func (r *RemoteDeckRecommender) postJSON(ctx context.Context, exec *remoteExecut
 				return err
 			}
 			r.logger.DebugContext(ctx, "deck request retrying",
-				"upstream", "deck-service",
+				"upstream", deckServiceName,
 				"upstream_path", path,
 				"attempt", attempt,
 				"max_retries", r.maxRetries,
@@ -83,7 +83,7 @@ func (r *RemoteDeckRecommender) postJSON(ctx context.Context, exec *remoteExecut
 		req.Header.Set("Content-Type", "application/json")
 
 		start := time.Now()
-		finishHTTP := commandtrace.MeasureOperation(ctx, "deck.http")
+		finishHTTP := commandtrace.MeasureOperation(ctx, deckHTTPStage)
 		resp, err := r.client.Do(req)
 
 		if err != nil {
@@ -94,7 +94,7 @@ func (r *RemoteDeckRecommender) postJSON(ctx context.Context, exec *remoteExecut
 			}
 			lastErr = err
 			r.logger.WarnContext(ctx, "deck request failed",
-				"upstream", "deck-service",
+				"upstream", deckServiceName,
 				"upstream_path", path,
 				"attempt", attempt,
 				"duration_ms", commandtrace.Milliseconds(elapsed),
@@ -123,7 +123,7 @@ func (r *RemoteDeckRecommender) postJSON(ctx context.Context, exec *remoteExecut
 
 		if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
 			r.logger.DebugContext(ctx, "deck request completed",
-				"upstream", "deck-service",
+				"upstream", deckServiceName,
 				"upstream_path", path,
 				"status_code", resp.StatusCode,
 				"duration_ms", commandtrace.Milliseconds(elapsed),
@@ -139,7 +139,7 @@ func (r *RemoteDeckRecommender) postJSON(ctx context.Context, exec *remoteExecut
 
 		lastErr = parseRemoteHTTPError(resp.StatusCode, payload)
 		r.logger.WarnContext(ctx, "deck request returned non-success status",
-			"upstream", "deck-service",
+			"upstream", deckServiceName,
 			"upstream_path", path,
 			"attempt", attempt,
 			"status_code", resp.StatusCode,
@@ -173,7 +173,7 @@ func (r *RemoteDeckRecommender) postBinary(ctx context.Context, exec *remoteExec
 				return err
 			}
 			r.logger.DebugContext(ctx, "deck binary request retrying",
-				"upstream", "deck-service",
+				"upstream", deckServiceName,
 				"upstream_path", path,
 				"attempt", attempt,
 				"max_retries", r.maxRetries,
@@ -187,7 +187,7 @@ func (r *RemoteDeckRecommender) postBinary(ctx context.Context, exec *remoteExec
 		req.Header.Set("Content-Type", "application/octet-stream")
 
 		start := time.Now()
-		finishHTTP := commandtrace.MeasureOperation(ctx, "deck.http")
+		finishHTTP := commandtrace.MeasureOperation(ctx, deckHTTPStage)
 		resp, err := r.client.Do(req)
 
 		if err != nil {
@@ -198,7 +198,7 @@ func (r *RemoteDeckRecommender) postBinary(ctx context.Context, exec *remoteExec
 			}
 			lastErr = err
 			r.logger.WarnContext(ctx, "deck binary request failed",
-				"upstream", "deck-service",
+				"upstream", deckServiceName,
 				"upstream_path", path,
 				"attempt", attempt,
 				"duration_ms", commandtrace.Milliseconds(elapsed),
@@ -227,7 +227,7 @@ func (r *RemoteDeckRecommender) postBinary(ctx context.Context, exec *remoteExec
 
 		if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
 			r.logger.DebugContext(ctx, "deck binary request completed",
-				"upstream", "deck-service",
+				"upstream", deckServiceName,
 				"upstream_path", path,
 				"status_code", resp.StatusCode,
 				"duration_ms", commandtrace.Milliseconds(elapsed),
@@ -243,7 +243,7 @@ func (r *RemoteDeckRecommender) postBinary(ctx context.Context, exec *remoteExec
 
 		lastErr = parseRemoteHTTPError(resp.StatusCode, body)
 		r.logger.WarnContext(ctx, "deck binary request returned non-success status",
-			"upstream", "deck-service",
+			"upstream", deckServiceName,
 			"upstream_path", path,
 			"attempt", attempt,
 			"status_code", resp.StatusCode,
@@ -298,7 +298,7 @@ func (r *RemoteDeckRecommender) healthCheck(ctx context.Context, baseURL string)
 		return false
 	}
 
-	finishHTTP := commandtrace.MeasureOperation(ctx, "deck.http")
+	finishHTTP := commandtrace.MeasureOperation(ctx, deckHTTPStage)
 	resp, err := r.client.Do(req)
 	finishHTTP()
 	if err != nil {

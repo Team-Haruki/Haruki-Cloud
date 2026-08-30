@@ -42,12 +42,12 @@ func normalizeTrackerUserFacingError(err error) error {
 		strings.Contains(lower, "tracker: base_url is empty"):
 		return onebot11.NewReplayError("查榜服务未就绪，请稍后再试")
 	case strings.Contains(lower, "tracker: request failed after retries"),
-		strings.Contains(lower, "context deadline exceeded"),
-		strings.Contains(lower, "client.timeout exceeded"),
-		strings.Contains(lower, "i/o timeout"):
+		strings.Contains(lower, contextDeadlineExceededText),
+		strings.Contains(lower, clientTimeoutExceededText),
+		strings.Contains(lower, ioTimeoutText):
 		return onebot11.NewReplayError("连接查榜服务超时或网络异常，请稍后再试")
-	case strings.Contains(lower, "connection refused"),
-		strings.Contains(lower, "no such host"):
+	case strings.Contains(lower, connectionRefusedText),
+		strings.Contains(lower, noSuchHostText):
 		return onebot11.NewReplayError("查榜服务暂时不可用，请稍后再试")
 	case strings.Contains(lower, "tracker: failed to unmarshal response"):
 		return onebot11.NewReplayError("查榜服务返回数据解析失败，请稍后再试")
@@ -93,12 +93,12 @@ func normalizeDrawingUserFacingError(err error) error {
 		return onebot11.NewReplayError("图片服务未就绪，请稍后再试")
 	case strings.Contains(lower, "asset path is empty"):
 		return onebot11.NewReplayError("图片资源不可用")
-	case strings.Contains(lower, "context deadline exceeded"),
-		strings.Contains(lower, "client.timeout exceeded"),
-		strings.Contains(lower, "i/o timeout"):
+	case strings.Contains(lower, contextDeadlineExceededText),
+		strings.Contains(lower, clientTimeoutExceededText),
+		strings.Contains(lower, ioTimeoutText):
 		return onebot11.NewReplayError("连接渲染服务超时或网络异常，请稍后再试")
-	case strings.Contains(lower, "connection refused"),
-		strings.Contains(lower, "no such host"),
+	case strings.Contains(lower, connectionRefusedText),
+		strings.Contains(lower, noSuchHostText),
 		strings.Contains(lower, "eof"):
 		return onebot11.NewReplayError("渲染服务暂时不可用，请稍后再试")
 	case strings.HasPrefix(lower, "api request failed with status:"):
@@ -185,11 +185,11 @@ func normalizeDeckServiceUserFacingError(err error) error {
 		strings.Contains(lower, "deck-service target state is not initialized"),
 		strings.Contains(lower, "circuit breaker open"):
 		return onebot11.NewReplayError("组卡服务未就绪，请稍后再试")
-	case strings.Contains(lower, "context deadline exceeded"),
-		strings.Contains(lower, "i/o timeout"):
+	case strings.Contains(lower, contextDeadlineExceededText),
+		strings.Contains(lower, ioTimeoutText):
 		return onebot11.NewReplayError("获取组卡所需数据超时，请稍后重试")
-	case strings.Contains(lower, "connection refused"),
-		strings.Contains(lower, "no such host"),
+	case strings.Contains(lower, connectionRefusedText),
+		strings.Contains(lower, noSuchHostText),
 		strings.Contains(lower, "eof"):
 		return onebot11.NewReplayError("组卡服务暂时不可用，请稍后再试")
 	}
@@ -308,12 +308,12 @@ func translateDrawingAPIDetail(message string) (string, bool) {
 		return "图片资源损坏，暂时无法渲染", true
 	case strings.Contains(lower, "download") && strings.Contains(lower, "failed"):
 		return "图片资源下载失败，请稍后再试", true
-	case strings.Contains(lower, "connection refused"),
-		strings.Contains(lower, "no such host"):
+	case strings.Contains(lower, connectionRefusedText),
+		strings.Contains(lower, noSuchHostText):
 		return "渲染服务暂时不可用，请稍后再试", true
-	case strings.Contains(lower, "context deadline exceeded"),
-		strings.Contains(lower, "client.timeout exceeded"),
-		strings.Contains(lower, "i/o timeout"):
+	case strings.Contains(lower, contextDeadlineExceededText),
+		strings.Contains(lower, clientTimeoutExceededText),
+		strings.Contains(lower, ioTimeoutText):
 		return "连接渲染服务超时或网络异常，请稍后再试", true
 	default:
 		return "", false
@@ -350,11 +350,11 @@ func translateDeckServiceDetail(message string) (string, bool) {
 		return "组卡所需的用户数据无效，请重新上传数据后重试", true
 	case strings.Contains(lower, "returned empty response"):
 		return "组卡服务返回空结果，请稍后再试", true
-	case strings.Contains(lower, "connection refused"),
-		strings.Contains(lower, "no such host"):
+	case strings.Contains(lower, connectionRefusedText),
+		strings.Contains(lower, noSuchHostText):
 		return "组卡服务暂时不可用，请稍后再试", true
-	case strings.Contains(lower, "context deadline exceeded"),
-		strings.Contains(lower, "i/o timeout"):
+	case strings.Contains(lower, contextDeadlineExceededText),
+		strings.Contains(lower, ioTimeoutText):
 		return "获取组卡所需数据超时，请稍后重试", true
 	default:
 		return "", false

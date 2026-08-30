@@ -233,7 +233,7 @@ func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint st
 	}
 	ttl := policy.TTL
 	if cached, ok := lc.get(key); ok {
-		commandtrace.RecordOperation(ctx, "drawing.cache_hit", 0)
+		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
 		cacheLogger.DebugContext(ctx, "drawing local cache hit", "upstream_path", endpoint)
 		return cached, nil
 	}
@@ -243,7 +243,7 @@ func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint st
 	result := lc.flight.DoChan(key, func() (any, error) {
 		flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
 			if cached, ok := lc.get(key); ok {
-				commandtrace.RecordOperation(sharedCtx, "drawing.cache_hit", 0)
+				commandtrace.RecordOperation(sharedCtx, drawingCacheHitTraceField, 0)
 				return cached, nil
 			}
 			data, err := render(sharedCtx)
@@ -335,7 +335,7 @@ func (c *RenderCacheClient) RenderSharedContext(ctx context.Context, endpoint st
 					cached, hit := c.lookupContext(sharedCtx, key, policy.APIPath)
 					finishLookup()
 					if hit {
-						commandtrace.RecordOperation(sharedCtx, "drawing.cache_hit", 0)
+						commandtrace.RecordOperation(sharedCtx, drawingCacheHitTraceField, 0)
 						cacheLogger.DebugContext(sharedCtx, "drawing remote cache hit",
 							"upstream_path", endpoint,
 							"cache_key", shortRenderCacheKey(key),

@@ -13,7 +13,7 @@ import (
 
 var (
 	musicDetailLeaderboardLiveTypeOrder = []string{"solo", "multi", "auto"}
-	musicDetailLeaderboardTargetOrder   = []string{"score", "pt", "pt/time"}
+	musicDetailLeaderboardTargetOrder   = []string{"score", "pt", pointsPerTimeMetric}
 
 	musicDetailLeaderboardLiveTypes = map[string]string{
 		"solo":  "单人",
@@ -21,9 +21,9 @@ var (
 		"auto":  "AUTO",
 	}
 	musicDetailLeaderboardTargets = map[string]string{
-		"score":   "分数",
-		"pt":      "PT",
-		"pt/time": "时速",
+		"score":             "分数",
+		"pt":                "PT",
+		pointsPerTimeMetric: "时速",
 	}
 	musicDetailLeaderboardSkills = map[string][]float64{
 		"solo":  {musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill, musicBoardDefaultSoloSkill},
@@ -183,8 +183,8 @@ func formatMusicDetailLeaderboardValue(row musicBoardRow, liveType, target strin
 	case "pt":
 		pt := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "pt"))
 		return strconv.Itoa(int(math.Round(pt)))
-	case "pt/time":
-		ptPerHour := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, "pt/time"))
+	case pointsPerTimeMetric:
+		ptPerHour := derefMusicBoardFloat(selectMusicBoardLiveValue(row, liveType, pointsPerTimeMetric))
 		return fmt.Sprintf("%.2fw/h", ptPerHour/10000.0)
 	default:
 		return "-"

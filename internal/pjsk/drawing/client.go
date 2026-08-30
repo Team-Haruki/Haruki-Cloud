@@ -402,7 +402,7 @@ func (c *HarukiDrawingClient) GenerateCostumeList(req *CostumeListRequest) ([]by
 }
 
 func (c *HarukiDrawingClient) GenerateCostumeDetail(req *CostumeDetailRequest) ([]byte, error) {
-	return c.cachedPost("/api/pjsk/costume/detail", req)
+	return c.cachedPost(costumeDetailEndpoint, req)
 }
 
 func (c *HarukiDrawingClient) GenerateCostumeDetailWithPrepare(cacheReq any, req *CostumeDetailRequest, prepare func(any) error) ([]byte, error) {
@@ -415,8 +415,8 @@ func (c *HarukiDrawingClient) GenerateCostumeDetailWithPrepare(cacheReq any, req
 }
 
 func (c *HarukiDrawingClient) GenerateCostumeDetailWithContextPrepare(cacheReq any, req *CostumeDetailRequest, prepare func(context.Context, any) error) ([]byte, error) {
-	return c.renderWithCacheRequestAndPrepare("/api/pjsk/costume/detail", cacheReq, req, prepare, func(renderCtx context.Context, prepared any) ([]byte, error) {
-		return c.WithContext(renderCtx).postPrepared("/api/pjsk/costume/detail", prepared)
+	return c.renderWithCacheRequestAndPrepare(costumeDetailEndpoint, cacheReq, req, prepare, func(renderCtx context.Context, prepared any) ([]byte, error) {
+		return c.WithContext(renderCtx).postPrepared(costumeDetailEndpoint, prepared)
 	}, false)
 }
 

@@ -153,11 +153,11 @@ func accessLogMiddleware(accessLogger *harukiLogger.Logger) fiber.Handler {
 			logCtx := context.Background()
 			switch {
 			case statusCode >= fiber.StatusInternalServerError || (observedErr != nil && statusCode < fiber.StatusBadRequest):
-				accessLogger.ErrorContext(logCtx, "http request completed", attrs...)
+				accessLogger.ErrorContext(logCtx, httpRequestCompletedLog, attrs...)
 			case statusCode >= fiber.StatusBadRequest:
-				accessLogger.WarnContext(logCtx, "http request completed", attrs...)
+				accessLogger.WarnContext(logCtx, httpRequestCompletedLog, attrs...)
 			default:
-				accessLogger.InfoContext(logCtx, "http request completed", attrs...)
+				accessLogger.InfoContext(logCtx, httpRequestCompletedLog, attrs...)
 			}
 		}()
 		observedErr = c.Next()

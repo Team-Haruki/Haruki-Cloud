@@ -56,7 +56,7 @@ func (sekaiHandlers) SKQueryHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-query", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleSK, skQueryCommand, params), nil
 		},
 	}, executeSK)
 }
@@ -91,7 +91,7 @@ func (sekaiHandlers) SKCheckRoomHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-check-room", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleSK, skCheckRoomCommand, params), nil
 		},
 	}, executeSK)
 }
@@ -108,7 +108,7 @@ func (sekaiHandlers) SKCheckRoomLiteHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-check-room", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleSK, skCheckRoomCommand, params), nil
 		},
 	}, executeSK)
 }
@@ -126,9 +126,9 @@ func (sekaiHandlers) SKPlayerTraceHandle() HarukiSekaiCommandHandler {
 				return nil, err
 			}
 			if len(params) == 0 {
-				return makeCommandRequest(ctx, parser.ModuleSK, "sk-player-trace"), nil
+				return makeCommandRequest(ctx, parser.ModuleSK, skPlayerTraceCommand), nil
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-player-trace", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleSK, skPlayerTraceCommand, params), nil
 		},
 	}, executeSK)
 }
@@ -209,7 +209,7 @@ func (sekaiHandlers) SKBoardHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			return makeCommandRequestWithParams(ctx, parser.ModuleSK, "sk-query", params), nil
+			return makeCommandRequestWithParams(ctx, parser.ModuleSK, skQueryCommand, params), nil
 		},
 	}, executeSK)
 }
@@ -258,15 +258,15 @@ func executeSKMode(rc *RequestContext, skCtrl *sk.Controller) (skExecutionResult
 	switch rc.Cmd.Mode {
 	case "sk-line":
 		return skImageResult(executeSKLine(rc, skCtrl))
-	case "sk-query":
+	case skQueryCommand:
 		return executeSKQuery(rc, skCtrl)
-	case "sk-check-room":
+	case skCheckRoomCommand:
 		return executeSKCheckRoom(rc, skCtrl)
 	case "sk-csb":
 		return executeSKCSB(rc, skCtrl)
 	case "sk-speed", "sk-daily-speed":
 		return skImageResult(executeSKSpeed(rc, skCtrl))
-	case "sk-player-trace":
+	case skPlayerTraceCommand:
 		return skImageResult(executeSKPlayerTrace(rc, skCtrl))
 	case "sk-rank-trace":
 		return skImageResult(executeSKRankTrace(rc, skCtrl))

@@ -221,7 +221,7 @@ func replaceWithMySekaiDataSource(profile *drawing.ProfileCardRequest, merged ma
 		return
 	}
 	profile.DataSources = []drawing.ProfileDataSource{{
-		Name: "Mysekai数据",
+		Name: mySekaiDataLabel,
 	}}
 }
 
@@ -242,13 +242,13 @@ func mergeMySekaiDataSources(profile *drawing.ProfileCardRequest, merged map[str
 	entry, ok := mysekaiDataSourceFromMerged(profile, merged)
 	if !ok {
 		if replaceSingle && len(profile.DataSources) == 1 {
-			profile.DataSources[0].Name = "Mysekai数据"
+			profile.DataSources[0].Name = mySekaiDataLabel
 		}
 		return
 	}
 
 	for i := range profile.DataSources {
-		if strings.TrimSpace(profile.DataSources[i].Name) == "Mysekai数据" {
+		if strings.TrimSpace(profile.DataSources[i].Name) == mySekaiDataLabel {
 			profile.DataSources[i] = entry
 			return
 		}
@@ -277,7 +277,7 @@ func mysekaiDataSourceFromMerged(profile *drawing.ProfileCardRequest, merged map
 	}
 
 	entry := drawing.ProfileDataSource{
-		Name: "Mysekai数据",
+		Name: mySekaiDataLabel,
 	}
 	if updateTime > 0 {
 		entry.UpdateTime = &updateTime

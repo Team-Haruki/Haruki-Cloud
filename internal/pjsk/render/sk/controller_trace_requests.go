@@ -19,7 +19,7 @@ func (c *Controller) RenderPlayerTrace(req drawing.PlayerTraceRequest) ([]byte, 
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildPlayerTraceRequest(req)
 	finishBuild()
 	if err != nil {
@@ -31,7 +31,7 @@ func (c *Controller) RenderPlayerTrace(req drawing.PlayerTraceRequest) ([]byte, 
 // BuildPlayerTraceFromTracker builds a player-trace request by fetching trace
 // data from the tracker API for a specific user or ranking line.
 func (c *Controller) BuildPlayerTraceFromTracker(req TrackerRankQuery) (*drawing.PlayerTraceRequest, error) {
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
@@ -109,7 +109,7 @@ func (c *Controller) BuildRankTraceRequest(req drawing.RankTraceRequest) (*drawi
 }
 
 func (c *Controller) BuildRankTraceRequestFromTracker(req TrackerRankQuery) (*drawing.RankTraceRequest, error) {
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	defer finishBuild()
 	normalized, err := c.validateTrackerQuery(req)
 	if err != nil {
@@ -141,7 +141,7 @@ func (c *Controller) RenderRankTrace(req drawing.RankTraceRequest) ([]byte, erro
 	if c == nil || c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildRankTraceRequest(req)
 	finishBuild()
 	if err != nil {

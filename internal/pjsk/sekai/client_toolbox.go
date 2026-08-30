@@ -100,7 +100,7 @@ func (c *HarukiToolboxClient) UpsertMysekaiBirthdayMonitor(ctx context.Context, 
 		return err
 	}
 	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-monitors/%s", strings.TrimRight(c.config.BaseURL, "/"), req.SubscriptionID)
-	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)
 	resp, err := r.SetBody(req).Put(endpoint)
 	finishHTTP()
 	if err != nil {
@@ -121,7 +121,7 @@ func (c *HarukiToolboxClient) DeleteMysekaiBirthdayMonitor(ctx context.Context, 
 		return err
 	}
 	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-monitors/%s", strings.TrimRight(c.config.BaseURL, "/"), subscriptionID)
-	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)
 	resp, err := r.SetQueryParam("subscription_version", subscriptionVersion).Delete(endpoint)
 	finishHTTP()
 	if err != nil {
@@ -142,7 +142,7 @@ func (c *HarukiToolboxClient) GetMysekaiBirthdayEvent(ctx context.Context, req M
 		return nil, err
 	}
 	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-events/%s", strings.TrimRight(c.config.BaseURL, "/"), req.EventID)
-	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)
 	resp, err := r.SetQueryParams(map[string]string{
 		"subscription_id":      req.SubscriptionID,
 		"subscription_version": req.SubscriptionVersion,
@@ -173,7 +173,7 @@ func (c *HarukiToolboxClient) AckMysekaiBirthdayEvent(ctx context.Context, req M
 		return err
 	}
 	endpoint := fmt.Sprintf("%s/internal/mysekai-birthday-events/%s/ack", strings.TrimRight(c.config.BaseURL, "/"), req.EventID)
-	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)
 	resp, err := r.SetBody(req).Post(endpoint)
 	finishHTTP()
 	if err != nil {
@@ -279,9 +279,9 @@ func (c *HarukiToolboxClient) getPrivateData(ctx context.Context, server string,
 		params["known_upload_time"] = strconv.FormatInt(knownUploadTime, 10)
 	}
 
-	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)
 	resp, err := r.
-		SetHeader("Accept-Encoding", "zstd").
+		SetHeader(acceptEncodingHeader, "zstd").
 		SetQueryParams(params).
 		Get(url)
 	finishHTTP()
@@ -381,9 +381,9 @@ func (c *HarukiToolboxClient) GetPrivateDataValueContext(ctx context.Context, se
 	}
 	url := fmt.Sprintf("%s/api/private/game-data/%s/%s/%d", c.config.BaseURL, server, string(dataType), userID)
 
-	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)
 	resp, err := r.
-		SetHeader("Accept-Encoding", "zstd").
+		SetHeader(acceptEncodingHeader, "zstd").
 		SetQueryParams(map[string]string{
 			"platform":         platform,
 			"platform_user_id": platformUserID,
@@ -500,9 +500,9 @@ func (c *HarukiToolboxClient) GetToolboxUserFastVerificationGameAccountBindingsC
 	}
 	url := fmt.Sprintf("%s/api/private/game-binding", c.config.BaseURL)
 
-	finishHTTP := commandtrace.MeasureOperation(ctx, "toolbox.http")
+	finishHTTP := commandtrace.MeasureOperation(ctx, toolboxHTTPStage)
 	resp, err := request.
-		SetHeader("Accept-Encoding", "zstd").
+		SetHeader(acceptEncodingHeader, "zstd").
 		SetQueryParams(map[string]string{
 			"platform":         platform,
 			"platform_user_id": platformUserID,

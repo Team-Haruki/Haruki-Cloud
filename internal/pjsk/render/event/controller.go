@@ -64,7 +64,7 @@ func (c *Controller) RenderEventDetail(query DetailQuery) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	req, err := c.BuildEventDetailRequest(query)
 	finishBuild()
 	if err != nil {
@@ -86,7 +86,7 @@ func (c *Controller) RenderEventList(query ListQuery) ([]byte, error) {
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	req, err := c.BuildEventListRequest(query)
 	finishBuild()
 	if err != nil {
@@ -115,7 +115,7 @@ func (c *Controller) RenderEventRecord(req drawing.EventRecordRequest) ([]byte, 
 	if c.drawing == nil {
 		return nil, fmt.Errorf("drawing client is not configured")
 	}
-	finishBuild := commandtrace.MeasureOperation(c.requestCtx, "payload.build")
+	finishBuild := commandtrace.MeasureOperation(c.requestCtx, payloadBuildStage)
 	payload, err := c.BuildEventRecordRequest(req)
 	finishBuild()
 	if err != nil {

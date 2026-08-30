@@ -49,7 +49,7 @@ func (sekaiHandlers) GachaHandle() HarukiSekaiCommandHandler {
 func resolveGachaDetailOrList(ctx HarrukiSekaiHandlerContext) (*CommandRequest, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args == "" {
-		return makeCommandRequestWithParams(ctx, parser.ModuleGacha, "gacha-list", map[string]any{
+		return makeCommandRequestWithParams(ctx, parser.ModuleGacha, gachaListCommand, map[string]any{
 			"include_past": true,
 		}), nil
 	}
@@ -64,7 +64,7 @@ func resolveGachaDetailOrList(ctx HarrukiSekaiHandlerContext) (*CommandRequest, 
 	if remaining != "" {
 		return nil, gachaSearchUsageError(ctx.originalTriggerCmd)
 	}
-	return makeCommandRequestWithParams(ctx, parser.ModuleGacha, "gacha-list", params), nil
+	return makeCommandRequestWithParams(ctx, parser.ModuleGacha, gachaListCommand, params), nil
 }
 
 func gachaSearchUsageError(trigger string) error {
@@ -157,7 +157,7 @@ func executeGacha(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
-	case "gacha", "gacha-list":
+	case "gacha", gachaListCommand:
 		q := gacha.ListQuery{Region: region}
 		mergeParams(rc.Cmd.Params, &q)
 		data, err = gachaCtrl.RenderGachaList(q)

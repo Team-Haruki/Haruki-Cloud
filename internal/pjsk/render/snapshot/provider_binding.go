@@ -43,7 +43,7 @@ func resolveSnapshotBinding(
 			"error_type", snapshotBindingErrorType(err),
 		)
 		if err == nil && bindingAllowed(binding, opts) {
-			bindingDebugLogger.DebugContext(ctx, "snapshot binding selected", "scope", "global_default")
+			bindingDebugLogger.DebugContext(ctx, snapshotBindingSelectedLog, "scope", "global_default")
 			return binding, nil
 		}
 	}
@@ -64,7 +64,7 @@ func resolveSnapshotBinding(
 		}
 		return nil, fmt.Errorf("snapshot: binding does not expose suite snapshot")
 	}
-	bindingDebugLogger.DebugContext(ctx, "snapshot binding selected", "scope", "region", "region", strings.TrimSpace(regionStr))
+	bindingDebugLogger.DebugContext(ctx, snapshotBindingSelectedLog, "scope", "region", "region", strings.TrimSpace(regionStr))
 	return binding, nil
 }
 
@@ -115,7 +115,7 @@ func resolveExplicitSnapshotBinding(
 		}
 		return nil, fmt.Errorf("snapshot: binding %s does not expose suite snapshot", pjskUserID)
 	}
-	bindingDebugLogger.DebugContext(ctx, "snapshot binding selected", "scope", "explicit", "region", region.String())
+	bindingDebugLogger.DebugContext(ctx, snapshotBindingSelectedLog, "scope", "explicit", "region", region.String())
 	return binding, nil
 }
 

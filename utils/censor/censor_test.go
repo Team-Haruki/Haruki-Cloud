@@ -182,3 +182,81 @@ func TestCensorShortBioForwardsRequestContext(t *testing.T) {
 		t.Fatal("context-aware moderator did not observe the request context")
 	}
 }
+
+func TestCensorNameStoresAuditAndUsesCachedDecision(t *testing.T) {
+	service := newCensorTestService(t, nil)
+	service.TextCensorAPI = fakeTextModerator{result: map[string]any{"conclusion": string(ResultCompliant)}}
+
+	if !service.CensorName(context.Background(), 42, "10001", "Miku", "jp") {
+		t.Fatal("compliant name was rejected")
+	}
+	if count, err := service.Client.Result.Query().Count(context.Background()); err != nil || count != 1 {
+		t.Fatalf("result cache count = %d, err=%v", count, err)
+	}
+	if count, err := service.Client.NameLog.Query().Count(context.Background()); err != nil || count != 1 {
+		t.Fatalf("name audit count = %d, err=%v", count, err)
+	}
+
+	service.TextCensorAPI = fakeTextModerator{err: errors.New("cache should avoid moderator")}
+	if !service.CensorName(context.Background(), 42, "10001", "Miku", "jp") {
+		t.Fatal("cached compliant name was rejected")
+	}
+	if !service.CensorName(context.Background(), 42, "10001", "", "jp") ||
+		!service.CensorName(context.Background(), 42, "10001", "anything", "cn") {
+		t.Fatal("name moderation bypass was rejected")
+	}
+}
+
+func TestCensorNameRejectsAndCachesNonCompliantDecision(t *testing.T) {
+	service := newCensorTestService(t, nil)
+	service.TextCensorAPI = fakeTextModerator{result: map[string]any{"conclusion": string(ResultNonCompliant)}}
+
+	if service.CensorName(context.Background(), 7, "10002", "blocked", "jp") {
+		t.Fatal("non-compliant name was accepted")
+	}
+	service.TextCensorAPI = fakeTextModerator{err: errors.New("cache should avoid moderator")}
+	if service.CensorName(context.Background(), 7, "10002", "blocked", "jp") {
+		t.Fatal("cached non-compliant name was accepted")
+	}
+}
+
+func TestCensorShortBioStoresAndUsesBothCachedDecisions(t *testing.T) {
+	service := newCensorTestService(t, nil)
+	service.TextCensorAPI = fakeTextModerator{result: map[string]any{"conclusion": string(ResultCompliant)}}
+
+	if !service.CensorShortBio(context.Background(), 8, "10003", "hello", "jp") {
+		t.Fatal("compliant short bio was rejected")
+	}
+	service.TextCensorAPI = fakeTextModerator{result: map[string]any{"conclusion": string(ResultNonCompliant)}}
+	if service.CensorShortBio(context.Background(), 8, "10003", "blocked bio", "jp") {
+		t.Fatal("non-compliant short bio was accepted")
+	}
+	service.TextCensorAPI = fakeTextModerator{err: errors.New("cache should avoid moderator")}
+	if !service.CensorShortBio(context.Background(), 8, "10003", "hello", "jp") {
+		t.Fatal("cached compliant short bio was rejected")
+	}
+	if service.CensorShortBio(context.Background(), 8, "10003", "blocked bio", "jp") {
+		t.Fatal("cached non-compliant short bio was accepted")
+	}
+	if !service.CensorShortBio(context.Background(), 8, "10003", "", "jp") ||
+		!service.CensorShortBio(context.Background(), 8, "10003", "anything", "cn") {
+		t.Fatal("short bio moderation bypass was rejected")
+	}
+}
+
+func TestCensorImagePassesCachesAndSupportsDisabledModerator(t *testing.T) {
+	disabled := newCensorTestService(t, nil)
+	if !disabled.CensorImage(context.Background(), 0, "https://example.test/disabled.png") {
+		t.Fatal("disabled image moderator rejected image")
+	}
+
+	service := newCensorTestService(t, fakeImageModerator{suggestion: IMSSuggestionPass})
+	imageURL := "https://example.test/passed.png"
+	if !service.CensorImage(context.Background(), 0, imageURL) {
+		t.Fatal("passing image was rejected")
+	}
+	service.ImageCensorAPI = fakeImageModerator{err: errors.New("cache should avoid moderator")}
+	if !service.CensorImage(context.Background(), 0, imageURL) {
+		t.Fatal("cached passing image was rejected")
+	}
+}

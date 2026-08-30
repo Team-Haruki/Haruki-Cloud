@@ -549,55 +549,12 @@ func paginateCostumeLogicalListItems(items []costumeAccessoryListItem, query Lis
 }
 
 func paginateCostumeLogicalListItemsByPart(items []costumeAccessoryListItem, pageSize int, page int) []costumeAccessoryListItem {
-	groups := make(map[string][]costumeAccessoryListItem)
-	order := make([]string, 0, len(costumePartOrder))
-	seen := make(map[string]struct{})
-	for _, item := range items {
+	return paginateCostumeItemsByPart(items, pageSize, page, func(item costumeAccessoryListItem) (string, bool) {
 		if item.costume == nil {
-			continue
+			return "", false
 		}
-		partType := strings.TrimSpace(item.costume.PartType)
-		groups[partType] = append(groups[partType], item)
-		if _, ok := seen[partType]; !ok {
-			seen[partType] = struct{}{}
-			order = append(order, partType)
-		}
-	}
-	ordered := make([]string, 0, len(order))
-	for _, partType := range costumePartOrder {
-		if _, ok := groups[partType]; ok {
-			ordered = append(ordered, partType)
-		}
-	}
-	for _, partType := range order {
-		if !containsString(ordered, partType) {
-			ordered = append(ordered, partType)
-		}
-	}
-	offsets := make(map[string]int, len(groups))
-	var current []costumeAccessoryListItem
-	for currentPage := 1; currentPage <= page; currentPage++ {
-		current = make([]costumeAccessoryListItem, 0, pageSize)
-		for len(current) < pageSize {
-			added := false
-			for _, partType := range ordered {
-				group := groups[partType]
-				if offsets[partType] >= len(group) {
-					continue
-				}
-				current = append(current, group[offsets[partType]])
-				offsets[partType]++
-				added = true
-				if len(current) >= pageSize {
-					break
-				}
-			}
-			if !added {
-				break
-			}
-		}
-	}
-	return current
+		return item.costume.PartType, true
+	})
 }
 
 func shouldBalanceCostumeListByPart(query ListQuery) bool {
@@ -605,53 +562,83 @@ func shouldBalanceCostumeListByPart(query ListQuery) bool {
 }
 
 func paginateCostumeListItemsByPart(items []*masterdata.Costume3d, pageSize int, page int) []*masterdata.Costume3d {
-	groups := make(map[string][]*masterdata.Costume3d)
-	order := make([]string, 0, len(costumePartOrder))
+	return paginateCostumeItemsByPart(items, pageSize, page, func(item *masterdata.Costume3d) (string, bool) {
+		if item == nil {
+			return "", false
+		}
+		return item.PartType, true
+	})
+}
+
+func paginateCostumeItemsByPart[T any](items []T, pageSize int, page int, partFor func(T) (string, bool)) []T {
+	groups, encountered := groupCostumeItemsByPart(items, partFor)
+	ordered := orderedCostumePartTypes(groups, encountered)
+	offsets := make(map[string]int, len(groups))
+	var current []T
+	for currentPage := 1; currentPage <= page; currentPage++ {
+		current = buildBalancedCostumePage(groups, ordered, offsets, pageSize)
+	}
+	return current
+}
+
+func groupCostumeItemsByPart[T any](items []T, partFor func(T) (string, bool)) (map[string][]T, []string) {
+	groups := make(map[string][]T)
+	encountered := make([]string, 0, len(costumePartOrder))
 	seen := make(map[string]struct{})
 	for _, item := range items {
-		if item == nil {
+		partType, ok := partFor(item)
+		if !ok {
 			continue
 		}
-		partType := strings.TrimSpace(item.PartType)
+		partType = strings.TrimSpace(partType)
 		groups[partType] = append(groups[partType], item)
-		if _, ok := seen[partType]; !ok {
+		if _, known := seen[partType]; !known {
 			seen[partType] = struct{}{}
-			order = append(order, partType)
+			encountered = append(encountered, partType)
 		}
 	}
-	ordered := make([]string, 0, len(order))
+	return groups, encountered
+}
+
+func orderedCostumePartTypes[T any](groups map[string][]T, encountered []string) []string {
+	ordered := make([]string, 0, len(encountered))
 	for _, partType := range costumePartOrder {
-		if _, ok := groups[partType]; ok {
+		if len(groups[partType]) > 0 {
 			ordered = append(ordered, partType)
 		}
 	}
-	for _, partType := range order {
+	for _, partType := range encountered {
 		if !containsString(ordered, partType) {
 			ordered = append(ordered, partType)
 		}
 	}
-	offsets := make(map[string]int, len(groups))
-	var current []*masterdata.Costume3d
-	for currentPage := 1; currentPage <= page; currentPage++ {
-		current = make([]*masterdata.Costume3d, 0, pageSize)
-		for len(current) < pageSize {
-			added := false
-			for _, partType := range ordered {
-				group := groups[partType]
-				if offsets[partType] >= len(group) {
-					continue
-				}
-				current = append(current, group[offsets[partType]])
-				offsets[partType]++
-				added = true
-				if len(current) >= pageSize {
-					break
-				}
-			}
-			if !added {
-				break
-			}
+	return ordered
+}
+
+func buildBalancedCostumePage[T any](groups map[string][]T, ordered []string, offsets map[string]int, pageSize int) []T {
+	current := make([]T, 0, pageSize)
+	for len(current) < pageSize {
+		previousLength := len(current)
+		current = appendCostumePartRound(current, groups, ordered, offsets, pageSize)
+		if len(current) == previousLength {
+			break
 		}
+	}
+	return current
+}
+
+func appendCostumePartRound[T any](current []T, groups map[string][]T, ordered []string, offsets map[string]int, pageSize int) []T {
+	for _, partType := range ordered {
+		if len(current) >= pageSize {
+			break
+		}
+		group := groups[partType]
+		index := offsets[partType]
+		if index >= len(group) {
+			continue
+		}
+		current = append(current, group[index])
+		offsets[partType] = index + 1
 	}
 	return current
 }
@@ -709,65 +696,9 @@ func (c *Controller) buildResolvedCostumeDetailRequest(region renderregion.Value
 		return nil, err
 	}
 	costumeBasic := c.buildCostumeBasic(region, source, costumeInfo, variants, sourceCards)
-	displayCharacterID := costumeInfo.CharacterID
-	if query.Character3DID > 0 {
-		costumeBasic.Character3DID = query.Character3DID
-		costumeBasic.Character3DIDs = []int{query.Character3DID}
-		c.apply3DRoleToCostumeBasic(source, &costumeBasic, query.Character3DID)
-		displayCharacterID = costumeBasic.CharacterID
-		switch costumeInfo.PartType {
-		case "body":
-			if c.preview3D == nil {
-				break
-			}
-			outfitIDs, err := c.preview3D.OutfitIDsForRole(c.ctx, region.String(), query.Character3DID)
-			if err != nil {
-				return nil, err
-			}
-			outfitID := outfitIDs[costumeInfo.ID]
-			if outfitID <= 0 {
-				return nil, fmt.Errorf("服装 %d 不适用于角色ID %d", costumeInfo.ID, query.Character3DID)
-			}
-			if query.OutfitID > 0 && query.OutfitID != outfitID {
-				return nil, fmt.Errorf("服装ID %d 不适用于角色ID %d", query.OutfitID, query.Character3DID)
-			}
-			costumeBasic.OutfitID = outfitID
-		case "head":
-			if c.preview3D == nil {
-				return nil, fmt.Errorf("3d preview service is not configured")
-			}
-			accessoryIDs, err := c.preview3D.AccessoryIDsForRole(c.ctx, region.String(), query.Character3DID)
-			if err != nil {
-				return nil, err
-			}
-			resolvedIDs := accessoryIDs[costumeInfo.ID]
-			if len(resolvedIDs) == 0 {
-				return nil, fmt.Errorf("饰品 %d 不适用于角色ID %d", costumeInfo.ID, query.Character3DID)
-			}
-			if query.AccessoryID > 0 {
-				if !slices.Contains(resolvedIDs, query.AccessoryID) {
-					return nil, fmt.Errorf("饰品ID %d 不适用于角色ID %d", query.AccessoryID, query.Character3DID)
-				}
-				costumeBasic.AccessoryID = query.AccessoryID
-				break
-			}
-			if len(resolvedIDs) > 1 {
-				return nil, fmt.Errorf("饰品原始ID %d 对角色ID %d 对应多个独立饰品（ID：%s），请明确填写饰品ID", costumeInfo.ID, query.Character3DID, joinCostumeIDs(resolvedIDs))
-			}
-			costumeBasic.AccessoryID = resolvedIDs[0]
-		case "hair":
-			if c.preview3D == nil {
-				return nil, fmt.Errorf("3d preview service is not configured")
-			}
-			hairIDs, err := c.preview3D.HairIDsForRole(c.ctx, region.String(), query.Character3DID)
-			if err != nil {
-				return nil, err
-			}
-			costumeBasic.HairID = hairIDs[costumeInfo.ID]
-			if costumeBasic.HairID <= 0 {
-				return nil, fmt.Errorf("发型 %d 不适用于角色ID %d", costumeInfo.ID, query.Character3DID)
-			}
-		}
+	displayCharacterID, err := c.applyCostumeDetailRole(region, source, costumeInfo, query, &costumeBasic)
+	if err != nil {
+		return nil, err
 	}
 	character, _ := source.GetCharacterByID(displayCharacterID)
 	return &drawing.CostumeDetailRequest{
@@ -776,6 +707,94 @@ func (c *Controller) buildResolvedCostumeDetailRequest(region renderregion.Value
 		CharacterIconPath: c.buildCharacterIconPath(displayCharacterID, characterUnit(character)),
 		UnitLogoPath:      c.buildUnitLogoPath(characterUnit(character)),
 	}, nil
+}
+
+func (c *Controller) applyCostumeDetailRole(region renderregion.Value, source DataSource, costumeInfo *masterdata.Costume3d, query Query, basic *drawing.CostumeBasic) (int, error) {
+	if query.Character3DID <= 0 {
+		return costumeInfo.CharacterID, nil
+	}
+	basic.Character3DID = query.Character3DID
+	basic.Character3DIDs = []int{query.Character3DID}
+	c.apply3DRoleToCostumeBasic(source, basic, query.Character3DID)
+	err := c.applyCostumeDetailPartRole(region, costumeInfo, query, basic)
+	return basic.CharacterID, err
+}
+
+func (c *Controller) applyCostumeDetailPartRole(region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query, basic *drawing.CostumeBasic) error {
+	switch costumeInfo.PartType {
+	case "body":
+		return c.applyCostumeDetailBodyRole(region, costumeInfo, query, basic)
+	case "head":
+		return c.applyCostumeDetailAccessoryRole(region, costumeInfo, query, basic)
+	case "hair":
+		return c.applyCostumeDetailHairRole(region, costumeInfo, query, basic)
+	default:
+		return nil
+	}
+}
+
+func (c *Controller) applyCostumeDetailBodyRole(region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query, basic *drawing.CostumeBasic) error {
+	if c.preview3D == nil {
+		return nil
+	}
+	outfitIDs, err := c.preview3D.OutfitIDsForRole(c.ctx, region.String(), query.Character3DID)
+	if err != nil {
+		return err
+	}
+	outfitID := outfitIDs[costumeInfo.ID]
+	if outfitID <= 0 {
+		return fmt.Errorf("服装 %d 不适用于角色ID %d", costumeInfo.ID, query.Character3DID)
+	}
+	if query.OutfitID > 0 && query.OutfitID != outfitID {
+		return fmt.Errorf("服装ID %d 不适用于角色ID %d", query.OutfitID, query.Character3DID)
+	}
+	basic.OutfitID = outfitID
+	return nil
+}
+
+func (c *Controller) applyCostumeDetailAccessoryRole(region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query, basic *drawing.CostumeBasic) error {
+	if c.preview3D == nil {
+		return fmt.Errorf("3d preview service is not configured")
+	}
+	accessoryIDs, err := c.preview3D.AccessoryIDsForRole(c.ctx, region.String(), query.Character3DID)
+	if err != nil {
+		return err
+	}
+	resolvedIDs := accessoryIDs[costumeInfo.ID]
+	if len(resolvedIDs) == 0 {
+		return fmt.Errorf("饰品 %d 不适用于角色ID %d", costumeInfo.ID, query.Character3DID)
+	}
+	return selectCostumeDetailAccessory(resolvedIDs, costumeInfo.ID, query, basic)
+}
+
+func selectCostumeDetailAccessory(resolvedIDs []int, costumeID int, query Query, basic *drawing.CostumeBasic) error {
+	if query.AccessoryID > 0 {
+		if !slices.Contains(resolvedIDs, query.AccessoryID) {
+			return fmt.Errorf("饰品ID %d 不适用于角色ID %d", query.AccessoryID, query.Character3DID)
+		}
+		basic.AccessoryID = query.AccessoryID
+		return nil
+	}
+	if len(resolvedIDs) > 1 {
+		return fmt.Errorf("饰品原始ID %d 对角色ID %d 对应多个独立饰品（ID：%s），请明确填写饰品ID", costumeID, query.Character3DID, joinCostumeIDs(resolvedIDs))
+	}
+	basic.AccessoryID = resolvedIDs[0]
+	return nil
+}
+
+func (c *Controller) applyCostumeDetailHairRole(region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query, basic *drawing.CostumeBasic) error {
+	if c.preview3D == nil {
+		return fmt.Errorf("3d preview service is not configured")
+	}
+	hairIDs, err := c.preview3D.HairIDsForRole(c.ctx, region.String(), query.Character3DID)
+	if err != nil {
+		return err
+	}
+	basic.HairID = hairIDs[costumeInfo.ID]
+	if basic.HairID <= 0 {
+		return fmt.Errorf("发型 %d 不适用于角色ID %d", costumeInfo.ID, query.Character3DID)
+	}
+	return nil
 }
 
 func (c *Controller) resolve3DPreviewPath(ctx context.Context, region renderregion.Value, costumeInfo *masterdata.Costume3d, query Query) (string, error) {
@@ -896,30 +915,47 @@ func (c *Controller) resolveNormalizedCostume(region renderregion.Value, source 
 	if !ok {
 		return nil, fmt.Errorf("角色ID必须在1到31之间")
 	}
-	colorID := query.ColorID
-	if colorID == 0 {
-		colorID = 1
+	colorID := normalizedCostumeColorID(query.ColorID)
+	switch {
+	case query.HairID > 0:
+		return c.resolveNormalizedHair(region, source, query)
+	case query.AccessoryID > 0:
+		return c.resolveNormalizedAccessory(region, source, query, colorID)
+	default:
+		return c.resolveNormalizedOutfit(region, source, query, characterID, colorID)
 	}
-	if query.HairID > 0 {
-		if c.preview3D == nil {
-			return nil, fmt.Errorf("3d preview service is not configured")
-		}
-		rawID, err := c.preview3D.HairCostume3DIDForRole(c.ctx, region.String(), query.HairID, query.Character3DID)
-		if err != nil {
-			return nil, err
-		}
-		return source.GetCostumeByID(rawID)
+}
+
+func normalizedCostumeColorID(colorID int) int {
+	if colorID <= 0 {
+		return 1
 	}
-	if query.AccessoryID > 0 {
-		if c.preview3D == nil {
-			return nil, fmt.Errorf("3d preview service is not configured")
-		}
-		rawID, err := c.preview3D.AccessoryCostume3DIDForRole(c.ctx, region.String(), query.AccessoryID, colorID, query.Character3DID)
-		if err != nil {
-			return nil, err
-		}
-		return source.GetCostumeByID(rawID)
+	return colorID
+}
+
+func (c *Controller) resolveNormalizedHair(region renderregion.Value, source DataSource, query Query) (*masterdata.Costume3d, error) {
+	if c.preview3D == nil {
+		return nil, fmt.Errorf("3d preview service is not configured")
 	}
+	rawID, err := c.preview3D.HairCostume3DIDForRole(c.ctx, region.String(), query.HairID, query.Character3DID)
+	if err != nil {
+		return nil, err
+	}
+	return source.GetCostumeByID(rawID)
+}
+
+func (c *Controller) resolveNormalizedAccessory(region renderregion.Value, source DataSource, query Query, colorID int) (*masterdata.Costume3d, error) {
+	if c.preview3D == nil {
+		return nil, fmt.Errorf("3d preview service is not configured")
+	}
+	rawID, err := c.preview3D.AccessoryCostume3DIDForRole(c.ctx, region.String(), query.AccessoryID, colorID, query.Character3DID)
+	if err != nil {
+		return nil, err
+	}
+	return source.GetCostumeByID(rawID)
+}
+
+func (c *Controller) resolveNormalizedOutfit(region renderregion.Value, source DataSource, query Query, characterID int, colorID int) (*masterdata.Costume3d, error) {
 	if c.preview3D != nil {
 		rawID, err := c.preview3D.OutfitCostume3DIDForRole(c.ctx, region.String(), query.OutfitID, colorID, query.Character3DID)
 		if err != nil {
@@ -977,147 +1013,237 @@ func (c *Controller) costumeDetailCacheRequest(req *drawing.CostumeDetailRequest
 }
 
 func (c *Controller) resolveSingleCostumeByQuery(region renderregion.Value, source DataSource, query Query) (*masterdata.Costume3d, error) {
-	lookup := ListQuery{Query: query.Query}
-	partType, hasPartType := normalizePartType(query.ExpectedPartType)
-	namedLookup := hasPartType && query.Character3DID > 0
-	if namedLookup {
-		lookup = ListQuery{
-			PartType:      partType,
-			Character3DID: query.Character3DID,
-			Keyword:       strings.TrimSpace(query.Query),
-		}
+	lookup := singleCostumeLookup{controller: c, region: region, source: source, query: query}
+	if err := lookup.prepare(); err != nil {
+		return nil, err
+	}
+	if err := lookup.loadItems(); err != nil {
+		return nil, err
+	}
+	if err := lookup.loadLogicalIDs(); err != nil {
+		return nil, err
+	}
+	lookup.keepUsableItems()
+	lookup.keepNameMatches()
+	return lookup.resolve()
+}
+
+type singleCostumeLookup struct {
+	controller *Controller
+	region     renderregion.Value
+	source     DataSource
+	query      Query
+	partType   string
+	named      bool
+	filter     Filter
+	items      []*masterdata.Costume3d
+	logicalIDs map[int][]int
+}
+
+func (s *singleCostumeLookup) prepare() error {
+	lookup := ListQuery{Query: s.query.Query}
+	s.partType, s.named = normalizePartType(s.query.ExpectedPartType)
+	s.named = s.named && s.query.Character3DID > 0
+	if s.named {
+		lookup = ListQuery{PartType: s.partType, Character3DID: s.query.Character3DID, Keyword: strings.TrimSpace(s.query.Query)}
 	}
 	parsed, err := normalizeListQuery(lookup)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	filter, err := c.buildFilter(parsed)
+	s.filter, err = s.controller.buildFilter(parsed)
+	if err != nil {
+		return err
+	}
+	s.adjustFilter()
+	return nil
+}
+
+func (s *singleCostumeLookup) adjustFilter() {
+	if s.named && (s.controller.preview3D != nil || s.partType == "head" || s.partType == "hair") {
+		s.filter.CharacterID = 0
+		s.filter.CharacterIDs = nil
+	}
+	s.filter.ColorID = normalizedCostumeColorID(s.query.ColorID)
+	if !s.named {
+		s.filter.Limit = 2
+	}
+}
+
+func (s *singleCostumeLookup) loadItems() error {
+	items, err := s.source.FilterCostumes(s.filter)
+	s.items = items
+	return err
+}
+
+func (s *singleCostumeLookup) loadLogicalIDs() error {
+	s.logicalIDs = make(map[int][]int)
+	if !s.named {
+		return nil
+	}
+	if (s.partType == "head" || s.partType == "hair") && s.controller.preview3D == nil {
+		return fmt.Errorf("3d preview service is not configured")
+	}
+	if s.controller.preview3D == nil {
+		return nil
+	}
+	return s.fetchLogicalIDs()
+}
+
+func (s *singleCostumeLookup) fetchLogicalIDs() error {
+	switch s.partType {
+	case "body":
+		ids, err := s.controller.preview3D.OutfitIDsForRole(s.controller.ctx, s.region.String(), s.query.Character3DID)
+		s.logicalIDs = wrapCostumeLogicalIDs(ids)
+		return err
+	case "head":
+		ids, err := s.controller.preview3D.AccessoryIDsForRole(s.controller.ctx, s.region.String(), s.query.Character3DID)
+		s.logicalIDs = ids
+		return err
+	case "hair":
+		ids, err := s.controller.preview3D.HairIDsForRole(s.controller.ctx, s.region.String(), s.query.Character3DID)
+		s.logicalIDs = wrapCostumeLogicalIDs(ids)
+		return err
+	default:
+		return nil
+	}
+}
+
+func wrapCostumeLogicalIDs(ids map[int]int) map[int][]int {
+	wrapped := make(map[int][]int, len(ids))
+	for rawID, logicalID := range ids {
+		wrapped[rawID] = []int{logicalID}
+	}
+	return wrapped
+}
+
+func (s *singleCostumeLookup) keepUsableItems() {
+	if !s.named || len(s.logicalIDs) == 0 {
+		return
+	}
+	usable := s.items[:0]
+	for _, item := range s.items {
+		if item != nil && len(s.logicalIDs[item.ID]) > 0 {
+			usable = append(usable, item)
+		}
+	}
+	s.items = usable
+}
+
+func (s *singleCostumeLookup) keepNameMatches() {
+	if !s.named {
+		return
+	}
+	needle := strings.TrimSpace(s.query.Query)
+	nameMatches, exactMatches := matchCostumeNames(s.items, needle)
+	s.items = nameMatches
+	if len(exactMatches) > 0 {
+		s.items = exactMatches
+	}
+}
+
+func matchCostumeNames(items []*masterdata.Costume3d, needle string) ([]*masterdata.Costume3d, []*masterdata.Costume3d) {
+	foldedNeedle := strings.ToLower(needle)
+	nameMatches := items[:0]
+	exactMatches := make([]*masterdata.Costume3d, 0, len(items))
+	for _, item := range items {
+		if item == nil || !strings.Contains(strings.ToLower(item.Name), foldedNeedle) {
+			continue
+		}
+		nameMatches = append(nameMatches, item)
+		if strings.EqualFold(strings.TrimSpace(item.Name), needle) {
+			exactMatches = append(exactMatches, item)
+		}
+	}
+	return nameMatches, exactMatches
+}
+
+func (s *singleCostumeLookup) resolve() (*masterdata.Costume3d, error) {
+	if len(s.items) == 0 {
+		return nil, s.noMatchError()
+	}
+	if s.named {
+		return s.resolveNamed()
+	}
+	if len(s.items) > 1 {
+		return nil, ambiguousCostumeError()
+	}
+	return s.items[0], nil
+}
+
+func (s *singleCostumeLookup) noMatchError() error {
+	needle := strings.TrimSpace(s.query.Query)
+	if s.named {
+		return fmt.Errorf("找不到角色ID %d 的%s名称“%s”", s.query.Character3DID, partTypeName(s.partType), needle)
+	}
+	return fmt.Errorf("no costume matched %q", needle)
+}
+
+func (s *singleCostumeLookup) resolveNamed() (*masterdata.Costume3d, error) {
+	ids := s.uniqueLogicalIDs()
+	if len(ids) == 1 && s.controller.preview3D != nil {
+		return s.resolveLogicalID(ids[0])
+	}
+	if len(ids) > 1 {
+		return nil, fmt.Errorf("角色ID %d 匹配到多个%s“%s”（ID：%s），请明确填写组件ID", s.query.Character3DID, partTypeName(s.partType), strings.TrimSpace(s.query.Query), joinCostumeIDs(ids))
+	}
+	if len(s.items) > 1 && len(ids) == 1 {
+		sort.Slice(s.items, func(i, j int) bool { return s.items[i].ID < s.items[j].ID })
+		return s.items[0], nil
+	}
+	if len(s.items) > 1 {
+		return nil, ambiguousCostumeError()
+	}
+	return s.items[0], nil
+}
+
+func (s *singleCostumeLookup) uniqueLogicalIDs() []int {
+	unique := make(map[int]struct{})
+	for _, item := range s.items {
+		for _, logicalID := range s.logicalIDsForItem(item) {
+			if logicalID > 0 {
+				unique[logicalID] = struct{}{}
+			}
+		}
+	}
+	ids := make([]int, 0, len(unique))
+	for id := range unique {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	return ids
+}
+
+func (s *singleCostumeLookup) logicalIDsForItem(item *masterdata.Costume3d) []int {
+	if s.partType == "body" && len(s.logicalIDs) == 0 {
+		return []int{normalizedOutfitID(item)}
+	}
+	return s.logicalIDs[item.ID]
+}
+
+func (s *singleCostumeLookup) resolveLogicalID(logicalID int) (*masterdata.Costume3d, error) {
+	rawID, err := s.rawCostumeID(logicalID)
 	if err != nil {
 		return nil, err
 	}
-	if namedLookup && (c.preview3D != nil || partType == "head" || partType == "hair") {
-		filter.CharacterID = 0
-		filter.CharacterIDs = nil
+	return s.source.GetCostumeByID(rawID)
+}
+
+func (s *singleCostumeLookup) rawCostumeID(logicalID int) (int, error) {
+	switch s.partType {
+	case "body":
+		return s.controller.preview3D.OutfitCostume3DIDForRole(s.controller.ctx, s.region.String(), logicalID, s.filter.ColorID, s.query.Character3DID)
+	case "head":
+		return s.controller.preview3D.AccessoryCostume3DIDForRole(s.controller.ctx, s.region.String(), logicalID, s.filter.ColorID, s.query.Character3DID)
+	case "hair":
+		return s.controller.preview3D.HairCostume3DIDForRole(s.controller.ctx, s.region.String(), logicalID, s.query.Character3DID)
+	default:
+		return 0, fmt.Errorf("unsupported costume part type %q", s.partType)
 	}
-	filter.ColorID = query.ColorID
-	if filter.ColorID <= 0 {
-		filter.ColorID = 1
-	}
-	if !namedLookup {
-		filter.Limit = 2
-	}
-	items, err := source.FilterCostumes(filter)
-	if err != nil {
-		return nil, err
-	}
-	logicalIDs := make(map[int][]int)
-	if namedLookup && (partType == "head" || partType == "hair") && c.preview3D == nil {
-		return nil, fmt.Errorf("3d preview service is not configured")
-	}
-	if namedLookup && c.preview3D != nil {
-		switch partType {
-		case "body":
-			var outfitIDs map[int]int
-			outfitIDs, err = c.preview3D.OutfitIDsForRole(c.ctx, region.String(), query.Character3DID)
-			for rawID, outfitID := range outfitIDs {
-				logicalIDs[rawID] = []int{outfitID}
-			}
-		case "head":
-			logicalIDs, err = c.preview3D.AccessoryIDsForRole(c.ctx, region.String(), query.Character3DID)
-		case "hair":
-			var hairIDs map[int]int
-			hairIDs, err = c.preview3D.HairIDsForRole(c.ctx, region.String(), query.Character3DID)
-			for rawID, hairID := range hairIDs {
-				logicalIDs[rawID] = []int{hairID}
-			}
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
-	if namedLookup && len(logicalIDs) > 0 {
-		usable := items[:0]
-		for _, item := range items {
-			if item != nil && len(logicalIDs[item.ID]) > 0 {
-				usable = append(usable, item)
-			}
-		}
-		items = usable
-	}
-	if namedLookup {
-		needle := strings.TrimSpace(query.Query)
-		foldedNeedle := strings.ToLower(needle)
-		nameMatches := items[:0]
-		exactMatches := make([]*masterdata.Costume3d, 0, len(items))
-		for _, item := range items {
-			if item == nil || !strings.Contains(strings.ToLower(item.Name), foldedNeedle) {
-				continue
-			}
-			nameMatches = append(nameMatches, item)
-			if strings.EqualFold(strings.TrimSpace(item.Name), needle) {
-				exactMatches = append(exactMatches, item)
-			}
-		}
-		items = nameMatches
-		if len(exactMatches) > 0 {
-			items = exactMatches
-		}
-	}
-	if len(items) == 0 {
-		if namedLookup {
-			return nil, fmt.Errorf("找不到角色ID %d 的%s名称“%s”", query.Character3DID, partTypeName(partType), strings.TrimSpace(query.Query))
-		}
-		return nil, fmt.Errorf("no costume matched %q", strings.TrimSpace(query.Query))
-	}
-	if namedLookup {
-		uniqueIDs := make(map[int]struct{})
-		for _, item := range items {
-			if partType == "body" && len(logicalIDs) == 0 {
-				if logicalID := normalizedOutfitID(item); logicalID > 0 {
-					uniqueIDs[logicalID] = struct{}{}
-				}
-				continue
-			}
-			for _, logicalID := range logicalIDs[item.ID] {
-				if logicalID > 0 {
-					uniqueIDs[logicalID] = struct{}{}
-				}
-			}
-		}
-		ids := make([]int, 0, len(uniqueIDs))
-		for id := range uniqueIDs {
-			ids = append(ids, id)
-		}
-		sort.Ints(ids)
-		if len(ids) == 1 && c.preview3D != nil {
-			var rawID int
-			switch partType {
-			case "body":
-				rawID, err = c.preview3D.OutfitCostume3DIDForRole(c.ctx, region.String(), ids[0], filter.ColorID, query.Character3DID)
-			case "head":
-				rawID, err = c.preview3D.AccessoryCostume3DIDForRole(c.ctx, region.String(), ids[0], filter.ColorID, query.Character3DID)
-			case "hair":
-				rawID, err = c.preview3D.HairCostume3DIDForRole(c.ctx, region.String(), ids[0], query.Character3DID)
-			}
-			if err != nil {
-				return nil, err
-			}
-			return source.GetCostumeByID(rawID)
-		}
-		if len(ids) > 1 {
-			return nil, fmt.Errorf("角色ID %d 匹配到多个%s“%s”（ID：%s），请明确填写组件ID", query.Character3DID, partTypeName(partType), strings.TrimSpace(query.Query), joinCostumeIDs(ids))
-		}
-		if len(items) > 1 {
-			if len(ids) == 1 {
-				sort.Slice(items, func(i, j int) bool { return items[i].ID < items[j].ID })
-				return items[0], nil
-			}
-		}
-	}
-	if len(items) > 1 {
-		return nil, fmt.Errorf("matched multiple costumes; use costume list first and query by costume id")
-	}
-	return items[0], nil
+}
+
+func ambiguousCostumeError() error {
+	return fmt.Errorf("matched multiple costumes; use costume list first and query by costume id")
 }
 
 func ParseNamedLookupQuery(raw string, partType string) (Query, bool, error) {

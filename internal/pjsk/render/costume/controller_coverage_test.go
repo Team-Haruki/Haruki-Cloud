@@ -125,6 +125,46 @@ func controllerCoverageCostume(id int, partType string) *masterdata.Costume3d {
 	}
 }
 
+func TestSingleCostumeLookupResolutionErrors(t *testing.T) {
+	unnamed := &singleCostumeLookup{query: Query{Query: "missing"}}
+	if _, err := unnamed.resolve(); err == nil || !strings.Contains(err.Error(), "no costume matched") {
+		t.Fatalf("unnamed no-match error = %v", err)
+	}
+
+	named := &singleCostumeLookup{
+		query:    Query{Query: "missing", Character3DID: 1},
+		partType: "body",
+		named:    true,
+	}
+	if _, err := named.resolve(); err == nil || !strings.Contains(err.Error(), "找不到角色ID") {
+		t.Fatalf("named no-match error = %v", err)
+	}
+
+	unnamed.items = []*masterdata.Costume3d{
+		controllerCoverageCostume(1, "body"),
+		controllerCoverageCostume(2, "body"),
+	}
+	if _, err := unnamed.resolve(); err == nil || !strings.Contains(err.Error(), "matched multiple costumes") {
+		t.Fatalf("ambiguous lookup error = %v", err)
+	}
+}
+
+func TestSingleCostumeLookupUnsupportedPart(t *testing.T) {
+	lookup := &singleCostumeLookup{
+		controller: &Controller{},
+		partType:   "unknown",
+	}
+	if err := lookup.fetchLogicalIDs(); err != nil {
+		t.Fatalf("fetchLogicalIDs default branch failed: %v", err)
+	}
+	if _, err := lookup.rawCostumeID(1); err == nil || !strings.Contains(err.Error(), "unsupported costume part type") {
+		t.Fatalf("rawCostumeID unsupported-part error = %v", err)
+	}
+	if err := lookup.controller.applyCostumeDetailPartRole(renderregion.JP, &masterdata.Costume3d{PartType: "unknown"}, Query{}, &drawing.CostumeBasic{}); err != nil {
+		t.Fatalf("unknown detail part should be ignored: %v", err)
+	}
+}
+
 func TestControllerCoverageLifecycleAndContext(t *testing.T) {
 	var nilController *Controller
 	nilController.RegisterSource(&controllerCoverageSource{})

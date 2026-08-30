@@ -39,53 +39,67 @@ func BuildCustomRoomScoreRequest(r *CommandInput, app *renderapp.App) (*drawing.
 	if err != nil {
 		return nil, err
 	}
-	if len(candidatePairs) == 0 {
-		if params.TargetPoint > 100 {
-			return nil, fmt.Errorf("该PT无法用自定义房间控分，控大于100的PT可使用\"/控分\"指令")
-		}
-		return nil, fmt.Errorf("该PT无法用自定义房间控分，可能是PT过小")
+	if err := validateCustomRoomCandidatePairs(params.TargetPoint, candidatePairs); err != nil {
+		return nil, err
 	}
-
-	sort.Slice(candidatePairs, func(i, j int) bool {
-		if candidatePairs[i][1] != candidatePairs[j][1] {
-			return candidatePairs[i][1] < candidatePairs[j][1]
-		}
-		return candidatePairs[i][0] > candidatePairs[j][0]
-	})
-
+	sortCustomRoomCandidatePairs(candidatePairs)
 	musicListMap, err := app.Music.ResolveCustomRoomMusicList(r.Region, customRoomEventRates(candidatePairs), customRoomMusicNumPerRate)
 	if err != nil {
 		return nil, err
 	}
 
-	filteredPairs := make([][]int, 0, len(candidatePairs))
-	for _, pair := range candidatePairs {
-		if len(musicListMap[pair[0]]) == 0 {
-			continue
-		}
-		filteredPairs = append(filteredPairs, []int{pair[0], pair[1]})
-		if len(filteredPairs) >= customRoomMaxShownPairs {
-			break
-		}
-	}
+	filteredPairs := filterCustomRoomCandidatePairs(candidatePairs, musicListMap)
 	if len(filteredPairs) == 0 {
 		return nil, fmt.Errorf("找不到可用于自定义房间控分的歌曲")
 	}
-
-	filteredMusicMap := make(map[int][]map[string]any, len(musicListMap))
-	for _, pair := range filteredPairs {
-		rate := pair[0]
-		if _, ok := filteredMusicMap[rate]; ok {
-			continue
-		}
-		filteredMusicMap[rate] = musicListMap[rate]
-	}
-
 	return &drawing.CustomRoomScoreRequest{
 		TargetPoint:    params.TargetPoint,
 		CandidatePairs: filteredPairs,
-		MusicListMap:   filteredMusicMap,
+		MusicListMap:   filterCustomRoomMusicMap(filteredPairs, musicListMap),
 	}, nil
+}
+
+func validateCustomRoomCandidatePairs(targetPoint int, pairs [][]int) error {
+	if len(pairs) > 0 {
+		return nil
+	}
+	if targetPoint > 100 {
+		return fmt.Errorf("该PT无法用自定义房间控分，控大于100的PT可使用\"/控分\"指令")
+	}
+	return fmt.Errorf("该PT无法用自定义房间控分，可能是PT过小")
+}
+
+func sortCustomRoomCandidatePairs(pairs [][]int) {
+	sort.Slice(pairs, func(i, j int) bool {
+		if pairs[i][1] != pairs[j][1] {
+			return pairs[i][1] < pairs[j][1]
+		}
+		return pairs[i][0] > pairs[j][0]
+	})
+}
+
+func filterCustomRoomCandidatePairs(pairs [][]int, musicMap map[int][]map[string]any) [][]int {
+	result := make([][]int, 0, min(len(pairs), customRoomMaxShownPairs))
+	for _, pair := range pairs {
+		if len(musicMap[pair[0]]) > 0 {
+			result = append(result, []int{pair[0], pair[1]})
+		}
+		if len(result) >= customRoomMaxShownPairs {
+			break
+		}
+	}
+	return result
+}
+
+func filterCustomRoomMusicMap(pairs [][]int, musicMap map[int][]map[string]any) map[int][]map[string]any {
+	result := make(map[int][]map[string]any, len(musicMap))
+	for _, pair := range pairs {
+		rate := pair[0]
+		if _, exists := result[rate]; !exists {
+			result[rate] = musicMap[rate]
+		}
+	}
+	return result
 }
 
 func resolveCustomRoomScoreSelection(r *CommandInput) (customRoomScoreSelection, error) {
@@ -121,35 +135,42 @@ func findCustomRoomCandidatePairs(targetPoint int) ([][]int, error) {
 		return nil, fmt.Errorf("custom-room pt csv is empty")
 	}
 
-	bonuses := make([]int, 0, len(records[0])-1)
-	for _, cell := range records[0][1:] {
-		bonus, ok := parseCustomRoomBonus(cell)
-		if !ok {
-			bonuses = append(bonuses, 0)
-			continue
-		}
-		bonuses = append(bonuses, bonus)
-	}
-
+	bonuses := parseCustomRoomBonuses(records[0])
 	result := make([][]int, 0, 32)
 	for _, row := range records[1:] {
-		if len(row) == 0 {
-			continue
-		}
-		eventRate, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(row[0], byteOrderMark)))
-		if err != nil || eventRate <= 0 {
-			continue
-		}
-		for idx := 1; idx < len(row) && idx-1 < len(bonuses); idx++ {
-			pt, err := strconv.Atoi(strings.TrimSpace(row[idx]))
-			if err != nil || pt != targetPoint {
-				continue
-			}
-			result = append(result, []int{eventRate, bonuses[idx-1]})
+		result = append(result, customRoomPairsFromRow(row, bonuses, targetPoint)...)
+	}
+	return result, nil
+}
+
+func parseCustomRoomBonuses(header []string) []int {
+	if len(header) < 2 {
+		return nil
+	}
+	bonuses := make([]int, 0, len(header)-1)
+	for _, cell := range header[1:] {
+		bonus, _ := parseCustomRoomBonus(cell)
+		bonuses = append(bonuses, bonus)
+	}
+	return bonuses
+}
+
+func customRoomPairsFromRow(row []string, bonuses []int, targetPoint int) [][]int {
+	if len(row) == 0 {
+		return nil
+	}
+	eventRate, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(row[0], byteOrderMark)))
+	if err != nil || eventRate <= 0 {
+		return nil
+	}
+	result := make([][]int, 0)
+	for index := 1; index < len(row) && index-1 < len(bonuses); index++ {
+		point, err := strconv.Atoi(strings.TrimSpace(row[index]))
+		if err == nil && point == targetPoint {
+			result = append(result, []int{eventRate, bonuses[index-1]})
 		}
 	}
-
-	return result, nil
+	return result
 }
 
 func parseCustomRoomBonus(raw string) (int, bool) {

@@ -63,32 +63,9 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 	if now <= 0 {
 		now = time.Now().UnixMilli()
 	}
-
-	eligibleCards := make([]*masterdata.Card, 0, len(allCards))
-	for _, card := range allCards {
-		if card == nil || card.ID <= 0 {
-			continue
-		}
-		if card.ReleaseAt > 0 && card.ReleaseAt > now {
-			continue
-		}
-		eligibleCards = append(eligibleCards, card)
-	}
-
+	eligibleCards := eligibleMaxProfileCards(allCards, now)
 	episodeSource, _ := source.(cardEpisodeSource)
-	episodesByCard, err := func() (map[int][]snapshot.RawUserCardEpisode, error) {
-		finish := commandtrace.MeasureOperation(c.contextOrBackground(), "deck.max_profile.episodes")
-		defer finish()
-		result := make(map[int][]snapshot.RawUserCardEpisode, len(eligibleCards))
-		for _, card := range eligibleCards {
-			episodes, err := maxProfileCardEpisodes(episodeSource, card.ID)
-			if err != nil {
-				return nil, err
-			}
-			result[card.ID] = episodes
-		}
-		return result, nil
-	}()
+	episodesByCard, err := c.maxProfileEpisodesByCard(episodeSource, eligibleCards)
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +86,30 @@ func (c *Controller) buildMaxProfileCards(region renderregion.Value, rawNow int6
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].CardID < result[j].CardID
 	})
+	return result, nil
+}
+
+func eligibleMaxProfileCards(cards []*masterdata.Card, now int64) []*masterdata.Card {
+	result := make([]*masterdata.Card, 0, len(cards))
+	for _, card := range cards {
+		if card != nil && card.ID > 0 && (card.ReleaseAt <= 0 || card.ReleaseAt <= now) {
+			result = append(result, card)
+		}
+	}
+	return result
+}
+
+func (c *Controller) maxProfileEpisodesByCard(source cardEpisodeSource, cards []*masterdata.Card) (map[int][]snapshot.RawUserCardEpisode, error) {
+	finish := commandtrace.MeasureOperation(c.contextOrBackground(), "deck.max_profile.episodes")
+	defer finish()
+	result := make(map[int][]snapshot.RawUserCardEpisode, len(cards))
+	for _, card := range cards {
+		episodes, err := maxProfileCardEpisodes(source, card.ID)
+		if err != nil {
+			return nil, err
+		}
+		result[card.ID] = episodes
+	}
 	return result, nil
 }
 
@@ -194,41 +195,40 @@ func (c *Controller) applyUserCardFilters(region renderregion.Value, raw *snapsh
 		return err
 	}
 
-	excluded := make(map[int]struct{}, len(query.ExcludedCards))
-	for _, cardID := range query.ExcludedCards {
-		if cardID > 0 {
-			excluded[cardID] = struct{}{}
-		}
-	}
-
+	excluded := positiveCardIDSet(query.ExcludedCards)
 	filtered := make([]snapshot.RawUserCard, 0, len(raw.UserCards))
 	for _, userCard := range raw.UserCards {
-		if _, ok := excluded[userCard.CardID]; ok {
-			continue
+		if c.userCardMatchesFilters(source, userCard, unitFilter, attrFilter, excluded) {
+			filtered = append(filtered, userCard)
 		}
-
-		cardInfo, err := source.GetCardByID(userCard.CardID)
-		if err != nil || cardInfo == nil {
-			if unitFilter == "" && attrFilter == "" {
-				filtered = append(filtered, userCard)
-			}
-			continue
-		}
-
-		if unitFilter != "" {
-			unit := c.resolveCardUnit(source, cardInfo, unitFilter)
-			if unit != unitFilter {
-				continue
-			}
-		}
-		if attrFilter != "" && normalizeRecommendAttr(cardInfo.Attr) != attrFilter {
-			continue
-		}
-		filtered = append(filtered, userCard)
 	}
 
 	raw.UserCards = filtered
 	return nil
+}
+
+func positiveCardIDSet(cardIDs []int) map[int]struct{} {
+	result := make(map[int]struct{}, len(cardIDs))
+	for _, cardID := range cardIDs {
+		if cardID > 0 {
+			result[cardID] = struct{}{}
+		}
+	}
+	return result
+}
+
+func (c *Controller) userCardMatchesFilters(source CardSource, userCard snapshot.RawUserCard, unitFilter, attrFilter string, excluded map[int]struct{}) bool {
+	if _, excluded := excluded[userCard.CardID]; excluded {
+		return false
+	}
+	cardInfo, err := source.GetCardByID(userCard.CardID)
+	if err != nil || cardInfo == nil {
+		return unitFilter == "" && attrFilter == ""
+	}
+	if unitFilter != "" && c.resolveCardUnit(source, cardInfo, unitFilter) != unitFilter {
+		return false
+	}
+	return attrFilter == "" || normalizeRecommendAttr(cardInfo.Attr) == attrFilter
 }
 
 func (c *Controller) resolveCardUnit(source CardSource, card *masterdata.Card, unitFilter string) string {
@@ -499,38 +499,50 @@ func (c *Controller) restoreFixedCards(region renderregion.Value, raw *snapshot.
 	}
 
 	for _, cardID := range fixedCards {
-		if cardID <= 0 {
-			continue
+		if err := c.restoreFixedCard(region, raw, original, cardID, indexByCardID, preferOriginal); err != nil {
+			return err
 		}
-		originalCard := snapshot.FindUserCard(original.UserCards, cardID)
-		if originalCard == nil {
-			if _, ok := indexByCardID[cardID]; ok {
-				continue
-			}
-			fallbackCard, err := c.buildFallbackRecommendUserCard(region, cardID, raw.Now, preferOriginal)
-			if err != nil {
-				return err
-			}
-			if fallbackCard == nil {
-				return fmt.Errorf("当前卡组中的卡牌 %d 不在抓包数据中，请更新抓包数据", cardID)
-			}
-			raw.UserCards = append(raw.UserCards, *fallbackCard)
-			indexByCardID[cardID] = len(raw.UserCards) - 1
-			continue
-		}
-
-		if index, ok := indexByCardID[cardID]; ok {
-			if preferOriginal {
-				raw.UserCards[index] = *originalCard
-			}
-			continue
-		}
-
-		raw.UserCards = append(raw.UserCards, *originalCard)
-		indexByCardID[cardID] = len(raw.UserCards) - 1
 	}
 
 	return nil
+}
+
+func (c *Controller) restoreFixedCard(region renderregion.Value, raw, original *snapshot.RawUserData, cardID int, indexByCardID map[int]int, preferOriginal bool) error {
+	if cardID <= 0 {
+		return nil
+	}
+	originalCard := snapshot.FindUserCard(original.UserCards, cardID)
+	if originalCard != nil {
+		restoreOriginalFixedCard(raw, originalCard, indexByCardID, preferOriginal)
+		return nil
+	}
+	if _, exists := indexByCardID[cardID]; exists {
+		return nil
+	}
+	fallbackCard, err := c.buildFallbackRecommendUserCard(region, cardID, raw.Now, preferOriginal)
+	if err != nil {
+		return err
+	}
+	if fallbackCard == nil {
+		return fmt.Errorf("当前卡组中的卡牌 %d 不在抓包数据中，请更新抓包数据", cardID)
+	}
+	appendIndexedUserCard(raw, *fallbackCard, indexByCardID)
+	return nil
+}
+
+func restoreOriginalFixedCard(raw *snapshot.RawUserData, originalCard *snapshot.RawUserCard, indexByCardID map[int]int, preferOriginal bool) {
+	if index, exists := indexByCardID[originalCard.CardID]; exists {
+		if preferOriginal {
+			raw.UserCards[index] = *originalCard
+		}
+		return
+	}
+	appendIndexedUserCard(raw, *originalCard, indexByCardID)
+}
+
+func appendIndexedUserCard(raw *snapshot.RawUserData, card snapshot.RawUserCard, indexByCardID map[int]int) {
+	raw.UserCards = append(raw.UserCards, card)
+	indexByCardID[card.CardID] = len(raw.UserCards) - 1
 }
 
 func (c *Controller) buildFallbackRecommendUserCard(region renderregion.Value, cardID int, rawNow int64, preferOwnedState bool) (*snapshot.RawUserCard, error) {
@@ -599,25 +611,12 @@ func (c *Controller) applyAreaItemLevel(region renderregion.Value, raw *snapshot
 
 	caps := c.areaItemLevelCaps(region, targetLevel)
 	if len(caps) == 0 {
-		if len(raw.UserAreas) == 0 {
-			return nil
-		}
-		levels := collectRawAreaItemLevels(raw.UserAreas)
-		for itemID, level := range levels {
-			if level < targetLevel {
-				levels[itemID] = targetLevel
-			}
-		}
-		raw.UserAreas = buildRawUserAreas(levels)
+		raiseExistingAreaItemLevels(raw, targetLevel)
 		return nil
 	}
-
-	for _, level := range caps {
-		if level > 0 && level < targetLevel {
-			return fmt.Errorf("该区服区域道具等级最多为%d", level)
-		}
+	if maxLevel, exceeded := firstAreaItemCapBelow(caps, targetLevel); exceeded {
+		return fmt.Errorf("该区服区域道具等级最多为%d", maxLevel)
 	}
-
 	levels := collectRawAreaItemLevels(raw.UserAreas)
 	for itemID, level := range caps {
 		if level > levels[itemID] {
@@ -626,6 +625,28 @@ func (c *Controller) applyAreaItemLevel(region renderregion.Value, raw *snapshot
 	}
 	raw.UserAreas = buildRawUserAreas(levels)
 	return nil
+}
+
+func raiseExistingAreaItemLevels(raw *snapshot.RawUserData, targetLevel int) {
+	if len(raw.UserAreas) == 0 {
+		return
+	}
+	levels := collectRawAreaItemLevels(raw.UserAreas)
+	for itemID, level := range levels {
+		if level < targetLevel {
+			levels[itemID] = targetLevel
+		}
+	}
+	raw.UserAreas = buildRawUserAreas(levels)
+}
+
+func firstAreaItemCapBelow(caps map[int]int, targetLevel int) (int, bool) {
+	for _, level := range caps {
+		if level > 0 && level < targetLevel {
+			return level, true
+		}
+	}
+	return 0, false
 }
 
 func (c *Controller) areaItemLevelCaps(region renderregion.Value, limit int) map[int]int {

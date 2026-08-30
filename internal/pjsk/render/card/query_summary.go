@@ -45,40 +45,43 @@ func (c *Controller) ShouldShowSummaryForBox(query Query) bool {
 
 func (c *Controller) formatQuerySummary(region string, mode string, rawQuery string, strictFilterOnly bool, showID bool, showBox bool, useAfterTraining *bool, cardIDs []int) string {
 	parts := make([]string, 0, 8)
-
-	var source DataSource
-	if c != nil {
-		if resolved, resolvedSource, _, err := c.resolveBuilder(region); err == nil {
-			source = resolvedSource
-			if label := strings.ToUpper(strings.TrimSpace(resolved.String())); label != "" {
-				parts = append(parts, label)
-			}
-		}
+	regionLabel, source := c.summaryRegionSource(region)
+	if regionLabel != "" {
+		parts = append(parts, regionLabel)
 	}
-	if len(parts) == 0 {
-		if label := strings.ToUpper(strings.TrimSpace(renderregion.Normalize(region).String())); label != "" && label != "UNKNOWN" {
-			parts = append(parts, label)
-		} else if label := strings.ToUpper(strings.TrimSpace(region)); label != "" {
-			parts = append(parts, label)
-		}
-	}
-
 	parts = append(parts, cardSummaryModeLabel(mode))
 	parts = append(parts, c.describeQueryParts(mode, rawQuery, strictFilterOnly, cardIDs, source)...)
-
 	if mode == "box" {
-		if showID {
-			parts = append(parts, "显示ID")
-		}
-		if showBox {
-			parts = append(parts, "显示持有")
-		}
-		if useAfterTraining != nil && !*useAfterTraining {
-			parts = append(parts, "花前")
+		parts = appendBoxSummaryOptions(parts, showID, showBox, useAfterTraining)
+	}
+	return strings.Join(filterNonEmptyStrings(parts), " / ")
+}
+
+func (c *Controller) summaryRegionSource(region string) (string, DataSource) {
+	if c != nil {
+		resolved, source, _, err := c.resolveBuilder(region)
+		if err == nil {
+			return strings.ToUpper(strings.TrimSpace(resolved.String())), source
 		}
 	}
+	label := strings.ToUpper(strings.TrimSpace(renderregion.Normalize(region).String()))
+	if label != "" && label != "UNKNOWN" {
+		return label, nil
+	}
+	return strings.ToUpper(strings.TrimSpace(region)), nil
+}
 
-	return strings.Join(filterNonEmptyStrings(parts), " / ")
+func appendBoxSummaryOptions(parts []string, showID, showBox bool, useAfterTraining *bool) []string {
+	if showID {
+		parts = append(parts, "显示ID")
+	}
+	if showBox {
+		parts = append(parts, "显示持有")
+	}
+	if useAfterTraining != nil && !*useAfterTraining {
+		parts = append(parts, "花前")
+	}
+	return parts
 }
 
 func (c *Controller) queryUsesMultiCardSelection(mode string, rawQuery string, strictFilterOnly bool) bool {
@@ -185,56 +188,77 @@ func describeCardQueryInfo(info *PjskCardQueryInfo, source DataSource, nicknames
 
 	switch info.Type {
 	case QueryTypeID:
-		if info.Value > 0 {
-			return []string{fmt.Sprintf("卡牌ID%d", info.Value)}
-		}
+		return describeCardIDQuery(info)
 	case QueryTypeLatest:
-		if info.Sequence < 0 {
-			return []string{fmt.Sprintf("全局最新第%d张", -info.Sequence)}
-		}
+		return describeCardLatestQuery(info)
 	case QueryTypeSeq:
-		if info.CharacterID > 0 && info.Sequence != 0 {
-			name := summaryCharacterLabel(source, nicknames, info.CharacterID)
-			if info.Sequence < 0 {
-				return []string{fmt.Sprintf("%s最新第%d张", name, -info.Sequence)}
-			}
-			return []string{fmt.Sprintf("%s第%d张", name, info.Sequence)}
-		}
+		return describeCardSequenceQuery(info, source, nicknames)
 	case QueryTypeFilter:
-		parts := make([]string, 0, 10)
-		if info.EventID > 0 {
-			parts = append(parts, fmt.Sprintf("event%d", info.EventID))
-		}
-		if info.BanCharID > 0 && info.BanSeq > 0 {
-			parts = append(parts, fmt.Sprintf("%s%d箱活", summaryCharacterLabel(source, nicknames, info.BanCharID), info.BanSeq))
-		}
-		if info.CharacterID > 0 {
-			parts = append(parts, summaryCharacterLabel(source, nicknames, info.CharacterID))
-		}
-		if label := summaryAttributeLabel(info.Attr); label != "" {
-			parts = append(parts, label)
-		}
-		if label := summaryDetailedSkillLabel(info.SkillIDs); label != "" {
-			parts = append(parts, label)
-		}
-		if label := summarySkillTypeLabel(info.SkillType); label != "" {
-			parts = append(parts, label)
-		}
-		if label := summaryUnitFilterLabel(info); label != "" {
-			parts = append(parts, label)
-		}
-		if label := summaryRarityLabel(info.Rarity); label != "" {
-			parts = append(parts, label)
-		}
-		if label := summarySupplyLabel(info.SupplyType); label != "" {
-			parts = append(parts, label)
-		}
-		if info.Year > 0 {
-			parts = append(parts, fmt.Sprintf("%d年", info.Year))
-		}
-		return parts
+		return describeCardFilterQuery(info, source, nicknames)
 	}
+	return describeOriginalCardQuery(info)
+}
 
+func describeCardIDQuery(info *PjskCardQueryInfo) []string {
+	if info.Value > 0 {
+		return []string{fmt.Sprintf("卡牌ID%d", info.Value)}
+	}
+	return describeOriginalCardQuery(info)
+}
+
+func describeCardLatestQuery(info *PjskCardQueryInfo) []string {
+	if info.Sequence < 0 {
+		return []string{fmt.Sprintf("全局最新第%d张", -info.Sequence)}
+	}
+	return describeOriginalCardQuery(info)
+}
+
+func describeCardSequenceQuery(info *PjskCardQueryInfo, source DataSource, nicknames map[string]int) []string {
+	if info.CharacterID <= 0 || info.Sequence == 0 {
+		return describeOriginalCardQuery(info)
+	}
+	name := summaryCharacterLabel(source, nicknames, info.CharacterID)
+	if info.Sequence < 0 {
+		return []string{fmt.Sprintf("%s最新第%d张", name, -info.Sequence)}
+	}
+	return []string{fmt.Sprintf("%s第%d张", name, info.Sequence)}
+}
+
+func describeCardFilterQuery(info *PjskCardQueryInfo, source DataSource, nicknames map[string]int) []string {
+	parts := make([]string, 0, 10)
+	if info.EventID > 0 {
+		parts = append(parts, fmt.Sprintf("event%d", info.EventID))
+	}
+	if info.BanCharID > 0 && info.BanSeq > 0 {
+		parts = append(parts, fmt.Sprintf("%s%d箱活", summaryCharacterLabel(source, nicknames, info.BanCharID), info.BanSeq))
+	}
+	if info.CharacterID > 0 {
+		parts = append(parts, summaryCharacterLabel(source, nicknames, info.CharacterID))
+	}
+	parts = appendNonEmptyCardSummaryLabels(parts,
+		summaryAttributeLabel(info.Attr),
+		summaryDetailedSkillLabel(info.SkillIDs),
+		summarySkillTypeLabel(info.SkillType),
+		summaryUnitFilterLabel(info),
+		summaryRarityLabel(info.Rarity),
+		summarySupplyLabel(info.SupplyType),
+	)
+	if info.Year > 0 {
+		parts = append(parts, fmt.Sprintf("%d年", info.Year))
+	}
+	return parts
+}
+
+func appendNonEmptyCardSummaryLabels(parts []string, labels ...string) []string {
+	for _, label := range labels {
+		if label != "" {
+			parts = append(parts, label)
+		}
+	}
+	return parts
+}
+
+func describeOriginalCardQuery(info *PjskCardQueryInfo) []string {
 	if original := strings.TrimSpace(info.Original); original != "" {
 		return []string{original}
 	}
@@ -258,14 +282,27 @@ func summaryCharacterLabel(source DataSource, nicknames map[string]int, characte
 	if characterID <= 0 {
 		return ""
 	}
-	if source != nil {
-		if character, err := source.GetCharacterByID(characterID); err == nil && character != nil {
-			if name := strings.TrimSpace(character.FirstName + character.GivenName); name != "" {
-				return name
-			}
-		}
+	if name := summaryCharacterSourceName(source, characterID); name != "" {
+		return name
 	}
+	if nickname := bestSummaryCharacterNickname(nicknames, characterID); nickname != "" {
+		return nickname
+	}
+	return fmt.Sprintf("角色%d", characterID)
+}
 
+func summaryCharacterSourceName(source DataSource, characterID int) string {
+	if source == nil {
+		return ""
+	}
+	character, err := source.GetCharacterByID(characterID)
+	if err != nil || character == nil {
+		return ""
+	}
+	return strings.TrimSpace(character.FirstName + character.GivenName)
+}
+
+func bestSummaryCharacterNickname(nicknames map[string]int, characterID int) string {
 	best := ""
 	for nickname, id := range nicknames {
 		if id != characterID {
@@ -279,10 +316,7 @@ func summaryCharacterLabel(source DataSource, nicknames map[string]int, characte
 			best = nickname
 		}
 	}
-	if best != "" {
-		return best
-	}
-	return fmt.Sprintf("角色%d", characterID)
+	return best
 }
 
 func betterSummaryNickname(candidate string, current string) bool {

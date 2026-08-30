@@ -60,27 +60,30 @@ func buildMusicResultMapFromUserMusics(userMusics []RawUserMusic) map[string]map
 	for _, music := range userMusics {
 		for _, status := range music.UserMusicDifficultyStatuses {
 			for _, item := range status.UserMusicResults {
-				normalized := item
-				if normalized.MusicID == 0 {
-					normalized.MusicID = music.MusicID
-				}
-				if strings.TrimSpace(normalized.MusicDifficultyType) == "" {
-					normalized.MusicDifficultyType = strings.TrimSpace(status.MusicDifficultyType)
-				}
-				if strings.TrimSpace(normalized.MusicDifficulty) == "" {
-					normalized.MusicDifficulty = strings.TrimSpace(status.MusicDifficulty)
-				}
-				if strings.TrimSpace(normalized.MusicDifficultyType) == "" {
-					normalized.MusicDifficultyType = strings.TrimSpace(normalized.MusicDifficulty)
-				}
-				if strings.TrimSpace(normalized.MusicDifficulty) == "" {
-					normalized.MusicDifficulty = strings.TrimSpace(normalized.MusicDifficultyType)
-				}
-				results = append(results, normalized)
+				results = append(results, normalizeNestedMusicResult(music.MusicID, status, item))
 			}
 		}
 	}
 	return buildMusicResultMap(results)
+}
+
+func normalizeNestedMusicResult(musicID int, status RawUserMusicDifficultyStatus, result RawMusicResult) RawMusicResult {
+	if result.MusicID == 0 {
+		result.MusicID = musicID
+	}
+	if strings.TrimSpace(result.MusicDifficultyType) == "" {
+		result.MusicDifficultyType = strings.TrimSpace(status.MusicDifficultyType)
+	}
+	if strings.TrimSpace(result.MusicDifficulty) == "" {
+		result.MusicDifficulty = strings.TrimSpace(status.MusicDifficulty)
+	}
+	if strings.TrimSpace(result.MusicDifficultyType) == "" {
+		result.MusicDifficultyType = strings.TrimSpace(result.MusicDifficulty)
+	}
+	if strings.TrimSpace(result.MusicDifficulty) == "" {
+		result.MusicDifficulty = strings.TrimSpace(result.MusicDifficultyType)
+	}
+	return result
 }
 
 func buildMusicResultMapFromCompact(raw json.RawMessage) map[string]map[int]string {
@@ -97,59 +100,66 @@ func buildMusicResultMapFromCompact(raw json.RawMessage) map[string]map[int]stri
 	}
 
 	enumValues := decodeCompactEnumValues(payload["__ENUM__"])
-	columns := make(map[string][]any, len(payload))
-	rowCount := 0
-	for key, fieldRaw := range payload {
-		if key == "__ENUM__" {
-			continue
-		}
-
-		var values []any
-		decoder := json.NewDecoder(bytes.NewReader(fieldRaw))
-		decoder.UseNumber()
-		if err := decoder.Decode(&values); err != nil {
-			continue
-		}
-		if len(values) == 0 {
-			continue
-		}
-		columns[key] = values
-		if len(values) > rowCount {
-			rowCount = len(values)
-		}
-	}
-
+	columns, rowCount := decodeCompactMusicColumns(payload)
 	if rowCount == 0 {
 		return nil
 	}
 
 	results := make([]RawMusicResult, 0, rowCount)
 	for index := 0; index < rowCount; index++ {
-		musicID, ok := compactIntFromColumns(columns, "musicId", index)
-		if !ok || musicID <= 0 {
-			continue
+		if result, ok := compactMusicResultAt(columns, enumValues, index); ok {
+			results = append(results, result)
 		}
-
-		diff := compactStringFromColumns(columns, enumValues, []string{"musicDifficultyType", "musicDifficulty"}, index)
-		if diff == "" {
-			continue
-		}
-
-		playResult := compactStringFromColumns(columns, enumValues, []string{"playResult"}, index)
-		fullCombo, _ := compactBoolFromColumns(columns, "fullComboFlg", index)
-		fullPerfect, _ := compactBoolFromColumns(columns, "fullPerfectFlg", index)
-
-		results = append(results, RawMusicResult{
-			MusicID:             musicID,
-			MusicDifficulty:     diff,
-			MusicDifficultyType: diff,
-			PlayResult:          playResult,
-			FullComboFlg:        fullCombo,
-			FullPerfectFlg:      fullPerfect,
-		})
 	}
-
 	return buildMusicResultMap(results)
+}
+
+func decodeCompactMusicColumns(payload map[string]json.RawMessage) (map[string][]any, int) {
+	columns := make(map[string][]any, len(payload))
+	rowCount := 0
+	for key, fieldRaw := range payload {
+		if key == "__ENUM__" {
+			continue
+		}
+		values, ok := decodeCompactMusicColumn(fieldRaw)
+		if !ok {
+			continue
+		}
+		columns[key] = values
+		rowCount = max(rowCount, len(values))
+	}
+	return columns, rowCount
+}
+
+func decodeCompactMusicColumn(raw json.RawMessage) ([]any, bool) {
+	var values []any
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&values); err != nil || len(values) == 0 {
+		return nil, false
+	}
+	return values, true
+}
+
+func compactMusicResultAt(columns map[string][]any, enumValues map[string][]string, index int) (RawMusicResult, bool) {
+	musicID, ok := compactIntFromColumns(columns, "musicId", index)
+	if !ok || musicID <= 0 {
+		return RawMusicResult{}, false
+	}
+	difficulty := compactStringFromColumns(columns, enumValues, []string{"musicDifficultyType", "musicDifficulty"}, index)
+	if difficulty == "" {
+		return RawMusicResult{}, false
+	}
+	fullCombo, _ := compactBoolFromColumns(columns, "fullComboFlg", index)
+	fullPerfect, _ := compactBoolFromColumns(columns, "fullPerfectFlg", index)
+	return RawMusicResult{
+		MusicID:             musicID,
+		MusicDifficulty:     difficulty,
+		MusicDifficultyType: difficulty,
+		PlayResult:          compactStringFromColumns(columns, enumValues, []string{"playResult"}, index),
+		FullComboFlg:        fullCombo,
+		FullPerfectFlg:      fullPerfect,
+	}, true
 }
 
 func decodeCompactEnumValues(raw json.RawMessage) map[string][]string {

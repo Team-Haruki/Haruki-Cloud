@@ -11,65 +11,12 @@ import (
 
 func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 	events := b.source.GetEvents()
-	now := time.Now()
+	filter := newEventListFilter(b, events, query, time.Now())
 	result := make([]*masterdata.Event, 0, len(events))
-	var worldBloomTurnByEvent map[int]int
-	if query.WorldBloomTurn > 0 {
-		worldBloomTurnByEvent = b.buildWorldBloomTurnByEvent(events)
-	}
-	includePast := query.IncludePast
-	includeFuture := query.IncludeFuture
-	if !query.OnlyFuture && !includePast && !includeFuture {
-		includePast = true
-		includeFuture = true
-	}
-	if query.OnlyFuture {
-		includeFuture = true
-		includePast = false
-	}
-
 	for _, eventInfo := range events {
-		start := time.UnixMilli(eventInfo.StartAt)
-		end := time.UnixMilli(eventutil.EffectiveClosedAt(eventInfo.AggregateAt, eventInfo.ClosedAt))
-		if !includePast && end.Before(now) {
-			continue
+		if filter.matches(eventInfo) {
+			result = append(result, eventInfo)
 		}
-		if !includeFuture && start.After(now) {
-			continue
-		}
-		if query.EventType != "" && !strings.EqualFold(eventInfo.EventType, query.EventType) {
-			continue
-		}
-		if query.WorldBloomTurn > 0 && !strings.EqualFold(eventInfo.EventType, "world_bloom") {
-			continue
-		}
-		if query.WorldBloomTurn > 0 && worldBloomTurnByEvent[eventInfo.ID] != query.WorldBloomTurn {
-			continue
-		}
-		if query.Year != 0 && start.Year() != query.Year {
-			continue
-		}
-		bonusUnit := query.Unit
-		if query.OnlyUnit {
-			bonusUnit = ""
-		}
-		if bonusUnit != "" || query.Blend || query.Attr != "" || query.CharacterID != 0 || len(query.CharacterIDs) > 0 {
-			if !b.matchEventBonus(eventInfo.EventType, eventInfo.ID, eventInfo.Unit, bonusUnit, query.Blend, query.Attr, query.CharacterID, query.CharacterIDs) {
-				continue
-			}
-		}
-		if query.OnlyUnit {
-			if !b.eventCardsAllInUnit(eventInfo.ID, query.Unit) {
-				continue
-			}
-		}
-		if query.BannerCharID != nil {
-			bannerCID, err := b.source.GetEventBannerCharacterID(eventInfo.ID)
-			if err != nil || bannerCID != *query.BannerCharID || !b.isBoxEvent(eventInfo.ID) {
-				continue
-			}
-		}
-		result = append(result, eventInfo)
 	}
 
 	sort.Slice(result, func(i, j int) bool {
@@ -79,6 +26,91 @@ func (b *Builder) filterEvents(query ListQuery) []*masterdata.Event {
 		result = result[:query.Limit]
 	}
 	return result
+}
+
+type eventListFilter struct {
+	builder               *Builder
+	query                 ListQuery
+	now                   time.Time
+	includePast           bool
+	includeFuture         bool
+	worldBloomTurnByEvent map[int]int
+}
+
+func newEventListFilter(builder *Builder, events []*masterdata.Event, query ListQuery, now time.Time) eventListFilter {
+	includePast, includeFuture := eventListTimeSelection(query)
+	filter := eventListFilter{
+		builder:       builder,
+		query:         query,
+		now:           now,
+		includePast:   includePast,
+		includeFuture: includeFuture,
+	}
+	if query.WorldBloomTurn > 0 {
+		filter.worldBloomTurnByEvent = builder.buildWorldBloomTurnByEvent(events)
+	}
+	return filter
+}
+
+func eventListTimeSelection(query ListQuery) (bool, bool) {
+	if query.OnlyFuture {
+		return false, true
+	}
+	if !query.IncludePast && !query.IncludeFuture {
+		return true, true
+	}
+	return query.IncludePast, query.IncludeFuture
+}
+
+func (f eventListFilter) matches(eventInfo *masterdata.Event) bool {
+	start := time.UnixMilli(eventInfo.StartAt)
+	end := time.UnixMilli(eventutil.EffectiveClosedAt(eventInfo.AggregateAt, eventInfo.ClosedAt))
+	if !f.includePast && end.Before(f.now) {
+		return false
+	}
+	if !f.includeFuture && start.After(f.now) {
+		return false
+	}
+	if f.query.EventType != "" && !strings.EqualFold(eventInfo.EventType, f.query.EventType) {
+		return false
+	}
+	if !f.matchesWorldBloomTurn(eventInfo) || (f.query.Year != 0 && start.Year() != f.query.Year) {
+		return false
+	}
+	if !f.matchesBonus(eventInfo) || !f.matchesOnlyUnit(eventInfo) {
+		return false
+	}
+	return f.matchesBanner(eventInfo)
+}
+
+func (f eventListFilter) matchesWorldBloomTurn(eventInfo *masterdata.Event) bool {
+	if f.query.WorldBloomTurn <= 0 {
+		return true
+	}
+	return strings.EqualFold(eventInfo.EventType, "world_bloom") && f.worldBloomTurnByEvent[eventInfo.ID] == f.query.WorldBloomTurn
+}
+
+func (f eventListFilter) matchesBonus(eventInfo *masterdata.Event) bool {
+	bonusUnit := f.query.Unit
+	if f.query.OnlyUnit {
+		bonusUnit = ""
+	}
+	if bonusUnit == "" && !f.query.Blend && f.query.Attr == "" && f.query.CharacterID == 0 && len(f.query.CharacterIDs) == 0 {
+		return true
+	}
+	return f.builder.matchEventBonus(eventInfo.EventType, eventInfo.ID, eventInfo.Unit, bonusUnit, f.query.Blend, f.query.Attr, f.query.CharacterID, f.query.CharacterIDs)
+}
+
+func (f eventListFilter) matchesOnlyUnit(eventInfo *masterdata.Event) bool {
+	return !f.query.OnlyUnit || f.builder.eventCardsAllInUnit(eventInfo.ID, f.query.Unit)
+}
+
+func (f eventListFilter) matchesBanner(eventInfo *masterdata.Event) bool {
+	if f.query.BannerCharID == nil {
+		return true
+	}
+	bannerCharacterID, err := f.builder.source.GetEventBannerCharacterID(eventInfo.ID)
+	return err == nil && bannerCharacterID == *f.query.BannerCharID && f.builder.isBoxEvent(eventInfo.ID)
 }
 
 func (b *Builder) buildWorldBloomTurnByEvent(events []*masterdata.Event) map[int]int {
@@ -142,22 +174,29 @@ func (b *Builder) extractEventBonusMeta(eventID int) (string, map[string]struct{
 	units := make(map[string]struct{})
 	charSet := make(map[int]struct{})
 	for _, bonus := range bonuses {
-		if attr == "" && bonus.CardAttr != "" {
+		if attr == "" {
 			attr = strings.ToLower(bonus.CardAttr)
 		}
-		if bonus.GameCharacterUnitID != 0 {
-			if unit, err := b.source.GetGameCharacterUnit(bonus.GameCharacterUnitID); err == nil && unit != nil {
-				unitName := strings.ToLower(strings.TrimSpace(unit.Unit))
-				if unitName != "" {
-					units[unitName] = struct{}{}
-				}
-				charSet[unit.GameCharacterID] = struct{}{}
-			}
-		} else if bonus.GameCharacterID != 0 {
-			charSet[bonus.GameCharacterID] = struct{}{}
-		}
+		b.addEventBonusCharacter(units, charSet, bonus.GameCharacterUnitID, bonus.GameCharacterID)
 	}
 	return attr, units, charSet
+}
+
+func (b *Builder) addEventBonusCharacter(units map[string]struct{}, characters map[int]struct{}, characterUnitID, characterID int) {
+	if characterUnitID == 0 {
+		if characterID != 0 {
+			characters[characterID] = struct{}{}
+		}
+		return
+	}
+	unit, err := b.source.GetGameCharacterUnit(characterUnitID)
+	if err != nil || unit == nil {
+		return
+	}
+	if unitName := strings.ToLower(strings.TrimSpace(unit.Unit)); unitName != "" {
+		units[unitName] = struct{}{}
+	}
+	characters[unit.GameCharacterID] = struct{}{}
 }
 
 func (b *Builder) isBoxEvent(eventID int) bool {
@@ -169,42 +208,52 @@ func (b *Builder) matchEventBonus(eventType string, eventID int, eventUnit strin
 	if unit == "" && !blend && attr == "" && charID == 0 && len(charIDs) == 0 {
 		return true
 	}
-
-	if unit != "" || blend || attr != "" {
-		bonusAttr, units, charSet := b.extractEventBonusMeta(eventID)
-		if len(units) == 0 && len(charSet) == 0 && bonusAttr == "" {
-			return false
-		}
-		attrMatched := attr == "" || strings.EqualFold(bonusAttr, attr)
-
-		unitMatched := unit == ""
-		if unit != "" {
-			normalizedUnit := strings.ToLower(strings.TrimSpace(unit))
-			if strings.EqualFold(eventType, "world_bloom") {
-				if normalizedEventUnit := strings.ToLower(strings.TrimSpace(eventUnit)); normalizedEventUnit != "" {
-					unitMatched = normalizedUnit == normalizedEventUnit
-				} else if chapterUnits, hasChapterData := b.extractWorldBloomChapterUnits(eventID); hasChapterData {
-					_, unitMatched = chapterUnits[normalizedUnit]
-				} else {
-					_, unitMatched = units[normalizedUnit]
-				}
-			} else {
-				_, unitMatched = units[normalizedUnit]
-			}
-		}
-		if blend || strings.EqualFold(strings.TrimSpace(unit), "blend") {
-			unitMatched = len(units) > 1
-		}
-		if !attrMatched || !unitMatched {
-			return false
-		}
+	if (unit != "" || blend || attr != "") && !b.matchEventBonusMeta(eventType, eventID, eventUnit, unit, blend, attr) {
+		return false
 	}
-
 	if charID != 0 || len(charIDs) > 0 {
 		return b.eventHasCardCharacters(eventID, charID, charIDs)
 	}
-
 	return true
+}
+
+func (b *Builder) matchEventBonusMeta(eventType string, eventID int, eventUnit, unit string, blend bool, attr string) bool {
+	bonusAttr, units, characters := b.extractEventBonusMeta(eventID)
+	if len(units) == 0 && len(characters) == 0 && bonusAttr == "" {
+		return false
+	}
+	if attr != "" && !strings.EqualFold(bonusAttr, attr) {
+		return false
+	}
+	return b.matchEventBonusUnit(eventType, eventID, eventUnit, unit, blend, units)
+}
+
+func (b *Builder) matchEventBonusUnit(eventType string, eventID int, eventUnit, unit string, blend bool, units map[string]struct{}) bool {
+	if blend || strings.EqualFold(strings.TrimSpace(unit), "blend") {
+		return len(units) > 1
+	}
+	if unit == "" {
+		return true
+	}
+	normalizedUnit := strings.ToLower(strings.TrimSpace(unit))
+	if !strings.EqualFold(eventType, "world_bloom") {
+		_, matched := units[normalizedUnit]
+		return matched
+	}
+	return b.matchWorldBloomBonusUnit(eventID, eventUnit, normalizedUnit, units)
+}
+
+func (b *Builder) matchWorldBloomBonusUnit(eventID int, eventUnit, normalizedUnit string, units map[string]struct{}) bool {
+	if normalizedEventUnit := strings.ToLower(strings.TrimSpace(eventUnit)); normalizedEventUnit != "" {
+		return normalizedUnit == normalizedEventUnit
+	}
+	chapterUnits, hasChapterData := b.extractWorldBloomChapterUnits(eventID)
+	if hasChapterData {
+		_, matched := chapterUnits[normalizedUnit]
+		return matched
+	}
+	_, matched := units[normalizedUnit]
+	return matched
 }
 
 func (b *Builder) eventHasCardCharacters(eventID int, charID int, charIDs []int) bool {
@@ -332,46 +381,54 @@ func (b *Builder) buildWorldBloomTimeline(eventID int) []map[string]any {
 
 	timeline := make([]map[string]any, 0, len(chapters))
 	for _, chapter := range chapters {
-		if chapter == nil {
-			continue
+		if chapter != nil {
+			timeline = append(timeline, b.buildWorldBloomTimelineItem(chapter))
 		}
-		chapterEndAt := resolveWorldBloomChapterEndAt(chapter)
-		item := map[string]any{
-			"start_at":             chapter.ChapterStartAt,
-			"aggregate_at":         chapter.AggregateAt,
-			"end_at":               chapterEndAt,
-			"chapter_start_at":     chapter.ChapterStartAt,
-			"chapter_aggregate_at": chapter.AggregateAt,
-			"chapter_end_at":       chapterEndAt,
-		}
-		if chapter.ChapterNo != 0 {
-			item["chapter_id"] = chapter.ChapterNo
-			item["chapter_no"] = chapter.ChapterNo
-		}
-		if chapter.GameCharacterID != nil && *chapter.GameCharacterID != 0 {
-			characterID := *chapter.GameCharacterID
-			item["game_character_id"] = characterID
-			item["character_icon_path"] = b.characterIconPath(characterID, b.source.DefaultRegion())
-			if characterName := b.characterDisplayName(characterID); characterName != "" {
-				item["character_name"] = characterName
-			}
-			if colorCode, ok := b.source.GetCharacterColorCode(characterID); ok {
-				item["color_code"] = colorCode
-				item["character_color_code"] = colorCode
-			}
-		}
-		if chapter.ChapterType != "" {
-			item["chapter_type"] = chapter.ChapterType
-		}
-		if chapter.IsSupplemental {
-			item["is_supplemental"] = true
-		}
-		timeline = append(timeline, item)
 	}
 	sort.Slice(timeline, func(i, j int) bool {
 		return timeline[i]["start_at"].(int64) < timeline[j]["start_at"].(int64)
 	})
 	return timeline
+}
+
+func (b *Builder) buildWorldBloomTimelineItem(chapter *masterdata.WorldBloom) map[string]any {
+	chapterEndAt := resolveWorldBloomChapterEndAt(chapter)
+	item := map[string]any{
+		"start_at":             chapter.ChapterStartAt,
+		"aggregate_at":         chapter.AggregateAt,
+		"end_at":               chapterEndAt,
+		"chapter_start_at":     chapter.ChapterStartAt,
+		"chapter_aggregate_at": chapter.AggregateAt,
+		"chapter_end_at":       chapterEndAt,
+	}
+	if chapter.ChapterNo != 0 {
+		item["chapter_id"] = chapter.ChapterNo
+		item["chapter_no"] = chapter.ChapterNo
+	}
+	b.populateWorldBloomTimelineCharacter(item, chapter.GameCharacterID)
+	if chapter.ChapterType != "" {
+		item["chapter_type"] = chapter.ChapterType
+	}
+	if chapter.IsSupplemental {
+		item["is_supplemental"] = true
+	}
+	return item
+}
+
+func (b *Builder) populateWorldBloomTimelineCharacter(item map[string]any, characterIDValue *int) {
+	if characterIDValue == nil || *characterIDValue == 0 {
+		return
+	}
+	characterID := *characterIDValue
+	item["game_character_id"] = characterID
+	item["character_icon_path"] = b.characterIconPath(characterID, b.source.DefaultRegion())
+	if characterName := b.characterDisplayName(characterID); characterName != "" {
+		item["character_name"] = characterName
+	}
+	if colorCode, ok := b.source.GetCharacterColorCode(characterID); ok {
+		item["color_code"] = colorCode
+		item["character_color_code"] = colorCode
+	}
 }
 
 func resolveWorldBloomChapterEndAt(chapter *masterdata.WorldBloom) int64 {

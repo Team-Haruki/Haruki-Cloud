@@ -42,7 +42,8 @@ jobs:
         run: go build -mod=readonly -modfile=.github/tools/go.mod -o "$RUNNER_TEMP/staticcheck" honnef.co/go/tools/cmd/staticcheck
 
       - name: Run staticcheck
-        run: "$RUNNER_TEMP/staticcheck" ./...
+        run: |
+          "$RUNNER_TEMP/staticcheck" ./...
 
       - name: Test
         run: go test -mod=readonly -race -count=1 ./...

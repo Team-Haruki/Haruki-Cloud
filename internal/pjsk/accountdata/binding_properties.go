@@ -34,31 +34,8 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 		return nil, unverifiedBindingProfileBGError(binding, "设置")
 	}
 
-	// User-level BG ban check: read from UserSettings (haruki_user_id granularity).
-	userSettings, err := GetUserSettings(ctx, s.pjskDB, binding.HarukiUserID)
-	if err != nil && !errors.Is(err, ErrUserSettingsNotFound) {
-		return nil, fmt.Errorf("读取用户设置失败: %w", err)
-	}
-	currentCount := 0
-	if userSettings != nil {
-		currentCount = userSettings.NoncompliantBGCount
-	}
-	if currentCount >= 3 {
-		return nil, fmt.Errorf("已达到背景图片违规上传上限（%d/3），背景上传功能已被禁用", currentCount)
-	}
-
-	// Image content moderation
-	if s.censor != nil {
-		if !s.censor.CensorImage(ctx, binding.HarukiUserID, imageURL) {
-			newCount, incrErr := IncrNoncompliantBGCount(ctx, s.pjskDB, binding.HarukiUserID)
-			if incrErr != nil {
-				return nil, fmt.Errorf("背景图片内容审核未通过，且无法更新违规计数: %w", incrErr)
-			}
-			if newCount >= 3 {
-				return nil, fmt.Errorf("背景图片内容审核未通过，背景上传功能已被禁用（违规次数已达 3/3）")
-			}
-			return nil, fmt.Errorf("背景图片内容审核未通过，请更换图片（违规次数：%d/3）", newCount)
-		}
+	if err := s.validateProfileBGUpload(ctx, binding, imageURL); err != nil {
+		return nil, err
 	}
 
 	server := bindingServer(binding)
@@ -82,6 +59,35 @@ func (s *BindingService) setBindingProfileBG(ctx context.Context, platform, plat
 		_ = s.bgStorage.DeleteProfileBackground(ctx, oldBg)
 	}
 	return s.bindingListItemByID(ctx, platform, platformUserID, binding.ID)
+}
+
+func (s *BindingService) validateProfileBGUpload(
+	ctx context.Context,
+	binding *pjskdb.UserBinding,
+	imageURL string,
+) error {
+	userSettings, err := GetUserSettings(ctx, s.pjskDB, binding.HarukiUserID)
+	if err != nil && !errors.Is(err, ErrUserSettingsNotFound) {
+		return fmt.Errorf("读取用户设置失败: %w", err)
+	}
+	currentCount := 0
+	if userSettings != nil {
+		currentCount = userSettings.NoncompliantBGCount
+	}
+	if currentCount >= 3 {
+		return fmt.Errorf("已达到背景图片违规上传上限（%d/3），背景上传功能已被禁用", currentCount)
+	}
+	if s.censor == nil || s.censor.CensorImage(ctx, binding.HarukiUserID, imageURL) {
+		return nil
+	}
+	newCount, err := IncrNoncompliantBGCount(ctx, s.pjskDB, binding.HarukiUserID)
+	if err != nil {
+		return fmt.Errorf("背景图片内容审核未通过，且无法更新违规计数: %w", err)
+	}
+	if newCount >= 3 {
+		return fmt.Errorf("背景图片内容审核未通过，背景上传功能已被禁用（违规次数已达 3/3）")
+	}
+	return fmt.Errorf("背景图片内容审核未通过，请更换图片（违规次数：%d/3）", newCount)
 }
 
 func (s *BindingService) clearBindingProfileBG(ctx context.Context, platform, platformUserID string, binding *pjskdb.UserBinding) (*BindingListItem, error) {

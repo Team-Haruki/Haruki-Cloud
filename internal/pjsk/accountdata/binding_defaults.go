@@ -144,22 +144,41 @@ func (s *BindingService) updateDefault(ctx context.Context, platform, platformUs
 	}
 
 	if clear {
-		if pjskdb.IsNotFound(err) {
-			return nil, fmt.Errorf("你当前没有设置%s默认绑定", scopeLabel)
-		}
-		if existing.BindingID != target.BindingID {
-			return nil, fmt.Errorf("所选账号不是你当前的%s默认绑定", scopeLabel)
-		}
-		if err := s.pjskDB.UserDefaultBinding.DeleteOneID(existing.ID).Exec(ctx); err != nil {
-			return nil, err
-		}
-		return &DefaultBindingResult{
-			Scope:   defaultScopeType(scope),
-			Server:  scope,
-			Binding: target,
-		}, nil
+		return s.clearSelectedDefault(ctx, existing, err, scope, scopeLabel, target)
 	}
+	return s.setSelectedDefault(ctx, harukiUserID, scope, target)
+}
 
+func (s *BindingService) clearSelectedDefault(
+	ctx context.Context,
+	existing *pjskdb.UserDefaultBinding,
+	lookupErr error,
+	scope string,
+	scopeLabel string,
+	target BindingListItem,
+) (*DefaultBindingResult, error) {
+	if pjskdb.IsNotFound(lookupErr) {
+		return nil, fmt.Errorf("你当前没有设置%s默认绑定", scopeLabel)
+	}
+	if existing.BindingID != target.BindingID {
+		return nil, fmt.Errorf("所选账号不是你当前的%s默认绑定", scopeLabel)
+	}
+	if err := s.pjskDB.UserDefaultBinding.DeleteOneID(existing.ID).Exec(ctx); err != nil {
+		return nil, err
+	}
+	return &DefaultBindingResult{
+		Scope:   defaultScopeType(scope),
+		Server:  scope,
+		Binding: target,
+	}, nil
+}
+
+func (s *BindingService) setSelectedDefault(
+	ctx context.Context,
+	harukiUserID int,
+	scope string,
+	target BindingListItem,
+) (*DefaultBindingResult, error) {
 	tx, err := s.pjskDB.Tx(ctx)
 	if err != nil {
 		return nil, err

@@ -10,139 +10,175 @@ import (
 func ExecuteCommand(ctx context.Context, service *Service, mode string, raw json.RawMessage) ([]byte, error) {
 	switch mode {
 	case ModeDelete:
-		params, err := decodeDeleteParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		records, err := service.Delete(ctx, params.AliasType, params.Platform, params.PlatformUserID, params.Target, params.Aliases)
-		if err != nil {
-			return nil, err
-		}
-		lines := []string{fmt.Sprintf("已删除 %d 条%s已审核别名：", len(records), aliasTypeLabel(params.AliasType))}
-		for _, record := range records {
-			lines = append(lines, formatApprovedAliasRecord(record))
-		}
-		return []byte(strings.Join(lines, "\n")), nil
+		return executeDeleteCommand(ctx, service, raw)
 	case ModeAdd:
-		params, err := decodeAddParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		records, err := service.Submit(ctx, params.AliasType, params.Platform, params.PlatformUserID, params.Target, params.Aliases)
-		if err != nil {
-			return nil, err
-		}
-		lines := []string{fmt.Sprintf("已提交 %d 条%s别名审核申请，审核ID如下：", len(records), aliasTypeLabel(params.AliasType))}
-		for _, record := range records {
-			lines = append(lines, formatAliasRecord(record))
-		}
-		return []byte(strings.Join(lines, "\n")), nil
+		return executeAddCommand(ctx, service, raw)
 	case ModeQuery:
-		params, err := decodeQueryParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		result, err := service.Query(ctx, params.AliasType, params.Target)
-		if err != nil {
-			return nil, err
-		}
-		lines := []string{
-			fmt.Sprintf("%s: %d", aliasTypeIDLabel(params.AliasType), result.Entity.ID),
-			fmt.Sprintf("%s: %s", aliasTypeNameLabel(params.AliasType), result.Entity.Name),
-		}
-		if len(result.Aliases) == 0 {
-			lines = append(lines, "已审核别名: 无")
-		} else {
-			lines = append(lines, fmt.Sprintf("已审核别名（%d 条）:", len(result.Aliases)))
-			lines = append(lines, result.Aliases...)
-		}
-		return []byte(strings.Join(lines, "\n")), nil
+		return executeQueryCommand(ctx, service, raw)
 	case ModePendingList:
-		params, err := decodeReviewListParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		records, err := service.ListPending(ctx, params.Platform, params.PlatformUserID)
-		if err != nil {
-			return nil, err
-		}
-		if len(records) == 0 {
-			return []byte("当前没有待审核别名"), nil
-		}
-		lines := []string{fmt.Sprintf("当前共有 %d 条待审核别名：", len(records))}
-		for _, record := range records {
-			lines = append(lines, formatAliasRecord(record))
-		}
-		return []byte(strings.Join(lines, "\n")), nil
+		return executePendingListCommand(ctx, service, raw)
 	case ModeSubmitter:
-		params, err := decodeSubmitterParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		record, err := service.GetSubmitter(ctx, params.Platform, params.PlatformUserID, params.ReviewID)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("别名提交者：\n%s\n提交者: %s", formatAliasRecord(*record), record.SubmittedBy)), nil
+		return executeSubmitterCommand(ctx, service, raw)
 	case ModeBanSubmitter:
-		params, err := decodeBanSubmitterParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		record, err := service.BanSubmitter(
-			ctx,
-			params.Platform,
-			params.PlatformUserID,
-			params.TargetPlatform,
-			params.TargetPlatformUserID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("已禁止用户 %s:%s 提交别名", record.Platform, record.PlatformUserID)), nil
+		return executeBanSubmitterCommand(ctx, service, raw)
 	case ModeApprove:
-		params, err := decodeApproveParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		records, err := service.Approve(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs)
-		if err != nil {
-			return nil, err
-		}
-		lines := []string{fmt.Sprintf("已通过 %d 条别名审核：", len(records))}
-		for _, record := range records {
-			lines = append(lines, formatAliasRecord(record))
-		}
-		return []byte(strings.Join(lines, "\n")), nil
+		return executeApproveCommand(ctx, service, raw)
 	case ModeReject:
-		params, err := decodeRejectParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		record, err := service.Reject(ctx, params.Platform, params.PlatformUserID, params.ReviewID, params.Reason)
-		if err != nil {
-			return nil, err
-		}
-		lines := []string{"已拒绝别名审核：", formatRejectedAliasRecord(*record, params.Reason)}
-		return []byte(strings.Join(lines, "\n")), nil
+		return executeRejectCommand(ctx, service, raw)
 	case ModeBatchReject:
-		params, err := decodeBatchRejectParams(raw)
-		if err != nil {
-			return nil, err
-		}
-		const reason = "批量拒绝"
-		records, err := service.RejectMany(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs, reason)
-		if err != nil {
-			return nil, err
-		}
-		lines := []string{fmt.Sprintf("已批量拒绝 %d 条别名审核：", len(records))}
-		for _, record := range records {
-			lines = append(lines, formatRejectedAliasRecord(record, reason))
-		}
-		return []byte(strings.Join(lines, "\n")), nil
+		return executeBatchRejectCommand(ctx, service, raw)
 	default:
 		return nil, fmt.Errorf("bridge: unsupported alias mode %q", mode)
 	}
+}
+
+func executeDeleteCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeDeleteParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	records, err := service.Delete(ctx, params.AliasType, params.Platform, params.PlatformUserID, params.Target, params.Aliases)
+	if err != nil {
+		return nil, err
+	}
+	lines := []string{fmt.Sprintf("已删除 %d 条%s已审核别名：", len(records), aliasTypeLabel(params.AliasType))}
+	for _, record := range records {
+		lines = append(lines, formatApprovedAliasRecord(record))
+	}
+	return []byte(strings.Join(lines, "\n")), nil
+}
+
+func executeAddCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeAddParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	records, err := service.Submit(ctx, params.AliasType, params.Platform, params.PlatformUserID, params.Target, params.Aliases)
+	if err != nil {
+		return nil, err
+	}
+	lines := []string{fmt.Sprintf("已提交 %d 条%s别名审核申请，审核ID如下：", len(records), aliasTypeLabel(params.AliasType))}
+	for _, record := range records {
+		lines = append(lines, formatAliasRecord(record))
+	}
+	return []byte(strings.Join(lines, "\n")), nil
+}
+
+func executeQueryCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeQueryParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	result, err := service.Query(ctx, params.AliasType, params.Target)
+	if err != nil {
+		return nil, err
+	}
+	lines := []string{
+		fmt.Sprintf("%s: %d", aliasTypeIDLabel(params.AliasType), result.Entity.ID),
+		fmt.Sprintf("%s: %s", aliasTypeNameLabel(params.AliasType), result.Entity.Name),
+	}
+	if len(result.Aliases) == 0 {
+		lines = append(lines, "已审核别名: 无")
+	} else {
+		lines = append(lines, fmt.Sprintf("已审核别名（%d 条）:", len(result.Aliases)))
+		lines = append(lines, result.Aliases...)
+	}
+	return []byte(strings.Join(lines, "\n")), nil
+}
+
+func executePendingListCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeReviewListParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	records, err := service.ListPending(ctx, params.Platform, params.PlatformUserID)
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return []byte("当前没有待审核别名"), nil
+	}
+	lines := []string{fmt.Sprintf("当前共有 %d 条待审核别名：", len(records))}
+	for _, record := range records {
+		lines = append(lines, formatAliasRecord(record))
+	}
+	return []byte(strings.Join(lines, "\n")), nil
+}
+
+func executeSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeSubmitterParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	record, err := service.GetSubmitter(ctx, params.Platform, params.PlatformUserID, params.ReviewID)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("别名提交者：\n%s\n提交者: %s", formatAliasRecord(*record), record.SubmittedBy)), nil
+}
+
+func executeBanSubmitterCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeBanSubmitterParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	record, err := service.BanSubmitter(
+		ctx,
+		params.Platform,
+		params.PlatformUserID,
+		params.TargetPlatform,
+		params.TargetPlatformUserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("已禁止用户 %s:%s 提交别名", record.Platform, record.PlatformUserID)), nil
+}
+
+func executeApproveCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeApproveParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	records, err := service.Approve(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs)
+	if err != nil {
+		return nil, err
+	}
+	lines := []string{fmt.Sprintf("已通过 %d 条别名审核：", len(records))}
+	for _, record := range records {
+		lines = append(lines, formatAliasRecord(record))
+	}
+	return []byte(strings.Join(lines, "\n")), nil
+}
+
+func executeRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeRejectParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	record, err := service.Reject(ctx, params.Platform, params.PlatformUserID, params.ReviewID, params.Reason)
+	if err != nil {
+		return nil, err
+	}
+	lines := []string{"已拒绝别名审核：", formatRejectedAliasRecord(*record, params.Reason)}
+	return []byte(strings.Join(lines, "\n")), nil
+}
+
+func executeBatchRejectCommand(ctx context.Context, service *Service, raw json.RawMessage) ([]byte, error) {
+	params, err := decodeBatchRejectParams(raw)
+	if err != nil {
+		return nil, err
+	}
+	const reason = "批量拒绝"
+	records, err := service.RejectMany(ctx, params.Platform, params.PlatformUserID, params.ReviewIDs, reason)
+	if err != nil {
+		return nil, err
+	}
+	lines := []string{fmt.Sprintf("已批量拒绝 %d 条别名审核：", len(records))}
+	for _, record := range records {
+		lines = append(lines, formatRejectedAliasRecord(record, reason))
+	}
+	return []byte(strings.Join(lines, "\n")), nil
 }
 
 func decodeDeleteParams(raw json.RawMessage) (DeleteCommandParams, error) {

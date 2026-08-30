@@ -4,6 +4,7 @@ go 1.27.0
 
 require (
 	entgo.io/ent v0.14.6
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/andybalholm/brotli v1.2.2
 	github.com/flynn/noise v1.1.0

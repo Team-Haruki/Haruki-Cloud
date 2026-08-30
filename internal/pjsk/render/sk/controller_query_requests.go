@@ -2,6 +2,7 @@ package sk
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"haruki-cloud/internal/observability/commandtrace"
@@ -53,34 +54,9 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 	if err != nil {
 		return nil, err
 	}
-	skipMissing := shouldSkipMissingTrackerRanks(normalized)
-	var rankInfos []drawing.RankInfo
-	var previous *drawing.RankInfo
-	var next *drawing.RankInfo
-	if normalized.UserID != nil && *normalized.UserID > 0 {
-		if infos, prev, nextInfo, ok, snapErr := c.buildUserQueryFromTrackerV2(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID, true); ok {
-			if snapErr != nil {
-				return nil, snapErr
-			}
-			rankInfos = infos
-			previous = prev
-			next = nextInfo
-		}
-	} else {
-		if infos, prev, nextInfo, ok, snapErr := c.buildRanksFromTrackerV2(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, true, skipMissing); ok {
-			if snapErr != nil {
-				return nil, snapErr
-			}
-			rankInfos = infos
-			previous = prev
-			next = nextInfo
-		}
-	}
-	if len(rankInfos) == 0 {
-		rankInfos, err = c.buildRanksOrUserFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.UserID, normalized.WlCharacterID, skipMissing)
-		if err != nil {
-			return nil, err
-		}
+	ranks, err := c.resolveQueryRanks(normalized)
+	if err != nil {
+		return nil, err
 	}
 	meta := c.resolveEventMeta(normalized.EventID, renderregion.Normalize(normalized.Region))
 	meta.applyOverrides(req)
@@ -89,35 +65,80 @@ func (c *Controller) BuildQueryRequestFromTracker(req TrackerRankQuery) (*drawin
 		Region:      normalized.Region,
 		Name:        meta.name,
 		AggregateAt: meta.aggregateAt,
-		Ranks:       rankInfos,
+		Ranks:       ranks.infos,
 	}
-	if len(rankInfos) == 1 {
-		targetRank := rankInfos[0].Rank
-		if previous != nil || next != nil {
-			payload.PrevRanks = previous
-			payload.NextRanks = next
-		} else {
-			prevRank, nextRank, hasPrev, hasNext := queryAdjacentSKLineRanks(targetRank, normalized.WlCharacterID != nil)
-			if hasPrev {
-				if prev, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, prevRank, normalized.WlCharacterID); err == nil {
-					payload.PrevRanks = &prev
-				}
-			}
-			if hasNext {
-				if next, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, nextRank, normalized.WlCharacterID); err == nil {
-					payload.NextRanks = &next
-				}
-			}
-		}
-	}
-	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region))
-		if icon != "" {
-			payload.WlCharaIconPath = &icon
-			payload.CharaIconPath = &icon
-		}
-	}
+	c.populateQueryAdjacentRanks(&payload, normalized, ranks)
+	c.populateQueryCharacterIcon(&payload, normalized)
 	return c.BuildQueryRequest(payload)
+}
+
+type trackerQueryRanks struct {
+	infos    []drawing.RankInfo
+	previous *drawing.RankInfo
+	next     *drawing.RankInfo
+}
+
+func (c *Controller) resolveQueryRanks(query TrackerRankQuery) (trackerQueryRanks, error) {
+	if query.UserID != nil && *query.UserID > 0 {
+		return c.resolveUserQueryRanks(query)
+	}
+	return c.resolveListedQueryRanks(query)
+}
+
+func (c *Controller) resolveUserQueryRanks(query TrackerRankQuery) (trackerQueryRanks, error) {
+	infos, previous, next, ok, err := c.buildUserQueryFromTrackerV2(query.Region, query.EventID, *query.UserID, query.WlCharacterID, true)
+	if ok {
+		return trackerQueryRanks{infos: infos, previous: previous, next: next}, err
+	}
+	infos, err = c.buildRanksOrUserFromTracker(query.Region, query.EventID, query.Ranks, query.UserID, query.WlCharacterID, shouldSkipMissingTrackerRanks(query))
+	return trackerQueryRanks{infos: infos}, err
+}
+
+func (c *Controller) resolveListedQueryRanks(query TrackerRankQuery) (trackerQueryRanks, error) {
+	skipMissing := shouldSkipMissingTrackerRanks(query)
+	infos, previous, next, ok, err := c.buildRanksFromTrackerV2(query.Region, query.EventID, query.Ranks, query.WlCharacterID, true, skipMissing)
+	if ok {
+		return trackerQueryRanks{infos: infos, previous: previous, next: next}, err
+	}
+	infos, err = c.buildRanksOrUserFromTracker(query.Region, query.EventID, query.Ranks, query.UserID, query.WlCharacterID, skipMissing)
+	return trackerQueryRanks{infos: infos}, err
+}
+
+func (c *Controller) populateQueryAdjacentRanks(payload *drawing.SKRequest, query TrackerRankQuery, ranks trackerQueryRanks) {
+	if len(ranks.infos) != 1 {
+		return
+	}
+	if ranks.previous != nil || ranks.next != nil {
+		payload.PrevRanks = ranks.previous
+		payload.NextRanks = ranks.next
+		return
+	}
+	previousRank, nextRank, hasPrevious, hasNext := queryAdjacentSKLineRanks(ranks.infos[0].Rank, query.WlCharacterID != nil)
+	if hasPrevious {
+		payload.PrevRanks = c.tryBuildSingleRank(query, previousRank)
+	}
+	if hasNext {
+		payload.NextRanks = c.tryBuildSingleRank(query, nextRank)
+	}
+}
+
+func (c *Controller) tryBuildSingleRank(query TrackerRankQuery, rank int) *drawing.RankInfo {
+	info, err := c.buildSingleRankLatestFromTracker(query.Region, query.EventID, rank, query.WlCharacterID)
+	if err != nil {
+		return nil
+	}
+	return &info
+}
+
+func (c *Controller) populateQueryCharacterIcon(payload *drawing.SKRequest, query TrackerRankQuery) {
+	if query.WlCharacterID == nil || *query.WlCharacterID <= 0 {
+		return
+	}
+	icon := c.resolveCharacterIconPath(*query.WlCharacterID, renderregion.Normalize(query.Region))
+	if icon != "" {
+		payload.WlCharaIconPath = &icon
+		payload.CharaIconPath = &icon
+	}
 }
 
 func queryAdjacentSKLineRanks(rank int, wlMode bool) (prev int, next int, hasPrev bool, hasNext bool) {
@@ -128,31 +149,19 @@ func queryAdjacentSKLineRanks(rank int, wlMode bool) (prev int, next int, hasPre
 	if wlMode {
 		nodes = queryAdjacentRanksWorldLink
 	}
-	for i, node := range nodes {
-		if node >= rank {
-			if node == rank {
-				if i > 0 {
-					prev = nodes[i-1]
-					hasPrev = true
-				}
-				if i+1 < len(nodes) {
-					next = nodes[i+1]
-					hasNext = true
-				}
-				return prev, next, hasPrev, hasNext
-			}
-			if i > 0 {
-				prev = nodes[i-1]
-				hasPrev = true
-			}
-			next = node
-			hasNext = true
-			return prev, next, hasPrev, hasNext
-		}
-	}
-	if len(nodes) > 0 {
-		prev = nodes[len(nodes)-1]
+	index := sort.SearchInts(nodes, rank)
+	if index > 0 {
+		prev = nodes[index-1]
 		hasPrev = true
+	}
+	if index >= len(nodes) {
+		return prev, 0, hasPrev, false
+	}
+	if nodes[index] > rank {
+		return prev, nodes[index], hasPrev, true
+	}
+	if index+1 < len(nodes) {
+		return prev, nodes[index+1], hasPrev, true
 	}
 	return prev, 0, hasPrev, false
 }
@@ -183,81 +192,117 @@ func (c *Controller) BuildCheckRoomRequestFromTracker(req TrackerRankQuery) (*dr
 		AggregateAt: meta.aggregateAt,
 		UpdateAt:    time.Now().UTC().UnixMilli(),
 	}
-	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
-			payload.WlCharaIconPath = &icon
-		}
+	c.populateCheckRoomCharacterIcon(&payload, normalized)
+	selection, err := c.resolveCheckRoomRanks(normalized)
+	if err != nil {
+		return nil, err
 	}
-
-	targetRank := 0
-	var previous *drawing.RankInfo
-	var next *drawing.RankInfo
-	if (normalized.UserID != nil && *normalized.UserID > 0) || len(normalized.Ranks) == 1 {
-		if info, prev, next, ok, err := c.buildCheckRoomFromTrackerCloudV2(
-			normalized.Region,
-			normalized.EventID,
-			normalized.Ranks,
-			normalized.UserID,
-			normalized.WlCharacterID,
-			shouldSkipMissingTrackerRanks(normalized),
-		); ok {
-			if err != nil {
-				return nil, err
-			}
-			if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
-				return nil, err
-			}
-			payload.Ranks = []drawing.RankInfo{info}
-			targetRank = info.Rank
-			payload.PrevRank = prev
-			payload.NextRank = next
-		} else if !ok && normalized.UserID != nil && *normalized.UserID > 0 {
-			info, err := c.buildSingleUserFromTracker(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID)
-			if err != nil {
-				return nil, fmt.Errorf("tracker user query failed: %w", err)
-			}
-			if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
-				return nil, err
-			}
-			payload.Ranks = []drawing.RankInfo{info}
-			targetRank = info.Rank
-		}
-	} else {
-		skipMissing := shouldSkipMissingTrackerRanks(normalized)
-		rankInfos, prev, nextInfo, ok, err := c.buildCheckRoomRanksFromTrackerCloudV2(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, skipMissing)
-		if !ok {
-			rankInfos, err = c.buildRanksFromTracker(normalized.Region, normalized.EventID, normalized.Ranks, normalized.WlCharacterID, skipMissing)
-		}
-		if err != nil {
-			return nil, err
-		}
-		previous = prev
-		next = nextInfo
-		if err := validateSKCheckRoomSupportedRanks(rankInfos); err != nil {
-			return nil, err
-		}
-		payload.Ranks = rankInfos
-		if len(rankInfos) > 0 {
-			targetRank = rankInfos[0].Rank
-		}
-	}
-
-	if targetRank > 0 {
-		if previous != nil || next != nil {
-			payload.PrevRank = previous
-			payload.NextRank = next
-		} else {
-			if targetRank > 1 {
-				if prev, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, targetRank-1, normalized.WlCharacterID); err == nil {
-					payload.PrevRank = &prev
-				}
-			}
-			if next, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, targetRank+1, normalized.WlCharacterID); err == nil {
-				payload.NextRank = &next
-			}
-		}
-	}
+	payload.Ranks = selection.infos
+	c.populateCheckRoomAdjacentRanks(&payload, normalized, selection)
 	return c.BuildCheckRoomRequest(payload)
+}
+
+type checkRoomRankSelection struct {
+	infos               []drawing.RankInfo
+	target              int
+	previous            *drawing.RankInfo
+	next                *drawing.RankInfo
+	alwaysFetchAdjacent bool
+}
+
+func (c *Controller) populateCheckRoomCharacterIcon(payload *drawing.CFRequest, query TrackerRankQuery) {
+	if query.WlCharacterID == nil || *query.WlCharacterID <= 0 {
+		return
+	}
+	icon := c.resolveCharacterIconPath(*query.WlCharacterID, renderregion.Normalize(query.Region))
+	if icon != "" {
+		payload.WlCharaIconPath = &icon
+	}
+}
+
+func (c *Controller) resolveCheckRoomRanks(query TrackerRankQuery) (checkRoomRankSelection, error) {
+	if (query.UserID != nil && *query.UserID > 0) || len(query.Ranks) == 1 {
+		return c.resolveSingleCheckRoomRank(query)
+	}
+	return c.resolveMultipleCheckRoomRanks(query)
+}
+
+func (c *Controller) resolveSingleCheckRoomRank(query TrackerRankQuery) (checkRoomRankSelection, error) {
+	info, previous, next, ok, err := c.buildCheckRoomFromTrackerCloudV2(
+		query.Region,
+		query.EventID,
+		query.Ranks,
+		query.UserID,
+		query.WlCharacterID,
+		shouldSkipMissingTrackerRanks(query),
+	)
+	if ok {
+		return newCheckRoomRankSelection(info, previous, next, err)
+	}
+	if query.UserID == nil || *query.UserID <= 0 {
+		return checkRoomRankSelection{}, nil
+	}
+	info, err = c.buildSingleUserFromTracker(query.Region, query.EventID, *query.UserID, query.WlCharacterID)
+	if err != nil {
+		return checkRoomRankSelection{}, fmt.Errorf("tracker user query failed: %w", err)
+	}
+	return newCheckRoomRankSelection(info, nil, nil, nil)
+}
+
+func newCheckRoomRankSelection(info drawing.RankInfo, previous, next *drawing.RankInfo, sourceErr error) (checkRoomRankSelection, error) {
+	if sourceErr != nil {
+		return checkRoomRankSelection{}, sourceErr
+	}
+	if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
+		return checkRoomRankSelection{}, err
+	}
+	return checkRoomRankSelection{
+		infos:               []drawing.RankInfo{info},
+		target:              info.Rank,
+		previous:            previous,
+		next:                next,
+		alwaysFetchAdjacent: true,
+	}, nil
+}
+
+func (c *Controller) resolveMultipleCheckRoomRanks(query TrackerRankQuery) (checkRoomRankSelection, error) {
+	skipMissing := shouldSkipMissingTrackerRanks(query)
+	infos, previous, next, ok, err := c.buildCheckRoomRanksFromTrackerCloudV2(query.Region, query.EventID, query.Ranks, query.WlCharacterID, skipMissing)
+	if !ok {
+		infos, err = c.buildRanksFromTracker(query.Region, query.EventID, query.Ranks, query.WlCharacterID, skipMissing)
+	}
+	if err != nil {
+		return checkRoomRankSelection{}, err
+	}
+	if err := validateSKCheckRoomSupportedRanks(infos); err != nil {
+		return checkRoomRankSelection{}, err
+	}
+	selection := checkRoomRankSelection{infos: infos, previous: previous, next: next}
+	if len(infos) > 0 {
+		selection.target = infos[0].Rank
+	}
+	return selection, nil
+}
+
+func (c *Controller) populateCheckRoomAdjacentRanks(payload *drawing.CFRequest, query TrackerRankQuery, selection checkRoomRankSelection) {
+	if selection.target <= 0 {
+		return
+	}
+	if !selection.alwaysFetchAdjacent && (selection.previous != nil || selection.next != nil) {
+		payload.PrevRank = selection.previous
+		payload.NextRank = selection.next
+		return
+	}
+	payload.PrevRank = selection.previous
+	payload.NextRank = selection.next
+	if selection.target > 1 {
+		if previous := c.tryBuildSingleRank(query, selection.target-1); previous != nil {
+			payload.PrevRank = previous
+		}
+	}
+	if next := c.tryBuildSingleRank(query, selection.target+1); next != nil {
+		payload.NextRank = next
+	}
 }
 
 func (c *Controller) RenderCheckRoom(req drawing.CFRequest) ([]byte, error) {
@@ -304,32 +349,48 @@ func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.
 		AggregateAt: meta.aggregateAt,
 		UpdateAt:    now.UnixMilli(),
 	}
-	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
-			payload.WlCharaIconPath = &icon
-		}
+	c.populateCSBCharacterIcon(&payload, normalized)
+	trace, err := c.resolveCSBTrace(normalized)
+	if err != nil {
+		return nil, err
 	}
+	payload.Ranks = appendIdleTrackerRankTraceAt(trace, now)
+	return c.BuildCSBRequest(payload)
+}
 
-	if normalized.UserID != nil && *normalized.UserID > 0 {
-		info, err := c.buildSingleUserFromTracker(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID)
-		if err != nil {
-			return nil, fmt.Errorf("tracker user query failed: %w", err)
-		}
-		if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
-			return nil, err
-		}
-		trace, err := c.buildUserTraceFromTracker(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID)
-		if err != nil {
-			return nil, err
-		}
-		payload.Ranks = appendIdleTrackerRankTraceAt(trace, now)
-		return c.BuildCSBRequest(payload)
+func (c *Controller) populateCSBCharacterIcon(payload *drawing.CSBRequest, query TrackerRankQuery) {
+	if query.WlCharacterID == nil || *query.WlCharacterID <= 0 {
+		return
 	}
+	icon := c.resolveCharacterIconPath(*query.WlCharacterID, renderregion.Normalize(query.Region))
+	if icon != "" {
+		payload.WlCharaIconPath = &icon
+	}
+}
 
-	if len(normalized.Ranks) == 0 {
+func (c *Controller) resolveCSBTrace(query TrackerRankQuery) ([]drawing.RankInfo, error) {
+	if query.UserID != nil && *query.UserID > 0 {
+		return c.resolveCSBUserTrace(query)
+	}
+	return c.resolveCSBRankTrace(query)
+}
+
+func (c *Controller) resolveCSBUserTrace(query TrackerRankQuery) ([]drawing.RankInfo, error) {
+	info, err := c.buildSingleUserFromTracker(query.Region, query.EventID, *query.UserID, query.WlCharacterID)
+	if err != nil {
+		return nil, fmt.Errorf("tracker user query failed: %w", err)
+	}
+	if err := validateSKCheckRoomSupportedRank(info.Rank); err != nil {
+		return nil, err
+	}
+	return c.buildUserTraceFromTracker(query.Region, query.EventID, *query.UserID, query.WlCharacterID)
+}
+
+func (c *Controller) resolveCSBRankTrace(query TrackerRankQuery) ([]drawing.RankInfo, error) {
+	if len(query.Ranks) == 0 {
 		return nil, fmt.Errorf("查水表目前仅支持单人查询")
 	}
-	info, userID, hasUserID, err := c.buildSingleRankBaseFromTracker(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
+	info, userID, hasUserID, err := c.buildSingleRankBaseFromTracker(query.Region, query.EventID, query.Ranks[0], query.WlCharacterID)
 	if err != nil {
 		return nil, err
 	}
@@ -337,18 +398,12 @@ func (c *Controller) BuildCSBRequestFromTracker(req TrackerRankQuery) (*drawing.
 		return nil, err
 	}
 	if !hasUserID {
-		var resolveErr error
-		userID, resolveErr = c.resolveTrackerUserIDByRank(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
-		if resolveErr != nil {
-			return nil, resolveErr
+		userID, err = c.resolveTrackerUserIDByRank(query.Region, query.EventID, query.Ranks[0], query.WlCharacterID)
+		if err != nil {
+			return nil, err
 		}
 	}
-	trace, err := c.buildUserTraceFromTracker(normalized.Region, normalized.EventID, userID, normalized.WlCharacterID)
-	if err != nil {
-		return nil, err
-	}
-	payload.Ranks = appendIdleTrackerRankTraceAt(trace, now)
-	return c.BuildCSBRequest(payload)
+	return c.buildUserTraceFromTracker(query.Region, query.EventID, userID, query.WlCharacterID)
 }
 
 func (c *Controller) RenderCSB(req drawing.CSBRequest) ([]byte, error) {

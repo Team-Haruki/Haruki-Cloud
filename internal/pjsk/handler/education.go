@@ -1,12 +1,15 @@
 package handler
 
 import (
+	"strings"
+
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/filteralias"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/education"
-	"strings"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func (sekaiHandlers) ChallengeInfoHandle() HarukiSekaiCommandHandler {
@@ -55,34 +58,42 @@ func (sekaiHandlers) AreaItemHandle() HarukiSekaiCommandHandler {
 			if err != nil {
 				return nil, err
 			}
-			params, err := newSelfQueryParamsMap(ctx)
+			params, err := educationAreaParams(ctx, query)
 			if err != nil {
 				return nil, err
-			}
-			if query.ShowFull {
-				params["show_full"] = true
-			}
-			if query.Unit != "" {
-				params["unit"] = query.Unit
-			}
-			if query.Cid > 0 {
-				params["cid"] = query.Cid
-			}
-			if query.CharacterQuery != "" {
-				params["character_query"] = query.CharacterQuery
-			}
-			if query.Attr != "" {
-				params["attr"] = query.Attr
-			}
-			if query.Tree {
-				params["tree"] = true
-			}
-			if query.Flower {
-				params["flower"] = true
 			}
 			return makeCommandRequestWithParams(ctx, parser.ModuleEducation, educationAreaCommand, params), nil
 		},
 	}, executeEducation)
+}
+
+func educationAreaParams(ctx HarrukiSekaiHandlerContext, query education.AreaItemQuery) (map[string]any, error) {
+	params, err := newSelfQueryParamsMap(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if query.ShowFull {
+		params["show_full"] = true
+	}
+	if query.Unit != "" {
+		params["unit"] = query.Unit
+	}
+	if query.Cid > 0 {
+		params["cid"] = query.Cid
+	}
+	if query.CharacterQuery != "" {
+		params["character_query"] = query.CharacterQuery
+	}
+	if query.Attr != "" {
+		params["attr"] = query.Attr
+	}
+	if query.Tree {
+		params["tree"] = true
+	}
+	if query.Flower {
+		params["flower"] = true
+	}
+	return params, nil
 }
 
 func (sekaiHandlers) BondsHandle() HarukiSekaiCommandHandler {
@@ -309,33 +320,11 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		return nil, unsupportedModeError("education", rc.Cmd.Mode)
 	}
 	eduCtrl := rc.App.Edu.WithContext(rc.Ctx)
-	var data []byte
-	region := rc.Region
-	regionStr := rc.RegionStr
-
-	if rc.Cmd.Mode == educationAreaCommand {
-		query := education.AreaItemQuery{Region: region}
-		mergeParams(rc.Cmd.Params, &query)
-		if query.Region.IsZero() {
-			query.Region = region
+	if data, handled, renderErr := renderFullEducationArea(rc, eduCtrl); handled {
+		if renderErr != nil {
+			return nil, renderErr
 		}
-		if query.ShowFull {
-			if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
-				query.Cid, err = resolveEducationAreaCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
-				if err != nil {
-					return nil, err
-				}
-			}
-			builtReq, buildErr := eduCtrl.BuildAreaItemUpgradeMaterialsRequestFull(query)
-			if buildErr != nil {
-				return nil, buildErr
-			}
-			data, err = eduCtrl.RenderAreaItemUpgradeMaterials(*builtReq)
-			if err != nil {
-				return nil, err
-			}
-			return rc.ImageMessage(data)
-		}
+		return rc.ImageMessage(data)
 	}
 
 	binding, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
@@ -343,151 +332,235 @@ func executeEducation(rc *RequestContext) (message onebot11.Message, err error) 
 		return nil, suiteErr
 	}
 	publicDetailedProfile, _ := resolveCommandDisplayProfiles(rc, suiteSnapshot)
-
-	platform := rc.Platform
-	platformUserID := rc.PlatformUserID
-	var suitePJSKUserID string
-	var suitePlatform, suitePlatformUserID string
+	execution := &educationExecution{
+		rc:         rc,
+		controller: eduCtrl,
+		snapshot:   suiteSnapshot,
+		profile:    publicDetailedProfile,
+	}
 	if binding != nil {
-		suitePJSKUserID = binding.PJSKUserID
-		suitePlatform = platform
-		suitePlatformUserID = platformUserID
+		execution.pjskUserID = binding.PJSKUserID
+		execution.platform = rc.Platform
+		execution.platformUserID = rc.PlatformUserID
+		execution.hasMySekaiData = hasUsableMySekaiData(binding)
 	}
-
-	switch rc.Cmd.Mode {
-	case "education-challenge":
-		q := education.ChallengeLiveQuery{Region: region}
-		mergeParams(rc.Cmd.Params, &q)
-		if q.Region.IsZero() {
-			q.Region = region
-		}
-		q.Profile = publicDetailedProfile
-		if suiteSnapshot != nil {
-			q.Snapshot = suiteSnapshot
-		}
-		data, err = eduCtrl.RenderChallengeLiveDetails(q)
-
-	case "education-bonds":
-		query := education.BondsQuery{Region: region}
-		mergeParams(rc.Cmd.Params, &query)
-		if query.Region.IsZero() {
-			query.Region = region
-		}
-		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
-			query.Cid, err = resolveEducationBondsCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		req := drawing.BondsRequest{}
-		mergeParams(rc.Cmd.Params, &req)
-		if len(req.Bonds) == 0 && suiteSnapshot != nil {
-			query.Profile = publicDetailedProfile
-			query.Snapshot = suiteSnapshot
-			bondsReq, buildErr := eduCtrl.BuildBondsRequestFromSnapshot(query)
-			if buildErr == nil {
-				req = *bondsReq
-			}
-		}
-		data, err = eduCtrl.RenderBonds(req)
-
-	case "education-leader":
-		req := drawing.LeaderCountRequest{}
-		mergeParams(rc.Cmd.Params, &req)
-		if len(req.LeaderCounts) == 0 && suiteSnapshot != nil {
-			leaderReq, buildErr := eduCtrl.BuildLeaderCountRequestFromSnapshot(education.LeaderCountQuery{
-				Region:   region,
-				Profile:  publicDetailedProfile,
-				Snapshot: suiteSnapshot,
-			})
-			if buildErr == nil {
-				req = *leaderReq
-			}
-		}
-		data, err = eduCtrl.RenderLeaderCount(req)
-
-	case "education-character-mission":
-		query := education.CharacterMissionQuery{Region: region}
-		mergeParams(rc.Cmd.Params, &query)
-		if query.Region.IsZero() {
-			query.Region = region
-		}
-		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
-			query.Cid, err = resolveEducationBondsCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
-			if err != nil {
-				return nil, err
-			}
-		}
-		query.Profile = publicDetailedProfile
-		query.Snapshot = suiteSnapshot
-		if query.ShowAll {
-			req, buildErr := eduCtrl.BuildCharacterMissionAllRequestFromSnapshot(query)
-			if buildErr != nil {
-				return nil, buildErr
-			}
-			data, err = eduCtrl.RenderCharacterMissionAll(*req)
-		} else {
-			req, buildErr := eduCtrl.BuildCharacterMissionOverviewRequestFromSnapshot(query)
-			if buildErr != nil {
-				return nil, buildErr
-			}
-			data, err = eduCtrl.RenderCharacterMissionOverview(*req)
-		}
-
-	case "education-power":
-		req := drawing.PowerBonusDetailRequest{}
-		mergeParams(rc.Cmd.Params, &req)
-		if len(req.CharaBonuses) == 0 && len(req.UnitBonuses) == 0 && len(req.AttrBonuses) == 0 {
-			snapshot := suiteSnapshot
-			if binding != nil && hasUsableMySekaiData(binding) {
-				if fullSnapshot := resolveTargetSnapshot(rc.Ctx, rc.App, regionStr, suitePlatform, suitePlatformUserID, suitePJSKUserID, true); fullSnapshot != nil {
-					snapshot = fullSnapshot
-				}
-			}
-			if snapshot != nil {
-				builtReq, buildErr := eduCtrl.BuildPowerBonusDetailRequestFromSnapshot(education.PowerBonusQuery{
-					Region:   region,
-					Profile:  publicDetailedProfile,
-					Snapshot: snapshot,
-				})
-				if buildErr != nil {
-					return nil, buildErr
-				}
-				req = *builtReq
-			}
-		}
-		data, err = eduCtrl.RenderPowerBonusDetail(req)
-
-	case educationAreaCommand:
-		query := education.AreaItemQuery{Region: region}
-		mergeParams(rc.Cmd.Params, &query)
-		if query.Region.IsZero() {
-			query.Region = region
-		}
-		if query.Cid <= 0 && strings.TrimSpace(query.CharacterQuery) != "" {
-			query.Cid, err = resolveEducationAreaCharacterID(rc.Ctx, rc.App, region, query.CharacterQuery)
-			if err != nil {
-				return nil, err
-			}
-		}
-		query.Profile = publicDetailedProfile
-		if suiteSnapshot != nil {
-			query.Snapshot = suiteSnapshot
-			builtReq, buildErr := eduCtrl.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query)
-			if buildErr != nil {
-				return nil, buildErr
-			}
-			data, err = eduCtrl.RenderAreaItemUpgradeMaterials(*builtReq)
-			break
-		}
-		data, err = eduCtrl.RenderAreaItemUpgradeMaterials(drawing.AreaItemUpgradeMaterialsRequest{})
-
-	default:
-		return nil, unsupportedModeError("education", rc.Cmd.Mode)
-	}
+	data, err := execution.render()
 	if err != nil {
 		return nil, err
 	}
 	return rc.ImageMessage(data)
+}
+
+func renderFullEducationArea(rc *RequestContext, controller *education.Controller) ([]byte, bool, error) {
+	if rc.Cmd.Mode != educationAreaCommand {
+		return nil, false, nil
+	}
+	query := education.AreaItemQuery{Region: rc.Region}
+	mergeParams(rc.Cmd.Params, &query)
+	setDefaultEducationRegion(&query.Region, rc.Region)
+	if !query.ShowFull {
+		return nil, false, nil
+	}
+	if err := resolveEducationAreaQueryCharacter(rc, &query); err != nil {
+		return nil, true, err
+	}
+	request, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(query)
+	if err != nil {
+		return nil, true, err
+	}
+	data, err := controller.RenderAreaItemUpgradeMaterials(*request)
+	return data, true, err
+}
+
+type educationExecution struct {
+	rc             *RequestContext
+	controller     *education.Controller
+	snapshot       snapshot.Snapshot
+	profile        *drawing.DetailedProfileCardRequest
+	pjskUserID     string
+	platform       string
+	platformUserID string
+	hasMySekaiData bool
+}
+
+func (e *educationExecution) render() ([]byte, error) {
+	switch e.rc.Cmd.Mode {
+	case "education-challenge":
+		return e.renderChallenge()
+	case "education-bonds":
+		return e.renderBonds()
+	case "education-leader":
+		return e.renderLeader()
+	case "education-character-mission":
+		return e.renderCharacterMission()
+	case "education-power":
+		return e.renderPower()
+	case educationAreaCommand:
+		return e.renderArea()
+	default:
+		return nil, unsupportedModeError("education", e.rc.Cmd.Mode)
+	}
+}
+
+func (e *educationExecution) renderChallenge() ([]byte, error) {
+	query := education.ChallengeLiveQuery{Region: e.rc.Region}
+	mergeParams(e.rc.Cmd.Params, &query)
+	setDefaultEducationRegion(&query.Region, e.rc.Region)
+	query.Profile = e.profile
+	query.Snapshot = e.snapshot
+	return e.controller.RenderChallengeLiveDetails(query)
+}
+
+func (e *educationExecution) renderBonds() ([]byte, error) {
+	query := education.BondsQuery{Region: e.rc.Region}
+	mergeParams(e.rc.Cmd.Params, &query)
+	setDefaultEducationRegion(&query.Region, e.rc.Region)
+	if err := resolveEducationBondsQueryCharacter(e.rc, &query); err != nil {
+		return nil, err
+	}
+	request := drawing.BondsRequest{}
+	mergeParams(e.rc.Cmd.Params, &request)
+	if len(request.Bonds) == 0 && e.snapshot != nil {
+		query.Profile = e.profile
+		query.Snapshot = e.snapshot
+		if built, err := e.controller.BuildBondsRequestFromSnapshot(query); err == nil {
+			request = *built
+		}
+	}
+	return e.controller.RenderBonds(request)
+}
+
+func (e *educationExecution) renderLeader() ([]byte, error) {
+	request := drawing.LeaderCountRequest{}
+	mergeParams(e.rc.Cmd.Params, &request)
+	if len(request.LeaderCounts) == 0 && e.snapshot != nil {
+		if built, err := e.controller.BuildLeaderCountRequestFromSnapshot(education.LeaderCountQuery{
+			Region:   e.rc.Region,
+			Profile:  e.profile,
+			Snapshot: e.snapshot,
+		}); err == nil {
+			request = *built
+		}
+	}
+	return e.controller.RenderLeaderCount(request)
+}
+
+func (e *educationExecution) renderCharacterMission() ([]byte, error) {
+	query := education.CharacterMissionQuery{Region: e.rc.Region}
+	mergeParams(e.rc.Cmd.Params, &query)
+	setDefaultEducationRegion(&query.Region, e.rc.Region)
+	if err := resolveEducationMissionQueryCharacter(e.rc, &query); err != nil {
+		return nil, err
+	}
+	query.Profile = e.profile
+	query.Snapshot = e.snapshot
+	if query.ShowAll {
+		request, err := e.controller.BuildCharacterMissionAllRequestFromSnapshot(query)
+		if err != nil {
+			return nil, err
+		}
+		return e.controller.RenderCharacterMissionAll(*request)
+	}
+	request, err := e.controller.BuildCharacterMissionOverviewRequestFromSnapshot(query)
+	if err != nil {
+		return nil, err
+	}
+	return e.controller.RenderCharacterMissionOverview(*request)
+}
+
+func (e *educationExecution) renderPower() ([]byte, error) {
+	request := drawing.PowerBonusDetailRequest{}
+	mergeParams(e.rc.Cmd.Params, &request)
+	if powerRequestPopulated(request) {
+		return e.controller.RenderPowerBonusDetail(request)
+	}
+	snap := e.powerSnapshot()
+	if snap == nil {
+		return e.controller.RenderPowerBonusDetail(request)
+	}
+	built, err := e.controller.BuildPowerBonusDetailRequestFromSnapshot(education.PowerBonusQuery{
+		Region:   e.rc.Region,
+		Profile:  e.profile,
+		Snapshot: snap,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return e.controller.RenderPowerBonusDetail(*built)
+}
+
+func powerRequestPopulated(request drawing.PowerBonusDetailRequest) bool {
+	return len(request.CharaBonuses) > 0 || len(request.UnitBonuses) > 0 || len(request.AttrBonuses) > 0
+}
+
+func (e *educationExecution) powerSnapshot() snapshot.Snapshot {
+	if !e.hasMySekaiData {
+		return e.snapshot
+	}
+	full := resolveTargetSnapshot(e.rc.Ctx, e.rc.App, e.rc.RegionStr, e.platform, e.platformUserID, e.pjskUserID, true)
+	if full != nil {
+		return full
+	}
+	return e.snapshot
+}
+
+func (e *educationExecution) renderArea() ([]byte, error) {
+	query := education.AreaItemQuery{Region: e.rc.Region}
+	mergeParams(e.rc.Cmd.Params, &query)
+	setDefaultEducationRegion(&query.Region, e.rc.Region)
+	if err := resolveEducationAreaQueryCharacter(e.rc, &query); err != nil {
+		return nil, err
+	}
+	query.Profile = e.profile
+	if e.snapshot == nil {
+		return e.controller.RenderAreaItemUpgradeMaterials(drawing.AreaItemUpgradeMaterialsRequest{})
+	}
+	query.Snapshot = e.snapshot
+	request, err := e.controller.BuildAreaItemUpgradeMaterialsRequestFromSnapshot(query)
+	if err != nil {
+		return nil, err
+	}
+	return e.controller.RenderAreaItemUpgradeMaterials(*request)
+}
+
+func setDefaultEducationRegion(region *renderregion.Value, fallback renderregion.Value) {
+	if region.IsZero() {
+		*region = fallback
+	}
+}
+
+func resolveEducationAreaQueryCharacter(rc *RequestContext, query *education.AreaItemQuery) error {
+	if query.Cid > 0 || strings.TrimSpace(query.CharacterQuery) == "" {
+		return nil
+	}
+	characterID, err := resolveEducationAreaCharacterID(rc.Ctx, rc.App, rc.Region, query.CharacterQuery)
+	if err != nil {
+		return err
+	}
+	query.Cid = characterID
+	return nil
+}
+
+func resolveEducationBondsQueryCharacter(rc *RequestContext, query *education.BondsQuery) error {
+	if query.Cid > 0 || strings.TrimSpace(query.CharacterQuery) == "" {
+		return nil
+	}
+	characterID, err := resolveEducationBondsCharacterID(rc.Ctx, rc.App, rc.Region, query.CharacterQuery)
+	if err != nil {
+		return err
+	}
+	query.Cid = characterID
+	return nil
+}
+
+func resolveEducationMissionQueryCharacter(rc *RequestContext, query *education.CharacterMissionQuery) error {
+	if query.Cid > 0 || strings.TrimSpace(query.CharacterQuery) == "" {
+		return nil
+	}
+	characterID, err := resolveEducationBondsCharacterID(rc.Ctx, rc.App, rc.Region, query.CharacterQuery)
+	if err != nil {
+		return err
+	}
+	query.Cid = characterID
+	return nil
 }

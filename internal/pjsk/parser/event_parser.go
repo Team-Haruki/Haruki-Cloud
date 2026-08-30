@@ -143,184 +143,241 @@ func (p *EventParser) tryParseFilter(args string) *EventQueryInfo {
 	if args == "" {
 		return nil
 	}
-
-	filter := EventFilter{}
-	matched := false
-
+	state := newEventFilterParseState(p)
 	ext := NewExtractor(nil)
 	yearRes := ext.ExtractYear(args)
 	if yearRes.Found {
-		filter.Year = yearRes.Value
+		state.filter.Year = yearRes.Value
 		args = yearRes.Remaining
-		matched = true
+		state.matched = true
 	}
-
-	parts := strings.Fields(strings.ToLower(args))
-	if len(parts) == 0 {
-		if matched {
-			return &EventQueryInfo{
-				Type:     QueryTypeEventFilter,
-				Filter:   filter,
-				Original: strings.TrimSpace(args),
-			}
+	for _, part := range strings.Fields(strings.ToLower(args)) {
+		if !state.apply(part) {
+			return nil
 		}
-		return nil
 	}
+	return state.result(args)
+}
 
-	units := filteralias.UnitMap()
+type eventFilterTokenResult uint8
 
-	types := map[string]string{
-		"marathon": "marathon", "普活": "marathon", "马拉松": "marathon",
-		"cheerful": "cheerful_carnival", "5v5": "cheerful_carnival", "carnival": "cheerful_carnival",
-		"wl": "world_bloom", "worldlink": "world_bloom", "world": "world_bloom",
+const (
+	eventFilterUnhandled eventFilterTokenResult = iota
+	eventFilterMatched
+	eventFilterInvalid
+)
+
+var eventFilterTypes = map[string]string{
+	"marathon": "marathon", "普活": "marathon", "马拉松": "marathon",
+	"cheerful": "cheerful_carnival", "5v5": "cheerful_carnival", "carnival": "cheerful_carnival",
+	"wl": "world_bloom", "worldlink": "world_bloom", "world": "world_bloom",
+}
+
+type eventFilterParseState struct {
+	parser       *EventParser
+	filter       EventFilter
+	matched      bool
+	onlyUnitNext bool
+	characters   map[int]struct{}
+	units        map[string]string
+	attributes   map[string]string
+}
+
+func newEventFilterParseState(parser *EventParser) *eventFilterParseState {
+	return &eventFilterParseState{
+		parser:     parser,
+		characters: map[int]struct{}{},
+		units:      filteralias.UnitMap(),
+		attributes: filteralias.AttributeMap(),
 	}
+}
 
-	attrAliases := filteralias.AttributeMap()
-
-	charSet := make(map[int]struct{})
-	onlyUnitNext := false
-	for _, part := range parts {
-		token := normalizeEventToken(part)
-		if token == "" {
-			continue
+func (s *eventFilterParseState) apply(part string) bool {
+	token := normalizeEventToken(part)
+	if token == "" {
+		return true
+	}
+	if isEventOnlyUnitToken(token) {
+		s.onlyUnitNext = true
+		s.matched = true
+		return true
+	}
+	for _, matcher := range []func(string) eventFilterTokenResult{
+		s.matchUnit,
+		s.matchBlend,
+		s.matchEventType,
+		s.matchAttribute,
+		s.matchBanner,
+		s.matchCharacter,
+		s.matchYear,
+	} {
+		result := matcher(token)
+		if result != eventFilterUnhandled {
+			return result == eventFilterMatched
 		}
+	}
+	return false
+}
 
-		if token == "仅" || token == "純" || token == "纯" || token == "only" {
-			onlyUnitNext = true
-			matched = true
-			continue
-		}
+func isEventOnlyUnitToken(token string) bool {
+	switch token {
+	case "仅", "純", "纯", "only":
+		return true
+	default:
+		return false
+	}
+}
 
-		unitToken := token
-		onlyUnit := onlyUnitNext
-		if stripped, ok := stripEventOnlyUnitPrefix(token); ok {
-			unitToken = stripped
-			onlyUnit = true
-		}
-		onlyUnitNext = false
-
-		if u, ok := units[unitToken]; ok {
-			if filter.Blend {
-				return nil
-			}
-			filter.Unit = u
-			if onlyUnit {
-				filter.OnlyUnit = true
-			}
-			matched = true
-			continue
-		}
+func (s *eventFilterParseState) matchUnit(token string) eventFilterTokenResult {
+	unitToken := token
+	onlyUnit := s.onlyUnitNext
+	if stripped, ok := stripEventOnlyUnitPrefix(token); ok {
+		unitToken = stripped
+		onlyUnit = true
+	}
+	s.onlyUnitNext = false
+	unit, ok := s.units[unitToken]
+	if !ok {
 		if onlyUnit {
-			return nil
+			return eventFilterInvalid
 		}
-
-		if token == "混活" || token == "混" || token == "blend" || token == "mixed" {
-			if filter.Unit != "" {
-				return nil
-			}
-			filter.Blend = true
-			matched = true
-			continue
-		}
-
-		if t, ok := types[token]; ok {
-			filter.EventType = t
-			matched = true
-			continue
-		}
-		if turn, ok := parseEventWorldBloomTurn(token); ok {
-			filter.EventType = "world_bloom"
-			filter.WorldBloomTurn = turn
-			matched = true
-			continue
-		}
-
-		if attr, ok := attrAliases[token]; ok {
-			filter.Attr = attr
-			matched = true
-			continue
-		}
-
-		if strings.Contains(token, "箱") || strings.Contains(token, "ban") {
-			bannerToken := strings.ReplaceAll(token, "箱", "")
-			bannerToken = strings.ReplaceAll(bannerToken, "ban", "")
-			if cid, ok := p.CharacterIDByNickname(bannerToken); ok {
-				filter.BannerCharID = cid
-				matched = true
-				continue
-			}
-		}
-
-		if cid, ok := p.CharacterIDByNickname(token); ok {
-			charSet[cid] = struct{}{}
-			matched = true
-			continue
-		}
-
-		if token == "去年" {
-			filter.Year = time.Now().Year() - 1
-			matched = true
-			continue
-		}
-		if token == "今年" {
-			filter.Year = time.Now().Year()
-			matched = true
-			continue
-		}
-
-		if strings.HasSuffix(token, "年") {
-			yStr := strings.TrimSuffix(token, "年")
-			if isNumeric(yStr) {
-				y, _ := strconv.Atoi(yStr)
-				if y < 100 {
-					y += 2000
-				}
-				filter.Year = y
-				matched = true
-				continue
-			}
-		}
-		if isNumeric(token) {
-			y, _ := strconv.Atoi(token)
-			if y > 2019 && y < 2030 {
-				filter.Year = y
-				matched = true
-				continue
-			}
-		}
-
-		if token != "" {
-			return nil
-		}
+		return eventFilterUnhandled
 	}
-
-	if len(charSet) > 0 {
-		filter.CharacterIDs = make([]int, 0, len(charSet))
-		for cid := range charSet {
-			filter.CharacterIDs = append(filter.CharacterIDs, cid)
-		}
-		sort.Ints(filter.CharacterIDs)
-		if len(filter.CharacterIDs) == 1 {
-			filter.CharacterID = filter.CharacterIDs[0]
-		}
+	if s.filter.Blend {
+		return eventFilterInvalid
 	}
+	s.filter.Unit = unit
+	s.filter.OnlyUnit = onlyUnit
+	s.matched = true
+	return eventFilterMatched
+}
 
-	if onlyUnitNext {
+func (s *eventFilterParseState) matchBlend(token string) eventFilterTokenResult {
+	if token != "混活" && token != "混" && token != "blend" && token != "mixed" {
+		return eventFilterUnhandled
+	}
+	if s.filter.Unit != "" {
+		return eventFilterInvalid
+	}
+	s.filter.Blend = true
+	s.matched = true
+	return eventFilterMatched
+}
+
+func (s *eventFilterParseState) matchEventType(token string) eventFilterTokenResult {
+	if eventType, ok := eventFilterTypes[token]; ok {
+		s.filter.EventType = eventType
+		s.matched = true
+		return eventFilterMatched
+	}
+	turn, ok := parseEventWorldBloomTurn(token)
+	if !ok {
+		return eventFilterUnhandled
+	}
+	s.filter.EventType = "world_bloom"
+	s.filter.WorldBloomTurn = turn
+	s.matched = true
+	return eventFilterMatched
+}
+
+func (s *eventFilterParseState) matchAttribute(token string) eventFilterTokenResult {
+	attribute, ok := s.attributes[token]
+	if !ok {
+		return eventFilterUnhandled
+	}
+	s.filter.Attr = attribute
+	s.matched = true
+	return eventFilterMatched
+}
+
+func (s *eventFilterParseState) matchBanner(token string) eventFilterTokenResult {
+	if !strings.Contains(token, "箱") && !strings.Contains(token, "ban") {
+		return eventFilterUnhandled
+	}
+	bannerToken := strings.ReplaceAll(strings.ReplaceAll(token, "箱", ""), "ban", "")
+	characterID, ok := s.parser.CharacterIDByNickname(bannerToken)
+	if !ok {
+		return eventFilterUnhandled
+	}
+	s.filter.BannerCharID = characterID
+	s.matched = true
+	return eventFilterMatched
+}
+
+func (s *eventFilterParseState) matchCharacter(token string) eventFilterTokenResult {
+	characterID, ok := s.parser.CharacterIDByNickname(token)
+	if !ok {
+		return eventFilterUnhandled
+	}
+	s.characters[characterID] = struct{}{}
+	s.matched = true
+	return eventFilterMatched
+}
+
+func (s *eventFilterParseState) matchYear(token string) eventFilterTokenResult {
+	year, ok := eventFilterYear(token, time.Now().Year())
+	if !ok {
+		return eventFilterUnhandled
+	}
+	s.filter.Year = year
+	s.matched = true
+	return eventFilterMatched
+}
+
+func eventFilterYear(token string, currentYear int) (int, bool) {
+	switch token {
+	case "去年":
+		return currentYear - 1, true
+	case "今年":
+		return currentYear, true
+	}
+	if strings.HasSuffix(token, "年") {
+		return normalizedEventFilterYear(strings.TrimSuffix(token, "年"))
+	}
+	if !isNumeric(token) {
+		return 0, false
+	}
+	year, _ := strconv.Atoi(token)
+	ok := year > 2019 && year < 2030
+	return year, ok
+}
+
+func normalizedEventFilterYear(token string) (int, bool) {
+	if !isNumeric(token) {
+		return 0, false
+	}
+	year, _ := strconv.Atoi(token)
+	if year < 100 {
+		year += 2000
+	}
+	return year, true
+}
+
+func (s *eventFilterParseState) result(original string) *EventQueryInfo {
+	if s.onlyUnitNext || !s.matched || (s.filter.OnlyUnit && s.filter.Unit == "") {
 		return nil
 	}
-
-	if matched {
-		if filter.OnlyUnit && filter.Unit == "" {
-			return nil
-		}
-		return &EventQueryInfo{
-			Type:     QueryTypeEventFilter,
-			Filter:   filter,
-			Original: args,
-		}
+	s.filter.CharacterIDs = sortedEventFilterCharacterIDs(s.characters)
+	if len(s.filter.CharacterIDs) == 1 {
+		s.filter.CharacterID = s.filter.CharacterIDs[0]
 	}
+	return &EventQueryInfo{
+		Type:     QueryTypeEventFilter,
+		Filter:   s.filter,
+		Original: strings.TrimSpace(original),
+	}
+}
 
-	return nil
+func sortedEventFilterCharacterIDs(characters map[int]struct{}) []int {
+	if len(characters) == 0 {
+		return nil
+	}
+	ids := make([]int, 0, len(characters))
+	for characterID := range characters {
+		ids = append(ids, characterID)
+	}
+	sort.Ints(ids)
+	return ids
 }
 
 func parseEventWorldBloomTurn(token string) (int, bool) {

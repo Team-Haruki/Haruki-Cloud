@@ -283,13 +283,38 @@ func shouldRefreshForecastEntry(entry *forecastDataCacheEntry, now time.Time, re
 	return entry.lastAttemptAt.IsZero() || now.Sub(entry.lastAttemptAt) >= retryInterval
 }
 
+type forecastDataCacheEntryAge struct {
+	key      forecastDataCacheKey
+	activity time.Time
+	hasData  bool
+}
+
 func (c *forecastDataCache) pruneLocked(now time.Time) {
 	if c == nil || len(c.entries) == 0 {
 		return
 	}
-	if now.IsZero() {
-		now = time.Now().UTC()
+	now = normalizedForecastCacheTime(now)
+	entryTTL, failureTTL, maxEntries := c.prunePolicy()
+	c.pruneExpired(now, entryTTL, failureTTL)
+	if len(c.entries) <= maxEntries {
+		return
 	}
+	ages := c.evictableEntryAges()
+	sortForecastDataCacheEntryAges(ages)
+	removeCount := min(len(c.entries)-maxEntries, len(ages))
+	for _, item := range ages[:removeCount] {
+		delete(c.entries, item.key)
+	}
+}
+
+func normalizedForecastCacheTime(now time.Time) time.Time {
+	if now.IsZero() {
+		return time.Now().UTC()
+	}
+	return now
+}
+
+func (c *forecastDataCache) prunePolicy() (time.Duration, time.Duration, int) {
 	entryTTL := c.entryTTL
 	if entryTTL <= 0 {
 		entryTTL = forecastDataEntryTTL
@@ -302,7 +327,10 @@ func (c *forecastDataCache) pruneLocked(now time.Time) {
 	if maxEntries <= 0 {
 		maxEntries = forecastDataMaxEntries
 	}
+	return entryTTL, failureTTL, maxEntries
+}
 
+func (c *forecastDataCache) pruneExpired(now time.Time, entryTTL, failureTTL time.Duration) {
 	for key, entry := range c.entries {
 		if _, refreshing := c.inFlight[key]; refreshing {
 			continue
@@ -311,40 +339,45 @@ func (c *forecastDataCache) pruneLocked(now time.Time) {
 			delete(c.entries, key)
 			continue
 		}
-		hasData := lenNonEmptyForecastData(entry.data) > 0
-		activityAt := entry.lastAttemptAt
-		ttl := failureTTL
-		if hasData {
-			activityAt = entry.refreshedAt
-			ttl = entryTTL
-		}
+		activityAt, hasData := forecastDataCacheEntryActivity(entry)
+		ttl := forecastCacheEntryTTL(hasData, entryTTL, failureTTL)
 		if activityAt.IsZero() || now.Sub(activityAt) >= ttl {
 			delete(c.entries, key)
 		}
 	}
-	if len(c.entries) <= maxEntries {
-		return
+}
+
+func forecastCacheEntryTTL(hasData bool, entryTTL, failureTTL time.Duration) time.Duration {
+	if hasData {
+		return entryTTL
 	}
-	type entryAge struct {
-		key      forecastDataCacheKey
-		activity time.Time
-		hasData  bool
-	}
-	ages := make([]entryAge, 0, len(c.entries))
+	return failureTTL
+}
+
+func (c *forecastDataCache) evictableEntryAges() []forecastDataCacheEntryAge {
+	ages := make([]forecastDataCacheEntryAge, 0, len(c.entries))
 	for key, entry := range c.entries {
 		if _, refreshing := c.inFlight[key]; refreshing {
 			continue
 		}
-		hasData := entry != nil && lenNonEmptyForecastData(entry.data) > 0
-		activityAt := time.Time{}
-		if entry != nil {
-			activityAt = entry.lastAttemptAt
-			if hasData {
-				activityAt = entry.refreshedAt
-			}
-		}
-		ages = append(ages, entryAge{key: key, activity: activityAt, hasData: hasData})
+		activityAt, hasData := forecastDataCacheEntryActivity(entry)
+		ages = append(ages, forecastDataCacheEntryAge{key: key, activity: activityAt, hasData: hasData})
 	}
+	return ages
+}
+
+func forecastDataCacheEntryActivity(entry *forecastDataCacheEntry) (time.Time, bool) {
+	if entry == nil {
+		return time.Time{}, false
+	}
+	hasData := lenNonEmptyForecastData(entry.data) > 0
+	if hasData {
+		return entry.refreshedAt, true
+	}
+	return entry.lastAttemptAt, false
+}
+
+func sortForecastDataCacheEntryAges(ages []forecastDataCacheEntryAge) {
 	sort.Slice(ages, func(i, j int) bool {
 		if ages[i].hasData != ages[j].hasData {
 			return !ages[i].hasData
@@ -363,13 +396,6 @@ func (c *forecastDataCache) pruneLocked(now time.Time) {
 		}
 		return ages[i].key.WlCharacterID < ages[j].key.WlCharacterID
 	})
-	removeCount := len(c.entries) - maxEntries
-	if removeCount > len(ages) {
-		removeCount = len(ages)
-	}
-	for _, item := range ages[:removeCount] {
-		delete(c.entries, item.key)
-	}
 }
 
 func truncateForecastCacheError(value string) string {
@@ -499,10 +525,8 @@ func filterForecastSourceDataMap(in map[string]ForecastSourceData, ranks []int) 
 	for source, data := range in {
 		scores := make(map[int]ForecastScore, len(data.Scores))
 		for rank, score := range data.Scores {
-			if len(rankFilter) > 0 {
-				if _, ok := rankFilter[rank]; !ok {
-					continue
-				}
+			if len(rankFilter) > 0 && !forecastRankSelected(rank, rankFilter) {
+				continue
 			}
 			scores[rank] = score
 		}

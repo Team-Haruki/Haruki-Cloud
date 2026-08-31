@@ -197,38 +197,9 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 		return nil, err
 	}
 
-	queryText := strings.TrimSpace(queries[0].Query)
-	var cards []*masterdata.Card
-	if queryText == "" {
-		cards, err = source.FilterCards(&PjskCardQueryInfo{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to load cards for card box: %w", err)
-		}
-		now := time.Now().UnixMilli()
-		filtered := cards[:0]
-		for _, card := range cards {
-			if card == nil || card.ReleaseAt > now {
-				continue
-			}
-			filtered = append(filtered, card)
-		}
-		cards = filtered
-		if len(cards) == 0 {
-			return nil, fmt.Errorf("no released cards found for region %s", region)
-		}
-	} else {
-		if queries[0].StrictFilterOnly {
-			cards, err = c.searchStrictFilterCards(source, queryText, false)
-			if err != nil {
-				return nil, fmt.Errorf("failed to search card box: %w", err)
-			}
-		} else {
-			searcher := NewSearchService(source, NewParser(c.nicknames))
-			cards, err = searcher.SearchList(queryText)
-			if err != nil {
-				return nil, fmt.Errorf("failed to search card box: %w", err)
-			}
-		}
+	cards, err := c.resolveCardBoxCards(source, region, queries[0])
+	if err != nil {
+		return nil, err
 	}
 	useAfterTraining := true
 	if queries[0].UseAfterTraining != nil {
@@ -250,6 +221,34 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 		req.Title = queries[0].Title
 	}
 	return req, nil
+}
+
+func (c *Controller) resolveCardBoxCards(source DataSource, region renderregion.Value, query Query) ([]*masterdata.Card, error) {
+	queryText := strings.TrimSpace(query.Query)
+	if queryText == "" {
+		cards, err := source.FilterCards(&PjskCardQueryInfo{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to load cards for card box: %w", err)
+		}
+		cards = filterVisibleCards(cards, time.Now().UnixMilli())
+		if len(cards) == 0 {
+			return nil, fmt.Errorf("no released cards found for region %s", region)
+		}
+		return cards, nil
+	}
+	if query.StrictFilterOnly {
+		cards, err := c.searchStrictFilterCards(source, queryText, false)
+		if err != nil {
+			return nil, fmt.Errorf("failed to search card box: %w", err)
+		}
+		return cards, nil
+	}
+	searcher := NewSearchService(source, NewParser(c.nicknames))
+	cards, err := searcher.SearchList(queryText)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search card box: %w", err)
+	}
+	return cards, nil
 }
 
 func (c *Controller) RenderCardBox(queries []Query) ([]byte, error) {
@@ -285,25 +284,7 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 	}
 
 	if len(query.CardIDs) > 0 {
-		cards := make([]*masterdata.Card, 0, len(query.CardIDs))
-		seen := make(map[int]struct{}, len(query.CardIDs))
-		for _, cardID := range query.CardIDs {
-			if cardID <= 0 {
-				continue
-			}
-			if _, ok := seen[cardID]; ok {
-				continue
-			}
-			seen[cardID] = struct{}{}
-			card, getErr := source.GetCardByID(cardID)
-			if getErr != nil || card == nil {
-				continue
-			}
-			if !query.AllowUnreleased && !isCardVisibleAt(card, currentCardVisibilityTime()) {
-				continue
-			}
-			cards = append(cards, card)
-		}
+		cards := resolveCardsByID(source, query.CardIDs, query.AllowUnreleased)
 		if len(cards) == 0 {
 			return region, nil, nil, nil, fmt.Errorf("card ids are required")
 		}
@@ -315,18 +296,7 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 		return region, nil, nil, nil, fmt.Errorf("card ids are required")
 	}
 
-	if query.StrictFilterOnly {
-		cards, err := c.searchStrictFilterCards(source, rawQuery, query.AllowUnreleased)
-		if err != nil {
-			return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", err)
-		}
-		if len(cards) == 0 {
-			return region, nil, nil, nil, fmt.Errorf("card ids are required")
-		}
-		return region, source, builder, cards, nil
-	}
-	searcher := NewSearchService(source, NewParser(c.nicknames)).WithAllowUnreleased(query.AllowUnreleased)
-	cards, err := searcher.SearchList(rawQuery)
+	cards, err := c.searchCardsForListRequest(source, rawQuery, query)
 	if err != nil {
 		return region, nil, nil, nil, fmt.Errorf("failed to search card list: %w", err)
 	}
@@ -334,6 +304,35 @@ func (c *Controller) resolveCardsForListRequest(query ListRequest) (renderregion
 		return region, nil, nil, nil, fmt.Errorf("card ids are required")
 	}
 	return region, source, builder, cards, nil
+}
+
+func resolveCardsByID(source DataSource, cardIDs []int, allowUnreleased bool) []*masterdata.Card {
+	cards := make([]*masterdata.Card, 0, len(cardIDs))
+	seen := make(map[int]struct{}, len(cardIDs))
+	now := currentCardVisibilityTime()
+	for _, cardID := range cardIDs {
+		if cardID <= 0 {
+			continue
+		}
+		if _, ok := seen[cardID]; ok {
+			continue
+		}
+		seen[cardID] = struct{}{}
+		card, err := source.GetCardByID(cardID)
+		if err != nil || card == nil || (!allowUnreleased && !isCardVisibleAt(card, now)) {
+			continue
+		}
+		cards = append(cards, card)
+	}
+	return cards
+}
+
+func (c *Controller) searchCardsForListRequest(source DataSource, rawQuery string, query ListRequest) ([]*masterdata.Card, error) {
+	if query.StrictFilterOnly {
+		return c.searchStrictFilterCards(source, rawQuery, query.AllowUnreleased)
+	}
+	searcher := NewSearchService(source, NewParser(c.nicknames)).WithAllowUnreleased(query.AllowUnreleased)
+	return searcher.SearchList(rawQuery)
 }
 
 func (c *Controller) searchStrictFilterCards(source DataSource, rawQuery string, allowUnreleased bool) ([]*masterdata.Card, error) {

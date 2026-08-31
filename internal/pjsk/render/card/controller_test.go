@@ -227,33 +227,37 @@ func TestBuildCardBoxRequestIncludesDistributionStats(t *testing.T) {
 		t.Fatalf("unexpected distribution max counts: %+v", req.Distribution)
 	}
 
-	var character5 drawing.CardDistributionCharacterStat
-	for _, stat := range req.Distribution.CharacterStats {
-		if stat.CharacterID == 5 {
-			character5 = stat
-			break
-		}
-	}
+	character5 := cardDistributionCharacterStat(req.Distribution.CharacterStats, 5)
 	if character5.Count != 2 || character5.OwnedCount != 1 || character5.BarCount != 1 {
 		t.Fatalf("unexpected character 5 stat: %+v", character5)
 	}
 
-	var cuteStat drawing.CardDistributionAttributeStat
-	var coolStat drawing.CardDistributionAttributeStat
-	for _, stat := range req.Distribution.AttributeStats {
-		switch stat.Attr {
-		case "cute":
-			cuteStat = stat
-		case "cool":
-			coolStat = stat
-		}
-	}
+	cuteStat := cardDistributionAttributeStat(req.Distribution.AttributeStats, "cute")
+	coolStat := cardDistributionAttributeStat(req.Distribution.AttributeStats, "cool")
 	if cuteStat.Count != 2 || cuteStat.OwnedCount != 2 || cuteStat.BarCount != 2 || len(cuteStat.CharacterStats) != 2 {
 		t.Fatalf("unexpected cute stat: %+v", cuteStat)
 	}
 	if coolStat.Count != 1 || coolStat.OwnedCount != 0 || coolStat.BarCount != 0 {
 		t.Fatalf("unexpected cool stat: %+v", coolStat)
 	}
+}
+
+func cardDistributionCharacterStat(stats []drawing.CardDistributionCharacterStat, characterID int) drawing.CardDistributionCharacterStat {
+	for _, stat := range stats {
+		if stat.CharacterID == characterID {
+			return stat
+		}
+	}
+	return drawing.CardDistributionCharacterStat{}
+}
+
+func cardDistributionAttributeStat(stats []drawing.CardDistributionAttributeStat, attr string) drawing.CardDistributionAttributeStat {
+	for _, stat := range stats {
+		if stat.Attr == attr {
+			return stat
+		}
+	}
+	return drawing.CardDistributionAttributeStat{}
 }
 
 func TestBuildCardBoxRequestAppliesDisplayFlagsAndBeforeSetting(t *testing.T) {

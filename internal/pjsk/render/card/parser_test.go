@@ -18,6 +18,15 @@ func TestLooksLikeSingleCardQuerySupportsIDAndNicknameSequence(t *testing.T) {
 	if LooksLikeSingleCardQuery("mnr 4星") {
 		t.Fatal("did not expect filter query to be treated as single-card query")
 	}
+	if !LooksLikeSingleCardQueryPreferFilter("1001") {
+		t.Fatal("expected card id query to remain a single-card query in prefer-filter mode")
+	}
+	if LooksLikeSingleCardQueryPreferFilter("mnr 4星") {
+		t.Fatal("did not expect filter query to be a single-card query in prefer-filter mode")
+	}
+	if LooksLikeSingleCardQueryPreferFilter("not-a-card-query") {
+		t.Fatal("did not expect an invalid query to be a single-card query")
+	}
 }
 
 func TestParserStrictFilterRejectsBareCardID(t *testing.T) {

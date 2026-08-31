@@ -131,6 +131,13 @@ func TestBuilderDualSkillAndLineCombinationBranches(t *testing.T) {
 }
 
 func TestBuilderPathHelperEdgeBranches(t *testing.T) {
+	testBuilderCardAndCostumePaths(t)
+	testBuilderCharacterIconPaths(t)
+	testBuilderRemainingPathHelpers(t)
+}
+
+func testBuilderCardAndCostumePaths(t *testing.T) {
+	t.Helper()
 	source := &builderCoverageSource{lookupTestSource: &lookupTestSource{}}
 	builder := NewBuilder(source, nil, nil, nil)
 	if got := builder.buildCardImagePaths(nil, renderregion.JP); got != nil {
@@ -152,7 +159,11 @@ func TestBuilderPathHelperEdgeBranches(t *testing.T) {
 	if buildCostumeAssetBundleName(nil) != "" {
 		t.Fatal("nil costume produced an asset bundle")
 	}
+}
 
+func testBuilderCharacterIconPaths(t *testing.T) {
+	t.Helper()
+	builder := NewBuilder(&builderCoverageSource{lookupTestSource: &lookupTestSource{}}, nil, nil, nil)
 	characterCases := map[int]string{
 		27: "miku_light_sound.png",
 		28: "miku_idol.png",
@@ -167,6 +178,11 @@ func TestBuilderPathHelperEdgeBranches(t *testing.T) {
 			t.Errorf("BuildCharacterIconPath(%d) = %q, want suffix %q", characterID, got, suffix)
 		}
 	}
+}
+
+func testBuilderRemainingPathHelpers(t *testing.T) {
+	t.Helper()
+	builder := NewBuilder(&builderCoverageSource{lookupTestSource: &lookupTestSource{}}, nil, nil, nil)
 	if got := builder.buildUnitLogoPath("", renderregion.JP); got != "" {
 		t.Fatalf("empty unit logo = %q", got)
 	}

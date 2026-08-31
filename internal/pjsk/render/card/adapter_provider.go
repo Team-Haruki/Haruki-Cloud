@@ -171,31 +171,8 @@ func (a *ProviderAdapter) GetMaxProfileMysekaiFixtureBonuses() []snapshot.RawUse
 
 	totalByCharacter := make(map[int]float64)
 	for _, fixture := range fixtures {
-		bonusID, ok := maxProfileNumberToInt(fixture["mysekaiFixtureGameCharacterGroupPerformanceBonusId"])
-		if !ok || bonusID <= 0 {
-			continue
-		}
-
-		bonus := bonusesByID[bonusID]
-		if bonus == nil {
-			continue
-		}
-		groupID, ok := maxProfileNumberToInt(bonus["mysekaiFixtureGameCharacterGroupId"])
-		if !ok || groupID <= 0 {
-			continue
-		}
-
-		group := groupsByID[groupID]
-		if group == nil {
-			continue
-		}
-		characterID, ok := maxProfileNumberToInt(group["gameCharacterId"])
-		if !ok || characterID <= 0 {
-			continue
-		}
-
-		bonusRate, ok := maxProfileNumberToFloat64(bonus["bonusRate"])
-		if !ok || bonusRate <= 0 {
+		characterID, bonusRate, ok := resolveFixtureCharacterBonus(fixture, bonusesByID, groupsByID)
+		if !ok {
 			continue
 		}
 		totalByCharacter[characterID] += bonusRate
@@ -222,6 +199,34 @@ func (a *ProviderAdapter) GetMaxProfileMysekaiFixtureBonuses() []snapshot.RawUse
 		})
 	}
 	return result
+}
+
+func resolveFixtureCharacterBonus(fixture map[string]any, bonusesByID, groupsByID map[int]map[string]any) (int, float64, bool) {
+	bonusID, ok := maxProfileNumberToInt(fixture["mysekaiFixtureGameCharacterGroupPerformanceBonusId"])
+	if !ok || bonusID <= 0 {
+		return 0, 0, false
+	}
+	bonus := bonusesByID[bonusID]
+	if bonus == nil {
+		return 0, 0, false
+	}
+	groupID, ok := maxProfileNumberToInt(bonus["mysekaiFixtureGameCharacterGroupId"])
+	if !ok || groupID <= 0 {
+		return 0, 0, false
+	}
+	group := groupsByID[groupID]
+	if group == nil {
+		return 0, 0, false
+	}
+	characterID, ok := maxProfileNumberToInt(group["gameCharacterId"])
+	if !ok || characterID <= 0 {
+		return 0, 0, false
+	}
+	bonusRate, ok := maxProfileNumberToFloat64(bonus["bonusRate"])
+	if !ok || bonusRate <= 0 {
+		return 0, 0, false
+	}
+	return characterID, bonusRate, true
 }
 
 func maxProfileNumberToInt(value any) (int, bool) {

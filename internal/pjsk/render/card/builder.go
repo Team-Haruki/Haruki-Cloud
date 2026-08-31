@@ -36,58 +36,7 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 		cardInfo.SupplyType = &supplyType
 	}
 
-	var eventInfo *drawing.CardEventInfo
-	var eventAttrIconPath *string
-	var eventUnitIconPath *string
-	var eventCharaIconPath *string
-
-	if b.events != nil {
-		if eventInfoModel, err := b.events.GetEventByCardID(card.ID); err == nil && eventInfoModel != nil {
-			eventInfo = &drawing.CardEventInfo{
-				EventID:         eventInfoModel.ID,
-				EventName:       eventInfoModel.Name,
-				StartAt:         eventInfoModel.StartAt,
-				EndAt:           eventInfoModel.AggregateAt + 1000,
-				EventBannerPath: b.buildEventBannerPath(eventInfoModel.AssetBundleName, region),
-			}
-			if bonuses, err := b.events.GetEventDeckBonuses(eventInfoModel.ID); err == nil {
-				for _, bonus := range bonuses {
-					if bonus == nil || bonus.CardAttr == "" {
-						continue
-					}
-					eventInfo.BonusAttr = new(bonus.CardAttr)
-					eventAttrIconPath = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", bonus.CardAttr))))
-				}
-
-				units := make(map[string]struct{})
-				for _, bonus := range bonuses {
-					if bonus == nil || bonus.GameCharacterUnitID <= 0 {
-						continue
-					}
-					gameCharacterUnit, err := b.events.GetGameCharacterUnit(bonus.GameCharacterUnitID)
-					if err != nil || gameCharacterUnit == nil {
-						continue
-					}
-					units[gameCharacterUnit.Unit] = struct{}{}
-				}
-				if len(units) == 1 {
-					for unit := range units {
-						eventInfo.Unit = &unit
-						if iconName := assets.UnitIconFilename(unit); iconName != "" {
-							eventUnitIconPath = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, iconName+".png"))
-						}
-					}
-					if bannerCharacterID, err := b.events.GetEventBannerCharacterID(eventInfoModel.ID); err == nil {
-						eventInfo.BannerCid = &bannerCharacterID
-						path := b.BuildCharacterIconPath(bannerCharacterID, stringValue(eventInfo.Unit), region)
-						if path != "" {
-							eventCharaIconPath = &path
-						}
-					}
-				}
-			}
-		}
-	}
+	eventDetails := b.buildCardEventDetails(card.ID, region)
 
 	var gachaInfo *drawing.CardGachaInfo
 	if gachaInfoModel, err := b.source.GetGachaByCardID(card.ID); err == nil && gachaInfoModel != nil {
@@ -103,16 +52,104 @@ func (b *Builder) BuildCardDetailRequest(card *masterdata.Card, region renderreg
 	return &drawing.CardDetailRequest{
 		CardInfo:           cardInfo,
 		Region:             region.String(),
-		EventInfo:          eventInfo,
+		EventInfo:          eventDetails.info,
 		GachaInfo:          gachaInfo,
 		CardImagesPath:     b.buildCardImagePaths(card, region),
 		CostumeImagesPath:  b.buildCostumeImagePaths(card, region),
 		CharacterIconPath:  b.BuildCharacterIconPath(card.CharacterID, stringValue(cardInfo.Unit), region),
 		UnitLogoPath:       b.buildUnitLogoPath(stringValue(cardInfo.Unit), region),
-		EventAttrIconPath:  eventAttrIconPath,
-		EventUnitIconPath:  eventUnitIconPath,
-		EventCharaIconPath: eventCharaIconPath,
+		EventAttrIconPath:  eventDetails.attrIcon,
+		EventUnitIconPath:  eventDetails.unitIcon,
+		EventCharaIconPath: eventDetails.characterIcon,
 	}, nil
+}
+
+type cardEventDetails struct {
+	info          *drawing.CardEventInfo
+	attrIcon      *string
+	unitIcon      *string
+	characterIcon *string
+}
+
+func (b *Builder) buildCardEventDetails(cardID int, region renderregion.Value) cardEventDetails {
+	if b.events == nil {
+		return cardEventDetails{}
+	}
+	model, err := b.events.GetEventByCardID(cardID)
+	if err != nil || model == nil {
+		return cardEventDetails{}
+	}
+	details := cardEventDetails{info: &drawing.CardEventInfo{
+		EventID:         model.ID,
+		EventName:       model.Name,
+		StartAt:         model.StartAt,
+		EndAt:           model.AggregateAt + 1000,
+		EventBannerPath: b.buildEventBannerPath(model.AssetBundleName, region),
+	}}
+	bonuses, err := b.events.GetEventDeckBonuses(model.ID)
+	if err != nil {
+		return details
+	}
+	b.applyCardEventBonuses(&details, model.ID, bonuses, region)
+	return details
+}
+
+func (b *Builder) applyCardEventBonuses(details *cardEventDetails, eventID int, bonuses []*masterdata.EventDeckBonus, region renderregion.Value) {
+	if attr, ok := eventBonusAttribute(bonuses); ok {
+		details.info.BonusAttr = &attr
+		details.attrIcon = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_icon_%s.png", attr))))
+	}
+	unit, ok := b.singleEventBonusUnit(bonuses)
+	if !ok {
+		return
+	}
+	details.info.Unit = &unit
+	if iconName := assets.UnitIconFilename(unit); iconName != "" {
+		details.unitIcon = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, iconName+".png"))
+	}
+	b.applyEventBannerCharacter(details, eventID, unit, region)
+}
+
+func eventBonusAttribute(bonuses []*masterdata.EventDeckBonus) (string, bool) {
+	var attr string
+	for _, bonus := range bonuses {
+		if bonus != nil && bonus.CardAttr != "" {
+			attr = bonus.CardAttr
+		}
+	}
+	return attr, attr != ""
+}
+
+func (b *Builder) singleEventBonusUnit(bonuses []*masterdata.EventDeckBonus) (string, bool) {
+	units := make(map[string]struct{})
+	for _, bonus := range bonuses {
+		if bonus == nil || bonus.GameCharacterUnitID <= 0 {
+			continue
+		}
+		unit, err := b.events.GetGameCharacterUnit(bonus.GameCharacterUnitID)
+		if err == nil && unit != nil {
+			units[unit.Unit] = struct{}{}
+		}
+	}
+	if len(units) != 1 {
+		return "", false
+	}
+	for unit := range units {
+		return unit, true
+	}
+	return "", false
+}
+
+func (b *Builder) applyEventBannerCharacter(details *cardEventDetails, eventID int, unit string, region renderregion.Value) {
+	characterID, err := b.events.GetEventBannerCharacterID(eventID)
+	if err != nil {
+		return
+	}
+	details.info.BannerCid = &characterID
+	path := b.BuildCharacterIconPath(characterID, unit, region)
+	if path != "" {
+		details.characterIcon = &path
+	}
 }
 
 func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value) (*drawing.CardListRequest, error) {

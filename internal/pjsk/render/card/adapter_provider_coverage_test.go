@@ -49,7 +49,16 @@ func TestProviderAdapterContextWrappersAndLocalProviderBehavior(t *testing.T) {
 	if nilAdapter.WithContext(context.Background()) != nil {
 		t.Fatal("nil adapter produced a contextual data source")
 	}
+	adapter := newAdapterCoverageLocalAdapter(t)
+	testProviderAdapterContexts(t, adapter)
+	testProviderAdapterCardLookups(t, adapter)
+	testProviderAdapterAreaAndCharacterLookups(t, adapter)
+	testProviderAdapterEpisodes(t, adapter)
+	testProviderAdapterSkillAndRelatedLookups(t, adapter)
+}
 
+func newAdapterCoverageLocalAdapter(t *testing.T) *ProviderAdapter {
+	t.Helper()
 	root := t.TempDir()
 	fixtures := map[string]any{
 		"cards.json": []masterdata.Card{
@@ -82,8 +91,11 @@ func TestProviderAdapterContextWrappersAndLocalProviderBehavior(t *testing.T) {
 	for filename, value := range fixtures {
 		writeAdapterProviderJSON(t, filepath.Join(root, filename), value)
 	}
+	return NewProviderAdapter(provider.NewLocalProvider(root, renderregion.JP))
+}
 
-	adapter := NewProviderAdapter(provider.NewLocalProvider(root, renderregion.JP))
+func testProviderAdapterContexts(t *testing.T, adapter *ProviderAdapter) {
+	t.Helper()
 	contextual := adapter.WithContext(nil)
 	if contextual == nil || contextual.DefaultRegion() != renderregion.JP {
 		t.Fatalf("contextual adapter = %#v", contextual)
@@ -92,7 +104,10 @@ func TestProviderAdapterContextWrappersAndLocalProviderBehavior(t *testing.T) {
 	if contextual == nil {
 		t.Fatal("non-nil context produced nil adapter")
 	}
+}
 
+func testProviderAdapterCardLookups(t *testing.T, adapter *ProviderAdapter) {
+	t.Helper()
 	card, err := adapter.GetCardByID(1)
 	if err != nil || card == nil || card.ID != 1 {
 		t.Fatalf("GetCardByID() = %+v, %v", card, err)
@@ -111,7 +126,10 @@ func TestProviderAdapterContextWrappersAndLocalProviderBehavior(t *testing.T) {
 	if _, err := adapter.FilterCards(&PjskCardQueryInfo{BanCharID: 5, BanSeq: 1}); err == nil {
 		t.Fatal("missing ban event was accepted")
 	}
+}
 
+func testProviderAdapterAreaAndCharacterLookups(t *testing.T, adapter *ProviderAdapter) {
+	t.Helper()
 	if caps := adapter.AreaItemLevelCaps(2); !reflect.DeepEqual(caps, map[int]int{11: 2, 12: 0}) {
 		t.Fatalf("AreaItemLevelCaps(2) = %+v", caps)
 	}
@@ -128,7 +146,10 @@ func TestProviderAdapterContextWrappersAndLocalProviderBehavior(t *testing.T) {
 	if unit, err := adapter.GetUnitByCardID(1); err != nil || unit != "idol" {
 		t.Fatalf("GetUnitByCardID() = %q, %v", unit, err)
 	}
+}
 
+func testProviderAdapterEpisodes(t *testing.T, adapter *ProviderAdapter) {
+	t.Helper()
 	episodes, err := adapter.GetCardEpisodes(1)
 	if err != nil || !reflect.DeepEqual(episodes, []snapshot.RawUserCardEpisode{{CardEpisodeID: 100, ScenarioStatus: "already_read"}}) {
 		t.Fatalf("GetCardEpisodes(1) = %+v, %v", episodes, err)
@@ -140,7 +161,14 @@ func TestProviderAdapterContextWrappersAndLocalProviderBehavior(t *testing.T) {
 	if _, err := unsupported.GetCardEpisodes(1); err == nil {
 		t.Fatal("provider without episode support was accepted")
 	}
+}
 
+func testProviderAdapterSkillAndRelatedLookups(t *testing.T, adapter *ProviderAdapter) {
+	t.Helper()
+	card, err := adapter.GetCardByID(1)
+	if err != nil || card == nil {
+		t.Fatalf("GetCardByID() = %+v, %v", card, err)
+	}
 	if got := adapter.GetCardSupplyType(card); got == "" {
 		t.Fatal("expected normalized supply type")
 	}

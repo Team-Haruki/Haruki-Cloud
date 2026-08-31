@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/utils/logger"
 
 	"golang.org/x/sync/errgroup"
-	json "haruki-cloud/internal/jsonutil"
+	"golang.org/x/sync/singleflight"
 )
 
 type remoteReadyFlightToken byte
@@ -57,24 +58,9 @@ func (r *RemoteDeckRecommender) RecommendBatchContext(ctx context.Context, req R
 	}
 	defer exec.Release()
 
-	// Circuit breaker: reject early when service is consistently failing.
-	if failures := exec.state.consecutiveFailures.Load(); failures >= maxConsecutiveFailures {
-		if r.tryResetCircuitBreakerAfterCooldown(exec.state, failures) {
-			if r.logger != nil {
-				r.logger.InfoContext(ctx, deckCircuitBreakerResetLog, "reason", "cooldown")
-			}
-		} else if r.tryResetCircuitBreakerOnHealthyService(ctx, exec.state, failures) {
-			if r.logger != nil {
-				r.logger.InfoContext(ctx, deckCircuitBreakerResetLog, "reason", "health_probe")
-			}
-		} else {
-			if r.logger != nil {
-				r.logger.WarnContext(ctx, "deck circuit breaker open", "consecutive_failures", failures)
-			}
-			return nil, fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures)
-		}
+	if err := r.ensureCircuitClosed(ctx, exec.state); err != nil {
+		return nil, err
 	}
-
 	if err := r.ensureReady(ctx, exec, req.Region, req.MusicMeta, req.MusicMetaFilePath); err != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return nil, ctxErr
@@ -82,7 +68,33 @@ func (r *RemoteDeckRecommender) RecommendBatchContext(ctx context.Context, req R
 		r.recordFailure(exec.state)
 		return nil, err
 	}
+	return r.recommendWithRewarm(ctx, exec, req)
+}
 
+func (r *RemoteDeckRecommender) ensureCircuitClosed(ctx context.Context, state *remoteTargetState) error {
+	failures := state.consecutiveFailures.Load()
+	if failures < maxConsecutiveFailures {
+		return nil
+	}
+	if r.tryResetCircuitBreakerAfterCooldown(state, failures) {
+		if r.logger != nil {
+			r.logger.InfoContext(ctx, deckCircuitBreakerResetLog, "reason", "cooldown")
+		}
+		return nil
+	}
+	if r.tryResetCircuitBreakerOnHealthyService(ctx, state, failures) {
+		if r.logger != nil {
+			r.logger.InfoContext(ctx, deckCircuitBreakerResetLog, "reason", "health_probe")
+		}
+		return nil
+	}
+	if r.logger != nil {
+		r.logger.WarnContext(ctx, "deck circuit breaker open", "consecutive_failures", failures)
+	}
+	return fmt.Errorf("deck-service unavailable: %d consecutive failures (circuit breaker open)", failures)
+}
+
+func (r *RemoteDeckRecommender) recommendWithRewarm(ctx context.Context, exec *remoteExecution, req RecommendRequest) ([]remoteBatchRecommendResult, error) {
 	start := time.Now()
 	results, err := r.recommendBatchOnce(ctx, exec, req)
 	elapsed := time.Since(start)
@@ -98,25 +110,31 @@ func (r *RemoteDeckRecommender) RecommendBatchContext(ctx context.Context, req R
 		return results, nil
 	}
 	rewarmKind := classifyRemoteRewarm(err)
-	if rewarmKind == remoteRewarmNone {
-		if shouldCountCircuitBreakerFailure(err) {
-			r.recordFailure(exec.state)
-			r.logger.WarnContext(ctx, "deck recommendation failed",
-				"duration_ms", commandtrace.Milliseconds(elapsed),
-				"error_type", fmt.Sprintf("%T", err),
-			)
-		} else {
-			r.recordSuccess(exec.state)
-			r.logger.InfoContext(ctx, "deck recommendation returned logical error",
-				"duration_ms", commandtrace.Milliseconds(elapsed),
-				"error_type", fmt.Sprintf("%T", err),
-			)
-		}
-		return nil, err
+	if rewarmKind != remoteRewarmNone {
+		return r.rewarmAndRetry(ctx, exec, req, err, rewarmKind)
 	}
+	r.recordRecommendError(ctx, exec.state, err, elapsed)
+	return nil, err
+}
 
-	// Rewarm and retry once.
-	r.logger.InfoContext(ctx, "deck service rewarming", "error_type", fmt.Sprintf("%T", err))
+func (r *RemoteDeckRecommender) recordRecommendError(ctx context.Context, state *remoteTargetState, err error, elapsed time.Duration) {
+	if shouldCountCircuitBreakerFailure(err) {
+		r.recordFailure(state)
+		r.logger.WarnContext(ctx, "deck recommendation failed",
+			"duration_ms", commandtrace.Milliseconds(elapsed),
+			"error_type", fmt.Sprintf("%T", err),
+		)
+		return
+	}
+	r.recordSuccess(state)
+	r.logger.InfoContext(ctx, "deck recommendation returned logical error",
+		"duration_ms", commandtrace.Milliseconds(elapsed),
+		"error_type", fmt.Sprintf("%T", err),
+	)
+}
+
+func (r *RemoteDeckRecommender) rewarmAndRetry(ctx context.Context, exec *remoteExecution, req RecommendRequest, recommendErr error, rewarmKind remoteRewarmKind) ([]remoteBatchRecommendResult, error) {
+	r.logger.InfoContext(ctx, "deck service rewarming", "error_type", fmt.Sprintf("%T", recommendErr))
 	r.invalidate(exec.state, rewarmKind)
 	if warmErr := r.ensureReady(ctx, exec, req.Region, req.MusicMeta, req.MusicMetaFilePath); warmErr != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
@@ -128,7 +146,7 @@ func (r *RemoteDeckRecommender) RecommendBatchContext(ctx context.Context, req R
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	results, err = r.recommendBatchOnce(ctx, exec, req)
+	results, err := r.recommendBatchOnce(ctx, exec, req)
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		return nil, ctxErr
 	}
@@ -411,140 +429,152 @@ func (r *RemoteDeckRecommender) doRecommendLegacyOption(ctx context.Context, exe
 
 func (r *RemoteDeckRecommender) ensureReady(ctx context.Context, exec *remoteExecution, region string, musicMeta []byte, musicMetaPath string) error {
 	ctx = normalizeRecommendContext(ctx)
-	if err := ctx.Err(); err != nil {
+	region, musicMetaPath, hash, err := r.normalizeReadyInputs(ctx, region, musicMeta, musicMetaPath)
+	if err != nil {
 		return err
 	}
-	musicMetaPath = strings.TrimSpace(musicMetaPath)
-	hash := hashPayload(musicMeta)
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	if hash == "" && musicMetaPath != "" {
-		hash = "path:" + musicMetaPath
-	}
-
 	state := exec.state
-	state.mu.Lock()
-	masterReady := state.masterdataReady
-	musicReady := hash != "" && hash == state.musicMetaHash
-	state.mu.Unlock()
-
-	region = strings.ToLower(strings.TrimSpace(region))
-	if region == "" {
-		region = r.region
-	}
-
-	if masterReady && (hash == "" || musicReady) {
+	if remoteStateReady(state, hash) {
 		return nil
 	}
-
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 		callerToken := new(remoteReadyFlightToken)
 		result := state.readyGroup.DoChan("ready", func() (any, error) {
-			detached := context.Background()
-			detached = logger.WithContextAttrs(detached, slog.Bool("shared_work", true))
-			sharedBase, cancel := context.WithTimeout(detached, r.readySharedTimeout())
-			defer cancel()
-			sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
-			sharedExec := &remoteExecution{state: state}
-
-			workErr := func() error {
-				state.mu.Lock()
-				masterReady = state.masterdataReady
-				musicReady = hash != "" && hash == state.musicMetaHash
-				state.mu.Unlock()
-
-				if masterReady && (hash == "" || musicReady) {
-					return nil
-				}
-
-				if !masterReady {
-					req := map[string]any{
-						"base_dir": r.masterdataDir,
-						"region":   region,
-					}
-					if err := r.postJSON(sharedCtx, sharedExec, "/update/masterdata", req, nil); err != nil {
-						return fmt.Errorf("deck remote engine: update masterdata: %w", err)
-					}
-				}
-
-				if hash != "" && !musicReady {
-					req := map[string]any{"region": region}
-					// Prefer sending bytes directly — container cannot access host file paths.
-					if len(musicMeta) > 0 {
-						req["data"] = string(musicMeta)
-						if err := r.postJSON(sharedCtx, sharedExec, "/update/musicmetas/string", req, nil); err != nil {
-							return fmt.Errorf("deck remote engine: update music metas: %w", err)
-						}
-					} else if musicMetaPath != "" {
-						req["file_path"] = musicMetaPath
-						if err := r.postJSON(sharedCtx, sharedExec, "/update/musicmetas", req, nil); err != nil {
-							return fmt.Errorf("deck remote engine: update music metas: %w", err)
-						}
-					}
-				}
-
-				state.mu.Lock()
-				state.masterdataReady = true
-				if hash != "" {
-					state.musicMetaHash = hash
-				}
-				state.mu.Unlock()
-				return nil
-			}()
-
-			return remoteReadyFlightResult{
-				err:        workErr,
-				operations: trace.Snapshot().Operations,
-				leader:     callerToken,
-			}, nil
+			return r.runReadyFlight(state, region, hash, musicMeta, musicMetaPath, callerToken), nil
 		})
-		finishReadyWait := commandtrace.MeasureOperation(ctx, "deck.ready_wait")
-		select {
-		case <-ctx.Done():
-			finishReadyWait()
-			return ctx.Err()
-		case readyResult := <-result:
-			finishReadyWait()
-			if readyResult.Err != nil {
-				if ctxErr := ctx.Err(); ctxErr != nil {
-					return ctxErr
-				}
-				if errors.Is(readyResult.Err, context.Canceled) || errors.Is(readyResult.Err, context.DeadlineExceeded) {
-					continue
-				}
-				return readyResult.Err
-			}
-			completed, ok := readyResult.Val.(remoteReadyFlightResult)
-			if !ok {
-				return fmt.Errorf("deck ready returned unexpected shared result %T", readyResult.Val)
-			}
-			commandtrace.MergeOperations(ctx, completed.operations)
-			if completed.leader != callerToken {
-				commandtrace.RecordOperation(ctx, "deck.ready_shared", 0)
-			}
-			if completed.err != nil {
-				if ctxErr := ctx.Err(); ctxErr != nil {
-					return ctxErr
-				}
-				if errors.Is(completed.err, context.Canceled) || errors.Is(completed.err, context.DeadlineExceeded) {
-					continue
-				}
-				return completed.err
-			}
+		retry, err := waitForReadyFlight(ctx, result, callerToken)
+		if err != nil {
+			return err
 		}
-
-		state.mu.Lock()
-		masterReady = state.masterdataReady
-		musicReady = hash != "" && hash == state.musicMetaHash
-		state.mu.Unlock()
-		if masterReady && (hash == "" || musicReady) {
+		if retry {
+			continue
+		}
+		if remoteStateReady(state, hash) {
 			return nil
 		}
 	}
+}
+
+func (r *RemoteDeckRecommender) normalizeReadyInputs(ctx context.Context, region string, musicMeta []byte, musicMetaPath string) (string, string, string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", "", "", err
+	}
+	musicMetaPath = strings.TrimSpace(musicMetaPath)
+	hash := hashPayload(musicMeta)
+	if err := ctx.Err(); err != nil {
+		return "", "", "", err
+	}
+	if hash == "" && musicMetaPath != "" {
+		hash = "path:" + musicMetaPath
+	}
+	region = strings.ToLower(strings.TrimSpace(region))
+	if region == "" {
+		region = r.region
+	}
+	return region, musicMetaPath, hash, nil
+}
+
+func remoteStateReady(state *remoteTargetState, hash string) bool {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	musicReady := hash != "" && hash == state.musicMetaHash
+	return state.masterdataReady && (hash == "" || musicReady)
+}
+
+func (r *RemoteDeckRecommender) runReadyFlight(state *remoteTargetState, region, hash string, musicMeta []byte, musicMetaPath string, leader *remoteReadyFlightToken) remoteReadyFlightResult {
+	detached := logger.WithContextAttrs(context.Background(), slog.Bool("shared_work", true))
+	sharedBase, cancel := context.WithTimeout(detached, r.readySharedTimeout())
+	defer cancel()
+	sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+	workErr := r.updateRemoteReadyState(sharedCtx, &remoteExecution{state: state}, region, hash, musicMeta, musicMetaPath)
+	return remoteReadyFlightResult{
+		err:        workErr,
+		operations: trace.Snapshot().Operations,
+		leader:     leader,
+	}
+}
+
+func (r *RemoteDeckRecommender) updateRemoteReadyState(ctx context.Context, exec *remoteExecution, region, hash string, musicMeta []byte, musicMetaPath string) error {
+	state := exec.state
+	if remoteStateReady(state, hash) {
+		return nil
+	}
+	state.mu.Lock()
+	masterReady := state.masterdataReady
+	musicReady := hash != "" && hash == state.musicMetaHash
+	state.mu.Unlock()
+	if !masterReady {
+		req := map[string]any{"base_dir": r.masterdataDir, "region": region}
+		if err := r.postJSON(ctx, exec, "/update/masterdata", req, nil); err != nil {
+			return fmt.Errorf("deck remote engine: update masterdata: %w", err)
+		}
+	}
+	if hash != "" && !musicReady {
+		if err := r.updateRemoteMusicMeta(ctx, exec, region, musicMeta, musicMetaPath); err != nil {
+			return err
+		}
+	}
+	state.mu.Lock()
+	state.masterdataReady = true
+	if hash != "" {
+		state.musicMetaHash = hash
+	}
+	state.mu.Unlock()
+	return nil
+}
+
+func (r *RemoteDeckRecommender) updateRemoteMusicMeta(ctx context.Context, exec *remoteExecution, region string, musicMeta []byte, musicMetaPath string) error {
+	req := map[string]any{"region": region}
+	path := "/update/musicmetas"
+	if len(musicMeta) > 0 {
+		req["data"] = string(musicMeta)
+		path = "/update/musicmetas/string"
+	} else {
+		req["file_path"] = musicMetaPath
+	}
+	if err := r.postJSON(ctx, exec, path, req, nil); err != nil {
+		return fmt.Errorf("deck remote engine: update music metas: %w", err)
+	}
+	return nil
+}
+
+func waitForReadyFlight(ctx context.Context, result <-chan singleflight.Result, callerToken *remoteReadyFlightToken) (bool, error) {
+	finishReadyWait := commandtrace.MeasureOperation(ctx, "deck.ready_wait")
+	select {
+	case <-ctx.Done():
+		finishReadyWait()
+		return false, ctx.Err()
+	case readyResult := <-result:
+		finishReadyWait()
+		if readyResult.Err != nil {
+			return classifyReadyFlightError(ctx, readyResult.Err)
+		}
+		completed, ok := readyResult.Val.(remoteReadyFlightResult)
+		if !ok {
+			return false, fmt.Errorf("deck ready returned unexpected shared result %T", readyResult.Val)
+		}
+		commandtrace.MergeOperations(ctx, completed.operations)
+		if completed.leader != callerToken {
+			commandtrace.RecordOperation(ctx, "deck.ready_shared", 0)
+		}
+		if completed.err != nil {
+			return classifyReadyFlightError(ctx, completed.err)
+		}
+		return false, nil
+	}
+}
+
+func classifyReadyFlightError(ctx context.Context, flightErr error) (bool, error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return false, ctxErr
+	}
+	if errors.Is(flightErr, context.Canceled) || errors.Is(flightErr, context.DeadlineExceeded) {
+		return true, nil
+	}
+	return false, flightErr
 }
 
 func (r *RemoteDeckRecommender) readySharedTimeout() time.Duration {

@@ -40,7 +40,7 @@ func additionalRemoteExecution(baseURL string) *remoteExecution {
 	}}}
 }
 
-func TestRemoteResultHelpersAdditional(t *testing.T) {
+func TestRemoteBatchParsingAdditional(t *testing.T) {
 	options := []map[string]any{{"algorithm": "ga", "target": "score", "limit": 2}}
 	if _, err := parseRemoteRecommendBatch(nil, options); err == nil {
 		t.Fatal("expected empty response error")
@@ -55,7 +55,10 @@ func TestRemoteResultHelpersAdditional(t *testing.T) {
 	if _, err := parseRemoteRecommendBatch(json.RawMessage(`{invalid`), options); err == nil {
 		t.Fatal("expected invalid single response error")
 	}
+}
 
+func TestRemoteAggregationAdditional(t *testing.T) {
+	options := []map[string]any{{"algorithm": "ga", "target": "score", "limit": 2}}
 	if _, err := aggregateRemoteRecommendResults("event", options, []remoteBatchRecommendResult{{Error: " bad option "}}); err == nil || err.Error() != "bad option" {
 		t.Fatalf("aggregate logical error = %v", err)
 	}
@@ -72,7 +75,9 @@ func TestRemoteResultHelpersAdditional(t *testing.T) {
 	if err != nil || len(agg.Decks) != 1 || agg.Decks[0].Score != 20 {
 		t.Fatalf("aggregate replacement = %+v, %v", agg, err)
 	}
+}
 
+func TestRemoteClassificationHelpers(t *testing.T) {
 	if classifyRemoteRewarm(nil) != remoteRewarmNone || classifyRemoteRewarm(errors.New("other")) != remoteRewarmNone {
 		t.Fatal("unexpected rewarm classification")
 	}
@@ -99,6 +104,9 @@ func TestRemoteResultHelpersAdditional(t *testing.T) {
 	if !isMissingUserdataHashError(errors.New("userdata_hash user data not found")) {
 		t.Fatal("expected missing-hash classification")
 	}
+}
+
+func TestRemotePayloadHelpers(t *testing.T) {
 	if hashPayload(nil) != "" || len(hashPayload([]byte("payload"))) != 64 {
 		t.Fatal("unexpected payload hash")
 	}
@@ -113,7 +121,7 @@ func TestRemoteResultHelpersAdditional(t *testing.T) {
 	}
 }
 
-func TestRemoteHTTPHelpersAdditional(t *testing.T) {
+func TestRemoteRetryAndHTTPErrorHelpersAdditional(t *testing.T) {
 	if !isRetryableError(additionalNetError{}, 0) {
 		t.Fatal("net.Error should be retryable")
 	}
@@ -139,7 +147,9 @@ func TestRemoteHTTPHelpersAdditional(t *testing.T) {
 	if got := parseRemoteHTTPError(500, oversizedError); strings.Contains(got.Error(), strings.Repeat("x", maxDeckErrorBodyBytes+1)) {
 		t.Fatal("HTTP error was not truncated")
 	}
+}
 
+func TestRemoteResponseBodyAndWaitHelpersAdditional(t *testing.T) {
 	payload, truncated, err := readDeckResponseBody(strings.NewReader("ok"))
 	if err != nil || truncated || string(payload) != "ok" {
 		t.Fatalf("read body = %q, %v, %v", payload, truncated, err)
@@ -202,6 +212,12 @@ func TestRemotePostAndHealthAdditional(t *testing.T) {
 	r.logger = logger.NewLogger("DeckRemoteAdditional", "ERROR", nil)
 	exec := testRemoteExecution(t, r)
 	defer exec.Release()
+	testRemotePostBranches(t, r, exec, &retryCalls)
+	testRemoteHealthAndInputBranches(t, r, exec, server)
+}
+
+func testRemotePostBranches(t *testing.T, r *RemoteDeckRecommender, exec *remoteExecution, retryCalls *int) {
+	t.Helper()
 	var response map[string]any
 	if err := r.postJSON(context.Background(), exec, "/ok", map[string]any{"x": 1}, &response); err != nil || response["value"] != "ok" {
 		t.Fatalf("postJSON success = %#v, %v", response, err)
@@ -215,11 +231,11 @@ func TestRemotePostAndHealthAdditional(t *testing.T) {
 	if err := r.postJSON(context.Background(), exec, "/client-error", nil, nil); err == nil || !strings.Contains(err.Error(), "client bad") {
 		t.Fatalf("postJSON client error = %v", err)
 	}
-	if err := r.postJSON(context.Background(), exec, "/missing", nil, nil); err == nil || retryCalls != 0 {
-		t.Fatalf("postJSON missing hash = %v, retryCalls=%d", err, retryCalls)
+	if err := r.postJSON(context.Background(), exec, "/missing", nil, nil); err == nil || *retryCalls != 0 {
+		t.Fatalf("postJSON missing hash = %v, retryCalls=%d", err, *retryCalls)
 	}
-	if err := r.postJSON(context.Background(), exec, "/retry", nil, nil); err == nil || retryCalls != 2 {
-		t.Fatalf("postJSON retry = %v, calls=%d", err, retryCalls)
+	if err := r.postJSON(context.Background(), exec, "/retry", nil, nil); err == nil || *retryCalls != 2 {
+		t.Fatalf("postJSON retry = %v, calls=%d", err, *retryCalls)
 	}
 	if err := r.postBinary(context.Background(), exec, "/ok", []byte("x"), &response); err != nil {
 		t.Fatalf("postBinary success = %v", err)
@@ -236,7 +252,10 @@ func TestRemotePostAndHealthAdditional(t *testing.T) {
 	if err := r.postBinary(context.Background(), exec, "/missing", nil, nil); err == nil {
 		t.Fatal("expected binary missing hash error")
 	}
+}
 
+func testRemoteHealthAndInputBranches(t *testing.T, r *RemoteDeckRecommender, exec *remoteExecution, server *httptest.Server) {
+	t.Helper()
 	if !r.healthCheck(context.Background(), server.URL) || r.healthCheck(context.Background(), "") {
 		t.Fatal("unexpected health result")
 	}
@@ -317,6 +336,13 @@ func TestRemoteTransportFailuresAdditional(t *testing.T) {
 }
 
 func TestRemoteRecommendHelpersAdditional(t *testing.T) {
+	testRemoteRecommendValidation(t)
+	testRemoteCircuitBreakerHelpers(t)
+	testRemoteReadyTimeoutAndInvalidation(t)
+}
+
+func testRemoteRecommendValidation(t *testing.T) {
+	t.Helper()
 	valid := testRemoteRecommendRequest()
 	for _, req := range []RecommendRequest{
 		{},
@@ -339,7 +365,10 @@ func TestRemoteRecommendHelpersAdditional(t *testing.T) {
 	if err := firstRemoteBatchError([]remoteBatchRecommendResult{{Error: " first "}, {Error: "second"}}); err == nil || err.Error() != "first" {
 		t.Fatalf("first batch error = %v", err)
 	}
+}
 
+func testRemoteCircuitBreakerHelpers(t *testing.T) {
+	t.Helper()
 	fixedNow := time.Unix(1000, 0)
 	r := &RemoteDeckRecommender{now: func() time.Time { return fixedNow }, logger: logger.NewLogger("DeckRemoteAdditional", "ERROR", nil)}
 	state := &remoteTargetState{}
@@ -383,7 +412,10 @@ func TestRemoteRecommendHelpersAdditional(t *testing.T) {
 	if shouldCountCircuitBreakerFailure(nil) || shouldCountCircuitBreakerFailure(errors.New("bad option")) {
 		t.Fatal("logical error counted as circuit failure")
 	}
+}
 
+func testRemoteReadyTimeoutAndInvalidation(t *testing.T) {
+	t.Helper()
 	if got := (&RemoteDeckRecommender{}).readySharedTimeout(); got != time.Minute {
 		t.Fatalf("default shared timeout = %v", got)
 	}
@@ -391,6 +423,8 @@ func TestRemoteRecommendHelpersAdditional(t *testing.T) {
 	if got := configured.readySharedTimeout(); got != 244*time.Second {
 		t.Fatalf("configured shared timeout = %v", got)
 	}
+	r := &RemoteDeckRecommender{}
+	state := &remoteTargetState{}
 	state.masterdataReady = true
 	state.musicMetaHash = "hash"
 	r.invalidate(state, remoteRewarmMasterdata)
@@ -406,6 +440,71 @@ func TestRemoteRecommendHelpersAdditional(t *testing.T) {
 	r.invalidate(state, remoteRewarmNone)
 	if state.masterdataReady || state.musicMetaHash != "" {
 		t.Fatal("full invalidation failed")
+	}
+}
+
+func TestRemoteCircuitGateAndErrorRecording(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+	fixedNow := time.Unix(2000, 0)
+	r := &RemoteDeckRecommender{
+		client: server.Client(),
+		now:    func() time.Time { return fixedNow },
+		logger: logger.NewLogger("DeckRemoteAdditional", "ERROR", nil),
+	}
+	state := &remoteTargetState{target: upstream.TargetConfig{BaseURL: server.URL}}
+	if err := r.ensureCircuitClosed(context.Background(), state); err != nil {
+		t.Fatalf("closed circuit error = %v", err)
+	}
+	state.consecutiveFailures.Store(maxConsecutiveFailures)
+	state.lastFailureAtNanos.Store(fixedNow.Add(-circuitBreakerCooldown - time.Second).UnixNano())
+	if err := r.ensureCircuitClosed(context.Background(), state); err != nil {
+		t.Fatalf("cooldown circuit reset error = %v", err)
+	}
+	state.consecutiveFailures.Store(maxConsecutiveFailures)
+	state.lastFailureAtNanos.Store(fixedNow.UnixNano())
+	if err := r.ensureCircuitClosed(context.Background(), state); err != nil {
+		t.Fatalf("health-probe circuit reset error = %v", err)
+	}
+	state.target.BaseURL = ""
+	state.consecutiveFailures.Store(maxConsecutiveFailures)
+	state.lastFailureAtNanos.Store(fixedNow.UnixNano())
+	if err := r.ensureCircuitClosed(context.Background(), state); err == nil {
+		t.Fatal("open circuit was accepted")
+	}
+
+	r.recordRecommendError(context.Background(), state, errors.New("connection refused"), time.Millisecond)
+	if state.consecutiveFailures.Load() != maxConsecutiveFailures+1 {
+		t.Fatal("transport error did not increment circuit failures")
+	}
+	r.recordRecommendError(context.Background(), state, errors.New("bad option"), time.Millisecond)
+	if state.consecutiveFailures.Load() != 0 {
+		t.Fatal("logical error did not reset circuit failures")
+	}
+}
+
+func TestRemoteReadyInputAndFlightErrorHelpers(t *testing.T) {
+	r := &RemoteDeckRecommender{region: "jp"}
+	region, path, hash, err := r.normalizeReadyInputs(context.Background(), " ", nil, " /tmp/meta.json ")
+	if err != nil || region != "jp" || path != "/tmp/meta.json" || hash != "path:/tmp/meta.json" {
+		t.Fatalf("normalized ready inputs = %q, %q, %q, %v", region, path, hash, err)
+	}
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, _, _, err := r.normalizeReadyInputs(canceled, "jp", nil, ""); !errors.Is(err, context.Canceled) {
+		t.Fatalf("canceled ready inputs error = %v", err)
+	}
+	if retry, err := classifyReadyFlightError(context.Background(), context.DeadlineExceeded); !retry || err != nil {
+		t.Fatalf("deadline flight error = retry %v, err %v", retry, err)
+	}
+	if retry, err := classifyReadyFlightError(canceled, errors.New("remote")); retry || !errors.Is(err, context.Canceled) {
+		t.Fatalf("caller cancellation = retry %v, err %v", retry, err)
+	}
+	wantErr := errors.New("remote")
+	if retry, err := classifyReadyFlightError(context.Background(), wantErr); retry || !errors.Is(err, wantErr) {
+		t.Fatalf("remote flight error = retry %v, err %v", retry, err)
 	}
 }
 

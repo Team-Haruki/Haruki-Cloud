@@ -54,65 +54,15 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 		}
 	}()
 
-	rows, err := tx.PendingAlias.Query().
-		Where(
-			pendingalias.AliasTypeIn(supportedAliasTypes...),
-			pendingalias.IDIn(uniqueIDs...),
-		).
-		All(ctx)
+	byID, err := loadPendingAliasesForReview(ctx, tx, uniqueIDs)
 	if err != nil {
 		return nil, err
 	}
-
-	byID := make(map[int64]*pjskdb.PendingAlias, len(rows))
-	for _, row := range rows {
-		byID[row.ID] = row
+	if err := s.validatePendingAliasesForApproval(ctx, tx, uniqueIDs, byID); err != nil {
+		return nil, err
 	}
-	if len(byID) != len(uniqueIDs) {
-		missing := make([]string, 0)
-		for _, reviewID := range uniqueIDs {
-			if _, ok := byID[reviewID]; !ok {
-				missing = append(missing, strconv.FormatInt(reviewID, 10))
-			}
-		}
-		return nil, onebot11.NewReplayError("未找到待审核别名ID: %s", strings.Join(missing, " "))
-	}
-
-	reserved := make(map[string]int64, len(uniqueIDs))
-	for _, reviewID := range uniqueIDs {
-		row := byID[reviewID]
-		if err := s.ensureEntityNameAvailable(ctx, row.AliasType, row.Alias); err != nil {
-			return nil, err
-		}
-		exists, err := approvedAliasExists(ctx, tx.Alias, row.AliasType, row.Alias)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			return nil, onebot11.NewReplayError("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
-		}
-		key := row.AliasType + "\x00" + normalizeCompareText(row.Alias)
-		if prevID, ok := reserved[key]; ok {
-			return nil, onebot11.NewReplayError("待通过的审核ID %d 与 %d 使用了重复%s别名 %q", prevID, reviewID, aliasTypeLabel(row.AliasType), row.Alias)
-		}
-		reserved[key] = reviewID
-	}
-
-	for _, reviewID := range uniqueIDs {
-		row := byID[reviewID]
-		if _, err := tx.Alias.Create().
-			SetAliasType(row.AliasType).
-			SetAliasTypeID(row.AliasTypeID).
-			SetAlias(row.Alias).
-			Save(ctx); err != nil {
-			if pjskdb.IsConstraintError(err) {
-				return nil, onebot11.NewReplayError("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
-			}
-			return nil, err
-		}
-		if err := tx.PendingAlias.DeleteOneID(row.ID).Exec(ctx); err != nil {
-			return nil, err
-		}
+	if err := approvePendingAliases(ctx, tx, uniqueIDs, byID); err != nil {
+		return nil, err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -120,6 +70,81 @@ func (s *Service) Approve(ctx context.Context, platform, platformUserID string, 
 	}
 	tx = nil
 	return s.buildAliasRecordsFromPending(ctx, orderedPendingAliases(uniqueIDs, byID))
+}
+
+func loadPendingAliasesForReview(ctx context.Context, tx *pjskdb.Tx, reviewIDs []int64) (map[int64]*pjskdb.PendingAlias, error) {
+	rows, err := tx.PendingAlias.Query().
+		Where(
+			pendingalias.AliasTypeIn(supportedAliasTypes...),
+			pendingalias.IDIn(reviewIDs...),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[int64]*pjskdb.PendingAlias, len(rows))
+	for _, row := range rows {
+		byID[row.ID] = row
+	}
+	missing := missingReviewIDs(reviewIDs, byID)
+	if len(missing) != 0 {
+		return nil, onebot11.NewReplayError("未找到待审核别名ID: %s", strings.Join(missing, " "))
+	}
+	return byID, nil
+}
+
+func missingReviewIDs(reviewIDs []int64, byID map[int64]*pjskdb.PendingAlias) []string {
+	missing := make([]string, 0)
+	for _, reviewID := range reviewIDs {
+		if _, ok := byID[reviewID]; !ok {
+			missing = append(missing, strconv.FormatInt(reviewID, 10))
+		}
+	}
+	return missing
+}
+
+func (s *Service) validatePendingAliasesForApproval(ctx context.Context, tx *pjskdb.Tx, reviewIDs []int64, byID map[int64]*pjskdb.PendingAlias) error {
+	reserved := make(map[string]int64, len(reviewIDs))
+	for _, reviewID := range reviewIDs {
+		row := byID[reviewID]
+		if err := s.ensureEntityNameAvailable(ctx, row.AliasType, row.Alias); err != nil {
+			return err
+		}
+		exists, err := approvedAliasExists(ctx, tx.Alias, row.AliasType, row.Alias)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return onebot11.NewReplayError("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
+		}
+		key := row.AliasType + "\x00" + normalizeCompareText(row.Alias)
+		if prevID, ok := reserved[key]; ok {
+			return onebot11.NewReplayError("待通过的审核ID %d 与 %d 使用了重复%s别名 %q", prevID, reviewID, aliasTypeLabel(row.AliasType), row.Alias)
+		}
+		reserved[key] = reviewID
+	}
+	return nil
+}
+
+func approvePendingAliases(ctx context.Context, tx *pjskdb.Tx, reviewIDs []int64, byID map[int64]*pjskdb.PendingAlias) error {
+	for _, reviewID := range reviewIDs {
+		row := byID[reviewID]
+		_, err := tx.Alias.Create().
+			SetAliasType(row.AliasType).
+			SetAliasTypeID(row.AliasTypeID).
+			SetAlias(row.Alias).
+			Save(ctx)
+		if pjskdb.IsConstraintError(err) {
+			return onebot11.NewReplayError("%s别名 %q 已经存在于已审核列表中", aliasTypeLabel(row.AliasType), row.Alias)
+		}
+		if err != nil {
+			return err
+		}
+		if err := tx.PendingAlias.DeleteOneID(row.ID).Exec(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) Reject(ctx context.Context, platform, platformUserID string, reviewID int64, reason string) (*PjskAliasRecord, error) {
@@ -167,46 +192,12 @@ func (s *Service) RejectMany(ctx context.Context, platform, platformUserID strin
 		}
 	}()
 
-	rows, err := tx.PendingAlias.Query().
-		Where(
-			pendingalias.AliasTypeIn(supportedAliasTypes...),
-			pendingalias.IDIn(uniqueIDs...),
-		).
-		All(ctx)
+	byID, err := loadPendingAliasesForReview(ctx, tx, uniqueIDs)
 	if err != nil {
 		return nil, err
 	}
-
-	byID := make(map[int64]*pjskdb.PendingAlias, len(rows))
-	for _, row := range rows {
-		byID[row.ID] = row
-	}
-	if len(byID) != len(uniqueIDs) {
-		missing := make([]string, 0)
-		for _, reviewID := range uniqueIDs {
-			if _, ok := byID[reviewID]; !ok {
-				missing = append(missing, strconv.FormatInt(reviewID, 10))
-			}
-		}
-		return nil, onebot11.NewReplayError("未找到待审核别名ID: %s", strings.Join(missing, " "))
-	}
-
-	reviewedAt := time.Now()
-	for _, reviewID := range uniqueIDs {
-		row := byID[reviewID]
-		if _, err := tx.RejectedAlias.Create().
-			SetAliasType(row.AliasType).
-			SetAliasTypeID(row.AliasTypeID).
-			SetAlias(row.Alias).
-			SetReviewedBy(reviewer).
-			SetReason(reason).
-			SetReviewedAt(reviewedAt).
-			Save(ctx); err != nil {
-			return nil, err
-		}
-		if err := tx.PendingAlias.DeleteOneID(reviewID).Exec(ctx); err != nil {
-			return nil, err
-		}
+	if err := rejectPendingAliases(ctx, tx, uniqueIDs, byID, reviewer, reason); err != nil {
+		return nil, err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -219,4 +210,25 @@ func (s *Service) RejectMany(ctx context.Context, platform, platformUserID strin
 		return nil, err
 	}
 	return records, nil
+}
+
+func rejectPendingAliases(ctx context.Context, tx *pjskdb.Tx, reviewIDs []int64, byID map[int64]*pjskdb.PendingAlias, reviewer, reason string) error {
+	reviewedAt := time.Now()
+	for _, reviewID := range reviewIDs {
+		row := byID[reviewID]
+		if _, err := tx.RejectedAlias.Create().
+			SetAliasType(row.AliasType).
+			SetAliasTypeID(row.AliasTypeID).
+			SetAlias(row.Alias).
+			SetReviewedBy(reviewer).
+			SetReason(reason).
+			SetReviewedAt(reviewedAt).
+			Save(ctx); err != nil {
+			return err
+		}
+		if err := tx.PendingAlias.DeleteOneID(reviewID).Exec(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
 }

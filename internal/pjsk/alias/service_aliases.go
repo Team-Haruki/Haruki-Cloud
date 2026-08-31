@@ -19,22 +19,9 @@ func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserI
 	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
-	platform = strings.TrimSpace(platform)
-	platformUserID = strings.TrimSpace(platformUserID)
-	if platform == "" || platformUserID == "" {
-		return nil, fmt.Errorf("缺少别名提交身份信息")
-	}
-	banned, err := s.pjsk.AliasSubmissionBan.Query().
-		Where(
-			aliassubmissionban.PlatformEQ(platform),
-			aliassubmissionban.PlatformUserIDEQ(platformUserID),
-		).
-		Exist(ctx)
+	submitter, err := s.validateSubmitter(ctx, platform, platformUserID)
 	if err != nil {
 		return nil, err
-	}
-	if banned {
-		return nil, onebot11.NewReplayError("你已被禁止提交别名")
 	}
 	aliasType, err = normalizeAliasType(aliasType)
 	if err != nil {
@@ -48,14 +35,10 @@ func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserI
 	if err != nil {
 		return nil, err
 	}
-	for _, aliasText := range cleanedAliases {
-		if err := s.ensureAliasAvailable(ctx, aliasType, s.pjsk.Alias, s.pjsk.PendingAlias, aliasText); err != nil {
-			return nil, err
-		}
+	if err := s.ensureAliasesAvailable(ctx, aliasType, cleanedAliases); err != nil {
+		return nil, err
 	}
 
-	submitter := buildActorLabel(platform, platformUserID)
-	now := time.Now()
 	tx, err := s.pjsk.Tx(ctx)
 	if err != nil {
 		return nil, err
@@ -66,32 +49,71 @@ func (s *Service) Submit(ctx context.Context, aliasType, platform, platformUserI
 		}
 	}()
 
-	records := make([]PjskAliasRecord, 0, len(cleanedAliases))
-	for _, aliasText := range cleanedAliases {
-		row, err := tx.PendingAlias.Create().
-			SetAliasType(aliasType).
-			SetAliasTypeID(entityRef.ID).
-			SetAlias(aliasText).
-			SetSubmittedBy(submitter).
-			SetSubmittedAt(now).
-			Save(ctx)
-		if err != nil {
-			if pjskdb.IsConstraintError(err) {
-				return nil, fmt.Errorf("%s别名 %q 已经在待审核列表中", aliasTypeLabel(aliasType), aliasText)
-			}
-			return nil, err
-		}
-		records = append(records, PjskAliasRecord{
-			ReviewID: row.ID,
-			Entity:   entityRef,
-			Alias:    row.Alias,
-		})
+	records, err := createPendingAliases(ctx, tx, aliasType, entityRef, cleanedAliases, submitter)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 	tx = nil
+	return records, nil
+}
+
+func (s *Service) validateSubmitter(ctx context.Context, platform, platformUserID string) (string, error) {
+	platform = strings.TrimSpace(platform)
+	platformUserID = strings.TrimSpace(platformUserID)
+	if platform == "" || platformUserID == "" {
+		return "", fmt.Errorf("缺少别名提交身份信息")
+	}
+	banned, err := s.pjsk.AliasSubmissionBan.Query().
+		Where(
+			aliassubmissionban.PlatformEQ(platform),
+			aliassubmissionban.PlatformUserIDEQ(platformUserID),
+		).
+		Exist(ctx)
+	if err != nil {
+		return "", err
+	}
+	if banned {
+		return "", onebot11.NewReplayError("你已被禁止提交别名")
+	}
+	return buildActorLabel(platform, platformUserID), nil
+}
+
+func (s *Service) ensureAliasesAvailable(ctx context.Context, aliasType string, aliases []string) error {
+	for _, aliasText := range aliases {
+		if err := s.ensureAliasAvailable(ctx, aliasType, s.pjsk.Alias, s.pjsk.PendingAlias, aliasText); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func createPendingAliases(ctx context.Context, tx *pjskdb.Tx, aliasType string, entity EntityRef, aliases []string, submitter string) ([]PjskAliasRecord, error) {
+	records := make([]PjskAliasRecord, 0, len(aliases))
+	now := time.Now()
+	for _, aliasText := range aliases {
+		row, err := tx.PendingAlias.Create().
+			SetAliasType(aliasType).
+			SetAliasTypeID(entity.ID).
+			SetAlias(aliasText).
+			SetSubmittedBy(submitter).
+			SetSubmittedAt(now).
+			Save(ctx)
+		if pjskdb.IsConstraintError(err) {
+			return nil, fmt.Errorf("%s别名 %q 已经在待审核列表中", aliasTypeLabel(aliasType), aliasText)
+		}
+		if err != nil {
+			return nil, err
+		}
+		records = append(records, PjskAliasRecord{
+			ReviewID: row.ID,
+			Entity:   entity,
+			Alias:    row.Alias,
+		})
+	}
 	return records, nil
 }
 

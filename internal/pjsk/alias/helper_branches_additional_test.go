@@ -53,7 +53,7 @@ func TestAliasServiceReadOnlyAndNameLoaders(t *testing.T) {
 	}
 }
 
-func TestAliasPureHelperBranches(t *testing.T) {
+func TestAliasRankingAndNameHelpers(t *testing.T) {
 	for region, want := range map[string]int{"jp": 0, "cn": 1, "tw": 2, "kr": 3, "en": 4, "xx": 5} {
 		if got := serverRegionRank(region); got != want {
 			t.Errorf("serverRegionRank(%q) = %d", region, got)
@@ -78,7 +78,9 @@ func TestAliasPureHelperBranches(t *testing.T) {
 	if characterMatchesName(characterRows[0], "") || !characterMatchesName(characterRows[0], "englishname") || characterMatchesName(characterRows[0], "missing") {
 		t.Fatal("character name matching failed")
 	}
+}
 
+func TestAliasNormalizationHelpers(t *testing.T) {
 	values := []string{"Alpha"}
 	appendUniqueString(&values, " ")
 	appendUniqueString(&values, " alpha ")
@@ -104,7 +106,9 @@ func TestAliasPureHelperBranches(t *testing.T) {
 	if got, err := normalizeReviewIDs([]int64{2, 2, 3}); err != nil || len(got) != 2 {
 		t.Fatalf("review IDs = %#v, %v", got, err)
 	}
+}
 
+func TestAliasLabelsAndPresentationHelpers(t *testing.T) {
 	for aliasType, label := range map[string]string{PjskAliasTypeMusic: "歌曲", PjskAliasTypeCharacter: "角色", "x": "未知类型"} {
 		if got := aliasTypeLabel(aliasType); got != label {
 			t.Errorf("aliasTypeLabel(%q) = %q", aliasType, got)

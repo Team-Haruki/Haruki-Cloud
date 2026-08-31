@@ -627,6 +627,20 @@ func TestEventPlannerParsesDeckLikeOptions(t *testing.T) {
 	}
 }
 
+func TestEventPlannerUsesWorldBloomFinaleSimulation(t *testing.T) {
+	query := renderdeck.AutoQuery{WorldBloomFinaleTurn: drawing.IntPtr(3)}
+	eventInfo, warning, err := resolveEventPlannerEventFromQuery(context.Background(), nil, renderregion.JP, query)
+	if err != nil {
+		t.Fatalf("resolveEventPlannerEventFromQuery() error = %v", err)
+	}
+	if eventInfo == nil || eventInfo.ID != 0 || eventInfo.Name != "WL3终章模拟活动" || eventInfo.EventType != "world_bloom" {
+		t.Fatalf("unexpected simulated finale event: %+v", eventInfo)
+	}
+	if warning != "已使用模拟活动设置进行规划" {
+		t.Fatalf("unexpected warning: %q", warning)
+	}
+}
+
 func TestEventPlannerParsesTotalRankingOption(t *testing.T) {
 	params, err := parseEventPlannerParams("t100 总榜 wl3 mzk", "/jp活动规划")
 	if err != nil {

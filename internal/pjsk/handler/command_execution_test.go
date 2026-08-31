@@ -3293,23 +3293,23 @@ func TestResolveDeckCharacterSelectionsSimulatesWorldBloomFinaleWithoutMasterdat
 	if query.EventID != nil {
 		t.Fatalf("simulated finale should not use an event id: %+v", query.EventID)
 	}
-	if query.WorldBloomFinaleTurn != nil {
-		t.Fatalf("expected finale turn to be consumed: %+v", query.WorldBloomFinaleTurn)
+	if query.WorldBloomFinaleTurn == nil || *query.WorldBloomFinaleTurn != 3 {
+		t.Fatalf("unexpected simulated finale turn: %+v", query.WorldBloomFinaleTurn)
 	}
-	if query.WorldBloomEventTurn == nil || *query.WorldBloomEventTurn != 3 {
-		t.Fatalf("unexpected simulated world bloom turn: %+v", query.WorldBloomEventTurn)
+	if query.WorldBloomEventTurn != nil {
+		t.Fatalf("simulated finale should not use an ordinary world bloom turn: %+v", query.WorldBloomEventTurn)
 	}
 	if !query.MetadataWorldBloomFinale {
 		t.Fatal("expected simulated finale metadata")
 	}
-	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 11 {
-		t.Fatalf("unexpected simulated world bloom character: %+v", query.WorldBloomCharacterID)
+	if query.WorldBloomCharacterID != nil || query.WorldBloomCharacterQuery != "" {
+		t.Fatalf("simulated finale should not select an ordinary chapter: id=%+v query=%q", query.WorldBloomCharacterID, query.WorldBloomCharacterQuery)
 	}
 	if query.ForcedLeaderCharacterID == nil || *query.ForcedLeaderCharacterID != 11 {
 		t.Fatalf("unexpected forced leader character: %+v", query.ForcedLeaderCharacterID)
 	}
-	if len(query.FixedCharacters) != 1 || query.FixedCharacters[0] != 11 {
-		t.Fatalf("expected the simulated finale leader to be fixed first: %+v", query.FixedCharacters)
+	if len(query.FixedCharacters) != 0 {
+		t.Fatalf("simulated finale should use the engine forced leader rule: %+v", query.FixedCharacters)
 	}
 }
 

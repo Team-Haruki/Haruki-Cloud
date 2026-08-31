@@ -86,7 +86,8 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	attr := normalizeRecommendAttr(query.EventAttr)
 	unit := normalizeRecommendUnit(query.EventUnit)
 	hasSimulatedWorldBloomTurn := !explicitEventID && query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0
-	fakeEvent := hasSimulatedWorldBloomTurn || (!explicitEventID && (attr != "" || unit != ""))
+	hasSimulatedWorldBloomFinale := !explicitEventID && query.WorldBloomFinaleTurn != nil && *query.WorldBloomFinaleTurn > 0
+	fakeEvent := hasSimulatedWorldBloomTurn || hasSimulatedWorldBloomFinale || (!explicitEventID && (attr != "" || unit != ""))
 
 	if attr != "" && fakeEvent {
 		option["event_attr"] = attr
@@ -96,6 +97,10 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	}
 	if hasSimulatedWorldBloomTurn {
 		option["world_bloom_event_turn"] = *query.WorldBloomEventTurn
+		option["event_type"] = "world_bloom"
+	}
+	if hasSimulatedWorldBloomFinale {
+		option["world_bloom_finale_turn"] = *query.WorldBloomFinaleTurn
 		option["event_type"] = "world_bloom"
 	}
 	worldBloomCharacterID := 0

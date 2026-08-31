@@ -857,17 +857,21 @@ func TestBuildRecommendOptionForwardsFinalChapterForcedLeader(t *testing.T) {
 	option, err = controller.buildRecommendOption(renderregion.JP, "event", AutoQuery{
 		Region:                   "jp",
 		RecommendType:            "event",
-		WorldBloomEventTurn:      new(3),
-		WorldBloomCharacterID:    new(11),
+		WorldBloomFinaleTurn:     new(3),
 		MetadataWorldBloomFinale: true,
 		ForcedLeaderCharacterID:  new(11),
-		FixedCharacters:          []int{11},
 	})
 	if err != nil {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
 	}
-	if option["event_id"] != nil || option["world_bloom_event_turn"] != 3 {
+	if option["event_id"] != nil || option["world_bloom_finale_turn"] != 3 {
 		t.Fatalf("unexpected simulated finale event options: %+v", option)
+	}
+	if _, ok := option["world_bloom_event_turn"]; ok {
+		t.Fatalf("simulated finale should not use ordinary world bloom options: %+v", option)
+	}
+	if _, ok := option["world_bloom_character_id"]; ok {
+		t.Fatalf("simulated finale should not select an ordinary chapter: %+v", option)
 	}
 	if option["forced_leader_character_id"] != 11 {
 		t.Fatalf("unexpected simulated finale forced leader: %+v", option["forced_leader_character_id"])

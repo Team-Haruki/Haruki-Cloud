@@ -16,24 +16,11 @@ import (
 )
 
 func TestDeckWorldBloomFinaleSimulationHelpers(t *testing.T) {
-	if isSimulatedDeckWorldBloomFinale(nil) {
-		t.Fatal("nil query classified as finale simulation")
-	}
 	turn := 3
-	query := &renderdeck.AutoQuery{WorldBloomEventTurn: &turn, MetadataWorldBloomFinale: true}
-	if !isSimulatedDeckWorldBloomFinale(query) {
-		t.Fatal("finale simulation was not recognized")
-	}
-	eventID := 1
-	query.EventID = &eventID
-	if isSimulatedDeckWorldBloomFinale(query) {
-		t.Fatal("resolved event classified as simulation")
-	}
-
 	if err := prepareDeckWorldBloomFinaleSimulation(nil, 3); err != nil {
 		t.Fatalf("nil finale query = %v", err)
 	}
-	query = &renderdeck.AutoQuery{}
+	query := &renderdeck.AutoQuery{}
 	if err := prepareDeckWorldBloomFinaleSimulation(query, 3); err == nil {
 		t.Fatal("expected missing leader error")
 	}
@@ -42,22 +29,15 @@ func TestDeckWorldBloomFinaleSimulationHelpers(t *testing.T) {
 	if err := prepareDeckWorldBloomFinaleSimulation(query, 3); err != nil {
 		t.Fatalf("ID finale simulation = %v", err)
 	}
-	if query.EventID != nil || query.WorldBloomFinaleTurn != nil || query.WorldBloomEventTurn == nil || *query.WorldBloomEventTurn != 3 || query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 || query.EventUnit != "piapro" {
+	if query.EventID != nil || query.WorldBloomFinaleTurn == nil || *query.WorldBloomFinaleTurn != 3 || query.WorldBloomEventTurn != nil || query.WorldBloomCharacterID != nil || query.WorldBloomCharacterQuery != "" || query.EventUnit != "" || query.EventAttr != "" || !query.MetadataWorldBloomFinale {
 		t.Fatalf("ID finale query = %+v", query)
 	}
 	query = &renderdeck.AutoQuery{ForcedLeaderCharacterQuery: "miku"}
 	if err := prepareDeckWorldBloomFinaleSimulation(query, 4); err != nil {
 		t.Fatalf("query finale simulation = %v", err)
 	}
-	if query.WorldBloomCharacterID != nil || query.WorldBloomCharacterQuery != "miku" || query.WorldBloomEventTurn == nil || *query.WorldBloomEventTurn != 4 {
+	if query.WorldBloomCharacterID != nil || query.WorldBloomCharacterQuery != "" || query.WorldBloomEventTurn != nil || query.WorldBloomFinaleTurn == nil || *query.WorldBloomFinaleTurn != 4 || query.ForcedLeaderCharacterQuery != "miku" {
 		t.Fatalf("query finale = %+v", query)
-	}
-
-	if got := prependDeckUniqueCharacter([]int{1, 2, 1}, 1); !reflect.DeepEqual(got, []int{1, 2}) {
-		t.Fatalf("prepended characters = %v", got)
-	}
-	if got := prependDeckUniqueCharacter(nil, 3); !reflect.DeepEqual(got, []int{3}) {
-		t.Fatalf("prepended empty characters = %v", got)
 	}
 }
 

@@ -145,7 +145,9 @@ func optionHasSimulatedEvent(option map[string]any) bool {
 	if option == nil {
 		return false
 	}
-	return optionHasUnitAttrEvent(option) || optionInt(option, "world_bloom_event_turn") > 0
+	return optionHasUnitAttrEvent(option) ||
+		optionInt(option, "world_bloom_event_turn") > 0 ||
+		optionInt(option, "world_bloom_finale_turn") > 0
 }
 
 func optionHasUnitAttrEvent(option map[string]any) bool {
@@ -161,5 +163,6 @@ func optionHasWorldBloom(option map[string]any) bool {
 	}
 	return optionInt(option, "world_bloom_character_id") > 0 ||
 		optionInt(option, "world_bloom_event_turn") > 0 ||
+		optionInt(option, "world_bloom_finale_turn") > 0 ||
 		optionInt(option, "event_id") == 180
 }

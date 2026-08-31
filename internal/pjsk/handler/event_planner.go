@@ -529,7 +529,8 @@ func resolveEventPlannerEventFromQuery(ctx context.Context, app *renderapp.App, 
 		return resolveEventPlannerEvent(ctx, app, region, *query.EventID)
 	}
 	if strings.TrimSpace(query.EventAttr) != "" || strings.TrimSpace(query.EventUnit) != "" ||
-		(query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0) {
+		(query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0) ||
+		(query.WorldBloomFinaleTurn != nil && *query.WorldBloomFinaleTurn > 0) {
 		return &masterdata.Event{
 			ID:          0,
 			Name:        eventPlannerSimulatedEventName(query),
@@ -542,6 +543,9 @@ func resolveEventPlannerEventFromQuery(ctx context.Context, app *renderapp.App, 
 }
 
 func eventPlannerSimulatedEventName(query renderdeck.AutoQuery) string {
+	if query.WorldBloomFinaleTurn != nil && *query.WorldBloomFinaleTurn > 0 {
+		return fmt.Sprintf("WL%d终章模拟活动", *query.WorldBloomFinaleTurn)
+	}
 	if query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0 {
 		return fmt.Sprintf("WL%d模拟活动", *query.WorldBloomEventTurn)
 	}
@@ -549,7 +553,8 @@ func eventPlannerSimulatedEventName(query renderdeck.AutoQuery) string {
 }
 
 func eventPlannerSimulatedEventType(query renderdeck.AutoQuery) string {
-	if query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0 {
+	if (query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0) ||
+		(query.WorldBloomFinaleTurn != nil && *query.WorldBloomFinaleTurn > 0) {
 		return "world_bloom"
 	}
 	return ""

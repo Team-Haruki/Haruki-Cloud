@@ -33,7 +33,6 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 	if err := resolveDeckForcedLeaderSelection(ctx, q, app, region); err != nil {
 		return err
 	}
-	applyDeckSimulatedFinaleLeader(q)
 	if err := resolveDeckWorldBloomCharacterQuery(ctx, q, app, region); err != nil {
 		return err
 	}
@@ -43,7 +42,6 @@ func resolveDeckCharacterSelections(ctx context.Context, q *deck.AutoQuery, app 
 	if err := resolveDeckFixedCharacterQueries(ctx, q, app, region); err != nil {
 		return err
 	}
-	applyDeckSimulatedFinaleFixedLeader(q)
 	if err := validateDeckCharacterIDs(q.FixedCharacters); err != nil {
 		return err
 	}
@@ -66,18 +64,6 @@ func resolveDeckForcedLeaderSelection(ctx context.Context, q *deck.AutoQuery, ap
 	q.ForcedLeaderCharacterID = drawing.IntPtr(charID)
 	q.ForcedLeaderCharacterQuery = ""
 	return nil
-}
-
-func applyDeckSimulatedFinaleLeader(q *deck.AutoQuery) {
-	if !isSimulatedDeckWorldBloomFinale(q) || q.ForcedLeaderCharacterID == nil || *q.ForcedLeaderCharacterID <= 0 {
-		return
-	}
-	charID := *q.ForcedLeaderCharacterID
-	q.WorldBloomCharacterID = drawing.IntPtr(charID)
-	q.WorldBloomCharacterQuery = ""
-	if strings.TrimSpace(q.EventUnit) == "" {
-		q.EventUnit = resolveDeckCharacterUnit(charID)
-	}
 }
 
 func resolveDeckWorldBloomCharacterQuery(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {
@@ -126,16 +112,6 @@ func resolveDeckFixedCharacterQueries(ctx context.Context, q *deck.AutoQuery, ap
 	return nil
 }
 
-func applyDeckSimulatedFinaleFixedLeader(q *deck.AutoQuery) {
-	if isSimulatedDeckWorldBloomFinale(q) && q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
-		q.FixedCharacters = prependDeckUniqueCharacter(q.FixedCharacters, *q.ForcedLeaderCharacterID)
-	}
-}
-
-func isSimulatedDeckWorldBloomFinale(q *deck.AutoQuery) bool {
-	return q != nil && q.MetadataWorldBloomFinale && q.EventID == nil && q.WorldBloomEventTurn != nil && *q.WorldBloomEventTurn > 0
-}
-
 func prepareDeckWorldBloomFinaleSimulation(q *deck.AutoQuery, turn int) error {
 	if q == nil {
 		return nil
@@ -145,29 +121,14 @@ func prepareDeckWorldBloomFinaleSimulation(q *deck.AutoQuery, turn int) error {
 	}
 
 	q.EventID = nil
-	q.WorldBloomFinaleTurn = nil
-	q.WorldBloomEventTurn = drawing.IntPtr(turn)
+	q.WorldBloomFinaleTurn = drawing.IntPtr(turn)
+	q.WorldBloomEventTurn = nil
 	q.MetadataWorldBloomFinale = true
-	if q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
-		q.WorldBloomCharacterID = drawing.IntPtr(*q.ForcedLeaderCharacterID)
-		q.WorldBloomCharacterQuery = ""
-		q.EventUnit = resolveDeckCharacterUnit(*q.ForcedLeaderCharacterID)
-	} else {
-		q.WorldBloomCharacterID = nil
-		q.WorldBloomCharacterQuery = q.ForcedLeaderCharacterQuery
-	}
+	q.WorldBloomCharacterID = nil
+	q.WorldBloomCharacterQuery = ""
+	q.EventUnit = ""
+	q.EventAttr = ""
 	return nil
-}
-
-func prependDeckUniqueCharacter(characters []int, characterID int) []int {
-	result := make([]int, 0, len(characters)+1)
-	result = append(result, characterID)
-	for _, existing := range characters {
-		if existing != characterID {
-			result = append(result, existing)
-		}
-	}
-	return result
 }
 
 func resolveDeckEventAndWorldBloomSelection(ctx context.Context, q *deck.AutoQuery, app *renderapp.App, region renderregion.Value) error {

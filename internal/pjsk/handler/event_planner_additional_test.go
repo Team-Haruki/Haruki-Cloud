@@ -80,6 +80,12 @@ func TestEventPlannerPrimitiveParsers(t *testing.T) {
 }
 
 func TestEventPlannerSongParsingVariants(t *testing.T) {
+	testEventPlannerSongMarkerAndSelections(t)
+	testEventPlannerSongTokenClassification(t)
+	testEventPlannerDifficultyAndDigits(t)
+}
+
+func testEventPlannerSongMarkerAndSelections(t *testing.T) {
 	prefix, after, ok := eventPlannerAfterSongMarker("pt100w 歌 虾ex 龙hd 5火")
 	if !ok || prefix != "pt100w" || after != "虾ex 龙hd 5火" {
 		t.Fatalf("marker = %q %q %v", prefix, after, ok)
@@ -96,6 +102,9 @@ func TestEventPlannerSongParsingVariants(t *testing.T) {
 		t.Fatalf("remaining = %q", remaining)
 	}
 
+}
+
+func testEventPlannerSongTokenClassification(t *testing.T) {
 	tests := []struct {
 		token string
 		want  bool
@@ -117,6 +126,9 @@ func TestEventPlannerSongParsingVariants(t *testing.T) {
 		}
 	}
 
+}
+
+func testEventPlannerDifficultyAndDigits(t *testing.T) {
 	query, diff := splitEventPlannerDifficulty("野车append")
 	if query != "野车" || diff != "append" {
 		t.Fatalf("split = %q %q", query, diff)
@@ -194,6 +206,12 @@ func TestEventPlannerQueryAndSimulationHelpers(t *testing.T) {
 }
 
 func TestEventPlannerTargetAndCurrentPointGuardPaths(t *testing.T) {
+	testEventPlannerTargetAndCurrentPoints(t)
+	testEventPlannerRankingAndBindingHelpers(t)
+	testEventPlannerWorldBloomHelpers(t)
+}
+
+func testEventPlannerTargetAndCurrentPoints(t *testing.T) {
 	rc := &RequestContext{Ctx: context.Background(), App: &renderapp.App{}}
 	event := &masterdata.Event{ID: 123, EventType: "world_bloom"}
 
@@ -220,6 +238,10 @@ func TestEventPlannerTargetAndCurrentPointGuardPaths(t *testing.T) {
 		t.Fatalf("missing tracker current = %d %v %q", current, known, warning)
 	}
 
+}
+
+func testEventPlannerRankingAndBindingHelpers(t *testing.T) {
+	event := &masterdata.Event{ID: 123, EventType: "world_bloom"}
 	if eventPlannerUseWorldBloomRanking(nil, eventPlannerCommandParams{}) || eventPlannerUseWorldBloomRanking(event, eventPlannerCommandParams{TotalRanking: true}) || !eventPlannerUseWorldBloomRanking(event, eventPlannerCommandParams{}) {
 		t.Fatal("world bloom ranking classification mismatch")
 	}
@@ -233,6 +255,9 @@ func TestEventPlannerTargetAndCurrentPointGuardPaths(t *testing.T) {
 		t.Fatalf("binding uid = %d %v", uid, ok)
 	}
 
+}
+
+func testEventPlannerWorldBloomHelpers(t *testing.T) {
 	primary := 9
 	metadata := 10
 	if id, ok := eventPlannerWorldBloomCharacterID(renderdeck.AutoQuery{WorldBloomCharacterID: &primary}); !ok || id != 9 {
@@ -253,6 +278,12 @@ func TestEventPlannerTargetAndCurrentPointGuardPaths(t *testing.T) {
 }
 
 func TestEventPlannerFormattingAndGuardPaths(t *testing.T) {
+	testEventPlannerDailyAndDeckFormatting(t)
+	testEventPlannerPointerFormatting(t)
+	testEventPlannerDependencyGuards(t)
+}
+
+func testEventPlannerDailyAndDeckFormatting(t *testing.T) {
 	day := int64(24 * time.Hour / time.Millisecond)
 	if got := eventPlannerDailyPoint(0, 0, 0, day, 0, false); got != 0 {
 		t.Fatalf("zero target daily point = %d", got)
@@ -289,6 +320,9 @@ func TestEventPlannerFormattingAndGuardPaths(t *testing.T) {
 		}
 	}
 
+}
+
+func testEventPlannerPointerFormatting(t *testing.T) {
 	value := 7
 	rate := 1.25
 	textValue := " title "
@@ -308,6 +342,9 @@ func TestEventPlannerFormattingAndGuardPaths(t *testing.T) {
 		t.Fatal("rate formatting mismatch")
 	}
 
+}
+
+func testEventPlannerDependencyGuards(t *testing.T) {
 	if _, err := buildEventPlannerDrawingRequest(nil, renderregion.JP, nil, nil, renderdeck.AutoQuery{}, eventPlannerCommandParams{}, nil, 0, "", 0, false); err == nil {
 		t.Fatal("expected nil event error")
 	}

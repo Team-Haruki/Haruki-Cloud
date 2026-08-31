@@ -18,6 +18,12 @@ import (
 )
 
 func TestFinalCustomProfileCardEdges(t *testing.T) {
+	testFinalCustomProfileParams(t)
+	testFinalCustomProfileResolution(t)
+	testFinalCustomProfileExecutionGuards(t)
+}
+
+func testFinalCustomProfileParams(t *testing.T) {
 	target := mysekaiEdgeContext("1")
 	target.uidArg = "@target"
 	if _, err := buildProfileCustomProfileCardParams(target); err == nil {
@@ -37,6 +43,9 @@ func TestFinalCustomProfileCardEdges(t *testing.T) {
 		t.Fatalf("explicit custom profile target = %+v", got)
 	}
 
+}
+
+func testFinalCustomProfileResolution(t *testing.T) {
 	cards := []sekaiapi.UserCustomProfileCard{
 		{CustomProfileID: 2, CustomProfileCardID: 3, Seq: 2},
 		{CustomProfileID: 1, CustomProfileCardID: 1, Seq: 1},
@@ -59,6 +68,9 @@ func TestFinalCustomProfileCardEdges(t *testing.T) {
 		t.Fatalf("positive integer = %d, %v", value, ok)
 	}
 
+}
+
+func testFinalCustomProfileExecutionGuards(t *testing.T) {
 	if _, err := executeProfileCustomProfileCard(nil); err == nil {
 		t.Fatal("nil custom profile request accepted")
 	}
@@ -103,6 +115,12 @@ func TestFinalContextDataMapEdges(t *testing.T) {
 }
 
 func TestFinalProfileCloneAndGuardEdges(t *testing.T) {
+	testFinalProfileGuardEdges(t)
+	testFinalProfileCloneEdges(t)
+	testFinalPublicProfileBuilderEdges(t)
+}
+
+func testFinalProfileGuardEdges(t *testing.T) {
 	if resolveCardBoxDetailedProfile(nil) != nil || resolveCardBoxDetailedProfile(&RequestContext{}) != nil {
 		t.Fatal("nil card-box profile should stay nil")
 	}
@@ -121,6 +139,9 @@ func TestFinalProfileCloneAndGuardEdges(t *testing.T) {
 	if detail, card := resolveCurrentTargetPublicProfiles(&RequestContext{}); detail != nil || card != nil {
 		t.Fatal("unresolved current-target profiles should stay nil")
 	}
+}
+
+func testFinalProfileCloneEdges(t *testing.T) {
 	if cloneDetailedProfileForTarget(nil, ResolvedGameTarget{}, "jp") != nil {
 		t.Fatal("nil detailed profile clone should stay nil")
 	}
@@ -140,6 +161,9 @@ func TestFinalProfileCloneAndGuardEdges(t *testing.T) {
 	if cloned.MysekaiLevel == &level || *cloned.MysekaiLevel != level {
 		t.Fatal("MySekai level was not deeply cloned")
 	}
+}
+
+func testFinalPublicProfileBuilderEdges(t *testing.T) {
 	if detail, compact := buildPublicMusicProfilesFromResolvedTarget(context.Background(), ResolvedGameTarget{}, "jp", "", "", nil, nil); detail != nil || compact != nil {
 		t.Fatal("nil public profile dependencies should stay nil")
 	}
@@ -149,6 +173,12 @@ func TestFinalProfileCloneAndGuardEdges(t *testing.T) {
 }
 
 func TestFinalTargetSnapshotAndPlannerEdges(t *testing.T) {
+	testFinalTargetAndRegionResolution(t)
+	testFinalSnapshotProviderResolution(t)
+	testFinalPlannerEdges(t)
+}
+
+func testFinalTargetAndRegionResolution(t *testing.T) {
 	ctx := context.Background()
 	if _, err := resolveGameTarget(ctx, userQueryParams{Mode: "uid", PJSKUserID: "1"}, "jp", true, nil); !errors.Is(err, accountdata.ErrBindingServiceUnavailable) {
 		t.Fatalf("nil binding service error = %v", err)
@@ -172,6 +202,9 @@ func TestFinalTargetSnapshotAndPlannerEdges(t *testing.T) {
 		t.Fatalf("unscoped target region = %q", got)
 	}
 
+}
+
+func testFinalSnapshotProviderResolution(t *testing.T) {
 	if defaultSnapshotProviderFactory(nil) != nil || defaultSnapshotProviderFactory(&renderapp.App{}) != nil {
 		t.Fatal("empty snapshot app unexpectedly produced provider")
 	}
@@ -180,7 +213,7 @@ func TestFinalTargetSnapshotAndPlannerEdges(t *testing.T) {
 		t.Fatal("static fallback snapshot provider missing")
 	}
 	liveApp := &renderapp.App{
-		Bindings:  service,
+		Bindings:  newHandlerTestBindingService(t),
 		Toolbox:   sekaiapi.NewToolboxClient(nil),
 		Snapshots: static,
 		Config: renderapp.Config{UserSnapshot: renderapp.UserSnapshotConfig{
@@ -198,6 +231,10 @@ func TestFinalTargetSnapshotAndPlannerEdges(t *testing.T) {
 		t.Fatalf("UID credentials = %q, %q", platform, userID)
 	}
 
+}
+
+func testFinalPlannerEdges(t *testing.T) {
+	ctx := context.Background()
 	if _, _, err := resolveEventPlannerEvent(ctx, nil, renderregion.JP, 0); err == nil {
 		t.Fatal("planner without provider resolved event")
 	}

@@ -35,6 +35,12 @@ func (s *handlerStampSource) GetStamps() ([]masterdata.Stamp, error) {
 }
 
 func TestStampParsingAndHandlerBranches(t *testing.T) {
+	testStampIDAndPageParsing(t)
+	testStampAllParsing(t)
+	testStampHandlerRequests(t)
+}
+
+func testStampIDAndPageParsing(t *testing.T) {
 	for _, tt := range []struct {
 		args string
 		want []int
@@ -67,6 +73,9 @@ func TestStampParsingAndHandlerBranches(t *testing.T) {
 			t.Errorf("parseStampPageWithRemaining(%q) = %d %q %v", tt.args, page, remaining, ok)
 		}
 	}
+}
+
+func testStampAllParsing(t *testing.T) {
 	for _, value := range []string{"all", "ALL", "全部", "所有"} {
 		if !parseStampAll(value) {
 			t.Errorf("parseStampAll(%q) = false", value)
@@ -76,6 +85,9 @@ func TestStampParsingAndHandlerBranches(t *testing.T) {
 		t.Fatal("unexpected all mode")
 	}
 
+}
+
+func testStampHandlerRequests(t *testing.T) {
 	handler := sekaiHandlers{}.StampHandle()
 	for _, tt := range []struct {
 		args      string
@@ -107,11 +119,13 @@ func TestStampParsingAndHandlerBranches(t *testing.T) {
 }
 
 func TestExecuteStampDirectAndGuardPaths(t *testing.T) {
-	ctx := context.Background()
-	if _, err := executeStamp(&RequestContext{Ctx: ctx, Cmd: &CommandRequest{}, App: &renderapp.App{}}); err == nil {
-		t.Fatal("expected missing stamp service error")
-	}
+	testExecuteStampRequestPaths(t)
+	testResolveDirectStampPaths(t)
+}
 
+func newStampExecutionFixture(t *testing.T) (context.Context, *renderstamp.Controller, *renderapp.App, *RequestContext) {
+	t.Helper()
+	ctx := context.Background()
 	dir := t.TempDir()
 	assetPath := filepath.Join(dir, "stamp", "stamp_a", "stamp_a.png")
 	if err := os.MkdirAll(filepath.Dir(assetPath), 0o755); err != nil {
@@ -131,6 +145,14 @@ func TestExecuteStampDirectAndGuardPaths(t *testing.T) {
 	}
 	params, _ := json.Marshal(renderstamp.ListQuery{IDs: []int{1}})
 	rc := &RequestContext{Ctx: ctx, Cmd: &CommandRequest{Mode: "stamp-list", Region: "jp", Params: params}, App: app}
+	return ctx, controller, app, rc
+}
+
+func testExecuteStampRequestPaths(t *testing.T) {
+	ctx, _, _, rc := newStampExecutionFixture(t)
+	if _, err := executeStamp(&RequestContext{Ctx: ctx, Cmd: &CommandRequest{}, App: &renderapp.App{}}); err == nil {
+		t.Fatal("expected missing stamp service error")
+	}
 	message, err := executeStamp(rc)
 	if err != nil || len(message) != 1 || message[0].Type != onebot11.TypeImage {
 		t.Fatalf("direct stamp = %+v, err = %v", message, err)
@@ -148,6 +170,10 @@ func TestExecuteStampDirectAndGuardPaths(t *testing.T) {
 		t.Fatalf("unexpected unsupported-mode error: %v", err)
 	}
 
+}
+
+func testResolveDirectStampPaths(t *testing.T) {
+	ctx, controller, app, _ := newStampExecutionFixture(t)
 	if _, ok, err := resolveDirectStampImage(ctx, nil, app, renderstamp.ListQuery{}); ok || err != nil {
 		t.Fatalf("nil direct resolver = %v %v", ok, err)
 	}
@@ -203,6 +229,12 @@ func TestSKModeDispatchWithoutExternalServices(t *testing.T) {
 }
 
 func TestSKTrackerQueryHelperBranches(t *testing.T) {
+	testTrackerRankQueryDecodingAndSelfDetection(t)
+	testTrackerRankingErrorAndChapterTiming(t)
+	testTrackerCharacterAndTargetResolution(t)
+}
+
+func testTrackerRankQueryDecodingAndSelfDetection(t *testing.T) {
 	if _, ok := trackerRankQueryFromParams(nil); ok {
 		t.Fatal("nil request unexpectedly decoded")
 	}
@@ -242,6 +274,9 @@ func TestSKTrackerQueryHelperBranches(t *testing.T) {
 		t.Fatal("implicit requester not classified as self")
 	}
 
+}
+
+func testTrackerRankingErrorAndChapterTiming(t *testing.T) {
 	original := errors.New("other")
 	if normalizeSKSelfRankingNotFoundError(false, "jp", sekaiapi.ErrRankingNotFound) != sekaiapi.ErrRankingNotFound || normalizeSKSelfRankingNotFoundError(true, "jp", nil) != nil || normalizeSKSelfRankingNotFoundError(true, "jp", original) != original {
 		t.Fatal("non-matching self ranking error changed")
@@ -256,8 +291,11 @@ func TestSKTrackerQueryHelperBranches(t *testing.T) {
 	if request.EventStartAt == nil || *request.EventStartAt != 100 || request.EventAggregateAt == nil || *request.EventAggregateAt != 200 {
 		t.Fatalf("chapter timing = %+v", request)
 	}
+}
+
+func testTrackerCharacterAndTargetResolution(t *testing.T) {
 	invalidID := 0
-	request = &rendersk.TrackerRankQuery{WlCharacterID: &invalidID}
+	request := &rendersk.TrackerRankQuery{WlCharacterID: &invalidID}
 	if err := resolveTrackerCharacterSelection(context.Background(), nil, request); err != nil || request.WlCharacterID != nil {
 		t.Fatalf("invalid character selection = %+v, %v", request, err)
 	}
@@ -272,6 +310,7 @@ func TestSKTrackerQueryHelperBranches(t *testing.T) {
 	if err := resolveTrackerTargetUser(context.Background(), nil, nil, "qq", "1"); err != nil {
 		t.Fatalf("nil target request = %v", err)
 	}
+	uid := int64(10)
 	request = &rendersk.TrackerRankQuery{UserID: &uid}
 	if err := resolveTrackerTargetUser(context.Background(), nil, request, "qq", "1"); err != nil {
 		t.Fatalf("resolved target request = %v", err)

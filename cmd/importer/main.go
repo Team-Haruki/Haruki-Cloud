@@ -143,146 +143,146 @@ func exitImportFailure(target, operation string, err error) {
 // Import functions
 // ──────────────────────────────────────────────
 
+type importCounts struct {
+	total    int
+	inserted int
+	skipped  int
+	failed   int
+}
+
+type bindingImportOutcome int
+
+const (
+	bindingInserted bindingImportOutcome = iota
+	bindingSkipped
+	bindingFailed
+)
+
 func importBindings(ctx context.Context, exportsDir string, pjsk *pjskDB.Client, users *usersDB.Client, dryRun bool) error {
 	files := []string{"bind.json", "cn_bind.json", "en_bind.json", "tw_bind.json", "kr_bind.json"}
 	resolver := identity.NewResolver(users)
-
-	total, inserted, skipped, failed := 0, 0, 0, 0
-
+	counts := importCounts{}
 	for _, filename := range files {
-		path := exportsDir + "/" + filename
-		if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-			importerLogger.Info("import source skipped",
-				"target", "bindings",
-				"file", filename,
-				"reason", "file_not_found",
-			)
-			continue
+		if err := importBindingFile(ctx, exportsDir, filename, pjsk, resolver, dryRun, &counts); err != nil {
+			return err
 		}
-
-		records, err := loadJSON[bindRecord](path)
-		if err != nil {
-			return fmt.Errorf("load %s: %w", filename, err)
-		}
-
-		server := serverFromFilename(filename)
-		importerLogger.Info("import source loaded",
-			"target", "bindings",
-			"file", filename,
-			"region", server,
-			"records", len(records),
-		)
-
-		for i, rec := range records {
-			total++
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-
-			platform, platformUserID := detectPlatform(rec.IMUserID)
-			visible := rec.IsPrivate == 0
-
-			if dryRun {
-				if (i+1)%5000 == 0 {
-					importerLogger.InfoContext(ctx, "import progress",
-						"target", "bindings",
-						"region", server,
-						"dry_run", true,
-						"processed", i+1,
-						"total", len(records),
-					)
-				}
-				inserted++
-				continue
-			}
-
-			// 1. Resolve or create haruki user
-			harukiUserID, err := resolver.ResolveOrCreate(ctx, platform, platformUserID)
-			if err != nil {
-				logRecordFailure(ctx, "bindings", server, "resolve_user", rec.ID, err)
-				failed++
-				continue
-			}
-
-			// 2. Upsert game account
-			gameAcc, err := pjsk.GameAccount.Query().
-				Where(gameaccount.ServerEQ(server), gameaccount.UserIDEQ(rec.UserID)).
-				Only(ctx)
-			if err != nil {
-				if !pjskDB.IsNotFound(err) {
-					logRecordFailure(ctx, "bindings", server, "query_game_account", rec.ID, err)
-					failed++
-					continue
-				}
-				gameAcc, err = pjsk.GameAccount.Create().
-					SetServer(server).
-					SetUserID(rec.UserID).
-					Save(ctx)
-				if err != nil {
-					if pjskDB.IsConstraintError(err) {
-						// Another row was inserted concurrently; re-query.
-						gameAcc, err = pjsk.GameAccount.Query().
-							Where(gameaccount.ServerEQ(server), gameaccount.UserIDEQ(rec.UserID)).
-							Only(ctx)
-					}
-					if err != nil {
-						logRecordFailure(ctx, "bindings", server, "create_game_account", rec.ID, err)
-						failed++
-						continue
-					}
-				}
-			}
-
-			// 3. Upsert user binding
-			exists, err := pjsk.UserBinding.Query().
-				Where(userbinding.HarukiUserID(harukiUserID), userbinding.GameAccountIDEQ(gameAcc.ID)).
-				Exist(ctx)
-			if err != nil {
-				logRecordFailure(ctx, "bindings", server, "query_binding", rec.ID, err)
-				failed++
-				continue
-			}
-			if exists {
-				skipped++
-				continue
-			}
-
-			displayOrder, err := nextDisplayOrder(ctx, pjsk, harukiUserID)
-			if err != nil {
-				logRecordFailure(ctx, "bindings", server, "display_order", rec.ID, err)
-				failed++
-				continue
-			}
-
-			_, err = pjsk.UserBinding.Create().
-				SetHarukiUserID(harukiUserID).
-				SetGameAccountID(gameAcc.ID).
-				SetDisplayOrder(displayOrder).
-				SetVisible(visible).
-				Save(ctx)
-			if err != nil {
-				if pjskDB.IsConstraintError(err) {
-					skipped++
-					continue
-				}
-				logRecordFailure(ctx, "bindings", server, "create_binding", rec.ID, err)
-				failed++
-				continue
-			}
-			inserted++
-		}
-
-		importerLogger.InfoContext(ctx, "import source completed", "target", "bindings", "region", server)
 	}
-
 	importerLogger.InfoContext(ctx, importTargetCompleted,
 		"target", "bindings",
-		"total", total,
-		"inserted", inserted,
-		"skipped", skipped,
-		"failed", failed,
+		"total", counts.total,
+		"inserted", counts.inserted,
+		"skipped", counts.skipped,
+		"failed", counts.failed,
 	)
 	return nil
+}
+
+func importBindingFile(ctx context.Context, exportsDir, filename string, pjsk *pjskDB.Client, resolver *identity.Resolver, dryRun bool, counts *importCounts) error {
+	path := exportsDir + "/" + filename
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		importerLogger.Info("import source skipped", "target", "bindings", "file", filename, "reason", "file_not_found")
+		return nil
+	}
+	records, err := loadJSON[bindRecord](path)
+	if err != nil {
+		return fmt.Errorf("load %s: %w", filename, err)
+	}
+	server := serverFromFilename(filename)
+	importerLogger.Info("import source loaded", "target", "bindings", "file", filename, "region", server, "records", len(records))
+	for i, rec := range records {
+		counts.total++
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if dryRun {
+			logBindingDryRunProgress(ctx, server, i, len(records))
+			counts.inserted++
+			continue
+		}
+		counts.record(importBindingRecord(ctx, server, rec, pjsk, resolver))
+	}
+	importerLogger.InfoContext(ctx, "import source completed", "target", "bindings", "region", server)
+	return nil
+}
+
+func logBindingDryRunProgress(ctx context.Context, server string, index, total int) {
+	if (index+1)%5000 != 0 {
+		return
+	}
+	importerLogger.InfoContext(ctx, "import progress", "target", "bindings", "region", server, "dry_run", true, "processed", index+1, "total", total)
+}
+
+func (c *importCounts) record(outcome bindingImportOutcome) {
+	switch outcome {
+	case bindingInserted:
+		c.inserted++
+	case bindingSkipped:
+		c.skipped++
+	case bindingFailed:
+		c.failed++
+	}
+}
+
+func importBindingRecord(ctx context.Context, server string, rec bindRecord, pjsk *pjskDB.Client, resolver *identity.Resolver) bindingImportOutcome {
+	platform, platformUserID := detectPlatform(rec.IMUserID)
+	harukiUserID, err := resolver.ResolveOrCreate(ctx, platform, platformUserID)
+	if err != nil {
+		return failedBindingRecord(ctx, server, "resolve_user", rec.ID, err)
+	}
+	gameAccountID, operation, err := resolveBindingGameAccountID(ctx, pjsk, server, rec.UserID)
+	if err != nil {
+		return failedBindingRecord(ctx, server, operation, rec.ID, err)
+	}
+	created, operation, err := createBindingIfMissing(ctx, pjsk, harukiUserID, gameAccountID, rec.IsPrivate == 0)
+	if err != nil {
+		return failedBindingRecord(ctx, server, operation, rec.ID, err)
+	}
+	if !created {
+		return bindingSkipped
+	}
+	return bindingInserted
+}
+
+func failedBindingRecord(ctx context.Context, server, operation string, recordID int, err error) bindingImportOutcome {
+	logRecordFailure(ctx, "bindings", server, operation, recordID, err)
+	return bindingFailed
+}
+
+func resolveBindingGameAccountID(ctx context.Context, pjsk *pjskDB.Client, server, gameUserID string) (int, string, error) {
+	gameAcc, err := pjsk.GameAccount.Query().Where(gameaccount.ServerEQ(server), gameaccount.UserIDEQ(gameUserID)).Only(ctx)
+	if err == nil {
+		return gameAcc.ID, "", nil
+	}
+	if !pjskDB.IsNotFound(err) {
+		return 0, "query_game_account", err
+	}
+	gameAcc, err = pjsk.GameAccount.Create().SetServer(server).SetUserID(gameUserID).Save(ctx)
+	if pjskDB.IsConstraintError(err) {
+		gameAcc, err = pjsk.GameAccount.Query().Where(gameaccount.ServerEQ(server), gameaccount.UserIDEQ(gameUserID)).Only(ctx)
+	}
+	if err != nil {
+		return 0, "create_game_account", err
+	}
+	return gameAcc.ID, "", nil
+}
+
+func createBindingIfMissing(ctx context.Context, pjsk *pjskDB.Client, harukiUserID, gameAccountID int, visible bool) (bool, string, error) {
+	exists, err := pjsk.UserBinding.Query().Where(userbinding.HarukiUserID(harukiUserID), userbinding.GameAccountIDEQ(gameAccountID)).Exist(ctx)
+	if err != nil {
+		return false, "query_binding", err
+	}
+	if exists {
+		return false, "", nil
+	}
+	displayOrder, err := nextDisplayOrder(ctx, pjsk, harukiUserID)
+	if err != nil {
+		return false, "display_order", err
+	}
+	_, err = pjsk.UserBinding.Create().SetHarukiUserID(harukiUserID).SetGameAccountID(gameAccountID).SetDisplayOrder(displayOrder).SetVisible(visible).Save(ctx)
+	if pjskDB.IsConstraintError(err) {
+		return false, "", nil
+	}
+	return err == nil, "create_binding", err
 }
 
 // nextDisplayOrder returns the next display_order value for a user's bindings.
@@ -299,6 +299,25 @@ func nextDisplayOrder(ctx context.Context, pjsk *pjskDB.Client, harukiUserID int
 // globalServerPriority defines the preference order when selecting a global default
 // among users with multiple server bindings.
 var globalServerPriority = []string{"jp", "cn", "tw", "en", "kr"}
+
+type defaultBindingInfo struct {
+	bindingID int
+	server    string
+}
+
+type defaultBindingScopeKey struct {
+	userID int
+	server string
+}
+
+type defaultBindingImportState struct {
+	ctx        context.Context
+	pjsk       *pjskDB.Client
+	alreadySet map[defaultBindingScopeKey]bool
+	inserted   int
+	skipped    int
+	failed     int
+}
 
 // setDefaultBindings creates UserDefaultBinding rows for every user:
 //   - 1 binding total   → global default ("default") + server default
@@ -321,21 +340,7 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 		return fmt.Errorf("query bindings: %w", err)
 	}
 
-	type bindInfo struct {
-		bindingID int
-		server    string
-	}
-	// Group by haruki_user_id.
-	byUser := make(map[int][]bindInfo, len(allBindings)/2)
-	for _, b := range allBindings {
-		if b.Edges.GameAccount == nil {
-			continue
-		}
-		byUser[b.HarukiUserID] = append(byUser[b.HarukiUserID], bindInfo{
-			bindingID: b.ID,
-			server:    b.Edges.GameAccount.Server,
-		})
-	}
+	byUser := groupBindingsByUser(allBindings)
 
 	importerLogger.InfoContext(ctx, importTargetLoaded,
 		"target", "defaults",
@@ -347,87 +352,88 @@ func setDefaultBindings(ctx context.Context, pjsk *pjskDB.Client, dryRun bool) e
 	if err != nil {
 		return fmt.Errorf("query existing defaults: %w", err)
 	}
-	type scopeKey struct {
-		userID int
-		server string
-	}
-	alreadySet := make(map[scopeKey]bool, len(existingDefaults))
+	alreadySet := make(map[defaultBindingScopeKey]bool, len(existingDefaults))
 	for _, d := range existingDefaults {
-		alreadySet[scopeKey{d.HarukiUserID, d.Server}] = true
+		alreadySet[defaultBindingScopeKey{d.HarukiUserID, d.Server}] = true
 	}
-
-	globalDefaultScope := "default"
-	inserted, skipped, failed := 0, 0, 0
-
-	createDefault := func(harukiUserID, bindingID int, scope string) {
-		if alreadySet[scopeKey{harukiUserID, scope}] {
-			skipped++
-			return
-		}
-		_, err := pjsk.UserDefaultBinding.Create().
-			SetHarukiUserID(harukiUserID).
-			SetServer(scope).
-			SetBindingID(bindingID).
-			Save(ctx)
-		if err != nil {
-			if pjskDB.IsConstraintError(err) {
-				skipped++
-				return
-			}
-			importerLogger.WarnContext(ctx, "default binding skipped",
-				"target", "defaults",
-				"scope", scope,
-				"operation", "create_default",
-				"error_type", importErrorType(err),
-			)
-			failed++
-			return
-		}
-		alreadySet[scopeKey{harukiUserID, scope}] = true
-		inserted++
-	}
-
+	state := &defaultBindingImportState{ctx: ctx, pjsk: pjsk, alreadySet: alreadySet}
 	for harukiUserID, binds := range byUser {
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if err := ctx.Err(); err != nil {
+			return err
 		}
-
-		if len(binds) == 1 {
-			// Single account: global default + server default.
-			createDefault(harukiUserID, binds[0].bindingID, globalDefaultScope)
-			createDefault(harukiUserID, binds[0].bindingID, binds[0].server)
-			continue
-		}
-
-		// Multiple accounts: build per-server map (first encountered per server).
-		byServer := make(map[string]int)
-		for _, b := range binds {
-			if _, exists := byServer[b.server]; !exists {
-				byServer[b.server] = b.bindingID
-			}
-		}
-
-		// Global default: first server in priority list that the user has.
-		for _, srv := range globalServerPriority {
-			if bindID, ok := byServer[srv]; ok {
-				createDefault(harukiUserID, bindID, globalDefaultScope)
-				break
-			}
-		}
-
-		// Server-specific defaults: one per server.
-		for srv, bindID := range byServer {
-			createDefault(harukiUserID, bindID, srv)
-		}
+		state.importUser(harukiUserID, binds)
 	}
 
 	importerLogger.InfoContext(ctx, importTargetCompleted,
 		"target", "defaults",
-		"inserted", inserted,
-		"skipped", skipped,
-		"failed", failed,
+		"inserted", state.inserted,
+		"skipped", state.skipped,
+		"failed", state.failed,
 	)
 	return nil
+}
+
+func groupBindingsByUser(allBindings []*pjskDB.UserBinding) map[int][]defaultBindingInfo {
+	byUser := make(map[int][]defaultBindingInfo, len(allBindings)/2)
+	for _, binding := range allBindings {
+		if binding.Edges.GameAccount == nil {
+			continue
+		}
+		byUser[binding.HarukiUserID] = append(byUser[binding.HarukiUserID], defaultBindingInfo{
+			bindingID: binding.ID,
+			server:    binding.Edges.GameAccount.Server,
+		})
+	}
+	return byUser
+}
+
+func (s *defaultBindingImportState) create(harukiUserID, bindingID int, scope string) {
+	key := defaultBindingScopeKey{harukiUserID, scope}
+	if s.alreadySet[key] {
+		s.skipped++
+		return
+	}
+	_, err := s.pjsk.UserDefaultBinding.Create().SetHarukiUserID(harukiUserID).SetServer(scope).SetBindingID(bindingID).Save(s.ctx)
+	if pjskDB.IsConstraintError(err) {
+		s.skipped++
+		return
+	}
+	if err != nil {
+		importerLogger.WarnContext(s.ctx, "default binding skipped", "target", "defaults", "scope", scope, "operation", "create_default", "error_type", importErrorType(err))
+		s.failed++
+		return
+	}
+	s.alreadySet[key] = true
+	s.inserted++
+}
+
+func (s *defaultBindingImportState) importUser(harukiUserID int, binds []defaultBindingInfo) {
+	const globalDefaultScope = "default"
+	if len(binds) == 1 {
+		s.create(harukiUserID, binds[0].bindingID, globalDefaultScope)
+		s.create(harukiUserID, binds[0].bindingID, binds[0].server)
+		return
+	}
+	byServer := firstBindingByServer(binds)
+	for _, server := range globalServerPriority {
+		if bindingID, ok := byServer[server]; ok {
+			s.create(harukiUserID, bindingID, globalDefaultScope)
+			break
+		}
+	}
+	for server, bindingID := range byServer {
+		s.create(harukiUserID, bindingID, server)
+	}
+}
+
+func firstBindingByServer(binds []defaultBindingInfo) map[string]int {
+	result := make(map[string]int)
+	for _, binding := range binds {
+		if _, exists := result[binding.server]; !exists {
+			result[binding.server] = binding.bindingID
+		}
+	}
+	return result
 }
 
 func importCharacterAliases(ctx context.Context, exportsDir string, pjsk *pjskDB.Client, dryRun bool) error {
@@ -628,11 +634,18 @@ func resolveDBConfig(envURL, envType, cfgURL, cfgType, defaultType string) (dbTy
 // main
 // ──────────────────────────────────────────────
 
+type importerTargets struct {
+	bindings        bool
+	characterAlias  bool
+	musicAlias      bool
+	groupAlias      bool
+	defaultBindings bool
+}
+
 func main() {
 	logger.SetGlobalFileWriter(os.Stdout)
 	logger.SetGlobalLogLevel(harukiConfig.LogLevelInfo)
 	logger.InstallStandardHandlers()
-
 	exportsDir := flag.String("exports-dir", "./exports", "directory containing the JSON export files")
 	targetFlag := flag.String("target", "all", "comma-separated targets: all, bindings, character-aliases, music-aliases, group-aliases, defaults")
 	dryRun := flag.Bool("dry-run", false, "parse and count records without writing to DB")
@@ -641,110 +654,125 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-
-	// Resolve targets
-	targets := map[string]bool{}
-	for _, t := range strings.Split(*targetFlag, ",") {
-		targets[strings.TrimSpace(t)] = true
-	}
-	runAll := targets["all"]
-	runBindings := runAll || targets["bindings"]
-	runCharAliases := runAll || targets[characterAliases]
-	runMusicAliases := runAll || targets[musicAliases]
-	runGroupAliases := runAll || targets[groupAliases]
-	runDefaults := runAll || targets["defaults"]
-
+	targets := parseImporterTargets(*targetFlag)
 	if *dryRun {
 		importerLogger.Info("importer started", "dry_run", true)
 	}
-
-	// Load config if available
-	var cfg *harukiConfig.Config
-	if _, err := os.Stat(*configPath); err == nil {
-		loaded, err := harukiConfig.ReadConfig(*configPath)
-		if err != nil {
-			exitImportFailure("config", "read", err)
-		}
-		cfg = &loaded
-	}
-
-	// Open PJSK DB (needed for all targets; skipped in dry-run)
-	var pjsk *pjskDB.Client
-	if !*dryRun {
-		var cfgPJSKURL, cfgPJSKType string
-		if cfg != nil {
-			cfgPJSKURL = cfg.PJSK.DBURL
-			cfgPJSKType = cfg.PJSK.DBType
-		}
-		pjskType, pjskDSN, err := resolveDBConfig("HARUKI_PJSK_DB_URL", "HARUKI_PJSK_DB_TYPE", cfgPJSKURL, cfgPJSKType, "postgres")
-		if err != nil {
-			exitImportFailure("pjsk_db", "resolve_config", err)
-		}
-		pjsk, err = pjskDB.Open(pjskType, pjskDSN)
-		if err != nil {
-			exitImportFailure("pjsk_db", "open", err)
-		}
+	cfg := loadImporterConfig(*configPath)
+	pjsk := openImporterPJSK(ctx, cfg, *dryRun)
+	if pjsk != nil {
 		defer pjsk.Close()
-		if err := pjsk.Schema.Create(ctx); err != nil {
-			exitImportFailure("pjsk_db", "migrate", err)
-		}
 	}
-
-	// Open Users DB (needed only for bindings; skipped in dry-run)
-	var users *usersDB.Client
-	if (runBindings || runDefaults) && !*dryRun {
-		var cfgUsersURL, cfgUsersType string
-		if cfg != nil {
-			cfgUsersURL = cfg.UsersDB.DBURL
-			cfgUsersType = cfg.UsersDB.DBType
-		}
-		usersType, usersDSN, err := resolveDBConfig("HARUKI_USERS_DB_URL", "HARUKI_USERS_DB_TYPE", cfgUsersURL, cfgUsersType, "postgres")
-		if err != nil {
-			exitImportFailure("users_db", "resolve_config", err)
-		}
-		users, err = usersDB.Open(usersType, usersDSN)
-		if err != nil {
-			exitImportFailure("users_db", "open", err)
-		}
+	users := openImporterUsers(ctx, cfg, targets.bindings || targets.defaultBindings, *dryRun)
+	if users != nil {
 		defer users.Close()
-		if err := users.Schema.Create(ctx); err != nil {
-			exitImportFailure("users_db", "migrate", err)
-		}
-
-		// Warm up: confirm users table is accessible
-		if _, err := users.User.Query().Where(user.Platform("__probe__")).Exist(ctx); err != nil {
-			exitImportFailure("users_db", "probe", err)
-		}
 	}
-
-	// ── Run targets ──────────────────────────────
-
-	if runBindings {
-		if err := importBindings(ctx, *exportsDir, pjsk, users, *dryRun); err != nil {
-			exitImportFailure("bindings", "run", err)
-		}
-	}
-	if runCharAliases {
-		if err := importCharacterAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			exitImportFailure(characterAliases, "run", err)
-		}
-	}
-	if runMusicAliases {
-		if err := importMusicAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			exitImportFailure(musicAliases, "run", err)
-		}
-	}
-	if runGroupAliases {
-		if err := importGroupAliases(ctx, *exportsDir, pjsk, *dryRun); err != nil {
-			exitImportFailure(groupAliases, "run", err)
-		}
-	}
-	// defaults must run after bindings are in place.
-	if runDefaults {
-		if err := setDefaultBindings(ctx, pjsk, *dryRun); err != nil {
-			exitImportFailure("defaults", "run", err)
-		}
-	}
-
+	runImporterTargets(ctx, targets, *exportsDir, pjsk, users, *dryRun)
 	importerLogger.Info("importer completed", "dry_run", *dryRun)
+}
+
+func parseImporterTargets(value string) importerTargets {
+	selected := make(map[string]bool)
+	for _, target := range strings.Split(value, ",") {
+		selected[strings.TrimSpace(target)] = true
+	}
+	all := selected["all"]
+	return importerTargets{
+		bindings:        all || selected["bindings"],
+		characterAlias:  all || selected[characterAliases],
+		musicAlias:      all || selected[musicAliases],
+		groupAlias:      all || selected[groupAliases],
+		defaultBindings: all || selected["defaults"],
+	}
+}
+
+func loadImporterConfig(path string) *harukiConfig.Config {
+	if _, err := os.Stat(path); err != nil {
+		return nil
+	}
+	loaded, err := harukiConfig.ReadConfig(path)
+	if err != nil {
+		exitImportFailure("config", "read", err)
+		return nil
+	}
+	return &loaded
+}
+
+func openImporterPJSK(ctx context.Context, cfg *harukiConfig.Config, dryRun bool) *pjskDB.Client {
+	if dryRun {
+		return nil
+	}
+	var cfgURL, cfgType string
+	if cfg != nil {
+		cfgURL, cfgType = cfg.PJSK.DBURL, cfg.PJSK.DBType
+	}
+	dbType, dsn, err := resolveDBConfig("HARUKI_PJSK_DB_URL", "HARUKI_PJSK_DB_TYPE", cfgURL, cfgType, "postgres")
+	if err != nil {
+		exitImportFailure("pjsk_db", "resolve_config", err)
+		return nil
+	}
+	client, err := pjskDB.Open(dbType, dsn)
+	if err != nil {
+		exitImportFailure("pjsk_db", "open", err)
+		return nil
+	}
+	if err := client.Schema.Create(ctx); err != nil {
+		client.Close()
+		exitImportFailure("pjsk_db", "migrate", err)
+		return nil
+	}
+	return client
+}
+
+func openImporterUsers(ctx context.Context, cfg *harukiConfig.Config, needed, dryRun bool) *usersDB.Client {
+	if !needed || dryRun {
+		return nil
+	}
+	var cfgURL, cfgType string
+	if cfg != nil {
+		cfgURL, cfgType = cfg.UsersDB.DBURL, cfg.UsersDB.DBType
+	}
+	dbType, dsn, err := resolveDBConfig("HARUKI_USERS_DB_URL", "HARUKI_USERS_DB_TYPE", cfgURL, cfgType, "postgres")
+	if err != nil {
+		exitImportFailure("users_db", "resolve_config", err)
+		return nil
+	}
+	client, err := usersDB.Open(dbType, dsn)
+	if err != nil {
+		exitImportFailure("users_db", "open", err)
+		return nil
+	}
+	if err := client.Schema.Create(ctx); err != nil {
+		client.Close()
+		exitImportFailure("users_db", "migrate", err)
+		return nil
+	}
+	if _, err := client.User.Query().Where(user.Platform("__probe__")).Exist(ctx); err != nil {
+		client.Close()
+		exitImportFailure("users_db", "probe", err)
+		return nil
+	}
+	return client
+}
+
+func runImporterTargets(ctx context.Context, targets importerTargets, exportsDir string, pjsk *pjskDB.Client, users *usersDB.Client, dryRun bool) {
+	runs := []struct {
+		enabled bool
+		name    string
+		run     func() error
+	}{
+		{targets.bindings, "bindings", func() error { return importBindings(ctx, exportsDir, pjsk, users, dryRun) }},
+		{targets.characterAlias, characterAliases, func() error { return importCharacterAliases(ctx, exportsDir, pjsk, dryRun) }},
+		{targets.musicAlias, musicAliases, func() error { return importMusicAliases(ctx, exportsDir, pjsk, dryRun) }},
+		{targets.groupAlias, groupAliases, func() error { return importGroupAliases(ctx, exportsDir, pjsk, dryRun) }},
+		{targets.defaultBindings, "defaults", func() error { return setDefaultBindings(ctx, pjsk, dryRun) }},
+	}
+	for _, target := range runs {
+		if !target.enabled {
+			continue
+		}
+		if err := target.run(); err != nil {
+			exitImportFailure(target.name, "run", err)
+		}
+	}
 }

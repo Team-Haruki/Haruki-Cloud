@@ -38,14 +38,7 @@ func TestProvisionBotSuccessfulLifecycle(t *testing.T) {
 	}
 	dbPath := filepath.Join(t.TempDir(), "bot.db")
 	dsn := fmt.Sprintf("file:%s?_fk=1", dbPath)
-	client, err := botDB.Open("sqlite3", dsn)
-	if err != nil {
-		t.Fatalf("open bot database: %v", err)
-	}
-	if err := client.Schema.Create(context.Background()); err != nil {
-		t.Fatalf("create bot schema: %v", err)
-	}
-	_ = client.Close()
+	createProvisionTestDatabase(t, dsn)
 
 	configPath := filepath.Join(t.TempDir(), "haruki-cloud.yaml")
 	configBody := fmt.Sprintf("profile: dev\nharuki_bot:\n  db_type: sqlite3\n  db_url: %q\n  credential_sign_token: provision-test-secret\n", dsn)
@@ -54,52 +47,99 @@ func TestProvisionBotSuccessfulLifecycle(t *testing.T) {
 	}
 
 	runProvisionMain(t, "--config", configPath, "--qq", "10001")
-	client, err = botDB.Open("sqlite3", dsn)
-	if err != nil {
-		t.Fatalf("reopen bot database: %v", err)
-	}
-	existing, err := client.User.Query().Where(user.OwnerUserIDEQ(10001)).Only(context.Background())
-	if err != nil {
-		t.Fatalf("query provisioned user: %v", err)
-	}
+	existing := queryProvisionTestUser(t, dsn, 10001)
 	if existing.BotID < 10_000_000 || existing.BotID > 99_999_999 {
 		t.Fatalf("generated bot id = %d", existing.BotID)
 	}
 	firstHash := existing.Credential
-	_ = client.Close()
 
 	runProvisionMain(t, "--config", configPath, "--qq", "10001", "--force")
-	client, err = botDB.Open("sqlite3", dsn)
-	if err != nil {
-		t.Fatalf("reopen after force: %v", err)
+	existing = queryProvisionTestUser(t, dsn, 10001)
+	if existing.Credential == firstHash {
+		t.Fatalf("credential was not reset: %#v", existing)
 	}
-	existing, err = client.User.Query().Where(user.OwnerUserIDEQ(10001)).Only(context.Background())
-	if err != nil || existing.Credential == firstHash {
-		t.Fatalf("credential reset result = %#v, %v", existing, err)
-	}
-	_ = client.Close()
 
 	runProvisionMain(t, "--config", configPath, "--qq", "10001", "--rebind", "--bot-id", "23456789")
-	client, err = botDB.Open("sqlite3", dsn)
-	if err != nil {
-		t.Fatalf("reopen after rebind: %v", err)
-	}
-	existing, err = client.User.Query().Where(user.OwnerUserIDEQ(10001)).Only(context.Background())
-	if err != nil || existing.BotID != 23456789 {
-		t.Fatalf("rebound user = %#v, %v", existing, err)
+	existing = queryProvisionTestUser(t, dsn, 10001)
+	if existing.BotID != 23456789 {
+		t.Fatalf("rebound user = %#v", existing)
 	}
 	secondHash := existing.Credential
-	_ = client.Close()
 
 	runProvisionMain(t, "--config", configPath, "--qq", "10001", "--rebind", "--bot-id", "34567890", "--force")
-	client, err = botDB.Open("sqlite3", dsn)
+	existing = queryProvisionTestUser(t, dsn, 10001)
+	if existing.BotID != 34567890 || existing.Credential == secondHash {
+		t.Fatalf("forced rebound user = %#v", existing)
+	}
+}
+
+func createProvisionTestDatabase(t *testing.T, dsn string) {
+	t.Helper()
+	client, err := botDB.Open("sqlite3", dsn)
 	if err != nil {
-		t.Fatalf("reopen after forced rebind: %v", err)
+		t.Fatalf("open bot database: %v", err)
 	}
 	defer client.Close()
-	existing, err = client.User.Query().Where(user.OwnerUserIDEQ(10001)).Only(context.Background())
-	if err != nil || existing.BotID != 34567890 || existing.Credential == secondHash {
-		t.Fatalf("forced rebound user = %#v, %v", existing, err)
+	if err := client.Schema.Create(context.Background()); err != nil {
+		t.Fatalf("create bot schema: %v", err)
+	}
+}
+
+func queryProvisionTestUser(t *testing.T, dsn string, qq int64) *botDB.User {
+	t.Helper()
+	client, err := botDB.Open("sqlite3", dsn)
+	if err != nil {
+		t.Fatalf("open bot database: %v", err)
+	}
+	defer client.Close()
+	existing, err := client.User.Query().Where(user.OwnerUserIDEQ(qq)).Only(context.Background())
+	if err != nil {
+		t.Fatalf("query provisioned user: %v", err)
+	}
+	return existing
+}
+
+func TestValidateProvisionOptions(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		options provisionOptions
+		wantErr bool
+	}{
+		{name: "default"},
+		{name: "rebind missing id", options: provisionOptions{rebind: true}, wantErr: true},
+		{name: "id too small", options: provisionOptions{explicitID: 9_999_999}, wantErr: true},
+		{name: "id too large", options: provisionOptions{explicitID: 100_000_000}, wantErr: true},
+		{name: "valid id", options: provisionOptions{explicitID: 12_345_678}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if err := validateProvisionOptions(test.options); (err != nil) != test.wantErr {
+				t.Fatalf("validateProvisionOptions() error = %v, wantErr %v", err, test.wantErr)
+			}
+		})
+	}
+}
+
+func TestProvisionBotRejectsDuplicateAndInvalidRebind(t *testing.T) {
+	dsn := fmt.Sprintf("file:%s?_fk=1", filepath.Join(t.TempDir(), "bot-errors.db"))
+	createProvisionTestDatabase(t, dsn)
+	client, err := botDB.Open("sqlite3", dsn)
+	if err != nil {
+		t.Fatalf("open bot database: %v", err)
+	}
+	defer client.Close()
+	ctx := context.Background()
+	options := provisionOptions{qq: 10001, explicitID: 12_345_678}
+	if err := provisionBot(ctx, client, "secret", options); err != nil {
+		t.Fatalf("initial provision: %v", err)
+	}
+	if err := provisionBot(ctx, client, "secret", options); err == nil || !strings.Contains(err.Error(), "already registered") {
+		t.Fatalf("duplicate provision error = %v", err)
+	}
+	if err := provisionBot(ctx, client, "secret", provisionOptions{qq: 20002, explicitID: 23_456_789, rebind: true}); err == nil || !strings.Contains(err.Error(), "not registered") {
+		t.Fatalf("missing rebind error = %v", err)
+	}
+	if _, err := selectProvisionedBotID(ctx, client, 12_345_678); err == nil || !strings.Contains(err.Error(), "already assigned") {
+		t.Fatalf("bot ID conflict error = %v", err)
 	}
 }
 

@@ -44,7 +44,9 @@ func TestCachePathAndConfigHelperBranches(t *testing.T) {
 	if exists, err := fileExists(child); err != nil || !exists {
 		t.Fatalf("existing directory = %v,%v", exists, err)
 	}
+}
 
+func TestCacheErrorAndConfigHelperBranches(t *testing.T) {
 	if drawingCacheErrorType(nil) != "" {
 		t.Fatal("nil cache error type should be blank")
 	}

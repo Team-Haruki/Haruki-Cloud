@@ -220,7 +220,17 @@ func TestBuildAutoRecommendRequestRemoteServiceUsesExplicitEvent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
 	}
+	assertExplicitEventRecommendRequest(t, request, eventID)
+}
 
+func assertExplicitEventRecommendRequest(t *testing.T, request *drawing.DeckRequest, eventID int) {
+	t.Helper()
+	assertExplicitEventMetadata(t, request, eventID)
+	assertExplicitEventDeck(t, request)
+}
+
+func assertExplicitEventMetadata(t *testing.T, request *drawing.DeckRequest, eventID int) {
+	t.Helper()
 	if request.RecommendType != "event" {
 		t.Fatalf("unexpected recommend type: %s", request.RecommendType)
 	}
@@ -242,6 +252,10 @@ func TestBuildAutoRecommendRequestRemoteServiceUsesExplicitEvent(t *testing.T) {
 	if request.SkillReferenceChooseStrategy == nil || *request.SkillReferenceChooseStrategy != "average" {
 		t.Fatalf("unexpected skill reference strategy: %+v", request.SkillReferenceChooseStrategy)
 	}
+}
+
+func assertExplicitEventDeck(t *testing.T, request *drawing.DeckRequest) {
+	t.Helper()
 	if len(request.DeckData) != 1 {
 		t.Fatalf("unexpected deck data count: %d", len(request.DeckData))
 	}
@@ -778,7 +792,17 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
 	}
+	assertRecommendOptionOverrides(t, option)
+}
 
+func assertRecommendOptionOverrides(t *testing.T, option map[string]any) {
+	t.Helper()
+	assertRecommendOptionCoreOverrides(t, option)
+	assertRecommendOptionConfigOverrides(t, option)
+}
+
+func assertRecommendOptionCoreOverrides(t *testing.T, option map[string]any) {
+	t.Helper()
 	if option["algorithm"] != "rl" {
 		t.Fatalf("unexpected algorithm: %+v", option["algorithm"])
 	}
@@ -809,7 +833,10 @@ func TestBuildRecommendOptionAppliesOverrides(t *testing.T) {
 	if option["keep_after_training_state"] != true {
 		t.Fatalf("unexpected keep_after_training_state: %+v", option["keep_after_training_state"])
 	}
+}
 
+func assertRecommendOptionConfigOverrides(t *testing.T, option map[string]any) {
+	t.Helper()
 	cfg, ok := option["rarity_4_config"].(map[string]any)
 	if !ok || cfg["master_max"] != true {
 		t.Fatalf("unexpected rarity_4_config: %+v", option["rarity_4_config"])
@@ -930,7 +957,17 @@ func TestBuildRecommendOptionAppliesExtendedOverrides(t *testing.T) {
 	if err != nil {
 		t.Fatalf("buildRecommendOption returned error: %v", err)
 	}
+	assertExtendedRecommendOptionOverrides(t, option)
+}
 
+func assertExtendedRecommendOptionOverrides(t *testing.T, option map[string]any) {
+	t.Helper()
+	assertExtendedRecommendFlags(t, option)
+	assertExtendedRecommendSlices(t, option)
+}
+
+func assertExtendedRecommendFlags(t *testing.T, option map[string]any) {
+	t.Helper()
 	if option["boost"] != 5 {
 		t.Fatalf("unexpected boost: %+v", option["boost"])
 	}
@@ -956,6 +993,10 @@ func TestBuildRecommendOptionAppliesExtendedOverrides(t *testing.T) {
 	if option["music_compare"] != true {
 		t.Fatalf("unexpected music_compare: %+v", option["music_compare"])
 	}
+}
+
+func assertExtendedRecommendSlices(t *testing.T, option map[string]any) {
+	t.Helper()
 	musicCompareQueries, ok := option["music_compare_queries"].([]string)
 	if !ok || !reflect.DeepEqual(musicCompareQueries, []string{"龙hard", "虾expert", "sage"}) {
 		t.Fatalf("unexpected music_compare_queries: %+v", option["music_compare_queries"])
@@ -1640,81 +1681,11 @@ func TestApplyCurrentDeckOptionMovesSnapshotLeaderToFixedCardFront(t *testing.T)
 func TestBuildAutoRecommendRequestChallengeCurrentUsesSnapshotDeck(t *testing.T) {
 	var recommendCalls atomic.Int32
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"challenge-current-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			option, ok := options[0].(map[string]any)
-			if !ok {
-				t.Fatalf("unexpected batch option payload: %+v", options[0])
-			}
-			if option["challenge_live_character_id"] != 21.0 {
-				t.Fatalf("unexpected challenge_live_character_id: %+v", option["challenge_live_character_id"])
-			}
-			fixedCards, ok := option["fixed_cards"].([]any)
-			if !ok || len(fixedCards) != 5 {
-				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
-			}
-			expected := []float64{1001, 1002, 1003, 1004, 1005}
-			for index, value := range fixedCards {
-				if value != expected[index] {
-					t.Fatalf("unexpected fixed card %d: %+v", index, value)
-				}
-			}
-			if option["best_skill_as_leader"] != false {
-				t.Fatalf("expected best_skill_as_leader to be disabled: %+v", option["best_skill_as_leader"])
-			}
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 1200000,
-							"live_score": 1200000,
-							"mysekai_event_point": 0,
-							"total_power": 456789,
-							"event_bonus_rate": 0,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 120,
-							"cards": [
-								{"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4, "skill_score_up": 100, "event_bonus_rate": 0, "episode1_read": true, "episode2_read": true, "after_training": false, "default_image": "normal", "has_canvas_bonus": false},
-								{"card_id": 1002, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 0, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false},
-								{"card_id": 1003, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 0, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false},
-								{"card_id": 1004, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 0, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false},
-								{"card_id": 1005, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 0, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}
-							]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newUserDataCaptureServer(t, userDataCaptureServerConfig{
+		hash: "challenge-current-hash", recommendCalls: &recommendCalls,
+		fixedCards: []int{1001, 1002, 1003, 1004, 1005}, challengeChar: 21,
+		cardID: 1001, score: 1_200_000,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -2359,72 +2330,10 @@ func TestBuildAutoRecommendRequestEventMusicCompareCurrentDeckBuildsCandidatesAn
 func TestBuildAutoRecommendRequestEventCurrentUsesSnapshotDeck(t *testing.T) {
 	var recommendCalls atomic.Int32
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"event-current-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			option, ok := options[0].(map[string]any)
-			if !ok {
-				t.Fatalf("unexpected batch option payload: %+v", options[0])
-			}
-			fixedCards, ok := option["fixed_cards"].([]any)
-			if !ok || len(fixedCards) != 5 {
-				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
-			}
-			expected := []float64{1001, 1002, 1003, 1004, 1005}
-			for index, value := range fixedCards {
-				if value != expected[index] {
-					t.Fatalf("unexpected fixed card %d: %+v", index, value)
-				}
-			}
-			if option["best_skill_as_leader"] != false {
-				t.Fatalf("expected best_skill_as_leader to be disabled: %+v", option["best_skill_as_leader"])
-			}
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 20,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4, "skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": false, "default_image": "normal", "has_canvas_bonus": false}]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newUserDataCaptureServer(t, userDataCaptureServerConfig{
+		hash: "event-current-hash", recommendCalls: &recommendCalls,
+		fixedCards: []int{1001, 1002, 1003, 1004, 1005}, cardID: 1001,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -2603,72 +2512,10 @@ func TestBuildAutoRecommendRequestEventCurrentDeckPrefersPublicProfileDeck(t *te
 		cached         snapshot.RawUserData
 	)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
-				t.Fatalf("decode cached raw user data: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"event-current-public-deck-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			option, ok := options[0].(map[string]any)
-			if !ok {
-				t.Fatalf("unexpected batch option payload: %+v", options[0])
-			}
-			fixedCards, ok := option["fixed_cards"].([]any)
-			if !ok || len(fixedCards) != 5 {
-				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
-			}
-			expected := []float64{1001, 1002, 1003, 1004, 1005}
-			for index, value := range fixedCards {
-				if value != expected[index] {
-					t.Fatalf("unexpected fixed card %d: %+v", index, value)
-				}
-			}
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 20,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1001, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newUserDataCaptureServer(t, userDataCaptureServerConfig{
+		hash: "event-current-public-deck-hash", cached: &cached, recommendCalls: &recommendCalls,
+		fixedCards: []int{1001, 1002, 1003, 1004, 1005}, cardID: 1001,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -2852,45 +2699,9 @@ func TestBuildAutoRecommendRequestEventFixedCardFallbackUsesBaseSkillAndMaster(t
 func TestBuildAutoRecommendRequestMaxProfilePreparesSyntheticUserCards(t *testing.T) {
 	var cached snapshot.RawUserData
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
-				t.Fatalf("decode cached raw user data: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"max-profile-hash"}`))
-		case "/recommend":
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 20,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1006, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newUserDataCaptureServer(t, userDataCaptureServerConfig{
+		hash: "max-profile-hash", cached: &cached, cardID: 1006,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -2962,48 +2773,9 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 	var cached snapshot.RawUserData
 	var cachedPayload map[string]json.RawMessage
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if err := json.Unmarshal(payloads[0], &cachedPayload); err != nil {
-				t.Fatalf("decode cached raw user data payload: %v", err)
-			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
-				t.Fatalf("decode cached raw user data: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"max-profile-no-snapshot-hash"}`))
-		case "/recommend":
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 20,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1006, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newUserDataCaptureServer(t, userDataCaptureServerConfig{
+		hash: "max-profile-no-snapshot-hash", cached: &cached, rawPayload: &cachedPayload, cardID: 1006,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -3206,45 +2978,9 @@ func TestBuildAutoRecommendRequestSubMaxProfilePromotesAreaItemsTo15(t *testing.
 func TestBuildAutoRecommendRequestFilterAndExcludeTrimUserCards(t *testing.T) {
 	var cached snapshot.RawUserData
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
-				t.Fatalf("decode cached raw user data: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"filtered-userdata-hash"}`))
-		case "/recommend":
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 20,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1003, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newUserDataCaptureServer(t, userDataCaptureServerConfig{
+		hash: "filtered-userdata-hash", cached: &cached, cardID: 1003,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -3754,6 +3490,122 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyWhenUserdataHash
 	}
 	if len(request.DeckData) != 1 || len(request.DeckData[0].CardData) != 1 {
 		t.Fatalf("unexpected request payload: %+v", request.DeckData)
+	}
+}
+
+type userDataCaptureServerConfig struct {
+	t              *testing.T
+	hash           string
+	cached         *snapshot.RawUserData
+	rawPayload     *map[string]json.RawMessage
+	recommendCalls *atomic.Int32
+	cardID         int
+	fixedCards     []int
+	score          int
+	challengeChar  int
+}
+
+func newUserDataCaptureServer(t *testing.T, config userDataCaptureServerConfig) *httptest.Server {
+	t.Helper()
+	config.t = t
+	return httptest.NewServer(http.HandlerFunc(config.handle))
+}
+
+func (c userDataCaptureServerConfig) handle(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	switch r.URL.Path {
+	case "/update/masterdata", "/update/musicmetas/string":
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	case "/cache_userdata":
+		c.handleCacheUserData(w, r)
+	case "/recommend":
+		c.handleRecommend(w, r)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (c userDataCaptureServerConfig) handleCacheUserData(w http.ResponseWriter, r *http.Request) {
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		c.t.Fatalf("decode cache_userdata payload: %v", err)
+	}
+	if c.rawPayload != nil {
+		if err := json.Unmarshal(payloads[0], c.rawPayload); err != nil {
+			c.t.Fatalf("decode cached raw user data payload: %v", err)
+		}
+	}
+	if c.cached != nil {
+		if err := json.Unmarshal(payloads[0], c.cached); err != nil {
+			c.t.Fatalf("decode cached raw user data: %v", err)
+		}
+	}
+	_, _ = fmt.Fprintf(w, `{"userdata_hash":%q}`, c.hash)
+}
+
+func (c userDataCaptureServerConfig) handleRecommend(w http.ResponseWriter, r *http.Request) {
+	if c.recommendCalls != nil {
+		c.recommendCalls.Add(1)
+	}
+	if len(c.fixedCards) > 0 {
+		c.validateFixedCards(r)
+	}
+	cardID := c.cardID
+	if cardID <= 0 {
+		cardID = 1001
+	}
+	response := []map[string]any{{
+		"alg": "ga", "cost_time": 0.5, "wait_time": 0.0,
+		"result": map[string]any{"decks": []map[string]any{{
+			"score": c.responseScore(), "live_score": c.responseScore(), "total_power": 200, "event_bonus_rate": 20,
+			"multi_live_score_up": 110, "cards": []map[string]any{{
+				"card_id": cardID, "level": 60, "master_rank": 5, "skill_level": 4,
+				"skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true,
+				"episode2_read": true, "after_training": true, "default_image": "special_training",
+			}},
+		}}},
+	}}
+	_ = json.NewEncoder(w).Encode(response)
+}
+
+func (c userDataCaptureServerConfig) responseScore() int {
+	if c.score > 0 {
+		return c.score
+	}
+	return 100
+}
+
+func (c userDataCaptureServerConfig) validateFixedCards(r *http.Request) {
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		c.t.Fatalf("decode recommend payload: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(payloads[0], &payload); err != nil {
+		c.t.Fatalf("decode recommend json: %v", err)
+	}
+	options, ok := payload["batch_options"].([]any)
+	if !ok || len(options) != 1 {
+		c.t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+	}
+	option, ok := options[0].(map[string]any)
+	if !ok {
+		c.t.Fatalf("unexpected batch option payload: %+v", options[0])
+	}
+	if c.challengeChar > 0 && option["challenge_live_character_id"] != float64(c.challengeChar) {
+		c.t.Fatalf("unexpected challenge_live_character_id: %+v", option["challenge_live_character_id"])
+	}
+	fixedCards, ok := option["fixed_cards"].([]any)
+	if !ok || len(fixedCards) != len(c.fixedCards) {
+		c.t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
+	}
+	for index, value := range fixedCards {
+		if value != float64(c.fixedCards[index]) {
+			c.t.Fatalf("unexpected fixed card %d: %+v", index, value)
+		}
+	}
+	if option["best_skill_as_leader"] != false {
+		c.t.Fatalf("expected best_skill_as_leader to be disabled: %+v", option["best_skill_as_leader"])
 	}
 }
 

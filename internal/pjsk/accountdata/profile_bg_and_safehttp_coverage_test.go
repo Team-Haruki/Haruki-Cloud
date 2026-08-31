@@ -41,6 +41,14 @@ func profileBGResponse(req *http.Request, status int, body io.ReadCloser) *http.
 
 func TestLocalProfileBGStoreValidationDownloadAndDeleteBranches(t *testing.T) {
 	ctx := context.Background()
+	testLocalProfileBGStoreConstruction(t, ctx)
+	testLocalProfileBGDownloadErrors(t, ctx)
+	testLocalProfileBGStoragePathErrors(t, ctx)
+	testLocalProfileBGDeleteAndPathValidation(t, ctx)
+}
+
+func testLocalProfileBGStoreConstruction(t *testing.T, ctx context.Context) {
+	t.Helper()
 	var nilStore *LocalProfileBGStore
 	if NewLocalProfileBGStore(" ") != nil || NewLocalProfileBGStoreWithClient(" ", http.DefaultClient) != nil {
 		t.Fatal("blank profile background root should be rejected")
@@ -62,7 +70,6 @@ func TestLocalProfileBGStoreValidationDownloadAndDeleteBranches(t *testing.T) {
 	if originalClient == nil {
 		t.Fatal("production profile background client is nil")
 	}
-
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
 	if _, err := store.SaveProfileBackground(canceled, "jp", "1", "https://example.test/a.png"); !errors.Is(err, context.Canceled) {
@@ -73,7 +80,10 @@ func TestLocalProfileBGStoreValidationDownloadAndDeleteBranches(t *testing.T) {
 			t.Fatalf("SaveProfileBackground(%q) should fail", rawURL)
 		}
 	}
+}
 
+func testLocalProfileBGDownloadErrors(t *testing.T, ctx context.Context) {
+	t.Helper()
 	transportError := errors.New("round trip failed")
 	errorClient := &http.Client{Transport: profileBGRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return nil, transportError
@@ -106,7 +116,10 @@ func TestLocalProfileBGStoreValidationDownloadAndDeleteBranches(t *testing.T) {
 	if _, err := NewLocalProfileBGStoreWithClient(t.TempDir(), invalidImageClient).SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); err == nil {
 		t.Fatal("invalid image body should fail")
 	}
+}
 
+func testLocalProfileBGStoragePathErrors(t *testing.T, ctx context.Context) {
+	t.Helper()
 	validRaw := pngBytes(t, 3, 7)
 	validClient := &http.Client{Transport: profileBGRoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		return profileBGResponse(req, http.StatusOK, io.NopCloser(bytes.NewReader(validRaw))), nil
@@ -124,7 +137,19 @@ func TestLocalProfileBGStoreValidationDownloadAndDeleteBranches(t *testing.T) {
 	if _, err := fileRootStore.SaveProfileBackground(ctx, "jp", "1", "https://example.test/a.png"); err == nil {
 		t.Fatal("profile background store rooted at a file should fail")
 	}
+}
 
+func testLocalProfileBGDeleteAndPathValidation(t *testing.T, ctx context.Context) {
+	t.Helper()
+	store := NewLocalProfileBGStore(t.TempDir())
+	testLocalProfileBGDeleteBranches(t, ctx, store)
+	testLocalProfileBGAbsolutePathValidation(t, store)
+}
+
+func testLocalProfileBGDeleteBranches(t *testing.T, ctx context.Context, store *LocalProfileBGStore) {
+	t.Helper()
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
 	if err := store.DeleteProfileBackground(canceled, nil); !errors.Is(err, context.Canceled) {
 		t.Fatalf("canceled delete = %v", err)
 	}
@@ -161,7 +186,10 @@ func TestLocalProfileBGStoreValidationDownloadAndDeleteBranches(t *testing.T) {
 	if err := store.DeleteProfileBackground(nil, &drawing.ProfileBgSettings{ImgPath: &fileRel}); err != nil {
 		t.Fatalf("delete profile background: %v", err)
 	}
+}
 
+func testLocalProfileBGAbsolutePathValidation(t *testing.T, store *LocalProfileBGStore) {
+	t.Helper()
 	for _, relative := range []string{"", ".", "../x", "/absolute.jpg"} {
 		if _, err := store.absolutePath(relative); err == nil {
 			t.Fatalf("absolutePath(%q) should fail", relative)
@@ -173,6 +201,14 @@ func TestLocalProfileBGStoreValidationDownloadAndDeleteBranches(t *testing.T) {
 }
 
 func TestProfileBGImageEncodingCleanupAndSafeHTTPBranches(t *testing.T) {
+	testProfileBGImageEncoding(t)
+	testProfileBGOrphanCleanup(t)
+	testProfileBGSafeDial(t)
+	testProfileBGSafeHTTPRedirects(t)
+}
+
+func testProfileBGImageEncoding(t *testing.T) {
+	t.Helper()
 	if got := randomHex8(); len(got) != 8 || strings.ToLower(got) != got {
 		t.Fatalf("randomHex8() = %q", got)
 	}
@@ -196,7 +232,10 @@ func TestProfileBGImageEncodingCleanupAndSafeHTTPBranches(t *testing.T) {
 	if got := profileBGContext(nil); got == nil || got.Err() != nil {
 		t.Fatal("nil profile background context should become a live context")
 	}
+}
 
+func testProfileBGOrphanCleanup(t *testing.T) {
+	t.Helper()
 	var nilStore *LocalProfileBGStore
 	if deleted, err := nilStore.CleanupOrphanedFiles(context.Background(), nil); err != nil || deleted != 0 {
 		t.Fatalf("nil cleanup = %d, %v", deleted, err)
@@ -232,7 +271,10 @@ func TestProfileBGImageEncodingCleanupAndSafeHTTPBranches(t *testing.T) {
 	if deleted, err := badStore.CleanupOrphanedFiles(context.Background(), nil); err != nil || deleted != 0 {
 		t.Fatalf("cleanup below a file root should skip the walk error: %d, %v", deleted, err)
 	}
+}
 
+func testProfileBGSafeDial(t *testing.T) {
+	t.Helper()
 	dial := safeDialContext(&net.Dialer{Timeout: time.Millisecond})
 	if _, err := dial(context.Background(), "tcp", "missing-port"); err == nil {
 		t.Fatal("dial address without a port should fail")
@@ -248,7 +290,10 @@ func TestProfileBGImageEncodingCleanupAndSafeHTTPBranches(t *testing.T) {
 	if _, err := dial(canceled, "tcp", "8.8.8.8:53"); err == nil {
 		t.Fatal("canceled public literal dial should fail")
 	}
+}
 
+func testProfileBGSafeHTTPRedirects(t *testing.T) {
+	t.Helper()
 	client := newSSRFSafeClient(123 * time.Millisecond)
 	if client.Timeout != 123*time.Millisecond || client.Transport == nil || client.CheckRedirect == nil {
 		t.Fatalf("safe HTTP client = %+v", client)

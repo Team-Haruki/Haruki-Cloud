@@ -145,7 +145,21 @@ func TestBindingSelectionResolutionDefaultsAndProperties(t *testing.T) {
 	if err != nil || len(items) != 3 {
 		t.Fatalf("seeded binding list = %+v, %v", items, err)
 	}
+	testBindingSelectionHelpers(t, items)
+	testBindingResolutionHelpers(t, ctx, service)
+	testBindingDefaultOperations(t, ctx, service)
+	testBindingSwapReadOnlyOperations(t, ctx, service)
+	testBindingDisplayOrderAndFallback(t, ctx, service, client, items)
+}
 
+func testBindingSelectionHelpers(t *testing.T, items []BindingListItem) {
+	t.Helper()
+	testBindingSelectionCases(t, items)
+	testBindingSelectionNormalization(t)
+}
+
+func testBindingSelectionCases(t *testing.T, items []BindingListItem) {
+	t.Helper()
 	if buildBindingList(nil, nil) != nil || filterBindingsByServer(nil, "") != nil {
 		t.Fatal("empty binding helpers should return nil")
 	}
@@ -173,13 +187,20 @@ func TestBindingSelectionResolutionDefaultsAndProperties(t *testing.T) {
 	if got := filterBindingsByServer(items, "JP"); len(got) != 2 {
 		t.Fatalf("JP filtered bindings = %+v", got)
 	}
+}
+
+func testBindingSelectionNormalization(t *testing.T) {
+	t.Helper()
 	if normalizeSelectorServer("") != "" || normalizeSelectorServer("default") != "" || normalizeSelectorServer("bad") != "bad" || normalizeSelectorServer(" JP ") != "jp" {
 		t.Fatal("selector server normalization mismatch")
 	}
 	if isNumericUID("") || isNumericUID("1a") || !isNumericUID("001") || normalizeUID(" x ") != "x" {
 		t.Fatal("UID normalization mismatch")
 	}
+}
 
+func testBindingResolutionHelpers(t *testing.T, ctx context.Context, service *BindingService) {
+	t.Helper()
 	if _, err := service.ResolveOwnBindingForUIDQuery(ctx, "qq", "42", "u2", "jp"); err != nil {
 		t.Fatalf("ResolveOwnBindingForUIDQuery selector: %v", err)
 	}
@@ -202,7 +223,10 @@ func TestBindingSelectionResolutionDefaultsAndProperties(t *testing.T) {
 	if _, err := service.bindingListItemByID(ctx, "qq", "42", 999); err == nil {
 		t.Fatal("missing binding list item should fail")
 	}
+}
 
+func testBindingDefaultOperations(t *testing.T, ctx context.Context, service *BindingService) {
+	t.Helper()
 	if scope, label, err := normalizeDefaultScope("unsupported"); err != nil || scope != "unsupported" || label != "UNSUPPORTED" {
 		t.Fatalf("custom default scope normalization = %q, %q, %v", scope, label, err)
 	}
@@ -235,7 +259,10 @@ func TestBindingSelectionResolutionDefaultsAndProperties(t *testing.T) {
 	if err != nil || cleared.Scope != DefaultScopeGlobal {
 		t.Fatalf("clear selected global default = %+v, %v", cleared, err)
 	}
+}
 
+func testBindingSwapReadOnlyOperations(t *testing.T, ctx context.Context, service *BindingService) {
+	t.Helper()
 	if _, err := service.Swap(ctx, "qq", "42", "", "u1", ""); err == nil {
 		t.Fatal("swap without both selectors should fail")
 	}
@@ -256,7 +283,10 @@ func TestBindingSelectionResolutionDefaultsAndProperties(t *testing.T) {
 		t.Fatal("read-only Swap should fail")
 	}
 	service.SetReadOnly(false)
+}
 
+func testBindingDisplayOrderAndFallback(t *testing.T, ctx context.Context, service *BindingService, client *pjskdb.Client, items []BindingListItem) {
+	t.Helper()
 	if got := effectiveBindingDisplayOrder(nil); got != 0 {
 		t.Fatalf("nil binding display order = %d", got)
 	}
@@ -288,8 +318,7 @@ func TestBindingSelectionResolutionDefaultsAndProperties(t *testing.T) {
 
 func TestBindingTransactionHelpersAndBackgroundValueHelpers(t *testing.T) {
 	ctx := context.Background()
-	service, client := openAccountCoverageService(t, "transactions", accountCoverageValidator{})
-	_ = service
+	_, client := openAccountCoverageService(t, "transactions", accountCoverageValidator{})
 	account, err := client.GameAccount.Create().SetServer("jp").SetUserID("9001").Save(ctx)
 	if err != nil {
 		t.Fatalf("create account: %v", err)
@@ -306,11 +335,27 @@ func TestBindingTransactionHelpersAndBackgroundValueHelpers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create second binding: %v", err)
 	}
+	testBindingTransactionHelpers(t, ctx, client, account.ID, b1.ID, b2.ID)
+	testProfileBackgroundValueHelpers(t, account.ID)
+	testProfileBackgroundPersistenceHelpers(t, ctx, client, account.ID)
+}
 
+func testBindingTransactionHelpers(t *testing.T, ctx context.Context, client *pjskdb.Client, accountID, firstBindingID, secondBindingID int) {
+	t.Helper()
 	tx, err := client.Tx(ctx)
 	if err != nil {
 		t.Fatalf("begin tx: %v", err)
 	}
+	testBindingOrderTransactionHelpers(t, ctx, tx)
+	testBindingDefaultTransactionHelpers(t, ctx, tx, firstBindingID, secondBindingID)
+	testGameAccountTransactionHelpers(t, ctx, tx, accountID)
+	if err := tx.Commit(); err != nil {
+		t.Fatalf("commit helpers tx: %v", err)
+	}
+}
+
+func testBindingOrderTransactionHelpers(t *testing.T, ctx context.Context, tx *pjskdb.Tx) {
+	t.Helper()
 	if next, err := nextBindingDisplayOrderTx(ctx, tx, 999); err != nil || next != 1 {
 		t.Fatalf("next empty display order = %d, %v", next, err)
 	}
@@ -323,19 +368,27 @@ func TestBindingTransactionHelpersAndBackgroundValueHelpers(t *testing.T) {
 	if err := ensureBindingDisplayOrdersTx(ctx, tx, 42); err != nil {
 		t.Fatalf("already-normalized binding orders: %v", err)
 	}
-	if created, err := ensureDefaultBindingTx(ctx, tx, 42, "default", b1.ID); err != nil || !created {
+}
+
+func testBindingDefaultTransactionHelpers(t *testing.T, ctx context.Context, tx *pjskdb.Tx, firstBindingID, secondBindingID int) {
+	t.Helper()
+	if created, err := ensureDefaultBindingTx(ctx, tx, 42, "default", firstBindingID); err != nil || !created {
 		t.Fatalf("create default = %v, %v", created, err)
 	}
-	if created, err := ensureDefaultBindingTx(ctx, tx, 42, "default", b2.ID); err != nil || created {
+	if created, err := ensureDefaultBindingTx(ctx, tx, 42, "default", secondBindingID); err != nil || created {
 		t.Fatalf("existing default = %v, %v", created, err)
 	}
-	if row, err := upsertDefaultBindingTx(ctx, tx, 42, "default", b2.ID); err != nil || row.BindingID != b2.ID {
+	if row, err := upsertDefaultBindingTx(ctx, tx, 42, "default", secondBindingID); err != nil || row.BindingID != secondBindingID {
 		t.Fatalf("update default = %+v, %v", row, err)
 	}
-	if row, err := upsertDefaultBindingTx(ctx, tx, 42, "jp", b1.ID); err != nil || row.BindingID != b1.ID {
+	if row, err := upsertDefaultBindingTx(ctx, tx, 42, "jp", firstBindingID); err != nil || row.BindingID != firstBindingID {
 		t.Fatalf("create server default = %+v, %v", row, err)
 	}
-	if existing, err := getOrCreateGameAccountTx(ctx, tx, " JP ", " 9001 "); err != nil || existing.ID != account.ID {
+}
+
+func testGameAccountTransactionHelpers(t *testing.T, ctx context.Context, tx *pjskdb.Tx, accountID int) {
+	t.Helper()
+	if existing, err := getOrCreateGameAccountTx(ctx, tx, " JP ", " 9001 "); err != nil || existing.ID != accountID {
 		t.Fatalf("existing game account = %+v, %v", existing, err)
 	}
 	if created, err := getOrCreateGameAccountTx(ctx, tx, "tw", "9003"); err != nil || created.UserID != "9003" {
@@ -344,10 +397,16 @@ func TestBindingTransactionHelpersAndBackgroundValueHelpers(t *testing.T) {
 	if _, err := getOrCreateGameAccountTx(ctx, tx, "", "9004"); err == nil {
 		t.Fatal("invalid game account identity should fail")
 	}
-	if err := tx.Commit(); err != nil {
-		t.Fatalf("commit helpers tx: %v", err)
-	}
+}
 
+func testProfileBackgroundValueHelpers(t *testing.T, accountID int) {
+	t.Helper()
+	testProfileBackgroundCloneAndMergeHelpers(t)
+	testProfileBackgroundBindingHelpers(t, accountID)
+}
+
+func testProfileBackgroundCloneAndMergeHelpers(t *testing.T) {
+	t.Helper()
 	if !hasDefaultScope([]*pjskdb.UserDefaultBinding{{Server: "jp"}}, "jp") || hasDefaultScope(nil, "jp") {
 		t.Fatal("default scope lookup mismatch")
 	}
@@ -372,31 +431,42 @@ func TestBindingTransactionHelpersAndBackgroundValueHelpers(t *testing.T) {
 	if mergeUploadedProfileBGSettings(nil, bg) == bg || clearProfileBGImagePath(nil) != nil || clearProfileBGImagePath(bg).ImgPath != nil {
 		t.Fatal("profile background merge/clear helpers mismatch")
 	}
+}
+
+func testProfileBackgroundBindingHelpers(t *testing.T, accountID int) {
+	t.Helper()
+	path := "user_upload/profile_bg/jp/test.jpg"
+	bg := &drawing.ProfileBgSettings{ImgPath: &path, Blur: 3, Alpha: 60, Vertical: true}
 	if bindingGameAccount(nil) != nil || bindingGameAccountID(nil) != 0 || bindingServer(nil) != "" || bindingUserID(nil) != "" || resolveBindingProfileBG(nil) != nil {
 		t.Fatal("nil binding helpers should return zero values")
 	}
-	edgeBinding := &pjskdb.UserBinding{Edges: pjskdb.UserBindingEdges{GameAccount: &pjskdb.GameAccount{ID: account.ID, Server: " JP ", UserID: " 9001 ", Bg: bg}}}
-	if bindingGameAccountID(edgeBinding) != account.ID || bindingServer(edgeBinding) != "jp" || bindingUserID(edgeBinding) != "9001" || resolveBindingProfileBG(edgeBinding) == nil {
+	edgeBinding := &pjskdb.UserBinding{Edges: pjskdb.UserBindingEdges{GameAccount: &pjskdb.GameAccount{ID: accountID, Server: " JP ", UserID: " 9001 ", Bg: bg}}}
+	if bindingGameAccountID(edgeBinding) != accountID || bindingServer(edgeBinding) != "jp" || bindingUserID(edgeBinding) != "9001" || resolveBindingProfileBG(edgeBinding) == nil {
 		t.Fatal("binding game-account helpers mismatch")
 	}
-	accountID := account.ID
 	edgeBinding.GameAccountID = &accountID
-	if bindingGameAccountID(edgeBinding) != account.ID {
+	if bindingGameAccountID(edgeBinding) != accountID {
 		t.Fatal("explicit binding game-account ID should win")
 	}
-	if got, err := loadProfileBackground(ctx, nil, account.ID); err != nil || got != nil {
+}
+
+func testProfileBackgroundPersistenceHelpers(t *testing.T, ctx context.Context, client *pjskdb.Client, accountID int) {
+	t.Helper()
+	path := "user_upload/profile_bg/jp/test.jpg"
+	bg := &drawing.ProfileBgSettings{ImgPath: &path, Blur: 3, Alpha: 60, Vertical: true}
+	if got, err := loadProfileBackground(ctx, nil, accountID); err != nil || got != nil {
 		t.Fatalf("nil DB loadProfileBackground = %+v, %v", got, err)
 	}
-	if err := upsertProfileBackground(ctx, nil, account.ID, bg); err != nil || deleteProfileBackground(ctx, nil, account.ID) != nil {
+	if err := upsertProfileBackground(ctx, nil, accountID, bg); err != nil || deleteProfileBackground(ctx, nil, accountID) != nil {
 		t.Fatal("nil DB profile background helpers should be no-ops")
 	}
-	if err := upsertProfileBackground(ctx, client, account.ID, bg); err != nil {
+	if err := upsertProfileBackground(ctx, client, accountID, bg); err != nil {
 		t.Fatalf("upsert profile background: %v", err)
 	}
-	if got, err := loadProfileBackground(ctx, client, account.ID); err != nil || got == nil || !hasCustomProfileBGImage(got) {
+	if got, err := loadProfileBackground(ctx, client, accountID); err != nil || got == nil || !hasCustomProfileBGImage(got) {
 		t.Fatalf("load profile background = %+v, %v", got, err)
 	}
-	if err := deleteProfileBackground(ctx, client, account.ID); err != nil {
+	if err := deleteProfileBackground(ctx, client, accountID); err != nil {
 		t.Fatalf("delete profile background: %v", err)
 	}
 	if err := deleteProfileBackground(ctx, client, 99999); err != nil {

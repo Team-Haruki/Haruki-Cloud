@@ -64,7 +64,13 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 	if _, err := service.Bind(ctx, "qq", "42", "12345678901234"); err != nil {
 		t.Fatalf("bind: %v", err)
 	}
+	testProfileBindingVisibility(t, ctx, service)
+	testProfileBindingVerification(t, ctx, service)
+	testProfileBackgroundLifecycle(t, ctx, service, bgStore)
+}
 
+func testProfileBindingVisibility(t *testing.T, ctx context.Context, service *accountdata.BindingService) {
+	t.Helper()
 	item, err := service.SetBindingVisible(ctx, "qq", "42", "jp", false)
 	if err != nil {
 		t.Fatalf("hide id: %v", err)
@@ -88,7 +94,10 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 	if item.MySekaiVisible {
 		t.Fatalf("expected mysekai_visible=false, got %+v", item)
 	}
+}
 
+func testProfileBindingVerification(t *testing.T, ctx context.Context, service *accountdata.BindingService) {
+	t.Helper()
 	item, alreadyVerified, err := service.VerifyCurrentBinding(ctx, "qq", "42", "jp")
 	if err != nil {
 		t.Fatalf("verify: %v", err)
@@ -107,8 +116,17 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 	if !alreadyVerified {
 		t.Fatalf("expected second verify call to report already verified")
 	}
+}
 
-	item, err = service.SetCurrentBindingProfileBG(ctx, "qq", "42", "jp", "https://example.com/bg.png")
+func testProfileBackgroundLifecycle(t *testing.T, ctx context.Context, service *accountdata.BindingService, bgStore *fakeProfileBGStore) {
+	t.Helper()
+	testProfileBackgroundUploadAdjustReplace(t, ctx, service, bgStore)
+	testProfileBackgroundClearAndReupload(t, ctx, service, bgStore)
+}
+
+func testProfileBackgroundUploadAdjustReplace(t *testing.T, ctx context.Context, service *accountdata.BindingService, bgStore *fakeProfileBGStore) {
+	t.Helper()
+	item, err := service.SetCurrentBindingProfileBG(ctx, "qq", "42", "jp", "https://example.com/bg.png")
 	if err != nil {
 		t.Fatalf("set bg: %v", err)
 	}
@@ -137,8 +155,11 @@ func TestBindingServiceProfileSettingsLifecycle(t *testing.T) {
 	if len(bgStore.deleted) != 1 {
 		t.Fatalf("expected replaced image to delete previous file, got %+v", bgStore.deleted)
 	}
+}
 
-	item, err = service.ClearCurrentBindingProfileBG(ctx, "qq", "42", "jp")
+func testProfileBackgroundClearAndReupload(t *testing.T, ctx context.Context, service *accountdata.BindingService, bgStore *fakeProfileBGStore) {
+	t.Helper()
+	item, err := service.ClearCurrentBindingProfileBG(ctx, "qq", "42", "jp")
 	if err != nil {
 		t.Fatalf("clear bg: %v", err)
 	}

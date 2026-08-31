@@ -91,13 +91,35 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 			return nil, err
 		}
 	}
+	resolveBinding := newProfileBindingResolver(ctx, service, params)
+	switch mode {
+	case ProfileModeHideID, ProfileModeShowID,
+		ProfileModeHideSuite, ProfileModeShowSuite,
+		ProfileModeHideMySekai, ProfileModeShowMySekai:
+		return executeProfileVisibilityMode(ctx, service, mode, params, resolveBinding)
+	case ProfileModeVerify:
+		return executeProfileVerifyMode(ctx, service, params, resolveBinding)
+	case ProfileModeVerifyList:
+		return executeProfileVerifyListMode(ctx, service, params)
+	case ProfileModeSetTimeZone:
+		return executeProfileTimeZoneMode(ctx, service, params)
+	case ProfileModeSetArrestDiff:
+		return executeProfileArrestDifficultyMode(ctx, service, params)
+	case ProfileModeSetChartStyle:
+		return executeProfileChartStyleMode(ctx, service, params)
+	case ProfileModeEnableModular, ProfileModeDisableModular:
+		return executeProfileModularMode(ctx, service, params, mode == ProfileModeEnableModular)
+	case ProfileModeBGUpload, ProfileModeBGClear, ProfileModeBGAdjust:
+		return executeProfileBackgroundMode(ctx, service, mode, params, resolveBinding)
+	default:
+		return nil, fmt.Errorf("bridge: unsupported profile settings mode %q", mode)
+	}
+}
 
-	// When a u[i] selector is provided, resolve it to a specific binding entity
-	// instead of using server-based lookup. This supports users with multiple
-	// bindings on the same server.
-	// When no selector and no explicit region prefix, try global default binding
-	// first so the user's "default" account is targeted, not a server-specific one.
-	resolveBinding := func() (*pjskdb.UserBinding, error) {
+type profileBindingResolver func() (*pjskdb.UserBinding, error)
+
+func newProfileBindingResolver(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) profileBindingResolver {
+	return func() (*pjskdb.UserBinding, error) {
 		if params.Selector != "" {
 			selectorServer := ""
 			if params.RegionExplicit {
@@ -113,237 +135,172 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		}
 		return service.currentBindingEntity(ctx, params.Platform, params.PlatformUserID, params.Server)
 	}
+}
 
+func executeProfileVisibilityMode(ctx context.Context, service *BindingService, mode string, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
+	binding, err := resolve()
+	if err != nil {
+		return nil, err
+	}
+	update := service.pjskDB.UserBinding.UpdateOneID(binding.ID)
+	action, subject := "", ""
 	switch mode {
 	case ProfileModeHideID:
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
-		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetVisible(false).Save(ctx); err != nil {
-			return nil, err
-		}
-		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("已隐藏 [%s] %s 的ID信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
+		action, subject = "隐藏", "ID信息"
+		_, err = update.SetVisible(false).Save(ctx)
 	case ProfileModeShowID:
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
-		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetVisible(true).Save(ctx); err != nil {
-			return nil, err
-		}
-		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("已展示 [%s] %s 的ID信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
+		action, subject = "展示", "ID信息"
+		_, err = update.SetVisible(true).Save(ctx)
 	case ProfileModeHideSuite:
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
-		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetSuiteVisible(false).Save(ctx); err != nil {
-			return nil, err
-		}
-		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("已隐藏 [%s] %s 的抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
+		action, subject = "隐藏", "抓包信息"
+		_, err = update.SetSuiteVisible(false).Save(ctx)
 	case ProfileModeShowSuite:
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
-		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetSuiteVisible(true).Save(ctx); err != nil {
-			return nil, err
-		}
-		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("已展示 [%s] %s 的抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
+		action, subject = "展示", "抓包信息"
+		_, err = update.SetSuiteVisible(true).Save(ctx)
 	case ProfileModeHideMySekai:
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
-		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetMysekaiVisible(false).Save(ctx); err != nil {
-			return nil, err
-		}
-		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("已隐藏 [%s] %s 的烤森抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
+		action, subject = "隐藏", "烤森抓包信息"
+		_, err = update.SetMysekaiVisible(false).Save(ctx)
 	case ProfileModeShowMySekai:
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
-		if _, err := service.pjskDB.UserBinding.UpdateOneID(binding.ID).SetMysekaiVisible(true).Save(ctx); err != nil {
-			return nil, err
-		}
-		item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("已展示 [%s] %s 的烤森抓包信息", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
-	case ProfileModeVerify:
-		if service.fastVerifier == nil {
-			return nil, fmt.Errorf("pjsk: fast verification provider is not configured")
-		}
-		entity, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
-		item, alreadyVerified, err := service.verifyBindingEntity(ctx, params.Platform, params.PlatformUserID, entity)
-		if err != nil {
-			return nil, err
-		}
-		if alreadyVerified {
-			return []byte(fmt.Sprintf("当前%s服绑定账号已经验证过", strings.ToUpper(item.Server))), nil
-		}
-		return []byte(fmt.Sprintf("已验证%s服账号 %s", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
-	case ProfileModeVerifyList:
-		items, err := service.List(ctx, params.Platform, params.PlatformUserID)
-		if err != nil {
-			return nil, err
-		}
-		server := ""
-		if params.RegionExplicit {
-			server = params.Server
-			items = filterBindingsByServer(items, server)
-		}
-		return []byte(formatVerifyListText(items, server)), nil
-	case ProfileModeSetTimeZone:
-		resolvedTimeZone, candidates, err := displaytime.ResolveUserTimeZoneInput(params.TimeZone)
-		if err != nil {
-			return nil, err
-		}
-		if len(candidates) > 0 {
-			return []byte(formatTimeZoneCandidatesText(params.TimeZone, candidates)), nil
-		}
+		action, subject = "展示", "烤森抓包信息"
+		_, err = update.SetMysekaiVisible(true).Save(ctx)
+	}
+	if err != nil {
+		return nil, err
+	}
+	item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("已%s [%s] %s 的%s", action, strings.ToUpper(item.Server), formatBindingUID(*item), subject)), nil
+}
 
-		harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
-		if err != nil {
-			return nil, err
-		}
+func executeProfileVerifyMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
+	if service.fastVerifier == nil {
+		return nil, fmt.Errorf("pjsk: fast verification provider is not configured")
+	}
+	entity, err := resolve()
+	if err != nil {
+		return nil, err
+	}
+	item, alreadyVerified, err := service.verifyBindingEntity(ctx, params.Platform, params.PlatformUserID, entity)
+	if err != nil {
+		return nil, err
+	}
+	if alreadyVerified {
+		return []byte(fmt.Sprintf("当前%s服绑定账号已经验证过", strings.ToUpper(item.Server))), nil
+	}
+	return []byte(fmt.Sprintf("已验证%s服账号 %s", strings.ToUpper(item.Server), formatBindingUID(*item))), nil
+}
 
-		settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
-		if err != nil {
-			if !errors.Is(err, ErrUserSettingsNotFound) {
-				return nil, fmt.Errorf("读取用户设置失败: %w", err)
-			}
-			settings = newDefaultUserSettings()
-		}
-		if settings == nil {
-			settings = newDefaultUserSettings()
-		}
-		settings.TimeZone = resolvedTimeZone
-		if err := UpsertUserSettings(ctx, service.pjskDB, harukiUserID, settings); err != nil {
-			return nil, fmt.Errorf("保存用户时区失败: %w", err)
-		}
-		return []byte(fmt.Sprintf("已设置PJSK时区为 %s", resolvedTimeZone)), nil
-	case ProfileModeSetArrestDiff:
-		if len(params.DifficultyToggles) == 0 {
-			return nil, fmt.Errorf("请至少指定一个逮捕难度开关")
-		}
+func executeProfileVerifyListMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
+	items, err := service.List(ctx, params.Platform, params.PlatformUserID)
+	if err != nil {
+		return nil, err
+	}
+	server := ""
+	if params.RegionExplicit {
+		server = params.Server
+		items = filterBindingsByServer(items, server)
+	}
+	return []byte(formatVerifyListText(items, server)), nil
+}
 
-		harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
-		if err != nil {
-			return nil, err
-		}
+func loadProfileUserSettings(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) (int, *pjskschema.UserSettings, error) {
+	harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
+	if err != nil {
+		return 0, nil, err
+	}
+	settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
+	if err != nil && !errors.Is(err, ErrUserSettingsNotFound) {
+		return 0, nil, fmt.Errorf("读取用户设置失败: %w", err)
+	}
+	if settings == nil || errors.Is(err, ErrUserSettingsNotFound) {
+		settings = newDefaultUserSettings()
+	}
+	return harukiUserID, settings, nil
+}
 
-		settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
-		if err != nil {
-			if !errors.Is(err, ErrUserSettingsNotFound) {
-				return nil, fmt.Errorf("读取用户设置失败: %w", err)
-			}
-			settings = newDefaultUserSettings()
-		}
-		if settings == nil {
-			settings = newDefaultUserSettings()
-		}
+func executeProfileTimeZoneMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
+	resolved, candidates, err := displaytime.ResolveUserTimeZoneInput(params.TimeZone)
+	if err != nil {
+		return nil, err
+	}
+	if len(candidates) > 0 {
+		return []byte(formatTimeZoneCandidatesText(params.TimeZone, candidates)), nil
+	}
+	userID, settings, err := loadProfileUserSettings(ctx, service, params)
+	if err != nil {
+		return nil, err
+	}
+	settings.TimeZone = resolved
+	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
+		return nil, fmt.Errorf("保存用户时区失败: %w", err)
+	}
+	return []byte(fmt.Sprintf("已设置PJSK时区为 %s", resolved)), nil
+}
 
-		nextDiffs, err := applyProfileDifficultyToggles(settings.PJSKEnabledDifficulties, params.DifficultyToggles)
-		if err != nil {
-			return nil, err
-		}
-		settings.PJSKEnabledDifficulties = nextDiffs
-		if err := UpsertUserSettings(ctx, service.pjskDB, harukiUserID, settings); err != nil {
-			return nil, fmt.Errorf("保存逮捕难度设置失败: %w", err)
-		}
-		return []byte(fmt.Sprintf("已设置逮捕难度为 %s", formatProfileDifficultySummary(settings.PJSKEnabledDifficulties))), nil
-	case ProfileModeSetChartStyle:
-		resolvedChartStyle := chartstyle.Normalize(params.ChartStyle)
-		if resolvedChartStyle == "" {
-			return nil, fmt.Errorf("谱面样式只支持 white 或 black")
-		}
+func executeProfileArrestDifficultyMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
+	if len(params.DifficultyToggles) == 0 {
+		return nil, fmt.Errorf("请至少指定一个逮捕难度开关")
+	}
+	userID, settings, err := loadProfileUserSettings(ctx, service, params)
+	if err != nil {
+		return nil, err
+	}
+	settings.PJSKEnabledDifficulties, err = applyProfileDifficultyToggles(settings.PJSKEnabledDifficulties, params.DifficultyToggles)
+	if err != nil {
+		return nil, err
+	}
+	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
+		return nil, fmt.Errorf("保存逮捕难度设置失败: %w", err)
+	}
+	return []byte(fmt.Sprintf("已设置逮捕难度为 %s", formatProfileDifficultySummary(settings.PJSKEnabledDifficulties))), nil
+}
 
-		harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
-		if err != nil {
-			return nil, err
-		}
+func executeProfileChartStyleMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams) ([]byte, error) {
+	style := chartstyle.Normalize(params.ChartStyle)
+	if style == "" {
+		return nil, fmt.Errorf("谱面样式只支持 white 或 black")
+	}
+	userID, settings, err := loadProfileUserSettings(ctx, service, params)
+	if err != nil {
+		return nil, err
+	}
+	settings.ChartStyle = style
+	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
+		return nil, fmt.Errorf("保存谱面样式失败: %w", err)
+	}
+	return []byte(fmt.Sprintf("已设置谱面样式为 %s", style)), nil
+}
 
-		settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
-		if err != nil {
-			if !errors.Is(err, ErrUserSettingsNotFound) {
-				return nil, fmt.Errorf("读取用户设置失败: %w", err)
-			}
-			settings = newDefaultUserSettings()
-		}
-		if settings == nil {
-			settings = newDefaultUserSettings()
-		}
-		settings.ChartStyle = resolvedChartStyle
-		if err := UpsertUserSettings(ctx, service.pjskDB, harukiUserID, settings); err != nil {
-			return nil, fmt.Errorf("保存谱面样式失败: %w", err)
-		}
-		return []byte(fmt.Sprintf("已设置谱面样式为 %s", resolvedChartStyle)), nil
-	case ProfileModeEnableModular, ProfileModeDisableModular:
-		enabled := mode == ProfileModeEnableModular
-		harukiUserID, err := service.identity.ResolveOrCreate(ctx, params.Platform, params.PlatformUserID)
-		if err != nil {
-			return nil, err
-		}
-		settings, err := GetUserSettings(ctx, service.pjskDB, harukiUserID)
-		if err != nil {
-			if !errors.Is(err, ErrUserSettingsNotFound) {
-				return nil, fmt.Errorf("读取用户设置失败: %w", err)
-			}
-			settings = newDefaultUserSettings()
-		}
-		if settings == nil {
-			settings = newDefaultUserSettings()
-		}
-		settings.ModularProfileEnabled = enabled
-		if err := UpsertUserSettings(ctx, service.pjskDB, harukiUserID, settings); err != nil {
-			return nil, fmt.Errorf("保存模块个人信息设置失败: %w", err)
-		}
-		if enabled {
-			return []byte("已开启模块个人信息，之后 /个人信息 将使用模块布局"), nil
-		}
-		return []byte("已关闭模块个人信息，之后 /个人信息 将使用经典布局"), nil
+func executeProfileModularMode(ctx context.Context, service *BindingService, params ProfileSettingsCommandParams, enabled bool) ([]byte, error) {
+	userID, settings, err := loadProfileUserSettings(ctx, service, params)
+	if err != nil {
+		return nil, err
+	}
+	settings.ModularProfileEnabled = enabled
+	if err := UpsertUserSettings(ctx, service.pjskDB, userID, settings); err != nil {
+		return nil, fmt.Errorf("保存模块个人信息设置失败: %w", err)
+	}
+	if enabled {
+		return []byte("已开启模块个人信息，之后 /个人信息 将使用模块布局"), nil
+	}
+	return []byte("已关闭模块个人信息，之后 /个人信息 将使用经典布局"), nil
+}
+
+func executeProfileBackgroundMode(ctx context.Context, service *BindingService, mode string, params ProfileSettingsCommandParams, resolve profileBindingResolver) ([]byte, error) {
+	binding, err := resolve()
+	if err != nil {
+		return nil, err
+	}
+	switch mode {
 	case ProfileModeBGUpload:
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
 		item, err := service.setBindingProfileBG(ctx, params.Platform, params.PlatformUserID, binding, params.ImageURL)
 		if err != nil {
 			return nil, err
 		}
 		return []byte(fmt.Sprintf("已更新%s服个人信息背景", strings.ToUpper(item.Server))), nil
 	case ProfileModeBGClear:
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
-		}
 		item, err := service.clearBindingProfileBG(ctx, params.Platform, params.PlatformUserID, binding)
 		if err != nil {
 			return nil, err
@@ -351,19 +308,11 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		return []byte(fmt.Sprintf("已清空%s服个人信息背景", strings.ToUpper(item.Server))), nil
 	case ProfileModeBGAdjust:
 		if params.Blur == nil && params.Alpha == nil && params.Vertical == nil {
-			binding, err := resolveBinding()
-			if err != nil {
-				return nil, err
-			}
 			item, err := service.bindingListItemByID(ctx, params.Platform, params.PlatformUserID, binding.ID)
 			if err != nil {
 				return nil, err
 			}
 			return []byte(formatProfileBGSettingsText(*item)), nil
-		}
-		binding, err := resolveBinding()
-		if err != nil {
-			return nil, err
 		}
 		item, err := service.adjustBindingProfileBG(ctx, params.Platform, params.PlatformUserID, binding, params.Blur, params.Alpha, params.Vertical)
 		if err != nil {
@@ -371,7 +320,7 @@ func ExecuteProfileSettingsCommand(ctx context.Context, service *BindingService,
 		}
 		return []byte(fmt.Sprintf("已更新%s服个人信息背景设置", strings.ToUpper(item.Server))), nil
 	default:
-		return nil, fmt.Errorf("bridge: unsupported profile settings mode %q", mode)
+		return nil, fmt.Errorf("bridge: unsupported profile background mode %q", mode)
 	}
 }
 
@@ -414,28 +363,32 @@ func formatVerifyListText(items []BindingListItem, server string) string {
 	}
 
 	for i, item := range items {
-		status := "❌"
-		if item.Verified {
-			status = "✅"
-		}
-		displayIdx := i + 1
-		if server != "" {
-			displayIdx = item.Index
-		}
-		line := fmt.Sprintf("u%d [%s] %s %s", displayIdx, strings.ToUpper(item.Server), formatBindingUID(item), status)
-		marks := make([]string, 0, 2)
-		if item.IsGlobalDefault {
-			marks = append(marks, "全局默认")
-		}
-		if item.IsServerDefault {
-			marks = append(marks, strings.ToUpper(item.Server)+"服默认")
-		}
-		if len(marks) > 0 {
-			line += " (" + strings.Join(marks, " / ") + ")"
-		}
-		lines = append(lines, line)
+		lines = append(lines, formatVerifyListItem(item, i+1, server != ""))
 	}
 	return strings.Join(lines, "\n")
+}
+
+func formatVerifyListItem(item BindingListItem, globalIndex int, useServerIndex bool) string {
+	status := "❌"
+	if item.Verified {
+		status = "✅"
+	}
+	displayIndex := globalIndex
+	if useServerIndex {
+		displayIndex = item.Index
+	}
+	line := fmt.Sprintf("u%d [%s] %s %s", displayIndex, strings.ToUpper(item.Server), formatBindingUID(item), status)
+	marks := make([]string, 0, 2)
+	if item.IsGlobalDefault {
+		marks = append(marks, "全局默认")
+	}
+	if item.IsServerDefault {
+		marks = append(marks, strings.ToUpper(item.Server)+"服默认")
+	}
+	if len(marks) > 0 {
+		line += " (" + strings.Join(marks, " / ") + ")"
+	}
+	return line
 }
 
 func formatProfileBGSettingsText(item BindingListItem) string {

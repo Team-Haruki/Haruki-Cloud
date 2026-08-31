@@ -51,6 +51,13 @@ func (s accountCoverageBGStorage) DeleteProfileBackground(context.Context, *draw
 }
 
 func TestProfileBindingCommandWrappersAndFormatBranches(t *testing.T) {
+	testProfileBindingParamDecoding(t)
+	testProfileBindingCommandExecution(t)
+	testProfileBindingFormatting(t)
+}
+
+func testProfileBindingParamDecoding(t *testing.T) {
+	t.Helper()
 	ctx := context.Background()
 	if _, err := DecodeProfileBindingParams(nil); err == nil {
 		t.Fatal("missing binding params should fail")
@@ -68,7 +75,11 @@ func TestProfileBindingCommandWrappersAndFormatBranches(t *testing.T) {
 	if _, err := ExecuteProfileBindingCommand(ctx, nil, ProfileModeBindList, params); !errors.Is(err, ErrBindingServiceUnavailable) {
 		t.Fatalf("nil binding command service = %v", err)
 	}
+}
 
+func testProfileBindingCommandExecution(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
 	service, _ := openAccountCoverageService(t, "binding_commands", accountCoverageValidator{profiles: map[string]string{"jp": "First"}})
 	if _, err := service.Bind(ctx, "qq", "42", "7001"); err != nil {
 		t.Fatalf("bind first command account: %v", err)
@@ -102,18 +113,31 @@ func TestProfileBindingCommandWrappersAndFormatBranches(t *testing.T) {
 			t.Fatalf("binding command %q should propagate selector errors", mode)
 		}
 	}
+}
 
+func testProfileBindingFormatting(t *testing.T) {
+	t.Helper()
+	visible := BindingListItem{Index: 2, BindingID: 2, Server: "jp", UserID: "123456789", Visible: true, IsGlobalDefault: true, IsServerDefault: true}
+	hidden := BindingListItem{Index: 1, BindingID: 1, Server: "jp", UserID: "123456789"}
+	testProfileBindingListFormatting(t, visible, hidden)
+	testProfileBindingResultFormatting(t, visible, hidden)
+}
+
+func testProfileBindingListFormatting(t *testing.T, visible, hidden BindingListItem) {
+	t.Helper()
 	if formatBindingListText(nil, "") != "你还没有绑定任何PJSK账号" || !strings.Contains(formatBindingListText(nil, "jp"), "JP服") {
 		t.Fatal("empty binding list formatting mismatch")
 	}
-	visible := BindingListItem{Index: 2, BindingID: 2, Server: "jp", UserID: "123456789", Visible: true, IsGlobalDefault: true, IsServerDefault: true}
-	hidden := BindingListItem{Index: 1, BindingID: 1, Server: "jp", UserID: "123456789"}
 	if text := formatBindingListText([]BindingListItem{visible}, "jp"); !strings.Contains(text, "u2") || !strings.Contains(text, "全局默认") || !strings.Contains(text, "JP服默认") || !strings.Contains(text, visible.UserID) {
 		t.Fatalf("server binding list text = %q", text)
 	}
 	if text := formatBindingListText([]BindingListItem{hidden}, ""); !strings.Contains(text, "u1") || strings.Contains(text, hidden.UserID) {
 		t.Fatalf("global hidden binding list text = %q", text)
 	}
+}
+
+func testProfileBindingResultFormatting(t *testing.T, visible, hidden BindingListItem) {
+	t.Helper()
 	if formatBindResultText(nil) != "绑定成功" {
 		t.Fatal("nil bind result formatting mismatch")
 	}
@@ -148,6 +172,14 @@ func TestProfileBindingCommandWrappersAndFormatBranches(t *testing.T) {
 }
 
 func TestProfileSettingsPureFormattingAndStableErrorBranches(t *testing.T) {
+	testProfileSettingsStableErrors(t)
+	testProfileSettingsMutationClassification(t)
+	testProfileSettingsFormatting(t)
+	testProfileDifficultyHelpers(t)
+}
+
+func testProfileSettingsStableErrors(t *testing.T) {
+	t.Helper()
 	ctx := context.Background()
 	service, _ := openAccountCoverageService(t, "settings_errors", accountCoverageValidator{})
 	params := ProfileSettingsCommandParams{Platform: "qq", PlatformUserID: "42", Server: "jp", RegionExplicit: true}
@@ -194,7 +226,11 @@ func TestProfileSettingsPureFormattingAndStableErrorBranches(t *testing.T) {
 		t.Fatal("read-only mutating settings mode should fail")
 	}
 	service.SetReadOnly(false)
+}
 
+func testProfileSettingsMutationClassification(t *testing.T) {
+	t.Helper()
+	params := ProfileSettingsCommandParams{}
 	for _, mode := range []string{ProfileModeHideID, ProfileModeShowID, ProfileModeHideSuite, ProfileModeShowSuite, ProfileModeHideMySekai, ProfileModeShowMySekai, ProfileModeSetTimeZone, ProfileModeSetArrestDiff, ProfileModeSetChartStyle, ProfileModeEnableModular, ProfileModeDisableModular, ProfileModeBGUpload, ProfileModeBGClear} {
 		if !profileSettingsModeMutates(mode, params) {
 			t.Fatalf("mode %q should mutate", mode)
@@ -207,7 +243,10 @@ func TestProfileSettingsPureFormattingAndStableErrorBranches(t *testing.T) {
 	if !profileSettingsModeMutates(ProfileModeBGAdjust, params) {
 		t.Fatal("background adjustment with a value should mutate")
 	}
+}
 
+func testProfileSettingsFormatting(t *testing.T) {
+	t.Helper()
 	if formatVerifyListText(nil, "") != "你还没有绑定任何PJSK账号" || !strings.Contains(formatVerifyListText(nil, "jp"), "JP服") {
 		t.Fatal("empty verify list formatting mismatch")
 	}
@@ -238,6 +277,10 @@ func TestProfileSettingsPureFormattingAndStableErrorBranches(t *testing.T) {
 	if text := formatTimeZoneCandidatesText("UTC", []string{"UTC"}); !strings.Contains(text, "UTC") {
 		t.Fatalf("short timezone candidates text = %q", text)
 	}
+}
+
+func testProfileDifficultyHelpers(t *testing.T) {
+	t.Helper()
 	for _, diff := range []sekaiapi.MusicDifficultyType{sekaiapi.MusicDifficultyEasy, sekaiapi.MusicDifficultyNormal, sekaiapi.MusicDifficultyHard, sekaiapi.MusicDifficultyExpert, sekaiapi.MusicDifficultyMaster, sekaiapi.MusicDifficultyAppend} {
 		if normalizeProfileDifficulty(sekaiapi.MusicDifficultyType(" "+strings.ToUpper(string(diff))+" ")) != diff {
 			t.Fatalf("difficulty %q did not normalize", diff)
@@ -272,6 +315,19 @@ func TestBindingPropertyDefensiveVerificationAndClearBranches(t *testing.T) {
 	if err != nil {
 		t.Fatalf("current property binding: %v", err)
 	}
+	testBindingProfileBackgroundDefenses(t, ctx, service, client, binding)
+	testBindingVerificationBranches(t, ctx, service, binding)
+	testBindingPropertyMutationErrors(t, ctx, service, binding)
+}
+
+func testBindingProfileBackgroundDefenses(t *testing.T, ctx context.Context, service *BindingService, client *pjskdb.Client, binding *pjskdb.UserBinding) {
+	t.Helper()
+	testUnverifiedProfileBackgroundDefenses(t, ctx, service, binding)
+	testVerifiedProfileBackgroundDefenses(t, ctx, service, client, binding)
+}
+
+func testUnverifiedProfileBackgroundDefenses(t *testing.T, ctx context.Context, service *BindingService, binding *pjskdb.UserBinding) {
+	t.Helper()
 	if _, err := (*BindingService)(nil).setBindingProfileBG(ctx, "qq", "42", binding, "url"); err == nil {
 		t.Fatal("nil profile background service should fail")
 	}
@@ -297,6 +353,10 @@ func TestBindingPropertyDefensiveVerificationAndClearBranches(t *testing.T) {
 	if _, err := service.adjustBindingProfileBG(ctx, "qq", "42", binding, nil, nil, nil); err == nil || !strings.Contains(err.Error(), "尚未验证") {
 		t.Fatalf("unverified profile background adjust = %v", err)
 	}
+}
+
+func testVerifiedProfileBackgroundDefenses(t *testing.T, ctx context.Context, service *BindingService, client *pjskdb.Client, binding *pjskdb.UserBinding) {
+	t.Helper()
 	if _, err := client.UserBinding.UpdateOneID(binding.ID).SetVerified(true).Save(ctx); err != nil {
 		t.Fatalf("verify property binding in DB: %v", err)
 	}
@@ -312,7 +372,10 @@ func TestBindingPropertyDefensiveVerificationAndClearBranches(t *testing.T) {
 	if _, err := service.clearBindingProfileBG(ctx, "qq", "42", binding); err == nil || !strings.Contains(err.Error(), "delete failed") {
 		t.Fatalf("background delete failure = %v", err)
 	}
+}
 
+func testBindingVerificationBranches(t *testing.T, ctx context.Context, service *BindingService, binding *pjskdb.UserBinding) {
+	t.Helper()
 	if _, _, err := (*BindingService)(nil).VerifyCurrentBinding(ctx, "qq", "42", "jp"); err == nil {
 		t.Fatal("nil fast verification service should fail")
 	}
@@ -343,6 +406,10 @@ func TestBindingPropertyDefensiveVerificationAndClearBranches(t *testing.T) {
 	if items, err := service.ListVerifiedBindings(ctx, "qq", "42", "tw"); err != nil || len(items) != 0 {
 		t.Fatalf("verified TW bindings = %+v, %v", items, err)
 	}
+}
+
+func testBindingPropertyMutationErrors(t *testing.T, ctx context.Context, service *BindingService, binding *pjskdb.UserBinding) {
+	t.Helper()
 	service.SetReadOnly(true)
 	for _, call := range []func() error{
 		func() error { _, err := service.SetBindingVisible(ctx, "qq", "42", "jp", true); return err },

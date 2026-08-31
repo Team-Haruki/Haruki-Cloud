@@ -4,6 +4,7 @@ package drawing
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"net/url"
 	"path/filepath"
@@ -57,6 +58,13 @@ func TestRenderCacheEndpointPayloadAndScalarBranches(t *testing.T) {
 }
 
 func TestRenderCacheProfileAndPathHelperBranches(t *testing.T) {
+	testRenderCacheProfileRecognition(t)
+	testRenderCacheUserIDNormalization(t)
+	testRenderCacheNestedValueHelpers(t)
+}
+
+func testRenderCacheProfileRecognition(t *testing.T) {
+	t.Helper()
 	profiles := []map[string]any{
 		{"profile": map[string]any{"id": "nested", "nickname": "n"}},
 		{"data_sources": []any{map[string]any{"source": "real"}}, "id": 22},
@@ -89,6 +97,10 @@ func TestRenderCacheProfileAndPathHelperBranches(t *testing.T) {
 	if isPlaceholderProfile(nil) || extractUserIDFromMap(nil) != "" {
 		t.Fatal("nil profile helper result is invalid")
 	}
+}
+
+func testRenderCacheUserIDNormalization(t *testing.T) {
+	t.Helper()
 	payload := map[string]any{"user_info": map[string]any{"nickname": "user", "id": "u1"}}
 	if got := extractRenderCacheUserID(payload); got != "u1" {
 		t.Fatalf("user_info id = %q", got)
@@ -113,7 +125,10 @@ func TestRenderCacheProfileAndPathHelperBranches(t *testing.T) {
 	if !safeRenderCachePathSegment("A_z-1.2") {
 		t.Fatal("safe path segment rejected")
 	}
+}
 
+func testRenderCacheNestedValueHelpers(t *testing.T) {
+	t.Helper()
 	root := map[string]any{"a": map[string]any{"b": []any{1, 2}}}
 	if got := valueAt(root, "a", "b"); len(got.([]any)) != 2 {
 		t.Fatalf("unexpected nested value: %#v", got)
@@ -130,6 +145,14 @@ func TestRenderCacheProfileAndPathHelperBranches(t *testing.T) {
 }
 
 func TestRenderCacheRuleAndTimeBranches(t *testing.T) {
+	testRenderCacheRuleMerging(t)
+	testRenderCacheMillisConversions(t)
+	testRenderCacheTTLClamps(t)
+	testRenderCacheWindowTTL(t)
+}
+
+func testRenderCacheRuleMerging(t *testing.T) {
+	t.Helper()
 	if got := cloneRenderCacheBucketMap(nil); len(got) != 0 {
 		t.Fatalf("nil bucket map clone = %v", got)
 	}
@@ -157,7 +180,10 @@ func TestRenderCacheRuleAndTimeBranches(t *testing.T) {
 	if !merged.Enabled || !merged.Infinite || merged.TTL != 0 || len(merged.IgnoreFieldNames) != 0 || len(merged.IgnorePaths) != 0 {
 		t.Fatalf("unexpected merged rule: %+v", merged)
 	}
+}
 
+func testRenderCacheMillisConversions(t *testing.T) {
+	t.Helper()
 	millisCases := []struct {
 		value any
 		want  int64
@@ -174,6 +200,10 @@ func TestRenderCacheRuleAndTimeBranches(t *testing.T) {
 			t.Fatalf("renderCacheMillis(%T(%v)) = %d,%v want %d,%v", tc.value, tc.value, got, ok, tc.want, tc.ok)
 		}
 	}
+}
+
+func testRenderCacheTTLClamps(t *testing.T) {
+	t.Helper()
 	if got := clampRenderCacheWindowTTL(-int64(time.Hour / time.Millisecond)); got != renderCacheWindowTTLMin {
 		t.Fatalf("window min clamp = %v", got)
 	}
@@ -198,7 +228,10 @@ func TestRenderCacheRuleAndTimeBranches(t *testing.T) {
 	if got := clampBirthdayDayBoundaryCacheTTL(time.Hour); got != time.Hour {
 		t.Fatalf("birthday middle clamp = %v", got)
 	}
+}
 
+func testRenderCacheWindowTTL(t *testing.T) {
+	t.Helper()
 	if _, ok := resolveRenderCacheWindowTTL("/api/pjsk/event/list", nil); ok {
 		t.Fatal("nil event payload produced window ttl")
 	}
@@ -222,6 +255,12 @@ func TestRenderCacheRuleAndTimeBranches(t *testing.T) {
 }
 
 func TestRenderCacheNodeAndLocalCacheBranches(t *testing.T) {
+	testRenderCacheNodeNormalization(t)
+	testLocalRenderCacheBranches(t)
+}
+
+func testRenderCacheNodeNormalization(t *testing.T) {
+	t.Helper()
 	rule := renderCacheRule{
 		Enabled:          true,
 		IgnoreFieldNames: renderCacheStringSet("remove"),
@@ -256,7 +295,10 @@ func TestRenderCacheNodeAndLocalCacheBranches(t *testing.T) {
 	if _, ok := bucketRenderCacheValue(10, time.Nanosecond); ok {
 		t.Fatal("sub-millisecond bucket unexpectedly succeeded")
 	}
+}
 
+func testLocalRenderCacheBranches(t *testing.T) {
+	t.Helper()
 	var nilCache *localRenderCache
 	if data, ok := nilCache.get("x"); ok || data != nil {
 		t.Fatalf("nil cache hit: %v %q", ok, data)
@@ -295,6 +337,14 @@ func TestRenderCacheNodeAndLocalCacheBranches(t *testing.T) {
 }
 
 func TestRemoteRenderCacheSmallHelpers(t *testing.T) {
+	testRemoteRenderCacheConstruction(t)
+	testRemoteRenderCachePaths(t)
+	testRemoteRenderCacheFileTypes(t)
+	testRemoteRenderCacheFileIO(t)
+}
+
+func testRemoteRenderCacheConstruction(t *testing.T) {
+	t.Helper()
 	for _, cfg := range []RenderCacheConfig{
 		{},
 		{BaseURL: "http://example.test", StorageDir: "/tmp", TTL: 0},
@@ -317,7 +367,11 @@ func TestRemoteRenderCacheSmallHelpers(t *testing.T) {
 	if shortRenderCacheKey(" short ") != "short" || shortRenderCacheKey("123456789012345") != "123456789012" {
 		t.Fatal("short cache key branches failed")
 	}
+}
 
+func testRemoteRenderCachePaths(t *testing.T) {
+	t.Helper()
+	var nilClient *RenderCacheClient
 	root := t.TempDir()
 	client := &RenderCacheClient{storageDir: root, imageCacheDir: filepath.Join(root, "images")}
 	path := client.defaultFilePath("api/pjsk/card/list", "user", "key")
@@ -340,7 +394,11 @@ func TestRemoteRenderCacheSmallHelpers(t *testing.T) {
 	if _, ok := nilClient.imageCacheRelativePath("x"); ok {
 		t.Fatal("nil client returned relative image path")
 	}
+}
 
+func testRemoteRenderCacheFileTypes(t *testing.T) {
+	t.Helper()
+	root := t.TempDir()
 	if renderCacheFileExtFromData([]byte("plain")) != ".png" {
 		t.Fatal("plain data should use png fallback")
 	}
@@ -364,7 +422,40 @@ func TestRemoteRenderCacheSmallHelpers(t *testing.T) {
 	}
 }
 
+func testRemoteRenderCacheFileIO(t *testing.T) {
+	t.Helper()
+	root := t.TempDir()
+	client := &RenderCacheClient{storageDir: root}
+	target := filepath.Join(root, "api", "pjsk", "card", "public", "image.gif")
+	prepared, err := client.prepareCacheTarget(target)
+	if err != nil || prepared != target {
+		t.Fatalf("prepare cache target = %q, %v", prepared, err)
+	}
+	data := []byte("GIF89a-render-cache")
+	if err := writeRenderCacheFileAtomic(prepared, data); err != nil {
+		t.Fatalf("write cache file: %v", err)
+	}
+	got, err := client.readCacheFile(prepared)
+	if err != nil || string(got) != string(data) {
+		t.Fatalf("read cache file = %q, %v", got, err)
+	}
+	if preparedAgain, err := client.prepareCacheTarget(target); err != nil || preparedAgain != target {
+		t.Fatalf("prepare existing cache target = %q, %v", preparedAgain, err)
+	}
+	hash, contentPath := client.contentFilePath("api/pjsk/card", "public", "key", data)
+	if len(hash) != sha256.Size*2 || filepath.Ext(contentPath) != ".gif" {
+		t.Fatalf("content path = %q, hash=%q", contentPath, hash)
+	}
+}
+
 func TestDrawingPointerProfileAndTimestampHelpers(t *testing.T) {
+	testDrawingPointerAndProfileHelpers(t)
+	testDrawingTimestampHelpers(t)
+	testDetailedProfileDetection(t)
+}
+
+func testDrawingPointerAndProfileHelpers(t *testing.T) {
+	t.Helper()
 	if *StringPtr("value") != "value" || *IntPtr(7) != 7 || *Int64Ptr(8) != 8 {
 		t.Fatal("pointer helpers returned unexpected values")
 	}
@@ -386,7 +477,10 @@ func TestDrawingPointerProfileAndTimestampHelpers(t *testing.T) {
 	if got := NewCustomProfileCardRenderRequest("en", sekaiapi.UserCustomProfileCard{}, nil, resources); got.Resources["asset"] != "path" {
 		t.Fatalf("custom resources were not preserved: %+v", got.Resources)
 	}
+}
 
+func testDrawingTimestampHelpers(t *testing.T) {
+	t.Helper()
 	valid := []struct {
 		value any
 		want  int64
@@ -415,6 +509,10 @@ func TestDrawingPointerProfileAndTimestampHelpers(t *testing.T) {
 	if got := normalizeDrawingUpdateTime(drawingTimestampMsThreshold, 99); got != drawingTimestampMsThreshold {
 		t.Fatalf("millisecond timestamp = %d", got)
 	}
+}
+
+func testDetailedProfileDetection(t *testing.T) {
+	t.Helper()
 	if looksLikeDetailedProfileCard(nil) || looksLikeDetailedProfileCard(map[string]any{}) {
 		t.Fatal("empty profile classified as detailed")
 	}
@@ -462,6 +560,13 @@ func TestDrawingClientSeparateCacheRequestWrapper(t *testing.T) {
 }
 
 func TestDrawingLimiterRemainingBranches(t *testing.T) {
+	testDrawingLimiterConfiguration(t)
+	testDrawingSlotAcquisition(t)
+	testDrawingLimiterAcquisition(t)
+}
+
+func testDrawingLimiterConfiguration(t *testing.T) {
+	t.Helper()
 	option := WithLimiter(LimiterConfig{})
 	option(nil, nil)
 	client := &HarukiDrawingClient{}
@@ -482,6 +587,10 @@ func TestDrawingLimiterRemainingBranches(t *testing.T) {
 	if permit, err := (*drawingLimiter)(nil).acquire(nil, "x"); err != nil || permit != (drawingPermit{}) {
 		t.Fatalf("nil limiter permit = %+v,%v", permit, err)
 	}
+}
+
+func testDrawingSlotAcquisition(t *testing.T) {
+	t.Helper()
 	if err := acquireDrawingSlot(nil, nil, 0); err != nil {
 		t.Fatalf("nil drawing slot = %v", err)
 	}
@@ -502,7 +611,10 @@ func TestDrawingLimiterRemainingBranches(t *testing.T) {
 		t.Fatal("full drawing slot did not time out")
 	}
 	<-channel
+}
 
+func testDrawingLimiterAcquisition(t *testing.T) {
+	t.Helper()
 	limiter := &drawingLimiter{
 		global:         make(chan struct{}, 1),
 		sk:             make(chan struct{}, 1),

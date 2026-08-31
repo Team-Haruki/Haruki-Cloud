@@ -172,57 +172,63 @@ func TestLocalRenderCacheSharedFlightMergesOperationsIntoEveryWaiter(t *testing.
 }
 
 func TestLocalRenderCacheEnforcesLRUEntryAndByteLimits(t *testing.T) {
-	t.Run("entry limit", func(t *testing.T) {
-		cache := newLocalRenderCacheWithLimits(time.Minute, 2, 1024)
-		cache.set("oldest", []byte("aaa"), time.Minute, true)
-		cache.set("recent", []byte("bbb"), time.Minute, false)
-		if _, ok := cache.get("oldest"); !ok {
-			t.Fatal("oldest entry unexpectedly missing before LRU refresh")
-		}
-		cache.set("new", []byte("ccc"), time.Minute, false)
+	testLocalRenderCacheEntryLimit(t)
+	testLocalRenderCacheByteLimit(t)
+	testLocalRenderCacheOversizedValue(t)
+}
 
-		if _, ok := cache.get("recent"); ok {
-			t.Fatal("least-recently-used entry was not evicted")
+func testLocalRenderCacheEntryLimit(t *testing.T) {
+	t.Helper()
+	cache := newLocalRenderCacheWithLimits(time.Minute, 2, 1024)
+	cache.set("oldest", []byte("aaa"), time.Minute, true)
+	cache.set("recent", []byte("bbb"), time.Minute, false)
+	if _, ok := cache.get("oldest"); !ok {
+		t.Fatal("oldest entry unexpectedly missing before LRU refresh")
+	}
+	cache.set("new", []byte("ccc"), time.Minute, false)
+	if _, ok := cache.get("recent"); ok {
+		t.Fatal("least-recently-used entry was not evicted")
+	}
+	for _, key := range []string{"oldest", "new"} {
+		if _, ok := cache.get(key); !ok {
+			t.Fatalf("retained entry %q was evicted", key)
 		}
-		for _, key := range []string{"oldest", "new"} {
-			if _, ok := cache.get(key); !ok {
-				t.Fatalf("retained entry %q was evicted", key)
-			}
-		}
-		entries, bytes, lruEntries := localRenderCacheUsage(cache)
-		if entries != 2 || bytes != 6 || lruEntries != entries {
-			t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
-		}
-	})
+	}
+	entries, bytes, lruEntries := localRenderCacheUsage(cache)
+	if entries != 2 || bytes != 6 || lruEntries != entries {
+		t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
+	}
+}
 
-	t.Run("byte limit", func(t *testing.T) {
-		cache := newLocalRenderCacheWithLimits(time.Minute, 10, 5)
-		cache.set("old", []byte("aaa"), time.Minute, false)
-		cache.set("new", []byte("bbb"), time.Minute, false)
-		if _, ok := cache.get("old"); ok {
-			t.Fatal("byte limit did not evict the least-recently-used entry")
-		}
-		if got, ok := cache.get("new"); !ok || string(got) != "bbb" {
-			t.Fatalf("new entry = %q, %t", got, ok)
-		}
-		entries, bytes, lruEntries := localRenderCacheUsage(cache)
-		if entries != 1 || bytes != 3 || lruEntries != entries {
-			t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
-		}
-	})
+func testLocalRenderCacheByteLimit(t *testing.T) {
+	t.Helper()
+	cache := newLocalRenderCacheWithLimits(time.Minute, 10, 5)
+	cache.set("old", []byte("aaa"), time.Minute, false)
+	cache.set("new", []byte("bbb"), time.Minute, false)
+	if _, ok := cache.get("old"); ok {
+		t.Fatal("byte limit did not evict the least-recently-used entry")
+	}
+	if got, ok := cache.get("new"); !ok || string(got) != "bbb" {
+		t.Fatalf("new entry = %q, %t", got, ok)
+	}
+	entries, bytes, lruEntries := localRenderCacheUsage(cache)
+	if entries != 1 || bytes != 3 || lruEntries != entries {
+		t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
+	}
+}
 
-	t.Run("oversized value", func(t *testing.T) {
-		cache := newLocalRenderCacheWithLimits(time.Minute, 10, 4)
-		cache.set("key", []byte("old"), time.Minute, false)
-		cache.set("key", []byte("too-large"), time.Minute, false)
-		if _, ok := cache.get("key"); ok {
-			t.Fatal("oversized replacement left a stale or oversized entry cached")
-		}
-		entries, bytes, lruEntries := localRenderCacheUsage(cache)
-		if entries != 0 || bytes != 0 || lruEntries != 0 {
-			t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
-		}
-	})
+func testLocalRenderCacheOversizedValue(t *testing.T) {
+	t.Helper()
+	cache := newLocalRenderCacheWithLimits(time.Minute, 10, 4)
+	cache.set("key", []byte("old"), time.Minute, false)
+	cache.set("key", []byte("too-large"), time.Minute, false)
+	if _, ok := cache.get("key"); ok {
+		t.Fatal("oversized replacement left a stale or oversized entry cached")
+	}
+	entries, bytes, lruEntries := localRenderCacheUsage(cache)
+	if entries != 0 || bytes != 0 || lruEntries != 0 {
+		t.Fatalf("usage = entries:%d bytes:%d lru:%d", entries, bytes, lruEntries)
+	}
 }
 
 func TestLocalRenderCacheSweepsUnvisitedExpiredEntries(t *testing.T) {
@@ -583,17 +589,7 @@ func TestRenderCacheClientRemoteMissUsesSingleflight(t *testing.T) {
 
 func TestRenderCacheClientSharedFlightMergesOperationsIntoEveryWaiter(t *testing.T) {
 	storageDir := t.TempDir()
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/cache":
-			http.NotFound(w, r)
-		case r.Method == http.MethodPost && r.URL.Path == "/cache":
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"ok":true}`))
-		default:
-			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
-		}
-	}))
+	server := httptest.NewServer(renderCacheMissStoreHandler(t))
 	defer server.Close()
 
 	client := NewRenderCacheClient(RenderCacheConfig{BaseURL: server.URL, StorageDir: storageDir, TTL: time.Minute})
@@ -609,62 +605,88 @@ func TestRenderCacheClientSharedFlightMergesOperationsIntoEveryWaiter(t *testing
 
 	leaderCtx, leaderTrace := commandtrace.WithTrace(context.Background())
 	followerCtx, followerTrace := commandtrace.WithTrace(context.Background())
-	type result struct {
-		data []byte
-		err  error
-	}
-	leaderDone := make(chan result, 1)
-	followerDone := make(chan result, 1)
+	leaderDone := make(chan renderCacheTestResult, 1)
+	followerDone := make(chan renderCacheTestResult, 1)
 	go func() {
 		data, err := client.RenderSharedContext(leaderCtx, "/api/pjsk/sk/query", request, render)
-		leaderDone <- result{data: data, err: err}
+		leaderDone <- renderCacheTestResult{data: data, err: err}
 	}()
 	<-started
 	go func() {
 		data, err := client.RenderSharedContext(followerCtx, "/api/pjsk/sk/query", request, render)
-		followerDone <- result{data: data, err: err}
+		followerDone <- renderCacheTestResult{data: data, err: err}
 	}()
 	time.Sleep(20 * time.Millisecond)
 	close(release)
 
-	for name, completed := range map[string]<-chan result{
+	for name, completed := range map[string]<-chan renderCacheTestResult{
 		"leader":   leaderDone,
 		"follower": followerDone,
 	} {
-		got := <-completed
-		if got.err != nil || string(got.data) != "rendered-image" {
-			t.Fatalf("%s result = %q, %v", name, got.data, got.err)
-		}
+		assertRenderCacheTestResult(t, name, completed)
 	}
 	client.waitForPendingStores()
 	for name, trace := range map[string]*commandtrace.Trace{
 		"leader":   leaderTrace,
 		"follower": followerTrace,
 	} {
-		for _, operation := range []string{
-			"drawing.cache_lookup",
-			"drawing.cache_lookup_http",
-			"drawing.render",
-		} {
-			if count := drawingTraceOperationCount(trace, operation); count != 1 {
-				t.Fatalf("%s %s count = %d, operations=%+v", name, operation, count, trace.Snapshot().Operations)
-			}
-		}
-		// The store runs write-behind after the flight returns, so store-side
-		// operations must no longer appear on any waiter's critical path.
-		for _, operation := range []string{
-			"drawing.cache_store",
-			"drawing.cache_hash",
-			"drawing.cache_write",
-			"drawing.cache_store_http",
-		} {
-			if count := drawingTraceOperationCount(trace, operation); count != 0 {
-				t.Fatalf("%s %s count = %d, want 0 (write-behind), operations=%+v", name, operation, count, trace.Snapshot().Operations)
-			}
-		}
+		assertSharedRenderFlightTrace(t, name, trace)
 	}
 	if count := drawingTraceOperationCount(followerTrace, "drawing.cache_shared"); count != 1 {
 		t.Fatalf("follower drawing.cache_shared count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
+	}
+}
+
+type renderCacheTestResult struct {
+	data []byte
+	err  error
+}
+
+func renderCacheMissStoreHandler(t *testing.T) http.Handler {
+	t.Helper()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/cache":
+			http.NotFound(w, r)
+		case r.Method == http.MethodPost && r.URL.Path == "/cache":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"ok":true}`))
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+	})
+}
+
+func assertRenderCacheTestResult(t *testing.T, name string, completed <-chan renderCacheTestResult) {
+	t.Helper()
+	got := <-completed
+	if got.err != nil || string(got.data) != "rendered-image" {
+		t.Fatalf("%s result = %q, %v", name, got.data, got.err)
+	}
+}
+
+func assertSharedRenderFlightTrace(t *testing.T, name string, trace *commandtrace.Trace) {
+	t.Helper()
+	for _, operation := range []string{
+		"drawing.cache_lookup",
+		"drawing.cache_lookup_http",
+		"drawing.render",
+	} {
+		if count := drawingTraceOperationCount(trace, operation); count != 1 {
+			t.Fatalf("%s %s count = %d, operations=%+v", name, operation, count, trace.Snapshot().Operations)
+		}
+	}
+	// The store runs write-behind after the flight returns, so store-side
+	// operations must no longer appear on any waiter's critical path.
+	for _, operation := range []string{
+		"drawing.cache_store",
+		"drawing.cache_hash",
+		"drawing.cache_write",
+		"drawing.cache_store_http",
+	} {
+		if count := drawingTraceOperationCount(trace, operation); count != 0 {
+			t.Fatalf("%s %s count = %d, want 0 (write-behind), operations=%+v", name, operation, count, trace.Snapshot().Operations)
+		}
 	}
 }
 

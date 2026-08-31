@@ -23,6 +23,7 @@ import (
 	"haruki-cloud/utils/logger"
 
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/sync/singleflight"
 )
 
 var cacheLogger = logger.NewLoggerFromGlobal("DrawingCache")
@@ -220,15 +221,8 @@ func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint st
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	finishKey := commandtrace.MeasureOperation(ctx, "drawing.cache_key")
-	policy, err := buildRenderCachePolicy(endpoint, request)
-	if err != nil {
-		finishKey()
-		return render(ctx)
-	}
-	key, err := buildRenderCacheKey(policy)
-	finishKey()
-	if err != nil {
+	policy, key, ok := resolveRenderCachePolicyKey(ctx, endpoint, request)
+	if !ok {
 		return render(ctx)
 	}
 	ttl := policy.TTL
@@ -256,29 +250,13 @@ func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint st
 		flightResult.leader = callerToken
 		return flightResult, nil
 	})
-	select {
-	case completed := <-result:
-		finishWait()
-		if completed.Err != nil {
-			return nil, completed.Err
-		}
-		flightResult, ok := completed.Val.(renderFlightResult)
-		if !ok {
-			return nil, fmt.Errorf("local render cache returned unexpected type %T", completed.Val)
-		}
-		commandtrace.MergeOperations(ctx, flightResult.operations)
-		if flightResult.leader != callerToken {
-			commandtrace.RecordOperation(ctx, "drawing.cache_shared", 0)
-		}
-		if flightResult.err != nil {
-			return nil, flightResult.err
-		}
-		cacheLogger.DebugContext(ctx, "drawing local cache miss rendered", "upstream_path", endpoint)
-		return cloneRenderBytes(flightResult.data), nil
-	case <-ctx.Done():
-		finishWait()
-		return nil, ctx.Err()
+	data, err := waitForRenderFlight(ctx, result, callerToken, "local")
+	finishWait()
+	if err != nil {
+		return nil, err
 	}
+	cacheLogger.DebugContext(ctx, "drawing local cache miss rendered", "upstream_path", endpoint)
+	return data, nil
 }
 
 func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
@@ -320,83 +298,93 @@ func (c *RenderCacheClient) RenderSharedContext(ctx context.Context, endpoint st
 		ctx = context.Background()
 	}
 
-	finishKey := commandtrace.MeasureOperation(ctx, "drawing.cache_key")
-	policy, policyErr := buildRenderCachePolicy(endpoint, request)
-	if policyErr == nil {
-		key, keyErr := buildRenderCacheKey(policy)
-		finishKey()
-		if keyErr == nil {
-			finishWait := commandtrace.MeasureOperation(ctx, "drawing.cache_wait")
-			callerToken := new(renderFlightToken)
-			result := c.flight.DoChan(key, func() (any, error) {
-				flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
-					tLookup := time.Now()
-					finishLookup := commandtrace.MeasureOperation(sharedCtx, "drawing.cache_lookup")
-					cached, hit := c.lookupContext(sharedCtx, key, policy.APIPath)
-					finishLookup()
-					if hit {
-						commandtrace.RecordOperation(sharedCtx, drawingCacheHitTraceField, 0)
-						cacheLogger.DebugContext(sharedCtx, "drawing remote cache hit",
-							"upstream_path", endpoint,
-							"cache_key", shortRenderCacheKey(key),
-							"duration_ms", commandtrace.Milliseconds(time.Since(tLookup)),
-						)
-						return cached, nil
-					}
-					commandtrace.RecordOperation(sharedCtx, "drawing.cache_miss", 0)
-					cacheLogger.DebugContext(sharedCtx, "drawing remote cache miss",
-						"upstream_path", endpoint,
-						"cache_key", shortRenderCacheKey(key),
-						"duration_ms", commandtrace.Milliseconds(time.Since(tLookup)),
-					)
-
-					image, err := render(sharedCtx)
-					if err != nil {
-						return nil, err
-					}
-
-					ttl := policy.TTL
-					if ttl <= 0 && !policy.Infinite {
-						ttl = c.ttl
-					}
-					// Store write-behind: failures were already warn-only, so no
-					// waiter depends on the store having completed. Returning the
-					// rendered bytes first keeps ~3.6ms of store+index work off
-					// every rendered command's critical path.
-					c.storeAsync(sharedCtx, endpoint, key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
-					return image, nil
-				})
-				flightResult.leader = callerToken
-				return flightResult, nil
-			})
-			select {
-			case completed := <-result:
-				finishWait()
-				if completed.Err != nil {
-					return nil, completed.Err
-				}
-				flightResult, ok := completed.Val.(renderFlightResult)
-				if !ok {
-					return nil, fmt.Errorf("remote render cache returned unexpected type %T", completed.Val)
-				}
-				commandtrace.MergeOperations(ctx, flightResult.operations)
-				if flightResult.leader != callerToken {
-					commandtrace.RecordOperation(ctx, "drawing.cache_shared", 0)
-				}
-				if flightResult.err != nil {
-					return nil, flightResult.err
-				}
-				return cloneRenderBytes(flightResult.data), nil
-			case <-ctx.Done():
-				finishWait()
-				return nil, ctx.Err()
-			}
-		}
-	} else {
-		finishKey()
+	policy, key, ok := resolveRenderCachePolicyKey(ctx, endpoint, request)
+	if !ok {
+		return render(ctx)
 	}
+	return c.renderRemoteFlight(ctx, endpoint, key, policy, render)
+}
 
-	return render(ctx)
+func resolveRenderCachePolicyKey(ctx context.Context, endpoint string, request any) (renderCachePolicy, string, bool) {
+	finishKey := commandtrace.MeasureOperation(ctx, "drawing.cache_key")
+	defer finishKey()
+	policy, err := buildRenderCachePolicy(endpoint, request)
+	if err != nil {
+		return renderCachePolicy{}, "", false
+	}
+	key, err := buildRenderCacheKey(policy)
+	return policy, key, err == nil
+}
+
+func waitForRenderFlight(ctx context.Context, result <-chan singleflight.Result, callerToken *renderFlightToken, cacheName string) ([]byte, error) {
+	select {
+	case completed := <-result:
+		if completed.Err != nil {
+			return nil, completed.Err
+		}
+		flightResult, ok := completed.Val.(renderFlightResult)
+		if !ok {
+			return nil, fmt.Errorf("%s render cache returned unexpected type %T", cacheName, completed.Val)
+		}
+		commandtrace.MergeOperations(ctx, flightResult.operations)
+		if flightResult.leader != callerToken {
+			commandtrace.RecordOperation(ctx, "drawing.cache_shared", 0)
+		}
+		if flightResult.err != nil {
+			return nil, flightResult.err
+		}
+		return cloneRenderBytes(flightResult.data), nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func (c *RenderCacheClient) renderRemoteFlight(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) ([]byte, error) {
+	finishWait := commandtrace.MeasureOperation(ctx, "drawing.cache_wait")
+	defer finishWait()
+	callerToken := new(renderFlightToken)
+	result := c.flight.DoChan(key, func() (any, error) {
+		flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
+			return c.renderRemoteFlightWork(sharedCtx, endpoint, key, policy, render)
+		})
+		flightResult.leader = callerToken
+		return flightResult, nil
+	})
+	return waitForRenderFlight(ctx, result, callerToken, "remote")
+}
+
+func (c *RenderCacheClient) renderRemoteFlightWork(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) ([]byte, error) {
+	lookupStarted := time.Now()
+	finishLookup := commandtrace.MeasureOperation(ctx, "drawing.cache_lookup")
+	cached, hit := c.lookupContext(ctx, key, policy.APIPath)
+	finishLookup()
+	if hit {
+		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
+		cacheLogger.DebugContext(ctx, "drawing remote cache hit",
+			"upstream_path", endpoint,
+			"cache_key", shortRenderCacheKey(key),
+			"duration_ms", commandtrace.Milliseconds(time.Since(lookupStarted)),
+		)
+		return cached, nil
+	}
+	commandtrace.RecordOperation(ctx, "drawing.cache_miss", 0)
+	cacheLogger.DebugContext(ctx, "drawing remote cache miss",
+		"upstream_path", endpoint,
+		"cache_key", shortRenderCacheKey(key),
+		"duration_ms", commandtrace.Milliseconds(time.Since(lookupStarted)),
+	)
+	image, err := render(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ttl := policy.TTL
+	if ttl <= 0 && !policy.Infinite {
+		ttl = c.ttl
+	}
+	// Store write-behind: failures were already warn-only, so no waiter
+	// depends on the store having completed.
+	c.storeAsync(ctx, endpoint, key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
+	return image, nil
 }
 
 func shortRenderCacheKey(key string) string {
@@ -658,19 +646,26 @@ func ensureRenderCacheDirectory(root, targetDir string) error {
 			continue
 		}
 		current = filepath.Join(current, segment)
-		info, statErr := os.Lstat(current)
-		switch {
-		case statErr == nil:
-			if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
-				return fmt.Errorf("render cache directory contains a non-directory component")
-			}
-		case os.IsNotExist(statErr):
-			if err := os.Mkdir(current, 0o755); err != nil && !os.IsExist(err) {
-				return err
-			}
-		case statErr != nil:
-			return statErr
+		if err := ensureRenderCacheDirectoryComponent(current); err != nil {
+			return err
 		}
+	}
+	return nil
+}
+
+func ensureRenderCacheDirectoryComponent(path string) error {
+	info, err := os.Lstat(path)
+	if err == nil {
+		if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+			return fmt.Errorf("render cache directory contains a non-directory component")
+		}
+		return nil
+	}
+	if !os.IsNotExist(err) {
+		return err
+	}
+	if err := os.Mkdir(path, 0o755); err != nil && !os.IsExist(err) {
+		return err
 	}
 	return nil
 }

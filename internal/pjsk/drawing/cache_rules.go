@@ -372,21 +372,27 @@ func resolveRenderCacheWindowTTL(endpointPath string, payload any) (time.Duratio
 		if root == nil {
 			return 0, false
 		}
-		nowMs := renderCacheNowMillis(root)
-		if nowMs <= 0 {
-			return 0, false
-		}
-		maxEnd := int64(0)
-		for _, item := range sliceAt(root, "lives") {
-			if endMs, ok := renderCacheMillis(valueAt(item, "end_at")); ok && endMs > maxEnd {
-				maxEnd = endMs
-			}
-		}
-		if maxEnd > 0 {
-			return clampRenderCacheWindowTTL(maxEnd - nowMs), true
-		}
+		return resolveVirtualLiveWindowCacheTTL(root)
 	}
 	return 0, false
+}
+
+func resolveVirtualLiveWindowCacheTTL(root map[string]any) (time.Duration, bool) {
+	nowMs := renderCacheNowMillis(root)
+	if nowMs <= 0 {
+		return 0, false
+	}
+	maxEnd := int64(0)
+	for _, item := range sliceAt(root, "lives") {
+		endMs, ok := renderCacheMillis(valueAt(item, "end_at"))
+		if ok && endMs > maxEnd {
+			maxEnd = endMs
+		}
+	}
+	if maxEnd <= 0 {
+		return 0, false
+	}
+	return clampRenderCacheWindowTTL(maxEnd - nowMs), true
 }
 
 func resolveEventListPhaseCacheTTL(root map[string]any) (time.Duration, bool) {
@@ -438,35 +444,38 @@ func renderCacheMillis(value any) (int64, bool) {
 	case nil:
 		return 0, false
 	case int64:
-		if typed > 0 {
-			return typed, true
-		}
+		return positiveRenderCacheMillis(typed)
 	case int:
-		if typed > 0 {
-			return int64(typed), true
-		}
+		return positiveRenderCacheMillis(int64(typed))
 	case float64:
-		if typed > 0 {
-			return int64(typed), true
-		}
+		return positiveRenderCacheMillis(int64(typed))
 	case float32:
-		if typed > 0 {
-			return int64(typed), true
-		}
+		return positiveRenderCacheMillis(int64(typed))
 	case json.Number:
-		if parsed, err := typed.Int64(); err == nil && parsed > 0 {
-			return parsed, true
-		}
+		return parsePositiveRenderCacheMillis(string(typed))
 	case string:
-		text := strings.TrimSpace(typed)
-		if text == "" {
-			return 0, false
-		}
-		if parsed, err := strconv.ParseInt(text, 10, 64); err == nil && parsed > 0 {
-			return parsed, true
-		}
+		return parsePositiveRenderCacheMillis(typed)
 	}
 	return 0, false
+}
+
+func positiveRenderCacheMillis(value int64) (int64, bool) {
+	if value <= 0 {
+		return 0, false
+	}
+	return value, true
+}
+
+func parsePositiveRenderCacheMillis(value string) (int64, bool) {
+	text := strings.TrimSpace(value)
+	if text == "" {
+		return 0, false
+	}
+	parsed, err := strconv.ParseInt(text, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return positiveRenderCacheMillis(parsed)
 }
 
 func clampRenderCacheWindowTTL(remainingMs int64) time.Duration {

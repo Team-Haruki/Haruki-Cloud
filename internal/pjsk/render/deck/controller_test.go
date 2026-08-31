@@ -1385,83 +1385,9 @@ func TestApplyCommonRecommendMetadataKeepsImplicitMysekaiWorldBloomBadgeWithoutE
 
 func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 	var recommendCalls atomic.Int32
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"challenge-all-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != challengeCharacterCount {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			response := make([]map[string]any, 0, len(options))
-			for index, rawOption := range options {
-				option, ok := rawOption.(map[string]any)
-				if !ok {
-					t.Fatalf("unexpected batch option payload: %+v", rawOption)
-				}
-				charID, ok := option["challenge_live_character_id"].(float64)
-				if !ok || int(charID) != index+1 {
-					t.Fatalf("unexpected challenge_live_character_id at %d: %+v", index, option["challenge_live_character_id"])
-				}
-				score := 1000000 + int(charID)
-				response = append(response, map[string]any{
-					"alg":       "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": map[string]any{
-						"decks": []map[string]any{{
-							"score":                   score,
-							"live_score":              score,
-							"mysekai_event_point":     0,
-							"total_power":             345678,
-							"event_bonus_rate":        0,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up":     120,
-							"cards": []map[string]any{{
-								"card_id":          1001,
-								"level":            50,
-								"master_rank":      1,
-								"skill_level":      4,
-								"skill_score_up":   100,
-								"event_bonus_rate": 0,
-								"episode1_read":    true,
-								"episode2_read":    true,
-								"after_training":   false,
-								"default_image":    "normal",
-								"has_canvas_bonus": false,
-							}},
-						}},
-					},
-				})
-			}
-			encoded, err := json.Marshal(response)
-			if err != nil {
-				t.Fatalf("encode recommend response: %v", err)
-			}
-			_, _ = w.Write(encoded)
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newChallengeAllServer(t, challengeAllServerConfig{
+		hash: "challenge-all-hash", algorithms: []string{"ga"}, recommendCalls: &recommendCalls,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -1506,90 +1432,9 @@ func TestBuildAutoRecommendRequestChallengeAllFansOutCharacters(t *testing.T) {
 
 func TestBuildAutoRecommendRequestChallengeAllDefaultsToPreferredAlgorithms(t *testing.T) {
 	var recommendCalls atomic.Int32
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"challenge-all-default-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != challengeCharacterCount*2 {
-				t.Fatalf("unexpected challenge-all default batch_options: %+v", payload["batch_options"])
-			}
-			response := make([]map[string]any, 0, len(options))
-			for index, rawOption := range options {
-				option, ok := rawOption.(map[string]any)
-				if !ok {
-					t.Fatalf("unexpected batch option payload: %+v", rawOption)
-				}
-				expectedAlg := "dfs_ga"
-				if index%2 == 1 {
-					expectedAlg = "rl"
-				}
-				if option["algorithm"] != expectedAlg {
-					t.Fatalf("expected challenge-all default algorithm %s at %d, got %+v", expectedAlg, index, option["algorithm"])
-				}
-				charID, ok := option["challenge_live_character_id"].(float64)
-				if !ok || int(charID) != index/2+1 {
-					t.Fatalf("unexpected challenge_live_character_id at %d: %+v", index, option["challenge_live_character_id"])
-				}
-				score := 1000000 + int(charID)
-				response = append(response, map[string]any{
-					"alg":       expectedAlg,
-					"cost_time": 0.2,
-					"wait_time": 0.0,
-					"result": map[string]any{
-						"decks": []map[string]any{{
-							"score":                   score,
-							"live_score":              score,
-							"mysekai_event_point":     0,
-							"total_power":             345678,
-							"event_bonus_rate":        0,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up":     120,
-							"cards": []map[string]any{{
-								"card_id":          1001,
-								"level":            50,
-								"master_rank":      1,
-								"skill_level":      4,
-								"skill_score_up":   100,
-								"event_bonus_rate": 0,
-								"episode1_read":    true,
-								"episode2_read":    true,
-								"after_training":   false,
-								"default_image":    "normal",
-								"has_canvas_bonus": false,
-							}},
-						}},
-					},
-				})
-			}
-			encoded, err := json.Marshal(response)
-			if err != nil {
-				t.Fatalf("encode recommend response: %v", err)
-			}
-			_, _ = w.Write(encoded)
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newChallengeAllServer(t, challengeAllServerConfig{
+		hash: "challenge-all-default-hash", algorithms: []string{"dfs_ga", "rl"}, recommendCalls: &recommendCalls,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -1757,78 +1602,11 @@ func TestBuildAutoRecommendRequestChallengeMusicCompareCurrentDeckBuildsCandidat
 	var recommendCalls atomic.Int32
 	seenMusicIDs := make([]int, 0, 3)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"challenge-compare-current-userdata-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			option := options[0].(map[string]any)
-			if option["challenge_live_character_id"] != 21.0 {
-				t.Fatalf("unexpected challenge_live_character_id: %+v", option["challenge_live_character_id"])
-			}
-			if option["limit"] != 1.0 {
-				t.Fatalf("unexpected compare limit: %+v", option["limit"])
-			}
-			fixedCards, ok := option["fixed_cards"].([]any)
-			if !ok || len(fixedCards) != 5 {
-				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
-			}
-			if option["best_skill_as_leader"] != false {
-				t.Fatalf("expected compare mode to disable best_skill_as_leader: %+v", option["best_skill_as_leader"])
-			}
-
-			musicID := int(option["music_id"].(float64))
-			seenMusicIDs = append(seenMusicIDs, musicID)
-			scoreByMusicID := map[int]int{
-				1: 1200000,
-				2: 1300000,
-				3: 1250000,
-			}
-			score := scoreByMusicID[musicID]
-			_, _ = w.Write([]byte(fmt.Sprintf(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": %d,
-							"live_score": %d,
-							"mysekai_event_point": 0,
-							"total_power": 200000,
-							"event_bonus_rate": 25,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]
-						}]
-					}
-				}
-			]`, score, score)))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newMusicCompareServer(t, musicCompareServerConfig{
+		hash: "challenge-compare-current-userdata-hash", recommendCalls: &recommendCalls,
+		seenMusicIDs: &seenMusicIDs, scores: map[int]int{1: 1200000, 2: 1300000, 3: 1250000},
+		fixedCardCount: 5, challengeCharacterID: 21, requireLimit: true,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -1874,19 +1652,7 @@ func TestBuildAutoRecommendRequestChallengeMusicCompareCurrentDeckBuildsCandidat
 	if request.CharaName == nil || *request.CharaName != "初音未来" {
 		t.Fatalf("unexpected challenge character metadata: %+v", request.CharaName)
 	}
-	if len(request.DeckData) != 3 {
-		t.Fatalf("unexpected compare deck count: %d", len(request.DeckData))
-	}
-	gotMusicIDs := make([]int, 0, len(request.DeckData))
-	for _, item := range request.DeckData {
-		if item.MusicID == nil {
-			t.Fatalf("missing compare music id in deck data: %+v", item)
-		}
-		gotMusicIDs = append(gotMusicIDs, *item.MusicID)
-	}
-	if !reflect.DeepEqual(gotMusicIDs, []int{2, 3, 1}) {
-		t.Fatalf("unexpected compare sort order: %+v", gotMusicIDs)
-	}
+	assertCompareMusicOrder(t, request, []int{2, 3, 1})
 	if request.DeckData[0].MusicTitle == nil || *request.DeckData[0].MusicTitle != "Song B" {
 		t.Fatalf("unexpected first compare title: %+v", request.DeckData[0].MusicTitle)
 	}
@@ -2090,67 +1856,10 @@ func TestBuildAutoRecommendRequestEventMusicCompareUsesResolvedSelections(t *tes
 	var recommendCalls atomic.Int32
 	seenMusicIDs := make([]int, 0, 2)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"compare-userdata-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			option := options[0].(map[string]any)
-			musicID := int(option["music_id"].(float64))
-			seenMusicIDs = append(seenMusicIDs, musicID)
-			if option["best_skill_as_leader"] != false {
-				t.Fatalf("expected compare mode to disable best_skill_as_leader: %+v", option["best_skill_as_leader"])
-			}
-
-			scoreByMusicID := map[int]int{
-				1: 100,
-				2: 300,
-			}
-			score := scoreByMusicID[musicID]
-			_, _ = w.Write([]byte(fmt.Sprintf(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": %d,
-							"live_score": %d,
-							"mysekai_event_point": 0,
-							"total_power": 200000,
-							"event_bonus_rate": 25,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]
-						}]
-					}
-				}
-			]`, score, score)))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newMusicCompareServer(t, musicCompareServerConfig{
+		hash: "compare-userdata-hash", recommendCalls: &recommendCalls,
+		seenMusicIDs: &seenMusicIDs, scores: map[int]int{1: 100, 2: 300},
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -2212,67 +1921,10 @@ func TestBuildAutoRecommendRequestEventMusicCompareUsesResolvedSelections(t *tes
 func TestBuildAutoRecommendRequestEventMusicCompareCurrentDeckBuildsCandidatesAndSorts(t *testing.T) {
 	var recommendCalls atomic.Int32
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"compare-current-userdata-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			option := options[0].(map[string]any)
-			fixedCards, ok := option["fixed_cards"].([]any)
-			if !ok || len(fixedCards) != 5 {
-				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
-			}
-			musicID := int(option["music_id"].(float64))
-			scoreByMusicID := map[int]int{
-				1: 100,
-				2: 400,
-				3: 250,
-			}
-			score := scoreByMusicID[musicID]
-			_, _ = w.Write([]byte(fmt.Sprintf(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": %d,
-							"live_score": %d,
-							"mysekai_event_point": 0,
-							"total_power": 200000,
-							"event_bonus_rate": 25,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]
-						}]
-					}
-				}
-			]`, score, score)))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newMusicCompareServer(t, musicCompareServerConfig{
+		hash: "compare-current-userdata-hash", recommendCalls: &recommendCalls,
+		scores: map[int]int{1: 100, 2: 400, 3: 250}, fixedCardCount: 5,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -2309,19 +1961,7 @@ func TestBuildAutoRecommendRequestEventMusicCompareCurrentDeckBuildsCandidatesAn
 	if !reflect.DeepEqual(request.FixedCardsID, []int{1001, 1002, 1003, 1004, 1005}) {
 		t.Fatalf("unexpected fixed cards in compare request: %+v", request.FixedCardsID)
 	}
-	if len(request.DeckData) != 3 {
-		t.Fatalf("unexpected compare deck count: %d", len(request.DeckData))
-	}
-	gotMusicIDs := make([]int, 0, len(request.DeckData))
-	for _, item := range request.DeckData {
-		if item.MusicID == nil {
-			t.Fatalf("missing compare music id in deck data: %+v", item)
-		}
-		gotMusicIDs = append(gotMusicIDs, *item.MusicID)
-	}
-	if !reflect.DeepEqual(gotMusicIDs, []int{2, 3, 1}) {
-		t.Fatalf("unexpected compare sort order: %+v", gotMusicIDs)
-	}
+	assertCompareMusicOrder(t, request, []int{2, 3, 1})
 	if request.DeckData[0].MusicTitle == nil || *request.DeckData[0].MusicTitle != "Song B" {
 		t.Fatalf("unexpected first compare title: %+v", request.DeckData[0].MusicTitle)
 	}
@@ -2375,75 +2015,11 @@ func TestBuildAutoRecommendRequestEventCurrentAreaItemLevelFallsBackForMissingSn
 		cached         snapshot.RawUserData
 	)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
-				t.Fatalf("decode cached raw user data: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"event-current-area-item-fallback-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			option, ok := options[0].(map[string]any)
-			if !ok {
-				t.Fatalf("unexpected batch option payload: %+v", options[0])
-			}
-			if option["area_item_level"] != 15.0 {
-				t.Fatalf("unexpected area_item_level: %+v", option["area_item_level"])
-			}
-			fixedCards, ok := option["fixed_cards"].([]any)
-			if !ok || len(fixedCards) != 5 {
-				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
-			}
-			expected := []float64{1006, 1002, 1003, 1004, 1005}
-			for index, value := range fixedCards {
-				if value != expected[index] {
-					t.Fatalf("unexpected fixed card %d: %+v", index, value)
-				}
-			}
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 20,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1006, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newUserDataCaptureServer(t, userDataCaptureServerConfig{
+		hash: "event-current-area-item-fallback-hash", cached: &cached,
+		recommendCalls: &recommendCalls, fixedCards: []int{1006, 1002, 1003, 1004, 1005},
+		cardID: 1006, areaItemLevel: 15,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -2594,66 +2170,11 @@ func TestBuildAutoRecommendRequestEventFixedCardFallbackUsesBaseSkillAndMaster(t
 		cached         snapshot.RawUserData
 	)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if err := json.Unmarshal(payloads[0], &cached); err != nil {
-				t.Fatalf("decode cached raw user data: %v", err)
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"event-fixed-card-fallback-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			option, ok := options[0].(map[string]any)
-			if !ok {
-				t.Fatalf("unexpected batch option payload: %+v", options[0])
-			}
-			fixedCards, ok := option["fixed_cards"].([]any)
-			if !ok || len(fixedCards) != 1 || fixedCards[0] != 1006.0 {
-				t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
-			}
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "ga",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 20,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1006, "level": 60, "master_rank": 0, "skill_level": 1, "skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newUserDataCaptureServer(t, userDataCaptureServerConfig{
+		hash: "event-fixed-card-fallback-hash", cached: &cached,
+		recommendCalls: &recommendCalls, fixedCards: []int{1006}, cardID: 1006,
+		bestSkillAsLeader: true,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -2802,99 +2323,10 @@ func TestBuildAutoRecommendRequestMaxProfileWithoutSnapshotUsesSyntheticSnapshot
 		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
 	}
 
-	if !request.IsMaxDeck {
-		t.Fatalf("expected max profile request to set is_max_deck")
-	}
-	if cached.UserGamedata.UserID != 1 || cached.UserGamedata.Deck != 1 {
-		t.Fatalf("unexpected synthetic user gamedata: %+v", cached.UserGamedata)
-	}
-	if len(cached.UserMysekaiCanvases) != 7 {
-		t.Fatalf("unexpected synthetic max profile mysekai canvas count: %d", len(cached.UserMysekaiCanvases))
-	}
-	if !reflect.DeepEqual(cached.UserMysekaiGates, []snapshot.RawUserMysekaiGate{
-		{MysekaiGateID: 1, MysekaiGateLevel: 40},
-		{MysekaiGateID: 2, MysekaiGateLevel: 40},
-		{MysekaiGateID: 3, MysekaiGateLevel: 40},
-		{MysekaiGateID: 4, MysekaiGateLevel: 40},
-		{MysekaiGateID: 5, MysekaiGateLevel: 40},
-	}) {
-		t.Fatalf("unexpected synthetic max profile mysekai gates: %+v", cached.UserMysekaiGates)
-	}
-	if !reflect.DeepEqual(cached.UserMysekaiFixtureGameCharacterPerformanceBonuses, []snapshot.RawUserFixtureBonus{
-		{GameCharacterID: 1, TotalBonusRate: 100},
-		{GameCharacterID: 5, TotalBonusRate: 42},
-	}) {
-		t.Fatalf("unexpected synthetic max profile fixture bonuses: %+v", cached.UserMysekaiFixtureGameCharacterPerformanceBonuses)
-	}
-	userCharacters, ok := cachedPayload["userCharacters"]
-	if !ok {
-		t.Fatalf("expected synthetic payload to include userCharacters")
-	}
-	var characterRanks []snapshot.RawUserCharacter
-	if err := json.Unmarshal(userCharacters, &characterRanks); err != nil {
-		t.Fatalf("decode synthetic userCharacters: %v", err)
-	}
-	if len(characterRanks) != challengeCharacterCount {
-		t.Fatalf("expected %d synthetic userCharacters, got %d", challengeCharacterCount, len(characterRanks))
-	}
-	if characterRanks[0].CharacterID != 1 || characterRanks[0].CharacterRank != 120 {
-		t.Fatalf("unexpected first synthetic userCharacter: %+v", characterRanks[0])
-	}
-	if characterRanks[len(characterRanks)-1].CharacterID != challengeCharacterCount || characterRanks[len(characterRanks)-1].CharacterRank != 120 {
-		t.Fatalf("unexpected last synthetic userCharacter: %+v", characterRanks[len(characterRanks)-1])
-	}
-	canvases, ok := cachedPayload["userMysekaiCanvases"]
-	if !ok {
-		t.Fatalf("expected synthetic payload to include userMysekaiCanvases")
-	}
-	var mysekaiCanvases []snapshot.RawUserMysekaiCanvas
-	if err := json.Unmarshal(canvases, &mysekaiCanvases); err != nil {
-		t.Fatalf("decode synthetic userMysekaiCanvases: %v", err)
-	}
-	if len(mysekaiCanvases) != 7 {
-		t.Fatalf("expected 7 synthetic userMysekaiCanvases, got %d", len(mysekaiCanvases))
-	}
-	if mysekaiCanvases[0].CardID != 1001 || mysekaiCanvases[0].Quantity != 1 {
-		t.Fatalf("unexpected first synthetic mysekai canvas: %+v", mysekaiCanvases[0])
-	}
-	mysekaiGates, ok := cachedPayload["userMysekaiGates"]
-	if !ok {
-		t.Fatalf("expected synthetic payload to include userMysekaiGates")
-	}
-	var decodedGates []snapshot.RawUserMysekaiGate
-	if err := json.Unmarshal(mysekaiGates, &decodedGates); err != nil {
-		t.Fatalf("decode synthetic userMysekaiGates: %v", err)
-	}
-	if !reflect.DeepEqual(decodedGates, []snapshot.RawUserMysekaiGate{
-		{MysekaiGateID: 1, MysekaiGateLevel: 40},
-		{MysekaiGateID: 2, MysekaiGateLevel: 40},
-		{MysekaiGateID: 3, MysekaiGateLevel: 40},
-		{MysekaiGateID: 4, MysekaiGateLevel: 40},
-		{MysekaiGateID: 5, MysekaiGateLevel: 40},
-	}) {
-		t.Fatalf("unexpected synthetic payload userMysekaiGates: %+v", decodedGates)
-	}
-	fixtureBonuses, ok := cachedPayload["userMysekaiFixtureGameCharacterPerformanceBonuses"]
-	if !ok {
-		t.Fatalf("expected synthetic payload to include userMysekaiFixtureGameCharacterPerformanceBonuses")
-	}
-	var decodedFixtureBonuses []snapshot.RawUserFixtureBonus
-	if err := json.Unmarshal(fixtureBonuses, &decodedFixtureBonuses); err != nil {
-		t.Fatalf("decode synthetic userMysekaiFixtureGameCharacterPerformanceBonuses: %v", err)
-	}
-	if !reflect.DeepEqual(decodedFixtureBonuses, []snapshot.RawUserFixtureBonus{
-		{GameCharacterID: 1, TotalBonusRate: 100},
-		{GameCharacterID: 5, TotalBonusRate: 42},
-	}) {
-		t.Fatalf("unexpected synthetic payload fixture bonuses: %+v", decodedFixtureBonuses)
-	}
-	if len(cached.UserCards) != 7 {
-		t.Fatalf("unexpected max profile user card count without snapshot: %d", len(cached.UserCards))
-	}
-	card1006 := snapshot.FindUserCard(cached.UserCards, 1006)
-	if card1006 == nil || card1006.Level != 60 || card1006.SkillLevel != 4 || card1006.MasterRank != 5 {
-		t.Fatalf("unexpected synthetic max profile card 1006: %+v", card1006)
-	}
+	assertSyntheticProfileBasics(t, request, &cached)
+	assertSyntheticCharactersAndCanvases(t, cachedPayload)
+	assertSyntheticGatesAndBonuses(t, cachedPayload)
+	assertSyntheticMaxProfileCard(t, &cached)
 }
 
 func TestBuildAutoRecommendRequestSubMaxProfilePromotesAreaItemsTo15(t *testing.T) {
@@ -3068,127 +2500,9 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 	var musicMetaCalls atomic.Int32
 	var recommendCalls atomic.Int32
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata":
-			masterdataCalls.Add(1)
-			var payload map[string]any
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-				t.Fatalf("decode masterdata request: %v", err)
-			}
-			if payload["region"] != "jp" {
-				t.Fatalf("unexpected masterdata region: %+v", payload["region"])
-			}
-			if strings.TrimSpace(payload["base_dir"].(string)) == "" {
-				t.Fatalf("expected masterdata base_dir")
-			}
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-
-		case "/update/musicmetas/string":
-			musicMetaCalls.Add(1)
-			var payload map[string]any
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-				t.Fatalf("decode music meta request: %v", err)
-			}
-			data, _ := payload["data"].(string)
-			var metas []map[string]any
-			if err := json.Unmarshal([]byte(data), &metas); err != nil || len(metas) == 0 {
-				http.Error(w, "invalid music meta payload", http.StatusBadRequest)
-				return
-			}
-			if musicID, ok := metas[0]["music_id"].(float64); !ok || int(musicID) != 10000 {
-				http.Error(w, "unexpected music meta payload", http.StatusBadRequest)
-				return
-			}
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if len(payloads) != 1 || len(payloads[0]) == 0 {
-				t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
-
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			if len(payloads) != 1 {
-				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			first, ok := options[0].(map[string]any)
-			if !ok || first["algorithm"] != "rl" {
-				t.Fatalf("unexpected algorithm batch: %+v", payload["batch_options"])
-			}
-			if payload["userdata_hash"] != "test-userdata-hash" {
-				t.Fatalf("unexpected userdata_hash: %+v", payload["userdata_hash"])
-			}
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "rl",
-					"cost_time": 0.5,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 1234567,
-							"live_score": 1234567,
-							"mysekai_event_point": 0,
-							"total_power": 345678,
-							"event_bonus_rate": 25,
-							"support_deck_bonus_rate": 10,
-							"multi_live_score_up": 120,
-							"cards": [
-								{
-									"card_id": 1002,
-									"level": 60,
-									"master_rank": 5,
-									"skill_level": 4,
-									"skill_score_up": 120,
-									"event_bonus_rate": 25,
-									"episode1_read": true,
-									"episode2_read": true,
-									"after_training": true,
-									"default_image": "special_training",
-									"has_canvas_bonus": false
-								},
-								{
-									"card_id": 1001,
-									"level": 50,
-									"master_rank": 1,
-									"skill_level": 4,
-									"skill_score_up": 100,
-									"event_bonus_rate": 20,
-									"episode1_read": true,
-									"episode2_read": true,
-									"after_training": false,
-									"default_image": "normal",
-									"has_canvas_bonus": false
-								}
-							]
-						}]
-					}
-				}
-			]`))
-
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newRemoteServiceServer(t, remoteServiceServerConfig{
+		masterdataCalls: &masterdataCalls, musicMetaCalls: &musicMetaCalls, recommendCalls: &recommendCalls,
+	})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -3256,68 +2570,7 @@ func TestBuildAutoRecommendRequestRemoteService(t *testing.T) {
 func TestBuildAutoRecommendRequestRemoteServiceBatchesAllAlgorithms(t *testing.T) {
 	var recommendCalls atomic.Int32
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if len(payloads) != 1 || len(payloads[0]) == 0 {
-				t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
-		case "/recommend":
-			recommendCalls.Add(1)
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode recommend payload: %v", err)
-			}
-			if len(payloads) != 1 {
-				t.Fatalf("unexpected recommend payloads: %d", len(payloads))
-			}
-			var payload map[string]any
-			if err := json.Unmarshal(payloads[0], &payload); err != nil {
-				t.Fatalf("decode recommend json: %v", err)
-			}
-			options, ok := payload["batch_options"].([]any)
-			if !ok || len(options) != 1 {
-				t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
-			}
-			first, ok := options[0].(map[string]any)
-			if !ok || first["algorithm"] != "rl" {
-				t.Fatalf("unexpected algorithm batch: %+v", payload["batch_options"])
-			}
-			if payload["userdata_hash"] != "test-userdata-hash" {
-				t.Fatalf("unexpected userdata_hash: %+v", payload["userdata_hash"])
-			}
-			_, _ = w.Write([]byte(`[
-				{
-					"alg": "rl",
-					"cost_time": 2.0,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 25,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4, "skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": false, "default_image": "normal", "has_canvas_bonus": false}]
-						}]
-					}
-				}
-			]`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newRemoteServiceServer(t, remoteServiceServerConfig{recommendCalls: &recommendCalls})
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -3418,44 +2671,7 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyWhenUserdataHash
 	var binaryRecommendCalls atomic.Int32
 	var legacyRecommendCalls atomic.Int32
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		switch r.URL.Path {
-		case "/update/masterdata", "/update/musicmetas/string":
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		case "/cache_userdata":
-			var payloads [][]byte
-			if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
-				t.Fatalf("decode cache_userdata payload: %v", err)
-			}
-			if len(payloads) != 1 || len(payloads[0]) == 0 {
-				t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
-			}
-			_, _ = w.Write([]byte(`{"userdata_hash":"missing-userdata-hash"}`))
-		case "/recommend":
-			if strings.Contains(r.Header.Get("Content-Type"), "application/octet-stream") {
-				binaryRecommendCalls.Add(1)
-				http.Error(w, `{"error":"User data not found for userdata_hash: missing-userdata-hash"}`, http.StatusInternalServerError)
-				return
-			}
-
-			legacyRecommendCalls.Add(1)
-			var payload map[string]any
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-				t.Fatalf("decode legacy recommend request: %v", err)
-			}
-			if payload["algorithm"] != "rl" {
-				t.Fatalf("unexpected legacy algorithm: %+v", payload["algorithm"])
-			}
-			if strings.TrimSpace(payload["user_data_str"].(string)) == "" {
-				t.Fatalf("expected user_data_str in legacy payload")
-			}
-			_, _ = w.Write([]byte(`{"decks":[{"score":456,"live_score":456,"mysekai_event_point":0,"total_power":789,"event_bonus_rate":25,"support_deck_bonus_rate":0,"multi_live_score_up":110,"cards":[{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]}]}`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
+	server := newMissingUserDataFallbackServer(t, &binaryRecommendCalls, &legacyRecommendCalls)
 	defer server.Close()
 
 	masterdataRoot := t.TempDir()
@@ -3493,16 +2709,481 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyWhenUserdataHash
 	}
 }
 
+type missingUserDataFallbackServer struct {
+	t                    *testing.T
+	binaryRecommendCalls *atomic.Int32
+	legacyRecommendCalls *atomic.Int32
+}
+
+func newMissingUserDataFallbackServer(t *testing.T, binaryCalls, legacyCalls *atomic.Int32) *httptest.Server {
+	t.Helper()
+	server := missingUserDataFallbackServer{t: t, binaryRecommendCalls: binaryCalls, legacyRecommendCalls: legacyCalls}
+	return httptest.NewServer(http.HandlerFunc(server.handle))
+}
+
+func (s missingUserDataFallbackServer) handle(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	switch r.URL.Path {
+	case "/update/masterdata", "/update/musicmetas/string":
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	case "/cache_userdata":
+		s.handleCacheUserData(w, r)
+	case "/recommend":
+		s.handleRecommend(w, r)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (s missingUserDataFallbackServer) handleCacheUserData(w http.ResponseWriter, r *http.Request) {
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		s.t.Fatalf("decode cache_userdata payload: %v", err)
+	}
+	if len(payloads) != 1 || len(payloads[0]) == 0 {
+		s.t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
+	}
+	_, _ = w.Write([]byte(`{"userdata_hash":"missing-userdata-hash"}`))
+}
+
+func (s missingUserDataFallbackServer) handleRecommend(w http.ResponseWriter, r *http.Request) {
+	if strings.Contains(r.Header.Get("Content-Type"), "application/octet-stream") {
+		s.binaryRecommendCalls.Add(1)
+		http.Error(w, `{"error":"User data not found for userdata_hash: missing-userdata-hash"}`, http.StatusInternalServerError)
+		return
+	}
+	s.legacyRecommendCalls.Add(1)
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		s.t.Fatalf("decode legacy recommend request: %v", err)
+	}
+	if payload["algorithm"] != "rl" || strings.TrimSpace(payload["user_data_str"].(string)) == "" {
+		s.t.Fatalf("unexpected legacy payload: %+v", payload)
+	}
+	_, _ = w.Write([]byte(`{"decks":[{"score":456,"live_score":456,"mysekai_event_point":0,"total_power":789,"event_bonus_rate":25,"support_deck_bonus_rate":0,"multi_live_score_up":110,"cards":[{"card_id":1001,"level":50,"master_rank":1,"skill_level":4,"skill_score_up":100,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":false,"default_image":"normal","has_canvas_bonus":false}]}]}`))
+}
+
 type userDataCaptureServerConfig struct {
+	t                 *testing.T
+	hash              string
+	cached            *snapshot.RawUserData
+	rawPayload        *map[string]json.RawMessage
+	recommendCalls    *atomic.Int32
+	cardID            int
+	fixedCards        []int
+	score             int
+	challengeChar     int
+	areaItemLevel     int
+	bestSkillAsLeader bool
+}
+
+type remoteServiceServerConfig struct {
+	t               *testing.T
+	masterdataCalls *atomic.Int32
+	musicMetaCalls  *atomic.Int32
+	recommendCalls  *atomic.Int32
+}
+
+func newRemoteServiceServer(t *testing.T, config remoteServiceServerConfig) *httptest.Server {
+	t.Helper()
+	config.t = t
+	return httptest.NewServer(http.HandlerFunc(config.handle))
+}
+
+func (c remoteServiceServerConfig) handle(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	switch r.URL.Path {
+	case "/update/masterdata":
+		c.handleMasterdata(w, r)
+	case "/update/musicmetas/string":
+		c.handleMusicMeta(w, r)
+	case "/cache_userdata":
+		c.handleCacheUserData(w, r)
+	case "/recommend":
+		c.handleRecommend(w, r)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (c remoteServiceServerConfig) handleMasterdata(w http.ResponseWriter, r *http.Request) {
+	if c.masterdataCalls != nil {
+		c.masterdataCalls.Add(1)
+	}
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		c.t.Fatalf("decode masterdata request: %v", err)
+	}
+	if payload["region"] != "jp" || strings.TrimSpace(payload["base_dir"].(string)) == "" {
+		c.t.Fatalf("unexpected masterdata payload: %+v", payload)
+	}
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
+}
+
+func (c remoteServiceServerConfig) handleMusicMeta(w http.ResponseWriter, r *http.Request) {
+	if c.musicMetaCalls != nil {
+		c.musicMetaCalls.Add(1)
+	}
+	var payload map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		c.t.Fatalf("decode music meta request: %v", err)
+	}
+	data, _ := payload["data"].(string)
+	var metas []map[string]any
+	if err := json.Unmarshal([]byte(data), &metas); err != nil || len(metas) == 0 {
+		c.t.Fatalf("invalid music meta payload: %v", err)
+	}
+	if metas[0]["music_id"] != float64(10000) {
+		c.t.Fatalf("unexpected music meta payload: %+v", metas[0])
+	}
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
+}
+
+func (c remoteServiceServerConfig) handleCacheUserData(w http.ResponseWriter, r *http.Request) {
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		c.t.Fatalf("decode cache_userdata payload: %v", err)
+	}
+	if len(payloads) != 1 || len(payloads[0]) == 0 {
+		c.t.Fatalf("unexpected cache_userdata payloads: %d", len(payloads))
+	}
+	_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+}
+
+func (c remoteServiceServerConfig) handleRecommend(w http.ResponseWriter, r *http.Request) {
+	if c.recommendCalls != nil {
+		c.recommendCalls.Add(1)
+	}
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		c.t.Fatalf("decode recommend payload: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(payloads[0], &payload); err != nil {
+		c.t.Fatalf("decode recommend json: %v", err)
+	}
+	options := jsonArrayToObjects(payload["batch_options"])
+	if len(options) != 1 || options[0]["algorithm"] != "rl" {
+		c.t.Fatalf("unexpected algorithm batch: %+v", payload["batch_options"])
+	}
+	if payload["userdata_hash"] != "test-userdata-hash" {
+		c.t.Fatalf("unexpected userdata_hash: %+v", payload["userdata_hash"])
+	}
+	if err := json.NewEncoder(w).Encode(remoteServiceResponse()); err != nil {
+		c.t.Fatalf("encode recommend response: %v", err)
+	}
+}
+
+func remoteServiceResponse() []map[string]any {
+	return []map[string]any{{
+		"alg": "rl", "cost_time": 0.5, "wait_time": 0.0,
+		"result": map[string]any{"decks": []map[string]any{{
+			"score": 1234567, "live_score": 1234567, "mysekai_event_point": 0, "total_power": 345678,
+			"event_bonus_rate": 25, "support_deck_bonus_rate": 10, "multi_live_score_up": 120,
+			"cards": []map[string]any{
+				{"card_id": 1002, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 25, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false},
+				{"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4, "skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": false, "default_image": "normal", "has_canvas_bonus": false},
+			},
+		}}},
+	}}
+}
+
+type challengeAllServerConfig struct {
 	t              *testing.T
 	hash           string
-	cached         *snapshot.RawUserData
-	rawPayload     *map[string]json.RawMessage
+	algorithms     []string
 	recommendCalls *atomic.Int32
-	cardID         int
-	fixedCards     []int
-	score          int
-	challengeChar  int
+}
+
+func newChallengeAllServer(t *testing.T, config challengeAllServerConfig) *httptest.Server {
+	t.Helper()
+	config.t = t
+	return httptest.NewServer(http.HandlerFunc(config.handle))
+}
+
+func (c challengeAllServerConfig) handle(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	switch r.URL.Path {
+	case "/update/masterdata", "/update/musicmetas/string":
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	case "/cache_userdata":
+		c.handleCacheUserData(w, r)
+	case "/recommend":
+		c.handleRecommend(w, r)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (c challengeAllServerConfig) handleCacheUserData(w http.ResponseWriter, r *http.Request) {
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		c.t.Fatalf("decode cache_userdata payload: %v", err)
+	}
+	_, _ = fmt.Fprintf(w, `{"userdata_hash":%q}`, c.hash)
+}
+
+func (c challengeAllServerConfig) handleRecommend(w http.ResponseWriter, r *http.Request) {
+	c.recommendCalls.Add(1)
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		c.t.Fatalf("decode recommend payload: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(payloads[0], &payload); err != nil {
+		c.t.Fatalf("decode recommend json: %v", err)
+	}
+	options := jsonArrayToObjects(payload["batch_options"])
+	expectedCount := challengeCharacterCount * len(c.algorithms)
+	if len(options) != expectedCount {
+		c.t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+	}
+	response := make([]map[string]any, 0, len(options))
+	for index, option := range options {
+		algorithm, characterID := c.validateOption(index, option)
+		response = append(response, challengeAllResponse(algorithm, characterID))
+	}
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		c.t.Fatalf("encode recommend response: %v", err)
+	}
+}
+
+func (c challengeAllServerConfig) validateOption(index int, option map[string]any) (string, int) {
+	algorithm := c.algorithms[index%len(c.algorithms)]
+	if option["algorithm"] != algorithm {
+		c.t.Fatalf("expected algorithm %s at %d, got %+v", algorithm, index, option["algorithm"])
+	}
+	characterID := index/len(c.algorithms) + 1
+	if option["challenge_live_character_id"] != float64(characterID) {
+		c.t.Fatalf("unexpected challenge character at %d: %+v", index, option["challenge_live_character_id"])
+	}
+	return algorithm, characterID
+}
+
+func challengeAllResponse(algorithm string, characterID int) map[string]any {
+	score := 1000000 + characterID
+	return map[string]any{
+		"alg": algorithm, "cost_time": 0.2, "wait_time": 0.0,
+		"result": map[string]any{"decks": []map[string]any{{
+			"score": score, "live_score": score, "mysekai_event_point": 0, "total_power": 345678,
+			"event_bonus_rate": 0, "support_deck_bonus_rate": 0, "multi_live_score_up": 120,
+			"cards": []map[string]any{{
+				"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4,
+				"skill_score_up": 100, "event_bonus_rate": 0, "episode1_read": true,
+				"episode2_read": true, "after_training": false, "default_image": "normal",
+				"has_canvas_bonus": false,
+			}},
+		}}},
+	}
+}
+
+type musicCompareServerConfig struct {
+	t                    *testing.T
+	hash                 string
+	recommendCalls       *atomic.Int32
+	seenMusicIDs         *[]int
+	scores               map[int]int
+	fixedCardCount       int
+	challengeCharacterID int
+	requireLimit         bool
+}
+
+func assertCompareMusicOrder(t *testing.T, request *drawing.DeckRequest, expected []int) {
+	t.Helper()
+	if len(request.DeckData) != len(expected) {
+		t.Fatalf("unexpected compare deck count: %d", len(request.DeckData))
+	}
+	actual := make([]int, 0, len(request.DeckData))
+	for _, item := range request.DeckData {
+		if item.MusicID == nil {
+			t.Fatalf("missing compare music id in deck data: %+v", item)
+		}
+		actual = append(actual, *item.MusicID)
+	}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("unexpected compare sort order: %+v", actual)
+	}
+}
+
+func assertSyntheticProfileBasics(t *testing.T, request *drawing.DeckRequest, cached *snapshot.RawUserData) {
+	t.Helper()
+	if !request.IsMaxDeck {
+		t.Fatalf("expected max profile request to set is_max_deck")
+	}
+	if cached.UserGamedata.UserID != 1 || cached.UserGamedata.Deck != 1 {
+		t.Fatalf("unexpected synthetic user gamedata: %+v", cached.UserGamedata)
+	}
+	if len(cached.UserMysekaiCanvases) != 7 {
+		t.Fatalf("unexpected synthetic max profile mysekai canvas count: %d", len(cached.UserMysekaiCanvases))
+	}
+	if !reflect.DeepEqual(cached.UserMysekaiGates, maxProfileGates()) {
+		t.Fatalf("unexpected synthetic max profile mysekai gates: %+v", cached.UserMysekaiGates)
+	}
+	if !reflect.DeepEqual(cached.UserMysekaiFixtureGameCharacterPerformanceBonuses, maxProfileFixtureBonuses()) {
+		t.Fatalf("unexpected synthetic max profile fixture bonuses: %+v", cached.UserMysekaiFixtureGameCharacterPerformanceBonuses)
+	}
+}
+
+func assertSyntheticCharactersAndCanvases(t *testing.T, payload map[string]json.RawMessage) {
+	t.Helper()
+	var characters []snapshot.RawUserCharacter
+	if err := json.Unmarshal(payload["userCharacters"], &characters); err != nil {
+		t.Fatalf("decode synthetic userCharacters: %v", err)
+	}
+	if len(characters) != challengeCharacterCount {
+		t.Fatalf("expected %d synthetic userCharacters, got %d", challengeCharacterCount, len(characters))
+	}
+	if characters[0].CharacterID != 1 || characters[0].CharacterRank != 120 {
+		t.Fatalf("unexpected first synthetic userCharacter: %+v", characters[0])
+	}
+	last := characters[len(characters)-1]
+	if last.CharacterID != challengeCharacterCount || last.CharacterRank != 120 {
+		t.Fatalf("unexpected last synthetic userCharacter: %+v", last)
+	}
+	var canvases []snapshot.RawUserMysekaiCanvas
+	if err := json.Unmarshal(payload["userMysekaiCanvases"], &canvases); err != nil {
+		t.Fatalf("decode synthetic userMysekaiCanvases: %v", err)
+	}
+	if len(canvases) != 7 || canvases[0].CardID != 1001 || canvases[0].Quantity != 1 {
+		t.Fatalf("unexpected synthetic mysekai canvases: %+v", canvases)
+	}
+}
+
+func assertSyntheticGatesAndBonuses(t *testing.T, payload map[string]json.RawMessage) {
+	t.Helper()
+	var gates []snapshot.RawUserMysekaiGate
+	if err := json.Unmarshal(payload["userMysekaiGates"], &gates); err != nil {
+		t.Fatalf("decode synthetic userMysekaiGates: %v", err)
+	}
+	if !reflect.DeepEqual(gates, maxProfileGates()) {
+		t.Fatalf("unexpected synthetic payload userMysekaiGates: %+v", gates)
+	}
+	var bonuses []snapshot.RawUserFixtureBonus
+	if err := json.Unmarshal(payload["userMysekaiFixtureGameCharacterPerformanceBonuses"], &bonuses); err != nil {
+		t.Fatalf("decode synthetic fixture bonuses: %v", err)
+	}
+	if !reflect.DeepEqual(bonuses, maxProfileFixtureBonuses()) {
+		t.Fatalf("unexpected synthetic payload fixture bonuses: %+v", bonuses)
+	}
+}
+
+func assertSyntheticMaxProfileCard(t *testing.T, cached *snapshot.RawUserData) {
+	t.Helper()
+	if len(cached.UserCards) != 7 {
+		t.Fatalf("unexpected max profile user card count without snapshot: %d", len(cached.UserCards))
+	}
+	card := snapshot.FindUserCard(cached.UserCards, 1006)
+	if card == nil || card.Level != 60 || card.SkillLevel != 4 || card.MasterRank != 5 {
+		t.Fatalf("unexpected synthetic max profile card 1006: %+v", card)
+	}
+}
+
+func maxProfileGates() []snapshot.RawUserMysekaiGate {
+	return []snapshot.RawUserMysekaiGate{
+		{MysekaiGateID: 1, MysekaiGateLevel: 40},
+		{MysekaiGateID: 2, MysekaiGateLevel: 40},
+		{MysekaiGateID: 3, MysekaiGateLevel: 40},
+		{MysekaiGateID: 4, MysekaiGateLevel: 40},
+		{MysekaiGateID: 5, MysekaiGateLevel: 40},
+	}
+}
+
+func maxProfileFixtureBonuses() []snapshot.RawUserFixtureBonus {
+	return []snapshot.RawUserFixtureBonus{
+		{GameCharacterID: 1, TotalBonusRate: 100},
+		{GameCharacterID: 5, TotalBonusRate: 42},
+	}
+}
+
+func newMusicCompareServer(t *testing.T, config musicCompareServerConfig) *httptest.Server {
+	t.Helper()
+	config.t = t
+	return httptest.NewServer(http.HandlerFunc(config.handle))
+}
+
+func (c musicCompareServerConfig) handle(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	switch r.URL.Path {
+	case "/update/masterdata", "/update/musicmetas/string":
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	case "/cache_userdata":
+		c.handleCacheUserData(w, r)
+	case "/recommend":
+		c.handleRecommend(w, r)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (c musicCompareServerConfig) handleCacheUserData(w http.ResponseWriter, r *http.Request) {
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		c.t.Fatalf("decode cache_userdata payload: %v", err)
+	}
+	_, _ = fmt.Fprintf(w, `{"userdata_hash":%q}`, c.hash)
+}
+
+func (c musicCompareServerConfig) handleRecommend(w http.ResponseWriter, r *http.Request) {
+	c.recommendCalls.Add(1)
+	option := c.decodeOption(r)
+	c.validateOption(option)
+	musicID := int(option["music_id"].(float64))
+	if c.seenMusicIDs != nil {
+		*c.seenMusicIDs = append(*c.seenMusicIDs, musicID)
+	}
+	if err := json.NewEncoder(w).Encode(singleDeckRecommendResponse(c.scores[musicID])); err != nil {
+		c.t.Fatalf("encode recommend response: %v", err)
+	}
+}
+
+func (c musicCompareServerConfig) decodeOption(r *http.Request) map[string]any {
+	var payloads [][]byte
+	if err := decodeDeckMultipartPayload(r.Body, &payloads); err != nil {
+		c.t.Fatalf("decode recommend payload: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(payloads[0], &payload); err != nil {
+		c.t.Fatalf("decode recommend json: %v", err)
+	}
+	options := jsonArrayToObjects(payload["batch_options"])
+	if len(options) != 1 {
+		c.t.Fatalf("unexpected batch_options: %+v", payload["batch_options"])
+	}
+	return options[0]
+}
+
+func (c musicCompareServerConfig) validateOption(option map[string]any) {
+	if option["best_skill_as_leader"] != false {
+		c.t.Fatalf("expected compare mode to disable best_skill_as_leader: %+v", option["best_skill_as_leader"])
+	}
+	if c.fixedCardCount > 0 {
+		fixedCards, ok := option["fixed_cards"].([]any)
+		if !ok || len(fixedCards) != c.fixedCardCount {
+			c.t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
+		}
+	}
+	if c.challengeCharacterID > 0 && option["challenge_live_character_id"] != float64(c.challengeCharacterID) {
+		c.t.Fatalf("unexpected challenge_live_character_id: %+v", option["challenge_live_character_id"])
+	}
+	if c.requireLimit && option["limit"] != 1.0 {
+		c.t.Fatalf("unexpected compare limit: %+v", option["limit"])
+	}
+}
+
+func singleDeckRecommendResponse(score int) []map[string]any {
+	return []map[string]any{{
+		"alg": "ga", "cost_time": 0.5, "wait_time": 0.0,
+		"result": map[string]any{"decks": []map[string]any{{
+			"score": score, "live_score": score, "mysekai_event_point": 0, "total_power": 200000,
+			"event_bonus_rate": 25, "support_deck_bonus_rate": 0, "multi_live_score_up": 110,
+			"cards": []map[string]any{{
+				"card_id": 1001, "level": 50, "master_rank": 1, "skill_level": 4,
+				"skill_score_up": 100, "event_bonus_rate": 20, "episode1_read": true,
+				"episode2_read": true, "after_training": false, "default_image": "normal",
+				"has_canvas_bonus": false,
+			}},
+		}}},
+	}}
 }
 
 func newUserDataCaptureServer(t *testing.T, config userDataCaptureServerConfig) *httptest.Server {
@@ -3595,6 +3276,9 @@ func (c userDataCaptureServerConfig) validateFixedCards(r *http.Request) {
 	if c.challengeChar > 0 && option["challenge_live_character_id"] != float64(c.challengeChar) {
 		c.t.Fatalf("unexpected challenge_live_character_id: %+v", option["challenge_live_character_id"])
 	}
+	if c.areaItemLevel > 0 && option["area_item_level"] != float64(c.areaItemLevel) {
+		c.t.Fatalf("unexpected area_item_level: %+v", option["area_item_level"])
+	}
 	fixedCards, ok := option["fixed_cards"].([]any)
 	if !ok || len(fixedCards) != len(c.fixedCards) {
 		c.t.Fatalf("unexpected fixed_cards: %+v", option["fixed_cards"])
@@ -3604,8 +3288,8 @@ func (c userDataCaptureServerConfig) validateFixedCards(r *http.Request) {
 			c.t.Fatalf("unexpected fixed card %d: %+v", index, value)
 		}
 	}
-	if option["best_skill_as_leader"] != false {
-		c.t.Fatalf("expected best_skill_as_leader to be disabled: %+v", option["best_skill_as_leader"])
+	if option["best_skill_as_leader"] != c.bestSkillAsLeader {
+		c.t.Fatalf("unexpected best_skill_as_leader: %+v", option["best_skill_as_leader"])
 	}
 }
 

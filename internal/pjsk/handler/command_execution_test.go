@@ -475,6 +475,129 @@ type bridgeMusicAliasResolver struct {
 
 type bridgeAmbiguousMusicAliasResolver struct{}
 
+type musicDrawingServerConfig struct {
+	t                     *testing.T
+	briefListCalls        *int
+	listCalls             *int
+	chartCalls            *int
+	titles                *[]string
+	expectedIDs           []int
+	requireFullDifficulty bool
+	expectNilProfile      bool
+}
+
+type customProfileDrawingServerConfig struct {
+	t               *testing.T
+	profileID       int
+	cardID          int
+	seq             int
+	validateContext bool
+}
+
+func newCustomProfileDrawingServer(t *testing.T, config customProfileDrawingServerConfig) *httptest.Server {
+	t.Helper()
+	config.t = t
+	return httptest.NewServer(http.HandlerFunc(config.handle))
+}
+
+func (c customProfileDrawingServerConfig) handle(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/api/pjsk/profile/custom-profile-card" {
+		c.t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+	}
+	var request drawing.CustomProfileCardRenderRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		c.t.Fatalf("decode drawing request: %v", err)
+	}
+	if request.Kind != drawing.CustomProfileCardRequestKind || request.SchemaVersion != 1 {
+		c.t.Fatalf("unexpected drawing request header: %+v", request)
+	}
+	if request.RenderVersion != drawing.CustomProfileCardRenderVersion || request.Region != "jp" {
+		c.t.Fatalf("unexpected drawing version or region: %+v", request)
+	}
+	if request.Card.CustomProfileID != c.profileID || request.Card.CustomProfileCardID != c.cardID || request.Card.Seq != c.seq {
+		c.t.Fatalf("unexpected custom profile card: %+v", request.Card)
+	}
+	if c.validateContext && (request.ProfileContext.User.Name != "Tester" || request.ProfileContext.UserProfile.Word != "hello") {
+		c.t.Fatalf("unexpected profile context: %+v", request.ProfileContext)
+	}
+	_, _ = w.Write([]byte("image-bytes"))
+}
+
+func newMusicDrawingServer(t *testing.T, config musicDrawingServerConfig) *httptest.Server {
+	t.Helper()
+	config.t = t
+	return httptest.NewServer(http.HandlerFunc(config.handle))
+}
+
+func (c musicDrawingServerConfig) handle(w http.ResponseWriter, r *http.Request) {
+	switch r.URL.Path {
+	case "/api/pjsk/music/brief-list":
+		c.handleBriefList(w, r)
+	case "/api/pjsk/music/list":
+		c.handleList(w, r)
+	case "/api/pjsk/chart":
+		if c.chartCalls == nil {
+			c.t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		*c.chartCalls++
+		_, _ = w.Write([]byte("png"))
+	default:
+		c.t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+	}
+}
+
+func (c musicDrawingServerConfig) handleBriefList(w http.ResponseWriter, r *http.Request) {
+	if c.briefListCalls == nil {
+		c.t.Fatalf("unexpected brief-list request")
+	}
+	*c.briefListCalls++
+	var request drawing.MusicBriefListRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		c.t.Fatalf("decode music-brief-list request: %v", err)
+	}
+	c.captureTitle(request.Title)
+	if len(request.MusicList) != len(c.expectedIDs) {
+		c.t.Fatalf("unexpected brief-list item count: %d", len(request.MusicList))
+	}
+	for index, expectedID := range c.expectedIDs {
+		if request.MusicList[index].ID != expectedID {
+			c.t.Fatalf("unexpected brief-list ids: %+v", request.MusicList)
+		}
+	}
+	if c.requireFullDifficulty && len(request.MusicList[0].Difficulty.Order) < 2 {
+		c.t.Fatalf("expected full difficulty info: %+v", request.MusicList[0].Difficulty)
+	}
+	_, _ = w.Write([]byte("png"))
+}
+
+func (c musicDrawingServerConfig) handleList(w http.ResponseWriter, r *http.Request) {
+	if c.listCalls == nil {
+		c.t.Fatalf("unexpected music-list request")
+	}
+	*c.listCalls++
+	var request drawing.MusicListRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		c.t.Fatalf("decode music-list request: %v", err)
+	}
+	c.captureTitle(request.Title)
+	if c.expectNilProfile && request.Profile != nil {
+		c.t.Fatalf("expected nil profile, got %+v", request.Profile)
+	}
+	if len(request.MusicList) != len(c.expectedIDs) {
+		c.t.Fatalf("unexpected music-list item count: %d", len(request.MusicList))
+	}
+	_, _ = w.Write([]byte("png"))
+}
+
+func (c musicDrawingServerConfig) captureTitle(title *string) {
+	if title == nil {
+		c.t.Fatalf("expected list title, got nil")
+	}
+	if c.titles != nil {
+		*c.titles = append(*c.titles, *title)
+	}
+}
+
 func (s *bridgeMusicSource) DefaultRegion() renderregion.Value { return renderregion.JP }
 
 func (r *bridgeMusicAliasResolver) TryResolveMusicID(_ context.Context, token string) (int, bool, error) {
@@ -812,32 +935,9 @@ func TestExecuteMusicChartUsesBriefListForAmbiguousAlias(t *testing.T) {
 	briefListCalls := 0
 	chartCalls := 0
 	titles := make([]string, 0, 1)
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/pjsk/music/brief-list":
-			briefListCalls++
-			var req drawing.MusicBriefListRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				t.Fatalf("decode music-brief-list request: %v", err)
-			}
-			if req.Title == nil {
-				t.Fatalf("expected list title, got nil")
-			}
-			titles = append(titles, *req.Title)
-			if len(req.MusicList) != 2 {
-				t.Fatalf("expected 2 list items, got %d", len(req.MusicList))
-			}
-			if req.MusicList[0].ID != 1 || req.MusicList[1].ID != 2 {
-				t.Fatalf("unexpected ambiguous chart ids: %+v", req.MusicList)
-			}
-			_, _ = w.Write([]byte("png"))
-		case "/api/pjsk/chart":
-			chartCalls++
-			_, _ = w.Write([]byte("png"))
-		default:
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-	}))
+	drawingServer := newMusicDrawingServer(t, musicDrawingServerConfig{
+		briefListCalls: &briefListCalls, chartCalls: &chartCalls, titles: &titles, expectedIDs: []int{1, 2},
+	})
 	defer drawingServer.Close()
 
 	source := &bridgeMusicSource{
@@ -907,39 +1007,9 @@ func TestExecuteMusicBPMUsesSingleMusicListImageForMixedDifficulties(t *testing.
 
 	briefListCalls := 0
 	titles := make([]string, 0, 1)
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/pjsk/music/brief-list":
-			briefListCalls++
-			var req drawing.MusicBriefListRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				t.Fatalf("decode music-brief-list request: %v", err)
-			}
-			if req.Title == nil {
-				t.Fatalf("expected list title, got nil")
-			}
-			titles = append(titles, *req.Title)
-			if len(req.MusicList) != 2 {
-				t.Fatalf("expected 2 list items in single request, got %d", len(req.MusicList))
-			}
-			gotIDs := []int{
-				req.MusicList[0].ID,
-				req.MusicList[1].ID,
-			}
-			wantIDs := []int{1, 2}
-			for i := range wantIDs {
-				if gotIDs[i] != wantIDs[i] {
-					t.Fatalf("unexpected bpm song list ids: got=%v want=%v", gotIDs, wantIDs)
-				}
-			}
-			if len(req.MusicList[0].Difficulty.Order) < 2 {
-				t.Fatalf("expected full difficulty info for first song, got %+v", req.MusicList[0].Difficulty)
-			}
-			_, _ = w.Write([]byte("png"))
-		default:
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-	}))
+	drawingServer := newMusicDrawingServer(t, musicDrawingServerConfig{
+		briefListCalls: &briefListCalls, titles: &titles, expectedIDs: []int{1, 2}, requireFullDifficulty: true,
+	})
 	defer drawingServer.Close()
 
 	source := &bridgeMusicSource{
@@ -1001,26 +1071,9 @@ func TestExecuteMusicBPMUsesListImageForSingleMatch(t *testing.T) {
 
 	briefListCalls := 0
 	titles := make([]string, 0, 1)
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/pjsk/music/brief-list":
-			briefListCalls++
-			var req drawing.MusicBriefListRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				t.Fatalf("decode music-brief-list request: %v", err)
-			}
-			if req.Title == nil {
-				t.Fatalf("expected list title, got nil")
-			}
-			titles = append(titles, *req.Title)
-			if len(req.MusicList) != 1 || req.MusicList[0].ID != 1 {
-				t.Fatalf("unexpected bpm song list: %+v", req.MusicList)
-			}
-			_, _ = w.Write([]byte("png"))
-		default:
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-	}))
+	drawingServer := newMusicDrawingServer(t, musicDrawingServerConfig{
+		briefListCalls: &briefListCalls, titles: &titles, expectedIDs: []int{1},
+	})
 	defer drawingServer.Close()
 
 	source := &bridgeMusicSource{
@@ -1066,29 +1119,9 @@ func TestExecuteMusicBPMUsesListImageForSingleMatch(t *testing.T) {
 func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 	briefListCalls := 0
 	titles := make([]string, 0, 1)
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/pjsk/music/brief-list":
-			briefListCalls++
-			var req drawing.MusicBriefListRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				t.Fatalf("decode music-brief-list request: %v", err)
-			}
-			if req.Title == nil {
-				t.Fatalf("expected list title, got nil")
-			}
-			titles = append(titles, *req.Title)
-			if len(req.MusicList) != 2 {
-				t.Fatalf("expected 2 list items, got %d", len(req.MusicList))
-			}
-			if req.MusicList[0].ID != 1 || req.MusicList[1].ID != 2 {
-				t.Fatalf("unexpected ambiguous alias ids: %+v", req.MusicList)
-			}
-			_, _ = w.Write([]byte("png"))
-		default:
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-	}))
+	drawingServer := newMusicDrawingServer(t, musicDrawingServerConfig{
+		briefListCalls: &briefListCalls, titles: &titles, expectedIDs: []int{1, 2},
+	})
 	defer drawingServer.Close()
 
 	source := &bridgeMusicSource{
@@ -1131,29 +1164,9 @@ func TestExecuteMusicDetailUsesBriefListForAmbiguousAlias(t *testing.T) {
 func TestExecuteMusicNoteCountUsesSingleMusicListImageWithoutSummaryText(t *testing.T) {
 	listCalls := 0
 	titles := make([]string, 0, 1)
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/pjsk/music/list":
-			listCalls++
-			var req drawing.MusicListRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				t.Fatalf("decode music-list request: %v", err)
-			}
-			if req.Title == nil {
-				t.Fatalf("expected list title, got nil")
-			}
-			titles = append(titles, *req.Title)
-			if req.Profile != nil {
-				t.Fatalf("expected nil profile for lookup list, got %+v", req.Profile)
-			}
-			if len(req.MusicList) != 2 {
-				t.Fatalf("expected 2 list items in single request, got %d", len(req.MusicList))
-			}
-			_, _ = w.Write([]byte("png"))
-		default:
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-	}))
+	drawingServer := newMusicDrawingServer(t, musicDrawingServerConfig{
+		listCalls: &listCalls, titles: &titles, expectedIDs: []int{1, 2}, expectNilProfile: true,
+	})
 	defer drawingServer.Close()
 
 	source := &bridgeMusicSource{
@@ -4475,31 +4488,9 @@ func TestExecuteProfileCustomProfileCard(t *testing.T) {
 		config.Cfg.SekaiAPI.Token = oldToken
 	})
 
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/pjsk/profile/custom-profile-card" {
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-		var req drawing.CustomProfileCardRenderRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			t.Fatalf("decode drawing request: %v", err)
-		}
-		if req.Kind != drawing.CustomProfileCardRequestKind || req.SchemaVersion != 1 {
-			t.Fatalf("unexpected drawing request header: %+v", req)
-		}
-		if req.RenderVersion != drawing.CustomProfileCardRenderVersion {
-			t.Fatalf("unexpected custom profile render version: %d", req.RenderVersion)
-		}
-		if req.Region != "jp" {
-			t.Fatalf("unexpected drawing region: %q", req.Region)
-		}
-		if req.Card.CustomProfileID != 1 || req.Card.CustomProfileCardID != 1 || req.Card.Seq != 1 {
-			t.Fatalf("unexpected custom profile card: %+v", req.Card)
-		}
-		if req.ProfileContext.User.Name != "Tester" || req.ProfileContext.UserProfile.Word != "hello" {
-			t.Fatalf("unexpected profile context: %+v", req.ProfileContext)
-		}
-		_, _ = w.Write([]byte("image-bytes"))
-	}))
+	drawingServer := newCustomProfileDrawingServer(t, customProfileDrawingServerConfig{
+		profileID: 1, cardID: 1, seq: 1, validateContext: true,
+	})
 	defer drawingServer.Close()
 
 	service := newHandlerTestBindingServiceWithValidator(t, handlerTestBindingValidator{})

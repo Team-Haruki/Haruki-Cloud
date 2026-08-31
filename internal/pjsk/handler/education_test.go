@@ -6,7 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	sekaienttest "haruki-cloud/database/sekai/enttest"
 	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
+	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/education"
 )
 
@@ -431,5 +434,50 @@ func TestCharacterMissionHandleParsesFlowerTreeAlias(t *testing.T) {
 	}
 	if params.CharacterQuery != "miku" || !params.ShowAll || params.MissionType != "area_item_level_up_reality_world" {
 		t.Fatalf("unexpected character mission params: %+v", params)
+	}
+}
+
+func TestResolveEducationQueryCharacters(t *testing.T) {
+	ctx := context.Background()
+	client := sekaienttest.Open(t, "sqlite3", "file:handler_education_query_characters?mode=memory&cache=shared&_fk=1")
+	t.Cleanup(func() { _ = client.Close() })
+	if _, err := client.Gamecharacter.Create().
+		SetServerRegion("jp").SetGameID(21).
+		SetFirstName("初音").SetGivenName("未来").
+		SetFirstNameEnglish("Hatsune").SetGivenNameEnglish("Miku").
+		Save(ctx); err != nil {
+		t.Fatalf("create game character: %v", err)
+	}
+	rc := &RequestContext{Ctx: ctx, App: &renderapp.App{Sekai: client}, Region: renderregion.JP}
+
+	area := education.AreaItemQuery{CharacterQuery: "Hatsune Miku"}
+	if err := resolveEducationAreaQueryCharacter(rc, &area); err != nil || area.Cid != 21 {
+		t.Fatalf("resolve area character = %+v, %v", area, err)
+	}
+	bonds := education.BondsQuery{CharacterQuery: "Hatsune Miku"}
+	if err := resolveEducationBondsQueryCharacter(rc, &bonds); err != nil || bonds.Cid != 21 {
+		t.Fatalf("resolve bonds character = %+v, %v", bonds, err)
+	}
+	mission := education.CharacterMissionQuery{CharacterQuery: "Hatsune Miku"}
+	if err := resolveEducationMissionQueryCharacter(rc, &mission); err != nil || mission.Cid != 21 {
+		t.Fatalf("resolve mission character = %+v, %v", mission, err)
+	}
+}
+
+func TestResolveEducationQueryCharacterErrorsAndDefaultRegion(t *testing.T) {
+	rc := &RequestContext{Ctx: context.Background(), Region: renderregion.JP}
+	if err := resolveEducationAreaQueryCharacter(rc, &education.AreaItemQuery{CharacterQuery: "unknown"}); err == nil {
+		t.Fatal("expected area character resolution error")
+	}
+	if err := resolveEducationBondsQueryCharacter(rc, &education.BondsQuery{CharacterQuery: "unknown"}); err == nil {
+		t.Fatal("expected bonds character resolution error")
+	}
+	if err := resolveEducationMissionQueryCharacter(rc, &education.CharacterMissionQuery{CharacterQuery: "unknown"}); err == nil {
+		t.Fatal("expected mission character resolution error")
+	}
+	var region renderregion.Value
+	setDefaultEducationRegion(&region, renderregion.EN)
+	if region != renderregion.EN {
+		t.Fatalf("default education region = %q", region)
 	}
 }

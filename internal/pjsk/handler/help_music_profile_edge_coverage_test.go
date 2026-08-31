@@ -16,6 +16,13 @@ import (
 )
 
 func TestCommandHelpPureFallbackBranches(t *testing.T) {
+	testCommandHelpNormalization(t)
+	testCommandHelpMarkdownFallbacks(t)
+	testCommandHelpAliasFallbacks(t)
+}
+
+func testCommandHelpNormalization(t *testing.T) {
+	t.Helper()
 	if commandHelpRequestPath(nil) != "" || commandHelpDocKey(" ") != "" || commandHelpFamily(" ") != "generic" || commandHelpFamily("music") != "music" {
 		t.Fatal("command help empty/family path mismatch")
 	}
@@ -37,7 +44,10 @@ func TestCommandHelpPureFallbackBranches(t *testing.T) {
 	if keys := commandHelpLookupKeys(""); len(keys) != 1 || keys[0] != "generic" {
 		t.Fatalf("empty lookup keys = %#v", keys)
 	}
+}
 
+func testCommandHelpMarkdownFallbacks(t *testing.T) {
+	t.Helper()
 	resolved := &CommandRequest{CommandPath: "missing/child", TriggerCommand: "/fallback", HelpText: "usage details"}
 	markdown, err := commandHelpMarkdown(resolved)
 	if err != nil || !strings.Contains(markdown, "usage details") {
@@ -61,6 +71,10 @@ func TestCommandHelpPureFallbackBranches(t *testing.T) {
 	if got := fallbackCommandHelpMarkdown("", "path", "body"); !strings.Contains(got, "path") {
 		t.Fatalf("path fallback = %q", got)
 	}
+}
+
+func testCommandHelpAliasFallbacks(t *testing.T) {
+	t.Helper()
 	if got := withCommandHelpAliasSection("body", ""); got != "body" || missingCommandHelpAliases("body", "") != nil || commandHelpAliases("") != nil {
 		t.Fatal("empty alias section mismatch")
 	}
@@ -68,27 +82,31 @@ func TestCommandHelpPureFallbackBranches(t *testing.T) {
 		t.Fatalf("generic text help = %#v, %v", message, err)
 	}
 }
-
 func TestMusicHandlerAndParserEdgeBranches(t *testing.T) {
+	testMusicHandlerErrorBranches(t)
+	testMusicResultFilterEdges(t)
+	testMusicLevelFilterEdges(t)
+	testMusicFormattingHelperEdges(t)
+}
+
+func testMusicHandlerErrorBranches(t *testing.T) {
+	t.Helper()
 	selfTarget := mysekaiEdgeContext("")
 	selfTarget.uidArg = "@target"
-	for _, h := range []HarukiSekaiCommandHandler{
+	for _, handler := range []HarukiSekaiCommandHandler{
 		sekaiHandlers{}.MusicListHandle(), sekaiHandlers{}.MusicRewardsHandle(), sekaiHandlers{}.MusicProgressHandle(),
 	} {
-		if _, err := h.handleFunc(selfTarget); err == nil {
-			t.Fatalf("handler %s accepted target query", h.Path)
+		if _, err := handler.handleFunc(selfTarget); err == nil {
+			t.Fatalf("handler %s accepted target query", handler.Path)
 		}
 	}
 	for _, tc := range []struct {
 		handler HarukiSekaiCommandHandler
 		args    string
 	}{
-		{sekaiHandlers{}.SongHandle(), ""},
-		{sekaiHandlers{}.NoteNumHandle(), "not-a-number"},
-		{sekaiHandlers{}.BPMHandle(), ""},
-		{sekaiHandlers{}.BPMHandle(), "master"},
-		{sekaiHandlers{}.BPMSearchHandle(), "bad"},
-		{sekaiHandlers{}.BPMSearchHandle(), "0"},
+		{sekaiHandlers{}.SongHandle(), ""}, {sekaiHandlers{}.NoteNumHandle(), "not-a-number"},
+		{sekaiHandlers{}.BPMHandle(), ""}, {sekaiHandlers{}.BPMHandle(), "master"},
+		{sekaiHandlers{}.BPMSearchHandle(), "bad"}, {sekaiHandlers{}.BPMSearchHandle(), "0"},
 		{sekaiHandlers{}.MusicCoverHandle(), ""},
 	} {
 		if _, err := tc.handler.handleFunc(mysekaiEdgeContext(tc.args)); err == nil {
@@ -98,7 +116,10 @@ func TestMusicHandlerAndParserEdgeBranches(t *testing.T) {
 	if request, err := (sekaiHandlers{}).SongHandle().handleFunc(mysekaiEdgeContext("song expert")); err != nil || request == nil || !strings.Contains(string(request.Params), "expert") {
 		t.Fatalf("song difficulty request = %#v, %v", request, err)
 	}
+}
 
+func testMusicResultFilterEdges(t *testing.T) {
+	t.Helper()
 	for _, token := range []string{"not_fc", "未完成"} {
 		filter, _, ok := extractMusicListResultFilter("prefix " + token + " suffix")
 		if !ok || filter == "" {
@@ -111,7 +132,16 @@ func TestMusicHandlerAndParserEdgeBranches(t *testing.T) {
 	if full, rest := extractMusicListFullFlag(""); full || rest != "" {
 		t.Fatalf("empty full flag = %v, %q", full, rest)
 	}
+}
 
+func testMusicLevelFilterEdges(t *testing.T) {
+	t.Helper()
+	testMusicLevelTokenEdges(t)
+	testMusicLevelRangeEdges(t)
+}
+
+func testMusicLevelTokenEdges(t *testing.T) {
+	t.Helper()
 	for _, token := range []string{"<=30", ">=31", "=32"} {
 		if _, ok := parseMusicListLevelToken(token); !ok {
 			t.Fatalf("level token %q rejected", token)
@@ -122,6 +152,10 @@ func TestMusicHandlerAndParserEdgeBranches(t *testing.T) {
 			t.Fatalf("invalid level token %q accepted", token)
 		}
 	}
+}
+
+func testMusicLevelRangeEdges(t *testing.T) {
+	t.Helper()
 	if params, rest, ok := extractMusicListLevelArgs("prefix 32 30 suffix"); !ok || params["level_min"] != 30 || rest != "prefix suffix" {
 		t.Fatalf("adjacent levels = %#v, %q, %v", params, rest, ok)
 	}
@@ -140,7 +174,10 @@ func TestMusicHandlerAndParserEdgeBranches(t *testing.T) {
 	if joinMusicListTokensExcluding(nil, 0) != "" {
 		t.Fatal("empty token join should be empty")
 	}
+}
 
+func testMusicFormattingHelperEdges(t *testing.T) {
+	t.Helper()
 	if got := formatMusicDuration(-1); got != "0:00" {
 		t.Fatalf("negative duration = %q", got)
 	}
@@ -162,14 +199,19 @@ func TestMusicHandlerAndParserEdgeBranches(t *testing.T) {
 		t.Fatal("unknown event-planner boost multiplier should be one")
 	}
 }
-
 func TestProfileBindingHandlerSuccessBranches(t *testing.T) {
+	testProfileBindingBaseHandlers(t)
+	testProfileBindingExplicitRegionHandlers(t)
+}
+
+func testProfileBindingBaseHandlers(t *testing.T) {
+	t.Helper()
 	base := additionalProfileContext("12345678901234", "")
-	for _, h := range []HarukiSekaiCommandHandler{
+	for _, handler := range []HarukiSekaiCommandHandler{
 		sekaiHandlers{}.ProfileBindHandle(), sekaiHandlers{}.ProfileUnbindHandle(), sekaiHandlers{}.ProfileSetMainHandle(),
 	} {
-		if request, err := h.handleFunc(base); err != nil || request == nil {
-			t.Fatalf("handler %s = %#v, %v", h.Path, request, err)
+		if request, err := handler.handleFunc(base); err != nil || request == nil {
+			t.Fatalf("handler %s = %#v, %v", handler.Path, request, err)
 		}
 	}
 	if request, handled, err := tryRerouteProfileBindCommand(base, "list"); err != nil || !handled || request == nil {
@@ -184,21 +226,24 @@ func TestProfileBindingHandlerSuccessBranches(t *testing.T) {
 	if request, handled, err := tryRerouteProfileBindCommand(base, ""); err != nil || handled || request != nil {
 		t.Fatalf("empty bind reroute = %#v, %v, %v", request, handled, err)
 	}
+}
 
-	explicit := base
+func testProfileBindingExplicitRegionHandlers(t *testing.T) {
+	t.Helper()
+	explicit := additionalProfileContext("12345678901234", "")
 	explicit.explicitRegion = true
 	explicit.region = renderregion.CN
-	for _, h := range []HarukiSekaiCommandHandler{
+	for _, handler := range []HarukiSekaiCommandHandler{
 		sekaiHandlers{}.ProfileBindListHandle(), sekaiHandlers{}.ProfileBindSwapHandle(), sekaiHandlers{}.ProfileClearDefaultBindingHandle(),
 	} {
 		ctx := explicit
-		if h.Path == "profile/bind/list" || h.Path == "profile/default/clear" {
+		if handler.Path == "profile/bind/list" || handler.Path == "profile/default/clear" {
 			ctx.SetArgs("")
 		} else {
 			ctx.SetArgs("u1 u2")
 		}
-		if request, err := h.handleFunc(ctx); err != nil || request == nil {
-			t.Fatalf("handler %s = %#v, %v", h.Path, request, err)
+		if request, err := handler.handleFunc(ctx); err != nil || request == nil {
+			t.Fatalf("handler %s = %#v, %v", handler.Path, request, err)
 		}
 	}
 	if buildProfileBindDerivedTrigger(explicit, "list") != "/cn绑定列表" || buildProfileBindDerivedTrigger(explicit, "swap") != "/cn绑定交换" ||
@@ -206,8 +251,13 @@ func TestProfileBindingHandlerSuccessBranches(t *testing.T) {
 		t.Fatal("derived profile bind trigger mismatch")
 	}
 }
-
 func TestEventPlannerAdditionalPureEdges(t *testing.T) {
+	testEventPlannerParsingEdges(t)
+	testEventPlannerDefaultsAndMath(t)
+}
+
+func testEventPlannerParsingEdges(t *testing.T) {
+	t.Helper()
 	if _, err := parseEventPlannerParams("", "/planner"); err == nil {
 		t.Fatal("empty planner params unexpectedly succeeded")
 	}
@@ -227,6 +277,10 @@ func TestEventPlannerAdditionalPureEdges(t *testing.T) {
 	if len(selections) != 0 || !strings.Contains(rest, "#1") {
 		t.Fatalf("non-song selections = %#v, %q", selections, rest)
 	}
+}
+
+func testEventPlannerDefaultsAndMath(t *testing.T) {
+	t.Helper()
 	songs := []eventPlannerSongSelection{{Query: "虾"}, {Query: "龙", Difficulty: "expert"}, {Query: "野车"}}
 	applyEventPlannerDefaultSongDifficulties(songs)
 	if songs[0].Difficulty != "expert" || songs[1].Difficulty != "expert" || songs[2].MusicID != eventPlannerOmakaseMusicID {
@@ -245,7 +299,6 @@ func TestEventPlannerAdditionalPureEdges(t *testing.T) {
 		t.Fatal("event banner path should be derived")
 	}
 }
-
 func TestBuildEventPlannerDrawingRequestSuccess(t *testing.T) {
 	deckCtrl := newHandlerTestDeckController(t)
 	app := &renderapp.App{Decks: deckCtrl}

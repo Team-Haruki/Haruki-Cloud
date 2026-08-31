@@ -108,37 +108,55 @@ func (c *Controller) WithContext(ctx context.Context) *Controller {
 	clone.ctx = ctx
 	clone.drawing = c.drawing.WithContext(ctx)
 	clone.assets = c.assets.WithContext(ctx)
+	clone.cardSources = c.cardSourcesWithContext(ctx)
+	clone.eventSources = c.eventSourcesWithContext(ctx)
+	clone.musicSources = c.musicSourcesWithContext(ctx)
+	return &clone
+}
+
+func (c *Controller) cardSourcesWithContext(ctx context.Context) *regionsource.Registry[CardSource] {
 	if c.cardSources != nil {
-		clone.cardSources = regionsource.NewRegistry[CardSource](c.cardSources.ResolveRegion(renderregion.Unknown))
+		result := regionsource.NewRegistry[CardSource](c.cardSources.ResolveRegion(renderregion.Unknown))
 		for _, source := range c.cardSources.OrderedSources() {
 			if contextual, ok := any(source).(contextualCardSource); ok {
-				clone.cardSources.RegisterSource(contextual.WithContext(ctx))
+				result.RegisterSource(contextual.WithContext(ctx))
 				continue
 			}
-			clone.cardSources.RegisterSource(source)
+			result.RegisterSource(source)
 		}
+		return result
 	}
+	return nil
+}
+
+func (c *Controller) eventSourcesWithContext(ctx context.Context) *regionsource.Registry[EventSource] {
 	if c.eventSources != nil {
-		clone.eventSources = regionsource.NewRegistry[EventSource](c.eventSources.ResolveRegion(renderregion.Unknown))
+		result := regionsource.NewRegistry[EventSource](c.eventSources.ResolveRegion(renderregion.Unknown))
 		for _, source := range c.eventSources.OrderedSources() {
 			if contextual, ok := any(source).(contextualEventSource); ok {
-				clone.eventSources.RegisterSource(contextual.WithContext(ctx))
+				result.RegisterSource(contextual.WithContext(ctx))
 				continue
 			}
-			clone.eventSources.RegisterSource(source)
+			result.RegisterSource(source)
 		}
+		return result
 	}
+	return nil
+}
+
+func (c *Controller) musicSourcesWithContext(ctx context.Context) *regionsource.Registry[MusicSource] {
 	if c.musicSources != nil {
-		clone.musicSources = regionsource.NewRegistry[MusicSource](c.musicSources.ResolveRegion(renderregion.Unknown))
+		result := regionsource.NewRegistry[MusicSource](c.musicSources.ResolveRegion(renderregion.Unknown))
 		for _, source := range c.musicSources.OrderedSources() {
 			if contextual, ok := any(source).(contextualMusicSource); ok {
-				clone.musicSources.RegisterSource(contextual.WithContext(ctx))
+				result.RegisterSource(contextual.WithContext(ctx))
 				continue
 			}
-			clone.musicSources.RegisterSource(source)
+			result.RegisterSource(source)
 		}
+		return result
 	}
-	return &clone
+	return nil
 }
 
 func (c *Controller) contextOrBackground() context.Context {

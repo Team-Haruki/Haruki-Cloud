@@ -54,210 +54,118 @@ func (r *RemoteDeckRecommender) postJSON(ctx context.Context, exec *remoteExecut
 	if err != nil {
 		return err
 	}
+	return r.postEncoded(ctx, exec, path, body, "application/json", "deck request", responseBody)
+}
+
+func (r *RemoteDeckRecommender) postBinary(ctx context.Context, exec *remoteExecution, path string, payload []byte, responseBody any) error {
+	ctx = normalizeRecommendContext(ctx)
+	return r.postEncoded(ctx, exec, path, payload, "application/octet-stream", "deck binary request", responseBody)
+}
+
+type deckPostOutcome struct {
+	err  error
+	done bool
+}
+
+func (r *RemoteDeckRecommender) postEncoded(ctx context.Context, exec *remoteExecution, path string, payload []byte, contentType, logLabel string, responseBody any) error {
 	baseURL := exec.BaseURL()
 	if strings.TrimSpace(baseURL) == "" {
 		return fmt.Errorf("deck-service target base_url is empty")
 	}
-
 	var lastErr error
 	for attempt := 0; attempt <= r.maxRetries; attempt++ {
-		if err := ctx.Err(); err != nil {
+		if err := r.prepareDeckPostAttempt(ctx, path, logLabel, attempt); err != nil {
 			return err
 		}
-		if attempt > 0 {
-			if err := waitForDeckRetry(ctx, r.retryWaitTime); err != nil {
-				return err
-			}
-			r.logger.DebugContext(ctx, "deck request retrying",
-				"upstream", deckServiceName,
-				"upstream_path", path,
-				"attempt", attempt,
-				"max_retries", r.maxRetries,
-			)
-		}
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+path, bytes.NewReader(body))
-		if err != nil {
-			return err
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		start := time.Now()
-		finishHTTP := commandtrace.MeasureOperation(ctx, deckHTTPStage)
-		resp, err := r.client.Do(req)
-
-		if err != nil {
-			finishHTTP()
-			elapsed := time.Since(start)
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return ctxErr
-			}
-			lastErr = err
-			r.logger.WarnContext(ctx, "deck request failed",
-				"upstream", deckServiceName,
-				"upstream_path", path,
-				"attempt", attempt,
-				"duration_ms", commandtrace.Milliseconds(elapsed),
-				"error_type", fmt.Sprintf("%T", err),
-			)
-			if isRetryableError(err, 0) {
-				continue
-			}
-			return err
-		}
-
-		payload, truncated, readErr := readDeckResponseBody(resp.Body)
-		resp.Body.Close()
-		finishHTTP()
-		elapsed := time.Since(start)
-		if readErr != nil {
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return ctxErr
-			}
-			lastErr = readErr
-			continue
-		}
-		if truncated {
-			return fmt.Errorf("deck-service response exceeded %d bytes", maxDeckResponseBodyBytes)
-		}
-
-		if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
-			r.logger.DebugContext(ctx, "deck request completed",
-				"upstream", deckServiceName,
-				"upstream_path", path,
-				"status_code", resp.StatusCode,
-				"duration_ms", commandtrace.Milliseconds(elapsed),
-			)
-			if responseBody == nil || len(payload) == 0 {
-				return nil
-			}
-			finishDecode := commandtrace.MeasureOperation(ctx, "deck.decode")
-			decodeErr := json.Unmarshal(payload, responseBody)
-			finishDecode()
-			return decodeErr
-		}
-
-		lastErr = parseRemoteHTTPError(resp.StatusCode, payload)
-		r.logger.WarnContext(ctx, "deck request returned non-success status",
-			"upstream", deckServiceName,
-			"upstream_path", path,
-			"attempt", attempt,
-			"status_code", resp.StatusCode,
-			"duration_ms", commandtrace.Milliseconds(elapsed),
-			"response_bytes", len(payload),
-		)
-		if isMissingUserdataHashError(lastErr) {
-			return lastErr
-		}
-		if !isRetryableError(nil, resp.StatusCode) {
-			return lastErr
+		outcome := r.executeDeckPostAttempt(ctx, baseURL+path, path, payload, contentType, logLabel, attempt, responseBody)
+		lastErr = outcome.err
+		if outcome.done {
+			return outcome.err
 		}
 	}
 	return lastErr
 }
 
-func (r *RemoteDeckRecommender) postBinary(ctx context.Context, exec *remoteExecution, path string, payload []byte, responseBody any) error {
-	ctx = normalizeRecommendContext(ctx)
-	baseURL := exec.BaseURL()
-	if strings.TrimSpace(baseURL) == "" {
-		return fmt.Errorf("deck-service target base_url is empty")
+func (r *RemoteDeckRecommender) prepareDeckPostAttempt(ctx context.Context, path, logLabel string, attempt int) error {
+	if err := ctx.Err(); err != nil {
+		return err
 	}
+	if attempt == 0 {
+		return nil
+	}
+	if err := waitForDeckRetry(ctx, r.retryWaitTime); err != nil {
+		return err
+	}
+	r.logger.DebugContext(ctx, logLabel+" retrying",
+		"upstream", deckServiceName, "upstream_path", path,
+		"attempt", attempt, "max_retries", r.maxRetries)
+	return nil
+}
 
-	var lastErr error
-	for attempt := 0; attempt <= r.maxRetries; attempt++ {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		if attempt > 0 {
-			if err := waitForDeckRetry(ctx, r.retryWaitTime); err != nil {
-				return err
-			}
-			r.logger.DebugContext(ctx, "deck binary request retrying",
-				"upstream", deckServiceName,
-				"upstream_path", path,
-				"attempt", attempt,
-				"max_retries", r.maxRetries,
-			)
-		}
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+path, bytes.NewReader(payload))
-		if err != nil {
-			return err
-		}
-		req.Header.Set("Content-Type", "application/octet-stream")
-
-		start := time.Now()
-		finishHTTP := commandtrace.MeasureOperation(ctx, deckHTTPStage)
-		resp, err := r.client.Do(req)
-
-		if err != nil {
-			finishHTTP()
-			elapsed := time.Since(start)
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return ctxErr
-			}
-			lastErr = err
-			r.logger.WarnContext(ctx, "deck binary request failed",
-				"upstream", deckServiceName,
-				"upstream_path", path,
-				"attempt", attempt,
-				"duration_ms", commandtrace.Milliseconds(elapsed),
-				"error_type", fmt.Sprintf("%T", err),
-			)
-			if isRetryableError(err, 0) {
-				continue
-			}
-			return err
-		}
-
-		body, truncated, readErr := readDeckResponseBody(resp.Body)
-		resp.Body.Close()
+func (r *RemoteDeckRecommender) executeDeckPostAttempt(ctx context.Context, url, path string, payload []byte, contentType, logLabel string, attempt int, responseBody any) deckPostOutcome {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
+	if err != nil {
+		return deckPostOutcome{err: err, done: true}
+	}
+	req.Header.Set("Content-Type", contentType)
+	start := time.Now()
+	finishHTTP := commandtrace.MeasureOperation(ctx, deckHTTPStage)
+	resp, err := r.client.Do(req)
+	if err != nil {
 		finishHTTP()
-		elapsed := time.Since(start)
-		if readErr != nil {
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return ctxErr
-			}
-			lastErr = readErr
-			continue
-		}
-		if truncated {
-			return fmt.Errorf("deck-service response exceeded %d bytes", maxDeckResponseBodyBytes)
-		}
-
-		if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
-			r.logger.DebugContext(ctx, "deck binary request completed",
-				"upstream", deckServiceName,
-				"upstream_path", path,
-				"status_code", resp.StatusCode,
-				"duration_ms", commandtrace.Milliseconds(elapsed),
-			)
-			if responseBody == nil || len(body) == 0 {
-				return nil
-			}
-			finishDecode := commandtrace.MeasureOperation(ctx, "deck.decode")
-			decodeErr := json.Unmarshal(body, responseBody)
-			finishDecode()
-			return decodeErr
-		}
-
-		lastErr = parseRemoteHTTPError(resp.StatusCode, body)
-		r.logger.WarnContext(ctx, "deck binary request returned non-success status",
-			"upstream", deckServiceName,
-			"upstream_path", path,
-			"attempt", attempt,
-			"status_code", resp.StatusCode,
-			"duration_ms", commandtrace.Milliseconds(elapsed),
-			"response_bytes", len(body),
-		)
-		if isMissingUserdataHashError(lastErr) {
-			return lastErr
-		}
-		if !isRetryableError(nil, resp.StatusCode) {
-			return lastErr
-		}
+		return r.deckTransportError(ctx, path, logLabel, attempt, time.Since(start), err)
 	}
-	return lastErr
+	body, truncated, readErr := readDeckResponseBody(resp.Body)
+	resp.Body.Close()
+	finishHTTP()
+	if readErr != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return deckPostOutcome{err: ctxErr, done: true}
+		}
+		return deckPostOutcome{err: readErr}
+	}
+	if truncated {
+		return deckPostOutcome{err: fmt.Errorf("deck-service response exceeded %d bytes", maxDeckResponseBodyBytes), done: true}
+	}
+	return r.handleDeckPostResponse(ctx, path, logLabel, attempt, time.Since(start), resp.StatusCode, body, responseBody)
+}
+
+func (r *RemoteDeckRecommender) deckTransportError(ctx context.Context, path, logLabel string, attempt int, elapsed time.Duration, err error) deckPostOutcome {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return deckPostOutcome{err: ctxErr, done: true}
+	}
+	r.logger.WarnContext(ctx, logLabel+" failed",
+		"upstream", deckServiceName, "upstream_path", path, "attempt", attempt,
+		"duration_ms", commandtrace.Milliseconds(elapsed), "error_type", fmt.Sprintf("%T", err))
+	return deckPostOutcome{err: err, done: !isRetryableError(err, 0)}
+}
+
+func (r *RemoteDeckRecommender) handleDeckPostResponse(ctx context.Context, path, logLabel string, attempt int, elapsed time.Duration, statusCode int, body []byte, responseBody any) deckPostOutcome {
+	if statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices {
+		r.logger.DebugContext(ctx, logLabel+" completed",
+			"upstream", deckServiceName, "upstream_path", path,
+			"status_code", statusCode, "duration_ms", commandtrace.Milliseconds(elapsed))
+		if responseBody == nil || len(body) == 0 {
+			return deckPostOutcome{done: true}
+		}
+		finishDecode := commandtrace.MeasureOperation(ctx, "deck.decode")
+		err := json.Unmarshal(body, responseBody)
+		finishDecode()
+		return deckPostOutcome{err: err, done: true}
+	}
+	err := parseRemoteHTTPError(statusCode, body)
+	r.logger.WarnContext(ctx, logLabel+" returned non-success status",
+		"upstream", deckServiceName,
+		"upstream_path", path,
+		"attempt", attempt,
+		"status_code", statusCode,
+		"duration_ms", commandtrace.Milliseconds(elapsed),
+		"response_bytes", len(body),
+	)
+	if isMissingUserdataHashError(err) || !isRetryableError(nil, statusCode) {
+		return deckPostOutcome{err: err, done: true}
+	}
+	return deckPostOutcome{err: err}
 }
 
 func parseRemoteHTTPError(statusCode int, payload []byte) error {

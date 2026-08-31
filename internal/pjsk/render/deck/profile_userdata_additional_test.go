@@ -67,6 +67,13 @@ func (s *additionalHonorEventSource) GetEventRankingHonorRewards(int) ([]masterd
 }
 
 func TestMaxProfileCardHelpersAdditional(t *testing.T) {
+	assertMaxProfileCanvasHelpers(t)
+	assertMaxProfileEpisodeHelpers(t)
+	assertMaxProfileCardStateHelpers(t)
+}
+
+func assertMaxProfileCanvasHelpers(t *testing.T) {
+	t.Helper()
 	if got := buildMaxProfileCanvases(nil); got != nil {
 		t.Fatalf("empty max-profile canvases = %#v", got)
 	}
@@ -74,7 +81,10 @@ func TestMaxProfileCardHelpersAdditional(t *testing.T) {
 	if !reflect.DeepEqual(canvases, []snapshot.RawUserMysekaiCanvas{{CardID: 2, Quantity: 1}, {CardID: 1, Quantity: 1}}) {
 		t.Fatalf("max-profile canvases = %#v", canvases)
 	}
+}
 
+func assertMaxProfileEpisodeHelpers(t *testing.T) {
+	t.Helper()
 	if episodes, err := maxProfileCardEpisodes(nil, 1); err != nil || episodes != nil {
 		t.Fatalf("nil episode source = %#v, %v", episodes, err)
 	}
@@ -94,7 +104,10 @@ func TestMaxProfileCardHelpersAdditional(t *testing.T) {
 	if originalEpisodes[0].CardEpisodeID != 1 {
 		t.Fatal("max-profile episodes were not cloned")
 	}
+}
 
+func assertMaxProfileCardStateHelpers(t *testing.T) {
+	t.Helper()
 	for rarity, level := range map[string]int{" rarity_1 ": 20, "RARITY_2": 30, "rarity_3": 50, "rarity_4": 60, "unknown": 60} {
 		if got := maxProfileCardLevel(rarity); got != level {
 			t.Errorf("maxProfileCardLevel(%q) = %d", rarity, got)
@@ -118,6 +131,13 @@ func TestMaxProfileCardHelpersAdditional(t *testing.T) {
 }
 
 func TestBuildAndApplyMaxProfileAdditional(t *testing.T) {
+	assertBuildMaxProfileErrors(t)
+	controller, now := assertBuildMaxProfileCards(t)
+	assertApplyMaxProfile(t, controller, now)
+}
+
+func assertBuildMaxProfileErrors(t *testing.T) {
+	t.Helper()
 	if _, err := (&Controller{}).buildMaxProfileCards(renderregion.JP, 1); err == nil {
 		t.Fatal("max profile without card source unexpectedly succeeded")
 	}
@@ -137,7 +157,10 @@ func TestBuildAndApplyMaxProfileAdditional(t *testing.T) {
 	if _, err := controller.buildMaxProfileCards(renderregion.JP, 1); !errors.Is(err, failing.episodeErr) {
 		t.Fatalf("max-profile episode error = %v", err)
 	}
+}
 
+func assertBuildMaxProfileCards(t *testing.T) (*Controller, int64) {
+	t.Helper()
 	now := time.Now().UnixMilli()
 	source := &testCardSource{
 		region: renderregion.JP,
@@ -157,7 +180,7 @@ func TestBuildAndApplyMaxProfileAdditional(t *testing.T) {
 		mysekaiGates:      []snapshot.RawUserMysekaiGate{{MysekaiGateID: 1, MysekaiGateLevel: 40}},
 		fixtureBonuses:    []snapshot.RawUserFixtureBonus{{GameCharacterID: 1, TotalBonusRate: 10}},
 	}
-	controller = NewController(source, nil, nil, nil, nil, renderregion.JP)
+	controller := NewController(source, nil, nil, nil, nil, renderregion.JP)
 	cards, err := controller.buildMaxProfileCards(renderregion.JP, now)
 	if err != nil || len(cards) != 4 || cards[0].CardID != 1 || cards[3].CardID != 4 || cards[2].Level != 50 || len(cards[2].Episodes) != 1 {
 		t.Fatalf("max-profile cards = %#v, %v", cards, err)
@@ -165,7 +188,11 @@ func TestBuildAndApplyMaxProfileAdditional(t *testing.T) {
 	if _, err := controller.buildMaxProfileCards(renderregion.JP, 0); err != nil {
 		t.Fatalf("max profile with wall-clock now failed: %v", err)
 	}
+	return controller, now
+}
 
+func assertApplyMaxProfile(t *testing.T, controller *Controller, now int64) {
+	t.Helper()
 	if err := controller.applyProfilePreset(renderregion.JP, nil, AutoQuery{MaxProfile: true}); err != nil {
 		t.Fatalf("nil profile preset = %v", err)
 	}
@@ -249,6 +276,14 @@ func TestProfileCardFiltersAndUnitResolutionAdditional(t *testing.T) {
 }
 
 func TestMaxProfileHonorHelpersAdditional(t *testing.T) {
+	rewards := assertMaxProfileHonorSelection(t)
+	assertMaxProfileHonorOrdering(t)
+	assertMaxProfileHonorUpserts(t)
+	assertApplyMaxProfileHonors(t, rewards)
+}
+
+func assertMaxProfileHonorSelection(t *testing.T) []masterdata.EventRankingHonorReward {
+	t.Helper()
 	if _, ok := pickMaxProfileRankingHonorReward(nil, 1000); ok {
 		t.Fatal("empty honor rewards unexpectedly selected")
 	}
@@ -266,6 +301,11 @@ func TestMaxProfileHonorHelpersAdditional(t *testing.T) {
 	if _, ok := pickMaxProfileRankingHonorReward([]masterdata.EventRankingHonorReward{{HonorID: 0}}, 1000); ok {
 		t.Fatal("invalid honor reward unexpectedly selected")
 	}
+	return rewards
+}
+
+func assertMaxProfileHonorOrdering(t *testing.T) {
+	t.Helper()
 	for _, tt := range []struct {
 		reward masterdata.EventRankingHonorReward
 		rank   int
@@ -290,7 +330,10 @@ func TestMaxProfileHonorHelpersAdditional(t *testing.T) {
 	if !rankingHonorRewardLess(masterdata.EventRankingHonorReward{ToRank: 10, FromRank: 1, HonorID: 1}, masterdata.EventRankingHonorReward{ToRank: 10, FromRank: 1, HonorID: 2}) {
 		t.Fatal("reward honor-ID tiebreak mismatch")
 	}
+}
 
+func assertMaxProfileHonorUpserts(t *testing.T) {
+	t.Helper()
 	originalHonors := []snapshot.RawUserHonor{{Seq: 3, HonorID: 10}}
 	if got := upsertMaxProfileUserHonor(originalHonors, 0); !reflect.DeepEqual(got, originalHonors) {
 		t.Fatalf("invalid honor upsert = %#v", got)
@@ -319,7 +362,10 @@ func TestMaxProfileHonorHelpersAdditional(t *testing.T) {
 	if len(gotProfiles) != 2 || gotProfiles[0].Seq != 1 {
 		t.Fatalf("inserted profile honor = %#v", gotProfiles)
 	}
+}
 
+func assertApplyMaxProfileHonors(t *testing.T, rewards []masterdata.EventRankingHonorReward) {
+	t.Helper()
 	eventID := 180
 	raw := &snapshot.RawUserData{}
 	(&Controller{}).applyMaxProfileEventHonors(renderregion.JP, raw, AutoQuery{EventID: &eventID})
@@ -340,6 +386,12 @@ func TestMaxProfileHonorHelpersAdditional(t *testing.T) {
 }
 
 func TestCurrentDeckAndFixedCardHelpersAdditional(t *testing.T) {
+	profile, deck := assertCurrentDeckCardHelpers(t)
+	assertApplyCurrentDeckHelpers(t, profile, deck)
+}
+
+func assertCurrentDeckCardHelpers(t *testing.T) (*sekai.GetAnotherProfileResponse, *snapshot.RawUserDeck) {
+	t.Helper()
 	if publicProfileCurrentDeck(nil) != nil || publicProfileCurrentDeck(&sekai.GetAnotherProfileResponse{}) != nil {
 		t.Fatal("empty public profile returned a current deck")
 	}
@@ -364,7 +416,11 @@ func TestCurrentDeckAndFixedCardHelpersAdditional(t *testing.T) {
 	if !ok || !reflect.DeepEqual(ordered, []int{1, 2, 3, 4, 5}) {
 		t.Fatalf("already-leading fixed cards = %#v, %v", ordered, ok)
 	}
+	return profile, deck
+}
 
+func assertApplyCurrentDeckHelpers(t *testing.T, profile *sekai.GetAnotherProfileResponse, deck *snapshot.RawUserDeck) {
+	t.Helper()
 	controller := &Controller{}
 	option := map[string]any{"fixed_characters": []int{1}}
 	if err := controller.applyCurrentDeckOption(nil, nil, "event", AutoQuery{}, option); err != nil {
@@ -408,6 +464,13 @@ func TestRestoreFixedCardsAndAreaItemsAdditional(t *testing.T) {
 		areaItemLevelCaps: map[int]int{1: 20, 2: 10, 3: 0},
 	}
 	controller := NewController(source, nil, nil, nil, nil, renderregion.JP)
+	assertRestoreFixedCards(t, controller)
+	assertFallbackRecommendCards(t, controller)
+	assertAreaItemLevelHelpers(t, controller)
+}
+
+func assertRestoreFixedCards(t *testing.T, controller *Controller) {
+	t.Helper()
 	if err := controller.restoreFixedCards(renderregion.JP, nil, &snapshot.RawUserData{}, map[string]any{}, false); err != nil {
 		t.Fatalf("nil fixed-card restore failed: %v", err)
 	}
@@ -429,6 +492,10 @@ func TestRestoreFixedCardsAndAreaItemsAdditional(t *testing.T) {
 	if err := controller.restoreFixedCards(renderregion.JP, &snapshot.RawUserData{}, &snapshot.RawUserData{}, map[string]any{"fixed_cards": []int{4}}, false); err == nil {
 		t.Fatal("unknown fixed card unexpectedly restored")
 	}
+}
+
+func assertFallbackRecommendCards(t *testing.T, controller *Controller) {
+	t.Helper()
 	if card, err := controller.buildFallbackRecommendUserCard(renderregion.JP, 0, 0, false); err != nil || card != nil {
 		t.Fatalf("zero fallback card = %#v, %v", card, err)
 	}
@@ -443,7 +510,10 @@ func TestRestoreFixedCardsAndAreaItemsAdditional(t *testing.T) {
 	if card, err := controller.buildFallbackRecommendUserCard(renderregion.JP, 4, 0, false); err != nil || card != nil {
 		t.Fatalf("missing fallback card = %#v, %v", card, err)
 	}
+}
 
+func assertAreaItemLevelHelpers(t *testing.T, controller *Controller) {
+	t.Helper()
 	controller.applyAreaItemCaps(renderregion.JP, nil, 0)
 	areaRaw := &snapshot.RawUserData{}
 	controller.applyAreaItemCaps(renderregion.JP, areaRaw, 15)
@@ -472,7 +542,11 @@ func TestRestoreFixedCardsAndAreaItemsAdditional(t *testing.T) {
 	if len(areas) != 1 || !reflect.DeepEqual(areas[0].AreaItems, []snapshot.RawUserAreaItem{{AreaItemID: 1, Level: 1}, {AreaItemID: 2, Level: 2}, {AreaItemID: 3, Level: 3}}) {
 		t.Fatalf("sorted raw user areas = %#v", areas)
 	}
+	assertAreaItemLevelFallback(t)
+}
 
+func assertAreaItemLevelFallback(t *testing.T) {
+	t.Helper()
 	noCaps := NewController(&additionalBasicCardSource{region: renderregion.JP}, nil, nil, nil, nil, renderregion.JP)
 	noCapsRaw := &snapshot.RawUserData{UserAreas: []snapshot.RawUserArea{{AreaItems: []snapshot.RawUserAreaItem{{AreaItemID: 1, Level: 2}}}}}
 	if err := noCaps.applyAreaItemLevel(renderregion.JP, noCapsRaw, 5); err != nil || noCapsRaw.UserAreas[0].AreaItems[0].Level != 5 {
@@ -510,6 +584,15 @@ func TestPreparedUserDataMergingAdditional(t *testing.T) {
 		"userHonors":[{"honorId":0},{"honorId":10,"custom":"honor"}],
 		"userProfileHonors":[{"seq":0},{"seq":1,"custom":"profile"}]
 	}`)
+	payload := assertPreparedUserDataEncoding(t, raw, original, originalJSON)
+	assertPreparedMergedPayload(t, payload)
+	assertPreparedEmptyMerges(t)
+	assertPreparedCardComparison(t)
+	assertPreparedJSONNormalization(t)
+}
+
+func assertPreparedUserDataEncoding(t *testing.T, raw, original *snapshot.RawUserData, originalJSON []byte) map[string]any {
+	t.Helper()
 	if _, err := encodePreparedRecommendUserData(nil, nil, nil); err == nil {
 		t.Fatal("nil prepared raw data unexpectedly encoded")
 	}
@@ -532,6 +615,11 @@ func TestPreparedUserDataMergingAdditional(t *testing.T) {
 	if err := json.Unmarshal(encoded, &payload); err != nil {
 		t.Fatalf("decode prepared snapshot: %v", err)
 	}
+	return payload
+}
+
+func assertPreparedMergedPayload(t *testing.T, payload map[string]any) {
+	t.Helper()
 	cards := payload["userCards"].([]any)
 	if len(cards) != 3 || cards[0].(map[string]any)["custom"] != "keep" || cards[1].(map[string]any)["custom"] != "merge" {
 		t.Fatalf("merged prepared cards = %#v", cards)
@@ -543,7 +631,10 @@ func TestPreparedUserDataMergingAdditional(t *testing.T) {
 	if len(areas) != 2 || areas[0].(map[string]any)["custom"] != "area" || areas[0].(map[string]any)["userAreaStatus"] == nil {
 		t.Fatalf("merged prepared areas = %#v", areas)
 	}
+}
 
+func assertPreparedEmptyMerges(t *testing.T) {
+	t.Helper()
 	if got, err := mergePreparedUserCards(nil, nil, nil); err != nil || len(got) != 0 {
 		t.Fatalf("empty merged cards = %#v, %v", got, err)
 	}
@@ -559,7 +650,10 @@ func TestPreparedUserDataMergingAdditional(t *testing.T) {
 	if got, err := mergePreparedUserProfileHonors(nil, nil); err != nil || len(got) != 0 {
 		t.Fatalf("empty merged profile honors = %#v, %v", got, err)
 	}
+}
 
+func assertPreparedCardComparison(t *testing.T) {
+	t.Helper()
 	card := snapshot.RawUserCard{CardID: 1, Level: 1, Episodes: []snapshot.RawUserCardEpisode{{CardEpisodeID: 1}}}
 	if samePreparedUserCard(nil, &card) || samePreparedUserCard(&card, nil) {
 		t.Fatal("nil prepared card comparison matched")
@@ -587,6 +681,10 @@ func TestPreparedUserDataMergingAdditional(t *testing.T) {
 	if !samePreparedUserCard(&card, &card) {
 		t.Fatal("identical prepared card did not match")
 	}
+}
+
+func assertPreparedJSONNormalization(t *testing.T) {
+	t.Helper()
 	normalizePreparedUserCardJSON(nil)
 	cardMap := map[string]any{"episodes": nil}
 	normalizePreparedUserCardJSON(cardMap)

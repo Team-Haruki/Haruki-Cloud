@@ -62,13 +62,7 @@ func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([
 		if err := json.Unmarshal(trimmed, &items); err != nil {
 			return nil, err
 		}
-		for i := range items {
-			if strings.TrimSpace(items[i].Alg) == "" && i < len(options) {
-				if alg, _ := options[i]["algorithm"].(string); strings.TrimSpace(alg) != "" {
-					items[i].Alg = alg
-				}
-			}
-		}
+		fillMissingRemoteAlgorithms(items, options)
 		return items, nil
 	}
 
@@ -85,109 +79,129 @@ func parseRemoteRecommendBatch(raw json.RawMessage, options []map[string]any) ([
 	return []remoteBatchRecommendResult{item}, nil
 }
 
+func fillMissingRemoteAlgorithms(items []remoteBatchRecommendResult, options []map[string]any) {
+	for index := range items {
+		if strings.TrimSpace(items[index].Alg) != "" || index >= len(options) {
+			continue
+		}
+		if alg, _ := options[index]["algorithm"].(string); strings.TrimSpace(alg) != "" {
+			items[index].Alg = alg
+		}
+	}
+}
+
+type remoteRecommendPair struct {
+	Deck RecommendDeck
+	Alg  string
+}
+
+type remoteResultAccumulator struct {
+	result   *RecommendResult
+	seen     map[string]*RecommendDeck
+	order    []string
+	firstErr error
+}
+
+func newRemoteResultAccumulator() *remoteResultAccumulator {
+	return &remoteResultAccumulator{
+		result: &RecommendResult{CostTimes: make(map[string]float64), WaitTimes: make(map[string]float64)},
+		seen:   make(map[string]*RecommendDeck),
+	}
+}
+
 func aggregateRemoteRecommendResults(recType string, options []map[string]any, results []remoteBatchRecommendResult) (*RecommendResult, error) {
-	agg := &RecommendResult{
-		CostTimes: make(map[string]float64),
-		WaitTimes: make(map[string]float64),
-	}
-	seen := make(map[string]*RecommendDeck)
-	var order []string
-	var firstErr error
-
+	accumulator := newRemoteResultAccumulator()
 	for _, item := range results {
-		if strings.TrimSpace(item.Error) != "" {
-			if firstErr == nil {
-				firstErr = fmt.Errorf("%s", strings.TrimSpace(item.Error))
-			}
-			continue
-		}
+		accumulator.add(item, recType, options)
+	}
+	if len(accumulator.order) == 0 && accumulator.firstErr != nil {
+		return nil, accumulator.firstErr
+	}
+	pairs := accumulator.pairs()
+	target, _ := options[0]["target"].(string)
+	sort.SliceStable(pairs, func(i, j int) bool {
+		return compareRecommendDecks(strings.ToLower(strings.TrimSpace(recType)), target, pairs[i].Deck, pairs[j].Deck)
+	})
+	for _, pair := range pairs[:remoteRecommendLimit(options[0], len(pairs))] {
+		accumulator.result.Decks = append(accumulator.result.Decks, pair.Deck)
+		accumulator.result.DeckAlgs = append(accumulator.result.DeckAlgs, pair.Alg)
+	}
+	return accumulator.result, nil
+}
 
-		var decks []RecommendDeck
-		if item.Result != nil {
-			decks = convertRemoteDecks(item.Result.Decks)
-		} else {
-			decks = convertRemoteDecks(item.Decks)
+func (a *remoteResultAccumulator) add(item remoteBatchRecommendResult, recType string, options []map[string]any) {
+	if message := strings.TrimSpace(item.Error); message != "" {
+		if a.firstErr == nil {
+			a.firstErr = fmt.Errorf("%s", message)
 		}
-		if len(decks) == 0 {
-			continue
-		}
+		return
+	}
+	decks := convertRemoteDecks(item.Decks)
+	if item.Result != nil {
+		decks = convertRemoteDecks(item.Result.Decks)
+	}
+	if len(decks) == 0 {
+		return
+	}
+	alg := displayRecommendAlgorithm(item.Alg)
+	if alg != "" {
+		a.result.CostTimes[alg], a.result.WaitTimes[alg] = item.CostTime, item.WaitTime
+	}
+	for _, deck := range decks {
+		a.addDeck(deck, alg, recType, options[0])
+	}
+}
 
-		alg := displayRecommendAlgorithm(item.Alg)
+func (a *remoteResultAccumulator) addDeck(deck RecommendDeck, alg, recType string, option map[string]any) {
+	hash := deckHash(deck)
+	if existing := a.seen[hash]; existing != nil {
 		if alg != "" {
-			agg.CostTimes[alg] = item.CostTime
-			agg.WaitTimes[alg] = item.WaitTime
+			existing.Algs = append(existing.Algs, alg)
 		}
+		target, _ := option["target"].(string)
+		if compareRecommendDecks(recType, target, deck, *existing) {
+			algs := existing.Algs
+			*existing = deck
+			existing.Algs = algs
+		}
+		return
+	}
+	copy := deck
+	if alg != "" {
+		copy.Algs = []string{alg}
+	}
+	a.seen[hash] = &copy
+	a.order = append(a.order, hash)
+}
 
-		for _, deck := range decks {
-			h := deckHash(deck)
-			if existing, ok := seen[h]; ok {
-				if alg != "" {
-					existing.Algs = append(existing.Algs, alg)
-				}
-				target, _ := options[0]["target"].(string)
-				if compareRecommendDecks(recType, target, deck, *existing) {
-					algs := existing.Algs
-					*existing = deck
-					existing.Algs = algs
-				}
-				continue
-			}
-			deckCopy := deck
-			if alg != "" {
-				deckCopy.Algs = []string{alg}
-			}
-			seen[h] = &deckCopy
-			order = append(order, h)
+func (a *remoteResultAccumulator) pairs() []remoteRecommendPair {
+	result := make([]remoteRecommendPair, 0, len(a.order))
+	for _, hash := range a.order {
+		deck := a.seen[hash]
+		unique := make(map[string]struct{}, len(deck.Algs))
+		for _, alg := range deck.Algs {
+			unique[alg] = struct{}{}
 		}
-	}
-	if len(order) == 0 && firstErr != nil {
-		return nil, firstErr
-	}
-
-	type pair struct {
-		Deck RecommendDeck
-		Alg  string
-	}
-	var pairs []pair
-	for _, h := range order {
-		deck := seen[h]
-		algsMap := make(map[string]struct{})
-		for _, a := range deck.Algs {
-			algsMap[a] = struct{}{}
-		}
-		var algs []string
-		for alg := range algsMap {
+		algs := make([]string, 0, len(unique))
+		for alg := range unique {
 			algs = append(algs, alg)
 		}
 		sort.Strings(algs)
-		pairs = append(pairs, pair{Deck: *deck, Alg: strings.Join(algs, "+")})
+		result = append(result, remoteRecommendPair{Deck: *deck, Alg: strings.Join(algs, "+")})
 	}
+	return result
+}
 
-	recType = strings.ToLower(strings.TrimSpace(recType))
-	target, _ := options[0]["target"].(string)
-	sort.SliceStable(pairs, func(i, j int) bool {
-		d1 := pairs[i].Deck
-		d2 := pairs[j].Deck
-		return compareRecommendDecks(recType, target, d1, d2)
-	})
-
-	limitFloat, _ := options[0]["limit"].(float64)
-	limitInt, ok := options[0]["limit"].(int)
+func remoteRecommendLimit(option map[string]any, available int) int {
+	limit, ok := option["limit"].(int)
 	if !ok {
-		limitInt = int(limitFloat)
+		value, _ := option["limit"].(float64)
+		limit = int(value)
 	}
-	if limitInt <= 0 {
-		limitInt = len(pairs)
+	if limit <= 0 || limit > available {
+		return available
 	}
-	if limitInt > len(pairs) {
-		limitInt = len(pairs)
-	}
-
-	for i := 0; i < limitInt; i++ {
-		agg.Decks = append(agg.Decks, pairs[i].Deck)
-		agg.DeckAlgs = append(agg.DeckAlgs, pairs[i].Alg)
-	}
-	return agg, nil
+	return limit
 }
 
 func shouldRewarmRemoteService(err error) bool {

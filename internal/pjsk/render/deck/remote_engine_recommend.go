@@ -334,15 +334,9 @@ func (r *RemoteDeckRecommender) doRecommendBatch(ctx context.Context, exec *remo
 }
 
 func (r *RemoteDeckRecommender) doRecommendLegacy(ctx context.Context, exec *remoteExecution, req RecommendRequest) ([]remoteBatchRecommendResult, error) {
-	type partial struct {
-		index int
-		item  remoteBatchRecommendResult
-		err   error
-	}
-
 	ctx = normalizeRecommendContext(ctx)
 	group, groupCtx := errgroup.WithContext(ctx)
-	partials := make([]partial, len(req.BatchOption))
+	partials := make([]remoteLegacyPartial, len(req.BatchOption))
 	var launchErr error
 	for index, option := range req.BatchOption {
 		if err := groupCtx.Err(); err != nil {
@@ -352,28 +346,7 @@ func (r *RemoteDeckRecommender) doRecommendLegacy(ctx context.Context, exec *rem
 		index := index
 		opt := cloneRecommendOption(option)
 		group.Go(func() error {
-			alg, _ := opt["algorithm"].(string)
-			start := time.Now()
-			decks, err := r.doRecommendLegacyOption(groupCtx, exec, req, opt)
-			if err != nil {
-				partials[index] = partial{
-					index: index,
-					item: remoteBatchRecommendResult{
-						Alg:   alg,
-						Error: err.Error(),
-					},
-					err: err,
-				}
-				return nil
-			}
-			partials[index] = partial{
-				index: index,
-				item: remoteBatchRecommendResult{
-					Alg:      alg,
-					CostTime: time.Since(start).Seconds(),
-					Result:   &remoteRecommendResult{Decks: decks},
-				},
-			}
+			partials[index] = r.recommendLegacyPartial(groupCtx, exec, req, opt, index)
 			return nil
 		})
 	}
@@ -404,6 +377,31 @@ func (r *RemoteDeckRecommender) doRecommendLegacy(ctx context.Context, exec *rem
 		return nil, firstErr
 	}
 	return out, nil
+}
+
+type remoteLegacyPartial struct {
+	index int
+	item  remoteBatchRecommendResult
+	err   error
+}
+
+func (r *RemoteDeckRecommender) recommendLegacyPartial(ctx context.Context, exec *remoteExecution, req RecommendRequest, option map[string]any, index int) remoteLegacyPartial {
+	alg, _ := option["algorithm"].(string)
+	start := time.Now()
+	decks, err := r.doRecommendLegacyOption(ctx, exec, req, option)
+	if err != nil {
+		return remoteLegacyPartial{
+			index: index, err: err,
+			item: remoteBatchRecommendResult{Alg: alg, Error: err.Error()},
+		}
+	}
+	return remoteLegacyPartial{
+		index: index,
+		item: remoteBatchRecommendResult{
+			Alg: alg, CostTime: time.Since(start).Seconds(),
+			Result: &remoteRecommendResult{Decks: decks},
+		},
+	}
 }
 
 func (r *RemoteDeckRecommender) doRecommendLegacyOption(ctx context.Context, exec *remoteExecution, req RecommendRequest, option map[string]any) ([]remoteRecommendDeck, error) {

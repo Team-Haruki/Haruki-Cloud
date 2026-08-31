@@ -15,6 +15,14 @@ import (
 )
 
 func TestMusicComparePureHelpersAdditional(t *testing.T) {
+	assertMusicComparePayloadHelpers(t)
+	assertMusicCompareFixedDeckHelpers(t)
+	assertMusicCompareCandidateHelpers(t)
+	assertMusicCompareConversionHelpers(t)
+}
+
+func assertMusicComparePayloadHelpers(t *testing.T) {
+	t.Helper()
 	payload := []byte("inline")
 	if got, err := resolveMusicCompareMetaPayload(payload, ""); err != nil || string(got) != "inline" {
 		t.Fatalf("inline metadata = %q,%v", got, err)
@@ -32,7 +40,10 @@ func TestMusicComparePureHelpersAdditional(t *testing.T) {
 	if got, err := resolveMusicCompareMetaPayload(nil, " "+path+" "); err != nil || string(got) != "file" {
 		t.Fatalf("file metadata = %q,%v", got, err)
 	}
+}
 
+func assertMusicCompareFixedDeckHelpers(t *testing.T) {
+	t.Helper()
 	if hasCompleteFixedDeckOption(nil) || hasCompleteFixedDeckOption(map[string]any{"fixed_cards": []int{1}}) {
 		t.Fatal("incomplete deck considered complete")
 	}
@@ -48,7 +59,10 @@ func TestMusicComparePureHelpersAdditional(t *testing.T) {
 	if original[0].MusicID != 1 {
 		t.Fatal("selection clone mutated original")
 	}
+}
 
+func assertMusicCompareCandidateHelpers(t *testing.T) {
+	t.Helper()
 	controller := newTestDeckController(t, RecommendConfig{})
 	if _, err := controller.buildMusicCompareCandidateSelections(renderregion.JP, "event", map[string]any{}, []byte("bad")); err == nil {
 		t.Fatal("expected invalid candidate metadata error")
@@ -77,7 +91,10 @@ func TestMusicComparePureHelpersAdditional(t *testing.T) {
 	}, "solo", false); value != 13 {
 		t.Fatalf("solo candidate value = %v", value)
 	}
+}
 
+func assertMusicCompareConversionHelpers(t *testing.T) {
+	t.Helper()
 	if normalizeMusicCompareDifficulty(" ") != "master" || normalizeMusicCompareDifficulty(" EXPERT ") != "expert" {
 		t.Fatal("difficulty normalization mismatch")
 	}
@@ -108,6 +125,14 @@ func TestMusicComparePureHelpersAdditional(t *testing.T) {
 
 func TestResolveAndJSONHelpersAdditional(t *testing.T) {
 	controller := newTestDeckControllerWithMeta(t, RecommendConfig{}, &testMusicMetaSource{data: []byte("meta")})
+	assertDeckResolveProfileHelpers(t, controller)
+	assertDeckResolveEventHelpers(t)
+	assertDeckResolveSourceHelpers(t, controller)
+	assertDeckJSONHelpers(t)
+}
+
+func assertDeckResolveProfileHelpers(t *testing.T, controller *Controller) {
+	t.Helper()
 	mode := "x"
 	override := &drawing.DetailedProfileCardRequest{ID: "1", Source: "source", Mode: &mode}
 	profile := controller.resolveProfile(renderregion.JP, override, "fallback")
@@ -133,7 +158,10 @@ func TestResolveAndJSONHelpersAdditional(t *testing.T) {
 	if controller.resolveUserDataFilePath() == "" {
 		t.Fatal("snapshot user-data path missing")
 	}
+}
 
+func assertDeckResolveEventHelpers(t *testing.T) {
+	t.Helper()
 	now := time.Now().UnixMilli()
 	events := &testEventSource{region: renderregion.JP, events: map[int]*masterdata.Event{
 		1: {ID: 1, StartAt: now - 1000, AggregateAt: now + 1000},
@@ -155,7 +183,16 @@ func TestResolveAndJSONHelpersAdditional(t *testing.T) {
 	if (&Controller{}).pickCurrentOrNextEventID(renderregion.JP) != 0 {
 		t.Fatal("missing event source should return zero")
 	}
+}
 
+func assertDeckResolveSourceHelpers(t *testing.T, controller *Controller) {
+	t.Helper()
+	assertDeckCardAndEventSources(t, controller)
+	assertDeckMusicSources(t, controller)
+}
+
+func assertDeckCardAndEventSources(t *testing.T, controller *Controller) {
+	t.Helper()
 	if _, _, err := (&Controller{}).resolveCardSource(renderregion.JP); err == nil {
 		t.Fatal("expected missing card source error")
 	}
@@ -174,6 +211,10 @@ func TestResolveAndJSONHelpersAdditional(t *testing.T) {
 	if region, _, ok := controller.resolveEventSource(renderregion.Unknown); !ok || region != renderregion.JP {
 		t.Fatalf("default event source = %s,%v", region, ok)
 	}
+}
+
+func assertDeckMusicSources(t *testing.T, controller *Controller) {
+	t.Helper()
 	if (*Controller)(nil).resolveEventBannerPath("x", renderregion.JP) != "" || controller.resolveEventBannerPath("", renderregion.JP) != "" || controller.resolveEventBannerPath("banner", renderregion.JP) == "" {
 		t.Fatal("event banner path mismatch")
 	}
@@ -189,7 +230,10 @@ func TestResolveAndJSONHelpersAdditional(t *testing.T) {
 	if title, cover := controller.resolveCompareMusicMetadata(renderregion.JP, 1); title != "Song A" || cover == "" {
 		t.Fatalf("resolved music metadata = %q,%q", title, cover)
 	}
+}
 
+func assertDeckJSONHelpers(t *testing.T) {
+	t.Helper()
 	if _, err := structToJSONObject(make(chan int)); err == nil {
 		t.Fatal("expected object marshal error")
 	}
@@ -220,6 +264,11 @@ func TestResolveAndJSONHelpersAdditional(t *testing.T) {
 	if len(copyJSONObject(nil)) != 0 {
 		t.Fatal("nil copy should be empty")
 	}
+	assertDeckJSONNumberHelpers(t)
+}
+
+func assertDeckJSONNumberHelpers(t *testing.T) {
+	t.Helper()
 	for _, tc := range []struct {
 		value any
 		want  int

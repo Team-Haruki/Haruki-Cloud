@@ -15,6 +15,13 @@ import (
 )
 
 func TestOptionAndNormalizationHelpersAdditional(t *testing.T) {
+	assertOptionValueHelpers(t)
+	assertRecommendAlgorithmSubsetHelpers(t)
+	assertRecommendLiveTypeHelpers(t)
+}
+
+func assertOptionValueHelpers(t *testing.T) {
+	t.Helper()
 	if optionString(nil, "x") != "" || optionString(map[string]any{"x": 1}, "x") != "" || optionString(map[string]any{"x": "ok"}, "x") != "ok" {
 		t.Fatal("unexpected optionString result")
 	}
@@ -50,7 +57,10 @@ func TestOptionAndNormalizationHelpersAdditional(t *testing.T) {
 	if _, ok := optionFloat(nil, "x"); ok {
 		t.Fatal("nil float option should not exist")
 	}
+}
 
+func assertRecommendAlgorithmSubsetHelpers(t *testing.T) {
+	t.Helper()
 	if got := normalizeRecommendAlgorithmSubset([]string{"ga", "GA", "bad", "all"}); !reflect.DeepEqual(got, []string{"ga"}) {
 		t.Fatalf("string subset = %#v", got)
 	}
@@ -80,7 +90,10 @@ func TestOptionAndNormalizationHelpersAdditional(t *testing.T) {
 	if got := selectRecommendAlgorithmSubset(map[string]any{}, []string{"ga"}); got != nil {
 		t.Fatalf("missing select subset = %#v", got)
 	}
+}
 
+func assertRecommendLiveTypeHelpers(t *testing.T) {
+	t.Helper()
 	cases := map[string]string{
 		"challenge/auto":  "challenge_auto",
 		"challenge/solo":  "challenge",
@@ -108,6 +121,13 @@ func TestOptionAndNormalizationHelpersAdditional(t *testing.T) {
 
 func TestPathAndConversionHelpersAdditional(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
+	assertDeckAssetPathHelpers(t, controller)
+	assertDeckBonusTargetHelpers(t)
+	assertDeckConversionHelpers(t)
+}
+
+func assertDeckAssetPathHelpers(t *testing.T, controller *Controller) {
+	t.Helper()
 	if (&Controller{}).resolveCharacterIconPath(0) != "" || (*Controller)(nil).resolveCharacterIconPath(1) != "" {
 		t.Fatal("invalid character icon should be empty")
 	}
@@ -126,7 +146,10 @@ func TestPathAndConversionHelpersAdditional(t *testing.T) {
 	if controller.resolveAttrIconPath("bad") != "" || controller.resolveAttrIconPath("cute") == "" {
 		t.Fatal("unexpected attr icon path")
 	}
+}
 
+func assertDeckBonusTargetHelpers(t *testing.T) {
+	t.Helper()
 	if got := pickBonusTargets([]int{5}, "120"); !reflect.DeepEqual(got, []int{5}) {
 		t.Fatalf("explicit bonus targets = %#v", got)
 	}
@@ -139,6 +162,10 @@ func TestPathAndConversionHelpersAdditional(t *testing.T) {
 	if _, err := parseBonusTarget("bad"); err == nil {
 		t.Fatal("expected invalid bonus target")
 	}
+}
+
+func assertDeckConversionHelpers(t *testing.T) {
+	t.Helper()
 	if got := toInterfaceSlice(nil); got != nil {
 		t.Fatalf("nil interface slice = %#v", got)
 	}
@@ -162,6 +189,21 @@ func TestPathAndConversionHelpersAdditional(t *testing.T) {
 }
 
 func TestMasterdataPathHelpersAdditional(t *testing.T) {
+	root, jp, flat := assertMasterdataDirHelpers(t)
+	if got := resolveDeckRemoteMasterdataDir(""); got != "" {
+		t.Fatalf("empty remote root = %q", got)
+	}
+	if got := resolveDeckRemoteMasterdataDir(jp); got != root {
+		t.Fatalf("remote region root = %q", got)
+	}
+	if got := resolveDeckRemoteMasterdataDir(flat); got != flat {
+		t.Fatalf("remote flat root = %q", got)
+	}
+	assertMasterdataContentHelpers(t, root, jp)
+}
+
+func assertMasterdataDirHelpers(t *testing.T) (string, string, string) {
+	t.Helper()
 	if got, err := resolveDeckMasterdataDir("", "jp"); err != nil || got != "" {
 		t.Fatalf("empty masterdata dir = %q, %v", got, err)
 	}
@@ -191,16 +233,11 @@ func TestMasterdataPathHelpersAdditional(t *testing.T) {
 	if got, err := resolveDeckMasterdataDir(emptyRoot, "jp"); err != nil || got != emptyRoot {
 		t.Fatalf("empty root = %q, %v", got, err)
 	}
-	if got := resolveDeckRemoteMasterdataDir(""); got != "" {
-		t.Fatalf("empty remote root = %q", got)
-	}
-	if got := resolveDeckRemoteMasterdataDir(jp); got != root {
-		t.Fatalf("remote region root = %q", got)
-	}
-	if got := resolveDeckRemoteMasterdataDir(flat); got != flat {
-		t.Fatalf("remote flat root = %q", got)
-	}
+	return root, jp, flat
+}
 
+func assertMasterdataContentHelpers(t *testing.T, root, jp string) {
+	t.Helper()
 	if _, ok := resolveDeckMasterdataContentDir("", "jp"); ok {
 		t.Fatal("empty content dir should fail")
 	}
@@ -224,7 +261,11 @@ func TestMasterdataPathHelpersAdditional(t *testing.T) {
 	if _, ok := resolveDeckMasterdataContentDir(t.TempDir(), "jp"); ok {
 		t.Fatal("missing marker should fail")
 	}
+	assertMasterdataEventHelpers(t, root, jp)
+}
 
+func assertMasterdataEventHelpers(t *testing.T, root, jp string) {
+	t.Helper()
 	if found, checked := deckMasterdataContainsEvent(root, "jp", 0); found || checked {
 		t.Fatal("invalid event should be unchecked")
 	}
@@ -253,6 +294,11 @@ func TestMasterdataPathHelpersAdditional(t *testing.T) {
 	if got, ok := resolveDeckMasterdataEventsFile(root, ""); !ok || got != eventsPath {
 		t.Fatalf("events file = %q,%v", got, ok)
 	}
+	assertMasterdataFileHelpers(t, root, jp, eventsPath)
+}
+
+func assertMasterdataFileHelpers(t *testing.T, root, jp, eventsPath string) {
+	t.Helper()
 	if !hasDeckRegionSubdirs(root) || hasDeckRegionSubdirs(t.TempDir()) {
 		t.Fatal("unexpected region subdir detection")
 	}
@@ -321,6 +367,14 @@ func TestMasterdataSignatureRefreshAdditional(t *testing.T) {
 }
 
 func TestControllerEntryHelpersAdditional(t *testing.T) {
+	assertNilControllerEntryHelpers(t)
+	c := assertControllerRegistryAndBuildHelpers(t)
+	assertControllerNormalizationHelpers(t, c)
+	assertControllerSnapshotHelpers(t, c)
+}
+
+func assertNilControllerEntryHelpers(t *testing.T) {
+	t.Helper()
 	var nilController *Controller
 	nilController.RegisterCardSource(nil)
 	nilController.RegisterEventSource(nil)
@@ -328,6 +382,16 @@ func TestControllerEntryHelpersAdditional(t *testing.T) {
 	if nilController.WithSnapshot(nil) != nil || nilController.contextOrBackground() == nil {
 		t.Fatal("nil controller helper mismatch")
 	}
+	if _, err := nilController.RenderRecommend(drawing.DeckRequest{Region: "jp", DeckData: []drawing.DeckData{{}}}); err == nil {
+		t.Fatal("expected missing drawing error")
+	}
+	if _, err := nilController.RenderAutoRecommend(AutoQuery{}); err == nil {
+		t.Fatal("expected missing drawing error")
+	}
+}
+
+func assertControllerRegistryAndBuildHelpers(t *testing.T) *Controller {
+	t.Helper()
 	c := &Controller{defaultRegion: renderregion.JP, assets: assets.NewAssetHelper("", nil)}
 	c.RegisterCardSource(nil)
 	c.RegisterEventSource(nil)
@@ -345,19 +409,18 @@ func TestControllerEntryHelpersAdditional(t *testing.T) {
 	if got, err := c.BuildRecommendRequest(req); err != nil || got.Region != "jp" {
 		t.Fatalf("valid request = %+v, %v", got, err)
 	}
-	if _, err := nilController.RenderRecommend(req); err == nil {
-		t.Fatal("expected missing drawing error")
-	}
-	if _, err := nilController.RenderAutoRecommend(AutoQuery{}); err == nil {
-		t.Fatal("expected missing drawing error")
-	}
-	if nilController.recommendTimeoutMs() != 60000 || (&Controller{}).recommendTimeoutMs() != 60000 {
+	if (*Controller)(nil).recommendTimeoutMs() != 60000 || (&Controller{}).recommendTimeoutMs() != 60000 {
 		t.Fatal("default timeout mismatch")
 	}
 	c.recommendCfg.Timeout = 1500 * time.Millisecond
 	if c.recommendTimeoutMs() != 1500 {
 		t.Fatal("configured timeout mismatch")
 	}
+	return c
+}
+
+func assertControllerNormalizationHelpers(t *testing.T, c *Controller) {
+	t.Helper()
 	for _, recType := range []string{"", "event", "challenge", "no_event", "bonus", "mysekai"} {
 		_, gotType, err := c.normalizeAutoQuery(AutoQuery{Region: "jp", RecommendType: recType})
 		if err != nil || (recType != "" && gotType != recType) || (recType == "" && gotType != "event") {
@@ -371,6 +434,10 @@ func TestControllerEntryHelpersAdditional(t *testing.T) {
 	if c.contextOrBackground() == nil {
 		t.Fatal("controller context missing")
 	}
+}
+
+func assertControllerSnapshotHelpers(t *testing.T, c *Controller) {
+	t.Helper()
 	if _, err := (*Controller)(nil).resolveAutoRecommendSnapshot(AutoQuery{}); err == nil {
 		t.Fatal("expected nil controller snapshot error")
 	}

@@ -74,36 +74,42 @@ func (c *Controller) pickCurrentOrNextEventID(region renderregion.Value) int {
 		return 0
 	}
 	now := time.Now().UnixMilli()
-	var current *masterdata.Event
-	var next *masterdata.Event
-	var latest *masterdata.Event
+	candidates := eventTimeCandidates{}
 	for _, eventInfo := range eventSource.GetEvents() {
-		if eventInfo == nil {
-			continue
-		}
-		if latest == nil || eventInfo.StartAt > latest.StartAt {
-			latest = eventInfo
-		}
-		if eventInfo.StartAt <= now && now <= eventInfo.AggregateAt {
-			if current == nil || eventInfo.StartAt > current.StartAt {
-				current = eventInfo
-			}
-			continue
-		}
-		if eventInfo.StartAt > now {
-			if next == nil || eventInfo.StartAt < next.StartAt {
-				next = eventInfo
-			}
-		}
+		candidates.add(eventInfo, now)
 	}
-	if current != nil {
-		return current.ID
+	return candidates.preferredID()
+}
+
+type eventTimeCandidates struct {
+	current *masterdata.Event
+	next    *masterdata.Event
+	latest  *masterdata.Event
+}
+
+func (c *eventTimeCandidates) add(event *masterdata.Event, now int64) {
+	if event == nil {
+		return
 	}
-	if next != nil {
-		return next.ID
+	if c.latest == nil || event.StartAt > c.latest.StartAt {
+		c.latest = event
 	}
-	if latest != nil {
-		return latest.ID
+	if event.StartAt <= now && now <= event.AggregateAt {
+		if c.current == nil || event.StartAt > c.current.StartAt {
+			c.current = event
+		}
+		return
+	}
+	if event.StartAt > now && (c.next == nil || event.StartAt < c.next.StartAt) {
+		c.next = event
+	}
+}
+
+func (c eventTimeCandidates) preferredID() int {
+	for _, event := range []*masterdata.Event{c.current, c.next, c.latest} {
+		if event != nil {
+			return event.ID
+		}
 	}
 	return 0
 }

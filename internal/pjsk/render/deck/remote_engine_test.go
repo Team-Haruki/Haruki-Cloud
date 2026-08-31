@@ -1340,57 +1340,11 @@ func TestEnsureReadySharedWarmupSurvivesLeaderCancellationAndMergesTrace(t *test
 }
 
 func TestRemoteRecommendBatchKeepsSingleRequestOnSameTarget(t *testing.T) {
-	type counts struct {
-		masterdata atomic.Int32
-		musicMeta  atomic.Int32
-		cache      atomic.Int32
-		recommend  atomic.Int32
-	}
-
-	newServer := func(counter *counts) *httptest.Server {
-		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer r.Body.Close()
-
-			switch strings.TrimSuffix(r.URL.Path, "/") {
-			case "/update/masterdata":
-				counter.masterdata.Add(1)
-				_, _ = w.Write([]byte(`{"status":"ok"}`))
-			case "/update/musicmetas/string":
-				counter.musicMeta.Add(1)
-				_, _ = w.Write([]byte(`{"status":"ok"}`))
-			case "/cache_userdata":
-				counter.cache.Add(1)
-				_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
-			case "/recommend":
-				counter.recommend.Add(1)
-				_, _ = w.Write([]byte(`[{
-					"alg": "ga",
-					"cost_time": 0.1,
-					"wait_time": 0.0,
-					"result": {
-						"decks": [{
-							"score": 100,
-							"live_score": 100,
-							"mysekai_event_point": 0,
-							"total_power": 200,
-							"event_bonus_rate": 20,
-							"support_deck_bonus_rate": 0,
-							"multi_live_score_up": 110,
-							"cards": [{"card_id": 1001, "level": 60, "master_rank": 5, "skill_level": 4, "skill_score_up": 120, "event_bonus_rate": 20, "episode1_read": true, "episode2_read": true, "after_training": true, "default_image": "special_training", "has_canvas_bonus": false}]
-						}]
-					}
-				}]`))
-			default:
-				http.NotFound(w, r)
-			}
-		}))
-	}
-
-	var first counts
-	var second counts
-	firstServer := newServer(&first)
+	var first sameTargetRequestCounts
+	var second sameTargetRequestCounts
+	firstServer := newSameTargetTestServer(&first)
 	defer firstServer.Close()
-	secondServer := newServer(&second)
+	secondServer := newSameTargetTestServer(&second)
 	defer secondServer.Close()
 
 	provider := newRemoteEngineProvider(RecommendConfig{
@@ -1422,19 +1376,45 @@ func TestRemoteRecommendBatchKeepsSingleRequestOnSameTarget(t *testing.T) {
 		t.Fatalf("unexpected recommend result: %+v", result)
 	}
 
-	type total struct {
-		masterdata int32
-		musicMeta  int32
-		cache      int32
-		recommend  int32
-	}
-	totals := []total{
-		{masterdata: first.masterdata.Load(), musicMeta: first.musicMeta.Load(), cache: first.cache.Load(), recommend: first.recommend.Load()},
-		{masterdata: second.masterdata.Load(), musicMeta: second.musicMeta.Load(), cache: second.cache.Load(), recommend: second.recommend.Load()},
-	}
+	assertSingleTargetRequestCounts(t, &first, &second)
+}
 
+type sameTargetRequestCounts struct {
+	masterdata atomic.Int32
+	musicMeta  atomic.Int32
+	cache      atomic.Int32
+	recommend  atomic.Int32
+}
+
+func newSameTargetTestServer(counter *sameTargetRequestCounts) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		switch strings.TrimSuffix(r.URL.Path, "/") {
+		case "/update/masterdata":
+			counter.masterdata.Add(1)
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/update/musicmetas/string":
+			counter.musicMeta.Add(1)
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		case "/cache_userdata":
+			counter.cache.Add(1)
+			_, _ = w.Write([]byte(`{"userdata_hash":"test-userdata-hash"}`))
+		case "/recommend":
+			counter.recommend.Add(1)
+			_, _ = w.Write([]byte(`[{"alg":"ga","cost_time":0.1,"wait_time":0,"result":{"decks":[{"score":100,"live_score":100,"total_power":200,"event_bonus_rate":20,"multi_live_score_up":110,"cards":[{"card_id":1001,"level":60,"master_rank":5,"skill_level":4,"skill_score_up":120,"event_bonus_rate":20,"episode1_read":true,"episode2_read":true,"after_training":true,"default_image":"special_training"}]}]}}]`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+}
+
+func assertSingleTargetRequestCounts(t *testing.T, counters ...*sameTargetRequestCounts) {
+	t.Helper()
 	activeServers := 0
-	for _, item := range totals {
+	for _, counter := range counters {
+		item := struct{ masterdata, musicMeta, cache, recommend int32 }{
+			counter.masterdata.Load(), counter.musicMeta.Load(), counter.cache.Load(), counter.recommend.Load(),
+		}
 		if item.cache > 0 || item.recommend > 0 {
 			activeServers++
 			if item.cache != 1 || item.recommend != 1 {
@@ -1446,7 +1426,7 @@ func TestRemoteRecommendBatchKeepsSingleRequestOnSameTarget(t *testing.T) {
 		}
 	}
 	if activeServers != 1 {
-		t.Fatalf("expected exactly one target to serve the whole request, got %+v", totals)
+		t.Fatalf("expected exactly one target to serve the whole request, got %d", activeServers)
 	}
 }
 

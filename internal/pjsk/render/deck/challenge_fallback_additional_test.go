@@ -80,6 +80,19 @@ func TestChallengeSequentialAdditional(t *testing.T) {
 
 func TestChallengeAndWorldBloomBranchesAdditional(t *testing.T) {
 	controller := newTestDeckController(t, RecommendConfig{})
+	assertChallengeBranchesAdditional(t, controller)
+	query, option := assertWorldBloomFallbackBranches(t)
+	assertWorldBloomErrorFallbackBranches(t, query, option)
+
+	controller.recommendCfg.MasterdataDir = t.TempDir()
+	gotQuery, gotOption := controller.applyWorldBloomSimulationFallbackIfMasterdataMissing(renderregion.JP, "event", query, option)
+	if gotQuery.EventUnit != query.EventUnit || optionInt(gotOption, "event_id") != 7 {
+		t.Fatal("unchecked masterdata should preserve request")
+	}
+}
+
+func assertChallengeBranchesAdditional(t *testing.T, controller *Controller) {
+	t.Helper()
 	if err := controller.prepareChallengeRecommend(AutoQuery{}, nil); err != nil {
 		t.Fatalf("nil challenge option = %v", err)
 	}
@@ -104,7 +117,10 @@ func TestChallengeAndWorldBloomBranchesAdditional(t *testing.T) {
 	if challengeHighScore(nil, 1) != 0 || challengeHighScore(controller.snapshot.RawData(), 999) != 0 {
 		t.Fatal("unexpected missing challenge high score")
 	}
+}
 
+func assertWorldBloomFallbackBranches(t *testing.T) (AutoQuery, map[string]any) {
+	t.Helper()
 	query := AutoQuery{EventUnit: "idol", WorldBloomEventTurn: deckIntPtr(2), WorldBloomCharacterID: deckIntPtr(5)}
 	option := map[string]any{"event_id": 7, "event_attr": "cute"}
 	fallbackQuery, fallbackOption, ok := buildWorldBloomSimulationFallback(query, option, " event ")
@@ -138,6 +154,11 @@ func TestChallengeAndWorldBloomBranchesAdditional(t *testing.T) {
 	if worldBloomSimulationTurn(AutoQuery{}) != 0 || worldBloomSimulationCharacterID(AutoQuery{}, map[string]any{"world_bloom_character_id": 8}) != 8 {
 		t.Fatal("world bloom fallback values mismatch")
 	}
+	return query, option
+}
+
+func assertWorldBloomErrorFallbackBranches(t *testing.T, query AutoQuery, option map[string]any) {
+	t.Helper()
 	if _, _, ok := buildWorldBloomSimulationFallbackOnError(query, option, "event", nil); ok {
 		t.Fatal("nil error fallback should fail")
 	}
@@ -153,11 +174,5 @@ func TestChallengeAndWorldBloomBranchesAdditional(t *testing.T) {
 	}
 	if !isDeckServiceEventNotFoundForID(err, 7) || *deckIntPtr(9) != 9 {
 		t.Fatal("event-not-found helper mismatch")
-	}
-
-	controller.recommendCfg.MasterdataDir = t.TempDir()
-	gotQuery, gotOption := controller.applyWorldBloomSimulationFallbackIfMasterdataMissing(renderregion.JP, "event", query, option)
-	if gotQuery.EventUnit != query.EventUnit || optionInt(gotOption, "event_id") != 7 {
-		t.Fatal("unchecked masterdata should preserve request")
 	}
 }

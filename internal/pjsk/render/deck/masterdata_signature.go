@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"hash"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -115,42 +116,49 @@ func deckMasterdataDirSignature(configured, region string) (deckMasterdataSignat
 		return deckMasterdataSignature{}, fmt.Errorf("masterdata dir not found for region %s under %s", strings.TrimSpace(region), strings.TrimSpace(configured))
 	}
 
-	hasher := sha256.New()
-	files := 0
-	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if entry.IsDir() {
-			if entry.Name() == ".git" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if !entry.Type().IsRegular() || !strings.EqualFold(filepath.Ext(entry.Name()), ".json") {
-			return nil
-		}
-		info, err := entry.Info()
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(dir, path)
-		if err != nil {
-			rel = path
-		}
-		files++
-		fmt.Fprintf(hasher, "%s\x00%d\x00%d\x00", filepath.ToSlash(rel), info.Size(), info.ModTime().UnixNano())
-		return nil
-	})
+	builder := &deckMasterdataSignatureBuilder{dir: dir, hasher: sha256.New()}
+	err := filepath.WalkDir(dir, builder.visit)
 	if err != nil {
 		return deckMasterdataSignature{}, err
 	}
-	if files == 0 {
+	if builder.files == 0 {
 		return deckMasterdataSignature{}, fmt.Errorf("masterdata dir %s has no json files", dir)
 	}
 	return deckMasterdataSignature{
 		Dir:   dir,
-		Hash:  hex.EncodeToString(hasher.Sum(nil)),
-		Files: files,
+		Hash:  hex.EncodeToString(builder.hasher.Sum(nil)),
+		Files: builder.files,
 	}, nil
+}
+
+type deckMasterdataSignatureBuilder struct {
+	dir    string
+	hasher hash.Hash
+	files  int
+}
+
+func (b *deckMasterdataSignatureBuilder) visit(path string, entry fs.DirEntry, walkErr error) error {
+	if walkErr != nil {
+		return walkErr
+	}
+	if entry.IsDir() {
+		if entry.Name() == ".git" {
+			return filepath.SkipDir
+		}
+		return nil
+	}
+	if !entry.Type().IsRegular() || !strings.EqualFold(filepath.Ext(entry.Name()), ".json") {
+		return nil
+	}
+	info, err := entry.Info()
+	if err != nil {
+		return err
+	}
+	rel, err := filepath.Rel(b.dir, path)
+	if err != nil {
+		rel = path
+	}
+	b.files++
+	_, err = fmt.Fprintf(b.hasher, "%s\x00%d\x00%d\x00", filepath.ToSlash(rel), info.Size(), info.ModTime().UnixNano())
+	return err
 }

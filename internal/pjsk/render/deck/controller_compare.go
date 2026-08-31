@@ -190,28 +190,14 @@ func (c *Controller) recommendMusicCompare(ctx context.Context, recommender Pjsk
 		return nil, nil, fmt.Errorf("歌曲比较未提供可用的歌曲")
 	}
 
-	items := make([]musicCompareResultItem, 0, len(selections))
-	costSamples := make(map[string][]float64)
-	waitSamples := make(map[string][]float64)
+	accumulator := newMusicCompareAccumulator(len(selections))
 	challengeCharID := optionInt(option, "challenge_live_character_id")
 
 	for _, selection := range selections {
 		if err := ctx.Err(); err != nil {
 			return nil, nil, err
 		}
-		compareOption := cloneRecommendOption(option)
-		compareOption["limit"] = 1
-		compareOption["music_id"] = selection.MusicID
-		compareOption["music_diff"] = normalizeMusicCompareDifficulty(selection.MusicDiff)
-
-		result, err := recommendWithContext(ctx, recommender, RecommendRequest{
-			Region:            req.Region,
-			UserData:          req.UserData,
-			UserDataFilePath:  req.UserDataFilePath,
-			MusicMeta:         req.MusicMeta,
-			MusicMetaFilePath: req.MusicMetaFilePath,
-			BatchOption:       expandRecommendBatchOptions(recommender, recType, compareOption),
-		})
+		result, err := recommendMusicCompareSelection(ctx, recommender, req, option, selection, recType)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -221,56 +207,79 @@ func (c *Controller) recommendMusicCompare(ctx context.Context, recommender Pjsk
 		if result == nil || len(result.Decks) == 0 {
 			continue
 		}
-
-		for alg, cost := range result.CostTimes {
-			costSamples[alg] = append(costSamples[alg], cost)
-		}
-		for alg, wait := range result.WaitTimes {
-			waitSamples[alg] = append(waitSamples[alg], wait)
-		}
-
-		alg := ""
-		if len(result.DeckAlgs) > 0 {
-			alg = result.DeckAlgs[0]
-		}
-		items = append(items, musicCompareResultItem{
-			selection: selection,
-			deck:      result.Decks[0],
-			alg:       alg,
-		})
+		accumulator.add(selection, result)
 	}
-	if len(items) == 0 {
+	return accumulator.finish(recType, optionString(option, "target"), showNum)
+}
+
+func recommendMusicCompareSelection(ctx context.Context, recommender PjskDeckRecommender, req RecommendRequest, option map[string]any, selection MusicCompareSelection, recType string) (*RecommendResult, error) {
+	compareOption := cloneRecommendOption(option)
+	compareOption["limit"] = 1
+	compareOption["music_id"] = selection.MusicID
+	compareOption["music_diff"] = normalizeMusicCompareDifficulty(selection.MusicDiff)
+	req.BatchOption = expandRecommendBatchOptions(recommender, recType, compareOption)
+	return recommendWithContext(ctx, recommender, req)
+}
+
+type musicCompareAccumulator struct {
+	items       []musicCompareResultItem
+	costSamples map[string][]float64
+	waitSamples map[string][]float64
+}
+
+func newMusicCompareAccumulator(capacity int) *musicCompareAccumulator {
+	return &musicCompareAccumulator{
+		items:       make([]musicCompareResultItem, 0, capacity),
+		costSamples: make(map[string][]float64),
+		waitSamples: make(map[string][]float64),
+	}
+}
+
+func (a *musicCompareAccumulator) add(selection MusicCompareSelection, result *RecommendResult) {
+	for alg, cost := range result.CostTimes {
+		a.costSamples[alg] = append(a.costSamples[alg], cost)
+	}
+	for alg, wait := range result.WaitTimes {
+		a.waitSamples[alg] = append(a.waitSamples[alg], wait)
+	}
+	alg := ""
+	if len(result.DeckAlgs) > 0 {
+		alg = result.DeckAlgs[0]
+	}
+	a.items = append(a.items, musicCompareResultItem{selection: selection, deck: result.Decks[0], alg: alg})
+}
+
+func (a *musicCompareAccumulator) finish(recType, target string, showNum int) (*RecommendResult, []MusicCompareSelection, error) {
+	if len(a.items) == 0 {
 		return nil, nil, fmt.Errorf("deck recommend service returned no deck results")
 	}
-
-	sort.SliceStable(items, func(i, j int) bool {
-		return compareRecommendDecks(recType, optionString(option, "target"), items[i].deck, items[j].deck)
+	sort.SliceStable(a.items, func(i, j int) bool {
+		return compareRecommendDecks(recType, target, a.items[i].deck, a.items[j].deck)
 	})
-
-	if showNum <= 0 || showNum > len(items) {
-		showNum = len(items)
+	if showNum <= 0 || showNum > len(a.items) {
+		showNum = len(a.items)
 	}
-	items = items[:showNum]
+	return buildMusicCompareResult(a.items[:showNum], a.costSamples, a.waitSamples)
+}
 
-	agg := &RecommendResult{
-		Decks:     make([]RecommendDeck, 0, len(items)),
-		DeckAlgs:  make([]string, 0, len(items)),
-		CostTimes: make(map[string]float64),
-		WaitTimes: make(map[string]float64),
+func buildMusicCompareResult(items []musicCompareResultItem, costSamples, waitSamples map[string][]float64) (*RecommendResult, []MusicCompareSelection, error) {
+	result := &RecommendResult{
+		Decks: make([]RecommendDeck, 0, len(items)), DeckAlgs: make([]string, 0, len(items)),
+		CostTimes: make(map[string]float64), WaitTimes: make(map[string]float64),
 	}
-	orderedSelections := make([]MusicCompareSelection, 0, len(items))
+	selections := make([]MusicCompareSelection, 0, len(items))
 	for _, item := range items {
-		agg.Decks = append(agg.Decks, item.deck)
-		agg.DeckAlgs = append(agg.DeckAlgs, item.alg)
-		orderedSelections = append(orderedSelections, item.selection)
+		result.Decks = append(result.Decks, item.deck)
+		result.DeckAlgs = append(result.DeckAlgs, item.alg)
+		selections = append(selections, item.selection)
 	}
 	for alg, values := range costSamples {
-		agg.CostTimes[alg] = averageChallengeSamples(values)
+		result.CostTimes[alg] = averageChallengeSamples(values)
 	}
 	for alg, values := range waitSamples {
-		agg.WaitTimes[alg] = averageChallengeSamples(values)
+		result.WaitTimes[alg] = averageChallengeSamples(values)
 	}
-	return agg, orderedSelections, nil
+	return result, selections, nil
 }
 
 func normalizeMusicCompareDifficulty(diff string) string {

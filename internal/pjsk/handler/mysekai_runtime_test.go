@@ -492,50 +492,8 @@ func TestExecuteMySekaiBlocksCNRegion(t *testing.T) {
 }
 
 func TestExecuteMySekaiMapRejectsExpiredSnapshotUnlessForced(t *testing.T) {
-	root := t.TempDir()
-	masterdataDir := filepath.Join(root, "masterdata")
-	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
-		t.Fatalf("mkdir masterdata: %v", err)
-	}
-
-	writeJSON := func(name string, data any) {
-		t.Helper()
-		raw, err := json.Marshal(data)
-		if err != nil {
-			t.Fatalf("marshal %s: %v", name, err)
-		}
-		if err := os.WriteFile(filepath.Join(masterdataDir, name), raw, 0o644); err != nil {
-			t.Fatalf("write %s: %v", name, err)
-		}
-	}
-
-	writeJSON("mysekaiSiteHarvestFixtures.json", []map[string]any{
-		{
-			"id":                                  1001,
-			"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
-			"mysekaiSiteHarvestFixtureType":       "wood",
-			"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
-		},
-	})
-	writeJSON("mysekaiMaterials.json", []map[string]any{})
-	writeJSON("mysekaiItems.json", []map[string]any{})
-	writeJSON("mysekaiFixtures.json", []map[string]any{})
-	writeJSON("mysekaiMusicRecords.json", []map[string]any{})
-	writeJSON("gameCharacters.json", []map[string]any{})
-
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/pjsk/mysekai/map" {
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-		var req drawing.MysekaiMsrMapRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			t.Fatalf("decode drawing request: %v", err)
-		}
-		if len(req.Maps) != 1 {
-			t.Fatalf("expected 1 map in drawing request, got %+v", req.Maps)
-		}
-		_, _ = w.Write([]byte("mysekai-map"))
-	}))
+	masterdataDir := writeExpiredMysekaiMapMasterdata(t)
+	drawingServer := newExpiredMysekaiMapDrawingServer(t)
 	defer drawingServer.Close()
 
 	service := newHandlerTestBindingService(t)
@@ -574,70 +532,97 @@ func TestExecuteMySekaiMapRejectsExpiredSnapshotUnlessForced(t *testing.T) {
 		ImageCache: imagecache.New("https://image-cache.test", t.TempDir()),
 	}
 
-	t.Run("default", func(t *testing.T) {
-		message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
-			Module:            parser.ModuleMysekai,
-			Mode:              "mysekai-map",
-			Region:            "jp",
-			RequesterPlatform: "qq",
-			RequesterUserID:   "42",
-		}, app))
-		if err == nil {
-			t.Fatal("expected expired mysekai error, got nil")
-		}
-		if len(message) != 0 {
-			t.Fatalf("expected no image message when expired, got %+v", message)
-		}
-		lines := strings.Split(err.Error(), "\n")
-		if len(lines) != 4 {
-			t.Fatalf("unexpected expired error lines: %+v", lines)
-		}
-		if lines[0] != "您的mysekai数据已过期" {
-			t.Fatalf("unexpected expired title: %q", lines[0])
-		}
-		if !strings.HasPrefix(lines[1], "上次更新时间: ") || strings.TrimSpace(strings.TrimPrefix(lines[1], "上次更新时间: ")) == "" {
-			t.Fatalf("unexpected last update line: %q", lines[1])
-		}
-		if lines[2] != "如果需要查看新的，请重新上传" {
-			t.Fatalf("unexpected refresh hint: %q", lines[2])
-		}
-		if lines[3] != "如果确定需要看目前数据，请在指令上加force参数" {
-			t.Fatalf("unexpected force hint: %q", lines[3])
-		}
-		if !strings.Contains(lines[1], time.UnixMilli(staleUploadTime).Format("2006")) {
-			t.Fatalf("expected last update line to contain upload year, got %q", lines[1])
-		}
-	})
+	t.Run("default", func(t *testing.T) { assertExpiredMysekaiMapRejected(t, app, staleUploadTime) })
+	t.Run("force", func(t *testing.T) { assertForcedMysekaiMapRenders(t, app) })
+}
 
-	t.Run("force", func(t *testing.T) {
-		params, marshalErr := json.Marshal(map[string]any{
-			"check_time":     false,
-			"show_harvested": true,
-		})
-		if marshalErr != nil {
-			t.Fatalf("marshal params: %v", marshalErr)
-		}
-		message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
-			Module:            parser.ModuleMysekai,
-			Mode:              "mysekai-map",
-			Region:            "jp",
-			Params:            params,
-			RequesterPlatform: "qq",
-			RequesterUserID:   "42",
-		}, app))
+func writeExpiredMysekaiMapMasterdata(t *testing.T) string {
+	t.Helper()
+	masterdataDir := filepath.Join(t.TempDir(), "masterdata")
+	if err := os.MkdirAll(masterdataDir, 0o755); err != nil {
+		t.Fatalf("mkdir masterdata: %v", err)
+	}
+	writeJSON := func(name string, data any) {
+		raw, err := json.Marshal(data)
 		if err != nil {
-			t.Fatalf("executeMysekai map force: %v", err)
+			t.Fatalf("marshal %s: %v", name, err)
 		}
-		if len(message) != 2 {
-			t.Fatalf("unexpected forced message segments: %+v", message)
+		if err := os.WriteFile(filepath.Join(masterdataDir, name), raw, 0o644); err != nil {
+			t.Fatalf("write %s: %v", name, err)
 		}
-		if message[0].Type != onebot11.TypeImage {
-			t.Fatalf("expected image first when force is set, got %+v", message[0])
+	}
+	writeJSON("mysekaiSiteHarvestFixtures.json", []map[string]any{{
+		"id":                                  1001,
+		"assetbundleName":                     "mdl_site_wood_common_fieldtree01",
+		"mysekaiSiteHarvestFixtureType":       "wood",
+		"mysekaiSiteHarvestFixtureRarityType": "rarity_1",
+	}})
+	for _, name := range []string{"mysekaiMaterials.json", "mysekaiItems.json", "mysekaiFixtures.json", "mysekaiMusicRecords.json", "gameCharacters.json"} {
+		writeJSON(name, []map[string]any{})
+	}
+	return masterdataDir
+}
+
+func newExpiredMysekaiMapDrawingServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/mysekai/map" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
 		}
-		if message[1].Type != onebot11.TypeAt {
-			t.Fatalf("expected at mention after image when force is set, got %+v", message[1])
+		var req drawing.MysekaiMsrMapRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
 		}
-	})
+		if len(req.Maps) != 1 {
+			t.Fatalf("expected 1 map in drawing request, got %+v", req.Maps)
+		}
+		_, _ = w.Write([]byte("mysekai-map"))
+	}))
+}
+
+func assertExpiredMysekaiMapRejected(t *testing.T, app *renderapp.App, staleUploadTime int64) {
+	t.Helper()
+	message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMysekai, Mode: "mysekai-map", Region: "jp",
+		RequesterPlatform: "qq", RequesterUserID: "42",
+	}, app))
+	if err == nil {
+		t.Fatal("expected expired mysekai error, got nil")
+	}
+	if len(message) != 0 {
+		t.Fatalf("expected no image message when expired, got %+v", message)
+	}
+	lines := strings.Split(err.Error(), "\n")
+	if len(lines) != 4 {
+		t.Fatalf("unexpected expired error lines: %+v", lines)
+	}
+	if lines[0] != "您的mysekai数据已过期" || lines[2] != "如果需要查看新的，请重新上传" || lines[3] != "如果确定需要看目前数据，请在指令上加force参数" {
+		t.Fatalf("unexpected expired error: %+v", lines)
+	}
+	if !strings.HasPrefix(lines[1], "上次更新时间: ") || strings.TrimSpace(strings.TrimPrefix(lines[1], "上次更新时间: ")) == "" {
+		t.Fatalf("unexpected last update line: %q", lines[1])
+	}
+	if !strings.Contains(lines[1], time.UnixMilli(staleUploadTime).Format("2006")) {
+		t.Fatalf("expected last update line to contain upload year, got %q", lines[1])
+	}
+}
+
+func assertForcedMysekaiMapRenders(t *testing.T, app *renderapp.App) {
+	t.Helper()
+	params, err := json.Marshal(map[string]any{"check_time": false, "show_harvested": true})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+	message, err := executeMysekai(NewRequestContext(context.Background(), &CommandRequest{
+		Module: parser.ModuleMysekai, Mode: "mysekai-map", Region: "jp", Params: params,
+		RequesterPlatform: "qq", RequesterUserID: "42",
+	}, app))
+	if err != nil {
+		t.Fatalf("executeMysekai map force: %v", err)
+	}
+	if len(message) != 2 || message[0].Type != onebot11.TypeImage || message[1].Type != onebot11.TypeAt {
+		t.Fatalf("unexpected forced message segments: %+v", message)
+	}
 }
 
 func TestExecuteMySekaiMapUsesPayloadProviderWithoutSnapshot(t *testing.T) {

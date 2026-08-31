@@ -39,49 +39,56 @@ func parseMysekaiMapIDs(args string) ([]int, error) {
 	result := make([]int, 0, len(fields))
 	seen := make(map[int]struct{}, len(fields))
 	for _, field := range fields {
-		lower := strings.ToLower(strings.TrimSpace(field))
-		if lower == "" || lower == "all" {
-			continue
+		mapIDs, err := parseMysekaiMapToken(field)
+		if err != nil {
+			return nil, err
 		}
-		if !isASCIIInt(lower) {
-			continue
-		}
+		result = appendUniqueMysekaiMapIDs(result, seen, mapIDs)
+	}
+	return result, nil
+}
 
-		// Support compact forms like "13" -> [1, 3].
-		if len(lower) > 1 {
-			splittable := true
-			for _, ch := range lower {
-				if ch < '1' || ch > '4' {
-					splittable = false
-					break
-				}
-			}
-			if splittable {
-				for _, ch := range lower {
-					index := int(ch - '0')
-					mapID := mysekaiMapIndexToID[index]
-					if _, ok := seen[mapID]; ok {
-						continue
-					}
-					seen[mapID] = struct{}{}
-					result = append(result, mapID)
-				}
-				continue
-			}
-		}
+func parseMysekaiMapToken(field string) ([]int, error) {
+	token := strings.ToLower(strings.TrimSpace(field))
+	if token == "" || token == "all" || !isASCIIInt(token) {
+		return nil, nil
+	}
+	if compact, ok := parseCompactMysekaiMapToken(token); ok {
+		return compact, nil
+	}
+	index, _ := strconv.Atoi(token)
+	mapID, ok := mysekaiMapIndexToID[index]
+	if !ok {
+		return nil, fmt.Errorf("地图编号仅支持 1-4（对应地图ID 5-8）")
+	}
+	return []int{mapID}, nil
+}
 
-		index, _ := strconv.Atoi(lower)
-		mapID, ok := mysekaiMapIndexToID[index]
-		if !ok {
-			return nil, fmt.Errorf("地图编号仅支持 1-4（对应地图ID 5-8）")
+func parseCompactMysekaiMapToken(token string) ([]int, bool) {
+	if len(token) <= 1 {
+		return nil, false
+	}
+	for _, ch := range token {
+		if ch < '1' || ch > '4' {
+			return nil, false
 		}
+	}
+	mapIDs := make([]int, 0, len(token))
+	for _, ch := range token {
+		mapIDs = append(mapIDs, mysekaiMapIndexToID[int(ch-'0')])
+	}
+	return mapIDs, true
+}
+
+func appendUniqueMysekaiMapIDs(result []int, seen map[int]struct{}, mapIDs []int) []int {
+	for _, mapID := range mapIDs {
 		if _, ok := seen[mapID]; ok {
 			continue
 		}
 		seen[mapID] = struct{}{}
 		result = append(result, mapID)
 	}
-	return result, nil
+	return result
 }
 
 func isASCIIInt(s string) bool {

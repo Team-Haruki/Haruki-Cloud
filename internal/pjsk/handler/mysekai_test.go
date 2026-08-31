@@ -378,8 +378,14 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 	if h.GetPath() != "mysekai/talk-list" {
 		t.Fatalf("handler path = %q", h.GetPath())
 	}
+	testMysekaiBlueprintFixtureList(t, h)
+	testMysekaiBlueprintTalkList(t, h)
+	testMysekaiBlueprintInvalidCharacter(t, h)
+}
 
-	result, err := h.Handle(&PjskHandlerContext{
+func testMysekaiBlueprintFixtureList(t *testing.T, handler HarukiSekaiCommandHandler) {
+	t.Helper()
+	resolved, err := handler.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "",
@@ -388,7 +394,6 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 		t.Fatalf("Handle() list error = %v", err)
 	}
 
-	resolved := result
 	if resolved == nil {
 		t.Fatal("expected command request, got nil")
 	}
@@ -416,8 +421,11 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 	if listParams.ShowProfile != nil || listParams.ShowProgress != nil || listParams.ShowObtained != nil {
 		t.Fatalf("unexpected list params: %+v", listParams)
 	}
+}
 
-	result, err = h.Handle(&PjskHandlerContext{
+func testMysekaiBlueprintTalkList(t *testing.T, handler HarukiSekaiCommandHandler) {
+	t.Helper()
+	resolved, err := handler.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "miku ln all",
@@ -426,7 +434,6 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 		t.Fatalf("Handle() talk error = %v", err)
 	}
 
-	resolved = result
 	if resolved == nil {
 		t.Fatal("expected command request, got nil")
 	}
@@ -447,8 +454,11 @@ func TestMysekaiBlueprintHandleBuildsCommandRequests(t *testing.T) {
 	if !talkParams.ShowID || !talkParams.ShowAllTalks {
 		t.Fatalf("unexpected talk params: %+v", talkParams)
 	}
+}
 
-	_, err = h.Handle(&PjskHandlerContext{
+func testMysekaiBlueprintInvalidCharacter(t *testing.T, handler HarukiSekaiCommandHandler) {
+	t.Helper()
+	_, err := handler.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msb",
 		ArgText:    "not-a-character",
@@ -632,8 +642,15 @@ func TestMysekaiBlueprintHandleRejectsFixtureIDs(t *testing.T) {
 func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	h := sekaiHandlers{}.MysekaiFurnitureHandle()
 	h.Regions = []renderregion.Value{renderregion.JP}
+	testMysekaiFurnitureDefaultList(t, h)
+	testMysekaiFurnitureFullList(t, h)
+	testMysekaiFurnitureCategoryList(t, h)
+	testMysekaiFurnitureDetails(t, h)
+}
 
-	result, err := h.Handle(&PjskHandlerContext{
+func testMysekaiFurnitureDefaultList(t *testing.T, handler HarukiSekaiCommandHandler) {
+	t.Helper()
+	resolved, err := handler.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msf",
 		ArgText:    "",
@@ -642,7 +659,6 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 		t.Fatalf("Handle() list error = %v", err)
 	}
 
-	resolved := result
 	if resolved == nil {
 		t.Fatal("expected command request, got nil")
 	}
@@ -671,8 +687,11 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	if listParams.OnlyCraftable != nil || listParams.ShowProfile != nil || listParams.ShowProgress != nil || listParams.ShowObtained != nil || listParams.CategoryQuery != "" {
 		t.Fatalf("expected default /msf to use dynamic fixture list defaults, got %+v", listParams)
 	}
+}
 
-	result, err = h.Handle(&PjskHandlerContext{
+func testMysekaiFurnitureFullList(t *testing.T, handler HarukiSekaiCommandHandler) {
+	t.Helper()
+	resolved, err := handler.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msf",
 		ArgText:    "full",
@@ -680,7 +699,6 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handle() full list error = %v", err)
 	}
-	resolved = result
 	if resolved == nil {
 		t.Fatal("expected command request, got nil")
 	}
@@ -699,8 +717,11 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	if !fullParams.ShowID || fullParams.ShowProfile || fullParams.ShowProgress || fullParams.ShowObtained {
 		t.Fatalf("expected /msf full to use static all-lit params, got %+v", fullParams)
 	}
+}
 
-	result, err = h.Handle(&PjskHandlerContext{
+func testMysekaiFurnitureCategoryList(t *testing.T, handler HarukiSekaiCommandHandler) {
+	t.Helper()
+	resolved, err := handler.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msf",
 		ArgText:    "テーブル",
@@ -708,7 +729,6 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handle() category list error = %v", err)
 	}
-	resolved = result
 	if resolved == nil {
 		t.Fatal("expected command request, got nil")
 	}
@@ -725,8 +745,11 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 	if categoryParams.ShowID == nil || !*categoryParams.ShowID || categoryParams.CategoryQuery != "テーブル" {
 		t.Fatalf("unexpected category params: %+v", categoryParams)
 	}
+}
 
-	result, err = h.Handle(&PjskHandlerContext{
+func testMysekaiFurnitureDetails(t *testing.T, handler HarukiSekaiCommandHandler) {
+	t.Helper()
+	resolved, err := handler.Handle(&PjskHandlerContext{
 		Context:    context.Background(),
 		TriggerCmd: "/msf",
 		ArgText:    "1 2",
@@ -735,7 +758,6 @@ func TestMysekaiFurnitureHandleBuildsCommandRequests(t *testing.T) {
 		t.Fatalf("Handle() detail error = %v", err)
 	}
 
-	resolved = result
 	if resolved == nil {
 		t.Fatal("expected command request, got nil")
 	}

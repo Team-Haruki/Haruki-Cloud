@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/pjsk/drawing"
+	"haruki-cloud/internal/pjsk/parser"
+	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 )
@@ -131,5 +134,50 @@ func TestMysekaiRuntimePureBranches(t *testing.T) {
 	err = buildMysekaiExpiredReplayError(rc, 0, rendermysekai.SnapshotStatus{LastUpdatedAt: time.Unix(1_700_000_000, 0)})
 	if err == nil || !strings.Contains(err.Error(), "上次更新时间") {
 		t.Fatalf("expired replay error = %v", err)
+	}
+}
+
+func TestMysekaiExecutionHelperErrorBranches(t *testing.T) {
+	controller := rendermysekai.NewController(nil, nil, renderregion.JP, nil, rendermysekai.MasterdataOptions{})
+	renderCtx := mySekaiRenderContext{Controller: controller, Region: "jp"}
+	app := &renderapp.App{}
+	for _, mode := range []string{
+		mySekaiFixtureListCommand,
+		mySekaiDoorUpgradeCommand,
+		mySekaiMusicRecordCommand,
+		mySekaiPhotoCommand,
+		mySekaiTalkListCommand,
+	} {
+		rc := NewRequestContext(context.Background(), &CommandRequest{Module: parser.ModuleMysekai, Mode: mode, Region: "jp"}, app)
+		if _, err := executeResolvedMysekaiMode(rc, renderCtx); err == nil {
+			t.Errorf("executeResolvedMysekaiMode(%q) unexpectedly succeeded", mode)
+		}
+	}
+
+	rc := NewRequestContext(context.Background(), &CommandRequest{Module: parser.ModuleMysekai, Mode: "other", Region: "jp"}, app)
+	if _, err := executeResolvedMysekaiMode(rc, renderCtx); err == nil {
+		t.Fatal("unsupported MySekai mode unexpectedly succeeded")
+	}
+	if _, handled, err := executeStaticMysekaiMode(rc, "jp"); handled || err != nil {
+		t.Fatalf("static unsupported mode = handled %t, error %v", handled, err)
+	}
+	if got := defaultMysekaiQueryRegion("en", "jp"); got != "en" {
+		t.Fatalf("explicit query region = %q", got)
+	}
+	if got := defaultMysekaiQueryRegion("", "tw"); got != "tw" {
+		t.Fatalf("defaulted query region = %q", got)
+	}
+
+	rc.Cmd.Mode = mySekaiResourceCommand
+	if err := validateMysekaiSnapshotExpiry(rc, renderCtx); err == nil {
+		t.Fatal("snapshot expiry validation unexpectedly succeeded without snapshot data")
+	}
+	resourceJob := mysekaiResourceMessageJob(rc, renderCtx, rendermysekai.ResourceQuery{Region: "jp"})
+	if _, err := resourceJob(context.Background()); err == nil {
+		t.Fatal("resource message job unexpectedly succeeded")
+	}
+	mapJob := mysekaiMapMessageJob(rc, renderCtx, &drawing.MysekaiMsrMapRequest{})
+	if _, err := mapJob(context.Background()); err == nil {
+		t.Fatal("map message job unexpectedly succeeded")
 	}
 }

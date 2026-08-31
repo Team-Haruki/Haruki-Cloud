@@ -9,6 +9,7 @@ import (
 
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/displaytime"
+	"haruki-cloud/internal/pjsk/drawing"
 	"haruki-cloud/internal/pjsk/parser"
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 
@@ -424,38 +425,15 @@ func parseMysekaiHousingSKArgs(args string) (rendermysekai.HousingCompetitionLin
 		if clean == "" {
 			continue
 		}
-		lower := strings.ToLower(clean)
-		switch {
-		case strings.HasPrefix(lower, "id="), strings.HasPrefix(lower, "housing_id="):
-			value := clean[strings.Index(clean, "=")+1:]
-			id, err := strconv.Atoi(strings.TrimSpace(value))
-			if err != nil || id <= 0 {
-				return query, fmt.Errorf("请输入正确的百景 housing_id")
-			}
-			query.HousingID = id
-		case strings.HasPrefix(lower, "sample="), strings.HasPrefix(lower, "samples="), strings.HasPrefix(lower, "count="):
-			value := clean[strings.Index(clean, "=")+1:]
-			count, err := strconv.Atoi(strings.TrimSpace(value))
-			if err != nil || count <= 0 {
-				return query, fmt.Errorf("请输入正确的刷新次数")
-			}
-			query.SampleCount = count
-		case strings.HasPrefix(lower, "interval="), strings.HasPrefix(lower, "interval_ms="):
-			value := clean[strings.Index(clean, "=")+1:]
-			interval, err := strconv.Atoi(strings.TrimSpace(value))
-			if err != nil {
-				return query, fmt.Errorf("请输入正确的刷新间隔")
-			}
-			query.SampleIntervalMillis = interval
-		default:
+		handled, err := applyMysekaiHousingOption(&query, clean)
+		if err != nil {
+			return query, err
+		}
+		if !handled {
 			rankTokens = append(rankTokens, clean)
 		}
 	}
-	if len(rankTokens) > 1 && query.HousingID == 0 && isPositiveIntegerToken(rankTokens[0]) && isMysekaiHousingRankRangeToken(rankTokens[1]) {
-		id, _ := strconv.Atoi(rankTokens[0])
-		query.HousingID = id
-		rankTokens = rankTokens[1:]
-	}
+	rankTokens = inferMysekaiHousingID(&query, rankTokens)
 	if len(rankTokens) > 0 {
 		ranks, err := parseMysekaiHousingRankTokens(rankTokens)
 		if err != nil {
@@ -469,6 +447,45 @@ func parseMysekaiHousingSKArgs(args string) (rendermysekai.HousingCompetitionLin
 	}
 	query.Ranks = ranks
 	return query, nil
+}
+
+func applyMysekaiHousingOption(query *rendermysekai.HousingCompetitionLineQuery, field string) (bool, error) {
+	key, value, ok := strings.Cut(field, "=")
+	if !ok {
+		return false, nil
+	}
+	parsed, err := strconv.Atoi(strings.TrimSpace(value))
+	switch strings.ToLower(strings.TrimSpace(key)) {
+	case "id", "housing_id":
+		if err != nil || parsed <= 0 {
+			return true, fmt.Errorf("请输入正确的百景 housing_id")
+		}
+		query.HousingID = parsed
+	case "sample", "samples", "count":
+		if err != nil || parsed <= 0 {
+			return true, fmt.Errorf("请输入正确的刷新次数")
+		}
+		query.SampleCount = parsed
+	case "interval", "interval_ms":
+		if err != nil {
+			return true, fmt.Errorf("请输入正确的刷新间隔")
+		}
+		query.SampleIntervalMillis = parsed
+	default:
+		return false, nil
+	}
+	return true, nil
+}
+
+func inferMysekaiHousingID(query *rendermysekai.HousingCompetitionLineQuery, rankTokens []string) []string {
+	if len(rankTokens) <= 1 || query.HousingID != 0 {
+		return rankTokens
+	}
+	if !isPositiveIntegerToken(rankTokens[0]) || !isMysekaiHousingRankRangeToken(rankTokens[1]) {
+		return rankTokens
+	}
+	query.HousingID, _ = strconv.Atoi(rankTokens[0])
+	return rankTokens[1:]
 }
 
 func parseMysekaiHousingRankTokens(tokens []string) ([]int, error) {
@@ -495,11 +512,22 @@ func splitMysekaiHousingRankToken(token string) []string {
 }
 
 func parseMysekaiHousingRankPart(part string) ([]int, error) {
-	part = strings.TrimSpace(part)
-	if part == "" {
+	normalized := normalizeMysekaiHousingRankPart(part)
+	if normalized == "" {
 		return nil, nil
 	}
-	normalized := strings.NewReplacer(
+	if isMysekaiHousingRankInterval(normalized) {
+		return parseMysekaiHousingRankInterval(normalized)
+	}
+	rank, err := parsePositiveMysekaiHousingRank(normalized)
+	if err != nil {
+		return nil, err
+	}
+	return []int{rank}, nil
+}
+
+func normalizeMysekaiHousingRankPart(part string) string {
+	return strings.NewReplacer(
 		"～", "-",
 		"~", "-",
 		"－", "-",
@@ -508,34 +536,42 @@ func parseMysekaiHousingRankPart(part string) ([]int, error) {
 		"..", "-",
 		"到", "-",
 		"至", "-",
-	).Replace(part)
-	if strings.Count(normalized, "-") == 1 && !strings.HasPrefix(normalized, "-") && !strings.HasSuffix(normalized, "-") {
-		parts := strings.Split(normalized, "-")
-		start, err := strconv.Atoi(strings.TrimSpace(parts[0]))
-		if err != nil || start <= 0 {
-			return nil, fmt.Errorf("请输入正确的百景排名")
-		}
-		end, err := strconv.Atoi(strings.TrimSpace(parts[1]))
-		if err != nil || end <= 0 {
-			return nil, fmt.Errorf("请输入正确的百景排名")
-		}
-		if end < start {
-			start, end = end, start
-		}
-		if end-start+1 > rendermysekai.MaxHousingCompetitionRankCount {
-			return nil, fmt.Errorf("一次最多查询%d个百景排名", rendermysekai.MaxHousingCompetitionRankCount)
-		}
-		out := make([]int, 0, end-start+1)
-		for rank := start; rank <= end; rank++ {
-			out = append(out, rank)
-		}
-		return out, nil
+	).Replace(strings.TrimSpace(part))
+}
+
+func isMysekaiHousingRankInterval(part string) bool {
+	return strings.Count(part, "-") == 1 && !strings.HasPrefix(part, "-") && !strings.HasSuffix(part, "-")
+}
+
+func parseMysekaiHousingRankInterval(interval string) ([]int, error) {
+	parts := strings.Split(interval, "-")
+	start, err := parsePositiveMysekaiHousingRank(parts[0])
+	if err != nil {
+		return nil, err
 	}
-	rank, err := strconv.Atoi(normalized)
+	end, err := parsePositiveMysekaiHousingRank(parts[1])
+	if err != nil {
+		return nil, err
+	}
+	if end < start {
+		start, end = end, start
+	}
+	if end-start+1 > rendermysekai.MaxHousingCompetitionRankCount {
+		return nil, fmt.Errorf("一次最多查询%d个百景排名", rendermysekai.MaxHousingCompetitionRankCount)
+	}
+	out := make([]int, 0, end-start+1)
+	for rank := start; rank <= end; rank++ {
+		out = append(out, rank)
+	}
+	return out, nil
+}
+
+func parsePositiveMysekaiHousingRank(value string) (int, error) {
+	rank, err := strconv.Atoi(strings.TrimSpace(value))
 	if err != nil || rank <= 0 {
-		return nil, fmt.Errorf("请输入正确的百景排名")
+		return 0, fmt.Errorf("请输入正确的百景排名")
 	}
-	return []int{rank}, nil
+	return rank, nil
 }
 
 func isPositiveIntegerToken(token string) bool {
@@ -673,55 +709,11 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return executeMysekaiHousingSK(rc, regionWithDefault(regionStr))
 	}
 
-	var p userQueryParams
-	mergeParams(rc.Cmd.Params, &p)
-	if p.Mode == "" {
-		p.Mode = "self"
-		p.Platform = rc.Platform
-		p.PlatformUserID = rc.PlatformUserID
+	if staticMessage, handled, staticErr := executeStaticMysekaiMode(rc, regionStr); handled {
+		return staticMessage, staticErr
 	}
 
-	staticFixtureListQuery := rendermysekai.FixtureListQuery{Region: regionStr}
-	if rc.Cmd.Mode == mySekaiFixtureListCommand {
-		mergeParams(rc.Cmd.Params, &staticFixtureListQuery)
-		if isStaticMySekaiFixtureListQuery(staticFixtureListQuery) {
-			if strings.TrimSpace(staticFixtureListQuery.Region) == "" {
-				staticFixtureListQuery.Region = regionWithDefault(regionStr)
-			}
-			data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureList(staticFixtureListQuery)
-			if err != nil {
-				return nil, err
-			}
-			return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
-		}
-	}
-	if rc.Cmd.Mode == "mysekai-fixture-detail" {
-		q := rendermysekai.FixtureDetailQuery{Region: regionStr, Query: rc.Cmd.Query}
-		mergeParams(rc.Cmd.Params, &q)
-		if strings.TrimSpace(q.Region) == "" {
-			q.Region = regionWithDefault(regionStr)
-		}
-		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureDetail(q)
-		if err != nil {
-			return nil, err
-		}
-		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
-	}
-	staticDoorUpgradeQuery := rendermysekai.DoorUpgradeQuery{Region: regionStr, Query: rc.Cmd.Query}
-	if rc.Cmd.Mode == mySekaiDoorUpgradeCommand {
-		mergeParams(rc.Cmd.Params, &staticDoorUpgradeQuery)
-		if isStaticMySekaiDoorUpgradeQuery(staticDoorUpgradeQuery) {
-			if strings.TrimSpace(staticDoorUpgradeQuery.Region) == "" {
-				staticDoorUpgradeQuery.Region = regionWithDefault(regionStr)
-			}
-			data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderDoorUpgrade(staticDoorUpgradeQuery)
-			if err != nil {
-				return nil, err
-			}
-			return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
-		}
-	}
-
+	p := mysekaiUserQueryParams(rc)
 	renderCtx, err := resolveMySekaiRenderContextWithOptions(rc.Ctx, rc.App, p, regionStr, rc.Cmd.RegionExplicit, mysekaiRenderContextOptionsForMode(rc.Cmd.Mode))
 	if err != nil {
 		return nil, err
@@ -730,142 +722,230 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return mySekaiRegionUnavailableMessage(), nil
 	}
 
-	if shouldEnforceMysekaiExpiry(rc.Cmd.Mode) && shouldCheckMysekaiExpiry(rc.Cmd.Params) {
-		status, statusErr := renderCtx.Controller.SnapshotStatus(renderCtx.Region, time.Now())
-		if statusErr != nil {
-			return nil, statusErr
-		}
-		if status.Expired {
-			return nil, buildMysekaiExpiredReplayError(rc, renderCtx.HarukiUserID, status)
-		}
+	if err := validateMysekaiSnapshotExpiry(rc, renderCtx); err != nil {
+		return nil, err
 	}
+	return executeResolvedMysekaiMode(rc, renderCtx)
+}
 
-	var data []byte
+func mysekaiUserQueryParams(rc *RequestContext) userQueryParams {
+	var params userQueryParams
+	mergeParams(rc.Cmd.Params, &params)
+	if params.Mode == "" {
+		params.Mode = "self"
+		params.Platform = rc.Platform
+		params.PlatformUserID = rc.PlatformUserID
+	}
+	return params
+}
+
+func executeStaticMysekaiMode(rc *RequestContext, region string) (onebot11.Message, bool, error) {
+	switch rc.Cmd.Mode {
+	case mySekaiFixtureListCommand:
+		query := rendermysekai.FixtureListQuery{Region: region}
+		mergeParams(rc.Cmd.Params, &query)
+		if !isStaticMySekaiFixtureListQuery(query) {
+			return nil, false, nil
+		}
+		query.Region = defaultMysekaiQueryRegion(query.Region, region)
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureList(query)
+		message, err := mysekaiImageResult(rc, data, err)
+		return message, true, err
+	case "mysekai-fixture-detail":
+		query := rendermysekai.FixtureDetailQuery{Region: region, Query: rc.Cmd.Query}
+		mergeParams(rc.Cmd.Params, &query)
+		query.Region = defaultMysekaiQueryRegion(query.Region, region)
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderFixtureDetail(query)
+		message, err := mysekaiImageResult(rc, data, err)
+		return message, true, err
+	case mySekaiDoorUpgradeCommand:
+		query := rendermysekai.DoorUpgradeQuery{Region: region, Query: rc.Cmd.Query}
+		mergeParams(rc.Cmd.Params, &query)
+		if !isStaticMySekaiDoorUpgradeQuery(query) {
+			return nil, false, nil
+		}
+		query.Region = defaultMysekaiQueryRegion(query.Region, region)
+		data, err := rc.App.MySekai.WithContext(rc.Ctx).RenderDoorUpgrade(query)
+		message, err := mysekaiImageResult(rc, data, err)
+		return message, true, err
+	default:
+		return nil, false, nil
+	}
+}
+
+func defaultMysekaiQueryRegion(queryRegion, fallback string) string {
+	if strings.TrimSpace(queryRegion) == "" {
+		return regionWithDefault(fallback)
+	}
+	return queryRegion
+}
+
+func validateMysekaiSnapshotExpiry(rc *RequestContext, renderCtx mySekaiRenderContext) error {
+	if !shouldEnforceMysekaiExpiry(rc.Cmd.Mode) || !shouldCheckMysekaiExpiry(rc.Cmd.Params) {
+		return nil
+	}
+	status, err := renderCtx.Controller.SnapshotStatus(renderCtx.Region, time.Now())
+	if err != nil {
+		return err
+	}
+	if status.Expired {
+		return buildMysekaiExpiredReplayError(rc, renderCtx.HarukiUserID, status)
+	}
+	return nil
+}
+
+func executeResolvedMysekaiMode(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
 	switch rc.Cmd.Mode {
 	case mySekaiResourceCommand:
-		hasRemaining, remainingErr := mysekaiMapHasRemainingMaterials(renderCtx, rc.Cmd.Params)
-		if remainingErr != nil {
-			return nil, remainingErr
-		}
-		if !hasRemaining {
-			return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
-		}
-		q := rendermysekai.ResourceQuery{Region: renderCtx.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = renderCtx.Profile
-		data, err = renderCtx.Controller.RenderResource(q)
+		return executeMysekaiResource(rc, renderCtx)
 	case mySekaiResourceMapCommand:
-		resourceQuery := rendermysekai.ResourceQuery{Region: renderCtx.Region}
-		mergeParams(rc.Cmd.Params, &resourceQuery)
-		resourceQuery.Profile = renderCtx.Profile
-		mapQuery := rendermysekai.MapQuery{Region: renderCtx.Region}
-		mergeParams(rc.Cmd.Params, &mapQuery)
-		finishBuild := measurePayloadBuild(rc.Ctx)
-		mapPayload, mapBuildErr := renderCtx.Controller.BuildMapRequest(mapQuery)
-		finishBuild()
-		if mapBuildErr != nil {
-			return nil, mapBuildErr
-		}
-		showHarvested := mapQuery.ShowHarvested != nil && *mapQuery.ShowHarvested
-		if !showHarvested && !rendermysekai.MapRequestHasRemainingHarvestResources(mapPayload) {
-			return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
-		}
-		message, runErr := executeConcurrentMessages(
-			rc.Ctx,
-			func(ctx context.Context) (onebot11.Message, error) {
-				resourceData, resourceErr := renderCtx.Controller.WithContext(ctx).RenderResource(resourceQuery)
-				if resourceErr != nil {
-					return nil, resourceErr
-				}
-				return imageMessage(ctx, resourceData, rc.App, BotModulePJSK)
-			},
-			func(ctx context.Context) (onebot11.Message, error) {
-				mapData, mapErr := renderCtx.Controller.WithContext(ctx).RenderMapRequest(mapPayload)
-				if mapErr != nil {
-					return nil, mapErr
-				}
-				return imageMessage(ctx, mapData, rc.App, BotModulePJSK)
-			},
-		)
-		if runErr != nil {
-			return nil, runErr
-		}
-		return message, nil
+		return executeMysekaiResourceMap(rc, renderCtx)
 	case mySekaiMapCommand:
-		q := rendermysekai.MapQuery{Region: renderCtx.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		finishBuild := measurePayloadBuild(rc.Ctx)
-		mapPayload, mapBuildErr := renderCtx.Controller.BuildMapRequest(q)
-		finishBuild()
-		if mapBuildErr != nil {
-			return nil, mapBuildErr
-		}
-		showHarvested := q.ShowHarvested != nil && *q.ShowHarvested
-		if !showHarvested && !rendermysekai.MapRequestHasRemainingHarvestResources(mapPayload) {
-			return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
-		}
-		data, err = renderCtx.Controller.RenderMapRequest(mapPayload)
-		if err != nil {
-			return nil, err
-		}
-		replayMessage, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
-		if err != nil {
-			return nil, err
-		}
-
-		replayMessage = append(replayMessage, onebot11.At(rc.PlatformUserID))
-		return replayMessage, nil
+		return executeMysekaiMap(rc, renderCtx)
 	case mySekaiFixtureListCommand:
-		q := rendermysekai.FixtureListQuery{Region: renderCtx.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = renderCtx.Profile
-		data, err = renderCtx.Controller.RenderFixtureList(q)
+		query := rendermysekai.FixtureListQuery{Region: renderCtx.Region}
+		mergeParams(rc.Cmd.Params, &query)
+		query.Profile = renderCtx.Profile
+		data, err := renderCtx.Controller.RenderFixtureList(query)
+		return mysekaiImageResult(rc, data, err)
 	case mySekaiDoorUpgradeCommand:
-		q := rendermysekai.DoorUpgradeQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = renderCtx.Profile
-		data, err = renderCtx.Controller.RenderDoorUpgrade(q)
+		query := rendermysekai.DoorUpgradeQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
+		mergeParams(rc.Cmd.Params, &query)
+		query.Profile = renderCtx.Profile
+		data, err := renderCtx.Controller.RenderDoorUpgrade(query)
+		return mysekaiImageResult(rc, data, err)
 	case mySekaiMusicRecordCommand:
-		q := rendermysekai.MusicRecordQuery{Region: renderCtx.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = renderCtx.Profile
-		data, err = renderCtx.Controller.RenderMusicRecord(q)
+		query := rendermysekai.MusicRecordQuery{Region: renderCtx.Region}
+		mergeParams(rc.Cmd.Params, &query)
+		query.Profile = renderCtx.Profile
+		data, err := renderCtx.Controller.RenderMusicRecord(query)
+		return mysekaiImageResult(rc, data, err)
 	case mySekaiPhotoCommand:
-		q := rendermysekai.PhotoQuery{Region: renderCtx.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		result, resolveErr := renderCtx.Controller.ResolvePhoto(q)
-		if resolveErr != nil {
-			return nil, resolveErr
-		}
-		data, err = rc.App.SekaiAPI.WithContext(rc.Ctx).GetMySekaiImage(result.Region, result.ImagePath)
-		if err != nil {
-			return nil, fmt.Errorf("获取 MySekai 照片失败：%w", err)
-		}
-		image, imageErr := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
-		if imageErr != nil {
-			return nil, imageErr
-		}
-		photoTime := "未知"
-		if !result.ObtainedAt.IsZero() {
-			timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, renderCtx.HarukiUserID)
-			loc, _ := displaytime.LoadLocation(timeZone)
-			photoTime = displaytime.FormatTime(result.ObtainedAt.In(loc), "2006-01-02 15:04")
-		}
-		return append(image, onebot11.Text(fmt.Sprintf("拍摄时间: %s", photoTime))), nil
+		return executeMysekaiPhoto(rc, renderCtx)
 	case mySekaiTalkListCommand:
-		q := rendermysekai.TalkListQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Profile = renderCtx.Profile
-		data, err = renderCtx.Controller.RenderTalkList(q)
+		query := rendermysekai.TalkListQuery{Region: renderCtx.Region, Query: rc.Cmd.Query}
+		mergeParams(rc.Cmd.Params, &query)
+		query.Profile = renderCtx.Profile
+		data, err := renderCtx.Controller.RenderTalkList(query)
+		return mysekaiImageResult(rc, data, err)
 	default:
 		return nil, unsupportedModeError("mysekai", rc.Cmd.Mode)
 	}
+}
+
+func executeMysekaiResource(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
+	hasRemaining, err := mysekaiMapHasRemainingMaterials(renderCtx, rc.Cmd.Params)
 	if err != nil {
 		return nil, err
 	}
-	message, err = imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	if !hasRemaining {
+		return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
+	}
+	query := rendermysekai.ResourceQuery{Region: renderCtx.Region}
+	mergeParams(rc.Cmd.Params, &query)
+	query.Profile = renderCtx.Profile
+	data, err := renderCtx.Controller.RenderResource(query)
+	return mysekaiImageResult(rc, data, err)
+}
+
+func executeMysekaiResourceMap(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
+	resourceQuery := rendermysekai.ResourceQuery{Region: renderCtx.Region}
+	mergeParams(rc.Cmd.Params, &resourceQuery)
+	resourceQuery.Profile = renderCtx.Profile
+	mapQuery := rendermysekai.MapQuery{Region: renderCtx.Region}
+	mergeParams(rc.Cmd.Params, &mapQuery)
+	mapPayload, err := buildMysekaiMapPayload(rc.Ctx, renderCtx.Controller, mapQuery)
 	if err != nil {
 		return nil, err
 	}
-	return message, nil
+	if mysekaiMapHasNoRemainingResources(mapQuery, mapPayload) {
+		return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
+	}
+	return executeConcurrentMessages(
+		rc.Ctx,
+		mysekaiResourceMessageJob(rc, renderCtx, resourceQuery),
+		mysekaiMapMessageJob(rc, renderCtx, mapPayload),
+	)
+}
+
+func buildMysekaiMapPayload(ctx context.Context, controller *rendermysekai.Controller, query rendermysekai.MapQuery) (*drawing.MysekaiMsrMapRequest, error) {
+	finishBuild := measurePayloadBuild(ctx)
+	payload, err := controller.BuildMapRequest(query)
+	finishBuild()
+	return payload, err
+}
+
+func mysekaiMapHasNoRemainingResources(query rendermysekai.MapQuery, payload *drawing.MysekaiMsrMapRequest) bool {
+	showHarvested := query.ShowHarvested != nil && *query.ShowHarvested
+	return !showHarvested && !rendermysekai.MapRequestHasRemainingHarvestResources(payload)
+}
+
+func mysekaiResourceMessageJob(rc *RequestContext, renderCtx mySekaiRenderContext, query rendermysekai.ResourceQuery) concurrentMessageJob {
+	return func(ctx context.Context) (onebot11.Message, error) {
+		data, err := renderCtx.Controller.WithContext(ctx).RenderResource(query)
+		return mysekaiImageResultWithContext(ctx, rc, data, err)
+	}
+}
+
+func mysekaiMapMessageJob(rc *RequestContext, renderCtx mySekaiRenderContext, payload *drawing.MysekaiMsrMapRequest) concurrentMessageJob {
+	return func(ctx context.Context) (onebot11.Message, error) {
+		data, err := renderCtx.Controller.WithContext(ctx).RenderMapRequest(payload)
+		return mysekaiImageResultWithContext(ctx, rc, data, err)
+	}
+}
+
+func executeMysekaiMap(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
+	query := rendermysekai.MapQuery{Region: renderCtx.Region}
+	mergeParams(rc.Cmd.Params, &query)
+	mapPayload, err := buildMysekaiMapPayload(rc.Ctx, renderCtx.Controller, query)
+	if err != nil {
+		return nil, err
+	}
+	if mysekaiMapHasNoRemainingResources(query, mapPayload) {
+		return mysekaiNoRemainingMaterialMessage(renderCtx.Region), nil
+	}
+	data, err := renderCtx.Controller.RenderMapRequest(mapPayload)
+	message, err := mysekaiImageResult(rc, data, err)
+	if err != nil {
+		return nil, err
+	}
+	return append(message, onebot11.At(rc.PlatformUserID)), nil
+}
+
+func executeMysekaiPhoto(rc *RequestContext, renderCtx mySekaiRenderContext) (onebot11.Message, error) {
+	query := rendermysekai.PhotoQuery{Region: renderCtx.Region}
+	mergeParams(rc.Cmd.Params, &query)
+	result, err := renderCtx.Controller.ResolvePhoto(query)
+	if err != nil {
+		return nil, err
+	}
+	data, err := rc.App.SekaiAPI.WithContext(rc.Ctx).GetMySekaiImage(result.Region, result.ImagePath)
+	if err != nil {
+		return nil, fmt.Errorf("获取 MySekai 照片失败：%w", err)
+	}
+	image, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	if err != nil {
+		return nil, err
+	}
+	return append(image, onebot11.Text(fmt.Sprintf("拍摄时间: %s", mysekaiPhotoTime(rc, renderCtx.HarukiUserID, result.ObtainedAt)))), nil
+}
+
+func mysekaiPhotoTime(rc *RequestContext, harukiUserID int, obtainedAt time.Time) string {
+	if obtainedAt.IsZero() {
+		return "未知"
+	}
+	timeZone := resolveHarukiUserTimeZone(rc.Ctx, rc.App, harukiUserID)
+	loc, _ := displaytime.LoadLocation(timeZone)
+	return displaytime.FormatTime(obtainedAt.In(loc), "2006-01-02 15:04")
+}
+
+func mysekaiImageResult(rc *RequestContext, data []byte, err error) (onebot11.Message, error) {
+	return mysekaiImageResultWithContext(rc.Ctx, rc, data, err)
+}
+
+func mysekaiImageResultWithContext(ctx context.Context, rc *RequestContext, data []byte, err error) (onebot11.Message, error) {
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(ctx, data, rc.App, BotModulePJSK)
 }

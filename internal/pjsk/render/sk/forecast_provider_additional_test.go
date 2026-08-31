@@ -39,6 +39,13 @@ func additionalForecastProvider(t *testing.T, responder func(*http.Request) (int
 }
 
 func TestForecastHTTPPureHelpersAdditional(t *testing.T) {
+	testSekaRunRowAndAssignmentHelpers(t)
+	testSekaRunRowExtraction(t)
+	testSekaRunScoreParsing(t)
+	testForecastNumberAndTimestampHelpers(t)
+}
+
+func testSekaRunRowAndAssignmentHelpers(t *testing.T) {
 	if got := parseSekaRunRow(` 1, "p", '[x]' `); !reflect.DeepEqual(got, []string{"1", "p", "x"}) {
 		t.Fatalf("parseSekaRunRow() = %#v", got)
 	}
@@ -59,6 +66,9 @@ func TestForecastHTTPPureHelpersAdditional(t *testing.T) {
 		}
 	}
 
+}
+
+func testSekaRunRowExtraction(t *testing.T) {
 	current, rows, err := extractSekaRunRows(`currentEvent = "7"; data = [[7,p,0,0,1,100,1,0,1,1], [7,h,0,0,2,200,2,0,1,1]];`)
 	if err != nil || current != "7" || len(rows) != 2 {
 		t.Fatalf("explicit sekarun rows = %q, %#v, %v", current, rows, err)
@@ -78,6 +88,9 @@ func TestForecastHTTPPureHelpersAdditional(t *testing.T) {
 		t.Fatal("invalid fallback sekarun payload unexpectedly succeeded")
 	}
 
+}
+
+func testSekaRunScoreParsing(t *testing.T) {
 	scoreCases := []struct {
 		values []string
 		want   int
@@ -97,6 +110,14 @@ func TestForecastHTTPPureHelpersAdditional(t *testing.T) {
 		}
 	}
 
+}
+
+func testForecastNumberAndTimestampHelpers(t *testing.T) {
+	testForecastIntegerConversions(t)
+	testForecastTimestampConversions(t)
+}
+
+func testForecastIntegerConversions(t *testing.T) {
 	intCases := []struct {
 		value any
 		want  int
@@ -125,6 +146,9 @@ func TestForecastHTTPPureHelpersAdditional(t *testing.T) {
 			t.Errorf("asInt64(%#v) = %d, %v", tt.value, got, ok)
 		}
 	}
+}
+
+func testForecastTimestampConversions(t *testing.T) {
 	if normalizeForecastTimestamp(0) != 0 || normalizeForecastTimestamp(-1) != 0 {
 		t.Fatal("non-positive forecast timestamp was not normalized to zero")
 	}
@@ -195,17 +219,21 @@ func TestForecastHTTPClientBranchesAdditional(t *testing.T) {
 
 func TestRemoteForecastProviderSourceParsersAdditional(t *testing.T) {
 	ctx := context.Background()
-	provider := additionalForecastProvider(t, func(req *http.Request) (int, string, error) {
-		switch req.URL.Host {
-		case "sekai-data.3-3.dev":
-			return http.StatusOK, `{
+	provider := additionalForecastProvider(t, forecastSourceResponder)
+	test33KitSourceParser(t, ctx, provider)
+	testMoesekaiSourceParsers(t, ctx, provider)
+	testSekaRunSourceParser(t, ctx, provider)
+}
+
+func forecastSourceResponder(req *http.Request) (int, string, error) {
+	switch req.URL.Host {
+	case "sekai-data.3-3.dev":
+		return http.StatusOK, `{
 				"event":{"id":10},
 				"data":{"ts":1700000000,"100":12345,"200":"23456","bad":999,"0":111,"300":0,"400":"bad"}
 			}`, nil
-		case "rk.exmeaning.com":
-			prediction := 50_000
-			_ = prediction
-			return http.StatusOK, `{
+	case "rk.exmeaning.com":
+		return http.StatusOK, `{
 				"event_id":10,"status":"ok","updated_at":"2024-01-02T03:04:05Z",
 				"items":[
 					{"rank":100,"score":1,"prediction":50000},
@@ -215,8 +243,8 @@ func TestRemoteForecastProviderSourceParsersAdditional(t *testing.T) {
 					{"rank":400,"prediction":0}
 				]
 			}`, nil
-		case "sekaibangdan.exmeaning.com":
-			return http.StatusOK, `{
+	case "sekaibangdan.exmeaning.com":
+		return http.StatusOK, `{
 				"timestamp":"1700000001",
 				"data":{"charts":[
 					{"Rank":"100","PredictedScore":"60000"},
@@ -226,13 +254,14 @@ func TestRemoteForecastProviderSourceParsersAdditional(t *testing.T) {
 					{"Rank":300,"PredictedScore":0}
 				]}
 			}`, nil
-		case "jiiku831.github.io":
-			return http.StatusOK, `currentEvent = "10"; data = [[10,p,0,0,80000,100,1700000002,0,0,0], [10,h,0,0,70000,200,1700000001,0,0,0]];`, nil
-		default:
-			return http.StatusNotFound, "", nil
-		}
-	})
+	case "jiiku831.github.io":
+		return http.StatusOK, `currentEvent = "10"; data = [[10,p,0,0,80000,100,1700000002,0,0,0], [10,h,0,0,70000,200,1700000001,0,0,0]];`, nil
+	default:
+		return http.StatusNotFound, "", nil
+	}
+}
 
+func test33KitSourceParser(t *testing.T, ctx context.Context, provider *RemoteForecastProvider) {
 	for _, query := range []ForecastQuery{
 		{Region: "jp", EventID: 10, Scope: ForecastScopeChapter},
 		{Region: "cn", EventID: 10, Scope: ForecastScopeTotal},
@@ -246,7 +275,10 @@ func TestRemoteForecastProviderSourceParsersAdditional(t *testing.T) {
 		t.Fatalf("33kit scores = %#v, %v", got, err)
 	}
 
-	got, err = provider.fetchMoe(ctx, "jp", 10, map[int]struct{}{100: {}, 200: {}, 300: {}, 400: {}})
+}
+
+func testMoesekaiSourceParsers(t *testing.T, ctx context.Context, provider *RemoteForecastProvider) {
+	got, err := provider.fetchMoe(ctx, "jp", 10, map[int]struct{}{100: {}, 200: {}, 300: {}, 400: {}})
 	if err != nil || len(got) != 2 || got[100].Score != 50_000 || got[200].Score != 40_000 || got[100].Source != "moesekai" {
 		t.Fatalf("moesekai scores = %#v, %v", got, err)
 	}
@@ -258,6 +290,9 @@ func TestRemoteForecastProviderSourceParsersAdditional(t *testing.T) {
 		t.Fatalf("JP legacy forecast failed: %v", err)
 	}
 
+}
+
+func testSekaRunSourceParser(t *testing.T, ctx context.Context, provider *RemoteForecastProvider) {
 	for _, query := range []ForecastQuery{
 		{Region: "en", EventID: 10, Scope: ForecastScopeChapter},
 		{Region: "jp", EventID: 10},
@@ -266,13 +301,19 @@ func TestRemoteForecastProviderSourceParsersAdditional(t *testing.T) {
 			t.Errorf("sekarun unsupported query = %#v, %v", got, err)
 		}
 	}
-	got, err = provider.fetchSekaRunByQuery(ctx, ForecastQuery{Region: "EN", EventID: 10}, map[int]struct{}{100: {}, 200: {}})
+	got, err := provider.fetchSekaRunByQuery(ctx, ForecastQuery{Region: "EN", EventID: 10}, map[int]struct{}{100: {}, 200: {}})
 	if err != nil || len(got) != 2 || got[100].Score != 80_000 || got[200].Score != 70_000 {
 		t.Fatalf("sekarun scores = %#v, %v", got, err)
 	}
 }
 
 func TestRemoteForecastProviderSourceErrorsAndFallbacksAdditional(t *testing.T) {
+	testForecastSourceEventMismatches(t)
+	testMoesekaiLegacyFallback(t)
+	testMoesekaiSourceFailures(t)
+}
+
+func testForecastSourceEventMismatches(t *testing.T) {
 	ctx := context.Background()
 	mismatch33 := additionalForecastProvider(t, func(*http.Request) (int, string, error) {
 		return http.StatusOK, `{"event":{"id":11},"data":{}}`, nil
@@ -287,6 +328,10 @@ func TestRemoteForecastProviderSourceErrorsAndFallbacksAdditional(t *testing.T) 
 		t.Fatal("moesekai event mismatch unexpectedly succeeded")
 	}
 
+}
+
+func testMoesekaiLegacyFallback(t *testing.T) {
+	ctx := context.Background()
 	legacyFallback := additionalForecastProvider(t, func(req *http.Request) (int, string, error) {
 		if req.URL.Host == "rk.exmeaning.com" {
 			return http.StatusOK, `{"event_id":10,"items":[]}`, nil
@@ -306,6 +351,10 @@ func TestRemoteForecastProviderSourceErrorsAndFallbacksAdditional(t *testing.T) 
 		}
 	}
 
+}
+
+func testMoesekaiSourceFailures(t *testing.T) {
+	ctx := context.Background()
 	bothFail := additionalForecastProvider(t, func(*http.Request) (int, string, error) {
 		return http.StatusBadGateway, "", nil
 	})
@@ -426,6 +475,14 @@ func TestSekaRunForecastBranchesAdditional(t *testing.T) {
 }
 
 func TestRemoteForecastProviderOrchestrationAdditional(t *testing.T) {
+	testRemoteForecastProviderValidation(t)
+	local, bySource := testRemoteForecastProviderLocalFetches(t)
+	testForecastQueryNormalization(t)
+	testForecastSourceOrdering(t, local)
+	testForecastFetchedAt(t, bySource)
+}
+
+func testRemoteForecastProviderValidation(t *testing.T) {
 	ctx := context.Background()
 	if _, err := (*RemoteForecastProvider)(nil).FetchBySourceQuery(ctx, ForecastQuery{Region: "jp", EventID: 1}); err == nil {
 		t.Fatal("nil remote forecast provider unexpectedly succeeded")
@@ -440,6 +497,10 @@ func TestRemoteForecastProviderOrchestrationAdditional(t *testing.T) {
 		t.Fatal("unsupported region unexpectedly succeeded")
 	}
 
+}
+
+func testRemoteForecastProviderLocalFetches(t *testing.T) (*RemoteForecastProvider, map[string]ForecastSourceData) {
+	ctx := context.Background()
 	local := additionalForecastProvider(t, func(*http.Request) (int, string, error) {
 		return http.StatusOK, `{"region":"tw","event_id":20,"lines":[{"leaderboard_scope":"total","rows":[{"rank":100,"prediction":1000},{"rank":200,"prediction":2000}]}]}`, nil
 	})
@@ -472,6 +533,10 @@ func TestRemoteForecastProviderOrchestrationAdditional(t *testing.T) {
 		t.Fatalf("all-source failure = %v", err)
 	}
 
+	return local, bySource
+}
+
+func testForecastQueryNormalization(t *testing.T) {
 	chapterID := -1
 	normalized := normalizeForecastQuery(ForecastQuery{Region: " JP ", Ranks: []int{100, -1, 100, 200}, Scope: "invalid", WlCharacterID: &chapterID})
 	if normalized.Region != "jp" || !reflect.DeepEqual(normalized.Ranks, []int{100, 200}) || normalized.Scope != ForecastScopeTotal || normalized.WlCharacterID != nil {
@@ -483,6 +548,9 @@ func TestRemoteForecastProviderOrchestrationAdditional(t *testing.T) {
 		t.Fatalf("normalized chapter query = %#v", normalized)
 	}
 
+}
+
+func testForecastSourceOrdering(t *testing.T, local *RemoteForecastProvider) {
 	for _, tt := range []struct {
 		query ForecastQuery
 		want  []string
@@ -527,6 +595,9 @@ func TestRemoteForecastProviderOrchestrationAdditional(t *testing.T) {
 		}
 	}
 
+}
+
+func testForecastFetchedAt(t *testing.T, bySource map[string]ForecastSourceData) {
 	start := time.Now().UTC().UnixMilli()
 	if bySource["local"].FetchedAt < start-5_000 {
 		t.Fatalf("unexpected fetched-at timestamp: %d", bySource["local"].FetchedAt)

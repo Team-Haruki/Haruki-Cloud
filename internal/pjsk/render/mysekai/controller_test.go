@@ -327,7 +327,12 @@ func TestBuildFixtureListRequestUsesUserFixturesAndCategoryAliases(t *testing.T)
 		LocalDir:      masterdataDir,
 		AllowFallback: true,
 	}).WithMySekaiData([]byte(mysekaiJSON))
+	assertUserFixtureSources(t, controller)
+	assertFixtureCategoryAliases(t, controller)
+}
 
+func assertUserFixtureSources(t *testing.T, controller *Controller) {
+	t.Helper()
 	req, err := controller.BuildFixtureListRequest(FixtureListQuery{
 		Region: "jp",
 		Profile: &drawing.ProfileCardRequest{
@@ -343,14 +348,7 @@ func TestBuildFixtureListRequestUsesUserFixturesAndCategoryAliases(t *testing.T)
 	if req.ProgressMessage == nil || !strings.Contains(*req.ProgressMessage, "1/3") {
 		t.Fatalf("expected total progress from userMysekaiFixtures, got %v", req.ProgressMessage)
 	}
-	obtainedByID := map[int]bool{}
-	for _, mainGenre := range req.MainGenres {
-		for _, subGenre := range mainGenre.SubGenres {
-			for _, fixture := range subGenre.Fixtures {
-				obtainedByID[fixture.ID] = fixture.Obtained
-			}
-		}
-	}
+	obtainedByID := fixtureObtainedByID(req)
 	if obtainedByID[2001] {
 		t.Fatalf("expected userMysekaiFixtures to take precedence over blueprint fallback, got %+v", obtainedByID)
 	}
@@ -368,18 +366,14 @@ func TestBuildFixtureListRequestUsesUserFixturesAndCategoryAliases(t *testing.T)
 	if err != nil {
 		t.Fatalf("BuildFixtureListRequest(blueprint source) error = %v", err)
 	}
-	blueprintObtainedByID := map[int]bool{}
-	for _, mainGenre := range blueprintReq.MainGenres {
-		for _, subGenre := range mainGenre.SubGenres {
-			for _, fixture := range subGenre.Fixtures {
-				blueprintObtainedByID[fixture.ID] = fixture.Obtained
-			}
-		}
-	}
+	blueprintObtainedByID := fixtureObtainedByID(blueprintReq)
 	if !blueprintObtainedByID[2001] || blueprintObtainedByID[2002] || blueprintObtainedByID[2003] {
 		t.Fatalf("expected blueprint source to ignore userMysekaiFixtures, got %+v", blueprintObtainedByID)
 	}
+}
 
+func assertFixtureCategoryAliases(t *testing.T, controller *Controller) {
+	t.Helper()
 	tableReq, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp", CategoryQuery: "桌子"})
 	if err != nil {
 		t.Fatalf("BuildFixtureListRequest(table alias) error = %v", err)
@@ -399,6 +393,18 @@ func TestBuildFixtureListRequestUsesUserFixturesAndCategoryAliases(t *testing.T)
 	if _, err := controller.BuildFixtureListRequest(FixtureListQuery{Region: "jp", CategoryQuery: "不存在"}); err == nil {
 		t.Fatal("expected unknown fixture category to fail")
 	}
+}
+
+func fixtureObtainedByID(req *drawing.MysekaiFixtureListRequest) map[int]bool {
+	result := make(map[int]bool)
+	for _, mainGenre := range req.MainGenres {
+		for _, subGenre := range mainGenre.SubGenres {
+			for _, fixture := range subGenre.Fixtures {
+				result[fixture.ID] = fixture.Obtained
+			}
+		}
+	}
+	return result
 }
 
 func TestBuildFixtureListRequestCanHideProfile(t *testing.T) {
@@ -444,27 +450,38 @@ func TestBuildFixtureListRequestCanHideProfile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildFixtureListRequest() error = %v", err)
 	}
+	assertHiddenFixtureListFields(t, req)
+}
+
+func assertHiddenFixtureListFields(t *testing.T, req *drawing.MysekaiFixtureListRequest) {
+	t.Helper()
 	if req.Profile != nil {
 		t.Fatalf("expected fixture list profile to be hidden, got %+v", req.Profile)
 	}
 	if req.ProgressMessage != nil {
 		t.Fatalf("expected fixture list progress to be hidden, got %+v", req.ProgressMessage)
 	}
-	for _, mainGenre := range req.MainGenres {
-		if mainGenre.ProgressMessage != nil {
-			t.Fatalf("expected main genre progress to be hidden, got %+v", mainGenre.ProgressMessage)
-		}
-		for _, subGenre := range mainGenre.SubGenres {
-			if subGenre.ProgressMessage != nil {
-				t.Fatalf("expected sub genre progress to be hidden, got %+v", subGenre.ProgressMessage)
-			}
-			for _, fixture := range subGenre.Fixtures {
-				if !fixture.Obtained {
-					t.Fatalf("expected fixture to be rendered as obtained, got %+v", fixture)
-				}
-			}
+	for _, progress := range fixtureGenreProgressMessages(req) {
+		if progress != nil {
+			t.Fatalf("expected genre progress to be hidden, got %+v", progress)
 		}
 	}
+	for id, obtained := range fixtureObtainedByID(req) {
+		if !obtained {
+			t.Fatalf("expected fixture %d to be rendered as obtained", id)
+		}
+	}
+}
+
+func fixtureGenreProgressMessages(req *drawing.MysekaiFixtureListRequest) []*string {
+	result := make([]*string, 0)
+	for _, mainGenre := range req.MainGenres {
+		result = append(result, mainGenre.ProgressMessage)
+		for _, subGenre := range mainGenre.SubGenres {
+			result = append(result, subGenre.ProgressMessage)
+		}
+	}
+	return result
 }
 
 func TestBuildFixtureDetailRequestsIncludeBaseColorCode(t *testing.T) {
@@ -1846,20 +1863,27 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 		t.Fatalf("expected 2 harvest points, got %+v", req.Maps[0].HarvestPoints)
 	}
 
-	var normalPoint, birthdayPoint *drawing.MysekaiMsrMapHarvestPoint
-	for i := range req.Maps[0].HarvestPoints {
-		point := &req.Maps[0].HarvestPoints[i]
-		if point.ID != nil && *point.ID == 1001 {
-			normalPoint = point
-		}
-		if point.ID != nil && *point.ID == 8001 {
-			birthdayPoint = point
-		}
-	}
+	normalPoint := findMapHarvestPoint(req.Maps[0].HarvestPoints, 1001)
+	birthdayPoint := findMapHarvestPoint(req.Maps[0].HarvestPoints, 8001)
 	if normalPoint == nil || birthdayPoint == nil {
 		t.Fatalf("missing expected harvest points: %+v", req.Maps[0].HarvestPoints)
 	}
+	assertNormalMapHarvestPoint(t, normalPoint)
+	assertBirthdayMapHarvestPoint(t, birthdayPoint, birthdayYear)
+	assertGroupedMapResourceDrops(t, req.Maps[0].ResourceDrops)
+}
 
+func findMapHarvestPoint(points []drawing.MysekaiMsrMapHarvestPoint, id int) *drawing.MysekaiMsrMapHarvestPoint {
+	for i := range points {
+		if points[i].ID != nil && *points[i].ID == id {
+			return &points[i]
+		}
+	}
+	return nil
+}
+
+func assertNormalMapHarvestPoint(t *testing.T, normalPoint *drawing.MysekaiMsrMapHarvestPoint) {
+	t.Helper()
 	if normalPoint.ImagePath != "static_images/mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png" {
 		t.Fatalf("unexpected normal point image path: %q", normalPoint.ImagePath)
 	}
@@ -1870,6 +1894,10 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 		t.Fatalf("unexpected normal point offset_z: %v", normalPoint.OffsetZ)
 	}
 
+}
+
+func assertBirthdayMapHarvestPoint(t *testing.T, birthdayPoint *drawing.MysekaiMsrMapHarvestPoint, birthdayYear int) {
+	t.Helper()
 	if birthdayPoint.ImagePath != fmt.Sprintf("asset/jp-assets/ondemand/mysekai/birthday/haruka_%d/icon_refresh.png", birthdayYear) {
 		t.Fatalf("unexpected birthday point image path: %q", birthdayPoint.ImagePath)
 	}
@@ -1887,13 +1915,17 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 		t.Fatalf("unexpected birthday point offsets: x=%v z=%v", birthdayPoint.OffsetX, birthdayPoint.OffsetZ)
 	}
 
-	if len(req.Maps[0].ResourceDrops) != 2 {
-		t.Fatalf("expected 2 grouped resource drops, got %+v", req.Maps[0].ResourceDrops)
+}
+
+func assertGroupedMapResourceDrops(t *testing.T, drops []drawing.MysekaiMsrMapResourceDrop) {
+	t.Helper()
+	if len(drops) != 2 {
+		t.Fatalf("expected 2 grouped resource drops, got %+v", drops)
 	}
 	var birthdayDrop *drawing.MysekaiMsrMapResourceDrop
 	var sideDrop *drawing.MysekaiMsrMapResourceDrop
-	for i := range req.Maps[0].ResourceDrops {
-		drop := &req.Maps[0].ResourceDrops[i]
+	for i := range drops {
+		drop := &drops[i]
 		if drop.Type == "mysekai_material" && drop.ID == 179 {
 			birthdayDrop = drop
 		}
@@ -1902,7 +1934,7 @@ func TestBuildMapRequestHarvestPointsMatchFixtureSemantics(t *testing.T) {
 		}
 	}
 	if birthdayDrop == nil || sideDrop == nil {
-		t.Fatalf("missing expected resource drops: %+v", req.Maps[0].ResourceDrops)
+		t.Fatalf("missing expected resource drops: %+v", drops)
 	}
 	if birthdayDrop.Hide {
 		t.Fatalf("birthday sapling drop should stay visible: %+v", birthdayDrop)
@@ -1999,23 +2031,26 @@ func TestBuildMapRequestAddsRareGlowAndPhenomenaTint(t *testing.T) {
 		t.Fatalf("unexpected map render sizes: %+v", req)
 	}
 
-	var rareMysekaiMaterial *drawing.MysekaiMsrMapResourceDrop
-	var rareEventMaterial *drawing.MysekaiMsrMapResourceDrop
-	var sideDrop *drawing.MysekaiMsrMapResourceDrop
-	for i := range req.Maps[0].ResourceDrops {
-		drop := &req.Maps[0].ResourceDrops[i]
-		switch {
-		case drop.Type == "mysekai_material" && drop.ID == 24:
-			rareMysekaiMaterial = drop
-		case drop.Type == "material" && drop.ID == 179:
-			rareEventMaterial = drop
-		case drop.Type == "mysekai_item" && drop.ID == 501:
-			sideDrop = drop
-		}
-	}
+	rareMysekaiMaterial := findMapResourceDrop(req.Maps[0].ResourceDrops, "mysekai_material", 24)
+	rareEventMaterial := findMapResourceDrop(req.Maps[0].ResourceDrops, "material", 179)
+	sideDrop := findMapResourceDrop(req.Maps[0].ResourceDrops, "mysekai_item", 501)
 	if rareMysekaiMaterial == nil || rareEventMaterial == nil || sideDrop == nil {
 		t.Fatalf("missing expected resource drops: %+v", req.Maps[0].ResourceDrops)
 	}
+	assertRareMapResourceDrops(t, rareMysekaiMaterial, rareEventMaterial, sideDrop)
+}
+
+func findMapResourceDrop(drops []drawing.MysekaiMsrMapResourceDrop, resourceType string, id int) *drawing.MysekaiMsrMapResourceDrop {
+	for i := range drops {
+		if drops[i].Type == resourceType && drops[i].ID == id {
+			return &drops[i]
+		}
+	}
+	return nil
+}
+
+func assertRareMapResourceDrops(t *testing.T, rareMysekaiMaterial, rareEventMaterial, sideDrop *drawing.MysekaiMsrMapResourceDrop) {
+	t.Helper()
 	if rareMysekaiMaterial.LightSize == nil || *rareMysekaiMaterial.LightSize != mysekaiMapRareLargeLightSize {
 		t.Fatalf("expected rare mysekai material glow, got %+v", rareMysekaiMaterial)
 	}

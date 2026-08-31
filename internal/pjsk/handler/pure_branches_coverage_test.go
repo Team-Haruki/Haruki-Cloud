@@ -12,6 +12,13 @@ import (
 )
 
 func TestSKParsingBranchCoverage(t *testing.T) {
+	testSKMetaParsing(t)
+	testSKWorldBloomSelectors(t)
+	testSKRankParsing(t)
+	testSKRankUtilities(t)
+}
+
+func testSKMetaParsing(t *testing.T) {
 	eventID, characterID, characterQuery, full, ranks := extractSKMetaArgs("--full e12 cid:21 3 1", false, false)
 	if eventID != 12 || characterID != 21 || characterQuery != "" || !full || ranks != "3 1" {
 		t.Fatalf("unexpected parsed meta: %d %d %q %v %q", eventID, characterID, characterQuery, full, ranks)
@@ -29,6 +36,15 @@ func TestSKParsingBranchCoverage(t *testing.T) {
 		t.Fatalf("invalid leading selector unexpectedly split: %q, %q", characterQuery, ranks)
 	}
 
+}
+
+func testSKWorldBloomSelectors(t *testing.T) {
+	testSKWorldBloomCharacterTokens(t)
+	testSKWorldBloomRankSplits(t)
+	testSKWorldBloomSelectorValidation(t)
+}
+
+func testSKWorldBloomCharacterTokens(t *testing.T) {
 	tokenCases := []struct {
 		input string
 		id    int
@@ -50,7 +66,9 @@ func TestSKParsingBranchCoverage(t *testing.T) {
 			t.Errorf("parseSKWorldBloomCharacterToken(%q) = %d, %q, %v", tt.input, id, query, ok)
 		}
 	}
+}
 
+func testSKWorldBloomRankSplits(t *testing.T) {
 	query, rankArgs := splitSKWorldBloomCharacterAndRanks(nil)
 	if query != "" || rankArgs != "" {
 		t.Fatalf("empty split = %q, %q", query, rankArgs)
@@ -67,7 +85,9 @@ func TestSKParsingBranchCoverage(t *testing.T) {
 	if query != "Hatsune Miku" || rankArgs != "" {
 		t.Fatalf("query-only split = %q, %q", query, rankArgs)
 	}
+}
 
+func testSKWorldBloomSelectorValidation(t *testing.T) {
 	if _, _, ok := splitLeadingSKWorldBloomSelectorAndRanks(nil); ok {
 		t.Fatal("empty leading selector unexpectedly accepted")
 	}
@@ -88,7 +108,14 @@ func TestSKParsingBranchCoverage(t *testing.T) {
 	if !isValidSKRankExpression("1 2") || isValidSKRankExpression("bad rank") {
 		t.Fatal("rank expression validation mismatch")
 	}
+}
 
+func testSKRankParsing(t *testing.T) {
+	testSKRankBasicParsing(t)
+	testSKRankRangeAndUserIDParsing(t)
+}
+
+func testSKRankBasicParsing(t *testing.T) {
 	if _, _, err := parseSKRanks("bad", true); err == nil {
 		t.Fatal("invalid ranks unexpectedly accepted")
 	}
@@ -108,6 +135,9 @@ func TestSKParsingBranchCoverage(t *testing.T) {
 	if _, _, err := parseSKRanks(strings.Join(many, " "), true); err == nil {
 		t.Fatal("more than 20 ranks unexpectedly accepted")
 	}
+}
+
+func testSKRankRangeAndUserIDParsing(t *testing.T) {
 	if _, _, err := parseSKRanks("0-1", true); err == nil {
 		t.Fatal("zero range unexpectedly accepted")
 	}
@@ -132,6 +162,9 @@ func TestSKParsingBranchCoverage(t *testing.T) {
 	if _, _, err := parseSKRanks("unbind", true); err == nil {
 		t.Fatal("unsupported parser command unexpectedly accepted")
 	}
+}
+
+func testSKRankUtilities(t *testing.T) {
 	if got := normalizeRanks(nil); got != nil {
 		t.Fatalf("nil ranks = %v", got)
 	}
@@ -149,11 +182,21 @@ func TestSKParsingBranchCoverage(t *testing.T) {
 }
 
 func TestSKParameterBranchCoverage(t *testing.T) {
-	ctx := HarrukiSekaiHandlerContext{
+	testSKTrackerAndSpeedParams(t)
+	testSKPlayerTraceParams(t)
+	testSKCompareRankArgs(t)
+}
+
+func newSKParameterTestContext() HarrukiSekaiHandlerContext {
+	return HarrukiSekaiHandlerContext{
 		PjskHandlerContext: PjskHandlerContext{Context: context.Background(), Platform: "QQ", UserId: "88", ArgText: "-f e7 cid:21 0"},
 		region:             renderregion.TW,
 		explicitRegion:     true,
 	}
+}
+
+func testSKTrackerAndSpeedParams(t *testing.T) {
+	ctx := newSKParameterTestContext()
 	if _, err := buildSKTrackerParamsWithDefaultRanks(ctx, false, false, false, []int{2, 4}); err == nil {
 		t.Fatal("zero-only rank unexpectedly accepted")
 	}
@@ -176,6 +219,11 @@ func TestSKParameterBranchCoverage(t *testing.T) {
 	}
 
 	ctx.prefixArg = ""
+}
+
+func testSKPlayerTraceParams(t *testing.T) {
+	ctx := newSKParameterTestContext()
+	ctx.prefixArg = ""
 	ctx.ArgText = "#"
 	if _, err := buildSKPlayerTraceParams(ctx); err == nil {
 		t.Fatal("empty compare rank unexpectedly accepted")
@@ -189,7 +237,7 @@ func TestSKParameterBranchCoverage(t *testing.T) {
 		t.Fatal("three trace ranks unexpectedly accepted")
 	}
 	ctx.ArgText = "event8 wl:Miku 1 2 #100"
-	params, err = buildSKPlayerTraceParams(ctx)
+	params, err := buildSKPlayerTraceParams(ctx)
 	if err != nil || params["event_id"] != 8 || params["wl_character_query"] != "Miku" || params["compare_rank"] != 100 {
 		t.Fatalf("trace params = %#v, %v", params, err)
 	}
@@ -221,6 +269,9 @@ func TestSKParameterBranchCoverage(t *testing.T) {
 		t.Fatalf("default WL trace params = %#v, %v", params, err)
 	}
 
+}
+
+func testSKCompareRankArgs(t *testing.T) {
 	for _, args := range []string{"#x", "#0", "#999999999999999999999999999999", "#1 #2"} {
 		if _, _, err := extractSKCompareRankArg(args); err == nil {
 			t.Errorf("extractSKCompareRankArg(%q) unexpectedly succeeded", args)
@@ -232,6 +283,14 @@ func TestSKParameterBranchCoverage(t *testing.T) {
 }
 
 func TestDeckTargetExtractionBranchCoverage(t *testing.T) {
+	testDeckFixedTargetExtraction(t)
+	testDeckEventSelection(t)
+	testDeckExplicitSelection(t)
+	testDeckSelectionParsers(t)
+	testDeckNoEventValidation(t)
+}
+
+func testDeckFixedTargetExtraction(t *testing.T) {
 	for _, tt := range []struct {
 		args    string
 		wantErr bool
@@ -252,6 +311,9 @@ func TestDeckTargetExtractionBranchCoverage(t *testing.T) {
 		}
 	}
 
+}
+
+func testDeckEventSelection(t *testing.T) {
 	selectionCases := []struct {
 		args    string
 		wantErr bool
@@ -274,6 +336,9 @@ func TestDeckTargetExtractionBranchCoverage(t *testing.T) {
 		}
 	}
 
+}
+
+func testDeckExplicitSelection(t *testing.T) {
 	params := deckAutoQueryParams{}
 	if _, err := extractDeckExplicitEventSelection("wl2", intPtr(123), &params, ""); err == nil {
 		t.Fatal("explicit deprecated turn unexpectedly accepted")
@@ -295,6 +360,9 @@ func TestDeckTargetExtractionBranchCoverage(t *testing.T) {
 		t.Fatalf("fallback finale query = %q, %+v, %v", remaining, params, err)
 	}
 
+}
+
+func testDeckSelectionParsers(t *testing.T) {
 	for _, args := range []string{"plain", "终章 plain", "wl0 终章", "wl2 终章 song"} {
 		_, _, _ = extractDeckWorldBloomFinaleTurn(args)
 	}
@@ -326,6 +394,9 @@ func TestDeckTargetExtractionBranchCoverage(t *testing.T) {
 		_, _, _ = extractDeckCharacterCandidate(args, false)
 		_, _, _ = extractDeckCharacterCandidate(args, true)
 	}
+}
+
+func testDeckNoEventValidation(t *testing.T) {
 	for input, want := range map[string]bool{"": false, "song": false, "song master": true, "master": false} {
 		if got := looksLikeInlineMusicQuery(input); got != want {
 			t.Errorf("looksLikeInlineMusicQuery(%q) = %v", input, got)
@@ -346,6 +417,13 @@ func TestDeckTargetExtractionBranchCoverage(t *testing.T) {
 }
 
 func TestDeckHelperAndConfigBranchCoverage(t *testing.T) {
+	testDeckUniqueIDsAndStrategies(t)
+	testDeckKeywordNumbers(t)
+	testDeckTokenHelpers(t)
+	testDeckCardConfigs(t)
+}
+
+func testDeckUniqueIDsAndStrategies(t *testing.T) {
 	for _, tt := range []struct {
 		values  []int
 		limit   int
@@ -393,6 +471,9 @@ func TestDeckHelperAndConfigBranchCoverage(t *testing.T) {
 		_, _ = resolveDeckCharacterToken(raw)
 	}
 
+}
+
+func testDeckKeywordNumbers(t *testing.T) {
 	parserFn := func(raw string) (int, error) { return parseDeckInt(raw) }
 	_, _, _ = extractDeckKeywordNumber("none", []string{"技能"}, parserFn)
 	_, _, _ = extractDeckKeywordNumber("技能", []string{"技能"}, parserFn)
@@ -415,6 +496,9 @@ func TestDeckHelperAndConfigBranchCoverage(t *testing.T) {
 			t.Errorf("looksLikeDeckNumericToken(%q) = %v", input, got)
 		}
 	}
+}
+
+func testDeckTokenHelpers(t *testing.T) {
 	if !containsDeckKeyword("abc技能", []string{"技能"}) || containsDeckKeyword("abc", []string{"技能"}) {
 		t.Fatal("containsDeckKeyword mismatch")
 	}
@@ -438,6 +522,9 @@ func TestDeckHelperAndConfigBranchCoverage(t *testing.T) {
 		t.Fatal("ASCII alias classification mismatch")
 	}
 
+}
+
+func testDeckCardConfigs(t *testing.T) {
 	params := deckAutoQueryParams{}
 	remaining := extractDeckCardConfigs("支援满技 四星满破 123满技 禁用 满剧情 满画布 bf不变 song", &params)
 	if remaining != "song" || !params.SupportSkillMax || params.Rarity4Config == nil || len(params.SingleCardConfigs) != 1 || !params.KeepAfterTrainingState {

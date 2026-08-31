@@ -30,6 +30,13 @@ func (s customChartErrorClient) GetCustomMusicScore(string, string) ([]byte, err
 }
 
 func TestCustomChartMetadataAndErrorHelpers(t *testing.T) {
+	testCustomChartTitlesAndArtists(t)
+	testCustomChartNotFoundErrors(t)
+	testCustomChartPublishedEntry(t)
+	testCustomChartTagHelpers(t)
+}
+
+func testCustomChartTitlesAndArtists(t *testing.T) {
 	artistCases := []struct {
 		entry customChartEntry
 		want  string
@@ -61,6 +68,9 @@ func TestCustomChartMetadataAndErrorHelpers(t *testing.T) {
 		}
 	}
 
+}
+
+func testCustomChartNotFoundErrors(t *testing.T) {
 	notFoundCases := []struct {
 		err  error
 		want bool
@@ -79,6 +89,9 @@ func TestCustomChartMetadataAndErrorHelpers(t *testing.T) {
 		}
 	}
 
+}
+
+func testCustomChartPublishedEntry(t *testing.T) {
 	if got := customChartEntryFromPublishedResponse(nil); !reflect.DeepEqual(got, customChartEntry{}) {
 		t.Fatalf("nil response produced %+v", got)
 	}
@@ -105,6 +118,9 @@ func TestCustomChartMetadataAndErrorHelpers(t *testing.T) {
 		t.Fatal("custom chart cache ID fallback failed")
 	}
 
+}
+
+func testCustomChartTagHelpers(t *testing.T) {
 	if got := resolveCustomChartTags(nil, []int{1}); got != nil {
 		t.Fatalf("nil source tags = %v", got)
 	}
@@ -121,6 +137,12 @@ func TestCustomChartMetadataAndErrorHelpers(t *testing.T) {
 }
 
 func TestCustomChartScalarAndNoteHelpers(t *testing.T) {
+	testCustomChartRawScalars(t)
+	testCustomChartNumericValues(t)
+	testCustomChartNoteHelpers(t)
+}
+
+func testCustomChartRawScalars(t *testing.T) {
 	raw := map[string]stdjson.RawMessage{
 		"integer": []byte(`"42"`),
 		"rounded": []byte(`2.6`),
@@ -157,6 +179,9 @@ func TestCustomChartScalarAndNoteHelpers(t *testing.T) {
 		}
 	}
 
+}
+
+func testCustomChartNumericValues(t *testing.T) {
 	floatCases := []struct {
 		value any
 		want  float64
@@ -188,6 +213,9 @@ func TestCustomChartScalarAndNoteHelpers(t *testing.T) {
 		}
 	}
 
+}
+
+func testCustomChartNoteHelpers(t *testing.T) {
 	var note customChartNote
 	if err := note.UnmarshalJSON([]byte(`{`)); err == nil {
 		t.Fatal("invalid note JSON unexpectedly succeeded")
@@ -210,6 +238,13 @@ func TestCustomChartScalarAndNoteHelpers(t *testing.T) {
 }
 
 func TestCustomChartConversionBranches(t *testing.T) {
+	testCustomChartNoteTypeConversions(t)
+	testCustomChartTapAndRelayConversions(t)
+	testCustomChartChainConversion(t)
+	testCustomChartComboCalculation(t)
+}
+
+func testCustomChartNoteTypeConversions(t *testing.T) {
 	slideCases := []struct {
 		note  customChartNote
 		last  bool
@@ -252,6 +287,9 @@ func TestCustomChartConversionBranches(t *testing.T) {
 		t.Fatal("tap unexpectedly requires a hold")
 	}
 
+}
+
+func testCustomChartTapAndRelayConversions(t *testing.T) {
 	score := newCustomChartScore()
 	addCustomChartTap(&score, customChartNote{NoteBaseType: 9}, false)
 	if len(score.notes) != 0 {
@@ -273,6 +311,9 @@ func TestCustomChartConversionBranches(t *testing.T) {
 		t.Fatal("decoration detection failed")
 	}
 
+}
+
+func testCustomChartChainConversion(t *testing.T) {
 	chainScore := newCustomChartScore()
 	addCustomChartChain(&chainScore, []*customChartNote{nil})
 	addCustomChartChain(&chainScore, []*customChartNote{
@@ -284,6 +325,9 @@ func TestCustomChartConversionBranches(t *testing.T) {
 		t.Fatalf("chain conversion failed: notes=%+v holds=%+v", chainScore.notes, chainScore.holdNotes)
 	}
 
+}
+
+func testCustomChartComboCalculation(t *testing.T) {
 	manual := newCustomChartScore()
 	manual.notes[1] = customChartConvertedNote{ID: 1, ParentID: -1, Type: customChartNoteHold, Tick: 1, Lane: 1, Width: 1}
 	manual.notes[2] = customChartConvertedNote{ID: 2, ParentID: 1, Type: customChartNoteHoldMid, Tick: 241, Lane: 1, Width: 1}
@@ -328,6 +372,13 @@ func TestCustomChartConversionBranches(t *testing.T) {
 }
 
 func TestCustomChartBPMAndDecodingBranches(t *testing.T) {
+	testCustomChartBPMFormatting(t)
+	testCustomChartPayloadDecoding(t)
+	testCustomChartEnvelopeAndGzipDecoding(t)
+	testCustomChartBase64AndInvalidPayloads(t)
+}
+
+func testCustomChartBPMFormatting(t *testing.T) {
 	events := []struct {
 		EventType   int `json:"eventType"`
 		ChangeValue any `json:"changeValue"`
@@ -351,6 +402,9 @@ func TestCustomChartBPMAndDecodingBranches(t *testing.T) {
 		t.Fatalf("short BPM events = %q", got)
 	}
 
+}
+
+func testCustomChartPayloadDecoding(t *testing.T) {
 	rawJSON := []byte(` {"chart":[]} `)
 	gzipJSON := gzipBytes(t, rawJSON)
 	base64JSON := base64.RawStdEncoding.EncodeToString(rawJSON)
@@ -369,6 +423,9 @@ func TestCustomChartBPMAndDecodingBranches(t *testing.T) {
 		})
 	}
 
+}
+
+func testCustomChartEnvelopeAndGzipDecoding(t *testing.T) {
 	if got, ok, err := decodeCustomMusicScoreEnvelope([]byte(`not-json`)); ok || err != nil || got != nil {
 		t.Fatalf("non-JSON envelope = %q, %v, %v", got, ok, err)
 	}
@@ -388,12 +445,16 @@ func TestCustomChartBPMAndDecodingBranches(t *testing.T) {
 	if _, ok, err := gunzipMaybe([]byte{0x1f, 0x8b, 0}); !ok || err == nil {
 		t.Fatalf("invalid gzip = %v, %v", ok, err)
 	}
+	rawJSON := []byte(` {"chart":[]} `)
 	truncated := gzipBytes(t, rawJSON)
 	truncated = truncated[:len(truncated)-4]
 	if _, ok, err := gunzipMaybe(truncated); !ok || err == nil {
 		t.Fatalf("truncated gzip = %v, %v", ok, err)
 	}
 
+}
+
+func testCustomChartBase64AndInvalidPayloads(t *testing.T) {
 	for _, value := range []string{
 		base64.RawStdEncoding.EncodeToString([]byte("raw")),
 		base64.URLEncoding.EncodeToString([]byte{0xfb, 0xff}),
@@ -422,6 +483,7 @@ func TestCustomChartBPMAndDecodingBranches(t *testing.T) {
 			t.Fatalf("invalid custom chart payload of %d bytes succeeded", len(input))
 		}
 	}
+	rawJSON := []byte(` {"chart":[]} `)
 	if got, err := decodeCustomMusicScoreJSON(rawJSON); err != nil || !strings.Contains(got, "chart") {
 		t.Fatalf("decode string = %q, %v", got, err)
 	}

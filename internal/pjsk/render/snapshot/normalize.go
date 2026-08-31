@@ -103,61 +103,70 @@ func normalizeSnapshotDocument(data []byte) (map[string]any, error) {
 func normalizeExtendedJSONValue(value any, topLevel bool) (any, error) {
 	switch typed := value.(type) {
 	case []any:
-		if topLevel {
-			if len(typed) == 0 {
-				return nil, fmt.Errorf("snapshot array is empty")
-			}
-			if len(typed) != 1 {
-				return nil, fmt.Errorf("snapshot array contains %d documents; expected 1", len(typed))
-			}
-			return normalizeExtendedJSONValue(typed[0], false)
-		}
-
-		out := make([]any, 0, len(typed))
-		for _, item := range typed {
-			normalized, err := normalizeExtendedJSONValue(item, false)
-			if err != nil {
-				return nil, err
-			}
-			out = append(out, normalized)
-		}
-		return out, nil
-
+		return normalizeExtendedJSONArray(typed, topLevel)
 	case map[string]any:
-		if len(typed) == 1 {
-			if raw, ok := typed["$numberLong"]; ok {
-				return normalizeExtendedJSONNumber(raw, "$numberLong")
-			}
-			if raw, ok := typed["$numberInt"]; ok {
-				return normalizeExtendedJSONNumber(raw, "$numberInt")
-			}
-			if raw, ok := typed["$numberDouble"]; ok {
-				return normalizeExtendedJSONNumber(raw, "$numberDouble")
-			}
-			if raw, ok := typed["$numberDecimal"]; ok {
-				return normalizeExtendedJSONNumber(raw, "$numberDecimal")
-			}
-			if raw, ok := typed["$oid"]; ok {
-				return normalizeExtendedJSONString(raw, "$oid")
-			}
-			if raw, ok := typed["$date"]; ok {
-				return normalizeExtendedJSONValue(raw, false)
-			}
-		}
-
-		out := make(map[string]any, len(typed))
-		for key, item := range typed {
-			normalized, err := normalizeExtendedJSONValue(item, false)
-			if err != nil {
-				return nil, err
-			}
-			out[key] = normalized
-		}
-		return out, nil
-
+		return normalizeExtendedJSONObject(typed)
 	default:
 		return value, nil
 	}
+}
+
+func normalizeExtendedJSONArray(items []any, topLevel bool) (any, error) {
+	if topLevel {
+		if len(items) == 0 {
+			return nil, fmt.Errorf("snapshot array is empty")
+		}
+		if len(items) != 1 {
+			return nil, fmt.Errorf("snapshot array contains %d documents; expected 1", len(items))
+		}
+		return normalizeExtendedJSONValue(items[0], false)
+	}
+
+	out := make([]any, 0, len(items))
+	for _, item := range items {
+		normalized, err := normalizeExtendedJSONValue(item, false)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, normalized)
+	}
+	return out, nil
+}
+
+func normalizeExtendedJSONObject(object map[string]any) (any, error) {
+	if len(object) == 1 {
+		if normalized, matched, err := normalizeExtendedJSONWrapper(object); matched {
+			return normalized, err
+		}
+	}
+
+	out := make(map[string]any, len(object))
+	for key, item := range object {
+		normalized, err := normalizeExtendedJSONValue(item, false)
+		if err != nil {
+			return nil, err
+		}
+		out[key] = normalized
+	}
+	return out, nil
+}
+
+func normalizeExtendedJSONWrapper(object map[string]any) (any, bool, error) {
+	for _, key := range []string{"$numberLong", "$numberInt", "$numberDouble", "$numberDecimal"} {
+		if raw, ok := object[key]; ok {
+			normalized, err := normalizeExtendedJSONNumber(raw, key)
+			return normalized, true, err
+		}
+	}
+	if raw, ok := object["$oid"]; ok {
+		normalized, err := normalizeExtendedJSONString(raw, "$oid")
+		return normalized, true, err
+	}
+	if raw, ok := object["$date"]; ok {
+		normalized, err := normalizeExtendedJSONValue(raw, false)
+		return normalized, true, err
+	}
+	return nil, false, nil
 }
 
 func normalizeExtendedJSONNumber(raw any, key string) (json.Number, error) {

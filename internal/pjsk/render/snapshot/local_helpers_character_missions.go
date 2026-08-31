@@ -39,7 +39,23 @@ func decodeCompactCharacterMissionV2Statuses(raw json.RawMessage) []RawUserChara
 		return nil
 	}
 
+	columns, rowCount := decodeCompactMissionColumns(payload)
+	if rowCount == 0 {
+		return nil
+	}
+
 	enumValues := decodeCompactEnumValues(payload["__ENUM__"])
+	statuses := make([]RawUserCharacterMissionV2Status, 0, rowCount)
+	for index := 0; index < rowCount; index++ {
+		status, ok := compactCharacterMissionStatusAt(columns, enumValues, index)
+		if ok {
+			statuses = append(statuses, status)
+		}
+	}
+	return statuses
+}
+
+func decodeCompactMissionColumns(payload map[string]json.RawMessage) (map[string][]any, int) {
 	columns := make(map[string][]any, len(payload))
 	rowCount := 0
 	for key, fieldRaw := range payload {
@@ -61,41 +77,33 @@ func decodeCompactCharacterMissionV2Statuses(raw json.RawMessage) []RawUserChara
 			rowCount = len(values)
 		}
 	}
+	return columns, rowCount
+}
 
-	if rowCount == 0 {
-		return nil
+func compactCharacterMissionStatusAt(columns map[string][]any, enumValues map[string][]string, index int) (RawUserCharacterMissionV2Status, bool) {
+	characterID, characterOK := compactPositiveIntFromColumns(columns, "characterId", index)
+	parameterGroupID, parameterGroupOK := compactPositiveIntFromColumns(columns, "parameterGroupId", index)
+	seq, seqOK := compactPositiveIntFromColumns(columns, "seq", index)
+	if !characterOK || !parameterGroupOK || !seqOK {
+		return RawUserCharacterMissionV2Status{}, false
 	}
 
-	statuses := make([]RawUserCharacterMissionV2Status, 0, rowCount)
-	for index := 0; index < rowCount; index++ {
-		characterID, ok := compactIntFromColumns(columns, "characterId", index)
-		if !ok || characterID <= 0 {
-			continue
-		}
-		parameterGroupID, ok := compactIntFromColumns(columns, "parameterGroupId", index)
-		if !ok || parameterGroupID <= 0 {
-			continue
-		}
-		seq, ok := compactIntFromColumns(columns, "seq", index)
-		if !ok || seq <= 0 {
-			continue
-		}
-
-		status := compactMissionStatusString(columns, enumValues, index)
-		if strings.EqualFold(status, "reset") {
-			continue
-		}
-
-		statuses = append(statuses, RawUserCharacterMissionV2Status{
-			ParameterGroupID: parameterGroupID,
-			Seq:              seq,
-			CharacterID:      characterID,
-			MissionID:        compactIntFromColumnsOrZero(columns, "missionId", index),
-			MissionStatus:    status,
-		})
+	status := compactMissionStatusString(columns, enumValues, index)
+	if strings.EqualFold(status, "reset") {
+		return RawUserCharacterMissionV2Status{}, false
 	}
+	return RawUserCharacterMissionV2Status{
+		ParameterGroupID: parameterGroupID,
+		Seq:              seq,
+		CharacterID:      characterID,
+		MissionID:        compactIntFromColumnsOrZero(columns, "missionId", index),
+		MissionStatus:    status,
+	}, true
+}
 
-	return statuses
+func compactPositiveIntFromColumns(columns map[string][]any, key string, index int) (int, bool) {
+	value, ok := compactIntFromColumns(columns, key, index)
+	return value, ok && value > 0
 }
 
 func compactIntFromColumnsOrZero(columns map[string][]any, key string, index int) int {

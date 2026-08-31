@@ -34,6 +34,15 @@ type musicMetaSource interface {
 	Get(region string) []byte
 }
 
+type conditionalPrivateDataFetcher func(knownUploadTime int64) ([]byte, bool, error)
+
+type toolboxPrivateDataResult struct {
+	data                 []byte
+	requestCacheHit      bool
+	crossRequestCacheHit bool
+	elapsed              time.Duration
+}
+
 // ToolboxSnapshotProvider is the current request-scoped provider implementation.
 // It keeps the existing Toolbox live-data path behind a stable provider
 // contract, so future DB-backed snapshot stores can replace it without forcing
@@ -100,6 +109,37 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 
 	tResolve := time.Now()
 	region := renderregion.WithDefault(selector.Region)
+	binding, uid, err := p.resolveAccount(ctx, selector, opts, platform, imUserID, region)
+	if err != nil {
+		return nil, err
+	}
+
+	suiteResult, err := p.fetchPrivateData(ctx, binding.Server, "suite", uid, platform, imUserID, func(knownUploadTime int64) ([]byte, bool, error) {
+		return p.client.GetSuiteDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(suiteResult.data) == 0 {
+		p.logEmptyPrivateData(ctx, binding.Server, "suite")
+		return nil, fmt.Errorf("snapshot: suite snapshot is empty")
+	}
+
+	mysekaiJSON, err := p.resolveMySekaiData(ctx, binding.Server, uid, platform, imUserID, opts.NeedMySekai)
+	if err != nil {
+		return nil, err
+	}
+	snapshotRegion, musicMetaJSON := p.resolveSupplementalData(region, binding.Server, opts)
+	return p.resolveBuiltSnapshot(ctx, tResolve, snapshotRegion, uid, suiteResult.data, mysekaiJSON, musicMetaJSON, opts)
+}
+
+func (p *ToolboxSnapshotProvider) resolveAccount(
+	ctx context.Context,
+	selector Selector,
+	opts ResolveOptions,
+	platform, imUserID string,
+	region renderregion.Value,
+) (*accountdata.ResolvedBinding, int64, error) {
 	finishBinding := commandtrace.MeasureOperation(ctx, "snapshot.binding")
 	binding, err := resolveSnapshotBinding(ctx, p.bindings, platform, imUserID, region, selector.PJSKUserID, opts)
 	finishBinding()
@@ -110,7 +150,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 			"need_mysekai", opts.NeedMySekai,
 			"error_type", fmt.Sprintf("%T", err),
 		)
-		return nil, err
+		return nil, 0, err
 	}
 	p.logger.DebugContext(ctx, "toolbox snapshot binding selected",
 		"upstream", "toolbox",
@@ -120,108 +160,96 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 
 	uid, err := strconv.ParseInt(binding.PJSKUserID, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("snapshot: invalid bound pjsk user id: %w", err)
+		return nil, 0, fmt.Errorf("snapshot: invalid bound pjsk user id: %w", err)
 	}
+	return binding, uid, nil
+}
 
-	tSuite := time.Now()
-	var suiteCacheHit, suiteCrossHit bool
-	suiteJSON, err, suiteCacheHit := cachedPrivateData(ctx, privateDataCacheKey{
-		Server:         binding.Server,
-		DataType:       "suite",
+func (p *ToolboxSnapshotProvider) fetchPrivateData(
+	ctx context.Context,
+	server, dataType string,
+	uid int64,
+	platform, imUserID string,
+	fetch conditionalPrivateDataFetcher,
+) (toolboxPrivateDataResult, error) {
+	started := time.Now()
+	result := toolboxPrivateDataResult{}
+	data, err, requestCacheHit := cachedPrivateData(ctx, privateDataCacheKey{
+		Server:         server,
+		DataType:       dataType,
 		UserID:         uid,
 		Platform:       platform,
 		PlatformUserID: imUserID,
 	}, func() ([]byte, error) {
 		data, cross, ferr := p.privateCache.Fetch(
-			PrivateDataKey{Server: binding.Server, DataType: "suite", UID: uid},
-			func(knownUploadTime int64) ([]byte, bool, error) {
-				return p.client.GetSuiteDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
-			},
+			PrivateDataKey{Server: server, DataType: dataType, UID: uid},
+			fetch,
 		)
-		suiteCrossHit = cross
+		result.crossRequestCacheHit = cross
 		return data, ferr
 	})
-	suiteElapsed := time.Since(tSuite)
+	result.data = data
+	result.requestCacheHit = requestCacheHit
+	result.elapsed = time.Since(started)
 	if err != nil {
 		p.logger.WarnContext(ctx, "toolbox private data fetch failed",
 			"upstream", "toolbox",
-			"data_type", "suite",
-			"region", binding.Server,
-			"duration_ms", commandtrace.Milliseconds(suiteElapsed),
+			"data_type", dataType,
+			"region", server,
+			"duration_ms", commandtrace.Milliseconds(result.elapsed),
 			"error_type", fmt.Sprintf("%T", err),
 		)
-		return nil, err
-	}
-	if len(suiteJSON) == 0 {
-		p.logger.WarnContext(ctx, "toolbox private data fetch returned empty payload",
-			"upstream", "toolbox",
-			"data_type", "suite",
-			"region", binding.Server,
-		)
-		return nil, fmt.Errorf("snapshot: suite snapshot is empty")
+		return toolboxPrivateDataResult{}, err
 	}
 	p.logger.DebugContext(ctx, "toolbox private data fetch completed",
 		"upstream", "toolbox",
-		"data_type", "suite",
-		"region", binding.Server,
-		"cache_hit", suiteCacheHit,
-		"cross_request_cache_hit", suiteCrossHit,
-		"duration_ms", commandtrace.Milliseconds(suiteElapsed),
-		"response_bytes", len(suiteJSON),
+		"data_type", dataType,
+		"region", server,
+		"cache_hit", result.requestCacheHit,
+		"cross_request_cache_hit", result.crossRequestCacheHit,
+		"duration_ms", commandtrace.Milliseconds(result.elapsed),
+		"response_bytes", len(result.data),
 	)
+	return result, nil
+}
 
-	var mysekaiJSON []byte
-	if opts.NeedMySekai {
-		tMysekai := time.Now()
-		var mysekaiCacheHit, mysekaiCrossHit bool
-		mysekaiJSON, err, mysekaiCacheHit = cachedPrivateData(ctx, privateDataCacheKey{
-			Server:         binding.Server,
-			DataType:       "mysekai",
-			UserID:         uid,
-			Platform:       platform,
-			PlatformUserID: imUserID,
-		}, func() ([]byte, error) {
-			data, cross, ferr := p.privateCache.Fetch(
-				PrivateDataKey{Server: binding.Server, DataType: "mysekai", UID: uid},
-				func(knownUploadTime int64) ([]byte, bool, error) {
-					return p.client.GetMySekaiDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
-				},
-			)
-			mysekaiCrossHit = cross
-			return data, ferr
-		})
-		mysekaiElapsed := time.Since(tMysekai)
-		if err != nil {
-			p.logger.WarnContext(ctx, "toolbox private data fetch failed",
-				"upstream", "toolbox",
-				"data_type", "mysekai",
-				"region", binding.Server,
-				"duration_ms", commandtrace.Milliseconds(mysekaiElapsed),
-				"error_type", fmt.Sprintf("%T", err),
-			)
-			return nil, err
-		}
-		p.logger.DebugContext(ctx, "toolbox private data fetch completed",
-			"upstream", "toolbox",
-			"data_type", "mysekai",
-			"region", binding.Server,
-			"cache_hit", mysekaiCacheHit,
-			"cross_request_cache_hit", mysekaiCrossHit,
-			"duration_ms", commandtrace.Milliseconds(mysekaiElapsed),
-			"response_bytes", len(mysekaiJSON),
-		)
+func (p *ToolboxSnapshotProvider) logEmptyPrivateData(ctx context.Context, server, dataType string) {
+	p.logger.WarnContext(ctx, "toolbox private data fetch returned empty payload",
+		"upstream", "toolbox",
+		"data_type", dataType,
+		"region", server,
+	)
+}
+
+func (p *ToolboxSnapshotProvider) resolveMySekaiData(ctx context.Context, server string, uid int64, platform, imUserID string, needed bool) ([]byte, error) {
+	if !needed {
+		return nil, nil
 	}
+	result, err := p.fetchPrivateData(ctx, server, "mysekai", uid, platform, imUserID, func(knownUploadTime int64) ([]byte, bool, error) {
+		return p.client.GetMySekaiDataConditionalContext(ctx, server, uid, platform, imUserID, knownUploadTime)
+	})
+	return result.data, err
+}
 
+func (p *ToolboxSnapshotProvider) resolveSupplementalData(region renderregion.Value, bindingServer string, opts ResolveOptions) (renderregion.Value, []byte) {
 	metaRegion := region
-	if bindingRegion := renderregion.Normalize(binding.Server); !bindingRegion.IsZero() {
+	if bindingRegion := renderregion.Normalize(bindingServer); !bindingRegion.IsZero() {
 		metaRegion = bindingRegion
 	}
-	snapshotRegion := metaRegion
-	var musicMetaJSON []byte
 	if opts.NeedMusicMeta && p.metas != nil {
-		musicMetaJSON = p.metas.Get(metaRegion.String())
+		return metaRegion, p.metas.Get(metaRegion.String())
 	}
+	return metaRegion, nil
+}
 
+func (p *ToolboxSnapshotProvider) resolveBuiltSnapshot(
+	ctx context.Context,
+	started time.Time,
+	region renderregion.Value,
+	uid int64,
+	suiteJSON, mysekaiJSON, musicMetaJSON []byte,
+	opts ResolveOptions,
+) (Snapshot, error) {
 	// Memoize the fully built snapshot across commands. The build is fully
 	// determined by the region, account, and each source payload's upload_time
 	// (parsed from the payloads already fetched above), so an unchanged account
@@ -236,7 +264,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	}
 	memoizable := !opts.NeedMusicMeta && suiteUploadTime > 0 && (!opts.NeedMySekai || mysekaiUploadTime > 0)
 	memoKey := builtSnapshotKey{
-		Region:            snapshotRegion.String(),
+		Region:            region.String(),
 		UID:               uid,
 		SuiteUploadTime:   suiteUploadTime,
 		NeedMySekai:       opts.NeedMySekai,
@@ -246,16 +274,16 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		if cached := p.builtCache.Get(memoKey); cached != nil {
 			p.logger.DebugContext(ctx, "toolbox snapshot resolved",
 				"upstream", "toolbox",
-				"region", snapshotRegion.String(),
+				"region", region.String(),
 				"built_cache_hit", true,
-				"duration_ms", commandtrace.Milliseconds(time.Since(tResolve)),
+				"duration_ms", commandtrace.Milliseconds(time.Since(started)),
 			)
 			return cached, nil
 		}
 	}
 
 	snapshot, err := p.factory.Build(ctx, BuildInput{
-		Region:        snapshotRegion,
+		Region:        region,
 		Source:        "toolbox_live",
 		SuiteJSON:     suiteJSON,
 		MySekaiJSON:   mysekaiJSON,
@@ -264,7 +292,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	if err != nil {
 		p.logger.WarnContext(ctx, "toolbox snapshot build failed",
 			"upstream", "toolbox",
-			"region", snapshotRegion.String(),
+			"region", region.String(),
 			"suite_bytes", len(suiteJSON),
 			"mysekai_bytes", len(mysekaiJSON),
 			"error_type", fmt.Sprintf("%T", err),
@@ -276,9 +304,9 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 	}
 	p.logger.DebugContext(ctx, "toolbox snapshot resolved",
 		"upstream", "toolbox",
-		"region", snapshotRegion.String(),
+		"region", region.String(),
 		"built_cache_hit", false,
-		"duration_ms", commandtrace.Milliseconds(time.Since(tResolve)),
+		"duration_ms", commandtrace.Milliseconds(time.Since(started)),
 	)
 	return snapshot, nil
 }

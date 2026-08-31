@@ -36,26 +36,19 @@ func (p *FallbackSnapshotProvider) Resolve(ctx context.Context, selector Selecto
 		return nil, ErrProviderUnavailable
 	}
 
+	providers := p.providers
+	if !p.allowFallback {
+		providers = providers[:1]
+	}
 	var lastErr error
-	for i, provider := range p.providers {
-		if i > 0 && !p.allowFallback {
-			break
-		}
+	for i, provider := range providers {
 		snapshot, err := provider.Resolve(ctx, selector, opts)
 		if err == nil && snapshot != nil {
-			if i > 0 {
-				p.logger.WarnContext(ctx, "snapshot resolved through fallback provider", "provider_index", i)
-			}
+			p.logFallbackSuccess(ctx, i)
 			return snapshot, nil
 		}
 		if err != nil {
-			if i == 0 && !p.allowFallback {
-				return nil, err
-			}
-			p.logger.WarnContext(ctx, "snapshot provider failed",
-				"provider_index", i,
-				"error_type", fmt.Sprintf("%T", err),
-			)
+			p.logProviderFailure(ctx, i, err)
 			lastErr = err
 		}
 	}
@@ -63,4 +56,17 @@ func (p *FallbackSnapshotProvider) Resolve(ctx context.Context, selector Selecto
 		return nil, lastErr
 	}
 	return nil, ErrSnapshotUnavailable
+}
+
+func (p *FallbackSnapshotProvider) logFallbackSuccess(ctx context.Context, providerIndex int) {
+	if providerIndex > 0 {
+		p.logger.WarnContext(ctx, "snapshot resolved through fallback provider", "provider_index", providerIndex)
+	}
+}
+
+func (p *FallbackSnapshotProvider) logProviderFailure(ctx context.Context, providerIndex int, err error) {
+	p.logger.WarnContext(ctx, "snapshot provider failed",
+		"provider_index", providerIndex,
+		"error_type", fmt.Sprintf("%T", err),
+	)
 }

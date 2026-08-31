@@ -12,6 +12,14 @@ import (
 )
 
 func TestSnapshotProfileDeckAndCloneHelpers(t *testing.T) {
+	testProfileImageSelection(t)
+	testRawUserDataCloneAndEncode(t)
+	testUserDeckHelpers(t)
+	testUserCardAndChallengeDeckHelpers(t)
+}
+
+func testProfileImageSelection(t *testing.T) {
+	t.Helper()
 	for _, tc := range []struct {
 		mode, wantMode  string
 		profile, leader int
@@ -27,6 +35,10 @@ func TestSnapshotProfileDeckAndCloneHelpers(t *testing.T) {
 			t.Errorf("SelectProfileImageCardID(%q, %d, %d) = %d", tc.mode, tc.profile, tc.leader, got)
 		}
 	}
+}
+
+func testRawUserDataCloneAndEncode(t *testing.T) {
+	t.Helper()
 	if cloned, err := CloneRawUserData(nil); err != nil || cloned != nil {
 		t.Fatalf("nil clone = %#v, %v", cloned, err)
 	}
@@ -45,7 +57,10 @@ func TestSnapshotProfileDeckAndCloneHelpers(t *testing.T) {
 	if data, err := EncodeRawUserData(raw); err != nil || len(data) == 0 {
 		t.Fatalf("encoded raw user data = %q, %v", data, err)
 	}
+}
 
+func testUserDeckHelpers(t *testing.T) {
+	t.Helper()
 	decks := []RawUserDeck{{DeckID: 1, Member1: 1}, {DeckID: 2, Member1: 2}}
 	if got := FindActiveDeck(decks, 2); got.DeckID != 2 {
 		t.Fatalf("active deck = %#v", got)
@@ -66,7 +81,10 @@ func TestSnapshotProfileDeckAndCloneHelpers(t *testing.T) {
 	if ids, ok := UserDeckCardIDs(complete); !ok || !reflect.DeepEqual(ids, []int{1, 2, 3, 4, 5}) {
 		t.Fatalf("complete deck IDs = %#v, %t", ids, ok)
 	}
+}
 
+func testUserCardAndChallengeDeckHelpers(t *testing.T) {
+	t.Helper()
 	cards := []RawUserCard{{CardID: 3}, {CardID: 4}}
 	if FindUserCard(cards, 4) == nil || FindUserCard(cards, 9) != nil {
 		t.Fatal("user-card lookup failed")
@@ -124,6 +142,14 @@ func TestSnapshotValueAndMySekaiMergeDecisionHelpers(t *testing.T) {
 }
 
 func TestCompactSnapshotScalarHelpers(t *testing.T) {
+	testCompactEnumValues(t)
+	testCompactIntegerValues(t)
+	testCompactBooleanValues(t)
+	testCompactColumns(t)
+}
+
+func testCompactEnumValues(t *testing.T) {
+	t.Helper()
 	enums := []string{"zero", "one"}
 	for _, tc := range []struct {
 		value any
@@ -138,6 +164,10 @@ func TestCompactSnapshotScalarHelpers(t *testing.T) {
 			t.Errorf("compactEnumString(%#v) = %q", tc.value, got)
 		}
 	}
+}
+
+func testCompactIntegerValues(t *testing.T) {
+	t.Helper()
 	for _, tc := range []struct {
 		value any
 		want  int
@@ -157,6 +187,10 @@ func TestCompactSnapshotScalarHelpers(t *testing.T) {
 			t.Errorf("compactIntValue(%#v) = %d, %t", tc.value, got, ok)
 		}
 	}
+}
+
+func testCompactBooleanValues(t *testing.T) {
+	t.Helper()
 	for _, tc := range []struct {
 		value any
 		want  bool
@@ -175,6 +209,10 @@ func TestCompactSnapshotScalarHelpers(t *testing.T) {
 			t.Errorf("compactBoolValue(%#v) = %t, %t", tc.value, got, ok)
 		}
 	}
+}
+
+func testCompactColumns(t *testing.T) {
+	t.Helper()
 	columns := map[string][]any{"value": {json.Number("1")}}
 	if got, ok := compactIntFromColumns(columns, "value", 0); !ok || got != 1 {
 		t.Fatal("compact integer column failed")
@@ -219,6 +257,13 @@ func TestSnapshotNormalizationScalarAndConversionHelpers(t *testing.T) {
 }
 
 func TestSnapshotServiceAccessorBranches(t *testing.T) {
+	testNilSnapshotServiceAccessors(t)
+	testSnapshotServiceRequireFailures(t)
+	testConfiguredSnapshotServiceAccessors(t)
+}
+
+func testNilSnapshotServiceAccessors(t *testing.T) {
+	t.Helper()
 	var nilService *Service
 	if nilService.Configured() || nilService.Require() == nil || nilService.DetailedProfile(renderregion.JP) != nil || nilService.ProfileCard(renderregion.JP) != nil {
 		t.Fatal("nil snapshot service reported available data")
@@ -232,7 +277,10 @@ func TestSnapshotServiceAccessorBranches(t *testing.T) {
 	if nilService.RawFilePath() != "" || nilService.RawData() != nil || nilService.MusicMetaBytes() != nil || nilService.MusicMetaView() != nil || nilService.MusicMetaPath() != "" {
 		t.Fatal("nil snapshot service returned local metadata")
 	}
+}
 
+func testSnapshotServiceRequireFailures(t *testing.T) {
+	t.Helper()
 	unconfigured := &Service{}
 	if unconfigured.Configured() || unconfigured.Require() == nil {
 		t.Fatal("unconfigured snapshot service passed Require")
@@ -244,7 +292,10 @@ func TestSnapshotServiceAccessorBranches(t *testing.T) {
 	if err := (&Service{configured: true}).Require(); err == nil {
 		t.Fatal("snapshot without a profile passed Require")
 	}
+}
 
+func testConfiguredSnapshotServiceAccessors(t *testing.T) {
+	t.Helper()
 	mode := "public"
 	frame := "frame.png"
 	view := &meta.View{}
@@ -267,6 +318,13 @@ func TestSnapshotServiceAccessorBranches(t *testing.T) {
 	if !service.Configured() || service.Require() != nil {
 		t.Fatal("configured snapshot service was unavailable")
 	}
+	testSnapshotProfileAccessors(t, service)
+	testSnapshotGameDataAccessors(t, service)
+	testSnapshotRawAccessors(t, service, raw, view)
+}
+
+func testSnapshotProfileAccessors(t *testing.T, service *Service) {
+	t.Helper()
 	detail := service.DetailedProfile(renderregion.CN)
 	if detail == service.baseProfile || detail.Region != "CN" || detail.Mode == service.baseProfile.Mode || detail.FramePath == service.baseProfile.FramePath {
 		t.Fatalf("cloned detailed profile = %#v", detail)
@@ -275,6 +333,10 @@ func TestSnapshotServiceAccessorBranches(t *testing.T) {
 	if card == nil || card.Profile == nil || card.Profile.ID != "1" || len(card.DataSources) != 1 {
 		t.Fatalf("profile card = %#v", card)
 	}
+}
+
+func testSnapshotGameDataAccessors(t *testing.T, service *Service) {
+	t.Helper()
 	results := service.MusicResults(" MASTER ")
 	if results[4] != "ap" || service.GetMusicResult(4, "master") != "ap" || service.GetMusicResult(9, "master") != "" {
 		t.Fatalf("music results = %#v", results)
@@ -287,6 +349,10 @@ func TestSnapshotServiceAccessorBranches(t *testing.T) {
 	if challenge == service.challenge || len(challenge.Results) != 1 {
 		t.Fatalf("challenge live = %#v", challenge)
 	}
+}
+
+func testSnapshotRawAccessors(t *testing.T, service *Service, raw *RawUserData, view *meta.View) {
+	t.Helper()
 	rawBytes, err := service.RawBytes()
 	if err != nil || string(rawBytes) != `{"ok":true}` || service.RawFilePath() != "raw.json" || service.RawData() != raw {
 		t.Fatalf("raw accessors = %q, %v", rawBytes, err)

@@ -33,10 +33,15 @@ type fakeBindingLookup struct {
 	resolveCalls []string
 	bindings     map[string]*accountdata.ResolvedBinding
 	listItems    []accountdata.BindingListItem
+	resolveErr   error
+	listErr      error
 }
 
 func (f *fakeBindingLookup) ResolveUserBinding(_ context.Context, _, _, server string) (int, *accountdata.ResolvedBinding, error) {
 	f.resolveCalls = append(f.resolveCalls, server)
+	if f.resolveErr != nil {
+		return 0, nil, f.resolveErr
+	}
 	item, ok := f.bindings[server]
 	if !ok {
 		return 0, nil, errors.New("binding not found")
@@ -45,6 +50,9 @@ func (f *fakeBindingLookup) ResolveUserBinding(_ context.Context, _, _, server s
 }
 
 func (f *fakeBindingLookup) List(_ context.Context, _, _ string) ([]accountdata.BindingListItem, error) {
+	if f.listErr != nil {
+		return nil, f.listErr
+	}
 	return append([]accountdata.BindingListItem(nil), f.listItems...), nil
 }
 
@@ -64,6 +72,8 @@ type fakePrivateDataClient struct {
 	suiteNotModified   int
 	mysekaiNotModified int
 	uploadTimeErr      error
+	suiteErr           error
+	mysekaiErr         error
 }
 
 func (f *fakePrivateDataClient) parseUploadTime() (int64, error) {
@@ -93,6 +103,9 @@ func (f *fakePrivateDataClient) checkNotModified(knownUploadTime int64) (bool, e
 func (f *fakePrivateDataClient) GetSuiteDataConditionalContext(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
 	f.suiteCtx = ctx
 	f.suiteKnownTimes = append(f.suiteKnownTimes, knownUploadTime)
+	if f.suiteErr != nil {
+		return nil, false, f.suiteErr
+	}
 	notModified, err := f.checkNotModified(knownUploadTime)
 	if err != nil {
 		return nil, false, err
@@ -108,6 +121,9 @@ func (f *fakePrivateDataClient) GetSuiteDataConditionalContext(ctx context.Conte
 func (f *fakePrivateDataClient) GetMySekaiDataConditionalContext(ctx context.Context, server string, _ int64, platform, platformUserID string, knownUploadTime int64) ([]byte, bool, error) {
 	f.mysekaiCtx = ctx
 	f.mysekaiKnownTimes = append(f.mysekaiKnownTimes, knownUploadTime)
+	if f.mysekaiErr != nil {
+		return nil, false, f.mysekaiErr
+	}
 	notModified, err := f.checkNotModified(knownUploadTime)
 	if err != nil {
 		return nil, false, err
@@ -118,6 +134,97 @@ func (f *fakePrivateDataClient) GetMySekaiDataConditionalContext(ctx context.Con
 	}
 	f.mysekaiCalls = append(f.mysekaiCalls, server+":"+platform+":"+platformUserID)
 	return append([]byte(nil), f.mysekaiJSON...), false, nil
+}
+
+type snapshotFactoryFunc func(context.Context, BuildInput) (Snapshot, error)
+
+func (f snapshotFactoryFunc) Build(ctx context.Context, input BuildInput) (Snapshot, error) {
+	return f(ctx, input)
+}
+
+func newValidToolboxProvider(client *fakePrivateDataClient) *ToolboxSnapshotProvider {
+	return NewToolboxSnapshotProvider(
+		&fakeBindingLookup{bindings: map[string]*accountdata.ResolvedBinding{
+			"jp": {
+				PJSKUserID:     "123456789",
+				Server:         "jp",
+				SuiteVisible:   true,
+				MySekaiVisible: true,
+			},
+		}},
+		client,
+		nil,
+		nil,
+	)
+}
+
+func validToolboxSelector() Selector {
+	return Selector{IMPlatform: "qq", IMUserID: "10001", Region: renderregion.JP}
+}
+
+func TestToolboxSnapshotProviderRejectsUnavailableAndIncompleteRequests(t *testing.T) {
+	var nilProvider *ToolboxSnapshotProvider
+	if nilProvider.WithMusicMetaSource(nil) != nil || nilProvider.WithPrivateDataCache(nil) != nil || nilProvider.WithBuiltSnapshotCache(nil) != nil {
+		t.Fatal("nil provider fluent methods returned a provider")
+	}
+	if _, err := nilProvider.Resolve(context.Background(), Selector{}, ResolveOptions{}); !errors.Is(err, ErrProviderUnavailable) {
+		t.Fatalf("nil provider error = %v", err)
+	}
+
+	provider := newValidToolboxProvider(&fakePrivateDataClient{suiteJSON: []byte(minimalSuiteJSON)})
+	if _, err := provider.Resolve(context.Background(), Selector{}, ResolveOptions{}); err == nil || !strings.Contains(err.Error(), "selector is incomplete") {
+		t.Fatalf("incomplete selector error = %v", err)
+	}
+}
+
+func TestToolboxSnapshotProviderPropagatesBindingAndUserIDErrors(t *testing.T) {
+	wantBindingErr := errors.New("binding lookup failed")
+	provider := NewToolboxSnapshotProvider(&fakeBindingLookup{resolveErr: wantBindingErr}, &fakePrivateDataClient{}, nil, nil)
+	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); !errors.Is(err, wantBindingErr) {
+		t.Fatalf("binding error = %v", err)
+	}
+
+	provider = NewToolboxSnapshotProvider(
+		&fakeBindingLookup{bindings: map[string]*accountdata.ResolvedBinding{
+			"jp": {PJSKUserID: "not-a-number", Server: "jp", SuiteVisible: true},
+		}},
+		&fakePrivateDataClient{},
+		nil,
+		nil,
+	)
+	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); err == nil || !strings.Contains(err.Error(), "invalid bound pjsk user id") {
+		t.Fatalf("invalid user ID error = %v", err)
+	}
+}
+
+func TestToolboxSnapshotProviderPropagatesPrivateDataErrors(t *testing.T) {
+	wantSuiteErr := errors.New("suite unavailable")
+	provider := newValidToolboxProvider(&fakePrivateDataClient{suiteErr: wantSuiteErr})
+	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); !errors.Is(err, wantSuiteErr) {
+		t.Fatalf("suite error = %v", err)
+	}
+
+	provider = newValidToolboxProvider(&fakePrivateDataClient{})
+	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); err == nil || !strings.Contains(err.Error(), "suite snapshot is empty") {
+		t.Fatalf("empty suite error = %v", err)
+	}
+
+	wantMySekaiErr := errors.New("mysekai unavailable")
+	provider = newValidToolboxProvider(&fakePrivateDataClient{suiteJSON: []byte(minimalSuiteJSON), mysekaiErr: wantMySekaiErr})
+	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{NeedMySekai: true}); !errors.Is(err, wantMySekaiErr) {
+		t.Fatalf("mysekai error = %v", err)
+	}
+}
+
+func TestToolboxSnapshotProviderPropagatesBuildError(t *testing.T) {
+	wantErr := errors.New("build failed")
+	provider := newValidToolboxProvider(&fakePrivateDataClient{suiteJSON: []byte(minimalSuiteJSON)})
+	provider.factory = snapshotFactoryFunc(func(context.Context, BuildInput) (Snapshot, error) {
+		return nil, wantErr
+	})
+	if _, err := provider.Resolve(context.Background(), validToolboxSelector(), ResolveOptions{}); !errors.Is(err, wantErr) {
+		t.Fatalf("build error = %v", err)
+	}
 }
 
 func TestToolboxSnapshotProviderFallsBackToRegionBinding(t *testing.T) {

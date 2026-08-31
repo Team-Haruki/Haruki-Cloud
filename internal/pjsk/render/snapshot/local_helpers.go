@@ -28,28 +28,38 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		return nil, fmt.Errorf("decode mysekai snapshot: %w", err)
 	}
 
-	updatedKeys := make(map[string]struct{})
-	if updatedResources, ok := mySekaiMap["updatedResources"].(map[string]any); ok {
-		for key, value := range updatedResources {
-			if shouldPreserveSuiteSnapshotKey(key) {
-				continue
-			}
-			updatedKeys[key] = struct{}{}
-			// Don't overwrite a non-empty suite array with an empty mysekai delta.
-			if shouldSkipEmptyMySekaiOverride(baseMap, key, value) {
-				continue
-			}
-			baseMap[key] = value
-		}
+	updatedKeys := mergeMySekaiUpdatedResources(baseMap, mySekaiMap)
+	mergeMySekaiTopLevelFields(baseMap, mySekaiMap, updatedKeys)
+
+	merged, err := json.Marshal(baseMap)
+	if err != nil {
+		return nil, fmt.Errorf("encode merged mysekai snapshot: %w", err)
 	}
-	for key, value := range mySekaiMap {
-		if key == "updatedResources" {
-			continue
-		}
+	return merged, nil
+}
+
+func mergeMySekaiUpdatedResources(baseMap, mySekaiMap map[string]any) map[string]struct{} {
+	updatedKeys := make(map[string]struct{})
+	updatedResources, ok := mySekaiMap["updatedResources"].(map[string]any)
+	if !ok {
+		return updatedKeys
+	}
+	for key, value := range updatedResources {
 		if shouldPreserveSuiteSnapshotKey(key) {
 			continue
 		}
-		if !shouldMergeMySekaiTopLevelKey(key) {
+		updatedKeys[key] = struct{}{}
+		// Don't overwrite a non-empty suite array with an empty mysekai delta.
+		if !shouldSkipEmptyMySekaiOverride(baseMap, key, value) {
+			baseMap[key] = value
+		}
+	}
+	return updatedKeys
+}
+
+func mergeMySekaiTopLevelFields(baseMap, mySekaiMap map[string]any, updatedKeys map[string]struct{}) {
+	for key, value := range mySekaiMap {
+		if !isMergeableMySekaiTopLevelKey(key) {
 			continue
 		}
 		if shouldSkipMySekaiTopLevelOverride(baseMap, updatedKeys, key, value) {
@@ -57,12 +67,12 @@ func mergeMySekaiData(userData []byte, mySekaiData []byte) ([]byte, error) {
 		}
 		baseMap[key] = value
 	}
+}
 
-	merged, err := json.Marshal(baseMap)
-	if err != nil {
-		return nil, fmt.Errorf("encode merged mysekai snapshot: %w", err)
-	}
-	return merged, nil
+func isMergeableMySekaiTopLevelKey(key string) bool {
+	return key != "updatedResources" &&
+		!shouldPreserveSuiteSnapshotKey(key) &&
+		shouldMergeMySekaiTopLevelKey(key)
 }
 
 func shouldSkipEmptyMySekaiOverride(baseMap map[string]any, key string, value any) bool {

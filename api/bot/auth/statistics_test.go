@@ -65,7 +65,7 @@ func TestStatisticsHandlerUpdateRequestsRankingIsAtomic(t *testing.T) {
 func newBotStatisticsTestClient(t *testing.T) *ent.Client {
 	t.Helper()
 	dsn := fmt.Sprintf(
-		"file:%s?_fk=1&_busy_timeout=5000",
+		"file:%s?_fk=1&_busy_timeout=30000&_journal_mode=WAL&_synchronous=NORMAL",
 		filepath.Join(t.TempDir(), fmt.Sprintf("statistics_%d.db", time.Now().UnixNano())),
 	)
 	client, err := ent.Open("sqlite3", dsn)

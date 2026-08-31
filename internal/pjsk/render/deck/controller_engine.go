@@ -7,119 +7,20 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/pjsk/render/snapshot"
 )
 
 func (c *Controller) buildAutoRecommendWithEngine(ctx context.Context, query AutoQuery) (*drawing.DeckRequest, error) {
 	ctx = normalizeRecommendContext(ctx)
 	finishPrepare := commandtrace.MeasureOperation(ctx, "deck.prepare_request")
 	defer finishPrepare()
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	if c.engine == nil {
-		return nil, fmt.Errorf("deck recommend engine is not configured")
-	}
-
-	region, recType, err := c.normalizeAutoQuery(query)
+	prepared, err := c.prepareAutoRecommendExecution(ctx, query)
 	if err != nil {
 		return nil, err
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	region, _, err = c.resolveCardSource(region)
-	if err != nil {
-		return nil, err
-	}
-
-	recommender, err := c.engine.Get(region.String())
-	if err != nil {
-		return nil, err
-	}
-
-	musicMeta := c.resolveMusicMeta(region)
-	musicMetaPath := c.resolveMusicMetaFilePath()
-	if len(musicMeta) == 0 && musicMetaPath == "" {
-		return nil, fmt.Errorf("deck recommend requires music meta data")
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
-	option, err := c.buildRecommendOption(region, recType, query)
-	if err != nil {
-		return nil, err
-	}
-	applyRecommendChallengeAllDefaults(option, recType, query)
-	query, option = c.applyWorldBloomSimulationFallbackIfMasterdataMissing(region, recType, query, option)
-	if recType == "challenge" {
-		if err := c.prepareChallengeRecommend(query, option); err != nil {
-			return nil, err
-		}
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
-	preparedRaw, userBytes, err := c.prepareRecommendUserData(region, recType, query, option)
-	if err != nil {
-		return nil, err
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
-	musicCompareSelections, musicCompareShowNum, err := c.prepareMusicCompareSelections(region, recType, query, option, musicMeta, musicMetaPath)
-	if err != nil {
-		return nil, err
-	}
-
-	recommendRequest := RecommendRequest{
-		Region:            region.String(),
-		RecommendType:     recType,
-		UserData:          userBytes,
-		UserDataFilePath:  c.resolveUserDataFilePath(),
-		MusicMeta:         musicMeta,
-		MusicMetaFilePath: musicMetaPath,
 	}
 	finishPrepare()
 
-	var result *RecommendResult
-	if recType == "challenge" {
-		if query.MusicCompare {
-			result, musicCompareSelections, err = c.recommendMusicCompare(ctx, recommender, recommendRequest, option, musicCompareSelections, musicCompareShowNum, recType)
-		} else if shouldRunChallengeAll(option) {
-			result, err = c.recommendChallengeAll(ctx, recommender, recommendRequest, option)
-		} else {
-			recommendRequest.BatchOption = expandRecommendBatchOptions(recommender, recType, option)
-			result, err = recommendWithContext(ctx, recommender, recommendRequest)
-			if err == nil {
-				applyChallengeScoreDelta(result, optionInt(option, "challenge_live_character_id"), c.snapshot.RawData())
-			}
-		}
-	} else if query.MusicCompare {
-		result, musicCompareSelections, err = c.recommendMusicCompare(ctx, recommender, recommendRequest, option, musicCompareSelections, musicCompareShowNum, recType)
-	} else {
-		recommendRequest.BatchOption = expandRecommendBatchOptions(recommender, recType, option)
-		result, err = recommendWithContext(ctx, recommender, recommendRequest)
-		if err != nil {
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return nil, ctxErr
-			}
-			if fallbackQuery, fallbackOption, ok := buildWorldBloomSimulationFallbackOnError(query, option, recType, err); ok {
-				fallbackRequest := recommendRequest
-				fallbackRequest.BatchOption = expandRecommendBatchOptions(recommender, recType, fallbackOption)
-				if fallbackResult, fallbackErr := recommendWithContext(ctx, recommender, fallbackRequest); fallbackErr == nil {
-					query = fallbackQuery
-					option = fallbackOption
-					result = fallbackResult
-					err = nil
-				} else {
-					err = fallbackErr
-				}
-			}
-		}
-	}
+	result, selections, err := c.runAutoRecommendExecution(ctx, &prepared)
 	if err != nil {
 		return nil, err
 	}
@@ -128,9 +29,208 @@ func (c *Controller) buildAutoRecommendWithEngine(ctx context.Context, query Aut
 	}
 
 	finishBuild := commandtrace.MeasureOperation(ctx, "payload.build")
-	payload, buildErr := c.buildDrawingRequestFromRecommendResult(region, recType, query, option, preparedRaw, result, musicCompareSelections)
+	payload, buildErr := c.buildDrawingRequestFromRecommendResult(
+		prepared.region,
+		prepared.recType,
+		prepared.query,
+		prepared.option,
+		prepared.userData,
+		result,
+		selections,
+	)
 	finishBuild()
 	return payload, buildErr
+}
+
+type autoRecommendExecution struct {
+	region          renderregion.Value
+	recType         string
+	query           AutoQuery
+	option          map[string]any
+	userData        *snapshot.RawUserData
+	recommender     PjskDeckRecommender
+	request         RecommendRequest
+	musicSelections []MusicCompareSelection
+	musicShowNum    int
+}
+
+func (c *Controller) prepareAutoRecommendExecution(ctx context.Context, query AutoQuery) (autoRecommendExecution, error) {
+	resources, err := c.resolveAutoRecommendResources(ctx, query)
+	if err != nil {
+		return autoRecommendExecution{}, err
+	}
+	option, err := c.buildRecommendOption(resources.region, resources.recType, query)
+	if err != nil {
+		return autoRecommendExecution{}, err
+	}
+	applyRecommendChallengeAllDefaults(option, resources.recType, query)
+	query, option = c.applyWorldBloomSimulationFallbackIfMasterdataMissing(resources.region, resources.recType, query, option)
+	if resources.recType == "challenge" {
+		if err := c.prepareChallengeRecommend(query, option); err != nil {
+			return autoRecommendExecution{}, err
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return autoRecommendExecution{}, err
+	}
+
+	preparedRaw, userBytes, err := c.prepareRecommendUserData(resources.region, resources.recType, query, option)
+	if err != nil {
+		return autoRecommendExecution{}, err
+	}
+	if err := ctx.Err(); err != nil {
+		return autoRecommendExecution{}, err
+	}
+
+	musicCompareSelections, musicCompareShowNum, err := c.prepareMusicCompareSelections(
+		resources.region,
+		resources.recType,
+		query,
+		option,
+		resources.musicMeta,
+		resources.musicMetaPath,
+	)
+	if err != nil {
+		return autoRecommendExecution{}, err
+	}
+
+	return autoRecommendExecution{
+		region:          resources.region,
+		recType:         resources.recType,
+		query:           query,
+		option:          option,
+		userData:        preparedRaw,
+		recommender:     resources.recommender,
+		musicSelections: musicCompareSelections,
+		musicShowNum:    musicCompareShowNum,
+		request: RecommendRequest{
+			Region:            resources.region.String(),
+			RecommendType:     resources.recType,
+			UserData:          userBytes,
+			UserDataFilePath:  c.resolveUserDataFilePath(),
+			MusicMeta:         resources.musicMeta,
+			MusicMetaFilePath: resources.musicMetaPath,
+		},
+	}, nil
+}
+
+type autoRecommendResources struct {
+	region        renderregion.Value
+	recType       string
+	recommender   PjskDeckRecommender
+	musicMeta     []byte
+	musicMetaPath string
+}
+
+func (c *Controller) resolveAutoRecommendResources(ctx context.Context, query AutoQuery) (autoRecommendResources, error) {
+	if err := ctx.Err(); err != nil {
+		return autoRecommendResources{}, err
+	}
+	if c.engine == nil {
+		return autoRecommendResources{}, fmt.Errorf("deck recommend engine is not configured")
+	}
+
+	region, recType, err := c.normalizeAutoQuery(query)
+	if err != nil {
+		return autoRecommendResources{}, err
+	}
+	if err := ctx.Err(); err != nil {
+		return autoRecommendResources{}, err
+	}
+	region, _, err = c.resolveCardSource(region)
+	if err != nil {
+		return autoRecommendResources{}, err
+	}
+
+	recommender, err := c.engine.Get(region.String())
+	if err != nil {
+		return autoRecommendResources{}, err
+	}
+
+	musicMeta := c.resolveMusicMeta(region)
+	musicMetaPath := c.resolveMusicMetaFilePath()
+	if len(musicMeta) == 0 && musicMetaPath == "" {
+		return autoRecommendResources{}, fmt.Errorf("deck recommend requires music meta data")
+	}
+	if err := ctx.Err(); err != nil {
+		return autoRecommendResources{}, err
+	}
+	return autoRecommendResources{
+		region:        region,
+		recType:       recType,
+		recommender:   recommender,
+		musicMeta:     musicMeta,
+		musicMetaPath: musicMetaPath,
+	}, nil
+}
+
+func (c *Controller) runAutoRecommendExecution(ctx context.Context, prepared *autoRecommendExecution) (*RecommendResult, []MusicCompareSelection, error) {
+	if prepared.recType == "challenge" {
+		return c.runChallengeRecommendExecution(ctx, prepared)
+	}
+	if prepared.query.MusicCompare {
+		result, selections, err := c.recommendMusicCompare(
+			ctx,
+			prepared.recommender,
+			prepared.request,
+			prepared.option,
+			prepared.musicSelections,
+			prepared.musicShowNum,
+			prepared.recType,
+		)
+		return result, selections, err
+	}
+	return c.runStandardRecommendExecution(ctx, prepared)
+}
+
+func (c *Controller) runChallengeRecommendExecution(ctx context.Context, prepared *autoRecommendExecution) (*RecommendResult, []MusicCompareSelection, error) {
+	if prepared.query.MusicCompare {
+		return c.recommendMusicCompare(
+			ctx,
+			prepared.recommender,
+			prepared.request,
+			prepared.option,
+			prepared.musicSelections,
+			prepared.musicShowNum,
+			prepared.recType,
+		)
+	}
+	if shouldRunChallengeAll(prepared.option) {
+		result, err := c.recommendChallengeAll(ctx, prepared.recommender, prepared.request, prepared.option)
+		return result, prepared.musicSelections, err
+	}
+	request := prepared.request
+	request.BatchOption = expandRecommendBatchOptions(prepared.recommender, prepared.recType, prepared.option)
+	result, err := recommendWithContext(ctx, prepared.recommender, request)
+	if err == nil {
+		applyChallengeScoreDelta(result, optionInt(prepared.option, "challenge_live_character_id"), c.snapshot.RawData())
+	}
+	return result, prepared.musicSelections, err
+}
+
+func (c *Controller) runStandardRecommendExecution(ctx context.Context, prepared *autoRecommendExecution) (*RecommendResult, []MusicCompareSelection, error) {
+	request := prepared.request
+	request.BatchOption = expandRecommendBatchOptions(prepared.recommender, prepared.recType, prepared.option)
+	result, err := recommendWithContext(ctx, prepared.recommender, request)
+	if err == nil {
+		return result, prepared.musicSelections, nil
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, prepared.musicSelections, ctxErr
+	}
+	fallbackQuery, fallbackOption, ok := buildWorldBloomSimulationFallbackOnError(prepared.query, prepared.option, prepared.recType, err)
+	if !ok {
+		return nil, prepared.musicSelections, err
+	}
+	fallbackRequest := request
+	fallbackRequest.BatchOption = expandRecommendBatchOptions(prepared.recommender, prepared.recType, fallbackOption)
+	fallbackResult, fallbackErr := recommendWithContext(ctx, prepared.recommender, fallbackRequest)
+	if fallbackErr != nil {
+		return nil, prepared.musicSelections, fallbackErr
+	}
+	prepared.query = fallbackQuery
+	prepared.option = fallbackOption
+	return fallbackResult, prepared.musicSelections, nil
 }
 
 func (c *Controller) buildRecommendOption(region renderregion.Value, recType string, query AutoQuery) (map[string]any, error) {

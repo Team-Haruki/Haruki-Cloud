@@ -9,6 +9,14 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if option == nil {
 		return
 	}
+	applyRecommendBasicOverrides(option, recType, query)
+	applyRecommendProfileOverrides(option, query)
+	applyRecommendEventOverrides(option, recType, query)
+	applyRecommendFixedDeckOverrides(option, query)
+	applyRecommendMultiLiveOverrides(option, query)
+}
+
+func applyRecommendBasicOverrides(option map[string]any, recType string, query AutoQuery) {
 	if liveType := normalizeRecommendLiveType(recType, query.LiveType); liveType != "" {
 		option["live_type"] = liveType
 	}
@@ -45,6 +53,9 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if query.UseCurrentDeck {
 		option["use_current_deck"] = true
 	}
+}
+
+func applyRecommendProfileOverrides(option map[string]any, query AutoQuery) {
 	if query.UseExactCardState {
 		option["rarity_1_config"] = noChangeDeckConfig()
 		option["rarity_2_config"] = noChangeDeckConfig()
@@ -77,50 +88,83 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 		}
 		option["specific_skill_order"] = slices.Clone(query.SpecificSkillOrder)
 	}
+}
 
+func applyRecommendEventOverrides(option map[string]any, recType string, query AutoQuery) {
 	explicitEventID := query.EventID != nil && *query.EventID > 0
 	if explicitEventID {
 		option["event_id"] = *query.EventID
 	}
 
-	attr := normalizeRecommendAttr(query.EventAttr)
-	unit := normalizeRecommendUnit(query.EventUnit)
-	hasSimulatedWorldBloomTurn := !explicitEventID && query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0
-	hasSimulatedWorldBloomFinale := !explicitEventID && query.WorldBloomFinaleTurn != nil && *query.WorldBloomFinaleTurn > 0
-	fakeEvent := hasSimulatedWorldBloomTurn || hasSimulatedWorldBloomFinale || (!explicitEventID && (attr != "" || unit != ""))
-
-	if attr != "" && fakeEvent {
-		option["event_attr"] = attr
+	simulation := resolveRecommendEventSimulation(query, explicitEventID)
+	if simulation.attr != "" && simulation.fakeEvent {
+		option["event_attr"] = simulation.attr
 	}
-	if unit != "" && (hasSimulatedWorldBloomTurn || !explicitEventID) {
-		option["event_unit"] = unit
+	if simulation.unit != "" && (simulation.worldBloomTurn || !explicitEventID) {
+		option["event_unit"] = simulation.unit
 	}
-	if hasSimulatedWorldBloomTurn {
-		option["world_bloom_event_turn"] = *query.WorldBloomEventTurn
-		option["event_type"] = "world_bloom"
-	}
-	if hasSimulatedWorldBloomFinale {
-		option["world_bloom_finale_turn"] = *query.WorldBloomFinaleTurn
-		option["event_type"] = "world_bloom"
-	}
-	worldBloomCharacterID := 0
-	if query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0 {
-		worldBloomCharacterID = *query.WorldBloomCharacterID
-	} else if recType == "mysekai" && query.MetadataWorldBloomCharacterID != nil && *query.MetadataWorldBloomCharacterID > 0 {
-		// Keep the implicitly resolved WL chapter hidden from the title text,
-		// while still passing it to the recommend service so support bonus is calculated.
-		worldBloomCharacterID = *query.MetadataWorldBloomCharacterID
-	}
+	applyWorldBloomTurnOverrides(option, query, simulation)
+	worldBloomCharacterID := recommendWorldBloomCharacterID(recType, query)
 	if worldBloomCharacterID > 0 {
 		option["world_bloom_character_id"] = worldBloomCharacterID
 	}
-	if ((explicitEventID && *query.EventID == 180) || query.MetadataWorldBloomFinale) && query.ForcedLeaderCharacterID != nil && *query.ForcedLeaderCharacterID > 0 {
-		option["forced_leader_character_id"] = *query.ForcedLeaderCharacterID
-	}
-	if fakeEvent {
+	applyForcedLeaderOverride(option, query, explicitEventID)
+	if simulation.fakeEvent {
 		option["event_id"] = nil
 	}
+}
 
+type recommendEventSimulation struct {
+	attr             string
+	unit             string
+	worldBloomTurn   bool
+	worldBloomFinale bool
+	fakeEvent        bool
+}
+
+func resolveRecommendEventSimulation(query AutoQuery, explicitEventID bool) recommendEventSimulation {
+	simulation := recommendEventSimulation{
+		attr: normalizeRecommendAttr(query.EventAttr),
+		unit: normalizeRecommendUnit(query.EventUnit),
+	}
+	simulation.worldBloomTurn = !explicitEventID && query.WorldBloomEventTurn != nil && *query.WorldBloomEventTurn > 0
+	simulation.worldBloomFinale = !explicitEventID && query.WorldBloomFinaleTurn != nil && *query.WorldBloomFinaleTurn > 0
+	simulation.fakeEvent = simulation.worldBloomTurn || simulation.worldBloomFinale ||
+		(!explicitEventID && (simulation.attr != "" || simulation.unit != ""))
+	return simulation
+}
+
+func applyWorldBloomTurnOverrides(option map[string]any, query AutoQuery, simulation recommendEventSimulation) {
+	if simulation.worldBloomTurn {
+		option["world_bloom_event_turn"] = *query.WorldBloomEventTurn
+		option["event_type"] = "world_bloom"
+	}
+	if simulation.worldBloomFinale {
+		option["world_bloom_finale_turn"] = *query.WorldBloomFinaleTurn
+		option["event_type"] = "world_bloom"
+	}
+}
+
+func applyForcedLeaderOverride(option map[string]any, query AutoQuery, explicitEventID bool) {
+	worldBloomEvent := (explicitEventID && *query.EventID == 180) || query.MetadataWorldBloomFinale
+	if worldBloomEvent && query.ForcedLeaderCharacterID != nil && *query.ForcedLeaderCharacterID > 0 {
+		option["forced_leader_character_id"] = *query.ForcedLeaderCharacterID
+	}
+}
+
+func recommendWorldBloomCharacterID(recType string, query AutoQuery) int {
+	if query.WorldBloomCharacterID != nil && *query.WorldBloomCharacterID > 0 {
+		return *query.WorldBloomCharacterID
+	}
+	if recType == "mysekai" && query.MetadataWorldBloomCharacterID != nil && *query.MetadataWorldBloomCharacterID > 0 {
+		// Keep the implicitly resolved WL chapter hidden from the title text,
+		// while still passing it to the recommend service so support bonus is calculated.
+		return *query.MetadataWorldBloomCharacterID
+	}
+	return 0
+}
+
+func applyRecommendFixedDeckOverrides(option map[string]any, query AutoQuery) {
 	if query.ChallengeLiveCharacterID != nil && *query.ChallengeLiveCharacterID > 0 {
 		option["challenge_live_character_id"] = *query.ChallengeLiveCharacterID
 	}
@@ -139,7 +183,9 @@ func applyRecommendOptionOverrides(option map[string]any, recType string, query 
 	if len(query.SingleCardConfigs) > 0 {
 		option["single_card_configs"] = toSingleCardConfigInterfaces(query.SingleCardConfigs)
 	}
+}
 
+func applyRecommendMultiLiveOverrides(option map[string]any, query AutoQuery) {
 	if query.MultiLiveTeammatePower != nil && *query.MultiLiveTeammatePower > 0 {
 		option["multi_live_teammate_power"] = *query.MultiLiveTeammatePower
 	}

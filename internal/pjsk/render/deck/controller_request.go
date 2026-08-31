@@ -25,103 +25,8 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	}
 
 	profile := c.resolveProfile(region, query.Profile, "deck_remote_service")
-	userCardMap := make(map[int]snapshot.RawUserCard)
-	if preparedRaw != nil {
-		for _, userCard := range preparedRaw.UserCards {
-			userCardMap[userCard.CardID] = userCard
-		}
-	} else if raw := c.snapshot.RawData(); raw != nil {
-		for _, userCard := range raw.UserCards {
-			userCardMap[userCard.CardID] = userCard
-		}
-	}
-
-	deckData := make([]drawing.DeckData, 0, len(result.Decks))
-	for index, deckInfo := range result.Decks {
-		cardData := make([]drawing.DeckCardData, 0, len(deckInfo.Cards))
-		for _, deckCard := range deckInfo.Cards {
-			card, err := c.cardByIDWithFallback(cardSource, region, deckCard.CardID)
-			if err != nil || card == nil {
-				continue
-			}
-
-			userCard, hasUserCard := userCardMap[deckCard.CardID]
-			displayAfterTraining, trainedArt := resolveRecommendCardDisplayState(card, deckCard)
-
-			level := deckCard.Level
-			if level <= 0 {
-				level = 60
-			}
-			masterRank := deckCard.MasterRank
-			rareImgPath := ""
-			if hasUserCard && strings.EqualFold(userCard.SpecialTrainingStatus, "done") {
-				rareImgPath = common.ResolveCardRareImagePath(c.assets, card, true)
-			}
-
-			cardData = append(cardData, drawing.DeckCardData{
-				CardThumbnail: common.BuildCardThumbnail(c.assets, card, region, common.ThumbnailOptions{
-					AfterTraining: displayAfterTraining,
-					TrainedArt:    trainedArt,
-					RareImgPath:   rareImgPath,
-					TrainRank:     drawing.IntPtr(masterRank),
-					Level:         drawing.IntPtr(level),
-					IsPcard:       true,
-				}),
-				CharaID:         card.CharacterID,
-				SkillLevel:      fmt.Sprintf("%d", deckCard.SkillLevel),
-				IsAfterTraining: displayAfterTraining,
-				SkillRate:       normalizeDeckDisplayRate(deckCard.SkillRate),
-				EventBonusRate:  normalizeDeckDisplayRate(deckCard.EventBonusRate),
-				IsBeforeStory:   deckCard.IsBeforeStory,
-				IsAfterStory:    deckCard.IsAfterStory,
-				HasCanvasBonus:  deckCard.HasCanvasBonus,
-			})
-		}
-
-		if len(cardData) > 1 {
-			teammates := cardData[1:]
-			sort.SliceStable(teammates, func(i, j int) bool {
-				left := deckInfo.Cards[i+1]
-				right := deckInfo.Cards[j+1]
-				if left.EventBonusRate != right.EventBonusRate {
-					return left.EventBonusRate > right.EventBonusRate
-				}
-				if left.MasterRank != right.MasterRank {
-					return left.MasterRank > right.MasterRank
-				}
-				if left.Level != right.Level {
-					return left.Level > right.Level
-				}
-				return left.CardID > right.CardID
-			})
-		}
-
-		deckItem := drawing.DeckData{
-			CardData:             cardData,
-			Score:                drawing.IntPtr(deckInfo.Score),
-			LiveScore:            drawing.IntPtr(deckInfo.LiveScore),
-			MySekaiEventPoint:    drawing.IntPtr(deckInfo.MysekaiEventPoint),
-			EventBonusRate:       float64Ptr(normalizeDeckDisplayRate(deckInfo.EventBonusRate)),
-			SupportDeckBonusRate: float64Ptr(normalizeDeckDisplayRate(deckInfo.SupportDeckBonusRate)),
-			MultiLiveScoreUp:     float64Ptr(normalizeDeckDisplayRate(deckInfo.MultiLiveScoreUp)),
-			TotalPower:           drawing.IntPtr(deckInfo.TotalPower),
-			ChallengeScoreDelta:  drawing.IntPtr(deckInfo.ChallengeScoreDelta),
-		}
-		if query.MusicCompare && index < len(musicCompareSelections) {
-			selection := musicCompareSelections[index]
-			deckItem.MusicID = drawing.IntPtr(selection.MusicID)
-			if strings.TrimSpace(selection.MusicDiff) != "" {
-				deckItem.MusicDiff = drawing.StringPtr(selection.MusicDiff)
-			}
-			if strings.TrimSpace(selection.MusicTitle) != "" {
-				deckItem.MusicTitle = drawing.StringPtr(selection.MusicTitle)
-			}
-			if strings.TrimSpace(selection.MusicCoverPath) != "" {
-				deckItem.MusicCoverPath = drawing.StringPtr(selection.MusicCoverPath)
-			}
-		}
-		deckData = append(deckData, deckItem)
-	}
+	userCardMap := c.recommendUserCardMap(preparedRaw)
+	deckData := c.buildRecommendDeckData(cardSource, region, result.Decks, userCardMap, query, musicCompareSelections)
 
 	target := "score"
 	if value, ok := option["target"].(string); ok && strings.TrimSpace(value) != "" {
@@ -143,6 +48,133 @@ func (c *Controller) buildDrawingRequestFromRecommendResult(region renderregion.
 	c.applyOptionRequestFields(request, option, query)
 	c.applyCommonRecommendMetadata(request, region, recType, metadataOption(option, recType, query), query)
 	return request, nil
+}
+
+func (c *Controller) recommendUserCardMap(preparedRaw *snapshot.RawUserData) map[int]snapshot.RawUserCard {
+	userCards := []snapshot.RawUserCard(nil)
+	if preparedRaw != nil {
+		userCards = preparedRaw.UserCards
+	} else if raw := c.snapshot.RawData(); raw != nil {
+		userCards = raw.UserCards
+	}
+	result := make(map[int]snapshot.RawUserCard, len(userCards))
+	for _, userCard := range userCards {
+		result[userCard.CardID] = userCard
+	}
+	return result
+}
+
+func (c *Controller) buildRecommendDeckData(
+	cardSource CardSource,
+	region renderregion.Value,
+	decks []RecommendDeck,
+	userCards map[int]snapshot.RawUserCard,
+	query AutoQuery,
+	musicCompareSelections []MusicCompareSelection,
+) []drawing.DeckData {
+	result := make([]drawing.DeckData, 0, len(decks))
+	for index, deckInfo := range decks {
+		cardData := c.buildRecommendDeckCards(cardSource, region, deckInfo.Cards, userCards)
+		sortRecommendDeckTeammates(cardData, deckInfo.Cards)
+		deckItem := recommendDeckDrawingData(deckInfo, cardData)
+		applyMusicCompareDrawingData(&deckItem, query, index, musicCompareSelections)
+		result = append(result, deckItem)
+	}
+	return result
+}
+
+func (c *Controller) buildRecommendDeckCards(cardSource CardSource, region renderregion.Value, cards []RecommendCard, userCards map[int]snapshot.RawUserCard) []drawing.DeckCardData {
+	result := make([]drawing.DeckCardData, 0, len(cards))
+	for _, deckCard := range cards {
+		card, err := c.cardByIDWithFallback(cardSource, region, deckCard.CardID)
+		if err != nil || card == nil {
+			continue
+		}
+		result = append(result, c.recommendDeckCardDrawingData(region, card, deckCard, userCards[deckCard.CardID]))
+	}
+	return result
+}
+
+func (c *Controller) recommendDeckCardDrawingData(region renderregion.Value, card *masterdata.Card, deckCard RecommendCard, userCard snapshot.RawUserCard) drawing.DeckCardData {
+	displayAfterTraining, trainedArt := resolveRecommendCardDisplayState(card, deckCard)
+	level := deckCard.Level
+	if level <= 0 {
+		level = 60
+	}
+	rareImgPath := ""
+	if strings.EqualFold(userCard.SpecialTrainingStatus, "done") {
+		rareImgPath = common.ResolveCardRareImagePath(c.assets, card, true)
+	}
+	return drawing.DeckCardData{
+		CardThumbnail: common.BuildCardThumbnail(c.assets, card, region, common.ThumbnailOptions{
+			AfterTraining: displayAfterTraining,
+			TrainedArt:    trainedArt,
+			RareImgPath:   rareImgPath,
+			TrainRank:     drawing.IntPtr(deckCard.MasterRank),
+			Level:         drawing.IntPtr(level),
+			IsPcard:       true,
+		}),
+		CharaID:         card.CharacterID,
+		SkillLevel:      fmt.Sprintf("%d", deckCard.SkillLevel),
+		IsAfterTraining: displayAfterTraining,
+		SkillRate:       normalizeDeckDisplayRate(deckCard.SkillRate),
+		EventBonusRate:  normalizeDeckDisplayRate(deckCard.EventBonusRate),
+		IsBeforeStory:   deckCard.IsBeforeStory,
+		IsAfterStory:    deckCard.IsAfterStory,
+		HasCanvasBonus:  deckCard.HasCanvasBonus,
+	}
+}
+
+func sortRecommendDeckTeammates(cardData []drawing.DeckCardData, cards []RecommendCard) {
+	if len(cardData) <= 1 {
+		return
+	}
+	teammates := cardData[1:]
+	sort.SliceStable(teammates, func(i, j int) bool {
+		left := cards[i+1]
+		right := cards[j+1]
+		if left.EventBonusRate != right.EventBonusRate {
+			return left.EventBonusRate > right.EventBonusRate
+		}
+		if left.MasterRank != right.MasterRank {
+			return left.MasterRank > right.MasterRank
+		}
+		if left.Level != right.Level {
+			return left.Level > right.Level
+		}
+		return left.CardID > right.CardID
+	})
+}
+
+func recommendDeckDrawingData(deck RecommendDeck, cards []drawing.DeckCardData) drawing.DeckData {
+	return drawing.DeckData{
+		CardData:             cards,
+		Score:                drawing.IntPtr(deck.Score),
+		LiveScore:            drawing.IntPtr(deck.LiveScore),
+		MySekaiEventPoint:    drawing.IntPtr(deck.MysekaiEventPoint),
+		EventBonusRate:       float64Ptr(normalizeDeckDisplayRate(deck.EventBonusRate)),
+		SupportDeckBonusRate: float64Ptr(normalizeDeckDisplayRate(deck.SupportDeckBonusRate)),
+		MultiLiveScoreUp:     float64Ptr(normalizeDeckDisplayRate(deck.MultiLiveScoreUp)),
+		TotalPower:           drawing.IntPtr(deck.TotalPower),
+		ChallengeScoreDelta:  drawing.IntPtr(deck.ChallengeScoreDelta),
+	}
+}
+
+func applyMusicCompareDrawingData(deck *drawing.DeckData, query AutoQuery, index int, selections []MusicCompareSelection) {
+	if !query.MusicCompare || index >= len(selections) {
+		return
+	}
+	selection := selections[index]
+	deck.MusicID = drawing.IntPtr(selection.MusicID)
+	if strings.TrimSpace(selection.MusicDiff) != "" {
+		deck.MusicDiff = drawing.StringPtr(selection.MusicDiff)
+	}
+	if strings.TrimSpace(selection.MusicTitle) != "" {
+		deck.MusicTitle = drawing.StringPtr(selection.MusicTitle)
+	}
+	if strings.TrimSpace(selection.MusicCoverPath) != "" {
+		deck.MusicCoverPath = drawing.StringPtr(selection.MusicCoverPath)
+	}
 }
 
 func metadataOption(option map[string]any, recType string, query AutoQuery) map[string]any {
@@ -221,6 +253,16 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	if target := optionString(option, "target"); target != "" {
 		request.Target = drawing.StringPtr(target)
 	}
+	applyRecommendMusicRequestFields(request, option, query)
+	if option == nil {
+		return
+	}
+	applyRecommendScoringRequestFields(request, option)
+	applyRecommendStrategyRequestFields(request, option)
+	applyRecommendDeckSelectionRequestFields(request, option)
+}
+
+func applyRecommendMusicRequestFields(request *drawing.DeckRequest, option map[string]any, query AutoQuery) {
 	if !query.MusicCompare {
 		if musicID := optionInt(option, "music_id"); musicID > 0 {
 			request.MusicID = drawing.IntPtr(musicID)
@@ -239,9 +281,9 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 			request.MusicDiff = drawing.StringPtr(diff)
 		}
 	}
-	if option == nil {
-		return
-	}
+}
+
+func applyRecommendScoringRequestFields(request *drawing.DeckRequest, option map[string]any) {
 	if teammatePower := optionInt(option, "multi_live_teammate_power"); teammatePower > 0 {
 		request.MultiLiveTeammatePower = drawing.IntPtr(teammatePower)
 	}
@@ -254,6 +296,9 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	if lowerBound, ok := optionFloat(option, "multi_live_score_up_lower_bound"); ok {
 		request.MultiLiveScoreUpLowerBound = float64Ptr(lowerBound)
 	}
+}
+
+func applyRecommendStrategyRequestFields(request *drawing.DeckRequest, option map[string]any) {
 	if strategy := optionString(option, "skill_order_choose_strategy"); strategy != "" {
 		request.SkillOrderChooseStrategy = drawing.StringPtr(strategy)
 	}
@@ -266,6 +311,9 @@ func (c *Controller) applyOptionRequestFields(request *drawing.DeckRequest, opti
 	if attrFilter := optionString(option, "attr_filter"); attrFilter != "" {
 		request.AttrFilter = drawing.StringPtr(attrFilter)
 	}
+}
+
+func applyRecommendDeckSelectionRequestFields(request *drawing.DeckRequest, option map[string]any) {
 	if excludedCards, ok := option["excluded_cards"].([]int); ok && len(excludedCards) > 0 {
 		request.ExcludedCards = slices.Clone(excludedCards)
 	}

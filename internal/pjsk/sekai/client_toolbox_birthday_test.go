@@ -13,44 +13,68 @@ import (
 	json "haruki-cloud/internal/jsonutil"
 )
 
-func TestToolboxBirthdayMonitorLifecycle(t *testing.T) {
-	var mu sync.Mutex
-	requests := make(map[string]int)
-	var authorization, userAgent, deleteVersion string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
-		mu.Lock()
-		requests[request.Method+" "+request.URL.Path]++
-		authorization = request.Header.Get("Authorization")
-		userAgent = request.Header.Get("User-Agent")
-		if request.Method == http.MethodDelete {
-			deleteVersion = request.URL.Query().Get("subscription_version")
-		}
-		mu.Unlock()
+type birthdayRequestRecorder struct {
+	mu            sync.Mutex
+	requests      map[string]int
+	authorization string
+	userAgent     string
+	deleteVersion string
+}
 
-		switch {
-		case request.Method == http.MethodPut && request.URL.Path == "/internal/mysekai-birthday-monitors/7":
-			var body MysekaiBirthdayMonitorUpsertRequest
-			if err := json.NewDecoder(request.Body).Decode(&body); err != nil || body.SubscriptionVersion != "v7" {
-				http.Error(w, "bad body", http.StatusBadRequest)
-				return
-			}
-			w.WriteHeader(http.StatusNoContent)
-		case request.Method == http.MethodDelete && request.URL.Path == "/internal/mysekai-birthday-monitors/7":
-			w.WriteHeader(http.StatusNoContent)
-		case request.Method == http.MethodGet && request.URL.Path == "/internal/mysekai-birthday-events/9":
-			_ = json.NewEncoder(w).Encode(MysekaiBirthdayEvent{
-				EventID:             "9",
-				SubscriptionID:      request.URL.Query().Get("subscription_id"),
-				SubscriptionVersion: request.URL.Query().Get("subscription_version"),
-				Region:              "jp",
-				UID:                 "123",
-			})
-		case request.Method == http.MethodPost && request.URL.Path == "/internal/mysekai-birthday-events/9/ack":
-			w.WriteHeader(http.StatusNoContent)
-		default:
-			http.NotFound(w, request)
-		}
-	}))
+func newBirthdayRequestRecorder() *birthdayRequestRecorder {
+	return &birthdayRequestRecorder{requests: make(map[string]int)}
+}
+
+func (recorder *birthdayRequestRecorder) handler(w http.ResponseWriter, request *http.Request) {
+	recorder.record(request)
+
+	switch {
+	case request.Method == http.MethodPut && request.URL.Path == "/internal/mysekai-birthday-monitors/7":
+		recorder.handleUpsert(w, request)
+	case request.Method == http.MethodDelete && request.URL.Path == "/internal/mysekai-birthday-monitors/7":
+		w.WriteHeader(http.StatusNoContent)
+	case request.Method == http.MethodGet && request.URL.Path == "/internal/mysekai-birthday-events/9":
+		recorder.handleEventLookup(w, request)
+	case request.Method == http.MethodPost && request.URL.Path == "/internal/mysekai-birthday-events/9/ack":
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		http.NotFound(w, request)
+	}
+}
+
+func (recorder *birthdayRequestRecorder) record(request *http.Request) {
+	recorder.mu.Lock()
+	defer recorder.mu.Unlock()
+	recorder.requests[request.Method+" "+request.URL.Path]++
+	recorder.authorization = request.Header.Get("Authorization")
+	recorder.userAgent = request.Header.Get("User-Agent")
+	if request.Method == http.MethodDelete {
+		recorder.deleteVersion = request.URL.Query().Get("subscription_version")
+	}
+}
+
+func (recorder *birthdayRequestRecorder) handleUpsert(w http.ResponseWriter, request *http.Request) {
+	var body MysekaiBirthdayMonitorUpsertRequest
+	if err := json.NewDecoder(request.Body).Decode(&body); err != nil || body.SubscriptionVersion != "v7" {
+		http.Error(w, "bad body", http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (recorder *birthdayRequestRecorder) handleEventLookup(w http.ResponseWriter, request *http.Request) {
+	_ = json.NewEncoder(w).Encode(MysekaiBirthdayEvent{
+		EventID:             "9",
+		SubscriptionID:      request.URL.Query().Get("subscription_id"),
+		SubscriptionVersion: request.URL.Query().Get("subscription_version"),
+		Region:              "jp",
+		UID:                 "123",
+	})
+}
+
+func TestToolboxBirthdayMonitorLifecycle(t *testing.T) {
+	recorder := newBirthdayRequestRecorder()
+	server := httptest.NewServer(http.HandlerFunc(recorder.handler))
 	defer server.Close()
 
 	client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL + "/", APIToken: "toolbox-token", UserAgent: "toolbox-test"})
@@ -71,10 +95,10 @@ func TestToolboxBirthdayMonitorLifecycle(t *testing.T) {
 		t.Fatalf("ack birthday event: %v", err)
 	}
 
-	mu.Lock()
-	defer mu.Unlock()
-	if authorization != "toolbox-token" || userAgent != "toolbox-test" || deleteVersion != "v7" {
-		t.Fatalf("request metadata = auth:%q ua:%q version:%q", authorization, userAgent, deleteVersion)
+	recorder.mu.Lock()
+	defer recorder.mu.Unlock()
+	if recorder.authorization != "toolbox-token" || recorder.userAgent != "toolbox-test" || recorder.deleteVersion != "v7" {
+		t.Fatalf("request metadata = auth:%q ua:%q version:%q", recorder.authorization, recorder.userAgent, recorder.deleteVersion)
 	}
 	for _, key := range []string{
 		"PUT /internal/mysekai-birthday-monitors/7",
@@ -82,8 +106,8 @@ func TestToolboxBirthdayMonitorLifecycle(t *testing.T) {
 		"GET /internal/mysekai-birthday-events/9",
 		"POST /internal/mysekai-birthday-events/9/ack",
 	} {
-		if requests[key] != 1 {
-			t.Fatalf("request %q count = %d", key, requests[key])
+		if recorder.requests[key] != 1 {
+			t.Fatalf("request %q count = %d", key, recorder.requests[key])
 		}
 	}
 }

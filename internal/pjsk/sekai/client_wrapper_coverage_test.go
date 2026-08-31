@@ -44,6 +44,59 @@ func TestSekaiAPIContextAndThumbnailWrappers(t *testing.T) {
 }
 
 func TestToolboxConvenienceWrappers(t *testing.T) {
+	client := newToolboxConvenienceTestClient(t)
+	ctx := context.Background()
+
+	conditional, notModified, err := client.GetMySekaiDataConditionalContext(ctx, "jp", 123, "qq", "456", 0)
+	if err != nil || notModified || !strings.Contains(string(conditional), "snapshot") {
+		t.Fatalf("conditional mysekai = %q,%v,%v", conditional, notModified, err)
+	}
+
+	assertToolboxBytesCall(t, "suite", func() ([]byte, error) {
+		return client.GetSuiteData("jp", 123, "qq", "456")
+	})
+	assertToolboxBytesCall(t, "mysekai", func() ([]byte, error) {
+		return client.GetMySekaiData("jp", 123, "qq", "456")
+	})
+	assertToolboxBytesCall(t, "mysekai ctx", func() ([]byte, error) {
+		return client.GetMySekaiDataContext(ctx, "jp", 123, "qq", "456")
+	})
+	assertToolboxBytesCall(t, "values ctx", func() ([]byte, error) {
+		return client.GetPrivateDataValuesContext(ctx, "jp", ToolboxDataTypeSuite, 123, "qq", "456", "a", "b")
+	})
+	assertToolboxBytesCall(t, "upload wrapper", func() ([]byte, error) {
+		return client.GetUploadTime("jp", ToolboxDataTypeSuite, 123, "qq", "456")
+	})
+}
+
+func TestToolboxUploadTimeWrappers(t *testing.T) {
+	client := newToolboxConvenienceTestClient(t)
+	ctx := context.Background()
+
+	if got, err := client.GetSuiteUploadTimeContext(ctx, "jp", 123, "qq", "456"); err != nil || got != 123 {
+		t.Fatalf("suite upload time = %d,%v", got, err)
+	}
+	if got, err := client.GetMySekaiUploadTimeContext(ctx, "jp", 123, "qq", "456"); err != nil || got != 123 {
+		t.Fatalf("mysekai upload time = %d,%v", got, err)
+	}
+}
+
+func TestToolboxBindingWrappers(t *testing.T) {
+	client := newToolboxConvenienceTestClient(t)
+	ctx := context.Background()
+
+	bindings, err := client.GetToolboxUserFastVerificationGameAccountBindings("qq", "456")
+	if err != nil || len(bindings) != 1 || bindings[0].GameUserID != "123" {
+		t.Fatalf("bindings wrapper = %+v,%v", bindings, err)
+	}
+	bindings, err = client.GetToolboxUserFastVerificationGameAccountBindingsContext(ctx, "qq", "456")
+	if err != nil || len(bindings) != 1 {
+		t.Fatalf("bindings context wrapper = %+v,%v", bindings, err)
+	}
+}
+
+func newToolboxConvenienceTestClient(t *testing.T) *HarukiToolboxClient {
+	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/private/game-binding" {
 			_, _ = w.Write([]byte(`[{"server":"jp","gameUserId":"123"}]`))
@@ -62,40 +115,14 @@ func TestToolboxConvenienceWrappers(t *testing.T) {
 			_, _ = w.Write([]byte(`{"snapshot":true}`))
 		}
 	}))
-	defer server.Close()
-	client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL, APIToken: "token"})
-	ctx := context.Background()
+	t.Cleanup(server.Close)
+	return NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL, APIToken: "token"})
+}
 
-	conditional, notModified, err := client.GetMySekaiDataConditionalContext(ctx, "jp", 123, "qq", "456", 0)
-	if err != nil || notModified || !strings.Contains(string(conditional), "snapshot") {
-		t.Fatalf("conditional mysekai = %q,%v,%v", conditional, notModified, err)
-	}
-	for name, call := range map[string]func() ([]byte, error){
-		"suite":       func() ([]byte, error) { return client.GetSuiteData("jp", 123, "qq", "456") },
-		"mysekai":     func() ([]byte, error) { return client.GetMySekaiData("jp", 123, "qq", "456") },
-		"mysekai ctx": func() ([]byte, error) { return client.GetMySekaiDataContext(ctx, "jp", 123, "qq", "456") },
-		"values ctx": func() ([]byte, error) {
-			return client.GetPrivateDataValuesContext(ctx, "jp", ToolboxDataTypeSuite, 123, "qq", "456", "a", "b")
-		},
-		"upload wrapper": func() ([]byte, error) { return client.GetUploadTime("jp", ToolboxDataTypeSuite, 123, "qq", "456") },
-	} {
-		data, err := call()
-		if err != nil || len(data) == 0 {
-			t.Fatalf("%s = %q,%v", name, data, err)
-		}
-	}
-	if got, err := client.GetSuiteUploadTimeContext(ctx, "jp", 123, "qq", "456"); err != nil || got != 123 {
-		t.Fatalf("suite upload time = %d,%v", got, err)
-	}
-	if got, err := client.GetMySekaiUploadTimeContext(ctx, "jp", 123, "qq", "456"); err != nil || got != 123 {
-		t.Fatalf("mysekai upload time = %d,%v", got, err)
-	}
-	bindings, err := client.GetToolboxUserFastVerificationGameAccountBindings("qq", "456")
-	if err != nil || len(bindings) != 1 || bindings[0].GameUserID != "123" {
-		t.Fatalf("bindings wrapper = %+v,%v", bindings, err)
-	}
-	bindings, err = client.GetToolboxUserFastVerificationGameAccountBindingsContext(ctx, "qq", "456")
-	if err != nil || len(bindings) != 1 {
-		t.Fatalf("bindings context wrapper = %+v,%v", bindings, err)
+func assertToolboxBytesCall(t *testing.T, name string, call func() ([]byte, error)) {
+	t.Helper()
+	data, err := call()
+	if err != nil || len(data) == 0 {
+		t.Fatalf("%s = %q,%v", name, data, err)
 	}
 }

@@ -55,17 +55,7 @@ func TestTrackerClientDeduplicatesConcurrentCloudV2GETByPath(t *testing.T) {
 	}
 	wg.Add(callers)
 	for index := range callers {
-		go func(index int) {
-			defer wg.Done()
-			resp, err := client.WithContext(contexts[index]).GetCloudSKQuery("jp", 101, nil, []int{100}, nil, false, false, 3600)
-			if err != nil {
-				errs <- err
-				return
-			}
-			if len(resp.Ranks) != 1 || resp.Ranks[0].Rank != 100 || resp.Ranks[0].Name != "Tester" {
-				t.Errorf("unexpected response: %+v", resp)
-			}
-		}(index)
+		go executeTrackerQuery(t, client, contexts[index], errs, &wg)
 	}
 
 	select {
@@ -84,6 +74,27 @@ func TestTrackerClientDeduplicatesConcurrentCloudV2GETByPath(t *testing.T) {
 	if got := hits.Load(); got != 1 {
 		t.Fatalf("expected one upstream GET, got %d", got)
 	}
+	sharedCount := assertTrackerTraceOperations(t, traces)
+	if sharedCount != callers-1 {
+		t.Fatalf("tracker.shared count = %d, want %d", sharedCount, callers-1)
+	}
+}
+
+func executeTrackerQuery(t *testing.T, client *TrackerClient, ctx context.Context, errs chan<- error, wg *sync.WaitGroup) {
+	t.Helper()
+	defer wg.Done()
+	resp, err := client.WithContext(ctx).GetCloudSKQuery("jp", 101, nil, []int{100}, nil, false, false, 3600)
+	if err != nil {
+		errs <- err
+		return
+	}
+	if len(resp.Ranks) != 1 || resp.Ranks[0].Rank != 100 || resp.Ranks[0].Name != "Tester" {
+		t.Errorf("unexpected response: %+v", resp)
+	}
+}
+
+func assertTrackerTraceOperations(t *testing.T, traces []*commandtrace.Trace) int {
+	t.Helper()
 	sharedCount := 0
 	for index, trace := range traces {
 		for _, operation := range []string{"tracker.wait", "tracker.http", "tracker.decode"} {
@@ -93,9 +104,7 @@ func TestTrackerClientDeduplicatesConcurrentCloudV2GETByPath(t *testing.T) {
 		}
 		sharedCount += trackerTraceOperationCount(trace, "tracker.shared")
 	}
-	if sharedCount != callers-1 {
-		t.Fatalf("tracker.shared count = %d, want %d", sharedCount, callers-1)
-	}
+	return sharedCount
 }
 
 func trackerTraceOperationCount(trace *commandtrace.Trace, name string) int {

@@ -330,56 +330,54 @@ func TestToolboxConditionalFetchZeroKnownFetchesDirectly(t *testing.T) {
 	}
 }
 
-func TestToolboxConditionalFetchEmulationPropagatesProbeErrors(t *testing.T) {
-	t.Run("authorization error", func(t *testing.T) {
-		var requests int
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			requests++
-			if r.URL.Query().Get("key") != "upload_time" {
-				t.Fatal("a failing probe must not be followed by a full fetch")
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusForbidden)
-			_, _ = w.Write([]byte(`{"message":"invalid platform or platform_user_id"}`))
-		}))
-		defer server.Close()
+func TestToolboxConditionalFetchPropagatesAuthorizationProbeError(t *testing.T) {
+	var requests int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if r.URL.Query().Get("key") != "upload_time" {
+			t.Fatal("a failing probe must not be followed by a full fetch")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"message":"invalid platform or platform_user_id"}`))
+	}))
+	defer server.Close()
 
-		client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL})
-		data, notModified, err := client.GetSuiteDataConditionalContext(context.Background(), "jp", 123456789, "qq", "10001", 1710000000)
-		if !errors.Is(err, ErrInvalidPlatformUser) {
-			t.Fatalf("probe error must propagate, got %v", err)
-		}
-		if notModified || data != nil {
-			t.Fatalf("probe error must not report data (notModified=%v data=%q)", notModified, data)
-		}
-		if requests != 1 {
-			t.Fatalf("failing probe must issue exactly one request, got %d", requests)
-		}
-	})
+	client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL})
+	data, notModified, err := client.GetSuiteDataConditionalContext(context.Background(), "jp", 123456789, "qq", "10001", 1710000000)
+	if !errors.Is(err, ErrInvalidPlatformUser) {
+		t.Fatalf("probe error must propagate, got %v", err)
+	}
+	if notModified || data != nil {
+		t.Fatalf("probe error must not report data (notModified=%v data=%q)", notModified, data)
+	}
+	if requests != 1 {
+		t.Fatalf("failing probe must issue exactly one request, got %d", requests)
+	}
+}
 
-	t.Run("unparseable upload_time", func(t *testing.T) {
-		var requests int
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			requests++
-			if r.URL.Query().Get("key") != "upload_time" {
-				t.Fatal("an unparseable probe must not be followed by a full fetch")
-			}
-			_, _ = w.Write([]byte("not-a-number"))
-		}))
-		defer server.Close()
+func TestToolboxConditionalFetchPropagatesInvalidUploadTime(t *testing.T) {
+	var requests int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if r.URL.Query().Get("key") != "upload_time" {
+			t.Fatal("an unparseable probe must not be followed by a full fetch")
+		}
+		_, _ = w.Write([]byte("not-a-number"))
+	}))
+	defer server.Close()
 
-		client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL})
-		data, notModified, err := client.GetSuiteDataConditionalContext(context.Background(), "jp", 123456789, "qq", "10001", 1710000000)
-		if err == nil || !strings.Contains(err.Error(), "invalid upload_time") {
-			t.Fatalf("parse error must propagate, got %v", err)
-		}
-		if notModified || data != nil {
-			t.Fatalf("parse error must not report data (notModified=%v data=%q)", notModified, data)
-		}
-		if requests != 1 {
-			t.Fatalf("unparseable probe must issue exactly one request, got %d", requests)
-		}
-	})
+	client := NewToolboxClient(&config.ToolboxConfig{BaseURL: server.URL})
+	data, notModified, err := client.GetSuiteDataConditionalContext(context.Background(), "jp", 123456789, "qq", "10001", 1710000000)
+	if err == nil || !strings.Contains(err.Error(), "invalid upload_time") {
+		t.Fatalf("parse error must propagate, got %v", err)
+	}
+	if notModified || data != nil {
+		t.Fatalf("parse error must not report data (notModified=%v data=%q)", notModified, data)
+	}
+	if requests != 1 {
+		t.Fatalf("unparseable probe must issue exactly one request, got %d", requests)
+	}
 }
 
 func TestToolboxConditionalFetchMapsErrorStatusWithoutServingNotModified(t *testing.T) {

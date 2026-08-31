@@ -82,29 +82,38 @@ func selectBinding(items []BindingListItem, selector, server string) (BindingLis
 
 	lower := strings.ToLower(selector)
 	if strings.HasPrefix(lower, "u") {
-		index, err := strconv.Atoi(strings.TrimSpace(lower[1:]))
-		if err != nil || index <= 0 {
-			return BindingListItem{}, fmt.Errorf("请提供正确的u序号，例如 u1")
-		}
-
-		scopedItems := items
-		if normalizedServer := normalizeSelectorServer(server); normalizedServer != "" {
-			scopedItems = filterBindingsByServer(items, normalizedServer)
-			if len(scopedItems) == 0 {
-				return BindingListItem{}, fmt.Errorf("你还没有绑定任何%s服账号", strings.ToUpper(normalizedServer))
-			}
-			if index > len(scopedItems) {
-				return BindingListItem{}, fmt.Errorf("指定的%s服账号序号超出范围，目前仅绑定了%d个账号", strings.ToUpper(normalizedServer), len(scopedItems))
-			}
-			return scopedItems[index-1], nil
-		}
-
-		if index > len(scopedItems) {
-			return BindingListItem{}, fmt.Errorf("指定的账号序号超出范围，目前仅绑定了%d个账号", len(scopedItems))
-		}
-		return scopedItems[index-1], nil
+		return selectBindingByIndex(items, lower, server)
 	}
+	return selectBindingByUID(items, selector)
+}
 
+func selectBindingByIndex(items []BindingListItem, selector, server string) (BindingListItem, error) {
+	index, err := strconv.Atoi(strings.TrimSpace(selector[1:]))
+	if err != nil || index <= 0 {
+		return BindingListItem{}, fmt.Errorf("请提供正确的u序号，例如 u1")
+	}
+	normalizedServer := normalizeSelectorServer(server)
+	if normalizedServer == "" {
+		return bindingAtIndex(items, index, "")
+	}
+	scopedItems := filterBindingsByServer(items, normalizedServer)
+	if len(scopedItems) == 0 {
+		return BindingListItem{}, fmt.Errorf("你还没有绑定任何%s服账号", strings.ToUpper(normalizedServer))
+	}
+	return bindingAtIndex(scopedItems, index, normalizedServer)
+}
+
+func bindingAtIndex(items []BindingListItem, index int, server string) (BindingListItem, error) {
+	if index <= len(items) {
+		return items[index-1], nil
+	}
+	if server != "" {
+		return BindingListItem{}, fmt.Errorf("指定的%s服账号序号超出范围，目前仅绑定了%d个账号", strings.ToUpper(server), len(items))
+	}
+	return BindingListItem{}, fmt.Errorf("指定的账号序号超出范围，目前仅绑定了%d个账号", len(items))
+}
+
+func selectBindingByUID(items []BindingListItem, selector string) (BindingListItem, error) {
 	var matched []BindingListItem
 	for _, item := range items {
 		if item.UserID == selector {

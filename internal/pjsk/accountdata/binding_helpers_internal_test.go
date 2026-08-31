@@ -14,15 +14,18 @@ func bindingWithOrder(id, displayOrder int, server, userID string) *pjskdb.UserB
 	return &pjskdb.UserBinding{ID: id, DisplayOrder: displayOrder, Edges: pjskdb.UserBindingEdges{GameAccount: &pjskdb.GameAccount{Server: server, UserID: userID}}}
 }
 
-func TestBuildBindingListAssignsPerServerIndicesAndSelectsWithinServer(t *testing.T) {
-	items := buildBindingList([]*pjskdb.UserBinding{
+func perServerBindingItems() []BindingListItem {
+	return buildBindingList([]*pjskdb.UserBinding{
 		binding(1, "jp", "2000"),
 		binding(2, "cn", "1000"),
 		binding(3, "jp", "3000"),
 		binding(4, "cn", "1500"),
 		binding(5, "en", "4000"),
 	}, nil)
+}
 
+func TestBuildBindingListAssignsPerServerIndices(t *testing.T) {
+	items := perServerBindingItems()
 	if len(items) != 5 {
 		t.Fatalf("expected 5 items, got %d", len(items))
 	}
@@ -42,7 +45,10 @@ func TestBuildBindingListAssignsPerServerIndicesAndSelectsWithinServer(t *testin
 	if items[4].Server != "en" || items[4].Index != 1 {
 		t.Fatalf("unexpected fifth item: %+v", items[4])
 	}
+}
 
+func TestSelectBindingWithinServer(t *testing.T) {
+	items := perServerBindingItems()
 	jpSecond, err := selectBinding(items, "u2", "jp")
 	if err != nil {
 		t.Fatalf("select jp u2: %v", err)

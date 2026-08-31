@@ -184,31 +184,35 @@ func (s *BanService) CheckBan(ctx context.Context, platform, userID string, modu
 		return globalBanError(status)
 	}
 
-	if isPJSKModule(module) {
-		if u.PjskBanState {
-			return banError("PJSK 功能", u.PjskBanReason)
-		}
-		switch featureBanFor(module) {
-		case featureMain:
-			if u.PjskMainBanState {
-				return banError("PJSK 主要功能", u.PjskMainBanReason)
-			}
-		case featureRanking:
-			if u.PjskRankingBanState {
-				return banError("PJSK 排名功能", u.PjskRankingBanReason)
-			}
-		case featureAlias:
-			if u.PjskAliasBanState {
-				return banError("PJSK 别名功能", u.PjskAliasBanReason)
-			}
-		case featureMysekai:
-			if u.PjskMysekaiBanState {
-				return banError("PJSK MySekai 功能", u.PjskMysekaiBanReason)
-			}
-		}
+	if !isPJSKModule(module) {
+		return nil
 	}
+	return pjskBanError(u, featureBanFor(module))
+}
 
-	return nil
+func pjskBanError(u *usersdb.User, feature featureCategory) error {
+	if u.PjskBanState {
+		return banError("PJSK 功能", u.PjskBanReason)
+	}
+	switch feature {
+	case featureMain:
+		return activeFeatureBanError(u.PjskMainBanState, "PJSK 主要功能", u.PjskMainBanReason)
+	case featureRanking:
+		return activeFeatureBanError(u.PjskRankingBanState, "PJSK 排名功能", u.PjskRankingBanReason)
+	case featureAlias:
+		return activeFeatureBanError(u.PjskAliasBanState, "PJSK 别名功能", u.PjskAliasBanReason)
+	case featureMysekai:
+		return activeFeatureBanError(u.PjskMysekaiBanState, "PJSK MySekai 功能", u.PjskMysekaiBanReason)
+	default:
+		return nil
+	}
+}
+
+func activeFeatureBanError(active bool, label, reason string) error {
+	if !active {
+		return nil
+	}
+	return banError(label, reason)
 }
 
 func globalBanStatusForUser(u *usersdb.User) GlobalBanStatus {

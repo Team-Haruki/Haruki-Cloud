@@ -21,7 +21,7 @@ func openBanCoverageService(t *testing.T, name string) (*BanService, *usersdb.Cl
 	return NewBanService(client), client
 }
 
-func TestBanServiceValidationAndFeatureHierarchyBranches(t *testing.T) {
+func TestBanServiceDefensiveBranches(t *testing.T) {
 	ctx := context.Background()
 	var nilService *BanService
 	nilService.SetAdminQQIDs(nil)
@@ -42,7 +42,7 @@ func TestBanServiceValidationAndFeatureHierarchyBranches(t *testing.T) {
 		t.Fatal("nil Back should fail")
 	}
 
-	service, client := openBanCoverageService(t, "hierarchy")
+	service, _ := openBanCoverageService(t, "hierarchy")
 	service.SetAdminQQIDs([]string{"", "-1", "abc", " 00042 ", "42"})
 	if !service.IsAdmin("qq", "42") || !service.IsAdmin(" qq ", " 42 ") || service.IsAdmin("discord", "42") {
 		t.Fatal("admin roster normalization mismatch")
@@ -53,7 +53,11 @@ func TestBanServiceValidationAndFeatureHierarchyBranches(t *testing.T) {
 	if banned, err := service.IsGloballyBanned(ctx, "qq", "missing"); err != nil || banned {
 		t.Fatalf("missing IsGloballyBanned = %v, %v", banned, err)
 	}
+}
 
+func TestBanServiceMutationValidationBranches(t *testing.T) {
+	ctx := context.Background()
+	service, _ := openBanCoverageService(t, "validation")
 	for _, test := range []struct {
 		qqID      string
 		reason    string
@@ -85,7 +89,11 @@ func TestBanServiceValidationAndFeatureHierarchyBranches(t *testing.T) {
 	if err := service.Back(ctx, "999"); err == nil {
 		t.Fatal("Back for a missing user should fail")
 	}
+}
 
+func TestBanServiceFeatureHierarchyBranches(t *testing.T) {
+	ctx := context.Background()
+	service, client := openBanCoverageService(t, "feature_hierarchy")
 	if _, err := client.User.Create().
 		SetID(100).
 		SetPlatform("qq").
@@ -118,12 +126,19 @@ func TestBanServiceValidationAndFeatureHierarchyBranches(t *testing.T) {
 	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleAlias); err == nil || !strings.Contains(err.Error(), "alias reason") {
 		t.Fatalf("alias feature ban = %v", err)
 	}
-	if _, err := client.User.UpdateOneID(100).
-		SetPjskAliasBanState(false).
+}
+
+func TestBanServiceModuleAndGlobalHierarchyBranches(t *testing.T) {
+	ctx := context.Background()
+	service, client := openBanCoverageService(t, "module_global_hierarchy")
+	if _, err := client.User.Create().
+		SetID(100).
+		SetPlatform("qq").
+		SetUserID("100").
 		SetPjskMysekaiBanState(true).
 		SetPjskMysekaiBanReason("mysekai reason").
 		Save(ctx); err != nil {
-		t.Fatalf("update MySekai ban: %v", err)
+		t.Fatalf("create MySekai-banned user: %v", err)
 	}
 	if err := service.CheckBan(ctx, "qq", "100", parser.ModuleMysekai); err == nil || !strings.Contains(err.Error(), "mysekai reason") {
 		t.Fatalf("MySekai feature ban = %v", err)
@@ -157,7 +172,7 @@ func TestBanServiceValidationAndFeatureHierarchyBranches(t *testing.T) {
 	}
 }
 
-func TestBanServicePureStatusAndModuleMappings(t *testing.T) {
+func TestGlobalBanStatusHelpers(t *testing.T) {
 	if globalBanStatusForUser(nil).Active || globalBanStatusForUser(&usersdb.User{}).Active {
 		t.Fatal("nil/inactive user should not have a global ban")
 	}
@@ -182,6 +197,9 @@ func TestBanServicePureStatusAndModuleMappings(t *testing.T) {
 	if err := banError("功能", "reason"); err == nil || !strings.Contains(err.Error(), "reason") {
 		t.Fatalf("reasoned ban error = %v", err)
 	}
+}
+
+func TestBanModuleMappings(t *testing.T) {
 	for _, module := range []parser.TargetModule{
 		parser.ModuleCard, parser.ModuleGacha, parser.ModuleMusic, parser.ModuleEvent,
 		parser.ModuleDeck, parser.ModuleSK, parser.ModuleMysekai, parser.ModuleProfile,
@@ -202,7 +220,9 @@ func TestBanServicePureStatusAndModuleMappings(t *testing.T) {
 	if featureNone != 0 {
 		t.Fatal("featureNone should remain the zero value")
 	}
+}
 
+func TestBanServiceDatabaseErrorBranches(t *testing.T) {
 	service, client := openBanCoverageService(t, "errors")
 	if err := client.Close(); err != nil {
 		t.Fatalf("close users DB: %v", err)

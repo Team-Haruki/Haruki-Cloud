@@ -636,7 +636,13 @@ func TestPreview3DRegistryRawAccessorySelectionOrdering(t *testing.T) {
 
 func TestPreview3DRegistryPartSelectionHelperBranches(t *testing.T) {
 	role := preview3DCharacterEntry{Character3DID: 1, CharacterID: 1, Unit: "a"}
-	registry := &preview3DRegistry{
+	registry := preview3DPartSelectionCoverageRegistry()
+	testPreview3DPartSelections(t, registry, role)
+	testPreview3DPartPreferences(t, role)
+}
+
+func preview3DPartSelectionCoverageRegistry() *preview3DRegistry {
+	return &preview3DRegistry{
 		parts: []preview3DPartEntry{
 			{Costume3DID: 700, PartType: "body", CharacterID: 1, Unit: "", ColorID: 1, OutfitID: 7, Status: "available"},
 			{Costume3DID: 701, PartType: "body", CharacterID: 1, Unit: "a", ColorID: 1, OutfitID: 7, Status: "available"},
@@ -656,7 +662,10 @@ func TestPreview3DRegistryPartSelectionHelperBranches(t *testing.T) {
 			{Costume3DID: 725, PartType: "hair", CharacterID: 1, Unit: "a", Status: "missing"},
 		},
 	}
+}
 
+func testPreview3DPartSelections(t *testing.T, registry *preview3DRegistry, role preview3DCharacterEntry) {
+	t.Helper()
 	if part, ok := registry.outfitPartForRole(7, 1, role); !ok || part.Costume3DID != 701 {
 		t.Fatalf("outfit exact-unit selection = %+v, %t", part, ok)
 	}
@@ -680,7 +689,10 @@ func TestPreview3DRegistryPartSelectionHelperBranches(t *testing.T) {
 	if part, ok := registry.defaultHeadOptionalPartForRole(role); !ok || part.Costume3DID != 708 {
 		t.Fatalf("default empty head selection = %+v, %t", part, ok)
 	}
+}
 
+func testPreview3DPartPreferences(t *testing.T, role preview3DCharacterEntry) {
+	t.Helper()
 	if !preferPreview3DHeadPart(
 		preview3DPartEntry{Unit: "a", ColorID: 2},
 		preview3DPartEntry{Unit: "", ColorID: 1},

@@ -1742,27 +1742,7 @@ func TestPreview3DRegistryDecodeErrorKeepsRegistryPrefix(t *testing.T) {
 func TestPreview3DEnsureCaptureSerializesMisses(t *testing.T) {
 	var active atomic.Int32
 	var maxActive atomic.Int32
-	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
-			http.NotFound(w, r)
-			return
-		}
-		if r.URL.Path == "/capture" {
-			current := active.Add(1)
-			for {
-				previous := maxActive.Load()
-				if current <= previous || maxActive.CompareAndSwap(previous, current) {
-					break
-				}
-			}
-			time.Sleep(20 * time.Millisecond)
-			active.Add(-1)
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"ok":true}`)
-			return
-		}
-		t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
-	}))
+	engine := httptest.NewServer(serializedCaptureTestHandler(t, &active, &maxActive))
 	defer engine.Close()
 
 	service := NewPreview3DService(Preview3DConfig{
@@ -1783,11 +1763,47 @@ func TestPreview3DEnsureCaptureSerializesMisses(t *testing.T) {
 		t.Fatalf("cn endpoint: %v", err)
 	}
 
+	runConcurrentCaptureRequests(t, service, []preview3DEndpoint{jpEndpoint, cnEndpoint})
+	if maxActive.Load() != 1 {
+		t.Fatalf("expected serialized captures, max active=%d", maxActive.Load())
+	}
+}
+
+func serializedCaptureTestHandler(t *testing.T, active, maxActive *atomic.Int32) http.Handler {
+	t.Helper()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
+			http.NotFound(w, r)
+			return
+		}
+		if r.URL.Path == "/capture" {
+			current := active.Add(1)
+			updateMaxActiveCaptureCount(maxActive, current)
+			time.Sleep(20 * time.Millisecond)
+			active.Add(-1)
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"ok":true}`)
+			return
+		}
+		t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+	})
+}
+
+func updateMaxActiveCaptureCount(maxActive *atomic.Int32, current int32) {
+	for {
+		previous := maxActive.Load()
+		if current <= previous || maxActive.CompareAndSwap(previous, current) {
+			return
+		}
+	}
+}
+
+func runConcurrentCaptureRequests(t *testing.T, service *Preview3DService, endpoints []preview3DEndpoint) {
+	t.Helper()
 	selections := []preview3DSelection{
 		{ImageID: "pjsk3d_a", RoleID: "1:unit", BodyCostume3DID: 1, HeadCostume3DID: 2, HairCostume3DID: 3},
 		{ImageID: "pjsk3d_b", RoleID: "1:unit", BodyCostume3DID: 1, HeadCostume3DID: 2, HairCostume3DID: 4},
 	}
-	endpoints := []preview3DEndpoint{jpEndpoint, cnEndpoint}
 	var wg sync.WaitGroup
 	errs := make(chan error, len(selections))
 	for index, selection := range selections {
@@ -1803,9 +1819,6 @@ func TestPreview3DEnsureCaptureSerializesMisses(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ensureCapture failed: %v", err)
 		}
-	}
-	if maxActive.Load() != 1 {
-		t.Fatalf("expected serialized captures, max active=%d", maxActive.Load())
 	}
 }
 
@@ -2045,16 +2058,7 @@ func TestEnsureStaticCaptureFileSharesDownloadAndSurvivesLeaderCancellation(t *t
 	releaseResponse := make(chan struct{})
 	var startedOnce sync.Once
 	var requests atomic.Int32
-	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.Path != "/captures/"+imageID+".png" {
-			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
-		}
-		requests.Add(1)
-		startedOnce.Do(func() { close(requestStarted) })
-		<-releaseResponse
-		w.Header().Set("content-type", "image/png")
-		_, _ = w.Write([]byte(png))
-	}))
+	engine := httptest.NewServer(sharedStaticCaptureHandler(t, imageID, png, requestStarted, releaseResponse, &startedOnce, &requests))
 	defer engine.Close()
 
 	outputDir := t.TempDir()
@@ -2069,6 +2073,37 @@ func TestEnsureStaticCaptureFileSharesDownloadAndSurvivesLeaderCancellation(t *t
 		t.Fatalf("endpoint: %v", err)
 	}
 
+	assertCanceledStaticCaptureLeader(t, service, endpoint, imageID, requestStarted)
+	traces := runStaticCaptureFollowers(t, service, endpoint, imageID, releaseResponse)
+	assertSharedStaticCaptureResult(t, outputDir, imageID, png, &requests)
+	assertSharedStaticCaptureTraces(t, traces)
+	assertNoStaticCaptureTemporaryFiles(t, outputDir, imageID)
+}
+
+func sharedStaticCaptureHandler(
+	t *testing.T,
+	imageID string,
+	png string,
+	requestStarted chan struct{},
+	releaseResponse chan struct{},
+	startedOnce *sync.Once,
+	requests *atomic.Int32,
+) http.Handler {
+	t.Helper()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/captures/"+imageID+".png" {
+			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+		}
+		requests.Add(1)
+		startedOnce.Do(func() { close(requestStarted) })
+		<-releaseResponse
+		w.Header().Set("content-type", "image/png")
+		_, _ = w.Write([]byte(png))
+	})
+}
+
+func assertCanceledStaticCaptureLeader(t *testing.T, service *Preview3DService, endpoint preview3DEndpoint, imageID string, requestStarted <-chan struct{}) {
+	t.Helper()
 	leaderCtx, cancelLeader := context.WithCancel(context.Background())
 	leaderDone := make(chan error, 1)
 	go func() {
@@ -2079,15 +2114,18 @@ func TestEnsureStaticCaptureFileSharesDownloadAndSurvivesLeaderCancellation(t *t
 	if err := <-leaderDone; err != context.Canceled {
 		t.Fatalf("leader error = %v, want context.Canceled", err)
 	}
+}
 
-	contexts := make([]context.Context, 2)
+func runStaticCaptureFollowers(t *testing.T, service *Preview3DService, endpoint preview3DEndpoint, imageID string, releaseResponse chan struct{}) []*commandtrace.Trace {
+	t.Helper()
 	traces := make([]*commandtrace.Trace, 2)
 	followers := make(chan error, 2)
-	for index := range contexts {
-		contexts[index], traces[index] = commandtrace.WithTrace(context.Background())
+	for index := range traces {
+		ctx, trace := commandtrace.WithTrace(context.Background())
+		traces[index] = trace
 		go func(ctx context.Context) {
 			followers <- service.ensureStaticCaptureFile(ctx, endpoint, imageID)
-		}(contexts[index])
+		}(ctx)
 	}
 	// Both followers now join the still-running target-key flight. The HTTP
 	// response stays blocked long enough that neither can observe a published
@@ -2099,7 +2137,11 @@ func TestEnsureStaticCaptureFileSharesDownloadAndSurvivesLeaderCancellation(t *t
 			t.Fatalf("follower error = %v", err)
 		}
 	}
+	return traces
+}
 
+func assertSharedStaticCaptureResult(t *testing.T, outputDir, imageID, png string, requests *atomic.Int32) {
+	t.Helper()
 	if got := requests.Load(); got != 1 {
 		t.Fatalf("capture downloads = %d, want 1", got)
 	}
@@ -2111,6 +2153,10 @@ func TestEnsureStaticCaptureFileSharesDownloadAndSurvivesLeaderCancellation(t *t
 	if got := string(stored); got != png {
 		t.Fatalf("stored capture = %q, want %q", got, png)
 	}
+}
+
+func assertSharedStaticCaptureTraces(t *testing.T, traces []*commandtrace.Trace) {
+	t.Helper()
 	for index, trace := range traces {
 		for _, operation := range []string{
 			"preview3d.static_stat",
@@ -2128,6 +2174,10 @@ func TestEnsureStaticCaptureFileSharesDownloadAndSurvivesLeaderCancellation(t *t
 			t.Fatalf("trace[%d] shared count = %d, operations=%+v", index, count, trace.Snapshot().Operations)
 		}
 	}
+}
+
+func assertNoStaticCaptureTemporaryFiles(t *testing.T, outputDir, imageID string) {
+	t.Helper()
 	if matches, err := filepath.Glob(filepath.Join(outputDir, "."+imageID+".png.tmp-*")); err != nil {
 		t.Fatalf("Glob() error = %v", err)
 	} else if len(matches) != 0 {

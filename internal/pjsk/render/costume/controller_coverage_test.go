@@ -68,18 +68,27 @@ func (s *controllerCoverageSource) FilterCostumes(filter Filter) ([]*masterdata.
 	}
 	items := make([]*masterdata.Costume3d, 0, len(s.costumes))
 	for _, item := range s.costumes {
-		if item == nil || filter.PartType != "" && item.PartType != filter.PartType || filter.ColorID > 0 && item.ColorID != filter.ColorID || filter.CharacterID > 0 && item.CharacterID != filter.CharacterID {
-			continue
+		if controllerCoverageCostumeMatches(item, filter) {
+			items = append(items, item)
 		}
-		if len(filter.CharacterIDs) > 0 && !slices.Contains(filter.CharacterIDs, item.CharacterID) {
-			continue
-		}
-		if filter.Keyword != "" && !strings.Contains(strings.ToLower(item.Name), strings.ToLower(filter.Keyword)) {
-			continue
-		}
-		items = append(items, item)
 	}
 	return items, nil
+}
+
+func controllerCoverageCostumeMatches(item *masterdata.Costume3d, filter Filter) bool {
+	if item == nil || filter.PartType != "" && item.PartType != filter.PartType {
+		return false
+	}
+	if filter.ColorID > 0 && item.ColorID != filter.ColorID {
+		return false
+	}
+	if filter.CharacterID > 0 && item.CharacterID != filter.CharacterID {
+		return false
+	}
+	if len(filter.CharacterIDs) > 0 && !slices.Contains(filter.CharacterIDs, item.CharacterID) {
+		return false
+	}
+	return filter.Keyword == "" || strings.Contains(strings.ToLower(item.Name), strings.ToLower(filter.Keyword))
 }
 
 func (s *controllerCoverageSource) GetCostumeVariants(groupID int, partType string, characterID int) ([]*masterdata.Costume3d, error) {
@@ -280,6 +289,12 @@ func TestControllerCoverageRenderCostumeList(t *testing.T) {
 }
 
 func TestControllerCoverageListValidationAndPagination(t *testing.T) {
+	testControllerCoverageListValidation(t)
+	testControllerCoverageListPagination(t)
+}
+
+func testControllerCoverageListValidation(t *testing.T) {
+	t.Helper()
 	item := controllerCoverageCostume(33_001, "body")
 	source := &controllerCoverageSource{costumes: map[int]*masterdata.Costume3d{item.ID: item}}
 	controller := NewController(source, nil, nil)
@@ -296,7 +311,10 @@ func TestControllerCoverageListValidationAndPagination(t *testing.T) {
 			t.Fatalf("BuildCostumeListRequest(%+v) unexpectedly succeeded", query)
 		}
 	}
+}
 
+func testControllerCoverageListPagination(t *testing.T) {
+	t.Helper()
 	if got, pages := paginateCostumeListItems(nil, ListQuery{}, 2, 9); len(got) != 0 || pages != 1 {
 		t.Fatalf("empty costume pagination = %v, %d", got, pages)
 	}
@@ -315,7 +333,11 @@ func TestControllerCoverageListValidationAndPagination(t *testing.T) {
 	if len(balanced) != 2 || balanced[0].PartType != "body" || balanced[1].PartType != "head" {
 		t.Fatalf("balanced page = %+v", balanced)
 	}
+	testControllerCoverageLogicalPagination(t, items)
+}
 
+func testControllerCoverageLogicalPagination(t *testing.T, items []*masterdata.Costume3d) {
+	t.Helper()
 	logical := []costumeAccessoryListItem{{costume: items[0]}, {costume: items[1], accessoryID: 2}, {costume: items[2]}}
 	if got, pages := paginateCostumeAccessoryListItems(nil, 2, 0); len(got) != 0 || pages != 1 {
 		t.Fatalf("empty accessory pagination = %v, %d", got, pages)
@@ -456,6 +478,14 @@ func TestControllerCoverageResolveAndCacheHelpers(t *testing.T) {
 }
 
 func TestControllerCoveragePureHelpers(t *testing.T) {
+	testControllerCoverageAssetHelpers(t)
+	testControllerCoverageIdentityHelpers(t)
+	testControllerCoverageFormattingHelpers(t)
+	testControllerCoverageCharacterAndSortHelpers(t)
+}
+
+func testControllerCoverageAssetHelpers(t *testing.T) {
+	t.Helper()
 	controller := NewController(&controllerCoverageSource{}, nil, renderassets.NewAssetHelper("https://assets.example/root", nil))
 	if got := controller.buildThumbnailPath(renderregion.JP, nil); got != "" {
 		t.Fatalf("nil costume thumbnail = %q", got)
@@ -481,7 +511,10 @@ func TestControllerCoveragePureHelpers(t *testing.T) {
 	if got := uniqueCostumeSourceCardIDs([]*masterdata.Costume3d{nil, {ID: 1}, {ID: 2}}, map[int][]int{1: {3, 2}, 2: {2, 1}}); !reflect.DeepEqual(got, []int{1, 2, 3}) {
 		t.Fatalf("unique source cards = %v", got)
 	}
+}
 
+func testControllerCoverageIdentityHelpers(t *testing.T) {
+	t.Helper()
 	if normalizedOutfitID(nil) != 0 || normalizedOutfitID(&masterdata.Costume3d{PartType: "head", GroupID: 33_000}) != 0 || normalizedOutfitID(&masterdata.Costume3d{PartType: "body", GroupID: 999}) != 0 {
 		t.Fatal("normalizedOutfitID accepted an invalid costume")
 	}
@@ -493,7 +526,10 @@ func TestControllerCoveragePureHelpers(t *testing.T) {
 			t.Fatalf("character3DIDsForCharacter(%d) = %v, want %v", characterID, got, want)
 		}
 	}
+}
 
+func testControllerCoverageFormattingHelpers(t *testing.T) {
+	t.Helper()
 	if costumeSortTime(nil) != 0 || costumeSortTime(&masterdata.Costume3d{PublishedAt: 3, ArchivePublishedAt: 2}) != 3 || costumeSortTime(&masterdata.Costume3d{ArchivePublishedAt: 2}) != 2 {
 		t.Fatal("costumeSortTime precedence is incorrect")
 	}
@@ -526,6 +562,10 @@ func TestControllerCoveragePureHelpers(t *testing.T) {
 	if partTypeName("unknown") != "unknown" {
 		t.Fatal("unknown part type should be preserved")
 	}
+}
+
+func testControllerCoverageCharacterAndSortHelpers(t *testing.T) {
+	t.Helper()
 	for _, test := range []struct {
 		character *masterdata.Character
 		want      string
@@ -555,6 +595,13 @@ func TestControllerCoveragePureHelpers(t *testing.T) {
 }
 
 func TestControllerCoverageParsingErrorsAndAliases(t *testing.T) {
+	testControllerCoverageLookupParsing(t)
+	testControllerCoverageNamedLookupParsing(t)
+	testControllerCoverageAliases(t)
+}
+
+func testControllerCoverageLookupParsing(t *testing.T) {
+	t.Helper()
 	for _, test := range []struct {
 		raw      string
 		partType string
@@ -585,7 +632,10 @@ func TestControllerCoverageParsingErrorsAndAliases(t *testing.T) {
 			t.Fatalf("ParseLookupQuery short %s = %+v, %v, %v", partType, query, matched, err)
 		}
 	}
+}
 
+func testControllerCoverageNamedLookupParsing(t *testing.T) {
+	t.Helper()
 	for _, test := range []struct {
 		raw      string
 		partType string
@@ -605,7 +655,10 @@ func TestControllerCoverageParsingErrorsAndAliases(t *testing.T) {
 			t.Fatalf("ParseNamedLookupQuery(%q, %q) matched=%v err=%v", test.raw, test.partType, matched, err)
 		}
 	}
+}
 
+func testControllerCoverageAliases(t *testing.T) {
+	t.Helper()
 	for token, want := range map[string]string{"unit:n25": "school_refusal", "team:ln": "light_sound", "missing": ""} {
 		got, ok := parseCostumeUnitAlias(token)
 		if got != want || ok != (want != "") {
@@ -618,7 +671,11 @@ func TestControllerCoverageParsingErrorsAndAliases(t *testing.T) {
 	if value, ok := resolveCharacterID(""); ok || value != 0 {
 		t.Fatalf("resolveCharacterID empty = %d, %v", value, ok)
 	}
+	testControllerCoverageGenderAndPageAliases(t)
+}
 
+func testControllerCoverageGenderAndPageAliases(t *testing.T) {
+	t.Helper()
 	for token, want := range map[string]string{"male": "male", "girl": "female", "secret": "secret", "invalid": ""} {
 		got, ok := normalizeGender(token)
 		if got != want || ok != (want != "") {
@@ -704,6 +761,12 @@ func TestControllerCoverageComboValidation(t *testing.T) {
 }
 
 func TestControllerCoverageListNormalizationAndPrompt(t *testing.T) {
+	testControllerCoverageListNormalization(t)
+	testControllerCoverageListPrompt(t)
+}
+
+func testControllerCoverageListNormalization(t *testing.T) {
+	t.Helper()
 	for _, test := range []struct {
 		name    string
 		query   ListQuery
@@ -776,7 +839,10 @@ func TestControllerCoverageListNormalizationAndPrompt(t *testing.T) {
 			}
 		})
 	}
+}
 
+func testControllerCoverageListPrompt(t *testing.T) {
+	t.Helper()
 	if prompt := BuildListPrompt(nil); prompt != "" {
 		t.Fatalf("nil list prompt = %q", prompt)
 	}

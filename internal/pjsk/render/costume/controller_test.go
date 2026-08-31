@@ -52,24 +52,27 @@ func (s denseListTestSource) GetCostumeByID(id int) (*masterdata.Costume3d, erro
 func (s denseListTestSource) FilterCostumes(filter Filter) ([]*masterdata.Costume3d, error) {
 	items := make([]*masterdata.Costume3d, 0, len(s.costumes))
 	for _, item := range s.costumes {
-		if filter.ColorID > 0 && item.ColorID != filter.ColorID {
-			continue
+		if denseListCostumeMatches(item, filter) {
+			items = append(items, item)
 		}
-		if filter.PartType != "" && item.PartType != filter.PartType {
-			continue
-		}
-		if filter.CharacterID > 0 && item.CharacterID != filter.CharacterID {
-			continue
-		}
-		if keyword := strings.TrimSpace(filter.Keyword); keyword != "" && !strings.Contains(strings.ToLower(item.Name), strings.ToLower(keyword)) {
-			continue
-		}
-		if len(filter.CharacterIDs) > 0 && !containsInt(filter.CharacterIDs, item.CharacterID) {
-			continue
-		}
-		items = append(items, item)
 	}
 	return items, nil
+}
+
+func denseListCostumeMatches(item *masterdata.Costume3d, filter Filter) bool {
+	if filter.ColorID > 0 && item.ColorID != filter.ColorID {
+		return false
+	}
+	if filter.PartType != "" && item.PartType != filter.PartType {
+		return false
+	}
+	if filter.CharacterID > 0 && item.CharacterID != filter.CharacterID {
+		return false
+	}
+	if keyword := strings.TrimSpace(filter.Keyword); keyword != "" && !strings.Contains(strings.ToLower(item.Name), strings.ToLower(keyword)) {
+		return false
+	}
+	return len(filter.CharacterIDs) == 0 || containsInt(filter.CharacterIDs, item.CharacterID)
 }
 
 func (s denseListTestSource) GetCostumeVariants(groupID int, partType string, characterID int) ([]*masterdata.Costume3d, error) {
@@ -542,58 +545,11 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	var capturePayload map[string]any
 	var engineRequests atomic.Int32
 	const capturePNG = "preview-png"
-	engine := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		engineRequests.Add(1)
-		if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
-			http.NotFound(w, r)
-			return
-		}
-		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/captures/") {
-			w.Header().Set("content-type", "image/png")
-			fmt.Fprint(w, capturePNG)
-			return
-		}
-		switch r.URL.Path {
-		case "/runtime/runtime-role-catalog.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[{"character3dId":20,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"ok"}]}`))
-		case "/runtime/parts/part-registry-compact.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"entries":[
-				{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
-				{"costume3dId":33002,"partType":"body","characterId":20,"unit":"school_refusal","colorId":2,"costume3dGroupId":330},
-				{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
-				{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330}
-			]}`))
-		case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
-			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`))
-		case "/capture":
-			if err := json.NewDecoder(r.Body).Decode(&capturePayload); err != nil {
-				t.Fatalf("decode capture payload: %v", err)
-			}
-			w.Header().Set("content-type", "application/json")
-			fmt.Fprint(w, `{"ok":true}`)
-		default:
-			t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
-		}
-	}))
+	engine := httptest.NewServer(costumeDetailPreviewEngineHandler(t, &capturePayload, &engineRequests, capturePNG))
 	defer engine.Close()
 
 	var drawingRequests atomic.Int32
-	drawingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		drawingRequests.Add(1)
-		if r.URL.Path != "/api/pjsk/costume/detail" {
-			t.Fatalf("unexpected drawing request: %s %s", r.Method, r.URL.Path)
-		}
-		var body map[string]any
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			t.Fatalf("decode drawing payload: %v", err)
-		}
-		costumeBody, _ := body["costume"].(map[string]any)
-		if _, ok := costumeBody["preview_image_path"].(string); !ok {
-			t.Fatalf("drawing payload should include preview_image_path: %+v", costumeBody)
-		}
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "detail-png")
-	}))
+	drawingServer := httptest.NewServer(costumeDetailDrawingHandler(t, &drawingRequests))
 	defer drawingServer.Close()
 
 	assetRoot := t.TempDir()
@@ -622,18 +578,7 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 		t.Fatalf("unexpected detail data: %q", string(data))
 	}
 	wantImageID := "pjsk3d_jp_" + controller.preview3D.captureCacheSignature() + "_c20_school_refusal_i33002_b33002_h33011_r33021_o0"
-	if capturePayload["imageId"] != wantImageID {
-		t.Fatalf("unexpected capture image id: %v", capturePayload["imageId"])
-	}
-	if capturePayload["cacheMode"] != "persistent" {
-		t.Fatalf("unexpected capture cache mode: %v", capturePayload["cacheMode"])
-	}
-	if capturePayload["cameraPreset"] != "capture" {
-		t.Fatalf("unexpected capture camera preset: %v", capturePayload["cameraPreset"])
-	}
-	if capturePayload["cameraProfile"] != "legacy-cloud" {
-		t.Fatalf("unexpected capture camera profile: %v", capturePayload["cameraProfile"])
-	}
+	assertCostumeDetailCapturePayload(t, capturePayload, wantImageID)
 	staticPreviewPath := filepath.Join(assetRoot, "static_images", "pjsk_3d_preview", wantImageID+".png")
 	if data, err := os.ReadFile(staticPreviewPath); err != nil || string(data) != capturePNG {
 		t.Fatalf("expected synced static preview at %s, data=%q err=%v", staticPreviewPath, string(data), err)
@@ -647,11 +592,105 @@ func TestRenderCostumeDetailEnsures3DPreviewOnCacheMiss(t *testing.T) {
 	if string(data) != "detail-png" {
 		t.Fatalf("unexpected second detail data: %q", string(data))
 	}
-	if engineRequests.Load() != engineRequestsAfterFirst {
-		t.Fatalf("drawing cache hit should not call 3d engine again")
+	assertCostumeDetailCacheHit(t, &engineRequests, engineRequestsAfterFirst, &drawingRequests, drawingRequestsAfterFirst)
+}
+
+func costumeDetailPreviewEngineHandler(t *testing.T, capturePayload *map[string]any, requests *atomic.Int32, capturePNG string) http.Handler {
+	t.Helper()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		if serveCostumeDetailCapture(w, r, capturePNG) {
+			return
+		}
+		if fixture, ok := costumeDetailRegistryFixture(r.URL.Path); ok {
+			_, _ = w.Write(registryFixtureBytes(t, r.URL.Path, fixture))
+			return
+		}
+		if r.URL.Path == "/capture" {
+			if err := json.NewDecoder(r.Body).Decode(capturePayload); err != nil {
+				t.Fatalf("decode capture payload: %v", err)
+			}
+			w.Header().Set("content-type", "application/json")
+			fmt.Fprint(w, `{"ok":true}`)
+			return
+		}
+		t.Fatalf("unexpected engine request: %s %s", r.Method, r.URL.Path)
+	})
+}
+
+func serveCostumeDetailCapture(w http.ResponseWriter, r *http.Request, capturePNG string) bool {
+	if r.Method == http.MethodHead && strings.HasPrefix(r.URL.Path, "/captures/") {
+		http.NotFound(w, r)
+		return true
 	}
-	if drawingRequests.Load() != drawingRequestsAfterFirst {
-		t.Fatalf("drawing cache hit should not call drawing api again")
+	if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/captures/") {
+		w.Header().Set("content-type", "image/png")
+		fmt.Fprint(w, capturePNG)
+		return true
+	}
+	return false
+}
+
+func costumeDetailRegistryFixture(path string) (string, bool) {
+	switch path {
+	case "/runtime/runtime-role-catalog.msgpack.br":
+		return `{"entries":[{"character3dId":20,"characterId":20,"unit":"school_refusal","bodyCostume3dId":33001,"headCostume3dId":33011,"hairCostume3dId":33021,"status":"ok"}]}`, true
+	case "/runtime/parts/part-registry-compact.msgpack.br":
+		return `{"entries":[
+			{"costume3dId":33001,"partType":"body","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
+			{"costume3dId":33002,"partType":"body","characterId":20,"unit":"school_refusal","colorId":2,"costume3dGroupId":330},
+			{"costume3dId":33011,"partType":"head","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330},
+			{"costume3dId":33021,"partType":"hair","characterId":20,"unit":"school_refusal","colorId":1,"costume3dGroupId":330}
+		]}`, true
+	case "/runtime/parts/head-hair-compatibility-compact.msgpack.br":
+		return `{"rules":[{"unit":"school_refusal","headCostume3dId":33011,"hairCostume3dId":33021,"state":"available"}]}`, true
+	default:
+		return "", false
+	}
+}
+
+func costumeDetailDrawingHandler(t *testing.T, requests *atomic.Int32) http.Handler {
+	t.Helper()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		if r.URL.Path != "/api/pjsk/costume/detail" {
+			t.Fatalf("unexpected drawing request: %s %s", r.Method, r.URL.Path)
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode drawing payload: %v", err)
+		}
+		costumeBody, _ := body["costume"].(map[string]any)
+		if _, ok := costumeBody["preview_image_path"].(string); !ok {
+			t.Fatalf("drawing payload should include preview_image_path: %+v", costumeBody)
+		}
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "detail-png")
+	})
+}
+
+func assertCostumeDetailCapturePayload(t *testing.T, payload map[string]any, imageID string) {
+	t.Helper()
+	want := map[string]any{
+		"imageId":       imageID,
+		"cacheMode":     "persistent",
+		"cameraPreset":  "capture",
+		"cameraProfile": "legacy-cloud",
+	}
+	for key, value := range want {
+		if payload[key] != value {
+			t.Fatalf("capture payload %s = %v, want %v", key, payload[key], value)
+		}
+	}
+}
+
+func assertCostumeDetailCacheHit(t *testing.T, engineRequests *atomic.Int32, wantEngine int32, drawingRequests *atomic.Int32, wantDrawing int32) {
+	t.Helper()
+	if engineRequests.Load() != wantEngine {
+		t.Fatal("drawing cache hit should not call 3d engine again")
+	}
+	if drawingRequests.Load() != wantDrawing {
+		t.Fatal("drawing cache hit should not call drawing api again")
 	}
 }
 

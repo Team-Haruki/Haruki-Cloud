@@ -53,6 +53,12 @@ func newEducationDrawingTestServer(t *testing.T) (*httptest.Server, *drawing.Har
 }
 
 func TestEducationControllerContextAndChallengeValidation(t *testing.T) {
+	assertEducationControllerContext(t)
+	assertEducationChallengeValidation(t)
+}
+
+func assertEducationControllerContext(t *testing.T) {
+	t.Helper()
 	var nilController *Controller
 	if got := nilController.WithContext(context.Background()); got != nil {
 		t.Fatalf("nil WithContext() = %#v", got)
@@ -76,7 +82,13 @@ func TestEducationControllerContextAndChallengeValidation(t *testing.T) {
 	if got, ok := clone.sources.SourceForRegion(renderregion.JP); !ok || got != plainSource {
 		t.Fatalf("cloned source = %#v, ok=%v", got, ok)
 	}
+}
 
+func assertEducationChallengeValidation(t *testing.T) {
+	t.Helper()
+	plainSource := &testSource{region: renderregion.JP}
+	controller := NewController(nil, nil, nil, renderregion.JP)
+	controller.RegisterSource(plainSource)
 	if _, err := controller.BuildChallengeLiveDetailsRequest(ChallengeLiveQuery{}); err == nil || !strings.Contains(err.Error(), "snapshot") {
 		t.Fatalf("missing snapshot error = %v", err)
 	}

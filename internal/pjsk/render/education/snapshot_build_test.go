@@ -424,14 +424,23 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildAreaItemUpgradeMaterialsRequestFromSnapshot() error = %v", err)
 	}
+	assertAreaItemSnapshotRequest(t, req)
+}
+
+func assertAreaItemSnapshotRequest(t *testing.T, req *drawing.AreaItemUpgradeMaterialsRequest) {
+	t.Helper()
 	if !req.HasProfile || req.Profile == nil || req.Profile.ID != "1001" {
 		t.Fatalf("unexpected profile payload: %+v", req.Profile)
 	}
 	if len(req.AreaItems) != 2 {
 		t.Fatalf("expected 2 area items, got %d", len(req.AreaItems))
 	}
+	assertFirstAreaItemSnapshot(t, req.AreaItems[0])
+	assertSecondAreaItemSnapshot(t, req.AreaItems[1])
+}
 
-	first := req.AreaItems[0]
+func assertFirstAreaItemSnapshot(t *testing.T, first drawing.AreaItemInfo) {
+	t.Helper()
 	if first.ItemID != 101 || first.CurrentLevel != 1 || len(first.Levels) != 2 {
 		t.Fatalf("unexpected first area item: %+v", first)
 	}
@@ -450,8 +459,10 @@ func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshot(t *testing.T) {
 	if got := first.Levels[1].Materials[1]; got.MaterialID != 201 || got.SumQuantity != 15 || got.IsEnough {
 		t.Fatalf("unexpected cumulative material payload: %+v", got)
 	}
+}
 
-	second := req.AreaItems[1]
+func assertSecondAreaItemSnapshot(t *testing.T, second drawing.AreaItemInfo) {
+	t.Helper()
 	if second.ItemID != 102 || second.CurrentLevel != 2 || len(second.Levels) != 2 {
 		t.Fatalf("unexpected second area item: %+v", second)
 	}
@@ -519,6 +530,19 @@ func TestBuildAreaItemUpgradeMaterialsRequestFullWithoutSnapshot(t *testing.T) {
 	if len(req.AreaItems) != 1 {
 		t.Fatalf("expected filtered area items, got %d", len(req.AreaItems))
 	}
+	assertFullAreaItemRequest(t, req)
+
+	filtered, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.JP, Unit: "street"})
+	if err != nil {
+		t.Fatalf("BuildAreaItemUpgradeMaterialsRequestFull(filtered) error = %v", err)
+	}
+	if len(filtered.AreaItems) != 1 || filtered.AreaItems[0].ItemID != 102 {
+		t.Fatalf("unexpected filtered full payload: %+v", filtered.AreaItems)
+	}
+}
+
+func assertFullAreaItemRequest(t *testing.T, req *drawing.AreaItemUpgradeMaterialsRequest) {
+	t.Helper()
 	first := req.AreaItems[0]
 	if first.ItemID != 101 || first.CurrentLevel != 0 || len(first.Levels) != 3 {
 		t.Fatalf("unexpected full area item payload: %+v", first)
@@ -531,14 +555,6 @@ func TestBuildAreaItemUpgradeMaterialsRequestFullWithoutSnapshot(t *testing.T) {
 	}
 	if got := first.Levels[2].Materials[1]; got.MaterialID != 201 || got.SumQuantity != 15 || !got.IsEnough {
 		t.Fatalf("unexpected cumulative full material payload: %+v", got)
-	}
-
-	filtered, err := controller.BuildAreaItemUpgradeMaterialsRequestFull(AreaItemQuery{Region: renderregion.JP, Unit: "street"})
-	if err != nil {
-		t.Fatalf("BuildAreaItemUpgradeMaterialsRequestFull(filtered) error = %v", err)
-	}
-	if len(filtered.AreaItems) != 1 || filtered.AreaItems[0].ItemID != 102 {
-		t.Fatalf("unexpected filtered full payload: %+v", filtered.AreaItems)
 	}
 }
 
@@ -709,8 +725,11 @@ func TestBuildBondsRequestFromSnapshot(t *testing.T) {
 	if len(req.Bonds) != 1 {
 		t.Fatalf("unexpected bonds payload: %+v", req.Bonds)
 	}
+	assertBuiltBond(t, req.Bonds[0])
+}
 
-	bond := req.Bonds[0]
+func assertBuiltBond(t *testing.T, bond drawing.BondInfo) {
+	t.Helper()
 	if bond.CharaID1 != 21 || bond.CharaID2 != 27 {
 		t.Fatalf("unexpected bond pair: %+v", bond)
 	}
@@ -1492,13 +1511,12 @@ func TestBuildCharacterMissionAllRequestFromSnapshotExpandsExRoundsByStepFunctio
 	if err != nil {
 		t.Fatalf("BuildCharacterMissionAllRequestFromSnapshot() error = %v", err)
 	}
-	var exSection *drawing.CharacterMissionAllSection
-	for i := range req.Sections {
-		if req.Sections[i].MissionType == "play_live_ex" {
-			exSection = &req.Sections[i]
-			break
-		}
-	}
+	assertExpandedCharacterMissionExSection(t, req.Sections)
+}
+
+func assertExpandedCharacterMissionExSection(t *testing.T, sections []drawing.CharacterMissionAllSection) {
+	t.Helper()
+	exSection := findCharacterMissionSection(sections, "play_live_ex")
 	if exSection == nil {
 		t.Fatalf("expected play_live_ex section")
 	}
@@ -1524,6 +1542,15 @@ func TestBuildCharacterMissionAllRequestFromSnapshotExpandsExRoundsByStepFunctio
 	if last.Seq != 31 || last.Requirement != 1500 || last.AccRequirement != 30000 {
 		t.Fatalf("unexpected last ex row: %+v", last)
 	}
+}
+
+func findCharacterMissionSection(sections []drawing.CharacterMissionAllSection, missionType string) *drawing.CharacterMissionAllSection {
+	for index := range sections {
+		if sections[index].MissionType == missionType {
+			return &sections[index]
+		}
+	}
+	return nil
 }
 
 func TestBuildAreaItemUpgradeMaterialsRequestFromSnapshotHidesUnreleasedFutureLevels(t *testing.T) {

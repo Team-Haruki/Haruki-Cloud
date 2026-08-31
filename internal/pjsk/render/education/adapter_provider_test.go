@@ -96,7 +96,13 @@ func TestProviderAdapterEmptyDatabaseAndContext(t *testing.T) {
 	if a.Context() != ctx {
 		t.Fatal("adapter did not retain the request context")
 	}
+	assertEmptyEducationCore(t, a)
+	assertEmptyEducationProgression(t, a)
+	assertEmptyEducationMissions(t, a)
+}
 
+func assertEmptyEducationCore(t *testing.T, a *ProviderAdapter) {
+	t.Helper()
 	if got := a.GetChallengeRewardsByCharacter(1); len(got) != 0 {
 		t.Fatalf("challenge rewards = %#v", got)
 	}
@@ -106,12 +112,20 @@ func TestProviderAdapterEmptyDatabaseAndContext(t *testing.T) {
 	if len(a.GetAreaItems()) != 0 || a.GetAreaItem(1) != nil || len(a.GetAreaItemLevels(1)) != 0 || a.GetAreaItemLevel(1, 1) != nil {
 		t.Fatal("empty area masterdata returned data")
 	}
+}
+
+func assertEmptyEducationProgression(t *testing.T, a *ProviderAdapter) {
+	t.Helper()
 	if len(a.GetCharacterLevels()) != 0 || a.GetCharacterRank(1, 1) != nil {
 		t.Fatal("empty character progression returned data")
 	}
 	if len(a.GetBonds()) != 0 || len(a.GetBondLevels()) != 0 || a.GetGameCharacterStyle(1) != nil {
 		t.Fatal("empty bonds masterdata returned data")
 	}
+}
+
+func assertEmptyEducationMissions(t *testing.T, a *ProviderAdapter) {
+	t.Helper()
 	if len(a.GetCharacterMissions(1)) != 0 || len(a.GetCharacterMissionParameterGroups(1)) != 0 {
 		t.Fatal("empty character missions returned data")
 	}
@@ -156,6 +170,13 @@ func TestProviderAdapterConversions(t *testing.T) {
 
 func TestProviderAdapterPopulatedConversions(t *testing.T) {
 	adapter := NewProviderAdapter(populatedEducationMasterProvider{education: populatedEducationProvider{}})
+	assertPopulatedEducationCore(t, adapter)
+	assertPopulatedEducationProgression(t, adapter)
+	assertPopulatedEducationMissions(t, adapter)
+}
+
+func assertPopulatedEducationCore(t *testing.T, adapter *ProviderAdapter) {
+	t.Helper()
 	if got := adapter.GetChallengeRewardsByCharacter(1); len(got) != 1 || got[0].ResourceBoxID != 4 {
 		t.Fatalf("challenge rewards = %#v", got)
 	}
@@ -166,6 +187,10 @@ func TestProviderAdapterPopulatedConversions(t *testing.T) {
 		adapter.GetAreaItemLevels(9)[0].AreaItemID != 9 || adapter.GetAreaItemLevel(10, 2).AreaItemID != 10 {
 		t.Fatal("area conversion failed")
 	}
+}
+
+func assertPopulatedEducationProgression(t *testing.T, adapter *ProviderAdapter) {
+	t.Helper()
 	levels := adapter.GetCharacterLevels()
 	if len(levels) != 2 || levels[0] != nil || levels[1].TotalExp != 12 || adapter.GetCharacterRank(13, 14).Rank != 14 {
 		t.Fatalf("character progression = %#v", levels)
@@ -174,6 +199,10 @@ func TestProviderAdapterPopulatedConversions(t *testing.T) {
 		adapter.GetGameCharacterStyle(21).ColorCode != "#ffffff" {
 		t.Fatal("bond conversion failed")
 	}
+}
+
+func assertPopulatedEducationMissions(t *testing.T, adapter *ProviderAdapter) {
+	t.Helper()
 	missions := adapter.GetCharacterMissions(24)
 	groups := adapter.GetCharacterMissionParameterGroups(25)
 	if len(missions) != 2 || missions[0] != nil || missions[1].ParameterGroupID != 25 ||

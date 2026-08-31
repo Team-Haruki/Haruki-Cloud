@@ -58,8 +58,25 @@ func (c *Controller) traceContext() context.Context {
 }
 
 func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) (*drawing.ChallengeLiveDetailsRequest, error) {
+	region, source, challenge, profile, err := c.resolveChallengeLiveRequestContext(query)
+	if err != nil {
+		return nil, err
+	}
+	scores, ranks, claimedRewards := challengeLiveLookups(challenge)
+	characterChallenges, maxScore := c.buildCharacterChallenges(source, scores, ranks, claimedRewards)
+	displayMax := maxInt(c.estimateChallengeMaxScore(region, source), maxScore)
+	request := &drawing.ChallengeLiveDetailsRequest{
+		Profile:             *profile,
+		CharacterChallenges: characterChallenges,
+		MaxScore:            displayMax,
+	}
+	c.applyChallengeRewardIcons(request)
+	return request, nil
+}
+
+func (c *Controller) resolveChallengeLiveRequestContext(query ChallengeLiveQuery) (renderregion.Value, DataSource, *snapshot.ChallengeLiveData, *drawing.DetailedProfileCardRequest, error) {
 	if c == nil || c.sources == nil {
-		return nil, fmt.Errorf("education controller is not initialized")
+		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("education controller is not initialized")
 	}
 
 	snap := query.Snapshot
@@ -67,30 +84,33 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 		snap = c.snapshot
 	}
 	if snap == nil {
-		return nil, fmt.Errorf("local user snapshot is not configured")
+		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("local user snapshot is not configured")
 	}
 	if err := snap.Require(); err != nil {
-		return nil, err
+		return renderregion.Unknown, nil, nil, nil, err
 	}
 
 	region := c.sources.ResolveRegion(query.Region)
 	source, ok := c.sources.SourceForRegion(region)
 	if !ok {
-		return nil, fmt.Errorf("education data source is not configured")
+		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("education data source is not configured")
 	}
 
 	challenge := snap.ChallengeLive()
 	if challenge == nil {
-		return nil, fmt.Errorf("user snapshot is missing challenge live data")
+		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("user snapshot is missing challenge live data")
 	}
 	profile := query.Profile
 	if profile == nil {
 		profile = snap.DetailedProfile(region)
 	}
 	if profile == nil {
-		return nil, fmt.Errorf("user snapshot is missing profile data")
+		return renderregion.Unknown, nil, nil, nil, fmt.Errorf("user snapshot is missing profile data")
 	}
+	return region, source, challenge, profile, nil
+}
 
+func challengeLiveLookups(challenge *snapshot.ChallengeLiveData) (map[int]int, map[int]int, map[int]struct{}) {
 	scoreByCharacter := make(map[int]int, len(challenge.Results))
 	for _, item := range challenge.Results {
 		scoreByCharacter[item.CharacterID] = item.HighScore
@@ -105,42 +125,37 @@ func (c *Controller) BuildChallengeLiveDetailsRequest(query ChallengeLiveQuery) 
 	for _, item := range challenge.Rewards {
 		claimedRewards[item.RewardID] = struct{}{}
 	}
+	return scoreByCharacter, rankByCharacter, claimedRewards
+}
 
+func (c *Controller) buildCharacterChallenges(source DataSource, scores, ranks map[int]int, claimedRewards map[int]struct{}) ([]drawing.CharacterChallengeInfo, int) {
 	maxScore := 0
 	characterChallenges := make([]drawing.CharacterChallengeInfo, 0, 26)
 	for characterID := 1; characterID <= 26; characterID++ {
-		score := scoreByCharacter[characterID]
+		score := scores[characterID]
 		if score > maxScore {
 			maxScore = score
 		}
 		jewel, shard := c.pickChallengeRewards(source, characterID, claimedRewards)
 		characterChallenges = append(characterChallenges, drawing.CharacterChallengeInfo{
 			CharaID:       characterID,
-			Rank:          rankByCharacter[characterID],
+			Rank:          ranks[characterID],
 			Score:         score,
 			Jewel:         jewel,
 			Shard:         shard,
 			CharaIconPath: c.characterIconPath(characterID),
 		})
 	}
+	return characterChallenges, maxScore
+}
 
-	displayMax := c.estimateChallengeMaxScore(region, source)
-	if maxScore > displayMax {
-		displayMax = maxScore
-	}
-
-	request := &drawing.ChallengeLiveDetailsRequest{
-		Profile:             *profile,
-		CharacterChallenges: characterChallenges,
-		MaxScore:            displayMax,
-	}
+func (c *Controller) applyChallengeRewardIcons(request *drawing.ChallengeLiveDetailsRequest) {
 	if icon := c.findStaticIcon("jewel.png"); icon != "" {
 		request.JewelIconPath = &icon
 	}
 	if icon := c.findStaticIcon("shard.png"); icon != "" {
 		request.ShardIconPath = &icon
 	}
-	return request, nil
 }
 
 func (c *Controller) RenderChallengeLiveDetails(query ChallengeLiveQuery) ([]byte, error) {
@@ -251,18 +266,27 @@ func (c *Controller) pickChallengeRewards(source DataSource, charID int, claimed
 		if box == nil {
 			continue
 		}
-		for _, detail := range box.Details {
-			switch strings.ToLower(detail.ResourceType) {
-			case "jewel":
-				jewelTotal += detail.ResourceQuantity
-			case "material":
-				if detail.ResourceID == 15 {
-					shardTotal += detail.ResourceQuantity
-				}
+		jewels, shards := challengeRewardAmounts(box)
+		jewelTotal += jewels
+		shardTotal += shards
+	}
+	return jewelTotal, shardTotal
+}
+
+func challengeRewardAmounts(box *ResourceBox) (int, int) {
+	jewels := 0
+	shards := 0
+	for _, detail := range box.Details {
+		switch strings.ToLower(detail.ResourceType) {
+		case "jewel":
+			jewels += detail.ResourceQuantity
+		case "material":
+			if detail.ResourceID == 15 {
+				shards += detail.ResourceQuantity
 			}
 		}
 	}
-	return jewelTotal, shardTotal
+	return jewels, shards
 }
 
 func (c *Controller) estimateChallengeMaxScore(region renderregion.Value, source DataSource) int {

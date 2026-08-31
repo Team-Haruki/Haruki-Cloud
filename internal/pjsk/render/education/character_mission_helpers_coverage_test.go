@@ -59,7 +59,13 @@ func TestCharacterMissionCloneAndLookupHelpers(t *testing.T) {
 	if cloneCharacterMissions(nil) != nil || cloneCharacterMissionParameterGroups(nil) != nil || cloneCharacterLevels(nil) != nil {
 		t.Fatal("nil clone input should produce nil")
 	}
+	mission := assertCharacterMissionClones(t)
+	assertCharacterMissionRawLookups(t)
+	assertCharacterMissionMetadataLookups(t, mission)
+}
 
+func assertCharacterMissionClones(t *testing.T) *CharacterMission {
+	t.Helper()
 	mission := &CharacterMission{ID: 1, CharacterID: 2, CharacterMissionType: "play_live", ParameterGroupID: 3, IsAchievementMission: true}
 	missions := cloneCharacterMissions([]*CharacterMission{nil, mission})
 	if len(missions) != 1 || missions[0] == mission || !reflect.DeepEqual(*missions[0], *mission) {
@@ -77,7 +83,11 @@ func TestCharacterMissionCloneAndLookupHelpers(t *testing.T) {
 	if len(levels) != 1 || levels[0] == level || !reflect.DeepEqual(*levels[0], *level) {
 		t.Fatalf("level clone = %#v", levels)
 	}
+	return mission
+}
 
+func assertCharacterMissionRawLookups(t *testing.T) {
+	t.Helper()
 	rawCharacters := []rendersnapshot.RawUserCharacter{{CharacterID: 1}, {CharacterID: 2, CharacterRank: 10}}
 	if got := findRawUserCharacter(rawCharacters, 2); got == nil || got.CharacterRank != 10 {
 		t.Fatalf("findRawUserCharacter() = %#v", got)
@@ -96,7 +106,10 @@ func TestCharacterMissionCloneAndLookupHelpers(t *testing.T) {
 	if got := characterMissionStatusesForCharacter(raw, 1); len(got) != 1 || got[0].MissionID != 10 {
 		t.Fatalf("status lookup = %#v", got)
 	}
+}
 
+func assertCharacterMissionMetadataLookups(t *testing.T, mission *CharacterMission) {
+	t.Helper()
 	if got := findCharacterMissionByType([]*CharacterMission{nil, mission}, "play_live"); got != mission {
 		t.Fatalf("mission lookup = %#v", got)
 	}
@@ -117,6 +130,13 @@ func TestCharacterMissionProgressHelpersEdgeCases(t *testing.T) {
 		{Seq: 1, Requirement: 10, Exp: 2},
 		{Seq: 3, Requirement: 30, Exp: 6},
 	}
+	assertCharacterMissionSequenceHelpers(t, groups)
+	assertCharacterMissionTargetHelpers(t, groups)
+	assertCharacterMissionRoundHelpers(t, groups)
+}
+
+func assertCharacterMissionSequenceHelpers(t *testing.T, groups []*CharacterMissionParameterGroup) {
+	t.Helper()
 	if got := characterMissionRequirementBySeq(groups, 0); got != 0 {
 		t.Fatalf("requirement seq 0 = %d", got)
 	}
@@ -135,7 +155,10 @@ func TestCharacterMissionProgressHelpersEdgeCases(t *testing.T) {
 	if got := characterMissionClearedTotal(groups, 3); got != 50 {
 		t.Fatalf("cleared total seq 3 = %d", got)
 	}
+}
 
+func assertCharacterMissionTargetHelpers(t *testing.T, groups []*CharacterMissionParameterGroup) {
+	t.Helper()
 	if got := characterMissionUpper(nil, false); got != nil {
 		t.Fatalf("empty upper = %#v", got)
 	}
@@ -155,7 +178,10 @@ func TestCharacterMissionProgressHelpersEdgeCases(t *testing.T) {
 	if need, exp := characterMissionNextTarget(groups, 100, false); need != nil || exp != nil {
 		t.Fatalf("completed next target = %#v, %#v", need, exp)
 	}
+}
 
+func assertCharacterMissionRoundHelpers(t *testing.T, groups []*CharacterMissionParameterGroup) {
+	t.Helper()
 	if got := characterMissionRequirementForRound(groups, 0); got != 0 {
 		t.Fatalf("round-zero requirement = %d", got)
 	}

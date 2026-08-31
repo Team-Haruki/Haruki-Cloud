@@ -38,7 +38,10 @@ func TestRedisKVStoreAndServiceHelperBranches(t *testing.T) {
 	if err := nilStore.Expire(ctx, "k", time.Second); !errors.Is(err, errRedisClientUnavailable) {
 		t.Fatalf("nil Expire error = %v", err)
 	}
+}
 
+func TestRedisKVStoreOperations(t *testing.T) {
+	ctx := context.Background()
 	mini := miniredis.RunT(t)
 	client := redis.NewClient(&redis.Options{Addr: mini.Addr()})
 	t.Cleanup(func() { _ = client.Close() })
@@ -61,17 +64,15 @@ func TestRedisKVStoreAndServiceHelperBranches(t *testing.T) {
 	if _, err := store.Get(ctx, "k"); !errors.Is(err, redis.Nil) {
 		t.Fatalf("deleted Get error = %v", err)
 	}
+}
 
-	userService := NewUserServiceWithDependencies(nil, nil, []byte("key"), "noise")
-	if userService.redisStore == nil {
-		t.Fatal("nil user store was not defaulted")
-	}
-	internalService := NewInternalServiceWithStore(nil, nil)
-	if internalService.redisStore == nil {
-		t.Fatal("nil internal store was not defaulted")
-	}
-	userService = NewUserService(nil, client, nil, "")
-	internalService = NewInternalService(nil, client)
+func TestServiceHelperBranches(t *testing.T) {
+	ctx := context.Background()
+	mini := miniredis.RunT(t)
+	client := redis.NewClient(&redis.Options{Addr: mini.Addr()})
+	t.Cleanup(func() { _ = client.Close() })
+	userService := NewUserService(nil, client, nil, "")
+	internalService := NewInternalService(nil, client)
 	if err := userService.setRedisKey(ctx, "test:%v", 7, "value", 1); err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +85,18 @@ func TestRedisKVStoreAndServiceHelperBranches(t *testing.T) {
 	if err := userService.delRedisKey(ctx, "test:%v", 7); err != nil {
 		t.Fatal(err)
 	}
+}
 
+func TestServiceConstructorsAndBanCheckerBranches(t *testing.T) {
+	ctx := context.Background()
+	userService := NewUserServiceWithDependencies(nil, nil, []byte("key"), "noise")
+	if userService.redisStore == nil {
+		t.Fatal("nil user store was not defaulted")
+	}
+	internalService := NewInternalServiceWithStore(nil, nil)
+	if internalService.redisStore == nil {
+		t.Fatal("nil internal store was not defaulted")
+	}
 	if (*UserService)(nil).WithGlobalBanChecker(nil) != nil || (*InternalService)(nil).WithGlobalBanChecker(nil) != nil {
 		t.Fatal("nil service ban checker should stay nil")
 	}

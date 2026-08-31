@@ -42,84 +42,14 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 		return c.Status(fiber.StatusTooManyRequests).SendString(ErrRateLimitExceeded)
 	}
 
-	// 使用固定 AES-256 密钥解密请求体
 	key := h.svc.authEncryptionKey
-	if len(key) == 0 {
-		return c.SendStatus(fiber.StatusInternalServerError)
+	payload, authErr := h.decodeAuthPayload(ctx, botIDStr, c.Body(), key)
+	if authErr != nil {
+		return sendAuthResponseError(c, authErr)
 	}
-
-	body := c.Body()
-	if len(body) == 0 {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
-	}
-
-	plaintext, err := DecryptRaw(body, key)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
-	}
-
-	// Nonce 检查（防重放）
-	isNew, nonceErr := h.svc.checkAndStoreNonce(ctx, plaintext)
-	if nonceErr != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
-	}
-	if !isNew {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrReplayDetected)
-	}
-
-	// MsgPack 解码载荷
-	var payload HarukiAuthPayload
-	if err := msgpack.Unmarshal(plaintext, &payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidEncryptedData)
-	}
-
-	// 验证 bot_id 一致性
-	if payload.BotID != botIDStr {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrBotIDMismatch)
-	}
-
-	// 验证时间戳（防重放）
-	now := time.Now().Unix()
-	if payload.Timestamp < now-MaxAuthTimestampAge || payload.Timestamp > now+MaxAuthTimestampAge {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthTimestampExpired)
-	}
-
-	// 获取用户信息
-	u, err := h.svc.dbClient.User.Query().
-		Where(user.BotIDEQ(botID)).
-		Only(ctx)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
-	}
-
-	// 解析并验证 JWT credential
-	decoded, err := parseCredentialJWT(payload.Credential, config.Cfg.HarukiBotDB.CredentialSignToken)
-	if err != nil || !decoded.Valid {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidCredential)
-	}
-
-	claims, ok := decoded.Claims.(jwt.MapClaims)
-	if !ok {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrInvalidCredential)
-	}
-
-	tokenBotID, _ := claims["bot_id"].(string)
-	tokenCredential, _ := claims["credential"].(string)
-
-	if tokenBotID != botIDStr {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrBotIDMismatch)
-	}
-
-	// 验证 credential（兼容 bcrypt 哈希和旧明文记录）
-	if !verifyCredential(u.Credential, tokenCredential) {
-		return c.Status(fiber.StatusBadRequest).SendString(ErrAuthFailed)
-	}
-	banned, err := ownerIsGloballyBanned(ctx, h.svc.globalBanChecker, u.OwnerUserID)
-	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
-	}
-	if banned {
-		return c.Status(fiber.StatusForbidden).SendString(ErrOwnerBanned)
+	authenticated, authErr := h.authenticateBot(ctx, botID, botIDStr, payload)
+	if authErr != nil {
+		return sendAuthResponseError(c, authErr)
 	}
 
 	// 生成 session token
@@ -142,16 +72,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	}
 
 	if !cluster.IsReadOnly() {
-		// 记录客户端自报的登录 IP 和位置
-		loginUpdate := h.svc.dbClient.User.UpdateOneID(u.ID).
-			SetLastLoginAt(time.Now())
-		if payload.ClientIP != "" {
-			loginUpdate = loginUpdate.SetLastLoginIP(payload.ClientIP)
-		}
-		if payload.ClientLocation != "" {
-			loginUpdate = loginUpdate.SetLastLoginLocation(payload.ClientLocation)
-		}
-		_ = loginUpdate.Exec(ctx) // 非关键操作，失败不阻塞登录
+		h.recordLogin(ctx, authenticated.userID, payload)
 	}
 
 	// 构造加密响应: MsgPack → AES-256-GCM
@@ -171,6 +92,99 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/octet-stream")
 	return c.Send(encrypted)
+}
+
+type authResponseError struct {
+	status  int
+	message string
+}
+
+type authenticatedBot struct {
+	userID int
+}
+
+func sendAuthResponseError(c fiber.Ctx, responseErr *authResponseError) error {
+	if responseErr.message == "" {
+		return c.SendStatus(responseErr.status)
+	}
+	return c.Status(responseErr.status).SendString(responseErr.message)
+}
+
+func (h *UserHandler) decodeAuthPayload(ctx context.Context, botID string, body, key []byte) (HarukiAuthPayload, *authResponseError) {
+	if len(key) == 0 {
+		return HarukiAuthPayload{}, &authResponseError{status: fiber.StatusInternalServerError}
+	}
+	if len(body) == 0 {
+		return HarukiAuthPayload{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrInvalidEncryptedData}
+	}
+	plaintext, err := DecryptRaw(body, key)
+	if err != nil {
+		return HarukiAuthPayload{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrInvalidEncryptedData}
+	}
+	isNew, err := h.svc.checkAndStoreNonce(ctx, plaintext)
+	if err != nil {
+		return HarukiAuthPayload{}, &authResponseError{status: fiber.StatusInternalServerError}
+	}
+	if !isNew {
+		return HarukiAuthPayload{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrReplayDetected}
+	}
+	var payload HarukiAuthPayload
+	if err := msgpack.Unmarshal(plaintext, &payload); err != nil {
+		return HarukiAuthPayload{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrInvalidEncryptedData}
+	}
+	if payload.BotID != botID {
+		return HarukiAuthPayload{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrBotIDMismatch}
+	}
+	now := time.Now().Unix()
+	if payload.Timestamp < now-MaxAuthTimestampAge || payload.Timestamp > now+MaxAuthTimestampAge {
+		return HarukiAuthPayload{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrAuthTimestampExpired}
+	}
+	return payload, nil
+}
+
+func (h *UserHandler) authenticateBot(ctx context.Context, botID int, botIDString string, payload HarukiAuthPayload) (authenticatedBot, *authResponseError) {
+	u, err := h.svc.dbClient.User.Query().
+		Where(user.BotIDEQ(botID)).
+		Only(ctx)
+	if err != nil {
+		return authenticatedBot{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrAuthFailed}
+	}
+	decoded, err := parseCredentialJWT(payload.Credential, config.Cfg.HarukiBotDB.CredentialSignToken)
+	if err != nil || !decoded.Valid {
+		return authenticatedBot{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrInvalidCredential}
+	}
+	claims, ok := decoded.Claims.(jwt.MapClaims)
+	if !ok {
+		return authenticatedBot{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrInvalidCredential}
+	}
+	tokenBotID, _ := claims["bot_id"].(string)
+	tokenCredential, _ := claims["credential"].(string)
+	if tokenBotID != botIDString {
+		return authenticatedBot{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrBotIDMismatch}
+	}
+	if !verifyCredential(u.Credential, tokenCredential) {
+		return authenticatedBot{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrAuthFailed}
+	}
+	banned, err := ownerIsGloballyBanned(ctx, h.svc.globalBanChecker, u.OwnerUserID)
+	if err != nil {
+		return authenticatedBot{}, &authResponseError{status: fiber.StatusInternalServerError}
+	}
+	if banned {
+		return authenticatedBot{}, &authResponseError{status: fiber.StatusForbidden, message: ErrOwnerBanned}
+	}
+	return authenticatedBot{userID: u.ID}, nil
+}
+
+func (h *UserHandler) recordLogin(ctx context.Context, userID int, payload HarukiAuthPayload) {
+	loginUpdate := h.svc.dbClient.User.UpdateOneID(userID).
+		SetLastLoginAt(time.Now())
+	if payload.ClientIP != "" {
+		loginUpdate = loginUpdate.SetLastLoginIP(payload.ClientIP)
+	}
+	if payload.ClientLocation != "" {
+		loginUpdate = loginUpdate.SetLastLoginLocation(payload.ClientLocation)
+	}
+	_ = loginUpdate.Exec(ctx)
 }
 
 func parseCredentialJWT(rawCredential string, signingToken string) (*jwt.Token, error) {

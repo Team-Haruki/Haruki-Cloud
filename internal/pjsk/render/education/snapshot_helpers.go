@@ -32,38 +32,7 @@ func areaItemMatchesFilter(
 		return false
 	}
 
-	matched := false
-	isVSItem := false
-
-	for _, level := range levels {
-		if level == nil {
-			continue
-		}
-
-		if normalized := normalizeUnit(level.TargetUnit); normalized == "piapro" {
-			isVSItem = true
-			if filterPiapro {
-				matched = true
-			}
-		}
-
-		if level.TargetGameCharacterID > 0 {
-			if _, ok := piaproCharacterIDs[level.TargetGameCharacterID]; ok {
-				isVSItem = true
-				if filterPiapro {
-					matched = true
-				}
-			}
-			if filterCID > 0 && level.TargetGameCharacterID == filterCID {
-				matched = true
-			}
-		}
-
-		if filterAttr != "" && normalizeAttr(level.TargetCardAttr) == filterAttr {
-			matched = true
-		}
-	}
-
+	matched, isVSItem := areaItemLevelsMatchFilter(levels, filterAttr, filterCID, filterPiapro)
 	if filterTree && item.AreaID == areaTreeAreaID {
 		matched = true
 	}
@@ -71,12 +40,41 @@ func areaItemMatchesFilter(
 		matched = true
 	}
 	if filterUnit != "" {
-		if areaID, ok := areaFilterUnitAreaIDs[filterUnit]; ok && item.AreaID == areaID && !isVSItem {
+		areaID, ok := areaFilterUnitAreaIDs[filterUnit]
+		if ok && item.AreaID == areaID && !isVSItem {
 			matched = true
 		}
 	}
-
 	return matched
+}
+
+func areaItemLevelsMatchFilter(levels []*AreaItemLevel, filterAttr string, filterCID int, filterPiapro bool) (bool, bool) {
+	matched := false
+	isVSItem := false
+	for _, level := range levels {
+		if level == nil {
+			continue
+		}
+		levelMatched, levelIsVS := areaItemLevelMatchesFilter(level, filterAttr, filterCID, filterPiapro)
+		matched = matched || levelMatched
+		isVSItem = isVSItem || levelIsVS
+	}
+	return matched, isVSItem
+}
+
+func areaItemLevelMatchesFilter(level *AreaItemLevel, filterAttr string, filterCID int, filterPiapro bool) (bool, bool) {
+	isVSItem := normalizeUnit(level.TargetUnit) == "piapro"
+	if _, ok := piaproCharacterIDs[level.TargetGameCharacterID]; ok {
+		isVSItem = true
+	}
+	matched := isVSItem && filterPiapro
+	if filterCID > 0 && level.TargetGameCharacterID == filterCID {
+		matched = true
+	}
+	if filterAttr != "" && normalizeAttr(level.TargetCardAttr) == filterAttr {
+		matched = true
+	}
+	return matched, isVSItem
 }
 
 func (c *Controller) areaItemTargetIcon(levels []*AreaItemLevel) string {

@@ -23,97 +23,19 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		return nil, err
 	}
 
-	playCountByCharacter := make(map[int]int, 26)
 	missionRequirements, maxPlayLimit := ctx.source.GetLeaderMissionRequirements()
-	exCountByCharacter := make(map[int]int)
-	exLevelByCharacter := make(map[int]int)
-	exProgressByCharacter := make(map[int]int)
-	hasPlayLiveExByCharacter := make(map[int]bool)
-	hasPlayLiveMission := false
-	playLiveMissionCount := 0
-	playLiveExMissionCount := 0
-	status101Count := 0
-
-	for _, item := range ctx.raw.UserCharacterMissionV2s {
-		if item.CharacterID <= 0 {
-			continue
-		}
-		switch strings.ToLower(strings.TrimSpace(item.CharacterMissionType)) {
-		case "play_live":
-			playCountByCharacter[item.CharacterID] = item.Progress
-			hasPlayLiveMission = true
-			playLiveMissionCount++
-		case "play_live_ex":
-			exCountByCharacter[item.CharacterID] = item.Progress
-			exProgressByCharacter[item.CharacterID] = item.Progress
-			hasPlayLiveExByCharacter[item.CharacterID] = true
-			playLiveExMissionCount++
-		}
-	}
-
-	if !hasPlayLiveMission {
-		for _, item := range ctx.raw.UserCharacterLiveUsageCounts {
-			if item.CharacterID <= 0 || !strings.EqualFold(item.CharacterLiveUsageType, "leader") {
-				continue
-			}
-			playCountByCharacter[item.CharacterID] = item.UsageCount
-		}
-	}
-
+	progress := collectLeaderMissionProgress(ctx.raw)
 	missionStatuses := leaderMissionStatuses(ctx.snapshot, ctx.raw)
-	for _, item := range missionStatuses {
-		if item.CharacterID <= 0 || item.ParameterGroupID != 101 {
-			continue
-		}
-		status101Count++
-		if item.Seq > exLevelByCharacter[item.CharacterID] {
-			exLevelByCharacter[item.CharacterID] = item.Seq
-		}
-		exCountByCharacter[item.CharacterID] += leaderMissionRequirementForSeq(missionRequirements, item.Seq)
-	}
-
-	for charID := 1; charID <= 26; charID++ {
-		if !hasPlayLiveExByCharacter[charID] {
-			continue
-		}
-		exLevelByCharacter[charID]++
-	}
-
-	leaders := make([]drawing.LeaderCountInfo, 0, 26)
-	for charID := 1; charID <= 26; charID++ {
-		playCount := playCountByCharacter[charID]
-		leaders = append(leaders, drawing.LeaderCountInfo{
-			CharaID:       charID,
-			CharaIconPath: c.characterIconPath(charID),
-			PlayCount:     playCount,
-			ExLevel:       exLevelByCharacter[charID],
-			ExCount:       exCountByCharacter[charID],
-		})
-	}
-	sort.SliceStable(leaders, func(i, j int) bool {
-		totalI := leaders[i].PlayCount + leaders[i].ExCount
-		totalJ := leaders[j].PlayCount + leaders[j].ExCount
-		if totalI == totalJ {
-			return leaders[i].CharaID < leaders[j].CharaID
-		}
-		return totalI > totalJ
-	})
-
-	maxPlay := maxPlayLimit
-	if maxPlay <= 0 {
-		for _, item := range leaders {
-			if item.PlayCount > maxPlay {
-				maxPlay = item.PlayCount
-			}
-		}
-	}
+	status101Count := applyLeaderMissionStatuses(progress, missionStatuses, missionRequirements)
+	leaders := c.buildLeaderCounts(progress)
+	maxPlay := leaderMaximumPlayCount(leaders, maxPlayLimit)
 
 	rawBytes, rawBytesErr := ctx.snapshot.RawBytes()
 	leaderCountDebugLogger.DebugContext(c.traceContext(), "leader count snapshot summarized",
 		"region", ctx.region.String(),
 		"mission_v2_count", len(ctx.raw.UserCharacterMissionV2s),
-		"play_live_count", playLiveMissionCount,
-		"play_live_ex_count", playLiveExMissionCount,
+		"play_live_count", progress.playLiveMissionCount,
+		"play_live_ex_count", progress.playLiveExMissionCount,
 		"mission_v2_status_count", len(missionStatuses),
 		"status_101_count", status101Count,
 		"live_usage_count", len(ctx.raw.UserCharacterLiveUsageCounts),
@@ -132,6 +54,104 @@ func (c *Controller) BuildLeaderCountRequestFromSnapshot(query LeaderCountQuery)
 		LeaderCounts: leaders,
 		MaxPlayCount: maxPlay,
 	})
+}
+
+type leaderMissionProgress struct {
+	playCounts             map[int]int
+	exCounts               map[int]int
+	exLevels               map[int]int
+	hasPlayLiveEx          map[int]bool
+	hasPlayLiveMission     bool
+	playLiveMissionCount   int
+	playLiveExMissionCount int
+}
+
+func collectLeaderMissionProgress(raw *rendersnapshot.RawUserData) *leaderMissionProgress {
+	progress := &leaderMissionProgress{
+		playCounts:    make(map[int]int, 26),
+		exCounts:      make(map[int]int),
+		exLevels:      make(map[int]int),
+		hasPlayLiveEx: make(map[int]bool),
+	}
+	for _, item := range raw.UserCharacterMissionV2s {
+		if item.CharacterID <= 0 {
+			continue
+		}
+		switch strings.ToLower(strings.TrimSpace(item.CharacterMissionType)) {
+		case "play_live":
+			progress.playCounts[item.CharacterID] = item.Progress
+			progress.hasPlayLiveMission = true
+			progress.playLiveMissionCount++
+		case "play_live_ex":
+			progress.exCounts[item.CharacterID] = item.Progress
+			progress.hasPlayLiveEx[item.CharacterID] = true
+			progress.playLiveExMissionCount++
+		}
+	}
+	if !progress.hasPlayLiveMission {
+		collectLeaderUsageCounts(progress.playCounts, raw.UserCharacterLiveUsageCounts)
+	}
+	return progress
+}
+
+func collectLeaderUsageCounts(playCounts map[int]int, usageCounts []rendersnapshot.RawUserCharacterLiveUsageCount) {
+	for _, item := range usageCounts {
+		if item.CharacterID <= 0 || !strings.EqualFold(item.CharacterLiveUsageType, "leader") {
+			continue
+		}
+		playCounts[item.CharacterID] = item.UsageCount
+	}
+}
+
+func applyLeaderMissionStatuses(progress *leaderMissionProgress, statuses []rendersnapshot.RawUserCharacterMissionV2Status, requirements []LeaderMissionRequirement) int {
+	statusCount := 0
+	for _, item := range statuses {
+		if item.CharacterID <= 0 || item.ParameterGroupID != 101 {
+			continue
+		}
+		statusCount++
+		progress.exLevels[item.CharacterID] = max(progress.exLevels[item.CharacterID], item.Seq)
+		progress.exCounts[item.CharacterID] += leaderMissionRequirementForSeq(requirements, item.Seq)
+	}
+	for charID := 1; charID <= 26; charID++ {
+		if progress.hasPlayLiveEx[charID] {
+			progress.exLevels[charID]++
+		}
+	}
+	return statusCount
+}
+
+func (c *Controller) buildLeaderCounts(progress *leaderMissionProgress) []drawing.LeaderCountInfo {
+	leaders := make([]drawing.LeaderCountInfo, 0, 26)
+	for charID := 1; charID <= 26; charID++ {
+		leaders = append(leaders, drawing.LeaderCountInfo{
+			CharaID:       charID,
+			CharaIconPath: c.characterIconPath(charID),
+			PlayCount:     progress.playCounts[charID],
+			ExLevel:       progress.exLevels[charID],
+			ExCount:       progress.exCounts[charID],
+		})
+	}
+	sort.SliceStable(leaders, func(i, j int) bool {
+		totalI := leaders[i].PlayCount + leaders[i].ExCount
+		totalJ := leaders[j].PlayCount + leaders[j].ExCount
+		if totalI == totalJ {
+			return leaders[i].CharaID < leaders[j].CharaID
+		}
+		return totalI > totalJ
+	})
+	return leaders
+}
+
+func leaderMaximumPlayCount(leaders []drawing.LeaderCountInfo, configuredMaximum int) int {
+	if configuredMaximum > 0 {
+		return configuredMaximum
+	}
+	maximum := 0
+	for _, item := range leaders {
+		maximum = max(maximum, item.PlayCount)
+	}
+	return maximum
 }
 
 func leaderMissionStatuses(snapshot rendersnapshot.Snapshot, raw *rendersnapshot.RawUserData) []rendersnapshot.RawUserCharacterMissionV2Status {

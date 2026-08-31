@@ -785,37 +785,11 @@ func ParseBirthdayMonitorCommand(message string) (BirthdayMonitorCommand, error)
 	enabled := map[string]bool{}
 	sawMaterial := false
 	for _, field := range fields {
-		token := strings.TrimSpace(field)
-		if token == "" {
-			continue
+		material, err := applyBirthdayMonitorField(&result, enabled, field)
+		if err != nil {
+			return BirthdayMonitorCommand{}, err
 		}
-		lower := strings.ToLower(token)
-		if isSelectorToken(lower) {
-			result.Selector = lower
-			continue
-		}
-		if minutes, ok := parseDurationToken(token); ok {
-			if cancel {
-				continue
-			}
-			if minutes <= 0 {
-				return BirthdayMonitorCommand{}, fmt.Errorf("监听时长必须大于 0 分钟")
-			}
-			if minutes > MaxBirthdayMonitorMinutes {
-				return BirthdayMonitorCommand{}, fmt.Errorf("监听时长不能超过 %d 分钟", MaxBirthdayMonitorMinutes)
-			}
-			result.DurationMinutes = minutes
-			continue
-		}
-		if name, value, ok := parseMaterialToken(token); ok {
-			if cancel {
-				continue
-			}
-			sawMaterial = true
-			enabled[name] = value
-			continue
-		}
-		return BirthdayMonitorCommand{}, fmt.Errorf("无法识别参数：%s", token)
+		sawMaterial = sawMaterial || material
 	}
 
 	if cancel {
@@ -833,6 +807,39 @@ func ParseBirthdayMonitorCommand(message string) (BirthdayMonitorCommand, error)
 		return BirthdayMonitorCommand{}, fmt.Errorf("至少需要开启一种监听材料")
 	}
 	return result, nil
+}
+
+func applyBirthdayMonitorField(result *BirthdayMonitorCommand, enabled map[string]bool, field string) (bool, error) {
+	token := strings.TrimSpace(field)
+	if token == "" {
+		return false, nil
+	}
+	lower := strings.ToLower(token)
+	if isSelectorToken(lower) {
+		result.Selector = lower
+		return false, nil
+	}
+	if minutes, ok := parseDurationToken(token); ok {
+		if result.Cancel {
+			return false, nil
+		}
+		if minutes <= 0 {
+			return false, fmt.Errorf("监听时长必须大于 0 分钟")
+		}
+		if minutes > MaxBirthdayMonitorMinutes {
+			return false, fmt.Errorf("监听时长不能超过 %d 分钟", MaxBirthdayMonitorMinutes)
+		}
+		result.DurationMinutes = minutes
+		return false, nil
+	}
+	if name, value, ok := parseMaterialToken(token); ok {
+		if result.Cancel {
+			return false, nil
+		}
+		enabled[name] = value
+		return true, nil
+	}
+	return false, fmt.Errorf("无法识别参数：%s", token)
 }
 
 func MaterialIDs(materials []string) []int {

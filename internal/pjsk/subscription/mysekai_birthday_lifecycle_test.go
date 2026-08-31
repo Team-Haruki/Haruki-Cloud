@@ -90,12 +90,8 @@ func TestBirthdayServiceReadinessAndUploadLookup(t *testing.T) {
 	service.SetReadOnly(false)
 }
 
-func TestBirthdayEventLocalLifecycle(t *testing.T) {
-	ctx := context.Background()
-	client := newBirthdayLifecycleDB(t)
-	service := NewService(client, nil)
-	subscription := createBirthdayLifecycleSubscription(t, client)
-
+func TestBirthdayEventStoreValidation(t *testing.T) {
+	ctx, service, subscription := newBirthdayLocalLifecycle(t)
 	for _, id := range []string{"", "bad", "0", "-1"} {
 		if _, err := service.StoreEvent(ctx, BirthdayEventPayload{SubscriptionID: id}); err == nil {
 			t.Fatalf("invalid subscription id %q was accepted", id)
@@ -108,19 +104,12 @@ func TestBirthdayEventLocalLifecycle(t *testing.T) {
 	}); err == nil || !strings.Contains(err.Error(), "target does not match") {
 		t.Fatalf("mismatched event error = %v", err)
 	}
+}
 
+func TestBirthdayEventLocalReadAndAck(t *testing.T) {
+	ctx, service, subscription := newBirthdayLocalLifecycle(t)
 	payload := []byte(`{"materials":[12,20]}`)
-	stored, err := service.StoreEvent(ctx, BirthdayEventPayload{
-		SubscriptionID:     fmt.Sprint(subscription.ID),
-		Region:             "JP",
-		UID:                " " + subscription.UID + " ",
-		UploadTime:         time.Now().UnixMilli(),
-		MatchedMaterialIDs: []int{20, 0, 12, 20, -3},
-		FilteredPayload:    payload,
-	})
-	if err != nil {
-		t.Fatalf("store event: %v", err)
-	}
+	stored := storeBirthdayLifecycleEvent(t, ctx, service, subscription, payload)
 	payload[0] = 'x'
 	if stored.SubscriptionID != fmt.Sprint(subscription.ID) || stored.EmptyResult {
 		t.Fatalf("stored event = %#v", stored)
@@ -144,6 +133,19 @@ func TestBirthdayEventLocalLifecycle(t *testing.T) {
 	}
 	event.FilteredPayload[0] = 'x'
 
+	if err := service.AckEvent(ctx, stored.EventID, fmt.Sprint(subscription.ID), "", "version-1.secret", "cloud-1", "group-1", "user-1", "self-1"); err != nil {
+		t.Fatalf("ack event: %v", err)
+	}
+	pending, err = service.PendingEvents(ctx, subscription.ID)
+	if err != nil || len(pending) != 0 {
+		t.Fatalf("pending events after ack = %#v, err=%v", pending, err)
+	}
+}
+
+func TestBirthdayEventLocalFailureBranches(t *testing.T) {
+	ctx, service, subscription := newBirthdayLocalLifecycle(t)
+	stored := storeBirthdayLifecycleEvent(t, ctx, service, subscription, []byte(`{"materials":[12]}`))
+
 	if _, err := service.EventForClient(ctx, stored.EventID, fmt.Sprint(subscription.ID), "", "version-1.secret", "other", "group-1", "user-1", "self-1"); err == nil || !strings.Contains(err.Error(), "context mismatch") {
 		t.Fatalf("subscription mismatch error = %v", err)
 	}
@@ -156,19 +158,35 @@ func TestBirthdayEventLocalLifecycle(t *testing.T) {
 		t.Fatal("read-only acknowledgement succeeded")
 	}
 	service.SetReadOnly(false)
-	if err := service.AckEvent(ctx, stored.EventID, fmt.Sprint(subscription.ID), "", "version-1.secret", "cloud-1", "group-1", "user-1", "self-1"); err != nil {
-		t.Fatalf("ack event: %v", err)
-	}
-	pending, err = service.PendingEvents(ctx, subscription.ID)
-	if err != nil || len(pending) != 0 {
-		t.Fatalf("pending events after ack = %#v, err=%v", pending, err)
-	}
 	if err := service.ackPendingEvents(ctx, 0, time.Now()); err != nil {
 		t.Fatalf("ack zero subscription: %v", err)
 	}
 	if pending, err := service.pendingEventsForSubscription(ctx, nil); err != nil || pending != nil {
 		t.Fatalf("nil subscription pending events = %#v, err=%v", pending, err)
 	}
+}
+
+func newBirthdayLocalLifecycle(t *testing.T) (context.Context, *Service, *pjskdb.MysekaiBirthdaySubscription) {
+	t.Helper()
+	ctx := context.Background()
+	client := newBirthdayLifecycleDB(t)
+	return ctx, NewService(client, nil), createBirthdayLifecycleSubscription(t, client)
+}
+
+func storeBirthdayLifecycleEvent(t *testing.T, ctx context.Context, service *Service, subscription *pjskdb.MysekaiBirthdaySubscription, payload []byte) *StoredBirthdayEvent {
+	t.Helper()
+	stored, err := service.StoreEvent(ctx, BirthdayEventPayload{
+		SubscriptionID:     fmt.Sprint(subscription.ID),
+		Region:             "JP",
+		UID:                " " + subscription.UID + " ",
+		UploadTime:         time.Now().UnixMilli(),
+		MatchedMaterialIDs: []int{20, 0, 12, 20, -3},
+		FilteredPayload:    payload,
+	})
+	if err != nil {
+		t.Fatalf("store event: %v", err)
+	}
+	return stored
 }
 
 func TestBirthdayTokenValidationFailures(t *testing.T) {
@@ -201,6 +219,42 @@ func TestBirthdayTokenValidationFailures(t *testing.T) {
 	}
 	if err := service.deleteBirthdayMonitor(ctx, subscription.ID, "v"); err != nil {
 		t.Fatalf("delete without toolbox: %v", err)
+	}
+}
+
+func TestBirthdayServiceNilEntryPoints(t *testing.T) {
+	var service *Service
+	ctx := context.Background()
+	if _, err := service.CreateOrUpdate(ctx, "qq", "1", "group", "cloud", "self", "jp", true, "/烤森生日监听", false); err == nil {
+		t.Fatal("nil service create succeeded")
+	}
+	if _, err := service.Cancel(ctx, "qq", "1", "group", "cloud", "self", "jp", true, "/烤森生日取消监听"); err == nil {
+		t.Fatal("nil service cancel succeeded")
+	}
+	if _, err := service.ActiveForUpload(ctx, "jp", "1"); err == nil {
+		t.Fatal("nil service upload lookup succeeded")
+	}
+	if _, err := service.StoreEvent(ctx, BirthdayEventPayload{SubscriptionID: "1"}); err == nil {
+		t.Fatal("nil service event store succeeded")
+	}
+	if _, err := service.ValidateToken(ctx, "1", "v", "token"); err == nil {
+		t.Fatal("nil service token validation succeeded")
+	}
+	if _, err := service.EventForClient(ctx, "1", "1", "", "token", "", "", "", ""); err == nil {
+		t.Fatal("nil service event lookup succeeded")
+	}
+	if err := service.AckEvent(ctx, "1", "1", "", "token", "", "", "", ""); err == nil {
+		t.Fatal("nil service acknowledgement succeeded")
+	}
+}
+
+func TestBirthdayEventMissingAndAckFailure(t *testing.T) {
+	ctx, service, subscription := newBirthdayLocalLifecycle(t)
+	if _, err := service.EventForClient(ctx, "999", fmt.Sprint(subscription.ID), "", "version-1.secret", "cloud-1", "group-1", "user-1", "self-1"); err == nil {
+		t.Fatal("missing event lookup succeeded")
+	}
+	if err := service.AckEvent(ctx, "1", fmt.Sprint(subscription.ID), "", "wrong", "cloud-1", "group-1", "user-1", "self-1"); err == nil {
+		t.Fatal("acknowledgement with invalid token succeeded")
 	}
 }
 
@@ -254,13 +308,57 @@ func TestCloseBirthdayMonitorConnection(t *testing.T) {
 	}
 }
 
-func TestBirthdayMaterialAndTokenHelpers(t *testing.T) {
+func TestCloseBirthdayMonitorConnectionInputAndTransportErrors(t *testing.T) {
+	originalConfig := config.Cfg
+	originalClient := hmesCloseHTTPClient
+	t.Cleanup(func() {
+		config.Cfg = originalConfig
+		hmesCloseHTTPClient = originalClient
+	})
+	service := &Service{}
+
+	config.Cfg.HMES.InternalBaseURL = "http://localhost"
+	if err := service.closeBirthdayMonitorConnection(context.Background(), 0, "version"); err != nil {
+		t.Fatalf("zero subscription close: %v", err)
+	}
+	if err := service.closeBirthdayMonitorConnection(context.Background(), 1, " "); err != nil {
+		t.Fatalf("empty version close: %v", err)
+	}
+	config.Cfg.HMES.InternalBaseURL = "%"
+	if err := service.closeBirthdayMonitorConnection(context.Background(), 1, "version"); err == nil {
+		t.Fatal("invalid close URL was accepted")
+	}
+
+	config.Cfg.HMES.InternalBaseURL = "http://localhost"
+	var nilContext context.Context
+	if err := service.closeBirthdayMonitorConnection(nilContext, 1, "version"); err == nil {
+		t.Fatal("nil close context was accepted")
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	config.Cfg.HMES.InternalBaseURL = server.URL
+	hmesCloseHTTPClient = server.Client()
+	server.Close()
+	if err := service.closeBirthdayMonitorConnection(context.Background(), 1, "version"); err == nil {
+		t.Fatal("closed HMES connection succeeded")
+	}
+}
+
+func TestBirthdayMaterialHelpers(t *testing.T) {
 	if got := MaterialIDs([]string{"diamond", " diamond ", "missing", "clover"}); !slices.Equal(got, []int{12, 20}) {
 		t.Fatalf("material ids = %v", got)
 	}
 	if got := MaterialNamesFromIDs([]int{20, 12, 999}); !slices.Equal(got, []string{"diamond", "clover"}) {
 		t.Fatalf("material names = %v", got)
 	}
+	if got := normalizeMaterialIDs([]int{3, 1, 3, 0, -1, 2}); !slices.Equal(got, []int{1, 2, 3}) {
+		t.Fatalf("normalized material ids = %v", got)
+	}
+}
+
+func TestBirthdayTokenHelpers(t *testing.T) {
 	if token, err := randomToken(); err != nil || token == "" {
 		t.Fatalf("random token = %q, %v", token, err)
 	}
@@ -271,14 +369,14 @@ func TestBirthdayMaterialAndTokenHelpers(t *testing.T) {
 	if tokenVersion("") != "" || tokenVersion("legacy-token") != "" {
 		t.Fatal("legacy token unexpectedly has a version")
 	}
+}
+
+func TestBirthdayNormalizationHelpers(t *testing.T) {
 	if normalizeRegion("") != "jp" || normalizeRegion(" TW ") != "tw" {
 		t.Fatal("region normalization failed")
 	}
 	if selectorBindingServer("jp", false) != "" || selectorBindingServer(" jp ", true) != "jp" {
 		t.Fatal("selector binding server normalization failed")
-	}
-	if got := normalizeMaterialIDs([]int{3, 1, 3, 0, -1, 2}); !slices.Equal(got, []int{1, 2, 3}) {
-		t.Fatalf("normalized material ids = %v", got)
 	}
 
 	now := time.Now()
@@ -291,7 +389,9 @@ func TestBirthdayMaterialAndTokenHelpers(t *testing.T) {
 	if got := normalizeUploadTime(0); got.Before(now) || got.After(time.Now().Add(time.Second)) {
 		t.Fatalf("default upload time = %v", got)
 	}
+}
 
+func TestBirthdayParserEdgeHelpers(t *testing.T) {
 	for _, input := range []string{"/unknown", "plain text", "/烤森生日监听 0", "/烤森生日监听 mystery"} {
 		if _, err := ParseBirthdayMonitorCommand(input); err == nil {
 			t.Fatalf("invalid command %q was accepted", input)
@@ -305,5 +405,23 @@ func TestBirthdayMaterialAndTokenHelpers(t *testing.T) {
 	}
 	if !isSelectorToken("u123") || isSelectorToken("u") || isSelectorToken("user") {
 		t.Fatal("selector token classification failed")
+	}
+}
+
+func TestBirthdayParserAdditionalEdges(t *testing.T) {
+	if _, err := ParseBirthdayMonitorCommand("/jp"); err == nil {
+		t.Fatal("region-only command was accepted")
+	}
+	if material, err := applyBirthdayMonitorField(&BirthdayMonitorCommand{}, map[string]bool{}, " "); err != nil || material {
+		t.Fatalf("empty field = %v, %v", material, err)
+	}
+	if _, ok := parseDurationToken(""); ok {
+		t.Fatal("empty duration accepted")
+	}
+	if name, value, ok := parseMaterialToken("diamondon"); !ok || !value || name != "diamond" {
+		t.Fatalf("enabled material = %q, %v, %v", name, value, ok)
+	}
+	if name, value, ok := parseMaterialToken("cloveroff"); !ok || value || name != "clover" {
+		t.Fatalf("disabled material = %q, %v, %v", name, value, ok)
 	}
 }

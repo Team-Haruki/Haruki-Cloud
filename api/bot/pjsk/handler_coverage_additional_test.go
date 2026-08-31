@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/api"
 	botauth "haruki-cloud/api/bot/auth"
 	usersenttest "haruki-cloud/database/users/enttest"
+	commandregistry "haruki-cloud/internal/handler"
 	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -26,6 +27,13 @@ import (
 )
 
 func TestHandlerEncodingAndPureHelperBranches(t *testing.T) {
+	testSharedCommandEncodingAndValidation(t)
+	testExplicitProfileRegionSynchronization(t)
+	testBotCommandTextAndCompatibilityHelpers(t)
+}
+
+func testSharedCommandEncodingAndValidation(t *testing.T) {
+	t.Helper()
 	metadata := sharedCommandMetadata{Command: "/coverage", Outcome: "ok"}
 	result := encodeSharedCommandResult(
 		context.Background(),
@@ -55,7 +63,10 @@ func TestHandlerEncodingAndPureHelperBranches(t *testing.T) {
 	if isExpectedCommandError(nil) || isExpectedCommandError(errors.New("unexpected")) {
 		t.Fatal("nil and generic errors must not be expected command errors")
 	}
+}
 
+func testExplicitProfileRegionSynchronization(t *testing.T) {
+	t.Helper()
 	syncExplicitRegionToProfileParams(nil, "jp")
 	invalidRegion := &commandhandler.CommandRequest{Mode: accountdata.ProfileModeBindList, Params: []byte(`{"platform":"qq","platform_user_id":"1"}`)}
 	syncExplicitRegionToProfileParams(invalidRegion, "invalid")
@@ -106,7 +117,10 @@ func TestHandlerEncodingAndPureHelperBranches(t *testing.T) {
 	if decodedSettings.Server != "cn" || !decodedSettings.RegionExplicit {
 		t.Fatalf("synchronized settings params = %+v", decodedSettings)
 	}
+}
 
+func testBotCommandTextAndCompatibilityHelpers(t *testing.T) {
+	t.Helper()
 	text := extractBotCommandText(onebot11.Message{
 		{Type: onebot11.TypeImage, Data: onebot11.ImageData{File: "ignored"}},
 		{Type: onebot11.TypeText, Data: map[string]any{onebot11.KeyText: "map-any "}},
@@ -279,86 +293,105 @@ func TestMakeBotHandlerValidationElectionAndTelemetryBranches(t *testing.T) {
 		MatchedCommand: "/ok",
 		Message:        onebot11.Message{onebot11.Text("/ok")},
 	}
-	post := func(t *testing.T, handler fiber.Handler, body []byte) int {
-		t.Helper()
-		app := fiber.New()
-		app.Post("/bot/:botId", handler)
-		req := httptest.NewRequest(http.MethodPost, "/bot/42", bytes.NewReader(body))
-		req.Header.Set(fiber.HeaderContentType, api.ContentTypeJSON)
-		response, err := app.Test(req)
-		if err != nil {
-			t.Fatalf("handler request: %v", err)
-		}
-		response.Body.Close()
-		return response.StatusCode
-	}
 	requestBody, err := json.Marshal(request)
 	if err != nil {
 		t.Fatalf("encode handler request: %v", err)
 	}
 
 	t.Run("decode error", func(t *testing.T) {
-		handler := makeBotHandler(&renderapp.App{}, nil, nil, nil, "event/detail", []string{"/ok"})
-		if got := post(t, handler, []byte(`{`)); got != fiber.StatusBadRequest {
-			t.Fatalf("decode error status = %d", got)
-		}
+		testBotHandlerDecodeError(t)
 	})
 	t.Run("command not allowed", func(t *testing.T) {
-		bad := request
-		bad.MatchedCommand = "/bad"
-		body, marshalErr := json.Marshal(bad)
-		if marshalErr != nil {
-			t.Fatalf("marshal bad command: %v", marshalErr)
-		}
-		handler := makeBotHandler(&renderapp.App{}, nil, nil, nil, "event/detail", []string{"/ok"})
-		if got := post(t, handler, body); got != fiber.StatusBadRequest {
-			t.Fatalf("disallowed command status = %d", got)
-		}
+		testBotHandlerCommandNotAllowed(t, request)
 	})
 	t.Run("replay rejected", func(t *testing.T) {
-		election := &responseElectionCoverageStub{}
-		replay := newTestReplayGuard(&fakeNonceStore{}, true, time.Now())
-		handler := makeBotHandler(&renderapp.App{}, election, nil, replay, "event/detail", []string{"/ok"})
-		if got := post(t, handler, requestBody); got != fiber.StatusOK {
-			t.Fatalf("replay status = %d", got)
-		}
-		if election.called != 0 {
-			t.Fatalf("election called for replay: %d", election.called)
-		}
+		testBotHandlerReplayRejected(t, requestBody)
 	})
 	for _, reason := range []string{"publish_unknown", "not_selected"} {
 		t.Run(reason, func(t *testing.T) {
-			election := &responseElectionCoverageStub{decision: responseElectionDecision{reason: reason}}
-			handler := makeBotHandler(&renderapp.App{}, election, nil, nil, "event/detail", []string{"/ok"})
-			if got := post(t, handler, requestBody); got != fiber.StatusOK {
-				t.Fatalf("invisible decision status = %d", got)
-			}
-			if election.called != 1 {
-				t.Fatalf("election calls = %d", election.called)
-			}
+			testBotHandlerInvisibleDecision(t, requestBody, reason)
 		})
 	}
 
 	t.Run("closed telemetry", func(t *testing.T) {
-		botClient := newBotCommandTestClient(t, "handler_closed_telemetry")
-		telemetry := botauth.NewCommandTelemetryDispatcher(botClient)
-		telemetry.Close()
-		encoded, encodeErr := encodeBotResponseEnvelope(newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK))
-		if encodeErr != nil {
-			t.Fatalf("encode visible response: %v", encodeErr)
-		}
-		election := &responseElectionCoverageStub{decision: responseElectionDecision{
-			visible: true,
-			result: sharedCommandResult{
-				Response: encoded,
-				Metadata: sharedCommandMetadata{Command: "/ok", CommandPath: "event/detail", Outcome: "ok"},
-			},
-		}}
-		handler := makeBotHandler(&renderapp.App{}, election, telemetry, nil, "event/detail", []string{"/ok"})
-		if got := post(t, handler, requestBody); got != fiber.StatusOK {
-			t.Fatalf("visible response status = %d", got)
-		}
+		testBotHandlerClosedTelemetry(t, requestBody)
 	})
+}
+
+func postBotHandlerStatus(t *testing.T, handler fiber.Handler, body []byte) int {
+	t.Helper()
+	app := fiber.New()
+	app.Post("/bot/:botId", handler)
+	req := httptest.NewRequest(http.MethodPost, "/bot/42", bytes.NewReader(body))
+	req.Header.Set(fiber.HeaderContentType, api.ContentTypeJSON)
+	response, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("handler request: %v", err)
+	}
+	response.Body.Close()
+	return response.StatusCode
+}
+
+func testBotHandlerDecodeError(t *testing.T) {
+	t.Helper()
+	handler := makeBotHandler(&renderapp.App{}, nil, nil, nil, "event/detail", []string{"/ok"})
+	if got := postBotHandlerStatus(t, handler, []byte(`{`)); got != fiber.StatusBadRequest {
+		t.Fatalf("decode error status = %d", got)
+	}
+}
+
+func testBotHandlerCommandNotAllowed(t *testing.T, request BotCommandRequest) {
+	t.Helper()
+	request.MatchedCommand = "/bad"
+	body, err := json.Marshal(request)
+	if err != nil {
+		t.Fatalf("marshal bad command: %v", err)
+	}
+	handler := makeBotHandler(&renderapp.App{}, nil, nil, nil, "event/detail", []string{"/ok"})
+	if got := postBotHandlerStatus(t, handler, body); got != fiber.StatusBadRequest {
+		t.Fatalf("disallowed command status = %d", got)
+	}
+}
+
+func testBotHandlerReplayRejected(t *testing.T, requestBody []byte) {
+	t.Helper()
+	election := &responseElectionCoverageStub{}
+	replay := newTestReplayGuard(&fakeNonceStore{}, true, time.Now())
+	handler := makeBotHandler(&renderapp.App{}, election, nil, replay, "event/detail", []string{"/ok"})
+	if got := postBotHandlerStatus(t, handler, requestBody); got != fiber.StatusOK || election.called != 0 {
+		t.Fatalf("replay status/election calls = %d/%d", got, election.called)
+	}
+}
+
+func testBotHandlerInvisibleDecision(t *testing.T, requestBody []byte, reason string) {
+	t.Helper()
+	election := &responseElectionCoverageStub{decision: responseElectionDecision{reason: reason}}
+	handler := makeBotHandler(&renderapp.App{}, election, nil, nil, "event/detail", []string{"/ok"})
+	if got := postBotHandlerStatus(t, handler, requestBody); got != fiber.StatusOK || election.called != 1 {
+		t.Fatalf("invisible status/election calls = %d/%d", got, election.called)
+	}
+}
+
+func testBotHandlerClosedTelemetry(t *testing.T, requestBody []byte) {
+	t.Helper()
+	botClient := newBotCommandTestClient(t, "handler_closed_telemetry")
+	telemetry := botauth.NewCommandTelemetryDispatcher(botClient)
+	telemetry.Close()
+	encoded, err := encodeBotResponseEnvelope(newBotResponseEnvelope(fiber.StatusOK, api.ResponseOK))
+	if err != nil {
+		t.Fatalf("encode visible response: %v", err)
+	}
+	election := &responseElectionCoverageStub{decision: responseElectionDecision{
+		visible: true,
+		result: sharedCommandResult{
+			Response: encoded,
+			Metadata: sharedCommandMetadata{Command: "/ok", CommandPath: "event/detail", Outcome: "ok"},
+		},
+	}}
+	handler := makeBotHandler(&renderapp.App{}, election, telemetry, nil, "event/detail", []string{"/ok"})
+	if got := postBotHandlerStatus(t, handler, requestBody); got != fiber.StatusOK {
+		t.Fatalf("visible response status = %d", got)
+	}
 }
 
 func TestBotRouteDispatchersCloseAllComponents(t *testing.T) {
@@ -373,4 +406,51 @@ func TestBotRouteDispatchersCloseAllComponents(t *testing.T) {
 	}
 	dispatchers.Close()
 	dispatchers.Close()
+}
+
+func TestBotCommandMatchFallbackBranches(t *testing.T) {
+	openHandler := &commandregistry.CommandHandlerBase{Path: "profile/open"}
+	closedHandler := &commandregistry.CommandHandlerBase{}
+	disabledHandler := &commandregistry.CommandHandlerBase{Disabled: true, Path: "profile/disabled"}
+	matched := commandregistry.MatchedHandler{Command: "/open", Handler: openHandler}
+
+	if !botCommandMatchRegistered(matched, true) {
+		t.Fatal("enabled registered command should be recognized")
+	}
+	if botCommandMatchRegistered(matched, false) {
+		t.Fatal("failed lookup must not be recognized as registered")
+	}
+	if botCommandMatchRegistered(commandregistry.MatchedHandler{}, true) {
+		t.Fatal("nil handler must not be recognized as registered")
+	}
+	if botCommandMatchRegistered(commandregistry.MatchedHandler{Handler: disabledHandler}, true) {
+		t.Fatal("disabled handler must not be recognized as registered")
+	}
+
+	actual := commandregistry.MatchedHandler{Command: "/actual", Handler: openHandler}
+	got, err := fallbackBotCommandMatch(commandregistry.MatchedHandler{}, actual, false, "/missing")
+	if err != nil || got.Command != actual.Command || got.Handler != actual.Handler {
+		t.Fatalf("actual command fallback = %+v, %v", got, err)
+	}
+
+	_, err = fallbackBotCommandMatch(
+		commandregistry.MatchedHandler{Command: "/closed", Handler: closedHandler},
+		commandregistry.MatchedHandler{},
+		true,
+		"/closed",
+	)
+	var validationErr *botValidationError
+	if !errors.As(err, &validationErr) || validationErr.msg != "matched_command 未开放给 Bot API: /closed" {
+		t.Fatalf("closed command error = %v", err)
+	}
+
+	_, err = fallbackBotCommandMatch(
+		commandregistry.MatchedHandler{},
+		commandregistry.MatchedHandler{Handler: disabledHandler},
+		false,
+		"/missing",
+	)
+	if !errors.As(err, &validationErr) || validationErr.msg != "matched_command 未注册: /missing" {
+		t.Fatalf("missing command error = %v", err)
+	}
 }

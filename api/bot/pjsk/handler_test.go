@@ -2603,39 +2603,7 @@ func TestBotEndpointSKQueryAllowsHiddenSelfBinding(t *testing.T) {
 }
 
 func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/pjsk/sk/speed" {
-			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
-		}
-		var req drawing.SpeedRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			t.Fatalf("decode drawing request: %v", err)
-		}
-		if req.EventID != 101 {
-			t.Fatalf("unexpected event id: %d", req.EventID)
-		}
-		if req.RequestType != "时" {
-			t.Fatalf("unexpected request type: %s", req.RequestType)
-		}
-		if req.Period <= 0 {
-			t.Fatalf("unexpected period: %d", req.Period)
-		}
-		if len(req.Ranks) == 0 {
-			t.Fatalf("expected non-empty ranks in speed request")
-		}
-		foundRank100 := false
-		for _, r := range req.Ranks {
-			if r.Rank == 100 {
-				foundRank100 = true
-				break
-			}
-		}
-		if !foundRank100 {
-			t.Fatalf("expected rank 100 in speed request, got %+v", req.Ranks)
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("SKSPEEDPNG"))
-	}))
+	srv := newBotSKSpeedDrawingServer(t)
 	defer srv.Close()
 
 	app := fiber.New()
@@ -2659,6 +2627,35 @@ func TestBotEndpointSKSpeedUsesTrackerPayload(t *testing.T) {
 		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, body)
 	}
 	assertSingleImageMessage(t, body)
+}
+
+func newBotSKSpeedDrawingServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/pjsk/sk/speed" {
+			t.Fatalf("unexpected drawing path: %s", r.URL.Path)
+		}
+		var req drawing.SpeedRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode drawing request: %v", err)
+		}
+		assertBotSKSpeedRequest(t, req)
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("SKSPEEDPNG"))
+	}))
+}
+
+func assertBotSKSpeedRequest(t *testing.T, request drawing.SpeedRequest) {
+	t.Helper()
+	if request.EventID != 101 || request.RequestType != "时" || request.Period <= 0 || len(request.Ranks) == 0 {
+		t.Fatalf("unexpected speed request: %+v", request)
+	}
+	for _, rank := range request.Ranks {
+		if rank.Rank == 100 {
+			return
+		}
+	}
+	t.Fatalf("expected rank 100 in speed request, got %+v", request.Ranks)
 }
 
 func assertSingleTextMessageContains(t *testing.T, body []byte, wantPart string) {

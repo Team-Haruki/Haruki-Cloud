@@ -115,38 +115,48 @@ func (c *Controller) pickCurrentOrNextEventID(region string) int {
 		return 0
 	}
 	now := time.Now().UnixMilli()
-	var current *masterdata.Event
-	var next *masterdata.Event
-	var latest *masterdata.Event
+	candidates := eventCandidates{}
 	for _, eventInfo := range eventSource.GetEvents() {
-		if eventInfo == nil {
-			continue
-		}
-		if latest == nil || eventInfo.StartAt > latest.StartAt {
-			latest = eventInfo
-		}
-		if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
-			if current == nil || eventInfo.StartAt > current.StartAt {
-				current = eventInfo
-			}
-			continue
-		}
-		if eventInfo.StartAt > now {
-			if next == nil || eventInfo.StartAt < next.StartAt {
-				next = eventInfo
-			}
-		}
+		candidates.consider(eventInfo, now)
 	}
-	if current != nil {
-		return current.ID
+	return candidates.preferredID()
+}
+
+type eventCandidates struct {
+	current *masterdata.Event
+	next    *masterdata.Event
+	latest  *masterdata.Event
+}
+
+func (c *eventCandidates) consider(eventInfo *masterdata.Event, now int64) {
+	if eventInfo == nil {
+		return
 	}
-	if next != nil {
-		return next.ID
+	if c.latest == nil || eventInfo.StartAt > c.latest.StartAt {
+		c.latest = eventInfo
 	}
-	if latest != nil {
-		return latest.ID
+	if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
+		if c.current == nil || eventInfo.StartAt > c.current.StartAt {
+			c.current = eventInfo
+		}
+		return
 	}
-	return 0
+	if eventInfo.StartAt > now && (c.next == nil || eventInfo.StartAt < c.next.StartAt) {
+		c.next = eventInfo
+	}
+}
+
+func (c eventCandidates) preferredID() int {
+	switch {
+	case c.current != nil:
+		return c.current.ID
+	case c.next != nil:
+		return c.next.ID
+	case c.latest != nil:
+		return c.latest.ID
+	default:
+		return 0
+	}
 }
 
 func (c *Controller) eventSourceForRegion(region string) EventSource {

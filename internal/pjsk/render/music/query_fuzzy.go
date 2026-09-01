@@ -30,6 +30,17 @@ func resolveFuzzyMusicQuery(source DataSource, query string, allowUnreleased boo
 	}
 
 	now := currentMusicVisibilityTime()
+	matches, bestScores := collectFuzzyMusicMatches(source, normalizedQuery, now, allowUnreleased)
+	if len(matches) > 0 {
+		return selectUniqueMusicMatch("模糊匹配", bestFuzzyMusicMatches(matches, bestScores))
+	}
+	if !allowUnreleased && hasUnreleasedFuzzyMusicMatch(source, normalizedQuery, now) {
+		return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
+	}
+	return nil, fmt.Errorf("music not found: %s", query)
+}
+
+func collectFuzzyMusicMatches(source DataSource, normalizedQuery string, now int64, allowUnreleased bool) ([]*masterdata.Music, map[int]musicFuzzyScore) {
 	matches := make([]*masterdata.Music, 0)
 	bestScores := make(map[int]musicFuzzyScore)
 	for _, musicInfo := range source.GetMusics() {
@@ -43,36 +54,27 @@ func resolveFuzzyMusicQuery(source DataSource, query string, allowUnreleased boo
 		matches = append(matches, musicInfo)
 		bestScores[musicInfo.ID] = score
 	}
-	if len(matches) == 0 {
-		if allowUnreleased {
-			return nil, fmt.Errorf("music not found: %s", query)
-		}
-		for _, musicInfo := range source.GetMusics() {
-			if musicInfo == nil || isMusicVisibleAt(musicInfo, now) {
-				continue
-			}
-			if _, ok := scoreMusicFuzzyMatch(source, musicInfo, normalizedQuery); ok {
-				return nil, releasecheck.New(releasecheck.KindMusic, query, 0)
-			}
-		}
-		return nil, fmt.Errorf("music not found: %s", query)
-	}
+	return matches, bestScores
+}
 
-	slices.SortFunc(matches, func(a, b *masterdata.Music) int {
-		scoreA := bestScores[a.ID]
-		scoreB := bestScores[b.ID]
-		switch {
-		case scoreA.matchType != scoreB.matchType:
-			return scoreA.matchType - scoreB.matchType
-		case scoreA.distance != scoreB.distance:
-			return scoreA.distance - scoreB.distance
-		case scoreA.lengthGap != scoreB.lengthGap:
-			return scoreA.lengthGap - scoreB.lengthGap
-		case scoreA.textLen != scoreB.textLen:
-			return scoreA.textLen - scoreB.textLen
-		default:
-			return a.ID - b.ID
+func hasUnreleasedFuzzyMusicMatch(source DataSource, normalizedQuery string, now int64) bool {
+	for _, musicInfo := range source.GetMusics() {
+		if musicInfo == nil || isMusicVisibleAt(musicInfo, now) {
+			continue
 		}
+		if _, ok := scoreMusicFuzzyMatch(source, musicInfo, normalizedQuery); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func bestFuzzyMusicMatches(matches []*masterdata.Music, bestScores map[int]musicFuzzyScore) []*masterdata.Music {
+	slices.SortFunc(matches, func(a, b *masterdata.Music) int {
+		if compared := compareMusicFuzzyScore(bestScores[a.ID], bestScores[b.ID]); compared != 0 {
+			return compared
+		}
+		return a.ID - b.ID
 	})
 
 	best := bestScores[matches[0].ID]
@@ -84,7 +86,7 @@ func resolveFuzzyMusicQuery(source DataSource, query string, allowUnreleased boo
 		}
 		topMatches = append(topMatches, match)
 	}
-	return selectUniqueMusicMatch("模糊匹配", topMatches)
+	return topMatches
 }
 
 func scoreMusicFuzzyMatch(source DataSource, musicInfo *masterdata.Music, normalizedQuery string) (musicFuzzyScore, bool) {

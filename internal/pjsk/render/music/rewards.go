@@ -85,65 +85,84 @@ func (c *Controller) BuildMusicRewardsDetailRequestFromAchievements(query Reward
 		return nil, fmt.Errorf("no reward-eligible musics found")
 	}
 
-	achievementsByMusic := make(map[int]map[int]struct{}, len(validMusicIDs))
+	achievementsByMusic := groupEligibleMusicAchievements(achievements, validMusicIDs)
+	rankRewards, comboRewards := calculateMissingMusicRewards(validMusicIDs, achievementsByMusic, builder)
+
+	return &drawing.DetailMusicRewardsRequest{
+		RankRewards:   rankRewards,
+		ComboRewards:  ensureDetailComboRewards(formatDetailComboRewards(comboRewards)),
+		Profile:       c.profileCardWithMessage(query.Profile, region, nil),
+		JewelIconPath: c.resolveStaticIcon(query.JewelIconPath, "jewel.png"),
+		ShardIconPath: c.resolveStaticIcon(query.ShardIconPath, "shard.png"),
+	}, nil
+}
+
+func groupEligibleMusicAchievements(achievements []userMusicAchievement, validMusicIDs map[int]struct{}) map[int]map[int]struct{} {
+	grouped := make(map[int]map[int]struct{}, len(validMusicIDs))
 	for _, item := range achievements {
 		if _, ok := validMusicIDs[item.MusicID]; !ok {
 			continue
 		}
-		if _, ok := achievementsByMusic[item.MusicID]; !ok {
-			achievementsByMusic[item.MusicID] = make(map[int]struct{})
+		if grouped[item.MusicID] == nil {
+			grouped[item.MusicID] = make(map[int]struct{})
 		}
-		achievementsByMusic[item.MusicID][item.MusicAchievementID] = struct{}{}
+		grouped[item.MusicID][item.MusicAchievementID] = struct{}{}
 	}
+	return grouped
+}
 
+func calculateMissingMusicRewards(validMusicIDs map[int]struct{}, achievementsByMusic map[int]map[int]struct{}, builder *Builder) (int, map[string]map[int]int) {
 	rankRewards := 0
-	comboRewards := map[string]map[int]int{
+	comboRewards := emptyDetailComboRewardTotals()
+	for musicID := range validMusicIDs {
+		rankRewards += missingRankRewardTotal(achievementsByMusic[musicID])
+		diffInfo, err := builder.buildDifficultyInfo(musicID)
+		if err == nil && diffInfo != nil {
+			addMissingComboRewards(comboRewards, diffInfo, achievementsByMusic[musicID])
+		}
+	}
+	return rankRewards, comboRewards
+}
+
+func emptyDetailComboRewardTotals() map[string]map[int]int {
+	return map[string]map[int]int{
 		"hard":   {},
 		"expert": {},
 		"master": {},
 		"append": {},
 	}
+}
 
-	for musicID := range validMusicIDs {
-		for achievementID, reward := range musicRankRewards {
-			if _, ok := achievementsByMusic[musicID][achievementID]; !ok {
-				rankRewards += reward.Jewel
-			}
-		}
-
-		diffInfo, err := builder.buildDifficultyInfo(musicID)
-		if err != nil || diffInfo == nil {
-			continue
-		}
-		for _, diff := range []string{"hard", "expert", "master", "append"} {
-			level := difficultyLevelFromInfo(diffInfo, diff)
-			if level == 0 {
-				continue
-			}
-			comboRewards[diff][level] += missingComboRewardTotal(diff, achievementsByMusic[musicID])
+func missingRankRewardTotal(achievements map[int]struct{}) int {
+	total := 0
+	for achievementID, reward := range musicRankRewards {
+		if _, ok := achievements[achievementID]; !ok {
+			total += reward.Jewel
 		}
 	}
+	return total
+}
 
-	out := make(map[string][]drawing.MusicComboReward, len(comboRewards))
+func addMissingComboRewards(totals map[string]map[int]int, diffInfo *drawing.DifficultyInfo, achievements map[int]struct{}) {
 	for _, diff := range []string{"hard", "expert", "master", "append"} {
-		levels := sortedRewardLevels(comboRewards[diff])
+		level := difficultyLevelFromInfo(diffInfo, diff)
+		if level > 0 {
+			totals[diff][level] += missingComboRewardTotal(diff, achievements)
+		}
+	}
+}
+
+func formatDetailComboRewards(totals map[string]map[int]int) map[string][]drawing.MusicComboReward {
+	out := make(map[string][]drawing.MusicComboReward, len(totals))
+	for _, diff := range []string{"hard", "expert", "master", "append"} {
+		levels := sortedRewardLevels(totals[diff])
 		items := make([]drawing.MusicComboReward, 0, len(levels))
 		for _, level := range levels {
-			items = append(items, drawing.MusicComboReward{
-				Level:  level,
-				Reward: comboRewards[diff][level],
-			})
+			items = append(items, drawing.MusicComboReward{Level: level, Reward: totals[diff][level]})
 		}
 		out[diff] = items
 	}
-
-	return &drawing.DetailMusicRewardsRequest{
-		RankRewards:   rankRewards,
-		ComboRewards:  ensureDetailComboRewards(out),
-		Profile:       c.profileCardWithMessage(query.Profile, region, nil),
-		JewelIconPath: c.resolveStaticIcon(query.JewelIconPath, "jewel.png"),
-		ShardIconPath: c.resolveStaticIcon(query.ShardIconPath, "shard.png"),
-	}, nil
+	return out
 }
 
 func (c *Controller) BuildMusicRewardsDetailRequestFromSnapshot(query RewardsDetailQuery, snapshot snapshot.Snapshot) (*drawing.DetailMusicRewardsRequest, error) {
@@ -171,79 +190,94 @@ func (c *Controller) BuildMusicRewardsBasicEstimateRequest(query RewardsBasicQue
 		return nil, fmt.Errorf("no reward-eligible musics found")
 	}
 
-	clearByDiff := make(map[string]int)
-	fcByDiff := make(map[string]int)
-	for _, item := range clearCounts {
-		diff := strings.ToLower(strings.TrimSpace(string(item.MusicDifficultyType)))
-		if diff == "" {
-			continue
-		}
-		clearByDiff[diff] = item.LiveClear
-		fcByDiff[diff] = item.FullCombo
-	}
-
+	clearByDiff, fcByDiff := musicClearCountsByDifficulty(clearCounts)
 	musicNum := len(validMusicIDs)
-	appendMusicNum := 0
-	for musicID := range validMusicIDs {
-		diffInfo, err := builder.buildDifficultyInfo(musicID)
-		if err != nil || diffInfo == nil {
-			continue
-		}
-		if difficultyLevelFromInfo(diffInfo, "append") > 0 {
-			appendMusicNum++
-		}
-	}
-
-	rankSNum := 0
-	for _, count := range clearByDiff {
-		if count > rankSNum {
-			rankSNum = count
-		}
-	}
-	if rankSNum > musicNum {
-		rankSNum = musicNum
-	}
-
-	totalRankReward := 0
-	for _, reward := range musicRankRewards {
-		totalRankReward += reward.Jewel
-	}
-
-	comboRewards := map[string]string{}
-	for _, diff := range []string{"hard", "expert", "master", "append"} {
-		totalPerMusic := 0
-		for _, reward := range musicComboRewards[diff] {
-			if diff == "append" {
-				totalPerMusic += reward.Shard
-			} else {
-				totalPerMusic += reward.Jewel
-			}
-		}
-		targetMusicCount := musicNum
-		if diff == "append" {
-			targetMusicCount = appendMusicNum
-		}
-		missingCount := targetMusicCount - fcByDiff[diff]
-		if missingCount < 0 {
-			missingCount = 0
-		}
-		comboRewards[diff] = formatEstimatedReward(totalPerMusic, missingCount)
-	}
-
-	message := reason
-	if message == "" {
-		message = "当前未使用 Suite 抓包数据，以下为基于公开信息的估算结果。"
-	} else {
-		message += "\n以下为基于公开信息的估算结果。"
-	}
+	appendMusicNum := countAppendRewardMusics(validMusicIDs, builder)
+	rankSNum := maxClearCount(clearByDiff, musicNum)
+	comboRewards := estimatedComboRewards(fcByDiff, musicNum, appendMusicNum)
+	message := musicRewardEstimateMessage(reason)
 
 	return &drawing.BasicMusicRewardsRequest{
-		RankRewards:   formatEstimatedReward(totalRankReward, musicNum-rankSNum),
+		RankRewards:   formatEstimatedReward(totalMusicRankReward(), musicNum-rankSNum),
 		ComboRewards:  comboRewards,
 		Profile:       c.profileCardWithMessage(query.Profile, region, &message),
 		JewelIconPath: c.resolveStaticIcon(query.JewelIconPath, "jewel.png"),
 		ShardIconPath: c.resolveStaticIcon(query.ShardIconPath, "shard.png"),
 	}, nil
+}
+
+func musicClearCountsByDifficulty(clearCounts []sekai.AnotherUserMusicDifficultyClearCount) (map[string]int, map[string]int) {
+	clearByDiff := make(map[string]int)
+	fcByDiff := make(map[string]int)
+	for _, item := range clearCounts {
+		diff := strings.ToLower(strings.TrimSpace(string(item.MusicDifficultyType)))
+		if diff != "" {
+			clearByDiff[diff] = item.LiveClear
+			fcByDiff[diff] = item.FullCombo
+		}
+	}
+	return clearByDiff, fcByDiff
+}
+
+func countAppendRewardMusics(validMusicIDs map[int]struct{}, builder *Builder) int {
+	count := 0
+	for musicID := range validMusicIDs {
+		diffInfo, err := builder.buildDifficultyInfo(musicID)
+		if err == nil && difficultyLevelFromInfo(diffInfo, "append") > 0 {
+			count++
+		}
+	}
+	return count
+}
+
+func maxClearCount(clearByDiff map[string]int, musicNum int) int {
+	maximum := 0
+	for _, count := range clearByDiff {
+		if count > maximum {
+			maximum = count
+		}
+	}
+	return min(maximum, musicNum)
+}
+
+func totalMusicRankReward() int {
+	total := 0
+	for _, reward := range musicRankRewards {
+		total += reward.Jewel
+	}
+	return total
+}
+
+func estimatedComboRewards(fcByDiff map[string]int, musicNum int, appendMusicNum int) map[string]string {
+	comboRewards := make(map[string]string, 4)
+	for _, diff := range []string{"hard", "expert", "master", "append"} {
+		targetMusicCount := musicNum
+		if diff == "append" {
+			targetMusicCount = appendMusicNum
+		}
+		missingCount := max(targetMusicCount-fcByDiff[diff], 0)
+		comboRewards[diff] = formatEstimatedReward(totalComboRewardForDifficulty(diff), missingCount)
+	}
+	return comboRewards
+}
+
+func totalComboRewardForDifficulty(diff string) int {
+	total := 0
+	for _, reward := range musicComboRewards[diff] {
+		if diff == "append" {
+			total += reward.Shard
+		} else {
+			total += reward.Jewel
+		}
+	}
+	return total
+}
+
+func musicRewardEstimateMessage(reason string) string {
+	if reason == "" {
+		return "当前未使用 Suite 抓包数据，以下为基于公开信息的估算结果。"
+	}
+	return reason + "\n以下为基于公开信息的估算结果。"
 }
 
 func (c *Controller) validRewardMusicIDs(region renderregion.Value, source DataSource, builder *Builder) map[int]struct{} {

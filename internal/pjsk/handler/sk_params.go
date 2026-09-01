@@ -165,13 +165,27 @@ func buildSKPlayerTraceParams(ctx HarrukiSekaiHandlerContext) (map[string]any, e
 		false,
 		ctx.PrefixArg() == "wl",
 	)
+	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
+		wlCharacterQuery = "wl"
+	}
+	params := newSKTraceParams(ctx, eventID, wlCharacterID, wlCharacterQuery, compareRank)
+	target, effectiveRankArgs := resolveSKTraceTarget(ctx, rankArgs)
+	if err := applySKTraceRanks(params, effectiveRankArgs); err != nil {
+		return nil, err
+	}
+	applySKTraceTarget(params, target, ctx.GetPlatform())
+	return params, nil
+}
 
+type skTraceTarget struct {
+	userID   string
+	selector string
+}
+
+func newSKTraceParams(ctx HarrukiSekaiHandlerContext, eventID int, wlCharacterID int, wlCharacterQuery string, compareRank int) map[string]any {
 	params := map[string]any{
 		"region":          strings.ToLower(strings.TrimSpace(ctx.Region().String())),
 		"region_explicit": ctx.HasExplicitRegion(),
-	}
-	if ctx.PrefixArg() == "wl" && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
-		wlCharacterQuery = "wl"
 	}
 	if eventID > 0 {
 		params["event_id"] = eventID
@@ -179,55 +193,63 @@ func buildSKPlayerTraceParams(ctx HarrukiSekaiHandlerContext) (map[string]any, e
 	if wlCharacterID > 0 {
 		params["wl_character_id"] = wlCharacterID
 	}
-	if strings.TrimSpace(wlCharacterQuery) != "" {
-		params["wl_character_query"] = strings.TrimSpace(wlCharacterQuery)
+	if query := strings.TrimSpace(wlCharacterQuery); query != "" {
+		params["wl_character_query"] = query
 	}
 	if compareRank > 0 {
 		params["compare_rank"] = compareRank
 	}
+	return params
+}
 
-	targetUserID := ""
-	targetSelector := ""
-	if uidArg := strings.TrimSpace(ctx.UIDArg()); uidArg != "" && strings.TrimSpace(rankArgs) == "" {
-		switch {
-		case strings.HasPrefix(uidArg, "@"):
-			candidate := strings.TrimSpace(strings.TrimPrefix(uidArg, "@"))
-			if isDigits(candidate) {
-				targetUserID = candidate
-			}
-		case isBindingSelector(uidArg):
-			targetUserID = strings.TrimSpace(ctx.GetUserId())
-			targetSelector = strings.ToLower(uidArg)
-		case isDigits(uidArg):
-			rankArgs = uidArg
-		}
+func resolveSKTraceTarget(ctx HarrukiSekaiHandlerContext, rankArgs string) (skTraceTarget, string) {
+	uidArg := strings.TrimSpace(ctx.UIDArg())
+	if uidArg == "" || strings.TrimSpace(rankArgs) != "" {
+		return skTraceTarget{}, rankArgs
 	}
-
-	if strings.TrimSpace(rankArgs) != "" {
-		ranks, userID, err := parseSKRanks(rankArgs, true)
-		if err != nil {
-			return nil, err
+	switch {
+	case strings.HasPrefix(uidArg, "@"):
+		candidate := strings.TrimSpace(strings.TrimPrefix(uidArg, "@"))
+		if isDigits(candidate) {
+			return skTraceTarget{userID: candidate}, rankArgs
 		}
-		if len(ranks) > 2 {
-			return nil, fmt.Errorf("ptr 最多支持两个排名，例如: /ptr 1 2")
-		}
-		if len(ranks) > 0 {
-			params["ranks"] = ranks
-		}
-		if userID != nil && *userID > 0 {
-			params["user_id"] = *userID
-		}
+	case isBindingSelector(uidArg):
+		return skTraceTarget{userID: strings.TrimSpace(ctx.GetUserId()), selector: strings.ToLower(uidArg)}, rankArgs
+	case isDigits(uidArg):
+		return skTraceTarget{}, uidArg
 	}
+	return skTraceTarget{}, rankArgs
+}
 
-	if targetUserID != "" {
-		params["target_platform"] = strings.ToLower(strings.TrimSpace(ctx.GetPlatform()))
-		params["target_user_id"] = targetUserID
-		if targetSelector != "" {
-			params["target_selector"] = targetSelector
-		}
+func applySKTraceRanks(params map[string]any, rankArgs string) error {
+	if strings.TrimSpace(rankArgs) == "" {
+		return nil
 	}
+	ranks, userID, err := parseSKRanks(rankArgs, true)
+	if err != nil {
+		return err
+	}
+	if len(ranks) > 2 {
+		return fmt.Errorf("ptr 最多支持两个排名，例如: /ptr 1 2")
+	}
+	if len(ranks) > 0 {
+		params["ranks"] = ranks
+	}
+	if userID != nil && *userID > 0 {
+		params["user_id"] = *userID
+	}
+	return nil
+}
 
-	return params, nil
+func applySKTraceTarget(params map[string]any, target skTraceTarget, platform string) {
+	if target.userID == "" {
+		return
+	}
+	params["target_platform"] = strings.ToLower(strings.TrimSpace(platform))
+	params["target_user_id"] = target.userID
+	if target.selector != "" {
+		params["target_selector"] = target.selector
+	}
 }
 
 func extractSKCompareRankArg(args string) (string, int, error) {

@@ -71,66 +71,82 @@ func (p *dbCardProvider) isWorldLink3Card(ctx context.Context, cardID int) bool 
 
 func (p *dbCardProvider) loadWorldLink3Cards(ctx context.Context) bool {
 	p.init()
-	p.worldLink3Mu.RLock()
-	loaded := dbBulkIndexFresh(p.worldLink3Loaded, p.worldLink3LoadedAt)
-	p.worldLink3Mu.RUnlock()
-	if loaded {
+	if p.worldLink3CardsFresh() {
 		return true
 	}
 
 	callerToken := new(dbBulkIndexFlightToken)
 	result := p.worldLink3Loads.DoChan(p.region.String(), func() (any, error) {
-		completed := runDBBulkIndexFlight(callerToken, func(loadCtx context.Context) error {
-			finishIndex := commandtrace.MeasureOperation(loadCtx, "cards.supply_index")
-			defer finishIndex()
-			p.worldLink3Mu.RLock()
-			loaded := dbBulkIndexFresh(p.worldLink3Loaded, p.worldLink3LoadedAt)
-			p.worldLink3Mu.RUnlock()
-			if loaded {
-				return nil
-			}
-
-			events, err := p.client.Event.Query().
-				Where(
-					event.ServerRegionEQ(p.region.String()),
-					event.EventTypeEQ("world_bloom"),
-					event.UnitEQ("none"),
-				).
-				All(loadCtx)
-			if err != nil {
-				return err
-			}
-			eventIDs := make([]int64, 0, len(events))
-			for _, item := range events {
-				eventIDs = append(eventIDs, item.GameID)
-			}
-
-			cards := make(map[int]bool)
-			if len(eventIDs) > 0 {
-				links, err := p.client.Eventcard.Query().
-					Where(
-						eventcard.ServerRegionEQ(p.region.String()),
-						eventcard.EventIDIn(eventIDs...),
-					).
-					All(loadCtx)
-				if err != nil {
-					return err
-				}
-				for _, link := range links {
-					cards[int(link.CardID)] = true
-				}
-			}
-
-			p.worldLink3Mu.Lock()
-			p.worldLink3ByCard = cards
-			p.worldLink3Loaded = true
-			p.worldLink3LoadedAt = time.Now()
-			p.worldLink3Mu.Unlock()
-			return nil
-		})
+		completed := runDBBulkIndexFlight(callerToken, p.refreshWorldLink3Cards)
 		return completed, nil
 	})
 	return waitDBBulkIndexFlight(ctx, result, callerToken, "cards.supply_index_wait", "cards.supply_index_shared") == nil
+}
+
+func (p *dbCardProvider) worldLink3CardsFresh() bool {
+	p.worldLink3Mu.RLock()
+	defer p.worldLink3Mu.RUnlock()
+	return dbBulkIndexFresh(p.worldLink3Loaded, p.worldLink3LoadedAt)
+}
+
+func (p *dbCardProvider) refreshWorldLink3Cards(ctx context.Context) error {
+	finishIndex := commandtrace.MeasureOperation(ctx, "cards.supply_index")
+	defer finishIndex()
+	if p.worldLink3CardsFresh() {
+		return nil
+	}
+	eventIDs, err := p.loadWorldLinkEventIDs(ctx)
+	if err != nil {
+		return err
+	}
+	cards, err := p.loadWorldLinkCardIDs(ctx, eventIDs)
+	if err != nil {
+		return err
+	}
+	p.worldLink3Mu.Lock()
+	p.worldLink3ByCard = cards
+	p.worldLink3Loaded = true
+	p.worldLink3LoadedAt = time.Now()
+	p.worldLink3Mu.Unlock()
+	return nil
+}
+
+func (p *dbCardProvider) loadWorldLinkEventIDs(ctx context.Context) ([]int64, error) {
+	events, err := p.client.Event.Query().
+		Where(
+			event.ServerRegionEQ(p.region.String()),
+			event.EventTypeEQ("world_bloom"),
+			event.UnitEQ("none"),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	eventIDs := make([]int64, 0, len(events))
+	for _, item := range events {
+		eventIDs = append(eventIDs, item.GameID)
+	}
+	return eventIDs, nil
+}
+
+func (p *dbCardProvider) loadWorldLinkCardIDs(ctx context.Context, eventIDs []int64) (map[int]bool, error) {
+	cards := make(map[int]bool)
+	if len(eventIDs) == 0 {
+		return cards, nil
+	}
+	links, err := p.client.Eventcard.Query().
+		Where(
+			eventcard.ServerRegionEQ(p.region.String()),
+			eventcard.EventIDIn(eventIDs...),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, link := range links {
+		cards[int(link.CardID)] = true
+	}
+	return cards, nil
 }
 
 func cardNormalizeSupportUnit(raw string) string {

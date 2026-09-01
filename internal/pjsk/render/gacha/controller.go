@@ -100,52 +100,73 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	if !ok {
 		return query, nil, fmt.Errorf("no gacha data source for region %s", query.Region)
 	}
-	if query.GachaID != 0 {
-		gachaInfo, err := src.GetGachaByID(query.GachaID)
-		if err != nil {
-			return query, src, err
-		}
-		if gachaInfo != nil && gachaInfo.StartAt > time.Now().UnixMilli() {
-			return query, src, releasecheck.New(releasecheck.KindGacha, "", gachaInfo.ID)
-		}
-		return query, src, nil
+	var err error
+	switch {
+	case query.GachaID != 0:
+		err = validateGachaRelease(src, query.GachaID)
+	case query.NegIndex < 0:
+		query.GachaID, err = resolveGachaNegativeIndex(src, query.Region, query.NegIndex)
+	case query.EventID != 0:
+		query.GachaID, err = resolveEventGachaID(src, query.EventID)
+	default:
+		err = fmt.Errorf("gacha id is required")
 	}
-	if query.NegIndex < 0 {
-		all := src.GetGachas()
-		gachas := make([]*masterdata.Gacha, 0, len(all))
-		now := time.Now().UnixMilli()
-		for _, item := range all {
-			if item == nil || item.StartAt > now {
-				continue
-			}
+	return query, src, err
+}
+
+func validateGachaRelease(src DataSource, gachaID int) error {
+	gachaInfo, err := src.GetGachaByID(gachaID)
+	if err != nil {
+		return err
+	}
+	return futureGachaError(gachaInfo)
+}
+
+func resolveGachaNegativeIndex(src DataSource, region renderregion.Value, negativeIndex int) (int, error) {
+	gachas := releasedGachas(src.GetGachas(), time.Now().UnixMilli())
+	if len(gachas) == 0 {
+		return 0, fmt.Errorf("no gacha data available for region %s", region)
+	}
+	sort.Slice(gachas, func(i, j int) bool {
+		if gachas[i].StartAt == gachas[j].StartAt {
+			return gachas[i].ID < gachas[j].ID
+		}
+		return gachas[i].StartAt < gachas[j].StartAt
+	})
+	index := len(gachas) + negativeIndex
+	if index < 0 || index >= len(gachas) {
+		return 0, fmt.Errorf("gacha index %d is out of range", negativeIndex)
+	}
+	return gachas[index].ID, nil
+}
+
+func releasedGachas(all []*masterdata.Gacha, now int64) []*masterdata.Gacha {
+	gachas := make([]*masterdata.Gacha, 0, len(all))
+	for _, item := range all {
+		if item != nil && item.StartAt <= now {
 			gachas = append(gachas, item)
 		}
-		if len(gachas) == 0 {
-			return query, src, fmt.Errorf("no gacha data available for region %s", query.Region)
-		}
-		sort.Slice(gachas, func(i, j int) bool {
-			if gachas[i].StartAt == gachas[j].StartAt {
-				return gachas[i].ID < gachas[j].ID
-			}
-			return gachas[i].StartAt < gachas[j].StartAt
-		})
-		index := len(gachas) + query.NegIndex
-		if index < 0 || index >= len(gachas) {
-			return query, src, fmt.Errorf("gacha index %d is out of range", query.NegIndex)
-		}
-		query.GachaID = gachas[index].ID
-		return query, src, nil
 	}
-	if query.EventID != 0 {
-		gachaInfo, err := src.GetGachaByEventID(query.EventID)
-		if err != nil {
-			return query, src, err
-		}
-		if gachaInfo != nil && gachaInfo.StartAt > time.Now().UnixMilli() {
-			return query, src, releasecheck.New(releasecheck.KindGacha, "", gachaInfo.ID)
-		}
-		query.GachaID = gachaInfo.ID
-		return query, src, nil
+	return gachas
+}
+
+func resolveEventGachaID(src DataSource, eventID int) (int, error) {
+	gachaInfo, err := src.GetGachaByEventID(eventID)
+	if err != nil {
+		return 0, err
 	}
-	return query, src, fmt.Errorf("gacha id is required")
+	if gachaInfo == nil {
+		return 0, fmt.Errorf("no gacha found for event %d", eventID)
+	}
+	if err := futureGachaError(gachaInfo); err != nil {
+		return 0, err
+	}
+	return gachaInfo.ID, nil
+}
+
+func futureGachaError(gachaInfo *masterdata.Gacha) error {
+	if gachaInfo != nil && gachaInfo.StartAt > time.Now().UnixMilli() {
+		return releasecheck.New(releasecheck.KindGacha, "", gachaInfo.ID)
+	}
+	return nil
 }

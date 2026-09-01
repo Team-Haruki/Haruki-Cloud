@@ -287,50 +287,54 @@ func (c *Controller) buildMusicListEntriesFromItems(source DataSource, builder *
 	seen := make(map[string]struct{}, len(items))
 
 	for _, item := range items {
-		if item.MusicID <= 0 {
+		entry, jacket, seenKey, ok := buildMusicListItemEntry(source, builder, region, difficulty, item, includeLeaks, now)
+		if !ok {
 			continue
 		}
-		musicInfo, err := source.GetMusicByID(item.MusicID)
-		if err != nil || musicInfo == nil {
-			continue
-		}
-		if !includeLeaks && !isMusicVisibleAt(musicInfo, now) {
-			continue
-		}
-
-		level := item.Level
-		if level <= 0 {
-			itemDiff := difficulty
-			if strings.TrimSpace(item.Difficulty) != "" {
-				itemDiff = normalizeDifficulty(item.Difficulty)
-			}
-			level = builder.GetDifficultyLevel(musicInfo.ID, itemDiff)
-		}
-		if level <= 0 {
-			continue
-		}
-
-		itemDiff := difficulty
-		if strings.TrimSpace(item.Difficulty) != "" {
-			itemDiff = normalizeDifficulty(item.Difficulty)
-		}
-		seenKey := fmt.Sprintf("%d:%s", item.MusicID, itemDiff)
-		if _, ok := seen[seenKey]; ok {
+		if _, duplicate := seen[seenKey]; duplicate {
 			continue
 		}
 
 		seen[seenKey] = struct{}{}
-		displayOrder := musicListDisplayOrder(musicInfo)
-		list = append(list, map[string]any{
-			"id":              musicInfo.ID,
-			"difficulty":      level,
-			"difficulty_type": itemDiff,
-			"release_at":      displayOrder,
-		})
-		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
+		list = append(list, entry)
+		jackets[item.MusicID] = jacket
 	}
 
 	return list, jackets
+}
+
+func buildMusicListItemEntry(source DataSource, builder *Builder, region renderregion.Value, defaultDifficulty string, item ListItemQuery, includeLeaks bool, now int64) (map[string]any, string, string, bool) {
+	if item.MusicID <= 0 {
+		return nil, "", "", false
+	}
+	musicInfo, err := source.GetMusicByID(item.MusicID)
+	if err != nil || musicInfo == nil || (!includeLeaks && !isMusicVisibleAt(musicInfo, now)) {
+		return nil, "", "", false
+	}
+	difficulty := listItemDifficulty(defaultDifficulty, item.Difficulty)
+	level := item.Level
+	if level <= 0 {
+		level = builder.GetDifficultyLevel(musicInfo.ID, difficulty)
+	}
+	if level <= 0 {
+		return nil, "", "", false
+	}
+	entry := map[string]any{
+		"id":              musicInfo.ID,
+		"difficulty":      level,
+		"difficulty_type": difficulty,
+		"release_at":      musicListDisplayOrder(musicInfo),
+	}
+	seenKey := fmt.Sprintf("%d:%s", item.MusicID, difficulty)
+	jacket := builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
+	return entry, jacket, seenKey, true
+}
+
+func listItemDifficulty(defaultDifficulty string, itemDifficulty string) string {
+	if strings.TrimSpace(itemDifficulty) == "" {
+		return defaultDifficulty
+	}
+	return normalizeDifficulty(itemDifficulty)
 }
 
 func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {

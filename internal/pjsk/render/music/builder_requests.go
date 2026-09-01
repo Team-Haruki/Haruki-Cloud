@@ -123,60 +123,20 @@ func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery
 	requiredDiff := ""
 	sameDifficulty := true
 
-	for _, item := range items {
-		if item.MusicID <= 0 {
+	for _, query := range items {
+		item, diff, ok := b.buildMusicBriefListItem(query, region)
+		if !ok {
 			continue
 		}
-		musicInfo, err := b.source.GetMusicByID(item.MusicID)
-		if err != nil || musicInfo == nil {
-			continue
-		}
-
-		diff := strings.TrimSpace(item.Difficulty)
-		level := 0
-		var diffInfo drawing.DifficultyInfo
+		list = append(list, item)
 		if diff == "" {
-			builtInfo, err := b.buildDifficultyInfo(musicInfo.ID)
-			if err != nil {
-				continue
-			}
-			diffInfo = *builtInfo
-			level = maxMusicDifficultyLevel(diffInfo.Level)
-		} else {
-			diff = normalizeDifficulty(diff)
-			level = b.GetDifficultyLevel(musicInfo.ID, diff)
-			if level == 0 {
-				continue
-			}
-			if requiredDiff == "" {
-				requiredDiff = diff
-			} else if requiredDiff != diff {
-				sameDifficulty = false
-			}
-			diffInfo = drawing.DifficultyInfo{
-				Level:     []int{level},
-				NoteCount: []int{0},
-				HasAppend: strings.EqualFold(diff, "append"),
-				Order:     []string{diff},
-			}
+			continue
 		}
-
-		list = append(list, drawing.MusicBriefList{
-			ID:              musicInfo.ID,
-			Level:           level,
-			MusicJacketPath: b.BuildMusicJacketPath(musicInfo.AssetBundleName, region),
-			MusicInfo: drawing.MusicMD{
-				ID:           musicInfo.ID,
-				Title:        b.buildDisplayMusicTitle(musicInfo, region),
-				Composer:     musicInfo.Composer,
-				Lyricist:     musicInfo.Lyricist,
-				Arranger:     musicInfo.Arranger,
-				Categories:   b.buildCategories(musicInfo.ID),
-				ReleaseAt:    musicInfo.PublishedAt,
-				IsFullLength: musicInfo.IsFullLength,
-			},
-			Difficulty: diffInfo,
-		})
+		if requiredDiff == "" {
+			requiredDiff = diff
+		} else if requiredDiff != diff {
+			sameDifficulty = false
+		}
 	}
 	if len(list) == 0 {
 		return nil, fmt.Errorf("no valid music data")
@@ -191,6 +151,59 @@ func (b *Builder) BuildMusicBriefListRequestFromItems(items []BriefListItemQuery
 		req.RequiredDifficulties = requiredDiff
 	}
 	return req, nil
+}
+
+func (b *Builder) buildMusicBriefListItem(query BriefListItemQuery, region renderregion.Value) (drawing.MusicBriefList, string, bool) {
+	if query.MusicID <= 0 {
+		return drawing.MusicBriefList{}, "", false
+	}
+	musicInfo, err := b.source.GetMusicByID(query.MusicID)
+	if err != nil || musicInfo == nil {
+		return drawing.MusicBriefList{}, "", false
+	}
+	difficulty, diff, level, ok := b.buildBriefListDifficulty(musicInfo.ID, query.Difficulty)
+	if !ok {
+		return drawing.MusicBriefList{}, "", false
+	}
+	return drawing.MusicBriefList{
+		ID:              musicInfo.ID,
+		Level:           level,
+		MusicJacketPath: b.BuildMusicJacketPath(musicInfo.AssetBundleName, region),
+		MusicInfo: drawing.MusicMD{
+			ID:           musicInfo.ID,
+			Title:        b.buildDisplayMusicTitle(musicInfo, region),
+			Composer:     musicInfo.Composer,
+			Lyricist:     musicInfo.Lyricist,
+			Arranger:     musicInfo.Arranger,
+			Categories:   b.buildCategories(musicInfo.ID),
+			ReleaseAt:    musicInfo.PublishedAt,
+			IsFullLength: musicInfo.IsFullLength,
+		},
+		Difficulty: difficulty,
+	}, diff, true
+}
+
+func (b *Builder) buildBriefListDifficulty(musicID int, raw string) (drawing.DifficultyInfo, string, int, bool) {
+	diff := strings.TrimSpace(raw)
+	if diff == "" {
+		info, err := b.buildDifficultyInfo(musicID)
+		if err != nil {
+			return drawing.DifficultyInfo{}, "", 0, false
+		}
+		return *info, "", maxMusicDifficultyLevel(info.Level), true
+	}
+	diff = normalizeDifficulty(diff)
+	level := b.GetDifficultyLevel(musicID, diff)
+	if level == 0 {
+		return drawing.DifficultyInfo{}, "", 0, false
+	}
+	info := drawing.DifficultyInfo{
+		Level:     []int{level},
+		NoteCount: []int{0},
+		HasAppend: strings.EqualFold(diff, "append"),
+		Order:     []string{diff},
+	}
+	return info, diff, level, true
 }
 
 func maxMusicDifficultyLevel(levels []int) int {

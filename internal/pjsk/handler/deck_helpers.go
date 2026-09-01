@@ -47,32 +47,46 @@ func resolveDeckSkillOrderField(field string, index int, fields []string) (strin
 		if !strings.Contains(field, keyword) {
 			continue
 		}
-		if strategy := resolveDeckStrategyValue(field); strategy != "" {
-			return strategy, nil, 1, nil
-		}
-
-		raw := strings.TrimSpace(strings.Replace(field, keyword, "", 1))
-		if raw != "" {
-			order, ok := parseDeckSpecificSkillOrder(raw)
-			if !ok {
-				return "", nil, 0, fmt.Errorf("%s", strings.TrimSpace(deckSpecificSkillOrderUsage))
-			}
-			return "specific", order, 1, nil
-		}
-
-		if index+1 < len(fields) {
-			next := strings.TrimSpace(fields[index+1])
-			if strategy := resolveDeckStrategyValue(next); strategy != "" {
-				return strategy, nil, 2, nil
-			}
-			order, ok := parseDeckSpecificSkillOrder(next)
-			if ok {
-				return "specific", order, 2, nil
-			}
-		}
-		return "", nil, 0, fmt.Errorf("%s", strings.TrimSpace(deckSpecificSkillOrderUsage))
+		return resolveDeckSkillOrderForKeyword(field, keyword, index, fields)
 	}
 	return "", nil, 0, nil
+}
+
+func resolveDeckSkillOrderForKeyword(field, keyword string, index int, fields []string) (string, []int, int, error) {
+	if strategy := resolveDeckStrategyValue(field); strategy != "" {
+		return strategy, nil, 1, nil
+	}
+	raw := strings.TrimSpace(strings.Replace(field, keyword, "", 1))
+	if raw != "" {
+		return resolveInlineDeckSkillOrder(raw)
+	}
+	if index+1 < len(fields) {
+		if strategy, order, ok := resolveFollowingDeckSkillOrder(fields[index+1]); ok {
+			return strategy, order, 2, nil
+		}
+	}
+	return "", nil, 0, deckSkillOrderUsageError()
+}
+
+func resolveInlineDeckSkillOrder(raw string) (string, []int, int, error) {
+	order, ok := parseDeckSpecificSkillOrder(raw)
+	if !ok {
+		return "", nil, 0, deckSkillOrderUsageError()
+	}
+	return "specific", order, 1, nil
+}
+
+func resolveFollowingDeckSkillOrder(raw string) (string, []int, bool) {
+	raw = strings.TrimSpace(raw)
+	if strategy := resolveDeckStrategyValue(raw); strategy != "" {
+		return strategy, nil, true
+	}
+	order, ok := parseDeckSpecificSkillOrder(raw)
+	return "specific", order, ok
+}
+
+func deckSkillOrderUsageError() error {
+	return fmt.Errorf("%s", strings.TrimSpace(deckSpecificSkillOrderUsage))
 }
 
 func parseDeckSpecificSkillOrder(raw string) ([]int, bool) {

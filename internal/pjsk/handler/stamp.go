@@ -105,38 +105,46 @@ func executeStamp(rc *RequestContext) (message onebot11.Message, err error) {
 	region := renderregion.Value(rc.Cmd.Region)
 	switch rc.Cmd.Mode {
 	case stampListCommand:
-		q := stamp.ListQuery{Region: region}
-		mergeParams(rc.Cmd.Params, &q)
-		resolveStampCharacterSelection(rc.Ctx, rc.App, &q, rc.Cmd.Query)
-		if message, ok, directErr := resolveDirectStampImage(rc.Ctx, stampCtrl, rc.App, q); ok {
-			return message, directErr
-		}
-		if q.All {
-			images, renderErr := stampCtrl.RenderStampListPages(q)
-			if renderErr != nil {
-				return nil, renderErr
-			}
-			message = make(onebot11.Message, 0, len(images))
-			for _, img := range images {
-				segment, imageErr := imageMessage(rc.Ctx, img, rc.App, BotModulePJSK)
-				if imageErr != nil {
-					return nil, imageErr
-				}
-				message = append(message, segment...)
-			}
-			if len(message) == 0 {
-				return nil, fmt.Errorf("stamp all mode did not produce any images")
-			}
-			return message, nil
-		}
-		data, renderErr := stampCtrl.RenderStampList(q)
-		if renderErr != nil {
-			return nil, renderErr
-		}
-		return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+		return executeStampList(rc, stampCtrl, region)
 	default:
 		return nil, unsupportedModeError("stamp", rc.Cmd.Mode)
 	}
+}
+
+func executeStampList(rc *RequestContext, stampCtrl *stamp.Controller, region renderregion.Value) (onebot11.Message, error) {
+	q := stamp.ListQuery{Region: region}
+	mergeParams(rc.Cmd.Params, &q)
+	resolveStampCharacterSelection(rc.Ctx, rc.App, &q, rc.Cmd.Query)
+	if message, ok, err := resolveDirectStampImage(rc.Ctx, stampCtrl, rc.App, q); ok {
+		return message, err
+	}
+	if q.All {
+		return renderAllStampPages(rc, stampCtrl, q)
+	}
+	data, err := stampCtrl.RenderStampList(q)
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+}
+
+func renderAllStampPages(rc *RequestContext, stampCtrl *stamp.Controller, q stamp.ListQuery) (onebot11.Message, error) {
+	images, err := stampCtrl.RenderStampListPages(q)
+	if err != nil {
+		return nil, err
+	}
+	message := make(onebot11.Message, 0, len(images))
+	for _, img := range images {
+		segment, imageErr := imageMessage(rc.Ctx, img, rc.App, BotModulePJSK)
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		message = append(message, segment...)
+	}
+	if len(message) == 0 {
+		return nil, fmt.Errorf("stamp all mode did not produce any images")
+	}
+	return message, nil
 }
 
 func resolveDirectStampImage(ctx context.Context, stampCtrl *stamp.Controller, app *renderapp.App, query stamp.ListQuery) (onebot11.Message, bool, error) {

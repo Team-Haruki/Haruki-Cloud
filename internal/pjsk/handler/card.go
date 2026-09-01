@@ -238,96 +238,110 @@ func executeCard(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, fmt.Errorf("card service unavailable: sekai client not configured")
 	}
 	cardCtrl := rc.App.Cards.WithContext(rc.Ctx)
-	buildDoneText := func(summary string) string {
-		if strings.TrimSpace(summary) == "" {
-			return ""
-		}
-		return fmt.Sprintf("已处理%s。", summary)
-	}
-	var data []byte
 	switch rc.Cmd.Mode {
 	case "card-detail":
-		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Region = rc.Cmd.Region
-		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
-		data, err = cardCtrl.RenderCardDetail(q)
-		if err != nil {
-			return nil, err
-		}
-		return rc.ImageMessage(data)
+		return executeCardDetail(rc, cardCtrl)
 	case cardListCommand:
-		q := card.ListRequest{Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Region = rc.Cmd.Region
-		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
-		q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, rc.ResolveSnapshot(false))
-		data, err = cardCtrl.RenderCardList(q)
-		if err != nil {
-			return nil, err
-		}
-		image, imageErr := rc.ImageMessage(data)
-		if imageErr != nil {
-			return nil, imageErr
-		}
-		if !cardCtrl.ShouldShowSummaryForList(q) {
-			return image, nil
-		}
-		return append(onebot11.Message{onebot11.Text(buildDoneText(cardCtrl.SummaryForList(q)))}, image...), nil
+		return executeCardList(rc, cardCtrl)
 	case cardBoxCommand:
-		q := card.Query{
-			Query:            rc.Cmd.Query,
-			Region:           rc.Cmd.Region,
-			UseAfterTraining: commandBoolPtr(true),
-			Title:            resolveCardCatalogTitle(rc),
-			DetailedProfile:  resolveCardBoxDetailedProfile(rc),
-		}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Region = rc.Cmd.Region
-		if (q.ShowBox || q.UnownedOnly || strings.TrimSpace(q.Query) == "") && !hasCardCatalogOwnedData(q.DetailedProfile) {
-			detail, detailErr := requireCardCatalogDetailedProfile(rc)
-			if detailErr != nil {
-				return nil, detailErr
-			}
-			q.DetailedProfile = detail
-		}
-		queries := []card.Query{q}
-		data, err = cardCtrl.RenderCardBox(queries)
-		if err != nil {
-			return nil, err
-		}
-		image, imageErr := rc.ImageMessage(data)
-		if imageErr != nil {
-			return nil, imageErr
-		}
-		if !cardCtrl.ShouldShowSummaryForBox(q) {
-			return image, nil
-		}
-		return append(onebot11.Message{onebot11.Text(buildDoneText(cardCtrl.SummaryForBox(q)))}, image...), nil
+		return executeCardBox(rc, cardCtrl)
 	case "card-image":
-		q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		q.Region = rc.Cmd.Region
-		q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
-		result, resolveErr := cardCtrl.ResolveCardImages(q)
-		if resolveErr != nil {
-			return nil, resolveErr
-		}
-		message = make(onebot11.Message, 0, len(result.Paths))
-		for _, path := range result.Paths {
-			image, imageErr := assetImageMessage(rc.Ctx, path, rc.App, BotModulePJSK)
-			if imageErr != nil {
-				return nil, imageErr
-			}
-			message = append(message, image...)
-		}
-		if len(message) == 0 {
-			return nil, fmt.Errorf("bridge: card %d did not resolve any images", result.Card.ID)
-		}
-		return message, nil
+		return executeCardImages(rc, cardCtrl)
 	default:
 		return nil, unsupportedModeError("card", rc.Cmd.Mode)
 	}
+}
+
+func executeCardDetail(rc *RequestContext, cardCtrl *card.Controller) (onebot11.Message, error) {
+	q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	q.Region = rc.Cmd.Region
+	q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
+	data, err := cardCtrl.RenderCardDetail(q)
+	if err != nil {
+		return nil, err
+	}
+	return rc.ImageMessage(data)
+}
+
+func executeCardList(rc *RequestContext, cardCtrl *card.Controller) (onebot11.Message, error) {
+	q := card.ListRequest{Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	q.Region = rc.Cmd.Region
+	q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
+	q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, rc.ResolveSnapshot(false))
+	data, err := cardCtrl.RenderCardList(q)
+	if err != nil {
+		return nil, err
+	}
+	image, err := rc.ImageMessage(data)
+	if err != nil || !cardCtrl.ShouldShowSummaryForList(q) {
+		return image, err
+	}
+	return prependCardSummary(image, cardCtrl.SummaryForList(q)), nil
+}
+
+func executeCardBox(rc *RequestContext, cardCtrl *card.Controller) (onebot11.Message, error) {
+	q := card.Query{
+		Query:            rc.Cmd.Query,
+		Region:           rc.Cmd.Region,
+		UseAfterTraining: commandBoolPtr(true),
+		Title:            resolveCardCatalogTitle(rc),
+		DetailedProfile:  resolveCardBoxDetailedProfile(rc),
+	}
+	mergeParams(rc.Cmd.Params, &q)
+	q.Region = rc.Cmd.Region
+	if cardCatalogNeedsOwnedData(q) && !hasCardCatalogOwnedData(q.DetailedProfile) {
+		detail, err := requireCardCatalogDetailedProfile(rc)
+		if err != nil {
+			return nil, err
+		}
+		q.DetailedProfile = detail
+	}
+	data, err := cardCtrl.RenderCardBox([]card.Query{q})
+	if err != nil {
+		return nil, err
+	}
+	image, err := rc.ImageMessage(data)
+	if err != nil || !cardCtrl.ShouldShowSummaryForBox(q) {
+		return image, err
+	}
+	return prependCardSummary(image, cardCtrl.SummaryForBox(q)), nil
+}
+
+func executeCardImages(rc *RequestContext, cardCtrl *card.Controller) (onebot11.Message, error) {
+	q := card.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	q.Region = rc.Cmd.Region
+	q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
+	result, err := cardCtrl.ResolveCardImages(q)
+	if err != nil {
+		return nil, err
+	}
+	message := make(onebot11.Message, 0, len(result.Paths))
+	for _, path := range result.Paths {
+		image, imageErr := assetImageMessage(rc.Ctx, path, rc.App, BotModulePJSK)
+		if imageErr != nil {
+			return nil, imageErr
+		}
+		message = append(message, image...)
+	}
+	if len(message) == 0 {
+		return nil, fmt.Errorf("bridge: card %d did not resolve any images", result.Card.ID)
+	}
+	return message, nil
+}
+
+func cardCatalogNeedsOwnedData(q card.Query) bool {
+	return q.ShowBox || q.UnownedOnly || strings.TrimSpace(q.Query) == ""
+}
+
+func prependCardSummary(image onebot11.Message, summary string) onebot11.Message {
+	if strings.TrimSpace(summary) == "" {
+		return image
+	}
+	text := onebot11.Text(fmt.Sprintf("已处理%s。", summary))
+	return append(onebot11.Message{text}, image...)
 }
 
 func hasCardCatalogOwnedData(detail *drawing.DetailedProfileCardRequest) bool {

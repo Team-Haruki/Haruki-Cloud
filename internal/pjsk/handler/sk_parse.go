@@ -14,25 +14,17 @@ func extractSKMetaArgs(args string, defaultFull bool, wlMode bool) (eventID int,
 	fields := strings.Fields(strings.TrimSpace(args))
 	remaining := make([]string, 0, len(fields))
 	for _, raw := range fields {
-		token := strings.ToLower(strings.TrimSpace(raw))
-		switch {
-		case token == "full" || token == "-f" || token == "--full":
+		kind, value, query := classifySKMetaToken(raw, wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "")
+		switch kind {
+		case skMetaTokenFull:
 			full = true
-			continue
-		case strings.HasPrefix(token, "event") && len(token) > 5 && isDigits(token[5:]):
-			eventID, _ = strconv.Atoi(token[5:])
-			continue
-		case strings.HasPrefix(token, "e") && len(token) > 1 && isDigits(token[1:]):
-			eventID, _ = strconv.Atoi(token[1:])
-			continue
-		case wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "":
-			if id, query, ok := parseSKWorldBloomCharacterToken(raw); ok {
-				wlCharacterID = id
-				wlCharacterQuery = query
-				continue
-			}
+		case skMetaTokenEvent:
+			eventID = value
+		case skMetaTokenCharacter:
+			wlCharacterID, wlCharacterQuery = value, query
+		default:
+			remaining = append(remaining, raw)
 		}
-		remaining = append(remaining, raw)
 	}
 	if wlMode && wlCharacterID == 0 && strings.TrimSpace(wlCharacterQuery) == "" {
 		wlCharacterQuery, rankArgs = splitSKWorldBloomCharacterAndRanks(remaining)
@@ -49,6 +41,36 @@ func extractSKMetaArgs(args string, defaultFull bool, wlMode bool) (eventID int,
 	}
 	rankArgs = strings.TrimSpace(strings.Join(remaining, " "))
 	return
+}
+
+type skMetaTokenKind uint8
+
+const (
+	skMetaTokenOther skMetaTokenKind = iota
+	skMetaTokenFull
+	skMetaTokenEvent
+	skMetaTokenCharacter
+)
+
+func classifySKMetaToken(raw string, allowCharacter bool) (skMetaTokenKind, int, string) {
+	token := strings.ToLower(strings.TrimSpace(raw))
+	if token == "full" || token == "-f" || token == "--full" {
+		return skMetaTokenFull, 0, ""
+	}
+	if strings.HasPrefix(token, "event") && len(token) > 5 && isDigits(token[5:]) {
+		value, _ := strconv.Atoi(token[5:])
+		return skMetaTokenEvent, value, ""
+	}
+	if strings.HasPrefix(token, "e") && len(token) > 1 && isDigits(token[1:]) {
+		value, _ := strconv.Atoi(token[1:])
+		return skMetaTokenEvent, value, ""
+	}
+	if allowCharacter {
+		if id, query, ok := parseSKWorldBloomCharacterToken(raw); ok {
+			return skMetaTokenCharacter, id, query
+		}
+	}
+	return skMetaTokenOther, 0, ""
 }
 
 func parseSKWorldBloomCharacterToken(raw string) (int, string, bool) {
@@ -161,32 +183,42 @@ func parseSKRanks(args string, allowUID bool) ([]int, *int64, error) {
 		}
 		return ranks, nil, nil
 	case parser.CmdTypeEventQueryRankRange:
-		if cmd.Param1 <= 0 || cmd.Param2 <= 0 {
-			return nil, nil, fmt.Errorf("排名必须大于 0")
-		}
-		count := cmd.Param2 - cmd.Param1 + 1
-		if count > 20 {
-			return nil, nil, fmt.Errorf("排名区间最多20个排名")
-		}
-		ranks := make([]int, 0, count)
-		for rank := cmd.Param1; rank <= cmd.Param2; rank++ {
-			ranks = append(ranks, rank)
-		}
-		return ranks, nil, nil
+		ranks, rangeErr := buildSKRankRange(cmd.Param1, cmd.Param2)
+		return ranks, nil, rangeErr
 	case parser.CmdTypeEventQueryUID:
-		if !allowUID {
-			return nil, nil, fmt.Errorf("该命令暂不支持按用户查询，请改用排名")
-		}
-		uid, parseErr := strconv.ParseInt(cmd.TargetID, 10, 64)
-		if parseErr != nil || uid <= 0 {
-			return nil, nil, fmt.Errorf("无效的UID: %s", cmd.TargetID)
-		}
-		return nil, &uid, nil
+		uid, uidErr := parseSKUID(cmd.TargetID, allowUID)
+		return nil, uid, uidErr
 	case parser.CmdTypeEventQueryAt:
 		return nil, nil, fmt.Errorf("暂不支持@用户查询，请直接输入游戏UID")
 	default:
 		return nil, nil, fmt.Errorf("暂不支持该查询格式")
 	}
+}
+
+func buildSKRankRange(first, last int) ([]int, error) {
+	if first <= 0 || last <= 0 {
+		return nil, fmt.Errorf("排名必须大于 0")
+	}
+	count := last - first + 1
+	if count > 20 {
+		return nil, fmt.Errorf("排名区间最多20个排名")
+	}
+	ranks := make([]int, 0, max(count, 0))
+	for rank := first; rank <= last; rank++ {
+		ranks = append(ranks, rank)
+	}
+	return ranks, nil
+}
+
+func parseSKUID(raw string, allow bool) (*int64, error) {
+	if !allow {
+		return nil, fmt.Errorf("该命令暂不支持按用户查询，请改用排名")
+	}
+	uid, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || uid <= 0 {
+		return nil, fmt.Errorf("无效的UID: %s", raw)
+	}
+	return &uid, nil
 }
 
 func normalizeRanks(values []int) []int {

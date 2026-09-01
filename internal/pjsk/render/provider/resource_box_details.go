@@ -79,6 +79,21 @@ func loadCompactResourceBoxDetailsRows(store *localStore) ([]resourceBoxDetailRe
 	}
 
 	enumValues := decodeCompactEnumValues(payload["__ENUM__"])
+	columns, rowCount := decodeCompactResourceBoxColumns(payload)
+	if rowCount == 0 {
+		return nil, false
+	}
+
+	rows := make([]resourceBoxDetailRecord, 0, rowCount)
+	for index := 0; index < rowCount; index++ {
+		if row, ok := compactResourceBoxDetailRow(columns, enumValues, index); ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows, len(rows) > 0
+}
+
+func decodeCompactResourceBoxColumns(payload map[string]json.RawMessage) (map[string][]any, int) {
 	columns := make(map[string][]any, len(payload))
 	rowCount := 0
 	for key, fieldRaw := range payload {
@@ -98,43 +113,32 @@ func loadCompactResourceBoxDetailsRows(store *localStore) ([]resourceBoxDetailRe
 			rowCount = len(values)
 		}
 	}
+	return columns, rowCount
+}
 
-	if rowCount == 0 {
-		return nil, false
+func compactResourceBoxDetailRow(columns map[string][]any, enumValues map[string][]string, index int) (resourceBoxDetailRecord, bool) {
+	boxID, ok := compactIntFromColumns(columns, "resourceBoxId", index)
+	if !ok || boxID <= 0 {
+		return resourceBoxDetailRecord{}, false
 	}
-
-	rows := make([]resourceBoxDetailRecord, 0, rowCount)
-	for index := 0; index < rowCount; index++ {
-		boxID, ok := compactIntFromColumns(columns, "resourceBoxId", index)
-		if !ok || boxID <= 0 {
-			continue
-		}
-
-		purpose := compactStringFromColumns(columns, enumValues, []string{"resourceBoxPurpose"}, index)
-		resourceType := compactStringFromColumns(columns, enumValues, []string{"resourceType"}, index)
-		if purpose == "" || resourceType == "" {
-			continue
-		}
-
-		row := resourceBoxDetailRecord{
-			ResourceBoxID:      boxID,
-			ResourceBoxPurpose: purpose,
-			ResourceQuantity:   compactIntFromColumnsDefault(columns, "resourceQuantity", index),
-			ResourceType:       resourceType,
-		}
-		if resourceID, ok := compactIntFromColumns(columns, "resourceId", index); ok {
-			row.ResourceID = &resourceID
-		}
-		if resourceLevel, ok := compactIntFromColumns(columns, "resourceLevel", index); ok {
-			row.ResourceLevel = &resourceLevel
-		}
-		rows = append(rows, row)
+	purpose := compactStringFromColumns(columns, enumValues, []string{"resourceBoxPurpose"}, index)
+	resourceType := compactStringFromColumns(columns, enumValues, []string{"resourceType"}, index)
+	if purpose == "" || resourceType == "" {
+		return resourceBoxDetailRecord{}, false
 	}
-
-	if len(rows) == 0 {
-		return nil, false
+	row := resourceBoxDetailRecord{
+		ResourceBoxID:      boxID,
+		ResourceBoxPurpose: purpose,
+		ResourceQuantity:   compactIntFromColumnsDefault(columns, "resourceQuantity", index),
+		ResourceType:       resourceType,
 	}
-	return rows, true
+	if resourceID, exists := compactIntFromColumns(columns, "resourceId", index); exists {
+		row.ResourceID = &resourceID
+	}
+	if resourceLevel, exists := compactIntFromColumns(columns, "resourceLevel", index); exists {
+		row.ResourceLevel = &resourceLevel
+	}
+	return row, true
 }
 
 func indexResourceBoxDetails(rows []resourceBoxDetailRecord) map[string]map[int][]ResourceBoxDetail {

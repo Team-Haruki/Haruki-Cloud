@@ -142,21 +142,28 @@ func (p *dbHonorProvider) GetGroupByID(ctx context.Context, id int) (*masterdata
 	if value := entity.FrameName; value != "" {
 		model.FrameName = &value
 	}
-	if model.HonorType == "birthday" && (model.BackgroundAssetBundleName == nil || model.FrameName == nil) {
-		if derived, ok := p.deriveBirthdayAssetsForGroup(ctx, int(entity.GameID), model.Name); ok {
-			if model.BackgroundAssetBundleName == nil && derived.background != "" {
-				model.BackgroundAssetBundleName = new(derived.background)
-			}
-			if model.FrameName == nil && derived.frame != "" {
-				model.FrameName = new(derived.frame)
-			}
-		}
-	}
+	p.completeBirthdayHonorGroupAssets(ctx, model)
 
 	p.groupMu.Lock()
 	p.groupCache[id] = model
 	p.groupMu.Unlock()
 	return common.CloneHonorGroup(model), nil
+}
+
+func (p *dbHonorProvider) completeBirthdayHonorGroupAssets(ctx context.Context, model *masterdata.HonorGroup) {
+	if model.HonorType != "birthday" || (model.BackgroundAssetBundleName != nil && model.FrameName != nil) {
+		return
+	}
+	derived, ok := p.deriveBirthdayAssetsForGroup(ctx, model.ID, model.Name)
+	if !ok {
+		return
+	}
+	if model.BackgroundAssetBundleName == nil && derived.background != "" {
+		model.BackgroundAssetBundleName = new(derived.background)
+	}
+	if model.FrameName == nil && derived.frame != "" {
+		model.FrameName = new(derived.frame)
+	}
 }
 
 func (p *dbHonorProvider) GetBondsHonorByID(ctx context.Context, id int) (*masterdata.BondsHonor, error) {

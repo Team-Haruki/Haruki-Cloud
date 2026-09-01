@@ -220,20 +220,7 @@ func compactUsageHelpLines(lines []string, fallbackTrigger, commandPath string) 
 		}
 		return "参数格式不正确\n查看完整用法请发送：" + trigger + " -help", true
 	}
-	hasUsageHelp := isUsageHelpMarker(first)
-	for _, line := range lines[1:] {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" {
-			continue
-		}
-		if trigger == "" {
-			trigger = extractUsageHelpTrigger(trimmed)
-		}
-		if isUsageHelpMarker(trimmed) {
-			hasUsageHelp = true
-			continue
-		}
-	}
+	trigger, hasUsageHelp := scanUsageHelpLines(lines[1:], isUsageHelpMarker(first))
 	if trigger == "" {
 		trigger = normalizeUsageHelpTrigger(fallbackTrigger)
 	}
@@ -247,6 +234,21 @@ func compactUsageHelpLines(lines []string, fallbackTrigger, commandPath string) 
 		first = "参数格式不正确"
 	}
 	return first + "\n查看完整用法请发送：" + trigger + " -help", true
+}
+
+func scanUsageHelpLines(lines []string, hasUsageHelp bool) (string, bool) {
+	trigger := ""
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		if trigger == "" {
+			trigger = extractUsageHelpTrigger(trimmed)
+		}
+		hasUsageHelp = hasUsageHelp || isUsageHelpMarker(trimmed)
+	}
+	return trigger, hasUsageHelp
 }
 
 func isUsageHelpMarker(line string) bool {

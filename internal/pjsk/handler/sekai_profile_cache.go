@@ -80,68 +80,12 @@ func fetchCachedSekaiUserProfile(ctx context.Context, app *renderapp.App, region
 	}
 
 	callerToken := new(sekaiProfileFlightToken)
-	resultCh := sekaiProfileCacheGroup.DoChan(key, func() (any, error) {
-		detached := context.Background()
-		detached = logger.WithContextAttrs(detached, slog.Bool("shared_work", true))
-		sharedBase, cancel := context.WithTimeout(detached, config.HTTPClientTimeout)
-		defer cancel()
-		sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
-		complete := func(result sekaiProfileFlightResult) sekaiProfileFlightResult {
-			result.operations = trace.Snapshot().Operations
-			return result
-		}
-		client := app.SekaiAPI.WithContext(sharedCtx)
-		now := time.Now()
-		if raw, ok := loadCachedSekaiUserProfileRaw(key, now); ok {
-			return complete(sekaiProfileFlightResult{raw: raw, leader: callerToken}), nil
-		}
-
-		startedAt := time.Now()
-		resp, fetchErr := client.GetUserProfile(region, userID)
-		flightResult := sekaiProfileFlightResult{httpElapsed: time.Since(startedAt), leader: callerToken}
-		if fetchErr != nil {
-			flightResult.err = fetchErr
-			return complete(flightResult), nil
-		}
-
-		startedAt = time.Now()
-		raw, marshalErr := json.Marshal(resp)
-		flightResult.encodeElapsed = time.Since(startedAt)
-		if marshalErr != nil {
-			flightResult.err = fmt.Errorf("sekai api: failed to encode profile response for cache: %w", marshalErr)
-			return complete(flightResult), nil
-		}
-
-		storeCachedSekaiUserProfile(key, raw, now.Add(ttl), now, ttl)
-		flightResult.raw = raw
-		return complete(flightResult), nil
-	})
-	finishWait := commandtrace.MeasureOperation(ctx, "sekai.profile_cache_wait")
-	var result singleflight.Result
-	select {
-	case <-ctx.Done():
-		finishWait()
-		return nil, ctx.Err()
-	case result = <-resultCh:
-		finishWait()
+	resultCh := startSekaiProfileFlight(ctx, app, region, userID, key, ttl, callerToken)
+	resolved, err := waitSekaiProfileFlight(ctx, resultCh)
+	if err != nil {
+		return nil, err
 	}
-	if result.Err != nil {
-		return nil, result.Err
-	}
-	resolved, ok := result.Val.(sekaiProfileFlightResult)
-	if !ok {
-		return nil, fmt.Errorf("sekai api: unexpected cached profile result type %T", result.Val)
-	}
-	commandtrace.MergeOperations(ctx, resolved.operations)
-	if resolved.httpElapsed > 0 {
-		commandtrace.RecordOperation(ctx, "sekai.profile_fetch", resolved.httpElapsed)
-	}
-	if resolved.encodeElapsed > 0 {
-		commandtrace.RecordOperation(ctx, "sekai.profile_encode", resolved.encodeElapsed)
-	}
-	if resolved.leader != callerToken {
-		commandtrace.RecordOperation(ctx, "sekai.profile_cache_shared", 0)
-	}
+	recordSekaiProfileFlightStats(ctx, resolved, callerToken)
 	if resolved.err != nil {
 		return nil, resolved.err
 	}
@@ -149,6 +93,89 @@ func fetchCachedSekaiUserProfile(ctx context.Context, app *renderapp.App, region
 	response, decodeErr := decodeSekaiUserProfile(resolved.raw)
 	commandtrace.RecordOperation(ctx, "sekai.profile_decode", time.Since(startedAt))
 	return response, decodeErr
+}
+
+func startSekaiProfileFlight(
+	ctx context.Context,
+	app *renderapp.App,
+	region, userID, key string,
+	ttl time.Duration,
+	callerToken *sekaiProfileFlightToken,
+) <-chan singleflight.Result {
+	return sekaiProfileCacheGroup.DoChan(key, func() (any, error) {
+		return runSekaiProfileFlight(ctx, app, region, userID, key, ttl, callerToken), nil
+	})
+}
+
+func runSekaiProfileFlight(
+	parent context.Context,
+	app *renderapp.App,
+	region, userID, key string,
+	ttl time.Duration,
+	callerToken *sekaiProfileFlightToken,
+) sekaiProfileFlightResult {
+	detached := logger.DetachedContext(parent)
+	detached = logger.WithContextAttrs(detached, slog.Bool("shared_work", true))
+	sharedBase, cancel := context.WithTimeout(detached, config.HTTPClientTimeout)
+	defer cancel()
+	sharedCtx, trace := commandtrace.WithNewTrace(sharedBase)
+	complete := func(result sekaiProfileFlightResult) sekaiProfileFlightResult {
+		result.operations = trace.Snapshot().Operations
+		return result
+	}
+
+	now := time.Now()
+	if raw, ok := loadCachedSekaiUserProfileRaw(key, now); ok {
+		return complete(sekaiProfileFlightResult{raw: raw, leader: callerToken})
+	}
+	startedAt := time.Now()
+	resp, err := app.SekaiAPI.WithContext(sharedCtx).GetUserProfile(region, userID)
+	result := sekaiProfileFlightResult{httpElapsed: time.Since(startedAt), leader: callerToken}
+	if err != nil {
+		result.err = err
+		return complete(result)
+	}
+	startedAt = time.Now()
+	raw, err := json.Marshal(resp)
+	result.encodeElapsed = time.Since(startedAt)
+	if err != nil {
+		result.err = fmt.Errorf("sekai api: failed to encode profile response for cache: %w", err)
+		return complete(result)
+	}
+	storeCachedSekaiUserProfile(key, raw, now.Add(ttl), now, ttl)
+	result.raw = raw
+	return complete(result)
+}
+
+func waitSekaiProfileFlight(ctx context.Context, resultCh <-chan singleflight.Result) (sekaiProfileFlightResult, error) {
+	finishWait := commandtrace.MeasureOperation(ctx, "sekai.profile_cache_wait")
+	defer finishWait()
+	select {
+	case <-ctx.Done():
+		return sekaiProfileFlightResult{}, ctx.Err()
+	case result := <-resultCh:
+		if result.Err != nil {
+			return sekaiProfileFlightResult{}, result.Err
+		}
+		resolved, ok := result.Val.(sekaiProfileFlightResult)
+		if !ok {
+			return sekaiProfileFlightResult{}, fmt.Errorf("sekai api: unexpected cached profile result type %T", result.Val)
+		}
+		return resolved, nil
+	}
+}
+
+func recordSekaiProfileFlightStats(ctx context.Context, result sekaiProfileFlightResult, callerToken *sekaiProfileFlightToken) {
+	commandtrace.MergeOperations(ctx, result.operations)
+	if result.httpElapsed > 0 {
+		commandtrace.RecordOperation(ctx, "sekai.profile_fetch", result.httpElapsed)
+	}
+	if result.encodeElapsed > 0 {
+		commandtrace.RecordOperation(ctx, "sekai.profile_encode", result.encodeElapsed)
+	}
+	if result.leader != callerToken {
+		commandtrace.RecordOperation(ctx, "sekai.profile_cache_shared", 0)
+	}
 }
 
 func loadCachedSekaiUserProfile(key string, now time.Time) (*sekaiapi.GetAnotherProfileResponse, bool, error) {

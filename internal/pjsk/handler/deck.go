@@ -8,6 +8,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	"haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/profile"
+	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	"strconv"
 	"strings"
 )
@@ -177,152 +178,47 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	if msg, disabled := deckRecommendDisabledMessage(rc); disabled {
 		return onebot11.Message{onebot11.Text(msg)}, nil
 	}
-
-	var data []byte
-	recommendType := ""
-	buildDoneText := func(q deck.AutoQuery) string {
-		text := fmt.Sprintf("已处理%s。", formatDeckQuerySummary(q))
-		if q.RecommendType == "event" {
-			text += "\n如需更加精确、更快、更多可自定义参数的组卡功能，请前往Haruki工具箱使用组卡推荐功能"
-		}
-		return text
-	}
 	switch rc.Cmd.Mode {
-	case deckEventCommand:
-		recommendType = "event"
-	case deckChallengeCommand:
-		recommendType = "challenge"
-	case deckNoEventCommand:
-		recommendType = "no_event"
-	case deckBonusCommand:
-		recommendType = "bonus"
 	case deckMySekaiCommand:
-		recommendType = "mysekai"
-
-		var combined struct {
-			Deck  json.RawMessage `json:"deck"`
-			Query userQueryParams `json:"query"`
-		}
-		mergeParams(rc.Cmd.Params, &combined)
-
-		regionStr := regionWithDefault(rc.Cmd.Region)
-		if !isMySekaiDeckRegionAllowed(rc.Cmd, regionStr) {
-			return mySekaiRegionUnavailableMessage(), nil
-		}
-
-		q := deck.AutoQuery{Region: regionStr, RecommendType: recommendType}
-		mergeParams(combined.Deck, &q)
-
-		if isTheoreticalDeckQuery(q) {
-			explicitMysekaiEventSelection := q.EventID != nil ||
-				strings.TrimSpace(q.EventUnit) != "" ||
-				strings.TrimSpace(q.EventAttr) != "" ||
-				q.WorldBloomEventTurn != nil ||
-				q.WorldBloomFinaleTurn != nil ||
-				q.WorldBloomCharacterID != nil ||
-				strings.TrimSpace(q.WorldBloomCharacterQuery) != ""
-			if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
-				return nil, err
-			}
-			applyDefaultChallengeDeckAutoQueryMusic(&q)
-			if !explicitMysekaiEventSelection {
-				preserveImplicitMysekaiWorldBloomMetadata(&q)
-			}
-			if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
-				return nil, err
-			}
-
-			data, err = rc.App.Decks.WithContext(rc.Ctx).RenderAutoRecommend(q)
-			if err != nil {
-				return nil, err
-			}
-			image, imageErr := rc.ImageMessage(data)
-			if imageErr != nil {
-				return nil, imageErr
-			}
-			return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
-		}
-
-		p := combined.Query
-		if p.Mode == "" {
-			p.Mode = "self"
-			p.Platform = strings.TrimSpace(rc.Cmd.RequesterPlatform)
-			p.PlatformUserID = strings.TrimSpace(rc.Cmd.RequesterUserID)
-		}
-		target, targetErr := resolveGameTarget(rc.Ctx, p, regionStr, rc.Cmd.RegionExplicit, rc.App)
-		if targetErr != nil {
-			return nil, targetErr
-		}
-
-		regionStr = resolvedTargetRegion(regionStr, target)
-		if !isMySekaiDeckRegionAllowed(rc.Cmd, regionStr) {
-			return mySekaiRegionUnavailableMessage(), nil
-		}
-		platform, platformUserID := platformCredentials(p)
-		targetSnapshot, snapshotErr := resolveTargetSnapshotWithError(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, false)
-		if snapshotErr != nil {
-			return nil, normalizeToolboxDataFetchError(snapshotErr, "suite", target.Binding)
-		}
-		if target.Binding != nil && targetSnapshot == nil {
-			return nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)
-		}
-
-		q.Region = regionStr
-		explicitMysekaiEventSelection := q.EventID != nil ||
-			strings.TrimSpace(q.EventUnit) != "" ||
-			strings.TrimSpace(q.EventAttr) != "" ||
-			q.WorldBloomEventTurn != nil ||
-			q.WorldBloomFinaleTurn != nil ||
-			q.WorldBloomCharacterID != nil ||
-			strings.TrimSpace(q.WorldBloomCharacterQuery) != ""
-		if err := resolveDeckCharacterSelections(rc.Ctx, &q, rc.App); err != nil {
-			return nil, err
-		}
-		applyDefaultChallengeDeckAutoQueryMusic(&q)
-		if !explicitMysekaiEventSelection {
-			preserveImplicitMysekaiWorldBloomMetadata(&q)
-		}
-		if err := resolveDeckMusicSelection(&q, rc.App); err != nil {
-			return nil, err
-		}
-
-		if resp := resolveDeckPublicProfileForTarget(rc, target, regionStr); resp != nil {
-			q.PublicProfileResp = resp
-			if rc.App.Profiles != nil {
-				pq := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
-				finishBuild := measurePayloadBuild(rc.Ctx)
-				detail, buildErr := rc.App.Profiles.WithContext(rc.Ctx).BuildDetailedProfileCardFromAPIWithSnapshot(pq, resp, targetSnapshot)
-				finishBuild()
-				if buildErr == nil {
-					q.Profile = detail
-				}
-			}
-		}
-
-		deckCtrl := rc.App.Decks.WithContext(rc.Ctx)
-		if targetSnapshot != nil {
-			deckCtrl = deckCtrl.WithSnapshot(targetSnapshot)
-		}
-
-		data, err = deckCtrl.RenderAutoRecommend(q)
-		if err != nil {
-			return nil, err
-		}
-		image, imageErr := rc.ImageMessage(data)
-		if imageErr != nil {
-			return nil, imageErr
-		}
-		return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
+		return executeMySekaiDeck(rc)
 	case "deck-score-up":
 		var msg string
-		err := json.Unmarshal(rc.Cmd.Params, &msg)
-		if err != nil {
+		if err := json.Unmarshal(rc.Cmd.Params, &msg); err != nil {
 			return nil, err
 		}
 		return onebot11.Message{onebot11.Text(msg)}, nil
-	default:
+	}
+	recommendType, ok := deckRecommendType(rc.Cmd.Mode)
+	if !ok {
 		return nil, unsupportedModeError("deck", rc.Cmd.Mode)
 	}
+	return executeStandardDeck(rc, recommendType)
+}
+
+func deckRecommendType(mode string) (string, bool) {
+	switch mode {
+	case deckEventCommand:
+		return "event", true
+	case deckChallengeCommand:
+		return "challenge", true
+	case deckNoEventCommand:
+		return "no_event", true
+	case deckBonusCommand:
+		return "bonus", true
+	default:
+		return "", false
+	}
+}
+
+func buildDeckDoneText(query deck.AutoQuery) string {
+	text := fmt.Sprintf("已处理%s。", formatDeckQuerySummary(query))
+	if query.RecommendType == "event" {
+		text += "\n如需更加精确、更快、更多可自定义参数的组卡功能，请前往Haruki工具箱使用组卡推荐功能"
+	}
+	return text
+}
+
+func executeStandardDeck(rc *RequestContext, recommendType string) (onebot11.Message, error) {
 	q := deck.AutoQuery{Region: rc.Cmd.Region, RecommendType: recommendType}
 	mergeParams(rc.Cmd.Params, &q)
 	var targetParams deckUserTargetParams
@@ -349,7 +245,7 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 		deckCtrl = deckCtrl.WithSnapshot(snapshot)
 	}
 
-	data, err = deckCtrl.RenderAutoRecommend(q)
+	data, err := deckCtrl.RenderAutoRecommend(q)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +253,119 @@ func executeDeck(rc *RequestContext) (message onebot11.Message, err error) {
 	if imageErr != nil {
 		return nil, imageErr
 	}
-	return append(onebot11.Message{onebot11.Text(buildDoneText(q))}, image...), nil
+	return append(onebot11.Message{onebot11.Text(buildDeckDoneText(q))}, image...), nil
+}
+
+func executeMySekaiDeck(rc *RequestContext) (onebot11.Message, error) {
+	var combined struct {
+		Deck  json.RawMessage `json:"deck"`
+		Query userQueryParams `json:"query"`
+	}
+	mergeParams(rc.Cmd.Params, &combined)
+	regionStr := regionWithDefault(rc.Cmd.Region)
+	if !isMySekaiDeckRegionAllowed(rc.Cmd, regionStr) {
+		return mySekaiRegionUnavailableMessage(), nil
+	}
+	query := deck.AutoQuery{Region: regionStr, RecommendType: "mysekai"}
+	mergeParams(combined.Deck, &query)
+	if isTheoreticalDeckQuery(query) {
+		return executeTheoreticalMySekaiDeck(rc, query)
+	}
+	return executeTargetMySekaiDeck(rc, query, combined.Query, regionStr)
+}
+
+func executeTheoreticalMySekaiDeck(rc *RequestContext, query deck.AutoQuery) (onebot11.Message, error) {
+	if err := prepareMySekaiDeckQuery(rc, &query); err != nil {
+		return nil, err
+	}
+	return renderMySekaiDeck(rc, query, nil)
+}
+
+func executeTargetMySekaiDeck(rc *RequestContext, query deck.AutoQuery, params userQueryParams, regionStr string) (onebot11.Message, error) {
+	if params.Mode == "" {
+		params.Mode = "self"
+		params.Platform = strings.TrimSpace(rc.Cmd.RequesterPlatform)
+		params.PlatformUserID = strings.TrimSpace(rc.Cmd.RequesterUserID)
+	}
+	target, err := resolveGameTarget(rc.Ctx, params, regionStr, rc.Cmd.RegionExplicit, rc.App)
+	if err != nil {
+		return nil, err
+	}
+	regionStr = resolvedTargetRegion(regionStr, target)
+	if !isMySekaiDeckRegionAllowed(rc.Cmd, regionStr) {
+		return mySekaiRegionUnavailableMessage(), nil
+	}
+	platform, platformUserID := platformCredentials(params)
+	targetSnapshot, err := resolveTargetSnapshotWithError(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, false)
+	if err != nil {
+		return nil, normalizeToolboxDataFetchError(err, "suite", target.Binding)
+	}
+	if target.Binding != nil && targetSnapshot == nil {
+		return nil, newSuiteDataNotFoundReplayErrorForBinding(target.Binding)
+	}
+
+	query.Region = regionStr
+	if err := prepareMySekaiDeckQuery(rc, &query); err != nil {
+		return nil, err
+	}
+	applyMySekaiDeckProfile(rc, &query, target, regionStr, targetSnapshot)
+	return renderMySekaiDeck(rc, query, targetSnapshot)
+}
+
+func prepareMySekaiDeckQuery(rc *RequestContext, query *deck.AutoQuery) error {
+	explicitEventSelection := hasExplicitMySekaiEventSelection(*query)
+	if err := resolveDeckCharacterSelections(rc.Ctx, query, rc.App); err != nil {
+		return err
+	}
+	applyDefaultChallengeDeckAutoQueryMusic(query)
+	if !explicitEventSelection {
+		preserveImplicitMysekaiWorldBloomMetadata(query)
+	}
+	return resolveDeckMusicSelection(query, rc.App)
+}
+
+func hasExplicitMySekaiEventSelection(query deck.AutoQuery) bool {
+	return query.EventID != nil ||
+		strings.TrimSpace(query.EventUnit) != "" ||
+		strings.TrimSpace(query.EventAttr) != "" ||
+		query.WorldBloomEventTurn != nil ||
+		query.WorldBloomFinaleTurn != nil ||
+		query.WorldBloomCharacterID != nil ||
+		strings.TrimSpace(query.WorldBloomCharacterQuery) != ""
+}
+
+func applyMySekaiDeckProfile(rc *RequestContext, query *deck.AutoQuery, target ResolvedGameTarget, regionStr string, targetSnapshot rendersnapshot.Snapshot) {
+	resp := resolveDeckPublicProfileForTarget(rc, target, regionStr)
+	if resp == nil {
+		return
+	}
+	query.PublicProfileResp = resp
+	if rc.App.Profiles == nil {
+		return
+	}
+	profileQuery := profile.Query{Region: regionStr, Visible: target.Visible, BgSettings: target.BgSettings}
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	detail, err := rc.App.Profiles.WithContext(rc.Ctx).BuildDetailedProfileCardFromAPIWithSnapshot(profileQuery, resp, targetSnapshot)
+	finishBuild()
+	if err == nil {
+		query.Profile = detail
+	}
+}
+
+func renderMySekaiDeck(rc *RequestContext, query deck.AutoQuery, targetSnapshot rendersnapshot.Snapshot) (onebot11.Message, error) {
+	deckCtrl := rc.App.Decks.WithContext(rc.Ctx)
+	if targetSnapshot != nil {
+		deckCtrl = deckCtrl.WithSnapshot(targetSnapshot)
+	}
+	data, err := deckCtrl.RenderAutoRecommend(query)
+	if err != nil {
+		return nil, err
+	}
+	image, err := rc.ImageMessage(data)
+	if err != nil {
+		return nil, err
+	}
+	return append(onebot11.Message{onebot11.Text(buildDeckDoneText(query))}, image...), nil
 }
 
 func deckRecommendDisabledMessage(rc *RequestContext) (string, bool) {

@@ -54,29 +54,12 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 		return nil, fmt.Errorf("inventory controller is not initialized")
 	}
 
-	snap := query.Snapshot
-	if snap == nil {
-		snap = c.snapshot
-	}
-	if snap == nil {
-		return nil, fmt.Errorf("local user snapshot is not configured")
-	}
-	if err := snap.Require(); err != nil {
+	snap, err := c.inventorySnapshot(query.Snapshot)
+	if err != nil {
 		return nil, err
 	}
-
 	raw := snap.RawData()
-	if raw == nil {
-		return nil, fmt.Errorf("user snapshot is missing raw data")
-	}
-
-	region := renderregion.Normalize(query.Region.String())
-	if region.IsZero() {
-		region = c.defaultRegion
-	}
-	if region.IsZero() {
-		region = renderregion.JP
-	}
+	region := c.inventoryRegion(query.Region)
 	filter := normalizeFilter(query.Filter)
 	if err := validateFilterForRegion(region, filter); err != nil {
 		return nil, err
@@ -89,19 +72,68 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 		return nil, fmt.Errorf("user snapshot is missing profile data")
 	}
 
-	md := c.masterdata.forRegion(region)
-	items := make([]drawing.InventoryItem, 0,
-		len(raw.UserMaterials)+
-			len(raw.UserBoostItems)+
-			len(raw.UserEventItems)+
-			len(raw.UserGachaTickets)+
-			len(raw.UserPracticeTickets)+
-			len(raw.UserSkillPracticeTickets)+
-			len(raw.UserGachaCeilItems)+
-			len(raw.UserMysekaiMaterials)+
-			4,
-	)
-	items = append(items, drawing.InventoryItem{
+	items := c.inventoryItems(region, raw, c.masterdata.forRegion(region))
+	items = filterInventoryItems(items, filter)
+	sections := buildInventorySections(items)
+	if len(sections) == 0 {
+		return nil, fmt.Errorf("user snapshot has no inventory data")
+	}
+
+	return &drawing.InventoryListRequest{
+		Profile:    *profile,
+		Sections:   sections,
+		TotalItems: countInventoryEntries(sections),
+	}, nil
+}
+
+func (c *Controller) inventorySnapshot(querySnapshot snapshot.Snapshot) (snapshot.Snapshot, error) {
+	if querySnapshot == nil {
+		querySnapshot = c.snapshot
+	}
+	if querySnapshot == nil {
+		return nil, fmt.Errorf("local user snapshot is not configured")
+	}
+	if err := querySnapshot.Require(); err != nil {
+		return nil, err
+	}
+	if querySnapshot.RawData() == nil {
+		return nil, fmt.Errorf("user snapshot is missing raw data")
+	}
+	return querySnapshot, nil
+}
+
+func (c *Controller) inventoryRegion(region renderregion.Value) renderregion.Value {
+	region = renderregion.Normalize(region.String())
+	if region.IsZero() {
+		region = c.defaultRegion
+	}
+	if region.IsZero() {
+		return renderregion.JP
+	}
+	return region
+}
+
+func (c *Controller) inventoryItems(region renderregion.Value, raw *snapshot.RawUserData, md *regionMasterdata) []drawing.InventoryItem {
+	items := make([]drawing.InventoryItem, 0, inventoryItemCapacity(raw))
+	items = append(items, c.inventoryCurrencyItems(region, raw)...)
+	items = append(items, c.inventoryMaterialItems(region, raw, md)...)
+	items = append(items, c.inventoryGachaTicketItems(region, raw, md)...)
+	items = append(items, c.inventoryPracticeTicketItems(region, raw, md)...)
+	items = append(items, c.inventorySkillTicketItems(region, raw, md)...)
+	items = append(items, c.inventoryGachaCeilItems(region, raw, md)...)
+	items = append(items, c.inventoryMysekaiMaterialItems(region, raw, md)...)
+	return append(items, c.inventoryBoostItems(region, raw, md)...)
+}
+
+func inventoryItemCapacity(raw *snapshot.RawUserData) int {
+	return len(raw.UserMaterials) + len(raw.UserBoostItems) + len(raw.UserEventItems) +
+		len(raw.UserGachaTickets) + len(raw.UserPracticeTickets) +
+		len(raw.UserSkillPracticeTickets) + len(raw.UserGachaCeilItems) +
+		len(raw.UserMysekaiMaterials) + 4
+}
+
+func (c *Controller) inventoryCurrencyItems(region renderregion.Value, raw *snapshot.RawUserData) []drawing.InventoryItem {
+	items := []drawing.InventoryItem{{
 		ID:           0,
 		Name:         "金币",
 		Description:  "游戏内基础货币，可用于成员育成等消耗。",
@@ -110,7 +142,7 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 		IconPath:     c.inventoryIconPath(region, "coin", 0),
 		Quantity:     raw.UserGamedata.Coin,
 		Seq:          0,
-	})
+	}}
 	if raw.UserChargedCurrency.Free > 0 {
 		items = append(items, drawing.InventoryItem{
 			ID:           -1,
@@ -147,7 +179,11 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 			Seq:          3,
 		})
 	}
+	return items
+}
 
+func (c *Controller) inventoryMaterialItems(region renderregion.Value, raw *snapshot.RawUserData, md *regionMasterdata) []drawing.InventoryItem {
+	items := make([]drawing.InventoryItem, 0, len(raw.UserMaterials))
 	for _, mat := range raw.UserMaterials {
 		if mat.MaterialID <= 0 || mat.Quantity <= 0 {
 			continue
@@ -169,7 +205,11 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 			Seq:          fallbackSeq(meta.Seq, mat.MaterialID),
 		})
 	}
+	return items
+}
 
+func (c *Controller) inventoryGachaTicketItems(region renderregion.Value, raw *snapshot.RawUserData, md *regionMasterdata) []drawing.InventoryItem {
+	items := make([]drawing.InventoryItem, 0, len(raw.UserGachaTickets))
 	for _, ticket := range raw.UserGachaTickets {
 		if ticket.GachaTicketID <= 0 || ticket.Quantity <= 0 {
 			continue
@@ -190,7 +230,11 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 			Seq:          fallbackSeq(meta.Seq, ticket.GachaTicketID),
 		})
 	}
+	return items
+}
 
+func (c *Controller) inventoryPracticeTicketItems(region renderregion.Value, raw *snapshot.RawUserData, md *regionMasterdata) []drawing.InventoryItem {
+	items := make([]drawing.InventoryItem, 0, len(raw.UserPracticeTickets))
 	for _, ticket := range raw.UserPracticeTickets {
 		if ticket.PracticeTicketID <= 0 || ticket.Quantity <= 0 {
 			continue
@@ -211,7 +255,11 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 			Seq:          fallbackSeq(meta.CharacterID*1000+meta.Exp, ticket.PracticeTicketID),
 		})
 	}
+	return items
+}
 
+func (c *Controller) inventorySkillTicketItems(region renderregion.Value, raw *snapshot.RawUserData, md *regionMasterdata) []drawing.InventoryItem {
+	items := make([]drawing.InventoryItem, 0, len(raw.UserSkillPracticeTickets))
 	for _, ticket := range raw.UserSkillPracticeTickets {
 		if ticket.SkillPracticeTicketID <= 0 || ticket.Quantity <= 0 {
 			continue
@@ -232,7 +280,11 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 			Seq:          fallbackSeq(meta.CharacterID*1000+meta.Exp, ticket.SkillPracticeTicketID),
 		})
 	}
+	return items
+}
 
+func (c *Controller) inventoryGachaCeilItems(region renderregion.Value, raw *snapshot.RawUserData, md *regionMasterdata) []drawing.InventoryItem {
+	items := make([]drawing.InventoryItem, 0, len(raw.UserGachaCeilItems))
 	for _, item := range raw.UserGachaCeilItems {
 		if item.GachaCeilItemID <= 0 || item.Quantity <= 0 {
 			continue
@@ -253,7 +305,11 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 			Seq:          fallbackSeq(meta.Seq, item.GachaCeilItemID),
 		})
 	}
+	return items
+}
 
+func (c *Controller) inventoryMysekaiMaterialItems(region renderregion.Value, raw *snapshot.RawUserData, md *regionMasterdata) []drawing.InventoryItem {
+	items := make([]drawing.InventoryItem, 0, len(raw.UserMysekaiMaterials))
 	for _, material := range raw.UserMysekaiMaterials {
 		if material.MysekaiMaterialID <= 0 || material.Quantity <= 0 {
 			continue
@@ -278,7 +334,11 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 			Seq:          fallbackSeq(meta.Seq, material.MysekaiMaterialID),
 		})
 	}
+	return items
+}
 
+func (c *Controller) inventoryBoostItems(region renderregion.Value, raw *snapshot.RawUserData, md *regionMasterdata) []drawing.InventoryItem {
+	items := make([]drawing.InventoryItem, 0, len(raw.UserBoostItems))
 	for _, boost := range raw.UserBoostItems {
 		if boost.BoostItemID <= 0 || boost.Quantity <= 0 {
 			continue
@@ -305,18 +365,7 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 			RecoveryValue: recovery,
 		})
 	}
-
-	items = filterInventoryItems(items, filter)
-	sections := buildInventorySections(items)
-	if len(sections) == 0 {
-		return nil, fmt.Errorf("user snapshot has no inventory data")
-	}
-
-	return &drawing.InventoryListRequest{
-		Profile:    *profile,
-		Sections:   sections,
-		TotalItems: countInventoryEntries(sections),
-	}, nil
+	return items
 }
 
 func (c *Controller) RenderList(query Query) ([]byte, error) {

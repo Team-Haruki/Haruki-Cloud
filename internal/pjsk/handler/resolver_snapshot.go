@@ -157,6 +157,45 @@ type bindingResolutionOptions struct {
 	Selector string
 }
 
+type bindingResolutionState struct {
+	options        bindingResolutionOptions
+	invalidHID     int
+	invalidBinding *accountdata.ResolvedBinding
+	unexpectedErr  error
+	sawNoBinding   bool
+}
+
+func (s *bindingResolutionState) record(hid int, binding *accountdata.ResolvedBinding, err error) bool {
+	if err == nil && s.valid(binding) {
+		return true
+	}
+	if err == nil {
+		if binding == nil {
+			s.sawNoBinding = true
+		} else {
+			s.invalidHID = hid
+			s.invalidBinding = binding
+		}
+		return false
+	}
+	if errors.Is(err, accountdata.ErrNoBinding) {
+		s.sawNoBinding = true
+	} else {
+		s.unexpectedErr = err
+	}
+	return false
+}
+
+func (s *bindingResolutionState) valid(binding *accountdata.ResolvedBinding) bool {
+	if binding == nil {
+		return false
+	}
+	if s.options.RequireSuite && !hasUsableSuiteData(binding) {
+		return false
+	}
+	return !s.options.RequireMySekai || hasUsableMySekaiData(binding)
+}
+
 // resolveBindingWithFallback resolves a user binding using the standard pattern:
 // 1. If regionExplicit is false, try global default binding first
 // 2. Fall back to region-specific binding
@@ -191,91 +230,50 @@ func resolveBindingWithFallback(
 		"require_mysekai", opts.RequireMySekai,
 	)
 
-	var hid int
-	var binding *accountdata.ResolvedBinding
-	var err error
-	var invalidHID int
-	var invalidBinding *accountdata.ResolvedBinding
-	var unexpectedErr error
-	var sawNoBinding bool
-
-	isValid := func(b *accountdata.ResolvedBinding) bool {
-		if b == nil {
-			return false
-		}
-		if opts.RequireSuite && !hasUsableSuiteData(b) {
-			return false
-		}
-		if opts.RequireMySekai && !hasUsableMySekaiData(b) {
-			return false
-		}
-		return true
-	}
-
-	recordAttempt := func(attemptHID int, attemptBinding *accountdata.ResolvedBinding, attemptErr error) (int, *accountdata.ResolvedBinding, error, bool) {
-		if attemptErr == nil && isValid(attemptBinding) {
-			return attemptHID, attemptBinding, nil, true
-		}
-		if attemptErr == nil {
-			if attemptBinding != nil {
-				invalidHID = attemptHID
-				invalidBinding = attemptBinding
-			} else {
-				sawNoBinding = true
-			}
-			return 0, nil, nil, false
-		}
-		if errors.Is(attemptErr, accountdata.ErrNoBinding) {
-			sawNoBinding = true
-			return 0, nil, nil, false
-		}
-		unexpectedErr = attemptErr
-		return 0, nil, attemptErr, false
-	}
-
+	state := bindingResolutionState{options: opts}
 	if opts.Selector != "" {
-		hid, binding, err = bindings.ResolveUserBindingBySelector(ctx, platform, platformUserID, selectorBindingServer(regionStr, regionExplicit), opts.Selector)
-		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
-			return resolvedHID, resolvedBinding, resolvedErr
-		}
-	} else if !regionExplicit {
-		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, accountdata.GlobalDefaultBindingScope)
-		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
-			return resolvedHID, resolvedBinding, resolvedErr
-		}
-		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
-			return resolvedHID, resolvedBinding, resolvedErr
+		hid, binding, err := bindings.ResolveUserBindingBySelector(ctx, platform, platformUserID, selectorBindingServer(regionStr, regionExplicit), opts.Selector)
+		if state.record(hid, binding, err) {
+			return hid, binding, nil
 		}
 	} else {
-		hid, binding, err = bindings.ResolveUserBinding(ctx, platform, platformUserID, regionStr)
-		if resolvedHID, resolvedBinding, resolvedErr, ok := recordAttempt(hid, binding, err); ok {
-			return resolvedHID, resolvedBinding, resolvedErr
+		scopes := []string{regionStr}
+		if !regionExplicit {
+			scopes = append([]string{accountdata.GlobalDefaultBindingScope}, scopes...)
+		}
+		for _, scope := range scopes {
+			hid, binding, err := bindings.ResolveUserBinding(ctx, platform, platformUserID, scope)
+			if state.record(hid, binding, err) {
+				return hid, binding, nil
+			}
 		}
 	}
+	return state.result(ctx, regionStr, regionExplicit)
+}
 
+func (s *bindingResolutionState) result(ctx context.Context, regionStr string, regionExplicit bool) (int, *accountdata.ResolvedBinding, error) {
 	switch {
-	case unexpectedErr != nil:
+	case s.unexpectedErr != nil:
 		snapshotDebugLogger.WarnContext(ctx, "binding resolve failed",
 			"region", strings.TrimSpace(regionStr),
 			"region_explicit", regionExplicit,
-			"has_selector", strings.TrimSpace(opts.Selector) != "",
-			"error_type", fmt.Sprintf("%T", unexpectedErr),
+			"has_selector", strings.TrimSpace(s.options.Selector) != "",
+			"error_type", fmt.Sprintf("%T", s.unexpectedErr),
 		)
-		return 0, nil, unexpectedErr
-	case invalidBinding != nil:
+		return 0, nil, s.unexpectedErr
+	case s.invalidBinding != nil:
 		snapshotDebugLogger.DebugContext(ctx, "binding resolve missing required private data",
 			"region", strings.TrimSpace(regionStr),
 			"region_explicit", regionExplicit,
-			"has_selector", strings.TrimSpace(opts.Selector) != "",
+			"has_selector", strings.TrimSpace(s.options.Selector) != "",
 		)
-		return invalidHID, invalidBinding, nil
-	case sawNoBinding:
+		return s.invalidHID, s.invalidBinding, nil
+	case s.sawNoBinding:
 		snapshotDebugLogger.DebugContext(ctx, "binding resolve completed",
 			"outcome", "not_found",
 			"region", strings.TrimSpace(regionStr),
 			"region_explicit", regionExplicit,
-			"has_selector", strings.TrimSpace(opts.Selector) != "",
+			"has_selector", strings.TrimSpace(s.options.Selector) != "",
 		)
 		return 0, nil, accountdata.ErrNoBinding
 	default:
@@ -283,7 +281,7 @@ func resolveBindingWithFallback(
 			"outcome", "invalid_private_data",
 			"region", strings.TrimSpace(regionStr),
 			"region_explicit", regionExplicit,
-			"has_selector", strings.TrimSpace(opts.Selector) != "",
+			"has_selector", strings.TrimSpace(s.options.Selector) != "",
 		)
 		return 0, nil, nil
 	}

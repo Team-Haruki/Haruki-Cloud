@@ -58,79 +58,27 @@ func (s *masterdataStore) loadRegion(region renderregion.Value) *regionMasterdat
 	if strings.TrimSpace(s.localDir) == "" {
 		return md
 	}
-
-	var materials []materialMeta
-	if loadMasterdataFile(s.localDir, region, "materials.json", &materials) == nil {
-		for _, item := range materials {
-			if item.ID > 0 {
-				md.materials[item.ID] = item
-			}
-		}
-	}
-
-	var boostItems []boostItemMeta
-	if loadMasterdataFile(s.localDir, region, "boostItems.json", &boostItems) == nil {
-		for _, item := range boostItems {
-			if item.ID > 0 {
-				md.boostItems[item.ID] = item
-			}
-		}
-	}
-
-	var eventItems []eventItemMeta
-	if loadMasterdataFile(s.localDir, region, "eventItems.json", &eventItems) == nil {
-		for _, item := range eventItems {
-			if item.ID > 0 {
-				md.eventItems[item.ID] = item
-			}
-		}
-	}
-
-	var gachaTickets []assetNamedMeta
-	if loadMasterdataFile(s.localDir, region, "gachaTickets.json", &gachaTickets) == nil {
-		for _, item := range gachaTickets {
-			if item.ID > 0 {
-				md.gachaTickets[item.ID] = item
-			}
-		}
-	}
-
-	var practiceTickets []ticketMeta
-	if loadMasterdataFile(s.localDir, region, "practiceTickets.json", &practiceTickets) == nil {
-		for _, item := range practiceTickets {
-			if item.ID > 0 {
-				md.practiceTickets[item.ID] = item
-			}
-		}
-	}
-
-	var skillPracticeTickets []ticketMeta
-	if loadMasterdataFile(s.localDir, region, "skillPracticeTickets.json", &skillPracticeTickets) == nil {
-		for _, item := range skillPracticeTickets {
-			if item.ID > 0 {
-				md.skillPracticeTickets[item.ID] = item
-			}
-		}
-	}
-
-	var gachaCeilItems []assetNamedMeta
-	if loadMasterdataFile(s.localDir, region, "gachaCeilItems.json", &gachaCeilItems) == nil {
-		for _, item := range gachaCeilItems {
-			if item.ID > 0 {
-				md.gachaCeilItems[item.ID] = item
-			}
-		}
-	}
-
-	var mysekaiMaterials []mysekaiMaterialMeta
-	if loadMasterdataFile(s.localDir, region, "mysekaiMaterials.json", &mysekaiMaterials) == nil {
-		for _, item := range mysekaiMaterials {
-			if item.ID > 0 {
-				md.mysekaiMaterials[item.ID] = item
-			}
-		}
-	}
+	loadIndexedMasterdata(s.localDir, region, "materials.json", md.materials, func(item materialMeta) int { return item.ID })
+	loadIndexedMasterdata(s.localDir, region, "boostItems.json", md.boostItems, func(item boostItemMeta) int { return item.ID })
+	loadIndexedMasterdata(s.localDir, region, "eventItems.json", md.eventItems, func(item eventItemMeta) int { return item.ID })
+	loadIndexedMasterdata(s.localDir, region, "gachaTickets.json", md.gachaTickets, func(item assetNamedMeta) int { return item.ID })
+	loadIndexedMasterdata(s.localDir, region, "practiceTickets.json", md.practiceTickets, func(item ticketMeta) int { return item.ID })
+	loadIndexedMasterdata(s.localDir, region, "skillPracticeTickets.json", md.skillPracticeTickets, func(item ticketMeta) int { return item.ID })
+	loadIndexedMasterdata(s.localDir, region, "gachaCeilItems.json", md.gachaCeilItems, func(item assetNamedMeta) int { return item.ID })
+	loadIndexedMasterdata(s.localDir, region, "mysekaiMaterials.json", md.mysekaiMaterials, func(item mysekaiMaterialMeta) int { return item.ID })
 	return md
+}
+
+func loadIndexedMasterdata[T any](localDir string, region renderregion.Value, filename string, destination map[int]T, idOf func(T) int) {
+	var items []T
+	if loadMasterdataFile(localDir, region, filename, &items) != nil {
+		return
+	}
+	for _, item := range items {
+		if id := idOf(item); id > 0 {
+			destination[id] = item
+		}
+	}
 }
 
 func emptyRegionMasterdata() *regionMasterdata {

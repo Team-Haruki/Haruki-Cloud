@@ -44,40 +44,40 @@ func (c *Controller) resolveGateIconPath(region renderregion.Value, gateID, gate
 
 // resolveGateAssetbundleName returns the asset bundle name for a gate.
 func (c *Controller) resolveGateAssetbundleName(gateID, gateSkinID int) string {
-	if gateSkinID > 0 {
-		skins := c.masterdata.loadMapByID("mysekaiGateSkins.json")
-		skin := skins[gateSkinID]
-		if len(skin) > 0 {
-			skinType := stringValue(skin["mysekaiGateSkinType"])
-			skinTypeID := intNumber(skin["mysekaiGateSkinTypeId"], 0)
-			if skinTypeID > 0 {
-				switch skinType {
-				case "unit":
-					if unitSkin := c.masterdata.loadMapByID("mysekaiGateUnitSkins.json")[skinTypeID]; len(unitSkin) > 0 {
-						if name := stringValue(unitSkin["assetbundleName"]); name != "" {
-							return name
-						}
-					}
-				case "common":
-					if commonSkin := c.masterdata.loadMapByID("mysekaiGateCommonSkins.json")[skinTypeID]; len(commonSkin) > 0 {
-						if name := stringValue(commonSkin["assetbundleName"]); name != "" {
-							return name
-						}
-					}
-				}
-			}
-		}
+	if name := c.resolveGateSkinAssetbundleName(gateSkinID); name != "" {
+		return name
 	}
-
 	if gateID <= 0 {
 		return ""
 	}
-	gates := c.masterdata.loadMapByID("mysekaiGates.json")
-	gate := gates[gateID]
-	if len(gate) == 0 {
+	return stringValue(c.masterdata.loadMapByID("mysekaiGates.json")[gateID]["assetbundleName"])
+}
+
+func (c *Controller) resolveGateSkinAssetbundleName(gateSkinID int) string {
+	if gateSkinID <= 0 {
 		return ""
 	}
-	return stringValue(gate["assetbundleName"])
+	skin := c.masterdata.loadMapByID("mysekaiGateSkins.json")[gateSkinID]
+	skinTypeID := intNumber(skin["mysekaiGateSkinTypeId"], 0)
+	if skinTypeID <= 0 {
+		return ""
+	}
+	filename := gateSkinMasterdataFilename(stringValue(skin["mysekaiGateSkinType"]))
+	if filename == "" {
+		return ""
+	}
+	return stringValue(c.masterdata.loadMapByID(filename)[skinTypeID]["assetbundleName"])
+}
+
+func gateSkinMasterdataFilename(skinType string) string {
+	switch skinType {
+	case "unit":
+		return "mysekaiGateUnitSkins.json"
+	case "common":
+		return "mysekaiGateCommonSkins.json"
+	default:
+		return ""
+	}
 }
 
 // RenderResource renders the MySekai resource view.

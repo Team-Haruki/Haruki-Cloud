@@ -204,50 +204,34 @@ func (c *Controller) StartHousingCompetitionStatsRefresh(ctx context.Context, ap
 		interval = DefaultHousingCompetitionRefreshInterval
 	}
 	region = renderregion.WithDefault(renderregion.Normalize(region)).String()
-	go func() {
-		for {
-			if err := ctx.Err(); err != nil {
-				return
-			}
+	go c.runHousingCompetitionStatsRefresh(ctx, api, region, interval)
+}
 
-			query := HousingCompetitionLineQuery{Region: region, Now: time.Now()}
-			controller := c.withRegion(region)
-			if err := controller.ensureMasterdata(); err != nil {
-				if waitHousingCompetitionSampleInterval(ctx, housingCompetitionIdleCheckInterval) != nil {
-					return
-				}
-				continue
-			}
-			controller.syncHousingCompetitionBannersFromMasterdata()
-
-			target, err := controller.resolveHousingCompetitionRefreshTarget(query)
-			if err != nil {
-				if waitHousingCompetitionSampleInterval(ctx, housingCompetitionIdleCheckInterval) != nil {
-					return
-				}
-				continue
-			}
-			if !target.Active {
-				wait := target.waitDuration(time.Now(), housingCompetitionIdleCheckInterval)
-				if wait <= 0 {
-					continue
-				}
-				if waitHousingCompetitionSampleInterval(ctx, wait) != nil {
-					return
-				}
-				continue
-			}
-
-			_, _, _, _ = controller.housingCompetitionStats.Refresh(ctx, api, region, target.Competition.ID, 1)
-			wait := target.activeRefreshWait(time.Now(), interval)
-			if wait <= 0 {
-				continue
-			}
-			if waitHousingCompetitionSampleInterval(ctx, wait) != nil {
-				return
-			}
+func (c *Controller) runHousingCompetitionStatsRefresh(ctx context.Context, api HousingCompetitionListClient, region string, interval time.Duration) {
+	for ctx.Err() == nil {
+		wait := c.nextHousingCompetitionStatsRefresh(ctx, api, region, interval)
+		if wait > 0 && waitHousingCompetitionSampleInterval(ctx, wait) != nil {
+			return
 		}
-	}()
+	}
+}
+
+func (c *Controller) nextHousingCompetitionStatsRefresh(ctx context.Context, api HousingCompetitionListClient, region string, interval time.Duration) time.Duration {
+	controller := c.withRegion(region)
+	if err := controller.ensureMasterdata(); err != nil {
+		return housingCompetitionIdleCheckInterval
+	}
+	controller.syncHousingCompetitionBannersFromMasterdata()
+	target, err := controller.resolveHousingCompetitionRefreshTarget(HousingCompetitionLineQuery{Region: region, Now: time.Now()})
+	if err != nil {
+		return housingCompetitionIdleCheckInterval
+	}
+	now := time.Now()
+	if !target.Active {
+		return target.waitDuration(now, housingCompetitionIdleCheckInterval)
+	}
+	_, _, _, _ = controller.housingCompetitionStats.Refresh(ctx, api, region, target.Competition.ID, 1)
+	return target.activeRefreshWait(now, interval)
 }
 
 func (c *Controller) RenderHousingCompetitionLine(result *HousingCompetitionLineResult) ([]byte, error) {

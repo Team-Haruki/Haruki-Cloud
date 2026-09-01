@@ -8,6 +8,7 @@ import (
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/pjsk/drawing"
+	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
 var (
@@ -32,165 +33,17 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 		return nil, err
 	}
 
-	showHarvested := false
-	if query.ShowHarvested != nil {
-		showHarvested = *query.ShowHarvested
-	}
-
-	harvestMapsBySite := make(map[int]map[string]any, 4)
-	for _, raw := range nestedList(merged, "userMysekaiHarvestMaps") {
-		item, ok := raw.(map[string]any)
-		if !ok {
-			continue
-		}
-		siteID := intNumber(item["mysekaiSiteId"], 0)
-		if siteID != 0 {
-			harvestMapsBySite[siteID] = item
-		}
-	}
-
-	materialMap := c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName")
-	materialRarityMap := c.loadFieldMap("mysekaiMaterials.json", "mysekaiMaterialRarityType")
-	itemMap := c.loadIconNameMap("mysekaiItems.json", "iconAssetbundleName")
-	fixtureMap := c.loadIconNameMap("mysekaiFixtures.json", "assetbundleName")
-	musicRecordMap := c.loadMusicRecordJacketMap()
-	harvestFixtureMap := c.masterdata.loadMapByID("mysekaiSiteHarvestFixtures.json")
-
 	siteOrder := resolveMysekaiMapSiteIDs(query.MapIDs)
 	if len(siteOrder) == 0 {
 		return nil, fmt.Errorf("mysekai map query contains no valid map ids")
 	}
-
+	harvestMapsBySite := indexMysekaiHarvestMaps(merged)
+	assets := c.loadMysekaiMapAssets()
 	maps := make([]drawing.MysekaiMsrMapData, 0, len(siteOrder))
 	for _, siteID := range siteOrder {
-		siteMap := harvestMapsBySite[siteID]
-		if len(siteMap) == 0 {
-			continue
+		if site := c.buildMysekaiMapSite(region, merged, siteID, harvestMapsBySite[siteID], assets); site != nil {
+			maps = append(maps, *site)
 		}
-		config, ok := mysekaiMapSiteConfigs[siteID]
-		if !ok {
-			continue
-		}
-
-		site := drawing.MysekaiMsrMapSiteInfo{
-			ImagePath: c.staticPath(fmt.Sprintf("mysekai/site/%s.png", config.SiteImageName)),
-			GridSize:  config.GridSize,
-			OffsetX:   config.OffsetX,
-			OffsetZ:   config.OffsetZ,
-			DirX:      config.DirX,
-			DirZ:      config.DirZ,
-			RevXZ:     config.RevXZ,
-			Scale:     0.8,
-		}
-		if len(config.CropBBox) > 0 {
-			site.CropBbox = slices.Clone(config.CropBBox)
-		}
-
-		harvestPoints := make([]drawing.MysekaiMsrMapHarvestPoint, 0, 16)
-		characterMap := c.masterdata.loadMapByID("gameCharacters.json")
-		birthdayCharacterByPos := make(map[string]int)
-		rawDrops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]any)
-		for _, raw := range rawDrops {
-			drop, ok := raw.(map[string]any)
-			if !ok {
-				continue
-			}
-			resourceID := intNumber(drop["resourceId"], intNumber(drop["id"], 0))
-			if resourceID < 174 || resourceID > 199 {
-				continue
-			}
-			posKey := mysekaiHarvestPosKey(
-				floatNumber(drop["positionX"], floatNumber(drop["position_x"], 0)),
-				floatNumber(drop["positionZ"], floatNumber(drop["position_z"], 0)),
-			)
-			if posKey == "" {
-				continue
-			}
-			if _, exists := birthdayCharacterByPos[posKey]; !exists {
-				birthdayCharacterByPos[posKey] = resourceID - 173
-			}
-		}
-
-		rawHarvestPoints, _ := siteMap["userMysekaiSiteHarvestFixtures"].([]any)
-		for _, raw := range rawHarvestPoints {
-			point, ok := raw.(map[string]any)
-			if !ok {
-				continue
-			}
-			fixtureID := intNumber(point["mysekaiSiteHarvestFixtureId"], 0)
-			meta := harvestFixtureMap[fixtureID]
-			rarityType := stringValue(meta["mysekaiSiteHarvestFixtureRarityType"])
-			assetbundleName := stringValue(meta["assetbundleName"])
-			fixtureType := stringValue(meta["mysekaiSiteHarvestFixtureType"])
-			if rarityType == "" || assetbundleName == "" {
-				continue
-			}
-			// Special-case: tone_gust harvest point should be skipped in msp map output.
-			lowerAssetbundle := strings.ToLower(assetbundleName)
-			if fixtureType == "tone_gust" || lowerAssetbundle == "tone_gust" || strings.Contains(lowerAssetbundle, "tone_gust") {
-				continue
-			}
-
-			status := stringValue(point["userMysekaiSiteHarvestFixtureStatus"])
-			if status == "" {
-				status = stringValue(point["mysekaiSiteHarvestFixtureStatus"])
-			}
-			if status == "" {
-				status = "spawned"
-			}
-
-			var pointID *int
-			if fixtureID > 0 {
-				pointID = new(fixtureID)
-			}
-
-			positionX := floatNumber(point["positionX"], floatNumber(point["position_x"], 0))
-			positionZ := floatNumber(point["positionZ"], floatNumber(point["position_z"], 0))
-			posKey := mysekaiHarvestPosKey(positionX, positionZ)
-
-			imageRelPath := fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName)
-			var fallbackImagePath *string
-			var size *int
-			var offsetX float64
-			offsetZ := -48.0
-			if fixtureType == "birthday_plant" {
-				fallbackImagePath = new(c.staticPath("mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png"))
-				if characterID := birthdayCharacterByPos[posKey]; characterID > 0 {
-					if birthdayPath := c.resolveMysekaiBirthdayRefreshIconPath(region, characterMap[characterID], time.Now()); birthdayPath != "" {
-						imageRelPath = birthdayPath
-					}
-				}
-				size = new(50)
-				offsetX = 7.5
-				offsetZ = 0
-			}
-
-			imagePath := c.staticPath(imageRelPath)
-			if strings.HasPrefix(imageRelPath, "asset/") {
-				imagePath = imageRelPath
-			}
-
-			harvestPoints = append(harvestPoints, drawing.MysekaiMsrMapHarvestPoint{
-				ID:                pointID,
-				ImagePath:         imagePath,
-				FallbackImagePath: fallbackImagePath,
-				PositionX:         positionX,
-				PositionZ:         positionZ,
-				Status:            status,
-				Size:              size,
-				OffsetX:           offsetX,
-				OffsetZ:           offsetZ,
-			})
-		}
-
-		resourceDrops := c.buildMapResourceDrops(region, merged, rawDrops, materialMap, materialRarityMap, itemMap, fixtureMap, musicRecordMap)
-
-		maps = append(maps, drawing.MysekaiMsrMapData{
-			MapID:         siteID,
-			Site:          site,
-			HarvestPoints: harvestPoints,
-			ResourceDrops: resourceDrops,
-		})
 	}
 
 	if len(maps) == 0 {
@@ -199,7 +52,7 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 
 	return &drawing.MysekaiMsrMapRequest{
 		Maps:                 maps,
-		ShowHarvested:        showHarvested,
+		ShowHarvested:        query.ShowHarvested != nil && *query.ShowHarvested,
 		PhenomenaGroundColor: c.currentMysekaiPhenomenaGroundColor(region, merged),
 		SpawnImagePath: drawing.StringPtr(
 			c.staticPath("mysekai/mark.png"),
@@ -210,6 +63,155 @@ func (c *Controller) BuildMapRequest(query MapQuery) (*drawing.MysekaiMsrMapRequ
 		SmallIconSize:      mysekaiMapSmallIconSize,
 		IconZOffset:        mysekaiMapIconZOffset,
 	}, nil
+}
+
+type mysekaiMapAssets struct {
+	materials       map[int]string
+	materialRarity  map[int]string
+	items           map[int]string
+	fixtures        map[int]string
+	musicRecords    map[int]string
+	harvestFixtures map[int]map[string]any
+	characters      map[int]map[string]any
+}
+
+func (c *Controller) loadMysekaiMapAssets() mysekaiMapAssets {
+	return mysekaiMapAssets{
+		materials:       c.loadIconNameMap("mysekaiMaterials.json", "iconAssetbundleName"),
+		materialRarity:  c.loadFieldMap("mysekaiMaterials.json", "mysekaiMaterialRarityType"),
+		items:           c.loadIconNameMap("mysekaiItems.json", "iconAssetbundleName"),
+		fixtures:        c.loadIconNameMap("mysekaiFixtures.json", "assetbundleName"),
+		musicRecords:    c.loadMusicRecordJacketMap(),
+		harvestFixtures: c.masterdata.loadMapByID("mysekaiSiteHarvestFixtures.json"),
+		characters:      c.masterdata.loadMapByID("gameCharacters.json"),
+	}
+}
+
+func indexMysekaiHarvestMaps(merged map[string]any) map[int]map[string]any {
+	result := make(map[int]map[string]any, 4)
+	for _, raw := range nestedList(merged, "userMysekaiHarvestMaps") {
+		item, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if siteID := intNumber(item["mysekaiSiteId"], 0); siteID != 0 {
+			result[siteID] = item
+		}
+	}
+	return result
+}
+
+func (c *Controller) buildMysekaiMapSite(region renderregion.Value, merged map[string]any, siteID int, siteMap map[string]any, assets mysekaiMapAssets) *drawing.MysekaiMsrMapData {
+	config, configured := mysekaiMapSiteConfigs[siteID]
+	if len(siteMap) == 0 || !configured {
+		return nil
+	}
+	site := drawing.MysekaiMsrMapSiteInfo{
+		ImagePath: c.staticPath(fmt.Sprintf("mysekai/site/%s.png", config.SiteImageName)),
+		GridSize:  config.GridSize, OffsetX: config.OffsetX, OffsetZ: config.OffsetZ,
+		DirX: config.DirX, DirZ: config.DirZ, RevXZ: config.RevXZ, Scale: 0.8,
+	}
+	if len(config.CropBBox) > 0 {
+		site.CropBbox = slices.Clone(config.CropBBox)
+	}
+	rawDrops, _ := siteMap["userMysekaiSiteHarvestResourceDrops"].([]any)
+	rawPoints, _ := siteMap["userMysekaiSiteHarvestFixtures"].([]any)
+	return &drawing.MysekaiMsrMapData{
+		MapID: siteID, Site: site,
+		HarvestPoints: c.buildMysekaiMapHarvestPoints(region, rawPoints, rawDrops, assets),
+		ResourceDrops: c.buildMapResourceDrops(region, merged, rawDrops, assets.materials, assets.materialRarity, assets.items, assets.fixtures, assets.musicRecords),
+	}
+}
+
+func birthdayCharactersByHarvestPosition(rawDrops []any) map[string]int {
+	result := make(map[string]int)
+	for _, raw := range rawDrops {
+		drop, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		resourceID := intNumber(drop["resourceId"], intNumber(drop["id"], 0))
+		position := mysekaiHarvestPosKey(floatNumber(drop["positionX"], floatNumber(drop["position_x"], 0)), floatNumber(drop["positionZ"], floatNumber(drop["position_z"], 0)))
+		if resourceID >= 174 && resourceID <= 199 && position != "" && result[position] == 0 {
+			result[position] = resourceID - 173
+		}
+	}
+	return result
+}
+
+func (c *Controller) buildMysekaiMapHarvestPoints(region renderregion.Value, rawPoints, rawDrops []any, assets mysekaiMapAssets) []drawing.MysekaiMsrMapHarvestPoint {
+	birthdayCharacters := birthdayCharactersByHarvestPosition(rawDrops)
+	result := make([]drawing.MysekaiMsrMapHarvestPoint, 0, len(rawPoints))
+	for _, raw := range rawPoints {
+		point, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if built := c.buildMysekaiMapHarvestPoint(region, point, birthdayCharacters, assets); built != nil {
+			result = append(result, *built)
+		}
+	}
+	return result
+}
+
+func (c *Controller) buildMysekaiMapHarvestPoint(region renderregion.Value, point map[string]any, birthdayCharacters map[string]int, assets mysekaiMapAssets) *drawing.MysekaiMsrMapHarvestPoint {
+	fixtureID := intNumber(point["mysekaiSiteHarvestFixtureId"], 0)
+	meta := assets.harvestFixtures[fixtureID]
+	rarityType := stringValue(meta["mysekaiSiteHarvestFixtureRarityType"])
+	assetbundleName := stringValue(meta["assetbundleName"])
+	fixtureType := stringValue(meta["mysekaiSiteHarvestFixtureType"])
+	if rarityType == "" || assetbundleName == "" || isToneGustHarvestFixture(fixtureType, assetbundleName) {
+		return nil
+	}
+	positionX := floatNumber(point["positionX"], floatNumber(point["position_x"], 0))
+	positionZ := floatNumber(point["positionZ"], floatNumber(point["position_z"], 0))
+	imagePath, fallback, size, offsetX, offsetZ := c.mysekaiHarvestPointImage(region, fixtureType, rarityType, assetbundleName, positionX, positionZ, birthdayCharacters, assets.characters)
+	return &drawing.MysekaiMsrMapHarvestPoint{
+		ID: positiveIntPointer(fixtureID), ImagePath: imagePath, FallbackImagePath: fallback,
+		PositionX: positionX, PositionZ: positionZ, Status: mysekaiHarvestPointStatus(point),
+		Size: size, OffsetX: offsetX, OffsetZ: offsetZ,
+	}
+}
+
+func isToneGustHarvestFixture(fixtureType, assetbundleName string) bool {
+	lowerAssetbundle := strings.ToLower(assetbundleName)
+	return fixtureType == "tone_gust" || lowerAssetbundle == "tone_gust" || strings.Contains(lowerAssetbundle, "tone_gust")
+}
+
+func positiveIntPointer(value int) *int {
+	if value <= 0 {
+		return nil
+	}
+	return new(value)
+}
+
+func mysekaiHarvestPointStatus(point map[string]any) string {
+	status := stringValue(point["userMysekaiSiteHarvestFixtureStatus"])
+	if status == "" {
+		status = stringValue(point["mysekaiSiteHarvestFixtureStatus"])
+	}
+	if status == "" {
+		return "spawned"
+	}
+	return status
+}
+
+func (c *Controller) mysekaiHarvestPointImage(region renderregion.Value, fixtureType, rarityType, assetbundleName string, positionX, positionZ float64, birthdayCharacters map[string]int, characters map[int]map[string]any) (string, *string, *int, float64, float64) {
+	imageRelPath := fmt.Sprintf("mysekai/harvest_fixture_icon/%s/%s.png", rarityType, assetbundleName)
+	if fixtureType != "birthday_plant" {
+		return c.staticPath(imageRelPath), nil, nil, 0, -48
+	}
+	fallback := new(c.staticPath("mysekai/harvest_fixture_icon/rarity_1/mdl_site_wood_common_fieldtree01.png"))
+	characterID := birthdayCharacters[mysekaiHarvestPosKey(positionX, positionZ)]
+	if characterID > 0 {
+		if birthdayPath := c.resolveMysekaiBirthdayRefreshIconPath(region, characters[characterID], time.Now()); birthdayPath != "" {
+			imageRelPath = birthdayPath
+		}
+	}
+	if strings.HasPrefix(imageRelPath, "asset/") {
+		return imageRelPath, fallback, new(50), 7.5, 0
+	}
+	return c.staticPath(imageRelPath), fallback, new(50), 7.5, 0
 }
 
 // HasRemainingHarvestResources reports whether the current map request contains

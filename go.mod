@@ -6,7 +6,7 @@ require (
 	entgo.io/ent v0.14.6
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/alicebob/miniredis/v2 v2.38.0
-	github.com/andybalholm/brotli v1.2.2
+	github.com/andybalholm/brotli v1.2.3
 	github.com/flynn/noise v1.1.0
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/go-sql-driver/mysql v1.10.0

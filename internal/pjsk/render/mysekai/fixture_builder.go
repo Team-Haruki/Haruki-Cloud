@@ -458,6 +458,11 @@ func (c *Controller) fixtureReactionCharacterGroups(fixtureID int) []drawing.Mys
 	}
 
 	rawItems, _ := parsed["FixturerRactions"].([]any)
+	grouped := groupFixtureReactionCharacters(rawItems, fixtureID)
+	return c.buildFixtureReactionCharacterGroups(grouped)
+}
+
+func groupFixtureReactionCharacters(rawItems []any, fixtureID int) map[int][][]int {
 	grouped := map[int][][]int{}
 	for _, raw := range rawItems {
 		item, ok := raw.(map[string]any)
@@ -466,24 +471,31 @@ func (c *Controller) fixtureReactionCharacterGroups(fixtureID int) []drawing.Mys
 		}
 		reactions, _ := item["ReactionCharacter"].([]any)
 		for _, rawReaction := range reactions {
-			entry, ok := rawReaction.(map[string]any)
-			if !ok {
-				continue
-			}
-			characters, _ := entry["CharacterUnitIds"].([]any)
-			var characterIDs []int
-			for _, character := range characters {
-				id := intNumber(character, 0)
-				if id != 0 {
-					characterIDs = append(characterIDs, id)
-				}
-			}
+			characterIDs := fixtureReactionCharacterIDs(rawReaction)
 			if len(characterIDs) > 0 {
 				grouped[len(characterIDs)] = append(grouped[len(characterIDs)], characterIDs)
 			}
 		}
 	}
+	return grouped
+}
 
+func fixtureReactionCharacterIDs(raw any) []int {
+	entry, ok := raw.(map[string]any)
+	if !ok {
+		return nil
+	}
+	characters, _ := entry["CharacterUnitIds"].([]any)
+	characterIDs := make([]int, 0, len(characters))
+	for _, character := range characters {
+		if id := intNumber(character, 0); id != 0 {
+			characterIDs = append(characterIDs, id)
+		}
+	}
+	return characterIDs
+}
+
+func (c *Controller) buildFixtureReactionCharacterGroups(grouped map[int][][]int) []drawing.MysekaiReactionCharacterGroups {
 	counts := make([]int, 0, len(grouped))
 	for count := range grouped {
 		counts = append(counts, count)

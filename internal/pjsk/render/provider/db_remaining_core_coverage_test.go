@@ -195,7 +195,8 @@ func TestDBVLiveProviderParsesFiltersAndSorts(t *testing.T) {
 			region:     renderregion.JP,
 		},
 		{id: 1, startAt: 100, endAt: 250, name: "first", asset: "live_one", schedules: json.RawMessage(`{}`), rewards: json.RawMessage(`{}`), characters: json.RawMessage(`{}`), region: renderregion.JP},
-		{id: 3, startAt: 50, endAt: 60, name: "other", asset: "other", region: renderregion.TW},
+		{id: 3, startAt: 50, endAt: 60, name: "earlier", asset: "earlier", region: renderregion.JP},
+		{id: 4, startAt: 40, endAt: 50, name: "other", asset: "other", region: renderregion.TW},
 	} {
 		if _, err := client.Virtuallive.Create().
 			SetGameID(live.id).
@@ -213,11 +214,11 @@ func TestDBVLiveProviderParsesFiltersAndSorts(t *testing.T) {
 	}
 
 	lives, err := p.vlives.GetLives(ctx, "")
-	if err != nil || len(lives) != 2 || lives[0].ID != 1 || lives[1].ID != 2 {
+	if err != nil || len(lives) != 3 || lives[0].ID != 3 || lives[1].ID != 1 || lives[2].ID != 2 {
 		t.Fatalf("GetLives() = %+v, %v", lives, err)
 	}
-	if len(lives[1].Schedules) != 1 || lives[1].Schedules[0].EndAt != 200 || len(lives[1].Rewards) != 1 || lives[1].Rewards[0].ResourceBoxID != 9 || len(lives[1].Characters) != 1 || lives[1].Characters[0].GameCharacterUnitID != 10 {
-		t.Fatalf("parsed virtual live = %+v", lives[1])
+	if len(lives[2].Schedules) != 1 || lives[2].Schedules[0].EndAt != 200 || len(lives[2].Rewards) != 1 || lives[2].Rewards[0].ResourceBoxID != 9 || len(lives[2].Characters) != 1 || lives[2].Characters[0].GameCharacterUnitID != 10 {
+		t.Fatalf("parsed virtual live = %+v", lives[2])
 	}
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()

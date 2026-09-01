@@ -3,11 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
-	json "haruki-cloud/internal/jsonutil"
 	"sort"
 
 	sekaiDB "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/virtuallive"
+	json "haruki-cloud/internal/jsonutil"
 	renderregion "haruki-cloud/internal/pjsk/region"
 )
 
@@ -31,57 +31,7 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 
 	lives := make([]*VLive, 0, len(entities))
 	for _, entity := range entities {
-		live := &VLive{
-			ID:              int(entity.GameID),
-			Name:            entity.Name,
-			AssetBundleName: entity.AssetbundleName,
-			StartAt:         entity.StartAt,
-			EndAt:           entity.EndAt,
-		}
-		var schedules []map[string]any
-		if len(entity.VirtualLiveSchedules) > 0 {
-			_ = json.Unmarshal(entity.VirtualLiveSchedules, &schedules)
-		}
-		for _, item := range schedules {
-			startAt := vliveInt64Number(item["startAt"])
-			endAt := vliveInt64Number(item["endAt"])
-			if startAt <= 0 || endAt <= 0 {
-				continue
-			}
-			live.Schedules = append(live.Schedules, VLiveSchedule{
-				StartAt: startAt,
-				EndAt:   endAt,
-			})
-		}
-		var rewards []map[string]any
-		if len(entity.VirtualLiveRewards) > 0 {
-			_ = json.Unmarshal(entity.VirtualLiveRewards, &rewards)
-		}
-		for _, item := range rewards {
-			resourceBoxID := vliveIntNumber(item["resourceBoxId"])
-			if resourceBoxID <= 0 {
-				continue
-			}
-			live.Rewards = append(live.Rewards, VLiveReward{
-				VirtualLiveType: vliveString(item["virtualLiveType"]),
-				ResourceBoxID:   resourceBoxID,
-			})
-		}
-		var characters []map[string]any
-		if len(entity.VirtualLiveCharacters) > 0 {
-			_ = json.Unmarshal(entity.VirtualLiveCharacters, &characters)
-		}
-		for _, item := range characters {
-			gameCharacterUnitID := vliveIntNumber(item["gameCharacterUnitId"])
-			if gameCharacterUnitID <= 0 {
-				continue
-			}
-			live.Characters = append(live.Characters, VLiveCharacter{
-				GameCharacterUnitID:        gameCharacterUnitID,
-				VirtualLivePerformanceType: vliveString(item["virtualLivePerformanceType"]),
-			})
-		}
-		lives = append(lives, live)
+		lives = append(lives, convertDBVLive(entity))
 	}
 
 	sort.Slice(lives, func(i, j int) bool {
@@ -91,6 +41,65 @@ func (p *dbVLiveProvider) GetLives(ctx context.Context, region renderregion.Valu
 		return lives[i].StartAt < lives[j].StartAt
 	})
 	return lives, nil
+}
+
+func convertDBVLive(entity *sekaiDB.Virtuallive) *VLive {
+	return &VLive{
+		ID:              int(entity.GameID),
+		Name:            entity.Name,
+		AssetBundleName: entity.AssetbundleName,
+		StartAt:         entity.StartAt,
+		EndAt:           entity.EndAt,
+		Schedules:       decodeVLiveSchedules(entity.VirtualLiveSchedules),
+		Rewards:         decodeVLiveRewards(entity.VirtualLiveRewards),
+		Characters:      decodeVLiveCharacters(entity.VirtualLiveCharacters),
+	}
+}
+
+func decodeVLiveSchedules(data []byte) []VLiveSchedule {
+	var items []map[string]any
+	_ = json.Unmarshal(data, &items)
+	schedules := make([]VLiveSchedule, 0, len(items))
+	for _, item := range items {
+		startAt := vliveInt64Number(item["startAt"])
+		endAt := vliveInt64Number(item["endAt"])
+		if startAt > 0 && endAt > 0 {
+			schedules = append(schedules, VLiveSchedule{StartAt: startAt, EndAt: endAt})
+		}
+	}
+	return schedules
+}
+
+func decodeVLiveRewards(data []byte) []VLiveReward {
+	var items []map[string]any
+	_ = json.Unmarshal(data, &items)
+	rewards := make([]VLiveReward, 0, len(items))
+	for _, item := range items {
+		resourceBoxID := vliveIntNumber(item["resourceBoxId"])
+		if resourceBoxID > 0 {
+			rewards = append(rewards, VLiveReward{
+				VirtualLiveType: vliveString(item["virtualLiveType"]),
+				ResourceBoxID:   resourceBoxID,
+			})
+		}
+	}
+	return rewards
+}
+
+func decodeVLiveCharacters(data []byte) []VLiveCharacter {
+	var items []map[string]any
+	_ = json.Unmarshal(data, &items)
+	characters := make([]VLiveCharacter, 0, len(items))
+	for _, item := range items {
+		gameCharacterUnitID := vliveIntNumber(item["gameCharacterUnitId"])
+		if gameCharacterUnitID > 0 {
+			characters = append(characters, VLiveCharacter{
+				GameCharacterUnitID:        gameCharacterUnitID,
+				VirtualLivePerformanceType: vliveString(item["virtualLivePerformanceType"]),
+			})
+		}
+	}
+	return characters
 }
 
 func vliveInt64Number(value any) int64 {

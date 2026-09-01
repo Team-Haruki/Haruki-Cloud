@@ -8,6 +8,7 @@ import (
 	"haruki-cloud/internal/pjsk/parser"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	rendermusic "haruki-cloud/internal/pjsk/render/music"
+	renderscore "haruki-cloud/internal/pjsk/render/score"
 	"haruki-cloud/internal/pjsk/requestbuilder"
 	"strconv"
 	"strings"
@@ -136,96 +137,124 @@ func (sekaiHandlers) MusicBoardHandle() HarukiSekaiCommandHandler {
 }
 
 func executeScore(rc *RequestContext) (message onebot11.Message, err error) {
-	var musicCtrl *rendermusic.Controller
+	scoreCtrl, musicCtrl := scoreControllers(rc)
+	data, err := executeScoreMode(rc, scoreCtrl, musicCtrl)
+	if err != nil {
+		return nil, err
+	}
+	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+}
+
+func scoreControllers(rc *RequestContext) (*renderscore.Controller, *rendermusic.Controller) {
 	scoreCtrl := rc.App.Score
 	if scoreCtrl != nil {
 		scoreCtrl = scoreCtrl.WithContext(rc.Ctx)
 	}
+	var musicCtrl *rendermusic.Controller
 	if rc.App != nil && rc.App.Music != nil {
 		musicCtrl = rc.App.Music.WithContext(rc.Ctx)
 		if rc.App.Aliases != nil {
 			musicCtrl.SetAliasResolver(rc.App.Aliases)
 		}
 	}
-	var data []byte
+	return scoreCtrl, musicCtrl
+}
+
+func executeScoreMode(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) ([]byte, error) {
 	switch rc.Cmd.Mode {
 	case "score-control":
-		finishBuild := measurePayloadBuild(rc.Ctx)
-		defer finishBuild()
-		req := drawing.ScoreControlRequest{}
-		mergeParams(rc.Cmd.Params, &req)
-		if req.MusicID <= 0 || req.TargetPoint <= 0 || len(req.ValidScores) == 0 {
-			reqPtr, resolveErr := requestbuilder.BuildScoreControlRequest(rc.Ctx, toRequestBuilderCommandInput(rc.Cmd), rc.App)
-			if resolveErr != nil {
-				return nil, resolveErr
-			}
-			req = *reqPtr
-		}
-		finishBuild()
-		data, err = scoreCtrl.RenderScoreControl(req)
+		return executeScoreControl(rc, scoreCtrl)
 	case "score-custom-room":
-		finishBuild := measurePayloadBuild(rc.Ctx)
-		defer finishBuild()
-		req := drawing.CustomRoomScoreRequest{}
-		mergeParams(rc.Cmd.Params, &req)
-		if req.TargetPoint <= 0 || len(req.CandidatePairs) == 0 {
-			reqPtr, resolveErr := requestbuilder.BuildCustomRoomScoreRequest(toRequestBuilderCommandInput(rc.Cmd), rc.App)
-			if resolveErr != nil {
-				return nil, resolveErr
-			}
-			req = *reqPtr
-		}
-		finishBuild()
-		data, err = scoreCtrl.RenderCustomRoomScore(req)
+		return executeScoreCustomRoom(rc, scoreCtrl)
 	case "score-music-meta":
-		finishBuild := measurePayloadBuild(rc.Ctx)
-		defer finishBuild()
-		var params struct {
-			Queries []string `json:"queries"`
-		}
-		if rc.Cmd.Params != nil {
-			if err := json.Unmarshal(rc.Cmd.Params, &params); err != nil {
-				return nil, fmt.Errorf("bridge: unmarshal music-meta params: %w", err)
-			}
-		}
-		if len(params.Queries) == 0 {
-			params.Queries = splitScoreMusicMetaQueries(rc.Cmd.Query)
-		}
-		req, resolveErr := musicCtrl.ResolveMusicMetaRequests(rc.Cmd.Region, params.Queries)
-		if resolveErr != nil {
-			return nil, resolveErr
-		}
-		finishBuild()
-		data, err = scoreCtrl.RenderMusicMeta(req)
+		return executeScoreMusicMeta(rc, scoreCtrl, musicCtrl)
 	case "score-music-board":
-		finishBuild := measurePayloadBuild(rc.Ctx)
-		defer finishBuild()
-		req := drawing.MusicBoardRequest{}
-		mergeParams(rc.Cmd.Params, &req)
-		if len(req.Items) == 0 {
-			if rc.App == nil || rc.App.Music == nil {
-				return nil, fmt.Errorf("music board service unavailable: music controller is not configured")
-			}
-			boardQuery := rendermusic.BoardQuery{}
-			mergeParams(rc.Cmd.Params, &boardQuery)
-			if len(rc.Cmd.Params) == 0 && len(boardQuery.SpecQueries) == 0 {
-				boardQuery.SpecQueries = splitScoreMusicMetaQueries(rc.Cmd.Query)
-			}
-			reqPtr, resolveErr := musicCtrl.ResolveMusicBoardRequest(rc.Cmd.Region, boardQuery)
-			if resolveErr != nil {
-				return nil, resolveErr
-			}
-			req = *reqPtr
-		}
-		finishBuild()
-		data, err = scoreCtrl.RenderMusicBoard(req)
+		return executeScoreMusicBoard(rc, scoreCtrl, musicCtrl)
 	default:
 		return nil, unsupportedModeError("score", rc.Cmd.Mode)
 	}
+}
+
+func executeScoreControl(rc *RequestContext, scoreCtrl *renderscore.Controller) ([]byte, error) {
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	defer finishBuild()
+	req := drawing.ScoreControlRequest{}
+	mergeParams(rc.Cmd.Params, &req)
+	if req.MusicID <= 0 || req.TargetPoint <= 0 || len(req.ValidScores) == 0 {
+		reqPtr, err := requestbuilder.BuildScoreControlRequest(rc.Ctx, toRequestBuilderCommandInput(rc.Cmd), rc.App)
+		if err != nil {
+			return nil, err
+		}
+		req = *reqPtr
+	}
+	finishBuild()
+	return scoreCtrl.RenderScoreControl(req)
+}
+
+func executeScoreCustomRoom(rc *RequestContext, scoreCtrl *renderscore.Controller) ([]byte, error) {
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	defer finishBuild()
+	req := drawing.CustomRoomScoreRequest{}
+	mergeParams(rc.Cmd.Params, &req)
+	if req.TargetPoint <= 0 || len(req.CandidatePairs) == 0 {
+		reqPtr, err := requestbuilder.BuildCustomRoomScoreRequest(toRequestBuilderCommandInput(rc.Cmd), rc.App)
+		if err != nil {
+			return nil, err
+		}
+		req = *reqPtr
+	}
+	finishBuild()
+	return scoreCtrl.RenderCustomRoomScore(req)
+}
+
+func executeScoreMusicMeta(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) ([]byte, error) {
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	defer finishBuild()
+	var params struct {
+		Queries []string `json:"queries"`
+	}
+	if rc.Cmd.Params != nil {
+		if err := json.Unmarshal(rc.Cmd.Params, &params); err != nil {
+			return nil, fmt.Errorf("bridge: unmarshal music-meta params: %w", err)
+		}
+	}
+	if len(params.Queries) == 0 {
+		params.Queries = splitScoreMusicMetaQueries(rc.Cmd.Query)
+	}
+	req, err := musicCtrl.ResolveMusicMetaRequests(rc.Cmd.Region, params.Queries)
 	if err != nil {
 		return nil, err
 	}
-	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	finishBuild()
+	return scoreCtrl.RenderMusicMeta(req)
+}
+
+func executeScoreMusicBoard(rc *RequestContext, scoreCtrl *renderscore.Controller, musicCtrl *rendermusic.Controller) ([]byte, error) {
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	defer finishBuild()
+	req := drawing.MusicBoardRequest{}
+	mergeParams(rc.Cmd.Params, &req)
+	if len(req.Items) == 0 {
+		resolved, err := resolveScoreMusicBoardRequest(rc, musicCtrl)
+		if err != nil {
+			return nil, err
+		}
+		req = *resolved
+	}
+	finishBuild()
+	return scoreCtrl.RenderMusicBoard(req)
+}
+
+func resolveScoreMusicBoardRequest(rc *RequestContext, musicCtrl *rendermusic.Controller) (*drawing.MusicBoardRequest, error) {
+	if rc.App == nil || rc.App.Music == nil {
+		return nil, fmt.Errorf("music board service unavailable: music controller is not configured")
+	}
+	boardQuery := rendermusic.BoardQuery{}
+	mergeParams(rc.Cmd.Params, &boardQuery)
+	if len(rc.Cmd.Params) == 0 && len(boardQuery.SpecQueries) == 0 {
+		boardQuery.SpecQueries = splitScoreMusicMetaQueries(rc.Cmd.Query)
+	}
+	return musicCtrl.ResolveMusicBoardRequest(rc.Cmd.Region, boardQuery)
 }
 
 func splitScoreMusicMetaQueries(args string) []string {

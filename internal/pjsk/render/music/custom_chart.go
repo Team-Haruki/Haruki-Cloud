@@ -532,26 +532,30 @@ func buildCustomChartChains(notes []customChartNote, byID map[int]*customChartNo
 		if note.PreviousConnectionID != -1 {
 			continue
 		}
-
-		chain := make([]*customChartNote, 0)
-		current := note
-		for current != nil {
-			if _, ok := connectedIDs[current.ID]; ok {
-				break
-			}
-			chain = append(chain, current)
-			connectedIDs[current.ID] = struct{}{}
-			if current.NextConnectionID == -1 {
-				current = nil
-				continue
-			}
-			current = byID[current.NextConnectionID]
-		}
+		chain := collectCustomChartChain(note, byID, connectedIDs)
 		if len(chain) > 0 {
 			chains = append(chains, chain)
 		}
 	}
+	return appendUnconnectedCustomChartChains(chains, notes, connectedIDs)
+}
 
+func collectCustomChartChain(first *customChartNote, byID map[int]*customChartNote, connectedIDs map[int]struct{}) []*customChartNote {
+	chain := make([]*customChartNote, 0)
+	for current := first; current != nil; current = byID[current.NextConnectionID] {
+		if _, ok := connectedIDs[current.ID]; ok {
+			break
+		}
+		chain = append(chain, current)
+		connectedIDs[current.ID] = struct{}{}
+		if current.NextConnectionID == -1 {
+			break
+		}
+	}
+	return chain
+}
+
+func appendUnconnectedCustomChartChains(chains [][]*customChartNote, notes []customChartNote, connectedIDs map[int]struct{}) [][]*customChartNote {
 	for i := range notes {
 		note := &notes[i]
 		if _, ok := connectedIDs[note.ID]; ok {
@@ -648,33 +652,28 @@ func addCustomChartTap(score *customChartScore, raw customChartNote, forceCritic
 }
 
 func calculateCustomChartScoreComboCount(score customChartScore) int {
-	holdStepTypesByID := make(map[int]customChartHoldStepType, len(score.notes))
+	holdStepTypesByID := customChartHoldStepTypes(score)
+	seen := make(map[string]struct{}, len(score.notes)*2)
+	total := countCustomChartScoreNotes(score, holdStepTypesByID, seen)
+	return total + countCustomChartHoldTicks(score, seen)
+}
+
+func customChartHoldStepTypes(score customChartScore) map[int]customChartHoldStepType {
+	typesByID := make(map[int]customChartHoldStepType, len(score.notes))
 	for _, hold := range score.holdNotes {
 		for _, step := range hold.Steps {
-			holdStepTypesByID[step.ID] = step.Type
+			typesByID[step.ID] = step.Type
 		}
 	}
+	return typesByID
+}
 
-	seen := make(map[string]struct{}, len(score.notes)*2)
+func countCustomChartScoreNotes(score customChartScore, holdStepTypesByID map[int]customChartHoldStepType, seen map[string]struct{}) int {
 	total := 0
 	for _, note := range score.notes {
 		hold, hasHold := customChartHoldForNote(score, note)
-		if customChartNoteRequiresHold(note.Type) && !hasHold {
+		if !customChartNoteCounts(note, hold, hasHold, holdStepTypesByID) {
 			continue
-		}
-		if hasHold && hold.isGuide() {
-			continue
-		}
-		if note.Type == customChartNoteHold && hasHold && hold.StartType != customChartHoldNoteNormal {
-			continue
-		}
-		if note.Type == customChartNoteHoldEnd && hasHold && hold.EndType != customChartHoldNoteNormal {
-			continue
-		}
-		if note.Type == customChartNoteHoldMid {
-			if stepType, ok := holdStepTypesByID[note.ID]; ok && stepType == customChartHoldStepHidden {
-				continue
-			}
 		}
 		key := customChartComboDedupKey(note)
 		if _, ok := seen[key]; ok {
@@ -683,30 +682,32 @@ func calculateCustomChartScoreComboCount(score customChartScore) int {
 		seen[key] = struct{}{}
 		total++
 	}
+	return total
+}
 
+func customChartNoteCounts(note customChartConvertedNote, hold customChartHold, hasHold bool, holdStepTypesByID map[int]customChartHoldStepType) bool {
+	if customChartNoteRequiresHold(note.Type) && !hasHold {
+		return false
+	}
+	if hasHold && hold.isGuide() {
+		return false
+	}
+	if note.Type == customChartNoteHold && hasHold && hold.StartType != customChartHoldNoteNormal {
+		return false
+	}
+	if note.Type == customChartNoteHoldEnd && hasHold && hold.EndType != customChartHoldNoteNormal {
+		return false
+	}
+	stepType, hasStepType := holdStepTypesByID[note.ID]
+	return note.Type != customChartNoteHoldMid || !hasStepType || stepType != customChartHoldStepHidden
+}
+
+func countCustomChartHoldTicks(score customChartScore, seen map[string]struct{}) int {
+	total := 0
 	for holdID, hold := range score.holdNotes {
-		if hold.isGuide() {
-			continue
-		}
-		start, ok := score.notes[holdID]
+		halfBeatTick, endTick, ok := customChartHoldTickBounds(score, holdID, hold)
 		if !ok {
 			continue
-		}
-		end, ok := score.notes[hold.End]
-		if !ok {
-			continue
-		}
-		startTick := start.Tick
-		endTick := end.Tick
-		halfBeatTick := startTick + customChartComboTickInterval
-		if remainder := halfBeatTick % customChartComboTickInterval; remainder != 0 {
-			halfBeatTick -= remainder
-		}
-		if halfBeatTick == startTick || halfBeatTick == endTick {
-			continue
-		}
-		if remainder := endTick % customChartComboTickInterval; remainder != 0 {
-			endTick += customChartComboTickInterval - remainder
 		}
 		for tick := halfBeatTick; tick < endTick; tick += customChartComboTickInterval {
 			key := customChartHoldHalfBeatDedupKey(holdID, hold, score, tick)
@@ -718,6 +719,29 @@ func calculateCustomChartScoreComboCount(score customChartScore) int {
 		}
 	}
 	return total
+}
+
+func customChartHoldTickBounds(score customChartScore, holdID int, hold customChartHold) (int, int, bool) {
+	if hold.isGuide() {
+		return 0, 0, false
+	}
+	start, startOK := score.notes[holdID]
+	end, endOK := score.notes[hold.End]
+	if !startOK || !endOK {
+		return 0, 0, false
+	}
+	halfBeatTick := start.Tick + customChartComboTickInterval
+	if remainder := halfBeatTick % customChartComboTickInterval; remainder != 0 {
+		halfBeatTick -= remainder
+	}
+	if halfBeatTick == start.Tick || halfBeatTick == end.Tick {
+		return 0, 0, false
+	}
+	endTick := end.Tick
+	if remainder := endTick % customChartComboTickInterval; remainder != 0 {
+		endTick += customChartComboTickInterval - remainder
+	}
+	return halfBeatTick, endTick, true
 }
 
 func customChartRawInt(raw map[string]stdjson.RawMessage, key string, fallback int) (int, bool) {

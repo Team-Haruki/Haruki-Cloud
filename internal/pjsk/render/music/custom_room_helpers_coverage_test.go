@@ -65,6 +65,10 @@ func TestResolveCustomRoomMusicListBranches(t *testing.T) {
 	if len(got[100]) != 1 || got[100][0]["music_id"] != 1 || len(got[110]) != 1 || got[110][0]["music_id"] != 2 {
 		t.Fatalf("custom-room result = %#v", got)
 	}
+	unlimited, err := controller.ResolveCustomRoomMusicList("jp", []int{100}, 0)
+	if err != nil || len(unlimited[100]) != 2 {
+		t.Fatalf("unlimited custom-room result = %#v, %v", unlimited, err)
+	}
 }
 
 func TestBuilderLocalizedTitleAndVocalCaptionBranches(t *testing.T) {

@@ -71,80 +71,39 @@ func resolveMySekaiRenderContextWithOptions(
 	result.HarukiUserID = target.HarukiUserID
 
 	platform, platformUserID := platformCredentials(params)
-	resolvePayload := func() (bool, error) {
-		data, payloadErr := resolveMySekaiPayloadBySelector(ctx, app, snapshot.Selector{
-			IMPlatform: strings.TrimSpace(platform),
-			IMUserID:   strings.TrimSpace(platformUserID),
-			Region:     renderregion.Normalize(regionStr),
-			PJSKUserID: strings.TrimSpace(target.PJSKUserID),
-		}, false)
-		if payloadErr != nil {
-			return false, normalizeToolboxDataFetchError(payloadErr, "mysekai", target.Binding)
-		}
-		if len(data) == 0 {
-			return false, nil
-		}
-		result.Controller = result.Controller.WithMySekaiData(data)
-		return result.Controller != nil, nil
-	}
-	resolveProfile := func(snap snapshot.Snapshot) {
-		if !opts.NeedProfile {
-			return
-		}
-		profile, profileErr := buildPublicProfileCardForTarget(ctx, target, regionStr, app, snap)
-		if profileErr != nil {
-			err = normalizeSekaiAPIFetchError(profileErr)
-			return
-		}
-		result.Profile = forceMySekaiProfileBindingID(profile, target, regionStr)
-		if result.Profile == nil && snap != nil {
-			result.Profile = forceMySekaiProfileBindingID(snap.ProfileCard(renderregion.Normalize(regionStr)), target, regionStr)
-		}
-	}
-
-	if opts.PreferMySekaiPayload {
-		resolved, payloadErr := resolvePayload()
-		if payloadErr != nil {
-			return mySekaiRenderContext{}, payloadErr
-		}
-		if resolved {
-			resolveProfile(nil)
-			if err != nil {
-				return mySekaiRenderContext{}, err
-			}
-			return result, nil
-		}
-		if opts.MySekaiPayloadOnly {
-			if target.Binding != nil {
-				return mySekaiRenderContext{}, newMySekaiDataNotFoundReplayErrorForBinding(target.Binding)
-			}
-			return result, nil
-		}
+	if handled, preferredResult, preferredErr := tryPreferredMySekaiPayload(ctx, app, result, target, platform, platformUserID, regionStr, opts); handled {
+		return preferredResult, preferredErr
 	}
 
 	snap, snapshotErr := resolveTargetSnapshotWithError(ctx, app, regionStr, platform, platformUserID, target.PJSKUserID, !opts.SuiteOnlySnapshot)
 	if snapshotErr != nil {
-		dataLabel := "mysekai"
-		if opts.SuiteOnlySnapshot {
-			dataLabel = "suite"
-		}
-		return mySekaiRenderContext{}, normalizeToolboxDataFetchError(snapshotErr, dataLabel, target.Binding)
+		return mySekaiRenderContext{}, normalizeToolboxDataFetchError(snapshotErr, mySekaiSnapshotLabel(opts), target.Binding)
 	}
 	if snap != nil {
 		result.Controller = result.Controller.WithSnapshot(snap)
-		resolveProfile(snap)
-		if err != nil {
+		if err := resolveMySekaiProfile(ctx, app, &result, target, regionStr, snap, opts.NeedProfile); err != nil {
 			return mySekaiRenderContext{}, err
 		}
 		return result, nil
 	}
+	return resolveMySekaiContextWithoutSnapshot(ctx, app, result, target, platform, platformUserID, regionStr, opts)
+}
 
-	resolveProfile(nil)
-	if err != nil {
+func resolveMySekaiContextWithoutSnapshot(
+	ctx context.Context,
+	app *renderapp.App,
+	result mySekaiRenderContext,
+	target ResolvedGameTarget,
+	platform string,
+	platformUserID string,
+	regionStr string,
+	opts mySekaiRenderContextOptions,
+) (mySekaiRenderContext, error) {
+	if err := resolveMySekaiProfile(ctx, app, &result, target, regionStr, nil, opts.NeedProfile); err != nil {
 		return mySekaiRenderContext{}, err
 	}
 	if !opts.PreferMySekaiPayload {
-		resolved, payloadErr := resolvePayload()
+		resolved, payloadErr := attachMySekaiPayload(ctx, app, &result, target, platform, platformUserID, regionStr)
 		if payloadErr != nil {
 			return mySekaiRenderContext{}, payloadErr
 		}
@@ -156,6 +115,94 @@ func resolveMySekaiRenderContextWithOptions(
 		return mySekaiRenderContext{}, newMySekaiDataNotFoundReplayErrorForBinding(target.Binding)
 	}
 	return result, nil
+}
+
+func tryPreferredMySekaiPayload(
+	ctx context.Context,
+	app *renderapp.App,
+	result mySekaiRenderContext,
+	target ResolvedGameTarget,
+	platform string,
+	platformUserID string,
+	regionStr string,
+	opts mySekaiRenderContextOptions,
+) (bool, mySekaiRenderContext, error) {
+	if !opts.PreferMySekaiPayload {
+		return false, result, nil
+	}
+	resolved, err := attachMySekaiPayload(ctx, app, &result, target, platform, platformUserID, regionStr)
+	if err != nil {
+		return true, mySekaiRenderContext{}, err
+	}
+	if resolved {
+		err = resolveMySekaiProfile(ctx, app, &result, target, regionStr, nil, opts.NeedProfile)
+		if err != nil {
+			return true, mySekaiRenderContext{}, err
+		}
+		return true, result, nil
+	}
+	if !opts.MySekaiPayloadOnly {
+		return false, result, nil
+	}
+	if target.Binding != nil {
+		return true, mySekaiRenderContext{}, newMySekaiDataNotFoundReplayErrorForBinding(target.Binding)
+	}
+	return true, result, nil
+}
+
+func attachMySekaiPayload(
+	ctx context.Context,
+	app *renderapp.App,
+	result *mySekaiRenderContext,
+	target ResolvedGameTarget,
+	platform string,
+	platformUserID string,
+	regionStr string,
+) (bool, error) {
+	data, err := resolveMySekaiPayloadBySelector(ctx, app, snapshot.Selector{
+		IMPlatform: strings.TrimSpace(platform),
+		IMUserID:   strings.TrimSpace(platformUserID),
+		Region:     renderregion.Normalize(regionStr),
+		PJSKUserID: strings.TrimSpace(target.PJSKUserID),
+	}, false)
+	if err != nil {
+		return false, normalizeToolboxDataFetchError(err, "mysekai", target.Binding)
+	}
+	if len(data) == 0 {
+		return false, nil
+	}
+	result.Controller = result.Controller.WithMySekaiData(data)
+	return result.Controller != nil, nil
+}
+
+func resolveMySekaiProfile(
+	ctx context.Context,
+	app *renderapp.App,
+	result *mySekaiRenderContext,
+	target ResolvedGameTarget,
+	regionStr string,
+	snap snapshot.Snapshot,
+	needed bool,
+) error {
+	if !needed {
+		return nil
+	}
+	profile, err := buildPublicProfileCardForTarget(ctx, target, regionStr, app, snap)
+	if err != nil {
+		return normalizeSekaiAPIFetchError(err)
+	}
+	result.Profile = forceMySekaiProfileBindingID(profile, target, regionStr)
+	if result.Profile == nil && snap != nil {
+		result.Profile = forceMySekaiProfileBindingID(snap.ProfileCard(renderregion.Normalize(regionStr)), target, regionStr)
+	}
+	return nil
+}
+
+func mySekaiSnapshotLabel(opts mySekaiRenderContextOptions) string {
+	if opts.SuiteOnlySnapshot {
+		return "suite"
+	}
+	return "mysekai"
 }
 
 func forceMySekaiProfileBindingID(profile *drawing.ProfileCardRequest, target ResolvedGameTarget, regionStr string) *drawing.ProfileCardRequest {

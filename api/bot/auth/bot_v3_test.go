@@ -83,7 +83,7 @@ func newAuthV3TestEnv(t *testing.T) *authV3TestEnv {
 
 	const botID = 30042042
 	credential := "v3-credential-value"
-	hashed, err := bcrypt.GenerateFromPassword([]byte(credential), bcrypt.DefaultCost)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(credential), bcrypt.MinCost)
 	if err != nil {
 		t.Fatalf("hash credential: %v", err)
 	}

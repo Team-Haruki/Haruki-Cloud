@@ -10,12 +10,36 @@ import (
 )
 
 func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuery, error) {
+	if err := validateTrackerController(c); err != nil {
+		return TrackerRankQuery{}, err
+	}
+	normalized, err := normalizeTrackerQueryInputs(req)
+	if err != nil {
+		return TrackerRankQuery{}, err
+	}
+	if normalized.EventID <= 0 {
+		normalized.EventID = c.pickCurrentOrNextEventID(normalized.Region)
+	}
+	if normalized.EventID <= 0 {
+		return TrackerRankQuery{}, fmt.Errorf("event_id is required when no current event can be inferred")
+	}
+	if err := c.validateTrackerWorldBloomScope(normalized); err != nil {
+		return TrackerRankQuery{}, err
+	}
+	return normalized, nil
+}
+
+func validateTrackerController(c *Controller) error {
 	if c == nil {
-		return TrackerRankQuery{}, fmt.Errorf("sk controller is not initialized")
+		return fmt.Errorf("sk controller is not initialized")
 	}
 	if c.tracker == nil {
-		return TrackerRankQuery{}, fmt.Errorf("tracker client is not configured")
+		return fmt.Errorf("tracker client is not configured")
 	}
+	return nil
+}
+
+func normalizeTrackerQueryInputs(req TrackerRankQuery) (TrackerRankQuery, error) {
 	normalized := req
 	normalized.Region = normalizeTrackerServer(req.Region)
 	if normalized.Region == "" {
@@ -31,23 +55,25 @@ func (c *Controller) validateTrackerQuery(req TrackerRankQuery) (TrackerRankQuer
 	if len(normalized.Ranks) == 0 && normalized.UserID == nil {
 		return TrackerRankQuery{}, fmt.Errorf("tracker ranks/user_id are empty")
 	}
-	if normalized.EventID <= 0 {
-		normalized.EventID = c.pickCurrentOrNextEventID(normalized.Region)
-	}
-	if normalized.EventID <= 0 {
-		return TrackerRankQuery{}, fmt.Errorf("event_id is required when no current event can be inferred")
-	}
 	if normalized.WlCharacterID != nil && *normalized.WlCharacterID <= 0 {
 		normalized.WlCharacterID = nil
 	}
-	if eventSource := c.eventSourceForRegion(normalized.Region); eventSource != nil {
-		if eventInfo, err := eventSource.GetEventByID(normalized.EventID); err == nil && eventInfo != nil {
-			if !strings.EqualFold(eventInfo.EventType, "world_bloom") && normalized.WlCharacterID != nil {
-				return TrackerRankQuery{}, fmt.Errorf("wl_character_id is only valid for world bloom event")
-			}
-		}
-	}
 	return normalized, nil
+}
+
+func (c *Controller) validateTrackerWorldBloomScope(req TrackerRankQuery) error {
+	eventSource := c.eventSourceForRegion(req.Region)
+	if eventSource == nil {
+		return nil
+	}
+	eventInfo, err := eventSource.GetEventByID(req.EventID)
+	if err != nil || eventInfo == nil {
+		return nil
+	}
+	if !strings.EqualFold(eventInfo.EventType, "world_bloom") && req.WlCharacterID != nil {
+		return fmt.Errorf("wl_character_id is only valid for world bloom event")
+	}
+	return nil
 }
 
 func shouldSkipMissingTrackerRanks(req TrackerRankQuery) bool {

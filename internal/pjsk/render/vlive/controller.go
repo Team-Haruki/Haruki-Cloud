@@ -14,6 +14,7 @@ import (
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/pjsk/render/provider"
 	regionsource "haruki-cloud/internal/pjsk/render/source"
 )
 
@@ -95,66 +96,79 @@ func (c *Controller) ResolveLives(query ListQuery) ([]ResolvedLive, renderregion
 
 	result := make([]ResolvedLive, 0, len(lives))
 	for _, live := range lives {
-		if live == nil {
-			continue
+		resolved, ok := resolveLiveAt(live, now)
+		if ok {
+			result = append(result, resolved)
 		}
-
-		startAt := unixTime(live.StartAt)
-		endAt := unixTime(live.EndAt)
-		if startAt.IsZero() || endAt.IsZero() {
-			continue
-		}
-		if !now.Before(endAt) {
-			continue
-		}
-		if startAt.Sub(now) >= 7*24*time.Hour {
-			continue
-		}
-		if endAt.Sub(startAt) >= 30*24*time.Hour {
-			continue
-		}
-
-		schedules := normalizeSchedules(live.Schedules)
-		resolved := ResolvedLive{
-			ID:              live.ID,
-			Name:            strings.TrimSpace(live.Name),
-			AssetBundleName: strings.TrimSpace(live.AssetBundleName),
-			StartAt:         startAt,
-			EndAt:           endAt,
-			Rewards:         append([]Reward(nil), live.Rewards...),
-			Characters:      append([]Character(nil), live.Characters...),
-		}
-		for _, schedule := range schedules {
-			if now.Before(schedule.EndAt) {
-				resolved.Current = new(Window)
-				*resolved.Current = schedule
-				resolved.Living = !now.Before(schedule.StartAt)
-				break
-			}
-		}
-		for _, schedule := range schedules {
-			if now.Before(schedule.StartAt) {
-				resolved.RestCount++
-			}
-		}
-		if resolved.Current == nil {
-			if now.Before(startAt) {
-				resolved.Current = &Window{StartAt: startAt, EndAt: endAt}
-			} else if now.Before(endAt) {
-				resolved.Current = &Window{StartAt: startAt, EndAt: endAt}
-				resolved.Living = true
-			}
-		}
-		result = append(result, resolved)
 	}
+	sortResolvedLives(result)
+	return result, region, nil
+}
 
+func resolveLiveAt(live *Live, now time.Time) (ResolvedLive, bool) {
+	if live == nil {
+		return ResolvedLive{}, false
+	}
+	startAt := unixTime(live.StartAt)
+	endAt := unixTime(live.EndAt)
+	if !liveWindowVisible(startAt, endAt, now) {
+		return ResolvedLive{}, false
+	}
+	resolved := ResolvedLive{
+		ID:              live.ID,
+		Name:            strings.TrimSpace(live.Name),
+		AssetBundleName: strings.TrimSpace(live.AssetBundleName),
+		StartAt:         startAt,
+		EndAt:           endAt,
+		Rewards:         append([]Reward(nil), live.Rewards...),
+		Characters:      append([]Character(nil), live.Characters...),
+	}
+	applyLiveSchedules(&resolved, normalizeSchedules(live.Schedules), now)
+	applyLiveWindowFallback(&resolved, now)
+	return resolved, true
+}
+
+func liveWindowVisible(startAt, endAt, now time.Time) bool {
+	return !startAt.IsZero() &&
+		!endAt.IsZero() &&
+		now.Before(endAt) &&
+		startAt.Sub(now) < 7*24*time.Hour &&
+		endAt.Sub(startAt) < 30*24*time.Hour
+}
+
+func applyLiveSchedules(resolved *ResolvedLive, schedules []Window, now time.Time) {
+	for _, schedule := range schedules {
+		if resolved.Current == nil && now.Before(schedule.EndAt) {
+			resolved.Current = new(schedule)
+			resolved.Living = !now.Before(schedule.StartAt)
+		}
+		if now.Before(schedule.StartAt) {
+			resolved.RestCount++
+		}
+	}
+}
+
+func applyLiveWindowFallback(resolved *ResolvedLive, now time.Time) {
+	if resolved.Current != nil {
+		return
+	}
+	if now.Before(resolved.StartAt) {
+		resolved.Current = &Window{StartAt: resolved.StartAt, EndAt: resolved.EndAt}
+		return
+	}
+	if now.Before(resolved.EndAt) {
+		resolved.Current = &Window{StartAt: resolved.StartAt, EndAt: resolved.EndAt}
+		resolved.Living = true
+	}
+}
+
+func sortResolvedLives(result []ResolvedLive) {
 	sort.Slice(result, func(i, j int) bool {
 		if result[i].StartAt.Equal(result[j].StartAt) {
 			return result[i].ID < result[j].ID
 		}
 		return result[i].StartAt.Before(result[j].StartAt)
 	})
-	return result, region, nil
 }
 
 func (c *Controller) BuildListRequest(query ListQuery) (*drawing.VLiveListRequest, error) {
@@ -295,32 +309,38 @@ func (c *Controller) buildRewardItems(source DataSource, live ResolvedLive) []dr
 	if source == nil {
 		return nil
 	}
-	var items []drawing.VLiveRewardItem
 	for _, reward := range live.Rewards {
-		if kind := strings.ToLower(strings.TrimSpace(reward.VirtualLiveType)); kind != "" && kind != "normal" {
+		if !isNormalVLiveReward(reward) {
 			continue
 		}
 		box := source.GetResourceBoxByPurpose("virtual_live_reward", reward.ResourceBoxID)
-		if box == nil {
+		items := c.buildRewardBoxItems(box)
+		if len(items) > 0 {
+			return items
+		}
+	}
+	return nil
+}
+
+func isNormalVLiveReward(reward Reward) bool {
+	kind := strings.ToLower(strings.TrimSpace(reward.VirtualLiveType))
+	return kind == "" || kind == "normal"
+}
+
+func (c *Controller) buildRewardBoxItems(box *provider.ResourceBox) []drawing.VLiveRewardItem {
+	if box == nil {
+		return nil
+	}
+	items := make([]drawing.VLiveRewardItem, 0, len(box.Details))
+	for _, detail := range box.Details {
+		imagePath := c.rewardImagePath(detail.ResourceType, detail.ResourceID)
+		if strings.TrimSpace(imagePath) == "" {
 			continue
 		}
-		for _, detail := range box.Details {
-			imagePath := c.rewardImagePath(detail.ResourceType, detail.ResourceID)
-			if strings.TrimSpace(imagePath) == "" {
-				continue
-			}
-			quantity := detail.ResourceQuantity
-			if quantity <= 0 {
-				quantity = 1
-			}
-			items = append(items, drawing.VLiveRewardItem{
-				ImagePath: imagePath,
-				Quantity:  quantity,
-			})
-		}
-		if len(items) > 0 {
-			break
-		}
+		items = append(items, drawing.VLiveRewardItem{
+			ImagePath: imagePath,
+			Quantity:  max(detail.ResourceQuantity, 1),
+		})
 	}
 	return items
 }

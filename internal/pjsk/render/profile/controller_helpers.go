@@ -188,6 +188,19 @@ func (c *Controller) buildPCards(source DataSource, userCards []snapshot.RawUser
 func (c *Controller) buildHonors(source DataSource, region renderregion.Value, profileHonors []snapshot.RawUserProfileHonor, userHonors []snapshot.RawUserHonor, musicCounts []drawing.MusicClearCount) []drawing.HonorRequest {
 	builder := renderhonor.NewBuilder(source, c.assets)
 	fcApLevels := buildHonorFcApLevels(musicCounts)
+	requests := buildSelectedProfileHonors(builder, region, profileHonors, fcApLevels)
+	if len(requests) > 0 {
+		return requests
+	}
+	return buildFallbackUserHonors(builder, region, userHonors, fcApLevels)
+}
+
+func buildSelectedProfileHonors(
+	builder *renderhonor.Builder,
+	region renderregion.Value,
+	profileHonors []snapshot.RawUserProfileHonor,
+	fcApLevels map[int]*int,
+) []drawing.HonorRequest {
 	selected := make([]snapshot.RawUserProfileHonor, 0, len(profileHonors))
 	for _, item := range profileHonors {
 		if item.HonorID > 0 || item.HonorId2 > 0 {
@@ -215,10 +228,16 @@ func (c *Controller) buildHonors(source DataSource, region renderregion.Value, p
 			requests = append(requests, *req)
 		}
 	}
-	if len(requests) > 0 {
-		return requests
-	}
+	return requests
+}
 
+func buildFallbackUserHonors(
+	builder *renderhonor.Builder,
+	region renderregion.Value,
+	userHonors []snapshot.RawUserHonor,
+	fcApLevels map[int]*int,
+) []drawing.HonorRequest {
+	requests := make([]drawing.HonorRequest, 0, 3)
 	for _, item := range userHonors {
 		if len(requests) >= 3 {
 			break
@@ -282,46 +301,57 @@ func buildHonorFcApLevels(musicCounts []drawing.MusicClearCount) map[int]*int {
 
 func buildMusicCounts(clears []snapshot.RawMusicClear, stats []snapshot.RawMusicResult) []drawing.MusicClearCount {
 	difficulties := []string{"easy", "normal", "hard", "expert", "master", "append"}
-	result := make([]drawing.MusicClearCount, 0, len(difficulties))
-
 	if len(clears) > 0 {
-		for _, difficulty := range difficulties {
-			count := drawing.MusicClearCount{Difficulty: difficulty}
-			for _, item := range clears {
-				if strings.EqualFold(item.MusicDifficultyType, difficulty) {
-					count.Clear = item.LiveClear
-					count.Fc = item.FullCombo
-					count.Ap = item.AllPerfect
-					break
-				}
-			}
-			result = append(result, count)
-		}
-		return result
+		return buildMusicCountsFromClears(difficulties, clears)
 	}
+	return buildMusicCountsFromResults(difficulties, stats)
+}
 
+func buildMusicCountsFromClears(difficulties []string, clears []snapshot.RawMusicClear) []drawing.MusicClearCount {
+	result := make([]drawing.MusicClearCount, 0, len(difficulties))
 	for _, difficulty := range difficulties {
 		count := drawing.MusicClearCount{Difficulty: difficulty}
-		seen := make(map[int]struct{})
-		for _, item := range stats {
-			if !strings.EqualFold(item.MusicDifficultyType, difficulty) {
-				continue
-			}
-			if _, ok := seen[item.MusicID]; ok {
-				continue
-			}
-			seen[item.MusicID] = struct{}{}
-			count.Clear++
-			if item.FullComboFlg {
-				count.Fc++
-			}
-			if item.FullPerfectFlg {
-				count.Ap++
+		for _, item := range clears {
+			if strings.EqualFold(item.MusicDifficultyType, difficulty) {
+				count.Clear = item.LiveClear
+				count.Fc = item.FullCombo
+				count.Ap = item.AllPerfect
+				break
 			}
 		}
 		result = append(result, count)
 	}
 	return result
+}
+
+func buildMusicCountsFromResults(difficulties []string, stats []snapshot.RawMusicResult) []drawing.MusicClearCount {
+	result := make([]drawing.MusicClearCount, 0, len(difficulties))
+	for _, difficulty := range difficulties {
+		result = append(result, buildMusicResultCount(difficulty, stats))
+	}
+	return result
+}
+
+func buildMusicResultCount(difficulty string, stats []snapshot.RawMusicResult) drawing.MusicClearCount {
+	count := drawing.MusicClearCount{Difficulty: difficulty}
+	seen := make(map[int]struct{})
+	for _, item := range stats {
+		if !strings.EqualFold(item.MusicDifficultyType, difficulty) {
+			continue
+		}
+		if _, ok := seen[item.MusicID]; ok {
+			continue
+		}
+		seen[item.MusicID] = struct{}{}
+		count.Clear++
+		if item.FullComboFlg {
+			count.Fc++
+		}
+		if item.FullPerfectFlg {
+			count.Ap++
+		}
+	}
+	return count
 }
 
 func buildCharacterRanks(ranks []snapshot.RawUserCharacter) []drawing.CharacterRank {

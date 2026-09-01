@@ -24,7 +24,7 @@ Haruki-Cloud is the core backend of the **HarukiBot** ecosystem. It serves:
 | ORM            | Ent (entgo.io)                               |
 | Databases      | PostgreSQL / MySQL / SQLite                  |
 | Cache          | Redis                                        |
-| Auth           | JWT (golang-jwt/v5) + AES-256-GCM + Noise NK |
+| Auth           | JWT (golang-jwt/v5) + Noise NK (AuthV3) |
 | JSON           | `encoding/json/v2` via `internal/jsonutil`   |
 | Go             | 1.27                                         |
 

@@ -9,8 +9,8 @@
 >    移除；Bot 账号由运维通过 `scripts/provision_bot` 手动开通，公开端点仅剩
 >    登录/注销。统计上报移至 `/internal/bot/statistics/record/:botID`（内部鉴权）。
 > 3. `BotCommandRequest` 新增可选字段 `event_time`/`event_id`（事件时间去重）与
->    `timestamp`/`nonce`（Noise 通道重放保护，`haruki_bot.require_request_nonce`
->    开启后强制校验）。
+>    `timestamp`/`nonce`（Noise 通道重放保护，默认强制校验；仅
+>    `haruki_bot.allow_requests_without_nonce=true` 时放宽）。
 > 4. `internal/` 新增 `cache/drawingcache`（绘图缓存）、`cluster`（节点只读模式）、
 >    `jsonutil`、`observability/commandtrace`、`core/upstream`；`internal/pjsk/`
 >    新增 `filteralias`、`subscription`；render 新增 `costume`、`inventory` 模块。
@@ -45,7 +45,7 @@
 | ORM | Ent (entgo.io) |
 | 数据库 | PostgreSQL / MySQL / SQLite |
 | 缓存 | Redis |
-| 认证 | JWT (golang-jwt/v5) + AES-256-GCM + Noise NK |
+| 认证 | JWT (golang-jwt/v5) + Noise NK（AuthV3，无共享密钥） |
 | JSON | `encoding/json/v2`（经 `internal/jsonutil` 统一封装，保持 v1 兼容语义） |
 | Go 版本 | 1.27 |
 
@@ -58,6 +58,7 @@ Haruki-Cloud/
 ├── main.go                       # ── 主服务入口（唯一运行的进程）──
 │
 ├── cmd/                          # ── 一次性 CLI 工具 ──
+│   ├── trust-signer/             #   离线 Ed25519 签名工具（keyset / manifest）
 │   ├── importer/main.go          #   旧数据迁移工具（历史数据导入）
 │   └── extractor/main.go         #   Schema 提取工具
 │
@@ -76,7 +77,8 @@ Haruki-Cloud/
 ├── internal/                     # ── 内部业务逻辑（不对外暴露） ──
 │   ├── cache/drawingcache/       #   绘图图片缓存（存储、GC、统计、管理 API）
 │   ├── cluster/                  #   集群节点角色 / 只读模式（config.Cfg.Node）
-│   ├── core/crypto/              #   Noise NK 协议加密工具
+│   ├── core/crypto/              #   Noise NK 协议加密工具（含多 key 密钥环）
+│   ├── core/trustsign/           #   Ed25519 分离载荷签名契约（keyset / manifest）
 │   ├── core/upstream/            #   上游连接池 / Transport
 │   ├── handler/                  #   统一命令注册表（handler.go + bot_route.go）
 │   ├── identity/                 #   平台用户身份解析
@@ -188,12 +190,15 @@ haruki_bot:                # Bot 管理数据库 + Bot 通道配置
   credential_sign_token: ""  # JWT 签名密钥（登录凭据）
   session_sign_token: ""     # JWT 签名密钥（会话令牌）
   internal_api_token: ""     # 内部 API 回退令牌
-  session_ttl_days: 7
-  noise_private_key: ""      # Noise NK 服务端私钥（未配置时退回 JSON 明文）
-  auth_encryption_key: ""    # 登录 AES-256-GCM 密钥
+  auth_v3_session_ttl: "1h"  # AuthV3 session 有效期，限定 [1m, 30d]
+  noise_private_key: ""      # Noise NK 服务端私钥（legacy 单 key，key_id 为 default，必配其一）
+  noise_keys: []             # 轮换用附加 key：[{key_id, private_key}]，全部可解密
+  manifest_signing_key: ""   # 在线 Ed25519 seed（hex），签 command manifest；由 keyset 授权
+  manifest_signing_key_id: ""
+  trust_keyset_path: ""      # 离线签名的 keyset 文件，原样服务于 GET /api/v3/trust/keyset
   response_election_window: 0 # 多 bot 响应选举窗口
   response_election_roster: false
-  require_request_nonce: false # true 时强制校验 timestamp/nonce（重放保护）
+  allow_requests_without_nonce: false # 默认强制 timestamp/nonce；true 仅作应急回退
   request_nonce_window: 0
 
 users_db:                  # 通用用户数据库（身份、绑定与全局封禁）
@@ -238,27 +243,30 @@ tracker:                   # SK Tracker 客户端
 实现：api/helper.go
 ```
 
-### 4.2 VerifyBotSession — Bot 客户端直调
+### 4.2 Bot 会话鉴权 — Bot 客户端直调
+
+会话校验规则只有一套（`api.VerifyBotSessionToken`）：JWT 签名有效且未过期、
+JWT `bot_id` claim == URL `:botId`、Redis (`hdb:bot:session:<botId>`) 中 token 一致。
+token 的携带方式按路由分两种：
 
 ```
-适用路径：/api/v2/bot/:botId/*
-请求头：
-  - X-Haruki-Bot-Id       → Bot 数字 ID
-  - X-Haruki-Bot-Session-Token → JWT 会话令牌
-检查项：
-  1. 两个头存在
-  2. X-Haruki-Bot-Id == URL :botId
-  3. JWT 签名有效 + 未过期
-  4. JWT bot_id claim == X-Haruki-Bot-Id
-  5. Redis (hdb:bot:session:<botId>) 中 token 一致
-实现：api/bot_session_middleware.go
+POST /api/v2/bot/:botId/pjsk/*      （Noise 之内）
+  token 位于请求体顶层字段 session_token，服务端在 Noise 解密后读取；
+  拒绝响应同样经 Noise 加密返回（MsgPack 信封）。
+  实现：api/bot/pjsk/session_payload.go
+
+GET  /api/v2/bot/:botId/command/manifests （无请求体，不在 Noise 之内）
+  请求头：
+    - X-Haruki-Bot-Id            → Bot 数字 ID，必须 == URL :botId
+    - X-Haruki-Bot-Session-Token → JWT 会话令牌
+  实现：api/bot_session_middleware.go（VerifyBotSession）
 ```
 
 ### 4.3 无鉴权 — 公开接口
 
 ```
 适用路径：/api/v2/public/pjsk/alias/*,  /api/v2/public/chunithm/*,
-          /api/v2/bot/:bot_id/auth, /api/v2/bot/:bot_id/logout
+          /api/v3/bot/:bot_id/auth, /api/v3/bot/:bot_id/logout
 ```
 
 ---
@@ -269,39 +277,79 @@ tracker:                   # SK Tracker 客户端
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/v2/bot/:bot_id/auth` | 登录（AES-256-GCM 加密凭据 → 返回 session_token） |
-| DELETE | `/api/v2/bot/:bot_id/logout` | 注销当前会话 |
+| POST | `/api/v3/bot/:bot_id/auth` | AuthV3 登录（Noise NK 通道，客户端只需预置服务端公钥 → 返回短期 session） |
+| DELETE | `/api/v3/bot/:bot_id/logout` | 注销当前会话（携带 `X-Haruki-Bot-Session-Token`） |
+
+本线 Cloud 没有明文或共享密钥的登录路径；旧的 `/api/v2/bot/:bot_id/auth`（共享 AES-256-GCM）
+只存在于 2.11.x 旧 Cloud，双跑期结束后随旧 Cloud 一起下线。
+
+AuthV3 契约（请求体 Noise NK Message 1，响应体 Message 2，payload 均为 MsgPack）：
+
+| 方向 | 字段 | 说明 |
+|------|------|------|
+| 请求 | `bot_id`, `credential`, `timestamp` | 与 V2 相同；timestamp 窗口 ±300s |
+| 请求 | `nonce` | 16 字节随机数的 hex（32 字符），按 bot_id + nonce 一次性消费 |
+| 请求 | `method`, `path` | 必须等于实际 HTTP 方法与路径，防止密文搬到其他接口 |
+| 请求 | `client_version`, `build_id` | 记录用途，当前不阻断 |
+| 请求 | `noise_key_id` | 握手所用服务端公钥 ID；为空不校验，非空必须与实际匹配 |
+| 响应 | `session_token`, `expires_at`, `session_id` | session 有效期由 `auth_v3_session_ttl` 决定，默认 1h |
+| 响应 | `echo_nonce`, `server_time`, `accepted_build_id` | 回显与服务端时间 |
+
+服务端可配置多把 Noise 静态密钥（`noise_private_key` + `noise_keys`），每把有 key_id。
+客户端可通过 `X-Haruki-Noise-Key-Id` 请求头提示所用公钥；缺省时服务端依次尝试全部密钥。
+响应头 `X-Haruki-Noise-Key-Id` 回传实际匹配的 key_id。auth 限流为每 bot_id 每分钟 10 次。
+
+#### 信任密钥集与签名（trustsign）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v3/trust/keyset` | 离线签名的信任密钥集，Cloud 原样转发 `haruki_bot.trust_keyset_path` 指向的文件 |
+
+签名契约（`internal/core/trustsign`，与客户端共享）：只签原始字节、分离载荷、域分隔。
+
+```
+签名输入 = domain || 0x00 || payload
+Envelope = { alg:"ed25519", domain, key_id, encoding:"json"|"msgpack",
+             payload:<base64 原始字节>, signature:<base64> }
+domain ∈ { "haruki-cloud/keyset/v1", "haruki-cloud/manifest/v1" }
+```
+
+客户端先用对应公钥验签 `payload` 原始字节，再按 `encoding` 解码。两级密钥：
+
+1. **离线根密钥**（仅运维持有，`cmd/trust-signer keygen`）签发 keyset 文档
+   （`trustsign.KeysetDocument`：version / issued_at / expires_at / noise_keys /
+   manifest_signing_keys / endpoints / minimum_client_version）。客户端内置根公钥，
+   校验签名、版本递增与有效期。
+2. **在线 manifest 签名密钥**（`haruki_bot.manifest_signing_key` + `_id`）由 keyset 授权，
+   Cloud 用它签 command manifest。配置后 manifest 响应的 `data` 变为上述 Envelope，
+   `payload` 为 `ManifestResponse` 的 JSON 字节。
 
 > Bot 自助注册链路（send-mail / register / SMTP 验证码 / Turnstile）已移除；
 > Bot 账号由运维通过 `scripts/provision_bot` 手动开通。
 
-### 5.2 Bot 指令端点（VerifyBotSession 鉴权）
+### 5.2 Bot 指令端点（Bot 会话鉴权）
 
 当前 Bot 端点由 `internal/pjsk/handler` registry 动态派生，标准协议如下：
 
 1. `GET /api/v2/bot/:botId/command/manifests`
 2. `POST /api/v2/bot/:botId/pjsk/<path>`
 
-协议头示例：
-
-X-Haruki-Bot-Id: 11451419
-X-Haruki-Bot-Session-Token: <jwt>
-
 其中：
 
-1. Manifest 端点始终为 `GET + JSON`
-2. PJSK Bot 业务端点为 `POST`
-3. 请求体使用 `BotCommandRequest`
-4. 当服务端配置了 `noise_private_key` 时，请求体为 `Noise NK + MsgPack(BotCommandRequest)`
-5. 当服务端未配置 `noise_private_key` 时，退回 `JSON(BotCommandRequest)` 明文模式
-6. `BotCommandRequest.enableParamEcho` 默认为 `false`；客户端只有显式传 `true` 时，参数解析错误才会回显具体参数
-7. `BotCommandRequest` 另有四个可选字段（更新版客户端发送）：
+1. Manifest 端点始终为 `GET + JSON`，会话走请求头 `X-Haruki-Bot-Id` /
+   `X-Haruki-Bot-Session-Token`；配置了 manifest 签名密钥时 `data` 为签名 Envelope
+2. PJSK Bot 业务端点为 `POST`，请求体为 `Noise NK + MsgPack(BotCommandRequest)`
+   （生产必配 Noise 密钥；未配置时仅测试用 JSON 明文）
+3. 会话 token 在请求体顶层字段 `session_token` 里随密文传输，不再放请求头；
+   `/pjsk` 下所有 POST（含 birthday-monitor 的 render / ack）都必须携带
+4. `BotCommandRequest.enableParamEcho` 默认为 `false`；客户端只有显式传 `true` 时，参数解析错误才会回显具体参数
+5. `BotCommandRequest` 另有四个可选字段：
    - `event_time` / `event_id`：平台事件时间戳（OneBot time）用于事件级去重——
      同一条消息被多个 bot 观测到时时间一致，已消费的响应选举保留 120s，可区分
      重复投递（同时间 → 拒绝）与用户重发（更新时间 → 新选举）；未带该字段的请求
      沿用旧的 3s 宽限
    - `timestamp` / `nonce`：Noise 通道的按次投递重放保护（窗口校验 + SET NX
-     单次 nonce）；默认宽松，`haruki_bot.require_request_nonce=true` 时强制
+     单次 nonce）；默认强制，仅 `haruki_bot.allow_requests_without_nonce=true` 时放宽
 
 代表性端点包括：
 
@@ -375,12 +423,9 @@ Bot 客户端
   ├─ Bot 本地用前缀匹配到端点 /pjsk/card/detail
   │
   └─ POST /api/v2/bot/:botId/pjsk/card/detail
-       Headers:
-         X-Haruki-Bot-Id
-         X-Haruki-Bot-Session-Token
        Body:
          Noise NK + MsgPack(BotCommandRequest)
-         或 JSON(BotCommandRequest)
+         （session_token / timestamp / nonce 均在密文内）
        │
        ▼ VerifyBotSession middleware
        │
@@ -415,9 +460,10 @@ Bot 客户端
 
 ```
 1. 运维执行 scripts/provision_bot  →  创建 Bot 账号 → 下发 JWT credential
-2. POST /api/v2/bot/:bot_id/auth   →  AES-256-GCM 解密 → JWT credential 验证
-                                    → 生成 session_token → 存 Redis → 返回
-3. DELETE /api/v2/bot/:bot_id/logout →  删除 Redis 会话
+2. POST /api/v3/bot/:bot_id/auth   →  secure 中间件 Noise NK 握手解密 → method/path/nonce/时间窗校验
+                                    → JWT credential 验证 → 生成短期 session → 存 Redis
+                                    → 同一握手加密返回（客户端预置公钥，二进制内无共享密钥）
+3. DELETE /api/v3/bot/:bot_id/logout →  校验 session header → 删除 Redis 会话
 ```
 
 ---
@@ -613,14 +659,20 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | 文件 | 职责 | 关联路由 |
 |------|------|----------|
 | `route.go` | 路由注册入口（user / internal / statistics 三组） | — |
-| `user.go` | 登录/注销 Handler | `/api/v2/bot/:bot_id/auth`, `/api/v2/bot/:bot_id/logout` |
-| `credential.go` | JWT credential 生成与校验 | — |
-| `crypto.go` | AES-256-GCM 工具 | — |
-| `session.go` | 会话令牌管理（Redis） | — |
+| `user.go` | 公开路由注册（AuthV3 登录 + 注销） | `/api/v3/bot/:bot_id/auth`, `/api/v3/bot/:bot_id/logout` |
+| `credential.go` | credential 校验（bcrypt / 常量时间比较） | — |
+| `session.go` | credential JWT 解析、所有者封禁检查、注销 Handler | — |
+| `session_v3.go` | AuthV3 登录 Handler（Noise NK 通道，nonce 单次消费，请求上下文绑定） | — |
 | `internal.go` | 内部 session 验证 | `/internal/bot/verify-session` |
 | `statistics.go` | 统计上报 Handler | `/internal/bot/statistics/record/:botID` |
 | `telemetry.go` / `telemetry_dispatcher.go` | Bot 遥测采集与转发 | — |
 | `struct.go` / `helper.go` | 结构体与辅助函数 | — |
+
+### api/trust/（package trust）
+
+| 文件 | 职责 | 关联路由 |
+|------|------|----------|
+| `keyset.go` | 原样转发离线签名的信任密钥集，按 mtime 热重载 | `/api/v3/trust/keyset` |
 
 ### api/bot/pjsk/（package pjsk）
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -143,4 +144,89 @@ func TestSecureMiddlewareRequiresServerKey(t *testing.T) {
 		}
 	}()
 	_ = New(Config{})
+}
+
+// secureRingRequest encrypts a fixed payload for pair, optionally sending a
+// key-id hint, and returns the raw response together with the initiator so
+// the caller can decrypt the body.
+func secureRingRequest(t *testing.T, app *fiber.App, pair *crypto.KeyPair, hint string) (*http.Response, []byte, *crypto.NoiseCipher) {
+	t.Helper()
+	initiator, err := crypto.NewInitiator(pair.Public)
+	if err != nil {
+		t.Fatalf("NewInitiator: %v", err)
+	}
+	ciphertext, err := initiator.EncryptPacket([]byte("payload"))
+	if err != nil {
+		t.Fatalf("encrypt: %v", err)
+	}
+	request := httptest.NewRequest("POST", "/secure", bytes.NewReader(ciphertext))
+	if hint != "" {
+		request.Header.Set(HeaderNoiseKeyID, hint)
+	}
+	response, err := app.Test(request)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	body, _ := io.ReadAll(response.Body)
+	return response, body, initiator
+}
+
+func TestSecureMiddlewareAcceptsEveryKeyInRing(t *testing.T) {
+	current := secureTestKeyPair(t)
+	next := secureTestKeyPair(t)
+	ring, err := crypto.NewKeyRing(
+		crypto.StaticKey{ID: "current", Pair: current},
+		crypto.StaticKey{ID: "next", Pair: next},
+	)
+	if err != nil {
+		t.Fatalf("NewKeyRing: %v", err)
+	}
+
+	var seenKeyID string
+	app := fiber.New()
+	app.Post("/secure", New(Config{KeyRing: ring}), func(c fiber.Ctx) error {
+		seenKeyID, _ = c.Locals(LocalNoiseKeyID).(string)
+		return c.SendString("ok")
+	})
+
+	for _, tc := range []struct {
+		name   string
+		pair   *crypto.KeyPair
+		hint   string
+		wantID string
+	}{
+		{name: "primary", pair: current, wantID: "current"},
+		{name: "rotation key without hint", pair: next, wantID: "next"},
+		{name: "rotation key with hint", pair: next, hint: "next", wantID: "next"},
+		{name: "rotation key with wrong hint", pair: next, hint: "current", wantID: "next"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			seenKeyID = ""
+			response, body, initiator := secureRingRequest(t, app, tc.pair, tc.hint)
+			if response.StatusCode != fiber.StatusOK {
+				t.Fatalf("status = %d body %q", response.StatusCode, body)
+			}
+			if plaintext, err := initiator.DecryptPacket(body); err != nil || string(plaintext) != "ok" {
+				t.Fatalf("decrypt response = %q, %v", plaintext, err)
+			}
+			if seenKeyID != tc.wantID || response.Header.Get(HeaderNoiseKeyID) != tc.wantID {
+				t.Fatalf("key id local %q header %q, want %q", seenKeyID, response.Header.Get(HeaderNoiseKeyID), tc.wantID)
+			}
+		})
+	}
+
+	// A key outside the ring must be refused before reaching the handler.
+	response, _, _ := secureRingRequest(t, app, secureTestKeyPair(t), "")
+	if response.StatusCode != fiber.StatusBadRequest {
+		t.Fatalf("foreign key status = %d", response.StatusCode)
+	}
+}
+
+func TestSecureMiddlewarePanicsWithoutKeys(t *testing.T) {
+	defer func() {
+		if recovered := recover(); recovered == nil {
+			t.Fatal("New(Config{}) did not panic")
+		}
+	}()
+	New(Config{})
 }

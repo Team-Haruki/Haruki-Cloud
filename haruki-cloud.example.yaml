@@ -108,8 +108,17 @@ haruki_bot:
   credential_sign_token: "your-credential-sign-token-32chars"
   session_sign_token: "your-session-sign-token-32chars"
   internal_api_token: "your-internal-api-token"
-  session_ttl_days: 7
-  noise_private_key: ""  # hex-encoded 32-byte X25519 private key for Noise IK transport encryption (leave empty to disable)
+  # Noise NK static keys. noise_private_key is the legacy single key (key id
+  # "default") and stays primary when set. noise_keys lists additional keys
+  # accepted during rotation; each needs a stable key_id clients can reference.
+  # At least one key must be configured.
+  noise_private_key: ""  # hex-encoded 32-byte X25519 private key
+  noise_keys: []
+  # - key_id: "cloud-noise-2026-09"
+  #   private_key: ""      # hex-encoded 32-byte X25519 private key
+  # Session lifetime for the Noise-wrapped AuthV3 endpoint (/api/v3/bot/:bot_id/auth).
+  # Zero uses the default (1h); values are clamped to [1m, 30d].
+  auth_v3_session_ttl: "1h"
   # Candidate collection window for choosing which Bot returns a shared command result.
   # Zero uses the runtime default (200ms); a negative duration disables response election.
   response_election_window: "200ms"
@@ -118,13 +127,22 @@ haruki_bot:
   # back to the full window; an under-counted one still yields exactly one
   # response. Members absent from 3 consecutive elections are demoted.
   response_election_roster: false
-  # Replay protection for the Noise-encrypted bot channel. When false (default),
-  # a timestamp+nonce is validated only when the client sends one, so old
-  # clients keep working; flip to true to reject requests without a valid nonce
-  # once every client ships the fields.
-  require_request_nonce: false
+  # Replay protection for the Noise-encrypted bot channel. Every command
+  # request must carry timestamp+nonce (default). Set true only as an
+  # emergency rollback lever: requests without the fields are then accepted,
+  # while nonces that are present are still validated.
+  allow_requests_without_nonce: false
   # Accepted request timestamp skew and single-use nonce TTL. 0 = default (5m).
   request_nonce_window: "5m"
+  # Trust signing (see docs/architecture.cn.md 5.1 "信任密钥集与签名").
+  # manifest_signing_key is the ONLINE Ed25519 seed (hex, 32 bytes) that signs
+  # command manifests; generate it with `cmd/trust-signer keygen` and list its
+  # public key in the keyset under manifest_signing_keys. Empty = unsigned.
+  manifest_signing_key: ""
+  manifest_signing_key_id: ""
+  # Offline-signed keyset envelope produced by `cmd/trust-signer sign --domain keyset`.
+  # Served verbatim at GET /api/v3/trust/keyset; empty = route not mounted.
+  trust_keyset_path: ""
 
 users_db:
   db_type: "postgres"

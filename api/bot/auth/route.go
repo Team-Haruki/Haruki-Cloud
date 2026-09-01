@@ -2,17 +2,23 @@ package auth
 
 import (
 	ent "haruki-cloud/database/bot"
+	"haruki-cloud/internal/core/crypto"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 )
 
-func RegisterBotRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) {
-	RegisterBotRoutesWithBanChecker(app, dbClient, redisClient, authEncryptionKey, noiseServerPubKey, nil)
+// RegisterBotRoutes registers the internal and statistics routes only. The
+// public AuthV3 routes need the Noise key ring; use
+// RegisterBotRoutesWithBanChecker to mount them.
+func RegisterBotRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client) {
+	RegisterBotRoutesWithBanChecker(app, dbClient, redisClient, nil, nil)
 }
 
-func RegisterBotRoutesWithBanChecker(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string, checker GlobalBanChecker) {
-	registerUserRoutes(app, dbClient, redisClient, authEncryptionKey, noiseServerPubKey, checker)
+// RegisterBotRoutesWithBanChecker registers every bot auth route. The public
+// AuthV3 login/logout routes are mounted only when noiseKeys is non-nil.
+func RegisterBotRoutesWithBanChecker(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, noiseKeys *crypto.KeyRing, checker GlobalBanChecker) {
+	registerUserRoutes(app, dbClient, redisClient, noiseKeys, checker)
 	registerInternalRoutes(app, dbClient, redisClient, checker)
 	registerStatisticsRoutes(app, dbClient)
 }

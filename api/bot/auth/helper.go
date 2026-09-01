@@ -58,29 +58,17 @@ func (s *redisKVStore) Expire(ctx context.Context, key string, ttl time.Duration
 
 // ================= Service Constructors =================
 
-func NewUserService(dbClient *ent.Client, redisClient *redis.Client, authEncryptionKey []byte, noiseServerPubKey string) *UserService {
-	return NewUserServiceWithDependencies(
-		dbClient,
-		newRedisKVStore(redisClient),
-		authEncryptionKey,
-		noiseServerPubKey,
-	)
+func NewUserService(dbClient *ent.Client, redisClient *redis.Client) *UserService {
+	return NewUserServiceWithDependencies(dbClient, newRedisKVStore(redisClient))
 }
 
-func NewUserServiceWithDependencies(
-	dbClient *ent.Client,
-	redisStore RedisKVStore,
-	authEncryptionKey []byte,
-	noiseServerPubKey string,
-) *UserService {
+func NewUserServiceWithDependencies(dbClient *ent.Client, redisStore RedisKVStore) *UserService {
 	if redisStore == nil {
 		redisStore = newRedisKVStore(nil)
 	}
 	return &UserService{
-		dbClient:          dbClient,
-		redisStore:        redisStore,
-		authEncryptionKey: authEncryptionKey,
-		noiseServerPubKey: noiseServerPubKey,
+		dbClient:   dbClient,
+		redisStore: redisStore,
 	}
 }
 

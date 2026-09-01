@@ -113,7 +113,9 @@ staticcheck ./...
   `haruki-cloud`（或在仓库已有 `haruki-server-linux`）。
 - 启动初始化 (`init_*.go`、`fiber.go`、`run.go`) 都在 `internal/server/` 包
   （`package server`）。
-- `cmd/` 目前只剩 `cmd/importer/` 与 `cmd/extractor/`。
+- `cmd/` 目前有 `cmd/importer/`、`cmd/extractor/` 与 `cmd/trust-signer/`
+  （离线 Ed25519 签名工具：生成根密钥 / 在线 manifest 密钥，签发 keyset；
+  绝不在 Cloud 主机上运行 keygen 根密钥）。
 
 ## 8. importer 速查
 

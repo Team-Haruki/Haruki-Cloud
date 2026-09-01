@@ -28,7 +28,7 @@ func TestCheckRateLimitCleansUpCounterWhenExpiryFails(t *testing.T) {
 		memoryRedisStore: newMemoryRedisStore(),
 		expireErr:        wantErr,
 	}
-	service := NewUserServiceWithDependencies(nil, store, nil, "")
+	service := NewUserServiceWithDependencies(nil, store)
 
 	allowed, err := service.checkRateLimit(context.Background(), "auth", "123", 10, 1)
 	if allowed {

@@ -2,13 +2,13 @@ package server
 
 import (
 	"context"
-	"encoding/hex"
 
 	harukiConfig "haruki-cloud/config"
 	harukiLogger "haruki-cloud/utils/logger"
 
 	botPJSK "haruki-cloud/api/bot/pjsk"
 	groupGuardAPI "haruki-cloud/api/groupguard"
+	trustAPI "haruki-cloud/api/trust"
 	"haruki-cloud/internal/pjsk/accountdata"
 
 	"github.com/gofiber/fiber/v3/middleware/static"
@@ -43,14 +43,14 @@ func Run(ctx context.Context) {
 		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)
 	}
 	validateBotAuthSecrets(mainLogger)
-	noiseKeyPair := initNoiseKeyPair(mainLogger)
-	authEncryptionKey := initAuthEncryptionKey(mainLogger)
-	var noiseServerPubKeyHex string
-	if noiseKeyPair != nil {
-		noiseServerPubKeyHex = hex.EncodeToString(noiseKeyPair.Public)
-	}
-	botDBClient := initBot(ctx, mainLogger, app, redisClient, authEncryptionKey, noiseServerPubKeyHex, banChecker)
-	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithContext(ctx, app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
+	noiseKeys := initNoiseKeyRing(mainLogger)
+	manifestSigner := initManifestSigner(mainLogger)
+	botDBClient := initBot(ctx, mainLogger, app, redisClient, noiseKeys, banChecker)
+	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithOptions(ctx, app, renderRuntime, redisClient, botDBClient, botPJSK.BotRouteOptions{
+		NoiseKeys:      noiseKeys,
+		ManifestSigner: manifestSigner,
+	})
+	trustAPI.RegisterTrustRoutes(app, harukiConfig.Cfg.HarukiBotDB.TrustKeysetPath)
 
 	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {
 		app.Get("/ic/*", static.New(dir))

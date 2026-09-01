@@ -124,7 +124,7 @@ func TestDatabaseInitializersWithSQLiteAndMiniRedis(t *testing.T) {
 	harukiConfig.Cfg.HarukiBotDB.DBType = "sqlite3"
 	harukiConfig.Cfg.HarukiBotDB.DBURL = serverCoverageSQLiteDSN(t, "bot")
 	banChecker := accountdata.NewBanService(usersClient)
-	botClient := initBot(nil, mainLogger, fiber.New(), redisClient, bytes.Repeat([]byte{1}, 32), "", banChecker)
+	botClient := initBot(nil, mainLogger, fiber.New(), redisClient, nil, banChecker)
 	if botClient == nil {
 		t.Fatal("bot database was not initialized")
 	}

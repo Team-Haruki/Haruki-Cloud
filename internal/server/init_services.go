@@ -9,6 +9,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/core/crypto"
+	"haruki-cloud/internal/core/trustsign"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/accountdata"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
@@ -222,8 +223,8 @@ func resolveMySekaiHousingCompetitionCachePath() string {
 
 // validateBotAuthSecrets fails fast when a bot JWT signing secret is empty.
 // An empty HMAC key signs/verifies tokens with a zero-length key, which is
-// forgeable — the AES + Noise keys are already validated the same way, and bot
-// auth routes are always registered, so these must be configured too.
+// forgeable — the Noise keys are already validated the same way, and bot auth
+// routes are always registered, so these must be configured too.
 func validateBotAuthSecrets(mainLogger *harukiLogger.Logger) {
 	if strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.SessionSignToken) == "" {
 		fatalStartup(mainLogger, "bot session signing token is not configured")
@@ -233,39 +234,73 @@ func validateBotAuthSecrets(mainLogger *harukiLogger.Logger) {
 	}
 }
 
-func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {
-	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.AuthEncryptionKey)
-	if keyHex == "" {
-		fatalStartup(mainLogger, "auth encryption key is not configured")
+// initManifestSigner loads the online Ed25519 manifest signing key. A missing
+// key is tolerated so local development works unsigned, but production logs a
+// warning: AuthV3 clients are expected to verify manifests.
+func initManifestSigner(mainLogger *harukiLogger.Logger) *trustsign.Signer {
+	botCfg := harukiConfig.Cfg.HarukiBotDB
+	seedHex := strings.TrimSpace(botCfg.ManifestSigningKey)
+	if seedHex == "" {
+		if harukiConfig.Cfg.Profile.IsProduction() {
+			mainLogger.Warn("manifest signing key is not configured; command manifests are served unsigned")
+		}
+		return nil
 	}
-	keyBytes, err := hex.DecodeString(keyHex)
+	keyID := strings.TrimSpace(botCfg.ManifestSigningKeyID)
+	if keyID == "" {
+		fatalStartup(mainLogger, "manifest_signing_key_id is required when manifest_signing_key is set")
+	}
+	signer, err := trustsign.NewSignerFromHex(keyID, seedHex)
 	if err != nil {
-		fatalStartup(mainLogger, "invalid auth_encryption_key hex", "error_type", fmt.Sprintf("%T", err))
+		fatalStartup(mainLogger, "invalid manifest signing key", "error_type", fmt.Sprintf("%T", err))
 	}
-	if len(keyBytes) != 32 {
-		fatalStartup(mainLogger, "auth encryption key has invalid length", "key_bytes", len(keyBytes))
-	}
-	mainLogger.Info("auth encryption key loaded", "algorithm", "AES-256-GCM")
-	return keyBytes
+	mainLogger.Info("manifest signing enabled", "algorithm", trustsign.Algorithm, "key_id", keyID, "public_key", signer.PublicKeyHex())
+	return signer
 }
 
-func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
-	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey)
-	if keyHex == "" {
+func initNoiseKeyRing(mainLogger *harukiLogger.Logger) *crypto.KeyRing {
+	botCfg := harukiConfig.Cfg.HarukiBotDB
+	keys := make([]crypto.StaticKey, 0, 1+len(botCfg.NoiseKeys))
+	if legacy := strings.TrimSpace(botCfg.NoisePrivateKey); legacy != "" {
+		keys = append(keys, crypto.StaticKey{ID: crypto.DefaultKeyID, Pair: parseNoisePrivateKey(mainLogger, "noise_private_key", legacy)})
+	}
+	for i, entry := range botCfg.NoiseKeys {
+		field := fmt.Sprintf("noise_keys[%d]", i)
+		keyID := strings.TrimSpace(entry.KeyID)
+		if keyID == "" {
+			fatalStartup(mainLogger, "Noise key id is empty", "config_field", field)
+		}
+		keys = append(keys, crypto.StaticKey{ID: keyID, Pair: parseNoisePrivateKey(mainLogger, field, entry.PrivateKey)})
+	}
+	if len(keys) == 0 {
 		fatalStartup(mainLogger, "Noise private key is not configured")
 	}
-	privBytes, err := hex.DecodeString(keyHex)
+	ring, err := crypto.NewKeyRing(keys...)
 	if err != nil {
-		fatalStartup(mainLogger, "invalid noise_private_key hex", "error_type", fmt.Sprintf("%T", err))
+		fatalStartup(mainLogger, "invalid Noise key ring", "error_type", fmt.Sprintf("%T", err), "detail", err.Error())
+	}
+	for i, key := range ring.Keys() {
+		role := "rotation"
+		if i == 0 {
+			role = "primary"
+		}
+		mainLogger.Info("Noise NK static key loaded", "key_id", key.ID, "role", role, "public_key", hex.EncodeToString(key.Pair.Public))
+	}
+	return ring
+}
+
+func parseNoisePrivateKey(mainLogger *harukiLogger.Logger, field string, keyHex string) *crypto.KeyPair {
+	privBytes, err := hex.DecodeString(strings.TrimSpace(keyHex))
+	if err != nil {
+		fatalStartup(mainLogger, "invalid Noise private key hex", "config_field", field, "error_type", fmt.Sprintf("%T", err))
 	}
 	if len(privBytes) != 32 {
-		fatalStartup(mainLogger, "Noise private key has invalid length", "key_bytes", len(privBytes))
+		fatalStartup(mainLogger, "Noise private key has invalid length", "config_field", field, "key_bytes", len(privBytes))
 	}
 	kp, err := crypto.KeyPairFromPrivate(privBytes)
 	if err != nil {
-		fatalStartup(mainLogger, "failed to derive Noise key pair", "error_type", fmt.Sprintf("%T", err))
+		fatalStartup(mainLogger, "failed to derive Noise key pair", "config_field", field, "error_type", fmt.Sprintf("%T", err))
 	}
-	mainLogger.Info("Noise IK transport encryption enabled", "public_key", hex.EncodeToString(kp.Public))
 	return kp
 }
 

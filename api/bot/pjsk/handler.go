@@ -16,6 +16,7 @@ import (
 	botuser "haruki-cloud/database/bot/user"
 	"haruki-cloud/internal/cluster"
 	"haruki-cloud/internal/core/crypto"
+	"haruki-cloud/internal/core/trustsign"
 	commandregistry "haruki-cloud/internal/handler"
 	"haruki-cloud/internal/middleware/secure"
 	"haruki-cloud/internal/observability/commandtrace"
@@ -60,6 +61,16 @@ func (d *BotRouteDispatchers) Close() {
 	}
 }
 
+// BotRouteOptions carries the optional security dependencies of the bot routes.
+type BotRouteOptions struct {
+	// NoiseKeys enables the Noise NK transport middleware on the /pjsk group.
+	// Every key in the ring is accepted so keys can rotate.
+	NoiseKeys *crypto.KeyRing
+	// ManifestSigner, when set, wraps the command manifest in a signed
+	// trustsign.Envelope (domain haruki-cloud/manifest/v1, JSON payload).
+	ManifestSigner *trustsign.Signer
+}
+
 // RegisterPJSKBotRoutes registers per-feature bot endpoints under
 //
 //	/api/v2/bot/:botId/pjsk/<path>
@@ -68,33 +79,40 @@ func (d *BotRouteDispatchers) Close() {
 //
 //	GET /api/v2/bot/:botId/command/manifests
 //
-// The canonical PJSK bot protocol is POST + JSON body:
+// The canonical PJSK bot protocol is POST + body:
 //
 //	POST /api/v2/bot/:botId/pjsk/<path>
-//	Content-Type: application/json
 //
 //	{"platform":"qq","platform_user_id":"12345","server":"jp",
 //	 "matched_command":"/cmd","message":[{"type":"text","data":{"text":"/cmd args"}}],
+//	 "session_token":"<jwt>","timestamp":1700000000,"nonce":"<hex>",
 //	 "enableParamEcho":false}
 //
-// When noiseKeyPair is non-nil, the Noise IK transport encryption middleware is applied
-// to the pjsk route group. Clients must then send Noise IK Message 1 containing a
-// MsgPack-encoded BotCommandRequest as the HTTP body, and will receive Noise IK Message 2
-// containing a MsgPack-encoded response. The manifest endpoint is NOT behind Noise.
+// When NoiseKeys is set, the Noise NK transport middleware is applied to the
+// pjsk route group: clients send Noise NK Message 1 containing a MsgPack-encoded
+// body and receive Noise NK Message 2 containing a MsgPack-encoded response.
 //
-// When redisClient is non-nil, the api.VerifyBotSession middleware is applied to
-// authenticate requests via X-Haruki-Bot-Id and X-Haruki-Bot-Session-Token headers.
-// Pass nil for redisClient in unit tests (auth is skipped).
+// Session authentication differs per route family:
+//   - /pjsk POST routes read session_token from the decrypted body
+//     (verifyBotSessionFromPayload), so the token never leaves the ciphertext.
+//   - GET /command/manifests has no body and is not behind Noise; it keeps the
+//     X-Haruki-Bot-Id / X-Haruki-Bot-Session-Token headers (api.VerifyBotSession).
+//
+// Pass nil for redisClient in unit tests (session auth is skipped).
 //
 // When botDBClient is non-nil, the manifest table is synchronized from the
 // registered command manifest routes on startup and the manifest endpoint returns
 // live data from the database.
 // Pass nil to keep the placeholder response (e.g. in unit tests).
-func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) *BotRouteDispatchers {
-	return RegisterPJSKBotRoutesWithContext(context.Background(), app, renderApp, redisClient, botDBClient, noiseKeyPair)
+func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeys *crypto.KeyRing) *BotRouteDispatchers {
+	return RegisterPJSKBotRoutesWithOptions(context.Background(), app, renderApp, redisClient, botDBClient, BotRouteOptions{NoiseKeys: noiseKeys})
 }
 
-func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) *BotRouteDispatchers {
+func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeys *crypto.KeyRing) *BotRouteDispatchers {
+	return RegisterPJSKBotRoutesWithOptions(initCtx, app, renderApp, redisClient, botDBClient, BotRouteOptions{NoiseKeys: noiseKeys})
+}
+
+func RegisterPJSKBotRoutesWithOptions(initCtx context.Context, app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, opts BotRouteOptions) *BotRouteDispatchers {
 	if renderApp == nil {
 		return nil
 	}
@@ -104,24 +122,31 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 
 	commandhandler.EnsureCommandHandlersRegistered()
 	seedBotCommandManifests(initCtx, botDBClient)
-	botMiddleware := botRouteMiddleware(renderApp, redisClient, botDBClient)
-	bot := app.Group(botRouteBase+"/:botId", botMiddleware...)
+	bot := app.Group(botRouteBase+"/:botId", commandTraceMiddleware)
+	ownerGuard := botOwnerGuardMiddleware(renderApp, botDBClient)
 
 	preview3DEnabled := renderApp.Config.Preview3D.Enabled
-	bot.Get("/command/manifests", buildManifestHandler(botDBClient, preview3DEnabled))
+	manifestChain := append(ownerGuard, buildManifestHandler(botDBClient, preview3DEnabled, opts.ManifestSigner))
+	bot.Get("/command/manifests", headerSessionMiddleware(redisClient), manifestChain...)
 
 	guard := NewRequestGuard(redisClient)
 	replay := newReplayGuard(
 		redisClient,
 		harukiConfig.Cfg.HarukiBotDB.RequestNonceWindow,
-		harukiConfig.Cfg.HarukiBotDB.RequireRequestNonce,
+		!harukiConfig.Cfg.HarukiBotDB.AllowRequestsWithoutNonce,
 	)
 	election, commandElection := newBotCommandElection(initCtx, redisClient, guard)
 	telemetry := botauth.NewCommandTelemetryDispatcher(botDBClient)
 
 	pjsk := bot.Group("/pjsk")
-	if noiseKeyPair != nil {
-		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
+	if opts.NoiseKeys != nil {
+		pjsk.Use(secure.New(secure.Config{KeyRing: opts.NoiseKeys}))
+	}
+	// Session and owner checks run after Noise so the token is read from the
+	// decrypted body and rejections are encrypted on the way out.
+	pjsk.Use(verifyBotSessionFromPayload(redisClient))
+	for _, guard := range ownerGuard {
+		pjsk.Use(guard)
 	}
 	registerBirthdayMonitorRoutes(pjsk, app, renderApp, guard)
 	if !registerBotCommandRoutes(pjsk, renderApp, commandElection, telemetry, replay, preview3DEnabled) {
@@ -142,16 +167,22 @@ func seedBotCommandManifests(ctx context.Context, client *botDB.Client) {
 	}
 }
 
-func botRouteMiddleware(renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client) []any {
-	sessionMiddleware := api.VerifyBotSessionTestBypass()
-	if redisClient != nil {
-		sessionMiddleware = api.VerifyBotSession(redisClient)
+// headerSessionMiddleware authenticates body-less routes (the manifest GET)
+// from the X-Haruki-Bot-Id / X-Haruki-Bot-Session-Token headers.
+func headerSessionMiddleware(redisClient *redis.Client) fiber.Handler {
+	if redisClient == nil {
+		return api.VerifyBotSessionTestBypass()
 	}
-	middleware := []any{commandTraceMiddleware, sessionMiddleware}
-	if botDBClient != nil && renderApp.BanChecker != nil {
-		middleware = append(middleware, verifyBotOwnerNotBanned(botDBClient, renderApp.BanChecker))
+	return api.VerifyBotSession(redisClient)
+}
+
+// botOwnerGuardMiddleware rejects bots whose owner is globally banned. It is
+// empty when the bot database or ban checker is unavailable (unit tests).
+func botOwnerGuardMiddleware(renderApp *renderapp.App, botDBClient *botDB.Client) []any {
+	if botDBClient == nil || renderApp.BanChecker == nil {
+		return nil
 	}
-	return middleware
+	return []any{verifyBotOwnerNotBanned(botDBClient, renderApp.BanChecker)}
 }
 
 func newBotCommandElection(initCtx context.Context, redisClient *redis.Client, guard *RequestGuard) (*ResponseElectionCoordinator, commandResponseElection) {
@@ -195,14 +226,14 @@ func verifyBotOwnerNotBanned(botDBClient *botDB.Client, checker *accountdata.Ban
 	return func(c fiber.Ctx) error {
 		botID, err := strconv.Atoi(strings.TrimSpace(c.Params("botId")))
 		if err != nil {
-			return api.JSONResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
+			return botResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
 		}
 		owner, err := botDBClient.User.Query().
 			Where(botuser.BotIDEQ(botID)).
 			Only(c.Context())
 		if err != nil {
 			if botDB.IsNotFound(err) {
-				return api.JSONResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
+				return botResponse(c, fiber.StatusUnauthorized, "Bot 会话无效")
 			}
 			return api.InternalError(c)
 		}
@@ -211,7 +242,7 @@ func verifyBotOwnerNotBanned(botDBClient *botDB.Client, checker *accountdata.Ban
 			return api.InternalError(c)
 		}
 		if banned {
-			return api.JSONResponse(c, fiber.StatusForbidden, botauth.ErrOwnerBanned)
+			return botResponse(c, fiber.StatusForbidden, botauth.ErrOwnerBanned)
 		}
 		return c.Next()
 	}
@@ -863,7 +894,12 @@ func shouldPreferMoreSpecificMessageMatch(message string, matched commandregistr
 // When botDBClient is non-nil it queries the command_manifests table and returns
 // the full manifest ordered by priority descending.
 // When botDBClient is nil it returns a 501 Not Implemented response (test / no-DB mode).
-func buildManifestHandler(botDBClient *botDB.Client, preview3DEnabled bool) fiber.Handler {
+//
+// When signer is non-nil the manifest is returned as a trustsign.Envelope in
+// the data field: the JSON bytes of ManifestResponse are the payload, signed
+// under DomainManifest. Clients verify the signature over the raw payload bytes
+// before decoding them.
+func buildManifestHandler(botDBClient *botDB.Client, preview3DEnabled bool, signer *trustsign.Signer) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		if botDBClient == nil {
 			return api.JSONResponse(c, fiber.StatusNotImplemented,
@@ -893,11 +929,23 @@ func buildManifestHandler(botDBClient *botDB.Client, preview3DEnabled bool) fibe
 				ClientPolicyScope:       clientPolicyScopes[manifestKey(r.CommandModule, r.CommandPath)],
 			})
 		}
-		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, ManifestResponse{
+		manifest := ManifestResponse{
 			Entries:                   entries,
 			CurrentHarukiCloudVersion: version.Get(),
 			LatestHarukiClientVersion: harukiConfig.Cfg.Backend.LatestHarukiClientVersion,
 			Profile:                   string(harukiConfig.Cfg.Profile),
-		})
+		}
+		if signer == nil {
+			return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, manifest)
+		}
+		payload, err := json.Marshal(manifest)
+		if err != nil {
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "编码指令清单失败", nil)
+		}
+		envelope, err := signer.Sign(trustsign.DomainManifest, trustsign.EncodingJSON, payload)
+		if err != nil {
+			return api.JSONResponse(c, fiber.StatusInternalServerError, "签名指令清单失败", nil)
+		}
+		return api.JSONResponse(c, fiber.StatusOK, api.ResponseOK, envelope)
 	}
 }

@@ -257,11 +257,38 @@ func buildEventPlannerDrawingRequest(
 		return nil, fmt.Errorf("活动数据为空")
 	}
 
-	remaining := targetPoint - currentPoint
-	if remaining < 0 {
-		remaining = 0
+	req := newEventPlannerDrawingRequest(rc, region, eventInfo, targetPoint, targetSource, currentPoint, currentPointKnown)
+
+	deckCtrl := rc.App.Decks.WithContext(rc.Ctx).WithSnapshot(snap)
+	for _, selection := range songs {
+		planSong, deckReq, deckData, err := buildEventPlannerDrawingSong(
+			deckCtrl, rc.App, region, eventInfo.ID, baseQuery, selection, params.Boosts, req.RemainingPoint,
+		)
+		if err != nil {
+			return nil, err
+		}
+		req.Songs = append(req.Songs, planSong)
+		if len(req.DeckCards) == 0 {
+			applyEventPlannerDeckDetails(req, deckReq, deckData, baseQuery)
+		}
 	}
-	req := &drawing.EventPlannerRequest{
+	if len(req.Songs) == 0 {
+		return nil, fmt.Errorf("没有可计算的歌曲")
+	}
+	return req, nil
+}
+
+func newEventPlannerDrawingRequest(
+	rc *RequestContext,
+	region renderregion.Value,
+	eventInfo *masterdata.Event,
+	targetPoint int64,
+	targetSource string,
+	currentPoint int64,
+	currentPointKnown bool,
+) *drawing.EventPlannerRequest {
+	remaining := max(targetPoint-currentPoint, 0)
+	return &drawing.EventPlannerRequest{
 		Title:           "活动规划",
 		Region:          region.String(),
 		EventID:         eventInfo.ID,
@@ -273,63 +300,78 @@ func buildEventPlannerDrawingRequest(
 		DailyPoint:      eventPlannerDailyPoint(targetPoint, currentPoint, eventInfo.StartAt, eventInfo.AggregateAt, time.Now().UnixMilli(), currentPointKnown),
 		TargetSource:    targetSource,
 	}
+}
 
-	deckCtrl := rc.App.Decks.WithContext(rc.Ctx).WithSnapshot(snap)
-	for _, selection := range songs {
-		deckReq, err := buildEventPlannerSongDeckRequest(deckCtrl, rc.App, region, eventInfo.ID, baseQuery, selection)
-		if err != nil {
-			return nil, err
-		}
-		if len(deckReq.DeckData) == 0 {
-			return nil, fmt.Errorf("组卡服务没有返回 %s 的卡组数据", selection.Query)
-		}
-		deckData := deckReq.DeckData[0]
-		basePoint := eventPlannerIntValue(deckData.Score)
-		if basePoint <= 0 {
-			return nil, fmt.Errorf("组卡服务返回的 %s PT 为 0", selection.Query)
-		}
-		planSong := drawing.EventPlannerSong{
-			Query:          selection.Query,
-			Title:          eventPlannerStringValue(deckReq.MusicTitle, selection.Query),
-			Difficulty:     eventPlannerStringValue(deckReq.MusicDiff, selection.Difficulty),
-			MusicCoverPath: eventPlannerStringValue(deckReq.MusicCoverPath, ""),
-		}
-		if deckReq.MusicID != nil {
-			planSong.MusicID = *deckReq.MusicID
-		}
-		for _, boost := range params.Boosts {
-			point := int64(basePoint) * eventPlannerBoostMultiplier(boost)
-			plays := int64(0)
-			if remaining > 0 && point > 0 {
-				plays = int64(math.Ceil(float64(remaining) / float64(point)))
-			}
-			planSong.Rows = append(planSong.Rows, drawing.EventPlannerBoostRow{
-				Boost:        boost,
-				PointPerPlay: point,
-				Plays:        plays,
-				Energy:       plays * int64(boost),
-			})
-		}
-		req.Songs = append(req.Songs, planSong)
+func buildEventPlannerDrawingSong(
+	deckCtrl *renderdeck.Controller,
+	app *renderapp.App,
+	region renderregion.Value,
+	eventID int,
+	baseQuery renderdeck.AutoQuery,
+	selection eventPlannerSongSelection,
+	boosts []int,
+	remaining int64,
+) (drawing.EventPlannerSong, *drawing.DeckRequest, drawing.DeckData, error) {
+	deckReq, err := buildEventPlannerSongDeckRequest(deckCtrl, app, region, eventID, baseQuery, selection)
+	if err != nil {
+		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, err
+	}
+	if len(deckReq.DeckData) == 0 {
+		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, fmt.Errorf("组卡服务没有返回 %s 的卡组数据", selection.Query)
+	}
+	deckData := deckReq.DeckData[0]
+	basePoint := eventPlannerIntValue(deckData.Score)
+	if basePoint <= 0 {
+		return drawing.EventPlannerSong{}, nil, drawing.DeckData{}, fmt.Errorf("组卡服务返回的 %s PT 为 0", selection.Query)
+	}
+	planSong := drawing.EventPlannerSong{
+		Query:          selection.Query,
+		Title:          eventPlannerStringValue(deckReq.MusicTitle, selection.Query),
+		Difficulty:     eventPlannerStringValue(deckReq.MusicDiff, selection.Difficulty),
+		MusicCoverPath: eventPlannerStringValue(deckReq.MusicCoverPath, ""),
+		Rows:           eventPlannerBoostRows(basePoint, boosts, remaining),
+	}
+	if deckReq.MusicID != nil {
+		planSong.MusicID = *deckReq.MusicID
+	}
+	return planSong, deckReq, deckData, nil
+}
 
-		if len(req.DeckCards) == 0 {
-			req.DeckRequest = deckReq
-			req.Profile = &deckReq.Profile
-			if deckReq.EventBannerPath != nil && strings.TrimSpace(*deckReq.EventBannerPath) != "" {
-				req.EventBannerPath = *deckReq.EventBannerPath
-			}
-			req.LiveName = eventPlannerStringValue(deckReq.LiveName, "")
-			req.DeckCards = eventPlannerDeckCards(deckData.CardData)
-			req.DeckTotalPower = eventPlannerIntValue(deckData.TotalPower)
-			req.DeckEventBonus = eventPlannerFloatValue(deckData.EventBonusRate)
-			req.DeckSkillUp = eventPlannerFloatValue(deckData.MultiLiveScoreUp)
-			req.DeckSummary = buildEventPlannerDeckSummary(baseQuery, req.DeckTotalPower, req.DeckEventBonus, req.DeckSkillUp)
+func eventPlannerBoostRows(basePoint int, boosts []int, remaining int64) []drawing.EventPlannerBoostRow {
+	rows := make([]drawing.EventPlannerBoostRow, 0, len(boosts))
+	for _, boost := range boosts {
+		point := int64(basePoint) * eventPlannerBoostMultiplier(boost)
+		plays := int64(0)
+		if remaining > 0 && point > 0 {
+			plays = int64(math.Ceil(float64(remaining) / float64(point)))
 		}
+		rows = append(rows, drawing.EventPlannerBoostRow{
+			Boost:        boost,
+			PointPerPlay: point,
+			Plays:        plays,
+			Energy:       plays * int64(boost),
+		})
 	}
-	if len(req.Songs) == 0 {
-		return nil, fmt.Errorf("没有可计算的歌曲")
+	return rows
+}
+
+func applyEventPlannerDeckDetails(
+	req *drawing.EventPlannerRequest,
+	deckReq *drawing.DeckRequest,
+	deckData drawing.DeckData,
+	baseQuery renderdeck.AutoQuery,
+) {
+	req.DeckRequest = deckReq
+	req.Profile = &deckReq.Profile
+	if deckReq.EventBannerPath != nil && strings.TrimSpace(*deckReq.EventBannerPath) != "" {
+		req.EventBannerPath = *deckReq.EventBannerPath
 	}
-	return req, nil
+	req.LiveName = eventPlannerStringValue(deckReq.LiveName, "")
+	req.DeckCards = eventPlannerDeckCards(deckData.CardData)
+	req.DeckTotalPower = eventPlannerIntValue(deckData.TotalPower)
+	req.DeckEventBonus = eventPlannerFloatValue(deckData.EventBonusRate)
+	req.DeckSkillUp = eventPlannerFloatValue(deckData.MultiLiveScoreUp)
+	req.DeckSummary = buildEventPlannerDeckSummary(baseQuery, req.DeckTotalPower, req.DeckEventBonus, req.DeckSkillUp)
 }
 
 func buildEventPlannerSongDeckRequest(
@@ -595,30 +637,35 @@ func resolveEventPlannerTargetPoint(
 	if rc == nil || rc.App == nil || rc.App.Tracker == nil {
 		return 0, "", fmt.Errorf("未配置 Tracker，不能按 t%d 读取榜线", params.TargetRank)
 	}
-	eventID := eventInfo.ID
-	tracker := rc.App.Tracker.WithContext(rc.Ctx)
-	if eventPlannerUseWorldBloomRanking(eventInfo, params) {
-		charID, ok := eventPlannerWorldBloomCharacterID(query)
-		if !ok {
-			return 0, "", fmt.Errorf("WL章节单榜需要指定章节角色；如需活动总榜请加 总榜")
-		}
-		lines, err := tracker.GetCloudSKLine(region.String(), eventInfo.ID, &charID, []int{params.TargetRank}, nil, false, 3600)
-		if err != nil {
-			return 0, "", err
-		}
-		if lines == nil || len(lines.Ranks) == 0 || lines.Ranks[0].Score <= 0 {
-			return 0, "", fmt.Errorf("tracker 未返回 WL 章节 t%d 的有效榜线", params.TargetRank)
-		}
-		return int64(lines.Ranks[0].Score), fmt.Sprintf("Tracker实时WL章节榜线:t%d", params.TargetRank), nil
+	characterID, source, missingLineError, err := eventPlannerTargetRankingScope(eventInfo, query, params)
+	if err != nil {
+		return 0, "", err
 	}
-	lines, err := tracker.GetCloudSKLine(region.String(), eventID, nil, []int{params.TargetRank}, nil, false, 3600)
+	lines, err := rc.App.Tracker.WithContext(rc.Ctx).GetCloudSKLine(
+		region.String(), eventInfo.ID, characterID, []int{params.TargetRank}, nil, false, 3600,
+	)
 	if err != nil {
 		return 0, "", err
 	}
 	if lines == nil || len(lines.Ranks) == 0 || lines.Ranks[0].Score <= 0 {
-		return 0, "", fmt.Errorf("tracker 未返回 t%d 的有效榜线", params.TargetRank)
+		return 0, "", fmt.Errorf(missingLineError, params.TargetRank)
 	}
-	return int64(lines.Ranks[0].Score), fmt.Sprintf("Tracker实时榜线:t%d", params.TargetRank), nil
+	return int64(lines.Ranks[0].Score), fmt.Sprintf(source, params.TargetRank), nil
+}
+
+func eventPlannerTargetRankingScope(
+	eventInfo *masterdata.Event,
+	query renderdeck.AutoQuery,
+	params eventPlannerCommandParams,
+) (*int, string, string, error) {
+	if !eventPlannerUseWorldBloomRanking(eventInfo, params) {
+		return nil, "Tracker实时榜线:t%d", "tracker 未返回 t%d 的有效榜线", nil
+	}
+	characterID, ok := eventPlannerWorldBloomCharacterID(query)
+	if !ok {
+		return nil, "", "", fmt.Errorf("WL章节单榜需要指定章节角色；如需活动总榜请加 总榜")
+	}
+	return &characterID, "Tracker实时WL章节榜线:t%d", "tracker 未返回 WL 章节 t%d 的有效榜线", nil
 }
 
 func eventPlannerUseWorldBloomRanking(eventInfo *masterdata.Event, params eventPlannerCommandParams) bool {

@@ -333,31 +333,38 @@ func parseMusicListLevelToken(token string) (map[string]any, bool) {
 			"level_max": values[1],
 		}, true
 	}
+	return parseMusicListComparisonToken(token)
+}
 
+func parseMusicListComparisonToken(token string) (map[string]any, bool) {
 	switch {
 	case strings.HasPrefix(token, "<="):
-		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, "<="))); err == nil && value > 0 {
-			return map[string]any{"level_max": value}, true
-		}
+		return parseMusicListComparisonValue(token, "<=", "level_max", 0, func(value int) bool { return value > 0 })
 	case strings.HasPrefix(token, ">="):
-		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, ">="))); err == nil && value > 0 {
-			return map[string]any{"level_min": value}, true
-		}
+		return parseMusicListComparisonValue(token, ">=", "level_min", 0, func(value int) bool { return value > 0 })
 	case strings.HasPrefix(token, "<"):
-		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, "<"))); err == nil && value > 0 {
-			return map[string]any{"level_max": value - 1}, value > 1
-		}
+		return parseMusicListComparisonValue(token, "<", "level_max", -1, func(value int) bool { return value > 1 })
 	case strings.HasPrefix(token, ">"):
-		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, ">"))); err == nil {
-			return map[string]any{"level_min": value + 1}, value >= 0
-		}
+		return parseMusicListComparisonValue(token, ">", "level_min", 1, func(value int) bool { return value >= 0 })
 	case strings.HasPrefix(token, "="):
-		if value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, "="))); err == nil && value > 0 {
-			return map[string]any{"level": value}, true
-		}
+		return parseMusicListComparisonValue(token, "=", "level", 0, func(value int) bool { return value > 0 })
+	default:
+		return nil, false
 	}
+}
 
-	return nil, false
+func parseMusicListComparisonValue(
+	token string,
+	prefix string,
+	key string,
+	delta int,
+	valid func(int) bool,
+) (map[string]any, bool) {
+	value, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(token, prefix)))
+	if err != nil || !valid(value) {
+		return nil, false
+	}
+	return map[string]any{key: value + delta}, true
 }
 
 var musicListRangeSeparators = regexp.MustCompile(`^(\d+)\s*(?:-|~|～|,|，|\.\.|到|至)\s*(\d+)$`)
@@ -425,17 +432,7 @@ func joinMusicListTokensExcluding(tokens []string, skipIndexes ...int) string {
 }
 
 func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
-	defer func() {
-		region := ""
-		query := ""
-		if rc != nil {
-			region = rc.RegionStr
-			if rc.Cmd != nil {
-				query = rc.Cmd.Query
-			}
-		}
-		err = normalizeMusicUserFacingErrorForLookup(err, region, query)
-	}()
+	defer normalizeExecuteMusicError(rc, &err)
 
 	if rc.App == nil || rc.App.Music == nil {
 		return nil, fmt.Errorf("music service unavailable: music controller is not configured")
@@ -447,36 +444,13 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	var data []byte
 	switch rc.Cmd.Mode {
 	case musicDetailCommand:
-		q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		data, err = musicCtrl.RenderMusicDetail(q)
-		if err != nil {
-			if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 1 {
-				return renderAmbiguousMusicIDsMessages(rc, musicCtrl, q.Region, err, ids)
-			}
-			return nil, err
+		var directMessage onebot11.Message
+		data, directMessage, err = executeMusicDetail(rc, musicCtrl)
+		if directMessage != nil {
+			return directMessage, err
 		}
 	case "music-list":
-		q := rendermusic.ListQuery{Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		var suiteSnapshot rendersnapshot.Snapshot
-		if !q.Full {
-			_, resolvedSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
-			if suiteErr != nil {
-				return nil, suiteErr
-			}
-			suiteSnapshot = resolvedSnapshot
-			if suiteSnapshot != nil {
-				musicCtrl = musicCtrl.WithSnapshot(suiteSnapshot)
-			}
-		}
-		if strings.TrimSpace(q.Keyword) == "" {
-			q.Keyword = strings.TrimSpace(rc.Cmd.Query)
-		}
-		if !q.Full {
-			q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, suiteSnapshot)
-		}
-		data, err = musicCtrl.RenderMusicList(q)
+		data, err = executeMusicList(rc, musicCtrl)
 	case "music-chart":
 		q := rendermusic.ChartQuery{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
@@ -485,65 +459,17 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		return renderMusicChartMessage(rc, musicCtrl, q)
 	case "music-progress":
-		_, suiteSnapshot, suiteErr := rc.requireVisibleSuiteSnapshot()
-		if suiteErr != nil {
-			return nil, suiteErr
-		}
-		q := rendermusic.ProgressQuery{Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		_, profile := resolveCommandDisplayProfiles(rc, suiteSnapshot)
-		if suiteSnapshot != nil {
-			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, profile)
-		} else {
-			data, err = musicCtrl.RenderMusicProgressFromSnapshot(q, nil, profile)
-		}
+		data, err = executeMusicProgress(rc, musicCtrl)
 	case "music-rewards":
 		data, err = renderMusicRewards(rc)
 	case "music-note-count":
-		q := rendermusic.NoteCountQuery{Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		matches, resolveErr := musicCtrl.FindMusicChartsByNoteCount(q)
-		if resolveErr != nil {
-			return nil, resolveErr
-		}
-		return renderNoteCountLookupListMessages(rc, musicCtrl, q, matches)
+		return executeMusicNoteCount(rc, musicCtrl)
 	case "music-cover":
-		q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		result, resolveErr := musicCtrl.ResolveMusicCover(q)
-		if resolveErr != nil {
-			return nil, resolveErr
-		}
-		image, imageErr := assetImageMessage(rc.Ctx, result.JacketPath, rc.App, BotModulePJSK)
-		if imageErr != nil {
-			return nil, imageErr
-		}
-		text := fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title)
-		return append(image, onebot11.Text(text)), nil
+		return executeMusicCover(rc, musicCtrl)
 	case "music-bpm-detail":
-		q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		result, resolveErr := musicCtrl.ResolveMusicBPM(q)
-		if resolveErr != nil {
-			if ids := rendermusic.ExtractAmbiguousMusicIDs(resolveErr); len(ids) > 1 {
-				return renderAmbiguousMusicBPMIDsMessages(rc, musicCtrl, q.Region, resolveErr, ids)
-			}
-			return nil, resolveErr
-		}
-		return renderMusicBPMDetailMessage(rc, result), nil
+		return executeMusicBPMDetail(rc, musicCtrl)
 	case "music-bpm":
-		q := rendermusic.BPMQuery{Region: rc.Cmd.Region}
-		mergeParams(rc.Cmd.Params, &q)
-		if q.BPM <= 0 {
-			if value, parseErr := strconv.ParseFloat(strings.TrimSpace(rc.Cmd.Query), 64); parseErr == nil {
-				q.BPM = value
-			}
-		}
-		matches, resolveErr := musicCtrl.FindMusicChartsByBPM(q)
-		if resolveErr != nil {
-			return nil, resolveErr
-		}
-		return renderBPMLookupListMessages(rc, musicCtrl, q, matches)
+		return executeMusicBPM(rc, musicCtrl)
 	default:
 		return nil, unsupportedModeError("music", rc.Cmd.Mode)
 	}
@@ -551,6 +477,117 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, err
 	}
 	return rc.ImageMessage(data)
+}
+
+func normalizeExecuteMusicError(rc *RequestContext, err *error) {
+	region := ""
+	query := ""
+	if rc != nil {
+		region = rc.RegionStr
+		if rc.Cmd != nil {
+			query = rc.Cmd.Query
+		}
+	}
+	*err = normalizeMusicUserFacingErrorForLookup(*err, region, query)
+}
+
+func executeMusicDetail(rc *RequestContext, musicCtrl *rendermusic.Controller) ([]byte, onebot11.Message, error) {
+	q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	data, err := musicCtrl.RenderMusicDetail(q)
+	if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 1 {
+		message, renderErr := renderAmbiguousMusicIDsMessages(rc, musicCtrl, q.Region, err, ids)
+		return nil, message, renderErr
+	}
+	return data, nil, err
+}
+
+func executeMusicList(rc *RequestContext, musicCtrl *rendermusic.Controller) ([]byte, error) {
+	q := rendermusic.ListQuery{Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	suiteSnapshot, err := musicListSnapshot(rc, q.Full)
+	if err != nil {
+		return nil, err
+	}
+	if suiteSnapshot != nil {
+		musicCtrl = musicCtrl.WithSnapshot(suiteSnapshot)
+	}
+	if strings.TrimSpace(q.Keyword) == "" {
+		q.Keyword = strings.TrimSpace(rc.Cmd.Query)
+	}
+	if !q.Full {
+		q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, suiteSnapshot)
+	}
+	return musicCtrl.RenderMusicList(q)
+}
+
+func musicListSnapshot(rc *RequestContext, full bool) (rendersnapshot.Snapshot, error) {
+	if full {
+		return nil, nil
+	}
+	_, snapshot, err := rc.requireVisibleSuiteSnapshot()
+	return snapshot, err
+}
+
+func executeMusicProgress(rc *RequestContext, musicCtrl *rendermusic.Controller) ([]byte, error) {
+	_, suiteSnapshot, err := rc.requireVisibleSuiteSnapshot()
+	if err != nil {
+		return nil, err
+	}
+	q := rendermusic.ProgressQuery{Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	_, profile := resolveCommandDisplayProfiles(rc, suiteSnapshot)
+	return musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, profile)
+}
+
+func executeMusicNoteCount(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
+	q := rendermusic.NoteCountQuery{Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	matches, err := musicCtrl.FindMusicChartsByNoteCount(q)
+	if err != nil {
+		return nil, err
+	}
+	return renderNoteCountLookupListMessages(rc, musicCtrl, q, matches)
+}
+
+func executeMusicCover(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
+	q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	result, err := musicCtrl.ResolveMusicCover(q)
+	if err != nil {
+		return nil, err
+	}
+	image, err := assetImageMessage(rc.Ctx, result.JacketPath, rc.App, BotModulePJSK)
+	if err != nil {
+		return nil, err
+	}
+	return append(image, onebot11.Text(fmt.Sprintf("【%d】%s", result.Music.ID, result.Music.Title))), nil
+}
+
+func executeMusicBPMDetail(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
+	q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	result, err := musicCtrl.ResolveMusicBPM(q)
+	if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 1 {
+		return renderAmbiguousMusicBPMIDsMessages(rc, musicCtrl, q.Region, err, ids)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return renderMusicBPMDetailMessage(rc, result), nil
+}
+
+func executeMusicBPM(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
+	q := rendermusic.BPMQuery{Region: rc.Cmd.Region}
+	mergeParams(rc.Cmd.Params, &q)
+	if q.BPM <= 0 {
+		q.BPM, _ = strconv.ParseFloat(strings.TrimSpace(rc.Cmd.Query), 64)
+	}
+	matches, err := musicCtrl.FindMusicChartsByBPM(q)
+	if err != nil {
+		return nil, err
+	}
+	return renderBPMLookupListMessages(rc, musicCtrl, q, matches)
 }
 
 func renderMusicBPMDetailMessage(rc *RequestContext, result *rendermusic.BPMResult) onebot11.Message {

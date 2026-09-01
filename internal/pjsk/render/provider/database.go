@@ -87,46 +87,40 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
 
 	root = strings.TrimSpace(root)
 	if root == "" {
-		if p.honors != nil {
-			p.honors.store = nil
-		}
-		if p.education != nil {
-			p.education.store = nil
-		}
-		if p.musics != nil {
-			p.musics.local = nil
-		}
-		if p.events != nil {
-			p.events.local = nil
-			p.events.store = nil
-		}
-		if p.mysekai != nil {
-			p.mysekai.local = nil
-		}
+		p.clearLocalMasterdata()
 		return
 	}
 
 	dirs := localMasterdataCandidateDirs(root, p.region)
 	if len(dirs) == 0 {
-		if p.honors != nil {
-			p.honors.store = nil
-		}
-		if p.education != nil {
-			p.education.store = nil
-		}
-		if p.musics != nil {
-			p.musics.local = nil
-		}
-		if p.events != nil {
-			p.events.local = nil
-			p.events.store = nil
-		}
-		if p.mysekai != nil {
-			p.mysekai.local = nil
-		}
+		p.clearLocalMasterdata()
 		return
 	}
 	store := newLocalStore(dirs...)
+	p.configureLocalMasterdata(store)
+	p.configureLeakedEventMasterdata(store, allowLeaks)
+}
+
+func (p *DatabaseProvider) clearLocalMasterdata() {
+	if p.honors != nil {
+		p.honors.store = nil
+	}
+	if p.education != nil {
+		p.education.store = nil
+	}
+	if p.musics != nil {
+		p.musics.local = nil
+	}
+	if p.mysekai != nil {
+		p.mysekai.local = nil
+	}
+	if p.events != nil {
+		p.events.local = nil
+		p.events.store = nil
+	}
+}
+
+func (p *DatabaseProvider) configureLocalMasterdata(store *localStore) {
 	if p.honors != nil {
 		p.honors.store = store
 	}
@@ -142,20 +136,20 @@ func (p *DatabaseProvider) SetLocalMasterdataDir(root string, allowLeaks bool) {
 	if p.events != nil {
 		p.events.store = store
 	}
+}
 
-	if !allowLeaks {
-		if p.events != nil {
-			p.events.local = nil
-		}
+func (p *DatabaseProvider) configureLeakedEventMasterdata(store *localStore, allowLeaks bool) {
+	if p.events == nil {
 		return
 	}
-
+	if !allowLeaks {
+		p.events.local = nil
+		return
+	}
 	localCharacters := &localCharacterProvider{store: store}
 	localSkills := &localSkillProvider{store: store, characters: localCharacters}
 	localCards := &localCardProvider{store: store, characters: localCharacters, skills: localSkills}
-	if p.events != nil {
-		p.events.local = &localEventProvider{store: store, cards: localCards}
-	}
+	p.events.local = &localEventProvider{store: store, cards: localCards}
 }
 
 func (p *DatabaseProvider) Region() renderregion.Value { return p.region }

@@ -98,45 +98,20 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 	}
 	p.init()
 
-	query := p.client.Card.Query().Where(card.ServerRegionEQ(p.region.String()))
-
-	if eventCardIDs, err := p.resolveFilterEventCardIDs(ctx, filter); err != nil {
+	query, empty, err := p.cardFilterQuery(ctx, filter)
+	if err != nil {
 		return nil, err
-	} else if len(eventCardIDs) == 0 && filter.EventID != 0 {
+	}
+	if empty {
 		return nil, nil
-	} else if len(eventCardIDs) > 0 {
-		query = query.Where(card.GameIDIn(eventCardIDs...))
-	}
-	if filter.CharacterID != 0 {
-		query = query.Where(card.CharacterIDEQ(int64(filter.CharacterID)))
-	}
-	if filter.Rarity != "" {
-		query = query.Where(cardJsonFieldEQ("card_rarity_type", filter.Rarity))
-	}
-	if filter.Attr != "" {
-		query = query.Where(cardJsonFieldEQ("attr", filter.Attr))
-	}
-	if filter.Year != 0 {
-		start := time.Date(filter.Year, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
-		end := time.Date(filter.Year+1, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
-		query = query.Where(card.ReleaseAtGTE(start), card.ReleaseAtLT(end))
 	}
 
-	var matchingSkillIDs map[int]struct{}
-	if filter.SkillType != "" {
-		if p.skills == nil {
-			return nil, nil
-		}
-		finishSkillFilter := commandtrace.MeasureOperation(ctx, "cards.skill_filter")
-		var err error
-		matchingSkillIDs, err = p.skills.matchingTypeIDs(ctx, filter.SkillType)
-		finishSkillFilter()
-		if err != nil {
-			return nil, fmt.Errorf("load card skill filter: %w", err)
-		}
-		if len(matchingSkillIDs) == 0 {
-			return nil, nil
-		}
+	matchingSkillIDs, err := p.cardFilterSkillTypeIDs(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	if filter.SkillType != "" && len(matchingSkillIDs) == 0 {
+		return nil, nil
 	}
 
 	entities, err := query.Order(card.ByReleaseAt()).All(ctx)
@@ -154,22 +129,8 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		// GetByID. Populate the shared cache before applying in-memory filters so
 		// follow-up lookups (for example GetUnitByCardID while building CardBox)
 		// do not turn one list query into hundreds of SELECTs.
-		p.cardMu.Lock()
-		p.cardCache[model.ID] = model
-		p.cardCachedAt[model.ID] = time.Now()
-		p.cardMu.Unlock()
-		if !p.matchesUnitFilter(ctx, filter, model) {
-			continue
-		}
-		if len(filter.SkillIDs) > 0 && !containsInt(filter.SkillIDs, model.SkillID) {
-			continue
-		}
-		if filter.SkillType != "" {
-			if _, ok := matchingSkillIDs[model.SkillID]; !ok {
-				continue
-			}
-		}
-		if filter.SupplyType != "" && !cardMatchesSupplyFilter(filter.SupplyType, p.GetSupplyType(ctx, model)) {
+		p.cacheFilteredCard(model)
+		if !p.cardMatchesFilter(ctx, filter, matchingSkillIDs, model) {
 			continue
 		}
 		results = append(results, common.CloneCard(model))
@@ -178,6 +139,70 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		}
 	}
 	return results, nil
+}
+
+func (p *dbCardProvider) cardFilterQuery(ctx context.Context, filter *CardFilter) (*sekaiDB.CardQuery, bool, error) {
+	query := p.client.Card.Query().Where(card.ServerRegionEQ(p.region.String()))
+	eventCardIDs, err := p.resolveFilterEventCardIDs(ctx, filter)
+	if err != nil {
+		return nil, false, err
+	}
+	if len(eventCardIDs) == 0 && filter.EventID != 0 {
+		return query, true, nil
+	}
+	if len(eventCardIDs) > 0 {
+		query = query.Where(card.GameIDIn(eventCardIDs...))
+	}
+	if filter.CharacterID != 0 {
+		query = query.Where(card.CharacterIDEQ(int64(filter.CharacterID)))
+	}
+	if filter.Rarity != "" {
+		query = query.Where(cardJsonFieldEQ("card_rarity_type", filter.Rarity))
+	}
+	if filter.Attr != "" {
+		query = query.Where(cardJsonFieldEQ("attr", filter.Attr))
+	}
+	if filter.Year != 0 {
+		start := time.Date(filter.Year, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
+		end := time.Date(filter.Year+1, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
+		query = query.Where(card.ReleaseAtGTE(start), card.ReleaseAtLT(end))
+	}
+	return query, false, nil
+}
+
+func (p *dbCardProvider) cardFilterSkillTypeIDs(ctx context.Context, filter *CardFilter) (map[int]struct{}, error) {
+	if filter.SkillType == "" || p.skills == nil {
+		return nil, nil
+	}
+	finishSkillFilter := commandtrace.MeasureOperation(ctx, "cards.skill_filter")
+	ids, err := p.skills.matchingTypeIDs(ctx, filter.SkillType)
+	finishSkillFilter()
+	if err != nil {
+		return nil, fmt.Errorf("load card skill filter: %w", err)
+	}
+	return ids, nil
+}
+
+func (p *dbCardProvider) cacheFilteredCard(model *masterdata.Card) {
+	p.cardMu.Lock()
+	p.cardCache[model.ID] = model
+	p.cardCachedAt[model.ID] = time.Now()
+	p.cardMu.Unlock()
+}
+
+func (p *dbCardProvider) cardMatchesFilter(ctx context.Context, filter *CardFilter, matchingSkillIDs map[int]struct{}, model *masterdata.Card) bool {
+	if !p.matchesUnitFilter(ctx, filter, model) {
+		return false
+	}
+	if len(filter.SkillIDs) > 0 && !containsInt(filter.SkillIDs, model.SkillID) {
+		return false
+	}
+	if filter.SkillType != "" {
+		if _, ok := matchingSkillIDs[model.SkillID]; !ok {
+			return false
+		}
+	}
+	return filter.SupplyType == "" || cardMatchesSupplyFilter(filter.SupplyType, p.GetSupplyType(ctx, model))
 }
 
 func (p *dbCardProvider) GetUnitByCardID(ctx context.Context, cardID int) (string, error) {

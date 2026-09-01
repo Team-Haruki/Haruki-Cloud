@@ -10,31 +10,36 @@ func (a *App) ProviderForRegion(region renderregion.Value) provider.MasterDataPr
 		return nil
 	}
 
+	resolved := a.resolveProviderRegion(region)
+	if src := firstConfiguredProvider(a.Providers, resolved, renderregion.WithDefault(a.Config.DefaultRegion)); src != nil {
+		return src
+	}
+	return a.legacyProviderForRegion(resolved)
+}
+
+func (a *App) resolveProviderRegion(region renderregion.Value) renderregion.Value {
 	resolved := renderregion.Normalize(region.String())
 	if resolved.IsZero() {
-		if configured := renderregion.WithDefault(a.Config.DefaultRegion); !configured.IsZero() {
-			resolved = configured
+		return renderregion.WithDefault(a.Config.DefaultRegion)
+	}
+	return resolved
+}
+
+func firstConfiguredProvider(providers map[renderregion.Value]provider.MasterDataProvider, preferred ...renderregion.Value) provider.MasterDataProvider {
+	for _, region := range preferred {
+		if !region.IsZero() && providers[region] != nil {
+			return providers[region]
 		}
 	}
-
-	if len(a.Providers) > 0 {
-		if !resolved.IsZero() {
-			if src, ok := a.Providers[resolved]; ok && src != nil {
-				return src
-			}
-		}
-		if configured := renderregion.WithDefault(a.Config.DefaultRegion); !configured.IsZero() {
-			if src, ok := a.Providers[configured]; ok && src != nil {
-				return src
-			}
-		}
-		for _, src := range a.Providers {
-			if src != nil {
-				return src
-			}
+	for _, src := range providers {
+		if src != nil {
+			return src
 		}
 	}
+	return nil
+}
 
+func (a *App) legacyProviderForRegion(resolved renderregion.Value) provider.MasterDataProvider {
 	if a.Provider == nil {
 		return nil
 	}

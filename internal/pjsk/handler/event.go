@@ -54,17 +54,8 @@ func (sekaiHandlers) EventDetailHandle() HarukiSekaiCommandHandler {
 func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (*CommandRequest, error) {
 	args := strings.TrimSpace(ctx.GetArgs())
 	if args == "" {
-		if preferList {
-			return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventListCommand, map[string]any{
-				"include_past":   true,
-				"include_future": true,
-			}), nil
-		}
-		return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventDetailCommand, map[string]any{
-			"use_current": true,
-		}), nil
+		return emptyEventQueryRequest(ctx, preferList), nil
 	}
-
 	if preferList {
 		if params, ok := resolveAmbiguousEventListFilter(args); ok {
 			return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventListCommand, params), nil
@@ -75,46 +66,64 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 	if err != nil {
 		return nil, eventSearchUsageError(ctx.originalTriggerCmd)
 	}
-
 	if info.Type == parser.QueryTypeEventFilter {
-		params := map[string]any{
-			"include_past":   true,
-			"include_future": true,
-		}
-		if info.Filter.EventType != "" {
-			params["event_type"] = info.Filter.EventType
-		}
-		if info.Filter.WorldBloomTurn != 0 {
-			params["world_bloom_turn"] = info.Filter.WorldBloomTurn
-		}
-		if info.Filter.Unit != "" {
-			params["unit"] = info.Filter.Unit
-		}
-		if info.Filter.OnlyUnit {
-			params["only_unit"] = true
-		}
-		if info.Filter.Blend {
-			params["blend"] = true
-		}
-		if info.Filter.Attr != "" {
-			params["attr"] = info.Filter.Attr
-		}
-		if info.Filter.Year != 0 {
-			params["year"] = info.Filter.Year
-		}
-		if info.Filter.CharacterID != 0 {
-			params["character_id"] = info.Filter.CharacterID
-		}
-		if len(info.Filter.CharacterIDs) > 0 {
-			params["character_ids"] = info.Filter.CharacterIDs
-		}
-		if info.Filter.BannerCharID != 0 {
-			params["banner_char_id"] = info.Filter.BannerCharID
-		}
-		return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventListCommand, params), nil
+		return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventListCommand, eventFilterParams(info.Filter)), nil
 	}
+	params, ok := eventDetailParams(info)
+	if !ok {
+		return nil, eventSearchUsageError(ctx.originalTriggerCmd)
+	}
+	return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventDetailCommand, params), nil
+}
 
-	params := map[string]any{}
+func emptyEventQueryRequest(ctx HarrukiSekaiHandlerContext, preferList bool) *CommandRequest {
+	if preferList {
+		return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventListCommand, map[string]any{"include_past": true, "include_future": true})
+	}
+	return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventDetailCommand, map[string]any{"use_current": true})
+}
+
+func eventFilterParams(filter parser.EventFilter) map[string]any {
+	params := map[string]any{"include_past": true, "include_future": true}
+	setNonZeroEventFilterParams(params, filter)
+	return params
+}
+
+func setNonZeroEventFilterParams(params map[string]any, filter parser.EventFilter) {
+	setStringParam(params, "event_type", filter.EventType)
+	setIntParam(params, "world_bloom_turn", filter.WorldBloomTurn)
+	setStringParam(params, "unit", filter.Unit)
+	setBoolParam(params, "only_unit", filter.OnlyUnit)
+	setBoolParam(params, "blend", filter.Blend)
+	setStringParam(params, "attr", filter.Attr)
+	setIntParam(params, "year", filter.Year)
+	setIntParam(params, "character_id", filter.CharacterID)
+	if len(filter.CharacterIDs) > 0 {
+		params["character_ids"] = filter.CharacterIDs
+	}
+	setIntParam(params, "banner_char_id", filter.BannerCharID)
+}
+
+func setStringParam(params map[string]any, key, value string) {
+	if value != "" {
+		params[key] = value
+	}
+}
+
+func setIntParam(params map[string]any, key string, value int) {
+	if value != 0 {
+		params[key] = value
+	}
+}
+
+func setBoolParam(params map[string]any, key string, value bool) {
+	if value {
+		params[key] = true
+	}
+}
+
+func eventDetailParams(info *parser.EventQueryInfo) (map[string]any, bool) {
+	params := make(map[string]any)
 	switch info.Type {
 	case parser.QueryTypeEventID:
 		params["event_id"] = info.EventID
@@ -132,9 +141,9 @@ func resolveEventDetailOrList(ctx HarrukiSekaiHandlerContext, preferList bool) (
 			params["index"] = info.Index
 		}
 	default:
-		return nil, eventSearchUsageError(ctx.originalTriggerCmd)
+		return nil, false
 	}
-	return makeCommandRequestWithParams(ctx, parser.ModuleEvent, eventDetailCommand, params), nil
+	return params, true
 }
 
 func eventSearchUsageError(trigger string) error {

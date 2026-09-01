@@ -250,20 +250,7 @@ func (rc *RequestContext) resolveProfiles() {
 		defer func() {
 			recordCommandStage(rc.Ctx, "profile.resolve", time.Since(startedAt))
 		}()
-		if target := rc.GetSelfTarget(); target != nil {
-			if resp := rc.GetPublicProfileResponse(); resp != nil {
-				region := resolvedTargetRegion(rc.RegionStr, *target)
-				rc.detailedProfile, rc.profileCard = buildPublicMusicProfilesFromResolvedTarget(
-					rc.Ctx,
-					*target,
-					region,
-					rc.Platform,
-					rc.PlatformUserID,
-					resp,
-					rc.App,
-				)
-			}
-		}
+		rc.resolveProfilesFromTarget()
 		if rc.detailedProfile == nil && rc.profileCard == nil {
 			rc.detailedProfile, rc.profileCard = buildPublicMusicProfiles(rc)
 		}
@@ -272,20 +259,41 @@ func (rc *RequestContext) resolveProfiles() {
 		// the snapshot here re-runs binding + factory.Build (a full suite parse)
 		// whose result would just be discarded by the nil-guards below.
 		if rc.detailedProfile == nil || rc.profileCard == nil {
-			if snap := rc.ResolveSnapshot(false); snap != nil {
-				if rc.detailedProfile == nil {
-					if detail := snap.DetailedProfile(rc.Region); detail != nil {
-						rc.detailedProfile = cloneDetailedProfileForCurrentTarget(rc, detail)
-					}
-				}
-				if rc.profileCard == nil {
-					if card := snap.ProfileCard(rc.Region); card != nil {
-						rc.profileCard = cloneProfileCardForCurrentTarget(rc, card)
-					}
-				}
-			}
+			rc.resolveMissingProfilesFromSnapshot()
 		}
 	})
+}
+
+func (rc *RequestContext) resolveProfilesFromTarget() {
+	target := rc.GetSelfTarget()
+	if target == nil {
+		return
+	}
+	resp := rc.GetPublicProfileResponse()
+	if resp == nil {
+		return
+	}
+	region := resolvedTargetRegion(rc.RegionStr, *target)
+	rc.detailedProfile, rc.profileCard = buildPublicMusicProfilesFromResolvedTarget(
+		rc.Ctx, *target, region, rc.Platform, rc.PlatformUserID, resp, rc.App,
+	)
+}
+
+func (rc *RequestContext) resolveMissingProfilesFromSnapshot() {
+	snap := rc.ResolveSnapshot(false)
+	if snap == nil {
+		return
+	}
+	if rc.detailedProfile == nil {
+		if detail := snap.DetailedProfile(rc.Region); detail != nil {
+			rc.detailedProfile = cloneDetailedProfileForCurrentTarget(rc, detail)
+		}
+	}
+	if rc.profileCard == nil {
+		if card := snap.ProfileCard(rc.Region); card != nil {
+			rc.profileCard = cloneProfileCardForCurrentTarget(rc, card)
+		}
+	}
 }
 
 // GetDetailedProfile lazily resolves the user's detailed profile, preferring

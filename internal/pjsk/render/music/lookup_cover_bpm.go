@@ -65,51 +65,11 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 		return nil, err
 	}
 
-	now := currentMusicVisibilityTime()
-	matches := make([]BPMMatch, 0)
 	finishScan := commandtrace.MeasureOperation(ctx, "music.chart_scan")
-	scanErr := func() error {
-		defer finishScan()
-		for _, musicInfo := range source.GetMusics() {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-			if !isMusicVisibleAt(musicInfo, now) {
-				continue
-			}
-
-			for _, difficulty := range c.collectBPMSearchDifficulties(source, musicInfo.ID, query.Difficulty) {
-				if err := ctx.Err(); err != nil {
-					return err
-				}
-				chartPath := c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
-				if chartPath == "" {
-					continue
-				}
-
-				parsed, err := parseChartBPM(ctx, chartPath)
-				if err != nil {
-					if ctx.Err() != nil {
-						return ctx.Err()
-					}
-					continue
-				}
-				if !chartContainsBPM(parsed, query.BPM) {
-					continue
-				}
-
-				matches = append(matches, BPMMatch{
-					Music:      buildLookupMusic(musicInfo, builder, region),
-					Difficulty: difficulty,
-					MainBPM:    parsed.MainBPM,
-					Events:     parsed.Events,
-				})
-			}
-		}
-		return nil
-	}()
-	if scanErr != nil {
-		return nil, scanErr
+	matches, err := c.scanMusicChartsByBPM(ctx, source, builder, region, query)
+	finishScan()
+	if err != nil {
+		return nil, err
 	}
 
 	if len(matches) == 0 {
@@ -122,6 +82,52 @@ func (c *Controller) FindMusicChartsByBPM(query BPMQuery) ([]BPMMatch, error) {
 		}
 		return matches[i].Music.ID < matches[j].Music.ID
 	})
+	return matches, nil
+}
+
+func (c *Controller) scanMusicChartsByBPM(ctx context.Context, source DataSource, builder *Builder, region renderregion.Value, query BPMQuery) ([]BPMMatch, error) {
+	now := currentMusicVisibilityTime()
+	matches := make([]BPMMatch, 0)
+	for _, musicInfo := range source.GetMusics() {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		if !isMusicVisibleAt(musicInfo, now) {
+			continue
+		}
+		musicMatches, err := c.scanOneMusicChartsByBPM(ctx, source, builder, region, musicInfo, query)
+		if err != nil {
+			return nil, err
+		}
+		matches = append(matches, musicMatches...)
+	}
+	return matches, nil
+}
+
+func (c *Controller) scanOneMusicChartsByBPM(ctx context.Context, source DataSource, builder *Builder, region renderregion.Value, musicInfo *masterdata.Music, query BPMQuery) ([]BPMMatch, error) {
+	matches := make([]BPMMatch, 0)
+	for _, difficulty := range c.collectBPMSearchDifficulties(source, musicInfo.ID, query.Difficulty) {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		chartPath := c.resolveLocalChartPath(region.String(), musicInfo.ID, difficulty)
+		if chartPath == "" {
+			continue
+		}
+		parsed, err := parseChartBPM(ctx, chartPath)
+		if err != nil {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			continue
+		}
+		if chartContainsBPM(parsed, query.BPM) {
+			matches = append(matches, BPMMatch{
+				Music: buildLookupMusic(musicInfo, builder, region), Difficulty: difficulty,
+				MainBPM: parsed.MainBPM, Events: parsed.Events,
+			})
+		}
+	}
 	return matches, nil
 }
 
@@ -314,11 +320,34 @@ func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	score, barCount, err := readChartScore(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+	finishParse := commandtrace.MeasureOperation(ctx, "music.chart_parse")
+	defer finishParse()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	bpmPalette := chartBPMPalette(score)
+	rawEvents, err := chartRawBPMEvents(ctx, score, bpmPalette)
+	if err != nil {
+		return nil, err
+	}
+	if len(rawEvents) == 0 {
+		return nil, fmt.Errorf("谱面中没有可用的 BPM 数据")
+	}
+	events := normalizeChartBPMEvents(rawEvents)
+	totalDuration, mainBPM := applyChartBPMDurations(events, barCount)
+	return &parsedChartBPM{MainBPM: mainBPM, Events: events, BarCount: barCount, Duration: totalDuration}, nil
+}
+
+func readChartScore(ctx context.Context, path string) (map[[2]string]string, int, error) {
 	finishRead := commandtrace.MeasureOperation(ctx, "music.chart_read")
 	defer finishRead()
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open chart file: %w", err)
+		return nil, 0, fmt.Errorf("failed to open chart file: %w", err)
 	}
 	defer func() {
 		_ = file.Close()
@@ -329,7 +358,7 @@ func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		if err := ctx.Err(); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		match := susLinePattern.FindStringSubmatch(strings.TrimSpace(scanner.Text()))
 		if len(match) != 4 {
@@ -344,16 +373,12 @@ func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("failed to read chart file: %w", err)
+		return nil, 0, fmt.Errorf("failed to read chart file: %w", err)
 	}
-	finishRead()
+	return score, barCount, nil
+}
 
-	finishParse := commandtrace.MeasureOperation(ctx, "music.chart_parse")
-	defer finishParse()
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
+func chartBPMPalette(score map[[2]string]string) map[string]float64 {
 	bpmPalette := make(map[string]float64)
 	for token, value := range score {
 		if token[0] != "BPM" {
@@ -365,12 +390,16 @@ func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
 		}
 		bpmPalette[token[1]] = bpmValue
 	}
+	return bpmPalette
+}
 
-	type rawEvent struct {
-		bar float64
-		bpm float64
-	}
-	rawEvents := make([]rawEvent, 0)
+type rawChartBPMEvent struct {
+	bar float64
+	bpm float64
+}
+
+func chartRawBPMEvents(ctx context.Context, score map[[2]string]string, bpmPalette map[string]float64) ([]rawChartBPMEvent, error) {
+	rawEvents := make([]rawChartBPMEvent, 0)
 	for token, value := range score {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -378,33 +407,33 @@ func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
 		if token[1] != "08" {
 			continue
 		}
-		barNumber, err := strconv.Atoi(token[0])
-		if err != nil {
-			continue
-		}
-		length := len(value) / 2
-		if length == 0 {
-			continue
-		}
-		for i := 0; i < length; i++ {
-			bpmKey := strings.ToUpper(value[i*2 : (i+1)*2])
-			if bpmKey == "00" {
-				continue
-			}
-			bpmValue, ok := bpmPalette[bpmKey]
-			if !ok {
-				continue
-			}
-			rawEvents = append(rawEvents, rawEvent{
-				bar: float64(barNumber) + float64(i)/float64(length),
-				bpm: bpmValue,
-			})
-		}
+		rawEvents = append(rawEvents, chartRawBPMEventsForBar(token[0], value, bpmPalette)...)
 	}
-	if len(rawEvents) == 0 {
-		return nil, fmt.Errorf("谱面中没有可用的 BPM 数据")
-	}
+	return rawEvents, nil
+}
 
+func chartRawBPMEventsForBar(bar string, value string, bpmPalette map[string]float64) []rawChartBPMEvent {
+	barNumber, err := strconv.Atoi(bar)
+	length := len(value) / 2
+	if err != nil || length == 0 {
+		return nil
+	}
+	events := make([]rawChartBPMEvent, 0, length)
+	for i := 0; i < length; i++ {
+		bpmKey := strings.ToUpper(value[i*2 : (i+1)*2])
+		bpmValue, ok := bpmPalette[bpmKey]
+		if bpmKey == "00" || !ok {
+			continue
+		}
+		events = append(events, rawChartBPMEvent{
+			bar: float64(barNumber) + float64(i)/float64(length),
+			bpm: bpmValue,
+		})
+	}
+	return events
+}
+
+func normalizeChartBPMEvents(rawEvents []rawChartBPMEvent) []BPMEvent {
 	sort.Slice(rawEvents, func(i, j int) bool {
 		return rawEvents[i].bar < rawEvents[j].bar
 	})
@@ -419,7 +448,10 @@ func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
 			BPM: item.bpm,
 		})
 	}
+	return events
+}
 
+func applyChartBPMDurations(events []BPMEvent, barCount int) (float64, float64) {
 	durationByBPM := make(map[float64]float64)
 	var totalDuration float64
 	for i := range events {
@@ -443,12 +475,7 @@ func parseChartBPM(ctx context.Context, path string) (*parsedChartBPM, error) {
 		}
 	}
 
-	return &parsedChartBPM{
-		MainBPM:  mainBPM,
-		Events:   events,
-		BarCount: barCount,
-		Duration: totalDuration,
-	}, nil
+	return totalDuration, mainBPM
 }
 
 func buildBPMDifficultyCandidates(preferred string) []string {

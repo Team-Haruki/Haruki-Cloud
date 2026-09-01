@@ -193,6 +193,11 @@ func (r *responseElectionRoster) reconcile(ctx context.Context, platform, group 
 		return
 	}
 	key := rosterKey(strings.TrimSpace(platform), group)
+	joined := normalizeJoinedRosterBots(joinedBots, selfBot)
+	go r.reconcileRoster(ctx, key, joined)
+}
+
+func normalizeJoinedRosterBots(joinedBots []string, selfBot string) map[string]struct{} {
 	joined := make(map[string]struct{}, len(joinedBots)+1)
 	for _, bot := range joinedBots {
 		if bot = strings.TrimSpace(bot); bot != "" {
@@ -202,71 +207,79 @@ func (r *responseElectionRoster) reconcile(ctx context.Context, platform, group 
 	if selfBot != "" {
 		joined[selfBot] = struct{}{}
 	}
-	go func() {
-		opCtx, cancel := context.WithTimeout(ctx, responseElectionRedisTimeout)
-		defer cancel()
+	return joined
+}
 
-		rosterFields, err := r.redis.HGetAll(opCtx, key).Result()
-		if err != nil && err != redis.Nil {
-			return
-		}
+func (r *responseElectionRoster) reconcileRoster(ctx context.Context, key string, joined map[string]struct{}) {
+	opCtx, cancel := context.WithTimeout(ctx, responseElectionRedisTimeout)
+	defer cancel()
+	rosterFields, err := r.redis.HGetAll(opCtx, key).Result()
+	if err != nil && err != redis.Nil {
+		return
+	}
+	members, misses := parseRosterFields(rosterFields)
+	demoted, err := r.applyRosterReconciliation(opCtx, key, members, misses, joined)
+	if err != nil {
+		return
+	}
+	logDemotedRosterMembers(demoted, len(members))
+	r.storeMembers(key, members)
+}
 
-		members := make(map[string]struct{}, len(rosterFields))
-		misses := make(map[string]int, len(rosterFields))
-		for field, value := range rosterFields {
-			if missBot, ok := strings.CutPrefix(field, rosterMissFieldPrefix); ok {
-				if count, err := strconv.Atoi(value); err == nil {
-					misses[missBot] = count
-				}
-				continue
-			}
+func parseRosterFields(fields map[string]string) (map[string]struct{}, map[string]int) {
+	members := make(map[string]struct{}, len(fields))
+	misses := make(map[string]int, len(fields))
+	for field, value := range fields {
+		missBot, isMiss := strings.CutPrefix(field, rosterMissFieldPrefix)
+		if !isMiss {
 			members[field] = struct{}{}
+			continue
 		}
+		if count, err := strconv.Atoi(value); err == nil {
+			misses[missBot] = count
+		}
+	}
+	return members, misses
+}
 
-		demote := r.redis.Pipeline()
-		demoted := make([]string, 0, 2)
-		mutations := 0
-		for member := range members {
-			if _, present := joined[member]; present {
-				// Present members reset their miss counter here, from the
-				// winner's authoritative join snapshot: recordJoin's reset is
-				// dedup-gated, so relying on it alone would let non-adjacent
-				// misses accumulate and demote a live, participating bot.
-				if misses[member] > 0 {
-					demote.HDel(opCtx, key, rosterMissFieldPrefix+member)
-					mutations++
-				}
-				continue
+func (r *responseElectionRoster) applyRosterReconciliation(ctx context.Context, key string, members map[string]struct{}, misses map[string]int, joined map[string]struct{}) ([]string, error) {
+	pipeline := r.redis.Pipeline()
+	demoted := make([]string, 0, 2)
+	mutations := 0
+	for member := range members {
+		if _, present := joined[member]; present {
+			if misses[member] > 0 {
+				pipeline.HDel(ctx, key, rosterMissFieldPrefix+member)
+				mutations++
 			}
-			mutations++
-			if misses[member]+1 >= rosterMissThreshold {
-				demote.HDel(opCtx, key, member, rosterMissFieldPrefix+member)
-				demoted = append(demoted, member)
-				delete(members, member)
-				continue
-			}
-			demote.HIncrBy(opCtx, key, rosterMissFieldPrefix+member, 1)
+			continue
 		}
-		if mutations > 0 {
-			if _, err := demote.Exec(opCtx); err != nil && opCtx.Err() == nil && err != redis.Nil {
-				responseElectionFailureLogger.Warn("response election roster reconcile failed",
-					"event", "response_election_roster",
-					"outcome", "reconcile_error",
-					"error_type", fmt.Sprintf("%T", err),
-				)
-				return
-			}
+		mutations++
+		if misses[member]+1 >= rosterMissThreshold {
+			pipeline.HDel(ctx, key, member, rosterMissFieldPrefix+member)
+			demoted = append(demoted, member)
+			delete(members, member)
+			continue
 		}
-		for _, member := range demoted {
-			responseElectionLogger.Info("response election roster member demoted",
-				"event", "response_election_roster",
-				"outcome", "demoted",
-				"demoted_bot_id", member,
-				"remaining_members", len(members),
-			)
-		}
-		r.storeMembers(key, members)
-	}()
+		pipeline.HIncrBy(ctx, key, rosterMissFieldPrefix+member, 1)
+	}
+	if mutations == 0 {
+		return demoted, nil
+	}
+	if _, err := pipeline.Exec(ctx); err != nil && ctx.Err() == nil && err != redis.Nil {
+		responseElectionFailureLogger.Warn("response election roster reconcile failed",
+			"event", "response_election_roster", "outcome", "reconcile_error", "error_type", fmt.Sprintf("%T", err))
+		return nil, err
+	}
+	return demoted, nil
+}
+
+func logDemotedRosterMembers(demoted []string, remaining int) {
+	for _, member := range demoted {
+		responseElectionLogger.Info("response election roster member demoted",
+			"event", "response_election_roster", "outcome", "demoted",
+			"demoted_bot_id", member, "remaining_members", remaining)
+	}
 }
 
 // refresh loads the roster member set from Redis into the local cache.

@@ -23,52 +23,20 @@ func buildSKTrackerParamsWithDefaultRanks(ctx HarrukiSekaiHandlerContext, defaul
 		wlMode = true
 	}
 
-	effectiveRankArgs := rankArgs
-	rankArgsProvided := strings.TrimSpace(effectiveRankArgs) != ""
-	targetUserID := ""
-	targetSelector := ""
-	if allowUID {
-		if uidArg := strings.TrimSpace(ctx.UIDArg()); uidArg != "" && strings.TrimSpace(effectiveRankArgs) == "" {
-			switch {
-			case strings.HasPrefix(uidArg, "@"):
-				candidate := strings.TrimSpace(strings.TrimPrefix(uidArg, "@"))
-				if isDigits(candidate) {
-					targetUserID = candidate
-				}
-			case isBindingSelector(uidArg):
-				targetUserID = strings.TrimSpace(ctx.GetUserId())
-				targetSelector = strings.ToLower(uidArg)
-			case isDigits(uidArg):
-				effectiveRankArgs = uidArg
-			}
-		}
-		if selfWhenEmpty && strings.TrimSpace(effectiveRankArgs) == "" && targetUserID == "" {
-			targetUserID = strings.TrimSpace(ctx.GetUserId())
-		}
+	target := resolveSKTrackerTarget(ctx, rankArgs, allowUID, selfWhenEmpty)
+	ranks, userID, err := parseSKTrackerTargetRanks(target, allowUID)
+	if err != nil {
+		return nil, err
 	}
-
-	var (
-		ranks  []int
-		userID *int64
-	)
-	if strings.TrimSpace(effectiveRankArgs) != "" || targetUserID == "" {
-		var err error
-		ranks, userID, err = parseSKRanks(effectiveRankArgs, allowUID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if len(ranks) == 0 && userID == nil && targetUserID == "" {
+	if len(ranks) == 0 && userID == nil && target.userID == "" {
 		return nil, fmt.Errorf("请至少提供一个排名或UID")
 	}
-
 	defaultRanks := defaultSKRanksByMode(wlMode)
 	if len(defaultRanksOverride) > 0 {
 		defaultRanks = slices.Clone(defaultRanksOverride)
 	}
 	// Empty rank query should use mode-specific default lines.
-	if !rankArgsProvided && userID == nil && targetUserID == "" {
+	if !target.rankArgsProvided && userID == nil && target.userID == "" {
 		ranks = defaultRanks
 	}
 	params := map[string]any{
@@ -78,32 +46,75 @@ func buildSKTrackerParamsWithDefaultRanks(ctx HarrukiSekaiHandlerContext, defaul
 	if len(ranks) > 0 {
 		params["ranks"] = ranks
 	}
-	if !rankArgsProvided && userID == nil && targetUserID == "" && len(ranks) > 0 {
+	if !target.rankArgsProvided && userID == nil && target.userID == "" && len(ranks) > 0 {
 		params["default_ranks"] = true
 	}
-	if eventID > 0 {
-		params["event_id"] = eventID
-	}
-	if wlCharacterID > 0 {
-		params["wl_character_id"] = wlCharacterID
-	}
-	if strings.TrimSpace(wlCharacterQuery) != "" {
-		params["wl_character_query"] = strings.TrimSpace(wlCharacterQuery)
-	}
-	if userID != nil && *userID > 0 {
-		params["user_id"] = *userID
-	}
-	if targetUserID != "" {
-		params["target_platform"] = strings.ToLower(strings.TrimSpace(ctx.GetPlatform()))
-		params["target_user_id"] = targetUserID
-		if targetSelector != "" {
-			params["target_selector"] = targetSelector
-		}
-	}
+	applySKTrackerMetaParams(params, eventID, wlCharacterID, wlCharacterQuery, userID)
+	applySKTrackerTargetParams(params, ctx, target)
 	if full {
 		params["full"] = true
 	}
 	return params, nil
+}
+
+type skTrackerTarget struct {
+	rankArgs         string
+	rankArgsProvided bool
+	userID           string
+	selector         string
+}
+
+func resolveSKTrackerTarget(ctx HarrukiSekaiHandlerContext, rankArgs string, allowUID, selfWhenEmpty bool) skTrackerTarget {
+	target := skTrackerTarget{rankArgs: rankArgs, rankArgsProvided: strings.TrimSpace(rankArgs) != ""}
+	if !allowUID {
+		return target
+	}
+	if uidArg := strings.TrimSpace(ctx.UIDArg()); uidArg != "" && strings.TrimSpace(target.rankArgs) == "" {
+		applySKUIDArgument(&target, uidArg, strings.TrimSpace(ctx.GetUserId()))
+	}
+	if selfWhenEmpty && strings.TrimSpace(target.rankArgs) == "" && target.userID == "" {
+		target.userID = strings.TrimSpace(ctx.GetUserId())
+	}
+	return target
+}
+
+func applySKUIDArgument(target *skTrackerTarget, uidArg, requesterID string) {
+	switch {
+	case strings.HasPrefix(uidArg, "@"):
+		if candidate := strings.TrimSpace(strings.TrimPrefix(uidArg, "@")); isDigits(candidate) {
+			target.userID = candidate
+		}
+	case isBindingSelector(uidArg):
+		target.userID = requesterID
+		target.selector = strings.ToLower(uidArg)
+	case isDigits(uidArg):
+		target.rankArgs = uidArg
+	}
+}
+
+func parseSKTrackerTargetRanks(target skTrackerTarget, allowUID bool) ([]int, *int64, error) {
+	if strings.TrimSpace(target.rankArgs) == "" && target.userID != "" {
+		return nil, nil, nil
+	}
+	return parseSKRanks(target.rankArgs, allowUID)
+}
+
+func applySKTrackerMetaParams(params map[string]any, eventID, wlCharacterID int, wlCharacterQuery string, userID *int64) {
+	setIntParam(params, "event_id", eventID)
+	setIntParam(params, "wl_character_id", wlCharacterID)
+	setStringParam(params, "wl_character_query", strings.TrimSpace(wlCharacterQuery))
+	if userID != nil && *userID > 0 {
+		params["user_id"] = *userID
+	}
+}
+
+func applySKTrackerTargetParams(params map[string]any, ctx HarrukiSekaiHandlerContext, target skTrackerTarget) {
+	if target.userID == "" {
+		return
+	}
+	params["target_platform"] = strings.ToLower(strings.TrimSpace(ctx.GetPlatform()))
+	params["target_user_id"] = target.userID
+	setStringParam(params, "target_selector", target.selector)
 }
 
 func buildSKSpeedTrackerParams(ctx HarrukiSekaiHandlerContext, unit string, defaultPeriodValue int64, periodScaleSeconds int64) (map[string]any, error) {

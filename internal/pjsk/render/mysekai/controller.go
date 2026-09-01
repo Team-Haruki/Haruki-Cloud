@@ -267,29 +267,8 @@ func (c *Controller) staticPath(relPath string) string {
 	if strings.HasPrefix(resolved, assets.StaticImagesDir+"/") {
 		return resolved
 	}
-
-	if c.assets != nil {
-		for _, root := range c.assets.Roots() {
-			root = strings.TrimSpace(root)
-			if root == "" {
-				continue
-			}
-			if strings.HasPrefix(root, "http://") || strings.HasPrefix(root, "https://") {
-				continue
-			}
-
-			rel := filepath.ToSlash(strings.TrimPrefix(assets.MakeRelative(root, resolved), "./"))
-			if strings.HasPrefix(rel, assets.StaticImagesDir+"/") {
-				return rel
-			}
-
-			// Local roots may point directly at "static_images". Normalize those
-			// back to "static_images/..." payload paths.
-			base := filepath.Base(filepath.ToSlash(root))
-			if rel != resolved && rel != "" && base == assets.StaticImagesDir {
-				return filepath.ToSlash(filepath.Join(assets.StaticImagesDir, strings.TrimPrefix(rel, "/")))
-			}
-		}
+	if relative := staticPathRelativeToRoots(c.assets, resolved); relative != "" {
+		return relative
 	}
 
 	// Never return local absolute filesystem paths to Drawing API. Cloud and
@@ -300,6 +279,33 @@ func (c *Controller) staticPath(relPath string) string {
 	}
 
 	return resolved
+}
+
+func staticPathRelativeToRoots(helper *assets.AssetHelper, resolved string) string {
+	if helper == nil {
+		return ""
+	}
+	for _, root := range helper.Roots() {
+		if relative := staticPathRelativeToRoot(root, resolved); relative != "" {
+			return relative
+		}
+	}
+	return ""
+}
+
+func staticPathRelativeToRoot(root, resolved string) string {
+	root = strings.TrimSpace(root)
+	if root == "" || strings.HasPrefix(root, "http://") || strings.HasPrefix(root, "https://") {
+		return ""
+	}
+	relative := filepath.ToSlash(strings.TrimPrefix(assets.MakeRelative(root, resolved), "./"))
+	if strings.HasPrefix(relative, assets.StaticImagesDir+"/") {
+		return relative
+	}
+	if relative == resolved || relative == "" || filepath.Base(filepath.ToSlash(root)) != assets.StaticImagesDir {
+		return ""
+	}
+	return filepath.ToSlash(filepath.Join(assets.StaticImagesDir, strings.TrimPrefix(relative, "/")))
 }
 
 // WithSnapshot returns a shallow copy of this Controller that uses the given

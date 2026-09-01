@@ -39,16 +39,25 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 		t.Fatalf("create music schema: %v", err)
 	}
 
+	seedPublicChunithmQueryData(ctx, mainClient, musicClient)
+	app := fiber.New()
+	RegisterChunithmRoutes(app, mainClient, musicClient, nil)
+	assertPublicChunithmSuccessQueries(t, app)
+	assertPublicChunithmValidationErrors(t, app)
+	assertPublicChunithmBatchQueries(t, app)
+}
+
+func seedPublicChunithmQueryData(ctx context.Context, mainClient *chunithmMainDB.Client, musicClient *chunithmMusicDB.Client) {
 	releaseAt := time.Now().Add(-2 * time.Hour)
 	mainClient.ChunithmMusicAlias.Create().SetMusicID(1001).SetAlias("test-song").SaveX(ctx)
 	mainClient.ChunithmMusicAlias.Create().SetMusicID(1001).SetAlias("ts").SaveX(ctx)
 	musicClient.ChunithmMusic.Create().SetMusicID(1001).SetTitle("Test Song").SetArtist("Artist").SetCategory("POPS").SetVersion("v2").SetReleaseDate(releaseAt).SaveX(ctx)
 	musicClient.ChunithmMusicDifficulty.Create().SetMusicID(1001).SetVersion("v1").SetDiff0Const(12.1).SetDiff1Const(12.8).SetDiff2Const(13.4).SetDiff3Const(13.9).SetDiff4Const(14.6).SaveX(ctx)
 	musicClient.ChunithmChartData.Create().SetMusicID(1001).SetDifficulty(3).SetCreator("ChartMaster").SetBpm(180).SetTapCount(500).SetHoldCount(120).SetSlideCount(80).SetAirCount(70).SetFlickCount(30).SetTotalCount(800).SaveX(ctx)
+}
 
-	app := fiber.New()
-	RegisterChunithmRoutes(app, mainClient, musicClient, nil)
-
+func assertPublicChunithmSuccessQueries(t *testing.T, app *fiber.App) {
+	t.Helper()
 	aliasResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/alias/music-id?alias=test-song", "")
 	if aliasResp.Status != fiber.StatusOK {
 		t.Fatalf("alias/music-id failed: status=%d message=%s", aliasResp.Status, aliasResp.Message)
@@ -82,12 +91,23 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 	if difficultyResp.Status != fiber.StatusOK {
 		t.Fatalf("music/difficulty-info failed: status=%d message=%s", difficultyResp.Status, difficultyResp.Message)
 	}
+	fallbackDifficultyResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/music/1001/difficulty-info?version=missing", "")
+	if fallbackDifficultyResp.Status != fiber.StatusOK {
+		t.Fatalf("music/difficulty-info fallback failed: status=%d message=%s", fallbackDifficultyResp.Status, fallbackDifficultyResp.Message)
+	}
+	var fallbackDifficulty MusicDifficultySchema
+	if err := json.Unmarshal(fallbackDifficultyResp.Data, &fallbackDifficulty); err != nil || fallbackDifficulty.Version != "v1" {
+		t.Fatalf("fallback difficulty = %+v, %v", fallbackDifficulty, err)
+	}
 
 	chartResp := requestAPI(t, app, http.MethodGet, "/api/v2/public/chunithm/music/1001/chart-data", "")
 	if chartResp.Status != fiber.StatusOK {
 		t.Fatalf("music/chart-data failed: status=%d message=%s", chartResp.Status, chartResp.Message)
 	}
+}
 
+func assertPublicChunithmValidationErrors(t *testing.T, app *fiber.App) {
+	t.Helper()
 	for _, path := range []string{
 		"/api/v2/public/chunithm/music/0/basic-info",
 		"/api/v2/public/chunithm/music/0/difficulty-info?version=v1",
@@ -109,7 +129,10 @@ func TestPublicChunithmQueryEndpoints(t *testing.T) {
 			t.Errorf("GET %s: status=%d message=%q, want 404", path, resp.Status, resp.Message)
 		}
 	}
+}
 
+func assertPublicChunithmBatchQueries(t *testing.T, app *fiber.App) {
+	t.Helper()
 	batchBody := `{"music_ids":[1001,9999],"version":"v1"}`
 	batchCompatResp := requestAPI(t, app, http.MethodPost, "/api/v2/public/chunithm/query-batch", batchBody)
 	if batchCompatResp.Status != fiber.StatusOK {

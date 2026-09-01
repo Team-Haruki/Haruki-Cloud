@@ -8,93 +8,97 @@ import (
 )
 
 func normalizeMusicBoardQuery(query BoardQuery) musicBoardResolvedQuery {
-	liveType := strings.ToLower(strings.TrimSpace(query.LiveType))
-	if _, ok := musicBoardLiveTypes[liveType]; !ok {
-		liveType = "solo"
-	}
-
-	target := strings.ToLower(strings.TrimSpace(query.Target))
-	if _, ok := musicBoardTargets[target]; !ok {
-		switch liveType {
-		case "multi":
-			target = "pt/time"
-		default:
-			target = "score"
-		}
-	}
-
-	strategy := strings.ToLower(strings.TrimSpace(query.SkillStrategy))
-	if _, ok := musicBoardStrategies[strategy]; !ok {
-		switch liveType {
-		case "solo":
-			strategy = "max"
-		default:
-			strategy = "avg"
-		}
-	}
-
-	page := query.Page
-	if page <= 0 {
-		page = 1
-	}
-
-	power := query.Power
-	if power <= 0 {
-		power = musicBoardDefaultPower
-	}
-
-	deckBonus := query.DeckBonus
-	if deckBonus <= 0 {
-		deckBonus = musicBoardDefaultDeckBonus
-	}
-
-	playInterval := query.PlayInterval
-	if playInterval <= 0 {
-		switch liveType {
-		case "multi":
-			playInterval = musicBoardDefaultMultiInterval
-		default:
-			playInterval = musicBoardDefaultSoloInterval
-		}
-	}
-
+	liveType := normalizeMusicBoardLiveType(query.LiveType)
 	skills := normalizeMusicBoardSkills(query.Skills, liveType)
-
-	diffFilter := make([]string, 0, len(query.DiffFilter))
-	for _, diff := range query.DiffFilter {
-		normalized := normalizeDifficulty(diff)
-		if normalized == "" {
-			continue
-		}
-		if common.ContainsString(diffFilter, normalized) {
-			continue
-		}
-		diffFilter = append(diffFilter, normalized)
-	}
-
-	specQueries := make([]string, 0, len(query.SpecQueries))
-	for _, raw := range query.SpecQueries {
-		text := strings.TrimSpace(raw)
-		if text == "" {
-			continue
-		}
-		specQueries = append(specQueries, text)
-	}
-
 	return musicBoardResolvedQuery{
 		LiveType:      liveType,
-		Target:        target,
+		Target:        normalizeMusicBoardTarget(query.Target, liveType),
 		Ascend:        query.Ascend,
-		Page:          page,
-		SkillStrategy: strategy,
+		Page:          positiveMusicBoardValue(query.Page, 1),
+		SkillStrategy: normalizeMusicBoardStrategy(query.SkillStrategy, liveType),
 		Skills:        skills,
-		Power:         power,
-		DeckBonus:     deckBonus,
-		PlayInterval:  playInterval,
-		DiffFilter:    diffFilter,
+		Power:         positiveMusicBoardValue(query.Power, musicBoardDefaultPower),
+		DeckBonus:     positiveMusicBoardFloat(query.DeckBonus, musicBoardDefaultDeckBonus),
+		PlayInterval:  normalizeMusicBoardPlayInterval(query.PlayInterval, liveType),
+		DiffFilter:    normalizeMusicBoardDiffFilter(query.DiffFilter),
 		LevelFilter:   strings.TrimSpace(query.LevelFilter),
-		SpecQueries:   specQueries,
+		SpecQueries:   compactMusicBoardStrings(query.SpecQueries),
 	}
+}
+
+func normalizeMusicBoardLiveType(raw string) string {
+	value := strings.ToLower(strings.TrimSpace(raw))
+	if _, ok := musicBoardLiveTypes[value]; ok {
+		return value
+	}
+	return "solo"
+}
+
+func normalizeMusicBoardTarget(raw, liveType string) string {
+	value := strings.ToLower(strings.TrimSpace(raw))
+	if _, ok := musicBoardTargets[value]; ok {
+		return value
+	}
+	if liveType == "multi" {
+		return "pt/time"
+	}
+	return "score"
+}
+
+func normalizeMusicBoardStrategy(raw, liveType string) string {
+	value := strings.ToLower(strings.TrimSpace(raw))
+	if _, ok := musicBoardStrategies[value]; ok {
+		return value
+	}
+	if liveType == "solo" {
+		return "max"
+	}
+	return "avg"
+}
+
+func positiveMusicBoardValue(value, fallback int) int {
+	if value > 0 {
+		return value
+	}
+	return fallback
+}
+
+func positiveMusicBoardFloat(value, fallback float64) float64 {
+	if value > 0 {
+		return value
+	}
+	return fallback
+}
+
+func normalizeMusicBoardPlayInterval(value float64, liveType string) float64 {
+	if value > 0 {
+		return value
+	}
+	if liveType == "multi" {
+		return musicBoardDefaultMultiInterval
+	}
+	return musicBoardDefaultSoloInterval
+}
+
+func normalizeMusicBoardDiffFilter(values []string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		normalized := normalizeDifficulty(value)
+		if normalized != "" && !common.ContainsString(result, normalized) {
+			result = append(result, normalized)
+		}
+	}
+	return result
+}
+
+func compactMusicBoardStrings(values []string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if text := strings.TrimSpace(value); text != "" {
+			result = append(result, text)
+		}
+	}
+	return result
 }
 
 func normalizeMusicBoardSkills(skills []float64, liveType string) []float64 {

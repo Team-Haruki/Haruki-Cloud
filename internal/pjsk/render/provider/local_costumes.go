@@ -157,17 +157,8 @@ func localCostumeMatchesFilter(costume *masterdata.Costume3d, filter *CostumeFil
 	if filter.CharacterID > 0 && costume.CharacterID != filter.CharacterID {
 		return false
 	}
-	if len(filter.CharacterIDs) > 0 {
-		matches := false
-		for _, id := range filter.CharacterIDs {
-			if id > 0 && costume.CharacterID == id {
-				matches = true
-				break
-			}
-		}
-		if !matches {
-			return false
-		}
+	if len(filter.CharacterIDs) > 0 && !positiveIntSliceContains(filter.CharacterIDs, costume.CharacterID) {
+		return false
 	}
 	if filter.ColorID > 0 && costume.ColorID != filter.ColorID {
 		return false
@@ -176,6 +167,15 @@ func localCostumeMatchesFilter(costume *masterdata.Costume3d, filter *CostumeFil
 		return false
 	}
 	return true
+}
+
+func positiveIntSliceContains(values []int, target int) bool {
+	for _, value := range values {
+		if value > 0 && value == target {
+			return true
+		}
+	}
+	return false
 }
 
 func localCostumeContainsKeyword(costume *masterdata.Costume3d, keyword string) bool {

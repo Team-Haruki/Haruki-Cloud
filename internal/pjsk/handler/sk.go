@@ -638,40 +638,14 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 		return accountdata.ErrBindingServiceUnavailable
 	}
 
-	var (
-		binding *accountdata.ResolvedBinding
-		err     error
-	)
-
-	if targetSelector != "" {
-		_, binding, err = app.Bindings.ResolveUserBindingBySelector(ctx, targetPlatform, targetUserID, selectorBindingServer(normalizeTrackerRegion(req.Region), req.RegionExplicit), targetSelector)
-		if err != nil {
-			return normalizeBindingLookupError(err, fmt.Sprintf("无法解析账号选择器 %s", targetSelector))
-		}
-	} else if req.RegionExplicit {
-		region := normalizeTrackerRegion(req.Region)
-		_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, region)
-		if err != nil {
-			return normalizeBindingLookupError(err, fmt.Sprintf("@用户 %s 在 %s 服没有绑定账号", targetUserID, strings.ToUpper(region)))
-		}
-	} else {
-		_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, accountdata.GlobalDefaultBindingScope)
-		if err != nil || binding == nil {
-			_, binding, err = app.Bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, DefaultRegionStr)
-			if err != nil {
-				return normalizeBindingLookupError(err, fmt.Sprintf("@用户 %s 没有可用绑定", targetUserID))
-			}
-		}
+	binding, err := resolveTrackerTargetBinding(ctx, app.Bindings, req, targetPlatform, targetUserID, targetSelector)
+	if err != nil {
+		return err
 	}
-
 	if binding == nil {
 		return accountdata.ErrNoBinding
 	}
-
-	isSelfTarget := strings.EqualFold(strings.TrimSpace(targetPlatform), strings.TrimSpace(requesterPlatform)) &&
-		strings.TrimSpace(targetUserID) != "" &&
-		strings.TrimSpace(targetUserID) == strings.TrimSpace(requesterUserID)
-
+	isSelfTarget := trackerTargetIsRequester(targetPlatform, targetUserID, requesterPlatform, requesterUserID)
 	if targetSelector == "" && !binding.Visible && !isSelfTarget {
 		return fmt.Errorf("@用户 %s 已隐藏个人信息，无法查询", targetUserID)
 	}
@@ -685,6 +659,45 @@ func resolveTrackerTargetUser(ctx context.Context, app *renderapp.App, req *sk.T
 		req.Region = normalizeTrackerRegion(binding.Server)
 	}
 	return nil
+}
+
+func resolveTrackerTargetBinding(
+	ctx context.Context,
+	bindings *accountdata.BindingService,
+	req *sk.TrackerRankQuery,
+	targetPlatform, targetUserID, targetSelector string,
+) (*accountdata.ResolvedBinding, error) {
+	if targetSelector != "" {
+		_, binding, err := bindings.ResolveUserBindingBySelector(ctx, targetPlatform, targetUserID, selectorBindingServer(normalizeTrackerRegion(req.Region), req.RegionExplicit), targetSelector)
+		if err != nil {
+			return nil, normalizeBindingLookupError(err, fmt.Sprintf("无法解析账号选择器 %s", targetSelector))
+		}
+		return binding, nil
+	}
+	if req.RegionExplicit {
+		region := normalizeTrackerRegion(req.Region)
+		_, binding, err := bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, region)
+		if err != nil {
+			return nil, normalizeBindingLookupError(err, fmt.Sprintf("@用户 %s 在 %s 服没有绑定账号", targetUserID, strings.ToUpper(region)))
+		}
+		return binding, nil
+	}
+	_, binding, err := bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, accountdata.GlobalDefaultBindingScope)
+	if err == nil && binding != nil {
+		return binding, nil
+	}
+	_, binding, err = bindings.ResolveUserBinding(ctx, targetPlatform, targetUserID, DefaultRegionStr)
+	if err != nil {
+		return nil, normalizeBindingLookupError(err, fmt.Sprintf("@用户 %s 没有可用绑定", targetUserID))
+	}
+	return binding, nil
+}
+
+func trackerTargetIsRequester(targetPlatform, targetUserID, requesterPlatform, requesterUserID string) bool {
+	targetUserID = strings.TrimSpace(targetUserID)
+	return targetUserID != "" &&
+		strings.EqualFold(strings.TrimSpace(targetPlatform), strings.TrimSpace(requesterPlatform)) &&
+		targetUserID == strings.TrimSpace(requesterUserID)
 }
 
 func normalizeTrackerRegion(region string) string {

@@ -351,25 +351,34 @@ func (c *Controller) resolveHousingCompetitionRefreshTarget(query HousingCompeti
 	var target housingCompetitionRefreshTarget
 	for _, item := range items {
 		info := c.housingCompetitionInfoFromMasterdata(item)
-		if info.ID == 0 {
-			continue
-		}
-		startAt := housingCompetitionListStartAt(info)
-		if startAt <= 0 || info.AggregateAt <= 0 {
-			continue
-		}
-		if nowMs >= startAt && nowMs < info.AggregateAt {
-			if target.Competition.ID == 0 || startAt > housingCompetitionListStartAt(target.Competition) || (startAt == housingCompetitionListStartAt(target.Competition) && info.ID > target.Competition.ID) {
-				target.Competition = info
-				target.Active = true
-			}
-			continue
-		}
-		if startAt > nowMs && (target.NextStartAt == 0 || startAt < target.NextStartAt) {
-			target.NextStartAt = startAt
-		}
+		updateHousingCompetitionRefreshTarget(&target, info, nowMs)
 	}
 	return target, nil
+}
+
+func updateHousingCompetitionRefreshTarget(target *housingCompetitionRefreshTarget, info HousingCompetitionInfo, nowMs int64) {
+	if target == nil || info.ID == 0 {
+		return
+	}
+	startAt := housingCompetitionListStartAt(info)
+	if startAt <= 0 || info.AggregateAt <= 0 {
+		return
+	}
+	if nowMs >= startAt && nowMs < info.AggregateAt {
+		if isPreferredActiveHousingCompetition(target.Competition, info, startAt) {
+			target.Competition = info
+			target.Active = true
+		}
+		return
+	}
+	if startAt > nowMs && (target.NextStartAt == 0 || startAt < target.NextStartAt) {
+		target.NextStartAt = startAt
+	}
+}
+
+func isPreferredActiveHousingCompetition(current, candidate HousingCompetitionInfo, candidateStartAt int64) bool {
+	currentStartAt := housingCompetitionListStartAt(current)
+	return current.ID == 0 || candidateStartAt > currentStartAt || (candidateStartAt == currentStartAt && candidate.ID > current.ID)
 }
 
 func housingCompetitionListStartAt(info HousingCompetitionInfo) int64 {

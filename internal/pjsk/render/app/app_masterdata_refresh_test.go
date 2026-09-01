@@ -58,3 +58,23 @@ func TestLocalMasterdataRefreshResetsProviderAndAdditionalCaches(t *testing.T) {
 		t.Fatalf("unchanged signature reset count = %d", additional.count)
 	}
 }
+
+func TestLocalMasterdataRefreshHandlesAppearingSource(t *testing.T) {
+	root := t.TempDir()
+	masterDir := filepath.Join(root, "haruki-sekai-master", "master")
+	if err := os.MkdirAll(masterDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(masterDir, "cards.json"), []byte(`[]`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	local := provider.NewLocalProvider(masterDir, renderregion.JP)
+	additional := &countingMasterdataResetter{}
+	state := newLocalMasterdataRefreshState(root, map[renderregion.Value]provider.MasterDataProvider{
+		renderregion.JP: local,
+	}, additional)
+	state.refresh()
+	if state.signatures[renderregion.JP] == "" || additional.count != 1 {
+		t.Fatalf("appearing source state = %+v, resets=%d", state.signatures, additional.count)
+	}
+}

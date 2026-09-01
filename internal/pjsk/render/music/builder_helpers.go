@@ -25,43 +25,43 @@ var (
 )
 
 func selectLocalizedTitle(base string, region string, titles []string) string {
-	candidates := make([]string, 0, len(titles))
-	for _, title := range titles {
-		trimmed := strings.TrimSpace(title)
-		if trimmed == "" || strings.EqualFold(trimmed, base) {
-			continue
-		}
-		candidates = append(candidates, trimmed)
-	}
+	candidates := localizedTitleCandidates(base, titles)
 	if len(candidates) == 0 {
 		return ""
 	}
 
 	switch renderregion.Normalize(region) {
 	case renderregion.CN, renderregion.TW:
-		for _, candidate := range candidates {
-			if hanPattern.MatchString(candidate) && !kanaPattern.MatchString(candidate) {
-				return candidate
-			}
-		}
-		return ""
+		return firstLocalizedTitleMatching(candidates, func(candidate string) bool {
+			return hanPattern.MatchString(candidate) && !kanaPattern.MatchString(candidate)
+		})
 	case renderregion.KR:
-		for _, candidate := range candidates {
-			if hangulPattern.MatchString(candidate) {
-				return candidate
-			}
-		}
-		return ""
+		return firstLocalizedTitleMatching(candidates, hangulPattern.MatchString)
 	case renderregion.EN:
-		for _, candidate := range candidates {
-			if latinPattern.MatchString(candidate) {
-				return candidate
-			}
-		}
-		return ""
+		return firstLocalizedTitleMatching(candidates, latinPattern.MatchString)
 	default:
 		return candidates[0]
 	}
+}
+
+func localizedTitleCandidates(base string, titles []string) []string {
+	candidates := make([]string, 0, len(titles))
+	for _, title := range titles {
+		trimmed := strings.TrimSpace(title)
+		if trimmed != "" && !strings.EqualFold(trimmed, base) {
+			candidates = append(candidates, trimmed)
+		}
+	}
+	return candidates
+}
+
+func firstLocalizedTitleMatching(candidates []string, matches func(string) bool) string {
+	for _, candidate := range candidates {
+		if matches(candidate) {
+			return candidate
+		}
+	}
+	return ""
 }
 
 func buildJPVocalOrderKey(vocal *masterdata.MusicVocal) string {

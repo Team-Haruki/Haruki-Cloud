@@ -269,26 +269,22 @@ func fetchHousingCompetitionSamples(ctx context.Context, api HousingCompetitionL
 		return nil, time.Time{}, 0, fmt.Errorf("invalid housing_id")
 	}
 	sampleCount = normalizeHousingCompetitionSampleCount(sampleCount)
+	return collectHousingCompetitionSamples(ctx, api, region, housingID, sampleCount, sampleIntervalMillis)
+}
 
+func collectHousingCompetitionSamples(ctx context.Context, api HousingCompetitionListClient, region string, housingID, sampleCount, sampleIntervalMillis int) ([]HousingCompetitionEntry, time.Time, int, error) {
 	merged := make(map[string]HousingCompetitionEntry)
 	var sampledAt time.Time
 	for i := 0; i < sampleCount; i++ {
 		if err := ctx.Err(); err != nil {
 			return nil, time.Time{}, i, err
 		}
-		raw, err := api.GetMySekaiHousingCompetitionList(region, housingID, true)
+		entries, sampleTime, err := fetchHousingCompetitionSample(api, region, housingID)
 		if err != nil {
 			return nil, time.Time{}, i, err
 		}
-		entries, lotteryAt, err := parseHousingCompetitionEntries(raw)
-		if err != nil {
-			return nil, time.Time{}, i, err
-		}
-		if lotteryAt > 0 {
-			current := time.UnixMilli(lotteryAt).UTC()
-			if sampledAt.IsZero() || current.After(sampledAt) {
-				sampledAt = current
-			}
+		if sampleTime.After(sampledAt) {
+			sampledAt = sampleTime
 		}
 		mergeHousingCompetitionEntries(merged, entries)
 		if i+1 < sampleCount && sampleIntervalMillis > 0 {
@@ -301,6 +297,21 @@ func fetchHousingCompetitionSamples(ctx context.Context, api HousingCompetitionL
 		sampledAt = time.Now().UTC()
 	}
 	return housingCompetitionEntriesFromMap(merged), sampledAt, sampleCount, nil
+}
+
+func fetchHousingCompetitionSample(api HousingCompetitionListClient, region string, housingID int) ([]HousingCompetitionEntry, time.Time, error) {
+	raw, err := api.GetMySekaiHousingCompetitionList(region, housingID, true)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+	entries, lotteryAt, err := parseHousingCompetitionEntries(raw)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+	if lotteryAt <= 0 {
+		return entries, time.Time{}, nil
+	}
+	return entries, time.UnixMilli(lotteryAt).UTC(), nil
 }
 
 func newHousingCompetitionStatsCacheKey(region string, housingID int) (housingCompetitionStatsCacheKey, bool) {

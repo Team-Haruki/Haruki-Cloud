@@ -893,40 +893,56 @@ func (c *ResponseElectionCoordinator) await(
 	defer cancel()
 
 	if wait := lease.deadline.Sub(c.now()); wait > 0 {
-		finishWindowWait := commandtrace.MeasureOperation(waitCtx, "response_election.window_wait")
-		windowReady := c.after(wait)
-		waitingForWindow := true
-		for waitingForWindow {
-			select {
-			case <-windowReady:
-				finishWindowWait()
-				waitingForWindow = false
-			case outcome, ok := <-executorResult:
-				if ok && outcome.err != nil {
-					finishWindowWait()
-					return c.executorPublishFailureDecision(outcome)
-				}
-				executorResult = nil
-			case <-waitCtx.Done():
-				finishWindowWait()
-				return responseElectionDecision{reason: "canceled"}
-			case <-c.worker.Done():
-				finishWindowWait()
-				return responseElectionDecision{reason: "shutdown"}
-			}
+		var decision responseElectionDecision
+		var done bool
+		executorResult, decision, done = c.waitForElectionWindow(waitCtx, wait, executorResult)
+		if done {
+			return decision
 		}
 	}
+	return c.pollElectionDecision(waitCtx, lease, executorResult)
+}
 
-	finishResultWait := commandtrace.MeasureOperation(waitCtx, "response_election.result_wait")
+func (c *ResponseElectionCoordinator) waitForElectionWindow(
+	ctx context.Context,
+	wait time.Duration,
+	executorResult <-chan responseElectionExecutorResult,
+) (<-chan responseElectionExecutorResult, responseElectionDecision, bool) {
+	finishWindowWait := commandtrace.MeasureOperation(ctx, "response_election.window_wait")
+	defer finishWindowWait()
+	windowReady := c.after(wait)
+	for {
+		select {
+		case <-windowReady:
+			return executorResult, responseElectionDecision{}, false
+		case outcome, ok := <-executorResult:
+			if ok && outcome.err != nil {
+				return nil, c.executorPublishFailureDecision(outcome), true
+			}
+			executorResult = nil
+		case <-ctx.Done():
+			return nil, responseElectionDecision{reason: "canceled"}, true
+		case <-c.worker.Done():
+			return nil, responseElectionDecision{reason: "shutdown"}, true
+		}
+	}
+}
+
+func (c *ResponseElectionCoordinator) pollElectionDecision(
+	ctx context.Context,
+	lease responseElectionLease,
+	executorResult <-chan responseElectionExecutorResult,
+) responseElectionDecision {
+	finishResultWait := commandtrace.MeasureOperation(ctx, "response_election.result_wait")
 	defer finishResultWait()
 	ticker := time.NewTicker(c.pollInterval)
 	defer ticker.Stop()
 	for {
-		decision, waiting, err := c.decide(waitCtx, lease)
+		decision, waiting, err := c.decide(ctx, lease)
 		if err == nil && !waiting {
 			return decision
 		}
-		if err != nil && waitCtx.Err() == nil && c.worker.Err() == nil {
+		if err != nil && ctx.Err() == nil && c.worker.Err() == nil {
 			responseElectionFailureLogger.Warn("response election wait failed",
 				"event", "response_election_wait",
 				"outcome", "retry",
@@ -940,7 +956,7 @@ func (c *ResponseElectionCoordinator) await(
 			}
 			executorResult = nil
 		case <-ticker.C:
-		case <-waitCtx.Done():
+		case <-ctx.Done():
 			return responseElectionDecision{reason: "canceled"}
 		case <-c.worker.Done():
 			return responseElectionDecision{reason: "shutdown"}

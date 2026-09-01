@@ -145,139 +145,167 @@ func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListR
 	if err != nil {
 		return nil, err
 	}
-	resultFilter := normalizeMusicListResultFilter(query.ResultFilter)
-	if query.Full {
-		resultFilter = ""
-	}
-	diff := ""
-	if strings.TrimSpace(query.Difficulty) != "" || len(query.Items) == 0 {
-		diff = normalizeDifficulty(query.Difficulty)
-	}
-
-	minLevel := query.LevelMin
-	maxLevel := query.LevelMax
-	if query.Level > 0 {
-		minLevel = query.Level
-		maxLevel = query.Level
-	}
-	if minLevel > 0 && maxLevel > 0 && minLevel > maxLevel {
-		minLevel, maxLevel = maxLevel, minLevel
-	}
-
-	var fallbackUserResults map[int]string
-	var queryUserResults map[int]string
-	if !query.Full {
-		fallbackUserResults = c.buildUserResults(diff)
-		queryUserResults = query.UserResults
-	}
-	userResults := buildMusicListUserResults(queryUserResults, fallbackUserResults)
-	includeLeaks := query.IncludeLeaks
-	if !includeLeaks && c.resolveRegion(query.Region) != renderregion.JP &&
-		(query.Full || query.DetailedProfile == nil) && (query.Full || len(query.UserResults) == 0) &&
-		len(fallbackUserResults) == 0 && resultFilter == "" {
-		includeLeaks = true
-	}
-	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(source, query.Keyword, includeLeaks)
+	options := c.musicListOptions(query)
+	filterMusicID, keyword, err := c.resolveMusicListKeywordFilter(source, query.Keyword, options.includeLeaks)
 	if err != nil {
 		return nil, err
 	}
-	list := make([]map[string]any, 0)
-	jackets := make(map[int]string)
+	var list []map[string]any
+	var jackets map[int]string
 	if len(query.Items) > 0 {
-		list, jackets = c.buildMusicListEntriesFromItems(source, builder, region, diff, query.Items, includeLeaks)
+		list, jackets = c.buildMusicListEntriesFromItems(source, builder, region, options.difficulty, query.Items, options.includeLeaks)
 	} else {
-		now := currentMusicVisibilityTime()
-		for _, musicInfo := range source.GetMusics() {
-			if musicInfo == nil {
-				continue
-			}
-			if !includeLeaks && !isMusicVisibleAt(musicInfo, now) {
-				continue
-			}
-			if filterMusicID != nil && musicInfo.ID != *filterMusicID {
-				continue
-			}
-			if filterMusicID == nil && keyword != "" && !matchesMusicKeyword(source, musicInfo, keyword) {
-				continue
-			}
-
-			level := builder.GetDifficultyLevel(musicInfo.ID, diff)
-			if level == 0 {
-				continue
-			}
-			if minLevel > 0 && level < minLevel {
-				continue
-			}
-			if maxLevel > 0 && level > maxLevel {
-				continue
-			}
-			if !matchesMusicListResultFilter(resultFilter, userResults[musicInfo.ID]) {
-				continue
-			}
-
-			displayOrder := musicListDisplayOrder(musicInfo)
-			list = append(list, map[string]any{
-				"id":              musicInfo.ID,
-				"difficulty":      level,
-				"difficulty_type": diff,
-				// The drawing service re-sorts each level bucket by release_at, so
-				// we pass the desired display order here instead of the raw publish time.
-				"release_at": displayOrder,
-			})
-			jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
-		}
+		list, jackets = buildFilteredMusicListEntries(source, builder, region, options, filterMusicID, keyword)
 	}
 
 	if len(list) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
 
-	sort.Slice(list, func(i, j int) bool {
-		diffI := normalizedDifficultyValue(list[i]["difficulty_type"])
-		diffJ := normalizedDifficultyValue(list[j]["difficulty_type"])
-		if diffI != diffJ {
-			return difficultyOrder(diffI) < difficultyOrder(diffJ)
-		}
-
-		levelI, _ := list[i]["difficulty"].(int)
-		levelJ, _ := list[j]["difficulty"].(int)
-		if levelI != levelJ {
-			return levelI < levelJ
-		}
-
-		orderI, _ := list[i]["release_at"].(int64)
-		orderJ, _ := list[j]["release_at"].(int64)
-		if orderI != orderJ {
-			return orderI < orderJ
-		}
-
-		idI, _ := list[i]["id"].(int)
-		idJ, _ := list[j]["id"].(int)
-		return idI < idJ
-	})
-	if diff == "" {
-		diff = normalizedDifficultyValue(list[0]["difficulty_type"])
-	}
-
-	drawingUserResults := make(map[int]any, len(userResults))
-	for musicID, result := range userResults {
-		drawingUserResults[musicID] = result
+	sortMusicListEntries(list)
+	if options.difficulty == "" {
+		options.difficulty = normalizedDifficultyValue(list[0]["difficulty_type"])
 	}
 
 	req := &drawing.MusicListRequest{
-		UserResults:          drawingUserResults,
+		UserResults:          drawingMusicListUserResults(options.userResults),
 		MusicList:            list,
 		JacketsPathList:      jackets,
-		RequiredDifficulties: diff,
+		RequiredDifficulties: options.difficulty,
 		Profile:              c.resolveMusicListProfileForQuery(query, region),
 		Title:                query.Title,
 		TitleStyle:           query.TitleStyle,
 		TitleShadow:          query.TitleShadow,
 	}
-	if len(userResults) > 0 && !query.Full {
+	if len(options.userResults) > 0 && !query.Full {
 		req.PlayResultIconPathMap = c.buildPlayResultIconMap(region)
 	}
 	return req, nil
+}
+
+type musicListBuildOptions struct {
+	difficulty   string
+	minLevel     int
+	maxLevel     int
+	resultFilter string
+	userResults  map[int]string
+	includeLeaks bool
+}
+
+func (c *Controller) musicListOptions(query ListQuery) musicListBuildOptions {
+	options := musicListBuildOptions{resultFilter: normalizeMusicListResultFilter(query.ResultFilter), includeLeaks: query.IncludeLeaks}
+	if query.Full {
+		options.resultFilter = ""
+	}
+	if strings.TrimSpace(query.Difficulty) != "" || len(query.Items) == 0 {
+		options.difficulty = normalizeDifficulty(query.Difficulty)
+	}
+	options.minLevel, options.maxLevel = normalizedMusicListLevels(query)
+	var fallbackResults map[int]string
+	if !query.Full {
+		fallbackResults = c.buildUserResults(options.difficulty)
+		options.userResults = buildMusicListUserResults(query.UserResults, fallbackResults)
+	}
+	if !options.includeLeaks && c.shouldIncludeMusicListLeaks(query, fallbackResults, options.resultFilter) {
+		options.includeLeaks = true
+	}
+	return options
+}
+
+func normalizedMusicListLevels(query ListQuery) (int, int) {
+	minimum, maximum := query.LevelMin, query.LevelMax
+	if query.Level > 0 {
+		minimum, maximum = query.Level, query.Level
+	}
+	if minimum > 0 && maximum > 0 && minimum > maximum {
+		minimum, maximum = maximum, minimum
+	}
+	return minimum, maximum
+}
+
+func (c *Controller) shouldIncludeMusicListLeaks(query ListQuery, fallbackResults map[int]string, resultFilter string) bool {
+	return c.resolveRegion(query.Region) != renderregion.JP &&
+		(query.Full || query.DetailedProfile == nil) &&
+		(query.Full || len(query.UserResults) == 0) &&
+		len(fallbackResults) == 0 && resultFilter == ""
+}
+
+func buildFilteredMusicListEntries(source DataSource, builder *Builder, region renderregion.Value, options musicListBuildOptions, filterMusicID *int, keyword string) ([]map[string]any, map[int]string) {
+	list := make([]map[string]any, 0)
+	jackets := make(map[int]string)
+	now := currentMusicVisibilityTime()
+	for _, musicInfo := range source.GetMusics() {
+		level := builder.GetDifficultyLevel(musicIDOrZero(musicInfo), options.difficulty)
+		if !matchesMusicListOptions(source, musicInfo, level, now, options, filterMusicID, keyword) {
+			continue
+		}
+		list = append(list, map[string]any{
+			"id": musicInfo.ID, "difficulty": level, "difficulty_type": options.difficulty,
+			"release_at": musicListDisplayOrder(musicInfo),
+		})
+		jackets[musicInfo.ID] = builder.BuildMusicJacketPath(musicInfo.AssetBundleName, region)
+	}
+	return list, jackets
+}
+
+func musicIDOrZero(musicInfo *masterdata.Music) int {
+	if musicInfo == nil {
+		return 0
+	}
+	return musicInfo.ID
+}
+
+func matchesMusicListOptions(source DataSource, musicInfo *masterdata.Music, level int, now int64, options musicListBuildOptions, filterMusicID *int, keyword string) bool {
+	if musicInfo == nil || level == 0 {
+		return false
+	}
+	if !options.includeLeaks && !isMusicVisibleAt(musicInfo, now) {
+		return false
+	}
+	if filterMusicID != nil && musicInfo.ID != *filterMusicID {
+		return false
+	}
+	if filterMusicID == nil && keyword != "" && !matchesMusicKeyword(source, musicInfo, keyword) {
+		return false
+	}
+	if options.minLevel > 0 && level < options.minLevel {
+		return false
+	}
+	if options.maxLevel > 0 && level > options.maxLevel {
+		return false
+	}
+	return matchesMusicListResultFilter(options.resultFilter, options.userResults[musicInfo.ID])
+}
+
+func sortMusicListEntries(list []map[string]any) {
+	sort.Slice(list, func(i, j int) bool {
+		difficultyI := normalizedDifficultyValue(list[i]["difficulty_type"])
+		difficultyJ := normalizedDifficultyValue(list[j]["difficulty_type"])
+		if difficultyI != difficultyJ {
+			return difficultyOrder(difficultyI) < difficultyOrder(difficultyJ)
+		}
+		levelI, _ := list[i]["difficulty"].(int)
+		levelJ, _ := list[j]["difficulty"].(int)
+		if levelI != levelJ {
+			return levelI < levelJ
+		}
+		orderI, _ := list[i]["release_at"].(int64)
+		orderJ, _ := list[j]["release_at"].(int64)
+		if orderI != orderJ {
+			return orderI < orderJ
+		}
+		idI, _ := list[i]["id"].(int)
+		idJ, _ := list[j]["id"].(int)
+		return idI < idJ
+	})
+}
+
+func drawingMusicListUserResults(userResults map[int]string) map[int]any {
+	result := make(map[int]any, len(userResults))
+	for musicID, value := range userResults {
+		result[musicID] = value
+	}
+	return result
 }
 
 func (c *Controller) buildMusicListEntriesFromItems(source DataSource, builder *Builder, region renderregion.Value, difficulty string, items []ListItemQuery, includeLeaks bool) ([]map[string]any, map[int]string) {

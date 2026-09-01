@@ -91,89 +91,13 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		c.forecastCache.StartRefreshQuery(forecastQuery)
 		return nil, fmt.Errorf("预测缓存暂无这些档位的数据")
 	}
-	sourceNames := map[string]string{
-		"33kit":    "33Kit预测",
-		"moesekai": "Moesekai预测",
-		"sekarun":  "SekaRun预测",
-		"local":    "本地预测",
-		"forecast": "预测",
-	}
-
-	columns := make([]drawing.SKForecastColumn, 0, len(sourceOrder))
-	for _, sourceKey := range sourceOrder {
-		sourceData, ok := bySource[sourceKey]
-		if !ok || len(sourceData.Scores) == 0 {
-			continue
-		}
-		rankInfos := make([]drawing.RankInfo, 0, len(forecastRanks))
-		forecastAt := int64(0)
-		for _, rank := range forecastRanks {
-			item, ok := sourceData.Scores[rank]
-			if !ok || item.Score <= 0 {
-				continue
-			}
-			if item.Timestamp > forecastAt {
-				forecastAt = item.Timestamp
-			}
-			score := item.Score
-			rankInfos = append(rankInfos, drawing.RankInfo{
-				Rank:  rank,
-				Name:  "",
-				Score: drawing.IntPtr(score),
-				Time:  formatTrackerTimestamp(item.Timestamp),
-			})
-		}
-		if len(rankInfos) == 0 {
-			continue
-		}
-		sort.Slice(rankInfos, func(i, j int) bool {
-			return rankInfos[i].Rank < rankInfos[j].Rank
-		})
-
-		columnName := strings.TrimSpace(sourceNames[sourceKey])
-		if columnName == "" {
-			columnName = sourceKey
-		}
-		column := drawing.SKForecastColumn{
-			Key:   sourceKey,
-			Name:  columnName,
-			Ranks: rankInfos,
-		}
-		if forecastAt > 0 {
-			column.ForecastTime = drawing.Int64Ptr(formatTrackerTimestamp(forecastAt))
-		}
-		if sourceData.FetchedAt > 0 {
-			column.UpdateTime = drawing.Int64Ptr(formatTrackerTimestamp(sourceData.FetchedAt))
-		}
-		columns = append(columns, column)
-	}
-
+	columns := buildForecastColumns(sourceOrder, bySource, forecastRanks)
 	if len(columns) == 0 {
 		c.forecastCache.StartRefreshQuery(forecastQuery)
 		return nil, fmt.Errorf("预测缓存暂无这些档位的数据")
 	}
 
-	currentRanks, currentErr := c.buildRanksFromTracker(
-		normalized.Region,
-		normalized.EventID,
-		forecastRanks,
-		normalized.WlCharacterID,
-		shouldSkipMissingTrackerRanks(normalized),
-	)
-	if currentErr == nil {
-		for i := range currentRanks {
-			// SK line keeps names empty to reduce visual noise.
-			currentRanks[i].Name = ""
-		}
-		sort.Slice(currentRanks, func(i, j int) bool {
-			return currentRanks[i].Rank < currentRanks[j].Rank
-		})
-	}
-
-	// Keep rendering available forecast sources even when current tracker line fails.
-	if currentErr != nil {
-		currentRanks = nil
-	}
+	currentRanks := c.buildCurrentForecastRanks(normalized, forecastRanks)
 
 	line := LineRequest{
 		ID:               normalized.EventID,
@@ -188,14 +112,85 @@ func (c *Controller) BuildPredictLineRequestFromTracker(req TrackerRankQuery) (*
 		PredictionNotice: skPredictionNotice,
 		Full:             normalized.Full,
 	}
-	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		wl := *normalized.WlCharacterID
-		line.WlCid = &wl
-		if icon := c.resolveCharacterIconPath(wl, renderregion.Normalize(normalized.Region)); icon != "" {
-			line.CharaIconPath = &icon
+	c.applyForecastWorldBloomFields(&line, normalized)
+	return c.BuildLineRequest(line)
+}
+
+func buildForecastColumns(sourceOrder []string, bySource map[string]ForecastSourceData, ranks []int) []drawing.SKForecastColumn {
+	columns := make([]drawing.SKForecastColumn, 0, len(sourceOrder))
+	for _, sourceKey := range sourceOrder {
+		column, ok := buildForecastColumn(sourceKey, bySource[sourceKey], ranks)
+		if ok {
+			columns = append(columns, column)
 		}
 	}
-	return c.BuildLineRequest(line)
+	return columns
+}
+
+func buildForecastColumn(sourceKey string, sourceData ForecastSourceData, ranks []int) (drawing.SKForecastColumn, bool) {
+	if len(sourceData.Scores) == 0 {
+		return drawing.SKForecastColumn{}, false
+	}
+	rankInfos := make([]drawing.RankInfo, 0, len(ranks))
+	forecastAt := int64(0)
+	for _, rank := range ranks {
+		item, ok := sourceData.Scores[rank]
+		if !ok || item.Score <= 0 {
+			continue
+		}
+		forecastAt = max(forecastAt, item.Timestamp)
+		rankInfos = append(rankInfos, drawing.RankInfo{
+			Rank: rank, Score: drawing.IntPtr(item.Score), Time: formatTrackerTimestamp(item.Timestamp),
+		})
+	}
+	if len(rankInfos) == 0 {
+		return drawing.SKForecastColumn{}, false
+	}
+	sort.Slice(rankInfos, func(i, j int) bool { return rankInfos[i].Rank < rankInfos[j].Rank })
+	column := drawing.SKForecastColumn{Key: sourceKey, Name: forecastSourceName(sourceKey), Ranks: rankInfos}
+	if forecastAt > 0 {
+		column.ForecastTime = drawing.Int64Ptr(formatTrackerTimestamp(forecastAt))
+	}
+	if sourceData.FetchedAt > 0 {
+		column.UpdateTime = drawing.Int64Ptr(formatTrackerTimestamp(sourceData.FetchedAt))
+	}
+	return column, true
+}
+
+func forecastSourceName(sourceKey string) string {
+	names := map[string]string{
+		"33kit": "33Kit预测", "moesekai": "Moesekai预测", "sekarun": "SekaRun预测",
+		"local": "本地预测", "forecast": "预测",
+	}
+	if name := strings.TrimSpace(names[sourceKey]); name != "" {
+		return name
+	}
+	return sourceKey
+}
+
+func (c *Controller) buildCurrentForecastRanks(req TrackerRankQuery, ranks []int) []drawing.RankInfo {
+	currentRanks, err := c.buildRanksFromTracker(
+		req.Region, req.EventID, ranks, req.WlCharacterID, shouldSkipMissingTrackerRanks(req),
+	)
+	if err != nil {
+		return nil
+	}
+	for i := range currentRanks {
+		currentRanks[i].Name = ""
+	}
+	sort.Slice(currentRanks, func(i, j int) bool { return currentRanks[i].Rank < currentRanks[j].Rank })
+	return currentRanks
+}
+
+func (c *Controller) applyForecastWorldBloomFields(line *LineRequest, req TrackerRankQuery) {
+	if req.WlCharacterID == nil || *req.WlCharacterID <= 0 {
+		return
+	}
+	worldBloomCharacterID := *req.WlCharacterID
+	line.WlCid = &worldBloomCharacterID
+	if icon := c.resolveCharacterIconPath(worldBloomCharacterID, renderregion.Normalize(req.Region)); icon != "" {
+		line.CharaIconPath = &icon
+	}
 }
 
 func (c *Controller) RenderPredictLineFromTracker(req TrackerRankQuery) ([]byte, error) {

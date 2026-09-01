@@ -401,24 +401,42 @@ func (c *housingCompetitionStatsCache) pruneLocked(now time.Time) {
 	if now.IsZero() {
 		now = time.Now().UTC()
 	}
-	entryTTL := c.entryTTL
-	if entryTTL <= 0 {
-		entryTTL = housingCompetitionStatsEntryTTL
-	}
-	maxEntries := c.maxEntries
-	if maxEntries <= 0 {
-		maxEntries = housingCompetitionStatsMaxEntries
-	}
-	maxBucketEntries := c.maxBucketEntries
-	if maxBucketEntries <= 0 {
-		maxBucketEntries = housingCompetitionStatsMaxEntriesPerBucket
-	}
-	maxBuckets := c.maxBuckets
-	if maxBuckets <= 0 {
-		maxBuckets = housingCompetitionStatsMaxBuckets
-	}
+	limits := c.pruneLimits()
+	c.pruneExpiredBuckets(now.Add(-limits.entryTTL).UnixMilli(), limits.maxBucketEntries)
+	c.trimBuckets(limits.maxBuckets)
+	c.trimEntries(limits.maxEntries)
+}
 
-	cutoffMillis := now.Add(-entryTTL).UnixMilli()
+type housingCompetitionPruneLimits struct {
+	entryTTL         time.Duration
+	maxEntries       int
+	maxBucketEntries int
+	maxBuckets       int
+}
+
+func (c *housingCompetitionStatsCache) pruneLimits() housingCompetitionPruneLimits {
+	limits := housingCompetitionPruneLimits{
+		entryTTL:         c.entryTTL,
+		maxEntries:       c.maxEntries,
+		maxBucketEntries: c.maxBucketEntries,
+		maxBuckets:       c.maxBuckets,
+	}
+	if limits.entryTTL <= 0 {
+		limits.entryTTL = housingCompetitionStatsEntryTTL
+	}
+	if limits.maxEntries <= 0 {
+		limits.maxEntries = housingCompetitionStatsMaxEntries
+	}
+	if limits.maxBucketEntries <= 0 {
+		limits.maxBucketEntries = housingCompetitionStatsMaxEntriesPerBucket
+	}
+	if limits.maxBuckets <= 0 {
+		limits.maxBuckets = housingCompetitionStatsMaxBuckets
+	}
+	return limits
+}
+
+func (c *housingCompetitionStatsCache) pruneExpiredBuckets(cutoffMillis int64, maxBucketEntries int) {
 	for key, bucket := range c.buckets {
 		if bucket == nil {
 			delete(c.buckets, key)
@@ -432,65 +450,79 @@ func (c *housingCompetitionStatsCache) pruneLocked(now time.Time) {
 			delete(c.buckets, key)
 			continue
 		}
-		changed := false
 		if len(bucket.entries) > maxBucketEntries {
 			removeLowestRankedHousingCompetitionEntries(bucket, len(bucket.entries)-maxBucketEntries)
-			changed = true
-		}
-		if changed {
 			bucket.snapshotDirty = true
 		}
 	}
+}
 
-	if len(c.buckets) > maxBuckets {
-		type bucketAge struct {
-			key housingCompetitionStatsCacheKey
-			at  time.Time
-		}
-		ages := make([]bucketAge, 0, len(c.buckets))
-		for key, bucket := range c.buckets {
-			at := bucket.refreshedAt
-			if at.IsZero() {
-				at = bucket.sampledAt
-			}
-			ages = append(ages, bucketAge{key: key, at: at})
-		}
-		sort.Slice(ages, func(i, j int) bool {
-			if !ages[i].at.Equal(ages[j].at) {
-				return ages[i].at.Before(ages[j].at)
-			}
-			if ages[i].key.Region != ages[j].key.Region {
-				return ages[i].key.Region < ages[j].key.Region
-			}
-			return ages[i].key.HousingID < ages[j].key.HousingID
-		})
-		for _, item := range ages[:len(ages)-maxBuckets] {
-			delete(c.buckets, item.key)
-		}
+type housingCompetitionBucketAge struct {
+	key housingCompetitionStatsCacheKey
+	at  time.Time
+}
+
+func (c *housingCompetitionStatsCache) trimBuckets(maxBuckets int) {
+	if len(c.buckets) <= maxBuckets {
+		return
 	}
+	ages := make([]housingCompetitionBucketAge, 0, len(c.buckets))
+	for key, bucket := range c.buckets {
+		at := bucket.refreshedAt
+		if at.IsZero() {
+			at = bucket.sampledAt
+		}
+		ages = append(ages, housingCompetitionBucketAge{key: key, at: at})
+	}
+	sort.Slice(ages, func(i, j int) bool {
+		if !ages[i].at.Equal(ages[j].at) {
+			return ages[i].at.Before(ages[j].at)
+		}
+		if ages[i].key.Region != ages[j].key.Region {
+			return ages[i].key.Region < ages[j].key.Region
+		}
+		return ages[i].key.HousingID < ages[j].key.HousingID
+	})
+	for _, item := range ages[:len(ages)-maxBuckets] {
+		delete(c.buckets, item.key)
+	}
+}
 
+type housingCompetitionGlobalEntryAge struct {
+	bucketKey      housingCompetitionStatsCacheKey
+	entryKey       string
+	bucketActivity int64
+	reviewCount    int
+	lastSeen       int64
+}
+
+func (c *housingCompetitionStatsCache) trimEntries(maxEntries int) {
+	total := c.entryCount()
+	if total <= maxEntries {
+		return
+	}
+	ages := c.globalEntryAges(total)
+	sortHousingCompetitionGlobalEntryAges(ages)
+	c.removeGlobalEntries(ages[:total-maxEntries])
+}
+
+func (c *housingCompetitionStatsCache) entryCount() int {
 	total := 0
 	for _, bucket := range c.buckets {
 		total += len(bucket.entries)
 	}
-	if total <= maxEntries {
-		return
-	}
-	type globalEntryAge struct {
-		bucketKey      housingCompetitionStatsCacheKey
-		entryKey       string
-		bucketActivity int64
-		reviewCount    int
-		lastSeen       int64
-	}
-	ages := make([]globalEntryAge, 0, total)
+	return total
+}
+
+func (c *housingCompetitionStatsCache) globalEntryAges(capacity int) []housingCompetitionGlobalEntryAge {
+	ages := make([]housingCompetitionGlobalEntryAge, 0, capacity)
 	for bucketKey, bucket := range c.buckets {
 		bucketActivity := unixMilliOrZero(bucket.refreshedAt)
 		if bucketActivity <= 0 {
 			bucketActivity = unixMilliOrZero(bucket.sampledAt)
 		}
 		for entryKey, entry := range bucket.entries {
-			ages = append(ages, globalEntryAge{
+			ages = append(ages, housingCompetitionGlobalEntryAge{
 				bucketKey:      bucketKey,
 				entryKey:       entryKey,
 				bucketActivity: bucketActivity,
@@ -499,6 +531,10 @@ func (c *housingCompetitionStatsCache) pruneLocked(now time.Time) {
 			})
 		}
 	}
+	return ages
+}
+
+func sortHousingCompetitionGlobalEntryAges(ages []housingCompetitionGlobalEntryAge) {
 	sort.Slice(ages, func(i, j int) bool {
 		if ages[i].bucketActivity != ages[j].bucketActivity {
 			return ages[i].bucketActivity < ages[j].bucketActivity
@@ -517,7 +553,10 @@ func (c *housingCompetitionStatsCache) pruneLocked(now time.Time) {
 		}
 		return ages[i].entryKey < ages[j].entryKey
 	})
-	for _, item := range ages[:total-maxEntries] {
+}
+
+func (c *housingCompetitionStatsCache) removeGlobalEntries(ages []housingCompetitionGlobalEntryAge) {
+	for _, item := range ages {
 		bucket := c.buckets[item.bucketKey]
 		if bucket == nil {
 			continue

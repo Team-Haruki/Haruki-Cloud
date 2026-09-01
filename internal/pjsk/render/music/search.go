@@ -60,91 +60,114 @@ func (s *SearchService) SearchInfo(info *QueryInfo) (*masterdata.Music, error) {
 
 	switch info.Type {
 	case QueryTypeID:
-		musicInfo, err := s.source.GetMusicByID(info.Value)
-		if err == nil && musicInfo != nil {
-			if isMusicAccessibleAt(musicInfo, now, s.allowUnreleased) {
-				return musicInfo, nil
-			}
-			return nil, releasecheck.New(releasecheck.KindMusic, "", info.Value)
-		}
-		if info.AllowTitleFallback {
-			if fallback := strings.TrimSpace(info.Keyword); fallback != "" {
-				if resolved, fallbackErr := s.resolveTitle(fallback); fallbackErr == nil && resolved != nil {
-					return resolved, nil
-				}
-			}
-		}
-		if err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("music not found: %d", info.Value)
+		return s.searchByID(info, now)
 
 	case QueryTypeSeq:
-		// Sequence lookup should stay anchored to songs that are already
-		// released in the target region, even when title/id lookup is allowed
-		// to peek at unreleased data.
-		musics := accessibleMusicsSortedByPublishedAt(s.source, now, false)
-		if len(musics) == 0 {
-			return nil, fmt.Errorf("no music data available")
-		}
-
-		index := info.Value
-		if index < 0 {
-			index = len(musics) + index
-		} else {
-			index--
-		}
-		if index < 0 || index >= len(musics) {
-			return nil, fmt.Errorf("music index out of range: %d", info.Value)
-		}
-		return musics[index], nil
+		return s.searchBySequence(info.Value, now)
 
 	case QueryTypeEvent:
-		musicInfo, err := s.source.GetMusicByEventID(info.Value)
-		if err != nil {
-			return nil, err
-		}
-		return ensureAccessibleMusic(musicInfo, now, info.Value, s.allowUnreleased)
+		return s.searchByEvent(info.Value, now)
 
 	case QueryTypeBan:
-		if fallback := strings.TrimSpace(info.Keyword); fallback != "" {
-			if resolved, fallbackErr := s.resolveTitle(fallback); fallbackErr == nil && resolved != nil {
-				return resolved, nil
-			} else if fallbackErr != nil && isMusicAmbiguousError(fallbackErr) {
-				return nil, fallbackErr
-			}
-		}
-		events := s.source.GetBanEvents(info.BanCharID)
-		if len(events) == 0 {
-			return nil, fmt.Errorf("no ban events found for character %d", info.BanCharID)
-		}
-		if info.BanSeq < 1 || info.BanSeq > len(events) {
-			return nil, fmt.Errorf("ban event index out of range: %d", info.BanSeq)
-		}
-		musicInfo, err := s.source.GetMusicByEventID(events[info.BanSeq-1].ID)
-		if err != nil {
-			return nil, err
-		}
-		return ensureAccessibleMusic(musicInfo, now, events[info.BanSeq-1].ID, s.allowUnreleased)
+		return s.searchByBan(info, now)
 
 	case QueryTypeTitle, QueryTypeChart:
-		if info.MusicID != 0 {
-			if musicInfo, err := s.source.GetMusicByID(info.MusicID); err == nil && musicInfo != nil {
-				return ensureAccessibleMusic(musicInfo, now, info.MusicID, s.allowUnreleased)
-			}
-		}
-		keyword := strings.TrimSpace(info.Keyword)
-		if keyword == "" {
-			if info.MusicID != 0 {
-				return nil, fmt.Errorf("music not found: %d", info.MusicID)
-			}
-			return nil, fmt.Errorf("music title query is empty")
-		}
-		return s.resolveTitle(keyword)
+		return s.searchByTitleOrChart(info, now)
 
 	default:
 		return nil, fmt.Errorf("unsupported music query type: %d", info.Type)
 	}
+}
+
+func (s *SearchService) searchByID(info *QueryInfo, now int64) (*masterdata.Music, error) {
+	musicInfo, err := s.source.GetMusicByID(info.Value)
+	if err == nil && musicInfo != nil {
+		if isMusicAccessibleAt(musicInfo, now, s.allowUnreleased) {
+			return musicInfo, nil
+		}
+		return nil, releasecheck.New(releasecheck.KindMusic, "", info.Value)
+	}
+	if info.AllowTitleFallback {
+		if resolved := s.resolveTitleFallback(info.Keyword); resolved != nil {
+			return resolved, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return nil, fmt.Errorf("music not found: %d", info.Value)
+}
+
+func (s *SearchService) resolveTitleFallback(keyword string) *masterdata.Music {
+	fallback := strings.TrimSpace(keyword)
+	if fallback == "" {
+		return nil
+	}
+	resolved, err := s.resolveTitle(fallback)
+	if err != nil {
+		return nil
+	}
+	return resolved
+}
+
+func (s *SearchService) searchBySequence(sequence int, now int64) (*masterdata.Music, error) {
+	// Sequence lookup stays anchored to songs released in the target region.
+	musics := accessibleMusicsSortedByPublishedAt(s.source, now, false)
+	if len(musics) == 0 {
+		return nil, fmt.Errorf("no music data available")
+	}
+	index := sequence - 1
+	if sequence < 0 {
+		index = len(musics) + sequence
+	}
+	if index < 0 || index >= len(musics) {
+		return nil, fmt.Errorf("music index out of range: %d", sequence)
+	}
+	return musics[index], nil
+}
+
+func (s *SearchService) searchByEvent(eventID int, now int64) (*masterdata.Music, error) {
+	musicInfo, err := s.source.GetMusicByEventID(eventID)
+	if err != nil {
+		return nil, err
+	}
+	return ensureAccessibleMusic(musicInfo, now, eventID, s.allowUnreleased)
+}
+
+func (s *SearchService) searchByBan(info *QueryInfo, now int64) (*masterdata.Music, error) {
+	if fallback := strings.TrimSpace(info.Keyword); fallback != "" {
+		resolved, err := s.resolveTitle(fallback)
+		if err == nil && resolved != nil {
+			return resolved, nil
+		}
+		if err != nil && isMusicAmbiguousError(err) {
+			return nil, err
+		}
+	}
+	events := s.source.GetBanEvents(info.BanCharID)
+	if len(events) == 0 {
+		return nil, fmt.Errorf("no ban events found for character %d", info.BanCharID)
+	}
+	if info.BanSeq < 1 || info.BanSeq > len(events) {
+		return nil, fmt.Errorf("ban event index out of range: %d", info.BanSeq)
+	}
+	return s.searchByEvent(events[info.BanSeq-1].ID, now)
+}
+
+func (s *SearchService) searchByTitleOrChart(info *QueryInfo, now int64) (*masterdata.Music, error) {
+	if info.MusicID != 0 {
+		if musicInfo, err := s.source.GetMusicByID(info.MusicID); err == nil && musicInfo != nil {
+			return ensureAccessibleMusic(musicInfo, now, info.MusicID, s.allowUnreleased)
+		}
+	}
+	keyword := strings.TrimSpace(info.Keyword)
+	if keyword != "" {
+		return s.resolveTitle(keyword)
+	}
+	if info.MusicID != 0 {
+		return nil, fmt.Errorf("music not found: %d", info.MusicID)
+	}
+	return nil, fmt.Errorf("music title query is empty")
 }
 
 func (s *SearchService) resolveTitle(query string) (*masterdata.Music, error) {

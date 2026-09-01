@@ -39,75 +39,17 @@ import (
 )
 
 func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *App {
-	cfg.DefaultRegion = renderregion.WithDefault(cfg.DefaultRegion)
-	initCtx := cfg.InitContext
-	if initCtx == nil {
-		initCtx = context.Background()
-	}
-	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, cfg.MusicMetaOutputDir)
-	if cfg.SharedUpstreamResources == nil {
-		cfg.SharedUpstreamResources = &upstream.SharedResources{}
-	}
-
-	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
-	var snapshotService snapshot.Snapshot
-	if shouldEnableLocalSnapshotFallback(cfg) {
-		snapshotService = snapshot.NewLocalFileServiceWithContext(initCtx, sekaiClient, assetHelper, snapshot.LocalFileConfig{
-			DefaultRegion: cfg.DefaultRegion,
-			UserJSON:      cfg.UserSnapshot.UserJSON,
-			MusicMetaJSON: cfg.UserSnapshot.MusicMetaJSON,
-			MySekaiJSON:   cfg.UserSnapshot.MySekaiJSON,
-		})
-	}
-	var staticSnapshotProvider snapshot.HarukiSnapshotProvider
-	if snapshotService != nil {
-		staticSnapshotProvider = snapshot.NewStaticSnapshotProvider(snapshotService)
-	}
-
-	var options []drawing.ClientOption
-	if cfg.DrawingTimeout > 0 {
-		options = append(options, drawing.WithTimeout(cfg.DrawingTimeout))
-	}
-	if cfg.DrawingRetryCount > 0 {
-		options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
-	}
-	if cfg.DrawingSKMaxConcurrency > 0 || cfg.DrawingSKAcquireTimeout > 0 || cfg.DrawingMaxConcurrency > 0 {
-		options = append(options, drawing.WithLimiter(drawing.LimiterConfig{
-			SKMaxConcurrency: cfg.DrawingSKMaxConcurrency,
-			SKAcquireTimeout: cfg.DrawingSKAcquireTimeout,
-			MaxConcurrency:   cfg.DrawingMaxConcurrency,
-		}))
-	}
-
-	var imgStore *imagecache.PGStore
-	if cfg.ImageCachePGURL != "" {
-		if store, err := imagecache.NewPGStore(cfg.ImageCachePGURL); err == nil {
-			if err := store.Init(initCtx); err == nil {
-				imgStore = store
-			} else {
-				_ = store.Close()
-			}
-		}
-	}
-
-	drawingCacheCfg := cfg.DrawingCache
-	drawingCacheCfg.ImageCacheDir = cfg.ImageCacheDir
-	drawingCacheCfg.ImageStore = imgStore
-	drawingClient := drawing.NewHarukiDrawingClientWithTargetsAndResources(cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, options...)
-	if drawingClient != nil {
-		drawingClient.SetRenderCache(drawing.NewRenderCacheClient(drawingCacheCfg))
-	}
-
+	initCtx := normalizeAppConfig(&cfg)
+	dependencies := newAppDependencies(initCtx, sekaiClient, cfg)
+	assetHelper := dependencies.assets
+	snapshotService := dependencies.snapshots
+	staticSnapshotProvider := dependencies.staticSnapshots
+	drawingClient := dependencies.drawing
+	imgStore := dependencies.imageStore
 	miscController := misc.NewController(drawingClient)
-	localMasterdataFallback := shouldEnableLocalMasterdataFallback(cfg)
-	localMasterdataDir := ""
-	if localMasterdataFallback {
-		localMasterdataDir = resolveRenderProviderMasterdataDir(cfg)
-	}
-	inventoryMasterdataDir := localMasterdataDir
-	if inventoryMasterdataDir == "" && strings.TrimSpace(cfg.LocalMasterdata.Dir) != "" {
-		inventoryMasterdataDir = resolveRenderProviderMasterdataDirFromWD(cfg, currentWorkingDir())
-	}
+	localMasterdataFallback := dependencies.localMasterdataFallback
+	localMasterdataDir := dependencies.localMasterdataDir
+	inventoryMasterdataDir := dependencies.inventoryMasterdataDir
 	mysekaiController := mysekai.NewController(drawingClient, snapshotService, cfg.DefaultRegion, assetHelper, mysekai.MasterdataOptions{
 		SekaiDSN:                          cfg.SekaiDSN,
 		LocalDir:                          localMasterdataDir,
@@ -119,138 +61,28 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	inventoryController := inventory.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, inventory.MasterdataOptions{
 		LocalDir: inventoryMasterdataDir,
 	})
-	musicController := (*music.Controller)(nil)
-	deckController := deck.NewControllerWithConfig(nil, nil, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
-		Enabled:                   cfg.DeckRecommend.Enabled,
-		Disable:                   cfg.DeckRecommend.Disable,
-		DisableReason:             cfg.DeckRecommend.DisableReason,
-		ServiceBaseURL:            cfg.DeckRecommend.ServiceBaseURL,
-		Targets:                   slices.Clone(cfg.DeckRecommend.Targets),
-		SharedResources:           cfg.SharedUpstreamResources,
-		MasterdataDir:             cfg.DeckRecommend.MasterdataDir,
-		MasterdataRefreshInterval: cfg.DeckRecommend.MasterdataRefreshInterval,
-		Timeout:                   cfg.DeckRecommend.Timeout,
-		MaxRetries:                cfg.DeckRecommend.MaxRetries,
-		RetryWaitTime:             cfg.DeckRecommend.RetryWaitTime,
-		DefaultAlgs:               slices.Clone(cfg.DeckRecommend.DefaultAlgs),
-	}, cfg.MetaLoader)
+	deckController := newAppDeckController(nil, nil, drawingClient, assetHelper, snapshotService, cfg)
 	educationController := education.NewController(drawingClient, assetHelper, snapshotService, cfg.DefaultRegion)
 	scoreController := score.NewController(drawingClient)
 	skController := sk.NewControllerWithConfig(drawingClient, cfg.SKForecast)
 	skController.SetTrackerIntegration(cfg.Tracker, nil, assetHelper)
 
-	var cardController *card.Controller
-	var costumeController *costume.Controller
-	var eventController *event.Controller
-	var gachaController *gacha.Controller
-	var honorController *honor.Controller
-	var profileController *profile.Controller
-	var stampController *stamp.Controller
-	var vliveController *vlive.Controller
-	var masterProvider provider.MasterDataProvider
-	providersByRegion := make(map[renderregion.Value]provider.MasterDataProvider)
-	registerProvider := func(src provider.MasterDataProvider) {
-		if src == nil {
-			return
-		}
-		region := renderregion.WithDefault(src.Region())
-		providersByRegion[region] = src
-		if masterProvider == nil {
-			masterProvider = src
-		}
-	}
-	if sekaiClient != nil {
-		masterDBProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN))
-		if localMasterdataFallback {
-			masterDBProvider.SetLocalMasterdataDir(localMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
-		}
-		registerProvider(masterDBProvider)
-
-		// Create module adapters from the unified provider
-		cardAdapter := card.NewProviderAdapter(masterProvider)
-		costumeAdapter := costume.NewProviderAdapter(masterProvider)
-		eventAdapter := event.NewProviderAdapter(masterProvider)
-		musicAdapter := music.NewProviderAdapter(masterProvider)
-		gachaAdapter := gacha.NewProviderAdapter(masterProvider)
-		honorAdapter := honor.NewProviderAdapter(masterProvider)
-		stampAdapter := stamp.NewProviderAdapter(masterProvider)
-		vliveAdapter := vlive.NewProviderAdapter(masterProvider)
-		profileAdapter := profile.NewProviderAdapter(masterProvider)
-		educationAdapter := education.NewProviderAdapter(masterProvider)
-
-		// Initialize controllers with provider adapters.
-		skController.SetTrackerIntegration(cfg.Tracker, eventAdapter, assetHelper)
-		deckController = deck.NewControllerWithConfig(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
-			Enabled:                   cfg.DeckRecommend.Enabled,
-			Disable:                   cfg.DeckRecommend.Disable,
-			DisableReason:             cfg.DeckRecommend.DisableReason,
-			ServiceBaseURL:            cfg.DeckRecommend.ServiceBaseURL,
-			Targets:                   slices.Clone(cfg.DeckRecommend.Targets),
-			SharedResources:           cfg.SharedUpstreamResources,
-			MasterdataDir:             cfg.DeckRecommend.MasterdataDir,
-			MasterdataRefreshInterval: cfg.DeckRecommend.MasterdataRefreshInterval,
-			Timeout:                   cfg.DeckRecommend.Timeout,
-			MaxRetries:                cfg.DeckRecommend.MaxRetries,
-			RetryWaitTime:             cfg.DeckRecommend.RetryWaitTime,
-			DefaultAlgs:               slices.Clone(cfg.DeckRecommend.DefaultAlgs),
-		}, cfg.MetaLoader)
-		deckController.RegisterMusicSource(musicAdapter)
-		cardController = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
-		costumeController = costume.NewController(costumeAdapter, drawingClient, assetHelper)
-		costumeController.Set3DPreviewConfig(cfg.Preview3D)
-		educationController.RegisterSource(educationAdapter)
-		eventController = event.NewController(eventAdapter, drawingClient, assetHelper)
-		gachaController = gacha.NewController(gachaAdapter, drawingClient, assetHelper)
-		honorController = honor.NewController(honorAdapter, drawingClient, assetHelper)
-		musicController = music.NewController(musicAdapter, drawingClient, assetHelper, snapshotService, cfg.MetaLoader)
-		musicController.SetCustomMusicScoreClient(cfg.SekaiAPI)
-		profileController = profile.NewController(profileAdapter, drawingClient, assetHelper, snapshotService)
-		stampController = stamp.NewController(stampAdapter, drawingClient, assetHelper)
-		vliveController = vlive.NewControllerWithDrawing(vliveAdapter, drawingClient, assetHelper, cfg.DefaultRegion)
-
-		for _, region := range []renderregion.Value{
-			renderregion.JP,
-			renderregion.CN,
-			renderregion.TW,
-			renderregion.KR,
-			renderregion.EN,
-		} {
-			if renderregion.WithDefault(region) == renderregion.WithDefault(cfg.DefaultRegion) {
-				continue
-			}
-			regionProvider := provider.NewDatabaseProvider(sekaiClient, region, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN))
-			if localMasterdataFallback {
-				regionProvider.SetLocalMasterdataDir(localMasterdataDir, cfg.LocalMasterdata.AllowLeaks)
-			}
-			registerProvider(regionProvider)
-			regionCardAdapter := card.NewProviderAdapter(regionProvider)
-			regionCostumeAdapter := costume.NewProviderAdapter(regionProvider)
-			regionEventAdapter := event.NewProviderAdapter(regionProvider)
-			regionMusicAdapter := music.NewProviderAdapter(regionProvider)
-			regionGachaAdapter := gacha.NewProviderAdapter(regionProvider)
-			regionHonorAdapter := honor.NewProviderAdapter(regionProvider)
-			regionStampAdapter := stamp.NewProviderAdapter(regionProvider)
-			regionVLiveAdapter := vlive.NewProviderAdapter(regionProvider)
-			regionProfileAdapter := profile.NewProviderAdapter(regionProvider)
-			regionEducationAdapter := education.NewProviderAdapter(regionProvider)
-
-			cardController.RegisterSource(regionCardAdapter)
-			cardController.RegisterEventSource(regionEventAdapter)
-			costumeController.RegisterSource(regionCostumeAdapter)
-			deckController.RegisterCardSource(regionCardAdapter)
-			deckController.RegisterEventSource(regionEventAdapter)
-			deckController.RegisterMusicSource(regionMusicAdapter)
-			educationController.RegisterSource(regionEducationAdapter)
-			eventController.RegisterSource(regionEventAdapter)
-			gachaController.RegisterSource(regionGachaAdapter)
-			honorController.RegisterSource(regionHonorAdapter)
-			musicController.RegisterSource(regionMusicAdapter)
-			profileController.RegisterSource(regionProfileAdapter)
-			skController.RegisterEventSource(regionEventAdapter)
-			stampController.RegisterSource(regionStampAdapter)
-			vliveController.RegisterSource(regionVLiveAdapter)
-		}
-	}
+	databaseControllers := configureAppDatabaseControllers(
+		sekaiClient, cfg, localMasterdataFallback, localMasterdataDir, drawingClient, assetHelper,
+		snapshotService, deckController, educationController, skController,
+	)
+	deckController = databaseControllers.decks
+	musicController := databaseControllers.music
+	cardController := databaseControllers.cards
+	costumeController := databaseControllers.costumes
+	eventController := databaseControllers.events
+	gachaController := databaseControllers.gachas
+	honorController := databaseControllers.honors
+	profileController := databaseControllers.profiles
+	stampController := databaseControllers.stamps
+	vliveController := databaseControllers.virtual
+	masterProvider := databaseControllers.provider
+	providersByRegion := databaseControllers.providers
 
 	aliasService := pjskalias.NewService(sekaiClient, pjskClient, nil)
 	if aliasService != nil {
@@ -317,6 +149,221 @@ func New(sekaiClient *sekaiDB.Client, pjskClient *pjskDB.Client, cfg Config) *Ap
 	}
 	mysekaiController.StartHousingCompetitionStatsRefresh(initCtx, cfg.SekaiAPI, cfg.DefaultRegion.String())
 	return runtime
+}
+
+type appDependencies struct {
+	assets                  *assets.AssetHelper
+	snapshots               snapshot.Snapshot
+	staticSnapshots         snapshot.HarukiSnapshotProvider
+	drawing                 *drawing.HarukiDrawingClient
+	imageStore              *imagecache.PGStore
+	localMasterdataFallback bool
+	localMasterdataDir      string
+	inventoryMasterdataDir  string
+}
+
+type appDatabaseControllers struct {
+	cards     *card.Controller
+	costumes  *costume.Controller
+	decks     *deck.Controller
+	events    *event.Controller
+	gachas    *gacha.Controller
+	honors    *honor.Controller
+	music     *music.Controller
+	profiles  *profile.Controller
+	stamps    *stamp.Controller
+	virtual   *vlive.Controller
+	provider  provider.MasterDataProvider
+	providers map[renderregion.Value]provider.MasterDataProvider
+}
+
+func configureAppDatabaseControllers(sekaiClient *sekaiDB.Client, cfg Config, localFallback bool, localDir string, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshotService snapshot.Snapshot, decks *deck.Controller, educationController *education.Controller, skController *sk.Controller) appDatabaseControllers {
+	controllers := appDatabaseControllers{decks: decks, providers: make(map[renderregion.Value]provider.MasterDataProvider)}
+	if sekaiClient == nil {
+		return controllers
+	}
+	controllers.configureDefaultProvider(sekaiClient, cfg, localFallback, localDir, drawingClient, assetHelper, snapshotService, educationController, skController)
+	controllers.configureRegionProviders(sekaiClient, cfg, localFallback, localDir, educationController, skController)
+	return controllers
+}
+
+func (c *appDatabaseControllers) registerProvider(source provider.MasterDataProvider) {
+	if source == nil {
+		return
+	}
+	region := renderregion.WithDefault(source.Region())
+	c.providers[region] = source
+	if c.provider == nil {
+		c.provider = source
+	}
+}
+
+func (c *appDatabaseControllers) configureDefaultProvider(sekaiClient *sekaiDB.Client, cfg Config, localFallback bool, localDir string, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshotService snapshot.Snapshot, educationController *education.Controller, skController *sk.Controller) {
+	databaseProvider := provider.NewDatabaseProvider(sekaiClient, cfg.DefaultRegion, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN))
+	if localFallback {
+		databaseProvider.SetLocalMasterdataDir(localDir, cfg.LocalMasterdata.AllowLeaks)
+	}
+	c.registerProvider(databaseProvider)
+	cardAdapter := card.NewProviderAdapter(c.provider)
+	costumeAdapter := costume.NewProviderAdapter(c.provider)
+	eventAdapter := event.NewProviderAdapter(c.provider)
+	musicAdapter := music.NewProviderAdapter(c.provider)
+	skController.SetTrackerIntegration(cfg.Tracker, eventAdapter, assetHelper)
+	c.decks = newAppDeckController(cardAdapter, eventAdapter, drawingClient, assetHelper, snapshotService, cfg)
+	c.decks.RegisterMusicSource(musicAdapter)
+	c.cards = card.NewController(cardAdapter, eventAdapter, drawingClient, assetHelper)
+	c.costumes = costume.NewController(costumeAdapter, drawingClient, assetHelper)
+	c.costumes.Set3DPreviewConfig(cfg.Preview3D)
+	educationController.RegisterSource(education.NewProviderAdapter(c.provider))
+	c.events = event.NewController(eventAdapter, drawingClient, assetHelper)
+	c.gachas = gacha.NewController(gacha.NewProviderAdapter(c.provider), drawingClient, assetHelper)
+	c.honors = honor.NewController(honor.NewProviderAdapter(c.provider), drawingClient, assetHelper)
+	c.music = music.NewController(musicAdapter, drawingClient, assetHelper, snapshotService, cfg.MetaLoader)
+	c.music.SetCustomMusicScoreClient(cfg.SekaiAPI)
+	c.profiles = profile.NewController(profile.NewProviderAdapter(c.provider), drawingClient, assetHelper, snapshotService)
+	c.stamps = stamp.NewController(stamp.NewProviderAdapter(c.provider), drawingClient, assetHelper)
+	c.virtual = vlive.NewControllerWithDrawing(vlive.NewProviderAdapter(c.provider), drawingClient, assetHelper, cfg.DefaultRegion)
+}
+
+func (c *appDatabaseControllers) configureRegionProviders(sekaiClient *sekaiDB.Client, cfg Config, localFallback bool, localDir string, educationController *education.Controller, skController *sk.Controller) {
+	regions := []renderregion.Value{renderregion.JP, renderregion.CN, renderregion.TW, renderregion.KR, renderregion.EN}
+	for _, region := range regions {
+		if renderregion.WithDefault(region) == renderregion.WithDefault(cfg.DefaultRegion) {
+			continue
+		}
+		c.configureRegionProvider(sekaiClient, region, cfg, localFallback, localDir, educationController, skController)
+	}
+}
+
+func (c *appDatabaseControllers) configureRegionProvider(sekaiClient *sekaiDB.Client, region renderregion.Value, cfg Config, localFallback bool, localDir string, educationController *education.Controller, skController *sk.Controller) {
+	regionProvider := provider.NewDatabaseProvider(sekaiClient, region, provider.WithSekaiDatabase(cfg.SekaiDBType, cfg.SekaiDSN))
+	if localFallback {
+		regionProvider.SetLocalMasterdataDir(localDir, cfg.LocalMasterdata.AllowLeaks)
+	}
+	c.registerProvider(regionProvider)
+	cardAdapter := card.NewProviderAdapter(regionProvider)
+	eventAdapter := event.NewProviderAdapter(regionProvider)
+	c.cards.RegisterSource(cardAdapter)
+	c.cards.RegisterEventSource(eventAdapter)
+	c.costumes.RegisterSource(costume.NewProviderAdapter(regionProvider))
+	c.decks.RegisterCardSource(cardAdapter)
+	c.decks.RegisterEventSource(eventAdapter)
+	c.decks.RegisterMusicSource(music.NewProviderAdapter(regionProvider))
+	educationController.RegisterSource(education.NewProviderAdapter(regionProvider))
+	c.events.RegisterSource(eventAdapter)
+	c.gachas.RegisterSource(gacha.NewProviderAdapter(regionProvider))
+	c.honors.RegisterSource(honor.NewProviderAdapter(regionProvider))
+	c.music.RegisterSource(music.NewProviderAdapter(regionProvider))
+	c.profiles.RegisterSource(profile.NewProviderAdapter(regionProvider))
+	skController.RegisterEventSource(eventAdapter)
+	c.stamps.RegisterSource(stamp.NewProviderAdapter(regionProvider))
+	c.virtual.RegisterSource(vlive.NewProviderAdapter(regionProvider))
+}
+
+func newAppDeckController(cardProvider deck.CardSource, eventProvider deck.EventSource, drawingClient *drawing.HarukiDrawingClient, assetHelper *assets.AssetHelper, snapshotService snapshot.Snapshot, cfg Config) *deck.Controller {
+	return deck.NewControllerWithConfig(cardProvider, eventProvider, drawingClient, assetHelper, snapshotService, cfg.DefaultRegion, deck.RecommendConfig{
+		Enabled: cfg.DeckRecommend.Enabled, Disable: cfg.DeckRecommend.Disable,
+		DisableReason: cfg.DeckRecommend.DisableReason, ServiceBaseURL: cfg.DeckRecommend.ServiceBaseURL,
+		Targets: slices.Clone(cfg.DeckRecommend.Targets), SharedResources: cfg.SharedUpstreamResources,
+		MasterdataDir: cfg.DeckRecommend.MasterdataDir, MasterdataRefreshInterval: cfg.DeckRecommend.MasterdataRefreshInterval,
+		Timeout: cfg.DeckRecommend.Timeout, MaxRetries: cfg.DeckRecommend.MaxRetries,
+		RetryWaitTime: cfg.DeckRecommend.RetryWaitTime, DefaultAlgs: slices.Clone(cfg.DeckRecommend.DefaultAlgs),
+	}, cfg.MetaLoader)
+}
+
+func normalizeAppConfig(cfg *Config) context.Context {
+	cfg.DefaultRegion = renderregion.WithDefault(cfg.DefaultRegion)
+	initCtx := cfg.InitContext
+	if initCtx == nil {
+		initCtx = context.Background()
+	}
+	cfg.MetaLoader = resolveMetaLoader(initCtx, cfg.MetaLoader, cfg.MusicMetaRefreshInterval, cfg.MusicMetaOutputDir)
+	if cfg.SharedUpstreamResources == nil {
+		cfg.SharedUpstreamResources = &upstream.SharedResources{}
+	}
+	return initCtx
+}
+
+func newAppDependencies(initCtx context.Context, sekaiClient *sekaiDB.Client, cfg Config) appDependencies {
+	assetHelper := assets.NewAssetHelper(cfg.AssetPrimaryDir, cfg.AssetLegacyDirs)
+	snapshotService, staticSnapshotProvider := newAppSnapshotServices(initCtx, sekaiClient, assetHelper, cfg)
+	drawingClient, imageStore := newAppDrawingClient(initCtx, cfg)
+	localFallback, localDir, inventoryDir := appMasterdataDirs(cfg)
+	return appDependencies{
+		assets: assetHelper, snapshots: snapshotService, staticSnapshots: staticSnapshotProvider,
+		drawing: drawingClient, imageStore: imageStore, localMasterdataFallback: localFallback,
+		localMasterdataDir: localDir, inventoryMasterdataDir: inventoryDir,
+	}
+}
+
+func newAppSnapshotServices(initCtx context.Context, sekaiClient *sekaiDB.Client, assetHelper *assets.AssetHelper, cfg Config) (snapshot.Snapshot, snapshot.HarukiSnapshotProvider) {
+	if !shouldEnableLocalSnapshotFallback(cfg) {
+		return nil, nil
+	}
+	service := snapshot.NewLocalFileServiceWithContext(initCtx, sekaiClient, assetHelper, snapshot.LocalFileConfig{
+		DefaultRegion: cfg.DefaultRegion, UserJSON: cfg.UserSnapshot.UserJSON,
+		MusicMetaJSON: cfg.UserSnapshot.MusicMetaJSON, MySekaiJSON: cfg.UserSnapshot.MySekaiJSON,
+	})
+	return service, snapshot.NewStaticSnapshotProvider(service)
+}
+
+func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDrawingClient, *imagecache.PGStore) {
+	imageStore := openAppImageStore(initCtx, cfg.ImageCachePGURL)
+	cacheConfig := cfg.DrawingCache
+	cacheConfig.ImageCacheDir = cfg.ImageCacheDir
+	cacheConfig.ImageStore = imageStore
+	client := drawing.NewHarukiDrawingClientWithTargetsAndResources(
+		cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, appDrawingOptions(cfg)...,
+	)
+	if client != nil {
+		client.SetRenderCache(drawing.NewRenderCacheClient(cacheConfig))
+	}
+	return client, imageStore
+}
+
+func appDrawingOptions(cfg Config) []drawing.ClientOption {
+	var options []drawing.ClientOption
+	if cfg.DrawingTimeout > 0 {
+		options = append(options, drawing.WithTimeout(cfg.DrawingTimeout))
+	}
+	if cfg.DrawingRetryCount > 0 {
+		options = append(options, drawing.WithRetryCount(cfg.DrawingRetryCount))
+	}
+	if cfg.DrawingSKMaxConcurrency > 0 || cfg.DrawingSKAcquireTimeout > 0 || cfg.DrawingMaxConcurrency > 0 {
+		options = append(options, drawing.WithLimiter(drawing.LimiterConfig{
+			SKMaxConcurrency: cfg.DrawingSKMaxConcurrency, SKAcquireTimeout: cfg.DrawingSKAcquireTimeout,
+			MaxConcurrency: cfg.DrawingMaxConcurrency,
+		}))
+	}
+	return options
+}
+
+func openAppImageStore(initCtx context.Context, url string) *imagecache.PGStore {
+	if url == "" {
+		return nil
+	}
+	store, err := imagecache.NewPGStore(url)
+	if err != nil {
+		return nil
+	}
+	if err := store.Init(initCtx); err != nil {
+		_ = store.Close()
+		return nil
+	}
+	return store
+}
+
+func appMasterdataDirs(cfg Config) (bool, string, string) {
+	localFallback := shouldEnableLocalMasterdataFallback(cfg)
+	localDir := ""
+	if localFallback {
+		localDir = resolveRenderProviderMasterdataDir(cfg)
+	}
+	inventoryDir := localDir
+	if inventoryDir == "" && strings.TrimSpace(cfg.LocalMasterdata.Dir) != "" {
+		inventoryDir = resolveRenderProviderMasterdataDirFromWD(cfg, currentWorkingDir())
+	}
+	return localFallback, localDir, inventoryDir
 }
 
 func shouldEnableLocalMasterdataFallback(cfg Config) bool {

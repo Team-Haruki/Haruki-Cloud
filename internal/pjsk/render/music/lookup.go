@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
 var susLinePattern = regexp.MustCompile(`^#([A-Za-z0-9]{3})([A-Za-z0-9]{2})\s*:\s*(\S+)`)
@@ -26,57 +28,9 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 		return nil, err
 	}
 
-	now := currentMusicVisibilityTime()
-	matches := make([]NoteCountMatch, 0)
-	if finder, ok := source.(noteCountFinder); ok {
-		items, err := finder.FindMusicDifficultiesByNoteCount(query.NoteCount)
-		if err != nil {
-			return nil, err
-		}
-		for _, item := range items {
-			if item == nil {
-				continue
-			}
-			musicInfo, err := source.GetMusicByID(item.MusicID)
-			if err != nil || !isMusicVisibleAt(musicInfo, now) {
-				continue
-			}
-			diff := normalizeDifficulty(item.MusicDifficulty)
-			if targetDifficulty != "" && diff != targetDifficulty {
-				continue
-			}
-			matches = append(matches, NoteCountMatch{
-				Music:          musicInfo,
-				Difficulty:     diff,
-				PlayLevel:      item.PlayLevel,
-				TotalNoteCount: item.TotalNoteCount,
-			})
-		}
-	} else {
-		for _, musicInfo := range source.GetMusics() {
-			if !isMusicVisibleAt(musicInfo, now) {
-				continue
-			}
-			difficulties, err := source.GetMusicDifficulties(musicInfo.ID)
-			if err != nil {
-				continue
-			}
-			for _, item := range difficulties {
-				if item == nil || item.TotalNoteCount != query.NoteCount {
-					continue
-				}
-				diff := normalizeDifficulty(item.MusicDifficulty)
-				if targetDifficulty != "" && diff != targetDifficulty {
-					continue
-				}
-				matches = append(matches, NoteCountMatch{
-					Music:          musicInfo,
-					Difficulty:     diff,
-					PlayLevel:      item.PlayLevel,
-					TotalNoteCount: item.TotalNoteCount,
-				})
-			}
-		}
+	matches, err := findMusicChartsByNoteCount(source, query.NoteCount, targetDifficulty)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(matches) == 0 {
@@ -93,4 +47,61 @@ func (c *Controller) FindMusicChartsByNoteCount(query NoteCountQuery) ([]NoteCou
 		return matches[i].Music.ID < matches[j].Music.ID
 	})
 	return matches, nil
+}
+
+func findMusicChartsByNoteCount(source DataSource, noteCount int, targetDifficulty string) ([]NoteCountMatch, error) {
+	if finder, ok := source.(noteCountFinder); ok {
+		return findIndexedMusicChartsByNoteCount(source, finder, noteCount, targetDifficulty)
+	}
+	return scanMusicChartsByNoteCount(source, noteCount, targetDifficulty), nil
+}
+
+func findIndexedMusicChartsByNoteCount(source DataSource, finder noteCountFinder, noteCount int, targetDifficulty string) ([]NoteCountMatch, error) {
+	items, err := finder.FindMusicDifficultiesByNoteCount(noteCount)
+	if err != nil {
+		return nil, err
+	}
+	now := currentMusicVisibilityTime()
+	matches := make([]NoteCountMatch, 0, len(items))
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		musicInfo, lookupErr := source.GetMusicByID(item.MusicID)
+		if lookupErr != nil || !isMusicVisibleAt(musicInfo, now) {
+			continue
+		}
+		matches = appendNoteCountMatch(matches, musicInfo, item, targetDifficulty)
+	}
+	return matches, nil
+}
+
+func scanMusicChartsByNoteCount(source DataSource, noteCount int, targetDifficulty string) []NoteCountMatch {
+	now := currentMusicVisibilityTime()
+	matches := make([]NoteCountMatch, 0)
+	for _, musicInfo := range source.GetMusics() {
+		if !isMusicVisibleAt(musicInfo, now) {
+			continue
+		}
+		difficulties, err := source.GetMusicDifficulties(musicInfo.ID)
+		if err != nil {
+			continue
+		}
+		for _, item := range difficulties {
+			if item != nil && item.TotalNoteCount == noteCount {
+				matches = appendNoteCountMatch(matches, musicInfo, item, targetDifficulty)
+			}
+		}
+	}
+	return matches
+}
+
+func appendNoteCountMatch(matches []NoteCountMatch, musicInfo *masterdata.Music, item *masterdata.MusicDifficulty, targetDifficulty string) []NoteCountMatch {
+	difficulty := normalizeDifficulty(item.MusicDifficulty)
+	if targetDifficulty != "" && difficulty != targetDifficulty {
+		return matches
+	}
+	return append(matches, NoteCountMatch{
+		Music: musicInfo, Difficulty: difficulty, PlayLevel: item.PlayLevel, TotalNoteCount: item.TotalNoteCount,
+	})
 }

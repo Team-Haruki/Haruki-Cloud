@@ -55,107 +55,13 @@ func (s *HarrukiSekaiHandlerContext) SetArgs(args string) {
 
 func (skh *HarukiSekaiCommandHandler) Handle(ctx Context) (*CommandRequest, error) {
 	if skh.handleFunc == nil {
-		cmdName := "未定义"
-		if len(skh.Commands) > 0 {
-			cmdName = skh.Commands[0]
-		}
-		return nil, fmt.Errorf("sekai 命令处理器 %s 没有处理方法", cmdName)
+		return nil, skh.missingHandleFuncError()
 	}
 
-	var cmdRegion renderregion.Value
-	explicitRegion := false
 	originalTriggerCmd := ctx.GetTriggerCmd()
-	triggerCmd := originalTriggerCmd
-	for _, region := range skh.Regions {
-		cmdRegionPrefix := fmt.Sprintf("/%s", string(region))
-		if strings.HasPrefix(triggerCmd, cmdRegionPrefix) {
-			cmdRegion = region
-			explicitRegion = true
-			triggerCmd = strings.Replace(triggerCmd, cmdRegionPrefix, "/", 1)
-			break
-		}
-	}
-
-	prefixArg := ""
-	bestPrefixLen := -1
-	for _, prefix := range skh.PrefixArgs {
-		cmdPrefix := fmt.Sprintf("/%s", prefix)
-		if strings.HasPrefix(triggerCmd, cmdPrefix) {
-			if len(cmdPrefix) <= bestPrefixLen {
-				continue
-			}
-			prefixArg = prefix
-			bestPrefixLen = len(cmdPrefix)
-		}
-	}
-	if bestPrefixLen >= 0 {
-		triggerCmd = strings.Replace(triggerCmd, fmt.Sprintf("/%s", prefixArg), "/", 1)
-	}
-
-	if cmdRegion.IsZero() && len(skh.Regions) > 0 {
-		cmdRegion = skh.Regions[0]
-	}
-
-	args := ctx.GetArgs()
-
-	ext := parser.NewExtractor(nil)
-	flags := make(map[string]bool)
-
-	regRes := ext.ExtractRegion(args)
-	if regRes.Value != "" {
-		normalized := renderregion.Normalize(regRes.Value)
-		if !normalized.IsZero() {
-			cmdRegion = normalized
-			explicitRegion = true
-		}
-	}
-	args = regRes.Remaining
-
-	verbRes := ext.ExtractVerbose(args)
-	flags["is_verbose"] = verbRes.Value
-	args = verbRes.Remaining
-
-	preRes := ext.ExtractPreview(args)
-	flags["is_preview"] = preRes.Value
-	args = preRes.Remaining
-
-	helpRes := ext.ExtractHelp(args)
-	flags["is_help"] = helpRes.Value
-	args = helpRes.Remaining
-	uidArg := ""
-
-	if skh.shouldParseUIDArg() {
-		uidRes := ext.ExtractUid(args)
-		if uidRes.Found {
-			uidArg = uidRes.Value
-			args = uidRes.Remaining
-		}
-		if atIDs := ctx.GetAtIds(); len(atIDs) > 0 {
-			uidArg = "@" + atIDs[0]
-		}
-	}
-
-	skCtx := HarrukiSekaiHandlerContext{
-		Context:            ctx,
-		Platform:           ctx.GetPlatform(),
-		TriggerCmd:         triggerCmd,
-		ArgText:            args,
-		MessageType:        ctx.GetMessageType(),
-		Message:            ctx.GetMessage(),
-		Event:              ctx.GetEvent(),
-		MessageId:          ctx.GetMessageId(),
-		UserId:             ctx.GetUserId(),
-		SenderName:         ctx.GetSenderName(),
-		GroupId:            ctx.GetGroupId(),
-		AtIds:              ctx.GetAtIds(),
-		region:             cmdRegion,
-		explicitRegion:     explicitRegion,
-		originalTriggerCmd: originalTriggerCmd,
-		prefixArg:          prefixArg,
-		uidArg:             uidArg,
-		flags:              flags,
-	}
-	if flags["is_help"] {
+	input := skh.parseHandlerInput(ctx, originalTriggerCmd)
+	skCtx := buildSekaiHandlerContext(ctx, input, originalTriggerCmd)
+	if input.flags["is_help"] {
 		resolved := makeCommandRequest(skCtx, parser.ModuleHelp, "help")
 		skh.attachCommandMetadata(resolved, originalTriggerCmd)
 		return resolved, nil
@@ -169,6 +75,117 @@ func (skh *HarukiSekaiCommandHandler) Handle(ctx Context) (*CommandRequest, erro
 		resolved.executor = skh.executor
 	}
 	return resolved, nil
+}
+
+func (skh *HarukiSekaiCommandHandler) missingHandleFuncError() error {
+	commandName := "未定义"
+	if len(skh.Commands) > 0 {
+		commandName = skh.Commands[0]
+	}
+	return fmt.Errorf("sekai 命令处理器 %s 没有处理方法", commandName)
+}
+
+type sekaiHandlerInput struct {
+	trigger        string
+	args           string
+	region         renderregion.Value
+	explicitRegion bool
+	prefixArg      string
+	uidArg         string
+	flags          map[string]bool
+}
+
+func (skh *HarukiSekaiCommandHandler) parseHandlerInput(ctx Context, trigger string) sekaiHandlerInput {
+	input := resolveSekaiTrigger(skh.Regions, skh.PrefixArgs, trigger)
+	input.args = ctx.GetArgs()
+	extractor := parser.NewExtractor(nil)
+	regionResult := extractor.ExtractRegion(input.args)
+	input.args = regionResult.Remaining
+	if normalized := renderregion.Normalize(regionResult.Value); !normalized.IsZero() {
+		input.region = normalized
+		input.explicitRegion = true
+	}
+	verboseResult := extractor.ExtractVerbose(input.args)
+	input.flags["is_verbose"] = verboseResult.Value
+	previewResult := extractor.ExtractPreview(verboseResult.Remaining)
+	input.flags["is_preview"] = previewResult.Value
+	helpResult := extractor.ExtractHelp(previewResult.Remaining)
+	input.flags["is_help"] = helpResult.Value
+	input.args = helpResult.Remaining
+	if skh.shouldParseUIDArg() {
+		input.uidArg, input.args = extractSekaiUIDArg(extractor, input.args, ctx.GetAtIds())
+	}
+	return input
+}
+
+func resolveSekaiTrigger(regions []renderregion.Value, prefixes []string, trigger string) sekaiHandlerInput {
+	input := sekaiHandlerInput{trigger: trigger, flags: make(map[string]bool)}
+	for _, region := range regions {
+		regionPrefix := fmt.Sprintf("/%s", region)
+		if strings.HasPrefix(input.trigger, regionPrefix) {
+			input.region = region
+			input.explicitRegion = true
+			input.trigger = strings.Replace(input.trigger, regionPrefix, "/", 1)
+			break
+		}
+	}
+	if input.region.IsZero() && len(regions) > 0 {
+		input.region = regions[0]
+	}
+	input.prefixArg = longestSekaiPrefix(prefixes, input.trigger)
+	if input.prefixArg != "" || slices.Contains(prefixes, "") {
+		input.trigger = strings.Replace(input.trigger, fmt.Sprintf("/%s", input.prefixArg), "/", 1)
+	}
+	return input
+}
+
+func longestSekaiPrefix(prefixes []string, trigger string) string {
+	best := ""
+	bestLength := -1
+	for _, prefix := range prefixes {
+		commandPrefix := fmt.Sprintf("/%s", prefix)
+		if strings.HasPrefix(trigger, commandPrefix) && len(commandPrefix) > bestLength {
+			best = prefix
+			bestLength = len(commandPrefix)
+		}
+	}
+	return best
+}
+
+func extractSekaiUIDArg(extractor *parser.Extractor, args string, atIDs []string) (string, string) {
+	uidArg := ""
+	result := extractor.ExtractUid(args)
+	if result.Found {
+		uidArg = result.Value
+		args = result.Remaining
+	}
+	if len(atIDs) > 0 {
+		uidArg = "@" + atIDs[0]
+	}
+	return uidArg, args
+}
+
+func buildSekaiHandlerContext(ctx Context, input sekaiHandlerInput, originalTrigger string) HarrukiSekaiHandlerContext {
+	return HarrukiSekaiHandlerContext{
+		Context:            ctx,
+		Platform:           ctx.GetPlatform(),
+		TriggerCmd:         input.trigger,
+		ArgText:            input.args,
+		MessageType:        ctx.GetMessageType(),
+		Message:            ctx.GetMessage(),
+		Event:              ctx.GetEvent(),
+		MessageId:          ctx.GetMessageId(),
+		UserId:             ctx.GetUserId(),
+		SenderName:         ctx.GetSenderName(),
+		GroupId:            ctx.GetGroupId(),
+		AtIds:              ctx.GetAtIds(),
+		region:             input.region,
+		explicitRegion:     input.explicitRegion,
+		originalTriggerCmd: originalTrigger,
+		prefixArg:          input.prefixArg,
+		uidArg:             input.uidArg,
+		flags:              input.flags,
+	}
 }
 
 func (skh *HarukiSekaiCommandHandler) attachCommandMetadata(resolved *CommandRequest, trigger string) {
@@ -211,45 +228,55 @@ func registerSekaiCommandHandlers() {
 		methodVal := handlersVal.Method(i)
 		methodTyp := methodVal.Type()
 		methodName := handlersTyp.Method(i).Name
-		if methodTyp.NumIn() == 0 &&
-			methodTyp.NumOut() == 1 &&
-			methodTyp.Out(0) == configTyp {
-			sekaiRegistryLogger.Info("command parser registered", "handler", methodName)
-			results := methodVal.Call(nil)
-			skHandler := results[0].Interface().(HarukiSekaiCommandHandler)
+		if !isSekaiHandlerFactory(methodTyp, configTyp) {
+			continue
+		}
+		sekaiRegistryLogger.Info("command parser registered", "handler", methodName)
+		skHandler := methodVal.Call(nil)[0].Interface().(HarukiSekaiCommandHandler)
+		normalizeSekaiHandler(&skHandler, methodName)
+		registryhandler.RegisterCommandHandler(BotModulePJSK, &skHandler)
+	}
+}
 
-			if len(skHandler.Regions) == 0 {
-				skHandler.Regions = AllRegions
-			}
-			if len(skHandler.PrefixArgs) == 0 {
-				skHandler.PrefixArgs = []string{""}
-			}
-			allRegionCommands := make(map[string]bool, len(skHandler.Commands)*len(skHandler.Regions)*len(skHandler.PrefixArgs))
-			for _, prefix := range skHandler.PrefixArgs {
-				for _, region := range skHandler.Regions {
-					for _, cmd := range skHandler.Commands {
-						regionStr := string(region)
-						if strings.HasPrefix(cmd, fmt.Sprintf("/%s%s", regionStr, prefix)) {
-							sekaiRegistryLogger.Warn("command already contains region prefix", "command", cmd)
-						}
-						allRegionCommands[cmd] = true
-						allRegionCommands[strings.Replace(cmd, "/", fmt.Sprintf("/%s", prefix), 1)] = true
-						allRegionCommands[strings.Replace(cmd, "/", fmt.Sprintf("/%s%s", regionStr, prefix), 1)] = true
-					}
+func isSekaiHandlerFactory(methodType, configType reflect.Type) bool {
+	return methodType.NumIn() == 0 && methodType.NumOut() == 1 && methodType.Out(0) == configType
+}
+
+func normalizeSekaiHandler(handler *HarukiSekaiCommandHandler, methodName string) {
+	if len(handler.Regions) == 0 {
+		handler.Regions = AllRegions
+	}
+	if len(handler.PrefixArgs) == 0 {
+		handler.PrefixArgs = []string{""}
+	}
+	handler.Commands = expandedSekaiCommands(handler.Commands, handler.Regions, handler.PrefixArgs)
+	if handler.Priority == 0 {
+		handler.Priority = DefaultPriority
+	}
+	if handler.executor == nil {
+		panic(fmt.Sprintf("sekai command handler %s (%s) has no bound executor", methodName, handler.Path))
+	}
+}
+
+func expandedSekaiCommands(commands []string, regions []renderregion.Value, prefixes []string) []string {
+	allCommands := make(map[string]bool, len(commands)*len(regions)*len(prefixes))
+	for _, prefix := range prefixes {
+		for _, region := range regions {
+			for _, command := range commands {
+				regionText := string(region)
+				if strings.HasPrefix(command, fmt.Sprintf("/%s%s", regionText, prefix)) {
+					sekaiRegistryLogger.Warn("command already contains region prefix", "command", command)
 				}
+				allCommands[command] = true
+				allCommands[strings.Replace(command, "/", fmt.Sprintf("/%s", prefix), 1)] = true
+				allCommands[strings.Replace(command, "/", fmt.Sprintf("/%s%s", regionText, prefix), 1)] = true
 			}
-			skHandler.Commands = make([]string, 0, len(allRegionCommands))
-			for cmd := range allRegionCommands {
-				skHandler.Commands = append(skHandler.Commands, cmd)
-			}
-			slices.Sort(skHandler.Commands)
-			if skHandler.Priority == 0 {
-				skHandler.Priority = DefaultPriority
-			}
-			if skHandler.executor == nil {
-				panic(fmt.Sprintf("sekai command handler %s (%s) has no bound executor", methodName, skHandler.Path))
-			}
-			registryhandler.RegisterCommandHandler(BotModulePJSK, &skHandler)
 		}
 	}
+	expanded := make([]string, 0, len(allCommands))
+	for command := range allCommands {
+		expanded = append(expanded, command)
+	}
+	slices.Sort(expanded)
+	return expanded
 }

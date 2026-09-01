@@ -231,63 +231,17 @@ func (p *localCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*
 		return nil, err
 	}
 
-	var allowedIDs map[int]struct{}
-	if filter.EventID != 0 {
-		if err := p.ensureEventCards(); err != nil {
-			return nil, err
-		}
-		cardIDs, ok := p.eventCards.v().cardsByEvent[filter.EventID]
-		if !ok || len(cardIDs) == 0 {
-			return nil, nil
-		}
-		allowedIDs = make(map[int]struct{}, len(cardIDs))
-		for _, id := range cardIDs {
-			allowedIDs[id] = struct{}{}
-		}
+	allowedIDs, err := p.allowedCardIDs(filter.EventID)
+	if err != nil {
+		return nil, err
+	}
+	if filter.EventID != 0 && len(allowedIDs) == 0 {
+		return nil, nil
 	}
 
 	results := make([]*masterdata.Card, 0)
 	for _, card := range p.cards.v().all {
-		if allowedIDs != nil {
-			if _, ok := allowedIDs[card.ID]; !ok {
-				continue
-			}
-		}
-		if filter.CharacterID != 0 && card.CharacterID != filter.CharacterID {
-			continue
-		}
-		if filter.Rarity != "" && card.CardRarityType != filter.Rarity {
-			continue
-		}
-		if filter.Attr != "" && card.Attr != filter.Attr {
-			continue
-		}
-		if len(filter.SkillIDs) > 0 && !containsInt(filter.SkillIDs, card.SkillID) {
-			continue
-		}
-		if filter.Year != 0 {
-			start := time.Date(filter.Year, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
-			end := time.Date(filter.Year+1, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
-			if card.ReleaseAt < start || card.ReleaseAt >= end {
-				continue
-			}
-		}
-		if filter.Unit != "" || filter.MainUnit != "" || filter.SupportUnit != "" {
-			if !p.matchesUnitFilter(ctx, filter, card) {
-				continue
-			}
-		}
-		if filter.SkillType != "" {
-			if p.skills != nil {
-				skill, sErr := p.skills.GetByID(ctx, card.SkillID)
-				if sErr != nil || skill == nil || !cardSkillTypesMatch(filter.SkillType, skill.DescriptionSpriteName) {
-					continue
-				}
-			} else {
-				continue
-			}
-		}
-		if filter.SupplyType != "" && !cardMatchesSupplyFilter(filter.SupplyType, p.GetSupplyType(ctx, card)) {
+		if !p.matchesCardFilter(ctx, filter, card, allowedIDs) {
 			continue
 		}
 		results = append(results, common.CloneCard(card))
@@ -296,6 +250,74 @@ func (p *localCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*
 		}
 	}
 	return results, nil
+}
+
+func (p *localCardProvider) allowedCardIDs(eventID int) (map[int]struct{}, error) {
+	if eventID == 0 {
+		return nil, nil
+	}
+	if err := p.ensureEventCards(); err != nil {
+		return nil, err
+	}
+	cardIDs := p.eventCards.v().cardsByEvent[eventID]
+	allowedIDs := make(map[int]struct{}, len(cardIDs))
+	for _, id := range cardIDs {
+		allowedIDs[id] = struct{}{}
+	}
+	return allowedIDs, nil
+}
+
+func (p *localCardProvider) matchesCardFilter(ctx context.Context, filter *CardFilter, card *masterdata.Card, allowedIDs map[int]struct{}) bool {
+	if allowedIDs != nil && !containsCardID(allowedIDs, card.ID) {
+		return false
+	}
+	if filter.CharacterID != 0 && card.CharacterID != filter.CharacterID {
+		return false
+	}
+	if filter.Rarity != "" && card.CardRarityType != filter.Rarity {
+		return false
+	}
+	if filter.Attr != "" && card.Attr != filter.Attr {
+		return false
+	}
+	if len(filter.SkillIDs) > 0 && !containsInt(filter.SkillIDs, card.SkillID) {
+		return false
+	}
+	if !cardMatchesReleaseYear(card, filter.Year) {
+		return false
+	}
+	if !p.matchesUnitFilter(ctx, filter, card) {
+		return false
+	}
+	if !p.matchesCardSkillType(ctx, filter.SkillType, card.SkillID) {
+		return false
+	}
+	return filter.SupplyType == "" || cardMatchesSupplyFilter(filter.SupplyType, p.GetSupplyType(ctx, card))
+}
+
+func containsCardID(allowedIDs map[int]struct{}, cardID int) bool {
+	_, ok := allowedIDs[cardID]
+	return ok
+}
+
+func cardMatchesReleaseYear(card *masterdata.Card, year int) bool {
+	if year == 0 {
+		return true
+	}
+	start := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
+	end := time.Date(year+1, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
+	return card.ReleaseAt >= start && card.ReleaseAt < end
+}
+
+func (p *localCardProvider) matchesCardSkillType(ctx context.Context, skillType string, skillID int) bool {
+	if skillType == "" {
+		return true
+	}
+	if p.skills == nil {
+		return false
+	}
+	skill, err := p.skills.GetByID(ctx, skillID)
+	return err == nil && skill != nil && cardSkillTypesMatch(skillType, skill.DescriptionSpriteName)
 }
 
 func containsInt(values []int, target int) bool {

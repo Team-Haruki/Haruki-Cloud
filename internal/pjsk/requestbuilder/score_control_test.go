@@ -225,3 +225,21 @@ func TestBuildScoreControlRequestValidationBranches(t *testing.T) {
 		t.Fatalf("unconfigured source error = %v", err)
 	}
 }
+
+func TestScoreControlRangeRefactorHelpers(t *testing.T) {
+	if scoreControlBoostCanMatch(100, 99) || scoreControlBoostCanMatch(101, 2) || !scoreControlBoostCanMatch(100, 2) {
+		t.Fatal("boost match helper returned unexpected results")
+	}
+	data, ok := scoreControlRange(100, 100, 0, 0)
+	if !ok || data.ScoreMin > data.ScoreMax || data.EventBonus != 0 || data.Boost != 0 {
+		t.Fatalf("score range = %+v, %v", data, ok)
+	}
+	if _, ok := scoreControlRange(1, 100, 0, 10); ok {
+		t.Fatal("impossible score range unexpectedly succeeded")
+	}
+	maximum, found := scoreControlMaximumScore(100, 100, 0, 0)
+	minimum := scoreControlMinimumScore(100, 100, 0, 0)
+	if !found || minimum > maximum || calcScoreControlPoints(minimum, 0, 100, 0) != 100 {
+		t.Fatalf("score bounds = %d..%d, found=%v", minimum, maximum, found)
+	}
+}

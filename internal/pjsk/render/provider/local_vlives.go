@@ -26,57 +26,7 @@ func (p *localVLiveProvider) ensureLoaded() error {
 		}
 		lives := make([]*VLive, 0, len(items))
 		for _, item := range items {
-			live := &VLive{
-				ID:              item.ID,
-				Name:            item.Name,
-				AssetBundleName: item.AssetBundleName,
-				StartAt:         item.StartAt,
-				EndAt:           item.EndAt,
-			}
-			var schedules []map[string]any
-			if len(item.VirtualLiveSchedules) > 0 {
-				_ = json.Unmarshal(item.VirtualLiveSchedules, &schedules)
-			}
-			for _, s := range schedules {
-				startAt := vliveInt64Number(s["startAt"])
-				endAt := vliveInt64Number(s["endAt"])
-				if startAt <= 0 || endAt <= 0 {
-					continue
-				}
-				live.Schedules = append(live.Schedules, VLiveSchedule{
-					StartAt: startAt,
-					EndAt:   endAt,
-				})
-			}
-			var rewards []map[string]any
-			if len(item.VirtualLiveRewards) > 0 {
-				_ = json.Unmarshal(item.VirtualLiveRewards, &rewards)
-			}
-			for _, reward := range rewards {
-				resourceBoxID := vliveIntNumber(reward["resourceBoxId"])
-				if resourceBoxID <= 0 {
-					continue
-				}
-				live.Rewards = append(live.Rewards, VLiveReward{
-					VirtualLiveType: vliveString(reward["virtualLiveType"]),
-					ResourceBoxID:   resourceBoxID,
-				})
-			}
-			var characters []map[string]any
-			if len(item.VirtualLiveCharacters) > 0 {
-				_ = json.Unmarshal(item.VirtualLiveCharacters, &characters)
-			}
-			for _, character := range characters {
-				gameCharacterUnitID := vliveIntNumber(character["gameCharacterUnitId"])
-				if gameCharacterUnitID <= 0 {
-					continue
-				}
-				live.Characters = append(live.Characters, VLiveCharacter{
-					GameCharacterUnitID:        gameCharacterUnitID,
-					VirtualLivePerformanceType: vliveString(character["virtualLivePerformanceType"]),
-				})
-			}
-			lives = append(lives, live)
+			lives = append(lives, buildLocalVLive(item))
 		}
 		sort.Slice(lives, func(i, j int) bool {
 			if lives[i].StartAt == lives[j].StartAt {
@@ -86,6 +36,65 @@ func (p *localVLiveProvider) ensureLoaded() error {
 		})
 		return lives, nil
 	})
+}
+
+func buildLocalVLive(item localVirtualLiveJSON) *VLive {
+	return &VLive{
+		ID:              item.ID,
+		Name:            item.Name,
+		AssetBundleName: item.AssetBundleName,
+		StartAt:         item.StartAt,
+		EndAt:           item.EndAt,
+		Schedules:       decodeLocalVLiveSchedules(item.VirtualLiveSchedules),
+		Rewards:         decodeLocalVLiveRewards(item.VirtualLiveRewards),
+		Characters:      decodeLocalVLiveCharacters(item.VirtualLiveCharacters),
+	}
+}
+
+func decodeLocalVLiveSchedules(raw json.RawMessage) []VLiveSchedule {
+	var values []map[string]any
+	_ = json.Unmarshal(raw, &values)
+	result := make([]VLiveSchedule, 0, len(values))
+	for _, value := range values {
+		startAt := vliveInt64Number(value["startAt"])
+		endAt := vliveInt64Number(value["endAt"])
+		if startAt > 0 && endAt > 0 {
+			result = append(result, VLiveSchedule{StartAt: startAt, EndAt: endAt})
+		}
+	}
+	return result
+}
+
+func decodeLocalVLiveRewards(raw json.RawMessage) []VLiveReward {
+	var values []map[string]any
+	_ = json.Unmarshal(raw, &values)
+	result := make([]VLiveReward, 0, len(values))
+	for _, value := range values {
+		resourceBoxID := vliveIntNumber(value["resourceBoxId"])
+		if resourceBoxID > 0 {
+			result = append(result, VLiveReward{
+				VirtualLiveType: vliveString(value["virtualLiveType"]),
+				ResourceBoxID:   resourceBoxID,
+			})
+		}
+	}
+	return result
+}
+
+func decodeLocalVLiveCharacters(raw json.RawMessage) []VLiveCharacter {
+	var values []map[string]any
+	_ = json.Unmarshal(raw, &values)
+	result := make([]VLiveCharacter, 0, len(values))
+	for _, value := range values {
+		gameCharacterUnitID := vliveIntNumber(value["gameCharacterUnitId"])
+		if gameCharacterUnitID > 0 {
+			result = append(result, VLiveCharacter{
+				GameCharacterUnitID:        gameCharacterUnitID,
+				VirtualLivePerformanceType: vliveString(value["virtualLivePerformanceType"]),
+			})
+		}
+	}
+	return result
 }
 
 func (p *localVLiveProvider) GetLives(_ context.Context, _ renderregion.Value) ([]*VLive, error) {

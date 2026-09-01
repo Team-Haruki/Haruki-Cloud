@@ -27,148 +27,11 @@ func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDeta
 		region = b.source.DefaultRegion()
 	}
 
-	rarityCounts := map[string]int{
-		"rarity_1":        0,
-		"rarity_2":        0,
-		"rarity_3":        0,
-		"rarity_4":        0,
-		"rarity_birthday": 0,
-	}
-	cardWeight := make(map[int]float64)
-	cardRarity := make(map[int]string)
-	cardCache := make(map[int]*masterdata.Card)
-	rarityWeights := make(map[string]float64)
-	pickupSet := make(map[int]struct{})
-	pickupOrder := make([]int, 0, len(gachaInfo.GachaPickups))
-	for _, pickup := range gachaInfo.GachaPickups {
-		if _, exists := pickupSet[pickup.CardID]; exists {
-			continue
-		}
-		pickupSet[pickup.CardID] = struct{}{}
-		pickupOrder = append(pickupOrder, pickup.CardID)
-	}
-
-	var guaranteedType string
-	for _, behavior := range gachaInfo.GachaBehaviors {
-		switch strings.ToLower(behavior.GachaBehaviorType) {
-		case "over_rarity_4_once":
-			guaranteedType = "rarity_4"
-		case "over_rarity_3_once":
-			if guaranteedType != "rarity_4" {
-				guaranteedType = "rarity_3"
-			}
-		}
-	}
-
-	for _, detail := range gachaInfo.GachaDetails {
-		cardInfo, err := b.source.GetCardByID(detail.CardID)
-		if err != nil {
-			continue
-		}
-		cardCache[cardInfo.ID] = cardInfo
-		rarity := strings.ToLower(cardInfo.CardRarityType)
-		cardRarity[cardInfo.ID] = rarity
-		rarityCounts[rarity]++
-		cardWeight[detail.CardID] += float64(detail.Weight)
-		rarityWeights[rarity] += float64(detail.Weight)
-	}
-
-	rarityRateFraction := map[string]float64{}
-	weightInfo := drawing.GachaWeight{
-		GuaranteedRates: map[string]float64{},
-	}
-	for _, rate := range gachaInfo.GachaCardRarityRates {
-		rarity := strings.ToLower(rate.CardRarityType)
-		if !strings.EqualFold(rate.LotteryType, "normal") {
-			continue
-		}
-		fraction := rate.Rate / 100.0
-		switch rarity {
-		case "rarity_1":
-			weightInfo.Rarity1Rate = float64Ptr(fraction)
-		case "rarity_2":
-			weightInfo.Rarity2Rate = float64Ptr(fraction)
-		case "rarity_3":
-			weightInfo.Rarity3Rate = float64Ptr(fraction)
-		case "rarity_4":
-			weightInfo.Rarity4Rate = float64Ptr(fraction)
-		case "rarity_birthday":
-			weightInfo.RarityBirthdayRate = float64Ptr(fraction)
-		}
-		rarityRateFraction[rarity] = fraction
-	}
-
-	if guaranteedType != "" {
-		guaranteedRates := map[string]float64{
-			"rarity_1":        0,
-			"rarity_2":        0,
-			"rarity_3":        0,
-			"rarity_4":        0,
-			"rarity_birthday": 0,
-		}
-		for rarity, fraction := range rarityRateFraction {
-			guaranteedRates[rarity] = fraction
-		}
-		// guaranteedType is always "rarity_3" or "rarity_4" here (set from GachaBehaviors)
-		guaranteedRates[guaranteedType] += guaranteedRates["rarity_2"]
-		guaranteedRates["rarity_2"] = 0
-		if guaranteedType == "rarity_4" {
-			guaranteedRates[guaranteedType] += guaranteedRates["rarity_3"]
-			guaranteedRates["rarity_3"] = 0
-		}
-		weightInfo.GuaranteedRates = guaranteedRates
-	}
-
-	computeCardRate := func(cardID int) float64 {
-		rarity := cardRarity[cardID]
-		if rarity == "" {
-			return 0
-		}
-		total := rarityWeights[rarity]
-		if total <= 0 {
-			return 0
-		}
-		base := rarityRateFraction[rarity]
-		if base == 0 {
-			return 0
-		}
-		return (cardWeight[cardID] / total) * base
-	}
-
-	pickupCards := make([]drawing.GachaCardWeight, 0, len(pickupOrder))
-	for _, cardID := range pickupOrder {
-		cardInfo := cardCache[cardID]
-		if cardInfo == nil {
-			var err error
-			cardInfo, err = b.source.GetCardByID(cardID)
-			if err != nil {
-				continue
-			}
-			cardCache[cardID] = cardInfo
-			cardRarity[cardID] = strings.ToLower(cardInfo.CardRarityType)
-		}
-		pickupCards = append(pickupCards, drawing.GachaCardWeight{
-			ID:               cardInfo.ID,
-			Rarity:           cardInfo.CardRarityType,
-			Rate:             computeCardRate(cardInfo.ID),
-			ThumbnailRequest: b.buildGachaThumbnail(cardInfo, region),
-		})
-	}
-
-	var bannerPath *string
-	if path := b.buildGachaBannerPath(gachaInfo, region); path != "" {
-		bannerPath = &path
-	}
-	var logoPath *string
-	if path := b.buildGachaLogoPath(gachaInfo, region); path != "" {
-		logoPath = &path
-	}
-	var ceilPath *string
-	if gachaInfo.GachaCeilItemID != nil && *gachaInfo.GachaCeilItemID != 0 {
-		if path := b.buildCeilItemIconPath(*gachaInfo.GachaCeilItemID, region); path != "" {
-			ceilPath = &path
-		}
-	}
+	pickupOrder := uniqueGachaPickupIDs(gachaInfo)
+	cardState := newGachaDetailCardState()
+	cardState.load(b.source, gachaInfo)
+	weightInfo := buildGachaWeight(gachaInfo, cardState)
+	pickupCards := cardState.pickupCards(b, pickupOrder, region)
 
 	info := drawing.GachaInfo{
 		ID:                  gachaInfo.ID,
@@ -179,24 +42,179 @@ func (b *Builder) BuildGachaDetailRequest(query DetailQuery) (*drawing.GachaDeta
 		StartAt:             gachaInfo.StartAt,
 		EndAt:               gachaInfo.EndAt + gachaEndPaddingMillis,
 		AssetName:           gachaInfo.AssetBundleName,
-		CeilItemImgPath:     ceilPath,
+		CeilItemImgPath:     b.gachaCeilItemPath(gachaInfo, region),
 		Behaviors:           b.convertBehaviors(gachaInfo, region),
-		Rarity1Count:        rarityCounts["rarity_1"],
-		Rarity2Count:        rarityCounts["rarity_2"],
-		Rarity3Count:        rarityCounts["rarity_3"],
-		Rarity4Count:        rarityCounts["rarity_4"],
-		RarityBirthdayCount: rarityCounts["rarity_birthday"],
-		PickupCount:         len(pickupSet),
+		Rarity1Count:        cardState.rarityCounts["rarity_1"],
+		Rarity2Count:        cardState.rarityCounts["rarity_2"],
+		Rarity3Count:        cardState.rarityCounts["rarity_3"],
+		Rarity4Count:        cardState.rarityCounts["rarity_4"],
+		RarityBirthdayCount: cardState.rarityCounts["rarity_birthday"],
+		PickupCount:         len(pickupOrder),
 	}
 
 	return &drawing.GachaDetailRequest{
 		Gacha:         info,
 		WeightInfo:    weightInfo,
 		PickupCards:   pickupCards,
-		LogoImgPath:   logoPath,
-		BannerImgPath: bannerPath,
+		LogoImgPath:   nonEmptyGachaPath(b.buildGachaLogoPath(gachaInfo, region)),
+		BannerImgPath: nonEmptyGachaPath(b.buildGachaBannerPath(gachaInfo, region)),
 		Region:        region.String(),
 	}, nil
+}
+
+type gachaDetailCardState struct {
+	rarityCounts  map[string]int
+	cardWeight    map[int]float64
+	cardRarity    map[int]string
+	cardCache     map[int]*masterdata.Card
+	rarityWeights map[string]float64
+	rarityRates   map[string]float64
+}
+
+func newGachaDetailCardState() *gachaDetailCardState {
+	return &gachaDetailCardState{
+		rarityCounts:  make(map[string]int),
+		cardWeight:    make(map[int]float64),
+		cardRarity:    make(map[int]string),
+		cardCache:     make(map[int]*masterdata.Card),
+		rarityWeights: make(map[string]float64),
+		rarityRates:   make(map[string]float64),
+	}
+}
+
+func (s *gachaDetailCardState) load(source DataSource, gachaInfo *masterdata.Gacha) {
+	for _, detail := range gachaInfo.GachaDetails {
+		cardInfo, err := source.GetCardByID(detail.CardID)
+		if err != nil {
+			continue
+		}
+		s.cardCache[cardInfo.ID] = cardInfo
+		rarity := strings.ToLower(cardInfo.CardRarityType)
+		s.cardRarity[cardInfo.ID] = rarity
+		s.rarityCounts[rarity]++
+		s.cardWeight[detail.CardID] += float64(detail.Weight)
+		s.rarityWeights[rarity] += float64(detail.Weight)
+	}
+}
+
+func uniqueGachaPickupIDs(gachaInfo *masterdata.Gacha) []int {
+	result := make([]int, 0, len(gachaInfo.GachaPickups))
+	seen := make(map[int]struct{}, len(gachaInfo.GachaPickups))
+	for _, pickup := range gachaInfo.GachaPickups {
+		if _, exists := seen[pickup.CardID]; !exists {
+			seen[pickup.CardID] = struct{}{}
+			result = append(result, pickup.CardID)
+		}
+	}
+	return result
+}
+
+func gachaGuaranteedType(gachaInfo *masterdata.Gacha) string {
+	guaranteedType := ""
+	for _, behavior := range gachaInfo.GachaBehaviors {
+		switch strings.ToLower(behavior.GachaBehaviorType) {
+		case "over_rarity_4_once":
+			guaranteedType = "rarity_4"
+		case "over_rarity_3_once":
+			if guaranteedType != "rarity_4" {
+				guaranteedType = "rarity_3"
+			}
+		}
+	}
+	return guaranteedType
+}
+
+func buildGachaWeight(gachaInfo *masterdata.Gacha, state *gachaDetailCardState) drawing.GachaWeight {
+	weight := drawing.GachaWeight{GuaranteedRates: map[string]float64{}}
+	for _, rate := range gachaInfo.GachaCardRarityRates {
+		if !strings.EqualFold(rate.LotteryType, "normal") {
+			continue
+		}
+		rarity := strings.ToLower(rate.CardRarityType)
+		fraction := rate.Rate / 100.0
+		state.rarityRates[rarity] = fraction
+		setGachaRarityRate(&weight, rarity, fraction)
+	}
+	weight.GuaranteedRates = guaranteedGachaRates(state.rarityRates, gachaGuaranteedType(gachaInfo))
+	return weight
+}
+
+func setGachaRarityRate(weight *drawing.GachaWeight, rarity string, fraction float64) {
+	switch rarity {
+	case "rarity_1":
+		weight.Rarity1Rate = float64Ptr(fraction)
+	case "rarity_2":
+		weight.Rarity2Rate = float64Ptr(fraction)
+	case "rarity_3":
+		weight.Rarity3Rate = float64Ptr(fraction)
+	case "rarity_4":
+		weight.Rarity4Rate = float64Ptr(fraction)
+	case "rarity_birthday":
+		weight.RarityBirthdayRate = float64Ptr(fraction)
+	}
+}
+
+func guaranteedGachaRates(rates map[string]float64, guaranteedType string) map[string]float64 {
+	if guaranteedType == "" {
+		return map[string]float64{}
+	}
+	result := map[string]float64{
+		"rarity_1": rates["rarity_1"], "rarity_2": rates["rarity_2"],
+		"rarity_3": rates["rarity_3"], "rarity_4": rates["rarity_4"],
+		"rarity_birthday": rates["rarity_birthday"],
+	}
+	result[guaranteedType] += result["rarity_2"]
+	result["rarity_2"] = 0
+	if guaranteedType == "rarity_4" {
+		result[guaranteedType] += result["rarity_3"]
+		result["rarity_3"] = 0
+	}
+	return result
+}
+
+func (s *gachaDetailCardState) cardRate(cardID int) float64 {
+	rarity := s.cardRarity[cardID]
+	total := s.rarityWeights[rarity]
+	base := s.rarityRates[rarity]
+	if rarity == "" || total <= 0 || base == 0 {
+		return 0
+	}
+	return (s.cardWeight[cardID] / total) * base
+}
+
+func (s *gachaDetailCardState) pickupCards(builder *Builder, pickupIDs []int, region renderregion.Value) []drawing.GachaCardWeight {
+	result := make([]drawing.GachaCardWeight, 0, len(pickupIDs))
+	for _, cardID := range pickupIDs {
+		cardInfo := s.cardCache[cardID]
+		if cardInfo == nil {
+			var err error
+			cardInfo, err = builder.source.GetCardByID(cardID)
+			if err != nil {
+				continue
+			}
+			s.cardCache[cardID] = cardInfo
+			s.cardRarity[cardID] = strings.ToLower(cardInfo.CardRarityType)
+		}
+		result = append(result, drawing.GachaCardWeight{
+			ID: cardInfo.ID, Rarity: cardInfo.CardRarityType, Rate: s.cardRate(cardInfo.ID),
+			ThumbnailRequest: builder.buildGachaThumbnail(cardInfo, region),
+		})
+	}
+	return result
+}
+
+func (b *Builder) gachaCeilItemPath(gachaInfo *masterdata.Gacha, region renderregion.Value) *string {
+	if gachaInfo.GachaCeilItemID == nil || *gachaInfo.GachaCeilItemID == 0 {
+		return nil
+	}
+	return nonEmptyGachaPath(b.buildCeilItemIconPath(*gachaInfo.GachaCeilItemID, region))
+}
+
+func nonEmptyGachaPath(path string) *string {
+	if path == "" {
+		return nil
+	}
+	return &path
 }
 
 func (b *Builder) buildGachaLogoPath(gachaInfo *masterdata.Gacha, region renderregion.Value) string {

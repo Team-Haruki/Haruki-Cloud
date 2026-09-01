@@ -115,85 +115,11 @@ func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (
 		return nil, fmt.Errorf("最多只能关注%d首歌曲", musicBoardPageSize-1)
 	}
 
-	specMap := make(map[string]struct{}, len(specs))
-	specRankMap := make(map[int]struct{}, len(specs))
-	specRows := make([]musicBoardRow, 0, len(specs))
-	for _, spec := range specs {
-		key := musicBoardKey(spec.MusicID, spec.Difficulty)
-		specMap[key] = struct{}{}
-		for _, row := range rows {
-			if row.MusicID != spec.MusicID || row.Difficulty != spec.Difficulty {
-				continue
-			}
-			specRows = append(specRows, row)
-			specRankMap[row.Rank] = struct{}{}
-			break
-		}
-	}
-
-	filtered := make([]musicBoardRow, 0, len(rows))
-	for _, row := range rows {
-		if _, exists := specRankMap[row.Rank]; exists {
-			continue
-		}
-		if len(normalized.DiffFilter) > 0 && !common.ContainsString(normalized.DiffFilter, row.Difficulty) {
-			continue
-		}
-		if !matchesMusicBoardLevelFilter(row.Level, normalized.LevelFilter) {
-			continue
-		}
-		filtered = append(filtered, row)
-	}
-
-	showRows := slices.Clone(specRows)
-	remainingSize := musicBoardPageSize - len(showRows)
-	totalPage := 1
-	if remainingSize <= 0 {
-		remainingSize = 0
-	}
-	if len(filtered) > 0 && remainingSize > 0 {
-		totalPage = int(math.Ceil(float64(len(filtered)) / float64(remainingSize)))
-		if normalized.Page < 1 || normalized.Page > totalPage {
-			return nil, fmt.Errorf("页数错误，当前筛选结果仅有%d页", totalPage)
-		}
-		start := (normalized.Page - 1) * remainingSize
-		end := start + remainingSize
-		if end > len(filtered) {
-			end = len(filtered)
-		}
-		showRows = append(showRows, filtered[start:end]...)
-	} else if len(filtered) == 0 && len(showRows) == 0 {
-		return nil, fmt.Errorf("筛选后的歌曲数为零")
-	}
-
-	sort.Slice(showRows, func(i, j int) bool {
-		return showRows[i].Rank < showRows[j].Rank
-	})
-
-	specMidDiffs := make([][]any, 0, len(specs))
-	for _, spec := range specs {
-		specMidDiffs = append(specMidDiffs, []any{spec.MusicID, spec.Difficulty})
-	}
-
-	items := make([]drawing.MusicBoardItem, 0, len(showRows))
-	for _, row := range showRows {
-		items = append(items, drawing.MusicBoardItem{
-			Rank:                 row.Rank,
-			MusicID:              row.MusicID,
-			Difficulty:           row.Difficulty,
-			Level:                row.Level,
-			MusicTitle:           row.MusicTitle,
-			MusicCoverPath:       row.MusicCoverPath,
-			LiveTypePt:           selectMusicBoardLiveValue(row, normalized.LiveType, "pt"),
-			LiveTypeRealScore:    selectMusicBoardLiveValue(row, normalized.LiveType, "real_score"),
-			LiveTypeScore:        selectMusicBoardLiveValue(row, normalized.LiveType, "score"),
-			LiveTypeSkillAccount: selectMusicBoardLiveValue(row, normalized.LiveType, "skill_account"),
-			LiveTypePtPerHour:    selectMusicBoardLiveValue(row, normalized.LiveType, "pt_per_hour"),
-			PlayCountPerHour:     row.PlayCountPerHour,
-			EventRate:            row.EventRate,
-			MusicTime:            row.MusicTime,
-			Tps:                  row.Tps,
-		})
+	specRows, specRankMap := selectMusicBoardSpecRows(rows, specs)
+	filtered := filterMusicBoardRows(rows, specRankMap, normalized)
+	showRows, totalPage, err := paginateMusicBoardRows(specRows, filtered, normalized.Page)
+	if err != nil {
+		return nil, err
 	}
 
 	titleText, description := buildMusicBoardTexts(normalized, totalPage)
@@ -204,8 +130,90 @@ func (c *Controller) ResolveMusicBoardRequest(region string, query BoardQuery) (
 		Page:         normalized.Page,
 		TotalPage:    totalPage,
 		TitleText:    titleText,
-		Items:        items,
-		SpecMidDiffs: specMidDiffs,
+		Items:        musicBoardDrawingItems(showRows, normalized.LiveType),
+		SpecMidDiffs: musicBoardSpecMidDiffs(specs),
 		Description:  description,
 	}, nil
+}
+
+func selectMusicBoardSpecRows(rows []musicBoardRow, specs []musicBoardSpec) ([]musicBoardRow, map[int]struct{}) {
+	specRows := make([]musicBoardRow, 0, len(specs))
+	specRankMap := make(map[int]struct{}, len(specs))
+	for _, spec := range specs {
+		for _, row := range rows {
+			if row.MusicID == spec.MusicID && row.Difficulty == spec.Difficulty {
+				specRows = append(specRows, row)
+				specRankMap[row.Rank] = struct{}{}
+				break
+			}
+		}
+	}
+	return specRows, specRankMap
+}
+
+func filterMusicBoardRows(rows []musicBoardRow, excludedRanks map[int]struct{}, query musicBoardResolvedQuery) []musicBoardRow {
+	filtered := make([]musicBoardRow, 0, len(rows))
+	for _, row := range rows {
+		if _, exists := excludedRanks[row.Rank]; exists {
+			continue
+		}
+		if len(query.DiffFilter) > 0 && !common.ContainsString(query.DiffFilter, row.Difficulty) {
+			continue
+		}
+		if matchesMusicBoardLevelFilter(row.Level, query.LevelFilter) {
+			filtered = append(filtered, row)
+		}
+	}
+	return filtered
+}
+
+func paginateMusicBoardRows(specRows, filtered []musicBoardRow, page int) ([]musicBoardRow, int, error) {
+	showRows := slices.Clone(specRows)
+	remainingSize := max(0, musicBoardPageSize-len(showRows))
+	totalPage := 1
+	if len(filtered) > 0 && remainingSize > 0 {
+		totalPage = int(math.Ceil(float64(len(filtered)) / float64(remainingSize)))
+		if page < 1 || page > totalPage {
+			return nil, totalPage, fmt.Errorf("页数错误，当前筛选结果仅有%d页", totalPage)
+		}
+		start := (page - 1) * remainingSize
+		end := min(start+remainingSize, len(filtered))
+		showRows = append(showRows, filtered[start:end]...)
+	} else if len(showRows) == 0 {
+		return nil, totalPage, fmt.Errorf("筛选后的歌曲数为零")
+	}
+	sort.Slice(showRows, func(i, j int) bool { return showRows[i].Rank < showRows[j].Rank })
+	return showRows, totalPage, nil
+}
+
+func musicBoardSpecMidDiffs(specs []musicBoardSpec) [][]any {
+	result := make([][]any, 0, len(specs))
+	for _, spec := range specs {
+		result = append(result, []any{spec.MusicID, spec.Difficulty})
+	}
+	return result
+}
+
+func musicBoardDrawingItems(rows []musicBoardRow, liveType string) []drawing.MusicBoardItem {
+	items := make([]drawing.MusicBoardItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, drawing.MusicBoardItem{
+			Rank:                 row.Rank,
+			MusicID:              row.MusicID,
+			Difficulty:           row.Difficulty,
+			Level:                row.Level,
+			MusicTitle:           row.MusicTitle,
+			MusicCoverPath:       row.MusicCoverPath,
+			LiveTypePt:           selectMusicBoardLiveValue(row, liveType, "pt"),
+			LiveTypeRealScore:    selectMusicBoardLiveValue(row, liveType, "real_score"),
+			LiveTypeScore:        selectMusicBoardLiveValue(row, liveType, "score"),
+			LiveTypeSkillAccount: selectMusicBoardLiveValue(row, liveType, "skill_account"),
+			LiveTypePtPerHour:    selectMusicBoardLiveValue(row, liveType, "pt_per_hour"),
+			PlayCountPerHour:     row.PlayCountPerHour,
+			EventRate:            row.EventRate,
+			MusicTime:            row.MusicTime,
+			Tps:                  row.Tps,
+		})
+	}
+	return items
 }

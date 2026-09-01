@@ -151,53 +151,67 @@ func findValidScoreRanges(targetPoint, basicPoint int, wl bool, limit int) []dra
 	result := make([]drawing.ScoreData, 0, 32)
 	for eventBonus := 0; eventBonus <= maxEventBonus; eventBonus++ {
 		for boost := 0; boost <= 10; boost++ {
-			boostBonus := scoreControlBoostBonus[boost]
-			if boostBonus == 0 || targetPoint%boostBonus != 0 {
+			if !scoreControlBoostCanMatch(targetPoint, boost) {
 				continue
 			}
-
-			left, right := 0, scoreControlMaxScore
-			found := false
-			for left <= right {
-				mid := (left + right) / 2
-				points := calcScoreControlPoints(mid, eventBonus, basicPoint, boost)
-				if points <= targetPoint {
-					left = mid + 1
-					if points == targetPoint {
-						found = true
-					}
-					continue
-				}
-				right = mid - 1
-			}
-			if !found {
+			data, ok := scoreControlRange(targetPoint, basicPoint, eventBonus, boost)
+			if !ok {
 				continue
 			}
-			scoreMax := right
-
-			left, right = 0, scoreControlMaxScore
-			for left <= right {
-				mid := (left + right) / 2
-				points := calcScoreControlPoints(mid, eventBonus, basicPoint, boost)
-				if points >= targetPoint {
-					right = mid - 1
-					continue
-				}
-				left = mid + 1
-			}
-
-			result = append(result, drawing.ScoreData{
-				EventBonus: eventBonus,
-				Boost:      boost,
-				ScoreMin:   left,
-				ScoreMax:   scoreMax,
-			})
+			result = append(result, data)
 			if limit > 0 && len(result) >= limit {
 				return result
 			}
 		}
 	}
 	return result
+}
+
+func scoreControlBoostCanMatch(targetPoint, boost int) bool {
+	boostBonus := scoreControlBoostBonus[boost]
+	return boostBonus > 0 && targetPoint%boostBonus == 0
+}
+
+func scoreControlRange(targetPoint, basicPoint, eventBonus, boost int) (drawing.ScoreData, bool) {
+	scoreMax, found := scoreControlMaximumScore(targetPoint, basicPoint, eventBonus, boost)
+	if !found {
+		return drawing.ScoreData{}, false
+	}
+	return drawing.ScoreData{
+		EventBonus: eventBonus,
+		Boost:      boost,
+		ScoreMin:   scoreControlMinimumScore(targetPoint, basicPoint, eventBonus, boost),
+		ScoreMax:   scoreMax,
+	}, true
+}
+
+func scoreControlMaximumScore(targetPoint, basicPoint, eventBonus, boost int) (int, bool) {
+	left, right := 0, scoreControlMaxScore
+	found := false
+	for left <= right {
+		mid := (left + right) / 2
+		points := calcScoreControlPoints(mid, eventBonus, basicPoint, boost)
+		if points <= targetPoint {
+			left = mid + 1
+			found = found || points == targetPoint
+		} else {
+			right = mid - 1
+		}
+	}
+	return right, found
+}
+
+func scoreControlMinimumScore(targetPoint, basicPoint, eventBonus, boost int) int {
+	left, right := 0, scoreControlMaxScore
+	for left <= right {
+		mid := (left + right) / 2
+		if calcScoreControlPoints(mid, eventBonus, basicPoint, boost) >= targetPoint {
+			right = mid - 1
+		} else {
+			left = mid + 1
+		}
+	}
+	return left
 }
 
 func calcScoreControlPoints(score, eventBonus, basicPoint, boost int) int {

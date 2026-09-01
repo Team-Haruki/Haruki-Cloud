@@ -29,11 +29,9 @@ type BotCommandRequest struct {
 	EventID string `json:"event_id,omitempty" msgpack:"event_id,omitempty"`
 	// Timestamp (unix seconds) and Nonce provide replay protection for the
 	// Noise-encrypted channel: the server validates the timestamp window and
-	// rejects a reused Nonce. Optional during rollout — when absent the server
-	// only rejects if bot.require_request_nonce is enabled. Nonce must be a
-	// fresh random value (>=16 bytes, hex/base64) per delivery attempt: a
-	// client HTTP retry must regenerate it, the event-time dedup prevents
-	// double execution.
+	// rejects a reused Nonce. Both are required unless
+	// bot.allow_requests_without_nonce is enabled. Nonce must be a fresh
+	// random value (>=16 bytes, hex/base64) per request.
 	Timestamp int64  `json:"timestamp,omitempty" msgpack:"timestamp,omitempty"`
 	Nonce     string `json:"nonce,omitempty" msgpack:"nonce,omitempty"`
 }

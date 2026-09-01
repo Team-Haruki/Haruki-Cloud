@@ -3,7 +3,6 @@ package auth
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -73,7 +72,7 @@ func newAuthV3TestEnv(t *testing.T) *authV3TestEnv {
 
 	store := newMemoryRedisStore()
 	ban := &stubGlobalBanChecker{}
-	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, nil, hex.EncodeToString(current.Public)).WithGlobalBanChecker(ban))
+	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store).WithGlobalBanChecker(ban))
 	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store).WithGlobalBanChecker(ban))
 
 	app := fiber.New()
@@ -383,7 +382,7 @@ func TestRegisterBotRoutesMountsAuthV3OnlyWithKeyRing(t *testing.T) {
 	}
 
 	withoutRing := fiber.New()
-	RegisterBotRoutes(withoutRing, client, nil, nil, "")
+	RegisterBotRoutes(withoutRing, client, nil)
 	resp := sendRawRequest(t, withoutRing, http.MethodPost, AuthV3RouteBase+"/1/auth", []byte("x"))
 	resp.Body.Close()
 	if resp.StatusCode != fiber.StatusNotFound {
@@ -393,7 +392,7 @@ func TestRegisterBotRoutesMountsAuthV3OnlyWithKeyRing(t *testing.T) {
 	pair, _ := crypto.GenerateKeyPair()
 	ring, _ := crypto.SingleKeyRing(pair)
 	withRing := fiber.New()
-	RegisterBotRoutesWithBanChecker(withRing, client, nil, nil, "", ring, nil)
+	RegisterBotRoutesWithBanChecker(withRing, client, nil, ring, nil)
 	resp = sendRawRequest(t, withRing, http.MethodPost, AuthV3RouteBase+"/1/auth", []byte("x"))
 	resp.Body.Close()
 	if resp.StatusCode != fiber.StatusBadRequest {

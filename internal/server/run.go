@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/hex"
 
 	harukiConfig "haruki-cloud/config"
 	harukiLogger "haruki-cloud/utils/logger"
@@ -44,12 +43,7 @@ func Run(ctx context.Context) {
 	}
 	validateBotAuthSecrets(mainLogger)
 	noiseKeys := initNoiseKeyRing(mainLogger)
-	authEncryptionKey := initAuthEncryptionKey(mainLogger)
-	var noiseServerPubKeyHex string
-	if noiseKeys != nil {
-		noiseServerPubKeyHex = hex.EncodeToString(noiseKeys.Primary().Pair.Public)
-	}
-	botDBClient := initBot(ctx, mainLogger, app, redisClient, authEncryptionKey, noiseServerPubKeyHex, noiseKeys, banChecker)
+	botDBClient := initBot(ctx, mainLogger, app, redisClient, noiseKeys, banChecker)
 	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithContext(ctx, app, renderRuntime, redisClient, botDBClient, noiseKeys)
 
 	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {

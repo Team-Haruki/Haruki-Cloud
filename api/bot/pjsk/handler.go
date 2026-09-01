@@ -114,7 +114,7 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	replay := newReplayGuard(
 		redisClient,
 		harukiConfig.Cfg.HarukiBotDB.RequestNonceWindow,
-		harukiConfig.Cfg.HarukiBotDB.RequireRequestNonce,
+		!harukiConfig.Cfg.HarukiBotDB.AllowRequestsWithoutNonce,
 	)
 	election, commandElection := newBotCommandElection(initCtx, redisClient, guard)
 	telemetry := botauth.NewCommandTelemetryDispatcher(botDBClient)

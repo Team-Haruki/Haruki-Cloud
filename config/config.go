@@ -263,16 +263,14 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BOT_CREDENTIAL_SIGN_TOKEN", &cfg.HarukiBotDB.CredentialSignToken)
 	envStr("HARUKI_BOT_SESSION_SIGN_TOKEN", &cfg.HarukiBotDB.SessionSignToken)
 	envStr("HARUKI_BOT_INTERNAL_API_TOKEN", &cfg.HarukiBotDB.InternalAPIToken)
-	envInt("HARUKI_BOT_SESSION_TTL_DAYS", &cfg.HarukiBotDB.SessionTTLDays)
 	envStr("HARUKI_BOT_NOISE_PRIVATE_KEY", &cfg.HarukiBotDB.NoisePrivateKey)
 	if err := envNoiseKeys("HARUKI_BOT_NOISE_KEYS", &cfg.HarukiBotDB.NoiseKeys); err != nil {
 		return err
 	}
 	envDuration("HARUKI_BOT_AUTH_V3_SESSION_TTL", &cfg.HarukiBotDB.AuthV3SessionTTL)
-	envStr("HARUKI_BOT_AUTH_ENCRYPTION_KEY", &cfg.HarukiBotDB.AuthEncryptionKey)
 	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
 	envBool("HARUKI_BOT_RESPONSE_ELECTION_ROSTER", &cfg.HarukiBotDB.ResponseElectionRoster)
-	envBool("HARUKI_BOT_REQUIRE_REQUEST_NONCE", &cfg.HarukiBotDB.RequireRequestNonce)
+	envBool("HARUKI_BOT_ALLOW_REQUESTS_WITHOUT_NONCE", &cfg.HarukiBotDB.AllowRequestsWithoutNonce)
 	envDuration("HARUKI_BOT_REQUEST_NONCE_WINDOW", &cfg.HarukiBotDB.RequestNonceWindow)
 
 	// Sekai API
@@ -575,7 +573,6 @@ type HarukiBotDBConfig struct {
 	CredentialSignToken string `yaml:"credential_sign_token"`
 	SessionSignToken    string `yaml:"session_sign_token"`
 	InternalAPIToken    string `yaml:"internal_api_token"`
-	SessionTTLDays      int    `yaml:"session_ttl_days"`
 	// AuthV3SessionTTL bounds sessions issued by the Noise-wrapped AuthV3
 	// endpoint. 0 = default (1h); clamped to [1m, 30d].
 	AuthV3SessionTTL time.Duration `yaml:"auth_v3_session_ttl"`
@@ -587,17 +584,17 @@ type HarukiBotDBConfig struct {
 	// first accepted key (noise_private_key if set, else noise_keys[0]) is
 	// the primary key advertised to clients.
 	NoiseKeys              []NoiseStaticKeyConfig `yaml:"noise_keys"`
-	AuthEncryptionKey      string                 `yaml:"auth_encryption_key"`
 	ResponseElectionWindow time.Duration          `yaml:"response_election_window"`
 	// ResponseElectionRoster enables the learned per-group bot roster: groups
 	// with a single known bot skip the election window entirely, and members
 	// that stop joining are demoted after repeated absences.
 	ResponseElectionRoster bool `yaml:"response_election_roster"`
-	// RequireRequestNonce, when true, rejects bot command requests that do not
-	// carry a valid timestamp+nonce (full replay protection). Default false
-	// (lenient): nonces are validated only when present, so old clients that do
-	// not send them keep working. Flip to true once all clients send nonces.
-	RequireRequestNonce bool `yaml:"require_request_nonce"`
+	// AllowRequestsWithoutNonce relaxes replay protection: when true, bot
+	// command requests missing timestamp+nonce are accepted (nonces are still
+	// validated whenever present). Default false: every request must carry a
+	// fresh nonce. This Cloud line only serves AuthV3 clients, which always
+	// send the fields; the switch exists as an emergency rollback lever.
+	AllowRequestsWithoutNonce bool `yaml:"allow_requests_without_nonce"`
 	// RequestNonceWindow is the accepted clock skew for the request timestamp
 	// and the single-use TTL of the nonce. 0 = default (5m).
 	RequestNonceWindow time.Duration `yaml:"request_nonce_window"`

@@ -144,7 +144,6 @@ func TestResolveRuntimeCachePaths(t *testing.T) {
 func TestValidBotCryptographicConfiguration(t *testing.T) {
 	preserveServerConfig(t)
 	key := bytes.Repeat([]byte{0x2a}, 32)
-	harukiConfig.Cfg.HarukiBotDB.AuthEncryptionKey = hex.EncodeToString(key)
 	harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey = hex.EncodeToString(key)
 	harukiConfig.Cfg.HarukiBotDB.SessionSignToken = "session-secret"
 	harukiConfig.Cfg.HarukiBotDB.CredentialSignToken = "credential-secret"
@@ -152,9 +151,6 @@ func TestValidBotCryptographicConfiguration(t *testing.T) {
 	var output bytes.Buffer
 	logger := startupTestLogger(&output)
 	validateBotAuthSecrets(logger)
-	if got := initAuthEncryptionKey(logger); !bytes.Equal(got, key) {
-		t.Fatalf("decoded auth key = %x", got)
-	}
 	ring := initNoiseKeyRing(logger)
 	if ring == nil || ring.Len() != 1 {
 		t.Fatalf("invalid Noise key ring: %#v", ring)
@@ -163,7 +159,7 @@ func TestValidBotCryptographicConfiguration(t *testing.T) {
 	if primary.ID != noiseCrypto.DefaultKeyID || len(primary.Pair.Private) != 32 || len(primary.Pair.Public) != 32 {
 		t.Fatalf("invalid primary Noise key: %#v", primary)
 	}
-	if !strings.Contains(output.String(), "AES-256-GCM") || !strings.Contains(output.String(), "Noise NK") {
+	if !strings.Contains(output.String(), "Noise NK") {
 		t.Fatalf("missing crypto startup records: %s", output.String())
 	}
 

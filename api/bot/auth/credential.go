@@ -2,9 +2,6 @@ package auth
 
 import (
 	"crypto/subtle"
-	"time"
-
-	"haruki-cloud/config"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,18 +22,4 @@ func verifyCredential(stored, provided string) bool {
 // isBcryptHash 检查字符串是否为 bcrypt 哈希格式
 func isBcryptHash(s string) bool {
 	return len(s) == 60 && s[0] == '$' && s[1] == '2'
-}
-
-// ================= Session TTL =================
-
-// getSessionTTL 获取 session 有效期，限制在 1~30 天
-func getSessionTTL() time.Duration {
-	days := config.Cfg.HarukiBotDB.SessionTTLDays
-	if days <= 0 {
-		days = 7
-	}
-	if days > 30 {
-		days = 30
-	}
-	return time.Duration(days) * 24 * time.Hour
 }

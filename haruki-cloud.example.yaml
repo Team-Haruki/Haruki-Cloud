@@ -108,7 +108,6 @@ haruki_bot:
   credential_sign_token: "your-credential-sign-token-32chars"
   session_sign_token: "your-session-sign-token-32chars"
   internal_api_token: "your-internal-api-token"
-  session_ttl_days: 7
   # Noise NK static keys. noise_private_key is the legacy single key (key id
   # "default") and stays primary when set. noise_keys lists additional keys
   # accepted during rotation; each needs a stable key_id clients can reference.
@@ -128,11 +127,11 @@ haruki_bot:
   # back to the full window; an under-counted one still yields exactly one
   # response. Members absent from 3 consecutive elections are demoted.
   response_election_roster: false
-  # Replay protection for the Noise-encrypted bot channel. When false (default),
-  # a timestamp+nonce is validated only when the client sends one, so old
-  # clients keep working; flip to true to reject requests without a valid nonce
-  # once every client ships the fields.
-  require_request_nonce: false
+  # Replay protection for the Noise-encrypted bot channel. Every command
+  # request must carry timestamp+nonce (default). Set true only as an
+  # emergency rollback lever: requests without the fields are then accepted,
+  # while nonces that are present are still validated.
+  allow_requests_without_nonce: false
   # Accepted request timestamp skew and single-use nonce TTL. 0 = default (5m).
   request_nonce_window: "5m"
 

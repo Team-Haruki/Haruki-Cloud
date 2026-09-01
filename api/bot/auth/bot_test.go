@@ -16,6 +16,7 @@ import (
 	"haruki-cloud/config"
 	ent "haruki-cloud/database/bot"
 	"haruki-cloud/database/bot/requestsranking"
+	"haruki-cloud/internal/core/crypto"
 	json "haruki-cloud/internal/jsonutil"
 
 	"github.com/gofiber/fiber/v3"
@@ -23,7 +24,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/redis/go-redis/v9"
 	noiseMP "github.com/shamaton/msgpack/v3"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type testEnvelope struct {
@@ -104,14 +104,28 @@ func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
 	config.Cfg.Backend.AcceptAuthorization = "Bearer route-test"
 	t.Cleanup(func() { config.Cfg = prev })
 
+	pair, err := crypto.GenerateKeyPair()
+	if err != nil {
+		t.Fatalf("generate key pair: %v", err)
+	}
+	ring, err := crypto.SingleKeyRing(pair)
+	if err != nil {
+		t.Fatalf("build key ring: %v", err)
+	}
 	app := fiber.New()
-	RegisterBotRoutes(app, client, nil, nil, "")
+	RegisterBotRoutesWithBanChecker(app, client, nil, ring, nil)
 
-	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/api/v2/bot/12345678/auth", []byte("garbage"))
+	// The login route sits behind the Noise middleware: garbage is refused there.
+	authHTTPResp := sendRawRequest(t, app, http.MethodPost, AuthV3RouteBase+"/12345678/auth", []byte("garbage"))
 	authHTTPResp.Body.Close()
-	// Auth route is registered if we get a non-404 response (400 or 500 both ok)
-	if authHTTPResp.StatusCode == fiber.StatusNotFound {
-		t.Fatalf("expected /api/v2/bot/:bot_id/auth to be registered, got 404")
+	if authHTTPResp.StatusCode != fiber.StatusBadRequest {
+		t.Fatalf("expected %s/:bot_id/auth to reject plaintext with 400, got %d", AuthV3RouteBase, authHTTPResp.StatusCode)
+	}
+
+	logoutResp := sendRawRequest(t, app, http.MethodDelete, AuthV3RouteBase+"/12345678/logout", nil)
+	logoutResp.Body.Close()
+	if logoutResp.StatusCode != fiber.StatusUnauthorized {
+		t.Fatalf("expected %s/:bot_id/logout without a token to return 401, got %d", AuthV3RouteBase, logoutResp.StatusCode)
 	}
 
 	verifyResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", `{}`, map[string]string{
@@ -124,96 +138,24 @@ func TestRegisterBotRoutes_ReopensPublicAndInternalRoutes(t *testing.T) {
 
 func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 	ctx := context.Background()
-	client := newBotTestClient(t, "flow")
-	defer func() { _ = client.Close() }()
-	if err := client.Schema.Create(ctx); err != nil {
-		t.Fatalf("create schema: %v", err)
+	env := newAuthV3TestEnv(t)
+	statsHandler := NewStatisticsHandler(NewStatisticsService(env.client))
+	env.app.Post("/internal/bot/statistics/record/:botID", api.VerifyAPIAuthorization(), statsHandler.RecordStatistics)
+
+	status, body := env.send(t, env.current, "", env.basePayload(t))
+	if status != fiber.StatusOK {
+		t.Fatalf("auth failed: status=%d body=%s", status, body)
 	}
-
-	prev := config.Cfg
-	config.Cfg.HarukiBotDB.CredentialSignToken = "credential-sign-token"
-	config.Cfg.HarukiBotDB.SessionSignToken = "session-sign-token"
-	config.Cfg.HarukiBotDB.SessionTTLDays = 7
-	config.Cfg.Backend.AcceptAuthorization = "Bearer internal-test"
-	config.Cfg.Backend.AcceptUserAgent = ""
-	t.Cleanup(func() { config.Cfg = prev })
-
-	store := newMemoryRedisStore()
-	testAuthKey := []byte("01234567890123456789012345678901") // 32 bytes
-	banChecker := &stubGlobalBanChecker{}
-	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store, testAuthKey, "deadbeef").WithGlobalBanChecker(banChecker))
-	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store).WithGlobalBanChecker(banChecker))
-	statsHandler := NewStatisticsHandler(NewStatisticsService(client))
-
-	app := fiber.New()
-	public := app.Group("/bot")
-	public.Post("/:bot_id/auth", userHandler.Auth)
-	internal := app.Group("/internal/bot", api.VerifyAPIAuthorization())
-	internal.Post("/verify-session", internalHandler.VerifySession)
-	app.Post("/internal/bot/statistics/record/:botID", api.VerifyAPIAuthorization(), statsHandler.RecordStatistics)
-
-	// Seed a user directly in the database
-	const qqNumber int64 = 123456789
-	const botID = 10042042
-	credential := "test-credential-value"
-	hashedCred, err := bcrypt.GenerateFromPassword([]byte(credential), bcrypt.DefaultCost)
-	if err != nil {
-		t.Fatalf("hash credential: %v", err)
-	}
-	_, err = client.User.Create().
-		SetOwnerUserID(qqNumber).
-		SetBotID(botID).
-		SetCredential(string(hashedCred)).
-		Save(ctx)
-	if err != nil {
-		t.Fatalf("seed user: %v", err)
-	}
-
-	botIDStr := strconv.Itoa(botID)
-
-	// Sign credential as JWT (mimicking what register would return)
-	credentialJWT := signTestCredential(t, botIDStr, credential)
-
-	// Auth flow
-	authPayload := HarukiAuthPayload{
-		BotID:      botIDStr,
-		Credential: credentialJWT,
-		Timestamp:  time.Now().Unix(),
-	}
-	payloadBytes, err := noiseMP.Marshal(authPayload)
-	if err != nil {
-		t.Fatalf("marshal auth payload: %v", err)
-	}
-	encryptedBody, err := EncryptRaw(payloadBytes, testAuthKey)
-	if err != nil {
-		t.Fatalf("encrypt auth payload: %v", err)
-	}
-
-	authHTTPResp := sendRawRequest(t, app, http.MethodPost, "/bot/"+botIDStr+"/auth", encryptedBody)
-	if authHTTPResp.StatusCode != fiber.StatusOK {
-		body, _ := io.ReadAll(authHTTPResp.Body)
-		t.Fatalf("auth failed: status=%d body=%s", authHTTPResp.StatusCode, string(body))
-	}
-	authRespBody, _ := io.ReadAll(authHTTPResp.Body)
-	authHTTPResp.Body.Close()
-
-	decryptedResp, err := DecryptRaw(authRespBody, testAuthKey)
-	if err != nil {
-		t.Fatalf("decrypt auth response: %v", err)
-	}
-	var authData HarukiAuthResponse
-	if err := noiseMP.Unmarshal(decryptedResp, &authData); err != nil {
+	var authData AuthResponseV3
+	if err := noiseMP.Unmarshal(body, &authData); err != nil {
 		t.Fatalf("decode auth response: %v", err)
 	}
 	if authData.SessionToken == "" || authData.ExpiresAt <= time.Now().Unix() {
 		t.Fatalf("invalid auth response: %+v", authData)
 	}
-	if authData.NoiseServerPubKey != "deadbeef" {
-		t.Fatalf("expected noise pubkey 'deadbeef', got '%s'", authData.NoiseServerPubKey)
-	}
 
-	verifyBody := fmt.Sprintf(`{"bot_id":"%s","session_token":"%s"}`, botIDStr, authData.SessionToken)
-	verifyResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
+	verifyBody := fmt.Sprintf(`{"bot_id":"%s","session_token":"%s"}`, env.botStr, authData.SessionToken)
+	verifyResp := sendJSONRequest(t, env.app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
 	if verifyResp.Status != fiber.StatusOK {
@@ -223,12 +165,12 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 	if err := json.Unmarshal(verifyResp.Data, &verifyData); err != nil {
 		t.Fatalf("decode verify response: %v", err)
 	}
-	if !verifyData.Valid || verifyData.BotID != botID || verifyData.OwnerUserID != qqNumber {
+	if !verifyData.Valid || verifyData.BotID != env.botID || verifyData.OwnerUserID != 987654321 {
 		t.Fatalf("unexpected verify response: %+v", verifyData)
 	}
 
-	banChecker.banned = true
-	verifyResp = sendJSONRequest(t, app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
+	env.ban.banned = true
+	verifyResp = sendJSONRequest(t, env.app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
 		"Authorization": "Bearer internal-test",
 	})
 	if err := json.Unmarshal(verifyResp.Data, &verifyData); err != nil {
@@ -237,22 +179,18 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 	if verifyData.Valid {
 		t.Fatalf("globally banned Bot owner retained a valid session: %+v", verifyData)
 	}
-	banChecker.banned = false
+	env.ban.banned = false
 
-	statsResp := sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+botIDStr, `{}`, map[string]string{
-		"Authorization": "Bearer internal-test",
-	})
-	if statsResp.Status != fiber.StatusOK {
-		t.Fatalf("statistics failed: status=%d message=%s", statsResp.Status, statsResp.Message)
-	}
-	statsResp = sendJSONRequest(t, app, http.MethodPost, "/internal/bot/statistics/record/"+botIDStr, `{}`, map[string]string{
-		"Authorization": "Bearer internal-test",
-	})
-	if statsResp.Status != fiber.StatusOK {
-		t.Fatalf("second statistics failed: status=%d message=%s", statsResp.Status, statsResp.Message)
+	for i := 0; i < 2; i++ {
+		statsResp := sendJSONRequest(t, env.app, http.MethodPost, "/internal/bot/statistics/record/"+env.botStr, `{}`, map[string]string{
+			"Authorization": "Bearer internal-test",
+		})
+		if statsResp.Status != fiber.StatusOK {
+			t.Fatalf("statistics call %d failed: status=%d message=%s", i+1, statsResp.Status, statsResp.Message)
+		}
 	}
 
-	rankingRow, err := client.RequestsRanking.Query().Where(requestsranking.BotIDEQ(botID)).Only(ctx)
+	rankingRow, err := env.client.RequestsRanking.Query().Where(requestsranking.BotIDEQ(env.botID)).Only(ctx)
 	if err != nil {
 		t.Fatalf("load requests ranking: %v", err)
 	}
@@ -260,7 +198,7 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 		t.Fatalf("requests ranking count mismatch: got=%d want=2", rankingRow.Counts)
 	}
 
-	hourlyRow, err := client.HourlyRequests.Query().Only(ctx)
+	hourlyRow, err := env.client.HourlyRequests.Query().Only(ctx)
 	if err != nil {
 		t.Fatalf("load hourly requests: %v", err)
 	}
@@ -268,69 +206,12 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 		t.Fatalf("hourly requests count mismatch: got=%d want=2", hourlyRow.Count)
 	}
 
-	dailyRow, err := client.DailyRequests.Query().Only(ctx)
+	dailyRow, err := env.client.DailyRequests.Query().Only(ctx)
 	if err != nil {
 		t.Fatalf("load daily requests: %v", err)
 	}
 	if dailyRow.Count != 2 {
 		t.Fatalf("daily requests count mismatch: got=%d want=2", dailyRow.Count)
-	}
-}
-
-func TestBotAuthRejectsGloballyBannedOwner(t *testing.T) {
-	ctx := context.Background()
-	client := newBotTestClient(t, "banned_owner")
-	t.Cleanup(func() { _ = client.Close() })
-	if err := client.Schema.Create(ctx); err != nil {
-		t.Fatalf("create schema: %v", err)
-	}
-
-	prev := config.Cfg
-	config.Cfg.HarukiBotDB.CredentialSignToken = "credential-sign-token"
-	t.Cleanup(func() { config.Cfg = prev })
-
-	const botID = 10043043
-	const credential = "banned-owner-credential"
-	hashedCred, err := bcrypt.GenerateFromPassword([]byte(credential), bcrypt.DefaultCost)
-	if err != nil {
-		t.Fatalf("hash credential: %v", err)
-	}
-	_, err = client.User.Create().
-		SetOwnerUserID(123456789).
-		SetBotID(botID).
-		SetCredential(string(hashedCred)).
-		Save(ctx)
-	if err != nil {
-		t.Fatalf("seed user: %v", err)
-	}
-
-	store := newMemoryRedisStore()
-	key := []byte("01234567890123456789012345678901")
-	handler := NewUserHandler(
-		NewUserServiceWithDependencies(client, store, key, "").
-			WithGlobalBanChecker(&stubGlobalBanChecker{banned: true}),
-	)
-	app := fiber.New()
-	app.Post("/bot/:bot_id/auth", handler.Auth)
-
-	botIDStr := strconv.Itoa(botID)
-	payloadBytes, err := noiseMP.Marshal(HarukiAuthPayload{
-		BotID:      botIDStr,
-		Credential: signTestCredential(t, botIDStr, credential),
-		Timestamp:  time.Now().Unix(),
-	})
-	if err != nil {
-		t.Fatalf("marshal payload: %v", err)
-	}
-	encryptedBody, err := EncryptRaw(payloadBytes, key)
-	if err != nil {
-		t.Fatalf("encrypt payload: %v", err)
-	}
-	resp := sendRawRequest(t, app, http.MethodPost, "/bot/"+botIDStr+"/auth", encryptedBody)
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != fiber.StatusForbidden || string(body) != ErrOwnerBanned {
-		t.Fatalf("unexpected banned auth response: status=%d body=%q", resp.StatusCode, body)
 	}
 }
 

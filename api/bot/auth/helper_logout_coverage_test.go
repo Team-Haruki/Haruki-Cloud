@@ -71,7 +71,7 @@ func TestServiceHelperBranches(t *testing.T) {
 	mini := miniredis.RunT(t)
 	client := redis.NewClient(&redis.Options{Addr: mini.Addr()})
 	t.Cleanup(func() { _ = client.Close() })
-	userService := NewUserService(nil, client, nil, "")
+	userService := NewUserService(nil, client)
 	internalService := NewInternalService(nil, client)
 	if err := userService.setRedisKey(ctx, "test:%v", 7, "value", 1); err != nil {
 		t.Fatal(err)
@@ -89,7 +89,7 @@ func TestServiceHelperBranches(t *testing.T) {
 
 func TestServiceConstructorsAndBanCheckerBranches(t *testing.T) {
 	ctx := context.Background()
-	userService := NewUserServiceWithDependencies(nil, nil, []byte("key"), "noise")
+	userService := NewUserServiceWithDependencies(nil, nil)
 	if userService.redisStore == nil {
 		t.Fatal("nil user store was not defaulted")
 	}
@@ -114,7 +114,7 @@ func TestServiceConstructorsAndBanCheckerBranches(t *testing.T) {
 
 func TestLogoutHandlerBranches(t *testing.T) {
 	store := newMemoryRedisStore()
-	service := NewUserServiceWithDependencies(nil, store, nil, "")
+	service := NewUserServiceWithDependencies(nil, store)
 	handler := NewUserHandler(service)
 	app := fiber.New()
 	app.Post("/logout/:bot_id", handler.Logout)
@@ -160,7 +160,7 @@ func TestLogoutHandlerBranches(t *testing.T) {
 	failing := &deleteFailingRedisStore{memoryRedisStore: newMemoryRedisStore(), err: wantErr}
 	failing.value[fmt.Sprintf(RedisKeySessionToken, "7")] = "token"
 	failingApp := fiber.New()
-	failingApp.Post("/logout/:bot_id", NewUserHandler(NewUserServiceWithDependencies(nil, failing, nil, "")).Logout)
+	failingApp.Post("/logout/:bot_id", NewUserHandler(NewUserServiceWithDependencies(nil, failing)).Logout)
 	failingReq, err := http.NewRequest(http.MethodPost, "/logout/7", nil)
 	if err != nil {
 		t.Fatal(err)

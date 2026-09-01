@@ -21,8 +21,6 @@ import (
 	"testing"
 	"time"
 
-	"encoding/base64"
-
 	botauth "haruki-cloud/api/bot/auth"
 	corecrypto "haruki-cloud/internal/core/crypto"
 
@@ -166,12 +164,6 @@ func ensureAuthenticated(t *testing.T) integrationConfig {
 }
 
 func authenticate(cfg integrationConfig) error {
-	// Key derivation: server takes the raw credential string bytes (not base64-decoded),
-	// copies first 32 bytes into a 32-byte key.
-	credRaw := []byte(cfg.Credential)
-	aesKey := make([]byte, 32)
-	copy(aesKey, credRaw)
-
 	// Build JWT credential: {bot_id, credential} signed with credentialSignToken.
 	jwtCred, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"bot_id":     cfg.BotID,
@@ -181,15 +173,42 @@ func authenticate(cfg integrationConfig) error {
 		return fmt.Errorf("sign JWT credential: %w", err)
 	}
 
-	authPayload := fmt.Sprintf(`{"credential":"%s","timestamp":%d}`, jwtCred, time.Now().Unix())
-	encryptedRaw, err := botauth.EncryptRaw([]byte(authPayload), aesKey)
+	serverPubKey, err = hex.DecodeString(cfg.ServerPubKeyHex)
+	if err != nil {
+		return fmt.Errorf("decode server pubkey: %w", err)
+	}
+
+	// AuthV3: the payload travels inside a Noise NK handshake keyed to the
+	// server's static public key; there is no shared client-side secret.
+	nonceRaw := make([]byte, botauth.AuthV3NonceSize)
+	if _, err := rand.Read(nonceRaw); err != nil {
+		return fmt.Errorf("generate nonce: %w", err)
+	}
+	path := botauth.AuthV3RouteBase + "/" + cfg.BotID + "/auth"
+	payload := botauth.AuthPayloadV3{
+		BotID:         cfg.BotID,
+		Credential:    jwtCred,
+		Timestamp:     time.Now().Unix(),
+		Nonce:         hex.EncodeToString(nonceRaw),
+		ClientVersion: "integration-test",
+		BuildID:       "integration-test",
+		Method:        http.MethodPost,
+		Path:          path,
+	}
+	plaintext, err := msgpack.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("marshal auth payload: %w", err)
+	}
+	nc, err := corecrypto.NewInitiator(serverPubKey)
+	if err != nil {
+		return fmt.Errorf("init noise: %w", err)
+	}
+	ciphertext, err := nc.EncryptPacket(plaintext)
 	if err != nil {
 		return fmt.Errorf("encrypt auth payload: %w", err)
 	}
-	encrypted := base64.StdEncoding.EncodeToString(encryptedRaw)
 
-	body := fmt.Sprintf(`{"encrypted_payload":"%s"}`, encrypted)
-	resp, err := http.Post(cfg.BaseURL+"/bot/"+cfg.BotID+"/auth", "application/json", strings.NewReader(body))
+	resp, err := http.Post(cfg.BaseURL+path, "application/octet-stream", bytes.NewReader(ciphertext))
 	if err != nil {
 		return fmt.Errorf("auth request: %w", err)
 	}
@@ -202,26 +221,23 @@ func authenticate(cfg integrationConfig) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("auth failed: status=%d body=%s", resp.StatusCode, string(respBody))
 	}
-
-	var authResp struct {
-		Message string `json:"message"`
-		Data    struct {
-			SessionToken string `json:"session_token"`
-			ExpiresAt    int64  `json:"expires_at"`
-		} `json:"data"`
+	decrypted, err := nc.DecryptPacket(respBody)
+	if err != nil {
+		return fmt.Errorf("decrypt auth response: %w", err)
 	}
-	if err := json.Unmarshal(respBody, &authResp); err != nil {
+
+	var authResp botauth.AuthResponseV3
+	if err := msgpack.Unmarshal(decrypted, &authResp); err != nil {
 		return fmt.Errorf("parse auth response: %w", err)
 	}
-	if authResp.Data.SessionToken == "" {
-		return fmt.Errorf("empty session token in response: %s", string(respBody))
+	if authResp.SessionToken == "" {
+		return fmt.Errorf("empty session token in auth response")
+	}
+	if authResp.EchoNonce != payload.Nonce {
+		return fmt.Errorf("auth response nonce mismatch")
 	}
 
-	sessionToken = authResp.Data.SessionToken
-	serverPubKey, err = hex.DecodeString(cfg.ServerPubKeyHex)
-	if err != nil {
-		return fmt.Errorf("decode server pubkey: %w", err)
-	}
+	sessionToken = authResp.SessionToken
 	return nil
 }
 

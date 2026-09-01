@@ -10,16 +10,6 @@ import (
 
 // ================= Request Types =================
 
-// HarukiAuthPayload 解密后的登录载荷（MsgPack 编码）
-// 请求体格式: nonce(12) || AES-256-GCM(key, nonce, MsgPack(HarukiAuthPayload))
-type HarukiAuthPayload struct {
-	BotID          string `msgpack:"bot_id"`
-	Credential     string `msgpack:"credential"`      // JWT 签名的 credential
-	Timestamp      int64  `msgpack:"timestamp"`       // 防重放攻击
-	ClientIP       string `msgpack:"client_ip"`       // 客户端自报 IP（来自 myip.ipip.net）
-	ClientLocation string `msgpack:"client_location"` // 客户端自报地理位置
-}
-
 // AuthPayloadV3 是 AuthV3 解密后的登录载荷（MsgPack 编码）。
 // 请求体格式: Noise NK Message 1，payload = MsgPack(AuthPayloadV3)。
 // 载荷通过 Noise 通道传输，不再依赖二进制内置的共享 AES 密钥。
@@ -47,13 +37,6 @@ type InternalVerifyRequest struct {
 
 // ================= Response Types =================
 
-// HarukiAuthResponse 登录成功响应（MsgPack 编码，AES-256-GCM 加密返回）
-type HarukiAuthResponse struct {
-	SessionToken      string `msgpack:"session_token"`
-	ExpiresAt         int64  `msgpack:"expires_at"`          // Unix 时间戳
-	NoiseServerPubKey string `msgpack:"noise_server_pubkey"` // hex 编码的 X25519 公钥
-}
-
 // AuthResponseV3 是 AuthV3 登录成功响应（MsgPack 编码，经 Noise NK Message 2 加密返回）。
 type AuthResponseV3 struct {
 	SessionToken string `msgpack:"session_token"`
@@ -76,7 +59,6 @@ type InternalVerifyResponse struct {
 
 const (
 	RedisKeySessionToken = api.RedisKeyBotSession
-	RedisKeyNonce        = "hdb:bot:nonce:%s"       // payload hash
 	RedisKeyNonceV3      = "hdb:bot:nonce:v3:%s:%s" // bot_id:nonce hex
 	RedisKeyRateLimit    = "hdb:bot:rl:%s:%s"       // action:identifier
 )
@@ -135,11 +117,9 @@ type GlobalBanChecker interface {
 }
 
 type UserService struct {
-	dbClient          *ent.Client
-	redisStore        RedisKVStore
-	authEncryptionKey []byte // 32-byte AES-256 key for auth payload encryption
-	noiseServerPubKey string // hex-encoded server Noise NK public key
-	globalBanChecker  GlobalBanChecker
+	dbClient         *ent.Client
+	redisStore       RedisKVStore
+	globalBanChecker GlobalBanChecker
 }
 
 type InternalService struct {

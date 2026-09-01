@@ -222,8 +222,8 @@ func resolveMySekaiHousingCompetitionCachePath() string {
 
 // validateBotAuthSecrets fails fast when a bot JWT signing secret is empty.
 // An empty HMAC key signs/verifies tokens with a zero-length key, which is
-// forgeable — the AES + Noise keys are already validated the same way, and bot
-// auth routes are always registered, so these must be configured too.
+// forgeable — the Noise keys are already validated the same way, and bot auth
+// routes are always registered, so these must be configured too.
 func validateBotAuthSecrets(mainLogger *harukiLogger.Logger) {
 	if strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.SessionSignToken) == "" {
 		fatalStartup(mainLogger, "bot session signing token is not configured")
@@ -231,22 +231,6 @@ func validateBotAuthSecrets(mainLogger *harukiLogger.Logger) {
 	if strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.CredentialSignToken) == "" {
 		fatalStartup(mainLogger, "bot credential signing token is not configured")
 	}
-}
-
-func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {
-	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.AuthEncryptionKey)
-	if keyHex == "" {
-		fatalStartup(mainLogger, "auth encryption key is not configured")
-	}
-	keyBytes, err := hex.DecodeString(keyHex)
-	if err != nil {
-		fatalStartup(mainLogger, "invalid auth_encryption_key hex", "error_type", fmt.Sprintf("%T", err))
-	}
-	if len(keyBytes) != 32 {
-		fatalStartup(mainLogger, "auth encryption key has invalid length", "key_bytes", len(keyBytes))
-	}
-	mainLogger.Info("auth encryption key loaded", "algorithm", "AES-256-GCM")
-	return keyBytes
 }
 
 func initNoiseKeyRing(mainLogger *harukiLogger.Logger) *crypto.KeyRing {

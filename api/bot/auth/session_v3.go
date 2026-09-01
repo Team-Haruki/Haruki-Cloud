@@ -24,11 +24,11 @@ import (
 // 解密后的 MsgPack(AuthPayloadV3) 写回 body；响应写出 MsgPack(AuthResponseV3)，
 // 由同一中间件用本次握手的密钥封装成 Noise NK Message 2。
 //
-// 与 AuthV2 的区别：
-//   - 不再使用二进制内置的共享 AES 密钥，客户端只需预置服务端 Noise 公钥；
+// 安全模型：
+//   - 客户端只需预置服务端 Noise 公钥，二进制里没有任何共享密钥；
 //   - nonce 由客户端显式提供，服务端按 bot_id + nonce 一次性消费；
 //   - method / path 绑定请求上下文，密文无法搬到其他接口重放；
-//   - session 有效期缩短为 auth_v3_session_ttl（默认 1 小时）。
+//   - session 有效期由 auth_v3_session_ttl 决定（默认 1 小时）。
 func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 	ctx := c.Context()
 	botIDStr := c.Params("bot_id")
@@ -42,7 +42,7 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(ErrSecureChannelMissing)
 	}
 
-	// 速率限制与 AuthV2 共用同一计数桶，避免攻击者叠加两条通道的预算。
+	// 速率限制：每 bot_id 每分钟最多 RateLimitAuth 次。
 	allowed, rlErr := h.svc.checkRateLimit(ctx, "auth", botIDStr, RateLimitAuth, RateLimitAuthTTL)
 	if rlErr != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)

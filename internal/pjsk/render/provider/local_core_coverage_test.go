@@ -183,7 +183,17 @@ func newLocalCoverageProvider(t *testing.T) *LocalProvider {
 func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	p := newLocalCoverageProvider(t)
 	ctx := context.Background()
+	testLocalCardLookupBranches(t, p, ctx)
+	testLocalCardFilterBranches(t, p, ctx)
+	testLocalCardMetadataBranches(t, p, ctx)
+	testLocalMusicLookupBranches(t, p, ctx)
+	testLocalMusicDetailBranches(t, p, ctx)
+	testLocalCostumeBranches(t, p, ctx)
+	testLocalGachaBranches(t, p, ctx)
+}
 
+func testLocalCardLookupBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if _, err := p.cards.GetByID(ctx, 0); err == nil {
 		t.Fatal("zero card id was accepted")
 	}
@@ -213,6 +223,10 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	if _, err := p.cards.Filter(ctx, nil); err == nil {
 		t.Fatal("nil card filter was accepted")
 	}
+}
+
+func testLocalCardFilterBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	filtered, err := p.cards.Filter(ctx, &CardFilter{
 		CharacterID: 21,
 		Unit:        "idol",
@@ -239,6 +253,16 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 			t.Fatalf("nonmatching card filter %+v = %+v, %v", filter, got, err)
 		}
 	}
+}
+
+func testLocalCardMetadataBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
+	testLocalCardSupplyBranches(t, p, ctx)
+	testLocalCardSourceBranches(t, p, ctx)
+}
+
+func testLocalCardSupplyBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if got := p.cards.GetSupplyType(ctx, nil); got != "normal" {
 		t.Fatalf("nil card supply type = %q", got)
 	}
@@ -263,6 +287,10 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	if _, err := p.cards.GetGachaByCardID(ctx, 999); err == nil {
 		t.Fatal("missing card gacha was accepted")
 	}
+}
+
+func testLocalCardSourceBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if costumes, err := p.cards.GetCostume3dsByCardID(ctx, 2); err != nil || len(costumes) != 1 || costumes[0].ID != 1001 {
 		t.Fatalf("card costumes = %+v, %v", costumes, err)
 	}
@@ -281,7 +309,16 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	if episodes, err := p.cards.GetEpisodesByCardID(ctx, 999); err != nil || episodes != nil {
 		t.Fatalf("missing card episodes = %+v, %v", episodes, err)
 	}
+}
 
+func testLocalMusicLookupBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
+	testLocalMusicSearchBranches(t, p, ctx)
+	testLocalMusicListBranches(t, p, ctx)
+}
+
+func testLocalMusicSearchBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if _, err := p.musics.Search(ctx, " "); err == nil {
 		t.Fatal("empty music search was accepted")
 	}
@@ -306,6 +343,10 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	if _, err := p.musics.GetByEventID(ctx, 999); err == nil {
 		t.Fatal("missing event music succeeded")
 	}
+}
+
+func testLocalMusicListBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if all := p.musics.GetAll(ctx); len(all) != 2 || all[0].ID != 1 {
 		t.Fatalf("all musics = %+v", all)
 	}
@@ -318,6 +359,16 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	if _, err := p.musics.GetLocalizedTitles(ctx, 0); err == nil {
 		t.Fatal("zero localized-title id was accepted")
 	}
+}
+
+func testLocalMusicDetailBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
+	testLocalMusicArrangementBranches(t, p, ctx)
+	testLocalMusicAssociationBranches(t, p, ctx)
+}
+
+func testLocalMusicArrangementBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if diffs, err := p.musics.GetDifficulties(ctx, 1); err != nil || len(diffs) != 2 {
 		t.Fatalf("music difficulties = %+v, %v", diffs, err)
 	}
@@ -333,6 +384,10 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	if tags, err := p.musics.GetTags(ctx, 1); err != nil || len(tags) != 1 || tags[0] != "mv" {
 		t.Fatalf("music tags = %+v, %v", tags, err)
 	}
+}
+
+func testLocalMusicAssociationBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if name, err := p.musics.GetOutsideCharacterByID(ctx, 5); err != nil || name != "Guest" {
 		t.Fatalf("outside character = %q, %v", name, err)
 	}
@@ -354,7 +409,16 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	if limited := p.musics.GetLimitedTimeMusics(ctx, 999); limited != nil {
 		t.Fatalf("missing limited musics = %+v", limited)
 	}
+}
 
+func testLocalCostumeBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
+	testLocalCostumeFilterBranches(t, p, ctx)
+	testLocalCostumeMetadataBranches(t, p, ctx)
+}
+
+func testLocalCostumeFilterBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if _, err := p.costumes.GetByID(ctx, 0); err == nil {
 		t.Fatal("zero costume id was accepted")
 	}
@@ -376,6 +440,10 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 			t.Fatalf("costume filter %+v: %v", filter, err)
 		}
 	}
+}
+
+func testLocalCostumeMetadataBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if variants, err := p.costumes.GetVariants(ctx, 100, "body", 1); err != nil || len(variants) != 2 || variants[0].ColorID != 1 {
 		t.Fatalf("costume variants = %+v, %v", variants, err)
 	}
@@ -391,7 +459,10 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 	if localCostumeContainsKeyword(&masterdata.Costume3d{Name: "plain"}, "missing") {
 		t.Fatal("nonmatching costume keyword matched")
 	}
+}
 
+func testLocalGachaBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if _, err := p.gachas.GetByID(ctx, 0); err == nil {
 		t.Fatal("zero gacha id was accepted")
 	}
@@ -424,7 +495,15 @@ func TestLocalCardMusicCostumeAndGachaProviders(t *testing.T) {
 func TestLocalHonorCharacterSkillAndAuxiliaryProviders(t *testing.T) {
 	p := newLocalCoverageProvider(t)
 	ctx := context.Background()
+	testLocalCharacterBranches(t, p, ctx)
+	testLocalSkillBranches(t, p, ctx)
+	testLocalHonorGroupBranches(t, p, ctx)
+	testLocalBondsHonorBranches(t, p, ctx)
+	testLocalAuxiliaryProviderBranches(t, p, ctx)
+}
 
+func testLocalCharacterBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if _, err := p.characters.GetByID(ctx, 0); err == nil {
 		t.Fatal("zero character id was accepted")
 	}
@@ -449,7 +528,10 @@ func TestLocalHonorCharacterSkillAndAuxiliaryProviders(t *testing.T) {
 	if _, err := p.characters.GetGameCharacterUnit(ctx, 999); err == nil {
 		t.Fatal("missing character unit was accepted")
 	}
+}
 
+func testLocalSkillBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if skill, err := p.skills.GetByID(ctx, 1); err != nil || skill.ID != 1 {
 		t.Fatalf("skill = %+v, %v", skill, err)
 	}
@@ -466,7 +548,10 @@ func TestLocalHonorCharacterSkillAndAuxiliaryProviders(t *testing.T) {
 	if got := p.skills.FormatDescription(ctx, characterSkill, 1); !strings.Contains(got, "Ichika") {
 		t.Fatalf("character skill description = %q", got)
 	}
+}
 
+func testLocalHonorGroupBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if _, err := p.honors.GetByID(ctx, 0); err == nil {
 		t.Fatal("zero honor id was accepted")
 	}
@@ -495,6 +580,10 @@ func TestLocalHonorCharacterSkillAndAuxiliaryProviders(t *testing.T) {
 	if localBirthdayGroupMatchesCharacter("", &localGameCharacterJSON{ID: 1}) || localBirthdayGroupMatchesCharacter("Ichika", nil) {
 		t.Fatal("invalid birthday match succeeded")
 	}
+}
+
+func testLocalBondsHonorBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if bond, err := p.honors.GetBondsHonorByID(ctx, 300); err != nil || bond.Name != "Bond" {
 		t.Fatalf("bonds honor = %+v, %v", bond, err)
 	}
@@ -519,7 +608,10 @@ func TestLocalHonorCharacterSkillAndAuxiliaryProviders(t *testing.T) {
 	if eventID := p.honors.GetEventIDByHonorID(ctx, 0); eventID != 0 {
 		t.Fatalf("zero honor event id = %d", eventID)
 	}
+}
 
+func testLocalAuxiliaryProviderBranches(t *testing.T, p *LocalProvider, ctx context.Context) {
+	t.Helper()
 	if stamps, err := p.stamps.GetAll(ctx); err != nil || len(stamps) != 1 {
 		t.Fatalf("stamps = %+v, %v", stamps, err)
 	}
@@ -544,7 +636,14 @@ func TestLocalEducationAndMySekaiProviders(t *testing.T) {
 	p := newLocalCoverageProvider(t)
 	ctx := context.Background()
 	education := p.education
+	testLocalEducationAreaBranches(t, education, ctx)
+	testLocalEducationMissionBranches(t, education, ctx)
+	testLocalEducationShopBranches(t, education, ctx)
+	testLocalMySekaiBranches(t, p)
+}
 
+func testLocalEducationAreaBranches(t *testing.T, education *localEducationProvider, ctx context.Context) {
+	t.Helper()
 	if items := education.GetAreaItems(ctx); len(items) != 1 {
 		t.Fatalf("area items = %+v", items)
 	}
@@ -572,6 +671,16 @@ func TestLocalEducationAndMySekaiProviders(t *testing.T) {
 	if education.GetCharacterRank(ctx, 0, 0) != nil || education.GetCharacterRank(ctx, 999, 1) != nil {
 		t.Fatal("invalid character rank resolved")
 	}
+}
+
+func testLocalEducationMissionBranches(t *testing.T, education *localEducationProvider, ctx context.Context) {
+	t.Helper()
+	testLocalEducationBondsAndStyleBranches(t, education, ctx)
+	testLocalEducationCharacterMissionBranches(t, education, ctx)
+}
+
+func testLocalEducationBondsAndStyleBranches(t *testing.T, education *localEducationProvider, ctx context.Context) {
+	t.Helper()
 	if bonds := education.GetBonds(ctx); len(bonds) != 1 {
 		t.Fatalf("bonds = %+v", bonds)
 	}
@@ -587,6 +696,10 @@ func TestLocalEducationAndMySekaiProviders(t *testing.T) {
 	if education.GetGameCharacterStyle(ctx, 0) != nil {
 		t.Fatal("zero character style resolved")
 	}
+}
+
+func testLocalEducationCharacterMissionBranches(t *testing.T, education *localEducationProvider, ctx context.Context) {
+	t.Helper()
 	if missions := education.GetCharacterMissions(ctx, 1); len(missions) != 1 {
 		t.Fatalf("character missions = %+v", missions)
 	}
@@ -608,6 +721,10 @@ func TestLocalEducationAndMySekaiProviders(t *testing.T) {
 	if education.GetMysekaiGateLevel(ctx, 0, 0) != nil || education.GetMysekaiGateLevel(ctx, 999, 1) != nil {
 		t.Fatal("invalid gate level resolved")
 	}
+}
+
+func testLocalEducationShopBranches(t *testing.T, education *localEducationProvider, ctx context.Context) {
+	t.Helper()
 	if shop := education.GetShopItemByResourceBoxID(ctx, 50); shop == nil || len(shop.Costs) != 1 || shop.Costs[0].Quantity != 10 {
 		t.Fatalf("shop item = %+v", shop)
 	}
@@ -617,7 +734,10 @@ func TestLocalEducationAndMySekaiProviders(t *testing.T) {
 	if shops := education.GetShopItems(ctx); len(shops) != 1 {
 		t.Fatalf("shop items = %+v", shops)
 	}
+}
 
+func testLocalMySekaiBranches(t *testing.T, p *LocalProvider) {
+	t.Helper()
 	if !p.mysekai.Configured() {
 		t.Fatal("local mysekai provider is not configured")
 	}

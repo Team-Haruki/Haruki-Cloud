@@ -325,54 +325,63 @@ func (s testCloudV2TrackerSource) GetCloudSKTrace(server string, eventID int, ch
 	if len(points) == 0 {
 		return nil, sekaiapi.ErrRankingNotFound
 	}
-	name := ""
-	userID := ""
-	if userData != nil {
-		name = userData.Name
-		userID = strings.TrimSpace(userData.UserID)
-	}
+	name, userID := cloudTraceUserIdentity(userData)
 	if name == "" {
 		name = s.cloudResolvedName(server, eventID, userID, "")
 	}
-	if subjectType == "rank" && len(points) > 0 {
-		currentUserID := strings.TrimSpace(points[len(points)-1].UserID)
-		if currentUserID != "" {
-			if currentTrace, currentUserData, err := s.cloudTracePoints(server, eventID, characterID, "user", currentUserID); err == nil && len(currentTrace) > 0 {
-				points = currentTrace
-				if currentUserData != nil && strings.TrimSpace(currentUserData.UserID) != "" {
-					userID = currentUserData.UserID
-				} else {
-					userID = currentUserID
-				}
-			}
-		}
-	}
+	points, userID = s.cloudCurrentRankTrace(server, eventID, characterID, subjectType, points, userID)
 	if latestName, latestUserID := s.cloudCurrentSubjectName(server, eventID, characterID, subjectType, subject, userID); latestName != "" {
 		name = latestName
 		if latestUserID != "" {
 			userID = latestUserID
 		}
 	}
-	out := make([]sekaiapi.CloudRankInfo, 0, len(points))
-	for _, point := range points {
-		pointUserID := strings.TrimSpace(point.UserID)
-		itemUserID := pointUserID
-		if itemUserID == "" {
-			itemUserID = userID
-		}
-		out = append(out, sekaiapi.CloudRankInfo{
-			Rank:        point.Rank,
-			UserID:      stringPtrIfNotEmpty(itemUserID),
-			Name:        name,
-			Score:       point.Score,
-			Timestamp:   point.Timestamp,
-			CharacterID: characterID,
-		})
-	}
+	out := cloudTraceRankInfo(points, characterID, name, userID)
 	return &sekaiapi.CloudTraceResponse{
 		Subject:  sekaiapi.SubjectTraceMeta{SubjectType: subjectType, Subject: subject, ResolvedUserID: stringPtrIfNotEmpty(userID)},
 		RankData: out,
 	}, nil
+}
+
+func cloudTraceUserIdentity(userData *sekaiapi.RankingUserData) (string, string) {
+	if userData == nil {
+		return "", ""
+	}
+	return userData.Name, strings.TrimSpace(userData.UserID)
+}
+
+func (s testCloudV2TrackerSource) cloudCurrentRankTrace(server string, eventID int, characterID *int, subjectType string, points []sekaiapi.RankDataPoint, userID string) ([]sekaiapi.RankDataPoint, string) {
+	if subjectType != "rank" || len(points) == 0 {
+		return points, userID
+	}
+	currentUserID := strings.TrimSpace(points[len(points)-1].UserID)
+	if currentUserID == "" {
+		return points, userID
+	}
+	currentTrace, currentUserData, err := s.cloudTracePoints(server, eventID, characterID, "user", currentUserID)
+	if err != nil || len(currentTrace) == 0 {
+		return points, userID
+	}
+	_, resolvedUserID := cloudTraceUserIdentity(currentUserData)
+	if resolvedUserID == "" {
+		resolvedUserID = currentUserID
+	}
+	return currentTrace, resolvedUserID
+}
+
+func cloudTraceRankInfo(points []sekaiapi.RankDataPoint, characterID *int, name, userID string) []sekaiapi.CloudRankInfo {
+	out := make([]sekaiapi.CloudRankInfo, 0, len(points))
+	for _, point := range points {
+		itemUserID := strings.TrimSpace(point.UserID)
+		if itemUserID == "" {
+			itemUserID = userID
+		}
+		out = append(out, sekaiapi.CloudRankInfo{
+			Rank: point.Rank, UserID: stringPtrIfNotEmpty(itemUserID), Name: name,
+			Score: point.Score, Timestamp: point.Timestamp, CharacterID: characterID,
+		})
+	}
+	return out
 }
 
 func (s testCloudV2TrackerSource) cloudRankInfoByRank(server string, eventID int, characterID *int, rank int) (sekaiapi.CloudRankInfo, error) {
@@ -3784,6 +3793,17 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 	if err != nil {
 		t.Fatalf("build predict line request: %v", err)
 	}
+	assertForecastScorePayload(t, payload, tracker)
+}
+
+func assertForecastScorePayload(t *testing.T, payload *LineRequest, tracker *batchLineMetricsTrackerSource) {
+	t.Helper()
+	assertForecastCurrentRanks(t, payload, tracker)
+	assertForecastColumns(t, payload)
+}
+
+func assertForecastCurrentRanks(t *testing.T, payload *LineRequest, tracker *batchLineMetricsTrackerSource) {
+	t.Helper()
 	if payload.Name != "Tracker Event 预测" {
 		t.Fatalf("unexpected payload name: %s", payload.Name)
 	}
@@ -3810,6 +3830,10 @@ func TestBuildPredictLineRequestFromTrackerUsesForecastScores(t *testing.T) {
 			t.Fatalf("forecast payload should omit ranks no source provided: %+v", payload.Ranks)
 		}
 	}
+}
+
+func assertForecastColumns(t *testing.T, payload *LineRequest) {
+	t.Helper()
 	if len(payload.ForecastColumns) != 3 {
 		t.Fatalf("unexpected forecast column len: %d", len(payload.ForecastColumns))
 	}
@@ -3953,7 +3977,32 @@ func TestBuildPredictLineRequestFromTrackerUsesSeparateScopesForWorldBloom(t *te
 		},
 	}, nil)
 	controller.SetForecastProvider(provider)
+	primeWorldBloomForecastScopes(t, controller, charaID)
+	totalPayload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+		EventID: 101,
+		Region:  "tw",
+		Ranks:   []int{100},
+	})
+	if err != nil {
+		t.Fatalf("build wl total predict line request: %v", err)
+	}
+	assertWorldBloomTotalForecastPayload(t, totalPayload)
 
+	chapterPayload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
+		EventID:       101,
+		Region:        "tw",
+		Ranks:         []int{100},
+		WlCharacterID: &charaID,
+	})
+	if err != nil {
+		t.Fatalf("build wl chapter predict line request: %v", err)
+	}
+	assertWorldBloomChapterForecastPayload(t, chapterPayload, charaID)
+	assertWorldBloomForecastQueries(t, provider, charaID)
+}
+
+func primeWorldBloomForecastScopes(t *testing.T, controller *Controller, charaID int) {
+	t.Helper()
 	if err := controller.forecastCache.RefreshNowQuery(context.Background(), ForecastQuery{
 		Region:  "tw",
 		EventID: 101,
@@ -3969,15 +4018,10 @@ func TestBuildPredictLineRequestFromTrackerUsesSeparateScopesForWorldBloom(t *te
 	}); err != nil {
 		t.Fatalf("prime wl chapter forecast cache: %v", err)
 	}
+}
 
-	totalPayload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
-		EventID: 101,
-		Region:  "tw",
-		Ranks:   []int{100},
-	})
-	if err != nil {
-		t.Fatalf("build wl total predict line request: %v", err)
-	}
+func assertWorldBloomTotalForecastPayload(t *testing.T, totalPayload *LineRequest) {
+	t.Helper()
 	if totalPayload.WlCid != nil {
 		t.Fatalf("expected wl total predict line to avoid chapter id, got %+v", totalPayload.WlCid)
 	}
@@ -3987,16 +4031,10 @@ func TestBuildPredictLineRequestFromTrackerUsesSeparateScopesForWorldBloom(t *te
 	if totalPayload.ForecastColumns[0].Ranks[0].Score == nil || *totalPayload.ForecastColumns[0].Ranks[0].Score != 8_888_888 {
 		t.Fatalf("unexpected wl total forecast score: %+v", totalPayload.ForecastColumns[0].Ranks[0])
 	}
+}
 
-	chapterPayload, err := controller.BuildPredictLineRequestFromTracker(TrackerRankQuery{
-		EventID:       101,
-		Region:        "tw",
-		Ranks:         []int{100},
-		WlCharacterID: &charaID,
-	})
-	if err != nil {
-		t.Fatalf("build wl chapter predict line request: %v", err)
-	}
+func assertWorldBloomChapterForecastPayload(t *testing.T, chapterPayload *LineRequest, charaID int) {
+	t.Helper()
 	if chapterPayload.Name != "WL Event 预测" {
 		t.Fatalf("unexpected wl chapter predict payload name: %s", chapterPayload.Name)
 	}
@@ -4009,7 +4047,10 @@ func TestBuildPredictLineRequestFromTrackerUsesSeparateScopesForWorldBloom(t *te
 	if chapterPayload.ForecastColumns[0].Ranks[0].Score == nil || *chapterPayload.ForecastColumns[0].Ranks[0].Score != 9_999_999 {
 		t.Fatalf("unexpected wl chapter forecast score: %+v", chapterPayload.ForecastColumns[0].Ranks[0])
 	}
+}
 
+func assertWorldBloomForecastQueries(t *testing.T, provider *scopedForecastProvider, charaID int) {
+	t.Helper()
 	if len(provider.queries) != 2 {
 		t.Fatalf("expected two scoped forecast queries, got %d", len(provider.queries))
 	}

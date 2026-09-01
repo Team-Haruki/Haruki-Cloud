@@ -135,6 +135,14 @@ func TestHousingCompetitionBuildValidationRefreshAndRenderBranches(t *testing.T)
 }
 
 func TestHousingCompetitionPureSelectionParsingAndTimingBranches(t *testing.T) {
+	testHousingCompetitionRankAndParsingBranches(t)
+	testHousingCompetitionSortingBranches(t)
+	testHousingCompetitionTimingBranches(t)
+	testHousingCompetitionThumbnailBranches(t)
+}
+
+func testHousingCompetitionRankAndParsingBranches(t *testing.T) {
+	t.Helper()
 	if got, err := NormalizeHousingCompetitionRanks(nil); err != nil || !reflect.DeepEqual(got, []int{1, 2, 3, 4, 5}) {
 		t.Fatalf("default ranks = %v, %v", got, err)
 	}
@@ -164,7 +172,10 @@ func TestHousingCompetitionPureSelectionParsingAndTimingBranches(t *testing.T) {
 	if normalizeHousingCompetitionSampleCount(0) != 1 || normalizeHousingCompetitionSampleCount(100) != 10 || normalizeHousingCompetitionSampleCount(3) != 3 {
 		t.Fatal("sample count normalization mismatch")
 	}
+}
 
+func testHousingCompetitionSortingBranches(t *testing.T) {
+	t.Helper()
 	items := []HousingCompetitionEntry{
 		{CacheKey: "z", ReviewCount: 1, SubmittedAt: 3, EntryName: "z"},
 		{CacheKey: "b", ReviewCount: 2, SubmittedAt: 2, EntryName: "b"},
@@ -178,7 +189,10 @@ func TestHousingCompetitionPureSelectionParsingAndTimingBranches(t *testing.T) {
 	if items[1].uniqueKey() != "a" || items[0].uniqueKey() == "" {
 		t.Fatal("entry unique keys should use explicit and derived forms")
 	}
+}
 
+func testHousingCompetitionTimingBranches(t *testing.T) {
+	t.Helper()
 	if stringPtrIfNotEmpty(" ") != nil || *stringPtrIfNotEmpty(" x ") != "x" {
 		t.Fatal("stringPtrIfNotEmpty mismatch")
 	}
@@ -210,7 +224,10 @@ func TestHousingCompetitionPureSelectionParsingAndTimingBranches(t *testing.T) {
 	if got := (housingCompetitionRefreshTarget{Competition: HousingCompetitionInfo{AggregateAt: 5_000}}).activeRefreshWait(now, time.Second); got != time.Second {
 		t.Fatalf("normal active wait = %v", got)
 	}
+}
 
+func testHousingCompetitionThumbnailBranches(t *testing.T) {
+	t.Helper()
 	noThumb := housingCompetitionThumbnailBase64(listOnlyHousingCoverageClient{}, "jp", "path")
 	if noThumb != nil || housingCompetitionThumbnailBase64(&housingCoverageClient{}, "jp", " ") != nil {
 		t.Fatal("thumbnail should require a path and thumbnail-capable client")
@@ -225,8 +242,41 @@ func TestHousingCompetitionPureSelectionParsingAndTimingBranches(t *testing.T) {
 }
 
 func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *testing.T) {
+	fixture := newHousingStatsCoverageFixture()
+	testHousingStatsCacheValidationBranches(t, fixture)
+	testHousingStatsCacheFreshnessBranches(t, fixture)
+	testHousingStatsBucketAndMergeBranches(t, fixture)
+	testHousingStatsSamplingBranches(t, fixture)
+	testHousingStatsPersistenceBranches(t)
+}
+
+type housingStatsCoverageFixture struct {
+	validRaw stdjson.RawMessage
+	client   *housingCoverageClient
+	cache    *housingCompetitionStatsCache
+	key      housingCompetitionStatsCacheKey
+	now      time.Time
+	bad      *housingCoverageClient
+}
+
+func newHousingStatsCoverageFixture() *housingStatsCoverageFixture {
 	validRaw := stdjson.RawMessage(`{"lotteryAt":2000,"results":[{"mysekaiHousingCompetitionId":25,"mysekaiOwnerUserId":1,"userMysekaiHousingCompetitionName":"entry","submittedAt":1000,"reviewCount":10}]}`)
 	client := &housingCoverageClient{raw: validRaw}
+	key, _ := newHousingCompetitionStatsCacheKey("", 25)
+	return &housingStatsCoverageFixture{
+		validRaw: validRaw,
+		client:   client,
+		cache:    newHousingCompetitionStatsCache("", -1),
+		key:      key,
+		now:      time.Now().UTC(),
+		bad:      &housingCoverageClient{err: errors.New("upstream")},
+	}
+}
+
+func testHousingStatsCacheValidationBranches(t *testing.T, fixture *housingStatsCoverageFixture) {
+	t.Helper()
+	client := fixture.client
+	cache := fixture.cache
 	var nilCache *housingCompetitionStatsCache
 	if nilCache.RefreshInterval() != DefaultHousingCompetitionRefreshInterval {
 		t.Fatal("nil cache refresh interval mismatch")
@@ -237,7 +287,6 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 	if entries, _, count, err := nilCache.Refresh(nil, client, "jp", 25, 1); err != nil || len(entries) != 1 || count != 1 {
 		t.Fatalf("nil-cache Refresh = %+v, %d, %v", entries, count, err)
 	}
-	cache := newHousingCompetitionStatsCache("", -1)
 	if cache.RefreshInterval() != DefaultHousingCompetitionRefreshInterval {
 		t.Fatal("default cache interval mismatch")
 	}
@@ -255,15 +304,18 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 	if _, _, _, err := cache.Refresh(nil, nil, "jp", 25, 1); err == nil {
 		t.Fatal("nil API should fail")
 	}
-	badClient := &housingCoverageClient{err: errors.New("upstream")}
-	if _, _, _, err := cache.Refresh(context.Background(), badClient, "jp", 25, 1); err == nil {
+	if _, _, _, err := cache.Refresh(context.Background(), fixture.bad, "jp", 25, 1); err == nil {
 		t.Fatal("upstream refresh error should propagate")
 	}
 	malformed := &housingCoverageClient{raw: stdjson.RawMessage(`{`)}
 	if _, _, _, err := cache.Refresh(context.Background(), malformed, "jp", 25, 1); err == nil {
 		t.Fatal("malformed refresh response should fail")
 	}
+}
 
+func testHousingStatsCacheFreshnessBranches(t *testing.T, fixture *housingStatsCoverageFixture) {
+	t.Helper()
+	cache, key, now := fixture.cache, fixture.key, fixture.now
 	key, ok := newHousingCompetitionStatsCacheKey("", 25)
 	if !ok || key.Region != renderRegionDefaultString() {
 		t.Fatalf("default cache key = %+v, %v", key, ok)
@@ -271,7 +323,6 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 	if _, ok := newHousingCompetitionStatsCacheKey("jp", -1); ok {
 		t.Fatal("negative housing ID should not form a cache key")
 	}
-	now := time.Now().UTC()
 	cache.buckets[key] = &housingCompetitionStatsBucket{
 		entries:       map[string]HousingCompetitionEntry{"entry": {CacheKey: "entry", ReviewCount: 10}},
 		refreshedAt:   now,
@@ -284,14 +335,25 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 	}
 	cache.buckets[key].refreshedAt = now.Add(-time.Hour)
 	cache.refreshInterval = time.Second
-	if entries, _, count, err := cache.GetOrRefresh(context.Background(), badClient, "jp", 25, 1); err != nil || len(entries) != 1 || count != 0 {
+	if entries, _, count, err := cache.GetOrRefresh(context.Background(), fixture.bad, "jp", 25, 1); err != nil || len(entries) != 1 || count != 0 {
 		t.Fatalf("stale fallback = %+v, %d, %v", entries, count, err)
 	}
 	delete(cache.buckets, key)
-	if _, _, _, err := cache.GetOrRefresh(context.Background(), badClient, "jp", 25, 1); err == nil {
+	if _, _, _, err := cache.GetOrRefresh(context.Background(), fixture.bad, "jp", 25, 1); err == nil {
 		t.Fatal("error without a stale fallback should propagate")
 	}
+}
 
+func testHousingStatsBucketAndMergeBranches(t *testing.T, fixture *housingStatsCoverageFixture) {
+	t.Helper()
+	testHousingStatsBucketBranches(t, fixture)
+	testHousingStatsMergeBranches(t)
+}
+
+func testHousingStatsBucketBranches(t *testing.T, fixture *housingStatsCoverageFixture) {
+	t.Helper()
+	cache, key, now := fixture.cache, fixture.key, fixture.now
+	var nilCache *housingCompetitionStatsCache
 	if shouldRefreshHousingCompetitionStats(nil, now, 0) != true || shouldRefreshHousingCompetitionStats(&housingCompetitionStatsBucket{}, now, 0) != true {
 		t.Fatal("empty buckets should refresh")
 	}
@@ -313,7 +375,10 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 	if entries, sampledAt := cache.snapshotLocked(key); entries != nil || !sampledAt.IsZero() {
 		t.Fatal("missing cache snapshot mismatch")
 	}
+}
 
+func testHousingStatsMergeBranches(t *testing.T) {
+	t.Helper()
 	merged := map[string]HousingCompetitionEntry{}
 	mergeHousingCompetitionEntries(merged, []HousingCompetitionEntry{{CompetitionID: 1, OwnerUserID: 2, EntryName: "old", ReviewCount: 2}})
 	for cacheKey, entry := range merged {
@@ -329,7 +394,10 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 	if len(removeBucket.entries) != 0 {
 		t.Fatalf("remove all bucket entries = %+v", removeBucket.entries)
 	}
+}
 
+func testHousingStatsSamplingBranches(t *testing.T, fixture *housingStatsCoverageFixture) {
+	t.Helper()
 	if err := waitHousingCompetitionSampleInterval(context.Background(), 0); err != nil {
 		t.Fatalf("zero wait = %v", err)
 	}
@@ -343,17 +411,27 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 	}
 
 	cancelCtx, cancelWait := context.WithCancel(context.Background())
-	cancelClient := &housingCoverageClient{raw: validRaw, afterCall: cancelWait}
+	cancelClient := &housingCoverageClient{raw: fixture.validRaw, afterCall: cancelWait}
 	if _, _, count, err := fetchHousingCompetitionSamples(cancelCtx, cancelClient, "", 25, 2, 1000); !errors.Is(err, context.Canceled) || count != 1 {
 		t.Fatalf("sample interval cancellation count=%d err=%v", count, err)
 	}
 	if _, _, _, err := fetchHousingCompetitionSamples(context.Background(), nil, "jp", 25, 1, 0); err == nil {
 		t.Fatal("nil sample API should fail")
 	}
-	if _, _, _, err := fetchHousingCompetitionSamples(context.Background(), client, "jp", 0, 1, 0); err == nil {
+	if _, _, _, err := fetchHousingCompetitionSamples(context.Background(), fixture.client, "jp", 0, 1, 0); err == nil {
 		t.Fatal("invalid sample housing ID should fail")
 	}
+}
 
+func testHousingStatsPersistenceBranches(t *testing.T) {
+	t.Helper()
+	testHousingStatsInvalidPersistenceFiles(t)
+	testHousingStatsSnapshotPersistence(t)
+	testHousingStatsPersistenceWriteAndTime(t)
+}
+
+func testHousingStatsInvalidPersistenceFiles(t *testing.T) {
+	t.Helper()
 	badFiles := []string{"", `{`, `{"version":99}`, `{"version":1,"buckets":[{"key":{"region":"jp","housing_id":0},"entries":[]},{"key":{"region":"jp","housing_id":1},"entries":[{"cache_key":""}]}]}`}
 	for index, payload := range badFiles {
 		path := filepath.Join(t.TempDir(), "cache.json")
@@ -367,7 +445,10 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 			t.Fatalf("bad cache %q loaded buckets: %+v", payload, loaded.buckets)
 		}
 	}
+}
 
+func testHousingStatsSnapshotPersistence(t *testing.T) {
+	t.Helper()
 	persistCache := newHousingCompetitionStatsCache(filepath.Join(t.TempDir(), "cache.json"), time.Second)
 	persistCache.buckets[housingCompetitionStatsCacheKey{Region: "tw", HousingID: 2}] = nil
 	persistCache.buckets[housingCompetitionStatsCacheKey{Region: "jp", HousingID: 2}] = &housingCompetitionStatsBucket{entries: map[string]HousingCompetitionEntry{"b": {CacheKey: "b"}}, snapshotDirty: true}
@@ -384,7 +465,10 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 	persistCache.persistLatest(context.Background(), 1)
 	var emptyPersist *housingCompetitionStatsCache
 	emptyPersist.persistLatest(context.Background(), 1)
+}
 
+func testHousingStatsPersistenceWriteAndTime(t *testing.T) {
+	t.Helper()
 	blockingParent := filepath.Join(t.TempDir(), "parent-file")
 	if err := os.WriteFile(blockingParent, []byte("x"), 0o644); err != nil {
 		t.Fatalf("write blocking parent: %v", err)
@@ -398,6 +482,13 @@ func TestHousingCompetitionStatsCacheFallbackPersistenceAndDefensiveBranches(t *
 }
 
 func TestHousingCompetitionBannerCacheIOAndURLBranches(t *testing.T) {
+	testHousingBannerCacheBasicIO(t)
+	testHousingBannerCacheRemoteErrors(t)
+	testHousingBannerCacheLocalAndPathEdges(t)
+}
+
+func testHousingBannerCacheBasicIO(t *testing.T) {
+	t.Helper()
 	var nilCache *housingCompetitionBannerCache
 	if _, err := nilCache.Bytes("path"); err == nil || nilCache.Base64("path") != nil || nilCache.isSynced("path") {
 		t.Fatal("nil banner cache behavior mismatch")
@@ -431,7 +522,10 @@ func TestHousingCompetitionBannerCacheIOAndURLBranches(t *testing.T) {
 	if encoded == nil || *encoded != base64.StdEncoding.EncodeToString([]byte("banner")) {
 		t.Fatalf("Base64() = %v", encoded)
 	}
+}
 
+func testHousingBannerCacheRemoteErrors(t *testing.T) {
+	t.Helper()
 	notFound := newHousingCompetitionBannerCache("", nil, "https://assets.example")
 	notFound.httpClient = &http.Client{Transport: housingRoundTripFunc(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusNotFound, Body: io.NopCloser(strings.NewReader("missing")), Header: make(http.Header)}, nil
@@ -457,7 +551,18 @@ func TestHousingCompetitionBannerCacheIOAndURLBranches(t *testing.T) {
 	if _, err := withoutSource.Bytes("banner.png"); err == nil {
 		t.Fatal("cache without a source should fail")
 	}
+}
 
+func testHousingBannerCacheLocalAndPathEdges(t *testing.T) {
+	t.Helper()
+	testHousingBannerLocalSourceAndPaths(t)
+	testHousingBannerCacheWrites(t)
+}
+
+func testHousingBannerLocalSourceAndPaths(t *testing.T) {
+	t.Helper()
+	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, "https://assets.example/base")
+	withoutSource := newHousingCompetitionBannerCache("", nil, "")
 	assetRoot := t.TempDir()
 	assetPath := filepath.Join(assetRoot, "asset", "jp-assets", "ondemand", "mysekai", "banner.png")
 	if err := os.MkdirAll(filepath.Dir(assetPath), 0o755); err != nil {
@@ -490,6 +595,11 @@ func TestHousingCompetitionBannerCacheIOAndURLBranches(t *testing.T) {
 	if regular != "asset/jp/banner.PNG" || !strings.HasPrefix(hashedAbs, "by_hash/") || !strings.HasSuffix(hashedAbs, ".png") || !strings.HasSuffix(hashedTraversal, ".bin") || housingCompetitionBannerCacheRelPath(" ") != "" {
 		t.Fatalf("banner cache relative paths regular=%q abs=%q traversal=%q", regular, hashedAbs, hashedTraversal)
 	}
+}
+
+func testHousingBannerCacheWrites(t *testing.T) {
+	t.Helper()
+	cache := newHousingCompetitionBannerCache(t.TempDir(), nil, "https://assets.example/base")
 	if err := cache.write("", []byte("x")); err != nil || cache.write(filepath.Join(t.TempDir(), "x"), nil) != nil {
 		t.Fatal("empty banner writes should be no-ops")
 	}

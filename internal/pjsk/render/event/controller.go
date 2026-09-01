@@ -131,82 +131,24 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		return query, nil, fmt.Errorf("no event data source for region %s", query.Region)
 	}
 	if query.EventID != 0 {
-		eventInfo, err := src.GetEventByID(query.EventID)
-		if err != nil {
-			return query, src, err
-		}
-		if !query.AllowUnreleased && eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
-			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
-		}
-		return query, src, nil
+		return validateEventDetailAccess(query, src)
 	}
 
 	if query.BanCharID != 0 {
-		if query.BanSeq <= 0 {
-			return query, src, fmt.Errorf("ban sequence must be greater than 0")
-		}
-		events := src.GetBanEvents(query.BanCharID)
-		if len(events) == 0 {
-			return query, src, fmt.Errorf("character %d does not have ban events", query.BanCharID)
-		}
-		sort.Slice(events, func(i, j int) bool {
-			return events[i].StartAt < events[j].StartAt
-		})
-		if query.BanSeq > len(events) {
-			return query, src, fmt.Errorf("character %d only has %d ban events", query.BanCharID, len(events))
-		}
-		query.EventID = events[query.BanSeq-1].ID
-		eventInfo, err := src.GetEventByID(query.EventID)
-		if err != nil {
-			return query, src, err
-		}
-		if !query.AllowUnreleased && eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
-			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
-		}
-		return query, src, nil
+		return resolveBanEventDetailQuery(query, src)
 	}
 
-	events := src.GetEvents()
-	sort.Slice(events, func(i, j int) bool {
-		return events[i].StartAt < events[j].StartAt
-	})
+	events := sortEventsByStart(src.GetEvents())
 	if len(events) == 0 {
 		return query, src, fmt.Errorf("no events found for region %s", query.Region)
 	}
 
 	if query.Keyword != "" {
-		index, err := resolveEventKeywordIndex(events, query.Keyword)
-		if err != nil {
-			return query, src, err
-		}
-		query.EventID = events[index].ID
-		eventInfo, err := src.GetEventByID(query.EventID)
-		if err != nil {
-			return query, src, err
-		}
-		if !query.AllowUnreleased && eventInfo != nil && eventInfo.StartAt > time.Now().UnixMilli() {
-			return query, src, releasecheck.New(releasecheck.KindEvent, "", eventInfo.ID)
-		}
-		return query, src, nil
+		return resolveKeywordEventDetailQuery(query, src, events)
 	}
 
 	if query.Index != nil {
-		baseIndex, err := resolveCurrentEventIndex(events, "next_first")
-		if err != nil {
-			return query, src, err
-		}
-		targetIndex := baseIndex
-		switch {
-		case *query.Index < 0:
-			targetIndex = baseIndex + *query.Index + 1
-		case *query.Index > 0:
-			targetIndex = baseIndex + *query.Index
-		}
-		if targetIndex < 0 || targetIndex >= len(events) {
-			return query, src, fmt.Errorf("event index %d is out of range", *query.Index)
-		}
-		query.EventID = events[targetIndex].ID
-		return query, src, nil
+		return resolveIndexedEventDetailQuery(query, src, events)
 	}
 
 	if !query.UseCurrent {
@@ -217,6 +159,10 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 		return query, src, err
 	}
 	query.EventID = events[index].ID
+	return validateEventDetailAccess(query, src)
+}
+
+func validateEventDetailAccess(query DetailQuery, src DataSource) (DetailQuery, DataSource, error) {
 	eventInfo, err := src.GetEventByID(query.EventID)
 	if err != nil {
 		return query, src, err
@@ -227,47 +173,110 @@ func (c *Controller) resolveDetailQuery(query DetailQuery) (DetailQuery, DataSou
 	return query, src, nil
 }
 
+func resolveBanEventDetailQuery(query DetailQuery, src DataSource) (DetailQuery, DataSource, error) {
+	if query.BanSeq <= 0 {
+		return query, src, fmt.Errorf("ban sequence must be greater than 0")
+	}
+	events := sortEventsByStart(src.GetBanEvents(query.BanCharID))
+	if len(events) == 0 {
+		return query, src, fmt.Errorf("character %d does not have ban events", query.BanCharID)
+	}
+	if query.BanSeq > len(events) {
+		return query, src, fmt.Errorf("character %d only has %d ban events", query.BanCharID, len(events))
+	}
+	query.EventID = events[query.BanSeq-1].ID
+	return validateEventDetailAccess(query, src)
+}
+
+func resolveKeywordEventDetailQuery(query DetailQuery, src DataSource, events []*masterdata.Event) (DetailQuery, DataSource, error) {
+	index, err := resolveEventKeywordIndex(events, query.Keyword)
+	if err != nil {
+		return query, src, err
+	}
+	query.EventID = events[index].ID
+	return validateEventDetailAccess(query, src)
+}
+
+func resolveIndexedEventDetailQuery(query DetailQuery, src DataSource, events []*masterdata.Event) (DetailQuery, DataSource, error) {
+	baseIndex, err := resolveCurrentEventIndex(events, "next_first")
+	if err != nil {
+		return query, src, err
+	}
+	targetIndex := baseIndex + eventIndexOffset(*query.Index)
+	if targetIndex < 0 || targetIndex >= len(events) {
+		return query, src, fmt.Errorf("event index %d is out of range", *query.Index)
+	}
+	query.EventID = events[targetIndex].ID
+	return query, src, nil
+}
+
+func eventIndexOffset(index int) int {
+	if index < 0 {
+		return index + 1
+	}
+	return index
+}
+
+func sortEventsByStart(events []*masterdata.Event) []*masterdata.Event {
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].StartAt < events[j].StartAt
+	})
+	return events
+}
+
 func resolveCurrentEventIndex(events []*masterdata.Event, fallback string) (int, error) {
-	now := time.Now().UnixMilli()
-	prevIndex := -1
-	currentIndex := -1
-	nextIndex := -1
+	indexes := classifyEventTimeline(events, time.Now().UnixMilli())
+	if indexes.current >= 0 {
+		return indexes.current, nil
+	}
+	return indexes.resolveFallback(fallback)
+}
+
+type eventTimelineIndexes struct {
+	previous int
+	current  int
+	next     int
+}
+
+func classifyEventTimeline(events []*masterdata.Event, now int64) eventTimelineIndexes {
+	indexes := eventTimelineIndexes{previous: -1, current: -1, next: -1}
 	for i, eventInfo := range events {
 		if eventutil.IsCurrent(eventInfo.StartAt, eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
-			currentIndex = i
+			indexes.current = i
 		}
 		if eventutil.IsPast(eventInfo.AggregateAt, eventInfo.ClosedAt, now) {
-			prevIndex = i
+			indexes.previous = i
 		}
-		if nextIndex == -1 && eventInfo.StartAt > now {
-			nextIndex = i
+		if indexes.next == -1 && eventInfo.StartAt > now {
+			indexes.next = i
 		}
 	}
-	if currentIndex >= 0 {
-		return currentIndex, nil
-	}
+	return indexes
+}
+
+func (indexes eventTimelineIndexes) resolveFallback(fallback string) (int, error) {
 	switch fallback {
 	case "prev":
-		if prevIndex >= 0 {
-			return prevIndex, nil
+		if indexes.previous >= 0 {
+			return indexes.previous, nil
 		}
 	case "next":
-		if nextIndex >= 0 {
-			return nextIndex, nil
+		if indexes.next >= 0 {
+			return indexes.next, nil
 		}
 	case "prev_first":
-		if prevIndex >= 0 {
-			return prevIndex, nil
+		if indexes.previous >= 0 {
+			return indexes.previous, nil
 		}
-		if nextIndex >= 0 {
-			return nextIndex, nil
+		if indexes.next >= 0 {
+			return indexes.next, nil
 		}
 	case "next_first":
-		if nextIndex >= 0 {
-			return nextIndex, nil
+		if indexes.next >= 0 {
+			return indexes.next, nil
 		}
-		if prevIndex >= 0 {
-			return prevIndex, nil
+		if indexes.previous >= 0 {
+			return indexes.previous, nil
 		}
 	}
 	return -1, fmt.Errorf("no current event found")

@@ -118,33 +118,66 @@ func (c *Controller) resolveMusicTitleQuery(source DataSource, query string, all
 	}
 	now := currentMusicVisibilityTime()
 
-	if musicID, ok := ParseExplicitMusicID(query); ok {
-		musicInfo, err := source.GetMusicByID(musicID)
-		if err != nil {
-			return nil, err
-		}
-		return ensureAccessibleMusic(musicInfo, now, musicID, allowUnreleased)
+	if musicInfo, handled, err := resolveExplicitMusicTitleQuery(source, query, now, allowUnreleased); handled {
+		return musicInfo, err
 	}
-
-	if c != nil && c.aliases != nil {
-		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), query)
-		if err != nil {
-			if ids := ExtractAmbiguousMusicIDs(err); len(ids) > 0 {
-				if normalizedMusic, normalizedErr := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now, allowUnreleased)); normalizedMusic != nil || normalizedErr != nil {
-					return normalizedMusic, normalizedErr
-				}
-			}
-			return nil, err
-		}
-		if ok {
-			musicInfo, getErr := source.GetMusicByID(musicID)
-			if getErr != nil {
-				return nil, getErr
-			}
-			return ensureAccessibleMusic(musicInfo, now, query, allowUnreleased)
-		}
+	if musicInfo, handled, err := c.resolveAliasMusicTitleQuery(source, query, now, allowUnreleased); handled {
+		return musicInfo, err
 	}
+	return resolveMusicTitleFallbacks(source, query, allowUnreleased)
+}
 
+func resolveExplicitMusicTitleQuery(source DataSource, query string, now int64, allowUnreleased bool) (*masterdata.Music, bool, error) {
+	musicID, ok := ParseExplicitMusicID(query)
+	if !ok {
+		return nil, false, nil
+	}
+	musicInfo, err := source.GetMusicByID(musicID)
+	if err != nil {
+		return nil, true, err
+	}
+	musicInfo, err = ensureAccessibleMusic(musicInfo, now, musicID, allowUnreleased)
+	return musicInfo, true, err
+}
+
+func (c *Controller) resolveAliasMusicTitleQuery(
+	source DataSource,
+	query string,
+	now int64,
+	allowUnreleased bool,
+) (*masterdata.Music, bool, error) {
+	if c == nil || c.aliases == nil {
+		return nil, false, nil
+	}
+	musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), query)
+	if err != nil {
+		musicInfo, normalizedErr := normalizeAmbiguousAliasMusic(source, err, now, allowUnreleased)
+		return musicInfo, true, normalizedErr
+	}
+	if !ok {
+		return nil, false, nil
+	}
+	musicInfo, err := source.GetMusicByID(musicID)
+	if err != nil {
+		return nil, true, err
+	}
+	musicInfo, err = ensureAccessibleMusic(musicInfo, now, query, allowUnreleased)
+	return musicInfo, true, err
+}
+
+func normalizeAmbiguousAliasMusic(source DataSource, aliasErr error, now int64, allowUnreleased bool) (*masterdata.Music, error) {
+	ids := ExtractAmbiguousMusicIDs(aliasErr)
+	if len(ids) == 0 {
+		return nil, aliasErr
+	}
+	musicInfo, err := selectUniqueMusicMatch("曲名/别名", collectVisibleMusicMatchesByID(source, ids, now, allowUnreleased))
+	if musicInfo == nil && err == nil {
+		return nil, aliasErr
+	}
+	return musicInfo, err
+}
+
+func resolveMusicTitleFallbacks(source DataSource, query string, allowUnreleased bool) (*masterdata.Music, error) {
 	musicInfo, err := resolveUniqueMusicQuery(source, query, allowUnreleased)
 	if err == nil || isMusicAmbiguousError(err) {
 		return musicInfo, err
@@ -164,48 +197,72 @@ func (c *Controller) resolveMusicListKeywordFilter(source DataSource, keyword st
 	}
 	now := currentMusicVisibilityTime()
 
-	if musicID, ok := ParseExplicitMusicID(keyword); ok {
-		if source == nil {
-			return nil, "", fmt.Errorf("music data source is not configured")
-		}
-		musicInfo, err := source.GetMusicByID(musicID)
-		if err != nil {
-			return nil, "", err
-		}
-		if _, err := ensureAccessibleMusic(musicInfo, now, musicID, allowUnreleased); err != nil {
-			return nil, "", err
-		}
-		return &musicID, "", nil
+	if musicID, handled, err := resolveExplicitMusicListFilter(source, keyword, now, allowUnreleased); handled {
+		return musicID, "", err
 	}
-
-	if musicID, ok := ParseImplicitMusicID(keyword); ok {
-		if source != nil {
-			if musicInfo, err := source.GetMusicByID(musicID); err == nil && isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
-				return &musicID, "", nil
-			}
-		}
+	if musicID := resolveImplicitMusicListFilter(source, keyword, now, allowUnreleased); musicID != nil {
+		return musicID, "", nil
 	}
-
-	if c != nil && c.aliases != nil {
-		musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), keyword)
-		if err != nil {
-			return nil, "", err
-		}
-		if ok {
-			if source != nil {
-				musicInfo, getErr := source.GetMusicByID(musicID)
-				if getErr != nil {
-					return nil, "", getErr
-				}
-				if _, visibleErr := ensureAccessibleMusic(musicInfo, now, keyword, allowUnreleased); visibleErr != nil {
-					return nil, "", visibleErr
-				}
-			}
-			return &musicID, "", nil
-		}
+	if musicID, handled, err := c.resolveAliasMusicListFilter(source, keyword, now, allowUnreleased); handled {
+		return musicID, "", err
 	}
-
 	return nil, strings.ToLower(keyword), nil
+}
+
+func resolveExplicitMusicListFilter(source DataSource, keyword string, now int64, allowUnreleased bool) (*int, bool, error) {
+	musicID, ok := ParseExplicitMusicID(keyword)
+	if !ok {
+		return nil, false, nil
+	}
+	if source == nil {
+		return nil, true, fmt.Errorf("music data source is not configured")
+	}
+	musicInfo, err := source.GetMusicByID(musicID)
+	if err != nil {
+		return nil, true, err
+	}
+	if _, err := ensureAccessibleMusic(musicInfo, now, musicID, allowUnreleased); err != nil {
+		return nil, true, err
+	}
+	return &musicID, true, nil
+}
+
+func resolveImplicitMusicListFilter(source DataSource, keyword string, now int64, allowUnreleased bool) *int {
+	musicID, ok := ParseImplicitMusicID(keyword)
+	if !ok || source == nil {
+		return nil
+	}
+	musicInfo, err := source.GetMusicByID(musicID)
+	if err != nil || !isMusicAccessibleAt(musicInfo, now, allowUnreleased) {
+		return nil
+	}
+	return &musicID
+}
+
+func (c *Controller) resolveAliasMusicListFilter(
+	source DataSource,
+	keyword string,
+	now int64,
+	allowUnreleased bool,
+) (*int, bool, error) {
+	if c == nil || c.aliases == nil {
+		return nil, false, nil
+	}
+	musicID, ok, err := c.aliases.TryResolveMusicTitleOrAliasID(c.contextOrBackground(), keyword)
+	if err != nil || !ok {
+		return nil, err != nil, err
+	}
+	if source == nil {
+		return &musicID, true, nil
+	}
+	musicInfo, err := source.GetMusicByID(musicID)
+	if err != nil {
+		return nil, true, err
+	}
+	if _, err := ensureAccessibleMusic(musicInfo, now, keyword, allowUnreleased); err != nil {
+		return nil, true, err
+	}
+	return &musicID, true, nil
 }
 
 func (c *Controller) resolveBuilder(region string) (renderregion.Value, DataSource, *Builder, error) {

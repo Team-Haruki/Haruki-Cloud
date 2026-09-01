@@ -45,34 +45,31 @@ func ExtractAmbiguousMusicIDs(err error) []int {
 	}
 	var ambiguous *musicAmbiguousQueryError
 	if errors.As(err, &ambiguous) {
-		ids := make([]int, 0, len(ambiguous.candidates))
-		for _, item := range ambiguous.candidates {
-			if item.ID <= 0 {
-				continue
-			}
+		return ambiguousMusicCandidateIDs(ambiguous.candidates)
+	}
+	return parseAmbiguousMusicIDs(err.Error())
+}
+
+func ambiguousMusicCandidateIDs(candidates []musicQueryCandidate) []int {
+	ids := make([]int, 0, len(candidates))
+	for _, item := range candidates {
+		if item.ID > 0 {
 			ids = append(ids, item.ID)
 		}
-		return ids
 	}
+	return ids
+}
 
-	lines := strings.Split(err.Error(), "\n")
+func parseAmbiguousMusicIDs(message string) []int {
+	lines := strings.Split(message, "\n")
 	ids := make([]int, 0, len(lines))
 	seen := make(map[int]struct{}, len(lines))
 	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if !strings.HasPrefix(strings.ToLower(line), "music") {
+		id, ok := parseAmbiguousMusicIDLine(line)
+		if !ok {
 			continue
 		}
-		raw := strings.TrimSpace(line[5:])
-		slashIdx := strings.Index(raw, "/")
-		if slashIdx <= 0 {
-			continue
-		}
-		id, convErr := strconv.Atoi(strings.TrimSpace(raw[:slashIdx]))
-		if convErr != nil || id <= 0 {
-			continue
-		}
-		if _, ok := seen[id]; ok {
+		if _, exists := seen[id]; exists {
 			continue
 		}
 		seen[id] = struct{}{}
@@ -83,6 +80,20 @@ func ExtractAmbiguousMusicIDs(err error) []int {
 	}
 	sort.Ints(ids)
 	return ids
+}
+
+func parseAmbiguousMusicIDLine(line string) (int, bool) {
+	line = strings.TrimSpace(line)
+	if !strings.HasPrefix(strings.ToLower(line), "music") {
+		return 0, false
+	}
+	raw := strings.TrimSpace(line[5:])
+	slashIdx := strings.Index(raw, "/")
+	if slashIdx <= 0 {
+		return 0, false
+	}
+	id, err := strconv.Atoi(strings.TrimSpace(raw[:slashIdx]))
+	return id, err == nil && id > 0
 }
 
 func collectVisibleMusicMatchesByID(source DataSource, ids []int, now int64, allowUnreleased bool) []*masterdata.Music {
@@ -263,6 +274,21 @@ func collectUnreleasedLocalizedMusicMatches(source DataSource, matcher func(stri
 }
 
 func selectUniqueMusicMatch(sourceName string, matches []*masterdata.Music) (*masterdata.Music, error) {
+	deduped := dedupeMusicMatchTitles(matches)
+	if len(deduped) == 0 {
+		return nil, nil
+	}
+	ids := sortedMusicMatchIDs(deduped)
+	if len(ids) == 1 {
+		return copyMusicMatch(matches, ids[0], deduped[ids[0]]), nil
+	}
+	return nil, &musicAmbiguousQueryError{
+		sourceName: sourceName,
+		candidates: musicMatchCandidates(ids, deduped),
+	}
+}
+
+func dedupeMusicMatchTitles(matches []*masterdata.Music) map[int]string {
 	deduped := make(map[int]string, len(matches))
 	for _, item := range matches {
 		if item == nil || item.ID <= 0 {
@@ -274,34 +300,34 @@ func selectUniqueMusicMatch(sourceName string, matches []*masterdata.Music) (*ma
 		}
 		deduped[item.ID] = title
 	}
-	if len(deduped) == 0 {
-		return nil, nil
-	}
+	return deduped
+}
 
+func sortedMusicMatchIDs(deduped map[int]string) []int {
 	ids := make([]int, 0, len(deduped))
 	for id := range deduped {
 		ids = append(ids, id)
 	}
 	sort.Ints(ids)
-	if len(ids) == 1 {
-		for _, item := range matches {
-			if item == nil || item.ID != ids[0] {
-				continue
-			}
-			return new(*item), nil
-		}
-		return &masterdata.Music{ID: ids[0], Title: deduped[ids[0]]}, nil
-	}
+	return ids
+}
 
+func copyMusicMatch(matches []*masterdata.Music, id int, fallbackTitle string) *masterdata.Music {
+	for _, item := range matches {
+		if item != nil && item.ID == id {
+			return new(*item)
+		}
+	}
+	return &masterdata.Music{ID: id, Title: fallbackTitle}
+}
+
+func musicMatchCandidates(ids []int, titles map[int]string) []musicQueryCandidate {
 	candidates := make([]musicQueryCandidate, 0, len(ids))
 	for _, id := range ids {
 		candidates = append(candidates, musicQueryCandidate{
 			ID:    id,
-			Title: deduped[id],
+			Title: titles[id],
 		})
 	}
-	return nil, &musicAmbiguousQueryError{
-		sourceName: sourceName,
-		candidates: candidates,
-	}
+	return candidates
 }

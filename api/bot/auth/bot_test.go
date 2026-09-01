@@ -155,29 +155,14 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 	}
 
 	verifyBody := fmt.Sprintf(`{"bot_id":"%s","session_token":"%s"}`, env.botStr, authData.SessionToken)
-	verifyResp := sendJSONRequest(t, env.app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
-		"Authorization": "Bearer internal-test",
-	})
-	if verifyResp.Status != fiber.StatusOK {
-		t.Fatalf("verify-session failed: status=%d message=%s", verifyResp.Status, verifyResp.Message)
-	}
-	var verifyData InternalVerifyResponse
-	if err := json.Unmarshal(verifyResp.Data, &verifyData); err != nil {
-		t.Fatalf("decode verify response: %v", err)
-	}
+	verifyData := env.verifySession(t, verifyBody, fiber.StatusOK)
 	if !verifyData.Valid || verifyData.BotID != env.botID || verifyData.OwnerUserID != 987654321 {
 		t.Fatalf("unexpected verify response: %+v", verifyData)
 	}
 
 	env.ban.banned = true
-	verifyResp = sendJSONRequest(t, env.app, http.MethodPost, "/internal/bot/verify-session", verifyBody, map[string]string{
-		"Authorization": "Bearer internal-test",
-	})
-	if err := json.Unmarshal(verifyResp.Data, &verifyData); err != nil {
-		t.Fatalf("decode banned verify response: %v", err)
-	}
-	if verifyData.Valid {
-		t.Fatalf("globally banned Bot owner retained a valid session: %+v", verifyData)
+	if banned := env.verifySession(t, verifyBody, 0); banned.Valid {
+		t.Fatalf("globally banned Bot owner retained a valid session: %+v", banned)
 	}
 	env.ban.banned = false
 
@@ -189,29 +174,44 @@ func TestBotAuthFlow_WithSeededUser(t *testing.T) {
 			t.Fatalf("statistics call %d failed: status=%d message=%s", i+1, statsResp.Status, statsResp.Message)
 		}
 	}
+	env.assertRequestCounts(t, ctx, 2)
+}
 
-	rankingRow, err := env.client.RequestsRanking.Query().Where(requestsranking.BotIDEQ(env.botID)).Only(ctx)
+// verifySession calls the internal verify-session route and decodes the
+// result. wantStatus 0 skips the status assertion so callers can inspect a
+// rejected session body.
+func (e *authV3TestEnv) verifySession(t *testing.T, body string, wantStatus int) InternalVerifyResponse {
+	t.Helper()
+	resp := sendJSONRequest(t, e.app, http.MethodPost, "/internal/bot/verify-session", body, map[string]string{
+		"Authorization": "Bearer internal-test",
+	})
+	if wantStatus != 0 && resp.Status != wantStatus {
+		t.Fatalf("verify-session status=%d want=%d message=%s", resp.Status, wantStatus, resp.Message)
+	}
+	var data InternalVerifyResponse
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode verify response: %v", err)
+	}
+	return data
+}
+
+// assertRequestCounts checks the three statistics tables agree on want.
+func (e *authV3TestEnv) assertRequestCounts(t *testing.T, ctx context.Context, want int) {
+	t.Helper()
+	rankingRow, err := e.client.RequestsRanking.Query().Where(requestsranking.BotIDEQ(e.botID)).Only(ctx)
 	if err != nil {
 		t.Fatalf("load requests ranking: %v", err)
 	}
-	if rankingRow.Counts != 2 {
-		t.Fatalf("requests ranking count mismatch: got=%d want=2", rankingRow.Counts)
-	}
-
-	hourlyRow, err := env.client.HourlyRequests.Query().Only(ctx)
+	hourlyRow, err := e.client.HourlyRequests.Query().Only(ctx)
 	if err != nil {
 		t.Fatalf("load hourly requests: %v", err)
 	}
-	if hourlyRow.Count != 2 {
-		t.Fatalf("hourly requests count mismatch: got=%d want=2", hourlyRow.Count)
-	}
-
-	dailyRow, err := env.client.DailyRequests.Query().Only(ctx)
+	dailyRow, err := e.client.DailyRequests.Query().Only(ctx)
 	if err != nil {
 		t.Fatalf("load daily requests: %v", err)
 	}
-	if dailyRow.Count != 2 {
-		t.Fatalf("daily requests count mismatch: got=%d want=2", dailyRow.Count)
+	if rankingRow.Counts != int64(want) || hourlyRow.Count != want || dailyRow.Count != want {
+		t.Fatalf("request counts ranking=%d hourly=%d daily=%d, want %d", rankingRow.Counts, hourlyRow.Count, dailyRow.Count, want)
 	}
 }
 

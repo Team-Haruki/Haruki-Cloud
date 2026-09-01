@@ -135,7 +135,7 @@ func (e *authV3TestEnv) send(t *testing.T, pair *crypto.KeyPair, keyIDHint strin
 	if keyIDHint != "" {
 		request.Header.Set(secure.HeaderNoiseKeyID, keyIDHint)
 	}
-	response, err := e.app.Test(request)
+	response, err := e.app.Test(request, fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
 	}
@@ -288,7 +288,7 @@ func TestAuthV3RejectsBrokenBindingsAndStalePayloads(t *testing.T) {
 	t.Run("garbage payload", func(t *testing.T) {
 		initiator, _ := crypto.NewInitiator(env.current.Public)
 		ciphertext, _ := initiator.EncryptPacket([]byte("not msgpack at all"))
-		response, err := env.app.Test(httptest.NewRequest(http.MethodPost, AuthV3RouteBase+"/"+env.botStr+"/auth", bytes.NewReader(ciphertext)))
+		response, err := env.app.Test(httptest.NewRequest(http.MethodPost, AuthV3RouteBase+"/"+env.botStr+"/auth", bytes.NewReader(ciphertext)), fiber.TestConfig{Timeout: 10 * time.Second, FailOnTimeout: true})
 		if err != nil {
 			t.Fatalf("app.Test: %v", err)
 		}

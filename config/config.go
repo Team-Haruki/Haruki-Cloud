@@ -162,25 +162,9 @@ func envNoiseKeys(name string, dst *[]NoiseStaticKeyConfig) error {
 	if v == "" {
 		return nil
 	}
-	var parsed []NoiseStaticKeyConfig
-	if strings.HasPrefix(v, "[") {
-		if err := json.Unmarshal([]byte(v), &parsed); err != nil {
-			return fmt.Errorf("invalid %s: %w", name, err)
-		}
-	} else {
-		for _, item := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' || r == '\n' }) {
-			item = strings.TrimSpace(item)
-			if item == "" {
-				continue
-			}
-			id, priv, ok := strings.Cut(item, "=")
-			id = strings.TrimSpace(id)
-			priv = strings.TrimSpace(priv)
-			if !ok || id == "" || priv == "" {
-				return fmt.Errorf("invalid %s entry %q: expected key_id=hex_private_key", name, item)
-			}
-			parsed = append(parsed, NoiseStaticKeyConfig{KeyID: id, PrivateKey: priv})
-		}
+	parsed, err := parseNoiseKeyList(name, v)
+	if err != nil {
+		return err
 	}
 	for i, key := range parsed {
 		if strings.TrimSpace(key.KeyID) == "" || strings.TrimSpace(key.PrivateKey) == "" {
@@ -189,6 +173,36 @@ func envNoiseKeys(name string, dst *[]NoiseStaticKeyConfig) error {
 	}
 	*dst = parsed
 	return nil
+}
+
+// parseNoiseKeyList decodes either the JSON array form or the
+// key_id=hex,key_id2=hex list form accepted by envNoiseKeys.
+func parseNoiseKeyList(name, v string) ([]NoiseStaticKeyConfig, error) {
+	var parsed []NoiseStaticKeyConfig
+	if strings.HasPrefix(v, "[") {
+		if err := json.Unmarshal([]byte(v), &parsed); err != nil {
+			return nil, fmt.Errorf("invalid %s: %w", name, err)
+		}
+		return parsed, nil
+	}
+	for _, item := range strings.FieldsFunc(v, isNoiseKeyListSeparator) {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		id, priv, ok := strings.Cut(item, "=")
+		id = strings.TrimSpace(id)
+		priv = strings.TrimSpace(priv)
+		if !ok || id == "" || priv == "" {
+			return nil, fmt.Errorf("invalid %s entry %q: expected key_id=hex_private_key", name, item)
+		}
+		parsed = append(parsed, NoiseStaticKeyConfig{KeyID: id, PrivateKey: priv})
+	}
+	return parsed, nil
+}
+
+func isNoiseKeyListSeparator(r rune) bool {
+	return r == ',' || r == ';' || r == '\n'
 }
 
 // ApplyEnvOverrides replaces key config fields with environment variables when set.

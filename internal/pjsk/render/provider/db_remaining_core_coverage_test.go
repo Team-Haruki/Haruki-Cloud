@@ -6,23 +6,26 @@ import (
 	"testing"
 
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestDBCharacterPlayerFrameAndStampProviders(t *testing.T) {
 	ctx := context.Background()
 	p := openProviderBehaviorDB(t, "remaining_core")
 	client := p.client
+	{
 
-	if _, err := client.Gamecharacter.Create().
-		SetGameID(1).
-		SetFirstName("Hoshino").
-		SetGivenName("Ichika").
-		SetUnit("light_sound").
-		SetGender("female").
-		SetServerRegion(renderregion.JP.String()).
-		Save(ctx); err != nil {
-		t.Fatalf("create character: %v", err)
+		_, err := client.Gamecharacter.Create().
+			SetGameID(1).
+			SetFirstName("Hoshino").
+			SetGivenName("Ichika").
+			SetUnit("light_sound").
+			SetGender("female").
+			SetServerRegion(renderregion.JP.String()).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create character: %v", err)
 	}
+
 	for _, unit := range []struct {
 		id, characterID int64
 		name, color     string
@@ -30,112 +33,191 @@ func TestDBCharacterPlayerFrameAndStampProviders(t *testing.T) {
 		{id: 10, characterID: 1, name: "light_sound", color: " #33AAFF "},
 		{id: 11, characterID: 2, name: "idol", color: " "},
 	} {
-		if _, err := client.Gamecharacterunit.Create().
-			SetGameID(unit.id).
-			SetGameCharacterID(unit.characterID).
-			SetUnit(unit.name).
-			SetColorCode(unit.color).
-			SetServerRegion(renderregion.JP.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create character unit %d: %v", unit.id, err)
+		{
+			_, err := client.Gamecharacterunit.Create().
+				SetGameID(unit.id).
+				SetGameCharacterID(unit.characterID).
+				SetUnit(unit.name).
+				SetColorCode(unit.color).
+				SetServerRegion(renderregion.JP.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create character unit %d: %v", unit.id, err)
 		}
+
 	}
 
 	characters := p.characters
-	if _, err := characters.GetByID(ctx, 0); err == nil {
-		t.Fatal("GetByID(0) should fail")
-	}
-	character, err := characters.GetByID(ctx, 1)
-	if err != nil || character.FirstName != "Hoshino" || character.GivenName != "Ichika" {
-		t.Fatalf("GetByID(1) = %+v, %v", character, err)
-	}
-	character.FirstName = "mutated"
-	if cached, err := characters.GetByID(ctx, 1); err != nil || cached.FirstName != "Hoshino" {
-		t.Fatalf("cached character = %+v, %v", cached, err)
-	}
-	if _, err := characters.GetByID(ctx, 404); err == nil {
-		t.Fatal("missing character should fail")
-	}
-	if color, ok := characters.GetColorCode(ctx, 0); ok || color != "" {
-		t.Fatalf("zero character color = %q, %v", color, ok)
-	}
-	if color, ok := characters.GetColorCode(ctx, 1); !ok || color != "#33AAFF" {
-		t.Fatalf("character color = %q, %v", color, ok)
-	}
-	if color, ok := characters.GetColorCode(ctx, 1); !ok || color != "#33AAFF" {
-		t.Fatalf("cached character color = %q, %v", color, ok)
-	}
-	if color, ok := characters.GetColorCode(ctx, 2); ok || color != "" {
-		t.Fatalf("blank character color = %q, %v", color, ok)
-	}
-	if color, ok := characters.GetColorCode(ctx, 2); ok || color != "" {
-		t.Fatalf("cached blank character color = %q, %v", color, ok)
-	}
-	if _, ok := characters.GetColorCode(ctx, 404); ok {
-		t.Fatal("missing character color should fail")
-	}
-	if _, err := characters.GetGameCharacterUnit(ctx, 0); err == nil {
-		t.Fatal("GetGameCharacterUnit(0) should fail")
-	}
-	unit, err := characters.GetGameCharacterUnit(ctx, 10)
-	if err != nil || unit.GameCharacterID != 1 || unit.Unit != "light_sound" {
-		t.Fatalf("GetGameCharacterUnit(10) = %+v, %v", unit, err)
-	}
-	unit.Unit = "mutated"
-	if cached, err := characters.GetGameCharacterUnit(ctx, 10); err != nil || cached.Unit != "light_sound" {
-		t.Fatalf("cached character unit = %+v, %v", cached, err)
-	}
-	if _, err := characters.GetGameCharacterUnit(ctx, 404); err == nil {
-		t.Fatal("missing character unit should fail")
+	{
+		_, err := characters.GetByID(ctx, 0)
+		testutil.RequireArgs(t, !(err == nil), "GetByID(0) should fail")
 	}
 
-	if _, err := client.Playerframe.Create().
-		SetGameID(20).
-		SetSeq(2).
-		SetPlayerFrameGroupID(30).
-		SetDescription("frame description").
-		SetGameCharacterID(1).
-		SetServerRegion(renderregion.JP.String()).
-		Save(ctx); err != nil {
-		t.Fatalf("create player frame: %v", err)
+	character, err := characters.GetByID(ctx, 1)
+	{
+		testutil.Require(t, !(err != nil), "GetByID(1) = %+v, %v", character, err)
+		testutil.Require(t, !(character.FirstName != "Hoshino"), "GetByID(1) = %+v, %v", character, err)
+		testutil.Require(t, !(character.GivenName != "Ichika"), "GetByID(1) = %+v, %v", character, err)
 	}
-	if _, err := client.Playerframegroup.Create().
-		SetGameID(30).
-		SetSeq(3).
-		SetName("frame group").
-		SetAssetbundleName("frame_asset").
-		SetServerRegion(renderregion.JP.String()).
-		Save(ctx); err != nil {
-		t.Fatalf("create player frame group: %v", err)
+
+	character.FirstName = "mutated"
+	{
+		cached, err := characters.GetByID(ctx, 1)
+		{
+			testutil.Require(t, !(err != nil), "cached character = %+v, %v", cached, err)
+			testutil.Require(t, !(cached.FirstName != "Hoshino"), "cached character = %+v, %v", cached, err)
+		}
 	}
+	{
+
+		_, err := characters.GetByID(ctx, 404)
+		testutil.RequireArgs(t, !(err == nil), "missing character should fail")
+	}
+	{
+
+		color, ok := characters.GetColorCode(ctx, 0)
+		{
+			testutil.Require(t, !(ok), "zero character color = %q, %v", color, ok)
+			testutil.Require(t, !(color != ""), "zero character color = %q, %v", color, ok)
+		}
+	}
+	{
+
+		color, ok := characters.GetColorCode(ctx, 1)
+		{
+			testutil.Require(t, ok, "character color = %q, %v", color, ok)
+			testutil.Require(t, !(color != "#33AAFF"), "character color = %q, %v", color, ok)
+		}
+	}
+	{
+
+		color, ok := characters.GetColorCode(ctx, 1)
+		{
+			testutil.Require(t, ok, "cached character color = %q, %v", color, ok)
+			testutil.Require(t, !(color != "#33AAFF"), "cached character color = %q, %v", color, ok)
+		}
+	}
+	{
+
+		color, ok := characters.GetColorCode(ctx, 2)
+		{
+			testutil.Require(t, !(ok), "blank character color = %q, %v", color, ok)
+			testutil.Require(t, !(color != ""), "blank character color = %q, %v", color, ok)
+		}
+	}
+	{
+
+		color, ok := characters.GetColorCode(ctx, 2)
+		{
+			testutil.Require(t, !(ok), "cached blank character color = %q, %v", color, ok)
+			testutil.Require(t, !(color != ""), "cached blank character color = %q, %v", color, ok)
+		}
+	}
+	{
+
+		_, ok := characters.GetColorCode(ctx, 404)
+		testutil.RequireArgs(t, !(ok), "missing character color should fail")
+	}
+	{
+
+		_, err := characters.GetGameCharacterUnit(ctx, 0)
+		testutil.RequireArgs(t, !(err == nil), "GetGameCharacterUnit(0) should fail")
+	}
+
+	unit, err := characters.GetGameCharacterUnit(ctx, 10)
+	{
+		testutil.Require(t, !(err != nil), "GetGameCharacterUnit(10) = %+v, %v", unit, err)
+		testutil.Require(t, !(unit.GameCharacterID != 1), "GetGameCharacterUnit(10) = %+v, %v", unit, err)
+		testutil.Require(t, !(unit.Unit != "light_sound"), "GetGameCharacterUnit(10) = %+v, %v", unit, err)
+	}
+
+	unit.Unit = "mutated"
+	{
+		cached, err := characters.GetGameCharacterUnit(ctx, 10)
+		{
+			testutil.Require(t, !(err != nil), "cached character unit = %+v, %v", cached, err)
+			testutil.Require(t, !(cached.Unit != "light_sound"), "cached character unit = %+v, %v", cached, err)
+		}
+	}
+	{
+
+		_, err := characters.GetGameCharacterUnit(ctx, 404)
+		testutil.RequireArgs(t, !(err == nil), "missing character unit should fail")
+	}
+	{
+
+		_, err := client.Playerframe.Create().
+			SetGameID(20).
+			SetSeq(2).
+			SetPlayerFrameGroupID(30).
+			SetDescription("frame description").
+			SetGameCharacterID(1).
+			SetServerRegion(renderregion.JP.String()).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create player frame: %v", err)
+	}
+	{
+
+		_, err := client.Playerframegroup.Create().
+			SetGameID(30).
+			SetSeq(3).
+			SetName("frame group").
+			SetAssetbundleName("frame_asset").
+			SetServerRegion(renderregion.JP.String()).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create player frame group: %v", err)
+	}
+
 	frames := p.playerFrames
-	if _, err := frames.GetByID(ctx, 0); err == nil {
-		t.Fatal("GetByID(0) should fail for player frames")
+	{
+		_, err := frames.GetByID(ctx, 0)
+		testutil.RequireArgs(t, !(err == nil), "GetByID(0) should fail for player frames")
 	}
+
 	frame, err := frames.GetByID(ctx, 20)
-	if err != nil || frame.PlayerFrameGroupID != 30 || frame.Description != "frame description" {
-		t.Fatalf("GetByID(20) = %+v, %v", frame, err)
+	{
+		testutil.Require(t, !(err != nil), "GetByID(20) = %+v, %v", frame, err)
+		testutil.Require(t, !(frame.PlayerFrameGroupID != 30), "GetByID(20) = %+v, %v", frame, err)
+		testutil.Require(t, !(frame.Description != "frame description"), "GetByID(20) = %+v, %v", frame, err)
 	}
+
 	frame.Description = "mutated"
-	if cached, err := frames.GetByID(ctx, 20); err != nil || cached.Description != "frame description" {
-		t.Fatalf("cached frame = %+v, %v", cached, err)
+	{
+		cached, err := frames.GetByID(ctx, 20)
+		{
+			testutil.Require(t, !(err != nil), "cached frame = %+v, %v", cached, err)
+			testutil.Require(t, !(cached.Description != "frame description"), "cached frame = %+v, %v", cached, err)
+		}
 	}
-	if _, err := frames.GetByID(ctx, 404); err == nil {
-		t.Fatal("missing player frame should fail")
+	{
+
+		_, err := frames.GetByID(ctx, 404)
+		testutil.RequireArgs(t, !(err == nil), "missing player frame should fail")
 	}
-	if _, err := frames.GetGroupByID(ctx, 0); err == nil {
-		t.Fatal("GetGroupByID(0) should fail")
+	{
+
+		_, err := frames.GetGroupByID(ctx, 0)
+		testutil.RequireArgs(t, !(err == nil), "GetGroupByID(0) should fail")
 	}
+
 	group, err := frames.GetGroupByID(ctx, 30)
-	if err != nil || group.Name != "frame group" || group.AssetBundleName != "frame_asset" {
-		t.Fatalf("GetGroupByID(30) = %+v, %v", group, err)
+	{
+		testutil.Require(t, !(err != nil), "GetGroupByID(30) = %+v, %v", group, err)
+		testutil.Require(t, !(group.Name != "frame group"), "GetGroupByID(30) = %+v, %v", group, err)
+		testutil.Require(t, !(group.AssetBundleName != "frame_asset"), "GetGroupByID(30) = %+v, %v", group, err)
 	}
+
 	group.Name = "mutated"
-	if cached, err := frames.GetGroupByID(ctx, 30); err != nil || cached.Name != "frame group" {
-		t.Fatalf("cached frame group = %+v, %v", cached, err)
+	{
+		cached, err := frames.GetGroupByID(ctx, 30)
+		{
+			testutil.Require(t, !(err != nil), "cached frame group = %+v, %v", cached, err)
+			testutil.Require(t, !(cached.Name != "frame group"), "cached frame group = %+v, %v", cached, err)
+		}
 	}
-	if _, err := frames.GetGroupByID(ctx, 404); err == nil {
-		t.Fatal("missing player frame group should fail")
+	{
+
+		_, err := frames.GetGroupByID(ctx, 404)
+		testutil.RequireArgs(t, !(err == nil), "missing player frame group should fail")
 	}
 
 	for _, stamp := range []struct {
@@ -146,39 +228,54 @@ func TestDBCharacterPlayerFrameAndStampProviders(t *testing.T) {
 		{id: 40, characterID: 1, characterID2: 2, asset: "stamp_asset", region: renderregion.JP},
 		{id: 41, characterID: 3, characterID2: 4, asset: "other_region", region: renderregion.TW},
 	} {
-		if _, err := client.Stamp.Create().
-			SetGameID(stamp.id).
-			SetAssetbundleName(stamp.asset).
-			SetCharacterId1(stamp.characterID).
-			SetCharacterId2(stamp.characterID2).
-			SetServerRegion(stamp.region.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create stamp %d: %v", stamp.id, err)
+		{
+			_, err := client.Stamp.Create().
+				SetGameID(stamp.id).
+				SetAssetbundleName(stamp.asset).
+				SetCharacterId1(stamp.characterID).
+				SetCharacterId2(stamp.characterID2).
+				SetServerRegion(stamp.region.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create stamp %d: %v", stamp.id, err)
 		}
+
 	}
 	stamps, err := p.stamps.GetAll(ctx)
-	if err != nil || len(stamps) != 1 || stamps[0].ID != 40 || stamps[0].CharacterID2 != 2 {
-		t.Fatalf("GetAll stamps = %+v, %v", stamps, err)
+	{
+		testutil.Require(t, !(err != nil), "GetAll stamps = %+v, %v", stamps, err)
+		testutil.Require(t, !(len(stamps) != 1), "GetAll stamps = %+v, %v", stamps, err)
+		testutil.Require(t, !(stamps[0].ID != 40), "GetAll stamps = %+v, %v", stamps, err)
+		testutil.Require(t, !(stamps[0].CharacterID2 != 2), "GetAll stamps = %+v, %v", stamps, err)
 	}
+
 	stamps[0].AssetBundleName = "mutated"
-	if cached, err := p.stamps.GetAll(ctx); err != nil || cached[0].AssetBundleName != "stamp_asset" {
-		t.Fatalf("cached stamps = %+v, %v", cached, err)
+	{
+		cached, err := p.stamps.GetAll(ctx)
+		{
+			testutil.Require(t, !(err != nil), "cached stamps = %+v, %v", cached, err)
+			testutil.Require(t, !(cached[0].AssetBundleName != "stamp_asset"), "cached stamps = %+v, %v", cached, err)
+		}
 	}
+
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
-	if _, err := (&dbStampProvider{client: client, region: renderregion.JP}).GetAll(canceled); err == nil {
-		t.Fatal("canceled stamp query should fail")
+	{
+		_, err := (&dbStampProvider{client: client, region: renderregion.JP}).GetAll(canceled)
+		testutil.RequireArgs(t, !(err == nil), "canceled stamp query should fail")
 	}
+
 }
 
 func TestDBVLiveProviderParsesFiltersAndSorts(t *testing.T) {
 	ctx := context.Background()
 	p := openProviderBehaviorDB(t, "remaining_vlive")
 	client := p.client
+	{
 
-	if _, err := (&dbVLiveProvider{}).GetLives(ctx, renderregion.JP); err == nil {
-		t.Fatal("nil-client VLive provider should fail")
+		_, err := (&dbVLiveProvider{}).GetLives(ctx, renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "nil-client VLive provider should fail")
 	}
+
 	for _, live := range []struct {
 		id, startAt, endAt int64
 		name, asset        string
@@ -198,32 +295,45 @@ func TestDBVLiveProviderParsesFiltersAndSorts(t *testing.T) {
 		{id: 3, startAt: 50, endAt: 60, name: "earlier", asset: "earlier", region: renderregion.JP},
 		{id: 4, startAt: 40, endAt: 50, name: "other", asset: "other", region: renderregion.TW},
 	} {
-		if _, err := client.Virtuallive.Create().
-			SetGameID(live.id).
-			SetName(live.name).
-			SetAssetbundleName(live.asset).
-			SetStartAt(live.startAt).
-			SetEndAt(live.endAt).
-			SetVirtualLiveSchedules(live.schedules).
-			SetVirtualLiveRewards(live.rewards).
-			SetVirtualLiveCharacters(live.characters).
-			SetServerRegion(live.region.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create virtual live %d: %v", live.id, err)
+		{
+			_, err := client.Virtuallive.Create().
+				SetGameID(live.id).
+				SetName(live.name).
+				SetAssetbundleName(live.asset).
+				SetStartAt(live.startAt).
+				SetEndAt(live.endAt).
+				SetVirtualLiveSchedules(live.schedules).
+				SetVirtualLiveRewards(live.rewards).
+				SetVirtualLiveCharacters(live.characters).
+				SetServerRegion(live.region.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create virtual live %d: %v", live.id, err)
 		}
+
 	}
 
 	lives, err := p.vlives.GetLives(ctx, "")
-	if err != nil || len(lives) != 3 || lives[0].ID != 3 || lives[1].ID != 1 || lives[2].ID != 2 {
-		t.Fatalf("GetLives() = %+v, %v", lives, err)
+	{
+		testutil.Require(t, !(err != nil), "GetLives() = %+v, %v", lives, err)
+		testutil.Require(t, !(len(lives) != 3), "GetLives() = %+v, %v", lives, err)
+		testutil.Require(t, !(lives[0].ID != 3), "GetLives() = %+v, %v", lives, err)
+		testutil.Require(t, !(lives[1].ID != 1), "GetLives() = %+v, %v", lives, err)
+		testutil.Require(t, !(lives[2].ID != 2), "GetLives() = %+v, %v", lives, err)
 	}
-	if len(lives[2].Schedules) != 1 || lives[2].Schedules[0].EndAt != 200 || len(lives[2].Rewards) != 1 || lives[2].Rewards[0].ResourceBoxID != 9 || len(lives[2].Characters) != 1 || lives[2].Characters[0].GameCharacterUnitID != 10 {
-		t.Fatalf("parsed virtual live = %+v", lives[2])
+	{
+		testutil.Require(t, !(len(lives[2].Schedules) != 1), "parsed virtual live = %+v", lives[2])
+		testutil.Require(t, !(lives[2].Schedules[0].EndAt != 200), "parsed virtual live = %+v", lives[2])
+		testutil.Require(t, !(len(lives[2].Rewards) != 1), "parsed virtual live = %+v", lives[2])
+		testutil.Require(t, !(lives[2].Rewards[0].ResourceBoxID != 9), "parsed virtual live = %+v", lives[2])
+		testutil.Require(t, !(len(lives[2].Characters) != 1), "parsed virtual live = %+v", lives[2])
+		testutil.Require(t, !(lives[2].Characters[0].GameCharacterUnitID != 10), "parsed virtual live = %+v", lives[2])
 	}
+
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
-	if _, err := p.vlives.GetLives(canceled, renderregion.JP); err == nil {
-		t.Fatal("canceled virtual live query should fail")
+	{
+		_, err := p.vlives.GetLives(canceled, renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "canceled virtual live query should fail")
 	}
 
 	for _, test := range []struct {
@@ -236,11 +346,16 @@ func TestDBVLiveProviderParsesFiltersAndSorts(t *testing.T) {
 		{value: float32(4), want: 4},
 		{value: "5", want: 0},
 	} {
-		if got := vliveInt64Number(test.value); got != test.want {
-			t.Fatalf("vliveInt64Number(%T) = %d, want %d", test.value, got, test.want)
+		{
+			got := vliveInt64Number(test.value)
+			testutil.Require(t, !(got != test.want), "vliveInt64Number(%T) = %d, want %d", test.value, got, test.want)
 		}
+
 	}
-	if vliveIntNumber(float64(6)) != 6 || vliveString("text") != "text" || vliveString(7) != "" {
-		t.Fatal("virtual live primitive conversion mismatch")
+	{
+		testutil.RequireArgs(t, !(vliveIntNumber(float64(6)) != 6), "virtual live primitive conversion mismatch")
+		testutil.RequireArgs(t, !(vliveString("text") != "text"), "virtual live primitive conversion mismatch")
+		testutil.RequireArgs(t, !(vliveString(7) != ""), "virtual live primitive conversion mismatch")
 	}
+
 }

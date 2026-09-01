@@ -10,6 +10,7 @@ import (
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/parser"
 	rendercostume "haruki-cloud/internal/pjsk/render/costume"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestCostumeNameLookupCommandsKeepMasterNameAsKeyword(t *testing.T) {
@@ -35,29 +36,29 @@ func TestCostumeNameLookupCommandsKeepMasterNameAsKeyword(t *testing.T) {
 				},
 				UserId: "12345",
 			})
-			if err != nil {
-				t.Fatalf("dispatch: %v", err)
+			testutil.Require(t, !(err != nil), "dispatch: %v", err)
+			testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+			{
+
+				testutil.Require(t, !(resolved.Module != parser.ModuleCostume), "unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+				testutil.Require(t, !(resolved.Mode != "costume-list"), "unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
 			}
-			if resolved == nil {
-				t.Fatal("expected command request, got nil")
-			}
-			if resolved.Module != parser.ModuleCostume || resolved.Mode != "costume-list" {
-				t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
-			}
-			if resolved.Region != tt.region {
-				t.Fatalf("region = %q, want %q", resolved.Region, tt.region)
-			}
-			if resolved.Query != "" {
-				t.Fatalf("generic query parser must not receive a component name, got %q", resolved.Query)
-			}
+			testutil.Require(t, !(resolved.Region != tt.region), "region = %q, want %q", resolved.Region, tt.region)
+			testutil.Require(t, !(resolved.Query != ""), "generic query parser must not receive a component name, got %q", resolved.Query)
 
 			var query rendercostume.ListQuery
-			if err := json.Unmarshal(resolved.Params, &query); err != nil {
-				t.Fatalf("unmarshal costume list params: %v", err)
+			{
+				err := json.Unmarshal(resolved.Params, &query)
+				testutil.Require(t, !(err != nil), "unmarshal costume list params: %v", err)
 			}
-			if query.Query != "" || query.Keyword != tt.keyword || query.PartType != tt.partType || query.Region != tt.region {
-				t.Fatalf("unexpected costume name query: %+v", query)
+			{
+
+				testutil.Require(t, !(query.Query != ""), "unexpected costume name query: %+v", query)
+				testutil.Require(t, !(query.Keyword != tt.keyword), "unexpected costume name query: %+v", query)
+				testutil.Require(t, !(query.PartType != tt.partType), "unexpected costume name query: %+v", query)
+				testutil.Require(t, !(query.Region != tt.region), "unexpected costume name query: %+v", query)
 			}
+
 		})
 	}
 }
@@ -88,23 +89,27 @@ func TestCostumeNameLookupWithRoleUsesDetail(t *testing.T) {
 				},
 				UserId: "12345",
 			})
-			if err != nil {
-				t.Fatalf("dispatch: %v", err)
+			testutil.Require(t, !(err != nil), "dispatch: %v", err)
+			{
+				testutil.Require(t, !(resolved == nil), "unexpected resolved target: %+v", resolved)
+				testutil.Require(t, !(resolved.Module != parser.ModuleCostume), "unexpected resolved target: %+v", resolved)
+				testutil.Require(t, !(resolved.Mode != "costume-detail"), "unexpected resolved target: %+v", resolved)
 			}
-			if resolved == nil || resolved.Module != parser.ModuleCostume || resolved.Mode != "costume-detail" {
-				t.Fatalf("unexpected resolved target: %+v", resolved)
-			}
-			if resolved.Region != tt.region {
-				t.Fatalf("region = %q, want %q", resolved.Region, tt.region)
-			}
+			testutil.Require(t, !(resolved.Region != tt.region), "region = %q, want %q", resolved.Region, tt.region)
 
 			var query rendercostume.Query
-			if err := json.Unmarshal(resolved.Params, &query); err != nil {
-				t.Fatalf("unmarshal costume detail params: %v", err)
+			{
+				err := json.Unmarshal(resolved.Params, &query)
+				testutil.Require(t, !(err != nil), "unmarshal costume detail params: %v", err)
 			}
-			if query.Query != tt.name || query.ExpectedPartType != tt.partType || query.Character3DID != tt.role || query.ColorID != 1 {
-				t.Fatalf("unexpected named costume detail query: %+v", query)
+			{
+
+				testutil.Require(t, !(query.Query != tt.name), "unexpected named costume detail query: %+v", query)
+				testutil.Require(t, !(query.ExpectedPartType != tt.partType), "unexpected named costume detail query: %+v", query)
+				testutil.Require(t, !(query.Character3DID != tt.role), "unexpected named costume detail query: %+v", query)
+				testutil.Require(t, !(query.ColorID != 1), "unexpected named costume detail query: %+v", query)
 			}
+
 		})
 	}
 }
@@ -119,23 +124,27 @@ func TestCostumeHeadLookupKeepsAccessoryIDQuery(t *testing.T) {
 		},
 		UserId: "12345",
 	})
-	if err != nil {
-		t.Fatalf("dispatch: %v", err)
-	}
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleCostume || resolved.Mode != "costume-detail" {
-		t.Fatalf("unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+	testutil.Require(t, !(err != nil), "dispatch: %v", err)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleCostume), "unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
+		testutil.Require(t, !(resolved.Mode != "costume-detail"), "unexpected resolved target: module=%v mode=%s", resolved.Module, resolved.Mode)
 	}
 
 	var query rendercostume.Query
-	if err := json.Unmarshal(resolved.Params, &query); err != nil {
-		t.Fatalf("unmarshal costume detail params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &query)
+		testutil.Require(t, !(err != nil), "unmarshal costume detail params: %v", err)
 	}
-	if query.AccessoryID != 2003001 || query.Character3DID != 23 || query.ColorID != 3 || query.ExpectedPartType != "head" {
-		t.Fatalf("unexpected normalized head query: %+v", query)
+	{
+
+		testutil.Require(t, !(query.AccessoryID != 2003001), "unexpected normalized head query: %+v", query)
+		testutil.Require(t, !(query.Character3DID != 23), "unexpected normalized head query: %+v", query)
+		testutil.Require(t, !(query.ColorID != 3), "unexpected normalized head query: %+v", query)
+		testutil.Require(t, !(query.ExpectedPartType != "head"), "unexpected normalized head query: %+v", query)
 	}
+
 }
 
 func TestCostumeHairLookupUsesRoleLocalHairID(t *testing.T) {
@@ -148,20 +157,25 @@ func TestCostumeHairLookupUsesRoleLocalHairID(t *testing.T) {
 		},
 		UserId: "12345",
 	})
-	if err != nil {
-		t.Fatalf("dispatch: %v", err)
-	}
-	if resolved == nil || resolved.Module != parser.ModuleCostume || resolved.Mode != "costume-detail" {
-		t.Fatalf("unexpected resolved target: %+v", resolved)
+	testutil.Require(t, !(err != nil), "dispatch: %v", err)
+	{
+		testutil.Require(t, !(resolved == nil), "unexpected resolved target: %+v", resolved)
+		testutil.Require(t, !(resolved.Module != parser.ModuleCostume), "unexpected resolved target: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "costume-detail"), "unexpected resolved target: %+v", resolved)
 	}
 
 	var query rendercostume.Query
-	if err := json.Unmarshal(resolved.Params, &query); err != nil {
-		t.Fatalf("unmarshal costume detail params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &query)
+		testutil.Require(t, !(err != nil), "unmarshal costume detail params: %v", err)
 	}
-	if query.HairID != 1 || query.Character3DID != 5 || query.ExpectedPartType != "hair" {
-		t.Fatalf("unexpected normalized hair query: %+v", query)
+	{
+
+		testutil.Require(t, !(query.HairID != 1), "unexpected normalized hair query: %+v", query)
+		testutil.Require(t, !(query.Character3DID != 5), "unexpected normalized hair query: %+v", query)
+		testutil.Require(t, !(query.ExpectedPartType != "hair"), "unexpected normalized hair query: %+v", query)
 	}
+
 }
 
 func TestCostumeListCommandKeepsFilterSyntax(t *testing.T) {
@@ -175,23 +189,25 @@ func TestCostumeListCommandKeepsFilterSyntax(t *testing.T) {
 		},
 		UserId: "12345",
 	})
-	if err != nil {
-		t.Fatalf("dispatch: %v", err)
+	testutil.Require(t, !(err != nil), "dispatch: %v", err)
+	{
+		testutil.Require(t, !(resolved == nil), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "costume-list"), "unexpected command request: %+v", resolved)
 	}
-	if resolved == nil || resolved.Mode != "costume-list" {
-		t.Fatalf("unexpected command request: %+v", resolved)
-	}
-	if resolved.Query != args {
-		t.Fatalf("list filter query = %q, want %q", resolved.Query, args)
-	}
+	testutil.Require(t, !(resolved.Query != args), "list filter query = %q, want %q", resolved.Query, args)
 
 	var query rendercostume.ListQuery
-	if err := json.Unmarshal(resolved.Params, &query); err != nil {
-		t.Fatalf("unmarshal costume list params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &query)
+		testutil.Require(t, !(err != nil), "unmarshal costume list params: %v", err)
 	}
-	if query.Query != args || query.Keyword != "" || query.PartType != "hair" {
-		t.Fatalf("unexpected costume list filter query: %+v", query)
+	{
+
+		testutil.Require(t, !(query.Query != args), "unexpected costume list filter query: %+v", query)
+		testutil.Require(t, !(query.Keyword != ""), "unexpected costume list filter query: %+v", query)
+		testutil.Require(t, !(query.PartType != "hair"), "unexpected costume list filter query: %+v", query)
 	}
+
 }
 
 func TestLegacyAccessoryLookupRedirectsToCandidateList(t *testing.T) {
@@ -201,10 +217,17 @@ func TestLegacyAccessoryLookupRedirectsToCandidateList(t *testing.T) {
 		Character3DID: 2,
 		AccessoryIDs:  []int{2003001, 2003017},
 	}, detail)
-	if !ok || list.Region != "jp" || list.PartType != "head" || list.Character3DID != 2 || !slices.Equal(list.AccessoryIDs, []int{2003001, 2003017}) {
-		t.Fatalf("unexpected redirected accessory list query: ok=%v query=%+v", ok, list)
+	{
+		testutil.Require(t, ok, "unexpected redirected accessory list query: ok=%v query=%+v", ok, list)
+		testutil.Require(t, !(list.Region != "jp"), "unexpected redirected accessory list query: ok=%v query=%+v", ok, list)
+		testutil.Require(t, !(list.PartType != "head"), "unexpected redirected accessory list query: ok=%v query=%+v", ok, list)
+		testutil.Require(t, !(list.Character3DID != 2), "unexpected redirected accessory list query: ok=%v query=%+v", ok, list)
+		testutil.Require(t, slices.Equal(list.AccessoryIDs, []int{2003001, 2003017}), "unexpected redirected accessory list query: ok=%v query=%+v", ok, list)
 	}
-	if _, ok := legacyAccessoryListQuery(errors.New("ordinary detail failure"), detail); ok {
-		t.Fatal("ordinary detail errors must not redirect to an accessory list")
+	{
+
+		_, ok := legacyAccessoryListQuery(errors.New("ordinary detail failure"), detail)
+		testutil.RequireArgs(t, !(ok), "ordinary detail errors must not redirect to an accessory list")
 	}
+
 }

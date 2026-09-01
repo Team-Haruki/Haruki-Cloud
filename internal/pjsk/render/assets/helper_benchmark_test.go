@@ -13,6 +13,17 @@ import (
 
 func BenchmarkAssetHelperFirstExistingTwentyThousandEntries(b *testing.B) {
 	b.StopTimer()
+	root := prepareAssetHelperBenchmarkFiles(b)
+	b.Run("exact", func(b *testing.B) { benchmarkAssetExact(b, root) })
+	b.Run("case_fold_cached", func(b *testing.B) { benchmarkAssetCaseFoldCached(b, root) })
+	b.Run("missing_cached", func(b *testing.B) { benchmarkAssetMissingCached(b, root) })
+	b.Run("cold_unique_exact_722", func(b *testing.B) { benchmarkAssetColdExact(b, root, false) })
+	b.Run("cold_unique_exact_722_traced", func(b *testing.B) { benchmarkAssetColdExact(b, root, true) })
+	b.Run("cold_unique_missing_722", func(b *testing.B) { benchmarkAssetColdMissing(b, root) })
+}
+
+func prepareAssetHelperBenchmarkFiles(b *testing.B) string {
+	b.Helper()
 	root := b.TempDir()
 	directory := filepath.Join(root, "thumbnail", "chara")
 	if err := os.MkdirAll(directory, 0o755); err != nil {
@@ -24,119 +35,102 @@ func BenchmarkAssetHelperFirstExistingTwentyThousandEntries(b *testing.B) {
 			b.Fatalf("write benchmark asset: %v", err)
 		}
 	}
-
-	b.Run("exact", func(b *testing.B) {
-		fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
-		helper := NewAssetHelper(root, nil)
-		helper.fs = fileSystem
-		const candidate = "thumbnail/chara/res19999.png"
-
-		b.ReportAllocs()
-		b.ResetTimer()
-		for range b.N {
-			if got := helper.FirstExisting(candidate); got == "" {
-				b.Fatal("exact asset did not resolve")
-			}
-		}
-		b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/op")
-	})
-
-	b.Run("case_fold_cached", func(b *testing.B) {
-		const candidate = "THUMBNAIL/CHARA/RES19999.PNG"
-		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(candidate))); err == nil {
-			b.Skip("filesystem is case-insensitive; case-fold fallback cannot be benchmarked")
-		}
-		fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
-		helper := NewAssetHelper(root, nil)
-		helper.fs = fileSystem
-		if got := helper.FirstExisting(candidate); got == "" {
-			b.Fatal("case-fold asset did not resolve during cache warmup")
-		}
-		fileSystem.readDirCalls.Store(0)
-
-		b.ReportAllocs()
-		b.ResetTimer()
-		for range b.N {
-			if got := helper.FirstExisting(candidate); got == "" {
-				b.Fatal("case-fold asset did not resolve")
-			}
-		}
-		b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/op")
-	})
-
-	b.Run("missing_cached", func(b *testing.B) {
-		fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
-		helper := NewAssetHelper(root, nil)
-		helper.fs = fileSystem
-		const candidate = "thumbnail/chara/not_present.png"
-		if got := helper.FirstExisting(candidate); got != "" {
-			b.Fatalf("missing asset resolved to %q during cache warmup", got)
-		}
-		fileSystem.readDirCalls.Store(0)
-
-		b.ReportAllocs()
-		b.ResetTimer()
-		for range b.N {
-			if got := helper.FirstExisting(candidate); got != "" {
-				b.Fatalf("missing asset resolved to %q", got)
-			}
-		}
-		b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/op")
-	})
-
-	b.Run("cold_unique_exact_722", func(b *testing.B) {
-		fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
-		b.ReportAllocs()
-		b.ResetTimer()
-		for range b.N {
-			helper := NewAssetHelper(root, nil)
-			helper.fs = fileSystem
-			for index := range 722 {
-				candidate := fmt.Sprintf("thumbnail/chara/res%05d.png", index)
-				if got := helper.FirstExisting(candidate); got == "" {
-					b.Fatalf("exact asset %q did not resolve", candidate)
-				}
-			}
-		}
-		b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/batch")
-	})
-
-	b.Run("cold_unique_exact_722_traced", func(b *testing.B) {
-		fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
-		b.ReportAllocs()
-		b.ResetTimer()
-		for range b.N {
-			ctx, _ := commandtrace.WithTrace(context.Background())
-			helper := NewAssetHelper(root, nil).WithContext(ctx)
-			helper.fs = fileSystem
-			for index := range 722 {
-				candidate := fmt.Sprintf("thumbnail/chara/res%05d.png", index)
-				if got := helper.FirstExisting(candidate); got == "" {
-					b.Fatalf("exact asset %q did not resolve", candidate)
-				}
-			}
-		}
-		b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/batch")
-	})
-
-	b.Run("cold_unique_missing_722", func(b *testing.B) {
-		fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
-		b.ReportAllocs()
-		b.ResetTimer()
-		for range b.N {
-			helper := NewAssetHelper(root, nil)
-			helper.fs = fileSystem
-			for index := range 722 {
-				candidate := fmt.Sprintf("thumbnail/chara/missing%05d.png", index)
-				if got := helper.FirstExisting(candidate); got != "" {
-					b.Fatalf("missing asset %q resolved to %q", candidate, got)
-				}
-			}
-		}
-		b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/batch")
-	})
+	return root
 }
 
+func benchmarkAssetExact(b *testing.B, root string) {
+	fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
+	helper := NewAssetHelper(root, nil)
+	helper.fs = fileSystem
+	const candidate = "thumbnail/chara/res19999.png"
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if got := helper.FirstExisting(candidate); got == "" {
+			b.Fatal("exact asset did not resolve")
+		}
+	}
+	b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/op")
+}
+
+func benchmarkAssetCaseFoldCached(b *testing.B, root string) {
+	const candidate = "THUMBNAIL/CHARA/RES19999.PNG"
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(candidate))); err == nil {
+		b.Skip("filesystem is case-insensitive; case-fold fallback cannot be benchmarked")
+	}
+	fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
+	helper := NewAssetHelper(root, nil)
+	helper.fs = fileSystem
+	if got := helper.FirstExisting(candidate); got == "" {
+		b.Fatal("case-fold asset did not resolve during cache warmup")
+	}
+	fileSystem.readDirCalls.Store(0)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if got := helper.FirstExisting(candidate); got == "" {
+			b.Fatal("case-fold asset did not resolve")
+		}
+	}
+	b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/op")
+}
+
+func benchmarkAssetMissingCached(b *testing.B, root string) {
+	fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
+	helper := NewAssetHelper(root, nil)
+	helper.fs = fileSystem
+	const candidate = "thumbnail/chara/not_present.png"
+	if got := helper.FirstExisting(candidate); got != "" {
+		b.Fatalf("missing asset resolved to %q during cache warmup", got)
+	}
+	fileSystem.readDirCalls.Store(0)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if got := helper.FirstExisting(candidate); got != "" {
+			b.Fatalf("missing asset resolved to %q", got)
+		}
+	}
+	b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/op")
+}
+
+func benchmarkAssetColdExact(b *testing.B, root string, traced bool) {
+	fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		helper := NewAssetHelper(root, nil)
+		if traced {
+			ctx, _ := commandtrace.WithTrace(context.Background())
+			helper = helper.WithContext(ctx)
+		}
+		helper.fs = fileSystem
+		for index := range 722 {
+			candidate := fmt.Sprintf("thumbnail/chara/res%05d.png", index)
+			if got := helper.FirstExisting(candidate); got == "" {
+				b.Fatalf("exact asset %q did not resolve", candidate)
+			}
+		}
+	}
+	b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/batch")
+}
+
+func benchmarkAssetColdMissing(b *testing.B, root string) {
+	fileSystem := &countingAssetFileSystem{delegate: osAssetFileSystem{}}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		helper := NewAssetHelper(root, nil)
+		helper.fs = fileSystem
+		for index := range 722 {
+			candidate := fmt.Sprintf("thumbnail/chara/missing%05d.png", index)
+			if got := helper.FirstExisting(candidate); got != "" {
+				b.Fatalf("missing asset %q resolved to %q", candidate, got)
+			}
+		}
+	}
+	b.ReportMetric(float64(fileSystem.readDirCalls.Load())/float64(b.N), "readdir/batch")
+}
 func BenchmarkAssetResolutionCacheHotKeyUnderChurn(b *testing.B) {
 	const capacity = 1_024
 	cache := &assetResolutionCache{

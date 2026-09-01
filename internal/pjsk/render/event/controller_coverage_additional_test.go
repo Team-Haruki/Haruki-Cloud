@@ -15,6 +15,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/assets"
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -25,12 +26,12 @@ func TestEventProviderAdapterEmptyDatabase(t *testing.T) {
 	adapter := NewProviderAdapter(provider.NewDatabaseProvider(client, renderregion.JP))
 	ctx := context.WithValue(context.Background(), eventContextKey("adapter"), "request")
 	withContext := adapter.WithContext(ctx)
-	if withContext == nil || withContext.(*ProviderAdapter).Context() != ctx {
-		t.Fatal("adapter did not retain context")
+	{
+		testutil.RequireArgs(t, !(withContext == nil), "adapter did not retain context")
+		testutil.RequireArgs(t, !(withContext.(*ProviderAdapter).Context() != ctx), "adapter did not retain context")
 	}
-	if (*ProviderAdapter)(nil).WithContext(ctx) != nil {
-		t.Fatal("nil adapter returned a source")
-	}
+	testutil.RequireArgs(t, !((*ProviderAdapter)(nil).WithContext(ctx) != nil), "nil adapter returned a source")
+
 	_, _ = adapter.GetEventByID(1)
 	_, _ = adapter.GetEventByCardID(1)
 	_ = adapter.GetEvents()
@@ -42,9 +43,14 @@ func TestEventProviderAdapterEmptyDatabase(t *testing.T) {
 	_ = adapter.GetBanEvents(1)
 	_ = adapter.GetWorldBloomChapters(1)
 	_, _ = adapter.GetCharacterByID(1)
-	if color, ok := adapter.GetCharacterColorCode(1); ok || color != "" {
-		t.Fatalf("empty character color = %q, %t", color, ok)
+	{
+		color, ok := adapter.GetCharacterColorCode(1)
+		{
+			testutil.Require(t, !(ok), "empty character color = %q, %t", color, ok)
+			testutil.Require(t, !(color != ""), "empty character color = %q, %t", color, ok)
+		}
 	}
+
 }
 
 func TestEventRenderEntrypointsAndRecordValidation(t *testing.T) {
@@ -80,22 +86,30 @@ func TestEventRenderEntrypointsAndRecordValidation(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			got, err := render()
-			if err != nil || !bytes.Equal(got, []byte("event-image")) {
-				t.Fatalf("render = %q, %v", got, err)
+			{
+				testutil.Require(t, !(err != nil), "render = %q, %v", got, err)
+				testutil.Require(t, bytes.Equal(got, []byte("event-image")), "render = %q, %v", got, err)
 			}
+
 		})
 	}
 
 	withoutDrawing := NewController(source, nil, nil)
-	if _, err := withoutDrawing.RenderEventDetail(DetailQuery{}); err == nil {
-		t.Fatal("detail without drawing client succeeded")
+	{
+		_, err := withoutDrawing.RenderEventDetail(DetailQuery{})
+		testutil.RequireArgs(t, !(err == nil), "detail without drawing client succeeded")
 	}
-	if _, err := withoutDrawing.RenderEventList(ListQuery{}); err == nil {
-		t.Fatal("list without drawing client succeeded")
+	{
+
+		_, err := withoutDrawing.RenderEventList(ListQuery{})
+		testutil.RequireArgs(t, !(err == nil), "list without drawing client succeeded")
 	}
-	if _, err := withoutDrawing.RenderEventRecord(validRecord); err == nil {
-		t.Fatal("record without drawing client succeeded")
+	{
+
+		_, err := withoutDrawing.RenderEventRecord(validRecord)
+		testutil.RequireArgs(t, !(err == nil), "record without drawing client succeeded")
 	}
+
 	for name, req := range map[string]drawing.EventRecordRequest{
 		"history": {},
 		"region": {
@@ -109,26 +123,37 @@ func TestEventRenderEntrypointsAndRecordValidation(t *testing.T) {
 		},
 	} {
 		t.Run("invalid "+name, func(t *testing.T) {
-			if _, err := controller.BuildEventRecordRequest(req); err == nil {
-				t.Fatal("invalid record unexpectedly succeeded")
+			{
+				_, err := controller.BuildEventRecordRequest(req)
+				testutil.RequireArgs(t, !(err == nil), "invalid record unexpectedly succeeded")
 			}
+
 		})
 	}
-	if got, err := controller.BuildEventRecordRequest(validRecord); err != nil || got == nil {
-		t.Fatalf("valid event record = %+v, %v", got, err)
+	{
+		got, err := controller.BuildEventRecordRequest(validRecord)
+		{
+			testutil.Require(t, !(err != nil), "valid event record = %+v, %v", got, err)
+			testutil.Require(t, !(got == nil), "valid event record = %+v, %v", got, err)
+		}
 	}
-	if _, err := controller.RenderEventDetail(DetailQuery{Region: renderregion.JP, EventID: 99}); err == nil {
-		t.Fatal("invalid detail render unexpectedly succeeded")
+	{
+
+		_, err := controller.RenderEventDetail(DetailQuery{Region: renderregion.JP, EventID: 99})
+		testutil.RequireArgs(t, !(err == nil), "invalid detail render unexpectedly succeeded")
 	}
-	if _, err := controller.RenderEventList(ListQuery{Region: renderregion.JP, EventType: "missing"}); err == nil {
-		t.Fatal("empty list render unexpectedly succeeded")
+	{
+
+		_, err := controller.RenderEventList(ListQuery{Region: renderregion.JP, EventType: "missing"})
+		testutil.RequireArgs(t, !(err == nil), "empty list render unexpectedly succeeded")
 	}
-	if _, err := controller.RenderEventRecord(drawing.EventRecordRequest{}); err == nil {
-		t.Fatal("invalid record render unexpectedly succeeded")
+	{
+
+		_, err := controller.RenderEventRecord(drawing.EventRecordRequest{})
+		testutil.RequireArgs(t, !(err == nil), "invalid record render unexpectedly succeeded")
 	}
-	if (*Controller)(nil).WithContext(context.Background()) != nil {
-		t.Fatal("nil controller WithContext returned a controller")
-	}
+	testutil.RequireArgs(t, !((*Controller)(nil).WithContext(context.Background()) != nil), "nil controller WithContext returned a controller")
+
 }
 
 func TestResolveEventDetailValidationBranches(t *testing.T) {
@@ -143,10 +168,12 @@ func TestResolveEventDetailValidationBranches(t *testing.T) {
 	}
 	source.banEventsByChar[7] = []*masterdata.Event{future, past}
 	controller := NewController(source, nil, nil)
+	{
 
-	if _, _, err := controller.resolveDetailQuery(DetailQuery{Region: renderregion.JP, EventID: 3}); err == nil {
-		t.Fatal("explicit unreleased event unexpectedly succeeded")
+		_, _, err := controller.resolveDetailQuery(DetailQuery{Region: renderregion.JP, EventID: 3})
+		testutil.RequireArgs(t, !(err == nil), "explicit unreleased event unexpectedly succeeded")
 	}
+
 	for name, query := range map[string]DetailQuery{
 		"ban sequence":     {Region: renderregion.JP, BanCharID: 7},
 		"missing ban":      {Region: renderregion.JP, BanCharID: 8, BanSeq: 1},
@@ -156,27 +183,42 @@ func TestResolveEventDetailValidationBranches(t *testing.T) {
 		"missing selector": {Region: renderregion.JP},
 	} {
 		t.Run(name, func(t *testing.T) {
-			if _, _, err := controller.resolveDetailQuery(query); err == nil {
-				t.Fatal("invalid detail query unexpectedly succeeded")
+			{
+				_, _, err := controller.resolveDetailQuery(query)
+				testutil.RequireArgs(t, !(err == nil), "invalid detail query unexpectedly succeeded")
 			}
+
 		})
 	}
 	positive := 1
-	if query, _, err := controller.resolveDetailQuery(DetailQuery{Region: renderregion.JP, Index: &positive}); err != nil || query.EventID != 3 {
-		t.Fatalf("positive event index = %+v, %v", query, err)
+	{
+		query, _, err := controller.resolveDetailQuery(DetailQuery{Region: renderregion.JP, Index: &positive})
+		{
+			testutil.Require(t, !(err != nil), "positive event index = %+v, %v", query, err)
+			testutil.Require(t, !(query.EventID != 3), "positive event index = %+v, %v", query, err)
+		}
 	}
+
 	zero := 0
-	if query, _, err := controller.resolveDetailQuery(DetailQuery{Region: renderregion.JP, Index: &zero}); err != nil || query.EventID != 2 {
-		t.Fatalf("current event index = %+v, %v", query, err)
+	{
+		query, _, err := controller.resolveDetailQuery(DetailQuery{Region: renderregion.JP, Index: &zero})
+		{
+			testutil.Require(t, !(err != nil), "current event index = %+v, %v", query, err)
+			testutil.Require(t, !(query.EventID != 2), "current event index = %+v, %v", query, err)
+		}
 	}
 
 	empty := NewController(newTestEventSource(renderregion.JP), nil, nil)
-	if _, _, err := empty.resolveDetailQuery(DetailQuery{Region: renderregion.JP, UseCurrent: true}); err == nil {
-		t.Fatal("empty event source unexpectedly resolved")
+	{
+		_, _, err := empty.resolveDetailQuery(DetailQuery{Region: renderregion.JP, UseCurrent: true})
+		testutil.RequireArgs(t, !(err == nil), "empty event source unexpectedly resolved")
 	}
-	if _, err := NewController(nil, nil, nil).BuildEventListRequest(ListQuery{Region: renderregion.JP}); err == nil {
-		t.Fatal("missing event source unexpectedly built a list")
+	{
+
+		_, err := NewController(nil, nil, nil).BuildEventListRequest(ListQuery{Region: renderregion.JP})
+		testutil.RequireArgs(t, !(err == nil), "missing event source unexpectedly built a list")
 	}
+
 }
 
 func TestEventIndexAndTimelineHelperBranches(t *testing.T) {
@@ -184,45 +226,70 @@ func TestEventIndexAndTimelineHelperBranches(t *testing.T) {
 	past := &masterdata.Event{ID: 1, StartAt: now - 30_000, AggregateAt: now - 20_000, ClosedAt: now - 10_000}
 	future := &masterdata.Event{ID: 2, StartAt: now + 10_000, AggregateAt: now + 20_000, ClosedAt: now + 30_000}
 	current := &masterdata.Event{ID: 3, StartAt: now - 1_000, AggregateAt: now + 1_000, ClosedAt: now + 2_000}
-	if index, err := resolveCurrentEventIndex([]*masterdata.Event{current}, "prev"); err != nil || index != 0 {
-		t.Fatalf("current index = %d, %v", index, err)
-	}
-	for fallback, want := range map[string]int{"prev": 0, "next": 1, "prev_first": 0, "next_first": 1} {
-		if index, err := resolveCurrentEventIndex([]*masterdata.Event{past, future}, fallback); err != nil || index != want {
-			t.Errorf("fallback %s = %d, %v", fallback, index, err)
+	{
+		index, err := resolveCurrentEventIndex([]*masterdata.Event{current}, "prev")
+		{
+			testutil.Require(t, !(err != nil), "current index = %d, %v", index, err)
+			testutil.Require(t, !(index != 0), "current index = %d, %v", index, err)
 		}
 	}
-	if _, err := resolveCurrentEventIndex(nil, "unknown"); err == nil {
-		t.Fatal("empty current-event lookup unexpectedly succeeded")
+
+	for fallback, want := range map[string]int{"prev": 0, "next": 1, "prev_first": 0, "next_first": 1} {
+		{
+			index, err := resolveCurrentEventIndex([]*masterdata.Event{past, future}, fallback)
+			testutil.Check(t, !(err != nil || index != want), "fallback %s = %d, %v", fallback, index, err)
+		}
+
 	}
-	if index, err := resolveEventKeywordIndex([]*masterdata.Event{past, future}, "prev"); err != nil || index != 0 {
-		t.Fatalf("previous keyword = %d, %v", index, err)
+	{
+		_, err := resolveCurrentEventIndex(nil, "unknown")
+		testutil.RequireArgs(t, !(err == nil), "empty current-event lookup unexpectedly succeeded")
 	}
-	if index, err := resolveEventKeywordIndex([]*masterdata.Event{past, future}, "next"); err != nil || index != 1 {
-		t.Fatalf("next keyword = %d, %v", index, err)
+	{
+
+		index, err := resolveEventKeywordIndex([]*masterdata.Event{past, future}, "prev")
+		{
+			testutil.Require(t, !(err != nil), "previous keyword = %d, %v", index, err)
+			testutil.Require(t, !(index != 0), "previous keyword = %d, %v", index, err)
+		}
 	}
-	if _, err := resolveEventKeywordIndex([]*masterdata.Event{future}, "prev"); err == nil {
-		t.Fatal("missing previous event unexpectedly resolved")
+	{
+
+		index, err := resolveEventKeywordIndex([]*masterdata.Event{past, future}, "next")
+		{
+			testutil.Require(t, !(err != nil), "next keyword = %d, %v", index, err)
+			testutil.Require(t, !(index != 1), "next keyword = %d, %v", index, err)
+		}
 	}
-	if _, err := resolveEventKeywordIndex([]*masterdata.Event{past}, "next"); err == nil {
-		t.Fatal("missing next event unexpectedly resolved")
+	{
+
+		_, err := resolveEventKeywordIndex([]*masterdata.Event{future}, "prev")
+		testutil.RequireArgs(t, !(err == nil), "missing previous event unexpectedly resolved")
+	}
+	{
+
+		_, err := resolveEventKeywordIndex([]*masterdata.Event{past}, "next")
+		testutil.RequireArgs(t, !(err == nil), "missing next event unexpectedly resolved")
 	}
 
 	source := newTestEventSource(renderregion.JP)
 	source.banEventsByChar[5] = []*masterdata.Event{future, past}
 	builder := NewBuilder(source, nil)
-	if index := builder.getBannerIndex(5, future.ID); index == nil || *index != 2 {
-		t.Fatalf("banner index = %v", index)
+	{
+		index := builder.getBannerIndex(5, future.ID)
+		{
+			testutil.Require(t, !(index == nil), "banner index = %v", index)
+			testutil.Require(t, !(*index != 2), "banner index = %v", index)
+		}
 	}
-	if builder.getBannerIndex(5, 99) != nil {
-		t.Fatal("missing banner event returned an index")
+	testutil.RequireArgs(t, !(builder.getBannerIndex(5, 99) != nil), "missing banner event returned an index")
+	{
+		testutil.RequireArgs(t, !(resolveWorldBloomChapterEndAt(nil) != 0), "world-bloom chapter end resolution failed")
+		testutil.RequireArgs(t, !(resolveWorldBloomChapterEndAt(&masterdata.WorldBloom{AggregateAt: 10}) != 1010), "world-bloom chapter end resolution failed")
+		testutil.RequireArgs(t, !(resolveWorldBloomChapterEndAt(&masterdata.WorldBloom{ChapterEndAt: 20}) != 20), "world-bloom chapter end resolution failed")
+		testutil.RequireArgs(t, !(resolveWorldBloomChapterEndAt(&masterdata.WorldBloom{}) != 0), "world-bloom chapter end resolution failed")
 	}
-	if resolveWorldBloomChapterEndAt(nil) != 0 ||
-		resolveWorldBloomChapterEndAt(&masterdata.WorldBloom{AggregateAt: 10}) != 1010 ||
-		resolveWorldBloomChapterEndAt(&masterdata.WorldBloom{ChapterEndAt: 20}) != 20 ||
-		resolveWorldBloomChapterEndAt(&masterdata.WorldBloom{}) != 0 {
-		t.Fatal("world-bloom chapter end resolution failed")
-	}
+
 }
 
 func TestEventCardAndCharacterFilterBranches(t *testing.T) {
@@ -239,18 +306,19 @@ func TestEventCardAndCharacterFilterBranches(t *testing.T) {
 	source.characterByID[7] = &masterdata.Character{ID: 7, Unit: "piapro"}
 	source.characterByID[8] = &masterdata.Character{ID: 8, Unit: ""}
 	builder := NewBuilder(source, nil)
-
-	if !builder.eventHasCardCharacters(1, 5, []int{0, 6}) {
-		t.Fatal("existing card characters were not matched")
+	testutil.RequireArgs(t, builder.eventHasCardCharacters(1, 5, []int{0, 6}), "existing card characters were not matched")
+	{
+		testutil.RequireArgs(t, !(builder.eventHasCardCharacters(1, 9, nil)), "missing card characters were matched")
+		testutil.RequireArgs(t, !(builder.eventHasCardCharacters(1, 0, []int{9})), "missing card characters were matched")
+		testutil.RequireArgs(t, !(builder.eventHasCardCharacters(99, 0, nil)), "missing card characters were matched")
 	}
-	if builder.eventHasCardCharacters(1, 9, nil) || builder.eventHasCardCharacters(1, 0, []int{9}) || builder.eventHasCardCharacters(99, 0, nil) {
-		t.Fatal("missing card characters were matched")
+	{
+		testutil.RequireArgs(t, builder.eventCardsAllInUnit(2, "idol"), "all-in-unit classification failed")
+		testutil.RequireArgs(t, !(builder.eventCardsAllInUnit(2, "")), "all-in-unit classification failed")
 	}
-	if !builder.eventCardsAllInUnit(2, "idol") || builder.eventCardsAllInUnit(2, "") {
-		t.Fatal("all-in-unit classification failed")
-	}
-	if builder.eventCardsAllInUnit(3, "idol") || builder.eventCardsAllInUnit(99, "idol") {
-		t.Fatal("mixed or empty event was classified as one unit")
+	{
+		testutil.RequireArgs(t, !(builder.eventCardsAllInUnit(3, "idol")), "mixed or empty event was classified as one unit")
+		testutil.RequireArgs(t, !(builder.eventCardsAllInUnit(99, "idol")), "mixed or empty event was classified as one unit")
 	}
 
 	for name, tc := range map[string]struct {
@@ -269,28 +337,37 @@ func TestEventCardAndCharacterFilterBranches(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			unit, ok := builder.eventCardUnit(tc.card)
-			if unit != tc.unit || ok != tc.ok {
-				t.Fatalf("eventCardUnit() = %q, %t", unit, ok)
+			{
+				testutil.Require(t, !(unit != tc.unit), "eventCardUnit() = %q, %t", unit, ok)
+				testutil.Require(t, !(ok != tc.ok), "eventCardUnit() = %q, %t", unit, ok)
 			}
+
 		})
 	}
-	if got := builder.characterIconPath(999, renderregion.JP); got == "" {
-		t.Fatal("unknown character icon path is empty")
+	{
+		got := builder.characterIconPath(999, renderregion.JP)
+		testutil.RequireArgs(t, !(got == ""), "unknown character icon path is empty")
 	}
-	if builder.characterDisplayName(999) != "" {
-		t.Fatal("missing character has a display name")
-	}
+	testutil.RequireArgs(t, !(builder.characterDisplayName(999) != ""), "missing character has a display name")
+
 	for code, want := range map[string]string{
 		"marathon": "马拉松", "cheerful_carnival": "5v5", "world_bloom": "WorldLink", "custom": "custom",
 	} {
-		if got := builder.displayEventType(code); got != want {
-			t.Errorf("displayEventType(%q) = %q", code, got)
+		{
+			got := builder.displayEventType(code)
+			testutil.Check(t, !(got != want), "displayEventType(%q) = %q", code, got)
+		}
+
+	}
+	{
+
+		units, ok := builder.extractWorldBloomChapterUnits(99)
+		{
+			testutil.RequireArgs(t, !(ok), "missing chapters returned units")
+			testutil.RequireArgs(t, !(units != nil), "missing chapters returned units")
 		}
 	}
 
-	if units, ok := builder.extractWorldBloomChapterUnits(99); ok || units != nil {
-		t.Fatal("missing chapters returned units")
-	}
 	zero := 0
 	charID := 5
 	source.worldByEvent[3] = []*masterdata.WorldBloom{
@@ -300,10 +377,11 @@ func TestEventCardAndCharacterFilterBranches(t *testing.T) {
 		{GameCharacterID: &charID},
 	}
 	units, ok := builder.extractWorldBloomChapterUnits(3)
-	if !ok {
-		t.Fatal("chapter data was not recognized")
+	testutil.RequireArgs(t, ok, "chapter data was not recognized")
+	{
+
+		_, exists := units["idol"]
+		testutil.Require(t, exists, "chapter units = %#v", units)
 	}
-	if _, exists := units["idol"]; !exists {
-		t.Fatalf("chapter units = %#v", units)
-	}
+
 }

@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"haruki-cloud/internal/observability/commandtrace"
+	"haruki-cloud/internal/testutil"
 )
 
 type sequencedForecastProvider struct {
@@ -58,22 +59,23 @@ func TestForecastDataCacheKeepsPreviousDataWhenRefreshFails(t *testing.T) {
 	cache := newForecastDataCache(provider)
 	cache.retryLimit = 1
 	cache.retryInterval = time.Millisecond
+	{
 
-	if err := cache.RefreshNow(context.Background(), "jp", 101); err != nil {
-		t.Fatalf("initial refresh: %v", err)
+		err := cache.RefreshNow(context.Background(), "jp", 101)
+		testutil.Require(t, !(err != nil), "initial refresh: %v", err)
 	}
-	if err := cache.RefreshNow(context.Background(), "jp", 101); err == nil {
-		t.Fatal("expected failed refresh, got nil")
+	{
+
+		err := cache.RefreshNow(context.Background(), "jp", 101)
+		testutil.RequireArgs(t, !(err == nil), "expected failed refresh, got nil")
 	}
 
 	got, err := cache.CachedBySource("jp", 101, []int{100})
-	if err != nil {
-		t.Fatalf("cached data after failed refresh: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "cached data after failed refresh: %v", err)
+
 	score := got["33kit"].Scores[100]
-	if score.Score != 1_234_567 {
-		t.Fatalf("failed refresh overwrote cached score: %+v", score)
-	}
+	testutil.Require(t, !(score.Score != 1_234_567), "failed refresh overwrote cached score: %+v", score)
+
 }
 
 func TestForecastDataCacheLoadsPersistedData(t *testing.T) {
@@ -91,8 +93,9 @@ func TestForecastDataCacheLoadsPersistedData(t *testing.T) {
 		},
 	}
 	cache := newForecastDataCacheWithPath(provider, cachePath)
-	if err := cache.RefreshNow(context.Background(), "cn", 202); err != nil {
-		t.Fatalf("initial refresh: %v", err)
+	{
+		err := cache.RefreshNow(context.Background(), "cn", 202)
+		testutil.Require(t, !(err != nil), "initial refresh: %v", err)
 	}
 
 	loadedProvider := &sequencedForecastProvider{
@@ -100,16 +103,16 @@ func TestForecastDataCacheLoadsPersistedData(t *testing.T) {
 	}
 	loaded := newForecastDataCacheWithPath(loadedProvider, cachePath)
 	got, err := loaded.CachedBySource("cn", 202, []int{100})
-	if err != nil {
-		t.Fatalf("read persisted forecast cache: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "read persisted forecast cache: %v", err)
+
 	score := got["local"].Scores[100]
-	if score.Score != 8_765_432 {
-		t.Fatalf("unexpected persisted score: %+v", score)
+	testutil.Require(t, !(score.Score != 8_765_432), "unexpected persisted score: %+v", score)
+	{
+
+		calls := loadedProvider.calls.Load()
+		testutil.Require(t, !(calls != 0), "persisted cache should avoid cold fetch, got %d calls", calls)
 	}
-	if calls := loadedProvider.calls.Load(); calls != 0 {
-		t.Fatalf("persisted cache should avoid cold fetch, got %d calls", calls)
-	}
+
 }
 
 type keyedForecastProvider struct {
@@ -185,9 +188,11 @@ func TestForecastDataCacheRetentionBoundsSuccessAndFailureEntries(t *testing.T) 
 
 	longError := strings.Repeat("错", forecastDataMaxErrorBytes)
 	truncated := truncateForecastCacheError(longError)
-	if len(truncated) > forecastDataMaxErrorBytes || !utf8.ValidString(truncated) {
-		t.Fatalf("truncated error is not bounded valid UTF-8: bytes=%d", len(truncated))
+	{
+		testutil.Require(t, !(len(truncated) > forecastDataMaxErrorBytes), "truncated error is not bounded valid UTF-8: bytes=%d", len(truncated))
+		testutil.Require(t, utf8.ValidString(truncated), "truncated error is not bounded valid UTF-8: bytes=%d", len(truncated))
 	}
+
 }
 
 func TestForecastDataCacheConcurrentPersistenceIsCompleteAndTraced(t *testing.T) {
@@ -212,52 +217,48 @@ func TestForecastDataCacheConcurrentPersistenceIsCompleteAndTraced(t *testing.T)
 	wg.Wait()
 	close(errs)
 	for err := range errs {
-		if err != nil {
-			t.Fatalf("RefreshNow() error = %v", err)
-		}
+		testutil.Require(t, !(err != nil), "RefreshNow() error = %v", err)
+
 	}
-	if calls := provider.calls.Load(); calls != refreshes {
-		t.Fatalf("provider calls = %d, want %d", calls, refreshes)
+	{
+		calls := provider.calls.Load()
+		testutil.Require(t, !(calls != refreshes), "provider calls = %d, want %d", calls, refreshes)
 	}
 
 	payload, err := os.ReadFile(cachePath)
-	if err != nil {
-		t.Fatalf("read persisted cache: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "read persisted cache: %v", err)
+
 	var persisted persistedForecastDataCache
-	if err := json.Unmarshal(payload, &persisted); err != nil {
-		t.Fatalf("decode persisted cache: %v", err)
+	{
+		err := json.Unmarshal(payload, &persisted)
+		testutil.Require(t, !(err != nil), "decode persisted cache: %v", err)
 	}
-	if len(persisted.Entries) != refreshes {
-		t.Fatalf("persisted entries = %d, want %d", len(persisted.Entries), refreshes)
-	}
+
+	testutil.Require(t, !(len(persisted.Entries) != refreshes), "persisted entries = %d, want %d", len(persisted.Entries), refreshes)
+
 	temps, err := filepath.Glob(filepath.Join(dir, ".sk_forecast_cache.json.tmp-*"))
-	if err != nil {
-		t.Fatalf("glob temp files: %v", err)
-	}
-	if len(temps) != 0 {
-		t.Fatalf("orphaned temp files: %v", temps)
-	}
+	testutil.Require(t, !(err != nil), "glob temp files: %v", err)
+	testutil.Require(t, !(len(temps) != 0), "orphaned temp files: %v", temps)
 
 	stageCounts := make(map[string]int)
 	for index, trace := range traces {
 		for _, name := range []string{"forecast_cache.fetch", "forecast_cache.merge", "forecast_cache.persist_wait"} {
-			if count := forecastCacheTraceOperationCount(trace, name); count != 1 {
-				t.Fatalf("trace[%d] %s count = %d, operations=%+v", index, name, count, trace.Snapshot().Operations)
+			{
+				count := forecastCacheTraceOperationCount(trace, name)
+				testutil.Require(t, !(count != 1), "trace[%d] %s count = %d, operations=%+v", index, name, count, trace.Snapshot().Operations)
 			}
+
 		}
 		for _, name := range []string{"forecast_cache.snapshot", "forecast_cache.encode", "forecast_cache.persist"} {
 			stageCounts[name] += forecastCacheTraceOperationCount(trace, name)
 		}
 	}
 	for _, name := range []string{"forecast_cache.snapshot", "forecast_cache.encode", "forecast_cache.persist"} {
-		if stageCounts[name] == 0 {
-			t.Fatalf("no trace recorded %s", name)
-		}
+		testutil.Require(t, !(stageCounts[name] == 0), "no trace recorded %s", name)
+
 	}
-	if cache.persistedGeneration != cache.generation {
-		t.Fatalf("persisted generation = %d, in-memory generation = %d", cache.persistedGeneration, cache.generation)
-	}
+	testutil.Require(t, !(cache.persistedGeneration != cache.generation), "persisted generation = %d, in-memory generation = %d", cache.persistedGeneration, cache.generation)
+
 }
 
 func forecastCacheTraceOperationCount(trace *commandtrace.Trace, name string) int {
@@ -290,8 +291,7 @@ func TestRemoteForecastProviderSourcesMatchSupportedRegions(t *testing.T) {
 		for _, source := range sources {
 			got = append(got, source.name)
 		}
-		if !reflect.DeepEqual(got, tt.want) {
-			t.Fatalf("sources for %s = %v, want %v", tt.region, got, tt.want)
-		}
+		testutil.Require(t, reflect.DeepEqual(got, tt.want), "sources for %s = %v, want %v", tt.region, got, tt.want)
+
 	}
 }

@@ -12,6 +12,7 @@ import (
 	renderregion "haruki-cloud/internal/pjsk/region"
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func additionalProfileContext(args, uidArg string) HarrukiSekaiHandlerContext {
@@ -33,54 +34,80 @@ func additionalProfileContext(args, uidArg string) HarrukiSekaiHandlerContext {
 func TestProfileParameterAndDifficultyHelpers(t *testing.T) {
 	ctx := additionalProfileContext("", "")
 	binding := newProfileBindingParams(ctx, " u2 ", " global ")
-	if binding.Platform != "qq" || binding.PlatformUserID != "10001" || binding.Selector != "u2" || binding.Server != "jp" || binding.Scope != "global" {
-		t.Fatalf("binding params = %+v", binding)
-	}
-	settings := newProfileSettingsParams(ctx, "u3")
-	if settings.Platform != "qq" || settings.Selector != "u3" || settings.Server != "jp" || !settings.RegionExplicit {
-		t.Fatalf("settings params = %+v", settings)
-	}
-	settings = newProfileSettingsParams(ctx, "")
-	if settings.Selector != "" {
-		t.Fatalf("empty selector retained: %+v", settings)
+	{
+		testutil.Require(t, !(binding.Platform != "qq"), "binding params = %+v", binding)
+		testutil.Require(t, !(binding.PlatformUserID != "10001"), "binding params = %+v", binding)
+		testutil.Require(t, !(binding.Selector != "u2"), "binding params = %+v", binding)
+		testutil.Require(t, !(binding.Server != "jp"), "binding params = %+v", binding)
+		testutil.Require(t, !(binding.Scope != "global"), "binding params = %+v", binding)
 	}
 
-	if selector, err := resolveSettingsSelector(ctx); err != nil || selector != "" {
-		t.Fatalf("empty selector = %q, %v", selector, err)
+	settings := newProfileSettingsParams(ctx, "u3")
+	{
+		testutil.Require(t, !(settings.Platform != "qq"), "settings params = %+v", settings)
+		testutil.Require(t, !(settings.Selector != "u3"), "settings params = %+v", settings)
+		testutil.Require(t, !(settings.Server != "jp"), "settings params = %+v", settings)
+		testutil.Require(t, settings.RegionExplicit, "settings params = %+v", settings)
 	}
+
+	settings = newProfileSettingsParams(ctx, "")
+	testutil.Require(t, !(settings.Selector != ""), "empty selector retained: %+v", settings)
+	{
+
+		selector, err := resolveSettingsSelector(ctx)
+		{
+			testutil.Require(t, !(err != nil), "empty selector = %q, %v", selector, err)
+			testutil.Require(t, !(selector != ""), "empty selector = %q, %v", selector, err)
+		}
+	}
+
 	ctx.uidArg = "u4"
-	if selector, err := resolveSettingsSelector(ctx); err != nil || selector != "u4" {
-		t.Fatalf("valid selector = %q, %v", selector, err)
+	{
+		selector, err := resolveSettingsSelector(ctx)
+		{
+			testutil.Require(t, !(err != nil), "valid selector = %q, %v", selector, err)
+			testutil.Require(t, !(selector != "u4"), "valid selector = %q, %v", selector, err)
+		}
 	}
+
 	ctx.uidArg = "@2"
-	if _, err := resolveSettingsSelector(ctx); err == nil {
-		t.Fatal("expected invalid target selector error")
+	{
+		_, err := resolveSettingsSelector(ctx)
+		testutil.RequireArgs(t, !(err == nil), "expected invalid target selector error")
 	}
+
 	ctx = additionalProfileContext("unexpected", "")
-	if _, err := resolveSettingsSelector(ctx); err == nil {
-		t.Fatal("expected extra argument selector error")
+	{
+		_, err := resolveSettingsSelector(ctx)
+		testutil.RequireArgs(t, !(err == nil), "expected extra argument selector error")
 	}
 
 	commands := profileTimeZoneCommands()
-	if len(commands) <= len(profileTimeZoneBaseCommands) {
-		t.Fatalf("timezone command aliases missing: %v", commands)
-	}
+	testutil.Require(t, !(len(commands) <= len(profileTimeZoneBaseCommands)), "timezone command aliases missing: %v", commands)
+
 	ctx = additionalProfileContext(" Asia/Shanghai ", "")
-	if got := extractProfileTimeZoneArg(ctx); got != "Asia/Shanghai" {
-		t.Fatalf("timezone arg = %q", got)
+	{
+		got := extractProfileTimeZoneArg(ctx)
+		testutil.Require(t, !(got != "Asia/Shanghai"), "timezone arg = %q", got)
 	}
+
 	ctx = additionalProfileContext("", "")
 	ctx.TriggerCmd = "/unrelated"
-	if got := extractProfileTimeZoneArg(ctx); got != "" {
-		t.Fatalf("unrelated timezone trigger = %q", got)
+	{
+		got := extractProfileTimeZoneArg(ctx)
+		testutil.Require(t, !(got != ""), "unrelated timezone trigger = %q", got)
 	}
+
 	ctx.TriggerCmd = "/pjsktz"
-	if got := extractProfileTimeZoneArg(ctx); got != "" {
-		t.Fatalf("bare timezone trigger = %q", got)
+	{
+		got := extractProfileTimeZoneArg(ctx)
+		testutil.Require(t, !(got != ""), "bare timezone trigger = %q", got)
 	}
+
 	ctx.TriggerCmd = "/pjsktzUTC"
-	if got := extractProfileTimeZoneArg(ctx); got != "UTC" {
-		t.Fatalf("compact timezone trigger = %q", got)
+	{
+		got := extractProfileTimeZoneArg(ctx)
+		testutil.Require(t, !(got != "UTC"), "compact timezone trigger = %q", got)
 	}
 
 	difficulties := map[string]sekaiapi.MusicDifficultyType{
@@ -91,48 +118,73 @@ func TestProfileParameterAndDifficultyHelpers(t *testing.T) {
 		"apd": sekaiapi.MusicDifficultyAppend,
 	}
 	for raw, want := range difficulties {
-		if got := parseProfileDifficultyToken(raw); got != want {
-			t.Errorf("parseProfileDifficultyToken(%q) = %q", raw, got)
+		{
+			got := parseProfileDifficultyToken(raw)
+			testutil.Check(t, !(got != want), "parseProfileDifficultyToken(%q) = %q", raw, got)
 		}
+
 	}
-	if parseProfileDifficultyToken("bad") != "" {
-		t.Fatal("invalid difficulty parsed")
-	}
+	testutil.RequireArgs(t, !(parseProfileDifficultyToken("bad") != ""), "invalid difficulty parsed")
+
 	for _, raw := range []string{"开启", "开", "on", "enable", "enabled", "true", "1"} {
-		if enabled, ok := parseProfileDifficultyState(raw); !ok || !enabled {
-			t.Errorf("enabled state %q = %v %v", raw, enabled, ok)
+		{
+			enabled, ok := parseProfileDifficultyState(raw)
+			testutil.Check(t, !(!ok || !enabled), "enabled state %q = %v %v", raw, enabled, ok)
 		}
+
 	}
 	for _, raw := range []string{"关闭", "关", "off", "disable", "disabled", "false", "0"} {
-		if enabled, ok := parseProfileDifficultyState(raw); !ok || enabled {
-			t.Errorf("disabled state %q = %v %v", raw, enabled, ok)
+		{
+			enabled, ok := parseProfileDifficultyState(raw)
+			testutil.Check(t, !(!ok || enabled), "disabled state %q = %v %v", raw, enabled, ok)
 		}
+
 	}
-	if _, ok := parseProfileDifficultyState("bad"); ok {
-		t.Fatal("invalid state parsed")
+	{
+		_, ok := parseProfileDifficultyState("bad")
+		testutil.RequireArgs(t, !(ok), "invalid state parsed")
 	}
-	if _, ok := parseProfileDifficultyCompactToggle(""); ok {
-		t.Fatal("empty compact toggle parsed")
+	{
+
+		_, ok := parseProfileDifficultyCompactToggle("")
+		testutil.RequireArgs(t, !(ok), "empty compact toggle parsed")
 	}
-	if _, ok := parseProfileDifficultyCompactToggle("bad开启"); ok {
-		t.Fatal("invalid compact difficulty parsed")
+	{
+
+		_, ok := parseProfileDifficultyCompactToggle("bad开启")
+		testutil.RequireArgs(t, !(ok), "invalid compact difficulty parsed")
 	}
-	if _, ok := parseProfileDifficultyCompactToggle("master"); ok {
-		t.Fatal("missing compact state parsed")
+	{
+
+		_, ok := parseProfileDifficultyCompactToggle("master")
+		testutil.RequireArgs(t, !(ok), "missing compact state parsed")
 	}
-	if toggle, ok := parseProfileDifficultyCompactToggle("master关"); !ok || toggle.Difficulty != sekaiapi.MusicDifficultyMaster || toggle.Enabled {
-		t.Fatalf("compact toggle = %+v %v", toggle, ok)
+	{
+
+		toggle, ok := parseProfileDifficultyCompactToggle("master关")
+		{
+			testutil.Require(t, ok, "compact toggle = %+v %v", toggle, ok)
+			testutil.Require(t, !(toggle.Difficulty != sekaiapi.MusicDifficultyMaster), "compact toggle = %+v %v", toggle, ok)
+			testutil.Require(t, !(toggle.Enabled), "compact toggle = %+v %v", toggle, ok)
+		}
 	}
 
 	for _, raw := range []string{"", "master", "bad on", "master maybe"} {
-		if _, err := parseProfileDifficultyToggles(raw); err == nil {
-			t.Errorf("parseProfileDifficultyToggles(%q) unexpectedly succeeded", raw)
+		{
+			_, err := parseProfileDifficultyToggles(raw)
+			testutil.Check(t, !(err == nil), "parseProfileDifficultyToggles(%q) unexpectedly succeeded", raw)
 		}
+
 	}
 	toggles, err := parseProfileDifficultyToggles("master 开启，expert关闭\nhard on")
-	if err != nil || len(toggles) != 3 || !toggles[0].Enabled || toggles[1].Enabled || !toggles[2].Enabled {
-		t.Fatalf("difficulty toggles = %+v, %v", toggles, err)
+	{
+		testutil.Require(t, !(err != nil), "difficulty toggles = %+v, %v", toggles, err)
+		testutil.Require(t, !(len(toggles) != 3), "difficulty toggles = %+v, %v", toggles, err)
+		testutil.Require(t, toggles[0].Enabled, "difficulty toggles = %+v, %v", toggles, err)
+		testutil.Require(t, !(toggles[1].Enabled), "difficulty toggles = %+v, %v", toggles, err)
+		testutil.Require(t, toggles[2].Enabled, "difficulty toggles = %+v, %v", toggles, err)
 	}
+
 }
 
 func TestProfileSettingsHandlersRejectInvalidSelectors(t *testing.T) {
@@ -147,9 +199,11 @@ func TestProfileSettingsHandlersRejectInvalidSelectors(t *testing.T) {
 		sekaiHandlers{}.ProfileVerifyHandle(),
 	}
 	for _, handler := range handlers {
-		if _, err := handler.handleFunc(ctx); err == nil {
-			t.Errorf("handler %s accepted invalid selector", handler.Path)
+		{
+			_, err := handler.handleFunc(ctx)
+			testutil.Check(t, !(err == nil), "handler %s accepted invalid selector", handler.Path)
 		}
+
 	}
 
 	ctx = additionalProfileContext("unexpected", "")
@@ -158,69 +212,110 @@ func TestProfileSettingsHandlersRejectInvalidSelectors(t *testing.T) {
 		sekaiHandlers{}.ProfileDisableModularHandle(),
 		sekaiHandlers{}.ProfileVerifyListHandle(),
 	} {
-		if _, err := handler.handleFunc(ctx); err == nil {
-			t.Errorf("handler %s accepted extra arguments", handler.Path)
+		{
+			_, err := handler.handleFunc(ctx)
+			testutil.Check(t, !(err == nil), "handler %s accepted extra arguments", handler.Path)
 		}
+
 	}
-	if _, err := (sekaiHandlers{}).ProfileArrestDifficultyHandle().handleFunc(ctx); err == nil {
-		t.Fatal("arrest difficulty accepted invalid arguments")
+	{
+		_, err := (sekaiHandlers{}).ProfileArrestDifficultyHandle().handleFunc(ctx)
+		testutil.RequireArgs(t, !(err == nil), "arrest difficulty accepted invalid arguments")
 	}
 
 	ctx = additionalProfileContext("", "@2")
-	if _, err := (sekaiHandlers{}).ProfileCheckDataHandle().handleFunc(ctx); err == nil {
-		t.Fatal("suite data handler accepted another user")
+	{
+		_, err := (sekaiHandlers{}).ProfileCheckDataHandle().handleFunc(ctx)
+		testutil.RequireArgs(t, !(err == nil), "suite data handler accepted another user")
 	}
-	if _, err := (sekaiHandlers{}).MsdHandle().handleFunc(ctx); err == nil {
-		t.Fatal("MySekai data handler accepted another user")
+	{
+
+		_, err := (sekaiHandlers{}).MsdHandle().handleFunc(ctx)
+		testutil.RequireArgs(t, !(err == nil), "MySekai data handler accepted another user")
 	}
+
 }
 
 func TestProfileBindingHandlerErrorBranches(t *testing.T) {
 	ctx := additionalProfileContext("", "")
-	if _, err := (sekaiHandlers{}).ProfileBindHandle().handleFunc(ctx); err == nil {
-		t.Fatal("bind accepted empty arguments")
+	{
+		_, err := (sekaiHandlers{}).ProfileBindHandle().handleFunc(ctx)
+		testutil.RequireArgs(t, !(err == nil), "bind accepted empty arguments")
 	}
-	if request, handled, err := tryRerouteProfileBindCommand(ctx, ""); request != nil || handled || err != nil {
-		t.Fatalf("empty bind reroute = %+v %v %v", request, handled, err)
+	{
+
+		request, handled, err := tryRerouteProfileBindCommand(ctx, "")
+		{
+			testutil.Require(t, !(request != nil), "empty bind reroute = %+v %v %v", request, handled, err)
+			testutil.Require(t, !(handled), "empty bind reroute = %+v %v %v", request, handled, err)
+			testutil.Require(t, !(err != nil), "empty bind reroute = %+v %v %v", request, handled, err)
+		}
 	}
-	if _, handled, err := tryRerouteProfileBindCommand(ctx, "list extra"); !handled || err == nil {
-		t.Fatalf("invalid list reroute = %v %v", handled, err)
+	{
+
+		_, handled, err := tryRerouteProfileBindCommand(ctx, "list extra")
+		{
+			testutil.Require(t, handled, "invalid list reroute = %v %v", handled, err)
+			testutil.Require(t, !(err == nil), "invalid list reroute = %v %v", handled, err)
+		}
 	}
-	if _, handled, err := tryRerouteProfileBindCommand(ctx, "swap u1"); !handled || err == nil {
-		t.Fatalf("invalid swap reroute = %v %v", handled, err)
+	{
+
+		_, handled, err := tryRerouteProfileBindCommand(ctx, "swap u1")
+		{
+			testutil.Require(t, handled, "invalid swap reroute = %v %v", handled, err)
+			testutil.Require(t, !(err == nil), "invalid swap reroute = %v %v", handled, err)
+		}
 	}
-	if request, handled, err := tryRerouteProfileBindCommand(ctx, "123456"); request != nil || handled || err != nil {
-		t.Fatalf("normal bind reroute = %+v %v %v", request, handled, err)
+	{
+
+		request, handled, err := tryRerouteProfileBindCommand(ctx, "123456")
+		{
+			testutil.Require(t, !(request != nil), "normal bind reroute = %+v %v %v", request, handled, err)
+			testutil.Require(t, !(handled), "normal bind reroute = %+v %v %v", request, handled, err)
+			testutil.Require(t, !(err != nil), "normal bind reroute = %+v %v %v", request, handled, err)
+		}
 	}
 
 	for _, tt := range []struct {
 		mode string
 		want string
 	}{{"list", "/jp绑定列表"}, {"swap", "/jp绑定交换"}, {"other", "/jp测试"}} {
-		if got := buildProfileBindDerivedTrigger(ctx, tt.mode); got != tt.want {
-			t.Errorf("derived trigger %q = %q", tt.mode, got)
+		{
+			got := buildProfileBindDerivedTrigger(ctx, tt.mode)
+			testutil.Check(t, !(got != tt.want), "derived trigger %q = %q", tt.mode, got)
 		}
+
 	}
 	ctx.explicitRegion = false
-	if buildProfileBindDerivedTrigger(ctx, "list") != "/绑定列表" || buildProfileBindDerivedTrigger(ctx, "swap") != "/绑定交换" {
-		t.Fatal("implicit derived trigger mismatch")
+	{
+		testutil.RequireArgs(t, !(buildProfileBindDerivedTrigger(ctx, "list") != "/绑定列表"), "implicit derived trigger mismatch")
+		testutil.RequireArgs(t, !(buildProfileBindDerivedTrigger(ctx, "swap") != "/绑定交换"), "implicit derived trigger mismatch")
 	}
 
 	ctx = additionalProfileContext("extra", "")
-	if _, err := (sekaiHandlers{}).ProfileBindListHandle().handleFunc(ctx); err == nil {
-		t.Fatal("bind list accepted arguments")
+	{
+		_, err := (sekaiHandlers{}).ProfileBindListHandle().handleFunc(ctx)
+		testutil.RequireArgs(t, !(err == nil), "bind list accepted arguments")
 	}
+
 	ctx = additionalProfileContext("u1", "")
-	if _, err := (sekaiHandlers{}).ProfileBindSwapHandle().handleFunc(ctx); err == nil {
-		t.Fatal("bind swap accepted one selector")
+	{
+		_, err := (sekaiHandlers{}).ProfileBindSwapHandle().handleFunc(ctx)
+		testutil.RequireArgs(t, !(err == nil), "bind swap accepted one selector")
 	}
+
 	ctx = additionalProfileContext("", "")
-	if _, err := (sekaiHandlers{}).ProfileUnbindHandle().handleFunc(ctx); err == nil {
-		t.Fatal("unbind accepted empty target")
+	{
+		_, err := (sekaiHandlers{}).ProfileUnbindHandle().handleFunc(ctx)
+		testutil.RequireArgs(t, !(err == nil), "unbind accepted empty target")
 	}
-	if _, err := (sekaiHandlers{}).ProfileSetMainHandle().handleFunc(ctx); err == nil {
-		t.Fatal("set main accepted empty target")
+	{
+
+		_, err := (sekaiHandlers{}).ProfileSetMainHandle().handleFunc(ctx)
+		testutil.RequireArgs(t, !(err == nil), "set main accepted empty target")
 	}
+
 }
 
 func TestProfileAndCheckDataExecutionGuards(t *testing.T) {
@@ -234,26 +329,42 @@ func TestProfileAndCheckDataExecutionGuards(t *testing.T) {
 		accountdata.ProfileModeBGAdjust,
 	} {
 		rc.Cmd.Mode = mode
-		if _, err := executeProfile(rc); !errors.Is(err, accountdata.ErrBindingServiceUnavailable) {
-			t.Errorf("executeProfile(%q) error = %v", mode, err)
+		{
+			_, err := executeProfile(rc)
+			testutil.Check(t, errors.Is(err, accountdata.ErrBindingServiceUnavailable), "executeProfile(%q) error = %v", mode, err)
 		}
+
 	}
 	rc.Cmd.Mode = accountdata.ProfileModeRender
-	if _, err := executeProfile(rc); err == nil || !strings.Contains(err.Error(), "profile service unavailable") {
-		t.Fatalf("profile render guard error = %v", err)
+	{
+		_, err := executeProfile(rc)
+		{
+			testutil.Require(t, !(err == nil), "profile render guard error = %v", err)
+			testutil.Require(t, strings.Contains(err.Error(), "profile service unavailable"), "profile render guard error = %v", err)
+		}
 	}
+
 	rc.Cmd.Mode = "unknown"
-	if _, err := executeProfile(rc); err == nil || !strings.Contains(err.Error(), "unsupported profile mode") {
-		t.Fatalf("unsupported profile error = %v", err)
+	{
+		_, err := executeProfile(rc)
+		{
+			testutil.Require(t, !(err == nil), "unsupported profile error = %v", err)
+			testutil.Require(t, strings.Contains(err.Error(), "unsupported profile mode"), "unsupported profile error = %v", err)
+		}
 	}
-	if _, _, err := renderProfileMessageForQuery(nil, userQueryParams{}, "jp", false); err == nil {
-		t.Fatal("nil profile context unexpectedly rendered")
+	{
+
+		_, _, err := renderProfileMessageForQuery(nil, userQueryParams{}, "jp", false)
+		testutil.RequireArgs(t, !(err == nil), "nil profile context unexpectedly rendered")
 	}
-	if _, _, err := renderProfileMessageForQuery(rc, userQueryParams{}, "jp", false); err == nil {
-		t.Fatal("missing profile services unexpectedly rendered")
+	{
+
+		_, _, err := renderProfileMessageForQuery(rc, userQueryParams{}, "jp", false)
+		testutil.RequireArgs(t, !(err == nil), "missing profile services unexpectedly rendered")
 	}
-	if isRequesterModularProfileEnabled(nil, userQueryParams{}) || isRequesterModularProfileEnabled(rc, userQueryParams{}) {
-		t.Fatal("missing binding service reported modular profile")
+	{
+		testutil.RequireArgs(t, !(isRequesterModularProfileEnabled(nil, userQueryParams{})), "missing binding service reported modular profile")
+		testutil.RequireArgs(t, !(isRequesterModularProfileEnabled(rc, userQueryParams{})), "missing binding service reported modular profile")
 	}
 
 	for _, tt := range []struct {
@@ -267,30 +378,32 @@ func TestProfileAndCheckDataExecutionGuards(t *testing.T) {
 		params, _ := json.Marshal(tt.p)
 		rc.Cmd.Mode = tt.mode
 		rc.Cmd.Params = params
-		if _, err := executeCheckData(rc); err == nil || !strings.Contains(err.Error(), tt.want) {
-			t.Errorf("executeCheckData(%q) error = %v", tt.mode, err)
+		{
+			_, err := executeCheckData(rc)
+			testutil.Check(t, !(err == nil || !strings.Contains(err.Error(), tt.want)), "executeCheckData(%q) error = %v", tt.mode, err)
 		}
+
 	}
 	for _, mode := range []string{"mysekai", "suite"} {
 		params, _ := json.Marshal(userQueryParams{Mode: "self", Platform: "qq", PlatformUserID: "1"})
 		rc.Cmd.Mode = mode
 		rc.Cmd.Params = params
-		if _, err := executeCheckData(rc); err == nil {
-			t.Errorf("executeCheckData(%q) unexpectedly resolved without bindings", mode)
+		{
+			_, err := executeCheckData(rc)
+			testutil.Check(t, !(err == nil), "executeCheckData(%q) unexpectedly resolved without bindings", mode)
 		}
+
 	}
 }
 
 func TestProfileDifficultyToggleValueSemantics(t *testing.T) {
 	toggles, err := parseProfileDifficultyToggles("easy on normal off")
-	if err != nil {
-		t.Fatalf("parse toggles: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "parse toggles: %v", err)
+
 	want := []accountdata.ProfileDifficultyToggle{
 		{Difficulty: sekaiapi.MusicDifficultyEasy, Enabled: true},
 		{Difficulty: sekaiapi.MusicDifficultyNormal, Enabled: false},
 	}
-	if !reflect.DeepEqual(toggles, want) {
-		t.Fatalf("toggles = %+v, want %+v", toggles, want)
-	}
+	testutil.Require(t, reflect.DeepEqual(toggles, want), "toggles = %+v, want %+v", toggles, want)
+
 }

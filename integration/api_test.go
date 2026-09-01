@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	"io"
 	"net"
 	"net/http"
@@ -148,9 +149,8 @@ func requireIntegrationConfig(t *testing.T) integrationConfig {
 	t.Helper()
 	requireIntegration(t)
 	cfg, err := loadIntegrationConfig()
-	if err != nil {
-		t.Fatalf("load integration config: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "load integration config: %v", err)
+
 	return cfg
 }
 
@@ -160,9 +160,8 @@ func ensureAuthenticated(t *testing.T) integrationConfig {
 	authOnce.Do(func() {
 		authErr = authenticate(cfg)
 	})
-	if authErr != nil {
-		t.Fatalf("authenticate integration bot: %v", authErr)
-	}
+	testutil.Require(t, !(authErr != nil), "authenticate integration bot: %v", authErr)
+
 	return cfg
 }
 
@@ -238,18 +237,13 @@ func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int)
 	t.Helper()
 	cfg := ensureAuthenticated(t)
 	body, err := msgpack.Marshal(payload)
-	if err != nil {
-		t.Fatalf("msgpack marshal: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "msgpack marshal: %v", err)
 
 	nc, err := corecrypto.NewInitiator(serverPubKey)
-	if err != nil {
-		t.Fatalf("noise handshake init: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "noise handshake init: %v", err)
+
 	ciphertext, err := nc.EncryptPacket(body)
-	if err != nil {
-		t.Fatalf("noise encrypt: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "noise encrypt: %v", err)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(ciphertext))
 	req.Header.Set("X-Haruki-Bot-Id", cfg.BotID)
@@ -257,9 +251,8 @@ func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int)
 	req.Header.Set("Content-Type", "application/octet-stream")
 
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("http post %s: %v", url, err)
-	}
+	testutil.Require(t, !(err != nil), "http post %s: %v", url, err)
+
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
 
@@ -274,9 +267,8 @@ func noiseRoundTrip(t *testing.T, url string, payload interface{}) ([]byte, int)
 	}
 
 	plaintext, err := nc.DecryptPacket(respBody)
-	if err != nil {
-		t.Fatalf("noise decrypt response: %v (raw len=%d)", err, len(respBody))
-	}
+	testutil.Require(t, !(err != nil), "noise decrypt response: %v (raw len=%d)", err, len(respBody))
+
 	return plaintext, resp.StatusCode
 }
 
@@ -411,15 +403,11 @@ func TestManifests(t *testing.T) {
 	req.Header.Set("X-Haruki-Bot-Id", cfg.BotID)
 	req.Header.Set("X-Haruki-Bot-Session-Token", sessionToken)
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("manifest request: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "manifest request: %v", err)
+
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-
-	if resp.StatusCode != 200 {
-		t.Fatalf("manifest failed: status=%d body=%s", resp.StatusCode, string(body))
-	}
+	testutil.Require(t, !(resp.StatusCode != 200), "manifest failed: status=%d body=%s", resp.StatusCode, string(body))
 
 	var mf struct {
 		Data struct {
@@ -578,42 +566,71 @@ func TestBotCommands(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, status := sendBotCommand(t, tt.path, tt.cmd, tt.text)
-			r := parseBotResp(t, data)
-
-			if status != 200 {
-				r2 := parseBotResp(t, data)
-				errMsg := r2.Error
-				if errMsg == "" {
-					errMsg = truncate(data, 200)
-				}
-				t.Logf("⚠️  %s: HTTP %d — %s", tt.name, status, errMsg)
-				results[tt.name] = fmt.Sprintf("HTTP %d: %s", status, truncate([]byte(errMsg), 80))
-				return
-			}
-
-			if r.Error != "" {
-				t.Logf("⚠️  %s: error=%s", tt.name, r.Error)
-				results[tt.name] = fmt.Sprintf("error: %s", r.Error)
-				return
-			}
-
-			if r.Message == "ok" && r.Data != nil {
-				t.Logf("✅ %s: OK (data: %v)", tt.name, summarizeData(r.Data))
-				results[tt.name] = "✅ OK"
-			} else if r.Message == "ok" {
-				t.Logf("✅ %s: OK (text-only response)", tt.name)
-				results[tt.name] = "✅ OK (text)"
-			} else {
-				t.Logf("⚠️  %s: msg=%s data=%v", tt.name, r.Message, r.Data)
-				results[tt.name] = fmt.Sprintf("msg=%s", r.Message)
-			}
+			runBotCommandCase(t, tt, results)
 		})
 	}
 
 	t.Log("\n=== Results Summary ===")
 	for name, result := range results {
 		t.Logf("  %-30s %s", name, result)
+	}
+}
+
+func runBotCommandCase(t *testing.T, test cmdTest, results map[string]string) {
+	data, status := sendBotCommand(t, test.path, test.cmd, test.text)
+	response := parseBotResp(t, data)
+	if status != http.StatusOK {
+		errorMessage := response.Error
+		if errorMessage == "" {
+			errorMessage = truncate(data, 200)
+		}
+		t.Logf("⚠️  %s: HTTP %d — %s", test.name, status, errorMessage)
+		results[test.name] = fmt.Sprintf("HTTP %d: %s", status, truncate([]byte(errorMessage), 80))
+		return
+	}
+	if response.Error != "" {
+		t.Logf("⚠️  %s: error=%s", test.name, response.Error)
+		results[test.name] = fmt.Sprintf("error: %s", response.Error)
+		return
+	}
+	if response.Message == "ok" && response.Data != nil {
+		t.Logf("✅ %s: OK (data: %v)", test.name, summarizeData(response.Data))
+		results[test.name] = "✅ OK"
+	} else if response.Message == "ok" {
+		t.Logf("✅ %s: OK (text-only response)", test.name)
+		results[test.name] = "✅ OK (text)"
+	} else {
+		t.Logf("⚠️  %s: msg=%s data=%v", test.name, response.Message, response.Data)
+		results[test.name] = fmt.Sprintf("msg=%s", response.Message)
+	}
+}
+
+func recordIntegrationResult(t *testing.T, results map[string]string, name string, data []byte, status int) {
+	t.Helper()
+	response := parseBotResp(t, data)
+	if status != http.StatusOK {
+		errorMessage := response.Error
+		if errorMessage == "" {
+			errorMessage = truncate(data, 200)
+		}
+		t.Logf("⚠️  %s: HTTP %d — %s", name, status, errorMessage)
+		results[name] = fmt.Sprintf("HTTP %d: %s", status, truncate([]byte(errorMessage), 80))
+		return
+	}
+	if response.Error != "" {
+		t.Logf("⚠️  %s: error=%s", name, response.Error)
+		results[name] = fmt.Sprintf("error: %s", response.Error)
+		return
+	}
+	if response.Message == "ok" && response.Data != nil {
+		t.Logf("✅ %s: OK (data: %v)", name, summarizeData(response.Data))
+		results[name] = "✅ OK"
+	} else if response.Message == "ok" {
+		t.Logf("✅ %s: OK (text-only response)", name)
+		results[name] = "✅ OK (text)"
+	} else {
+		t.Logf("⚠️  %s: msg=%s data=%v", name, response.Message, response.Data)
+		results[name] = fmt.Sprintf("msg=%s", response.Message)
 	}
 }
 
@@ -624,15 +641,13 @@ func resolveHarukiUserID(t *testing.T) int {
 	t.Helper()
 	cfg := requireIntegrationConfig(t)
 	db, err := sql.Open("postgres", cfg.UsersDSN)
-	if err != nil {
-		t.Fatalf("open users DB: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "open users DB: %v", err)
+
 	defer db.Close()
 	var id int
 	err = db.QueryRow("SELECT id FROM users WHERE platform=$1 AND user_id=$2", cfg.Platform, cfg.PlatformUserID).Scan(&id)
-	if err != nil {
-		t.Fatalf("resolve haruki_user_id for %s/%s: %v", cfg.Platform, cfg.PlatformUserID, err)
-	}
+	testutil.Require(t, !(err != nil), "resolve haruki_user_id for %s/%s: %v", cfg.Platform, cfg.PlatformUserID, err)
+
 	return id
 }
 
@@ -641,15 +656,13 @@ func ensureAliasAdmin(t *testing.T, harukiUserID int) {
 	t.Helper()
 	cfg := requireIntegrationConfig(t)
 	db, err := sql.Open("postgres", cfg.PJSKDSN)
-	if err != nil {
-		t.Fatalf("open pjsk DB: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "open pjsk DB: %v", err)
+
 	defer db.Close()
 	_, err = db.Exec(`INSERT INTO alias_admins (haruki_user_id, name) VALUES ($1, $2)
 		ON CONFLICT (haruki_user_id) DO UPDATE SET name=$2`, harukiUserID, "integration-test-admin")
-	if err != nil {
-		t.Fatalf("insert alias admin: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "insert alias admin: %v", err)
+
 	t.Logf("✅ Alias admin configured: haruki_user_id=%d", harukiUserID)
 }
 
@@ -657,9 +670,8 @@ func ensureAliasAdmin(t *testing.T, harukiUserID int) {
 func startImageServer(t *testing.T) string {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("start image server: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "start image server: %v", err)
+
 	port := listener.Addr().(*net.TCPAddr).Port
 	mux := http.NewServeMux()
 	// Serve from project root (tests run with cwd = integration/)
@@ -709,32 +721,7 @@ func TestExpandedCoverage(t *testing.T) {
 	results := make(map[string]string)
 
 	runTest := func(t *testing.T, name string, data []byte, status int) {
-		t.Helper()
-		r := parseBotResp(t, data)
-		if status != 200 {
-			errMsg := r.Error
-			if errMsg == "" {
-				errMsg = truncate(data, 200)
-			}
-			t.Logf("⚠️  %s: HTTP %d — %s", name, status, errMsg)
-			results[name] = fmt.Sprintf("HTTP %d: %s", status, truncate([]byte(errMsg), 80))
-			return
-		}
-		if r.Error != "" {
-			t.Logf("⚠️  %s: error=%s", name, r.Error)
-			results[name] = fmt.Sprintf("error: %s", r.Error)
-			return
-		}
-		if r.Message == "ok" && r.Data != nil {
-			t.Logf("✅ %s: OK (data: %v)", name, summarizeData(r.Data))
-			results[name] = "✅ OK"
-		} else if r.Message == "ok" {
-			t.Logf("✅ %s: OK (text-only response)", name)
-			results[name] = "✅ OK (text)"
-		} else {
-			t.Logf("⚠️  %s: msg=%s data=%v", name, r.Message, r.Data)
-			results[name] = fmt.Sprintf("msg=%s", r.Message)
-		}
+		recordIntegrationResult(t, results, name, data, status)
 	}
 
 	// ─── Alias Query ─────────────────────────────────────────
@@ -945,9 +932,8 @@ func TestExternalAPIs(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
 		req.Header.Set("X-Haruki-Sekai-Token", sekaiToken)
 		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatalf("sekai api: %v", err)
-		}
+		testutil.Require(t, !(err != nil), "sekai api: %v", err)
+
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
 		t.Logf("Sekai Profile: HTTP %d (%d bytes)", resp.StatusCode, len(body))
@@ -965,9 +951,8 @@ func TestExternalAPIs(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer "+toolboxToken)
 		req.Header.Set("User-Agent", "Haruki-Cloud/v2.0.0")
 		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatalf("toolbox: %v", err)
-		}
+		testutil.Require(t, !(err != nil), "toolbox: %v", err)
+
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
 		t.Logf("Toolbox MySEKAI: HTTP %d (%d bytes)", resp.StatusCode, len(body))
@@ -980,9 +965,8 @@ func TestExternalAPIs(t *testing.T) {
 	t.Run("tracker/event-ranking", func(t *testing.T) {
 		url := fmt.Sprintf("%s/api/v2/cloud/events/%s/199/leaderboards/total/sk/query?rank=1", trackerBase, cfg.Region)
 		resp, err := http.Get(url)
-		if err != nil {
-			t.Fatalf("tracker: %v", err)
-		}
+		testutil.Require(t, !(err != nil), "tracker: %v", err)
+
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
 		t.Logf("Tracker Event: HTTP %d (%d bytes)", resp.StatusCode, len(body))

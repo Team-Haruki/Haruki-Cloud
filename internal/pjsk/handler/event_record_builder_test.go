@@ -17,6 +17,7 @@ import (
 	renderevent "haruki-cloud/internal/pjsk/render/event"
 	renderprovider "haruki-cloud/internal/pjsk/render/provider"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -61,17 +62,18 @@ func TestBuildEventRecordFromSnapshotSeparatesWorldBloomTotalAndSingleRank(t *te
 
 	startAt := time.Now().Add(-2 * time.Hour).UnixMilli()
 	aggregateAt := time.Now().Add(-time.Hour).UnixMilli()
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("jp").
-		SetGameID(9001).
-		SetEventType("world_bloom").
-		SetName("WL Event").
-		SetAssetbundleName("wl_9001").
-		SetStartAt(startAt).
-		SetAggregateAt(aggregateAt).
-		SetClosedAt(aggregateAt + 1000).
-		Save(ctx); err != nil {
-		t.Fatalf("create event: %v", err)
+	{
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("jp").
+			SetGameID(9001).
+			SetEventType("world_bloom").
+			SetName("WL Event").
+			SetAssetbundleName("wl_9001").
+			SetStartAt(startAt).
+			SetAggregateAt(aggregateAt).
+			SetClosedAt(aggregateAt + 1000).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -108,41 +110,41 @@ func TestBuildEventRecordFromSnapshotSeparatesWorldBloomTotalAndSingleRank(t *te
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 total event entry, got %+v", req.EventInfo)
+	testutil.Require(t, !(eventHistoryPoint(req.EventInfo[0]) != 9999), "unexpected total WL point: %+v", req.EventInfo[0])
+	{
+		testutil.Require(t, !(req.EventInfo[0].Rank == nil), "unexpected total WL rank: %+v", req.EventInfo[0].Rank)
+		testutil.Require(t, !(*req.EventInfo[0].Rank != 123), "unexpected total WL rank: %+v", req.EventInfo[0].Rank)
+	}
+	testutil.Require(t, !(len(req.WlEventInfo) != 2), "expected 2 WL single-rank entries, got %+v", req.WlEventInfo)
+	{
+		testutil.Require(t, !(eventHistoryPoint(req.WlEventInfo[0]) != 111), "unexpected WL single points: %+v", req.WlEventInfo)
+		testutil.Require(t, !(eventHistoryPoint(req.WlEventInfo[1]) != 222), "unexpected WL single points: %+v", req.WlEventInfo)
+	}
+	{
+		testutil.Require(t, !(req.WlEventInfo[0].Rank == nil), "unexpected first WL single rank: %+v", req.WlEventInfo[0].Rank)
+		testutil.Require(t, !(*req.WlEventInfo[0].Rank != 10), "unexpected first WL single rank: %+v", req.WlEventInfo[0].Rank)
+	}
+	{
+		testutil.Require(t, !(req.WlEventInfo[1].Rank == nil), "unexpected second WL single rank: %+v", req.WlEventInfo[1].Rank)
+		testutil.Require(t, !(*req.WlEventInfo[1].Rank != 20), "unexpected second WL single rank: %+v", req.WlEventInfo[1].Rank)
+	}
+	{
+		testutil.Require(t, !(req.WlEventInfo[0].WlCharaIconPath == nil), "expected WL single-rank icons: %+v", req.WlEventInfo)
+		testutil.Require(t, !(req.WlEventInfo[1].WlCharaIconPath == nil), "expected WL single-rank icons: %+v", req.WlEventInfo)
+	}
+	{
+
+		got := *req.WlEventInfo[0].WlCharaIconPath
+		testutil.Require(t, !(got != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_21.png"), "unexpected first WL single SD path: %q", got)
+	}
+	{
+
+		got := *req.WlEventInfo[1].WlCharaIconPath
+		testutil.Require(t, !(got != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_22.png"), "unexpected second WL single SD path: %q", got)
 	}
 
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 total event entry, got %+v", req.EventInfo)
-	}
-	if eventHistoryPoint(req.EventInfo[0]) != 9999 {
-		t.Fatalf("unexpected total WL point: %+v", req.EventInfo[0])
-	}
-	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 123 {
-		t.Fatalf("unexpected total WL rank: %+v", req.EventInfo[0].Rank)
-	}
-
-	if len(req.WlEventInfo) != 2 {
-		t.Fatalf("expected 2 WL single-rank entries, got %+v", req.WlEventInfo)
-	}
-	if eventHistoryPoint(req.WlEventInfo[0]) != 111 || eventHistoryPoint(req.WlEventInfo[1]) != 222 {
-		t.Fatalf("unexpected WL single points: %+v", req.WlEventInfo)
-	}
-	if req.WlEventInfo[0].Rank == nil || *req.WlEventInfo[0].Rank != 10 {
-		t.Fatalf("unexpected first WL single rank: %+v", req.WlEventInfo[0].Rank)
-	}
-	if req.WlEventInfo[1].Rank == nil || *req.WlEventInfo[1].Rank != 20 {
-		t.Fatalf("unexpected second WL single rank: %+v", req.WlEventInfo[1].Rank)
-	}
-	if req.WlEventInfo[0].WlCharaIconPath == nil || req.WlEventInfo[1].WlCharaIconPath == nil {
-		t.Fatalf("expected WL single-rank icons: %+v", req.WlEventInfo)
-	}
-	if got := *req.WlEventInfo[0].WlCharaIconPath; got != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_21.png" {
-		t.Fatalf("unexpected first WL single SD path: %q", got)
-	}
-	if got := *req.WlEventInfo[1].WlCharaIconPath; got != "asset/jp-assets/startapp/character/character_sd_l/chr_sp_22.png" {
-		t.Fatalf("unexpected second WL single SD path: %q", got)
-	}
 }
 
 func TestBuildEventRecordFromSnapshotLeavesRegularEventRankEmptyWithoutSuiteRank(t *testing.T) {
@@ -152,17 +154,18 @@ func TestBuildEventRecordFromSnapshotLeavesRegularEventRankEmptyWithoutSuiteRank
 
 	startAt := time.Now().Add(-24 * time.Hour).UnixMilli()
 	aggregateAt := time.Now().Add(-23 * time.Hour).UnixMilli()
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("jp").
-		SetGameID(9101).
-		SetEventType("marathon").
-		SetName("Regular Event").
-		SetAssetbundleName("regular_9101").
-		SetStartAt(startAt).
-		SetAggregateAt(aggregateAt).
-		SetClosedAt(aggregateAt + 1000).
-		Save(ctx); err != nil {
-		t.Fatalf("create event: %v", err)
+	{
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("jp").
+			SetGameID(9101).
+			SetEventType("marathon").
+			SetName("Regular Event").
+			SetAssetbundleName("regular_9101").
+			SetStartAt(startAt).
+			SetAggregateAt(aggregateAt).
+			SetClosedAt(aggregateAt + 1000).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -193,15 +196,10 @@ func TestBuildEventRecordFromSnapshotLeavesRegularEventRankEmptyWithoutSuiteRank
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
-	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
-	}
-	if req.EventInfo[0].Rank != nil {
-		t.Fatalf("expected missing suite rank to stay empty, got %+v", req.EventInfo[0].Rank)
-	}
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	testutil.Require(t, !(req.EventInfo[0].Rank != nil), "expected missing suite rank to stay empty, got %+v", req.EventInfo[0].Rank)
+
 }
 
 func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromHonor(t *testing.T) {
@@ -228,33 +226,35 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromHonor(t 
 			},
 		},
 	})
-	if err != nil {
-		t.Fatalf("marshal reward ranges: %v", err)
+	testutil.Require(t, !(err != nil), "marshal reward ranges: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9201).
+			SetEventType("marathon").
+			SetName("T5000 Event").
+			SetAssetbundleName("honor_9201").
+			SetStartAt(startAt).
+			SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(closedAt).
+			SetEventRankingRewardRanges(rewardRanges).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event 9201: %v", err)
 	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9201).
-		SetEventType("marathon").
-		SetName("T5000 Event").
-		SetAssetbundleName("honor_9201").
-		SetStartAt(startAt).
-		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(closedAt).
-		SetEventRankingRewardRanges(rewardRanges).
-		Save(ctx); err != nil {
-		t.Fatalf("create event 9201: %v", err)
-	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9202).
-		SetEventType("marathon").
-		SetName("High PT No Tier").
-		SetAssetbundleName("honor_9202").
-		SetStartAt(startAt).
-		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(closedAt).
-		Save(ctx); err != nil {
-		t.Fatalf("create event 9202: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9202).
+			SetEventType("marathon").
+			SetName("High PT No Tier").
+			SetAssetbundleName("honor_9202").
+			SetStartAt(startAt).
+			SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(closedAt).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event 9202: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -292,27 +292,23 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromHonor(t 
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 2), "expected 2 event entries, got %+v", req.EventInfo)
+	testutil.Require(t, !(req.EventInfo[0].ID != 9201), "expected T rank tier to sort before PT-only event, got %+v", req.EventInfo)
+	testutil.Require(t, !(req.EventInfo[0].Rank != nil), "expected honor fallback to avoid exact rank, got %+v", req.EventInfo[0].Rank)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankDisplay == nil), "expected T5000 display, got %+v", req.EventInfo[0].RankDisplay)
+		testutil.Require(t, !(*req.EventInfo[0].RankDisplay != "T5000"), "expected T5000 display, got %+v", req.EventInfo[0].RankDisplay)
 	}
-	if len(req.EventInfo) != 2 {
-		t.Fatalf("expected 2 event entries, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankTier == nil), "expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
+		testutil.Require(t, !(*req.EventInfo[0].RankTier != 5000), "expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
 	}
-	if req.EventInfo[0].ID != 9201 {
-		t.Fatalf("expected T rank tier to sort before PT-only event, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.RankNote == nil), "expected CN rank note, got %+v", req.RankNote)
+		testutil.Require(t, !(*req.RankNote != "CN/KR/TW服没有排名数据，仅显示Txxx名"), "expected CN rank note, got %+v", req.RankNote)
 	}
-	if req.EventInfo[0].Rank != nil {
-		t.Fatalf("expected honor fallback to avoid exact rank, got %+v", req.EventInfo[0].Rank)
-	}
-	if req.EventInfo[0].RankDisplay == nil || *req.EventInfo[0].RankDisplay != "T5000" {
-		t.Fatalf("expected T5000 display, got %+v", req.EventInfo[0].RankDisplay)
-	}
-	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
-		t.Fatalf("expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
-	}
-	if req.RankNote == nil || *req.RankNote != "CN/KR/TW服没有排名数据，仅显示Txxx名" {
-		t.Fatalf("expected CN rank note, got %+v", req.RankNote)
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotOverlaysSuiteRankAfterHonorScan(t *testing.T) {
@@ -330,21 +326,21 @@ func TestBuildEventRecordFromSnapshotOverlaysSuiteRankAfterHonorScan(t *testing.
 			{"resourceType": "honor", "resourceId": 5005},
 		},
 	}})
-	if err != nil {
-		t.Fatalf("marshal reward ranges: %v", err)
-	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("jp").
-		SetGameID(9301).
-		SetEventType("marathon").
-		SetName("Rank Overlay Event").
-		SetAssetbundleName("honor_9301").
-		SetStartAt(startAt).
-		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(closedAt).
-		SetEventRankingRewardRanges(rewardRanges).
-		Save(ctx); err != nil {
-		t.Fatalf("create event 9301: %v", err)
+	testutil.Require(t, !(err != nil), "marshal reward ranges: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("jp").
+			SetGameID(9301).
+			SetEventType("marathon").
+			SetName("Rank Overlay Event").
+			SetAssetbundleName("honor_9301").
+			SetStartAt(startAt).
+			SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(closedAt).
+			SetEventRankingRewardRanges(rewardRanges).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event 9301: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -381,18 +377,17 @@ func TestBuildEventRecordFromSnapshotOverlaysSuiteRankAfterHonorScan(t *testing.
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].Rank == nil), "expected exact suite rank to overlay honor display, got %+v", req.EventInfo[0].Rank)
+		testutil.Require(t, !(*req.EventInfo[0].Rank != 4971), "expected exact suite rank to overlay honor display, got %+v", req.EventInfo[0].Rank)
 	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankDisplay != nil), "expected exact rank to hide T display, got %+v", req.EventInfo[0])
+		testutil.Require(t, !(req.EventInfo[0].RankTier != nil), "expected exact rank to hide T display, got %+v", req.EventInfo[0])
 	}
-	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 4971 {
-		t.Fatalf("expected exact suite rank to overlay honor display, got %+v", req.EventInfo[0].Rank)
-	}
-	if req.EventInfo[0].RankDisplay != nil || req.EventInfo[0].RankTier != nil {
-		t.Fatalf("expected exact rank to hide T display, got %+v", req.EventInfo[0])
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromResourceBoxHonor(t *testing.T) {
@@ -410,37 +405,38 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromResource
 			{"resourceBoxId": 4926, "rewardConditionType": "none"},
 		},
 	}})
-	if err != nil {
-		t.Fatalf("marshal reward ranges: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "marshal reward ranges: %v", err)
+
 	resourceBoxDetails, err := json.Marshal([]map[string]any{
 		{"resourceType": "jewel", "resourceQuantity": 100},
 		{"resourceType": "honor", "resourceId": 5870, "resourceQuantity": 1},
 	})
-	if err != nil {
-		t.Fatalf("marshal resource box details: %v", err)
+	testutil.Require(t, !(err != nil), "marshal resource box details: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9203).
+			SetEventType("marathon").
+			SetName("Real Shape T5000 Event").
+			SetAssetbundleName("honor_9203").
+			SetStartAt(startAt).
+			SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(closedAt).
+			SetEventRankingRewardRanges(rewardRanges).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event 9203: %v", err)
 	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9203).
-		SetEventType("marathon").
-		SetName("Real Shape T5000 Event").
-		SetAssetbundleName("honor_9203").
-		SetStartAt(startAt).
-		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(closedAt).
-		SetEventRankingRewardRanges(rewardRanges).
-		Save(ctx); err != nil {
-		t.Fatalf("create event 9203: %v", err)
-	}
-	if _, err := sekaiClient.Resourceboxe.Create().
-		SetServerRegion("cn").
-		SetGameID(4926).
-		SetResourceBoxPurpose("event_ranking_reward").
-		SetResourceBoxType("expand").
-		SetDetails(resourceBoxDetails).
-		Save(ctx); err != nil {
-		t.Fatalf("create resource box 4926: %v", err)
+	{
+
+		_, err := sekaiClient.Resourceboxe.Create().
+			SetServerRegion("cn").
+			SetGameID(4926).
+			SetResourceBoxPurpose("event_ranking_reward").
+			SetResourceBoxType("expand").
+			SetDetails(resourceBoxDetails).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create resource box 4926: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -474,18 +470,17 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedEventRankDisplayFromResource
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankDisplay == nil), "expected resource-box honor fallback T5000, got %+v", req.EventInfo[0].RankDisplay)
+		testutil.Require(t, !(*req.EventInfo[0].RankDisplay != "T5000"), "expected resource-box honor fallback T5000, got %+v", req.EventInfo[0].RankDisplay)
 	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankTier == nil), "expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
+		testutil.Require(t, !(*req.EventInfo[0].RankTier != 5000), "expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
 	}
-	if req.EventInfo[0].RankDisplay == nil || *req.EventInfo[0].RankDisplay != "T5000" {
-		t.Fatalf("expected resource-box honor fallback T5000, got %+v", req.EventInfo[0].RankDisplay)
-	}
-	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
-		t.Fatalf("expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotAddsBadgeOnlyEventRankDisplayFromHonor(t *testing.T) {
@@ -503,21 +498,21 @@ func TestBuildEventRecordFromSnapshotAddsBadgeOnlyEventRankDisplayFromHonor(t *t
 			{"resourceType": "honor", "resourceId": 6205},
 		},
 	}})
-	if err != nil {
-		t.Fatalf("marshal reward ranges: %v", err)
-	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9204).
-		SetEventType("marathon").
-		SetName("Badge Only Event").
-		SetAssetbundleName("badge_only_9204").
-		SetStartAt(startAt).
-		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(closedAt).
-		SetEventRankingRewardRanges(rewardRanges).
-		Save(ctx); err != nil {
-		t.Fatalf("create event 9204: %v", err)
+	testutil.Require(t, !(err != nil), "marshal reward ranges: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9204).
+			SetEventType("marathon").
+			SetName("Badge Only Event").
+			SetAssetbundleName("badge_only_9204").
+			SetStartAt(startAt).
+			SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(closedAt).
+			SetEventRankingRewardRanges(rewardRanges).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event 9204: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -548,24 +543,19 @@ func TestBuildEventRecordFromSnapshotAddsBadgeOnlyEventRankDisplayFromHonor(t *t
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected badge-only event entry, got %+v", req.EventInfo)
+	testutil.Require(t, !(req.EventInfo[0].ID != 9204), "expected badge-only event 9204, got %+v", req.EventInfo[0])
+	testutil.Require(t, !(req.EventInfo[0].EventPoint != nil), "expected badge-only event point to be omitted, got %+v", req.EventInfo[0].EventPoint)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankDisplay == nil), "expected badge-only T5000 display, got %+v", req.EventInfo[0].RankDisplay)
+		testutil.Require(t, !(*req.EventInfo[0].RankDisplay != "T5000"), "expected badge-only T5000 display, got %+v", req.EventInfo[0].RankDisplay)
 	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected badge-only event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankTier == nil), "expected badge-only rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
+		testutil.Require(t, !(*req.EventInfo[0].RankTier != 5000), "expected badge-only rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
 	}
-	if req.EventInfo[0].ID != 9204 {
-		t.Fatalf("expected badge-only event 9204, got %+v", req.EventInfo[0])
-	}
-	if req.EventInfo[0].EventPoint != nil {
-		t.Fatalf("expected badge-only event point to be omitted, got %+v", req.EventInfo[0].EventPoint)
-	}
-	if req.EventInfo[0].RankDisplay == nil || *req.EventInfo[0].RankDisplay != "T5000" {
-		t.Fatalf("expected badge-only T5000 display, got %+v", req.EventInfo[0].RankDisplay)
-	}
-	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
-		t.Fatalf("expected badge-only rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotBackfillsClosedWorldBloomChapterRankDisplayFromHonor(t *testing.T) {
@@ -577,43 +567,48 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedWorldBloomChapterRankDisplay
 	startAt := now.Add(-72 * time.Hour).UnixMilli()
 	chapterEndAt := now.Add(-48 * time.Hour).UnixMilli()
 	closedAt := now.Add(-24 * time.Hour).UnixMilli()
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9501).
-		SetEventType("world_bloom").
-		SetName("WL Chapter Honor Event").
-		SetAssetbundleName("wl_chapter_honor").
-		SetStartAt(startAt).
-		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(closedAt).
-		Save(ctx); err != nil {
-		t.Fatalf("create wl event: %v", err)
+	{
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9501).
+			SetEventType("world_bloom").
+			SetName("WL Chapter Honor Event").
+			SetAssetbundleName("wl_chapter_honor").
+			SetStartAt(startAt).
+			SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(closedAt).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create wl event: %v", err)
 	}
-	if _, err := sekaiClient.Worldbloom.Create().
-		SetServerRegion("cn").
-		SetGameID(950101).
-		SetEventID(9501).
-		SetGameCharacterID(21).
-		SetWorldBloomChapterType("game_character").
-		SetChapterNo(1).
-		SetChapterStartAt(startAt).
-		SetAggregateAt(chapterEndAt - 1000).
-		SetChapterEndAt(chapterEndAt).
-		Save(ctx); err != nil {
-		t.Fatalf("create world bloom chapter 21: %v", err)
+	{
+
+		_, err := sekaiClient.Worldbloom.Create().
+			SetServerRegion("cn").
+			SetGameID(950101).
+			SetEventID(9501).
+			SetGameCharacterID(21).
+			SetWorldBloomChapterType("game_character").
+			SetChapterNo(1).
+			SetChapterStartAt(startAt).
+			SetAggregateAt(chapterEndAt - 1000).
+			SetChapterEndAt(chapterEndAt).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create world bloom chapter 21: %v", err)
 	}
-	if _, err := sekaiClient.Worldbloom.Create().
-		SetServerRegion("cn").
-		SetGameID(950102).
-		SetEventID(9501).
-		SetGameCharacterID(22).
-		SetWorldBloomChapterType("game_character").
-		SetChapterNo(2).
-		SetChapterStartAt(startAt).
-		SetAggregateAt(chapterEndAt - 1000).
-		SetChapterEndAt(chapterEndAt).
-		Save(ctx); err != nil {
-		t.Fatalf("create world bloom chapter 22: %v", err)
+	{
+
+		_, err := sekaiClient.Worldbloom.Create().
+			SetServerRegion("cn").
+			SetGameID(950102).
+			SetEventID(9501).
+			SetGameCharacterID(22).
+			SetWorldBloomChapterType("game_character").
+			SetChapterNo(2).
+			SetChapterStartAt(startAt).
+			SetAggregateAt(chapterEndAt - 1000).
+			SetChapterEndAt(chapterEndAt).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create world bloom chapter 22: %v", err)
 	}
 
 	root := t.TempDir()
@@ -689,12 +684,9 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedWorldBloomChapterRankDisplay
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
-	}
-	if len(req.WlEventInfo) != 2 {
-		t.Fatalf("expected 2 WL entries, got %+v", req.WlEventInfo)
-	}
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.WlEventInfo) != 2), "expected 2 WL entries, got %+v", req.WlEventInfo)
+
 	var char21, char22 *drawing.EventHistory
 	for i := range req.WlEventInfo {
 		item := &req.WlEventInfo[i]
@@ -705,18 +697,23 @@ func TestBuildEventRecordFromSnapshotBackfillsClosedWorldBloomChapterRankDisplay
 			char22 = item
 		}
 	}
-	if char21 == nil || char22 == nil {
-		t.Fatalf("expected both character entries, got %+v", req.WlEventInfo)
+	{
+		testutil.Require(t, !(char21 == nil), "expected both character entries, got %+v", req.WlEventInfo)
+		testutil.Require(t, !(char22 == nil), "expected both character entries, got %+v", req.WlEventInfo)
 	}
-	if char21.RankDisplay == nil || *char21.RankDisplay != "T5000" {
-		t.Fatalf("expected character 21 T5000 display, got %+v", char21.RankDisplay)
+	{
+		testutil.Require(t, !(char21.RankDisplay == nil), "expected character 21 T5000 display, got %+v", char21.RankDisplay)
+		testutil.Require(t, !(*char21.RankDisplay != "T5000"), "expected character 21 T5000 display, got %+v", char21.RankDisplay)
 	}
-	if char21.RankTier == nil || *char21.RankTier != 5000 {
-		t.Fatalf("expected character 21 rank_tier=5000, got %+v", char21.RankTier)
+	{
+		testutil.Require(t, !(char21.RankTier == nil), "expected character 21 rank_tier=5000, got %+v", char21.RankTier)
+		testutil.Require(t, !(*char21.RankTier != 5000), "expected character 21 rank_tier=5000, got %+v", char21.RankTier)
 	}
-	if char22.RankDisplay != nil || char22.RankTier != nil {
-		t.Fatalf("expected character 22 to avoid character 21 honor fallback, got %+v", char22)
+	{
+		testutil.Require(t, !(char22.RankDisplay != nil), "expected character 22 to avoid character 21 honor fallback, got %+v", char22)
+		testutil.Require(t, !(char22.RankTier != nil), "expected character 22 to avoid character 21 honor fallback, got %+v", char22)
 	}
+
 }
 
 func TestBuildEventRecordFromSnapshotAddsBadgeOnlyWorldBloomChapterRankDisplayFromHonor(t *testing.T) {
@@ -728,30 +725,33 @@ func TestBuildEventRecordFromSnapshotAddsBadgeOnlyWorldBloomChapterRankDisplayFr
 	startAt := now.Add(-72 * time.Hour).UnixMilli()
 	chapterEndAt := now.Add(-48 * time.Hour).UnixMilli()
 	closedAt := now.Add(-24 * time.Hour).UnixMilli()
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9503).
-		SetEventType("world_bloom").
-		SetName("WL Chapter Badge Only Event").
-		SetAssetbundleName("wl_chapter_badge_only").
-		SetStartAt(startAt).
-		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(closedAt).
-		Save(ctx); err != nil {
-		t.Fatalf("create wl event: %v", err)
+	{
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9503).
+			SetEventType("world_bloom").
+			SetName("WL Chapter Badge Only Event").
+			SetAssetbundleName("wl_chapter_badge_only").
+			SetStartAt(startAt).
+			SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(closedAt).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create wl event: %v", err)
 	}
-	if _, err := sekaiClient.Worldbloom.Create().
-		SetServerRegion("cn").
-		SetGameID(950301).
-		SetEventID(9503).
-		SetGameCharacterID(21).
-		SetWorldBloomChapterType("game_character").
-		SetChapterNo(1).
-		SetChapterStartAt(startAt).
-		SetAggregateAt(chapterEndAt - 1000).
-		SetChapterEndAt(chapterEndAt).
-		Save(ctx); err != nil {
-		t.Fatalf("create world bloom chapter: %v", err)
+	{
+
+		_, err := sekaiClient.Worldbloom.Create().
+			SetServerRegion("cn").
+			SetGameID(950301).
+			SetEventID(9503).
+			SetGameCharacterID(21).
+			SetWorldBloomChapterType("game_character").
+			SetChapterNo(1).
+			SetChapterStartAt(startAt).
+			SetAggregateAt(chapterEndAt - 1000).
+			SetChapterEndAt(chapterEndAt).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create world bloom chapter: %v", err)
 	}
 
 	root := t.TempDir()
@@ -807,27 +807,20 @@ func TestBuildEventRecordFromSnapshotAddsBadgeOnlyWorldBloomChapterRankDisplayFr
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.WlEventInfo) != 1), "expected badge-only WL entry, got %+v", req.WlEventInfo)
+	testutil.Require(t, !(req.WlEventInfo[0].ID != 9503), "expected badge-only WL event 9503, got %+v", req.WlEventInfo[0])
+	testutil.Require(t, !(req.WlEventInfo[0].EventPoint != nil), "expected badge-only WL point to be omitted, got %+v", req.WlEventInfo[0].EventPoint)
+	{
+		testutil.Require(t, !(req.WlEventInfo[0].RankDisplay == nil), "expected badge-only WL T5000 display, got %+v", req.WlEventInfo[0].RankDisplay)
+		testutil.Require(t, !(*req.WlEventInfo[0].RankDisplay != "T5000"), "expected badge-only WL T5000 display, got %+v", req.WlEventInfo[0].RankDisplay)
 	}
-	if len(req.WlEventInfo) != 1 {
-		t.Fatalf("expected badge-only WL entry, got %+v", req.WlEventInfo)
+	{
+		testutil.Require(t, !(req.WlEventInfo[0].RankTier == nil), "expected badge-only WL rank_tier=5000, got %+v", req.WlEventInfo[0].RankTier)
+		testutil.Require(t, !(*req.WlEventInfo[0].RankTier != 5000), "expected badge-only WL rank_tier=5000, got %+v", req.WlEventInfo[0].RankTier)
 	}
-	if req.WlEventInfo[0].ID != 9503 {
-		t.Fatalf("expected badge-only WL event 9503, got %+v", req.WlEventInfo[0])
-	}
-	if req.WlEventInfo[0].EventPoint != nil {
-		t.Fatalf("expected badge-only WL point to be omitted, got %+v", req.WlEventInfo[0].EventPoint)
-	}
-	if req.WlEventInfo[0].RankDisplay == nil || *req.WlEventInfo[0].RankDisplay != "T5000" {
-		t.Fatalf("expected badge-only WL T5000 display, got %+v", req.WlEventInfo[0].RankDisplay)
-	}
-	if req.WlEventInfo[0].RankTier == nil || *req.WlEventInfo[0].RankTier != 5000 {
-		t.Fatalf("expected badge-only WL rank_tier=5000, got %+v", req.WlEventInfo[0].RankTier)
-	}
-	if req.WlEventInfo[0].WlCharaIconPath == nil {
-		t.Fatalf("expected badge-only WL character icon, got %+v", req.WlEventInfo[0])
-	}
+	testutil.Require(t, !(req.WlEventInfo[0].WlCharaIconPath == nil), "expected badge-only WL character icon, got %+v", req.WlEventInfo[0])
+
 }
 
 func TestBuildEventRecordFromSnapshotOverlaysWorldBloomChapterSuiteRankAfterHonorScan(t *testing.T) {
@@ -839,30 +832,33 @@ func TestBuildEventRecordFromSnapshotOverlaysWorldBloomChapterSuiteRankAfterHono
 	startAt := now.Add(-72 * time.Hour).UnixMilli()
 	chapterEndAt := now.Add(-48 * time.Hour).UnixMilli()
 	closedAt := now.Add(-24 * time.Hour).UnixMilli()
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9502).
-		SetEventType("world_bloom").
-		SetName("WL Chapter Rank Overlay Event").
-		SetAssetbundleName("wl_chapter_rank_overlay").
-		SetStartAt(startAt).
-		SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(closedAt).
-		Save(ctx); err != nil {
-		t.Fatalf("create wl event: %v", err)
+	{
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9502).
+			SetEventType("world_bloom").
+			SetName("WL Chapter Rank Overlay Event").
+			SetAssetbundleName("wl_chapter_rank_overlay").
+			SetStartAt(startAt).
+			SetAggregateAt(closedAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(closedAt).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create wl event: %v", err)
 	}
-	if _, err := sekaiClient.Worldbloom.Create().
-		SetServerRegion("cn").
-		SetGameID(950201).
-		SetEventID(9502).
-		SetGameCharacterID(21).
-		SetWorldBloomChapterType("game_character").
-		SetChapterNo(1).
-		SetChapterStartAt(startAt).
-		SetAggregateAt(chapterEndAt - 1000).
-		SetChapterEndAt(chapterEndAt).
-		Save(ctx); err != nil {
-		t.Fatalf("create world bloom chapter: %v", err)
+	{
+
+		_, err := sekaiClient.Worldbloom.Create().
+			SetServerRegion("cn").
+			SetGameID(950201).
+			SetEventID(9502).
+			SetGameCharacterID(21).
+			SetWorldBloomChapterType("game_character").
+			SetChapterNo(1).
+			SetChapterStartAt(startAt).
+			SetAggregateAt(chapterEndAt - 1000).
+			SetChapterEndAt(chapterEndAt).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create world bloom chapter: %v", err)
 	}
 
 	root := t.TempDir()
@@ -921,18 +917,17 @@ func TestBuildEventRecordFromSnapshotOverlaysWorldBloomChapterSuiteRankAfterHono
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.WlEventInfo) != 1), "expected 1 WL entry, got %+v", req.WlEventInfo)
+	{
+		testutil.Require(t, !(req.WlEventInfo[0].Rank == nil), "expected exact suite WL rank to overlay honor display, got %+v", req.WlEventInfo[0].Rank)
+		testutil.Require(t, !(*req.WlEventInfo[0].Rank != 4971), "expected exact suite WL rank to overlay honor display, got %+v", req.WlEventInfo[0].Rank)
 	}
-	if len(req.WlEventInfo) != 1 {
-		t.Fatalf("expected 1 WL entry, got %+v", req.WlEventInfo)
+	{
+		testutil.Require(t, !(req.WlEventInfo[0].RankDisplay != nil), "expected exact WL rank to hide T display, got %+v", req.WlEventInfo[0])
+		testutil.Require(t, !(req.WlEventInfo[0].RankTier != nil), "expected exact WL rank to hide T display, got %+v", req.WlEventInfo[0])
 	}
-	if req.WlEventInfo[0].Rank == nil || *req.WlEventInfo[0].Rank != 4971 {
-		t.Fatalf("expected exact suite WL rank to overlay honor display, got %+v", req.WlEventInfo[0].Rank)
-	}
-	if req.WlEventInfo[0].RankDisplay != nil || req.WlEventInfo[0].RankTier != nil {
-		t.Fatalf("expected exact WL rank to hide T display, got %+v", req.WlEventInfo[0])
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotDoesNotBackfillHonorRankBeforeRankingAnnounce(t *testing.T) {
@@ -948,22 +943,22 @@ func TestBuildEventRecordFromSnapshotDoesNotBackfillHonorRankBeforeRankingAnnoun
 			{"resourceType": "honor", "resourceId": 5005},
 		},
 	}})
-	if err != nil {
-		t.Fatalf("marshal reward ranges: %v", err)
-	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9203).
-		SetEventType("marathon").
-		SetName("Open Event").
-		SetAssetbundleName("honor_open").
-		SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
-		SetAggregateAt(now.Add(-time.Hour).UnixMilli()).
-		SetRankingAnnounceAt(now.Add(time.Hour).UnixMilli()).
-		SetClosedAt(now.Add(2 * time.Hour).UnixMilli()).
-		SetEventRankingRewardRanges(rewardRanges).
-		Save(ctx); err != nil {
-		t.Fatalf("create event: %v", err)
+	testutil.Require(t, !(err != nil), "marshal reward ranges: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9203).
+			SetEventType("marathon").
+			SetName("Open Event").
+			SetAssetbundleName("honor_open").
+			SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
+			SetAggregateAt(now.Add(-time.Hour).UnixMilli()).
+			SetRankingAnnounceAt(now.Add(time.Hour).UnixMilli()).
+			SetClosedAt(now.Add(2 * time.Hour).UnixMilli()).
+			SetEventRankingRewardRanges(rewardRanges).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -997,15 +992,13 @@ func TestBuildEventRecordFromSnapshotDoesNotBackfillHonorRankBeforeRankingAnnoun
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankDisplay != nil), "expected event before ranking announce to avoid honor rank fallback, got %+v", req.EventInfo[0])
+		testutil.Require(t, !(req.EventInfo[0].RankTier != nil), "expected event before ranking announce to avoid honor rank fallback, got %+v", req.EventInfo[0])
 	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
-	}
-	if req.EventInfo[0].RankDisplay != nil || req.EventInfo[0].RankTier != nil {
-		t.Fatalf("expected event before ranking announce to avoid honor rank fallback, got %+v", req.EventInfo[0])
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotBackfillsHonorRankAfterRankingAnnounceBeforeClosed(t *testing.T) {
@@ -1021,22 +1014,22 @@ func TestBuildEventRecordFromSnapshotBackfillsHonorRankAfterRankingAnnounceBefor
 			{"resourceType": "honor", "resourceId": 5005},
 		},
 	}})
-	if err != nil {
-		t.Fatalf("marshal reward ranges: %v", err)
-	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9204).
-		SetEventType("marathon").
-		SetName("Announced Event").
-		SetAssetbundleName("honor_announced").
-		SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
-		SetAggregateAt(now.Add(-48 * time.Hour).UnixMilli()).
-		SetRankingAnnounceAt(now.Add(-47 * time.Hour).UnixMilli()).
-		SetClosedAt(now.Add(time.Hour).UnixMilli()).
-		SetEventRankingRewardRanges(rewardRanges).
-		Save(ctx); err != nil {
-		t.Fatalf("create event: %v", err)
+	testutil.Require(t, !(err != nil), "marshal reward ranges: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9204).
+			SetEventType("marathon").
+			SetName("Announced Event").
+			SetAssetbundleName("honor_announced").
+			SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
+			SetAggregateAt(now.Add(-48 * time.Hour).UnixMilli()).
+			SetRankingAnnounceAt(now.Add(-47 * time.Hour).UnixMilli()).
+			SetClosedAt(now.Add(time.Hour).UnixMilli()).
+			SetEventRankingRewardRanges(rewardRanges).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -1070,18 +1063,17 @@ func TestBuildEventRecordFromSnapshotBackfillsHonorRankAfterRankingAnnounceBefor
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankDisplay == nil), "expected announced event to backfill T5000, got %+v", req.EventInfo[0])
+		testutil.Require(t, !(*req.EventInfo[0].RankDisplay != "T5000"), "expected announced event to backfill T5000, got %+v", req.EventInfo[0])
 	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankTier == nil), "expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
+		testutil.Require(t, !(*req.EventInfo[0].RankTier != 5000), "expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
 	}
-	if req.EventInfo[0].RankDisplay == nil || *req.EventInfo[0].RankDisplay != "T5000" {
-		t.Fatalf("expected announced event to backfill T5000, got %+v", req.EventInfo[0])
-	}
-	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
-		t.Fatalf("expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotBackfillsHonorRankAfterAggregateWhenRankingAnnounceMissing(t *testing.T) {
@@ -1097,21 +1089,21 @@ func TestBuildEventRecordFromSnapshotBackfillsHonorRankAfterAggregateWhenRanking
 			{"resourceType": "honor", "resourceId": 5005},
 		},
 	}})
-	if err != nil {
-		t.Fatalf("marshal reward ranges: %v", err)
-	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("cn").
-		SetGameID(9205).
-		SetEventType("marathon").
-		SetName("Aggregate Fallback Event").
-		SetAssetbundleName("honor_aggregate_fallback").
-		SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
-		SetAggregateAt(now.Add(-time.Hour).UnixMilli()).
-		SetClosedAt(now.Add(time.Hour).UnixMilli()).
-		SetEventRankingRewardRanges(rewardRanges).
-		Save(ctx); err != nil {
-		t.Fatalf("create event: %v", err)
+	testutil.Require(t, !(err != nil), "marshal reward ranges: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("cn").
+			SetGameID(9205).
+			SetEventType("marathon").
+			SetName("Aggregate Fallback Event").
+			SetAssetbundleName("honor_aggregate_fallback").
+			SetStartAt(now.Add(-72 * time.Hour).UnixMilli()).
+			SetAggregateAt(now.Add(-time.Hour).UnixMilli()).
+			SetClosedAt(now.Add(time.Hour).UnixMilli()).
+			SetEventRankingRewardRanges(rewardRanges).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -1145,18 +1137,17 @@ func TestBuildEventRecordFromSnapshotBackfillsHonorRankAfterAggregateWhenRanking
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.CN)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankDisplay == nil), "expected aggregate fallback event to backfill T5000, got %+v", req.EventInfo[0])
+		testutil.Require(t, !(*req.EventInfo[0].RankDisplay != "T5000"), "expected aggregate fallback event to backfill T5000, got %+v", req.EventInfo[0])
 	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].RankTier == nil), "expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
+		testutil.Require(t, !(*req.EventInfo[0].RankTier != 5000), "expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
 	}
-	if req.EventInfo[0].RankDisplay == nil || *req.EventInfo[0].RankDisplay != "T5000" {
-		t.Fatalf("expected aggregate fallback event to backfill T5000, got %+v", req.EventInfo[0])
-	}
-	if req.EventInfo[0].RankTier == nil || *req.EventInfo[0].RankTier != 5000 {
-		t.Fatalf("expected rank_tier=5000, got %+v", req.EventInfo[0].RankTier)
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotDropsNonJPRankingBoundaryRank(t *testing.T) {
@@ -1170,21 +1161,21 @@ func TestBuildEventRecordFromSnapshotDropsNonJPRankingBoundaryRank(t *testing.T)
 		{"fromRank": 3001, "toRank": 4000},
 		{"fromRank": 4001, "toRank": 5000},
 	})
-	if err != nil {
-		t.Fatalf("marshal reward ranges: %v", err)
-	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("tw").
-		SetGameID(9105).
-		SetEventType("marathon").
-		SetName("TW Boundary Rank Event").
-		SetAssetbundleName("tw_boundary_rank").
-		SetStartAt(startAt).
-		SetAggregateAt(aggregateAt).
-		SetClosedAt(aggregateAt + 1000).
-		SetEventRankingRewardRanges(rewardRanges).
-		Save(ctx); err != nil {
-		t.Fatalf("create event: %v", err)
+	testutil.Require(t, !(err != nil), "marshal reward ranges: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("tw").
+			SetGameID(9105).
+			SetEventType("marathon").
+			SetName("TW Boundary Rank Event").
+			SetAssetbundleName("tw_boundary_rank").
+			SetStartAt(startAt).
+			SetAggregateAt(aggregateAt).
+			SetClosedAt(aggregateAt + 1000).
+			SetEventRankingRewardRanges(rewardRanges).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -1218,15 +1209,10 @@ func TestBuildEventRecordFromSnapshotDropsNonJPRankingBoundaryRank(t *testing.T)
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.TW)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
-	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
-	}
-	if req.EventInfo[0].Rank != nil {
-		t.Fatalf("expected suspicious non-JP boundary rank to be dropped, got %+v", req.EventInfo[0].Rank)
-	}
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	testutil.Require(t, !(req.EventInfo[0].Rank != nil), "expected suspicious non-JP boundary rank to be dropped, got %+v", req.EventInfo[0].Rank)
+
 }
 
 func TestBuildEventRecordFromSnapshotUsesEmbeddedRegularEventRank(t *testing.T) {
@@ -1236,17 +1222,18 @@ func TestBuildEventRecordFromSnapshotUsesEmbeddedRegularEventRank(t *testing.T) 
 
 	startAt := time.Now().Add(-24 * time.Hour).UnixMilli()
 	aggregateAt := time.Now().Add(-23 * time.Hour).UnixMilli()
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("jp").
-		SetGameID(9104).
-		SetEventType("marathon").
-		SetName("Regular Event With Embedded Rank").
-		SetAssetbundleName("regular_9104").
-		SetStartAt(startAt).
-		SetAggregateAt(aggregateAt).
-		SetClosedAt(aggregateAt + 1000).
-		Save(ctx); err != nil {
-		t.Fatalf("create event: %v", err)
+	{
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("jp").
+			SetGameID(9104).
+			SetEventType("marathon").
+			SetName("Regular Event With Embedded Rank").
+			SetAssetbundleName("regular_9104").
+			SetStartAt(startAt).
+			SetAggregateAt(aggregateAt).
+			SetClosedAt(aggregateAt + 1000).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -1282,15 +1269,13 @@ func TestBuildEventRecordFromSnapshotUsesEmbeddedRegularEventRank(t *testing.T) 
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].Rank == nil), "expected embedded regular event rank, got %+v", req.EventInfo[0].Rank)
+		testutil.Require(t, !(*req.EventInfo[0].Rank != 908), "expected embedded regular event rank, got %+v", req.EventInfo[0].Rank)
 	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
-	}
-	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 908 {
-		t.Fatalf("expected embedded regular event rank, got %+v", req.EventInfo[0].Rank)
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotUsesUserEventResultRank(t *testing.T) {
@@ -1300,17 +1285,18 @@ func TestBuildEventRecordFromSnapshotUsesUserEventResultRank(t *testing.T) {
 
 	startAt := time.Now().Add(-24 * time.Hour).UnixMilli()
 	aggregateAt := time.Now().Add(-23 * time.Hour).UnixMilli()
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("jp").
-		SetGameID(9102).
-		SetEventType("marathon").
-		SetName("Regular Event With Snapshot Rank").
-		SetAssetbundleName("regular_9102").
-		SetStartAt(startAt).
-		SetAggregateAt(aggregateAt).
-		SetClosedAt(aggregateAt + 1000).
-		Save(ctx); err != nil {
-		t.Fatalf("create event: %v", err)
+	{
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("jp").
+			SetGameID(9102).
+			SetEventType("marathon").
+			SetName("Regular Event With Snapshot Rank").
+			SetAssetbundleName("regular_9102").
+			SetStartAt(startAt).
+			SetAggregateAt(aggregateAt).
+			SetClosedAt(aggregateAt + 1000).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -1344,15 +1330,13 @@ func TestBuildEventRecordFromSnapshotUsesUserEventResultRank(t *testing.T) {
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 1), "expected 1 event entry, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].Rank == nil), "expected snapshot rank to be preserved, got %+v", req.EventInfo[0].Rank)
+		testutil.Require(t, !(*req.EventInfo[0].Rank != 321), "expected snapshot rank to be preserved, got %+v", req.EventInfo[0].Rank)
 	}
-	if len(req.EventInfo) != 1 {
-		t.Fatalf("expected 1 event entry, got %+v", req.EventInfo)
-	}
-	if req.EventInfo[0].Rank == nil || *req.EventInfo[0].Rank != 321 {
-		t.Fatalf("expected snapshot rank to be preserved, got %+v", req.EventInfo[0].Rank)
-	}
+
 }
 
 func TestBuildEventRecordFromSnapshotLeavesWorldBloomAndRegularRanksEmptyWithoutSuiteRank(t *testing.T) {
@@ -1363,29 +1347,32 @@ func TestBuildEventRecordFromSnapshotLeavesWorldBloomAndRegularRanksEmptyWithout
 	now := time.Now()
 	startAt := now.Add(-2 * time.Hour).UnixMilli()
 	aggregateAt := now.Add(-time.Hour).UnixMilli()
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("jp").
-		SetGameID(9401).
-		SetEventType("world_bloom").
-		SetName("WL Event").
-		SetAssetbundleName("wl_no_rank").
-		SetStartAt(startAt).
-		SetAggregateAt(aggregateAt).
-		SetClosedAt(aggregateAt + 1000).
-		Save(ctx); err != nil {
-		t.Fatalf("create wl event: %v", err)
+	{
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("jp").
+			SetGameID(9401).
+			SetEventType("world_bloom").
+			SetName("WL Event").
+			SetAssetbundleName("wl_no_rank").
+			SetStartAt(startAt).
+			SetAggregateAt(aggregateAt).
+			SetClosedAt(aggregateAt + 1000).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create wl event: %v", err)
 	}
-	if _, err := sekaiClient.Event.Create().
-		SetServerRegion("jp").
-		SetGameID(9400).
-		SetEventType("marathon").
-		SetName("Regular Event").
-		SetAssetbundleName("regular_no_rank").
-		SetStartAt(startAt - int64(time.Hour/time.Millisecond)).
-		SetAggregateAt(aggregateAt - int64(time.Hour/time.Millisecond)).
-		SetClosedAt(aggregateAt + 1000 - int64(time.Hour/time.Millisecond)).
-		Save(ctx); err != nil {
-		t.Fatalf("create regular event: %v", err)
+	{
+
+		_, err := sekaiClient.Event.Create().
+			SetServerRegion("jp").
+			SetGameID(9400).
+			SetEventType("marathon").
+			SetName("Regular Event").
+			SetAssetbundleName("regular_no_rank").
+			SetStartAt(startAt - int64(time.Hour/time.Millisecond)).
+			SetAggregateAt(aggregateAt - int64(time.Hour/time.Millisecond)).
+			SetClosedAt(aggregateAt + 1000 - int64(time.Hour/time.Millisecond)).
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create regular event: %v", err)
 	}
 
 	rc := NewRequestContext(ctx, &CommandRequest{
@@ -1417,21 +1404,15 @@ func TestBuildEventRecordFromSnapshotLeavesWorldBloomAndRegularRanksEmptyWithout
 	})
 
 	req, err := buildEventRecordFromSnapshot(rc, renderregion.JP)
-	if err != nil {
-		t.Fatalf("buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "buildEventRecordFromSnapshot() error = %v", err)
+	testutil.Require(t, !(len(req.EventInfo) != 2), "expected 2 event entries, got %+v", req.EventInfo)
+	{
+		testutil.Require(t, !(req.EventInfo[0].ID != 9401), "unexpected first event info: %+v", req.EventInfo[0])
+		testutil.Require(t, req.EventInfo[0].IsWlEvent, "unexpected first event info: %+v", req.EventInfo[0])
 	}
-	if len(req.EventInfo) != 2 {
-		t.Fatalf("expected 2 event entries, got %+v", req.EventInfo)
-	}
-	if req.EventInfo[0].ID != 9401 || !req.EventInfo[0].IsWlEvent {
-		t.Fatalf("unexpected first event info: %+v", req.EventInfo[0])
-	}
-	if req.EventInfo[0].Rank != nil {
-		t.Fatalf("expected wl total event to keep empty rank, got %+v", req.EventInfo[0].Rank)
-	}
-	if req.EventInfo[1].Rank != nil {
-		t.Fatalf("expected regular event to keep empty rank, got %+v", req.EventInfo[1].Rank)
-	}
+	testutil.Require(t, !(req.EventInfo[0].Rank != nil), "expected wl total event to keep empty rank, got %+v", req.EventInfo[0].Rank)
+	testutil.Require(t, !(req.EventInfo[1].Rank != nil), "expected regular event to keep empty rank, got %+v", req.EventInfo[1].Rank)
+
 }
 
 func TestSortEventHistoryUsesRankDisplayTier(t *testing.T) {
@@ -1447,19 +1428,19 @@ func TestSortEventHistoryUsesRankDisplayTier(t *testing.T) {
 	got := []int{items[0].ID.(int), items[1].ID.(int), items[2].ID.(int), items[3].ID.(int)}
 	want := []int{4, 1, 2, 3}
 	for i := range want {
-		if got[i] != want[i] {
-			t.Fatalf("expected T5000 to sort as 5000, got order %v", got)
-		}
+		testutil.Require(t, !(got[i] != want[i]), "expected T5000 to sort as 5000, got order %v", got)
+
 	}
 }
 
 func writeJSONFile(t *testing.T, path string, value any) {
 	t.Helper()
 	data, err := json.Marshal(value)
-	if err != nil {
-		t.Fatalf("marshal %s: %v", path, err)
+	testutil.Require(t, !(err != nil), "marshal %s: %v", path, err)
+	{
+
+		err := os.WriteFile(path, data, 0o644)
+		testutil.Require(t, !(err != nil), "write %s: %v", path, err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		t.Fatalf("write %s: %v", path, err)
-	}
+
 }

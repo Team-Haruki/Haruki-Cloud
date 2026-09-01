@@ -13,6 +13,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 type musicControllerContextKey struct{}
@@ -39,22 +40,28 @@ func (s *round4ContextSource) WithContext(ctx context.Context) DataSource {
 }
 
 func TestFindMusicChartsByNoteCountFinderBranches(t *testing.T) {
-	if _, err := (*Controller)(nil).FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 1}); err == nil {
-		t.Fatal("nil note-count controller error = nil")
+	{
+		_, err := (*Controller)(nil).FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 1})
+		testutil.RequireArgs(t, !(err == nil), "nil note-count controller error = nil")
 	}
+
 	controller := NewController(nil, nil, nil, nil, nil)
-	if _, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{}); err == nil {
-		t.Fatal("invalid note count error = nil")
+	{
+		_, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{})
+		testutil.RequireArgs(t, !(err == nil), "invalid note count error = nil")
 	}
-	if _, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp"}); err == nil {
-		t.Fatal("missing note-count source error = nil")
+	{
+
+		_, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp"})
+		testutil.RequireArgs(t, !(err == nil), "missing note-count source error = nil")
 	}
 
 	base := newRound4SearchSource()
 	source := &round4NoteFinderSource{round4SearchSource: base, err: errors.New("finder failed")}
 	controller = NewController(source, nil, nil, nil, nil)
-	if _, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp"}); !errors.Is(err, source.err) {
-		t.Fatalf("finder error = %v", err)
+	{
+		_, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp"})
+		testutil.Require(t, errors.Is(err, source.err), "finder error = %v", err)
 	}
 
 	now := time.Now().UnixMilli()
@@ -73,23 +80,38 @@ func TestFindMusicChartsByNoteCountFinderBranches(t *testing.T) {
 		{MusicID: 1, MusicDifficulty: "expert", PlayLevel: 27, TotalNoteCount: 10},
 	}
 	matches, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp", Difficulty: "expert"})
-	if err != nil || len(matches) != 1 || matches[0].Music.ID != 1 || matches[0].Difficulty != "expert" {
-		t.Fatalf("finder matches = %#v, %v", matches, err)
+	{
+		testutil.Require(t, !(err != nil), "finder matches = %#v, %v", matches, err)
+		testutil.Require(t, !(len(matches) != 1), "finder matches = %#v, %v", matches, err)
+		testutil.Require(t, !(matches[0].Music.ID != 1), "finder matches = %#v, %v", matches, err)
+		testutil.Require(t, !(matches[0].Difficulty != "expert"), "finder matches = %#v, %v", matches, err)
 	}
-	if _, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp", Difficulty: "easy"}); err == nil || !strings.Contains(err.Error(), "easy") {
-		t.Fatalf("filtered no-match error = %v", err)
+	{
+
+		_, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp", Difficulty: "easy"})
+		{
+			testutil.Require(t, !(err == nil), "filtered no-match error = %v", err)
+			testutil.Require(t, strings.Contains(err.Error(), "easy"), "filtered no-match error = %v", err)
+		}
 	}
+
 	source.items = nil
-	if _, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp"}); err == nil || strings.Contains(err.Error(), "easy") {
-		t.Fatalf("unfiltered no-match error = %v", err)
+	{
+		_, err := controller.FindMusicChartsByNoteCount(NoteCountQuery{NoteCount: 10, Region: "jp"})
+		{
+			testutil.Require(t, !(err == nil), "unfiltered no-match error = %v", err)
+			testutil.Require(t, !(strings.Contains(err.Error(), "easy")), "unfiltered no-match error = %v", err)
+		}
 	}
+
 }
 
 func TestBuilderRequestValidationAndMixedItems(t *testing.T) {
 	source := newRound4SearchSource()
 	builder := NewBuilder(source, nil, assets.NewAssetHelper("", nil))
-	if _, err := builder.BuildMusicDetailRequest(nil, renderregion.Unknown); err == nil {
-		t.Fatal("nil music detail error = nil")
+	{
+		_, err := builder.BuildMusicDetailRequest(nil, renderregion.Unknown)
+		testutil.RequireArgs(t, !(err == nil), "nil music detail error = nil")
 	}
 
 	now := time.Now().UnixMilli()
@@ -104,30 +126,46 @@ func TestBuilderRequestValidationAndMixedItems(t *testing.T) {
 	source.primaryEvent = &masterdata.Event{ID: 9, AssetBundleName: "event_9"}
 	source.limited = []*masterdata.LimitedTimeMusic{{StartAt: 10, EndAt: 20}}
 	detail, err := builder.BuildMusicDetailRequest(source.musics[1], renderregion.Unknown)
-	if err != nil || detail.EventID == nil || *detail.EventID != 9 || detail.EventBannerPath == nil || len(detail.LimitedTimes) != 1 {
-		t.Fatalf("detail event/limited payload = %#v, %v", detail, err)
+	{
+		testutil.Require(t, !(err != nil), "detail event/limited payload = %#v, %v", detail, err)
+		testutil.Require(t, !(detail.EventID == nil), "detail event/limited payload = %#v, %v", detail, err)
+		testutil.Require(t, !(*detail.EventID != 9), "detail event/limited payload = %#v, %v", detail, err)
+		testutil.Require(t, !(detail.EventBannerPath == nil), "detail event/limited payload = %#v, %v", detail, err)
+		testutil.Require(t, !(len(detail.LimitedTimes) != 1), "detail event/limited payload = %#v, %v", detail, err)
+	}
+	{
+
+		_, err := builder.BuildMusicBriefListRequest(nil, "master", renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "empty brief IDs error = nil")
+	}
+	{
+
+		_, err := builder.BuildMusicBriefListRequest([]int{99}, "master", renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "missing brief music error = nil")
+	}
+	{
+
+		_, err := builder.BuildMusicBriefListRequest([]int{2}, "append", renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "brief music without level error = nil")
 	}
 
-	if _, err := builder.BuildMusicBriefListRequest(nil, "master", renderregion.JP); err == nil {
-		t.Fatal("empty brief IDs error = nil")
-	}
-	if _, err := builder.BuildMusicBriefListRequest([]int{99}, "master", renderregion.JP); err == nil {
-		t.Fatal("missing brief music error = nil")
-	}
-	if _, err := builder.BuildMusicBriefListRequest([]int{2}, "append", renderregion.JP); err == nil {
-		t.Fatal("brief music without level error = nil")
-	}
 	brief, err := builder.BuildMusicBriefListRequest([]int{99, 1}, "expert", renderregion.Unknown)
-	if err != nil || len(brief.MusicList) != 1 || brief.MusicList[0].ID != 1 {
-		t.Fatalf("brief request = %#v, %v", brief, err)
+	{
+		testutil.Require(t, !(err != nil), "brief request = %#v, %v", brief, err)
+		testutil.Require(t, !(len(brief.MusicList) != 1), "brief request = %#v, %v", brief, err)
+		testutil.Require(t, !(brief.MusicList[0].ID != 1), "brief request = %#v, %v", brief, err)
+	}
+	{
+
+		_, err := builder.BuildMusicBriefListRequestFromItems(nil, renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "empty brief items error = nil")
+	}
+	{
+
+		_, err := builder.BuildMusicBriefListRequestFromItems([]BriefListItemQuery{{MusicID: 0}, {MusicID: 99}}, renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "invalid brief items error = nil")
 	}
 
-	if _, err := builder.BuildMusicBriefListRequestFromItems(nil, renderregion.JP); err == nil {
-		t.Fatal("empty brief items error = nil")
-	}
-	if _, err := builder.BuildMusicBriefListRequestFromItems([]BriefListItemQuery{{MusicID: 0}, {MusicID: 99}}, renderregion.JP); err == nil {
-		t.Fatal("invalid brief items error = nil")
-	}
 	items, err := builder.BuildMusicBriefListRequestFromItems([]BriefListItemQuery{
 		{MusicID: 0},
 		{MusicID: 99},
@@ -136,23 +174,30 @@ func TestBuilderRequestValidationAndMixedItems(t *testing.T) {
 		{MusicID: 1, Difficulty: "master"},
 		{MusicID: 2, Difficulty: "append"},
 	}, renderregion.Unknown)
-	if err != nil || len(items.MusicList) != 3 || items.RequiredDifficulty != "" {
-		t.Fatalf("mixed brief items = %#v, %v", items, err)
-	}
-	same, err := builder.BuildMusicBriefListRequestFromItems([]BriefListItemQuery{{MusicID: 1, Difficulty: "expert"}}, renderregion.JP)
-	if err != nil || same.RequiredDifficulty != "expert" || same.RequiredDifficulties != "expert" {
-		t.Fatalf("same-difficulty brief items = %#v, %v", same, err)
+	{
+		testutil.Require(t, !(err != nil), "mixed brief items = %#v, %v", items, err)
+		testutil.Require(t, !(len(items.MusicList) != 3), "mixed brief items = %#v, %v", items, err)
+		testutil.Require(t, !(items.RequiredDifficulty != ""), "mixed brief items = %#v, %v", items, err)
 	}
 
-	if _, err := builder.BuildMusicChartRequest(ChartQuery{}, nil, renderregion.JP); err == nil {
-		t.Fatal("nil chart music error = nil")
+	same, err := builder.BuildMusicBriefListRequestFromItems([]BriefListItemQuery{{MusicID: 1, Difficulty: "expert"}}, renderregion.JP)
+	{
+		testutil.Require(t, !(err != nil), "same-difficulty brief items = %#v, %v", same, err)
+		testutil.Require(t, !(same.RequiredDifficulty != "expert"), "same-difficulty brief items = %#v, %v", same, err)
+		testutil.Require(t, !(same.RequiredDifficulties != "expert"), "same-difficulty brief items = %#v, %v", same, err)
 	}
-	if _, err := builder.BuildMusicChartRequest(ChartQuery{Difficulty: "append"}, source.musics[1], renderregion.JP); err == nil {
-		t.Fatal("missing chart difficulty error = nil")
+	{
+
+		_, err := builder.BuildMusicChartRequest(ChartQuery{}, nil, renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "nil chart music error = nil")
 	}
-	if builder.BuildChartArtist(nil) != "" {
-		t.Fatal("nil chart artist is non-empty")
+	{
+
+		_, err := builder.BuildMusicChartRequest(ChartQuery{Difficulty: "append"}, source.musics[1], renderregion.JP)
+		testutil.RequireArgs(t, !(err == nil), "missing chart difficulty error = nil")
 	}
+	testutil.RequireArgs(t, !(builder.BuildChartArtist(nil) != ""), "nil chart artist is non-empty")
+
 	artistCases := []struct {
 		music *masterdata.Music
 		want  string
@@ -166,21 +211,26 @@ func TestBuilderRequestValidationAndMixedItems(t *testing.T) {
 		{music: &masterdata.Music{Composer: "Comp", Arranger: "Arr"}, want: "Comp / Arr"},
 	}
 	for _, tt := range artistCases {
-		if got := builder.BuildChartArtist(tt.music); got != tt.want {
-			t.Errorf("BuildChartArtist(%+v) = %q, want %q", tt.music, got, tt.want)
+		{
+			got := builder.BuildChartArtist(tt.music)
+			testutil.Check(t, !(got != tt.want), "BuildChartArtist(%+v) = %q, want %q", tt.music, got, tt.want)
 		}
+
 	}
 }
 
 func TestMusicControllerContextAndResolutionEdges(t *testing.T) {
 	var nilController *Controller
-	if nilController.WithContext(context.Background()) != nil || nilController.WithSnapshot(nil) != nil {
-		t.Fatal("nil controller clone returned non-nil")
+	{
+		testutil.RequireArgs(t, !(nilController.WithContext(context.Background()) != nil), "nil controller clone returned non-nil")
+		testutil.RequireArgs(t, !(nilController.WithSnapshot(nil) != nil), "nil controller clone returned non-nil")
 	}
+
 	nilController.SetCustomMusicScoreClient(nil)
 	nilController.SetAliasResolver(nil)
-	if got := nilController.resolveRegion("cn"); got != renderregion.CN {
-		t.Fatalf("nil controller region = %s", got)
+	{
+		got := nilController.resolveRegion("cn")
+		testutil.Require(t, !(got != renderregion.CN), "nil controller region = %s", got)
 	}
 
 	source := newRound4SearchSource()
@@ -189,95 +239,137 @@ func TestMusicControllerContextAndResolutionEdges(t *testing.T) {
 	controller.SetCustomMusicScoreClient(sekaiapi.NewSekaiAPIClient(nil))
 	ctx := context.WithValue(context.Background(), musicControllerContextKey{}, "music-context")
 	clone := controller.WithContext(ctx)
-	if clone == controller || clone.requestCtx != ctx {
-		t.Fatalf("context clone = %#v", clone)
+	{
+		testutil.Require(t, !(clone == controller), "context clone = %#v", clone)
+		testutil.Require(t, !(clone.requestCtx != ctx), "context clone = %#v", clone)
 	}
+
 	clonedSource, ok := clone.sources.SourceForRegion(renderregion.JP)
-	if !ok || clonedSource.(*round4ContextSource).ctx != ctx {
-		t.Fatalf("contextual source = %#v, ok=%v", clonedSource, ok)
+	{
+		testutil.Require(t, ok, "contextual source = %#v, ok=%v", clonedSource, ok)
+		testutil.Require(t, !(clonedSource.(*round4ContextSource).ctx != ctx), "contextual source = %#v, ok=%v", clonedSource, ok)
 	}
-	if _, ok := clone.customScores.(*sekaiapi.HarukiSekaiAPIClient); !ok {
-		t.Fatalf("contextual custom score client = %T", clone.customScores)
+	{
+
+		_, ok := clone.customScores.(*sekaiapi.HarukiSekaiAPIClient)
+		testutil.Require(t, ok, "contextual custom score client = %T", clone.customScores)
 	}
+
 	stub := &musicSnapshotStub{}
-	if got := controller.WithSnapshot(stub); got == controller || got.snapshot != stub {
-		t.Fatalf("snapshot clone = %#v", got)
+	{
+		got := controller.WithSnapshot(stub)
+		{
+			testutil.Require(t, !(got == controller), "snapshot clone = %#v", got)
+			testutil.Require(t, !(got.snapshot != stub), "snapshot clone = %#v", got)
+		}
 	}
 
 	wantErr := errors.New("lookup failed")
 	source.getByID = func(int) (*masterdata.Music, error) { return nil, wantErr }
-	if _, err := controller.resolveMusicTitleQuery(contextSource, "music1", false); !errors.Is(err, wantErr) {
-		t.Fatalf("explicit title source error = %v", err)
+	{
+		_, err := controller.resolveMusicTitleQuery(contextSource, "music1", false)
+		testutil.Require(t, errors.Is(err, wantErr), "explicit title source error = %v", err)
 	}
+
 	plainAliasError := errors.New("alias unavailable")
 	controller.SetAliasResolver(&lookupTestAliasResolver{err: plainAliasError})
-	if _, err := controller.resolveMusicTitleQuery(contextSource, "alias", false); !errors.Is(err, plainAliasError) {
-		t.Fatalf("alias error = %v", err)
-	}
-	controller.SetAliasResolver(&lookupTestAliasResolver{ids: map[string]int{"alias": 2}})
-	if _, err := controller.resolveMusicTitleQuery(contextSource, "alias", false); !errors.Is(err, wantErr) {
-		t.Fatalf("alias get error = %v", err)
+	{
+		_, err := controller.resolveMusicTitleQuery(contextSource, "alias", false)
+		testutil.Require(t, errors.Is(err, plainAliasError), "alias error = %v", err)
 	}
 
-	if _, _, err := controller.resolveMusicListKeywordFilter(nil, "music1", false); err == nil {
-		t.Fatal("nil explicit keyword source error = nil")
+	controller.SetAliasResolver(&lookupTestAliasResolver{ids: map[string]int{"alias": 2}})
+	{
+		_, err := controller.resolveMusicTitleQuery(contextSource, "alias", false)
+		testutil.Require(t, errors.Is(err, wantErr), "alias get error = %v", err)
 	}
-	if _, _, err := controller.resolveMusicListKeywordFilter(contextSource, "music1", false); !errors.Is(err, wantErr) {
-		t.Fatalf("explicit keyword source error = %v", err)
+	{
+
+		_, _, err := controller.resolveMusicListKeywordFilter(nil, "music1", false)
+		testutil.RequireArgs(t, !(err == nil), "nil explicit keyword source error = nil")
 	}
+	{
+
+		_, _, err := controller.resolveMusicListKeywordFilter(contextSource, "music1", false)
+		testutil.Require(t, errors.Is(err, wantErr), "explicit keyword source error = %v", err)
+	}
+
 	future := &masterdata.Music{ID: 1, PublishedAt: time.Now().Add(time.Hour).UnixMilli()}
 	source.getByID = func(int) (*masterdata.Music, error) { return future, nil }
-	if _, _, err := controller.resolveMusicListKeywordFilter(contextSource, "music1", false); err == nil {
-		t.Fatal("unreleased explicit keyword error = nil")
-	}
-	controller.SetAliasResolver(&lookupTestAliasResolver{err: plainAliasError})
-	if _, _, err := controller.resolveMusicListKeywordFilter(contextSource, "alias", false); !errors.Is(err, plainAliasError) {
-		t.Fatalf("keyword alias error = %v", err)
-	}
-	controller.SetAliasResolver(&lookupTestAliasResolver{ids: map[string]int{"alias": 2}})
-	source.getByID = func(int) (*masterdata.Music, error) { return nil, wantErr }
-	if _, _, err := controller.resolveMusicListKeywordFilter(contextSource, "alias", false); !errors.Is(err, wantErr) {
-		t.Fatalf("keyword alias get error = %v", err)
+	{
+		_, _, err := controller.resolveMusicListKeywordFilter(contextSource, "music1", false)
+		testutil.RequireArgs(t, !(err == nil), "unreleased explicit keyword error = nil")
 	}
 
-	if controller.fallbackSource(renderregion.JP) != nil || controller.fallbackSource(renderregion.CN) == nil {
-		t.Fatal("fallback source resolution mismatch")
+	controller.SetAliasResolver(&lookupTestAliasResolver{err: plainAliasError})
+	{
+		_, _, err := controller.resolveMusicListKeywordFilter(contextSource, "alias", false)
+		testutil.Require(t, errors.Is(err, plainAliasError), "keyword alias error = %v", err)
 	}
-	if NewController(nil, nil, nil, nil, nil).fallbackSource(renderregion.CN) != nil {
-		t.Fatal("missing JP fallback returned a source")
+
+	controller.SetAliasResolver(&lookupTestAliasResolver{ids: map[string]int{"alias": 2}})
+	source.getByID = func(int) (*masterdata.Music, error) { return nil, wantErr }
+	{
+		_, _, err := controller.resolveMusicListKeywordFilter(contextSource, "alias", false)
+		testutil.Require(t, errors.Is(err, wantErr), "keyword alias get error = %v", err)
 	}
-	if _, _, _, err := NewController(nil, nil, nil, nil, nil).resolveBuilder("cn"); err == nil {
-		t.Fatal("missing regional builder error = nil")
+	{
+		testutil.RequireArgs(t, !(controller.fallbackSource(renderregion.JP) != nil), "fallback source resolution mismatch")
+		testutil.RequireArgs(t, !(controller.fallbackSource(renderregion.CN) == nil), "fallback source resolution mismatch")
 	}
+	testutil.RequireArgs(t, !(NewController(nil, nil, nil, nil, nil).fallbackSource(renderregion.CN) != nil), "missing JP fallback returned a source")
+	{
+
+		_, _, _, err := NewController(nil, nil, nil, nil, nil).resolveBuilder("cn")
+		testutil.RequireArgs(t, !(err == nil), "missing regional builder error = nil")
+	}
+
 }
 
 func TestMusicControllerHelperResidualBranches(t *testing.T) {
 	controller := NewController(newRound4SearchSource(), nil, nil, nil, nil)
-	if controller.currentSnapshot() != nil {
-		t.Fatal("missing current snapshot is non-nil")
-	}
+	testutil.RequireArgs(t, !(controller.currentSnapshot() != nil), "missing current snapshot is non-nil")
+
 	invalidSnapshot := &rendersnapshot.Service{}
 	controller = controller.WithSnapshot(invalidSnapshot)
-	if controller.currentSnapshot() != nil {
-		t.Fatal("invalid current snapshot is non-nil")
-	}
+	testutil.RequireArgs(t, !(controller.currentSnapshot() != nil), "invalid current snapshot is non-nil")
+
 	override := &drawing.DetailedProfileCardRequest{ID: "override"}
-	if got := controller.resolveMusicListProfile(override, renderregion.JP); got == override || got.ID != "override" {
-		t.Fatalf("profile override = %#v", got)
+	{
+		got := controller.resolveMusicListProfile(override, renderregion.JP)
+		{
+			testutil.Require(t, !(got == override), "profile override = %#v", got)
+			testutil.Require(t, !(got.ID != "override"), "profile override = %#v", got)
+		}
 	}
-	if got := controller.resolveMusicListProfile(nil, renderregion.JP); got != nil {
-		t.Fatalf("missing list profile = %#v", got)
+	{
+
+		got := controller.resolveMusicListProfile(nil, renderregion.JP)
+		testutil.Require(t, !(got != nil), "missing list profile = %#v", got)
 	}
+
 	card := convertDetailedProfileToCard(drawing.DetailedProfileCardRequest{ID: "x"})
-	if card.Profile == nil || card.DataSources[0].Source == nil || *card.DataSources[0].Source != "lunabot-service" || card.DataSources[0].UpdateTime == nil || *card.DataSources[0].UpdateTime == 0 {
-		t.Fatalf("default converted profile = %#v", card)
+	{
+		testutil.Require(t, !(card.Profile == nil), "default converted profile = %#v", card)
+		testutil.Require(t, !(card.DataSources[0].Source == nil), "default converted profile = %#v", card)
+		testutil.Require(t, !(*card.DataSources[0].Source != "lunabot-service"), "default converted profile = %#v", card)
+		testutil.Require(t, !(card.DataSources[0].UpdateTime == nil), "default converted profile = %#v", card)
+		testutil.Require(t, !(*card.DataSources[0].UpdateTime == 0), "default converted profile = %#v", card)
 	}
-	if got := controller.buildUserResults("master"); got != nil {
-		t.Fatalf("invalid snapshot user results = %#v", got)
+	{
+
+		got := controller.buildUserResults("master")
+		testutil.Require(t, !(got != nil), "invalid snapshot user results = %#v", got)
 	}
-	if got := controller.resolveStaticIcon(nil, "missing.png"); got == nil || *got == "" {
-		t.Fatalf("fallback static icon = %#v", got)
+	{
+
+		got := controller.resolveStaticIcon(nil, "missing.png")
+		{
+			testutil.Require(t, !(got == nil), "fallback static icon = %#v", got)
+			testutil.Require(t, !(*got == ""), "fallback static icon = %#v", got)
+		}
 	}
+
 }
 
 var _ rendersnapshot.Snapshot = (*musicSnapshotStub)(nil)

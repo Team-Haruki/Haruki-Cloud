@@ -13,6 +13,7 @@ import (
 
 	"haruki-cloud/config"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	harukiRedis "haruki-cloud/utils/redis"
 
 	"github.com/alicebob/miniredis/v2"
@@ -32,47 +33,51 @@ func TestResponseHelpersAndValidation(t *testing.T) {
 
 	for path, wantStatus := range map[string]int{"/json": 201, "/json-empty": 400, "/internal": 500} {
 		response, err := app.Test(httptest.NewRequest(http.MethodGet, path, nil))
-		if err != nil {
-			t.Fatalf("request %s: %v", path, err)
-		}
+		testutil.Require(t, !(err != nil), "request %s: %v", path, err)
+
 		var envelope helperTestEnvelope
-		if err := json.NewDecoder(response.Body).Decode(&envelope); err != nil {
-			t.Fatalf("decode %s: %v", path, err)
+		{
+			err := json.NewDecoder(response.Body).Decode(&envelope)
+			testutil.Require(t, !(err != nil), "decode %s: %v", path, err)
 		}
+
 		_ = response.Body.Close()
-		if response.StatusCode != wantStatus || envelope.Status != wantStatus {
-			t.Fatalf("%s status = HTTP %d envelope %d", path, response.StatusCode, envelope.Status)
+		{
+			testutil.Require(t, !(response.StatusCode != wantStatus), "%s status = HTTP %d envelope %d", path, response.StatusCode, envelope.Status)
+			testutil.Require(t, !(envelope.Status != wantStatus), "%s status = HTTP %d envelope %d", path, response.StatusCode, envelope.Status)
 		}
+
 	}
 
 	for _, path := range []string{"/msgpack", "/msgpack-empty"} {
 		response, err := app.Test(httptest.NewRequest(http.MethodGet, path, nil))
-		if err != nil {
-			t.Fatalf("request %s: %v", path, err)
-		}
+		testutil.Require(t, !(err != nil), "request %s: %v", path, err)
+
 		body, err := io.ReadAll(response.Body)
 		_ = response.Body.Close()
-		if err != nil {
-			t.Fatalf("read %s: %v", path, err)
-		}
-		var envelope map[string]any
-		if err := msgpack.Unmarshal(body, &envelope); err != nil {
-			t.Fatalf("decode msgpack %s: %v", path, err)
-		}
-		if response.Header.Get("Content-Type") != ContentTypeMsgPack {
-			t.Fatalf("%s content type = %q", path, response.Header.Get("Content-Type"))
-		}
-	}
+		testutil.Require(t, !(err != nil), "read %s: %v", path, err)
 
-	if !ValidateStringLength("你好", 2) || ValidateStringLength("你好", 1) {
-		t.Fatal("rune-aware string validation failed")
+		var envelope map[string]any
+		{
+			err := msgpack.Unmarshal(body, &envelope)
+			testutil.Require(t, !(err != nil), "decode msgpack %s: %v", path, err)
+		}
+
+		testutil.Require(t, !(response.Header.Get("Content-Type") != ContentTypeMsgPack), "%s content type = %q", path, response.Header.Get("Content-Type"))
+
 	}
-	if ValidateAlias("") || !ValidateAlias("alias") || ValidateServer("") || !ValidateServer("jp") {
-		t.Fatal("alias/server validation failed")
+	{
+		testutil.RequireArgs(t, ValidateStringLength("你好", 2), "rune-aware string validation failed")
+		testutil.RequireArgs(t, !(ValidateStringLength("你好", 1)), "rune-aware string validation failed")
 	}
-	if (&CacheBypassError{}).Error() != "cache bypass" {
-		t.Fatal("unexpected cache bypass error text")
+	{
+		testutil.RequireArgs(t, !(ValidateAlias("")), "alias/server validation failed")
+		testutil.RequireArgs(t, ValidateAlias("alias"), "alias/server validation failed")
+		testutil.RequireArgs(t, !(ValidateServer("")), "alias/server validation failed")
+		testutil.RequireArgs(t, ValidateServer("jp"), "alias/server validation failed")
 	}
+	testutil.RequireArgs(t, !((&CacheBypassError{}).Error() != "cache bypass"), "unexpected cache bypass error text")
+
 }
 
 func TestCacheQueryAndWithCachePaths(t *testing.T) {
@@ -108,19 +113,22 @@ func TestCacheQueryAndWithCachePaths(t *testing.T) {
 
 	for range 2 {
 		response, err := app.Test(httptest.NewRequest(http.MethodGet, "/cached/42?haruki_user_id=7", nil))
-		if err != nil || response.StatusCode != http.StatusOK {
-			t.Fatalf("cached response = %#v, %v", response, err)
+		{
+			testutil.Require(t, !(err != nil), "cached response = %#v, %v", response, err)
+			testutil.Require(t, !(response.StatusCode != http.StatusOK), "cached response = %#v, %v", response, err)
 		}
+
 		_ = response.Body.Close()
 	}
-	if fetches != 1 {
-		t.Fatalf("fetch count = %d", fetches)
-	}
+	testutil.Require(t, !(fetches != 1), "fetch count = %d", fetches)
+
 	for path, want := range map[string]int{"/failure": 500, "/bypass": 404} {
 		response, err := app.Test(httptest.NewRequest(http.MethodGet, path, nil))
-		if err != nil || response.StatusCode != want {
-			t.Fatalf("%s response = %#v, %v", path, response, err)
+		{
+			testutil.Require(t, !(err != nil), "%s response = %#v, %v", path, response, err)
+			testutil.Require(t, !(response.StatusCode != want), "%s response = %#v, %v", path, response, err)
 		}
+
 		_ = response.Body.Close()
 	}
 
@@ -133,12 +141,15 @@ func TestCacheQueryAndWithCachePaths(t *testing.T) {
 		return CachedJSONResponse(context.Background(), c, client, time.Minute, key, 200, "ok", "data")
 	})
 	response, err := probe.Test(httptest.NewRequest(http.MethodGet, "/probe", nil))
-	if err != nil || response.StatusCode != 200 {
-		t.Fatalf("probe response = %#v, %v", response, err)
+	{
+		testutil.Require(t, !(err != nil), "probe response = %#v, %v", response, err)
+		testutil.Require(t, !(response.StatusCode != 200), "probe response = %#v, %v", response, err)
 	}
+
 	_ = response.Body.Close()
-	if _, err := client.Get(context.Background(), "probe:/probe:query=none").Result(); err != nil {
-		t.Fatalf("cached probe missing: %v", err)
+	{
+		_, err := client.Get(context.Background(), "probe:/probe:query=none").Result()
+		testutil.Require(t, !(err != nil), "cached probe missing: %v", err)
 	}
 
 	badQuery := fiber.New()
@@ -152,14 +163,18 @@ func TestCacheQueryAndWithCachePaths(t *testing.T) {
 		return c.SendStatus(204)
 	})
 	response, err = badQuery.Test(httptest.NewRequest(http.MethodGet, "/bad", nil))
-	if err != nil || response.StatusCode != 204 {
-		t.Fatalf("bad cache probe = %#v, %v", response, err)
+	{
+		testutil.Require(t, !(err != nil), "bad cache probe = %#v, %v", response, err)
+		testutil.Require(t, !(response.StatusCode != 204), "bad cache probe = %#v, %v", response, err)
 	}
-	_ = response.Body.Close()
 
-	if err := harukiRedis.SetCache(context.Background(), client, "typed", map[string]any{"ok": true}, time.Minute); err != nil {
-		t.Fatalf("seed typed cache: %v", err)
+	_ = response.Body.Close()
+	{
+
+		err := harukiRedis.SetCache(context.Background(), client, "typed", map[string]any{"ok": true}, time.Minute)
+		testutil.Require(t, !(err != nil), "seed typed cache: %v", err)
 	}
+
 }
 
 func signSessionTokenForTest(t *testing.T, method jwt.SigningMethod, botID string) string {
@@ -168,9 +183,8 @@ func signSessionTokenForTest(t *testing.T, method jwt.SigningMethod, botID strin
 		"bot_id": botID,
 		"exp":    time.Now().Add(time.Hour).Unix(),
 	}).SignedString([]byte("session-secret"))
-	if err != nil {
-		t.Fatalf("sign session token: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "sign session token: %v", err)
+
 	return token
 }
 
@@ -196,52 +210,70 @@ func TestVerifyBotSessionAllBranches(t *testing.T) {
 			req.Header.Set(HeaderBotSessionToken, token)
 		}
 		response, err := app.Test(req)
-		if err != nil {
-			t.Fatalf("session request: %v", err)
-		}
+		testutil.Require(t, !(err != nil), "session request: %v", err)
+
 		defer response.Body.Close()
 		return response.StatusCode
 	}
 
 	valid := signSessionTokenForTest(t, jwt.SigningMethodHS256, "42")
 	app := makeApp(client)
-	if got := request(makeApp(nil), "42", "42", valid); got != 503 {
-		t.Fatalf("nil redis status = %d", got)
+	{
+		got := request(makeApp(nil), "42", "42", valid)
+		testutil.Require(t, !(got != 503), "nil redis status = %d", got)
 	}
-	if got := request(app, "42", "", ""); got != 401 {
-		t.Fatalf("missing headers status = %d", got)
+	{
+
+		got := request(app, "42", "", "")
+		testutil.Require(t, !(got != 401), "missing headers status = %d", got)
 	}
-	if got := request(app, "42", "43", valid); got != 403 {
-		t.Fatalf("URL mismatch status = %d", got)
+	{
+
+		got := request(app, "42", "43", valid)
+		testutil.Require(t, !(got != 403), "URL mismatch status = %d", got)
 	}
-	if got := request(app, "42", "42", "not-a-jwt"); got != 401 {
-		t.Fatalf("invalid JWT status = %d", got)
+	{
+
+		got := request(app, "42", "42", "not-a-jwt")
+		testutil.Require(t, !(got != 401), "invalid JWT status = %d", got)
 	}
+
 	wrongClaim := signSessionTokenForTest(t, jwt.SigningMethodHS256, "99")
-	if got := request(app, "42", "42", wrongClaim); got != 403 {
-		t.Fatalf("claim mismatch status = %d", got)
+	{
+		got := request(app, "42", "42", wrongClaim)
+		testutil.Require(t, !(got != 403), "claim mismatch status = %d", got)
 	}
+
 	hs384 := signSessionTokenForTest(t, jwt.SigningMethodHS384, "42")
-	if got := request(app, "42", "42", hs384); got != 401 {
-		t.Fatalf("HS384 status = %d, want 401", got)
+	{
+		got := request(app, "42", "42", hs384)
+		testutil.Require(t, !(got != 401), "HS384 status = %d, want 401", got)
 	}
-	if got := request(app, "42", "42", valid); got != 401 {
-		t.Fatalf("missing Redis session status = %d", got)
+	{
+
+		got := request(app, "42", "42", valid)
+		testutil.Require(t, !(got != 401), "missing Redis session status = %d", got)
 	}
+
 	server.Set(fmt.Sprintf(RedisKeyBotSession, "42"), "different")
-	if got := request(app, "42", "42", valid); got != 401 {
-		t.Fatalf("Redis token mismatch status = %d", got)
+	{
+		got := request(app, "42", "42", valid)
+		testutil.Require(t, !(got != 401), "Redis token mismatch status = %d", got)
 	}
+
 	server.Set(fmt.Sprintf(RedisKeyBotSession, "42"), valid)
-	if got := request(app, "42", "42", valid); got != 204 {
-		t.Fatalf("valid session status = %d", got)
+	{
+		got := request(app, "42", "42", valid)
+		testutil.Require(t, !(got != 204), "valid session status = %d", got)
 	}
 
 	bypass := fiber.New()
 	bypass.Get("/bypass", VerifyBotSessionTestBypass(), func(c fiber.Ctx) error { return c.SendStatus(204) })
 	response, err := bypass.Test(httptest.NewRequest(http.MethodGet, "/bypass", nil))
-	if err != nil || response.StatusCode != 204 {
-		t.Fatalf("test bypass response = %#v, %v", response, err)
+	{
+		testutil.Require(t, !(err != nil), "test bypass response = %#v, %v", response, err)
+		testutil.Require(t, !(response.StatusCode != 204), "test bypass response = %#v, %v", response, err)
 	}
+
 	_ = response.Body.Close()
 }

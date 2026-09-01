@@ -11,6 +11,7 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	renderdeck "haruki-cloud/internal/pjsk/render/deck"
 	"haruki-cloud/internal/pjsk/render/provider"
+	"haruki-cloud/internal/testutil"
 )
 
 func newDeckEventCoverageApp(t *testing.T) *renderapp.App {
@@ -42,73 +43,104 @@ func TestDeckEventLocalProviderResolution(t *testing.T) {
 	app := newDeckEventCoverageApp(t)
 
 	events, err := queryDeckEvents(ctx, app, renderregion.JP)
-	if err != nil || len(events) != 4 || events[0].GameID != 90 {
-		t.Fatalf("queryDeckEvents = %#v, %v", events, err)
+	{
+		testutil.Require(t, !(err != nil), "queryDeckEvents = %#v, %v", events, err)
+		testutil.Require(t, !(len(events) != 4), "queryDeckEvents = %#v, %v", events, err)
+		testutil.Require(t, !(events[0].GameID != 90), "queryDeckEvents = %#v, %v", events, err)
 	}
+
 	worldBlooms, err := queryDeckWorldBloomEvents(ctx, app, renderregion.JP)
-	if err != nil || len(worldBlooms) != 2 {
-		t.Fatalf("queryDeckWorldBloomEvents = %#v, %v", worldBlooms, err)
+	{
+		testutil.Require(t, !(err != nil), "queryDeckWorldBloomEvents = %#v, %v", worldBlooms, err)
+		testutil.Require(t, !(len(worldBlooms) != 2), "queryDeckWorldBloomEvents = %#v, %v", worldBlooms, err)
 	}
+
 	event, err := queryDeckEventByID(ctx, app, renderregion.JP, 100)
-	if err != nil || event.GameID != 100 {
-		t.Fatalf("queryDeckEventByID = %#v, %v", event, err)
+	{
+		testutil.Require(t, !(err != nil), "queryDeckEventByID = %#v, %v", event, err)
+		testutil.Require(t, !(event.GameID != 100), "queryDeckEventByID = %#v, %v", event, err)
 	}
-	if _, err := queryDeckEventByID(ctx, app, renderregion.JP, 999); err == nil {
-		t.Fatal("missing local event unexpectedly resolved")
+	{
+
+		_, err := queryDeckEventByID(ctx, app, renderregion.JP, 999)
+		testutil.RequireArgs(t, !(err == nil), "missing local event unexpectedly resolved")
 	}
+
 	chapters, err := queryDeckWorldBloomChapters(ctx, app, renderregion.JP, 100)
-	if err != nil || len(chapters) != 2 || chapters[0].GameCharacterID != 21 {
-		t.Fatalf("queryDeckWorldBloomChapters = %#v, %v", chapters, err)
+	{
+		testutil.Require(t, !(err != nil), "queryDeckWorldBloomChapters = %#v, %v", chapters, err)
+		testutil.Require(t, !(len(chapters) != 2), "queryDeckWorldBloomChapters = %#v, %v", chapters, err)
+		testutil.Require(t, !(chapters[0].GameCharacterID != 21), "queryDeckWorldBloomChapters = %#v, %v", chapters, err)
 	}
 
 	turn, err := resolveDeckWorldBloomCharacterTurnForEvent(ctx, app, renderregion.JP, 100, 21)
-	if err != nil || turn != 1 {
-		t.Fatalf("character turn = %d, %v", turn, err)
+	{
+		testutil.Require(t, !(err != nil), "character turn = %d, %v", turn, err)
+		testutil.Require(t, !(turn != 1), "character turn = %d, %v", turn, err)
 	}
+
 	turn, err = resolveDeckWorldBloomUnitTurnForEvent(ctx, app, renderregion.JP, 100, "piapro")
-	if err != nil || turn != 1 {
-		t.Fatalf("unit turn = %d, %v", turn, err)
+	{
+		testutil.Require(t, !(err != nil), "unit turn = %d, %v", turn, err)
+		testutil.Require(t, !(turn != 1), "unit turn = %d, %v", turn, err)
 	}
+
 	turn, err = resolveDeckWorldBloomUnitTurnForEvent(ctx, app, renderregion.JP, 101, "piapro")
-	if err != nil || turn != 2 {
-		t.Fatalf("second unit turn = %d, %v", turn, err)
+	{
+		testutil.Require(t, !(err != nil), "second unit turn = %d, %v", turn, err)
+		testutil.Require(t, !(turn != 2), "second unit turn = %d, %v", turn, err)
 	}
 
 	query := &renderdeck.AutoQuery{WorldBloomCharacterID: drawing.IntPtr(21)}
-	if got := resolveDeckWorldBloomEventTurn(ctx, app, renderregion.JP, event, chapters, query); got != 1 {
-		t.Fatalf("resolved event turn = %d", got)
+	{
+		got := resolveDeckWorldBloomEventTurn(ctx, app, renderregion.JP, event, chapters, query)
+		testutil.Require(t, !(got != 1), "resolved event turn = %d", got)
 	}
+
 	ensureDeckWorldBloomEventTurnMetadata(ctx, app, renderregion.JP, event, chapters, query)
-	if query.MetadataWorldBloomEventTurn == nil || *query.MetadataWorldBloomEventTurn != 1 {
-		t.Fatalf("event turn metadata = %+v", query)
+	{
+		testutil.Require(t, !(query.MetadataWorldBloomEventTurn == nil), "event turn metadata = %+v", query)
+		testutil.Require(t, !(*query.MetadataWorldBloomEventTurn != 1), "event turn metadata = %+v", query)
 	}
 
 	selected, err := resolveDeckWorldBloomEventByCharacterTurn(ctx, app, renderregion.JP, 1, 21)
-	if err != nil || selected.GameID != 100 {
-		t.Fatalf("character WL selection = %#v, %v", selected, err)
+	{
+		testutil.Require(t, !(err != nil), "character WL selection = %#v, %v", selected, err)
+		testutil.Require(t, !(selected.GameID != 100), "character WL selection = %#v, %v", selected, err)
 	}
+
 	if _, err := resolveDeckWorldBloomEventByCharacterTurn(ctx, app, renderregion.JP, 3, 21); err == nil {
 		t.Fatal("future character WL selection unexpectedly succeeded")
 	} else {
 		var future *deckFutureWorldBloomTurnError
-		if !errors.As(err, &future) || future.Available != 2 {
-			t.Fatalf("future character error = %v", err)
+		{
+			testutil.Require(t, errors.As(err, &future), "future character error = %v", err)
+			testutil.Require(t, !(future.Available != 2), "future character error = %v", err)
 		}
+
 	}
 	selected, err = resolveDeckWorldBloomEventByUnitTurn(ctx, app, renderregion.JP, 2, "piapro")
-	if err != nil || selected.GameID != 101 {
-		t.Fatalf("unit WL selection = %#v, %v", selected, err)
+	{
+		testutil.Require(t, !(err != nil), "unit WL selection = %#v, %v", selected, err)
+		testutil.Require(t, !(selected.GameID != 101), "unit WL selection = %#v, %v", selected, err)
 	}
-	if _, err := resolveDeckWorldBloomEventByUnitTurn(ctx, app, renderregion.JP, 3, "piapro"); err == nil {
-		t.Fatal("future unit WL selection unexpectedly succeeded")
+	{
+
+		_, err := resolveDeckWorldBloomEventByUnitTurn(ctx, app, renderregion.JP, 3, "piapro")
+		testutil.RequireArgs(t, !(err == nil), "future unit WL selection unexpectedly succeeded")
 	}
+
 	finale, err := resolveDeckWorldBloomFinaleEventByTurn(ctx, app, renderregion.JP, 3)
-	if err != nil || finale.GameID != 101 {
-		t.Fatalf("future finale selection = %#v, %v", finale, err)
+	{
+		testutil.Require(t, !(err != nil), "future finale selection = %#v, %v", finale, err)
+		testutil.Require(t, !(finale.GameID != 101), "future finale selection = %#v, %v", finale, err)
 	}
-	if _, err := resolveDeckWorldBloomFinaleEventByTurn(ctx, app, renderregion.JP, 4); err == nil {
-		t.Fatal("unavailable finale unexpectedly succeeded")
+	{
+
+		_, err := resolveDeckWorldBloomFinaleEventByTurn(ctx, app, renderregion.JP, 4)
+		testutil.RequireArgs(t, !(err == nil), "unavailable finale unexpectedly succeeded")
 	}
+
 }
 
 func TestDeckEventSelectionWithLocalProvider(t *testing.T) {
@@ -116,50 +148,70 @@ func TestDeckEventSelectionWithLocalProvider(t *testing.T) {
 	app := newDeckEventCoverageApp(t)
 
 	current, err := pickDeckAutoEvent(ctx, app, renderregion.JP, "event")
-	if err != nil || current == nil || current.GameID != 100 {
-		t.Fatalf("current auto event = %#v, %v", current, err)
+	{
+		testutil.Require(t, !(err != nil), "current auto event = %#v, %v", current, err)
+		testutil.Require(t, !(current == nil), "current auto event = %#v, %v", current, err)
+		testutil.Require(t, !(current.GameID != 100), "current auto event = %#v, %v", current, err)
 	}
+
 	current, err = pickCurrentOrNextDeckEvent(ctx, app, renderregion.JP)
-	if err != nil || current == nil || current.GameID != 100 {
-		t.Fatalf("current-or-next event = %#v, %v", current, err)
+	{
+		testutil.Require(t, !(err != nil), "current-or-next event = %#v, %v", current, err)
+		testutil.Require(t, !(current == nil), "current-or-next event = %#v, %v", current, err)
+		testutil.Require(t, !(current.GameID != 100), "current-or-next event = %#v, %v", current, err)
 	}
 
 	query := &renderdeck.AutoQuery{EventID: drawing.IntPtr(100), RecommendType: "event", WorldBloomCharacterID: drawing.IntPtr(21)}
-	if err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP); err != nil {
-		t.Fatalf("resolve explicit WL event = %v", err)
+	{
+		err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP)
+		testutil.Require(t, !(err != nil), "resolve explicit WL event = %v", err)
 	}
-	if query.MetadataWorldBloomEventTurn == nil || *query.MetadataWorldBloomEventTurn != 1 {
-		t.Fatalf("resolved WL query = %+v", query)
+	{
+
+		testutil.Require(t, !(query.MetadataWorldBloomEventTurn == nil), "resolved WL query = %+v", query)
+		testutil.Require(t, !(*query.MetadataWorldBloomEventTurn != 1), "resolved WL query = %+v", query)
 	}
 
 	query = &renderdeck.AutoQuery{EventID: drawing.IntPtr(100), RecommendType: "event"}
-	if err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP); err != nil {
-		t.Fatalf("resolve default WL chapter = %v", err)
+	{
+		err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP)
+		testutil.Require(t, !(err != nil), "resolve default WL chapter = %v", err)
 	}
-	if query.WorldBloomCharacterID == nil || *query.WorldBloomCharacterID != 21 {
-		t.Fatalf("default WL query = %+v", query)
+	{
+
+		testutil.Require(t, !(query.WorldBloomCharacterID == nil), "default WL query = %+v", query)
+		testutil.Require(t, !(*query.WorldBloomCharacterID != 21), "default WL query = %+v", query)
 	}
 
 	query = &renderdeck.AutoQuery{EventID: drawing.IntPtr(90), RecommendType: "event", WorldBloomCharacterID: drawing.IntPtr(21)}
-	if err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP); err != nil {
-		t.Fatalf("resolve regular event = %v", err)
+	{
+		err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP)
+		testutil.Require(t, !(err != nil), "resolve regular event = %v", err)
 	}
-	if query.WorldBloomCharacterID != nil {
-		t.Fatalf("regular event retained WL character: %+v", query)
-	}
+
+	testutil.Require(t, !(query.WorldBloomCharacterID != nil), "regular event retained WL character: %+v", query)
 
 	turn := 1
 	query = &renderdeck.AutoQuery{RecommendType: "event", WorldBloomEventTurn: &turn, WorldBloomCharacterID: drawing.IntPtr(21)}
-	if err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP); err != nil {
-		t.Fatalf("resolve WL turn = %v", err)
+	{
+		err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP)
+		testutil.Require(t, !(err != nil), "resolve WL turn = %v", err)
 	}
-	if query.EventID == nil || *query.EventID != 100 || query.MetadataWorldBloomEventTurn == nil {
-		t.Fatalf("resolved WL turn query = %+v", query)
+	{
+
+		testutil.Require(t, !(query.EventID == nil), "resolved WL turn query = %+v", query)
+		testutil.Require(t, !(*query.EventID != 100), "resolved WL turn query = %+v", query)
+		testutil.Require(t, !(query.MetadataWorldBloomEventTurn == nil), "resolved WL turn query = %+v", query)
 	}
 
 	turn = 3
 	query = &renderdeck.AutoQuery{RecommendType: "event", WorldBloomEventTurn: &turn, WorldBloomCharacterID: drawing.IntPtr(21)}
-	if err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP); err != nil || query.EventID != nil {
-		t.Fatalf("future simulated WL selection = %+v, %v", query, err)
+	{
+		err := resolveDeckEventAndWorldBloomSelection(ctx, query, app, renderregion.JP)
+		{
+			testutil.Require(t, !(err != nil), "future simulated WL selection = %+v, %v", query, err)
+			testutil.Require(t, !(query.EventID != nil), "future simulated WL selection = %+v, %v", query, err)
+		}
 	}
+
 }

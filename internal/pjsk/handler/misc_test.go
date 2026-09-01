@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/parser"
@@ -20,12 +21,16 @@ func TestMiscBirthdayHandleBuildsCommandRequest(t *testing.T) {
 			checkFunc: func(t *testing.T, raw []byte) {
 				t.Helper()
 				var params miscBirthdayParams
-				if err := json.Unmarshal(raw, &params); err != nil {
-					t.Fatalf("unmarshal params: %v", err)
+				{
+					err := json.Unmarshal(raw, &params)
+					testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 				}
-				if params.UpcomingIndex != 1 || params.Cid != 0 {
-					t.Fatalf("unexpected params: %+v", params)
+				{
+
+					testutil.Require(t, !(params.UpcomingIndex != 1), "unexpected params: %+v", params)
+					testutil.Require(t, !(params.Cid != 0), "unexpected params: %+v", params)
 				}
+
 			},
 		},
 		{
@@ -34,12 +39,16 @@ func TestMiscBirthdayHandleBuildsCommandRequest(t *testing.T) {
 			checkFunc: func(t *testing.T, raw []byte) {
 				t.Helper()
 				var params miscBirthdayParams
-				if err := json.Unmarshal(raw, &params); err != nil {
-					t.Fatalf("unmarshal params: %v", err)
+				{
+					err := json.Unmarshal(raw, &params)
+					testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 				}
-				if params.UpcomingIndex != 2 || params.Cid != 0 {
-					t.Fatalf("unexpected params: %+v", params)
+				{
+
+					testutil.Require(t, !(params.UpcomingIndex != 2), "unexpected params: %+v", params)
+					testutil.Require(t, !(params.Cid != 0), "unexpected params: %+v", params)
 				}
+
 			},
 		},
 		{
@@ -48,12 +57,17 @@ func TestMiscBirthdayHandleBuildsCommandRequest(t *testing.T) {
 			checkFunc: func(t *testing.T, raw []byte) {
 				t.Helper()
 				var params miscBirthdayParams
-				if err := json.Unmarshal(raw, &params); err != nil {
-					t.Fatalf("unmarshal params: %v", err)
+				{
+					err := json.Unmarshal(raw, &params)
+					testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 				}
-				if params.Query != "miku" || params.Cid != 0 || params.UpcomingIndex != 0 {
-					t.Fatalf("unexpected params: %+v", params)
+				{
+
+					testutil.Require(t, !(params.Query != "miku"), "unexpected params: %+v", params)
+					testutil.Require(t, !(params.Cid != 0), "unexpected params: %+v", params)
+					testutil.Require(t, !(params.UpcomingIndex != 0), "unexpected params: %+v", params)
 				}
+
 			},
 		},
 	}
@@ -67,17 +81,16 @@ func TestMiscBirthdayHandleBuildsCommandRequest(t *testing.T) {
 				TriggerCmd: "/生日",
 				ArgText:    tt.args,
 			})
-			if err != nil {
-				t.Fatalf("Handle() error = %v", err)
-			}
+			testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 			resolved := result
-			if resolved == nil {
-				t.Fatal("expected command request, got nil")
+			testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+			{
+
+				testutil.Require(t, !(resolved.Module != parser.ModuleMisc), "unexpected command request: %+v", resolved)
+				testutil.Require(t, !(resolved.Mode != "misc-birthday"), "unexpected command request: %+v", resolved)
 			}
-			if resolved.Module != parser.ModuleMisc || resolved.Mode != "misc-birthday" {
-				t.Fatalf("unexpected command request: %+v", resolved)
-			}
+
 			tt.checkFunc(t, resolved.Params)
 		})
 	}

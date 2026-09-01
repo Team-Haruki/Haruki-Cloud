@@ -20,6 +20,7 @@ import (
 	"haruki-cloud/internal/observability/commandtrace"
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/assets"
+	"haruki-cloud/internal/testutil"
 )
 
 type fakeHousingCompetitionListClient struct {
@@ -61,13 +62,17 @@ func TestBuildHousingCompetitionLineSamplesAndRanksByReviewCount(t *testing.T) {
 	writeHousingCompetitionMasterdata(t, root)
 	assetRoot := t.TempDir()
 	bannerPath := filepath.Join(assetRoot, "asset", "jp-assets", "ondemand", "mysekai", "effect", "ui_anim", "mysekai_housing_competition", "lottery_result", "bg_competition_contest_1.png")
-	if err := os.MkdirAll(filepath.Dir(bannerPath), 0o755); err != nil {
-		t.Fatalf("mkdir banner asset: %v", err)
+	{
+		err := os.MkdirAll(filepath.Dir(bannerPath), 0o755)
+		testutil.Require(t, !(err != nil), "mkdir banner asset: %v", err)
 	}
+
 	bannerBytes := []byte("banner-image")
-	if err := os.WriteFile(bannerPath, bannerBytes, 0o644); err != nil {
-		t.Fatalf("write banner asset: %v", err)
+	{
+		err := os.WriteFile(bannerPath, bannerBytes, 0o644)
+		testutil.Require(t, !(err != nil), "write banner asset: %v", err)
 	}
+
 	statsCachePath := filepath.Join(t.TempDir(), "housing_stats.json")
 
 	api := &fakeHousingCompetitionListClient{
@@ -95,67 +100,67 @@ func TestBuildHousingCompetitionLineSamplesAndRanksByReviewCount(t *testing.T) {
 		SampleIntervalMillis: -1,
 		Now:                  time.UnixMilli(1500),
 	})
-	if err != nil {
-		t.Fatalf("BuildHousingCompetitionLine() error = %v", err)
-	}
-	if len(api.calls) != 2 {
-		t.Fatalf("calls = %+v", api.calls)
-	}
+	testutil.Require(t, !(err != nil), "BuildHousingCompetitionLine() error = %v", err)
+	testutil.Require(t, !(len(api.calls) != 2), "calls = %+v", api.calls)
+
 	for _, call := range api.calls {
-		if call.server != "jp" || call.housingID != 25 || !call.isLottery {
-			t.Fatalf("unexpected api call: %+v", call)
+		{
+			testutil.Require(t, !(call.server != "jp"), "unexpected api call: %+v", call)
+			testutil.Require(t, !(call.housingID != 25), "unexpected api call: %+v", call)
+			testutil.Require(t, call.isLottery, "unexpected api call: %+v", call)
 		}
+
 	}
-	if result.Competition.ID != 25 || result.UniqueCount != 3 || result.SampleCount != 2 {
-		t.Fatalf("unexpected result meta: %+v", result)
+	{
+		testutil.Require(t, !(result.Competition.ID != 25), "unexpected result meta: %+v", result)
+		testutil.Require(t, !(result.UniqueCount != 3), "unexpected result meta: %+v", result)
+		testutil.Require(t, !(result.SampleCount != 2), "unexpected result meta: %+v", result)
 	}
+
 	gotNames := []string{result.Entries[0].EntryName, result.Entries[1].EntryName, result.Entries[2].EntryName}
-	if !reflect.DeepEqual(gotNames, []string{"entry-a", "entry-b", "entry-c"}) {
-		t.Fatalf("unexpected rank order: %+v", gotNames)
-	}
+	testutil.Require(t, reflect.DeepEqual(gotNames, []string{"entry-a", "entry-b", "entry-c"}), "unexpected rank order: %+v", gotNames)
+
 	gotScores := []int{result.Request.Entries[0].ReviewCount, result.Request.Entries[1].ReviewCount, result.Request.Entries[2].ReviewCount}
-	if !reflect.DeepEqual(gotScores, []int{15, 12, 1}) {
-		t.Fatalf("unexpected request scores: %+v", gotScores)
+	testutil.Require(t, reflect.DeepEqual(gotScores, []int{15, 12, 1}), "unexpected request scores: %+v", gotScores)
+	{
+		testutil.Require(t, !(result.Request.CompetitionID != 25), "unexpected drawing request: %+v", result.Request)
+		testutil.Require(t, !(result.Request.Name != "烤森百景 ブロックアート"), "unexpected drawing request: %+v", result.Request)
 	}
-	if result.Request.CompetitionID != 25 || result.Request.Name != "烤森百景 ブロックアート" {
-		t.Fatalf("unexpected drawing request: %+v", result.Request)
+	{
+		testutil.Require(t, !(result.Request.Description == nil), "unexpected notice: %v", result.Request.Description)
+		testutil.Require(t, !(*result.Request.Description != HousingCompetitionNotice), "unexpected notice: %v", result.Request.Description)
 	}
-	if result.Request.Description == nil || *result.Request.Description != HousingCompetitionNotice {
-		t.Fatalf("unexpected notice: %v", result.Request.Description)
+	{
+		testutil.Require(t, !(result.Request.BannerImagePath == nil), "unexpected banner path: %v", result.Request.BannerImagePath)
+		testutil.Require(t, !(*result.Request.BannerImagePath != "asset/jp-assets/ondemand/mysekai/effect/ui_anim/mysekai_housing_competition/lottery_result/bg_competition_contest_1.png"), "unexpected banner path: %v", result.Request.BannerImagePath)
 	}
-	if result.Request.BannerImagePath == nil || *result.Request.BannerImagePath != "asset/jp-assets/ondemand/mysekai/effect/ui_anim/mysekai_housing_competition/lottery_result/bg_competition_contest_1.png" {
-		t.Fatalf("unexpected banner path: %v", result.Request.BannerImagePath)
+	{
+		testutil.Require(t, !(result.Request.BannerImageBase64 == nil), "unexpected banner base64: %v", result.Request.BannerImageBase64)
+		testutil.Require(t, !(*result.Request.BannerImageBase64 != base64.StdEncoding.EncodeToString(bannerBytes)), "unexpected banner base64: %v", result.Request.BannerImageBase64)
 	}
-	if result.Request.BannerImageBase64 == nil || *result.Request.BannerImageBase64 != base64.StdEncoding.EncodeToString(bannerBytes) {
-		t.Fatalf("unexpected banner base64: %v", result.Request.BannerImageBase64)
-	}
+
 	cachedBannerPath := filepath.Join(filepath.Dir(statsCachePath), housingCompetitionBannerCacheDirName, "asset", "jp-assets", "ondemand", "mysekai", "effect", "ui_anim", "mysekai_housing_competition", "lottery_result", "bg_competition_contest_1.png")
 	cachedBanner, err := os.ReadFile(cachedBannerPath)
-	if err != nil {
-		t.Fatalf("read cached banner: %v", err)
-	}
-	if !reflect.DeepEqual(cachedBanner, bannerBytes) {
-		t.Fatalf("unexpected cached banner bytes: %q", string(cachedBanner))
-	}
+	testutil.Require(t, !(err != nil), "read cached banner: %v", err)
+	testutil.Require(t, reflect.DeepEqual(cachedBanner, bannerBytes), "unexpected cached banner bytes: %q", string(cachedBanner))
+
 	requestPayload, err := stdjson.Marshal(result.Request)
-	if err != nil {
-		t.Fatalf("marshal drawing request: %v", err)
+	testutil.Require(t, !(err != nil), "marshal drawing request: %v", err)
+	testutil.Require(t, !(strings.Contains(string(requestPayload), "owner_user_id")), "owner user id should not be sent to drawing api: %s", string(requestPayload))
+	{
+		testutil.Require(t, !(result.Request.Entries[0].NextReviewCount == nil), "unexpected next review count: %+v", result.Request.Entries[0])
+		testutil.Require(t, !(*result.Request.Entries[0].NextReviewCount != 12), "unexpected next review count: %+v", result.Request.Entries[0])
 	}
-	if strings.Contains(string(requestPayload), "owner_user_id") {
-		t.Fatalf("owner user id should not be sent to drawing api: %s", string(requestPayload))
+	{
+		testutil.Require(t, !(result.Request.Entries[1].PreviousDelta == nil), "unexpected previous delta: %+v", result.Request.Entries[1])
+		testutil.Require(t, !(*result.Request.Entries[1].PreviousDelta != 3), "unexpected previous delta: %+v", result.Request.Entries[1])
 	}
-	if result.Request.Entries[0].NextReviewCount == nil || *result.Request.Entries[0].NextReviewCount != 12 {
-		t.Fatalf("unexpected next review count: %+v", result.Request.Entries[0])
+	{
+		testutil.Require(t, !(result.Request.Entries[0].ThumbnailImageBase64 == nil), "unexpected thumbnail payload: %+v", result.Request.Entries[0].ThumbnailImageBase64)
+		testutil.Require(t, !(*result.Request.Entries[0].ThumbnailImageBase64 != base64.StdEncoding.EncodeToString([]byte("thumb-hash/a"))), "unexpected thumbnail payload: %+v", result.Request.Entries[0].ThumbnailImageBase64)
 	}
-	if result.Request.Entries[1].PreviousDelta == nil || *result.Request.Entries[1].PreviousDelta != 3 {
-		t.Fatalf("unexpected previous delta: %+v", result.Request.Entries[1])
-	}
-	if result.Request.Entries[0].ThumbnailImageBase64 == nil || *result.Request.Entries[0].ThumbnailImageBase64 != base64.StdEncoding.EncodeToString([]byte("thumb-hash/a")) {
-		t.Fatalf("unexpected thumbnail payload: %+v", result.Request.Entries[0].ThumbnailImageBase64)
-	}
-	if len(api.thumbnailCalls) != 3 {
-		t.Fatalf("thumbnail calls = %+v", api.thumbnailCalls)
-	}
+	testutil.Require(t, !(len(api.thumbnailCalls) != 3), "thumbnail calls = %+v", api.thumbnailCalls)
+
 }
 
 func TestResolveHousingCompetitionRefreshTargetUsesReviewWindow(t *testing.T) {
@@ -167,40 +172,43 @@ func TestResolveHousingCompetitionRefreshTargetUsesReviewWindow(t *testing.T) {
 		Region: "jp",
 		Now:    time.UnixMilli(1500),
 	})
-	if err != nil {
-		t.Fatalf("resolve before review: %v", err)
+	testutil.Require(t, !(err != nil), "resolve before review: %v", err)
+	{
+		testutil.Require(t, !(beforeReview.Active), "unexpected before-review target: %+v", beforeReview)
+		testutil.Require(t, !(beforeReview.NextStartAt != 2000), "unexpected before-review target: %+v", beforeReview)
 	}
-	if beforeReview.Active || beforeReview.NextStartAt != 2000 {
-		t.Fatalf("unexpected before-review target: %+v", beforeReview)
-	}
-	if _, err := controller.resolveHousingCompetition(HousingCompetitionLineQuery{
-		Region: "jp",
-		Now:    time.UnixMilli(1500),
-	}); err == nil || err.Error() != "当前没有正在进行的烤森百景活动" {
-		t.Fatalf("resolveHousingCompetition should not select a competition before reviewStartAt")
+	{
+
+		_, err := controller.resolveHousingCompetition(HousingCompetitionLineQuery{
+			Region: "jp",
+			Now:    time.UnixMilli(1500),
+		})
+		{
+			testutil.Require(t, !(err == nil), "resolveHousingCompetition should not select a competition before reviewStartAt")
+			testutil.Require(t, !(err.Error() != "当前没有正在进行的烤森百景活动"), "resolveHousingCompetition should not select a competition before reviewStartAt")
+		}
 	}
 
 	active, err := controller.resolveHousingCompetitionRefreshTarget(HousingCompetitionLineQuery{
 		Region: "jp",
 		Now:    time.UnixMilli(2500),
 	})
-	if err != nil {
-		t.Fatalf("resolve active: %v", err)
-	}
-	if !active.Active || active.Competition.ID != 25 {
-		t.Fatalf("unexpected active target: %+v", active)
+	testutil.Require(t, !(err != nil), "resolve active: %v", err)
+	{
+		testutil.Require(t, active.Active, "unexpected active target: %+v", active)
+		testutil.Require(t, !(active.Competition.ID != 25), "unexpected active target: %+v", active)
 	}
 
 	afterAggregate, err := controller.resolveHousingCompetitionRefreshTarget(HousingCompetitionLineQuery{
 		Region: "jp",
 		Now:    time.UnixMilli(3500),
 	})
-	if err != nil {
-		t.Fatalf("resolve after aggregate: %v", err)
+	testutil.Require(t, !(err != nil), "resolve after aggregate: %v", err)
+	{
+		testutil.Require(t, !(afterAggregate.Active), "unexpected after-aggregate target: %+v", afterAggregate)
+		testutil.Require(t, !(afterAggregate.NextStartAt != 0), "unexpected after-aggregate target: %+v", afterAggregate)
 	}
-	if afterAggregate.Active || afterAggregate.NextStartAt != 0 {
-		t.Fatalf("unexpected after-aggregate target: %+v", afterAggregate)
-	}
+
 }
 
 func TestHousingCompetitionBannerCacheFallsBackToAssetsBaseURL(t *testing.T) {
@@ -238,23 +246,18 @@ func TestHousingCompetitionBannerCacheFallsBackToAssetsBaseURL(t *testing.T) {
 		Ranks:  []int{1},
 		Now:    time.UnixMilli(1500),
 	})
-	if err != nil {
-		t.Fatalf("BuildHousingCompetitionLine() error = %v", err)
+	testutil.Require(t, !(err != nil), "BuildHousingCompetitionLine() error = %v", err)
+	{
+		testutil.Require(t, !(result.Request.BannerImageBase64 == nil), "unexpected remote banner base64: %v", result.Request.BannerImageBase64)
+		testutil.Require(t, !(*result.Request.BannerImageBase64 != base64.StdEncoding.EncodeToString(bannerBytes)), "unexpected remote banner base64: %v", result.Request.BannerImageBase64)
 	}
-	if result.Request.BannerImageBase64 == nil || *result.Request.BannerImageBase64 != base64.StdEncoding.EncodeToString(bannerBytes) {
-		t.Fatalf("unexpected remote banner base64: %v", result.Request.BannerImageBase64)
-	}
-	if requestedPath == "" {
-		t.Fatalf("expected banner fetch from assets base url")
-	}
+	testutil.Require(t, !(requestedPath == ""), "expected banner fetch from assets base url")
+
 	cachedBannerPath := filepath.Join(filepath.Dir(cachePath), housingCompetitionBannerCacheDirName, "asset", "jp-assets", "ondemand", "mysekai", "effect", "ui_anim", "mysekai_housing_competition", "lottery_result", "bg_competition_contest_1.png")
 	cachedBanner, err := os.ReadFile(cachedBannerPath)
-	if err != nil {
-		t.Fatalf("read cached remote banner: %v", err)
-	}
-	if !reflect.DeepEqual(cachedBanner, bannerBytes) {
-		t.Fatalf("unexpected cached remote banner bytes: %q", string(cachedBanner))
-	}
+	testutil.Require(t, !(err != nil), "read cached remote banner: %v", err)
+	testutil.Require(t, reflect.DeepEqual(cachedBanner, bannerBytes), "unexpected cached remote banner bytes: %q", string(cachedBanner))
+
 }
 
 func TestHousingCompetitionStatsCachePersistsWithoutOwnerUserID(t *testing.T) {
@@ -274,22 +277,22 @@ func TestHousingCompetitionStatsCachePersistsWithoutOwnerUserID(t *testing.T) {
 		AllowFallback:                    true,
 		HousingCompetitionStatsCachePath: cachePath,
 	})
-	if _, err := controller.BuildHousingCompetitionLine(context.Background(), api, HousingCompetitionLineQuery{
-		Region: "jp",
-		Ranks:  []int{1},
-		Now:    time.UnixMilli(1500),
-	}); err != nil {
-		t.Fatalf("initial BuildHousingCompetitionLine() error = %v", err)
+	{
+		_, err := controller.BuildHousingCompetitionLine(context.Background(), api, HousingCompetitionLineQuery{
+			Region: "jp",
+			Ranks:  []int{1},
+			Now:    time.UnixMilli(1500),
+		})
+		testutil.Require(t, !(err != nil), "initial BuildHousingCompetitionLine() error = %v", err)
 	}
-	if len(api.calls) != 1 {
-		t.Fatalf("initial api calls = %+v", api.calls)
-	}
+
+	testutil.Require(t, !(len(api.calls) != 1), "initial api calls = %+v", api.calls)
+
 	payload, err := os.ReadFile(cachePath)
-	if err != nil {
-		t.Fatalf("read cache file: %v", err)
-	}
-	if strings.Contains(string(payload), "777777777777") || strings.Contains(string(payload), "owner_user_id") {
-		t.Fatalf("cache file should not expose owner user id: %s", string(payload))
+	testutil.Require(t, !(err != nil), "read cache file: %v", err)
+	{
+		testutil.Require(t, !(strings.Contains(string(payload), "777777777777")), "cache file should not expose owner user id: %s", string(payload))
+		testutil.Require(t, !(strings.Contains(string(payload), "owner_user_id")), "cache file should not expose owner user id: %s", string(payload))
 	}
 
 	cachedAPI := &fakeHousingCompetitionListClient{}
@@ -303,15 +306,10 @@ func TestHousingCompetitionStatsCachePersistsWithoutOwnerUserID(t *testing.T) {
 		Ranks:  []int{1},
 		Now:    time.UnixMilli(1500),
 	})
-	if err != nil {
-		t.Fatalf("cached BuildHousingCompetitionLine() error = %v", err)
-	}
-	if len(cachedAPI.calls) != 0 {
-		t.Fatalf("fresh persisted cache should avoid list api calls: %+v", cachedAPI.calls)
-	}
-	if result.Entries[0].OwnerUserID != 0 {
-		t.Fatalf("cached entry should not retain owner user id: %+v", result.Entries[0])
-	}
+	testutil.Require(t, !(err != nil), "cached BuildHousingCompetitionLine() error = %v", err)
+	testutil.Require(t, !(len(cachedAPI.calls) != 0), "fresh persisted cache should avoid list api calls: %+v", cachedAPI.calls)
+	testutil.Require(t, !(result.Entries[0].OwnerUserID != 0), "cached entry should not retain owner user id: %+v", result.Entries[0])
+
 }
 
 type concurrentHousingCompetitionClient struct {
@@ -378,9 +376,8 @@ func TestHousingCompetitionStatsCacheSharesRefreshAndTrace(t *testing.T) {
 	wg.Wait()
 	close(errs)
 	for err := range errs {
-		if err != nil {
-			t.Fatalf("Refresh() error = %v", err)
-		}
+		testutil.Require(t, !(err != nil), "Refresh() error = %v", err)
+
 	}
 
 	shared := 0
@@ -391,24 +388,26 @@ func TestHousingCompetitionStatsCacheSharesRefreshAndTrace(t *testing.T) {
 			"housing_cache.encode",
 			"housing_cache.persist",
 		} {
-			if count := housingCacheTraceOperationCount(trace, name); count != 1 {
-				t.Fatalf("trace[%d] %s count = %d, operations=%+v", index, name, count, trace.Snapshot().Operations)
+			{
+				count := housingCacheTraceOperationCount(trace, name)
+				testutil.Require(t, !(count != 1), "trace[%d] %s count = %d, operations=%+v", index, name, count, trace.Snapshot().Operations)
 			}
+
 		}
-		if count := housingCacheTraceOperationCount(trace, "housing_cache.snapshot"); count < 1 {
-			t.Fatalf("trace[%d] housing_cache.snapshot count = %d, operations=%+v", index, count, trace.Snapshot().Operations)
+		{
+			count := housingCacheTraceOperationCount(trace, "housing_cache.snapshot")
+			testutil.Require(t, !(count < 1), "trace[%d] housing_cache.snapshot count = %d, operations=%+v", index, count, trace.Snapshot().Operations)
 		}
+
 		shared += housingCacheTraceOperationCount(trace, "housing_cache.shared")
 	}
-	if shared != callers-1 {
-		t.Fatalf("shared trace count = %d, want %d", shared, callers-1)
-	}
+	testutil.Require(t, !(shared != callers-1), "shared trace count = %d, want %d", shared, callers-1)
+
 	cache.mu.Lock()
 	generation := cache.generation
 	cache.mu.Unlock()
-	if generation != 1 {
-		t.Fatalf("cache generation = %d, want one merged refresh", generation)
-	}
+	testutil.Require(t, !(generation != 1), "cache generation = %d, want one merged refresh", generation)
+
 }
 
 func TestHousingCompetitionStatsCacheLeaderCancellationDoesNotCancelSharedRefresh(t *testing.T) {
@@ -445,18 +444,26 @@ func TestHousingCompetitionStatsCacheLeaderCancellationDoesNotCancelSharedRefres
 		t.Fatalf("leader Refresh() error = %v, want context.Canceled", err)
 	}
 	close(release)
-	if err := <-followerResult; err != nil {
-		t.Fatalf("follower Refresh() error = %v", err)
+	{
+		err := <-followerResult
+		testutil.Require(t, !(err != nil), "follower Refresh() error = %v", err)
 	}
-	if calls := client.calls.Load(); calls != 1 {
-		t.Fatalf("provider calls = %d, want one shared fetch", calls)
+	{
+
+		calls := client.calls.Load()
+		testutil.Require(t, !(calls != 1), "provider calls = %d, want one shared fetch", calls)
 	}
-	if count := housingCacheTraceOperationCount(followerTrace, "housing_cache.fetch"); count != 1 {
-		t.Fatalf("follower fetch trace count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
+	{
+
+		count := housingCacheTraceOperationCount(followerTrace, "housing_cache.fetch")
+		testutil.Require(t, !(count != 1), "follower fetch trace count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
 	}
-	if count := housingCacheTraceOperationCount(followerTrace, "housing_cache.shared"); count != 1 {
-		t.Fatalf("follower shared trace count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
+	{
+
+		count := housingCacheTraceOperationCount(followerTrace, "housing_cache.shared")
+		testutil.Require(t, !(count != 1), "follower shared trace count = %d, operations=%+v", count, followerTrace.Snapshot().Operations)
 	}
+
 }
 
 func TestHousingCompetitionStatsCacheRetentionBounds(t *testing.T) {
@@ -520,9 +527,8 @@ func TestHousingCompetitionStatsCacheRetentionBounds(t *testing.T) {
 		}
 	}
 	cache.mu.Unlock()
-	if total != 3 {
-		t.Fatalf("total entries = %d, want 3", total)
-	}
+	testutil.Require(t, !(total != 3), "total entries = %d, want 3", total)
+
 }
 
 func TestHousingCompetitionStatsCacheConcurrentPersistenceIsComplete(t *testing.T) {
@@ -545,29 +551,25 @@ func TestHousingCompetitionStatsCacheConcurrentPersistenceIsComplete(t *testing.
 	wg.Wait()
 	close(errs)
 	for err := range errs {
-		if err != nil {
-			t.Fatalf("Refresh() error = %v", err)
-		}
+		testutil.Require(t, !(err != nil), "Refresh() error = %v", err)
+
 	}
 
 	payload, err := os.ReadFile(cachePath)
-	if err != nil {
-		t.Fatalf("read cache file: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "read cache file: %v", err)
+
 	var persisted persistedHousingCompetitionStatsCache
-	if err := stdjson.Unmarshal(payload, &persisted); err != nil {
-		t.Fatalf("decode cache file: %v", err)
+	{
+		err := stdjson.Unmarshal(payload, &persisted)
+		testutil.Require(t, !(err != nil), "decode cache file: %v", err)
 	}
-	if len(persisted.Buckets) != refreshes {
-		t.Fatalf("persisted buckets = %d, want %d", len(persisted.Buckets), refreshes)
-	}
+
+	testutil.Require(t, !(len(persisted.Buckets) != refreshes), "persisted buckets = %d, want %d", len(persisted.Buckets), refreshes)
+
 	temps, err := filepath.Glob(filepath.Join(dir, ".housing_stats.json.tmp-*"))
-	if err != nil {
-		t.Fatalf("glob temp files: %v", err)
-	}
-	if len(temps) != 0 {
-		t.Fatalf("orphaned temp files: %v", temps)
-	}
+	testutil.Require(t, !(err != nil), "glob temp files: %v", err)
+	testutil.Require(t, !(len(temps) != 0), "orphaned temp files: %v", temps)
+
 }
 
 func housingCacheTraceOperationCount(trace *commandtrace.Trace, name string) int {
@@ -589,9 +591,11 @@ func writeHousingCompetitionMasterdata(t *testing.T, root string) {
 
 func writeHousingCompetitionMasterdataWithWindow(t *testing.T, root string, submitStartAt, reviewStartAt, aggregateAt int64) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Join(root, "jp"), 0o755); err != nil {
-		t.Fatalf("mkdir masterdata: %v", err)
+	{
+		err := os.MkdirAll(filepath.Join(root, "jp"), 0o755)
+		testutil.Require(t, !(err != nil), "mkdir masterdata: %v", err)
 	}
+
 	masterdata := fmt.Sprintf(`[
 		{
 			"id":25,
@@ -604,7 +608,9 @@ func writeHousingCompetitionMasterdataWithWindow(t *testing.T, root string, subm
 			"backgroundImageAssetbundleFileName":"bg_competition_contest_1"
 		}
 	]`, submitStartAt, reviewStartAt, aggregateAt)
-	if err := os.WriteFile(filepath.Join(root, "jp", "mysekaiHousingCompetitions.json"), []byte(masterdata), 0o644); err != nil {
-		t.Fatalf("write masterdata: %v", err)
+	{
+		err := os.WriteFile(filepath.Join(root, "jp", "mysekaiHousingCompetitions.json"), []byte(masterdata), 0o644)
+		testutil.Require(t, !(err != nil), "write masterdata: %v", err)
 	}
+
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"haruki-cloud/internal/testutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,54 +12,66 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 		root := t.TempDir()
 		masterdataRoot := filepath.Join(root, "render-masterdata")
 		for _, region := range []string{"jp", "cn"} {
-			if err := os.MkdirAll(filepath.Join(masterdataRoot, region), 0o755); err != nil {
-				t.Fatalf("mkdir region dir: %v", err)
+			{
+				err := os.MkdirAll(filepath.Join(masterdataRoot, region), 0o755)
+				testutil.Require(t, !(err != nil), "mkdir region dir: %v", err)
 			}
+
 		}
 		cfg := Config{
 			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: " " + masterdataRoot + " "},
 			DeckRecommend:   DeckRecommendConfig{MasterdataDir: "/srv/deck-masterdata"},
 		}
+		{
 
-		if got := resolveRenderProviderMasterdataDir(cfg); got != masterdataRoot {
-			t.Fatalf("expected local masterdata dir, got %q", got)
+			got := resolveRenderProviderMasterdataDir(cfg)
+			testutil.Require(t, !(got != masterdataRoot), "expected local masterdata dir, got %q", got)
 		}
+
 	})
 
 	t.Run("does not fall back to deck masterdata", func(t *testing.T) {
 		root := t.TempDir()
 		masterdataRoot := filepath.Join(root, "deck-masterdata")
 		for _, region := range []string{"jp", "cn"} {
-			if err := os.MkdirAll(filepath.Join(masterdataRoot, region), 0o755); err != nil {
-				t.Fatalf("mkdir region dir: %v", err)
+			{
+				err := os.MkdirAll(filepath.Join(masterdataRoot, region), 0o755)
+				testutil.Require(t, !(err != nil), "mkdir region dir: %v", err)
 			}
+
 		}
 		cfg := Config{
 			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: "   "},
 			DeckRecommend:   DeckRecommendConfig{MasterdataDir: " " + masterdataRoot + " "},
 		}
+		{
 
-		if got := resolveRenderProviderMasterdataDir(cfg); got != "" {
-			t.Fatalf("expected no deck masterdata fallback, got %q", got)
+			got := resolveRenderProviderMasterdataDir(cfg)
+			testutil.Require(t, !(got != ""), "expected no deck masterdata fallback, got %q", got)
 		}
+
 	})
 
 	t.Run("does not scan working directory for fallback roots", func(t *testing.T) {
 		wd := t.TempDir()
 		deckRoot := filepath.Join(wd, "deckrec", "masterdata")
 		for _, region := range []string{"jp", "cn", "tw", "kr", "en"} {
-			if err := os.MkdirAll(filepath.Join(deckRoot, region), 0o755); err != nil {
-				t.Fatalf("mkdir deck region dir: %v", err)
+			{
+				err := os.MkdirAll(filepath.Join(deckRoot, region), 0o755)
+				testutil.Require(t, !(err != nil), "mkdir deck region dir: %v", err)
 			}
+
 		}
 
 		cfg := Config{
 			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: "/masterdata/jp"},
 		}
+		{
 
-		if got := resolveRenderProviderMasterdataDirFromWD(cfg, wd); got != "" {
-			t.Fatalf("expected no working-directory fallback, got %q", got)
+			got := resolveRenderProviderMasterdataDirFromWD(cfg, wd)
+			testutil.Require(t, !(got != ""), "expected no working-directory fallback, got %q", got)
 		}
+
 	})
 
 	t.Run("detects mounted multi-repo masterdata root from broken region config", func(t *testing.T) {
@@ -72,62 +85,79 @@ func TestResolveRenderProviderMasterdataDir(t *testing.T) {
 			"haruki-sekai-en-master",
 		} {
 			masterDir := filepath.Join(repoRoot, repoDir, "master")
-			if err := os.MkdirAll(masterDir, 0o755); err != nil {
-				t.Fatalf("mkdir repo master dir: %v", err)
+			{
+				err := os.MkdirAll(masterDir, 0o755)
+				testutil.Require(t, !(err != nil), "mkdir repo master dir: %v", err)
 			}
-			if err := os.WriteFile(filepath.Join(masterDir, "resourceBoxes.json"), []byte(`[]`), 0o644); err != nil {
-				t.Fatalf("write repo resourceBoxes.json: %v", err)
+			{
+
+				err := os.WriteFile(filepath.Join(masterDir, "resourceBoxes.json"), []byte(`[]`), 0o644)
+				testutil.Require(t, !(err != nil), "write repo resourceBoxes.json: %v", err)
 			}
+
 		}
 
 		cfg := Config{
 			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: filepath.Join(repoRoot, "jp")},
 		}
+		{
 
-		if got := resolveRenderProviderMasterdataDirFromWD(cfg, root); got != repoRoot {
-			t.Fatalf("expected repo-root masterdata dir, got %q", got)
+			got := resolveRenderProviderMasterdataDirFromWD(cfg, root)
+			testutil.Require(t, !(got != repoRoot), "expected repo-root masterdata dir, got %q", got)
 		}
+
 	})
 
 	t.Run("accepts inventory-only masterdata files", func(t *testing.T) {
 		root := t.TempDir()
 		masterdataRoot := filepath.Join(root, "inventory-masterdata")
-		if err := os.MkdirAll(masterdataRoot, 0o755); err != nil {
-			t.Fatalf("mkdir inventory masterdata root: %v", err)
+		{
+			err := os.MkdirAll(masterdataRoot, 0o755)
+			testutil.Require(t, !(err != nil), "mkdir inventory masterdata root: %v", err)
 		}
-		if err := os.WriteFile(filepath.Join(masterdataRoot, "materials.json"), []byte(`[]`), 0o644); err != nil {
-			t.Fatalf("write materials.json: %v", err)
+		{
+
+			err := os.WriteFile(filepath.Join(masterdataRoot, "materials.json"), []byte(`[]`), 0o644)
+			testutil.Require(t, !(err != nil), "write materials.json: %v", err)
 		}
 
 		cfg := Config{
 			LocalMasterdata: LocalMasterdataConfig{Enabled: true, AllowFallback: true, Dir: masterdataRoot},
 		}
+		{
 
-		if got := resolveRenderProviderMasterdataDir(cfg); got != masterdataRoot {
-			t.Fatalf("expected inventory masterdata dir, got %q", got)
+			got := resolveRenderProviderMasterdataDir(cfg)
+			testutil.Require(t, !(got != masterdataRoot), "expected inventory masterdata dir, got %q", got)
 		}
+
 	})
 
 	t.Run("returns empty when both are unset", func(t *testing.T) {
-		if got := resolveRenderProviderMasterdataDirFromWD(Config{}, t.TempDir()); got != "" {
-			t.Fatalf("expected empty masterdata dir, got %q", got)
+		{
+			got := resolveRenderProviderMasterdataDirFromWD(Config{}, t.TempDir())
+			testutil.Require(t, !(got != ""), "expected empty masterdata dir, got %q", got)
 		}
+
 	})
 
 	t.Run("returns empty when local fallback is disabled", func(t *testing.T) {
 		root := t.TempDir()
 		masterdataRoot := filepath.Join(root, "render-masterdata")
 		for _, region := range []string{"jp", "cn"} {
-			if err := os.MkdirAll(filepath.Join(masterdataRoot, region), 0o755); err != nil {
-				t.Fatalf("mkdir region dir: %v", err)
+			{
+				err := os.MkdirAll(filepath.Join(masterdataRoot, region), 0o755)
+				testutil.Require(t, !(err != nil), "mkdir region dir: %v", err)
 			}
+
 		}
 		cfg := Config{
 			LocalMasterdata: LocalMasterdataConfig{Dir: masterdataRoot},
 		}
+		{
 
-		if got := resolveRenderProviderMasterdataDir(cfg); got != "" {
-			t.Fatalf("expected disabled local masterdata fallback, got %q", got)
+			got := resolveRenderProviderMasterdataDir(cfg)
+			testutil.Require(t, !(got != ""), "expected disabled local masterdata fallback, got %q", got)
 		}
+
 	})
 }

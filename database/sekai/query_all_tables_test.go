@@ -9,6 +9,7 @@ import (
 
 	entsekai "haruki-cloud/database/sekai"
 	"haruki-cloud/database/sekai/migrate"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/lib/pq"
 )
@@ -26,14 +27,14 @@ func TestSekaiQueryAllTables(t *testing.T) {
 	}
 
 	client, err := entsekai.Open("postgres", dsn)
-	if err != nil {
-		t.Fatalf("open sekai client: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "open sekai client: %v", err)
+
 	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
-	if err := client.Schema.Create(ctx); err != nil {
-		t.Fatalf("ensure sekai schema: %v", err)
+	{
+		err := client.Schema.Create(ctx)
+		testutil.Require(t, !(err != nil), "ensure sekai schema: %v", err)
 	}
 
 	clientValue := reflect.ValueOf(client).Elem()
@@ -57,22 +58,14 @@ func TestSekaiQueryAllTables(t *testing.T) {
 		}
 
 		queryResult := queryMethod.Call(nil)
-		if len(queryResult) != 1 {
-			t.Fatalf("%s.Query returned %d values, expect 1", fieldType.Name, len(queryResult))
-		}
+		testutil.Require(t, !(len(queryResult) != 1), "%s.Query returned %d values, expect 1", fieldType.Name, len(queryResult))
 
 		countMethod := queryResult[0].MethodByName("Count")
-		if !countMethod.IsValid() {
-			t.Fatalf("%s query has no Count method", fieldType.Name)
-		}
+		testutil.Require(t, countMethod.IsValid(), "%s query has no Count method", fieldType.Name)
 
 		countResult := countMethod.Call([]reflect.Value{reflect.ValueOf(ctx)})
-		if len(countResult) != 2 {
-			t.Fatalf("%s.Query().Count returned %d values, expect 2", fieldType.Name, len(countResult))
-		}
-		if !countResult[1].IsNil() {
-			t.Fatalf("%s.Query().Count failed: %v", fieldType.Name, countResult[1].Interface())
-		}
+		testutil.Require(t, !(len(countResult) != 2), "%s.Query().Count returned %d values, expect 2", fieldType.Name, len(countResult))
+		testutil.Require(t, countResult[1].IsNil(), "%s.Query().Count failed: %v", fieldType.Name, countResult[1].Interface())
 
 		queriedClients = append(queriedClients, fieldType.Name)
 	}

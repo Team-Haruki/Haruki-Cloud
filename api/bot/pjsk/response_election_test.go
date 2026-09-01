@@ -14,6 +14,7 @@ import (
 
 	"haruki-cloud/internal/observability/commandtrace"
 	"haruki-cloud/internal/onebot11"
+	"haruki-cloud/internal/testutil"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
@@ -34,21 +35,27 @@ func TestResponseElectionCoordinatesAcrossInstancesAndWaitsForWindow(t *testing.
 	rig.start(results, 0, request, "bot-c", execute)
 	rig.waitForCandidateCount(t, request, 3)
 	rig.waitForStateField(t, request, "ready", "1")
+	{
 
-	if got := executions.Load(); got != 1 {
-		t.Fatalf("command executions before election = %d, want 1", got)
+		got := executions.Load()
+		testutil.Require(t, !(got != 1), "command executions before election = %d, want 1", got)
 	}
+
 	assertNoResponseElectionDecision(t, results, "fast command returned before the election window closed")
 
 	rig.advancePastWindow()
 	outcomes := collectResponseElectionOutcomes(t, results, 3)
 	winner := assertSingleVisibleResponseElectionOutcome(t, outcomes)
-	if got := string(winner.decision.result.Response.JSONBody); got != "fast-result" {
-		t.Fatalf("winner result = %q, want %q", got, "fast-result")
+	{
+		got := string(winner.decision.result.Response.JSONBody)
+		testutil.Require(t, !(got != "fast-result"), "winner result = %q, want %q", got, "fast-result")
 	}
-	if got := executions.Load(); got != 1 {
-		t.Fatalf("command executions after election = %d, want 1", got)
+	{
+
+		got := executions.Load()
+		testutil.Require(t, !(got != 1), "command executions after election = %d, want 1", got)
 	}
+
 	for _, operation := range []string{
 		"response_election.redis_join",
 		"response_election.window_wait",
@@ -58,9 +65,8 @@ func TestResponseElectionCoordinatesAcrossInstancesAndWaitsForWindow(t *testing.
 	} {
 		assertResponseElectionTraceOperation(t, winner.trace, operation)
 	}
-	if !hasResponseElectionSharedOperation(winner.decision.result.Operations, "response_election.result_serialize") {
-		t.Fatalf("winner shared operations missing result serialization: %+v", winner.decision.result.Operations)
-	}
+	testutil.Require(t, hasResponseElectionSharedOperation(winner.decision.result.Operations, "response_election.result_serialize"), "winner shared operations missing result serialization: %+v", winner.decision.result.Operations)
+
 }
 
 func TestResponseElectionSlowCommandReturnsWhenReadyAfterWindow(t *testing.T) {
@@ -95,16 +101,22 @@ func TestResponseElectionSlowCommandReturnsWhenReadyAfterWindow(t *testing.T) {
 	releasedAt := time.Now()
 	releaseOnce.Do(func() { close(release) })
 	outcomes := collectResponseElectionOutcomes(t, results, 3)
-	if elapsed := time.Since(releasedAt); elapsed >= 750*time.Millisecond {
-		t.Fatalf("command took %s to return after becoming ready; window had already closed", elapsed)
+	{
+		elapsed := time.Since(releasedAt)
+		testutil.Require(t, !(elapsed >= 750*time.Millisecond), "command took %s to return after becoming ready; window had already closed", elapsed)
 	}
+
 	winner := assertSingleVisibleResponseElectionOutcome(t, outcomes)
-	if got := string(winner.decision.result.Response.JSONBody); got != "slow-result" {
-		t.Fatalf("winner result = %q, want %q", got, "slow-result")
+	{
+		got := string(winner.decision.result.Response.JSONBody)
+		testutil.Require(t, !(got != "slow-result"), "winner result = %q, want %q", got, "slow-result")
 	}
-	if got := executions.Load(); got != 1 {
-		t.Fatalf("command executions = %d, want 1", got)
+	{
+
+		got := executions.Load()
+		testutil.Require(t, !(got != 1), "command executions = %d, want 1", got)
 	}
+
 }
 
 func TestResponseElectionRejectsLateDuplicatesWithoutExecuting(t *testing.T) {
@@ -141,11 +153,14 @@ func TestResponseElectionRejectsLateDuplicatesWithoutExecuting(t *testing.T) {
 	lateResult := make(chan responseElectionTestOutcome, 1)
 	rig.start(lateResult, 1, request, "bot-after-window", lateExecute)
 	late := collectResponseElectionOutcomes(t, lateResult, 1)[0]
-	if late.decision.visible || late.decision.reason != "rejected" {
-		t.Fatalf("post-window decision = %+v, want rejected and invisible", late.decision)
+	{
+		testutil.Require(t, !(late.decision.visible), "post-window decision = %+v, want rejected and invisible", late.decision)
+		testutil.Require(t, !(late.decision.reason != "rejected"), "post-window decision = %+v, want rejected and invisible", late.decision)
 	}
-	if got := lateExecutions.Load(); got != 0 {
-		t.Fatalf("post-window duplicate executions = %d, want 0", got)
+	{
+
+		got := lateExecutions.Load()
+		testutil.Require(t, !(got != 0), "post-window duplicate executions = %d, want 0", got)
 	}
 
 	releaseOnce.Do(func() { close(release) })
@@ -157,15 +172,21 @@ func TestResponseElectionRejectsLateDuplicatesWithoutExecuting(t *testing.T) {
 		responseElectionRequest{Request: request, BotID: "bot-after-delivery"},
 		lateExecute,
 	)
-	if postDelivery.visible || postDelivery.reason != "rejected" {
-		t.Fatalf("post-delivery decision = %+v, want rejected and invisible", postDelivery)
+	{
+		testutil.Require(t, !(postDelivery.visible), "post-delivery decision = %+v, want rejected and invisible", postDelivery)
+		testutil.Require(t, !(postDelivery.reason != "rejected"), "post-delivery decision = %+v, want rejected and invisible", postDelivery)
 	}
-	if got := lateExecutions.Load(); got != 0 {
-		t.Fatalf("late duplicate executions = %d, want 0", got)
+	{
+
+		got := lateExecutions.Load()
+		testutil.Require(t, !(got != 0), "late duplicate executions = %d, want 0", got)
 	}
-	if got := executions.Load(); got != 1 {
-		t.Fatalf("original command executions = %d, want 1", got)
+	{
+
+		got := executions.Load()
+		testutil.Require(t, !(got != 1), "original command executions = %d, want 1", got)
 	}
+
 }
 
 func TestResponseElectionForceExecutorSelectsOwner(t *testing.T) {
@@ -202,15 +223,18 @@ func TestResponseElectionForceExecutorSelectsOwner(t *testing.T) {
 	rig.advancePastWindow()
 	outcomes := collectResponseElectionOutcomes(t, results, 2)
 	winner := assertSingleVisibleResponseElectionOutcome(t, outcomes)
-	if winner.botID != executorBotID {
-		t.Fatalf("selected bot = %q, want executor %q", winner.botID, executorBotID)
+	testutil.Require(t, !(winner.botID != executorBotID), "selected bot = %q, want executor %q", winner.botID, executorBotID)
+	{
+
+		got := winner.decision.result.Metadata.ExecutorBotID
+		testutil.Require(t, !(got != executorBotID), "result executor bot = %q, want %q", got, executorBotID)
 	}
-	if got := winner.decision.result.Metadata.ExecutorBotID; got != executorBotID {
-		t.Fatalf("result executor bot = %q, want %q", got, executorBotID)
+	{
+
+		got := executions.Load()
+		testutil.Require(t, !(got != 1), "command executions = %d, want 1", got)
 	}
-	if got := executions.Load(); got != 1 {
-		t.Fatalf("command executions = %d, want 1", got)
-	}
+
 }
 
 func TestResponseElectionJoinIsIdempotentAfterAmbiguousRedisReply(t *testing.T) {
@@ -242,24 +266,32 @@ func TestResponseElectionJoinIsIdempotentAfterAmbiguousRedisReply(t *testing.T) 
 			window.Milliseconds(),
 			dedupInFlightTTL.Milliseconds(),
 		).Slice()
-		if err != nil {
-			t.Fatalf("join script: %v", err)
-		}
+		testutil.Require(t, !(err != nil), "join script: %v", err)
+
 		return result
 	}
 
 	first := runJoin()
-	if status, err := responseElectionInt64(first[0]); err != nil || status != int64(responseElectionExecutor) {
-		t.Fatalf("first join status = %v (%v), want executor", first[0], err)
+	{
+		status, err := responseElectionInt64(first[0])
+		{
+			testutil.Require(t, !(err != nil), "first join status = %v (%v), want executor", first[0], err)
+			testutil.Require(t, !(status != int64(responseElectionExecutor)), "first join status = %v (%v), want executor", first[0], err)
+		}
 	}
 
 	// A command timeout can make go-redis repeat a script after Redis already
 	// committed it. The original token must recover its role even if W elapsed.
 	server.SetTime(baseTime.Add(window + time.Millisecond))
 	replayed := runJoin()
-	if status, err := responseElectionInt64(replayed[0]); err != nil || status != int64(responseElectionExecutor) {
-		t.Fatalf("replayed join status = %v (%v), want executor", replayed[0], err)
+	{
+		status, err := responseElectionInt64(replayed[0])
+		{
+			testutil.Require(t, !(err != nil), "replayed join status = %v (%v), want executor", replayed[0], err)
+			testutil.Require(t, !(status != int64(responseElectionExecutor)), "replayed join status = %v (%v), want executor", replayed[0], err)
+		}
 	}
+
 }
 
 func TestResponseElectionAdmitsOnlyOneRequestPerBot(t *testing.T) {
@@ -273,20 +305,21 @@ func TestResponseElectionAdmitsOnlyOneRequestPerBot(t *testing.T) {
 
 	request := responseElectionTestRequest("same-bot")
 	first, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-a"})
-	if err != nil {
-		t.Fatalf("first join: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "first join: %v", err)
+
 	second, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-a"})
-	if err != nil {
-		t.Fatalf("duplicate join: %v", err)
+	testutil.Require(t, !(err != nil), "duplicate join: %v", err)
+	{
+		testutil.Require(t, !(first.role != responseElectionExecutor), "first/second roles = %d/%d, want executor/rejected", first.role, second.role)
+		testutil.Require(t, !(second.role != responseElectionRejected), "first/second roles = %d/%d, want executor/rejected", first.role, second.role)
 	}
-	if first.role != responseElectionExecutor || second.role != responseElectionRejected {
-		t.Fatalf("first/second roles = %d/%d, want executor/rejected", first.role, second.role)
-	}
+
 	count, err := client.HLen(context.Background(), first.candidatesKey).Result()
-	if err != nil || count != 1 {
-		t.Fatalf("candidate count = %d (%v), want 1", count, err)
+	{
+		testutil.Require(t, !(err != nil), "candidate count = %d (%v), want 1", count, err)
+		testutil.Require(t, !(count != 1), "candidate count = %d (%v), want 1", count, err)
 	}
+
 }
 
 func TestResponseElectionInteroperatesWithLegacyRequestGuard(t *testing.T) {
@@ -300,19 +333,23 @@ func TestResponseElectionInteroperatesWithLegacyRequestGuard(t *testing.T) {
 		})
 
 		request := responseElectionTestRequest("legacy-owner")
-		if err := client.Set(context.Background(), dedupKey(request), "legacy-token", dedupInFlightTTL).Err(); err != nil {
-			t.Fatalf("seed legacy lock: %v", err)
+		{
+			err := client.Set(context.Background(), dedupKey(request), "legacy-token", dedupInFlightTTL).Err()
+			testutil.Require(t, !(err != nil), "seed legacy lock: %v", err)
 		}
+
 		lease, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-new"})
-		if err != nil {
-			t.Fatalf("join: %v", err)
+		testutil.Require(t, !(err != nil), "join: %v", err)
+		testutil.Require(t, !(lease.role != responseElectionRejected), "election role = %d, want rejected", lease.role)
+		{
+
+			exists, err := client.Exists(context.Background(), responseElectionStateKey(responseElectionIdentity(request))).Result()
+			{
+				testutil.Require(t, !(err != nil), "election state exists = %d (%v), want 0", exists, err)
+				testutil.Require(t, !(exists != 0), "election state exists = %d (%v), want 0", exists, err)
+			}
 		}
-		if lease.role != responseElectionRejected {
-			t.Fatalf("election role = %d, want rejected", lease.role)
-		}
-		if exists, err := client.Exists(context.Background(), responseElectionStateKey(responseElectionIdentity(request))).Result(); err != nil || exists != 0 {
-			t.Fatalf("election state exists = %d (%v), want 0", exists, err)
-		}
+
 	})
 
 	t.Run("election owner excludes legacy and releases compat lock", func(t *testing.T) {
@@ -330,36 +367,55 @@ func TestResponseElectionInteroperatesWithLegacyRequestGuard(t *testing.T) {
 
 		request := responseElectionTestRequest("election-owner")
 		lease, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-new"})
-		if err != nil {
-			t.Fatalf("join: %v", err)
+		testutil.Require(t, !(err != nil), "join: %v", err)
+		testutil.Require(t, !(lease.role != responseElectionExecutor), "election role = %d, want executor", lease.role)
+		{
+
+			owner, err := client.Get(context.Background(), dedupKey(request)).Result()
+			{
+				testutil.Require(t, !(err != nil), "legacy compatibility owner = %q (%v), want %q", owner, err, lease.token)
+				testutil.Require(t, !(owner != lease.token), "legacy compatibility owner = %q (%v), want %q", owner, err, lease.token)
+			}
 		}
-		if lease.role != responseElectionExecutor {
-			t.Fatalf("election role = %d, want executor", lease.role)
+		{
+
+			legacyLease := legacyGuard.Acquire(context.Background(), request)
+			testutil.RequireArgs(t, !(legacyLease.proceed), "legacy guard acquired an event owned by response election")
 		}
-		if owner, err := client.Get(context.Background(), dedupKey(request)).Result(); err != nil || owner != lease.token {
-			t.Fatalf("legacy compatibility owner = %q (%v), want %q", owner, err, lease.token)
+		{
+
+			err := coordinator.publish(
+				context.Background(),
+				lease,
+				responseElectionTestResult("compat-result", lease.botID, false),
+			)
+			testutil.Require(t, !(err != nil), "publish: %v", err)
 		}
-		if legacyLease := legacyGuard.Acquire(context.Background(), request); legacyLease.proceed {
-			t.Fatal("legacy guard acquired an event owned by response election")
-		}
-		if err := coordinator.publish(
-			context.Background(),
-			lease,
-			responseElectionTestResult("compat-result", lease.botID, false),
-		); err != nil {
-			t.Fatalf("publish: %v", err)
-		}
+
 		server.SetTime(baseTime.Add(coordinator.window + time.Millisecond))
 		decision, waiting, err := coordinator.decide(context.Background(), lease)
-		if err != nil || waiting || !decision.visible {
-			t.Fatalf("consume = %+v, waiting=%v, err=%v", decision, waiting, err)
+		{
+			testutil.Require(t, !(err != nil), "consume = %+v, waiting=%v, err=%v", decision, waiting, err)
+			testutil.Require(t, !(waiting), "consume = %+v, waiting=%v, err=%v", decision, waiting, err)
+			testutil.Require(t, decision.visible, "consume = %+v, waiting=%v, err=%v", decision, waiting, err)
 		}
-		if exists, err := client.Exists(context.Background(), dedupKey(request)).Result(); err != nil || exists != 0 {
-			t.Fatalf("legacy lock exists after consume = %d (%v), want 0", exists, err)
+		{
+
+			exists, err := client.Exists(context.Background(), dedupKey(request)).Result()
+			{
+				testutil.Require(t, !(err != nil), "legacy lock exists after consume = %d (%v), want 0", exists, err)
+				testutil.Require(t, !(exists != 0), "legacy lock exists after consume = %d (%v), want 0", exists, err)
+			}
 		}
-		if exists, err := client.Exists(context.Background(), rateLimitKey(request)).Result(); err != nil || exists != 1 {
-			t.Fatalf("shared rate key exists = %d (%v), want 1", exists, err)
+		{
+
+			exists, err := client.Exists(context.Background(), rateLimitKey(request)).Result()
+			{
+				testutil.Require(t, !(err != nil), "shared rate key exists = %d (%v), want 1", exists, err)
+				testutil.Require(t, !(exists != 1), "shared rate key exists = %d (%v), want 1", exists, err)
+			}
 		}
+
 	})
 }
 
@@ -376,35 +432,45 @@ func TestResponseElectionPublishAndConsumeAreIdempotent(t *testing.T) {
 
 	request := responseElectionTestRequest("idempotent-result")
 	lease, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-owner"})
-	if err != nil {
-		t.Fatalf("join: %v", err)
-	}
-	if lease.role != responseElectionExecutor {
-		t.Fatalf("join role = %d, want executor", lease.role)
-	}
+	testutil.Require(t, !(err != nil), "join: %v", err)
+	testutil.Require(t, !(lease.role != responseElectionExecutor), "join role = %d, want executor", lease.role)
+
 	shared := responseElectionTestResult("idempotent-result", "bot-owner", false)
-	if err := coordinator.publish(context.Background(), lease, shared); err != nil {
-		t.Fatalf("publish: %v", err)
+	{
+		err := coordinator.publish(context.Background(), lease, shared)
+		testutil.Require(t, !(err != nil), "publish: %v", err)
 	}
-	if err := coordinator.reconcileFailedPublish(lease, errors.New("ambiguous Redis reply")); err != nil {
-		t.Fatalf("reconcile committed publication: %v", err)
+	{
+
+		err := coordinator.reconcileFailedPublish(lease, errors.New("ambiguous Redis reply"))
+		testutil.Require(t, !(err != nil), "reconcile committed publication: %v", err)
 	}
 
 	server.SetTime(baseTime.Add(coordinator.window + time.Millisecond))
 	first, waiting, err := coordinator.decide(context.Background(), lease)
-	if err != nil || waiting || !first.visible {
-		t.Fatalf("first consume = %+v, waiting=%v, err=%v", first, waiting, err)
+	{
+		testutil.Require(t, !(err != nil), "first consume = %+v, waiting=%v, err=%v", first, waiting, err)
+		testutil.Require(t, !(waiting), "first consume = %+v, waiting=%v, err=%v", first, waiting, err)
+		testutil.Require(t, first.visible, "first consume = %+v, waiting=%v, err=%v", first, waiting, err)
 	}
+
 	replayed, waiting, err := coordinator.decide(context.Background(), lease)
-	if err != nil || waiting || !replayed.visible {
-		t.Fatalf("replayed consume = %+v, waiting=%v, err=%v", replayed, waiting, err)
+	{
+		testutil.Require(t, !(err != nil), "replayed consume = %+v, waiting=%v, err=%v", replayed, waiting, err)
+		testutil.Require(t, !(waiting), "replayed consume = %+v, waiting=%v, err=%v", replayed, waiting, err)
+		testutil.Require(t, replayed.visible, "replayed consume = %+v, waiting=%v, err=%v", replayed, waiting, err)
 	}
-	if got := string(replayed.result.Response.JSONBody); got != "idempotent-result" {
-		t.Fatalf("replayed result = %q, want idempotent-result", got)
+	{
+
+		got := string(replayed.result.Response.JSONBody)
+		testutil.Require(t, !(got != "idempotent-result"), "replayed result = %q, want idempotent-result", got)
 	}
-	if err := coordinator.publish(context.Background(), lease, shared); err != nil {
-		t.Fatalf("replayed publish after consume: %v", err)
+	{
+
+		err := coordinator.publish(context.Background(), lease, shared)
+		testutil.Require(t, !(err != nil), "replayed publish after consume: %v", err)
 	}
+
 }
 
 func TestResponseElectionFailedPublishAbortsFollowers(t *testing.T) {
@@ -418,27 +484,44 @@ func TestResponseElectionFailedPublishAbortsFollowers(t *testing.T) {
 
 	request := responseElectionTestRequest("publish-abort")
 	owner, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-owner"})
-	if err != nil {
-		t.Fatalf("join owner: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "join owner: %v", err)
+
 	follower, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-follower"})
-	if err != nil {
-		t.Fatalf("join follower: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "join follower: %v", err)
+
 	publishErr := errors.New("publish failed")
-	if err := coordinator.reconcileFailedPublish(owner, publishErr); !errors.Is(err, publishErr) || !errors.Is(err, errResponseElectionAborted) {
-		t.Fatalf("reconcile error = %v, want confirmed abort with original publish error", err)
+	{
+		err := coordinator.reconcileFailedPublish(owner, publishErr)
+		{
+			testutil.Require(t, errors.Is(err, publishErr), "reconcile error = %v, want confirmed abort with original publish error", err)
+			testutil.Require(t, errors.Is(err, errResponseElectionAborted), "reconcile error = %v, want confirmed abort with original publish error", err)
+		}
 	}
-	if closed, err := client.HGet(context.Background(), owner.stateKey, "closed").Result(); err != nil || closed != "1" {
-		t.Fatalf("closed state = %q (%v), want 1", closed, err)
+	{
+
+		closed, err := client.HGet(context.Background(), owner.stateKey, "closed").Result()
+		{
+			testutil.Require(t, !(err != nil), "closed state = %q (%v), want 1", closed, err)
+			testutil.Require(t, !(closed != "1"), "closed state = %q (%v), want 1", closed, err)
+		}
 	}
-	if exists, err := client.Exists(context.Background(), owner.legacyLockKey).Result(); err != nil || exists != 0 {
-		t.Fatalf("legacy lock exists after abort = %d (%v), want 0", exists, err)
+	{
+
+		exists, err := client.Exists(context.Background(), owner.legacyLockKey).Result()
+		{
+			testutil.Require(t, !(err != nil), "legacy lock exists after abort = %d (%v), want 0", exists, err)
+			testutil.Require(t, !(exists != 0), "legacy lock exists after abort = %d (%v), want 0", exists, err)
+		}
 	}
+
 	decision, waiting, err := coordinator.decide(context.Background(), follower)
-	if err != nil || waiting || decision.visible || decision.reason != "not_selected" {
-		t.Fatalf("follower after abort = %+v, waiting=%v, err=%v", decision, waiting, err)
+	{
+		testutil.Require(t, !(err != nil), "follower after abort = %+v, waiting=%v, err=%v", decision, waiting, err)
+		testutil.Require(t, !(waiting), "follower after abort = %+v, waiting=%v, err=%v", decision, waiting, err)
+		testutil.Require(t, !(decision.visible), "follower after abort = %+v, waiting=%v, err=%v", decision, waiting, err)
+		testutil.Require(t, !(decision.reason != "not_selected"), "follower after abort = %+v, waiting=%v, err=%v", decision, waiting, err)
 	}
+
 }
 
 func TestResponseElectionOnlyFailsOpenAfterConfirmedAbort(t *testing.T) {
@@ -455,16 +538,20 @@ func TestResponseElectionOnlyFailsOpenAfterConfirmedAbort(t *testing.T) {
 		result: result,
 		err:    errors.Join(errResponseElectionAborted, errors.New("publish failed")),
 	})
-	if !aborted.visible || aborted.reason != "publish_fail_open" {
-		t.Fatalf("confirmed abort decision = %+v, want visible fail-open", aborted)
+	{
+		testutil.Require(t, aborted.visible, "confirmed abort decision = %+v, want visible fail-open", aborted)
+		testutil.Require(t, !(aborted.reason != "publish_fail_open"), "confirmed abort decision = %+v, want visible fail-open", aborted)
 	}
+
 	unknown := coordinator.executorPublishFailureDecision(responseElectionExecutorResult{
 		result: result,
 		err:    errors.Join(errResponseElectionUnknown, errors.New("Redis unavailable")),
 	})
-	if unknown.visible || unknown.reason != "publish_unknown" {
-		t.Fatalf("unknown publication decision = %+v, want invisible unknown", unknown)
+	{
+		testutil.Require(t, !(unknown.visible), "unknown publication decision = %+v, want invisible unknown", unknown)
+		testutil.Require(t, !(unknown.reason != "publish_unknown"), "unknown publication decision = %+v, want invisible unknown", unknown)
 	}
+
 }
 
 func TestResponseElectionTTLAlwaysOutlivesConfiguredWindow(t *testing.T) {
@@ -479,18 +566,19 @@ func TestResponseElectionTTLAlwaysOutlivesConfiguredWindow(t *testing.T) {
 
 	request := responseElectionTestRequest("long-window")
 	lease, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-owner"})
-	if err != nil {
-		t.Fatalf("join: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "join: %v", err)
+
 	assertTTLExceedsResponseElectionWindow(t, client, lease.stateKey, window)
 	assertTTLExceedsResponseElectionWindow(t, client, lease.legacyLockKey, window)
-	if err := coordinator.publish(
-		context.Background(),
-		lease,
-		responseElectionTestResult("long-window-result", lease.botID, false),
-	); err != nil {
-		t.Fatalf("publish: %v", err)
+	{
+		err := coordinator.publish(
+			context.Background(),
+			lease,
+			responseElectionTestResult("long-window-result", lease.botID, false),
+		)
+		testutil.Require(t, !(err != nil), "publish: %v", err)
 	}
+
 	assertTTLExceedsResponseElectionWindow(t, client, lease.stateKey, window)
 	assertTTLExceedsResponseElectionWindow(t, client, lease.legacyLockKey, window)
 }
@@ -498,12 +586,9 @@ func TestResponseElectionTTLAlwaysOutlivesConfiguredWindow(t *testing.T) {
 func assertTTLExceedsResponseElectionWindow(t *testing.T, client *redis.Client, key string, window time.Duration) {
 	t.Helper()
 	ttl, err := client.PTTL(context.Background(), key).Result()
-	if err != nil {
-		t.Fatalf("PTTL %q: %v", key, err)
-	}
-	if ttl <= window {
-		t.Fatalf("PTTL %q = %s, must exceed window %s", key, ttl, window)
-	}
+	testutil.Require(t, !(err != nil), "PTTL %q: %v", key, err)
+	testutil.Require(t, !(ttl <= window), "PTTL %q = %s, must exceed window %s", key, ttl, window)
+
 }
 
 func TestResponseElectionReelectsWhenSelectedCandidateDisappears(t *testing.T) {
@@ -519,46 +604,54 @@ func TestResponseElectionReelectsWhenSelectedCandidateDisappears(t *testing.T) {
 
 	request := responseElectionTestRequest("stale-winner")
 	executorLease, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: "bot-executor"})
-	if err != nil {
-		t.Fatalf("join executor: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "join executor: %v", err)
+
 	seed, err := client.HGet(context.Background(), executorLease.stateKey, "seed").Result()
-	if err != nil {
-		t.Fatalf("read election seed: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "read election seed: %v", err)
+
 	ghostBotID := responseElectionFollowerWithLowerScore(t, seed, executorLease.botID)
 	ghostLease, err := coordinator.join(context.Background(), responseElectionRequest{Request: request, BotID: ghostBotID})
-	if err != nil {
-		t.Fatalf("join disappearing candidate: %v", err)
-	}
-	if ghostLease.role != responseElectionFollower {
-		t.Fatalf("disappearing candidate role = %d, want follower", ghostLease.role)
-	}
-	if err := coordinator.publish(
-		context.Background(),
-		executorLease,
-		responseElectionTestResult("reelected-result", executorLease.botID, false),
-	); err != nil {
-		t.Fatalf("publish: %v", err)
+	testutil.Require(t, !(err != nil), "join disappearing candidate: %v", err)
+	testutil.Require(t, !(ghostLease.role != responseElectionFollower), "disappearing candidate role = %d, want follower", ghostLease.role)
+	{
+
+		err := coordinator.publish(
+			context.Background(),
+			executorLease,
+			responseElectionTestResult("reelected-result", executorLease.botID, false),
+		)
+		testutil.Require(t, !(err != nil), "publish: %v", err)
 	}
 
 	server.SetTime(baseTime.Add(coordinator.window + time.Millisecond))
 	decision, waiting, err := coordinator.decide(context.Background(), executorLease)
-	if err != nil || !waiting || decision.visible {
-		t.Fatalf("decision while ghost owns claim = %+v, waiting=%v, err=%v", decision, waiting, err)
+	{
+		testutil.Require(t, !(err != nil), "decision while ghost owns claim = %+v, waiting=%v, err=%v", decision, waiting, err)
+		testutil.Require(t, waiting, "decision while ghost owns claim = %+v, waiting=%v, err=%v", decision, waiting, err)
+		testutil.Require(t, !(decision.visible), "decision while ghost owns claim = %+v, waiting=%v, err=%v", decision, waiting, err)
 	}
-	if got, err := client.HGet(context.Background(), executorLease.stateKey, "winner_bot").Result(); err != nil || got != ghostBotID {
-		t.Fatalf("initial winner = %q (%v), want ghost %q", got, err, ghostBotID)
+	{
+
+		got, err := client.HGet(context.Background(), executorLease.stateKey, "winner_bot").Result()
+		{
+			testutil.Require(t, !(err != nil), "initial winner = %q (%v), want ghost %q", got, err, ghostBotID)
+			testutil.Require(t, !(got != ghostBotID), "initial winner = %q (%v), want ghost %q", got, err, ghostBotID)
+		}
 	}
 
 	server.SetTime(baseTime.Add(coordinator.window + responseElectionWinnerClaim + 2*time.Millisecond))
 	decision, waiting, err = coordinator.decide(context.Background(), executorLease)
-	if err != nil || waiting || !decision.visible {
-		t.Fatalf("decision after stale claim = %+v, waiting=%v, err=%v", decision, waiting, err)
+	{
+		testutil.Require(t, !(err != nil), "decision after stale claim = %+v, waiting=%v, err=%v", decision, waiting, err)
+		testutil.Require(t, !(waiting), "decision after stale claim = %+v, waiting=%v, err=%v", decision, waiting, err)
+		testutil.Require(t, decision.visible, "decision after stale claim = %+v, waiting=%v, err=%v", decision, waiting, err)
 	}
-	if got := string(decision.result.Response.JSONBody); got != "reelected-result" {
-		t.Fatalf("reelected result = %q, want reelected-result", got)
+	{
+
+		got := string(decision.result.Response.JSONBody)
+		testutil.Require(t, !(got != "reelected-result"), "reelected result = %q, want reelected-result", got)
 	}
+
 }
 
 type responseElectionTestRig struct {
@@ -748,16 +841,12 @@ func assertSingleVisibleResponseElectionOutcome(
 			visible = append(visible, outcome)
 			continue
 		}
-		if outcome.decision.reason != "not_selected" {
-			t.Errorf("losing bot %s reason = %q, want not_selected", outcome.botID, outcome.decision.reason)
-		}
+		testutil.Check(t, !(outcome.decision.reason != "not_selected"), "losing bot %s reason = %q, want not_selected", outcome.botID, outcome.decision.reason)
+
 	}
-	if len(visible) != 1 {
-		t.Fatalf("visible decisions = %d, want 1; outcomes=%+v", len(visible), outcomes)
-	}
-	if visible[0].decision.reason != "selected" {
-		t.Fatalf("winner reason = %q, want selected", visible[0].decision.reason)
-	}
+	testutil.Require(t, !(len(visible) != 1), "visible decisions = %d, want 1; outcomes=%+v", len(visible), outcomes)
+	testutil.Require(t, !(visible[0].decision.reason != "selected"), "winner reason = %q, want selected", visible[0].decision.reason)
+
 	return visible[0]
 }
 

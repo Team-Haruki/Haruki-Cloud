@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	"testing"
 
 	"haruki-cloud/internal/pjsk/parser"
@@ -24,12 +25,16 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 			checkParam: func(t *testing.T, raw []byte) {
 				t.Helper()
 				var params card.Query
-				if err := json.Unmarshal(raw, &params); err != nil {
-					t.Fatalf("unmarshal params: %v", err)
+				{
+					err := json.Unmarshal(raw, &params)
+					testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 				}
-				if params.Query != "1001" || params.Region != "jp" {
-					t.Fatalf("unexpected params: %+v", params)
+				{
+
+					testutil.Require(t, !(params.Query != "1001"), "unexpected params: %+v", params)
+					testutil.Require(t, !(params.Region != "jp"), "unexpected params: %+v", params)
 				}
+
 			},
 		},
 		{
@@ -39,12 +44,16 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 			checkParam: func(t *testing.T, raw []byte) {
 				t.Helper()
 				var params card.Query
-				if err := json.Unmarshal(raw, &params); err != nil {
-					t.Fatalf("unmarshal params: %v", err)
+				{
+					err := json.Unmarshal(raw, &params)
+					testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 				}
-				if params.Query != "-1" || params.Region != "jp" {
-					t.Fatalf("unexpected params: %+v", params)
+				{
+
+					testutil.Require(t, !(params.Query != "-1"), "unexpected params: %+v", params)
+					testutil.Require(t, !(params.Region != "jp"), "unexpected params: %+v", params)
 				}
+
 			},
 		},
 		{
@@ -54,12 +63,16 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 			checkParam: func(t *testing.T, raw []byte) {
 				t.Helper()
 				var params card.Query
-				if err := json.Unmarshal(raw, &params); err != nil {
-					t.Fatalf("unmarshal params: %v", err)
+				{
+					err := json.Unmarshal(raw, &params)
+					testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 				}
-				if params.Query != "mnr-1" || params.Region != "jp" {
-					t.Fatalf("unexpected params: %+v", params)
+				{
+
+					testutil.Require(t, !(params.Query != "mnr-1"), "unexpected params: %+v", params)
+					testutil.Require(t, !(params.Region != "jp"), "unexpected params: %+v", params)
 				}
+
 			},
 		},
 		{
@@ -69,12 +82,16 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 			checkParam: func(t *testing.T, raw []byte) {
 				t.Helper()
 				var params card.ListRequest
-				if err := json.Unmarshal(raw, &params); err != nil {
-					t.Fatalf("unmarshal params: %v", err)
+				{
+					err := json.Unmarshal(raw, &params)
+					testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 				}
-				if params.Query != "mnr 4星" || params.Region != "jp" {
-					t.Fatalf("unexpected params: %+v", params)
+				{
+
+					testutil.Require(t, !(params.Query != "mnr 4星"), "unexpected params: %+v", params)
+					testutil.Require(t, !(params.Region != "jp"), "unexpected params: %+v", params)
 				}
+
 			},
 		},
 		{
@@ -89,12 +106,18 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 					UnownedOnly      bool `json:"unowned_only"`
 					UseAfterTraining bool `json:"use_after_training"`
 				}
-				if err := json.Unmarshal(raw, &params); err != nil {
-					t.Fatalf("unmarshal params: %v", err)
+				{
+					err := json.Unmarshal(raw, &params)
+					testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 				}
-				if !params.ShowID || !params.ShowBox || !params.UnownedOnly || params.UseAfterTraining {
-					t.Fatalf("unexpected params: %+v", params)
+				{
+
+					testutil.Require(t, params.ShowID, "unexpected params: %+v", params)
+					testutil.Require(t, params.ShowBox, "unexpected params: %+v", params)
+					testutil.Require(t, params.UnownedOnly, "unexpected params: %+v", params)
+					testutil.Require(t, !(params.UseAfterTraining), "unexpected params: %+v", params)
 				}
+
 			},
 		},
 	}
@@ -118,35 +141,33 @@ func TestCardDetailAndListHandlersShareDispatchRules(t *testing.T) {
 					TriggerCmd: "/查卡",
 					ArgText:    tt.args,
 				})
-				if err != nil {
-					t.Fatalf("Handle() error = %v", err)
-				}
+				testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 				resolved := result
-				if resolved == nil {
-					t.Fatal("expected command request, got nil")
-				}
+				testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+
 				expectedMode := tt.wantMode
 				if builder.name == "list" && tt.wantMode != "card-box" {
 					expectedMode = "card-list"
 				}
-				if resolved.Module != parser.ModuleCard || resolved.Mode != expectedMode {
-					t.Fatalf("unexpected command request: %+v", resolved)
+				{
+					testutil.Require(t, !(resolved.Module != parser.ModuleCard), "unexpected command request: %+v", resolved)
+					testutil.Require(t, !(resolved.Mode != expectedMode), "unexpected command request: %+v", resolved)
 				}
+
 				tt.checkParam(t, resolved.Params)
 				if builder.name == "list" && resolved.Mode == "card-list" {
 					var params card.ListRequest
-					if err := json.Unmarshal(resolved.Params, &params); err != nil {
-						t.Fatalf("unmarshal strict list params: %v", err)
+					{
+						err := json.Unmarshal(resolved.Params, &params)
+						testutil.Require(t, !(err != nil), "unmarshal strict list params: %v", err)
 					}
-					if !params.StrictFilterOnly {
-						t.Fatalf("expected strict filter mode for card-list handler, got %+v", params)
-					}
-				}
 
-				if tt.wantMode == "card-box" && resolved.Query != "mnr 4星" {
-					t.Fatalf("unexpected cleaned query: %q", resolved.Query)
+					testutil.Require(t, params.StrictFilterOnly, "expected strict filter mode for card-list handler, got %+v", params)
+
 				}
+				testutil.Require(t, !(tt.wantMode == "card-box" && resolved.Query != "mnr 4星"), "unexpected cleaned query: %q", resolved.Query)
+
 			})
 		}
 	}
@@ -161,25 +182,27 @@ func TestCardListHandlePrefers25UnitAliasOverCardID(t *testing.T) {
 		TriggerCmd: "/卡牌列表",
 		ArgText:    "25",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleCard), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "card-list"), "unexpected command request: %+v", resolved)
 	}
 
 	var params card.ListRequest
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Query != "25" || params.Region != "jp" {
-		t.Fatalf("unexpected params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.Query != "25"), "unexpected params: %+v", params)
+		testutil.Require(t, !(params.Region != "jp"), "unexpected params: %+v", params)
 	}
+
 }
 
 func TestCardListHandlePrefersBare4RarityOverSingleCardID(t *testing.T) {
@@ -191,25 +214,27 @@ func TestCardListHandlePrefersBare4RarityOverSingleCardID(t *testing.T) {
 		TriggerCmd: "/卡牌列表",
 		ArgText:    "4",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleCard), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "card-list"), "unexpected command request: %+v", resolved)
 	}
 
 	var params card.ListRequest
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Query != "4" || params.Region != "jp" {
-		t.Fatalf("unexpected params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.Query != "4"), "unexpected params: %+v", params)
+		testutil.Require(t, !(params.Region != "jp"), "unexpected params: %+v", params)
 	}
+
 }
 
 func TestCardListHandleSupportsLunabotCharacterAlias(t *testing.T) {
@@ -221,25 +246,27 @@ func TestCardListHandleSupportsLunabotCharacterAlias(t *testing.T) {
 		TriggerCmd: "/卡牌列表",
 		ArgText:    "tks 4",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleCard), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "card-list"), "unexpected command request: %+v", resolved)
 	}
 
 	var params card.ListRequest
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Query != "tks 4" || params.Region != "jp" {
-		t.Fatalf("unexpected params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.Query != "tks 4"), "unexpected params: %+v", params)
+		testutil.Require(t, !(params.Region != "jp"), "unexpected params: %+v", params)
 	}
+
 }
 
 func TestCardBoxHandleTreats25AsStrictFilterQuery(t *testing.T) {
@@ -251,30 +278,27 @@ func TestCardBoxHandleTreats25AsStrictFilterQuery(t *testing.T) {
 		TriggerCmd: "/卡牌一览",
 		ArgText:    "25",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleCard), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "card-box"), "unexpected command request: %+v", resolved)
 	}
-	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-box" {
-		t.Fatalf("unexpected command request: %+v", resolved)
-	}
-	if resolved.Query != "25" {
-		t.Fatalf("unexpected box query: %q", resolved.Query)
-	}
+	testutil.Require(t, !(resolved.Query != "25"), "unexpected box query: %q", resolved.Query)
 
 	var params struct {
 		StrictFilterOnly bool `json:"strict_filter_only"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.StrictFilterOnly {
-		t.Fatalf("expected strict filter mode for /卡牌一览 25, got %+v", params)
-	}
+
+	testutil.Require(t, params.StrictFilterOnly, "expected strict filter mode for /卡牌一览 25, got %+v", params)
+
 }
 
 func TestCardBoxHandleParsesAttributeGrouping(t *testing.T) {
@@ -286,32 +310,33 @@ func TestCardBoxHandleParsesAttributeGrouping(t *testing.T) {
 		TriggerCmd: "/卡牌一览",
 		ArgText:    "mnr 4 属性 未持有",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleCard), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "card-box"), "unexpected command request: %+v", resolved)
 	}
-	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-box" {
-		t.Fatalf("unexpected command request: %+v", resolved)
-	}
-	if resolved.Query != "mnr 4" {
-		t.Fatalf("unexpected cleaned query: %q", resolved.Query)
-	}
+	testutil.Require(t, !(resolved.Query != "mnr 4"), "unexpected cleaned query: %q", resolved.Query)
 
 	var params struct {
 		GroupBy          string `json:"group_by"`
 		UnownedOnly      bool   `json:"unowned_only"`
 		StrictFilterOnly bool   `json:"strict_filter_only"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.GroupBy != card.CardBoxGroupByAttr || !params.UnownedOnly || !params.StrictFilterOnly {
-		t.Fatalf("unexpected card box grouping params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.GroupBy != card.CardBoxGroupByAttr), "unexpected card box grouping params: %+v", params)
+		testutil.Require(t, params.UnownedOnly, "unexpected card box grouping params: %+v", params)
+		testutil.Require(t, params.StrictFilterOnly, "unexpected card box grouping params: %+v", params)
 	}
+
 }
 
 func TestCardListHandleEmbedsSelfSelector(t *testing.T) {
@@ -325,20 +350,16 @@ func TestCardListHandleEmbedsSelfSelector(t *testing.T) {
 		TriggerCmd: "/卡牌列表",
 		ArgText:    "u2 mnr 4星",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleCard), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "card-list"), "unexpected command request: %+v", resolved)
 	}
-	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-list" {
-		t.Fatalf("unexpected command request: %+v", resolved)
-	}
-	if resolved.Query != "mnr 4星" {
-		t.Fatalf("unexpected cleaned query: %q", resolved.Query)
-	}
+	testutil.Require(t, !(resolved.Query != "mnr 4星"), "unexpected cleaned query: %q", resolved.Query)
 
 	var params struct {
 		Mode             string `json:"mode"`
@@ -349,15 +370,23 @@ func TestCardListHandleEmbedsSelfSelector(t *testing.T) {
 		Region           string `json:"region"`
 		StrictFilterOnly bool   `json:"strict_filter_only"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
-		t.Fatalf("unexpected self params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.Mode != "self"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.Platform != "qq"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.PlatformUserID != "42"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.Selector != "u2"), "unexpected self params: %+v", params)
 	}
-	if params.Query != "mnr 4星" || params.Region != "jp" || !params.StrictFilterOnly {
-		t.Fatalf("unexpected card list params: %+v", params)
+	{
+		testutil.Require(t, !(params.Query != "mnr 4星"), "unexpected card list params: %+v", params)
+		testutil.Require(t, !(params.Region != "jp"), "unexpected card list params: %+v", params)
+		testutil.Require(t, params.StrictFilterOnly, "unexpected card list params: %+v", params)
 	}
+
 }
 
 func TestCardBoxHandleEmbedsSelfSelector(t *testing.T) {
@@ -371,20 +400,16 @@ func TestCardBoxHandleEmbedsSelfSelector(t *testing.T) {
 		TriggerCmd: "/卡牌一览",
 		ArgText:    "u2 mnr 4星 box id before",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleCard), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "card-box"), "unexpected command request: %+v", resolved)
 	}
-	if resolved.Module != parser.ModuleCard || resolved.Mode != "card-box" {
-		t.Fatalf("unexpected command request: %+v", resolved)
-	}
-	if resolved.Query != "mnr 4星" {
-		t.Fatalf("unexpected cleaned query: %q", resolved.Query)
-	}
+	testutil.Require(t, !(resolved.Query != "mnr 4星"), "unexpected cleaned query: %q", resolved.Query)
 
 	var params struct {
 		Mode             string `json:"mode"`
@@ -396,13 +421,22 @@ func TestCardBoxHandleEmbedsSelfSelector(t *testing.T) {
 		UseAfterTraining bool   `json:"use_after_training"`
 		StrictFilterOnly bool   `json:"strict_filter_only"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
-		t.Fatalf("unexpected self params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.Mode != "self"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.Platform != "qq"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.PlatformUserID != "42"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.Selector != "u2"), "unexpected self params: %+v", params)
 	}
-	if !params.ShowID || !params.ShowBox || params.UseAfterTraining || !params.StrictFilterOnly {
-		t.Fatalf("unexpected card box params: %+v", params)
+	{
+		testutil.Require(t, params.ShowID, "unexpected card box params: %+v", params)
+		testutil.Require(t, params.ShowBox, "unexpected card box params: %+v", params)
+		testutil.Require(t, !(params.UseAfterTraining), "unexpected card box params: %+v", params)
+		testutil.Require(t, params.StrictFilterOnly, "unexpected card box params: %+v", params)
 	}
+
 }

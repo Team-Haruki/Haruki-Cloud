@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"haruki-cloud/internal/testutil"
 	"regexp"
 	"testing"
 	"time"
@@ -8,11 +9,21 @@ import (
 
 func TestExtractorFeatureBranches(t *testing.T) {
 	ext := NewExtractor(map[string]int{"miku": 21, "hatsune miku": 21})
-	if got := ext.ExtractCharacter("HATSUNE MIKU card"); !got.Found || got.Value != 21 || got.Remaining != "card" {
-		t.Fatalf("unexpected character extraction: %+v", got)
+	{
+		got := ext.ExtractCharacter("HATSUNE MIKU card")
+		{
+			testutil.Require(t, got.Found, "unexpected character extraction: %+v", got)
+			testutil.Require(t, !(got.Value != 21), "unexpected character extraction: %+v", got)
+			testutil.Require(t, !(got.Remaining != "card"), "unexpected character extraction: %+v", got)
+		}
 	}
-	if got := ext.ExtractCharacter("unknown"); got.Found || got.Remaining != "unknown" {
-		t.Fatalf("unexpected missing character extraction: %+v", got)
+	{
+
+		got := ext.ExtractCharacter("unknown")
+		{
+			testutil.Require(t, !(got.Found), "unexpected missing character extraction: %+v", got)
+			testutil.Require(t, !(got.Remaining != "unknown"), "unexpected missing character extraction: %+v", got)
+		}
 	}
 
 	stringCases := []struct {
@@ -28,9 +39,11 @@ func TestExtractorFeatureBranches(t *testing.T) {
 	}
 	for _, tc := range stringCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.got.Found || tc.got.Value != tc.want {
-				t.Fatalf("unexpected extraction: %+v, want %q", tc.got, tc.want)
+			{
+				testutil.Require(t, tc.got.Found, "unexpected extraction: %+v, want %q", tc.got, tc.want)
+				testutil.Require(t, !(tc.got.Value != tc.want), "unexpected extraction: %+v, want %q", tc.got, tc.want)
 			}
+
 		})
 	}
 	for _, got := range []ExtractResult[string]{
@@ -40,22 +53,34 @@ func TestExtractorFeatureBranches(t *testing.T) {
 		ext.ExtractSupply("none"),
 		ext.ExtractRegion("none"),
 	} {
-		if got.Found {
-			t.Fatalf("unexpected match: %+v", got)
+		testutil.Require(t, !(got.Found), "unexpected match: %+v", got)
+
+	}
+	{
+
+		got := ext.ExtractHelp(" -HELP ")
+		{
+			testutil.Require(t, got.Found, "unexpected help extraction: %+v", got)
+			testutil.Require(t, !(got.Remaining != ""), "unexpected help extraction: %+v", got)
 		}
 	}
+	{
 
-	if got := ext.ExtractHelp(" -HELP "); !got.Found || got.Remaining != "" {
-		t.Fatalf("unexpected help extraction: %+v", got)
+		got := ext.ExtractHelp("help")
+		testutil.Require(t, !(got.Found), "unexpected help match: %+v", got)
 	}
-	if got := ext.ExtractHelp("help"); got.Found {
-		t.Fatalf("unexpected help match: %+v", got)
+	{
+
+		got := ext.ExtractVerbose("card --verbose list")
+		{
+			testutil.Require(t, got.Found, "unexpected verbose extraction: %+v", got)
+			testutil.Require(t, !(got.Remaining != "card list"), "unexpected verbose extraction: %+v", got)
+		}
 	}
-	if got := ext.ExtractVerbose("card --verbose list"); !got.Found || got.Remaining != "card list" {
-		t.Fatalf("unexpected verbose extraction: %+v", got)
-	}
-	if got := ext.ExtractVerbose("card"); got.Found {
-		t.Fatalf("unexpected verbose match: %+v", got)
+	{
+
+		got := ext.ExtractVerbose("card")
+		testutil.Require(t, !(got.Found), "unexpected verbose match: %+v", got)
 	}
 
 	year := time.Now().Year()
@@ -69,57 +94,98 @@ func TestExtractorFeatureBranches(t *testing.T) {
 		{"今年 event", year},
 	} {
 		got := ext.ExtractYear(tc.input)
-		if !got.Found || got.Value != tc.want {
-			t.Fatalf("ExtractYear(%q) = %+v, want %d", tc.input, got, tc.want)
+		{
+			testutil.Require(t, got.Found, "ExtractYear(%q) = %+v, want %d", tc.input, got, tc.want)
+			testutil.Require(t, !(got.Value != tc.want), "ExtractYear(%q) = %+v, want %d", tc.input, got, tc.want)
+		}
+
+	}
+	{
+		got := ext.ExtractYear("event")
+		testutil.Require(t, !(got.Found), "unexpected year match: %+v", got)
+	}
+	{
+
+		got := ext.ExtractID(" 123 ")
+		{
+			testutil.Require(t, got.Found, "unexpected id extraction: %+v", got)
+			testutil.Require(t, !(got.Value != 123), "unexpected id extraction: %+v", got)
+			testutil.Require(t, !(got.Remaining != ""), "unexpected id extraction: %+v", got)
 		}
 	}
-	if got := ext.ExtractYear("event"); got.Found {
-		t.Fatalf("unexpected year match: %+v", got)
+	{
+
+		got := ext.ExtractID("12x")
+		testutil.Require(t, !(got.Found), "unexpected id match: %+v", got)
 	}
-	if got := ext.ExtractID(" 123 "); !got.Found || got.Value != 123 || got.Remaining != "" {
-		t.Fatalf("unexpected id extraction: %+v", got)
-	}
-	if got := ext.ExtractID("12x"); got.Found {
-		t.Fatalf("unexpected id match: %+v", got)
-	}
+
 }
 
 func TestExtractorLowLevelBranches(t *testing.T) {
 	rules := buildRules(map[string]string{"ab": "short", "abc": "long", "中文": "cn"})
-	if got := extractByRules("ABC rest", rules); !got.Found || got.Value != "long" {
-		t.Fatalf("longest ASCII rule was not preferred: %+v", got)
+	{
+		got := extractByRules("ABC rest", rules)
+		{
+			testutil.Require(t, got.Found, "longest ASCII rule was not preferred: %+v", got)
+			testutil.Require(t, !(got.Value != "long"), "longest ASCII rule was not preferred: %+v", got)
+		}
 	}
-	if got := extractByRules("x中文y", rules); !got.Found || got.Value != "cn" {
-		t.Fatalf("unicode rule did not match: %+v", got)
+	{
+
+		got := extractByRules("x中文y", rules)
+		{
+			testutil.Require(t, got.Found, "unicode rule did not match: %+v", got)
+			testutil.Require(t, !(got.Value != "cn"), "unicode rule did not match: %+v", got)
+		}
 	}
-	if got := extractByRules("zabz", rules); got.Found {
-		t.Fatalf("ASCII word boundary should prevent match: %+v", got)
+	{
+
+		got := extractByRules("zabz", rules)
+		testutil.Require(t, !(got.Found), "ASCII word boundary should prevent match: %+v", got)
 	}
 
 	re := regexp.MustCompile(`@(\d+)`)
 	value, remaining, ok := extractFirstMatch("x @123 y", re, "@")
-	if !ok || value != "@123" || remaining != "x  y" {
-		t.Fatalf("unexpected subgroup extraction: value=%q remaining=%q ok=%v", value, remaining, ok)
+	{
+		testutil.Require(t, ok, "unexpected subgroup extraction: value=%q remaining=%q ok=%v", value, remaining, ok)
+		testutil.Require(t, !(value != "@123"), "unexpected subgroup extraction: value=%q remaining=%q ok=%v", value, remaining, ok)
+		testutil.Require(t, !(remaining != "x  y"), "unexpected subgroup extraction: value=%q remaining=%q ok=%v", value, remaining, ok)
 	}
-	if value, remaining, ok := extractFirstMatch("none", re, "@"); ok || value != "" || remaining != "none" {
-		t.Fatalf("unexpected missing subgroup extraction: %q %q %v", value, remaining, ok)
+	{
+
+		value, remaining, ok := extractFirstMatch("none", re, "@")
+		{
+			testutil.Require(t, !(ok), "unexpected missing subgroup extraction: %q %q %v", value, remaining, ok)
+			testutil.Require(t, !(value != ""), "unexpected missing subgroup extraction: %q %q %v", value, remaining, ok)
+			testutil.Require(t, !(remaining != "none"), "unexpected missing subgroup extraction: %q %q %v", value, remaining, ok)
+		}
 	}
-	if _, _, ok := extractUIDIndexArg("prefixu2 suffix"); ok {
-		t.Fatal("embedded uid index should not match")
+	{
+
+		_, _, ok := extractUIDIndexArg("prefixu2 suffix")
+		testutil.RequireArgs(t, !(ok), "embedded uid index should not match")
 	}
-	if !isUIDIndexTokenBoundary("a", 0) || !isUIDIndexTokenBoundary("a", 1) {
-		t.Fatal("edge indexes should be boundaries")
+	{
+		testutil.RequireArgs(t, isUIDIndexTokenBoundary("a", 0), "edge indexes should be boundaries")
+		testutil.RequireArgs(t, isUIDIndexTokenBoundary("a", 1), "edge indexes should be boundaries")
 	}
+
 }
 
 func TestEventParserCoversIdentifierSequenceAndFilterBranches(t *testing.T) {
 	var nilParser *EventParser
-	if _, ok := nilParser.CharacterIDByNickname("miku"); ok {
-		t.Fatal("nil parser should not resolve nicknames")
+	{
+		_, ok := nilParser.CharacterIDByNickname("miku")
+		testutil.RequireArgs(t, !(ok), "nil parser should not resolve nicknames")
 	}
+
 	parser := NewEventParser(map[string]int{"": 99, "miku": 21, "miku long": 22, "rin": 22})
-	if id, ok := parser.CharacterIDByNickname(" MIKU "); !ok || id != 21 {
-		t.Fatalf("unexpected nickname result: %d %v", id, ok)
+	{
+		id, ok := parser.CharacterIDByNickname(" MIKU ")
+		{
+			testutil.Require(t, ok, "unexpected nickname result: %d %v", id, ok)
+			testutil.Require(t, !(id != 21), "unexpected nickname result: %d %v", id, ok)
+		}
 	}
 
 	valid := []string{
@@ -130,9 +196,14 @@ func TestEventParserCoversIdentifierSequenceAndFilterBranches(t *testing.T) {
 		"miku rin", "miku箱", "rinban", "blend", "only vbs", "仅25h",
 	}
 	for _, input := range valid {
-		if info, err := parser.Parse(input); err != nil || info == nil {
-			t.Fatalf("Parse(%q) = %+v, %v", input, info, err)
+		{
+			info, err := parser.Parse(input)
+			{
+				testutil.Require(t, !(err != nil), "Parse(%q) = %+v, %v", input, info, err)
+				testutil.Require(t, !(info == nil), "Parse(%q) = %+v, %v", input, info, err)
+			}
 		}
+
 	}
 
 	invalid := []string{
@@ -140,26 +211,50 @@ func TestEventParserCoversIdentifierSequenceAndFilterBranches(t *testing.T) {
 		"blend vbs", "vbs blend", "only blend", "world0", "worldx",
 	}
 	for _, input := range invalid {
-		if info, err := parser.Parse(input); err == nil || info != nil {
-			t.Fatalf("Parse(%q) unexpectedly succeeded: %+v", input, info)
+		{
+			info, err := parser.Parse(input)
+			{
+				testutil.Require(t, !(err == nil), "Parse(%q) unexpectedly succeeded: %+v", input, info)
+				testutil.Require(t, !(info != nil), "Parse(%q) unexpectedly succeeded: %+v", input, info)
+			}
+		}
+
+	}
+	{
+
+		turn, ok := parseEventWorldBloomTurn("WORLD3")
+		{
+			testutil.Require(t, ok, "unexpected world bloom turn: %d %v", turn, ok)
+			testutil.Require(t, !(turn != 3), "unexpected world bloom turn: %d %v", turn, ok)
 		}
 	}
 
-	if turn, ok := parseEventWorldBloomTurn("WORLD3"); !ok || turn != 3 {
-		t.Fatalf("unexpected world bloom turn: %d %v", turn, ok)
-	}
 	for _, input := range []string{"wl", "wl0", "world-nope", "other2"} {
-		if _, ok := parseEventWorldBloomTurn(input); ok {
-			t.Fatalf("unexpected world bloom turn match for %q", input)
+		{
+			_, ok := parseEventWorldBloomTurn(input)
+			testutil.Require(t, !(ok), "unexpected world bloom turn match for %q", input)
+		}
+
+	}
+	{
+		got, ok := stripEventOnlyUnitPrefix("onlyvbs")
+		{
+			testutil.Require(t, ok, "unexpected only prefix: %q %v", got, ok)
+			testutil.Require(t, !(got != "vbs"), "unexpected only prefix: %q %v", got, ok)
 		}
 	}
-	if got, ok := stripEventOnlyUnitPrefix("onlyvbs"); !ok || got != "vbs" {
-		t.Fatalf("unexpected only prefix: %q %v", got, ok)
+	{
+
+		got, ok := stripEventOnlyUnitPrefix("only")
+		{
+			testutil.Require(t, !(ok), "unexpected empty only prefix: %q %v", got, ok)
+			testutil.Require(t, !(got != "only"), "unexpected empty only prefix: %q %v", got, ok)
+		}
 	}
-	if got, ok := stripEventOnlyUnitPrefix("only"); ok || got != "only" {
-		t.Fatalf("unexpected empty only prefix: %q %v", got, ok)
+	{
+
+		got := normalizeEventToken("  WORLD  Link  ")
+		testutil.Require(t, !(got != "worldlink"), "unexpected normalized token: %q", got)
 	}
-	if got := normalizeEventToken("  WORLD  Link  "); got != "worldlink" {
-		t.Fatalf("unexpected normalized token: %q", got)
-	}
+
 }

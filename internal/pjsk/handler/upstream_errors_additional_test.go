@@ -9,15 +9,16 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/drawing"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestNormalizeTrackerUserFacingErrorMatrix(t *testing.T) {
-	if normalizeTrackerUserFacingError(nil) != nil {
-		t.Fatal("nil error should remain nil")
-	}
+	testutil.RequireArgs(t, !(normalizeTrackerUserFacingError(nil) != nil), "nil error should remain nil")
+
 	replay := onebot11.NewReplayError("already normalized")
-	if got := normalizeTrackerUserFacingError(replay); got.Error() != replay.Error() {
-		t.Fatalf("replay error changed: %v", got)
+	{
+		got := normalizeTrackerUserFacingError(replay)
+		testutil.Require(t, !(got.Error() != replay.Error()), "replay error changed: %v", got)
 	}
 
 	tests := []struct {
@@ -49,19 +50,22 @@ func TestNormalizeTrackerUserFacingErrorMatrix(t *testing.T) {
 	}
 
 	original := errors.New("unclassified")
-	if got := normalizeTrackerUserFacingError(original); got != original {
-		t.Fatalf("unclassified error changed: %v", got)
+	{
+		got := normalizeTrackerUserFacingError(original)
+		testutil.Require(t, !(got != original), "unclassified error changed: %v", got)
 	}
+
 }
 
 func TestNormalizeDrawingUserFacingErrorMatrix(t *testing.T) {
-	if normalizeDrawingUserFacingError(nil) != nil {
-		t.Fatal("nil error should remain nil")
-	}
+	testutil.RequireArgs(t, !(normalizeDrawingUserFacingError(nil) != nil), "nil error should remain nil")
+
 	replay := onebot11.NewReplayError("already normalized")
-	if got := normalizeDrawingUserFacingError(replay); got.Error() != replay.Error() {
-		t.Fatalf("replay error changed: %v", got)
+	{
+		got := normalizeDrawingUserFacingError(replay)
+		testutil.Require(t, !(got.Error() != replay.Error()), "replay error changed: %v", got)
 	}
+
 	tests := []struct {
 		name string
 		err  error
@@ -87,18 +91,20 @@ func TestNormalizeDrawingUserFacingErrorMatrix(t *testing.T) {
 		})
 	}
 	original := errors.New("unclassified drawing failure")
-	if got := normalizeDrawingUserFacingError(original); got != original {
-		t.Fatalf("unclassified error changed: %v", got)
+	{
+		got := normalizeDrawingUserFacingError(original)
+		testutil.Require(t, !(got != original), "unclassified error changed: %v", got)
 	}
+
 }
 
 func TestDrawingDataInsufficientClassification(t *testing.T) {
-	if normalizeSKPlayerTraceDrawingError(nil) != nil {
-		t.Fatal("nil should remain nil")
-	}
+	testutil.RequireArgs(t, !(normalizeSKPlayerTraceDrawingError(nil) != nil), "nil should remain nil")
+
 	replay := onebot11.NewReplayError("kept")
-	if got := normalizeSKPlayerTraceDrawingError(replay); got.Error() != replay.Error() {
-		t.Fatalf("replay changed: %v", got)
+	{
+		got := normalizeSKPlayerTraceDrawingError(replay)
+		testutil.Require(t, !(got.Error() != replay.Error()), "replay changed: %v", got)
 	}
 
 	positive := []error{
@@ -111,28 +117,33 @@ func TestDrawingDataInsufficientClassification(t *testing.T) {
 		errors.New(`{"detail":"data insufficient"}`),
 	}
 	for _, err := range positive {
-		if !isDrawingDataInsufficientError(err) {
-			t.Errorf("expected insufficient classification for %q", err)
-		}
+		testutil.Check(t, isDrawingDataInsufficientError(err), "expected insufficient classification for %q", err)
+
 		assertReplayErrorText(t, normalizeSKPlayerTraceDrawingError(err), "玩家轨迹数据不足，暂时无法渲染")
 	}
-	if isDrawingDataInsufficientError(nil) || isDrawingDataInsufficientError(errors.New("")) || isDrawingDataInsufficientError(errors.New("other")) {
-		t.Fatal("unexpected insufficient classification")
+	{
+		testutil.RequireArgs(t, !(isDrawingDataInsufficientError(nil)), "unexpected insufficient classification")
+		testutil.RequireArgs(t, !(isDrawingDataInsufficientError(errors.New(""))), "unexpected insufficient classification")
+		testutil.RequireArgs(t, !(isDrawingDataInsufficientError(errors.New("other"))), "unexpected insufficient classification")
 	}
+
 	original := errors.New("other")
-	if got := normalizeSKPlayerTraceDrawingError(original); got != original {
-		t.Fatalf("unclassified trace error changed: %v", got)
+	{
+		got := normalizeSKPlayerTraceDrawingError(original)
+		testutil.Require(t, !(got != original), "unclassified trace error changed: %v", got)
 	}
+
 }
 
 func TestNormalizeDeckServiceUserFacingErrorMatrix(t *testing.T) {
-	if normalizeDeckServiceUserFacingError(nil) != nil {
-		t.Fatal("nil should remain nil")
-	}
+	testutil.RequireArgs(t, !(normalizeDeckServiceUserFacingError(nil) != nil), "nil should remain nil")
+
 	replay := onebot11.NewReplayError("kept")
-	if got := normalizeDeckServiceUserFacingError(replay); got.Error() != replay.Error() {
-		t.Fatalf("replay changed: %v", got)
+	{
+		got := normalizeDeckServiceUserFacingError(replay)
+		testutil.Require(t, !(got.Error() != replay.Error()), "replay changed: %v", got)
 	}
+
 	tests := []struct {
 		name string
 		err  error
@@ -154,9 +165,11 @@ func TestNormalizeDeckServiceUserFacingErrorMatrix(t *testing.T) {
 		})
 	}
 	original := errors.New("unclassified deck failure")
-	if got := normalizeDeckServiceUserFacingError(original); got != original {
-		t.Fatalf("unclassified error changed: %v", got)
+	{
+		got := normalizeDeckServiceUserFacingError(original)
+		testutil.Require(t, !(got != original), "unclassified error changed: %v", got)
 	}
+
 }
 
 func TestUpstreamDetailTranslationMatrices(t *testing.T) {
@@ -170,30 +183,44 @@ func TestUpstreamDetailTranslationMatrices(t *testing.T) {
 		"missing token",
 		"invalid token",
 	} {
-		if translated, ok := translateToolboxAPIDetail("suite", message, binding); !ok || strings.TrimSpace(translated) == "" {
-			t.Errorf("toolbox translation failed for %q", message)
+		{
+			translated, ok := translateToolboxAPIDetail("suite", message, binding)
+			testutil.Check(t, !(!ok || strings.TrimSpace(translated) == ""), "toolbox translation failed for %q", message)
+		}
+
+	}
+	{
+		translated, ok := translateToolboxAPIDetail("suite", "", binding)
+		{
+			testutil.RequireArgs(t, !(ok), "empty toolbox message should not translate")
+			testutil.RequireArgs(t, !(translated != ""), "empty toolbox message should not translate")
 		}
 	}
-	if translated, ok := translateToolboxAPIDetail("suite", "", binding); ok || translated != "" {
-		t.Fatal("empty toolbox message should not translate")
-	}
-	if _, ok := translateToolboxAPIDetail("suite", "unknown", binding); ok {
-		t.Fatal("unknown toolbox message translated")
+	{
+
+		_, ok := translateToolboxAPIDetail("suite", "unknown", binding)
+		testutil.RequireArgs(t, !(ok), "unknown toolbox message translated")
 	}
 
 	assertTranslations := func(name string, fn func(string) (string, bool), messages []string) {
 		t.Helper()
 		for _, message := range messages {
-			if translated, ok := fn(message); !ok || strings.TrimSpace(translated) == "" {
-				t.Errorf("%s translation failed for %q", name, message)
+			{
+				translated, ok := fn(message)
+				testutil.Check(t, !(!ok || strings.TrimSpace(translated) == ""), "%s translation failed for %q", name, message)
 			}
+
 		}
-		if translated, ok := fn(""); ok || translated != "" {
-			t.Errorf("%s empty message translated", name)
+		{
+			translated, ok := fn("")
+			testutil.Check(t, !(ok || translated != ""), "%s empty message translated", name)
 		}
-		if _, ok := fn("unknown"); ok {
-			t.Errorf("%s unknown message translated", name)
+		{
+
+			_, ok := fn("unknown")
+			testutil.Check(t, !(ok), "%s unknown message translated", name)
 		}
+
 	}
 	assertTranslations("sekai", translateSekaiAPIDetail, []string{
 		"missing token", "invalid token", "not authorized for this server", "invalid api type", "internal server error", "upstream unavailable",
@@ -233,18 +260,25 @@ func TestUpstreamErrorPayloadParsing(t *testing.T) {
 	}
 	for _, tt := range tests {
 		status, detail, ok := extractStatusAndPayload(tt.message, tt.prefix)
-		if status != tt.status || detail != tt.detail || ok != tt.ok {
-			t.Errorf("extractStatusAndPayload(%q) = %d %q %v", tt.message, status, detail, ok)
+		testutil.Check(t, !(status != tt.status || detail != tt.detail || ok != tt.ok), "extractStatusAndPayload(%q) = %d %q %v", tt.message, status, detail, ok)
+
+	}
+	{
+
+		status, tail, ok := consumeLeadingInt(" 418 rest")
+		{
+			testutil.Require(t, ok, "consumeLeadingInt = %d %q %v", status, tail, ok)
+			testutil.Require(t, !(status != 418), "consumeLeadingInt = %d %q %v", status, tail, ok)
+			testutil.Require(t, !(tail != " rest"), "consumeLeadingInt = %d %q %v", status, tail, ok)
 		}
 	}
 
-	if status, tail, ok := consumeLeadingInt(" 418 rest"); !ok || status != 418 || tail != " rest" {
-		t.Fatalf("consumeLeadingInt = %d %q %v", status, tail, ok)
-	}
 	for _, value := range []string{"", "none"} {
-		if _, _, ok := consumeLeadingInt(value); ok {
-			t.Errorf("consumeLeadingInt(%q) unexpectedly succeeded", value)
+		{
+			_, _, ok := consumeLeadingInt(value)
+			testutil.Check(t, !(ok), "consumeLeadingInt(%q) unexpectedly succeeded", value)
 		}
+
 	}
 
 	for _, tt := range []struct {
@@ -259,14 +293,20 @@ func TestUpstreamErrorPayloadParsing(t *testing.T) {
 		{raw: `{"detail":""}`, want: `{"detail":""}`},
 		{raw: "plain", want: "plain"},
 	} {
-		if got := parseEmbeddedErrorText(tt.raw); got != tt.want {
-			t.Errorf("parseEmbeddedErrorText(%q) = %q, want %q", tt.raw, got, tt.want)
+		{
+			got := parseEmbeddedErrorText(tt.raw)
+			testutil.Check(t, !(got != tt.want), "parseEmbeddedErrorText(%q) = %q, want %q", tt.raw, got, tt.want)
 		}
+
 	}
-	if got := extractQuotedMessage(`prefix "hello" suffix`); got != "hello" {
-		t.Fatalf("quoted message = %q", got)
+	{
+		got := extractQuotedMessage(`prefix "hello" suffix`)
+		testutil.Require(t, !(got != "hello"), "quoted message = %q", got)
 	}
-	if got := extractQuotedMessage("plain"); got != "plain" {
-		t.Fatalf("plain message = %q", got)
+	{
+
+		got := extractQuotedMessage("plain")
+		testutil.Require(t, !(got != "plain"), "plain message = %q", got)
 	}
+
 }

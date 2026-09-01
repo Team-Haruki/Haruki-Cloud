@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	"reflect"
 	"strings"
 	"testing"
@@ -32,48 +33,48 @@ func TestDeckAutoQueryParamsJSONRoundTripPreservesExtendedFields(t *testing.T) {
 	}
 
 	data, err := json.Marshal(original)
-	if err != nil {
-		t.Fatalf("marshal params: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "marshal params: %v", err)
 
 	var decoded deckAutoQueryParams
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(data, &decoded)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
+	{
 
-	if decoded.Boost == nil || *decoded.Boost != 5 {
-		t.Fatalf("unexpected boost: %+v", decoded.Boost)
+		testutil.Require(t, !(decoded.Boost == nil), "unexpected boost: %+v", decoded.Boost)
+		testutil.Require(t, !(*decoded.Boost != 5), "unexpected boost: %+v", decoded.Boost)
 	}
-	if decoded.AreaItemLevel == nil || *decoded.AreaItemLevel != 15 {
-		t.Fatalf("unexpected area item level: %+v", decoded.AreaItemLevel)
+	{
+		testutil.Require(t, !(decoded.AreaItemLevel == nil), "unexpected area item level: %+v", decoded.AreaItemLevel)
+		testutil.Require(t, !(*decoded.AreaItemLevel != 15), "unexpected area item level: %+v", decoded.AreaItemLevel)
 	}
-	if decoded.Selector != "u2" {
-		t.Fatalf("unexpected selector: %q", decoded.Selector)
+	testutil.Require(t, !(decoded.Selector != "u2"), "unexpected selector: %q", decoded.Selector)
+	{
+		testutil.Require(t, !(decoded.UnitFilter != "idol"), "unexpected filters: unit=%q attr=%q", decoded.UnitFilter, decoded.AttrFilter)
+		testutil.Require(t, !(decoded.AttrFilter != "cool"), "unexpected filters: unit=%q attr=%q", decoded.UnitFilter, decoded.AttrFilter)
 	}
-	if decoded.UnitFilter != "idol" || decoded.AttrFilter != "cool" {
-		t.Fatalf("unexpected filters: unit=%q attr=%q", decoded.UnitFilter, decoded.AttrFilter)
+	testutil.Require(t, reflect.DeepEqual(decoded.ExcludedCards, []int{123, 456}), "unexpected excluded cards: %+v", decoded.ExcludedCards)
+	{
+		testutil.Require(t, decoded.UseCurrentDeck, "unexpected flags: %+v", decoded)
+		testutil.Require(t, decoded.MaxProfile, "unexpected flags: %+v", decoded)
+		testutil.Require(t, decoded.SubMaxProfile, "unexpected flags: %+v", decoded)
+		testutil.Require(t, decoded.SupportMasterMax, "unexpected flags: %+v", decoded)
+		testutil.Require(t, decoded.SupportSkillMax, "unexpected flags: %+v", decoded)
+		testutil.Require(t, decoded.MusicCompare, "unexpected flags: %+v", decoded)
 	}
-	if !reflect.DeepEqual(decoded.ExcludedCards, []int{123, 456}) {
-		t.Fatalf("unexpected excluded cards: %+v", decoded.ExcludedCards)
+	testutil.Require(t, reflect.DeepEqual(decoded.MusicCompareQueries, []string{"龙hard", "虾expert", "sage"}), "unexpected music compare queries: %+v", decoded.MusicCompareQueries)
+	testutil.Require(t, reflect.DeepEqual(decoded.SpecificSkillOrder, []int{0, 1, 2, 3, 4}), "unexpected specific skill order: %+v", decoded.SpecificSkillOrder)
+	{
+		testutil.Require(t, !(decoded.WorldBloomFinaleTurn == nil), "unexpected world bloom finale turn: %+v", decoded.WorldBloomFinaleTurn)
+		testutil.Require(t, !(*decoded.WorldBloomFinaleTurn != 3), "unexpected world bloom finale turn: %+v", decoded.WorldBloomFinaleTurn)
 	}
-	if !decoded.UseCurrentDeck || !decoded.MaxProfile || !decoded.SubMaxProfile || !decoded.SupportMasterMax || !decoded.SupportSkillMax || !decoded.MusicCompare {
-		t.Fatalf("unexpected flags: %+v", decoded)
+	{
+		testutil.Require(t, !(decoded.ForcedLeaderCharacterID == nil), "unexpected forced leader id: %+v", decoded.ForcedLeaderCharacterID)
+		testutil.Require(t, !(*decoded.ForcedLeaderCharacterID != 21), "unexpected forced leader id: %+v", decoded.ForcedLeaderCharacterID)
 	}
-	if !reflect.DeepEqual(decoded.MusicCompareQueries, []string{"龙hard", "虾expert", "sage"}) {
-		t.Fatalf("unexpected music compare queries: %+v", decoded.MusicCompareQueries)
-	}
-	if !reflect.DeepEqual(decoded.SpecificSkillOrder, []int{0, 1, 2, 3, 4}) {
-		t.Fatalf("unexpected specific skill order: %+v", decoded.SpecificSkillOrder)
-	}
-	if decoded.WorldBloomFinaleTurn == nil || *decoded.WorldBloomFinaleTurn != 3 {
-		t.Fatalf("unexpected world bloom finale turn: %+v", decoded.WorldBloomFinaleTurn)
-	}
-	if decoded.ForcedLeaderCharacterID == nil || *decoded.ForcedLeaderCharacterID != 21 {
-		t.Fatalf("unexpected forced leader id: %+v", decoded.ForcedLeaderCharacterID)
-	}
-	if decoded.ForcedLeaderCharacterQuery != "miku" {
-		t.Fatalf("unexpected forced leader query: %q", decoded.ForcedLeaderCharacterQuery)
-	}
+	testutil.Require(t, !(decoded.ForcedLeaderCharacterQuery != "miku"), "unexpected forced leader query: %q", decoded.ForcedLeaderCharacterQuery)
+
 }
 
 func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
@@ -85,44 +86,47 @@ func TestEventDeckHandleParsesCommonOptions(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 miku auto 倍率 满技能 #123 456",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleDeck || resolved.Mode != "deck-event" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleDeck), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "deck-event"), "unexpected command request: %+v", resolved)
 	}
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	// "miku" is now resolved to character ID 21 by the extractor
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	{
+		testutil.
+
+			// "miku" is now resolved to character ID 21 by the extractor
+			Require(t, !(params.WorldBloomCharacterID == nil), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+		testutil.
+			Require(t, !(*params.WorldBloomCharacterID != 21), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
-	if params.WorldBloomCharacterQuery != "" {
-		t.Fatalf("unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
+	testutil.Require(t, !(params.WorldBloomCharacterQuery != ""), "unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
+	testutil.Require(t, !(params.LiveType != "auto"), "unexpected live type: %q", params.LiveType)
+	testutil.Require(t, !(params.Target != "skill"), "unexpected target: %q", params.Target)
+	{
+		testutil.Require(t, !(len(params.FixedCards) != 2), "unexpected fixed cards: %+v", params.FixedCards)
+		testutil.Require(t, !(params.FixedCards[0] != 123), "unexpected fixed cards: %+v", params.FixedCards)
+		testutil.Require(t, !(params.FixedCards[1] != 456), "unexpected fixed cards: %+v", params.FixedCards)
 	}
-	if params.LiveType != "auto" {
-		t.Fatalf("unexpected live type: %q", params.LiveType)
+	{
+		testutil.Require(t, !(params.Rarity1Config == nil), "unexpected rarity patch: %+v", params.Rarity1Config)
+		testutil.Require(t, params.Rarity1Config.SkillMax, "unexpected rarity patch: %+v", params.Rarity1Config)
 	}
-	if params.Target != "skill" {
-		t.Fatalf("unexpected target: %q", params.Target)
-	}
-	if len(params.FixedCards) != 2 || params.FixedCards[0] != 123 || params.FixedCards[1] != 456 {
-		t.Fatalf("unexpected fixed cards: %+v", params.FixedCards)
-	}
-	if params.Rarity1Config == nil || !params.Rarity1Config.SkillMax {
-		t.Fatalf("unexpected rarity patch: %+v", params.Rarity1Config)
-	}
+
 }
 
 func TestEventDeckHandleParsesMixedFixedCharactersAndCards(t *testing.T) {
@@ -134,26 +138,22 @@ func TestEventDeckHandleParsesMixedFixedCharactersAndCards(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "180 #len #1237",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 180 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 180), "unexpected event id: %+v", params.EventID)
 	}
-	if !reflect.DeepEqual(params.FixedCharacters, []int{23}) {
-		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
-	}
-	if !reflect.DeepEqual(params.FixedCards, []int{1237}) {
-		t.Fatalf("unexpected fixed cards: %+v", params.FixedCards)
-	}
-	if len(params.FixedCharacterQueries) != 0 {
-		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
-	}
+	testutil.Require(t, reflect.DeepEqual(params.FixedCharacters, []int{23}), "unexpected fixed characters: %+v", params.FixedCharacters)
+	testutil.Require(t, reflect.DeepEqual(params.FixedCards, []int{1237}), "unexpected fixed cards: %+v", params.FixedCards)
+	testutil.Require(t, !(len(params.FixedCharacterQueries) != 0), "unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+
 }
 
 func TestEventDeckHandleParsesVirtualSingerSingleRuneAliases(t *testing.T) {
@@ -165,23 +165,21 @@ func TestEventDeckHandleParsesVirtualSingerSingleRuneAliases(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "180 冰 #葱 #橘 #蕉 #鱼 #酒",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.ForcedLeaderCharacterID == nil || *params.ForcedLeaderCharacterID != 26 {
-		t.Fatalf("unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+	{
+
+		testutil.Require(t, !(params.ForcedLeaderCharacterID == nil), "unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+		testutil.Require(t, !(*params.ForcedLeaderCharacterID != 26), "unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
 	}
-	if !reflect.DeepEqual(params.FixedCharacters, []int{21, 22, 23, 24, 25}) {
-		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
-	}
-	if len(params.FixedCharacterQueries) != 0 {
-		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
-	}
+	testutil.Require(t, reflect.DeepEqual(params.FixedCharacters, []int{21, 22, 23, 24, 25}), "unexpected fixed characters: %+v", params.FixedCharacters)
+	testutil.Require(t, !(len(params.FixedCharacterQueries) != 0), "unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+
 }
 
 func TestEventDeckHandleParsesFinalChapterForcedLeader(t *testing.T) {
@@ -193,29 +191,29 @@ func TestEventDeckHandleParsesFinalChapterForcedLeader(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "180 miku #len #1237",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 180 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 180), "unexpected event id: %+v", params.EventID)
 	}
-	if params.ForcedLeaderCharacterID == nil || *params.ForcedLeaderCharacterID != 21 {
-		t.Fatalf("unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+	{
+		testutil.Require(t, !(params.ForcedLeaderCharacterID == nil), "unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+		testutil.Require(t, !(*params.ForcedLeaderCharacterID != 21), "unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
 	}
-	if params.WorldBloomCharacterID != nil || params.WorldBloomCharacterQuery != "" {
-		t.Fatalf("unexpected world bloom selection: id=%+v query=%q", params.WorldBloomCharacterID, params.WorldBloomCharacterQuery)
+	{
+		testutil.Require(t, !(params.WorldBloomCharacterID != nil), "unexpected world bloom selection: id=%+v query=%q", params.WorldBloomCharacterID, params.WorldBloomCharacterQuery)
+		testutil.Require(t, !(params.WorldBloomCharacterQuery != ""), "unexpected world bloom selection: id=%+v query=%q", params.WorldBloomCharacterID, params.WorldBloomCharacterQuery)
 	}
-	if !reflect.DeepEqual(params.FixedCharacters, []int{23}) {
-		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
-	}
-	if !reflect.DeepEqual(params.FixedCards, []int{1237}) {
-		t.Fatalf("unexpected fixed cards: %+v", params.FixedCards)
-	}
+	testutil.Require(t, reflect.DeepEqual(params.FixedCharacters, []int{23}), "unexpected fixed characters: %+v", params.FixedCharacters)
+	testutil.Require(t, reflect.DeepEqual(params.FixedCards, []int{1237}), "unexpected fixed cards: %+v", params.FixedCards)
+
 }
 
 func TestEventDeckHandleParsesWorldBloomFinaleTurnAndForcedLeader(t *testing.T) {
@@ -227,26 +225,28 @@ func TestEventDeckHandleParsesWorldBloomFinaleTurnAndForcedLeader(t *testing.T) 
 		TriggerCmd: "/组卡",
 		ArgText:    "wl3 终章 akt",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID != nil {
-		t.Fatalf("unexpected hard-coded event id: %+v", params.EventID)
+
+	testutil.Require(t, !(params.EventID != nil), "unexpected hard-coded event id: %+v", params.EventID)
+	{
+		testutil.Require(t, !(params.WorldBloomFinaleTurn == nil), "unexpected world bloom finale turn: %+v", params.WorldBloomFinaleTurn)
+		testutil.Require(t, !(*params.WorldBloomFinaleTurn != 3), "unexpected world bloom finale turn: %+v", params.WorldBloomFinaleTurn)
 	}
-	if params.WorldBloomFinaleTurn == nil || *params.WorldBloomFinaleTurn != 3 {
-		t.Fatalf("unexpected world bloom finale turn: %+v", params.WorldBloomFinaleTurn)
+	{
+		testutil.Require(t, !(params.ForcedLeaderCharacterID == nil), "unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+		testutil.Require(t, !(*params.ForcedLeaderCharacterID != 11), "unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
 	}
-	if params.ForcedLeaderCharacterID == nil || *params.ForcedLeaderCharacterID != 11 {
-		t.Fatalf("unexpected forced leader character: %+v", params.ForcedLeaderCharacterID)
+	{
+		testutil.Require(t, !(params.WorldBloomCharacterID != nil), "unexpected world bloom selection: id=%+v query=%q", params.WorldBloomCharacterID, params.WorldBloomCharacterQuery)
+		testutil.Require(t, !(params.WorldBloomCharacterQuery != ""), "unexpected world bloom selection: id=%+v query=%q", params.WorldBloomCharacterID, params.WorldBloomCharacterQuery)
 	}
-	if params.WorldBloomCharacterID != nil || params.WorldBloomCharacterQuery != "" {
-		t.Fatalf("unexpected world bloom selection: id=%+v query=%q", params.WorldBloomCharacterID, params.WorldBloomCharacterQuery)
-	}
+
 }
 
 func TestEventDeckHandleParsesSupportMaxOptionsWithoutAffectingMainDeck(t *testing.T) {
@@ -258,23 +258,27 @@ func TestEventDeckHandleParsesSupportMaxOptionsWithoutAffectingMainDeck(t *testi
 		TriggerCmd: "/活动组卡",
 		ArgText:    "event123 支援满突破满技能",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
-	if result == nil {
-		t.Fatal("expected command request, got nil")
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
+	testutil.RequireArgs(t, !(result == nil), "expected command request, got nil")
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.SupportMasterMax || !params.SupportSkillMax {
-		t.Fatalf("unexpected support flags: %+v", params)
+	{
+
+		testutil.Require(t, params.SupportMasterMax, "unexpected support flags: %+v", params)
+		testutil.Require(t, params.SupportSkillMax, "unexpected support flags: %+v", params)
 	}
-	if params.Rarity1Config != nil || params.Rarity2Config != nil || params.Rarity3Config != nil || params.Rarity4Config != nil || params.RarityBirthdayConfig != nil {
-		t.Fatalf("support options should not leak into main deck config: %+v", params)
+	{
+		testutil.Require(t, !(params.Rarity1Config != nil), "support options should not leak into main deck config: %+v", params)
+		testutil.Require(t, !(params.Rarity2Config != nil), "support options should not leak into main deck config: %+v", params)
+		testutil.Require(t, !(params.Rarity3Config != nil), "support options should not leak into main deck config: %+v", params)
+		testutil.Require(t, !(params.Rarity4Config != nil), "support options should not leak into main deck config: %+v", params)
+		testutil.Require(t, !(params.RarityBirthdayConfig != nil), "support options should not leak into main deck config: %+v", params)
 	}
+
 }
 
 func TestEventDeckHandleParsesLeadingSelectorArg(t *testing.T) {
@@ -286,27 +290,23 @@ func TestEventDeckHandleParsesLeadingSelectorArg(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "u2 event123 当前 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Selector != "u2" {
-		t.Fatalf("unexpected selector: %q", params.Selector)
+
+	testutil.Require(t, !(params.Selector != "u2"), "unexpected selector: %q", params.Selector)
+	{
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
-	}
-	if !params.UseCurrentDeck {
-		t.Fatalf("expected use_current_deck to be enabled")
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, params.UseCurrentDeck, "expected use_current_deck to be enabled")
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesCompactASCIIQueryDifficultySuffix(t *testing.T) {
@@ -318,18 +318,20 @@ func TestEventDeckHandleParsesCompactASCIIQueryDifficultySuffix(t *testing.T) {
 		TriggerCmd: "/活动组卡",
 		ArgText:    "segaex",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.MusicQuery != "sega" || params.MusicDiff != "expert" {
-		t.Fatalf("unexpected compact music query: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
+	{
+
+		testutil.Require(t, !(params.MusicQuery != "sega"), "unexpected compact music query: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
+		testutil.Require(t, !(params.MusicDiff != "expert"), "unexpected compact music query: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
 	}
+
 }
 
 func TestEventDeckHandleParsesTrailingSelectorArg(t *testing.T) {
@@ -341,24 +343,22 @@ func TestEventDeckHandleParsesTrailingSelectorArg(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 sage neo u1",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Selector != "u1" {
-		t.Fatalf("unexpected selector: %q", params.Selector)
+
+	testutil.Require(t, !(params.Selector != "u1"), "unexpected selector: %q", params.Selector)
+	{
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandlePrefersLastLiveTypeKeyword(t *testing.T) {
@@ -368,21 +368,18 @@ func TestEventDeckHandlePrefersLastLiveTypeKeyword(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "solo auto",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.LiveType != "auto" {
-		t.Fatalf("unexpected live type: %q", params.LiveType)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, !(params.LiveType != "auto"), "unexpected live type: %q", params.LiveType)
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesSimulatedEvent(t *testing.T) {
@@ -392,21 +389,21 @@ func TestEventDeckHandleParsesSimulatedEvent(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "25h 可爱",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventUnit != "school_refusal" || params.EventAttr != "cute" {
-		t.Fatalf("unexpected simulate event params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.EventUnit != "school_refusal"), "unexpected simulate event params: %+v", params)
+		testutil.Require(t, !(params.EventAttr != "cute"), "unexpected simulate event params: %+v", params)
 	}
-	if params.EventID != nil {
-		t.Fatalf("simulated event should not set event id: %+v", params.EventID)
-	}
+	testutil.Require(t, !(params.EventID != nil), "simulated event should not set event id: %+v", params.EventID)
+
 }
 
 func TestEventDeckHandlePrefersSimulatedEventOverBareNumericEventFor25(t *testing.T) {
@@ -416,21 +413,21 @@ func TestEventDeckHandlePrefersSimulatedEventOverBareNumericEventFor25(t *testin
 		TriggerCmd: "/组卡",
 		ArgText:    "25 蓝",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID != nil {
-		t.Fatalf("simulated event should not set event id: %+v", params.EventID)
+
+	testutil.Require(t, !(params.EventID != nil), "simulated event should not set event id: %+v", params.EventID)
+	{
+		testutil.Require(t, !(params.EventUnit != "school_refusal"), "unexpected simulate event params: %+v", params)
+		testutil.Require(t, !(params.EventAttr != "cool"), "unexpected simulate event params: %+v", params)
 	}
-	if params.EventUnit != "school_refusal" || params.EventAttr != "cool" {
-		t.Fatalf("unexpected simulate event params: %+v", params)
-	}
+
 }
 
 func TestEventDeckHandleParsesMultiSkillLowerBound(t *testing.T) {
@@ -440,30 +437,27 @@ func TestEventDeckHandleParsesMultiSkillLowerBound(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "多人 230实效 Song A",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.LiveType != "multi" {
-		t.Fatalf("unexpected live type: %q", params.LiveType)
+
+	testutil.Require(t, !(params.LiveType != "multi"), "unexpected live type: %q", params.LiveType)
+	testutil.Require(t, !(params.Target != ""), "unexpected target: %q", params.Target)
+	{
+		testutil.Require(t, !(params.MultiLiveTeammateScoreUp == nil), "unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
+		testutil.Require(t, !(*params.MultiLiveTeammateScoreUp != 230), "unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
 	}
-	if params.Target != "" {
-		t.Fatalf("unexpected target: %q", params.Target)
+	{
+		testutil.Require(t, !(params.MultiLiveScoreUpLowerBound == nil), "unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+		testutil.Require(t, !(*params.MultiLiveScoreUpLowerBound != 230), "unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
 	}
-	if params.MultiLiveTeammateScoreUp == nil || *params.MultiLiveTeammateScoreUp != 230 {
-		t.Fatalf("unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
-	}
-	if params.MultiLiveScoreUpLowerBound == nil || *params.MultiLiveScoreUpLowerBound != 230 {
-		t.Fatalf("unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
-	}
-	if params.MusicQuery != "song a" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != "song a"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesSplitTeammateScoreUp(t *testing.T) {
@@ -473,30 +467,24 @@ func TestEventDeckHandleParsesSplitTeammateScoreUp(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "多人 队友实效 210 Song A",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.LiveType != "multi" {
-		t.Fatalf("unexpected live type: %q", params.LiveType)
+
+	testutil.Require(t, !(params.LiveType != "multi"), "unexpected live type: %q", params.LiveType)
+	testutil.Require(t, !(params.Target != ""), "unexpected target: %q", params.Target)
+	{
+		testutil.Require(t, !(params.MultiLiveTeammateScoreUp == nil), "unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
+		testutil.Require(t, !(*params.MultiLiveTeammateScoreUp != 210), "unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
 	}
-	if params.Target != "" {
-		t.Fatalf("unexpected target: %q", params.Target)
-	}
-	if params.MultiLiveTeammateScoreUp == nil || *params.MultiLiveTeammateScoreUp != 210 {
-		t.Fatalf("unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
-	}
-	if params.MultiLiveScoreUpLowerBound != nil {
-		t.Fatalf("teammate score up should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
-	}
-	if params.MusicQuery != "song a" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MultiLiveScoreUpLowerBound != nil), "teammate score up should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	testutil.Require(t, !(params.MusicQuery != "song a"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesBareSkillTargetAfterMusicQuery(t *testing.T) {
@@ -506,36 +494,34 @@ func TestEventDeckHandleParsesBareSkillTargetAfterMusicQuery(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "三星满破满技能 四星禁用 已读 画布 龙hd 实效",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Target != "skill" {
-		t.Fatalf("unexpected target: %q", params.Target)
+
+	testutil.Require(t, !(params.Target != "skill"), "unexpected target: %q", params.Target)
+	testutil.Require(t, !(params.MusicDiff != "hard"), "unexpected music diff: %q", params.MusicDiff)
+	testutil.Require(t, !(params.MusicQuery != "龙"), "unexpected music query: %q", params.MusicQuery)
+	testutil.Require(t, !(params.MultiLiveScoreUpLowerBound != nil), "bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	{
+		testutil.Require(t, !(params.Rarity3Config == nil), "unexpected rarity 3 config: %+v", params.Rarity3Config)
+		testutil.Require(t, params.Rarity3Config.MasterMax, "unexpected rarity 3 config: %+v", params.Rarity3Config)
+		testutil.Require(t, params.Rarity3Config.SkillMax, "unexpected rarity 3 config: %+v", params.Rarity3Config)
 	}
-	if params.MusicDiff != "hard" {
-		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
+	{
+		testutil.Require(t, !(params.Rarity4Config == nil), "unexpected rarity 4 config: %+v", params.Rarity4Config)
+		testutil.Require(t, params.Rarity4Config.Disable, "unexpected rarity 4 config: %+v", params.Rarity4Config)
 	}
-	if params.MusicQuery != "龙" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
+	{
+		testutil.Require(t, !(params.Rarity1Config == nil), "unexpected global config propagation: %+v", params.Rarity1Config)
+		testutil.Require(t, params.Rarity1Config.EpisodeRead, "unexpected global config propagation: %+v", params.Rarity1Config)
+		testutil.Require(t, params.Rarity1Config.Canvas, "unexpected global config propagation: %+v", params.Rarity1Config)
 	}
-	if params.MultiLiveScoreUpLowerBound != nil {
-		t.Fatalf("bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
-	}
-	if params.Rarity3Config == nil || !params.Rarity3Config.MasterMax || !params.Rarity3Config.SkillMax {
-		t.Fatalf("unexpected rarity 3 config: %+v", params.Rarity3Config)
-	}
-	if params.Rarity4Config == nil || !params.Rarity4Config.Disable {
-		t.Fatalf("unexpected rarity 4 config: %+v", params.Rarity4Config)
-	}
-	if params.Rarity1Config == nil || !params.Rarity1Config.EpisodeRead || !params.Rarity1Config.Canvas {
-		t.Fatalf("unexpected global config propagation: %+v", params.Rarity1Config)
-	}
+
 }
 
 func TestEventDeckHandleParsesSplitSkillLowerBound(t *testing.T) {
@@ -545,24 +531,25 @@ func TestEventDeckHandleParsesSplitSkillLowerBound(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "多人 230 实效",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Target != "" {
-		t.Fatalf("unexpected target: %q", params.Target)
+
+	testutil.Require(t, !(params.Target != ""), "unexpected target: %q", params.Target)
+	{
+		testutil.Require(t, !(params.MultiLiveTeammateScoreUp == nil), "unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
+		testutil.Require(t, !(*params.MultiLiveTeammateScoreUp != 230), "unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
 	}
-	if params.MultiLiveTeammateScoreUp == nil || *params.MultiLiveTeammateScoreUp != 230 {
-		t.Fatalf("unexpected teammate score up: %+v", params.MultiLiveTeammateScoreUp)
+	{
+		testutil.Require(t, !(params.MultiLiveScoreUpLowerBound == nil), "unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+		testutil.Require(t, !(*params.MultiLiveScoreUpLowerBound != 230), "unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
 	}
-	if params.MultiLiveScoreUpLowerBound == nil || *params.MultiLiveScoreUpLowerBound != 230 {
-		t.Fatalf("unexpected score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
-	}
+
 }
 
 func TestEventDeckHandleParsesSimulatedWorldBloomTurnAndCharacter(t *testing.T) {
@@ -572,26 +559,25 @@ func TestEventDeckHandleParsesSimulatedWorldBloomTurnAndCharacter(t *testing.T) 
 		TriggerCmd: "/组卡",
 		ArgText:    "miku wl4",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID != nil {
-		t.Fatalf("unexpected explicit event id: %+v", params.EventID)
+
+	testutil.Require(t, !(params.EventID != nil), "unexpected explicit event id: %+v", params.EventID)
+	{
+		testutil.Require(t, !(params.WorldBloomEventTurn == nil), "unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+		testutil.Require(t, !(*params.WorldBloomEventTurn != 4), "unexpected wl event turn: %+v", params.WorldBloomEventTurn)
 	}
-	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 4 {
-		t.Fatalf("unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+	{
+		testutil.Require(t, !(params.WorldBloomCharacterID == nil), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+		testutil.Require(t, !(*params.WorldBloomCharacterID != 21), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesSimulatedWorldBloomTurnAndAsciiAlias(t *testing.T) {
@@ -601,26 +587,25 @@ func TestEventDeckHandleParsesSimulatedWorldBloomTurnAndAsciiAlias(t *testing.T)
 		TriggerCmd: "/活动组卡",
 		ArgText:    "wl2 mzk",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID != nil {
-		t.Fatalf("unexpected explicit event id: %+v", params.EventID)
+
+	testutil.Require(t, !(params.EventID != nil), "unexpected explicit event id: %+v", params.EventID)
+	{
+		testutil.Require(t, !(params.WorldBloomEventTurn == nil), "unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+		testutil.Require(t, !(*params.WorldBloomEventTurn != 2), "unexpected wl event turn: %+v", params.WorldBloomEventTurn)
 	}
-	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 2 {
-		t.Fatalf("unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+	{
+		testutil.Require(t, !(params.WorldBloomCharacterID == nil), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+		testutil.Require(t, !(*params.WorldBloomCharacterID != 20), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 20 {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesSimulatedWorldBloomTurnWithTrailingMusicQuery(t *testing.T) {
@@ -630,23 +615,24 @@ func TestEventDeckHandleParsesSimulatedWorldBloomTurnWithTrailingMusicQuery(t *t
 		TriggerCmd: "/组卡",
 		ArgText:    "sage wl3 初音未来",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 3 {
-		t.Fatalf("unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+	{
+
+		testutil.Require(t, !(params.WorldBloomEventTurn == nil), "unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+		testutil.Require(t, !(*params.WorldBloomEventTurn != 3), "unexpected wl event turn: %+v", params.WorldBloomEventTurn)
 	}
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	{
+		testutil.Require(t, !(params.WorldBloomCharacterID == nil), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+		testutil.Require(t, !(*params.WorldBloomCharacterID != 21), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
-	if params.MusicQuery != "sage" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != "sage"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesWorldBloomTurnCharacterAndMusicQuery(t *testing.T) {
@@ -656,26 +642,25 @@ func TestEventDeckHandleParsesWorldBloomTurnCharacterAndMusicQuery(t *testing.T)
 		TriggerCmd: "/组卡",
 		ArgText:    "wl1 miku 虾 ex",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.WorldBloomEventTurn == nil || *params.WorldBloomEventTurn != 1 {
-		t.Fatalf("unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+	{
+
+		testutil.Require(t, !(params.WorldBloomEventTurn == nil), "unexpected wl event turn: %+v", params.WorldBloomEventTurn)
+		testutil.Require(t, !(*params.WorldBloomEventTurn != 1), "unexpected wl event turn: %+v", params.WorldBloomEventTurn)
 	}
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	{
+		testutil.Require(t, !(params.WorldBloomCharacterID == nil), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+		testutil.Require(t, !(*params.WorldBloomCharacterID != 21), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
-	if params.MusicQuery != "虾" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-	if params.MusicDiff != "expert" {
-		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
-	}
+	testutil.Require(t, !(params.MusicQuery != "虾"), "unexpected music query: %q", params.MusicQuery)
+	testutil.Require(t, !(params.MusicDiff != "expert"), "unexpected music diff: %q", params.MusicDiff)
+
 }
 
 func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing.T) {
@@ -685,25 +670,29 @@ func TestEventDeckHandlePreservesWorldBloomCharacterQueryAfterEventID(t *testing
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 初音未来",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	// "初音未来" is resolved to character ID 21
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 21 {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	{
+		testutil.
+
+			// "初音未来" is resolved to character ID 21
+			Require(t, !(params.WorldBloomCharacterID == nil), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+		testutil.
+			Require(t, !(*params.WorldBloomCharacterID != 21), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
-	if params.WorldBloomCharacterQuery != "" {
-		t.Fatalf("unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
-	}
+	testutil.Require(t, !(params.WorldBloomCharacterQuery != ""), "unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
+
 }
 
 func TestEventDeckHandleRejectsDeprecatedWorldBloomChapterSelectorAfterEventID(t *testing.T) {
@@ -713,12 +702,9 @@ func TestEventDeckHandleRejectsDeprecatedWorldBloomChapterSelectorAfterEventID(t
 		TriggerCmd: "/组卡",
 		ArgText:    "140 wl3 sage",
 	})
-	if err == nil {
-		t.Fatalf("expected deprecated wl chapter selector to be rejected")
-	}
-	if !strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.Require(t, !(err == nil), "expected deprecated wl chapter selector to be rejected")
+	testutil.Require(t, strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法"), "unexpected error: %v", err)
+
 }
 
 func TestEventDeckHandleRejectsDeprecatedStandaloneWorldBloomChapterSelector(t *testing.T) {
@@ -728,12 +714,9 @@ func TestEventDeckHandleRejectsDeprecatedStandaloneWorldBloomChapterSelector(t *
 		TriggerCmd: "/活动组卡",
 		ArgText:    "sage wl3",
 	})
-	if err == nil {
-		t.Fatalf("expected deprecated wl chapter selector to be rejected")
-	}
-	if !strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.Require(t, !(err == nil), "expected deprecated wl chapter selector to be rejected")
+	testutil.Require(t, strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法"), "unexpected error: %v", err)
+
 }
 
 func TestEventDeckHandleParsesMaxProfile(t *testing.T) {
@@ -743,21 +726,18 @@ func TestEventDeckHandleParsesMaxProfile(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 顶配 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.MaxProfile {
-		t.Fatalf("expected max_profile to be enabled")
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, params.MaxProfile, "expected max_profile to be enabled")
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesSubMaxProfile(t *testing.T) {
@@ -767,21 +747,18 @@ func TestEventDeckHandleParsesSubMaxProfile(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 次顶配 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.SubMaxProfile {
-		t.Fatalf("expected sub_max_profile to be enabled")
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, params.SubMaxProfile, "expected sub_max_profile to be enabled")
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesCurrentDeck(t *testing.T) {
@@ -791,21 +768,18 @@ func TestEventDeckHandleParsesCurrentDeck(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 当前 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.UseCurrentDeck {
-		t.Fatalf("expected use_current_deck to be enabled")
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, params.UseCurrentDeck, "expected use_current_deck to be enabled")
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesMusicCompareCurrent(t *testing.T) {
@@ -815,24 +789,22 @@ func TestEventDeckHandleParsesMusicCompareCurrent(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "歌曲比较 当前",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.MusicCompare || !params.UseCurrentDeck {
-		t.Fatalf("unexpected compare current params: %+v", params)
+	{
+
+		testutil.Require(t, params.MusicCompare, "unexpected compare current params: %+v", params)
+		testutil.Require(t, params.UseCurrentDeck, "unexpected compare current params: %+v", params)
 	}
-	if len(params.MusicCompareQueries) != 0 {
-		t.Fatalf("unexpected music compare queries: %+v", params.MusicCompareQueries)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(len(params.MusicCompareQueries) != 0), "unexpected music compare queries: %+v", params.MusicCompareQueries)
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesMusicCompareQueriesAcrossKeyword(t *testing.T) {
@@ -842,24 +814,19 @@ func TestEventDeckHandleParsesMusicCompareQueriesAcrossKeyword(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "龙hard 歌曲比较 虾expert sage",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.MusicCompare {
-		t.Fatalf("expected music_compare to be enabled")
-	}
-	if !reflect.DeepEqual(params.MusicCompareQueries, []string{"龙hard", "虾expert", "sage"}) {
-		t.Fatalf("unexpected music compare queries: %+v", params.MusicCompareQueries)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, params.MusicCompare, "expected music_compare to be enabled")
+	testutil.Require(t, reflect.DeepEqual(params.MusicCompareQueries, []string{"龙hard", "虾expert", "sage"}), "unexpected music compare queries: %+v", params.MusicCompareQueries)
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleRejectsTooManyMusicCompareQueries(t *testing.T) {
@@ -869,12 +836,9 @@ func TestEventDeckHandleRejectsTooManyMusicCompareQueries(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "歌曲比较 a b c d e f",
 	})
-	if err == nil {
-		t.Fatalf("expected too many compare songs to fail")
-	}
-	if !strings.Contains(err.Error(), "最多只能指定 5 首歌曲") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.Require(t, !(err == nil), "expected too many compare songs to fail")
+	testutil.Require(t, strings.Contains(err.Error(), "最多只能指定 5 首歌曲"), "unexpected error: %v", err)
+
 }
 
 func TestEventDeckHandleParsesUnitFilter(t *testing.T) {
@@ -884,21 +848,18 @@ func TestEventDeckHandleParsesUnitFilter(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 仅vs sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.UnitFilter != "piapro" {
-		t.Fatalf("unexpected unit filter: %q", params.UnitFilter)
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, !(params.UnitFilter != "piapro"), "unexpected unit filter: %q", params.UnitFilter)
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesAttrFilter(t *testing.T) {
@@ -908,21 +869,18 @@ func TestEventDeckHandleParsesAttrFilter(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 仅紫 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.AttrFilter != "mysterious" {
-		t.Fatalf("unexpected attr filter: %q", params.AttrFilter)
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, !(params.AttrFilter != "mysterious"), "unexpected attr filter: %q", params.AttrFilter)
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesExcludedCards(t *testing.T) {
@@ -932,21 +890,18 @@ func TestEventDeckHandleParsesExcludedCards(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 sage neo -123 -456",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !reflect.DeepEqual(params.ExcludedCards, []int{123, 456}) {
-		t.Fatalf("unexpected excluded cards: %+v", params.ExcludedCards)
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, reflect.DeepEqual(params.ExcludedCards, []int{123, 456}), "unexpected excluded cards: %+v", params.ExcludedCards)
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesAreaItemLevel(t *testing.T) {
@@ -956,21 +911,21 @@ func TestEventDeckHandleParsesAreaItemLevel(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 区域道具15级 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.AreaItemLevel == nil || *params.AreaItemLevel != 15 {
-		t.Fatalf("unexpected area item level: %+v", params.AreaItemLevel)
+	{
+
+		testutil.Require(t, !(params.AreaItemLevel == nil), "unexpected area item level: %+v", params.AreaItemLevel)
+		testutil.Require(t, !(*params.AreaItemLevel != 15), "unexpected area item level: %+v", params.AreaItemLevel)
 	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesAreaItemLevelShorthand(t *testing.T) {
@@ -980,24 +935,22 @@ func TestEventDeckHandleParsesAreaItemLevelShorthand(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 15级 当前 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.AreaItemLevel == nil || *params.AreaItemLevel != 15 {
-		t.Fatalf("unexpected area item level: %+v", params.AreaItemLevel)
+	{
+
+		testutil.Require(t, !(params.AreaItemLevel == nil), "unexpected area item level: %+v", params.AreaItemLevel)
+		testutil.Require(t, !(*params.AreaItemLevel != 15), "unexpected area item level: %+v", params.AreaItemLevel)
 	}
-	if !params.UseCurrentDeck {
-		t.Fatalf("expected use_current_deck to be enabled")
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, params.UseCurrentDeck, "expected use_current_deck to be enabled")
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesSkillOrderAverage(t *testing.T) {
@@ -1007,24 +960,19 @@ func TestEventDeckHandleParsesSkillOrderAverage(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 技能顺序平均 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.SkillOrderChooseStrategy != "average" {
-		t.Fatalf("unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
-	}
-	if len(params.SpecificSkillOrder) != 0 {
-		t.Fatalf("unexpected specific skill order: %+v", params.SpecificSkillOrder)
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, !(params.SkillOrderChooseStrategy != "average"), "unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
+	testutil.Require(t, !(len(params.SpecificSkillOrder) != 0), "unexpected specific skill order: %+v", params.SpecificSkillOrder)
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesSpecificSkillOrderWithCurrent(t *testing.T) {
@@ -1034,27 +982,20 @@ func TestEventDeckHandleParsesSpecificSkillOrderWithCurrent(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 当前 技能顺序12345 sage neo",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.UseCurrentDeck {
-		t.Fatalf("expected use_current_deck to be enabled")
-	}
-	if params.SkillOrderChooseStrategy != "specific" {
-		t.Fatalf("unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
-	}
-	if !reflect.DeepEqual(params.SpecificSkillOrder, []int{0, 1, 2, 3, 4}) {
-		t.Fatalf("unexpected specific skill order: %+v", params.SpecificSkillOrder)
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, params.UseCurrentDeck, "expected use_current_deck to be enabled")
+	testutil.Require(t, !(params.SkillOrderChooseStrategy != "specific"), "unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
+	testutil.Require(t, reflect.DeepEqual(params.SpecificSkillOrder, []int{0, 1, 2, 3, 4}), "unexpected specific skill order: %+v", params.SpecificSkillOrder)
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesSpecificSkillOrderWithFixedCards(t *testing.T) {
@@ -1064,27 +1005,20 @@ func TestEventDeckHandleParsesSpecificSkillOrderWithFixedCards(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 sage neo 技能顺序15234 #1 2 3 4 5",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !reflect.DeepEqual(params.FixedCards, []int{1, 2, 3, 4, 5}) {
-		t.Fatalf("unexpected fixed cards: %+v", params.FixedCards)
-	}
-	if params.SkillOrderChooseStrategy != "specific" {
-		t.Fatalf("unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
-	}
-	if !reflect.DeepEqual(params.SpecificSkillOrder, []int{0, 4, 1, 2, 3}) {
-		t.Fatalf("unexpected specific skill order: %+v", params.SpecificSkillOrder)
-	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, reflect.DeepEqual(params.FixedCards, []int{1, 2, 3, 4, 5}), "unexpected fixed cards: %+v", params.FixedCards)
+	testutil.Require(t, !(params.SkillOrderChooseStrategy != "specific"), "unexpected skill order choose strategy: %q", params.SkillOrderChooseStrategy)
+	testutil.Require(t, reflect.DeepEqual(params.SpecificSkillOrder, []int{0, 4, 1, 2, 3}), "unexpected specific skill order: %+v", params.SpecificSkillOrder)
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleRejectsSpecificSkillOrderWithoutCompleteFixedDeck(t *testing.T) {
@@ -1094,12 +1028,9 @@ func TestEventDeckHandleRejectsSpecificSkillOrderWithoutCompleteFixedDeck(t *tes
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 技能顺序12345 sage neo",
 	})
-	if err == nil {
-		t.Fatalf("expected specific skill order without fixed deck to fail")
-	}
-	if !strings.Contains(err.Error(), "仅在使用固定队伍") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.Require(t, !(err == nil), "expected specific skill order without fixed deck to fail")
+	testutil.Require(t, strings.Contains(err.Error(), "仅在使用固定队伍"), "unexpected error: %v", err)
+
 }
 
 func TestEventDeckHandleRejectsSpecificSkillOrderWithFixedCharacters(t *testing.T) {
@@ -1109,12 +1040,9 @@ func TestEventDeckHandleRejectsSpecificSkillOrderWithFixedCharacters(t *testing.
 		TriggerCmd: "/组卡",
 		ArgText:    "event123 sage neo 技能顺序12345 #miku rin",
 	})
-	if err == nil {
-		t.Fatalf("expected fixed characters with specific skill order to fail")
-	}
-	if !strings.Contains(err.Error(), "仅在使用固定队伍") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.Require(t, !(err == nil), "expected fixed characters with specific skill order to fail")
+	testutil.Require(t, strings.Contains(err.Error(), "仅在使用固定队伍"), "unexpected error: %v", err)
+
 }
 
 func TestBonusDeckHandleParsesEventAndBonuses(t *testing.T) {
@@ -1124,21 +1052,25 @@ func TestBonusDeckHandleParsesEventAndBonuses(t *testing.T) {
 		TriggerCmd: "/加成组卡",
 		ArgText:    "event123 120 160",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	if len(params.TargetBonuses) != 2 || params.TargetBonuses[0] != 120 || params.TargetBonuses[1] != 160 {
-		t.Fatalf("unexpected bonuses: %+v", params.TargetBonuses)
+	{
+		testutil.Require(t, !(len(params.TargetBonuses) != 2), "unexpected bonuses: %+v", params.TargetBonuses)
+		testutil.Require(t, !(params.TargetBonuses[0] != 120), "unexpected bonuses: %+v", params.TargetBonuses)
+		testutil.Require(t, !(params.TargetBonuses[1] != 160), "unexpected bonuses: %+v", params.TargetBonuses)
 	}
+
 }
 
 func TestBonusDeckHandleParsesBonusKeywords(t *testing.T) {
@@ -1148,21 +1080,25 @@ func TestBonusDeckHandleParsesBonusKeywords(t *testing.T) {
 		TriggerCmd: "/加成组卡",
 		ArgText:    "event123 120加成 160%",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	if len(params.TargetBonuses) != 2 || params.TargetBonuses[0] != 120 || params.TargetBonuses[1] != 160 {
-		t.Fatalf("unexpected bonuses: %+v", params.TargetBonuses)
+	{
+		testutil.Require(t, !(len(params.TargetBonuses) != 2), "unexpected bonuses: %+v", params.TargetBonuses)
+		testutil.Require(t, !(params.TargetBonuses[0] != 120), "unexpected bonuses: %+v", params.TargetBonuses)
+		testutil.Require(t, !(params.TargetBonuses[1] != 160), "unexpected bonuses: %+v", params.TargetBonuses)
 	}
+
 }
 
 func TestBonusDeckHandleTreatsBareNumericLeadingValueAsBonusTarget(t *testing.T) {
@@ -1172,21 +1108,18 @@ func TestBonusDeckHandleTreatsBareNumericLeadingValueAsBonusTarget(t *testing.T)
 		TriggerCmd: "/加成组卡",
 		ArgText:    "123 120",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID != nil {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
-	}
-	if !reflect.DeepEqual(params.TargetBonuses, []int{123, 120}) {
-		t.Fatalf("unexpected target bonuses: %+v", params.TargetBonuses)
-	}
+
+	testutil.Require(t, !(params.EventID != nil), "unexpected event id: %+v", params.EventID)
+	testutil.Require(t, reflect.DeepEqual(params.TargetBonuses, []int{123, 120}), "unexpected target bonuses: %+v", params.TargetBonuses)
+
 }
 
 func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
@@ -1196,25 +1129,25 @@ func TestChallengeDeckHandleParsesCharacterAndAuto(t *testing.T) {
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "miku auto",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	// "miku" is resolved to character ID 21
-	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	{
+
+		testutil.
+			// "miku" is resolved to character ID 21
+			Require(t, !(params.ChallengeLiveCharacterID == nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+		testutil.
+			Require(t, !(*params.ChallengeLiveCharacterID != 21), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if params.ChallengeLiveCharacterQuery != "" {
-		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
-	}
-	if params.LiveType != "auto" {
-		t.Fatalf("unexpected live type: %q", params.LiveType)
-	}
+	testutil.Require(t, !(params.ChallengeLiveCharacterQuery != ""), "unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	testutil.Require(t, !(params.LiveType != "auto"), "unexpected live type: %q", params.LiveType)
+
 }
 
 func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T) {
@@ -1224,24 +1157,22 @@ func TestChallengeDeckHandleAllowsAllCharactersWhenCharacterOmitted(t *testing.T
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.ChallengeLiveCharacterID != nil {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+
+	testutil.Require(t, !(params.ChallengeLiveCharacterID != nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	testutil.Require(t, !(params.ChallengeLiveCharacterQuery != ""), "unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	{
+		testutil.Require(t, !(params.MusicQuery != defaultChallengeDeckMusicQuery), "unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
+		testutil.Require(t, !(params.MusicDiff != defaultChallengeDeckMusicDiff), "unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
 	}
-	if params.ChallengeLiveCharacterQuery != "" {
-		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
-	}
-	if params.MusicQuery != defaultChallengeDeckMusicQuery || params.MusicDiff != defaultChallengeDeckMusicDiff {
-		t.Fatalf("unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
-	}
+
 }
 
 func TestChallengeDeckHandleTreatsInlineDifficultyTokenAsMusicQuery(t *testing.T) {
@@ -1251,27 +1182,20 @@ func TestChallengeDeckHandleTreatsInlineDifficultyTokenAsMusicQuery(t *testing.T
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "群青ex",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.ChallengeLiveCharacterID != nil {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
-	}
-	if params.ChallengeLiveCharacterQuery != "" {
-		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
-	}
-	if params.MusicQuery != "群青" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-	if params.MusicDiff != "expert" {
-		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
-	}
+
+	testutil.Require(t, !(params.ChallengeLiveCharacterID != nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	testutil.Require(t, !(params.ChallengeLiveCharacterQuery != ""), "unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	testutil.Require(t, !(params.MusicQuery != "群青"), "unexpected music query: %q", params.MusicQuery)
+	testutil.Require(t, !(params.MusicDiff != "expert"), "unexpected music diff: %q", params.MusicDiff)
+
 }
 
 func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
@@ -1281,24 +1205,22 @@ func TestChallengeDeckHandleParsesCurrentKeywordWithoutCharacter(t *testing.T) {
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "当前",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.UseCurrentDeck {
-		t.Fatalf("expected use_current_deck to be enabled")
+
+	testutil.Require(t, params.UseCurrentDeck, "expected use_current_deck to be enabled")
+	testutil.Require(t, !(params.ChallengeLiveCharacterID != nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	{
+		testutil.Require(t, !(params.MusicQuery != defaultChallengeDeckMusicQuery), "unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
+		testutil.Require(t, !(params.MusicDiff != defaultChallengeDeckMusicDiff), "unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
 	}
-	if params.ChallengeLiveCharacterID != nil {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
-	}
-	if params.MusicQuery != defaultChallengeDeckMusicQuery || params.MusicDiff != defaultChallengeDeckMusicDiff {
-		t.Fatalf("unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
-	}
+
 }
 
 func TestChallengeDeckHandleParsesCharacterAndCurrentKeyword(t *testing.T) {
@@ -1308,24 +1230,25 @@ func TestChallengeDeckHandleParsesCharacterAndCurrentKeyword(t *testing.T) {
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "miku 当前",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.UseCurrentDeck {
-		t.Fatalf("expected use_current_deck to be enabled")
+
+	testutil.Require(t, params.UseCurrentDeck, "expected use_current_deck to be enabled")
+	{
+		testutil.Require(t, !(params.ChallengeLiveCharacterID == nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+		testutil.Require(t, !(*params.ChallengeLiveCharacterID != 21), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	{
+		testutil.Require(t, !(params.MusicQuery != defaultChallengeDeckMusicQuery), "unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
+		testutil.Require(t, !(params.MusicDiff != defaultChallengeDeckMusicDiff), "unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
 	}
-	if params.MusicQuery != defaultChallengeDeckMusicQuery || params.MusicDiff != defaultChallengeDeckMusicDiff {
-		t.Fatalf("unexpected default music: query=%q diff=%q", params.MusicQuery, params.MusicDiff)
-	}
+
 }
 
 func TestChallengeDeckHandleParsesMusicCompareQueries(t *testing.T) {
@@ -1335,27 +1258,23 @@ func TestChallengeDeckHandleParsesMusicCompareQueries(t *testing.T) {
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "miku 歌曲比较 10th 群青apd",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	{
+
+		testutil.Require(t, !(params.ChallengeLiveCharacterID == nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+		testutil.Require(t, !(*params.ChallengeLiveCharacterID != 21), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if !params.MusicCompare {
-		t.Fatalf("expected music_compare to be enabled")
-	}
-	if !reflect.DeepEqual(params.MusicCompareQueries, []string{"10th", "群青apd"}) {
-		t.Fatalf("unexpected music compare queries: %+v", params.MusicCompareQueries)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, params.MusicCompare, "expected music_compare to be enabled")
+	testutil.Require(t, reflect.DeepEqual(params.MusicCompareQueries, []string{"10th", "群青apd"}), "unexpected music compare queries: %+v", params.MusicCompareQueries)
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestChallengeDeckHandleParsesMusicCompareAliasQueries(t *testing.T) {
@@ -1365,27 +1284,23 @@ func TestChallengeDeckHandleParsesMusicCompareAliasQueries(t *testing.T) {
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "mzk 歌曲对比 群青apd 火花apd",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 20 {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	{
+
+		testutil.Require(t, !(params.ChallengeLiveCharacterID == nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+		testutil.Require(t, !(*params.ChallengeLiveCharacterID != 20), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if !params.MusicCompare {
-		t.Fatalf("expected music_compare to be enabled")
-	}
-	if !reflect.DeepEqual(params.MusicCompareQueries, []string{"群青apd", "火花apd"}) {
-		t.Fatalf("unexpected music compare queries: %+v", params.MusicCompareQueries)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, params.MusicCompare, "expected music_compare to be enabled")
+	testutil.Require(t, reflect.DeepEqual(params.MusicCompareQueries, []string{"群青apd", "火花apd"}), "unexpected music compare queries: %+v", params.MusicCompareQueries)
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestChallengeDeckHandlePreservesCharacterQuery(t *testing.T) {
@@ -1395,25 +1310,25 @@ func TestChallengeDeckHandlePreservesCharacterQuery(t *testing.T) {
 		TriggerCmd: "/挑战组卡",
 		ArgText:    "初音未来 auto",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	// "初音未来" is resolved to character ID 21
-	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 21 {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	{
+
+		testutil.
+			// "初音未来" is resolved to character ID 21
+			Require(t, !(params.ChallengeLiveCharacterID == nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+		testutil.
+			Require(t, !(*params.ChallengeLiveCharacterID != 21), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if params.ChallengeLiveCharacterQuery != "" {
-		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
-	}
-	if params.LiveType != "auto" {
-		t.Fatalf("unexpected live type: %q", params.LiveType)
-	}
+	testutil.Require(t, !(params.ChallengeLiveCharacterQuery != ""), "unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	testutil.Require(t, !(params.LiveType != "auto"), "unexpected live type: %q", params.LiveType)
+
 }
 
 func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
@@ -1423,26 +1338,30 @@ func TestMysekaiDeckHandleParsesEventAndFixedCharacter(t *testing.T) {
 		TriggerCmd: "/ms组卡",
 		ArgText:    "event123 #miku",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var combined mysekaiDeckCombinedParams
-	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &combined)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
+
 	params := combined.Deck
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	// "#miku" is now resolved to character ID 21
-	if len(params.FixedCharacters) != 1 || params.FixedCharacters[0] != 21 {
-		t.Fatalf("unexpected fixed characters: %+v", params.FixedCharacters)
+	{
+		testutil.
+
+			// "#miku" is now resolved to character ID 21
+			Require(t, !(len(params.FixedCharacters) != 1), "unexpected fixed characters: %+v", params.FixedCharacters)
+		testutil.
+			Require(t, !(params.FixedCharacters[0] != 21), "unexpected fixed characters: %+v", params.FixedCharacters)
 	}
-	if len(params.FixedCharacterQueries) != 0 {
-		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
-	}
+	testutil.Require(t, !(len(params.FixedCharacterQueries) != 0), "unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+
 }
 
 func TestMysekaiDeckHandleParsesMusicCompareQueries(t *testing.T) {
@@ -1452,21 +1371,18 @@ func TestMysekaiDeckHandleParsesMusicCompareQueries(t *testing.T) {
 		TriggerCmd: "/ms组卡",
 		ArgText:    "歌曲比较 龙hard 虾expert",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var combined mysekaiDeckCombinedParams
-	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &combined)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !combined.Deck.MusicCompare {
-		t.Fatalf("expected music_compare to be enabled")
-	}
-	if !reflect.DeepEqual(combined.Deck.MusicCompareQueries, []string{"龙hard", "虾expert"}) {
-		t.Fatalf("unexpected music compare queries: %+v", combined.Deck.MusicCompareQueries)
-	}
+
+	testutil.Require(t, combined.Deck.MusicCompare, "expected music_compare to be enabled")
+	testutil.Require(t, reflect.DeepEqual(combined.Deck.MusicCompareQueries, []string{"龙hard", "虾expert"}), "unexpected music compare queries: %+v", combined.Deck.MusicCompareQueries)
+
 }
 
 func TestMysekaiDeckHandlePreservesFixedCharacterQueries(t *testing.T) {
@@ -1476,26 +1392,32 @@ func TestMysekaiDeckHandlePreservesFixedCharacterQueries(t *testing.T) {
 		TriggerCmd: "/ms组卡",
 		ArgText:    "event123 #初音未来 巡音流歌",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var combined mysekaiDeckCombinedParams
-	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &combined)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
+
 	params := combined.Deck
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	// "初音未来" resolves to 21, "巡音流歌" resolves to 24
-	if len(params.FixedCharacters) != 2 || params.FixedCharacters[0] != 21 || params.FixedCharacters[1] != 24 {
-		t.Fatalf("unexpected fixed character ids: %+v", params.FixedCharacters)
+	{
+		testutil.
+
+			// "初音未来" resolves to 21, "巡音流歌" resolves to 24
+			Require(t, !(len(params.FixedCharacters) != 2), "unexpected fixed character ids: %+v", params.FixedCharacters)
+		testutil.
+			Require(t, !(params.FixedCharacters[0] != 21), "unexpected fixed character ids: %+v", params.FixedCharacters)
+		testutil.
+			Require(t, !(params.FixedCharacters[1] != 24), "unexpected fixed character ids: %+v", params.FixedCharacters)
 	}
-	if len(params.FixedCharacterQueries) != 0 {
-		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
-	}
+	testutil.Require(t, !(len(params.FixedCharacterQueries) != 0), "unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+
 }
 
 func TestEventDeckHandleParsesMusicQueryAndDifficulty(t *testing.T) {
@@ -1505,21 +1427,18 @@ func TestEventDeckHandleParsesMusicQueryAndDifficulty(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "Tell Your World ex",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.MusicQuery != "tell your world" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-	if params.MusicDiff != "expert" {
-		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
-	}
+
+	testutil.Require(t, !(params.MusicQuery != "tell your world"), "unexpected music query: %q", params.MusicQuery)
+	testutil.Require(t, !(params.MusicDiff != "expert"), "unexpected music diff: %q", params.MusicDiff)
+
 }
 
 func TestEventDeckHandleParsesMusicQueryAndDifficultyWithoutSpace(t *testing.T) {
@@ -1529,24 +1448,22 @@ func TestEventDeckHandleParsesMusicQueryAndDifficultyWithoutSpace(t *testing.T) 
 		TriggerCmd: "/组卡",
 		ArgText:    "190 满画布 已读 虾ex 10火",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 190 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 190), "unexpected event id: %+v", params.EventID)
 	}
-	if params.MusicQuery != "虾" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-	if params.MusicDiff != "expert" {
-		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
-	}
+	testutil.Require(t, !(params.MusicQuery != "虾"), "unexpected music query: %q", params.MusicQuery)
+	testutil.Require(t, !(params.MusicDiff != "expert"), "unexpected music diff: %q", params.MusicDiff)
+
 }
 
 func TestEventDeckHandleParsesExplicitMusicID(t *testing.T) {
@@ -1556,24 +1473,22 @@ func TestEventDeckHandleParsesExplicitMusicID(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "music123 ex",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.MusicID == nil || *params.MusicID != 123 {
-		t.Fatalf("unexpected music id: %+v", params.MusicID)
+	{
+
+		testutil.Require(t, !(params.MusicID == nil), "unexpected music id: %+v", params.MusicID)
+		testutil.Require(t, !(*params.MusicID != 123), "unexpected music id: %+v", params.MusicID)
 	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-	if params.MusicDiff != "expert" {
-		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
-	}
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+	testutil.Require(t, !(params.MusicDiff != "expert"), "unexpected music diff: %q", params.MusicDiff)
+
 }
 
 func TestEventDeckHandleKeepsBareNumericQuery(t *testing.T) {
@@ -1583,24 +1498,19 @@ func TestEventDeckHandleKeepsBareNumericQuery(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "123 ex",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.MusicID != nil {
-		t.Fatalf("unexpected music id: %+v", params.MusicID)
-	}
-	if params.MusicQuery != "123" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
-	if params.MusicDiff != "expert" {
-		t.Fatalf("unexpected music diff: %q", params.MusicDiff)
-	}
+
+	testutil.Require(t, !(params.MusicID != nil), "unexpected music id: %+v", params.MusicID)
+	testutil.Require(t, !(params.MusicQuery != "123"), "unexpected music query: %q", params.MusicQuery)
+	testutil.Require(t, !(params.MusicDiff != "expert"), "unexpected music diff: %q", params.MusicDiff)
+
 }
 
 func TestEventDeckHandleRecognizesNicknameAliasAfterEventID(t *testing.T) {
@@ -1610,24 +1520,25 @@ func TestEventDeckHandleRecognizesNicknameAliasAfterEventID(t *testing.T) {
 		TriggerCmd: "/缁勫崱",
 		ArgText:    "event123 tks",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 123), "unexpected event id: %+v", params.EventID)
 	}
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 13 {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	{
+		testutil.Require(t, !(params.WorldBloomCharacterID == nil), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+		testutil.Require(t, !(*params.WorldBloomCharacterID != 13), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
-	if params.WorldBloomCharacterQuery != "" {
-		t.Fatalf("unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
-	}
+	testutil.Require(t, !(params.WorldBloomCharacterQuery != ""), "unexpected world bloom character query: %q", params.WorldBloomCharacterQuery)
+
 }
 
 func TestEventDeckHandleRecognizesLeadingNumericEventIDAndStripsBoostToken(t *testing.T) {
@@ -1637,27 +1548,29 @@ func TestEventDeckHandleRecognizesLeadingNumericEventIDAndStripsBoostToken(t *te
 		TriggerCmd: "/组卡",
 		ArgText:    "163 tks sage 5火",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 163 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 163), "unexpected event id: %+v", params.EventID)
 	}
-	if params.WorldBloomCharacterID == nil || *params.WorldBloomCharacterID != 13 {
-		t.Fatalf("unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+	{
+		testutil.Require(t, !(params.WorldBloomCharacterID == nil), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
+		testutil.Require(t, !(*params.WorldBloomCharacterID != 13), "unexpected world bloom character id: %+v", params.WorldBloomCharacterID)
 	}
-	if params.Boost == nil || *params.Boost != 5 {
-		t.Fatalf("unexpected boost: %+v", params.Boost)
+	{
+		testutil.Require(t, !(params.Boost == nil), "unexpected boost: %+v", params.Boost)
+		testutil.Require(t, !(*params.Boost != 5), "unexpected boost: %+v", params.Boost)
 	}
-	if params.MusicQuery != "sage" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != "sage"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleStripsBoostTokenAfterExplicitEventID(t *testing.T) {
@@ -1667,24 +1580,25 @@ func TestEventDeckHandleStripsBoostTokenAfterExplicitEventID(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "event163 sage neo 5火",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 163 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 163), "unexpected event id: %+v", params.EventID)
 	}
-	if params.Boost == nil || *params.Boost != 5 {
-		t.Fatalf("unexpected boost: %+v", params.Boost)
+	{
+		testutil.Require(t, !(params.Boost == nil), "unexpected boost: %+v", params.Boost)
+		testutil.Require(t, !(*params.Boost != 5), "unexpected boost: %+v", params.Boost)
 	}
-	if params.MusicQuery != "sage neo" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != "sage neo"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestChallengeDeckHandleRecognizesNicknameAlias(t *testing.T) {
@@ -1694,24 +1608,22 @@ func TestChallengeDeckHandleRecognizesNicknameAlias(t *testing.T) {
 		TriggerCmd: "/鎸戞垬缁勫崱",
 		ArgText:    "tks auto",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.ChallengeLiveCharacterID == nil || *params.ChallengeLiveCharacterID != 13 {
-		t.Fatalf("unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+	{
+
+		testutil.Require(t, !(params.ChallengeLiveCharacterID == nil), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
+		testutil.Require(t, !(*params.ChallengeLiveCharacterID != 13), "unexpected challenge character id: %+v", params.ChallengeLiveCharacterID)
 	}
-	if params.ChallengeLiveCharacterQuery != "" {
-		t.Fatalf("unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
-	}
-	if params.LiveType != "auto" {
-		t.Fatalf("unexpected live type: %q", params.LiveType)
-	}
+	testutil.Require(t, !(params.ChallengeLiveCharacterQuery != ""), "unexpected challenge character query: %q", params.ChallengeLiveCharacterQuery)
+	testutil.Require(t, !(params.LiveType != "auto"), "unexpected live type: %q", params.LiveType)
+
 }
 
 func TestMysekaiDeckHandleRecognizesFixedCharacterAlias(t *testing.T) {
@@ -1721,22 +1633,22 @@ func TestMysekaiDeckHandleRecognizesFixedCharacterAlias(t *testing.T) {
 		TriggerCmd: "/ms缁勫崱",
 		ArgText:    "event123 #tks",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var combined mysekaiDeckCombinedParams
-	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &combined)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
+
 	params := combined.Deck
-	if len(params.FixedCharacters) != 1 || params.FixedCharacters[0] != 13 {
-		t.Fatalf("unexpected fixed character ids: %+v", params.FixedCharacters)
+	{
+		testutil.Require(t, !(len(params.FixedCharacters) != 1), "unexpected fixed character ids: %+v", params.FixedCharacters)
+		testutil.Require(t, !(params.FixedCharacters[0] != 13), "unexpected fixed character ids: %+v", params.FixedCharacters)
 	}
-	if len(params.FixedCharacterQueries) != 0 {
-		t.Fatalf("unexpected fixed character queries: %+v", params.FixedCharacterQueries)
-	}
+	testutil.Require(t, !(len(params.FixedCharacterQueries) != 0), "unexpected fixed character queries: %+v", params.FixedCharacterQueries)
+
 }
 
 func TestNoEventDeckHandleRecognizesBoostToken(t *testing.T) {
@@ -1746,21 +1658,21 @@ func TestNoEventDeckHandleRecognizesBoostToken(t *testing.T) {
 		TriggerCmd: "/最强组卡",
 		ArgText:    "sage 5火",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Boost == nil || *params.Boost != 5 {
-		t.Fatalf("unexpected boost: %+v", params.Boost)
+	{
+
+		testutil.Require(t, !(params.Boost == nil), "unexpected boost: %+v", params.Boost)
+		testutil.Require(t, !(*params.Boost != 5), "unexpected boost: %+v", params.Boost)
 	}
-	if params.MusicQuery != "sage" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != "sage"), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleParsesNewAlgorithmAliases(t *testing.T) {
@@ -1792,20 +1704,17 @@ func TestEventDeckHandleParsesNewAlgorithmAliases(t *testing.T) {
 				TriggerCmd: "/组卡",
 				ArgText:    tc.argText,
 			})
-			if err != nil {
-				t.Fatalf("Handle() error = %v", err)
-			}
+			testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 			var params deckAutoQueryParams
-			if err := json.Unmarshal(result.Params, &params); err != nil {
-				t.Fatalf("unmarshal params: %v", err)
+			{
+				err := json.Unmarshal(result.Params, &params)
+				testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 			}
-			if params.Algorithm != tc.algorithm {
-				t.Fatalf("unexpected algorithm: %q", params.Algorithm)
-			}
-			if params.MusicQuery != tc.music {
-				t.Fatalf("unexpected music query: %q", params.MusicQuery)
-			}
+
+			testutil.Require(t, !(params.Algorithm != tc.algorithm), "unexpected algorithm: %q", params.Algorithm)
+			testutil.Require(t, !(params.MusicQuery != tc.music), "unexpected music query: %q", params.MusicQuery)
+
 		})
 	}
 }
@@ -1817,21 +1726,24 @@ func TestMysekaiDeckHandleRecognizesBoostToken(t *testing.T) {
 		TriggerCmd: "/ms组卡",
 		ArgText:    "event123 5火",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var combined mysekaiDeckCombinedParams
-	if err := json.Unmarshal(resolved.Params, &combined); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &combined)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if combined.Deck.EventID == nil || *combined.Deck.EventID != 123 {
-		t.Fatalf("unexpected event id: %+v", combined.Deck.EventID)
+	{
+
+		testutil.Require(t, !(combined.Deck.EventID == nil), "unexpected event id: %+v", combined.Deck.EventID)
+		testutil.Require(t, !(*combined.Deck.EventID != 123), "unexpected event id: %+v", combined.Deck.EventID)
 	}
-	if combined.Deck.Boost == nil || *combined.Deck.Boost != 5 {
-		t.Fatalf("unexpected boost: %+v", combined.Deck.Boost)
+	{
+		testutil.Require(t, !(combined.Deck.Boost == nil), "unexpected boost: %+v", combined.Deck.Boost)
+		testutil.Require(t, !(*combined.Deck.Boost != 5), "unexpected boost: %+v", combined.Deck.Boost)
 	}
+
 }
 
 func TestEventDeckHandleRecognizesChinese25JiAlias(t *testing.T) {
@@ -1841,21 +1753,21 @@ func TestEventDeckHandleRecognizesChinese25JiAlias(t *testing.T) {
 		TriggerCmd: "/组卡",
 		ArgText:    "25时 紫",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventUnit != "school_refusal" || params.EventAttr != "mysterious" {
-		t.Fatalf("unexpected simulated event params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.EventUnit != "school_refusal"), "unexpected simulated event params: %+v", params)
+		testutil.Require(t, !(params.EventAttr != "mysterious"), "unexpected simulated event params: %+v", params)
 	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestNoEventDeckHandleRejectsAttrOnlyAliasAsSongQuery(t *testing.T) {
@@ -1865,12 +1777,9 @@ func TestNoEventDeckHandleRejectsAttrOnlyAliasAsSongQuery(t *testing.T) {
 		TriggerCmd: "/最强组卡",
 		ArgText:    "紫月",
 	})
-	if err == nil {
-		t.Fatalf("expected attr-only alias to trigger simulated-event hint")
-	}
-	if !strings.Contains(err.Error(), "/组卡 团名 属性") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.Require(t, !(err == nil), "expected attr-only alias to trigger simulated-event hint")
+	testutil.Require(t, strings.Contains(err.Error(), "/组卡 团名 属性"), "unexpected error: %v", err)
+
 }
 
 func TestNoEventDeckHandleRejectsFullAliasesWithNoEventHint(t *testing.T) {
@@ -1880,12 +1789,9 @@ func TestNoEventDeckHandleRejectsFullAliasesWithNoEventHint(t *testing.T) {
 		TriggerCmd: "/最强组卡",
 		ArgText:    "25时 蓝星",
 	})
-	if err == nil {
-		t.Fatalf("expected no-event deck to reject simulated event aliases")
-	}
-	if !strings.Contains(err.Error(), "/组卡 团名 属性") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.Require(t, !(err == nil), "expected no-event deck to reject simulated event aliases")
+	testutil.Require(t, strings.Contains(err.Error(), "/组卡 团名 属性"), "unexpected error: %v", err)
+
 }
 
 func TestEventDeckHandleRejectsDeprecatedWorldBloomSelectorAndCharacterAfterEventID(t *testing.T) {
@@ -1895,12 +1801,9 @@ func TestEventDeckHandleRejectsDeprecatedWorldBloomSelectorAndCharacterAfterEven
 		TriggerCmd: "/组卡",
 		ArgText:    "140 wl3 miku",
 	})
-	if err == nil {
-		t.Fatalf("expected deprecated WL chapter selector to be rejected")
-	}
-	if !strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法") {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	testutil.Require(t, !(err == nil), "expected deprecated WL chapter selector to be rejected")
+	testutil.Require(t, strings.Contains(err.Error(), "不再支持 wl2 这种 WL 章节写法"), "unexpected error: %v", err)
+
 }
 
 func TestNoEventDeckHandleAllowsOnly25WithBareSkillTarget(t *testing.T) {
@@ -1910,27 +1813,20 @@ func TestNoEventDeckHandleAllowsOnly25WithBareSkillTarget(t *testing.T) {
 		TriggerCmd: "/最强组卡",
 		ArgText:    "仅25 实效",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Target != "skill" {
-		t.Fatalf("unexpected target: %q", params.Target)
-	}
-	if params.MultiLiveScoreUpLowerBound != nil {
-		t.Fatalf("bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
-	}
-	if params.UnitFilter != "school_refusal" {
-		t.Fatalf("unexpected unit filter: %q", params.UnitFilter)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, !(params.Target != "skill"), "unexpected target: %q", params.Target)
+	testutil.Require(t, !(params.MultiLiveScoreUpLowerBound != nil), "bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	testutil.Require(t, !(params.UnitFilter != "school_refusal"), "unexpected unit filter: %q", params.UnitFilter)
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestNoEventDeckHandleAllowsOnly25hWithBareSkillTarget(t *testing.T) {
@@ -1940,27 +1836,20 @@ func TestNoEventDeckHandleAllowsOnly25hWithBareSkillTarget(t *testing.T) {
 		TriggerCmd: "/最强组卡",
 		ArgText:    "仅25h 实效",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Target != "skill" {
-		t.Fatalf("unexpected target: %q", params.Target)
-	}
-	if params.MultiLiveScoreUpLowerBound != nil {
-		t.Fatalf("bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
-	}
-	if params.UnitFilter != "school_refusal" {
-		t.Fatalf("unexpected unit filter: %q", params.UnitFilter)
-	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+
+	testutil.Require(t, !(params.Target != "skill"), "unexpected target: %q", params.Target)
+	testutil.Require(t, !(params.MultiLiveScoreUpLowerBound != nil), "bare skill target should not set score up lower bound: %+v", params.MultiLiveScoreUpLowerBound)
+	testutil.Require(t, !(params.UnitFilter != "school_refusal"), "unexpected unit filter: %q", params.UnitFilter)
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }
 
 func TestEventDeckHandleTreatsBareSingleNumberAsEventID(t *testing.T) {
@@ -1970,19 +1859,19 @@ func TestEventDeckHandleTreatsBareSingleNumberAsEventID(t *testing.T) {
 		TriggerCmd: "/活动组卡",
 		ArgText:    "118",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
 	var params deckAutoQueryParams
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.EventID == nil || *params.EventID != 118 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
+	{
+
+		testutil.Require(t, !(params.EventID == nil), "unexpected event id: %+v", params.EventID)
+		testutil.Require(t, !(*params.EventID != 118), "unexpected event id: %+v", params.EventID)
 	}
-	if params.MusicQuery != "" {
-		t.Fatalf("unexpected music query: %q", params.MusicQuery)
-	}
+	testutil.Require(t, !(params.MusicQuery != ""), "unexpected music query: %q", params.MusicQuery)
+
 }

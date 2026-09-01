@@ -12,17 +12,22 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 	"haruki-cloud/internal/pjsk/render/music"
 	rendersnapshot "haruki-cloud/internal/pjsk/render/snapshot"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestResolveCustomRoomScoreSelection(t *testing.T) {
 	selection, err := resolveCustomRoomScoreSelection(&CommandInput{Params: []byte(`{"target_point":42}`), Query: "99"})
-	if err != nil || selection.TargetPoint != 42 {
-		t.Fatalf("selection from params = %#v, %v", selection, err)
+	{
+		testutil.Require(t, !(err != nil), "selection from params = %#v, %v", selection, err)
+		testutil.Require(t, !(selection.TargetPoint != 42), "selection from params = %#v, %v", selection, err)
 	}
+
 	selection, err = resolveCustomRoomScoreSelection(&CommandInput{Query: " 23 "})
-	if err != nil || selection.TargetPoint != 23 {
-		t.Fatalf("selection from query = %#v, %v", selection, err)
+	{
+		testutil.Require(t, !(err != nil), "selection from query = %#v, %v", selection, err)
+		testutil.Require(t, !(selection.TargetPoint != 23), "selection from query = %#v, %v", selection, err)
 	}
+
 	for name, input := range map[string]*CommandInput{
 		"nil":          nil,
 		"empty":        {},
@@ -30,9 +35,11 @@ func TestResolveCustomRoomScoreSelection(t *testing.T) {
 		"invalid json": {Params: []byte(`{`)},
 	} {
 		t.Run(name, func(t *testing.T) {
-			if _, err := resolveCustomRoomScoreSelection(input); err == nil {
-				t.Fatal("invalid selection unexpectedly succeeded")
+			{
+				_, err := resolveCustomRoomScoreSelection(input)
+				testutil.RequireArgs(t, !(err == nil), "invalid selection unexpectedly succeeded")
 			}
+
 		})
 	}
 }
@@ -44,20 +51,23 @@ func TestCustomRoomScoreCSVHelpers(t *testing.T) {
 		"\ufeff300%": 300,
 	} {
 		got, ok := parseCustomRoomBonus(raw)
-		if !ok || got != want {
-			t.Errorf("parseCustomRoomBonus(%q) = (%d, %t)", raw, got, ok)
-		}
+		testutil.Check(t, !(!ok || got != want), "parseCustomRoomBonus(%q) = (%d, %t)", raw, got, ok)
+
 	}
 	for _, raw := range []string{"", "%", "invalid"} {
-		if _, ok := parseCustomRoomBonus(raw); ok {
-			t.Errorf("parseCustomRoomBonus(%q) unexpectedly succeeded", raw)
+		{
+			_, ok := parseCustomRoomBonus(raw)
+			testutil.Check(t, !(ok), "parseCustomRoomBonus(%q) unexpectedly succeeded", raw)
 		}
+
 	}
 
 	pairs, err := findCustomRoomCandidatePairs(22)
-	if err != nil || len(pairs) == 0 {
-		t.Fatalf("find candidate pairs = %#v, %v", pairs, err)
+	{
+		testutil.Require(t, !(err != nil), "find candidate pairs = %#v, %v", pairs, err)
+		testutil.Require(t, !(len(pairs) == 0), "find candidate pairs = %#v, %v", pairs, err)
 	}
+
 	found := false
 	for _, pair := range pairs {
 		if len(pair) == 2 && pair[0] == 100 && pair[1] == 0 {
@@ -65,24 +75,32 @@ func TestCustomRoomScoreCSVHelpers(t *testing.T) {
 			break
 		}
 	}
-	if !found {
-		t.Fatalf("candidate pairs do not contain the CSV's first cell: %#v", pairs)
-	}
+	testutil.Require(t, found, "candidate pairs do not contain the CSV's first cell: %#v", pairs)
+
 	missing, err := findCustomRoomCandidatePairs(-999)
-	if err != nil || len(missing) != 0 {
-		t.Fatalf("missing candidate pairs = %#v, %v", missing, err)
+	{
+		testutil.Require(t, !(err != nil), "missing candidate pairs = %#v, %v", missing, err)
+		testutil.Require(t, !(len(missing) != 0), "missing candidate pairs = %#v, %v", missing, err)
 	}
 
 	rates := customRoomEventRates([][]int{{100, 0}, {100, 5}, nil, {-1, 10}, {103, 10}})
-	if len(rates) != 2 || rates[0] != 100 || rates[1] != 103 {
-		t.Fatalf("custom room rates = %#v", rates)
+	{
+		testutil.Require(t, !(len(rates) != 2), "custom room rates = %#v", rates)
+		testutil.Require(t, !(rates[0] != 100), "custom room rates = %#v", rates)
+		testutil.Require(t, !(rates[1] != 103), "custom room rates = %#v", rates)
 	}
+
 }
 
 func TestBuildCustomRoomScoreRequestRequiresController(t *testing.T) {
-	if _, err := BuildCustomRoomScoreRequest(&CommandInput{Query: "22"}, nil); err == nil || !strings.Contains(err.Error(), "music controller") {
-		t.Fatalf("nil app error = %v", err)
+	{
+		_, err := BuildCustomRoomScoreRequest(&CommandInput{Query: "22"}, nil)
+		{
+			testutil.Require(t, !(err == nil), "nil app error = %v", err)
+			testutil.Require(t, strings.Contains(err.Error(), "music controller"), "nil app error = %v", err)
+		}
 	}
+
 }
 
 func TestBuildCustomRoomScoreRequestValidationAndMusicErrors(t *testing.T) {
@@ -94,25 +112,35 @@ func TestBuildCustomRoomScoreRequestValidationAndMusicErrors(t *testing.T) {
 		"small impossible":  {Query: "1"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			if _, err := BuildCustomRoomScoreRequest(input, app); err == nil {
-				t.Fatal("invalid custom-room request unexpectedly succeeded")
+			{
+				_, err := BuildCustomRoomScoreRequest(input, app)
+				testutil.RequireArgs(t, !(err == nil), "invalid custom-room request unexpectedly succeeded")
 			}
+
 		})
 	}
-	if _, err := BuildCustomRoomScoreRequest(&CommandInput{Query: "22"}, app); err == nil || !strings.Contains(err.Error(), "data source") {
-		t.Fatalf("missing music source error = %v", err)
+	{
+		_, err := BuildCustomRoomScoreRequest(&CommandInput{Query: "22"}, app)
+		{
+			testutil.Require(t, !(err == nil), "missing music source error = %v", err)
+			testutil.Require(t, strings.Contains(err.Error(), "data source"), "missing music source error = %v", err)
+		}
 	}
+
 }
 
 func TestBuildCustomRoomScoreRequestSuccess(t *testing.T) {
 	root := t.TempDir()
 	userJSON := filepath.Join(root, "user.json")
 	metaJSON := filepath.Join(root, "music_meta.json")
-	if err := os.WriteFile(userJSON, []byte(`{"now":1700000000,"userGamedata":{"userId":1,"name":"Tester","deck":1},"userProfile":{},"userDecks":[{"deckId":1}],"userCards":[]}`), 0o644); err != nil {
-		t.Fatalf("write user snapshot: %v", err)
+	{
+		err := os.WriteFile(userJSON, []byte(`{"now":1700000000,"userGamedata":{"userId":1,"name":"Tester","deck":1},"userProfile":{},"userDecks":[{"deckId":1}],"userCards":[]}`), 0o644)
+		testutil.Require(t, !(err != nil), "write user snapshot: %v", err)
 	}
-	if err := os.WriteFile(metaJSON, []byte(`[{"music_id":1,"difficulty":"master","event_rate":100}]`), 0o644); err != nil {
-		t.Fatalf("write music metadata: %v", err)
+	{
+
+		err := os.WriteFile(metaJSON, []byte(`[{"music_id":1,"difficulty":"master","event_rate":100}]`), 0o644)
+		testutil.Require(t, !(err != nil), "write music metadata: %v", err)
 	}
 
 	helper := assets.NewAssetHelper(root, nil)
@@ -126,10 +154,11 @@ func TestBuildCustomRoomScoreRequestSuccess(t *testing.T) {
 	}}, nil, helper, snapshot, nil)
 
 	req, err := BuildCustomRoomScoreRequest(&CommandInput{Region: "jp", Query: "22"}, &renderapp.App{Music: controller})
-	if err != nil {
-		t.Fatalf("BuildCustomRoomScoreRequest() error = %v", err)
+	testutil.Require(t, !(err != nil), "BuildCustomRoomScoreRequest() error = %v", err)
+	{
+		testutil.Require(t, !(req.TargetPoint != 22), "unexpected custom-room request: %+v", req)
+		testutil.Require(t, !(len(req.CandidatePairs) == 0), "unexpected custom-room request: %+v", req)
+		testutil.Require(t, !(len(req.MusicListMap[100]) != 1), "unexpected custom-room request: %+v", req)
 	}
-	if req.TargetPoint != 22 || len(req.CandidatePairs) == 0 || len(req.MusicListMap[100]) != 1 {
-		t.Fatalf("unexpected custom-room request: %+v", req)
-	}
+
 }

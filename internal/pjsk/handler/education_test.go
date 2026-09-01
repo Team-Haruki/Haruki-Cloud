@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	"strings"
 	"testing"
 
@@ -26,9 +27,16 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			wantErr: true,
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.ShowFull || query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
-					t.Fatalf("unexpected query: %+v", query)
+				{
+					testutil.Require(t, !(query.ShowFull), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Unit != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Cid != 0), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.CharacterQuery != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Attr != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Tree), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Flower), "unexpected query: %+v", query)
 				}
+
 			},
 		},
 		{
@@ -37,9 +45,16 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			wantErr: true,
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.ShowFull || query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
-					t.Fatalf("unexpected query: %+v", query)
+				{
+					testutil.Require(t, !(query.ShowFull), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Unit != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Cid != 0), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.CharacterQuery != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Attr != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Tree), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Flower), "unexpected query: %+v", query)
 				}
+
 			},
 		},
 		{
@@ -47,9 +62,16 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			args: "花树",
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.ShowFull || query.Unit != "" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || !query.Tree || !query.Flower {
-					t.Fatalf("unexpected query: %+v", query)
+				{
+					testutil.Require(t, !(query.ShowFull), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Unit != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Cid != 0), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.CharacterQuery != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Attr != ""), "unexpected query: %+v", query)
+					testutil.Require(t, query.Tree, "unexpected query: %+v", query)
+					testutil.Require(t, query.Flower, "unexpected query: %+v", query)
 				}
+
 			},
 		},
 		{
@@ -57,9 +79,16 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			args: "25h full",
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if !query.ShowFull || query.Unit != "school_refusal" || query.Cid != 0 || query.CharacterQuery != "" || query.Attr != "" || query.Tree || query.Flower {
-					t.Fatalf("unexpected query: %+v", query)
+				{
+					testutil.Require(t, query.ShowFull, "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Unit != "school_refusal"), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Cid != 0), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.CharacterQuery != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Attr != ""), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Tree), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Flower), "unexpected query: %+v", query)
 				}
+
 			},
 		},
 		{
@@ -67,9 +96,15 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			args: "25h miku 可爱 树 花",
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.Unit != "school_refusal" || query.Cid != 0 || query.CharacterQuery != "miku" || query.Attr != "cute" || !query.Tree || !query.Flower {
-					t.Fatalf("unexpected query: %+v", query)
+				{
+					testutil.Require(t, !(query.Unit != "school_refusal"), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Cid != 0), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.CharacterQuery != "miku"), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.Attr != "cute"), "unexpected query: %+v", query)
+					testutil.Require(t, query.Tree, "unexpected query: %+v", query)
+					testutil.Require(t, query.Flower, "unexpected query: %+v", query)
 				}
+
 			},
 		},
 		{
@@ -77,9 +112,8 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			args: "vs",
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.Unit != "piapro" {
-					t.Fatalf("unexpected query: %+v", query)
-				}
+				testutil.Require(t, !(query.Unit != "piapro"), "unexpected query: %+v", query)
+
 			},
 		},
 		{
@@ -87,9 +121,11 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 			args: "初音未来",
 			checkFunc: func(t *testing.T, query education.AreaItemQuery) {
 				t.Helper()
-				if query.Cid != 0 || query.CharacterQuery != "初音未来" {
-					t.Fatalf("unexpected query: %+v", query)
+				{
+					testutil.Require(t, !(query.Cid != 0), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.CharacterQuery != "初音未来"), "unexpected query: %+v", query)
 				}
+
 			},
 		},
 	}
@@ -103,27 +139,26 @@ func TestAreaItemHandleBuildsCommandRequest(t *testing.T) {
 				ArgText:    tt.args,
 			})
 			if tt.wantErr {
-				if err == nil {
-					t.Fatal("expected error, got nil")
-				}
+				testutil.RequireArgs(t, !(err == nil), "expected error, got nil")
+
 				return
 			}
-			if err != nil {
-				t.Fatalf("Handle() error = %v", err)
-			}
+			testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 			resolved := result
-			if resolved == nil {
-				t.Fatal("expected command request, got nil")
-			}
-			if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-area" {
-				t.Fatalf("unexpected command request: %+v", resolved)
+			testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+			{
+
+				testutil.Require(t, !(resolved.Module != parser.ModuleEducation), "unexpected command request: %+v", resolved)
+				testutil.Require(t, !(resolved.Mode != "education-area"), "unexpected command request: %+v", resolved)
 			}
 
 			var query education.AreaItemQuery
-			if err := json.Unmarshal(resolved.Params, &query); err != nil {
-				t.Fatalf("unmarshal params: %v", err)
+			{
+				err := json.Unmarshal(resolved.Params, &query)
+				testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 			}
+
 			tt.checkFunc(t, query)
 		})
 	}
@@ -136,12 +171,16 @@ func TestAreaItemHandleReportsSpecificFullUsageError(t *testing.T) {
 		TriggerCmd: "/区域道具",
 		ArgText:    "full",
 	})
-	if err == nil {
-		t.Fatal("expected error, got nil")
+	testutil.RequireArgs(t, !(err == nil), "expected error, got nil")
+	{
+
+		got := err.Error()
+		{
+			testutil.Require(t, strings.Contains(got, "full 需要和区域道具分类一起使用"), "unexpected error: %q", got)
+			testutil.Require(t, !(strings.Contains(got, "使用方式")), "unexpected error: %q", got)
+		}
 	}
-	if got := err.Error(); !strings.Contains(got, "full 需要和区域道具分类一起使用") || strings.Contains(got, "使用方式") {
-		t.Fatalf("unexpected error: %q", got)
-	}
+
 }
 
 func TestBondsHandleBuildsCommandRequest(t *testing.T) {
@@ -155,9 +194,11 @@ func TestBondsHandleBuildsCommandRequest(t *testing.T) {
 			args: "",
 			checkFunc: func(t *testing.T, query education.BondsQuery) {
 				t.Helper()
-				if query.Cid != 0 || query.CharacterQuery != "" {
-					t.Fatalf("unexpected query: %+v", query)
+				{
+					testutil.Require(t, !(query.Cid != 0), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.CharacterQuery != ""), "unexpected query: %+v", query)
 				}
+
 			},
 		},
 		{
@@ -165,9 +206,11 @@ func TestBondsHandleBuildsCommandRequest(t *testing.T) {
 			args: "初音未来",
 			checkFunc: func(t *testing.T, query education.BondsQuery) {
 				t.Helper()
-				if query.Cid != 0 || query.CharacterQuery != "初音未来" {
-					t.Fatalf("unexpected query: %+v", query)
+				{
+					testutil.Require(t, !(query.Cid != 0), "unexpected query: %+v", query)
+					testutil.Require(t, !(query.CharacterQuery != "初音未来"), "unexpected query: %+v", query)
 				}
+
 			},
 		},
 	}
@@ -180,22 +223,22 @@ func TestBondsHandleBuildsCommandRequest(t *testing.T) {
 				TriggerCmd: "/羁绊",
 				ArgText:    tt.args,
 			})
-			if err != nil {
-				t.Fatalf("Handle() error = %v", err)
-			}
+			testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 			resolved := result
-			if resolved == nil {
-				t.Fatal("expected command request, got nil")
-			}
-			if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-bonds" {
-				t.Fatalf("unexpected command request: %+v", resolved)
+			testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+			{
+
+				testutil.Require(t, !(resolved.Module != parser.ModuleEducation), "unexpected command request: %+v", resolved)
+				testutil.Require(t, !(resolved.Mode != "education-bonds"), "unexpected command request: %+v", resolved)
 			}
 
 			var query education.BondsQuery
-			if err := json.Unmarshal(resolved.Params, &query); err != nil {
-				t.Fatalf("unmarshal params: %v", err)
+			{
+				err := json.Unmarshal(resolved.Params, &query)
+				testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 			}
+
 			tt.checkFunc(t, query)
 		})
 	}
@@ -223,16 +266,14 @@ func TestEducationSelfHandlersEmbedSelector(t *testing.T) {
 				TriggerCmd: tt.cmd,
 				ArgText:    "u2",
 			})
-			if err != nil {
-				t.Fatalf("Handle() error = %v", err)
-			}
+			testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 			resolved := result
-			if resolved == nil {
-				t.Fatal("expected command request, got nil")
-			}
-			if resolved.Module != parser.ModuleEducation || resolved.Mode != tt.mode {
-				t.Fatalf("unexpected command request: %+v", resolved)
+			testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+			{
+
+				testutil.Require(t, !(resolved.Module != parser.ModuleEducation), "unexpected command request: %+v", resolved)
+				testutil.Require(t, !(resolved.Mode != tt.mode), "unexpected command request: %+v", resolved)
 			}
 
 			var params struct {
@@ -241,12 +282,18 @@ func TestEducationSelfHandlersEmbedSelector(t *testing.T) {
 				PlatformUserID string `json:"platform_user_id"`
 				Selector       string `json:"selector"`
 			}
-			if err := json.Unmarshal(resolved.Params, &params); err != nil {
-				t.Fatalf("unmarshal params: %v", err)
+			{
+				err := json.Unmarshal(resolved.Params, &params)
+				testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 			}
-			if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
-				t.Fatalf("unexpected params: %+v", params)
+			{
+
+				testutil.Require(t, !(params.Mode != "self"), "unexpected params: %+v", params)
+				testutil.Require(t, !(params.Platform != "qq"), "unexpected params: %+v", params)
+				testutil.Require(t, !(params.PlatformUserID != "42"), "unexpected params: %+v", params)
+				testutil.Require(t, !(params.Selector != "u2"), "unexpected params: %+v", params)
 			}
+
 		})
 	}
 }
@@ -260,14 +307,10 @@ func TestAreaItemHandleEmbedsSelfSelector(t *testing.T) {
 		TriggerCmd: "/区域道具",
 		ArgText:    "u2 25h miku 可爱 树 花",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
 
 	var params struct {
 		Mode           string `json:"mode"`
@@ -280,15 +323,25 @@ func TestAreaItemHandleEmbedsSelfSelector(t *testing.T) {
 		Tree           bool   `json:"tree"`
 		Flower         bool   `json:"flower"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
-		t.Fatalf("unexpected self params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.Mode != "self"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.Platform != "qq"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.PlatformUserID != "42"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.Selector != "u2"), "unexpected self params: %+v", params)
 	}
-	if params.Unit != "school_refusal" || params.CharacterQuery != "miku" || params.Attr != "cute" || !params.Tree || !params.Flower {
-		t.Fatalf("unexpected area item params: %+v", params)
+	{
+		testutil.Require(t, !(params.Unit != "school_refusal"), "unexpected area item params: %+v", params)
+		testutil.Require(t, !(params.CharacterQuery != "miku"), "unexpected area item params: %+v", params)
+		testutil.Require(t, !(params.Attr != "cute"), "unexpected area item params: %+v", params)
+		testutil.Require(t, params.Tree, "unexpected area item params: %+v", params)
+		testutil.Require(t, params.Flower, "unexpected area item params: %+v", params)
 	}
+
 }
 
 func TestBondsHandleEmbedsSelfSelector(t *testing.T) {
@@ -300,14 +353,10 @@ func TestBondsHandleEmbedsSelfSelector(t *testing.T) {
 		TriggerCmd: "/羁绊",
 		ArgText:    "u2 初音未来",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
 
 	var params struct {
 		Mode           string `json:"mode"`
@@ -316,12 +365,19 @@ func TestBondsHandleEmbedsSelfSelector(t *testing.T) {
 		Selector       string `json:"selector"`
 		CharacterQuery string `json:"character_query"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" || params.CharacterQuery != "初音未来" {
-		t.Fatalf("unexpected params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.Mode != "self"), "unexpected params: %+v", params)
+		testutil.Require(t, !(params.Platform != "qq"), "unexpected params: %+v", params)
+		testutil.Require(t, !(params.PlatformUserID != "42"), "unexpected params: %+v", params)
+		testutil.Require(t, !(params.Selector != "u2"), "unexpected params: %+v", params)
+		testutil.Require(t, !(params.CharacterQuery != "初音未来"), "unexpected params: %+v", params)
 	}
+
 }
 
 func TestCharacterMissionHandleBuildsOverviewRequest(t *testing.T) {
@@ -333,16 +389,14 @@ func TestCharacterMissionHandleBuildsOverviewRequest(t *testing.T) {
 		TriggerCmd: "/cr任务",
 		ArgText:    "u2 miku",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-character-mission" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleEducation), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "education-character-mission"), "unexpected command request: %+v", resolved)
 	}
 
 	var params struct {
@@ -354,15 +408,23 @@ func TestCharacterMissionHandleBuildsOverviewRequest(t *testing.T) {
 		ShowAll        bool   `json:"show_all"`
 		MissionType    string `json:"mission_type"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.Mode != "self" || params.Platform != "qq" || params.PlatformUserID != "42" || params.Selector != "u2" {
-		t.Fatalf("unexpected self params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.Mode != "self"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.Platform != "qq"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.PlatformUserID != "42"), "unexpected self params: %+v", params)
+		testutil.Require(t, !(params.Selector != "u2"), "unexpected self params: %+v", params)
 	}
-	if params.CharacterQuery != "miku" || params.ShowAll || params.MissionType != "" {
-		t.Fatalf("unexpected character mission params: %+v", params)
+	{
+		testutil.Require(t, !(params.CharacterQuery != "miku"), "unexpected character mission params: %+v", params)
+		testutil.Require(t, !(params.ShowAll), "unexpected character mission params: %+v", params)
+		testutil.Require(t, !(params.MissionType != ""), "unexpected character mission params: %+v", params)
 	}
+
 }
 
 func TestCharacterMissionHandleBuildsAllRequest(t *testing.T) {
@@ -374,16 +436,14 @@ func TestCharacterMissionHandleBuildsAllRequest(t *testing.T) {
 		TriggerCmd: "/cr任务",
 		ArgText:    "u2 miku all 队长次数",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-character-mission" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleEducation), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "education-character-mission"), "unexpected command request: %+v", resolved)
 	}
 
 	var params struct {
@@ -395,12 +455,17 @@ func TestCharacterMissionHandleBuildsAllRequest(t *testing.T) {
 		ShowAll        bool   `json:"show_all"`
 		MissionType    string `json:"mission_type"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.CharacterQuery != "miku" || !params.ShowAll || params.MissionType != "play_live" {
-		t.Fatalf("unexpected character mission all params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.CharacterQuery != "miku"), "unexpected character mission all params: %+v", params)
+		testutil.Require(t, params.ShowAll, "unexpected character mission all params: %+v", params)
+		testutil.Require(t, !(params.MissionType != "play_live"), "unexpected character mission all params: %+v", params)
 	}
+
 }
 
 func TestCharacterMissionHandleParsesFlowerTreeAlias(t *testing.T) {
@@ -412,16 +477,14 @@ func TestCharacterMissionHandleParsesFlowerTreeAlias(t *testing.T) {
 		TriggerCmd: "/cr任务",
 		ArgText:    "u2 miku all 花树",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleEducation || resolved.Mode != "education-character-mission" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleEducation), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "education-character-mission"), "unexpected command request: %+v", resolved)
 	}
 
 	var params struct {
@@ -429,55 +492,82 @@ func TestCharacterMissionHandleParsesFlowerTreeAlias(t *testing.T) {
 		ShowAll        bool   `json:"show_all"`
 		MissionType    string `json:"mission_type"`
 	}
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.CharacterQuery != "miku" || !params.ShowAll || params.MissionType != "area_item_level_up_reality_world" {
-		t.Fatalf("unexpected character mission params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.CharacterQuery != "miku"), "unexpected character mission params: %+v", params)
+		testutil.Require(t, params.ShowAll, "unexpected character mission params: %+v", params)
+		testutil.Require(t, !(params.MissionType != "area_item_level_up_reality_world"), "unexpected character mission params: %+v", params)
 	}
+
 }
 
 func TestResolveEducationQueryCharacters(t *testing.T) {
 	ctx := context.Background()
 	client := sekaienttest.Open(t, "sqlite3", "file:handler_education_query_characters?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = client.Close() })
-	if _, err := client.Gamecharacter.Create().
-		SetServerRegion("jp").SetGameID(21).
-		SetFirstName("初音").SetGivenName("未来").
-		SetFirstNameEnglish("Hatsune").SetGivenNameEnglish("Miku").
-		Save(ctx); err != nil {
-		t.Fatalf("create game character: %v", err)
+	{
+		_, err := client.Gamecharacter.Create().
+			SetServerRegion("jp").SetGameID(21).
+			SetFirstName("初音").SetGivenName("未来").
+			SetFirstNameEnglish("Hatsune").SetGivenNameEnglish("Miku").
+			Save(ctx)
+		testutil.Require(t, !(err != nil), "create game character: %v", err)
 	}
+
 	rc := &RequestContext{Ctx: ctx, App: &renderapp.App{Sekai: client}, Region: renderregion.JP}
 
 	area := education.AreaItemQuery{CharacterQuery: "Hatsune Miku"}
-	if err := resolveEducationAreaQueryCharacter(rc, &area); err != nil || area.Cid != 21 {
-		t.Fatalf("resolve area character = %+v, %v", area, err)
+	{
+		err := resolveEducationAreaQueryCharacter(rc, &area)
+		{
+			testutil.Require(t, !(err != nil), "resolve area character = %+v, %v", area, err)
+			testutil.Require(t, !(area.Cid != 21), "resolve area character = %+v, %v", area, err)
+		}
 	}
+
 	bonds := education.BondsQuery{CharacterQuery: "Hatsune Miku"}
-	if err := resolveEducationBondsQueryCharacter(rc, &bonds); err != nil || bonds.Cid != 21 {
-		t.Fatalf("resolve bonds character = %+v, %v", bonds, err)
+	{
+		err := resolveEducationBondsQueryCharacter(rc, &bonds)
+		{
+			testutil.Require(t, !(err != nil), "resolve bonds character = %+v, %v", bonds, err)
+			testutil.Require(t, !(bonds.Cid != 21), "resolve bonds character = %+v, %v", bonds, err)
+		}
 	}
+
 	mission := education.CharacterMissionQuery{CharacterQuery: "Hatsune Miku"}
-	if err := resolveEducationMissionQueryCharacter(rc, &mission); err != nil || mission.Cid != 21 {
-		t.Fatalf("resolve mission character = %+v, %v", mission, err)
+	{
+		err := resolveEducationMissionQueryCharacter(rc, &mission)
+		{
+			testutil.Require(t, !(err != nil), "resolve mission character = %+v, %v", mission, err)
+			testutil.Require(t, !(mission.Cid != 21), "resolve mission character = %+v, %v", mission, err)
+		}
 	}
+
 }
 
 func TestResolveEducationQueryCharacterErrorsAndDefaultRegion(t *testing.T) {
 	rc := &RequestContext{Ctx: context.Background(), Region: renderregion.JP}
-	if err := resolveEducationAreaQueryCharacter(rc, &education.AreaItemQuery{CharacterQuery: "unknown"}); err == nil {
-		t.Fatal("expected area character resolution error")
+	{
+		err := resolveEducationAreaQueryCharacter(rc, &education.AreaItemQuery{CharacterQuery: "unknown"})
+		testutil.RequireArgs(t, !(err == nil), "expected area character resolution error")
 	}
-	if err := resolveEducationBondsQueryCharacter(rc, &education.BondsQuery{CharacterQuery: "unknown"}); err == nil {
-		t.Fatal("expected bonds character resolution error")
+	{
+
+		err := resolveEducationBondsQueryCharacter(rc, &education.BondsQuery{CharacterQuery: "unknown"})
+		testutil.RequireArgs(t, !(err == nil), "expected bonds character resolution error")
 	}
-	if err := resolveEducationMissionQueryCharacter(rc, &education.CharacterMissionQuery{CharacterQuery: "unknown"}); err == nil {
-		t.Fatal("expected mission character resolution error")
+	{
+
+		err := resolveEducationMissionQueryCharacter(rc, &education.CharacterMissionQuery{CharacterQuery: "unknown"})
+		testutil.RequireArgs(t, !(err == nil), "expected mission character resolution error")
 	}
+
 	var region renderregion.Value
 	setDefaultEducationRegion(&region, renderregion.EN)
-	if region != renderregion.EN {
-		t.Fatalf("default education region = %q", region)
-	}
+	testutil.Require(t, !(region != renderregion.EN), "default education region = %q", region)
+
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
@@ -129,79 +130,114 @@ func TestBuildCustomProfileResourcesResolvesPathsInCloud(t *testing.T) {
 	}
 
 	resources, err := buildCustomProfileResources(context.Background(), app, "cn", card, resp)
-	if err != nil {
-		t.Fatalf("buildCustomProfileResources() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "buildCustomProfileResources() error = %v", err)
 
 	shape := resources["customProfileShapeResources"].(map[int]map[string]any)[12]
-	if got := shape["imagePath"].(string); got != "asset/cn-assets/startapp/custom_profile/shape/circle.png" {
-		t.Fatalf("unexpected shape image path: %s", got)
+	{
+		got := shape["imagePath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/custom_profile/shape/circle.png"), "unexpected shape image path: %s", got)
 	}
+
 	characterIcon := resources["customProfileCharacterIconResources"].(map[int]map[string]any)[21]
-	if got := characterIcon["imagePath"].(string); got != "asset/cn-assets/startapp/custom_profile/character_icon/profile_chr_icon_miku.png" {
-		t.Fatalf("unexpected character icon image path: %s", got)
+	{
+		got := characterIcon["imagePath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/custom_profile/character_icon/profile_chr_icon_miku.png"), "unexpected character icon image path: %s", got)
 	}
+
 	material := resources["customProfileMaterialResources"].(map[int]map[string]any)[1]
-	if got := material["imagePath"].(string); got != "asset/cn-assets/startapp/custom_profile/material/profile_icon_item_0001.png" {
-		t.Fatalf("unexpected material image path: %s", got)
+	{
+		got := material["imagePath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/custom_profile/material/profile_icon_item_0001.png"), "unexpected material image path: %s", got)
 	}
+
 	userInterfaceIcon := resources["customProfileUserInterfaceIconResources"].(map[int]map[string]any)[42]
-	if got := userInterfaceIcon["imagePath"].(string); got != "asset/cn-assets/startapp/custom_profile/user_interface_icon/profile_icon_0042.png" {
-		t.Fatalf("unexpected user interface icon image path: %s", got)
+	{
+		got := userInterfaceIcon["imagePath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/custom_profile/user_interface_icon/profile_icon_0042.png"), "unexpected user interface icon image path: %s", got)
 	}
+
 	stamp := resources["stampAssets"].(map[int]map[string]any)[146]
-	if got := stamp["imagePath"].(string); got != "asset/cn-assets/startapp/stamp/stamp0230/stamp0230.png" {
-		t.Fatalf("unexpected stamp image path: %s", got)
+	{
+		got := stamp["imagePath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/stamp/stamp0230/stamp0230.png"), "unexpected stamp image path: %s", got)
 	}
+
 	charaIcons := resources["charaRankIconPathMap"].(map[string]string)
-	if got := charaIcons["21"]; got != "static_images/chara_icon/miku.png" {
-		t.Fatalf("unexpected chara rank icon path: %s", got)
+	{
+		got := charaIcons["21"]
+		testutil.Require(t, !(got != "static_images/chara_icon/miku.png"), "unexpected chara rank icon path: %s", got)
 	}
+
 	omikujis := resources["omikujis"].(map[int]map[string]any)
-	if got := omikujis[183]["fortuneType"].(string); got != "grate_fortune" {
-		t.Fatalf("unexpected omikuji fortune type: %s", got)
+	{
+		got := omikujis[183]["fortuneType"].(string)
+		testutil.Require(t, !(got != "grate_fortune"), "unexpected omikuji fortune type: %s", got)
 	}
+
 	storyFavorites := resources["storyFavoriteResources"].(map[string]any)
 	story := storyFavorites["event_story:19"].(map[string]any)
-	if got := story["title"].(string); got != "Test Event Story" {
-		t.Fatalf("unexpected story favorite title: %s", got)
+	{
+		got := story["title"].(string)
+		testutil.Require(t, !(got != "Test Event Story"), "unexpected story favorite title: %s", got)
 	}
-	if got := story["imagePath"].(string); got != "asset/cn-assets/ondemand/event_story/event_story_test/screen_image/banner_event_story.png" {
-		t.Fatalf("unexpected story favorite image path: %s", got)
+	{
+
+		got := story["imagePath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/ondemand/event_story/event_story_test/screen_image/banner_event_story.png"), "unexpected story favorite image path: %s", got)
 	}
+
 	unitStory := storyFavorites["unit_story:5"].(map[string]any)
-	if got := unitStory["title"].(string); got != "Test Unit Story" {
-		t.Fatalf("unexpected unit story title: %s", got)
+	{
+		got := unitStory["title"].(string)
+		testutil.Require(t, !(got != "Test Unit Story"), "unexpected unit story title: %s", got)
 	}
-	if got := unitStory["imagePath"].(string); got != "asset/cn-assets/ondemand/unit_story/main_schoolrefusal_piapro/screen_image/banner_unit_story.png" {
-		t.Fatalf("unexpected unit story image path: %s", got)
+	{
+
+		got := unitStory["imagePath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/ondemand/unit_story/main_schoolrefusal_piapro/screen_image/banner_unit_story.png"), "unexpected unit story image path: %s", got)
 	}
+
 	cardAsset := resources["cardAssets"].(map[int]map[string]any)[915]
-	if got := cardAsset["afterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member/res010_no034/card_after_training.png" {
-		t.Fatalf("unexpected card after-training path: %s", got)
+	{
+		got := cardAsset["afterTrainingPath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/character/member/res010_no034/card_after_training.png"), "unexpected card after-training path: %s", got)
 	}
-	if got := cardAsset["deckAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_cutout/res010_no034/after_training.png" {
-		t.Fatalf("unexpected deck after-training path: %s", got)
+	{
+
+		got := cardAsset["deckAfterTrainingPath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/character/member_cutout/res010_no034/after_training.png"), "unexpected deck after-training path: %s", got)
 	}
-	if got := cardAsset["clipAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_cutout_trm/res010_no034/after_training.png" {
-		t.Fatalf("unexpected clip after-training path: %s", got)
+	{
+
+		got := cardAsset["clipAfterTrainingPath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/character/member_cutout_trm/res010_no034/after_training.png"), "unexpected clip after-training path: %s", got)
 	}
-	if got := cardAsset["smallAfterTrainingPath"].(string); got != "asset/cn-assets/startapp/character/member_small/res010_no034/card_after_training.png" {
-		t.Fatalf("unexpected small after-training path: %s", got)
+	{
+
+		got := cardAsset["smallAfterTrainingPath"].(string)
+		testutil.Require(t, !(got != "asset/cn-assets/startapp/character/member_small/res010_no034/card_after_training.png"), "unexpected small after-training path: %s", got)
 	}
+
 	honorRequests := resources["honorRequests"].(map[string]any)
 	honorReq := honorRequests["7001:1:main"].(*drawing.HonorRequest)
-	if honorReq.HonorImgPath == nil || !strings.HasSuffix(*honorReq.HonorImgPath, "honor/honor_bg_event_demo/degree_main.png") {
-		t.Fatalf("unexpected honor image path: %+v", honorReq.HonorImgPath)
+	{
+		testutil.Require(t, !(honorReq.HonorImgPath == nil), "unexpected honor image path: %+v", honorReq.HonorImgPath)
+		testutil.Require(t, strings.HasSuffix(*honorReq.HonorImgPath, "honor/honor_bg_event_demo/degree_main.png"), "unexpected honor image path: %+v", honorReq.HonorImgPath)
 	}
+
 	bondsHonorRequests := resources["bondsHonorRequests"].(map[string]any)
 	bondsReq := bondsHonorRequests["1020501:3:main:10205002:reverse"].(*drawing.HonorRequest)
-	if bondsReq.WordImgPath == nil || *bondsReq.WordImgPath != "asset/cn-assets/startapp/bonds_honor/word/honorname_0205_default_0502_01.png" {
-		t.Fatalf("unexpected bonds honor word path: %+v", bondsReq.WordImgPath)
+	{
+		testutil.Require(t, !(bondsReq.WordImgPath == nil), "unexpected bonds honor word path: %+v", bondsReq.WordImgPath)
+		testutil.Require(t, !(*bondsReq.WordImgPath != "asset/cn-assets/startapp/bonds_honor/word/honorname_0205_default_0502_01.png"), "unexpected bonds honor word path: %+v", bondsReq.WordImgPath)
 	}
-	if bondsReq.CharaID == nil || *bondsReq.CharaID != "22" || bondsReq.CharaID2 == nil || *bondsReq.CharaID2 != "11" {
-		t.Fatalf("unexpected reverse bonds honor character order: %+v %+v", bondsReq.CharaID, bondsReq.CharaID2)
+	{
+		testutil.Require(t, !(bondsReq.CharaID == nil), "unexpected reverse bonds honor character order: %+v %+v", bondsReq.CharaID, bondsReq.CharaID2)
+		testutil.Require(t, !(*bondsReq.CharaID != "22"), "unexpected reverse bonds honor character order: %+v %+v", bondsReq.CharaID, bondsReq.CharaID2)
+		testutil.Require(t, !(bondsReq.CharaID2 == nil), "unexpected reverse bonds honor character order: %+v %+v", bondsReq.CharaID, bondsReq.CharaID2)
+		testutil.Require(t, !(*bondsReq.CharaID2 != "11"), "unexpected reverse bonds honor character order: %+v %+v", bondsReq.CharaID, bondsReq.CharaID2)
 	}
+
 }
 
 func TestCustomProfileHonorFcApLevelsUseMusicClearCounts(t *testing.T) {
@@ -211,28 +247,37 @@ func TestCustomProfileHonorFcApLevelsUseMusicClearCounts(t *testing.T) {
 			{MusicDifficultyType: "append", FullCombo: 3, AllPerfect: 1},
 		},
 	})
+	{
 
-	if got := *levels[3013]; got != 394 {
-		t.Fatalf("master fc level = %d, want 394", got)
+		got := *levels[3013]
+		testutil.Require(t, !(got != 394), "master fc level = %d, want 394", got)
 	}
-	if got := *levels[3014]; got != 12 {
-		t.Fatalf("master ap level = %d, want 12", got)
+	{
+
+		got := *levels[3014]
+		testutil.Require(t, !(got != 12), "master ap level = %d, want 12", got)
 	}
-	if got := *levels[4700]; got != 3 {
-		t.Fatalf("append fc level = %d, want 3", got)
+	{
+
+		got := *levels[4700]
+		testutil.Require(t, !(got != 3), "append fc level = %d, want 3", got)
 	}
+
 }
 
 func writeCustomProfileJSONFile(t *testing.T, path string, value any) {
 	t.Helper()
 	data, err := json.Marshal(value)
-	if err != nil {
-		t.Fatalf("marshal %s: %v", path, err)
+	testutil.Require(t, !(err != nil), "marshal %s: %v", path, err)
+	{
+
+		err := os.MkdirAll(filepath.Dir(path), 0o755)
+		testutil.Require(t, !(err != nil), "mkdir %s: %v", filepath.Dir(path), err)
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatalf("mkdir %s: %v", filepath.Dir(path), err)
+	{
+
+		err := os.WriteFile(path, data, 0o644)
+		testutil.Require(t, !(err != nil), "write %s: %v", path, err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		t.Fatalf("write %s: %v", path, err)
-	}
+
 }

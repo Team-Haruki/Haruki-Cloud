@@ -17,6 +17,7 @@ import (
 	"haruki-cloud/internal/pjsk/render/provider"
 	"haruki-cloud/internal/pjsk/render/snapshot"
 	"haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -47,64 +48,94 @@ func TestModularProfileBuildAndPureHelpers(t *testing.T) {
 		Visible:    true,
 		BgSettings: &drawing.ProfileBgSettings{ImgPath: &img},
 	}, minimalProfileResponse(), nil)
-	if err != nil {
-		t.Fatalf("BuildModularProfileRequestFromAPIWithSnapshot() error = %v", err)
+	testutil.Require(t, !(err != nil), "BuildModularProfileRequestFromAPIWithSnapshot() error = %v", err)
+	{
+		testutil.Require(t, !(payload.Profile.ID != "42"), "unexpected modular payload: %+v", payload)
+		testutil.Require(t, !(payload.Profile.IsHideUID), "unexpected modular payload: %+v", payload)
+		testutil.Require(t, !(payload.Preset.ID == ""), "unexpected modular payload: %+v", payload)
+		testutil.Require(t, !(len(payload.Preset.Widgets) != 7), "unexpected modular payload: %+v", payload)
 	}
-	if payload.Profile.ID != "42" || payload.Profile.IsHideUID || payload.Preset.ID == "" || len(payload.Preset.Widgets) != 7 {
-		t.Fatalf("unexpected modular payload: %+v", payload)
+	{
+		testutil.Require(t, !(payload.BgSettings == nil), "background settings = %+v", payload.BgSettings)
+		testutil.Require(t, !(payload.BgSettings.ImgPath == nil), "background settings = %+v", payload.BgSettings)
+		testutil.Require(t, !(*payload.BgSettings.ImgPath != "asset/background.png"), "background settings = %+v", payload.BgSettings)
 	}
-	if payload.BgSettings == nil || payload.BgSettings.ImgPath == nil || *payload.BgSettings.ImgPath != "asset/background.png" {
-		t.Fatalf("background settings = %+v", payload.BgSettings)
-	}
+
 	widget := modularWidget("id", "type", "family", "Title", 1, 2, 3, 4, map[string]any{"a": 1}, map[string]any{"b": 2})
-	if widget.Title == nil || *widget.Title != "Title" || widget.Frame.W != 3 {
-		t.Fatalf("widget = %+v", widget)
+	{
+		testutil.Require(t, !(widget.Title == nil), "widget = %+v", widget)
+		testutil.Require(t, !(*widget.Title != "Title"), "widget = %+v", widget)
+		testutil.Require(t, !(widget.Frame.W != 3), "widget = %+v", widget)
 	}
-	if firstCharacterRank(nil) != nil || firstDeckCard(nil) != nil {
-		t.Fatal("empty focus helpers returned an item")
+	{
+		testutil.RequireArgs(t, !(firstCharacterRank(nil) != nil), "empty focus helpers returned an item")
+		testutil.RequireArgs(t, !(firstDeckCard(nil) != nil), "empty focus helpers returned an item")
 	}
+
 	ranks := []drawing.CharacterRank{{}, {CharacterID: 3}}
 	cards := []drawing.CardFullThumbnailRequest{{}, {CardID: 4}}
-	if firstCharacterRank(ranks).CharacterID != 3 || firstDeckCard(cards).CardID != 4 {
-		t.Fatal("focus helpers did not skip empty entries")
+	{
+		testutil.RequireArgs(t, !(firstCharacterRank(ranks).CharacterID != 3), "focus helpers did not skip empty entries")
+		testutil.RequireArgs(t, !(firstDeckCard(cards).CardID != 4), "focus helpers did not skip empty entries")
 	}
+
 }
 
 func TestProfilePublicBuildEntrypointsAndValidation(t *testing.T) {
 	controller := minimalProfileController(nil)
 	resp := minimalProfileResponse()
-	if detail, err := controller.BuildDetailedProfileCardFromAPI(Query{Region: "jp"}, resp, []byte(`[]`)); err != nil || detail.ID != "42" {
-		t.Fatalf("detailed profile = %+v, %v", detail, err)
+	{
+		detail, err := controller.BuildDetailedProfileCardFromAPI(Query{Region: "jp"}, resp, []byte(`[]`))
+		{
+			testutil.Require(t, !(err != nil), "detailed profile = %+v, %v", detail, err)
+			testutil.Require(t, !(detail.ID != "42"), "detailed profile = %+v, %v", detail, err)
+		}
 	}
-	if card, err := controller.BuildProfileCardFromAPI(Query{Region: "jp"}, resp, []byte(`[]`)); err != nil || card.Profile == nil || card.Profile.ID != "42" {
-		t.Fatalf("profile card = %+v, %v", card, err)
+	{
+
+		card, err := controller.BuildProfileCardFromAPI(Query{Region: "jp"}, resp, []byte(`[]`))
+		{
+			testutil.Require(t, !(err != nil), "profile card = %+v, %v", card, err)
+			testutil.Require(t, !(card.Profile == nil), "profile card = %+v, %v", card, err)
+			testutil.Require(t, !(card.Profile.ID != "42"), "profile card = %+v, %v", card, err)
+		}
+	}
+	{
+
+		_, err := (*Controller)(nil).BuildModularProfileRequestFromAPIWithSnapshot(Query{}, resp, nil)
+		testutil.RequireArgs(t, !(err == nil), "nil modular controller unexpectedly succeeded")
+	}
+	{
+
+		_, err := controller.BuildModularProfileRequestFromAPIWithSnapshot(Query{}, nil, nil)
+		testutil.RequireArgs(t, !(err == nil), "nil modular response unexpectedly succeeded")
+	}
+	{
+
+		_, err := NewController(nil, nil, nil, nil).BuildModularProfileRequestFromAPIWithSnapshot(Query{}, resp, nil)
+		testutil.RequireArgs(t, !(err == nil), "missing modular source unexpectedly succeeded")
+	}
+	{
+
+		_, err := controller.BuildDetailedProfileCardFromAPI(Query{}, nil, nil)
+		testutil.RequireArgs(t, !(err == nil), "nil detailed response unexpectedly succeeded")
+	}
+	{
+
+		_, err := controller.BuildProfileCardFromAPI(Query{}, nil, nil)
+		testutil.RequireArgs(t, !(err == nil), "nil card response unexpectedly succeeded")
+	}
+	{
+		testutil.RequireArgs(t, !(controller.SnapshotDetailedProfile(renderregion.JP) != nil), "missing snapshot returned profile data")
+		testutil.RequireArgs(t, !((*Controller)(nil).SnapshotDetailedProfile(renderregion.JP) != nil), "missing snapshot returned profile data")
 	}
 
-	if _, err := (*Controller)(nil).BuildModularProfileRequestFromAPIWithSnapshot(Query{}, resp, nil); err == nil {
-		t.Fatal("nil modular controller unexpectedly succeeded")
-	}
-	if _, err := controller.BuildModularProfileRequestFromAPIWithSnapshot(Query{}, nil, nil); err == nil {
-		t.Fatal("nil modular response unexpectedly succeeded")
-	}
-	if _, err := NewController(nil, nil, nil, nil).BuildModularProfileRequestFromAPIWithSnapshot(Query{}, resp, nil); err == nil {
-		t.Fatal("missing modular source unexpectedly succeeded")
-	}
-	if _, err := controller.BuildDetailedProfileCardFromAPI(Query{}, nil, nil); err == nil {
-		t.Fatal("nil detailed response unexpectedly succeeded")
-	}
-	if _, err := controller.BuildProfileCardFromAPI(Query{}, nil, nil); err == nil {
-		t.Fatal("nil card response unexpectedly succeeded")
-	}
-	if controller.SnapshotDetailedProfile(renderregion.JP) != nil || (*Controller)(nil).SnapshotDetailedProfile(renderregion.JP) != nil {
-		t.Fatal("missing snapshot returned profile data")
-	}
 	controller.SetCensor(nil)
 	(*Controller)(nil).SetCensor(nil)
 	controller.RegisterSource(nil)
 	(*Controller)(nil).RegisterSource(nil)
-	if (*Controller)(nil).WithContext(context.Background()) != nil {
-		t.Fatal("nil controller WithContext returned a controller")
-	}
+	testutil.RequireArgs(t, !((*Controller)(nil).WithContext(context.Background()) != nil), "nil controller WithContext returned a controller")
+
 }
 
 func TestProfileRenderEntrypoints(t *testing.T) {
@@ -125,9 +156,11 @@ func TestProfileRenderEntrypoints(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			got, err := render()
-			if err != nil || !bytes.Equal(got, []byte("profile-image")) {
-				t.Fatalf("render = %q, %v", got, err)
+			{
+				testutil.Require(t, !(err != nil), "render = %q, %v", got, err)
+				testutil.Require(t, bytes.Equal(got, []byte("profile-image")), "render = %q, %v", got, err)
 			}
+
 		})
 	}
 
@@ -141,17 +174,23 @@ func TestProfileRenderEntrypoints(t *testing.T) {
 		"local": func() ([]byte, error) { return withoutDrawing.RenderProfile(Query{}) },
 	} {
 		t.Run("missing drawing "+name, func(t *testing.T) {
-			if _, err := render(); err == nil {
-				t.Fatal("render unexpectedly succeeded")
+			{
+				_, err := render()
+				testutil.RequireArgs(t, !(err == nil), "render unexpectedly succeeded")
 			}
+
 		})
 	}
-	if _, err := controller.RenderProfileFromAPI(Query{}, nil, nil); err == nil {
-		t.Fatal("render with invalid payload unexpectedly succeeded")
+	{
+		_, err := controller.RenderProfileFromAPI(Query{}, nil, nil)
+		testutil.RequireArgs(t, !(err == nil), "render with invalid payload unexpectedly succeeded")
 	}
-	if _, err := controller.RenderModularProfileFromAPIWithSnapshot(Query{}, nil, nil); err == nil {
-		t.Fatal("modular render with invalid payload unexpectedly succeeded")
+	{
+
+		_, err := controller.RenderModularProfileFromAPIWithSnapshot(Query{}, nil, nil)
+		testutil.RequireArgs(t, !(err == nil), "modular render with invalid payload unexpectedly succeeded")
 	}
+
 }
 
 func TestProfileProviderAdapterEmptyDatabase(t *testing.T) {
@@ -160,39 +199,57 @@ func TestProfileProviderAdapterEmptyDatabase(t *testing.T) {
 	adapter := NewProviderAdapter(provider.NewDatabaseProvider(client, renderregion.JP))
 	ctx := context.WithValue(context.Background(), profileContextKey("adapter"), "request")
 	withContext := adapter.WithContext(ctx)
-	if withContext == nil || withContext.(*ProviderAdapter).Context() != ctx {
-		t.Fatal("adapter did not retain its request context")
+	{
+		testutil.RequireArgs(t, !(withContext == nil), "adapter did not retain its request context")
+		testutil.RequireArgs(t, !(withContext.(*ProviderAdapter).Context() != ctx), "adapter did not retain its request context")
 	}
-	if (*ProviderAdapter)(nil).WithContext(ctx) != nil {
-		t.Fatal("nil adapter returned a data source")
+	testutil.RequireArgs(t, !((*ProviderAdapter)(nil).WithContext(ctx) != nil), "nil adapter returned a data source")
+	{
+
+		_, err := adapter.GetHonorByID(1)
+		testutil.RequireArgs(t, !(err == nil), "missing honor returned no error")
 	}
-	if _, err := adapter.GetHonorByID(1); err == nil {
-		t.Fatal("missing honor returned no error")
+	{
+
+		_, err := adapter.GetHonorGroupByID(1)
+		testutil.RequireArgs(t, !(err == nil), "missing honor group returned no error")
 	}
-	if _, err := adapter.GetHonorGroupByID(1); err == nil {
-		t.Fatal("missing honor group returned no error")
+	{
+
+		_, err := adapter.GetBondsHonorByID(1)
+		testutil.RequireArgs(t, !(err == nil), "missing bonds honor returned no error")
 	}
-	if _, err := adapter.GetBondsHonorByID(1); err == nil {
-		t.Fatal("missing bonds honor returned no error")
+	{
+
+		_, err := adapter.GetBondsHonorWordByID(1)
+		testutil.RequireArgs(t, !(err == nil), "missing bonds honor word returned no error")
 	}
-	if _, err := adapter.GetBondsHonorWordByID(1); err == nil {
-		t.Fatal("missing bonds honor word returned no error")
+	{
+
+		_, ok := adapter.GetGameCharacterUnitByID(1)
+		testutil.RequireArgs(t, !(ok), "missing game-character unit was found")
 	}
-	if _, ok := adapter.GetGameCharacterUnitByID(1); ok {
-		t.Fatal("missing game-character unit was found")
+	{
+
+		_, err := adapter.GetPlayerFrameByID(1)
+		testutil.RequireArgs(t, !(err == nil), "missing frame returned no error")
 	}
-	if _, err := adapter.GetPlayerFrameByID(1); err == nil {
-		t.Fatal("missing frame returned no error")
+	{
+
+		_, err := adapter.GetPlayerFrameGroupByID(1)
+		testutil.RequireArgs(t, !(err == nil), "missing frame group returned no error")
 	}
-	if _, err := adapter.GetPlayerFrameGroupByID(1); err == nil {
-		t.Fatal("missing frame group returned no error")
+	{
+
+		_, err := adapter.GetCardByID(1)
+		testutil.RequireArgs(t, !(err == nil), "missing card returned no error")
 	}
-	if _, err := adapter.GetCardByID(1); err == nil {
-		t.Fatal("missing card returned no error")
+	{
+
+		got := adapter.GetEventIDByHonorID(1)
+		testutil.Require(t, !(got != 0), "missing honor event ID = %d", got)
 	}
-	if got := adapter.GetEventIDByHonorID(1); got != 0 {
-		t.Fatalf("missing honor event ID = %d", got)
-	}
+
 }
 
 func TestProfileAggregationHelperBranches(t *testing.T) {
@@ -202,63 +259,93 @@ func TestProfileAggregationHelperBranches(t *testing.T) {
 		{MusicID: 2, MusicDifficultyType: "master"},
 		{MusicID: 3, MusicDifficultyType: "expert", FullComboFlg: true},
 	})
-	if len(counts) != 6 || counts[4].Clear != 2 || counts[4].Fc != 1 || counts[4].Ap != 1 {
-		t.Fatalf("music counts = %#v", counts)
+	{
+		testutil.Require(t, !(len(counts) != 6), "music counts = %#v", counts)
+		testutil.Require(t, !(counts[4].Clear != 2), "music counts = %#v", counts)
+		testutil.Require(t, !(counts[4].Fc != 1), "music counts = %#v", counts)
+		testutil.Require(t, !(counts[4].Ap != 1), "music counts = %#v", counts)
 	}
+
 	levels := buildHonorFcApLevels([]drawing.MusicClearCount{
 		{Difficulty: "master", Fc: 12, Ap: 3},
 		{Difficulty: " ", Fc: 99},
 	})
-	if len(levels) == 0 {
-		t.Fatal("FC/AP honor levels are empty")
-	}
-	if buildHonorFcApLevels(nil) != nil || buildHonorFcApLevels([]drawing.MusicClearCount{{Difficulty: " "}}) != nil {
-		t.Fatal("empty FC/AP inputs returned levels")
+	testutil.RequireArgs(t, !(len(levels) == 0), "FC/AP honor levels are empty")
+	{
+		testutil.RequireArgs(t, !(buildHonorFcApLevels(nil) != nil), "empty FC/AP inputs returned levels")
+		testutil.RequireArgs(t, !(buildHonorFcApLevels([]drawing.MusicClearCount{{Difficulty: " "}}) != nil), "empty FC/AP inputs returned levels")
 	}
 
 	solo := buildSoloLive(
 		[]snapshot.RawChallengeLiveResult{{CharacterID: 1, HighScore: 10}, {CharacterID: 2, HighScore: 30}},
 		[]snapshot.RawChallengeLiveStage{{CharacterID: 1, Rank: 9}, {CharacterID: 2, Rank: 2}, {CharacterID: 2, Rank: 5}},
 	)
-	if solo == nil || solo.CharacterID != 2 || solo.Score != 30 || solo.Rank != 5 {
-		t.Fatalf("solo-live rank = %#v", solo)
+	{
+		testutil.Require(t, !(solo == nil), "solo-live rank = %#v", solo)
+		testutil.Require(t, !(solo.CharacterID != 2), "solo-live rank = %#v", solo)
+		testutil.Require(t, !(solo.Score != 30), "solo-live rank = %#v", solo)
+		testutil.Require(t, !(solo.Rank != 5), "solo-live rank = %#v", solo)
 	}
-	if buildSoloLive(nil, nil) != nil {
-		t.Fatal("empty solo-live results returned a rank")
+	testutil.RequireArgs(t, !(buildSoloLive(nil, nil) != nil), "empty solo-live results returned a rank")
+	{
+
+		got := adaptAPIChallengeLiveResult(sekai.UserChallengeLiveSoloResult{CharacterID: 2, HighScore: 40})
+		{
+			testutil.Require(t, !(len(got) != 1), "adapted solo-live result = %#v", got)
+			testutil.Require(t, !(got[0].HighScore != 40), "adapted solo-live result = %#v", got)
+		}
 	}
-	if got := adaptAPIChallengeLiveResult(sekai.UserChallengeLiveSoloResult{CharacterID: 2, HighScore: 40}); len(got) != 1 || got[0].HighScore != 40 {
-		t.Fatalf("adapted solo-live result = %#v", got)
-	}
+
 	stages := adaptAPIChallengeLiveStages([]sekai.AnotherUserChallengeLiveSoloStage{{CharacterID: 2, Rank: 7}})
-	if len(stages) != 1 || stages[0].Rank != 7 {
-		t.Fatalf("adapted solo-live stages = %#v", stages)
+	{
+		testutil.Require(t, !(len(stages) != 1), "adapted solo-live stages = %#v", stages)
+		testutil.Require(t, !(stages[0].Rank != 7), "adapted solo-live stages = %#v", stages)
 	}
 
 	vertical := true
-	if settings := applyProfileBGVerticalOverride(nil, &vertical); settings == nil || !settings.Vertical {
-		t.Fatalf("vertical background settings = %#v", settings)
+	{
+		settings := applyProfileBGVerticalOverride(nil, &vertical)
+		{
+			testutil.Require(t, !(settings == nil), "vertical background settings = %#v", settings)
+			testutil.Require(t, settings.Vertical, "vertical background settings = %#v", settings)
+		}
 	}
+
 	entries := buildAPIUserCardEntries([]sekai.AnotherUserCard{
 		{},
 		{CardID: 8, Level: 1},
 		{CardID: 8, Level: 2},
 	}, sekai.UserDeck{})
-	if len(entries) != 1 {
-		t.Fatalf("deduplicated API card entries = %#v", entries)
+	testutil.Require(t, !(len(entries) != 1), "deduplicated API card entries = %#v", entries)
+	{
+
+		ranks := buildCharacterRanks([]snapshot.RawUserCharacter{{CharacterID: 9, CharacterRank: 10}})
+		{
+			testutil.Require(t, !(len(ranks) != 1), "character ranks = %#v", ranks)
+			testutil.Require(t, !(ranks[0].Rank != 10), "character ranks = %#v", ranks)
+		}
 	}
-	if ranks := buildCharacterRanks([]snapshot.RawUserCharacter{{CharacterID: 9, CharacterRank: 10}}); len(ranks) != 1 || ranks[0].Rank != 10 {
-		t.Fatalf("character ranks = %#v", ranks)
+	{
+
+		chars := adaptAPICharacters([]sekai.AnotherUserCharacter{{CharacterID: 11, CharacterRank: 12}})
+		{
+			testutil.Require(t, !(len(chars) != 1), "adapted characters = %#v", chars)
+			testutil.Require(t, !(chars[0].CharacterRank != 12), "adapted characters = %#v", chars)
+		}
 	}
-	if chars := adaptAPICharacters([]sekai.AnotherUserCharacter{{CharacterID: 11, CharacterRank: 12}}); len(chars) != 1 || chars[0].CharacterRank != 12 {
-		t.Fatalf("adapted characters = %#v", chars)
+	{
+		testutil.RequireArgs(t, !(parseFramesJSON([]byte(`{`)) != nil), "invalid frame data or nil snapshot card was accepted")
+		testutil.RequireArgs(t, !(isSnapshotCardTrainedArt(nil)), "invalid frame data or nil snapshot card was accepted")
 	}
-	if parseFramesJSON([]byte(`{`)) != nil || isSnapshotCardTrainedArt(nil) {
-		t.Fatal("invalid frame data or nil snapshot card was accepted")
+	{
+
+		_, err := minimalProfileController(nil).cardByIDWithFallback(nil, renderregion.JP, 1)
+		testutil.RequireArgs(t, !(err == nil), "nil card source unexpectedly succeeded")
 	}
-	if _, err := minimalProfileController(nil).cardByIDWithFallback(nil, renderregion.JP, 1); err == nil {
-		t.Fatal("nil card source unexpectedly succeeded")
+	{
+
+		got := minimalProfileController(nil).buildLeaderImagePathFromSource(&testProfileSource{}, 99, false, renderregion.JP)
+		testutil.RequireArgs(t, !(got == ""), "missing leader card returned an empty placeholder")
 	}
-	if got := minimalProfileController(nil).buildLeaderImagePathFromSource(&testProfileSource{}, 99, false, renderregion.JP); got == "" {
-		t.Fatal("missing leader card returned an empty placeholder")
-	}
+
 }

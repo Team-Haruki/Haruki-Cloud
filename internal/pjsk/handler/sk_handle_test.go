@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 	"slices"
 	"testing"
 
@@ -18,34 +19,27 @@ func TestSKDailySpeedHandleBuildsCommandRequest(t *testing.T) {
 		TriggerCmd: "/日速",
 		ArgText:    "",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-daily-speed" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleSK), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "sk-daily-speed"), "unexpected command request: %+v", resolved)
 	}
 
 	var params sk.TrackerRankQuery
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.SpeedUnit != "d" {
-		t.Fatalf("unexpected speed unit: %+v", params)
-	}
-	if params.SpeedPeriodSecs != 24*60*60 {
-		t.Fatalf("unexpected speed period: %+v", params)
-	}
-	if !slices.Equal(params.Ranks, defaultSKRanksNormal) {
-		t.Fatalf("unexpected default speed ranks len: %+v", params)
-	}
-	if !params.DefaultRanks {
-		t.Fatalf("expected default ranks flag: %+v", params)
-	}
+
+	testutil.Require(t, !(params.SpeedUnit != "d"), "unexpected speed unit: %+v", params)
+	testutil.Require(t, !(params.SpeedPeriodSecs != 24*60*60), "unexpected speed period: %+v", params)
+	testutil.Require(t, slices.Equal(params.Ranks, defaultSKRanksNormal), "unexpected default speed ranks len: %+v", params)
+	testutil.Require(t, params.DefaultRanks, "expected default ranks flag: %+v", params)
+
 }
 
 func TestSKSpeedHandleBuildsCommandRequestWithHourDefaults(t *testing.T) {
@@ -56,31 +50,26 @@ func TestSKSpeedHandleBuildsCommandRequestWithHourDefaults(t *testing.T) {
 		TriggerCmd: "/时速",
 		ArgText:    "",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-speed" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleSK), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "sk-speed"), "unexpected command request: %+v", resolved)
 	}
 
 	var params sk.TrackerRankQuery
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.SpeedUnit != "h" {
-		t.Fatalf("unexpected speed unit: %+v", params)
-	}
-	if params.SpeedPeriodSecs != 60*60 {
-		t.Fatalf("unexpected speed period: %+v", params)
-	}
-	if !slices.Equal(params.Ranks, defaultSKRanksNormal) {
-		t.Fatalf("unexpected default speed ranks len: %+v", params)
-	}
+
+	testutil.Require(t, !(params.SpeedUnit != "h"), "unexpected speed unit: %+v", params)
+	testutil.Require(t, !(params.SpeedPeriodSecs != 60*60), "unexpected speed period: %+v", params)
+	testutil.Require(t, slices.Equal(params.Ranks, defaultSKRanksNormal), "unexpected default speed ranks len: %+v", params)
+
 }
 
 func TestSKSpeedHandleTreatsArgumentAsMinutePeriod(t *testing.T) {
@@ -91,20 +80,20 @@ func TestSKSpeedHandleTreatsArgumentAsMinutePeriod(t *testing.T) {
 		TriggerCmd: "/时速",
 		ArgText:    "30",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params sk.TrackerRankQuery
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.SpeedUnit != "h" || params.SpeedPeriodSecs != 30*60 {
-		t.Fatalf("unexpected speed params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.SpeedUnit != "h"), "unexpected speed params: %+v", params)
+		testutil.Require(t, !(params.SpeedPeriodSecs != 30*60), "unexpected speed params: %+v", params)
 	}
-	if !slices.Equal(params.Ranks, defaultSKRanksNormal) {
-		t.Fatalf("unexpected speed ranks: %+v", params.Ranks)
-	}
+	testutil.Require(t, slices.Equal(params.Ranks, defaultSKRanksNormal), "unexpected speed ranks: %+v", params.Ranks)
+
 }
 
 func TestSKDailySpeedHandleTreatsArgumentAsDayPeriod(t *testing.T) {
@@ -115,20 +104,20 @@ func TestSKDailySpeedHandleTreatsArgumentAsDayPeriod(t *testing.T) {
 		TriggerCmd: "/日速",
 		ArgText:    "2",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	var params sk.TrackerRankQuery
-	if err := json.Unmarshal(result.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(result.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.SpeedUnit != "d" || params.SpeedPeriodSecs != 2*24*60*60 {
-		t.Fatalf("unexpected speed params: %+v", params)
+	{
+
+		testutil.Require(t, !(params.SpeedUnit != "d"), "unexpected speed params: %+v", params)
+		testutil.Require(t, !(params.SpeedPeriodSecs != 2*24*60*60), "unexpected speed params: %+v", params)
 	}
-	if !slices.Equal(params.Ranks, defaultSKRanksNormal) {
-		t.Fatalf("unexpected speed ranks: %+v", params.Ranks)
-	}
+	testutil.Require(t, slices.Equal(params.Ranks, defaultSKRanksNormal), "unexpected speed ranks: %+v", params.Ranks)
+
 }
 
 func TestSKLineHandleBuildsWorldLinkCurrentChapterSelector(t *testing.T) {
@@ -139,28 +128,28 @@ func TestSKLineHandleBuildsWorldLinkCurrentChapterSelector(t *testing.T) {
 		TriggerCmd: "/wlsk线",
 		ArgText:    "",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-line" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleSK), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "sk-line"), "unexpected command request: %+v", resolved)
 	}
 
 	var params sk.TrackerRankQuery
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.WlCharacterQuery != "wl" {
-		t.Fatalf("expected wl selector, got %+v", params)
+
+	testutil.Require(t, !(params.WlCharacterQuery != "wl"), "expected wl selector, got %+v", params)
+	{
+		testutil.Require(t, !(len(params.Ranks) == 0), "expected default wl ranks, got %+v", params)
+		testutil.Require(t, params.DefaultRanks, "expected default wl ranks, got %+v", params)
 	}
-	if len(params.Ranks) == 0 || !params.DefaultRanks {
-		t.Fatalf("expected default wl ranks, got %+v", params)
-	}
+
 }
 
 func TestSKCheckRoomHandleDefaultsToSelfBinding(t *testing.T) {
@@ -173,34 +162,30 @@ func TestSKCheckRoomHandleDefaultsToSelfBinding(t *testing.T) {
 		Platform:   "qq",
 		UserId:     "24680",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-check-room" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleSK), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "sk-check-room"), "unexpected command request: %+v", resolved)
 	}
 
 	var params sk.TrackerRankQuery
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.UserID != nil {
-		t.Fatalf("expected binding target metadata instead of direct user id, got %+v", params)
+
+	testutil.Require(t, !(params.UserID != nil), "expected binding target metadata instead of direct user id, got %+v", params)
+	{
+		testutil.Require(t, !(params.TargetPlatform != "qq"), "expected self target metadata, got %+v", params)
+		testutil.Require(t, !(params.TargetUserID != "24680"), "expected self target metadata, got %+v", params)
 	}
-	if params.TargetPlatform != "qq" || params.TargetUserID != "24680" {
-		t.Fatalf("expected self target metadata, got %+v", params)
-	}
-	if len(params.Ranks) != 0 {
-		t.Fatalf("expected no default rank list for /cf self query, got %+v", params.Ranks)
-	}
-	if params.EventID != 101 {
-		t.Fatalf("unexpected event id: %+v", params.EventID)
-	}
+	testutil.Require(t, !(len(params.Ranks) != 0), "expected no default rank list for /cf self query, got %+v", params.Ranks)
+	testutil.Require(t, !(params.EventID != 101), "unexpected event id: %+v", params.EventID)
+
 }
 
 func TestSKBoardHandleWorldLinkEmptyDefaultsToSelf(t *testing.T) {
@@ -213,31 +198,32 @@ func TestSKBoardHandleWorldLinkEmptyDefaultsToSelf(t *testing.T) {
 		Platform:   "qq",
 		UserId:     "24680",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-query" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleSK), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "sk-query"), "unexpected command request: %+v", resolved)
 	}
 
 	var params sk.TrackerRankQuery
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if params.TargetPlatform != "qq" || params.TargetUserID != "24680" {
-		t.Fatalf("expected self target metadata for /wlsk, got %+v", params)
+	{
+
+		testutil.Require(t, !(params.TargetPlatform != "qq"), "expected self target metadata for /wlsk, got %+v", params)
+		testutil.Require(t, !(params.TargetUserID != "24680"), "expected self target metadata for /wlsk, got %+v", params)
 	}
-	if params.WlCharacterQuery != "wl" {
-		t.Fatalf("expected wl selector, got %+v", params)
+	testutil.Require(t, !(params.WlCharacterQuery != "wl"), "expected wl selector, got %+v", params)
+	{
+		testutil.Require(t, !(len(params.Ranks) != 0), "expected no default ranks for /wlsk self query, got %+v", params)
+		testutil.Require(t, !(params.DefaultRanks), "expected no default ranks for /wlsk self query, got %+v", params)
 	}
-	if len(params.Ranks) != 0 || params.DefaultRanks {
-		t.Fatalf("expected no default ranks for /wlsk self query, got %+v", params)
-	}
+
 }
 
 func TestSKCheckRoomLiteHandleUsesFixedDefaultRanks(t *testing.T) {
@@ -248,32 +234,28 @@ func TestSKCheckRoomLiteHandleUsesFixedDefaultRanks(t *testing.T) {
 		TriggerCmd: "/cfl",
 		ArgText:    "event101",
 	})
-	if err != nil {
-		t.Fatalf("Handle() error = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 	resolved := result
-	if resolved == nil {
-		t.Fatal("expected command request, got nil")
-	}
-	if resolved.Module != parser.ModuleSK || resolved.Mode != "sk-check-room" {
-		t.Fatalf("unexpected command request: %+v", resolved)
+	testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+	{
+
+		testutil.Require(t, !(resolved.Module != parser.ModuleSK), "unexpected command request: %+v", resolved)
+		testutil.Require(t, !(resolved.Mode != "sk-check-room"), "unexpected command request: %+v", resolved)
 	}
 
 	var params sk.TrackerRankQuery
-	if err := json.Unmarshal(resolved.Params, &params); err != nil {
-		t.Fatalf("unmarshal params: %v", err)
+	{
+		err := json.Unmarshal(resolved.Params, &params)
+		testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 	}
-	if !params.DefaultRanks {
-		t.Fatalf("expected default ranks flag for /cfl, got %+v", params)
-	}
-	if len(params.Ranks) != len(defaultSKCheckRoomLiteRanks) {
-		t.Fatalf("unexpected /cfl default rank count: %d", len(params.Ranks))
-	}
+
+	testutil.Require(t, params.DefaultRanks, "expected default ranks flag for /cfl, got %+v", params)
+	testutil.Require(t, !(len(params.Ranks) != len(defaultSKCheckRoomLiteRanks)), "unexpected /cfl default rank count: %d", len(params.Ranks))
+
 	for i, rank := range defaultSKCheckRoomLiteRanks {
-		if params.Ranks[i] != rank {
-			t.Fatalf("unexpected /cfl default ranks: %+v", params.Ranks)
-		}
+		testutil.Require(t, !(params.Ranks[i] != rank), "unexpected /cfl default ranks: %+v", params.Ranks)
+
 	}
 }
 
@@ -316,32 +298,32 @@ func TestSKHandlersRespectWorldLinkPrefixAcrossCommands(t *testing.T) {
 				TriggerCmd: tc.triggerCmd,
 				ArgText:    "",
 			})
-			if err != nil {
-				t.Fatalf("Handle() error = %v", err)
-			}
+			testutil.Require(t, !(err != nil), "Handle() error = %v", err)
 
 			resolved := result
-			if resolved == nil {
-				t.Fatal("expected command request, got nil")
-			}
-			if resolved.Module != parser.ModuleSK || resolved.Mode != tc.wantMode {
-				t.Fatalf("unexpected command request: %+v", resolved)
+			testutil.RequireArgs(t, !(resolved == nil), "expected command request, got nil")
+			{
+
+				testutil.Require(t, !(resolved.Module != parser.ModuleSK), "unexpected command request: %+v", resolved)
+				testutil.Require(t, !(resolved.Mode != tc.wantMode), "unexpected command request: %+v", resolved)
 			}
 
 			var params sk.TrackerRankQuery
-			if err := json.Unmarshal(resolved.Params, &params); err != nil {
-				t.Fatalf("unmarshal params: %v", err)
+			{
+				err := json.Unmarshal(resolved.Params, &params)
+				testutil.Require(t, !(err != nil), "unmarshal params: %v", err)
 			}
 
 			if tc.wantWL {
-				if params.WlCharacterQuery != "wl" {
-					t.Fatalf("expected wl selector, got %+v", params)
-				}
+				testutil.Require(t, !(params.WlCharacterQuery != "wl"), "expected wl selector, got %+v", params)
+
 				return
 			}
-			if params.WlCharacterQuery != "" || params.WlCharacterID != nil {
-				t.Fatalf("expected total-ranking request, got %+v", params)
+			{
+				testutil.Require(t, !(params.WlCharacterQuery != ""), "expected total-ranking request, got %+v", params)
+				testutil.Require(t, !(params.WlCharacterID != nil), "expected total-ranking request, got %+v", params)
 			}
+
 		})
 	}
 }

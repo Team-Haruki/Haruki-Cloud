@@ -7,6 +7,7 @@ import (
 
 	renderregion "haruki-cloud/internal/pjsk/region"
 	"haruki-cloud/internal/pjsk/render/masterdata"
+	"haruki-cloud/internal/testutil"
 )
 
 func setProviderBehaviorLazy[T any](value *lazyValue[T], data T) {
@@ -95,9 +96,11 @@ func TestDBEventProviderQueriesCachesAndCombinesLocalEvents(t *testing.T) {
 		if len(item.ranking) > 0 {
 			builder.SetEventRankingRewardRanges(item.ranking)
 		}
-		if _, err := builder.Save(ctx); err != nil {
-			t.Fatalf("create event %d: %v", item.id, err)
+		{
+			_, err := builder.Save(ctx)
+			testutil.Require(t, !(err != nil), "create event %d: %v", item.id, err)
 		}
+
 	}
 
 	for _, item := range []struct {
@@ -107,18 +110,20 @@ func TestDBEventProviderQueriesCachesAndCombinesLocalEvents(t *testing.T) {
 		{id: 101, characterID: 6, supplyID: 2},
 		{id: 102, characterID: 5, supplyID: 1},
 	} {
-		if _, err := client.Card.Create().
-			SetGameID(item.id).
-			SetCharacterID(item.characterID).
-			SetCardSupplyID(item.supplyID).
-			SetCardRarityType("rarity_4").
-			SetAttr("cute").
-			SetPrefix("card").
-			SetAssetbundleName("card_asset").
-			SetServerRegion(renderregion.JP.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create card %d: %v", item.id, err)
+		{
+			_, err := client.Card.Create().
+				SetGameID(item.id).
+				SetCharacterID(item.characterID).
+				SetCardSupplyID(item.supplyID).
+				SetCardRarityType("rarity_4").
+				SetAttr("cute").
+				SetPrefix("card").
+				SetAssetbundleName("card_asset").
+				SetServerRegion(renderregion.JP.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create card %d: %v", item.id, err)
 		}
+
 	}
 	for _, item := range []struct {
 		id, cardID, eventID int64
@@ -129,14 +134,16 @@ func TestDBEventProviderQueriesCachesAndCombinesLocalEvents(t *testing.T) {
 		{id: 4, cardID: 404, eventID: 13},
 		{id: 5, cardID: 102, eventID: 14},
 	} {
-		if _, err := client.Eventcard.Create().
-			SetGameID(item.id).
-			SetCardID(item.cardID).
-			SetEventID(item.eventID).
-			SetServerRegion(renderregion.JP.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create event card %d: %v", item.id, err)
+		{
+			_, err := client.Eventcard.Create().
+				SetGameID(item.id).
+				SetCardID(item.cardID).
+				SetEventID(item.eventID).
+				SetServerRegion(renderregion.JP.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create event card %d: %v", item.id, err)
 		}
+
 	}
 	for _, item := range []struct {
 		id       int64
@@ -145,13 +152,15 @@ func TestDBEventProviderQueriesCachesAndCombinesLocalEvents(t *testing.T) {
 		{id: 1, typeName: "normal"},
 		{id: 2, typeName: "colorful_festival_limited"},
 	} {
-		if _, err := client.Cardsupplie.Create().
-			SetGameID(item.id).
-			SetCardSupplyType(item.typeName).
-			SetServerRegion(renderregion.JP.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create supply %d: %v", item.id, err)
+		{
+			_, err := client.Cardsupplie.Create().
+				SetGameID(item.id).
+				SetCardSupplyType(item.typeName).
+				SetServerRegion(renderregion.JP.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create supply %d: %v", item.id, err)
 		}
+
 	}
 
 	for _, item := range []struct {
@@ -162,16 +171,18 @@ func TestDBEventProviderQueriesCachesAndCombinesLocalEvents(t *testing.T) {
 		{id: 2, eventID: 14, gcuID: 501, attr: "cute"},
 		{id: 3, eventID: 14, gcuID: 502, attr: "cool"},
 	} {
-		if _, err := client.Eventdeckbonuse.Create().
-			SetGameID(item.id).
-			SetEventID(item.eventID).
-			SetGameCharacterUnitID(item.gcuID).
-			SetCardAttr(item.attr).
-			SetBonusRate(0.25).
-			SetServerRegion(renderregion.JP.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create event bonus %d: %v", item.id, err)
+		{
+			_, err := client.Eventdeckbonuse.Create().
+				SetGameID(item.id).
+				SetEventID(item.eventID).
+				SetGameCharacterUnitID(item.gcuID).
+				SetCardAttr(item.attr).
+				SetBonusRate(0.25).
+				SetServerRegion(renderregion.JP.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create event bonus %d: %v", item.id, err)
 		}
+
 	}
 	for _, item := range []struct {
 		id, characterID int64
@@ -180,14 +191,16 @@ func TestDBEventProviderQueriesCachesAndCombinesLocalEvents(t *testing.T) {
 		{id: 501, characterID: 5, unit: " idol "},
 		{id: 502, characterID: 6, unit: "street"},
 	} {
-		if _, err := client.Gamecharacterunit.Create().
-			SetGameID(item.id).
-			SetGameCharacterID(item.characterID).
-			SetUnit(item.unit).
-			SetServerRegion(renderregion.JP.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create game character unit %d: %v", item.id, err)
+		{
+			_, err := client.Gamecharacterunit.Create().
+				SetGameID(item.id).
+				SetGameCharacterID(item.characterID).
+				SetUnit(item.unit).
+				SetServerRegion(renderregion.JP.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create game character unit %d: %v", item.id, err)
 		}
+
 	}
 
 	for _, item := range []struct {
@@ -196,130 +209,214 @@ func TestDBEventProviderQueriesCachesAndCombinesLocalEvents(t *testing.T) {
 		{id: 1, characterID: 0, chapterNo: 1},
 		{id: 2, characterID: 5, chapterNo: 2},
 	} {
-		if _, err := client.Worldbloom.Create().
-			SetGameID(item.id).
-			SetEventID(10).
-			SetGameCharacterID(item.characterID).
-			SetChapterNo(item.chapterNo).
-			SetChapterStartAt(1000 + item.chapterNo).
-			SetAggregateAt(1100 + item.chapterNo).
-			SetChapterEndAt(1200 + item.chapterNo).
-			SetWorldBloomChapterType("character").
-			SetIsSupplemental(item.characterID == 0).
-			SetServerRegion(renderregion.JP.String()).
-			Save(ctx); err != nil {
-			t.Fatalf("create world bloom %d: %v", item.id, err)
+		{
+			_, err := client.Worldbloom.Create().
+				SetGameID(item.id).
+				SetEventID(10).
+				SetGameCharacterID(item.characterID).
+				SetChapterNo(item.chapterNo).
+				SetChapterStartAt(1000 + item.chapterNo).
+				SetAggregateAt(1100 + item.chapterNo).
+				SetChapterEndAt(1200 + item.chapterNo).
+				SetWorldBloomChapterType("character").
+				SetIsSupplemental(item.characterID == 0).
+				SetServerRegion(renderregion.JP.String()).
+				Save(ctx)
+			testutil.Require(t, !(err != nil), "create world bloom %d: %v", item.id, err)
 		}
+
 	}
 
 	eventProvider := provider.events
-	if _, err := eventProvider.GetByID(ctx, 0); err == nil {
-		t.Fatal("GetByID(0) should reject an invalid event ID")
+	{
+		_, err := eventProvider.GetByID(ctx, 0)
+		testutil.RequireArgs(t, !(err == nil), "GetByID(0) should reject an invalid event ID")
 	}
+
 	eventInfo, err := eventProvider.GetByID(ctx, 10)
-	if err != nil || eventInfo.Name != "box event" {
-		t.Fatalf("GetByID(10) = %+v, %v", eventInfo, err)
+	{
+		testutil.Require(t, !(err != nil), "GetByID(10) = %+v, %v", eventInfo, err)
+		testutil.Require(t, !(eventInfo.Name != "box event"), "GetByID(10) = %+v, %v", eventInfo, err)
 	}
+
 	eventInfo.Name = "mutated"
-	if cached, err := eventProvider.GetByID(ctx, 10); err != nil || cached.Name != "box event" {
-		t.Fatalf("cached event = %+v, %v", cached, err)
+	{
+		cached, err := eventProvider.GetByID(ctx, 10)
+		{
+			testutil.Require(t, !(err != nil), "cached event = %+v, %v", cached, err)
+			testutil.Require(t, !(cached.Name != "box event"), "cached event = %+v, %v", cached, err)
+		}
 	}
-	if _, err := eventProvider.GetByID(ctx, 404); err == nil {
-		t.Fatal("missing event should return an error after local fallback misses")
+	{
+
+		_, err := eventProvider.GetByID(ctx, 404)
+		testutil.RequireArgs(t, !(err == nil), "missing event should return an error after local fallback misses")
 	}
+
 	byCard, err := eventProvider.GetByCardID(ctx, 100)
-	if err != nil || byCard.ID != 10 {
-		t.Fatalf("GetByCardID(100) = %+v, %v", byCard, err)
+	{
+		testutil.Require(t, !(err != nil), "GetByCardID(100) = %+v, %v", byCard, err)
+		testutil.Require(t, !(byCard.ID != 10), "GetByCardID(100) = %+v, %v", byCard, err)
 	}
-	if _, err := eventProvider.GetByCardID(ctx, 4040); err == nil {
-		t.Fatal("missing event-card relation should return an error")
+	{
+
+		_, err := eventProvider.GetByCardID(ctx, 4040)
+		testutil.RequireArgs(t, !(err == nil), "missing event-card relation should return an error")
 	}
 
 	all := eventProvider.GetAll(ctx)
-	if len(all) != 6 || all[0] == nil || all[0].ID != 99 || all[len(all)-1].ID != 14 {
-		t.Fatalf("combined/sorted event list = %+v", all)
+	{
+		testutil.Require(t, !(len(all) != 6), "combined/sorted event list = %+v", all)
+		testutil.Require(t, !(all[0] == nil), "combined/sorted event list = %+v", all)
+		testutil.Require(t, !(all[0].ID != 99), "combined/sorted event list = %+v", all)
+		testutil.Require(t, !(all[len(all)-1].ID != 14), "combined/sorted event list = %+v", all)
 	}
-	if _, exists := eventProvider.eventCache[99]; !exists {
-		t.Fatal("local-only event was not merged into the DB cache")
+	{
+
+		_, exists := eventProvider.eventCache[99]
+		testutil.RequireArgs(t, exists, "local-only event was not merged into the DB cache")
 	}
 
 	cards, err := eventProvider.GetCards(ctx, 10)
-	if err != nil || len(cards) != 2 || cards[0].ID != 100 || cards[1].ID != 101 {
-		t.Fatalf("GetCards(10) = %+v, %v", cards, err)
+	{
+		testutil.Require(t, !(err != nil), "GetCards(10) = %+v, %v", cards, err)
+		testutil.Require(t, !(len(cards) != 2), "GetCards(10) = %+v, %v", cards, err)
+		testutil.Require(t, !(cards[0].ID != 100), "GetCards(10) = %+v, %v", cards, err)
+		testutil.Require(t, !(cards[1].ID != 101), "GetCards(10) = %+v, %v", cards, err)
 	}
+
 	cards[0].CharacterID = -1
 	cachedCards, err := eventProvider.GetCards(ctx, 10)
-	if err != nil || cachedCards[0].CharacterID != 5 {
-		t.Fatalf("cached cards = %+v, %v", cachedCards, err)
+	{
+		testutil.Require(t, !(err != nil), "cached cards = %+v, %v", cachedCards, err)
+		testutil.Require(t, !(cachedCards[0].CharacterID != 5), "cached cards = %+v, %v", cachedCards, err)
 	}
-	if _, err := eventProvider.GetCards(ctx, 11); err == nil {
-		t.Fatal("event without cards should return an error")
+	{
+
+		_, err := eventProvider.GetCards(ctx, 11)
+		testutil.RequireArgs(t, !(err == nil), "event without cards should return an error")
 	}
-	if _, err := eventProvider.GetCards(ctx, 13); err == nil {
-		t.Fatal("event relation to missing card should return an error")
+	{
+
+		_, err := eventProvider.GetCards(ctx, 13)
+		testutil.RequireArgs(t, !(err == nil), "event relation to missing card should return an error")
 	}
 
 	rewards, err := eventProvider.GetRankingHonorRewards(ctx, 10)
-	if err != nil || len(rewards) != 1 || rewards[0].HonorID != 700 {
-		t.Fatalf("ranking rewards = %+v, %v", rewards, err)
+	{
+		testutil.Require(t, !(err != nil), "ranking rewards = %+v, %v", rewards, err)
+		testutil.Require(t, !(len(rewards) != 1), "ranking rewards = %+v, %v", rewards, err)
+		testutil.Require(t, !(rewards[0].HonorID != 700), "ranking rewards = %+v, %v", rewards, err)
 	}
+
 	fallbackRewards, err := eventProvider.GetRankingHonorRewards(ctx, 11)
-	if err != nil || len(fallbackRewards) != 1 || fallbackRewards[0].HonorID != 911 {
-		t.Fatalf("ranking fallback rewards = %+v, %v", fallbackRewards, err)
+	{
+		testutil.Require(t, !(err != nil), "ranking fallback rewards = %+v, %v", fallbackRewards, err)
+		testutil.Require(t, !(len(fallbackRewards) != 1), "ranking fallback rewards = %+v, %v", fallbackRewards, err)
+		testutil.Require(t, !(fallbackRewards[0].HonorID != 911), "ranking fallback rewards = %+v, %v", fallbackRewards, err)
 	}
-	if _, err := eventProvider.GetRankingHonorRewards(ctx, 404); err == nil {
-		t.Fatal("missing ranking-reward event should return an error")
+	{
+
+		_, err := eventProvider.GetRankingHonorRewards(ctx, 404)
+		testutil.RequireArgs(t, !(err == nil), "missing ranking-reward event should return an error")
 	}
 
 	bonuses, err := eventProvider.GetDeckBonuses(ctx, 10)
-	if err != nil || len(bonuses) != 1 || bonuses[0].GameCharacterUnitID != 501 {
-		t.Fatalf("deck bonuses = %+v, %v", bonuses, err)
+	{
+		testutil.Require(t, !(err != nil), "deck bonuses = %+v, %v", bonuses, err)
+		testutil.Require(t, !(len(bonuses) != 1), "deck bonuses = %+v, %v", bonuses, err)
+		testutil.Require(t, !(bonuses[0].GameCharacterUnitID != 501), "deck bonuses = %+v, %v", bonuses, err)
 	}
-	if empty, err := eventProvider.GetDeckBonuses(ctx, 11); err != nil || len(empty) != 0 {
-		t.Fatalf("empty deck bonuses = %+v, %v", empty, err)
+	{
+
+		empty, err := eventProvider.GetDeckBonuses(ctx, 11)
+		{
+			testutil.Require(t, !(err != nil), "empty deck bonuses = %+v, %v", empty, err)
+			testutil.Require(t, !(len(empty) != 0), "empty deck bonuses = %+v, %v", empty, err)
+		}
 	}
+
 	banner, err := eventProvider.GetBannerCharacterID(ctx, 10)
-	if err != nil || banner != 5 {
-		t.Fatalf("banner character = %d, %v", banner, err)
+	{
+		testutil.Require(t, !(err != nil), "banner character = %d, %v", banner, err)
+		testutil.Require(t, !(banner != 5), "banner character = %d, %v", banner, err)
 	}
-	if _, err := eventProvider.GetBannerCharacterID(ctx, 12); err == nil {
-		t.Fatal("festival-only event should not have a banner character")
+	{
+
+		_, err := eventProvider.GetBannerCharacterID(ctx, 12)
+		testutil.RequireArgs(t, !(err == nil), "festival-only event should not have a banner character")
 	}
+
 	banEvents := eventProvider.GetBanEvents(ctx, 5)
-	if len(banEvents) != 1 || banEvents[0].ID != 10 {
-		t.Fatalf("box events for character 5 = %+v", banEvents)
+	{
+		testutil.Require(t, !(len(banEvents) != 1), "box events for character 5 = %+v", banEvents)
+		testutil.Require(t, !(banEvents[0].ID != 10), "box events for character 5 = %+v", banEvents)
 	}
-	if unit, ok := eventProvider.getBonusUnit(ctx, 0); ok || unit != "" {
-		t.Fatalf("invalid bonus unit = %q, %t", unit, ok)
+	{
+
+		unit, ok := eventProvider.getBonusUnit(ctx, 0)
+		{
+			testutil.Require(t, !(ok), "invalid bonus unit = %q, %t", unit, ok)
+			testutil.Require(t, !(unit != ""), "invalid bonus unit = %q, %t", unit, ok)
+		}
 	}
-	if unit, ok := eventProvider.getBonusUnit(ctx, 501); !ok || unit != "idol" {
-		t.Fatalf("bonus unit = %q, %t", unit, ok)
+	{
+
+		unit, ok := eventProvider.getBonusUnit(ctx, 501)
+		{
+			testutil.Require(t, ok, "bonus unit = %q, %t", unit, ok)
+			testutil.Require(t, !(unit != "idol"), "bonus unit = %q, %t", unit, ok)
+		}
 	}
-	if unit, ok := eventProvider.getBonusUnit(ctx, 501); !ok || unit != "idol" {
-		t.Fatalf("cached bonus unit = %q, %t", unit, ok)
+	{
+
+		unit, ok := eventProvider.getBonusUnit(ctx, 501)
+		{
+			testutil.Require(t, ok, "cached bonus unit = %q, %t", unit, ok)
+			testutil.Require(t, !(unit != "idol"), "cached bonus unit = %q, %t", unit, ok)
+		}
 	}
-	if _, ok := eventProvider.getBonusUnit(ctx, 999); ok {
-		t.Fatal("missing bonus unit should not resolve")
+	{
+
+		_, ok := eventProvider.getBonusUnit(ctx, 999)
+		testutil.RequireArgs(t, !(ok), "missing bonus unit should not resolve")
 	}
 
 	chapters := eventProvider.GetWorldBloomChapters(ctx, 10)
-	if len(chapters) != 2 || chapters[0].GameCharacterID != nil || chapters[1].GameCharacterID == nil || *chapters[1].GameCharacterID != 5 {
-		t.Fatalf("world bloom chapters = %+v", chapters)
+	{
+		testutil.Require(t, !(len(chapters) != 2), "world bloom chapters = %+v", chapters)
+		testutil.Require(t, !(chapters[0].GameCharacterID != nil), "world bloom chapters = %+v", chapters)
+		testutil.Require(t, !(chapters[1].GameCharacterID == nil), "world bloom chapters = %+v", chapters)
+		testutil.Require(t, !(*chapters[1].GameCharacterID != 5), "world bloom chapters = %+v", chapters)
 	}
-	if got := eventProvider.GetWorldBloomChapters(ctx, 11); got != nil {
-		t.Fatalf("missing world bloom chapters = %+v, want nil", got)
+	{
+
+		got := eventProvider.GetWorldBloomChapters(ctx, 11)
+		testutil.Require(t, !(got != nil), "missing world bloom chapters = %+v, want nil", got)
 	}
-	if ranges, err := eventProvider.GetWorldBloomChapterRankingRewardRanges(ctx, 0, 5); err != nil || ranges != nil {
-		t.Fatalf("invalid world bloom ranges = %+v, %v", ranges, err)
+	{
+
+		ranges, err := eventProvider.GetWorldBloomChapterRankingRewardRanges(ctx, 0, 5)
+		{
+			testutil.Require(t, !(err != nil), "invalid world bloom ranges = %+v, %v", ranges, err)
+			testutil.Require(t, !(ranges != nil), "invalid world bloom ranges = %+v, %v", ranges, err)
+		}
 	}
+
 	ranges, err := eventProvider.GetWorldBloomChapterRankingRewardRanges(ctx, 99, 5)
-	if err != nil || len(ranges) != 1 || ranges[0].ResourceBoxID != 500 {
-		t.Fatalf("local world bloom ranges = %+v, %v", ranges, err)
+	{
+		testutil.Require(t, !(err != nil), "local world bloom ranges = %+v, %v", ranges, err)
+		testutil.Require(t, !(len(ranges) != 1), "local world bloom ranges = %+v, %v", ranges, err)
+		testutil.Require(t, !(ranges[0].ResourceBoxID != 500), "local world bloom ranges = %+v, %v", ranges, err)
 	}
+
 	storeRanges, err := eventProvider.GetWorldBloomChapterRankingRewardRanges(ctx, 77, 7)
-	if err != nil || len(storeRanges) != 1 || storeRanges[0].ResourceBoxID != 501 {
-		t.Fatalf("store world bloom ranges = %+v, %v", storeRanges, err)
+	{
+		testutil.Require(t, !(err != nil), "store world bloom ranges = %+v, %v", storeRanges, err)
+		testutil.Require(t, !(len(storeRanges) != 1), "store world bloom ranges = %+v, %v", storeRanges, err)
+		testutil.Require(t, !(storeRanges[0].ResourceBoxID != 501), "store world bloom ranges = %+v, %v", storeRanges, err)
 	}
+
 }
 
 func TestDBEventProviderFallsBackWhenDatabaseUnavailable(t *testing.T) {
@@ -328,42 +425,63 @@ func TestDBEventProviderFallsBackWhenDatabaseUnavailable(t *testing.T) {
 	local, store := newEventBehaviorFallback(t)
 	provider.events.local = local
 	provider.events.store = store
-	if err := provider.client.Close(); err != nil {
-		t.Fatalf("close fixture database: %v", err)
+	{
+		err := provider.client.Close()
+		testutil.Require(t, !(err != nil), "close fixture database: %v", err)
 	}
 
 	eventInfo, err := provider.events.GetByID(ctx, 99)
-	if err != nil || eventInfo.ID != 99 {
-		t.Fatalf("fallback GetByID() = %+v, %v", eventInfo, err)
-	}
-	byCard, err := provider.events.GetByCardID(ctx, 999)
-	if err != nil || byCard.ID != 99 {
-		t.Fatalf("fallback GetByCardID() = %+v, %v", byCard, err)
-	}
-	if all := provider.events.GetAll(ctx); len(all) != 3 {
-		t.Fatalf("fallback GetAll() = %+v", all)
-	}
-	cards, err := provider.events.GetCards(ctx, 99)
-	if err != nil || len(cards) != 1 || cards[0].ID != 999 {
-		t.Fatalf("fallback GetCards() = %+v, %v", cards, err)
-	}
-	rewards, err := provider.events.GetRankingHonorRewards(ctx, 99)
-	if err != nil || len(rewards) != 1 || rewards[0].HonorID != 999 {
-		t.Fatalf("fallback ranking rewards = %+v, %v", rewards, err)
-	}
-	bonuses, err := provider.events.GetDeckBonuses(ctx, 99)
-	if err != nil || len(bonuses) != 1 || bonuses[0].ID != 99 {
-		t.Fatalf("fallback deck bonuses = %+v, %v", bonuses, err)
-	}
-	chapters := provider.events.GetWorldBloomChapters(ctx, 99)
-	if len(chapters) != 1 || chapters[0].ID != 99 {
-		t.Fatalf("fallback world bloom chapters = %+v", chapters)
+	{
+		testutil.Require(t, !(err != nil), "fallback GetByID() = %+v, %v", eventInfo, err)
+		testutil.Require(t, !(eventInfo.ID != 99), "fallback GetByID() = %+v, %v", eventInfo, err)
 	}
 
-	if _, err := provider.events.GetByID(ctx, 404); err == nil {
-		t.Fatal("database and local miss should return an error")
+	byCard, err := provider.events.GetByCardID(ctx, 999)
+	{
+		testutil.Require(t, !(err != nil), "fallback GetByCardID() = %+v, %v", byCard, err)
+		testutil.Require(t, !(byCard.ID != 99), "fallback GetByCardID() = %+v, %v", byCard, err)
 	}
-	if _, err := provider.events.GetCards(ctx, 404); err == nil {
-		t.Fatal("database and local card miss should return an error")
+	{
+
+		all := provider.events.GetAll(ctx)
+		testutil.Require(t, !(len(all) != 3), "fallback GetAll() = %+v", all)
 	}
+
+	cards, err := provider.events.GetCards(ctx, 99)
+	{
+		testutil.Require(t, !(err != nil), "fallback GetCards() = %+v, %v", cards, err)
+		testutil.Require(t, !(len(cards) != 1), "fallback GetCards() = %+v, %v", cards, err)
+		testutil.Require(t, !(cards[0].ID != 999), "fallback GetCards() = %+v, %v", cards, err)
+	}
+
+	rewards, err := provider.events.GetRankingHonorRewards(ctx, 99)
+	{
+		testutil.Require(t, !(err != nil), "fallback ranking rewards = %+v, %v", rewards, err)
+		testutil.Require(t, !(len(rewards) != 1), "fallback ranking rewards = %+v, %v", rewards, err)
+		testutil.Require(t, !(rewards[0].HonorID != 999), "fallback ranking rewards = %+v, %v", rewards, err)
+	}
+
+	bonuses, err := provider.events.GetDeckBonuses(ctx, 99)
+	{
+		testutil.Require(t, !(err != nil), "fallback deck bonuses = %+v, %v", bonuses, err)
+		testutil.Require(t, !(len(bonuses) != 1), "fallback deck bonuses = %+v, %v", bonuses, err)
+		testutil.Require(t, !(bonuses[0].ID != 99), "fallback deck bonuses = %+v, %v", bonuses, err)
+	}
+
+	chapters := provider.events.GetWorldBloomChapters(ctx, 99)
+	{
+		testutil.Require(t, !(len(chapters) != 1), "fallback world bloom chapters = %+v", chapters)
+		testutil.Require(t, !(chapters[0].ID != 99), "fallback world bloom chapters = %+v", chapters)
+	}
+	{
+
+		_, err := provider.events.GetByID(ctx, 404)
+		testutil.RequireArgs(t, !(err == nil), "database and local miss should return an error")
+	}
+	{
+
+		_, err := provider.events.GetCards(ctx, 404)
+		testutil.RequireArgs(t, !(err == nil), "database and local card miss should return an error")
+	}
+
 }

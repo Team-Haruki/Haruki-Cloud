@@ -15,6 +15,7 @@ import (
 
 	"haruki-cloud/internal/pjsk/drawing"
 	renderregion "haruki-cloud/internal/pjsk/region"
+	"haruki-cloud/internal/testutil"
 )
 
 type closeTrackingMasterdataSource struct {
@@ -112,9 +113,11 @@ func TestMysekaiRenderWrappersExerciseSuccessfulDrawingPaths(t *testing.T) {
 
 	assertRendered := func(name string, image []byte, err error) {
 		t.Helper()
-		if err != nil || string(image) != "rendered" {
-			t.Fatalf("%s = %q, %v", name, image, err)
+		{
+			testutil.Require(t, !(err != nil), "%s = %q, %v", name, image, err)
+			testutil.Require(t, !(string(image) != "rendered"), "%s = %q, %v", name, image, err)
 		}
+
 	}
 	assertCall := func(name string, call func() ([]byte, error)) {
 		t.Helper()
@@ -146,25 +149,31 @@ func TestMysekaiRenderWrappersExerciseSuccessfulDrawingPaths(t *testing.T) {
 	})
 
 	payload, err := controller.BuildMapRequest(MapQuery{MapIDs: []int{5}})
-	if err != nil {
-		t.Fatalf("BuildMapRequest = %v", err)
-	}
+	testutil.Require(t, !(err != nil), "BuildMapRequest = %v", err)
+
 	assertCall("RenderMapRequest", func() ([]byte, error) { return controller.RenderMapRequest(payload) })
-	if _, err := controller.RenderMapRequest(nil); err == nil {
-		t.Fatal("nil map payload should fail")
+	{
+		_, err := controller.RenderMapRequest(nil)
+		testutil.RequireArgs(t, !(err == nil), "nil map payload should fail")
 	}
-	if _, err := (*Controller)(nil).RenderMapRequest(payload); err == nil {
-		t.Fatal("nil map controller should fail")
+	{
+
+		_, err := (*Controller)(nil).RenderMapRequest(payload)
+		testutil.RequireArgs(t, !(err == nil), "nil map controller should fail")
 	}
-	if remaining, err := controller.HasRemainingHarvestResources(MapQuery{MapIDs: []int{5}}); err != nil || remaining {
-		t.Fatalf("HasRemainingHarvestResources = %v, %v", remaining, err)
+	{
+
+		remaining, err := controller.HasRemainingHarvestResources(MapQuery{MapIDs: []int{5}})
+		{
+			testutil.Require(t, !(err != nil), "HasRemainingHarvestResources = %v, %v", remaining, err)
+			testutil.Require(t, !(remaining), "HasRemainingHarvestResources = %v, %v", remaining, err)
+		}
 	}
-	if MapRequestHasRemainingHarvestResources(nil) || MapRequestHasRemainingHarvestResources(&drawing.MysekaiMsrMapRequest{Maps: []drawing.MysekaiMsrMapData{{ResourceDrops: []drawing.MysekaiMsrMapResourceDrop{{Hide: true}}}}}) {
-		t.Fatal("hidden or nil map resources should not remain")
+	{
+		testutil.RequireArgs(t, !(MapRequestHasRemainingHarvestResources(nil)), "hidden or nil map resources should not remain")
+		testutil.RequireArgs(t, !(MapRequestHasRemainingHarvestResources(&drawing.MysekaiMsrMapRequest{Maps: []drawing.MysekaiMsrMapData{{ResourceDrops: []drawing.MysekaiMsrMapResourceDrop{{Hide: true}}}}})), "hidden or nil map resources should not remain")
 	}
-	if !MapRequestHasRemainingHarvestResources(&drawing.MysekaiMsrMapRequest{Maps: []drawing.MysekaiMsrMapData{{ResourceDrops: []drawing.MysekaiMsrMapResourceDrop{{Hide: false}}}}}) {
-		t.Fatal("visible map resource should remain")
-	}
+	testutil.RequireArgs(t, MapRequestHasRemainingHarvestResources(&drawing.MysekaiMsrMapRequest{Maps: []drawing.MysekaiMsrMapData{{ResourceDrops: []drawing.MysekaiMsrMapResourceDrop{{Hide: false}}}}}), "visible map resource should remain")
 
 	for name, call := range map[string]func() error{
 		"resource": func() error { _, err := (*Controller)(nil).RenderResource(ResourceQuery{}); return err },
@@ -175,9 +184,11 @@ func TestMysekaiRenderWrappersExerciseSuccessfulDrawingPaths(t *testing.T) {
 		"detail":   func() error { _, err := (*Controller)(nil).RenderFixtureDetail(FixtureDetailQuery{}); return err },
 		"map":      func() error { _, err := (*Controller)(nil).RenderMap(MapQuery{}); return err },
 	} {
-		if err := call(); err == nil {
-			t.Fatalf("nil %s renderer should fail", name)
+		{
+			err := call()
+			testutil.Require(t, !(err == nil), "nil %s renderer should fail", name)
 		}
+
 	}
 }
 
@@ -201,19 +212,27 @@ func TestControllerResourceExtractionAndLifecycleBranches(t *testing.T) {
 	writeTestJSON(t, filepath.Join(masterdataDir, "mysekaiGameCharacterUnitGroups.json"), groups)
 	writeTestJSON(t, filepath.Join(masterdataDir, "gameCharacterUnits.json"), units)
 	controller := NewController(nil, nil, renderregion.JP, nil, MasterdataOptions{LocalDir: masterdataDir, AllowFallback: true})
+	{
 
-	if got := controller.extractVisitCharacters(renderregion.JP, map[string]any{}); len(got) != 0 {
-		t.Fatalf("visits without a visit object = %+v", got)
+		got := controller.extractVisitCharacters(renderregion.JP, map[string]any{})
+		testutil.Require(t, !(len(got) != 0), "visits without a visit object = %+v", got)
 	}
-	if got := controller.extractVisitCharacters(renderregion.JP, map[string]any{"userMysekaiGateCharacterVisit": map[string]any{}}); len(got) != 0 {
-		t.Fatalf("visits without characters = %+v", got)
+	{
+
+		got := controller.extractVisitCharacters(renderregion.JP, map[string]any{"userMysekaiGateCharacterVisit": map[string]any{}})
+		testutil.Require(t, !(len(got) != 0), "visits without characters = %+v", got)
 	}
+
 	gotVisits := controller.extractVisitCharacters(renderregion.JP, map[string]any{"userMysekaiGateCharacterVisit": map[string]any{"userMysekaiGateCharacters": visits}})
-	if len(gotVisits) != 6 || !gotVisits[0].IsReservation || gotVisits[0].ReservationIconPath == nil || gotVisits[0].MemoriaImagePath == nil {
-		t.Fatalf("visit extraction = %+v", gotVisits)
+	{
+		testutil.Require(t, !(len(gotVisits) != 6), "visit extraction = %+v", gotVisits)
+		testutil.Require(t, gotVisits[0].IsReservation, "visit extraction = %+v", gotVisits)
+		testutil.Require(t, !(gotVisits[0].ReservationIconPath == nil), "visit extraction = %+v", gotVisits)
+		testutil.Require(t, !(gotVisits[0].MemoriaImagePath == nil), "visit extraction = %+v", gotVisits)
 	}
-	if controller.gameCharacterIDByUnitID(101) != 1 || controller.gameCharacterIDByUnitID(999) != 0 {
-		t.Fatal("unit to character lookup mismatch")
+	{
+		testutil.RequireArgs(t, !(controller.gameCharacterIDByUnitID(101) != 1), "unit to character lookup mismatch")
+		testutil.RequireArgs(t, !(controller.gameCharacterIDByUnitID(999) != 0), "unit to character lookup mismatch")
 	}
 
 	fixtureIDs := userMysekaiFixtureIDs([]any{
@@ -223,9 +242,8 @@ func TestControllerResourceExtractionAndLifecycleBranches(t *testing.T) {
 		map[string]any{"mysekaiFixture": map[string]any{"id": 3}},
 		map[string]any{},
 	})
-	if len(fixtureIDs) != 3 {
-		t.Fatalf("user fixture IDs = %v", fixtureIDs)
-	}
+	testutil.Require(t, !(len(fixtureIDs) != 3), "user fixture IDs = %v", fixtureIDs)
+
 	blueprints := map[int]map[string]any{
 		10: {"mysekaiCraftType": "mysekai_fixture", "craftTargetId": 1},
 		11: {"mysekaiCraftType": "item", "craftTargetId": 2},
@@ -234,11 +252,11 @@ func TestControllerResourceExtractionAndLifecycleBranches(t *testing.T) {
 	fromBlueprints := userMysekaiBlueprintFixtureIDs(map[string]any{"userMysekaiBlueprints": []any{
 		"invalid", map[string]any{"mysekaiBlueprintId": 404}, map[string]any{"mysekaiBlueprintId": 11}, map[string]any{"mysekaiBlueprintId": 10},
 	}}, blueprints)
-	if len(fromBlueprints) != 1 {
-		t.Fatalf("blueprint fixture IDs = %v", fromBlueprints)
-	}
-	if got := controller.craftableMysekaiFixtureIDs(blueprints); len(got) != 1 {
-		t.Fatalf("craftable fixture IDs = %v", got)
+	testutil.Require(t, !(len(fromBlueprints) != 1), "blueprint fixture IDs = %v", fromBlueprints)
+	{
+
+		got := controller.craftableMysekaiFixtureIDs(blueprints)
+		testutil.Require(t, !(len(got) != 1), "craftable fixture IDs = %v", got)
 	}
 
 	merged := map[string]any{
@@ -259,65 +277,79 @@ func TestControllerResourceExtractionAndLifecycleBranches(t *testing.T) {
 		},
 	}
 	sites := controller.extractSiteResourceNumbers(renderregion.JP, merged)
-	if len(sites) != 1 || len(sites[0].ResourceNumbers) != 4 {
-		t.Fatalf("site resources = %+v", sites)
+	{
+		testutil.Require(t, !(len(sites) != 1), "site resources = %+v", sites)
+		testutil.Require(t, !(len(sites[0].ResourceNumbers) != 4), "site resources = %+v", sites)
 	}
-	if controller.hasMysekaiMusicRecord(merged, 4) != true || controller.hasMysekaiMusicRecord(merged, 5) {
-		t.Fatal("music record ownership mismatch")
+	{
+		testutil.RequireArgs(t, !(controller.hasMysekaiMusicRecord(merged, 4) != true), "music record ownership mismatch")
+		testutil.RequireArgs(t, !(controller.hasMysekaiMusicRecord(merged, 5)), "music record ownership mismatch")
 	}
-	if path, _ := controller.resourceImagePath(renderregion.JP, "invalid", nil, nil, nil, nil, nil); path != "" {
-		t.Fatalf("invalid resource image path = %q", path)
+	{
+
+		path, _ := controller.resourceImagePath(renderregion.JP, "invalid", nil, nil, nil, nil, nil)
+		testutil.Require(t, !(path != ""), "invalid resource image path = %q", path)
 	}
-	if got := (*Controller)(nil).loadIconNameMap("x", "y"); len(got) != 0 {
-		t.Fatalf("nil icon map = %v", got)
+	{
+
+		got := (*Controller)(nil).loadIconNameMap("x", "y")
+		testutil.Require(t, !(len(got) != 0), "nil icon map = %v", got)
 	}
-	if got := (&Controller{}).loadFieldMap("x", "y"); len(got) != 0 {
-		t.Fatalf("nil field map = %v", got)
+	{
+
+		got := (&Controller{}).loadFieldMap("x", "y")
+		testutil.Require(t, !(len(got) != 0), "nil field map = %v", got)
 	}
-	if mysekaiBirthdayCharacterImageName(nil) != "" || mysekaiBirthdayCharacterImageName(map[string]any{"givenNameEnglish": " Ichika "}) != "ichika" {
-		t.Fatal("birthday image name mismatch")
+	{
+		testutil.RequireArgs(t, !(mysekaiBirthdayCharacterImageName(nil) != ""), "birthday image name mismatch")
+		testutil.RequireArgs(t, !(mysekaiBirthdayCharacterImageName(map[string]any{"givenNameEnglish": " Ichika "}) != "ichika"), "birthday image name mismatch")
 	}
+
 	storeMysekaiBirthdayRefreshIcon("", "")
 
 	var nilController *Controller
-	if nilController.WithSnapshot(nil) != nil || nilController.WithContext(context.Background()) != nil {
-		t.Fatal("nil controller clones should remain nil")
+	{
+		testutil.RequireArgs(t, !(nilController.WithSnapshot(nil) != nil), "nil controller clones should remain nil")
+		testutil.RequireArgs(t, !(nilController.WithContext(context.Background()) != nil), "nil controller clones should remain nil")
 	}
+
 	cloned := controller.WithSnapshot(nil)
-	if cloned == controller || cloned.snapshot != nil {
-		t.Fatal("WithSnapshot should shallow-clone the controller")
+	{
+		testutil.RequireArgs(t, !(cloned == controller), "WithSnapshot should shallow-clone the controller")
+		testutil.RequireArgs(t, !(cloned.snapshot != nil), "WithSnapshot should shallow-clone the controller")
 	}
-	if controller.WithContext(nil) == controller {
-		t.Fatal("WithContext should shallow-clone the controller")
-	}
-	if controller.WithMySekaiData(nil) != nil {
-		t.Fatal("empty direct MySekai data should be rejected")
-	}
+	testutil.RequireArgs(t, !(controller.WithContext(nil) == controller), "WithContext should shallow-clone the controller")
+	testutil.RequireArgs(t, !(controller.WithMySekaiData(nil) != nil), "empty direct MySekai data should be rejected")
 
 	source := &closeTrackingMasterdataSource{}
 	resolver := &masterdataResolver{cache: map[string]masterdataSource{"jp": source}}
 	lifecycle := &Controller{resolver: resolver}
 	lifecycle.ResetMasterdataCache()
-	if !source.reset {
-		t.Fatal("controller cache reset did not reach source")
-	}
+	testutil.RequireArgs(t, source.reset, "controller cache reset did not reach source")
+
 	lifecycle.Close()
-	if !source.closed || len(resolver.cache) != 0 {
-		t.Fatalf("controller close source=%+v cache=%v", source, resolver.cache)
+	{
+		testutil.Require(t, source.closed, "controller close source=%+v cache=%v", source, resolver.cache)
+		testutil.Require(t, !(len(resolver.cache) != 0), "controller close source=%+v cache=%v", source, resolver.cache)
 	}
+
 	nilController.Close()
 	nilController.ResetMasterdataCache()
 	(*masterdataResolver)(nil).Close()
 	(*masterdataResolver)(nil).ResetMasterdataCache()
 	(&Controller{}).Close()
 	(&Controller{}).ResetMasterdataCache()
+	{
 
-	if got := (*fixtureCategoryNotFoundError)(nil).Error(); got != "mysekai fixture category not found" {
-		t.Fatalf("nil category error = %q", got)
+		got := (*fixtureCategoryNotFoundError)(nil).Error()
+		testutil.Require(t, !(got != "mysekai fixture category not found"), "nil category error = %q", got)
 	}
-	if got := (&fixtureCategoryNotFoundError{query: " missing "}).Error(); !strings.HasSuffix(got, "missing") {
-		t.Fatalf("category error = %q", got)
+	{
+
+		got := (&fixtureCategoryNotFoundError{query: " missing "}).Error()
+		testutil.Require(t, strings.HasSuffix(got, "missing"), "category error = %q", got)
 	}
+
 }
 
 func TestSnapshotStatusAndPhotoEdgeBranches(t *testing.T) {
@@ -326,50 +358,72 @@ func TestSnapshotStatusAndPhotoEdgeBranches(t *testing.T) {
 		"updatedResources":{"userMysekaiPhotos":[]}
 	}`))
 	status, err := controller.SnapshotStatus("", time.Time{})
-	if err != nil || status.LastUpdatedAt.UnixMilli() != 1700000000000 {
-		t.Fatalf("SnapshotStatus = %+v, %v", status, err)
+	{
+		testutil.Require(t, !(err != nil), "SnapshotStatus = %+v, %v", status, err)
+		testutil.Require(t, !(status.LastUpdatedAt.UnixMilli() != 1700000000000), "SnapshotStatus = %+v, %v", status, err)
 	}
-	if _, err := controller.SnapshotExpired("jp"); err != nil {
-		t.Fatalf("SnapshotExpired = %v", err)
+	{
+
+		_, err := controller.SnapshotExpired("jp")
+		testutil.Require(t, !(err != nil), "SnapshotExpired = %v", err)
 	}
-	if _, err := (&Controller{}).SnapshotStatus("jp", time.Now()); err == nil {
-		t.Fatal("snapshot status without data should fail")
+	{
+
+		_, err := (&Controller{}).SnapshotStatus("jp", time.Now())
+		testutil.RequireArgs(t, !(err == nil), "snapshot status without data should fail")
 	}
-	if _, err := controller.ResolvePhoto(PhotoQuery{Seq: 1}); err == nil {
-		t.Fatal("empty photos should fail")
+	{
+
+		_, err := controller.ResolvePhoto(PhotoQuery{Seq: 1})
+		testutil.RequireArgs(t, !(err == nil), "empty photos should fail")
 	}
 
 	badItem := (&Controller{defaultRegion: renderregion.JP}).WithMySekaiData([]byte(`{"updatedResources":{"userMysekaiPhotos":[1]}}`))
-	if _, err := badItem.ResolvePhoto(PhotoQuery{Seq: 1}); err == nil {
-		t.Fatal("non-object photo should fail")
+	{
+		_, err := badItem.ResolvePhoto(PhotoQuery{Seq: 1})
+		testutil.RequireArgs(t, !(err == nil), "non-object photo should fail")
 	}
-	if _, err := badItem.ResolvePhoto(PhotoQuery{Seq: -2}); err == nil {
-		t.Fatal("negative photo index beyond the list should fail")
-	}
+	{
 
-	if got := normalizeMySekaiTimestampMs(0); got != 0 {
-		t.Fatalf("zero timestamp = %d", got)
+		_, err := badItem.ResolvePhoto(PhotoQuery{Seq: -2})
+		testutil.RequireArgs(t, !(err == nil), "negative photo index beyond the list should fail")
 	}
-	if got := normalizeMySekaiTimestampMs(1_700_000_000); got != 1_700_000_000_000 {
-		t.Fatalf("seconds timestamp = %d", got)
+	{
+
+		got := normalizeMySekaiTimestampMs(0)
+		testutil.Require(t, !(got != 0), "zero timestamp = %d", got)
 	}
-	if got := normalizeMySekaiTimestampMs(1_700_000_000_000); got != 1_700_000_000_000 {
-		t.Fatalf("millisecond timestamp = %d", got)
+	{
+
+		got := normalizeMySekaiTimestampMs(1_700_000_000)
+		testutil.Require(t, !(got != 1_700_000_000_000), "seconds timestamp = %d", got)
+	}
+	{
+
+		got := normalizeMySekaiTimestampMs(1_700_000_000_000)
+		testutil.Require(t, !(got != 1_700_000_000_000), "millisecond timestamp = %d", got)
 	}
 
 	root := t.TempDir()
 	staticRoot := filepath.Join(root, "static_images")
-	if err := os.MkdirAll(staticRoot, 0o755); err != nil {
-		t.Fatalf("mkdir static root: %v", err)
+	{
+		err := os.MkdirAll(staticRoot, 0o755)
+		testutil.Require(t, !(err != nil), "mkdir static root: %v", err)
 	}
-	if got := (&Controller{}).staticPath(" "); got != "" {
-		t.Fatalf("blank static path = %q", got)
+	{
+
+		got := (&Controller{}).staticPath(" ")
+		testutil.Require(t, !(got != ""), "blank static path = %q", got)
 	}
-	if got := (&Controller{}).staticPath("icon.png"); got != "static_images/icon.png" {
-		t.Fatalf("fallback static path = %q", got)
+	{
+
+		got := (&Controller{}).staticPath("icon.png")
+		testutil.Require(t, !(got != "static_images/icon.png"), "fallback static path = %q", got)
+	}
+	{
+		testutil.RequireArgs(t, reflect.DeepEqual(parseMysekaiColorCode("#010203"), []int{1, 2, 3, 255}), "color code parsing mismatch")
+		testutil.RequireArgs(t, !(parseMysekaiColorCode("#bad") != nil), "color code parsing mismatch")
+		testutil.RequireArgs(t, !(parseMysekaiColorCode("#gg0000") != nil), "color code parsing mismatch")
 	}
 
-	if !reflect.DeepEqual(parseMysekaiColorCode("#010203"), []int{1, 2, 3, 255}) || parseMysekaiColorCode("#bad") != nil || parseMysekaiColorCode("#gg0000") != nil {
-		t.Fatal("color code parsing mismatch")
-	}
 }

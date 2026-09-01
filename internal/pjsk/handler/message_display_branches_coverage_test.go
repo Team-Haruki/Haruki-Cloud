@@ -16,58 +16,81 @@ import (
 	renderapp "haruki-cloud/internal/pjsk/render/app"
 	"haruki-cloud/internal/pjsk/render/releasecheck"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestDisplayPreferenceAndTimeBranches(t *testing.T) {
 	ctx := context.Background()
-	if got := resolveHarukiUserChartStyle(ctx, nil, 1); got != "" {
-		t.Fatalf("nil chart style = %q", got)
+	{
+		got := resolveHarukiUserChartStyle(ctx, nil, 1)
+		testutil.Require(t, !(got != ""), "nil chart style = %q", got)
 	}
-	if got := resolveRequesterHarukiUserChartStyle(ctx, nil, "qq", "1"); got != "" {
-		t.Fatalf("nil requester chart style = %q", got)
+	{
+
+		got := resolveRequesterHarukiUserChartStyle(ctx, nil, "qq", "1")
+		testutil.Require(t, !(got != ""), "nil requester chart style = %q", got)
 	}
-	if got := resolveHarukiUserTimeZone(ctx, nil, 1); got != displaytime.DefaultTimeZone {
-		t.Fatalf("nil time zone = %q", got)
+	{
+
+		got := resolveHarukiUserTimeZone(ctx, nil, 1)
+		testutil.Require(t, !(got != displaytime.DefaultTimeZone), "nil time zone = %q", got)
 	}
-	if got := resolveRequesterHarukiUserTimeZone(ctx, nil, "qq", "1"); got != displaytime.DefaultTimeZone {
-		t.Fatalf("nil requester time zone = %q", got)
+	{
+
+		got := resolveRequesterHarukiUserTimeZone(ctx, nil, "qq", "1")
+		testutil.Require(t, !(got != displaytime.DefaultTimeZone), "nil requester time zone = %q", got)
 	}
 
 	db := pjskenttest.Open(t, "sqlite3", fmt.Sprintf("file:handler_display_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
 	t.Cleanup(func() { _ = db.Close() })
 	app := &renderapp.App{PJSK: db}
-	if got := resolveHarukiUserChartStyle(ctx, app, 1); got != "" {
-		t.Fatalf("missing chart style = %q", got)
+	{
+		got := resolveHarukiUserChartStyle(ctx, app, 1)
+		testutil.Require(t, !(got != ""), "missing chart style = %q", got)
 	}
-	if got := resolveHarukiUserTimeZone(ctx, app, 1); got != displaytime.DefaultTimeZone {
-		t.Fatalf("missing settings time zone = %q", got)
+	{
+
+		got := resolveHarukiUserTimeZone(ctx, app, 1)
+		testutil.Require(t, !(got != displaytime.DefaultTimeZone), "missing settings time zone = %q", got)
 	}
-	if err := accountdata.UpsertUserSettings(ctx, db, 1, &schema.UserSettings{ChartStyle: " WHITE ", TimeZone: "Asia/Tokyo"}); err != nil {
-		t.Fatal(err)
+	{
+
+		err := accountdata.UpsertUserSettings(ctx, db, 1, &schema.UserSettings{ChartStyle: " WHITE ", TimeZone: "Asia/Tokyo"})
+		testutil.RequireArgs(t, !(err != nil), err)
 	}
-	if got := resolveHarukiUserChartStyle(ctx, app, 1); got != "white" {
-		t.Fatalf("stored chart style = %q", got)
+	{
+
+		got := resolveHarukiUserChartStyle(ctx, app, 1)
+		testutil.Require(t, !(got != "white"), "stored chart style = %q", got)
 	}
-	if got := resolveHarukiUserTimeZone(ctx, app, 1); got != "Asia/Tokyo" {
-		t.Fatalf("stored time zone = %q", got)
+	{
+
+		got := resolveHarukiUserTimeZone(ctx, app, 1)
+		testutil.Require(t, !(got != "Asia/Tokyo"), "stored time zone = %q", got)
 	}
+
 	_ = resolveRequesterHarukiUserChartStyle(ctx, app, "qq", "1")
 	_ = resolveRequesterHarukiUserTimeZone(ctx, app, "qq", "1")
 }
 
 func TestMySekaiHousingAndMessageBranches(t *testing.T) {
-	if _, err := executeMysekaiHousingSK(nil, "jp"); err == nil {
-		t.Fatal("nil housing runtime unexpectedly succeeded")
+	{
+		_, err := executeMysekaiHousingSK(nil, "jp")
+		testutil.RequireArgs(t, !(err == nil), "nil housing runtime unexpectedly succeeded")
 	}
+
 	rc := &RequestContext{Ctx: context.Background(), Cmd: &CommandRequest{}, App: &renderapp.App{}}
-	if _, err := executeMysekaiHousingSK(rc, "jp"); err == nil {
-		t.Fatal("missing housing controller unexpectedly succeeded")
+	{
+		_, err := executeMysekaiHousingSK(rc, "jp")
+		testutil.RequireArgs(t, !(err == nil), "missing housing controller unexpectedly succeeded")
 	}
+
 	app, _ := newExecutionCoverageApp(t)
 	rc.App = app
 	rc.Cmd.Params = []byte(`{"region":""}`)
-	if _, err := executeMysekaiHousingSK(rc, "tw"); err == nil {
-		t.Fatal("generic local API unexpectedly returned housing data")
+	{
+		_, err := executeMysekaiHousingSK(rc, "tw")
+		testutil.RequireArgs(t, !(err == nil), "generic local API unexpectedly returned housing data")
 	}
 
 	for mode, want := range map[string]string{
@@ -77,14 +100,18 @@ func TestMySekaiHousingAndMessageBranches(t *testing.T) {
 		"mysekai-door-upgrade":   "/msg",
 		"unknown":                "/mysekai",
 	} {
-		if got := canonicalMySekaiTrigger(mode); got != want {
-			t.Errorf("canonical trigger %q = %q", mode, got)
+		{
+			got := canonicalMySekaiTrigger(mode)
+			testutil.Check(t, !(got != want), "canonical trigger %q = %q", mode, got)
 		}
+
 	}
 	replay := onebot11.NewReplayError("already normalized")
-	if normalizeMySekaiUserFacingError(nil, "") != nil || normalizeMySekaiUserFacingError(replay, "") != replay {
-		t.Fatal("nil/replay MySekai error changed")
+	{
+		testutil.RequireArgs(t, !(normalizeMySekaiUserFacingError(nil, "") != nil), "nil/replay MySekai error changed")
+		testutil.RequireArgs(t, !(normalizeMySekaiUserFacingError(replay, "") != replay), "nil/replay MySekai error changed")
 	}
+
 	messages := []string{
 		"mysekai service unavailable",
 		"mysekai talk list requires character query",
@@ -107,9 +134,11 @@ func TestMySekaiHousingAndMessageBranches(t *testing.T) {
 		"decode mysekai data: invalid json",
 	}
 	for _, message := range messages {
-		if got := normalizeMySekaiUserFacingError(errors.New(message), "mysekai-talk-list"); got == nil || got.Error() == "" {
-			t.Errorf("normalize MySekai %q = %v", message, got)
+		{
+			got := normalizeMySekaiUserFacingError(errors.New(message), "mysekai-talk-list")
+			testutil.Check(t, !(got == nil || got.Error() == ""), "normalize MySekai %q = %v", message, got)
 		}
+
 	}
 }
 
@@ -123,9 +152,8 @@ func TestProfileBackgroundPureBranchCoverage(t *testing.T) {
 		{"竖屏 plain", commandBoolPtr(true)},
 	} {
 		got, _ := extractProfileVerticalArg(tt.args)
-		if (got == nil) != (tt.want == nil) || got != nil && *got != *tt.want {
-			t.Errorf("extractProfileVerticalArg(%q) = %v", tt.args, got)
-		}
+		testutil.Check(t, !((got == nil) != (tt.want == nil) || got != nil && *got != *tt.want), "extractProfileVerticalArg(%q) = %v", tt.args, got)
+
 	}
 	contexts := []HarrukiSekaiHandlerContext{
 		{PjskHandlerContext: PjskHandlerContext{Message: onebot11.Message{onebot11.Text("x")}}},
@@ -146,16 +174,27 @@ func TestProfileBackgroundPureBranchCoverage(t *testing.T) {
 		_, _ = parseProfileBGInt(raw, 0, 10)
 	}
 	ctx := HarrukiSekaiHandlerContext{PjskHandlerContext: PjskHandlerContext{Context: context.Background()}, originalTriggerCmd: "/调整"}
-	if selector, err := resolveProfileBGSelector(ctx); err != nil || selector != "" {
-		t.Fatalf("default BG selector = %q, %v", selector, err)
+	{
+		selector, err := resolveProfileBGSelector(ctx)
+		{
+			testutil.Require(t, !(err != nil), "default BG selector = %q, %v", selector, err)
+			testutil.Require(t, !(selector != ""), "default BG selector = %q, %v", selector, err)
+		}
 	}
+
 	ctx.uidArg = "u2"
-	if selector, err := resolveProfileBGSelector(ctx); err != nil || selector != "u2" {
-		t.Fatalf("indexed BG selector = %q, %v", selector, err)
+	{
+		selector, err := resolveProfileBGSelector(ctx)
+		{
+			testutil.Require(t, !(err != nil), "indexed BG selector = %q, %v", selector, err)
+			testutil.Require(t, !(selector != "u2"), "indexed BG selector = %q, %v", selector, err)
+		}
 	}
+
 	ctx.uidArg = "@2"
-	if _, err := resolveProfileBGSelector(ctx); err == nil {
-		t.Fatal("foreign BG selector unexpectedly accepted")
+	{
+		_, err := resolveProfileBGSelector(ctx)
+		testutil.RequireArgs(t, !(err == nil), "foreign BG selector unexpectedly accepted")
 	}
 
 	for _, handler := range []HarukiSekaiCommandHandler{
@@ -170,22 +209,22 @@ func TestProfileBackgroundPureBranchCoverage(t *testing.T) {
 		}
 		request, err := handler.handleFunc(ctx)
 		if strings.Contains(handler.Path, "upload") {
-			if err == nil {
-				t.Error("BG upload without image unexpectedly succeeded")
-			}
+			testutil.CheckArgs(t, !(err == nil), "BG upload without image unexpectedly succeeded")
+
 			ctx.Message = onebot11.Message{onebot11.Image("", "https://example.invalid/bg.png")}
 			request, err = handler.handleFunc(ctx)
 		}
-		if err != nil || request == nil {
-			t.Errorf("BG handler %s = %+v, %v", handler.Path, request, err)
-		}
+		testutil.Check(t, !(err != nil || request == nil), "BG handler %s = %+v, %v", handler.Path, request, err)
+
 	}
 }
 
 func TestCommonAndCostumeMessageBranchCoverage(t *testing.T) {
-	if bindingServiceUnavailableMessage() == "" || newMySekaiDataNotFoundReplayError() == nil {
-		t.Fatal("common messages are empty")
+	{
+		testutil.RequireArgs(t, !(bindingServiceUnavailableMessage() == ""), "common messages are empty")
+		testutil.RequireArgs(t, !(newMySekaiDataNotFoundReplayError() == nil), "common messages are empty")
 	}
+
 	bindings := []*accountdata.ResolvedBinding{
 		nil,
 		{},
@@ -238,8 +277,9 @@ func TestCommonAndCostumeMessageBranchCoverage(t *testing.T) {
 	} {
 		_ = WrapDomainError(err)
 	}
-	if stringPtr(" ") != nil || stringPtr(" x ") == nil {
-		t.Fatal("stringPtr trimming mismatch")
+	{
+		testutil.RequireArgs(t, !(stringPtr(" ") != nil), "stringPtr trimming mismatch")
+		testutil.RequireArgs(t, !(stringPtr(" x ") == nil), "stringPtr trimming mismatch")
 	}
 
 	costumeMessages := []string{
@@ -258,17 +298,21 @@ func TestCommonAndCostumeMessageBranchCoverage(t *testing.T) {
 	for _, message := range costumeMessages {
 		_ = normalizeCostume3DError(errors.New(message))
 	}
-	if trailingCostume3DID("bad") != 0 || bracketedCostumeIDs("missing") != "" {
-		t.Fatal("costume ID fallback mismatch")
+	{
+		testutil.RequireArgs(t, !(trailingCostume3DID("bad") != 0), "costume ID fallback mismatch")
+		testutil.RequireArgs(t, !(bracketedCostumeIDs("missing") != ""), "costume ID fallback mismatch")
 	}
+
 }
 
 func TestReleaseMessageBranchCoverage(t *testing.T) {
 	replay := onebot11.NewReplayError("existing")
 	for _, normalize := range []func(error) error{normalizeCardUserFacingError, normalizeMusicUserFacingError, normalizeEventUserFacingError, normalizeGachaUserFacingError} {
-		if normalize(nil) != nil || normalize(replay) != replay {
-			t.Fatal("release normalizer changed nil/replay")
+		{
+			testutil.RequireArgs(t, !(normalize(nil) != nil), "release normalizer changed nil/replay")
+			testutil.RequireArgs(t, !(normalize(replay) != replay), "release normalizer changed nil/replay")
 		}
+
 	}
 	for _, err := range []error{
 		&releasecheck.UnreleasedError{Kind: releasecheck.KindCard, ID: 1},

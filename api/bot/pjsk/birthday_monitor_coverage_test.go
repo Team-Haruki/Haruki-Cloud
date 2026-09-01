@@ -28,6 +28,7 @@ import (
 	rendermysekai "haruki-cloud/internal/pjsk/render/mysekai"
 	sekaiapi "haruki-cloud/internal/pjsk/sekai"
 	"haruki-cloud/internal/pjsk/subscription"
+	"haruki-cloud/internal/testutil"
 	"haruki-cloud/utils/imagecache"
 
 	"github.com/gofiber/fiber/v3"
@@ -57,9 +58,8 @@ func createAPIBirthdaySubscription(t *testing.T, client *pjskdb.Client) *pjskdb.
 		SetActive(true).
 		SetExpiresAt(time.Now().Add(time.Hour)).
 		Save(context.Background())
-	if err != nil {
-		t.Fatalf("create birthday subscription: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "create birthday subscription: %v", err)
+
 	return item
 }
 
@@ -72,9 +72,8 @@ func storeAPIBirthdayEvent(t *testing.T, client *pjskdb.Client, sub *pjskdb.Myse
 		EmptyResult:     empty,
 		FilteredPayload: payload,
 	})
-	if err != nil {
-		t.Fatalf("store birthday event: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "store birthday event: %v", err)
+
 	return stored
 }
 
@@ -88,23 +87,20 @@ func birthdayHandlerRequest(t *testing.T, app *fiber.App, method, target string,
 		} else {
 			raw, err = stdjson.Marshal(body)
 		}
-		if err != nil {
-			t.Fatalf("encode request: %v", err)
-		}
+		testutil.Require(t, !(err != nil), "encode request: %v", err)
+
 	}
 	req := httptest.NewRequest(method, target, bytes.NewReader(raw))
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
 	resp, err := app.Test(req)
-	if err != nil {
-		t.Fatalf("request %s %s: %v", method, target, err)
-	}
+	testutil.Require(t, !(err != nil), "request %s %s: %v", method, target, err)
+
 	defer resp.Body.Close()
 	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("read response: %v", err)
-	}
+	testutil.Require(t, !(err != nil), "read response: %v", err)
+
 	return resp, responseBody
 }
 
@@ -120,12 +116,21 @@ func TestBirthdayMonitorInternalHandlersLifecycle(t *testing.T) {
 
 	resp, body := birthdayHandlerRequest(t, app, http.MethodGet, "/active?region=jp&uid="+sub.UID, nil, "")
 	var active activeBirthdaySubscriptionResponse
-	if resp.StatusCode != fiber.StatusOK || stdjson.Unmarshal(body, &active) != nil || !active.Active || active.SubscriptionID != fmt.Sprint(sub.ID) || !reflect.DeepEqual(active.MaterialIDs, []int{12, 20}) {
-		t.Fatalf("active response status=%d body=%s decoded=%+v", resp.StatusCode, body, active)
+	{
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "active response status=%d body=%s decoded=%+v", resp.StatusCode, body, active)
+		testutil.Require(t, !(stdjson.Unmarshal(body, &active) != nil), "active response status=%d body=%s decoded=%+v", resp.StatusCode, body, active)
+		testutil.Require(t, active.Active, "active response status=%d body=%s decoded=%+v", resp.StatusCode, body, active)
+		testutil.Require(t, !(active.SubscriptionID != fmt.Sprint(sub.ID)), "active response status=%d body=%s decoded=%+v", resp.StatusCode, body, active)
+		testutil.Require(t, reflect.DeepEqual(active.MaterialIDs, []int{12, 20}), "active response status=%d body=%s decoded=%+v", resp.StatusCode, body, active)
 	}
+
 	_, body = birthdayHandlerRequest(t, app, http.MethodGet, "/active?region=jp&uid=missing", nil, "")
-	if err := stdjson.Unmarshal(body, &active); err != nil || active.Active {
-		t.Fatalf("inactive response body=%s decoded=%+v err=%v", body, active, err)
+	{
+		err := stdjson.Unmarshal(body, &active)
+		{
+			testutil.Require(t, !(err != nil), "inactive response body=%s decoded=%+v err=%v", body, active, err)
+			testutil.Require(t, !(active.Active), "inactive response body=%s decoded=%+v err=%v", body, active, err)
+		}
 	}
 
 	eventReq := birthdayEventWriteRequest{
@@ -135,31 +140,45 @@ func TestBirthdayMonitorInternalHandlersLifecycle(t *testing.T) {
 	}
 	resp, body = birthdayHandlerRequest(t, app, http.MethodPost, "/events", eventReq, fiber.MIMEApplicationJSON)
 	var stored birthdayEventWriteResponse
-	if resp.StatusCode != fiber.StatusOK || stdjson.Unmarshal(body, &stored) != nil || stored.EventID == "" || stored.SubscriptionID != fmt.Sprint(sub.ID) {
-		t.Fatalf("event response status=%d body=%s decoded=%+v", resp.StatusCode, body, stored)
+	{
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "event response status=%d body=%s decoded=%+v", resp.StatusCode, body, stored)
+		testutil.Require(t, !(stdjson.Unmarshal(body, &stored) != nil), "event response status=%d body=%s decoded=%+v", resp.StatusCode, body, stored)
+		testutil.Require(t, !(stored.EventID == ""), "event response status=%d body=%s decoded=%+v", resp.StatusCode, body, stored)
+		testutil.Require(t, !(stored.SubscriptionID != fmt.Sprint(sub.ID)), "event response status=%d body=%s decoded=%+v", resp.StatusCode, body, stored)
 	}
+
 	resp, _ = birthdayHandlerRequest(t, app, http.MethodPost, "/events", birthdayEventWriteRequest{SubscriptionID: fmt.Sprint(sub.ID), Region: "en", UID: sub.UID}, fiber.MIMEApplicationJSON)
-	if resp.StatusCode != fiber.StatusBadRequest {
-		t.Fatalf("mismatched event status = %d", resp.StatusCode)
-	}
+	testutil.Require(t, !(resp.StatusCode != fiber.StatusBadRequest), "mismatched event status = %d", resp.StatusCode)
+
 	badReq := httptest.NewRequest(http.MethodPost, "/events", strings.NewReader("{"))
 	badReq.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
 	badResp, err := app.Test(badReq)
-	if err != nil || badResp.StatusCode != fiber.StatusBadRequest {
-		t.Fatalf("malformed event response = %+v, %v", badResp, err)
+	{
+		testutil.Require(t, !(err != nil), "malformed event response = %+v, %v", badResp, err)
+		testutil.Require(t, !(badResp.StatusCode != fiber.StatusBadRequest), "malformed event response = %+v, %v", badResp, err)
 	}
+
 	if badResp != nil {
 		_ = badResp.Body.Close()
 	}
 
 	resp, body = birthdayHandlerRequest(t, app, http.MethodGet, "/validate?subscription_id="+fmt.Sprint(sub.ID)+"&subscription_version=version-1&token=version-1.secret", nil, "")
 	var validation birthdayTokenValidationResponse
-	if resp.StatusCode != fiber.StatusOK || stdjson.Unmarshal(body, &validation) != nil || !validation.Valid || validation.SubscriptionID != fmt.Sprint(sub.ID) || len(validation.PendingEvents) != 1 {
-		t.Fatalf("validation response status=%d body=%s decoded=%+v", resp.StatusCode, body, validation)
+	{
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "validation response status=%d body=%s decoded=%+v", resp.StatusCode, body, validation)
+		testutil.Require(t, !(stdjson.Unmarshal(body, &validation) != nil), "validation response status=%d body=%s decoded=%+v", resp.StatusCode, body, validation)
+		testutil.Require(t, validation.Valid, "validation response status=%d body=%s decoded=%+v", resp.StatusCode, body, validation)
+		testutil.Require(t, !(validation.SubscriptionID != fmt.Sprint(sub.ID)), "validation response status=%d body=%s decoded=%+v", resp.StatusCode, body, validation)
+		testutil.Require(t, !(len(validation.PendingEvents) != 1), "validation response status=%d body=%s decoded=%+v", resp.StatusCode, body, validation)
 	}
+
 	_, body = birthdayHandlerRequest(t, app, http.MethodGet, "/validate?subscription_id="+fmt.Sprint(sub.ID)+"&token=wrong", nil, "")
-	if err := stdjson.Unmarshal(body, &validation); err != nil || validation.Valid {
-		t.Fatalf("invalid-token response body=%s decoded=%+v err=%v", body, validation, err)
+	{
+		err := stdjson.Unmarshal(body, &validation)
+		{
+			testutil.Require(t, !(err != nil), "invalid-token response body=%s decoded=%+v err=%v", body, validation, err)
+			testutil.Require(t, !(validation.Valid), "invalid-token response body=%s decoded=%+v err=%v", body, validation, err)
+		}
 	}
 
 	broken := fiber.New()
@@ -171,14 +190,12 @@ func TestBirthdayMonitorInternalHandlersLifecycle(t *testing.T) {
 		{http.MethodGet, "/validate?subscription_id=1&token=x"},
 	} {
 		resp, _ := birthdayHandlerRequest(t, broken, check.method, check.target, nil, "")
-		if resp.StatusCode != fiber.StatusInternalServerError {
-			t.Fatalf("broken %s status = %d", check.target, resp.StatusCode)
-		}
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusInternalServerError), "broken %s status = %d", check.target, resp.StatusCode)
+
 	}
 	resp, _ = birthdayHandlerRequest(t, broken, http.MethodPost, "/events", eventReq, fiber.MIMEApplicationJSON)
-	if resp.StatusCode != fiber.StatusBadRequest {
-		t.Fatalf("broken event status = %d", resp.StatusCode)
-	}
+	testutil.Require(t, !(resp.StatusCode != fiber.StatusBadRequest), "broken event status = %d", resp.StatusCode)
+
 }
 
 func TestBirthdayMonitorRenderAndAckHandlerBranches(t *testing.T) {
@@ -200,100 +217,109 @@ func TestBirthdayMonitorRenderAndAckHandlerBranches(t *testing.T) {
 	}
 
 	resp, body := birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(empty.EventID), fiber.MIMEApplicationJSON)
-	if resp.StatusCode != fiber.StatusOK || !strings.Contains(string(body), subscription.EmptyBirthdayMonitorMessage) || !strings.Contains(string(body), sub.PlatformUserID) {
-		t.Fatalf("empty render status=%d body=%s", resp.StatusCode, body)
+	{
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "empty render status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), subscription.EmptyBirthdayMonitorMessage), "empty render status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), sub.PlatformUserID), "empty render status=%d body=%s", resp.StatusCode, body)
 	}
+
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(missingPayload.EventID), fiber.MIMEApplicationJSON)
-	if !strings.Contains(string(body), "缺少可绘制数据") {
-		t.Fatalf("missing-payload render body=%s", body)
-	}
+	testutil.Require(t, strings.Contains(string(body), "缺少可绘制数据"), "missing-payload render body=%s", body)
+
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	if !strings.Contains(string(body), "服务未就绪") {
-		t.Fatalf("unready render body=%s", body)
-	}
+	testutil.Require(t, strings.Contains(string(body), "服务未就绪"), "unready render body=%s", body)
+
 	badToken := requestFor(nonEmpty.EventID)
 	badToken.Token = "wrong"
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", badToken, fiber.MIMEApplicationJSON)
-	if !strings.Contains(string(body), "请求处理失败") {
-		t.Fatalf("invalid-token render body=%s", body)
-	}
+	testutil.Require(t, strings.Contains(string(body), "请求处理失败"), "invalid-token render body=%s", body)
 
 	mysekaiController := rendermysekai.NewController(nil, nil, renderregion.JP, assets.NewAssetHelper("", nil), rendermysekai.MasterdataOptions{})
 	renderApp.MySekai = mysekaiController
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	if !strings.Contains(string(body), "服务未就绪") {
-		t.Fatalf("nil-cache render body=%s", body)
-	}
+	testutil.Require(t, strings.Contains(string(body), "服务未就绪"), "nil-cache render body=%s", body)
+
 	renderApp.ImageCache = imagecache.New("https://cache.invalid", t.TempDir())
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/render", requestFor(nonEmpty.EventID), fiber.MIMEApplicationJSON)
-	if !strings.Contains(string(body), "渲染服务未就绪") {
-		t.Fatalf("render failure body=%s", body)
-	}
+	testutil.Require(t, strings.Contains(string(body), "渲染服务未就绪"), "render failure body=%s", body)
 
 	invalidReq := httptest.NewRequest(http.MethodPost, "/bots/bot-1/render", strings.NewReader("{"))
 	invalidReq.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
 	invalidResp, err := app.Test(invalidReq)
-	if err != nil || invalidResp.StatusCode != fiber.StatusBadRequest {
-		t.Fatalf("invalid render response = %+v, %v", invalidResp, err)
+	{
+		testutil.Require(t, !(err != nil), "invalid render response = %+v, %v", invalidResp, err)
+		testutil.Require(t, !(invalidResp.StatusCode != fiber.StatusBadRequest), "invalid render response = %+v, %v", invalidResp, err)
 	}
+
 	if invalidResp != nil {
 		_ = invalidResp.Body.Close()
 	}
 
 	resp, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/ack", requestFor(nonEmpty.EventID), "application/msgpack")
-	if resp.StatusCode != fiber.StatusOK {
-		t.Fatalf("ack status=%d body=%s", resp.StatusCode, body)
-	}
+	testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "ack status=%d body=%s", resp.StatusCode, body)
+
 	var ackEnvelope renderEnvelope
-	if err := stdjson.Unmarshal(body, &ackEnvelope); err != nil {
-		t.Fatalf("decode ack envelope: %v body=%s", err, body)
+	{
+		err := stdjson.Unmarshal(body, &ackEnvelope)
+		testutil.Require(t, !(err != nil), "decode ack envelope: %v body=%s", err, body)
 	}
+
 	badAck := requestFor(empty.EventID)
 	badAck.Token = "wrong"
 	_, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/ack", badAck, fiber.MIMEApplicationJSON)
-	if !strings.Contains(string(body), "请求处理失败") {
-		t.Fatalf("invalid ack body=%s", body)
-	}
+	testutil.Require(t, strings.Contains(string(body), "请求处理失败"), "invalid ack body=%s", body)
+
 	invalidAck := httptest.NewRequest(http.MethodPost, "/bots/bot-1/ack", strings.NewReader("{"))
 	invalidAck.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
 	invalidAckResp, err := app.Test(invalidAck)
-	if err != nil || invalidAckResp.StatusCode != fiber.StatusBadRequest {
-		t.Fatalf("invalid ack response = %+v, %v", invalidAckResp, err)
+	{
+		testutil.Require(t, !(err != nil), "invalid ack response = %+v, %v", invalidAckResp, err)
+		testutil.Require(t, !(invalidAckResp.StatusCode != fiber.StatusBadRequest), "invalid ack response = %+v, %v", invalidAckResp, err)
 	}
+
 	if invalidAckResp != nil {
 		_ = invalidAckResp.Body.Close()
 	}
 }
 
 func TestBirthdayMonitorPureHelpersAndResponseEncoding(t *testing.T) {
-	if newBirthdayMonitorService(nil) != nil || newBirthdayMonitorDBService(nil) != nil {
-		t.Fatal("nil render app produced a birthday service")
+	{
+		testutil.RequireArgs(t, !(newBirthdayMonitorService(nil) != nil), "nil render app produced a birthday service")
+		testutil.RequireArgs(t, !(newBirthdayMonitorDBService(nil) != nil), "nil render app produced a birthday service")
 	}
+
 	client := newAPIBirthdayDB(t)
 	renderApp := &renderapp.App{PJSK: client, Config: renderapp.Config{ReadOnly: true}}
-	if service := newBirthdayMonitorService(renderApp); service == nil {
-		t.Fatal("birthday monitor service is nil")
+	{
+		service := newBirthdayMonitorService(renderApp)
+		testutil.RequireArgs(t, !(service == nil), "birthday monitor service is nil")
 	}
-	if service := newBirthdayMonitorDBService(renderApp); service == nil {
-		t.Fatal("birthday DB service is nil")
+	{
+
+		service := newBirthdayMonitorDBService(renderApp)
+		testutil.RequireArgs(t, !(service == nil), "birthday DB service is nil")
 	}
 
 	originalConfig := harukiConfig.Cfg
 	t.Cleanup(func() { harukiConfig.Cfg = originalConfig })
 	harukiConfig.Cfg.HMES.PublicBaseURL = " https://hmes.example/ "
-	if birthdayMonitorActions(nil) != nil || birthdayMonitorActions(&subscription.BirthdayMonitorResult{}) != nil {
-		t.Fatal("incomplete birthday result produced actions")
+	{
+		testutil.RequireArgs(t, !(birthdayMonitorActions(nil) != nil), "incomplete birthday result produced actions")
+		testutil.RequireArgs(t, !(birthdayMonitorActions(&subscription.BirthdayMonitorResult{}) != nil), "incomplete birthday result produced actions")
 	}
+
 	sub := createAPIBirthdaySubscription(t, client)
 	result := &subscription.BirthdayMonitorResult{Subscription: sub, SubscriptionVersion: "v1", Token: "token"}
 	actions := birthdayMonitorActions(result)
-	if len(actions) != 1 || actions[0].Endpoint != "https://hmes.example/sse" || actions[0].SubscriptionID != fmt.Sprint(sub.ID) || actions[0].ExpiresAt != sub.ExpiresAt.Unix() {
-		t.Fatalf("birthday actions = %+v", actions)
+	{
+		testutil.Require(t, !(len(actions) != 1), "birthday actions = %+v", actions)
+		testutil.Require(t, !(actions[0].Endpoint != "https://hmes.example/sse"), "birthday actions = %+v", actions)
+		testutil.Require(t, !(actions[0].SubscriptionID != fmt.Sprint(sub.ID)), "birthday actions = %+v", actions)
+		testutil.Require(t, !(actions[0].ExpiresAt != sub.ExpiresAt.Unix()), "birthday actions = %+v", actions)
 	}
+
 	harukiConfig.Cfg.HMES.PublicBaseURL = " "
-	if birthdayMonitorActions(result) != nil {
-		t.Fatal("blank public URL produced actions")
-	}
+	testutil.RequireArgs(t, !(birthdayMonitorActions(result) != nil), "blank public URL produced actions")
 
 	message := BotCommandRequest{Message: onebot11.Message{
 		onebot11.Text(" first "),
@@ -302,47 +328,57 @@ func TestBirthdayMonitorPureHelpersAndResponseEncoding(t *testing.T) {
 		{Type: onebot11.TypeText, Data: map[string]any{onebot11.KeyText: 4}},
 		onebot11.Image("ignored", ""),
 	}}
-	if got := requestMessageText(message); got != "first secondthird" {
-		t.Fatalf("request message text = %q", got)
+	{
+		got := requestMessageText(message)
+		testutil.Require(t, !(got != "first secondthird"), "request message text = %q", got)
 	}
-	if got := birthdayMonitorCommandText(BotCommandRequest{Message: onebot11.Message{onebot11.Text("/烤森生日监听 钻石")}}); got != "/烤森生日监听 钻石" {
-		t.Fatalf("complete command text = %q", got)
+	{
+
+		got := birthdayMonitorCommandText(BotCommandRequest{Message: onebot11.Message{onebot11.Text("/烤森生日监听 钻石")}})
+		testutil.Require(t, !(got != "/烤森生日监听 钻石"), "complete command text = %q", got)
 	}
-	if got := birthdayMonitorCommandText(BotCommandRequest{MatchedCommand: " /烤森生日监听 ", Message: onebot11.Message{onebot11.Text("bad")}}); got != "/烤森生日监听 bad" {
-		t.Fatalf("fallback command text = %q", got)
+	{
+
+		got := birthdayMonitorCommandText(BotCommandRequest{MatchedCommand: " /烤森生日监听 ", Message: onebot11.Message{onebot11.Text("bad")}})
+		testutil.Require(t, !(got != "/烤森生日监听 bad"), "fallback command text = %q", got)
 	}
-	if got := birthdayMonitorCommandText(BotCommandRequest{MatchedCommand: "/烤森生日监听"}); got != "/烤森生日监听" {
-		t.Fatalf("matched-only command text = %q", got)
+	{
+
+		got := birthdayMonitorCommandText(BotCommandRequest{MatchedCommand: "/烤森生日监听"})
+		testutil.Require(t, !(got != "/烤森生日监听"), "matched-only command text = %q", got)
 	}
-	if got := birthdayMonitorCommandText(BotCommandRequest{Message: onebot11.Message{onebot11.Text("bad")}}); got != "bad" {
-		t.Fatalf("message-only command text = %q", got)
+	{
+
+		got := birthdayMonitorCommandText(BotCommandRequest{Message: onebot11.Message{onebot11.Text("bad")}})
+		testutil.Require(t, !(got != "bad"), "message-only command text = %q", got)
 	}
 
 	prefixes := buildBirthdayMonitorManifestCommandPrefixes([]string{"", " /test ", "/test"})
-	if len(prefixes) != 16 || !slices.Contains(prefixes, "/test") || !slices.Contains(prefixes, "/jptest") || !slices.Contains(prefixes, "/jp /test") {
-		t.Fatalf("manifest prefixes = %v", prefixes)
+	{
+		testutil.Require(t, !(len(prefixes) != 16), "manifest prefixes = %v", prefixes)
+		testutil.Require(t, slices.Contains(prefixes, "/test"), "manifest prefixes = %v", prefixes)
+		testutil.Require(t, slices.Contains(prefixes, "/jptest"), "manifest prefixes = %v", prefixes)
+		testutil.Require(t, slices.Contains(prefixes, "/jp /test"), "manifest prefixes = %v", prefixes)
 	}
-	if !isCancelBirthdayMonitorText("/烤森生日取消监听") || isCancelBirthdayMonitorText("/烤森生日监听") || isCancelBirthdayMonitorText("bad") {
-		t.Fatal("birthday cancel recognition mismatch")
+	{
+		testutil.RequireArgs(t, isCancelBirthdayMonitorText("/烤森生日取消监听"), "birthday cancel recognition mismatch")
+		testutil.RequireArgs(t, !(isCancelBirthdayMonitorText("/烤森生日监听")), "birthday cancel recognition mismatch")
+		testutil.RequireArgs(t, !(isCancelBirthdayMonitorText("bad")), "birthday cancel recognition mismatch")
 	}
 
 	finished := 0
 	finishPhaseOnPanic(func() { finished++ })
-	if finished != 0 {
-		t.Fatal("finish callback ran without a panic")
-	}
+	testutil.RequireArgs(t, !(finished != 0), "finish callback ran without a panic")
+
 	func() {
 		defer func() {
-			if recover() == nil {
-				t.Fatal("finishPhaseOnPanic swallowed panic")
-			}
+			testutil.RequireArgs(t, !(recover() == nil), "finishPhaseOnPanic swallowed panic")
+
 		}()
 		defer finishPhaseOnPanic(func() { finished++ })
 		panic("boom")
 	}()
-	if finished != 1 {
-		t.Fatalf("panic finish count = %d", finished)
-	}
+	testutil.Require(t, !(finished != 1), "panic finish count = %d", finished)
 
 	app := fiber.New()
 	app.Post("/json", func(c fiber.Ctx) error {
@@ -357,18 +393,21 @@ func TestBirthdayMonitorPureHelpersAndResponseEncoding(t *testing.T) {
 		return botResponseWithActions(c, fiber.StatusOK, api.ResponseOK, make(chan int), actions)
 	})
 	resp, body := birthdayHandlerRequest(t, app, http.MethodPost, "/json", nil, "")
-	if resp.StatusCode != fiber.StatusCreated || !strings.Contains(string(body), "client_actions") {
-		t.Fatalf("JSON action response status=%d body=%s", resp.StatusCode, body)
+	{
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusCreated), "JSON action response status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), "client_actions"), "JSON action response status=%d body=%s", resp.StatusCode, body)
 	}
+
 	resp, body = birthdayHandlerRequest(t, app, http.MethodPost, "/msgpack", nil, "")
 	var decoded map[string]any
-	if resp.StatusCode != fiber.StatusOK || msgpack.Unmarshal(body, &decoded) != nil || decoded["client_actions"] == nil {
-		t.Fatalf("MsgPack action response status=%d body=%x decoded=%v", resp.StatusCode, body, decoded)
+	{
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "MsgPack action response status=%d body=%x decoded=%v", resp.StatusCode, body, decoded)
+		testutil.Require(t, !(msgpack.Unmarshal(body, &decoded) != nil), "MsgPack action response status=%d body=%x decoded=%v", resp.StatusCode, body, decoded)
+		testutil.Require(t, !(decoded["client_actions"] == nil), "MsgPack action response status=%d body=%x decoded=%v", resp.StatusCode, body, decoded)
 	}
+
 	resp, _ = birthdayHandlerRequest(t, app, http.MethodPost, "/msgpack-error", nil, "")
-	if resp.StatusCode != fiber.StatusInternalServerError {
-		t.Fatalf("MsgPack encode error status = %d", resp.StatusCode)
-	}
+	testutil.Require(t, !(resp.StatusCode != fiber.StatusInternalServerError), "MsgPack encode error status = %d", resp.StatusCode)
 
 	parser := fiber.New()
 	parser.Post("/parse", func(c fiber.Ctx) error {
@@ -380,9 +419,11 @@ func TestBirthdayMonitorPureHelpersAndResponseEncoding(t *testing.T) {
 	})
 	for _, contentType := range []string{fiber.MIMEApplicationJSON, "application/msgpack"} {
 		resp, body := birthdayHandlerRequest(t, parser, http.MethodPost, "/parse", birthdayRenderRequest{EventID: "event"}, contentType)
-		if resp.StatusCode != fiber.StatusOK || string(body) != "event" {
-			t.Fatalf("parse %s status=%d body=%s", contentType, resp.StatusCode, body)
+		{
+			testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "parse %s status=%d body=%s", contentType, resp.StatusCode, body)
+			testutil.Require(t, !(string(body) != "event"), "parse %s status=%d body=%s", contentType, resp.StatusCode, body)
 		}
+
 	}
 
 }
@@ -399,11 +440,14 @@ func TestBirthdayMonitorCommandHandlerCreateAndCancelSuccess(t *testing.T) {
 	usersClient := usersenttest.Open(t, "sqlite3", fmt.Sprintf("file:api_birthday_users_%d?mode=memory&cache=shared&_fk=1", time.Now().UnixNano()))
 	t.Cleanup(func() { _ = usersClient.Close() })
 	bindings := accountdata.NewBindingService(pjskClient, identity.NewResolver(usersClient), apiBirthdayProfileValidator{})
-	if _, err := bindings.Bind(ctx, "qq", "user-1", "123456789012345678"); err != nil {
-		t.Fatalf("bind birthday account: %v", err)
+	{
+		_, err := bindings.Bind(ctx, "qq", "user-1", "123456789012345678")
+		testutil.Require(t, !(err != nil), "bind birthday account: %v", err)
 	}
-	if err := pjskClient.UserBinding.Update().SetVerified(true).Exec(ctx); err != nil {
-		t.Fatalf("verify birthday binding: %v", err)
+	{
+
+		err := pjskClient.UserBinding.Update().SetVerified(true).Exec(ctx)
+		testutil.Require(t, !(err != nil), "verify birthday binding: %v", err)
 	}
 
 	toolbox := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -432,26 +476,30 @@ func TestBirthdayMonitorCommandHandlerCreateAndCancelSuccess(t *testing.T) {
 		MatchedCommand: "/烤森生日监听", Message: onebot11.Message{onebot11.Text("/烤森生日监听 钻石 10")},
 	}
 	resp, body := birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/monitor", request, fiber.MIMEApplicationJSON)
-	if resp.StatusCode != fiber.StatusOK || !strings.Contains(string(body), "有效期 10 分钟") || !strings.Contains(string(body), "client_actions") || !strings.Contains(string(body), "hmes_sse") {
-		t.Fatalf("create monitor status=%d body=%s", resp.StatusCode, body)
+	{
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "create monitor status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), "有效期 10 分钟"), "create monitor status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), "client_actions"), "create monitor status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), "hmes_sse"), "create monitor status=%d body=%s", resp.StatusCode, body)
 	}
 
 	request.MatchedCommand = "/烤森生日取消监听"
 	request.Message = onebot11.Message{onebot11.Text("/烤森生日取消监听")}
 	resp, body = birthdayHandlerRequest(t, app, http.MethodPost, "/bots/bot-1/monitor", request, fiber.MIMEApplicationJSON)
-	if resp.StatusCode != fiber.StatusOK || !strings.Contains(string(body), "监听已取消") {
-		t.Fatalf("cancel monitor status=%d body=%s", resp.StatusCode, body)
+	{
+		testutil.Require(t, !(resp.StatusCode != fiber.StatusOK), "cancel monitor status=%d body=%s", resp.StatusCode, body)
+		testutil.Require(t, strings.Contains(string(body), "监听已取消"), "cancel monitor status=%d body=%s", resp.StatusCode, body)
 	}
-	if guard.completed != 2 {
-		t.Fatalf("guard completion count = %d", guard.completed)
-	}
+	testutil.Require(t, !(guard.completed != 2), "guard completion count = %d", guard.completed)
 
 	invalid := httptest.NewRequest(http.MethodPost, "/bots/bot-1/monitor", strings.NewReader("{"))
 	invalid.Header.Set("Content-Type", fiber.MIMEApplicationJSON)
 	invalidResp, err := app.Test(invalid)
-	if err != nil || invalidResp.StatusCode != fiber.StatusBadRequest {
-		t.Fatalf("invalid monitor response = %+v, %v", invalidResp, err)
+	{
+		testutil.Require(t, !(err != nil), "invalid monitor response = %+v, %v", invalidResp, err)
+		testutil.Require(t, !(invalidResp.StatusCode != fiber.StatusBadRequest), "invalid monitor response = %+v, %v", invalidResp, err)
 	}
+
 	if invalidResp != nil {
 		_ = invalidResp.Body.Close()
 	}

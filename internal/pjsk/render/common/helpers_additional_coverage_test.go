@@ -5,94 +5,152 @@ import (
 
 	sekaiDB "haruki-cloud/database/sekai"
 	json "haruki-cloud/internal/jsonutil"
+	"haruki-cloud/internal/testutil"
 )
 
 func TestJSONNicknamePointerAndSliceHelpers(t *testing.T) {
 	var decoded map[string]any
-	if err := DecodeJSONUseNumber([]byte(`{"id":9007199254740993}`), &decoded); err != nil {
-		t.Fatal(err)
+	{
+		err := DecodeJSONUseNumber([]byte(`{"id":9007199254740993}`), &decoded)
+		testutil.RequireArgs(t, !(err != nil), err)
 	}
-	if _, ok := decoded["id"].(json.Number); !ok {
-		t.Fatalf("number was decoded as %T", decoded["id"])
+	{
+
+		_, ok := decoded["id"].(json.Number)
+		testutil.Require(t, ok, "number was decoded as %T", decoded["id"])
 	}
-	if err := DecodeJSONUseNumber([]byte(`{`), &decoded); err == nil {
-		t.Fatal("invalid JSON unexpectedly decoded")
+	{
+
+		err := DecodeJSONUseNumber([]byte(`{`), &decoded)
+		testutil.RequireArgs(t, !(err == nil), "invalid JSON unexpectedly decoded")
 	}
-	if JSONString(nil) != "" || JSONString(json.RawMessage(`"value"`)) != "value" || JSONString(json.RawMessage(`123`)) != "123" {
-		t.Fatal("JSONString branches returned unexpected values")
+	{
+		testutil.RequireArgs(t, !(JSONString(nil) != ""), "JSONString branches returned unexpected values")
+		testutil.RequireArgs(t, !(JSONString(json.RawMessage(`"value"`)) != "value"), "JSONString branches returned unexpected values")
+		testutil.RequireArgs(t, !(JSONString(json.RawMessage(`123`)) != "123"), "JSONString branches returned unexpected values")
 	}
-	if got, err := DecodeSlice[int](nil); err != nil || got != nil {
-		t.Fatalf("empty slice decode = %v,%v", got, err)
+	{
+
+		got, err := DecodeSlice[int](nil)
+		{
+			testutil.Require(t, !(err != nil), "empty slice decode = %v,%v", got, err)
+			testutil.Require(t, !(got != nil), "empty slice decode = %v,%v", got, err)
+		}
 	}
-	if got, err := DecodeSlice[int](json.RawMessage(`[1,2]`)); err != nil || len(got) != 2 {
-		t.Fatalf("slice decode = %v,%v", got, err)
+	{
+
+		got, err := DecodeSlice[int](json.RawMessage(`[1,2]`))
+		{
+			testutil.Require(t, !(err != nil), "slice decode = %v,%v", got, err)
+			testutil.Require(t, !(len(got) != 2), "slice decode = %v,%v", got, err)
+		}
 	}
-	if _, err := DecodeSlice[int](json.RawMessage(`{`)); err == nil {
-		t.Fatal("invalid slice JSON unexpectedly decoded")
+	{
+
+		_, err := DecodeSlice[int](json.RawMessage(`{`))
+		testutil.RequireArgs(t, !(err == nil), "invalid slice JSON unexpectedly decoded")
 	}
-	if got, err := DecodeMap[map[string]int](nil); err != nil || got != nil {
-		t.Fatalf("empty map decode = %v,%v", got, err)
+	{
+
+		got, err := DecodeMap[map[string]int](nil)
+		{
+			testutil.Require(t, !(err != nil), "empty map decode = %v,%v", got, err)
+			testutil.Require(t, !(got != nil), "empty map decode = %v,%v", got, err)
+		}
 	}
-	if got, err := DecodeMap[map[string]int](json.RawMessage(`{"a":1}`)); err != nil || got["a"] != 1 {
-		t.Fatalf("map decode = %v,%v", got, err)
+	{
+
+		got, err := DecodeMap[map[string]int](json.RawMessage(`{"a":1}`))
+		{
+			testutil.Require(t, !(err != nil), "map decode = %v,%v", got, err)
+			testutil.Require(t, !(got["a"] != 1), "map decode = %v,%v", got, err)
+		}
 	}
-	if _, err := DecodeMap[map[string]int](json.RawMessage(`{`)); err == nil {
-		t.Fatal("invalid map JSON unexpectedly decoded")
+	{
+
+		_, err := DecodeMap[map[string]int](json.RawMessage(`{`))
+		testutil.RequireArgs(t, !(err == nil), "invalid map JSON unexpectedly decoded")
 	}
-	if ToStringSliceFromRaw(nil) != nil || ToStringSliceFromRaw(json.RawMessage(`{`)) != nil {
-		t.Fatal("invalid raw string slices should be nil")
+	{
+		testutil.RequireArgs(t, !(ToStringSliceFromRaw(nil) != nil), "invalid raw string slices should be nil")
+		testutil.RequireArgs(t, !(ToStringSliceFromRaw(json.RawMessage(`{`)) != nil), "invalid raw string slices should be nil")
 	}
-	if got := ToStringSliceFromRaw(json.RawMessage(`["a"," ","b"]`)); len(got) != 2 || got[0] != "a" || got[1] != "b" {
-		t.Fatalf("filtered strings = %v", got)
+	{
+
+		got := ToStringSliceFromRaw(json.RawMessage(`["a"," ","b"]`))
+		{
+			testutil.Require(t, !(len(got) != 2), "filtered strings = %v", got)
+			testutil.Require(t, !(got[0] != "a"), "filtered strings = %v", got)
+			testutil.Require(t, !(got[1] != "b"), "filtered strings = %v", got)
+		}
 	}
 
 	source := map[string]int{"miku": 21}
 	clone := CloneNicknames(source)
 	clone["miku"] = 1
-	if source["miku"] != 21 {
-		t.Fatal("nickname clone shared storage")
+	testutil.RequireArgs(t, !(source["miku"] != 21), "nickname clone shared storage")
+	{
+
+		got := NormalizeNicknameQuery(" MIKU  LONG ")
+		testutil.Require(t, !(got != "mikulong"), "unexpected normalized nickname: %q", got)
 	}
-	if got := NormalizeNicknameQuery(" MIKU  LONG "); got != "mikulong" {
-		t.Fatalf("unexpected normalized nickname: %q", got)
-	}
+
 	value := "x"
-	if CloneStringPtr(nil) != nil || CloneStringPtr(&value) == &value || *CloneStringPtr(&value) != "x" {
-		t.Fatal("string pointer clone branches failed")
+	{
+		testutil.RequireArgs(t, !(CloneStringPtr(nil) != nil), "string pointer clone branches failed")
+		testutil.RequireArgs(t, !(CloneStringPtr(&value) == &value), "string pointer clone branches failed")
+		testutil.RequireArgs(t, !(*CloneStringPtr(&value) != "x"), "string pointer clone branches failed")
 	}
-	if !*BoolPtr(true) || OptionalString(" ") != nil || *OptionalString(" x ") != "x" {
-		t.Fatal("pointer helpers returned unexpected values")
+	{
+		testutil.RequireArgs(t, *BoolPtr(true), "pointer helpers returned unexpected values")
+		testutil.RequireArgs(t, !(OptionalString(" ") != nil), "pointer helpers returned unexpected values")
+		testutil.RequireArgs(t, !(*OptionalString(" x ") != "x"), "pointer helpers returned unexpected values")
 	}
-	if !ContainsString([]string{"One", "Two"}, "two") || ContainsString([]string{"One"}, "three") {
-		t.Fatal("ContainsString branches failed")
+	{
+		testutil.RequireArgs(t, ContainsString([]string{"One", "Two"}, "two"), "ContainsString branches failed")
+		testutil.RequireArgs(t, !(ContainsString([]string{"One"}, "three")), "ContainsString branches failed")
 	}
+
 }
 
 func TestEntityConverterErrorAndSuccessBranches(t *testing.T) {
-	if _, err := ConvertCardEntity(nil); err == nil {
-		t.Fatal("nil card entity unexpectedly converted")
+	{
+		_, err := ConvertCardEntity(nil)
+		testutil.RequireArgs(t, !(err == nil), "nil card entity unexpectedly converted")
 	}
-	if _, err := ConvertCardEntity(&sekaiDB.Card{CardParameters: json.RawMessage(`{`)}); err == nil {
-		t.Fatal("invalid card parameters unexpectedly converted")
+	{
+
+		_, err := ConvertCardEntity(&sekaiDB.Card{CardParameters: json.RawMessage(`{`)})
+		testutil.RequireArgs(t, !(err == nil), "invalid card parameters unexpectedly converted")
 	}
-	if ConvertEventEntity(nil) != nil || ConvertCostumeEntity(nil) != nil {
-		t.Fatal("nil simple entities unexpectedly converted")
-	}
-	event := ConvertEventEntity(&sekaiDB.Event{GameID: 1, Name: "Event"})
-	if event.ID != 1 || event.Name != "Event" {
-		t.Fatalf("unexpected event conversion: %+v", event)
-	}
-	costume := ConvertCostumeEntity(&sekaiDB.Costume3D{GameID: 2, Name: "Costume"})
-	if costume.ID != 2 || costume.Description != "Costume" {
-		t.Fatalf("unexpected costume conversion: %+v", costume)
-	}
-	music := ConvertMusicEntity(&sekaiDB.Music{GameID: 3, Categories: json.RawMessage(`["mv"]`)})
-	if music.ID != 3 || len(music.Categories) != 1 {
-		t.Fatalf("unexpected music conversion: %+v", music)
+	{
+		testutil.RequireArgs(t, !(ConvertEventEntity(nil) != nil), "nil simple entities unexpectedly converted")
+		testutil.RequireArgs(t, !(ConvertCostumeEntity(nil) != nil), "nil simple entities unexpectedly converted")
 	}
 
-	if _, err := ConvertGachaEntity(nil); err == nil {
-		t.Fatal("nil gacha entity unexpectedly converted")
+	event := ConvertEventEntity(&sekaiDB.Event{GameID: 1, Name: "Event"})
+	{
+		testutil.Require(t, !(event.ID != 1), "unexpected event conversion: %+v", event)
+		testutil.Require(t, !(event.Name != "Event"), "unexpected event conversion: %+v", event)
 	}
+
+	costume := ConvertCostumeEntity(&sekaiDB.Costume3D{GameID: 2, Name: "Costume"})
+	{
+		testutil.Require(t, !(costume.ID != 2), "unexpected costume conversion: %+v", costume)
+		testutil.Require(t, !(costume.Description != "Costume"), "unexpected costume conversion: %+v", costume)
+	}
+
+	music := ConvertMusicEntity(&sekaiDB.Music{GameID: 3, Categories: json.RawMessage(`["mv"]`)})
+	{
+		testutil.Require(t, !(music.ID != 3), "unexpected music conversion: %+v", music)
+		testutil.Require(t, !(len(music.Categories) != 1), "unexpected music conversion: %+v", music)
+	}
+	{
+
+		_, err := ConvertGachaEntity(nil)
+		testutil.RequireArgs(t, !(err == nil), "nil gacha entity unexpectedly converted")
+	}
+
 	valid := json.RawMessage(`[]`)
 	invalidCases := []*sekaiDB.Gacha{
 		{GachaCardRarityRates: json.RawMessage(`{`)},
@@ -102,23 +160,35 @@ func TestEntityConverterErrorAndSuccessBranches(t *testing.T) {
 		{GachaCardRarityRates: valid, GachaDetails: valid, GachaBehaviors: valid, GachaPickups: valid, GachaInformation: json.RawMessage(`{`)},
 	}
 	for i, entity := range invalidCases {
-		if _, err := ConvertGachaEntity(entity); err == nil {
-			t.Fatalf("invalid gacha case %d unexpectedly converted", i)
+		{
+			_, err := ConvertGachaEntity(entity)
+			testutil.Require(t, !(err == nil), "invalid gacha case %d unexpectedly converted", i)
 		}
+
 	}
 	gacha, err := ConvertGachaEntity(&sekaiDB.Gacha{GameID: 4, GachaCeilItemID: 9})
-	if err != nil || gacha.ID != 4 || gacha.GachaCeilItemID == nil || *gacha.GachaCeilItemID != 9 {
-		t.Fatalf("unexpected gacha conversion: %+v,%v", gacha, err)
+	{
+		testutil.Require(t, !(err != nil), "unexpected gacha conversion: %+v,%v", gacha, err)
+		testutil.Require(t, !(gacha.ID != 4), "unexpected gacha conversion: %+v,%v", gacha, err)
+		testutil.Require(t, !(gacha.GachaCeilItemID == nil), "unexpected gacha conversion: %+v,%v", gacha, err)
+		testutil.Require(t, !(*gacha.GachaCeilItemID != 9), "unexpected gacha conversion: %+v,%v", gacha, err)
+	}
+	{
+
+		_, err := ConvertSkillEntity(nil)
+		testutil.RequireArgs(t, !(err == nil), "nil skill entity unexpectedly converted")
+	}
+	{
+
+		_, err := ConvertSkillEntity(&sekaiDB.Skill{SkillEffects: json.RawMessage(`{`)})
+		testutil.RequireArgs(t, !(err == nil), "invalid skill effects unexpectedly converted")
 	}
 
-	if _, err := ConvertSkillEntity(nil); err == nil {
-		t.Fatal("nil skill entity unexpectedly converted")
-	}
-	if _, err := ConvertSkillEntity(&sekaiDB.Skill{SkillEffects: json.RawMessage(`{`)}); err == nil {
-		t.Fatal("invalid skill effects unexpectedly converted")
-	}
 	skill, err := ConvertSkillEntity(&sekaiDB.Skill{GameID: 5, SkillEffects: json.RawMessage(`[{}]`)})
-	if err != nil || skill.ID != 5 || len(skill.SkillEffects) != 1 {
-		t.Fatalf("unexpected skill conversion: %+v,%v", skill, err)
+	{
+		testutil.Require(t, !(err != nil), "unexpected skill conversion: %+v,%v", skill, err)
+		testutil.Require(t, !(skill.ID != 5), "unexpected skill conversion: %+v,%v", skill, err)
+		testutil.Require(t, !(len(skill.SkillEffects) != 1), "unexpected skill conversion: %+v,%v", skill, err)
 	}
+
 }

@@ -86,7 +86,19 @@ type customProfileResourceCollector struct {
 }
 
 func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp *sekaiapi.GetAnotherProfileResponse) customProfileResourceCollector {
-	c := customProfileResourceCollector{
+	c := newEmptyCustomProfileResourceCollector()
+	collectCustomProfileElementIDs(&c, card)
+	fcApLevels := customProfileHonorFcApLevels(resp)
+	collectCustomProfileResponseResources(&c, resp, fcApLevels)
+	collectCustomProfileCardHonors(&c, card, resp, fcApLevels)
+	if _, ok := c.playerInfoIDs[14]; ok && resp != nil {
+		c.storyFavorites = append(c.storyFavorites, resp.UserStoryFavorites...)
+	}
+	return c
+}
+
+func newEmptyCustomProfileResourceCollector() customProfileResourceCollector {
+	return customProfileResourceCollector{
 		textColorIDs:      make(map[int]struct{}),
 		textFontIDs:       make(map[int]struct{}),
 		shapeIDs:          make(map[int]struct{}),
@@ -106,9 +118,10 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 		profileHonors:     make(map[string]renderhonor.Query),
 		bondsHonorQueries: make(map[string]renderhonor.Query),
 	}
+}
 
+func collectCustomProfileElementIDs(c *customProfileResourceCollector, card sekaiapi.UserCustomProfileCard) {
 	data := card.CustomProfileCard
-	fcApLevels := customProfileHonorFcApLevels(resp)
 	for _, item := range data.Generals {
 		addID(c.playerInfoIDs, item.PlayerInfoResourceID)
 	}
@@ -153,31 +166,36 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 	for _, item := range data.CardMembers {
 		addID(c.cardIDs, item.ID)
 	}
+}
 
-	if resp != nil {
-		deck := resp.UserDeck
-		for _, cardID := range []int{deck.Leader, deck.Member1, deck.Member2, deck.Member3, deck.Member4, deck.Member5} {
-			addID(c.cardIDs, cardID)
-		}
-		for _, row := range resp.UserProfileHonors {
-			query := renderhonor.Query{
-				HonorID:             row.HonorID,
-				HonorLevel:          row.HonorLevel,
-				IsMain:              row.Seq == 1,
-				BondsHonorViewType:  row.BondsHonorViewType,
-				BondsHonorWordID:    row.BondsHonorWordID,
-				FcOrApLevelOverride: fcApLevels[row.HonorID],
-			}
-			if query.HonorID <= 0 {
-				continue
-			}
-			c.profileHonors[fmt.Sprintf("profile:%d", row.Seq)] = query
-			c.profileHonors[fmt.Sprintf("profile:%d:%d", row.HonorID, row.Seq)] = query
-			c.profileHonors[customProfileHonorRequestKey(row.HonorID, row.HonorLevel, query.IsMain)] = query
-		}
+func collectCustomProfileResponseResources(c *customProfileResourceCollector, resp *sekaiapi.GetAnotherProfileResponse, fcApLevels map[int]*int) {
+	if resp == nil {
+		return
 	}
+	deck := resp.UserDeck
+	for _, cardID := range []int{deck.Leader, deck.Member1, deck.Member2, deck.Member3, deck.Member4, deck.Member5} {
+		addID(c.cardIDs, cardID)
+	}
+	for _, row := range resp.UserProfileHonors {
+		query := renderhonor.Query{
+			HonorID:             row.HonorID,
+			HonorLevel:          row.HonorLevel,
+			IsMain:              row.Seq == 1,
+			BondsHonorViewType:  row.BondsHonorViewType,
+			BondsHonorWordID:    row.BondsHonorWordID,
+			FcOrApLevelOverride: fcApLevels[row.HonorID],
+		}
+		if query.HonorID <= 0 {
+			continue
+		}
+		c.profileHonors[fmt.Sprintf("profile:%d", row.Seq)] = query
+		c.profileHonors[fmt.Sprintf("profile:%d:%d", row.HonorID, row.Seq)] = query
+		c.profileHonors[customProfileHonorRequestKey(row.HonorID, row.HonorLevel, query.IsMain)] = query
+	}
+}
 
-	for _, item := range data.Honors {
+func collectCustomProfileCardHonors(c *customProfileResourceCollector, card sekaiapi.UserCustomProfileCard, resp *sekaiapi.GetAnotherProfileResponse, fcApLevels map[int]*int) {
+	for _, item := range card.CustomProfileCard.Honors {
 		level := customProfileUserHonorLevel(resp, item.ID)
 		query := renderhonor.Query{
 			HonorID:             item.ID,
@@ -189,7 +207,7 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 			c.honorQueries[customProfileHonorRequestKey(item.ID, level, item.FullSize)] = query
 		}
 	}
-	for _, item := range data.BondsHonors {
+	for _, item := range card.CustomProfileCard.BondsHonors {
 		level := customProfileUserBondsHonorLevel(resp, item.ID)
 		query := renderhonor.Query{
 			HonorID:              item.ID,
@@ -203,11 +221,6 @@ func newCustomProfileResourceCollector(card sekaiapi.UserCustomProfileCard, resp
 			c.bondsHonorQueries[customProfileBondsHonorRequestKey(item.ID, level, item.FullSize, item.WordID, item.Inverse, item.UseUnitVirtualSinger)] = query
 		}
 	}
-	if _, ok := c.playerInfoIDs[14]; ok && resp != nil {
-		c.storyFavorites = append(c.storyFavorites, resp.UserStoryFavorites...)
-	}
-
-	return c
 }
 
 func collectCustomProfileMasterResources(ctx context.Context, app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) error {
@@ -339,19 +352,7 @@ func collectCustomProfileStoryFavoriteResources(ctx context.Context, app *render
 	if len(c.storyFavorites) == 0 {
 		return nil
 	}
-	eventStoryIDs := make(map[int]struct{})
-	unitStoryIDs := make(map[int]struct{})
-	for _, story := range c.storyFavorites {
-		if story.StoryID <= 0 {
-			continue
-		}
-		switch strings.ToLower(strings.TrimSpace(story.StoryType)) {
-		case "event_story":
-			eventStoryIDs[story.StoryID] = struct{}{}
-		case "unit_story":
-			unitStoryIDs[story.StoryID] = struct{}{}
-		}
-	}
+	eventStoryIDs, unitStoryIDs := customProfileStoryFavoriteIDs(c.storyFavorites)
 	if len(eventStoryIDs) == 0 && len(unitStoryIDs) == 0 {
 		return nil
 	}
@@ -363,6 +364,34 @@ func collectCustomProfileStoryFavoriteResources(ctx context.Context, app *render
 	if err != nil {
 		return err
 	}
+	events := loadCustomProfileStoryEvents(ctx, app, region, eventStories)
+	items := make(map[string]any, len(eventStories)+len(unitStories))
+	for _, story := range c.storyFavorites {
+		key := customProfileStoryFavoriteKey(story.StoryType, story.StoryID)
+		items[key] = customProfileStoryFavoriteResource(app, region, story, eventStories, unitStories, events)
+	}
+	resources["storyFavoriteResources"] = items
+	return nil
+}
+
+func customProfileStoryFavoriteIDs(stories []sekaiapi.UserStoryFavorite) (map[int]struct{}, map[int]struct{}) {
+	eventStoryIDs := make(map[int]struct{})
+	unitStoryIDs := make(map[int]struct{})
+	for _, story := range stories {
+		if story.StoryID <= 0 {
+			continue
+		}
+		switch strings.ToLower(strings.TrimSpace(story.StoryType)) {
+		case "event_story":
+			eventStoryIDs[story.StoryID] = struct{}{}
+		case "unit_story":
+			unitStoryIDs[story.StoryID] = struct{}{}
+		}
+	}
+	return eventStoryIDs, unitStoryIDs
+}
+
+func loadCustomProfileStoryEvents(ctx context.Context, app *renderapp.App, region renderregion.Value, eventStories map[int]map[string]any) map[int]map[string]any {
 	eventIDs := make(map[int]struct{})
 	for _, row := range eventStories {
 		if eventID, ok := mapInt(row, "eventId"); ok {
@@ -372,58 +401,59 @@ func collectCustomProfileStoryFavoriteResources(ctx context.Context, app *render
 	events := map[int]map[string]any{}
 	if len(eventIDs) > 0 {
 		if loaded, err := loadCustomProfileMasterTable(ctx, app, region, "events.json", eventIDs); err == nil {
-			events = loaded
+			return loaded
 		}
 	}
+	return events
+}
 
-	items := make(map[string]any, len(eventStories)+len(unitStories))
-	for _, story := range c.storyFavorites {
-		key := customProfileStoryFavoriteKey(story.StoryType, story.StoryID)
-		item := map[string]any{
-			"storyType": story.StoryType,
-			"storyId":   story.StoryID,
-		}
-		switch strings.ToLower(strings.TrimSpace(story.StoryType)) {
-		case "event_story":
-			row := eventStories[story.StoryID]
-			if row != nil {
-				assetBundleName := strings.TrimSpace(mapString(row, "assetbundleName"))
-				item["assetbundleName"] = assetBundleName
-				if imagePath := resolveCustomProfileEventStoryBannerPath(app, region, assetBundleName); imagePath != "" {
-					item["imagePath"] = imagePath
-				}
-				if eventID, ok := mapInt(row, "eventId"); ok {
-					item["eventId"] = eventID
-					if eventRow := events[eventID]; eventRow != nil {
-						if title := strings.TrimSpace(mapString(eventRow, "name")); title != "" {
-							item["title"] = title
-						}
-					}
-				}
-			}
-		case "unit_story":
-			row := unitStories[story.StoryID]
-			if row != nil {
-				assetBundleName := strings.TrimSpace(mapString(row, "assetbundleName"))
-				item["assetbundleName"] = assetBundleName
-				if unit := strings.TrimSpace(mapString(row, "unit")); unit != "" {
-					item["unit"] = unit
-				}
-				if category := strings.TrimSpace(mapString(row, "unitEpisodeCategory")); category != "" {
-					item["unitEpisodeCategory"] = category
-				}
-				if title := customProfileUnitStoryTitle(row); title != "" {
-					item["title"] = title
-				}
-				if imagePath := resolveCustomProfileUnitStoryBannerPath(app, region, assetBundleName); imagePath != "" {
-					item["imagePath"] = imagePath
-				}
-			}
-		}
-		items[key] = item
+func customProfileStoryFavoriteResource(app *renderapp.App, region renderregion.Value, story sekaiapi.UserStoryFavorite, eventStories, unitStories, events map[int]map[string]any) map[string]any {
+	item := map[string]any{"storyType": story.StoryType, "storyId": story.StoryID}
+	switch strings.ToLower(strings.TrimSpace(story.StoryType)) {
+	case "event_story":
+		applyCustomProfileEventStoryResource(item, app, region, eventStories[story.StoryID], events)
+	case "unit_story":
+		applyCustomProfileUnitStoryResource(item, app, region, unitStories[story.StoryID])
 	}
-	resources["storyFavoriteResources"] = items
-	return nil
+	return item
+}
+
+func applyCustomProfileEventStoryResource(item map[string]any, app *renderapp.App, region renderregion.Value, row map[string]any, events map[int]map[string]any) {
+	if row == nil {
+		return
+	}
+	assetBundleName := strings.TrimSpace(mapString(row, "assetbundleName"))
+	item["assetbundleName"] = assetBundleName
+	if imagePath := resolveCustomProfileEventStoryBannerPath(app, region, assetBundleName); imagePath != "" {
+		item["imagePath"] = imagePath
+	}
+	eventID, ok := mapInt(row, "eventId")
+	if !ok {
+		return
+	}
+	item["eventId"] = eventID
+	if title := strings.TrimSpace(mapString(events[eventID], "name")); title != "" {
+		item["title"] = title
+	}
+}
+
+func applyCustomProfileUnitStoryResource(item map[string]any, app *renderapp.App, region renderregion.Value, row map[string]any) {
+	if row == nil {
+		return
+	}
+	assetBundleName := strings.TrimSpace(mapString(row, "assetbundleName"))
+	item["assetbundleName"] = assetBundleName
+	optional := map[string]string{
+		"unit":                strings.TrimSpace(mapString(row, "unit")),
+		"unitEpisodeCategory": strings.TrimSpace(mapString(row, "unitEpisodeCategory")),
+		"title":               customProfileUnitStoryTitle(row),
+		"imagePath":           resolveCustomProfileUnitStoryBannerPath(app, region, assetBundleName),
+	}
+	for key, value := range optional {
+		if value != "" {
+			item[key] = value
+		}
+	}
 }
 
 func collectCustomProfileHonorResources(ctx context.Context, app *renderapp.App, region renderregion.Value, c customProfileResourceCollector, resources drawing.CustomProfileResources) error {
@@ -517,45 +547,55 @@ func customProfileMasterdataDirs(app *renderapp.App, region renderregion.Value) 
 		app.Config.LocalMasterdata.Dir,
 		app.Config.DeckRecommend.MasterdataDir,
 	}
-	result := make([]string, 0, 12)
-	seen := make(map[string]struct{}, 12)
-	add := func(dir string) {
-		dir = strings.TrimSpace(dir)
-		if dir == "" || dir == "." || dir == "/" {
-			return
-		}
-		dir = filepath.Clean(dir)
-		if _, ok := seen[dir]; ok {
-			return
-		}
-		seen[dir] = struct{}{}
-		result = append(result, dir)
-	}
+	dirs := customProfileDirCollector{seen: make(map[string]struct{}, 12), result: make([]string, 0, 12)}
 	repoDir := customProfileMasterdataRepoDir(region)
 	for _, root := range roots {
-		root = strings.TrimSpace(root)
-		if root == "" {
-			continue
-		}
-		add(filepath.Join(root, region.String()))
-		if repoDir != "" {
-			add(filepath.Join(root, repoDir, "master"))
-		}
-		add(root)
-		current := filepath.Clean(root)
-		for depth := 0; depth < 4; depth++ {
-			parent := filepath.Dir(current)
-			if parent == "" || parent == "." || parent == "/" || parent == current {
-				break
-			}
-			current = parent
-			add(filepath.Join(current, region.String()))
-			if repoDir != "" {
-				add(filepath.Join(current, repoDir, "master"))
-			}
-		}
+		dirs.addRoot(root, region.String(), repoDir)
 	}
-	return result
+	return dirs.result
+}
+
+type customProfileDirCollector struct {
+	seen   map[string]struct{}
+	result []string
+}
+
+func (c *customProfileDirCollector) add(dir string) {
+	dir = strings.TrimSpace(dir)
+	if dir == "" || dir == "." || dir == "/" {
+		return
+	}
+	dir = filepath.Clean(dir)
+	if _, ok := c.seen[dir]; ok {
+		return
+	}
+	c.seen[dir] = struct{}{}
+	c.result = append(c.result, dir)
+}
+
+func (c *customProfileDirCollector) addRoot(root, region, repoDir string) {
+	root = strings.TrimSpace(root)
+	if root == "" {
+		return
+	}
+	c.addVariants(root, region, repoDir)
+	current := filepath.Clean(root)
+	for depth := 0; depth < 4; depth++ {
+		parent := filepath.Dir(current)
+		if parent == "" || parent == "." || parent == "/" || parent == current {
+			return
+		}
+		current = parent
+		c.addVariants(current, region, repoDir)
+	}
+}
+
+func (c *customProfileDirCollector) addVariants(root, region, repoDir string) {
+	c.add(filepath.Join(root, region))
+	if repoDir != "" {
+		c.add(filepath.Join(root, repoDir, "master"))
+	}
+	c.add(root)
 }
 
 func customProfileMasterdataRepoDir(region renderregion.Value) string {

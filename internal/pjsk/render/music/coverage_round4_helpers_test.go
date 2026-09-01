@@ -103,6 +103,13 @@ func TestMusicProviderAdapterLocalAndTagBranches(t *testing.T) {
 }
 
 func TestMusicParseHelpersAllBranches(t *testing.T) {
+	testMusicDifficultyHelpers(t)
+	testMusicIDHelpers(t)
+	testMusicParserFallbacks(t)
+}
+
+func testMusicDifficultyHelpers(t *testing.T) {
+	t.Helper()
 	if diff, rest := ExtractMusicDifficulty("   "); diff != "" || rest != "" {
 		t.Fatalf("empty difficulty = %q, %q", diff, rest)
 	}
@@ -141,7 +148,16 @@ func TestMusicParseHelpersAllBranches(t *testing.T) {
 	if got, want := SplitMusicQueries(" one / two|\r\n  \nthree "), []string{"one", "two", "three"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("split queries = %#v, want %#v", got, want)
 	}
+}
 
+func testMusicIDHelpers(t *testing.T) {
+	t.Helper()
+	testExplicitMusicIDHelpers(t)
+	testImplicitMusicIDHelpers(t)
+}
+
+func testExplicitMusicIDHelpers(t *testing.T) {
+	t.Helper()
 	for _, input := range []string{"song1", "music", "musicx", "music0"} {
 		if id, ok := ParseExplicitMusicID(input); ok || id != 0 {
 			t.Errorf("ParseExplicitMusicID(%q) = %d, %v", input, id, ok)
@@ -150,6 +166,10 @@ func TestMusicParseHelpersAllBranches(t *testing.T) {
 	if id, ok := ParseExplicitMusicID(" MUSIC42 "); !ok || id != 42 {
 		t.Fatalf("explicit ID = %d, %v", id, ok)
 	}
+}
+
+func testImplicitMusicIDHelpers(t *testing.T) {
+	t.Helper()
 	for _, input := range []string{"", "id", "idx", "id0", "12x"} {
 		if id, ok := ParseImplicitMusicID(input); ok || id != 0 {
 			t.Errorf("ParseImplicitMusicID(%q) = %d, %v", input, id, ok)
@@ -164,7 +184,10 @@ func TestMusicParseHelpersAllBranches(t *testing.T) {
 	if isNumeric("") || isNumeric("1x") || !isNumeric("123") {
 		t.Fatal("numeric classification mismatch")
 	}
+}
 
+func testMusicParserFallbacks(t *testing.T) {
+	t.Helper()
 	parser := NewParser(map[string]int{"ick": 1})
 	if _, err := parser.Parse("   "); err == nil {
 		t.Fatal("empty parser input error = nil")
@@ -187,6 +210,14 @@ func TestMusicParseHelpersAllBranches(t *testing.T) {
 }
 
 func TestMusicBoardMetricAndFilterBranches(t *testing.T) {
+	testMusicBoardMetricPopulation(t)
+	testMusicBoardSorting(t)
+	testMusicBoardMetricSelection(t)
+	testMusicBoardLevelFilters(t)
+}
+
+func testMusicBoardMetricPopulation(t *testing.T) {
+	t.Helper()
 	if got := weightedMusicBoardSkill(nil, nil, 0); got != 0 {
 		t.Fatalf("empty weighted skill = %v", got)
 	}
@@ -206,7 +237,10 @@ func TestMusicBoardMetricAndFilterBranches(t *testing.T) {
 	if row.SoloPt == nil || row.AutoPt == nil || row.MultiPt == nil || row.PlayCountPerHour == nil {
 		t.Fatalf("populated metrics = %+v", row)
 	}
+}
 
+func testMusicBoardSorting(t *testing.T) {
+	t.Helper()
 	rows := []musicBoardRow{
 		{MusicID: 1, Difficulty: "expert", Tps: 3, MusicTime: 100},
 		{MusicID: 1, Difficulty: "master", Tps: 3, MusicTime: 90},
@@ -222,7 +256,10 @@ func TestMusicBoardMetricAndFilterBranches(t *testing.T) {
 			t.Fatalf("rank %d = %d", i, rows[i].Rank)
 		}
 	}
+}
 
+func testMusicBoardMetricSelection(t *testing.T) {
+	t.Helper()
 	value := 7.0
 	metricRow := musicBoardRow{
 		Tps: 8, MusicTime: 9,
@@ -244,7 +281,10 @@ func TestMusicBoardMetricAndFilterBranches(t *testing.T) {
 	if selectMusicBoardLiveValue(metricRow, "unknown", "score") != nil || derefMusicBoardFloat(nil) != 0 || derefMusicBoardFloat(&value) != value {
 		t.Fatal("live value fallback mismatch")
 	}
+}
 
+func testMusicBoardLevelFilters(t *testing.T) {
+	t.Helper()
 	filters := map[string]bool{
 		"": true, "oops": true, "<x": true,
 		"<11": true, ">9": true, "<=10": true, ">=10": true, "=10": true, "==10": true,
@@ -306,6 +346,12 @@ func TestMusicBoardTextQueryAndSmallHelpers(t *testing.T) {
 }
 
 func TestMusicVisibilityAllFallbacks(t *testing.T) {
+	testMusicAccessibilityFallbacks(t)
+	testMusicVisibleSortingAndOrder(t)
+}
+
+func testMusicAccessibilityFallbacks(t *testing.T) {
+	t.Helper()
 	now := time.Now().UnixMilli()
 	visible := &masterdata.Music{ID: 1, Seq: 10, PublishedAt: now - 1}
 	future := &masterdata.Music{ID: 2, PublishedAt: now + 100_000}
@@ -335,6 +381,12 @@ func TestMusicVisibilityAllFallbacks(t *testing.T) {
 	if got := filterAccessibleMusics([]*masterdata.Music{nil, hidden, future, visible}, now, false); len(got) != 1 || got[0] != visible {
 		t.Fatalf("filtered music = %#v", got)
 	}
+}
+
+func testMusicVisibleSortingAndOrder(t *testing.T) {
+	t.Helper()
+	now := time.Now().UnixMilli()
+	visible := &masterdata.Music{ID: 1, Seq: 10, PublishedAt: now - 1}
 	if accessibleMusicsSortedByPublishedAt(nil, now, false) != nil {
 		t.Fatal("nil source sorting should return nil")
 	}

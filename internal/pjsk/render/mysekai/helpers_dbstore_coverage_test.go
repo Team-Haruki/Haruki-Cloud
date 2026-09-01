@@ -13,6 +13,15 @@ import (
 )
 
 func TestConversionHelpersCoverSupportedRepresentations(t *testing.T) {
+	testIntNumberConversions(t)
+	testFloatNumberConversions(t)
+	testInt64NumberConversions(t)
+	testBooleanAndStringConversions(t)
+	testNestedAndTokenConversions(t)
+}
+
+func testIntNumberConversions(t *testing.T) {
+	t.Helper()
 	intCases := []struct {
 		value any
 		want  int
@@ -31,7 +40,10 @@ func TestConversionHelpersCoverSupportedRepresentations(t *testing.T) {
 	if got := intNumberFrom(map[string]any{"first": "bad", "second": "12"}, 9, "first", "second"); got != 12 {
 		t.Fatalf("intNumberFrom aliases = %d", got)
 	}
+}
 
+func testFloatNumberConversions(t *testing.T) {
+	t.Helper()
 	floatCases := []struct {
 		value any
 		want  float64
@@ -44,7 +56,10 @@ func TestConversionHelpersCoverSupportedRepresentations(t *testing.T) {
 			t.Fatalf("floatNumber(%#v) = %f, want %f", tc.value, got, tc.want)
 		}
 	}
+}
 
+func testInt64NumberConversions(t *testing.T) {
+	t.Helper()
 	int64Cases := []struct {
 		value any
 		want  int64
@@ -57,7 +72,10 @@ func TestConversionHelpersCoverSupportedRepresentations(t *testing.T) {
 			t.Fatalf("int64Number(%#v) = %d, want %d", tc.value, got, tc.want)
 		}
 	}
+}
 
+func testBooleanAndStringConversions(t *testing.T) {
+	t.Helper()
 	truthy := []any{true, float64(1), float32(1), int(1), int32(1), int64(1), stdjson.Number("1"), "true", "YES", " y "}
 	for _, value := range truthy {
 		if !boolValue(value) {
@@ -81,7 +99,10 @@ func TestConversionHelpersCoverSupportedRepresentations(t *testing.T) {
 	if stringValue(1) != "" || stringValue(" x ") != "x" {
 		t.Fatal("stringValue conversion mismatch")
 	}
+}
 
+func testNestedAndTokenConversions(t *testing.T) {
+	t.Helper()
 	direct := []any{1, 2}
 	updated := map[string]any{"updatedResources": map[string]any{"items": []any{3}}}
 	if got := nestedList(map[string]any{"items": direct}, "items"); !reflect.DeepEqual(got, direct) {
@@ -102,6 +123,13 @@ func TestConversionHelpersCoverSupportedRepresentations(t *testing.T) {
 }
 
 func TestFixtureHelpersCoverAlternateLayoutsAndEdges(t *testing.T) {
+	testFixtureThumbnailAndColorHelpers(t)
+	testFixtureInfoTagAndBlueprintHelpers(t)
+	testFixtureGroupingAndAvailabilityHelpers(t)
+}
+
+func testFixtureThumbnailAndColorHelpers(t *testing.T) {
+	t.Helper()
 	resolve := func(path string) string { return "resolved/" + path }
 	characters := map[int]map[string]any{5: {"givenName": "みのり"}, 6: {"givenName": ""}}
 	if got := birthdayCharacterID(characters, "家具（みのり）"); got != 5 {
@@ -142,7 +170,10 @@ func TestFixtureHelpersCoverAlternateLayoutsAndEdges(t *testing.T) {
 	if len(colors) != 3 || colors[1].ColorCode == nil || colors[2].ColorCode != nil {
 		t.Fatalf("surface fixture colors = %+v", colors)
 	}
+}
 
+func testFixtureInfoTagAndBlueprintHelpers(t *testing.T) {
+	t.Helper()
 	positiveInfo := fixtureBasicInfo(map[string]any{
 		"isAssembled": true, "isDisassembled": true, "mysekaiFixturePlayerActionType": "sit", "isGameCharacterAction": true,
 	})
@@ -169,6 +200,10 @@ func TestFixtureHelpersCoverAlternateLayoutsAndEdges(t *testing.T) {
 	if findFixtureBlueprint(blueprints, 7) == nil || findFixtureBlueprint(blueprints, 8) != nil {
 		t.Fatal("findFixtureBlueprint mismatch")
 	}
+}
+
+func testFixtureGroupingAndAvailabilityHelpers(t *testing.T) {
+	t.Helper()
 	if charaIconName(1) != "ick" || charaIconName(999) != "miku" {
 		t.Fatal("charaIconName fallback mismatch")
 	}
@@ -191,6 +226,19 @@ func TestFixtureHelpersCoverAlternateLayoutsAndEdges(t *testing.T) {
 }
 
 func TestDBMasterdataStoreDefensiveAndConversionBranches(t *testing.T) {
+	testNilAndConfiguredDBMasterdataStore(t)
+	testBrokenDBMasterdataStore(t)
+	testDBMasterdataConversionHelpers(t)
+}
+
+func testNilAndConfiguredDBMasterdataStore(t *testing.T) {
+	t.Helper()
+	testNilDBMasterdataStore(t)
+	testConfiguredDBMasterdataStore(t)
+}
+
+func testNilDBMasterdataStore(t *testing.T) {
+	t.Helper()
 	var nilStore *dbMasterdataStore
 	if nilStore.Configured() || nilStore.WithContext(context.Background()) != nil || nilStore.contextOrBackground() == nil {
 		t.Fatal("nil db store defensive behavior mismatch")
@@ -203,7 +251,10 @@ func TestDBMasterdataStoreDefensiveAndConversionBranches(t *testing.T) {
 	if newDBMasterdataStore(context.Background(), " ", "jp") != nil {
 		t.Fatal("blank DSN should not configure a DB store")
 	}
+}
 
+func testConfiguredDBMasterdataStore(t *testing.T) {
+	t.Helper()
 	store := newTestDBMasterdataStore(t)
 	if !store.Configured() || store.WithContext(nil) == nil || store.contextOrBackground() == nil {
 		t.Fatal("configured DB store behavior mismatch")
@@ -234,7 +285,10 @@ func TestDBMasterdataStoreDefensiveAndConversionBranches(t *testing.T) {
 	if withoutDB.Configured() || withoutDB.loadList("musics.json") != nil || len(withoutDB.loadMapByID("musics.json")) != 0 {
 		t.Fatal("store without DB should not load data")
 	}
+}
 
+func testBrokenDBMasterdataStore(t *testing.T) {
+	t.Helper()
 	brokenDB, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatalf("open broken DB: %v", err)
@@ -244,7 +298,10 @@ func TestDBMasterdataStoreDefensiveAndConversionBranches(t *testing.T) {
 		t.Fatalf("querying a missing table = %+v", got)
 	}
 	broken.Close()
+}
 
+func testDBMasterdataConversionHelpers(t *testing.T) {
+	t.Helper()
 	if mapColumnName("id") != "" || mapColumnName("game_id") != "id" || mapColumnName("server_region") != "" || mapColumnName("my_field_name") != "myFieldName" {
 		t.Fatal("mapColumnName mismatch")
 	}

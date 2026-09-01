@@ -14,7 +14,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/klauspost/compress v1.19.2
 	github.com/lib/pq v1.12.3
-	github.com/mattn/go-sqlite3 v1.14.49
+	github.com/mattn/go-sqlite3 v1.14.50
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/redis/go-redis/v9 v9.22.0
 	github.com/shamaton/msgpack/v3 v3.2.0

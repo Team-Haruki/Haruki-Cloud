@@ -152,34 +152,12 @@ func (c *Controller) collectStampItems(query ListQuery) ([]drawing.StampData, st
 		return nil, "", fmt.Errorf("no stamp data available")
 	}
 
-	filter := make(map[int]struct{}, len(query.IDs))
-	for _, id := range query.IDs {
-		if id > 0 {
-			filter[id] = struct{}{}
-		}
-	}
-	characterFilter := make(map[int]struct{}, len(query.CharacterIDs))
-	for _, id := range query.CharacterIDs {
-		if id > 0 {
-			characterFilter[id] = struct{}{}
-		}
-	}
-
+	filter := positiveStampIDSet(query.IDs)
+	characterFilter := positiveStampIDSet(query.CharacterIDs)
 	items := make([]drawing.StampData, 0, len(stamps))
 	for _, item := range stamps {
-		if len(filter) > 0 {
-			if _, ok := filter[item.ID]; !ok {
-				continue
-			}
-		}
-		if len(characterFilter) > 0 {
-			_, ok1 := characterFilter[item.CharacterID]
-			_, ok2 := characterFilter[item.CharacterID2]
-			// Bonds stamps carry two characters; match either slot so the
-			// stamp shows up in both characters' lists.
-			if !ok1 && !ok2 {
-				continue
-			}
+		if !stampMatchesFilters(item, filter, characterFilter) {
+			continue
 		}
 		imagePath, ok := c.resolveStampImage(item, query.Region)
 		if !ok {
@@ -199,18 +177,44 @@ func (c *Controller) collectStampItems(query ListQuery) ([]drawing.StampData, st
 		return nil, "", fmt.Errorf("no stamps matched the query")
 	}
 
-	prompt := strings.TrimSpace(query.PromptMessage)
-	if prompt == "" {
-		prompt = strings.Join([]string{
-			`发送"/stamp 序号"获取单张表情`,
-			`发送"/stamp 序号 序号"获取多张表情`,
-			`发送"/stamp 角色名"按角色筛选表情`,
-			`发送"/stamp page 2"查看指定页`,
-			`发送"/stamp all"返回全部页`,
-		}, "\n")
-	}
+	return items, stampPrompt(query.PromptMessage), nil
+}
 
-	return items, prompt, nil
+func positiveStampIDSet(ids []int) map[int]struct{} {
+	result := make(map[int]struct{}, len(ids))
+	for _, id := range ids {
+		if id > 0 {
+			result[id] = struct{}{}
+		}
+	}
+	return result
+}
+
+func stampMatchesFilters(item masterdata.Stamp, ids, characterIDs map[int]struct{}) bool {
+	if len(ids) > 0 {
+		if _, ok := ids[item.ID]; !ok {
+			return false
+		}
+	}
+	if len(characterIDs) == 0 {
+		return true
+	}
+	_, first := characterIDs[item.CharacterID]
+	_, second := characterIDs[item.CharacterID2]
+	return first || second
+}
+
+func stampPrompt(value string) string {
+	if prompt := strings.TrimSpace(value); prompt != "" {
+		return prompt
+	}
+	return strings.Join([]string{
+		`发送"/stamp 序号"获取单张表情`,
+		`发送"/stamp 序号 序号"获取多张表情`,
+		`发送"/stamp 角色名"按角色筛选表情`,
+		`发送"/stamp page 2"查看指定页`,
+		`发送"/stamp all"返回全部页`,
+	}, "\n")
 }
 
 func (c *Controller) resolveStampImage(item masterdata.Stamp, region renderregion.Value) (string, bool) {

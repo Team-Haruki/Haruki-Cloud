@@ -44,36 +44,9 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 	}
 	musicCounts := buildMusicCounts(raw.UserMusicClear, raw.UserMusicStats)
 
-	nickname := detail.Nickname
-	word := cleanWord(raw.UserProfile.Word)
-	if c.censor != nil && (nickname != "" || word != "") {
-		// Name and bio moderation are independent (distinct verdict caches,
-		// separate upstream calls on miss); overlapping them halves the
-		// double-miss penalty on the render critical path. Each goroutine
-		// writes a distinct variable and wg.Wait orders those writes before
-		// the reads below.
-		censorCtx := c.contextOrBackground()
-		var wg sync.WaitGroup
-		if nickname != "" {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				if !c.censor.CensorName(censorCtx, 0, detail.ID, nickname, query.Region) {
-					nickname = ""
-				}
-			}()
-		}
-		if word != "" {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				if !c.censor.CensorShortBio(censorCtx, 0, strconv.FormatInt(raw.UserGamedata.UserID, 10), word, query.Region) {
-					word = ""
-				}
-			}()
-		}
-		wg.Wait()
-	}
+	nickname, word := c.moderateProfileText(
+		query.Region, detail.ID, raw.UserGamedata.UserID, detail.Nickname, cleanWord(raw.UserProfile.Word),
+	)
 
 	return &drawing.ProfileRequest{
 		Profile: drawing.BasicProfile{
@@ -104,6 +77,36 @@ func (c *Controller) BuildProfileRequest(query Query) (*drawing.ProfileRequest, 
 		CharaRankIconPathMap: buildCharaIconMap(c.assets),
 		FramePaths:           framePaths,
 	}, nil
+}
+
+func (c *Controller) moderateProfileText(region, profileID string, userID int64, nickname, word string) (string, string) {
+	if c.censor == nil || (nickname == "" && word == "") {
+		return nickname, word
+	}
+	// Name and bio moderation are independent (distinct verdict caches,
+	// separate upstream calls on miss), so overlap the two cache misses.
+	censorCtx := c.contextOrBackground()
+	var wg sync.WaitGroup
+	if nickname != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if !c.censor.CensorName(censorCtx, 0, profileID, nickname, region) {
+				nickname = ""
+			}
+		}()
+	}
+	if word != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if !c.censor.CensorShortBio(censorCtx, 0, strconv.FormatInt(userID, 10), word, region) {
+				word = ""
+			}
+		}()
+	}
+	wg.Wait()
+	return nickname, word
 }
 
 func (c *Controller) RenderProfile(query Query) ([]byte, error) {

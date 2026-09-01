@@ -9,6 +9,7 @@ import (
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/core/crypto"
+	"haruki-cloud/internal/core/trustsign"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/pjsk/accountdata"
 	pjskalias "haruki-cloud/internal/pjsk/alias"
@@ -231,6 +232,30 @@ func validateBotAuthSecrets(mainLogger *harukiLogger.Logger) {
 	if strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.CredentialSignToken) == "" {
 		fatalStartup(mainLogger, "bot credential signing token is not configured")
 	}
+}
+
+// initManifestSigner loads the online Ed25519 manifest signing key. A missing
+// key is tolerated so local development works unsigned, but production logs a
+// warning: AuthV3 clients are expected to verify manifests.
+func initManifestSigner(mainLogger *harukiLogger.Logger) *trustsign.Signer {
+	botCfg := harukiConfig.Cfg.HarukiBotDB
+	seedHex := strings.TrimSpace(botCfg.ManifestSigningKey)
+	if seedHex == "" {
+		if harukiConfig.Cfg.Profile.IsProduction() {
+			mainLogger.Warn("manifest signing key is not configured; command manifests are served unsigned")
+		}
+		return nil
+	}
+	keyID := strings.TrimSpace(botCfg.ManifestSigningKeyID)
+	if keyID == "" {
+		fatalStartup(mainLogger, "manifest_signing_key_id is required when manifest_signing_key is set")
+	}
+	signer, err := trustsign.NewSignerFromHex(keyID, seedHex)
+	if err != nil {
+		fatalStartup(mainLogger, "invalid manifest signing key", "error_type", fmt.Sprintf("%T", err))
+	}
+	mainLogger.Info("manifest signing enabled", "algorithm", trustsign.Algorithm, "key_id", keyID, "public_key", signer.PublicKeyHex())
+	return signer
 }
 
 func initNoiseKeyRing(mainLogger *harukiLogger.Logger) *crypto.KeyRing {

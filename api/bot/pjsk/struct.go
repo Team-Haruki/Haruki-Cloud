@@ -34,6 +34,11 @@ type BotCommandRequest struct {
 	// random value (>=16 bytes, hex/base64) per request.
 	Timestamp int64  `json:"timestamp,omitempty" msgpack:"timestamp,omitempty"`
 	Nonce     string `json:"nonce,omitempty" msgpack:"nonce,omitempty"`
+	// SessionToken is the AuthV3 session token. It travels inside the Noise
+	// ciphertext instead of the X-Haruki-Bot-Session-Token header so it is
+	// never visible to intermediaries; the server validates it after
+	// decryption. Every POST under /pjsk must carry it at the top level.
+	SessionToken string `json:"session_token,omitempty" msgpack:"session_token,omitempty"`
 }
 
 // BotCommandErrorResponse is returned when a bot endpoint cannot process the request.

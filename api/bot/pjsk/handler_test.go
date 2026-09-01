@@ -23,6 +23,7 @@ import (
 	pjskenttest "haruki-cloud/database/pjsk/enttest"
 	usersenttest "haruki-cloud/database/users/enttest"
 	noiseCrypto "haruki-cloud/internal/core/crypto"
+	"haruki-cloud/internal/core/trustsign"
 	"haruki-cloud/internal/identity"
 	"haruki-cloud/internal/onebot11"
 	"haruki-cloud/internal/pjsk/accountdata"
@@ -3349,5 +3350,58 @@ func TestBotOwnerGlobalBanMiddlewareBlocksExistingRequests(t *testing.T) {
 	if resp.StatusCode != fiber.StatusForbidden {
 		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("banned Bot request status=%d body=%s", resp.StatusCode, body)
+	}
+}
+
+func TestBotManifestEndpointIsSignedWhenSignerConfigured(t *testing.T) {
+	botClient := newBotCommandTestClient(t, "manifest_signed")
+	t.Cleanup(func() { _ = botClient.Close() })
+
+	signer, err := trustsign.NewSigner("manifest-test", bytes.Repeat([]byte{7}, trustsign.SeedSize))
+	if err != nil {
+		t.Fatalf("NewSigner: %v", err)
+	}
+	app := fiber.New()
+	runtime := testRenderApp(t, nil)
+	dispatcher := RegisterPJSKBotRoutesWithOptions(context.Background(), app, runtime, nil, botClient, BotRouteOptions{ManifestSigner: signer})
+	if dispatcher != nil {
+		t.Cleanup(dispatcher.Close)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "/api/v2/bot/"+testBotID+"/command/manifests", nil)
+	req.Host = "localhost"
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", resp.StatusCode, respBody)
+	}
+
+	var wire struct {
+		Data trustsign.Envelope `json:"data"`
+	}
+	if err := json.Unmarshal(respBody, &wire); err != nil {
+		t.Fatalf("decode signed manifest: %v raw=%s", err, respBody)
+	}
+	if wire.Data.KeyID != "manifest-test" || wire.Data.Encoding != trustsign.EncodingJSON {
+		t.Fatalf("envelope metadata = %+v", wire.Data)
+	}
+	if err := trustsign.Verify(signer.PublicKey(), wire.Data, trustsign.DomainManifest); err != nil {
+		t.Fatalf("manifest signature invalid: %v", err)
+	}
+	// A manifest signature must never verify under the keyset domain.
+	if err := trustsign.Verify(signer.PublicKey(), wire.Data, trustsign.DomainKeyset); err == nil {
+		t.Fatal("manifest envelope verified under the keyset domain")
+	}
+
+	var manifest ManifestResponse
+	if err := json.Unmarshal(wire.Data.Payload, &manifest); err != nil {
+		t.Fatalf("decode manifest payload: %v", err)
+	}
+	if len(manifest.Entries) == 0 || manifest.CurrentHarukiCloudVersion == "" {
+		t.Fatalf("manifest payload = %+v", manifest)
 	}
 }

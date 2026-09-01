@@ -268,6 +268,9 @@ func ApplyEnvOverrides(cfg *Config) error {
 		return err
 	}
 	envDuration("HARUKI_BOT_AUTH_V3_SESSION_TTL", &cfg.HarukiBotDB.AuthV3SessionTTL)
+	envStr("HARUKI_BOT_MANIFEST_SIGNING_KEY", &cfg.HarukiBotDB.ManifestSigningKey)
+	envStr("HARUKI_BOT_MANIFEST_SIGNING_KEY_ID", &cfg.HarukiBotDB.ManifestSigningKeyID)
+	envStr("HARUKI_BOT_TRUST_KEYSET_PATH", &cfg.HarukiBotDB.TrustKeysetPath)
 	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
 	envBool("HARUKI_BOT_RESPONSE_ELECTION_ROSTER", &cfg.HarukiBotDB.ResponseElectionRoster)
 	envBool("HARUKI_BOT_ALLOW_REQUESTS_WITHOUT_NONCE", &cfg.HarukiBotDB.AllowRequestsWithoutNonce)
@@ -583,8 +586,17 @@ type HarukiBotDBConfig struct {
 	// each with a stable key_id clients can reference. Order matters: the
 	// first accepted key (noise_private_key if set, else noise_keys[0]) is
 	// the primary key advertised to clients.
-	NoiseKeys              []NoiseStaticKeyConfig `yaml:"noise_keys"`
-	ResponseElectionWindow time.Duration          `yaml:"response_election_window"`
+	NoiseKeys []NoiseStaticKeyConfig `yaml:"noise_keys"`
+	// ManifestSigningKey is the hex-encoded 32-byte Ed25519 seed of the ONLINE
+	// key that signs command manifests. It is delegated by the offline root
+	// through the trust keyset; rotate it by publishing a new keyset first.
+	// Empty disables manifest signing (dev only; warned in production).
+	ManifestSigningKey   string `yaml:"manifest_signing_key"`
+	ManifestSigningKeyID string `yaml:"manifest_signing_key_id"`
+	// TrustKeysetPath points at the offline-signed keyset envelope produced by
+	// cmd/trust-signer. It is served verbatim at GET /api/v3/trust/keyset.
+	TrustKeysetPath        string        `yaml:"trust_keyset_path"`
+	ResponseElectionWindow time.Duration `yaml:"response_election_window"`
 	// ResponseElectionRoster enables the learned per-group bot roster: groups
 	// with a single known bot skip the election window entirely, and members
 	// that stop joining are demoted after repeated absences.

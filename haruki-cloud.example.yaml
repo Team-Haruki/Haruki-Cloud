@@ -134,6 +134,15 @@ haruki_bot:
   allow_requests_without_nonce: false
   # Accepted request timestamp skew and single-use nonce TTL. 0 = default (5m).
   request_nonce_window: "5m"
+  # Trust signing (see docs/architecture.cn.md 5.1 "信任密钥集与签名").
+  # manifest_signing_key is the ONLINE Ed25519 seed (hex, 32 bytes) that signs
+  # command manifests; generate it with `cmd/trust-signer keygen` and list its
+  # public key in the keyset under manifest_signing_keys. Empty = unsigned.
+  manifest_signing_key: ""
+  manifest_signing_key_id: ""
+  # Offline-signed keyset envelope produced by `cmd/trust-signer sign --domain keyset`.
+  # Served verbatim at GET /api/v3/trust/keyset; empty = route not mounted.
+  trust_keyset_path: ""
 
 users_db:
   db_type: "postgres"

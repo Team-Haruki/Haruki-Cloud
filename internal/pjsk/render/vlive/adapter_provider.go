@@ -27,43 +27,32 @@ func (a *ProviderAdapter) GetLives(region renderregion.Value) ([]*Live, error) {
 	}
 	result := make([]*Live, len(pvLives))
 	for i, pv := range pvLives {
-		live := &Live{
-			ID:              pv.ID,
-			Name:            pv.Name,
-			AssetBundleName: pv.AssetBundleName,
-			StartAt:         pv.StartAt,
-			EndAt:           pv.EndAt,
-		}
-		if len(pv.Schedules) > 0 {
-			live.Schedules = make([]Schedule, len(pv.Schedules))
-			for j, s := range pv.Schedules {
-				live.Schedules[j] = Schedule{
-					StartAt: s.StartAt,
-					EndAt:   s.EndAt,
-				}
-			}
-		}
-		if len(pv.Rewards) > 0 {
-			live.Rewards = make([]Reward, len(pv.Rewards))
-			for j, reward := range pv.Rewards {
-				live.Rewards[j] = Reward{
-					VirtualLiveType: reward.VirtualLiveType,
-					ResourceBoxID:   reward.ResourceBoxID,
-				}
-			}
-		}
-		if len(pv.Characters) > 0 {
-			live.Characters = make([]Character, len(pv.Characters))
-			for j, character := range pv.Characters {
-				live.Characters[j] = Character{
-					GameCharacterUnitID:        character.GameCharacterUnitID,
-					VirtualLivePerformanceType: character.VirtualLivePerformanceType,
-				}
-			}
-		}
-		result[i] = live
+		result[i] = liveFromProvider(pv)
 	}
 	return result, nil
+}
+
+func liveFromProvider(pv *provider.VLive) *Live {
+	live := &Live{
+		ID:              pv.ID,
+		Name:            pv.Name,
+		AssetBundleName: pv.AssetBundleName,
+		StartAt:         pv.StartAt,
+		EndAt:           pv.EndAt,
+	}
+	for _, item := range pv.Schedules {
+		live.Schedules = append(live.Schedules, Schedule{StartAt: item.StartAt, EndAt: item.EndAt})
+	}
+	for _, item := range pv.Rewards {
+		live.Rewards = append(live.Rewards, Reward{VirtualLiveType: item.VirtualLiveType, ResourceBoxID: item.ResourceBoxID})
+	}
+	for _, item := range pv.Characters {
+		live.Characters = append(live.Characters, Character{
+			GameCharacterUnitID:        item.GameCharacterUnitID,
+			VirtualLivePerformanceType: item.VirtualLivePerformanceType,
+		})
+	}
+	return live
 }
 
 func (a *ProviderAdapter) GetGameCharacterUnit(id int) (*masterdata.GameCharacterUnit, error) {

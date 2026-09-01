@@ -86,16 +86,7 @@ func CachedJSONResponse(
 
 func VerifyAPIAuthorization() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		expectedAuth := strings.TrimSpace(config.Cfg.Backend.AcceptAuthorization)
-		if expectedAuth == "" {
-			if token := strings.TrimSpace(config.Cfg.HarukiBotDB.InternalAPIToken); token != "" {
-				if strings.HasPrefix(strings.ToLower(token), strings.ToLower(AuthBearerPrefix)) {
-					expectedAuth = token
-				} else {
-					expectedAuth = AuthBearerPrefix + token
-				}
-			}
-		}
+		expectedAuth := configuredInternalAPIAuthorization()
 		expectedUserAgent := strings.TrimSpace(config.Cfg.Backend.AcceptUserAgent)
 
 		// Require at least an Authorization token to be configured.
@@ -117,6 +108,17 @@ func VerifyAPIAuthorization() fiber.Handler {
 
 		return c.Next()
 	}
+}
+
+func configuredInternalAPIAuthorization() string {
+	if authorization := strings.TrimSpace(config.Cfg.Backend.AcceptAuthorization); authorization != "" {
+		return authorization
+	}
+	token := strings.TrimSpace(config.Cfg.HarukiBotDB.InternalAPIToken)
+	if token == "" || strings.HasPrefix(strings.ToLower(token), strings.ToLower(AuthBearerPrefix)) {
+		return token
+	}
+	return AuthBearerPrefix + token
 }
 
 func CacheQuery(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, namespace string) (string, map[string]any, bool, error) {

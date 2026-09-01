@@ -127,24 +127,15 @@ func ExtractCommandArgs(message, command string) (string, bool) {
 func MatchCommandPrefix(message, command string) (int, bool) {
 	messageRunes := []rune(message)
 	commandRunes := []rune(command)
-
 	messageIndex := 0
-	commandIndex := 0
-
-	for commandIndex < len(commandRunes) {
-		skippedCommandSeg := false
-		for commandIndex < len(commandRunes) && IsCommandSeg(commandRunes[commandIndex]) {
-			skippedCommandSeg = true
-			commandIndex++
-		}
-		if commandIndex >= len(commandRunes) {
+	for commandIndex := 0; commandIndex < len(commandRunes); {
+		nextCommandIndex, skippedCommandSeg := skipCommandSegments(commandRunes, commandIndex)
+		if nextCommandIndex >= len(commandRunes) {
 			break
 		}
-
+		commandIndex = nextCommandIndex
 		if skippedCommandSeg {
-			for messageIndex < len(messageRunes) && IsCommandSeg(messageRunes[messageIndex]) {
-				messageIndex++
-			}
+			messageIndex = skipMessageSegments(messageRunes, messageIndex)
 		} else if messageIndex < len(messageRunes) && IsCommandSeg(messageRunes[messageIndex]) {
 			return 0, false
 		}
@@ -159,8 +150,22 @@ func MatchCommandPrefix(message, command string) (int, bool) {
 		messageIndex++
 		commandIndex++
 	}
-
 	return messageIndex, true
+}
+
+func skipCommandSegments(command []rune, index int) (int, bool) {
+	start := index
+	for index < len(command) && IsCommandSeg(command[index]) {
+		index++
+	}
+	return index, index > start
+}
+
+func skipMessageSegments(message []rune, index int) int {
+	for index < len(message) && IsCommandSeg(message[index]) {
+		index++
+	}
+	return index
 }
 
 type handlerTreeNode struct {

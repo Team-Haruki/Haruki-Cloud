@@ -150,32 +150,13 @@ func parseTimeZoneOffsetSeconds(raw string) (int, bool) {
 		}
 	}
 
-	sign := 1
-	switch {
-	case strings.HasPrefix(input, "+"):
-		input = strings.TrimSpace(input[1:])
-	case strings.HasPrefix(input, "-"):
-		input = strings.TrimSpace(input[1:])
-		sign = -1
-	}
+	input, sign := trimTimeZoneOffsetSign(input)
 	if input == "" {
 		return 0, false
 	}
 
 	if strings.Contains(input, ":") {
-		parts := strings.Split(input, ":")
-		if len(parts) != 2 {
-			return 0, false
-		}
-		hours, err := strconv.Atoi(strings.TrimSpace(parts[0]))
-		if err != nil || hours < 0 {
-			return 0, false
-		}
-		minutes, err := strconv.Atoi(strings.TrimSpace(parts[1]))
-		if err != nil || minutes < 0 || minutes >= 60 {
-			return 0, false
-		}
-		return sign * (hours*3600 + minutes*60), true
+		return parseClockTimeZoneOffset(input, sign)
 	}
 
 	value, err := strconv.Atoi(input)
@@ -186,6 +167,33 @@ func parseTimeZoneOffsetSeconds(raw string) (int, bool) {
 		return sign * value * 3600, true
 	}
 	return sign * value, true
+}
+
+func trimTimeZoneOffsetSign(input string) (string, int) {
+	switch {
+	case strings.HasPrefix(input, "+"):
+		return strings.TrimSpace(input[1:]), 1
+	case strings.HasPrefix(input, "-"):
+		return strings.TrimSpace(input[1:]), -1
+	default:
+		return input, 1
+	}
+}
+
+func parseClockTimeZoneOffset(input string, sign int) (int, bool) {
+	parts := strings.Split(input, ":")
+	if len(parts) != 2 {
+		return 0, false
+	}
+	hours, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+	if err != nil || hours < 0 {
+		return 0, false
+	}
+	minutes, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+	if err != nil || minutes < 0 || minutes >= 60 {
+		return 0, false
+	}
+	return sign * (hours*3600 + minutes*60), true
 }
 
 func findTimeZonesByOffset(offsetSeconds int, ref time.Time) []string {

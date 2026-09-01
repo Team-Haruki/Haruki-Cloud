@@ -47,75 +47,73 @@ func (s *Service) CensorName(ctx context.Context, harukiUserID int, userID strin
 	if name == "" || strings.EqualFold(strings.TrimSpace(server), string(renderregion.CN)) {
 		return true
 	}
-
-	finishCache := commandtrace.MeasureOperation(ctx, censorCacheStage)
-	existing, err := s.Client.Result.
-		Query().
-		Where(result.NameEQ(name)).
-		Only(ctx)
-	finishCache()
-	if err == nil && existing != nil {
-		if existing.Result != nil {
-			return *existing.Result == 1
-		}
+	if decision, cached := s.cachedNameDecision(ctx, name); cached {
+		return decision
+	}
+	censorResult, err := s.moderateName(ctx, name)
+	if err != nil {
 		return false
 	}
+	s.storeNameDecision(ctx, name, censorResult)
+	s.ensureNameAudit(ctx, harukiUserID, userID, name, censorResult)
+	return censorResult == 1
+}
 
+func (s *Service) cachedNameDecision(ctx context.Context, name string) (bool, bool) {
+	finish := commandtrace.MeasureOperation(ctx, censorCacheStage)
+	existing, err := s.Client.Result.Query().Where(result.NameEQ(name)).Only(ctx)
+	finish()
+	if err != nil || existing == nil {
+		return false, false
+	}
+	return existing.Result != nil && *existing.Result == 1, true
+}
+
+func (s *Service) moderateName(ctx context.Context, name string) (int, error) {
 	data, err := textCensor(ctx, s.TextCensorAPI, name)
 	if err != nil {
 		s.Logger.ErrorContext(ctx, "name moderation request failed", "error_type", fmt.Sprintf("%T", err))
-		return false
+		return 0, err
 	}
-
-	censorResult := 0
 	if conclusion, ok := data["conclusion"].(string); ok && conclusion == string(ResultCompliant) {
-		censorResult = 1
-	} else {
-		s.Logger.DebugContext(ctx, "name moderation rejected")
+		return 1, nil
 	}
+	s.Logger.DebugContext(ctx, "name moderation rejected")
+	return 0, nil
+}
 
-	finishStore := commandtrace.MeasureOperation(ctx, censorStoreStage)
-	_, err = s.Client.Result.
-		Create().
-		SetName(name).
-		SetResult(censorResult).
-		Save(ctx)
-	finishStore()
+func (s *Service) storeNameDecision(ctx context.Context, name string, censorResult int) {
+	finish := commandtrace.MeasureOperation(ctx, censorStoreStage)
+	_, err := s.Client.Result.Create().SetName(name).SetResult(censorResult).Save(ctx)
+	finish()
 	if err != nil {
 		s.Logger.ErrorContext(ctx, "name moderation cache store failed", "error_type", fmt.Sprintf("%T", err))
 	}
+}
 
-	finishCache = commandtrace.MeasureOperation(ctx, censorCacheStage)
-	exists, _ := s.Client.NameLog.
-		Query().
-		Where(
-			namelog.UserIDEQ(fmt.Sprint(userID)),
-			namelog.NameEQ(name),
-			namelog.HarukiUserIDEQ(harukiUserID),
-		).
-		Exist(ctx)
-	finishCache()
-	if !exists {
-		text := string(ResultCompliant)
-		if censorResult == 0 {
-			text = string(ResultNonCompliant)
-		}
-		finishStore = commandtrace.MeasureOperation(ctx, censorStoreStage)
-		_, err := s.Client.NameLog.
-			Create().
-			SetUserID(fmt.Sprint(userID)).
-			SetName(name).
-			SetHarukiUserID(harukiUserID).
-			SetResult(text).
-			SetTime(time.Now()).
-			Save(ctx)
-		finishStore()
-		if err != nil {
-			s.Logger.ErrorContext(ctx, "name moderation audit store failed", "error_type", fmt.Sprintf("%T", err))
-		}
+func (s *Service) ensureNameAudit(ctx context.Context, harukiUserID int, userID, name string, censorResult int) {
+	finish := commandtrace.MeasureOperation(ctx, censorCacheStage)
+	exists, _ := s.Client.NameLog.Query().Where(
+		namelog.UserIDEQ(fmt.Sprint(userID)),
+		namelog.NameEQ(name),
+		namelog.HarukiUserIDEQ(harukiUserID),
+	).Exist(ctx)
+	finish()
+	if exists {
+		return
 	}
-
-	return censorResult == 1
+	text := string(ResultCompliant)
+	if censorResult == 0 {
+		text = string(ResultNonCompliant)
+	}
+	finish = commandtrace.MeasureOperation(ctx, censorStoreStage)
+	_, err := s.Client.NameLog.Create().
+		SetUserID(fmt.Sprint(userID)).SetName(name).SetHarukiUserID(harukiUserID).
+		SetResult(text).SetTime(time.Now()).Save(ctx)
+	finish()
+	if err != nil {
+		s.Logger.ErrorContext(ctx, "name moderation audit store failed", "error_type", fmt.Sprintf("%T", err))
+	}
 }
 
 func (s *Service) CensorShortBio(ctx context.Context, harukiUserID int, userID string, content string, server string) bool {

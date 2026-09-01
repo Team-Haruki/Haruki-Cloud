@@ -15,44 +15,55 @@ func (c *Controller) buildSpeedInfosFromTracker(server string, eventID int, rank
 }
 
 func speedInfoFromGrowthPoint(point sekaiapi.ScoreGrowthPoint, unitPeriodSeconds int64) drawing.SpeedInfo {
-	var speed *int
 	if unitPeriodSeconds <= 0 {
 		unitPeriodSeconds = 60 * 60
 	}
-
-	growth := point.Growth
-	if growth == nil && point.ScoreEarlier != nil {
-		val := point.ScoreLatest - *point.ScoreEarlier
-		if val >= 0 {
-			growth = &val
-		}
-	}
-
-	timeDiff := point.TimeDiff
-	if (timeDiff == nil || *timeDiff <= 0) && point.TimestampEarlier != nil {
-		latest := normalizeTrackerUnixSeconds(point.TimestampLatest)
-		earlier := normalizeTrackerUnixSeconds(*point.TimestampEarlier)
-		diff := latest - earlier
-		if diff > 0 {
-			timeDiff = &diff
-		}
-	}
-
+	growth := trackerPointGrowth(point)
+	timeDiff := trackerPointTimeDiff(point)
+	var speed *int
 	if growth != nil && *growth >= 0 && timeDiff != nil && *timeDiff > 0 {
 		speed = new(int((int64(*growth) * unitPeriodSeconds) / *timeDiff))
 	}
-	score := point.ScoreLatest
-	if score <= 0 && point.ScoreEarlier != nil {
-		score = *point.ScoreEarlier
-	}
-	recordTs := point.TimestampLatest
-	if recordTs <= 0 && point.TimestampEarlier != nil {
-		recordTs = *point.TimestampEarlier
-	}
 	return drawing.SpeedInfo{
 		Rank:       point.Rank,
-		Score:      score,
+		Score:      latestTrackerPointScore(point),
 		Speed:      speed,
-		RecordTime: formatTrackerTimestamp(recordTs),
+		RecordTime: formatTrackerTimestamp(latestTrackerPointTimestamp(point)),
 	}
+}
+
+func trackerPointGrowth(point sekaiapi.ScoreGrowthPoint) *int {
+	if point.Growth != nil || point.ScoreEarlier == nil {
+		return point.Growth
+	}
+	growth := point.ScoreLatest - *point.ScoreEarlier
+	if growth < 0 {
+		return nil
+	}
+	return &growth
+}
+
+func trackerPointTimeDiff(point sekaiapi.ScoreGrowthPoint) *int64 {
+	if point.TimeDiff != nil && *point.TimeDiff > 0 || point.TimestampEarlier == nil {
+		return point.TimeDiff
+	}
+	diff := normalizeTrackerUnixSeconds(point.TimestampLatest) - normalizeTrackerUnixSeconds(*point.TimestampEarlier)
+	if diff <= 0 {
+		return point.TimeDiff
+	}
+	return &diff
+}
+
+func latestTrackerPointScore(point sekaiapi.ScoreGrowthPoint) int {
+	if point.ScoreLatest > 0 || point.ScoreEarlier == nil {
+		return point.ScoreLatest
+	}
+	return *point.ScoreEarlier
+}
+
+func latestTrackerPointTimestamp(point sekaiapi.ScoreGrowthPoint) int64 {
+	if point.TimestampLatest > 0 || point.TimestampEarlier == nil {
+		return point.TimestampLatest
+	}
+	return *point.TimestampEarlier
 }

@@ -40,34 +40,14 @@ func resolveGameCharacterIDByQuery(
 	if target == "" {
 		return 0, fmt.Errorf("请输入角色名")
 	}
-	if app.Aliases != nil {
-		if charID, ok, err := app.Aliases.TryResolveCharacterID(ctx, query); err != nil {
-			return 0, err
-		} else if ok && charID > 0 {
-			return charID, nil
-		}
-	}
-	if charID, ok := card.ResolveDefaultCharacterNickname(query); ok && charID > 0 {
-		return charID, nil
+	if charID, resolved, err := resolveKnownGameCharacterID(ctx, app, query); resolved || err != nil {
+		return charID, err
 	}
 
-	rows, err := app.Sekai.Gamecharacter.Query().
-		Where(gamecharacterdb.ServerRegionEQ(region.String())).
-		All(ctx)
+	ids, err := queryMatchingGameCharacterIDs(ctx, app.Sekai, region, target)
 	if err != nil {
 		return 0, fmt.Errorf("query %s characters failed: %w", serviceLabel, err)
 	}
-	ids := matchGameCharacterIDs(rows, target)
-	if len(ids) == 0 {
-		rows, err = app.Sekai.Gamecharacter.Query().
-			Where(gamecharacterdb.GameIDGT(0)).
-			All(ctx)
-		if err != nil {
-			return 0, fmt.Errorf("query %s characters failed: %w", serviceLabel, err)
-		}
-		ids = matchGameCharacterIDs(rows, target)
-	}
-
 	switch len(ids) {
 	case 0:
 		return 0, fmt.Errorf("未找到角色：%s", query)
@@ -76,6 +56,32 @@ func resolveGameCharacterIDByQuery(
 	default:
 		return 0, fmt.Errorf("匹配到多个角色：%s", query)
 	}
+}
+
+func resolveKnownGameCharacterID(ctx context.Context, app *renderapp.App, query string) (int, bool, error) {
+	if app.Aliases != nil {
+		charID, ok, err := app.Aliases.TryResolveCharacterID(ctx, query)
+		if err != nil || ok && charID > 0 {
+			return charID, ok, err
+		}
+	}
+	charID, ok := card.ResolveDefaultCharacterNickname(query)
+	return charID, ok && charID > 0, nil
+}
+
+func queryMatchingGameCharacterIDs(ctx context.Context, client *sekaidb.Client, region renderregion.Value, target string) ([]int, error) {
+	rows, err := client.Gamecharacter.Query().Where(gamecharacterdb.ServerRegionEQ(region.String())).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if ids := matchGameCharacterIDs(rows, target); len(ids) > 0 {
+		return ids, nil
+	}
+	rows, err = client.Gamecharacter.Query().Where(gamecharacterdb.GameIDGT(0)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return matchGameCharacterIDs(rows, target), nil
 }
 
 func matchGameCharacterIDs(rows []*sekaidb.Gamecharacter, target string) []int {

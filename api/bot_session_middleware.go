@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -32,72 +33,83 @@ func VerifyBotSession(redisClient *redis.Client) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		finish := commandtrace.MeasurePhase(c.Context(), "session_auth")
 		defer finish()
-		if redisClient == nil {
-			finish()
-			return JSONResponse(c, fiber.StatusServiceUnavailable, "会话存储不可用")
+		if failure := validateBotSession(c, redisClient); failure != nil {
+			return JSONResponse(c, failure.status, failure.message)
 		}
-
-		headerBotID := c.Get(HeaderBotID)
-		sessionToken := c.Get(HeaderBotSessionToken)
-
-		if headerBotID == "" || sessionToken == "" {
-			finish()
-			return JSONResponse(c, fiber.StatusUnauthorized,
-				"缺少 "+HeaderBotID+" 或 "+HeaderBotSessionToken+" 请求头")
-		}
-
-		// The URL parameter name is "botId" as registered by the route group.
-		urlBotID := c.Params("botId")
-		if urlBotID != headerBotID {
-			finish()
-			return JSONResponse(c, fiber.StatusForbidden,
-				"请求头中的 bot_id 与 URL 参数不一致")
-		}
-
-		// Validate JWT signature and expiry.
-		decoded, err := jwt.Parse(sessionToken, func(token *jwt.Token) (any, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errors.New("unexpected signing method")
-			}
-			return []byte(config.Cfg.HarukiBotDB.SessionSignToken), nil
-		}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
-		if err != nil || !decoded.Valid {
-			finish()
-			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌无效或已过期")
-		}
-
-		claims, ok := decoded.Claims.(jwt.MapClaims)
-		if !ok {
-			finish()
-			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌声明无效")
-		}
-
-		claimBotID, _ := claims["bot_id"].(string)
-		if claimBotID != headerBotID {
-			finish()
-			return JSONResponse(c, fiber.StatusForbidden,
-				"会话令牌中的 bot_id 与请求 bot_id 不一致")
-		}
-
-		// Verify the session has not been revoked (Redis lookup).
-		key := fmt.Sprintf(RedisKeyBotSession, headerBotID)
-		stored, err := redisClient.Get(c.Context(), key).Result()
-		if errors.Is(err, redis.Nil) {
-			finish()
-			return JSONResponse(c, fiber.StatusUnauthorized, "会话已过期或不存在")
-		}
-		if err != nil {
-			finish()
-			return InternalError(c)
-		}
-		if stored != sessionToken {
-			finish()
-			return JSONResponse(c, fiber.StatusUnauthorized, "会话令牌不匹配")
-		}
-
-		finish()
 		return c.Next()
 	}
+}
+
+type botSessionFailure struct {
+	status  int
+	message string
+}
+
+func validateBotSession(c fiber.Ctx, redisClient *redis.Client) *botSessionFailure {
+	if redisClient == nil {
+		return &botSessionFailure{status: fiber.StatusServiceUnavailable, message: "会话存储不可用"}
+	}
+	headerBotID, sessionToken, failure := botSessionHeaders(c)
+	if failure != nil {
+		return failure
+	}
+	claimBotID, failure := parseBotSessionClaim(sessionToken)
+	if failure != nil {
+		return failure
+	}
+	if claimBotID != headerBotID {
+		return &botSessionFailure{status: fiber.StatusForbidden, message: "会话令牌中的 bot_id 与请求 bot_id 不一致"}
+	}
+	return validateStoredBotSession(c.Context(), redisClient, headerBotID, sessionToken)
+}
+
+func botSessionHeaders(c fiber.Ctx) (string, string, *botSessionFailure) {
+	headerBotID := c.Get(HeaderBotID)
+	sessionToken := c.Get(HeaderBotSessionToken)
+	if headerBotID == "" || sessionToken == "" {
+		return "", "", &botSessionFailure{
+			status:  fiber.StatusUnauthorized,
+			message: "缺少 " + HeaderBotID + " 或 " + HeaderBotSessionToken + " 请求头",
+		}
+	}
+	if c.Params("botId") != headerBotID {
+		return "", "", &botSessionFailure{status: fiber.StatusForbidden, message: "请求头中的 bot_id 与 URL 参数不一致"}
+	}
+	return headerBotID, sessionToken, nil
+}
+
+func parseBotSessionClaim(sessionToken string) (string, *botSessionFailure) {
+	decoded, err := jwt.Parse(sessionToken, botSessionSigningKey, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+	if err != nil || !decoded.Valid {
+		return "", &botSessionFailure{status: fiber.StatusUnauthorized, message: "会话令牌无效或已过期"}
+	}
+	claims, ok := decoded.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", &botSessionFailure{status: fiber.StatusUnauthorized, message: "会话令牌声明无效"}
+	}
+	claimBotID, _ := claims["bot_id"].(string)
+	return claimBotID, nil
+}
+
+func botSessionSigningKey(token *jwt.Token) (any, error) {
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, errors.New("unexpected signing method")
+	}
+	return []byte(config.Cfg.HarukiBotDB.SessionSignToken), nil
+}
+
+func validateStoredBotSession(ctx context.Context, redisClient *redis.Client, botID, sessionToken string) *botSessionFailure {
+	stored, err := redisClient.Get(ctx, fmt.Sprintf(RedisKeyBotSession, botID)).Result()
+	if errors.Is(err, redis.Nil) {
+		return &botSessionFailure{status: fiber.StatusUnauthorized, message: "会话已过期或不存在"}
+	}
+	if err != nil {
+		return &botSessionFailure{status: fiber.StatusInternalServerError, message: ErrInternalServer}
+	}
+	if stored != sessionToken {
+		return &botSessionFailure{status: fiber.StatusUnauthorized, message: "会话令牌不匹配"}
+	}
+	return nil
 }
 
 // VerifyBotSessionTestBypass returns a no-op middleware that skips session

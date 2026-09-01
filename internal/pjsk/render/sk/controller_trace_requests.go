@@ -42,63 +42,73 @@ func (c *Controller) BuildPlayerTraceFromTracker(req TrackerRankQuery) (*drawing
 		EventID: normalized.EventID,
 		Region:  normalized.Region,
 	}
-
-	switch {
-	case normalized.UserID != nil:
-		ranks, err := c.buildUserTraceFromTracker(normalized.Region, normalized.EventID, *normalized.UserID, normalized.WlCharacterID)
-		if err != nil {
-			return nil, err
-		}
-		if len(ranks) == 0 {
-			return nil, fmt.Errorf("no trace data available for user")
-		}
-		payload.Ranks = ranks
-
-	case len(normalized.Ranks) > 0:
-		if len(normalized.Ranks) > 2 {
-			return nil, fmt.Errorf("player-trace 最多支持两个排名")
-		}
-		trace1, err := c.buildPlayerTraceByRankFromTracker(normalized.Region, normalized.EventID, normalized.Ranks[0], normalized.WlCharacterID)
-		if err != nil {
-			return nil, err
-		}
-		if len(trace1) == 0 {
-			return nil, fmt.Errorf("no trace data available for rank %d", normalized.Ranks[0])
-		}
-		payload.Ranks = trace1
-		if len(normalized.Ranks) > 1 {
-			trace2, err := c.buildPlayerTraceByRankFromTracker(normalized.Region, normalized.EventID, normalized.Ranks[1], normalized.WlCharacterID)
-			if err != nil {
-				return nil, err
-			}
-			payload.Ranks2 = trace2
-		}
-
-	default:
-		return nil, fmt.Errorf("player-trace requires user_id or rank")
+	payload.Ranks, payload.Ranks2, err = c.buildPrimaryPlayerTrace(normalized)
+	if err != nil {
+		return nil, err
 	}
-	if normalized.CompareRank > 0 {
-		trace, err := c.buildRankTraceFromTracker(normalized.Region, normalized.EventID, normalized.CompareRank, normalized.WlCharacterID)
-		if err != nil {
-			return nil, err
-		}
-		latest, err := c.buildSingleRankLatestFromTracker(normalized.Region, normalized.EventID, normalized.CompareRank, normalized.WlCharacterID)
-		if err != nil {
-			return nil, err
-		}
-		payload.CompareRank = normalized.CompareRank
-		payload.CompareRankTrace = trace
-		payload.CompareRankLatest = &latest
-		if latest.Score != nil {
-			payload.CompareRankLineScore = latest.Score
-		}
+	if err := c.applyPlayerTraceComparison(&payload, normalized); err != nil {
+		return nil, err
 	}
-	if normalized.WlCharacterID != nil && *normalized.WlCharacterID > 0 {
-		if icon := c.resolveCharacterIconPath(*normalized.WlCharacterID, renderregion.Normalize(normalized.Region)); icon != "" {
-			payload.WlCharaIconPath = &icon
-		}
-	}
+	payload.WlCharaIconPath = c.playerTraceCharacterIcon(normalized)
 	return c.BuildPlayerTraceRequest(payload)
+}
+
+func (c *Controller) buildPrimaryPlayerTrace(query TrackerRankQuery) ([]drawing.RankInfo, []drawing.RankInfo, error) {
+	if query.UserID != nil {
+		ranks, err := c.buildUserTraceFromTracker(query.Region, query.EventID, *query.UserID, query.WlCharacterID)
+		if err == nil && len(ranks) == 0 {
+			err = fmt.Errorf("no trace data available for user")
+		}
+		return ranks, nil, err
+	}
+	if len(query.Ranks) == 0 {
+		return nil, nil, fmt.Errorf("player-trace requires user_id or rank")
+	}
+	if len(query.Ranks) > 2 {
+		return nil, nil, fmt.Errorf("player-trace 最多支持两个排名")
+	}
+	first, err := c.buildPlayerTraceByRankFromTracker(query.Region, query.EventID, query.Ranks[0], query.WlCharacterID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(first) == 0 {
+		return nil, nil, fmt.Errorf("no trace data available for rank %d", query.Ranks[0])
+	}
+	if len(query.Ranks) == 1 {
+		return first, nil, nil
+	}
+	second, err := c.buildPlayerTraceByRankFromTracker(query.Region, query.EventID, query.Ranks[1], query.WlCharacterID)
+	return first, second, err
+}
+
+func (c *Controller) applyPlayerTraceComparison(payload *drawing.PlayerTraceRequest, query TrackerRankQuery) error {
+	if query.CompareRank <= 0 {
+		return nil
+	}
+	trace, err := c.buildRankTraceFromTracker(query.Region, query.EventID, query.CompareRank, query.WlCharacterID)
+	if err != nil {
+		return err
+	}
+	latest, err := c.buildSingleRankLatestFromTracker(query.Region, query.EventID, query.CompareRank, query.WlCharacterID)
+	if err != nil {
+		return err
+	}
+	payload.CompareRank = query.CompareRank
+	payload.CompareRankTrace = trace
+	payload.CompareRankLatest = &latest
+	payload.CompareRankLineScore = latest.Score
+	return nil
+}
+
+func (c *Controller) playerTraceCharacterIcon(query TrackerRankQuery) *string {
+	if query.WlCharacterID == nil || *query.WlCharacterID <= 0 {
+		return nil
+	}
+	icon := c.resolveCharacterIconPath(*query.WlCharacterID, renderregion.Normalize(query.Region))
+	if icon == "" {
+		return nil
+	}
+	return &icon
 }
 
 func (c *Controller) BuildRankTraceRequest(req drawing.RankTraceRequest) (*drawing.RankTraceRequest, error) {

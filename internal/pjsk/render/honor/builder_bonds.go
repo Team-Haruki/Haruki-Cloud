@@ -62,27 +62,29 @@ func (b *Builder) buildBondsHonorRequest(req *drawing.HonorRequest, honorInfo *m
 	req.FrameImgPath = new(fmt.Sprintf("%s/honor/frame_degree_%s_%d.png", assets.StaticImagesDir, string(mode[0]), mapHonorRarity(honorInfo.HonorRarity)))
 
 	if req.IsMainHonor {
-		wordID := bondsHonorWordID
-		if wordID == 0 {
-			wordID = honorInfo.ID
-		}
-		var bundleName string
-		if wordInfo, err := b.source.GetBondsHonorWordByID(wordID); err == nil && wordInfo != nil && strings.TrimSpace(wordInfo.AssetBundleName) != "" {
-			tierSuffix := max(1, honorInfo.ID%100)
-			bundleName = fmt.Sprintf("%s_%02d", strings.TrimSpace(wordInfo.AssetBundleName), tierSuffix)
-		} else if absInt(honorInfo.ID-wordID) < 100 {
-			bundleName = fmt.Sprintf("honorname_%02d%02d_%02d_01", cid1, cid2, wordID%100)
-		} else if wordID%10 == 1 {
-			bundleName = fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_01", cid1, cid2, cid1, cid2)
-		} else {
-			bundleName = fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_01", cid1, cid2, cid2, cid1)
-		}
+		bundleName := b.bondsHonorWordBundleName(honorInfo, bondsHonorWordID, cid1, cid2)
 		req.WordImgPath = new(resolveGameAsset(fmt.Sprintf("bonds_honor/word/%s.png", bundleName)))
 	}
 
 	req.LvImgPath = new(filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv.png")))
 	req.Lv6ImgPath = new(filepath.ToSlash(filepath.Join(assets.StaticImagesDir, "honor", "icon_degreeLv6.png")))
 	return nil
+}
+
+func (b *Builder) bondsHonorWordBundleName(honorInfo *masterdata.BondsHonor, wordID, cid1, cid2 int) string {
+	if wordID == 0 {
+		wordID = honorInfo.ID
+	}
+	if wordInfo, err := b.source.GetBondsHonorWordByID(wordID); err == nil && wordInfo != nil && strings.TrimSpace(wordInfo.AssetBundleName) != "" {
+		return fmt.Sprintf("%s_%02d", strings.TrimSpace(wordInfo.AssetBundleName), max(1, honorInfo.ID%100))
+	}
+	if absInt(honorInfo.ID-wordID) < 100 {
+		return fmt.Sprintf("honorname_%02d%02d_%02d_01", cid1, cid2, wordID%100)
+	}
+	if wordID%10 == 1 {
+		return fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_01", cid1, cid2, cid1, cid2)
+	}
+	return fmt.Sprintf("honorname_%02d%02d_default_%02d%02d_01", cid1, cid2, cid2, cid1)
 }
 
 func applyUnitVirtualSingerDisplaySlots(source DataSource, displaySlots []struct {

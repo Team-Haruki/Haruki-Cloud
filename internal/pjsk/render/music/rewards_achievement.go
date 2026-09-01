@@ -113,25 +113,41 @@ func collectUserMusicAchievements(value any) []userMusicAchievement {
 func findNestedJSONValue(value any, want string) (any, bool) {
 	switch typed := value.(type) {
 	case map[string]any:
-		for key, item := range typed {
-			normalized := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(key), "_", ""), "-", ""))
-			if normalized == want {
-				return item, true
-			}
-		}
-		for _, item := range typed {
-			if found, ok := findNestedJSONValue(item, want); ok {
-				return found, true
-			}
-		}
+		return findNestedJSONMapValue(typed, want)
 	case []any:
-		for _, item := range typed {
-			if found, ok := findNestedJSONValue(item, want); ok {
-				return found, true
-			}
+		return findNestedJSONSliceValue(typed, want)
+	}
+	return nil, false
+}
+
+func findNestedJSONMapValue(value map[string]any, want string) (any, bool) {
+	for key, item := range value {
+		if normalizeNestedJSONKey(key) == want {
+			return item, true
+		}
+	}
+	return findNestedJSONSliceValue(mapValues(value), want)
+}
+
+func findNestedJSONSliceValue(value []any, want string) (any, bool) {
+	for _, item := range value {
+		if found, ok := findNestedJSONValue(item, want); ok {
+			return found, true
 		}
 	}
 	return nil, false
+}
+
+func normalizeNestedJSONKey(key string) string {
+	return strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(key), "_", ""), "-", ""))
+}
+
+func mapValues(value map[string]any) []any {
+	result := make([]any, 0, len(value))
+	for _, item := range value {
+		result = append(result, item)
+	}
+	return result
 }
 
 func parseAchievementItemMap(value map[string]any) (userMusicAchievement, bool) {

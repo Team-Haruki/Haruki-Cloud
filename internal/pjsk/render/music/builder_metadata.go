@@ -81,23 +81,7 @@ func (b *Builder) buildVocalInfo(musicID int, region renderregion.Value) (*drawi
 		if vocal == nil {
 			continue
 		}
-
-		characters := make([]map[string]string, 0, len(vocal.Characters))
-		for _, character := range vocal.Characters {
-			name, useAvatar := b.lookupVocalCharacter(character)
-			if name == "" {
-				name = "VS"
-			}
-			characters = append(characters, map[string]string{"characterName": name})
-			if useAvatar && character.CharacterID != 0 {
-				assetsMap[name] = b.BuildCharacterIconPath(character.CharacterID, region)
-			}
-		}
-
-		mapKey := vocal.AssetBundleName
-		if region == renderregion.JP {
-			mapKey = buildJPVocalOrderKey(vocal)
-		}
+		mapKey, characters := b.buildVocalEntry(vocal, region, assetsMap)
 		info[mapKey] = map[string]any{
 			"caption":    normalizeVocalCaption(vocal.Caption, vocal.MusicVocalType, vocal.AssetBundleName, region),
 			"characters": characters,
@@ -108,6 +92,24 @@ func (b *Builder) buildVocalInfo(musicID int, region renderregion.Value) (*drawi
 		VocalInfo:   info,
 		VocalAssets: assetsMap,
 	}, nil
+}
+
+func (b *Builder) buildVocalEntry(vocal *masterdata.MusicVocal, region renderregion.Value, assetsMap map[string]string) (string, []map[string]string) {
+	characters := make([]map[string]string, 0, len(vocal.Characters))
+	for _, character := range vocal.Characters {
+		name, useAvatar := b.lookupVocalCharacter(character)
+		if name == "" {
+			name = "VS"
+		}
+		characters = append(characters, map[string]string{"characterName": name})
+		if useAvatar && character.CharacterID != 0 {
+			assetsMap[name] = b.BuildCharacterIconPath(character.CharacterID, region)
+		}
+	}
+	if region == renderregion.JP {
+		return buildJPVocalOrderKey(vocal), characters
+	}
+	return vocal.AssetBundleName, characters
 }
 
 func (b *Builder) lookupVocalCharacter(character masterdata.MusicVocalCharacter) (string, bool) {

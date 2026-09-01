@@ -99,32 +99,13 @@ func (p *dbMusicProvider) GetByEventID(ctx context.Context, eventID int) (*maste
 
 func (p *dbMusicProvider) GetAll(ctx context.Context) []*masterdata.Music {
 	p.init()
-	if p.local != nil {
-		if localItems := p.local.GetAll(ctx); len(localItems) > 0 {
-			cachedList := common.CloneMusicList(localItems)
-			cachedByID := make(map[int]*masterdata.Music, len(cachedList))
-			for _, item := range cachedList {
-				if item == nil {
-					continue
-				}
-				cachedByID[item.ID] = item
-			}
-			p.mu.Lock()
-			p.musicList = cachedList
-			p.musicByID = cachedByID
-			p.mu.Unlock()
-			return common.CloneMusicList(cachedList)
-		}
+	if localItems := p.localMusicList(ctx); len(localItems) > 0 {
+		p.storeMusicList(localItems, true)
+		return common.CloneMusicList(localItems)
 	}
-
-	p.mu.RLock()
-	if len(p.musicList) > 0 {
-		cached := common.CloneMusicList(p.musicList)
-		p.mu.RUnlock()
+	if cached := p.cachedMusicList(); len(cached) > 0 {
 		return cached
 	}
-	p.mu.RUnlock()
-
 	entities, err := p.client.Music.Query().
 		Where(music.ServerRegionEQ(p.region.String())).
 		Order(music.ByPublishedAt(), music.ByGameID()).
@@ -146,14 +127,44 @@ func (p *dbMusicProvider) GetAll(ctx context.Context) []*masterdata.Music {
 		}
 		return list[i].PublishedAt < list[j].PublishedAt
 	})
+	p.storeMusicListWithIndex(list, byID, false)
+	return common.CloneMusicList(list)
+}
 
+func (p *dbMusicProvider) localMusicList(ctx context.Context) []*masterdata.Music {
+	if p.local == nil {
+		return nil
+	}
+	return common.CloneMusicList(p.local.GetAll(ctx))
+}
+
+func (p *dbMusicProvider) cachedMusicList() []*masterdata.Music {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return common.CloneMusicList(p.musicList)
+}
+
+func (p *dbMusicProvider) storeMusicList(list []*masterdata.Music, replaceIndex bool) {
+	byID := make(map[int]*masterdata.Music, len(list))
+	for _, item := range list {
+		if item != nil {
+			byID[item.ID] = item
+		}
+	}
+	p.storeMusicListWithIndex(list, byID, replaceIndex)
+}
+
+func (p *dbMusicProvider) storeMusicListWithIndex(list []*masterdata.Music, byID map[int]*masterdata.Music, replaceIndex bool) {
 	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.musicList = list
+	if replaceIndex {
+		p.musicByID = byID
+		return
+	}
 	for id, item := range byID {
 		p.musicByID[id] = item
 	}
-	p.mu.Unlock()
-	return common.CloneMusicList(list)
 }
 
 func (p *dbMusicProvider) GetLocalizedTitles(ctx context.Context, musicID int) ([]string, error) {

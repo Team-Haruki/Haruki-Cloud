@@ -93,13 +93,7 @@ func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregi
 
 	cards, err := b.source.GetEventCards(eventInfo.ID)
 	if err == nil && len(cards) > 0 {
-		maxCards := len(cards)
-		if maxCards > 6 {
-			maxCards = 6
-		}
-		for i := 0; i < maxCards; i++ {
-			brief.EventCards = append(brief.EventCards, common.BuildCardThumbnail(b.assets, cards[i], region, common.ThumbnailOptions{}))
-		}
+		brief.EventCards = b.eventCardThumbnails(cards, region)
 	}
 	if attr, _ := b.extractEventBonuses(eventInfo.ID); attr != "" {
 		brief.EventAttrPath = new(assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("card", fmt.Sprintf("attr_%s.png", strings.ToLower(attr)))))
@@ -107,21 +101,37 @@ func (b *Builder) buildEventBrief(eventInfo *masterdata.Event, region renderregi
 
 	isWLEvent := strings.EqualFold(eventInfo.EventType, "world_bloom")
 	if !isWLEvent {
-		if bannerCID, err := b.source.GetEventBannerCharacterID(eventInfo.ID); err == nil && bannerCID != 0 {
-			brief.EventCharaPath = new(b.characterIconPath(bannerCID, region))
-			if unit := b.unitIconPathByCharacter(bannerCID, region); unit != "" {
-				brief.EventUnitPath = &unit
-			}
-		}
+		b.applyEventBriefBanner(&brief, eventInfo.ID, region)
 		return brief, nil
 	}
-
 	if len(cards) > 0 && len(cards) <= 6 {
-		if unit := b.unitIconPathByCharacter(cards[0].CharacterID, region); unit != "" {
-			brief.EventUnitPath = &unit
-		}
+		brief.EventUnitPath = nonEmptyStringPtr(b.unitIconPathByCharacter(cards[0].CharacterID, region))
 	}
 	return brief, nil
+}
+
+func (b *Builder) eventCardThumbnails(cards []*masterdata.Card, region renderregion.Value) []drawing.CardFullThumbnailRequest {
+	result := make([]drawing.CardFullThumbnailRequest, 0, min(6, len(cards)))
+	for _, card := range cards[:min(6, len(cards))] {
+		result = append(result, common.BuildCardThumbnail(b.assets, card, region, common.ThumbnailOptions{}))
+	}
+	return result
+}
+
+func (b *Builder) applyEventBriefBanner(brief *drawing.EventBrief, eventID int, region renderregion.Value) {
+	bannerCID, err := b.source.GetEventBannerCharacterID(eventID)
+	if err != nil || bannerCID == 0 {
+		return
+	}
+	brief.EventCharaPath = new(b.characterIconPath(bannerCID, region))
+	brief.EventUnitPath = nonEmptyStringPtr(b.unitIconPathByCharacter(bannerCID, region))
+}
+
+func nonEmptyStringPtr(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
 }
 
 func (b *Builder) characterIconPath(charID int, _ renderregion.Value) string {

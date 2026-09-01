@@ -57,52 +57,57 @@ func parseProfileBGAdjustArgs(args string) (accountdata.ProfileSettingsCommandPa
 		return params, nil
 	}
 	params.Vertical, args = extractProfileVerticalArg(args)
-
 	tokens := strings.Fields(args)
 	for i := 0; i < len(tokens); i++ {
-		token := strings.TrimSpace(tokens[i])
-		switch strings.ToLower(token) {
-		case "模糊", "blur":
-			if i+1 >= len(tokens) {
-				return params, onebot11.NewReplayError("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
-			}
-			value, err := parseProfileBGInt(tokens[i+1], 0, 10)
-			if err != nil {
-				return params, err
-			}
-			params.Blur = &value
-			i++
-		case "透明", "alpha":
-			if i+1 >= len(tokens) {
-				return params, onebot11.NewReplayError("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
-			}
-			value, err := parseProfileBGInt(tokens[i+1], 0, 100)
-			if err != nil {
-				return params, err
-			}
-			params.Alpha = &value
-			i++
-		default:
-			if strings.HasPrefix(token, "模糊") {
-				value, err := parseProfileBGInt(strings.TrimPrefix(token, "模糊"), 0, 10)
-				if err != nil {
-					return params, err
-				}
-				params.Blur = &value
-				continue
-			}
-			if strings.HasPrefix(token, "透明") {
-				value, err := parseProfileBGInt(strings.TrimPrefix(token, "透明"), 0, 100)
-				if err != nil {
-					return params, err
-				}
-				params.Alpha = &value
-				continue
-			}
-			return params, fmt.Errorf("无法识别的个人信息背景参数: %s", token)
+		kind, raw, consumed, err := parseProfileBGToken(tokens, i)
+		if err != nil {
+			return params, err
 		}
+		value, err := parseProfileBGInt(raw, 0, profileBGValueLimit(kind))
+		if err != nil {
+			return params, err
+		}
+		if kind == "blur" {
+			params.Blur = &value
+		} else {
+			params.Alpha = &value
+		}
+		i += consumed
 	}
 	return params, nil
+}
+
+func parseProfileBGToken(tokens []string, index int) (string, string, int, error) {
+	token := strings.TrimSpace(tokens[index])
+	switch strings.ToLower(token) {
+	case "模糊", "blur", "透明", "alpha":
+		if index+1 >= len(tokens) {
+			return "", "", 0, onebot11.NewReplayError("使用方式:\n调整个人信息背景 [横屏|竖屏] [模糊 0~10] [透明 0~100]")
+		}
+		return profileBGTokenKind(token), tokens[index+1], 1, nil
+	default:
+		if strings.HasPrefix(token, "模糊") {
+			return "blur", strings.TrimPrefix(token, "模糊"), 0, nil
+		}
+		if strings.HasPrefix(token, "透明") {
+			return "alpha", strings.TrimPrefix(token, "透明"), 0, nil
+		}
+		return "", "", 0, fmt.Errorf("无法识别的个人信息背景参数: %s", token)
+	}
+}
+
+func profileBGTokenKind(token string) string {
+	if strings.EqualFold(token, "blur") || token == "模糊" {
+		return "blur"
+	}
+	return "alpha"
+}
+
+func profileBGValueLimit(kind string) int {
+	if kind == "blur" {
+		return 10
+	}
+	return 100
 }
 
 func parseProfileBGInt(raw string, minValue, maxValue int) (int, error) {

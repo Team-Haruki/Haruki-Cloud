@@ -135,34 +135,28 @@ func resolveCustomProfileCard(cards []sekaiapi.UserCustomProfileCard, params pro
 	if len(cards) == 0 {
 		return nil, onebot11.NewReplayError("当前公开profile中没有自定义档案")
 	}
-
-	var target *sekaiapi.UserCustomProfileCard
 	if params.CustomProfileID > 0 && params.CustomProfileCardID > 0 {
-		for i := range cards {
-			card := &cards[i]
-			if card.CustomProfileID == params.CustomProfileID && card.CustomProfileCardID == params.CustomProfileCardID {
-				target = card
-				break
-			}
+		if target := findCustomProfileCard(cards, params.CustomProfileID, params.CustomProfileCardID); target != nil {
+			return target, nil
 		}
-		if target == nil {
-			return nil, onebot11.NewReplayError("未找到第%d组第%d张自定义档案", params.CustomProfileID, params.CustomProfileCardID)
-		}
-	} else {
-		page := params.Seq
-		if page <= 0 {
-			page = 1
-		}
-		if page > len(cards) {
-			return nil, onebot11.NewReplayError("未找到第%d页自定义档案，当前共有%d页", page, len(cards))
-		}
-		ordered := slices.Clone(cards)
-		slices.SortStableFunc(ordered, func(a, b sekaiapi.UserCustomProfileCard) int {
-			return a.Seq - b.Seq
-		})
-		target = &ordered[page-1]
+		return nil, onebot11.NewReplayError("未找到第%d组第%d张自定义档案", params.CustomProfileID, params.CustomProfileCardID)
 	}
-	return target, nil
+	page := max(1, params.Seq)
+	if page > len(cards) {
+		return nil, onebot11.NewReplayError("未找到第%d页自定义档案，当前共有%d页", page, len(cards))
+	}
+	ordered := slices.Clone(cards)
+	slices.SortStableFunc(ordered, func(a, b sekaiapi.UserCustomProfileCard) int { return a.Seq - b.Seq })
+	return &ordered[page-1], nil
+}
+
+func findCustomProfileCard(cards []sekaiapi.UserCustomProfileCard, profileID, cardID int) *sekaiapi.UserCustomProfileCard {
+	for i := range cards {
+		if cards[i].CustomProfileID == profileID && cards[i].CustomProfileCardID == cardID {
+			return &cards[i]
+		}
+	}
+	return nil
 }
 
 func parsePositiveIntArg(value string) (int, bool) {

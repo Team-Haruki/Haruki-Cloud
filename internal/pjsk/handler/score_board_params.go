@@ -72,34 +72,17 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 	args = remaining
 
 	if target == "pt" || target == pointsPerTimeMetric {
-		power, remaining, err := extractMusicBoardPower(args)
+		args, err = applyMusicBoardPowerAndBonus(&params, args)
 		if err != nil {
 			return rendermusic.BoardQuery{}, err
 		}
-		if power > 0 {
-			params.Power = power
-		}
-		args = remaining
-
-		deckBonus, remaining, err := extractMusicBoardDeckBonus(args)
-		if err != nil {
-			return rendermusic.BoardQuery{}, err
-		}
-		if deckBonus > 0 {
-			params.DeckBonus = deckBonus
-		}
-		args = remaining
 	}
 
 	if target == pointsPerTimeMetric || target == "time" {
-		interval, remaining, err := extractMusicBoardInterval(args)
+		args, err = applyMusicBoardInterval(&params, args)
 		if err != nil {
 			return rendermusic.BoardQuery{}, err
 		}
-		if interval > 0 {
-			params.PlayInterval = interval
-		}
-		args = remaining
 	}
 
 	levelFilter, remaining := extractMusicBoardLevelFilter(args)
@@ -112,6 +95,35 @@ func buildMusicBoardParams(args string) (rendermusic.BoardQuery, error) {
 
 	params.SpecQueries = splitMusicBoardSpecQueries(args)
 	return params, nil
+}
+
+func applyMusicBoardPowerAndBonus(params *rendermusic.BoardQuery, args string) (string, error) {
+	power, remaining, err := extractMusicBoardPower(args)
+	if err != nil {
+		return "", err
+	}
+	if power > 0 {
+		params.Power = power
+	}
+	deckBonus, remaining, err := extractMusicBoardDeckBonus(remaining)
+	if err != nil {
+		return "", err
+	}
+	if deckBonus > 0 {
+		params.DeckBonus = deckBonus
+	}
+	return remaining, nil
+}
+
+func applyMusicBoardInterval(params *rendermusic.BoardQuery, args string) (string, error) {
+	interval, remaining, err := extractMusicBoardInterval(args)
+	if err != nil {
+		return "", err
+	}
+	if interval > 0 {
+		params.PlayInterval = interval
+	}
+	return remaining, nil
 }
 
 func splitMusicBoardSpecQueries(args string) []string {
@@ -168,21 +180,9 @@ func looksLikeCompactMusicBoardSpecQuery(field string) bool {
 		return true
 	}
 
-	hasNonASCII := false
-	hasASCIIUpper := false
-	hasASCII := false
-	for _, r := range field {
-		if r > unicode.MaxASCII {
-			hasNonASCII = true
-			continue
-		}
-		hasASCII = true
-		if unicode.IsUpper(r) {
-			hasASCIIUpper = true
-		}
-		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '-') {
-			return false
-		}
+	hasNonASCII, hasASCII, hasASCIIUpper, valid := compactMusicBoardFieldShape(field)
+	if !valid {
+		return false
 	}
 	if hasNonASCII && !hasASCII {
 		return true
@@ -191,6 +191,21 @@ func looksLikeCompactMusicBoardSpecQuery(field string) bool {
 		return false
 	}
 	return len(field) <= 8
+}
+
+func compactMusicBoardFieldShape(field string) (hasNonASCII, hasASCII, hasASCIIUpper, valid bool) {
+	for _, r := range field {
+		if r > unicode.MaxASCII {
+			hasNonASCII = true
+			continue
+		}
+		hasASCII = true
+		hasASCIIUpper = hasASCIIUpper || unicode.IsUpper(r)
+		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '-') {
+			return hasNonASCII, hasASCII, hasASCIIUpper, false
+		}
+	}
+	return hasNonASCII, hasASCII, hasASCIIUpper, true
 }
 
 func extractCompactMusicDifficulty(query string) (string, string) {

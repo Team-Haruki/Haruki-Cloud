@@ -138,38 +138,23 @@ func parseDeckSupportConfigPatch(segment string) (renderdeck.CardConfigPatch, bo
 }
 
 func parseDeckCardConfigPatch(segment string) (renderdeck.CardConfigPatch, bool) {
-	patch := renderdeck.CardConfigPatch{}
-	for _, keyword := range deckDisableKeywords {
-		if strings.Contains(segment, keyword) {
-			patch.Disable = true
-			break
-		}
-	}
-	for _, keyword := range deckSkillMaxKeywords {
-		if strings.Contains(segment, keyword) {
-			patch.SkillMax = true
-			break
-		}
-	}
-	for _, keyword := range deckMasterMaxKeywords {
-		if strings.Contains(segment, keyword) {
-			patch.MasterMax = true
-			break
-		}
-	}
-	for _, keyword := range deckEpisodeReadKeywords {
-		if strings.Contains(segment, keyword) {
-			patch.EpisodeRead = true
-			break
-		}
-	}
-	for _, keyword := range deckCanvasKeywords {
-		if strings.Contains(segment, keyword) {
-			patch.Canvas = true
-			break
-		}
+	patch := renderdeck.CardConfigPatch{
+		Disable:     containsDeckConfigKeyword(segment, deckDisableKeywords),
+		SkillMax:    containsDeckConfigKeyword(segment, deckSkillMaxKeywords),
+		MasterMax:   containsDeckConfigKeyword(segment, deckMasterMaxKeywords),
+		EpisodeRead: containsDeckConfigKeyword(segment, deckEpisodeReadKeywords),
+		Canvas:      containsDeckConfigKeyword(segment, deckCanvasKeywords),
 	}
 	return patch, patch.Disable || patch.SkillMax || patch.MasterMax || patch.EpisodeRead || patch.Canvas
+}
+
+func containsDeckConfigKeyword(segment string, keywords []string) bool {
+	for _, keyword := range keywords {
+		if strings.Contains(segment, keyword) {
+			return true
+		}
+	}
+	return false
 }
 
 func applyGlobalDeckCardConfig(params *deckAutoQueryParams, patch renderdeck.CardConfigPatch) {

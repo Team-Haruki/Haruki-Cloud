@@ -242,10 +242,9 @@ func setNormalHonorLevelIcons(req *drawing.HonorRequest, groupType string) {
 func resolveHonorLevelVisual(levels []masterdata.HonorLevel, requestedLevel int) (*masterdata.HonorLevel, bool) {
 	var bestAtOrBelow *masterdata.HonorLevel
 	var firstUsable *masterdata.HonorLevel
-
 	for i := range levels {
 		level := &levels[i]
-		if level.AssetBundleName == "" && level.HonorRarity == "" {
+		if !usableHonorLevelVisual(level) {
 			continue
 		}
 		if firstUsable == nil {
@@ -254,20 +253,23 @@ func resolveHonorLevelVisual(levels []masterdata.HonorLevel, requestedLevel int)
 		if level.Level == requestedLevel {
 			return level, true
 		}
-		if requestedLevel > 0 && level.Level <= requestedLevel {
-			if bestAtOrBelow == nil || level.Level > bestAtOrBelow.Level {
-				bestAtOrBelow = level
-			}
+		if betterHonorLevelVisual(level, bestAtOrBelow, requestedLevel) {
+			bestAtOrBelow = level
 		}
 	}
+	selected := bestAtOrBelow
+	if selected == nil {
+		selected = firstUsable
+	}
+	return selected, selected != nil
+}
 
-	if bestAtOrBelow != nil {
-		return bestAtOrBelow, true
-	}
-	if firstUsable != nil {
-		return firstUsable, true
-	}
-	return nil, false
+func usableHonorLevelVisual(level *masterdata.HonorLevel) bool {
+	return level != nil && (level.AssetBundleName != "" || level.HonorRarity != "")
+}
+
+func betterHonorLevelVisual(candidate, current *masterdata.HonorLevel, requestedLevel int) bool {
+	return requestedLevel > 0 && candidate.Level <= requestedLevel && (current == nil || candidate.Level > current.Level)
 }
 
 func (b *Builder) assetExists(rel string) bool {

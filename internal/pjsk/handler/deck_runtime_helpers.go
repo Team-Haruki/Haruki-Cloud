@@ -38,30 +38,40 @@ func formatDeckQuerySummary(q deck.AutoQuery) string {
 	if q.EventID != nil && *q.EventID > 0 {
 		parts = append(parts, fmt.Sprintf("event%d", *q.EventID))
 	}
-	if q.MusicTitle != "" {
-		parts = append(parts, q.MusicTitle)
-	} else if q.MusicQuery != "" {
-		parts = append(parts, q.MusicQuery)
-	}
+	parts = appendNonEmpty(parts, firstNonEmpty(q.MusicTitle, q.MusicQuery))
 	if q.MusicDiff != "" {
 		parts = append(parts, strings.ToUpper(q.MusicDiff))
 	}
-	if q.WorldBloomCharacterQuery != "" {
-		parts = append(parts, q.WorldBloomCharacterQuery)
-	} else if q.WorldBloomCharacterID != nil && *q.WorldBloomCharacterID > 0 {
-		parts = append(parts, fmt.Sprintf("wl角色%d", *q.WorldBloomCharacterID))
-	}
-	if q.ForcedLeaderCharacterQuery != "" {
-		parts = append(parts, q.ForcedLeaderCharacterQuery)
-	} else if q.ForcedLeaderCharacterID != nil && *q.ForcedLeaderCharacterID > 0 {
-		parts = append(parts, fmt.Sprintf("队长角色%d", *q.ForcedLeaderCharacterID))
-	}
-	if q.ChallengeLiveCharacterQuery != "" {
-		parts = append(parts, q.ChallengeLiveCharacterQuery)
-	} else if q.ChallengeLiveCharacterID != nil && *q.ChallengeLiveCharacterID > 0 {
-		parts = append(parts, fmt.Sprintf("挑战角色%d", *q.ChallengeLiveCharacterID))
-	}
+	parts = appendNonEmpty(parts, deckCharacterSummary(q.WorldBloomCharacterQuery, q.WorldBloomCharacterID, "wl角色"))
+	parts = appendNonEmpty(parts, deckCharacterSummary(q.ForcedLeaderCharacterQuery, q.ForcedLeaderCharacterID, "队长角色"))
+	parts = appendNonEmpty(parts, deckCharacterSummary(q.ChallengeLiveCharacterQuery, q.ChallengeLiveCharacterID, "挑战角色"))
 	return strings.Join(parts, " / ")
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func appendNonEmpty(values []string, value string) []string {
+	if value == "" {
+		return values
+	}
+	return append(values, value)
+}
+
+func deckCharacterSummary(query string, id *int, prefix string) string {
+	if query != "" {
+		return query
+	}
+	if id == nil || *id <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("%s%d", prefix, *id)
 }
 
 func applyDefaultChallengeDeckAutoQueryMusic(q *deck.AutoQuery) {

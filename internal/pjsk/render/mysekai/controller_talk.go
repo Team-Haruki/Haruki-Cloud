@@ -93,13 +93,7 @@ func (c *Controller) lookupTalkCharacterID(query string) int {
 }
 
 func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID int, gameCharacterUnits []map[string]any) (int, int, error) {
-	candidates := make([]map[string]any, 0, 6)
-	for _, item := range gameCharacterUnits {
-		if intNumberFrom(item, 0, "gameCharacterId", "game_character_id") != characterID {
-			continue
-		}
-		candidates = append(candidates, item)
-	}
+	candidates := talkCharacterUnitCandidates(characterID, gameCharacterUnits)
 	if len(candidates) == 0 {
 		return 0, 0, fmt.Errorf("找不到要查询的角色")
 	}
@@ -113,11 +107,8 @@ func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID in
 	}
 
 	if unit != "" {
-		normalizedUnit := normalizeMysekaiTalkUnit(unit)
-		for _, item := range candidates {
-			if normalizeMysekaiTalkUnit(stringValueFrom(item, "unit")) == normalizedUnit {
-				return characterID, intNumberFrom(item, 0, "id", "game_id"), nil
-			}
+		if unitID := matchingTalkCharacterUnitID(candidates, unit); unitID > 0 {
+			return characterID, unitID, nil
 		}
 		return 0, 0, fmt.Errorf("找不到要查询的角色")
 	}
@@ -129,6 +120,26 @@ func (c *Controller) resolveTalkCharacterUnit(query, unit string, characterID in
 		return 0, 0, fmt.Errorf("查询存在多个组合的V家角色时需要同时指定组合，例如\"%s ln\"", strings.TrimSpace(query))
 	}
 	return characterID, intNumberFrom(candidates[0], 0, "id", "game_id"), nil
+}
+
+func talkCharacterUnitCandidates(characterID int, units []map[string]any) []map[string]any {
+	candidates := make([]map[string]any, 0, 6)
+	for _, item := range units {
+		if intNumberFrom(item, 0, "gameCharacterId", "game_character_id") == characterID {
+			candidates = append(candidates, item)
+		}
+	}
+	return candidates
+}
+
+func matchingTalkCharacterUnitID(candidates []map[string]any, unit string) int {
+	normalizedUnit := normalizeMysekaiTalkUnit(unit)
+	for _, item := range candidates {
+		if normalizeMysekaiTalkUnit(stringValueFrom(item, "unit")) == normalizedUnit {
+			return intNumberFrom(item, 0, "id", "game_id")
+		}
+	}
+	return 0
 }
 
 func (c *Controller) filterMysekaiVirtualSingerCandidates(characterID int, candidates []map[string]any) []map[string]any {

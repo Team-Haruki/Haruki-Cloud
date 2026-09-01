@@ -109,7 +109,17 @@ haruki_bot:
   session_sign_token: "your-session-sign-token-32chars"
   internal_api_token: "your-internal-api-token"
   session_ttl_days: 7
-  noise_private_key: ""  # hex-encoded 32-byte X25519 private key for Noise IK transport encryption (leave empty to disable)
+  # Noise NK static keys. noise_private_key is the legacy single key (key id
+  # "default") and stays primary when set. noise_keys lists additional keys
+  # accepted during rotation; each needs a stable key_id clients can reference.
+  # At least one key must be configured.
+  noise_private_key: ""  # hex-encoded 32-byte X25519 private key
+  noise_keys: []
+  # - key_id: "cloud-noise-2026-09"
+  #   private_key: ""      # hex-encoded 32-byte X25519 private key
+  # Session lifetime for the Noise-wrapped AuthV3 endpoint (/api/v3/bot/:bot_id/auth).
+  # Zero uses the default (1h); values are clamped to [1m, 30d].
+  auth_v3_session_ttl: "1h"
   # Candidate collection window for choosing which Bot returns a shared command result.
   # Zero uses the runtime default (200ms); a negative duration disables response election.
   response_election_window: "200ms"

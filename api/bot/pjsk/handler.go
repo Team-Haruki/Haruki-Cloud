@@ -77,8 +77,8 @@ func (d *BotRouteDispatchers) Close() {
 //	 "matched_command":"/cmd","message":[{"type":"text","data":{"text":"/cmd args"}}],
 //	 "enableParamEcho":false}
 //
-// When noiseKeyPair is non-nil, the Noise IK transport encryption middleware is applied
-// to the pjsk route group. Clients must then send Noise IK Message 1 containing a
+// When noiseKeys is non-nil, the Noise NK transport encryption middleware is applied
+// to the pjsk route group; every key in the ring is accepted so keys can rotate. Clients must then send Noise IK Message 1 containing a
 // MsgPack-encoded BotCommandRequest as the HTTP body, and will receive Noise IK Message 2
 // containing a MsgPack-encoded response. The manifest endpoint is NOT behind Noise.
 //
@@ -90,11 +90,11 @@ func (d *BotRouteDispatchers) Close() {
 // registered command manifest routes on startup and the manifest endpoint returns
 // live data from the database.
 // Pass nil to keep the placeholder response (e.g. in unit tests).
-func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) *BotRouteDispatchers {
-	return RegisterPJSKBotRoutesWithContext(context.Background(), app, renderApp, redisClient, botDBClient, noiseKeyPair)
+func RegisterPJSKBotRoutes(app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeys *crypto.KeyRing) *BotRouteDispatchers {
+	return RegisterPJSKBotRoutesWithContext(context.Background(), app, renderApp, redisClient, botDBClient, noiseKeys)
 }
 
-func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeyPair *crypto.KeyPair) *BotRouteDispatchers {
+func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, renderApp *renderapp.App, redisClient *redis.Client, botDBClient *botDB.Client, noiseKeys *crypto.KeyRing) *BotRouteDispatchers {
 	if renderApp == nil {
 		return nil
 	}
@@ -120,8 +120,8 @@ func RegisterPJSKBotRoutesWithContext(initCtx context.Context, app *fiber.App, r
 	telemetry := botauth.NewCommandTelemetryDispatcher(botDBClient)
 
 	pjsk := bot.Group("/pjsk")
-	if noiseKeyPair != nil {
-		pjsk.Use(secure.New(secure.Config{ServerPrivateKey: noiseKeyPair}))
+	if noiseKeys != nil {
+		pjsk.Use(secure.New(secure.Config{KeyRing: noiseKeys}))
 	}
 	registerBirthdayMonitorRoutes(pjsk, app, renderApp, guard)
 	if !registerBotCommandRoutes(pjsk, renderApp, commandElection, telemetry, replay, preview3DEnabled) {

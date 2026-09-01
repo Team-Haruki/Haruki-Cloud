@@ -249,23 +249,49 @@ func initAuthEncryptionKey(mainLogger *harukiLogger.Logger) []byte {
 	return keyBytes
 }
 
-func initNoiseKeyPair(mainLogger *harukiLogger.Logger) *crypto.KeyPair {
-	keyHex := strings.TrimSpace(harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey)
-	if keyHex == "" {
+func initNoiseKeyRing(mainLogger *harukiLogger.Logger) *crypto.KeyRing {
+	botCfg := harukiConfig.Cfg.HarukiBotDB
+	keys := make([]crypto.StaticKey, 0, 1+len(botCfg.NoiseKeys))
+	if legacy := strings.TrimSpace(botCfg.NoisePrivateKey); legacy != "" {
+		keys = append(keys, crypto.StaticKey{ID: crypto.DefaultKeyID, Pair: parseNoisePrivateKey(mainLogger, "noise_private_key", legacy)})
+	}
+	for i, entry := range botCfg.NoiseKeys {
+		field := fmt.Sprintf("noise_keys[%d]", i)
+		keyID := strings.TrimSpace(entry.KeyID)
+		if keyID == "" {
+			fatalStartup(mainLogger, "Noise key id is empty", "config_field", field)
+		}
+		keys = append(keys, crypto.StaticKey{ID: keyID, Pair: parseNoisePrivateKey(mainLogger, field, entry.PrivateKey)})
+	}
+	if len(keys) == 0 {
 		fatalStartup(mainLogger, "Noise private key is not configured")
 	}
-	privBytes, err := hex.DecodeString(keyHex)
+	ring, err := crypto.NewKeyRing(keys...)
 	if err != nil {
-		fatalStartup(mainLogger, "invalid noise_private_key hex", "error_type", fmt.Sprintf("%T", err))
+		fatalStartup(mainLogger, "invalid Noise key ring", "error_type", fmt.Sprintf("%T", err), "detail", err.Error())
+	}
+	for i, key := range ring.Keys() {
+		role := "rotation"
+		if i == 0 {
+			role = "primary"
+		}
+		mainLogger.Info("Noise NK static key loaded", "key_id", key.ID, "role", role, "public_key", hex.EncodeToString(key.Pair.Public))
+	}
+	return ring
+}
+
+func parseNoisePrivateKey(mainLogger *harukiLogger.Logger, field string, keyHex string) *crypto.KeyPair {
+	privBytes, err := hex.DecodeString(strings.TrimSpace(keyHex))
+	if err != nil {
+		fatalStartup(mainLogger, "invalid Noise private key hex", "config_field", field, "error_type", fmt.Sprintf("%T", err))
 	}
 	if len(privBytes) != 32 {
-		fatalStartup(mainLogger, "Noise private key has invalid length", "key_bytes", len(privBytes))
+		fatalStartup(mainLogger, "Noise private key has invalid length", "config_field", field, "key_bytes", len(privBytes))
 	}
 	kp, err := crypto.KeyPairFromPrivate(privBytes)
 	if err != nil {
-		fatalStartup(mainLogger, "failed to derive Noise key pair", "error_type", fmt.Sprintf("%T", err))
+		fatalStartup(mainLogger, "failed to derive Noise key pair", "config_field", field, "error_type", fmt.Sprintf("%T", err))
 	}
-	mainLogger.Info("Noise IK transport encryption enabled", "public_key", hex.EncodeToString(kp.Public))
 	return kp
 }
 

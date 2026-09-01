@@ -20,6 +20,25 @@ type HarukiAuthPayload struct {
 	ClientLocation string `msgpack:"client_location"` // 客户端自报地理位置
 }
 
+// AuthPayloadV3 是 AuthV3 解密后的登录载荷（MsgPack 编码）。
+// 请求体格式: Noise NK Message 1，payload = MsgPack(AuthPayloadV3)。
+// 载荷通过 Noise 通道传输，不再依赖二进制内置的共享 AES 密钥。
+type AuthPayloadV3 struct {
+	BotID      string `msgpack:"bot_id"`
+	Credential string `msgpack:"credential"` // JWT 签名的 credential
+	Timestamp  int64  `msgpack:"timestamp"`  // Unix 秒，服务端校验时间窗口
+	// Nonce 为 16 字节随机数的 hex 编码（32 个 hex 字符），
+	// 服务端按 bot_id + nonce 一次性消费。
+	Nonce         string `msgpack:"nonce"`
+	ClientVersion string `msgpack:"client_version"`
+	BuildID       string `msgpack:"build_id"`
+	// Method / Path 绑定请求上下文，防止密文被搬到其他接口重放。
+	Method string `msgpack:"method"`
+	Path   string `msgpack:"path"`
+	// NoiseKeyID 为客户端本次握手使用的服务端公钥 ID；为空时不校验。
+	NoiseKeyID string `msgpack:"noise_key_id"`
+}
+
 // InternalVerifyRequest 内部服务验证请求
 type InternalVerifyRequest struct {
 	BotID        string `json:"bot_id"`
@@ -35,6 +54,17 @@ type HarukiAuthResponse struct {
 	NoiseServerPubKey string `msgpack:"noise_server_pubkey"` // hex 编码的 X25519 公钥
 }
 
+// AuthResponseV3 是 AuthV3 登录成功响应（MsgPack 编码，经 Noise NK Message 2 加密返回）。
+type AuthResponseV3 struct {
+	SessionToken string `msgpack:"session_token"`
+	ExpiresAt    int64  `msgpack:"expires_at"` // Unix 秒
+	// EchoNonce 回显请求中的 nonce（hex），供客户端确认响应与请求匹配。
+	EchoNonce       string `msgpack:"echo_nonce"`
+	SessionID       string `msgpack:"session_id"`
+	ServerTime      int64  `msgpack:"server_time"` // Unix 秒
+	AcceptedBuildID string `msgpack:"accepted_build_id"`
+}
+
 // InternalVerifyResponse 内部服务验证响应
 type InternalVerifyResponse struct {
 	Valid       bool  `json:"valid"`
@@ -46,8 +76,9 @@ type InternalVerifyResponse struct {
 
 const (
 	RedisKeySessionToken = api.RedisKeyBotSession
-	RedisKeyNonce        = "hdb:bot:nonce:%s" // payload hash
-	RedisKeyRateLimit    = "hdb:bot:rl:%s:%s" // action:identifier
+	RedisKeyNonce        = "hdb:bot:nonce:%s"       // payload hash
+	RedisKeyNonceV3      = "hdb:bot:nonce:v3:%s:%s" // bot_id:nonce hex
+	RedisKeyRateLimit    = "hdb:bot:rl:%s:%s"       // action:identifier
 )
 
 // ================= Cache Settings =================
@@ -55,6 +86,16 @@ const (
 const (
 	// MaxAuthTimestampAge 认证时间戳最大偏差（秒），防重放攻击
 	MaxAuthTimestampAge = 300
+
+	// AuthV3RouteBase 是 AuthV3 公开路由前缀；完整路径为 <base>/:bot_id/auth。
+	AuthV3RouteBase = "/api/v3/bot"
+	// AuthV3NonceSize 是 AuthV3 nonce 的原始字节数（hex 编码后为 2 倍长度）。
+	AuthV3NonceSize = 16
+	// DefaultAuthV3SessionTTL 是 AuthV3 session 的默认有效期。
+	DefaultAuthV3SessionTTL = time.Hour
+	// MinAuthV3SessionTTL / MaxAuthV3SessionTTL 限定配置值的合法范围。
+	MinAuthV3SessionTTL = time.Minute
+	MaxAuthV3SessionTTL = 30 * 24 * time.Hour
 
 	// Rate limit settings
 	RateLimitAuth    = 10 // 每 bot_id 每分钟最多认证 10 次
@@ -73,6 +114,10 @@ const (
 	ErrRateLimitExceeded    = "请求过于频繁，请稍后再试"
 	ErrReplayDetected       = "检测到重复请求"
 	ErrOwnerBanned          = "Bot 所有者已被全局封禁"
+	ErrSecureChannelMissing = "认证请求必须经由 Noise 安全通道"
+	ErrRequestBindingBroken = "请求上下文不匹配"
+	ErrNoiseKeyMismatch     = "Noise 公钥标识不匹配"
+	ErrInvalidNonce         = "nonce 无效"
 )
 
 // ================= Service Structs =================

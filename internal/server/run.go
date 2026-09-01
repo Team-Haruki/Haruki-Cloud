@@ -43,14 +43,14 @@ func Run(ctx context.Context) {
 		groupGuardAPI.RegisterGroupGuardRoutes(app, renderRuntime.Toolbox)
 	}
 	validateBotAuthSecrets(mainLogger)
-	noiseKeyPair := initNoiseKeyPair(mainLogger)
+	noiseKeys := initNoiseKeyRing(mainLogger)
 	authEncryptionKey := initAuthEncryptionKey(mainLogger)
 	var noiseServerPubKeyHex string
-	if noiseKeyPair != nil {
-		noiseServerPubKeyHex = hex.EncodeToString(noiseKeyPair.Public)
+	if noiseKeys != nil {
+		noiseServerPubKeyHex = hex.EncodeToString(noiseKeys.Primary().Pair.Public)
 	}
-	botDBClient := initBot(ctx, mainLogger, app, redisClient, authEncryptionKey, noiseServerPubKeyHex, banChecker)
-	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithContext(ctx, app, renderRuntime, redisClient, botDBClient, noiseKeyPair)
+	botDBClient := initBot(ctx, mainLogger, app, redisClient, authEncryptionKey, noiseServerPubKeyHex, noiseKeys, banChecker)
+	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithContext(ctx, app, renderRuntime, redisClient, botDBClient, noiseKeys)
 
 	if dir := harukiConfig.Cfg.PJSKRender.ImageCache.Dir; dir != "" {
 		app.Get("/ic/*", static.New(dir))

@@ -12,10 +12,27 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+const (
+	// HeaderNoiseKeyID lets a client name the server static key it handshook
+	// against. It is a hint: when absent or unknown every configured key is
+	// tried, so rotation never depends on the client sending it.
+	HeaderNoiseKeyID = "X-Haruki-Noise-Key-Id"
+	// LocalSecureNoise is set to true on the request context once the Noise
+	// handshake succeeded, so downstream handlers can refuse to run unwrapped.
+	LocalSecureNoise = "secure_noise"
+	// LocalNoiseKeyID carries the id of the static key that decrypted the
+	// request.
+	LocalNoiseKeyID = "secure_noise_key_id"
+)
+
 // Config defines the config for Secure middleware.
 type Config struct {
 	// ServerPrivateKey is the server's static key pair used for Noise NK.
+	// It is a single-key shorthand; KeyRing takes precedence when set.
 	ServerPrivateKey *crypto.KeyPair
+	// KeyRing lists every static key the server currently accepts, primary
+	// first. Configure two keys to rotate without an outage.
+	KeyRing *crypto.KeyRing
 }
 
 // New creates a new Secure middleware with Noise NK transport encryption.
@@ -24,8 +41,16 @@ type Config struct {
 //	Request body  = Noise NK Message 1 (-> e, es, payload)
 //	Response body = Noise NK Message 2 (<- e, ee, payload)
 func New(config Config) fiber.Handler {
-	if config.ServerPrivateKey == nil {
-		panic("secure middleware: ServerPrivateKey is required")
+	ring := config.KeyRing
+	if ring == nil {
+		if config.ServerPrivateKey == nil {
+			panic("secure middleware: KeyRing or ServerPrivateKey is required")
+		}
+		single, err := crypto.SingleKeyRing(config.ServerPrivateKey)
+		if err != nil {
+			panic("secure middleware: " + err.Error())
+		}
+		ring = single
 	}
 
 	return func(c fiber.Ctx) error {
@@ -35,22 +60,16 @@ func New(config Config) fiber.Handler {
 			return c.Status(status).JSON(payload)
 		}
 		finishDecrypt := commandtrace.MeasurePhase(c.Context(), "noise_decrypt")
-		// 1. Initialize Noise NK Responder
-		nc, err := crypto.NewResponder(config.ServerPrivateKey)
-		if err != nil {
-			finishDecrypt()
-			commandtrace.SetErrorType(c.Context(), fmt.Sprintf("%T", err))
-			return sendJSON(fiber.StatusInternalServerError, fiber.Map{"error": "Crypto init failed"})
-		}
-
-		// 2. Read Request Body (NK Message 1: -> e, es, payload)
+		// 1. Read Request Body (NK Message 1: -> e, es, payload)
 		ciphertext := c.Body()
 		if len(ciphertext) == 0 {
 			finishDecrypt()
 			return sendJSON(fiber.StatusBadRequest, fiber.Map{"error": "Empty body"})
 		}
 
-		plaintext, err := nc.DecryptPacket(ciphertext)
+		// 2. Open the handshake against the key ring, honouring the client's
+		// key-id hint first and falling back to every other configured key.
+		nc, plaintext, keyID, err := ring.OpenNK(ciphertext, c.Get(HeaderNoiseKeyID))
 		if err != nil {
 			finishDecrypt()
 			commandtrace.SetErrorType(c.Context(), fmt.Sprintf("%T", err))
@@ -62,7 +81,9 @@ func New(config Config) fiber.Handler {
 		// 3. Set Request Body to Plaintext
 		c.Request().SetBody(plaintext)
 		c.Request().Header.Set("Content-Type", "application/msgpack")
-		c.Locals("secure_noise", true)
+		c.Locals(LocalSecureNoise, true)
+		c.Locals(LocalNoiseKeyID, keyID)
+		c.Set(HeaderNoiseKeyID, keyID)
 
 		// 4. Continue stack. Once the Noise handshake succeeds, downstream
 		// errors and panics must be rendered here so the fallback response still

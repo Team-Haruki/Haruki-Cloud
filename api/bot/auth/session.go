@@ -47,7 +47,7 @@ func (h *UserHandler) Auth(c fiber.Ctx) error {
 	if authErr != nil {
 		return sendAuthResponseError(c, authErr)
 	}
-	authenticated, authErr := h.authenticateBot(ctx, botID, botIDStr, payload)
+	authenticated, authErr := h.authenticateBot(ctx, botID, botIDStr, payload.Credential)
 	if authErr != nil {
 		return sendAuthResponseError(c, authErr)
 	}
@@ -142,14 +142,15 @@ func (h *UserHandler) decodeAuthPayload(ctx context.Context, botID string, body,
 	return payload, nil
 }
 
-func (h *UserHandler) authenticateBot(ctx context.Context, botID int, botIDString string, payload HarukiAuthPayload) (authenticatedBot, *authResponseError) {
+// authenticateBot 校验 credential JWT 并检查所有者封禁状态。AuthV2 与 AuthV3 共用。
+func (h *UserHandler) authenticateBot(ctx context.Context, botID int, botIDString string, credential string) (authenticatedBot, *authResponseError) {
 	u, err := h.svc.dbClient.User.Query().
 		Where(user.BotIDEQ(botID)).
 		Only(ctx)
 	if err != nil {
 		return authenticatedBot{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrAuthFailed}
 	}
-	decoded, err := parseCredentialJWT(payload.Credential, config.Cfg.HarukiBotDB.CredentialSignToken)
+	decoded, err := parseCredentialJWT(credential, config.Cfg.HarukiBotDB.CredentialSignToken)
 	if err != nil || !decoded.Valid {
 		return authenticatedBot{}, &authResponseError{status: fiber.StatusBadRequest, message: ErrInvalidCredential}
 	}

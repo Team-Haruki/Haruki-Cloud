@@ -188,9 +188,11 @@ haruki_bot:                # Bot 管理数据库 + Bot 通道配置
   credential_sign_token: ""  # JWT 签名密钥（登录凭据）
   session_sign_token: ""     # JWT 签名密钥（会话令牌）
   internal_api_token: ""     # 内部 API 回退令牌
-  session_ttl_days: 7
-  noise_private_key: ""      # Noise NK 服务端私钥（未配置时退回 JSON 明文）
-  auth_encryption_key: ""    # 登录 AES-256-GCM 密钥
+  session_ttl_days: 7        # AuthV2 session 有效期
+  auth_v3_session_ttl: "1h"  # AuthV3 session 有效期，限定 [1m, 30d]
+  noise_private_key: ""      # Noise NK 服务端私钥（legacy 单 key，key_id 为 default，必配其一）
+  noise_keys: []             # 轮换用附加 key：[{key_id, private_key}]，全部可解密
+  auth_encryption_key: ""    # AuthV2 登录 AES-256-GCM 密钥
   response_election_window: 0 # 多 bot 响应选举窗口
   response_election_roster: false
   require_request_nonce: false # true 时强制校验 timestamp/nonce（重放保护）
@@ -258,7 +260,8 @@ tracker:                   # SK Tracker 客户端
 
 ```
 适用路径：/api/v2/public/pjsk/alias/*,  /api/v2/public/chunithm/*,
-          /api/v2/bot/:bot_id/auth, /api/v2/bot/:bot_id/logout
+          /api/v2/bot/:bot_id/auth, /api/v2/bot/:bot_id/logout,
+          /api/v3/bot/:bot_id/auth
 ```
 
 ---
@@ -269,8 +272,25 @@ tracker:                   # SK Tracker 客户端
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/v2/bot/:bot_id/auth` | 登录（AES-256-GCM 加密凭据 → 返回 session_token） |
+| POST | `/api/v2/bot/:bot_id/auth` | AuthV2 登录（共享 AES-256-GCM 密钥加密凭据 → 返回 session_token） |
+| POST | `/api/v3/bot/:bot_id/auth` | AuthV3 登录（Noise NK 通道，客户端只需预置服务端公钥 → 返回短期 session） |
 | DELETE | `/api/v2/bot/:bot_id/logout` | 注销当前会话 |
+
+AuthV3 契约（请求体 Noise NK Message 1，响应体 Message 2，payload 均为 MsgPack）：
+
+| 方向 | 字段 | 说明 |
+|------|------|------|
+| 请求 | `bot_id`, `credential`, `timestamp` | 与 V2 相同；timestamp 窗口 ±300s |
+| 请求 | `nonce` | 16 字节随机数的 hex（32 字符），按 bot_id + nonce 一次性消费 |
+| 请求 | `method`, `path` | 必须等于实际 HTTP 方法与路径，防止密文搬到其他接口 |
+| 请求 | `client_version`, `build_id` | 记录用途，当前不阻断 |
+| 请求 | `noise_key_id` | 握手所用服务端公钥 ID；为空不校验，非空必须与实际匹配 |
+| 响应 | `session_token`, `expires_at`, `session_id` | session 有效期由 `auth_v3_session_ttl` 决定，默认 1h |
+| 响应 | `echo_nonce`, `server_time`, `accepted_build_id` | 回显与服务端时间 |
+
+服务端可配置多把 Noise 静态密钥（`noise_private_key` + `noise_keys`），每把有 key_id。
+客户端可通过 `X-Haruki-Noise-Key-Id` 请求头提示所用公钥；缺省时服务端依次尝试全部密钥。
+响应头 `X-Haruki-Noise-Key-Id` 回传实际匹配的 key_id。V2 与 V3 共用同一 auth 限流桶。
 
 > Bot 自助注册链路（send-mail / register / SMTP 验证码 / Turnstile）已移除；
 > Bot 账号由运维通过 `scripts/provision_bot` 手动开通。
@@ -415,8 +435,11 @@ Bot 客户端
 
 ```
 1. 运维执行 scripts/provision_bot  →  创建 Bot 账号 → 下发 JWT credential
-2. POST /api/v2/bot/:bot_id/auth   →  AES-256-GCM 解密 → JWT credential 验证
-                                    → 生成 session_token → 存 Redis → 返回
+2a. POST /api/v2/bot/:bot_id/auth  →  共享 AES-256-GCM 解密 → JWT credential 验证
+                                    → 生成 session_token → 存 Redis → AES 加密返回（含 Noise 公钥）
+2b. POST /api/v3/bot/:bot_id/auth  →  secure 中间件 Noise NK 握手解密 → method/path/nonce/时间窗校验
+                                    → JWT credential 验证 → 生成短期 session → 存 Redis
+                                    → 同一握手加密返回（客户端预置公钥，不再依赖共享 AES 密钥）
 3. DELETE /api/v2/bot/:bot_id/logout →  删除 Redis 会话
 ```
 
@@ -613,10 +636,11 @@ go test ./internal/pjsk/render/...          # 渲染子系统
 | 文件 | 职责 | 关联路由 |
 |------|------|----------|
 | `route.go` | 路由注册入口（user / internal / statistics 三组） | — |
-| `user.go` | 登录/注销 Handler | `/api/v2/bot/:bot_id/auth`, `/api/v2/bot/:bot_id/logout` |
+| `user.go` | 公开路由注册（V2 + V3） | `/api/v2/bot/:bot_id/auth`, `/api/v2/bot/:bot_id/logout`, `/api/v3/bot/:bot_id/auth` |
 | `credential.go` | JWT credential 生成与校验 | — |
-| `crypto.go` | AES-256-GCM 工具 | — |
-| `session.go` | 会话令牌管理（Redis） | — |
+| `crypto.go` | AES-256-GCM 工具（仅 AuthV2） | — |
+| `session.go` | AuthV2 登录 / 注销 Handler，会话令牌管理（Redis） | — |
+| `session_v3.go` | AuthV3 登录 Handler（Noise NK 通道，nonce 单次消费，请求上下文绑定） | — |
 | `internal.go` | 内部 session 验证 | `/internal/bot/verify-session` |
 | `statistics.go` | 统计上报 Handler | `/internal/bot/statistics/record/:botID` |
 | `telemetry.go` / `telemetry_dispatcher.go` | Bot 遥测采集与转发 | — |

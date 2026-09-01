@@ -3237,10 +3237,15 @@ func TestBotNoiseIKRoundTrip(t *testing.T) {
 		t.Fatalf("generate server key pair: %v", err)
 	}
 
+	serverRing, err := noiseCrypto.SingleKeyRing(serverKP)
+	if err != nil {
+		t.Fatalf("build server key ring: %v", err)
+	}
+
 	var client *drawing.HarukiDrawingClient
 	app := fiber.New()
 	runtime := testRenderApp(t, client)
-	RegisterPJSKBotRoutes(app, runtime, nil, nil, serverKP)
+	RegisterPJSKBotRoutes(app, runtime, nil, nil, serverRing)
 
 	// Build request payload
 	cmdReq := BotCommandRequest{

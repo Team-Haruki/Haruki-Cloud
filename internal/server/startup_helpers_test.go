@@ -15,6 +15,7 @@ import (
 	"time"
 
 	harukiConfig "haruki-cloud/config"
+	noiseCrypto "haruki-cloud/internal/core/crypto"
 	harukiLogger "haruki-cloud/utils/logger"
 
 	"entgo.io/ent"
@@ -154,12 +155,35 @@ func TestValidBotCryptographicConfiguration(t *testing.T) {
 	if got := initAuthEncryptionKey(logger); !bytes.Equal(got, key) {
 		t.Fatalf("decoded auth key = %x", got)
 	}
-	keyPair := initNoiseKeyPair(logger)
-	if keyPair == nil || len(keyPair.Private) != 32 || len(keyPair.Public) != 32 {
-		t.Fatalf("invalid Noise key pair: %#v", keyPair)
+	ring := initNoiseKeyRing(logger)
+	if ring == nil || ring.Len() != 1 {
+		t.Fatalf("invalid Noise key ring: %#v", ring)
 	}
-	if !strings.Contains(output.String(), "AES-256-GCM") || !strings.Contains(output.String(), "Noise IK") {
+	primary := ring.Primary()
+	if primary.ID != noiseCrypto.DefaultKeyID || len(primary.Pair.Private) != 32 || len(primary.Pair.Public) != 32 {
+		t.Fatalf("invalid primary Noise key: %#v", primary)
+	}
+	if !strings.Contains(output.String(), "AES-256-GCM") || !strings.Contains(output.String(), "Noise NK") {
 		t.Fatalf("missing crypto startup records: %s", output.String())
+	}
+
+	// A rotation key configured alongside the legacy key joins the ring after it.
+	harukiConfig.Cfg.HarukiBotDB.NoiseKeys = []harukiConfig.NoiseStaticKeyConfig{
+		{KeyID: "next", PrivateKey: hex.EncodeToString(bytes.Repeat([]byte{0x3b}, 32))},
+	}
+	ring = initNoiseKeyRing(logger)
+	if ring.Len() != 2 || ring.Primary().ID != noiseCrypto.DefaultKeyID {
+		t.Fatalf("rotation ring = len %d primary %q", ring.Len(), ring.Primary().ID)
+	}
+	if _, ok := ring.Lookup("next"); !ok {
+		t.Fatal("rotation key missing from ring")
+	}
+
+	// noise_keys alone (legacy key cleared) makes its first entry primary.
+	harukiConfig.Cfg.HarukiBotDB.NoisePrivateKey = ""
+	ring = initNoiseKeyRing(logger)
+	if ring.Len() != 1 || ring.Primary().ID != "next" {
+		t.Fatalf("noise_keys-only ring = len %d primary %q", ring.Len(), ring.Primary().ID)
 	}
 }
 

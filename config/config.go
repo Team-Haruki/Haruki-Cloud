@@ -151,6 +151,46 @@ func envStringSlice(name string, dst *[]string) error {
 	return nil
 }
 
+// envNoiseKeys overrides dst with an ordered Noise key list. Accepted forms:
+//
+//	key_id=hexprivkey,key_id2=hexprivkey2        (also ';' or newline separated)
+//	[{"key_id":"...","private_key":"..."}, ...]  (JSON array)
+//
+// Order is preserved so the first entry keeps its rotation priority.
+func envNoiseKeys(name string, dst *[]NoiseStaticKeyConfig) error {
+	v := strings.TrimSpace(os.Getenv(name))
+	if v == "" {
+		return nil
+	}
+	var parsed []NoiseStaticKeyConfig
+	if strings.HasPrefix(v, "[") {
+		if err := json.Unmarshal([]byte(v), &parsed); err != nil {
+			return fmt.Errorf("invalid %s: %w", name, err)
+		}
+	} else {
+		for _, item := range strings.FieldsFunc(v, func(r rune) bool { return r == ',' || r == ';' || r == '\n' }) {
+			item = strings.TrimSpace(item)
+			if item == "" {
+				continue
+			}
+			id, priv, ok := strings.Cut(item, "=")
+			id = strings.TrimSpace(id)
+			priv = strings.TrimSpace(priv)
+			if !ok || id == "" || priv == "" {
+				return fmt.Errorf("invalid %s entry %q: expected key_id=hex_private_key", name, item)
+			}
+			parsed = append(parsed, NoiseStaticKeyConfig{KeyID: id, PrivateKey: priv})
+		}
+	}
+	for i, key := range parsed {
+		if strings.TrimSpace(key.KeyID) == "" || strings.TrimSpace(key.PrivateKey) == "" {
+			return fmt.Errorf("invalid %s entry %d: key_id and private_key must not be empty", name, i)
+		}
+	}
+	*dst = parsed
+	return nil
+}
+
 // ApplyEnvOverrides replaces key config fields with environment variables when set.
 // Env var names follow the pattern HARUKI_<SECTION>_<FIELD> (all upper-snake).
 func ApplyEnvOverrides(cfg *Config) error {
@@ -225,6 +265,10 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BOT_INTERNAL_API_TOKEN", &cfg.HarukiBotDB.InternalAPIToken)
 	envInt("HARUKI_BOT_SESSION_TTL_DAYS", &cfg.HarukiBotDB.SessionTTLDays)
 	envStr("HARUKI_BOT_NOISE_PRIVATE_KEY", &cfg.HarukiBotDB.NoisePrivateKey)
+	if err := envNoiseKeys("HARUKI_BOT_NOISE_KEYS", &cfg.HarukiBotDB.NoiseKeys); err != nil {
+		return err
+	}
+	envDuration("HARUKI_BOT_AUTH_V3_SESSION_TTL", &cfg.HarukiBotDB.AuthV3SessionTTL)
 	envStr("HARUKI_BOT_AUTH_ENCRYPTION_KEY", &cfg.HarukiBotDB.AuthEncryptionKey)
 	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
 	envBool("HARUKI_BOT_RESPONSE_ELECTION_ROSTER", &cfg.HarukiBotDB.ResponseElectionRoster)
@@ -519,16 +563,32 @@ type CensorConfig struct {
 	CensorDBURL  string `yaml:"censor_db_url"`
 }
 
+// NoiseStaticKeyConfig names one Noise static key pair by a stable identifier.
+type NoiseStaticKeyConfig struct {
+	KeyID      string `yaml:"key_id" json:"key_id"`
+	PrivateKey string `yaml:"private_key" json:"private_key"` // hex-encoded 32-byte X25519 private key
+}
+
 type HarukiBotDBConfig struct {
-	DBType                 string        `yaml:"db_type"`
-	DBURL                  string        `yaml:"db_url"`
-	CredentialSignToken    string        `yaml:"credential_sign_token"`
-	SessionSignToken       string        `yaml:"session_sign_token"`
-	InternalAPIToken       string        `yaml:"internal_api_token"`
-	SessionTTLDays         int           `yaml:"session_ttl_days"`
-	NoisePrivateKey        string        `yaml:"noise_private_key"`
-	AuthEncryptionKey      string        `yaml:"auth_encryption_key"`
-	ResponseElectionWindow time.Duration `yaml:"response_election_window"`
+	DBType              string `yaml:"db_type"`
+	DBURL               string `yaml:"db_url"`
+	CredentialSignToken string `yaml:"credential_sign_token"`
+	SessionSignToken    string `yaml:"session_sign_token"`
+	InternalAPIToken    string `yaml:"internal_api_token"`
+	SessionTTLDays      int    `yaml:"session_ttl_days"`
+	// AuthV3SessionTTL bounds sessions issued by the Noise-wrapped AuthV3
+	// endpoint. 0 = default (1h); clamped to [1m, 30d].
+	AuthV3SessionTTL time.Duration `yaml:"auth_v3_session_ttl"`
+	// NoisePrivateKey is the legacy single Noise static key (hex, 32 bytes).
+	// It joins the ring under key id "default" and stays primary when set.
+	NoisePrivateKey string `yaml:"noise_private_key"`
+	// NoiseKeys lists additional Noise static keys accepted during rotation,
+	// each with a stable key_id clients can reference. Order matters: the
+	// first accepted key (noise_private_key if set, else noise_keys[0]) is
+	// the primary key advertised to clients.
+	NoiseKeys              []NoiseStaticKeyConfig `yaml:"noise_keys"`
+	AuthEncryptionKey      string                 `yaml:"auth_encryption_key"`
+	ResponseElectionWindow time.Duration          `yaml:"response_election_window"`
 	// ResponseElectionRoster enables the learned per-group bot roster: groups
 	// with a single known bot skip the election window entirely, and members
 	// that stop joining are demoted after repeated absences.

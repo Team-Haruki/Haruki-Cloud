@@ -100,4 +100,16 @@ func init() {
 	user.DefaultLastLoginLocation = userDescLastLoginLocation.Default.(string)
 	// user.LastLoginLocationValidator is a validator for the "last_login_location" field. It is called by the builders before save.
 	user.LastLoginLocationValidator = userDescLastLoginLocation.Validators[0].(func(string) error)
+	// userDescLastClientVersion is the schema descriptor for last_client_version field.
+	userDescLastClientVersion := userFields[6].Descriptor()
+	// user.DefaultLastClientVersion holds the default value on creation for the last_client_version field.
+	user.DefaultLastClientVersion = userDescLastClientVersion.Default.(string)
+	// user.LastClientVersionValidator is a validator for the "last_client_version" field. It is called by the builders before save.
+	user.LastClientVersionValidator = userDescLastClientVersion.Validators[0].(func(string) error)
+	// userDescLastBuildID is the schema descriptor for last_build_id field.
+	userDescLastBuildID := userFields[7].Descriptor()
+	// user.DefaultLastBuildID holds the default value on creation for the last_build_id field.
+	user.DefaultLastBuildID = userDescLastBuildID.Default.(string)
+	// user.LastBuildIDValidator is a validator for the "last_build_id" field. It is called by the builders before save.
+	user.LastBuildIDValidator = userDescLastBuildID.Validators[0].(func(string) error)
 }

@@ -5,6 +5,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"haruki-cloud/internal/core/buildpolicy"
+	"haruki-cloud/internal/core/secevent"
 	"log/slog"
 	"strconv"
 	"time"
@@ -48,15 +50,24 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 	if !allowed {
+		h.reportSecurity(ctx, secevent.Event{Kind: secevent.KindRateLimited, BotID: botIDStr, SourceIP: c.IP(), Enforced: true})
 		return c.Status(fiber.StatusTooManyRequests).SendString(ErrRateLimitExceeded)
 	}
 
 	payload, authErr := h.decodeAuthPayloadV3(ctx, c, botIDStr)
 	if authErr != nil {
+		h.reportSecurity(ctx, authFailureEvent(botIDStr, c.IP(), authErr))
+		return sendAuthResponseError(c, authErr)
+	}
+	if authErr := h.applyBuildPolicy(ctx, c, botIDStr, payload); authErr != nil {
 		return sendAuthResponseError(c, authErr)
 	}
 	authenticated, authErr := h.authenticateBot(ctx, botID, botIDStr, payload.Credential)
 	if authErr != nil {
+		h.reportSecurity(ctx, secevent.Event{
+			Kind: secevent.KindAuthFailed, BotID: botIDStr, BuildID: payload.BuildID,
+			ClientVersion: payload.ClientVersion, SourceIP: c.IP(), Reason: authErr.message, Enforced: true,
+		})
 		return sendAuthResponseError(c, authErr)
 	}
 
@@ -68,12 +79,15 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
+	// bid / cv 把登录时自报的构建身份钉进会话，供会话期内的撤销检查使用。
 	sessionToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"bot_id": botIDStr,
 		"sid":    sessionID,
 		"iat":    now.Unix(),
 		"exp":    expiresAt,
 		"ver":    3,
+		"bid":    payload.BuildID,
+		"cv":     payload.ClientVersion,
 	}).SignedString([]byte(config.Cfg.HarukiBotDB.SessionSignToken))
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
@@ -82,8 +96,9 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
+	h.reportLoginAnomalies(ctx, botIDStr, c.IP(), authenticated, payload)
 	if !cluster.IsReadOnly() {
-		h.recordLoginV3(ctx, authenticated.userID, c.IP())
+		h.recordLoginV3(ctx, authenticated.userID, c.IP(), payload)
 	}
 	slog.InfoContext(ctx, "bot auth v3 succeeded",
 		"bot_id", botIDStr,
@@ -105,6 +120,69 @@ func (h *UserHandler) AuthV3(c fiber.Ctx) error {
 	}
 	c.Set("Content-Type", "application/msgpack")
 	return c.Send(respBytes)
+}
+
+func (h *UserHandler) reportSecurity(ctx context.Context, ev secevent.Event) {
+	secevent.Report(ctx, h.svc.security, ev)
+}
+
+// authFailureEvent classifies a payload-level rejection: a consumed nonce is
+// a replay, everything else is a failed login.
+func authFailureEvent(botID, sourceIP string, authErr *authResponseError) secevent.Event {
+	kind := secevent.KindAuthFailed
+	if authErr.message == ErrReplayDetected {
+		kind = secevent.KindReplayDetected
+	}
+	return secevent.Event{Kind: kind, BotID: botID, SourceIP: sourceIP, Reason: authErr.message, Enforced: true}
+}
+
+// applyBuildPolicy evaluates the release allowlist / revocations before the
+// credential is checked, so a revoked build or blocked source never reaches
+// the database. Under log-only the outcome is reported but the login proceeds.
+func (h *UserHandler) applyBuildPolicy(ctx context.Context, c fiber.Ctx, botID string, payload AuthPayloadV3) *authResponseError {
+	decision := h.svc.buildPolicy.Evaluate(buildpolicy.Request{
+		BotID:         botID,
+		ClientVersion: payload.ClientVersion,
+		BuildID:       payload.BuildID,
+		Target:        payload.Target,
+		BinarySHA256:  payload.BinarySHA256,
+		SourceIP:      c.IP(),
+	})
+	if decision.Passed {
+		return nil
+	}
+	kind := secevent.KindBuildRejected
+	if decision.Code == buildpolicy.CodePolicyUnavailable {
+		kind = secevent.KindPolicyUnavailable
+	}
+	h.reportSecurity(ctx, secevent.Event{
+		Kind: kind, BotID: botID, BuildID: payload.BuildID, ClientVersion: payload.ClientVersion,
+		SourceIP: c.IP(), Reason: decision.Code + ": " + decision.Reason, Enforced: !decision.Allowed,
+	})
+	if decision.Allowed {
+		return nil
+	}
+	return &authResponseError{status: fiber.StatusForbidden, message: ErrClientNotAuthorized}
+}
+
+// reportLoginAnomalies flags a successful login whose source address or
+// client identity differs from the previous successful login of the same bot.
+func (h *UserHandler) reportLoginAnomalies(ctx context.Context, botID, sourceIP string, previous authenticatedBot, payload AuthPayloadV3) {
+	if previous.lastLoginIP != "" && sourceIP != "" && previous.lastLoginIP != sourceIP {
+		h.reportSecurity(ctx, secevent.Event{
+			Kind: secevent.KindLoginSourceChanged, BotID: botID, BuildID: payload.BuildID,
+			ClientVersion: payload.ClientVersion, SourceIP: sourceIP,
+			Reason: "previous login from " + previous.lastLoginIP,
+		})
+	}
+	if (previous.lastClientVersion != "" && previous.lastClientVersion != payload.ClientVersion) ||
+		(previous.lastBuildID != "" && previous.lastBuildID != payload.BuildID) {
+		h.reportSecurity(ctx, secevent.Event{
+			Kind: secevent.KindClientChanged, BotID: botID, BuildID: payload.BuildID,
+			ClientVersion: payload.ClientVersion, SourceIP: sourceIP,
+			Reason: fmt.Sprintf("previous client %s/%s", previous.lastClientVersion, previous.lastBuildID),
+		})
+	}
 }
 
 // decodeAuthPayloadV3 解析并校验 Noise 解密后的 AuthV3 载荷。
@@ -167,10 +245,14 @@ func (s *UserService) consumeNonceV3(ctx context.Context, botID string, nonceHex
 	return true, nil
 }
 
-// recordLoginV3 记录登录时间和服务端观察到的客户端 IP。
+// recordLoginV3 记录登录时间、服务端观察到的客户端 IP，以及本次自报的
+// 客户端版本 / build_id（用于下次登录的异常比对）。
 // AuthV3 不再接受客户端自报的 IP / 地理位置。
-func (h *UserHandler) recordLoginV3(ctx context.Context, userID int, clientIP string) {
-	loginUpdate := h.svc.dbClient.User.UpdateOneID(userID).SetLastLoginAt(time.Now())
+func (h *UserHandler) recordLoginV3(ctx context.Context, userID int, clientIP string, payload AuthPayloadV3) {
+	loginUpdate := h.svc.dbClient.User.UpdateOneID(userID).
+		SetLastLoginAt(time.Now()).
+		SetLastClientVersion(payload.ClientVersion).
+		SetLastBuildID(payload.BuildID)
 	if clientIP != "" {
 		loginUpdate = loginUpdate.SetLastLoginIP(clientIP)
 	}

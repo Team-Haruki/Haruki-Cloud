@@ -23,6 +23,10 @@ const (
 	FieldLastLoginLocation = "last_login_location"
 	// FieldLastLoginAt holds the string denoting the last_login_at field in the database.
 	FieldLastLoginAt = "last_login_at"
+	// FieldLastClientVersion holds the string denoting the last_client_version field in the database.
+	FieldLastClientVersion = "last_client_version"
+	// FieldLastBuildID holds the string denoting the last_build_id field in the database.
+	FieldLastBuildID = "last_build_id"
 	// Table holds the table name of the user in the database.
 	Table = "user"
 )
@@ -36,6 +40,8 @@ var Columns = []string{
 	FieldLastLoginIP,
 	FieldLastLoginLocation,
 	FieldLastLoginAt,
+	FieldLastClientVersion,
+	FieldLastBuildID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -59,6 +65,14 @@ var (
 	DefaultLastLoginLocation string
 	// LastLoginLocationValidator is a validator for the "last_login_location" field. It is called by the builders before save.
 	LastLoginLocationValidator func(string) error
+	// DefaultLastClientVersion holds the default value on creation for the "last_client_version" field.
+	DefaultLastClientVersion string
+	// LastClientVersionValidator is a validator for the "last_client_version" field. It is called by the builders before save.
+	LastClientVersionValidator func(string) error
+	// DefaultLastBuildID holds the default value on creation for the "last_build_id" field.
+	DefaultLastBuildID string
+	// LastBuildIDValidator is a validator for the "last_build_id" field. It is called by the builders before save.
+	LastBuildIDValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -97,4 +111,14 @@ func ByLastLoginLocation(opts ...sql.OrderTermOption) OrderOption {
 // ByLastLoginAt orders the results by the last_login_at field.
 func ByLastLoginAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastLoginAt, opts...).ToFunc()
+}
+
+// ByLastClientVersion orders the results by the last_client_version field.
+func ByLastClientVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastClientVersion, opts...).ToFunc()
+}
+
+// ByLastBuildID orders the results by the last_build_id field.
+func ByLastBuildID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastBuildID, opts...).ToFunc()
 }

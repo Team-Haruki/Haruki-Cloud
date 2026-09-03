@@ -21,6 +21,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"haruki-cloud/internal/core/buildpolicy"
 	"io"
 	"os"
 	"strings"
@@ -65,12 +66,13 @@ const usage = `usage: trust-signer <keygen|sign|verify> [flags]
       Generate an Ed25519 seed, write it (hex, mode 0600) to <seed-file> and
       print the key id and public key. Refuses to overwrite an existing file.
 
-  sign --key <seed-file> --key-id <id> --domain <keyset|manifest>
+  sign --key <seed-file> --key-id <id> --domain <keyset|manifest|release>
        --in <payload-file> --out <envelope-file> [--encoding json]
       Sign the exact bytes of <payload-file> and write a trustsign envelope.
-      For the keyset domain the payload is validated as a KeysetDocument.
+      For the keyset domain the payload is validated as a KeysetDocument;
+      for the release domain as a buildpolicy.Document (client build policy).
 
-  verify --public <hex> --in <envelope-file> [--domain <keyset|manifest>]
+  verify --public <hex> --in <envelope-file> [--domain <keyset|manifest|release>]
       Verify an envelope and print its payload to stdout.`
 
 func runKeygen(args []string, stdout io.Writer) error {
@@ -149,6 +151,14 @@ func runSign(args []string, stdout io.Writer) error {
 			return fmt.Errorf("sign: keyset payload rejected: %w", err)
 		}
 	}
+	if domainName == trustsign.DomainRelease {
+		if *encoding != trustsign.EncodingJSON {
+			return errors.New("sign: release policy payloads must be JSON")
+		}
+		if _, err := buildpolicy.Parse(payload, nil); err != nil {
+			return fmt.Errorf("sign: release policy payload rejected: %w", err)
+		}
+	}
 	envelope, err := signer.Sign(domainName, *encoding, payload)
 	if err != nil {
 		return err
@@ -211,6 +221,8 @@ func resolveDomain(name string) (string, error) {
 		return trustsign.DomainKeyset, nil
 	case "manifest", trustsign.DomainManifest:
 		return trustsign.DomainManifest, nil
+	case "release", trustsign.DomainRelease:
+		return trustsign.DomainRelease, nil
 	}
-	return "", fmt.Errorf("unknown domain %q (want keyset or manifest)", name)
+	return "", fmt.Errorf("unknown domain %q (want keyset, manifest or release)", name)
 }

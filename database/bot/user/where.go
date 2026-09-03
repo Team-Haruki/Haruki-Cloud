@@ -84,6 +84,16 @@ func LastLoginAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldLastLoginAt, v))
 }
 
+// LastClientVersion applies equality check predicate on the "last_client_version" field. It's identical to LastClientVersionEQ.
+func LastClientVersion(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLastClientVersion, v))
+}
+
+// LastBuildID applies equality check predicate on the "last_build_id" field. It's identical to LastBuildIDEQ.
+func LastBuildID(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLastBuildID, v))
+}
+
 // OwnerUserIDEQ applies the EQ predicate on the "owner_user_id" field.
 func OwnerUserIDEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldOwnerUserID, v))
@@ -437,6 +447,156 @@ func LastLoginAtIsNil() predicate.User {
 // LastLoginAtNotNil applies the NotNil predicate on the "last_login_at" field.
 func LastLoginAtNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldLastLoginAt))
+}
+
+// LastClientVersionEQ applies the EQ predicate on the "last_client_version" field.
+func LastClientVersionEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLastClientVersion, v))
+}
+
+// LastClientVersionNEQ applies the NEQ predicate on the "last_client_version" field.
+func LastClientVersionNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldLastClientVersion, v))
+}
+
+// LastClientVersionIn applies the In predicate on the "last_client_version" field.
+func LastClientVersionIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldLastClientVersion, vs...))
+}
+
+// LastClientVersionNotIn applies the NotIn predicate on the "last_client_version" field.
+func LastClientVersionNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldLastClientVersion, vs...))
+}
+
+// LastClientVersionGT applies the GT predicate on the "last_client_version" field.
+func LastClientVersionGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldLastClientVersion, v))
+}
+
+// LastClientVersionGTE applies the GTE predicate on the "last_client_version" field.
+func LastClientVersionGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldLastClientVersion, v))
+}
+
+// LastClientVersionLT applies the LT predicate on the "last_client_version" field.
+func LastClientVersionLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldLastClientVersion, v))
+}
+
+// LastClientVersionLTE applies the LTE predicate on the "last_client_version" field.
+func LastClientVersionLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldLastClientVersion, v))
+}
+
+// LastClientVersionContains applies the Contains predicate on the "last_client_version" field.
+func LastClientVersionContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldLastClientVersion, v))
+}
+
+// LastClientVersionHasPrefix applies the HasPrefix predicate on the "last_client_version" field.
+func LastClientVersionHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldLastClientVersion, v))
+}
+
+// LastClientVersionHasSuffix applies the HasSuffix predicate on the "last_client_version" field.
+func LastClientVersionHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldLastClientVersion, v))
+}
+
+// LastClientVersionIsNil applies the IsNil predicate on the "last_client_version" field.
+func LastClientVersionIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldLastClientVersion))
+}
+
+// LastClientVersionNotNil applies the NotNil predicate on the "last_client_version" field.
+func LastClientVersionNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldLastClientVersion))
+}
+
+// LastClientVersionEqualFold applies the EqualFold predicate on the "last_client_version" field.
+func LastClientVersionEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldLastClientVersion, v))
+}
+
+// LastClientVersionContainsFold applies the ContainsFold predicate on the "last_client_version" field.
+func LastClientVersionContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldLastClientVersion, v))
+}
+
+// LastBuildIDEQ applies the EQ predicate on the "last_build_id" field.
+func LastBuildIDEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLastBuildID, v))
+}
+
+// LastBuildIDNEQ applies the NEQ predicate on the "last_build_id" field.
+func LastBuildIDNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldLastBuildID, v))
+}
+
+// LastBuildIDIn applies the In predicate on the "last_build_id" field.
+func LastBuildIDIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldLastBuildID, vs...))
+}
+
+// LastBuildIDNotIn applies the NotIn predicate on the "last_build_id" field.
+func LastBuildIDNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldLastBuildID, vs...))
+}
+
+// LastBuildIDGT applies the GT predicate on the "last_build_id" field.
+func LastBuildIDGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldLastBuildID, v))
+}
+
+// LastBuildIDGTE applies the GTE predicate on the "last_build_id" field.
+func LastBuildIDGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldLastBuildID, v))
+}
+
+// LastBuildIDLT applies the LT predicate on the "last_build_id" field.
+func LastBuildIDLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldLastBuildID, v))
+}
+
+// LastBuildIDLTE applies the LTE predicate on the "last_build_id" field.
+func LastBuildIDLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldLastBuildID, v))
+}
+
+// LastBuildIDContains applies the Contains predicate on the "last_build_id" field.
+func LastBuildIDContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldLastBuildID, v))
+}
+
+// LastBuildIDHasPrefix applies the HasPrefix predicate on the "last_build_id" field.
+func LastBuildIDHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldLastBuildID, v))
+}
+
+// LastBuildIDHasSuffix applies the HasSuffix predicate on the "last_build_id" field.
+func LastBuildIDHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldLastBuildID, v))
+}
+
+// LastBuildIDIsNil applies the IsNil predicate on the "last_build_id" field.
+func LastBuildIDIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldLastBuildID))
+}
+
+// LastBuildIDNotNil applies the NotNil predicate on the "last_build_id" field.
+func LastBuildIDNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldLastBuildID))
+}
+
+// LastBuildIDEqualFold applies the EqualFold predicate on the "last_build_id" field.
+func LastBuildIDEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldLastBuildID, v))
+}
+
+// LastBuildIDContainsFold applies the ContainsFold predicate on the "last_build_id" field.
+func LastBuildIDContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldLastBuildID, v))
 }
 
 // And groups predicates with the AND operator between them.

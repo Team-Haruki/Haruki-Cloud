@@ -54,26 +54,26 @@ func newTestReplayGuard(store nonceStore, requireNonce bool, now time.Time) *rep
 
 func TestReplayGuardNilAndMissingFieldsAreLenient(t *testing.T) {
 	var nilGuard *replayGuard
-	if !nilGuard.allow(context.Background(), replayTestRequest("", 0)) {
+	if !nilGuard.allow(context.Background(), "", replayTestRequest("", 0)) {
 		t.Fatal("nil guard must allow everything")
 	}
 
 	guard := newTestReplayGuard(&fakeNonceStore{}, false, time.Now())
-	if !guard.allow(context.Background(), replayTestRequest("", 0)) {
+	if !guard.allow(context.Background(), "", replayTestRequest("", 0)) {
 		t.Fatal("lenient guard must allow a request without nonce fields")
 	}
-	if !guard.allow(context.Background(), replayTestRequest("nonce-without-timestamp", 0)) {
+	if !guard.allow(context.Background(), "", replayTestRequest("nonce-without-timestamp", 0)) {
 		t.Fatal("lenient guard must allow a nonce without timestamp (incomplete fields)")
 	}
 }
 
 func TestReplayGuardStrictRejectsMissingNonce(t *testing.T) {
 	guard := newTestReplayGuard(&fakeNonceStore{}, true, time.Now())
-	if guard.allow(context.Background(), replayTestRequest("", 0)) {
+	if guard.allow(context.Background(), "", replayTestRequest("", 0)) {
 		t.Fatal("strict guard must reject a request without nonce fields")
 	}
 	now := time.Now()
-	if !guard.allow(context.Background(), replayTestRequest("fresh-nonce-0123456789abcdef", now.Unix())) {
+	if !guard.allow(context.Background(), "", replayTestRequest("fresh-nonce-0123456789abcdef", now.Unix())) {
 		t.Fatal("strict guard must allow a valid nonce")
 	}
 }
@@ -83,15 +83,15 @@ func TestReplayGuardRejectsTimestampOutsideWindow(t *testing.T) {
 	guard := newTestReplayGuard(&fakeNonceStore{}, false, now)
 
 	stale := now.Add(-defaultReplayWindow - time.Minute).Unix()
-	if guard.allow(context.Background(), replayTestRequest("stale-nonce-0123456789abcdef", stale)) {
+	if guard.allow(context.Background(), "", replayTestRequest("stale-nonce-0123456789abcdef", stale)) {
 		t.Fatal("timestamp older than the window must be rejected")
 	}
 	future := now.Add(defaultReplayWindow + time.Minute).Unix()
-	if guard.allow(context.Background(), replayTestRequest("future-nonce-0123456789abcdef", future)) {
+	if guard.allow(context.Background(), "", replayTestRequest("future-nonce-0123456789abcdef", future)) {
 		t.Fatal("timestamp beyond the window in the future must be rejected")
 	}
 	edge := now.Add(-defaultReplayWindow + time.Second).Unix()
-	if !guard.allow(context.Background(), replayTestRequest("edge-nonce-0123456789abcdef", edge)) {
+	if !guard.allow(context.Background(), "", replayTestRequest("edge-nonce-0123456789abcdef", edge)) {
 		t.Fatal("timestamp inside the window must be accepted")
 	}
 }
@@ -101,12 +101,12 @@ func TestReplayGuardNonceIsSingleUse(t *testing.T) {
 	client := redis.NewClient(&redis.Options{Addr: server.Addr()})
 	t.Cleanup(func() { _ = client.Close() })
 
-	guard := newReplayGuard(client, 0, false)
+	guard := newReplayGuard(client, 0, false, nil)
 	request := replayTestRequest("single-use-nonce-0123456789abcdef", time.Now().Unix())
-	if !guard.allow(context.Background(), request) {
+	if !guard.allow(context.Background(), "", request) {
 		t.Fatal("first use of a nonce must be accepted")
 	}
-	if guard.allow(context.Background(), request) {
+	if guard.allow(context.Background(), "", request) {
 		t.Fatal("second use of the same nonce must be rejected as a replay")
 	}
 	// The stored nonce carries the window as its TTL, so by the time it
@@ -118,7 +118,7 @@ func TestReplayGuardNonceIsSingleUse(t *testing.T) {
 
 func TestReplayGuardFailsOpenOnStoreError(t *testing.T) {
 	guard := newTestReplayGuard(&fakeNonceStore{err: errors.New("redis down")}, true, time.Now())
-	if !guard.allow(context.Background(), replayTestRequest("any-nonce-0123456789abcdef", time.Now().Unix())) {
+	if !guard.allow(context.Background(), "", replayTestRequest("any-nonce-0123456789abcdef", time.Now().Unix())) {
 		t.Fatal("store errors must fail open")
 	}
 }

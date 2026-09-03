@@ -28,7 +28,11 @@ type User struct {
 	// Client self-reported location from myip.ipip.net
 	LastLoginLocation string `json:"last_login_location,omitempty"`
 	// Last successful login time
-	LastLoginAt  *time.Time `json:"last_login_at,omitempty"`
+	LastLoginAt *time.Time `json:"last_login_at,omitempty"`
+	// client_version reported by the last successful AuthV3 login
+	LastClientVersion string `json:"last_client_version,omitempty"`
+	// build_id reported by the last successful AuthV3 login
+	LastBuildID  string `json:"last_build_id,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -39,7 +43,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldID, user.FieldOwnerUserID, user.FieldBotID:
 			values[i] = new(sql.NullInt64)
-		case user.FieldCredential, user.FieldLastLoginIP, user.FieldLastLoginLocation:
+		case user.FieldCredential, user.FieldLastLoginIP, user.FieldLastLoginLocation, user.FieldLastClientVersion, user.FieldLastBuildID:
 			values[i] = new(sql.NullString)
 		case user.FieldLastLoginAt:
 			values[i] = new(sql.NullTime)
@@ -101,6 +105,18 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				_m.LastLoginAt = new(time.Time)
 				*_m.LastLoginAt = value.Time
 			}
+		case user.FieldLastClientVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field last_client_version", values[i])
+			} else if value.Valid {
+				_m.LastClientVersion = value.String
+			}
+		case user.FieldLastBuildID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field last_build_id", values[i])
+			} else if value.Valid {
+				_m.LastBuildID = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -156,6 +172,12 @@ func (_m *User) String() string {
 		builder.WriteString("last_login_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("last_client_version=")
+	builder.WriteString(_m.LastClientVersion)
+	builder.WriteString(", ")
+	builder.WriteString("last_build_id=")
+	builder.WriteString(_m.LastBuildID)
 	builder.WriteByte(')')
 	return builder.String()
 }

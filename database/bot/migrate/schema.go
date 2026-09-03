@@ -125,6 +125,8 @@ var (
 		{Name: "last_login_ip", Type: field.TypeString, Nullable: true, Size: 64, Default: ""},
 		{Name: "last_login_location", Type: field.TypeString, Nullable: true, Size: 256, Default: ""},
 		{Name: "last_login_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_client_version", Type: field.TypeString, Nullable: true, Size: 64, Default: ""},
+		{Name: "last_build_id", Type: field.TypeString, Nullable: true, Size: 128, Default: ""},
 	}
 	// UserTable holds the schema information for the "user" table.
 	UserTable = &schema.Table{

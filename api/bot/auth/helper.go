@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/internal/core/buildpolicy"
+	"haruki-cloud/internal/core/secevent"
 	"time"
 
 	ent "haruki-cloud/database/bot"
@@ -86,6 +88,22 @@ func NewInternalServiceWithStore(dbClient *ent.Client, redisStore RedisKVStore) 
 func (s *UserService) WithGlobalBanChecker(checker GlobalBanChecker) *UserService {
 	if s != nil {
 		s.globalBanChecker = checker
+	}
+	return s
+}
+
+// WithBuildPolicy installs the client build policy evaluated at AuthV3 login.
+func (s *UserService) WithBuildPolicy(store *buildpolicy.Store) *UserService {
+	if s != nil {
+		s.buildPolicy = store
+	}
+	return s
+}
+
+// WithSecurityReporter installs the security event sink.
+func (s *UserService) WithSecurityReporter(reporter secevent.Reporter) *UserService {
+	if s != nil {
+		s.security = reporter
 	}
 	return s
 }

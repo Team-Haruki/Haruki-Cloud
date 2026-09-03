@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	botAuth "haruki-cloud/api/bot/auth"
 
 	harukiConfig "haruki-cloud/config"
 	harukiLogger "haruki-cloud/utils/logger"
@@ -45,10 +46,19 @@ func Run(ctx context.Context) {
 	validateBotAuthSecrets(mainLogger)
 	noiseKeys := initNoiseKeyRing(mainLogger)
 	manifestSigner := initManifestSigner(mainLogger)
-	botDBClient := initBot(ctx, mainLogger, app, redisClient, noiseKeys, banChecker)
+	buildPolicy := initBuildPolicy(mainLogger)
+	securityMonitor := initSecurityMonitor(mainLogger, redisClient)
+	botDBClient := initBot(ctx, mainLogger, app, redisClient, botAuth.BotAuthOptions{
+		NoiseKeys:   noiseKeys,
+		BanChecker:  banChecker,
+		BuildPolicy: buildPolicy,
+		Security:    securityMonitor,
+	})
 	botRouteDispatchers := botPJSK.RegisterPJSKBotRoutesWithOptions(ctx, app, renderRuntime, redisClient, botDBClient, botPJSK.BotRouteOptions{
 		NoiseKeys:      noiseKeys,
 		ManifestSigner: manifestSigner,
+		SessionPolicy:  sessionPolicyFor(buildPolicy),
+		Security:       securityMonitor,
 	})
 	trustAPI.RegisterTrustRoutes(app, harukiConfig.Cfg.HarukiBotDB.TrustKeysetPath)
 

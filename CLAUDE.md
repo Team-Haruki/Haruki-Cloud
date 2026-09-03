@@ -37,6 +37,7 @@
 | `docs/pjsk-command-system.cn.md` | PJSK 指令体系设计 |
 | `docs/toolbox-api.cn.md` | 上游 Toolbox API 契约 |
 | `docs/deck_refer_help.md` | `deck` 命令族用户帮助 |
+| `docs/build-policy.cn.md` | 客户端构建许可 / 撤销与安全事件告警 |
 
 改动涉及模块时，以代码为准——`docs/` 仅描述项目当前形态，不再保留历史进度/对接记录。
 

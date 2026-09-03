@@ -66,7 +66,7 @@ func postJSON(t *testing.T, app *fiber.App, path, body string) (int, string) {
 func TestVerifyBotSessionFromPayloadJSON(t *testing.T) {
 	client, token := payloadSessionTestSetup(t)
 	app := fiber.New()
-	app.Post("/api/v2/bot/:botId/pjsk/x", verifyBotSessionFromPayload(client), func(c fiber.Ctx) error {
+	app.Post("/api/v2/bot/:botId/pjsk/x", verifyBotSessionFromPayload(client, nil, nil), func(c fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 
@@ -104,7 +104,7 @@ func TestVerifyBotSessionFromPayloadUnderNoiseIsEncrypted(t *testing.T) {
 	app := fiber.New()
 	app.Post("/api/v2/bot/:botId/pjsk/x",
 		secure.New(secure.Config{ServerPrivateKey: pair}),
-		verifyBotSessionFromPayload(client),
+		verifyBotSessionFromPayload(client, nil, nil),
 		func(c fiber.Ctx) error { return botResponse(c, fiber.StatusOK, "ok") },
 	)
 
@@ -148,7 +148,7 @@ func TestVerifyBotSessionFromPayloadUnderNoiseIsEncrypted(t *testing.T) {
 
 func TestVerifyBotSessionFromPayloadBypassesWithoutRedis(t *testing.T) {
 	app := fiber.New()
-	app.Post("/api/v2/bot/:botId/pjsk/x", verifyBotSessionFromPayload(nil), func(c fiber.Ctx) error {
+	app.Post("/api/v2/bot/:botId/pjsk/x", verifyBotSessionFromPayload(nil, nil, nil), func(c fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 	if status, _ := postJSON(t, app, "/api/v2/bot/42/pjsk/x", `{}`); status != fiber.StatusNoContent {

@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"haruki-cloud/internal/core/buildpolicy"
+	"haruki-cloud/internal/core/secevent"
 	"time"
 
 	"haruki-cloud/api"
@@ -22,6 +24,10 @@ type AuthPayloadV3 struct {
 	Nonce         string `msgpack:"nonce"`
 	ClientVersion string `msgpack:"client_version"`
 	BuildID       string `msgpack:"build_id"`
+	// Target / BinarySHA256 是客户端自报的构建平台与二进制哈希，可选；
+	// 存在时与构建许可清单比对（自报值不是远程证明，只抬高篡改成本）。
+	Target       string `msgpack:"target"`
+	BinarySHA256 string `msgpack:"binary_sha256"`
 	// Method / Path 绑定请求上下文，防止密文被搬到其他接口重放。
 	Method string `msgpack:"method"`
 	Path   string `msgpack:"path"`
@@ -100,6 +106,10 @@ const (
 	ErrRequestBindingBroken = "请求上下文不匹配"
 	ErrNoiseKeyMismatch     = "Noise 公钥标识不匹配"
 	ErrInvalidNonce         = "nonce 无效"
+	// ErrClientNotAuthorized covers every build-policy rejection (unknown or
+	// revoked build, revoked version/bot, blocked source) with one message so
+	// the response does not reveal which rule matched.
+	ErrClientNotAuthorized = "客户端未获授权"
 )
 
 // ================= Service Structs =================
@@ -120,6 +130,8 @@ type UserService struct {
 	dbClient         *ent.Client
 	redisStore       RedisKVStore
 	globalBanChecker GlobalBanChecker
+	buildPolicy      *buildpolicy.Store
+	security         secevent.Reporter
 }
 
 type InternalService struct {

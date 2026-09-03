@@ -150,6 +150,46 @@ func (_u *UserUpdate) ClearLastLoginAt() *UserUpdate {
 	return _u
 }
 
+// SetLastClientVersion sets the "last_client_version" field.
+func (_u *UserUpdate) SetLastClientVersion(v string) *UserUpdate {
+	_u.mutation.SetLastClientVersion(v)
+	return _u
+}
+
+// SetNillableLastClientVersion sets the "last_client_version" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLastClientVersion(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetLastClientVersion(*v)
+	}
+	return _u
+}
+
+// ClearLastClientVersion clears the value of the "last_client_version" field.
+func (_u *UserUpdate) ClearLastClientVersion() *UserUpdate {
+	_u.mutation.ClearLastClientVersion()
+	return _u
+}
+
+// SetLastBuildID sets the "last_build_id" field.
+func (_u *UserUpdate) SetLastBuildID(v string) *UserUpdate {
+	_u.mutation.SetLastBuildID(v)
+	return _u
+}
+
+// SetNillableLastBuildID sets the "last_build_id" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLastBuildID(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetLastBuildID(*v)
+	}
+	return _u
+}
+
+// ClearLastBuildID clears the value of the "last_build_id" field.
+func (_u *UserUpdate) ClearLastBuildID() *UserUpdate {
+	_u.mutation.ClearLastBuildID()
+	return _u
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -197,6 +237,16 @@ func (_u *UserUpdate) check() error {
 	if v, ok := _u.mutation.LastLoginLocation(); ok {
 		if err := user.LastLoginLocationValidator(v); err != nil {
 			return &ValidationError{Name: "last_login_location", err: fmt.Errorf(`bot: validator failed for field "User.last_login_location": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LastClientVersion(); ok {
+		if err := user.LastClientVersionValidator(v); err != nil {
+			return &ValidationError{Name: "last_client_version", err: fmt.Errorf(`bot: validator failed for field "User.last_client_version": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LastBuildID(); ok {
+		if err := user.LastBuildIDValidator(v); err != nil {
+			return &ValidationError{Name: "last_build_id", err: fmt.Errorf(`bot: validator failed for field "User.last_build_id": %w`, err)}
 		}
 	}
 	return nil
@@ -249,6 +299,18 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.LastLoginAtCleared() {
 		_spec.ClearField(user.FieldLastLoginAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.LastClientVersion(); ok {
+		_spec.SetField(user.FieldLastClientVersion, field.TypeString, value)
+	}
+	if _u.mutation.LastClientVersionCleared() {
+		_spec.ClearField(user.FieldLastClientVersion, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastBuildID(); ok {
+		_spec.SetField(user.FieldLastBuildID, field.TypeString, value)
+	}
+	if _u.mutation.LastBuildIDCleared() {
+		_spec.ClearField(user.FieldLastBuildID, field.TypeString)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -392,6 +454,46 @@ func (_u *UserUpdateOne) ClearLastLoginAt() *UserUpdateOne {
 	return _u
 }
 
+// SetLastClientVersion sets the "last_client_version" field.
+func (_u *UserUpdateOne) SetLastClientVersion(v string) *UserUpdateOne {
+	_u.mutation.SetLastClientVersion(v)
+	return _u
+}
+
+// SetNillableLastClientVersion sets the "last_client_version" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLastClientVersion(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetLastClientVersion(*v)
+	}
+	return _u
+}
+
+// ClearLastClientVersion clears the value of the "last_client_version" field.
+func (_u *UserUpdateOne) ClearLastClientVersion() *UserUpdateOne {
+	_u.mutation.ClearLastClientVersion()
+	return _u
+}
+
+// SetLastBuildID sets the "last_build_id" field.
+func (_u *UserUpdateOne) SetLastBuildID(v string) *UserUpdateOne {
+	_u.mutation.SetLastBuildID(v)
+	return _u
+}
+
+// SetNillableLastBuildID sets the "last_build_id" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLastBuildID(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetLastBuildID(*v)
+	}
+	return _u
+}
+
+// ClearLastBuildID clears the value of the "last_build_id" field.
+func (_u *UserUpdateOne) ClearLastBuildID() *UserUpdateOne {
+	_u.mutation.ClearLastBuildID()
+	return _u
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -452,6 +554,16 @@ func (_u *UserUpdateOne) check() error {
 	if v, ok := _u.mutation.LastLoginLocation(); ok {
 		if err := user.LastLoginLocationValidator(v); err != nil {
 			return &ValidationError{Name: "last_login_location", err: fmt.Errorf(`bot: validator failed for field "User.last_login_location": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LastClientVersion(); ok {
+		if err := user.LastClientVersionValidator(v); err != nil {
+			return &ValidationError{Name: "last_client_version", err: fmt.Errorf(`bot: validator failed for field "User.last_client_version": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LastBuildID(); ok {
+		if err := user.LastBuildIDValidator(v); err != nil {
+			return &ValidationError{Name: "last_build_id", err: fmt.Errorf(`bot: validator failed for field "User.last_build_id": %w`, err)}
 		}
 	}
 	return nil
@@ -521,6 +633,18 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.LastLoginAtCleared() {
 		_spec.ClearField(user.FieldLastLoginAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.LastClientVersion(); ok {
+		_spec.SetField(user.FieldLastClientVersion, field.TypeString, value)
+	}
+	if _u.mutation.LastClientVersionCleared() {
+		_spec.ClearField(user.FieldLastClientVersion, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastBuildID(); ok {
+		_spec.SetField(user.FieldLastBuildID, field.TypeString, value)
+	}
+	if _u.mutation.LastBuildIDCleared() {
+		_spec.ClearField(user.FieldLastBuildID, field.TypeString)
 	}
 	_node = &User{config: _u.config}
 	_spec.Assign = _node.assignValues

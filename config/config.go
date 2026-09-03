@@ -286,6 +286,12 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_BOT_MANIFEST_SIGNING_KEY", &cfg.HarukiBotDB.ManifestSigningKey)
 	envStr("HARUKI_BOT_MANIFEST_SIGNING_KEY_ID", &cfg.HarukiBotDB.ManifestSigningKeyID)
 	envStr("HARUKI_BOT_TRUST_KEYSET_PATH", &cfg.HarukiBotDB.TrustKeysetPath)
+	envStr("HARUKI_BOT_BUILD_POLICY_PATH", &cfg.HarukiBotDB.BuildPolicyPath)
+	envStr("HARUKI_BOT_BUILD_POLICY_MODE", &cfg.HarukiBotDB.BuildPolicyMode)
+	envStr("HARUKI_BOT_BUILD_POLICY_ROOT_PUBLIC_KEY", &cfg.HarukiBotDB.BuildPolicyRootPublicKey)
+	envStr("HARUKI_SECURITY_ALERT_WEBHOOK_URL", &cfg.Security.AlertWebhookURL)
+	envInt("HARUKI_SECURITY_ALERT_THRESHOLD", &cfg.Security.AlertThreshold)
+	envDuration("HARUKI_SECURITY_ALERT_WINDOW", &cfg.Security.AlertWindow)
 	envDuration("HARUKI_BOT_RESPONSE_ELECTION_WINDOW", &cfg.HarukiBotDB.ResponseElectionWindow)
 	envBool("HARUKI_BOT_RESPONSE_ELECTION_ROSTER", &cfg.HarukiBotDB.ResponseElectionRoster)
 	envBool("HARUKI_BOT_ALLOW_REQUESTS_WITHOUT_NONCE", &cfg.HarukiBotDB.AllowRequestsWithoutNonce)
@@ -628,6 +634,32 @@ type HarukiBotDBConfig struct {
 	// RequestNonceWindow is the accepted clock skew for the request timestamp
 	// and the single-use TTL of the nonce. 0 = default (5m).
 	RequestNonceWindow time.Duration `yaml:"request_nonce_window"`
+	// BuildPolicyPath points at the client build policy document (release
+	// allowlist + revocations). Plain JSON, or a trustsign envelope with
+	// domain haruki-cloud/release/v1 when BuildPolicyRootPublicKey is set.
+	// The file is re-read when its mtime changes (checked every 30s).
+	BuildPolicyPath string `yaml:"build_policy_path"`
+	// BuildPolicyMode is "off", "log-only" or "enforce". Empty means
+	// "log-only" when BuildPolicyPath is set and "off" otherwise, so a new
+	// policy file starts by measuring before it starts rejecting logins.
+	BuildPolicyMode string `yaml:"build_policy_mode"`
+	// BuildPolicyRootPublicKey (hex, 32 bytes) makes the Cloud verify the
+	// policy file's signature against the offline root; without it the file
+	// is trusted as-is (host filesystem integrity only).
+	BuildPolicyRootPublicKey string `yaml:"build_policy_root_public_key"`
+}
+
+// SecurityConfig tunes security event alerting (login failures, replays,
+// rejected builds, credential anomalies).
+type SecurityConfig struct {
+	// AlertWebhookURL receives one JSON POST when an event kind crosses
+	// AlertThreshold occurrences for the same bot / source inside
+	// AlertWindow. Empty logs the alert at ERROR level only.
+	AlertWebhookURL string `yaml:"alert_webhook_url"`
+	// AlertThreshold is the occurrence count that triggers an alert. 0 = 5.
+	AlertThreshold int `yaml:"alert_threshold"`
+	// AlertWindow is the counting window. 0 = 10m.
+	AlertWindow time.Duration `yaml:"alert_window"`
 }
 
 type UsersDBConfig struct {
@@ -691,6 +723,7 @@ type Config struct {
 	PJSKRender  PJSKRenderConfig  `yaml:"pjsk_render"`
 	Censor      CensorConfig      `yaml:"censor"`
 	HarukiBotDB HarukiBotDBConfig `yaml:"haruki_bot"`
+	Security    SecurityConfig    `yaml:"security"`
 	UsersDB     UsersDBConfig     `yaml:"users_db"`
 	Moderation  ModerationConfig  `yaml:"moderation"`
 	Redis       RedisConfig       `yaml:"redis"`

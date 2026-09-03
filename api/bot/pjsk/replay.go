@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"haruki-cloud/internal/core/secevent"
 	"strings"
 	"time"
 
@@ -53,9 +54,10 @@ type replayGuard struct {
 	window       time.Duration
 	requireNonce bool
 	now          func() time.Time
+	security     secevent.Reporter
 }
 
-func newReplayGuard(rc *redis.Client, window time.Duration, requireNonce bool) *replayGuard {
+func newReplayGuard(rc *redis.Client, window time.Duration, requireNonce bool, security secevent.Reporter) *replayGuard {
 	if rc == nil {
 		return nil
 	}
@@ -67,13 +69,14 @@ func newReplayGuard(rc *redis.Client, window time.Duration, requireNonce bool) *
 		window:       window,
 		requireNonce: requireNonce,
 		now:          time.Now,
+		security:     security,
 	}
 }
 
 // allow reports whether the request passes replay validation. Rejected
 // requests must be dropped silently (empty OK response), indistinguishable
 // from a dedup drop.
-func (g *replayGuard) allow(ctx context.Context, req BotCommandRequest) bool {
+func (g *replayGuard) allow(ctx context.Context, botID string, req BotCommandRequest) bool {
 	if g == nil || g.nonces == nil {
 		return true
 	}
@@ -113,6 +116,9 @@ func (g *replayGuard) allow(ctx context.Context, req BotCommandRequest) bool {
 			"event", "request_replay",
 			"outcome", "nonce_reused",
 		)
+		secevent.Report(ctx, g.security, secevent.Event{
+			Kind: secevent.KindReplayDetected, BotID: botID, Reason: "command nonce reused", Enforced: true,
+		})
 	}
 	return stored
 }

@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	botAuth "haruki-cloud/api/bot/auth"
 	"io"
 	"net"
 	"net/http"
@@ -124,7 +125,7 @@ func TestDatabaseInitializersWithSQLiteAndMiniRedis(t *testing.T) {
 	harukiConfig.Cfg.HarukiBotDB.DBType = "sqlite3"
 	harukiConfig.Cfg.HarukiBotDB.DBURL = serverCoverageSQLiteDSN(t, "bot")
 	banChecker := accountdata.NewBanService(usersClient)
-	botClient := initBot(nil, mainLogger, fiber.New(), redisClient, nil, banChecker)
+	botClient := initBot(nil, mainLogger, fiber.New(), redisClient, botAuth.BotAuthOptions{BanChecker: banChecker})
 	if botClient == nil {
 		t.Fatal("bot database was not initialized")
 	}

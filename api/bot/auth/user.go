@@ -20,12 +20,15 @@ import (
 // route, so the handler only ever sees the decrypted MsgPack payload and its
 // response is encrypted on the way out. Nothing is mounted without a key ring:
 // this Cloud line has no plaintext or shared-key login path.
-func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, noiseKeys *crypto.KeyRing, checker GlobalBanChecker) {
-	if noiseKeys == nil {
+func registerUserRoutes(app *fiber.App, dbClient *ent.Client, redisClient *redis.Client, opts BotAuthOptions) {
+	if opts.NoiseKeys == nil {
 		return
 	}
-	svc := NewUserService(dbClient, redisClient).WithGlobalBanChecker(checker)
-	registerAuthV3Routes(app, NewUserHandler(svc), noiseKeys)
+	svc := NewUserService(dbClient, redisClient).
+		WithGlobalBanChecker(opts.BanChecker).
+		WithBuildPolicy(opts.BuildPolicy).
+		WithSecurityReporter(opts.Security)
+	registerAuthV3Routes(app, NewUserHandler(svc), opts.NoiseKeys)
 }
 
 // registerAuthV3Routes mounts the AuthV3 login route behind the Noise NK

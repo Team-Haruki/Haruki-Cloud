@@ -2,10 +2,16 @@ package server
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
+	"github.com/redis/go-redis/v9"
+	"haruki-cloud/api"
+	"haruki-cloud/internal/core/buildpolicy"
+	"haruki-cloud/internal/core/secevent"
 	"path/filepath"
 	"strings"
+	"time"
 
 	harukiConfig "haruki-cloud/config"
 	"haruki-cloud/internal/core/crypto"
@@ -338,4 +344,84 @@ func initCensorIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logger, r
 
 	mainLogger.Info("censor service initialized")
 	return svc
+}
+
+// initBuildPolicy loads the client build policy (release allowlist and
+// revocations). Without a path the policy is off; with a path but no explicit
+// mode it runs log-only so unlisted builds are measured before being refused.
+func initBuildPolicy(mainLogger *harukiLogger.Logger) *buildpolicy.Store {
+	botCfg := harukiConfig.Cfg.HarukiBotDB
+	path := strings.TrimSpace(botCfg.BuildPolicyPath)
+	mode, err := buildpolicy.ParseMode(botCfg.BuildPolicyMode, path != "")
+	if err != nil {
+		fatalStartup(mainLogger, "invalid build_policy_mode", "error_type", fmt.Sprintf("%T", err))
+	}
+	if mode == buildpolicy.ModeOff {
+		if harukiConfig.Cfg.Profile.IsProduction() {
+			mainLogger.Warn("client build policy is off; build_id is recorded but never enforced")
+		}
+		return nil
+	}
+	if path == "" {
+		fatalStartup(mainLogger, "build_policy_path is required when build_policy_mode is not off")
+	}
+	var rootPub ed25519.PublicKey
+	if pubHex := strings.TrimSpace(botCfg.BuildPolicyRootPublicKey); pubHex != "" {
+		rootPub, err = trustsign.ParsePublicKeyHex(pubHex)
+		if err != nil {
+			fatalStartup(mainLogger, "invalid build_policy_root_public_key", "error_type", fmt.Sprintf("%T", err))
+		}
+	} else if harukiConfig.Cfg.Profile.IsProduction() {
+		mainLogger.Warn("build policy is not signature-verified; set build_policy_root_public_key to pin the offline root")
+	}
+	store := buildpolicy.NewStore(path, mode, rootPub)
+	if doc, err := store.Document(); err != nil {
+		mainLogger.Warn("client build policy could not be loaded; logins are admitted fail-open until it is",
+			"build_policy_path", path, "error_type", fmt.Sprintf("%T", err))
+	} else {
+		mainLogger.Info("client build policy loaded",
+			"build_policy_mode", string(mode), "policy_version", doc.Version, "builds", len(doc.Builds),
+			"revoked_versions", len(doc.RevokedVersions), "revoked_bots", len(doc.RevokedBots),
+			"blocked_sources", len(doc.BlockedSources), "signature_verified", rootPub != nil)
+	}
+	return store
+}
+
+// sessionPolicyFor converts a possibly-nil store into the api.SessionPolicy
+// interface without smuggling a typed nil through it.
+func sessionPolicyFor(store *buildpolicy.Store) api.SessionPolicy {
+	if store == nil {
+		return nil
+	}
+	return store
+}
+
+// initSecurityMonitor wires the security event funnel to Redis-backed
+// counters and the alert webhook.
+func initSecurityMonitor(mainLogger *harukiLogger.Logger, redisClient *redis.Client) *secevent.Monitor {
+	secCfg := harukiConfig.Cfg.Security
+	var counter secevent.Counter
+	if redisClient != nil {
+		counter = redisSecurityCounter{rc: redisClient}
+	}
+	monitor := secevent.New(secevent.Config{
+		WebhookURL: secCfg.AlertWebhookURL,
+		Threshold:  secCfg.AlertThreshold,
+		Window:     secCfg.AlertWindow,
+		Node:       harukiConfig.Cfg.Node.Name,
+	}, counter)
+	if strings.TrimSpace(secCfg.AlertWebhookURL) == "" && harukiConfig.Cfg.Profile.IsProduction() {
+		mainLogger.Warn("security alert webhook is not configured; alerts are logged only")
+	}
+	return monitor
+}
+
+type redisSecurityCounter struct{ rc *redis.Client }
+
+func (c redisSecurityCounter) Incr(ctx context.Context, key string) (int64, error) {
+	return c.rc.Incr(ctx, key).Result()
+}
+
+func (c redisSecurityCounter) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	return c.rc.Expire(ctx, key, ttl).Err()
 }

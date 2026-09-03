@@ -146,6 +146,14 @@ haruki_bot:
   # Offline-signed keyset envelope produced by `cmd/trust-signer sign --domain keyset`.
   # Served verbatim at GET /api/v3/trust/keyset; empty = route not mounted.
   trust_keyset_path: ""
+  # Client build policy: release allowlist + revocations checked at AuthV3
+  # login and on live sessions. Plain JSON, or a trust-signer envelope
+  # (--domain release) when build_policy_root_public_key is set.
+  # build_policy_mode: off | log-only | enforce (empty = log-only when a path
+  # is set). Start with log-only and watch security events for build_rejected.
+  build_policy_path: ""
+  build_policy_mode: ""
+  build_policy_root_public_key: ""
 
 users_db:
   db_type: "postgres"
@@ -263,3 +271,13 @@ pjsk_render:
     max_retries: 3            # HTTP-level retry count for transient failures
     retry_wait_time: "1s"     # wait between retries
     default_algs: ["dfs", "ga"]
+
+security:
+  # Security events (auth_failed, replay_detected, rate_limited,
+  # build_rejected, session_revoked, login_source_changed, client_changed,
+  # policy_unavailable) are always logged with event=security. When one kind
+  # crosses alert_threshold occurrences for the same bot / source inside
+  # alert_window, one JSON alert is POSTed here (ERROR log only when empty).
+  alert_webhook_url: ""
+  alert_threshold: 5
+  alert_window: 10m

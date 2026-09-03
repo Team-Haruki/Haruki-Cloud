@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"haruki-cloud/internal/core/secevent"
 	"slices"
 	"strconv"
 	"strings"
@@ -69,6 +70,10 @@ type BotRouteOptions struct {
 	// ManifestSigner, when set, wraps the command manifest in a signed
 	// trustsign.Envelope (domain haruki-cloud/manifest/v1, JSON payload).
 	ManifestSigner *trustsign.Signer
+	// SessionPolicy re-checks live sessions against build-policy revocations.
+	SessionPolicy api.SessionPolicy
+	// Security receives replay and revocation events.
+	Security secevent.Reporter
 }
 
 // RegisterPJSKBotRoutes registers per-feature bot endpoints under
@@ -127,13 +132,14 @@ func RegisterPJSKBotRoutesWithOptions(initCtx context.Context, app *fiber.App, r
 
 	preview3DEnabled := renderApp.Config.Preview3D.Enabled
 	manifestChain := append(ownerGuard, buildManifestHandler(botDBClient, preview3DEnabled, opts.ManifestSigner))
-	bot.Get("/command/manifests", headerSessionMiddleware(redisClient), manifestChain...)
+	bot.Get("/command/manifests", headerSessionMiddleware(redisClient, opts.SessionPolicy, opts.Security), manifestChain...)
 
 	guard := NewRequestGuard(redisClient)
 	replay := newReplayGuard(
 		redisClient,
 		harukiConfig.Cfg.HarukiBotDB.RequestNonceWindow,
 		!harukiConfig.Cfg.HarukiBotDB.AllowRequestsWithoutNonce,
+		opts.Security,
 	)
 	election, commandElection := newBotCommandElection(initCtx, redisClient, guard)
 	telemetry := botauth.NewCommandTelemetryDispatcher(botDBClient)
@@ -144,7 +150,7 @@ func RegisterPJSKBotRoutesWithOptions(initCtx context.Context, app *fiber.App, r
 	}
 	// Session and owner checks run after Noise so the token is read from the
 	// decrypted body and rejections are encrypted on the way out.
-	pjsk.Use(verifyBotSessionFromPayload(redisClient))
+	pjsk.Use(verifyBotSessionFromPayload(redisClient, opts.SessionPolicy, opts.Security))
 	for _, guard := range ownerGuard {
 		pjsk.Use(guard)
 	}
@@ -169,11 +175,11 @@ func seedBotCommandManifests(ctx context.Context, client *botDB.Client) {
 
 // headerSessionMiddleware authenticates body-less routes (the manifest GET)
 // from the X-Haruki-Bot-Id / X-Haruki-Bot-Session-Token headers.
-func headerSessionMiddleware(redisClient *redis.Client) fiber.Handler {
+func headerSessionMiddleware(redisClient *redis.Client, policy api.SessionPolicy, reporter secevent.Reporter) fiber.Handler {
 	if redisClient == nil {
 		return api.VerifyBotSessionTestBypass()
 	}
-	return api.VerifyBotSession(redisClient)
+	return api.VerifyBotSessionWithPolicy(redisClient, policy, reporter)
 }
 
 // botOwnerGuardMiddleware rejects bots whose owner is globally banned. It is
@@ -263,7 +269,7 @@ func makeBotHandler(renderApp *renderapp.App, election commandResponseElection, 
 			return botResponse(c, fiber.StatusBadRequest, rejection.message)
 		}
 		requestCtx := c.Context()
-		if !replay.allow(requestCtx, req) {
+		if !replay.allow(requestCtx, c.Params("botId"), req) {
 			// A stale or replayed request is dropped exactly like a dedup drop:
 			// empty OK, indistinguishable to the sender.
 			setCommandTraceOutcome(c, "replayed", nil)

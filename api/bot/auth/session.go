@@ -21,6 +21,10 @@ type authResponseError struct {
 
 type authenticatedBot struct {
 	userID int
+	// Previous-login facts used for anomaly reporting.
+	lastLoginIP       string
+	lastClientVersion string
+	lastBuildID       string
 }
 
 func sendAuthResponseError(c fiber.Ctx, responseErr *authResponseError) error {
@@ -61,7 +65,12 @@ func (h *UserHandler) authenticateBot(ctx context.Context, botID int, botIDStrin
 	if banned {
 		return authenticatedBot{}, &authResponseError{status: fiber.StatusForbidden, message: ErrOwnerBanned}
 	}
-	return authenticatedBot{userID: u.ID}, nil
+	return authenticatedBot{
+		userID:            u.ID,
+		lastLoginIP:       u.LastLoginIP,
+		lastClientVersion: u.LastClientVersion,
+		lastBuildID:       u.LastBuildID,
+	}, nil
 }
 
 func parseCredentialJWT(rawCredential string, signingToken string) (*jwt.Token, error) {

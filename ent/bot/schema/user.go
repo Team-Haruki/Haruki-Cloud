@@ -43,6 +43,16 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Comment("Last successful login time"),
+		field.String("last_client_version").
+			MaxLen(64).
+			Optional().
+			Default("").
+			Comment("client_version reported by the last successful AuthV3 login"),
+		field.String("last_build_id").
+			MaxLen(128).
+			Optional().
+			Default("").
+			Comment("build_id reported by the last successful AuthV3 login"),
 	}
 }
 

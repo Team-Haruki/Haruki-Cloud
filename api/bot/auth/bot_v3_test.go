@@ -35,6 +35,7 @@ type authV3TestEnv struct {
 	botStr  string
 	credJWT string
 	ban     *stubGlobalBanChecker
+	svc     *UserService
 }
 
 func newAuthV3TestEnv(t *testing.T) *authV3TestEnv {
@@ -72,7 +73,8 @@ func newAuthV3TestEnv(t *testing.T) *authV3TestEnv {
 
 	store := newMemoryRedisStore()
 	ban := &stubGlobalBanChecker{}
-	userHandler := NewUserHandler(NewUserServiceWithDependencies(client, store).WithGlobalBanChecker(ban))
+	svc := NewUserServiceWithDependencies(client, store).WithGlobalBanChecker(ban)
+	userHandler := NewUserHandler(svc)
 	internalHandler := NewInternalHandler(NewInternalServiceWithStore(client, store).WithGlobalBanChecker(ban))
 
 	app := fiber.New()
@@ -93,7 +95,7 @@ func newAuthV3TestEnv(t *testing.T) *authV3TestEnv {
 	botStr := strconv.Itoa(botID)
 	return &authV3TestEnv{
 		app: app, client: client, ring: ring, current: current, next: next,
-		botID: botID, botStr: botStr, credJWT: signTestCredential(t, botStr, credential), ban: ban,
+		botID: botID, botStr: botStr, credJWT: signTestCredential(t, botStr, credential), ban: ban, svc: svc,
 	}
 }
 

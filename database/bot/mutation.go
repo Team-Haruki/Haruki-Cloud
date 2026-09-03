@@ -2638,6 +2638,8 @@ type UserMutation struct {
 	last_login_ip       *string
 	last_login_location *string
 	last_login_at       *time.Time
+	last_client_version *string
+	last_build_id       *string
 	clearedFields       map[string]struct{}
 	done                bool
 	oldValue            func(context.Context) (*User, error)
@@ -3050,6 +3052,104 @@ func (m *UserMutation) ResetLastLoginAt() {
 	delete(m.clearedFields, user.FieldLastLoginAt)
 }
 
+// SetLastClientVersion sets the "last_client_version" field.
+func (m *UserMutation) SetLastClientVersion(s string) {
+	m.last_client_version = &s
+}
+
+// LastClientVersion returns the value of the "last_client_version" field in the mutation.
+func (m *UserMutation) LastClientVersion() (r string, exists bool) {
+	v := m.last_client_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastClientVersion returns the old "last_client_version" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastClientVersion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastClientVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastClientVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastClientVersion: %w", err)
+	}
+	return oldValue.LastClientVersion, nil
+}
+
+// ClearLastClientVersion clears the value of the "last_client_version" field.
+func (m *UserMutation) ClearLastClientVersion() {
+	m.last_client_version = nil
+	m.clearedFields[user.FieldLastClientVersion] = struct{}{}
+}
+
+// LastClientVersionCleared returns if the "last_client_version" field was cleared in this mutation.
+func (m *UserMutation) LastClientVersionCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastClientVersion]
+	return ok
+}
+
+// ResetLastClientVersion resets all changes to the "last_client_version" field.
+func (m *UserMutation) ResetLastClientVersion() {
+	m.last_client_version = nil
+	delete(m.clearedFields, user.FieldLastClientVersion)
+}
+
+// SetLastBuildID sets the "last_build_id" field.
+func (m *UserMutation) SetLastBuildID(s string) {
+	m.last_build_id = &s
+}
+
+// LastBuildID returns the value of the "last_build_id" field in the mutation.
+func (m *UserMutation) LastBuildID() (r string, exists bool) {
+	v := m.last_build_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastBuildID returns the old "last_build_id" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastBuildID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastBuildID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastBuildID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastBuildID: %w", err)
+	}
+	return oldValue.LastBuildID, nil
+}
+
+// ClearLastBuildID clears the value of the "last_build_id" field.
+func (m *UserMutation) ClearLastBuildID() {
+	m.last_build_id = nil
+	m.clearedFields[user.FieldLastBuildID] = struct{}{}
+}
+
+// LastBuildIDCleared returns if the "last_build_id" field was cleared in this mutation.
+func (m *UserMutation) LastBuildIDCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastBuildID]
+	return ok
+}
+
+// ResetLastBuildID resets all changes to the "last_build_id" field.
+func (m *UserMutation) ResetLastBuildID() {
+	m.last_build_id = nil
+	delete(m.clearedFields, user.FieldLastBuildID)
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -3084,7 +3184,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 8)
 	if m.owner_user_id != nil {
 		fields = append(fields, user.FieldOwnerUserID)
 	}
@@ -3102,6 +3202,12 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.last_login_at != nil {
 		fields = append(fields, user.FieldLastLoginAt)
+	}
+	if m.last_client_version != nil {
+		fields = append(fields, user.FieldLastClientVersion)
+	}
+	if m.last_build_id != nil {
+		fields = append(fields, user.FieldLastBuildID)
 	}
 	return fields
 }
@@ -3123,6 +3229,10 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.LastLoginLocation()
 	case user.FieldLastLoginAt:
 		return m.LastLoginAt()
+	case user.FieldLastClientVersion:
+		return m.LastClientVersion()
+	case user.FieldLastBuildID:
+		return m.LastBuildID()
 	}
 	return nil, false
 }
@@ -3144,6 +3254,10 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldLastLoginLocation(ctx)
 	case user.FieldLastLoginAt:
 		return m.OldLastLoginAt(ctx)
+	case user.FieldLastClientVersion:
+		return m.OldLastClientVersion(ctx)
+	case user.FieldLastBuildID:
+		return m.OldLastBuildID(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -3194,6 +3308,20 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLastLoginAt(v)
+		return nil
+	case user.FieldLastClientVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastClientVersion(v)
+		return nil
+	case user.FieldLastBuildID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastBuildID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -3264,6 +3392,12 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldLastLoginAt) {
 		fields = append(fields, user.FieldLastLoginAt)
 	}
+	if m.FieldCleared(user.FieldLastClientVersion) {
+		fields = append(fields, user.FieldLastClientVersion)
+	}
+	if m.FieldCleared(user.FieldLastBuildID) {
+		fields = append(fields, user.FieldLastBuildID)
+	}
 	return fields
 }
 
@@ -3290,6 +3424,12 @@ func (m *UserMutation) ClearField(name string) error {
 	case user.FieldLastLoginAt:
 		m.ClearLastLoginAt()
 		return nil
+	case user.FieldLastClientVersion:
+		m.ClearLastClientVersion()
+		return nil
+	case user.FieldLastBuildID:
+		m.ClearLastBuildID()
+		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
 }
@@ -3315,6 +3455,12 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldLastLoginAt:
 		m.ResetLastLoginAt()
+		return nil
+	case user.FieldLastClientVersion:
+		m.ResetLastClientVersion()
+		return nil
+	case user.FieldLastBuildID:
+		m.ResetLastBuildID()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

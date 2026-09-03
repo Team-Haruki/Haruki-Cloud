@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"haruki-cloud/api"
+	"haruki-cloud/internal/core/secevent"
 	"haruki-cloud/internal/observability/commandtrace"
 
 	"github.com/gofiber/fiber/v3"
@@ -28,7 +29,7 @@ type payloadSessionEnvelope struct {
 // bot_id claim and the Redis-stored session must both match it. A nil Redis
 // client bypasses the check (unit tests without Redis), mirroring
 // api.VerifyBotSessionTestBypass.
-func verifyBotSessionFromPayload(redisClient *redis.Client) fiber.Handler {
+func verifyBotSessionFromPayload(redisClient *redis.Client, policy api.SessionPolicy, reporter secevent.Reporter) fiber.Handler {
 	if redisClient == nil {
 		return api.VerifyBotSessionTestBypass()
 	}
@@ -46,7 +47,7 @@ func verifyBotSessionFromPayload(redisClient *redis.Client) fiber.Handler {
 		if token == "" {
 			return botResponse(c, fiber.StatusUnauthorized, api.ErrBotSessionMissing)
 		}
-		if failure := api.VerifyBotSessionToken(c.Context(), redisClient, c.Params("botId"), token); failure != nil {
+		if failure := api.VerifyBotSessionTokenWithPolicy(c.Context(), redisClient, policy, reporter, c.Params("botId"), token); failure != nil {
 			return botResponse(c, failure.Status, failure.Message)
 		}
 		return c.Next()

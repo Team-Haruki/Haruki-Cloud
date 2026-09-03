@@ -129,3 +129,41 @@ func TestSignRejectsInvalidKeysetAndBadFlags(t *testing.T) {
 		t.Fatalf("help output = %q", help)
 	}
 }
+
+func TestSignReleasePolicyValidatesAndRoundTrips(t *testing.T) {
+	dir := t.TempDir()
+	seedFile := filepath.Join(dir, "root.seed")
+	var keygen struct {
+		PublicKey string `json:"public_key"`
+	}
+	if err := json.Unmarshal([]byte(runOK(t, "keygen", "--out", seedFile, "--key-id", "root")), &keygen); err != nil {
+		t.Fatal(err)
+	}
+
+	bad := filepath.Join(dir, "bad-policy.json")
+	if err := os.WriteFile(bad, []byte(`{"version":1,"builds":[{"build_id":"","version":"1"}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(dir, "policy.signed.json")
+	if msg := runFail(t, "sign", "--key", seedFile, "--key-id", "root", "--domain", "release", "--in", bad, "--out", out); !strings.Contains(msg, "release policy payload rejected") {
+		t.Fatalf("invalid policy message = %q", msg)
+	}
+
+	good := filepath.Join(dir, "policy.json")
+	payload := []byte(`{"version":3,"builds":[{"build_id":"b1","version":"3.1.0"}],"revoked_versions":["3.0.*"]}`)
+	if err := os.WriteFile(good, payload, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runOK(t, "sign", "--key", seedFile, "--key-id", "root", "--domain", "release", "--in", good, "--out", out)
+	if verified := runOK(t, "verify", "--public", keygen.PublicKey, "--in", out, "--domain", "release"); verified != string(payload) {
+		t.Fatalf("verify printed %q", verified)
+	}
+	raw, _ := os.ReadFile(out)
+	var envelope trustsign.Envelope
+	if err := json.Unmarshal(raw, &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if envelope.Domain != trustsign.DomainRelease {
+		t.Fatalf("domain = %q", envelope.Domain)
+	}
+}

@@ -529,7 +529,7 @@ func validateFilterForRegion(region renderregion.Value, filter Filter) error {
 	}
 	switch normalizeFilter(filter) {
 	case FilterMysekai:
-		return fmt.Errorf("国服暂不支持查询 MySekai 材料")
+		return fmt.Errorf("国服 MySekai 功能永不开启，无法查询 MySekai 材料")
 	case FilterMemory:
 		return fmt.Errorf("国服暂不支持查询记忆")
 	default:

@@ -16,7 +16,7 @@ const inventoryListHelp = `使用方式:
 /查背包 ms材料
 /查背包 记忆
 
-空参数默认不展示水晶、火罐、MySekai 材料和记忆。国服不支持 ms材料、记忆。`
+空参数默认不展示水晶、火罐、MySekai 材料和记忆。国服 MySekai 功能永不开启，不支持 ms材料；国服也不支持记忆。`
 
 type inventoryListParams struct {
 	userQueryParams
@@ -129,7 +129,7 @@ func validateInventoryFilterForRegion(region renderregion.Value, filter renderin
 	}
 	switch filter {
 	case renderinventory.FilterMysekai:
-		return onebot11.NewReplayError("国服暂不支持查询 MySekai 材料")
+		return onebot11.NewReplayError("国服 MySekai 功能永不开启，无法查询 MySekai 材料")
 	case renderinventory.FilterMemory:
 		return onebot11.NewReplayError("国服暂不支持查询记忆")
 	default:

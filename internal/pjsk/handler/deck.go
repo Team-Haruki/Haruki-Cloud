@@ -264,7 +264,7 @@ func executeMySekaiDeck(rc *RequestContext) (onebot11.Message, error) {
 	mergeParams(rc.Cmd.Params, &combined)
 	regionStr := regionWithDefault(rc.Cmd.Region)
 	if !isMySekaiDeckRegionAllowed(rc.Cmd, regionStr) {
-		return mySekaiRegionUnavailableMessage(), nil
+		return rejectCNMySekai(rc)
 	}
 	query := deck.AutoQuery{Region: regionStr, RecommendType: "mysekai"}
 	mergeParams(combined.Deck, &query)
@@ -293,7 +293,7 @@ func executeTargetMySekaiDeck(rc *RequestContext, query deck.AutoQuery, params u
 	}
 	regionStr = resolvedTargetRegion(regionStr, target)
 	if !isMySekaiDeckRegionAllowed(rc.Cmd, regionStr) {
-		return mySekaiRegionUnavailableMessage(), nil
+		return rejectCNMySekai(rc)
 	}
 	platform, platformUserID := platformCredentials(params)
 	targetSnapshot, err := resolveTargetSnapshotWithError(rc.Ctx, rc.App, regionStr, platform, platformUserID, target.PJSKUserID, false)

@@ -19,6 +19,7 @@ var (
 		{Name: "pjsk_ban_state", Type: field.TypeBool, Default: false},
 		{Name: "pjsk_ban_reason", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "pjsk_banned_game_account_bind_attempts", Type: field.TypeInt, Default: 0},
+		{Name: "pjsk_cn_mysekai_attempts", Type: field.TypeInt, Default: 0},
 		{Name: "chunithm_ban_state", Type: field.TypeBool, Default: false},
 		{Name: "chunithm_ban_reason", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "pjsk_main_ban_state", Type: field.TypeBool, Default: false},

@@ -579,7 +579,7 @@ func assertSingleMySekaiUnavailableMessage(t *testing.T, message onebot11.Messag
 	if !ok {
 		t.Fatalf("unexpected message data: %+v", message[0].Data)
 	}
-	if data.Text != "MySekai 功能在此区服暂未开放" {
+	if !strings.HasPrefix(data.Text, cnMySekaiNeverOpensNotice) {
 		t.Fatalf("unexpected text: %q", data.Text)
 	}
 }

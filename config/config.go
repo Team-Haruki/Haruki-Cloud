@@ -241,6 +241,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envBool("HARUKI_PJSK_ENABLED", &cfg.PJSK.Enabled)
 	envStr("HARUKI_PJSK_DB_TYPE", &cfg.PJSK.DBType)
 	envStr("HARUKI_PJSK_DB_URL", &cfg.PJSK.DBURL)
+	envDuration("HARUKI_PJSK_CN_MYSEKAI_BAN_DURATION", &cfg.PJSK.CNMySekaiBanDuration)
 
 	// Sekai
 	envBool("HARUKI_SEKAI_ENABLED", &cfg.Sekai.Enabled)
@@ -421,6 +422,9 @@ type PJSKConfig struct {
 	DBType         string                    `yaml:"db_type"`
 	DBURL          string                    `yaml:"db_url"`
 	AllowCNMySekai []MySekaiCNWhitelistEntry `yaml:"allow_cn_mysekai"`
+	// CNMySekaiBanDuration is how long the temporary global ban lasts once a
+	// user has hit the CN MySekai gate three times. Zero means ten minutes.
+	CNMySekaiBanDuration time.Duration `yaml:"cn_mysekai_ban_duration"`
 }
 
 type SekaiConfig struct {

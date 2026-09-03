@@ -60,7 +60,7 @@ func TestInventoryListHandleRejectsCNMysekaiFilter(t *testing.T) {
 	if err == nil {
 		t.Fatal("Handle() error = nil, want replay error")
 	}
-	if !strings.Contains(err.Error(), "国服暂不支持查询") {
+	if !strings.Contains(err.Error(), "国服 MySekai 功能永不开启") {
 		t.Fatalf("error = %v", err)
 	}
 }

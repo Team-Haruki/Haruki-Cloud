@@ -27,6 +27,8 @@ const (
 	FieldPjskBanReason = "pjsk_ban_reason"
 	// FieldPjskBannedGameAccountBindAttempts holds the string denoting the pjsk_banned_game_account_bind_attempts field in the database.
 	FieldPjskBannedGameAccountBindAttempts = "pjsk_banned_game_account_bind_attempts"
+	// FieldPjskCnMysekaiAttempts holds the string denoting the pjsk_cn_mysekai_attempts field in the database.
+	FieldPjskCnMysekaiAttempts = "pjsk_cn_mysekai_attempts"
 	// FieldChunithmBanState holds the string denoting the chunithm_ban_state field in the database.
 	FieldChunithmBanState = "chunithm_ban_state"
 	// FieldChunithmBanReason holds the string denoting the chunithm_ban_reason field in the database.
@@ -70,6 +72,7 @@ var Columns = []string{
 	FieldPjskBanState,
 	FieldPjskBanReason,
 	FieldPjskBannedGameAccountBindAttempts,
+	FieldPjskCnMysekaiAttempts,
 	FieldChunithmBanState,
 	FieldChunithmBanReason,
 	FieldPjskMainBanState,
@@ -111,6 +114,8 @@ var (
 	PjskBanReasonValidator func(string) error
 	// DefaultPjskBannedGameAccountBindAttempts holds the default value on creation for the "pjsk_banned_game_account_bind_attempts" field.
 	DefaultPjskBannedGameAccountBindAttempts int
+	// DefaultPjskCnMysekaiAttempts holds the default value on creation for the "pjsk_cn_mysekai_attempts" field.
+	DefaultPjskCnMysekaiAttempts int
 	// DefaultChunithmBanState holds the default value on creation for the "chunithm_ban_state" field.
 	DefaultChunithmBanState bool
 	// ChunithmBanReasonValidator is a validator for the "chunithm_ban_reason" field. It is called by the builders before save.
@@ -187,6 +192,11 @@ func ByPjskBanReason(opts ...sql.OrderTermOption) OrderOption {
 // ByPjskBannedGameAccountBindAttempts orders the results by the pjsk_banned_game_account_bind_attempts field.
 func ByPjskBannedGameAccountBindAttempts(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPjskBannedGameAccountBindAttempts, opts...).ToFunc()
+}
+
+// ByPjskCnMysekaiAttempts orders the results by the pjsk_cn_mysekai_attempts field.
+func ByPjskCnMysekaiAttempts(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPjskCnMysekaiAttempts, opts...).ToFunc()
 }
 
 // ByChunithmBanState orders the results by the chunithm_ban_state field.

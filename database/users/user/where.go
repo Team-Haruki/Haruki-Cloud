@@ -94,6 +94,11 @@ func PjskBannedGameAccountBindAttempts(v int) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPjskBannedGameAccountBindAttempts, v))
 }
 
+// PjskCnMysekaiAttempts applies equality check predicate on the "pjsk_cn_mysekai_attempts" field. It's identical to PjskCnMysekaiAttemptsEQ.
+func PjskCnMysekaiAttempts(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPjskCnMysekaiAttempts, v))
+}
+
 // ChunithmBanState applies equality check predicate on the "chunithm_ban_state" field. It's identical to ChunithmBanStateEQ.
 func ChunithmBanState(v bool) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldChunithmBanState, v))
@@ -552,6 +557,46 @@ func PjskBannedGameAccountBindAttemptsLT(v int) predicate.User {
 // PjskBannedGameAccountBindAttemptsLTE applies the LTE predicate on the "pjsk_banned_game_account_bind_attempts" field.
 func PjskBannedGameAccountBindAttemptsLTE(v int) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldPjskBannedGameAccountBindAttempts, v))
+}
+
+// PjskCnMysekaiAttemptsEQ applies the EQ predicate on the "pjsk_cn_mysekai_attempts" field.
+func PjskCnMysekaiAttemptsEQ(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPjskCnMysekaiAttempts, v))
+}
+
+// PjskCnMysekaiAttemptsNEQ applies the NEQ predicate on the "pjsk_cn_mysekai_attempts" field.
+func PjskCnMysekaiAttemptsNEQ(v int) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldPjskCnMysekaiAttempts, v))
+}
+
+// PjskCnMysekaiAttemptsIn applies the In predicate on the "pjsk_cn_mysekai_attempts" field.
+func PjskCnMysekaiAttemptsIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldIn(FieldPjskCnMysekaiAttempts, vs...))
+}
+
+// PjskCnMysekaiAttemptsNotIn applies the NotIn predicate on the "pjsk_cn_mysekai_attempts" field.
+func PjskCnMysekaiAttemptsNotIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldPjskCnMysekaiAttempts, vs...))
+}
+
+// PjskCnMysekaiAttemptsGT applies the GT predicate on the "pjsk_cn_mysekai_attempts" field.
+func PjskCnMysekaiAttemptsGT(v int) predicate.User {
+	return predicate.User(sql.FieldGT(FieldPjskCnMysekaiAttempts, v))
+}
+
+// PjskCnMysekaiAttemptsGTE applies the GTE predicate on the "pjsk_cn_mysekai_attempts" field.
+func PjskCnMysekaiAttemptsGTE(v int) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldPjskCnMysekaiAttempts, v))
+}
+
+// PjskCnMysekaiAttemptsLT applies the LT predicate on the "pjsk_cn_mysekai_attempts" field.
+func PjskCnMysekaiAttemptsLT(v int) predicate.User {
+	return predicate.User(sql.FieldLT(FieldPjskCnMysekaiAttempts, v))
+}
+
+// PjskCnMysekaiAttemptsLTE applies the LTE predicate on the "pjsk_cn_mysekai_attempts" field.
+func PjskCnMysekaiAttemptsLTE(v int) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldPjskCnMysekaiAttempts, v))
 }
 
 // ChunithmBanStateEQ applies the EQ predicate on the "chunithm_ban_state" field.

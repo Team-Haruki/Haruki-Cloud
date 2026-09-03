@@ -165,6 +165,27 @@ func (_u *UserUpdate) AddPjskBannedGameAccountBindAttempts(v int) *UserUpdate {
 	return _u
 }
 
+// SetPjskCnMysekaiAttempts sets the "pjsk_cn_mysekai_attempts" field.
+func (_u *UserUpdate) SetPjskCnMysekaiAttempts(v int) *UserUpdate {
+	_u.mutation.ResetPjskCnMysekaiAttempts()
+	_u.mutation.SetPjskCnMysekaiAttempts(v)
+	return _u
+}
+
+// SetNillablePjskCnMysekaiAttempts sets the "pjsk_cn_mysekai_attempts" field if the given value is not nil.
+func (_u *UserUpdate) SetNillablePjskCnMysekaiAttempts(v *int) *UserUpdate {
+	if v != nil {
+		_u.SetPjskCnMysekaiAttempts(*v)
+	}
+	return _u
+}
+
+// AddPjskCnMysekaiAttempts adds value to the "pjsk_cn_mysekai_attempts" field.
+func (_u *UserUpdate) AddPjskCnMysekaiAttempts(v int) *UserUpdate {
+	_u.mutation.AddPjskCnMysekaiAttempts(v)
+	return _u
+}
+
 // SetChunithmBanState sets the "chunithm_ban_state" field.
 func (_u *UserUpdate) SetChunithmBanState(v bool) *UserUpdate {
 	_u.mutation.SetChunithmBanState(v)
@@ -543,6 +564,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedPjskBannedGameAccountBindAttempts(); ok {
 		_spec.AddField(user.FieldPjskBannedGameAccountBindAttempts, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.PjskCnMysekaiAttempts(); ok {
+		_spec.SetField(user.FieldPjskCnMysekaiAttempts, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPjskCnMysekaiAttempts(); ok {
+		_spec.AddField(user.FieldPjskCnMysekaiAttempts, field.TypeInt, value)
+	}
 	if value, ok := _u.mutation.ChunithmBanState(); ok {
 		_spec.SetField(user.FieldChunithmBanState, field.TypeBool, value)
 	}
@@ -760,6 +787,27 @@ func (_u *UserUpdateOne) SetNillablePjskBannedGameAccountBindAttempts(v *int) *U
 // AddPjskBannedGameAccountBindAttempts adds value to the "pjsk_banned_game_account_bind_attempts" field.
 func (_u *UserUpdateOne) AddPjskBannedGameAccountBindAttempts(v int) *UserUpdateOne {
 	_u.mutation.AddPjskBannedGameAccountBindAttempts(v)
+	return _u
+}
+
+// SetPjskCnMysekaiAttempts sets the "pjsk_cn_mysekai_attempts" field.
+func (_u *UserUpdateOne) SetPjskCnMysekaiAttempts(v int) *UserUpdateOne {
+	_u.mutation.ResetPjskCnMysekaiAttempts()
+	_u.mutation.SetPjskCnMysekaiAttempts(v)
+	return _u
+}
+
+// SetNillablePjskCnMysekaiAttempts sets the "pjsk_cn_mysekai_attempts" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillablePjskCnMysekaiAttempts(v *int) *UserUpdateOne {
+	if v != nil {
+		_u.SetPjskCnMysekaiAttempts(*v)
+	}
+	return _u
+}
+
+// AddPjskCnMysekaiAttempts adds value to the "pjsk_cn_mysekai_attempts" field.
+func (_u *UserUpdateOne) AddPjskCnMysekaiAttempts(v int) *UserUpdateOne {
+	_u.mutation.AddPjskCnMysekaiAttempts(v)
 	return _u
 }
 
@@ -1170,6 +1218,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.AddedPjskBannedGameAccountBindAttempts(); ok {
 		_spec.AddField(user.FieldPjskBannedGameAccountBindAttempts, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.PjskCnMysekaiAttempts(); ok {
+		_spec.SetField(user.FieldPjskCnMysekaiAttempts, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPjskCnMysekaiAttempts(); ok {
+		_spec.AddField(user.FieldPjskCnMysekaiAttempts, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.ChunithmBanState(); ok {
 		_spec.SetField(user.FieldChunithmBanState, field.TypeBool, value)

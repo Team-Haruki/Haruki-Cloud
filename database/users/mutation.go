@@ -42,6 +42,8 @@ type UserMutation struct {
 	pjsk_ban_reason                           *string
 	pjsk_banned_game_account_bind_attempts    *int
 	addpjsk_banned_game_account_bind_attempts *int
+	pjsk_cn_mysekai_attempts                  *int
+	addpjsk_cn_mysekai_attempts               *int
 	chunithm_ban_state                        *bool
 	chunithm_ban_reason                       *string
 	pjsk_main_ban_state                       *bool
@@ -511,6 +513,62 @@ func (m *UserMutation) AddedPjskBannedGameAccountBindAttempts() (r int, exists b
 func (m *UserMutation) ResetPjskBannedGameAccountBindAttempts() {
 	m.pjsk_banned_game_account_bind_attempts = nil
 	m.addpjsk_banned_game_account_bind_attempts = nil
+}
+
+// SetPjskCnMysekaiAttempts sets the "pjsk_cn_mysekai_attempts" field.
+func (m *UserMutation) SetPjskCnMysekaiAttempts(i int) {
+	m.pjsk_cn_mysekai_attempts = &i
+	m.addpjsk_cn_mysekai_attempts = nil
+}
+
+// PjskCnMysekaiAttempts returns the value of the "pjsk_cn_mysekai_attempts" field in the mutation.
+func (m *UserMutation) PjskCnMysekaiAttempts() (r int, exists bool) {
+	v := m.pjsk_cn_mysekai_attempts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPjskCnMysekaiAttempts returns the old "pjsk_cn_mysekai_attempts" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPjskCnMysekaiAttempts(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPjskCnMysekaiAttempts is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPjskCnMysekaiAttempts requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPjskCnMysekaiAttempts: %w", err)
+	}
+	return oldValue.PjskCnMysekaiAttempts, nil
+}
+
+// AddPjskCnMysekaiAttempts adds i to the "pjsk_cn_mysekai_attempts" field.
+func (m *UserMutation) AddPjskCnMysekaiAttempts(i int) {
+	if m.addpjsk_cn_mysekai_attempts != nil {
+		*m.addpjsk_cn_mysekai_attempts += i
+	} else {
+		m.addpjsk_cn_mysekai_attempts = &i
+	}
+}
+
+// AddedPjskCnMysekaiAttempts returns the value that was added to the "pjsk_cn_mysekai_attempts" field in this mutation.
+func (m *UserMutation) AddedPjskCnMysekaiAttempts() (r int, exists bool) {
+	v := m.addpjsk_cn_mysekai_attempts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPjskCnMysekaiAttempts resets all changes to the "pjsk_cn_mysekai_attempts" field.
+func (m *UserMutation) ResetPjskCnMysekaiAttempts() {
+	m.pjsk_cn_mysekai_attempts = nil
+	m.addpjsk_cn_mysekai_attempts = nil
 }
 
 // SetChunithmBanState sets the "chunithm_ban_state" field.
@@ -1142,7 +1200,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 23)
 	if m.platform != nil {
 		fields = append(fields, user.FieldPlatform)
 	}
@@ -1166,6 +1224,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.pjsk_banned_game_account_bind_attempts != nil {
 		fields = append(fields, user.FieldPjskBannedGameAccountBindAttempts)
+	}
+	if m.pjsk_cn_mysekai_attempts != nil {
+		fields = append(fields, user.FieldPjskCnMysekaiAttempts)
 	}
 	if m.chunithm_ban_state != nil {
 		fields = append(fields, user.FieldChunithmBanState)
@@ -1233,6 +1294,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.PjskBanReason()
 	case user.FieldPjskBannedGameAccountBindAttempts:
 		return m.PjskBannedGameAccountBindAttempts()
+	case user.FieldPjskCnMysekaiAttempts:
+		return m.PjskCnMysekaiAttempts()
 	case user.FieldChunithmBanState:
 		return m.ChunithmBanState()
 	case user.FieldChunithmBanReason:
@@ -1286,6 +1349,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPjskBanReason(ctx)
 	case user.FieldPjskBannedGameAccountBindAttempts:
 		return m.OldPjskBannedGameAccountBindAttempts(ctx)
+	case user.FieldPjskCnMysekaiAttempts:
+		return m.OldPjskCnMysekaiAttempts(ctx)
 	case user.FieldChunithmBanState:
 		return m.OldChunithmBanState(ctx)
 	case user.FieldChunithmBanReason:
@@ -1378,6 +1443,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPjskBannedGameAccountBindAttempts(v)
+		return nil
+	case user.FieldPjskCnMysekaiAttempts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPjskCnMysekaiAttempts(v)
 		return nil
 	case user.FieldChunithmBanState:
 		v, ok := value.(bool)
@@ -1488,6 +1560,9 @@ func (m *UserMutation) AddedFields() []string {
 	if m.addpjsk_banned_game_account_bind_attempts != nil {
 		fields = append(fields, user.FieldPjskBannedGameAccountBindAttempts)
 	}
+	if m.addpjsk_cn_mysekai_attempts != nil {
+		fields = append(fields, user.FieldPjskCnMysekaiAttempts)
+	}
 	return fields
 }
 
@@ -1498,6 +1573,8 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case user.FieldPjskBannedGameAccountBindAttempts:
 		return m.AddedPjskBannedGameAccountBindAttempts()
+	case user.FieldPjskCnMysekaiAttempts:
+		return m.AddedPjskCnMysekaiAttempts()
 	}
 	return nil, false
 }
@@ -1513,6 +1590,13 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPjskBannedGameAccountBindAttempts(v)
+		return nil
+	case user.FieldPjskCnMysekaiAttempts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPjskCnMysekaiAttempts(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
@@ -1627,6 +1711,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldPjskBannedGameAccountBindAttempts:
 		m.ResetPjskBannedGameAccountBindAttempts()
+		return nil
+	case user.FieldPjskCnMysekaiAttempts:
+		m.ResetPjskCnMysekaiAttempts()
 		return nil
 	case user.FieldChunithmBanState:
 		m.ResetChunithmBanState()

@@ -206,7 +206,7 @@ func TestExecuteCheckDataMySekaiRejectsCNWhenNotAllowed(t *testing.T) {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 	data, ok := message[0].Data.(onebot11.TextData)
-	if !ok || data.Text != "MySekai 功能在此区服暂未开放" {
+	if !ok || !strings.HasPrefix(data.Text, cnMySekaiNeverOpensNotice) {
 		t.Fatalf("unexpected text data: %+v", message[0].Data)
 	}
 }

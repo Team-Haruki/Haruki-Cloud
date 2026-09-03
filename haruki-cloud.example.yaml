@@ -50,6 +50,9 @@ pjsk:
     # - platform: "qq"
     #   group_id: "12345678"
     #   bot_id: "11451419"
+  # CN users outside the whitelist are told MySekai will never open for CN;
+  # the third blocked attempt earns a temporary global ban of this length.
+  cn_mysekai_ban_duration: 10m
 
 sekai:
   enabled: true

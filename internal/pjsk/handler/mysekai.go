@@ -701,7 +701,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 	}
 
 	if !isMySekaiRegionAllowedForMode(rc.Cmd, regionWithDefault(rc.Cmd.Region)) {
-		return mySekaiRegionUnavailableMessage(), nil
+		return rejectCNMySekai(rc)
 	}
 
 	regionStr := rc.RegionStr
@@ -719,7 +719,7 @@ func executeMysekai(rc *RequestContext) (message onebot11.Message, err error) {
 		return nil, err
 	}
 	if !isMySekaiRegionAllowed(rc.Cmd, renderCtx.Region) {
-		return mySekaiRegionUnavailableMessage(), nil
+		return rejectCNMySekai(rc)
 	}
 
 	if err := validateMysekaiSnapshotExpiry(rc, renderCtx); err != nil {

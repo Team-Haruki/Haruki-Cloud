@@ -172,7 +172,7 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	}
 }
 
-func TestExecuteCheckDataMySekaiRejectsCNWhenNotAllowed(t *testing.T) {
+func TestExecuteCheckDataMySekaiSilentlyDropsCNWhenNotAllowed(t *testing.T) {
 	original := config.Cfg.PJSK.AllowCNMySekai
 	config.Cfg.PJSK.AllowCNMySekai = nil
 	t.Cleanup(func() {
@@ -202,12 +202,8 @@ func TestExecuteCheckDataMySekaiRejectsCNWhenNotAllowed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeCheckData() error = %v", err)
 	}
-	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+	if len(message) != 0 {
 		t.Fatalf("unexpected message: %+v", message)
-	}
-	data, ok := message[0].Data.(onebot11.TextData)
-	if !ok || !strings.HasPrefix(data.Text, cnMySekaiNeverOpensNotice) {
-		t.Fatalf("unexpected text data: %+v", message[0].Data)
 	}
 }
 

@@ -570,17 +570,10 @@ func TestExecuteDeckUsesSelectedBindingRegionBeforeResolvingCurrentEvent(t *test
 	}
 }
 
-func assertSingleMySekaiUnavailableMessage(t *testing.T, message onebot11.Message) {
+func assertEmptyMySekaiMessage(t *testing.T, message onebot11.Message) {
 	t.Helper()
-	if len(message) != 1 || message[0].Type != onebot11.TypeText {
+	if len(message) != 0 {
 		t.Fatalf("unexpected message: %+v", message)
-	}
-	data, ok := message[0].Data.(onebot11.TextData)
-	if !ok {
-		t.Fatalf("unexpected message data: %+v", message[0].Data)
-	}
-	if !strings.HasPrefix(data.Text, cnMySekaiNeverOpensNotice) {
-		t.Fatalf("unexpected text: %q", data.Text)
 	}
 }
 

@@ -10,7 +10,10 @@ import (
 	"haruki-cloud/internal/pjsk/accountdata"
 )
 
-const cnMySekaiNeverOpensNotice = "国服 MySekai 功能永不开启，请勿再尝试。"
+const (
+	cnMySekaiNeverOpensNotice = "国服 MySekai 功能永不开启，请勿再尝试。"
+	silenceCNMySekaiRejection = true
+)
 
 func isMySekaiRegionAllowed(cmd *CommandRequest, region string) bool {
 	region = strings.ToLower(strings.TrimSpace(region))
@@ -57,6 +60,9 @@ func isMySekaiRegionAllowedForMode(cmd *CommandRequest, region string) bool {
 // cycle turns into a temporary global ban (see BanService.RecordCNMySekaiAttempt).
 // Tracking failures never hide the notice itself.
 func rejectCNMySekai(rc *RequestContext) (onebot11.Message, error) {
+	if silenceCNMySekaiRejection {
+		return onebot11.Message{}, nil
+	}
 	if rc == nil || rc.App == nil || rc.Cmd == nil {
 		return onebot11.Message{onebot11.Text(cnMySekaiNeverOpensNotice)}, nil
 	}

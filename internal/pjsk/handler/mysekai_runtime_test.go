@@ -471,7 +471,7 @@ func TestExecuteMySekaiReturnsBindingErrorBeforeDataMessage(t *testing.T) {
 	}
 }
 
-func TestExecuteMySekaiSilentlyDropsBlockedCNRegion(t *testing.T) {
+func TestExecuteMySekaiWarnsOnBlockedCNRegion(t *testing.T) {
 	original := harukiConfig.Cfg.PJSK.AllowCNMySekai
 	harukiConfig.Cfg.PJSK.AllowCNMySekai = nil
 	t.Cleanup(func() {
@@ -488,7 +488,9 @@ func TestExecuteMySekaiSilentlyDropsBlockedCNRegion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeMysekai() error = %v", err)
 	}
-	assertEmptyMySekaiMessage(t, message)
+	if got := rejectionText(t, message); got != cnMySekaiNeverOpensNotice {
+		t.Fatalf("warning = %q", got)
+	}
 }
 
 func TestExecuteMySekaiMapRejectsExpiredSnapshotUnlessForced(t *testing.T) {

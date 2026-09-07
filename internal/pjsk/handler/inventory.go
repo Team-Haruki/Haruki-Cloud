@@ -55,6 +55,9 @@ func executeInventory(rc *RequestContext) (onebot11.Message, error) {
 
 	params := inventoryListParams{}
 	mergeParams(rc.Cmd.Params, &params)
+	if rc.Region == renderregion.CN && params.Filter == renderinventory.FilterMysekai {
+		return rejectCNMySekai(rc)
+	}
 	if err := validateInventoryFilterForRegion(rc.Region, params.Filter); err != nil {
 		return nil, err
 	}
@@ -128,8 +131,6 @@ func validateInventoryFilterForRegion(region renderregion.Value, filter renderin
 		return nil
 	}
 	switch filter {
-	case renderinventory.FilterMysekai:
-		return onebot11.NewReplayError("国服 MySekai 功能永不开启，无法查询 MySekai 材料")
 	case renderinventory.FilterMemory:
 		return onebot11.NewReplayError("国服暂不支持查询记忆")
 	default:

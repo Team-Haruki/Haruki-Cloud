@@ -428,8 +428,8 @@ type PJSKConfig struct {
 	DBType         string                    `yaml:"db_type"`
 	DBURL          string                    `yaml:"db_url"`
 	AllowCNMySekai []MySekaiCNWhitelistEntry `yaml:"allow_cn_mysekai"`
-	// CNMySekaiBanDuration is how long the temporary global ban lasts once a
-	// user has hit the CN MySekai gate three times. Zero means ten minutes.
+	// CNMySekaiBanDuration is retained for config compatibility and ignored.
+	// Blocked CN MySekai requests now warn three times, then stay silent.
 	CNMySekaiBanDuration time.Duration `yaml:"cn_mysekai_ban_duration"`
 }
 

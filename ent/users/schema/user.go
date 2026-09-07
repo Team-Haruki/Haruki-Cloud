@@ -44,7 +44,7 @@ func (User) Fields() []ent.Field {
 			Comment("Attempts to bind PJSK game accounts blocked by blacklist"),
 		field.Int("pjsk_cn_mysekai_attempts").
 			Default(0).
-			Comment("Blocked CN MySekai requests since the last temporary ban"),
+			Comment("CN MySekai warnings issued, capped at three"),
 		field.Bool("chunithm_ban_state").
 			Default(false).
 			Comment("Whether user is banned from Chunithm features"),

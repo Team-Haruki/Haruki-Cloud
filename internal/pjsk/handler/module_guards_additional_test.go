@@ -63,7 +63,7 @@ func TestInventoryParsingAndExecutionGuards(t *testing.T) {
 		testutil.Require(t, !(err != nil), "CN default filter rejected: %v", err)
 	}
 
-	for _, filter := range []renderinventory.Filter{renderinventory.FilterMysekai, renderinventory.FilterMemory} {
+	for _, filter := range []renderinventory.Filter{renderinventory.FilterMemory} {
 		{
 			err := validateInventoryFilterForRegion(renderregion.CN, filter)
 			testutil.Check(t, !(err == nil), "CN filter %q unexpectedly accepted", filter)
@@ -82,8 +82,8 @@ func TestInventoryParsingAndExecutionGuards(t *testing.T) {
 	ctx.region = renderregion.CN
 	ctx.ArgText = "ms材料"
 	{
-		_, err := buildInventoryListParams(ctx)
-		testutil.RequireArgs(t, !(err == nil), "CN MySekai inventory params unexpectedly succeeded")
+		params, err := buildInventoryListParams(ctx)
+		testutil.Require(t, err == nil && params.Filter == renderinventory.FilterMysekai, "CN MySekai filter must reach warning gate: %+v, %v", params, err)
 	}
 
 	ctx.region = renderregion.JP
@@ -121,8 +121,9 @@ func TestInventoryParsingAndExecutionGuards(t *testing.T) {
 	rc.Cmd = &CommandRequest{Mode: "inventory-list", Params: json.RawMessage(`{"filter":"mysekai"}`)}
 	rc.Region = renderregion.CN
 	{
-		_, err := executeInventory(rc)
-		testutil.RequireArgs(t, !(err == nil), "CN MySekai runtime filter unexpectedly succeeded")
+		message, err := executeInventory(rc)
+		testutil.Require(t, err == nil, "CN MySekai runtime warning failed: %v", err)
+		testutil.Check(t, rejectionText(t, message) == cnMySekaiNeverOpensNotice, "missing CN MySekai warning")
 	}
 
 	rc.Cmd.Params = nil

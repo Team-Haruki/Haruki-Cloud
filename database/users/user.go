@@ -34,7 +34,7 @@ type User struct {
 	PjskBanReason string `json:"pjsk_ban_reason,omitempty"`
 	// Attempts to bind PJSK game accounts blocked by blacklist
 	PjskBannedGameAccountBindAttempts int `json:"pjsk_banned_game_account_bind_attempts,omitempty"`
-	// Blocked CN MySekai requests since the last temporary ban
+	// CN MySekai warnings issued, capped at three
 	PjskCnMysekaiAttempts int `json:"pjsk_cn_mysekai_attempts,omitempty"`
 	// Whether user is banned from Chunithm features
 	ChunithmBanState bool `json:"chunithm_ban_state,omitempty"`

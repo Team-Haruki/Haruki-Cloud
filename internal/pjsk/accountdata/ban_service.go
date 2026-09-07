@@ -139,28 +139,19 @@ func (s *BanService) Kill(ctx context.Context, qqID, reason string, expiresAt *t
 	return GlobalBanStatus{Active: true, Reason: reason, ExpiresAt: expiresAt}, nil
 }
 
-// CN MySekai gate: every blocked request is counted per identity and the
-// third one converts into a temporary global ban.
-const (
-	CNMySekaiAttemptThreshold = 3
-	cnMySekaiBanReason        = "多次尝试使用国服未开启的 MySekai 功能"
-	defaultCNMySekaiBanFor    = 10 * time.Minute
-)
+const CNMySekaiAttemptThreshold = 3
 
-// CNMySekaiAttempt is the outcome of recording one blocked CN MySekai request.
+// CNMySekaiAttempt is the outcome of recording a blocked CN MySekai request.
 // Attempts is 0 when the service could not track the identity.
 type CNMySekaiAttempt struct {
 	Attempts  int
 	Threshold int
-	Banned    bool
-	ExpiresAt time.Time
+	Silenced  bool
 }
 
-// RecordCNMySekaiAttempt counts a blocked CN MySekai request for an identity.
-// Reaching CNMySekaiAttemptThreshold sets a global ban that expires after
-// banFor (ten minutes when banFor is not positive) and resets the counter so the
-// next three attempts after the ban lapses warn again before banning.
-func (s *BanService) RecordCNMySekaiAttempt(ctx context.Context, platform, userID string, banFor time.Duration) (CNMySekaiAttempt, error) {
+// RecordCNMySekaiAttempt grants three notices per identity, shared by all
+// blocked CN MySekai commands. Later requests stay silent across restarts.
+func (s *BanService) RecordCNMySekaiAttempt(ctx context.Context, platform, userID string) (CNMySekaiAttempt, error) {
 	result := CNMySekaiAttempt{Threshold: CNMySekaiAttemptThreshold}
 	if s == nil || s.db == nil || s.identity == nil {
 		return result, nil
@@ -170,40 +161,37 @@ func (s *BanService) RecordCNMySekaiAttempt(ctx context.Context, platform, userI
 	if platform == "" || userID == "" {
 		return result, nil
 	}
-	if err := cluster.EnsureWritable(s.readOnly); err != nil {
-		return result, err
-	}
-	if banFor <= 0 {
-		banFor = defaultCNMySekaiBanFor
-	}
-
 	id, err := s.identity.ResolveOrCreate(ctx, platform, userID)
 	if err != nil {
 		return result, err
 	}
-	u, err := s.db.User.Get(ctx, id)
-	if err != nil {
-		return result, err
+	for {
+		u, err := s.db.User.Get(ctx, id)
+		if err != nil {
+			return result, err
+		}
+		if u.PjskCnMysekaiAttempts >= CNMySekaiAttemptThreshold {
+			result.Attempts = CNMySekaiAttemptThreshold
+			result.Silenced = true
+			return result, nil
+		}
+		if err := cluster.EnsureWritable(s.readOnly); err != nil {
+			return result, err
+		}
+		// Compare-and-swap prevents concurrent commands from receiving the
+		// same warning number or exceeding the three-notice limit.
+		updated, err := s.db.User.Update().
+			Where(user.IDEQ(id), user.PjskCnMysekaiAttemptsEQ(u.PjskCnMysekaiAttempts)).
+			AddPjskCnMysekaiAttempts(1).
+			Save(ctx)
+		if err != nil {
+			return result, err
+		}
+		if updated > 0 {
+			result.Attempts = u.PjskCnMysekaiAttempts + 1
+			return result, nil
+		}
 	}
-
-	attempts := u.PjskCnMysekaiAttempts + 1
-	update := s.db.User.UpdateOneID(id)
-	if attempts >= CNMySekaiAttemptThreshold {
-		expiresAt := time.Now().Add(banFor)
-		update.SetPjskCnMysekaiAttempts(0).
-			SetBanState(true).
-			SetBanReason(cnMySekaiBanReason).
-			SetBanExpiresAt(expiresAt)
-		result.Banned = true
-		result.ExpiresAt = expiresAt
-	} else {
-		update.SetPjskCnMysekaiAttempts(attempts)
-	}
-	if err := update.Exec(ctx); err != nil {
-		return result, err
-	}
-	result.Attempts = attempts
-	return result, nil
 }
 
 // Back removes a global ban and all of its metadata from a QQ identity.

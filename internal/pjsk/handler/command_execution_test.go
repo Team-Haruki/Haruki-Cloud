@@ -172,7 +172,7 @@ func TestExecuteCheckDataMySekaiRequiresVisibleMySekaiSnapshot(t *testing.T) {
 	}
 }
 
-func TestExecuteCheckDataMySekaiSilentlyDropsCNWhenNotAllowed(t *testing.T) {
+func TestExecuteCheckDataMySekaiWarnsOnCNWhenNotAllowed(t *testing.T) {
 	original := config.Cfg.PJSK.AllowCNMySekai
 	config.Cfg.PJSK.AllowCNMySekai = nil
 	t.Cleanup(func() {
@@ -202,7 +202,7 @@ func TestExecuteCheckDataMySekaiSilentlyDropsCNWhenNotAllowed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("executeCheckData() error = %v", err)
 	}
-	if len(message) != 0 {
+	if rejectionText(t, message) != cnMySekaiNeverOpensNotice {
 		t.Fatalf("unexpected message: %+v", message)
 	}
 }

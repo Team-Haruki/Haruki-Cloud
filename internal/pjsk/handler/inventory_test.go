@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 
 	json "haruki-cloud/internal/jsonutil"
@@ -46,22 +45,20 @@ func TestInventoryListHandleParsesFilterAndSelector(t *testing.T) {
 	}
 }
 
-func TestInventoryListHandleRejectsCNMysekaiFilter(t *testing.T) {
+func TestInventoryListHandleDefersCNMysekaiFilterToWarningGate(t *testing.T) {
 	h := sekaiHandlers{}.InventoryListHandle()
 	h.Regions = AllRegions
-
-	_, err := h.Handle(&PjskHandlerContext{
-		Context:    context.Background(),
-		Platform:   "qq",
-		UserId:     "12345",
-		TriggerCmd: "/cn查背包",
-		ArgText:    "ms材料",
+	request, err := h.Handle(&PjskHandlerContext{
+		Context: context.Background(), Platform: "qq", UserId: "12345",
+		TriggerCmd: "/cn查背包", ArgText: "ms材料",
 	})
-	if err == nil {
-		t.Fatal("Handle() error = nil, want replay error")
+	if err != nil || request == nil {
+		t.Fatalf("Handle() = %+v, %v", request, err)
 	}
-	if !strings.Contains(err.Error(), "国服 MySekai 功能永不开启") {
-		t.Fatalf("error = %v", err)
+	var params inventoryListParams
+	mergeParams(request.Params, &params)
+	if params.Filter != renderinventory.FilterMysekai {
+		t.Fatalf("filter = %q", params.Filter)
 	}
 }
 

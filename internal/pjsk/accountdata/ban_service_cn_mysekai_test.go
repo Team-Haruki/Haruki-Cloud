@@ -2,10 +2,12 @@ package accountdata_test
 
 import (
 	"context"
-	"strings"
+	"sync"
 	"testing"
-	"time"
 
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
+	usersdb "haruki-cloud/database/users"
 	usersenttest "haruki-cloud/database/users/enttest"
 	"haruki-cloud/internal/pjsk/accountdata"
 	"haruki-cloud/internal/pjsk/parser"
@@ -13,83 +15,109 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func TestRecordCNMySekaiAttemptBansOnThirdAttempt(t *testing.T) {
+func TestRecordCNMySekaiAttemptWarnsThreeTimesThenStaysSilent(t *testing.T) {
 	client := usersenttest.Open(t, "sqlite3", "file:cn_mysekai_attempts?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = client.Close() })
 	service := accountdata.NewBanService(client)
 	ctx := context.Background()
-
-	for want := 1; want < accountdata.CNMySekaiAttemptThreshold; want++ {
-		attempt, err := service.RecordCNMySekaiAttempt(ctx, "qq", "10001", 0)
-		if err != nil {
-			t.Fatalf("attempt %d: %v", want, err)
-		}
-		if attempt.Banned || attempt.Attempts != want || attempt.Threshold != accountdata.CNMySekaiAttemptThreshold {
-			t.Fatalf("attempt %d = %+v", want, attempt)
-		}
-		if err := service.CheckBan(ctx, "qq", "10001", parser.ModuleMysekai); err != nil {
-			t.Fatalf("attempt %d must not ban yet: %v", want, err)
+	for want := 1; want <= accountdata.CNMySekaiAttemptThreshold; want++ {
+		attempt, err := service.RecordCNMySekaiAttempt(ctx, "qq", "10001")
+		if err != nil || attempt.Silenced || attempt.Attempts != want || attempt.Threshold != 3 {
+			t.Fatalf("attempt %d = %+v, %v", want, attempt, err)
 		}
 	}
-
-	before := time.Now()
-	attempt, err := service.RecordCNMySekaiAttempt(ctx, "qq", "10001", 30*time.Minute)
-	if err != nil {
-		t.Fatalf("third attempt: %v", err)
+	// A fresh service still observes the persisted limit.
+	service = accountdata.NewBanService(client)
+	for range 5 {
+		attempt, err := service.RecordCNMySekaiAttempt(ctx, "qq", "10001")
+		if err != nil || !attempt.Silenced || attempt.Attempts != 3 {
+			t.Fatalf("later attempt = %+v, %v", attempt, err)
+		}
 	}
-	if !attempt.Banned || attempt.Attempts != accountdata.CNMySekaiAttemptThreshold {
-		t.Fatalf("third attempt = %+v", attempt)
-	}
-	if got := attempt.ExpiresAt.Sub(before); got < 29*time.Minute || got > 31*time.Minute {
-		t.Fatalf("ban length = %v, want ~30m", got)
-	}
-	err = service.CheckBan(ctx, "qq", "10001", parser.ModuleMusic)
-	if err == nil || !strings.Contains(err.Error(), "MySekai") || !strings.Contains(err.Error(), "封禁至") {
-		t.Fatalf("CheckBan after ban = %v", err)
-	}
-
 	row, err := client.User.Query().Only(ctx)
 	if err != nil {
-		t.Fatalf("query user: %v", err)
+		t.Fatal(err)
 	}
-	if row.PjskCnMysekaiAttempts != 0 || !row.BanState || row.BanExpiresAt == nil {
-		t.Fatalf("row after ban = attempts %d ban %v expires %v", row.PjskCnMysekaiAttempts, row.BanState, row.BanExpiresAt)
+	if row.PjskCnMysekaiAttempts != 3 || row.BanState || row.BanExpiresAt != nil {
+		t.Fatalf("unexpected warning/ban state: %+v", row)
+	}
+	for _, module := range []parser.TargetModule{parser.ModuleMusic, parser.ModuleMysekai} {
+		if err := service.CheckBan(ctx, "qq", "10001", module); err != nil {
+			t.Fatalf("warning limit must not ban other regions or features: %v", err)
+		}
+	}
+	service.SetReadOnly(true)
+	attempt, err := service.RecordCNMySekaiAttempt(ctx, "qq", "10001")
+	if err != nil || !attempt.Silenced {
+		t.Fatalf("read-only existing silence = %+v, %v", attempt, err)
+	}
+	service.SetReadOnly(false)
+	for _, identity := range [][2]string{{"qq", "10002"}, {"telegram", "10001"}} {
+		attempt, err := service.RecordCNMySekaiAttempt(ctx, identity[0], identity[1])
+		if err != nil || attempt.Silenced || attempt.Attempts != 1 {
+			t.Fatalf("independent identity = %+v, %v", attempt, err)
+		}
 	}
 }
 
-func TestRecordCNMySekaiAttemptDefaultsToTenMinutes(t *testing.T) {
-	client := usersenttest.Open(t, "sqlite3", "file:cn_mysekai_default_hour?mode=memory&cache=shared&_fk=1")
+func TestRecordCNMySekaiAttemptConcurrentRequestsOnlyWarnThreeTimes(t *testing.T) {
+	driver, err := entsql.Open(dialect.SQLite, "file:cn_mysekai_concurrent?mode=memory&cache=shared&_fk=1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	driver.DB().SetMaxOpenConns(1)
+	client := usersdb.NewClient(usersdb.Driver(driver))
 	t.Cleanup(func() { _ = client.Close() })
-	service := accountdata.NewBanService(client)
 	ctx := context.Background()
-
-	var attempt accountdata.CNMySekaiAttempt
-	for range accountdata.CNMySekaiAttemptThreshold {
-		var err error
-		if attempt, err = service.RecordCNMySekaiAttempt(ctx, "qq", "10002", 0); err != nil {
-			t.Fatal(err)
+	if err := client.Schema.Create(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.User.Create().SetID(100001).SetPlatform("qq").SetUserID("10003").Save(ctx); err != nil {
+		t.Fatal(err)
+	}
+	service := accountdata.NewBanService(client)
+	results := make(chan accountdata.CNMySekaiAttempt, 20)
+	var wg sync.WaitGroup
+	for range 20 {
+		wg.Go(func() {
+			attempt, err := service.RecordCNMySekaiAttempt(ctx, "qq", "10003")
+			if err != nil {
+				t.Errorf("record: %v", err)
+				return
+			}
+			results <- attempt
+		})
+	}
+	wg.Wait()
+	close(results)
+	warnings := map[int]int{}
+	silenced := 0
+	for attempt := range results {
+		if attempt.Silenced {
+			silenced++
+		} else {
+			warnings[attempt.Attempts]++
 		}
 	}
-	if got := time.Until(attempt.ExpiresAt); got < 9*time.Minute || got > 11*time.Minute {
-		t.Fatalf("default ban length = %v, want ~10m", got)
+	if warnings[1] != 1 || warnings[2] != 1 || warnings[3] != 1 || silenced != 17 {
+		t.Fatalf("warnings = %v, silenced = %d", warnings, silenced)
 	}
 }
 
 func TestRecordCNMySekaiAttemptIsNilAndReadOnlySafe(t *testing.T) {
 	var nilService *accountdata.BanService
-	attempt, err := nilService.RecordCNMySekaiAttempt(context.Background(), "qq", "1", 0)
-	if err != nil || attempt.Attempts != 0 || attempt.Banned {
+	attempt, err := nilService.RecordCNMySekaiAttempt(context.Background(), "qq", "1")
+	if err != nil || attempt.Attempts != 0 || attempt.Silenced {
 		t.Fatalf("nil service = %+v, %v", attempt, err)
 	}
-
 	client := usersenttest.Open(t, "sqlite3", "file:cn_mysekai_readonly?mode=memory&cache=shared&_fk=1")
 	t.Cleanup(func() { _ = client.Close() })
 	service := accountdata.NewBanService(client)
-	if _, err := service.RecordCNMySekaiAttempt(context.Background(), "", "1", 0); err != nil {
+	if _, err := service.RecordCNMySekaiAttempt(context.Background(), "", "1"); err != nil {
 		t.Fatalf("blank platform must be ignored: %v", err)
 	}
 	service.SetReadOnly(true)
-	if _, err := service.RecordCNMySekaiAttempt(context.Background(), "qq", "1", 0); err == nil {
+	if _, err := service.RecordCNMySekaiAttempt(context.Background(), "qq", "1"); err == nil {
 		t.Fatal("read-only node must refuse to record")
 	}
 }

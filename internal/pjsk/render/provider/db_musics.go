@@ -25,6 +25,12 @@ type dbMusicProvider struct {
 	localizedByID    map[int][]string
 	difficultiesByID map[int][]*masterdata.MusicDifficulty
 
+	difficultyMu         sync.RWMutex
+	difficultyLoads      singleflight.Group
+	difficultyIndex      map[int][]*masterdata.MusicDifficulty
+	difficultyLoadedAt   time.Time
+	difficultyGeneration uint64
+
 	// limitedtimemusic is a small region-wide table queried once per music by
 	// music/rewards (~744 queries per command before the bulk index). Load it
 	// whole under the shared bulk-index flight; a missing key doubles as the

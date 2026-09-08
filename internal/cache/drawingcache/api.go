@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -25,10 +26,12 @@ const (
 )
 
 type API struct {
-	dao        *DAO
-	storageDir string
-	now        func() time.Time
-	stats      *cacheStatsTracker
+	lifecycleMu    sync.Mutex
+	pendingTouches map[string]pendingCacheTouch
+	dao            *DAO
+	storageDir     string
+	now            func() time.Time
+	stats          *cacheStatsTracker
 }
 
 func NewAPI(dao *DAO, storageDir string) *API {
@@ -64,6 +67,8 @@ func (a *API) RegisterRoutes(router fiber.Router) {
 }
 
 func (a *API) handleGetCache(c fiber.Ctx) error {
+	a.lifecycleMu.Lock()
+	defer a.lifecycleMu.Unlock()
 	apiPathHint := c.Query("api_path")
 	key := strings.TrimSpace(c.Query("key"))
 	if err := ValidateSHA256Key(key); err != nil {
@@ -79,8 +84,12 @@ func (a *API) handleGetCache(c fiber.Ctx) error {
 		return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "query record failed"})
 	}
 
+	a.applyPendingTouch(record)
 	now := a.now().UTC()
 	if !isInfiniteTTL(record.TTLSeconds) && now.After(record.ExpiresAt.UTC()) {
+		if err := a.flushTouchesLocked(); err != nil {
+			return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "flush cache ttl failed"})
+		}
 		shared, err := fileReferencedByLiveRecord(a.dao.db, record.FilePath, record.Sha256Key)
 		if err != nil {
 			return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "query shared file references failed"})
@@ -93,6 +102,7 @@ func (a *API) handleGetCache(c fiber.Ctx) error {
 				)
 			}
 		}
+		delete(a.pendingTouches, key)
 		if err := a.dao.DeleteRecord(key); err != nil {
 			return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "delete expired record failed"})
 		}
@@ -106,6 +116,7 @@ func (a *API) handleGetCache(c fiber.Ctx) error {
 		return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "check cache file failed"})
 	}
 	if !exists {
+		delete(a.pendingTouches, key)
 		if err := a.dao.DeleteRecord(key); err != nil {
 			return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "delete missing-file record failed"})
 		}
@@ -119,7 +130,7 @@ func (a *API) handleGetCache(c fiber.Ctx) error {
 		return jsonStatus(c, fiber.StatusNotFound, fiber.Map{"error": "file not found"})
 	}
 
-	if err := a.dao.TouchRecordOnHit(record.Sha256Key, now, record.TTLSeconds); err != nil {
+	if err := a.touchRecord(record, now); err != nil {
 		if errors.Is(err, ErrRecordNotFound) {
 			return jsonStatus(c, fiber.StatusNotFound, fiber.Map{"error": "record not found"})
 		}
@@ -140,6 +151,8 @@ func (a *API) handleGetCache(c fiber.Ctx) error {
 }
 
 func (a *API) handlePostCache(c fiber.Ctx) error {
+	a.lifecycleMu.Lock()
+	defer a.lifecycleMu.Unlock()
 	key := strings.TrimSpace(c.FormValue("key"))
 	if err := ValidateSHA256Key(key); err != nil {
 		return jsonStatus(c, fiber.StatusBadRequest, fiber.Map{"error": err.Error()})
@@ -201,6 +214,7 @@ func (a *API) handlePostCache(c fiber.Ctx) error {
 	if err := a.dao.SaveRecord(record); err != nil {
 		return jsonStatus(c, fiber.StatusInternalServerError, fiber.Map{"error": "save cache metadata failed"})
 	}
+	delete(a.pendingTouches, key)
 	a.stats.recordStore(record.APIPath)
 
 	return jsonStatus(c, fiber.StatusOK, fiber.Map{

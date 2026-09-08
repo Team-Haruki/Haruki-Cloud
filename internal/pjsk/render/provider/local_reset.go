@@ -59,6 +59,9 @@ func (p *dbCardProvider) resetMasterdataCache() {
 	p.cardMu.Lock()
 	p.cardCache = make(map[int]*masterdata.Card)
 	p.cardCachedAt = make(map[int]time.Time)
+	p.allCards = nil
+	p.allCardsLoadedAt = time.Time{}
+	p.cardGeneration++
 	p.cardMu.Unlock()
 	p.episodeMu.Lock()
 	p.episodesByCard = make(map[int][]*masterdata.CardEpisode)
@@ -285,6 +288,11 @@ func (p *dbMusicProvider) resetLocalMasterdataCache() {
 	p.localizedByID = make(map[int][]string)
 	p.difficultiesByID = make(map[int][]*masterdata.MusicDifficulty)
 	p.mu.Unlock()
+	p.difficultyMu.Lock()
+	p.difficultyIndex = nil
+	p.difficultyLoadedAt = time.Time{}
+	p.difficultyGeneration++
+	p.difficultyMu.Unlock()
 	p.limitedMu.Lock()
 	p.limitedByMusic = make(map[int][]*masterdata.LimitedTimeMusic)
 	p.limitedLoaded = false

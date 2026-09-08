@@ -99,16 +99,24 @@ func (c *Controller) BuildCardDetailRequest(query Query) (*drawing.CardDetailReq
 }
 
 func (c *Controller) RenderCardDetail(query Query) ([]byte, error) {
+	image, err := c.RenderCardDetailImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.ctx)
+}
+
+func (c *Controller) RenderCardDetailImage(query Query) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, err := c.BuildCardDetailRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateCardDetail(req)
+	return c.drawing.GenerateCardDetailImage(req)
 }
 
 func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListRequest, error) {
@@ -117,7 +125,11 @@ func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListR
 		return nil, err
 	}
 
-	cardIDs := make([]int, 0, len(cards))
+	return buildResolvedCardListRequest(query, region, builder, cards)
+}
+
+func buildResolvedCardListRequest(query ListRequest, region renderregion.Value, builder *Builder, cards []*masterdata.Card) (*drawing.CardListRequest, error) {
+	resolved := make([]*masterdata.Card, 0, len(cards))
 	seen := make(map[int]struct{}, len(cards))
 	for _, item := range cards {
 		if item == nil || item.ID <= 0 {
@@ -127,12 +139,12 @@ func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListR
 			continue
 		}
 		seen[item.ID] = struct{}{}
-		cardIDs = append(cardIDs, item.ID)
+		resolved = append(resolved, item)
 	}
-	if len(cardIDs) == 0 {
+	if len(resolved) == 0 {
 		return nil, fmt.Errorf("card ids are required")
 	}
-	req, err := builder.BuildCardListRequest(cardIDs, region)
+	req, err := builder.buildCardListRequestFromCards(resolved, region)
 	if err != nil {
 		return nil, err
 	}
@@ -147,19 +159,27 @@ func (c *Controller) BuildCardListRequest(query ListRequest) (*drawing.CardListR
 }
 
 func (c *Controller) RenderCardList(query ListRequest) ([]byte, error) {
+	image, err := c.RenderCardListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.ctx)
+}
+
+func (c *Controller) RenderCardListImage(query ListRequest) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, autoBox, err := c.buildCardListRenderRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	if autoBox {
-		return c.drawing.GenerateCardBox(req.(*drawing.CardBoxRequest))
+		return c.drawing.GenerateCardBoxImage(req.(*drawing.CardBoxRequest))
 	}
-	return c.drawing.GenerateCardList(req.(*drawing.CardListRequest))
+	return c.drawing.GenerateCardListImage(req.(*drawing.CardListRequest))
 }
 
 func (c *Controller) buildCardListRenderRequest(query ListRequest) (any, bool, error) {
@@ -177,7 +197,7 @@ func (c *Controller) buildCardListRenderRequest(query ListRequest) (any, bool, e
 		}
 		return req, true, nil
 	}
-	req, err := c.BuildCardListRequest(query)
+	req, err := buildResolvedCardListRequest(query, region, builder, cards)
 	if err != nil {
 		return nil, false, err
 	}
@@ -252,16 +272,24 @@ func (c *Controller) resolveCardBoxCards(source DataSource, region renderregion.
 }
 
 func (c *Controller) RenderCardBox(queries []Query) ([]byte, error) {
+	image, err := c.RenderCardBoxImage(queries)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.ctx)
+}
+
+func (c *Controller) RenderCardBoxImage(queries []Query) (drawing.ImageResult, error) {
 	if c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.ctx, payloadBuildStage)
 	req, err := c.BuildCardBoxRequest(queries)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateCardBox(req)
+	return c.drawing.GenerateCardBoxImage(req)
 }
 
 func (c *Controller) resolveBuilder(region string) (renderregion.Value, DataSource, *Builder, error) {

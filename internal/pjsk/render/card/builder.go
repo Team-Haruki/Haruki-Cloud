@@ -157,10 +157,21 @@ func (b *Builder) BuildCardListRequest(cardIDs []int, region renderregion.Value)
 		return nil, fmt.Errorf("card ids are required")
 	}
 
-	cards := make([]drawing.CardBasic, 0, len(cardIDs))
+	resolved := make([]*masterdata.Card, 0, len(cardIDs))
 	for _, cardID := range cardIDs {
 		card, err := b.source.GetCardByID(cardID)
 		if err != nil || card == nil {
+			continue
+		}
+		resolved = append(resolved, card)
+	}
+	return b.buildCardListRequestFromCards(resolved, region)
+}
+
+func (b *Builder) buildCardListRequestFromCards(resolved []*masterdata.Card, region renderregion.Value) (*drawing.CardListRequest, error) {
+	cards := make([]drawing.CardBasic, 0, len(resolved))
+	for _, card := range resolved {
+		if card == nil {
 			continue
 		}
 		cardInfo := b.BuildCardBasic(card, region)

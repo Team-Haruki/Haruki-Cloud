@@ -30,6 +30,8 @@ type BuildInput struct {
 }
 
 type HarukiSnapshotFactory interface {
+	// Build treats the input JSON slices as read-only; they may be shared by
+	// authorized requests. Implementations must copy before modifying them.
 	Build(ctx context.Context, input BuildInput) (Snapshot, error)
 }
 

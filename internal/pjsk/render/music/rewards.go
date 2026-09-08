@@ -283,7 +283,9 @@ func musicRewardEstimateMessage(reason string) string {
 func (c *Controller) validRewardMusicIDs(region renderregion.Value, source DataSource, builder *Builder) map[int]struct{} {
 	now := time.Now().UnixMilli()
 	result := make(map[int]struct{})
-	for _, musicInfo := range source.GetMusics() {
+	musics := source.GetMusics()
+	candidates := make([]int, 0, len(musics))
+	for _, musicInfo := range musics {
 		if musicInfo == nil {
 			continue
 		}
@@ -296,7 +298,13 @@ func (c *Controller) validRewardMusicIDs(region renderregion.Value, source DataS
 		if !musicRewardAvailableNow(source, musicInfo.ID, now, region) {
 			continue
 		}
-		diffInfo, err := builder.buildDifficultyInfo(musicInfo.ID)
+		candidates = append(candidates, musicInfo.ID)
+	}
+	if len(candidates) > 1 {
+		preloadMusicDifficulties(source)
+	}
+	for _, musicID := range candidates {
+		diffInfo, err := builder.buildDifficultyInfo(musicID)
 		if err != nil || diffInfo == nil {
 			continue
 		}
@@ -308,7 +316,7 @@ func (c *Controller) validRewardMusicIDs(region renderregion.Value, source DataS
 			difficultyLevelFromInfo(diffInfo, "append") == 0 {
 			continue
 		}
-		result[musicInfo.ID] = struct{}{}
+		result[musicID] = struct{}{}
 	}
 	return result
 }

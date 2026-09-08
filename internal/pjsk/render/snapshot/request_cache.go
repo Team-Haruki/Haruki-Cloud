@@ -25,7 +25,7 @@ type privateDataCacheKey struct {
 
 type privateDataCacheEntry struct {
 	once sync.Once
-	data []byte
+	data privateDataPayload
 	err  error
 }
 
@@ -52,7 +52,7 @@ func cacheFromContext(ctx context.Context) *requestCache {
 	return cache
 }
 
-func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func() ([]byte, error)) ([]byte, error, bool) {
+func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func() (privateDataPayload, error)) (privateDataPayload, error, bool) {
 	cache := cacheFromContext(ctx)
 	if cache == nil {
 		finishFetch := commandtrace.MeasureOperation(ctx, "snapshot.private_data")
@@ -75,19 +75,10 @@ func cachedPrivateData(ctx context.Context, key privateDataCacheKey, fetch func(
 		didFetch = true
 		finishFetch := commandtrace.MeasureOperation(ctx, "snapshot.private_data")
 		entry.data, entry.err = fetch()
-		if entry.data != nil {
-			entry.data = append([]byte(nil), entry.data...)
-		}
 		finishFetch()
 	})
 	if !didFetch {
 		commandtrace.RecordOperation(ctx, "snapshot.cache_wait", time.Since(waitStartedAt))
 	}
-	if entry.data == nil {
-		return nil, entry.err, hit
-	}
-	finishCopy := commandtrace.MeasureOperation(ctx, "snapshot.cache_copy")
-	data := append([]byte(nil), entry.data...)
-	finishCopy()
-	return data, entry.err, hit
+	return entry.data, entry.err, hit
 }

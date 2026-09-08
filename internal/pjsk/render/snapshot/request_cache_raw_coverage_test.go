@@ -60,40 +60,41 @@ func TestRequestCacheContextAndFetchBranches(t *testing.T) {
 
 	key := privateDataCacheKey{Server: "jp", DataType: "suite", UserID: 1}
 	calls := 0
-	data, err, hit := cachedPrivateData(context.Background(), key, func() ([]byte, error) {
+	data, err, hit := cachedPrivateData(context.Background(), key, func() (privateDataPayload, error) {
 		calls++
-		return []byte("direct"), nil
+		return newPrivateDataPayload([]byte("direct")), nil
 	})
-	if err != nil || hit || string(data) != "direct" || calls != 1 {
-		t.Fatalf("direct fetch = %q,%v hit=%v calls=%d", data, err, hit, calls)
+	if err != nil || hit || string(data.data) != "direct" || calls != 1 {
+		t.Fatalf("direct fetch = %v,%v hit=%v calls=%d", data, err, hit, calls)
 	}
 
-	data, err, hit = cachedPrivateData(ctx, key, func() ([]byte, error) {
+	data, err, hit = cachedPrivateData(ctx, key, func() (privateDataPayload, error) {
 		calls++
-		return []byte("cached"), nil
+		return newPrivateDataPayload([]byte("cached")), nil
 	})
-	if err != nil || hit || string(data) != "cached" {
-		t.Fatalf("first cached fetch = %q,%v hit=%v", data, err, hit)
+	if err != nil || hit || string(data.data) != "cached" {
+		t.Fatalf("first cached fetch = %v,%v hit=%v", data, err, hit)
 	}
-	data[0] = 'X'
-	data, err, hit = cachedPrivateData(ctx, key, func() ([]byte, error) {
+	owned := data.cloneBytes()
+	owned[0] = 'X'
+	data, err, hit = cachedPrivateData(ctx, key, func() (privateDataPayload, error) {
 		t.Fatal("cached fetch function called twice")
-		return nil, nil
+		return privateDataPayload{}, nil
 	})
-	if err != nil || !hit || string(data) != "cached" {
-		t.Fatalf("second cached fetch = %q,%v hit=%v", data, err, hit)
+	if err != nil || !hit || string(data.data) != "cached" {
+		t.Fatalf("second cached fetch = %v,%v hit=%v", data, err, hit)
 	}
 
 	wantErr := errors.New("fetch failed")
 	errorKey := privateDataCacheKey{Server: "en", DataType: "mysekai", UserID: 2}
-	data, err, hit = cachedPrivateData(ctx, errorKey, func() ([]byte, error) { return nil, wantErr })
-	if data != nil || !errors.Is(err, wantErr) || hit {
-		t.Fatalf("cached error fetch = %q,%v hit=%v", data, err, hit)
+	data, err, hit = cachedPrivateData(ctx, errorKey, func() (privateDataPayload, error) { return privateDataPayload{}, wantErr })
+	if data.data != nil || !errors.Is(err, wantErr) || hit {
+		t.Fatalf("cached error fetch = %v,%v hit=%v", data, err, hit)
 	}
 
 	manualCache := &requestCache{privateData: map[privateDataCacheKey]*privateDataCacheEntry{key: nil}}
 	manualCtx := context.WithValue(context.Background(), requestCacheContextKey{}, manualCache)
-	if data, err, hit := cachedPrivateData(manualCtx, key, func() ([]byte, error) { return []byte("filled"), nil }); err != nil || !hit || string(data) != "filled" {
-		t.Fatalf("nil cache entry refill = %q,%v hit=%v", data, err, hit)
+	if data, err, hit := cachedPrivateData(manualCtx, key, func() (privateDataPayload, error) { return newPrivateDataPayload([]byte("filled")), nil }); err != nil || !hit || string(data.data) != "filled" {
+		t.Fatalf("nil cache entry refill = %v,%v hit=%v", data, err, hit)
 	}
 }

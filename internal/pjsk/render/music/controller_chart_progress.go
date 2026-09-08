@@ -118,14 +118,22 @@ func (c *Controller) BuildMusicProgressRequestFromSnapshot(query ProgressQuery, 
 }
 
 func (c *Controller) RenderMusicProgressFromSnapshot(query ProgressQuery, snapshot snapshot.Snapshot, fallbackProfile *drawing.ProfileCardRequest) ([]byte, error) {
+	image, err := c.RenderMusicProgressFromSnapshotImage(query, snapshot, fallbackProfile)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderMusicProgressFromSnapshotImage(query ProgressQuery, snapshot snapshot.Snapshot, fallbackProfile *drawing.ProfileCardRequest) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicProgressRequestFromSnapshot(query, snapshot, fallbackProfile)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GeneratePlayProgress(payload)
+	return c.drawing.GeneratePlayProgressImage(payload)
 }

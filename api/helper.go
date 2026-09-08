@@ -1,11 +1,13 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"crypto/subtle"
 	"errors"
 	"fmt"
 	"haruki-cloud/config"
+	json "haruki-cloud/internal/jsonutil"
 	"haruki-cloud/internal/observability/commandtrace"
 	harukiRedis "haruki-cloud/utils/redis"
 	"strconv"
@@ -78,10 +80,14 @@ func CachedJSONResponse(
 	finish := commandtrace.MeasurePhase(c.Context(), "response_encode")
 	defer finish()
 	resp := BuildResponseMap(status, message, data)
-	if redisClient != nil {
-		_ = harukiRedis.SetCache(ctx, redisClient, key, resp, ttl) // best-effort cache write
+	encoded, err := c.App().Config().JSONEncoder(resp)
+	if err != nil {
+		return err
 	}
-	return c.Status(status).JSON(resp)
+	if redisClient != nil {
+		_ = redisClient.Set(ctx, key, encoded, ttl).Err() // best-effort cache write
+	}
+	return SendCachedJSON(c, status, encoded)
 }
 
 func VerifyAPIAuthorization() fiber.Handler {
@@ -121,20 +127,28 @@ func configuredInternalAPIAuthorization() string {
 	return AuthBearerPrefix + token
 }
 
-func CacheQuery(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, namespace string) (string, map[string]any, bool, error) {
+func CacheQuery(ctx context.Context, c fiber.Ctx, redisClient *redis.Client, namespace string) (string, []byte, bool, error) {
 	key := cacheKeyFromFiberCtx(c, namespace)
 	if redisClient == nil {
 		return key, nil, false, nil
 	}
-	var cached map[string]any
-	found, err := harukiRedis.GetCache(ctx, redisClient, key, &cached)
+	cached, err := redisClient.Get(ctx, key).Bytes()
+	if errors.Is(err, redis.Nil) {
+		return key, nil, false, nil
+	}
 	if err != nil {
 		return key, nil, false, err
 	}
-	if found {
-		return key, cached, true, nil
+	trimmed := bytes.TrimSpace(cached)
+	if !json.Valid(trimmed) || (trimmed[0] != '{' && !bytes.Equal(trimmed, []byte("null"))) {
+		return key, nil, false, fmt.Errorf("invalid cached JSON response")
 	}
-	return key, nil, false, nil
+	return key, cached, true, nil
+}
+
+func SendCachedJSON(c fiber.Ctx, status int, encoded []byte) error {
+	c.Set(fiber.HeaderContentType, ContentTypeJSON)
+	return c.Status(status).Send(encoded)
 }
 
 // WithCache is a convenience wrapper that handles the cache-check boilerplate.
@@ -149,7 +163,7 @@ func WithCache(c fiber.Ctx, redisClient *redis.Client, namespace string, fetchFn
 		return InternalError(c)
 	}
 	if hit {
-		return c.Status(fiber.StatusOK).JSON(cached)
+		return SendCachedJSON(c, fiber.StatusOK, cached)
 	}
 	data, err := fetchFn(key)
 	if err != nil {

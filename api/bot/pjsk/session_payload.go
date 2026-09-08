@@ -45,11 +45,14 @@ func verifyBotSessionFromPayload(redisClient *redis.Client, policy api.SessionPo
 		}
 		token := strings.TrimSpace(envelope.SessionToken)
 		if token == "" {
+			finish()
 			return botResponse(c, fiber.StatusUnauthorized, api.ErrBotSessionMissing)
 		}
 		if failure := api.VerifyBotSessionTokenWithPolicy(c.Context(), redisClient, policy, reporter, c.Params("botId"), token); failure != nil {
+			finish()
 			return botResponse(c, failure.Status, failure.Message)
 		}
+		finish()
 		return c.Next()
 	}
 }

@@ -109,11 +109,11 @@ func executeProfileCustomProfileCard(rc *RequestContext) (onebot11.Message, erro
 	}
 	req := drawing.NewCustomProfileCardRenderRequest(region, *card, resp, resources)
 	finishBuild()
-	data, err := rc.App.Drawing.WithContext(rc.Ctx).GenerateCustomProfileCard(req)
+	data, err := rc.App.Drawing.WithContext(rc.Ctx).GenerateCustomProfileCardImage(req)
 	if err != nil {
 		return nil, fmt.Errorf("渲染自定义档案失败：%w", err)
 	}
-	return imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	return rc.RenderedImageMessage(data)
 }
 
 func (p profileCustomProfileCardParams) userQueryParams() userQueryParams {

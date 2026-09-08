@@ -3,6 +3,7 @@ package snapshot
 import (
 	"container/list"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -22,7 +23,7 @@ import (
 // payloads.
 //
 // Entries are immutable once stored: their data slice and uploadTime are never
-// mutated in place, so a reader may copy an entry's data after releasing the
+// mutated in place, so a reader may share an entry's data after releasing the
 // lock without racing a concurrent store or eviction.
 type PrivateDataCache struct {
 	mu         sync.Mutex
@@ -43,11 +44,26 @@ type PrivateDataKey struct {
 	UID      int64
 }
 
-type privateDataStoreEntry struct {
-	key        PrivateDataKey
+// privateDataPayload is immutable after creation. Internal consumers may read
+// data directly; a caller that exposes mutable bytes must use cloneBytes.
+type privateDataPayload struct {
 	data       []byte
 	uploadTime int64
-	storedAt   time.Time
+}
+
+func newPrivateDataPayload(data []byte) privateDataPayload {
+	uploadTime, _ := parseTopLevelUploadTime(data)
+	return privateDataPayload{data: slices.Clone(data), uploadTime: uploadTime}
+}
+
+func (p privateDataPayload) cloneBytes() []byte {
+	return slices.Clone(p.data)
+}
+
+type privateDataStoreEntry struct {
+	privateDataPayload
+	key      PrivateDataKey
+	storedAt time.Time
 }
 
 const (
@@ -94,6 +110,27 @@ func (c *PrivateDataCache) Fetch(
 	key PrivateDataKey,
 	fetch func(knownUploadTime int64) (data []byte, notModified bool, err error),
 ) ([]byte, bool, error) {
+	var fetched []byte
+	payload, hit, err := c.fetchPayload(key, func(known int64) ([]byte, bool, error) {
+		data, notModified, err := fetch(known)
+		fetched = data
+		return data, notModified, err
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	if !hit {
+		return fetched, false, nil
+	}
+	return payload.cloneBytes(), hit, err
+}
+
+// fetchPayload keeps the validated payload and its parsed version together,
+// avoiding full-body copies and timestamp scans on the internal warm path.
+func (c *PrivateDataCache) fetchPayload(
+	key PrivateDataKey,
+	fetch func(knownUploadTime int64) (data []byte, notModified bool, err error),
+) (privateDataPayload, bool, error) {
 	var cached *privateDataStoreEntry
 	known := int64(0)
 	if c != nil {
@@ -104,21 +141,20 @@ func (c *PrivateDataCache) Fetch(
 
 	data, notModified, err := fetch(known)
 	if err != nil {
-		return nil, false, err
+		return privateDataPayload{}, false, err
 	}
 	if notModified {
 		if cached == nil {
 			// Upstream cannot validate a timestamp this request never sent.
-			return nil, false, fmt.Errorf("snapshot: upstream reported not-modified without a cached payload")
+			return privateDataPayload{}, false, fmt.Errorf("snapshot: upstream reported not-modified without a cached payload")
 		}
-		return append([]byte(nil), cached.data...), true, nil
+		return cached.privateDataPayload, true, nil
 	}
-	if c != nil {
-		if uploadTime, perr := parseTopLevelUploadTime(data); perr == nil && uploadTime > 0 {
-			c.store(key, data, uploadTime)
-		}
+	payload := newPrivateDataPayload(data)
+	if c != nil && payload.uploadTime > 0 {
+		c.storePayload(key, payload)
 	}
-	return data, false, nil
+	return payload, false, nil
 }
 
 func (c *PrivateDataCache) load(key PrivateDataKey) *privateDataStoreEntry {
@@ -137,8 +173,7 @@ func (c *PrivateDataCache) load(key PrivateDataKey) *privateDataStoreEntry {
 	return entry
 }
 
-func (c *PrivateDataCache) store(key PrivateDataKey, data []byte, uploadTime int64) {
-	dataCopy := append([]byte(nil), data...)
+func (c *PrivateDataCache) storePayload(key PrivateDataKey, payload privateDataPayload) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if el, ok := c.items[key]; ok {
@@ -147,13 +182,13 @@ func (c *PrivateDataCache) store(key PrivateDataKey, data []byte, uploadTime int
 		// Replace with a fresh entry rather than mutating the existing one so a
 		// concurrent reader that already captured the old entry keeps reading
 		// immutable data.
-		el.Value = &privateDataStoreEntry{key: key, data: dataCopy, uploadTime: uploadTime, storedAt: time.Now()}
-		c.curBytes += int64(len(dataCopy))
+		el.Value = &privateDataStoreEntry{key: key, privateDataPayload: payload, storedAt: time.Now()}
+		c.curBytes += int64(len(payload.data))
 		c.ll.MoveToFront(el)
 	} else {
-		el := c.ll.PushFront(&privateDataStoreEntry{key: key, data: dataCopy, uploadTime: uploadTime, storedAt: time.Now()})
+		el := c.ll.PushFront(&privateDataStoreEntry{key: key, privateDataPayload: payload, storedAt: time.Now()})
 		c.items[key] = el
-		c.curBytes += int64(len(dataCopy))
+		c.curBytes += int64(len(payload.data))
 	}
 	c.evictLocked()
 }

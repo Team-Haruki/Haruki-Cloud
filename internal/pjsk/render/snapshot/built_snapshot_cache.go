@@ -4,6 +4,8 @@ import (
 	"container/list"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // BuiltSnapshotCache memoizes fully built Snapshots across commands so a warm
@@ -23,6 +25,7 @@ import (
 // values and no accessor mutates the Snapshot; the two non-copying accessors
 // (RawData, MusicMetaView) expose data every caller treats as read-only.
 type BuiltSnapshotCache struct {
+	builds     singleflight.Group
 	mu         sync.Mutex
 	ll         *list.List
 	items      map[builtSnapshotKey]*list.Element

@@ -48,6 +48,10 @@ func Unmarshal(data []byte, target any) error {
 	return jsonv2.Unmarshal(data, target, defaultOptions)
 }
 
+func Valid(data []byte) bool {
+	return jsontext.Value(data).IsValid(defaultOptions)
+}
+
 func UnmarshalRead(reader io.Reader, target any) error {
 	return jsonv2.UnmarshalRead(reader, target, defaultOptions)
 }

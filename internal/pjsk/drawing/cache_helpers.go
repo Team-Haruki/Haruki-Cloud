@@ -25,18 +25,20 @@ func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, er
 	}
 
 	var payload any
+	var rule renderCacheRule
 	if prepared, ok := request.(preparedRenderCachePayload); ok {
-		// Cache-key sanitization removes and buckets fields in place. Keep the
-		// prepared render body immutable because the same map is sent upstream on
-		// a cache miss.
-		payload = cloneRenderCachePayload(prepared.payload)
+		rule = adjustRenderCacheRuleForPayload(parsedEndpoint.Path, prepared.payload, resolveRenderCacheRule(parsedEndpoint.Path))
+		if rule.Enabled {
+			var path [16]string
+			payload = cloneSanitizedRenderCacheNode(prepared.payload, path[:0], rule)
+		}
 	} else {
 		payload, err = normalizeRenderCachePayload(request)
 		if err != nil {
 			return renderCachePolicy{}, err
 		}
+		rule = sanitizeRenderCachePayload(parsedEndpoint.Path, payload)
 	}
-	rule := sanitizeRenderCachePayload(parsedEndpoint.Path, payload)
 	if !rule.Enabled {
 		return renderCachePolicy{}, fmt.Errorf("render cache disabled for endpoint %s", parsedEndpoint.Path)
 	}
@@ -57,25 +59,6 @@ func buildRenderCachePolicy(endpoint string, request any) (renderCachePolicy, er
 	}, nil
 }
 
-func cloneRenderCachePayload(value any) any {
-	switch typed := value.(type) {
-	case map[string]any:
-		cloned := make(map[string]any, len(typed))
-		for key, child := range typed {
-			cloned[key] = cloneRenderCachePayload(child)
-		}
-		return cloned
-	case []any:
-		cloned := make([]any, len(typed))
-		for index, child := range typed {
-			cloned[index] = cloneRenderCachePayload(child)
-		}
-		return cloned
-	default:
-		return value
-	}
-}
-
 func buildRenderCacheKey(policy renderCachePolicy) (string, error) {
 	version := renderCacheKeyVersion
 	if strings.TrimSpace(policy.APIPath) == "api/pjsk/event/list" {
@@ -86,7 +69,7 @@ func buildRenderCacheKey(policy renderCachePolicy) (string, error) {
 		Endpoint: policy.Endpoint,
 		APIPath:  policy.APIPath,
 		UserID:   policy.UserID,
-		Params:   policy.Params,
+		Params:   renderCacheHashPayload{value: policy.Params},
 	}, hashstructure.FormatV2, nil)
 	if err != nil {
 		return "", err

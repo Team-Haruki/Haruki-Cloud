@@ -46,3 +46,10 @@ func (b *Builder) BuildCharacterIconPath(characterID int, _ renderregion.Value) 
 	}
 	return assets.ResolveAssetPath(b.assets, assets.StaticImagesDir, filepath.Join("chara_icon", fmt.Sprintf("chr_icon_%d.png", characterID)))
 }
+
+func preloadMusicDifficulties(source DataSource) {
+	if loader, ok := source.(interface{ PreloadMusicDifficulties() error }); ok {
+		// A failed prefetch preserves the existing per-music error handling.
+		_ = loader.PreloadMusicDifficulties()
+	}
+}

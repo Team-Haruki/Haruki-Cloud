@@ -322,7 +322,8 @@ func sanitizeRenderCachePayload(endpointPath string, payload any) renderCacheRul
 	if !rule.Enabled {
 		return rule
 	}
-	normalizeRenderCacheNode(payload, nil, rule)
+	var path [16]string
+	normalizeRenderCacheNode(payload, path[:0], rule)
 	return rule
 }
 
@@ -535,7 +536,7 @@ func normalizeRenderCacheNode(node any, path []string, rule renderCacheRule) any
 	switch value := node.(type) {
 	case map[string]any:
 		for key, child := range value {
-			childPath := appendRenderCachePath(path, key)
+			childPath := append(path, key)
 			if shouldIgnoreRenderCachePath(rule, childPath) {
 				delete(value, key)
 				continue
@@ -545,7 +546,7 @@ func normalizeRenderCacheNode(node any, path []string, rule renderCacheRule) any
 		return value
 	case []any:
 		for idx, child := range value {
-			value[idx] = normalizeRenderCacheNode(child, appendRenderCachePath(path, "*"), rule)
+			value[idx] = normalizeRenderCacheNode(child, append(path, "*"), rule)
 		}
 		return value
 	default:
@@ -558,20 +559,15 @@ func normalizeRenderCacheNode(node any, path []string, rule renderCacheRule) any
 	}
 }
 
-func appendRenderCachePath(path []string, segment string) []string {
-	next := make([]string, 0, len(path)+1)
-	next = append(next, path...)
-	next = append(next, segment)
-	return next
-}
-
 func shouldIgnoreRenderCachePath(rule renderCacheRule, path []string) bool {
-	pathKey := renderCachePathKey(path)
-	if _, ok := rule.BucketPaths[pathKey]; ok {
-		return false
-	}
-	if _, ok := rule.IgnorePaths[pathKey]; ok {
-		return true
+	if len(rule.BucketPaths) > 0 || len(rule.IgnorePaths) > 0 {
+		pathKey := renderCachePathKey(path)
+		if _, ok := rule.BucketPaths[pathKey]; ok {
+			return false
+		}
+		if _, ok := rule.IgnorePaths[pathKey]; ok {
+			return true
+		}
 	}
 	fieldName := renderCacheFieldName(path)
 	if _, ok := rule.BucketFieldNames[fieldName]; ok {
@@ -582,9 +578,10 @@ func shouldIgnoreRenderCachePath(rule renderCacheRule, path []string) bool {
 }
 
 func renderCacheBucketFor(rule renderCacheRule, path []string) time.Duration {
-	pathKey := renderCachePathKey(path)
-	if bucket, ok := rule.BucketPaths[pathKey]; ok {
-		return bucket
+	if len(rule.BucketPaths) > 0 {
+		if bucket, ok := rule.BucketPaths[renderCachePathKey(path)]; ok {
+			return bucket
+		}
 	}
 	return rule.BucketFieldNames[renderCacheFieldName(path)]
 }

@@ -97,6 +97,9 @@ func (p *dbCardProvider) Filter(ctx context.Context, filter *CardFilter) ([]*mas
 		return nil, fmt.Errorf("filter is required")
 	}
 	p.init()
+	if cardFilterUsesAllCards(filter) {
+		return p.getAllCards(ctx, filter.Limit)
+	}
 
 	query, empty, err := p.cardFilterQuery(ctx, filter)
 	if err != nil {

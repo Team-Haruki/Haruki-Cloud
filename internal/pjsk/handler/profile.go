@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"haruki-cloud/internal/pjsk/drawing"
 	"strings"
 
 	"haruki-cloud/internal/onebot11"
@@ -352,16 +353,16 @@ func renderProfileMessageForQuery(rc *RequestContext, p userQueryParams, region 
 		BgSettings:       target.BgSettings,
 		VerticalOverride: p.ProfileVertical,
 	}
-	var data []byte
+	var data drawing.ImageResult
 	if isRequesterModularProfileEnabled(rc, p) {
-		data, err = profileCtrl.RenderModularProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
+		data, err = profileCtrl.RenderModularProfileFromAPIWithSnapshotImage(q, resp, profileSnapshot)
 	} else {
-		data, err = profileCtrl.RenderProfileFromAPIWithSnapshot(q, resp, profileSnapshot)
+		data, err = profileCtrl.RenderProfileFromAPIWithSnapshotImage(q, resp, profileSnapshot)
 	}
 	if err != nil {
 		return zeroTarget, nil, err
 	}
-	message, err := imageMessage(rc.Ctx, data, rc.App, BotModulePJSK)
+	message, err := rc.RenderedImageMessage(data)
 	if err != nil {
 		return zeroTarget, nil, err
 	}

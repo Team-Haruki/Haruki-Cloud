@@ -18,9 +18,13 @@ type dbCardProvider struct {
 	skills     *dbSkillProvider
 	once       sync.Once
 
-	cardMu       sync.RWMutex
-	cardCache    map[int]*masterdata.Card
-	cardCachedAt map[int]time.Time
+	cardMu           sync.RWMutex
+	allCards         []*masterdata.Card
+	allCardsLoadedAt time.Time
+	cardGeneration   uint64
+	cardLoads        singleflight.Group
+	cardCache        map[int]*masterdata.Card
+	cardCachedAt     map[int]time.Time
 
 	episodeMu        sync.RWMutex
 	episodesByCard   map[int][]*masterdata.CardEpisode

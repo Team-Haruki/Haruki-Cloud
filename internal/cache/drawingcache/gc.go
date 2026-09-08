@@ -168,16 +168,16 @@ func fileReferencedByLiveRecord(db *sql.DB, filePath string, excludingKey string
 	}
 
 	nowText := time.Now().UTC().Format(sqliteTimeLayout)
-	var count int
+	var exists bool
 	err := db.QueryRow(`
-SELECT COUNT(1)
+SELECT EXISTS (SELECT 1
 FROM image_cache_index
 WHERE file_path = ?
   AND sha256_key <> ?
-  AND (ttl_seconds <= 0 OR expires_at >= ?)
-`, filePath, excludingKey, nowText).Scan(&count)
+  AND (ttl_seconds <= 0 OR expires_at >= ?))
+`, filePath, excludingKey, nowText).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("query shared cache file refs failed: %w", err)
 	}
-	return count > 0, nil
+	return exists, nil
 }

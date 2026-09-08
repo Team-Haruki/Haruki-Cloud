@@ -85,6 +85,32 @@ CREATE TABLE image_cache_index (
 	}
 }
 
+func TestSharedCacheFileLookupUsesIndex(t *testing.T) {
+	db := openTestDB(t)
+	rows, err := db.Query(`EXPLAIN QUERY PLAN SELECT EXISTS (SELECT 1 FROM image_cache_index WHERE file_path = ? AND sha256_key <> ? AND (ttl_seconds <= 0 OR expires_at >= ?))`, "shared.png", "key", time.Now().UTC().Format(sqliteTimeLayout))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	indexed := false
+	for rows.Next() {
+		var id, parent, unused int
+		var detail string
+		if err := rows.Scan(&id, &parent, &unused, &detail); err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(detail, "idx_image_cache_file_path") {
+			indexed = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if !indexed {
+		t.Fatal("shared file reference check must use file_path index")
+	}
+}
+
 func TestCleanupExpiredBatchDeletesMultipleRecordsWithFixedStatement(t *testing.T) {
 	db := openTestDB(t)
 	dao := NewDAO(db)

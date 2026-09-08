@@ -298,22 +298,28 @@ func (r *RemoteDeckRecommender) doRecommendBatch(ctx context.Context, exec *remo
 		return nil, fmt.Errorf("deck remote engine: no user data bytes available")
 	}
 
-	var cacheResp remoteUserDataCacheResponse
-	userPayload := buildMultipartPayload(ctx, userData)
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	key := remoteUserdataDigest(ctx, userData)
+	for attempt := 0; ; attempt++ {
+		entry, err := r.cachedUserdata(ctx, exec.state, key, userData)
+		if err != nil {
+			return nil, err
+		}
+		results, err := r.doRecommendWithUserdataHash(ctx, exec, req, entry.hash)
+		if !isMissingUserdataHashError(err) {
+			return results, err
+		}
+		exec.state.userdata.invalidate(key, entry)
+		if attempt == 1 {
+			return nil, err
+		}
 	}
-	if err := r.postBinary(ctx, exec, "/cache_userdata", userPayload, &cacheResp); err != nil {
-		return nil, err
-	}
-	if strings.TrimSpace(cacheResp.UserdataHash) == "" {
-		return nil, fmt.Errorf("deck-service cache_userdata returned empty userdata_hash")
-	}
+}
 
+func (r *RemoteDeckRecommender) doRecommendWithUserdataHash(ctx context.Context, exec *remoteExecution, req RecommendRequest, hash string) ([]remoteBatchRecommendResult, error) {
 	recommendPayload := map[string]any{
 		"region":        strings.ToLower(strings.TrimSpace(req.Region)),
 		"batch_options": req.BatchOption,
-		"userdata_hash": cacheResp.UserdataHash,
+		"userdata_hash": hash,
 	}
 	finishEncode := commandtrace.MeasureOperation(ctx, "deck.encode")
 	recommendJSON, err := json.Marshal(recommendPayload)

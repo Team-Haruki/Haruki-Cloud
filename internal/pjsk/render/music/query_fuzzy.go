@@ -70,22 +70,23 @@ func hasUnreleasedFuzzyMusicMatch(source DataSource, normalizedQuery string, now
 }
 
 func bestFuzzyMusicMatches(matches []*masterdata.Music, bestScores map[int]musicFuzzyScore) []*masterdata.Music {
-	slices.SortFunc(matches, func(a, b *masterdata.Music) int {
-		if compared := compareMusicFuzzyScore(bestScores[a.ID], bestScores[b.ID]); compared != 0 {
-			return compared
-		}
-		return a.ID - b.ID
-	})
-
+	if len(matches) == 0 {
+		return nil
+	}
 	best := bestScores[matches[0].ID]
 	topMatches := make([]*masterdata.Music, 0, len(matches))
 	for _, match := range matches {
 		score := bestScores[match.ID]
-		if score != best {
-			break
+		compared := compareMusicFuzzyScore(score, best)
+		if compared < 0 {
+			best = score
+			topMatches = topMatches[:0]
 		}
-		topMatches = append(topMatches, match)
+		if compared <= 0 {
+			topMatches = append(topMatches, match)
+		}
 	}
+	slices.SortFunc(topMatches, func(a, b *masterdata.Music) int { return a.ID - b.ID })
 	return topMatches
 }
 
@@ -163,8 +164,9 @@ func scoreNormalizedMusicFuzzyCandidate(normalizedQuery string, normalizedCandid
 		return score, true
 	}
 
-	distance := levenshteinDistance(queryRunes, candidateRunes)
-	if distance > fuzzyDistanceLimit(queryLen) {
+	limit := fuzzyDistanceLimit(queryLen)
+	distance := boundedLevenshteinDistance(queryRunes, candidateRunes, limit)
+	if distance > limit {
 		return musicFuzzyScore{}, false
 	}
 	return musicFuzzyScore{
@@ -284,11 +286,16 @@ func scoreMusicFuzzySubstring(queryRunes []rune, candidateRunes []rune) (musicFu
 	limit := fuzzyDistanceLimit(queryLen)
 	minWindowLen := maxFuzzyInt(1, queryLen-limit)
 	maxWindowLen := minFuzzyInt(candidateLen, queryLen+limit)
+	var scratch [128]int
+	rows := scratch[:]
+	if needed := 2 * (maxWindowLen + 1); needed > len(rows) {
+		rows = make([]int, needed)
+	}
 	best := musicFuzzyScore{}
 	found := false
 	for windowLen := minWindowLen; windowLen <= maxWindowLen; windowLen++ {
 		for start := 0; start+windowLen <= candidateLen; start++ {
-			distance := levenshteinDistance(queryRunes, candidateRunes[start:start+windowLen])
+			distance := levenshteinDistanceWithin(queryRunes, candidateRunes[start:start+windowLen], limit, rows)
 			if distance > limit {
 				continue
 			}
@@ -304,6 +311,64 @@ func scoreMusicFuzzySubstring(queryRunes []rune, candidateRunes []rune) (musicFu
 		}
 	}
 	return best, found
+}
+
+// Distances above limit are indistinguishable to fuzzy ranking.
+func boundedLevenshteinDistance(left, right []rune, limit int) int {
+	if absInt(len(left)-len(right)) > limit {
+		return limit + 1
+	}
+	if len(right) > len(left) {
+		left, right = right, left
+	}
+	var scratch [128]int
+	rows := scratch[:]
+	if needed := 2 * (len(right) + 1); needed > len(rows) {
+		rows = make([]int, needed)
+	}
+	return levenshteinDistanceWithin(left, right, limit, rows)
+}
+
+func levenshteinDistanceWithin(left, right []rune, limit int, rows []int) int {
+	if absInt(len(left)-len(right)) > limit {
+		return limit + 1
+	}
+	if len(left) == 0 {
+		return len(right)
+	}
+	if len(right) == 0 {
+		return len(left)
+	}
+	width := len(right) + 1
+	prev, curr := rows[:width], rows[width:2*width]
+	for j := range prev {
+		prev[j] = min(j, limit+1)
+	}
+	for i, leftRune := range left {
+		row := i + 1
+		from, to := max(1, row-limit), min(len(right), row+limit)
+		curr[0] = min(row, limit+1)
+		if from > 1 {
+			curr[from-1] = limit + 1
+		}
+		rowMin := limit + 1
+		for col := from; col <= to; col++ {
+			cost := 0
+			if leftRune != right[col-1] {
+				cost = 1
+			}
+			curr[col] = min(curr[col-1]+1, prev[col]+1, prev[col-1]+cost)
+			rowMin = min(rowMin, curr[col])
+		}
+		if rowMin > limit {
+			return limit + 1
+		}
+		if to < len(right) {
+			curr[to+1] = limit + 1
+		}
+		prev, curr = curr, prev
+	}
+	return min(prev[len(right)], limit+1)
 }
 
 func levenshteinDistance(left []rune, right []rune) int {
@@ -333,7 +398,7 @@ func levenshteinDistance(left []rune, right []rune) int {
 				prev[j]+cost,
 			)
 		}
-		copy(prev, curr)
+		prev, curr = curr, prev
 	}
 	return prev[len(right)]
 }

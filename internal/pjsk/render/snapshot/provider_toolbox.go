@@ -37,7 +37,7 @@ type musicMetaSource interface {
 type conditionalPrivateDataFetcher func(knownUploadTime int64) ([]byte, bool, error)
 
 type toolboxPrivateDataResult struct {
-	data                 []byte
+	privateDataPayload
 	requestCacheHit      bool
 	crossRequestCacheHit bool
 	elapsed              time.Duration
@@ -130,7 +130,7 @@ func (p *ToolboxSnapshotProvider) Resolve(ctx context.Context, selector Selector
 		return nil, err
 	}
 	snapshotRegion, musicMetaJSON := p.resolveSupplementalData(region, binding.Server, opts)
-	return p.resolveBuiltSnapshot(ctx, tResolve, snapshotRegion, uid, suiteResult.data, mysekaiJSON, musicMetaJSON, opts)
+	return p.resolveBuiltSnapshot(ctx, tResolve, snapshotRegion, uid, suiteResult.privateDataPayload, mysekaiJSON, musicMetaJSON, opts)
 }
 
 func (p *ToolboxSnapshotProvider) resolveAccount(
@@ -180,15 +180,15 @@ func (p *ToolboxSnapshotProvider) fetchPrivateData(
 		UserID:         uid,
 		Platform:       platform,
 		PlatformUserID: imUserID,
-	}, func() ([]byte, error) {
-		data, cross, ferr := p.privateCache.Fetch(
+	}, func() (privateDataPayload, error) {
+		data, cross, ferr := p.privateCache.fetchPayload(
 			PrivateDataKey{Server: server, DataType: dataType, UID: uid},
 			fetch,
 		)
 		result.crossRequestCacheHit = cross
 		return data, ferr
 	})
-	result.data = data
+	result.privateDataPayload = data
 	result.requestCacheHit = requestCacheHit
 	result.elapsed = time.Since(started)
 	if err != nil {
@@ -221,14 +221,14 @@ func (p *ToolboxSnapshotProvider) logEmptyPrivateData(ctx context.Context, serve
 	)
 }
 
-func (p *ToolboxSnapshotProvider) resolveMySekaiData(ctx context.Context, server string, uid int64, platform, imUserID string, needed bool) ([]byte, error) {
+func (p *ToolboxSnapshotProvider) resolveMySekaiData(ctx context.Context, server string, uid int64, platform, imUserID string, needed bool) (privateDataPayload, error) {
 	if !needed {
-		return nil, nil
+		return privateDataPayload{}, nil
 	}
 	result, err := p.fetchPrivateData(ctx, server, "mysekai", uid, platform, imUserID, func(knownUploadTime int64) ([]byte, bool, error) {
 		return p.client.GetMySekaiDataConditionalContext(ctx, server, uid, platform, imUserID, knownUploadTime)
 	})
-	return result.data, err
+	return result.privateDataPayload, err
 }
 
 func (p *ToolboxSnapshotProvider) resolveSupplementalData(region renderregion.Value, bindingServer string, opts ResolveOptions) (renderregion.Value, []byte) {
@@ -247,65 +247,53 @@ func (p *ToolboxSnapshotProvider) resolveBuiltSnapshot(
 	started time.Time,
 	region renderregion.Value,
 	uid int64,
-	suiteJSON, mysekaiJSON, musicMetaJSON []byte,
+	suite, mysekai privateDataPayload,
+	musicMetaJSON []byte,
 	opts ResolveOptions,
 ) (Snapshot, error) {
-	// Memoize the fully built snapshot across commands. The build is fully
-	// determined by the region, account, and each source payload's upload_time
-	// (parsed from the payloads already fetched above), so an unchanged account
-	// reuses the parsed model — skipping the suite unmarshal, the leader-image
-	// DB lookup, and the transforms inside factory.Build. Only memoize when music
-	// meta is not folded in (the normal case) and every contributing upload_time
-	// is known, so the key fully determines the built result.
-	suiteUploadTime, _ := parseTopLevelUploadTime(suiteJSON)
-	var mysekaiUploadTime int64
-	if opts.NeedMySekai {
-		mysekaiUploadTime, _ = parseTopLevelUploadTime(mysekaiJSON)
-	}
-	memoizable := !opts.NeedMusicMeta && suiteUploadTime > 0 && (!opts.NeedMySekai || mysekaiUploadTime > 0)
+	// Toolbox advances upload_time whenever the payload changes. Reuse the
+	// version parsed at ingestion; every request has already authorized its read.
+	memoizable := !opts.NeedMusicMeta && suite.uploadTime > 0 && (!opts.NeedMySekai || mysekai.uploadTime > 0)
 	memoKey := builtSnapshotKey{
 		Region:            region.String(),
 		UID:               uid,
-		SuiteUploadTime:   suiteUploadTime,
+		SuiteUploadTime:   suite.uploadTime,
 		NeedMySekai:       opts.NeedMySekai,
-		MySekaiUploadTime: mysekaiUploadTime,
+		MySekaiUploadTime: mysekai.uploadTime,
 	}
+	build := func(buildCtx context.Context) (Snapshot, error) {
+		return p.factory.Build(buildCtx, BuildInput{
+			Region:        region,
+			Source:        "toolbox_live",
+			SuiteJSON:     suite.data,
+			MySekaiJSON:   mysekai.data,
+			MusicMetaJSON: musicMetaJSON,
+		})
+	}
+	var (
+		snapshot Snapshot
+		err      error
+		cacheHit bool
+	)
 	if memoizable {
-		if cached := p.builtCache.Get(memoKey); cached != nil {
-			p.logger.DebugContext(ctx, "toolbox snapshot resolved",
-				"upstream", "toolbox",
-				"region", region.String(),
-				"built_cache_hit", true,
-				"duration_ms", commandtrace.Milliseconds(time.Since(started)),
-			)
-			return cached, nil
-		}
+		snapshot, cacheHit, err = p.builtCache.getOrBuild(ctx, memoKey, int64(len(suite.data)+len(mysekai.data)), build)
+	} else {
+		snapshot, err = build(ctx)
 	}
-
-	snapshot, err := p.factory.Build(ctx, BuildInput{
-		Region:        region,
-		Source:        "toolbox_live",
-		SuiteJSON:     suiteJSON,
-		MySekaiJSON:   mysekaiJSON,
-		MusicMetaJSON: musicMetaJSON,
-	})
 	if err != nil {
 		p.logger.WarnContext(ctx, "toolbox snapshot build failed",
 			"upstream", "toolbox",
 			"region", region.String(),
-			"suite_bytes", len(suiteJSON),
-			"mysekai_bytes", len(mysekaiJSON),
+			"suite_bytes", len(suite.data),
+			"mysekai_bytes", len(mysekai.data),
 			"error_type", fmt.Sprintf("%T", err),
 		)
 		return nil, err
 	}
-	if memoizable {
-		p.builtCache.Put(memoKey, snapshot, int64(len(suiteJSON)+len(mysekaiJSON)))
-	}
 	p.logger.DebugContext(ctx, "toolbox snapshot resolved",
 		"upstream", "toolbox",
 		"region", region.String(),
-		"built_cache_hit", false,
+		"built_cache_hit", cacheHit,
 		"duration_ms", commandtrace.Milliseconds(time.Since(started)),
 	)
 	return snapshot, nil

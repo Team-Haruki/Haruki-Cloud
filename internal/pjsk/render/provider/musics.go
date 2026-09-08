@@ -6,6 +6,12 @@ import (
 	"haruki-cloud/internal/pjsk/render/masterdata"
 )
 
+// MusicDifficultyPreloader optionally batches the difficulty reads used by
+// full music lists and reward calculations.
+type MusicDifficultyPreloader interface {
+	PreloadDifficulties(ctx context.Context) error
+}
+
 // MusicProvider exposes music-related masterdata queries.
 type MusicProvider interface {
 	Search(ctx context.Context, query string) (*masterdata.Music, error)

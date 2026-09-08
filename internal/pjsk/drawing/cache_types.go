@@ -15,22 +15,24 @@ import (
 // It is keyed by a stable hash of (endpoint, sanitized request payload) and
 // avoids repeated Drawing API calls when the request has not changed.
 type localRenderCache struct {
-	mu         sync.Mutex
-	entries    map[string]*localRenderEntry
-	lru        *list.List
-	totalBytes int64
-	maxEntries int
-	maxBytes   int64
-	ttl        time.Duration
-	flight     singleflight.Group
+	mu             sync.Mutex
+	entries        map[string]*localRenderEntry
+	lru            *list.List
+	nextGeneration uint64
+	totalBytes     int64
+	maxEntries     int
+	maxBytes       int64
+	ttl            time.Duration
+	flight         singleflight.Group
 }
 
 type localRenderEntry struct {
-	data      []byte
-	expiresAt time.Time
-	permanent bool
-	size      int64
-	element   *list.Element
+	generation uint64
+	data       []byte
+	expiresAt  time.Time
+	permanent  bool
+	size       int64
+	element    *list.Element
 }
 
 type RenderCacheConfig struct {
@@ -49,6 +51,8 @@ type RenderCacheClient struct {
 	imageCacheDir string
 	imageStore    *imagecache.PGStore
 	flight        singleflight.Group
+	readFlight    singleflight.Group
+	pending       *localRenderCache
 	// storeSlots bounds concurrent write-behind cache stores; storeWG lets
 	// tests (and future shutdown hooks) wait for pending stores to drain.
 	storeSlots chan struct{}

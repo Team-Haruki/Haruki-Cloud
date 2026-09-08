@@ -32,6 +32,17 @@ func (p *dbMusicProvider) GetDifficulties(ctx context.Context, musicID int) ([]*
 		}
 	}
 
+	p.difficultyMu.RLock()
+	indexed := dbBulkIndexFresh(p.difficultyIndex != nil, p.difficultyLoadedAt)
+	indexedItems := p.difficultyIndex[musicID]
+	p.difficultyMu.RUnlock()
+	if indexed {
+		if len(indexedItems) == 0 {
+			return nil, fmt.Errorf("no difficulties found for music %d", musicID)
+		}
+		return common.CloneMusicDifficulties(indexedItems), nil
+	}
+
 	p.mu.RLock()
 	if cached, ok := p.difficultiesByID[musicID]; ok {
 		p.mu.RUnlock()
@@ -55,13 +66,7 @@ func (p *dbMusicProvider) GetDifficulties(ctx context.Context, musicID int) ([]*
 
 	result := make([]*masterdata.MusicDifficulty, 0, len(items))
 	for _, item := range items {
-		result = append(result, &masterdata.MusicDifficulty{
-			ID:              int(item.GameID),
-			MusicID:         int(item.MusicID),
-			MusicDifficulty: item.MusicDifficulty,
-			PlayLevel:       int(item.PlayLevel),
-			TotalNoteCount:  int(item.TotalNoteCount),
-		})
+		result = append(result, convertMusicDifficulty(item))
 	}
 
 	p.mu.Lock()

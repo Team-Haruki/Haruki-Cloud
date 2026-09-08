@@ -441,16 +441,11 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	if rc.App.Aliases != nil {
 		musicCtrl.SetAliasResolver(rc.App.Aliases)
 	}
-	var data []byte
 	switch rc.Cmd.Mode {
 	case musicDetailCommand:
-		var directMessage onebot11.Message
-		data, directMessage, err = executeMusicDetail(rc, musicCtrl)
-		if directMessage != nil {
-			return directMessage, err
-		}
+		return executeMusicDetail(rc, musicCtrl)
 	case "music-list":
-		data, err = executeMusicList(rc, musicCtrl)
+		return executeMusicListMessage(rc, musicCtrl)
 	case "music-chart":
 		q := rendermusic.ChartQuery{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 		mergeParams(rc.Cmd.Params, &q)
@@ -459,9 +454,9 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 		}
 		return renderMusicChartMessage(rc, musicCtrl, q)
 	case "music-progress":
-		data, err = executeMusicProgress(rc, musicCtrl)
+		return executeMusicProgress(rc, musicCtrl)
 	case "music-rewards":
-		data, err = renderMusicRewards(rc)
+		return renderMusicRewards(rc)
 	case "music-note-count":
 		return executeMusicNoteCount(rc, musicCtrl)
 	case "music-cover":
@@ -473,10 +468,6 @@ func executeMusic(rc *RequestContext) (message onebot11.Message, err error) {
 	default:
 		return nil, unsupportedModeError("music", rc.Cmd.Mode)
 	}
-	if err != nil {
-		return nil, err
-	}
-	return rc.ImageMessage(data)
 }
 
 func normalizeExecuteMusicError(rc *RequestContext, err *error) {
@@ -491,18 +482,22 @@ func normalizeExecuteMusicError(rc *RequestContext, err *error) {
 	*err = normalizeMusicUserFacingErrorForLookup(*err, region, query)
 }
 
-func executeMusicDetail(rc *RequestContext, musicCtrl *rendermusic.Controller) ([]byte, onebot11.Message, error) {
+func executeMusicDetail(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
 	q := rendermusic.Query{Query: rc.Cmd.Query, Region: rc.Cmd.Region}
 	mergeParams(rc.Cmd.Params, &q)
-	data, err := musicCtrl.RenderMusicDetail(q)
+	data, err := musicCtrl.RenderMusicDetailImage(q)
 	if ids := rendermusic.ExtractAmbiguousMusicIDs(err); len(ids) > 1 {
 		message, renderErr := renderAmbiguousMusicIDsMessages(rc, musicCtrl, q.Region, err, ids)
-		return nil, message, renderErr
+		return message, renderErr
 	}
-	return data, nil, err
+	if err != nil {
+		return nil, err
+	}
+	message, err := rc.RenderedImageMessage(data)
+	return message, err
 }
 
-func executeMusicList(rc *RequestContext, musicCtrl *rendermusic.Controller) ([]byte, error) {
+func executeMusicListMessage(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
 	q := rendermusic.ListQuery{Region: rc.Cmd.Region}
 	mergeParams(rc.Cmd.Params, &q)
 	suiteSnapshot, err := musicListSnapshot(rc, q.Full)
@@ -518,7 +513,11 @@ func executeMusicList(rc *RequestContext, musicCtrl *rendermusic.Controller) ([]
 	if !q.Full {
 		q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, suiteSnapshot)
 	}
-	return musicCtrl.RenderMusicList(q)
+	image, err := musicCtrl.RenderMusicListImage(q)
+	if err != nil {
+		return nil, err
+	}
+	return rc.RenderedImageMessage(image)
 }
 
 func musicListSnapshot(rc *RequestContext, full bool) (rendersnapshot.Snapshot, error) {
@@ -529,7 +528,7 @@ func musicListSnapshot(rc *RequestContext, full bool) (rendersnapshot.Snapshot, 
 	return snapshot, err
 }
 
-func executeMusicProgress(rc *RequestContext, musicCtrl *rendermusic.Controller) ([]byte, error) {
+func executeMusicProgress(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
 	_, suiteSnapshot, err := rc.requireVisibleSuiteSnapshot()
 	if err != nil {
 		return nil, err
@@ -537,7 +536,11 @@ func executeMusicProgress(rc *RequestContext, musicCtrl *rendermusic.Controller)
 	q := rendermusic.ProgressQuery{Region: rc.Cmd.Region}
 	mergeParams(rc.Cmd.Params, &q)
 	_, profile := resolveCommandDisplayProfiles(rc, suiteSnapshot)
-	return musicCtrl.RenderMusicProgressFromSnapshot(q, suiteSnapshot, profile)
+	image, err := musicCtrl.RenderMusicProgressFromSnapshotImage(q, suiteSnapshot, profile)
+	if err != nil {
+		return nil, err
+	}
+	return rc.RenderedImageMessage(image)
 }
 
 func executeMusicNoteCount(rc *RequestContext, musicCtrl *rendermusic.Controller) (onebot11.Message, error) {
@@ -686,7 +689,7 @@ func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Co
 	if len(items) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
-	data, err := musicCtrl.RenderMusicList(rendermusic.ListQuery{
+	data, err := musicCtrl.RenderMusicListImage(rendermusic.ListQuery{
 		Items:       items,
 		Difficulty:  requestDifficulty,
 		Region:      region,
@@ -696,7 +699,7 @@ func renderMusicLookupListMessages(rc *RequestContext, musicCtrl *rendermusic.Co
 	if err != nil {
 		return nil, err
 	}
-	image, err := rc.ImageMessage(data)
+	image, err := rc.RenderedImageMessage(data)
 	if err != nil {
 		return nil, err
 	}
@@ -707,7 +710,7 @@ func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *rendermus
 	if len(items) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
-	data, err := musicCtrl.RenderMusicBriefList(rendermusic.BriefListQuery{
+	data, err := musicCtrl.RenderMusicBriefListImage(rendermusic.BriefListQuery{
 		Items:       items,
 		Region:      region,
 		Title:       stringPtr(buildMusicLookupListTitle(prefix, value, "")),
@@ -716,7 +719,7 @@ func renderMusicBriefLookupListMessages(rc *RequestContext, musicCtrl *rendermus
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }
 
 func renderAmbiguousMusicDetailListMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, sourceErr error, items []rendermusic.BriefListItemQuery) (onebot11.Message, error) {
@@ -724,7 +727,7 @@ func renderAmbiguousMusicDetailListMessages(rc *RequestContext, musicCtrl *rende
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
 	title := buildAmbiguousMusicDetailListTitle(sourceErr)
-	data, err := musicCtrl.RenderMusicBriefList(rendermusic.BriefListQuery{
+	data, err := musicCtrl.RenderMusicBriefListImage(rendermusic.BriefListQuery{
 		Items:       items,
 		Region:      region,
 		Title:       stringPtr(title),
@@ -733,7 +736,7 @@ func renderAmbiguousMusicDetailListMessages(rc *RequestContext, musicCtrl *rende
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }
 
 func renderAmbiguousMusicIDsMessages(rc *RequestContext, musicCtrl *rendermusic.Controller, region string, sourceErr error, ids []int) (onebot11.Message, error) {
@@ -752,7 +755,7 @@ func renderAmbiguousMusicBPMIDsMessages(rc *RequestContext, musicCtrl *rendermus
 	if len(items) == 0 {
 		return nil, fmt.Errorf("no music matched the current filters")
 	}
-	data, err := musicCtrl.RenderMusicBriefList(rendermusic.BriefListQuery{
+	data, err := musicCtrl.RenderMusicBriefListImage(rendermusic.BriefListQuery{
 		Items:       items,
 		Region:      region,
 		Title:       stringPtr(buildAmbiguousMusicBPMListTitle(sourceErr)),
@@ -761,7 +764,7 @@ func renderAmbiguousMusicBPMIDsMessages(rc *RequestContext, musicCtrl *rendermus
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }
 
 func buildAmbiguousMusicDetailListTitle(sourceErr error) string {
@@ -856,7 +859,7 @@ func formatMusicBPM(value float64) string {
 	return strconv.FormatFloat(value, 'f', -1, 64)
 }
 
-func renderMusicRewards(rc *RequestContext) ([]byte, error) {
+func renderMusicRewards(rc *RequestContext) (onebot11.Message, error) {
 	musicCtrl := rc.App.Music.WithContext(rc.Ctx)
 	if rc.App.Aliases != nil {
 		musicCtrl.SetAliasResolver(rc.App.Aliases)
@@ -872,8 +875,15 @@ func renderMusicRewards(rc *RequestContext) ([]byte, error) {
 	detailQuery := rendermusic.RewardsDetailQuery{Region: rc.Cmd.Region}
 	mergeParams(rc.Cmd.Params, &detailQuery)
 	_, detailQuery.Profile = resolveCommandDisplayProfiles(rc, snapshot)
-	if _, buildErr := musicCtrl.BuildMusicRewardsDetailRequestFromSnapshot(detailQuery, snapshot); buildErr != nil {
+	finishBuild := measurePayloadBuild(rc.Ctx)
+	payload, buildErr := musicCtrl.BuildMusicRewardsDetailRequestFromSnapshot(detailQuery, snapshot)
+	finishBuild()
+	if buildErr != nil {
 		return nil, newSuiteDataNotFoundReplayErrorForBinding(binding)
 	}
-	return musicCtrl.RenderMusicRewardsDetailFromSnapshot(detailQuery, snapshot)
+	image, err := musicCtrl.RenderMusicRewardsDetailRequestImage(payload)
+	if err != nil {
+		return nil, err
+	}
+	return rc.RenderedImageMessage(image)
 }

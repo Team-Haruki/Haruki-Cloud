@@ -1478,8 +1478,8 @@ func TestRemoteRecommendFallsBackToLegacyWhenUserdataHashMissing(t *testing.T) {
 	if result == nil || len(result.Decks) != 1 {
 		t.Fatalf("unexpected recommend result: %+v", result)
 	}
-	if batchRecommendCalls.Load() != 1 {
-		t.Fatalf("expected 1 batch recommend call, got %d", batchRecommendCalls.Load())
+	if batchRecommendCalls.Load() != 2 {
+		t.Fatalf("expected 2 batch recommend calls including hash recovery, got %d", batchRecommendCalls.Load())
 	}
 	if legacyRecommendCalls.Load() != 1 {
 		t.Fatalf("expected 1 legacy recommend call, got %d", legacyRecommendCalls.Load())

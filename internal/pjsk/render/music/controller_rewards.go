@@ -30,7 +30,7 @@ func (c *Controller) RenderMusicRewardsDetail(query RewardsDetailQuery) ([]byte,
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateDetailMusicRewards(payload)
+	return c.RenderMusicRewardsDetailRequest(payload)
 }
 
 func (c *Controller) RenderMusicRewardsDetailFromAchievements(query RewardsDetailQuery, achievementsJSON []byte) ([]byte, error) {
@@ -43,7 +43,7 @@ func (c *Controller) RenderMusicRewardsDetailFromAchievements(query RewardsDetai
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateDetailMusicRewards(payload)
+	return c.RenderMusicRewardsDetailRequest(payload)
 }
 
 func (c *Controller) RenderMusicRewardsDetailFromSnapshot(query RewardsDetailQuery, snapshot snapshot.Snapshot) ([]byte, error) {
@@ -56,7 +56,22 @@ func (c *Controller) RenderMusicRewardsDetailFromSnapshot(query RewardsDetailQue
 	if err != nil {
 		return nil, err
 	}
-	return c.drawing.GenerateDetailMusicRewards(payload)
+	return c.RenderMusicRewardsDetailRequest(payload)
+}
+
+func (c *Controller) RenderMusicRewardsDetailRequest(payload *drawing.DetailMusicRewardsRequest) ([]byte, error) {
+	image, err := c.RenderMusicRewardsDetailRequestImage(payload)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderMusicRewardsDetailRequestImage(payload *drawing.DetailMusicRewardsRequest) (drawing.ImageResult, error) {
+	if c == nil || c.drawing == nil {
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
+	}
+	return c.drawing.GenerateDetailMusicRewardsImage(payload)
 }
 
 func (c *Controller) BuildMusicRewardsBasicRequest(query RewardsBasicQuery) (*drawing.BasicMusicRewardsRequest, error) {

@@ -2698,8 +2698,8 @@ func TestBuildAutoRecommendRequestRemoteServiceFallsBackToLegacyWhenUserdataHash
 	if err != nil {
 		t.Fatalf("BuildAutoRecommendRequest returned error: %v", err)
 	}
-	if binaryRecommendCalls.Load() != 1 {
-		t.Fatalf("expected one binary recommend call, got %d", binaryRecommendCalls.Load())
+	if binaryRecommendCalls.Load() != 2 {
+		t.Fatalf("expected two binary recommend calls including hash recovery, got %d", binaryRecommendCalls.Load())
 	}
 	if legacyRecommendCalls.Load() != 1 {
 		t.Fatalf("expected one legacy recommend call, got %d", legacyRecommendCalls.Load())

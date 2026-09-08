@@ -53,8 +53,10 @@ func VerifyBotSessionWithPolicy(redisClient *redis.Client, policy SessionPolicy,
 		finish := commandtrace.MeasurePhase(c.Context(), "session_auth")
 		defer finish()
 		if failure := validateBotSession(c, redisClient, policy, reporter); failure != nil {
+			finish()
 			return JSONResponse(c, failure.Status, failure.Message)
 		}
+		finish()
 		return c.Next()
 	}
 }

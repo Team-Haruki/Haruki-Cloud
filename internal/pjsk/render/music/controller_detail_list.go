@@ -92,16 +92,24 @@ func (c *Controller) BuildMusicDetailRequest(query Query) (*drawing.MusicDetailR
 }
 
 func (c *Controller) RenderMusicDetail(query Query) ([]byte, error) {
+	image, err := c.RenderMusicDetailImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderMusicDetailImage(query Query) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicDetailRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMusicDetail(payload)
+	return c.drawing.GenerateMusicDetailImage(payload)
 }
 
 func (c *Controller) BuildMusicBriefListRequest(query BriefListQuery) (*drawing.MusicBriefListRequest, error) {
@@ -128,16 +136,24 @@ func (c *Controller) BuildMusicBriefListRequest(query BriefListQuery) (*drawing.
 }
 
 func (c *Controller) RenderMusicBriefList(query BriefListQuery) ([]byte, error) {
+	image, err := c.RenderMusicBriefListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderMusicBriefListImage(query BriefListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicBriefListRequest(query)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateMusicBriefList(payload)
+	return c.drawing.GenerateMusicBriefListImage(payload)
 }
 
 func (c *Controller) BuildMusicListRequest(query ListQuery) (*drawing.MusicListRequest, error) {
@@ -234,9 +250,26 @@ func buildFilteredMusicListEntries(source DataSource, builder *Builder, region r
 	list := make([]map[string]any, 0)
 	jackets := make(map[int]string)
 	now := currentMusicVisibilityTime()
-	for _, musicInfo := range source.GetMusics() {
-		level := builder.GetDifficultyLevel(musicIDOrZero(musicInfo), options.difficulty)
-		if !matchesMusicListOptions(source, musicInfo, level, now, options, filterMusicID, keyword) {
+	var musics []*masterdata.Music
+	if filterMusicID != nil {
+		if musicInfo, err := source.GetMusicByID(*filterMusicID); err == nil && musicInfo != nil {
+			musics = []*masterdata.Music{musicInfo}
+		}
+	} else {
+		musics = source.GetMusics()
+	}
+	candidates := make([]*masterdata.Music, 0, len(musics))
+	for _, musicInfo := range musics {
+		if matchesMusicListMetadata(source, musicInfo, now, options.includeLeaks, keyword, filterMusicID != nil) {
+			candidates = append(candidates, musicInfo)
+		}
+	}
+	if keyword == "" && len(candidates) > 1 {
+		preloadMusicDifficulties(source)
+	}
+	for _, musicInfo := range candidates {
+		level := builder.GetDifficultyLevel(musicInfo.ID, options.difficulty)
+		if !matchesMusicListOptions(musicInfo.ID, level, options) {
 			continue
 		}
 		list = append(list, map[string]any{
@@ -248,24 +281,15 @@ func buildFilteredMusicListEntries(source DataSource, builder *Builder, region r
 	return list, jackets
 }
 
-func musicIDOrZero(musicInfo *masterdata.Music) int {
-	if musicInfo == nil {
-		return 0
+func matchesMusicListMetadata(source DataSource, musicInfo *masterdata.Music, now int64, includeLeaks bool, keyword string, resolvedID bool) bool {
+	if musicInfo == nil || (!includeLeaks && !isMusicVisibleAt(musicInfo, now)) {
+		return false
 	}
-	return musicInfo.ID
+	return resolvedID || keyword == "" || matchesMusicKeyword(source, musicInfo, keyword)
 }
 
-func matchesMusicListOptions(source DataSource, musicInfo *masterdata.Music, level int, now int64, options musicListBuildOptions, filterMusicID *int, keyword string) bool {
-	if musicInfo == nil || level == 0 {
-		return false
-	}
-	if !options.includeLeaks && !isMusicVisibleAt(musicInfo, now) {
-		return false
-	}
-	if filterMusicID != nil && musicInfo.ID != *filterMusicID {
-		return false
-	}
-	if filterMusicID == nil && keyword != "" && !matchesMusicKeyword(source, musicInfo, keyword) {
+func matchesMusicListOptions(musicID, level int, options musicListBuildOptions) bool {
+	if level == 0 {
 		return false
 	}
 	if options.minLevel > 0 && level < options.minLevel {
@@ -274,7 +298,7 @@ func matchesMusicListOptions(source DataSource, musicInfo *masterdata.Music, lev
 	if options.maxLevel > 0 && level > options.maxLevel {
 		return false
 	}
-	return matchesMusicListResultFilter(options.resultFilter, options.userResults[musicInfo.ID])
+	return matchesMusicListResultFilter(options.resultFilter, options.userResults[musicID])
 }
 
 func sortMusicListEntries(list []map[string]any) {
@@ -366,14 +390,22 @@ func listItemDifficulty(defaultDifficulty string, itemDifficulty string) string 
 }
 
 func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
+	image, err := c.RenderMusicListImage(query)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderMusicListImage(query ListQuery) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), payloadBuildStage)
 	payload, err := c.BuildMusicListRequest(query)
 	if err != nil {
 		finishBuild()
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
 	includeLeaks := query.IncludeLeaks
 	if !includeLeaks && c.resolveRegion(query.Region) != renderregion.JP &&
@@ -383,7 +415,7 @@ func (c *Controller) RenderMusicList(query ListQuery) ([]byte, error) {
 		includeLeaks = true
 	}
 	finishBuild()
-	return c.drawing.GenerateMusicList(payload, query.ShowID, includeLeaks)
+	return c.drawing.GenerateMusicListImage(payload, query.ShowID, includeLeaks)
 }
 
 func buildMusicListUserResults(primary map[int]string, fallback map[int]string) map[int]string {

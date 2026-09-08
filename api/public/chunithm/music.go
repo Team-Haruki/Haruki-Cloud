@@ -68,7 +68,7 @@ func (h *MusicHandler) GetDifficultyInfo(c fiber.Ctx) error {
 		return api.InternalError(c)
 	}
 	if hit {
-		return c.Status(fiber.StatusOK).JSON(cached)
+		return api.SendCachedJSON(c, fiber.StatusOK, cached)
 	}
 	record, err := h.svc.client.ChunithmMusicDifficulty.
 		Query().
@@ -123,7 +123,7 @@ func (h *MusicHandler) GetBasicInfo(c fiber.Ctx) error {
 		return api.InternalError(c)
 	}
 	if hit {
-		return c.Status(fiber.StatusOK).JSON(cached)
+		return api.SendCachedJSON(c, fiber.StatusOK, cached)
 	}
 	row, err := h.svc.client.ChunithmMusic.
 		Query().
@@ -158,7 +158,7 @@ func (h *MusicHandler) GetChartData(c fiber.Ctx) error {
 		return api.InternalError(c)
 	}
 	if hit {
-		return c.Status(fiber.StatusOK).JSON(cached)
+		return api.SendCachedJSON(c, fiber.StatusOK, cached)
 	}
 	rows, err := h.svc.client.ChunithmChartData.
 		Query().

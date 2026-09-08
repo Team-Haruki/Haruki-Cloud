@@ -253,14 +253,22 @@ func (c *Controller) RenderProfileFromAPI(query Query, resp *sekai.GetAnotherPro
 }
 
 func (c *Controller) RenderProfileFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snapshot snapshot.Snapshot) ([]byte, error) {
+	image, err := c.RenderProfileFromAPIWithSnapshotImage(query, resp, snapshot)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderProfileFromAPIWithSnapshotImage(query Query, resp *sekai.GetAnotherProfileResponse, snapshot snapshot.Snapshot) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildProfileRequestFromAPIWithSnapshot(query, resp, snapshot)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateProfile(payload)
+	return c.drawing.GenerateProfileImage(payload)
 }

@@ -213,7 +213,8 @@ type RemoteDeckRecommender struct {
 }
 
 type remoteTargetState struct {
-	target upstream.TargetConfig
+	userdata remoteUserdataCache
+	target   upstream.TargetConfig
 
 	mu              sync.Mutex
 	masterdataReady bool

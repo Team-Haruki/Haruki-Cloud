@@ -87,16 +87,24 @@ func (c *Controller) BuildModularProfileRequestFromAPIWithSnapshot(query Query, 
 }
 
 func (c *Controller) RenderModularProfileFromAPIWithSnapshot(query Query, resp *sekai.GetAnotherProfileResponse, snap snapshot.Snapshot) ([]byte, error) {
+	image, err := c.RenderModularProfileFromAPIWithSnapshotImage(query, resp, snap)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(c.contextOrBackground())
+}
+
+func (c *Controller) RenderModularProfileFromAPIWithSnapshotImage(query Query, resp *sekai.GetAnotherProfileResponse, snap snapshot.Snapshot) (drawing.ImageResult, error) {
 	if c == nil || c.drawing == nil {
-		return nil, fmt.Errorf("drawing client is not configured")
+		return drawing.ImageResult{}, fmt.Errorf("drawing client is not configured")
 	}
 	finishBuild := commandtrace.MeasureOperation(c.contextOrBackground(), "payload.build")
 	payload, err := c.BuildModularProfileRequestFromAPIWithSnapshot(query, resp, snap)
 	finishBuild()
 	if err != nil {
-		return nil, err
+		return drawing.ImageResult{}, err
 	}
-	return c.drawing.GenerateModularProfile(payload)
+	return c.drawing.GenerateModularProfileImage(payload)
 }
 
 func buildDefaultModularProfilePreset(

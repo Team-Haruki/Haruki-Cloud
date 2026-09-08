@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS image_cache_index (
 	expires_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_image_cache_expires_at ON image_cache_index(expires_at);
+CREATE INDEX IF NOT EXISTS idx_image_cache_file_path ON image_cache_index(file_path);
 `
 	if _, err := db.Exec(ddl); err != nil {
 		_ = db.Close()

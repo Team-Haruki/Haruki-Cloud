@@ -47,6 +47,13 @@ func (a *ProviderAdapter) GetMusicDifficulties(musicID int) ([]*masterdata.Music
 	return a.P.Musics().GetDifficulties(a.Context(), musicID)
 }
 
+func (a *ProviderAdapter) PreloadMusicDifficulties() error {
+	if loader, ok := a.P.Musics().(provider.MusicDifficultyPreloader); ok {
+		return loader.PreloadDifficulties(a.Context())
+	}
+	return nil
+}
+
 func (a *ProviderAdapter) GetMusicVocals(musicID int) ([]*masterdata.MusicVocal, error) {
 	return a.P.Musics().GetVocals(a.Context(), musicID)
 }

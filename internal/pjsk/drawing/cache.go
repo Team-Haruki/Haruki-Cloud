@@ -36,10 +36,13 @@ const (
 	localRenderCacheMaxBytes       = 256 << 20
 	renderCacheAPIResponseMaxBytes = 1 << 20
 	renderCacheStoreConcurrency    = 8
+	pendingRenderCacheTTL          = 30 * time.Second
+	pendingRenderCacheMaxBytes     = 64 << 20
 )
 
 type renderFlightResult struct {
 	data       []byte
+	image      ImageResult
 	err        error
 	operations []commandtrace.Stats
 	leader     *renderFlightToken
@@ -137,10 +140,12 @@ func (lc *localRenderCache) set(key string, data []byte, ttl time.Duration, perm
 		return
 	}
 
+	lc.nextGeneration++
 	entry := &localRenderEntry{
-		data:      owned,
-		permanent: permanent,
-		size:      size,
+		generation: lc.nextGeneration,
+		data:       owned,
+		permanent:  permanent,
+		size:       size,
 	}
 	if !permanent {
 		entry.expiresAt = now.Add(ttl)
@@ -277,6 +282,7 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 		imageCacheDir: strings.TrimSpace(cfg.ImageCacheDir),
 		imageStore:    cfg.ImageStore,
 		storeSlots:    make(chan struct{}, renderCacheStoreConcurrency),
+		pending:       newLocalRenderCacheWithLimits(pendingRenderCacheTTL, 128, pendingRenderCacheMaxBytes),
 	}
 }
 
@@ -317,46 +323,105 @@ func resolveRenderCachePolicyKey(ctx context.Context, endpoint string, request a
 }
 
 func waitForRenderFlight(ctx context.Context, result <-chan singleflight.Result, callerToken *renderFlightToken, cacheName string) ([]byte, error) {
+	image, err := waitForImageFlight(ctx, result, callerToken, cacheName)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(ctx)
+}
+
+func waitForImageFlight(ctx context.Context, result <-chan singleflight.Result, callerToken *renderFlightToken, cacheName string) (ImageResult, error) {
 	select {
 	case completed := <-result:
 		if completed.Err != nil {
-			return nil, completed.Err
+			return ImageResult{}, completed.Err
 		}
 		flightResult, ok := completed.Val.(renderFlightResult)
 		if !ok {
-			return nil, fmt.Errorf("%s render cache returned unexpected type %T", cacheName, completed.Val)
+			return ImageResult{}, fmt.Errorf("%s render cache returned unexpected type %T", cacheName, completed.Val)
 		}
 		commandtrace.MergeOperations(ctx, flightResult.operations)
 		if flightResult.leader != callerToken {
-			commandtrace.RecordOperation(ctx, "drawing.cache_shared", 0)
+			operation := "drawing.cache_shared"
+			if cacheName == "file" {
+				operation = "drawing.cache_read_shared"
+			}
+			commandtrace.RecordOperation(ctx, operation, 0)
 		}
 		if flightResult.err != nil {
-			return nil, flightResult.err
+			return ImageResult{}, flightResult.err
 		}
-		return cloneRenderBytes(flightResult.data), nil
+		if flightResult.image.filePath != "" {
+			return flightResult.image, nil
+		}
+		return ImageBytes(cloneRenderBytes(flightResult.data)), nil
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return ImageResult{}, ctx.Err()
 	}
 }
 
 func (c *RenderCacheClient) renderRemoteFlight(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) ([]byte, error) {
+	image, err := c.renderRemoteImageFlight(ctx, endpoint, key, policy, render, false)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(ctx)
+}
+
+func (c *RenderCacheClient) renderRemoteImageFlight(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error), rebuild bool) (ImageResult, error) {
 	finishWait := commandtrace.MeasureOperation(ctx, "drawing.cache_wait")
 	defer finishWait()
 	callerToken := new(renderFlightToken)
-	result := c.flight.DoChan(key, func() (any, error) {
+	flightKey := key
+	if rebuild {
+		flightKey += ":rebuild"
+	}
+	result := c.flight.DoChan(flightKey, func() (any, error) {
+		var image ImageResult
 		flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
-			return c.renderRemoteFlightWork(sharedCtx, endpoint, key, policy, render)
+			var err error
+			if rebuild {
+				image.data, err = c.renderRemoteMiss(sharedCtx, endpoint, key, policy, render)
+			} else {
+				image, err = c.renderRemoteImageWork(sharedCtx, endpoint, key, policy, render)
+			}
+			return image.data, err
 		})
+		flightResult.image = image
 		flightResult.leader = callerToken
 		return flightResult, nil
 	})
-	return waitForRenderFlight(ctx, result, callerToken, "remote")
+	image, err := waitForImageFlight(ctx, result, callerToken, "remote")
+	if err == nil && image.filePath != "" {
+		// Retry only the render work, once, if the file disappears after lookup.
+		image.fallback = func(retryCtx context.Context) ([]byte, error) {
+			fresh, err := c.renderRemoteImageFlight(retryCtx, endpoint, key, policy, render, true)
+			if err != nil {
+				return nil, err
+			}
+			return fresh.Bytes(retryCtx)
+		}
+	}
+	return image, err
 }
 
 func (c *RenderCacheClient) renderRemoteFlightWork(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) ([]byte, error) {
+	image, err := c.renderRemoteImageWork(ctx, endpoint, key, policy, render)
+	if err != nil {
+		return nil, err
+	}
+	return image.Bytes(ctx)
+}
+
+func (c *RenderCacheClient) renderRemoteImageWork(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) (ImageResult, error) {
+	if data, ok := c.pending.get(key); ok {
+		commandtrace.RecordOperation(ctx, "drawing.cache_pending_hit", 0)
+		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
+		return ImageBytes(data), nil
+	}
 	lookupStarted := time.Now()
 	finishLookup := commandtrace.MeasureOperation(ctx, "drawing.cache_lookup")
-	cached, hit := c.lookupContext(ctx, key, policy.APIPath)
+	cached, hit := c.lookupImageContext(ctx, key, policy.APIPath)
 	finishLookup()
 	if hit {
 		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
@@ -373,6 +438,11 @@ func (c *RenderCacheClient) renderRemoteFlightWork(ctx context.Context, endpoint
 		"cache_key", shortRenderCacheKey(key),
 		"duration_ms", commandtrace.Milliseconds(time.Since(lookupStarted)),
 	)
+	data, err := c.renderRemoteMiss(ctx, endpoint, key, policy, render)
+	return ImageBytes(data), err
+}
+
+func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) ([]byte, error) {
 	image, err := render(ctx)
 	if err != nil {
 		return nil, err
@@ -383,6 +453,11 @@ func (c *RenderCacheClient) renderRemoteFlightWork(ctx context.Context, endpoint
 	}
 	// Store write-behind: failures were already warn-only, so no waiter
 	// depends on the store having completed.
+	pendingTTL := pendingRenderCacheTTL
+	if !policy.Infinite && ttl > 0 && ttl < pendingTTL {
+		pendingTTL = ttl
+	}
+	c.pending.set(key, image, pendingTTL, false)
 	c.storeAsync(ctx, endpoint, key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
 	return image, nil
 }
@@ -400,6 +475,15 @@ func (c *RenderCacheClient) lookup(key string, apiPath string) ([]byte, bool) {
 }
 
 func (c *RenderCacheClient) lookupContext(ctx context.Context, key string, apiPath string) ([]byte, bool) {
+	image, hit := c.lookupImageContext(ctx, key, apiPath)
+	if !hit {
+		return nil, false
+	}
+	data, err := image.Bytes(ctx)
+	return data, err == nil
+}
+
+func (c *RenderCacheClient) lookupImageContext(ctx context.Context, key string, apiPath string) (ImageResult, bool) {
 	var record renderCacheRecord
 	var apiErr renderCacheAPIError
 
@@ -415,19 +499,17 @@ func (c *RenderCacheClient) lookupContext(ctx context.Context, key string, apiPa
 	resp, err := request.Get(c.baseURL + "/cache")
 	finishHTTP()
 	if err != nil {
-		return nil, false
+		return ImageResult{}, false
 	}
 	if resp.StatusCode() != http.StatusOK || strings.TrimSpace(record.FilePath) == "" {
-		return nil, false
+		return ImageResult{}, false
 	}
 
-	finishRead := commandtrace.MeasureOperation(ctx, "drawing.cache_read")
-	body, err := c.readCacheFile(record.FilePath)
-	finishRead()
+	image, err := c.cachedFile(record.FilePath)
 	if err != nil {
-		return nil, false
+		return ImageResult{}, false
 	}
-	return body, true
+	return image, true
 }
 
 func (c *RenderCacheClient) store(key string, apiPath string, userID string, image []byte, ttl time.Duration, infinite bool) error {
@@ -459,6 +541,7 @@ func (c *RenderCacheClient) storeAsync(ctx context.Context, endpoint string, key
 	// The flight result retains the original slice and hands clones to
 	// waiters; clone here too (after slot acquisition, so dropped stores never
 	// copy) so the background store never races a future owner mutation.
+	pendingGeneration := c.pending.peekGeneration(key)
 	owned := cloneRenderBytes(image)
 	c.storeWG.Add(1)
 	go func() {
@@ -479,6 +562,7 @@ func (c *RenderCacheClient) storeAsync(ctx context.Context, endpoint string, key
 			)
 			return
 		}
+		c.pending.deleteGeneration(key, pendingGeneration)
 		cacheLogger.DebugContext(storeCtx, "drawing remote cache stored",
 			"upstream_path", endpoint,
 			"cache_key", shortRenderCacheKey(key),
@@ -789,4 +873,29 @@ func renderCacheFileExtFromData(data []byte) string {
 	default:
 		return ".png"
 	}
+}
+
+// The store completion retains only a generation, so evicted entries can
+// release their image bytes while the asynchronous store is still running.
+func (lc *localRenderCache) deleteGeneration(key string, generation uint64) {
+	if lc == nil {
+		return
+	}
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+	if entry := lc.entries[key]; entry != nil && entry.generation == generation {
+		lc.removeEntryLocked(key, entry)
+	}
+}
+
+func (lc *localRenderCache) peekGeneration(key string) uint64 {
+	if lc == nil {
+		return 0
+	}
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
+	if entry := lc.entries[key]; entry != nil {
+		return entry.generation
+	}
+	return 0
 }

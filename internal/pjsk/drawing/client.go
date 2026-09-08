@@ -619,3 +619,49 @@ func (c *HarukiDrawingClient) GenerateSKRankTrace(req *RankTraceRequest) ([]byte
 func (c *HarukiDrawingClient) GenerateSKWinRate(req *WinRateRequest) ([]byte, error) {
 	return c.cachedPost("/api/pjsk/sk/winrate", req)
 }
+
+func (c *HarukiDrawingClient) GenerateCardDetailImage(req *CardDetailRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/card/detail", req)
+}
+
+func (c *HarukiDrawingClient) GenerateCardListImage(req *CardListRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/card/list", req)
+}
+
+func (c *HarukiDrawingClient) GenerateCardBoxImage(req *CardBoxRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/card/box", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMusicDetailImage(req *MusicDetailRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/music/detail", req)
+}
+
+func (c *HarukiDrawingClient) GenerateMusicListImage(req *MusicListRequest, showID bool, showLeak bool) (ImageResult, error) {
+	// Query params: show_id, show_leak
+	endpoint := fmt.Sprintf("/api/pjsk/music/list?show_id=%v&show_leak=%v", showID, showLeak)
+	return c.cachedPostImage(endpoint, req)
+}
+
+func (c *HarukiDrawingClient) GenerateMusicBriefListImage(req *MusicBriefListRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/music/brief-list", req)
+}
+
+func (c *HarukiDrawingClient) GenerateProfileImage(req *ProfileRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/profile", req)
+}
+
+func (c *HarukiDrawingClient) GenerateModularProfileImage(req *ModularProfileRenderRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/profile/modular", req)
+}
+
+func (c *HarukiDrawingClient) GenerateCustomProfileCardImage(req *CustomProfileCardRenderRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/profile/custom-profile-card", req)
+}
+
+func (c *HarukiDrawingClient) GenerateDetailMusicRewardsImage(req *DetailMusicRewardsRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/music/rewards/detail", req)
+}
+
+func (c *HarukiDrawingClient) GeneratePlayProgressImage(req *PlayProgressRequest) (ImageResult, error) {
+	return c.cachedPostImage("/api/pjsk/music/progress", req)
+}

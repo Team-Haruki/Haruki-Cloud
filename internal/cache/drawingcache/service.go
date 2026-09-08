@@ -6,6 +6,7 @@ import (
 	"errors"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -23,9 +24,13 @@ type Config struct {
 }
 
 type Service struct {
-	db  *sql.DB
-	api *API
-	cfg Config
+	stop      context.CancelFunc
+	done      chan struct{}
+	closeOnce sync.Once
+	closeErr  error
+	db        *sql.DB
+	api       *API
+	cfg       Config
 }
 
 func NewService(ctx context.Context, cfg Config) (*Service, error) {
@@ -40,8 +45,13 @@ func NewService(ctx context.Context, cfg Config) (*Service, error) {
 	}
 
 	api := NewAPI(NewDAO(db), cfg.StorageDir)
-	StartGCWorker(ctx, db, cfg.StorageDir, cfg.GCInterval)
-	return &Service{db: db, api: api, cfg: cfg}, nil
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	workerCtx, stop := context.WithCancel(ctx)
+	s := &Service{db: db, api: api, cfg: cfg, stop: stop, done: make(chan struct{})}
+	go func() { defer close(s.done); api.maintain(workerCtx, cfg.GCInterval) }()
+	return s, nil
 }
 
 func (s *Service) RegisterRoutes(router fiber.Router) {
@@ -55,7 +65,17 @@ func (s *Service) Close() error {
 	if s == nil || s.db == nil {
 		return nil
 	}
-	return s.db.Close()
+	s.closeOnce.Do(func() {
+		if s.stop != nil {
+			s.stop()
+			<-s.done
+		}
+		if s.api != nil {
+			s.closeErr = s.api.flushTouches()
+		}
+		s.closeErr = errors.Join(s.closeErr, s.db.Close())
+	})
+	return s.closeErr
 }
 
 func (s *Service) Config() Config {

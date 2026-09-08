@@ -1108,6 +1108,11 @@ var (
 				Unique:  true,
 				Columns: []*schema.Column{MusicdifficultiesColumns[1], MusicdifficultiesColumns[7]},
 			},
+			{
+				Name:    "musicdifficultie_server_region_music_id",
+				Unique:  false,
+				Columns: []*schema.Column{MusicdifficultiesColumns[7], MusicdifficultiesColumns[2]},
+			},
 		},
 	}
 	// MusictagsColumns holds the columns for the "musictags" table.

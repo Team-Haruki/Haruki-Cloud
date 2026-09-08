@@ -3,7 +3,6 @@ package snapshot
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -62,7 +61,7 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 		return nil, fmt.Errorf("snapshot: invalid bound pjsk user id %q: %w", binding.PJSKUserID, err)
 	}
 
-	payload, _, err := p.privateCache.Fetch(
+	payload, _, err := p.privateCache.fetchPayload(
 		PrivateDataKey{Server: binding.Server, DataType: "mysekai", UID: uid},
 		func(knownUploadTime int64) ([]byte, bool, error) {
 			return p.client.GetMySekaiDataConditionalContext(ctx, binding.Server, uid, platform, imUserID, knownUploadTime)
@@ -71,10 +70,10 @@ func (p *ToolboxMySekaiPayloadProvider) Resolve(ctx context.Context, selector Se
 	if err != nil {
 		return nil, err
 	}
-	if len(payload) == 0 {
+	if len(payload.data) == 0 {
 		return nil, ErrSnapshotUnavailable
 	}
-	return slices.Clone(payload), nil
+	return payload.cloneBytes(), nil
 }
 
 type FallbackMySekaiPayloadProvider struct {

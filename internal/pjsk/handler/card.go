@@ -257,11 +257,11 @@ func executeCardDetail(rc *RequestContext, cardCtrl *card.Controller) (onebot11.
 	mergeParams(rc.Cmd.Params, &q)
 	q.Region = rc.Cmd.Region
 	q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
-	data, err := cardCtrl.RenderCardDetail(q)
+	data, err := cardCtrl.RenderCardDetailImage(q)
 	if err != nil {
 		return nil, err
 	}
-	return rc.ImageMessage(data)
+	return rc.RenderedImageMessage(data)
 }
 
 func executeCardList(rc *RequestContext, cardCtrl *card.Controller) (onebot11.Message, error) {
@@ -270,11 +270,11 @@ func executeCardList(rc *RequestContext, cardCtrl *card.Controller) (onebot11.Me
 	q.Region = rc.Cmd.Region
 	q.AllowUnreleased = allowReadOnlyLeaks(q.Region)
 	q.DetailedProfile, _ = resolveCommandDisplayProfiles(rc, rc.ResolveSnapshot(false))
-	data, err := cardCtrl.RenderCardList(q)
+	data, err := cardCtrl.RenderCardListImage(q)
 	if err != nil {
 		return nil, err
 	}
-	image, err := rc.ImageMessage(data)
+	image, err := rc.RenderedImageMessage(data)
 	if err != nil || !cardCtrl.ShouldShowSummaryForList(q) {
 		return image, err
 	}
@@ -298,11 +298,11 @@ func executeCardBox(rc *RequestContext, cardCtrl *card.Controller) (onebot11.Mes
 		}
 		q.DetailedProfile = detail
 	}
-	data, err := cardCtrl.RenderCardBox([]card.Query{q})
+	data, err := cardCtrl.RenderCardBoxImage([]card.Query{q})
 	if err != nil {
 		return nil, err
 	}
-	image, err := rc.ImageMessage(data)
+	image, err := rc.RenderedImageMessage(data)
 	if err != nil || !cardCtrl.ShouldShowSummaryForBox(q) {
 		return image, err
 	}

@@ -52,11 +52,21 @@ func (c *RenderCacheClient) cachedFile(candidate string) (ImageResult, error) {
 	if !info.Mode().IsRegular() || info.Size() < 0 || info.Size() > drawingMaxResponseBytes {
 		return ImageResult{}, fmt.Errorf("invalid render cache image file")
 	}
-	absolute, err := filepath.Abs(filepath.Clean(candidate))
+	root, err := filepath.Abs(c.storageDir)
 	if err != nil {
 		return ImageResult{}, err
 	}
-	return ImageResult{filePath: absolute, cache: c}, nil
+	realRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return ImageResult{}, err
+	}
+	relative, err := filepath.Rel(realRoot, resolved)
+	if err != nil {
+		return ImageResult{}, err
+	}
+	// Pin the validated target while retaining the configured root's namespace
+	// for cache reads and CDN paths when the root itself is a symlink.
+	return ImageResult{filePath: filepath.Join(root, relative), cache: c}, nil
 }
 
 func (c *RenderCacheClient) RenderImageSharedContext(ctx context.Context, endpoint string, request any, render func(context.Context) ([]byte, error)) (ImageResult, error) {

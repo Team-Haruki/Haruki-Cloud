@@ -21,6 +21,9 @@ type builtSnapshotFlightResult struct {
 // getOrBuild is reached only after this caller's authorized payload reads.
 // Authorization and private-data fetching must never be included in the flight.
 func (c *BuiltSnapshotCache) getOrBuild(ctx context.Context, key builtSnapshotKey, payloadBytes int64, build func(context.Context) (Snapshot, error)) (Snapshot, bool, error) {
+	if ctx == nil {
+		ctx = context.TODO()
+	}
 	if err := ctx.Err(); err != nil {
 		return nil, false, err
 	}

@@ -297,3 +297,19 @@ func TestPrivatePayloadSharingKeepsOwnedBoundariesAndVersions(t *testing.T) {
 		t.Fatal("request cache shared authorization between requesters")
 	}
 }
+
+func TestBuiltSnapshotFlightAcceptsNilContext(t *testing.T) {
+	for _, cache := range []*BuiltSnapshotCache{nil, NewBuiltSnapshotCache()} {
+		expected := buildTestSnapshot(t)
+		//lint:ignore SA1012 Exercise the legacy nil-context compatibility boundary.
+		got, _, err := cache.getOrBuild(nil, builtKey(1, 100), 1, func(ctx context.Context) (Snapshot, error) {
+			if ctx == nil {
+				t.Error("build received nil context")
+			}
+			return expected, nil
+		})
+		if err != nil || got != expected {
+			t.Fatalf("snapshot=%v err=%v", got, err)
+		}
+	}
+}

@@ -130,3 +130,35 @@ func TestImageBytesWaiterCanCancelSharedRead(t *testing.T) {
 		t.Fatal("caller cancellation interrupted shared read")
 	}
 }
+
+func TestCachedImagePinsSymlinkTarget(t *testing.T) {
+	realRoot := t.TempDir()
+	root := filepath.Join(t.TempDir(), "cache")
+	if err := os.Symlink(realRoot, root); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"first.png", "second.png"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(name), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	link := filepath.Join(root, "current.png")
+	if err := os.Symlink("first.png", link); err != nil {
+		t.Fatal(err)
+	}
+	client := &RenderCacheClient{storageDir: root}
+	result, err := client.cachedFile(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(link); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("second.png", link); err != nil {
+		t.Fatal(err)
+	}
+	data, err := result.Bytes(t.Context())
+	if err != nil || string(data) != "first.png" {
+		t.Fatalf("data=%q err=%v", data, err)
+	}
+}

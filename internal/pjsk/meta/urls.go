@@ -23,7 +23,11 @@ func ResolveURL(source, baseURL, region string) (string, error) {
 	switch strings.ToLower(strings.TrimSpace(source)) {
 	case "", SourceLegacy:
 		if base == "" {
-			base = defaultLegacyBaseURL
+			url, ok := regionURLs[region]
+			if !ok {
+				return "", fmt.Errorf("meta: unknown region %q", region)
+			}
+			return url, nil
 		}
 		filename, ok := regionFilenames[region]
 		if !ok {
@@ -41,6 +45,16 @@ func ResolveURL(source, baseURL, region string) (string, error) {
 	default:
 		return "", fmt.Errorf("meta: unknown music metas source %q", source)
 	}
+}
+
+// regionURLs maps SekaiServerRegion strings to their legacy community-feed
+// URLs (tests override entries to point at a local server).
+var regionURLs = map[string]string{
+	"jp": defaultLegacyBaseURL + "/music_metas.json",
+	"en": defaultLegacyBaseURL + "/music_metas-en.json",
+	"tw": defaultLegacyBaseURL + "/music_metas-tc.json",
+	"kr": defaultLegacyBaseURL + "/music_metas-kr.json",
+	"cn": defaultLegacyBaseURL + "/music_metas-cn.json",
 }
 
 // regionFilenames maps SekaiServerRegion strings to the legacy community

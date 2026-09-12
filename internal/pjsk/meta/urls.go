@@ -23,11 +23,7 @@ func ResolveURL(source, baseURL, region string) (string, error) {
 	switch strings.ToLower(strings.TrimSpace(source)) {
 	case "", SourceLegacy:
 		if base == "" {
-			url, ok := regionURLs[region]
-			if !ok {
-				return "", fmt.Errorf("meta: unknown region %q", region)
-			}
-			return url, nil
+			base = defaultLegacyBaseURL
 		}
 		filename, ok := regionFilenames[region]
 		if !ok {
@@ -47,17 +43,8 @@ func ResolveURL(source, baseURL, region string) (string, error) {
 	}
 }
 
-// regionURLs maps SekaiServerRegion strings to their remote music_metas.json URLs.
-// Source: sekai-data.3-3.dev (community-maintained, updated alongside game releases).
-// Note: "tw" region uses the "-tc" suffix in the filename.
-var regionURLs = map[string]string{
-	"jp": "https://sekai-data.3-3.dev/music_metas.json",
-	"en": "https://sekai-data.3-3.dev/music_metas-en.json",
-	"tw": "https://sekai-data.3-3.dev/music_metas-tc.json",
-	"kr": "https://sekai-data.3-3.dev/music_metas-kr.json",
-	"cn": "https://sekai-data.3-3.dev/music_metas-cn.json",
-}
-
+// regionFilenames maps SekaiServerRegion strings to the legacy community
+// feed's file names (sekai-data.3-3.dev; "tw" uses the "-tc" suffix).
 var regionFilenames = map[string]string{
 	"jp": "music_metas.json",
 	"en": "music_metas-en.json",

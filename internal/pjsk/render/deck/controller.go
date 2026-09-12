@@ -42,6 +42,7 @@ func NewControllerWithConfig(cards CardSource, events EventSource, drawingClient
 			SharedResources:           cfg.SharedResources,
 			MasterdataDir:             cfg.MasterdataDir,
 			MasterdataRefreshInterval: cfg.MasterdataRefreshInterval,
+			RegistryURL:               strings.TrimSpace(cfg.RegistryURL),
 			Timeout:                   cfg.Timeout,
 			MaxRetries:                cfg.MaxRetries,
 			RetryWaitTime:             cfg.RetryWaitTime,

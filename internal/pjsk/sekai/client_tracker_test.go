@@ -121,8 +121,10 @@ func trackerTraceOperationCount(trace *commandtrace.Trace, name string) int {
 
 func TestTrackerClientCloudV2Paths(t *testing.T) {
 	var paths []string
+	var authHeaders []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paths = append(paths, r.URL.String())
+		authHeaders = append(authHeaders, r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		switch {
 		case strings.Contains(r.URL.Path, "/sk/query"):
@@ -145,7 +147,7 @@ func TestTrackerClientCloudV2Paths(t *testing.T) {
 
 	characterID := 19
 	userID := int64(10001)
-	client := NewTrackerClient(&config.TrackerConfig{BaseURL: server.URL})
+	client := NewTrackerClient(&config.TrackerConfig{BaseURL: server.URL, Token: " cloud-token "})
 	if _, err := client.GetCloudSKQuery("cn", 170, &characterID, []int{1, 2}, &userID, true, true, 3600); err != nil {
 		t.Fatalf("query failed: %v", err)
 	}
@@ -178,6 +180,12 @@ func TestTrackerClientCloudV2Paths(t *testing.T) {
 			t.Fatalf("path[%d] = %q, want prefix %q", i, paths[i], want)
 		}
 	}
+	for i, header := range authHeaders {
+		if header != "Bearer cloud-token" {
+			t.Fatalf("request %d missing bearer token: %q", i, header)
+		}
+	}
+
 }
 
 func TestTrackerClientMaps404ToRankingNotFound(t *testing.T) {
@@ -216,5 +224,23 @@ func TestTrackerClientDoesNotCacheServerErrors(t *testing.T) {
 	}
 	if got := hits.Load(); got <= 5 {
 		t.Fatalf("expected second request to refetch after 5xx, got %d hits", got)
+	}
+}
+
+func TestTrackerClientOmitsAuthorizationWithoutToken(t *testing.T) {
+	var seen []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"timestamp":1704067200,"status":1,"statusDesc":"ok","timeAgo":0}`))
+	}))
+	defer server.Close()
+
+	client := NewTrackerClient(&config.TrackerConfig{BaseURL: server.URL})
+	if _, err := client.GetEventStatus("cn", 170); err != nil {
+		t.Fatalf("status failed: %v", err)
+	}
+	if len(seen) != 1 || seen[0] != "" {
+		t.Fatalf("expected no Authorization header, got %v", seen)
 	}
 }

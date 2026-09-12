@@ -75,6 +75,15 @@ func (c *TrackerClient) userAgent() string {
 	return version.UserAgent()
 }
 
+// token returns the bearer for the tracker's cloud group; empty means the
+// tracker is deployed without cloud_api.tokens and no header is sent.
+func (c *TrackerClient) token() string {
+	if c != nil && c.config != nil {
+		return strings.TrimSpace(c.config.Token)
+	}
+	return ""
+}
+
 func (c *TrackerClient) baseURL() (string, error) {
 	if c == nil || c.config == nil {
 		return "", ErrClientNotConfigured
@@ -207,10 +216,13 @@ func (c *TrackerClient) getRaw(path string) ([]byte, error) {
 		}
 		url := baseURL + path
 		finishHTTP := commandtrace.MeasureOperation(sharedCtx, "tracker.http")
-		resp, err := c.http.R().
+		req := c.http.R().
 			SetContext(sharedCtx).
-			SetHeader("User-Agent", c.userAgent()).
-			Get(url)
+			SetHeader("User-Agent", c.userAgent())
+		if token := c.token(); token != "" {
+			req.SetHeader("Authorization", "Bearer "+token)
+		}
+		resp, err := req.Get(url)
 		finishHTTP()
 		result := trackerRawResult{leader: callerToken}
 		if err != nil {

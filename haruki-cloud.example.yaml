@@ -185,6 +185,7 @@ toolbox:
 
 tracker:
   base_url: "https://tracker.haruki.example.com"
+  token: ""                       # bearer for /api/v2/cloud/* (tracker cloud_api.tokens); empty sends no Authorization header
   user_agent: "HarukiCloud/1.0"
 
 pjsk_render:

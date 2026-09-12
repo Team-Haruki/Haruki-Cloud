@@ -63,6 +63,8 @@ type Config struct {
 	UserSnapshot                             UserSnapshotConfig
 	MusicMetaRefreshInterval                 time.Duration
 	MusicMetaOutputDir                       string
+	MusicMetaSource                          string
+	MusicMetaBaseURL                         string
 	MetaLoader                               *meta.Loader
 	SharedUpstreamResources                  *upstream.SharedResources
 	SKForecast                               sk.ForecastConfig
@@ -106,6 +108,7 @@ type DeckRecommendConfig struct {
 	SharedResources           *upstream.SharedResources
 	MasterdataDir             string
 	MasterdataRefreshInterval time.Duration
+	RegistryURL               string
 	Timeout                   time.Duration
 	MaxRetries                int
 	RetryWaitTime             time.Duration

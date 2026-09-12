@@ -89,12 +89,12 @@ func TestLocalMasterdataRefreshGuardBranches(t *testing.T) {
 
 func TestResolveMetaLoaderBranches(t *testing.T) {
 	configured := meta.NewLoader(nil)
-	if got := resolveMetaLoader(context.Background(), configured, 0, ""); got != configured {
+	if got := resolveMetaLoader(context.Background(), configured, 0, "", "", ""); got != configured {
 		t.Fatal("configured loader was replaced")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if got := resolveMetaLoader(ctx, nil, 0, t.TempDir()); got == nil {
+	if got := resolveMetaLoader(ctx, nil, 0, t.TempDir(), "", ""); got == nil {
 		t.Fatal("default loader was not constructed")
 	}
 }

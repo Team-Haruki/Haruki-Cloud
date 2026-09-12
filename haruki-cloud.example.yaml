@@ -206,8 +206,10 @@ pjsk_render:
   drawing_timeout: "30s"
   drawing_retry_count: 2
   music_meta:
-    refresh_interval: "30m"   # how often to re-check sekai-data.3-3.dev for music_metas updates
+    refresh_interval: "30m"   # how often to re-check the upstream for music_metas updates
     output_dir: ""            # optional: persist music_metas*.json into this directory after updates
+    source: "legacy"          # legacy = sekai-data.3-3.dev file layout; registry = Haruki master registry (/v1/metas/{region}/music_metas.json, omakase rows already included)
+    base_url: ""              # required for source=registry (e.g. http://100.76.159.97:9998); optional mirror host for legacy
   sk_forecast:
     local_base_url: "http://100.109.13.111:18746"
     cache_path: "/data/haruki/cache/drawing/sk_forecast_cache.json"
@@ -264,8 +266,9 @@ pjsk_render:
     #   - name: "vm101"
     #     base_url: "http://127.0.0.1:3001"
     #     concurrency: 8
-    masterdata_dir: "/data/HarukiServices/alpha/Data/master/haruki-sekai-master" # root dir; Cloud will resolve the region subdir
-    masterdata_refresh_interval: "5m" # re-check mounted masterdata files and ask deck-service to reload
+    masterdata_dir: "/data/HarukiServices/alpha/Data/master/haruki-sekai-master" # root dir; Cloud will resolve the region subdir (not needed when registry_url is set)
+    masterdata_refresh_interval: "5m" # re-check mounted masterdata files (or the registry manifest) and ask deck-service to reload
+    registry_url: ""          # Haruki master registry base URL; when set, deck-service pulls master data from it (POST /update/masterdata/registry) and Cloud only tracks the published contentHash
     timeout: "10s"
     max_retries: 3            # HTTP-level retry count for transient failures
     retry_wait_time: "1s"     # wait between retries

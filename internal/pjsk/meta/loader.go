@@ -38,9 +38,27 @@ type Loader struct {
 	loadLocks map[string]*sync.Mutex
 	logger    *logger.Logger
 	outputDir string
+	source    string
+	baseURL   string
 }
 
 type LoaderOption func(*Loader)
+
+// WithSource selects where music_metas are fetched from (SourceLegacy or
+// SourceRegistry). Unknown values surface as a load error per region.
+func WithSource(source string) LoaderOption {
+	return func(l *Loader) {
+		l.source = strings.ToLower(strings.TrimSpace(source))
+	}
+}
+
+// WithBaseURL overrides the upstream host. Required for SourceRegistry;
+// optional for SourceLegacy (a mirror of the community layout).
+func WithBaseURL(baseURL string) LoaderOption {
+	return func(l *Loader) {
+		l.baseURL = strings.TrimSpace(baseURL)
+	}
+}
 
 // WithOutputDir enables atomic persistence of fetched music_metas JSON.
 func WithOutputDir(dir string) LoaderOption {
@@ -104,9 +122,9 @@ func (l *Loader) LoadAll(ctx context.Context) error {
 // On 304 Not Modified the existing cache entry is kept as-is.
 // On 200 the body is processed (omakase injected) and cached.
 func (l *Loader) load(ctx context.Context, region string) error {
-	url, ok := regionURLs[region]
-	if !ok {
-		return fmt.Errorf("meta: unknown region %q", region)
+	url, err := ResolveURL(l.source, l.baseURL, region)
+	if err != nil {
+		return err
 	}
 	l.loadMu.Lock()
 	loadLock := l.loadLocks[region]

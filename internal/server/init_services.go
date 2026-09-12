@@ -102,12 +102,19 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 		metaRefreshInterval = harukiConfig.MetaRefreshInterval
 	}
 	metaOutputDir := harukiConfig.Cfg.PJSKRender.MusicMeta.OutputDir
-	metaLoader := meta.NewLoader(harukiLogger.NewLoggerFromGlobal("MusicMeta"), meta.WithOutputDir(metaOutputDir))
+	metaSource := harukiConfig.Cfg.PJSKRender.MusicMeta.Source
+	metaBaseURL := harukiConfig.Cfg.PJSKRender.MusicMeta.BaseURL
+	metaLoader := meta.NewLoader(
+		harukiLogger.NewLoggerFromGlobal("MusicMeta"),
+		meta.WithOutputDir(metaOutputDir),
+		meta.WithSource(metaSource),
+		meta.WithBaseURL(metaBaseURL),
+	)
 	if err := metaLoader.LoadAll(ctx); err != nil {
 		mainLogger.Warn("music meta initial load partially failed", "error_type", fmt.Sprintf("%T", err))
 	}
 	metaLoader.StartBackgroundRefresh(ctx, metaRefreshInterval)
-	mainLogger.Info("music meta loader started", "refresh_interval", metaRefreshInterval, "has_output_dir", strings.TrimSpace(metaOutputDir) != "")
+	mainLogger.Info("music meta loader started", "refresh_interval", metaRefreshInterval, "has_output_dir", strings.TrimSpace(metaOutputDir) != "", "source", strings.TrimSpace(metaSource), "has_base_url", strings.TrimSpace(metaBaseURL) != "")
 
 	sekaiAPIClient := sekaiAPI.NewSekaiAPIClient(&harukiConfig.Cfg.SekaiAPI)
 	toolboxClient := sekaiAPI.NewToolboxClient(&harukiConfig.Cfg.Toolbox)
@@ -154,6 +161,8 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			MySekaiJSON:   harukiConfig.Cfg.PJSKRender.UserSnapshot.MySekaiJSON,
 		},
 		MusicMetaOutputDir: metaOutputDir,
+		MusicMetaSource:    metaSource,
+		MusicMetaBaseURL:   metaBaseURL,
 		MetaLoader:         metaLoader,
 		SKForecast: renderapp.SKForecastConfig{
 			LocalBaseURL: harukiConfig.Cfg.PJSKRender.SKForecast.LocalBaseURL,
@@ -189,6 +198,7 @@ func initPJSKRenderIfEnabled(ctx context.Context, mainLogger *harukiLogger.Logge
 			Targets:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Targets,
 			MasterdataDir:             resolveDeckRecommendMasterdataDir(),
 			MasterdataRefreshInterval: harukiConfig.Cfg.PJSKRender.DeckRecommend.MasterdataRefreshInterval,
+			RegistryURL:               strings.TrimSpace(harukiConfig.Cfg.PJSKRender.DeckRecommend.RegistryURL),
 			Timeout:                   harukiConfig.Cfg.PJSKRender.DeckRecommend.Timeout,
 			MaxRetries:                harukiConfig.Cfg.PJSKRender.DeckRecommend.MaxRetries,
 			RetryWaitTime:             harukiConfig.Cfg.PJSKRender.DeckRecommend.RetryWaitTime,

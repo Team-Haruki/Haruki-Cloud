@@ -354,6 +354,8 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_ASSETS_BASE_URL", &cfg.PJSKRender.AssetDirs.AssetsBaseURL)
 	envDuration("HARUKI_PJSK_RENDER_MUSIC_META_REFRESH_INTERVAL", &cfg.PJSKRender.MusicMeta.RefreshInterval)
 	envStr("HARUKI_PJSK_RENDER_MUSIC_META_OUTPUT_DIR", &cfg.PJSKRender.MusicMeta.OutputDir)
+	envStr("HARUKI_PJSK_RENDER_MUSIC_META_SOURCE", &cfg.PJSKRender.MusicMeta.Source)
+	envStr("HARUKI_PJSK_RENDER_MUSIC_META_BASE_URL", &cfg.PJSKRender.MusicMeta.BaseURL)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_LOCAL_BASE_URL", &cfg.PJSKRender.SKForecast.LocalBaseURL)
 	envStr("HARUKI_PJSK_RENDER_SK_FORECAST_CACHE_PATH", &cfg.PJSKRender.SKForecast.CachePath)
 	envStr("HARUKI_PJSK_RENDER_MYSEKAI_HOUSING_COMPETITION_CACHE_PATH", &cfg.PJSKRender.MySekaiHousingCompetition.CachePath)
@@ -361,6 +363,7 @@ func ApplyEnvOverrides(cfg *Config) error {
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_SERVICE_BASE_URL", &cfg.PJSKRender.DeckRecommend.ServiceBaseURL)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_DIR", &cfg.PJSKRender.DeckRecommend.MasterdataDir)
 	envDuration("HARUKI_PJSK_RENDER_DECK_RECOMMEND_MASTERDATA_REFRESH_INTERVAL", &cfg.PJSKRender.DeckRecommend.MasterdataRefreshInterval)
+	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_REGISTRY_URL", &cfg.PJSKRender.DeckRecommend.RegistryURL)
 	envBool("HARUKI_PJSK_RENDER_DECK_RECOMMEND_DISABLE", &cfg.PJSKRender.DeckRecommend.Disable)
 	envStr("HARUKI_PJSK_RENDER_DECK_RECOMMEND_DISABLE_REASON", &cfg.PJSKRender.DeckRecommend.DisableReason)
 	envBool("HARUKI_PJSK_RENDER_LOCAL_MASTERDATA_ENABLED", &cfg.PJSKRender.LocalMasterdata.Enabled)
@@ -483,6 +486,7 @@ type DeckRecommendConfig struct {
 	Targets                   []upstream.TargetConfig `yaml:"targets"`
 	MasterdataDir             string                  `yaml:"masterdata_dir"`
 	MasterdataRefreshInterval time.Duration           `yaml:"masterdata_refresh_interval"`
+	RegistryURL               string                  `yaml:"registry_url"` // Haruki master registry base URL; when set, deck-service loads master data from it and masterdata_dir is not needed
 	Timeout                   time.Duration           `yaml:"timeout"`
 	MaxRetries                int                     `yaml:"max_retries"`
 	RetryWaitTime             time.Duration           `yaml:"retry_wait_time"`
@@ -513,6 +517,8 @@ type ImageCacheConfig struct {
 type MusicMetaConfig struct {
 	RefreshInterval time.Duration `yaml:"refresh_interval"` // default: 30m
 	OutputDir       string        `yaml:"output_dir"`       // optional directory to persist fetched music_metas JSON
+	Source          string        `yaml:"source"`           // legacy (default, sekai-data.3-3.dev layout) or registry (Haruki master registry /v1/metas)
+	BaseURL         string        `yaml:"base_url"`         // upstream host; required for source=registry, optional mirror for legacy
 }
 
 type SKForecastConfig struct {

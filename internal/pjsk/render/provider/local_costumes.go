@@ -81,6 +81,9 @@ func (p *localCostumeProvider) Filter(_ context.Context, filter *CostumeFilter) 
 	}
 	items := make([]*masterdata.Costume3d, 0)
 	for _, costume := range p.costumes.v().all {
+		if filter.CardID > 0 && !positiveIntSliceContains(p.costumes.v().sourceCards[costume.ID], filter.CardID) {
+			continue
+		}
 		if !localCostumeMatchesFilter(costume, filter) {
 			continue
 		}

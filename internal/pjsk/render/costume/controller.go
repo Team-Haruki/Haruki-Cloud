@@ -897,6 +897,9 @@ func (c *Controller) resolveSource(regionText string) (renderregion.Value, DataS
 }
 
 func (c *Controller) resolveCostumeInfo(region renderregion.Value, source DataSource, query Query) (*masterdata.Costume3d, error) {
+	if query.CardID > 0 {
+		return resolveCardCostume(source, query)
+	}
 	if query.OutfitID > 0 || query.AccessoryID > 0 || query.HairID > 0 {
 		return c.resolveNormalizedCostume(region, source, query)
 	}
@@ -908,6 +911,46 @@ func (c *Controller) resolveCostumeInfo(region renderregion.Value, source DataSo
 		return source.GetCostumeByID(costumeID)
 	}
 	return c.resolveSingleCostumeByQuery(region, source, query)
+}
+
+func resolveCardCostume(source DataSource, query Query) (*masterdata.Costume3d, error) {
+	if query.ColorPosition < 0 {
+		return nil, fmt.Errorf("颜色位顺超出范围：请填写从1开始的颜色位顺")
+	}
+	items, err := source.FilterCostumes(Filter{CardID: query.CardID, PartType: "body"})
+	if err != nil {
+		return nil, err
+	}
+	if len(items) == 0 {
+		return nil, fmt.Errorf("该卡牌没有服装")
+	}
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].ColorID == items[j].ColorID {
+			return items[i].ID < items[j].ID
+		}
+		return items[i].ColorID < items[j].ColorID
+	})
+	base := items[0]
+	if query.ColorPosition == 0 {
+		return base, nil
+	}
+	variants, err := source.GetCostumeVariants(base.GroupID, base.PartType, base.CharacterID)
+	if err != nil {
+		return nil, err
+	}
+	if len(variants) == 0 {
+		variants = []*masterdata.Costume3d{base}
+	}
+	sort.Slice(variants, func(i, j int) bool {
+		if variants[i].ColorID == variants[j].ColorID {
+			return variants[i].ID < variants[j].ID
+		}
+		return variants[i].ColorID < variants[j].ColorID
+	})
+	if query.ColorPosition > len(variants) {
+		return nil, fmt.Errorf("颜色位顺超出范围：该服装共有%d种颜色", len(variants))
+	}
+	return variants[query.ColorPosition-1], nil
 }
 
 func (c *Controller) resolveNormalizedCostume(region renderregion.Value, source DataSource, query Query) (*masterdata.Costume3d, error) {

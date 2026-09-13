@@ -27,6 +27,8 @@ type contextualDataSource interface {
 }
 
 type Query struct {
+	CardID           int    `json:"card_id,omitempty"`
+	ColorPosition    int    `json:"color_position,omitempty"`
 	Query            string `json:"query,omitempty"`
 	ID               int    `json:"id,omitempty"`
 	Region           string `json:"region,omitempty"`
@@ -62,6 +64,7 @@ type ListQuery struct {
 }
 
 type Filter struct {
+	CardID       int
 	PartType     string
 	CostumeType  string
 	CharacterID  int

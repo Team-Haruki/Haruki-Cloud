@@ -37,6 +37,8 @@ var cardBoxAttributeColors = map[string]string{
 
 func normalizeCardBoxGroupBy(value string) string {
 	switch strings.ToLower(strings.TrimSpace(value)) {
+	case CardBoxGroupByTime:
+		return CardBoxGroupByTime
 	case CardBoxGroupByAttr, "attrs", "attribute", "attributes":
 		return CardBoxGroupByAttr
 	default:

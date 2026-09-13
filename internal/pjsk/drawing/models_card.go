@@ -73,8 +73,9 @@ type CardBasic struct {
 }
 
 type UserCard struct {
-	Card    CardBasic `json:"card"`
-	HasCard bool      `json:"has_card"`
+	AcquiredAt int64     `json:"acquired_at,omitempty"`
+	Card       CardBasic `json:"card"`
+	HasCard    bool      `json:"has_card"`
 }
 
 type CardDistributionCharacterStat struct {

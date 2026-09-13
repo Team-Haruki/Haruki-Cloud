@@ -88,6 +88,7 @@ type RawUserCardEpisode struct {
 }
 
 type RawUserCard struct {
+	CreatedAt             int64                `json:"createdAt,omitempty"`
 	CardID                int                  `json:"cardId"`
 	Level                 int                  `json:"level"`
 	SkillLevel            int                  `json:"skillLevel,omitempty"`

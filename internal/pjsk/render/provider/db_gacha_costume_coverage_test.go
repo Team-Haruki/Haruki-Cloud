@@ -292,6 +292,12 @@ func TestDBGachaAndCardRelationProvidersQueryAndCache(t *testing.T) {
 
 	}
 
+	for _, tt := range []struct{ card, count int }{{200, 2}, {201, 0}, {203, 0}} {
+		items, err := provider.costumes.Filter(ctx, &CostumeFilter{CardID: tt.card, PartType: "body"})
+		if err != nil || len(items) != tt.count {
+			t.Fatalf("card %d costumes: %+v, %v", tt.card, items, err)
+		}
+	}
 	gachas := provider.gachas
 	{
 		_, err := gachas.GetByID(ctx, 0)

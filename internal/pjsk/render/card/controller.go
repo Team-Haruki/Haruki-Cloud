@@ -208,7 +208,7 @@ func (c *Controller) BuildCardBoxRequest(queries []Query) (*drawing.CardBoxReque
 	if len(queries) == 0 {
 		return nil, fmt.Errorf("no card query provided")
 	}
-	if (queries[0].ShowBox || queries[0].UnownedOnly) && !hasOwnedCardData(queries[0].DetailedProfile) {
+	if (queries[0].ShowBox || queries[0].UnownedOnly || queries[0].GroupBy == CardBoxGroupByTime) && !hasOwnedCardData(queries[0].DetailedProfile) {
 		return nil, fmt.Errorf("box 模式需要用户卡牌持有数据，请先提供 Suite 抓包或本地快照")
 	}
 

@@ -533,3 +533,21 @@ func TestRenderCardListAutoSwitchesToCardBoxOmitsUserInfo(t *testing.T) {
 		}
 	}
 }
+
+func TestCardBoxTimelineCarriesAcquisitionTimeAndOnlyOwnedCards(t *testing.T) {
+	b := NewBuilder(&lookupTestSource{}, nil, nil, nil)
+	req, err := b.BuildCardBoxRequest([]*masterdata.Card{
+		{ID: 1001, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", AssetBundleName: "a"},
+		{ID: 1002, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", AssetBundleName: "b"},
+		{ID: 1003, CharacterID: 5, CardRarityType: "rarity_4", Attr: "cute", AssetBundleName: "c"},
+	}, "jp", &drawing.DetailedProfileCardRequest{UserCards: []any{
+		map[string]any{"cardId": 1001, "createdAt": float64(1780000000000)},
+		map[string]any{"cardId": 1003},
+	}}, false, true, false, true, CardBoxGroupByTime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.GroupBy != CardBoxGroupByTime || len(req.Cards) != 2 || req.Cards[0].AcquiredAt != 1780000000000 || req.Cards[1].AcquiredAt != 0 {
+		t.Fatalf("unexpected timeline: %+v", req)
+	}
+}

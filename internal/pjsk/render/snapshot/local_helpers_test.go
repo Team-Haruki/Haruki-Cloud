@@ -41,3 +41,10 @@ func TestEncodeRawUserDataOmitsNilCollections(t *testing.T) {
 		}
 	}
 }
+
+func TestUserCardEntriesKeepCreatedAt(t *testing.T) {
+	entries := buildUserCardEntries([]RawUserCard{{CardID: 1, CreatedAt: 1780000000000}})
+	if len(entries) != 1 || entries[0].(map[string]any)["createdAt"] != int64(1780000000000) {
+		t.Fatalf("acquisition timestamp lost: %+v", entries)
+	}
+}

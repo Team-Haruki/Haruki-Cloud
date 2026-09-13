@@ -42,6 +42,7 @@ type contextualEventSource interface {
 const (
 	cardListAutoBoxThreshold = 90
 	CardBoxGroupByAttr       = "attr"
+	CardBoxGroupByTime       = "time"
 )
 
 type Controller struct {

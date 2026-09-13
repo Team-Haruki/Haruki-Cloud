@@ -75,6 +75,19 @@ func (c *Controller) BuildListRequestFromSnapshot(query Query) (*drawing.Invento
 	items := c.inventoryItems(region, raw, c.masterdata.forRegion(region))
 	items = filterInventoryItems(items, filter)
 	sections := buildInventorySections(items)
+	if filter == FilterBoost {
+		var total int64
+		for _, item := range items {
+			if item.RecoveryValue != nil {
+				total += int64(item.Quantity) * int64(*item.RecoveryValue)
+			}
+		}
+		for i := range sections {
+			if sections[i].Key == "boost" {
+				sections[i].Title = fmt.Sprintf("%s · 可恢复体力 %dx🔥", sections[i].Title, total)
+			}
+		}
+	}
 	if len(sections) == 0 {
 		return nil, fmt.Errorf("user snapshot has no inventory data")
 	}

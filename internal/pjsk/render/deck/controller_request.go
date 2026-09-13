@@ -74,23 +74,29 @@ func (c *Controller) buildRecommendDeckData(
 ) []drawing.DeckData {
 	result := make([]drawing.DeckData, 0, len(decks))
 	for index, deckInfo := range decks {
-		cardData := c.buildRecommendDeckCards(cardSource, region, deckInfo.Cards, userCards)
+		cardData := c.buildRecommendDeckCards(cardSource, region, deckInfo.Cards, userCards, false)
 		sortRecommendDeckTeammates(cardData, deckInfo.Cards)
 		deckItem := recommendDeckDrawingData(deckInfo, cardData)
+		deckItem.SupportCardData = c.buildRecommendDeckCards(cardSource, region, deckInfo.SupportCards, userCards, true)
 		applyMusicCompareDrawingData(&deckItem, query, index, musicCompareSelections)
 		result = append(result, deckItem)
 	}
 	return result
 }
 
-func (c *Controller) buildRecommendDeckCards(cardSource CardSource, region renderregion.Value, cards []RecommendCard, userCards map[int]snapshot.RawUserCard) []drawing.DeckCardData {
+func (c *Controller) buildRecommendDeckCards(cardSource CardSource, region renderregion.Value, cards []RecommendCard, userCards map[int]snapshot.RawUserCard, support bool) []drawing.DeckCardData {
 	result := make([]drawing.DeckCardData, 0, len(cards))
 	for _, deckCard := range cards {
 		card, err := c.cardByIDWithFallback(cardSource, region, deckCard.CardID)
 		if err != nil || card == nil {
 			continue
 		}
-		result = append(result, c.recommendDeckCardDrawingData(region, card, deckCard, userCards[deckCard.CardID]))
+		data := c.recommendDeckCardDrawingData(region, card, deckCard, userCards[deckCard.CardID])
+		if support {
+			// WL support bonuses include quarter-percent steps.
+			data.EventBonusRate = math.Round(deckCard.EventBonusRate*100) / 100
+		}
+		result = append(result, data)
 	}
 	return result
 }
@@ -153,7 +159,7 @@ func recommendDeckDrawingData(deck RecommendDeck, cards []drawing.DeckCardData) 
 		LiveScore:            drawing.IntPtr(deck.LiveScore),
 		MySekaiEventPoint:    drawing.IntPtr(deck.MysekaiEventPoint),
 		EventBonusRate:       float64Ptr(normalizeDeckDisplayRate(deck.EventBonusRate)),
-		SupportDeckBonusRate: float64Ptr(normalizeDeckDisplayRate(deck.SupportDeckBonusRate)),
+		SupportDeckBonusRate: float64Ptr(math.Round(deck.SupportDeckBonusRate*100) / 100),
 		MultiLiveScoreUp:     float64Ptr(normalizeDeckDisplayRate(deck.MultiLiveScoreUp)),
 		TotalPower:           drawing.IntPtr(deck.TotalPower),
 		ChallengeScoreDelta:  drawing.IntPtr(deck.ChallengeScoreDelta),

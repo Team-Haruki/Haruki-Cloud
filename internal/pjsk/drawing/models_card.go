@@ -171,6 +171,7 @@ type DeckCardData struct {
 }
 
 type DeckData struct {
+	SupportCardData      []DeckCardData `json:"support_card_data,omitempty"`
 	CardData             []DeckCardData `json:"card_data"`
 	MusicTitle           *string        `json:"music_title,omitempty"`
 	MusicID              *int           `json:"music_id,omitempty"`

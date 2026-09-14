@@ -25,6 +25,10 @@ func ImageBytes(data []byte) ImageResult { return ImageResult{data: data} }
 
 func (r ImageResult) FilePath() string { return r.filePath }
 
+// ImageArtifact wraps a ref without a byte reader: URL emission works, Bytes
+// reports ErrArtifactBytesUnavailable.
+func ImageArtifact(ref *ArtifactRef) ImageResult { return ImageResult{ref: ref} }
+
 // Ref returns the artifact ref of a result Drawing stored, or nil.
 func (r ImageResult) Ref() *ArtifactRef { return r.ref }
 

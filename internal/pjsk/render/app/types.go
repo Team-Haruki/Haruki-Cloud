@@ -61,6 +61,11 @@ type Config struct {
 	ImageCachePGMaxOpen int    // image cache index pool bound; <= 0 selects the default (8)
 	// ImageCacheRenderIndexDDL runs the render index DDL at index Init.
 	ImageCacheRenderIndexDDL bool
+	// ImageCacheRenderIndexLookup serves render cache hits from the render
+	// index (needs the index DSN); ImageCacheRenderIndexTouchInterval is its
+	// per-key sliding-TTL throttle (0 = default 60s).
+	ImageCacheRenderIndexLookup        bool
+	ImageCacheRenderIndexTouchInterval time.Duration
 	// ImageCacheLocalRoot is the absolute directory of the image_cache slot
 	// when it resolved to local, "" otherwise.
 	ImageCacheLocalRoot      string

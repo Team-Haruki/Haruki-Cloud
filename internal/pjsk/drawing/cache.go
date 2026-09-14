@@ -97,42 +97,67 @@ func newLocalRenderCacheWithLimits(ttl time.Duration, maxEntries int, maxBytes i
 }
 
 func (lc *localRenderCache) get(key string) ([]byte, bool) {
-	if lc == nil {
+	data, ref, ok := lc.lookupEntry(key)
+	if !ok || ref != nil {
 		return nil, false
+	}
+	return data, true
+}
+
+// lookupEntry returns a live entry: cloned bytes, or the pending ref.
+func (lc *localRenderCache) lookupEntry(key string) ([]byte, *ArtifactRef, bool) {
+	if lc == nil {
+		return nil, nil, false
 	}
 	now := time.Now()
 	lc.mu.Lock()
 	entry, ok := lc.entries[key]
 	if !ok {
 		lc.mu.Unlock()
-		return nil, false
+		return nil, nil, false
 	}
 	if !entry.permanent && !entry.expiresAt.IsZero() && !now.Before(entry.expiresAt) {
 		lc.removeEntryLocked(key, entry)
 		lc.mu.Unlock()
-		return nil, false
+		return nil, nil, false
 	}
 	if entry.element != nil {
 		lc.lru.MoveToFront(entry.element)
 	}
-	data := entry.data
+	data, ref := entry.data, entry.ref
 	lc.mu.Unlock()
-	return cloneRenderBytes(data), true
+	if ref != nil {
+		return nil, ref, true
+	}
+	return cloneRenderBytes(data), nil, true
 }
 
 func (lc *localRenderCache) set(key string, data []byte, ttl time.Duration, permanent bool) {
 	if lc == nil {
 		return
 	}
-	if !permanent && ttl <= 0 {
-		ttl = lc.ttl
-	}
-	now := time.Now()
 	size := int64(len(data))
 	var owned []byte
 	if lc.maxEntries > 0 && lc.maxBytes > 0 && size <= lc.maxBytes {
 		owned = cloneRenderBytes(data)
 	}
+	lc.store(key, owned, nil, size, ttl, permanent)
+}
+
+// setRef keeps a pending artifact ref, accounted at len(cdn_path)+128 bytes,
+// and returns its generation (0 when it was not retained).
+func (lc *localRenderCache) setRef(key string, ref *ArtifactRef, ttl time.Duration) uint64 {
+	if lc == nil || ref == nil {
+		return 0
+	}
+	return lc.store(key, nil, ref, int64(len(ref.CDNPath)+pendingRefBaseBytes), ttl, false)
+}
+
+func (lc *localRenderCache) store(key string, owned []byte, ref *ArtifactRef, size int64, ttl time.Duration, permanent bool) uint64 {
+	if !permanent && ttl <= 0 {
+		ttl = lc.ttl
+	}
+	now := time.Now()
 
 	lc.mu.Lock()
 	defer lc.mu.Unlock()
@@ -142,13 +167,14 @@ func (lc *localRenderCache) set(key string, data []byte, ttl time.Duration, perm
 		lc.removeEntryLocked(key, existing)
 	}
 	if lc.maxEntries <= 0 || lc.maxBytes <= 0 || size > lc.maxBytes {
-		return
+		return 0
 	}
 
 	lc.nextGeneration++
 	entry := &localRenderEntry{
 		generation: lc.nextGeneration,
 		data:       owned,
+		ref:        ref,
 		permanent:  permanent,
 		size:       size,
 	}
@@ -159,6 +185,10 @@ func (lc *localRenderCache) set(key string, data []byte, ttl time.Duration, perm
 	lc.entries[key] = entry
 	lc.totalBytes += size
 	lc.evictLocked()
+	if lc.entries[key] != entry {
+		return 0
+	}
+	return entry.generation
 }
 
 func (lc *localRenderCache) ensureInitializedLocked() {
@@ -272,11 +302,12 @@ func (lc *localRenderCache) RenderSharedContext(ctx context.Context, endpoint st
 func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 	baseURL := strings.TrimRight(strings.TrimSpace(cfg.BaseURL), "/")
 	storageDir := strings.TrimSpace(cfg.StorageDir)
-	if baseURL == "" || storageDir == "" || cfg.TTL <= 0 {
+	index := usableRenderIndex(cfg.Index)
+	if cfg.TTL <= 0 || (index == nil && (baseURL == "" || storageDir == "")) {
 		return nil
 	}
 
-	return &RenderCacheClient{
+	client := &RenderCacheClient{
 		http: resty.New().
 			SetTransport(upstream.NewTunedTransport(upstream.TunedTransportConfig{})).
 			SetResponseBodyLimit(renderCacheAPIResponseMaxBytes).
@@ -289,6 +320,12 @@ func NewRenderCacheClient(cfg RenderCacheConfig) *RenderCacheClient {
 		storeSlots:    make(chan struct{}, renderCacheStoreConcurrency),
 		pending:       newLocalRenderCacheWithLimits(pendingRenderCacheTTL, 128, pendingRenderCacheMaxBytes),
 	}
+	if index != nil {
+		client.index = index
+		client.indexWriter = newRenderIndexWriter(index, cfg.TouchInterval)
+		client.fetcher = newArtifactFetcher(cfg.Artifacts, cfg.Hosts, cfg.FetchTimeout)
+	}
+	return client
 }
 
 func (c *RenderCacheClient) Render(endpoint string, request any, render func() ([]byte, error)) ([]byte, error) {
@@ -386,7 +423,7 @@ func (c *RenderCacheClient) renderRemoteImageFlight(ctx context.Context, endpoin
 		flightResult := runSharedRenderFlight(ctx, func(sharedCtx context.Context) ([]byte, error) {
 			var err error
 			if rebuild {
-				image.data, err = c.renderRemoteMiss(sharedCtx, endpoint, key, policy, render)
+				image, err = c.renderRemoteMiss(sharedCtx, endpoint, key, policy, render)
 			} else {
 				image, err = c.renderRemoteImageWork(sharedCtx, endpoint, key, policy, render)
 			}
@@ -397,7 +434,8 @@ func (c *RenderCacheClient) renderRemoteImageFlight(ctx context.Context, endpoin
 		return flightResult, nil
 	})
 	image, err := waitForImageFlight(ctx, result, callerToken, "remote")
-	if err == nil && image.filePath != "" {
+	// Rebuild-on-vanished-file is meaningless for content-addressed refs.
+	if err == nil && image.filePath != "" && image.ref == nil {
 		// Retry only the render work, once, if the file disappears after lookup.
 		image.fallback = func(retryCtx context.Context) ([]byte, error) {
 			fresh, err := c.renderRemoteImageFlight(retryCtx, endpoint, key, policy, render, true)
@@ -419,15 +457,16 @@ func (c *RenderCacheClient) renderRemoteFlightWork(ctx context.Context, endpoint
 }
 
 func (c *RenderCacheClient) renderRemoteImageWork(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) (ImageResult, error) {
-	if data, ok := c.pending.get(key); ok {
+	if data, ref, ok := c.pending.lookupEntry(key); ok {
 		commandtrace.RecordOperation(ctx, "drawing.cache_pending_hit", 0)
 		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
+		if ref != nil {
+			return ImageResult{ref: ref, fetcher: c.fetcher}, nil
+		}
 		return ImageBytes(data), nil
 	}
 	lookupStarted := time.Now()
-	finishLookup := commandtrace.MeasureOperation(ctx, "drawing.cache_lookup")
-	cached, hit := c.lookupImageContext(ctx, key, policy.APIPath)
-	finishLookup()
+	cached, hit := c.lookupRemote(ctx, key, policy.APIPath)
 	if hit {
 		commandtrace.RecordOperation(ctx, drawingCacheHitTraceField, 0)
 		cacheLogger.DebugContext(ctx, "drawing remote cache hit",
@@ -443,11 +482,27 @@ func (c *RenderCacheClient) renderRemoteImageWork(ctx context.Context, endpoint,
 		"cache_key", shortRenderCacheKey(key),
 		"duration_ms", commandtrace.Milliseconds(time.Since(lookupStarted)),
 	)
-	data, err := c.renderRemoteMiss(ctx, endpoint, key, policy, render)
-	return ImageBytes(data), err
+	return c.renderRemoteMiss(ctx, endpoint, key, policy, render)
 }
 
-func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) ([]byte, error) {
+// lookupRemote is the remote lookup order: the render index in index mode,
+// then the legacy /cache API while it is still configured (or always, in
+// legacy mode).
+func (c *RenderCacheClient) lookupRemote(ctx context.Context, key, apiPath string) (ImageResult, bool) {
+	if c.indexMode() {
+		if cached, hit := c.lookupIndexContext(ctx, key); hit {
+			return cached, true
+		}
+		if !c.legacyConfigured() {
+			return ImageResult{}, false
+		}
+	}
+	finishLookup := commandtrace.MeasureOperation(ctx, "drawing.cache_lookup")
+	defer finishLookup()
+	return c.lookupImageContext(ctx, key, apiPath)
+}
+
+func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key string, policy renderCachePolicy, render func(context.Context) ([]byte, error)) (ImageResult, error) {
 	ttl := policy.TTL
 	if ttl <= 0 && !policy.Infinite {
 		ttl = c.ttl
@@ -462,25 +517,49 @@ func (c *RenderCacheClient) renderRemoteMiss(ctx context.Context, endpoint, key 
 	}
 	image, err := render(renderCtx)
 	if err != nil {
-		return nil, err
+		return ImageResult{}, err
 	}
 	if directive != nil && directive.outcome.Ref != nil {
-		// Index mode is not wired yet: resolve the ref to bytes and keep the
-		// byte path (pending entry + write-behind store) unchanged.
-		image, err = mode.fetcher.fetch(ctx, directive.outcome.Ref)
+		ref := directive.outcome.Ref
+		if c.indexMode() {
+			return c.pendingRef(key, policy, ttl, ref), nil
+		}
+		// Legacy mode: resolve the ref to bytes and keep the byte path.
+		image, err = mode.fetcher.fetch(ctx, ref)
 		if err != nil {
-			return nil, err
+			return ImageResult{}, err
 		}
 	}
 	// Store write-behind: failures were already warn-only, so no waiter
 	// depends on the store having completed.
+	if c.indexMode() {
+		// Bytes in index mode (degraded write, Cache-Store: 0, an old Drawing,
+		// a non-allow-listed endpoint): no index row will exist, so the entry
+		// stays until it expires; the legacy store runs only while configured.
+		c.pending.set(key, image, pendingIndexTTL(policy, ttl), false)
+		if c.legacyConfigured() {
+			c.storeAsync(ctx, endpoint, key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
+		}
+		return ImageBytes(image), nil
+	}
 	pendingTTL := pendingRenderCacheTTL
 	if !policy.Infinite && ttl > 0 && ttl < pendingTTL {
 		pendingTTL = ttl
 	}
 	c.pending.set(key, image, pendingTTL, false)
 	c.storeAsync(ctx, endpoint, key, policy.APIPath, policy.UserID, image, ttl, policy.Infinite)
-	return image, nil
+	return ImageBytes(image), nil
+}
+
+// pendingRef keeps a ref Drawing returned until its index row is visible:
+// it is dropped at once when Drawing reported index_written, and never passes
+// through storeAsync.
+func (c *RenderCacheClient) pendingRef(key string, policy renderCachePolicy, ttl time.Duration, ref *ArtifactRef) ImageResult {
+	generation := c.pending.setRef(key, ref, pendingIndexTTL(policy, ttl))
+	if ref.IndexWritten && generation != 0 {
+		c.pending.deleteGeneration(key, generation)
+	}
+	return ImageResult{ref: ref, fetcher: c.fetcher}
 }
 
 func shortRenderCacheKey(key string) string {

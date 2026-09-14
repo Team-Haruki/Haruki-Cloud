@@ -132,6 +132,23 @@ func (r *ArtifactRef) ExpiresAtTime() (time.Time, error) {
 	return parsed, nil
 }
 
+// EscapedCDNPath returns cdn_path with every segment path-escaped, ready to
+// join onto a public host base URL.
+func (r *ArtifactRef) EscapedCDNPath() string {
+	if r == nil {
+		return ""
+	}
+	return escapeCDNPath(r.CDNPath)
+}
+
+func escapeCDNPath(cdnPath string) string {
+	segments := strings.Split(cdnPath, "/")
+	for i, segment := range segments {
+		segments[i] = url.PathEscape(segment)
+	}
+	return strings.Join(segments, "/")
+}
+
 func isHex64(value string) bool {
 	if len(value) != 64 {
 		return false
@@ -362,11 +379,7 @@ func unavailableArtifact(cause error) error {
 // reach the host (the only case that puts it into cooldown); a non-200 answer
 // such as a 404 inside the replication window is not a host fault.
 func (f *artifactFetcher) fetchHost(ctx context.Context, base, cdnPath string) (data []byte, transportErr bool, err error) {
-	segments := strings.Split(cdnPath, "/")
-	for i, segment := range segments {
-		segments[i] = url.PathEscape(segment)
-	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/"+strings.Join(segments, "/"), nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/"+escapeCDNPath(cdnPath), nil)
 	if err != nil {
 		return nil, false, err
 	}

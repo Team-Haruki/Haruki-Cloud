@@ -355,6 +355,7 @@ func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDr
 	if imageStore != nil {
 		cacheConfig.ImageStore = imageStore
 	}
+	configureRenderIndex(initCtx, &cacheConfig, imageStore, cfg)
 	client := drawing.NewHarukiDrawingClientWithTargetsAndResources(
 		cfg.DrawingBaseURL, cfg.DrawingTargets, cfg.SharedUpstreamResources, appDrawingOptions(cfg)...,
 	)
@@ -362,6 +363,26 @@ func newAppDrawingClient(initCtx context.Context, cfg Config) (*drawing.HarukiDr
 		client.SetRenderCache(drawing.NewRenderCacheClient(cacheConfig))
 	}
 	return client, imageStore, imageStoreErr
+}
+
+// configureRenderIndex switches the render cache to index mode when
+// render_index.lookup_enabled is set and the index is open. The index is
+// assigned only from a non-nil pointer.
+func configureRenderIndex(initCtx context.Context, cacheConfig *drawing.RenderCacheConfig, imageStore *imagecache.PGStore, cfg Config) {
+	if !cfg.ImageCacheRenderIndexLookup {
+		return
+	}
+	if imageStore == nil {
+		logger.WarnContext(initCtx, "render index lookups disabled: the image cache index is not available")
+		return
+	}
+	cacheConfig.Index = imageStore
+	if cfg.Stores.ImageCache != storage.Disabled() {
+		cacheConfig.Artifacts = cfg.Stores.ImageCache
+	}
+	cacheConfig.Hosts = cfg.ImageHosts
+	cacheConfig.TouchInterval = cfg.ImageCacheRenderIndexTouchInterval
+	cacheConfig.FetchTimeout = cfg.DrawingArtifact.FetchTimeout
 }
 
 func appDrawingOptions(cfg Config) []drawing.ClientOption {
@@ -541,6 +562,9 @@ func (a *App) Close() error {
 		return nil
 	}
 	var err error
+	if a.Drawing != nil {
+		err = errors.Join(err, a.Drawing.Close())
+	}
 	if a.ImageCache != nil {
 		err = errors.Join(err, a.ImageCache.Close())
 	}
